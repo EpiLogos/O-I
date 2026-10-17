@@ -207,3 +207,481 @@ fn native_pending_relations_allow_theme_and_read_admission_rejects_stale_complet
     assert_eq!(kernel.knowledge_refs.len(), admitted_before);
     println!("native relations kept exact subject; theme changed while PID{pid} paused; older native read could not replace admission; proof={}", proof.display());
 }
+
+/// Two registers' knowledge reads prepared in one burst while the kernel
+/// holds no World reading read Central's World once between them, and a
+/// register prepared just after takes that reading at preparation. A World
+/// change the owner reports — a fresh World read (lib.rs `world_map`), a
+/// ground change — withdraws it: the next burst reads the World again.
+#[cfg(unix)]
+#[test]
+fn registers_prepared_in_one_burst_share_one_world_reading() {
+    let owner = crate::tests::FakeOwner::spawn_counter("knowledge-world-burst");
+    let mut kernel = owner.kernel();
+    let relations = |space: &str| KernelOp::Knowledge {
+        project: None,
+        request: knowledge::Request::Relations {
+            address: knowledge::Address::Wiki(space.into()),
+        },
+        fresh: false,
+    };
+    let burst: Vec<Prepared> = ["central:wiki:root", "central:wiki:o-i"]
+        .into_iter()
+        .map(|space| {
+            kernel
+                .prepare_knowledge(&relations(space))
+                .unwrap()
+                .unwrap()
+        })
+        .collect();
+    let worlds: Vec<Value> = std::thread::scope(|scope| {
+        let readers: Vec<_> = burst
+            .iter()
+            .map(|prepared| scope.spawn(move || prepared.world()))
+            .collect();
+        readers
+            .into_iter()
+            .map(|reader| reader.join().unwrap().unwrap())
+            .collect()
+    });
+    assert_eq!(owner.spawns("central.world"), 1);
+    assert_eq!(worlds[0], worlds[1]);
+    let late = kernel
+        .prepare_knowledge(&relations("central:wiki:face-rig"))
+        .unwrap()
+        .unwrap();
+    assert!(
+        late.world.is_some(),
+        "a reading just read serves preparation"
+    );
+    late.world().unwrap();
+    assert_eq!(owner.spawns("central.world"), 1);
+    // A fresh World read withdraws the reading the burst shared.
+    kernel.reads.invalidate("world");
+    let next = kernel
+        .prepare_knowledge(&relations("central:wiki:root"))
+        .unwrap()
+        .unwrap();
+    next.world().unwrap();
+    assert_eq!(owner.spawns("central.world"), 2);
+    // So does a ground change.
+    kernel.reads.clear();
+    let next = kernel
+        .prepare_knowledge(&relations("central:wiki:root"))
+        .unwrap()
+        .unwrap();
+    next.world().unwrap();
+    assert_eq!(owner.spawns("central.world"), 3);
+}
+
+/// N+1 knowledge requests at once against a bound of N: at most N owner
+/// calls are in flight, the last waits for a slot, and every request is
+/// answered by its own owner call.
+#[cfg(unix)]
+#[test]
+fn concurrent_owner_calls_hold_to_the_readers_bound() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    const N: usize = 2;
+    let owner = crate::tests::FakeOwner::spawn_counter("knowledge-readers-bound");
+    let client = owner.kernel().client.clone();
+    let readers = Readers::new(N);
+    let (in_flight, most) = (AtomicUsize::new(0), AtomicUsize::new(0));
+    let together = std::sync::Barrier::new(N + 1);
+    std::thread::scope(|scope| {
+        let requests: Vec<_> = (0..=N)
+            .map(|_| {
+                scope.spawn(|| {
+                    together.wait();
+                    readers.run(|| {
+                        let now = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
+                        most.fetch_max(now, Ordering::SeqCst);
+                        std::thread::sleep(Duration::from_millis(100));
+                        let answer = crate::world::read_world(&client);
+                        in_flight.fetch_sub(1, Ordering::SeqCst);
+                        answer
+                    })
+                })
+            })
+            .collect();
+        for request in requests {
+            assert!(request.join().unwrap().is_ok());
+        }
+    });
+    assert_eq!(
+        most.load(Ordering::SeqCst),
+        N,
+        "at most N owner calls in flight"
+    );
+    assert_eq!(owner.spawns("central.world"), N + 1);
+}
+
+/// Which relations batch an AIKit stand-in has.
+#[cfg(unix)]
+#[derive(Clone, Copy)]
+enum Batch {
+    /// None: its parser refuses the verb.
+    Absent,
+    /// The whole-document batch only (v1): it refuses the streamed form by
+    /// name, as an AIKit before W2 does.
+    Whole,
+    /// Both forms; the streamed one prints each item as it is answered.
+    Streamed,
+}
+
+/// An AIKit stand-in reached the way the kernel reaches it
+/// (`<suite> aikit --json -C <cwd> knowledge …`): every process logs itself;
+/// a wiki address ending `:missing` is refused exactly as AIKit refuses an
+/// unindexed object, in the single read's envelope and in a batch item's,
+/// and one ending `:slow` takes a batch two seconds to answer.
+#[cfg(unix)]
+struct FakeAikit {
+    dir: PathBuf,
+    executable: PathBuf,
+    log: PathBuf,
+}
+
+#[cfg(unix)]
+impl FakeAikit {
+    fn new(test: &str, batch: Batch) -> Self {
+        let dir = std::env::temp_dir().join(format!(
+            "oi-cradle-{}-{test}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let fake = Self {
+            executable: dir.join("oi"),
+            log: dir.join("processes.log"),
+            dir,
+        };
+        fake.write(batch);
+        fake
+    }
+    fn write(&self, batch: Batch) {
+        use std::os::unix::fs::PermissionsExt;
+        let script = format!(
+            r#"#!/usr/bin/env python3
+import json, sys, threading, time
+LOG, MODE = {log:?}, {mode:?}
+V1, V2 = "aikit.knowledge-relations-batch/v1", "aikit.knowledge-relations-batch/v2"
+args = sys.argv[1:]
+cwd = args[args.index("-C") + 1]
+def answer(cwd, address):
+    value = json.loads(address)["value"]
+    if value.endswith(":missing"):
+        return {{"ok": False, "error": {{"code": "knowledge.wiki_object_missing", "message": "Wiki object or relation endpoint " + value + " is not indexed", "details": {{}}}}}}
+    return {{"ok": True, "context": {{"project_root": cwd}}, "data": {{"query": {{"focus": value, "depth": 2, "max_nodes": 96, "max_edges": 192}}, "cwd": cwd, "edges": []}}, "warnings": []}}
+def slow(item):
+    if json.loads(item["address"])["value"].endswith(":slow"):
+        time.sleep(2)
+if args[-1] == "relations-batch":
+    if MODE == "absent":
+        open(LOG, "a").write("batch-refused\n")
+        sys.stderr.write("error: unrecognized subcommand 'relations-batch'\n\n  tip: a similar subcommand exists: 'relations'\n")
+        sys.exit(2)
+    request = json.load(sys.stdin)
+    if request["schema"] == V2 and MODE == "whole":
+        open(LOG, "a").write("stream-refused\n")
+        print(json.dumps({{"schema": 1, "ok": False, "error": {{"code": "knowledge.relations_batch_input", "message": "unsupported relations batch schema " + V2 + "; expected " + V1, "details": {{}}}}}}))
+        sys.exit(1)
+    assert request["schema"] in (V1, V2)
+    open(LOG, "a").write("batch %d %s\n" % (len(request["items"]), cwd))
+    if request["schema"] == V1:
+        time.sleep(0.1)
+        for item in request["items"]:
+            slow(item)
+        answers = [answer(item["cwd"], item["address"]) for item in request["items"]]
+        print(json.dumps({{"schema": 1, "ok": True, "context": {{}}, "data": {{"schema": V1, "answers": answers}}, "warnings": []}}))
+    else:
+        lock = threading.Lock()
+        def one(index, item):
+            time.sleep(0.1)
+            slow(item)
+            line = json.dumps({{"schema": V2, "index": index, "answer": answer(item["cwd"], item["address"])}})
+            with lock:
+                sys.stdout.write(line + "\n")
+                sys.stdout.flush()
+        workers = [threading.Thread(target=one, args=(index, item)) for index, item in enumerate(request["items"])]
+        for worker in workers:
+            worker.start()
+        for worker in workers:
+            worker.join()
+        print(json.dumps({{"schema": 1, "ok": True, "context": {{}}, "data": {{"schema": V2, "answered": len(request["items"])}}, "warnings": []}}))
+else:
+    open(LOG, "a").write("single\n")
+    envelope = answer(cwd, args[-1])
+    print(json.dumps(envelope))
+    sys.exit(0 if envelope["ok"] else 1)
+"#,
+            log = self.log.display().to_string(),
+            mode = match batch {
+                Batch::Absent => "absent",
+                Batch::Whole => "whole",
+                Batch::Streamed => "streamed",
+            },
+        );
+        std::fs::write(&self.executable, script).unwrap();
+        std::fs::set_permissions(&self.executable, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&self.executable);
+    }
+    /// Its identity with no AIKit pin: this test's, whatever another test
+    /// sets in the process environment.
+    fn identity(&self) -> knowledge::AikitIdentity {
+        knowledge::AikitIdentity::pinned(self.executable.as_os_str(), None)
+    }
+    fn processes(&self) -> Vec<String> {
+        std::fs::read_to_string(&self.log)
+            .unwrap_or_default()
+            .lines()
+            .map(str::to_owned)
+            .collect()
+    }
+}
+
+#[cfg(unix)]
+impl Drop for FakeAikit {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.dir);
+    }
+}
+
+#[cfg(unix)]
+fn relations_item(cwd: &std::path::Path, space: &str) -> knowledge::RelationsItem {
+    knowledge::RelationsItem {
+        cwd: cwd.to_path_buf(),
+        address: knowledge::Address::Wiki(space.into()),
+    }
+}
+
+/// Relations reads of one Central root arriving within the window go to
+/// AIKit as ONE batch process (an identical read shares its item; another
+/// root is its own batch), and each read is answered with exactly what its
+/// single read answers — its reading, or its own refusal in the same words.
+#[cfg(unix)]
+#[test]
+fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer() {
+    let aikit = FakeAikit::new("relations-batch", Batch::Streamed);
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations =
+        Box::leak(Box::new(Relations::new(Duration::from_millis(400))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
+    let root = aikit.dir.join("Central");
+    let other_root = aikit.dir.join("Other");
+    let project = root.join("Work/O-I");
+    let reads: Vec<(PathBuf, PathBuf, &str)> = vec![
+        (root.clone(), root.clone(), "central:wiki:root"),
+        (root.clone(), project.clone(), "central:wiki:project:O-I"),
+        (root.clone(), project.clone(), "central:wiki:project:O-I"),
+        (
+            root.clone(),
+            root.clone(),
+            "central:wiki:project:gone:missing",
+        ),
+        (root.clone(), root.clone(), "central:wiki:project:ai-kit"),
+        (other_root.clone(), other_root.clone(), "central:wiki:root"),
+    ];
+    let together = std::sync::Barrier::new(reads.len());
+    let answers: Vec<Result<Value, String>> = std::thread::scope(|scope| {
+        let handles: Vec<_> = reads
+            .iter()
+            .map(|(root, cwd, space)| {
+                let (relations, readers, together, aikit) = (relations, readers, &together, &aikit);
+                scope.spawn(move || {
+                    together.wait();
+                    match relations.read(
+                        readers,
+                        aikit.executable.as_os_str(),
+                        aikit.identity(),
+                        root,
+                        relations_item(cwd, space),
+                    ) {
+                        Gathered::Answer(answer) => answer.map_err(knowledge::describe),
+                        Gathered::Single => panic!("an AIKit with the batch never reads alone"),
+                    }
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    let mut processes = aikit.processes();
+    processes.sort();
+    assert_eq!(
+        processes,
+        vec![
+            format!("batch 1 {}", other_root.display()),
+            format!("batch 4 {}", root.display()),
+        ],
+        "one process per root; the duplicate read shared its item"
+    );
+    for ((_, cwd, space), answer) in reads.iter().zip(&answers) {
+        let single = knowledge::call_with(
+            aikit.executable.as_os_str(),
+            cwd,
+            &knowledge::Request::Relations {
+                address: knowledge::Address::Wiki((*space).into()),
+            },
+        );
+        assert_eq!(answer, &single, "{space} answers as its single read");
+    }
+    assert!(answers[3]
+        .as_ref()
+        .unwrap_err()
+        .contains("central:wiki:project:gone:missing is not indexed"));
+    assert_eq!(
+        answers[1].as_ref().unwrap()["cwd"],
+        project.display().to_string()
+    );
+}
+
+/// An AIKit without the batch is asked once: its own refusal of the verb
+/// sends the gathering's reads to single reads, and its identity is
+/// remembered — the next read is single without asking. A replaced AIKit
+/// is another identity, asked again.
+#[cfg(unix)]
+#[test]
+fn an_aikit_without_the_batch_is_asked_once_per_identity_and_reads_alone() {
+    let aikit = FakeAikit::new("relations-batch-absent", Batch::Absent);
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations =
+        Box::leak(Box::new(Relations::new(Duration::from_millis(50))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
+    let root = aikit.dir.join("Central");
+    let read = |space: &str| {
+        relations.read(
+            readers,
+            aikit.executable.as_os_str(),
+            aikit.identity(),
+            &root,
+            relations_item(&root, space),
+        )
+    };
+    assert!(matches!(read("central:wiki:root"), Gathered::Single));
+    assert_eq!(aikit.processes(), vec!["batch-refused"]);
+    assert!(matches!(read("central:wiki:project:O-I"), Gathered::Single));
+    assert_eq!(
+        aikit.processes(),
+        vec!["batch-refused"],
+        "the absence is remembered for this AIKit"
+    );
+    // The same path, rewritten with the batch: a new identity, asked again.
+    aikit.write(Batch::Streamed);
+    assert!(matches!(read("central:wiki:root"), Gathered::Answer(Ok(_))));
+    assert_eq!(
+        aikit.processes(),
+        vec![
+            "batch-refused".to_owned(),
+            format!("batch 1 {}", root.display())
+        ]
+    );
+}
+
+/// A streamed batch answers each read the moment AIKit streams its item: a
+/// fast register is never held for a slow one in the same process, and each
+/// read still gets exactly its single read's answer.
+#[cfg(unix)]
+#[test]
+fn a_streamed_item_answers_its_read_before_a_slower_item_of_its_batch() {
+    let aikit = FakeAikit::new("relations-batch-streamed", Batch::Streamed);
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations =
+        Box::leak(Box::new(Relations::new(Duration::from_millis(200))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
+    let root = aikit.dir.join("Central");
+    let spaces = ["central:wiki:project:cold:slow", "central:wiki:project:O-I"];
+    let together = std::sync::Barrier::new(spaces.len());
+    let started = Instant::now();
+    let answered: Vec<(Result<Value, String>, Duration)> = std::thread::scope(|scope| {
+        let handles: Vec<_> = spaces
+            .iter()
+            .map(|space| {
+                let (relations, readers, together, aikit, root) =
+                    (relations, readers, &together, &aikit, &root);
+                scope.spawn(move || {
+                    together.wait();
+                    let answer = match relations.read(
+                        readers,
+                        aikit.executable.as_os_str(),
+                        aikit.identity(),
+                        root,
+                        relations_item(root, space),
+                    ) {
+                        Gathered::Answer(answer) => answer.map_err(knowledge::describe),
+                        Gathered::Single => panic!("an AIKit with the batch never reads alone"),
+                    };
+                    (answer, started.elapsed())
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    assert_eq!(
+        aikit.processes(),
+        vec![format!("batch 2 {}", root.display())],
+        "one process for the burst"
+    );
+    assert!(
+        answered[1].1 < Duration::from_millis(1500),
+        "the fast register answered as AIKit streamed it, not with the slow one: {:?}",
+        answered[1].1
+    );
+    assert!(answered[0].1 >= Duration::from_secs(2));
+    for (space, (answer, _)) in spaces.iter().zip(&answered) {
+        let single = knowledge::call_with(
+            aikit.executable.as_os_str(),
+            &root,
+            &knowledge::Request::Relations {
+                address: knowledge::Address::Wiki((*space).into()),
+            },
+        );
+        assert_eq!(answer, &single, "{space} answers as its single read");
+    }
+}
+
+/// An AIKit whose batch answers only the whole document (installed before
+/// the streamed form) refuses the streamed form by name once: that gathering
+/// is asked again for the whole document at once, every read is answered,
+/// and its identity is remembered — the next gathering asks for the whole
+/// document without asking for the stream.
+#[cfg(unix)]
+#[test]
+fn an_aikit_without_the_streamed_batch_is_asked_for_the_whole_document() {
+    let aikit = FakeAikit::new("relations-batch-whole", Batch::Whole);
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations =
+        Box::leak(Box::new(Relations::new(Duration::from_millis(50))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
+    let root = aikit.dir.join("Central");
+    let read = |space: &str| {
+        relations.read(
+            readers,
+            aikit.executable.as_os_str(),
+            aikit.identity(),
+            &root,
+            relations_item(&root, space),
+        )
+    };
+    assert!(matches!(read("central:wiki:root"), Gathered::Answer(Ok(_))));
+    assert_eq!(
+        aikit.processes(),
+        vec![
+            "stream-refused".to_owned(),
+            format!("batch 1 {}", root.display())
+        ]
+    );
+    assert!(matches!(
+        read("central:wiki:project:O-I"),
+        Gathered::Answer(Ok(_))
+    ));
+    assert_eq!(
+        aikit.processes(),
+        vec![
+            "stream-refused".to_owned(),
+            format!("batch 1 {}", root.display()),
+            format!("batch 1 {}", root.display())
+        ],
+        "the whole-document batch is remembered for this AIKit"
+    );
+}

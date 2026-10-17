@@ -2,24 +2,66 @@
 // pane body that the engine mounts in a Factory (or any) pane tree.
 //
 // The App owns the data: the set, its document, the selection, the colours and the World cut's temporal reading
-// (`worldView`). The App publishes exactly the props its World cut residence reads (TimelineProjectionResidence), and the
-// pane body renders them through the same residence component. Nothing is copied into a second store: this module holds
-// the App's last published reading by reference, the way the atlas publishes its handle (AtlasProjectionPanel).
+// (`worldView`). The App publishes the reading each render, and the pane body (frame/tracks/TracksPane.tsx) draws the mode's
+// tracks from it. Nothing is copied into a second store: this module holds the App's last published reading by reference, the
+// way the atlas publishes its handle (AtlasProjectionPanel).
 //
-// The pane's own presentation (Session = Journey, m3; Arrangement = Timeline, m2) is pane state, not a World cut state:
-// it lives here beside the reading so the lens bar and the Device side can read it, and it never touches the App's `tab`,
-// which is the World cut's presentation.
+// The pane's own presentation (Session or Arrangement) is pane state: it lives here beside the reading, so the App, the pane
+// body and the aperture's view chooser (frame/browser/apertureViews.tsx) read one value.
 
 import {useLayoutEffect, useSyncExternalStore} from 'react'
-import type {TimelineResidenceProps} from './timelineResidence'
-import type {TimelinePresentation} from './timelinePresentation'
+import type {SurfMode} from '../shell/modeGrammar'
+import type {NativeExpressionsContent} from '../shell/nativeContent'
+import type {NativeCompositionViewSource} from '../shell/compositionViews'
+import type {SetDocument} from '../shell/document'
+import type {SetSummary} from '../shell/useSet'
+import type {SetSelection} from '../shell/liveSelection'
+import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {TimeSpine} from '../timeline/timeSpine'
+import type {JourneyPresentation} from '../timeline/journeyWalks'
+import type {WorldTimelineView} from './useWorldTemporalReading'
 
-/** The props the World cut's residence reads, for a pane. The native sources and the presentation are not published: the
- * World cut passes no native source, and the presentation is the pane's own. */
-export type TimelineHostReading = Pick<TimelineResidenceProps, 'set' | 'document' | 'selection' | 'select' | 'colors' | 'setColor' | 'world' | 'journey'>
+/** The Session · Arrangement pane's two presentations of one set of tracks (FOUNDATION F3). */
+export type TimelinePresentation = 'session' | 'arrangement'
+
+/** What the App publishes for a tracks pane: the mode's tracks (FOUNDATION F2 — the pane is the centre in every mode; which
+ * material it shows is the mode's registration, shell/modeFrames.ts MODE_TRACK_SOURCES: the open set, the World cut, or the
+ * open Expression's native sources). The presentation is the pane's own. `mode` names the mode whose tracks the pane draws. */
+export interface TimelineHostReading {
+  /** The open Live set and its document (Live's tracks). */
+  set: SetSummary | null
+  document: SetDocument | null
+  /** Live's selection in the open set, and its writer. */
+  selection: SetSelection
+  select: (value: SetSelection) => void
+  colors: string[]
+  setColor: (track: number, value: string) => void
+  /** The World cut: World material as tracks over the kernel's temporal read. Undefined means the civil field is unread. */
+  world?: WorldTimelineView
+  /** The shell's door to open an Expression a walk stop carries; present only over the World cut. */
+  journey?: JourneyPresentation
+  /** The open Expression's native composition sources, already qualified by the App (undefined unless its tracks are native). */
+  session: NativeCompositionViewSource | undefined
+  arrangement: NativeCompositionViewSource | undefined
+  mode: SurfMode
+  /** The World cut's time spine in every mode (its civil Now and the occasion stood in), whatever the mode's tracks are — the
+   * aperture slot's occasion reads it in Expressions and Live too (lane F). */
+  spine?: TimeSpine | null
+  /** The open Expression's content and title (Expressions' tracks, F3). */
+  native?: NativeExpressionsContent | null
+  workName?: string
+  /** THE selection's ref, and the one writer the shared views select through (FOUNDATION F1, F3). */
+  selectedRef?: string
+  selectTrackItem: (target: {kind: 'clip' | 'track'; ref: string; title: string; track?: string}) => void
+  /** Why the mode has no tracks yet, in its own words, when it has none. */
+  waiting?: string
+  /** The kernel carrier, for a mode whose tracks read their own owner (frame/tracks/modeTracks.ts). */
+  transport?: KernelTransportStatus
+}
 
 let reading: TimelineHostReading | null = null
-let presentation: TimelinePresentation = 'arrangement'
+// Session, as every mode's frame opens (shell/modeFrames.ts); the App moves it with the mode's restored view.
+let presentation: TimelinePresentation = 'session'
 const readingListeners = new Set<() => void>()
 const presentationListeners = new Set<() => void>()
 

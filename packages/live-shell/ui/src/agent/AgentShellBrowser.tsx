@@ -1,13 +1,25 @@
-import {useEffect, useMemo, useState, type DragEvent} from 'react'
+import {useEffect, useMemo, useState, type DragEvent, type ReactNode} from 'react'
+import {Icon as CutIcon} from '../inhabitants/sdk/Icon'
+import {KindMark, WoodMark} from '../inhabitants/sdk/marks.tsx'
+import {createPortal} from 'react-dom'
+import type {BrowserCategory, BrowserKind, ControlledBrowser} from '../frame/browser/browserKinds'
+import {InstrumentsSection} from '../frame/InstrumentsSection'
+import {SetsSection} from '../shell/SetsSection'
 import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import {AgentDevicePool} from './AgentDevicePool'
 import {useAgentShell} from './AgentShellContext'
+import {useAgentSessionsOptional, type AgentSessionsValue} from './AgentSessionsProvider'
+import {agentState, sessionState, type SessionWord} from '../frame/browser/rowWords'
 import {useWorkspace} from '../shell/workspaceContext'
-import {useHarnessBinding} from './useHarnessBinding'
+import {useRosterAnswer, useWorkcellAnswer} from '../owners/readers'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalLine, safeJson} from './RefusalCard'
 import {AGENT_CHAIN_MIME, encodeChainDrag, setActiveChainDrag, type AgentChainDrag} from './agentChainDrag'
 import {missingOpRemedy, OWNER_BINDINGS, ownerRefusalLine} from './agentChainDrag'
+import {DEVICE_PANE_KIND, selectDevice, useIsPublished} from '../frame/devices/deviceDoor'
+import {openInstrument} from '../frame/instrumentDoor'
+import {RUNS_ID} from './devices/taskBindings'
+import {RUN_ID} from './devices/sessionChainBindings'
 import './agentShell.css'
 
 const CATEGORIES = [
@@ -16,6 +28,15 @@ const CATEGORIES = [
   {id: 'agents', label: 'Agents'},
   {id: 'skillsets', label: 'Skillsets'},
   {id: 'git', label: 'Git'},
+  {id: 'runs', label: 'Runs'},
+] as const
+
+/** The Runs category (softwareFactoryFamilyManifest.ts factory-runs, lane BF3): the selected session's Run (DLW §19.1) and its Runs
+ * (§19.11), each a device the chain publishes. A press shows it whole in the pool (§16.4 "Select a device to show it whole in the
+ * pool"); a double-click opens it full in a pane. */
+const RUN_DEVICES = [
+  {id: RUN_ID, name: 'Run', says: 'the selected session\'s lane along the clock'},
+  {id: RUNS_ID, name: 'Runs', says: 'every attempt on the session\'s work, and which stands'},
 ] as const
 
 const CONTEXT_TILES = [
@@ -31,19 +52,48 @@ const CONTEXT_TILES = [
   {id: 'agents' as const, name: 'Agents'},
 ]
 
+/** Each Factory category's kind in the one browser (F6): sessions and agents are running things (an agent dragged onto an
+ * empty track is seated); the context tiles open in a pane; skillsets go on the agent chain; the git seat is material. */
+const AGENT_KINDS: Record<(typeof CATEGORIES)[number]['id'], BrowserKind> = {sess: 'running', agents: 'running', context: 'instruments', skillsets: 'devices', git: 'material', runs: 'devices'}
+/** Each category's mark from the icon cut (the agents wear the cut's agent kind). */
+const AGENT_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
+  sess: <CutIcon name="session" size={12} />, context: <CutIcon name="pane" size={12} />, agents: <KindMark kind="agent" size={12} />,
+  skillsets: <CutIcon name="chain" size={12} />, git: <CutIcon name="lib" size={12} />, runs: <CutIcon name="arrangement" size={12} />,
+}
+export const AGENT_BROWSER_CATEGORIES: readonly BrowserCategory[] = CATEGORIES.map(category => ({id: category.id, label: category.label, kind: AGENT_KINDS[category.id], mark: AGENT_MARKS[category.id]}))
+
+/** Each category's row mark, from the cut (the mockup's bee for sessions and agents is the cut's agent kind). */
+const ROW_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
+  sess: <KindMark kind="agent" size={12} />, agents: <KindMark kind="agent" size={12} />, context: <CutIcon name="pane" size={12} />,
+  skillsets: <WoodMark kind="skillset" size={12} />, git: <CutIcon name="lib" size={12} />, runs: <CutIcon name="arrangement" size={12} />,
+}
+
+/** A skillset or git row's standing, by the row its reading gave (skillsetRowsFromRoster, gitRowsFromWorkcell): what was admitted
+ * or seated, or how the reading failed — the row's label carries the owner's words. */
+const READING_STANDING: Readonly<Record<string, string>> = {
+  'skillsets-unadmitted': 'refused', 'skillsets-empty': 'waiting',
+  seat: 'seat', 'seat-unavailable': 'refused', 'seat-no-ref': 'no ref', 'seat-unread': 'unread',
+}
+
 /** The right-edge action the results header names (mockup .bhead law). */
 const RESULT_HEADER: Record<(typeof CATEGORIES)[number]['id'], string> = {
   sess: 'State',
   context: 'Open',
-  agents: 'Seated',
+  agents: 'State',
   skillsets: 'Admitted',
   git: 'Seat',
+  runs: 'Chain',
 }
 
 export interface BrowserRow {
   readonly key: string
   readonly label: string
   readonly meta: string
+  /** The row's standing in words (the mockup's .st: running / done / stalled, working / idle, open, admitted …) where it is not
+   * the meta itself; '—' when no reading discloses one. */
+  readonly standing?: string
+  /** The row's hover words (refs, the space, what the standing was read from). */
+  readonly hover?: string
   /** Set when the row is a real disclosed item and may start a chain drag.
    * Refusal and empty rows never carry one — nothing to drop. */
   readonly drag?: AgentChainDrag
@@ -133,17 +183,79 @@ export function gitRowsFromWorkcell(
   }]
 }
 
-export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRow[]; error: string | null; loading: boolean}) {
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]['id']>('sess')
+/** What the Sessions and Agents rows read of the one agent-sessions provider (AgentSessionsProvider): each session's track (its
+ * task clips from encounter_task_read, its needle from the temporal read), the roster's names, and whether the temporal read
+ * answered. Null where no provider is mounted: the rows then disclose no state. */
+export type SessionsReading = Pick<AgentSessionsValue, 'tracks' | 'roster' | 'temporalError'> | null
+
+/** Each session's state word by its ref (rowWords.ts sessionState); a needle says nothing when the temporal read refused. */
+function sessionStates(sessions: SessionsReading): ReadonlyMap<string, SessionWord | null> {
+  const states = new Map<string, SessionWord | null>()
+  const needleKnown = !sessions?.temporalError
+  for (const track of sessions?.tracks ?? []) if (!track.group) states.set(track.sessionRef, sessionState(track, needleKnown))
+  return states
+}
+
+/** The Sessions rows (the mockup's `SESS` rows, renderBrowser() :1492): the agent's mark, the session by its purpose (the name
+ * its track wears on the grid), else its agent's roster name or its space's label; its state — running, stalled, done, queued,
+ * idle — from its own readings, '—' when none discloses one. */
+export function sessionBrowserRows(rows: readonly AgencySessionRow[], sessions: SessionsReading): BrowserRow[] {
+  const states = sessionStates(sessions)
+  return rows.map(row => {
+    const state = states.get(row.sessionRef) ?? null
+    const agent = row.agentRef ? sessions?.roster.get(row.agentRef)?.name ?? null : null
+    const label = row.purpose ?? agent ?? row.spaceLabel ?? row.sessionRef
+    return {
+      key: `${row.spaceRef}:${row.sessionRef}`,
+      label,
+      meta: row.agentRef ?? row.spaceLabel ?? '',
+      standing: state ?? '—',
+      hover: [label, row.spaceLabel && row.spaceLabel !== label ? `in ${row.spaceLabel}` : null, agent ? `agent ${agent}` : row.agentRef ? `agent ${row.agentRef}` : null,
+        state ? `${state}, from the session's task reads and its needle` : 'no reading discloses its state', row.sessionRef].filter(Boolean).join(' · '),
+      drag: {family: 'session' as const, ref: `${row.spaceRef}:${row.sessionRef}`, label: row.purpose ?? row.sessionRef},
+    }
+  })
+}
+
+/** The Agents rows (the mockup's agents, renderBrowser() :1493): the agent's mark, its roster name (else its ref), and its state
+ * over its own sessions — working, stalled, idle — '—' when none of them discloses one. */
+export function agentBrowserRows(rows: readonly AgencySessionRow[], sessions: SessionsReading, loading: boolean): BrowserRow[] {
+  const states = sessionStates(sessions)
+  const refs = [...new Set(rows.map(row => row.agentRef).filter((value): value is string => !!value))]
+  if (!refs.length) return [{key: 'empty-agents', label: loading ? 'Reading…' : 'No agent_ref disclosed yet.', meta: '', standing: ''}]
+  return refs.map((ref): BrowserRow => {
+    const name = sessions?.roster.get(ref)?.name ?? ref
+    const state = agentState(rows.filter(row => row.agentRef === ref).map(row => states.get(row.sessionRef) ?? null))
+    return {key: ref, label: name, meta: 'agent', standing: state ?? '—',
+      hover: `${name}${name !== ref ? ` (${ref})` : ''} · ${state ? `${state}, over its sessions' states` : 'no reading discloses its sessions\' states'}`,
+      drag: {family: 'agent' as const, ref, label: name}}
+  })
+}
+
+export function AgentShellBrowser({rows, error, loading, controlled}: {rows: AgencySessionRow[]; error: string | null; loading: boolean; controlled?: ControlledBrowser}) {
+  const [ownCategory, setCategory] = useState<(typeof CATEGORIES)[number]['id']>('sess')
+  // Held by the one browser (F6), the category and the search are its.
+  const category = (controlled?.category as (typeof CATEGORIES)[number]['id'] | undefined) ?? ownCategory
+  const needle = controlled?.query.trim().toLowerCase() ?? ''
   const shell = useAgentShell()
+  // Whether the chain publishes the Run and the Runs now (re-read only when one comes onto the door or leaves it).
+  const runOn = useIsPublished(RUN_ID), runsOn = useIsPublished(RUNS_ID)
+  const published = (id: string) => (id === RUN_ID ? runOn : id === RUNS_ID ? runsOn : false)
+  // The sessions' states and the agents' names, from the one agent-sessions provider (its task reads, its needles, its roster).
+  const sessions = useAgentSessionsOptional()
   const {transport} = useWorkspace()
-  const {binding} = useHarnessBinding(transport)
-  const [gateway, setGateway] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading gateway…', receipt: null, refused: false})
+  // The gateway is no longer read here: its card in the pool is gone, and the Gateway on the chain reads harness_agent_read
+  // itself (devices/useAgentChainReading.ts), drawn whole in the runtime's pool (lane BF).
   const [git, setGit] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading seat…', receipt: null, refused: false})
-  const [rosterOutcome, setRosterOutcome] = useState<KernelOutcome>(null)
-  const [rosterError, setRosterError] = useState<string | null>(null)
-  const [seatOutcome, setSeatOutcome] = useState<KernelOutcome>(null)
-  const [seatError, setSeatError] = useState<string | null>(null)
+  // The roster and the seat are the window's shared answers (owners/readers.ts): the same ones the Factory chain, the sessions
+  // provider and the Central devices read — one owner read between them, a refusal remembered for its epoch.
+  const rosterAnswer = useRosterAnswer(transport, null).reading
+  const seatAnswer = useWorkcellAnswer(transport).reading
+  const unreached = transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null
+  const rosterOutcome = useMemo<KernelOutcome>(() => rosterAnswer.status === 'answered' ? {result: 'agent_definition_reading', data: rosterAnswer.value} : null, [rosterAnswer])
+  const rosterError = unreached ?? (rosterAnswer.status === 'refused' ? rosterAnswer.error : null)
+  const seatOutcome = useMemo<KernelOutcome>(() => seatAnswer.status === 'answered' ? {result: 'workcell_status_reading', data: seatAnswer.value} : null, [seatAnswer])
+  const seatError = unreached ?? (seatAnswer.status === 'refused' ? seatAnswer.error : null)
 
   useEffect(() => {
     let live = true
@@ -151,35 +263,12 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
       if (transport.kind === 'unavailable') {
         if (live) {
           const reason = transport.reason ?? 'Transport unavailable'
-          setGateway({line: ownerRefusalLine('gateway', reason, 'not-reached'), receipt: null, refused: true})
           setGit({line: ownerRefusalLine('workcell', reason, 'not-reached'), receipt: null, refused: true})
-          setRosterOutcome(null)
-          setRosterError(reason)
-          setSeatOutcome(null)
-          setSeatError(reason)
         }
         return
       }
-      const gatewayOp = await kernelOp(transport, {op: 'harness_agent_read', binding})
-      if (live) {
-        const reading = !gatewayOp.error && gatewayOp.outcome?.result === 'harness_agent_reading' ? gatewayOp.outcome : null
-        setGateway(reading
-          ? {line: `binding ${reading.binding} answered — receipt holds the document`, receipt: safeJson(reading.document), refused: false}
-          : {line: ownerRefusalLine('gateway', refusalLine(gatewayOp.error, 'Harness gateway reading unavailable')), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null, refused: true})
-      }
-      // The Skillsets rows' admitted source: the roster reading the chain's
-      // skillset admit light consumes (accepted profiles' skill_refs).
-      const roster = await kernelOp(transport, {op: 'agent_definition', project: null, request: {action: 'roster'}})
-      if (live) {
-        setRosterOutcome(roster.error ? null : roster.outcome)
-        setRosterError(roster.error ?? null)
-      }
-      // The Git rows' admitted source: the workcell family's seat reading.
-      const seat = await kernelOp(transport, {op: 'workcell_status_read'})
-      if (live) {
-        setSeatOutcome(seat.error ? null : seat.outcome)
-        setSeatError(seat.error ?? null)
-      }
+      // The Skillsets rows' admitted source (the roster reading the chain's skillset admit light consumes) and the Git rows'
+      // (the workcell family's seat reading) are the shared answers above.
       const gitOp = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
       if (live) {
         const doc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null
@@ -189,25 +278,20 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
       }
     })()
     return () => { live = false }
-  }, [transport, binding])
+  }, [transport])
 
   // Rows that carry a drag payload are exactly the rows a real owner reading
   // disclosed: sessions (the track key), agents (the roster/session ref),
   // skillsets (the accepted skill refs), git (the workcell seat). Refusal and
   // empty rows drag nothing — nothing to drop.
   const list = useMemo((): BrowserRow[] => {
-    if (category === 'sess') return rows.map(row => ({
-      key: `${row.spaceRef}:${row.sessionRef}`,
-      label: row.purpose ?? row.sessionRef,
-      meta: row.agentRef ?? row.spaceLabel ?? '',
-      drag: {family: 'session' as const, ref: `${row.spaceRef}:${row.sessionRef}`, label: row.purpose ?? row.sessionRef},
-    }))
-    if (category === 'context') return CONTEXT_TILES.map((tile): BrowserRow => ({key: tile.id, label: tile.name, meta: shell.openTiles.includes(tile.id) ? '● open' : ''}))
+    if (category === 'sess') return sessionBrowserRows(rows, sessions)
+    if (category === 'context') return CONTEXT_TILES.map((tile): BrowserRow => ({key: tile.id, label: tile.name, meta: shell.openTiles.includes(tile.id) ? '● open' : '', standing: shell.openTiles.includes(tile.id) ? 'open' : ''}))
     if (category === 'git') {
       const seat = seatOutcome?.result === 'workcell_status_reading' && isObj(seatOutcome.data)
         ? seatOutcome.data as {workcell_ref?: unknown} : null
       const workcellRef = typeof seat?.workcell_ref === 'string' && seat.workcell_ref ? seat.workcell_ref : null
-      return gitRowsFromWorkcell(seatOutcome, seatError).map(row => row.key === 'seat' && workcellRef
+      return gitRowsFromWorkcell(seatOutcome, seatError).map(row => ({...row, standing: READING_STANDING[row.key] ?? row.meta})).map(row => row.key === 'seat' && workcellRef
         ? {...row, drag: {family: 'git' as const, ref: workcellRef, label: row.label}}
         : row)
     }
@@ -215,54 +299,29 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
       const answered = rosterOutcome?.result === 'agent_definition_reading'
       return skillsetRowsFromRoster(rosterOutcome, rosterError).map(row =>
         answered && row.meta === 'skillset'
-          ? {...row, drag: {family: 'skillset' as const, ref: row.key, label: row.label}}
-          : row)
+          ? {...row, standing: 'admitted', drag: {family: 'skillset' as const, ref: row.key, label: row.label}}
+          : {...row, standing: READING_STANDING[row.key] ?? row.meta})
     }
-    if (category === 'agents') {
-      const names = [...new Set(rows.map(row => row.agentRef).filter((value): value is string => !!value))]
-      return names.length ? names.map((name): BrowserRow => ({key: name, label: name, meta: 'agent', drag: {family: 'agent' as const, ref: name, label: name}})) : [{key: 'empty-agents', label: loading ? 'Reading…' : 'No agent_ref disclosed yet.', meta: ''}]
-    }
-    return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: ''}]
-  }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError])
+    if (category === 'agents') return agentBrowserRows(rows, sessions, loading)
+    if (category === 'runs') return RUN_DEVICES.map((device): BrowserRow => {
+      const on = published(device.id)
+      return {key: device.id, label: device.name, meta: device.says, standing: on ? 'on chain' : 'no chain',
+        hover: `${device.name} · ${device.says}. ${on ? 'Press: show it whole in the pool. Double-click: open it full in a pane.' : 'No Factory chain is drawn: open Device view in Factory.'}`}
+    })
+    return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: '', standing: ''}]
+  }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError, sessions, runOn, runsOn])
 
-  // The pool's skillset rows read the same roster the Skillsets rows do —
-  // admitted when accepted profiles carry skill refs, else waiting on the
-  // owner of whichever reading left them dark (Central refused; AIKit empty).
-  const skillAdmission = useMemo(() => {
-    if (!rosterOutcome && !rosterError) return {count: null, note: null, waiting: null}
-    const rows = skillsetRowsFromRoster(rosterOutcome, rosterError)
-    const count = rows.filter(row => row.meta === 'skillset').length
-    if (count > 0) return {count, note: `${count} skill ref${count === 1 ? '' : 's'} on accepted roster profiles.`, waiting: null}
-    const refused = rows[0]?.key === 'skillsets-unadmitted'
-    return {
-      count: 0,
-      note: rows[0]?.label ?? null,
-      waiting: refused ? OWNER_BINDINGS.roster.owner : OWNER_BINDINGS.skillset.owner,
-    }
-  }, [rosterOutcome, rosterError])
-
-  return (
-    <aside className="agent-shell-browser" data-region="browser">
-      <div className="browser-search"><input readOnly placeholder="Search (⌘F)" aria-label="Search browser" /></div>
-      <div className="browser-columns">
-        <nav className="agent-bcats" aria-label="Browser categories">
-          {CATEGORIES.map(cat => (
-            <button key={cat.id} type="button" className={'agent-bcat' + (category === cat.id ? ' on' : '')} onClick={() => setCategory(cat.id)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zM12 7.5v4.5l3 2.5" /></svg>
-              {cat.label}
-            </button>
-          ))}
-        </nav>
-        <div className="browser-results">
-          <div className="agent-bfilt"><span>○ Filters</span><span>In set</span></div>
+  const shown = needle ? list.filter(item => item.label.toLowerCase().includes(needle) || item.meta.toLowerCase().includes(needle)) : list
+  const results = <>
           <div className="agent-bhead"><span>Name</span><span>{RESULT_HEADER[category]}</span></div>
           {error && <p className="native-error" role="alert">{error}</p>}
-          {list.map(item => (
+          {shown.map(item => (
             <button
               key={item.key}
               type="button"
               className="agent-bitem"
-              title={item.label}
+              aria-current={category === 'sess' && shell.selectedTrackId === item.key ? 'true' : undefined}
+              title={item.hover ?? item.label}
               draggable={!!item.drag}
               aria-describedby={item.drag ? `chain-drag-hint-${category}` : undefined}
               onDragStart={item.drag ? (event: DragEvent<HTMLElement>) => {
@@ -278,34 +337,47 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
               onClick={() => {
                 if (category === 'context') shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
                 if (category === 'git') shell.toggleTile('diff')
+                if (category === 'runs' && published(item.key)) selectDevice(item.key)
                 if (category === 'sess') {
-                  shell.setSelectedTrackId(item.key)
+                  shell.setSelectedTrackId(item.key, item.label)
                   shell.openThread(item.key)
                 }
               }}
+              onDoubleClick={category === 'runs' && published(item.key) ? () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: item.key, title: item.label}) : undefined}
             >
+              {item.key.startsWith('empty') ? null : <span aria-hidden="true">{ROW_MARKS[category]}</span>}
               <span style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{item.label}</span>
-              <span className="st">{item.meta}</span>
+              <span className="st">{item.standing ?? item.meta}</span>
             </button>
           ))}
           <p id={`chain-drag-hint-${category}`} hidden>Drag onto the device chain: through → who → how → where → lands.</p>
-        </div>
-      </div>
+  </>
+  const pool = (
       <AgentDevicePool
-        gatewayLine={gateway.line}
-        gatewayReceipt={gateway.receipt}
-        gatewayRefused={gateway.refused}
         gitLine={git.line}
         gitReceipt={git.receipt}
         gitRefused={git.refused}
-        effort={shell.effort}
-        autonomy={shell.steer ? 'steer' : 'review'}
-        budgetUsed={0}
-        budgetCap={12}
-        skillsAdmitted={skillAdmission.count}
-        skillsNote={skillAdmission.note}
-        skillsWaitingOn={skillAdmission.waiting}
       />
+  )
+  if (controlled) return <div className="agent-browser-body">{results}{controlled.poolHost && createPortal(pool, controlled.poolHost)}</div>
+  return (
+    <aside className="agent-shell-browser" data-region="browser">
+      <div className="browser-search"><input readOnly placeholder="Search (⌘F)" aria-label="Search browser" /></div>
+      <div className="browser-columns">
+        <nav className="agent-bcats" aria-label="Browser categories">
+          {CATEGORIES.map(cat => (
+            <button key={cat.id} type="button" className={'agent-bcat' + (category === cat.id ? ' on' : '')} onClick={() => setCategory(cat.id)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zM12 7.5v4.5l3 2.5" /></svg>
+              {cat.label}
+            </button>
+          ))}
+        </nav>
+        <div className="browser-results">
+          {results}
+        </div>
+      </div>
+      {pool}
+      <InstrumentsSection /><SetsSection />
     </aside>
   )
 }

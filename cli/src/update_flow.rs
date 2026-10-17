@@ -1033,6 +1033,10 @@ fn repoint_registration(
     Ok(())
 }
 
+/// What an apply moved: the products it updated, the suite supersession it
+/// made itself, and the installed `oi` it hands the suite reconcile to instead.
+type AppliedUpdate = (Vec<String>, Option<SuiteSupersession>, Option<PathBuf>);
+
 fn command_update_apply(
     selection: &[String],
     force_rebuild: bool,
@@ -1091,7 +1095,7 @@ fn command_update_apply(
     suite_supersession_admitted(&pending.iter().map(|entry| entry.id.clone()).collect::<Vec<_>>())?;
 
     let lock = acquire_update_lock(&data_root)?;
-    let outcome = (|| -> Result<(Vec<String>, Option<SuiteSupersession>), String> {
+    let outcome = (|| -> Result<AppliedUpdate, String> {
         let targets = update_targets(&manifest)?;
         let activation_root = activation_dir()?;
         let previous = load_active_update_receipt(&data_root)?;
@@ -1148,14 +1152,20 @@ fn command_update_apply(
         }
         // The active suite receipt is superseded first for every product this
         // run moved or found current, so `oi where` names what was installed;
-        // a later receipt write that fails puts it back with the flips.
+        // a later receipt write that fails puts it back with the flips. When
+        // this run installed an `oi` other than the one running, that `oi`
+        // supersedes instead, once the receipts name what it installed.
         let reconciled: Vec<String> = updated.iter().chain(current.iter()).cloned().collect();
-        let supersession = match supersede_active_suite(&receipt.products, &reconciled) {
-            Ok(supersession) => supersession,
-            Err(error) => {
-                undo_flips(&flips);
-                return Err(format!("{error}; every flip was put back"));
-            }
+        let installed_oi = installed_oi_other_than_running(&receipt.products, &updated);
+        let supersession = match installed_oi {
+            Some(_) => None,
+            None => match supersede_active_suite(&receipt.products, &reconciled) {
+                Ok(supersession) => supersession,
+                Err(error) => {
+                    undo_flips(&flips);
+                    return Err(format!("{error}; every flip was put back"));
+                }
+            },
         };
         let receipted = (|| -> Result<(), String> {
             // Receipt order is the recovery order: the previous set is durably
@@ -1189,16 +1199,20 @@ fn command_update_apply(
             return Err(format!("{error}; every flip was put back"));
         }
         for (_, product) in &prepared { finish_prepared(product); }
-        Ok((updated, supersession))
+        Ok((updated, supersession, installed_oi))
     })();
     let _ = fs::remove_file(lock.path());
-    let (updated, supersession) = outcome?;
+    let (updated, supersession, installed_oi) = outcome?;
     if !json_mode && !updated.is_empty() {
         println!("Managed update complete (channel {}): {} product(s) swapped atomically; receipts at {}.",
             channel.as_str(), updated.len(), active_update_receipt_path(&data_root).display());
         println!("Running processes kept their binaries; the next invocation resolves the new set. Roll back with 'oi update --rollback'.");
     }
     report_suite_supersession(supersession.as_ref(), json_mode)?;
+    if let Some(installed) = installed_oi {
+        let reconciled: Vec<String> = updated.iter().chain(current.iter()).cloned().collect();
+        hand_suite_reconcile_to(&installed, &data_root, &reconciled, json_mode)?;
+    }
     if updated.is_empty() { return Ok(0); }
     // A new binary on disk is not a new process. Every resident a product owns
     // says whether it still runs an older build, by the product's own reading;
@@ -1495,6 +1509,7 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
     let mut force_rebuild = false;
     let mut allow_downgrade = false;
     let mut restart_residents = false;
+    let mut reconcile_suite = false;
     let mut channel = UpdateChannel::DeveloperSource;
     let mut products: Vec<OsString> = Vec::new();
     let mut candidate_specs: Vec<String> = Vec::new();
@@ -1511,6 +1526,10 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
             "--rebuild" => force_rebuild = true,
             "--allow-downgrade" => allow_downgrade = true,
             "--restart-residents" => restart_residents = true,
+            // The suite reconcile an update hands to the `oi` it installed
+            // (`hand_suite_reconcile_to`): supersede the active suite receipt
+            // for the named products' managed installs, building nothing.
+            "--reconcile-suite" => reconcile_suite = true,
             "--candidate" => {
                 index += 1;
                 let spec = args.get(index).and_then(|value| value.to_str())
@@ -1532,6 +1551,13 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
             _ => products.push(args[index].clone()),
         }
         index += 1;
+    }
+    if reconcile_suite {
+        if check_only || rollback || !candidate_specs.is_empty() {
+            return Err("--reconcile-suite takes only --json and products".to_owned());
+        }
+        let selection = resolve_update_selection(&products, &suite_manifest()?)?;
+        return reconcile_suite_with_current(&oi_data_root()?, &selection, json_mode);
     }
     if rollback {
         if check_only { return Err("--check and --rollback are separate operations".to_owned()); }

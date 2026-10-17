@@ -61,9 +61,9 @@
 .mode-centre-structure { flex: 1; min-height: 0; overflow: auto; padding: 8px }
 .mode-centre-note { margin: 6px 2px; font-size: 10px; color: var(--text-faint) }
 
-/* The mockup's column colours — the identity grammar of the mode centres
-   (world-shell-mockup-base-session / -r2-scenes). */
-.mode-centre { --mode-day: #97b1be; --mode-flows: #5cc6b4; --mode-beings: #8fd0a8; --mode-things: #e2a35e; --mode-goals: #c79ae0;
+/* The mockup's column colours — the identity grammar of the mode centres and the shared tracks pane
+   (world-shell-mockup.html docgrid: Day · Flows · Beings · Things · Goals). */
+.mode-centre, .tracks-pane { --mode-day: #a8b0b8; --mode-flows: #e8e4d8; --mode-beings: #5cc6b4; --mode-things: #d8c89a; --mode-goals: #9fb4c8;
   --mode-place: #d8c89a; --mode-occasion: #e2a35e; --mode-artefact: #c79ae0; --mode-expression: #b095d6; --mode-narration: #9db8cc; --mode-transition: #6fb3c9 }
 
 /* Base · Session — the day as clips: five coloured track columns at the
@@ -163,32 +163,11 @@
 .mode-browser-empty-read { margin: 4px 8px 0; font-size: 10px; color: var(--text-faint); line-height: 1.45 }
 .mode-browser-empty-read b { color: var(--text-dim) }
 .mode-browser-waiting-dot { width: 5px; height: 5px; flex: none; border: 1px dashed var(--text-faint); margin-left: auto }
-.mode-browser-context { padding: 7px 8px; font-size: 11px; color: var(--text-dim); line-height: 1.45 }
-.mode-browser-context strong { color: var(--text); font-weight: 500 }
-.mode-browser-context p { margin: 3px 0 0 }
 .mode-browser-fault { margin: 7px; padding: 6px 8px; border: 1px solid var(--rec); color: #f3b4a0; font-size: 11px; background: var(--bg-1) }
 
-/* The aperture slot (Rev 3) — the encounter concepts the focused pane
-   follows, drawn in the pool beneath the category context. */
-.mode-browser-aperture { margin: 6px 7px 7px; border: 1px solid var(--line-strong); background: var(--bg-1) }
-.mode-browser-aperture-head { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0); font-size: 10px; color: var(--text-faint); letter-spacing: .04em }
-.mode-browser-aperture-row { display: grid; grid-template-columns: 64px 1fr; gap: 8px; min-height: 21px; align-items: baseline; padding: 1px 8px; font-size: 10.5px }
-.mode-browser-aperture-name { color: var(--text-faint) }
-.mode-browser-aperture-value { color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px }
 
 /* ——— the per-mode detail frames (device density, the guide's §3.7 chain
    anatomy scaled to the strip) ——— */
-.mode-detail-frame { width: min(100%, 980px); border: 1px solid var(--line-strong); background: var(--bg-1); margin: 6px; align-self: flex-start }
-.mode-detail-frame-wide { width: calc(100% - 12px) }
-.mode-detail-frame-head { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0) }
-.mode-detail-frame-mark { display: grid; place-items: center; color: var(--text-dim) }
-.mode-detail-frame-head strong { font-size: 11px }
-.mode-detail-frame-sub { font-size: 10px; color: var(--text-faint); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.mode-detail-frame-state { margin-left: auto; flex: none; font-size: 9px; letter-spacing: .04em; color: var(--text-faint); border: 1px dashed var(--line-strong); padding: 1px 5px; white-space: nowrap }
-.mode-detail-frame-note { margin: 7px 8px; font-size: 11px; color: var(--text-dim); line-height: 1.45 }
-.mode-detail-frame-note b { color: var(--text) }
-.mode-detail-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0 8px 8px }
-.mode-detail-chip { font-size: 10px; color: var(--text-dim); background: var(--bg-2); border: 1px solid var(--line-strong); padding: 2px 7px }
 
 /* The document device cards — the guide's §3.7 chain anatomy: power lamp
    (dark = no reading), name, owner, fold/pop marks, reason line. */
@@ -247,43 +226,141 @@
 .mode-detail-logrow-wait { border-top: 1px solid var(--line); margin-top: 4px; font-size: 10px }
 @media (max-width: 1000px) { .mode-detail-tasklog { grid-template-columns: 1fr } .mode-detail-tasklog-side { border-right: 0; border-bottom: 1px solid var(--line) } .mode-detail-craft { grid-template-columns: 1fr 1fr } .mode-detail-craft-col { border-bottom: 1px solid var(--line) } }
 
-/* ——— the per-mode context dock (Rev 4: tiles above, launcher below, the
-   resize wedge that dies with the toggle) ——— */
-.mode-dock { position: relative; height: 100%; min-height: 0; display: flex; flex-direction: column; background: var(--bg-1); border-left: 4px solid var(--line) }
+/* ——— the widget rail (FOUNDATION F8; manual §10.6), drawn to the mockup's right column (world-shell-mockup.html
+   `.dk` 362, `.tilesh` 140, `.tiles` 141, `.tile`/`.tlh`/`.tlb` 142–145, `.ctx` 118–120, `.hl2` 377–378, `.acts`/`.bt` 127–130,
+   `.launch`/`.lh`/`.lgrid`/`.lcell`/`.pv`/`.nm` 379–387): tiles above, the launcher below, the wedge that widens it ——— */
+.mode-dock { position: relative; height: 100%; min-height: 0; min-width: 0; display: flex; flex-direction: column; background: var(--bg-1); border-left: 4px solid var(--line) }
 .mode-dock-wedge { position: absolute; left: -7px; top: 0; bottom: 0; width: 9px; cursor: ew-resize; z-index: 5 }
 .mode-dock-wedge:hover { background: rgba(255, 190, 0, .2) }
-.mode-dock-tilesh { flex: none; height: 24px; display: flex; align-items: center; gap: 6px; padding: 0 8px; background: var(--bg-2); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--text-dim) }
-.mode-dock-count { margin-left: auto; font-size: 10px; color: var(--text-faint) }
-.mode-dock-tiles { flex: 1; min-height: 0; overflow: auto; padding: 5px; display: grid; grid-template-columns: 1fr; gap: 5px; align-content: start }
+.mode-dock-tilesh { flex: none; height: 24px; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--bg-2); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--text) }
+.mode-dock-count { font-size: 11px; color: var(--text-faint) }
+.mode-dock-tiles { flex: 1; min-height: 0; overflow: auto; padding: 5px; display: flex; flex-direction: column; gap: 5px }
 .mode-dock-empty { padding: 12px; font-size: 11px; color: var(--text-faint) }
-.mode-dock-tile { border: 1px solid var(--line); background: var(--bg-1); display: flex; flex-direction: column; min-width: 0 }
-.mode-dock-tile-head { flex: none; height: 24px; display: flex; align-items: center; gap: 5px; padding: 0 6px; background: var(--bg-2); font-size: 11px; border-bottom: 1px solid var(--line) }
-.mode-dock-tile-mark { display: grid; place-items: center; color: var(--text-dim) }
+.mode-dock-tile { flex: none; border: 1px solid var(--line); background: var(--bg-1); display: flex; flex-direction: column; min-width: 0 }
+.mode-dock-tile-head { flex: none; height: 24px; display: flex; align-items: center; gap: 5px; padding: 0 6px; background: var(--bg-2); font-size: 11px; color: var(--text); border-bottom: 1px solid var(--line) }
+.mode-dock-tile-mark { display: grid; place-items: center; color: var(--text-faint) }
 .mode-dock-tile-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.mode-dock-tile-marks { display: flex; gap: 7px }
-.mode-dock-tile-marks button { color: var(--text-faint); font-size: 10px; padding: 1px 2px }
+.mode-dock-tile-count { flex: none; font: 10px var(--mono, ui-monospace, Menlo, monospace); color: var(--text-faint) }
+.mode-dock-tile-marks { flex: none; display: flex; align-items: center; gap: 6px }
+.mode-dock-tile-marks button { display: grid; place-items: center; color: var(--text-faint); font-size: 10px; padding: 1px 2px; line-height: 1 }
 .mode-dock-tile-marks button:hover, .mode-dock-tile-marks button[aria-pressed="true"] { color: var(--accent) }
-.mode-dock-tile-body { position: relative; overflow: hidden; max-height: 240px; overflow-y: auto }
+.mode-dock-tile-body { position: relative; overflow: hidden auto; max-height: 260px; background: var(--bg-2) }
 .mode-dock-companion { padding: 7px 8px }
 .mode-dock-companion-name { display: flex; align-items: baseline; gap: 6px; font-size: 11px }
 .mode-dock-companion-name b { font-weight: 500; color: var(--text) }
 .mode-dock-companion-name span { font-size: 9.5px; color: var(--text-faint) }
 .mode-dock-companion-tabs { margin-top: 4px; font-size: 10px; color: var(--text-dim) }
-.mode-dock-rows { padding: 4px 0 }
-.mode-dock-row { display: grid; grid-template-columns: 14px 54px 1fr; gap: 6px; align-items: center; min-height: 21px; padding: 1px 8px; font-size: 10.5px; color: var(--text-dim) }
-.mode-dock-row b { font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.mode-dock-row-light { width: 6px; height: 6px; border-radius: 50%; flex: none }
-.mode-dock-row-meta { margin-left: auto; font-size: 9.5px; color: var(--text-faint) }
+/* A key–value row (the mockup's `.ctx`): the key faint, the value ellided, an aside at the end. */
+.mode-dock-rows { padding: 3px 0 }
+.mode-dock-row { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 6px; align-items: center; min-height: 21px; padding: 2px 8px; font-size: 11px; color: var(--text) }
+.mode-dock-row > span:first-child { color: var(--text-faint); font-size: 10px }
+.mode-dock-row b { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-dock-row-meta { font-size: 9.5px; color: var(--text-faint) }
+/* A line (the mockup's `.hl2`): a faint lead (a time, a size), the text, a faint aside. */
+.mode-dock-lines { list-style: none; margin: 0; padding: 0 }
+.mode-dock-line { display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0; padding: 4px 10px; font-size: 10.5px; color: var(--text); text-align: left; background: none; border: 0; border-bottom: 1px solid #ffffff06 }
+button.mode-dock-line { cursor: pointer }
+.mode-dock-line:hover { background: var(--bg-3) }
+.mode-dock-line-lead { flex: none; min-width: 0; font: 9.5px var(--mono, ui-monospace, Menlo, monospace); color: var(--text-faint) }
+.mode-dock-line-lead:empty { display: none }
+.mode-dock-line-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-dock-line-text b { font-weight: 500 }
+.mode-dock-line-meta { flex: none; margin-left: auto; font: 9.5px var(--mono, ui-monospace, Menlo, monospace); color: var(--text-faint) }
+.mode-dock-row-light { flex: none; width: 6px; height: 6px; border-radius: 50% }
 .mode-dock-note { margin: 5px 8px 7px; font-size: 10.5px; color: var(--text-faint); line-height: 1.45 }
-.mode-dock-launch { flex: none; border-top: 5px solid var(--line); background: var(--bg-2); display: flex; flex-direction: column; margin-bottom: 0 }
-.mode-dock-launch-head { display: flex; align-items: center; gap: 5px; padding: 4px 5px; background: var(--bg-1); border-bottom: 1px solid var(--line) }
-.mode-dock-launch-head input { flex: 1; min-width: 0; height: 18px; background: var(--bg-0); border: 1px solid var(--line); padding: 0 6px; font-size: 10.5px; color: var(--text) }
+.mode-dock-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 5px 8px }
+.mode-dock-act { height: 20px; padding: 0 9px; font-size: 10.5px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-dim); white-space: nowrap }
+.mode-dock-act:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
+.mode-dock-act.pri { background: var(--accent); border-color: var(--accent); color: #1d1f22 }
+.mode-dock-act:disabled { opacity: .45 }
+.mode-dock-acts-note { font-size: 10px; color: var(--text-faint) }
+/* The launcher: two columns of 122px cells, each a live miniature of what the open widget read, or its designed mark. */
+.mode-dock-launch { flex: none; height: 300px; border-top: 5px solid var(--line); background: var(--bg-2); display: flex; flex-direction: column }
+.mode-dock-launch-head { flex: none; height: 25px; display: flex; align-items: center; gap: 5px; padding: 0 5px; background: var(--bg-1); border-bottom: 1px solid var(--line); font-size: 11px }
+.mode-dock-launch-mark { display: grid; place-items: center; color: var(--text-faint) }
+.mode-dock-launch-head input { flex: 1; min-width: 0; height: 18px; background: var(--bg-0); border: 1px solid var(--line); padding: 0 6px; font-size: 10.5px; color: var(--text); outline: none }
 .mode-dock-launch-more { color: var(--text-faint); cursor: default; padding: 0 3px }
-.mode-dock-launch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 5px; max-height: 180px; overflow: auto }
-.mode-dock-cell { border: 1px solid var(--line); background: var(--bg-1); display: flex; flex-direction: column; cursor: pointer; position: relative; min-width: 0; padding: 0 }
+.mode-dock-launch-grid { flex: 1; min-height: 0; overflow: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 122px; gap: 5px; padding: 5px }
+.mode-dock-cell { border: 1px solid var(--line); background: var(--bg-1); display: flex; flex-direction: column; cursor: pointer; position: relative; min-width: 0; padding: 0; text-align: left; color: var(--text) }
 .mode-dock-cell:hover { border-color: var(--text-faint) }
 .mode-dock-cell.open { border-color: var(--accent) }
-.mode-dock-cell-preview { flex: 1; min-height: 44px; display: grid; place-items: center; background: var(--bg-0); margin: 4px; color: var(--text-faint) }
-.mode-dock-cell-name { height: 20px; display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10.5px; color: var(--text-dim) }
+.mode-dock-cell-preview { flex: 1; min-height: 0; margin: 4px; background: var(--bg-0); position: relative; overflow: hidden; display: grid; place-items: center; color: var(--text-faint) }
+.mode-dock-cell-mark { display: grid; place-items: center; opacity: .85 }
+.mode-dock-cell-lines { align-self: stretch; justify-self: stretch; display: flex; flex-direction: column; gap: 2px; padding: 5px 6px; font-size: 7.5px; line-height: 1.3; color: var(--text-dim); overflow: hidden }
+.mode-dock-cell-lines > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px solid #ffffff08; padding-bottom: 1px }
+.mode-dock-cell-lines i { font: normal 7px var(--mono, ui-monospace, Menlo, monospace); color: var(--text-faint); margin-right: 4px }
+.mode-dock-cell-name { flex: none; height: 19px; display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10.5px; white-space: nowrap; min-width: 0 }
+.mode-dock-cell-glyph { display: grid; place-items: center; color: var(--text-faint) }
+.mode-dock-cell-label { min-width: 0; overflow: hidden; text-overflow: ellipsis }
+.mode-dock-cell-name small { margin-left: auto; font-size: 9px; color: var(--text-faint) }
 .mode-dock-cell-dot { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--accent) }
+.widget-presets { flex: none; display: flex; flex-wrap: wrap; gap: 4px; padding: 0 5px 5px }
+.widget-presets form { flex: 1 }
+.widget-presets input { width: 100%; height: 18px; background: var(--bg-0); border: 1px solid var(--accent-dim); padding: 0 6px; font-size: 10.5px; color: var(--text) }
 .mode-dock-preset { margin: 0 5px 5px; padding: 3px 6px; font-size: 10px; color: var(--text-faint); border: 1px dashed var(--line-strong); background: transparent; text-align: left }
+.widget-presets .mode-dock-preset { margin: 0 }
+/* The agent widget: the candidate's one conversation surface (AgentLayer → AgentChat), compact. The surface reads the
+   desktop's --oi tokens; in the rail they are the shell's own tokens, so the conversation wears the shell. */
+.mode-dock-tile[data-widget="agent"] .mode-dock-tile-body { height: 340px; max-height: none; overflow: hidden; display: flex; flex-direction: column }
+.widget-agent {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--bg-2); color: var(--text-dim);
+  --oi-agent-ground: var(--bg-2); --oi-canvas-ground: var(--bg-1); --oi-composer-ground: var(--bg-1); --oi-message-ground: var(--bg-1);
+  --oi-paper: var(--bg-1); --oi-surface: var(--bg-2); --oi-foreground: var(--text); --oi-ink: var(--text);
+  --oi-muted: var(--text-dim); --oi-muted-2: var(--text-faint); --oi-muted-3: var(--text-faint);
+  --oi-hairline: var(--line); --oi-hairline-soft: var(--line); --oi-control-edge: var(--line-strong); --oi-composer-rule: var(--line-strong);
+  --oi-wash: var(--bg-3); --oi-wash-strong: var(--bg-3); --oi-active-ground: var(--bg-3); --oi-active-ink: var(--text);
+  --oi-accent: var(--accent); --oi-accent-ink: var(--text); --oi-accent-soft: var(--line-strong); --oi-focus: var(--text);
+  --oi-font-sans: var(--font-ui); --oi-font-mono: var(--mono, ui-monospace, Menlo, monospace);
+  --oi-shell-type-meta: 10px; --oi-shell-type-ui: 11px; --oi-shell-type-nav: 11px; --oi-shell-type-eyebrow: 9.5px;
+  --oi-shell-type-body: 11.5px; --oi-shell-type-prose: 11.5px; --oi-shell-type-heading: 12px; --oi-shell-tracking: 0;
+  --oi-shell-edge: 1px; --oi-shell-radius: 0; --oi-shell-radius-row: 0; --oi-shell-radius-control: 0; --oi-radius-pill: 0;
+  --oi-shell-gutter: 6px; --oi-shell-row-dense: 21px; --oi-panel-head-height: 24px;
+  --oi-space-1: 2px; --oi-space-2: 4px; --oi-space-3: 6px; --oi-space-4: 8px; --oi-focus-ring-width: 1px;
+  --oi-motion-ui: 120ms; --oi-motion-normal: 160ms; --oi-motion-ease: ease; --oi-motion-ease-out: ease-out;
+  --oi-z-popover: 60; --oi-shadow-plane: none; --oi-shadow-menu: 0 10px 30px #0008;
+}
+.widget-agent > .agent-layer { flex: 1; min-height: 0; height: auto }
+.widget-agent-absence { flex: none; margin: 6px 8px 0; font-size: 10.5px; line-height: 1.45; color: var(--text-faint) }
+/* Compact: the conversation alone — the panel's planes and its own head belong to the full surface (the Factory thread, a
+   conversation pane); the tile's head names the agent. */
+.widget-agent .panel-top, .widget-agent .chat-head { display: none }
+.widget-agent .chat-session { height: 22px; padding: 0 8px; font-size: 10px }
+.widget-agent .chat-session-provider, .widget-agent .chat-avatar, .widget-agent .chat-suggestions { display: none }
+.widget-agent .chat-welcome { padding: 8px 8px 2px; gap: 2px }
+.widget-agent .chat-welcome-title { font-size: 11px; font-weight: 500 }
+.widget-agent .chat-welcome-line { font-size: 10.5px; line-height: 1.45; color: var(--text-faint) }
+.widget-agent .chat-turn { position: relative }
+.widget-agent .chat-turn-actions { position: absolute; top: 2px; right: 2px }
+.widget-agent .chat-transcript { padding: 8px 8px 4px; gap: 8px; scrollbar-gutter: auto }
+.widget-agent .chat-turn { gap: 6px; font-size: 11.5px }
+.widget-agent .chat-turn strong { font-size: 10px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--text-faint); margin-bottom: 3px }
+.widget-agent .chat-turn-user > .chat-turn-body { max-width: 100%; align-items: stretch }
+.widget-agent .chat-bubble { padding: 6px 8px; border-radius: 0; background: var(--bg-3); color: var(--text) }
+.widget-agent .chat-bubble p, .widget-agent .chat-prose p, .widget-agent .chat-prose ul { font-size: 11.5px; line-height: 1.5; color: var(--text) }
+.widget-agent .chat-turn-assistant .chat-prose { padding: 6px 8px; border: 1px solid var(--line); background: var(--bg-1) }
+.widget-agent .chat-prose p { margin-bottom: 6px }
+.widget-agent .chat-prose pre { border-radius: 0; max-height: 140px }
+.widget-agent .chat-working { margin: -2px 0 0 20px }
+.widget-agent .chat-composer { margin: 6px 8px 8px; padding: 5px 7px; gap: 3px; border-radius: 0; border-color: var(--line-strong); background: var(--bg-1); color: var(--text) }
+.widget-agent .chat-composer textarea { min-height: 18px; max-height: 90px; font-size: 11px; line-height: 1.45 }
+.widget-agent .chat-composer-row > .oi-tool, .widget-agent .chat-composer-chip { height: 20px }
+.widget-agent .chat-composer-row > .oi-tool { width: 20px }
+.widget-agent .chat-send { width: 20px; height: 20px; border-radius: 0; color: #1d1f22 }
+
+/* Sets (manual §10.2, FOUNDATION F1): the browser's named arrangements, in every browser until F6 makes them one. */
+.browser-sets { flex: none; border-top: 1px solid var(--line); background: var(--bg-1); padding: 4px 0 6px; font-size: 10.5px; color: var(--text-dim) }
+.browser-sets-head { display: flex; align-items: center; gap: 6px; padding: 2px 8px 4px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; font-size: 9.5px }
+.browser-sets-head button { margin-left: auto; background: none; border: 1px solid var(--line); color: var(--text-dim); font-size: 10px; padding: 1px 6px; text-transform: none; letter-spacing: 0 }
+.browser-sets-head button:hover { border-color: var(--line-strong); color: var(--text) }
+.browser-sets-head form { margin-left: auto; flex: 1 }
+.browser-sets-head input { width: 100%; height: 18px; background: var(--bg-0); border: 1px solid var(--accent-dim); padding: 0 6px; font-size: 10.5px; color: var(--text) }
+.browser-sets ul { list-style: none; margin: 0; padding: 0 }
+.browser-sets li button { display: flex; width: 100%; gap: 8px; align-items: baseline; background: none; border: 0; padding: 2px 8px; color: var(--text-dim); text-align: left; font-size: 10.5px }
+.browser-sets li button:hover { background: var(--bg-2); color: var(--text) }
+.browser-sets li b { font-weight: 400; color: var(--text) }
+.browser-sets li span { margin-left: auto; color: var(--text-faint); font-size: 9.5px }
+.browser-sets-empty { margin: 2px 8px; color: var(--text-faint) }
+
+/* The trail (manual §10.7): newest stop first, each a line (the mockup's `.hl2`); the current selection is marked. */
+.trail-stops li { display: block }
+.trail-stops [aria-current="location"] .mode-dock-line-text { color: var(--accent) }

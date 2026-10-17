@@ -33,19 +33,20 @@
  * reads and drives the hosted lens. The two vocabularies differ in two ids,
  * mapped in one table here (BAR_LENS_OF_HOSTED); the rest are identical.
  *
- * Frame gates (deviceInstrumentFor): Live's centre is the audio cut, which
- * hides every centre pane but world.knowledge, so Live presents no
- * instrument and keeps its audio device chain. In Expressions, the native
- * panes keep their native device rack (NativeWorldDetail), the pane's own
- * controls, rather than being replaced by a held-face rack; the hosted pane
- * keeps it too while the hosted lens is canvas (m1), whose native rack is the
- * Expressions Canvas's own.
+ * Mode gates. Live keeps its audio device chain whatever pane is focused: that
+ * is MODE_DETAILS.live.ownsDeviceSide (shell/modeDetails.tsx), applied once, by
+ * the one detail host (frame/detail/DetailHost.tsx) — this module pairs panes
+ * with instruments and holds no Live rule. In Expressions, the native panes
+ * keep their native device rack (NativeWorldDetail), the pane's own controls,
+ * rather than being replaced by a held-face rack (OWN_DEVICE_PANELS, the one
+ * table of it below); the hosted pane keeps it too while the hosted lens is
+ * canvas (m1), whose native rack is the Expressions Canvas's own.
  *
  * Pure data: no React, no store, no I/O.
  */
 
 import type {AtlasView} from '../projections/atlas/AtlasProjectionPanel'
-import type {TimelinePresentation} from '../projections/timelinePresentation'
+import type {TimelinePresentation} from '../projections/timelinePaneHost'
 
 /** The six Technē instrument holders (sdk/semantics.ts TECHNE_INSTRUMENTS). */
 export type TechneInstrumentId = 'techne:m0' | 'techne:m1' | 'techne:m2' | 'techne:m3' | 'techne:m4' | 'techne:m5'
@@ -92,8 +93,11 @@ export function hostedLensOfBarId(barId: string): HostedLens | null {
   return (Object.keys(BAR_LENS_OF_HOSTED) as HostedLens[]).find(lens => BAR_LENS_OF_HOSTED[lens] === barId) ?? null
 }
 
-/** The centre panels whose device side is their own native rack in Expressions. */
-const EXPRESSIONS_OWN_DEVICES: ReadonlySet<string> = new Set(['world.expressions', 'native.session', 'native.arrangement'])
+/** The centre panels whose device side stays the mode's own native rack, by mode (a registration, never a branch): in
+ * Expressions, the open work's panes. A mode absent here lets the focused pane's instrument take the Device side. */
+const OWN_DEVICE_PANELS: Readonly<Partial<Record<FrameModeName, ReadonlySet<string>>>> = {
+  expressions: new Set(['world.expressions', 'native.session', 'native.arrangement', 'projection.expressions', 'projection.timeline']),
+}
 
 /** The instrument the focused centre pane holds, or null when it holds none.
  * `hostedLens` is the hosted Expressions lens the frame reports (null until it does). */
@@ -113,24 +117,24 @@ export function instrumentOfPane(
     case 'world.expressions':
       return hostedLens ? HOSTED_INSTRUMENT[hostedLens] : null
     case 'projection.expressions':
-      // The Expressions pane (T-EXPRESSIONS-PANE-LEASE) presents the one hosted frame and holds no instrument of its own: the
-      // frame's hosted lens stands in the centre's bar, never in this pane.
-      return null
+      // The stage pane (T-EXPRESSIONS-PANE-LEASE) presents the one hosted frame: its instrument is the lens the frame stands in.
+      return hostedLens ? HOSTED_INSTRUMENT[hostedLens] : null
     case 'world.ground':
     case 'native.session':
     case 'native.arrangement':
     case 'projection.timeline':
-      // The Timeline pane (T-FACTORY-TIMELINE-PANE) is the same projection: its own presentation picks the lens.
-      if (presentation === 'arrangement') return 'techne:m2'
-      if (presentation === 'session') return 'techne:m3'
+      // The Session · Arrangement pane is a view of the mode's material, never Technē's Journey or Timeline instrument
+      // (FOUNDATION F3): it holds no instrument, so the Device side stays the mode's own chain.
+      void presentation
       return null
     default:
       return null
   }
 }
 
-/** The instrument the detail row's Device side presents for this frame, or
- * null when the mode keeps its own Device side. */
+/** The instrument the detail row's Device side presents for this frame, or null when the mode keeps its own Device side
+ * for this pane. A mode that keeps its Device side whatever pane is focused (Live) is vetoed by the detail host, from
+ * MODE_DETAILS.ownsDeviceSide — not here. */
 export function deviceInstrumentFor(
   frameMode: FrameModeName,
   centerPanel: string,
@@ -138,24 +142,10 @@ export function deviceInstrumentFor(
   atlasView: AtlasView,
   hostedLens: HostedLens | null = null,
 ): PaneInstrumentId | null {
-  if (frameMode === 'live') return null
   // In Expressions mode the hosted pane is the mode's own instrument: its own studio and native rack stand, whatever lens the
   // frame reports (it reports `project` by default) — never removed by the ruling. Elsewhere the hosted lens governs.
-  if (frameMode === 'expressions' && EXPRESSIONS_OWN_DEVICES.has(centerPanel)) return null
+  if (OWN_DEVICE_PANELS[frameMode]?.has(centerPanel)) return null
   return instrumentOfPane(centerPanel, presentation, atlasView, hostedLens)
-}
-
-/** Whether the Technē lens bar stands above the centre: the centre holds an
- * instrument pane (the World cut, the Earth atlas or the hosted Expressions
- * pane), in any mode but Live. */
-export function showsLensBar(frameMode: FrameModeName, centerPanel: string): boolean {
-  if (frameMode === 'live') return false
-  // Factory's centre is the pane tree, and the lens bar is how an instrument pane opens there: it stands over the agent tab
-  // as over any instrument pane (its un-admitted lenses disabled with their reason).
-  if (frameMode === 'factory') return true
-  // The hosted Expressions pane carries the lens bar outside Expressions mode; in it, the pane's own studio is its chrome.
-  if (centerPanel === 'world.expressions') return frameMode !== 'expressions'
-  return centerPanel === 'world.ground' || centerPanel === 'projection.earth'
 }
 
 /** The centre pane a focused Factory tab stands for, so the existing `deviceInstrumentFor` reads its instrument (owner ruling,

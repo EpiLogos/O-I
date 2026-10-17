@@ -39,7 +39,7 @@ export function uSpan(us: ArrayLike<number>, bounds: TimeSpan = { fromU: 0, toU:
   let hi = -Infinity;
   for (let i = 0; i < us.length; i++) {
     const u = us[i];
-    if (!Number.isFinite(u)) continue;
+    if (!Number.isFinite(u) || u < 0) continue; // [§8.4 host] u < 0 is UNDATED_U: no date, so no span
     distinct.add(u);
     lo = Math.min(lo, u);
     hi = Math.max(hi, u);

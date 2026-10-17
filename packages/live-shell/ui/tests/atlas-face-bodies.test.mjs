@@ -98,13 +98,38 @@ const withAtlas = (handle, body) => {
   }
 }
 
-test('the 0 instrument docks all four atlas faces expanded, each with its body', () => {
+test('the 0 instrument is one plate: its sections draw the four atlas faces\' controls, each face a mark on its section, each body its picture in the pool', async () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'techne:m0'}))
-  for (const id of ATLAS_FACE_IDS) {
-    assert.equal(expandedOf(out, id), 'true', `${id} is held by techne:m0`)
-    assert.match(out, new RegExp(`data-atlas-face="${id}"`), `${id} renders its body`)
-  }
+  assert.match(out, /data-instrument="techne:m0" data-expanded="true" data-project-plate="true"/, 'one coherent plate (lane E), not three boxed sub-devices')
+  for (const id of ATLAS_FACE_IDS) assert.match(out, new RegExp(`class="plate-held-mark" data-device="atlas-earth:${id}"`), `${id} is held by techne:m0: its mark stands on the section that draws it`)
+  assert.doesNotMatch(out, /data-atlas-face=/, 'no face body is boxed inside the plate')
   assert.doesNotMatch(out, /docks when its material is selected/, 'no atlas face shows the empty-slot notice')
+  // the pool and a pane still show each face whole, its body its picture (the door publishes the same entries)
+  const {techneEntries} = await import('../src/inhabitants/ql/devices/TechneDevices.tsx')
+  const {atlasReading} = await import('../src/inhabitants/ql/devices/atlasDevices.ts')
+  const entries = techneEntries([inhabitantManifest(ATLAS_FAMILY_ID)], {atlas: atlasReading(null, 'earth'), surface: null, torus: null, instrumentReading: null})
+  for (const id of ATLAS_FACE_IDS) {
+    const entry = entries.find(candidate => candidate.face.id === id)
+    assert.match(html(entry.picture('whole')), new RegExp(`data-atlas-face="${id}"`), `${id}: its body is its picture in the pool`)
+  }
+})
+
+test('the 0 instrument\'s plate reads the mounted atlas and draws the faces\' controls in the device craft, each through the bodies\' own acts', async () => {
+  const {ProjectPlate} = await import('../src/inhabitants/ql/devices/ProjectPlate.tsx')
+  const graph = new FakeGraph()
+  graph.state.local = true
+  graph.state.depth = 2
+  const out = withAtlas(atlasHandle({graph}), () => html(createElement(ProjectPlate, {held: [], focused: true})))
+  const section = id => out.slice(out.indexOf(`data-section="${id}"`), out.indexOf('</section>', out.indexOf(`data-section="${id}"`)))
+  assert.match(section('graph'), /role="radiogroup" aria-label="Steps"[\s\S]*?aria-checked="true"[^>]*>2</, 'the steps the graph reaches, lit by its reading')
+  for (const label of ['Archetypes', 'Theoretics', 'Families', 'Occurrences']) assert.match(section('graph'), new RegExp(`aria-pressed="true"[^>]*>${label}<`), `${label} lit as the graph draws it`)
+  assert.match(section('graph'), /aria-pressed="false"[^>]*>Sky anchors</, 'sky anchors off, as the graph reads')
+  for (const row of FORCE_ROWS) assert.match(section('forces'), new RegExp(`aria-valuetext="${forceMultiple(row.key, DEFAULT_FORCES[row.key]).toFixed(2)}×"`), `${row.label}: a dial at the arrangement as drawn`)
+  assert.match(section('view'), /data-disabled="true"[^>]*>[\s\S]*?Scope/, 'no set aside on the globe: the scope waits, and says why')
+  assert.match(section('time'), /All time/, 'the clock reads all time')
+  const unmounted = html(createElement(ProjectPlate, {held: [], focused: true}))
+  assert.match(unmounted, /The Earth has not mounted in this session/, 'no atlas: each control waits with the body\'s own words')
+  assert.doesNotMatch(unmounted, /aria-valuetext="1\.00×"/, 'no force is drawn as a value nobody holds')
 })
 
 test('every atlas face the family declares has a body, and each is collapsible on the rack', () => {

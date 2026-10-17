@@ -20,7 +20,7 @@ const {saveScene,restoreScene}=await import(new URL('sceneWorkflow.ts',author));
 const {preserveRecoveryLibraryCopies}=await import(new URL('recoveryLibrary.ts',author));
 const {draftJourney}=await import(new URL('recovery.ts',author));
 const {STORAGE_KEY,saveToLibrary,readLibraryDetailed}=await import(new URL('store.ts',author));
-for(const [name,path] of Object.entries({nativeRecovery:'desktop/cradle/expressions-app/field-studies-journeys/src/nativeRecovery.ts',recovery:'desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts',workspace:'desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts',transport:'packages/live-shell/ui/src/components/NativeSceneTransport.tsx',session:'packages/live-shell/ui/src/components/SessionView.tsx'}))files[name]=ts.createSourceFile(path,await readFile(new URL(path,root),'utf8'),ts.ScriptTarget.Latest,true);
+for(const [name,path] of Object.entries({nativeRecovery:'desktop/cradle/expressions-app/field-studies-journeys/src/nativeRecovery.ts',recovery:'desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts',workspace:'desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts',transport:'packages/live-shell/ui/src/components/NativeSceneTransport.tsx'}))files[name]=ts.createSourceFile(path,await readFile(new URL(path,root),'utf8'),ts.ScriptTarget.Latest,true);
 const nodes=(file,predicate)=>{const found=[];const walk=n=>{if(predicate(n))found.push(n);ts.forEachChild(n,walk)};walk(file);return found};
 const execute=(text,bindings)=>new Function(...Object.keys(bindings),ts.transpileModule(`const receive=${text};`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText+'\nreturn receive;')(...Object.values(bindings));
 const callback=(file,name)=>nodes(file,n=>ts.isVariableDeclaration(n)&&n.name.getText(file)===name)[0].initializer.getText(file);
@@ -39,7 +39,7 @@ function recovery(beforeRead=async()=>{}) {
  const native=functions(files.nativeRecovery,['nativeRead','rememberReading','collectNativeRecoveryBasis','validateNativeRecoveryBasis','acceptNativeRecoveryBasis','acceptRecoveryDraft'],{...state,key:(scope,kind,id)=>`${scope}:${kind}:${id}`,nativeRecoveryRequest:async request=>{
   requests.push(request);await beforeRead(request);const input=inputs.find(row=>JSON.stringify(row.request.request)===JSON.stringify(request));assert.ok(input,'only genuine archived owner reads are admitted');return structuredClone(input.response.outcome.data);
  }});
- const receiving=functions(files.recovery,['readBoundWorkingDraft','acceptWorkingRecoveryBasis'],{...native,hostedRecovery:()=>true,validateJourney,draftJourney,validateWorkingRecord,sameSceneData,preserveRecoveryLibraryCopies});
+ const receiving=functions(files.recovery,['checkpointReading','readBoundWorkingDraft','acceptWorkingRecoveryBasis'],{...native,hostedRecovery:()=>true,validateJourney,draftJourney,validateWorkingRecord,sameSceneData,preserveRecoveryLibraryCopies});
  return {...state,...native,...receiving,requests};
 }
 test('actual bound recovery read carries original owner records without accepting newer CAS and explicit validated adoption couples them',async()=>{
@@ -196,11 +196,5 @@ test('actual SceneTransport hidden originating cut refuses before any retained e
  const settle=execute(callback(files.transport,'settle'),{source,lifetime:{current:{mounted:true,epoch:3}},latest:{current:source},currentNativeSceneReply,setBusy:value=>updates.push(value),setFault:value=>updates.push(value)});
  await settle({action:'pause'});assert.deepEqual(updates,[]);assert.equal(r.store.undoStack.length,0);
 });
-test('actual Session Scene action cannot publish a correlated late refusal after its presentation mount retires',async t=>{
- let reject,entered;const waiting=new Promise((_,r)=>{reject=r}),started=new Promise(resolve=>{entered=resolve});
- const r=sceneOwner(()=>{entered();return waiting}),controller=editor(t,r.owner),read=await controller.request({operation:'read'}),faults=[];
- const source=viewSource(read.reading,createNativeContentActions(readNativeExpressionsContent(read.reading),controller)),latest={current:source},presentation=createNativeCompositionPresentationGuard(),cleanup=presentation.mount();
- const sceneAction=execute(callback(files.session,'sceneAction'),{source,latest,presentation,currentNativeSceneReply,setFault:value=>faults.push(value)});
- const finishing=sceneAction({action:'focus',scene_ref:source.content.basis.scene_ref});await started;
- cleanup();reject(closed);await finishing;assert.deepEqual(faults,[]);assert.equal(r.store.undoStack.length,0);
-});
+// (The Session view's own scene action — and its late-refusal test — retired with SessionView.tsx (lane J, 15 Oct): Scene
+// actions go through components/expressions/clip/sceneCalls.ts, which reads currentNativeSceneReply.)

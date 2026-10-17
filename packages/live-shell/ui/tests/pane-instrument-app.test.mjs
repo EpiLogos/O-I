@@ -8,38 +8,41 @@ import {readFile} from 'node:fs/promises'
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
 const lines = app.split('\n')
 
-test('the Technē lens bar is not gated on frameMode === techne', () => {
-  const line = lines.find(l => l.includes('<TechneLensBar'))
-  assert.ok(line, 'the lens bar is rendered from App')
-  assert.doesNotMatch(line, /frameMode === 'techne'/, 'the lens bar gate names the instrument pane, not the mode')
-  const attr = lines.find(l => l.includes('data-lens-bar='))
-  assert.ok(attr, 'the centre carries the lens-bar marker')
-  assert.doesNotMatch(attr, /frameMode === 'techne'/)
+test('there is no lens bar: every instrument opens from the browser\'s Instruments, in every mode (FOUNDATION F2)', async () => {
+  assert.doesNotMatch(app, /TechneLensBar|showsLensBar|data-lens-bar/, 'App draws no lens bar')
+  for (const browser of ['components/BrowserPane.tsx', 'components/WorldBrowser.tsx', 'shell/ModeBrowser.tsx', 'agent/AgentShellBrowser.tsx']) {
+    assert.match(await readFile(new URL(`../src/${browser}`, import.meta.url), 'utf8'), /<InstrumentsSection \/>/, `${browser} lists the instruments`)
+  }
 })
 
-test('the focused instrument Device side is not gated on the Technē mode', () => {
-  const residence = lines.find(l => l.includes('data-instrument-device'))
-  assert.ok(residence, 'the instrument residence is in App')
-  assert.match(residence, /InstrumentDeviceDetail/, 'the residence presents the focused instrument')
-  assert.doesNotMatch(residence, /frameMode === 'techne'/, 'the residence is not gated on the Technē mode')
-  assert.doesNotMatch(residence, /'techne'/)
+test('the focused instrument takes the Device side in every mode but Live, from the one detail host (FOUNDATION F4)', async () => {
+  const host = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
+  assert.match(host, /<InstrumentDeviceDetail transport=\{reading\.transport\} instrument=\{instrument\}/, 'the host presents the focused instrument')
+  assert.doesNotMatch(host, /'(live|base|factory|expressions|techne)'/, 'the host names no mode')
+  const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
+  assert.match(details, /live: \{clip: LiveClip, device: LiveChain, ownsDeviceSide: true, dropHint: /, 'Live keeps its own chain')
 })
 
-test('in Central the instrument residence keeps the ground devices on the chain', () => {
-  const residence = lines.find(l => l.includes('data-instrument-device'))
-  assert.match(residence, /centralDevices=\{frameMode === 'base'\}/)
+test('in Central the instrument\'s chain keeps the ground devices leading', async () => {
+  const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
+  assert.match(details, /base: \{clip: CentralClip, device: CentralChain, devicesLeadInstrument: true, dropHint: /)
+  const host = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
+  assert.match(host, /centralDevices=\{!!registration\.devicesLeadInstrument\}/)
 })
 
-// The hosted Expressions lens (owner ruling, lock §0.1): the bar reads the hosted lens the frame reports and drives it through
-// the retained-instrument event the expressions panel's receiver already handles. App holds no host handle.
-test('the hosted pane reads the reported lens into the bar and the Device side, and drives it through the instrument event', () => {
-  const bar = lines.find(l => l.includes('<TechneLensBar'))
-  assert.match(bar, /hosted=\{focusedPane === 'world\.expressions' \? \{lens: hostedLens\} : null\}/)
+// The hosted Expressions lens (owner ruling, lock §0.1): the Device side reads the lens the frame reports; the browser's
+// Instruments drive it through the retained-instrument event the expressions panel's receiver already handles. Neither
+// holds a host handle.
+test('the stage pane\'s reported lens reaches the Device side, and a stage lens in the browser drives it through the instrument event', async () => {
   const reads = lines.find(l => l.includes('const hostedLens = workspace.reading?.lens'))
   assert.ok(reads, 'App reads the lens the frame publishes through the workspace reading')
   const device = lines.find(l => l.includes('const focusedInstrument = deviceInstrumentFor('))
   assert.match(device, /hostedLens\)/, 'the Device side passes the hosted lens')
-  assert.match(app, /window\.dispatchEvent\(new CustomEvent\(TECHNE_INSTRUMENT_OPEN, \{detail\}\)\)/, 'a hosted press dispatches the retained-instrument event')
-  assert.match(app, /captureTechneInstrumentOpen\(\{workspaceId: workspace\.workspaceId/, 'the press is captured from the current native scope, never from a stale copy')
-  assert.match(app, /showsLensBar\(frameMode, focusedPane\)/)
+  const section = await readFile(new URL('../src/frame/InstrumentsSection.tsx', import.meta.url), 'utf8')
+  // The row's payload carries its lens; the instrument door opens the stage and drives the lens (frame/instrumentDoor.ts).
+  const door = await readFile(new URL('../src/frame/instrumentDoor.ts', import.meta.url), 'utf8')
+  assert.match(door, /driveStageLens\(lens, reportInstrumentFault\)/, 'the door drives the stage through the frame\'s published driver')
+  assert.match(section, /openInstrument\(instrumentPayload\(entry\)\)/, 'a stage lens row opens through the door with its lens')
+  assert.match(app, /window\.dispatchEvent\(new CustomEvent\(TECHNE_INSTRUMENT_OPEN, \{detail\}\)\)/, 'the driver dispatches the retained-instrument event')
+  assert.match(app, /captureTechneInstrumentOpen\(\{workspaceId: now\.workspaceId/, 'the press is captured from the current native scope, never from a stale copy')
 })

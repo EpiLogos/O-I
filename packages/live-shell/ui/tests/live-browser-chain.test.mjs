@@ -37,7 +37,6 @@ const {readFileSync} = await import('node:fs')
 await import('../src/live/LiveInstrumentSection.tsx')
 await import('../src/live/LivePresets.tsx')
 await import('../src/panels/devices/index.tsx')
-await import('../src/panels/devices-b2/index.tsx')
 await import('../src/panels/devices-pro/index.ts')
 const panels = await import('../src/shell/panels.ts')
 const chainModel = await import('../src/live/liveChain.ts')
@@ -47,9 +46,10 @@ const torus = await import('../src/live/torusInstrument.ts')
 const chain = await import('../src/components/DeviceChainPanel.tsx')
 import {readFile} from 'node:fs/promises'
 
-// The bottom-slot faces as committed at HEAD (before leg 5): nothing may be unregistered.
-const COMMITTED_BOTTOM = ['devices.beat-repeat', 'devices.channel-eq', 'devices.compressor', 'devices.echo', 'devices.eq-three', 'devices.erosion', 'devices.filter-delay', 'devices.gate', 'devices.glue-compressor', 'devices.grain-delay', 'devices.limiter', 'devices.overdrive', 'devices.phaser-flanger', 'devices.redux', 'devices.reverb', 'devicesb2.autofilter', 'devicesb2.autopan', 'devicesb2.chorus-ensemble', 'devicesb2.delay', 'devicesb2.drift', 'devicesb2.drumbuss', 'devicesb2.eq8', 'devicesb2.hybrid-reverb', 'devicesb2.multiband-dynamics', 'devicesb2.saturator', 'devicesb2.utility', 'devicesb2.wavetable', 'devicespro.echo', 'devicespro.glue-compressor', 'devicespro.operator', 'devicespro.rack.echo', 'devicespro.rack.glue-compressor', 'devicespro.rack.operator', 'devicespro.rack.reverb', 'devicespro.rack.wavetable', 'devicespro.reverb', 'devicespro.wavetable']
-const LEGACY = ['devicespro.operator', 'devicespro.rack.operator', 'devicespro.wavetable', 'devicespro.rack.wavetable', 'devicesb2.wavetable', 'devicesb2.drift']
+// The bottom-slot faces: the generic stored-parameter editors and the devices-pro faces (frozen as the corpus reference). The devices-b2
+// faces kept local state and wrote nothing, and were removed (FOUNDATION §7).
+const COMMITTED_BOTTOM = ['devices.beat-repeat', 'devices.channel-eq', 'devices.compressor', 'devices.echo', 'devices.eq-three', 'devices.erosion', 'devices.filter-delay', 'devices.gate', 'devices.glue-compressor', 'devices.grain-delay', 'devices.limiter', 'devices.overdrive', 'devices.phaser-flanger', 'devices.redux', 'devices.reverb', 'devicespro.echo', 'devicespro.glue-compressor', 'devicespro.operator', 'devicespro.rack.echo', 'devicespro.rack.glue-compressor', 'devicespro.rack.operator', 'devicespro.rack.reverb', 'devicespro.rack.wavetable', 'devicespro.reverb', 'devicespro.wavetable']
+const LEGACY = ['devicespro.operator', 'devicespro.rack.operator', 'devicespro.wavetable', 'devicespro.rack.wavetable']
 const ctx = {set: null, loading: false, error: null}
 const selection = {track: 0, clip: undefined, scene: null}
 
@@ -84,38 +84,34 @@ test('Presets list through the owner route and store nothing in the shell or the
   assert.match(source, /commitLivePerformance\(\{action: 'list'\}\)/)
 })
 
-// ── 3 — the chain: the torus first, then the effect faces in order ───────
+// ── 3 — the chain: the torus first, then the selected track's own devices ─
 
-test('the chain model: the effect faces are the bottom faces without the legacy generators, in registry order', () => {
-  const effects = chainModel.liveChainEffects().map(p => p.id)
-  for (const id of LEGACY) assert.ok(!effects.includes(id), `${id} is not on the chain`)
-  assert.equal(effects.length, COMMITTED_BOTTOM.length - LEGACY.length)
-  const orders = chainModel.liveChainEffects().map(p => p.order ?? 100)
-  assert.deepEqual(orders, [...orders].sort((a, b) => a - b), 'registry order')
-})
-
-test('the legacy generators are exactly the six ported faces, and they and the effects together are every committed face', () => {
+test('the legacy generators are exactly the four devices-pro generator faces', () => {
   assert.deepEqual(chainModel.legacyGeneratorPanels().map(p => p.id).sort(), [...LEGACY].sort())
-  const all = [...chainModel.liveChainEffects(), ...chainModel.legacyGeneratorPanels()].map(p => p.id).sort()
-  assert.deepEqual(all, [...COMMITTED_BOTTOM].sort())
 })
 
-test('the Live device side has the torus first, then the effect faces, then the track; clip detail keeps its own order', () => {
+test('with no set the device side is the keyboard and the torus, then one waiting line — never the registry; the clip side carries no faces', () => {
   torus.publishLiveTorusState({ok: true, determinants: null,
     value: {schema: 'ql.instrument-reading/v1', standing: 'following', identity: {event_ref: 'event:chain'}},
     parameters: {muted: true, level: 1, scale: {unitsPerMetre: 120, mode: 'domain-follow'}, cadence: null, refusal: null}})
   let device
   try { device = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'device'})) }
   finally { torus.publishLiveTorusState(null) }
-  const torusAt = device.indexOf('data-live-torus=')
-  const effectsRendered = [...device.matchAll(/data-chain-device="([^"]+)"/g)].map(m => m[1])
-  assert.ok(torusAt >= 0, 'the instrument is the chain head once published')
-  assert.ok(device.indexOf('data-chain-device=') > torusAt, 'the effect faces follow the torus')
-  assert.deepEqual(effectsRendered, chainModel.liveChainEffects().map(p => p.id), 'every effect face on the chain, in order')
-  for (const id of LEGACY) assert.ok(!device.includes(`data-chain-device="${id}"`))
+  assert.ok(device.indexOf('data-live-torus=') >= 0, 'the instrument is on the chain once published')
+  assert.doesNotMatch(device, /data-chain-device=/, 'no registered face stands on a chain with no track')
+  assert.ok(device.indexOf('data-live-chain-waits') > device.indexOf('data-live-torus='), 'the line where the track\'s devices would stand follows the torus')
   const clip = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'clip'}))
-  assert.doesNotMatch(clip, /data-live-torus=/)
-  assert.deepEqual([...clip.matchAll(/data-chain-device="([^"]+)"/g)].map(m => m[1]), chainModel.liveChainEffects().map(p => p.id))
+  assert.doesNotMatch(clip, /data-live-torus=|data-chain-device=/)
+})
+
+test('with a set, the chain is the selected track\'s devices in order, each a plate: the owner\'s table where one exists, else the document read losslessly', () => {
+  const set = {path: '/sets/demo.als', tracks: [{name: 'Pad', kind: 'midi', devices: ['Reverb', 'PluginDevice', 'Echo']}, {name: 'Bass', kind: 'midi', devices: ['Gate']}]}
+  const markup = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx: {set, loading: false, error: null}, document: null, selection, mode: 'device'}))
+  assert.deepEqual([...markup.matchAll(/data-chain-device="([^"]+)"/g)].map(m => m[1]), ['Reverb', 'PluginDevice', 'Echo'], 'every device of the track, in track order')
+  assert.equal((markup.match(/data-device-size="compact"/g) ?? []).length, 3, 'each one a plate of the runtime (live/SetDeviceOnChain.tsx)')
+  assert.doesNotMatch(markup, /Gate/, 'another track\'s devices are not on this chain')
+  assert.equal(chainModel.trackDeviceFaceTitle('Reverb'), 'Reverb', 'Reverb reads and writes through its stored-parameter table once the owner\'s table is read')
+  assert.equal(chainModel.trackDeviceFaceTitle('PluginDevice'), undefined, 'a plug-in has none: its plate reads the document')
 })
 
 // ── 4 — the generator faces are reachable under Legacy generators ───────
@@ -128,9 +124,9 @@ test('the Instruments section names the legacy generators and renders each of th
   for (const id of LEGACY) assert.match(markup, new RegExp(`data-legacy-generator="${id.replace(/\./g, '\\.')}"`), id)
 })
 
-// ── 5 — nothing removed ─────────────────────────────────────────────────
+// ── 5 — the registered faces ─────────────────────────────────────────
 
-test('nothing is removed: every committed bottom face is still registered, with its id and title', () => {
+test('the registered bottom faces are the generic editors and the frozen devices-pro faces, each with an id and title', () => {
   const registered = panels.getPanels('bottom').map(p => p.id).sort()
   assert.deepEqual(registered, [...COMMITTED_BOTTOM].sort())
   for (const panel of panels.getPanels('bottom')) assert.ok(panel.title && panel.component, panel.id)

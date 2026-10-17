@@ -35,9 +35,11 @@ export async function load(u, c, n) {
 // The Factory centre as a pane tree (owner ruling, DEVICE-SEMANTICS-LOCK §0.1 and §3). The agent surface is the default
 // tab; instrument panes open beside it through the engine's own door; the Device side follows the focused tab.
 const {factoryFocusedPane, deviceInstrumentFor} = await import('../src/shell/paneInstrument.ts')
-const {seedFactoryCentre, hasFactoryCentre, openFactoryInstrumentPane, focusedSurfaceKind, agentTabClosable, AGENT_SHELL_ID, AGENT_SHELL_KIND} = await import('../src/agent/factoryCentre.ts')
+const {seedFactoryCentre, hasFactoryCentre, hasFactoryTracks, openFactoryInstrumentPane, focusedSurfaceKind, agentTabClosable, AGENT_SHELL_ID, AGENT_SHELL_KIND, AGENT_TAB_TITLE, FACTORY_TRACKS_KIND, FACTORY_TRACKS_TITLE} = await import('../src/agent/factoryCentre.ts')
 const engine = await import('../../../../desktop/cradle/src/surface/engine.ts')
 const {closeSurface, activateSurface, groupsOf} = engine
+const tabsOf = layout => groupsOf(layout.root).flatMap(group => group.tabs)
+const tracksTabOf = layout => tabsOf(layout).find(id => layout.surfaces[id].kind === FACTORY_TRACKS_KIND)
 const {freshLayout} = await import('../../../../desktop/cradle/src/surface/types.ts')
 const {switchWorkspaceMode} = await import('../../../../desktop/cradle/src/workspace/store.ts')
 
@@ -46,16 +48,79 @@ const appLines = app.split('\n')
 const nativeWorkbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
 const agentPanel = await readFile(new URL('../src/panels/agentShell.tsx', import.meta.url), 'utf8')
 const engineTree = await readFile(new URL('../../../../desktop/cradle/src/surface/Workbench.tsx', import.meta.url), 'utf8')
+const modeFrames = await readFile(new URL('../src/shell/modeFrames.ts', import.meta.url), 'utf8')
+const modeDetails = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
+const detailHost = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
 
-test('the Factory tree seeds the agent tab once, pinned and active, as the default tab', () => {
+test('the Factory tree seeds the mockup\'s [sessions] | [thread]: the shared Session pane left, the agent tab right, pinned, once', () => {
   const seeded = seedFactoryCentre(freshLayout())
   assert.ok(hasFactoryCentre(seeded), 'the agent tab is placed')
+  assert.ok(hasFactoryTracks(seeded), 'the shared Session · Arrangement pane is placed')
   assert.equal(seeded.surfaces[AGENT_SHELL_ID].kind, AGENT_SHELL_KIND)
-  const [group] = groupsOf(seeded.root)
-  assert.equal(groupsOf(seeded.root).length, 1)
-  assert.ok(group.pinned.includes(AGENT_SHELL_ID), 'the agent tab is pinned')
-  assert.equal(group.active, AGENT_SHELL_ID)
+  assert.equal(seeded.surfaces[AGENT_SHELL_ID].title, AGENT_TAB_TITLE, 'the tab is named for what it holds: the thread')
+  const groups = groupsOf(seeded.root)
+  assert.equal(groups.length, 2, 'two panes: row, children [0, 1]')
+  assert.equal(seeded.root.type, 'split')
+  assert.equal(seeded.root.dir, 'h', 'side by side')
+  const [left, right] = groups
+  assert.deepEqual(left.tabs.map(id => seeded.surfaces[id].kind), [FACTORY_TRACKS_KIND], 'the Session pane stands on the left')
+  assert.equal(seeded.surfaces[left.tabs[0]].title, FACTORY_TRACKS_TITLE, 'its tab reads as the mockup\'s: Sessions')
+  assert.deepEqual(right.tabs, [AGENT_SHELL_ID], 'the thread stands on the right')
+  assert.ok(right.pinned.includes(AGENT_SHELL_ID), 'the agent tab is pinned')
+  assert.deepEqual(left.pinned, [], 'the Session pane is the user\'s to close')
+  assert.equal(right.active, AGENT_SHELL_ID)
+  assert.equal(seeded.focusedGroupId, left.id, 'the Session pane is focused: the mockup\'s focus:0')
   assert.deepEqual(seedFactoryCentre(seeded), seeded, 'seeding again changes nothing')
+  assert.equal(seedFactoryCentre(seeded), seeded, 'and returns the same tree, so the Workbench\'s seed effect settles')
+})
+
+test('a book that stood with the agent tab alone gains the Session pane once, keeping its arrangement, focus and maximised pane', () => {
+  // The old seed: the agent tab, pinned, alone in the tree (what every saved Factory book holds), under its old title.
+  const old = freshLayout()
+  const opened = engine.openBinding(old, {id: AGENT_SHELL_ID, kind: AGENT_SHELL_KIND, title: 'Agents'})
+  const legacy = {...engine.activateSurface(opened, AGENT_SHELL_ID), focusedTabId: AGENT_SHELL_ID}
+  const [home] = groupsOf(legacy.root)
+  const pinned = {...legacy, root: {...legacy.root, pinned: [AGENT_SHELL_ID]}, maximizedGroupId: home.id}
+  const gained = seedFactoryCentre(pinned)
+  assert.ok(hasFactoryTracks(gained), 'the pane is added')
+  const [left, right] = groupsOf(gained.root)
+  assert.deepEqual(left.tabs.map(id => gained.surfaces[id].kind), [FACTORY_TRACKS_KIND], 'at the left edge of the agent tab\'s pane')
+  assert.deepEqual(right.tabs, [AGENT_SHELL_ID])
+  assert.equal(right.id, home.id, 'the agent tab\'s pane is the one it was')
+  assert.ok(right.pinned.includes(AGENT_SHELL_ID), 'still pinned')
+  assert.equal(gained.focusedGroupId, pinned.focusedGroupId, 'focus stays where the book left it')
+  assert.equal(gained.focusedTabId, AGENT_SHELL_ID)
+  assert.equal(gained.maximizedGroupId, home.id, 'a maximised pane stays maximised')
+  assert.equal(gained.surfaces[AGENT_SHELL_ID].title, AGENT_TAB_TITLE, 'the saved title is brought to what the tab holds')
+  assert.equal(seedFactoryCentre(gained), gained, 'a second open gains nothing')
+})
+
+test('a book that has the Session pane keeps its arrangement exactly; one that closed it is not given it back', () => {
+  const seeded = seedFactoryCentre(freshLayout())
+  const earth = openFactoryInstrumentPane(seeded, 'projection.earth')
+  assert.equal(seedFactoryCentre(earth), earth, 'a placed tracks pane: nothing moves, nothing is added')
+  // The user moves the tracks pane under the agent tab (a tab in the agent\'s pane): still placed, still not duplicated.
+  const tracksId = tracksTabOf(seeded)
+  const [, agentGroup] = groupsOf(seeded.root)
+  const together = engine.moveTab(seeded, tracksId, agentGroup.id)
+  assert.equal(seedFactoryCentre(together), together)
+  // Closing is the user's act: the binding stays in `surfaces` (and on the closed stack), so the seed leaves the tree alone.
+  const closed = closeSurface(seeded, tracksId)
+  assert.notEqual(closed, seeded)
+  assert.ok(!hasFactoryTracks(closed))
+  assert.ok(closed.surfaces[tracksId], 'the closed binding is remembered')
+  assert.equal(seedFactoryCentre(closed), closed, 'the seed respects a closed pane')
+  const reopened = engine.reopenClosed(closed)
+  assert.ok(hasFactoryTracks(reopened), 'Reopen closed brings it back')
+  assert.equal(seedFactoryCentre(reopened), reopened)
+})
+
+test('a tree with other tabs and no agent tab gains the agent tab beside them and the Session pane left of it', () => {
+  const earth = openFactoryInstrumentPane(freshLayout(), 'projection.earth')
+  const seeded = seedFactoryCentre(earth)
+  assert.ok(hasFactoryCentre(seeded) && hasFactoryTracks(seeded))
+  assert.ok(tabsOf(seeded).some(id => seeded.surfaces[id].kind === 'projection.earth'), 'the other tab is kept')
+  assert.equal(seedFactoryCentre(seeded), seeded)
 })
 
 test('the agent tab cannot be closed: the engine refuses a pinned surface', () => {
@@ -64,21 +129,22 @@ test('the agent tab cannot be closed: the engine refuses a pinned surface', () =
   assert.equal(agentTabClosable(seeded), false)
 })
 
-test('an Earth pane opens beside the agent tab and closes on its own, the agent tab staying', () => {
-  const withEarth = openFactoryInstrumentPane(seedFactoryCentre(freshLayout()), 'projection.earth')
-  const tabs = groupsOf(withEarth.root).flatMap(group => group.tabs)
-  assert.equal(tabs.length, 2)
+test('an Earth pane opens beside the seeded panes and closes on its own, the agent tab and the Session pane staying', () => {
+  const seeded = seedFactoryCentre(freshLayout())
+  const withEarth = openFactoryInstrumentPane(seeded, 'projection.earth')
+  const tabs = tabsOf(withEarth)
+  assert.equal(tabs.length, 3)
   assert.ok(tabs.includes(AGENT_SHELL_ID))
-  const earth = tabs.find(id => id !== AGENT_SHELL_ID)
-  assert.equal(withEarth.surfaces[earth].kind, 'projection.earth')
+  assert.ok(tracksTabOf(withEarth), 'the Session pane stands')
+  const earth = tabs.find(id => withEarth.surfaces[id].kind === 'projection.earth')
   const closed = closeSurface(withEarth, earth)
   assert.notEqual(closed, withEarth)
-  assert.deepEqual(groupsOf(closed.root).flatMap(group => group.tabs), [AGENT_SHELL_ID])
+  assert.deepEqual(tabsOf(closed).sort(), tabsOf(seeded).sort())
 })
 
 test('the focused Earth pane takes the Device side as the 0 instrument; the agent tab keeps its own Device side', () => {
   const withEarth = openFactoryInstrumentPane(seedFactoryCentre(freshLayout()), 'projection.earth')
-  const earth = groupsOf(withEarth.root).flatMap(group => group.tabs).find(id => id !== AGENT_SHELL_ID)
+  const earth = tabsOf(withEarth).find(id => withEarth.surfaces[id].kind === 'projection.earth')
   const onEarth = activateSurface(withEarth, earth)
   const earthPane = factoryFocusedPane(focusedSurfaceKind(onEarth))
   assert.equal(deviceInstrumentFor('factory', earthPane.pane, earthPane.presentation, 'graph'), 'techne:m0')
@@ -88,11 +154,12 @@ test('the focused Earth pane takes the Device side as the 0 instrument; the agen
   assert.equal(deviceInstrumentFor('factory', agentPane.pane, agentPane.presentation, 'graph'), null, 'the agent tab keeps AgentShellDeviceDetail')
 })
 
-test('a Timeline pane beside the agent tab takes the Timeline instrument, and a Graph pane the 0 instrument', () => {
-  const withTimeline = activateSurface(openFactoryInstrumentPane(seedFactoryCentre(freshLayout()), 'projection.timeline'), groupsOf(openFactoryInstrumentPane(seedFactoryCentre(freshLayout()), 'projection.timeline').root).flatMap(group => group.tabs).find(id => id !== AGENT_SHELL_ID))
-  const timeline = factoryFocusedPane(focusedSurfaceKind(withTimeline))
-  assert.equal(deviceInstrumentFor('factory', timeline.pane, timeline.presentation, 'graph'), 'techne:m2')
-  const graph = openFactoryInstrumentPane(seedFactoryCentre(freshLayout()), 'projection.constellation')
+test('the seeded Session · Arrangement pane holds no instrument (FOUNDATION F3), and a Graph pane the 0 instrument', () => {
+  const seeded = seedFactoryCentre(freshLayout())
+  const timeline = factoryFocusedPane(focusedSurfaceKind(seeded))
+  assert.equal(timeline.pane, 'projection.timeline', 'Factory opens with the Session pane focused')
+  assert.equal(deviceInstrumentFor('factory', timeline.pane, timeline.presentation, 'graph'), null, 'the tracks pane keeps Factory\'s own chain')
+  const graph = openFactoryInstrumentPane(seeded, 'projection.constellation')
   const graphPane = factoryFocusedPane(focusedSurfaceKind(graph))
   assert.equal(deviceInstrumentFor('factory', graphPane.pane, graphPane.presentation, 'graph'), 'techne:m0')
 })
@@ -109,13 +176,16 @@ test('the Factory tree and its agent tab persist through modeLayouts when the mo
   assert.ok(away.modeLayouts.factory.surfaces[AGENT_SHELL_ID], 'the agent tab is kept')
   const back = switchWorkspaceMode(away, 'factory')
   assert.deepEqual(groupsOf(back.layout.root).flatMap(group => group.tabs), groupsOf(layout.root).flatMap(group => group.tabs))
-  assert.ok(groupsOf(back.layout.root)[0].pinned.includes(AGENT_SHELL_ID), 'the pin persists with the tree')
+  assert.ok(hasFactoryTracks(back.layout), 'the Session pane returns with the tree')
+  assert.equal(seedFactoryCentre(back.layout), back.layout, 'and the seed finds nothing to add on the return')
+  assert.ok(groupsOf(back.layout.root).find(group => group.tabs.includes(AGENT_SHELL_ID)).pinned.includes(AGENT_SHELL_ID), 'the pin persists with the tree')
 })
 
 // Source pins: the centre identity, the Device-side routing and the agent body (the frame is not renderable in a test harness).
 test('Factory centre is the Workbench tree: the centre is native.workbench, and the agent-shell chrome stands on Factory', () => {
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/, 'the agent-shell chrome stands over every Factory tree')
-  assert.match(app, /if \(next === 'base' \|\| next === 'techne'\) \{ setCenterPanel\('world\.ground'\); setDock\(true\); return \}\s*\n\s*setCenterPanel\('native\.workbench'\); setDock\(true\)/, 'entering Factory presents the Workbench tree')
+  // Every mode's centre is the Workbench tree (FOUNDATION F2); Factory first opens with its dock (shell/modeFrames.ts).
+  assert.match(modeFrames, /factory: \{\.\.\.FRAME, centerPanel: 'native\.workbench', detailMode: 'clip', dock: true\}/, 'entering Factory presents the Workbench tree, its detail row on the mockup\'s Clip')
   assert.doesNotMatch(app, /setCenterPanel\('native\.agent'\)/, 'the agent centre panel is no longer the Factory centre')
 })
 
@@ -123,19 +193,22 @@ test('the focused Factory tab routes the Device side through the existing device
   const focus = appLines.find(l => l.includes('const focusedInstrument = deviceInstrumentFor('))
   assert.ok(focus, 'the Device side reads the instrument through deviceInstrumentFor')
   assert.match(app, /factoryFocusedPane\(/, 'a Factory tree names its focused pane through factoryFocusedPane')
-  assert.match(app, /const focusedPane = settingsPresented \? 'world\.settings' : factoryFocus \? factoryFocus\.pane : centerPanel/)
-  const agentResidence = appLines.find(l => l.includes('<AgentShellDeviceDetail'))
-  assert.ok(agentResidence, 'the agent Device side is in App')
-  assert.match(agentResidence, /focusedInstrument !== null/, 'the agent Device side yields to a focused instrument pane')
+  assert.match(app, /const focusedPane = settingsPresented \? 'world\.settings' : centerPanel !== 'native\.workbench' \? centerPanel : paneFocus\.pane/)
+  // The one detail host (FOUNDATION F4) gives a focused instrument the Device side over the mode's own chain.
+  assert.match(modeDetails, /factory: \{clip: FactoryClip, device: FactoryChain, dropHint: /, 'Factory\'s chain is its registered Device side')
+  assert.match(detailHost, /const instrument = side === 'device' && !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'a focused instrument pane takes the Device side')
 })
 
-test('the lens bar in Factory opens instrument panes inside the tree, never by leaving the centre', () => {
-  assert.match(app, /if \(agentShell\) \{[^}]*factoryLensPane\(lens\)[^}]*openFactoryInstrumentPane\(/, 'a lens press in Factory opens only its admitted pane beside the agent tab')
+test('an instrument opens as a pane inside the tree, never by leaving the centre (the browser\'s Instruments, FOUNDATION F2)', () => {
+  assert.doesNotMatch(app, /TechneLensBar/, 'the lens bar is gone; its instruments are in the browser')
+  // lane F (F2): the same door also answers 'in-view' (a palace entered brings the Earth into view: instrumentDoor.ts instrumentInView)
+  assert.match(nativeWorkbench, /publishInstrumentOpener\(\(kind, at, subject\) => latest\.current\.book\.setLayout\(layout => at === 'in-view' \? instrumentInView\(layout, kind, subject\) : openInstrumentAt\(layout, kind, at, subject\)\)\)/, 'the presented tree is the one door an instrument opens through')
 })
 
 test('the Workbench tree mounts the agent surface from the tree conversation, and admits no kernel surface for it', () => {
   assert.match(nativeWorkbench, /conversation: tree\.layout\.mode === 'factory' \? <AgentShellCentre\/> : <FactoryChat/, 'the Factory tree conversation is the agent surface')
-  assert.match(nativeWorkbench, /seedFactoryCentre\(/, 'the Workbench seeds the Factory tree with its agent tab')
+  assert.match(modeFrames, /factory: seedFactoryCentre,/, 'the Factory tree is seeded with its agent tab from the mode table')
+  assert.match(nativeWorkbench, /MODE_TREE_SEEDS\[book\.current\.layout\.mode \?\? 'base'\]/, 'the Workbench seeds every mode\'s first tree from the table')
   assert.match(nativeWorkbench, /const unowned = new Set\(\['draft', 'blank', 'device', AGENT_SHELL_KIND\]\)/, 'the agent tab (and a popped-out device, seam 8) is not a kernel-owned surface')
   assert.match(engineTree, /if \(binding\.kind === "agent-shell"\) return <>\{conversation\}<\/>;/, 'the engine mounts the agent body from the tree conversation')
 })
@@ -144,12 +217,24 @@ test('the native.agent centre panel no longer mounts a second agent body', () =>
   assert.doesNotMatch(agentPanel, /AgentShellCentre/, 'the agent body lives in the Workbench tree only')
 })
 
-test('Factory opens with the agent tab focused, and every agent-shell chrome piece stands over the tree', () => {
+test('Factory opens with the agent tab focused, and every agent-shell chrome piece stands over the tree', async () => {
   const {activeBindingId} = engine
-  assert.equal(activeBindingId(seedFactoryCentre(freshLayout())), AGENT_SHELL_ID, 'the agent tab is the focused default')
-  for (const piece of ['<AgentShellTransportBridge', '<AgentStatusBarBridge', '<AgentContextDock', '<FactoryTaskLogDetail', '<AgentShellDeviceDetail', '<AgentShellBrowser']) {
+  const seeded = seedFactoryCentre(freshLayout())
+  assert.equal(activeBindingId(seeded), tracksTabOf(seeded), 'the Session pane is the focused default (the mockup\'s focus:0)')
+  assert.equal(groupsOf(seeded.root).find(group => group.tabs.includes(AGENT_SHELL_ID)).active, AGENT_SHELL_ID, 'the agent tab is the active tab of its pane')
+  // The agent dock's tiles are widgets of the one rail (F8), registered in shell/widgets.tsx.
+  assert.match(await readFile(new URL('../src/shell/widgets.tsx', import.meta.url), 'utf8'), /AgentDockTileBody id=\{id\}/)
+  // Factory's transport is the one bar (F7): its controls are bindings (shell/transports/useFactoryTransport.tsx).
+  assert.ok(!app.includes('<AgentShellTransportBridge'), 'no Factory bar of its own')
+  assert.match(await readFile(new URL('../src/shell/modeTransports.tsx', import.meta.url), 'utf8'), /factory: useFactoryTransport/)
+  for (const piece of ['<AgentStatusBarBridge']) {
     assert.ok(app.includes(piece), `${piece} is still rendered by App`)
   }
+  // The agent browser's rows are Factory's in the one browser (F6): registered, never a residence of their own.
+  const modeBrowsers = await readFile(new URL('../src/shell/modeBrowsers.tsx', import.meta.url), 'utf8')
+  assert.match(modeBrowsers, /factory: \(\) => \[AGENTS\]/); assert.match(modeBrowsers, /<AgentShellBrowser rows=/)
+  assert.ok(app.includes('<Browser key={frameMode} sources={browserSources}'), 'App mounts the one browser')
+  for (const piece of ['<FactoryTaskLogDetail', '<AgentShellDeviceDetail']) assert.ok(modeDetails.includes(piece), `${piece} is Factory's registered detail`)
   const bridge = appLines.find(l => l.includes('{agentShell ? <AgentStatusBarBridge'))
   assert.ok(bridge, 'the status bar switches on the agent shell, not on the retired centre panel')
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/)
@@ -200,11 +285,12 @@ test('a Factory press on a disabled lens opens nothing: the tree is unchanged', 
   }
 })
 
-test('a Factory press on an enabled lens opens its one admitted pane beside the agent tab', () => {
+test('a Factory press on an enabled lens opens its one admitted pane beside the seeded two; the Timeline lenses find theirs standing', () => {
   const layout = seedFactoryCentre(freshLayout())
   for (const lens of LENSES.filter(item => factoryLensReason(item) === null)) {
-    const next = openFactoryInstrumentPane(layout, factoryLensPane(lens))
-    assert.equal(groupsOf(next.root).flatMap(group => group.tabs).length, 2, `${lens.name} opens one pane`)
+    const kind = factoryLensPane(lens)
+    const next = openFactoryInstrumentPane(layout, kind)
+    assert.equal(tabsOf(next).length, kind === FACTORY_TRACKS_KIND ? 2 : 3, `${lens.name} opens ${kind === FACTORY_TRACKS_KIND ? 'no new pane: the Session pane stands' : 'one pane'}`)
   }
 })
 
@@ -217,12 +303,12 @@ test('Timeline and Journey open the one Timeline pane; the lens presentation is 
   assert.equal(factoryLensPane(journey), 'projection.timeline')
   const layout = seedFactoryCentre(freshLayout())
   const once = openFactoryInstrumentPane(openFactoryInstrumentPane(layout, factoryLensPane(timeline)), factoryLensPane(journey))
-  assert.equal(groupsOf(once.root).flatMap(group => group.tabs).length, 2, 'the two lenses share one pane, never two')
+  assert.equal(tabsOf(once).length, 2, 'the agent tab and the one Session pane: the two lenses share it, never a second')
+  assert.equal(Object.values(once.surfaces).filter(binding => binding.kind === FACTORY_TRACKS_KIND).length, 1, 'one binding of the tracks kind')
 })
 
-test('the App lens press reads the factory lens table, and the bar is told it is in Factory', () => {
-  assert.match(app, /factoryLensPane\(lens\)/, 'the press opens the pane the table admits')
-  assert.match(app, /paneKind === 'projection\.timeline'\) setTimelinePanePresentation\(lens\.presentation/, 'the lens carries its presentation to the one Timeline pane')
-  assert.doesNotMatch(app, /factoryLensPane\(lens\)[\s\S]{0,40}'projection\.timeline'/, 'App names no Timeline pane kind beside the table')
-  assert.match(app, /factory=\{isFactoryMode\(frameMode\)\}/, 'the bar carries the Factory reading')
+test('Tab moves the one Session · Arrangement pane between its presentations, in Factory as in every mode', () => {
+  assert.match(app, /presentSettings\(false\); setTab\(view\); setTimelinePanePresentation\(view\)/, 'the pane\'s own presentation moves')
+  // The agent tab holds the thread only (agent/AgentShellRoot.tsx), so the two views are the Session pane's alone: nothing in the
+  // tab body reads the shell's centreView (see tests/factory-centre.test.mjs).
 })

@@ -1,0 +1,79 @@
+/* The plate's controls (plateControls.tsx) and the device panel kit's controls (inhabitants/sdk/panel.css) as an instrument's plate and
+   a Compact instrument draw them. The kit's colour names resolve the shell's tokens (styles.css :root) at :root in panel.css, so a
+   plate brings no colour of its own (docs/dlw/DLW.md §16.9: teal a value, amber what is on, the well near black). Shell tokens
+   only. */
+/* The kit's colours resolve the shell's tokens at :root now (panel.css), on every plate; an instrument's plate and a Compact
+   instrument keep only the kit's type here. */
+:is(.inst-plate, .techne-compact) { font: 10.5px/1.2 var(--font-ui) }
+
+/* A wrap that only listens for the hand's release (the owner's write goes then); it adds no box. */
+.plate-wrap { display: contents }
+
+/* A parameter no owner carries: the ring alone, "—" under it, at the kit's disabled strength. */
+.dp-cell[data-waiting="true"] .dp-value { color: var(--text-faint) }
+
+/* Rows you press: the kit's row, its whole line the press; the lit row in the accent. */
+.plate-rows { min-width: 0 }
+.plate-row { gap: 0 }
+.plate-row-press { flex: 1 1 auto; min-width: 0; height: 100%; display: flex; align-items: center; gap: 5px; padding: 0 2px; background: none; border: 0;
+  color: var(--text); font: inherit; text-align: left; cursor: default }
+button.plate-row-press { cursor: pointer }
+button.plate-row-press:hover:not(:disabled) { background: color-mix(in srgb, var(--text) 5%, transparent) }
+button.plate-row-press:disabled { color: var(--text-faint) }
+.plate-row[data-on="true"] .plate-row-press { box-shadow: inset 2px 0 0 var(--accent) }
+.plate-row[data-on="true"] .dp-row-name { color: var(--accent) }
+.plate-row[data-dim="true"] .dp-row-name { color: var(--text-faint) }
+.plate-row-acts { flex: none; display: inline-flex; gap: 1px }
+.plate-row-acts button { width: 14px; height: 14px; padding: 0; font-size: 9.5px; line-height: 14px; color: var(--text-dim); background: none; border: 0; cursor: pointer }
+.plate-row-acts button:hover:not(:disabled) { color: var(--text) }
+.plate-row-acts button:disabled { opacity: .35; cursor: default }
+.plate-empty { margin: 0; font-size: 10px; line-height: 1.35; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.plate-row-press:focus-visible, .plate-row-acts button:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px }
+
+/* A name field: the value box's text form (16 px, the field's ground). */
+.dp-cell.plate-field { align-self: stretch; justify-self: stretch; align-items: stretch }
+.plate-field-input { height: 16px; width: 100%; min-width: 0; padding: 0 4px; border: 1px solid var(--line); background: var(--dp-field); color: var(--text); font: inherit; font-size: 10px }
+.plate-field-input::placeholder { color: var(--text-faint) }
+.plate-field-input:focus-visible { outline: 1px solid var(--accent); outline-offset: 0 }
+
+/* One short line: its whole words on the status line. */
+.plate-line { margin: 0; min-width: 0; font-size: 10px; line-height: 14px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.plate-line[data-tone="armed"] { color: var(--accent) }
+.plate-line[data-tone="refused"] { color: var(--stall) }
+.plate-line[data-tone="saved"] { color: var(--green) }
+.plate-line button { padding: 0 0 0 4px; background: none; border: 0; color: var(--sel); font: inherit; text-decoration: underline; cursor: pointer }
+
+/* The marks of the devices a section holds: a light, the mark (the pool), ⤢ (a pane). */
+.plate-held { display: inline-flex; gap: 4px; margin-left: auto; text-transform: none; letter-spacing: 0 }
+.plate-held-mark { position: relative; display: inline-flex; align-items: center; gap: 1px }
+.plate-held-mark button { display: inline-grid; place-items: center; width: 13px; height: 13px; padding: 0; background: none; border: 0; color: var(--text-faint); font-size: 9px; cursor: pointer }
+.plate-held-mark button:hover { color: var(--text) }
+.plate-held-mark[data-device-light="on"]::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--accent) }
+
+/* A choice, a toggle or a reading on one line: its name first, the switch after, so a group of them stands in one column. */
+.dp-cell.plate-inline { flex-direction: row; align-items: center; gap: 6px; justify-self: stretch; align-self: stretch; grid-column: 1 / -1 }
+.plate-inline > .dp-label { flex: none; width: 52px; text-align: left }
+.plate-inline > .dp-radio { flex: 1 1 auto; min-width: 0 }
+.plate-inline .dp-radio button { min-width: 0; overflow: hidden; text-overflow: ellipsis }
+/* A readout or a toggle laid inline: the value at the right of its name. */
+.plate-inline.dp-cell--readout, .plate-inline > .dp-cell--readout { flex-direction: row-reverse; justify-content: flex-end }
+.plate-row-line { display: flex; align-items: center; gap: 6px; min-width: 0 }
+.plate-lamp-row { display: flex; align-items: center; gap: 6px; height: 16px; min-width: 0 }
+.plate-lamp-row .dp-value { margin-left: auto; color: var(--text) }
+/* Keys in a row (a lens's own options, a walk's steps): they wrap at the section's width. */
+.plate-keys { display: flex; flex-wrap: wrap; gap: 3px; min-width: 0 }
+.plate-keys > .dp-cell { flex-direction: row }
+.plate-tool-row { display: flex; align-items: center; gap: 4px; min-width: 0 }
+.plate-tool-row > .plate-field { flex: 1 1 auto }
+.plate-radio-why { color: var(--text-faint) }
+.dp-cell.plate-reading { flex-direction: row; align-items: center; gap: 6px; height: 16px; justify-self: stretch; align-self: stretch; grid-column: 1 / -1 }
+.dp-cell.plate-reading > .dp-label { flex: none; width: 52px; text-align: left }
+.dp-cell.plate-reading > .dp-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text) }
+
+/* A state the owner reports, drawn as the kit's light and one word (manual §16.10 Light): a save state, a tool armed, a line of the owner's
+   words that is only the status bar's (PlateLine `word`, StageInstrumentPlate.tsx FrameReading). */
+.dp-cell.plate-light { flex-direction: row; align-items: center; gap: 5px; height: 16px; min-width: 0; white-space: nowrap }
+.dp-cell.plate-light > .dp-label { margin: 0; color: var(--text-dim) }
+.dp-cell.plate-light[data-tone="refused"] > .dp-label { color: var(--stall) }
+.dp-cell.plate-light[data-tone="armed"] > .dp-label { color: var(--accent) }
+.dp-cell.plate-light > button { padding: 0 0 0 2px; background: none; border: 0; color: var(--sel); font: inherit; font-size: 10px; cursor: pointer }

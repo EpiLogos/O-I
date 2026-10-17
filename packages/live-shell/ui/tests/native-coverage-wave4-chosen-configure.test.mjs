@@ -107,22 +107,46 @@ test('a Follow entry offers Bind this object only when one object is selected to
 
 test('an unavailable owner disables Add Parameter and says the owner has not disclosed its chosen controls', () => {
   const markup = render({available: false, entries: [], controls: []})
-  assert.match(markup, /<button disabled="">\+ Parameter<\/button>/)
+  assert.match(markup, /<button type="button" class="dp-action" disabled="">\+ Parameter<\/button>/, 'the kit\'s action, off')
   assert.match(markup, /The retained owner has not disclosed its chosen controls\./)
 })
 
-test('a retained declaration the owner has not resolved shows its reason and cannot take a typed value', () => {
+test('a retained declaration the owner has not resolved says its reason on the status line and cannot be turned', () => {
   const markup = render({entries: [{id: 'entry-follow', key: second.key, scope: 'selected'}], controls: []})
-  assert.match(markup, /The native owner has not resolved this retained declaration\./)
-  assert.match(markup, /class="native-chosen-control is-unavailable"/)
-  assert.match(tagWithLabel(markup, 'Unavailable parameter exact value'), /disabled=""/)
+  assert.match(markup, /data-i="Unavailable parameter\|[^"]*The native owner has not resolved this retained declaration\./)
+  assert.match(markup, /class="native-chosen-item is-unavailable"/)
+  assert.match(tagWithLabel(markup, 'Unavailable parameter'), /aria-disabled="true"/)
+  assert.match(tagWithLabel(markup, 'Unavailable parameter'), /aria-valuetext="no reading"/, 'no reading, never a zero')
 })
 
 test('the dial reports its range and current value to assistive technology', () => {
   const markup = render({entries: [{id: 'entry-follow', key: second.key, scope: 'selected'}], controls: [control('entry-follow', second, {base_value: 1, entity_id: object.id})], selection: [object.id]})
-  const dial = tagWithLabel(markup, `${second.label} · ${object.name}`)
+  const label = second.label.replace(/^Entity \d+ · /, '')
+  const dial = tagWithLabel(markup, label)
   assert.match(dial, /role="slider"/)
-  assert.match(dial, new RegExp(`aria-valuemin="${second.hardMin}"`))
-  assert.match(dial, new RegExp(`aria-valuemax="${second.hardMax}"`))
+  assert.match(dial, new RegExp(`aria-valuemin="${second.min}"`), 'the kit dial sweeps the parameter\'s own range')
+  assert.match(dial, new RegExp(`aria-valuemax="${second.max}"`))
   assert.match(dial, /aria-valuenow="1"/)
+  assert.match(markup, new RegExp(`data-i="${escape(label).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\|Follow · ${object.name}`), 'its scope and the object it acts on, on the status line')
+})
+
+test('your controls page in their section, never scroll, and stand as kit dials, never cards (lane BE)', async () => {
+  const {chosenPage, pageOf} = await import('../src/components/NativeChosenControls.tsx')
+  // The band's 139 px holds one row of dials under the head (+ Parameter, the pages); a taller band holds two; Configure adds the management.
+  assert.deepEqual(chosenPage(139, 3, false), {rows: 1, size: 3})
+  assert.deepEqual(chosenPage(160, 4, false), {rows: 2, size: 8})
+  assert.deepEqual(chosenPage(139, 3, true), {rows: 1, size: 3})
+  assert.deepEqual(chosenPage(null, 3, false), {rows: 1, size: 3}, 'unmeasured: one row')
+  assert.deepEqual(pageOf(['a', 'b', 'c', 'd', 'e'], 2, 1), {at: 1, pages: 3, shown: ['c', 'd']})
+  assert.deepEqual(pageOf(['a', 'b', 'c'], 2, 9), {at: 1, pages: 2, shown: ['c']}, 'a page past the end shows the last')
+  const markup = render()
+  assert.match(markup, /class="dp-cell dp-cell--dial"/, 'the kit\'s dial')
+  assert.doesNotMatch(markup, /native-chosen-control|native-chosen-editor|<article/, 'no card, no box of its own')
+  const css = await readFile(new URL('../src/components/NativeChosenControls.css', import.meta.url), 'utf8')
+  assert.doesNotMatch(css, /overflow\s*:\s*(auto|scroll)/, 'nothing scrolls')
+  const many = render({entries: Array.from({length: 7}, (_, i) => ({id: `e${i}`, key: second.key, scope: 'selected'})),
+    controls: Array.from({length: 7}, (_, i) => control(`e${i}`, second))})
+  assert.equal(countOf(many, /class="native-chosen-item"/g), 3, 'one page of three in an unmeasured section')
+  assert.match(many, /aria-label="Next page of your controls"/)
+  assert.match(many, /<span>1\/3<\/span>/, 'the pages in the head')
 })

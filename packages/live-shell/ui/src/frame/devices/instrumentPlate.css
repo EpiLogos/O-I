@@ -1,0 +1,73 @@
+/* An instrument as one plate, its controls grouped in sections side by side: the mockup's .inst / .insth / .isecs / .isec
+   (world-shell-mockup.html:352-359) drawn on the SDK's plate (inhabitants/sdk/sdk.css) at the device UI standard's measures
+   (docs/dlw/DLW.md §16.9: a 22 px head, a band of sections, 56 px control columns, 9 px small capitals 13 px high; §1: "Sections are
+   columns, ruled off from each other by a hairline … Nothing scrolls, and no box sits inside a box"). Shell and SDK tokens only. */
+.inst-plate { flex: none; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; max-height: 100% }
+/* The plate's face (manual §16.9 Face): the panel kit's grey on a hairline, its head, its row of sections, what stands under them. */
+.inst-plate > .inst-face { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg-2); border: 1px solid var(--line);
+  font: 11px/1.35 var(--font-ui, sans-serif); color: var(--text) }
+/* The head is the panel kit's (panel.tsx PanelHead; manual §16.9): the activator, ▾, the mark, the name, the held mark, the pages, the
+   device's own acts, the place's marks, ⤢. It never pushes the plate wider than its sections: what does not fit is cut at the right. */
+.inst-plate > .inst-face > .dp-head { overflow: hidden }
+.inst-plate > .inst-face > .dp-head > .inst-head-mark { flex: none; color: var(--accent) }
+
+/* The sections (.isecs, .isec): one row of columns at the widths their controls take, each ruled off from the next by a hairline. The
+   row never scrolls: what does not fit folds to its title (plateFit.ts). */
+.inst-sections { flex: 1 1 auto; display: flex; min-height: 0; min-width: 0; overflow: hidden }
+.inst-section { flex: none; width: var(--section-w, auto); min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 5px 6px 6px; border-right: 1px solid var(--line); overflow: hidden }
+.inst-section:last-child { border-right: none; flex: 1 0 auto }
+.inst-section-head { flex: none; height: 13px; margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 400; font-size: 9px; line-height: 13px;
+  color: var(--text-faint); letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; overflow: hidden }
+.inst-section-head > :first-child { flex: none }
+.inst-section-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-faint); letter-spacing: .02em; text-transform: none; font-size: 9.5px }
+/* The body never scrolls: a list pages (plateControls.tsx PlateRows), a section too wide folds. */
+.inst-section-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 5px; overflow: hidden }
+.inst-section-body > * { flex: none }
+/* Control columns (manual §16.9 "Control column 56 wide"): dials and toggles side by side; a radio, a list, a chooser, a field or a line
+   across the section. */
+.inst-section-body[data-cols] { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 5px 0; align-content: start; justify-items: center }
+.inst-section-body[data-cols] > :is(.dp-cell--radio, .dp-cell--rows, .dp-cell--chooser, .dp-cell--wide, .plate-field, .plate-line, .plate-span, .inst-section-line, .frame-chrome, .inst-devices, p) { grid-column: 1 / -1; justify-self: stretch }
+.inst-section-body[data-cols] > .plate-half { grid-column: span 2; justify-self: stretch }
+/* A group's line when its owner discloses nothing: short, faint, three lines at most; its whole words on the status line. */
+.inst-section-line { margin: 0; max-width: 30ch; font-size: 10px; line-height: 1.4; color: var(--text-faint); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden }
+/* A column folded to its title: the runtime's fold strip (sdk.css .sdk-face__unfold; the mockup's .ifold, :153), 26px wide, its
+   name read upward, pressed to open. An open column that can fold carries its title as the press. */
+.inst-section--folded { width: 26px; padding: 0; gap: 0 }
+.inst-section--folded:last-child { flex: none }
+.inst-section--folded > .sdk-face__unfold { display: flex; align-items: center; gap: 8px; width: 100%; height: 100%; min-height: 0; padding: 8px 0; writing-mode: vertical-rl;
+  background: transparent; border: 0; color: var(--text-dim); font: inherit; font-size: 11px; white-space: nowrap; overflow: hidden; cursor: pointer }
+.inst-section--folded > .sdk-face__unfold:hover { color: var(--text) }
+.inst-section--folded .sdk-face__fold-title { overflow: hidden; text-overflow: ellipsis }
+.inst-section--folded:hover { background: var(--bg-3) }
+.inst-section-fold { padding: 0; background: none; border: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer }
+.inst-section-fold:hover { color: var(--text) }
+.inst-section-fold:focus-visible, .inst-section--folded > .sdk-face__unfold:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+
+/* The device's own acts in the head (the kit's .dp-head-acts): a short state, then its keys (the mockup's Studio head: Save, Undo, Redo). */
+.inst-plate .dp-head-acts .dp-toggle, .inst-plate .dp-head-acts .dp-action, .inst-plate .dp-head-acts .frame-chrome-key { height: 16px }
+
+/* A section's devices: the selector of marks (one per device it holds), then the shown device drawn flat into the column — its
+   own head (ring, name, marks) stays, the plate's frame stands down so the column reads as one group. */
+.inst-devices { display: flex; flex-direction: column; gap: 4px; min-width: 0 }
+.inst-selector { display: flex; flex-wrap: wrap; gap: 0 }
+.inst-selector-mark { position: relative; display: inline-grid; place-items: center; width: 20px; height: 16px; padding: 0; background: none; border: 0; border-bottom: 1px solid transparent; color: var(--text-faint); cursor: pointer }
+.inst-selector-mark:hover { color: var(--text) }
+.inst-selector-mark[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--text) }
+.inst-selector-mark:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+/* The device's light on its mark: lit only when the owner reports on (a reading, never a default). */
+.inst-selector-mark[data-device-light="on"]::after { content: ''; position: absolute; right: 2px; top: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent) }
+.inst-device { min-width: 0 }
+/* The kit's plate (panel.tsx Panel) stands flat in the column: no face, no edge, its head a line, its sections without their own
+   rules — the column's heading names the group, so the device reads as the column's controls (no box inside a box). */
+.inst-device .dp { background: transparent; border: 0 }
+.inst-device .dp > .dp-head { height: 18px; padding: 0; background: none; border-bottom: 0 }
+.inst-device .dp > .dp-body { height: auto }
+.inst-device .dp-sec { padding: 4px 0 0 }
+.inst-device .dp-sec + .dp-sec { border-left: 0; padding-left: 6px }
+
+/* The display's section (InstrumentPlate.tsx `display`; manual §16.9, §7): the well alone at the plate's left, no heading, never
+   folded; the well is the plate's only inset surface. */
+.inst-section--display { flex: none; justify-content: center; align-items: center; padding: 5px 6px }
+/* A section whose owner discloses nothing, drawn as a light and one word (SectionNote `word`): its sentence is the status bar's. */
+.inst-section-word { display: flex; align-items: center; gap: 5px; -webkit-line-clamp: 1; white-space: nowrap; text-overflow: ellipsis }
+.inst-section-word > .dp-lamp { flex: none }

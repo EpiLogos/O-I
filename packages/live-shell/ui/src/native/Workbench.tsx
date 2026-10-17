@@ -4,12 +4,13 @@ import {deviceBindingId, deviceWindowGone, nativeDetachedBodySupported, placeDev
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Workbench, GroupPane, type WorkbenchProps} from '../../../../../desktop/cradle/src/surface/Workbench'
 import {ProjectionEncounterProvider} from '../../../../../desktop/cradle/src/surface/projectionPane'
+import {followsSelection} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import {createSpineEncounterBridge} from '../projections/encounterBridge'
 import {ContextMenu, type MenuState} from '../../../../../desktop/cradle/src/surface/ContextMenu'
 import {bindingDisclosures, frameDisclosures, executeFrameAction} from '../../../../../desktop/cradle/src/surface/registry'
-import {activeBindingId, detachBinding, groupsOf, makeSourceBinding, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
+import {activeBindingId, detachBinding, focusedGroup, groupsOf, makeSourceBinding, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
 import {frameActionForKey} from '../../../../../desktop/cradle/src/surface/keys'
-import type {ActionArg, LayoutState, RestorePoint, SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
+import type {ActionArg, LayoutState, Pane, RestorePoint, SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 import {useKernel} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
 import type {ListedSource, CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
 import {acquireFileReading, acquireFileBytes} from '../../../../../desktop/cradle/src/files/resources'
@@ -26,8 +27,11 @@ import {bindScopeWriter, publishScope, publishFocusedProject, scopeFromWorkspace
 import {FactoryLiveProvider} from '../../../../../desktop/cradle/src/contributions/factory/FactoryLive'
 import {publishCentreView} from '../../../../../desktop/cradle/src/contributions/factory/desk/deskModel'
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
+import {publishFocusedPane, publishWorkbenchAperture, publishWorkbenchOpeners} from './workbenchDoor'
 import {withHostedDescriptor} from '../../../../../desktop/cradle/src/contributions/registry'
 import {DOCUMENT_FORMS} from '../../../../../desktop/cradle/src/flow/documentForms'
+/** The four forms the browser's New… grid makes (shell/ModeBrowser.tsx NEW_FORMS). */
+const NEW_DOCUMENT_FORMS: readonly string[] = ['document-42', 'document-01', 'document-beings', 'document-things']
 import {createFormInPlace} from '../../../../../desktop/cradle/src/flow/createInPlace'
 import {userFlowsArea} from '../../../../../desktop/cradle/src/flow/instances'
 import {mintBlankInstance, mintInstance, instanceFileName, parseInstance} from '../../../../../desktop/cradle/src/flow/instance'
@@ -42,7 +46,12 @@ import {NativeAgencyParticipation} from '../components/NativeAgencyParticipation
 import {preparedContextScopeKey,type NativePreparedContextScope} from './preparedContextBinding'
 import {workbenchContextScope} from './workbenchContext'
 import {AgentShellCentre} from '../agent/AgentShellRoot'
-import {AGENT_SHELL_KIND, hasFactoryCentre, seedFactoryCentre} from '../agent/factoryCentre'
+import {AGENT_SHELL_KIND} from '../agent/factoryCentre'
+import {MODE_TREE_SEEDS} from '../shell/modeFrames'
+import {openInstrumentAt} from '../frame/openInstrument'
+import {instrumentInView, openInstrument, publishInstrumentOpener} from '../frame/instrumentDoor'
+import {Icon} from '../inhabitants/sdk/Icon'
+import '../frame/paneGrammar.css'
 import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import {isRetainedCentreKind, WARM_WORKSPACES, type WarmTreeRef} from '../../../../../desktop/cradle/src/surface/warmTrees'
 import {RETAINED_VIEW_BUDGET} from '../../../../../desktop/cradle/src/surface/runtime'
@@ -66,6 +75,51 @@ export function workbenchMembership(book: CandidateWorkspace): Map<string, Surfa
   }
   return found
 }
+
+// lane F (F5): the pane tabs' pin, read against the candidate's own grammar.
+/** The candidate's pane grammar for tabs (the mockup's panes, world-shell-mockup.html .trail, #375): a compact rail on the pane's
+ * left edge, folded until pointed at — no control sits on a pane's face. A pane's own pin state stands over it. */
+export const PANE_TABS = {presentation: 'unpinned', orientation: 'vertical'} as const
+
+/** ⌘⌥\ (desktop/cradle/src/surface/keys.ts: frame.tabs-pin) pins or unpins the focused pane's tabs in their orientation,
+ * frame.tabs-orient turns them, and the frame menu's Pin tabs horizontally / vertically / Unpin tabs (frame.tabs:…) set every
+ * pane. The cradle's registry reads an absent presentation as pinned-horizontal and stores a pin as the
+ * absent default, so under this grammar (absent = unpinned) its pin unpinned an unpinned pane (no visible change) and its next
+ * press stored "absent" again, which is unpinned here: the strips could never be pinned (seen natively by the lead, 16 Oct).
+ * Here the pane's state is read through the grammar and every state is stored explicitly. Pure. */
+export type PaneTabsRef = 'frame.tabs-pin' | 'frame.tabs-orient' | 'frame.tabs:pinned-horizontal' | 'frame.tabs:pinned-vertical' | 'frame.tabs:unpinned'
+const PANE_TABS_REFS: readonly string[] = ['frame.tabs-pin', 'frame.tabs-orient', 'frame.tabs:pinned-horizontal', 'frame.tabs:pinned-vertical', 'frame.tabs:unpinned']
+export const isPaneTabsRef = (ref: string): ref is PaneTabsRef => PANE_TABS_REFS.includes(ref)
+
+/** A pane's tabs as they stand: its own state, else the grammar's. */
+export function paneTabsOf(group: Extract<Pane, {type: 'group'}> | undefined): {presentation: 'pinned-horizontal' | 'pinned-vertical' | 'unpinned'; orientation: 'horizontal' | 'vertical'} {
+  const presentation = group?.tabPresentation ?? PANE_TABS.presentation
+  const orientation = group?.tabPinOrientation ?? (presentation === 'pinned-vertical' ? 'vertical' : presentation === 'pinned-horizontal' ? 'horizontal' : PANE_TABS.orientation)
+  return {presentation, orientation}
+}
+
+export function paneTabsAction(layout: LayoutState, ref: PaneTabsRef, groupId: string | null | undefined = layout.focusedGroupId): LayoutState {
+  if (!layout.root) return layout
+  const pinned = (to: 'horizontal' | 'vertical') => to === 'vertical' ? 'pinned-vertical' as const : 'pinned-horizontal' as const
+  const turn = (group: Extract<Pane, {type: 'group'}>): Pane => {
+    const {presentation, orientation} = paneTabsOf(group)
+    if (ref.startsWith('frame.tabs:')) {
+      // the frame menu's choice: every pane moves together (the registry's bulk control), each stored as itself
+      const chosen = ref.slice('frame.tabs:'.length) as 'pinned-horizontal' | 'pinned-vertical' | 'unpinned'
+      return {...group, tabPresentation: chosen, tabPinOrientation: chosen === 'unpinned' ? orientation : chosen === 'pinned-vertical' ? 'vertical' : 'horizontal'}
+    }
+    if (ref === 'frame.tabs-pin') return presentation === 'unpinned'
+      ? {...group, tabPresentation: pinned(orientation), tabPinOrientation: orientation}
+      : {...group, tabPresentation: 'unpinned', tabPinOrientation: orientation}
+    const next = orientation === 'vertical' ? 'horizontal' : 'vertical'
+    return {...group, tabPresentation: presentation === 'unpinned' ? 'unpinned' : pinned(next), tabPinOrientation: next}
+  }
+  const bulk = ref.startsWith('frame.tabs:')
+  if (!bulk && !groupId) return layout
+  const walk = (pane: Pane): Pane => pane.type === 'split' ? {...pane, children: pane.children.map(walk)} : bulk || pane.id === groupId ? turn(pane) : pane
+  return {...layout, root: walk(layout.root), focusedTabId: undefined}
+}
+// end lane F (F5)
 
 export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}) {
   const book = useContinuity(), workspace = useWorkspace(), kernel = useKernel()
@@ -125,11 +179,38 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     return () => observer.disconnect()
   }, [])
   useEffect(() => {restore.current = checkpoint(book.current.layout); setMenu(null)}, [book.current.id, book.current.layout.mode])
-  // Factory's centre is the Workbench tree: entering Factory seeds its default agent tab once (pinned, so it cannot be closed).
+  // The status bar reads the aperture the panes stand in: the panes the tree holds, and those pinned to their own subject.
   useEffect(() => {
-    if (book.current.layout.mode !== 'factory') return
-    if (!hasFactoryCentre(book.current.layout)) book.setLayout(layout => seedFactoryCentre(layout))
+    const layout = book.current.layout
+    const groups = groupsOf(layout.root).filter(group => group.tabs.length > 0)
+    const pinned = groups.filter(group => {const id = group.active ?? group.tabs[0]; return !!(id && layout.surfaces[id]?.projection?.subject_ref)}).length
+    publishWorkbenchAperture(presented ? {panes: groups.length, pinned} : null)
+  }, [book.current.layout, presented])
+  // The browser's aperture slot reads the focused pane (world-shell-mockup.html renderSlot): its kind and tab, which pane of how
+  // many, its pin — and pins or lets it follow through the pane's own Follow/Pin action (surface.pin-subject).
+  useEffect(() => {
+    const layout = book.current.layout
+    const groups = groupsOf(layout.root).filter(group => group.tabs.length > 0)
+    const group = focusedGroup(layout), id = group?.active ?? group?.tabs[0], binding = id ? layout.surfaces[id] : undefined
+    const index = group ? groups.indexOf(group) : -1
+    publishFocusedPane(presented && id && binding && index >= 0 ? {id, kind: binding.kind, title: binding.title, index: index + 1, count: groups.length,
+      pinned: binding.projection?.subject_ref, follows: !!binding.projection && followsSelection(binding.projection.kind), ref: binding.ref, project: binding.project,
+      worldRef: binding.presentation?.world_ref, fieldRef: binding.presentation?.field_ref,
+      pin: ref => callbacks.current.execute('surface.pin-subject', {surfaceId: id, ref})} : null)
+    return () => publishFocusedPane(null)
+  }, [book.current.layout, presented])
+  // The pane tree is the centre in every mode (FOUNDATION F2): a mode's first tree is seeded from its registration
+  // (shell/modeFrames.ts MODE_TREE_SEEDS — Factory's pinned agent tab, the others' instruments); a seed never touches a tree
+  // that already holds the mode's own arrangement.
+  useEffect(() => {
+    const seed = MODE_TREE_SEEDS[book.current.layout.mode ?? 'base']
+    if (seed && seed(book.current.layout) !== book.current.layout) book.setLayout(layout => seed(layout))
   }, [book.current.id, book.current.layout])
+  // The one door the browser's instruments open through: the presented tree, in the focused pane or where asked.
+  useEffect(() => {
+    publishInstrumentOpener((kind, at, subject) => latest.current.book.setLayout(layout => at === 'in-view' ? instrumentInView(layout, kind, subject) : openInstrumentAt(layout, kind, at, subject)))
+    return () => publishInstrumentOpener(null)
+  }, [])
   useEffect(() => {
     let live = true
     const epoch = workspace.accessEpoch
@@ -201,7 +282,9 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
   }
 
   useEffect(() => {
-    if (!workspace.accessReady || !config) return
+    // The kernel admits operations a moment after access is ready; admitting a tab before then is refused as retired
+    // access and never retried (seen on screen at every launch). Wait for the kernel, and run again when it is ready.
+    if (!workspace.accessReady || !config || !kernel.operationReady) return
     const membership = workbenchMembership(book)
     const demanded = new Set<string>()
     if (presented) for (const group of [...groupsOf(book.current.layout.root), ...(book.current.layout.sidePane ? [book.current.layout.sidePane] : [])]) if (group.active) demanded.add(group.active)
@@ -225,7 +308,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         await origin.kernel.surfaceClose(id)
       })().catch(report).finally(() => closing.current.delete(ticket))
     }
-  }, [book.workspaces, book.current.layout, workspace.accessEpoch, workspace.accessReady, kernel.snapshot.surfaces, config, presented, releaseRetry])
+  }, [book.workspaces, book.current.layout, workspace.accessEpoch, workspace.accessReady, kernel.operationReady, kernel.snapshot.surfaces, config, presented, releaseRetry])
 
   const retainedMembership=()=>{
     const live=workbenchMembership(latest.current.book);
@@ -354,6 +437,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     if (ref === 'surface.detach') {void detach(arg?.surfaceId ?? activeBindingId(latest.current.book.current.layout) ?? '').catch(report); return}
     if (ref === 'surface.open') {insert({id: crypto.randomUUID(), kind: 'blank', title: 'New tab', project: latest.current.book.current.project}); return}
     if (ref === 'surface.open-sources' || ref === 'frame.world') {insert({id: crypto.randomUUID(), kind: 'sources', title: 'Sources', project: latest.current.book.current.project}); return}
+    // ⌘⌥\ and the orientation toggle, read through the candidate's pane grammar (paneTabsAction, above)
+    if (isPaneTabsRef(ref)) {latest.current.book.setLayout(layout => paneTabsAction(layout, ref, arg?.groupId)); return}
     const mayRelease = ['surface.close', 'surface.split-right', 'surface.split-down', 'surface.tile', 'surface.restore-layout', 'surface.drop', 'surface.move'].includes(ref) || ref.startsWith('surface.move-to:')
     if (mayRelease) {
       const origin = latest.current.book, workspaceId = origin.current.id, mode = origin.current.layout.mode, token = ++intent.current
@@ -399,6 +484,13 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const state = side && layout.sidePane ? {...layout, root: layout.sidePane, sidePane: undefined, focusedGroupId: layout.sidePane.id} : layout
     const context = {state, snapshot: side ? checkpoint(state) : restore.current}
     const items = id ? bindingDisclosures(context, id) : frameDisclosures(context)
+    // the menu's tab entries disclose the focused pane's tabs as they stand under the grammar (paneTabsOf), not the cradle's default
+    const standing = paneTabsOf(focusedGroup(state)).presentation
+    for (const item of items) if (item.action_ref.startsWith('frame.tabs:')) {
+      const current = item.action_ref.slice('frame.tabs:'.length) === standing, base = item.title.replace(/ \(current\)$/, '')
+      item.title = current ? `${base} (current)` : base
+      item.enabled = !current
+    }
     if (side) for (const item of items) if (['surface.split-right', 'surface.split-down', 'surface.tile'].includes(item.action_ref)) item.enabled = false
     if (!side && id && kernel.transport.kind === 'tauri') items.push({action_ref: 'surface.detach', title: 'Detach into native window', enabled: !!book.current.layout.surfaces[id] && nativeDetachedBodySupported(book.current.layout.surfaces[id].kind)})
     if (items.length) setMenu({x, y, items, surfaceId: id})
@@ -761,14 +853,31 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
   for (const key of visitedTrees.current) if (!retainedOwners.has(key.split(':')[0])) visitedTrees.current.delete(key)
   const activeErrors = Object.entries(errors).filter(([id]) => workbenchMembership(book).has(id)).slice(-16)
 
+  // What this Workbench can open is listed in the one browser's Instruments (native/workbenchDoor.ts) — the panes carry no
+  // toolbar of their own (the controls-live-in-device-UI law).
+  const openerActions = useRef({execute, capture, openKind, report})
+  openerActions.current = {execute, capture, openKind, report}
+  const tauri = kernel.transport.kind === 'tauri'
+  useEffect(() => {
+    const run = (open: () => void) => () => { try { open() } catch (cause) { openerActions.current.report(cause) } }
+    const kind = (kind: string) => run(() => { openerActions.current.capture(undefined, true); openerActions.current.openKind(kind) })
+    return publishWorkbenchOpeners([
+      {id: 'surface.new', title: 'New tab', hint: 'an empty tab in the focused pane', open: run(() => openerActions.current.execute('surface.open'))},
+      {id: 'surface.sources', title: 'Sources', hint: 'the native sources of this work', open: run(() => openerActions.current.execute('surface.open-sources'))},
+      ...registeredHostedSurfaces.filter(entry => entry.descriptor.kind !== 'expressions').map(entry => ({id: `hosted.${entry.descriptor.kind}`, title: entry.descriptor.title, hint: 'a surface the suite hosts', open: kind(entry.descriptor.kind)})),
+      ...(tauri ? [{id: 'terminal', title: 'Terminal', hint: 'a shell in a pane', open: kind('terminal')}, {id: 'browser', title: 'Web browser', hint: 'a web page in a pane', open: kind('browser')}] : []),
+      // The browser's New… grid (lane L): each of the four document forms opens a new tab and makes the form in it through the
+      // same fresh choice a blank tab's form picker uses — the owner writes the new document.
+      ...DOCUMENT_FORMS.filter(form => NEW_DOCUMENT_FORMS.includes(form.kind)).map(form => ({id: `form.${form.kind}`, title: form.label, hint: form.hint,
+        open: run(() => {
+          const id = crypto.randomUUID()
+          callbacks.current.insert({id, kind: 'blank', title: 'New tab', project: latest.current.book.current.project})
+          void callbacks.current.freshChoice(id, form.kind).catch(openerActions.current.report)
+        })})),
+    ])
+  }, [tauri])
+
   return <FactoryLiveProvider><section ref={host} className="candidate-workbench" aria-label="Native Workbench">
-    <div className="candidate-workbench-toolbar">
-      <span>{book.current.name}</span>
-      <button type="button" onClick={() => execute('surface.open')}>New tab</button>
-      <button type="button" onClick={() => execute('surface.open-sources')}>Sources</button>
-      {registeredHostedSurfaces.filter(entry => entry.descriptor.kind !== 'expressions').map(entry => <button key={entry.descriptor.descriptor_ref} type="button" onClick={() => {try {capture(undefined, true); openKind(entry.descriptor.kind)} catch (cause) {report(cause)}}}>{entry.descriptor.title}</button>)}
-      {kernel.transport.kind === 'tauri' && <><button type="button" onClick={() => {try {capture(undefined, true); openKind('terminal')} catch (cause) {report(cause)}}}>Terminal</button><button type="button" onClick={() => {try {capture(undefined, true); openKind('browser')} catch (cause) {report(cause)}}}>Browser</button></>}
-    </div>
     {fault && <p role="alert" className="candidate-workbench-fault">{fault}{!config && <button type="button" disabled={!workspace.accessReady} onClick={() => setBackingRetry(value => value + 1)}>Retry backing read</button>}<button type="button" onClick={() => setFault(undefined)}>Dismiss</button></p>}
     {!!failedReleases.current.size && <p role="alert" className="candidate-workbench-fault">Some document views remain mounted because their local checkpoint failed; the normal warm budget may be exceeded.<button type="button" onClick={() => {failedReleases.current.clear(); setReleaseRetry(value => value + 1)}}>Retry local checkpoints</button></p>}
     {returnContext?.origin === 'canvas' && <div className="candidate-workbench-return"><button type="button" disabled={returning || !workspace.accessReady} onClick={returnCanvas}>{returning ? 'Returning…' : 'Return to Canvas'}</button><span>{selected?.title}</span></div>}
@@ -827,6 +936,15 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           current()
           return {ref:reading.agent_session,project:reading.project,space:reading.space}
         }} report={report}/>,
+        paneGrammar: {
+          // Through the instrument door, so a stage-lens row dropped on a pane opens the stage there and turns its lens.
+          openInstrument: (kind, groupId, edge) => {if (allowed()) openInstrument(kind, {groupId, edge})},
+          selectionRef: owner.context?.selection?.ref,
+          mark: name => <Icon name={name === 'pin' ? 'placed' : 'follow'} size={12}/>,
+          // The mockup's panes (world-shell-mockup.html .trail, #375): tabs a compact rail on the pane's left edge, folded until
+          // hovered — no control sits on a pane's face (PANE_TABS; its pin through paneTabsAction).
+          tabs: PANE_TABS,
+        },
         host: {project:factoryScope?.project,sourceWorldRef:factoryScope?.sourceWorldRef,current:factoryCurrent,unavailable:factoryUnavailable,accompanying:tree.layout.accompanying,openEncounter:row=>factoryCurrent()?chooseFactory(row):Promise.reject(Error(factoryUnavailable??'The originating Factory owner is concealed or retired.')),onMessage:report}, subject: owner.context?.subject,
       }
       const side = tree.layout.sidePane

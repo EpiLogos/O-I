@@ -26,12 +26,10 @@ export async function load(url,context,next){
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root);
 const [{kernelDocumentToJourney}, {prepareCompositionEdit}, {DocumentStore}, {createRetainedNativeEditor, applyNativeGlyphChanges},
   {toNativeEntity}, {readNativeExpressionsContent, createNativeContentActions},
-  {nativeSourceLanes, readNativeSourceTimeline, selectNativeSource, editNativeSourceTiming, currentCompositionReply, createNativeCompositionPresentationGuard},
-  {SessionView}, {ArrangementView}, React, {renderToStaticMarkup}] = await Promise.all([
+  {nativeSourceLanes, readNativeSourceTimeline, selectNativeSource, editNativeSourceTiming, currentCompositionReply, createNativeCompositionPresentationGuard}] = await Promise.all([
   import(new URL('kernelDocumentBridge.ts',author)), import(new URL('kernelComposition.ts',author)), import(new URL('store.ts',author)),
   import(new URL('hostEditor.ts',author)), import(new URL('nativeBridge.ts',author)), import('../src/shell/nativeContent.ts'),
-  import('../src/shell/compositionViews.ts'), import('../src/components/SessionView.tsx'), import('../src/components/ArrangementView.tsx'),
-  import('react'), import('react-dom/server'),
+  import('../src/shell/compositionViews.ts'),
 ]);
 
 // The rich Glyph rack at native revision 8, as an actual read-only inspection
@@ -187,40 +185,10 @@ test('real sequence clock edit exposes morph cycles and refuses a seconds edit o
   assert.equal(reply.ok,false);assert.match(reply.error,/shared Field dwell/);assert.equal(requests.length,0);
 });
 
-const audioProps = {set:null,document:null,selection:{track:0,scene:null},select:blocked,colors:[],setColor:blocked};
-test('actual resident SSR displays exact native membership and authored states without audio transport controls',()=>{
-  const content = readNativeExpressionsContent(retained().reading),{source,requests} = boundary(content);
-  const session = renderToStaticMarkup(React.createElement(SessionView,{...audioProps,native:source}));
-  const arrangement = renderToStaticMarkup(React.createElement(ArrangementView,{...audioProps,native:source}));
-  const objects=[...new Set(content.scenes.scenes.flatMap(row=>row.member_refs))];
-  assert.equal((session.match(/data-native-object=/g)??[]).length,objects.length);
-  for(const ref of objects)assert.ok(session.includes(`data-native-object="${ref}"`));
-  const members=content.scenes.scenes.reduce((count,row)=>count+row.members.length,0);
-  assert.equal((session.match(/class="clip-slot[^"\n]*occupied-slot/g)??[]).length,members);
-  for(const row of content.scenes.scenes)for(const ref of objects){
-    const member=row.members.find(member=>member.entity_ref===ref);
-    const label=`${content.scenes.object_titles[ref]}, ${row.title}${member?`, ${member.state}`:', absent'}`;
-    const escaped=renderToStaticMarkup(React.createElement('span',null,label)).slice(6,-7);
-    assert.ok(session.includes(`aria-label="${escaped}"`),`exact native matrix cell: ${ref} in ${row.scene_ref}`);
-  }
-  assert.equal((arrangement.match(/class="arrange-clip native-state-span"/g)??[]).length,3);
-  assert.match(session,/>Scenes</);assert.match(session,/>Field</);assert.match(arrangement,/Glyph source timing/);
-  assert.match(arrangement,/Authored source time in seconds/);assert.match(arrangement,/>Layers</);
-  for(const html of [session,arrangement])assert.doesNotMatch(html,/MIDI From|Audio From|Launch scene|track-stop|arrange-loop-brace|Arm requires/);
-  assert.equal(requests.length,0);
-});
-test('existing audio empty-state route remains the DESIGNED empty state when no native owner is supplied',()=>{
-  // The audio cut's empty route was the bare sentence `view-empty`; the
-  // live lane's designed empty states replaced it (the empty-state law).
-  // The guard now holds the DESIGNED state: a styled disclosure inside the
-  // frame, never a floating sentence — and no native content appears.
-  for(const Component of [SessionView,ArrangementView]){
-    const out=renderToStaticMarkup(React.createElement(Component,audioProps));
-    assert.match(out,/live-empty-disclosure/,'the designed empty disclosure stands');
-    assert.ok(!out.includes('native.session')&&!out.includes('data-scene-ref'),'no native content without a native owner');
-  }
-});
-
+// The Session and Arrangement views that drew this material resident (SessionView, ArrangementView) were drawn by nothing once
+// the tracks pane became the centre (FOUNDATION F3) and were deleted on 15 Oct (§7): the open Expression's scenes are clips of its
+// track in the one Session grid (frame/tracks/modeTracks.ts nativeTracks), and its source timing is edited in the Clip editor
+// (components/GlyphSequenceEditor.tsx).
 // Execute the exact production presentation closures. Setter observations
 // are UI effects, not substitute native owners or fabricated native replies.
 const ts=(await import(compiler)).default;
@@ -284,8 +252,9 @@ test('actual devicePresented requires the device cut, exact native access and re
 });
 
 test('actual Deep Return restores the captured exact height and refuses a departed native residence',()=>{
- const element=find(appSource,n=>ts.isJsxSelfClosingElement(n)&&n.tagName.getText(appSource)==='NativeWorldDetail');
- const attribute=name=>find(element,n=>ts.isJsxAttribute(n)&&n.name.getText(appSource)===name).initializer.expression.getText(appSource);
+ // The native detail's expand and collapse ride the one detail host's reading (FOUNDATION F4), not a JSX residence in App.
+ const reading=find(appSource,n=>ts.isVariableDeclaration(n)&&n.name.getText(appSource)==='detailReading').initializer;
+ const attribute=name=>find(reading,n=>ts.isPropertyAssignment(n)&&n.name.getText(appSource)===name).initializer.getText(appSource);
  for(const height of [null,319.997,421]){
   const detailExpansionReturn={current:null},effects=[],workspace={workspaceId:'current-native-residence',accessEpoch:7};
   const bindings={detailExpansionReturn,detailHeight:height,workspace,viewport:[1200,577],resizeDetail:value=>effects.push(value)};
@@ -465,7 +434,9 @@ test('actual acknowledged native open presentation ensures Source, Layers or Pla
 async function nativeEditorResidence(){
  const app=await parse('packages/live-shell/ui/src/App.tsx'),retention=await parse('packages/live-shell/ui/src/components/NativeInputRetention.tsx');
  const engine=await import(new URL('desktop/cradle/src/surface/engine.ts',root)),{freshLayout}=await import(new URL('desktop/cradle/src/surface/types.ts',root));
- const nativeInputBinding=execute(find(retention,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='nativeInputBinding').getText(retention).replace(/^export /,''),{groupsOf:engine.groupsOf});
+ // The finder is the shared one (native/expressionsBinding.ts): a placed binding, as this book holds, is found as before.
+ const {expressionsBindingOf}=await import(new URL('packages/live-shell/ui/src/native/expressionsBinding.ts',root));
+ const nativeInputBinding=execute(find(retention,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='nativeInputBinding').getText(retention).replace(/^export /,''),{expressionsBindingOf});
  const r=retained(),book={layout:engine.openBinding(freshLayout(),{id:'world.expressions',kind:'expressions',title:'Expressions'}),modeLayouts:{}},continuity={current:book},currentContinuity={current:continuity};
  const state={workspaceId:'native-residence-source',accessEpoch:7,editor:r.owner,mode:'techne',centerPanel:'native.arrangement',settingsPresented:false,epoch:0},presentation={current:state};
  const effects=[],queued=[],currentEditorReading={current:r.owner.read()};let returned=null;
@@ -510,7 +481,7 @@ test('actual checkpoint view keeps origin only during active large residence and
  const app=await parse('packages/live-shell/ui/src/App.tsx');
  const effect=find(app,n=>ts.isCallExpression(n)&&n.expression.getText(app)==='useEffect'&&n.arguments[0]?.getText(app).includes('continuity.checkpointApplicationView')).arguments[0].getText(app);
  for(const active of [true,false])for(const height of [null,319.997]){
-  const writes=[],bindings={frameWorkspace:'retained-native-workspace',workspace:{workspaceId:'retained-native-workspace',mode:'techne'},continuity:{checkpointApplicationView:value=>writes.push(value)},state:{path:null},restored:null,tab:'arrangement',selection:{track:0,scene:null},browser:true,detail:false,dock:true,browserWidth:null,detailHeight:421,detailExpansionReturn:{current:{height,workspaceId:'retained-native-workspace',accessEpoch:7}},centerPanel:active?'world.expressions':'native.workbench',detailMode:'device',nativeEditorPresented:active,nativeEditorReturn:{centerPanel:'native.arrangement',detail:true,detailMode:'clip'},settingsPresented:false};
+  const writes=[],bindings={browserCategory:undefined,restoredKey:'retained-native-workspace|techne|',restoreKey:'retained-native-workspace|techne|',workspace:{workspaceId:'retained-native-workspace',mode:'techne'},continuity:{checkpointApplicationView:value=>writes.push(value)},state:{path:null},restored:null,tab:'arrangement',liveHeld:{track:0,scene:null},browser:true,detail:false,dock:true,browserWidth:null,detailHeight:421,detailExpansionReturn:{current:{height,workspaceId:'retained-native-workspace',accessEpoch:7}},centerPanel:active?'world.expressions':'native.workbench',detailMode:'device',nativeEditorPresented:active,nativeEditorReturn:{centerPanel:'native.arrangement',detail:true,detailMode:'clip'},settingsPresented:false};
   execute(effect,bindings)();assert.equal(writes.length,1);assert.equal(writes[0].detailHeight,height);assert.equal(writes[0].centerPanel,active?'native.arrangement':'native.workbench');assert.equal(writes[0].detail,active);assert.equal(writes[0].detailMode,active?'clip':'device');
  }
 });
@@ -548,7 +519,7 @@ test('actual NativeWorldDetail fullscreen open permits only intended restored mo
 
 
 test('actual mounted hosted freshness key is unique per mount and real host hide/reveal/mode changes retain one frame URL',async()=>{
- const panel=await parse('packages/live-shell/ui/src/panels/expressions.tsx'),{mountExpressionsApplication}=await import('../../../expressions-boundary/src/host.ts');
+ const panel=await parse('packages/live-shell/ui/src/panels/expressions.tsx'),{mountExpressionsApplication}=await import('../../../expressions-boundary/src/host.ts'),{entryAtAddress}=await import('../../../expressions-boundary/src/protocol.ts');
  const freshness=find(panel,n=>ts.isVariableDeclaration(n)&&n.name.getText(panel)==='hostLoad').parent.parent.getText(panel);
  const call=find(panel,n=>ts.isCallExpression(n)&&n.expression.getText(panel)==='mountExpressionsApplication');
  const mainEffect=find(panel,n=>ts.isCallExpression(n)&&n.expression.getText(panel)==='useEffect'&&n.arguments[0]?.getText(panel).includes('let mounted:'));
@@ -565,14 +536,16 @@ test('actual mounted hosted freshness key is unique per mount and real host hide
   frame.dataset={};frame.style={};frame.attributes={};frame.setAttribute=(key,value)=>{frame.attributes[key]=value};frame.remove=()=>{frame.removed=true};frame.contentWindow={postMessage:(value,origin)=>{commands.push({value,origin})}};frames.push(frame);return frame;
  }};
  const container={ownerDocument,append:frame=>{frame.attached=true}};
- const invocation=new Function('mountExpressionsApplication','target','config','modeRef','worldLens','initialRef','continued','initial','owners','presented','workspaceRef','bookRef','selectionOwner','refreshEditor','setStatus','setHostFault','workspace','expressionBinding','live','disclosureSession',ts.transpileModule(`${freshness}
+ const invocation=new Function('mountExpressionsApplication','target','config','modeRef','worldLens','initialRef','continued','initial','owners','presented','workspaceRef','bookRef','selectionOwner','refreshEditor','setStatus','setHostFault','workspace','expressionBinding','live','disclosureSession','entryAtAddress','keptAddress',ts.transpileModule(`${freshness}
 return ${call.getText(panel)};`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText);
  const mounts=[];let visible=true;
  try{
   for(let lease=0;lease<2;lease++){
-   const mounted=invocation(mountExpressionsApplication,container,{expressions_entry:'/__application/expressions/index.html'},{current:'expressions'},{current:'generic'},r.reading.basis.expression_ref,undefined,undefined,{channels:{}},()=>visible,{current:{publishReading:blocked,publishEditorReading:blocked}}, {current:{current:{id:'retained-native-workspace'}}},{current:{workspaceId:'retained-native-workspace',expected:r.reading.basis.expression_ref}},()=>{},()=>{},()=>{},{setMode:blocked},()=>undefined,true,undefined);
+   const mounted=invocation(mountExpressionsApplication,container,{expressions_entry:'/__application/expressions/index.html'},{current:'expressions'},{current:'generic'},r.reading.basis.expression_ref,undefined,undefined,{channels:{}},()=>visible,{current:{publishReading:blocked,publishEditorReading:blocked}}, {current:{current:{id:'retained-native-workspace'}}},{current:{workspaceId:'retained-native-workspace',expected:r.reading.basis.expression_ref}},()=>{},()=>{},()=>{},{setMode:blocked},()=>undefined,true,undefined,entryAtAddress,lease?{scene:'scene:kept',t:7.5,marker:'m1'}:undefined);
    mounts.push(mounted);const url=new URL(mounted.frame.src),original=mounted.frame.src;
-   assert.equal(url.searchParams.get('expression'),r.reading.basis.expression_ref);assert.match(url.searchParams.get('host-load'),/^[0-9a-f-]{36}$/);assert.equal(url.searchParams.get('mode'),'expressions');
+   assert.equal(url.searchParams.get('expression'),r.reading.basis.expression_ref);
+   // ticket P (G3): a kept address reopens the frame there, in the frame's own query; without one the entry is as it was.
+   assert.deepEqual(['scene','t','marker'].map(key=>url.searchParams.get(key)),lease?['scene:kept','7.5','m1']:[null,null,null]);assert.match(url.searchParams.get('host-load'),/^[0-9a-f-]{36}$/);assert.equal(url.searchParams.get('mode'),'expressions');
    visible=false;mounted.host.setPresented();visible=true;mounted.host.setPresented();mounted.host.setMode('techne','generic');mounted.host.setMode('expressions','generic');
    assert.equal(mounted.frame.src,original);assert.equal(mounted.frame.srcWrites,1);assert.equal(mounted.host.frame,mounted.frame);assert.equal(mounted.frame.removed,undefined);
   }

@@ -321,86 +321,70 @@ fn where_discloses_companions_beside_the_resolved_executable() {
     assert_eq!(reading["companions"], json!({}));
 }
 
-/// A managed update and the active suite receipt name one install. A product
-/// the managed flow installed while a source suite pinned an older cut is
-/// first disclosed as shadowed by `oi where` and `oi update --check`; an
-/// apply supersedes only that product's suite entry, companions included, so
-/// `oi where` and dispatch resolve the managed cut; `oi suite rollback`
-/// restores the replaced receipt.
 #[cfg(unix)]
-#[test]
-fn managed_update_supersedes_the_active_suite_entry_it_installed() {
+fn set_personal_ground(config: &Path, ground: &Path) {
+    let path = config.join("composition.json");
+    let mut composition: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    composition["personal_ground"] = json!(ground);
+    fs::write(&path, serde_json::to_vec_pretty(&composition).unwrap()).unwrap();
+}
+
+#[cfg(unix)]
+fn git(checkout: &Path, args: &[&str]) -> String {
+    let result = Command::new("git")
+        .arg("-C")
+        .arg(checkout)
+        .args(args)
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    String::from_utf8(result.stdout).unwrap().trim().to_owned()
+}
+
+/// A fresh checkout with one committed cut: its revision and tree.
+#[cfg(unix)]
+fn committed_checkout(checkout: &Path) -> (String, String) {
+    fs::create_dir_all(checkout).unwrap();
+    git(checkout, &["init", "--quiet"]);
+    fs::write(checkout.join("README"), "cut\n").unwrap();
+    git(checkout, &["add", "."]);
+    git(
+        checkout,
+        &[
+            "-c",
+            "user.email=t@example.invalid",
+            "-c",
+            "user.name=T",
+            "commit",
+            "--quiet",
+            "-m",
+            "cut",
+        ],
+    );
+    (
+        git(checkout, &["rev-parse", "HEAD"]),
+        git(checkout, &["rev-parse", "HEAD^{tree}"]),
+    )
+}
+
+/// The QL checkout's committed cut installed by the managed flow with its
+/// four companions — linked, activated and receipted — while the active
+/// suite receipt still pins an older QL: its revision and digest.
+#[cfg(unix)]
+fn install_managed_ql(data: &Path, home: &Path, ground: &Path) -> (String, String) {
     use sha2::Digest;
     use std::os::unix::fs::{symlink, PermissionsExt};
 
-    let config = TempDir::new().unwrap();
-    let data = TempDir::new().unwrap();
-    let bin = TempDir::new().unwrap();
-    let home = TempDir::new().unwrap();
-    let ground = TempDir::new().unwrap();
-    write_source_composition(config.path(), bin.path(), "central");
-    let mut composition: Value =
-        serde_json::from_slice(&fs::read(config.path().join("composition.json")).unwrap()).unwrap();
-    composition["personal_ground"] = json!(ground.path());
-    fs::write(
-        config.path().join("composition.json"),
-        serde_json::to_vec_pretty(&composition).unwrap(),
-    )
-    .unwrap();
-    let run = |args: &[&str]| {
-        output(
-            oi(config.path(), data.path(), bin.path())
-                .env("HOME", home.path())
-                .args(args),
-        )
-    };
-
-    assert!(run(&["suite", "channel", "source"]).status.success());
-    let activated = run(&["suite", "update", "--json"]);
-    assert!(activated.status.success(), "{}", stderr(&activated));
-    let suite: Value = serde_json::from_slice(&activated.stdout).unwrap();
-    let first_receipt = suite["active"]["receipt_ref"].as_str().unwrap().to_owned();
-    let first_products = suite["active"]["products"].clone();
-
-    // The QL checkout's committed cut, already installed by the managed flow
-    // with its companions — after the suite was activated.
-    let checkout = ground.path().join("Work/Quaternal-Logic");
-    fs::create_dir_all(&checkout).unwrap();
-    let git = |args: &[&str]| {
-        let result = Command::new("git")
-            .arg("-C")
-            .arg(&checkout)
-            .args(args)
-            .output()
-            .unwrap();
-        assert!(
-            result.status.success(),
-            "{}",
-            String::from_utf8_lossy(&result.stderr)
-        );
-        String::from_utf8(result.stdout).unwrap().trim().to_owned()
-    };
-    git(&["init", "--quiet"]);
-    fs::write(checkout.join("README"), "ql\n").unwrap();
-    git(&["add", "."]);
-    git(&[
-        "-c",
-        "user.email=t@example.invalid",
-        "-c",
-        "user.name=T",
-        "commit",
-        "--quiet",
-        "-m",
-        "cut",
-    ]);
-    let revision = git(&["rev-parse", "HEAD"]);
-    let tree = git(&["rev-parse", "HEAD^{tree}"]);
-
+    let checkout = ground.join("Work/Quaternal-Logic");
+    let (revision, tree) = committed_checkout(&checkout);
     let staging = TempDir::new().unwrap();
     let primary = fake_executable(staging.path(), "ql", "ql-managed");
     let sha256 = format!("{:x}", sha2::Sha256::digest(fs::read(&primary).unwrap()));
     let generation = data
-        .path()
         .join("products/quaternal-logic")
         .join(&sha256)
         .join("bin");
@@ -425,11 +409,11 @@ fn managed_update_supersedes_the_active_suite_entry_it_installed() {
         );
     }
     fs::set_permissions(generation.join("ql"), fs::Permissions::from_mode(0o755)).unwrap();
-    fs::create_dir_all(data.path().join("bin")).unwrap();
-    symlink(generation.join("ql"), data.path().join("bin/ql")).unwrap();
-    let activation = home.path().join(".local/bin");
+    fs::create_dir_all(data.join("bin")).unwrap();
+    symlink(generation.join("ql"), data.join("bin/ql")).unwrap();
+    let activation = home.join(".local/bin");
     fs::create_dir_all(&activation).unwrap();
-    symlink(data.path().join("bin/ql"), activation.join("ql")).unwrap();
+    symlink(data.join("bin/ql"), activation.join("ql")).unwrap();
     let receipt = json!({
         "schema": "oi.managed-update/v1",
         "channel": "source",
@@ -439,18 +423,55 @@ fn managed_update_supersedes_the_active_suite_entry_it_installed() {
             "exe": "ql", "revision": revision, "tree": tree, "branch": "main",
             "channel": "source", "source_dirty": false,
             "source_path": checkout, "sha256": sha256,
-            "managed": generation.join("ql"), "bin": data.path().join("bin/ql"),
+            "managed": generation.join("ql"), "bin": data.join("bin/ql"),
             "activation": activation.join("ql"), "provenance": "built",
             "build_command": [], "gate": "", "installed_at_unix_seconds": 1,
             "companions": companions,
         }},
     });
-    fs::create_dir_all(data.path().join("receipts/updates")).unwrap();
+    fs::create_dir_all(data.join("receipts/updates")).unwrap();
     fs::write(
-        data.path().join("receipts/updates/active.json"),
+        data.join("receipts/updates/active.json"),
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
+    (revision, sha256)
+}
+
+/// A managed update and the active suite receipt name one install. A product
+/// the managed flow installed while a source suite pinned an older cut is
+/// first disclosed as shadowed by `oi where` and `oi update --check`; an
+/// apply supersedes only that product's suite entry, companions included, so
+/// `oi where` and dispatch resolve the managed cut; `oi suite rollback`
+/// restores the replaced receipt.
+#[cfg(unix)]
+#[test]
+fn managed_update_supersedes_the_active_suite_entry_it_installed() {
+    let config = TempDir::new().unwrap();
+    let data = TempDir::new().unwrap();
+    let bin = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+    let ground = TempDir::new().unwrap();
+    write_source_composition(config.path(), bin.path(), "central");
+    set_personal_ground(config.path(), ground.path());
+    let run = |args: &[&str]| {
+        output(
+            oi(config.path(), data.path(), bin.path())
+                .env("HOME", home.path())
+                .args(args),
+        )
+    };
+
+    assert!(run(&["suite", "channel", "source"]).status.success());
+    let activated = run(&["suite", "update", "--json"]);
+    assert!(activated.status.success(), "{}", stderr(&activated));
+    let suite: Value = serde_json::from_slice(&activated.stdout).unwrap();
+    let first_receipt = suite["active"]["receipt_ref"].as_str().unwrap().to_owned();
+    let first_products = suite["active"]["products"].clone();
+
+    // The QL checkout's committed cut, already installed by the managed flow
+    // with its companions — after the suite was activated.
+    let (revision, sha256) = install_managed_ql(data.path(), home.path(), ground.path());
 
     // Shadowed: the suite still resolves its own ql, without companions,
     // and both readings say so with the remedy.
@@ -536,5 +557,188 @@ fn managed_update_supersedes_the_active_suite_entry_it_installed() {
     assert_eq!(
         stdout(&run(&["ql", "probe"])).trim(),
         "quaternal-logic:probe"
+    );
+}
+
+/// An update that installs an `oi` other than the one running it hands the
+/// suite reconcile to the `oi` it installed, so the newest supersede law
+/// decides what the suite pins whichever `oi` ran the update. The running
+/// `oi` stands for the older binary: once it installs another `oi` it does
+/// not supersede the suite receipt itself, so QL — current, and still pinned
+/// at its old cut — stays shadowed unless the installed `oi` reconciles it.
+/// The installed `oi` is a stand-in that names the O:I cut, records how it
+/// was called and runs this build.
+#[cfg(unix)]
+#[test]
+fn an_update_that_installs_another_oi_is_reconciled_by_the_installed_oi() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let config = TempDir::new().unwrap();
+    let data = TempDir::new().unwrap();
+    let bin = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+    let ground = TempDir::new().unwrap();
+    write_source_composition(config.path(), bin.path(), "central");
+    set_personal_ground(config.path(), ground.path());
+    let run = |args: &[&str]| {
+        output(
+            oi(config.path(), data.path(), bin.path())
+                .env("HOME", home.path())
+                .args(args),
+        )
+    };
+    assert!(run(&["suite", "channel", "source"]).status.success());
+    let activated = run(&["suite", "update", "--json"]);
+    assert!(activated.status.success(), "{}", stderr(&activated));
+    let first_receipt = serde_json::from_slice::<Value>(&activated.stdout).unwrap()["active"]
+        ["receipt_ref"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let (ql_revision, ql_sha256) = install_managed_ql(data.path(), home.path(), ground.path());
+
+    // The O:I cut the update adopts: an unmanaged `oi` on PATH that names it.
+    let (oi_revision, _) = committed_checkout(&ground.path().join("Work/O-I"));
+    let calls = home.path().join("installed-oi.calls");
+    let stand_in = bin.path().join("oi");
+    fs::write(
+        &stand_in,
+        format!(
+            "#!/bin/sh\nif [ \"${{1:-}}\" = \"--version\" ]; then echo 'oi 0.1.0 ({})'; exit 0; fi\necho \"$*\" >> '{}'\nexec '{}' \"$@\"\n",
+            &oi_revision[..12],
+            calls.display(),
+            env!("CARGO_BIN_EXE_oi"),
+        ),
+    )
+    .unwrap();
+    fs::set_permissions(&stand_in, fs::Permissions::from_mode(0o755)).unwrap();
+
+    let shadow = |id: &str| {
+        let location = run(&["where", id, "--json"]);
+        assert!(location.status.success(), "{}", stderr(&location));
+        serde_json::from_slice::<Value>(&location.stdout).unwrap()
+    };
+    assert!(!shadow("quaternal-logic")["shadowed_managed_update"].is_null());
+
+    let applied = run(&["update", "--apply", "oi", "quaternal-logic"]);
+    assert!(
+        applied.status.success(),
+        "{}{}",
+        stdout(&applied),
+        stderr(&applied)
+    );
+    assert!(
+        stdout(&applied).contains("oi: adopted"),
+        "{}",
+        stdout(&applied)
+    );
+    // Nothing is shadowed: QL resolves its managed cut through the successor.
+    for (id, _, _) in products() {
+        assert!(
+            shadow(&id)["shadowed_managed_update"].is_null(),
+            "{id} is shadowed"
+        );
+    }
+    // The installed `oi` ran the reconcile, and it superseded the suite.
+    assert_eq!(
+        fs::read_to_string(&calls).unwrap().trim(),
+        "update --reconcile-suite oi quaternal-logic"
+    );
+    assert!(
+        stdout(&applied).contains(&format!("Active suite receipt {first_receipt} superseded")),
+        "{}",
+        stdout(&applied)
+    );
+    let located = shadow("quaternal-logic");
+    assert_eq!(located["authority"], "active-suite-receipt");
+    assert_ne!(located["receipt_ref"], first_receipt);
+    assert_eq!(located["revision"], json!(ql_revision));
+    assert_eq!(located["sha256"], json!(ql_sha256));
+    let check: Value =
+        serde_json::from_slice(&run(&["update", "--check", "--json", "quaternal-logic"]).stdout)
+            .unwrap();
+    assert_eq!(check["suite_shadowed"], json!([]));
+}
+
+/// A dispatch remembers the suite it verified and does not hash it again
+/// while nothing moved; an active executable rewritten in place — same size,
+/// its modification time set back — is hashed again and refused, never
+/// served from the remembered verification.
+#[cfg(unix)]
+#[test]
+fn a_dispatch_remembers_its_verified_suite_and_never_serves_a_changed_binary() {
+    let config = TempDir::new().unwrap();
+    let data = TempDir::new().unwrap();
+    let bin = TempDir::new().unwrap();
+    write_source_composition(config.path(), bin.path(), "central-v1");
+    let run = |args: &[&str]| output(oi(config.path(), data.path(), bin.path()).args(args));
+    assert!(run(&["suite", "channel", "source"]).status.success());
+    let update = run(&["suite", "update", "--json"]);
+    assert!(update.status.success(), "{}", stderr(&update));
+    let cache = data.path().join("cache/suite-verification.json");
+    assert!(!cache.exists());
+
+    let first = run(&["central", "probe"]);
+    assert_eq!(
+        stdout(&first).trim(),
+        "central-v1:probe",
+        "{}",
+        stderr(&first)
+    );
+    let remembered: Value = serde_json::from_slice(&fs::read(&cache).unwrap()).unwrap();
+    assert_eq!(remembered["schema"], "oi.suite-verification-cache/v1");
+    assert_eq!(remembered["products"].as_object().unwrap().len(), 6);
+    let stamp = fs::metadata(&cache).unwrap().modified().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(20));
+    assert_eq!(
+        stdout(&run(&["central", "probe"])).trim(),
+        "central-v1:probe"
+    );
+    assert_eq!(
+        fs::metadata(&cache).unwrap().modified().unwrap(),
+        stamp,
+        "an unmoved suite is not verified again"
+    );
+    // `oi where` verifies through the same remembered verification.
+    fs::remove_file(&cache).unwrap();
+    let located = run(&["where", "central", "--json"]);
+    assert!(located.status.success(), "{}", stderr(&located));
+    assert!(
+        cache.is_file(),
+        "`oi where` remembers the suite it verified"
+    );
+
+    let status: Value =
+        serde_json::from_slice(&run(&["suite", "status", "--json"]).stdout).unwrap();
+    let executable = PathBuf::from(
+        status["active"]["products"]["central"]["executable"]
+            .as_str()
+            .unwrap(),
+    );
+    let before = fs::metadata(&executable).unwrap();
+    let body = fs::read_to_string(&executable).unwrap();
+    let altered = body.replace("central-v1", "central-v9");
+    assert_eq!(altered.len(), body.len());
+    fs::write(&executable, altered).unwrap();
+    fs::File::options()
+        .write(true)
+        .open(&executable)
+        .unwrap()
+        .set_modified(before.modified().unwrap())
+        .unwrap();
+    let refused = run(&["central", "probe"]);
+    assert!(!refused.status.success());
+    assert!(
+        stderr(&refused).contains("active central executable digest drift"),
+        "{}",
+        stderr(&refused)
+    );
+    assert!(!stdout(&refused).contains("central-v9"));
+    let located = run(&["where", "central", "--json"]);
+    assert!(!located.status.success());
+    assert!(
+        stderr(&located).contains("active central executable digest drift"),
+        "{}",
+        stderr(&located)
     );
 }

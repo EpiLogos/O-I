@@ -18,6 +18,7 @@
  * presentation over landed readings: no second store, no owner writes.
  */
 
+import {TrailWidget} from './TrailWidget'
 import {useRef, useState, type PointerEvent as ReactPointerEvent} from 'react'
 import {MODE_GRAMMAR, type SurfMode} from './modeGrammar'
 import {useAgencySessions} from '../agent/useAgencySessions'
@@ -37,7 +38,7 @@ interface TileSpec {
   readonly launcherOnly?: boolean
 }
 
-const TILES: Record<string, TileSpec> = {
+export const TILES: Record<string, TileSpec> = {
   agent: {id: 'agent', name: 'Agent', mark: 'dock'},
   packet: {id: 'packet', name: 'Packet', mark: 'cap'},
   trail: {id: 'trail', name: 'Trail', mark: 'trav'},
@@ -60,7 +61,7 @@ const DOCKS: Record<SurfMode, {tiles: string[]; open: string[]}> = {
 }
 
 /** The companion per mode (Rev 3's right-column row). */
-const COMPANIONS: Record<SurfMode, {name: string; tabs: string; note: string}> = {
+export const COMPANIONS: Record<SurfMode, {name: string; tabs: string; note: string}> = {
   live: {name: 'Fizz', tabs: 'Conversation · Activity · Context · Inspect', note: 'The situated agent rides the shell in every mode; its chain docks in the detail row.'},
   base: {name: 'Fizz', tabs: 'Conversation · Activity · Context · Inspect', note: 'The situated agent for the ground. The conversation device docks on the detail chain; the packet tile shows exactly what it receives.'},
   factory: {name: 'Fizz', tabs: 'Activity · Context · Inspect · Results', note: 'The result desk — the agency surface carries the live dock.'},
@@ -166,7 +167,7 @@ export function ModeContextDock({mode, world, transport, subject, initialOpen}: 
 
 /** One tile's body — the landed readings it composes, or the designed
  * frame naming its owner read. */
-function TileBody({id, mode, world, transport, subject}: {
+export function TileBody({id, mode, world, transport, subject}: {
   id: string
   mode: SurfMode
   world: WorldTimelineView | null
@@ -197,13 +198,7 @@ function TileBody({id, mode, world, transport, subject}: {
       <p className="mode-dock-note">Exactly what the agent receives — selection · entry · document. Select a document in the browser; the packet composes from it in the Document detail.</p>
     </div>
   }
-  if (id === 'trail') {
-    return <div className="mode-dock-rows">
-      {subject
-        ? <div className="mode-dock-row"><span>here</span><b title={subject.path}>{subject.path.split('/').pop()}</b></div>
-        : <p className="mode-dock-note">Every encounter, returnable. Select a subject — the trail keeps the encounters and returns to them.</p>}
-    </div>
-  }
+  if (id === 'trail') return <TrailWidget />
   if (id === 'field') {
     return <div className="mode-dock-rows">
       <div className="mode-dock-row"><span>carrier</span><b>{transport.kind === 'unavailable' ? '—' : carrierOf(transport)}</b></div>
@@ -228,12 +223,13 @@ function AgentsTile({transport}: {transport: KernelTransportStatus}) {
   const agency = useAgencySessions(transport)
   const tracks = agency.tracks.filter(track => !track.group)
   const stateColour: Record<string, string> = {live: 'var(--accent)', stalled: 'var(--stall)', idle: 'var(--text-faint)'}
-  return <div className="mode-dock-rows" aria-label="Agents">
+  // One line per session (the mockup's agents tile, world-shell-mockup.html 1632): its light only where the reading states it.
+  return <div className="mode-dock-lines" aria-label="Agents">
     {transport.kind === 'unavailable' && <p className="mode-dock-note">The carrier is unavailable — the agency reading waits: {transport.reason}</p>}
-    {tracks.slice(0, 8).map(track => <div key={track.sessionRef} className="mode-dock-row" data-i={`${track.purpose ?? track.sessionRef}|${track.needle?.state ?? 'unknown'} — the agency surface's own reading`}>
-      <span className="mode-dock-row-light" style={{background: stateColour[track.needle?.state ?? ''] ?? 'var(--bg-3)'}} aria-hidden="true" />
-      <b>{track.purpose ?? track.sessionRef.slice(0, 24)}</b>
-      <span className="mode-dock-row-meta">{track.needle?.state ?? '—'}</span>
+    {tracks.slice(0, 8).map(track => <div key={track.sessionRef} className="mode-dock-line" data-i={`${track.purpose ?? track.sessionRef}|${track.needle?.state ?? 'unknown'} — the agency surface's own reading`}>
+      {stateColour[track.needle?.state ?? ''] && <span className="mode-dock-row-light" style={{background: stateColour[track.needle?.state ?? '']}} aria-hidden="true" />}
+      <span className="mode-dock-line-text">{track.agentName && <b>{track.agentName} </b>}{track.purpose ?? track.sessionRef.slice(0, 24)}</span>
+      <span className="mode-dock-line-meta">{track.needle?.state ?? '—'}</span>
     </div>)}
     {transport.kind !== 'unavailable' && !tracks.length && <p className="mode-dock-note">No sessions in the agency reading yet.</p>}
   </div>

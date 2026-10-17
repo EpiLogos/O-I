@@ -578,7 +578,17 @@ export interface HostedAppState {
   stage?: {mode: '2d' | '3d'; grid: boolean; snap: boolean; guides: boolean;
     tool?: 'select' | 'interact' | 'pin' | 'text' | 'formation' | 'orbit'; repeatPins?: boolean; videoTake?: boolean};
   hostMode?: HostedAppMode;
+  /** The frame's cut presents its native instrument full-stage (the Live cut's torus): it draws with no Expression open. In
+   * every other cut a frame with no native scene draws nothing, and the pane it stands over says what it waits for. */
+  presentsInstrument?: boolean;
+  /** lane-3 E22: where the frame stands, as its own deep link names it (deepLinks.ts `?scene=&t=&marker=`): the Scene's ref
+   * always, the time and the marker while the transport stands still, and the marker's name for words. Absent until a link the
+   * frame opened at has settled. */
+  address?: HostedAddress;
 }
+
+/** The frame's address (lane-3 E22), refs as its deep link carries them. */
+export interface HostedAddress {scene?: string; t?: number; marker?: string; markerName?: string}
 
 /** Follow one frame's oi-app-state announcements. Only envelopes from that
  * frame are accepted. Returns the teardown. */

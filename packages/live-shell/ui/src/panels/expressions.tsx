@@ -1,9 +1,10 @@
 import {useEffect, useRef, useState} from 'react'
 import {externalHttpsUrl} from '../../../../../desktop/cradle/src/shared/externalLink'
-import {mountExpressionsApplication, reopenConfiguredWorks,
+import {mountExpressionsApplication, reopenConfiguredWorks, addressRefs, entryAtAddress,
   type ExpressionsHost, type HostedAppMode, type ChannelContext} from '@epilogos/expressions-boundary'
 import {createCradleOwners, type KernelTransportStatus} from '@epilogos/expressions-boundary/cradle'
 import {createNativeTechneNavigator} from '@epilogos/expressions-boundary/techne'
+import {createLiveStageAnswers} from '../techne/subject/openSubject'
 import {createNativeEditorClient} from '@epilogos/expressions-boundary/editor-host'
 import type {NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import {registerPanel} from '../shell/panels'
@@ -14,7 +15,6 @@ import {withWikiSubjectStanding} from '../native/wikiSubjectStanding'
 import {disclosureSession} from '../../../../../desktop/cradle/src/techne/session'
 import {useContinuity, type Workspace} from '../continuity'
 import {useKernel} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
-import {groupsOf, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
 import {withHostedDescriptor} from '../../../../../desktop/cradle/src/contributions/registry'
 import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
@@ -26,28 +26,29 @@ import {stageEngine} from '../native/stageCommands'
 import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
 import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
-import {NativeStageTools} from '../components/NativeStageTools'
+import {enumerateWorks, needsListing, setExpressionOwner} from '../components/nativeExpressionCommands'
+import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
 import {followFrame} from '../projections/framePlacement'
 import {registerExpressionsPaneHost} from '../projections/expressionsPane'
 import {liveTorusFromHost, publishLiveTorusState, setLiveInstrumentCommander} from '../live/torusInstrument'
 import {setLivePerformanceChannel} from '../live/LivePresets'
+import {expressionsBindingOf, holdExpressionsBinding, unplaceExpressionsBinding} from '../native/expressionsBinding'
 
-interface NativeWork {expression_ref: string; title: string; revision: number}
 const expressionDescriptor = registeredHostedSurfaces.find(row => row.descriptor.kind === 'expressions')?.descriptor
 
-/** The one application body carries an ordinary native workbench binding.
- * Closed bindings remain recoverable, but never stand in for an open host. */
-function expressionBinding(owner: Workspace): SurfaceBinding | undefined {
-  for (const layout of [owner.layout, ...Object.values(owner.modeLayouts ?? {})]) {
-    for (const id of [...groupsOf(layout.root).flatMap(group => group.tabs), ...(layout.sidePane?.tabs ?? []), ...(layout.detached ?? []).map(row => row.surfaceId)]) {
-      const binding = layout.surfaces[id]
-      if (binding?.kind === 'expressions') return binding
-    }
-  }
-}
+/** The one application body's book binding, held on no tab (native/expressionsBinding.ts). Closed bindings remain recoverable, but
+ * never stand in for an open host. */
+const expressionBinding = (owner: Workspace): SurfaceBinding | undefined => expressionsBindingOf(owner)?.binding
 const checkpointRef = (binding?: SurfaceBinding) => binding?.engine?.expressionRef.startsWith('expression:') ? binding.engine.expressionRef : undefined
+/** The hosted engine's checkpoint from the frame's own reading: the work, its revision, and where it stands (lane-3 E22, ticket P):
+ * the address the frame announced, or — while it announces none (an opening link not yet settled) — the one already kept with
+ * this same work. One shape for every writer, so no writer strips what another kept. */
+function engineCheckpoint(state: HostedAppState, scene: NonNullable<HostedAppState['nativeScene']>, held?: SurfaceBinding): NonNullable<SurfaceBinding['engine']> {
+  const address = addressRefs(state.address) ?? (held?.engine?.expressionRef === scene.expression_ref ? held.engine.address : undefined)
+  return {expressionRef: scene.expression_ref, documentId: state.document?.id, revision: String(scene.revision), ...(address ? {address} : {})}
+}
 
 /** The real application is mounted once. The deep cut changes disclosure;
  * both cuts read/edit/save the same owner's document through the boundary. */
@@ -124,10 +125,25 @@ export function ExpressionsPanel() {
     }
     const fail = (cause: unknown) => {if (live) setFault(cause instanceof Error ? cause.message : String(cause))}
     const presented = () => !!target.getClientRects().length && !target.closest('[hidden],[inert]')
+    // The stage's answer to a Technē selection ask (techne/subject/subjectAsks.ts createStageAnswers; tickets S and D): the
+    // navigator settles each ask it takes; an opened one is answered `shown` when this frame announces the owner's Expression
+    // (onState below), refused in the frame's own words when the frame refuses the open, and refused by its deadline when the
+    // frame says nothing. A refusal stands on the fault line of the pane whose stage took the ask (techne/subject/askFault.ts) —
+    // not among this panel's faults, which every Expressions pane in every mode draws.
+    const stageAnswers = createLiveStageAnswers(() => mounted?.host.getState())
     const openNative = (ref: string) => {
       if (!presented() || !mounted) {pendingOpen.current = ref; pendingDraft.current = null; return}
       selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: ref}
-      mounted.host.openExpression(ref, 'world.expressions')
+      // A work the owner lists only as its file in its works home (FOUNDATION N1) opens from that file first, then by ref.
+      const closed = closedWork(workspaceRef.current.nativeWorks, ref), channel = expressionOwner(), presenting = mounted.host
+      if (!closed || !channel) {presenting.openExpression(ref, 'world.expressions'); return}
+      const epoch = workspaceRef.current.accessEpoch
+      const current = () => live && mounted?.host === presenting && workspaceRef.current.nativeAccessCurrent(epoch)
+      void openListedWork(channel, closed).then(() => {
+        if (!current()) return
+        presenting.openExpression(ref, 'world.expressions')
+        return enumerateWorks(channel, works => workspaceRef.current.publishWorks(works), current)
+      }).catch(fail)
     }
     openRequest.current = openNative
     // The same door, the other request kind: a browser-local draft by its Library id, through the host's open-local-draft command.
@@ -167,7 +183,8 @@ export function ExpressionsPanel() {
           if (JSON.stringify([current.world_scope, current.backing_id, current.profile_scope]) !== JSON.stringify([config.world_scope, config.backing_id, config.profile_scope])) throw Error('This retained Expression belongs to another native ground or installation profile')
           if (facade) stopFacade = createCradleOwners(access.transport, {project: 'O-I', retainSelectionOnDispose: true, isCurrent}).attach?.(facade.frame, facade.state) ?? null
           navigator.current = createNativeTechneNavigator({transport: access.transport, host: mounted.host,
-            isPresented: () => isCurrent() && modeRef.current === 'techne' && presented(), onError: cause => {if (isCurrent()) fail(cause)}})
+            isPresented: () => isCurrent() && modeRef.current === 'techne' && presented(), onError: cause => {if (isCurrent()) fail(cause)},
+            onSettled: settlement => {if (live) stageAnswers.settle(settlement)}})
           stopInstruments = connectTechneInstrumentRequests({host:mounted.host,current:()=>workspaceRef.current,
             isPresented:()=>isCurrent()&&presented()})
           if (modeRef.current === 'techne' && presented()) stopSelection.current = navigator.current.connectSelectionRequests()
@@ -179,25 +196,33 @@ export function ExpressionsPanel() {
       if (transport.kind === 'unavailable') {fail(transport.reason); return}
       const context = (): ChannelContext => ({mode: modeRef.current, bindingId: 'world.expressions', epoch: 0,
         signal: abort.signal, state: mounted?.host.getState() ?? null, current: () => live})
+      // The browser's Open and New reach the owner only through this channel (components/nativeExpressionCommands.ts setExpressionOwner).
+      setExpressionOwner(request => owners.channels['kernel-expression'](request, context()))
       const continued = config.saved_works !== undefined && !(Array.isArray(config.saved_works) && config.saved_works.length === 0)
         ? await reopenConfiguredWorks(owners, context(), config.saved_works) : null
       const knownRef = checkpointRef(expressionBinding(bookRef.current.current))
       const initial = (knownRef ? continued?.works.find(work => work.expression_ref === knownRef) : undefined)
         ?? (knownRef ? undefined : continued?.works.find(work => work.scope === modeRef.current) ?? continued?.works[0])
-      if (knownRef && continued && !initial) throw Error('The selected Expression has no configured native recovery address; its workspace checkpoint has been retained')
-      const enumerate = async () => {
+      const enumerate = () => {
         const epoch = workspaceRef.current.accessEpoch
-        const inventory = await owners.channels['kernel-expression']({operation: 'list'}, context()) as {expressions?: NativeWork[]}
-        if (!live || !workspaceRef.current.nativeAccessCurrent(epoch)) return []
-        const existing = inventory.expressions ?? []
-        workspaceRef.current.publishWorks(existing)
-        return existing
+        return enumerateWorks(request => owners.channels['kernel-expression'](request, context()), works => workspaceRef.current.publishWorks(works),
+          () => live && workspaceRef.current.nativeAccessCurrent(epoch))
       }
-      // Known open work takes its owner's direct boot route. Enumeration is
-      // only needed to choose a first work when there is no held address.
+      // The works are listed and published after boot in every case, so the browser and Technē's Sources show them while a work is open:
+      // before mounting when no address is held (the list chooses the first work), after mounting when a known work takes its direct boot route.
+      // A work made later (New, an opened starter, a frame Save) is listed the first time the frame presents it (onState).
+      let listedFor: string | null = null
       const existing = knownRef || initial ? [] : await enumerate()
       if (!live) return
-      const initialRef = knownRef ?? initial?.expression_ref ?? existing[0]?.expression_ref
+      let initialRef: string | undefined = knownRef ?? initial?.expression_ref ?? existing[0]?.expression_ref
+      // The first listed work may live only as its file in the owner's works home (N1): the owner opens it from that file
+      // before the frame boots on its ref. A refusal shows here and the frame boots on no work.
+      const firstClosed = initialRef ? closedWork(existing, initialRef) : null, owner = expressionOwner()
+      if (firstClosed && owner) {
+        try {await openListedWork(owner, firstClosed); await enumerate()}
+        catch (cause) {fail(cause); initialRef = undefined}
+        if (!live) return
+      }
       selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: initialRef}
       // A new native owner lease must fetch the current hosted entry rather
       // than reuse a cached HTML page pointing at a previous build. Hidden
@@ -219,17 +244,27 @@ export function ExpressionsPanel() {
           clear: () => {if (live) setFault(null)},
         })
       }
-      mounted = mountExpressionsApplication(target, `${config.expressions_entry ?? '/__application/expressions/index.html'}?mode=${modeRef.current}&world=${worldLens.current}&host-load=${hostLoad}${initialRef ? `&expression=${encodeURIComponent(initialRef)}` : ''}`, {
+      // lane-3 E22 (ticket P, G3): the work reopens where it stood — the address kept beside it, in the frame's own query
+      // (?scene=&t=&marker=); the frame applies it once the work has settled and names any part it refuses.
+      const keptEngine = expressionBinding(bookRef.current.current)?.engine
+      const keptAddress = initialRef && keptEngine?.expressionRef === initialRef ? keptEngine.address : undefined
+      mounted = mountExpressionsApplication(target, entryAtAddress(`${config.expressions_entry ?? '/__application/expressions/index.html'}?mode=${modeRef.current}&world=${worldLens.current}&host-load=${hostLoad}${initialRef ? `&expression=${encodeURIComponent(initialRef)}` : ''}`, keptAddress), {
         bindingId: 'world.expressions', owners, mode: modeRef.current, world: worldLens.current,
         recoveryBindings: continued?.works, initialRecoveryBinding: initial,
+        // T-RECOVERY-FOR-OPENED-WORKS: every Expression this host opens (the boot work, the browser's Open and New, a starter,
+        // Technē's door) without a configured saved-work address is routed to its canonical checkpoint; a configured one wins.
+        selectOpenedWorks: true,
         isPresented: presented,
         // T-FRAME-TIME-PUSH: the session's shared window nudges the presented frame to re-read it (never a value carried).
         sharedWindow: disclosureSession,
         onState: state => {
           if (!live) return
+          stageAnswers.seen(state.nativeScene?.expression_ref)
           setStage(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state)
           setNativeEngineMounted(!!state.nativeScene)
           workspaceRef.current.publishReading(state)
+          const presentedRef = state.nativeScene?.expression_ref
+          if (needsListing(presentedRef, listedFor, workspaceRef.current.nativeWorks)) {listedFor = presentedRef ?? null; void enumerate().catch(fail)}
           // The Expressions pane body presents this one frame's reading by value (T-EXPRESSIONS-PANE-LEASE); it holds no frame.
           publishHostedExpressions({expression_ref: state.nativeScene?.expression_ref ?? null, title: state.document?.name ?? null})
           // The one instrument's reading (ticket T-LIVE-TORUS-INSTRUMENT): the frame's announced owner reading, or its withdrawal.
@@ -238,7 +273,7 @@ export function ExpressionsPanel() {
             const owner = bookRef.current, selected = selectionOwner.current
             const binding = expressionBinding(owner.current), scene = state.nativeScene
             if (workspaceRef.current.accessReady && selected.workspaceId === owner.current.id && (!selected.expected || selected.expected === scene.expression_ref) && binding) {
-              const engine = {expressionRef: scene.expression_ref, documentId: state.document?.id, revision: String(scene.revision)}
+              const engine = engineCheckpoint(state, scene, binding)
               if (JSON.stringify(binding.engine) !== JSON.stringify(engine)) owner.surfaceEngine(owner.current.id, binding.id, engine)
             }
             refreshEditor()
@@ -310,7 +345,7 @@ export function ExpressionsPanel() {
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; setExpressionOwner(null); stageAnswers.dispose(); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);
@@ -318,13 +353,15 @@ export function ExpressionsPanel() {
   }, [qualified, attempt])
   useEffect(() => {
     if (!workspace.accessReady || !kernel.operationReady || (book.current.layout.mode !== 'expressions' && book.current.layout.mode !== 'techne')) return
-    const owner = book.current, held = expressionBinding(owner)
+    const owner = book.current, found = expressionsBindingOf(owner), held = found?.binding
     if (held) {
-      if (!owner.layout.surfaces[held.id]) book.moveSurface(held.id, 'tree')
-      const scene = host.current?.getState()?.nativeScene
+      // Held, never placed: a binding an older book put on a tab leaves it when its tree stands in front; one held by another mode's
+      // layout stays there (its checkpoint is written wherever it stands — updateWorkspaceBinding).
+      if (found.placed && found.layout === owner.layout) book.setLayout(layout => unplaceExpressionsBinding(layout, held.id))
+      const reading = host.current?.getState(), scene = reading?.nativeScene
       const expected = selectionOwner.current.expected
-      if (scene && (!expected || expected === scene.expression_ref)) {
-        const engine = {expressionRef: scene.expression_ref, documentId: host.current?.getState()?.document?.id, revision: String(scene.revision)}
+      if (reading && scene && (!expected || expected === scene.expression_ref)) {
+        const engine = engineCheckpoint(reading, scene, held)
         if (JSON.stringify(held.engine) !== JSON.stringify(engine)) book.surfaceEngine(owner.id, held.id, engine)
       }
       return
@@ -343,7 +380,7 @@ export function ExpressionsPanel() {
         void kernel.apply({op: 'surface_close', surface_id: binding.id}).catch(cause => setFault(String(cause)))
         return
       }
-      current.setLayout(layout => openBinding(layout, binding))
+      current.setLayout(layout => holdExpressionsBinding(layout, binding))
       setSurfaceFault(null)
     }).catch(cause => {
       const current = bookRef.current.current
@@ -385,7 +422,8 @@ export function ExpressionsPanel() {
   // The pane body reads the frame only while the frame reports ready (T-EXPRESSIONS-PANE-LEASE): a status that is not ready clears it.
   useEffect(() => {if (status !== 'Expressions') publishHostedExpressions(null)}, [status])
   // The frame's chrome is published by value: a Factory pane that holds the frame shows the same toolbar and faults beside its header.
-  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text)})}, [stage, hostFault, surfaceFault, fault, attempt])
+  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text),
+    reopen: !host.current && !starting.current ? () => retry(value => value + 1) : null})}, [stage, hostFault, surfaceFault, fault, attempt])
   useEffect(() => () => publishHostedChrome(null), [])
   // While a Factory pane holds the frame, the container follows that pane's slot (its own place and state return on release).
   useEffect(() => {
@@ -393,15 +431,14 @@ export function ExpressionsPanel() {
     if (!frame || !placement) return
     return followFrame(frame, placement.slot)
   }, [placement])
+  // The frame alone: its faults, the stage tools and Reopen ride the published chrome to the Studio plate and the pane's slot
+  // (panes are the centre in every mode, F2 — this residence is never shown on its own).
   return <div className="expressions-inhabitant" title={status}>
-    {!placement && <>
-      {hostFault && <div role="alert" className="inhabitant-fault">{hostFault}</div>}
-      {surfaceFault && <div role="alert" className="inhabitant-fault">{surfaceFault}</div>}
-      {fault && <div role="alert" className="inhabitant-fault">{fault}</div>}
-      <NativeStageTools state={stage} run={host.current ? stageRun : null} />
-      {!host.current && !starting.current && <button type="button" onClick={() => retry(value => value + 1)}>Reopen native work</button>}
-    </>}
-    <div ref={container} className="expressions-application" />
+    {/* With no native work open the frame paints an opaque empty body over its pane; it stands hidden then, so the pane's own
+        waiting line shows (seen on screen, 15 Oct). The frame says when its cut draws without one (Live's torus): the one frame
+        keeps its instrument session open in every cut, so an announced instrument is not a drawn one (seen again at 2f5c1bcf6). */}
+    <div ref={container} className="expressions-application" data-empty={stage && !stage.nativeScene && !stage.presentsInstrument ? 'true' : undefined}
+      data-i="Expressions|The field. Orbit is a pointer drag on the stage itself; its tools are the Studio's, in the detail row." />
   </div>
 }
 

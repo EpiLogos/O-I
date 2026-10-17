@@ -381,6 +381,31 @@ impl OwnerRequest {
     pub fn needs_world(&self) -> bool {
         matches!(self, OwnerRequest::Locate { .. })
     }
+    /// A reading of the owner's state, which may run outside the kernel lock
+    /// (owner_read.rs `PreparedRead`). Named one by one: a request not named
+    /// here — an action, a recognition, a commission, a close, and any
+    /// request added later — is a prepared write (owner_write.rs): its owner
+    /// runs outside the lock and its finish records the Run's receipt.
+    pub fn is_read(&self) -> bool {
+        matches!(
+            self,
+            OwnerRequest::Locate { .. }
+                | OwnerRequest::WorkflowInspect { .. }
+                | OwnerRequest::TelemetryStatus { .. }
+                | OwnerRequest::TelemetryInspect { .. }
+                | OwnerRequest::TelemetryWatch { .. }
+                | OwnerRequest::TelemetryField { .. }
+                | OwnerRequest::TelemetryCurrent { .. }
+                | OwnerRequest::TelemetrySignal { .. }
+                | OwnerRequest::TelemetryDigest { .. }
+                | OwnerRequest::TelemetryLookback { .. }
+                | OwnerRequest::TelemetryDay { .. }
+                | OwnerRequest::AttemptReturn { .. }
+                | OwnerRequest::ActionList { .. }
+                | OwnerRequest::Inhabitation { .. }
+                | OwnerRequest::CurrentWork { .. }
+        )
+    }
 }
 
 /// The owner executable and whether the suite route prefixes `factory` —
@@ -397,11 +422,15 @@ pub fn owner_executable() -> (PathBuf, bool) {
     }
 }
 
+/// One Factory owner call's wall-clock bound. Action invocations, commissions
+/// and run closes may do real work before answering (no pace is measured);
+/// the bound is for an owner that never answers, not a pace.
+const OWNER_CALL_LIMIT: std::time::Duration = std::time::Duration::from_secs(300);
+
 /// Run one owner command capturing BOTH streams: the workflow family writes
 /// its refusal as a diagnostic document on stdout, so the refusal message is
 /// the diagnostic's own words when present, else stderr.
 fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value, Error> {
-    use std::io::Write;
     let (executable, suite_route) = owner_executable();
     let mut argv: Vec<std::ffi::OsString> = Vec::new();
     if suite_route {
@@ -413,30 +442,36 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
         // named `timeout`, never a hung panel or a stalled temporal field.
         return bounded_owner_read(&executable, &argv, args);
     }
-    let mut child = std::process::Command::new(&executable)
-        .args(&argv)
-        .stdin(if input.is_some() {
-            std::process::Stdio::piped()
-        } else {
-            std::process::Stdio::null()
-        })
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|e| Error {
-            kind: "unavailable".into(),
-            message: e.to_string(),
-            operation_may_have_run: false,
-        })?;
-    if let Some(input) = input {
-        if let Some(mut stdin) = child.stdin.take() {
-            let _ = stdin.write_all(input);
+    // Bounded like every owner call (owner_process.rs): a stuck owner is
+    // stopped and named; a write stopped at its limit is uncertain.
+    let operation = args
+        .iter()
+        .map(|arg| arg.to_string_lossy())
+        .take_while(|arg| !arg.starts_with('-'))
+        .take(2)
+        .collect::<Vec<_>>()
+        .join(" ");
+    let output = crate::owner_process::output(
+        std::process::Command::new(&executable).args(&argv),
+        input.map(<[u8]>::to_vec),
+        crate::owner_process::Bound {
+            owner: "Software Factory",
+            operation: &operation,
+            limit: OWNER_CALL_LIMIT,
+            effect: crate::owner_process::Effect::Unclassified,
+        },
+    )
+    .map_err(|failure| {
+        let (kind, ran) = match failure.failed {
+            crate::owner_process::Failed::Unavailable => ("unavailable", false),
+            crate::owner_process::Failed::Stopped => ("timeout", true),
+            crate::owner_process::Failed::Process => ("process-error", true),
+        };
+        Error {
+            kind: kind.into(),
+            message: failure.message,
+            operation_may_have_run: ran,
         }
-    }
-    let output = child.wait_with_output().map_err(|e| Error {
-        kind: "process-error".into(),
-        message: e.to_string(),
-        operation_may_have_run: true,
     })?;
     let parsed: Option<Value> = serde_json::from_slice(&output.stdout).ok();
     if !output.status.success() {
@@ -898,7 +933,7 @@ fn act_suffix() -> String {
 
 /// The roots discovery reads: Central's own root and its Work projects, from
 /// the world reading (`root`, `work.projects[].{name,path}`).
-fn locate_roots(
+pub(crate) fn locate_roots(
     world: &Value,
     project: Option<&str>,
     all: bool,
@@ -933,6 +968,55 @@ fn locate_roots(
     }
 }
 
+/// One discovery row per root, each root located concurrently; each answer
+/// stands on its own — an absent source (no Factory state set up there) is
+/// not a refusal, and one refusal never hides the others.
+pub(crate) fn locate_each(roots: Vec<(Option<String>, PathBuf)>) -> Vec<Value> {
+    let handles: Vec<_> = roots
+        .into_iter()
+        .map(|(project, root)| std::thread::spawn(move || locate_row(project, &root)))
+        .collect();
+    handles
+        .into_iter()
+        .map(|handle| {
+            handle.join().unwrap_or_else(
+                |_| serde_json::json!({"state": "refused", "error": "locate worker failed"}),
+            )
+        })
+        .collect()
+}
+
+/// `factory project locate <root>`, as one discovery row: `located` with the
+/// owner's location, `absent` (no `.factory` there, and the owner says so),
+/// or `refused` in the owner's words.
+fn locate_row(project: Option<String>, root: &Path) -> Value {
+    let args: Vec<std::ffi::OsString> = vec![
+        "project".into(),
+        "locate".into(),
+        path_arg(root),
+        "--json".into(),
+    ];
+    let answer = owner_call(&args, None)
+        .and_then(|data| expect_contract(data, &["factory.project-location/v1"]));
+    let mut row = serde_json::json!({"project": project, "root": root.to_string_lossy()});
+    match answer {
+        Ok(location) => {
+            row["state"] = "located".into();
+            row["location"] = location;
+        }
+        Err(error) => {
+            // A root with no `.factory` directory is simply not a Factory
+            // source; one that has it but cannot be located is a refusal the
+            // Desk must name (never an empty board).
+            let absent = !root.join(".factory").exists()
+                && error.message.contains("No such file or directory");
+            row["state"] = if absent { "absent" } else { "refused" }.into();
+            row["error"] = error.message.into();
+        }
+    }
+    row
+}
+
 /// Serve one owner request. `world` is Central's world reading when the
 /// request needs roots (see [`OwnerRequest::needs_world`]).
 pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Error> {
@@ -945,48 +1029,10 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             // One locate per root, concurrently; each answer stands on its
             // own — an absent source (no Factory state set up there) is not a
             // refusal, and one refusal never hides the others.
-            let handles: Vec<_> = roots
-                .into_iter()
-                .map(|(project, root)| {
-                    std::thread::spawn(move || {
-                        let args: Vec<std::ffi::OsString> = vec![
-                            "project".into(),
-                            "locate".into(),
-                            path_arg(&root),
-                            "--json".into(),
-                        ];
-                        let answer = owner_call(&args, None).and_then(|data| {
-                            expect_contract(data, &["factory.project-location/v1"])
-                        });
-                        let mut row =
-                            serde_json::json!({"project": project, "root": root.to_string_lossy()});
-                        match answer {
-                            Ok(location) => {
-                                row["state"] = "located".into();
-                                row["location"] = location;
-                            }
-                            Err(error) => {
-                                // A root with no `.factory` directory is
-                                // simply not a Factory source; one that has
-                                // it but cannot be located is a refusal the
-                                // Desk must name (never an empty board).
-                                let absent = !root.join(".factory").exists()
-                                    && error.message.contains("No such file or directory");
-                                row["state"] = if absent { "absent" } else { "refused" }.into();
-                                row["error"] = error.message.into();
-                            }
-                        }
-                        row
-                    })
-                })
-                .collect();
-            let locations: Vec<Value> = handles
-                .into_iter()
-                .map(|handle| handle.join().unwrap_or_else(|_| serde_json::json!({"state": "refused", "error": "locate worker failed"})))
-                .collect();
-            Ok(
-                serde_json::json!({"contract": "oi.factory-source-discovery/v1", "locations": locations}),
-            )
+            Ok(serde_json::json!({
+                "contract": "oi.factory-source-discovery/v1",
+                "locations": locate_each(roots),
+            }))
         }
         OwnerRequest::WorkflowInspect {
             state_path,

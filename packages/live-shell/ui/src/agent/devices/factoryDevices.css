@@ -1,0 +1,61 @@
+/* Factory's agent chain as devices of the runtime (T-DEVICES-FACTORY). Shell tokens only; the chain row, the
+   chain-row lamp and the notes reuse agentShell.css, and the device's three sizes are frame/devices/devices.css. */
+.factory-devices { min-width: 0 }
+.factory-slot { display: flex; flex: none; min-width: 0; background: var(--bg-2) }
+.factory-slot[data-selected="true"] { outline: 1px solid var(--accent); outline-offset: -1px }
+.factory-slot > .device { min-width: 0 }
+/* The rack's chosen chain, its member device, stands inside the rack's slot (DLW §19.8). */
+.factory-slot__member { display: flex; flex: none; min-width: 0; border-left: 1px solid var(--line) }
+.factory-slot__rail { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 14px; flex: none; padding: 3px 0; background: var(--bg-0); border-right: 1px solid var(--line); color: var(--text-faint) }
+/* The chain's own drop receiver stands as the row's end (the mockup's .dropz, frame/detail/detail.css): it arms while a drag is held. */
+.factory-devices .agent-dropz { width: 140px; font-size: 10.5px }
+
+/* The pictures: each fills the device's picture well (devices.css .device-picture) at the size it is shown. */
+.fd-pic { box-sizing: border-box; width: 100%; height: 100%; display: flex; flex-direction: column; gap: 4px; padding: 3px; min-width: 0; min-height: 0; overflow: auto; font-size: 10px; color: var(--text-dim) }
+.fd-pic__row { display: flex; align-items: center; gap: 6px; min-width: 0 }
+.fd-pic__text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0 }
+.fd-pic__caption { font-family: var(--mono); font-size: 9.5px; color: var(--text) }
+.fd-pic__svg { flex: none; width: 56px; height: 52px }
+.fd-pic[data-size="whole"] .fd-pic__svg { width: 96px; height: 88px }
+.fd-pic[data-size="full"] .fd-pic__svg { width: 192px; height: 176px }
+/* Compact, on the chain: the picture fills the runtime's 104 box (frame/devices/devices.css .device-picture; deviceRuntime.ts
+   PLATE.picture) — its drawing over its one reading line, stacked, never squeezed beside it. */
+.fd-pic[data-size="compact"] { padding: 4px; gap: 3px; overflow: hidden }
+.fd-pic[data-size="compact"] > .fd-pic__row { flex: 1 1 auto; min-height: 0; flex-direction: column; align-items: stretch; gap: 3px }
+.fd-pic[data-size="compact"] .fd-pic__mark { flex: 1 1 auto; min-height: 0; display: flex }
+.fd-pic[data-size="compact"] .fd-pic__svg { flex: 1 1 auto; width: 100%; height: auto; min-height: 0 }
+.fd-pic[data-size="compact"] .fd-face { align-self: center }
+.fd-pic[data-size="compact"] .fd-face svg { width: auto; height: 46px }
+.fd-pic[data-size="compact"] .fd-pic__text { flex: none; align-items: center; text-align: center }
+.fd-pic[data-size="compact"] .fd-pic__caption { font-size: 9px; line-height: 1.3 }
+.fd-pic[data-size="compact"] :is(.agent-reading-inline, .agent-refusal-inline) { margin: 0; font-size: 9px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden }
+.fd-pic__mark { display: inline-flex; flex: none; padding: 0; background: none; border: 0; cursor: pointer; line-height: 0 }
+.fd-pic__open { align-self: flex-start; background: none; border: 1px solid var(--line-strong); color: var(--text-dim); font-size: 9.5px; padding: 0 5px; cursor: pointer }
+.fd-pic__open:hover:not(:disabled) { color: var(--text); border-color: var(--accent) }
+.fd-pic__open:disabled { color: var(--text-faint); cursor: default }
+.fd-face { display: inline-flex; flex: none; line-height: 0 }
+.fd-reading { margin: 0 }
+
+/* The rack: chains, each with its mark and admit lamp, and the selector. */
+.fd-rack { display: flex; flex-direction: column; gap: 2px; width: 100%; min-height: 0 }
+.fd-chain { width: 100%; font: inherit; text-align: left; color: var(--text-dim); cursor: pointer }
+.fd-chain.sel { outline: 1px solid var(--accent); outline-offset: -1px; color: var(--text) }
+.fd-chain__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.fd-rack__empty { margin: 0; line-height: 1.35 }
+.fd-detail { display: flex; flex-direction: column; gap: 1px }
+
+/* The world's legend and the git seat's branch. */
+.fd-legend { font-size: 9.5px; color: var(--text-faint) }
+.fd-git__branch { font-family: var(--mono); font-size: 9.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.fd-dirty { animation: fd-pulse 1.4s ease-in-out infinite }
+@keyframes fd-pulse { 50% { opacity: .35 } }
+
+/* Factory's Main track (DLW §16.2, §19.3): its devices stand first on the Device side, ruled off from the session's chain. */
+.factory-main { display: flex; flex: none; gap: 6px; padding-right: 6px; border-right: 1px solid var(--line-strong) }
+.factory-main:empty { display: none }
+
+/* The task on the Clip side (DLW §19.1; TaskClipDevice.tsx): the Tasks device stands beside its log, as Live's clip box beside its
+   editor (lane BF3). */
+.factory-clip { display: flex; gap: 6px; height: 100%; min-width: 0; min-height: 0 }
+.factory-clip > :last-child { flex: 1 1 auto; min-width: 0 }
+.factory-task-clip { display: flex; flex: none; min-height: 0; background: var(--bg-2) }

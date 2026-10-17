@@ -33,7 +33,7 @@ export async function load(url,context,next){
 const here = new URL('../src/', import.meta.url)
 const torus = await import('../src/live/torusInstrument.ts')
 const section = await import('../src/live/LiveInstrumentSection.tsx')
-const widget = await import('../src/panels/devices/LiveTorusWidget.tsx')
+const torusDeviceModule = await import('../src/live/torusDevice.ts')
 const panels = await import('../src/shell/panels.ts')
 const qlNew = await import('../../../expressions-boundary/src/qlInstrumentReading.ts')
 const qlOld = await import('../src/inhabitants/ql/qlInstrumentReading.ts')
@@ -98,19 +98,25 @@ test('a synchronous refusal from the channel (a concealed frame) is a named resu
 test('the host registers its stage channel for the instrument writes, and nothing else writes the owner from the shell', async () => {
   const panel = await readFile(new URL('panels/expressions.tsx', here), 'utf8')
   assert.match(panel, /setLiveInstrumentCommander\(command => stageRun\(command\)\)/)
-  const shellWrites = (await Promise.all(['live/LiveInstrumentSection.tsx', 'panels/devices/LiveTorusWidget.tsx', 'live/torusInstrument.ts']
+  const shellWrites = (await Promise.all(['live/LiveInstrumentSection.tsx', 'live/TorusOnChain.tsx', 'live/torusDevice.ts', 'live/torusInstrument.ts']
     .map(p => readFile(new URL(p, here), 'utf8')))).join('\n')
   assert.doesNotMatch(shellWrites, /\bcontroller\b|port\.request|host\.current|NativeFieldController/, 'the shell reaches the owner only through the hosted command')
 })
 
-// ── 4 — the widget's macro controls: enabled only in a writable owner state ──
+// ── 4 — the device's macro controls: writable only in a writable owner state ──
+// (the old LiveTorusWidget rack card's four <select>s are gone: the torus is a device of the runtime — live/torusDevice.ts, whose rows
+// the frame's DeviceView draws as the owner's own enumerated choices on the chain, in the pool and in a pane)
 
-test('the widget offers the four owner choices while the owner is following, and disables them otherwise', () => {
-  const live = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: okState('following')}))
-  assert.equal((live.match(/<select/g) || []).length, 4)
-  assert.doesNotMatch(live, /<select[^>]*disabled/)
-  const manual = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: okState('manual')}))
-  assert.equal((manual.match(/<select[^>]* disabled/g) || []).length, 4)
+test('the torus device offers the four owner choices while the owner is following, and disables them otherwise', () => {
+  const live = torusDeviceModule.torusDevice(okState('following'))
+  const macros = live.rows.filter(row => row.compact)
+  assert.equal(macros.length, 4, 'the four determinants are the compact controls')
+  assert.ok(macros.every(row => row.type === 'enumerated' && row.writePath === 'stage:instrument'), 'each is an enumerated row written through the stage channel')
+  assert.deepEqual(macros.map(row => row.values.length), [12, 7, 9, 2], 'the choices are the owner\'s: twelve lenses, CF1–CF7, B1–B8 with Row, DNA or RNA')
+  // The owner's other parameters follow, as the native field panel groups them (LiveInstrumentSection.tsx), never compact.
+  assert.deepEqual(live.rows.filter(row => !row.compact).map(row => [row.key, row.group]), [['sound', 'Sound'], ['level', 'Sound'], ['cadence', 'Play'], ['scale', 'Scale']])
+  const manual = torusDeviceModule.torusDevice(okState('manual'))
+  assert.ok(manual.rows.every(row => !row.writePath && /only while the instrument follows or is held/.test(row.disclosure)), 'a manual instrument takes no edits, and says why')
 })
 
 // ── 5 — the expanded instrument in the browser pool: every parameter, grouped as the owner groups them ──

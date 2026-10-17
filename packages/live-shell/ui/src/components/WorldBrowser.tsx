@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import {createPortal} from 'react-dom'
+import type {BrowserCategory as OneBrowserCategory, BrowserKind, ControlledBrowser} from '../frame/browser/browserKinds'
+import {InstrumentsSection} from '../frame/InstrumentsSection'
+import {SetsSection} from '../shell/SetsSection'
 import type { NativeDirectory, NativeFileEntry } from '@epilogos/expressions-boundary/cradle'
 import {createCradleOwners} from '@epilogos/expressions-boundary/cradle'
 import {sameEditorBasis} from '@epilogos/expressions-boundary/editor'
@@ -6,6 +10,8 @@ import type {KernelExpressionDocument} from '../../../../../desktop/cradle/expre
 import {createCanvasKnowledgeOpen} from '../native/knowledgeOpen'
 import { useWorkspace } from '../shell/workspace'
 import {NativeMaterialBrowser} from './NativeMaterialBrowser'
+import {Icon} from './Icon'
+import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import {NativePropertyBrowser} from './NativePropertyBrowser'
 import {NativeTechneBrowser} from './NativeTechneBrowser'
 import {NativeDeviceBrowser} from './NativeDeviceBrowser'
@@ -29,21 +35,29 @@ const CATEGORIES: {id: BrowserCategory; name: string; icon: string}[] = [
   {id: 'knowledge', name: 'Knowledge', icon: '⌘'},
 ]
 
+/** Each Expressions category's kind in the one browser (F6): works, material and files are material to open; objects,
+ * parameters and devices go on the open scene's chain; knowledge opens instruments over the work. */
+const WORLD_KINDS: Record<BrowserCategory, BrowserKind> = {works: 'material', material: 'material', files: 'material', objects: 'devices', properties: 'devices', devices: 'devices', knowledge: 'instruments'}
+export const WORLD_BROWSER_CATEGORIES: readonly OneBrowserCategory[] = CATEGORIES.map(row => ({id: row.id, label: row.name, kind: WORLD_KINDS[row.id], mark: row.icon}))
+
 /** Navigation over the native Central listing. Locations and retrieval grants
  * come from that owner; this component holds only a displayed directory. */
-export function WorldBrowser() {
+export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}) {
   const workspace = useWorkspace()
   const { transport, nativeWorks, selectedRef, reading, resources, workspaceId, accessEpoch, accessReady, sourceRecoveryReady, browserPath: path } = workspace
   const origin = useRef(workspace)
   origin.current = workspace
   const [directory, setDirectory] = useState<NativeDirectory | null>(null)
-  const [query, setQuery] = useState('')
+  const [ownQuery, setQuery] = useState('')
+  // Held by the one browser (F6), the category and the search are its; standing alone, they are this browser's own.
+  const query = controlled?.query ?? ownQuery
   const [showHidden, setShowHidden] = useState(false)
   const [loading, setLoading] = useState(false)
   const [opening, setOpening] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openingGraph, setOpeningGraph] = useState(false)
-  const [category, setCategory] = useState<BrowserCategory>('works')
+  const [ownCategory, setCategory] = useState<BrowserCategory>('works')
+  const category = (controlled?.category as BrowserCategory | undefined) ?? ownCategory
   const [poolOpen, setPoolOpen] = useState(true)
   // The pool's device role is independent of the category: closing it shows the category that was open.
   const [device, setDevice] = useState<DeviceRequest | null>(null)
@@ -174,13 +188,9 @@ export function WorldBrowser() {
     } catch (cause) {if (origin.current.workspaceId === id) setError(cause instanceof Error ? cause.message : String(cause))}
     finally {setOpeningGraph(false)}
   }
-  return <aside className={`world-browser world-browser-categories${poolOpen ? '' : ' pool-collapsed'}`} aria-label="World browser" onKeyDown={onBrowserKeyDown}>
-    <div className="world-browser-searchrow"><label className="world-browser-search"><span className="sr-only">Search {CATEGORIES.find(row => row.id === category)?.name}</span><input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search (⌘ F)" /></label><output className="world-browser-count" aria-live="polite">{countText}</output></div>
-    <div className="world-browser-main">
-      <nav className="world-category-list" aria-label="World browser categories"><h3>Library</h3>{CATEGORIES.map(row => <button type="button" key={row.id} aria-pressed={category === row.id} onClick={() => {setCategory(row.id); setQuery('')}}><span aria-hidden="true">{row.icon}</span><span>{row.name}</span></button>)}</nav>
-      <div className="world-browser-results">
+  const results = <>
     <div hidden={category !== 'knowledge'}><NativeTechneBrowser query={category==='knowledge'?query:''} onOpenGraph={openSelectedGraph} openingGraph={openingGraph} graphError={category==='knowledge'?error:null}/></div>
-    <section hidden={category !== 'works'} className="world-works" aria-label="Saved native works"><h3>Name</h3><ul>{works.map(work => <li key={work.expression_ref}><button type="button" data-browser-row className={`world-work-row${reading?.nativeScene?.expression_ref === work.expression_ref ? ' selected' : ''}${previewRef === work.expression_ref ? ' previewed' : ''}`} aria-current={reading?.nativeScene?.expression_ref === work.expression_ref ? 'true' : undefined} title={`${work.expression_ref} · revision ${work.revision}. Enter opens; Space previews.`} onClick={() => openWork(work.expression_ref)} onKeyDown={event => {if (event.key === ' ') {event.preventDefault(); setPreviewRef(work.expression_ref)}}} onKeyUp={event => {if (event.key === ' ') event.preventDefault()}}><span aria-hidden="true">◇</span><span>{work.title}</span></button></li>)}</ul>{!works.length && <p className="native-empty">{nativeWorks.length ? 'No works match this search.' : 'No native works disclosed.'}</p>}</section>
+    <section hidden={category !== 'works'} className="world-works" aria-label="Saved native works"><h3>Name</h3><ul>{works.map(work => <li key={work.expression_ref}><button type="button" data-browser-row className={`world-work-row${reading?.nativeScene?.expression_ref === work.expression_ref ? ' selected' : ''}${previewRef === work.expression_ref ? ' previewed' : ''}`} aria-current={reading?.nativeScene?.expression_ref === work.expression_ref ? 'true' : undefined} title={`${work.expression_ref} · revision ${work.revision}. Enter opens; Space previews.`} onClick={() => openWork(work.expression_ref)} onKeyDown={event => {if (event.key === ' ') {event.preventDefault(); setPreviewRef(work.expression_ref)}}} onKeyUp={event => {if (event.key === ' ') event.preventDefault()}}><span aria-hidden="true"><KindMark kind="expression" size={12} /></span><span>{work.title}</span><span className="mode-browser-row-meta mono">r{work.revision}</span></button></li>)}</ul>{!works.length && <p className="native-empty">{nativeWorks.length ? 'No works match this search.' : 'No native works disclosed.'}</p>}</section>
     {category === 'works' && <NativeExpressionCollections query={query}/>}
     <div hidden={category !== 'material'}><NativeMaterialBrowser query={category === 'material' ? query : ''} detailHost={materialHost} onCount={count => reportCount('material', count)}/></div>
     <div hidden={category !== 'properties'}><NativePropertyBrowser query={category === 'properties' ? query : ''} detailHost={propertyHost} onCount={count => reportCount('properties', count)}/></div>
@@ -197,13 +207,12 @@ export function WorldBrowser() {
       {directory && <ul className="world-file-list">{parts.length > 0 && <li><button type="button" className="world-file-row" onClick={() => navigate(parts.slice(0, -1).join('/'))}><span aria-hidden="true">↰</span><span>Parent folder</span></button></li>}{entries.map(entry => {
         const isDirectory = entry.kind === 'directory'
         const available = isDirectory || (entry.kind === 'file' && entry.retrieval_allowed)
-        return <li key={entry.location.ref}><button type="button" className={`world-file-row${selectedRef === entry.location.ref ? ' selected' : ''}`} disabled={!available} aria-current={selectedRef === entry.location.ref ? 'true' : undefined} title={available ? `${entry.location.path}\n${entry.location.ref}` : `Native retrieval is unavailable for this ${entry.kind}`} onClick={() => isDirectory ? navigate(entry.location.path) : void selectFile(entry)}><span aria-hidden="true">{isDirectory ? '▸' : '·'}</span><span>{entry.name}</span>{opening === entry.location.ref && <span className="world-file-status" role="status">…</span>}</button></li>
+        return <li key={entry.location.ref}><button type="button" className={`world-file-row${selectedRef === entry.location.ref ? ' selected' : ''}`} disabled={!available} aria-current={selectedRef === entry.location.ref ? 'true' : undefined} title={available ? `${entry.location.path}\n${entry.location.ref}` : `Native retrieval is unavailable for this ${entry.kind}`} onClick={() => isDirectory ? navigate(entry.location.path) : void selectFile(entry)}><span aria-hidden="true">{isDirectory ? <Icon name="folder" size={12} /> : <KindMark kind="doc" size={12} />}</span><span>{entry.name}</span>{opening === entry.location.ref && <span className="world-file-status" role="status">…</span>}</button></li>
       })}</ul>}
       {directory && !entries.length && <p className="native-empty">{needle ? 'No files match in this folder.' : 'This folder has no visible entries.'}</p>}
     </section>
-      </div>
-    </div>
-    <section className={`world-context-pool${device ? ' is-device' : ''}`} aria-label="Browser context">
+  </>
+  const pool = <section className={`world-context-pool${device ? ' is-device' : ''}`} aria-label="Browser context">
       <header><button type="button" aria-expanded={poolOpen} aria-controls="world-browser-pool-body" onClick={() => setPoolOpen(value => !value)}><span aria-hidden="true">{poolOpen ? '▾' : '▸'}</span> {device ? 'Device' : category === 'properties' ? 'Parameter' : category === 'material' ? 'Material' : category === 'objects' ? 'Objects' : category === 'devices' ? 'Devices' : 'Context'}</button></header>
       <div id="world-browser-pool-body" className="world-pool-body" hidden={!poolOpen}>
         {device && <NativeDevicePool request={device} onClose={closeDevice}/>}
@@ -219,5 +228,16 @@ export function WorldBrowser() {
         </div>
       </div>
     </section>
+  if (controlled) return <div className="world-browser-body" onKeyDown={onBrowserKeyDown}>{results}{controlled.poolHost && createPortal(pool, controlled.poolHost)}</div>
+  return <aside className={`world-browser world-browser-categories${poolOpen ? '' : ' pool-collapsed'}`} aria-label="World browser" onKeyDown={onBrowserKeyDown}>
+    <div className="world-browser-searchrow"><label className="world-browser-search"><span className="sr-only">Search {CATEGORIES.find(row => row.id === category)?.name}</span><input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search (⌘ F)" /></label><output className="world-browser-count" aria-live="polite">{countText}</output></div>
+    <div className="world-browser-main">
+      <nav className="world-category-list" aria-label="World browser categories"><h3>Library</h3>{CATEGORIES.map(row => <button type="button" key={row.id} aria-pressed={category === row.id} onClick={() => {setCategory(row.id); setQuery('')}}><span aria-hidden="true">{row.icon}</span><span>{row.name}</span></button>)}</nav>
+      <div className="world-browser-results">
+        {results}
+      </div>
+    </div>
+    {pool}
+    <InstrumentsSection /><SetsSection />
   </aside>
 }

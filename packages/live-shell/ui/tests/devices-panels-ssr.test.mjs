@@ -5,7 +5,7 @@ import { register } from 'node:module'
 // The device-panel SSR smoke — the round-2 gates' render check for the
 // generic DevicePanel family in `src/panels/devices/`. It imports the three
 // device-panel modules the frame's `src/panels/index.ts` activates
-// (devices, devices-b2, devices-pro), renders every registered device face
+// (devices, devices-pro), renders every registered device face
 // through `react-dom/server` against a null set (the honest "no set open"
 // state — SSR never runs effects, so no fetch is simulated) and against a
 // set carrying the device (the "reading parameter tables…" state), and fails
@@ -49,7 +49,6 @@ globalThis.document = {
 const { renderToStaticMarkup } = await import('react-dom/server')
 const React = await import('react')
 await import('../src/panels/devices/index.tsx')
-await import('../src/panels/devices-b2/index.tsx')
 await import('../src/panels/devices-pro/index.ts')
 const { allPanels } = await import('../src/shell/panels.ts')
 

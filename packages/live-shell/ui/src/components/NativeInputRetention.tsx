@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react'
 import {useContinuity,type Workspace} from '../continuity'
 import {useWorkspace} from '../shell/workspace'
-import {groupsOf} from '../../../../../desktop/cradle/src/surface/engine'
+import {expressionsBindingOf} from '../native/expressionsBinding'
 import {registerDocumentCheckpoint} from '../../../../../desktop/cradle/src/document/frame'
 import {createNativeInputContinuity,type NativeInputContinuity,type PrivateNativeInputReceipt} from '../continuity/nativeInputs'
 import {sameEditorBasis,type NativeEditorReading,type NativeEditorChange,type NativeEditorRequest,type NativeEditorReply} from '@epilogos/expressions-boundary/editor'
@@ -12,13 +12,9 @@ export type {NativeInputAperture}
 
 /** Checkpoint membership is the actual open Expressions binding, including a
  * detached or retained mode tree. A presentation carrier is never its ID. */
+/** Native input is retained under the one application body's binding, placed or held (native/expressionsBinding.ts). */
 export function nativeInputBinding(owner:Workspace):string|null {
-  for(const layout of [owner.layout,...Object.values(owner.modeLayouts??{})]) {
-    for(const id of [...groupsOf(layout.root).flatMap(group=>group.tabs),...(layout.sidePane?.tabs??[]),...(layout.detached??[]).map(row=>row.surfaceId)]) {
-      if(layout.surfaces[id]?.kind==='expressions')return id
-    }
-  }
-  return null
+  return expressionsBindingOf(owner)?.binding.id??null
 }
 export function NativeInputRetentionProvider({children}:{children:ReactNode}) {
   const workspace=useWorkspace(),book=useContinuity()

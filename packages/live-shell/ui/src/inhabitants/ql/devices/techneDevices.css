@@ -1,0 +1,76 @@
+/* The Technē instruments rack (T-DEVICES-TECHNE; the mockup's Technē device side, world-shell-mockup.html:153 .ifold and :352-359 .inst):
+   the instruments folded to their titles by the kit's fold (the panel kit's vertical strip, inhabitants/sdk/panel.css .dp-folded)
+   around the one open instrument, a plate whose columns are the families whose devices it holds. Shell tokens only. The runtime's own
+   sheet (frame/devices/devices.css) sizes a device's picture for a small drawing; these faces' pictures are their bodies, so the sheet
+   below lets a body show as itself: what fits the compact well, whole at its own height in the pool, at the pane's size in a pane. */
+.techne-devices { flex: 1; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; padding: 4px; overflow: hidden }
+.techne-family { display: contents }
+.techne-instrument { flex: none; display: flex; min-height: 0 }
+.techne-instrument > .dp-folded { height: 100%; box-sizing: border-box }
+/* The strip reads the plain name, then the M′ address in the accent the mockup's strip gives its prefix (.ifold b). */
+.techne-instrument .dp-folded-reading { color: var(--accent) }
+.techne-device { position: relative; flex: none; display: flex; min-height: 0 }
+.techne-device > .dp-folded { height: 100%; box-sizing: border-box }
+.techne-picture { width: 100%; box-sizing: border-box; align-self: stretch; text-align: left; font-size: 10.5px; color: var(--text-dim) }
+.techne-standing { display: inline-block; margin: 0 0 3px; padding: 0 5px; font-size: 9.5px; color: var(--text-dim); border: 1px solid var(--line) }
+.techne-standing[data-ql-standing="following"] { color: var(--text); border-color: var(--accent) }
+.techne-standing[data-ql-standing="refusing"], .techne-standing[data-ql-standing="unavailable"] { color: var(--stall) }
+.techne-waiting { display: grid; place-items: center; width: 100%; height: 100%; min-height: 48px; color: var(--text-faint); opacity: .7 }
+/* A body is never a scroller in its well (owner, 15 Oct: "no scrollers"): on a chain it shows what fits the well; whole in the pool and
+   full in a pane it stands at its own height (the pool, under the browser, is the place that scrolls). */
+.device-picture:has(> .techne-picture) { display: block; overflow: hidden }
+.device--compact .device-picture:has(> .techne-picture) { padding: 2px 3px }
+.device--whole .device-picture:has(> .techne-picture), .device--full .device-picture:has(> .techne-picture) { height: auto; max-height: none; padding: 4px 6px }
+.device-picture:has(> .techne-picture[data-picture="mode-switch"]) { height: auto }
+/* A reading's reason (a waiting face's note, the owner's refusal) is read whole in the pool and the pane. */
+:is(.device--whole, .device--full):is([data-device^="quaternal-logic:"], [data-device^="atlas-earth:"], [data-device^="knowledge-graph:"]) .sdk-row--reading .sdk-chip { white-space: normal; max-width: 100% }
+/* Central's devices lead the instrument's on the same row (the ruling: they are never removed): Central's chain takes what it needs. */
+.mode-detail[data-central-devices="true"] > .inhabitant-rack, .mode-detail[data-mode-detail="knowledge-graph-device"] > .inhabitant-rack { flex: 0 1 auto }
+
+/* Technē's event clip (shell/ModeDetail.tsx TechneClipDetail, through frame/detail/ClipView.tsx): the disclosure ladder under the props
+   (the mockup's .sec + rungs, world-shell-mockup.html:1655), the bounded whole (:1656) and the source (:1658). Its sheet stands with the
+   Technē instruments' — the families' Technē presentation, one sheet. */
+.techne-ladder { display: flex; flex-direction: column; gap: 4px; margin: 2px -10px 0 }
+.techne-ladder-head { display: flex; justify-content: space-between; padding: 6px 10px 0; font-size: 10px; color: var(--text-faint) }
+.techne-ladder-rungs { display: flex; gap: 2px; padding: 0 10px 8px }
+.techne-ladder-rungs i { flex: 1; height: 5px; background: var(--bg-0) }
+.techne-constellation { display: block; margin: 0 auto }
+.techne-constellation line { stroke: var(--text); stroke-opacity: .22 }
+.techne-constellation circle { fill: var(--sel) }
+.techne-constellation .techne-constellation-focus { fill: var(--accent) }
+.techne-constellation text { fill: var(--text-dim); font-size: 8.5px }
+.techne-source { padding: 4px 10px; font: 12px/1.55 var(--serif, Georgia, serif); color: var(--text-dim) }
+.techne-source p { margin: 0 }
+.techne-source-ref { margin-bottom: 4px; font: 9.5px var(--mono); color: var(--sel); overflow-wrap: anywhere }
+.techne-source-note { margin-top: 4px; font: 9.5px var(--font-ui); color: var(--text-faint) }
+
+/* Inside an open instrument a family's devices stand side by side in its section, drawn flat: the device's own frame stands down so the
+   section reads as one group, one hairline between two devices (manual §16.9 "no box sits inside a box"). */
+.techne-section-devices { display: flex; gap: 0; align-items: stretch; min-height: 0; height: 100% }
+.inst-section .techne-device .device > .dp { background: transparent; border: 0 }
+.inst-section .techne-device .device > .dp > .dp-head { height: 18px; padding: 0; background: none; border-bottom: 0 }
+.inst-section .techne-device > .device .device-body { padding: 4px 0 0 }
+.inst-section .techne-device + .techne-device { margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--line) }
+
+/* The rack is the row's width (the mockup's .inst fills the chain between its folds, :352 flex:1): the open instrument takes what the
+   folds and the Compacts leave, and folds its own sections to fit (frame/devices/plateFit.ts) — the row never scrolls; the folds stay in
+   reach on both sides. */
+.detail-chain .detail-chain-devices:has(> .mode-detail > .techne-devices), .detail-chain .detail-chain-devices:has(> .techne-devices) { flex: 1 1 auto; min-width: 0 }
+.detail-chain .mode-detail:has(> .techne-devices) { flex: 1 1 auto; min-width: 0 }
+.detail-chain .techne-devices[data-techne-devices] { flex: 1 1 auto; min-width: 0; overflow: hidden }
+.techne-devices > .inst-plate { flex: 1 1 auto; min-width: 0 }
+/* On the rack the plate's last section takes only what it holds (the plate's face runs on after it), so the width the plate asks of the
+   row (plateFit.ts `natural`) is its sections' own and the Compacts beside it get what is truly left (TechneDevices.tsx useRackFit). */
+.techne-devices > .inst-plate .inst-section:last-child { flex: none }
+
+/* An instrument at its Compact size (techneCompacts.tsx; manual §16.1 "a small live picture and up to four macros"; manual §16.3–§3):
+   the kit's 22 px head — its light, its mark, its name (pressed, it opens on the focused pane), ⤢ — over one band: the well that draws it,
+   and its four macros in two control columns. One fixed width; no box inside it but the well. */
+.techne-compact { flex: none; width: 228px; display: flex; flex-direction: column; min-height: 0; background: var(--bg-2); border: 1px solid var(--line) }
+.techne-compact > .dp-head { overflow: hidden }
+.techne-compact-mark { flex: none; color: var(--accent) }
+.techne-compact-body { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-start; gap: 6px; padding: 6px; overflow: hidden }
+.techne-compact-macros { flex: none; width: 112px; display: grid; grid-template-columns: repeat(2, 56px); grid-auto-rows: min-content; gap: 6px 0; justify-items: center }
+.techne-compact-macros > :is(.dp-cell--chooser, .dp-cell--radio) { width: 52px; justify-self: center }
+.techne-compact-macros .dp-chooser { padding-right: 12px }
+.techne-compact .dp-display-corner { font-size: 9px }

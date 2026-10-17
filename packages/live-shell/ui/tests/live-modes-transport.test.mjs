@@ -14,12 +14,14 @@ export async function resolve(specifier,context,next){
   try{return await next(specifier,context)}catch(error){
     if(!specifier.startsWith('.'))throw error;
     if(specifier.endsWith('.js')){try{return await next(specifier.slice(0,-3)+'.ts',context)}catch{}}
-    for(const suffix of ['.ts','.tsx']){try{return await next(specifier+suffix,context)}catch{}}
+    for(const suffix of ['.ts','.tsx','/index.ts','/index.tsx']){try{return await next(specifier+suffix,context)}catch{}}
     throw error;
   }
 }
 export async function load(url,context,next){
   if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export default null'};
+  if(['.html','.svg','.png','.md'].some(ext=>url.split('?')[0].endsWith(ext))||url.endsWith('?raw'))return {format:'module',shortCircuit:true,source:'export default ""'};
+  if(url.endsWith('.json'))return {format:'module',shortCircuit:true,source:'export default '+await readFile(new URL(url).pathname,'utf8')};
   if(url.endsWith('.ts')||url.endsWith('.tsx')){
     const source=await readFile(new URL(url).pathname,'utf8');
     const {outputText}=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:url});
@@ -59,8 +61,9 @@ test('the Live root and scale slots name the mode in force and its kernel seam, 
 
 test('the key slot and the set transport keep their established controls', () => {
   const markup = liveTransport()
-  const key = markup.match(/<button[^>]*aria-label="Scale"[^>]*>/)
+  // F7: the one transport draws every slot in its place; the key slot is still a control, disabled until its owner writes.
+  const key = markup.match(/<button[^>]*data-slot="key"[^>]*>/)
   assert.ok(key && /disabled=""/.test(key[0]), 'the key control is still drawn, disabled')
-  assert.match(markup, /aria-label="Global quantization"/, 'the rest of the Live transport is unchanged')
+  assert.match(markup, /data-slot="quantize"/, 'the quantize slot stands in its place')
   assert.match(markup, /data-i="Key\|/, 'the key slot keeps its data-i meaning')
 })

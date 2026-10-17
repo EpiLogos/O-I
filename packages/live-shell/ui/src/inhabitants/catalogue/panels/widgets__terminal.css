@@ -1,0 +1,34 @@
+/* The Terminal's own layout: the screen drawn in the well, the pane body, and the widget's side readings. Shell and panel tokens only.
+   Text is the shell's own: a monospace face at the text size, the shell's output dim, your commands and an agent's at full ink. */
+.dp-display .wt-mono { font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace); fill: var(--text, #d4d7da); white-space: pre; }
+.dp-display .wt-mono[data-out="true"] { fill: var(--text-dim, #a2a7ad); }
+.dp-display .wt-mono[data-ask="true"] { fill: var(--stall, #ff9b4a); }
+.dp-display .wt-tick { fill: var(--dp-value); }
+.dp-display .wt-cursor { fill: var(--text, #d4d7da); opacity: .7; }
+.dp-display .wt-cursor[data-ask="true"] { fill: var(--stall, #ff9b4a); opacity: 1; }
+.dp-display .wt-rule { stroke: var(--text-faint, #71767c); stroke-width: 1; fill: none; }
+.dp-display .wt-track { fill: color-mix(in srgb, var(--text, #d4d7da) 10%, transparent); }
+.dp-display .wt-kept { fill: var(--dp-value-dim); }
+.dp-display .wt-ask-edge { fill: none; stroke: var(--stall, #ff9b4a); stroke-width: 1; }
+
+.wt-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+
+/* The pane: the shell at full size, a bar above and the shell's own footer below. */
+.wt-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-0, #26292d); color: var(--text, #d4d7da); font: 10.5px var(--font-ui, sans-serif); overflow: hidden; }
+.wt-bar { flex: none; height: 22px; display: flex; align-items: center; gap: 10px; padding: 0 10px; background: var(--bg-1, #33363b); border-bottom: 1px solid var(--line, #24262a); white-space: nowrap; overflow: hidden; }
+.wt-bar--foot { border-bottom: 0; border-top: 1px solid var(--line, #24262a); }
+.wt-bar b { font-weight: 600; }
+.wt-bar [data-tone="value"] { color: var(--dp-value); }
+.wt-bar [data-tone="stall"] { color: var(--stall, #ff9b4a); }
+.wt-bar [data-tone="dim"] { color: var(--text-dim, #a2a7ad); }
+.wt-fill { margin-left: auto; }
+.wt-body { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-start; gap: 8px; padding: 10px 10px 0 0; overflow: hidden; }
+.wt-gutter { flex: none; width: 52px; text-align: right; color: var(--dp-value); font-size: 9.5px; white-space: nowrap; overflow: hidden; }
+.wt-screen { flex: none; overflow: hidden; font-family: var(--font-mono, ui-monospace, Menlo, Consolas, monospace); color: var(--text, #d4d7da); }
+.wt-gutter div, .wt-screen div { white-space: pre; }
+.wt-screen [data-out="true"] { color: var(--text-dim, #a2a7ad); }
+.wt-screen [data-ask="true"] { color: var(--stall, #ff9b4a); }
+.wt-cur { display: inline-block; width: .6em; height: 1em; vertical-align: text-bottom; background: var(--text, #d4d7da); opacity: .7; }
+.wt-cur[data-ask="true"] { background: var(--stall, #ff9b4a); opacity: 1; }
+.wt-gauge { flex: none; position: relative; width: 4px; background: color-mix(in srgb, var(--text, #d4d7da) 10%, transparent); }
+.wt-gauge i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--dp-value-dim); }

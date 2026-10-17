@@ -36,6 +36,7 @@ import "./library.css";
 /** "here" filters providers/kinds by the current mode (SCOPE SEMANTICS). */
 const HERE_KINDS: Record<WorkspaceMode, LibraryKind[]> = {
   base: ["projected-object", "page"],
+  live: ["projected-object", "page"],
   factory: ["projected-object", "page"],
   techne: ["composition", "world", "projected-object", "page"],
   expressions: ["composition", "world"],

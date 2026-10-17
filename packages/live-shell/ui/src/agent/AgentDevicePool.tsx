@@ -5,41 +5,20 @@ import {agentAddressesForDevice, type AgentParamAddress} from '../inhabitants/ag
 import {RefusalCard} from './RefusalCard'
 import './agentShell.css'
 
-/** Pool-row hooks keyed like the mockup oracle (`label|function`). */
+/** Pool-row hooks keyed like the mockup oracle (`label|function`): the git seat's rows. */
 const POOL_DATA_I = {
-  transport: agentDataI('Transport', 'stdio (spawned child, trusted) · ws (token / 30 s ticket at the upgrade) · remote (through Workcell’s address book).'),
-  approvals: agentDataI('Approvals', 'Default answer to approval.request: ask you each time · allow for this session · always. Deny is always yours to give.'),
-  frameMonitor: agentDataI('Frame monitor', 'Live’s MIDI monitor for agents: every frame the gateway sends or receives, per session, in order. Use it to see exactly what a stalled lane last did.'),
-  spend: agentDataI('Spend', 'Where Live’s CPU meter sits: session spend against its cap.'),
-  model: agentDataI('Model', 'This session’s model. Subagents can run a different one.'),
   commit: agentDataI('Commit', 'When the agent commits: per turn · per task · manual.'),
   push: agentDataI('Push', 'off · on land.'),
   land: agentDataI('Land', 'Open a draft PR from this branch (checks 2/3 ✓).'),
 } as const
 
 const ROW_DATA_I: Partial<Record<string, string>> = {
-  transport: POOL_DATA_I.transport,
-  approvals: POOL_DATA_I.approvals,
-  frames: POOL_DATA_I.frameMonitor,
-  spend: POOL_DATA_I.spend,
-  model: POOL_DATA_I.model,
-  'budget-used': agentDataI('Budget', 'Turns per task.'),
-  input: agentDataI('Input', 'Steer the running turn, or queue.'),
-  heartbeat: agentDataI('Heartbeat', 'Where Live has the metronome: running agents check in on a cadence. Each check-in moves that thread’s needle in the Arrangement; a needle that stops is a stall.'),
-  autonomy: agentDataI('Autonomy', 'Suggest · Review (proposals) · Auto (lands with receipts).'),
-  effort: agentDataI('Effort', 'Thinking effort per turn.'),
   'commit-policy': POOL_DATA_I.commit,
   'push-policy': POOL_DATA_I.push,
   land: POOL_DATA_I.land,
 }
 
 const ROW_LABELS: Partial<Record<string, string>> = {
-  'stall-after': 'Stall-after',
-  'budget-used': 'Budget',
-  'test-depth': 'Test depth',
-  'knowledge-route': 'Knowledge route',
-  'write-mode': 'Write mode',
-  'write-receipts': 'Receipts',
   'commit-policy': 'Commit',
   'push-policy': 'Push',
 }
@@ -52,43 +31,25 @@ const declared = (row: AgentParamAddress): string => {
   return row.unit ? `${row.type} · ${row.unit}` : row.type
 }
 
-/** Expanded device faces in the pool. Device rows derive from the admitted
- * family manifests (never a hardcoded table); each rendered row is one
- * address from the §14 table, showing its live reading, or its verbatim
- * disclosed absence — spend renders its no-writer line, never a fake fill.
- * Readings sit at the mockup's .row density; refusals render as named cards
+/** The devices the runtime's own pool draws whole (frame/devices/DevicePool.tsx: the device last chosen on the chain, on the binding
+ * its chain plate reads): the Gateway, the Agent, the Skillset rack and Scope, by their catalogue designs once bound to their
+ * owners (devices/designBindings.ts), else the generic plate of the owner's rows with the device's own picture (the gateway's
+ * refusal card among it). Their text cards here read the shell's own defaults as values (effort "high", budget "0 / 12", autonomy
+ * from the steer flag, reads "teal" and writes "amber") or repeated the chain's gateway read, and are gone (lane BF). */
+export const POOL_DRAWN_BY_RUNTIME: ReadonlySet<string> = new Set(['gateway', 'agent', 'skillset', 'world'])
+
+/** Expanded device faces in the pool, for the chain devices the runtime's pool does not draw yet (the git seat).
+ * Device rows derive from the admitted family manifests (never a hardcoded table); each rendered row is one address from the §14
+ * table with its verbatim disclosed absence — spend renders its no-writer line, never a fake fill. Refusals render as named cards
  * with the receipt folded, never raw JSON on the surface. */
 export function AgentDevicePool({
-  gatewayLine,
-  gatewayReceipt = null,
-  gatewayRefused = true,
   gitLine,
   gitReceipt = null,
   gitRefused = true,
-  effort,
-  autonomy,
-  budgetUsed,
-  budgetCap,
-  skillsAdmitted = null,
-  skillsNote = null,
-  identityNote = null,
-  skillsWaitingOn = null,
 }: {
-  gatewayLine: string
-  gatewayReceipt?: string | null
-  gatewayRefused?: boolean
   gitLine: string
   gitReceipt?: string | null
   gitRefused?: boolean
-  effort: string
-  autonomy: string
-  budgetUsed: number
-  budgetCap: number
-  skillsAdmitted?: number | null
-  skillsNote?: string | null
-  identityNote?: string | null
-  /** The owner an unlit skillset row waits on (P0-R4); null while reading. */
-  skillsWaitingOn?: string | null
 }) {
   const shell = useAgentShell()
   const devices = agentDeviceCatalogue()
@@ -102,23 +63,8 @@ export function AgentDevicePool({
       </section>
     )
   }
+  if (POOL_DRAWN_BY_RUNTIME.has(selected.id)) return null
   const rows = agentAddressesForDevice(selected.id)
-  const reading = (row: AgentParamAddress): string | null => {
-    if (selected.id === 'agent') {
-      if (row.key === 'effort') return effort
-      if (row.key === 'budget-used') return `${budgetUsed} / ${budgetCap}`
-      if (row.key === 'input') return shell.steer ? 'steer' : 'queue'
-      if (row.key === 'heartbeat') return shell.heartbeat ? 'on' : 'off'
-      if (row.key === 'autonomy') return autonomy
-      if (row.key === 'identity') return identityNote
-    }
-    if (selected.id === 'world') {
-      if (row.key === 'reads') return 'teal'
-      if (row.key === 'writes') return 'amber'
-      if (row.key === 'write-mode') return shell.writeArm ? 'direct' : 'propose'
-    }
-    return null
-  }
   return (
     <section className="pool agent-device-pool" aria-label="Device pool">
       <div className="poolh">
@@ -140,47 +86,19 @@ export function AgentDevicePool({
         </span>
       </div>
       <div className="poolb">
-        {selected.id === 'gateway' && (
-          gatewayRefused
-            ? <RefusalCard title="Gateway · hermes" line={gatewayLine} receipt={gatewayReceipt} />
-            : <ReadingLine title="Gateway · hermes" line={gatewayLine} receipt={gatewayReceipt} />
-        )}
-        {selected.id === 'skillset' && (
-          <p className="agent-disclosed">{skillsNote ?? 'Admit lights follow harness disclosure.'}</p>
-        )}
         {selected.id === 'git' && (
           gitRefused
             ? <RefusalCard title="Git" line={gitLine} receipt={gitReceipt} />
             : <ReadingLine title="Git" line={gitLine} receipt={gitReceipt} />
         )}
-        {selected.id === 'skillset'
-          ? rows.map(row => (
-            <label key={`${row.family}.${row.key}`} className="agent-pool-row" data-family={row.family}>
-              <span>{rowLabel(row)}</span>
-              <span className="agent-disclosed">{(skillsAdmitted ?? 0) > 0 ? 'admitted' : skillsWaitingOn ? `waiting · ${skillsWaitingOn}` : skillsAdmitted == null ? 'reading' : 'not admitted'}</span>
-            </label>
-          ))
-          : rows.map(row => {
-            const value = reading(row)
-            return (
-              <div key={`${row.family}.${row.key}`} className="agent-row" data-family={row.family} data-i={ROW_DATA_I[row.key]} title={ROW_DATA_I[row.key]}>
-                <span className="k">{rowLabel(row)}</span>
-                {value != null
-                  ? <output>{value}</output>
-                  : row.disclosure
-                    ? <span className="agent-disclosed">{row.disclosure}</span>
-                    : <span style={{color: 'var(--text-dim)', fontSize: 10.5}}>{declared(row)}</span>}
-              </div>
-            )
-          })}
-        {selected.id === 'gateway' && (
-          <details className="agent-fold">
-            <summary>Details</summary>
-            <div className="agent-kv"><span>Protocol</span><span>JSON-RPC / NDJSON</span></div>
-            <div className="agent-kv"><span>Connect</span><span>attaches this session’s harness; detached sessions keep running and re-attach with session.resume</span></div>
-            <div className="agent-kv"><span>Frames</span><span>the Frames dock tile is the frame monitor</span></div>
-          </details>
-        )}
+        {rows.map(row => (
+          <div key={`${row.family}.${row.key}`} className="agent-row" data-family={row.family} data-i={ROW_DATA_I[row.key]} title={ROW_DATA_I[row.key]}>
+            <span className="k">{rowLabel(row)}</span>
+            {row.disclosure
+              ? <span className="agent-disclosed">{row.disclosure}</span>
+              : <span style={{color: 'var(--text-dim)', fontSize: 10.5}}>{declared(row)}</span>}
+          </div>
+        ))}
       </div>
     </section>
   )

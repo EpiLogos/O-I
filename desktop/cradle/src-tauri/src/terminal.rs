@@ -90,7 +90,7 @@ fn trusted(view: &Webview) -> Result<(), String> {
             .app_handle()
             .get_webview_window(view.label())
             .ok_or("Candidate terminal window is unavailable")?;
-        return crate::native_shell::admit_candidate_webview(&window);
+        crate::native_shell::admit_candidate_webview(&window)
     }
     #[cfg(not(feature = "native_shell"))]
     if view.label() == "main" || view.label().starts_with("surface-") {

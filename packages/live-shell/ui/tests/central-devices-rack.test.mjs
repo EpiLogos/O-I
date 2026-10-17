@@ -1,11 +1,13 @@
 // The Base Devices chain takes its Central apertures from the one selection the
-// Document row shows (WORLD-SHELL-DESIGN §5, §17.2; src/central). Rendered under SSR
-// (the mode-surface-fidelity pattern): the owner's Day reading is passed in as the
+// Document row shows (WORLD-SHELL-DESIGN §5, §17.2; src/central), and draws the family's
+// devices through the device runtime (T-DEVICES-CENTRAL; src/central/devices): each
+// compact, with its own live picture, the Day die its die. Rendered under SSR (the
+// mode-surface-fidelity pattern): the owner's Day reading is passed in as the
 // `standing` the hook would have read, because effects do not run server-side.
 //
 // Channels: the events and the Day answers are constructed from the real capture's
-// shape (the walk test reads the captures); the rack, the Day die, and the Nara face
-// are the production components, rendered as they are.
+// shape (the walk test reads the captures); the chain, the Day die, and the Nara face
+// are the production components, rendered as they are. Scripted (SSR), not a screen pass.
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -19,6 +21,7 @@ register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
 import {readFile} from 'node:fs/promises';
 export async function resolve(s, c, n) {
+  if (s === 'react' || s.startsWith('react/')) return n(s, {...c, parentURL: ${JSON.stringify(import.meta.url)}})
   let r = null
   try { r = await n(s, c) } catch (e) { if (!s.startsWith('.')) throw e }
   if (r) {
@@ -40,20 +43,19 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const {BaseDevicesDetail} = await import('../src/shell/ModeDetail.tsx')
-const {InhabitantRack} = await import('../src/inhabitants/inhabitantRack.tsx')
-const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
 const {createTimeSpine} = await import('../src/timeline/timeSpine.ts')
 const vertical = await import('../src/central/centralVertical.ts')
 const rack = await import('../src/central/centralRack.ts')
+const devices = await import('../src/central/devices/CentralDevices.tsx')
+const model = await import('../src/central/devices/centralDeviceModel.ts')
+const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
+const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
 
 const html = (element) => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
-const central = inhabitantManifest('central')
-assert.ok(central, 'the central family is admitted by the shell\'s own door')
 
 // The Base Devices chain as it stands with no selection (the reference markup).
-const todayMarkup = html(createElement('div', {className: 'mode-detail', 'data-mode-detail': 'base-devices'},
-  createElement(InhabitantRack, {manifests: [central], transport})))
+const todayMarkup = html(createElement(BaseDevicesDetail, {transport}))
 
 // A world the Central selection reads: the spine and the reading the World cut holds.
 const NOW_REF = 'central:now:control:root:' + '0'.repeat(63) + '1'
@@ -75,39 +77,69 @@ const readyStanding = vertical.interpretDayOpen(DAY_REF, {data: {schema: 'oi.cen
   document: {document_id: 'day-document:2026-10-06'}, revision: {revision: 'central.content-fnv1a64/v1:12:0000000000000001'}}}})
 const uninitialisedStanding = vertical.interpretDayOpen(DAY_REF, {error: 'Current Day has no native document yet. Use the explicit native initialisation path; its temporal artifact is not a Daily Die'})
 
-test('no selected occasion: the Devices chain is unchanged (the same markup as the rack alone)', () => {
-  assert.equal(html(createElement(BaseDevicesDetail, {transport})), todayMarkup, 'no world: unchanged')
+const central = inhabitantManifest('central')
+assert.ok(central, 'the central family is admitted by the shell\'s own door')
+
+/** The chain's input with no owner answered and no aperture standing, over the family's own faces. */
+const chainInput = (extra = {}) => ({transport, faces: central.faces, manifest: central, reads: {}, day: null, conversation: null, flow: null, impact: null, deviceWindows: null, ...extra})
+
+/** One device's compact markup out of the chain. */
+const deviceMarkup = (markup, faceId) => {
+  const start = markup.indexOf(`data-device="central:${faceId}"`)
+  assert.ok(start > 0, `the ${faceId} device stands on the chain`)
+  const next = markup.indexOf('data-device="central:', start + 10)
+  return markup.slice(start, next < 0 ? undefined : next)
+}
+
+test('no selected occasion: the chain is unchanged by a world with nothing retained', () => {
+  // Lane BC3: Search joins the agent's devices on the chain (DLW §18.4); the Packet stands only on a reached document's chain.
+  assert.match(todayMarkup, /data-central-devices="7"/, 'the seven device faces of the Central family stand on the chain while no document is reached')
   const empty = worldWith([nowEvent], null)
   assert.equal(html(createElement(BaseDevicesDetail, {transport, world: empty, standing: null})), todayMarkup, 'a world with no retained occasion: unchanged')
+  assert.equal(html(createElement(BaseDevicesDetail, {transport, standing: readyStanding})), todayMarkup, 'a Day standing with no occasion draws no Day: the die has no aperture')
 })
 
-test('a browser subject stands in the Document row: the Devices chain keeps its own unchanged markup', () => {
+test('a browser subject stands in the Document row: it shadows the occasion, the Day die keeps no Day, the Impact names the subject', () => {
   const selected = worldWith([nowEvent], nowEvent)
-  const subject = {kind: 'day', path: 'Control/agents/now/day/2026-09-12.md'}
-  assert.equal(html(createElement(BaseDevicesDetail, {transport, world: selected, subject, standing: readyStanding})), todayMarkup, 'the browser subject shadows the occasion')
+  const subject = {kind: 'note', path: 'Control/agents/now/day/2026-09-12.md'}
+  const markup = html(createElement(BaseDevicesDetail, {transport, world: selected, subject, standing: readyStanding}))
+  const die = deviceMarkup(markup, 'day-die')
+  assert.match(die, /data-device-light="unknown"/, 'no Day aperture: the die\'s light stays dark')
+  assert.doesNotMatch(die, /2026-10-06/, 'the occasion\'s Day is not read while a browser subject stands')
+  assert.match(deviceMarkup(markup, 'impact'), /data-central-picture="impact"[\s\S]*<small>Control\/agents\/now\/day\/2026-09-12\.md<\/small>/, 'the Impact reads the selected subject')
 })
 
-test('a selected Day occasion with a ready Day: the Day die has its body, docked in the chain', () => {
+test('a selected Day occasion with a ready Day: the Day die stands lit on its Day, its body a pane away (its picture is its design\'s)', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport, world: worldWith([nowEvent], nowEvent), standing: readyStanding}))
-  assert.match(markup, /data-document-device="ql-daily-die"/, 'the Day die body renders from the owner\'s Day identity')
-  assert.doesNotMatch(markup, /Expand: the Day die docks/, 'the die is docked, not folded')
-  assert.doesNotMatch(markup, /No Day is selected/, 'the empty-slot copy does not claim there is no Day')
-  assert.match(markup, /data-face-id="day-die"/)
+  const die = deviceMarkup(markup, 'day-die')
+  assert.match(die, /data-device-light="on"/, 'the owner reports the Day ready, so the light is on')
+  assert.doesNotMatch(die, /class="central-die-net"/, 'MOVED: the net is the design\'s (day.tsx), drawn once the Day\'s binding is published (central-day-binding.test.mjs)')
+  assert.doesNotMatch(markup, /data-document-device="ql-daily-die"/, 'the hosted form is the full size\'s body, not the compact device\'s')
+  assert.doesNotMatch(markup, /No Day is selected\. Select one in the browser[^<]*docks here/, 'the empty-slot copy does not claim there is no Day')
 })
 
-test('a selected Day occasion with an uninitialised Day: the owner state is named above the chain, and no die is drawn', () => {
+test('a selected Day occasion with an uninitialised Day: the owner state is named above the chain, and the die is lit off, never on', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport, world: worldWith([nowEvent], nowEvent), standing: uninitialisedStanding}))
   assert.match(markup, /data-central-day-notice="uninitialised"/)
   assert.match(markup, /has no Day document yet/)
   assert.match(markup, /central · initialise-day/, 'the owner op that would admit the Day is named')
-  assert.doesNotMatch(markup, /data-document-device="ql-daily-die"/, 'no die is drawn for a Day the owner has not initialised')
+  assert.match(deviceMarkup(markup, 'day-die'), /data-device-light="off"/, 'the owner says the Day is not ready: off, not dark and not on')
 })
 
-test('a selected conversation occasion: the Nara face docks on its conversation; the owner gap is named (no expression is disclosed)', () => {
+test('a selected conversation occasion: the Nara device stands unbound with no identity; the owner gap shows whole and in its body', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport, world: worldWith([conversationEvent], conversationEvent)}))
-  assert.match(markup, /data-conversation-device="nara"/, 'the Nara face is docked in the chain')
-  assert.match(markup, new RegExp(`data-conversation-gap="${CONVERSATION_SPACE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), 'the face names this conversation')
-  assert.match(markup, /session-space/, 'the gap names the owner that owes the binding')
+  const nara = deviceMarkup(markup, 'nara-conversation')
+  assert.match(nara, /no identity — disclosed absence/, 'no Nara identity is current: disclosed, not filled')
+  assert.match(nara, /data-device-light="off"/, 'unbound is a known standing: off, not on')
+  const face = central.faces.find(item => item.id === 'nara-conversation')
+  const gap = vertical.conversationGap(CONVERSATION_SPACE)
+  const device = model.centralDevice(face, {nara: {state: 'no-identity', conversation: CONVERSATION_SPACE, gap, expression: null, session: null}})
+  assert.equal(device.values.conversation, CONVERSATION_SPACE, 'the device names this conversation')
+  assert.match(html(createElement(DeviceView, {device, size: 'whole'})), /session-space/, 'whole: the expression row names the owner that owes the binding')
+  const entry = devices.centralDeviceEntries(chainInput({conversation: {project: null, expressionRef: null, conversation: CONVERSATION_SPACE}}))
+    .find(item => item.id === 'central:nara-conversation')
+  const full = html(entry.picture('full'))
+  assert.match(full, new RegExp(`data-conversation-gap="${CONVERSATION_SPACE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), 'full: the body names this conversation')
 })
 
 test('the apertures follow the Document row\'s own selection and the Day standing', () => {

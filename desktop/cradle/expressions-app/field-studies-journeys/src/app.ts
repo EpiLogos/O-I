@@ -60,7 +60,7 @@ import {inspectorHTML,InspectorContext} from './inspector.js';
 import {sourceVisual,describeAnalysis} from './sourcePreview.js';
 import {isStudioSection,studioPlacement,type StudioSection} from './studioSections.js';
 import {LiveOverrides} from './liveOverrides.js';
-import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings} from './stageCommands.js';
+import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings} from './stageCommands.js';import {installPresentedChrome,frameChromeRegions,type PresentedChrome} from './presentedChrome.js';
 import {DEFAULT_SOURCE_THRESHOLD} from '../../src/engine/sourceSampling';
 import {PARAMETERS,parameter} from './registry.js';
 import {evaluateParameters,phases,sequenceAt,focusAt,arrange,reorderFocus} from './timeline.js';
@@ -70,7 +70,7 @@ const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
-import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
+import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
@@ -86,10 +86,8 @@ import {sameEditorBasis} from '../../../../../packages/expressions-boundary/src/
 import {createNativeMaterialController} from '../../../../../packages/expressions-boundary/src/nativeMaterials';
 import {requestNativeMaterialEditor} from '../../../../../packages/expressions-boundary/src/materialEditor';
 import {worldRequest} from './worldChannel';
-import {installLensStudio,type LensId} from './lensStudio.js';
+import {installLensStudio,PALACE_MOVED,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
-import {installPalaceInstrument} from './palaceInstrument.js';
-import {palaceInstrumentOpenRequest} from './palaceWhole.js';
 import {installJourneyInstrument} from './journeyInstrument.js';
 import {writeJourneyCrossing,writeJourneyReturn} from './sharedTimeWindow.js';
 import {composeSceneRequest} from './journeyBeats.js';
@@ -98,7 +96,6 @@ import {installNaraInstrument} from './naraInstrument.js';
 import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
 import {createEvidenceField,type PrivateEvidenceField} from './naraEvidenceField.js';
-import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
 import {applyResearchMaterial,applyConnectorRecord,pruneResearchOccurrence,runCanvasImport,type CanvasImportHost,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
@@ -214,6 +211,8 @@ let deepLinkPending:{address:DeepLinkAddress;notes:string[]}|null={address:bootL
 // address is never written faster than WKWebView's replaceState throttle allows, and the last position is always written.
 const DEEP_LINK_WRITE_MS=400;
 let deepLinkWriteTimer=0;
+// E22 (ticket P, G3): the address last announced to the host, so a changed address is announced once.
+let announcedAddress='';
 let focusSession:FocusSession=NOT_FOCUSED,focusHold:FullscreenHold|null=null,focusExitedAt=Number.NEGATIVE_INFINITY;
 const featured=featuredExpressions(),starters=startingPoints();
 const covers=new Map<string,string>();
@@ -313,7 +312,6 @@ function renderInspector(){const content=$('inspector-content');if(!inspectorOpe
 // listeners), replacing the generic detail-groups content above.
 if(studioSection==='native'&&nativeField)content.replaceChildren(nativeField.panel);
 if(studioSection==='blueprint'&&!search)content.replaceChildren(blueprintHome);
-if(studioSection==='palace'&&!search)content.replaceChildren(palaceHome);
 if(studioSection==='places'&&!search)content.replaceChildren(placesHome);
 if(studioSection==='canvas'&&!search)content.replaceChildren(canvasHome);
 $('inspector-title').textContent=document.querySelector<HTMLElement>('[data-action="studio-section"][aria-current="page"]')?.textContent??'Studio';
@@ -955,7 +953,7 @@ function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);con
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
 function setStudio(open:boolean){if(!open)draftSchedule.flushNow('studio');pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
-function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','palace','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
+function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
  if(!$('inspector').hidden)studioScroll=$('inspector-content').scrollTop;$('inspector').hidden=!inspectorOpen||!editing;$('tool-rail').hidden=presenting;$('view-controls').hidden=!editing||!(tool==='pin'||shapePickerOpen||placementStep)||!!contextKind||inspectorOpen;$('coordinates').hidden=presenting||libraryOpen;$('timeline-panel').hidden=!timelineOpen;$('shape-picker').hidden=!shapePickerOpen||!editing;$('present-return').hidden=!presenting;
  $('scene-number').textContent=String(sceneIndex+1).padStart(2,'0');$('scene-name').textContent=scene().name;
  $('scene-picker').setAttribute('aria-expanded',String(timelineOpen));$('scene-state').textContent=sceneSaveState(store.document,scene());
@@ -1340,7 +1338,7 @@ function renderLibrary(){coverObserver?.disconnect();const {read:library,origins
  if(typeof IntersectionObserver==='undefined')images.forEach(paint);
  else{coverObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){paint(entry.target as HTMLImageElement);coverObserver?.unobserve(entry.target);}},{root:$('library-page'),rootMargin:'160px'});images.forEach(image=>coverObserver!.observe(image));}
 }
-function openLibrary(section:'collection'|'about'='collection',navigate=true){if(propertyTake)finishPropertyTake();
+function openLibrary(section:'collection'|'about'='collection',navigate=true){/* Lane BE: presented on the shell's devices, the Library opens in its own device home — full in a pane, its own page (library.html) — never over this field: the frame hands the summon to the shell (presentedChrome.ts summon) and its field plays on. */if(section==='collection'&&presentedChrome?.summon('library'))return;if(propertyTake)finishPropertyTake();
  wikiStanding.begin(); // E21: a refusal is not kept across opens; each subject is asked once more in this open.
  if(!libraryOpen)rememberCover();
  pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;refreshQuarantine();refreshOwnerQuarantine();refreshCollections();
@@ -1370,7 +1368,6 @@ let sceneBodies:ReturnType<typeof installSceneBodies>|undefined;
 let blueprintHUD:ReturnType<typeof installBlueprintHUD>|undefined;
 // Studio-owned homes for instrument controls (re-parented, never re-rendered).
 const blueprintHome=document.createElement('div');blueprintHome.className='blueprint-home';
-const palaceHome=document.createElement('div');palaceHome.className='palace-home';
 const journeyHome=document.createElement('div');journeyHome.className='journey-reading-home';journeyHome.hidden=true;$('app').append(journeyHome);
 const placesHome=document.createElement('div');placesHome.className='places-home';
 const canvasHome=document.createElement('div');canvasHome.className='canvas-home';
@@ -1406,9 +1403,10 @@ function kernelOriginFor(journey:Journey):LibraryOrigin|undefined{
  return {kind:'kernel-ref',ref:view.document.expression_ref};
 }
 /** Opens a kernel copy through the boot's own follow path. A refusal is named, and `fallback` (the browser copy) then opens. */
-function openKernelCopy(ref:string,fallback?:()=>void,recovery?:unknown){
- const refused=()=>{toast(kernelCopyRefusalMessage(!!fallback),7000);fallback?.();};
- void Promise.resolve(nativeWorkspace?.follow(ref,recovery)).then(applied=>{if(applied!==true)refused();},refused);
+/** Resolves whether the frame now stands on the kernel's document (a refusal is toasted and its reason stays on the native status line). */
+function openKernelCopy(ref:string,fallback?:()=>void,recovery?:unknown):Promise<boolean>{
+ const refused=()=>{toast(kernelCopyRefusalMessage(!!fallback),7000);fallback?.();return false;};
+ return Promise.resolve(nativeWorkspace?.follow(ref,recovery)).then(applied=>applied===true?true:refused(),refused);
 }
 /** The browser copy a kernel ref falls back to when the kernel refuses it: the Library entry that holds the ref (libraryCards.localCopyIdFor). */
 function localCopyFallbackFor(ref:string):(()=>void)|undefined{
@@ -2123,7 +2121,7 @@ let hostMode:'expressions'|'techne'|'live'=new URLSearchParams(location.search).
 // The world lens the host stands in (workspace.current.context.world). Read
 // from ?world= or an optional host-mode `world`; the Epi-Logos world opens the
 // Studio on the live instrument the first time, never overriding a choice.
-let worldLens:string|null=new URLSearchParams(location.search).get('world');let instrumentOffered=false;
+let worldLens:string|null=new URLSearchParams(location.search).get('world');let instrumentOffered=false;let presentedChrome:PresentedChrome|undefined; // T-FRAME-CHROME-ONTO-PLATES: how the shell presents this frame (a pane: the chrome on its devices; at full size: here) and the chrome read as data for them (presentedChrome.ts), installed once its regions stand (below).
 let livedRailHTML='';
 // One rail in both modes: Technē keeps the Expressions tools; the active
 // instrument's own tools sit beside them in #instrument-tools.
@@ -2139,12 +2137,14 @@ function announceHostState(){
   // The Technē lens the frame stands in (the masthead chooser). Read here, not in the literal: a call before the chooser exists omits it rather than throwing out of the announcement.
   let lens:LensId|undefined;try{lens=lensStudio.active();}catch{lens=undefined;}
   const instrument=announcedInstrument();
-  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode,recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo}};
+  // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
+  const address=hostAddress();announcedAddress=JSON.stringify(address??null);
+  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
-}
+}/** T-FRAME-CHROME-ONTO-PLATES: the presentation and the chrome reading for the announcement; absent before the door stands, never a throw out of it. */function chromeState(){try{return presentedChrome?{presentation:presentedChrome.presentation(),chrome:presentedChrome.reading()}:{};}catch{return {};}}
 /** The native instrument as the frame announces it (ticket T-LIVE-TORUS-INSTRUMENT). Read here, never from a stale copy; absent while no session is open, and never a throw out of the announcement. */
 function announcedInstrument(){
  try{return nativeField?announceInstrument(nativeField.controller.reading):undefined;}catch{return undefined;}
@@ -2183,7 +2183,7 @@ function setHostMode(mode:'expressions'|'techne'|'live'){
  document.body.classList.toggle('oi-host-live',mode==='live');
  renderRail();
  lensStudio.setMode(mode==='techne'?'techne':'expressions');
- if(mode!=='techne'){researchInstruments?.close();palaceInstrument.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
+ if(mode!=='techne'){researchInstruments?.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
  if(mode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);nativeField.openLive();}
  if(mode!=='live')nativeField?.leaveLive();
  renderAll();
@@ -2196,18 +2196,40 @@ function setHostMode(mode:'expressions'|'techne'|'live'){
 // previous field. If the kernel channel has not been announced yet it opens on
 // that announce, exactly as the boot ?expression= deep link does. Refs only —
 // the kernel document is the store, and a bad ref is refused by the owner.
-let pendingHostOpen:{ref:string;recovery?:unknown}|null=null,hostOpenArmed=false;
+let pendingHostOpen:{ref:string;recovery?:unknown;settle:(opened:boolean|string)=>void}|null=null,hostOpenArmed=false;
 let hostThemeReadingKey='';
-function openHostExpression(ref:string,recovery?:unknown){
- if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
- if(kernelExpressionsAvailable()){openKernelCopy(ref,localCopyFallbackFor(ref),recovery);return;}
+/** Resolves whether the frame now stands on the Expression, or why not when no status line says it (answerHostOpen carries that to the host). */
+function openHostExpression(ref:string,recovery?:unknown):Promise<boolean|string>{
+ if(typeof ref!=='string'||!ref.startsWith('expression:'))return Promise.resolve(false);
+ if(kernelExpressionsAvailable())return openKernelCopy(ref,localCopyFallbackFor(ref),recovery);
  // Buffer the LATEST ref and arm exactly one announce listener (not one per
  // pre-ready call), so repeated posts before the channel is up converge to a
- // single last-wins open and no message listeners accumulate.
- pendingHostOpen={ref,recovery};
- if(hostOpenArmed)return;
+ // single last-wins open and no message listeners accumulate. A superseded
+ // buffered open resolves unopened.
+ const answer=new Promise<boolean|string>(settle=>{pendingHostOpen?.settle('A newer open superseded this one before the kernel channel was announced.');pendingHostOpen={ref,recovery,settle};});
+ if(hostOpenArmed)return answer;
  hostOpenArmed=true;
- window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery);}});
+ window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery).then(r.settle);}});
+ return answer;
+}
+/** The host's re-read of an Expression it focused (nativeWorkspace.refreshReference): resolves whether the frame stands on it. */
+function refreshHostExpression(ref:string,recovery?:unknown):Promise<boolean>{
+ return Promise.resolve(nativeWorkspace?.refreshReference(ref,recovery)??false).catch(()=>false);
+}
+/** Lane D: the frame's answer to the host's open (open-expression / refresh-expression carrying `req`), as a stage command is answered
+ * (stageReplyMessage): ok once the frame stands on the Expression, or refused in the words its native status line holds — the owner's
+ * refusal (a revision conflict, an absent work) or the host's own hold. Seen headless and natively (16 Oct): the frame refused the door's
+ * Scene with a toast alone, and the shell's ask waited 30 s and then said the frame "gave the shell no reason". An open without `req`
+ * (an older host) is answered by the toast alone, as before. */
+function answerHostOpen(req:unknown,opened:Promise<boolean|string>){
+ if(!Number.isSafeInteger(req)||Number(req)<1||window.parent===window)return;
+ void opened.then(outcome=>{
+  const ok=outcome===true;
+  // A refusal in words of its own (a superseded open), or the status line's: every other unopened path sets it first — run()'s
+  // catch (the owner's refusal) or refusedByHost (the host's own hold).
+  const reason=typeof outcome==='string'?outcome:nativeState?.text||'The Expressions frame did not open this Expression; it named no reason.';
+  try{window.parent.postMessage(stageReplyMessage(Number(req),ok?{ok:true}:{ok:false,error:reason}),'*');}catch{/* nothing is sent rather than a wrong-channel throw */}
+ });
 }
 // Stage controls the shell drives (stageCommands.ts). Each runs the application's
 // own action body; the file download or picker stays here, in the frame's gesture.
@@ -2232,7 +2254,7 @@ async function runStageCommand(command:StageCommand){
   case 'present':await action(command.on?'present':'exit-present',body);break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;
-  case 'janko':
+  /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':
    // A Jankó chord: the owner's own played voices, struck through the native owner (nativeField.ts playJanko). Never synthesised.
    if(!nativeField)throw new Error('This application has no native instrument.');
    await nativeField.playJanko(command.pitch_classes,command.amplitude);
@@ -2333,7 +2355,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne'||d.mode==='live')){const world=(d as {world?:unknown}).world;if(typeof world==='string'&&world.length<=64)worldLens=world;setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
-  else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref,d.recovery);else openHostExpression(d.ref,d.recovery);}
+  else if(d.command==='open-expression'&&typeof d.ref==='string')answerHostOpen(d.req,(d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable()?refreshHostExpression(d.ref,d.recovery):openHostExpression(d.ref,d.recovery));
   else if(d.command==='open-local-draft'&&typeof (d as {id?:unknown}).id==='string')void openBrowserDraft((d as {id:string}).id);
   else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){
    const lens=(d as {lens:LensId}).lens,ref=(d as {ref?:unknown}).ref;
@@ -2345,7 +2367,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
     try{lensStudio.select(lens);}finally{carriedFocus=null;}
    }else lensStudio.select(lens);
   }
-  else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref,d.recovery);
+  else if(d.command==='refresh-expression'&&typeof d.ref==='string')answerHostOpen(d.req,refreshHostExpression(d.ref,d.recovery));
   else if(d.command==='insert-source'&&typeof d.req==='string'){
    const req=d.req,target=d.target as {expression_ref?:unknown;revision?:unknown;scene_ref?:unknown}|undefined,source=d.source as {title?:unknown;binding?:unknown}|undefined;
    void (async()=>{
@@ -2418,7 +2440,7 @@ function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHi
  sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===desired));
  if(preservePosition){camera=oldCamera;sceneElapsed=oldTime;selected=oldSelection.filter(id=>scene().entities.some(e=>e.id===id));journeyPlaying=oldPlaying;}
  else {applySceneView();const nativeRef=view.document.selection?.entity_ref;const occurrence=view.bindings[scene().id]?.occurrences.find(o=>o.entity_ref===nativeRef);selected=occurrence?[occurrence.view_entity_id]:[];}
- markSaved();renderAll();announceHostState();void researchInstruments?.refresh();void journeyInstrument?.refresh();void palaceInstrument.refresh();
+ markSaved();renderAll();announceHostState();void researchInstruments?.refresh();void journeyInstrument?.refresh();
 }
 // The M0′–M5′ Lens Studio stands on the SAME native construction the native
 // workspace holds; refreshing it when the construction changes keeps the
@@ -2428,7 +2450,6 @@ let researchSuspension:symbol|null=null;
 function setInstrumentSurface(lens:LensId|null){
  const research=lens==='canvas'||lens==='timeline'||lens==='place';
  document.body.classList.toggle('research-active',research);
- document.body.classList.toggle('palace-active',lens==='palace');
  document.body.dataset.activeInstrument=lens??'expression';
  $('stage').inert=research;
  $('stage').setAttribute('aria-hidden',String(research));
@@ -2446,7 +2467,7 @@ function activateInstrument(lens:LensId){
  const carried=carriedFocus?.lens===lens?carriedFocus.ref:undefined;
  // A Studio section that belongs to the instrument being left does not stay
  // open, empty, over the next one.
- const owned:Record<string,LensId>={places:'place',palace:'palace',canvas:'canvas'};
+ const owned:Record<string,LensId>={places:'place',canvas:'canvas'};
  if(owned[studioSection]&&owned[studioSection]!==lens){inspectorOpen=false;studioSection='formations';tab='objects';}
  setInstrumentSurface(lens);
  pointer.active=false;
@@ -2463,8 +2484,8 @@ function activateInstrument(lens:LensId){
  if(lens==='journey')void journeyInstrument?.open().then(()=>journeyInstrument?.returnFromCrossing()).then(()=>carried===undefined?undefined:journeyInstrument?.focusBeat(carried)); // T11: a crossed beat returns by ref, through the owner.
  else journeyInstrument?.close();
  if(lens==='place'){editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='places';}
- if(lens==='palace'){if(propertyTake)finishPropertyTake();editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='palace';void palaceInstrument.open(carried);}
- else palaceInstrument.close();
+ // M5′ Palace is the shell's Earth atlas now (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4): asked for, the frame says where it went.
+ if(lens==='palace')toast(PALACE_MOVED,8000);
  renderAll();announceHostState();
 }
 const masthead=document.querySelector<HTMLElement>('#app > .masthead')!;
@@ -2489,7 +2510,9 @@ mastheadCentre.append(workspaceCluster);
 let canvasImportOwnerCall=false;
 function ownerWriteRefusal():string|null{const label=store.spanningLabel;if(label===null||canvasImportOwnerCall)return null;return `${label} is in progress: this change waits until its native owner acknowledges it.`;}
 function asCanvasImportOwnerCall<T>(call:()=>T):T{canvasImportOwnerCall=true;try{return call();}finally{canvasImportOwnerCall=false;}}
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+// An untouched opening canvas is not recovery material (:243), awaited boot or not: a draft is retained for an edit or for an open
+// native work only (lane W, 15 Oct — the door's Scene and New were refused while the frame stood on its own blank canvas).
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
@@ -2720,21 +2743,6 @@ researchInstruments=installResearchInstruments({
   },
  updateConnectionKind:async(sceneId,ref,kind)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,relation:{...binding.relation,ref:`${ref}:${connectionKind(kind)}`,revision:String(Number(binding.relation.revision)+1)}}}],'Set connection type');},
 });
-// M5′ Palace: regions are Scenes of the Palace Expression, each disclosing one
-// contained Expression as its body with a portal; the guided path is Scene
-// order. Everything goes through the kernel Expression owner with CAS.
-const palaceSnapshot=(raw:unknown):PalaceDocumentSnapshot&{title:string}=>{const doc=raw as {expression_ref:string;revision:number;title?:string;scenes?:{scene_ref:string;title?:string;body?:{carrier?:string;subject_ref?:string}|null;triggers?:{trigger_ref:string;target?:{kind?:string;subject_ref?:string}}[]}[]};return {expression_ref:doc.expression_ref,revision:doc.revision,title:doc.title??doc.expression_ref,scenes:(doc.scenes??[]).map(scene=>({scene_ref:scene.scene_ref,title:scene.title??'',body:scene.body?{carrier:scene.body.carrier,subject_ref:scene.body.subject_ref}:null,triggers:(scene.triggers??[]).map(trigger=>({trigger_ref:trigger.trigger_ref,target:trigger.target?{kind:trigger.target.kind,subject_ref:trigger.target.subject_ref}:undefined}))}))};};
-const palaceInstrument=installPalaceInstrument({
- nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
- authoredRevision:()=>store.revision,
- canCompose:()=>{const reading=retainedEditor.read();return !store.transactionOpen&&!reading.standing.pending&&!reading.standing.dirty;},
- listExpressions:()=>listKernelExpressions(),
- readExpression:async ref=>palaceSnapshot(await readKernelExpression(ref)),
- composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit',expression_ref,expected_revision,actor:'human:techne-palace',changes}) as {state?:string;current_revision?:number;document?:unknown}|null;if(data?.state==='revision_conflict')return {ok:false,reason:`This Palace changed elsewhere (now revision ${data.current_revision}). Nothing was saved; reopen it and try again.`};if(!data?.document||data.state!=='ready')return {ok:false,reason:`The Expression owner did not accept the composition (${String(data?.state)}).`};return {ok:true,document:palaceSnapshot(data.document)};},
- openExpression:ref=>{void nativeWorkspace?.open(ref);},
- // Lane-5 seam B: a non-Expression palace entry asks for its instrument through the frame's existing host-request summon.
- openInstrument:(instrument,ref)=>{hostRequest(palaceInstrumentOpenRequest(instrument,ref));},
-},palaceHome);
 /** lane-5 T8: the journey as the expression clock runs it: a saved sequence runs on its saved durations, otherwise the working ones. */
 function playbackJourney():Journey{
  const working=store.document;
@@ -2840,9 +2848,9 @@ const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nati
   const applied=nativeWorkspace?.nativeView()?.document;
   if(applied?.expression_ref!==native.expression_ref||applied.revision!==native.revision)throw Error('The coordinate was adopted natively; resolve the retained local draft before displaying the new revision.');
  }});
-if(qs.get('nara')==='1')naraInstrument.open();
+if(qs.get('nara')==='1')naraInstrument.open();presentedChrome=installPresentedChrome({lens:()=>hostMode==='techne'?lensStudio.active():hostMode,changed:()=>announceHostState(),regions:()=>frameChromeRegions({canvasHome})}); // T-FRAME-CHROME-ONTO-PLATES: every region of the chrome now stands (the masthead with Nara and Save, the scene bar with Acts, the tools dock, the selected card, the Canvas section).
 const disposeFieldStudies=window.__FIELD_STUDIES__.dispose;
-window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument?.destroy();palaceInstrument.destroy();wikiStanding.dispose();disposeFieldStudies();};
+window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument?.destroy();wikiStanding.dispose();disposeFieldStudies();};
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
 // expression from the browser library, the featured set or the starters —
 // the Technè M0 instrument opens onto the Epii face this way
@@ -3052,8 +3060,29 @@ function applyDeepLinkAddress(address:DeepLinkAddress):string[]{
  }
  return notes;
 }
-/** E22: the address follows the person. The Scene always; the time and marker while the transport stands still.
- * Only replaceState, so Back and history stay as they were. */
+/** E22: where the frame stands, in its link's terms: the Scene always; the time and marker while the transport stands still.
+ * The URL write and the host's announcement read this one place. */
+function deepLinkAddressNow():{expression?:string;scene:string;t?:number;marker?:string}{
+ const view=nativeWorkspace?.nativeView(),doc=store.document;
+ const timing=expressionTiming(doc,sceneIndex,sceneElapsed),still=!journeyPlaying&&!scenePlaying;
+ const expression=view?.document.expression_ref??(addressKeepsExpression?doc.id:undefined);
+ const marker=still?markerAtTime(doc.markers??[],timing.time):undefined;
+ return {...(expression!==undefined?{expression}:{}),scene:nativeSceneRef(scene().id)??scene().id,...(still?{t:timing.time}:{}),...(marker!==undefined?{marker}:{})};
+}
+/** E22 (ticket P, G3): the address the host is told with the frame's state, once the opening link has settled and the work it
+ * names stands; the marker's name rides beside its ref for the host's words. Absent otherwise: the host keeps what it held. */
+function hostAddress():{scene:string;t?:number;marker?:string;markerName?:string}|undefined{
+ try{
+ // Only a native work has an address: with none open, the frame's own scene is no work's place (seen on screen 15 Oct: the Studio's
+ // head named "1 · Origin" at 0:00 with no work open).
+ if(deepLinkPending||!nativeWorkspace?.nativeView())return undefined;
+ const now=deepLinkAddressNow();
+ const name=now.marker!==undefined?markerNamed(store.document.markers??[],now.marker)?.name:undefined;
+ return {scene:now.scene,...(now.t!==undefined?{t:now.t}:{}),...(now.marker!==undefined?{marker:now.marker}:{}),...(name!==undefined?{markerName:name}:{})};
+ }catch{return undefined;/* a frame still starting names no address rather than a wrong one */}
+}
+/** E22: the address follows the person. Only replaceState, so Back and history stay as they were. A changed address is also
+ * announced to the host (G3), at the same throttled pace. */
 function syncDeepLinkAddress(){
  if(deepLinkPending)return;
  if(deepLinkWriteTimer)return;
@@ -3061,17 +3090,12 @@ function syncDeepLinkAddress(){
   deepLinkWriteTimer=0;
   if(deepLinkPending)return;
   try{
-  const view=nativeWorkspace?.nativeView(),doc=store.document;
-  const timing=expressionTiming(doc,sceneIndex,sceneElapsed),still=!journeyPlaying&&!scenePlaying;
-  const expression=view?.document.expression_ref??(addressKeepsExpression?doc.id:undefined);
-  const next=formatDeepLink(location.search,{
-   ...(expression!==undefined?{expression}:{}),
-   scene:nativeSceneRef(scene().id)??scene().id,
-   t:still?timing.time:undefined,
-   marker:still?markerAtTime(doc.markers??[],timing.time):undefined,
-  });
+  const address=deepLinkAddressNow();
+  const next=formatDeepLink(location.search,{...(address.expression!==undefined?{expression:address.expression}:{}),scene:address.scene,t:address.t,marker:address.marker});
   if(next!==location.search)history.replaceState(history.state,'',location.pathname+next+location.hash);
   }catch{/* a refused history write leaves the address as it was; the page keeps working */}
+  const announced=JSON.stringify(hostAddress()??null);
+  if(announced!==announcedAddress){announcedAddress=announced;announceHostState();}
  },DEEP_LINK_WRITE_MS);
 }
 /** E23: the layout focus hides and restores. Read and written as one record; the pure model is focusMode.ts. */

@@ -1,0 +1,8 @@
+/* The Sky's own layout: a glyph face for the planet and sign marks, and the centred cell in the compact macros. Tokens only. */
+.sky-glyph { font-family: "Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif; font-style: normal; }
+.dp-display text.sky-glyph { font-family: "Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif; }
+.dp-row .sky-glyph { flex: none; width: 10px; text-align: center; font-size: 11px; line-height: 1; color: var(--text); }
+.dp-row[data-dim="true"] .sky-glyph { color: var(--text-faint, #71767c); }
+.sky-mid { align-self: center; justify-self: center; display: flex; justify-content: center; }
+.sky-pair { display: flex; gap: 6px; justify-content: space-around; width: 100%; }
+.sky-macros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 4px; justify-items: center; align-content: start; width: 100%; }

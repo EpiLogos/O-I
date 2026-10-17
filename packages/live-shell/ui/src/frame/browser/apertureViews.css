@@ -1,0 +1,47 @@
+/* The aperture slot — the focused pane's own context, at the mockup's floor (world-shell-mockup.html .sloth, .slotb, .sec,
+   .ctx, .row, .seg, .acts, .bt, .pin-t). It heads the one browser's pool in every mode. Shell tokens only. */
+.aperture-slot { flex: none; display: flex; flex-direction: column; min-height: 0; background: var(--bg-2) }
+
+/* the head (.sloth): 22px on bg-1 — the pane's mark in the accent, its tab's name, then "pane i/N" and the pin */
+.aperture-slot .aperture-head { height: 22px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--bg-1);
+  border-bottom: 1px solid var(--line); font-size: 11px; color: var(--text); white-space: nowrap }
+.aperture-slot .aperture-mark { flex: none; display: inline-grid; place-items: center; color: var(--accent) }
+.aperture-slot .aperture-head > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500 }
+.aperture-slot .aperture-r { margin-left: auto; flex: none; display: flex; align-items: center; gap: 2px; font-size: 10px; color: var(--text-faint) }
+/* the pin (.pin-t): 16px, 9px, on bg-0; pinned wears the accent */
+.aperture-slot .aperture-pin { height: 16px; margin-left: 4px; padding: 0 5px; border: 1px solid var(--line); background: var(--bg-0); font-size: 9px;
+  line-height: 14px; color: var(--text-faint) }
+.aperture-slot .aperture-pin.on { color: var(--accent); border-color: var(--accent) }
+.aperture-slot .aperture-pin:not(:disabled):hover { color: var(--text) }
+.aperture-slot .aperture-pin:disabled { cursor: default }
+
+/* the body (.slotb) and its section lines (.sec) */
+.aperture-slot .aperture-body { padding: 4px 0 8px }
+.aperture-slot .aperture-sec { display: flex; justify-content: space-between; align-items: center; padding: 8px 8px 3px; font-size: 10px; color: var(--text-faint) }
+
+/* a context row (.ctx): key 62px, the value with its dot or kind mark, a faint standing */
+.aperture-slot .aperture-ctx { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 6px; align-items: center; min-height: 21px; padding: 2px 8px; font-size: 11px }
+.aperture-slot .aperture-ctx .k { font-size: 10px; color: var(--text-faint) }
+.aperture-slot .aperture-ctx .v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text) }
+.aperture-slot .aperture-ctx .v b { font-weight: 500 }
+.aperture-slot .aperture-ctx .v .kg { display: inline-grid; vertical-align: -2px; margin-right: 3px }
+.aperture-slot .aperture-ctx .dot { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50% }
+.aperture-slot .aperture-ctx .s { font-size: 9.5px; color: var(--text-faint) }
+
+/* a view row (.row): key 76px, dim */
+.aperture-slot .aperture-row { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px; align-items: center; min-height: 22px; padding: 2px 8px; font-size: 11px }
+.aperture-slot .aperture-row .k { color: var(--text-dim) }
+.aperture-slot .aperture-row .v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text) }
+.aperture-slot .mono { font-family: var(--mono); font-size: 10.5px }
+
+/* a segmented choice (.seg): 17px cells, the chosen one in the accent */
+.aperture-slot .aperture-seg { display: flex; width: max-content; max-width: 100%; border: 1px solid var(--line) }
+.aperture-slot .aperture-seg button { height: 17px; padding: 1px 7px; border-right: 1px solid var(--line); background: var(--bg-1); font-size: 10px; color: var(--text-dim); white-space: nowrap }
+.aperture-slot .aperture-seg button:last-child { border-right: 0 }
+.aperture-slot .aperture-seg button[aria-pressed=true] { background: var(--accent); color: var(--bg-0) }
+
+/* the owner's actions (.acts, .bt) */
+.aperture-slot .aperture-acts { display: flex; flex-wrap: wrap; gap: 4px; padding: 5px 8px }
+.aperture-slot .aperture-bt { height: 20px; padding: 0 9px; border: 1px solid var(--line); background: var(--bg-1); font-size: 10.5px; color: var(--text-dim); white-space: nowrap }
+.aperture-slot .aperture-bt:not(:disabled):hover { color: var(--text); border-color: var(--text-faint) }
+.aperture-slot .aperture-bt:disabled { opacity: .45 }

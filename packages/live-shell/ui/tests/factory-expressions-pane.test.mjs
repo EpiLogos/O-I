@@ -137,21 +137,49 @@ test('the placement hook identity is stable while nothing changes: the centre fo
   door.unregisterExpressionsPane('ex-g')
 })
 
-test('the pane header shows the frame\'s reading by value, Show in the centre, and the honest states', () => {
+// The pane IS the field (14 Oct, owner: "options inside the pane" are a violation; PATH §1; the mockup's centre at
+// world-shell-mockup.html:1716 "the field only — tools live in the Studio"): the body is the slot only, edge to edge. Its header line,
+// Show in the centre (retired: panes are the centre in every mode, F2), Show here (replaced by pressing the pane) and the stage tool
+// rows (moved to the Studio's Tools and Capture) are gone; the reading names the pane in its hover words.
+test('the pane body is the slot only: no header, no button, no tool row; the reading names it, and an empty slot says what it waits for', () => {
+  door.publishHostedChrome(null)
   door.publishHostedExpressions(null)
-  assert.match(html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-h'})), /has not reported its state yet/)
+  const waitingForApp = html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-h'}))
+  assert.match(waitingForApp, /role="status"[^>]*>The Expressions application has not reported its state yet\.<\/p>/)
+  assert.match(waitingForApp, /data-i="Expressions\|Expressions: the hosted application has not reported its state yet\. Orbit is a pointer drag on the stage itself, not a button/)
+  door.publishHostedExpressions({expression_ref: null, title: null})
+  const noWork = html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-h'}))
+  assert.match(noWork, /No Expression is open — open one from the browser&#x27;s Expressions, or New\./, 'what the empty slot waits for, in the heading\'s honest state')
+  assert.match(noWork, /aria-label="Expressions: no native Expression open"/)
   door.publishHostedExpressions({expression_ref: 'expression:one', title: 'Return of Zero'})
   const body = html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-h'}))
   assert.match(body, /data-hosted-expression="expression:one"/)
-  assert.match(body, /Return of Zero · expression:one/, 'the header is the held expression\'s title and ref')
-  assert.match(body, /Show in the centre/)
+  assert.match(body, /aria-label="Return of Zero · expression:one"/, 'the held expression\'s title and ref name the pane')
+  assert.doesNotMatch(body, /role="status"/, 'a work is open: the field fills the slot and nothing is drawn under it')
   assert.match(body, /data-frame-slot="free"/, 'the placeholder slot is present and free while no pane holds the frame')
-  door.publishHostedExpressions({expression_ref: null, title: null})
-  assert.match(html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-h'})), /no native Expression open/)
+  for (const text of [waitingForApp, noWork, body]) {
+    assert.doesNotMatch(text, /<button|<header|role="toolbar"|Show in the centre|Show here|Capture PNG|Fit view/, 'no control and no chrome inside the pane')
+    assert.equal((text.match(/<p /g) ?? []).length <= 1, true, 'one line at most')
+  }
+  assert.equal(pane.expressionsHeading(null), 'Expressions: the hosted application has not reported its state yet')
+  assert.equal(pane.expressionsWaiting({expression_ref: 'expression:one', title: null}), null)
   door.publishHostedExpressions(null)
 })
 
-test('a pane that does not hold the frame says so and offers to move it here; the holder shows its slot as held', () => {
+test('the frame\'s faults stand in one alert line at the slot\'s foot, outside the slot the frame is drawn over', () => {
+  door.publishHostedExpressions(null)
+  door.publishHostedChrome({state: null, run: null, faults: ['The host failed.', 'The surface failed.']})
+  const body = html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-k'}))
+  assert.equal((body.match(/role="alert"/g) ?? []).length, 1, 'one alert line')
+  assert.match(body, /role="alert"[^>]*>The host failed\. · The surface failed\.<\/p>/)
+  assert.ok(body.indexOf('role="alert"') > body.indexOf('data-frame-slot'), 'after the slot, never inside it')
+  assert.match(body, /data-frame-slot="free"[^>]*><p role="status"[^>]*>[^<]*<\/p><\/div><p role="alert"/, 'the slot closes before the fault line')
+  door.publishHostedChrome(null)
+  assert.doesNotMatch(html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-k'})), /role="alert"/, 'no fault, no line')
+})
+
+test('a pane that does not hold the frame says so in its one line, and pressing it brings the frame here; the holder shows its slot as held', async () => {
+  door.publishHostedExpressions({expression_ref: 'expression:one', title: 'One'})
   door.registerExpressionsPane('ex-i'); door.registerExpressionsPane('ex-j')
   door.attachExpressionsSlot('ex-i', slotStub('i')); door.attachExpressionsSlot('ex-j', slotStub('j'))
   door.setExpressionsPanePresented('ex-i', true); door.setExpressionsPanePresented('ex-j', true)
@@ -159,11 +187,18 @@ test('a pane that does not hold the frame says so and offers to move it here; th
   const other = html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-j'}))
   assert.match(holder, /data-frame-here="true"/)
   assert.match(holder, /data-frame-slot="held"/)
-  assert.doesNotMatch(holder, /Show here/, 'the holder offers no move')
+  assert.doesNotMatch(holder, /Presented in the other/, 'the holder shows the field, no line')
   assert.match(other, /data-frame-here="false"/)
-  assert.match(other, /Presented in the other Expressions pane\./)
-  assert.match(other, /Show here/, 'the other pane offers the control that moves the frame there')
+  assert.match(other, /role="status"[^>]*>Presented in the other Expressions pane\.<\/p>/)
+  assert.match(other, /data-i="Expressions\|Presented in the other Expressions pane\. Press this pane to bring the field here\."/)
+  assert.match(other, /tabindex="0"/, 'reachable by keyboard: Enter or Space brings the frame here')
+  assert.doesNotMatch(other, /<button|Show here/, 'pressing the pane replaces the Show here control')
+  const source = await code('../src/projections/expressionsPane.tsx')
+  assert.match(source, /onPointerDown=\{\(\) => preferExpressionsPane\(paneId\)\}/, 'a press on the pane prefers it')
+  door.preferExpressionsPane('ex-j')
+  assert.equal(door.framePlacement()?.paneId, 'ex-j', 'the pressed pane takes the one frame')
   door.unregisterExpressionsPane('ex-i'); door.unregisterExpressionsPane('ex-j')
+  door.publishHostedExpressions(null)
 })
 
 test('the placement follows the slot rectangle and releases exactly what it set: the frame model keeps its identity, parent and src', () => {
@@ -233,34 +268,45 @@ test('the pane module and the frame placement hold no frame, owner, lease or re-
     assert.doesNotMatch(text, /createElement\('iframe'\)|appendChild|insertBefore|removeChild|replaceChild|\.remove\(\)|\.src\s*=/, 'no structural change, no iframe creation, no src write')
     assert.doesNotMatch(text, /from '\.\.\/panels\//, 'the pane never imports the centre panel that owns the frame')
   }
-  assert.match(sources[0], /unmount: \(\) => \{\s*unregisterExpressionsPane\(paneId\)\s*root\.unmount\(\)/, 'closing the pane releases its claim and unmounts only its own root')
+  assert.match(sources[0], /unmount: \(\) => \{\s*unregisterExpressionsPane\(paneId, admission\)\s*(?:\/\/[^\n]*\n\s*)*if \(!expressionsPaneAdmitted\(paneId\)\) clearAskFault\(paneId\)\s*queueMicrotask\(\(\) => root\.unmount\(\)\)/,
+    'closing the pane releases its claim at once — and a Technē ask\'s fault it held, when no later instance took the pane over (lane D) — and unmounts only its own root, after the commit that asked for it')
 })
 
 test('the centre frame keeps its mount and its container element; the placement moves only the container\'s style (source reading)', async () => {
   const panel = await code('../src/panels/expressions.tsx')
   assert.match(panel, /\}, \[qualified, attempt\]\)/, 'the frame\'s mount effect keeps its dependencies: presenting the frame in a pane never re-mounts it')
-  assert.match(panel, /<div ref=\{container\} className="expressions-application" \/>/, 'the container element is the one the frame lives in')
+  assert.match(panel, /<div ref=\{container\} className="expressions-application" data-empty=\{stage && !stage\.nativeScene && !stage\.presentsInstrument \? 'true' : undefined\}\s+data-i="Expressions\|[^"]+" \/>/, 'the container element is the one the frame lives in; it stands hidden while it has no work and its cut draws no instrument (an announced instrument is not a drawn one — the one frame keeps its session open in every cut); its hover words carry the stage\'s Orbit note')
   assert.match(panel, /useEffect\(\(\) => \{\s*const frame = container\.current\s*if \(!frame \|\| !placement\) return\s*return followFrame\(frame, placement\.slot\)\s*\}, \[placement\]\)/)
-  assert.match(panel, /\{!placement && <>/, 'the centre chrome (toolbar, faults, reopen) moves to the pane while a pane holds the frame')
+  assert.doesNotMatch(panel, /\{!placement && <>|NativeStageTools/, 'the residence draws no chrome of its own: faults, stage tools and Reopen ride the published chrome to the Studio and the pane (lane G)')
+  assert.match(panel, /reopen: !host\.current && !starting\.current \? \(\) => retry\(value => value \+ 1\) : null/, 'Reopen is published for the Studio head')
   assert.match(panel, /publishHostedChrome\(\{state: stage, run: host\.current \? stageRun : null/)
   assert.match(panel, /publishHostedExpressions\(\{expression_ref: state\.nativeScene\?\.expression_ref \?\? null, title: state\.document\?\.name \?\? null\}\)/)
   assert.match(panel, /registerExpressionsPaneHost\(\)\n/)
   assert.doesNotMatch(panel.slice(panel.indexOf('onStatus: (value, reason)'), panel.indexOf('onHostRequest:')), /publishHostedExpressions|publishHostedChrome/, 'the status callback stays exactly as the lifetime test reads it')
 })
 
-test('centre residence: the Expressions panel stays mounted in Factory (hidden, never unmounted), and the centre forces the Workbench there (source reading)', async () => {
+test('centre residence: the Expressions panel stays mounted (hidden, never unmounted), and the centre is the Workbench in every mode (F2; source reading)', async () => {
   const app = await source('../src/App.tsx')
   assert.match(app, /\{panels\.map\(panel => \{ const Panel = panel\.component; const placed = expressionsPlaced && panel\.id === 'world\.expressions'; return <div/, 'every centre panel is rendered; only its wrapper\'s hidden attribute changes')
   assert.match(app, /<Panel \{\.\.\.ctx\} \/>/)
-  assert.match(app, /const workbenchCentre = \(panel: string \| undefined\): string \| undefined => frameMode === 'factory' \|\| panel === 'native\.agent'/, 'Factory forces the Workbench as its centre: the Expressions panel is concealed, not unmounted')
+  assert.match(app, /const workbenchCentre = \(_panel: string \| undefined\): string => 'native\.workbench'/, 'the panes are the centre in every mode (F2): the Expressions panel is concealed, not unmounted')
 })
 
-test('the Expressions residence is placed only while a Factory pane holds the frame, and is otherwise exactly as it was', async () => {
+test('the Expressions residence is placed while a pane holds the frame, and is otherwise exactly as it was', async () => {
   const app = await source('../src/App.tsx')
-  assert.match(app, /const framePlacement = useFramePlacement\(\)\n\s*const expressionsPlaced = agentShell && framePlacement !== null/)
+  assert.match(app, /const framePlacement = useFramePlacement\(\)\n[\s\S]{0,400}const expressionsPlaced = framePlacement !== null && centerPanel !== 'world\.expressions'/, 'a pane holds the frame in any mode (F2)')
   assert.match(app, /style=\{placed \? PLACED_RESIDENCE_STYLE : undefined\} hidden=\{placed \? false : panel\.id === 'world\.settings'/)
   const style = await source('../src/projections/expressionsPaneHost.ts')
-  assert.match(style, /export const PLACED_RESIDENCE_STYLE: CSSProperties = \{position: 'fixed', left: 0, top: 0, width: 0, height: 0, overflow: 'visible', pointerEvents: 'none'\}/, 'the residence is zero-size and out of flow: the container, not the residence, is the one placed')
+  assert.match(style, /export const PLACED_RESIDENCE_STYLE: CSSProperties = \{position: 'fixed', left: 0, top: 0, width: 0, height: 0, overflow: 'visible', pointerEvents: 'none', zIndex: 20\}/, 'the residence is zero-size and out of flow: the container, not the residence, is the one placed')
+})
+
+test('the placed residence stands at the placement\'s height, so the frame paints over the pane that holds it (seen blank, 15 Oct)', async () => {
+  const {PLACED_RESIDENCE_STYLE} = await import('../src/projections/expressionsPaneHost.ts')
+  const {PLACED_Z_INDEX} = await import('../src/projections/framePlacement.ts')
+  // A fixed element is its own stacking context: the container's PLACED_Z_INDEX counts only inside the residence, so the residence
+  // itself must stand at that height among the centre's panels, or the pane tree painted after it covers the frame.
+  assert.equal(PLACED_RESIDENCE_STYLE.position, 'fixed')
+  assert.equal(String(PLACED_RESIDENCE_STYLE.zIndex), PLACED_Z_INDEX)
 })
 
 test('the Factory Expressions entry is enabled with its real behaviour, and the bar of every other mode keeps its six lenses', () => {
@@ -270,18 +316,19 @@ test('the Factory Expressions entry is enabled with its real behaviour, and the 
   assert.equal(LENSES.some(lens => lens.id === 'expressions'), false, 'the Expressions entry is a Factory-bar entry only')
 })
 
-test('a focused Expressions pane holds no instrument of its own; the Factory focus names it, and Device gates nothing', () => {
+test('a focused Expressions pane brings the hosted lens\'s instrument into the chain (manual §3); the focus names it', () => {
   const focus = factoryFocusedPane('projection.expressions')
   assert.deepEqual(focus, {pane: 'projection.expressions', presentation: null})
-  assert.equal(instrumentOfPane('projection.expressions', null, 'graph', 'timeline'), null, 'the hosted lens stands in the centre bar, never in this pane')
-  assert.equal(deviceInstrumentFor('factory', 'projection.expressions', null, 'graph', 'timeline'), null)
+  const instrument = instrumentOfPane('projection.expressions', null, 'graph', 'timeline')
+  assert.ok(instrument, 'the instrument in the focused pane brings its own controls into the chain')
+  assert.deepEqual(deviceInstrumentFor('factory', 'projection.expressions', null, 'graph', 'timeline'), instrument, 'in every mode the same')
 })
 
 test('the Factory centre helper admits the Expressions pane kind on the one engine door, and App keeps the established call', async () => {
   const centre = await source('../src/agent/factoryCentre.ts')
   assert.match(centre, /kind: 'projection\.earth' \| 'projection\.constellation' \| 'projection\.timeline' \| 'projection\.expressions'\)/)
   const app = await source('../src/App.tsx')
-  assert.match(app, /continuity\.setLayout\(layout => openFactoryInstrumentPane\(layout, paneKind\)\)/)
+  assert.match(app, /openInstrument\('projection\.expressions'\)/, 'App opens the pane through the one instrument door (F2)')
   assert.doesNotMatch(app, /openProjectionPane/, 'App no longer branches around the widened helper')
   assert.match(app, /registerTimelineHost\(\)/, 'the Timeline door is untouched')
 })

@@ -9,25 +9,10 @@ import {register} from 'node:module'
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function load(u,c,n){if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(!u.endsWith('.ts')&&!u.endsWith('.tsx'))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{fileName:new URL(u).pathname,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}}).outputText}}`)}`, import.meta.url)
 
-const [{timelinePresentation, PROJECTION_TIMELINE_KIND}] = await Promise.all([
-  import('../src/projections/timelinePresentation.ts'),
-])
+// The Timeline presentation mapping (projections/timelinePresentation.ts: the encounter → Session or Arrangement for the World
+// cut's residence) was read by nothing once the tracks pane became the centre and was deleted on 15 Oct (FOUNDATION §7): the
+// pane's presentation is its own state (projections/timelinePaneHost.ts, asserted in factory-timeline-pane.test.mjs).
 const {createSpineEncounterBridge} = await import('../src/projections/encounterBridge.ts')
-
-test('the Timeline presentation mapping is whole and reads the encounter only', () => {
-  assert.equal(PROJECTION_TIMELINE_KIND, 'projection.timeline')
-  // the audio cut presents through `tab`
-  assert.equal(timelinePresentation('audio', 'session', 'world.expressions'), 'session')
-  assert.equal(timelinePresentation('audio', 'arrangement', 'world.expressions'), 'arrangement')
-  assert.equal(timelinePresentation('audio', 'other', 'world.expressions'), null)
-  // the native cut presents through the application-view identity the
-  // receiving joins are bound to — whichever mode stands
-  assert.equal(timelinePresentation('expressions', 'session', 'native.session'), 'session')
-  assert.equal(timelinePresentation('techne', 'arrangement', 'native.arrangement'), 'arrangement')
-  // the Stage, another centre, or anything else: both stand concealed-retained
-  assert.equal(timelinePresentation('expressions', 'session', 'world.expressions'), null)
-  assert.equal(timelinePresentation('techne', 'session', 'native.agent'), null)
-})
 
 const fixtureSpine = () => {
   const writes = []

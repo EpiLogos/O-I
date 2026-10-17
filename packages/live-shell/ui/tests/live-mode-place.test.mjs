@@ -34,7 +34,9 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const React = await import('react')
 const {MODE_GRAMMAR, SURF_MODES, TRANSPORT_SLOT_IDS, slotMeaning, slotDataI} = await import('../src/shell/modeGrammar.ts')
 const {ModeModeRail} = await import('../src/shell/ModeModeRail.tsx')
-const {LiveSessionEmpty, LiveArrangementEmpty} = await import('../src/shell/live/LiveEmptyStates.tsx')
+const {liveSetTrackAdapter} = await import('../src/timeline/liveSetTrackAdapter.ts')
+const {TracksPane} = await import('../src/frame/tracks/TracksPane.tsx')
+const paneHost = await import('../src/projections/timelinePaneHost.ts')
 const {StatusBar} = await import('../src/components/StatusBar.tsx')
 const {DeviceChainPanel} = await import('../src/components/DeviceChainPanel.tsx')
 
@@ -70,34 +72,46 @@ test('every other mode keeps Live\'s transport meanings as re-meanings, never re
 })
 
 // ————————————————————————————————————————————————————————————————————————
-// The designed empty states (the widget law: framed grid + browser
-// affordances visible, never sparse floats; structure, never set content).
+// The designed empty states (the widget law: a framed grid, never a sparse
+// float; structure, never set content). Live's own empty Session and
+// Arrangement (shell/live/LiveEmptyStates.tsx) stood inside the retired
+// SessionView and ArrangementView and were deleted with them on 15 Oct
+// (FOUNDATION §7): the one Session grid and Arrangement ruler draw Live's
+// empty set now, over Live's own adapter, in the tracks pane the App
+// publishes Live's reading to.
+const noSet = liveSetTrackAdapter.project({set: null, document: null})
+const liveWithNoSet = {mode: 'live', set: null, document: null, selection: {track: 0, scene: null}, select() {}, colors: [], setColor() {},
+  session: undefined, arrangement: undefined, selectTrackItem() {}, waiting: 'Open a Live set from the browser to see its tracks.'}
+const paneOf = presentation => {
+  paneHost.publishTimelineReading(liveWithNoSet)
+  paneHost.setTimelinePanePresentation(presentation)
+  return htmlOf(React.createElement(TracksPane))
+}
+/** The reason the empty frame states, as drawn (its words are the pane's; that they are there is the law). */
+const dropReason = html => html.match(/<div class="sg-drop" role="status">([^<]+)<\/div>/)?.[1]
 
-test('Live · Session with no set: the framed clips-and-scenes grid, not a floating sentence', () => {
-  const html = htmlOf(React.createElement(LiveSessionEmpty))
-  assert.match(html, /data-live-empty="session"/)
-  assert.match(html, /class="session-view live-empty"/, 'the presentation\'s own density classes')
-  assert.match(html, /live-empty-disclosure/, 'the disclosure stands INSIDE the frame')
-  assert.match(html, /Open a Live set from the <b>browser<\/b>/, 'the browser affordance is the named fill')
-  assert.match(html, /class="track-header"/, 'track header columns are drawn')
-  assert.match(html, /Main/, 'the Main scene rail is drawn')
-  assert.match(html, /track-stop-row/, 'the stop row is drawn')
-  const slots = [...html.matchAll(/class="clip-slot[^"]*"/g)]
-  assert.ok(slots.length >= 5, 'clip slots drawn across the ready columns')
-  assert.match(html, /Track 1/, 'structural track names (never set content)')
+test('Live · Session with no set: the framed grid — the stops down the right and the drop area with the reason, not a floating sentence', () => {
+  assert.deepEqual(noSet, {columns: [], tracks: [], clips: []}, 'Live\'s adapter reads no set as no tracks, invents none')
+  const html = paneOf('session')
+  assert.match(html, /data-tracks-mode="live"/)
+  assert.match(html, /data-tracks-view="session" data-empty="true"/)
+  assert.match(html, /role="grid" aria-label="Session"/, 'the grid frame stands')
+  assert.ok(dropReason(html), 'a reason stands inside the frame, where the tracks will stand')
+  // The Main head is a track's head: a button that selects the Main track (lane BF3; SessionGrid.tsx MainHead).
+  assert.match(html, /aria-label="Stops"><button type="button" class="thd" aria-pressed="false" data-track-head="main"[^>]*>Main<\/button>/, 'the Main stop column is drawn, its head selecting the Main track')
+  assert.equal((html.match(/class="stop-launch" disabled=""/g) ?? []).length, 8, 'eight stops, as a new Live set has, none launchable')
   assert.doesNotMatch(html, /view-empty/, 'the sparse float is gone')
 })
 
-test('Live · Arrangement with no set: overview ABOVE the ruler, framed lanes, honest disabled controls', () => {
-  const html = htmlOf(React.createElement(LiveArrangementEmpty))
-  assert.match(html, /data-live-empty="arrangement"/)
-  assert.match(html, /class="arrange-view live-empty"/)
-  const overviewAt = html.indexOf('arrange-overview')
-  const rulerAt = html.indexOf('arrange-ruler-row')
-  assert.ok(overviewAt > -1 && rulerAt > overviewAt, 'the integrated overview stands above the ruler (the measured Live structure)')
-  assert.match(html, /the whole song draws here/, 'the overview names what fills it — no fabricated content')
-  assert.match(html, /<button disabled="" title="Locators set when the document owner reads a set">Set<\/button>/, 'the locator affordance is drawn honest-disabled')
-  assert.match(html, /Track 1/, 'ready lane labels')
+test('Live · Arrangement with no set: the ruler stands above the lane area, with the reason in it', () => {
+  const html = paneOf('arrangement')
+  assert.match(html, /aria-label="Arrangement" data-tracks-view="arrangement" data-empty="true"/)
+  const rulerAt = html.indexOf('class="tl-ruler"')
+  const dropAt = html.indexOf('class="sg-drop"')
+  assert.ok(rulerAt > -1 && dropAt > rulerAt, 'the ruler stands above the lane area')
+  assert.equal((html.match(/<span (class="end" )?style="left:/g) ?? []).length, 9, 'the ruler carries its marks')
+  assert.ok(dropReason(html), 'the reason stands in the lane area')
+  paneHost.setTimelinePanePresentation('session')
 })
 
 // ————————————————————————————————————————————————————————————————————————
@@ -106,13 +120,19 @@ test('Live · Arrangement with no set: overview ABOVE the ruler, framed lanes, h
 
 const baseState = (overrides = {}) => ({set: null, path: null, error: null, loading: false, open: () => {}, ...overrides})
 
-test('Live\'s status line names the presented presentation and the live work', () => {
+test('Live\'s identity is the title line\'s: the open set by name, and the status bar reads the Info view and the set\'s counts', async () => {
+  // Ticket C: the mockup draws the work's identity in the title line ("Mercurius sketch — Live set"), and the status bar's left
+  // is the Info view. The identity line that stood in the status bar moved to the title line (components/TransportBar.tsx).
+  // (The line's markup is pinned in transport-readings-modes.test.mjs; its words are these.)
+  const {titleLine} = await import('../src/shell/transports/transportReadings.ts')
+  assert.deepEqual(titleLine({line: 'set', setName: 'Mercurius'}), {lead: 'Mercurius', absent: null, context: 'Live set'})
+  assert.deepEqual(titleLine({line: 'set', setName: ''}), {lead: null, absent: 'No set open', context: 'Live set'}, 'no set: the line says so')
   const none = htmlOf(React.createElement(StatusBar, {state: baseState(), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
-  assert.match(none, /<b>Session<\/b> — clips and scenes · no set open/, 'no set: the line says so and keeps the affordance')
+  assert.match(none, /data-region="info-view"[^>]*><b>Info<\/b>Hover anything to read what it does\.</)
   const withSet = htmlOf(React.createElement(StatusBar, {state: baseState({set: {path: '/Users/x/Mercurius.als', tracks: [], scene_count: 0, arrangement_clips: 0, tempo_bpm: 120}, path: '/Users/x/Mercurius.als'}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
-  assert.match(withSet, /<b>Session<\/b> — clips and scenes · \/Users\/x\/Mercurius\.als/, 'the set IS the named live work')
-  const arranged = htmlOf(React.createElement(StatusBar, {state: baseState(), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'arrangement'}))
-  assert.match(arranged, /<b>Arrangement<\/b> — the song over time · no set open/, 'the identity follows the presented presentation')
+  assert.match(withSet, /title="\/Users\/x\/Mercurius\.als">0 tracks · 0 scenes · 0 clips</, 'the set\'s counts carry its path')
+  const failed = htmlOf(React.createElement(StatusBar, {state: baseState({error: 'no such set'}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'arrangement'}))
+  assert.match(failed, /class="statusbar-error"[^>]*>Open failed: no such set</, 'an open failure is still read in the bar')
 })
 
 // ————————————————————————————————————————————————————————————————————————
@@ -122,41 +142,38 @@ test('Live\'s status line names the presented presentation and the live work', (
 
 const fakeCtx = {
   set: {path: '/x/set.als', tempo_bpm: 120, scene_count: 1, arrangement_clips: 0,
-    tracks: [{kind: 'audio', name: 'Drums', devices: ['DrumRack', 'GlueCompressor']}]},
+    tracks: [{kind: 'audio', name: 'Drums', devices: ['DrumRack', 'Saturator']}]},
   loading: false, error: null, openSet: () => {},
 }
 const fakeDocument = {path: '/x/set.als', tempo: 120, scenes: 1, tracks: [{kind: 'audio', name: 'Drums', devices: [
   {name: 'DrumRack', params: [{id: 'Device Params/Drum Decay', value: '400 ms', min: '25 ms', max: '2 s'}]},
-  {name: 'GlueCompressor', params: []},
+  {name: 'Saturator', params: []},
 ], arrangementClips: [], sessionSlots: {}}]}
 
-test('Device face: the document\'s own names, lossless values, disclosed ranges — read-only', () => {
+test('Device face: the document\'s own names, lossless values, disclosed ranges — read-only, each device a plate of the runtime', () => {
   const html = htmlOf(React.createElement(DeviceChainPanel, {ctx: fakeCtx, document: fakeDocument, selection: {track: 0, scene: null}, mode: 'device'}))
-  assert.match(html, /data-device-tile="DrumRack"/)
-  assert.match(html, /Device Params\/Drum Decay/, 'the parameter keeps the document\'s own name — never a prettified fake label')
-  assert.match(html, /value="400 ms"/, 'the lossless reading is the inline value')
+  // live/SetDeviceOnChain.tsx: a device with no stored-parameter table reads the deep document (was the read-only tile).
+  assert.match(html, /data-chain-device="DrumRack" data-set-device="reading"/)
+  assert.match(html, /data-param="Device Params\/Drum Decay"/, 'the parameter keeps the document\'s own name — never a prettified fake label')
+  assert.match(html, /<output class="dp-readout-value">400 ms<\/output>/, 'the lossless reading is the value shown (the kit\'s readout)')
   assert.match(html, /disclosed range 25 ms – 2 s/, 'the range shows only because the document discloses it')
-  assert.match(html, /Lossless document reading · parameter editing awaits native owner/, 'the read-only law in the face')
-  const inputs = [...html.matchAll(/<input[^>]*>/g)].map(input => input[0])
-  assert.ok(inputs.length > 0)
-  for (const input of inputs) assert.match(input, /readonly/, 'every value input is read-only')
-  assert.match(html, /Glue Compressor[\s\S]*?class="device-empty"/, 'the parameterless device says the document discloses none')
+  assert.match(html, /lossless document reading[^"]*editing awaits the native device owner/, 'the read-only law in the face')
+  assert.doesNotMatch(html, /<input/, 'a reading is a reading row, never a text field')
+  assert.match(html, /data-chain-device="Saturator"[\s\S]*?No parameters disclosed by the native document/, 'the parameterless device says the document discloses none')
 })
 
-test('Device face with an empty chain or no track: the designed empty frame, not a bare line', () => {
-  const emptyChain = htmlOf(React.createElement(DeviceChainPanel, {ctx: fakeCtx, document: fakeDocument, selection: {track: 0, scene: null}, mode: 'device'}))
-  assert.match(emptyChain, /data-detail-density="device"/)
+test('Device face with an empty chain or no track: one line in the host\'s waiting idiom, never a card', () => {
   const noDevices = htmlOf(React.createElement(DeviceChainPanel, {ctx: {...fakeCtx, set: {...fakeCtx.set, tracks: [{kind: 'audio', name: 'Drums', devices: []}]}}, document: null, selection: {track: 0, scene: null}, mode: 'device'}))
-  assert.match(noDevices, /data-detail-empty="device"/)
-  assert.match(noDevices, /insertion awaits the device lane.*?s owner/, 'the empty frame names the owner that fills it')
+  assert.match(noDevices, /data-detail-density="device"/)
+  assert.doesNotMatch(noDevices, /data-chain-device=|data-detail-empty|mode-detail-chip/, 'a track with no devices: the host\'s drop zone speaks')
+  assert.match(noDevices, /The torus joins the chain when its owner publishes a reading\./, 'what the chain still waits for, once')
   const noTrack = htmlOf(React.createElement(DeviceChainPanel, {ctx: {...fakeCtx, set: null}, document: null, selection: {track: 0, scene: null}, mode: 'device'}))
-  assert.match(noTrack, /data-detail-empty="device"/)
+  assert.match(noTrack, /open a set to bring a track&#x27;s devices here\./)
+  assert.doesNotMatch(noTrack, /data-detail-empty/)
 })
 
-test('Clip face with no selection: the designed empty frame naming what docks', () => {
+test('Clip face with no selection: one line in the host\'s waiting idiom, nothing under it', () => {
   const html = htmlOf(React.createElement(DeviceChainPanel, {ctx: fakeCtx, document: fakeDocument, selection: {track: 0, scene: null}, mode: 'clip'}))
-  assert.match(html, /data-detail-empty="clip"/)
-  assert.match(html, /Clip/, 'the Rev-4 pair label')
-  assert.match(html, /mode-detail-chip/, 'the chips name the faces that dock here')
-  assert.doesNotMatch(html, /detail-no-selection/, 'the sparse float is gone')
+  assert.equal(html, '<p class="clip-empty" role="status">Select a clip in the Session or the Arrangement to see it here.</p>')
+  assert.doesNotMatch(html, /mode-detail-chip|data-detail-empty|detail-no-selection/, 'no card, no chips, no float')
 })

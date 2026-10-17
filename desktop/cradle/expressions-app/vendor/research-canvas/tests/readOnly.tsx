@@ -7,7 +7,6 @@ import {GroupNode} from '../packages/canvas/src/nodes/GroupNode';
 import {ResourceNode} from '../packages/canvas/src/nodes/ResourceNode';
 import {CanvasView,availableMenu,isNodeSelected} from '../packages/canvas/src/CanvasView';
 import {StreetViewSurface} from '../packages/canvas/src/streetview/StreetViewSurface';
-import {PsychogeographicMap} from '../packages/canvas/src/psychogeographic/PsychogeographicMap';
 import {TimelineSurface} from '../packages/canvas/src/timeline/TimelineSurface';
 import {createLiveServicePolicy} from '../packages/geography/src/policy';
 import {readingInstruments} from '../../../field-studies-journeys/src/researchInstrumentsData';
@@ -74,12 +73,12 @@ assert.match(imageView,/Authored image title/);assert.doesNotMatch(imageView,/<f
 if(process.env.OI_RESEARCH_NATIVE_READING){
  const reading=JSON.parse(await readFile(process.env.OI_RESEARCH_NATIVE_READING,'utf8'));
  const adapters=await readingInstruments(reading);
- const map=renderToStaticMarkup(<PsychogeographicMap repository={adapters.places} projectId={reading.subject.subject_ref} tileSource={{kind:'geojson',url:'data:application/json,%7B%7D',attribution:'Offline'}} offlineOnly policy={policy}/>);
- assert.doesNotMatch(map,/Enable live tiles|Refresh tiles/);assert.match(map,/Globe/);assert.match(map,/Flat/);
+ // The hosted Places map retired (T-PLACES-ONTO-ATLAS): Places is the shell's Earth atlas, which draws no live-network control in its
+ // pane (packages/live-shell/ui/tests/atlas-places-plate.test.mjs).
  const timeline=renderToStaticMarkup(<TimelineSurface repository={adapters.timeline} constellationId={reading.subject.subject_ref} dataSource={adapters.dataSource} initialState={{centerYear:0,pixelsPerYear:1,selectedNodeId:null}} onOpenCanvasNode={()=>{}} onOpenNode={()=>{}}/>);
  assert.match(timeline,/Timeline navigation controls/);
  // These are real production adapter refusals, not substituted owner replies.
  await assert.rejects(adapters.timeline.getTimelineWalk('foreign:scope',{startYear:0,endYear:3000}),/does not address/);
  await assert.rejects(adapters.places.getRelatedNodesForPlace(reading.subject.subject_ref,'foreign:source'),/not found/);
- console.log('Native reading adapters reject foreign reads; actual hosted map/image components withhold live network controls, retain labels and omit absent metadata.');
+ console.log('Native reading adapters reject foreign reads; the actual hosted image component withholds live network controls, retains labels and omits absent metadata.');
 }

@@ -111,13 +111,17 @@ export function naraInstrumentRequest(request:import('../../../src/nara/instrume
  return call('nara-instrument',{request},90000);
 }
 
-export interface KernelExpressionListing {expression_ref:string;title:string;revision:number;dirty?:boolean;last_touched_unix?:number}
+export interface KernelExpressionListing {expression_ref:string;title:string;revision:number;dirty?:boolean;last_touched_unix?:number;open?:boolean}
 
 /** The kernel's own expression listing (oi.expression-list/v1) — most
- * recently touched first, exactly as the kernel discloses it. */
+ * recently touched first, exactly as the kernel discloses it — held to the
+ * works the kernel holds OPEN. Since N1 the list also names closed works from
+ * the works home (`open: false`, with their file location); every reader here
+ * inspects or reads a work by ref, which a closed work cannot answer. The
+ * shell's browser lists the closed ones and opens them from their files. */
 export async function listKernelExpressions():Promise<KernelExpressionListing[]>{
  const data=await call<{expressions?:KernelExpressionListing[]}>("kernel-expression",{request:{operation:"list"}});
- return data&&Array.isArray(data.expressions)?data.expressions:[];
+ return data&&Array.isArray(data.expressions)?data.expressions.filter(entry=>entry.open!==false):[];
 }
 
 /** Read one kernel-held oi.expression/v1 document. */

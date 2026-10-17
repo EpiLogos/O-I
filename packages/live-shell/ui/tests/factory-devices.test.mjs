@@ -1,0 +1,374 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {register} from 'node:module'
+import {readFileSync} from 'node:fs'
+
+// T-DEVICES-FACTORY: Factory's agent chain (gateway → agent → skills → scope → landing) as devices of the runtime, and the skills
+// rack as a rack. The rows are the verified address table's, the Live semantics the admitted manifests', the readings the
+// owners', the writes the rows' own write paths. Loader as live-browser-chain.test.mjs.
+const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
+register(`data:text/javascript,${encodeURIComponent(`
+import ts from ${JSON.stringify(compiler)};
+import {readFile} from 'node:fs/promises';
+export async function resolve(specifier,context,next){
+  try{return await next(specifier,context)}catch(error){
+    if(!specifier.startsWith('.'))throw error;
+    if(specifier.endsWith('.js')){try{return await next(specifier.slice(0,-3)+'.ts',context)}catch{}}
+    for(const suffix of ['.ts','.tsx']){try{return await next(specifier+suffix,context)}catch{}}
+    throw error;
+  }
+}
+export async function load(url,context,next){
+  if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export default null'};
+  if(url.endsWith('.ts')||url.endsWith('.tsx')){
+    const source=await readFile(new URL(url).pathname,'utf8');
+    const {outputText}=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:url});
+    return {format:'module',shortCircuit:true,source:outputText};
+  }
+  return next(url,context);
+}`)}`, {parentURL: import.meta.url})
+
+globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
+const {createElement} = await import('react')
+const {renderToStaticMarkup} = await import('react-dom/server')
+const family = await import('../src/inhabitants/familyManifest.ts')
+const {loadAgentShellFamilies} = await import('../src/inhabitants/loadAgentShellFamilies.ts')
+const {AGENT_SHELL_ADDRESS_TABLE, agentAddress, agentAddressesForDevice} = await import('../src/inhabitants/agentParamAddresses.ts')
+const {validateFaceSemantic} = await import('../src/inhabitants/sdk/semantics.ts')
+const {compactRows, lightOf} = await import('../src/frame/devices/deviceRuntime.ts')
+const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
+const door = await import('../src/frame/devices/deviceDoor.ts')
+const {DevicePool} = await import('../src/frame/devices/DevicePool.tsx')
+const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
+const model = await import('../src/agent/devices/agentChainDevices.ts')
+const pictures = await import('../src/agent/devices/AgentDevicePictures.tsx')
+const selection = await import('../src/agent/devices/skillRackSelection.ts')
+const accepted = await import('../src/agent/devices/ownerAccepted.ts')
+
+family.resetFamilyManifestsForTest()
+loadAgentShellFamilies()
+
+const html = element => renderToStaticMarkup(element)
+const SLOTS = ['gateway', 'agent', 'skillset', 'world', 'git']
+const fired = row => ({kind: 'fired', channel: 'shell', writePath: row.writePath, note: 'acknowledged'})
+const ROSTER = {schema: 'central.agent-profile-roster/v1', profiles: [
+  {accepted: true, profile: {agent_ref: 'agent/ada', skill_refs: ['vault-read', 'gazetteer']}},
+  {accepted: true, profile: {agent_ref: 'agent/ash', skill_refs: ['gazetteer']}},
+  {accepted: false, profile: {agent_ref: 'agent/zed', skill_refs: ['zeta']}},
+]}
+const chain = (over = {}) => model.agentChainDevices({
+  sessionRef: over.sessionRef ?? null,
+  reading: {...model.INITIAL_READING, ...over.reading},
+  accepted: {...over.accepted},
+}, over.write ?? (async row => fired(row)))
+const slotOf = (set, id) => set.find(entry => entry.slot.id === id)
+const context = (over = {}) => ({reading: {...model.INITIAL_READING, ...over.reading}, sessionRef: over.sessionRef ?? null, onFrames() {}, onThread() {}})
+const params = markup => [...markup.matchAll(/data-param="([^"]+)"/g)].map(match => match[1])
+const deviceHost = await import('../src/frame/devices/deviceHost.tsx')
+/** A whole plate on every one of its pages (DEVICE-UI §1: pages in its head, never a scroller), turned through the host. */
+const everyPage = (id, draw) => {
+  const pages = []
+  for (let at = 1; at <= 8; at++) {
+    deviceHost.setHostPage(id, `p${at}`)
+    const markup = draw()
+    pages.push(markup)
+    if ((markup.match(/role="tab"/g) ?? []).length <= at) break
+  }
+  deviceHost.setHostPage(id, 'p1')
+  return pages.join('\n')
+}
+const read = path => readFileSync(new URL(`../src/agent/${path}`, import.meta.url), 'utf8')
+
+test('the chain is the admitted slots in the declared order, each a device over the address table\'s rows — none invented, none dropped', () => {
+  const set = chain()
+  assert.deepEqual(set.map(entry => entry.device.id), SLOTS.map(slot => `factory:${slot}`))
+  for (const slot of SLOTS) {
+    const {device} = slotOf(set, slot)
+    const table = agentAddressesForDevice(slot)
+    assert.deepEqual([...device.rows.map(row => row.key)].sort(), table.map(row => row.key).sort(), `${slot}: the table's rows`)
+    for (const row of device.rows) {
+      const address = agentAddress(slot, row.key)
+      assert.equal(row.family, address.family, `${slot}/${row.key}: one owning family`)
+      assert.ok(row.title && row.group, `${slot}/${row.key}: a label and a group`)
+      assert.ok(!row.writePath || row.writePath === address.writePath, `${slot}/${row.key}: a write path is the table's own, never added`)
+    }
+  }
+  assert.equal(AGENT_SHELL_ADDRESS_TABLE.length, SLOTS.flatMap(slot => agentAddressesForDevice(slot)).length, 'the table has no row off the chain')
+})
+
+test('every device keeps its Live semantic and invariant (lock §1, §5) — the gate finds no fault in any of the five', () => {
+  const set = chain({reading: {chains: model.rosterChains(ROSTER)}})
+  assert.deepEqual(set.map(entry => entry.device.face.liveSemantic), ['return', 'device-instrument', 'rack', 'device-audio-fx', 'return'])
+  for (const {slot, device} of set) assert.deepEqual(validateFaceSemantic(device.face, {family: slot.family}), [], `${slot.id} keeps its semantic`)
+  const rack = slotOf(set, 'skillset').device.face
+  assert.deepEqual(rack.invariant.chains, ['gazetteer', 'vault-read', 'zeta'], 'the rack declares the chains it holds')
+  assert.ok(rack.invariant.chainSelector, 'and its chain selector')
+  assert.equal(slotOf(chain(), 'skillset').device.face.invariant.chains.length >= 1, true, 'a rack never declares fewer than one chain')
+})
+
+test('compact is a picture and at most four controls: the others\' are their most-played rows, and the rack claims no macro it cannot map', () => {
+  const set = chain()
+  const compact = slot => compactRows(slotOf(set, slot).device.rows).map(row => row.key)
+  assert.deepEqual(compact('gateway'), ['transport', 'approvals', 'connect', 'readiness'])
+  assert.deepEqual(compact('agent'), ['autonomy', 'effort', 'budget-used', 'input'], 'the mockup\'s four: autonomy, effort, budget, input')
+  assert.deepEqual(compact('skillset'), [], 'the rack\'s four settings are readings no owner maps, so the compact rack draws its chains and no badge posing as a macro')
+  assert.deepEqual(compact('world'), ['write-mode'])
+  assert.deepEqual(compact('git'), ['commit-policy', 'push-policy', 'land'])
+  for (const {device} of set) assert.ok(compactRows(device.rows).length <= 4)
+  const rack = slotOf(set, 'skillset').device.rows
+  assert.deepEqual(rack.map(row => row.key), ['thoroughness', 'test-depth', 'reach', 'risk'], 'the rows ai-kit declares are kept, none dropped')
+  assert.ok(rack.every(row => !row.macro && !row.writePath && row.group === 'Settings'), 'and they are plain readings: ai-kit declares no mapping and no writer, so none claims macro')
+  for (const {slot, device} of set) assert.ok(device.rows.every(row => !row.macro), `${slot.id}: no row of the chain claims a macro`)
+})
+
+test('a macro maps at least one declared row of its own device, with a range — checked at the instance, every fault named (lock §0.1, §5.3)', () => {
+  const rows = [
+    {key: 'level', title: 'Level', family: 'ai-kit', deviceInstance: 'skillset', type: 'number', range: {min: 0, max: 10}},
+    {key: 'depth', title: 'Depth', family: 'ai-kit', deviceInstance: 'skillset', type: 'number'},
+  ]
+  const claim = (key, maps) => ({key, title: key, family: 'ai-kit', deviceInstance: 'skillset', type: 'enumerated', macro: {maps}})
+  assert.deepEqual(model.macroFaults('skillset', [...rows, claim('thorough', [{key: 'level', min: 2, max: 8}, {key: 'depth', min: 0, max: 1}])]), [], 'a macro that maps two rows with ranges keeps its semantic')
+  assert.match(model.macroFaults('skillset', [...rows, claim('thorough', [])]).join(), /maps none/, 'the empty mapping the rack used to claim')
+  assert.match(model.macroFaults('skillset', [...rows, claim('thorough', [{key: 'ghost', min: 0, max: 1}])]).join(), /"ghost", which is no other row of this device/, 'a row the device does not have')
+  assert.match(model.macroFaults('skillset', [...rows, claim('thorough', [{key: 'thorough', min: 0, max: 1}])]).join(), /"thorough", which is no other row/, 'a macro cannot map itself')
+  assert.match(model.macroFaults('skillset', [...rows, claim('thorough', [{key: 'level'}])]).join(), /no range/, 'a mapping without a range')
+  assert.match(model.macroFaults('skillset', [...rows, claim('thorough', [{key: 'level', min: 5, max: 1}])]).join(), /no range/, 'a range that runs backwards')
+  assert.match(model.macroFaults('skillset', [...rows, claim('thorough', [{key: 'level', min: 0, max: 11}])]).join(), /leaves that row's own range \[0, 10\]/, 'a range outside the mapped row\'s own')
+  assert.deepEqual(model.macroFaults('skillset', rows), [], 'a row that claims nothing is held to nothing')
+  assert.deepEqual(SLOTS.flatMap(slot => model.macroFaults(slot, model.slotRows(slot))), [], 'every device of the chain passes')
+  const source = read('devices/agentChainDevices.ts')
+  assert.match(source, /const faults = macroFaults\(slot\.id, rows\)\n  if \(faults\.length\) throw Error\(/, 'and the instance is refused at admission, the fault named')
+})
+
+test('a light is the owner\'s reading: dark while the owner has not answered, lit or unlit as it reports — never the shell\'s selection or a flag', () => {
+  const dark = chain()
+  assert.deepEqual(SLOTS.map(slot => lightOf(slotOf(dark, slot).device)), ['unknown', 'unknown', 'unknown', 'unknown', 'unknown'], 'nothing is lit before an owner speaks')
+  const selected = chain({sessionRef: 'session:1'})
+  assert.equal(lightOf(slotOf(selected, 'agent').device), 'unknown', 'a selected session is the person\'s choice, not the owner saying the agent is on it')
+  const answered = chain({sessionRef: 'session:1', reading: {attached: true, gatewayAdmitted: true, gitAdmitted: false, chains: model.rosterChains(ROSTER)}})
+  assert.deepEqual(SLOTS.map(slot => lightOf(slotOf(answered, slot).device)), ['on', 'on', 'on', 'unknown', 'off'], 'the world device has no owner reading of its own, so no light')
+  assert.equal(lightOf(slotOf(chain({reading: {attached: true}}), 'agent').device), 'unknown', 'a task record with no session selected is no record of this agent')
+  assert.equal(slotOf(chain({sessionRef: 's', reading: {attached: true}}), 'world').device.enabledKey, undefined, 'the write arm is a shell flag: it lights nothing')
+  assert.equal(lightOf(slotOf(chain({reading: {chains: []}}), 'skillset').device), 'off', 'a roster with no admitted skill is an answered "no"')
+  assert.equal(lightOf(slotOf(chain({reading: {chains: model.rosterChains({profiles: [{accepted: false, profile: {skill_refs: ['x']}}]})}}), 'skillset').device), 'off', 'carried is not admitted')
+})
+
+test('a value with no reading stays unknown — no default stands in for it', () => {
+  const {device: gateway} = slotOf(chain(), 'gateway')
+  for (const key of ['transport', 'approvals', 'connect', 'readiness', 'spend']) assert.equal(gateway.values[key], undefined, key)
+  const {device: agent} = slotOf(chain(), 'agent')
+  for (const key of ['autonomy', 'budget-used', 'identity', 'model']) assert.equal(agent.values[key], undefined, key)
+  for (const key of ['effort', 'input', 'heartbeat']) assert.equal(agent.values[key], undefined, `${key}: the shell\'s defaults (high, steer, heartbeat on) are not readings`)
+  assert.equal(slotOf(chain(), 'world').device.values['write-mode'], undefined, 'nor is the write arm\'s flag')
+  assert.equal(slotOf(chain({sessionRef: 's', accepted: {effort: 'max', input: 'queue'}}), 'agent').device.values.effort, 'max', 'what the owner accepted is')
+  assert.equal(slotOf(chain({accepted: {effort: 'max', input: 'queue'}}), 'agent').device.values.input, 'queue')
+  assert.equal(slotOf(chain({accepted: {effort: 'max', input: 'queue'}}), 'agent').device.values.heartbeat, undefined, 'heartbeat has no owner that has ever accepted it')
+  assert.equal(slotOf(chain({accepted: {effort: 'max', input: 'queue'}}), 'world').device.values['write-mode'], undefined, 'nor has the write arm')
+  const read = slotOf(chain({sessionRef: 's', reading: {budget: {used: 3, cap: 12}, autonomy: 'review', identity: 'agent/ada'}}), 'agent').device
+  assert.deepEqual([read.values['budget-used'], read.values.autonomy, read.values.identity], ['3 / 12', 'review', 'agent/ada'])
+  const git = slotOf(chain({reading: {gitRepo: {branch: 'dlw/build', uncommitted: 4}}}), 'git').device
+  assert.deepEqual([git.values.branch, git.values.uncommitted], ['dlw/build', 4])
+})
+
+test('owners write, faces read: a write row reaches its own write path, a reading row has none, a refusal comes back in the owner\'s words', async () => {
+  const calls = []
+  const write = async (row, value) => { calls.push({key: row.key, path: row.writePath, value}); return fired(row) }
+  const {device} = slotOf(chain({write}), 'agent')
+  await device.submit([{key: 'effort', value: 'max'}])
+  await device.submit([{key: 'input', value: 'queue'}])
+  await device.submit([{key: 'input', value: 'steer'}])
+  await device.submit([{key: 'heartbeat', value: false}])
+  assert.deepEqual(calls, [
+    {key: 'effort', path: 'shell.setEffort', value: 'max'},
+    {key: 'input', path: 'shell.setSteer', value: false},
+    {key: 'input', path: 'shell.setSteer', value: true},
+    {key: 'heartbeat', path: 'shell.setHeartbeat', value: false},
+  ], 'the shell\'s steer setter takes the boolean the transport gives it')
+  await assert.rejects(() => device.submit([{key: 'autonomy', value: 'auto'}]), /no owner write is declared/, 'autonomy is a reading here')
+  await assert.rejects(() => device.submit([{key: 'budget-used', value: '1'}]), /no owner write is declared/)
+  assert.equal(calls.length, 4, 'a reading dispatched nothing')
+
+  const world = slotOf(chain({write}), 'world').device
+  await world.submit([{key: 'write-mode', value: 'direct'}])
+  await world.submit([{key: 'write-mode', value: 'propose'}])
+  await assert.rejects(() => world.submit([{key: 'write-mode', value: 'draft'}]), /draft awaits its writer/, 'draft has no writer: refused by name, not sent')
+  assert.deepEqual(calls.slice(4), [{key: 'write-mode', path: 'shell.setWriteArm', value: true}, {key: 'write-mode', path: 'shell.setWriteArm', value: false}])
+
+  const refusing = slotOf(chain({write: async row => ({kind: 'refused', channel: 'kernel', writePath: row.writePath, reason: 'the gateway refused the carrier'})}), 'gateway').device
+  await assert.rejects(() => refusing.submit([{key: 'transport', value: 'ws'}]), /the gateway refused the carrier/)
+})
+
+test('a write the table declares but gives no domain for stays a reading in the device — no knob on an invented 0..1', () => {
+  const stall = slotOf(chain(), 'gateway').device.rows.find(row => row.key === 'stall-after')
+  assert.equal(agentAddress('gateway', 'stall-after').writePath, 'kernel:harness_agent_control')
+  assert.equal(stall.writePath, undefined)
+  assert.match(stall.disclosure, /no domain/)
+})
+
+test('the harness\'s document supplies the gateway rows only under the carrier\'s own names and inside the declared choices', () => {
+  assert.deepEqual(model.gatewayDisclosed({state: 'ready', transport: 'ws', approvals: 'sometimes', connect: true, stall_after_seconds: 30}),
+    {readiness: 'ready', transport: 'ws', connect: true}, 'a choice outside the declared set is not a reading')
+  assert.deepEqual(model.gatewayDisclosed({refused: {message: 'no'}}), {})
+  assert.deepEqual(model.gatewayDisclosed(null), {})
+  assert.equal(model.gatewayLine({schema: 's', binding: 'b'}), 'schema s · binding b')
+  assert.deepEqual(model.gitRepoReading({repo_root: '/r', head_branch: 'main', worktrees: [{path: '/x', dirty_files: 9}, {path: '/r', dirty_files: 2}]}), {branch: 'main', uncommitted: 2})
+  assert.deepEqual(model.gitRepoReading({repo_root: '/r', worktrees: []}), {})
+  assert.deepEqual(model.taskReading({turns: {used: 2, cap: 8}, custody: 'review'}), {used: 2, cap: 8, autonomy: 'review'})
+  assert.equal(model.budgetLine({used: 2}), '2')
+  assert.equal(model.budgetLine(null), undefined)
+})
+
+test('the skills rack is a rack: chains with admit lights and a selector — its four settings are readings until ai-kit maps them, not macros', () => {
+  selection.selectSkillChain(null)
+  const chains = model.rosterChains(ROSTER)
+  assert.deepEqual(chains.map(c => [c.ref, c.admitted, c.carriedBy]), [
+    ['gazetteer', true, ['agent/ada', 'agent/ash']], ['vault-read', true, ['agent/ada']], ['zeta', false, ['agent/zed']],
+  ])
+  assert.equal(model.rosterAdmits(ROSTER), 2)
+  assert.equal(model.rosterIdentity(ROSTER), 'agent/ada')
+  const reading = {chains, skillsNote: '2 accepted agents with skill refs disclosed.'}
+  for (const size of ['compact', 'whole', 'full']) {
+    const markup = html(pictures.chainPicture('skillset', context({reading}), size))
+    assert.match(markup, /role="listbox"/, `${size}: the chains stand in a selector`)
+    assert.equal((markup.match(/role="option"/g) ?? []).length, 3)
+    assert.match(markup, /data-chain="zeta" data-admitted="false"/, 'a carried skill that is not admitted is a dark chain')
+    assert.match(markup, /data-chain="gazetteer" data-admitted="true"/)
+    assert.match(markup, /role="option" aria-selected="true" data-chain="gazetteer"/, 'the first chain is selected until another is chosen')
+  }
+  assert.doesNotMatch(html(pictures.chainPicture('skillset', context({reading}), 'compact')), /data-chain-detail/)
+  assert.match(html(pictures.chainPicture('skillset', context({reading}), 'whole')), /data-chain-detail="gazetteer"/, 'whole shows the chosen chain\'s detail')
+  selection.selectSkillChain('zeta')
+  const chosen = html(pictures.chainPicture('skillset', context({reading}), 'full'))
+  assert.match(chosen, /role="option" aria-selected="true" data-chain="zeta"/, 'one choice for every size')
+  assert.match(chosen, /data-chain-detail="zeta"[\s\S]*carried, not admitted/)
+  selection.selectSkillChain('not-a-chain')
+  assert.equal(selection.chosenChain(chains, 'not-a-chain'), 'gazetteer', 'a stale choice falls back to the first chain')
+  selection.selectSkillChain(null)
+  const waiting = html(pictures.chainPicture('skillset', context({reading: {chains: [], skillsNote: 'waiting on Central — roster refused'}}), 'compact'))
+  assert.match(waiting, /waiting on Central — roster refused/)
+  assert.doesNotMatch(waiting, /role="option"/)
+})
+
+test('the agent\'s picture says "attached" only on the owner\'s word — a selected session is only selected', () => {
+  const caption = over => html(pictures.chainPicture('agent', context(over), 'compact')).match(/turns not read · (attached|selected|unselected)/)?.[1]
+  assert.equal(caption({}), 'unselected')
+  assert.equal(caption({sessionRef: 's'}), 'selected', 'the person chose it; no owner has said the agent is on it')
+  assert.equal(caption({sessionRef: 's', reading: {attached: true}}), 'attached', 'the owner holds a task record for it')
+  assert.equal(caption({reading: {attached: true}}), 'unselected', 'a record with no session selected is no record of this agent')
+})
+
+test('the world\'s rings draw no reach arc: no owner reports the reach, so the picture says it is not read', () => {
+  for (const size of ['compact', 'whole', 'full']) {
+    const markup = html(pictures.chainPicture('world', context(), size))
+    assert.match(markup, /data-reach="not-read"/)
+    assert.match(markup, /reach not read/)
+    assert.doesNotMatch(markup, /<path/, `${size}: no likely arc stands in for the owner's reach`)
+  }
+})
+
+test('what an owner accepted is the only reading effort and input have: recorded per binding, only inside the row\'s choices, replaced not mutated', () => {
+  accepted.resetOwnerAccepted()
+  try {
+    assert.deepEqual(accepted.ownerAccepted('cursor'), {}, 'nothing before an owner accepts')
+    let heard = 0
+    const stop = accepted.subscribeOwnerAccepted(() => { heard += 1 })
+    const before = accepted.ownerAccepted('cursor')
+    assert.equal(accepted.recordOwnerAccepted('cursor', 'effort', 'max'), true)
+    assert.equal(accepted.recordOwnerAccepted('cursor', 'input', 'queue'), true)
+    assert.deepEqual(accepted.ownerAccepted('cursor'), {effort: 'max', input: 'queue'})
+    assert.notEqual(accepted.ownerAccepted('cursor'), before, 'a new snapshot, never a mutated one')
+    assert.deepEqual(accepted.ownerAccepted('hermes'), {}, 'the acceptance is the bound harness\'s, not every harness\'s')
+    for (const [key, value] of [['effort', 'turbo'], ['input', true], ['heartbeat', false], ['write-mode', 'direct'], ['interrupt-quantize', 'soon']]) {
+      assert.equal(accepted.recordOwnerAccepted('cursor', key, value), false, `${key}=${String(value)} is no acceptance of a row the devices read`)
+    }
+    // Interrupt timing: the harness carrier's quantize, one of its three choices — the Agent design's Interrupt reads it (lane BF).
+    assert.equal(accepted.recordOwnerAccepted('cursor', 'interrupt-quantize', 'next tool'), true)
+    assert.deepEqual(accepted.ownerAccepted('cursor'), {effort: 'max', input: 'queue', quantize: 'next tool'})
+    assert.equal(heard, 3, 'a subscriber hears each real acceptance and nothing else')
+    stop()
+    accepted.recordOwnerAccepted('cursor', 'effort', 'low')
+    assert.equal(heard, 3, 'and stops hearing when it leaves')
+  } finally { accepted.resetOwnerAccepted() }
+})
+
+test('one device in three sizes: the same live rows, a picture in each — no text-only card', () => {
+  const set = chain({sessionRef: 's', reading: {chains: model.rosterChains(ROSTER), gatewayAdmitted: true, gitRepo: {branch: 'dlw/build', uncommitted: 1}}})
+  for (const {slot, device} of set) {
+    // The light's own row is the plate's activator, not one of its controls (DEVICE-UI §4.1).
+    const rows = device.rows.filter(row => row.key !== device.enabledKey)
+    const compact = compactRows(rows).map(row => row.key)
+    const draw = size => html(createElement(DeviceView, {device, size, picture: pictures.chainPicture(slot.id, context({sessionRef: 's', reading: {chains: model.rosterChains(ROSTER)}}), size)}))
+    const markups = [draw('compact'), everyPage(device.id, () => draw('whole')), draw('full')]
+    markups.forEach((markup, index) => {
+      assert.match(markup, new RegExp(`data-device="factory:${slot.id}" data-device-size="${['compact', 'whole', 'full'][index]}"`))
+      assert.match(markup, /class="dv-picture"|class="dv-full"/, `${slot.id}: the picture stands in every size`)
+      assert.match(markup, new RegExp(`fd-pic--${slot.id === 'skillset' ? 'rack' : slot.id}`), `${slot.id}: the device's own picture`)
+    })
+    assert.deepEqual(params(markups[0]), compact, `${slot.id}: compact draws exactly its compact rows`)
+    assert.deepEqual([...params(markups[1])].sort(), rows.map(row => row.key).sort(), `${slot.id}: whole draws every row, on its pages`)
+    assert.deepEqual(params(markups[2]), [], `${slot.id}: full is the material; its controls stay in Device view`)
+    assert.doesNotMatch(markups[0], /class="dp-sec-label">(?!Macros)/, 'compact folds the groups')
+    assert.match(markups[1], /class="dp-sec-label"/)
+  }
+  const rack = html(createElement(DeviceView, {device: slotOf(set, 'skillset').device, size: 'compact', picture: null}))
+  assert.equal((rack.match(/data-param=/g) ?? []).length, 0, 'the compact rack draws no badge for settings it cannot map as macros')
+  const rackWhole = html(createElement(DeviceView, {device: slotOf(set, 'skillset').device, size: 'whole', picture: null}))
+  assert.equal((rackWhole.match(/data-control="readout"/g) ?? []).length, 4, 'the whole rack keeps ai-kit\'s four settings as readings: no control without an owner write')
+  assert.doesNotMatch(rackWhole, /data-control="(?:radio|radio-stack|chooser|toggle|dial|box|field)"|role="slider"|class="dp-sec-label">Macros</)
+  assert.match(rackWhole, /class="dp-sec-label">Settings</)
+  const agent = html(createElement(DeviceView, {device: slotOf(set, 'agent').device, size: 'compact', picture: null}))
+  // Effort (four short choices) and input (two) stand as the kit's radios (DEVICE-UI §5 Radio: one of two to five).
+  assert.equal((agent.match(/class="dp-radio" role="radiogroup"/g) ?? []).length, 2, 'effort and input are the rows with an owner write')
+  assert.equal((agent.match(/role="radio" aria-checked/g) ?? []).length, 6, 'their choices are the owner\'s own: low · medium · high · max, steer · queue')
+  // A radio names every choice; none is drawn as the value until the owner reads one.
+  assert.doesNotMatch(agent, /aria-checked="true"|aria-pressed="true"/, 'no default is drawn as a value')
+  assert.match(agent, /data-param="autonomy"[^>]*data-control="readout"[\s\S]*?<span class="dp-label">Autonomy<\/span>/, 'autonomy is a reading until the task record discloses it')
+})
+
+test('the door shows the chosen device whole in the pool and full in a pane — the same device, the same live settings', () => {
+  const set = chain({reading: {chains: model.rosterChains(ROSTER)}})
+  const ctx = context({reading: {chains: model.rosterChains(ROSTER)}})
+  for (const {slot, device} of set) door.publishDevice(device.id, {device, picture: size => pictures.chainPicture(slot.id, ctx, size)})
+  try {
+    door.selectDevice('factory:skillset')
+    const pool = html(createElement(DevicePool))
+    assert.match(pool, /data-device-pool="factory:skillset"/)
+    assert.match(pool, /data-device-size="whole"/)
+    assert.match(pool, /class="dp-sec-label">Settings</)
+    assert.doesNotMatch(pool, /class="dp-sec-label">Macros</, 'the rack\'s settings are not offered as macros')
+    assert.match(pool, /fd-pic--rack/)
+    const pane = html(createElement(DeviceFullPane, {id: 'factory:skillset'}))
+    assert.match(pane, /data-device-size="full"/)
+    assert.match(pane, /fd-pic--rack/, 'the pane is the device\'s own material')
+    assert.deepEqual(params(pane), [], 'and holds no controls: they stay in Device view, read from the same device')
+    for (const slot of SLOTS) assert.match(html(createElement(DeviceFullPane, {id: `factory:${slot}`})), /data-device-size="full"/, `${slot} opens full`)
+  } finally {
+    for (const {device} of set) door.publishDevice(device.id, null)
+    door.selectDevice(null)
+  }
+  assert.match(html(createElement(DeviceFullPane, {id: 'factory:agent'})), /not on any chain right now/, 'withdrawn with its chain')
+})
+
+test('the Device side is these devices, wired to the door, the pane and the owner\'s write path — and no colour is written raw', () => {
+  const detail = read('AgentShellDeviceDetail.tsx')
+  assert.match(detail, /<FactoryDeviceChain sessionRef=/)
+  assert.doesNotMatch(detail, /from '\.\/(AgentDeviceChain|NativeAgentDeviceRack)'/, 'the chain\'s cards no longer draw the Device side')
+  const view = read('devices/FactoryDeviceChain.tsx')
+  assert.match(view, /<DeviceView device=\{device\} size="compact"/, 'every device draws through DeviceView at its compact size')
+  assert.match(view, /publishDevice\(device\.id, \{device, picture:/, 'each device is published to the door')
+  assert.match(view, /publishDevice\(id, null\)/, 'and withdrawn with the chain')
+  assert.match(view, /selectDevice\(chainDeviceId\(slotId\)\)/, 'choosing one shows it whole in the pool')
+  assert.match(view, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: id, title\}\)/, 'opening one full puts it in a pane')
+  assert.match(view, /const openFull = \(slotId: string, title: string\) => openDevice\(chainDeviceId\(slotId\), title\)/, 'by its chain id')
+  assert.match(view, /const openAgentThread = \(\) => openDevice\(THREAD_DEVICE_ID, 'Thread'\)/, 'the Agent\'s ⤢ opens its thread (§19.3): the Thread device\'s own Full (lane BF2)')
+  assert.match(view, /onThread: \(\) => shell\.openThread\(sessionRef\)/, 'the agent tab\'s conversation stays reachable from the chain picture')
+  assert.match(view, /fireWritePath\(row, value, \{transport, binding\}\)/, 'a change goes to the row\'s own write path through the one resolver')
+  assert.match(view, /chainDropDecision\(active\.drag\)/, 'the aperture law\'s drop receiver is kept')
+  assert.match(view, /MISSING_OPS\.order/, 'and the slide\'s refusal by name')
+  assert.doesNotMatch(view, /from '\.\.\/(AgentDeviceChain|NativeAgentDeviceRack)'/)
+  for (const file of ['devices/FactoryDeviceChain.tsx', 'devices/AgentDevicePictures.tsx', 'devices/agentChainDevices.ts', 'devices/factoryDevices.css']) {
+    const source = read(file)
+    assert.deepEqual(source.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)
+    assert.doesNotMatch(source, /is-on/, `${file}: no hardcoded lit lamp`)
+  }
+})

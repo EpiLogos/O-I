@@ -137,15 +137,17 @@ test('the Browser arms disclosed rows only, with the row’s own card as the ima
   assert.match(browser, /drag: \{family: 'git' as const, ref: workcellRef/, 'the git row drags only a disclosed workcell ref')
 })
 
+// The chain's cards are drawn by devices/FactoryDeviceChain.tsx (each a device of the one runtime through DeviceView); the old
+// AgentDeviceChain.tsx / NativeAgentDeviceRack.tsx pair is gone, and the drop, slide and refusal behaviour below was ported to it.
 test('the chain resolves the drop target and hands ONE payload to the aperture receiver', async () => {
-  const rack = await read('NativeAgentDeviceRack.tsx')
+  const rack = await read('devices/FactoryDeviceChain.tsx')
   assert.match(rack, /onDragOver=\{onRowDragOver\}/)
   assert.match(rack, /onDrop=\{onRowDrop\}/)
   assert.match(rack, /decodeChainDrag\(event\.dataTransfer\.getData\(AGENT_CHAIN_MIME\)\) \?\? activeChainDrag\(\)/)
   assert.match(rack, /closest<HTMLElement>\('\[data-slot\]'\)/, 'the target is the card under the pointer, or the zone')
   assert.match(rack, /\{kind: 'zone', label: 'the drop zone'\}/)
   assert.match(rack, /\{kind: 'card', id: card\.id, label: `«\$\{card\.title\}»`\}/, 'a card drop names the card it landed beside')
-  assert.match(rack, /data-slot=\{device\.id\}/, 'every card is a named drop target')
+  assert.match(rack, /data-slot=\{slot\.id\}/, 'every card is a named drop target')
   assert.match(rack, /data-slot="zone"/, 'the zone is the semantic-position target')
   assert.match(rack, /agent-chain-gap/, 'the slide’s drop slot is visible in the row')
   assert.match(rack, /held \? dropZoneLine\(held\) : 'Drop gateways, agents, skillsets, worlds or git here'/, 'the zone updates to what is held')
@@ -153,30 +155,30 @@ test('the chain resolves the drop target and hands ONE payload to the aperture r
 })
 
 test('the chain card carries a slide grip, and the grip refuses through the receiver', async () => {
-  const rack = await read('NativeAgentDeviceRack.tsx')
+  const rack = await read('devices/FactoryDeviceChain.tsx')
   assert.match(rack, /agent-chain-grip/)
   assert.match(rack, /setActiveChainDrag\(\{kind: 'reorder', reorder\}\)/)
   assert.match(rack, /event\.dataTransfer\.setData\(AGENT_CHAIN_MIME, encodeChainDrag\(reorder\)\)/)
-  assert.match(rack, /void onDropAttempt\(\{kind: 'reorder', reorder: \{id, title\}\}/, 'Alt+Arrow reaches the same honest refusal')
+  assert.match(rack, /void attemptDrop\(\{kind: 'reorder', reorder: \{id: id as AgentChainSlotId, title\}\}/, 'Alt+Arrow reaches the same honest refusal')
 })
 
 test('the drop dispatches through the declared owners; refusals render as the landed card', async () => {
-  const chain = await read('AgentDeviceChain.tsx')
+  const chain = await read('devices/FactoryDeviceChain.tsx')
   assert.match(chain, /harnessAgentControl\(transport, binding, decision\.operation\.control\)/, 'the agent seat dispatches harness_agent_control')
   assert.match(chain, /shell\.setSelectedTrackId\(active\.drag\.ref\)/, 'the session drop rides the run model’s selection')
   assert.match(chain, /missing op \$\{decision\.missingOp\}/, 'the refusal card names the exact missing op')
   assert.match(chain, /MISSING_OPS\.order/, 'the slide refusal names the missing order op')
   assert.match(chain, /<RefusalCard/, 'refusals render through the landed disclosure card')
-  assert.match(chain, /onDismiss=\{\(\) => setDropOutcome\(null\)\}/)
+  assert.match(chain, /onDismiss=\{\(\) => setNote\(null\)\}/)
   assert.match(chain, /agent-transport-note/, 'receipts render as the styled note, never a JSON dump')
   assert.doesNotMatch(chain, /JSON\.stringify\(.*drop/i, 'no raw dump on the chain surface')
   assert.match(chain, /safeJson\(outcome\.document\)/, 'the owner’s outcome document rides folded as the receipt')
 })
 
 test('the chain composition still comes from the family door — no parallel order state', async () => {
-  const rack = await read('NativeAgentDeviceRack.tsx')
+  const model = await read('devices/agentChainDevices.ts')
   const catalogue = await readFile(new URL('../src/inhabitants/agentDeviceCatalogue.ts', import.meta.url), 'utf8')
-  assert.match(rack, /const devices = agentDeviceCatalogue\(\)/, 'the rack renders the declared composition')
+  assert.match(model, /deriveAgentDeviceRows\(allFamilyManifests\(\)\)/, 'the chain renders the composition the door declares')
   assert.match(catalogue, /const CHAIN_SLOTS: readonly AgentChainSlot\[\]/, 'the composition is a declaration, not a store')
   assert.doesNotMatch(catalogue, /setOrder|reorder|moveCard/i, 'the door declares no order operation')
 })
@@ -228,16 +230,19 @@ test('a refused reading waits on its owner by name; a transport failure is never
 })
 
 test('the chain earns every lamp from a reading and names who an unlit lamp waits on', async () => {
-  const chain = await read('AgentDeviceChain.tsx')
-  const rack = await read('NativeAgentDeviceRack.tsx')
-  assert.match(rack, /gatewayAdmitted = false,/, 'the gateway lamp is dark until a reading answers — no default-on lamp')
-  assert.match(chain, /gatewayAdmitted=\{gatewayAdmitted\}/, 'the chain passes the earned gateway admission')
-  assert.match(chain, /setGatewayAdmitted\(gatewayAnswered\)/)
-  assert.match(chain, /waitingOn=\{waitingOn\}/)
-  assert.match(rack, /waiting · \$\{waitingOn\.gateway\}/)
-  assert.match(rack, /waiting · \$\{waitingOn\.git\}/)
-  assert.match(rack, /not admitted — waiting on \$\{waiting\}/, 'the lamp’s accessible name names the owner')
-  assert.doesNotMatch(rack, /'unadmitted'/, 'no bare unadmitted wall')
+  const chain = await read('devices/FactoryDeviceChain.tsx')
+  const model = await read('devices/agentChainDevices.ts')
+  const readings = await read('devices/useAgentChainReading.ts')
+  const pictures = await read('devices/AgentDevicePictures.tsx')
+  assert.match(model, /gatewayAdmitted: null,/, 'the gateway lamp is dark until a reading answers — no default-on lamp')
+  assert.match(model, /put\('admitted', reading\.gatewayAdmitted\)/, 'the device carries the earned gateway admission, not an assumed one')
+  // Lane Q: the roster, the task record and the seat are the shared owner answers (owners/readers.ts); the lamps are composed
+  // over them, with the same waits.
+  assert.match(readings, /gatewayWaiting: gatewayAnswered \? null : OWNER_BINDINGS\.gateway\.owner/, 'the gateway names AIKit until its reading answers')
+  assert.match(readings, /next\.waitingOn\.git = seatAnswered \? null : OWNER_BINDINGS\.workcell\.owner/, 'the git seat names Workcell until its reading answers')
+  assert.match(pictures, /carried, not admitted/, 'an unlit skill chain says it is carried, not admitted')
+  assert.match(pictures, /Waiting on/, 'and the skillset picture names who it waits on')
+  assert.doesNotMatch(chain, /'unadmitted'/, 'no bare unadmitted wall')
   assert.match(chain, /owner \$\{decision\.owner \?\? 'not named'\}; remedy: \$\{decision\.remedy\}/, 'the drop refusal names owner and remedy')
   assert.match(chain, /remedy: \$\{missingOpRemedy\('order'\)\}/, 'the slide refusal names the order op’s remedy')
 })
@@ -249,8 +254,12 @@ test('the browser names the owner that actually refused: Central for the roster,
   assert.doesNotMatch(refused[0].label, /ai-kit skillset registry.*refused/)
   const empty = browser.skillsetRowsFromRoster({result: 'agent_definition_reading', data: {profiles: []}}, null)
   assert.match(empty[0].label, /waiting on AIKit: AIKit builds agent-chain skillset admit/)
+  // The rack is drawn whole by the runtime's pool (lane BF): its old text card, and the roster admission that fed it, are gone;
+  // no shell default reaches the pool as a reading.
   const pool = await read('AgentDevicePool.tsx')
-  assert.match(pool, /waiting · \$\{skillsWaitingOn\}/, 'the pool rows name who they wait on')
+  assert.match(pool, /POOL_DRAWN_BY_RUNTIME: ReadonlySet<string> = new Set\(\['gateway', 'agent', 'skillset', 'world'\]\)/)
+  assert.match(pool, /if \(POOL_DRAWN_BY_RUNTIME\.has\(selected\.id\)\) return null/)
   const source = await read('AgentShellBrowser.tsx')
-  assert.match(source, /skillsAdmitted=\{skillAdmission\.count\}/, 'the pool receives the same roster admission, not a default')
+  assert.doesNotMatch(source, /budgetCap=\{12\}|budgetUsed=\{0\}|effort=\{shell\.effort\}|autonomy=\{shell\.steer/, 'the shell\'s defaults are not passed as readings')
+  assert.doesNotMatch(source, /op: 'harness_agent_read'/, 'nor is the gateway read a second time for a card the chain\'s Gateway replaces')
 })

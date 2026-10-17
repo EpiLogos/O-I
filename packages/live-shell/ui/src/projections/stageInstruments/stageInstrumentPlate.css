@@ -1,0 +1,3 @@
+/* The stage instruments' plates (StageInstrumentPlate.tsx): the frame's refusal of the last press under the sections, in the plate's
+   fault idiom (the Studio's .studio-fault). Shell tokens only. */
+.stage-plate-fault { margin: 0; padding: 3px 8px; border-top: 1px solid var(--line); color: var(--rec); font-size: 10px; overflow-wrap: anywhere }

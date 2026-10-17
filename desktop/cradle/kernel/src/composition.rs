@@ -11,6 +11,10 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+/// One S composition reading's wall-clock bound: a reading of the suite's
+/// own records, bounded for an owner that never answers.
+const OWNER_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
+
 /// Milliseconds since epoch as this process's clock observes it — a plain
 /// freshness stamp for a read model, never a substitute for owner-carried
 /// revision/provenance.
@@ -168,11 +172,14 @@ impl Client {
         }
         command.push("--json".into());
         let result = (|| {
-            let output = Command::new(&self.executable)
-                .current_dir(cwd)
-                .args(&command)
-                .output()
-                .map_err(|e| format!("S composition command unavailable: {e}"))?;
+            let output = crate::owner_process::output(
+                Command::new(&self.executable)
+                    .current_dir(cwd)
+                    .args(&command),
+                None,
+                crate::owner_process::Bound::read("S", operation, OWNER_READ_LIMIT),
+            )
+            .map_err(|e| format!("S composition command unavailable: {e}"))?;
             if !output.status.success() {
                 return Err(format!(
                     "S {operation} failed ({}): {}",

@@ -17,6 +17,7 @@ import { loadField } from '../src/data/load';
 import { loadHistory } from '../src/aion/model';
 import { loadSymbols } from '../src/data/symbols';
 import { loadCorpusIndex } from '../src/data/corpus';
+import type { CentralLocation } from '../../../../../../../desktop/cradle/src/kernel/types';
 import type { Field, ImageRef } from '../src/types/field';
 import type { History } from '../src/types/history';
 import type { Symbols } from '../src/types/symbols';
@@ -36,6 +37,10 @@ export interface ImageBundle {
    * are not served from the host's root. `data:`/`http(s)`/`blob:` refs in the
    * field pass through unresolved (src/data/load.ts resolveSrc). */
   base?: string;
+  /** [T-ATLAS-ASSETS] The Central Location, in the folder the provider's relative ImageRef paths (`img/…`) are relative to,
+   * that the host's material route resolves them against (provider/imageRefs.ts). Absent ⇒ a relative ref is not served
+   * and its plate stays absent. */
+  location?: CentralLocation;
   /** The standalone store (the published images.json), keyed by ref id. */
   refs?: Record<string, ImageRef>;
 }

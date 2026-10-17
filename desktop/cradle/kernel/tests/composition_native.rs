@@ -1,6 +1,10 @@
 //! Actual installed/candidate S commands; no mock executables or fixture states.
 #[path = "../src/composition.rs"]
 mod composition;
+// composition.rs bounds its owner calls through the kernel's runner.
+#[path = "../src/owner_process.rs"]
+#[allow(dead_code)]
+mod owner_process;
 
 #[test]
 #[ignore = "requires explicit OI_BIN pointing to an actual built S executable"]

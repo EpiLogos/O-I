@@ -1,0 +1,48 @@
+/* The catalogue gallery's own layout. Every colour resolves a shell token (styles.css); nothing here restyles a device. */
+html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
+#root { padding: 14px; }
+.cat-views { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+.cat-view { display: flex; flex-direction: column; gap: 6px; }
+.cat-view-title { font: 600 10px/1 var(--mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.cat-view-body { display: flex; }
+.cat-view--whole .cat-view-body { width: 520px; }
+.cat-pane { position: relative; width: 720px; height: 380px; overflow: hidden; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-1, #33363b); padding: 10px; }
+.cat-rail { width: 300px; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-1, #33363b); }
+.cat-rail-head { padding: 6px 8px; font-size: 11px; color: var(--text-dim, #a2a7ad); border-bottom: 1px solid var(--line, #24262a); }
+.cat-rail .device { width: 100%; }
+.cat-note { margin-top: 10px; font-size: 11px; color: var(--text-faint, #71767c); }
+.cat-index { color: var(--text, #d4d7da); font-size: 12px; }
+.cat-index h1 { font-size: 16px; margin-bottom: 6px; }
+.cat-index h2 { font-size: 12px; margin: 14px 0 4px; color: var(--accent, #ffbe00); }
+.cat-index ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 2px 14px; }
+.cat-index a { color: var(--text, #d4d7da); }
+.cat-semantic { margin-left: 6px; color: var(--text-faint, #71767c); font-family: var(--mono, monospace); font-size: 10px; }
+.cat-missing { color: var(--text-dim, #a2a7ad); font-size: 13px; padding: 20px; line-height: 1.6; }
+/* A folded plate stands at chain height; give it one. */
+.cat-view--folded .cat-view-body, .cat-view--compact .cat-view-body { height: 200px; }
+.cat-rail { height: 230px; display: flex; flex-direction: column; }
+/* The reference devices' frames: the pool is the browser's width, the pane a pane, the rail the rail with its tiles. */
+.cat-views--ref { align-items: flex-start; }
+.cat-pool { width: 400px; padding: 6px; background: var(--bg-1, #33363b); border: 1px solid var(--line-strong, #3d4147); }
+.cat-pool > .dp { width: 100%; }
+.cat-pane--ref { width: 760px; height: 420px; padding: 0; }
+.cat-rail--ref { height: auto; min-height: 180px; }
+.cat-rail-tiles { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; }
+.cat-status { position: sticky; bottom: 0; margin-top: 14px; padding: 5px 10px; font-size: 11px; color: var(--text-dim, #a2a7ad); background: var(--bg-1, #33363b); border-top: 1px solid var(--line, #24262a); }
+/* The fixture switch: the readings a reference device is shown on. */
+.cat-fixtures { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; font-size: 10.5px; color: var(--text-faint, #71767c); }
+.cat-fixtures span { margin-right: 6px; text-transform: uppercase; letter-spacing: .08em; font: 600 10px var(--mono, monospace); }
+.cat-fixtures button { height: 20px; padding: 0 9px; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-1, #33363b); color: var(--text-dim, #a2a7ad); font: inherit; cursor: pointer; }
+.cat-fixtures button[aria-pressed="true"] { background: var(--accent, #ffbe00); color: #1c1d1f; border-color: var(--accent, #ffbe00); }
+
+/* Whole expanded above the chain (Live's expanded view): a band across the detail area; the panes above shrink, the chain stays under it. */
+.cat-flip { width: min(1180px, calc(100vw - 24px)); display: flex; flex-direction: column; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-0, #26292d); }
+.cat-flip-panes { height: 64px; display: grid; place-items: center; color: var(--text-faint, #71767c); font-size: 11px; background: var(--bg-1, #33363b); border-bottom: 1px solid var(--line, #24262a); }
+.cat-flip > .dp-flip { padding: 4px; border-bottom: 2px solid var(--line-strong, #3d4147); box-shadow: 0 -6px 14px rgba(0, 0, 0, .35); }
+.cat-flip-chain { padding: 4px; display: flex; background: var(--bg-0, #26292d); }
+/* Pop-out: the device's own window. */
+.cat-window { width: min(1180px, calc(100vw - 24px)); border: 1px solid var(--line-strong, #3d4147); border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+.cat-window-bar { height: 26px; display: flex; align-items: center; gap: 7px; padding: 0 10px; background: var(--bg-2, #3f4348); font-size: 11px; color: var(--text-dim, #a2a7ad); }
+.cat-window-bar > i { width: 11px; height: 11px; border-radius: 50%; background: var(--bg-3, #4a4e54); }
+.cat-window-bar > span { margin-left: 8px; }
+.cat-window-room { width: 100%; height: 620px; }

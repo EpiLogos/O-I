@@ -80,24 +80,30 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   }
   // Central's composed manifest carries the L2 faces after its base's own.
   const central = schema.inhabitantManifest('central')
+  // …and the page family after them (lane BC2: DLW §17.8 Document, §18.2 Workspace, §18.4–§18.8), then the agent chain's Packet and
+  // Search (lane BC3: DLW §18.3, §18.4).
   assert.deepEqual(central.faces.map(face => face.id),
-    ['context-world', 'agent-identity', 'ground-hygiene', 'impact', 'day-die', 'flow-document', 'nara-conversation'])
-  // Software-factory's composed manifest carries attempt-review after its base's own.
+    ['context-world', 'agent-identity', 'ground-hygiene', 'impact', 'day-die', 'flow-document', 'nara-conversation',
+      'document', 'workspace', 'beings', 'things', 'text', 'highlight', 'notes', 'packet', 'search'])
+  // Software-factory's composed manifest carries attempt-review after its base's own (the base admits the thread, tasks and the
+  // agentset rack since lane BF3).
   const factory = schema.inhabitantManifest('software-factory')
   assert.deepEqual(factory.faces.map(face => face.id),
-    ['agent-custody', 'context-write-mode', 'ledger', 'approvals', 'run-device', 'attempt-review'])
+    ['agent-custody', 'context-write-mode', 'ledger', 'approvals', 'run-device', 'thread', 'tasks', 'agentset-rack', 'attempt-review'])
   // Idempotent: a second load changes nothing.
   world.loadWorldShellFamilies()
   assert.equal(JSON.stringify(schema.inhabitantManifest('central')), JSON.stringify(central))
 })
 
-test('quaternal-logic: every face is declared waiting with a named owner; telemetry is an honest null; the family is the chronos contributor', () => {
+test('quaternal-logic: every face but the sky is declared waiting with a named owner; telemetry is an honest null; the family is the chronos contributor', () => {
   door.resetFamilyManifestsForTest()
   qlogic.quaternalLogicFamilyManifest()
   const manifest = schema.inhabitantManifest('quaternal-logic')
   assert.ok(manifest)
   assert.equal(manifest.faces.length, 6)
   for (const face of manifest.faces) {
+    // The sky draws on its owner (lane BL, aba3ddaea): the kernel's nara_identity transit, with its honest absence of a write.
+    if (face.id === 'sky') { assert.notEqual(face.admission, 'waiting', 'sky: admitted on the transit read'); continue }
     assert.equal(face.admission, 'waiting', `${face.id}: declared, waiting`)
     assert.ok(face.note && face.note.length > 40, `${face.id}: the note names what it waits for`)
     assert.equal(schema.faceKind(face), 'parameter', `${face.id}: declared faces carry no body until an owner lands`)

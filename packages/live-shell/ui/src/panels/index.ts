@@ -6,7 +6,6 @@
  * same way — see ui/PANELS.md.
  */
 
-import './context'
 import './expressions'
 import './knowledge'
 import './settings'
@@ -14,13 +13,11 @@ import './settings'
 import './workbench'
 import './agentShell'
 
-// The device-face family (M3 — Glue/Echo/Reverb generic editors, the 12
-// devices-b2 ports, the devices-pro faces and racks). Each module
-// self-registers; the family renders in the live-mode detail host
-// (DeviceChainPanel's bottom slot — the one mounted panel host in live
-// mode, per the integration map's host decision: the frame's dock residence
-// belongs to the Rev 4 mode context dock, so no second right-dock host is
-// mounted).
+// The device-face family: the generic stored-parameter editors (M3), which
+// the Live chain renders one per device on the selected track, and the
+// devices-pro faces, frozen as the corpus reference (FOUNDATION-AUDIT §E 1);
+// its two generators stay in the browser's Legacy generators section. The
+// devices-b2 faces kept local state and wrote nothing, so they are gone
+// (FOUNDATION §7): the generic editor writes the same stored parameters.
 import './devices'
-import './devices-b2'
 import './devices-pro'

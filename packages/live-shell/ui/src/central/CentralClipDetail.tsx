@@ -1,34 +1,36 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useState, type ReactNode} from 'react'
 
-/** The selected Timeline clip's Central craft, drawn in the Base detail row
- * (WORLD-SHELL-DESIGN §17.2 — the Central vertical).
+/** Central's Clip side: the selected document as data (manual §3; world-shell-mockup.html clipDetail(), its Central branch, :1666-1668)
+ * — the Clip view's props column (its form on the head, then file, template, revision, state and its bindings: world, subject,
+ * office, sources) beside its named columns (Highlights, Notes, Packet, and what the material itself holds). Every value is a
+ * reading an owner already gives through the door this file has always used; a row no owner fills shows "—", a column no owner
+ * fills says so in one line. Nothing here writes, and no device stands here: the document's devices (the Day die, the
+ * conversation) stand on the Device side, from the same selection (shell/ModeDetail.tsx BaseDevicesDetail).
  *
- * Each part reads its owner through the existing door and names its owner
- * when it cannot answer:
- * - a day (a dated day-track moment, or the day a return stands in) opens the
- *   Day document device over the owner's `central` open-day reading — the
- *   device itself is `DocumentDayDieFace`, imported, not copied;
- * - a NOW return reads `central.now-reading/v1` (`receiving/now` `read`) and
- *   draws its purpose, lifecycle, source basis and returns;
- * - a wiki return reads its own file through the owner's file route
- *   (`central:path` ref, CAS-revised) and draws its text;
- * - a conversation opens the Nara device (`NaraConversationFace`), which
- *   names the binding gap rather than guessing an expression.
- * A wiki subject is opened only from a `wiki:node:` ref the return or Day
- * names in its own text; the Constellation opens focused on that ref.
- *
- * No store here: each read is held by this component for its selection and
- * dropped when the selection changes (the chooser keys it by identity). */
+ * Two kinds of selection open here (central/CentralClipChooser.tsx):
+ * - a browser subject — a folder, note or day of the ground — read through the owner's file route (`readFile` →
+ *   `central.file-reading/v1`, CAS-revised; a folder through `listFiles`). Ported from inhabitants/CentralSubjectDetail.tsx:53-101.
+ *   A document file's own payload (its `ql-doc` island) gives the Highlights, Notes and Packet columns (central/documentPayload.ts).
+ * - a Timeline clip — the spine's retained occasion: a day reads the owner's `open-day` (useCentralDayStanding), and its Day
+ *   document's payload through the owner's document reading (`receiving` `document`, as the Day die reads it:
+ *   inhabitants/DocumentDayDieFace.tsx:110-111); a NOW return reads `central.now-reading/v1` (`receiving/now` `read`); a wiki
+ *   return reads its own file through the owner's file route.
+ *   Ported from the panes this file drew before (DayDocumentPane, NowReturnPane, WikiReturnPane).
+ * A wiki subject is opened only from a `wiki:node:` ref the material names in its own text; the Constellation opens focused
+ * on it. No store here: each read is held for its selection and dropped when the selection changes. The payload's html never
+ * reaches the shell: every row is text the payload reading reduced. */
 
 import {nowReading} from '../../../../../desktop/cradle/src/receiving/now'
-import {readFile} from '../../../../../desktop/cradle/src/files/client'
-import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {DocumentDayDieFace} from '../inhabitants/DocumentDayDieFace'
-import {NaraConversationFace} from '../inhabitants/ConversationNaraFace'
-import {KindMark} from '../inhabitants/sdk/marks.tsx'
-import '../inhabitants/inhabitantDevices.css'
+import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
+import {validateDocumentBasis} from '../../../../../desktop/cradle/src/central/dayForm'
+import {listFiles, readFile} from '../../../../../desktop/cradle/src/files/client'
+import type {CentralLocation, KernelTransportStatus, NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
+import {casShort, subjectDayRef} from '../inhabitants/centralDayNowModel'
+import {SAVE_ROUTER_OUTCOMES} from '../inhabitants/manifest.ts'
+import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
+import {ClipLine, ClipNone, ClipView, ClipWaiting, type ClipColumn, type ClipRow} from '../frame/detail/ClipView'
 import {
-  CONVERSATION_BINDING_GAP,
+  conversationGap,
   namedWikiSubjects,
   nowReturnFacts,
   parseCentralPathRef,
@@ -36,86 +38,263 @@ import {
   type NowReturnFacts,
 } from './centralVertical'
 import {openConstellation} from './constellation'
+import {
+  bounded,
+  packetChars,
+  packetHead,
+  payloadLine,
+  readDayPayload,
+  readDocumentPayload,
+  type DocumentPayloadReading,
+  type PayloadColumn,
+} from './documentPayload'
 import {useCentralDayStanding} from './useCentralDayStanding'
+import {subjectWords} from './daySurface'
 
 const READ_PREVIEW_CHARS = 4000
-
-export interface CentralClipDetailProps {
-  readonly transport: KernelTransportStatus
-  readonly selection: CentralClipSelection
+/** A subject's owner location: the one the browser's row carried (the owner's own `files_list` entry), else the entry the
+ * owner lists for it in its folder. The root is the owner's — no machine's path is written into the shell. */
+async function ownerLocation(transport: KernelTransportStatus, subject: CentralSubjectSelection): Promise<CentralLocation> {
+  if (subject.location) return subject.location
+  const cut = subject.path.lastIndexOf('/')
+  const folder = await listFiles(transport, cut > 0 ? subject.path.slice(0, cut) : '')
+  const name = subject.path.slice(cut + 1)
+  const entry = folder.entries.find(row => row.name === name)
+  if (entry?.location) return entry.location
+  throw new Error(`the owner lists no ${name} in ${cut > 0 ? subject.path.slice(0, cut) : 'the ground'}`)
 }
 
-/** The Constellation opener for one wiki subject; a refusal is named here. */
-function ConstellationOpener({subjectRef}: {subjectRef: string}) {
+/** The mockup's widths for the first two columns (clipDetail() :1668); the last column takes the rest. */
+const HIGHLIGHTS_W = 320, NOTES_W = 300
+
+const NO_SAVE = `The save router's outcomes (${SAVE_ROUTER_OUTCOMES.join(' · ')}) — none reached: the Clip view performs no write`
+const UNBOUND = (binding: string) => `No reading gives this document's ${binding} binding`
+const basename = (path: string) => path.split('/').filter(Boolean).pop() ?? path
+
+/** The binding rows the mockup's bound documents carry (Things, Beings: clipDetail() :1667); this reading gives none of them. */
+const bindingRows = (): ClipRow[] => ['world', 'subject', 'office', 'sources'].map(key => ({key, value: null, title: UNBOUND(key)}))
+/** A Day's own rows in the mockup (its die's face and when it closes, :1667): the die reads its face on the Device side and the
+ * day's closure is the owner's automation, so neither is read here. */
+const dayRows = (): ClipRow[] => [
+  {key: 'face', value: null, title: 'The Day die reads the open face (the Device side)'},
+  {key: 'closes', value: null, title: 'The day closes by the owner\'s automation; no reading gives its close here'},
+]
+
+/** The two columns a material with no document payload has (a NOW return, a return of no named kind): no payload is read for
+ * it, so its highlights and its notes are not disclosed. */
+const marksColumns = (last: boolean): ClipColumn[] => [
+  {name: 'Highlights', width: HIGHLIGHTS_W, body: <ClipNone>{NO_READING.highlights}</ClipNone>},
+  {name: 'Notes', width: last ? undefined : NOTES_W, body: <ClipNone>{NO_READING.notes}</ClipNone>},
+]
+
+/** A column's line when the selection carries no document payload. */
+const NO_READING: Record<PayloadColumn, string> = {
+  highlights: 'No highlights reading: the document\'s owner discloses none.',
+  notes: 'No notes reading: the document\'s owner discloses none.',
+  packet: 'No packet reading: the document\'s owner discloses none.',
+}
+
+/** A document's payload as the Clip side holds it: none to read (no document under the selection), being read, refused by
+ * its owner, or read (central/documentPayload.ts — which may still find no island, or one that does not parse). */
+export type PayloadState =
+  | {readonly phase: 'none'}
+  | {readonly phase: 'reading'}
+  | {readonly phase: 'refused'; readonly message: string}
+  | {readonly phase: 'read'; readonly reading: DocumentPayloadReading}
+
+const MORE = (more: number) => more > 0 ? <ClipNone>… {more} more in the payload</ClipNone> : null
+
+/** One column's body from the payload: its rows (bounded), or its one line. */
+function payloadBody(state: PayloadState, column: PayloadColumn, rows: (reading: Extract<DocumentPayloadReading, {state: 'read'}>) => ReactNode): ReactNode {
+  if (state.phase === 'reading') return <ClipNone>Waiting for the owner's reading.</ClipNone>
+  if (state.phase === 'refused') return <ClipNone>Not read: the owner refused the document reading.</ClipNone>
+  const reading = state.phase === 'read' ? state.reading : null
+  if (!reading || reading.state === 'absent') return <ClipNone>{NO_READING[column]}</ClipNone>
+  const line = payloadLine(reading, column)
+  if (line || reading.state !== 'read') return <ClipNone>{line}</ClipNone>
+  return rows(reading)
+}
+
+/** The document's three columns (clipDetail() :1663): the passages it marks, its notes, its packet — each the payload's own
+ * words, as text. A highlight is the yellow mark and its words, with the entry or face it stands on; a note is its anchor and
+ * its words; a packet item is its size, its kind, where it came from and the words the agent would read. */
+export function documentColumns(state: PayloadState): ClipColumn[] {
+  const reading = state.phase === 'read' ? state.reading : null
+  return [
+    {name: 'Highlights', width: HIGHLIGHTS_W, body: payloadBody(state, 'highlights', read => {
+      const {shown, more} = bounded(read.highlights)
+      return <div data-payload-column="highlights" data-rows={read.highlights.length}>
+        {shown.map((mark, index) => <ClipLine key={index} lead={<i className="hl2-dot" aria-hidden="true" />} right={mark.anchor}
+          title={`Marked in ${mark.where}`}>{mark.text}</ClipLine>)}
+        {MORE(more)}
+      </div>
+    })},
+    {name: 'Notes', width: NOTES_W, body: payloadBody(state, 'notes', read => {
+      const {shown, more} = bounded(read.notes)
+      return <div data-payload-column="notes" data-rows={read.notes.length}>
+        {shown.map((note, index) => <ClipLine key={index} lead={note.anchor ?? '—'}
+          title={[note.where ? `On ${note.where}` : 'The note names no entry', note.quote ? `on “${note.quote}”` : null, note.at].filter(Boolean).join(' · ')}>
+          {note.text || (note.quote ? `“${note.quote}”` : '—')}
+        </ClipLine>)}
+        {MORE(more)}
+      </div>
+    })},
+    {name: reading ? packetHead(reading) : 'Packet', body: payloadBody(state, 'packet', read => {
+      const {shown, more} = bounded(read.packet)
+      return <div data-payload-column="packet" data-rows={read.packet.length}>
+        {shown.map((item, index) => <ClipLine key={index} lead={packetChars(item)} chip={item.kind ?? undefined}
+          title={[`${packetChars(item)} characters`, item.source, item.at].filter(Boolean).join(' · ')}>
+          {`${item.source ? `${item.source} — ` : ''}${item.text || '—'}`}
+        </ClipLine>)}
+        {MORE(more)}
+      </div>
+    })},
+  ]
+}
+
+/** The template a read payload names, as the props column's `template` row. */
+const payloadTemplate = (state: PayloadState): string | null =>
+  state.phase === 'read' && state.reading.state === 'read' ? state.reading.template : null
+
+/** The wiki subjects a text names, each opening the Constellation; one line when the text names none. */
+function NamesColumn({refs, from}: {refs: readonly string[]; from: string}) {
   const [refusal, setRefusal] = useState<string | null>(null)
-  return (
-    <span className="inhabitant-device-note" data-constellation-opener={subjectRef}>
-      <button type="button" className="inhabitant-act" data-action="open-constellation" data-subject-ref={subjectRef}
-        title="Open the wiki Constellation focused on this subject (oi:epi-open-knowledge, wiki address, graph plane)"
-        onClick={() => {setRefusal(null); openConstellation(subjectRef, subjectRef, error => setRefusal(error ?? null))}}>
-        Open in the Constellation
-      </button>
-      <span className="mono"> {subjectRef}</span>
-      {refusal && <span className="inhabitant-device-fault" role="alert" data-constellation-refusal> The Constellation refused: {refusal}</span>}
-    </span>
-  )
-}
-
-/** The named wiki subjects a text carries, each opening the Constellation; an
- * honest absence when the text names none. */
-function NamedWikiSubjects({refs, from}: {refs: readonly string[]; from: string}) {
-  if (!refs.length) {
-    return <p className="inhabitant-device-notice" data-named-wiki="none">{from} names no wiki node (no `wiki:node:` ref in its own text), so no Constellation subject is opened from it.</p>
-  }
-  return (
-    <ul className="inhabitant-reading-list" data-named-wiki={refs.length}>
-      {refs.map(ref => (
-        <li key={ref} className="inhabitant-reading"><span className="inhabitant-reading-op">names</span><ConstellationOpener subjectRef={ref}/></li>
-      ))}
-    </ul>
-  )
+  if (!refs.length) return <ClipNone>{from} names no wiki node (no `wiki:node:` ref in its own text).</ClipNone>
+  return <div data-named-wiki={refs.length}>
+    {refs.map(ref => <ClipLine key={ref} lead="names" title="Open the wiki Constellation focused on this subject (oi:epi-open-knowledge)"
+      onPress={() => { setRefusal(null); openConstellation(ref, ref, error => setRefusal(error ?? null)) }}>{ref}</ClipLine>)}
+    {refusal && <ClipNone><span role="alert">The Constellation refused: {refusal}</span></ClipNone>}
+  </div>
 }
 
 // ---------------------------------------------------------------------------
-// the Day document
+// a browser subject: a folder, note or day of the ground
 
-/** The Day document device for one civil day, over the owner's open-day reading (the shared hook). */
-function DayDocumentPane({transport, dayRef}: {transport: KernelTransportStatus; dayRef: string}) {
-  const standing = useCentralDayStanding(transport, dayRef)
-  if (!standing) {
-    return <p className="inhabitant-device-note" role="status" data-day-standing="reading">Reading the owner's Day {dayRef}…</p>
-  }
-  if (standing.state === 'ready') {
-    return (
-      <div data-day-standing="ready" data-day-source={standing.sourceRef} data-day-document={standing.documentId}>
-        <p className="inhabitant-device-note" data-day-basis>Day {standing.civilDate} · document {standing.documentId} · revision <span className="mono">{standing.revision}</span></p>
-        <DocumentDayDieFace transport={transport} project={null} sourceRef={standing.sourceRef} documentId={standing.documentId}/>
-      </div>
+interface SubjectReading {
+  readonly revision: string | null
+  readonly ref: string | null
+  readonly byteLen: number | null
+  readonly project: string | null
+  readonly boundaryOp: string
+  readonly directory: NativeDirectory | null
+  /** The file's own payload (its `ql-doc` island), read from the content the owner's file route gave; null for a folder. */
+  readonly payload: DocumentPayloadReading | null
+  readonly pending: boolean
+  readonly fault: string | null
+}
+
+const UNREAD: SubjectReading = {revision: null, ref: null, byteLen: null, project: null, boundaryOp: '', directory: null, payload: null, pending: true, fault: null}
+
+/** The subject's reading through the owner's file route (ported from inhabitants/CentralSubjectDetail.tsx:53-101). */
+function useSubjectReading(transport: KernelTransportStatus, subject: CentralSubjectSelection): SubjectReading {
+  const folder = subject.kind === 'folder'
+  const [state, setState] = useState<SubjectReading>(UNREAD)
+  useEffect(() => {
+    let alive = true
+    setState(UNREAD)
+    const read = folder
+      ? listFiles(transport, subject.path).then(directory => ({
+          revision: null, ref: directory.location?.ref ?? null,
+          byteLen: directory.entries.reduce((total, entry) => total + (entry.byte_len ?? 0), 0), project: null,
+          boundaryOp: 'op files_list (central.directory-reading/v1)', directory, payload: null, pending: false, fault: null}))
+      : ownerLocation(transport, subject).then(location => readFile(transport, location)).then(reading => ({
+          revision: reading.revision, ref: reading.location?.ref ?? null,
+          byteLen: reading.byte_len, project: reading.project?.name ?? null,
+          boundaryOp: 'op file_read (central.file-reading/v1)', directory: null, payload: readDocumentPayload(reading.content), pending: false, fault: null}))
+    read.then(
+      next => { if (alive) setState(next) },
+      (error: unknown) => { if (alive) setState(held => ({...held, pending: false, fault: error instanceof Error ? error.message : String(error)})) },
     )
-  }
-  if (standing.state === 'uninitialised') {
-    return (
-      <div className="inhabitant-device-notice" data-day-standing="uninitialised" data-owner={standing.owner} data-owner-op={standing.op}>
-        <p>Day {standing.civilDate} has no Day document yet. The owner says: “{standing.message}”</p>
-        <p>Owner: {standing.owner} · op: <span className="mono">{standing.op}</span></p>
-        <p>{standing.remedy}</p>
-      </div>
-    )
-  }
-  return (
-    <div className="inhabitant-device-fault" role="alert" data-day-standing="refused" data-day-refusal>
-      Day {standing.civilDate}: the owner refused the Day document — “{standing.message}”
-    </div>
-  )
+    return () => { alive = false }
+  }, [transport, subject.path, folder])
+  return state
+}
+
+const FORM: Record<CentralSubjectSelection['kind'], string> = {folder: 'Folder', note: 'Note', day: 'Day'}
+
+/** A browser subject by its form and its file's name ("Day · 2026-10-08.md"), as the row's head names it. */
+export const centralSubjectName = (subject: CentralSubjectSelection): string => `${FORM[subject.kind]} · ${subjectWords(subject.path)}`
+
+/** A browser subject as data. Legacy: inhabitants/CentralSubjectDetail.tsx:112-182 (the reading rows under "Central detail"). */
+export function CentralSubjectClip({transport, subject, colour}: {transport: KernelTransportStatus; subject: CentralSubjectSelection; colour?: string | null}) {
+  const read = useSubjectReading(transport, subject)
+  const dayRef = subjectDayRef(subject.path)
+  const payload: PayloadState = read.pending ? {phase: 'reading'} : read.fault ? {phase: 'refused', message: read.fault}
+    : read.payload ? {phase: 'read', reading: read.payload} : {phase: 'none'}
+  const template = payloadTemplate(payload)
+  const rows: ClipRow[] = [
+    {key: 'file', value: basename(subject.path), title: read.ref ?? subject.path},
+    {key: 'template', value: template, title: template ? 'The template the document\'s own payload names (meta.template)' : 'The file reading names no template'},
+    {key: 'revision', value: read.revision ? casShort(read.revision) : null, title: read.revision ?? (read.directory ? 'A listing has no single CAS revision: its entries carry their own' : 'Not read yet')},
+    {key: 'state', value: null, title: NO_SAVE},
+    ...(subject.kind === 'day' ? dayRows() : bindingRows()),
+    {key: 'path', value: subject.path, title: subject.path},
+    {key: 'size', value: read.byteLen !== null ? `${read.byteLen} B` : null},
+    ...(read.project ? [{key: 'project', value: read.project}] : []),
+    ...(dayRef ? [{key: 'civil day', value: dayRef}] : []),
+    {key: 'read via', value: read.boundaryOp || null},
+  ]
+  const note = read.pending ? 'Reading the owner…' : read.fault ? <span role="alert" data-detail-fault>The owner refused the read: {read.fault}</span>
+    : read.payload?.state === 'malformed' ? <span data-payload-standing="malformed">The document's payload island does not parse: {read.payload.reason}</span>
+    : null
+  const columns: ClipColumn[] = read.directory
+    ? [{name: 'Entries', body: read.directory.entries.length
+        ? <div data-detail-entries>{read.directory.entries.map(entry => <ClipLine key={entry.name} lead={entry.kind} right={entry.byte_len != null ? `${entry.byte_len} B` : undefined}>{entry.name}</ClipLine>)}</div>
+        : <ClipNone>The listing holds no entries.</ClipNone>}]
+    : documentColumns(payload)
+  return <ClipView kind={`subject:${subject.kind}`} name={FORM[subject.kind]} colour={colour} rows={rows} columns={columns} note={note} />
 }
 
 // ---------------------------------------------------------------------------
-// the NOW return
+// a Timeline clip: a day, a return, a conversation
 
-type NowPaneState = {phase: 'reading'} | {phase: 'done'; facts: NowReturnFacts | null; error: string | null}
+/** The Day document's payload, through the owner's document reading — the read the Day die itself loads from
+ * (inhabitants/DocumentDayDieFace.tsx:110-111: `receiving` `document`, then `validateDocumentBasis`): its `template_payload` is
+ * the die's own payload. Read again when the Day's revision moves; none while no Day document stands. */
+function useDayDocumentPayload(transport: KernelTransportStatus, day: {sourceRef: string; documentId: string; revision: string} | null): PayloadState {
+  const [state, setState] = useState<PayloadState>({phase: 'none'})
+  const sourceRef = day?.sourceRef ?? null, documentId = day?.documentId ?? null, revision = day?.revision ?? null
+  useEffect(() => {
+    if (!sourceRef || !documentId) { setState({phase: 'none'}); return }
+    let alive = true
+    setState({phase: 'reading'})
+    receiving<unknown>(transport, null, {kind: 'document', source_ref: sourceRef, document_id: documentId})
+      .then(reading => validateDocumentBasis(reading, sourceRef, documentId))
+      .then(basis => { if (alive) setState({phase: 'read', reading: readDayPayload(basis.payload)}) })
+      .catch((error: unknown) => { if (alive) setState({phase: 'refused', message: error instanceof Error ? error.message : String(error)}) })
+    return () => { alive = false }
+  }, [transport, sourceRef, documentId, revision])
+  return state
+}
 
-function NowReturnPane({transport, nowRef}: {transport: KernelTransportStatus; nowRef: string}) {
-  const [state, setState] = useState<NowPaneState>({phase: 'reading'})
+function DayClip({transport, selection, colour}: {transport: KernelTransportStatus; selection: CentralClipSelection; colour?: string | null}) {
+  const standing = useCentralDayStanding(transport, selection.dayRef)
+  const ready = standing?.state === 'ready' ? standing : null
+  const payload = useDayDocumentPayload(transport, ready)
+  const template = payloadTemplate(payload)
+  const rows: ClipRow[] = [
+    {key: 'file', value: ready?.sourceRef ?? null, title: 'The Day document\'s source, as the owner\'s open-day names it'},
+    {key: 'template', value: template, title: template ? 'The template the Day document\'s own payload names (meta.template)' : 'The open-day reading names no template'},
+    {key: 'revision', value: ready?.revision ?? null},
+    {key: 'state', value: !standing ? null : standing.state === 'ready' ? 'ready' : standing.state === 'uninitialised' ? 'no Day document yet' : 'refused', title: NO_SAVE},
+    ...dayRows(),
+    {key: 'document', value: ready?.documentId ?? null},
+    {key: 'civil day', value: selection.civilDate},
+  ]
+  const note = !selection.dayRef ? 'Undated: the reading gives this clip no civil day, so no Day document opens for it.'
+    : !standing ? 'Reading the owner\'s Day…'
+    : standing.state === 'uninitialised' ? <span data-day-standing="uninitialised">The owner says: “{standing.message}” — {standing.owner} · {standing.op}</span>
+    : standing.state === 'refused' ? <span role="alert" data-day-standing="refused">The owner refused the Day document: “{standing.message}”</span>
+    : payload.phase === 'refused' ? <span role="alert" data-day-document="refused">The owner refused the Day document's reading: “{payload.message}”</span>
+    : null
+  return <ClipView kind="day" name="Day" colour={colour} rows={rows} columns={documentColumns(payload)} note={note} />
+}
+
+type NowState = {phase: 'reading'} | {phase: 'done'; facts: NowReturnFacts | null; error: string | null}
+
+function NowReturnClip({transport, selection, colour}: {transport: KernelTransportStatus; selection: CentralClipSelection; colour?: string | null}) {
+  const nowRef = selection.subjectRef
+  const [state, setState] = useState<NowState>({phase: 'reading'})
   useEffect(() => {
     let alive = true
     setState({phase: 'reading'})
@@ -124,106 +303,75 @@ function NowReturnPane({transport, nowRef}: {transport: KernelTransportStatus; n
       .catch((error: unknown) => { if (alive) setState({phase: 'done', facts: null, error: error instanceof Error ? error.message : String(error)}) })
     return () => { alive = false }
   }, [transport, nowRef])
-
-  if (state.phase === 'reading') return <p className="inhabitant-device-note" role="status" data-now-standing="reading">Reading the NOW return…</p>
-  if (state.error || !state.facts) {
-    return <p className="inhabitant-device-fault" role="alert" data-now-standing="refused">The NOW return was refused by its owner: {state.error ?? 'no reading for this clearing'}</p>
-  }
-  const facts = state.facts
-  return (
-    <div data-now-standing="read" data-now-ref={facts.nowRef}>
-      <ul className="inhabitant-reading-list" data-now-facts>
-        <li className="inhabitant-reading"><span className="inhabitant-reading-op">purpose</span><span className="inhabitant-reading-standing">{facts.purpose || 'no purpose disclosed'}</span></li>
-        <li className="inhabitant-reading"><span className="inhabitant-reading-op">lifecycle</span><span className="inhabitant-reading-standing">{facts.lifecycle ?? 'not disclosed'}</span></li>
-        {facts.taskRef && <li className="inhabitant-reading"><span className="inhabitant-reading-op">task</span><span className="inhabitant-reading-standing mono">{facts.taskRef}</span></li>}
-        {facts.source && <li className="inhabitant-reading" data-now-basis><span className="inhabitant-reading-op">source</span><span className="inhabitant-reading-standing mono" title={facts.revision ?? ''}>{facts.source.path}{facts.revision ? ` · ${facts.revision}` : ''}</span></li>}
-        <li className="inhabitant-reading" data-now-returns={facts.returns.length}><span className="inhabitant-reading-op">returns</span><span className="inhabitant-reading-standing">{facts.returns.length ? facts.returns.map(item => `${item.status}${item.settled ? '' : ' (open)'}`).join(' · ') : 'none at this reading'}</span></li>
-      </ul>
-      <NamedWikiSubjects refs={facts.namedWikiRefs} from="This NOW return"/>
-    </div>
-  )
+  const facts = state.phase === 'done' ? state.facts : null
+  const rows: ClipRow[] = [
+    {key: 'file', value: facts?.source?.path ?? null, title: facts?.source?.ref ?? 'The clearing\'s source, as the owner discloses it'},
+    {key: 'template', value: null, title: 'The NOW reading names no template'},
+    {key: 'revision', value: facts?.revision ?? null},
+    {key: 'state', value: facts?.lifecycle ?? null, title: 'The clearing\'s lifecycle, as the owner reads it'},
+    {key: 'purpose', value: facts?.purpose || null},
+    ...(facts?.taskRef ? [{key: 'task', value: facts.taskRef}] : []),
+    {key: 'returns', value: facts ? (facts.returns.length ? facts.returns.map(item => `${item.status}${item.settled ? '' : ' (open)'}`).join(' · ') : 'none') : null},
+    {key: 'civil day', value: selection.civilDate},
+  ]
+  const note = state.phase === 'reading' ? 'Reading the NOW return…'
+    : !facts ? <span role="alert" data-now-standing="refused">The NOW return was refused by its owner: {state.error ?? 'no reading for this clearing'}</span>
+    : null
+  return <ClipView kind="now-return" name={`NOW return · ${facts?.purpose || nowRef}`} colour={colour} rows={rows} note={note}
+    columns={[...marksColumns(false), {name: 'Names', body: facts ? <NamesColumn refs={facts.namedWikiRefs} from="This NOW return" /> : <ClipNone>Waiting for the owner's reading.</ClipNone>}]} />
 }
 
-// ---------------------------------------------------------------------------
-// the wiki return
+type WikiState = {phase: 'reading'} | {phase: 'done'; content: string; revision: string; byteLen: number | null; path: string} | {phase: 'refused'; message: string}
 
-type WikiPaneState = {phase: 'reading'} | {phase: 'done'; content: string; revision: string; byteLen: number | null; path: string} | {phase: 'refused'; message: string}
-
-function WikiReturnPane({transport, subjectRef}: {transport: KernelTransportStatus; subjectRef: string}) {
-  const [state, setState] = useState<WikiPaneState>({phase: 'reading'})
+function WikiReturnClip({transport, selection, colour}: {transport: KernelTransportStatus; selection: CentralClipSelection; colour?: string | null}) {
+  const subjectRef = selection.subjectRef
+  const [state, setState] = useState<WikiState>({phase: 'reading'})
   useEffect(() => {
     let alive = true
-    const location = parseCentralPathRef(subjectRef)
-    if (!location) {
-      setState({phase: 'refused', message: `The return's ref is not a central:path ref: ${subjectRef}`})
-      return () => { alive = false }
-    }
+    const at = parseCentralPathRef(subjectRef)
+    if (!at) { setState({phase: 'refused', message: `The return's ref is not a central:path ref: ${subjectRef}`}); return () => { alive = false } }
     setState({phase: 'reading'})
-    readFile(transport, {schema: 'central.path-ref/v1', ref: subjectRef, root: location.root, path: location.path})
-      .then(reading => { if (alive) setState({phase: 'done', content: reading.content, revision: reading.revision, byteLen: reading.byte_len, path: location.path}) })
+    readFile(transport, {schema: 'central.path-ref/v1', ref: subjectRef, root: at.root, path: at.path})
+      .then(reading => { if (alive) setState({phase: 'done', content: reading.content, revision: reading.revision, byteLen: reading.byte_len, path: at.path}) })
       .catch((error: unknown) => { if (alive) setState({phase: 'refused', message: error instanceof Error ? error.message : String(error)}) })
     return () => { alive = false }
   }, [transport, subjectRef])
-
-  if (state.phase === 'reading') return <p className="inhabitant-device-note" role="status" data-wiki-return-standing="reading">Reading the wiki return…</p>
-  if (state.phase === 'refused') return <p className="inhabitant-device-fault" role="alert" data-wiki-return-standing="refused">The wiki return was refused by its owner: {state.message}</p>
-  const named = namedWikiSubjects(state.content)
-  const preview = state.content.length > READ_PREVIEW_CHARS ? `${state.content.slice(0, READ_PREVIEW_CHARS)}…` : state.content
-  return (
-    <div data-wiki-return-standing="read" data-wiki-return-path={state.path}>
-      <p className="inhabitant-device-note" data-wiki-return-basis>{state.path} · <span className="mono">{state.revision}</span>{state.byteLen !== null ? ` · ${state.byteLen} B` : ''}</p>
-      <pre className="inhabitant-device-note" data-wiki-return-content style={{whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto'}}>{preview}</pre>
-      <NamedWikiSubjects refs={named} from="This wiki return"/>
-    </div>
-  )
+  const done = state.phase === 'done' ? state : null
+  const rows: ClipRow[] = [
+    {key: 'file', value: done?.path ?? null, title: subjectRef},
+    {key: 'template', value: null, title: 'The file reading names no template'},
+    {key: 'revision', value: done ? casShort(done.revision) : null, title: done?.revision},
+    {key: 'state', value: null, title: NO_SAVE},
+    {key: 'size', value: done?.byteLen != null ? `${done.byteLen} B` : null},
+    {key: 'civil day', value: selection.civilDate},
+  ]
+  const note = state.phase === 'reading' ? 'Reading the wiki return…'
+    : state.phase === 'refused' ? <span role="alert" data-wiki-return-standing="refused">The wiki return was refused by its owner: {state.message}</span>
+    : null
+  const text = done ? (done.content.length > READ_PREVIEW_CHARS ? `${done.content.slice(0, READ_PREVIEW_CHARS)}…` : done.content) : null
+  return <ClipView kind="wiki-return" name={`Wiki return · ${done ? basename(done.path) : subjectRef}`} colour={colour} rows={rows} note={note} columns={[
+    {name: 'Text', width: 420, body: text !== null ? <pre className="ccol-text" data-wiki-return-content>{text}</pre> : <ClipNone>Waiting for the owner's reading.</ClipNone>},
+    {name: 'Names', body: done ? <NamesColumn refs={namedWikiSubjects(done.content)} from="This wiki return" /> : <ClipNone>Waiting for the owner's reading.</ClipNone>},
+  ]} />
 }
 
-// ---------------------------------------------------------------------------
-// the conversation
-
-function ConversationPane({transport, spaceRef}: {transport: KernelTransportStatus; spaceRef: string}) {
-  return (
-    <div data-conversation-gap={CONVERSATION_BINDING_GAP.owner}>
-      <NaraConversationFace transport={transport} project={null} expressionRef={null} conversation={spaceRef}/>
-    </div>
-  )
+function ConversationClip({selection, colour}: {selection: CentralClipSelection; colour?: string | null}) {
+  return <ClipView kind="conversation" name={`Conversation · ${selection.summary ?? selection.subjectRef}`} colour={colour} rows={[
+    {key: 'space', value: selection.subjectRef},
+    {key: 'stream', value: selection.stream},
+    {key: 'expression', value: null, title: conversationGap(selection.subjectRef)},
+    {key: 'civil day', value: selection.civilDate},
+  ]} columns={[{name: 'Binding', body: <ClipNone>{conversationGap(selection.subjectRef)}</ClipNone>}]} />
 }
 
-// ---------------------------------------------------------------------------
-
-const KIND_LABEL: Record<CentralClipSelection['kind'], string> = {
-  day: 'day',
-  return: 'return',
-  conversation: 'conversation',
-  other: 'material',
-}
-
-export function CentralClipDetail({transport, selection}: CentralClipDetailProps) {
-  const dayRef = selection.dayRef
-  const civilDate = selection.civilDate
-  const undated = !civilDate
-  const stands = selection.kind === 'day' || selection.kind === 'return'
-  return (
-    <section className="inhabitant-device" data-central-clip={selection.kind} data-subject-ref={selection.subjectRef}
-      data-civil-day={civilDate ?? ''} data-stream={selection.stream ?? ''} data-return-kind={selection.returnKind ?? ''}>
-      <header className="inhabitant-device-head">
-        <span className="inhabitant-device-mark"><KindMark kind={selection.kind === 'conversation' ? 'agent' : selection.kind === 'day' ? 'day' : 'source'} size={12} title={`central ${KIND_LABEL[selection.kind]}`}/></span>
-        <strong>Central · {KIND_LABEL[selection.kind]}</strong>
-        <span className="inhabitant-device-sub">{selection.summary ?? selection.subjectRef}</span>
-        <span className="inhabitant-device-save" data-clip-identity={selection.subjectRef}>{civilDate ? `day ${civilDate}` : 'undated'}</span>
-      </header>
-      {selection.kind === 'return' && selection.returnKind === 'now' && <NowReturnPane key={`now:${selection.subjectRef}`} transport={transport} nowRef={selection.subjectRef}/>}
-      {selection.kind === 'return' && selection.returnKind === 'wiki-return' && <WikiReturnPane key={`wiki:${selection.subjectRef}`} transport={transport} subjectRef={selection.subjectRef}/>}
-      {selection.kind === 'day' && dayRef && <DayDocumentPane key={`day:${dayRef}`} transport={transport} dayRef={dayRef}/>}
-      {selection.kind === 'conversation' && <ConversationPane key={`conv:${selection.subjectRef}`} transport={transport} spaceRef={selection.subjectRef}/>}
-      {selection.kind === 'other' && <p className="inhabitant-device-notice" data-central-other>This clip stands for material the Central vertical does not own ({selection.stream ?? 'no stream'}), so no Central device opens for it.</p>}
-      {stands && undated && <p className="inhabitant-device-notice" data-undated>Undated: the reading gives this clip no civil day, so no Day document opens for it.</p>}
-      {selection.kind === 'return' && dayRef && (
-        <div data-day-context={civilDate ?? ''}>
-          <p className="inhabitant-device-note">The day this return stands in</p>
-          <DayDocumentPane key={`day-context:${dayRef}`} transport={transport} dayRef={dayRef}/>
-        </div>
-      )}
-    </section>
-  )
+/** The selected Timeline clip as data. Legacy: this file's CentralClipDetail (the "Central · <kind>" card with its panes). */
+export function CentralClipDetail({transport, selection, colour}: {transport: KernelTransportStatus; selection: CentralClipSelection; colour?: string | null}) {
+  if (selection.kind === 'day') return <DayClip transport={transport} selection={selection} colour={colour} />
+  if (selection.kind === 'return' && selection.returnKind === 'now') return <NowReturnClip transport={transport} selection={selection} colour={colour} />
+  if (selection.kind === 'return' && selection.returnKind === 'wiki-return') return <WikiReturnClip transport={transport} selection={selection} colour={colour} />
+  if (selection.kind === 'conversation') return <ConversationClip selection={selection} colour={colour} />
+  if (selection.kind === 'return') return <ClipView kind="return" name={`Return · ${selection.summary ?? selection.subjectRef}`} colour={colour}
+    rows={[{key: 'ref', value: selection.subjectRef}, {key: 'stream', value: selection.stream}, {key: 'civil day', value: selection.civilDate}]}
+    columns={marksColumns(true)} note="The reading names no kind for this return (NOW or wiki), so no owner read opens for it." />
+  return <ClipWaiting line={`This clip stands for material Central does not own (${selection.stream ?? 'no stream'}), so it opens nothing here.`} />
 }

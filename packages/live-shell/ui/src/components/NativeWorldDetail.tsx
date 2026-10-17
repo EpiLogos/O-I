@@ -3,6 +3,7 @@ import {sameEditorBasis,type NativeEditorBasis,type NativeEditorReply,type Nativ
 import {useWorkspace} from '../shell/workspace'
 import {GlyphSequenceEditor, type RetainedGlyphInput} from './GlyphSequenceEditor'
 import {NativeDeviceRack} from './NativeDeviceRack'
+import {readNativeRacks} from '../../../../expressions-boundary/src/nativeRacks'
 import {NativeRackEditor} from './NativeRackEditor'
 import {NativeChosenControls} from './NativeChosenControls'
 import {NativeSceneEditor} from './NativeSceneEditor'
@@ -13,7 +14,13 @@ import {SceneSequenceEditor} from './SceneSequenceEditor'
 import {dispatchOpenDevice} from './nativeDrag'
 import {createNativeContentActions, readNativeExpressionsContent} from '../shell/nativeContent'
 import type {DetailMode} from './DeviceChainPanel'
-import {openDetailSettings, toggleDetailSettings, type NativeDetailConfigurationFamily} from '../shell/compositionViews'
+import {openDetailSettings, toggleDetailSettings, type NativeCompositionViewSource, type NativeDetailConfigurationFamily} from '../shell/compositionViews'
+import {SceneControls} from './expressions/clip/SceneControls'
+import {SceneStrip} from './expressions/clip/SceneStrip'
+import {ExpressionsStudio} from './expressions/studio/ExpressionsStudio'
+import type {PlateSection} from '../frame/devices/InstrumentPlate'
+import {Icon} from '../inhabitants/sdk/Icon'
+import {PopOut} from '../inhabitants/sdk/marks'
 import './NativeWorldDetail.css'
 
 interface NativeDetailDestinationBasis {
@@ -26,8 +33,9 @@ interface NativeDetailDestinationBasis {
 export type NativeDetailConfigurationIntent = NativeDetailDestinationBasis &
   ({mode:'clip';material:'glyph'|'scene'}|{mode:'device';family:NativeDetailConfigurationFamily});
 
-/** Persistent presentation of the retained application's actual editor owner. */
-export function NativeWorldDetail({mode, expand, collapse, presentMode, presentNativeEditor, configurationIntent}: {mode: DetailMode; expand: () => void; collapse: () => void; presentMode:(mode:DetailMode)=>void; presentNativeEditor?:(editor:'source'|'layers'|'placement',basis:NativeEditorBasis)=>void; configurationIntent?: NativeDetailConfigurationIntent | null}) {
+/** Persistent presentation of the retained application's actual editor owner. `sceneControls`: the clip is an Expressions Scene, so the
+ * Scene's own controls stand beside it (components/expressions/clip/SceneControls.tsx); only the Expressions clip entry asks for them. */
+export function NativeWorldDetail({mode, expand, collapse, presentMode, presentNativeEditor, configurationIntent, sceneControls = false}: {mode: DetailMode; expand: () => void; collapse: () => void; presentMode:(mode:DetailMode)=>void; presentNativeEditor?:(editor:'source'|'layers'|'placement',basis:NativeEditorBasis)=>void; configurationIntent?: NativeDetailConfigurationIntent | null; sceneControls?: boolean}) {
   const workspace = useWorkspace()
   const currentWorkspace=useRef(workspace);currentWorkspace.current=workspace
   const publishedReading=useRef(workspace.editorReading)
@@ -68,7 +76,8 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
     document.addEventListener('fullscreenchange', changed)
     return () => document.removeEventListener('fullscreenchange', changed)
   }, [])
-  const request = useCallback(async (operation: NativeEditorRequest): Promise<NativeEditorReply> => {
+  // `quiet`: the caller says the owner's refusal in its own place (the Scene's controls do), so this header does not say it twice.
+  const request = useCallback(async (operation: NativeEditorRequest, quiet = false): Promise<NativeEditorReply> => {
     const epoch=lifetime.current;
     const captured={...requestResidence.current};
     const restoredMode=deepReturn.current?.mode??captured.mode;let depthExit=false;
@@ -85,7 +94,7 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
     if(!current()||epoch!==lifetime.current||!residence.current?.getClientRects().length)return {ok:false,error:'The native editor residence changed before dispatch; current work was retained'}
     const result = workspace.editor ? await workspace.editor.request(operation) : {ok: false as const, error: 'The retained native editor is unavailable'}
     const readingNow=publishedReading.current;
-    if(current()&&epoch===lifetime.current&&residence.current?.getClientRects().length
+    if(!quiet&&current()&&epoch===lifetime.current&&residence.current?.getClientRects().length
       &&(operation.operation==='read'||readingNow&&sameEditorBasis(result.ok?result.reading.basis:operation.basis,readingNow.basis)))setFault(result.ok ? null : result.error)
     if(operation.operation==='open'&&result.ok&&current()&&epoch===lifetime.current&&residence.current?.getClientRects().length
       &&readingNow&&sameEditorBasis(result.reading.basis,readingNow.basis))presentNativeEditor?.(operation.editor,result.reading.basis)
@@ -110,12 +119,19 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
     &&!!residence.current?.getClientRects().length;};
   const sceneSource={owner:'expressions' as const,content:sceneContent,actions:sceneContent?createNativeContentActions(sceneContent,{request:operation=>scenePresented()?request(operation):Promise.resolve({ok:false as const,error:'The Scene editor is no longer presented'})}):null,
     isPresented:scenePresented,revealDetail:()=>{}};
+  // The Scene's controls on the clip side: the same owner, presented while this clip body is the one shown.
+  const clipPresented=()=>{const current=scenePresentation.current;return current.mode==='clip'
+    &&current.workspaceId===sceneWorkspaceId&&current.accessEpoch===sceneAccessEpoch&&workspace.nativeAccessCurrent(sceneAccessEpoch)
+    &&!!residence.current?.getClientRects().length;};
+  const clipSource:NativeCompositionViewSource={owner:'expressions',content:sceneContent,actions:sceneContent?createNativeContentActions(sceneContent,{request:operation=>clipPresented()?request(operation,true):Promise.resolve({ok:false as const,error:'The Scene controls are no longer presented'})}):null,
+    isPresented:clipPresented,currentReading:()=>publishedReading.current,revealDetail:()=>{}};
+  const showSceneControls=sceneControls&&mode==='clip';
   const selectEntity = (id: string) => {
     if (reading) void request({operation: 'select', basis: reading.basis, entity_id: id})
   }
   const chooseConfiguration = (next: NativeDetailConfigurationFamily) => {
     setConfiguration(next)
-    requestAnimationFrame(() => residence.current?.querySelector(next === 'controls' ? '.native-chain-controls' : next === 'rack' ? '.native-chain-rack' : '.native-chain-configuration')?.scrollIntoView({block: 'nearest', inline: 'nearest'}))
+    requestAnimationFrame(() => residence.current?.querySelector(next === 'controls' ? '[data-section="controls"]' : next === 'rack' ? '[data-section="macros"]' : '[data-section="settings"]')?.scrollIntoView({block: 'nearest', inline: 'nearest'}))
   }
   const consumedConfiguration = useRef<number | null>(null)
   useEffect(() => {
@@ -136,7 +152,7 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
       return
     }
     deepReturn.current = {mode,configure, configuration, focus: document.activeElement instanceof HTMLElement ? document.activeElement : null, scroll: residence.current.querySelector('.native-device-view')?.scrollLeft ?? 0}
-    if (mode === 'device' && !configure) {setConfigure(true); setConfiguration('device')}
+    // Deep edit is the Studio's door: the same plate at full height, its sections as they stand (the settings stay one press away).
     // Expand through the host layout. Browser fullscreen events can arrive
     // after a refused request and must not undo this ordinary editor placement.
     // The same mounted owner and input drafts stay throughout.
@@ -144,38 +160,54 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
   }
   const expandClip = () => {expand(); void deep()}
   const expandGlyphDevice=()=>{setClipSurface('glyph');presentMode('clip');if(!expanded&&!fullscreen)void deep()}
-  const selectedFormation=reading?.scene.entities.some(entity=>entity.kind==='formation'&&reading.selection.entity_ids.includes(entity.id))??false
-  return <section ref={residence} className={`chain world-detail native-world-detail${configure ? ' is-configuring' : ''}${fullscreen ? ' is-fullscreen' : ''}`} aria-label={mode === 'clip' ? 'Native clip editor' : 'Native device chain'}>
-    <header className="native-detail-header">
-      <label>Object <select aria-label="Native editor selection" value={reading?.selection.entity_ids.length === 1 ? reading.selection.entity_ids[0] : ''}
-        disabled={!reading || reading.standing.pending} onChange={event => selectEntity(event.target.value)}>
-        <option value="">{reading ? 'Choose an object' : 'Native owner loading'}</option>
-        {reading?.scene.entities.map(entity => <option key={entity.id} value={entity.id}>{entity.name}</option>)}
-      </select></label>
-      <span className="native-detail-title" title={reading ? `${reading.basis.expression_ref}\n${reading.basis.scene_ref}` : undefined}>{reading?.scene.name}</span>
-      <span className="native-detail-actions">
-        {mode==='clip'&&<><button aria-pressed={clipSurface==='scene'} onClick={()=>setClipSurface('scene')}>Scene</button><button aria-pressed={clipSurface==='glyph'} onClick={()=>setClipSurface('glyph')}>States</button><button aria-pressed={clipSurface==='takes'} onClick={()=>setClipSurface('takes')}>Takes</button></>}
-        {mode === 'device' && <><button type="button" aria-expanded={configure} title="Configure chosen controls, devices and macros" onClick={() => {const next = toggleDetailSettings(configure, configuration); setConfigure(next.open); if (next.open) chooseConfiguration(next.family)}}>{configure ? 'Close settings' : 'Configure'}</button>
-          {configure && <select aria-label="Editor settings family" value={configuration} onChange={event => chooseConfiguration(event.target.value as NativeDetailConfigurationFamily)}><option value="controls">Chosen controls</option><option value="device">Devices</option><option value="rack">Macros</option><option value="scene">Scene</option></select>}</>}
-        <button type="button" disabled={!reading} title="Expand this editor; Return restores its previous placement" onClick={() => void deep()}>{expanded || fullscreen ? 'Return' : 'Deep edit ↗'}</button>
-        <button type="button" disabled={!workspace.editor} title="Read the retained editor owner" aria-label="Refresh native editor" onClick={() => void request({operation: 'read'})}>↻</button>
-      </span>
-      {fault && <span role="alert">{fault}</span>}
-    </header>
+  const settingsFamily=(next:NativeDetailConfigurationFamily)=>{const chosen=openDetailSettings(next);setConfigure(chosen.open);chooseConfiguration(chosen.family)}
+  // Configure: the Studio's settings — your rack, the chosen controls, the macros, then the family the settings edit (each as before).
+  const settings:PlateSection[]=[
+    {id:'rack',title:'Your rack',children:<div className="native-chain-strip studio-settings-rack"><NativeDeviceRack reading={reading} request={request} onOpen={dispatchOpenDevice}/></div>},
+    {id:'controls',title:'Chosen controls',children:<div className="native-chain-controls"><NativeChosenControls reading={reading} request={request} configure={configure && configuration === 'controls'}/></div>},
+    {id:'macros',title:'Macros',children:<div className="native-chain-rack"><NativeRackEditor reading={reading} request={request} configure={configure && configuration === 'rack'}/></div>},
+    {id:'settings',title:'Settings',children:<div className="native-chain-configuration">
+      <nav className="studio-settings-nav" aria-label="Native device settings"><button aria-pressed={configuration === 'controls'} onClick={() => settingsFamily('controls')}>Chosen controls</button><button aria-pressed={configuration === 'device'} onClick={() => settingsFamily('device')}>Devices</button><button aria-pressed={configuration === 'rack'} onClick={() => settingsFamily('rack')}>Macros</button><button aria-pressed={configuration === 'scene'} onClick={() => settingsFamily('scene')}>Scene</button></nav>
+      <div className="native-settings-note" hidden={configuration !== 'controls'}>Choose properties in the browser. Reorder, bind or remove them in the chosen-control rack.</div>
+      <div className="native-settings-editor native-settings-handoff" hidden={configuration !== 'device'}><p className="native-settings-note">Device settings open in the Browser pool beside the rack, so changing them never adds a widget to the rack.</p><button type="button" disabled={!reading || !devicePresented()} onClick={() => {const selected = (reading?.selection.entity_ids.length ?? 0) > 0; dispatchOpenDevice({scope: selected ? 'entity' : 'field', family: selected ? 'force' : 'physics'})}}>Open device settings</button></div>
+      <div className="native-settings-editor" hidden={configuration !== 'scene'}><NativeSceneTransport source={sceneSource}/>{sceneProjectionFault&&<p role="alert">{sceneProjectionFault}</p>}</div>
+      <div className="native-settings-note" hidden={configuration !== 'rack'}>Map parameters, set recall exclusions and capture variations in the macro rack.</div>
+    </div>},
+  ]
+  // The person's own controls stand in the Studio too while they hold any: the chosen controls they picked and the macros of their racks
+  // (and the macro rack keeps listening for the browser's Map to macro…).
+  let racksHeld=false;try{racksHeld=!!reading&&readNativeRacks(reading.scene,reading.entityOccurrences).racks.length>0}catch{racksHeld=false}
+  const own:PlateSection[]=[
+    ...(reading?.chosenControls.entries.length?[{id:'chosen',title:'Your controls',children:<div className="native-chain-controls"><NativeChosenControls reading={reading} request={request} configure={false}/></div>}]:[]),
+    ...(racksHeld?[{id:'macros',title:'Macros',children:<div className="native-chain-rack"><NativeRackEditor reading={reading} request={request} configure={false}/></div>}]:[]),
+  ]
+  const clipSurfaceChoice=(next:'scene'|'glyph'|'takes')=>setClipSurface(next)
+  return <section ref={residence} className={`native-world-detail${configure ? ' is-configuring' : ''}${fullscreen ? ' is-fullscreen' : ''}`} data-detail-side={mode} aria-label={mode === 'clip' ? 'Native clip editor' : 'Native device chain'}>
     <div className="native-detail-body">
-      <div className="native-detail-view" hidden={mode !== 'clip'}><div className="native-clip-surface" hidden={clipSurface!=='scene'}><NativeSceneEditor reading={reading} request={request}/></div><div className="native-clip-surface" hidden={clipSurface!=='glyph'}>{workspace.mode==='expressions'&&<SceneSequenceEditor reading={reading} request={request}/>}<GlyphSequenceEditor reading={reading} request={request} drafts={drafts.current} onExpand={expandClip} isPresented={glyphPresented}/></div><div className="native-clip-surface" hidden={clipSurface!=='takes'}><NativeTakes reading={reading} request={request}/></div></div>
-      <div className="native-detail-view native-device-view" hidden={mode !== 'device'}>
-        <div className="native-chain-glyph" hidden={!selectedFormation}><GlyphSequenceEditor compact reading={reading} request={request} drafts={drafts.current} onExpand={expandGlyphDevice} isPresented={compactGlyphPresented}/></div>
-        <div className="native-chain-strip"><NativeDeviceRack reading={reading} request={request} onOpen={dispatchOpenDevice}/></div>
-        <div className="native-chain-controls"><NativeChosenControls reading={reading} request={request} configure={configure && configuration === 'controls'}/></div>
-        <div className="native-chain-rack"><NativeRackEditor reading={reading} request={request} configure={configure && configuration === 'rack'}/></div>
-        <div className="native-chain-configuration" hidden={!configure}>
-          <nav aria-label="Native device settings"><button aria-pressed={configuration === 'controls'} onClick={() => {const next = openDetailSettings('controls'); setConfigure(next.open); chooseConfiguration(next.family)}}>Chosen controls</button><button aria-pressed={configuration === 'device'} onClick={() => {const next = openDetailSettings('device'); setConfigure(next.open); chooseConfiguration(next.family)}}>Devices</button><button aria-pressed={configuration === 'rack'} onClick={() => {const next = openDetailSettings('rack'); setConfigure(next.open); chooseConfiguration(next.family)}}>Macros</button><button aria-pressed={configuration === 'scene'} onClick={() => {const next = openDetailSettings('scene'); setConfigure(next.open); chooseConfiguration(next.family)}}>Scene</button></nav>
-          <div className="native-settings-note" hidden={configuration !== 'controls'}>Choose properties in the browser. Reorder, bind or remove them in the chosen-control rack.</div>
-          <div className="native-settings-editor native-settings-handoff" hidden={configuration !== 'device'}><p className="native-settings-note">Device settings open in the Browser pool beside the rack, so changing them never adds a widget to the rack.</p><button type="button" disabled={!reading || !devicePresented()} onClick={() => {const selected = (reading?.selection.entity_ids.length ?? 0) > 0; dispatchOpenDevice({scope: selected ? 'entity' : 'field', family: selected ? 'force' : 'physics'})}}>Open device settings</button></div>
-          <div className="native-settings-editor" hidden={configuration !== 'scene'}><NativeSceneTransport source={sceneSource}/>{sceneProjectionFault&&<p role="alert">{sceneProjectionFault}</p>}</div>
-          <div className="native-settings-note" hidden={configuration !== 'rack'}>Map parameters, set recall exclusions and capture variations in the macro rack.</div>
+      <div className={`clipv native-detail-view native-clip-view${showSceneControls ? ' has-scene-controls' : ''}`} hidden={mode !== 'clip'}>{showSceneControls&&<SceneControls source={clipSource}/>}{showSceneControls&&<SceneStrip source={clipSource}/>}
+        <div className="ccol native-clip-sequence" aria-label="Sequence">
+          <h5 className="native-clip-head"><span>Sequence</span>
+            <span className="native-clip-tools">
+              <span className="native-clip-surface-choice" role="group" aria-label="Clip editor"><button type="button" aria-pressed={clipSurface==='scene'} onClick={()=>clipSurfaceChoice('scene')}>Scene</button><button type="button" aria-pressed={clipSurface==='glyph'} onClick={()=>clipSurfaceChoice('glyph')}>States</button><button type="button" aria-pressed={clipSurface==='takes'} onClick={()=>clipSurfaceChoice('takes')}>Takes</button></span>
+              <select aria-label="Native editor selection" value={reading?.selection.entity_ids.length === 1 ? reading.selection.entity_ids[0] : ''} disabled={!reading || reading.standing.pending} onChange={event => selectEntity(event.target.value)}>
+                <option value="">{reading ? 'Choose an object' : 'Native owner loading'}</option>
+                {reading?.scene.entities.map(entity => <option key={entity.id} value={entity.id}>{entity.name}</option>)}
+              </select>
+              <button type="button" className="native-clip-mark" disabled={!reading} aria-label={expanded || fullscreen ? 'Return' : 'Deep edit'} title={expanded || fullscreen ? 'Return the editor to its place' : 'Deep edit: expand this editor; Return restores its previous placement'} onClick={() => void deep()}><PopOut size={10}/></button>
+              <button type="button" className="native-clip-mark" disabled={!workspace.editor} title="Read the retained editor owner" aria-label="Refresh native editor" onClick={() => void request({operation: 'read'})}><Icon name="orbit" size={12}/></button>
+            </span>
+          </h5>
+          {fault && mode==='clip' && <p className="native-clip-fault" role="alert">{fault}</p>}
+          <div className="native-clip-surfaces"><div className="native-clip-surface" hidden={clipSurface!=='scene'}><NativeSceneEditor reading={reading} request={request}/></div><div className="native-clip-surface" hidden={clipSurface!=='glyph'}>{workspace.mode==='expressions'&&<SceneSequenceEditor reading={reading} request={request}/>}<GlyphSequenceEditor reading={reading} request={request} drafts={drafts.current} onExpand={expandClip} isPresented={glyphPresented}/></div><div className="native-clip-surface" hidden={clipSurface!=='takes'}><NativeTakes reading={reading} request={request}/></div></div>
         </div>
+      </div>
+      <div className="native-detail-view native-studio-view" hidden={mode !== 'device'}>
+        <ExpressionsStudio reading={reading} request={request} selectEntity={selectEntity} drafts={drafts.current} onExpandGlyph={expandGlyphDevice} glyphPresented={compactGlyphPresented}
+          configure={configure} onConfigure={() => {const next = toggleDetailSettings(configure, configuration); setConfigure(next.open); if (next.open) chooseConfiguration(next.family)}}
+          settings={settings} own={own}
+          deep={{open: expanded || fullscreen, available: !!reading, onPress: () => void deep()}}
+          refresh={{available: !!workspace.editor, onPress: () => void request({operation: 'read'})}}
+          fault={mode === 'device' ? fault : null}/>
       </div>
     </div>
     <NativeInputRecovery reading={reading} request={request} isPresented={()=>workspace.mode!=='audio'&&!!residence.current?.getClientRects().length}/>

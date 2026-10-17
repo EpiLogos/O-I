@@ -3,6 +3,13 @@ import type {KernelTransportStatus, KnowledgeRequest} from "../kernel/types";
 import {KnowledgeReadCoordinator} from "./requests";
 
 const reads = new KnowledgeReadCoordinator();
+/** Run one owner read chain that ends in an AIKit knowledge read — e.g. a wiki register's reading (listing, file, relations;
+ * techne/wikiExpression.ts readWikiRegister) — under this realm's knowledge read bound: the same coordinator and its slots, so
+ * a load of every register never has more knowledge reads in flight than the kernel's AIKit readers bound (five). Equal keys
+ * share one run. The chain must not itself call `knowledge()`: its slot would wait on a slot it holds. */
+export function boundedKnowledgeChain<T>(key: string, run: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+  return reads.read(JSON.stringify(["chain", key]), run, signal);
+}
 export interface KnowledgeReadOptions {signal?: AbortSignal; fresh?: boolean}
 const SUPERSEDED = "superseded";
 // Bounded, never infinite. The coordinator already serialises this realm's

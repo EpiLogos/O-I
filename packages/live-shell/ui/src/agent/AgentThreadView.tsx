@@ -1,14 +1,19 @@
 import {useMemo} from 'react'
 import {NativeAgencyParticipation} from '../components/NativeAgencyParticipation'
 import {useWorkspace} from '../shell/workspaceContext'
-import {trackKey, type AgentSessionTrack} from './agentRunModel'
+import type {AgentSessionTrack} from './agentRunModel'
+import {threadTrackOf} from './threadTrack'
 import {useAgentShell} from './AgentShellContext'
 import './agentShell.css'
 
+export {threadTrackOf}
+
+/** The agent tab's body: the selected session's conversation with its steer composer (the mockup's `thread`). It stands alone —
+ * the Session and the Arrangement are the shared tracks pane's, never this tab's. */
 export function AgentThreadView({tracks}: {tracks: AgentSessionTrack[]}) {
   const shell = useAgentShell()
   const workspace = useWorkspace()
-  const track = tracks.find(item => trackKey(item) === shell.threadTrackId) ?? tracks.find(item => trackKey(item) === shell.selectedTrackId) ?? tracks.find(item => !item.group)
+  const track = threadTrackOf(tracks, shell.selectedTrackId, shell.threadTrackId)
   const scope = useMemo(() => {
     if (!track) return null
     return {
@@ -20,13 +25,13 @@ export function AgentThreadView({tracks}: {tracks: AgentSessionTrack[]}) {
   }, [track, workspace.workspaceId, workspace.accessEpoch])
 
   if (!track || !scope) {
-    return <div className="agent-shell-centre" data-region="centre"><div className="view-empty">Double-click a task clip or pick a session to open its thread.</div></div>
+    return <div className="agent-thread" data-region="thread"><div className="view-empty" role="status">Select a session or a task in the Session pane to open its thread.</div></div>
   }
 
   const current = () => workspace.nativeAccessCurrent(workspace.accessEpoch)
 
   return (
-    <div className="agent-thread">
+    <div className="agent-thread" data-region="thread">
       <NativeAgencyParticipation
         scope={scope}
         current={current}
@@ -35,6 +40,8 @@ export function AgentThreadView({tracks}: {tracks: AgentSessionTrack[]}) {
         onError={message => console.warn(message)}
         conversation
         full
+        plane="Chat"
+        onPlane={() => {}}
         mode="base"
       />
     </div>

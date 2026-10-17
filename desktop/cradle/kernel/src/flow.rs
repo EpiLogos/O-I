@@ -71,6 +71,22 @@ impl std::fmt::Display for OwnerCallError {
 
 impl std::error::Error for OwnerCallError {}
 
+impl ReceivingRequest {
+    /// The Central Action that serves the request (`CentralClient::receiving`).
+    pub fn action(&self) -> &'static str {
+        match self {
+            Self::List { .. } => "central.receiving.list",
+            Self::Read { .. } => "central.receiving.read",
+            Self::Submit { .. } => "central.receiving.submit",
+            Self::Document { .. } => "central.document.read",
+            Self::Review { .. } => "central.receiving.review",
+            Self::Include { .. } => "central.receiving.include",
+            Self::Recover { .. } => "central.receiving.recover",
+            Self::MutateField { .. } => "central.document.mutate",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReceivingRequest {
     List {
@@ -187,6 +203,11 @@ pub enum NowRequest {
         now_ref: String,
     },
 }
+
+/// The wall-clock bound on one Central Action. Central's slowest measured
+/// readings take seconds (the World 0.8–2.8 s, a NOW thought listing 3 s; real
+/// ground, 15 Oct); the bound is for an owner that never answers, not a pace.
+const CENTRAL_ACTION_LIMIT: std::time::Duration = std::time::Duration::from_secs(120);
 
 /// Client for the Central owner Actions the kernel reads and writes
 /// through `oi central`. OI_BIN selects the suite executable; the suite resolves
@@ -324,42 +345,28 @@ impl CentralClient {
         command.args(["action", "run", action]);
         // Original forms and large native edits exceed OS argv limits. The
         // explicit native stdin transport retains the same owner validation.
-        let output = if encoded.len() > 64 * 1024 {
-            use std::io::Write;
-            use std::process::Stdio;
-            let mut child = command
-                .arg("-")
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .spawn()
-                .map_err(|error| OwnerCallError::Unavailable {
-                    detail: format!("launch {} for {action}: {error}", self.executable.display()),
-                })?;
-            let mut stdin = child.stdin.take().expect("piped stdin");
-            let writer = std::thread::spawn(move || stdin.write_all(&encoded));
-            let output = child
-                .wait_with_output()
-                .map_err(|error| OwnerCallError::Unavailable {
-                    detail: format!("wait for {action}: {error}"),
-                })?;
-            let written = writer.join().map_err(|_| OwnerCallError::Malformed {
-                detail: "Central input writer failed".into(),
-            })?;
-            if output.status.success() {
-                written.map_err(|error| OwnerCallError::Malformed {
-                    detail: format!("incomplete {action} input: {error}"),
-                })?;
-            }
-            output
+        let input = if encoded.len() > 64 * 1024 {
+            command.arg("-");
+            Some(encoded)
         } else {
-            command
-                .arg(String::from_utf8(encoded).expect("JSON is UTF-8"))
-                .output()
-                .map_err(|error| OwnerCallError::Unavailable {
-                    detail: format!("launch {} for {action}: {error}", self.executable.display()),
-                })?
+            command.arg(String::from_utf8(encoded).expect("JSON is UTF-8"));
+            None
         };
+        // Every Action is bounded (owner_process.rs): a Central that never
+        // answers is stopped at the limit and named, never waited on forever.
+        let output = crate::owner_process::output(
+            &mut command,
+            input,
+            crate::owner_process::Bound {
+                owner: "Central",
+                operation: action,
+                limit: CENTRAL_ACTION_LIMIT,
+                effect: crate::owner_process::Effect::Unclassified,
+            },
+        )
+        .map_err(|detail| OwnerCallError::Unavailable {
+            detail: format!("{detail} ({})", self.executable.display()),
+        })?;
         let stdout =
             String::from_utf8(output.stdout).map_err(|error| OwnerCallError::Malformed {
                 detail: format!("{action} returned non-UTF8 output: {error}"),

@@ -1,0 +1,107 @@
+// The agent's devices on Central's chain (lane BC3; DLW §16.2 "Central — A workspace … the document effects, then the agent that
+// answers"; §18.9–§18.11, §18.14, §18.15): the readings and bindings of the Packet, Search, Agent identity and Context & world, over
+// the owners the shell already reads (packetBinding.ts, searchBinding.ts, identityBinding.ts, contextWorldBinding.ts). The chain
+// (CentralDevices.tsx) places and publishes them, and mounts the encounter observers the Packet and the Answer share.
+import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
+import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
+import {knowledge} from '../../../../../../desktop/cradle/src/knowledge/client'
+import {progressiveSearch} from '../../../../../../desktop/cradle/src/knowledge/searchProgress'
+import {readAgentCard} from '../../../../../../desktop/cradle/src/agency/agentCardReading'
+import type {DesignBinding} from '../../frame/devices/designed'
+import type {ObservedHandle} from '../../agent/devices/EncounterObservers'
+import {useRosterAgents, useRosterAnswer} from '../../owners/readers'
+import {centralDeviceId} from './centralDeviceModel'
+import {editPacket} from './centralDeviceWrites'
+import {contextWorldBinding, type ContextWorldInput} from './contextWorldBinding'
+import {identityAgentOf, identityBinding, identityWorldOf, profileExtrasOf, type IdentityInput, type ProfileExtras} from './identityBinding'
+import {holdsVersion, subscribeHolds} from './pageBindings'
+import {packetBinding, type PacketConversation} from './packetBinding'
+import {searchBinding, searchProjectOf, searchQueryOf, type SearchAnswer} from './searchBinding'
+
+export const PACKET_DEVICE_ID = centralDeviceId('packet')
+export const SEARCH_DEVICE_ID = centralDeviceId('search')
+export const IDENTITY_DEVICE_ID = centralDeviceId('agent-identity')
+export const CONTEXT_WORLD_DEVICE_ID = centralDeviceId('context-world')
+
+const message = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause))
+
+/** The conversation as its one shared observer reports it, reduced to what the Packet reads. */
+export function packetConversationOf(handle: ObservedHandle | undefined): PacketConversation | undefined {
+  if (!handle || !('state' in handle)) return undefined
+  return {draft: handle.state.draft ?? '', busy: !!handle.state.busy, ...(handle.state.reading ? {reading: handle.state.reading} : {})}
+}
+
+/** The Packet: the shell's one packet reading (useCentralTransport.tsx usePacketReading), the owner's edit, the conversation's Send. */
+export function usePacketDevice(transport: KernelTransportStatus, reading: {context?: PreparedContext; error?: string} | null, conversation: {readonly companion: string; readonly bound: boolean; readonly handle?: ObservedHandle}): DesignBinding {
+  useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
+  const version = holdsVersion()
+  const {companion, bound, handle} = conversation
+  return useMemo(() => {
+    const context = reading?.context
+    return packetBinding(PACKET_DEVICE_ID, {reading, companion, bound, conversation: packetConversationOf(handle)}, {
+      edit: context ? async mutation => { await editPacket(transport, context, mutation) } : null,
+      send: handle && 'actions' in handle ? () => handle.actions.send() : null,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+  }, [transport, reading, companion, bound, handle, version])
+}
+
+/** Search: the held query asked of AIKit's knowledge search (search and resolve, progressively, as the cradle's overlay asks them), in
+ * the held reach; read again only when the query or the reach changes (the line commits on Enter). */
+export function useSearchDevice(transport: KernelTransportStatus, projects: readonly string[] | null): DesignBinding {
+  useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
+  const version = holdsVersion()
+  const query = searchQueryOf(SEARCH_DEVICE_ID), project = searchProjectOf(SEARCH_DEVICE_ID)
+  const [answer, setAnswer] = useState<SearchAnswer | null>(null)
+  useEffect(() => {
+    if (!query) return
+    if (transport.kind === 'unavailable') { setAnswer({query, hits: [], rows: [], error: `The kernel carrier is unavailable: ${transport.reason}`, pending: []}); return }
+    const controller = new AbortController()
+    progressiveSearch(
+      () => knowledge(transport, project, {action: 'search', query}, {signal: controller.signal}),
+      () => knowledge(transport, project, {action: 'resolve', query}, {signal: controller.signal}),
+      snapshot => setAnswer({query, hits: snapshot.hits, rows: snapshot.rows, ...(snapshot.error ? {error: snapshot.error} : {}), pending: snapshot.pending}),
+      controller.signal,
+    )
+    return () => controller.abort()
+  }, [transport, query, project])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+  return useMemo(() => searchBinding(SEARCH_DEVICE_ID, answer, projects), [answer, projects, version])
+}
+
+const NO_EXTRAS: ReadonlyMap<string, ProfileExtras> = new Map()
+
+/** Agent identity: the shared roster answer, and the chosen agent's card in the chosen World (op agent_card). */
+export function useIdentityDevice(transport: KernelTransportStatus, talkingTo: string | null): DesignBinding {
+  useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
+  const version = holdsVersion()
+  const roster = useRosterAgents(transport)
+  const raw = useRosterAnswer(transport, null)
+  const extras = useMemo(() => (raw.reading.status === 'answered' ? profileExtrasOf(raw.reading.value) : NO_EXTRAS), [raw.reading])
+  const list = useMemo((): IdentityInput['roster'] => (roster.state === 'ready' ? {agents: roster.agents} : roster.state === 'error' ? {error: roster.error ?? 'The agent roster did not answer'} : null),
+    [roster.state, roster.agents, roster.error])
+  const agent = identityAgentOf(IDENTITY_DEVICE_ID, {roster: list, talkingTo})
+  const world = identityWorldOf(IDENTITY_DEVICE_ID)
+  const [card, setCard] = useState<IdentityInput['card']>(null)
+  useEffect(() => {
+    if (!agent || transport.kind === 'unavailable') return
+    let alive = true
+    readAgentCard(transport, agent, world).then(
+      read => { if (alive) setCard({agent, world, card: read}) },
+      cause => { if (alive) setCard({agent, world, error: message(cause)}) },
+    )
+    return () => { alive = false }
+  }, [transport, agent, world])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+  return useMemo(() => identityBinding(IDENTITY_DEVICE_ID, {roster: list, extras, talkingTo, card}), [list, extras, talkingTo, card, version])
+}
+
+/** Context & world: the Answer's session's scope over Central's ground (its change horizon) and the Packet's reading. */
+export function useContextWorldDevice(input: ContextWorldInput): DesignBinding {
+  useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
+  const version = holdsVersion()
+  const {answer, horizon, groundError, document, packet} = input
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the parts are the input; the holds' version re-binds the view's own keys
+  return useMemo(() => contextWorldBinding(CONTEXT_WORLD_DEVICE_ID, {answer, horizon, groundError, document, packet}), [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, version])
+}

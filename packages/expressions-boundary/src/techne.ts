@@ -9,12 +9,13 @@ import {
   selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters,
 } from '../../../desktop/cradle/src/techne/wikiNativeExpression';
 import {
-  consumeWikiSelectionRequest, getWikiProjectionState, subscribeWikiProjection,
+  consumeWikiSelectionRequest, getWikiProjectionState, requestWikiSelection, subscribeWikiProjection,
+  type WikiSelectionRequest,
 } from '../../../desktop/cradle/src/techne/wikiProjectionStore';
 import type {WikiRegister} from '../../../desktop/cradle/src/techne/wikiExpression';
 import type {SceneConstellationTarget} from '../../../desktop/cradle/src/techne/wikiReadingProvider';
 import type {ExpressionsHost} from './host.ts';
-import {boundedText, isDeepInstrument, type HostedTechneLens} from './protocol.ts';
+import {boundedText, isDeepInstrument, type HostedTechneLens, type StageResult} from './protocol.ts';
 
 export type {WikiRegister, SceneConstellationTarget};
 export interface NativeTechneSelection {
@@ -34,11 +35,25 @@ export interface NativeTechneOpen {
   entity_ref: string | null;
   drift?: string;
 }
+/** How a selection request this navigator took ended: the owner focused it and the host was told to open it (the frame's own
+ * state announcement still proves that it shows), or it was refused in the owner's words. A request the navigator was
+ * concealed or released from while opening is not settled: it is posted again for the stage presented next.
+ * An opened settlement carries the application's own answer to the host's open (ExpressionsHost.openExpression): ok once the
+ * frame stands on the Expression, or its refusal in its own words — so the stage can refuse the ask with the owner's reason
+ * the frame was given, instead of waiting out its deadline (lane D, 16 Oct: the frame refused with a revision conflict the
+ * shell never heard). */
+export type NativeTechneSettlement =
+  | {request: WikiSelectionRequest; state: 'opened'; open: NativeTechneOpen; answer?: Promise<StageResult>}
+  | {request: WikiSelectionRequest; state: 'refused'; reason: string};
 export interface NativeTechneNavigatorOptions {
   transport: KernelTransportStatus;
   host: ExpressionsHost;
   isPresented: () => boolean;
+  /** A taken request refused while no `onSettled` takes its settlement. With `onSettled`, the refusal is that settlement's alone:
+   * the stage says it where the ask belongs (lane D: a refusal reported twice stood on every mode's pane). */
   onError?: (reason: string) => void;
+  /** Every request taken from the seam ends here exactly once, unless it was returned to the seam (above). */
+  onSettled?: (settlement: NativeTechneSettlement) => void;
 }
 /** A mounted source editor opens the exact owner-resolved frame. It returns
  * an owner ref/revision; the kernel keeps authoring, source-CAS and receipts.
@@ -72,14 +87,18 @@ export function createNativeTechneNavigator(options: NativeTechneNavigatorOption
     const projects = result.outcome.snapshot.navigator?.root?.work.projects ?? [];
     return publishWikiNativeRegisters(projects.map(row => ({name: row.name, path: row.path})));
   };
+  /** The application's answer to each open this navigator told the host to make, by the open it returned. */
+  const answers = new WeakMap<NativeTechneOpen, Promise<StageResult>>();
   const opened = (register: WikiRegister, prepared: Awaited<ReturnType<typeof ensureWikiNativeExpression>>, token: number, lens?: HostedTechneLens, refresh = false): NativeTechneOpen => {
     presented();
     if (token !== generation) throw Error('A newer Technē open superseded this request; native work was retained');
     selectWikiNativeRegister(register.key);
-    options.host.openExpression(prepared.document.expression_ref, options.host.bindingId, {refresh, lens});
-    return {register: register.key, expression_ref: prepared.document.expression_ref, revision: prepared.document.revision,
+    const answer = options.host.openExpression(prepared.document.expression_ref, options.host.bindingId, {refresh, lens});
+    const open: NativeTechneOpen = {register: register.key, expression_ref: prepared.document.expression_ref, revision: prepared.document.revision,
       scene_ref: prepared.document.selection.scene_ref, entity_ref: prepared.document.selection.entity_ref ?? null,
       ...(prepared.drift ? {drift: prepared.drift} : {})};
+    if (answer) answers.set(open, Promise.resolve(answer));
+    return open;
   };
   const openRegister = async (key: string, request: {lens?: HostedTechneLens} = {}): Promise<NativeTechneOpen> => {
     presented();
@@ -106,7 +125,11 @@ export function createNativeTechneNavigator(options: NativeTechneNavigatorOption
     return opened(register, prepared, token, request.lens, true);
   };
   /** Consume the existing graph/wiki request seam, only while this one host
-   * is presented. Concealed hosts leave the same request for its owner. */
+   * is presented. Concealed hosts leave the same request for its owner — and
+   * a request taken while presented but concealed or released before its open
+   * finished goes back to the seam (unless a newer one is already there), so
+   * the stage presented next opens it rather than nobody. Every other taken
+   * request is settled: opened, or refused in the owner's words. */
   const connectSelectionRequests = () => {
     active();
     if (stopSelection) throw Error('This Technē navigator already consumes selection requests');
@@ -119,8 +142,21 @@ export function createNativeTechneNavigator(options: NativeTechneNavigatorOption
           const request = getWikiProjectionState().request;
           if (!request) break;
           consumeWikiSelectionRequest();
-          try {await openSelection(request);}
-          catch (error) {if (connected && live) options.onError?.(error instanceof Error ? error.message : String(error));}
+          let open: NativeTechneOpen;
+          try {open = await openSelection(request);}
+          catch (error) {
+            const reason = error instanceof Error ? error.message : String(error);
+            if (!connected || !live || !options.isPresented()) {
+              const {seq: _seq, ...ask} = request;
+              if (!getWikiProjectionState().request) requestWikiSelection(ask);
+              break;
+            }
+            if (options.onSettled) options.onSettled({request, state: 'refused', reason});
+            else options.onError?.(reason);
+            continue;
+          }
+          const answer = answers.get(open);
+          options.onSettled?.({request, state: 'opened', open, ...(answer ? {answer} : {})});
         }
       } finally {draining = false;}
     };

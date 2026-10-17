@@ -61,7 +61,14 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
   const draftEntries = Object.entries(drafts)
   const invalid = draftEntries.some(([, draft]) => draft.error !== null)
 
+  // Preferences are read when they are first opened — or first asked for, by a contextual entry's request — never at boot: the
+  // panel stands mounted, hidden, for the whole session (panels/settings.tsx), and its registry and resolutions cost the owner
+  // 4–68 s (measured 15 Oct). Once opened, they are read as before: again for each new adapter or owner epoch.
+  const [wanted, setWanted] = useState(active || !!request)
+  useEffect(() => { if (!wanted && (active || request)) setWanted(true) }, [active, request, wanted])
+
   useEffect(() => {
+    if (!wanted) return
     const epoch = ++generation.current
     setLoading(true); setProblem(null); setNotice(null); setResult(null); setReview(null); setReadings({}); setBusy(false); setResetTarget(null)
     adapter.readRegistry().then(reading => {
@@ -76,7 +83,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, ac
     }).catch(error => { if (generation.current === epoch) setProblem(String(error.message ?? error)) })
       .finally(() => { if (generation.current === epoch) setLoading(false) })
     return () => { ++generation.current }
-  }, [adapter, adapter.ownerEpoch])
+  }, [adapter, adapter.ownerEpoch, wanted])
 
   useEffect(() => {
     if (loading) return

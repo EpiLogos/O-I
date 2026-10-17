@@ -167,7 +167,7 @@ test('actual presentation effect waits reactive readiness and retains exact admi
   const receiveSource=effect(files.panel,'bindingRequests.current.has(key)'),updates=[],requests=[];
   const owner={id:'source-workspace',project:null,layout:{mode:'techne',surfaces:{}}};
   const bindings={workspace:{accessReady:true,accessEpoch:7},kernel:{operationReady:false,apply:()=>assert.fail('Unready presentation must not dispatch')},book:{current:owner},
-    expressionBinding:()=>null};
+    expressionsBindingOf:()=>undefined};
   const receive=execute(receiveSource,bindings);assert.equal(receive(),undefined);
   // Exercise a real production refusal through apply's retired-owner gate.
   const errors=[],state={epochKey:'old-epoch',ownerEpoch:{current:{key:'new-epoch',generation:1}},reportOpError:v=>errors.push(v)};
@@ -194,7 +194,7 @@ test('actual presentation rejection retains diagnostics only for its current own
       return resources.directory('unattached-source-workspace');
     }};
     execute(effect(files.panel,'bindingRequests.current.has(key)'),{workspace:{accessReady:true,accessEpoch:7},kernel,book:{current:owner},bookRef,
-      expressionBinding:()=>null,bindingRequests:{current:new Set()},withHostedDescriptor:value=>value,crypto:globalThis.crypto,
+      expressionsBindingOf:()=>undefined,bindingRequests:{current:new Set()},withHostedDescriptor:value=>value,crypto:globalThis.crypto,
       workspaceRef:{current:{nativeAccessCurrent:()=>current}},setSurfaceFault:value=>updates.push(value),setFault:()=>assert.fail('Surface rejection must not overwrite a working-operation fault')})();
     if(retire==='epoch')current=false;
     if(retire==='workspace')bookRef.current={current:{...owner,id:'new-workspace'}};

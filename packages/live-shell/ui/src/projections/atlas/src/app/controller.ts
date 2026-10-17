@@ -6,7 +6,7 @@ import { scopeOf } from '../data/scope';
 import { archetypesOfFamily, selfSubject, subjectExists, subjectLine, subjectName, subjectOccurrences, subjectPalette } from '../data/model';
 import { angleBetween, dirFromLatLon, fitDistance, latLonFromDir, spreadOf, worldDistance, type Vec3 } from '../data/geo';
 import { averagePalettes, rgbToHex, WORLD_PALETTE, type RGBPalette } from '../data/palette';
-import { buildSearchIndex, refreshOccurrenceEntry, type SearchResult } from '../data/search';
+import { buildSearchIndex, refreshOccurrenceEntry, type SearchIndex, type SearchResult } from '../data/search';
 import { planThread, type ThreadStep } from '../data/thread';
 import { FOV, type GlobeEngine } from '../globe/engine';
 import { chronologyPath } from '../globe/chronology';
@@ -25,7 +25,7 @@ import { FocusLabel, type LabelContent } from '../ui/focus-label';
 import { DeepSheet, type DeepTarget } from '../ui/deep';
 import { Floats, type FloatItem, type FloatTarget } from '../ui/floats';
 import { HoverLabel } from '../ui/hover-label';
-import { hostOrigin, hostSize } from '../ui/hostSize';
+import { hostElement, hostOrigin, hostSize } from '../ui/hostSize';
 import { Reveal } from '../ui/reveal';
 import { SearchUI } from '../ui/search';
 import { Strip } from '../ui/strip';
@@ -55,7 +55,7 @@ import { dataWithWindow } from '../sky/sidecar';
 import type { CuratedPerson } from '../astro/charts';
 import { loadLensData } from '../lenses/ui';
 import { SkyTies } from '../sky/ties';
-import { later, listen, whenIdle } from '../ui/lifetime';
+import { followSize, later, listen, whenIdle } from '../ui/lifetime';
 import { systemViewLatLon } from '../sky/frames';
 import { approachDist, EARTH_FIELD_EXIT, isSkyApproachBody, skyMaxDist, SETTLE, STAGE_EDGES, SKY_ENTER, SKY_EXIT, SYSTEM_VIEW_ELEVATION, systemHomeDist, systemViewLongitude } from '../sky/stages';
 import { BODY_KEYS, type BodyKey } from '../types/sky';
@@ -95,14 +95,16 @@ export class Controller {
   /** a birth from an old link, in memory until the Astrology form takes it */
   private birthPrefill: BirthPrefill | null = null;
   private rel: Float32Array;
-  private searchIndex;
+  /** [§8.4 host] the field's one search index, read by the M4 plate's Locations find (T-PLACES-ONTO-ATLAS) */
+  readonly searchIndex: SearchIndex;
   private floats: Floats;
   private label: FocusLabel;
   private reveal: Reveal;
   private deep: DeepSheet;
   private strip: Strip;
   private hover: HoverLabel;
-  private timeControl: TimeControl;
+  /** [§8.4 host] the one time control: the shell's transport presses its button and reads its walk (T-PLACES-ONTO-ATLAS) */
+  readonly timeControl: TimeControl;
   private search: SearchUI;
   private tour: Tour | null = null;
   private timeSnap: TimeSnapshot | null = null;
@@ -226,6 +228,8 @@ export class Controller {
     this.hover = new HoverLabel(root);
     this.timeControl = new TimeControl(root, m, time, () => this.onUserTime());
     this.timeControl.setTour(null, () => this.tourToggle());
+    // [§8.4 host] the transport reads the walk that holds the one button: its changes are face notices
+    this.timeControl.onWalkChange = () => this.emitFaces();
     this.search = new SearchUI(root, this.searchIndex, (r) => this.chooseResult(r), (open) => {
       document.body.classList.toggle('search-open', open);
       if (open) this.hover.hide();
@@ -292,7 +296,12 @@ export class Controller {
     // window listeners are released with the atlas lifetime (ui/lifetime.ts): a closed pane leaves none of them bound
     listen(window, 'keydown', this.onKey);
     listen(window, 'hashchange', this.onHash);
-    listen(window, 'resize', () => { this.syncRig(); this.syncShift(); this.strip.recenter(); this.measureLabel(); this.syncGraphInsets(); });
+    const relayout = () => { this.syncRig(); this.syncShift(); this.strip.recenter(); this.measureLabel(); this.syncGraphInsets(); };
+    listen(window, 'resize', relayout);
+    // hosted, the pane changes size without the window (a browser, rail or detail toggle, a split): the same handlers follow the
+    // pane's box (ui/lifetime.ts followSize). The engine observed its own parent first, so its size is current when these read it
+    // (resize observers report in the order they were made).
+    followSize(hostElement(this.root) ?? this.root, relayout);
     engine.onFrame((dt) => this.tick(dt));
     // the sky's data is fetched at idle, so the first pull-back never waits on it (audit S3 (d)); never on the boot path
     whenIdle(() => this.requestSky(), 4000, 1500);
@@ -633,7 +642,8 @@ export class Controller {
     if (v.kind === 'manifest') this.navigate(startThread(this.state, { type: 'parallels', id: v.occId }));
   }
 
-  private chooseResult(r: SearchResult) {
+  /** [§8.4 host] public: the M4 plate's Locations find chooses through it, as the search field does (T-PLACES-ONTO-ATLAS) */
+  chooseResult(r: SearchResult) {
     const a = r.action;
     // from the sky a pick is a descent like any other: the sky stays behind (See in sky), the reading opens on the landing
     if (a.type === 'subject') {
@@ -806,7 +816,7 @@ export class Controller {
     this.chronoKey = key;
     if (!subject) { this.engine.arcs.clearChronology(); return; }
     const m = this.m;
-    const idx = subjectOccurrences(m, subject);
+    const idx = subjectOccurrences(m, subject).filter((i) => m.u[i] >= 0); // [§8.4 host] a chronology is in date order: an undated occurrence has no place in it
     const path = chronologyPath(idx.map((i) => ({ u: m.u[i], dir: m.dir[i] })));
     const steps = path.map((k) => idx[k]);
     this.engine.arcs.buildChronology(steps.map((i) => m.dir[i]), steps.map((i) => m.u[i]), this.subjectPal(subject).core);
@@ -818,7 +828,7 @@ export class Controller {
     if (i === undefined) return;
     this.time.pause();
     this.time.setCumulative(false);
-    this.time.glideTo(this.m.u[i]);
+    if (this.m.u[i] >= 0) this.time.glideTo(this.m.u[i]); // [§8.4 host] an undated folio has no year to glide to
   }
 
   /** Leave Aion's mode: its view, the time range it set, and the clock it held. */
@@ -971,7 +981,8 @@ export class Controller {
   }
 
   /** A filter chosen in the menu, a chip removed, or a link's filter: the globe's mask, the walks, the hash. */
-  private setFilter(f: FieldFilter) {
+  /** [§8.4 host] public: the M4 plate's Relations rows narrow the globe through the one filter (T-PLACES-ONTO-ATLAS) */
+  setFilter(f: FieldFilter) {
     if (filterEq(f, this.filter)) return;
     this.applyFilter(f);
     // the engine re-masks by itself; what reads the field's membership (a focus's framing and images, a walk) is re-entered
@@ -1022,6 +1033,8 @@ export class Controller {
     this.shell.setFilter(f);
     this.setCache.key = '';
     document.body.classList.toggle('filtered', !isEmpty(f));
+    // [§8.4 host] the M4 plate's Relations rows read the filter in force
+    this.emitFaces();
   }
 
   /** Does occurrence `i` pass the field filter? */
@@ -1223,6 +1236,13 @@ export class Controller {
   private apply(next: AppState) {
     this.applying = true;
     try { this.applyState(next); } finally { this.applying = false; }
+    // [§8.4 host] the M4 plate reads the state it stands in (its subject, the sky), so a new state is a face notice
+    this.emitFaces();
+  }
+
+  /** [§8.4 host] the field filter in force, read by the M4 plate's Relations rows (T-PLACES-ONTO-ATLAS) */
+  get fieldFilter(): FieldFilter {
+    return this.filter;
   }
 
   private applyState(next: AppState) {
@@ -2557,7 +2577,7 @@ export class Controller {
       this.tour.timer = 2.7;
     });
     this.time.setCumulative(true);
-    this.time.glideTo(m.u[step.occ] + DEFAULT_RAMP * 1.6);
+    if (m.u[step.occ] >= 0) this.time.glideTo(m.u[step.occ] + DEFAULT_RAMP * 1.6); // [§8.4 host] an undated step has no time to glide to
     e.arcs.uniforms.uTour.value = 1;
     e.markers.head.show(m.dir[step.occ], this.engine.palette.core);
     // an unmoving flight (same spot) never fires onFlyEnd

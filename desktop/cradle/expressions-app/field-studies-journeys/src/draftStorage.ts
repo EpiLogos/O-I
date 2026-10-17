@@ -20,6 +20,7 @@
  * or when the owner kept it. A draft with no recorded base is unknown: it is offered, never quarantined. */
 import {Journey,clone,uid,validateJourney} from './model.js';
 import {mergeTake,type PropertyTrack} from './propertyTracks.js';
+import {initialiseShared} from './sharedSettings.js';
 import type {ExpressionRecoveryRequest} from '../../../src/expressions/recoveryTypes';
 export const PAIR_SCHEMA='oi.draft-record/v1';
 export const QUARANTINE_SCHEMA='oi.draft-quarantine/v1';
@@ -176,9 +177,12 @@ export async function removeRecord(layout:RecordLayout,key:string,at:Date,valida
  await removePair(layout.store,full);
 }
 // ---- E19 ----
-/** Stable text of a Journey's authored material: keys sorted, the top-level timestamp excluded. */
+/** Stable text of a Journey's authored material: keys sorted, the top-level timestamp excluded. Absent shared settings read as the
+ * ones the frame gives every work it loads (initialiseShared): a draft of an untouched native work, which holds them, is not an
+ * edit of a saved copy that does not (lane D, 16 Oct: such drafts were kept as edited and offered for recovery). */
 function material(journey:Journey):string{
  const copy=clone(journey) as Partial<Journey>;delete copy.updatedAt;
+ if(!copy.shared)initialiseShared(copy as Journey);
  return JSON.stringify(copy,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.keys(value).sort().map(k=>[k,value[k]])):value);
 }
 /** E19: what the draft changes against the saved copy, counted per scene. Both sides are kept whichever the owner chooses; this only names the difference. */

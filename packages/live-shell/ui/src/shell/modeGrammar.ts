@@ -53,6 +53,9 @@ export interface SlotMeaning {
   readonly id: string
   readonly label: string
   readonly fn: string
+  /** The word the slot's face wears in this mode where the mockup draws a word on a control (Link, Ground, Stamp, Tap,
+   * Map — world-shell-mockup.html rev 5 `TPM`): a name, never a reading. Absent: the slot's face is its mark or its reading. */
+  readonly face?: string
 }
 
 /** One presentation's meaning: what the icon shows, and what the view holds.
@@ -76,8 +79,8 @@ export interface DetailPair {
 // per-mode conditional sprawl in components). The CATEGORIES are the
 // grammar's data (Revision 3's left-column table, mode by mode); their
 // ENTRIES are not invented here — the frame composes them through the
-// families' declared surfaces (§12/§16): the L7 central browser categories,
-// the L4 temporal reading, the ground listing. `cut` names a category whose
+// families' declared surfaces (§12/§16): the L4 temporal reading, the
+// ground listing. `cut` names a category whose
 // rows compose from a landed owner today; `waiting` names one the owner has
 // not landed — the browser draws it as a designed empty category that names
 // its owner, never another mode's content.
@@ -200,8 +203,8 @@ const live: SurfModeGrammar = {
   },
   status: {label: 'Live', fn: 'the instrument — the M1 torus, the set and its transport'},
   transport: [
-    {id: 'link', label: 'Link', fn: 'join the set\'s clock with Link peers'},
-    {id: 'tap', label: 'Tap', fn: 'tap tempo'},
+    {id: 'link', label: 'Link', fn: 'join the set\'s clock with Link peers', face: 'Link'},
+    {id: 'tap', label: 'Tap', fn: 'tap tempo', face: 'Tap'},
     {id: 'tempo', label: 'Tempo', fn: 'the set\'s tempo'},
     {id: 'signature', label: 'Signature', fn: 'the set\'s time signature'},
     {id: 'metro', label: 'Metronome', fn: 'the metronome'},
@@ -224,8 +227,8 @@ const live: SurfModeGrammar = {
     {id: 'loop-length', label: 'Loop length', fn: 'the loop brace\'s length'},
     {id: 'draw', label: 'Draw', fn: 'draw notes and automation'},
     {id: 'keys', label: 'Keys', fn: 'play the instrument from the computer keyboard — the Jankó surface'},
-    {id: 'key-map', label: 'Key map', fn: 'bind computer keys to controls'},
-    {id: 'midi-map', label: 'MIDI map', fn: 'bind MIDI controls'},
+    {id: 'key-map', label: 'Key map', fn: 'bind computer keys to controls', face: 'KEY'},
+    {id: 'midi-map', label: 'MIDI map', fn: 'bind MIDI controls', face: 'MIDI'},
     {id: 'rate', label: 'Rate', fn: 'the engine\'s sample rate, in kHz'},
     {id: 'cpu', label: 'CPU', fn: 'the engine\'s CPU load'},
   ],
@@ -244,14 +247,16 @@ const base: SurfModeGrammar = {
     device: {label: 'Devices', meaning: 'Text · Highlight · Notes · Packet · Answer · the form devices (the ground\'s family docks here)'},
   },
   // The mockup's Base column (Rev 3): Central — Days, Flows, Beings, Things,
-  // Goals; Project — Files, Wiki. Entries compose through the central
-  // family's declared surfaces: L7's browser categories + the L4 civil
-  // reading for Days, the ground listing for Files.
+  // Goals; Project — Files, Wiki; then New…. These rows are Central's browser
+  // categories (L7's own module retired into them on 15 Oct). Entries compose
+  // through the day records and the owner's Day reading for Days, the owner's
+  // Flow listing for Flows, the ground listing for Files and the form roster
+  // for New.
   browser: [
     {id: 'central-days', label: 'Days', group: 'Central', mark: 'die', kindMark: 'day', family: 'central', state: 'cut',
       hint: 'The civil calendar: a day per row, its record beneath — rows from the kernel\'s temporal read (L4) and the day records.'},
-    {id: 'central-flows', label: 'Flows', group: 'Central', mark: 'trav', kindMark: 'doc', family: 'central', state: 'waiting',
-      hint: 'The flow documents (Dialogue · Flow · Journal). The Flow document device is declared; the flow listing\'s owner read is not landed — designed empty until it is.'},
+    {id: 'central-flows', label: 'Flows', group: 'Central', mark: 'trav', kindMark: 'doc', family: 'central', state: 'cut',
+      hint: 'The flow documents (Dialogue · Flow · Journal), from the owner\'s Flow listing at Control/user/flows — each Flow by its own title, its agents and its revision.'},
     {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', kindMark: 'agent', family: 'central', state: 'waiting',
       hint: 'Beings with their bindings (world, subject, office, sources). The oi-beings form\'s owner has not landed its listing read — designed empty until it is.'},
     {id: 'central-things', label: 'Things', group: 'Central', mark: 'chain', kindMark: 'source', family: 'central', state: 'waiting',
@@ -263,6 +268,9 @@ const base: SurfModeGrammar = {
       hint: 'The ground\'s listing — folders and notes as rows; selecting one opens its craft in the Document detail.'},
     {id: 'central-wiki', label: 'Wiki', group: 'Project', mark: 'lib', kindMark: 'source', family: 'central', state: 'waiting',
       hint: 'The wiki projects through its Expression owner (§6); the projection read does not answer in every boot — designed empty, named.'},
+    // The mockup's New… (world-shell-mockup.html BCATS.base, renderBrowser() :1491): the four document forms as a grid.
+    {id: 'central-new', label: 'New…', group: 'Project', mark: 'plus', state: 'cut',
+      hint: 'New document — exactly Day · Flow · Beings · Things, the four document forms of the owner\'s form roster; each is made through the Workbench\'s own opener for it.'},
   ],
   centre: {
     session: {label: 'Day · Session', meaning: 'the day as clips — Day, Flows, Beings, Things, Goals as tracks; documents and entries as clips'},
@@ -270,8 +278,8 @@ const base: SurfModeGrammar = {
   },
   status: {label: 'Central', fn: 'the ground — the day as clips, documents and entries'},
   transport: [
-    {id: 'link', label: 'Ground sync', fn: 'the frame follows the ground\'s carrier (the kernel link)'},
-    {id: 'tap', label: 'Stamp Now', fn: 'stamp Now into the open document'},
+    {id: 'link', label: 'Ground sync', fn: 'the frame follows the ground\'s carrier (the kernel link)', face: 'Ground'},
+    {id: 'tap', label: 'Stamp Now', fn: 'stamp Now into the open document', face: 'Stamp'},
     {id: 'tempo', label: 'Die face', fn: 'the Day die\'s open face; ‹ › turns it'},
     {id: 'signature', label: '4 + 2', fn: 'the die\'s 4+2 reading — four working faces, two flanks'},
     {id: 'metro', label: 'Autosave', fn: 'the document\'s autosave'},
@@ -294,8 +302,8 @@ const base: SurfModeGrammar = {
     {id: 'loop-length', label: 'Day span', fn: 'the day\'s span'},
     {id: 'draw', label: 'Highlight pen', fn: 'highlight in the open document'},
     {id: 'keys', label: 'Keys', fn: 'keys for the document\'s controls'},
-    {id: 'key-map', label: 'Map', fn: 'bind a key or spoken phrase to any control'},
-    {id: 'midi-map', label: 'Map', fn: 'bind a pad or phrase to any control'},
+    {id: 'key-map', label: 'Map', fn: 'bind a key or spoken phrase to any control', face: 'Map'},
+    {id: 'midi-map', label: 'Map', fn: 'bind a pad or phrase to any control', face: 'MIDI'},
     {id: 'rate', label: 'Carrier', fn: 'which carrier serves the field, and its round-trip'},
     {id: 'cpu', label: 'Save state', fn: 'the document\'s save standing'},
   ],
@@ -332,8 +340,8 @@ const factory: SurfModeGrammar = {
   },
   status: {label: 'Factory', fn: 'sessions and tasks — the agency desk'},
   transport: [
-    {id: 'link', label: 'Peers', fn: 'link the shell\'s sessions to agents in other harnesses and machines (one ledger, one clock)'},
-    {id: 'tap', label: 'Ping', fn: 'ask every running agent for a status line now; answers land in the Agents tile'},
+    {id: 'link', label: 'Peers', fn: 'link the shell\'s sessions to agents in other harnesses and machines (one ledger, one clock)', face: 'Link'},
+    {id: 'tap', label: 'Ping', fn: 'ask every running agent for a status line now; answers land in the Agents tile', face: 'Tap'},
     {id: 'tempo', label: 'Effort', fn: 'thinking effort per turn (low → max); per-task override exists'},
     {id: 'signature', label: 'Budget', fn: 'turns used / allowed for the selected session'},
     {id: 'metro', label: 'Heartbeat', fn: 'running agents check in on a cadence; a stopped needle is a stall'},
@@ -356,8 +364,8 @@ const factory: SurfModeGrammar = {
     {id: 'loop-length', label: 'Routine cap', fn: 'the routine\'s cap'},
     {id: 'draw', label: 'Point', fn: 'mark the stage or tiles as agent reference'},
     {id: 'keys', label: 'Keys', fn: 'number keys launch task rows; letters fire rack macros'},
-    {id: 'key-map', label: 'Map', fn: 'bind a key to any control ("Fizz, retry")'},
-    {id: 'midi-map', label: 'Map', fn: 'bind a pad or spoken phrase to any control'},
+    {id: 'key-map', label: 'Map', fn: 'bind a key to any control ("Fizz, retry")', face: 'Map'},
+    {id: 'midi-map', label: 'Map', fn: 'bind a pad or spoken phrase to any control', face: 'MIDI'},
     {id: 'rate', label: 'Throughput', fn: 't/s across running agents — the tokens/s rate'},
     {id: 'cpu', label: 'Context', fn: 'context-window fill of the selected session'},
   ],
@@ -384,8 +392,8 @@ const expressions: SurfModeGrammar = {
   },
   status: {label: 'Expressions', fn: 'the living field — the retained body'},
   transport: [
-    {id: 'link', label: 'Field sync', fn: 'sync the frame with the field carrier'},
-    {id: 'tap', label: 'Tap', fn: 'tap tempo for the field'},
+    {id: 'link', label: 'Field sync', fn: 'sync the frame with the field carrier', face: 'Link'},
+    {id: 'tap', label: 'Tap', fn: 'tap tempo for the field', face: 'Tap'},
     {id: 'tempo', label: 'Field tempo', fn: 'the field\'s time scale'},
     {id: 'signature', label: '5 : 3', fn: 'the scene ratio — hold : transition'},
     {id: 'metro', label: 'Pulse', fn: 'the field\'s pulse'},
@@ -408,8 +416,8 @@ const expressions: SurfModeGrammar = {
     {id: 'loop-length', label: 'Sequence span', fn: 'the saved sequence\'s span'},
     {id: 'draw', label: 'Draw form', fn: 'draw on the field'},
     {id: 'keys', label: 'Keys', fn: 'keys for the field\'s controls'},
-    {id: 'key-map', label: 'Map', fn: 'bind keys to the field\'s controls'},
-    {id: 'midi-map', label: 'Map', fn: 'bind pads to the field\'s controls'},
+    {id: 'key-map', label: 'Map', fn: 'bind keys to the field\'s controls', face: 'Map'},
+    {id: 'midi-map', label: 'Map', fn: 'bind pads to the field\'s controls', face: 'MIDI'},
     {id: 'rate', label: 'fps', fn: 'the field\'s frame rate, in fps'},
     {id: 'cpu', label: 'GPU', fn: 'the GPU share of the field'},
   ],
@@ -421,17 +429,21 @@ const techne: SurfModeGrammar = {
   title: 'Technē',
   mark: 'techne',
   hint: 'The deep mode — the six lenses over one encounter',
-  session: {label: 'Session', meaning: 'Journey', provenance: 'M3′ Journey'},
-  arrangement: {label: 'Arrangement', meaning: 'Timeline', provenance: 'M2′ Relation Field'},
+  // Session and Arrangement are views of Technē's material, never its Journey and Timeline instruments (FOUNDATION F3; lock §9.1).
+  session: {label: 'Session', meaning: 'readings and threads as tracks, events as clips, walk stops as rows', provenance: 'lock §9.1 Technē row'},
+  arrangement: {label: 'Arrangement', meaning: 'the same material on one ruler, from deep time to this morning', provenance: 'lock §9.1 Technē row'},
   detail: {
     clip: {label: 'Clip', meaning: 'identity, place and time, disclosure, typed relations, bounded constellation, source'},
     device: {label: 'Instruments', meaning: 'the six lenses — the focused lens\'s instrument expanded, the others folded; clicking one opens it on the focused pane'},
   },
   // The mockup's Technē column (Rev 3): To hand — sources, files; World —
   // bodies, locations, earth places, palaces, journeys. Sources and Files
-  // compose from landed owners; the World groups wait for theirs — drawn as
-  // designed empty categories that name their owners, never another mode's
-  // content.
+  // compose from landed owners. Of the World groups, Locations and Places
+  // compose from the suite reading (N3, provider/suiteStanding.ts `places`;
+  // rows in techne/subject/worldRows.ts); Bodies and Journeys draw from their
+  // owners when those carry them and otherwise wait, saying on what; Palaces
+  // waits for its owner (N4) — each drawn as a designed empty category that
+  // names its owner, never another mode's content.
   browser: [
     {id: 'techne-sources', label: 'Sources', group: 'To hand', mark: 'form',
       state: 'cut',
@@ -440,24 +452,24 @@ const techne: SurfModeGrammar = {
       state: 'cut',
       hint: 'Reference files from the ground\'s listing — add a reference to the lens from here.'},
     {id: 'techne-bodies', label: 'Bodies', group: 'World', mark: 'earth', kindMark: 'world', family: 'quaternal-logic', state: 'waiting',
-      hint: 'The field\'s bodies — your planet and the Worlds around it. The Earth projection\'s adapter is the family\'s to land (the atlas port refused the merge) — designed empty until it is.'},
-    {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', kindMark: 'location', family: 'quaternal-logic', state: 'waiting',
-      hint: 'Placed artefacts and their anchors. Waits for the Earth projection\'s owner — designed empty, named.'},
-    {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', kindMark: 'place', family: 'quaternal-logic', state: 'waiting',
-      hint: 'Earth places — the Atlas port\'s surface. Waits for the Places owner — designed empty, named.'},
-    {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', kindMark: 'palace', family: 'quaternal-logic', state: 'waiting',
-      hint: 'Palaces — M5′ as locations you enter. Waits for the Palace owner — designed empty, named.'},
+      hint: 'The field\'s bodies — your planet and the Worlds around it: the registers the suite reading composes, Central\'s root from Central\'s wiki and each hosted World from the shared field. Its standing publishes their places, not the bodies, so the group waits, naming those inputs.'},
+    {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', kindMark: 'location', family: 'quaternal-logic', state: 'cut',
+      hint: 'Locations on your planet — the project spaces the suite reading names (projects are places on Central\'s surface). Select one to hold it as the subject; double-click or Enter opens it in the Scene that carries it.'},
+    {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', kindMark: 'place', family: 'quaternal-logic', state: 'cut',
+      hint: 'Earth places — the places your owners declare, each at the owner\'s own precision or named unlocated. Select one to hold it as the subject; double-click or Enter opens it in the Scene that carries it.'},
+    {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', kindMark: 'palace', family: 'quaternal-logic', state: 'cut',
+      hint: 'Palaces — M5′ as places you enter on the Earth: one per register of your world, its rooms its Scenes (FOUNDATION N4).'},
     {id: 'techne-journeys', label: 'Journeys', group: 'World', mark: 'journey', kindMark: 'journey', family: 'quaternal-logic', state: 'waiting',
       hint: 'Journeys — the walk stops (place · occasion · artefact · narration), read from the World\'s walks; when no walk is carried the stops hold their places, named.'},
   ],
   centre: {
-    session: {label: 'Journey', meaning: 'walk stops — place · occasion · artefact · narration', provenance: 'M3′ Journey'},
-    arrangement: {label: 'Timeline', meaning: 'timeline — authored history beside development on one non-linear ruler, with the declared break into today', provenance: 'M2′ Relation Field'},
+    session: {label: 'Session', meaning: 'the grid of readings, events and walk stops', provenance: 'lock §9.1 Technē row'},
+    arrangement: {label: 'Arrangement', meaning: 'the readings along one ruler, with the declared break into today', provenance: 'lock §9.1 Technē row'},
   },
   status: {label: 'Technē', fn: 'the six lenses over one encounter'},
   transport: [
-    {id: 'link', label: 'Field carrier', fn: 'join the World to the shared field carrier; off, the same grammar runs over the local ground'},
-    {id: 'tap', label: 'Back to Now', fn: 'snap the occasion back to Now'},
+    {id: 'link', label: 'Field carrier', fn: 'join the World to the shared field carrier; off, the same grammar runs over the local ground', face: 'Link'},
+    {id: 'tap', label: 'Back to Now', fn: 'snap the occasion back to Now', face: 'Tap'},
     {id: 'tempo', label: 'Walk pace', fn: 'walk dwell per stop'},
     {id: 'signature', label: 'Stop n/8', fn: 'the stop of eight in the walk'},
     {id: 'metro', label: 'Presence', fn: 'the FieldNow presence pulse — other Worlds\' presence animates'},
@@ -480,8 +492,8 @@ const techne: SurfModeGrammar = {
     {id: 'loop-length', label: 'Window span', fn: 'the occasion window\'s span'},
     {id: 'draw', label: 'Place tool', fn: 'presentation placement'},
     {id: 'keys', label: 'Keys', fn: 'keys for the lens\'s controls'},
-    {id: 'key-map', label: 'Map', fn: 'bind keys to the lens\'s controls'},
-    {id: 'midi-map', label: 'Map', fn: 'bind pads to the lens\'s controls'},
+    {id: 'key-map', label: 'Map', fn: 'bind keys to the lens\'s controls', face: 'Map'},
+    {id: 'midi-map', label: 'Map', fn: 'bind pads to the lens\'s controls', face: 'MIDI'},
     {id: 'rate', label: 'Carrier', fn: 'the carrier and its round-trip'},
     {id: 'cpu', label: 'Projected', fn: 'share of your World projected into the field'},
   ],
@@ -538,7 +550,10 @@ export type DeclaredBrowserCategory = ModeBrowserCategory & {
  * maps to the owner whose read the rows come from; `null` is the shell's own listing, which no family declares. */
 export const ROW_SOURCE_OWNERS: ReadonlyMap<string, string | null> = new Map([
   ['central-days', 'central'],
+  ['central-flows', 'central'],
+  ['central-beings', 'central'],
   ['central-files', null],
+  ['central-new', null],
   ['techne-files', null],
   ['techne-sources', null],
 ])

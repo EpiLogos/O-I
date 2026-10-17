@@ -16,6 +16,7 @@ mod app_assets;
 mod native_shell;
 mod walk_diagnostics;
 mod midi;
+mod downloads;
 use std::sync::Mutex;
 
 use oi_cradle_kernel::events::{KernelEventReplay, KERNEL_EVENT_TOPIC};
@@ -36,97 +37,23 @@ struct NativeOwnerServer {
 #[tauri::command]
 async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, String> {
     // Native owner reads may scan a large World. Keep them off the UI thread;
-    // the kernel mutex still serialises mutations and event order.
+    // the kernel mutex still serialises mutations and event order. The one
+    // dispatch the walk-bridge also calls (kernel dispatch.rs): owner work
+    // runs outside the kernel lock wherever the op has a prepared form.
     tauri::async_runtime::spawn_blocking(move || {
-        if let KernelOp::ExpressionRecovery { request } = op {
-            return oi_cradle_kernel::expression_recovery::execute(request);
-        }
-        if let KernelOp::NaraCoordinate { request } = op {
-            return oi_cradle_kernel::nara_coordinate::execute(request);
-        }
-        if let KernelOp::WorldResolve { world_id, verify } = op {
-            return oi_cradle_kernel::world_resolve::execute(oi_cradle_kernel::world_resolve::Request { world_id, verify });
-        }
         let host = app.state::<KernelHost>();
-        let epii = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii(&op)?;
-        if let Some(prepared) = epii {
-            let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
-            return Ok(outcome);
-        }
-        let voice = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_voice(&op)?;
-        let act = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act(&op)?;
-        if let Some(prepared) = act {
-            let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
-            return Ok(outcome);
-        }
-        let presence=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_presence(&op)?;
-        if let Some(prepared)=presence {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_presence(completed);
-        }
-        let m3=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_m3_reception(&op)?;
-        if let Some(prepared)=m3 {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_m3_reception(completed);
-        }
-        let current=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_current(&op)?;
-        if let Some(prepared)=current {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_current(completed);
-        }
-        if let Some(prepared) = voice { return prepared.execute(); }
-        let dialogue = host
-            .0
-            .lock()
-            .map_err(|_| "kernel lock unavailable")?
-            .prepare_nara_dialogue(&op)?;
-        if let Some(prepared) = dialogue {
-            return prepared.execute();
-        }
-        let identity = host
-            .0
-            .lock()
-            .map_err(|_| "kernel lock unavailable")?
-            .prepare_nara_identity(&op);
-        if let Some(prepared) = identity {
-            return prepared.execute();
-        }
-        // Composing may provision QL's dated sky for tens of seconds: run it
-        // outside the lock; only the single-owner open is serialised.
-        let compose=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_compose(&op)?;
-        if let Some(prepared)=compose{let composed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_compose(composed);}
-        let prepared = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_owner_read(&op);
-        if let Some(read) = prepared { return read.execute(); }
-        let working=match &op {
-            KernelOp::WorkingSurfaceRead {project,agent_session,binding}=>Some(host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_working_surface_read(project,agent_session.clone(),binding.clone(),false)?),
-            KernelOp::WorkingSurfaceAttachment {project,agent_session,binding}=>Some(host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_working_surface_read(project,agent_session.clone(),Some(binding.clone()),true)?),
-            _=>None,
-        };
-        if let Some(read)=working{return Ok(KernelOpOutcome {receipts:vec![],result:oi_cradle_kernel::KernelOpResult::WorkingSurfaceReading{document:read.execute()?}});}
-        let dictation=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_dictation(&op)?;
-        if let Some(prepared)=dictation{return prepared.execute();}
-        let knowledge=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_knowledge(&op)?;
-        if let Some(prepared)=knowledge{let completed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_knowledge(completed);}
-        let decision = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_decision(&op)?;
-        let decision_receipt = match decision { Some(prepared) => Some(prepared.execute()?), None => None };
-        let (outcome, receipts) = {
-            let mut kernel = host.0.lock().map_err(|_| "kernel lock unavailable")?;
-            let outcome = match decision_receipt {
-                Some(receipt) => kernel.finish_decision(receipt, matches!(&op, KernelOp::InvokeAction { .. }))?,
-                None => kernel.apply(op)?,
-            };
-            let receipts = outcome.receipts.clone();
-            (outcome, receipts)
-        };
-        for receipt in receipts {
+        // One timing line per op, in the dev bridge's format, to the file
+        // OI_KERNEL_TRACE_FILE names (a Finder launch has no stderr).
+        let name = oi_cradle_kernel::dispatch::op_name(&op);
+        let started = std::time::Instant::now();
+        let (result, timing) = oi_cradle_kernel::dispatch::dispatch(&host.0, op);
+        oi_cradle_kernel::dispatch::trace_op("native", &name, result.is_ok(), started.elapsed(), &timing);
+        let outcome = result?;
+        for receipt in &outcome.receipts {
             if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } = &receipt.envelope.event {
                 apply_native_appearance(&app, &theme.appearance);
             }
-            let _ = app.emit(KERNEL_EVENT_TOPIC, &receipt);
+            let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
         }
         Ok(outcome)
     }).await.map_err(|e| e.to_string())?
@@ -159,8 +86,13 @@ async fn kernel_event_log(app: AppHandle, cursor: u64, generation: Option<String
     // kernel_op itself correctly runs on the blocking pool.
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
+        let asked = std::time::Instant::now();
         let kernel = host.0.lock().map_err(|_| "kernel lock unavailable".to_owned())?;
-        Ok(kernel.event_log().replay(generation.as_deref(), cursor, limit))
+        let waited = asked.elapsed();
+        let replay = kernel.event_log().replay(generation.as_deref(), cursor, limit);
+        drop(kernel);
+        oi_cradle_kernel::dispatch::trace_replay("native", waited);
+        Ok(replay)
     }).await.map_err(|error| error.to_string())?
 }
 
@@ -191,6 +123,26 @@ fn main() {
     for window in &mut context.config_mut().app.windows {
         window.data_store_identifier=Some([79,73,83,72,69,76,76,67,65,78,68,73,68,65,84,69]);
     }
+    // Every window the config would create is built in setup instead, from
+    // the same config through the same `from_config` Tauri's own auto-create
+    // uses, so it carries the download receiver (wry cancels a download when
+    // a webview has none: every export vanished). Its WebKit store is the one
+    // auto-create gave it: the pinned `from_config` does not apply the
+    // config's identifier, so only a store applied before (the isolated run
+    // below) is applied here — the main window keeps the store its workspace
+    // book lives in.
+    #[cfg_attr(not(debug_assertions), allow(unused_mut))]
+    let mut seated: Vec<(String, Option<[u8; 16]>)> = context
+        .config_mut()
+        .app
+        .windows
+        .iter_mut()
+        .filter(|window| window.create)
+        .map(|window| {
+            window.create = false;
+            (window.label.clone(), None)
+        })
+        .collect();
     // A development/native acceptance run can use an isolated persistent
     // WebKit store while exercising the real owner ground and kernel.
     #[cfg(debug_assertions)]
@@ -198,12 +150,19 @@ fn main() {
         assert!(raw.len()==32 && raw.bytes().all(|b|b.is_ascii_hexdigit()),"OI_CRADLE_DATA_STORE_ID must be 32 hex digits");
         let mut id=[0u8;16];for (i,byte) in id.iter_mut().enumerate(){*byte=u8::from_str_radix(&raw[i*2..i*2+2],16).expect("validated hex");}
         for window in &mut context.config_mut().app.windows {window.data_store_identifier=Some(id);window.create=false;}
+        seated = context
+            .config()
+            .app
+            .windows
+            .iter()
+            .map(|window| (window.label.clone(), Some(id)))
+            .collect();
     }
     let builder = material_protocol::register(tauri::Builder::default());
     builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
+        .setup(move |app| {
             app.manage(windows::Windows::default());
             #[cfg(feature = "native_shell")]
             app.manage(native_shell::ApplicationClose::default());
@@ -282,13 +241,20 @@ fn main() {
                 }
             }
 
-            #[cfg(target_os="macos")]
-            for config in &app.config().app.windows {
-                if !config.create {
-                    if let Some(id)=config.data_store_identifier {
-                        tauri::WebviewWindowBuilder::from_config(app,config)?.data_store_identifier(id).build()?;
-                    }
-                }
+            // The windows main() took from auto-create: each built from its own config, with the download receiver.
+            for (label, store) in &seated {
+                let Some(config) = app.config().app.windows.iter().find(|window| &window.label == label).cloned() else {
+                    continue;
+                };
+                let builder = tauri::WebviewWindowBuilder::from_config(app, &config)?;
+                #[cfg(target_os = "macos")]
+                let builder = match store {
+                    Some(id) => builder.data_store_identifier(*id),
+                    None => builder,
+                };
+                #[cfg(not(target_os = "macos"))]
+                let _ = store;
+                builder.on_download(downloads::receiver()).build()?;
             }
             midi::start(app.handle());
             menus::install(app.handle(), &[], "")?;
@@ -305,14 +271,12 @@ fn main() {
                     api.prevent_close();
                     if let Err(error)=native_shell::request_close(app,0,false){native_shell::report_close_failure(app,error);}
                 }
-                tauri::RunEvent::ExitRequested {code,api,..} => {
-                    if !native_shell::close_approved(app,code) {
-                        // Pinned Tauri cannot prevent its direct restart API;
-                        // candidate Restart calls request_close before using it.
-                        api.prevent_exit();
-                        if code!=Some(tauri::RESTART_EXIT_CODE) {
-                            if let Err(error)=native_shell::request_close(app,code.unwrap_or(0),false){native_shell::report_close_failure(app,error);}
-                        }
+                tauri::RunEvent::ExitRequested {code,api,..} if !native_shell::close_approved(app,code) => {
+                    // Pinned Tauri cannot prevent its direct restart API;
+                    // candidate Restart calls request_close before using it.
+                    api.prevent_exit();
+                    if code!=Some(tauri::RESTART_EXIT_CODE) {
+                        if let Err(error)=native_shell::request_close(app,code.unwrap_or(0),false){native_shell::report_close_failure(app,error);}
                     }
                 }
                 _=>{}

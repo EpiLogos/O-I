@@ -1,0 +1,66 @@
+/* Notes: the pane, the widget's list and the list's marks, inside the gallery's frames. Shell and panel tokens only. The page and its
+   notes are drawn on the document's own paper (documents/ql-flow.html :root): the material's colours, as a page keeps them. */
+
+/* the list's marks (whole view) */
+.nts-tag { flex: none; min-width: 20px; text-align: center; font-size: 9px; font-weight: 600; color: var(--dp-value, #5cc6b4); font-variant-numeric: tabular-nums; }
+.nts-tag[data-stale="true"] { color: var(--stall, #ff9b4a); }
+.nts-after { flex: none; font-size: 8.5px; color: var(--text-faint, #71767c); }
+
+/* the widget */
+.nts-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.nts-side-top { flex: none; display: grid; grid-template-columns: 1.3fr 1fr 1fr; align-items: center; }
+.nts-last { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-rows: 17px; align-content: start; }
+.nts-last li { min-width: 0; height: 17px; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); }
+.nts-last li button { display: flex; align-items: center; gap: 5px; width: 100%; height: 17px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 10.5px; text-align: left; cursor: pointer; }
+.nts-last li button b { flex: none; min-width: 20px; font-size: 9px; font-weight: 600; color: var(--dp-value, #5cc6b4); text-align: center; }
+.nts-last li button span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nts-last li button:hover span { color: var(--dp-on, #ffbe00); }
+.nts-last-empty { display: flex; align-items: center; font-size: 10.5px; color: var(--text-faint, #71767c); }
+
+/* the pane: the page at the left, its notes at the right */
+.nts-pane { --paper: #efefed; --field: #fafaf8; --ink: #1a1a18; --mid: #6e6e6a; --faint: #a3a39e; --rule: #c9c9c4; --hl: #ffe97a;
+  --serif: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  position: relative; flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px; background: var(--paper); color: var(--ink); font: 14px/1.5 var(--serif); }
+.nts-page { min-width: 0; overflow: auto; padding: 16px 24px 24px; user-select: text; -webkit-user-select: text; }
+.nts-title { margin: 0 0 4px; font: 400 18px/1.25 var(--serif); }
+.nts-docmark { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; padding: 0; border: 0; background: none; color: var(--mid); font: 11px/1.6 var(--font-ui, sans-serif); cursor: pointer; }
+.nts-docmark::before { content: ""; width: 3px; height: 12px; background: var(--hl); }
+.nts-ent { display: grid; grid-template-columns: 46px minmax(0, 1fr); column-gap: 12px; padding: 4px 0 4px 9px; border-left: 3px solid transparent; cursor: default; }
+.nts-ent[data-noted="true"] { border-left-color: var(--hl); }
+.nts-ent[data-open="true"] { background: color-mix(in srgb, var(--ink) 5%, transparent); border-left-color: var(--accent, #ffbe00); }
+.nts-lead { font: 11px/1.9 var(--font-ui, sans-serif); color: var(--mid); white-space: nowrap; }
+.nts-lead b { margin-right: 6px; font-weight: 700; color: var(--ink); }
+.nts-body { margin: 0; min-width: 0; }
+.nts-anchor { background: color-mix(in srgb, var(--hl) 55%, transparent); border-bottom: 1.5px solid var(--hl); cursor: pointer; }
+.nts-anchor[data-on="true"] { background: var(--hl); }
+.nts-seltool { position: absolute; z-index: 5; transform: translateX(-50%); padding: 0; background: var(--bg-0, #26292d); border: 1px solid var(--line, #24262a); }
+.nts-seltool button { height: 22px; padding: 0 12px; border: 0; background: none; color: var(--text, #d4d7da); font: 11px var(--font-ui, sans-serif); cursor: pointer; }
+.nts-seltool button:hover { color: var(--dp-on, #ffbe00); }
+
+.nts-col { min-width: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 24px 14px; border-left: 1px solid var(--rule); }
+.nts-col-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 11px/1 var(--font-ui, sans-serif); letter-spacing: .06em; text-transform: uppercase; color: var(--mid); }
+.nts-new { height: 22px; padding: 0 10px; border: 1px solid var(--mid); background: none; color: var(--ink); font: 11px var(--font-ui, sans-serif); letter-spacing: 0; text-transform: none; cursor: pointer; }
+.nts-new:disabled { opacity: .4; cursor: default; }
+.nts-empty { margin: 0; font: italic 13px/1.5 var(--serif); color: var(--faint); }
+
+.nts-note { position: relative; flex: none; padding: 8px 10px 7px 15px; background: var(--field); border-radius: 2px; font: 13px/1.45 var(--serif); cursor: default; }
+.nts-note::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; border-radius: 2px 0 0 2px; background: var(--hl); }
+.nts-note[data-timing="after"]::before { background: none; box-shadow: inset 0 0 0 1.5px var(--hl); }
+.nts-note[data-stale="true"]::before { background: var(--stall, #ff9b4a); box-shadow: none; }
+.nts-note[data-on="true"] { outline: 1.5px solid var(--mid); outline-offset: 1px; }
+.nts-who { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 3px; font: 11px/1.5 var(--font-ui, sans-serif); color: var(--mid); }
+.nts-who b { font-weight: 700; color: var(--ink); }
+.nts-who time { margin-left: auto; font-variant-numeric: tabular-nums; }
+.nts-timing { padding: 0; border: 0; border-bottom: 1px dotted var(--rule); background: none; color: var(--mid); font: inherit; cursor: pointer; }
+.nts-timing:hover { color: var(--ink); border-color: var(--ink); }
+.nts-timing:disabled, .nts-acts button:disabled { opacity: .4; cursor: default; }
+.nts-timing:disabled:hover { color: var(--mid); border-color: var(--rule); }
+.nts-note q { display: block; margin: 0 0 4px; font-style: italic; color: var(--mid); quotes: "\201C" "\201D"; }
+.nts-note q.stale::after { content: " — anchor not found, review"; font: 11px var(--font-ui, sans-serif); font-style: normal; color: var(--ink); }
+.nts-text { display: block; width: 100%; min-height: 2.9em; resize: none; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; outline: 0; field-sizing: content; user-select: text; -webkit-user-select: text; }
+.nts-text::placeholder { color: var(--faint); font-style: italic; }
+.nts-replies { margin: 5px 0 0; padding: 0 0 0 10px; border-left: 1px solid var(--rule); display: grid; row-gap: 3px; }
+.nts-replies input { width: 100%; padding: 0; border: 0; background: none; color: var(--ink); font: 12.5px/1.4 var(--serif); outline: 0; user-select: text; -webkit-user-select: text; }
+.nts-acts { margin-top: 5px; display: flex; gap: 12px; font: 11px/1.6 var(--font-ui, sans-serif); }
+.nts-acts button { padding: 0; border: 0; background: none; color: var(--mid); text-decoration: underline; text-underline-offset: 3px; font: inherit; cursor: pointer; }
+.nts-acts button:hover:not(:disabled) { color: var(--ink); }

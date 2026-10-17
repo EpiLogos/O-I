@@ -32,7 +32,7 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {instrumentOfPane, deviceInstrumentFor, showsLensBar, HOSTED_INSTRUMENT, BAR_LENS_OF_HOSTED, hostedLensOfBarId} = await import('../src/shell/paneInstrument.ts')
+const {instrumentOfPane, deviceInstrumentFor, HOSTED_INSTRUMENT, BAR_LENS_OF_HOSTED, hostedLensOfBarId} = await import('../src/shell/paneInstrument.ts')
 const {TECHNE_INSTRUMENTS} = await import('../src/inhabitants/sdk/semantics.ts')
 const {TechneInstrumentsDetail, InstrumentDeviceDetail, BaseDevicesDetail, TechneLensBar} = await import('../src/shell/ModeDetail.tsx')
 
@@ -45,11 +45,13 @@ test('the pane → instrument table: every centre panel the shell uses maps as d
     ['projection.earth', null, 'earth', 'techne:m0'],
     ['world.knowledge', null, 'graph', 'knowledge-graph'],
     ['world.expressions', null, 'graph', null], // no hosted lens reported yet: the pane holds none until it does
-    ['world.ground', 'arrangement', 'graph', 'techne:m2'],
-    ['world.ground', 'session', 'graph', 'techne:m3'],
-    ['world.ground', null, 'graph', null],
-    ['native.arrangement', 'arrangement', 'graph', 'techne:m2'],
-    ['native.session', 'session', 'graph', 'techne:m3'],
+    // The Session · Arrangement pane is a view of the mode's material, never Technē's Journey or Timeline (FOUNDATION F3).
+    ['world.ground', 'arrangement', 'graph', null],
+    ['world.ground', 'session', 'graph', null],
+    ['projection.timeline', 'arrangement', 'graph', null],
+    ['projection.timeline', 'session', 'graph', null],
+    ['native.arrangement', 'arrangement', 'graph', null],
+    ['native.session', 'session', 'graph', null],
     ['native.workbench', null, 'graph', null],
     ['native.agent', null, 'graph', null],
     ['world.settings', null, 'graph', null],
@@ -70,8 +72,16 @@ test('the knowledge graph is its own instrument, never the 0 instrument', () => 
   }
 })
 
-test('the Device-side gate: Live keeps the audio chain, Expressions keeps its native rack for its own panes', () => {
-  assert.equal(deviceInstrumentFor('live', 'projection.earth', null, 'graph'), null, 'Live presents no instrument')
+test('the Device-side gate: Expressions keeps its native rack for its own panes; Live\'s audio chain is the detail host\'s veto, not this module\'s', async () => {
+  // Live keeps its own chain whatever pane is focused: MODE_DETAILS.live.ownsDeviceSide, applied once by the one detail host
+  // (pane-instrument-app.test.mjs pins the host). This module pairs panes with instruments and names no mode in a branch.
+  assert.equal(deviceInstrumentFor('live', 'projection.earth', null, 'graph'), 'techne:m0', 'the pairing is mode-blind: the host, not this module, keeps Live\'s chain')
+  const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
+  assert.match(details, /live: \{clip: LiveClip, device: LiveChain, ownsDeviceSide: true/, 'Live registers its own Device side once')
+  const host = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
+  assert.match(host, /side === 'device' && !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'the host vetoes the instrument for a mode that owns its Device side')
+  const source = await readFile(new URL('../src/shell/paneInstrument.ts', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /[!=]==\s*'(?:live|base|factory|expressions|techne)'/, 'paneInstrument.ts holds no mode comparison: a mode\'s difference is a registration')
   assert.equal(deviceInstrumentFor('expressions', 'world.expressions', null, 'graph'), null, 'the Expressions pane keeps its native rack')
   assert.equal(deviceInstrumentFor('expressions', 'projection.earth', null, 'graph'), 'techne:m0', 'the atlas in Expressions takes its instrument')
 })
@@ -80,8 +90,8 @@ test('the Device-side gate: every mode with an instrument pane presents it', () 
   for (const mode of ['base', 'techne', 'factory', 'expressions']) {
     assert.equal(deviceInstrumentFor(mode, 'projection.earth', null, 'graph'), 'techne:m0', `${mode} · projection.earth`)
   }
-  assert.equal(deviceInstrumentFor('base', 'world.ground', 'arrangement', 'graph'), 'techne:m2', 'Central · Timeline')
-  assert.equal(deviceInstrumentFor('techne', 'world.ground', 'session', 'graph'), 'techne:m3', 'Technē · Journey')
+  assert.equal(deviceInstrumentFor('base', 'projection.timeline', 'arrangement', 'graph'), null, 'Central · the tracks pane keeps Central\'s own chain')
+  assert.equal(deviceInstrumentFor('techne', 'projection.expressions', null, 'graph', 'journey'), 'techne:m3', 'Technē · the stage turned to its Journey lens')
   assert.equal(deviceInstrumentFor('base', 'world.knowledge', null, 'graph'), 'knowledge-graph', 'Central · knowledge graph')
 })
 
@@ -92,30 +102,22 @@ test('no instrument pane: the mode keeps its own Device side (Central → the gr
   assert.match(html(createElement(BaseDevicesDetail, {transport})), /data-mode-detail="base-devices"/)
 })
 
-test('the lens bar stands over an instrument pane in every mode but Live', () => {
-  assert.equal(showsLensBar('base', 'world.ground'), true, 'Central')
-  assert.equal(showsLensBar('techne', 'projection.earth'), true, 'Technē')
-  assert.equal(showsLensBar('expressions', 'projection.earth'), true, 'Expressions')
-  assert.equal(showsLensBar('factory', 'projection.earth'), true, 'Factory')
-  assert.equal(showsLensBar('factory', 'native.agent'), true, 'Factory: the bar stands over the agent tab — it is how an instrument pane opens there')
-  assert.equal(showsLensBar('live', 'world.ground'), false, 'Live shows the audio cut, no instrument pane')
-  assert.equal(showsLensBar('base', 'native.agent'), false)
-  assert.equal(showsLensBar('base', 'world.settings'), false)
-})
-
 const expandedOf = (out, faceId) => {
   const match = out.match(new RegExp(`data-face-id="${faceId}"[^>]*data-expanded="(true|false)"`))
   assert.ok(match, `the face ${faceId} is on the rack`)
   return match[1]
 }
 
-test('the focused instrument rack: the 0 instrument expands its held faces and folds the others', () => {
+/** A face the open instrument holds stands as its mark on the plate's section that draws its controls (lane E: one coherent plate). */
+const heldMark = (out, faceId, family = 'atlas-earth') => assert.match(out, new RegExp(`class="plate-held-mark" data-device="${family}:${faceId}"`), `the face ${faceId} is on the open plate`)
+
+test('the focused instrument rack: the 0 instrument stands open with its held faces; the other instruments fold', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'techne:m0'}))
   assert.match(out, /data-focus-instrument="techne:m0"/)
-  assert.equal(expandedOf(out, 'graph-tools'), 'true', 'graph-tools is held by techne:m0')
-  assert.equal(expandedOf(out, 'mode-switch'), 'true', 'mode-switch is held by techne:m0')
-  assert.equal(expandedOf(out, 'torus'), 'false', 'a face the instrument does not hold stays folded')
-  assert.equal(expandedOf(out, 'sky'), 'false')
+  heldMark(out, 'graph-tools')
+  heldMark(out, 'mode-switch')
+  assert.doesNotMatch(out, /data-face-id="torus"|data-face-id="sky"/, 'a face the instrument does not hold is not drawn open: it is inside its own instrument\'s fold')
+  assert.match(out, /data-instrument="techne:m2" data-expanded="false"/, 'the Timeline folds')
 })
 
 test('the focused rack for the Timeline expands the faces it holds', () => {
@@ -123,14 +125,16 @@ test('the focused rack for the Timeline expands the faces it holds', () => {
   assert.equal(expandedOf(out, 'sky'), 'true')
   assert.equal(expandedOf(out, 'time-control'), 'true')
   assert.equal(expandedOf(out, 'm3-clock'), 'true', 'm3-clock is held by techne:m2 too')
-  assert.equal(expandedOf(out, 'torus'), 'false')
+  assert.doesNotMatch(out, /data-face-id="torus"/, 'the torus is Body · 3:3\'s, not the Timeline\'s')
+  assert.match(out, /data-instrument="techne:m0" data-expanded="false"/)
 })
 
-test('without a focus the Technē rack stands as it did: the QL faces, all folded', () => {
+test('without a focus the Technē rack folds its six instruments; the QL faces none holds stand after them', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport}))
   assert.doesNotMatch(out, /data-focus-instrument/)
-  assert.equal(expandedOf(out, 'sky'), 'false')
-  assert.doesNotMatch(out, /data-face-id="graph-tools"/, 'the atlas faces are not in the unfocused Technē rack')
+  assert.equal(expandedOf(out, 'torus'), 'false')
+  assert.equal(expandedOf(out, 'ql-instrument'), 'true')
+  assert.doesNotMatch(out, /data-face-id="graph-tools"/, 'the atlas faces are not drawn while their instrument folds')
 })
 
 test('the knowledge graph Device side draws its own family rack, never the 0 rack and never the placeholder', () => {
@@ -147,12 +151,13 @@ test('the knowledge graph Device side draws its own family rack, never the 0 rac
 test('the atlas instrument device side goes through the focused rack', () => {
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m0'}))
   assert.match(out, /data-focus-instrument="techne:m0"/)
-  assert.equal(expandedOf(out, 'graph-tools'), 'true')
+  heldMark(out, 'graph-tools')
 })
 
-test('the 0 instrument is the Earth and solar system: the globe face docks expanded with it (lock §0.1.3)', () => {
+test('the 0 instrument is the Earth and solar system: the globe face stands with it (lock §0.1.3)', () => {
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m0'}))
-  assert.equal(expandedOf(out, 'globe-engine'), 'true', 'the globe is the 0 instrument’s Earth view')
+  heldMark(out, 'globe-engine')
+  assert.match(out, /data-section="view"[\s\S]*?aria-label="View"/, 'the globe\'s Earth view and the graph are one switch on the plate')
 })
 
 test('Central keeps its own devices: they lead the chain, then the focused instrument (never removed)', () => {
@@ -203,18 +208,12 @@ test('the lens bar and the hosted frame speak one table: project-graph↔project
   assert.equal(hostedLensOfBarId('no.such.lens'), null)
 })
 
-test('the lens bar stands over the hosted Expressions pane in every mode but its own, as over the other instrument panes', () => {
-  for (const mode of ['base', 'techne', 'factory']) assert.equal(showsLensBar(mode, 'world.expressions'), true, mode)
-  assert.equal(showsLensBar('expressions', 'world.expressions'), false, 'in Expressions mode the pane’s own studio is its chrome')
-  assert.equal(showsLensBar('live', 'world.expressions'), false, 'Live shows the audio cut')
-})
-
-test('the hosted Expressions pane follows the hosted lens in every mode the ruling covers (not Live)', () => {
+test('the hosted Expressions pane follows the hosted lens in every mode the ruling covers (Live\'s chain is the host\'s veto)', () => {
   for (const mode of ['base', 'techne', 'factory']) {
     assert.equal(deviceInstrumentFor(mode, 'world.expressions', null, 'graph', 'timeline'), 'techne:m2', `${mode} · hosted timeline`)
   }
   assert.equal(deviceInstrumentFor('techne', 'world.expressions', null, 'graph', 'palace'), 'techne:m5', 'Technē · hosted palace')
-  assert.equal(deviceInstrumentFor('live', 'world.expressions', null, 'graph', 'timeline'), null, 'Live keeps the audio chain')
+  assert.equal(deviceInstrumentFor('live', 'world.expressions', null, 'graph', 'timeline'), 'techne:m2', 'the pairing is mode-blind; the host keeps Live\'s audio chain')
   assert.equal(deviceInstrumentFor('base', 'world.expressions', null, 'graph', null), null, 'no hosted lens reported: the mode keeps its own Device side')
 })
 

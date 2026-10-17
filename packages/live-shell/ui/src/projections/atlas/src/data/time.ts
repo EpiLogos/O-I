@@ -84,6 +84,11 @@ export interface TimeWindow {
 export const DEFAULT_TRAIL = 0.17;
 export const DEFAULT_RAMP = 0.022;
 
+/** [§8.4 host, T-N3-ATLAS-SUITE-PROVIDER] The slider position of an undated occurrence (`Occurrence.dated === false`): outside the
+ * scale, which runs 0..1. Mirrored in GLSL (TIME_GLSL: `u < 0.0`). An undated occurrence is never gated by the time window. */
+export const UNDATED_U = -1;
+export const isUndatedU = (u: number): boolean => u < 0;
+
 function sstep(a: number, b: number, x: number): number {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
@@ -94,8 +99,10 @@ function sstep(a: number, b: number, x: number): number {
  * Appears as the cursor reaches it, fades over the trailing window.
  * Identical formula runs in the vertex shader (TIME_GLSL, timeVis); the points use presenceWeights
  * below, which keeps this function's on-mix, and the density field still uses it as is.
+ * An undated occurrence (u = UNDATED_U) is present at every cursor.
  */
 export function timeVisibility(u: number, w: TimeWindow): number {
+  if (isUndatedU(u)) return 1;
   const d = w.cursorU - u;
   const fin = sstep(0, w.ramp, d);
   const fout = 1 - sstep(w.trail * 0.55, w.trail, d);
@@ -205,6 +212,7 @@ export const PICK_PRESENCE = 0.5;
  * through effectiveVisibility, so a standing node is always pickable) is at least PICK_PRESENCE. Pick and draw share one gate.
  */
 export function pickablePresence(u: number, w: TimeWindow, rel: number): boolean {
+  if (isUndatedU(u)) return true; // [§8.4 host] outside the time scale: present, so pickable, at every cursor
   return effectiveVisibility(presenceWeights(w.cursorU - u, w, rel).present, rel) >= PICK_PRESENCE;
 }
 

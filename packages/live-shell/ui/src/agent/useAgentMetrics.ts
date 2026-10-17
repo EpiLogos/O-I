@@ -1,17 +1,9 @@
-import {useEffect, useState} from 'react'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {useMemo} from 'react'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import {useTaskAnswer} from '../owners/readers'
 
-/** One raw `encounter_task_read` for a session — the model consumes this
- * shape directly. `null` is the honest absence: no task is bound. */
-export async function readEncounterTask(transport: KernelTransportStatus, project: string, sessionRef: string): Promise<{reading: unknown} | {error: string}> {
-  if (transport.kind === 'unavailable') return {error: transport.reason ?? 'Transport unavailable'}
-  const result = await kernelOp(transport, {op: 'encounter_task_read', project, agent_session: sessionRef})
-  if (result.error || result.outcome?.result !== 'encounter_task_reading') {
-    return {error: result.error ?? 'AIKit did not return a task reading'}
-  }
-  return {reading: result.outcome.data ?? null}
-}
+// The task record's one read is the shared answer's (owners/readers.ts `readTaskOf`, moved from here): every reader of a
+// session's task record subscribes to it instead of asking the owner itself.
 
 /** The session's turn budget, from whatever fields the reading actually
  * carries — nulls where the owner discloses none. */
@@ -27,58 +19,34 @@ export function budgetFromReading(data: unknown): {used: number | null; max: num
   }
 }
 
+const NO_METRICS = {tokensIn: '—', tokensOut: '—', spend: null, budgetUsed: null, budgetCap: null, position: '— . — . —'} as const
+
+/** The metrics a task record discloses — nulls and dashes where it discloses none. Pure. */
+export function metricsFromReading(reading: unknown): {tokensIn: string; tokensOut: string; spend: number | null; budgetUsed: number | null; budgetCap: number | null; position: string} {
+  if (!reading || typeof reading !== 'object') return NO_METRICS
+  const data = reading as Record<string, unknown>
+  const usage = data.usage as Record<string, unknown> | undefined
+  const inTok = usage?.tokens_in ?? data.tokens_in
+  const outTok = usage?.tokens_out ?? data.tokens_out
+  const cap = usage?.spend_cap ?? data.spend_cap
+  const fill = usage?.spend_fill ?? data.spend_fill
+  const budget = budgetFromReading(data)
+  const taskIndex = data.task_index ?? data.task
+  const turn = data.turn_index ?? data.turn
+  const step = data.step_index ?? data.step
+  return {
+    tokensIn: inTok === undefined ? '—' : String(inTok),
+    tokensOut: outTok === undefined ? '—' : String(outTok),
+    spend: typeof fill === 'number' ? fill : typeof cap === 'number' ? cap : null,
+    budgetUsed: budget.used,
+    budgetCap: budget.max,
+    position: [taskIndex, turn, step].every(value => value === undefined) ? '— . — . —' : `${taskIndex ?? '—'} . ${turn ?? '—'} . ${step ?? '—'}`,
+  }
+}
+
+/** The selected session's metrics, from the shared task record (owners/readers.ts `useTaskAnswer`): the same answer the
+ * sessions provider, the Factory chain and the dock read — one owner read between them, re-read when a notice reaches it. */
 export function useAgentMetrics(transport: KernelTransportStatus, sessionRef: string | null) {
-  const [tokensIn, setTokensIn] = useState<string>('—')
-  const [tokensOut, setTokensOut] = useState<string>('—')
-  const [spend, setSpend] = useState<number | null>(null)
-  const [budgetUsed, setBudgetUsed] = useState<number | null>(null)
-  const [budgetCap, setBudgetCap] = useState<number | null>(null)
-  const [position, setPosition] = useState('— . — . —')
-
-  useEffect(() => {
-    let live = true
-    void (async () => {
-      if (transport.kind === 'unavailable' || !sessionRef) {
-        if (live) {
-          setTokensIn('—')
-          setTokensOut('—')
-          setSpend(null)
-          setBudgetUsed(null)
-          setBudgetCap(null)
-          setPosition('— . — . —')
-        }
-        return
-      }
-      const outcome = await readEncounterTask(transport, 'O-I', sessionRef)
-      if (!live) return
-      if ('error' in outcome || !outcome.reading) {
-        setTokensIn('—')
-        setTokensOut('—')
-        setSpend(null)
-        setBudgetUsed(null)
-        setBudgetCap(null)
-        setPosition('— . — . —')
-      } else {
-        const data = outcome.reading as Record<string, unknown>
-        const usage = data.usage as Record<string, unknown> | undefined
-        const inTok = usage?.tokens_in ?? data.tokens_in
-        const outTok = usage?.tokens_out ?? data.tokens_out
-        setTokensIn(inTok === undefined ? '—' : String(inTok))
-        setTokensOut(outTok === undefined ? '—' : String(outTok))
-        const cap = usage?.spend_cap ?? data.spend_cap
-        const fill = usage?.spend_fill ?? data.spend_fill
-        setSpend(typeof fill === 'number' ? fill : typeof cap === 'number' ? cap : null)
-        const budget = budgetFromReading(data)
-        setBudgetUsed(budget.used)
-        setBudgetCap(budget.max)
-        const taskIndex = data.task_index ?? data.task
-        const turn = data.turn_index ?? data.turn
-        const step = data.step_index ?? data.step
-        setPosition([taskIndex, turn, step].every(value => value === undefined) ? '— . — . —' : `${taskIndex ?? '—'} . ${turn ?? '—'} . ${step ?? '—'}`)
-      }
-    })()
-    return () => { live = false }
-  }, [transport, sessionRef])
-
-  return {tokensIn, tokensOut, spend, budgetUsed, budgetCap, position}
+  const {reading} = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef)
+  return useMemo(() => reading.status === 'answered' ? metricsFromReading(reading.value) : NO_METRICS, [reading])
 }

@@ -40,7 +40,6 @@ const FOLDED_RECEIPTS = {
 // Developer disclosures that may still preformat JSON, with the reason each is
 // not an owner refusal (the rescope in the ticket's Resolution).
 const DEVELOPER_DISCLOSURES = {
-  'panels/inspector.tsx': 'developer inspection of the set summary (rescope: not a refusal)',
   'settings/SettingsWorkspace.tsx': 'developer plan blocks and the acknowledgement of a settings apply (rescope: plan blocks are not refusals; the acknowledgement dump is a carried follow-up)',
   'components/NativeInputRetention.tsx': 'the input gesture receipt of a retained copy (an input record, not an owner refusal)',
   'agent/RefusalCard.tsx': 'the verbatim receipt folded behind a summary, never the surface (the refusal line is the surface)',
@@ -71,9 +70,11 @@ test('the named owner-refusal surfaces carry no raw JSON serialisation outside t
 })
 
 test('the run-context and carrier call sites read the carrier through carrierOf, never a second kind-only reading', async () => {
-  for (const rel of ['shell/ModeBrowser.tsx', 'shell/ModeContextDock.tsx', 'App.tsx']) {
+  // The browser's aperture no longer names the carrier as its World (it reads the World from the book and the host:
+  // frame/browser/apertureViews.tsx); the carrier stays the transport's link readout (App.tsx). Neither shows a bare kind.
+  for (const rel of ['shell/ModeBrowser.tsx', 'frame/browser/apertureViews.tsx', 'shell/ModeContextDock.tsx', 'App.tsx']) {
     const text = await read(rel)
-    assert.match(text, /import \{ ?carrierOf ?\} from/, `${rel} imports the one carrier reader`)
+    if (!rel.includes('ModeBrowser') && !rel.includes('apertureViews')) assert.match(text, /import \{ ?carrierOf ?\} from/, `${rel} imports the one carrier reader`)
     assert.doesNotMatch(text, /'—' : (?:workspace\.)?transport\.kind\b/, `${rel} must not show the bare transport kind as the carrier`)
     assert.doesNotMatch(text, /value: (?:workspace\.)?transport\.kind\b/, `${rel} must not show the bare transport kind as the carrier`)
   }

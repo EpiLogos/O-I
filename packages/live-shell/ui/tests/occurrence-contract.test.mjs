@@ -14,7 +14,8 @@
 //   the QL transit passes through, current.rs). No kernel process runs.
 // - FIXTURE: the Factory binding and the Jung record below are built here, shaped to the contract. They are not owner
 //   output: no Factory owner declares a binding (factoryVertical.ts EARTH_SEAM still holds).
-// - LOADER: the founding adapter (adaptFoundingField) runs on a minimal founding record, as the atlas-provider suite does.
+// - FIXTURE (founding): the minimal founding record is reshaped to the Field contract by tests/support/foundingFieldFixture.mjs (the
+//   pure reshaping the retired founding provider did); no provider runs.
 // What is NOT claimed: no browser draws the globe here; the Sun's draw on the live Earth is not observed.
 
 import test from 'node:test'
@@ -47,7 +48,7 @@ const contract = await import('../src/projections/occurrence.ts')
 const qlSky = await import('../src/inhabitants/qlSkyEarthAdapter.ts')
 const {shownInstantOf, sunStanding, withoutSubsolar, SUBSOLAR_OCCURRENCE_ID} = qlSky
 const factory = await import('../src/factory/factoryVertical.ts')
-const founding = await import('../src/projections/atlas/provider/archetypalEarthProvider.ts')
+const {adaptFoundingFixture} = await import('./support/foundingFieldFixture.mjs')
 
 const SHAPE = JSON.parse(await readFile(new URL('./fixtures/occurrence-contract/ql-sky-snapshot.shape.json', import.meta.url), 'utf8'))
 
@@ -59,7 +60,7 @@ const factoryBinding = () => ({
   lat: 50.18, lon: -4.27, geoPrecision: 'place', year: 2026, yearDisplay: '2026', cites: [], body: [], parallelIds: [],
 })
 
-// The founding record as the Jung vault's ingest writes it (FIXTURE; the atlas-provider suite's minimal shape): no basis.
+// The founding record as the Jung vault's ingest writes it (FIXTURE; a minimal shape): no basis.
 const founded = () => ({
   meta: {generatedAt: '2026-10-13T00:46:34.423Z', vaultPath: '/vault/jung-archetypal-field', vaultLedgerLine: 'LEDGER LINE',
     counts: {archetypes: 1, theoretics: 0, families: 1, occurrences: 1, cultures: 0, images: 0}, yearMin: 1698, yearMax: 1698},
@@ -72,7 +73,7 @@ const founded = () => ({
   cultures: [],
   joins: [],
 })
-const foundingField = () => founding.adaptFoundingField(founded())
+const foundingField = () => adaptFoundingFixture(founded())
 
 // The kernel's bridge answers `POST <url>/op` with `{ok, outcome}`. Only fetch is stubbed; kernelOp runs as shipped.
 const bridgeAnswering = (body, sent = []) => {
@@ -96,7 +97,7 @@ test('one contract: a Factory occurrence and a QL occurrence pass the same check
   for (const record of [fromFactory.value, fromQl.value]) assert.deepEqual(contract.checkOccurrence(record), {ok: true, value: record})
 })
 
-test('a Jung occurrence without a basis stays valid: it passes the contract, carries no basis, and loads through the founding adapter', () => {
+test('a Jung occurrence without a basis stays valid: it passes the contract and carries no basis', () => {
   const field = foundingField()
   assert.equal(field.occurrences.length, 1)
   for (const occurrence of field.occurrences) {

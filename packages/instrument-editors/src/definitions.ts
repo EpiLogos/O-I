@@ -8,8 +8,9 @@ export const CANVAS=define('canvas','Canvas',[1100,720],[...Array.from({length:1
 export const TIMELINE=define('timeline','Timeline',[1200,700],Array.from({length:25},(_,i)=>`lane-2:T${i+1}`),'wide');
 export const JOURNEY=define('journey','Journey',[1200,760],Array.from({length:13},(_,i)=>`lane-5:T${i+1}`),'wide');
 export const PLACES=define('places','Places',[1150,760],Array.from({length:30},(_,i)=>`lane-4:T${i+1}`));
-export const PALACE=define('palace','Palace',[1100,740],Array.from({length:11},(_,i)=>`lane-5:T${i+14}`));
-export const TECHNE_EDITORS=[PROJECT_GRAPH,CANVAS,TIMELINE,JOURNEY,PLACES,PALACE] as const;
+// The Palace editor retired with the frame's Palace (b5a935661): a palace lives in the atlas, walked on the M5 plate
+// (packages/live-shell/ui/src/projections/atlas/palaces/; FOUNDATION N4).
+export const TECHNE_EDITORS=[PROJECT_GRAPH,CANVAS,TIMELINE,JOURNEY,PLACES] as const;
 
 /** Current native automation group editor. Target traceability is reported in
  * SOURCE-TARGETS.md; no programme-wide acceptance is implied by registration. */

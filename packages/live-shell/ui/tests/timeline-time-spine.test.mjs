@@ -34,9 +34,6 @@ const {registeredWorldTrackAdapterIds, manifestDeclaredProjections, isManifestDe
 const {admitFamilyManifest, resetFamilyManifestsForTest} = await import('../src/inhabitants/familyManifest.ts');
 const {expressionsTrackAdapter} = await import('../src/timeline/expressionsTrackAdapter.ts');
 const {sceneSequenceAsTracks} = await import('../src/timeline/expressionsSequenceEditor.ts');
-const {WorldTimelinePresentation} = await import('../src/projections/worldTimelinePresentation.tsx');
-const React = await import('react');
-const {renderToStaticMarkup} = await import('react-dom/server');
 
 // The reading shape exactly as the kernel's temporal read gives it
 // (temporal_sources.rs rows; the same rows the walk-bridge served the lane).
@@ -229,40 +226,7 @@ test('the registry: family door verifies manifest declarations; lane door serves
   resetFamilyManifestsForTest();
 });
 
-test('the World cut renders honest states and places day and run clips in both presentations', () => {
-  const spine = createTimeSpine();
-  spine.declareCadence({id: 'central-temporal-read', everyMs: 90000, label: 'civil-field read', declaredBy: 'timeline projection'});
-  const source = {
-    status: 'live',
-    error: null,
-    now: {instantUnixMs: at(3), dayRef: 'central:day:control:root:2026-10-08', source: 'kernel temporal read'},
-    events: READING,
-    sets: [projectDayTracks(READING), projectRunTracks(READING), projectConversationTracks(READING)],
-    eventByClipId: new Map([...dayClipEventIndex(READING), ...runClipEventIndex(READING), ...conversationClipEventIndex(READING)]),
-    readAtUnixMs: at(3),
-    readCadence: {id: 'central-temporal-read', everyMs: 90000, label: 'civil-field read', declaredBy: 'timeline projection'},
-  };
-  const view = {source, spine, selectOccasion: () => {}};
-  for (const presentation of ['session', 'arrangement']) {
-    const html = renderToStaticMarkup(React.createElement(WorldTimelinePresentation, {view, presentation}));
-    assert.ok(html.includes('2026-10-06'), `${presentation}: a civil day stands on the ruler`);
-    assert.ok(html.includes('Central · civil field'), `${presentation}: the day track group renders`);
-    assert.ok(html.includes('Runs · Factory &amp; agency'), `${presentation}: the run track group renders`);
-    assert.ok(html.includes('data-standing="sourced"'), `${presentation}: clips carry their standing`);
-    assert.ok(html.includes('Cron'), `${presentation}: the cron chip renders`);
-    if (presentation === 'arrangement') {
-      assert.ok(html.includes('⟩ week'), 'the declared break into the civil strip renders on the integrated ruler');
-      assert.ok(html.includes('wt-cursor wt-now'), 'the now cursor renders');
-      assert.ok(html.includes('atlas non-linear scale'), 'the adopted deep-time scale is disclosed on the integrated ruler');
-    }
-  }
-  // Honest refusals: an unavailable transport renders the named absence.
-  const unavailable = {...view, source: {...source, status: 'unavailable', error: 'no kernel transport: neither the Tauri host nor a dev walk bridge is reachable', sets: [], events: []}};
-  const empty = renderToStaticMarkup(React.createElement(WorldTimelinePresentation, {view: unavailable, presentation: 'arrangement'}));
-  assert.match(empty, /The civil field is unread/);
-  // An occasion selection is retained and shown with its separate admission light.
-  spine.selectOccasion(READING[0], at(3));
-  const withOccasion = renderToStaticMarkup(React.createElement(WorldTimelinePresentation, {view, presentation: 'arrangement'}));
-  assert.ok(withOccasion.includes('Expression enrichment pass'.slice(0, 20)), 'the retained basis names its event');
-  assert.ok(withOccasion.includes('is-unqualified'), 'current admission is a separate, unlit-when-unqualified reading');
-});
+// The World cut's own presentation (honest states, civil days and run clips on its ruler, the cron chip, the now cursor, the
+// retained occasion with its admission light) was drawn by nothing once the tracks pane became the centre (FOUNDATION F3) and
+// was deleted on 15 Oct (§7). The day, run and conversation sets above are what the tracks pane draws (central-tracks.test.mjs,
+// techne-tracks.test.mjs); the spine's Now and occasion are asserted above.

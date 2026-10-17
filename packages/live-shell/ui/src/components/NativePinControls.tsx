@@ -14,18 +14,18 @@ export function PinModeToggle() {
     if (!mode.active) return
     const onKey = (event: KeyboardEvent) => {
       const field = document.activeElement instanceof HTMLElement && document.activeElement.closest('input,textarea,select,[contenteditable="true"]')
-      if (event.key === 'Escape' && !field) setPinMode({active: false})
+      if (event.key === 'Escape' && !field) { event.preventDefault(); setPinMode({active: false}) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [mode.active])
   const destinations: readonly {value: PinDestination; label: string; title: string}[] = [
-    {value: 'field', label: 'Field', title: 'Field parameters pin to the bar. Object parameters Follow the selected object.'},
+    {value: 'field', label: 'Field', title: 'Field parameters pin to the Scene\'s pinned controls (Clip side). Object parameters Follow the selected object.'},
     {value: 'follow', label: 'Follow', title: 'Pin an object parameter so it follows whichever object is selected.'},
     {value: 'bind', label: 'Bind', title: 'Pin an object parameter to that one object by name.'},
   ]
   return <div className="bar-pin-mode" role="group" aria-label="Pin controls">
-    <button type="button" className="bar-pin-toggle" aria-pressed={mode.active} title="Pin mode: every parameter shows a pin. Pin it to the bar (Field), or to the rack (Follow or Bind). Escape leaves the mode."
+    <button type="button" className="bar-pin-toggle" aria-pressed={mode.active} title="Pin mode: every parameter shows a pin. Pin it to the Scene's pinned controls (Field), or to the rack (Follow or Bind). Escape leaves the mode."
       onClick={() => setPinMode({active: !mode.active})}>Map</button>
     {mode.active && <>
       <span className="bar-pin-chip" role="radiogroup" aria-label="Pin destination">

@@ -1,0 +1,52 @@
+/* Palaces on the atlas (T-PALACES-ONTO-ATLAS): the palace drawn inside, at the atlas's palace scale (PalaceFloor.tsx), after the mockup's
+   palace interior (world-shell-mockup.html:307-308 .palace, :1222-1249 palaceSVG: the floor's warm dark, the rooms in the tower's tone, the
+   guided path dashed and numbered, the focused room in the accent, the objects as small dark plates); and the M5 plate's own rows beside the
+   M4 plate's (places/placesPlate.css). Shell tokens only (styles.css :root). */
+
+/* the layer: over the globe, inert until a palace is entered. Inside, the palace is the pane's whole picture: it stands above every
+   overlay that reads the field (its focus label 10, the sky and Aion layers 10, its shell header 22, the menu 40–41, the phone sheets
+   45 — src/style/*.css), so no Earth reading shows through the floor (seen through it by the lead, 15 Oct, at the walk's ground
+   locus); the atlas's own dialogs, its search (⌘K, 60) and its loading veil (100), still stand over it. */
+.atlas-palace-layer { position: absolute; inset: 0; z-index: 48; pointer-events: none }
+.atlas-palace { position: absolute; inset: 0; pointer-events: auto; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--tower) 10%, var(--bg-0)) 0, color-mix(in srgb, var(--tower) 5%, var(--line)) 80%) }
+.atlas-palace__plan { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; user-select: none }
+.atlas-palace__plan:active { cursor: grabbing }
+.atlas-palace__line { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 11px; color: var(--text-dim) }
+
+/* a room: its walls in the tower's tone, the focused room in the accent, a selected room in the selection's colour */
+.palace-room { cursor: move }
+.palace-room__wall { fill: color-mix(in srgb, var(--tower) 10%, transparent); stroke: var(--tower); stroke-width: 1.2 }
+.palace-room[data-focused="true"] .palace-room__wall { fill: color-mix(in srgb, var(--tower) 22%, transparent); stroke: var(--accent); stroke-width: 2 }
+.palace-room[data-selected="true"] .palace-room__wall { stroke: var(--sel); stroke-width: 1.6 }
+.palace-room[data-saved="false"] .palace-room__wall { stroke-dasharray: 5 3 }
+.palace-room__name { font-size: 12px; fill: var(--tower); font-family: var(--font-ui) }
+.palace-room[data-focused="true"] .palace-room__name { fill: var(--accent) }
+.palace-room__empty, .palace-room__more { font-size: 10px; fill: var(--text-faint); font-family: var(--font-ui) }
+
+/* an object a room holds: a small dark plate, opened through its owner */
+.palace-object { cursor: pointer }
+.palace-object rect { fill: var(--bg-0); fill-opacity: .85; stroke: var(--line-strong) }
+.palace-object:hover rect { stroke: var(--text-dim) }
+.palace-object text { font-size: 10.5px; fill: var(--text); font-family: var(--font-ui) }
+.palace-object--portal text { fill: var(--tower) }
+
+/* the guided path: dashed through the rooms in their order; a gap, a broken edge or a self reference named, never hidden */
+.palace-path line { stroke: var(--tower); stroke-width: 1.5; stroke-dasharray: 3 5; opacity: .7 }
+.palace-path [data-edge="gap"] line, .palace-path [data-edge="broken"] line, .palace-path [data-edge="self"] line { stroke: var(--stall); opacity: 1 }
+.palace-path text { font-size: 10px; fill: var(--stall); text-anchor: middle; font-family: var(--font-ui) }
+.palace-steps circle { fill: var(--bg-0); stroke: var(--tower) }
+.palace-steps [data-focused="true"] circle { stroke: var(--accent); stroke-width: 2 }
+.palace-steps text { font-size: 9.5px; fill: var(--tower); text-anchor: middle; font-family: var(--font-ui) }
+.palace-marquee { fill: var(--accent-soft); stroke: var(--accent); stroke-dasharray: 4 3 }
+
+/* the M5 plate (PalacePlate.tsx): rows and switches of the plate's controls (frame/devices/plateControls.css); what only a palace has */
+.palace-room-n { width: 14px; text-align: right; flex: none }
+.palace-standing-mark { flex: none; width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--text-faint) }
+.palace-standing-mark[data-standing="warranted"] { background: var(--green); border-color: var(--green) }
+.palace-standing-mark[data-standing="owner"] { background: var(--sel); border-color: var(--sel) }
+.palace-entry-indent { flex: none; width: 8px }
+.palace-entry-indent[data-walk-focus="true"] { box-shadow: inset 2px 0 0 var(--accent-dim) }
+.palace-compose-act { width: auto !important; padding: 0 3px !important; color: var(--sel) !important }
+.plate-line[data-tone="guide"] { color: var(--tower) }
+.palace-plate-line { padding: 2px 8px 3px; border-top: 1px solid var(--line) }

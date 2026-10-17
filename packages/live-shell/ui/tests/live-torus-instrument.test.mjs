@@ -6,8 +6,8 @@ import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
 // T-LIVE-TORUS-INSTRUMENT leg 1 — Live mode seats the one instrument, the M1 torus
-// (DEVICE-SEMANTICS-LOCK §0.2, §2.1). The shell holds ONE reading handle; the rack
-// widget and the Live device chain read it. The simulation itself runs in the
+// (DEVICE-SEMANTICS-LOCK §0.2, §2.1). The shell holds ONE reading handle; the torus
+// device (live/torusDevice.ts, drawn on the Live chain by live/TorusOnChain.tsx through the frame's DeviceView) reads it. The simulation itself runs in the
 // hosted Expressions frame (field-studies-journeys native-field), so the shell
 // never draws a second torus: it shows only what the owner reading carries.
 // Same in-memory TS loader as devices-panels-ssr.test.mjs.
@@ -36,7 +36,8 @@ export async function load(url,context,next){
 
 const here = new URL('../src/', import.meta.url)
 const torus = await import('../src/live/torusInstrument.ts')
-const widget = await import('../src/panels/devices/LiveTorusWidget.tsx')
+const onChain = await import('../src/live/TorusOnChain.tsx')
+const torusDeviceModule = await import('../src/live/torusDevice.ts')
 const manifest = await import('../src/inhabitants/quaternalLogicFamilyManifest.ts')
 const qlReading = await import('../src/inhabitants/ql/qlInstrumentReading.ts')
 const chain = await import('../src/components/DeviceChainPanel.tsx')
@@ -84,7 +85,7 @@ test('the topology is QL-MEF ql_m1_torus: coordinate #1-5-1, R=16/9, r=1, and no
 
 // ── 2 — at most four macros, the engine's own first determinants ────────────
 
-test('the rack widget carries at most four macros: the determinants the native field panel exposes first, each with its source', () => {
+test('the torus device carries at most four macros: the determinants the native field panel exposes first, each with its source', () => {
   assert.ok(torus.LIVE_TORUS_MACROS.length <= torus.LIVE_TORUS_MAX_MACROS)
   assert.equal(torus.LIVE_TORUS_MAX_MACROS, 4)
   assert.deepEqual(torus.LIVE_TORUS_MACROS.map(macro => macro.id), ['lens', 'context-frame', 'harmonic-basis', 'm3-transcription'])
@@ -120,27 +121,82 @@ test('the handle is one store: readers see the same state object, a change notif
   torus.publishLiveTorusState(null)
 })
 
-// ── 4 — the widget refuses honestly and never shows a plausible state ───────
+// ── 4 — the device refuses honestly and never shows a plausible state ──────
+// (the old LiveTorusWidget rack card is gone: the torus is a device of the runtime — live/torusDevice.ts, drawn by live/TorusOnChain.tsx)
 
-test('a refused reading renders the refusal; an absent state renders the absence', () => {
-  const absent = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: null}))
-  assert.match(absent, /data-live-torus="absent"/)
-  assert.doesNotMatch(absent, /data-standing=/)
-  const refused = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: {ok: false, fault: 'reading.schema: expected ql.instrument-reading/v1'}}))
+test('a refused reading renders the refusal on the chain; an absent state is a dark device that writes nothing', () => {
+  const absent = torusDeviceModule.torusDevice(null)
+  assert.equal(absent.rows.filter(row => row.compact).length, 4, 'the four macros stand even with no reading')
+  assert.equal(absent.rows.length, 8, 'and the owner\'s sound, level, cadence and scale after them')
+  assert.ok(absent.rows.every(row => !row.writePath), 'no reading, no writes')
+  assert.deepEqual(absent.values, {}, 'and no value is invented')
+  const refused = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: {ok: false, fault: 'reading.schema: expected ql.instrument-reading/v1'}}))
   assert.match(refused, /data-live-torus="refused"/)
   assert.match(refused, /Refused reading/)
+  assert.match(refused, /data-device-light="unknown"/, 'a refused reading lights nothing')
 })
 
-// ── 5 — with the owner reading: standing shows, no macro is invented, no drawn torus ──
+// ── 5 — with the owner reading: standing shows, no macro is invented, the picture is the torus's outline ──
 
-test('with the owner reading the widget shows its standing; each macro reads not published; the widget draws no torus', () => {
-  const markup = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: validState()}))
+test('with the owner reading the chain shows its standing; each macro reads not published; the device draws the torus outline, not a phase', () => {
+  const markup = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: validState()}))
   assert.match(markup, /data-live-torus="following"/)
-  assert.match(markup, /data-standing="following"/)
-  assert.equal((markup.match(/data-macro="/g) || []).length, 4)
-  assert.equal((markup.match(/data-value="none"/g) || []).length, 4, 'the owner reading publishes no determinant yet, so no macro carries a value')
-  assert.doesNotMatch(markup, /data-value="(?!none")/)
-  assert.doesNotMatch(markup, /<svg|<ellipse/, 'the shell draws no torus: the visible torus is the simulation render only')
+  assert.match(markup, /data-device-light="on"/, 'a following instrument is lit')
+  assert.match(markup, /<div class="dv-picture"><div class="torus-picture" data-live-torus="following" data-torus-size="compact"/, 'the compact picture is the torus figure, in the kit\'s well')
+  assert.match(markup, /<svg role="img" aria-label="M1 torus, following"/, 'a drawing with a name, not a text label')
+  assert.match(markup, /<path d="M[-\d. ML]+L[-\d. ML]+"[^>]*data-torus-side="far"/, 'the far side is drawn, fainter')
+  assert.match(markup, /<path d="M[-\d. ML]+L[-\d. ML]+"[^>]*data-torus-side="near"/, 'the near side is drawn')
+  assert.match(markup, /data-torus-tone="lit"/, 'the standing tints it')
+  assert.doesNotMatch(markup, /<div class="torus-picture"[^>]*><b>/, 'no text-only card')
+  assert.equal((markup.match(/data-param="/g) || []).length, 4)
+  // The long lists (lens, context frame, harmonic basis) are the kit's choosers; the two-choice transcription is a radio (DEVICE-UI
+  // §5) — and with no determinant published, no chooser shows a value and no choice is lit.
+  assert.equal((markup.match(/data-control="chooser"/g) || []).length, 3, 'the long lists are choosers')
+  assert.equal((markup.match(/<option value="" disabled=""[^>]*>—<\/option>/g) || []).length, 3, 'the owner reading publishes no determinant yet, so no chooser carries a value')
+  assert.equal((markup.match(/data-control="radio"/g) || []).length, 1, 'the two-choice macro is a radio')
+  assert.doesNotMatch(markup, /aria-checked="true"/, 'and none of its choices is lit')
+  assert.deepEqual(torusDeviceModule.torusDevice(validState()).values, {enabled: true}, 'the device holds no macro value either')
+  assert.doesNotMatch(markup, /<ellipse|<circle/, 'the outline is paths: no point or phase is drawn on it — the oscillation is the simulation render only')
+})
+
+test('the picture is the same device at all three sizes: the figure grows denser, the owner\'s reading is the same', () => {
+  const figures = ['compact', 'whole', 'full'].map(size => torusDeviceModule.torusFigure(size))
+  const strokes = figures.map(figure => (figure.front.match(/M/g) ?? []).length + (figure.back.match(/M/g) ?? []).length)
+  assert.ok(strokes[0] < strokes[1] && strokes[1] < strokes[2], `more of the outline at each size: ${strokes}`)
+  for (const figure of figures) {
+    assert.ok(figure.front.length > 0 && figure.back.length > 0, 'both sides of the surface are drawn')
+    // every coordinate lies inside the viewBox the figure names: the whole torus is in the picture
+    const {x, y, width, height} = figure.view
+    const numbers = (figure.front + figure.back).match(/-?\d+(?:\.\d+)?/g).map(Number)
+    for (let index = 0; index < numbers.length; index += 2) {
+      assert.ok(numbers[index] >= x && numbers[index] <= x + width, `x ${numbers[index]} inside the view`)
+      assert.ok(numbers[index + 1] >= y && numbers[index + 1] <= y + height, `y ${numbers[index + 1]} inside the view`)
+    }
+  }
+  assert.deepEqual(torusDeviceModule.torusFigure('compact'), torusDeviceModule.torusFigure('compact'), 'the same size draws the same figure')
+  // the geometry is the kernel's: the widest reach across is R + r, from the topology constants
+  const compact = torusDeviceModule.torusFigure('compact')
+  assert.ok(Math.abs((compact.view.width / 2) - (25 / 9 + 0.15)) < 0.01)
+  // the pool and the pane draw the same picture at their own size: the chain publishes it by size (TorusOnChain publishDevice)
+  for (const size of ['whole', 'full']) {
+    const markup = renderToStaticMarkup(createElement(onChain.TorusPicture, {state: validState(), size}))
+    assert.match(markup, new RegExp(`data-torus-size="${size}"`))
+    assert.match(markup, /<small>following · controlled:occasion<\/small>/, `${size}: the owner's standing and event under the figure`)
+  }
+  assert.doesNotMatch(renderToStaticMarkup(createElement(onChain.TorusPicture, {state: validState(), size: 'compact'})), /<small>/, 'the rack\'s small picture is the figure alone')
+})
+
+test('a refused or absent reading draws the outline unlit and names the refusal', () => {
+  const refused = renderToStaticMarkup(createElement(onChain.TorusPicture, {state: {ok: false, fault: 'reading.schema: expected ql.instrument-reading/v1'}, size: 'whole'}))
+  assert.match(refused, /data-torus-tone="unlit"/)
+  assert.match(refused, /role="alert"[^>]*>Refused reading: reading\.schema/)
+  assert.equal(torusDeviceModule.torusTone(null), 'unlit')
+  const standing = name => ({...validState(), value: {...validState().value, standing: name}})
+  assert.equal(torusDeviceModule.torusTone(standing('following')), 'lit')
+  assert.equal(torusDeviceModule.torusTone(standing('held')), 'lit')
+  assert.equal(torusDeviceModule.torusTone(standing('opening')), 'rising')
+  assert.equal(torusDeviceModule.torusTone(standing('manual')), 'unlit')
+  assert.equal(torusDeviceModule.torusTone(standing('unavailable')), 'unlit')
 })
 
 // ── 6 — the torus face declares the full presentation, admission unchanged ──
@@ -154,12 +210,12 @@ test('the quaternal-logic torus face declares the full presentation too, and sta
 
 // ── 7 — tokens only for colour ──────────────────────────────────────────────
 
-test('the widget and its stylesheet take colour from tokens only', async () => {
-  const css = await readFile(new URL('panels/devices/liveTorusWidget.css', here), 'utf8')
-  const tsx = await readFile(new URL('panels/devices/LiveTorusWidget.tsx', here), 'utf8')
-  assert.doesNotMatch(css, /#[0-9a-fA-F]{3,8}\b/)
-  assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/)
-  assert.doesNotMatch(tsx, /#[0-9a-fA-F]{3,8}\b/)
+test('the torus device and its chain card take colour from tokens only', async () => {
+  for (const file of ['live/TorusOnChain.tsx', 'live/torusDevice.ts']) {
+    const source = await readFile(new URL(file, here), 'utf8')
+    assert.doesNotMatch(source, /#[0-9a-fA-F]{3,8}\b/, `${file}: no raw hex colour`)
+    assert.doesNotMatch(source, /\b(rgb|rgba|hsl|hsla)\(/, `${file}: no raw colour function`)
+  }
 })
 
 // ── 8 — the Live device chain mounts the one instrument only once a reading is published ──
@@ -186,9 +242,8 @@ test('with the owner determinants the four macros show the owner values: lens, C
   torus.publishLiveTorusState(validState(determinantsOwned()))
   const rows = torus.liveTorusMacroRows(torus.liveTorusState())
   assert.deepEqual(rows.map(row => row.value), ['L1′', 'CF2', 'B5', 'RNA'])
-  const markup = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: torus.liveTorusState()}))
-  assert.equal((markup.match(/data-value="none"/g) || []).length, 0)
-  assert.match(markup, /data-macro="harmonic-basis" data-value="B5"/)
+  assert.deepEqual(torusDeviceModule.torusDevice(torus.liveTorusState()).values, {lens: 'L1′', 'context-frame': 'CF2', 'harmonic-basis': 'B5', 'm3-transcription': 'RNA', enabled: true},
+    'the device shows the owner\'s values under the macros\' ids')
   torus.publishLiveTorusState(null)
 })
 
@@ -205,9 +260,9 @@ test('a reading without owner determinants leaves every macro absent, and a refu
   assert.deepEqual(torus.liveTorusMacroRows(null).map(row => row.value), [null, null, null, null])
 })
 
-// ── 10 — the publisher path: the frame's announcement → boundary → handle → widget ──
+// ── 10 — the publisher path: the frame's announcement → boundary → handle → device ──
 
-test('the frame announcement reaches the widget through the boundary reader and the one handle', async () => {
+test('the frame announcement reaches the torus device through the boundary reader and the one handle', async () => {
   const boundary = await import('../../../expressions-boundary/src/protocol.ts')
   const composer = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrumentAnnouncement.mjs')
   const basis = {event_ref: 'event:owner', subject_ref: 'subject:owner', registry_revision: 'registry:owner', geometry_ref: 'geometry:owner', material_ref: 'material:owner', model_ref: 'model:owner', generation: '4', samples_elapsed: '245760'}
@@ -223,10 +278,11 @@ test('the frame announcement reaches the widget through the boundary reader and 
   const state = torus.liveTorusState()
   assert.equal(state.ok, true)
   assert.equal(state.value.identity.model_ref, 'model:owner')
-  const markup = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state}))
+  const markup = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state}))
   assert.match(markup, /data-live-torus="following"/)
-  assert.match(markup, /data-macro="lens" data-value="L1′"/)
-  assert.match(markup, /data-macro="context-frame" data-value="CF2"/)
+  const values = torusDeviceModule.torusDevice(state).values
+  assert.equal(values.lens, 'L1′')
+  assert.equal(values['context-frame'], 'CF2')
   // The announcement withdrawn (no instrument in the next hosted state): the handle, and so the chain, is absent again.
   const bare = boundary.readHostedState({hostMode: 'live', sceneIndex: 0, sceneCount: 1, nativeScene: {expression_ref: 'expression:kept', revision: 3, scene_ref: 'scene:one'}})
   torus.publishLiveTorusState(torus.liveTorusFromHost(bare.instrument))
@@ -236,20 +292,19 @@ test('the frame announcement reaches the widget through the boundary reader and 
 test('the hosted panel publishes every announcement to the one handle and withdraws it on unmount; the Live cut is the audio workspace', async () => {
   const panel = await readFile(new URL('panels/expressions.tsx', here), 'utf8')
   assert.match(panel, /publishLiveTorusState\(liveTorusFromHost\(state\.instrument\)\)/)
-  assert.match(panel, /live = false; publishLiveTorusState\(null\)/)
+  assert.match(panel, /live = false;[^}]*publishLiveTorusState\(null\)/)
   assert.match(panel, /mode === 'audio' \? 'live' : mode/, 'the Live workspace stands the frame in its live cut')
   assert.doesNotMatch(panel, /if \(workspace\.mode === 'audio'\) return/, 'the audio early return that kept the frame out of Live is gone')
 })
 
 // ── 11 — Live's centre: the instrument over the Timeline, the audio cut's behaviour kept ──
 
-test('Live centre: the instrument is the centre identity world.expressions; a Timeline view shows the Timeline; other audio panels stay hidden', async () => {
+test('Live centre: the instrument stands in Live\'s first pane beside the set\'s tracks; the stage frame is placed, never remounted', async () => {
   const app = await readFile(new URL('App.tsx', here), 'utf8')
-  // the audio hide rule still hides every panel except knowledge, and now the hosted instrument when the centre is not on it
-  assert.match(app, /workspace\.mode === 'audio' && panel\.id !== 'world\.knowledge' && panel\.id !== 'world\.expressions' \|\|/)
-  // a Timeline view in Live moves the centre identity off the instrument; the Live mode press returns to it (chooseMode)
-  assert.match(app, /if \(frameMode === 'live'\) \{ setCenterPanel\(`native\.\$\{view\}`\); return \}/)
-  assert.match(app, /if \(next === 'live' \|\| next === 'expressions'\) \{ setCenterPanel\('world\.expressions'\)/, 'the Live mode press returns the centre to the instrument')
+  // The panes are the centre in every mode (FOUNDATION F2): Live's first tree holds the stage (the torus) beside its tracks,
+  // and the one stage frame is placed over whichever pane holds it.
+  assert.match(await readFile(new URL('shell/modeFrames.ts', here), 'utf8'), /live: healLiveTree\(seedInstruments\(\['projection\.expressions', 'projection\.timeline'\]\)\)/, 'Live\'s first pane holds the instrument (and heals a tree that is Central\'s seed, live-tree-heal.test.mjs)')
+  assert.match(app, /const expressionsPlaced = framePlacement !== null/)
   assert.match(app, /live-centre-torus/)
   const css = await readFile(new URL('live/liveCentre.css', here), 'utf8')
   assert.match(css, /background: var\(--bg-2\)/)

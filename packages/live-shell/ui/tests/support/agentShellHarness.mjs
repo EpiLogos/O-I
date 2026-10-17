@@ -433,12 +433,12 @@ export async function runFixtureHarness({evidence}) {
         return !!el && el.textContent.includes('kernel not attached')
       }, undefined, {timeout: 8000})
     })
-    await checker.check('session grid discloses the absent SessionSpace reading', async () => {
-      const text = await page.locator('.view-empty').innerText()
-      assert.ok(text.includes('No SessionSpace sessions disclosed'), text)
+    await checker.check('the agent tab discloses the unavailable transport instead of a session reading', async () => {
+      const text = await page.locator('.agent-shell-centre .view-empty').innerText()
+      assert.ok(text.includes('Native transport unavailable') && text.includes(FIXTURE_REASON), text)
     })
-    await checker.check('no fabricated session tracks', async () => {
-      assert.equal(await page.locator('.agent-track').count(), 0)
+    await checker.check('no fabricated session tracks (the agent tab draws no grid; the tracks pane is not mounted here)', async () => {
+      assert.equal(await page.locator('.trk, .agent-track').count(), 0)
     })
     await checker.check('no fabricated rows (no Porting, no Honey)', async () => {
       const text = await page.evaluate(() => document.body.innerText)

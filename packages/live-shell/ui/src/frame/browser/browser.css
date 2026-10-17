@@ -1,0 +1,140 @@
+/* The one browser (F6) at the mockup's floor (world-shell-mockup.html .br, .bsearch, .bcats, .bres/.bhead, .bitem, .bsep,
+   .slot/.sloth/.sec/.ctx). It wears the World browser's chrome (WorldBrowser.css) and its own: the four kinds head the
+   category column, and one pool holds a body's pool content above the selected device. The row bodies are the old
+   browsers drawn under the one browser's control; their rows, heads and separators take the mockup's rhythm here, scoped
+   to .one-browser, so each old browser keeps its own look anywhere else. Shell tokens only. */
+
+/* ——— the column (.br) ——— */
+.one-browser.world-browser { display: flex; flex-direction: column; overflow: hidden; background: var(--bg-1); font-size: 11px }
+
+/* ——— search (.bsearch): 25px, the back and forward cells, the input on bg-0 ——— */
+.one-browser .world-browser-searchrow { height: 25px; flex: none; display: flex; align-items: center; gap: 1px; padding: 2px; border-bottom: 1px solid var(--line); background: var(--bg-1) }
+.one-browser .one-browser-step { width: 20px; height: 20px; flex: none; display: grid; place-items: center; padding: 0; font-size: 13px; line-height: 1; color: var(--text-faint); background: transparent }
+.one-browser .one-browser-step:not(:disabled):hover { color: var(--text) }
+.one-browser .one-browser-step:disabled { opacity: .45 }
+.one-browser .world-browser-searchrow .world-browser-search { flex: 1 1 auto; min-width: 0; display: block; padding: 0; border: 0 }
+.one-browser .world-browser-search input { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 20px; padding: 2px 6px; border: 0; border-radius: 0; background: var(--bg-0); color: var(--text); font-size: 11px }
+.one-browser .world-browser-search input::placeholder { color: var(--text-faint) }
+.one-browser .world-browser-count { padding: 0 4px; font-size: 10px; color: var(--text-faint) }
+.one-browser .world-browser-count:empty { display: none }
+
+/* ——— categories (.bcats): the mockup's 112px, widened only as far as the longest label needs; the ellipsis is the last
+   resort. The four kinds are the headings (h6: 10.5px, faint); a row is 2px/3px with its mark, its name and a count where
+   the source discloses one. ——— */
+.one-browser .world-browser-main { display: grid; grid-template-columns: fit-content(156px) minmax(0, 1fr); min-height: 0; flex: 1 }
+.one-browser .world-category-list { min-width: 112px; padding: 0 3px 6px; overflow: auto; scrollbar-width: none; background: var(--bg-1); border-right: 1px solid var(--line); font-size: 11px }
+.one-browser .world-category-list h3 { margin: 0; padding: 6px 3px 2px; font-size: 10.5px; font-weight: 400; color: var(--text-faint); white-space: nowrap }
+.one-browser .world-category-list button { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 0; padding: 2px 3px; border-radius: 2px; background: transparent; color: var(--text-dim); font-size: 11px; line-height: 1.4; text-align: left; white-space: nowrap }
+.one-browser .world-category-list button:hover { color: var(--text) }
+.one-browser .world-category-list button[aria-pressed=true] { background: var(--bg-3); color: var(--text) }
+.one-browser .world-category-list button > span:first-child { flex: none; width: 11px; display: grid; place-items: center; overflow: visible; color: var(--text-faint) }
+.one-browser .world-category-list button > span:first-child svg { width: 12px; height: 12px }
+.one-browser .world-category-list button > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.one-browser .one-browser-category-count { flex: none; margin-left: auto; padding-left: 4px; font-size: 9px; color: var(--text-faint) }
+.one-browser .one-browser-category-count + .mode-browser-waiting-dot { margin-left: 4px }
+
+/* ——— results (.bres): bg-2; each body's head is the 20px .bhead on bg-0, staying in view as the rows scroll ——— */
+.one-browser .world-browser-results { background: var(--bg-2) }
+.one-browser .world-browser-results > .browser-results { overflow: visible; background: transparent }
+.one-browser .world-browser-results :is(.mode-browser-resulthead, .agent-bhead, .browser-list-heading, .world-works > h3, .browser-sets-head) {
+  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 20px; flex: none;
+  margin: 0; padding: 2px 5px; border: 0; background: var(--bg-0); color: var(--text-dim); font-size: 10px; font-weight: 400; letter-spacing: 0; text-transform: none }
+.one-browser .world-browser-results :is(.browser-list-heading, .browser-sets-head) > span { color: inherit }
+.one-browser .world-browser-results .browser-sets-head button { height: 15px; margin-left: auto; padding: 0 5px; border: 1px solid var(--line-strong); background: transparent; color: var(--text-dim); font-size: 9.5px; line-height: 13px }
+.one-browser .world-browser-results .browser-sets-head input { height: 16px; font-size: 10px }
+/* The old browsers' filter rows (○ Filters · In set) are static words with no control behind them; the floor has none. */
+.one-browser .world-browser-results :is(.agent-bfilt, .browser-filters) { display: none }
+
+/* Separators inside a category's rows (.bsep): 9.5px, faint; a separator with two words holds them at either end. */
+.one-browser .world-browser-results :is(.mode-browser-rows > h3, .world-files-heading) { margin: 0; padding: 7px 6px 2px; font-size: 9.5px; font-weight: 400; color: var(--text-faint) }
+.one-browser .world-browser-results .mode-browser-sep { display: flex; justify-content: space-between; gap: 6px; padding: 7px 6px 2px; font-size: 9.5px; color: var(--text-faint); white-space: nowrap; overflow: hidden }
+.one-browser .world-browser-results .mode-browser-rows ul { list-style: none; margin: 0; padding: 0 }
+
+/* New — the four forms (.newforms): a 4-column grid of 44px cells, the form's mark over its name. A cell whose opener the
+   Workbench does not publish stands drawn and dimmed. */
+.one-browser .world-browser-results .mode-browser-newforms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; padding: 5px }
+.one-browser .world-browser-results .mode-browser-newforms button { height: 44px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 0; border: 1px solid var(--line); border-radius: 0; background: var(--bg-1); color: var(--text-dim); font-size: 10px; box-shadow: none }
+.one-browser .world-browser-results .mode-browser-newforms button:not(:disabled):hover { border-color: var(--text-faint); color: var(--text) }
+.one-browser .world-browser-results .mode-browser-newforms button:disabled { opacity: .55 }
+.one-browser .world-browser-results .mode-browser-newforms button > b { display: grid; place-items: center; height: 17px; font-weight: 400; color: var(--text) }
+
+/* The designed empty category and a refused read, at the rows' rhythm rather than as a card: the head is a row (mark, name, its
+   standing at the right), the owner's words under it, faint. */
+.one-browser .world-browser-results .mode-browser-empty { margin: 0; padding: 0 0 6px; border: 0; background: transparent }
+.one-browser .world-browser-results .mode-browser-empty-head { min-height: 23px; gap: 6px; padding: 2px 5px; border: 0; background: transparent; color: var(--text-dim) }
+.one-browser .world-browser-results .mode-browser-empty-mark { flex: none; width: 12px; color: var(--text-faint) }
+.one-browser .world-browser-results .mode-browser-empty-mark svg { width: 12px; height: 12px }
+.one-browser .world-browser-results .mode-browser-empty-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 400 }
+.one-browser .world-browser-results .mode-browser-empty-state { flex: none; margin-left: auto; padding: 0 0 0 6px; border: 0; font-size: 9.5px; letter-spacing: 0; color: var(--text-faint) }
+.one-browser .world-browser-results :is(.mode-browser-empty-owner, .mode-browser-empty-read) { margin: 1px 6px 0 23px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }
+.one-browser .world-browser-results .world-files-heading h3 { font-size: 9.5px; font-weight: 400 }
+.one-browser .world-browser-results :is(.browser-sets, .browser-instruments) { padding: 0; border: 0; background: transparent }
+
+/* ——— rows (.bitem): 23px at 11px; the mark, the name (ellipsis), the status right-aligned and faint; hover bg-3; the
+   selected row bg-3 with the inset accent bar ——— */
+.one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row, .agent-bitem, .browser-instruments li > button, .browser-sets li > button) {
+  display: flex; align-items: center; gap: 6px; width: 100%; height: auto; min-height: 23px; padding: 2px 5px; border: 0; border-radius: 0;
+  background: transparent; color: var(--text-dim); font-size: 11px; line-height: 1.4; text-align: left; white-space: nowrap; box-shadow: none }
+.one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row, .agent-bitem, .browser-instruments li > button, .browser-sets li > button):not(:disabled):hover {
+  background: var(--bg-3); color: var(--text) }
+.one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row, .agent-bitem, .browser-instruments li > button, .browser-sets li > button):is(.selected, .browser-item-active, [aria-current]:not([aria-current=false]), [aria-pressed=true]) {
+  background: var(--bg-3); color: var(--text); box-shadow: inset 2px 0 0 var(--accent) }
+.one-browser .world-browser-results :is(.world-file-row, .world-work-row, .mode-browser-row):disabled { color: var(--text-faint) }
+/* the mark (.kg): 12px, faint; Live's leading ▸ before a device's own mark is not drawn twice (nothing expands there) */
+.one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row) > span[aria-hidden]:first-child,
+.one-browser .world-browser-results .browser-item > span:first-child:not(:last-child) { flex: none; width: 12px; display: grid; place-items: center; font-size: 10px; color: var(--text-faint) }
+.one-browser .world-browser-results .browser-item > span:first-child:not(:last-child):has(+ svg) { display: none }
+.one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row, .browser-instruments li > button) > svg { flex: none; width: 12px; height: 12px; color: var(--text-faint) }
+.one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row) > span:not([aria-hidden]):not([class]),
+.one-browser .world-browser-results :is(.browser-instruments, .browser-sets) li > button > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; flex: 0 1 auto }
+.one-browser .world-browser-results :is(.browser-instruments, .browser-sets) li > button > b { color: inherit }
+/* An agent row is [mark] name meta: the mark keeps its size, the name shrinks to an ellipsis. (The mark's wrapper used to
+   take the name's shrink rule as the first child, collapse to nothing and paint its icon over the name's first letters.) */
+.one-browser .world-browser-results .agent-bitem > span[aria-hidden] { flex: none; display: inline-flex }
+.one-browser .world-browser-results .agent-bitem > span:not([aria-hidden]):not(.st) { min-width: 0; flex: 0 1 auto; white-space: nowrap }
+/* the status (.st) */
+.one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st, .native-material-mark, .world-file-status, .browser-instruments li > button > span, .browser-sets li > button > span) {
+  flex: none; margin-left: auto; padding-left: 6px; font-size: 9.5px; color: var(--text-faint) }
+/* A standing never takes the name's room: it holds at most half the row, cut short with an ellipsis (its whole words are the
+   row's hover). */
+.one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st) { max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st):empty { display: none }
+/* A row one step in (the mockup's .bitem.ind1): the Scenes that carry an opened World subject, under its row. */
+.one-browser .world-browser-results .mode-browser-row.ind1 { padding-left: 18px }
+.one-browser .world-browser-results .mode-browser-rows ul ul { list-style: none; margin: 0; padding: 0 }
+/* A row that stands for something read, not a control (the NOW section's machines): the row's rhythm, no hover. */
+.one-browser .world-browser-results div.mode-browser-row:hover { background: transparent; color: var(--text-dim) }
+
+/* The Expressions collections (New, Featured, Starters, Built-in presets) at the row's floor: mark · name · the row's own action
+   word in the standing's place; the description is hover words. */
+/* One column, never wider than the results: a grid track would grow to its longest name. */
+.one-browser .world-browser-results .native-expression-collections { display: block; gap: 0; padding: 0; min-width: 0 }
+.one-browser .world-browser-results .world-collection { margin: 0; padding: 0; border: 0; background: transparent }
+.one-browser .world-browser-results .world-collection > h3 { margin: 0; padding: 7px 6px 2px; font-size: 9.5px; font-weight: 400; color: var(--text-faint); letter-spacing: 0; text-transform: none }
+.one-browser .world-browser-results .world-collection ul { list-style: none; margin: 0; padding: 0 }
+.one-browser .world-browser-results .world-collection-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-height: 23px; padding: 2px 5px; border: 0; background: transparent; color: var(--text-dim); font-size: 11px }
+.one-browser .world-browser-results .world-collection-row:hover { background: var(--bg-3); color: var(--text) }
+.one-browser .world-browser-results .world-collection-row > .world-collection-mark { flex: none; width: 12px; display: grid; place-items: center; color: var(--text-faint) }
+.one-browser .world-browser-results .world-collection-row > .world-collection-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: inherit }
+.one-browser .world-browser-results .world-collection-row > button { flex: none; margin-left: auto; height: 17px; min-height: 0; padding: 0 0 0 6px; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+  font-size: 9.5px; color: var(--text-faint) }
+.one-browser .world-browser-results .world-collection-row > button:not(:disabled):hover { color: var(--accent) }
+.one-browser .world-browser-results .world-collection-row > :is(.native-error, .native-empty) { flex: 1 0 100%; margin: 0; padding: 1px 0 2px 18px; font-size: 10px }
+.one-browser .world-browser-results :is(.browser-empty, .native-empty) { padding: 8px 6px; margin: 0; font-size: 10.5px; color: var(--text-faint) }
+
+/* ——— the pool (.slot): 46% of the column under a 5px rule, bg-2; the aperture slot (apertureViews.css), then a body's pool
+   content, then the selected device; a body's pool head is the 22px .sloth on bg-1 ——— */
+.one-browser .one-browser-pool { flex: 0 0 46%; min-height: 120px; max-height: none; display: flex; flex-direction: column; overflow: auto; border-top: 5px solid var(--line); background: var(--bg-2) }
+.one-browser .one-browser-pool > .device-pool { height: auto; flex: 1 0 auto }
+.one-browser-pool-host:empty { display: none }
+.one-browser .one-browser-pool-host > .world-context-pool { flex: none; min-height: 0; max-height: none; border-top: 0; background: transparent }
+.one-browser .one-browser-pool-host > .world-context-pool > header { flex: none; height: 22px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line) }
+.one-browser .one-browser-pool-host > .world-context-pool > header > button { display: flex; align-items: center; gap: 6px; height: 21px; min-height: 0; padding: 0; font-size: 11px; color: var(--text) }
+.one-browser .one-browser-pool-host > .world-context-pool > .world-pool-body { padding: 4px 0 8px }
+.one-browser .one-browser-pool-host .pool { height: auto; min-height: 0; border-top: 0 }
+
+@media (max-width: 760px) {
+  .one-browser .world-browser-main { grid-template-columns: fit-content(96px) minmax(0, 1fr) }
+  .one-browser .world-category-list { min-width: 0 }
+}

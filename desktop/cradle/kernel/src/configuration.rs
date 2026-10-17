@@ -64,9 +64,8 @@ use crate::composition;
 use crate::system_composition::{namespace_for, Availability};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// The frozen contribution contract a mount must self-identify as (09 §2).
@@ -320,6 +319,11 @@ pub enum ProfileEditOp {
 
 /// The subprocess outcome of one engine invocation, kept as data so the
 /// interpretation is a pure, deterministic function.
+/// One configuration owner call's bound: the suite's config and profile verbs
+/// read, plan and apply its own records; the bound is for an owner that never
+/// answers.
+const CONFIGURATION_LIMIT: std::time::Duration = std::time::Duration::from_secs(60);
+
 enum InvokeOutcome {
     SpawnFailed(String),
     Completed {
@@ -382,26 +386,31 @@ impl Client {
 
     fn invoke(&self, cwd: &Path, args: &[String], stdin: Option<&Value>) -> InvokeOutcome {
         let mut command = Command::new(&self.executable);
-        command
-            .current_dir(cwd)
-            .args(args)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped());
-        let mut child = match command.spawn() {
-            Ok(child) => child,
-            Err(error) => return InvokeOutcome::SpawnFailed(error.to_string()),
-        };
-        if let Some(value) = stdin {
-            let mut pipe = match child.stdin.take() {
-                Some(pipe) => pipe,
-                None => return InvokeOutcome::SpawnFailed("stdin pipe was already closed".into()),
-            };
-            if let Err(error) = pipe.write_all(&serde_json::to_vec(value).unwrap_or_default()) {
-                return InvokeOutcome::SpawnFailed(format!("cannot write the request: {error}"));
-            }
-        }
-        match child.wait_with_output() {
-            Err(error) => InvokeOutcome::SpawnFailed(error.to_string()),
+        command.current_dir(cwd).args(args);
+        let operation = args
+            .iter()
+            .take_while(|arg| !arg.starts_with('-'))
+            .take(2)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(" ");
+        // Bounded like every owner call (owner_process.rs). The same verb
+        // family reads, plans and writes; a stopped write is named uncertain.
+        match crate::owner_process::output(
+            &mut command,
+            Some(
+                stdin
+                    .map(|value| serde_json::to_vec(value).unwrap_or_default())
+                    .unwrap_or_default(),
+            ),
+            crate::owner_process::Bound {
+                owner: "O:I",
+                operation: &operation,
+                limit: CONFIGURATION_LIMIT,
+                effect: crate::owner_process::Effect::Unclassified,
+            },
+        ) {
+            Err(error) => InvokeOutcome::SpawnFailed(error.into()),
             Ok(output) => InvokeOutcome::Completed {
                 exit_code: output.status.code().unwrap_or(-1),
                 stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
@@ -1008,7 +1017,7 @@ impl Client {
     ) -> Result<Value, String> {
         match self.invoke(cwd, args, stdin) {
             InvokeOutcome::SpawnFailed(error) => {
-                Err(format!("the oi engine could not be started: {error}"))
+                Err(format!("the oi engine did not answer: {error}"))
             }
             InvokeOutcome::Completed {
                 exit_code,
@@ -1034,7 +1043,7 @@ impl Client {
             InvokeOutcome::SpawnFailed(error) => Err(json!({
                 "schema": ERROR_SCHEMA,
                 "error_code": "owner_unavailable",
-                "message": format!("the oi engine could not be started: {error}"),
+                "message": format!("the oi engine did not answer: {error}"),
                 "retryable": true,
             })),
             InvokeOutcome::Completed {
@@ -1355,6 +1364,7 @@ fn mint_changeset_id() -> String {
 mod tests {
     use super::*;
     use std::os::unix::fs::PermissionsExt;
+    use std::process::Stdio;
 
     /// A stub `oi` that answers the commands this binding runs, recording
     /// every invocation (argv + stdin) beside the scene so tests can assert

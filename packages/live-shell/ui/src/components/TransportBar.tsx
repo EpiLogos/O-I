@@ -1,61 +1,22 @@
 import { Icon } from './Icon'
 import { Icon as CutIcon } from '../inhabitants/sdk/Icon'
-import { NativeTransportBar } from './NativeTransportBar'
-import { MODE_GRAMMAR, slotDataI, slotMeaning, surfModeOf, type SurfMode } from '../shell/modeGrammar'
-import { ModeTransportBar, type ModeTransportReadouts } from '../shell/ModeTransportBar'
+import { MODE_GRAMMAR, surfModeOf, type SurfMode } from '../shell/modeGrammar'
+import type { ModeTransportReadouts } from '../shell/ModeTransportBar'
+import { MODE_TITLE, ModeTransport } from '../shell/modeTransports'
+import { useContext } from 'react'
+import { useOptionalContinuity } from '../continuity/workspace'
+import { ShellConfigContext } from '../shell/useSet'
+import { useSpineRevision } from '../shell/ModeTransportBar'
+import { titleLine, worldName } from '../shell/transports/transportReadings'
 import type { TimeSpine } from '../timeline/timeSpine'
 import type { PaneInstrumentId } from '../shell/paneInstrument'
 import { ModeModeRail } from '../shell/ModeModeRail'
 import type { PanelRegistration } from '../shell/panels'
 import type { NativeCompositionViewSource } from '../shell/compositionViews'
-import { PITCH_CLASS_NAMES } from '../live/modes'
-import { setLiveModeHold, useLiveModeInForce } from '../native/liveModeCatalogue'
-import { MidiMapHost, MidiMapToggles } from '../live/midiMap/midiMapControls'
 
-
-/** The Live transport's key / root / scale slots over the owner's ql.music-modes/v1
- * catalogue (T-LIVE-MODE-SCALES leg 2). Key keeps its established control; Root is
- * the tonic; Scale lists the catalogued modes on that tonic, grouped by basis
- * (scalesOnRoot). Its own component so the catalogue read and the held choice are hooks. */
-function LiveModeSlots() {
-  const { reading, hold, refresh, groups, mode, line } = useLiveModeInForce()
-  const ready = reading.state === 'ready'
-  const choice = mode.state === 'in-force' ? mode.selection : null
-  return <>
-    <NativeControl label="Scale" slot="key">♯</NativeControl>
-    <select aria-label="Root note" data-i={slotDataI(slotMeaning('live', 'root'))} title={`Root — the mode in force's root. ${line}`}
-      disabled={!ready} value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({ root: Number(event.target.value) })}>
-      {ready ? PITCH_CLASS_NAMES.map((name, pitch) => <option key={pitch} value={pitch}>{name}</option>) : <option>—</option>}
-    </select>
-    <select aria-label="Scale mode" data-i={slotDataI(slotMeaning('live', 'scale'))} title={`Scale — the mode in force, one of the kernel's scales. ${line}`}
-      disabled={!ready || groups.length === 0} value={choice?.scale.key ?? ''} onChange={event => setLiveModeHold({ key: event.target.value || null })}>
-      <option value="">{!ready ? '—' : groups.length ? 'none chosen' : 'no catalogued mode on this root'}</option>
-      {groups.map(group => <optgroup key={group.label} label={group.label}>
-        {group.scales.map(scale => <option key={scale.key} value={scale.key}>{scale.label}</option>)}
-      </optgroup>)}
-    </select>
-    <output className="transport-mode-line" aria-label="Mode in force" data-i={slotDataI(slotMeaning('live', 'scale'))} title={line}>{line}</output>
-    <button type="button" className="native-control" aria-label="Re-read the mode catalogue" title="Re-read the owner's mode catalogue through the kernel"
-      disabled={reading.state === 'loading'} onClick={refresh}>↻</button>
-  </>
-}
-
-/** A waiting audio control: the Live meaning (from the grammar) with the
- * standing honesty that the audio engine's transport is read-only until its
- * owner lands. The data-i string IS the per-mode meaning (the F2 law). */
-function NativeControl({ children, label, slot, className = '' }: { children: React.ReactNode; label: string; slot?: string; className?: string }) {
-  const meaning = slot ? slotMeaning('live', slot) : null
-  return <button
-    className={'native-control ' + className}
-    disabled
-    aria-label={label}
-    data-i={meaning ? slotDataI(meaning) : `${label}|requires native transport`}
-    title={meaning ? `${meaning.label} — ${meaning.fn} · requires native transport` : `${label} · requires native transport`}
-  >{children}</button>
-}
 
 export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presentedView, modeReadouts, timeSpine, focusedInstrument, workName, nativeTransport, centerPanels, activeCenter, openCenter, browser, detail, dock, toggleBrowser, toggleDetail, toggleDock }: {
-  /** The Expressions Scene transport source; absent until the native reading is admitted. */
+  /** The Expressions owner's source for the bar's bindings; absent until the native reading is admitted. */
   nativeTransport?: NativeCompositionViewSource | null
   centerPanels: PanelRegistration[]; activeCenter: string | null; openCenter: (id: string) => void
   /** The frame's Rev-5 mode reading (surfModeOf maps it onto the surf). */
@@ -78,25 +39,22 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
 }) {
   const surf = surfModeOf(mode) ?? 'live'
   const grammar = MODE_GRAMMAR[surf]
-  return <header className="transport"><div className="set-title">{mode === 'live' ? name || 'Untitled' : workName || grammar.title}</div><div className="transport-controls">
+  // The bar is the native window's drag region (its title bar is an overlay): the header, the title line and the controls
+  // row's empty space move the window; a control inside them is pressed as ever (Tauri drags only from the marked element).
+  return <header className="transport" data-tauri-drag-region><TransportTitle line={MODE_TITLE[surf]} setName={name} workName={workName} timeSpine={timeSpine} /><div className="transport-controls" data-tauri-drag-region>
     {/* The chrome toggles wear the cut's marks (the same controls in the
       agent transport draw the same marks — the icon law). */}
     <button className="chrome-toggle" aria-label="Toggle browser" aria-pressed={browser} onClick={toggleBrowser} title="Browser · ⌘⌥B"><CutIcon name="browser" size={15} /></button>
     {/* One transport, five meanings (Rev 5): the SAME slots in the SAME
-      places. Live keeps the audio cut's own controls; Expressions keeps the
-      native transport when the owner is attached; Base·Central and Technē
-      wear the grammar's meanings as drawn waiting states; every mode's
-      texts are the data-i strings. The drawn marks are the icon-cut's, the
-      same mark per control in every mode. */}
-    {mode === 'live' ? <><div className="transport-group transport-tempo"><NativeControl label="Link" slot="link">Link</NativeControl><NativeControl label="Tap tempo" slot="tap">Tap</NativeControl><input className="tempo-field" aria-label="Tempo" data-i={slotDataI(slotMeaning('live', 'tempo'))} title="Tempo — the set's tempo · document read-only until editing owner lands" value={tempoBpm?.toFixed(2) ?? '—'} readOnly /><NativeControl label="Tempo nudge down" slot="tempo">‹</NativeControl><NativeControl label="Tempo nudge up" slot="tempo">›</NativeControl><output className="meter-field" data-i={slotDataI(slotMeaning('live', 'signature'))} title="Signature — the set's time signature · not disclosed by the document">— / —</output><NativeControl label="Metronome" slot="metro"><CutIcon name="metro" size={14} /></NativeControl><select aria-label="Global quantization" data-i={slotDataI(slotMeaning('live', 'quantize'))} disabled title="Quantize — global launch quantization · requires native transport"><option>—</option></select></div>
-    <div className="transport-scale"><LiveModeSlots /></div>
-    <div className="transport-spacer" />
-    <div className="transport-group transport-playback"><NativeControl label="Follow arrangement" slot="follow"><CutIcon name="follow" size={14} /></NativeControl><output className="position-field" data-i={slotDataI(slotMeaning('live', 'position'))} title="Position — bars . beats . sixteenths · native transport position unavailable">— . — . —</output>{([['play', 'play'], ['stop', 'stop'], ['record', 'rec']] as const).map(([slot, mark]) => <NativeControl key={slot} label={slot[0].toUpperCase() + slot.slice(1)} slot={slot} className={'transport-btn transport-' + slot}><CutIcon name={mark} size={15} /></NativeControl>)}<NativeControl label="MIDI overdub" slot="overdub"><CutIcon name="plus" size={13} /></NativeControl><NativeControl label="Automation arm" slot="arm"><CutIcon name="arm" size={14} /></NativeControl><NativeControl label="Re-enable automation" slot="re-enable"><CutIcon name="back" size={14} /></NativeControl><NativeControl label="Session record" slot="capture"><CutIcon name="cap" size={14} /></NativeControl></div>
-    <div className="transport-loop transport-group"><output className="position-field" data-i={slotDataI(slotMeaning('live', 'punch-in'))} title="Punch in — record between the in and out points · requires native transport">— . — . —</output><NativeControl label="Punch in" slot="punch-in"><CutIcon name="punchIn" size={14} /></NativeControl><NativeControl label="Loop" slot="loop"><CutIcon name="loop" size={13} /></NativeControl><NativeControl label="Punch out" slot="punch-out"><CutIcon name="punchOut" size={14} /></NativeControl><output className="position-field" data-i={slotDataI(slotMeaning('live', 'loop-length'))} title="Loop length — the loop brace's length · requires native transport">— . — . —</output></div>
-    <div className="transport-spacer" />
-    <div className="transport-system"><NativeControl label="Draw mode" slot="draw"><CutIcon name="draw" size={14} /></NativeControl><NativeControl label="Computer MIDI keyboard" slot="keys"><CutIcon name="keys" size={14} /></NativeControl><MidiMapToggles /><MidiMapHost /><output data-i={slotDataI(slotMeaning('live', 'rate'))} title="Rate — the engine's sample rate · unavailable">— kHz</output><output data-i={slotDataI(slotMeaning('live', 'cpu'))} title="CPU — the engine's CPU load · unavailable">— %</output><span className="cpu-meter" /></div>
-    </> : mode === 'expressions' && nativeTransport?.content ? <NativeTransportBar source={nativeTransport} />
-      : <ModeTransportBar mode={surf} readouts={modeReadouts} timeSpine={timeSpine} focusedInstrument={focusedInstrument} />}
+      places, in every mode — Expressions too: its own bar is retired, its
+      working controls are bound to the slots (shell/transports/useExpressionsTransport.tsx)
+      and the Scene's other controls stand on the Clip side
+      (components/expressions/clip/SceneControls.tsx). Live keeps the audio
+      cut's own controls; Base·Central and Technē wear the grammar's
+      meanings as drawn waiting states; every mode's texts are the data-i
+      strings. The drawn marks are the icon-cut's, the same mark per control
+      in every mode. */}
+    <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm, nativeTransport}} />
     <nav className="surface-icons" aria-label="Working surface">
       {/* Session and Arrangement first — presentations of the Timeline
         projection, their meanings per mode (Rev 5's second table). */}
@@ -111,6 +69,23 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
       <ModeModeRail mode={mode} chooseMode={chooseMode} />
       {centerPanels.map(panel => <button key={panel.id} type="button" aria-label={panel.title} aria-pressed={activeCenter === panel.id} title={panel.note ?? panel.title} onClick={() => openCenter(panel.id)}><Icon name={panel.icon ?? 'element'} size={17} /></button>)}
     </nav>
-    <button className="chrome-toggle" aria-label="Toggle detail" aria-pressed={detail} onClick={toggleDetail} title="Detail panel · ⌘⌥L"><CutIcon name="detail" size={15} /></button><button className="chrome-toggle" aria-label="Toggle agents and context" aria-pressed={dock} onClick={toggleDock} title="Agents & context"><CutIcon name="dock" size={15} /></button>
+    <button className="chrome-toggle" aria-label="Toggle detail" aria-pressed={detail} onClick={toggleDetail} title="Detail panel · ⌘⌥L"><CutIcon name="detail" size={15} /></button><button className="chrome-toggle" aria-label="Toggle agents and context" aria-pressed={dock} onClick={toggleDock} title="Agents & context · ⌘⌥R"><CutIcon name="dock" size={15} /></button>
   </div></header>
 }
+
+/** The title line (the mockup's `#title`: "<b>Bollingen · the stone carved</b> — Central · 08 Oct"): THE selection (the
+ * book's WorldContext.selection), the world (the book's WorldContext.world, else the World the host discloses) and the civil
+ * day the World cut's spine stands in (`now().dayRef`) — or, in Live, the open set's name. With no selection, the open work. What the line reads is the mode's
+ * registration (shell/modeTransports.tsx MODE_TITLE); with nothing standing it says so. */
+export function TransportTitle({line, setName, workName, timeSpine}: {line: 'set' | 'selection'; setName?: string; workName?: string; timeSpine?: TimeSpine | null}) {
+  const context = useOptionalContinuity()?.current.context
+  const config = useContext(ShellConfigContext)
+  useSpineRevision(timeSpine)
+  // With no selection standing, the open work in front of you (the hosted frame's document) is what the line names, as before.
+  const title = titleLine({line, setName, selection: context?.selection ?? (workName ? {title: workName} : null), world: worldName(context?.world, config), civilDayRef: timeSpine?.now()?.dayRef ?? null})
+  const words = [title.lead ?? title.absent, title.context].filter(Boolean).join(' — ')
+  return <div className="set-title" data-region="title-line" data-tauri-drag-region title={words} data-i={`${title.lead ?? title.absent ?? ''}|${line === 'set' ? 'The open Live set.' : 'THE selection, its world and the day it stands in.'}`}>
+    {title.lead ? <b>{title.lead}</b> : <span className="set-title-absent">{title.absent}</span>}{title.context ? ` — ${title.context}` : null}
+  </div>
+}
+

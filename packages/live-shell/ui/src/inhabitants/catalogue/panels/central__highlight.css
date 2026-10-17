@@ -1,0 +1,43 @@
+/* The Highlight's swatches, list, widget and page, inside the gallery's frames. Shell and panel tokens only; the page's paper and the
+   four marker colours are the material's own (the document templates keep one: --hl, yellow). */
+.hl-colour { width: 100%; display: flex; align-self: stretch; }
+.hl-colour > .dp-cell { flex: 1 1 auto; }
+.hl-colour .dp-radio button { display: flex; align-items: center; gap: 4px; text-align: left; }
+.hl-colour .dp-radio button::before { content: ''; flex: none; width: 6px; height: 6px; background: var(--c); }
+.hl-colour .dp-radio button:nth-child(1) { --c: var(--hl-yellow); }
+.hl-colour .dp-radio button:nth-child(2) { --c: var(--hl-green); }
+.hl-colour .dp-radio button:nth-child(3) { --c: var(--hl-blue); }
+.hl-colour .dp-radio button:nth-child(4) { --c: var(--hl-pink); }
+
+.hl-dot { flex: none; display: inline-block; width: 8px; height: 8px; border-radius: 1px; background: var(--c); }
+
+/* The widget: the highlights as lines, and the count, the colour and the pen beside them. */
+.hl-wid { flex: 1 1 auto; min-width: 0; display: flex; gap: 8px; }
+.hl-lines { flex: 1 1 auto; min-width: 0; list-style: none; margin: 0; padding: 0; display: grid; grid-auto-rows: 17px; align-content: start; }
+.hl-lines li { min-width: 0; }
+.hl-lines button { width: 100%; height: 17px; display: flex; align-items: center; gap: 5px; padding: 0; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); background: none; color: var(--text, #d4d7da); font: inherit; font-size: 10.5px; text-align: left; cursor: pointer; }
+.hl-lines button:hover, .hl-lines button:focus-visible { background: color-mix(in srgb, var(--sel, #7ec3e6) 14%, transparent); outline: none; }
+.hl-lines button > span:nth-child(2) { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hl-lines small { flex: none; font-size: 9.5px; color: var(--text-faint, #71767c); font-variant-numeric: tabular-nums; }
+.hl-lines-empty { height: 17px; display: flex; align-items: center; font-size: 10.5px; color: var(--text-faint, #71767c); }
+.hl-side { flex: none; width: 62px; display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; }
+
+/* The pane: the open document as a page. */
+.hl-pane { flex: 1 1 auto; min-height: 0; display: flex; justify-content: center; overflow: auto; padding: 12px 24px; background: #E4E4E1; }
+.hl-sheet { position: relative; align-self: flex-start; width: 100%; max-width: 720px; box-sizing: border-box; padding: 22px 44px; background: #EFEFED; color: #000; font: 15.5px/1.55 Charter, Georgia, serif; }
+.hl-sheet h3 { margin: 0 0 16px; font: 400 13px/1.4 var(--font-ui, sans-serif); letter-spacing: .04em; color: #6E6E6A; }
+.hl-entry { margin: 0 0 16px; }
+.hl-entry small { display: block; margin: 0 0 6px; font: 11px/1.4 var(--font-ui, sans-serif); color: #A3A39E; }
+.hl-entry p { margin: 0; padding: 14px 20px; background: #FAFAF8; border-radius: 2px; }
+.hl-sheet[data-pen="true"] .hl-entry p { cursor: crosshair; }
+.hl-t[data-c] { background: var(--c); }
+.hl-t[data-c]:not(.hl-sp) { padding: 0 .08em; margin: 0 -.08em; border-radius: 1px; }
+.hl-sheet[data-show="marks"] .hl-t:not([data-c]) { opacity: .16; }
+.hl-tool { position: absolute; z-index: 3; display: flex; padding: 3px; background: #000; border-radius: 3px; box-shadow: 0 6px 20px rgba(0, 0, 0, .18); transform: translate(-50%, -100%) translateY(-10px); font: 13px/1 var(--font-ui, sans-serif); }
+.hl-tool::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: #000; transform: translateX(-50%) rotate(45deg); }
+.hl-tool button { position: relative; z-index: 1; padding: 8px 11px; border: 0; border-radius: 2px; background: none; color: #fff; font: inherit; cursor: pointer; }
+.hl-tool button:hover, .hl-tool button:focus-visible { background: #333; outline: none; }
+.hl-tool button[data-act="highlight"]::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; background: var(--c); vertical-align: -1px; }
+.hl-none { margin: 0 0 16px; font: 12px/1.4 var(--font-ui, sans-serif); color: #6E6E6A; }
+.hl-tool > span { display: flex; }
+.hl-tool button:disabled { opacity: .4; cursor: default; pointer-events: none; }

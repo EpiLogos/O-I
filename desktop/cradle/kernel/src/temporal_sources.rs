@@ -206,8 +206,14 @@ impl CentralThoughtsSource {
         }
     }
 
+    /// Every named clearing's fixtures: Central's NOW batch in one call when
+    /// the owner has it ([`read_thoughts_batch`]), else one read per clearing
+    /// in order, stopping at the first that fails.
     pub fn read(&self) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
         const STREAM: &str = "central-now-thoughts";
+        if let Some(answer) = read_thoughts_batch(&self.client, &self.now_refs, self.limit) {
+            return answer;
+        }
         let mut events = Vec::new();
         for now_ref in &self.now_refs {
             let envelope = self
@@ -222,25 +228,177 @@ impl CentralThoughtsSource {
                     }),
                 )
                 .map_err(|error| unavailable(STREAM, error))?;
-            if envelope.pointer("/data/automatic_agent_or_model_invocation")
-                == Some(&Value::Bool(true))
-            {
-                return Err(refused_reading(STREAM));
-            }
-            let directory = envelope
-                .pointer("/data/directory")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
-            for fixture in envelope
-                .pointer("/data/fixtures")
-                .and_then(Value::as_array)
-                .unwrap_or(&Vec::new())
-            {
-                events.push(thought_fixture_to_event(now_ref, directory, fixture)?);
-            }
+            events.append(&mut thoughts_from_envelope(now_ref, &envelope)?);
         }
         Ok(events)
     }
+}
+
+/// One clearing's `central.now.thoughts.read` envelope — a single read's,
+/// or one item of Central's NOW batch, which is exactly that envelope — as
+/// thought events: an automatic or model-invoked reading is refused by name;
+/// a refusal of the clearing (an envelope with no reading) adds no events,
+/// as it always has; each fixture maps through [`thought_fixture_to_event`].
+fn thoughts_from_envelope(
+    now_ref: &str,
+    envelope: &Value,
+) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
+    const STREAM: &str = "central-now-thoughts";
+    if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true)) {
+        return Err(refused_reading(STREAM));
+    }
+    let directory = envelope
+        .pointer("/data/directory")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    envelope
+        .pointer("/data/fixtures")
+        .and_then(Value::as_array)
+        .unwrap_or(&Vec::new())
+        .iter()
+        .map(|fixture| thought_fixture_to_event(now_ref, directory, fixture))
+        .collect()
+}
+
+/// Central's NOW batch (`central.now.thoughts.read-batch`, Central #273):
+/// many clearings' thought streams in one owner call, each item exactly the
+/// `central.now.thoughts.read` envelope for its ref, in request order.
+const THOUGHTS_BATCH: &str = "central.now.thoughts.read-batch";
+/// Central's own bound on one batch's refs.
+const THOUGHTS_BATCH_MAX: usize = 4096;
+
+/// The Central owner a thought read reaches, as far as the kernel can see it:
+/// the client's own route (`retained_resource_epoch`: its executables, root
+/// and route) and the executables the host names — the suite (`OI_BIN`, else
+/// `oi`) and the pinned Central owner (`OI_CENTRAL_CTRL_BIN`) — each by path
+/// and file identity. A replaced owner is another identity.
+fn central_identity(client: &CentralClient) -> CentralIdentity {
+    (
+        client.retained_resource_epoch(),
+        crate::knowledge::AikitIdentity::pinned(
+            &std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into()),
+            std::env::var_os("OI_CENTRAL_CTRL_BIN").filter(|value| !value.is_empty()),
+        ),
+    )
+}
+
+type CentralIdentity = (String, crate::knowledge::AikitIdentity);
+
+/// The Central owners that refused the NOW batch as an unknown Action.
+static WITHOUT_THOUGHTS_BATCH: std::sync::OnceLock<
+    std::sync::Mutex<std::collections::HashSet<CentralIdentity>>,
+> = std::sync::OnceLock::new();
+
+fn without_thoughts_batch(
+) -> std::sync::MutexGuard<'static, std::collections::HashSet<CentralIdentity>> {
+    WITHOUT_THOUGHTS_BATCH
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// Every clearing's thoughts through Central's NOW batch: the same events,
+/// in the same order, with the same error precedence (the earliest failing
+/// clearing) as one read per clearing. `None` when this Central owner has no
+/// batch — its own refusal names the Action unknown — remembered for its
+/// identity, so the caller reads one clearing at a time, as before.
+fn read_thoughts_batch(
+    client: &CentralClient,
+    now_refs: &[String],
+    limit: u64,
+) -> Option<Result<Vec<TemporalEvent>, TemporalEventsError>> {
+    const STREAM: &str = "central-now-thoughts";
+    if now_refs.is_empty() {
+        return Some(Ok(Vec::new()));
+    }
+    let identity = central_identity(client);
+    if without_thoughts_batch().contains(&identity) {
+        return None;
+    }
+    let invalid = |reason: &str| TemporalEventsError::InvalidRecord {
+        stream: STREAM.to_string(),
+        position: String::new(),
+        reason: reason.to_string(),
+    };
+    let mut events = Vec::new();
+    for refs in now_refs.chunks(THOUGHTS_BATCH_MAX) {
+        let envelope = match client.run_envelope(
+            THOUGHTS_BATCH,
+            json!({
+                "project": Value::Null,
+                "now_refs": refs,
+                "include_content": true,
+                "limit": limit,
+            }),
+        ) {
+            Ok(envelope) => envelope,
+            Err(error) => return Some(Err(unavailable(STREAM, error))),
+        };
+        if envelope["ok"] != true {
+            if envelope
+                .pointer("/error/message")
+                .and_then(Value::as_str)
+                .is_some_and(|message| message.starts_with("Unknown Action"))
+            {
+                without_thoughts_batch().insert(identity);
+                return None;
+            }
+            // A request, scope or register fault refuses the whole call, as
+            // it would refuse every single read: a refused clearing adds no
+            // events.
+            continue;
+        }
+        if envelope_refused(&envelope) {
+            return Some(Err(refused_reading(STREAM)));
+        }
+        let items = match envelope.pointer("/data/items").and_then(Value::as_array) {
+            Some(items) if items.len() == refs.len() => items,
+            _ => {
+                return Some(Err(invalid(
+                    "Central's NOW batch did not answer each clearing it was asked",
+                )))
+            }
+        };
+        for (now_ref, item) in refs.iter().zip(items) {
+            if item["now_ref"].as_str() != Some(now_ref.as_str()) {
+                return Some(Err(invalid(
+                    "Central's NOW batch answered a clearing out of request order",
+                )));
+            }
+            match thoughts_from_envelope(now_ref, &item["result"]) {
+                Ok(mut part) => events.append(&mut part),
+                Err(error) => return Some(Err(error)),
+            }
+        }
+    }
+    Some(Ok(events))
+}
+
+/// The register's thought stream for the assembled field: Central's NOW
+/// batch when the owner has it, else the bounded per-clearing fan-out
+/// ([`read_thoughts_chunk`]), earliest failing clearing first either way.
+fn read_thoughts(
+    client: &CentralClient,
+    now_refs: &[String],
+) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
+    if let Some(answer) = read_thoughts_batch(client, now_refs, THOUGHT_LIMIT) {
+        return answer;
+    }
+    let chunk = now_refs.len().div_ceil(THOUGHT_WORKERS).max(1);
+    std::thread::scope(|scope| {
+        let readers: Vec<_> = now_refs
+            .chunks(chunk)
+            .map(|part| scope.spawn(move || read_thoughts_chunk(client, part)))
+            .collect();
+        let mut events = Vec::new();
+        for reader in readers {
+            match reader.join().expect("thought reader") {
+                Ok(mut part) => events.append(&mut part),
+                Err((_, error)) => return Err(error),
+            }
+        }
+        Ok(events)
+    })
 }
 
 /// Map one thought fixture as `central.now.thoughts.read` returns it.
@@ -465,6 +623,10 @@ impl TemporalStreamSource for KernelEventLogSource<'_> {
 /// curation material, `session-space` is NOW/session material, and the
 /// knowledge-plane kinds (routes, frames, sources, compositions) are
 /// `Knowledge`.
+/// AIKit's history reading (measured 1.6 s on the real ground, 15 Oct); the
+/// bound is the Factory stream's, for an owner that never answers.
+const HISTORY_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
+
 pub struct AikitHistorySource {
     executable: PathBuf,
     cwd: PathBuf,
@@ -483,16 +645,20 @@ impl AikitHistorySource {
 
     pub fn read(&self) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
         const STREAM: &str = "aikit-history";
-        let output = Command::new(&self.executable)
-            .arg("-C")
-            .arg(&self.cwd)
-            .arg("history")
-            .arg("--json")
-            .output()
-            .map_err(|error| TemporalEventsError::SourceUnavailable {
-                stream: STREAM.to_string(),
-                detail: format!("aikit history owner unavailable: {error}"),
-            })?;
+        // Bounded like every owner call (owner_process.rs).
+        let output = crate::owner_process::output(
+            Command::new(&self.executable)
+                .arg("-C")
+                .arg(&self.cwd)
+                .arg("history")
+                .arg("--json"),
+            None,
+            crate::owner_process::Bound::read("AIKit", "history", HISTORY_READ_LIMIT),
+        )
+        .map_err(|error| TemporalEventsError::SourceUnavailable {
+            stream: STREAM.to_string(),
+            detail: format!("aikit history owner unavailable: {error}"),
+        })?;
         if !output.status.success() {
             return Err(TemporalEventsError::SourceUnavailable {
                 stream: STREAM.to_string(),
@@ -793,13 +959,7 @@ pub(crate) fn factory_runs_read(
         Ok(world) => world,
         Err(words) => return silent(AbsenceReason::OwnerUnreadable, words),
     };
-    let located = match crate::factory::owner(
-        OwnerRequest::Locate {
-            project: None,
-            all: true,
-        },
-        Some(&world),
-    ) {
+    let located = match locate_remembering(&world) {
         Ok(located) => located,
         Err(error) => return silent(owner_failure_reason(&error), error.message),
     };
@@ -869,6 +1029,11 @@ pub(crate) fn factory_runs_read(
         ) {
             Ok(reading) => reading,
             Err(error) => {
+                // A located source whose day reading fails is located again
+                // on the next read: its remembered location may be stale.
+                if let Some(root) = row.get("root").and_then(Value::as_str) {
+                    forget_location(root);
+                }
                 failures.push(factory_absence(
                     owner_failure_reason(&error),
                     error.message,
@@ -895,6 +1060,125 @@ pub(crate) fn factory_runs_read(
         absences.extend(absent_roots.into_iter().next());
     }
     FactoryReading { events, absences }
+}
+
+/// Factory's own locate answers, remembered per root for the World epoch
+/// (lane W3). Each temporal read used to ask `factory project locate` of the
+/// root and every Work project (17 processes against the real ground, 13 of
+/// them refused the same way every time: no `.factory` there). A root's
+/// answer is kept for the World that named it — the Central root and its Work
+/// projects, by name and path — and the Factory executable that gave it, and
+/// served while what the answer stood on still stands:
+///
+/// - `absent` while the root still has no `.factory` directory (the premise
+///   the row was classified on, factory.rs `locate_row`);
+/// - `located` while the state file it names is still there; a day reading
+///   that fails forgets it (`forget_location`), so the next read locates
+///   that root again;
+/// - `refused` while the root's `.factory` directory is still there.
+///
+/// A new World (a project added, moved or renamed), a new Factory executable
+/// or a ground bind (`forget_factory_locations`) asks again. Nothing here is
+/// the kernel's own answer: each row is the owner's, verbatim.
+type LocateKey = (crate::knowledge::AikitIdentity, String);
+static FACTORY_LOCATIONS: std::sync::OnceLock<
+    std::sync::Mutex<std::collections::HashMap<LocateKey, (String, Value)>>,
+> = std::sync::OnceLock::new();
+
+fn factory_locations(
+) -> std::sync::MutexGuard<'static, std::collections::HashMap<LocateKey, (String, Value)>> {
+    FACTORY_LOCATIONS
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// The Factory executable a locate reaches, by path and file identity.
+fn factory_identity() -> crate::knowledge::AikitIdentity {
+    let (executable, _) = crate::factory::owner_executable();
+    crate::knowledge::AikitIdentity::pinned(executable.as_os_str(), None)
+}
+
+/// The World epoch a locate answer belongs to: the roots the World names.
+fn world_epoch(roots: &[(Option<String>, PathBuf)]) -> String {
+    use sha2::{Digest, Sha256};
+    let mut digest = Sha256::new();
+    for (project, root) in roots {
+        digest.update(project.as_deref().unwrap_or("").as_bytes());
+        digest.update([0]);
+        digest.update(root.as_os_str().as_encoded_bytes());
+        digest.update([0]);
+    }
+    format!("{:x}", digest.finalize())
+}
+
+/// A remembered row still stands on what it was answered on.
+fn still_stands(row: &Value, root: &std::path::Path) -> bool {
+    match row.get("state").and_then(Value::as_str) {
+        Some("absent") => !root.join(".factory").exists(),
+        Some("refused") => root.join(".factory").exists(),
+        Some("located") => row
+            .pointer("/location/statePath")
+            .and_then(Value::as_str)
+            .is_some_and(|state| std::path::Path::new(state).exists()),
+        _ => false,
+    }
+}
+
+/// Factory source discovery over every root the World names, asking the
+/// owner only for the roots whose answer this World epoch does not already
+/// hold. The answer is the discovery `factory::owner` gives
+/// (`oi.factory-source-discovery/v1`, one row per root in World order).
+pub(crate) fn locate_remembering(world: &Value) -> Result<Value, crate::material::Error> {
+    let roots = crate::factory::locate_roots(world, None, true)?;
+    let epoch = world_epoch(&roots);
+    let identity = factory_identity();
+    let key = |root: &std::path::Path| (identity.clone(), root.to_string_lossy().into_owned());
+    let mut rows: Vec<Option<Value>> = {
+        let held = factory_locations();
+        roots
+            .iter()
+            .map(|(_, root)| {
+                held.get(&key(root))
+                    .filter(|(at, row)| *at == epoch && still_stands(row, root))
+                    .map(|(_, row)| row.clone())
+            })
+            .collect()
+    };
+    let asked: Vec<(Option<String>, PathBuf)> = roots
+        .iter()
+        .zip(&rows)
+        .filter(|(_, held)| held.is_none())
+        .map(|(root, _)| root.clone())
+        .collect();
+    let mut answered = crate::factory::locate_each(asked.clone()).into_iter();
+    {
+        let mut held = factory_locations();
+        for ((_, root), row) in roots.iter().zip(rows.iter_mut()) {
+            if row.is_some() {
+                continue;
+            }
+            let answer = answered
+                .next()
+                .unwrap_or_else(|| json!({"state": "refused", "error": "locate worker failed"}));
+            held.insert(key(root), (epoch.clone(), answer.clone()));
+            *row = Some(answer);
+        }
+    }
+    Ok(json!({
+        "contract": "oi.factory-source-discovery/v1",
+        "locations": rows.into_iter().flatten().collect::<Vec<_>>(),
+    }))
+}
+
+/// Forget one root's remembered locate answer.
+fn forget_location(root: &str) {
+    factory_locations().retain(|(_, at), _| at != root);
+}
+
+/// Forget every remembered locate answer: a ground bind re-based every root.
+pub(crate) fn forget_factory_locations() {
+    factory_locations().clear();
 }
 
 /// One named absence for the Factory stream, with the source it names when the
@@ -1114,23 +1398,9 @@ fn read_thoughts_chunk(
                 }),
             )
             .map_err(|error| (index, unavailable(STREAM, error)))?;
-        if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true))
-        {
-            return Err((index, refused_reading(STREAM)));
-        }
-        let directory = envelope
-            .pointer("/data/directory")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        for fixture in envelope
-            .pointer("/data/fixtures")
-            .and_then(Value::as_array)
-            .unwrap_or(&Vec::new())
-        {
-            let mapped = thought_fixture_to_event(now_ref, directory, fixture)
-                .map_err(|error| (index, error))?;
-            events.push(mapped);
-        }
+        events.append(
+            &mut thoughts_from_envelope(now_ref, &envelope).map_err(|error| (index, error))?,
+        );
     }
     Ok(events)
 }
@@ -1146,9 +1416,11 @@ fn read_thoughts_chunk(
 /// - ONE `central.now.list` reading serves both the clearing refs and the
 ///   clearing events (they read the same register);
 /// - the independent owners (civil field, wiki placement, kernel log,
-///   aikit history) run beside the per-clearing thought fan-out, which is
-///   bounded at [`THOUGHT_WORKERS`]; the Factory run stream follows the
-///   civil field (its window needs the policy) and is non-fatal;
+///   aikit history) run beside the thought stream, which is ONE call to
+///   Central's NOW batch (`central.now.thoughts.read-batch`) — or, for a
+///   Central without it, the per-clearing fan-out bounded at
+///   [`THOUGHT_WORKERS`]; the Factory run stream follows the civil field
+///   (its window needs the policy) and is non-fatal;
 /// - the Central owner executable is named directly when the host
 ///   provides it (`OI_CENTRAL_CTRL_BIN`), one process per Action instead
 ///   of two;
@@ -1173,15 +1445,21 @@ pub fn read_field(
             reason: format!("temporal query serialisation failed: {error}"),
         })?
     );
-    if let Some(cached) = cache
-        .lock()
-        .expect("temporal read cache lock")
-        .get(&cache_key, crate::read_cache::HORIZON_TTL)
-    {
-        return serde_json::from_value(cached).map_err(|error| TemporalEventsError::CivilTime {
-            reason: format!("retained temporal answer unreadable: {error}"),
-        });
-    }
+    // The answer is retained under a ticket taken before its owners are
+    // asked: a write the kernel carried meanwhile (a NOW, Day, receiving or
+    // Factory receipt, `retire_answers`) withdraws it, so the answer read
+    // across the write is given to its caller and never retained.
+    let ticket = {
+        let mut held = cache.lock().expect("temporal read cache lock");
+        if let Some(cached) = held.get(&cache_key, crate::read_cache::HORIZON_TTL) {
+            return serde_json::from_value(cached).map_err(|error| {
+                TemporalEventsError::CivilTime {
+                    reason: format!("retained temporal answer unreadable: {error}"),
+                }
+            });
+        }
+        held.begin(cache_key.clone())
+    };
 
     let owner = client
         .owner_direct_from_env()
@@ -1223,29 +1501,19 @@ pub fn read_field(
                 Err(error) => Err(error.clone()),
             };
 
-            let thoughts = now_records
-                .as_ref()
-                .map(|records| {
-                    let now_refs: Vec<String> = records
-                        .iter()
-                        .filter_map(|record| {
-                            record
-                                .get("now_ref")
-                                .and_then(Value::as_str)
-                                .map(str::to_string)
-                        })
-                        .collect();
-                    let chunk = now_refs.len().div_ceil(THOUGHT_WORKERS).max(1);
-                    now_refs
-                        .chunks(chunk)
-                        .map(|part| {
-                            let client = owner.clone();
-                            let part = part.to_vec();
-                            scope.spawn(move || read_thoughts_chunk(&client, &part))
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
+            let thoughts = now_records.as_ref().ok().map(|records| {
+                let now_refs: Vec<String> = records
+                    .iter()
+                    .filter_map(|record| {
+                        record
+                            .get("now_ref")
+                            .and_then(Value::as_str)
+                            .map(str::to_string)
+                    })
+                    .collect();
+                let client = owner.clone();
+                scope.spawn(move || read_thoughts(&client, &now_refs))
+            });
 
             // Sequential error precedence: civil field, register reading,
             // clearing events, thoughts (earliest failing ref), wiki
@@ -1268,13 +1536,10 @@ pub fn read_field(
             let now_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
                 now_records.iter().map(now_record_to_event).collect();
             let now_events = now_events?;
-            let mut thought_events = Vec::new();
-            for handle in thoughts {
-                match handle.join().expect("thought reader") {
-                    Ok(mut part) => thought_events.append(&mut part),
-                    Err((_, error)) => return Err(error),
-                }
-            }
+            let thought_events = match thoughts {
+                Some(reader) => reader.join().expect("thought reader")?,
+                None => Vec::new(),
+            };
             let wiki_events = wiki.join().expect("wiki reader")?;
             let kernel_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
                 log_receipts.iter().map(kernel_receipt_to_event).collect();
@@ -1328,15 +1593,27 @@ pub fn read_field(
             // Every stream that swallowed its failure names it here; the five
             // others fail the whole reading by name and never reach this list.
             answer.absences = factory_absences;
-            cache.lock().expect("temporal read cache lock").put(
-                cache_key,
+            let retained =
                 serde_json::to_value(&answer).map_err(|error| TemporalEventsError::CivilTime {
                     reason: format!("temporal answer serialisation failed: {error}"),
-                })?,
-            );
+                })?;
+            let mut held = cache.lock().expect("temporal read cache lock");
+            if held.finish(&cache_key, ticket) {
+                held.put(cache_key, retained);
+            }
             Ok(answer)
         },
     )
+}
+
+/// Retire the temporal field's retained answers and every read in flight
+/// (their tickets): a write the kernel carried moved a ground the field reads
+/// (owner_write.rs). The Factory locate memo is the World epoch's and stays.
+pub(crate) fn retire_answers(cache: &std::sync::Mutex<crate::read_cache::OwnerReadCache>) {
+    cache
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+        .invalidate_prefix(TEMPORAL_CACHE_PREFIX);
 }
 
 /// The envelope's automatic-reading refusal flag — one check, shared by
@@ -1386,10 +1663,44 @@ mod read_field_tests {
             );
             let nowlist = write_file(&directory, "nowlist.json", nowlist);
             let thoughts = write_file(&directory, "thoughts.json", thoughts_reply);
-            let refused = write_file(
+            const REFUSED: &str =
+                r#"{"ok":true,"data":{"automatic_agent_or_model_invocation":true}}"#;
+            const DENIED: &str = r#"{"ok":false,"status":"forbidden","action":"central.now.thoughts.read","error":{"code":"forbidden","message":"outside the agent aperture"}}"#;
+            let refused = write_file(&directory, "refused.json", REFUSED);
+            let denied = write_file(&directory, "denied.json", DENIED);
+            // Central's NOW batch over the register's own refs: each item is
+            // exactly the envelope the single read answers for that ref.
+            let items: Vec<Value> = std::fs::read_to_string(&nowlist)
+                .ok()
+                .and_then(|text| serde_json::from_str::<Value>(&text).ok())
+                .and_then(|list| list.pointer("/data/records").cloned())
+                .and_then(|records| records.as_array().cloned())
+                .unwrap_or_default()
+                .iter()
+                .filter_map(|record| record["now_ref"].as_str().map(str::to_owned))
+                .map(|now_ref| {
+                    let result = if now_ref.contains("unavailable-ref") {
+                        REFUSED
+                    } else if now_ref.contains("denied-ref") {
+                        DENIED
+                    } else {
+                        thoughts_reply
+                    };
+                    json!({"now_ref": now_ref, "result": serde_json::from_str::<Value>(result).unwrap()})
+                })
+                .collect();
+            let refusals = items
+                .iter()
+                .filter(|item| item["result"]["ok"] != true)
+                .count();
+            let batch = write_file(
                 &directory,
-                "refused.json",
-                r#"{"ok":true,"data":{"automatic_agent_or_model_invocation":true}}"#,
+                "batch.json",
+                json!({"ok": true, "status": "success", "action": "central.now.thoughts.read-batch", "data": {
+                    "schema": "central.thoughts-batch-reading/v1", "scope_ref": "control:root",
+                    "requested": items.len(), "answered": items.len() - refusals, "refused": refusals,
+                    "items": items, "automatic_agent_or_model_invocation": false}})
+                .to_string(),
             );
             let files = write_file(
                 &directory,
@@ -1462,9 +1773,15 @@ mod read_field_tests {
                 let _ = writeln!(body, r#"  central.now.list) cat {} ;;"#, nowlist.display());
                 let _ = writeln!(
                     body,
-                    r#"  central.now.thoughts.read) sleep 0.03; case "$5" in *unavailable-ref*) cat {};; *) cat {};; esac ;;"#,
+                    r#"  central.now.thoughts.read) sleep 0.03; case "$5" in *unavailable-ref*) cat {};; *denied-ref*) cat {};; *) cat {};; esac ;;"#,
                     refused.display(),
+                    denied.display(),
                     thoughts.display()
+                );
+                let _ = writeln!(
+                    body,
+                    r#"  central.now.thoughts.read-batch) sleep 0.03; cat {} ;;"#,
+                    batch.display()
                 );
                 let _ = writeln!(body, r#"  central.files.list) cat {} ;;"#, files.display());
                 let _ = writeln!(body, r#"  central.world) cat {} ;;"#, world.display());
@@ -1629,10 +1946,10 @@ mod read_field_tests {
             vec![
                 ("central.files.list".to_owned(), 1),
                 ("central.now.list".to_owned(), 1),
-                ("central.now.thoughts.read".to_owned(), 4),
+                ("central.now.thoughts.read-batch".to_owned(), 1),
                 ("central.time.policy".to_owned(), 1),
             ],
-            "the register reading is shared, and every clearing is asked once"
+            "the register reading is shared, and every clearing is asked in one batch"
         );
 
         // Every stream joined the field: 4 clearings + 4 thoughts + 1 wiki
@@ -1657,6 +1974,80 @@ mod read_field_tests {
                 .iter()
                 .any(|event| event.stream_position == format!("{reference}#T/a.json")));
         }
+    }
+
+    /// A Central without the NOW batch refuses it as an unknown Action: the
+    /// thought stream is read one clearing at a time, as before, with the
+    /// same events — a clearing the owner refuses adds none either way — and
+    /// the absence is remembered for that owner: the next read asks no batch.
+    #[test]
+    fn an_owner_without_the_batch_is_read_one_clearing_at_a_time_with_the_same_events() {
+        let _env = owner_env();
+        let refs = ["ref-a", "denied-ref", "ref-c"];
+        let thoughts = |answer: &TemporalEventsAnswer| -> Vec<TemporalEvent> {
+            answer
+                .events
+                .iter()
+                .filter(|event| event.stream == "central-now-thoughts")
+                .cloned()
+                .collect()
+        };
+        let batched = FakeOwner::new("with-batch", &nowlist(&refs), THOUGHTS_REPLY);
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let with_batch = read_field(
+            &batched.client(),
+            &cache,
+            &[],
+            batched.directory.clone(),
+            &window_all(),
+        )
+        .unwrap();
+        assert_eq!(
+            batched
+                .calls()
+                .iter()
+                .filter(|call| call.starts_with("central.now.thoughts"))
+                .collect::<Vec<_>>(),
+            vec!["central.now.thoughts.read-batch"]
+        );
+
+        let single = FakeOwner::new("without-batch", &nowlist(&refs), THOUGHTS_REPLY);
+        std::fs::write(
+            single.directory.join("batch.json"),
+            r#"{"ok":false,"status":"invalid_input","action":"central.now.thoughts.read-batch","error":{"code":"invalid_input","message":"Unknown Action: central.now.thoughts.read-batch"}}"#,
+        )
+        .unwrap();
+        let client = single.client();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let one_by_one = read_field(
+            &client,
+            &cache,
+            &[],
+            single.directory.clone(),
+            &window_all(),
+        )
+        .unwrap();
+        assert_eq!(thoughts(&one_by_one), thoughts(&with_batch));
+        assert_eq!(
+            thoughts(&with_batch).len(),
+            2,
+            "the denied clearing adds none"
+        );
+        let asked = |name: &str| single.calls().iter().filter(|call| *call == name).count();
+        assert_eq!(asked("central.now.thoughts.read-batch"), 1);
+        assert_eq!(asked("central.now.thoughts.read"), 3);
+
+        let narrowed = TemporalQuery {
+            subject: Some("ref-a".to_owned()),
+            ..window_all()
+        };
+        read_field(&client, &cache, &[], single.directory.clone(), &narrowed).unwrap();
+        assert_eq!(
+            asked("central.now.thoughts.read-batch"),
+            1,
+            "the owner's absence is remembered"
+        );
+        assert_eq!(asked("central.now.thoughts.read"), 6);
     }
 
     #[test]
@@ -1851,6 +2242,61 @@ mod read_field_tests {
                 source_ref: None,
             }]
         );
+    }
+
+    /// Lane W3: Factory's locate answers are remembered for the World epoch.
+    /// A later read (its answer not retained — a write retired it) asks no
+    /// locate while the root still stands as answered; a root that gains a
+    /// Factory state is asked again; a ground bind forgets every answer.
+    #[test]
+    fn factory_locations_are_remembered_for_the_world_epoch() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-memo", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let read = || {
+            retire_answers(&cache);
+            read_field(
+                &owner.client(),
+                &cache,
+                &[],
+                owner.directory.clone(),
+                &span_window(),
+            )
+            .unwrap()
+        };
+        let locate = format!("project locate {} --json", owner.directory.display());
+        let located = |owner: &FakeOwner| {
+            owner
+                .factory_calls()
+                .iter()
+                .filter(|call| **call == locate)
+                .count()
+        };
+        let first = read();
+        assert_eq!(located(&owner), 1);
+        let second = read();
+        assert_eq!(located(&owner), 1, "the absent root is not asked again");
+        assert_eq!(
+            first.absences, second.absences,
+            "the remembered answer is the owner's own"
+        );
+        // The premise moved: the root has a `.factory` now.
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
+        read();
+        assert_eq!(
+            located(&owner),
+            2,
+            "a root that gained a Factory state is asked"
+        );
+        read();
+        assert_eq!(
+            located(&owner),
+            2,
+            "its refusal is remembered while it stands"
+        );
+        forget_factory_locations();
+        read();
+        assert_eq!(located(&owner), 3, "a ground bind forgets every location");
     }
 
     #[test]

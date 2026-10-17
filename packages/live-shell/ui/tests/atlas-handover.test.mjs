@@ -17,7 +17,7 @@ const providerStub = new URL('./fixtures/atlas-provider-stub.mjs', import.meta.u
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
 import {readFile} from 'node:fs/promises';
-const STUBS = {'./mount': ${JSON.stringify(mountStub)}, './provider/archetypalEarthProvider': ${JSON.stringify(providerStub)}};
+const STUBS = {'./mount': ${JSON.stringify(mountStub)}, './provider/suiteProvider': ${JSON.stringify(providerStub)}};
 export async function resolve(s, c, n) {
   if (c.parentURL && c.parentURL.endsWith('/AtlasProjectionPanel.tsx') && STUBS[s]) return {url: STUBS[s], format: 'module', shortCircuit: true};
   let r = null
@@ -227,7 +227,9 @@ test('a throw part way through the attach leaves no observer, subscription, foll
 test('a clean attach and close leave no observer or subscription behind', async () => {
   const attached = await panel.attachAtlas({element: pane(), transport, follow: true})
   assert.equal(observersLive, 1)
-  assert.equal(subscriptionsLive, 1)
+  // T-PLACES-ONTO-ATLAS: two disclosure subscriptions while the atlas stands — the Sun's (the window's instant) and Places' (the shared
+  // spatial focus turns the Earth, places/placesHost.ts); both are released with it
+  assert.equal(subscriptionsLive, 2)
   attached.unmount()
   assert.equal(observersLive, 0)
   assert.equal(subscriptionsLive, 0)

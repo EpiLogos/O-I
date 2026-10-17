@@ -188,13 +188,16 @@ test('a refused re-read keeps the held window and raises nothing into the nudge'
   stop();
 });
 
-test('the Timeline and Places lenses follow the nudge through their own render paths; spatial writes are tracked; destroy tears the follower down', async () => {
+test('the Timeline follows the nudge through its own render path; spatial writes are tracked; destroy tears the follower down', async () => {
   const {readFile} = await import('node:fs/promises');
   const source = await readFile(new URL('../src/researchInstruments.tsx', import.meta.url), 'utf8');
   assert.match(source, /if\(sharedTime\)followSharedTime\(\(\)=>render\(canvasNode2\(\)\)\);\s*render\(canvasNode2\(\)\);return;/, 'the Timeline follows, re-rendering through canvasNode2');
-  assert.match(source, /if\(sharedTime\)followSharedTime\(\(\)=>render\(renderPlaces\(\)\)\);\s*render\(renderPlaces\(\)\);/, 'Places follows, re-rendering through renderPlaces');
+  // T-PLACES-ONTO-ATLAS: the frame's Places lens retired with its map; Places is the shell's Earth atlas, which follows the shared window
+  // through its own clock (packages/live-shell/ui/tests/atlas-time-binding.test.mjs). Asked for, the frame's lens reads and follows nothing.
+  assert.match(source, /if\(selected==='m4'\)\{message\(PLACES_MOVED\);[^\n]*return;\}/, 'the retired Places lens follows nothing');
+  assert.doesNotMatch(source, /renderPlaces/, 'no Places render path is left to follow');
   assert.match(source, /offSharedTimeNudges\?\.\(\);\s*offSharedTimeNudges=followSharedTimeNudges\(/, 'one follower at a time');
-  assert.match(source, /destroy\(\)\{flushPlaceLayers\(\);\+\+epoch;offSharedTimeNudges\?\.\(\);offSharedTimeNudges=null;/, 'destroy tears it down, after the pending layers write is flushed');
+  assert.match(source, /destroy\(\)\{\+\+epoch;offSharedTimeNudges\?\.\(\);offSharedTimeNudges=null;/, 'destroy tears it down first');
   assert.match(source, /return trackOwnSharedTimeWrite\(writeSharedSpatialFocusNow\(/, 'a spatial write is the frame’s own write');
   assert.match(source, /if\(draft&&!draft\.captured\)/, 'a draft the person is composing is never overwritten');
 });

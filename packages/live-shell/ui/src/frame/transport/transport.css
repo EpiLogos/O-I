@@ -1,0 +1,82 @@
+/* The one transport (F7) at the mockup's floor (world-shell-mockup.html .tp, .g, .nc, .fld, .tbtn, .sp, .cpu): groups of
+   cells 2px apart and 7px between groups; a cell is 19px on bg-0 with a line border, lit (the owner's reading) in the
+   accent; a readout is a mono field on bg-0, the position underlined in the accent; play, stop and record are the 20×22
+   play row — play in the accent and filled when lit, record lighting in --rec. Shell tokens only (the agent frame's
+   --accent-ink / --rec-ink / --mono where it carries them). Scoped to .one-transport so the old bars' rules elsewhere
+   stand. */
+
+.mode-transport.one-transport { gap: 7px }
+/* Display stays the shell's everywhere but in an owner's slot, so the narrow-width rules (styles.css) still fold the scale,
+   loop and system groups and the tempo and play rows' later cells away. */
+.one-transport .transport-group, .one-transport .transport-scale, .one-transport .transport-system { align-items: center; gap: 2px; white-space: nowrap }
+.one-transport .transport-slot { display: flex; align-items: center; gap: 2px; white-space: nowrap }
+.one-transport .transport-slot:has(> output) { min-width: 0 }
+/* the scale group may give way: an owner's long line in it (Live's mode in force) ellipsizes before the bar overflows */
+.one-transport .transport-scale { margin-left: 10px; min-width: 0; flex-shrink: 1 }
+
+/* a cell (.nc); its line is the mockup's #30343a, whose closest shell token is --bg-1 (#33363b): the cell reads as a flat
+   block on the bar, as it does in the mockup */
+.mode-transport.one-transport .native-control { height: 19px; min-width: 17px;
+  padding: 1px 4px; border: 1px solid var(--bg-1); background: var(--bg-0); color: var(--text-dim); font-size: 10px; line-height: 14px }
+/* a cell's mark sits inline, centred, so a mark and its owner's word (Technē's focused instrument) share one 19px line */
+.mode-transport.one-transport .native-control svg { display: inline-block; vertical-align: -2px }
+.mode-transport.one-transport .native-control:not(:disabled):hover { color: var(--text) }
+.mode-transport.one-transport .native-control[data-light=on]:not(.transport-btn) { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, var(--line)) }
+
+/* a readout (.fld): mono, on bg-0, the owner's value in the text colour; unread, it stays faint */
+.mode-transport.one-transport :is(.tempo-field, .meter-field, .position-field) { width: auto; height: 19px; line-height: 15px;
+  padding: 2px 6px; border: 0; background: var(--bg-0); color: var(--text); font-family: var(--mono, ui-monospace, 'SF Mono', Menlo, monospace); font-size: 10px; white-space: nowrap }
+.mode-transport.one-transport .position-field { text-align: center }
+.mode-transport.one-transport .position-field[data-slot=position] { box-shadow: inset 0 -2px 0 var(--accent) }
+.mode-transport.one-transport :is(.tempo-field, .meter-field, .position-field)[data-unread] { color: var(--text-faint) }
+
+/* the play row (.tbtn): 20×22, no cell; play in the accent, filled when lit; record lights in --rec */
+.mode-transport.one-transport .transport-playback > .transport-btn { width: 20px; height: 22px; min-width: 0; padding: 0; border: 0; background: transparent }
+.mode-transport.one-transport .transport-btn[data-light=on] { color: var(--text) }
+.mode-transport.one-transport .transport-play[data-light=on] { background: var(--accent); color: var(--accent-ink, var(--line)) !important }
+.mode-transport.one-transport .transport-record { color: var(--rec-ink, var(--text-dim)) !important }
+.mode-transport.one-transport .transport-record[data-light=on] { color: var(--rec) !important }
+
+/* an owner's own control in a slot (a choice of root or scale, the map toggles), drawn at the cell's height and type */
+.mode-transport.one-transport .transport-slot :is(button, output, label) { font-size: 10px }
+.mode-transport.one-transport .transport-slot select { height: 19px; padding: 0 4px; border: 1px solid var(--bg-1); background: var(--bg-0); color: var(--text-dim); font-size: 10px }
+.mode-transport.one-transport .transport-slot > :not(output) { flex-shrink: 0 }
+
+/* the key group's readings give way before the bar does (a long session name on Factory's root) */
+.mode-transport.one-transport .transport-scale :is(.meter-field, .transport-reading) { max-width: 120px; overflow: hidden; text-overflow: ellipsis }
+/* a reading in a marked slot's place (the day's opening and close on the punch slots, the mockup's .fld) reads as a field */
+.mode-transport.one-transport .transport-reading { color: var(--text) }
+/* the owner's own controls at the bar's density: the Scene scrub (Expressions' position) keeps a short track beside its time */
+.mode-transport.one-transport .native-transport-scrub { flex: 0 0 72px; min-width: 0; height: 19px }
+/* the owner's stage tool rail in the draw slot (components/NativeBarControls.tsx BarTools) wears its own abbreviations at
+   the bar's density, as the mockup's one ✎ cell takes the place; the full names stay its accessible names and titles */
+.mode-transport.one-transport .bar-tool-full { display: none }
+.mode-transport.one-transport .bar-tool-abbr { display: inline }
+.mode-transport.one-transport .bar-tools { padding: 0 }
+
+/* The fold (fold.ts, lane F; the lead saw it at 1372 px: "Repe", "Pulse", "Glob" and a "Running" over the Map slot and the mode
+   icons). A chooser is never cut short: an owner's chooser in the bar shows its whole choice (the shell's 54px cap is for the
+   old bars). The bar never draws past its box: short of room, an owner's control in a marked slot folds to the slot's mark — one
+   cell, the mockup's (the draw slot's ✎) — and the mark's press opens the control, whole, beneath it (it opens leftward from
+   the mark, inside the bar's width); open, the body lays its controls in the row as before. The x-clip is the last guard:
+   nothing of the bar ever lies over the mode icons. */
+.mode-transport.one-transport { min-width: 0; overflow-x: clip }
+/* a chooser is as wide as its current choice (field-sizing), never its longest option and never the old 54px cut; past 160px a
+   very long choice (a scale's full name) gives way, and the whole name stays its title */
+.mode-transport.one-transport .transport-slot select { field-sizing: content; max-width: 160px }
+.one-transport .transport-slot:has(> .transport-fold-body) { position: relative }
+.one-transport .transport-fold-body { display: contents }
+.mode-transport.one-transport .transport-fold-mark { display: none }
+.mode-transport.one-transport .transport-slot[data-fold] > .transport-fold-mark { display: inline-block }
+.one-transport .transport-slot[data-fold] > .transport-fold-body { display: none }
+.one-transport .transport-slot[data-fold=open] > .transport-fold-body { display: flex; position: absolute; top: calc(100% + 5px); right: -4px; z-index: 60;
+  align-items: center; gap: 2px; padding: 3px 4px; border: 1px solid var(--line-strong, var(--line)); background: var(--bg-1) }
+.mode-transport.one-transport .transport-slot[data-fold=open] > .transport-fold-mark { border-color: var(--accent) }
+/* opened beneath its mark, the owner's stage tool rail has the room for its own names */
+.mode-transport.one-transport .transport-slot[data-fold=open] .bar-tool-full { display: inline }
+.mode-transport.one-transport .transport-slot[data-fold=open] .bar-tool-abbr { display: none }
+/* an unread loop length is Live's empty "—", drawn at its own width: the 79px field is for a length the owner reads (it gave
+   the room the scale group's readings were squeezed out of at 1440 px) */
+.mode-transport.one-transport .position-field[data-slot=loop-length][data-unread] { min-width: 0 }
+/* the owner's stage tool rail lights the tool in force (its aria-pressed is the frame's reading) */
+.mode-transport.one-transport .bar-tool[aria-pressed=true] { color: var(--accent) }

@@ -29,14 +29,9 @@ export async function load(url,context,next){
   return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:new URL(url).pathname}).outputText};
 }`)}`, import.meta.url);
 
-const {eventStanding, standingInputOf, readStanding, createTimeSpine} = await import('../src/timeline/timeSpine.ts');
+const {eventStanding, standingInputOf, readStanding} = await import('../src/timeline/timeSpine.ts');
 const {standingOf} = await import('../../../../desktop/cradle/src/techne/m0m5/timeline/standing.ts');
-const {clipStandingMark, WorldTimelinePresentation} = await import('../src/projections/worldTimelinePresentation.tsx');
 const {projectQlPhysicsTracks} = await import('../src/timeline/qlPhysicsTrackAdapter.ts');
-const {STANDING_COLOUR} = await import('../../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/timeline/palette.ts');
-const {STANDING_DRAWING} = await import('../../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/timeline/standingStyle.ts');
-const React = await import('react');
-const {renderToStaticMarkup} = await import('react-dom/server');
 
 const DAY = '2026-10-06';
 const at = (hour) => Date.UTC(2026, 9, 6, hour, 0, 0);
@@ -115,78 +110,8 @@ test('a family clip with a stated word keeps it; an unstated one reads unavailab
   assert.match(byId('stated').label, /· hypothesis/, 'the stated word rides the label, as before');
 });
 
-// ── 3 — the clip draws its class from the grammar and announces it ─────────────────
-
-// One clip per reading, moment and span forms, in one lane and one day.
-const cases = [
-  ['sourced', readStanding({...UNDISCLOSED, source_ref: 'central-now:now:1'})],
-  ['hypothesis', readStanding({...UNDISCLOSED, standing: 'hypothesis'})],
-  ['inferred', readStanding({...UNDISCLOSED, standing: 'inferred'})],
-  ['disputed', readStanding({...UNDISCLOSED, standing: 'disputed'})],
-  ['claim', readStanding({...UNDISCLOSED, standing: 'claim'})],
-  ['unknown', readStanding(UNDISCLOSED)],
-];
-const standingSet = () => ({
-  columns: [{id: `day:${DAY}`, name: DAY}],
-  tracks: [{id: 'run:demo', name: 'demo run', kind: 'run'}],
-  clips: cases.map(([name, reading], index) => ({
-    id: `clip-${name}`, trackId: 'run:demo', columnId: `day:${DAY}`, label: `item ${name}`, standing: reading,
-    ...(index % 2 === 1 ? {span: {start: index, end: index + 2}} : {}),
-  })),
-});
-const eventsFor = (set) => new Map(set.clips.filter((clip) => !clip.span).map((clip, index) => [clip.id, {
-  stream: 'factory', kind: 'run', subject_ref: 'factory/demo', stream_position: `p${index}`, instant_unix_ms: at(8 + index), day_ref: `central:day:control:root:${DAY}`, summary: clip.label, evidence_refs: [],
-}]));
-const viewFor = (set) => ({
-  source: {status: 'live', error: null, now: {instantUnixMs: at(12), dayRef: `central:day:control:root:${DAY}`, source: 'test'},
-    events: [], sets: [set], eventByClipId: eventsFor(set), readAtUnixMs: at(12), readCadence: undefined},
-  spine: createTimeSpine(),
-  selectOccasion: () => {},
-});
-
-test('the class each clip is drawn in comes from its reading, and its verbatim word and rule are shown', () => {
-  const set = standingSet();
-  for (const presentation of ['session', 'arrangement']) {
-    const html = renderToStaticMarkup(React.createElement(WorldTimelinePresentation, {view: viewFor(set), presentation}));
-    // data-standing is the authority's visual class.
-    assert.match(html, /data-standing="sourced"/, `${presentation}: sourced drawn`);
-    assert.match(html, /data-standing="derived"[^>]*data-standing-stated="hypothesis"|data-standing-stated="hypothesis"[^>]*data-standing="derived"/, `${presentation}: a hypothesis is drawn derived, verbatim kept`);
-    assert.match(html, /data-standing="disputed"/, `${presentation}: disputed drawn`);
-    assert.match(html, /data-standing="unavailable"/, `${presentation}: nothing disclosed drawn unavailable`);
-    // The accessible name shows the verbatim stated word, else the grammar's legend label.
-    assert.match(html, /aria-label="item hypothesis — standing hypothesis"/, `${presentation}: verbatim word announced`);
-    assert.match(html, /aria-label="item sourced — standing sourced"/, `${presentation}: legend label announced`);
-    assert.match(html, /aria-label="item unknown — standing standing unknown"/, `${presentation}: unknown announced by its legend label`);
-    // The grammar's own stroke for the class.
-    assert.ok(html.includes(STANDING_COLOUR.derived), `${presentation}: derived uses the grammar's stroke`);
-    assert.ok(html.includes(STANDING_COLOUR.disputed), `${presentation}: disputed uses the grammar's stroke`);
-    // The rule rides the title: the mapping is explicit, never silent.
-    assert.ok(html.includes('source or evidence ref is disclosed'), `${presentation}: the sourced rule is in the title`);
-    assert.ok(html.includes('standing unknown, never guessed'), `${presentation}: the unavailable rule is in the title`);
-  }
-});
-
-test('clipStandingMark draws from the grammar table and the dash follows the grammar pattern', () => {
-  const set = standingSet();
-  const byName = (name) => clipStandingMark(set.clips.find((clip) => clip.id === `clip-${name}`));
-  assert.equal(byName('sourced').stroke, STANDING_DRAWING.sourced.stroke);
-  assert.equal(byName('hypothesis').stroke, STANDING_DRAWING.derived.stroke, 'a hypothesis is drawn as the derived class');
-  assert.equal(byName('hypothesis').word, 'hypothesis', 'the label shows the verbatim word');
-  assert.equal(byName('disputed').line, 'dotted', 'disputed is the grammar dash 2 3 (dotted)');
-  assert.equal(byName('hypothesis').line, 'dashed', 'derived is the grammar dash 5 3 (dashed)');
-  assert.equal(byName('sourced').line, 'solid', 'sourced is solid');
-  assert.equal(byName('unknown').word, 'standing unknown', 'no word: the legend label of the class');
-});
-
-test('the same reading keeps its class wherever it is placed: moment, span, or undated', () => {
-  const set = standingSet();
-  const view = viewFor(set);
-  const arrangement = renderToStaticMarkup(React.createElement(WorldTimelinePresentation, {view, presentation: 'arrangement'}));
-  assert.match(arrangement, /data-standing="sourced"[^>]*aria-label="item sourced/, 'the moment keeps sourced on the ruler');
-  assert.match(arrangement, /data-standing="derived"[^>]*aria-label="item hypothesis/, 'the span keeps derived as a lane block');
-  // Drop the instant: the clip is undated and drawn in the same class, with no fabricated time.
-  const undated = {...set, clips: set.clips.map((clip) => clip.id === 'clip-sourced' ? {...clip, span: undefined} : clip)};
-  const html = renderToStaticMarkup(React.createElement(WorldTimelinePresentation, {view: {...view, source: {...view.source, eventByClipId: new Map(), sets: [undated]}}, presentation: 'arrangement'}));
-  assert.match(html, /wt-undated[^>]*data-standing="sourced"/, 'an undated sourced clip keeps sourced');
-  assert.match(html, /undated — relative order, no fabricated date/, 'the undated clip still names no date');
-});
+// ── 3 — drawing the class ────────────────────────────────────────────────────────────────
+// The World cut presentation drew each clip in its class (data-standing, the grammar's stroke and dash, the class in the clip's
+// accessible name). It was drawn by nothing once the tracks pane became the centre, and was deleted on 15 Oct (FOUNDATION §7).
+// The readings above still ride every clip (`clip.standing`); the shared Session grid and Arrangement ruler do not draw them
+// yet — clipStandingMark, in that presentation at git 09a573a1d, is the port source.

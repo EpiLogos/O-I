@@ -1,5 +1,12 @@
-/* UI-EVIDENCE.md, rev 1: measured region/density/colour facts. Original glyphs; no captured assets. */
-:root { --bg-0:#3f4348; --bg-1:#33363b; --bg-2:#43464c; --bg-3:#51565d; --line:#292c31; --line-strong:#656a70; --text:#e0e0dc; --text-dim:#b8bbb9; --text-faint:#919693; --accent:#ffbe00; --accent-dim:#b09035; --rec:#df716c; --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+/* The DLW mockup's colours (world-shell-mockup.html :root, the craft floor — owner, 14 Oct: "mockups are the minimal standard"); they replace UI-EVIDENCE.md rev 1's measured Live greys. Original glyphs; no captured assets. */
+:root { --bg-0:#26292d; --bg-1:#33363b; --bg-2:#3f4348; --bg-3:#4a4e54; --surface:#43464c; --line:#24262a; --line-strong:#3d4147; --text:#d4d7da; --text-dim:#a2a7ad; --text-faint:#71767c; --accent:#ffbe00; --accent-dim:#b09035; --accent-soft:rgba(255,190,0,.13); --sel:#7ec3e6; --rec:#e0523f; --green:#8fd0a8; --stall:#ff9b4a; --mono:ui-monospace,'SF Mono',Menlo,monospace; --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  /* The cut's palette (icon-cut.html :14–17): the agents', worlds' and kinds' own colours the marks paint with — undefined until
+     now, so place, palace, journey, expression and occurrence marks painted nothing (lane F, 14 Oct). */
+  --fizz:#5cc6b4; --honey:#e2a35e; --bumble:#d985a6; --drone:#8fbfb6; --fixgen:#a8c9c2; --parasakti:#c79ae0;
+  --w-ariadne:#d1a46c; --w-satya:#5fb3b0; --w-kestrel:#a9c4dc; --w-field:#7ec3e6;
+  --mercurius:#c9a0dc; --selfc:#9fc7e8; --tower:#d8c89a;
+  --paper:#EFEFED; --pfield:#FAFAF8; --ink:#111; --pmid:#6E6E6A; --hl:#FFE97A;
+  --serif:Charter,"Iowan Old Style",Palatino,Georgia,serif }
 * { box-sizing:border-box }
 html,body,#root { height:100%; margin:0 }
 body { background:var(--bg-0); color:var(--text); font:11px/1.35 var(--font-ui); overflow:hidden; -webkit-font-smoothing:antialiased }
@@ -10,13 +17,28 @@ button:focus-visible,input:focus-visible { outline:1px solid var(--accent); outl
 input { min-width:0; border:1px solid var(--line); background:var(--bg-1); padding:3px 5px; border-radius:0 }
 .micro-label { font-size:10px; color:var(--text-faint) }
 .tag { font-size:10px; color:var(--text-dim) }
-.frame { height:100%; display:grid; grid-template-columns:var(--browser-w) minmax(0,1fr) 0px; grid-template-rows:var(--transport-h) minmax(0,1fr) var(--detail-h) 28px; grid-template-areas:'transport transport transport' 'browser center dock' 'chain chain dock' 'status status status' }
-.frame.browser-hidden { grid-template-columns:0 minmax(0,1fr) 0 }
-.frame.dock-open { grid-template-columns:var(--browser-w) minmax(0,1fr) var(--dock-w, 260px) }
-.frame.browser-hidden.dock-open { grid-template-columns:0 minmax(0,1fr) var(--dock-w, 260px) }
-.frame.detail-hidden { grid-template-rows:var(--transport-h) minmax(0,1fr) 0 28px }
+/* The window's parts (manual §10.1: "To hide a part, click its toggle. The other parts grow to fill the space"): each part's track is
+   its own variable, so showing or hiding one never changes another's size, and the panes take what the others leave. The rail's
+   default width is the frame's (narrower below 1000px); the width its edge set (--dock-w, from the book) stands over it. A device's
+   expanded view is a band across the detail area above the chain: the detail row grows by it, the panes above shrink, nothing is
+   covered (manual §16.4; frame/devices/DeviceFlip.tsx). The detail row never takes more than the window between the bars. */
+.frame { --frame-browser:var(--browser-w); --frame-rail:0px; --rail-default:260px; --frame-detail:var(--detail-h); --frame-band:0px;
+  height:100%; display:grid; grid-template-columns:var(--frame-browser) minmax(0,1fr) var(--frame-rail);
+  grid-template-rows:var(--transport-h) minmax(0,1fr) min(calc(var(--frame-detail) + var(--frame-band)), calc(100vh - var(--transport-h) - 28px)) 28px;
+  grid-template-areas:'transport transport transport' 'browser center dock' 'chain chain dock' 'status status status' }
+.frame.browser-hidden { --frame-browser:0px }
+.frame.dock-open { --frame-rail:var(--dock-w, var(--rail-default)) }
+.frame.detail-hidden { --frame-detail:0px }
+/* The expanded view's band: the head and one band of Whole, its bands side by side (catalogue/panels/popout.tsx WIDE_WHOLE_H 192),
+   and the band's 4px padding above and below. */
+.frame:has(> .device-flip-host > *):not(.detail-hidden) { --frame-band:200px }
+.device-flip-host { grid-row:3; grid-column:1 / 3; align-self:start; height:var(--frame-band); min-width:0; overflow:hidden; z-index:2 }
+.device-flip-host:empty, .frame.detail-hidden > .device-flip-host { display:none }
+.frame .detail-residence > .detail-host { margin-top:var(--frame-band); height:auto; min-height:0 }
 .transport { grid-area:transport; display:flex; flex-direction:column }
-.set-title { height:20px; text-align:center; color:var(--text-dim); font-weight:600; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+.set-title { height:14px; line-height:14px; text-align:center; color:var(--text-dim); font-size:11px; font-weight:400; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+.set-title b { color:var(--text); font-weight:500 }
+.set-title-absent { color:var(--text-faint) }
 .transport-controls { display:flex; align-items:center; flex:1 }
 .transport-group { display:flex; align-items:center }
 .transport-group>button:not(.transport-btn) { background:var(--bg-2) }
@@ -86,16 +108,10 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .chain-empty { color:var(--text-faint); padding:5px }
 .chain-side { width:260px; overflow:auto; border-left:1px solid var(--line) }
 .dock { grid-area:dock; background:var(--bg-1); overflow:auto; border-left:4px solid var(--line); padding:5px }
-.dock-panel { border:1px solid var(--line); margin-bottom:4px }
-.dock-panel-header { display:flex; align-items:center; gap:5px; width:100%; height:26px; padding:4px 6px; background:var(--bg-2) }
-.dock-panel-title { flex:1; text-align:left }
-.dock-panel-body { padding:6px; border-top:1px solid var(--line); overflow:auto }
-.dock-panel-chevron.is-collapsed { transform:rotate(-90deg) }
 .inspector-json { font:10px/1.4 var(--font-ui); color:var(--text-dim); white-space:pre-wrap; overflow-wrap:anywhere; margin:4px 0 }
 .panel-hint { color:var(--text-faint); overflow-wrap:anywhere }
 .panel-hint-error,.statusbar-error { color:var(--rec) }
 .statusbar { grid-area:status; border-top:1px solid var(--line); background:var(--bg-1); display:flex; align-items:center; color:var(--text-dim); min-width:0 }
-.statusbar-path { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .statusbar-agent-info { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim) }
 .statusbar-agent-info b { color:var(--text); font-weight:600; margin-right:6px }
 .statusbar-counts { white-space:nowrap }
@@ -107,12 +123,14 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 ::-webkit-scrollbar { width:8px; height:8px }
 ::-webkit-scrollbar-thumb { background:#777e80; border:2px solid var(--bg-1) }
 ::-webkit-scrollbar-track { background:var(--bg-1) }
-@media(max-width:1000px) { :root { --session-slot-w:80px} .frame.dock-open { grid-template-columns:var(--browser-w) minmax(0,1fr) 210px } .meter-field { display:none } .detail-inspector { width:140px } }
-@media(max-width:760px) { :root { --session-slot-w:68px} .browser-search { padding:3px } .position-field { padding:3px 5px } .detail-inspector { width:118px } .track-reading { height:88px } .mixer-unavailable { height:104px } .track-slots { min-height:208px } .statusbar-counts { font-size:9px } .frame.dock-open { grid-template-columns:0 minmax(0,1fr) 210px } .frame.dock-open .browser { display:none } .arrange-lane-label,.arrange-header-space { width:140px } }
+@media(max-width:1000px) { :root { --session-slot-w:80px} .frame { --rail-default:210px } .meter-field { display:none } .detail-inspector { width:140px } }
+@media(max-width:760px) { :root { --session-slot-w:68px} .browser-search { padding:3px } .position-field { padding:3px 5px } .detail-inspector { width:118px } .track-reading { height:88px } .mixer-unavailable { height:104px } .track-slots { min-height:208px } .statusbar-counts { font-size:9px } .arrange-lane-label,.arrange-header-space { width:140px } }
 /* Second evidence pass: complete control geometry, reading values only from native contracts. */
-:root { --transport-h:64px; --session-slot-w:68px; --browser-w:clamp(176px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
+:root { --transport-h:46px; --session-slot-w:68px; --browser-w:clamp(176px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
 .frame { position:relative; padding:0 6px 0; gap:0; background:var(--bg-1) }
-.transport { margin:0 -6px; padding:3px 10px 8px; background:var(--bg-1); border-bottom:3px solid var(--line) }
+/* The transport at the mockup's floor (.tp): a 14px title line over one row of 19–22px controls — 46px with its 3px rule. */
+.transport { margin:0 -6px; padding:2px 10px 5px; background:var(--bg-1); border-bottom:3px solid var(--line) }
+.transport .surface-icons button { width:24px; height:22px }
 .transport-controls { gap:7px }
 .transport-group { gap:2px; white-space:nowrap }
 .native-control { height:19px; min-width:17px; padding:1px 4px; background:var(--bg-0); border:1px solid #30343a; line-height:14px; font-size:10px }
@@ -235,50 +253,31 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .arrange-mixer button { padding:0 2px; border:1px solid var(--line); min-width:16px; height:14px; font-size:9px }
 .arrange-mixer .track-number { width:31px; min-width:31px; height:14px; display:block; padding:0; line-height:12px; font-size:10px }
 .chain { position:relative; border-top:6px solid var(--line); border-radius:3px; padding:0; background:var(--bg-2); gap:4px; border-left:1px solid var(--line-strong); border-right:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong) }
-.detail-no-selection { flex:1; display:grid; place-items:center; color:var(--text-dim); font-size:10px }
-.device-chain-surface { flex:1; min-width:0; overflow-x:auto; display:flex; padding:7px; gap:6px }
-.device-tile { height:100%; width:200px; min-width:200px; background:var(--bg-1); display:flex; flex-direction:column; border:1px solid var(--line-strong); border-radius:3px }
 .device-title { padding:2px 5px; font-size:10px; height:22px; flex:none; background:var(--bg-0); gap:4px; white-space:nowrap }
 .device-title>span:last-child { margin-left:auto }
 .device-power { color:var(--text-faint) }
-.device-parameters { overflow:auto; padding:4px 5px; flex:1 }
-.device-parameter { display:flex; flex-direction:column; gap:1px; margin-bottom:6px; font-size:9px }
-.device-parameter>span { overflow-wrap:anywhere; color:var(--text-dim) }
-.device-parameter>input { padding:1px 3px; height:17px; width:100%; text-overflow:ellipsis; font-size:10px; color:var(--text) }
-.device-empty { height:100%; display:grid; place-items:center; color:var(--text-faint) }
-.clip-inspector { width:180px; flex:none; padding:3px; background:var(--bg-1); border-right:5px solid var(--line); overflow:auto; font-size:10px }
 .clip-section-title { height:20px; background:var(--bg-0); padding:2px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 .clip-color-chip { display:inline-block; width:7px; height:7px; background:var(--accent); margin-right:4px }
-.clip-inspector summary { height:20px; padding:2px 3px; background:var(--bg-0); cursor:pointer; color:var(--text-dim) }
-.clip-inspector details { border-top:1px solid var(--line); padding-bottom:4px }
-.clip-values-pair { display:flex; gap:4px; padding:2px 4px }
-.clip-value { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; font-size:10px }
-.clip-value input { width:100%; height:15px; padding:0 3px; font-size:10px; text-align:center }
-.clip-inspector button { width:calc(100% - 8px); height:17px; font-size:10px; background:var(--bg-0); border:1px solid var(--line); border-radius:7px; margin:2px 4px }
-.clip-values-pair button { margin:2px 0; flex:1; width:auto }
-.clip-subheading { display:block; padding:3px 7px 0 }
-.note-editor { flex:1; min-width:0; display:flex; flex-direction:column }
-.note-toolbar { height:20px; padding:1px 4px; font-size:10px; background:var(--bg-1); display:flex; align-items:center; gap:4px }
-.note-toolbar button { padding:0 4px; background:var(--bg-0); border:1px solid var(--line) }
-.note-toolbar label { display:flex; gap:3px; align-items:center; white-space:nowrap }
-.note-toolbar input { width:10px; height:10px; margin:0 }
-.note-toolbar>span { flex:1; text-align:center }
-.note-toolbar output { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.note-ruler { height:20px; margin-left:52px; display:flex; overflow:hidden; background:var(--bg-1); flex:none }
-.note-ruler span { width:72px; min-width:72px; padding:2px; font-size:10px; border-left:1px solid var(--line) }
-.note-grid { display:flex; flex:1; min-height:0 }
-.note-keyboard { width:52px; flex:none; display:flex; flex-direction:column; justify-content:space-between; padding:6px 6px; font-size:10px; border-right:1px solid var(--line); background:repeating-linear-gradient(0deg,var(--bg-1) 0,var(--bg-1) 13px,var(--bg-0) 13px,var(--bg-0) 18px) }
-.note-grid-body { flex:1; background:repeating-linear-gradient(90deg,transparent 0,transparent 71px,var(--line) 71px,var(--line) 72px),repeating-linear-gradient(0deg,transparent 0,transparent 17px,#363b4055 17px,#363b4055 18px); border-bottom:1px solid var(--line) }
-.velocity-lane { height:45px; display:flex; flex:none; border-top:1px solid var(--line) }
-.velocity-lane>span { width:52px; padding:6px 4px; font-size:9px; color:var(--text-dim); background:var(--bg-1) }
-.velocity-lane>div { flex:1; background:repeating-linear-gradient(90deg,transparent 0,transparent 71px,var(--line) 71px,var(--line) 72px) }
 .statusbar { padding:0 4px; gap:8px; border:none; font-size:10px }
 .statusbar-info { width:14px; height:14px; border-radius:50%; background:var(--bg-3); display:grid; place-items:center; font-weight:bold }
-.statusbar-path { background:var(--bg-0); padding:2px 5px }
+/* The Info view (the mockup's .sb .info): what the pointer is over, read in the bar; idle, how to use it. */
+/* It has its room first (lane F; natively the run context's admission list crushed it to one letter, "C", "E", "L"…): it never
+   narrows below its floor and takes all the room left; the readings beside it give way to it, never the other way round. */
+.statusbar-info-line { flex:1 1 0; min-width:min(45%, 560px); height:20px; padding:2px 8px; line-height:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:var(--bg-0); color:var(--text-dim) }
+.statusbar-info-line b { color:var(--text); font-weight:500; margin-right:6px }
+/* The readings to its right shorten to what fits, each whole in its title (the Info line reads it on hover): the run context
+   ellipsizes; the owner readback shows its count and folds its admitted rows away (a failed owner stays in the bar, in --rec);
+   the aperture and the Clip | Device switch keep their size, the Scene's name its own 90–140px. */
+.statusbar > :is(.statusbar-counts, .statusbar-error) { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis }
+.statusbar > :is(.statusbar-aperture, .status-detail-views) { flex:none }
+.statusbar > .owner-readback { flex-shrink:4 }
+.statusbar .owner-readback-row:not([data-owner-state="failed"]) { display:none }
+.statusbar .owner-readback-summary { min-width:0; overflow:hidden; text-overflow:ellipsis }
 .statusbar-track { min-width:90px; max-width:140px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:var(--text-dim) }
 .statusbar-mini-meter { color:var(--accent); font-size:17px; line-height:18px }
-.browser-resizer { position:absolute; left:calc(var(--browser-w) + 2px); top:var(--transport-h); bottom:calc(var(--detail-h) + 28px); width:6px; cursor:col-resize; z-index:3; touch-action:none }
-.detail-resizer { position:absolute; left:6px; right:6px; bottom:calc(var(--detail-h) + 25px); height:6px; z-index:3; cursor:row-resize; touch-action:none }
+.browser-resizer { position:absolute; left:calc(var(--browser-w) + 2px); top:var(--transport-h); bottom:calc(var(--frame-detail) + var(--frame-band) + 28px); width:6px; cursor:col-resize; z-index:3; touch-action:none }
+/* The detail area's edge runs under the panes only: the rail beside it keeps its own edge (its wedge). */
+.detail-resizer { position:absolute; left:6px; right:calc(var(--frame-rail) + 6px); bottom:calc(var(--frame-detail) + var(--frame-band) + 25px); height:6px; z-index:3; cursor:row-resize; touch-action:none }
 .browser-resizer:focus-visible,.detail-resizer:focus-visible { outline:1px solid var(--accent) }
 @media(max-width:1400px) { .transport-scale,.transport-loop { display:none } .transport-system { margin-left:10px } }
 @media(max-width:1000px) { .transport-system { display:none } .transport-tempo>button:nth-of-type(n+3) { display:none } .transport-controls { gap:5px } .transport-spacer { min-width:0 } .browser-categories { width:96px } .session-track { width:68px; min-width:68px } .session-return-tracks .session-track { width:58px; min-width:58px } .session-main { width:58px } :root { --detail-h:240px; --browser-w:220px } .groove-columns { gap:6px } .clip-inspector { width:160px } }
@@ -297,6 +296,7 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .expressions-inhabitant { display:flex; flex-direction:column; width:100%; height:100%; min-height:0 }
 .expressions-application { flex:1; min-height:0; position:relative }
 .expressions-application iframe { display:block }
+.expressions-application[data-empty] { visibility:hidden }
 .inhabitant-fault { padding:4px 7px; font-size:11px; color:#f3b4a0; background:var(--bg-0); flex:none }
 .world-browser { grid-area:browser; min-height:0; overflow:auto; border:1px solid var(--line-strong); border-right:4px solid var(--line); border-radius:3px 0 0 3px; background:var(--bg-2); font-size:11px }
 .world-browser-header,.world-files-heading,.native-context-header,.native-context-section-header { display:flex; align-items:center; justify-content:space-between; min-width:0; gap:8px }
@@ -374,8 +374,18 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 /* Retained native consumers keep their model while presentation is concealed. */
 .browser-residence, .dock-residence { display: contents; }
 .browser-residence[hidden], .dock-residence[hidden] { display: none; }
+/* The one detail residence (F4) dissolves like the others; its host takes the detail row (frame/detail/detail.css:
+   chain, ch in the agency frame). */
+.detail-residence { display: contents; }
+.detail-residence[hidden] { display: none; }
+/* The one browser and the one widget rail take their areas in both frames — never auto-placed. */
+.widget-rail { grid-area: dock; }
+.frame.agent-shell-frame .one-browser { grid-area: br; }
+.frame.agent-shell-frame .widget-rail { grid-area: dk; }
 .native-foundation-fault { position: fixed; z-index: 90; bottom: 28px; left: 12px; max-width: min(640px, calc(100vw - 24px)); padding: 8px 12px; background: #251e1c; color: #edc9bc; border: 1px solid #705344; font-size: 12px; }
-.native-foundation-pending { position: fixed; z-index: 90; bottom: 3px; left: 32px; color: var(--muted); font-size: 11px; pointer-events: none; }
 
-/* The Expressions bar carries a second row of pinned controls (NativeBarStrip): the header grows to hold it. */
-.frame:has(.native-transport-pins) { --transport-h:98px }
+
+/* The native Mac window's traffic lights stand over the content's top-left (titleBarStyle "Overlay"): the transport's
+   controls row starts past them, the title line stays centred. Seen on screen 15 Oct: at the mockup's 46px bar the lights
+   covered the globe, Link and Tap. */
+:root[data-window-chrome="overlay"] .transport-controls { padding-left: 72px }

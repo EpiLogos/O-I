@@ -7,7 +7,7 @@
  * browser); everything React is here.
  */
 import {createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
-import {absentEncounterBridge, projectionModule, type EncounterBridge} from "./projectionModules";
+import {absentEncounterBridge, createPaneSubject, followedRefOf, projectionModule, type EncounterBridge} from "./projectionModules";
 import {ProjectionPaneSession, observeConcealment} from "./projectionPaneSession";
 import {isProjectionPaneKind, type SurfaceBinding} from "./types";
 
@@ -45,7 +45,7 @@ export function useProjectionEncounter(): ProjectionEncounterSource {
  * a body.
  */
 export function ProjectionSurface({binding}: {binding: SurfaceBinding}) {
-  const registration = isProjectionPaneKind(binding.kind) ? projectionModule(binding.kind) : undefined;
+  const registration = isProjectionPaneKind(binding.kind) ? projectionModule(binding.kind, binding.projection?.build) : undefined;
   const {bridge, publish} = useProjectionEncounter();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const elementRef = useRef<HTMLDivElement | null>(null);
@@ -64,6 +64,12 @@ export function ProjectionSurface({binding}: {binding: SurfaceBinding}) {
       bridge.transition(intent);
     },
   }), [bridge]);
+  // The pane's subject (manual §10.2): its pin (`projection.subject_ref`, set by the pane's Follow/Pin control) or the selection
+  // it follows. A pin or an unpin reaches the mounted module through this channel and does NOT remount it: a remount would tear
+  // down a retained engine (the Earth's globe, its one atlas claim) for a change of subject.
+  const paneSubject = useMemo(() => createPaneSubject({pinned: binding.projection?.subject_ref, followed: followedRefOf(bridge.snapshot())}), [binding.id]);
+  const pinnedRef = binding.projection?.subject_ref;
+  useEffect(() => {paneSubject.pin(pinnedRef);}, [paneSubject, pinnedRef]);
   // A new kernel connection generation remounts the pane's module: its old
   // registration was retired by the epoch guard, and a fresh mount
   // re-subscribes on the current epoch — the same accessEpoch/accessReady
@@ -79,6 +85,7 @@ export function ProjectionSurface({binding}: {binding: SurfaceBinding}) {
       binding: {id: binding.id, title: binding.title, subject_ref: binding.projection?.subject_ref},
       element: elementRef.current,
       encounter: paneEncounter,
+      subject: paneSubject,
     }, message => setFault(message));
     sessionRef.current = session;
     return () => {
@@ -86,11 +93,13 @@ export function ProjectionSurface({binding}: {binding: SurfaceBinding}) {
       if (sessionRef.current === session) sessionRef.current = null;
     };
     // One mount per binding instance per connection generation; encounter
-    // delivery rides `publish`.
+    // delivery rides `publish`, and a pin rides `paneSubject` (above) — neither remounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [binding.id, registration?.id, epoch]);
   useEffect(() => {
     publish();
+    // The same render that publishes the spine moves what a following pane follows; a pinned pane's shown ref is unmoved.
+    paneSubject.follow(followedRefOf(bridge.snapshot()));
   });
   // Concealed-retained notice (the pane tier hides the WRAPPER with
   // display:none): the same off-screen observation every viewport-gated

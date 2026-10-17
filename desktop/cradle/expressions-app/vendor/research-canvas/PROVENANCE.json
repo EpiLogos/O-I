@@ -2,13 +2,12 @@
   "source": "Research Canvas / Antichrist Project",
   "source_checkout": "/Users/admin/Central/Work/projects/Antichrist Project",
   "revision": "7df35f822f9235331a69940cdaf484fe4a0b95c1",
-  "scope": "Mature Canvas, Timeline, Places and Street View source dependency closure plus native ql.techne compatibility adapters. Upstream files byte-exact except explicitly recorded capability, native error disclosure and hosted offline-network patches. No standalone application, database or backend is mounted.",
+  "scope": "Mature Canvas, Timeline, Places and Street View source dependency closure plus native ql.techne compatibility adapters. Upstream files byte-exact except explicitly recorded capability, native error disclosure and hosted offline-network patches. No standalone application, database or backend is mounted. 2026-10-14 (PORT-AUDIT §E5): the 30 overlays under packages/canvas/src/** are port-new modules, not upstream files; each is absent at the recorded revision 7df35f8 (git cat-file, scripted). Their file headers cite O-I lanes 1, 2 and 4; three of the 30 cite none.",
   "entries": [
     "packages/desktop-api/src/techneBundle.ts",
     "packages/desktop-api/src/techneTransport.ts",
     "packages/canvas/src/CanvasView.tsx",
     "packages/canvas/src/timeline/TimelineSurface.tsx",
-    "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx",
     "packages/canvas/src/streetview/StreetViewSurface.tsx",
     "packages/canvas/src/geography/bundledPack.ts",
     "packages/canvas/src/styles/shell.css",
@@ -58,11 +57,6 @@
     "packages/canvas/src/nodes/nodeHandles.ts": "b7d99fc09e11e502413e39d32018763d7edbf24d0b8f70edff6777e832bbca94",
     "packages/canvas/src/nodes/nodeVisualStyle.ts": "4eb46d6c9a54be722ab65fae8b707fb564b51493f2199928d88b60a17648888f",
     "packages/canvas/src/presentation/cardPresentation.ts": "767aa78733f2cb8bcd5d8085778e7084976ccfc59e20f51e19455727a83b41e6",
-    "packages/canvas/src/psychogeographic/LocationPanel.tsx": "7955e4173276c769fc98dfbef60847b72ff9927fe807a9123c46a83ea8c69731",
-    "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
-    "packages/canvas/src/psychogeographic/geometry.ts": "7b9cc1b85b3bda72a4acffb295cef5a871613eb3e4d5a205cfa02f16e8cfca2d",
-    "packages/canvas/src/psychogeographic/mapStyle.ts": "1a59316a06bbcfbba0bb41c3de461763d01cfd06591994b28decd9607eb6e626",
-    "packages/canvas/src/psychogeographic/renderer.ts": "c20d573672250c6befe77b187745f90d602b6b76378134b0a4c1c3fe9aafad1e",
     "packages/canvas/src/scenes/walkAssembly.ts": "08bb5f0871fbc812dbd110dc6fd018384f67335c9687e4d589bc4cda8da60dc3",
     "packages/canvas/src/sequences/SequenceMap.tsx": "6dbc9e0e321c2bcd881cac799581cbfc277e1a422a8ce07c818c180bbae02185",
     "packages/canvas/src/sequences/walkSequenceGraph.ts": "5453d52196fcb9a858f43e8ef838e793e27e8f647496f44b3f87f491a7afcdee",
@@ -187,25 +181,16 @@
     "packages/canvas/src/canvas/CanvasGuides.tsx",
     "packages/canvas/src/canvas/ZoomReadout.tsx",
     "packages/canvas/src/psychogeographic/basemapSources.ts",
-    "packages/canvas/src/psychogeographic/basemapLayers.ts",
     "packages/canvas/src/psychogeographic/placeAuthoring.ts",
     "packages/canvas/src/canvas/CanvasObjectNodes.tsx",
-    "packages/canvas/src/psychogeographic/placeTimeControl.ts",
     "packages/canvas/src/timeline/causeChain.ts",
     "packages/canvas/src/timeline/nesting.ts",
     "packages/canvas/src/timeline/participantSpans.ts",
     "packages/canvas/src/timeline/TimelineNesting.tsx",
     "packages/canvas/src/timeline/TimelineParticipants.tsx",
-    "packages/canvas/src/psychogeographic/terminator.ts",
     "packages/canvas/src/timeline/availabilityVoice.ts",
     "packages/canvas/src/timeline/palette.ts",
     "packages/canvas/src/timeline/standingStyle.ts",
-    "packages/canvas/src/psychogeographic/disclosure.ts",
-    "packages/canvas/src/psychogeographic/placeLayers.ts",
-    "packages/canvas/src/psychogeographic/placeNavigation.ts",
-    "packages/canvas/src/psychogeographic/placeProvenance.ts",
-    "packages/canvas/src/psychogeographic/placeRoutes.ts",
-    "packages/canvas/src/psychogeographic/placeStanding.ts",
     "packages/canvas/src/timeline/TimelineBands.tsx",
     "packages/canvas/src/timeline/TimelineClusters.tsx",
     "packages/canvas/src/timeline/TimelineMinimap.tsx",
@@ -214,6 +199,7 @@
     "packages/canvas/src/timeline/labels.ts",
     "packages/canvas/src/timeline/minimapGeometry.ts"
   ],
+  "overlays_standing": "port-new — authored in the O-I port (file headers cite lanes 1, 2 and 4), not upstream; covers the 30 overlays under packages/canvas/src/**; the other 14 overlays are not classified by this field (2026-10-14, PORT-AUDIT §E5)",
   "patches": {
     "packages/canvas/src/timeline/categories.ts": {
       "upstream_sha256": "201d672a055205d5843cc7467d6393dfa56c8aa1b19598154d45f32670023734",
@@ -270,11 +256,6 @@
       "adapted_sha256": "36b83a5ef472bef2b9246c09387439d1a600acd8ef100394d29b2a7715afdb69",
       "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T8: periodisation bands | lane-2 T12+T13: honest clusters, scale-window minimap | lane-2 T10-T11: cause chains, standing edges | lane-2 T15-T18: timeline views and style | lane-2 T9-T14: nesting, participant spans | lane-2 T20 glue: onOpenRelation and onOpenEndpoint props, forwarded to the relationship layer and the cause-chain panel, which read each hop back to its native relationship; an endpoint the host accepts opens through the lens's own node-open path, and the panel offers no selection the host did not declare.; lane-2 T9: a collapsed parent counts only the children the category chips show (chip-hidden children neither count nor hold the parent open)"
     },
-    "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
-      "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
-      "adapted_sha256": "edd1e116ae59ce3daa3ecfccee7e8a3f8cb33adfe5e8ff764bdf01505e07df49",
-      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes. | lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T4b copy: the offline stance reads as the owner's switch | lane-4 T17-T19: placemark authoring | lane review fixes 13 Oct | lane-4 T14-T16: time on the globe | lane-4 T20-T21: place views, layer persistence | lane-4 T22-T24: navigation identity | lane-4 T27-T28: terminator, ladder | lane-4 T25: tour flight seam (onRegisterPlaceFlight): one camera flight per stop, layers and basemap rows untouched; lane-4 T22: the session focus is honoured once per distinct ref, so a search choice flies the mounted map in place | lane-4 T30: markers carry their facet's standing class; the inspector receives it; lane-4 T30 (R2): a place's marker and inspector standing read every facet it carries (placeStandingOfRelations: mythic wins), not the last facet kept"
-    },
     "packages/canvas/src/streetview/StreetViewSurface.tsx": {
       "upstream_sha256": "0c77fb9bfb11a49f5683ddc38c5ee6f152a5e08c859a21c712064f8dd077a7d2",
       "adapted_sha256": "0323bdfa45eaec4b616953699e7aa6c8ee6681d96332c62b50c400800c9ac580",
@@ -309,11 +290,6 @@
       "upstream_sha256": "7a985dcad012bde50624a7bb846b1acdbac5ccee750f7f9d4538ec7b004c4901",
       "adapted_sha256": "ffb97e473c6ac33bf63ad3ce7550c048d32aa524c1f61293e993899478e184f1",
       "reason": "Filter actual native relation types; dated relation focus displays both real endpoints without invented edges; optional explicit Close callback."
-    },
-    "packages/canvas/src/psychogeographic/LocationPanel.tsx": {
-      "upstream_sha256": "7955e4173276c769fc98dfbef60847b72ff9927fe807a9123c46a83ea8c69731",
-      "reason": " Optional hosted panel follows native inspector styling and exposes Close/Escape without a second map panel. Lane-4 T30: a mythic place's inspector shows the mythic tag and the mythic sentence; any other place renders nothing extra.",
-      "adapted_sha256": "6d2e93f622e74ef024754010599c7e0694456d950dc41859dee0e075a7271aa8"
     },
     "packages/canvas/src/timeline/projection.ts": {
       "upstream_sha256": "686589e885e3cd6756c8f14b4a26a764c1e3a9058b0d27fc66952d66ee2714bc",
@@ -383,15 +359,6 @@
     "packages/schema/src/node.ts": {
       "adapted_sha256": "d91388fe3b6a8a02d784edbf1cb952355375caab028d452c018699a7c8ca4d80",
       "reason": "lane-2 T1: bridge carries every precision rung verbatim | lane-2 T4: deep time | lane-2 T4c: TEMPORAL_PRECISIONS is the contract list, re-exported"
-    },
-    "packages/canvas/src/psychogeographic/mapStyle.ts": {
-      "upstream_sha256": "1a59316a06bbcfbba0bb41c3de461763d01cfd06591994b28decd9607eb6e626",
-      "adapted_sha256": "d701eec2ea210966b62e53e7f2a00c8f9b10b2d2864ab4c6d96f6c7823cd2891",
-      "reason": "lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T11-T13: routes, hierarchy edges, provenance"
-    },
-    "packages/canvas/src/psychogeographic/renderer.ts": {
-      "adapted_sha256": "9748e8ad6bd98d49c97c95e658d0cd8cf349ffc77a71a1f94d1b8e144e966def",
-      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T17-T19: placemark authoring | lane review fixes 13 Oct | lane-4 T27-T28: terminator, ladder | review-6: the terminator edge draws the great circle only | lane-4 T30: a mythic marker is drawn as mythic (dashed mythic ring, Mythic note, title sentence); a factual marker is unchanged, and the mark law is placeStanding.ts"
     },
     "packages/schema/src/time.ts": {
       "upstream_sha256": "9107194ab14fcfaeca85499e7a88f71c06661cad824ed4ec89e28c87d7f9a9ea",

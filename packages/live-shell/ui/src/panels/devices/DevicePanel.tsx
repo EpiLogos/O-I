@@ -29,6 +29,8 @@ type Status = 'saving' | 'saved' | 'error'
 export interface DevicePanelProps {
   /** Device element name in the document (e.g. "GlueCompressor"). */
   elementName: string
+  /** The track whose device this face edits, when the host binds it (the Live chain binds the selected track). */
+  boundTrack?: string
   /** Product title for hints and headers. */
   displayTitle: string
   set: SetSummary | null
@@ -87,7 +89,7 @@ function StatusMark({ status, statusMsg }: { status: Status | undefined; statusM
   return null
 }
 
-export function DevicePanel({ elementName, displayTitle, set, loading, error }: DevicePanelProps) {
+export function DevicePanel({ elementName, displayTitle, set, loading, error, boundTrack }: DevicePanelProps) {
   const [descriptors, setDescriptors] = useState<Record<string, ParamDescJson[]> | null>(null)
   const [descError, setDescError] = useState<string | null>(null)
 
@@ -120,7 +122,7 @@ export function DevicePanel({ elementName, displayTitle, set, loading, error }: 
     () => (set ? set.tracks.filter((t) => t.devices.includes(elementName)) : []),
     [set, elementName],
   )
-  const track = trackChoice ?? carriers[0]?.name ?? null
+  const track = boundTrack ?? trackChoice ?? carriers[0]?.name ?? null
 
   // A newly opened set resets the manual track choice.
   useEffect(() => {
@@ -228,18 +230,22 @@ export function DevicePanel({ elementName, displayTitle, set, loading, error }: 
     <div className="devp-panel">
       <div className="devp-header">
         <span className="micro-label">track</span>
-        <select
-          className="devp-track-select"
-          value={track}
-          onChange={(e) => setTrackChoice(e.target.value)}
-          aria-label={`${displayTitle} — track to edit`}
-        >
-          {carriers.map((t) => (
-            <option key={t.name} value={t.name}>
-              {t.name}
-            </option>
-          ))}
-        </select>
+        {boundTrack !== undefined ? (
+          <span className="devp-track-select" aria-label={`${displayTitle} — track it edits`}>{boundTrack}</span>
+        ) : (
+          <select
+            className="devp-track-select"
+            value={track}
+            onChange={(e) => setTrackChoice(e.target.value)}
+            aria-label={`${displayTitle} — track to edit`}
+          >
+            {carriers.map((t) => (
+              <option key={t.name} value={t.name}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        )}
         <span className="devp-device-tag">{elementName}</span>
       </div>
 

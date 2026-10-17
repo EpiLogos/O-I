@@ -5,8 +5,7 @@ import {AgentShellProvider, useAgentShell} from './AgentShellContext'
 import {AgentShellTransport} from './AgentShellTransport'
 import {AgentShellBrowser} from './AgentShellBrowser'
 import {AgentContextDock} from './AgentContextDock'
-import {AgentSessionGrid} from './AgentSessionGrid'
-import {AgentArrangementView} from './AgentArrangementView'
+import {AgentShellCentre} from './AgentShellRoot'
 import {AgentShellDeviceDetail} from './AgentShellDeviceDetail'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {loadAgentShellFamilies} from '../inhabitants/loadAgentShellFamilies'
@@ -20,7 +19,9 @@ loadAgentShellFamilies()
 
 /**
  * The F2 refusal fixture: the real agent-shell components over an
- * unavailable transport and EMPTY agency data. It shows only what the shell
+ * unavailable transport and EMPTY agency data. The centre is the agent tab's
+ * body (the thread); the Session and the Arrangement are the shared tracks
+ * pane's and are not mounted here. It shows only what the shell
  * honestly discloses when no kernel is attached — no fabricated rows, no
  * fabricated telemetry. The live oracle path (tests/agent-shell-live.browser.mjs)
  * is the one that exercises native.agent against the F1 oracle; this fixture
@@ -59,11 +60,7 @@ function Stage() {
         transport={FIXTURE_TRANSPORT}
       />
       <div className="browser-residence" hidden={!browser}><AgentShellBrowser rows={[]} error={null} loading={false} /></div>
-      <main className="center" data-region="centre">
-        {shell.centreView === 'arrangement'
-          ? <AgentArrangementView tracks={[]} error={null} />
-          : <AgentSessionGrid tracks={[]} />}
-      </main>
+      <main className="center" data-region="centre"><AgentShellCentre /></main>
       <div className="dock-residence" hidden={!dock}><AgentContextDock /></div>
       <div className="detail-residence" hidden={!detail}><AgentShellDeviceDetail tracks={[]} /></div>
       <footer className="statusbar" data-region="status-bar" role="status">Agent shell refusal fixture — {FIXTURE_TRANSPORT.reason}</footer>

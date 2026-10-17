@@ -1,55 +1,57 @@
-.native-world-detail{display:flex;flex-direction:column;min-height:0;background:var(--bg-2)}
-.native-world-detail .native-detail-header{display:flex;align-items:center;gap:8px;flex:none;min-height:29px;padding:3px 7px;border-bottom:1px solid var(--line);background:var(--bg-1);font-size:10px}
-.native-detail-header label{display:flex;align-items:center;gap:6px;min-width:0}
-.native-detail-header select{max-width:230px;color:var(--text);background:var(--bg-2);border:1px solid var(--line);font:inherit;padding:2px 4px}
-.native-detail-header button,.native-chain-configuration>nav button{font:inherit;color:var(--text);background:var(--bg-2);border:1px solid var(--line);border-radius:2px;padding:3px 6px;cursor:pointer;white-space:nowrap}
-.native-detail-header button:hover:not(:disabled),.native-chain-configuration>nav button:hover{background:var(--bg-3)}
-.native-detail-header button[aria-expanded=true],.native-chain-configuration>nav button[aria-pressed=true]{background:var(--accent);color:var(--bg-0,#202020)}
-.native-detail-header button:focus-visible,.native-detail-header select:focus-visible,.native-chain-configuration>nav button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.native-detail-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;color:var(--text-dim)}
-.native-detail-actions{display:flex;align-items:center;gap:3px;margin-left:auto;flex:none}
-.native-detail-header [role=alert]{color:#f3b4a0;overflow-wrap:anywhere;min-width:0;flex:1}
-.native-detail-body{flex:1;min-height:0;overflow:auto}
-.native-detail-view{min-height:100%}
+/* The Expressions detail: the Scene clip on the Clip side (the mockup's .clipv — properties, Scenes, Sequence; world-shell-mockup.html
+   :147-152 and :1678) and the Studio on the Device side (components/expressions/studio). Shell tokens only. */
+.native-world-detail{display:flex;flex-direction:column;min-height:0;min-width:0;height:100%;background:var(--bg-1)}
+.native-detail-body{flex:1;min-height:0;display:flex;flex-direction:column}
+.native-detail-view{flex:1;min-height:0;min-width:0}
+.native-detail-view[hidden],.native-settings-editor[hidden],.native-settings-note[hidden]{display:none}
+
+/* Clip: the clip view (.clipv) — the properties column, the Scenes, then the Sequence taking what is left. */
+.native-clip-view{display:flex;align-items:stretch;background:var(--bg-1);border:1px solid var(--line);overflow:hidden}
+.native-clip-view[hidden]{display:none}
+.native-clip-view .ccol{border-right:1px solid var(--line);overflow:auto;padding:4px 0;min-width:0}
+.native-clip-view .ccol:last-child{border-right:none;flex:1}
+.native-clip-view .ccol>h5{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;padding:4px 10px;font-weight:400;font-size:9.5px;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase}
+.native-clip-view .ccol>h5>span:not(.native-clip-tools){letter-spacing:.06em}
+.native-clip-sequence{display:flex;flex-direction:column}
+.native-clip-tools{display:flex;align-items:center;gap:6px;letter-spacing:0;text-transform:none}
+.native-clip-surface-choice{display:flex;border:1px solid var(--line)}
+.native-clip-surface-choice button{padding:1px 6px;background:var(--bg-0);border:0;color:var(--text-faint);font:inherit;font-size:9.5px;cursor:pointer}
+.native-clip-surface-choice button[aria-pressed=true]{background:var(--accent);color:var(--bg-1)}
+.native-clip-tools select{height:18px;max-width:170px;padding:0 4px;background:var(--bg-2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:10px}
+.native-clip-mark{display:inline-grid;place-items:center;width:16px;height:16px;padding:0;background:none;border:1px solid transparent;color:var(--text-faint);cursor:pointer}
+.native-clip-mark:hover:not(:disabled){color:var(--accent);border-color:var(--line-strong)}
+.native-clip-mark:disabled{opacity:.45;cursor:default}
+.native-clip-tools :is(button,select):focus-visible{outline:1px solid var(--accent);outline-offset:1px}
+.native-clip-fault{margin:0;padding:2px 10px;color:var(--rec);font-size:10px;overflow-wrap:anywhere}
+.native-clip-surfaces{flex:1;min-height:0;overflow:auto;padding:0 6px 6px}
 .native-clip-surface{height:100%;min-height:0}.native-clip-surface[hidden]{display:none}
-.native-detail-view[hidden],.native-chain-configuration[hidden],.native-settings-editor[hidden],.native-settings-note[hidden]{display:none}
-.native-device-view{display:flex;align-items:stretch;gap:5px;height:100%;min-height:0;overflow:auto;padding:4px}
-.native-device-view>div{flex:none;min-height:0;display:flex;flex-direction:column}
-.native-device-view>.native-chain-glyph[hidden]{display:none}
-.native-chain-controls{width:475px}
+
+/* Device: the Studio fills the row; it scrolls sideways inside its own plate. */
+.native-studio-view{display:flex;min-width:0}
+.native-studio-view>.inst-plate{flex:1 1 auto;min-width:0}
+.native-chain-controls{width:475px;min-height:0}
 .native-chain-controls>.native-chosen-editor{height:100%;min-height:0}
 .native-chain-rack:has(>.native-rack-editor){width:355px}
-.native-chain-rack:empty{display:none}
-.native-chain-rack .native-rack-editor{height:100%;min-height:0}
-.native-chain-configuration{width:650px;border:1px solid var(--line);background:var(--bg-1);overflow:auto}
-.native-chain-configuration>nav{display:flex;gap:3px;padding:4px;border-bottom:1px solid var(--line);font-size:10px;flex:none;position:sticky;top:0;z-index:1;background:var(--bg-1)}
-.native-settings-editor{flex:1;display:flex;min-height:0}
-.native-settings-note{padding:10px;font-size:11px;line-height:1.5;color:var(--text-dim);max-width:37ch}
-.native-world-detail:fullscreen{width:100vw;height:100dvh;padding:0;border:0;background:var(--bg-2);overflow:hidden}
-.native-world-detail:fullscreen>.native-detail-header{min-height:36px}
-.native-world-detail:fullscreen .native-detail-view[hidden]{display:none}
-.native-world-detail:fullscreen .native-device-view{display:grid;grid-template-columns:minmax(320px,475px) minmax(0,1fr);grid-template-rows:minmax(0,1fr);align-items:stretch}
-.native-world-detail:fullscreen .native-chain-controls{width:auto;grid-column:1;grid-row:1}
-.native-world-detail:fullscreen .native-chain-configuration{width:auto;grid-column:2;grid-row:1 / -1}
-.native-world-detail:fullscreen .native-chain-rack:has(>.native-rack-editor){width:auto;grid-column:1;grid-row:2;max-height:45dvh}
-.native-world-detail:fullscreen .native-device-view:has(>.native-chain-rack>.native-rack-editor){grid-template-rows:minmax(200px,1fr) minmax(120px,.65fr)}
-.native-world-detail:fullscreen .native-settings-editor .native-force-layout,.native-world-detail:fullscreen .native-settings-editor .native-field-layout{grid-template-columns:minmax(200px,1fr) minmax(240px,.8fr)}
+.native-chain-configuration{width:360px;display:flex;flex-direction:column;gap:6px;min-height:0}
+.native-settings-editor{flex:1;display:flex;flex-direction:column;gap:6px;min-height:0}
+.native-settings-handoff button{align-self:flex-start;height:20px;padding:0 9px;background:var(--bg-1);border:1px solid var(--line);color:var(--text-dim);font:inherit;font-size:10.5px;cursor:pointer}
+.native-settings-handoff button:disabled{opacity:.45;cursor:default}
+.native-settings-note{margin:0;font-size:11px;line-height:1.5;color:var(--text-dim);max-width:37ch}
+
+/* Deep edit at full screen: the same detail, the whole screen. */
+.native-world-detail:fullscreen{width:100vw;height:100dvh;padding:0;border:0;background:var(--bg-1);overflow:hidden}
 .detail-residence{display:contents}
 .detail-residence[hidden]{display:none}
 @media(max-width:720px){
- .native-world-detail .native-detail-header{flex-wrap:wrap;gap:4px}
- .native-detail-header select{max-width:min(230px,45vw)}
- .native-detail-title{display:none}
- .native-detail-actions{gap:2px}
- .native-detail-header [role=alert]{flex-basis:100%}
+ .native-clip-view{flex-direction:column;overflow:auto}
+ .native-clip-view .ccol{border-right:none;border-bottom:1px solid var(--line)}
  .native-chain-controls,.native-chain-rack:has(>.native-rack-editor),.native-chain-configuration{width:min(355px,calc(100vw - 22px))}
- .native-world-detail:fullscreen .native-device-view{display:flex;flex-direction:column;overflow:auto}
- .native-world-detail:fullscreen .native-chain-controls{width:100%;flex:none;height:255px}
- .native-world-detail:fullscreen .native-chain-rack:has(>.native-rack-editor){width:100%;flex:none;max-height:none}
- .native-world-detail:fullscreen .native-chain-configuration{width:100%;flex:none;min-height:300px;overflow:visible}
- .native-world-detail:fullscreen .native-settings-editor .native-force-layout,.native-world-detail:fullscreen .native-settings-editor .native-field-layout{grid-template-columns:1fr}
 }
 .native-input-recovery {flex:0 0 auto;font-size:10px;max-height:38%;overflow:auto;border-top:1px solid var(--border);padding:4px 9px}
 .native-input-copy {display:flex;flex-wrap:wrap;gap:5px;padding:6px 0;border-top:1px solid var(--border)}
 .native-input-copy>span:first-child {flex-basis:100%;overflow-wrap:anywhere}
 .native-input-copy pre {width:100%;max-height:80px;overflow:auto;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+/* The Studio is one plate the row's width (the mockup's .inst fills the chain, :352 flex:1): the chain's wrapper gives it the row,
+   and the plate's own sections scroll sideways under its head, so the head's marks stay in reach. */
+.detail-chain .detail-chain-devices:has(> .native-world-detail){flex:1 1 auto;min-width:0}
+.detail-chain .detail-chain-devices>.native-world-detail{flex:1 1 auto;min-width:0}

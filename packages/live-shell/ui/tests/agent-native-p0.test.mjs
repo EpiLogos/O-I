@@ -250,11 +250,23 @@ test('ligament 4 — the setter bridge wires the armed values: registration, arr
   assert.ok(presented.some(([key, value]) => key === 'effort' && value === 'medium'), 'presentation keeps the control\u2019s value true')
   assert.equal(receipt.kind, 'fired', `the setter returns a fired receipt: ${JSON.stringify(receipt)}`)
   assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'configure', value: {effort: 'medium'}}, 'the value ARRIVES through the bridge')
+  // The shell holds steer as a boolean; the carrier's input mode arrives as its word.
+  await sdkSetters.shellSetter('shell.setSteer')(true)
+  await sdkSetters.shellSetter('shell.setSteer')(false)
+  const sent = JSON.stringify(captured)
+  assert.match(sent, /"input_mode":"steer"/, 'steer arrives as input_mode steer'); assert.match(sent, /"input_mode":"queue"/, 'release arrives as queue')
+  assert.doesNotMatch(sent, /"input_mode":(true|false)/, 'never a boolean')
+  assert.ok(presented.some(([key, value]) => key === 'steer' && value === true), 'the presentation keeps the boolean')
   // The setter channel also answers refusals through the bridge: heartbeat
   // refuses naming the cron owner, nothing captured.
   const hbReceipt = await sdkSetters.shellSetter('shell.setHeartbeat')(false)
   assert.equal(hbReceipt.kind, 'refused')
   assert.match(hbReceipt.missingOp ?? '', /WO-A3/)
+  assert.ok(!presented.some(([key]) => key === 'heartbeat'), 'a refused heartbeat never flips the flag: it moves only after the owner accepts')
+  const armReceipt = await sdkSetters.shellSetter('shell.setWriteArm')(true)
+  assert.equal(armReceipt.kind, 'refused')
+  assert.match(armReceipt.missingOp ?? '', /WO-SF2/)
+  assert.ok(!presented.some(([key]) => key === 'writeArm'), 'nor the write arm: the dispatcher calls it presentation-state and refuses it')
 
   // Cut test: with the registry reset, the same path refuses naming the setter.
   door.resetFamilyManifestsForTest()
@@ -268,6 +280,53 @@ test('ligament 4 — the setter bridge wires the armed values: registration, arr
   )
   assert.equal(cut.kind, 'refused')
   assert.equal(cut.missingOp, 'shell.setEffort', 'unregistered setter: the refusal NAMES the setter')
+})
+
+test('ligament 4 — a shell flag moves only after the owner accepts, and what the owner accepted is what the devices read', async () => {
+  standWorld()
+  const {registerAgentShellSetters} = await import('../src/agent/shellSetterBridge.ts')
+  const accepted = await import('../src/agent/devices/ownerAccepted.ts')
+  accepted.resetOwnerAccepted()
+  const presented = []
+  const receipts = []
+  const shell = {
+    setEffort: v => presented.push(['effort', v]), setSteer: v => presented.push(['steer', v]), setHeartbeat: v => presented.push(['heartbeat', v]),
+    setWriteArm: v => presented.push(['writeArm', v]), setQuantize: v => presented.push(['quantize', v]), quantize: 'next tool',
+  }
+  let answer
+  registerAgentShellSetters({transport: () => TRANSPORT, binding: () => BINDING, shell, onReceipt: r => receipts.push(r), invoke: async () => answer})
+  const press = (path, value) => sdkSetters.shellSetter(path)(value)
+  try {
+    // the unpatched kernel refuses the carrier: the flag stays where it was, and nothing is recorded as the owner's
+    answer = {outcome: null, error: 'the kernel refused the operation: unknown variant `configure`, expected one of `new`, `stop`, `restart`, `pause`, `resume`'}
+    const unpatched = await press('shell.setEffort', 'max')
+    assert.equal(unpatched.kind, 'refused'); assert.match(unpatched.reason, /unknown variant `configure`/)
+    assert.deepEqual(presented, [], 'the owner refused: the effort flag did not move')
+    assert.deepEqual(accepted.ownerAccepted(BINDING), {})
+    // the harness answers, and its own document refuses: an answer that refuses is not an acceptance
+    answer = {outcome: {result: 'harness_agent_outcome', document: {refused: {message: 'effort max is not allowed here'}}}}
+    const harnessRefused = await press('shell.setEffort', 'max')
+    assert.equal(harnessRefused.kind, 'refused'); assert.match(harnessRefused.reason, /effort max is not allowed here/)
+    assert.deepEqual(presented, [], 'the harness refused in its own document: nothing moved')
+    assert.deepEqual(accepted.ownerAccepted(BINDING), {})
+    // the owner accepts: now the flag moves, after the answer, and the value is recorded for the devices
+    answer = {outcome: {result: 'harness_agent_outcome', document: {state: 'configured'}}}
+    const taken = await press('shell.setEffort', 'max')
+    assert.equal(taken.kind, 'fired')
+    assert.deepEqual(presented, [['effort', 'max']])
+    await press('shell.setSteer', false)
+    assert.deepEqual(presented.at(-1), ['steer', false], 'the shell keeps its boolean')
+    assert.deepEqual(accepted.ownerAccepted(BINDING), {effort: 'max', input: 'queue'}, 'the devices read the owner\u2019s acceptance, in the owner\u2019s word for steer')
+    assert.deepEqual(accepted.ownerAccepted('hermes'), {}, 'on this binding only')
+    // the dispatcher calls these two presentation-state and refuses them: they never flip and are never recorded
+    for (const [path, value] of [['shell.setHeartbeat', false], ['shell.setWriteArm', true]]) {
+      const receipt = await press(path, value)
+      assert.equal(receipt.kind, 'refused', path)
+    }
+    assert.deepEqual(presented.map(([key]) => key), ['effort', 'steer'], 'heartbeat and the write arm stayed where they were')
+    assert.deepEqual(accepted.ownerAccepted(BINDING), {effort: 'max', input: 'queue'})
+    assert.equal(receipts.filter(r => r.kind === 'refused').length, 4, 'every refusal still reached the receipt sink')
+  } finally { accepted.resetOwnerAccepted() }
 })
 
 test('ligament 2 — the tool bridge parses the grammar and renders receipts', async () => {

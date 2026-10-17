@@ -81,3 +81,5 @@ present at boot. Scripted: 9/9; pin check 0; a scratch run over the real
 AE data loaded 2,854 occurrences, 3 readings, 29 symbols, 35 corpus works.
 Unverified: the blob route inside the native webview (the lead's native
 screen pass). Images and the sky leg: T-ATLAS-IMAGES / the QL sky binding.
+
+2026-10-14: restated by PORT-AUDIT §E1 — the scratch run did not go through Central. Central refuses `field.json` (4 MiB text bound, per the audit's evidence), so the provider has never loaded the real field through its declared path. The field is now N3 (FOUNDATION §3), the suite's data model, not AE's corpus. The 2,854-occurrence figure is kept as recorded; it is not a load through Central.

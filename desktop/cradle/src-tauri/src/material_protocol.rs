@@ -1,7 +1,8 @@
 //! The `oi-material://` custom protocol (FND-04): the only way rich
 //! material content (HTML, its relative assets, images, PDFs) reaches a
 //! webview. The reserved `/__application/` route serves candidate-owned code
-//! through the application asset owner; every personal-material byte passes
+//! through the application asset owner, and at its one exact path the native
+//! document frame (kernel `document_frame`); every personal-material byte passes
 //! through the Central owner's
 //! `central.files.read` (via the kernel's typed `KernelOp::FilesList` /
 //! `KernelOp::FileBytes` seam) — this module resolves the URL grammar and
@@ -19,7 +20,7 @@
 //! reached, and `..`/absolute segments are refused outright before any
 //! owner call is made.
 use oi_cradle_kernel::files::MaterialRouteError;
-use oi_cradle_kernel::{KernelOp, KernelOpResult};
+use oi_cradle_kernel::KernelOpResult;
 use tauri::http::{Request, Response, StatusCode};
 use tauri::{AppHandle, Manager, Runtime};
 
@@ -42,6 +43,15 @@ pub fn register<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
 
 fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> Response<Vec<u8>> {
     let path = request.uri().path();
+    // The native document frame (kernel `document_frame`): candidate-owned code compiled into this binary, answered at
+    // its one exact path before the application asset route below (which admits only the Expressions build). A Central
+    // document face's iframe loads it under Tauri because a srcdoc document inherits the window's CSP; it reads no file.
+    let host = request.uri().host();
+    if let Some(page) =
+        oi_cradle_kernel::document_frame::serve(host, request.method().as_str(), path)
+    {
+        return document_frame(page);
+    }
     // Candidate-owned application code shares the historical material origin
     // so hosted drafts retain their browser storage. Personal file requests
     // still use the Central-owner location grammar below.
@@ -71,19 +81,20 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
         }
     }
 
+    // Through the kernel's one dispatch (files::read_material), as the dev bridge's /material route already reads: the listing and
+    // the bytes are prepared owner reads, so a document's material never holds the kernel lock while Central answers.
     let host = app_handle.state::<KernelHost>();
-    let mut kernel = match host.0.lock() {
-        Ok(kernel) => kernel,
-        Err(_) => return refuse(StatusCode::NOT_FOUND, "Kernel is unavailable"),
+    // Each op the route dispatches writes its timing line (kernel dispatch.rs `trace_op`).
+    let mut trace = |name: &str, ok: bool, total: std::time::Duration, timing: &oi_cradle_kernel::dispatch::Timing| {
+        oi_cradle_kernel::dispatch::trace_op("native", name, ok, total, timing)
     };
-
-    let target = match oi_cradle_kernel::files::resolve_material(&mut kernel, &location, &relative) {
-        Ok(resolved) => resolved,
+    let (target, bytes) = match oi_cradle_kernel::files::read_material_observed(&host.0, &location, &relative, &mut trace) {
+        Ok(read) => read,
         Err(MaterialRouteError::Forbidden(message)) => return refuse(StatusCode::FORBIDDEN, &message),
         Err(MaterialRouteError::NotFound(message)) => return owner_error(&message),
     };
 
-    match kernel.apply(KernelOp::FileBytes { location: target.clone() }) {
+    match bytes {
         Ok(outcome) => match outcome.result {
             KernelOpResult::FileBytes { byte_len: _, mime_hint, content_base64, .. } => {
                 match base64_decode(&content_base64) {
@@ -122,6 +133,23 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
         },
         Err(message) => owner_error(&message),
     }
+}
+
+/// The document frame page carries no Content-Security-Policy, deliberately: the form written into it runs its own
+/// scripts (a form that brings its own policy, as the Day die's projection does, keeps it). Never cached.
+fn document_frame(page: oi_cradle_kernel::document_frame::FramePage) -> Response<Vec<u8>> {
+    Response::builder()
+        .status(StatusCode::from_u16(page.status).unwrap_or(StatusCode::NOT_FOUND))
+        .header("Content-Type", page.content_type)
+        .header("Cache-Control", "no-store")
+        .header("X-Content-Type-Options", "nosniff")
+        .body(page.body)
+        .unwrap_or_else(|_| {
+            refuse(
+                StatusCode::NOT_FOUND,
+                "Document frame response could not be built",
+            )
+        })
 }
 
 fn world_file(rest: &str) -> Response<Vec<u8>> {

@@ -9,26 +9,35 @@ import {nativeHost} from '../native/application'
 export const CANDIDATE_WORKSPACE_KEY = 'oi.live-shell.candidate.workspace.v2'
 export const CANDIDATE_LEGACY_LAYOUT_KEY = 'oi.live-shell.candidate.layout.v1'
 /** The shell's mode cut (WORLD-SHELL-DESIGN Rev 5's rack): Live (the audio
- * presentation) · Base·Central (the Central world context over the same
- * book mode) · Factory · Expressions · Technē, with Settings the terminal
- * system entry. Live and Base share the book's `base` mode — the design's
- * §6 resolution: Central is a world context (`context.world = 'central'`),
- * not a second mode — so a mode switch here is an encounter transition
- * over the spine, never a fork of it. */
+ * presentation) · Base·Central · Factory · Expressions · Technē, with
+ * Settings the terminal system entry. Each stands on its own book mode, so
+ * each keeps its own panes, detail side and browser (FOUNDATION F1): Live
+ * is the book's `live`, Central its `base`. A mode switch is an encounter
+ * transition over the spine, never a fork of it. */
 export type ShellMode = 'audio' | 'base' | 'factory' | 'expressions' | 'techne' | 'settings'
 export type CandidateWorkspace = ReturnType<typeof useCandidateWorkspace>
 
-/** One imported v2 book. Audio is the candidate's presentation of Base;
- * owner documents, source buffers and recovery addresses remain native. */
+/** The shell modes by the book mode each stands on (a table, never a branch). */
+const SHELL_MODE_OF_BOOK: Readonly<Record<string, ShellMode>> = {live: 'audio', base: 'base', factory: 'factory', expressions: 'expressions', techne: 'techne', settings: 'settings'}
+export const BOOK_MODE_OF_SHELL: Readonly<Record<ShellMode, 'live' | 'base' | 'factory' | 'expressions' | 'techne' | 'settings'>> = {audio: 'live', base: 'base', factory: 'factory', expressions: 'expressions', techne: 'techne', settings: 'settings'}
+
+/** One imported v2 book; owner documents, source buffers and recovery addresses remain native. */
 export function useCandidateWorkspace() {
   const book = useWorkspaces({storageKey: CANDIDATE_WORKSPACE_KEY, legacyLayoutKey: CANDIDATE_LEGACY_LAYOUT_KEY})
   const storedMode = book.current.layout.mode ?? 'base'
-  // Restore reads the encounter: book `base` stands in Base·Central when the
-  // world context says Central, else it is Live's audio cut (the standing
-  // reading of this candidate).
-  const mode: ShellMode = storedMode === 'expressions' || storedMode === 'techne' || storedMode === 'settings' || storedMode === 'factory' ? storedMode
-    : storedMode === 'base' && book.current.context?.world === 'central' ? 'base' : 'audio'
-  const setMode = (next: ShellMode) => book.switchMode(next === 'audio' || next === 'base' ? 'base' : next)
+  // A book saved before Live had its own mode stood in Live as `base` without the Central world: that tree is renamed
+  // Live's, once, and Central opens on its own default the first time it is entered. A tree holding Central's documents is
+  // Central's own (its seed), never an old Live tree, whatever world the context names.
+  // (The kind is central/documents/centralDocuments.ts CENTRAL_DOCUMENT_PANE_KIND, named here: that module reaches the flow
+  // templates, which the book's readers do not load.)
+  // An old Live tree is a SAVED tree: a fresh book has none, and its first tree is Central's seed (lane D found every fresh
+  // book renamed: the base seed landed between this reading and the rename). The rename tests the layout it renames.
+  const holdsCentralDocuments = (layout: {surfaces?: Record<string, {kind?: string}>}) => Object.values(layout.surfaces ?? {}).some(surface => surface.kind === 'projection.central-document')
+  const savedTree = Object.keys(book.current.layout.surfaces ?? {}).length > 0
+  const standsInOldLive = storedMode === 'base' && savedTree && book.current.context?.world !== 'central' && !book.current.modeLayouts?.live && !holdsCentralDocuments(book.current.layout)
+  useEffect(() => { if (standsInOldLive) book.setLayout(layout => holdsCentralDocuments(layout) ? layout : {...layout, mode: 'live'}) }, [standsInOldLive, book.current.id])
+  const mode: ShellMode = standsInOldLive ? 'audio' : SHELL_MODE_OF_BOOK[storedMode] ?? 'base'
+  const setMode = (next: ShellMode) => book.switchMode(BOOK_MODE_OF_SHELL[next])
   const warmTrees = warmWorkspaceTrees(book.workspaces, book.current.id, storedMode)
   const applicationView = useMemo(() => readCandidateApplicationView(book.current.layout.applicationView), [book.current.layout.applicationView])
   const currentBook = useRef(book)
@@ -112,6 +121,10 @@ export function ContinuityProvider({children}: {children: ReactNode}) {
 function ContinuityBook({children}: {children: ReactNode}) {
   const workspace = useCandidateWorkspace()
   return <Continuity.Provider value={workspace}>{children}</Continuity.Provider>
+}
+/** The book when one is mounted, else null — for a part that can stand without it (it then shows nothing of the book). */
+export function useOptionalContinuity(): CandidateWorkspace | null {
+  return useContext(Continuity)
 }
 export function useContinuity(): CandidateWorkspace {
   const value = useContext(Continuity)

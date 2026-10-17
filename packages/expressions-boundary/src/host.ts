@@ -11,6 +11,9 @@ import {RecoveryAdmission, type RecoveryBinding} from './recoveryBinding.ts';
 import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore} from '../../../desktop/cradle/src/techne/session.ts';
 /** A stage control that the frame never answers settles as a refusal, never a hang. */
 const STAGE_TIMEOUT_MS = 60000;
+/** An Expression open waiting for the frame's readiness, with the settle of its answer. */
+interface PendingExpressionOpen {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding; settle: (result: StageResult) => void}
+const SUPERSEDED_OPEN = 'A newer open superseded this one before the Expressions application was ready';
 
 export interface ExpressionsHostOptions {
   bindingId: string;
@@ -20,6 +23,10 @@ export interface ExpressionsHostOptions {
    * no native work; omission preserves legacy non-recovery hosting only. */
   recoveryBindings?: readonly RecoveryBinding[];
   initialRecoveryBinding?: RecoveryBinding;
+  /** T-RECOVERY-FOR-OPENED-WORKS: an Expression this host opens itself (openExpression, the boot deep link) and holds no
+   * configured address for gets the host-selected address `{scope: 'expressions', checkpoint_id: ref, expression_ref: ref}`
+   * before the frame asks. A configured address is never replaced. */
+  selectOpenedWorks?: boolean;
   world?: string;
   expectedOrigin?: string;
   /** The composition root knows which retained host is presented. */
@@ -60,8 +67,9 @@ export class ExpressionsHost {
   private abort = new AbortController();
   private timeout?: ReturnType<typeof setTimeout>;
   private readonly seen = new Set<string>();
-  /** One open waits for readiness, last wins: an Expression, or a browser-local draft by its Library id (openLocalDraft). */
-  private pendingOpen: {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding} | {draftId: string} | null = null;
+  /** One open waits for readiness, last wins: an Expression, or a browser-local draft by its Library id (openLocalDraft). An
+   * Expression's open carries the settle of its answer (openExpression); an open superseded before it was sent is answered so. */
+  private pendingOpen: PendingExpressionOpen | {draftId: string} | null = null;
   /** Tagged with the document epoch it was asked of: a reload drops it. */
   private pendingStudio: {section: StudioSection; epoch: number} | null = null;
   /** Each stage control awaits its own answer by request id. A reload or disposal settles all of them. */
@@ -79,7 +87,7 @@ export class ExpressionsHost {
     this.frame = frame;
     this.bindingId = options.bindingId;
     this.options = options;
-    this.recovery = new RecoveryAdmission(options.recoveryBindings);
+    this.recovery = new RecoveryAdmission(options.recoveryBindings, {selectOpened: options.selectOpenedWorks});
     this.recovery.initial(options.initialRecoveryBinding);
     this.initialNavigationPending = options.initialNavigationPending ?? false;
     this.mode = options.mode ?? 'expressions';
@@ -358,29 +366,48 @@ export class ExpressionsHost {
     this.setMode('techne');
     this.post({v: CHANNEL_VERSION, kind: 'host-command', command: 'lens', lens, ...(ref !== undefined ? {ref} : {})});
   }
-  openExpression(ref: string, targetBindingId: string, options: {refresh?: boolean; lens?: HostedTechneLens} = {}) {
+  /** Opens one native Expression in the presented application. Resolves with the application's own answer, as a stage command's
+   * (lane D): ok once it stands on the Expression, or refused in its own words — the owner's refusal its native status line holds
+   * (a revision conflict, an absent work) — so a caller waiting on the open hears why, not only the frame's toast. An open the
+   * application never answers settles refused at the stage deadline; one superseded before the application was ready, at once.
+   * Callers that need no answer ignore it. */
+  openExpression(ref: string, targetBindingId: string, options: {refresh?: boolean; lens?: HostedTechneLens} = {}): Promise<StageResult> {
     if (!expressionRef(ref)) throw Error('A native Expression ref is required');
     if (targetBindingId !== this.bindingId || !this.presented()) throw Error('The requested application is not the presented target');
     if (options.lens !== undefined && !isDeepInstrument(options.lens)) throw Error('Unknown deep instrument');
     const recovery = this.recovery.binding(ref);
-    const request = {ref, refresh: options.refresh ?? false, lens: options.lens, ...(recovery ? {recovery} : {})};
-    if (!this.ready) this.pendingOpen = request;
-    else this.sendOpen(request);
+    return new Promise<StageResult>(settle => {
+      const request: PendingExpressionOpen = {ref, refresh: options.refresh ?? false, lens: options.lens, ...(recovery ? {recovery} : {}), settle};
+      if (!this.ready) this.holdOpen(request);
+      else this.sendOpen(request);
+    });
+  }
+  /** The open that waits for readiness, last wins: the one it replaces is answered as superseded. */
+  private holdOpen(next: PendingExpressionOpen | {draftId: string} | null) {
+    const previous = this.pendingOpen;
+    this.pendingOpen = next;
+    if (previous && 'settle' in previous) previous.settle({ok: false, error: SUPERSEDED_OPEN});
   }
   /** Opens one browser-local draft by its Library id in the presented application: the host-command `open-local-draft` (the frame reads the
    * draft from its own Library and loads it). Mirrors openExpression: the same target and presented gate, queued until ready. */
   openLocalDraft(draftId: string, targetBindingId: string) {
     if (!boundedText(draftId, 256)) throw Error('A browser draft id is required');
     if (targetBindingId !== this.bindingId || !this.presented()) throw Error('The requested application is not the presented target');
-    if (!this.ready) this.pendingOpen = {draftId};
+    if (!this.ready) this.holdOpen({draftId});
     else this.sendLocalDraft(draftId);
   }
   private sendLocalDraft(draftId: string) {
     this.post({v: CHANNEL_VERSION, kind: 'host-command', command: 'open-local-draft', id: draftId});
   }
-  private sendOpen(request: {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding}) {
+  /** Posts the open with the req its answer settles (the stage commands' answer channel: host-command-result by req, this epoch). */
+  private sendOpen(request: PendingExpressionOpen) {
+    const req = ++this.stageRequests;
+    const timer = setTimeout(() => {if (this.pendingStage.delete(req)) request.settle({ok: false, error: 'The Expressions application did not answer this open'});}, STAGE_TIMEOUT_MS);
+    // Nobody need wait on an open's answer: its deadline never holds a process open by itself.
+    (timer as {unref?: () => void}).unref?.();
+    this.pendingStage.set(req, {epoch: this.epoch, settle: request.settle, timer});
     this.post({v: CHANNEL_VERSION, kind: 'host-command', command: request.refresh ? 'refresh-expression' : 'open-expression', ref: request.ref,
-      ...(request.recovery ? {recovery: request.recovery} : {})});
+      ...(request.recovery ? {recovery: request.recovery} : {}), req});
     if (request.lens) this.selectInstrument(request.lens);
   }
   /** Opens one Studio section in the presented application. Refused unless the
@@ -442,7 +469,9 @@ export class ExpressionsHost {
     this.messages.removeEventListener('message', this.guard, true);
     this.messages.removeEventListener('message', this.receive);
     this.frame.removeEventListener('load', this.loaded);
+    const held = this.pendingOpen;
     this.pendingOpen = null;
+    if (held && 'settle' in held) held.settle({ok: false, error: 'The hosted application was disposed'});
     this.pendingStudio = null;
     this.reading = null;
   }
@@ -455,7 +484,7 @@ export function mountExpressionsApplication(container: HTMLElement, applicationU
   frame.title = 'Expressions';
   frame.dataset.expressionsBinding = options.bindingId;
   const url = new URL(applicationUrl, container.ownerDocument.baseURI);
-  const admission = new RecoveryAdmission(options.recoveryBindings);
+  const admission = new RecoveryAdmission(options.recoveryBindings, {selectOpened: options.selectOpenedWorks});
   const initial = admission.initial(options.initialRecoveryBinding)
     ?? (url.searchParams.has('expression') ? admission.binding(url.searchParams.get('expression')!) : undefined);
   if (initial) {

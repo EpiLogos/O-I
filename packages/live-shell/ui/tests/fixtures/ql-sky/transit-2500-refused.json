@@ -1,0 +1,4 @@
+{
+ "_source": "the same read for epoch 2500-01-01T00:00:00Z: exit 2, stderr as recorded",
+ "stderr": "ql: Natal provider refused: {\"schema\": \"ql.sky-error/v1\", \"error\": \"epoch outside adapter range [1800,2400)\", \"snapshot\": null}"
+}

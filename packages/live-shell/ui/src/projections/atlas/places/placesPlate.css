@@ -1,0 +1,24 @@
+/* The M4′ World / Places plate (T-PLACES-ONTO-ATLAS): the mockup's M4 sections (world-shell-mockup.html:1447-1461) on the instrument
+   plate (frame/devices/instrumentPlate.css), drawn with the device panel kit and the plate's controls (frame/devices/plateControls.css):
+   dials, radios, rows. What stays here is only what a place has: its precision mark, the mythic tag, a relation's swatch, the owners'
+   return. Shell tokens only (styles.css :root). */
+
+/* what the owners returned, as readouts and a light (PlacesPlate.tsx OwnersReturned); a chosen place's source and its Window */
+.places-returned, .places-chosen { align-items: center; gap: 2px 8px }
+.places-returned > .dp-cell--readout { flex-direction: row; align-items: baseline; gap: 3px }
+
+/* the precision grammar's marks (desktop/cradle/src/techne/m0m5/place/project.ts precisionMarker): solid, halo, outline, no coordinate */
+.places-prec { flex: none; display: inline-block; width: 8px; height: 8px; border-radius: 50%; box-sizing: border-box }
+.places-prec[data-marker="solid"] { background: var(--text) }
+.places-prec[data-marker="halo"] { background: var(--text-dim); box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-dim) 35%, transparent) }
+.places-prec[data-marker="outline"] { border: 1.5px solid var(--text-dim) }
+.places-prec[data-marker="no-coordinate"] { border: 1px dashed var(--text-faint) }
+
+/* one grammar for standing (lane-4 T30): factual, mythic (dashed, named), the owner's own vocabulary */
+.places-swatch { flex: none; width: 14px; height: 0; border-top: 2px solid var(--sel) }
+.places-swatch[data-standing="mythic"] { border-top: 2px dashed var(--mercurius) }
+.places-swatch[data-standing="owner-vocabulary"] { border-top-color: var(--text-faint) }
+.places-tag[data-standing="mythic"] { flex: none; padding: 0 3px; font-size: 8.5px; line-height: 11px; color: var(--mercurius); border: 1px dashed var(--mercurius) }
+
+/* the lens's own readings under the chooser */
+.places-lens { display: flex; flex-direction: column; gap: 3px; min-width: 0 }

@@ -20,6 +20,9 @@ import {useCallback, useState} from 'react'
  * always in scope, repair is a separate act). */
 
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {ownerReadings} from '../owners/ownerReading'
+import {readWorkcellOf, workcellReadingKey} from '../owners/readers'
+import {useSpineEpoch} from '../owners/spine'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {
   assembleCensus,
@@ -28,7 +31,9 @@ import {
   HYGIENE_TENDERS,
   parseBranchRefs,
   parseSeatStatus,
+  parseSeatStatusJson,
   parseWorktreeList,
+  workcellRefOf,
   type BoundaryOpSource,
   type HygieneCensus,
   type HygieneFinding,
@@ -41,9 +46,11 @@ export interface CentralHygieneDeviceProps {
   /** The host's machine-level declared reads (the seat instrument, read-only
    * git). The harness supplies them; absent, only the kernel ops are read
    * and their refusals shown. Each result must name the boundary_op it ran. */
-  readonly machineRead?: (kind: 'seat-status' | 'worktree-list' | 'branch-refs') => Promise<{boundaryOp: string; stdout: string; refused?: string}>
+  readonly machineRead?: HygieneMachineRead
   /** The seat paths the register admits (the census classifies against them). */
   readonly seatPaths?: readonly string[]
+  /** Each product's primary checkout as the register names it (`products.<product>.primary`), when the host read the register. */
+  readonly primaries?: Readonly<Record<string, string>>
   readonly expanded?: boolean
 }
 
@@ -54,79 +61,100 @@ interface ReadState {
   readonly fault: string | null
 }
 
-export function CentralHygieneDevice({transport, machineRead, seatPaths = [], expanded = false}: CentralHygieneDeviceProps) {
+/** The machine-level declared reads a host can supply (the seat instrument, read-only git); each names the boundary_op it ran. */
+export type HygieneMachineRead = (kind: 'seat-status' | 'worktree-list' | 'branch-refs') => Promise<{boundaryOp: string; stdout: string; refused?: string}>
+
+/** Read the ground once: the kernel's workcell and git reads (each refusal carried verbatim), then the host's machine reads where
+ * it supplies them; the census and the model's findings. The device's own body and the designed device (central/devices/
+ * groundDevices.ts) read through this one reader. */
+export async function readHygieneCensus({transport, epoch, machineRead, seatPaths = [], primaries}: {
+  readonly transport: KernelTransportStatus
+  readonly epoch: string
+  readonly machineRead?: HygieneMachineRead
+  readonly seatPaths?: readonly string[]
+  readonly primaries?: Readonly<Record<string, string>>
+}): Promise<{census: HygieneCensus; findings: readonly HygieneFinding[]}> {
+  const sources: BoundaryOpSource[] = []
+  let seats: ReturnType<typeof parseSeatStatus> = []
+  let worktrees: ReturnType<typeof parseWorktreeList> = []
+  let branches: ReturnType<typeof parseBranchRefs> = []
+  let machineRef: string | null = null
+
+  // The kernel's workcell read — the primary owner, through the window's shared workcell answer (owners/readers.ts): the
+  // person asked, so it is read again even after a refusal, and every other reader of it sees the same answer. A refusal is
+  // a reading; its instant is when the owner answered.
+  const workcellEntry = ownerReadings.entry(workcellReadingKey(transport), readWorkcellOf(transport))
+  await workcellEntry.retry(epoch)
+  const workcell = workcellEntry.snapshot()
+  const workcellAt = new Date(workcell.readAtUnixMs ?? Date.now()).toISOString()
+  if (workcell.status !== 'answered') {
+    sources.push({
+      boundaryOp: 'op workcell_status_read',
+      channel: 'kernel-op',
+      at: workcellAt,
+      refusal: workcell.error ?? 'the workcell status reading did not answer',
+    })
+  } else {
+    sources.push({boundaryOp: 'op workcell_status_read', channel: 'kernel-op', at: workcellAt})
+    // Workcell's own status names its machine `workcell_ref` (centralHygieneModel.ts workcellRefOf).
+    machineRef = workcellRefOf(workcell.value)
+  }
+
+  // The kernel's git read — refused verbatim when the owner refuses.
+  const gitAt = new Date().toISOString()
+  const git = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
+  if (git.error || git.outcome?.result !== 'git_repository_reading') {
+    sources.push({
+      boundaryOp: 'op git_repository_read (project O-I)',
+      channel: 'kernel-op',
+      at: gitAt,
+      refusal: git.error ?? 'the git repository reading did not answer',
+    })
+  } else {
+    sources.push({boundaryOp: 'op git_repository_read (project O-I)', channel: 'kernel-op', at: gitAt})
+  }
+
+  // The machine-level declared reads — the seat instrument and read-only
+  // git, each naming its exact boundary operation.
+  if (machineRead) {
+    for (const kind of ['seat-status', 'worktree-list', 'branch-refs'] as const) {
+      try {
+        const result = await machineRead(kind)
+        sources.push({boundaryOp: result.boundaryOp, channel: 'machine-instrument', at: new Date().toISOString(), refusal: result.refused})
+        if (result.refused) continue
+        if (kind === 'seat-status') {
+          // The instrument's own JSON (`seat status --json`) states every count; its text is read only when the host ran that.
+          seats = parseSeatStatusJson(result.stdout) ?? parseSeatStatus(result.stdout)
+        }
+        if (kind === 'worktree-list') worktrees = parseWorktreeList(result.stdout)
+        if (kind === 'branch-refs') branches = parseBranchRefs(result.stdout)
+      } catch (error) {
+        sources.push({
+          boundaryOp: `machine read ${kind}`,
+          channel: 'machine-instrument',
+          at: new Date().toISOString(),
+          refusal: String(error),
+        })
+      }
+    }
+  }
+
+  const census = assembleCensus({sources, worktrees, branches, seats, machineRef, ...(primaries ? {primaries} : {})})
+  // The registered paths come from the census's own seat rows; the host's
+  // seatPaths prop, when supplied, is admitted alongside them.
+  const registered = [...new Set([...seatPaths, ...registeredSeatPaths(census)])]
+  return {census, findings: hygieneFindings(census, registered)}
+}
+
+export function CentralHygieneDevice({transport, machineRead, seatPaths = [], primaries, expanded = false}: CentralHygieneDeviceProps) {
   const [state, setState] = useState<ReadState>({census: null, findings: [], pending: false, fault: null})
+  const epoch = useSpineEpoch()
 
   const read = useCallback(async () => {
     setState(prev => ({...prev, pending: true, fault: null}))
-    const sources: BoundaryOpSource[] = []
-    let seats: ReturnType<typeof parseSeatStatus> = []
-    let worktrees: ReturnType<typeof parseWorktreeList> = []
-    let branches: ReturnType<typeof parseBranchRefs> = []
-    let machineRef: string | null = null
-
-    // The kernel's workcell read — the primary owner. A refusal is a reading.
-    const workcellAt = new Date().toISOString()
-    const workcell = await kernelOp(transport, {op: 'workcell_status_read'})
-    if (workcell.error || workcell.outcome?.result !== 'workcell_status_reading') {
-      sources.push({
-        boundaryOp: 'op workcell_status_read',
-        channel: 'kernel-op',
-        at: workcellAt,
-        refusal: workcell.error ?? 'the workcell status reading did not answer',
-      })
-    } else {
-      sources.push({boundaryOp: 'op workcell_status_read', channel: 'kernel-op', at: workcellAt})
-      const data = (workcell.outcome as {data?: {machine_ref?: string; register?: unknown}}).data
-      machineRef = data?.machine_ref ?? null
-    }
-
-    // The kernel's git read — refused verbatim when the owner refuses.
-    const gitAt = new Date().toISOString()
-    const git = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
-    if (git.error || git.outcome?.result !== 'git_repository_reading') {
-      sources.push({
-        boundaryOp: 'op git_repository_read (project O-I)',
-        channel: 'kernel-op',
-        at: gitAt,
-        refusal: git.error ?? 'the git repository reading did not answer',
-      })
-    } else {
-      sources.push({boundaryOp: 'op git_repository_read (project O-I)', channel: 'kernel-op', at: gitAt})
-    }
-
-    // The machine-level declared reads — the seat instrument and read-only
-    // git, each naming its exact boundary operation.
-    if (machineRead) {
-      for (const kind of ['seat-status', 'worktree-list', 'branch-refs'] as const) {
-        try {
-          const result = await machineRead(kind)
-          sources.push({boundaryOp: result.boundaryOp, channel: 'machine-instrument', at: new Date().toISOString(), refusal: result.refused})
-          if (result.refused) continue
-          if (kind === 'seat-status') {
-            seats = parseSeatStatus(result.stdout)
-            const machine = result.stdout.match(/^workcell (\S+)/)
-            if (machine && !machineRef) machineRef = machine[1]
-          }
-          if (kind === 'worktree-list') worktrees = parseWorktreeList(result.stdout)
-          if (kind === 'branch-refs') branches = parseBranchRefs(result.stdout)
-        } catch (error) {
-          sources.push({
-            boundaryOp: `machine read ${kind}`,
-            channel: 'machine-instrument',
-            at: new Date().toISOString(),
-            refusal: String(error),
-          })
-        }
-      }
-    }
-
-    const census = assembleCensus({sources, worktrees, branches, seats, machineRef})
-    // The registered paths come from the census's own seat rows; the host's
-    // seatPaths prop, when supplied, is admitted alongside them.
-    const registered = [...new Set([...seatPaths, ...registeredSeatPaths(census)])]
-    setState({census, findings: hygieneFindings(census, registered), pending: false, fault: null})
-  }, [machineRead, seatPaths, transport])
+    const {census, findings} = await readHygieneCensus({transport, epoch, machineRead, seatPaths, primaries})
+    setState({census, findings, pending: false, fault: null})
+  }, [machineRead, seatPaths, primaries, transport, epoch])
 
   const strip = state.census
     ? `${state.census.worktrees.length} worktrees · ${state.census.branches.length} branches · ${state.census.seats.length} seats`

@@ -277,6 +277,9 @@ as a device or a pane control, and is listed before the frame map is removed.
   evidence under `evidence/`.
   - No foundation item and no UI module is done without that.
   - If screen access fails, stop building UI and fix the access first.
+  - A window listed at about 116×120 at a negative x, captured as a tilted thumbnail with no accessibility windows, is the
+    candidate parked in Stage Manager's strip, not a broken host: bring it to the current stage
+    (`app_bring_to_current_space`), which needs the screen unlocked — while the Mac is locked no screen pass can run.
 - **Scripted checks** remain the floor (all three tsc roots, the suites,
   conformance, kernel fmt/clippy). They are never the claim.
 - **A Sonnet review** at the end of each foundation item and each module wave.
@@ -314,8 +317,10 @@ each foundation item's done-when. The list below comes from FOUNDATION-AUDIT
 - **The duplicate bars, browsers and rails.** Each goes once its controls live
   as bindings or registrations: four transports, four browsers, two rails
   (F6–F8).
-- **Unreached code.** `candidate-reachable.mjs --list` against the tree
-  names it. Delete it, unless the legacy desktop still runs it.
+- **Unreached code.** `candidate-reachable.mjs --unreached` against the tree
+  names it (type-only imports do not reach; the candidate's shipped pages,
+  the hosted frame's included, are its roots). Delete it, unless the legacy
+  desktop still runs it.
 
 Keep what works: Factory's transport and Expressions' transport until their
 bindings land, the pane engine, the book, the contracts, the frame's

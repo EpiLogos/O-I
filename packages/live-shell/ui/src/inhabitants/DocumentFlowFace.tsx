@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useContext, useCallback, useEffect, useRef, useState} from 'react'
 
 /** The Flow document device — central family, face `flow-document`.
  *
@@ -9,7 +9,10 @@ import {useCallback, useEffect, useRef, useState} from 'react'
  * - the body is the sandboxed iframe carrying the page with its payload
  *   island; the only host↔frame traffic is the bounded island read
  *   (`oi:document-host-request/response` — the document host bridge the
- *   cradle's frames already carry);
+ *   cradle's frames already carry). Under Tauri the iframe is the native
+ *   document frame written with the projection (a srcdoc document inherits
+ *   the window's CSP, which refuses the form's own scripts); elsewhere it is
+ *   srcdoc — `useDocumentFrame`, one switch by transport;
  * - Save is the document's own revision-checked CAS write
  *   (`writeFlowInstance`): the host reads the island, embeds it with the
  *   owner's `embedDocument`, and the owner CAS-checks `expected_revision`.
@@ -24,17 +27,22 @@ import {useCallback, useEffect, useRef, useState} from 'react'
 
 import {embedDocument, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
 import {readFlowInstance, writeFlowInstance, type FlowInstance} from '../../../../../desktop/cradle/src/flow/instances'
-import {documentPayloadSource, documentScripts, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
+import {documentPayloadSource, documentScripts, useDocumentFrame, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
 import type {KernelTransportStatus, CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import './inhabitantDevices.css'
+import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 
 export interface DocumentFlowFaceProps {
   readonly transport: KernelTransportStatus
   /** The flow instance's owner location (the aperture selects the document;
    * nothing here mints a flow identity — it comes from the document). */
   readonly location: CentralLocation
+  /** In a pane the document is the face (the mockup's document pane): its head reads the revision and the save standing, and
+   * Save / Re-read stand in the browser's aperture for the document reached (central/documents/documentDoor.ts). As a device
+   * the face keeps its own action row. */
+  readonly presentation?: 'device' | 'pane'
 }
 
 /** The hosted copy: payload read seam + the bounded host bridge, injected
@@ -46,7 +54,7 @@ function projectFlowDocument(html: string): string {
     : withSeam
 }
 
-export function FlowFace({transport, location}: DocumentFlowFaceProps) {
+export function FlowFace({transport, location, presentation = 'device'}: DocumentFlowFaceProps) {
   const [instance, setInstance] = useState<FlowInstance>()
   const [face, setFace] = useState<string>()
   const [failure, setFailure] = useState<string>()
@@ -57,6 +65,7 @@ export function FlowFace({transport, location}: DocumentFlowFaceProps) {
   const [revision, setRevision] = useState<string>('')
   const [baselined, setBaselined] = useState(false)
   const frame = useRef<HTMLIFrameElement>(null)
+  const frameProps = useDocumentFrame(frame, face, transport)
   const readIsland = useDocumentHostRead(frame, true)
   /** The basis the current draft was taken against; a moved basis is stale. */
   const draftBasis = useRef<string>()
@@ -158,10 +167,17 @@ export function FlowFace({transport, location}: DocumentFlowFaceProps) {
       }
       if (JSON.stringify(doc) !== baselineText.current) markDraft()
     } catch {
-      // Absence of an answer is not a draft; the strip keeps its last state.
+      // Absence of an answer is not a draft; the strip keeps its last state. Three silent polls after the form stood (7.5 s)
+      // mean its own scripts never started in this window: say so, rather than show blank paper (the native pass at
+      // 14cb8a1bb showed the Flow pane blank while the same document draws its entries standalone).
+      unanswered.current += 1
+      if (unanswered.current === 3 && baselineText.current === undefined) setNotice('The Flow\'s form has not started in this window: its own scripts did not answer the host\'s read, so nothing is drawn and nothing can be saved.')
     }
   }, [captureIsland, face, instance, markDraft, pending])
+  const unanswered = useRef(0)
 
+  // A new form starts its count afresh; the poll below re-arms whenever its callback changes, which must not reset it.
+  useEffect(() => { unanswered.current = 0 }, [face])
   useEffect(() => {
     if (!face) return
     const timer = window.setInterval(() => void refreshDraftStanding(), 2500)
@@ -169,9 +185,23 @@ export function FlowFace({transport, location}: DocumentFlowFaceProps) {
   }, [face, refreshDraftStanding])
 
   const documentLabel = instance?.doc.meta.title || instance?.doc.meta.documentId || location.path
+  const inPane = presentation === 'pane'
+  const key = useRef(`flow:${Math.random().toString(36).slice(2)}`).current
+  const paneId = useContext(DocumentPaneContext) ?? undefined
+  // The door carries the Flow's own location, draft fact and last save outcome, so the page family's devices read the reached
+  // Flow's file and its save standing from the face that holds it (central/devices/pageDevices.tsx), never a second copy.
+  const standing: DocumentInPane = {key, paneId, form: 'Flow', title: documentLabel, revision: revision || undefined,
+    state: face && !baselined && !save ? 'form not answered yet' : documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
+    reread: pending ? undefined : () => void load(), rereadLabel: 'Re-read', location: instance?.location ?? location, dirty,
+    ...(save ? {outcome: save.outcome} : {})}
+  // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
+  useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
+  useEffect(() => () => withdrawDocument(key), [key])
 
   return (
     <div
+      onPointerDownCapture={inPane ? () => publishDocument(standing, true) : undefined}
+      onFocusCapture={inPane ? () => publishDocument(standing, true) : undefined}
       className="inhabitant-face-body inhabitant-document"
       data-document-device="ql-flow"
       data-save-outcome={save?.outcome ?? ''}
@@ -179,7 +209,10 @@ export function FlowFace({transport, location}: DocumentFlowFaceProps) {
       data-baselined={baselined ? 'true' : 'false'}
       data-basis-revision={revision}
     >
-      <div className="inhabitant-body-actions">
+      {inPane ? <div className="document-pane-head" data-document-head="flow">
+        <span className="document-pane-form">Flow</span>
+        <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revisionShort(revision)} · ` : ''}{standing.state}</span>
+      </div> : <div className="inhabitant-body-actions">
         <button type="button" className="inhabitant-act" data-action="save" disabled={!face || pending} onClick={() => void saveToOwner()}>Save to native source</button>
         <button type="button" className="inhabitant-act" data-action="reread" disabled={pending} onClick={() => void load()}>Re-read current document</button>
         <span className="inhabitant-device-save" role="status" aria-live="polite" data-save-outcome-label={save?.outcome ?? ''}>
@@ -187,12 +220,12 @@ export function FlowFace({transport, location}: DocumentFlowFaceProps) {
             ? <SaveOutcomeChip outcome={save.outcome} detail={save.detail}/>
             : <span className="inhabitant-quiet">{pending ? 'waiting for the native operation…' : 'no save attempted'}</span>}
         </span>
-      </div>
+      </div>}
       {failure && <p className="inhabitant-device-fault" role="alert">Flow document unavailable: {failure}</p>}
       {notice && <p className="inhabitant-device-notice" role="status">{notice}</p>}
-      {face === undefined
+      {face === undefined || !frameProps
         ? <p role="status" className="inhabitant-quiet">Reading the flow instance…</p>
-        : <iframe ref={frame} className="inhabitant-document-frame" title={`Flow — Dialogue · Flow · Journal · ${documentLabel}`} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" srcDoc={face}/>}
+        : <iframe key={frameProps.key} ref={frame} className="inhabitant-document-frame" title={`Flow — Dialogue · Flow · Journal · ${documentLabel}`} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" src={frameProps.src} srcDoc={frameProps.srcDoc}/>}
     </div>
   )
 }

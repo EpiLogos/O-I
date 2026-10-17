@@ -29,8 +29,10 @@ export async function mountAtlas() {
   state.mounts++
   listen(globalThis.window, 'keydown', () => {})
   later(() => {}, 60_000)
+  // T-PLACES-ONTO-ATLAS: the attach binds Places (places/placesHost.ts) to the engine's frame, its canvas and its camera
+  const canvas = {dataset: {}, addEventListener() {}, removeEventListener() {}}
   return {
-    engine: {setPaused() {}, dispose() {}},
+    engine: {setPaused() {}, dispose() {}, onFrame() {}, renderer: {domElement: canvas}, rig: {lat: 0, lon: 0, dist: 3.8, shiftX: 0, shiftY: 0, flyTo() {}}, camera: {fov: 38, aspect: 1}, sky: null},
     ctl: {
       get state() {
         if (state.refuseState) throw Error('stub state refused')

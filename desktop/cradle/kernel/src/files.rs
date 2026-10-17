@@ -200,6 +200,76 @@ pub fn resolve_material(
     base: &Location,
     relative: &[String],
 ) -> Result<Location, MaterialRouteError> {
+    resolve_material_with(base, relative, |path| {
+        listed(kernel.apply(crate::KernelOp::FilesList {
+            path: path.to_owned(),
+            fresh: None,
+        }))
+    })
+}
+
+/// The material route whole, through the kernel's one dispatch
+/// (dispatch.rs) rather than one held lock: each directory listing and the
+/// file's bytes run their owner calls outside the kernel lock and record
+/// under it — the same listings, traversal law and `FileBytes` reading as
+/// `resolve_material` followed by `FileBytes` under the lock. Returns the
+/// resolved file and its `FileBytes` outcome.
+#[allow(clippy::type_complexity)]
+pub fn read_material(
+    kernel: &std::sync::Mutex<crate::Kernel>,
+    base: &Location,
+    relative: &[String],
+) -> Result<(Location, Result<crate::KernelOpOutcome, String>), MaterialRouteError> {
+    read_material_observed(kernel, base, relative, &mut |_, _, _, _| {})
+}
+
+/// `read_material`, telling `observe` each op it dispatched — its wire name,
+/// whether it answered, its total time and where that time went — so a host
+/// can trace the route's ops as it traces its own (dispatch.rs `trace_op`).
+#[allow(clippy::type_complexity)]
+pub fn read_material_observed(
+    kernel: &std::sync::Mutex<crate::Kernel>,
+    base: &Location,
+    relative: &[String],
+    observe: &mut dyn FnMut(&str, bool, std::time::Duration, &crate::dispatch::Timing),
+) -> Result<(Location, Result<crate::KernelOpOutcome, String>), MaterialRouteError> {
+    let mut dispatch = |op: crate::KernelOp, name: &str| {
+        let started = std::time::Instant::now();
+        let (result, timing) = crate::dispatch::dispatch(kernel, op);
+        observe(name, result.is_ok(), started.elapsed(), &timing);
+        result
+    };
+    let target = resolve_material_with(base, relative, |path| {
+        listed(dispatch(
+            crate::KernelOp::FilesList {
+                path: path.to_owned(),
+                fresh: None,
+            },
+            "files_list",
+        ))
+    })?;
+    let bytes = dispatch(
+        crate::KernelOp::FileBytes {
+            location: target.clone(),
+        },
+        "file_bytes",
+    );
+    Ok((target, bytes))
+}
+
+fn listed(outcome: Result<crate::KernelOpOutcome, String>) -> Result<Directory, String> {
+    match outcome?.result {
+        crate::KernelOpResult::DirectoryRead { directory } => Ok(directory),
+        _ => Err("Central returned an unsupported directory reading".into()),
+    }
+}
+
+/// The traversal law over Central's own listings (`list`).
+fn resolve_material_with(
+    base: &Location,
+    relative: &[String],
+    mut list: impl FnMut(&str) -> Result<Directory, String>,
+) -> Result<Location, MaterialRouteError> {
     if relative.is_empty() {
         return Ok(base.clone());
     }
@@ -210,20 +280,7 @@ pub fn resolve_material(
                 "Traversal outside the material directory is refused".into(),
             ));
         }
-        let outcome = kernel
-            .apply(crate::KernelOp::FilesList {
-                path: directory_path.clone(),
-                fresh: None,
-            })
-            .map_err(MaterialRouteError::NotFound)?;
-        let directory = match outcome.result {
-            crate::KernelOpResult::DirectoryRead { directory } => directory,
-            _ => {
-                return Err(MaterialRouteError::NotFound(
-                    "Central returned an unsupported directory reading".into(),
-                ))
-            }
-        };
+        let directory = list(&directory_path).map_err(MaterialRouteError::NotFound)?;
         let Some(entry) = directory
             .entries
             .into_iter()

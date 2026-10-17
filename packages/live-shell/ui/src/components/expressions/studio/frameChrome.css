@@ -1,0 +1,31 @@
+/* The frame's controls on a device (frameChrome.tsx) in the device craft: the panel kit's toggle, action, chooser, value box and dial
+   (inhabitants/sdk/panel.css; docs/dlw/DLW.md §16.10) — keys flow in rows at the section's width, a choice or a value stands under its
+   small name, a reading is a mono line. No box of their own, no scroller. Shell and SDK tokens only. */
+/* Keys flow down a column and then across (Live's device widens; it never scrolls and never cuts a control off): six rows of 16 px,
+   a choice, a value or a swept number two rows, a reading one; the section takes the columns its run needs, and the plate folds what
+   does not fit (frame/devices/plateFit.ts). */
+.frame-chrome { display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--chrome-rows, 6), 16px); grid-auto-columns: max-content; gap: 3px 4px; align-content: start; min-width: 0 }
+.frame-chrome > :is(.frame-chrome-choice, .frame-chrome-sweep, [data-chrome]:has(> .frame-chrome-field)) { grid-row: span 2 }
+.sdk-face__extra .frame-chrome, .dp-head-acts .frame-chrome { display: flex; gap: 3px }
+.frame-chrome-key { max-width: 132px; overflow: hidden; text-overflow: ellipsis }
+.frame-chrome-key.dp-toggle[aria-pressed="true"] { border-color: var(--accent) }
+.frame-chrome-key:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
+.frame-chrome-key:disabled { opacity: .45 }
+.frame-chrome-key:focus-visible, .frame-chrome select:focus-visible, .frame-chrome input:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+.frame-chrome-name { font-size: 9px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+/* A choice or a value stands under its small name, as a device's parameter does. */
+.frame-chrome-choice, .frame-chrome-field { align-items: stretch; min-width: 0; max-width: 100% }
+.frame-chrome-choice { min-width: 96px }
+.frame-chrome-choice .dp-label, .frame-chrome-field .dp-label { text-align: left }
+.frame-chrome-choice .dp-chooser { max-width: 100% }
+.frame-chrome-field input[type=number] { width: 56px }
+.frame-chrome-field input:not([type=number]) { width: 128px; max-width: 100% }
+.frame-chrome-sweep { display: inline-flex }
+.frame-chrome-swatch { flex-direction: row; align-items: center; gap: 3px; height: 16px }
+.frame-chrome-swatch input { width: 16px; height: 14px; padding: 0; background: none; border: 1px solid var(--line); cursor: pointer }
+.frame-chrome-reading { max-width: 220px; min-width: 0; font: 9.5px/16px var(--mono); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.frame-chrome-reading .frame-chrome-name { font-family: inherit }
+/* A parameter the manual names that no owner carries yet: its switch (or its menu, for many) with nothing lit, dim; the why on the status
+   line. */
+.frame-chrome-waiting { align-self: stretch }
+.frame-chrome-waiting .frame-chrome-values { font: 9.5px var(--mono); color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }

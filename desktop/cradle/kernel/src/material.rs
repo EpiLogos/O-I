@@ -180,6 +180,10 @@ fn bounded(mut reader: impl Read) -> std::io::Result<(Vec<u8>, bool)> {
     }
     Ok((kept, exceeded))
 }
+/// One native material/status Action's wall-clock bound. These owners answer
+/// from their own records in about a second; the bound is for one that never
+/// answers.
+const MATERIAL_LIMIT: std::time::Duration = std::time::Duration::from_secs(60);
 pub(crate) fn invoke(
     executable: &PathBuf,
     args: &[std::ffi::OsString],
@@ -192,7 +196,13 @@ pub(crate) fn invoke(
             false,
         ));
     }
-    let mut child = Command::new(executable)
+    let mut command = Command::new(executable);
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        command.process_group(0);
+    }
+    let mut child = command
         .args(args)
         .stdin(if input.is_some() {
             Stdio::piped()
@@ -208,9 +218,45 @@ pub(crate) fn invoke(
     let out = thread::spawn(move || bounded(stdout));
     let err = thread::spawn(move || bounded(stderr));
     let write_error = input.and_then(|input| child.stdin.take().unwrap().write_all(&input).err());
-    let status = child
-        .wait()
-        .map_err(|e| Error::new("process-error", e, true))?;
+    // Bounded like every owner call (owner_process.rs): an owner that never
+    // answers is stopped at the limit and named, with whatever it started.
+    let deadline = std::time::Instant::now() + MATERIAL_LIMIT;
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if std::time::Instant::now() >= deadline => {
+                #[cfg(unix)]
+                if let Ok(group) = i32::try_from(child.id()) {
+                    unsafe {
+                        libc::kill(-group, libc::SIGKILL);
+                    }
+                }
+                let _ = child.kill();
+                let _ = child.wait();
+                let owner = executable
+                    .file_name()
+                    .map(|name| name.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| executable.display().to_string());
+                let operation = args
+                    .iter()
+                    .map(|arg| arg.to_string_lossy())
+                    .filter(|arg| !arg.starts_with('-'))
+                    .take(2)
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                return Err(Error::new(
+                    "timeout",
+                    format!(
+                        "{owner} {operation} did not answer within {} s; if it writes, its effect is uncertain — read the owner's state before retrying",
+                        MATERIAL_LIMIT.as_secs()
+                    ),
+                    true,
+                ));
+            }
+            Ok(None) => thread::sleep(std::time::Duration::from_millis(10)),
+            Err(e) => return Err(Error::new("process-error", e, true)),
+        }
+    };
     let output = out
         .join()
         .map_err(|_| Error::new("process-error", "stdout reader failed", true))?

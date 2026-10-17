@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Document</title></head><body><script>
+/* The native document frame — oi-material://localhost/__application/document/frame.html, candidate-owned code the host
+ * binary serves itself (kernel `document_frame`) with no content policy. A srcdoc document inherits the shell window's
+ * policy, whose script-src (a hash, no 'unsafe-inline') blocks every inline script of a Central form; this page is a
+ * document of its own and carries none. It asks its parent once for the document, writes exactly what the parent
+ * sends — the projection a srcdoc frame carries (desktop/cradle/src/document/frame.ts `useDocumentFrame`) — and is gone:
+ * no native bridge, no authority, nothing read but that one message from its own parent. */
+(() => {
+  if (parent === window) return;
+  let written = false;
+  const write = event => {
+    const data = event.data;
+    if (written || event.source !== parent || !data || data.type !== 'oi:document-frame-write' || typeof data.html !== 'string') return;
+    written = true;
+    removeEventListener('message', write);
+    document.open();
+    document.write(data.html);
+    document.close();
+  };
+  addEventListener('message', write);
+  parent.postMessage({type: 'oi:document-frame-ready'}, '*');
+})();
+</script></body></html>

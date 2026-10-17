@@ -1177,6 +1177,13 @@
  * height of the drawer's edge — one narrow invisible band, not a pocket at
  * the foot. When the drawer stands open the strip (z 26) covers the band. */
 :where(.candidate-workbench) .pane.group > .tab-reveal-zone[data-orientation="vertical"] { left: 0; top: 0; bottom: 0; width: 14px; height: auto; }
+/* lane F (F5): …and along the pane's top edge too. Natively the lead pointed at the top edge of Technē's frame pane, Expressions'
+ * field and Central's Day and Flow and nothing opened: the rail answered only on the left band. The zone is one L — the left
+ * band and an 8px top band — cut by clip-path, which also cuts its hit area, so the pane's face stays live everywhere else. It
+ * stands above the hosted frame (z 25 over the placed frame's 20; no ancestor of the zone makes a stacking context). Pointing
+ * at either edge opens the rail with its tabs and, at its foot, the pane tools (⊞). */
+:where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"] > .tab-reveal-zone[data-orientation="vertical"] { right: 0; width: auto;
+  clip-path: polygon(0 0, 100% 0, 100% 8px, 14px 8px, 14px 100%, 0 100%); }
 
 /* The vertical list's width separator (the .region-resizer grammar,
  * shell.css): a transparent hit area on the strip's inner edge whose
@@ -1221,9 +1228,7 @@
 :where(.candidate-workbench) .icon-tab-strip[aria-orientation="vertical"] .icon-tab:is([aria-selected="true"],[aria-checked="true"]){box-shadow:inset 2px 0 var(--oi-accent-ink)}
 
 .candidate-workbench {position:relative; display:flex; flex-direction:column; min-height:0; height:100%; color:var(--oi-text, #d8d8d8); background:var(--oi-bg, #151515);}
-.candidate-workbench-toolbar {display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:6px 8px; border-bottom:1px solid var(--oi-border, #333);}
-.candidate-workbench-toolbar > span {margin-right:auto;}
-.candidate-workbench-toolbar button, .candidate-workbench-fault button, .candidate-workbench-return button {font:inherit; font-size:11px; padding:3px 6px;}
+.candidate-workbench-fault button, .candidate-workbench-return button {font:inherit; font-size:11px; padding:3px 6px;}
 .candidate-workbench-tree {flex:1; min-height:0; display:flex;}
 .candidate-workbench-tree[hidden], .candidate-workbench-rest[hidden] {display:none;}
 .candidate-workbench-tree > .workbench {flex:1; min-width:0; min-height:0;}

@@ -219,6 +219,12 @@ export interface Occurrence {
   geoPrecision: GeoPrecision;
   year: number; // representative year, negative = BCE
   yearDisplay: string; // human truth, e.g. "~11th c."
+  /** [§8.4 host, T-N3-ATLAS-SUITE-PROVIDER] `false` ⇒ the owner declares no date: the occurrence is undated, an honest state.
+   * Convention, stated as the lat/lon one is: `year` is always present, and for an undated occurrence it is a placeholder (the
+   * field's yearMax) that no code may read as a date; `dated: false` decides. An undated occurrence stands outside the time
+   * scale: its slider position is UNDATED_U (data/time.ts), it is never gated by the time window, and its `yearDisplay` says
+   * "undated". Absent (or true) ⇒ `year` is the occurrence's date, as in the found contract. */
+  dated?: false;
   yearRange?: [number, number];
   /** [C2-b7] renamed from `jung` at the seam: the field name was corpus-named; the
    * shape {work, workTitle, year, locator} is generic. Ingest re-emits. */

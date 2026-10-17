@@ -1,0 +1,65 @@
+/* Runs' own layout: the pane's attempts and task tree (or ruler), its Return card and its task line, and the widget's task list. Shell and panel tokens only. */
+.ar-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.4 var(--font-ui, sans-serif); overflow: hidden; }
+.ar-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+.ar-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
+.ar-head span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.ar-head b + span::before { content: "›"; }
+.ar-main { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 280px; }
+.ar-list { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 8px 14px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); }
+.ar-list > * { flex: none; }
+.ar-none { margin: 10px 0; color: var(--text-dim, #a2a7ad); }
+
+.ar-row { display: grid; align-items: center; column-gap: 8px; min-height: 22px; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 60%, transparent); }
+.ar-list[data-view="tree"] .ar-row { grid-template-columns: minmax(0, 1fr) 56px 44px 68px 70px; }
+.ar-list[data-view="ruler"] .ar-row { grid-template-columns: minmax(240px, 36%) minmax(0, 1fr); }
+.ar-colhead { white-space: nowrap; min-height: 18px; color: var(--text-faint, #71767c); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
+.ar-group { min-height: 24px; margin-top: 6px; color: var(--text-faint, #71767c); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
+.ar-group span { grid-column: 1 / -1; }
+.ar-name { min-width: 0; overflow: hidden; display: flex; align-items: center; gap: 8px; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; }
+button.ar-name { cursor: pointer; }
+button.ar-name:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+.ar-name > span:not(.dp-lamp) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-row[data-kind="attempt"] { margin-top: 4px; min-height: 26px; background: color-mix(in srgb, var(--bg-0, #26292d) 55%, transparent); }
+.ar-row[data-kind="attempt"] .ar-name b { font-weight: 600; }
+.ar-row[data-kind="attempt"] .ar-name { padding-left: 6px; }
+.ar-row[data-kind="task"][data-selected="true"] { background: color-mix(in srgb, var(--sel, #3a5f8a) 38%, transparent); }
+.ar-row[data-dim="true"] .ar-name { opacity: .5; }
+.ar-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim, #a2a7ad); font-size: 10.5px; }
+.ar-cell[data-state="running"] { color: var(--dp-value, #5cc6b4); }
+.ar-cell[data-state="stalled"] { color: var(--stall, #ff9b4a); }
+.ar-cell[data-state="done"] { color: var(--green, #8fd0a8); }
+.ar-mark { flex: none; padding: 0 4px; height: 14px; line-height: 12px; border: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 8.5px; letter-spacing: .02em; text-transform: uppercase; }
+.ar-mark[data-on="reading"] { border-color: var(--dp-on, #ffbe00); color: var(--dp-on, #ffbe00); }
+.ar-mark[data-on="compare"] { border-color: var(--dp-value, #5cc6b4); color: var(--dp-value, #5cc6b4); }
+.ar-mark[data-on="stands"] { background: var(--dp-on, #ffbe00); border-color: var(--dp-on, #ffbe00); color: var(--bg-0, #26292d); }
+.ar-mark[data-on="waits"] { border: 1px dashed var(--dp-on, #ffbe00); color: var(--dp-on, #ffbe00); }
+
+/* The ruler: elapsed minutes from the start of each attempt, one scale for all. */
+.ar-track { position: relative; height: 22px; }
+.ar-ticks { position: relative; height: 18px; }
+.ar-ticks i { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line, #24262a); font-style: normal; }
+.ar-ticks small { position: absolute; left: 3px; top: 3px; font-size: 9px; color: var(--text-faint, #71767c); }
+.ar-bar { position: absolute; top: 8px; height: 6px; background: var(--text-faint, #71767c); }
+.ar-row[data-kind="attempt"] .ar-bar { top: 6px; height: 14px; opacity: .8; }
+.ar-bar[data-state="done"] { background: var(--green, #8fd0a8); }
+.ar-bar[data-state="running"] { background: linear-gradient(to right, var(--dp-value, #5cc6b4) 70%, transparent); }
+.ar-bar[data-state="stalled"] { background: var(--stall, #ff9b4a); }
+.ar-bar[data-state="stalled"]::after { content: ""; position: absolute; right: -1px; top: -3px; bottom: -3px; width: 2px; background: var(--stall, #ff9b4a); }
+.ar-bar[data-state="failed"] { background: none; border: 1px solid var(--text-dim, #a2a7ad); }
+.ar-bar[data-state="queued"], .ar-bar[data-state="unknown"] { background: none; border: 1px dashed var(--text-faint, #71767c); width: 12px; }
+
+/* The Return card at the right of the pane. */
+.ar-side { min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; border-left: 1px solid var(--line, #24262a); background: var(--bg-0, #26292d); overflow: hidden; }
+.ar-side h4 { margin: 0; font-size: 9px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.ar-side p { margin: 0; color: var(--text, #d4d7da); }
+.ar-side dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 10.5px; }
+.ar-side dt { color: var(--text-faint, #71767c); }
+.ar-side dd { margin: 0; color: var(--text-dim, #a2a7ad); }
+.ar-side [data-wait] { padding: 5px 8px; border: 1px dashed var(--dp-on, #ffbe00); color: var(--dp-on, #ffbe00); }
+.ar-foot { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; border-top: 1px solid var(--line, #24262a); background: var(--bg-0, #26292d); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+.ar-foot b { font-weight: 600; color: var(--text, #d4d7da); }
+
+/* The widget: the latest attempt's tasks with a light each, and three readings. */
+.ar-tile-list { flex: 1 1 auto; min-width: 0; display: flex; }
+.ar-tile-list > .dp-cell { flex: 1 1 auto; }
+.ar-tile-side { flex: none; width: 74px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }

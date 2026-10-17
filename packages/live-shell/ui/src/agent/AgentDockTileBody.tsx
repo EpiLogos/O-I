@@ -1,35 +1,38 @@
-import {useEffect, useState, type ReactElement} from 'react'
+import {useEffect, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import {CutIcon} from './agentIcons'
+import type {IconName} from '../inhabitants/sdk/Icon'
 import {NativeContextPanel} from '../components/NativeContextPanel'
 import {useWorkspace} from '../shell/workspaceContext'
 import {scalarEntries, safeJson} from './RefusalCard'
 import type {AgentTileId} from './AgentShellContext'
-import {useHarnessBinding} from './useHarnessBinding'
+import {DEVICE_WIDGET_PREFIX} from '../frame/devices/deviceDoor'
+import {claimRailWidget, deviceWidget} from '../frame/widgets/deviceWidgets'
+import {FRAMES_ID} from './devices/mainTrackBindings'
+import {APPROVALS_ID, LEDGER_ID} from './devices/receiptBindings'
 
-/** Tile marks: the specimen's where it has one (dock = companion, folder =
- * files family, link = frames); otherwise a monoline mark held to the
- * specimen's drawing conventions (24 viewBox, stroke 1.7, round caps) —
- * named as convention-held in the lane return, not silently invented. */
-const held = (inner: string, size = 12): ReactElement => (
-  <span
-    aria-hidden
-    style={{display: 'inline-flex', lineHeight: 0}}
-    dangerouslySetInnerHTML={{__html: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`}}
-  />
-)
+// The rail's Frames is the Frames monitor's widget (DLW §19.6 "Frames is the Frames monitor on the rail"; §19.5): its tile draws the
+// device's own Widget view on the binding the Gateway's Full and the pool read (agent/devices/mainTrackBindings.ts framesBinding),
+// bare, as the rail draws any device's widget. It replaced this tile's raw harness_agent_read receipt (MOVED, lane BF2).
+claimRailWidget('frames', FRAMES_ID)
+// The rail's Ledger and Approvals are the Main track's devices' widgets the same way (§23.9, §23.10; agent/devices/receiptBindings.ts):
+// the Ledger on Central's change horizon, Approvals on the Gateway's approvals key and the shown session's consent requests. They
+// replaced these tiles' raw task-record receipts (MOVED, lane BF3).
+claimRailWidget('ledger', LEDGER_ID)
+claimRailWidget('approvals', APPROVALS_ID)
 
-export const TILE_ICONS: Record<AgentTileId, ReactElement> = {
-  sessions: held('<path d="M4 5h6M8 12h8M8 19h8M6 5v14"/>'),
-  agents: <CutIcon name="dock" size={12} />,
-  terminal: held('<path d="M5 6.5l5 5-5 5M12 17h7"/>'),
-  files: held('<path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.5h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/>'),
-  web: <CutIcon name="browser" size={12} />,
-  graph: held('<circle cx="12" cy="12" r="2.6"/><path d="M12 9.4V4M12 14.6V20M9.4 12H4M14.6 12H20"/>'),
-  diff: held('<path d="M8 4v10M4 8h8"/><path d="M16 11v9M12 15.5h8"/>'),
-  frames: <CutIcon name="link" size={12} />,
-  ledger: held('<path d="M5 6h14M5 12h10M5 18h13"/>'),
-  approvals: held('<path d="M12 4l7 8-7 8-7-8z"/>'),
+/** Tile marks, every one from the icon cut through the SDK Icon (icon-cut.html; inhabitants/sdk/icons.ts): the rail draws
+ * them in the tile's head and, at preview scale, in its launcher cell. */
+export const TILE_ICONS: Record<AgentTileId, IconName> = {
+  sessions: 'session',
+  agents: 'bind',
+  terminal: 'keys',
+  files: 'lib',
+  web: 'browser',
+  graph: 'orbit',
+  diff: 'select',
+  frames: 'link',
+  ledger: 'chain',
+  approvals: 'arm',
 }
 
 const TILE_TITLES: Record<AgentTileId, string> = {
@@ -92,38 +95,9 @@ function ReadingRows({label, text, loading}: {label: string; text: string | null
 
 export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef: string | null}) {
   const {transport} = useWorkspace()
-  const {binding} = useHarnessBinding(transport)
-  const [ledger, setLedger] = useState<string | null>(null)
-  const [ledgerLoading, setLedgerLoading] = useState(false)
   const [diff, setDiff] = useState<string | null>(null)
   const [diffLoading, setDiffLoading] = useState(false)
-  const [frames, setFrames] = useState<string | null>(null)
-  const [framesLoading, setFramesLoading] = useState(false)
   const [gitNote, setGitNote] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (id !== 'ledger' && id !== 'approvals') return
-    let live = true
-    setLedgerLoading(true)
-    void (async () => {
-      if (transport.kind === 'unavailable' || !sessionRef) {
-        if (live) {
-          setLedger(transport.kind === 'unavailable' ? transport.reason ?? 'Unavailable' : 'Select a session track')
-          setLedgerLoading(false)
-        }
-        return
-      }
-      const task = await kernelOp(transport, {op: 'encounter_task_read', project: 'O-I', agent_session: sessionRef})
-      if (!live) return
-      if (task.error || task.outcome?.result !== 'encounter_task_reading') {
-        setLedger(task.error ?? 'Task reading unavailable')
-      } else {
-        setLedger(safeJson(task.outcome.data))
-      }
-      setLedgerLoading(false)
-    })()
-    return () => { live = false }
-  }, [id, sessionRef, transport])
 
   useEffect(() => {
     if (id !== 'diff') return
@@ -167,30 +141,6 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
   }, [id, transport])
 
   useEffect(() => {
-    if (id !== 'frames') return
-    let live = true
-    setFramesLoading(true)
-    void (async () => {
-      if (transport.kind === 'unavailable') {
-        if (live) {
-          setFrames(transport.reason ?? 'Unavailable')
-          setFramesLoading(false)
-        }
-        return
-      }
-      const gateway = await kernelOp(transport, {op: 'harness_agent_read', binding})
-      if (!live) return
-      if (gateway.error || gateway.outcome?.result !== 'harness_agent_reading') {
-        setFrames(gateway.error ?? 'Harness gateway unavailable')
-      } else {
-        setFrames(safeJson(gateway.outcome.document))
-      }
-      setFramesLoading(false)
-    })()
-    return () => { live = false }
-  }, [id, transport, binding])
-
-  useEffect(() => {
     if (id !== 'files') return
     let live = true
     void (async () => {
@@ -207,10 +157,9 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
 
   if (id === 'sessions') return <NativeContextPanel project="O-I" />
   if (id === 'agents') return <NativeContextPanel project="O-I" initialTab="agents" />
-  if (id === 'ledger') return <ReadingRows label="Encounter task (ledger basis)" text={ledger} loading={ledgerLoading} />
-  if (id === 'approvals') return <ReadingRows label="Task record (approval hooks)" text={ledger} loading={ledgerLoading} />
+  if (id === 'ledger' || id === 'approvals') { const Device = deviceWidget(`${DEVICE_WIDGET_PREFIX}${id === 'ledger' ? LEDGER_ID : APPROVALS_ID}`).Body; return <Device subject={sessionRef} pinned={false} /> }
   if (id === 'diff') return <ReadingRows label="git_diff_read · seat" text={diff} loading={diffLoading} />
-  if (id === 'frames') return <ReadingRows label="Harness gateway (frame monitor basis)" text={frames} loading={framesLoading} />
+  if (id === 'frames') { const Frames = deviceWidget(`${DEVICE_WIDGET_PREFIX}${FRAMES_ID}`).Body; return <Frames subject={sessionRef} pinned={false} /> }
   if (id === 'files') return <ReadingRows label="git_repository_read · O-I" text={gitNote} />
   if (id === 'graph') return <ReadingRows label="Graph" text="Open Bimba / knowledge graph from the world browser; no kernel graph_read in this shell yet." />
   if (id === 'web') return <ReadingRows label="Web" text="Browser surfaces live in the workbench; agent shell exposes git and harness readings here." />

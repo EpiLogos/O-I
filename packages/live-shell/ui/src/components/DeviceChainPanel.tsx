@@ -1,69 +1,18 @@
+// Live's two detail sides, as its registration hands them to the one detail host (shell/modeDetails.tsx MODE_DETAILS.live):
+// Device is the instrument's chain of plates (live/LiveDeviceChain.tsx), Clip is the clip in the shared Clip view anatomy
+// (live/LiveClip.tsx). The host draws the one head and the drop zone; nothing here draws a head, a card or a hint of its own.
 import type { PanelContext } from '../shell/panels'
-import { displayDeviceName, type SetDocument } from '../shell/document'
-import type { SetSelection } from './SessionView'
-import { Icon } from './Icon'
-import { MODE_GRAMMAR } from '../shell/modeGrammar'
-import { LiveTorusWidget } from '../panels/devices/LiveTorusWidget'
-import { JankoDevice } from '../live/janko/JankoDevice'
-import { NoteDeviceChain } from '../live/noteDevices/NoteDeviceChain'
-import { PITCH_CLASS_NAMES } from '../live/modes'
-import { useLiveModeInForce } from '../native/liveModeCatalogue'
-import { useLiveTorusReading } from '../live/torusInstrument'
-import { liveChainEffects } from '../live/liveChain'
-import type { PanelRegistration } from '../shell/panels'
-import '../shell/live/liveDetail.css'
+import type { SetDocument } from '../shell/document'
+import type { SetSelection } from '../shell/liveSelection'
+import { LiveDeviceChain } from '../live/LiveDeviceChain'
+import { LiveClip } from '../live/LiveClip'
 export type DetailMode = 'clip' | 'device'
-function Value({ label, value }: { label: string; value?: string }) {
-  return <label className="clip-value"><span>{label}</span><input readOnly value={value ?? '—'} aria-label={label} title={value === undefined ? 'Value not disclosed by the document owner' : `${label} · read-only native document value`} /></label>
-}
-/** The clip's Scale: the set's mode in force (T-LIVE-MODE-SCALES). A clip carries no mode of its own until the set document has an owner
- * write for one, so the clip reads the transport's; while no mode is in force the values wait and say why. */
-function ClipModeValues() {
-  const { mode, line } = useLiveModeInForce()
-  const held = mode.state === 'in-force' ? mode.selection : null
-  const title = held ? `The set's mode in force; this clip carries no mode of its own yet. ${line}` : line
-  return <div className="clip-values-pair" data-clip-mode={held ? 'in-force' : 'waiting'}>
-    <label className="clip-value"><span>Root</span><input readOnly aria-label="Root" value={held ? PITCH_CLASS_NAMES[held.root] : '—'} title={title} /></label>
-    <label className="clip-value"><span>Mode</span><input readOnly aria-label="Mode" value={held ? held.scale.label : '—'} title={title} /></label>
-  </div>
-}
-/** The detail row's designed empty state (the widget guide's law): a framed
- * face naming what docks here and the selection that fills it — never a
- * bare sentence in the chain's void. */
-function DetailEmptyFrame({ kind, fill }: { kind: 'clip' | 'device'; fill: string }) {
-  const pair = MODE_GRAMMAR.live.detail[kind]
-  const chips = kind === 'clip'
-    ? ['Clip — Start · End · Position · Length · Signature · Groove', 'Launch — launch mode', 'Pitch & Time — Transpose · Fit to Scale', 'Note editor — ruler · keyboard · velocity lane']
-    : ['Device tiles — one per device on the selected track', 'Parameter faces — the document\'s own names, lossless values, disclosed ranges', 'Enable state — drawn dark until its owner discloses it']
-  return <div className="detail-empty-frame" data-detail-empty={kind} role="status">
-    <section className="mode-detail-frame">
-      <header className="mode-detail-frame-head">
-        <span className="mode-detail-frame-mark"><Icon name={kind === 'clip' ? 'set' : 'device'} size={14} /></span>
-        <strong>{pair.label}</strong>
-        <span className="mode-detail-frame-sub">{pair.meaning}</span>
-      </header>
-      <p className="mode-detail-frame-note">{fill}</p>
-      <ul className="mode-detail-chips" aria-label={`What docks in the ${pair.label} detail`}>
-        {chips.map(chip => <li key={chip} className="mode-detail-chip" data-i={`${chip}|docks here when the selection fills it`}>{chip}</li>)}
-      </ul>
-    </section>
-  </div>
-}
+
+/** The Clip side's one line while no clip of the open set is selected (the host's waiting idiom). */
+export const LIVE_CLIP_WAITS = 'Select a clip in the Session or the Arrangement to see it here.'
+
 export function DeviceChainPanel({ ctx, document, selection, mode }: { ctx: PanelContext; document: SetDocument | null; selection: SetSelection; mode: DetailMode }) {
-  // The one instrument mounts at the chain's head only once the owner has published a reading; until then the chain is unchanged.
-  const torus = useLiveTorusReading()
-  // The instrument's chain (T-LIVE-TORUS-INSTRUMENT): the torus first, then the effect faces in registry order. The generators are not in the chain.
-  const effects = liveChainEffects()
-  const renderEffect = (panel: PanelRegistration) => { const Panel = panel.component; return <div className="chain-side" key={panel.id} data-chain-device={panel.id}><Panel {...ctx} /></div> }
-  const track = ctx.set?.tracks[selection.track]
-  const deep = document?.tracks[selection.track]
-  const clip = selection.clip === undefined ? undefined : deep?.arrangementClips[selection.clip]
-  const sessionClip = selection.scene === null ? null : deep?.sessionSlots[String(selection.scene)]
-  const name = clip?.name ?? sessionClip
-  return <section className="chain" aria-label="Detail panel" data-detail-density={mode}>
-    {mode === 'clip' ? !name && !clip ? <DetailEmptyFrame kind="clip" fill="No clip is selected. Select a clip in Session (a clip slot) or Arrangement (a clip on a lane) — the clip's readings open here read-only; editing waits for the document owner." /> : <><aside className="clip-inspector"><div className="clip-section-title"><span className="clip-color-chip" />{name || 'Clip'}</div><details open><summary>Clip</summary><div className="clip-values-pair"><Value label="Start" value={clip?.start.toString()} /><Value label="End" value={clip?.end.toString()} /></div><button disabled title="Duplicate requires the document editing owner">Duplicate</button><button disabled title="Loop writing requires native document editing">▣ Loop</button><div className="clip-values-pair"><Value label="Position" value={clip?.start.toString()} /><Value label="Length" value={clip ? (clip.end - clip.start).toString() : undefined} /></div><div className="clip-values-pair"><Value label="Signature" /><Value label="Groove" /></div><span className="clip-subheading">Scale</span><ClipModeValues /></details><details><summary>Launch</summary><Value label="Launch mode" /></details><details open><summary>Pitch &amp; Time</summary><button disabled title="Note editing requires native clip notes">Fit to Scale</button><button disabled title="Note editing requires native clip notes">Invert</button><Value label="Transpose" /><div className="clip-values-pair"><button disabled>×2</button><button disabled>÷2</button></div></details></aside>
-      <div className="note-editor"><div className="note-toolbar"><button disabled>Fold</button><button disabled>Scale</button><label><input type="checkbox" disabled />Highlight Scale</label><span>{clip?.kind === 'audio' ? 'Audio' : 'Notes'}</span><output>{track?.name}</output></div><div className="note-ruler">{Array.from({ length: 20 }, (_, i) => <span key={i}>{Math.floor((clip?.start ?? 0) / 4) + i + 1}</span>)}</div><div className="note-grid"><div className="note-keyboard">{['C5', 'C4', 'C3', 'C2', 'C1', 'C0', 'C−1', 'C−2'].map(note => <span key={note}>{note}</span>)}</div><div className="note-grid-body" title="Note and waveform contents are not yet disclosed by the document owner" /></div><div className="velocity-lane"><span>Velocity</span><div /></div></div></>
-      : <>{torus !== null && <NoteDeviceChain />}{torus !== null && <LiveTorusWidget />}{torus !== null && <JankoDevice />}{effects.map(renderEffect)}{!track ? <DetailEmptyFrame kind="device" fill="No track is under the selection (no set is open, or the selection is out of range). A set's tracks bring their device chains here; each device reads its parameters losslessly, read-only, until the device lane's editing owner lands." /> : <><div className="device-chain-surface">{track.devices.length === 0 && <DetailEmptyFrame kind="device" fill={`No devices on ${track.name}. The chain fills from the set's own device listing; insertion awaits the device lane's owner.`} />}{track.devices.map((name, i) => { const device = deep?.devices[i]; return <section key={i} className="device-tile" data-device-tile={name}><div className="device-title"><span className="device-power" title="Device enable state not disclosed">●</span><Icon name="device" size={12} />{displayDeviceName(name)}<span>▾</span></div><div className="device-parameters">{device?.params.map(parameter => <label key={parameter.id} className="device-parameter" title={`${parameter.id} · lossless document reading${parameter.min === undefined ? '' : ` · disclosed range ${parameter.min} – ${parameter.max}`} · editing awaits the native device owner`}><span className="device-parameter-name">{parameter.id}</span><input aria-label={`${displayDeviceName(name)} ${parameter.id}`} value={parameter.value} readOnly title="Lossless document reading · parameter editing awaits native owner" />{parameter.min !== undefined && <span className="device-parameter-range">disclosed range {parameter.min} – {parameter.max}</span>}</label>)}{!device?.params.length && <div className="device-empty" title="No parameters disclosed by the native document">—</div>}</div></section> })}</div></>}</>}
-    {mode === 'clip' && effects.map(renderEffect)}
-  </section>
+  return mode === 'clip'
+    ? <LiveClip set={ctx.set} document={document} selection={selection} waits={LIVE_CLIP_WAITS} />
+    : <LiveDeviceChain ctx={ctx} document={document} selection={selection} />
 }

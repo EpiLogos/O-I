@@ -1,0 +1,48 @@
+/* One device in its places (manual §16.3, §3): the panel kit draws every plate (inhabitants/sdk/panel.css); this sheet only places
+   it — on a chain at its own width and the chain's one height, whole in the pool at 400 wide, full in a pane, a tile on the rail —
+   and lays a generic plate's controls into the kit's sections. Nothing here scrolls; shell and kit tokens only. */
+
+/* A place: the plate at its own size, scaled as a whole (plateScale.ts: CSS zoom, 80–125 % with the detail area's height). */
+.device-place { flex: none; display: flex; align-items: flex-start; min-width: 0; min-height: 0 }
+.device { flex: none; display: flex; min-width: 0; min-height: 0 }
+
+/* The plate the pool shows wears the selection's tint in its head, a design's head as the generic plate's (§4.3). */
+.device[data-device-selected="true"] > .dp > .dp-head { background: color-mix(in srgb, var(--dp-head) 72%, var(--sel) 28%) }
+
+/* A generic plate's control: its key and holder on a wrapper that adds no box; a wide control spans two control columns. */
+.dv-param { display: contents }
+.dv-param[data-span="2"] > * { grid-column: span 2; justify-self: stretch }
+.dv-param[data-span="2"] > .dp-cell--dial, .dv-param[data-span="2"] > .dp-cell--readout, .dv-param[data-span="2"] > .dp-cell--toggle { justify-self: center }
+.dv-param[data-control="readout"] .dp-readout-value { max-width: 100%; overflow: hidden; text-overflow: ellipsis }
+.dv-param > .dp-cell--readout { max-width: 100% }
+.dv-empty { font-size: 10px; color: var(--text-faint) }
+
+/* The device's own picture in the well (Display raw): centred, clipped to the well. */
+.dv-picture { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden }
+.dv-picture--mini { zoom: .55; width: auto; height: auto }
+
+/* Whole, in the pool: the plate is 400 wide (§3), one or two bands, pages in its head. */
+.device--whole > .dp { width: 400px }
+.device-pool { height: 100%; padding: 6px; overflow: hidden }
+.device-pool-empty { margin: 6px; font-size: 10.5px; color: var(--text-faint) }
+
+/* Whole as the expanded view (manual §16.4; DeviceFlip.tsx): a band across the detail area above the chain, the plate as wide as
+   the band with its bands side by side (the wide frame, catalogue/panels/panels.css .dp-wide). Nothing in it scrolls. */
+.device-flip { height: 100%; padding: 4px; display: flex; align-items: flex-start; overflow: hidden; background: var(--bg-0); border: 1px solid var(--line-strong); border-bottom: 0 }
+.device-flip > .device-place--whole, .device-flip .device--whole { flex: 1 1 auto; min-width: 0 }
+.device-flip .device--whole > .dp { width: auto; flex: 1 1 auto; min-width: 0 }
+
+/* Full, in a pane: the material at the pane's size, no controls (DLW §16.1). */
+.device-place--full, .device--full { position: absolute; inset: 0 }
+.dv-full { position: absolute; inset: 0; display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; background: var(--bg-1) }
+.dv-full > * { flex: 1 1 auto; min-width: 0; min-height: 0 }
+.dv-full > .dv-full-none { flex: none; margin: auto; max-width: 40ch; font-size: 11px; line-height: 1.5; color: var(--text-faint); text-align: center }
+
+/* The widget: the kit's tile, its controls in one column beside the small picture. */
+.dv-tile-controls { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 5px }
+.dv-tile-controls .dp-cell { align-items: stretch; align-self: stretch }
+.dv-tile-controls .dp-cell--readout { align-items: flex-start }
+.device-widget-away { margin: 0; padding: 8px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }
+
+/* A view that did not draw, where no generic plate stands in for it: its reason, in the place (deviceHost.tsx). */
+.device-fault { margin: 0; padding: 8px; max-width: 220px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }

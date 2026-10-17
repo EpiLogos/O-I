@@ -1,0 +1,80 @@
+/* Tasks' own layout: the queue's press targets and blink, the task log at pane size (clips, time map, entries, composer), and the
+   widget's side readings. Shell and panel tokens only. A session's colour is its identity and arrives inline as --tc. */
+.dp-display .sft-hit { cursor: pointer; }
+.dp-display .sft-hit:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+.dp-display .sft-name { paint-order: stroke; stroke: var(--dp-well); stroke-width: 2.4px; stroke-linejoin: round; }
+.dp-display .sft-tri[data-state="running"] { animation: sft-blink 1s steps(2) infinite; }
+.dp-display .sft-tri[data-state="queued"] { animation: sft-blink .35s steps(2) infinite; }
+@keyframes sft-blink { 50% { opacity: .25; } }
+
+.sft-tile-list { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.sft-tile-side { flex: 0 0 auto; width: 56px; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+.sft-none { margin: 0; font-size: 10px; color: var(--text-faint, #71767c); }
+
+/* The pane. */
+.sft-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
+.sft-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+.sft-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
+.sft-head span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.sft-head b + span::before { content: "›"; }
+.sft-head [data-state="stalled"] { color: var(--stall, #ff9b4a); }
+.sft-head [data-state="running"] { color: var(--dp-value, #5cc6b4); }
+.sft-head [data-state="done"] { color: var(--green, #8fd0a8); }
+.sft-main { flex: 1 1 auto; min-height: 0; display: flex; }
+
+.sft-rail { flex: none; width: 210px; display: flex; flex-direction: column; gap: 2px; padding: 12px 10px; background: var(--bg-2, #3f4348); border-right: 1px solid var(--line, #24262a); overflow: hidden; }
+.sft-rail h4 { margin: 0 0 4px; font-size: 9px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.sft-clip { flex: none; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border: 0; font: inherit; text-align: left; white-space: nowrap; overflow: hidden; cursor: pointer;
+  background: var(--tc, var(--dp-value)); color: var(--bg-0, #26292d); }
+.sft-clip i { flex: none; width: 0; height: 0; border-left: 7px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.sft-clip span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sft-clip small { flex: none; font-size: 9px; opacity: .8; }
+.sft-clip[data-state="done"] { opacity: .55; }
+.sft-clip[data-state="queued"] { background: color-mix(in srgb, var(--tc, var(--dp-value)) 25%, var(--bg-2, #3f4348)); color: var(--text, #d4d7da); outline: 1px dashed var(--tc, var(--dp-value)); outline-offset: -2px; }
+.sft-clip[data-state="queued"] i { color: var(--tc, var(--dp-value)); animation: sft-blink .35s steps(2) infinite; }
+.sft-clip[data-state="running"] { background: linear-gradient(90deg, var(--tc, var(--dp-value)) 0, color-mix(in srgb, var(--tc, var(--dp-value)) 60%, transparent) 55%, color-mix(in srgb, var(--tc, var(--dp-value)) 8%, var(--bg-2, #3f4348)) 100%); }
+.sft-clip[data-state="running"] i { animation: sft-blink 1s steps(2) infinite; }
+.sft-clip[data-state="stalled"] { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--tc, var(--dp-value)) 45%, var(--bg-2, #3f4348)) 0 7px, color-mix(in srgb, var(--stall, #ff9b4a) 55%, transparent) 7px 9px); color: var(--text, #d4d7da); }
+.sft-clip[data-state="stalled"] i { color: var(--stall, #ff9b4a); }
+.sft-clip[data-state="unknown"] { background: transparent; outline: 1px dotted var(--text-faint, #71767c); outline-offset: -2px; color: var(--text-dim, #a2a7ad); }
+.sft-clip[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--accent, #ffbe00); }
+.sft-clip:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+
+.sft-log { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px 18px 8px; }
+.sft-map { flex: none; position: relative; padding: 6px 10px 8px 0; background: var(--dp-well, #1d2024); border: 1px solid var(--line, #24262a); }
+.sft-ruler { position: relative; height: 16px; margin-left: 96px; border-bottom: 1px solid var(--line, #24262a); }
+.sft-ruler span { position: absolute; top: 0; transform: translateX(-50%); font-size: 9px; color: var(--text-faint, #71767c); font-variant-numeric: tabular-nums; }
+.sft-lanes { position: relative; padding-bottom: 16px; }
+.sft-lane { display: flex; align-items: center; height: 20px; }
+.sft-lane-name { flex: none; width: 96px; padding-left: 10px; box-sizing: border-box; font: 10px var(--mono, ui-monospace, monospace); color: var(--text-dim, #a2a7ad); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sft-lane-track { position: relative; flex: 1 1 auto; height: 100%; border-bottom: 1px solid color-mix(in srgb, var(--text, #d4d7da) 8%, transparent); }
+.sft-bar { position: absolute; top: 5px; height: 10px; min-width: 3px; background: var(--dp-value, #5cc6b4); }
+.sft-bar[data-state="runs"] { background: linear-gradient(90deg, var(--dp-value, #5cc6b4) 0, color-mix(in srgb, var(--dp-value, #5cc6b4) 8%, transparent) 100%); }
+.sft-bar[data-state="waits"] { background: repeating-linear-gradient(135deg, var(--stall, #ff9b4a) 0 3px, color-mix(in srgb, var(--stall, #ff9b4a) 30%, transparent) 3px 5px); }
+.sft-plot { position: absolute; left: 96px; right: 0; top: 0; bottom: 0; pointer-events: none; }
+.sft-steer { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--dp-on, #ffbe00); }
+.sft-steer b { position: absolute; top: -1px; left: 3px; font-size: 9px; font-weight: 500; color: var(--dp-on, #ffbe00); }
+.sft-edge { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid var(--dp-value, #5cc6b4); }
+.sft-edge[data-state="stalled"] { border-left: 2px solid var(--stall, #ff9b4a); }
+.sft-edge b { position: absolute; bottom: 1px; right: 4px; white-space: nowrap; font-size: 9px; font-weight: 500; color: var(--dp-value, #5cc6b4); }
+.sft-edge[data-state="stalled"] b { color: var(--stall, #ff9b4a); }
+.sft-edge i { position: absolute; top: -3px; left: -3px; width: 5px; height: 5px; border-radius: 50%; background: var(--dp-value, #5cc6b4); animation: sft-blink 1s steps(2) infinite; }
+.sft-edge[data-state="stalled"] i { background: var(--stall, #ff9b4a); animation: none; }
+.sft-empty { margin: 0; padding: 18px 10px 14px 106px; font-size: 10.5px; color: var(--text-dim, #a2a7ad); }
+
+.sft-entries { list-style: none; margin: 0; padding: 0; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); }
+.sft-entries li { display: grid; grid-template-columns: 38px 64px minmax(0, 1fr); gap: 10px; align-items: baseline; min-width: 0; }
+.sft-entries time { font-size: 10px; color: var(--text-faint, #71767c); font-variant-numeric: tabular-nums; }
+.sft-entries b { justify-self: start; max-width: 100%; font: 500 10px var(--mono, ui-monospace, monospace); padding: 0 5px; border: 1px solid var(--line, #24262a); color: var(--text, #d4d7da); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sft-entries span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim, #a2a7ad); }
+.sft-entries li[data-kind="steer"] b, .sft-entries li[data-kind="steer"] span { color: var(--dp-on, #ffbe00); }
+.sft-entries li[data-kind="stall"] b, .sft-entries li[data-kind="stall"] span { color: var(--stall, #ff9b4a); }
+.sft-entries li[data-kind="spawn"] b { color: var(--dp-value, #5cc6b4); }
+.sft-entries li[data-kind="say"] span { color: var(--text, #d4d7da); }
+
+.sft-compose { flex: none; padding: 8px 18px 10px; background: var(--bg-0, #26292d); border-top: 1px solid var(--line, #24262a); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dp-display .sft-tri, .sft-clip i, .sft-edge i { animation: none !important; }
+}

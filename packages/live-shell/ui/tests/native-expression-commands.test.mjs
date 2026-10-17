@@ -30,9 +30,9 @@ const root = new URL('../../../../', import.meta.url)
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root)
 const boundary = new URL('packages/expressions-boundary/src/', root)
 const shell = new URL('packages/live-shell/ui/src/', root)
-const [C, NT, CMD, COL, GUIDE, App, Model, Store, Retained, Bridge] = await Promise.all([
+const [C, SC, CMD, COL, GUIDE, App, Model, Store, Retained, Bridge] = await Promise.all([
   import(new URL('shell/nativeContent.ts', shell)),
-  import(new URL('components/NativeTransportBar.tsx', shell)),
+  import(new URL('components/expressions/clip/SceneControls.tsx', shell)),
   import(new URL('components/nativeExpressionCommands.ts', shell)),
   import(new URL('components/NativeExpressionCollections.tsx', shell)),
   import(new URL('components/NativeExpressionGuide.tsx', shell)),
@@ -107,7 +107,7 @@ test('save is the owner save request on the captured basis, and nothing else', a
   assert.deepEqual(sent, [{operation: 'save', basis: content.basis}])
 })
 
-test('collection sections map the app groups to Featured, Starters and Built-in presets, with a disabled open on every row', () => {
+test('collection sections map the app groups to Featured, Starters and Built-in presets', () => {
   const items = [
     {id: 'f1', name: 'Mark', description: 'The mark', group: 'Featured'},
     {id: 's1', name: 'Material scene', description: 'Starter material', group: 'Material'},
@@ -118,8 +118,6 @@ test('collection sections map the app groups to Featured, Starters and Built-in 
   const sections = CMD.collectionSections(items, '')
   assert.deepEqual(sections.map(section => [section.id, section.title, section.rows.map(row => row.id)]), [
     ['featured', 'Featured', ['f1']], ['starters', 'Starters', ['s1', 's2']], ['presets', 'Built-in presets', ['p1', 'p2']]])
-  for (const row of sections.flatMap(section => section.rows)) assert.deepEqual(row.open, {disabled: true, reason: CMD.FORK_REASON})
-  assert.match(CMD.FORK_REASON, /save_as owner operation/)
   assert.deepEqual(CMD.collectionSections(items, 'chakra').map(section => section.rows.length), [0, 0, 1])
   assert.deepEqual(CMD.collectionSections(items, '  CORPUS ').map(section => section.rows.length), [0, 1, 0])
 })
@@ -136,18 +134,6 @@ test('the collection rows are the app own collections: featured, starters and bu
   assert.deepEqual(items.filter(item => item.group === 'Composition' || item.group === 'Native').map(item => item.id), presets.map(point => point.id))
   assert.ok(featured.length >= 1 && presets.length >= 1 && starters.length >= 1, 'the app ships collections in every section')
   assert.equal(COL.appCollectionItems(), items, 'the app collections are read once')
-})
-
-test('the collections render read-only, with each action disabled and its reason on the page', () => {
-  const markup = renderToStaticMarkup(createElement(COL.NativeExpressionCollections, {query: ''}))
-  for (const title of ['Featured', 'Starters', 'Built-in presets']) assert.match(markup, new RegExp(`aria-label="${title}"`))
-  const first = App.featuredExpressions()[0]
-  assert.match(markup, new RegExp(escapeHtml(first.name)))
-  assert.equal((markup.match(/<button[^>]*disabled=""[^>]*>Open<\/button>/g) ?? []).length, COL.appCollectionItems().length)
-  assert.doesNotMatch(markup, /<button(?![^>]*disabled)[^>]*>Open</)
-  assert.ok(markup.includes(escapeHtml(CMD.FORK_REASON)), 'the reason is shown, not only in a title')
-  assert.match(markup, /Fork as variation and Remove saved copy need native owner operations/)
-  assert.match(renderToStaticMarkup(createElement(COL.NativeExpressionCollections, {query: 'zz-no-such-collection'})), /No collections match this search\./)
 })
 
 test('the guide shows the app quick guide, About and the shortcuts the shell binds', () => {
@@ -169,10 +155,13 @@ test('the guide text is the app own text: each quick-guide paragraph and About p
 })
 
 test('every shortcut in the guide is bound by the handler it names', async () => {
-  const transport = await read('components/NativeTransportBar.tsx'), app = await read('App.tsx'), browser = await read('components/WorldBrowser.tsx')
+  // The retired Expressions bar held three of these; they stand in the one bar's bindings and with Save (the guide's `source`
+  // column still names the retired file until nativeExpressionCommands.ts is updated: see the ticket's PROPOSE).
+  const bindings = await read('shell/transports/useExpressionsTransport.tsx'), keepers = await read('components/expressions/clip/sceneKeepers.ts')
+  const app = await read('App.tsx'), browser = await read('components/WorldBrowser.tsx')
   const scrub = await read('components/nativeScenePlayback.ts')
-  assert.match(transport, /event\.key\.toLowerCase\(\) === 's'/)
-  assert.match(transport, /spaceTogglesPlayback/)
+  assert.match(keepers, /event\.key\.toLowerCase\(\) === 's'/)
+  assert.match(bindings, /spaceTogglesPlayback/)
   assert.match(scrub, /case 'ArrowRight': case 'ArrowUp'/)
   assert.match(scrub, /case 'Home'/)
   assert.match(app, /event\.key === ','/)
@@ -185,27 +174,33 @@ test('every shortcut in the guide is bound by the handler it names', async () =>
   assert.match(browser, /<NativeExpressionCollections query=\{query\}\/>/)
 })
 
-test('the transport offers Save with its reason, and a Guide control, from the owner reading', () => {
+test('the Clip side offers Save with its reason, and a Guide control, from the owner reading', () => {
   const clean = ownerReading()
-  const cleanMarkup = renderToStaticMarkup(createElement(NT.NativeTransportBar, {source: transportSource(clean)}))
+  const cleanMarkup = renderToStaticMarkup(createElement(SC.SceneControls, {source: transportSource(clean)}))
   const saveClean = cleanMarkup.match(/<button[^>]*aria-label="Save Expression"[^>]*>/)[0]
   assert.match(saveClean, /disabled=""/)
   assert.match(saveClean, /Nothing to save/)
+  assert.match(cleanMarkup, />saved</, 'the standing row reads the owner: clean')
   const guide = cleanMarkup.match(/<button[^>]*aria-label="Expressions guide"[^>]*>/)[0]
   assert.match(guide, /aria-expanded="false"/)
   assert.doesNotMatch(cleanMarkup, /role="dialog"/, 'the guide is closed until asked')
 
-  const dirtyMarkup = renderToStaticMarkup(createElement(NT.NativeTransportBar, {source: transportSource(clean, {...clean.standing, dirty: true})}))
+  const dirtyMarkup = renderToStaticMarkup(createElement(SC.SceneControls, {source: transportSource(clean, {...clean.standing, dirty: true})}))
   const saveDirty = dirtyMarkup.match(/<button[^>]*aria-label="Save Expression"[^>]*>/)[0]
   assert.doesNotMatch(saveDirty, /disabled=""/)
   assert.match(saveDirty, /Ctrl or ⌘ S/)
+  assert.match(dirtyMarkup, />edited since save</)
 
-  const pendingMarkup = renderToStaticMarkup(createElement(NT.NativeTransportBar, {source: transportSource(clean, {...clean.standing, dirty: true, pending: true})}))
+  const pendingMarkup = renderToStaticMarkup(createElement(SC.SceneControls, {source: transportSource(clean, {...clean.standing, dirty: true, pending: true})}))
   assert.match(pendingMarkup.match(/<button[^>]*aria-label="Save Expression"[^>]*>/)[0], /disabled=""/)
 })
 
-test('the transport source sends save through the same history channel the device toolbar uses', async () => {
-  const transport = await read('components/NativeTransportBar.tsx'), devices = await read('components/NativeDeviceEditors.tsx')
-  assert.match(transport, /actions\.history\('save'\)/)
+test('Save sends the owner save request through the same history channel the device toolbar uses, from one place', async () => {
+  const calls = await read('components/expressions/clip/sceneCalls.ts'), devices = await read('components/NativeDeviceEditors.tsx')
+  assert.match(calls, /actions\.history\('save'\)/)
   assert.match(devices, /invoke\(\{operation: 'save', basis: reading\.basis\}\)/)
+  // The Clip side's Save button and the chord both go through sendSave: neither makes the owner call itself.
+  for (const file of ['components/expressions/clip/SceneControls.tsx', 'components/expressions/clip/sceneKeepers.ts', 'shell/transports/useExpressionsTransport.tsx']) {
+    assert.doesNotMatch(await read(file), /history\('save'\)/, `${file} reaches the owner only through sendSave`)
+  }
 })

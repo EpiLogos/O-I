@@ -45,6 +45,11 @@ export interface Workspace {
   context?: WorldContext;
   /** Bounded reference-only recency. Contents and owner readings never live here. */
   recentPlaces?: WorkspaceRecentPlace[];
+  /** Named sets (manual §10.2), newest first. */
+  sets?: NamedSet[];
+  /** The widget rail (manual §10.6): one open set for the whole world, so a widget opened in one mode is open in every
+   * mode; each widget's pin; the rail's presets and width. Beside the per-mode trees, never inside them. */
+  widgets?: WidgetRail;
   /** When the person last stood in this workspace (the retention warm set's
    * recency order — surface/retention.tsx keeps the active workspace plus
    * the most recently visited ones warm). Presentation bookkeeping, never
@@ -58,13 +63,22 @@ export interface Workspace {
  * "return" lands on the same mode, surface and reading position. Refs and
  * positions only — never content, never an authority reading. */
 export type WorldRef = "central" | "epi-logos";
-export interface TrailStop { mode: WorkspaceMode; surfaceRef?: string; surfaceKind?: string; label: string; position?: string }
+export interface TrailStop { mode: WorkspaceMode; surfaceRef?: string; surfaceKind?: string; label: string; position?: string; at?: number }
+/** THE selection (FOUNDATION F1): one value for the whole window — a Day, a document, a clip, a track, a task, a scene.
+ * Every pane that follows the selection reads it here; each move is a trail stop. `ref` is the owner's ref (or the
+ * Central-relative path for ground material); `track` names the track a clip sits on. Refs only, never content. */
+export interface WorldSelection { mode: WorkspaceMode; kind: string; ref: string; title: string; track?: string }
 export interface WorldContext {
   world?: WorldRef;
   subject?: { ref?: string; kind?: string; title: string; project?: string };
   reading?: { ref: string; position?: string };
+  selection?: WorldSelection;
   trail?: TrailStop[];
 }
+/** A named set (manual §10.2): an arrangement of panes, instruments and the frame's parts, kept under a name and
+ * returned to from the browser. The layout is the mode's own tree with its application view; refs only. */
+export interface NamedSet { id: string; name: string; mode: WorkspaceMode; layout: LayoutState; savedAt: number }
+const SET_LIMIT = 64;
 const TRAIL_LIMIT = 24;
 const text = (value: unknown, max = 512): string | undefined => typeof value === "string" && value.length > 0 && value.length <= max ? value : undefined;
 const RECENT_PLACE_LIMIT = 24;
@@ -111,10 +125,13 @@ export function decodeWorldContext(raw: unknown): WorldContext | undefined {
   const reading = readingRaw && typeof readingRaw === "object" && text(readingRaw.ref) ? { ref: text(readingRaw.ref)!, position: text(readingRaw.position) } : undefined;
   const trail = Array.isArray(r.trail) ? r.trail.flatMap((stop): TrailStop[] => {
     const o = stop as Record<string, unknown> | null;
-    return o && typeof o === "object" && isWorkspaceMode(o.mode) && text(o.label) ? [{ mode: o.mode, label: text(o.label)!, surfaceRef: text(o.surfaceRef), surfaceKind: text(o.surfaceKind, 64), position: text(o.position) }] : [];
+    return o && typeof o === "object" && isWorkspaceMode(o.mode) && text(o.label) ? [{ mode: o.mode, label: text(o.label)!, surfaceRef: text(o.surfaceRef), surfaceKind: text(o.surfaceKind, 64), position: text(o.position), at: typeof o.at === "number" && Number.isFinite(o.at) ? o.at : undefined }] : [];
   }).slice(-TRAIL_LIMIT) : undefined;
-  const context: WorldContext = { world: r.world === "epi-logos" ? "epi-logos" : r.world === "central" ? "central" : undefined, subject, reading, trail: trail?.length ? trail : undefined };
-  return context.world || context.subject || context.reading || context.trail ? context : undefined;
+  const selectionRaw = r.selection as Record<string, unknown> | undefined;
+  const selection = selectionRaw && typeof selectionRaw === "object" && isWorkspaceMode(selectionRaw.mode) && text(selectionRaw.kind, 64) && text(selectionRaw.ref, 4096) && text(selectionRaw.title)
+    ? { mode: selectionRaw.mode, kind: text(selectionRaw.kind, 64)!, ref: text(selectionRaw.ref, 4096)!, title: text(selectionRaw.title)!, track: text(selectionRaw.track, 4096) } : undefined;
+  const context: WorldContext = { world: r.world === "epi-logos" ? "epi-logos" : r.world === "central" ? "central" : undefined, subject, reading, selection, trail: trail?.length ? trail : undefined };
+  return context.world || context.subject || context.reading || context.selection || context.trail ? context : undefined;
 }
 /** What crosses a mode switch on the layout itself: the side-region widths,
  * the live accompanying session (one canonical conversation), and the
@@ -136,6 +153,86 @@ export function switchWorkspaceMode(workspace: Workspace, next: WorkspaceMode): 
     ...(next === "settings" ? { agencyDepth: "panel", rightDepth: "collapsed", settingsReturnMode: from as Exclude<WorkspaceMode, "settings"> } : {}) };
   const context: WorldContext | undefined = next === "epi-logos" ? { ...workspace.context, world: "epi-logos" } : workspace.context;
   return { ...workspace, layout, modeLayouts: rest, context };
+}
+/** The widget rail's state in the book (manual §10.6). `pinned` holds, per widget, the ref it stopped following at. */
+export interface WidgetRail { open: string[]; pinned?: Record<string, string>; presets?: WidgetPreset[]; width?: number }
+export interface WidgetPreset { id: string; name: string; open: string[]; savedAt: number }
+const WIDGET_LIMIT = 32;
+/** The rail as the book holds it; a world that never touched its rail stands on the shell's defaults. */
+const railOf = (workspace: Workspace, defaults: readonly string[] = []): WidgetRail => workspace.widgets ?? { open: [...defaults] };
+/** Open a widget, or close it (it stays in the launcher). Closing drops its pin. Pure. */
+export function toggleWidget(workspace: Workspace, id: string, defaults: readonly string[] = []): Workspace {
+  const rail = railOf(workspace, defaults);
+  if (rail.open.includes(id)) {
+    const { [id]: _dropped, ...pinned } = rail.pinned ?? {};
+    return { ...workspace, widgets: { ...rail, open: rail.open.filter(held => held !== id), pinned } };
+  }
+  return { ...workspace, widgets: { ...rail, open: [...rail.open, id].slice(-WIDGET_LIMIT) } };
+}
+/** Pin a widget at the ref it shows now (it stops following the selection), or unpin it (`null`). Pure. */
+export function pinWidget(workspace: Workspace, id: string, ref: string | null): Workspace {
+  const rail = railOf(workspace);
+  const { [id]: _was, ...rest } = rail.pinned ?? {};
+  return { ...workspace, widgets: { ...rail, pinned: ref === null ? rest : { ...rest, [id]: ref } } };
+}
+/** Keep the open widgets as a preset (a same-named preset is replaced), newest first. Pure. */
+export function saveWidgetPreset(workspace: Workspace, name: string, id: string = crypto.randomUUID(), savedAt: number = Date.now(), defaults: readonly string[] = []): Workspace {
+  const label = name.trim();
+  if (!label) return workspace;
+  const rail = railOf(workspace, defaults);
+  const preset: WidgetPreset = { id, name: label, open: [...rail.open], savedAt };
+  return { ...workspace, widgets: { ...rail, presets: [preset, ...(rail.presets ?? []).filter(held => held.name !== label)].slice(0, SET_LIMIT) } };
+}
+/** Open exactly a preset's widgets. Pure. */
+export function applyWidgetPreset(workspace: Workspace, id: string): Workspace {
+  const rail = railOf(workspace);
+  const preset = rail.presets?.find(held => held.id === id);
+  return preset ? { ...workspace, widgets: { ...rail, open: [...preset.open], pinned: {} } } : workspace;
+}
+/** The rail's width, bounded as the docks were (260–900). Pure. */
+export function setWidgetRailWidth(workspace: Workspace, width: number): Workspace {
+  return { ...workspace, widgets: { ...railOf(workspace), width: Math.max(260, Math.min(900, Math.round(width))) } };
+}
+function decodeWidgetRail(raw: unknown): WidgetRail | undefined {
+  const o = raw as Record<string, unknown> | null;
+  if (!o || typeof o !== "object" || !Array.isArray(o.open)) return undefined;
+  const ids = (list: unknown): string[] => Array.isArray(list) ? list.flatMap(id => text(id, 128) ? [text(id, 128)!] : []).slice(0, WIDGET_LIMIT) : [];
+  const pinned = o.pinned && typeof o.pinned === "object"
+    ? Object.fromEntries(Object.entries(o.pinned as Record<string, unknown>).flatMap(([id, ref]) => text(id, 128) && text(ref, 2048) ? [[id, text(ref, 2048)!]] : []))
+    : undefined;
+  const presets = Array.isArray(o.presets) ? o.presets.flatMap((entry): WidgetPreset[] => {
+    const p = entry as Record<string, unknown> | null;
+    return p && typeof p === "object" && text(p.id, 128) && text(p.name, 128) && typeof p.savedAt === "number"
+      ? [{ id: text(p.id, 128)!, name: text(p.name, 128)!, open: ids(p.open), savedAt: p.savedAt }] : [];
+  }).slice(0, SET_LIMIT) : undefined;
+  return { open: ids(o.open), ...(pinned ? { pinned } : {}), ...(presets?.length ? { presets } : {}), ...(typeof o.width === "number" ? { width: Math.max(260, Math.min(900, o.width)) } : {}) };
+}
+/** Keep the active mode's arrangement under a name (newest first; a same-named set in the same mode is replaced). Pure. */
+export function saveNamedSet(workspace: Workspace, name: string, id: string = crypto.randomUUID(), savedAt: number = Date.now()): Workspace {
+  const label = name.trim();
+  if (!label) return workspace;
+  const mode: WorkspaceMode = workspace.layout.mode ?? "base";
+  const set: NamedSet = { id, name: label, mode, layout: { ...workspace.layout, detached: undefined, windowBounds: undefined }, savedAt };
+  return { ...workspace, sets: [set, ...(workspace.sets ?? []).filter(held => !(held.mode === mode && held.name === label))].slice(0, SET_LIMIT) };
+}
+/** Return to a named set: stand in its mode, then take its tree and frame — the side widths, the accompanying session
+ * and any detached windows stay as they are. Pure. */
+export function applyNamedSet(workspace: Workspace, id: string, at: number = Date.now()): Workspace {
+  const set = workspace.sets?.find(held => held.id === id);
+  if (!set) return workspace;
+  const standing = switchWorkspaceMode(workspace, set.mode);
+  const layout: LayoutState = { ...set.layout, ...sharedAcrossModes(standing.layout), detached: standing.layout.detached, windowBounds: standing.layout.windowBounds, mode: set.mode === "base" ? undefined : set.mode, appliedSet: `${set.id}@${at}` };
+  return { ...standing, layout };
+}
+function decodeNamedSets(raw: unknown, restore: (layout: LayoutState) => LayoutState): NamedSet[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const sets = raw.flatMap((entry): NamedSet[] => {
+    const o = entry as Record<string, unknown> | null;
+    if (!o || typeof o !== "object" || !text(o.id, 128) || !text(o.name, 128) || !isWorkspaceMode(o.mode) || typeof o.savedAt !== "number") return [];
+    try { return [{ id: text(o.id, 128)!, name: text(o.name, 128)!, mode: o.mode, layout: { ...restore(o.layout as LayoutState), mode: o.mode === "base" ? undefined : o.mode }, savedAt: o.savedAt }]; }
+    catch { return []; }
+  }).slice(0, SET_LIMIT);
+  return sets.length ? sets : undefined;
 }
 /** Move one already-held Surface to the active mode's canvas. Its binding,
  * native buffer and per-binding view state survive; no second host is minted. */
@@ -309,7 +406,9 @@ function restoreWorkspace(w: Workspace, draftPrefix?: string): {workspace: Works
       if (state.mode !== undefined && !["chats", "files", "wiki"].includes(state.mode)) throw new Error("Invalid project mode");
       return [ref, { expanded: state.expanded, scroll: state.scroll, directories: state.directories, mode: state.mode ?? "files", locationPath: state.locationPath }];
     }));
-    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }, draftPrefix), notes};
+    // A named set that no longer restores is dropped on its own, never the workspace with it.
+    const sets = decodeNamedSets(w.sets, raw => { const before = notes.length; try { return restore(raw); } finally { notes.length = before; } });
+    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), sets, widgets: decodeWidgetRail(w.widgets), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }, draftPrefix), notes};
   } catch (error) {
     // The record still names itself when its name is readable; its
     // identifier survives only when it is a string no healthy workspace
@@ -505,6 +604,21 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   /** The one scope's writer (scope.ts): Central, a project, or Factory's All projects. */
   const browseAll = () => update(w => ({ ...w, allProjects: true }));
   const switchMode = (next: WorkspaceMode) => update(w => switchWorkspaceMode(w, next));
+  const saveSet = (name: string) => update(w => saveNamedSet(w, name));
+  const applySet = (id: string) => update(w => applyNamedSet(w, id));
+  const removeSet = (id: string) => update(w => ({ ...w, sets: w.sets?.filter(held => held.id !== id) }));
+  const toggleWidgetOpen = (id: string, defaults: readonly string[] = []) => update(w => toggleWidget(w, id, defaults));
+  const pinWidgetAt = (id: string, ref: string | null) => update(w => pinWidget(w, id, ref));
+  const saveWidgets = (name: string, defaults: readonly string[] = []) => update(w => saveWidgetPreset(w, name, undefined, undefined, defaults));
+  const applyWidgets = (id: string) => update(w => applyWidgetPreset(w, id));
+  const widenWidgets = (width: number) => update(w => setWidgetRailWidth(w, width));
+  /** Move THE selection (WorldContext.selection) and record the move on the trail — the one writer every mode uses. */
+  const select = (selection: WorldSelection | null) => setContext(context => {
+    if (!selection) return { ...context, selection: undefined };
+    const same = context.selection && context.selection.ref === selection.ref && context.selection.kind === selection.kind && context.selection.mode === selection.mode;
+    const stop: TrailStop = { mode: selection.mode, surfaceRef: selection.ref, surfaceKind: selection.kind, label: selection.title, position: selection.track, at: Date.now() };
+    return { ...context, selection, trail: same ? context.trail : [...(context.trail ?? []), stop] };
+  });
   const moveSurface=(surfaceId:string,into:"tree"|"side")=>update(w=>moveWorkspaceSurface(w,surfaceId,into));
   /** The world-context layer's one writer. `trail` pushes are bounded. */
   const setContext = (change: (context: WorldContext) => WorldContext) => update(w => { const next = change(w.context ?? {}); return { ...w, context: { ...next, trail: next.trail?.slice(-TRAIL_LIMIT) } }; });
@@ -580,5 +694,5 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   };
   const showRecovery=()=>{const saved=latest();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
-  return { flushCheckpoint: flushNow, storageNamespace: namespace, switchMode, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, dropDetachedEverywhere, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
+  return { flushCheckpoint: flushNow, storageNamespace: namespace, switchMode, saveSet, applySet, removeSet, toggleWidgetOpen, pinWidgetAt, saveWidgets, applyWidgets, widenWidgets, select, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, dropDetachedEverywhere, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }

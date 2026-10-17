@@ -19,7 +19,7 @@ import type { SkyLayer } from '../sky/layer';
 import type { BodyKey } from '../types/sky';
 import { wrapLon } from '../data/geo';
 import { hostSize } from '../ui/hostSize';
-import { listen, later, nextFrame } from '../ui/lifetime';
+import { followSize, listen, later, nextFrame } from '../ui/lifetime';
 
 export interface ScreenPoint {
   x: number;
@@ -132,7 +132,10 @@ export class GlobeEngine {
     this.markers = { sel: new Marker(this.shared, 26), hover: new Marker(this.shared, 17), head: new Marker(this.shared, 30) };
 
     this.ready = this.init();
+    // the window's resize carries a change of devicePixelRatio (a zoom, another screen); the pane's own size changes without
+    // the window (a browser, rail or detail toggle, a split): the observer of the parent follows those (ui/lifetime.ts followSize)
     listen(window, 'resize', this.onResize);
+    followSize(this.parent, this.onResize);
     this.onResize();
   }
 
@@ -356,6 +359,9 @@ export class GlobeEngine {
   private onResize = () => {
     const w = this.parent.clientWidth || hostSize(this.parent).w;
     const h = this.parent.clientHeight || hostSize(this.parent).h;
+    // a hidden pane (its mode's tree parked, the pane folded) measures 0: the globe keeps its last size until it stands again
+    // (an aspect of 0/0 would put NaN into the camera)
+    if (!w || !h) return;
     this.width = w;
     this.height = h;
     this.pr = Math.min(window.devicePixelRatio || 1, 2);

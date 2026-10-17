@@ -1,0 +1,113 @@
+/* The Expressions Studio (the mockup's Studio, world-shell-mockup.html:1432-1441, drawn with .inst/.isec, :352-359; its buttons the
+   mockup's .bt, :128-130; its toggles .tog .tg, :343-344; its list rows .dli, :346-347). Shell and SDK tokens only. */
+.inst-plate[data-studio] { min-width: 0 }
+/* The columns fit the row by the plate's fold (studioFit.ts): a folded column is the strip, and the last column takes only what it
+   holds, so what each column needs is what is measured. */
+.inst-plate[data-studio] .inst-section.inst-section--folded { min-width: 0 }
+.inst-plate[data-studio] .inst-section:last-child { flex: none }
+.inst-plate[data-dropping="true"] > .sdk-face { outline: 1px dashed var(--accent); outline-offset: -2px }
+.inst-plate[data-dirty="true"] .sdk-face__owner { color: var(--stall) }
+.inst-plate[data-studio] .inst-section { min-width: 116px }
+.inst-plate[data-studio] .inst-section--folded { min-width: 0 }
+
+/* A section's parts stand side by side, each fitted to the band (studioBand.ts): never stacked past the plate's foot. */
+.studio-cols { display: flex; flex-direction: row; align-items: flex-start; gap: 12px; min-width: 0; height: 100%; min-height: 0 }
+.studio-cols > * { flex: none; max-height: 100% }
+/* The marks of the devices a section holds, in its head (studioDevices.tsx): the runtime's selector marks, at the head's height. */
+.inst-plate[data-studio] .inst-section-head .inst-section-note { display: inline-flex; align-items: center; gap: 6px; overflow: hidden }
+.studio-marks { display: inline-flex; gap: 0 }
+.studio-marks .inst-selector-mark { width: 17px; height: 13px }
+.studio-provenance { color: var(--text-faint); letter-spacing: .02em; text-transform: none; font-size: 9.5px; white-space: nowrap }
+/* The shown device, drawn flat into the column at the band's scale (its frame stands down: instrumentPlate.css .inst-device). */
+.studio-device { flex: none; min-width: 0 }
+/* Selected's pages, in its head: the kit's pager words, the shown page lit. */
+.studio-pages { gap: 6px; text-transform: none; letter-spacing: 0 }
+.studio-pages button[aria-selected="true"] { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px }
+
+/* Selected · the glyph: the object chooser, then what the Studio does to it. */
+.studio-selected { display: flex; flex-direction: column; gap: 6px; min-width: 150px; max-width: 176px }
+.studio-chooser { display: flex; flex-direction: column; align-items: stretch; gap: 2px }
+.studio-chooser .dp-label { text-align: left }
+.studio-chooser .dp-chooser { max-width: 168px }
+.studio-force { display: flex; flex-direction: column; gap: 4px }
+.studio-row-head { display: flex; align-items: center; gap: 6px; min-width: 0 }
+.studio-row-name { min-width: 0; padding: 0; background: none; border: 0; color: var(--text); font: inherit; font-size: 11px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer }
+.studio-row-name:hover { color: var(--accent) }
+.studio-row-name:focus-visible, .studio-toggle button:focus-visible, .studio-row-add:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+/* The mockup's .tog .tg: segments on the well, the chosen one lit. */
+.studio-toggle { display: flex; width: max-content; max-width: 100%; border: 1px solid var(--line) }
+.studio-toggle button { padding: 1px 5px; background: var(--bg-0); border: 0; color: var(--text-faint); font: inherit; font-size: 9.5px; white-space: nowrap; cursor: pointer }
+.studio-toggle button[aria-pressed="true"] { background: var(--accent); color: var(--bg-1) }
+.studio-toggle button:disabled { cursor: default; opacity: .55 }
+.studio-summary { margin: 0; max-width: 168px; font: 9.5px/1.35 var(--mono); color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+/* Selected · Glyph: the sequence's controls in control columns (manual §16.9), never the glyph editor's own box. */
+.studio-sequence { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; min-width: 0 }
+.studio-sequence > .dp-cell--radio, .studio-sequence-col { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 5px; width: 64px }
+.studio-sequence .dp-cell--radio .dp-label { text-align: left }
+
+/* A section's object and Scene devices (.dli): the light, the name that opens its settings, + to put it on the rack. */
+.studio-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0; min-width: 132px }
+.studio-list-row { display: flex; align-items: center; gap: 6px; height: 17px; padding: 0 2px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); font-size: 10px; white-space: nowrap; overflow: hidden }
+.studio-list-row .studio-row-name { flex: 1; font-size: 10px; color: var(--text-dim) }
+.studio-list-row[data-on-rack] .studio-row-name { color: var(--text) }
+.studio-row-note { font-family: var(--mono); font-size: 9px; color: var(--text-faint) }
+.studio-row-add { display: inline-grid; place-items: center; width: 16px; height: 14px; padding: 0; background: none; border: 1px solid transparent; color: var(--text-faint); cursor: pointer }
+.studio-row-add:hover:not(:disabled) { color: var(--accent); border-color: var(--line-strong) }
+.studio-row-add:disabled { opacity: .45; cursor: default }
+
+.studio-fault { margin: 0; padding: 3px 8px; border-top: 1px solid var(--line); color: var(--rec); font-size: 10px; overflow-wrap: anywhere }
+/* The copy's answer: a status, not a fault. */
+.studio-note { margin: 0; padding: 3px 8px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 10px; overflow-wrap: anywhere }
+
+/* The settings (Configure) stand as the plate's columns: your rack, the chosen controls, the macros, then the Scene and device settings. */
+.studio-settings-rack { min-width: 0 }
+.studio-settings-rack .native-device-rack { background: transparent }
+.studio-settings-rack .native-device-rack-row { padding: 0 }
+.studio-settings-nav { display: flex; flex-wrap: wrap; gap: 3px }
+.studio-settings-nav button { height: 20px; padding: 0 9px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-dim); font: inherit; font-size: 10.5px; white-space: nowrap; cursor: pointer }
+.studio-settings-nav button:hover { color: var(--text); border-color: var(--text-faint) }
+.studio-settings-nav button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg-1) }
+.studio-settings-nav button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+
+/* The stage's controls in Tools and Capture (StudioStage.tsx; the mockup's x.tool / x.cap segs and its ◉ Capture and Edition… buttons,
+   world-shell-mockup.html:1434, :1440). A seg is the mockup's .tog .tg (:343-344): segments on the well, the pressed one lit; a lone
+   control is the mockup's .bt (:128-129), the capture itself its .bt.pri. */
+.studio-stage { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0 }
+.studio-stage-label { font-size: 9.5px; color: var(--text-dim); white-space: nowrap }
+.studio-seg { display: flex; width: max-content; max-width: 100%; border: 1px solid var(--line) }
+.studio-seg .studio-stage-button { height: 17px; padding: 1px 6px; background: var(--bg-0); border: 0; border-right: 1px solid var(--line); color: var(--text-faint); font: inherit; font-size: 9.5px; white-space: nowrap; cursor: pointer }
+.studio-seg .studio-stage-button:last-child { border-right: 0 }
+.studio-seg .studio-stage-button:hover:not(:disabled) { color: var(--text) }
+.studio-seg .studio-stage-button[aria-pressed="true"] { background: var(--accent); color: var(--bg-1) }
+.studio-stage-row { display: flex; flex-wrap: wrap; gap: 4px }
+.studio-stage-row .studio-stage-button { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 9px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-dim); font: inherit; font-size: 10.5px; white-space: nowrap; cursor: pointer }
+.studio-stage-row .studio-stage-button:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
+.studio-stage-row .studio-stage-button[aria-pressed="true"], .studio-stage-row .studio-stage-button[aria-expanded="true"] { border-color: var(--accent); color: var(--text) }
+.studio-stage-row .studio-stage-button.is-primary { background: var(--accent); border-color: var(--accent); color: var(--bg-1) }
+.studio-stage-button:disabled { cursor: default; opacity: .45 }
+.studio-stage-button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+.studio-stage-reason { max-width: 30ch }
+/* Where the last export landed (G1): the file and its folder, the owner-reading idiom of a line under the controls; a failure in
+   the refusal colour. */
+.studio-export-line { margin: 0; max-width: 32ch; font-size: 10px; line-height: 1.4; color: var(--text-dim); overflow-wrap: anywhere }
+.studio-export-line[data-export="failed"] { color: var(--rec) }
+
+/* Capture: the capture itself, then Edition… open beside it — the options, Export and Import as columns of the section. */
+.studio-capture { flex-direction: row; align-items: flex-start; gap: 12px }
+.studio-capture-main { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0 }
+.studio-edition { display: flex; gap: 12px; padding-left: 12px; border-left: 1px solid var(--line) }
+.studio-edition-col { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0 }
+.studio-edition-col .studio-stage-button { height: 20px; padding: 0 9px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-dim); font: inherit; font-size: 10.5px; white-space: nowrap; cursor: pointer }
+.studio-edition-col .studio-stage-button:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
+.studio-edition-field { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-dim); white-space: nowrap }
+.studio-edition-field select { height: 20px; padding: 0 4px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 10.5px }
+.studio-edition-field select:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+.studio-edition-check { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-dim); white-space: nowrap }
+.studio-edition-check input { margin: 0; accent-color: var(--accent) }
+
+/* The head: where the work stands against its last save (the mockup's "edited since save", :1432), then Save, Undo and Redo. */
+.studio-head-standing { font-size: 10px; color: var(--text-faint); white-space: nowrap }
+.studio-head-standing[data-dirty="true"] { color: var(--stall) }
+.inst-plate[data-studio] :is(.sdk-face__extra, .dp-head-acts) .frame-chrome { flex-wrap: nowrap }
+/* Your controls (NativeChosenControls) stand as the section's own kit dials, paged (NativeChosenControls.css); the settings' column the same. */
+.inst-plate[data-studio] .native-chain-controls { width: auto; max-width: none; height: auto }

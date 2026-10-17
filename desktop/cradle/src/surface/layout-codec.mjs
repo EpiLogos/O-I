@@ -22,6 +22,9 @@ import {validateNativeKnowledgeContext} from '../knowledge/nativeContext.mjs';
 // surface engine declares (surface/types.ts). Kept as literals here so the
 // codec stays language-neutral and browser-testable without a TS import.
 const PROJECTION_PANE_KINDS = ['projection.earth', 'projection.timeline', 'projection.constellation', 'projection.expressions'];
+// Any instrument the frame opens is a projection kind by its name (the engine's isProjectionPaneKind grammar), so a
+// document or device pane survives a restart like the four named ones.
+const isProjectionKind = kind => typeof kind === 'string' && /^projection\.[a-z0-9-]+$/.test(kind);
 const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'agency', 'object', ...PROJECTION_PANE_KINDS, ...hostedSurfaceDescriptors.map(descriptor => descriptor.kind)];
 const ENCOUNTER_PLANES = ['Conversation', 'Activity', 'Context', 'Inspect'];
 const KNOWLEDGE_PLANES = ['graph', 'page'];
@@ -50,6 +53,21 @@ export function validApplicationView(raw) {
   } catch { return undefined; }
 }
 
+// lane-3 E22 (ticket P, G3): the address kept beside the work (surface/types.ts engine.address) — the frame's announced refs,
+// each part well-typed or dropped. The frame reads it again through its own deep-link grammar on reopen (deepLinks.ts
+// parseDeepLink) and names any refusal there, so only the shape is decided here (a ref no longer than the frame's
+// DEEP_LINK_REF_MAX, a time in seconds from the start).
+const addressRef = (value) => typeof value === 'string' && value.length > 0 && value.length <= 256;
+function engineAddress(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const address = {
+    ...(addressRef(raw.scene) ? { scene: raw.scene } : {}),
+    ...(typeof raw.t === 'number' && Number.isFinite(raw.t) && raw.t >= 0 ? { t: raw.t } : {}),
+    ...(addressRef(raw.marker) ? { marker: raw.marker } : {}),
+  };
+  return Object.keys(address).length ? address : undefined;
+}
+
 export function validBinding(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw;
@@ -68,7 +86,7 @@ export function validBinding(raw) {
     const descriptor = hostedSurfaceDescriptors.find(row => row.kind === o.kind);
     if (descriptor) hosted = {descriptor_ref:descriptor.descriptor_ref, contribution_ref:descriptor.contribution_ref};
   }
-  if (!SURFACE_KINDS.includes(o.kind) && !hosted) return null;
+  if (!SURFACE_KINDS.includes(o.kind) && !isProjectionKind(o.kind) && !hosted) return null;
   if (o.ref !== undefined && typeof o.ref !== 'string') return null;
   if (o.kind === 'instrument' && (typeof o.ref !== 'string' || !o.ref.trim())) return null;
   // An object page (10-SIDEBARS §4.7) is identity only: its ref names the object.
@@ -111,7 +129,7 @@ export function validBinding(raw) {
   // spine address, never content. A missing or mistyped slice drops the
   // slice — the pane then follows the encounter — never the binding.
   const projectionRaw = o.projection;
-  const projection = PROJECTION_PANE_KINDS.includes(o.kind) && projectionRaw && typeof projectionRaw === 'object' && projectionRaw.kind === o.kind
+  const projection = isProjectionKind(o.kind) && projectionRaw && typeof projectionRaw === 'object' && projectionRaw.kind === o.kind
     ? {kind: projectionRaw.kind, ...(typeof projectionRaw.subject_ref === 'string' && projectionRaw.subject_ref.trim() ? {subject_ref: projectionRaw.subject_ref} : {})}
     : undefined;
   // Compact view state is kind-scoped: the plane an encounter Surface was
@@ -153,6 +171,7 @@ export function validBinding(raw) {
         expressionRef: engineRaw.expressionRef,
         ...(typeof engineRaw.documentId === 'string' ? { documentId: engineRaw.documentId } : {}),
         ...(typeof engineRaw.revision === 'string' ? { revision: engineRaw.revision } : {}),
+        ...(engineAddress(engineRaw.address) ? { address: engineAddress(engineRaw.address) } : {}),
       }
     : undefined;
   return {

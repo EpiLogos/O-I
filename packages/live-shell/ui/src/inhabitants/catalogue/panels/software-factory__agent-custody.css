@@ -1,0 +1,20 @@
+/* Custody's own layout: the held items in the pane, and the widget. Shell and panel tokens only. */
+.cu-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
+.cu-pane-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; }
+.cu-pane-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
+.cu-pane-head span + span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.cu-pane-head [data-lit="true"] { color: var(--rec, #e5484d); }
+.cu-list { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 10px 20px; overflow: hidden; }
+.cu-line { display: grid; grid-template-columns: 16px minmax(0, 1fr) 64px 84px 96px 84px; gap: 10px; align-items: center; height: 24px; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); }
+.cu-line--head { height: 20px; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.cu-line > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cu-name { color: var(--text, #d4d7da); }
+.cu-kind, .cu-by, .cu-receipts { color: var(--text-dim, #a2a7ad); }
+.cu-state[data-state="in-progress"] { color: var(--stall, #ff9b4a); }
+.cu-state[data-state="blocked"] { color: var(--stall, #ff9b4a); }
+.cu-state[data-state="edited"] { color: var(--rec, #e5484d); }
+.cu-line svg { display: block; }
+.cu-empty { margin: 0; padding: 14px 0; color: var(--text-faint, #71767c); }
+
+/* The widget: a small well and its readings. */
+.cu-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }

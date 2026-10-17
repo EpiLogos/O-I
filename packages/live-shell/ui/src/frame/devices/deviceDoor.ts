@@ -1,0 +1,160 @@
+// The device door (FOUNDATION F5): the places that hold live devices — a track's chain, an instrument's rack — publish
+// each one here by id, with its live picture, and the other places read it by id: the pool under the browser shows the
+// selected device whole, a pane shows a device full, the rail keeps a device's widget. One device, one set of live settings,
+// five views (manual §16.3). A device can carry its own Full — its material, or the act that opens it — over its design's.
+import {useSyncExternalStore, type ReactNode} from 'react'
+import type {DesignBinding} from './designed'
+import type {DeviceInstance} from './deviceRuntime'
+
+/** The pane kind that holds one device full (devicePane.tsx registers it). */
+export const DEVICE_PANE_KIND = 'projection.device'
+
+export interface PublishedDevice {
+  device: DeviceInstance
+  /** The device's own live picture, drawn at the size it is shown. */
+  picture?: (size: 'compact' | 'whole' | 'full') => ReactNode
+  /** The wiring of the device's designed views to its owner (the design's value keys to owner readings), where its family has
+   * written one; absent, the device's rows are its value keys (designed.ts bindingOf). */
+  binding?: DesignBinding
+  /** The marks its place gives the device's head, before ⤢ (a pop-out, a redock): the pool's head carries them as the chain's does. */
+  marks?: ReactNode
+  /** The device's own Full, over its design's (manual §16.3 Full: "The material itself"). `draw`: the material, drawn as the Full
+   * view in the device's pane (the Day's page as its owner stands it). `open`: the act that opens the material where it lives (the
+   * Agent's thread), which every ⤢ — the chain's, the pool's, the rail's — does in place of opening the device's pane. */
+  full?: OwnFull
+  /** The act that pops the device out into its own window (manual §16.1 Pop-out; seam 8), offered by its publisher only while the
+   * device stands docked and its face declares a window (central/devices/CentralDevices.tsx popOutOf). The head's ↗ does it. */
+  popout?: () => void
+}
+
+export type OwnFull = {readonly draw: () => ReactNode} | {readonly open: () => void}
+
+const devices = new Map<string, PublishedDevice>()
+let selected: string | null = null
+const listeners = new Set<() => void>()
+let version = 0
+const notify = () => { version++; for (const listener of listeners) listener() }
+
+/** Publish (or withdraw, with null) one live device by its id. */
+export function publishDevice(id: string, entry: PublishedDevice | null): void {
+  if (entry) devices.set(id, entry); else devices.delete(id)
+  notify()
+}
+
+export function publishedDevice(id: string): PublishedDevice | undefined {
+  return devices.get(id)
+}
+
+/** Every device published now, in the order they were first published. */
+export function publishedDevices(): readonly PublishedDevice[] {
+  return [...devices.values()]
+}
+
+/** The device the pool shows whole: the one last chosen on a chain. */
+export function selectDevice(id: string | null): void {
+  if (selected === id) return
+  selected = id
+  notify()
+}
+
+export function selectedDeviceId(): string | null {
+  return selected
+}
+
+const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }
+
+/** Re-render when any published device or the selection changes. */
+export function useDeviceDoor(): {device: (id: string) => PublishedDevice | undefined; selected: string | null} {
+  useSyncExternalStore(subscribe, () => version, () => version)
+  return {device: publishedDevice, selected}
+}
+
+/** Re-render only when the selection changes (a plate on the chain wears the outline of the one the pool shows), never on
+ * a publish: a chain of plates does not redraw each time one of its devices reads anew. */
+export function useSelectedDeviceId(): string | null {
+  return useSyncExternalStore(subscribe, selectedDeviceId, selectedDeviceId)
+}
+
+// ------------------------------------------------------------------------------------------------------------- the expanded view
+// The ▸ in a chain plate's head shows the device's expanded view (manual §16.4; Live's Toggle Expanded View): its Whole as a band
+// across the detail area above the chain, one device at a time, drawn by its chain plate into the host the frame stands there
+// (DeviceFlip.tsx). ▾, or Esc, folds it back.
+
+let flipped: string | null = null
+
+/** Show a device's expanded view (or fold it back, with null). */
+export function flipDevice(id: string | null): void {
+  if (flipped === id) return
+  flipped = id
+  notify()
+}
+
+export function flippedDeviceId(): string | null {
+  return flipped
+}
+
+/** Re-render only when the expanded device changes. */
+export function useFlippedDeviceId(): string | null {
+  return useSyncExternalStore(subscribe, flippedDeviceId, flippedDeviceId)
+}
+
+let flipHost: HTMLElement | null = null
+
+/** The frame's expanded-view host hands its element (or withdraws it, with null). */
+export function publishFlipHost(element: HTMLElement | null): void {
+  if (flipHost === element) return
+  flipHost = element
+  notify()
+}
+
+/** The element an expanded view is drawn into, while the frame stands one. */
+export function useFlipHost(): HTMLElement | null {
+  return useSyncExternalStore(subscribe, () => flipHost, () => flipHost)
+}
+
+/** Re-render only when this device comes onto the door or leaves it. */
+export function useIsPublished(id: string): boolean {
+  return useSyncExternalStore(subscribe, () => devices.has(id), () => devices.has(id))
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the rail's hand
+// A device's widget stands on the one rail (frame/widgets/WidgetRail.tsx) under the widget id `device:<id>`, in the rail's own
+// open set (the workspace book's, so it stays when you change mode). The rail hands its open set and its toggle here when it draws;
+// a device's head asks through them.
+
+export const DEVICE_WIDGET_PREFIX = 'device:'
+export const deviceWidgetId = (deviceId: string): string => `${DEVICE_WIDGET_PREFIX}${deviceId}`
+
+let rail: {open: readonly string[]; toggle: (id: string) => void} | null = null
+const railListeners = new Set<() => void>()
+
+/** The rail hands its open set and its toggle (or withdraws them, with null). */
+export function publishRail(next: {open: readonly string[]; toggle: (id: string) => void} | null): void {
+  const was = rail
+  rail = next
+  if (was?.open.join('\n') !== next?.open.join('\n') || !was !== !next) for (const listener of railListeners) listener()
+}
+
+/** Whether the device stands on the rail now. */
+export function onRail(deviceId: string): boolean {
+  return !!rail?.open.includes(deviceWidgetId(deviceId))
+}
+
+/** Put the device on the rail; a device already there stays. Refuses in words when no rail is drawn. */
+export function putOnRail(deviceId: string): string | null {
+  if (!rail) return 'The widget rail is not open. Open it from the transport, then press the mark again.'
+  if (!onRail(deviceId)) rail.toggle(deviceWidgetId(deviceId))
+  return null
+}
+
+/** Take the device off the rail. */
+export function takeOffRail(deviceId: string): void {
+  if (rail && onRail(deviceId)) rail.toggle(deviceWidgetId(deviceId))
+}
+
+const subscribeRail = (listener: () => void) => { railListeners.add(listener); return () => { railListeners.delete(listener) } }
+
+/** Re-render when the rail's open set changes. */
+export function useOnRail(deviceId: string): boolean {
+  return useSyncExternalStore(subscribeRail, () => onRail(deviceId), () => onRail(deviceId))
+}

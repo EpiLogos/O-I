@@ -1,4 +1,5 @@
 import {useState} from 'react'
+import {ChevronFold} from '../inhabitants/sdk/marks.tsx'
 import type {Entity, NativeEditorChange} from '../../../../expressions-boundary/src/editor'
 import type {StripDevice} from './nativeDeviceStripModel'
 import './NativeDeviceStrip.css'
@@ -16,7 +17,7 @@ export function ForceDeviceCard({device, entity, locked, send, onOpen}: {device:
       {/* Force has no enable operation: the light reports the entity's state and is not a control. */}
       <span role="img" className={`native-chain-light is-${state}`} aria-label={`${device.name} ${state}`} title={`${device.name} is ${state}`} />
       <button type="button" className="native-chain-fold" aria-expanded={!folded} aria-label={`${folded ? 'Expand' : 'Fold'} ${device.name}`}
-        onClick={() => setFolded(!folded)}><span aria-hidden="true">{folded ? '▸' : '▾'}</span></button>
+        onClick={() => setFolded(!folded)}><ChevronFold size={9} style={folded ? {transform: 'rotate(-90deg)'} : undefined} /></button>
       <button type="button" className="native-chain-title" title="Open settings" onClick={() => onOpen({scope: 'entity', family: 'force'})}>{device.name}</button>
     </header>
     {!folded && <div className="native-chain-body">

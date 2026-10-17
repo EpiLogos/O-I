@@ -72,9 +72,20 @@ export class TimeControl {
   setTour(playing: boolean | null, onToggle?: () => void) {
     this.tour = playing === null ? null : { playing, onToggle: onToggle ?? this.tour?.onToggle ?? (() => {}) };
     this.render();
+    this.onWalkChange?.();
   }
 
-  private togglePlay() {
+  /** [§8.4 host] Told when a walk takes the button, plays, pauses or gives it back (the shell's transport re-reads it). */
+  onWalkChange: (() => void) | null = null;
+
+  /** [§8.4 host] The thread walk that holds the button, or null while the clock holds it: the shell's transport reads it
+   * (T-PLACES-ONTO-ATLAS). */
+  get walk(): { readonly playing: boolean } | null {
+    return this.tour;
+  }
+
+  /** [§8.4 host] public: the shell's one transport presses this button (T-PLACES-ONTO-ATLAS; lock §7.1 "one transport"). */
+  togglePlay() {
     if (this.tour) {
       this.tour.onToggle();
       return;

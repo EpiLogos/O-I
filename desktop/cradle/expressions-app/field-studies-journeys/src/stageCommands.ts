@@ -4,8 +4,101 @@
  * application's own action body (app.ts action()); nothing here re-implements a
  * control. Camera pan/zoom/orbit stay pointer gestures on the stage itself. */
 import {NATIVE_BINDINGS} from './nativeParameters.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome'] as const;
 export type StageCommandName = (typeof STAGE_COMMANDS)[number];
+/** How the shell presents the frame (T-FRAME-CHROME-ONTO-PLATES; manual §16.1: "A pane is a device at full size. Its controls stay out
+ * of the pane and appear in Device view below it"). 'devices': a pane — the frame draws only its field, and every control its chrome
+ * draws stands on the shell's devices through the chrome reading below. 'frame': the pane at full size (the pane grammar's maximise) —
+ * the frame's own controls stand inside it, as the standalone application has them. A frame nobody declares to stays 'frame'. */
+export const FRAME_PRESENTATIONS = ['devices', 'frame'] as const;
+export type FramePresentation = (typeof FRAME_PRESENTATIONS)[number];
+/** Where a control of the frame's chrome belongs, in the manual's own groups (DLW.md §17.3 Canvas "Tools, Lines, Relation, Look,
+ * Views", §17.4 Timeline "Lens, Readings, Standing, Window", §17.5 Journey "Stops, Pace, Transitions, Takes"), and for the stage-wide
+ * chrome the masthead's and scene bar's own clusters: work (Save, Undo, Redo), tools (the rail and the workspace menu), capture, nara,
+ * scene (the scene bar), side (the toolbelt handle), lens (the M0′–M3′ chooser). The editors the frame summons over its field stand as
+ * homes of their own while they are open (lane BE: in the 'devices' presentation they stand down over the field and stand on a device in
+ * the shell's pool instead): acts (the scene bar's Acts, actPanel.ts), nara:instrument (the personal Nara instrument, naraInstrument.tsx)
+ * and canvas:find (Find on Canvas, canvasFindOverlay.tsx). One closed list for frame, boundary and shell. */
+export const FRAME_CHROME_HOMES = ['work', 'tools', 'capture', 'nara', 'scene', 'side', 'lens', 'acts', 'nara:instrument',
+  'canvas:tools', 'canvas:lines', 'canvas:relation', 'canvas:look', 'canvas:views', 'canvas:find',
+  'timeline:lens', 'timeline:readings', 'timeline:standing', 'timeline:window',
+  'journey:stops', 'journey:pace', 'journey:transitions', 'journey:takes',
+  'project:view'] as const;
+export type FrameChromeHome = (typeof FRAME_CHROME_HOMES)[number];
+/** What a control is, as the frame draws it: a press, a toggle (its pressed state the frame's own aria reading), a choice among the
+ * frame's options, a value it commits (colour, text, number, range), or a reading it shows (a status line, a time, a count). */
+export const FRAME_CHROME_KINDS = ['button', 'toggle', 'select', 'color', 'text', 'number', 'range', 'reading'] as const;
+export type FrameChromeKind = (typeof FRAME_CHROME_KINDS)[number];
+export interface FrameChromeOption {value: string; label: string; group?: string}
+/** One control of the frame's chrome, by value: the frame's own words, its own state; never a copy the shell keeps. */
+export interface FrameChromeControl {
+  id: string; home: FrameChromeHome; kind: FrameChromeKind; label: string
+  /** The control's visible word, where the frame draws one short enough to stand on a key. */
+  short?: string; title?: string; pressed?: boolean; disabled?: boolean; value?: string
+  options?: FrameChromeOption[]; min?: number; max?: number; step?: number
+}
+/** The editors the frame hands to the shell to open in their own device home, in the 'devices' presentation (lane BE): the Library, which
+ * the shell opens full in a pane on its own page (library.html) instead of over the field. */
+export const FRAME_SUMMONS = ['library'] as const;
+export type FrameSummon = (typeof FRAME_SUMMONS)[number];
+/** The frame's chrome as it stands: the cut and lens it is drawn for, and every control, in the frame's order; and how many times since it
+ * started the frame has handed each summon to the shell (a count, so a reading never replays a summon the shell has answered). */
+export interface FrameChromeReading {lens: string; controls: FrameChromeControl[]; summons?: Partial<Record<FrameSummon, number>>}
+export const FRAME_CHROME_LIMITS = {controls: 400, options: 200, text: 512, id: 200} as const;
+const chromeText = (value: unknown, max: number = FRAME_CHROME_LIMITS.text): value is string => typeof value === 'string' && value.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value);
+/** A value the frame's own control holds (a choice's value, a field's text): bounded, and carried as it is — the frame's choices join
+ * their parts with control characters (researchInstruments.tsx "apply\u0000<name>"), so a value is never cleaned, only bounded. */
+const chromeValue = (value: unknown): value is string => typeof value === 'string' && value.length <= FRAME_CHROME_LIMITS.text;
+const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+/** The chrome reading, exact or refused (null): every key is closed and every string bounded. */
+export function readFrameChrome(raw: unknown): FrameChromeReading | null {
+  if (!plain(raw) || !closed(raw, ['lens', 'controls', 'summons']) || !chromeText(raw.lens, 64) || !Array.isArray(raw.controls) || raw.controls.length > FRAME_CHROME_LIMITS.controls) return null;
+  let summons: Partial<Record<FrameSummon, number>> | undefined;
+  if (raw.summons !== undefined) {
+    if (!plain(raw.summons) || !closed(raw.summons, FRAME_SUMMONS)) return null;
+    summons = {};
+    for (const key of FRAME_SUMMONS) {
+      const count = raw.summons[key];
+      if (count === undefined) continue;
+      if (!Number.isSafeInteger(count) || (count as number) < 0) return null;
+      summons[key] = count as number;
+    }
+  }
+  const controls: FrameChromeControl[] = [];
+  const ids = new Set<string>();
+  for (const item of raw.controls) {
+    if (!plain(item) || !closed(item, ['id', 'home', 'kind', 'label', 'short', 'title', 'pressed', 'disabled', 'value', 'options', 'min', 'max', 'step'])) return null;
+    if (!chromeText(item.id, FRAME_CHROME_LIMITS.id) || !item.id || ids.has(item.id) || !stageOneOf(FRAME_CHROME_HOMES, item.home) || !stageOneOf(FRAME_CHROME_KINDS, item.kind) || !chromeText(item.label)) return null;
+    ids.add(item.id);
+    const control: FrameChromeControl = {id: item.id, home: item.home, kind: item.kind, label: item.label};
+    for (const key of ['short', 'title', 'value'] as const) {
+      if (item[key] === undefined) continue;
+      if (!(key === 'value' ? chromeValue(item[key]) : chromeText(item[key]))) return null;
+      control[key] = item[key] as string;
+    }
+    for (const key of ['pressed', 'disabled'] as const) {
+      if (item[key] === undefined) continue;
+      if (typeof item[key] !== 'boolean') return null;
+      control[key] = item[key] as boolean;
+    }
+    for (const key of ['min', 'max', 'step'] as const) {
+      if (item[key] === undefined) continue;
+      if (!finite(item[key])) return null;
+      control[key] = item[key] as number;
+    }
+    if (item.options !== undefined) {
+      if (!Array.isArray(item.options) || item.options.length > FRAME_CHROME_LIMITS.options) return null;
+      const options: FrameChromeOption[] = [];
+      for (const option of item.options) {
+        if (!plain(option) || !closed(option, ['value', 'label', 'group']) || !chromeValue(option.value) || !chromeText(option.label) || option.group !== undefined && !chromeText(option.group)) return null;
+        options.push({value: option.value, label: option.label, ...(option.group !== undefined ? {group: option.group as string} : {})});
+      }
+      control.options = options;
+    }
+    controls.push(control);
+  }
+  return {lens: raw.lens, controls, ...(summons ? {summons} : {})};
+}
 /** Rail tools the shell may choose. Text and formation open their panels; pin is a placement mode. Orbit is a stage pointer gesture, never a command. */
 export const STAGE_TOOLS = ['select', 'interact', 'pin', 'text', 'formation'] as const;
 export type StageTool = (typeof STAGE_TOOLS)[number];
@@ -110,7 +203,9 @@ export type StageCommand =
   | {command: 'live'; action: 'set' | 'hold'; target: string; value: number}
   | {command: 'live'; action: 'release'}
   | {command: 'instrument'; edit: InstrumentEdit}
-  | {command: 'janko'; action: 'play'; pitch_classes: number[]; amplitude: number};
+  | {command: 'janko'; action: 'play'; pitch_classes: number[]; amplitude: number}
+  | {command: 'presentation'; chrome: FramePresentation}
+  | {command: 'chrome'; id: string; value?: string};
 /** A Jankó note: one to twelve distinct pitch classes (0–11) struck together as one act, at an amplitude in (0, 1] (modal metres; the owner's strike bound). */
 export const STAGE_JANKO_AMPLITUDE_MAX = 1;
 export type StageResult = {ok: true} | {ok: false; error: string};
@@ -194,6 +289,14 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (typeof raw.amplitude !== 'number' || !Number.isFinite(raw.amplitude) || raw.amplitude <= 0 || raw.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
       return {req, command: {command: 'janko', action: 'play', pitch_classes: [...classes], amplitude: raw.amplitude}};
     }
+    case 'presentation':
+      return closed(raw, [...BASE_KEYS, 'chrome']) && stageOneOf(FRAME_PRESENTATIONS, raw.chrome) ? {req, command: {command: 'presentation', chrome: raw.chrome}} : null;
+    case 'chrome':
+      // One control of the frame's own chrome, by the id its reading gives it, and — for a choice or a value — what to set. The frame
+      // refuses an id its reading does not hold (presentedChrome.ts press).
+      if (!closed(raw, [...BASE_KEYS, 'id', 'value']) || !chromeText(raw.id, FRAME_CHROME_LIMITS.id) || !raw.id) return null;
+      if (raw.value === undefined) return {req, command: {command: 'chrome', id: raw.id}};
+      return chromeValue(raw.value) ? {req, command: {command: 'chrome', id: raw.id, value: raw.value}} : null;
     case 'instrument': {
       const edit = closed(raw, [...BASE_KEYS, 'edit']) ? readInstrumentEdit(raw.edit) : null;
       return edit ? {req, command: {command: 'instrument', edit}} : null;

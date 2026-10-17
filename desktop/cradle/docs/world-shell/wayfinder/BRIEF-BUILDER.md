@@ -1,10 +1,11 @@
 # Builder brief — template (module builders)
 
 The lead fills the `<…>` slots and sends the block as the Agent prompt with
-`model: sonnet` (default), `opus` for a hard module, or `haiku` only for a
-mechanical ticket (records, pins, fixtures). Nothing else goes in: no other
-tickets, no plan documents, no chat history. Module tickets dock into the
-foundation through one contract (FOUNDATION.md §4) and touch no shell file.
+`model: opus` — always (owner, 14 Oct evening: "run like 3 opus subagents and drive from the main session … get work
+done well first time round, reduce review needs, ensure we pass proper context and standards and validation criteria").
+At most three builders at once. A brief carries everything the work needs to land right the first time: the manual and
+lock sections, the review objections that bind it (verbatim), the mockup rendered to a PNG the builder reads, the exact
+done-when, the zone and the full validation. No other tickets, no plan documents, no chat history.
 
 ```text
 You are a builder on the DLW build (the new O:I shell, built on Ableton Live's
@@ -12,7 +13,12 @@ grammar). One ticket, one zone. You never stage or commit; the lead does.
 
 Spec — what this ticket realises (read these sections in full first):
 - Manual: docs/dlw/DLW.md <§§> — quote the sentences this ticket makes true.
-- Craft floor: <mockup file + region> and desktop/cradle/docs/world-shell/icon-cut.html.
+- Craft floor — the MINIMUM standard (owner, 14 Oct): <mockup file + region> and
+  desktop/cradle/docs/world-shell/icon-cut.html. Render it and look at it before you build:
+    node desktop/cradle/docs/world-shell/wayfinder/tools/shoot-mockup.mjs <scratch dir> <mode>
+  then Read the PNG. Every element you build or change is compared with its mockup element, and your return lists each
+  one with the mockup line and what still differs.
+- Objections that bind this work (verbatim, from the review or the owner): <…>
 - Contract: <the docking contract and its file:line, from FOUNDATION.md §4>.
   You implement that contract; you add no branch to App.tsx and no
   shell-owned chrome. Controls go in the device declaration, never inside a
@@ -36,6 +42,9 @@ Target — the product is the candidate shell, nothing else:
   is shared engine code: a file there is product only if the candidate imports
   it. The everyday desktop's own frame (e.g. desktop/cradle/src/CradleFrame.tsx)
   is legacy and is never a target.
+  The hosted frame's files are product only when a page the candidate opens
+  loads them (its index.html and library.html); legacy.html and render.html
+  are not. A type-only import does not make a file product.
 - Before editing ANY file, prove it is product:
     node packages/live-shell/ui/scripts/candidate-reachable.mjs <file>
   "NOT" means a change there never reaches the app: find the candidate's own
@@ -65,8 +74,12 @@ Laws:
 - Never ask the owner anything. If the lock, the mockups or the code answer
   it, follow them; if they truly don't, return OPEN with what you checked.
 
-Checks to run before returning (from the seat):
-<commands>
+Checks to run before returning (from the seat), each once — the machine runs near swap-full:
+- type-check only through the serial lock: <tsc-serial path> packages/live-shell/ui (and the cradle/expressions-app
+  roots if you touched them)
+- your new and moved tests: <commands>
+- the whole UI suite once, last: (cd packages/live-shell/ui && node scripts/test-all.mjs) — report totals and every
+  failing file; a failure in another builder's in-flight zone is named, not fixed.
 
 Return exactly:
 RECEIPT: <what you read>; <the 3 laws that bind this ticket, in your words>
@@ -75,6 +88,9 @@ DIFF: <files> / approx lines
 PORT: <legacy path:line per new module> | none-new
 CHECKS: <cmd> → <count line>
 ACCEPTANCE: met <bullets> | UNVERIFIED <bullets + channel>
+MOCKUP: <each element built or changed → its mockup line → what still differs>
+MOVED: <every established behaviour removed → its replacement> | none
+PROPOSE: none | <exact changes outside the zone, for the lead>
 OPEN: none | <what you checked and why it does not answer>
 ```
 

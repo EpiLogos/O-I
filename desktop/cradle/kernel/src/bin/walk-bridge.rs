@@ -278,7 +278,8 @@ fn serve_connection(
             return;
         };
         eprintln!(
-            "[bridge] {} {} ({} bytes)",
+            "[bridge] {} {} {} ({} bytes)",
+            unix_ms(),
             request.method,
             request.path,
             request.body.len()
@@ -400,9 +401,30 @@ enum BridgeResponse {
         content_type: String,
         body: Vec<u8>,
     },
-    Empty {
-        status: u16,
-    },
+    /// A CORS preflight: answered once per `PREFLIGHT_MAX_AGE`, not per op.
+    Preflight,
+}
+/// How long a browser may reuse a preflight answer. 600 s is the longest
+/// every engine honours in full (WebKit's own cap; Chromium allows 7200).
+const PREFLIGHT_MAX_AGE: u32 = 600;
+fn unix_ms() -> u128 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_millis())
+        .unwrap_or(0)
+}
+fn millis(duration: Duration) -> f64 {
+    duration.as_secs_f64() * 1000.0
+}
+/// The op's wire name, for the bridge log only.
+fn op_name(body: &[u8]) -> String {
+    #[derive(serde::Deserialize)]
+    struct Tag {
+        op: String,
+    }
+    serde_json::from_slice::<Tag>(body)
+        .map(|tag| tag.op)
+        .unwrap_or_else(|_| "?".into())
 }
 fn json_ok(fields: serde_json::Value) -> BridgeResponse {
     let mut body = serde_json::json!({"ok": true});
@@ -429,7 +451,7 @@ fn handle_with_diagnostic(
 ) -> BridgeResponse {
     let path = request.path.split('?').next().unwrap_or("");
     match (request.method.as_str(), path) {
-        ("OPTIONS", _) => BridgeResponse::Empty { status: 204 },
+        ("OPTIONS", _) => BridgeResponse::Preflight,
         ("GET", "/state") => {
             let kernel = kernel.lock().expect("kernel mutex");
             match serde_json::to_value(kernel.snapshot()) {
@@ -446,10 +468,18 @@ fn handle_with_diagnostic(
                 Ok(parameters) => parameters,
                 Err(error) => return json_error(400, error),
             };
+            let asked = Instant::now();
             let kernel = kernel.lock().expect("kernel mutex");
+            let waited = asked.elapsed();
             let replay = kernel
                 .event_log()
                 .replay(generation.as_deref(), cursor, limit);
+            drop(kernel);
+            eprintln!(
+                "[bridge] {} event-replay lock_wait_ms={:.1}",
+                unix_ms(),
+                millis(waited)
+            );
             match serde_json::to_value(replay) {
                 Ok(replay) => json_ok(serde_json::json!({"replay": replay})),
                 Err(error) => json_error(500, error.to_string()),
@@ -466,177 +496,43 @@ fn handle_with_diagnostic(
                     trace.activate(&request.body);
                 }
             }
-            let execute = || -> Result<oi_cradle_kernel::KernelOpOutcome, String> {
-                if let KernelOp::ExpressionRecovery { request } = op {
-                    if let Some(trace) = diagnostic.filter(|trace| trace.active.get()) {
-                        let started = Instant::now();
-                        let result = oi_cradle_kernel::expression_recovery::with_diagnostic_trace(
-                            trace.id,
-                            || oi_cradle_kernel::expression_recovery::execute(request),
-                        );
-                        trace.phase("bridge_owner_execution", started);
-                        return result;
-                    }
-                    return oi_cradle_kernel::expression_recovery::execute(request);
-                }
-                if let KernelOp::NaraCoordinate { request } = op {
-                    return oi_cradle_kernel::nara_coordinate::execute(request);
-                }
-                if let KernelOp::WorldResolve { world_id, verify } = op {
-                    return oi_cradle_kernel::world_resolve::execute(
-                        oi_cradle_kernel::world_resolve::Request { world_id, verify },
+            // The one dispatch the native host also calls (dispatch.rs): owner
+            // work runs outside the kernel lock wherever the op has a
+            // prepared form. A controlled recovery trace wraps its own run.
+            let name = op_name(&request.body);
+            let started = Instant::now();
+            let (result, timing) = match op {
+                KernelOp::ExpressionRecovery { request }
+                    if diagnostic.is_some_and(|trace| trace.active.get()) =>
+                {
+                    let trace = diagnostic.expect("an active recovery trace");
+                    let result = oi_cradle_kernel::expression_recovery::with_diagnostic_trace(
+                        trace.id,
+                        || oi_cradle_kernel::expression_recovery::execute(request),
                     );
+                    trace.phase("bridge_owner_execution", started);
+                    let timing = oi_cradle_kernel::dispatch::Timing {
+                        owner: started.elapsed(),
+                        form: "free",
+                        ..Default::default()
+                    };
+                    (result, timing)
                 }
-                let epii = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_nara_epii(&op)?;
-                if let Some(prepared) = epii {
-                    let completed = prepared.execute()?;
-                    return kernel
-                        .lock()
-                        .expect("kernel mutex")
-                        .finish_nara_epii(completed);
-                }
-                let act = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_nara_expressive_act(&op)?;
-                if let Some(prepared) = act {
-                    let completed = prepared.execute()?;
-                    return kernel
-                        .lock()
-                        .expect("kernel mutex")
-                        .finish_nara_expressive_act(completed);
-                }
-                let presence = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_nara_presence(&op)?;
-                if let Some(prepared) = presence {
-                    let completed = prepared.execute()?;
-                    return kernel
-                        .lock()
-                        .expect("kernel mutex")
-                        .finish_nara_presence(completed);
-                }
-                let m3 = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_m3_reception(&op)?;
-                if let Some(prepared) = m3 {
-                    let completed = prepared.execute()?;
-                    return kernel
-                        .lock()
-                        .expect("kernel mutex")
-                        .finish_m3_reception(completed);
-                }
-                let current = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_nara_current(&op)?;
-                if let Some(prepared) = current {
-                    let completed = prepared.execute()?;
-                    return kernel
-                        .lock()
-                        .expect("kernel mutex")
-                        .finish_nara_current(completed);
-                }
-                let voice = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_nara_voice(&op)?;
-                if let Some(prepared) = voice {
-                    return prepared.execute();
-                }
-                let dialogue = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_nara_dialogue(&op)?;
-                if let Some(prepared) = dialogue {
-                    return prepared.execute();
-                }
-                let identity = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_nara_identity(&op);
-                if let Some(prepared) = identity {
-                    return prepared.execute();
-                }
-                let read = kernel.lock().expect("kernel mutex").prepare_owner_read(&op);
-                if let Some(read) = read {
-                    return read.execute();
-                }
-                let dictation = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_dictation(&op)?;
-                if let Some(read) = dictation {
-                    return read.execute();
-                }
-                let knowledge = kernel
-                    .lock()
-                    .expect("kernel mutex")
-                    .prepare_knowledge(&op)?;
-                if let Some(read) = knowledge {
-                    let completed = read.execute()?;
-                    return kernel
-                        .lock()
-                        .expect("kernel mutex")
-                        .finish_knowledge(completed);
-                }
-                let working = match &op {
-                    KernelOp::WorkingSurfaceRead {
-                        project,
-                        agent_session,
-                        binding,
-                    } => Some(
-                        kernel
-                            .lock()
-                            .expect("kernel mutex")
-                            .prepare_working_surface_read(
-                                project,
-                                agent_session.clone(),
-                                binding.clone(),
-                                false,
-                            )?,
-                    ),
-                    KernelOp::WorkingSurfaceAttachment {
-                        project,
-                        agent_session,
-                        binding,
-                    } => Some(
-                        kernel
-                            .lock()
-                            .expect("kernel mutex")
-                            .prepare_working_surface_read(
-                                project,
-                                agent_session.clone(),
-                                Some(binding.clone()),
-                                true,
-                            )?,
-                    ),
-                    _ => None,
-                };
-                if let Some(read) = working {
-                    return Ok(oi_cradle_kernel::KernelOpOutcome {
-                        receipts: vec![],
-                        result: KernelOpResult::WorkingSurfaceReading {
-                            document: read.execute()?,
-                        },
-                    });
-                }
-                let prepared = kernel.lock().expect("kernel mutex").prepare_decision(&op)?;
-                if let Some(decision) = prepared {
-                    let receipt = decision.execute()?;
-                    return kernel
-                        .lock()
-                        .expect("kernel mutex")
-                        .finish_decision(receipt, matches!(&op, KernelOp::InvokeAction { .. }));
-                }
-                kernel.lock().expect("kernel mutex").apply(op)
+                op => oi_cradle_kernel::dispatch::dispatch(kernel, op),
             };
-            let result = execute();
+            // One line per op: when it was answered, how long it waited for
+            // the kernel lock, held it, and spent in owner work outside it —
+            // the rest of its total is the bridge's own.
+            eprintln!(
+                "[bridge] {} op {name} {} total_ms={:.1} lock_wait_ms={:.1} lock_held_ms={:.1} owner_ms={:.1} form={}",
+                unix_ms(),
+                if result.is_ok() { "ok" } else { "err" },
+                millis(started.elapsed()),
+                millis(timing.lock_wait),
+                millis(timing.lock_held),
+                millis(timing.owner),
+                timing.form,
+            );
             let serialization_started = diagnostic
                 .filter(|trace| trace.active.get())
                 .map(|_| Instant::now());
@@ -737,16 +633,15 @@ fn material(kernel: &Mutex<Kernel>, rest: &str) -> BridgeResponse {
             None => return json_error(403, "Material path segment is not validly encoded"),
         }
     }
-    let mut kernel = kernel.lock().expect("kernel mutex");
-    let target = match oi_cradle_kernel::files::resolve_material(&mut kernel, &location, &relative)
+    // The kernel's one dispatch serves each listing and the bytes: their
+    // owner calls run outside the kernel lock (files.rs `read_material`).
+    let (target, bytes) = match oi_cradle_kernel::files::read_material(kernel, &location, &relative)
     {
         Ok(resolved) => resolved,
         Err(MaterialRouteError::Forbidden(message)) => return json_error(403, message),
         Err(MaterialRouteError::NotFound(message)) => return json_error(404, message),
     };
-    match kernel.apply(KernelOp::FileBytes {
-        location: target.clone(),
-    }) {
+    match bytes {
         Ok(outcome) => match outcome.result {
             KernelOpResult::FileBytes {
                 mime_hint,
@@ -832,6 +727,7 @@ fn respond_with_diagnostic(
     let serialization_started = diagnostic
         .filter(|trace| trace.active.get())
         .map(|_| Instant::now());
+    let preflight = matches!(response, BridgeResponse::Preflight);
     let (status, content_type, body): (u16, String, Vec<u8>) = match response {
         BridgeResponse::Json { status, body } => (
             status,
@@ -843,7 +739,7 @@ fn respond_with_diagnostic(
             content_type,
             body,
         } => (status, content_type, body),
-        BridgeResponse::Empty { status } => (status, "text/plain".into(), Vec::new()),
+        BridgeResponse::Preflight => (204, "text/plain".into(), Vec::new()),
     };
     if let (Some(trace), Some(started)) = (diagnostic, serialization_started) {
         trace.phase("bridge_http_serialization", started);
@@ -858,10 +754,15 @@ fn respond_with_diagnostic(
         410 => "Gone",
         _ => "Internal Server Error",
     };
+    let max_age = if preflight {
+        format!("Access-Control-Max-Age: {PREFLIGHT_MAX_AGE}\r\n")
+    } else {
+        String::new()
+    };
     let headers = format!(
         "HTTP/1.1 {status} {reason}\r\nAccess-Control-Allow-Origin: *\r\n\
          Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n\
-         Access-Control-Allow-Headers: content-type\r\n\
+         Access-Control-Allow-Headers: content-type\r\n{max_age}\
          Content-Type: {content_type}\r\nCache-Control: no-store\r\nContent-Length: {}\r\nConnection: keep-alive\r\n\r\n",
         body.len()
     );
@@ -1219,6 +1120,39 @@ mod poll_channel_tests {
                 read, 0,
                 "the peer-requested close must end the connection cleanly"
             );
+            server.join().unwrap();
+        });
+    }
+
+    /// A CORS preflight carries how long the browser may reuse it, so an
+    /// op is not preceded by its own preflight round trip each time; other
+    /// replies carry no max-age.
+    #[test]
+    fn a_preflight_reply_carries_its_max_age_and_others_do_not() {
+        let kernel = Mutex::new(Kernel::discover());
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::scope(|scope| {
+            let server = scope.spawn(|| {
+                let (stream, _) = listener.accept().unwrap();
+                serve_connection(stream, &kernel, None, Duration::from_secs(10));
+            });
+            let mut stream = TcpStream::connect(addr).unwrap();
+            let mut reader = framed(&mut stream);
+            reader.send(
+                b"OPTIONS /op HTTP/1.1\r\nHost: 127.0.0.1\r\nAccess-Control-Request-Method: POST\r\n\r\n",
+            );
+            let (status, head, body) = reader.read_response();
+            assert_eq!(status, 204);
+            assert!(body.is_empty());
+            let head = head.to_ascii_lowercase();
+            assert!(head.contains("access-control-max-age: 600"), "{head}");
+            assert!(head.contains("access-control-allow-headers: content-type"));
+            reader.send(&get("/event-replay?cursor=1&limit=1"));
+            let (status, head, _) = reader.read_response();
+            assert_eq!(status, 200);
+            assert!(!head.to_ascii_lowercase().contains("access-control-max-age"));
+            drop(stream);
             server.join().unwrap();
         });
     }
