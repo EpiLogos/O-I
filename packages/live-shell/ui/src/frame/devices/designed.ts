@@ -10,12 +10,16 @@ import type {DeviceInstance, ParamValue} from './deviceRuntime'
 
 export type {DesignedDevice, Nav, Value, Values, ViewProps, Standing}
 
-/** The five views of one device (manual §16.3). */
-export type DeviceViewName = 'folded' | 'compact' | 'whole' | 'full' | 'widget'
-export const DEVICE_VIEWS: readonly DeviceViewName[] = ['folded', 'compact', 'whole', 'full', 'widget']
+/** The six views of one device (the catalogue's ViewName, design.ts; d18c911a3): Folded and Compact on a chain, Whole in the pool or
+ * as the expanded view above the chain, Full in a pane, Pop-out in the device's own window, Widget on the rail. */
+export type DeviceViewName = 'folded' | 'compact' | 'whole' | 'full' | 'popout' | 'widget'
+export const DEVICE_VIEWS: readonly DeviceViewName[] = ['folded', 'compact', 'whole', 'full', 'popout', 'widget']
 
-/** The navigation a place gives a view: the catalogue's Nav (select, full, fold, unfold, rail, close), and the place's own marks. */
+/** The navigation a place gives a view: the catalogue's Nav (select, expand, full, popout, fold, unfold, rail, close), and the place's
+ * own marks. */
 export interface HostNav extends Nav {
+  /** The expanded view stands above the chain: the head's ▸ shows ▾, pressed (sdk/panel.tsx Place.expanded). */
+  readonly expanded?: boolean
   /** The marks the place gives the device's head, before ⤢ (a pop-out, a redock; manual §16.8): the generic plate draws them in its
    * head, and the host hands them to a design's kit head when the design draws none of its own (deviceHost.tsx withPlaceMarks). */
   readonly marks?: ReactNode
