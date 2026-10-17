@@ -356,15 +356,15 @@ What belongs to one scene is in the scene itself, open below the field: its
 length and what it carries, what follows it, the tools that draw a form, bind
 a symbol, arrange several or tie six into one figure, and the symbol you have
 selected, with its place, its force, its voice and its meaning. What shapes
-every scene is in the device area. The studio holds how the particles gather,
-the material, the motion, the layers that join the field, and a personal layer
-that stays yours however the scene is shared. Behind it stand the devices that
-govern the field itself — physics, the pointer, how symbols relate, the medium
-they move through, what happens when they touch, morph, focus, colour, ink,
-depth, resonance — each a whole device with every setting it needs. Read one at
-a glance on its chain, open it as a band above the chain with every setting,
-let it fill a pane or a window of its own, or keep it as a tile on the rail.
-Its settings stay live whichever you look at.
+the field is in the device area. The studio holds the controls you chose to
+play, the same in every scene, and the devices that govern the field itself —
+physics, the pointer, how symbols relate, the medium they move through, what
+happens when they touch, morph, focus, colour, ink, depth, resonance — in four
+chains: material, motion, body, and a personal layer that stays yours however
+the scene is shared. Each is a whole device with every setting it needs. Read
+one at a glance on its chain, open it as a band above the chain with every
+setting, let it fill a pane or a window of its own, or keep it as a tile on
+the rail. Its settings stay live whichever you look at.
 
 The transport turns in this case to the field. Tempo is the speed it forms and
 breathes at, and the time signature is the scene's ratio of hold to change. Key
@@ -5785,7 +5785,7 @@ Expressions is where the DLW makes things you can see and hear. Particles and sy
 
 **Product:** Expressions · **Track:** an Expression · **Clip:** a scene · **Main track:** the stops, and the sound of every Expression together
 
-You need to build a scene, step by step, until the figure says what you meant, and hear it as you go. In Expressions each Expression is a track, and its scenes are its clips. Select a scene and Clip view opens its sequence, with each symbol in its own lane and the scene's sound beneath it. Device view below holds the Studio, which shapes the field for every scene of the Expression.
+You need to build a scene, step by step, until the figure says what you meant, and hear it as you go. In Expressions each Expression is a track, and its scenes are its clips. Select a scene and Clip view opens its sequence, with each symbol in its own lane and the scene's sound beneath it. Device view below holds the Studio: the controls you chose to play, the same in every scene, and the devices that shape the field.
 
 #### The track
 
@@ -6014,13 +6014,13 @@ A lane can follow another lane. The follower takes the leader's type, wave, rate
 
 Arm the Expression and press Play, and Play records a take of the scene. Takes lie as take lanes under the Expression's track in Arrangement view. Choose the take that stands: select a range in a take and press Enter to bring it into the main lane, as comping does in Live. Capture in the transport keeps your last gestures as a new scene.
 
-In Arrangement view each Expression is a track, with its picture lane over its sound lane, and its scenes in order along a ruler in seconds. Under a track, an automation lane shows the recorded moves of one parameter of the Studio, such as a field device over the course of several scenes.
+In Arrangement view each Expression is a track, with its picture lane over its sound lane, and its scenes in order along a ruler in seconds. Under a track, an automation lane shows the recorded moves of one of the Studio's macros, such as Turbulence over the course of a scene.
 
 #### The Main track
 
 The Main track holds the stops. In Session view its row launchers stand at the end of the grid, and each row is a moment across several Expressions: launch it and the scene in that row plays on every Expression in it. The Main track's mixer row sets the level of every Expression's sound together.
 
-Device view for an Expression holds the Studio, with its sections Particles, Material, Motion, Body and Nara. The pointer tools, the selected symbol's controls and Capture are not in the Studio: the tools and the symbol's controls are in Clip view, and Capture is the transport's.
+Device view for an Expression holds the Studio: your macros, and the field devices in four chains, Material, Motion, Body and Nara. The pointer tools, the selected symbol's controls and Capture are not in the Studio: the tools and the symbol's controls are in Clip view, and Capture is the transport's.
 
 #### On the rail
 
@@ -6166,7 +6166,7 @@ Where: the rail on the right. The widget shows a small copy of the field and a l
 | Stop | Stops the field and rewinds the scene. |
 | Record | Records a take of the field. |
 | Overdub | Lays a new take over the scene. |
-| Arm | Records the Studio as a take. Every control that you move becomes an automation lane. |
+| Arm | Records the Studio as a take. Every macro that you move becomes a lane of the scene. |
 | Tempo | Sets the speed of the field. |
 | Time signature | Sets the ratio of hold to change. |
 | Metronome | Pulses the field. |
@@ -6178,7 +6178,7 @@ Where: the rail on the right. The widget shows a small copy of the field and a l
 
 1. Open an Expression. The Field fills the pane.
 2. Press Play. The particles gather and the plate sounds.
-3. Open the Studio in Device view. Add a formation, or select a symbol.
+3. Select a symbol in the scene's editor in Clip view (§20.1), or draw one with the Form tool.
 4. Sweep the Resonance parameter. Watch the pattern form on the plate.
 5. Give a symbol a voice on the Sound page of the scene's Expression tab (§20.1). Listen to it in the field.
 6. Press Capture to keep the figure as a scene. Save the Expression.
@@ -6201,47 +6201,57 @@ Where: the rail on the right. The widget shows a small copy of the field and a l
 
 **Product:** Expressions · **Kind:** rack · **Track:** An Expression. It fills Device view in Expressions.
 
-The Studio holds what shapes the whole field, for every scene on the track:
-how the particles gather, the material they are made of, how they move, which
-layers join the field, and your personal layer. It is the rack in front of
-the field devices, as an Instrument Rack stands in front of its chains, and
-its macros are the controls you play most.
+You play a few controls far more than the rest, and you want them in reach in
+every scene. The Studio is the rack of an Expression. Its macros are the
+controls you choose to play, from anywhere in the field. Its chains hold the
+devices that shape the field, so you can see at a glance which are on and
+open any of them. It stands in front of the field devices, as an Instrument
+Rack stands in front of its chains.
 
 What belongs to one scene or one symbol is in the scene's editor in Clip view
 (§20.1): the pointer's tools (Select, Orbit, Form, Bind), what you can do to
-the selected symbol, and its force, form, voice and meaning. Capture is the
+the selected symbol, and its form, force, voice and meaning. Capture is the
 transport's.
 
-#### The sections
+#### The macros
 
-The Studio has five sections. Each section is one chain of controls. Select a
-section to open it in the pane.
+Your macros are the controls you chose. Each one moves one real parameter,
+within that parameter's own range. Press + Parameter to choose one in the
+browser, from the field's parameters and those of the scene's symbols. The
+list belongs to the Expression, so the same macros stand in every scene.
 
-| Section | What it holds |
+| Reach | What the macro moves |
 |---|---|
-| Particles | How the particles gather: how many points, how many folds, and the shape. |
-| Material | The palette, the glow and the grain. |
-| Motion | The speed, the turbulence and how symbols follow. |
-| Body | Which layers join the field: the torus, the sky and the clock. The graph and Epii also switch here. |
-| Nara | Your personal layer. It stays yours however the scene is shared. |
+| Field | A parameter of the field, such as Particle count or Turbulence. |
+| Follow | The same parameter of whichever symbol you select. |
+| Bind | The parameter of one symbol, by name. When that symbol is not in the scene, the macro says so and waits. |
 
-Behind the sections stand the devices that govern the field, each a whole
-device with every parameter it needs: Physics, Pointer, Relational, Medium,
-Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.
+A field parameter belongs to the scene you set it in. Turn on All scenes to
+hold its value for every scene of the Expression.
+
+#### The chains
+
+| Chain | Devices | What it holds |
+|---|---|---|
+| Material | Colour, Ink, Depth, Medium | What the field is made of: the palette, the marks, the depth, and the medium the particles move through. |
+| Motion | Pointer, Relational, Contacts, Morph, Focus | How the field moves: the pointer's stir, the pulls between symbols, what happens when they touch, the morph and the focus. |
+| Body | Physics, Resonance, Torus | The physics of the particles, the plate that sounds, and the torus. |
+| Nara | Nara | Your personal layer over the field. |
+
+Each device is a whole device with every parameter it needs (§20.4 to
+§20.14). Physics, Ink, Pointer and Focus have no on and off: they are always
+part of the field. The torus waits until its owner reaches Expressions, and
+its row says so.
 
 #### Parameters
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Density | 60 to 220 points | 160 | How many points make the formation. |
-| Symmetry | 3 to 9 folds | 5 | How many times the formation repeats around its centre. |
-| Shape | Ring · Spiral · Lattice | Ring | The form that points gather into. |
-| Glow and grain | Glow 0 to 100% · Grain 0 to 100% | 50% · 30% | How bright the marks shine, and how coarse they look. |
-| Speed | 0 to 100% | 50% | How fast the field moves. |
-| Turbulence | 0 to 100% | 20% | How much the field stirs. |
-| Follow | Free · Bind | Bind | Free symbols move alone. Bind makes them follow their binding. |
-| Body | Torus, Sky, Clock, Graph, Epii: On · Off | Torus, Sky and Clock On | Adds or removes each layer. |
-| Nara | On · Off, then Private · Circle | On, Private | Shows your personal layer. Private keeps it to you. |
+| Macros | Your chosen controls, in your order | None | The controls that the compact view, the widget and the Macros page show. Remove takes one off and leaves its parameter in the field. |
+| Reach | Field · Follow · Bind, for each macro | Field for a field parameter, Bind for a symbol's | What the macro moves. A symbol's macro switches between Follow and Bind. |
+| All scenes | On · Off, for each field macro | Off | On holds the value for every scene of the Expression. Off lets each scene keep its own. |
+| On | On · Off, for each device that has one | The device's own | Turns a device of a chain on or off. |
+| Nara | Open · Closed | Closed | Opens your Nara instrument over the field. |
 
 #### Views
 
@@ -6252,40 +6262,49 @@ caption: Studio, on a fixture of readings.
 
 | View | Holds |
 |---|---|
-| Folded | Its name, the open section and the save state: Draft, Saved, or Edited since save. |
-| Compact | A strip of the five section names, the open one marked. Macros: Density, Glow, Speed, Turbulence. |
-| Whole | Every parameter, in five groups, one for each section. |
-| Full | The open section at full size, as a surface to work on: Particles shows the form, Material the palette, Motion the flow, Body the layers of the field. |
-| Widget | The four macros and the open section. |
+| Folded | Its name, the save state, and how many controls you chose. |
+| Compact | Your macros as lines in the display, the first four with handles, and the first four as dials. With fewer than four, + Parameter stands in the gap. |
+| Whole | Two pages. Macros: the display, your macros in order, and the chosen one's reach, All scenes and value. Chains: the four chains with their lights, the devices of the chosen chain, and the chosen device's On, Show and Pane. Expanded, the display grows into the band. |
+| Full | The Studio to read: every macro as a range with its value, and every chain with its devices' lights and what each owner reports. No controls. |
+| Pop-out | Full, with Whole below it. |
+| Widget | A small display of your macros, and the first three as value boxes. |
+
+The head carries the work's own acts: Save, Undo and Redo. The display's
+corner shows the save state: saved, edited since save, or busy while the
+owner answers a change.
 
 #### Transport
 
 | Control | Effect on the Studio |
 |---|---|
-| Arm | Records every Studio move as an automation lane. |
-| Re-enable | Gives back the values that you hold. |
-| Keys and maps | Maps keys and gestures to Studio controls. |
+| Arm | With Play, records the moves of your macros as the scene's lanes. A macro set to All scenes is not recorded. |
+| Re-enable | Gives a macro back to the lane that moves it. |
 
 #### To use the Studio
 
 1. Open an Expression and look at Device view.
-2. Open Particles. Set Density and Symmetry until the form reads.
-3. Open Material and Motion. Set Glow, Speed and Turbulence.
-4. Open Body and choose the layers that join the field.
-5. To change one symbol, select it in the scene's editor in Clip view.
+2. Press + Parameter and choose the controls you play most.
+3. Play them on the compact view's dials, or drag the handles in its display.
+4. To keep a field value the same in every scene, choose its macro and turn on All scenes.
+5. Open Chains to see which devices are on. Choose a device and press Show to see every setting in the pool.
+6. To change one symbol, select it in the scene's editor in Clip view.
 
 #### Rules
 
 - The Studio controls stay out of the field pane. The field pane shows only the field.
-- What the Studio sets holds for every scene on the track. A scene's own changes are its envelopes, in Clip view.
-- Your personal layer does not become portable because it is drawn. Private keeps it to you.
-- The save state shows Draft, Saved and Edited since save as three separate states.
+- Your macros belong to the Expression. The same list stands in every scene.
+- A field value belongs to the scene you set it in. All scenes holds it for every scene, and the shared value overrides the scene's envelopes.
+- A field macro cannot follow or bind a symbol, and a symbol's macro cannot become a field macro.
+- When the owner cannot find a macro's parameter, as for a bound symbol that is not in the scene, the macro says why and keeps its place.
+- A macro set to All scenes is not recorded. Turn All scenes off to record its moves.
+- Your Nara layer never enters the Expression. Saving or sharing the Expression does not carry it.
 - A control that you hold shows the hand-back light. Press the light to give control back.
 
 #### Tips
 
-- To share a scene without your personal layer, set Nara to Private before you save.
-- To open a device at full size, select its section name.
+- To work on whichever symbol you select, give its macro Follow. To stay on one symbol, give it Bind.
+- To see a device at full size, choose it in Chains and press Pane.
+- To keep a few controls together across scenes, choose them once: the macros stand in every scene.
 
 ### 20.4 Physics
 
