@@ -107,6 +107,11 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
 
 
+From the documentation lane (17 Oct): the next run is `tickets/T-REALIGN-the-next-run-after-the-design-realignment.md` — the state at
+handover (S1 and T1 not running, their work uncommitted in the seat and snapshotted at `refs/recovered/dlw-s1-t1-wip-20261017`;
+BC3 landed) and the run in FOUNDATION's order: R1 the six views (F5, finish S1), R2 Clip view after Live (F4), R3 tracks, the mixer
+row and Arrangement's lanes (F3), R4 the merged and moved devices' bindings, R5 the 24 new designs bound.
+
 From the documentation lane (16 Oct, evening), for the next tranche. The manual is the source (O-I main `6fdc6d55c`): §16.1 what
 goes where, §16.3–§16.6 the views, Clip view and the tracks, and each mode's own tracks and clips at §17.1 (Technē), §18.1 (Central),
 §19.1 (Factory), §20.1 (Expressions), §21.1 (Live). Live 12 evidence and the shell-side mapping, with file:line for every move:
