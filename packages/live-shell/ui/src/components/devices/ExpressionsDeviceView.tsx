@@ -20,6 +20,7 @@ import {fieldDeviceSend} from './fieldDeviceSend'
 import {ExpressionsPicture, hasPicture} from './ExpressionsPicture'
 import {ModulationLine} from './ModulationLine'
 import {physicsDesignBinding, type PhysicsPress} from './physicsBinding'
+import {fieldDesignBinding as familyDesignBinding, isFieldDesignFamily} from './fieldDesignBinding'
 import type {DesignBinding} from '../../frame/devices/designed'
 import {dispatchNativeEngineCommand, engineCommandReason, readNativeEngineMounted} from '../../native/engineCommand'
 import './expressionsDevices.css'
@@ -96,7 +97,7 @@ export function useFieldDevices(families: readonly string[], host: Omit<FieldHos
   // draws on value keys the engine reports publishes its binding with it (fieldDesignBinding), and the design draws in every place.
   const devices = useMemo(() => families.map(family => {
     const device = host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!) : null
-    const binding = device ? fieldDesignBinding(family, device, host.reading) : undefined
+    const binding = device ? fieldDesignBinding(family, device, host.reading, sends.get(family) ?? null) : undefined
     return {family, id: expressionsDeviceId(family), device, picture: pictures.get(family)!, ...(binding ? {binding} : {})}
   }), [host.reading, host.locked, sends, pictures])
   const claims = useRef(new Map<string, DeviceClaim>())
@@ -117,10 +118,12 @@ const enginePress: PhysicsPress = action => {
   dispatchNativeEngineCommand(action === 'reset' ? {action: 'reset', confirmed: true} : {action})
 }
 
-/** The binding of a field family's catalogue design, where the design draws on the engine's own readings (lane BE): Physics. The Field
- * (`expressions:field`) is not a device of this shell, and its picture draws the module's own symbols: it publishes nothing yet. */
-export function fieldDesignBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null): DesignBinding | undefined {
-  return family === 'physics' ? physicsDesignBinding(device, reading, enginePress) : undefined
+/** The binding of a field family's catalogue design, where the design draws on the engine's own readings: Physics (lane BE), and every
+ * other field family on its engine paths (fieldDesignBinding.ts, R5). The Field (`expressions:field`) is not a device of this shell, and its
+ * picture draws the module's own symbols: it publishes nothing yet. */
+export function fieldDesignBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null = null): DesignBinding | undefined {
+  if (family === 'physics') return physicsDesignBinding(device, reading, enginePress)
+  return isFieldDesignFamily(family) ? familyDesignBinding(family, device, reading, send) : undefined
 }
 
 /** The field device on the rack: compact, with its summary line above and the modulation lines under the controls it moves. The card's
