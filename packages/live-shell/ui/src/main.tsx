@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import './styles.css'
+import './shell/theme' // the theme library's blocks; the chosen theme paints through styles.css's bridge
 import './panels' // builtin panel registration — third-party panels import here too
 import {loadAgentShellFamilies} from './inhabitants/loadAgentShellFamilies'
 loadAgentShellFamilies()

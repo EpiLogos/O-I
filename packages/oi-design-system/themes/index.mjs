@@ -27,6 +27,24 @@ export const THEMES = [
     }
   },
   {
+    "id": "dlw",
+    "name": "DLW",
+    "appearance": "dark",
+    "preview": {
+      "ground": "#3f4348",
+      "ink": "#d4d7da",
+      "accent": "#ffbe00",
+      "strip": [
+        "#ffbe00"
+      ]
+    },
+    "source": {
+      "name": "DLW",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
+    }
+  },
+  {
     "id": "dracula-dark",
     "name": "Dracula",
     "appearance": "dark",
