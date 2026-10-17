@@ -22,6 +22,9 @@ export interface PublishedDevice {
    * view in the device's pane (the Day's page as its owner stands it). `open`: the act that opens the material where it lives (the
    * Agent's thread), which every ⤢ — the chain's, the pool's, the rail's — does in place of opening the device's pane. */
   full?: OwnFull
+  /** The act that pops the device out into its own window (manual §16.1 Pop-out; seam 8), offered by its publisher only while the
+   * device stands docked and its face declares a window (central/devices/CentralDevices.tsx popOutOf). The head's ↗ does it. */
+  popout?: () => void
 }
 
 export type OwnFull = {readonly draw: () => ReactNode} | {readonly open: () => void}
@@ -70,6 +73,43 @@ export function useDeviceDoor(): {device: (id: string) => PublishedDevice | unde
  * a publish: a chain of plates does not redraw each time one of its devices reads anew. */
 export function useSelectedDeviceId(): string | null {
   return useSyncExternalStore(subscribe, selectedDeviceId, selectedDeviceId)
+}
+
+// ------------------------------------------------------------------------------------------------------------- the expanded view
+// The ▸ in a chain plate's head shows the device's expanded view (manual §16.4; Live's Toggle Expanded View): its Whole as a band
+// across the detail area above the chain, one device at a time, drawn by its chain plate into the host the frame stands there
+// (DeviceFlip.tsx). ▾, or Esc, folds it back.
+
+let flipped: string | null = null
+
+/** Show a device's expanded view (or fold it back, with null). */
+export function flipDevice(id: string | null): void {
+  if (flipped === id) return
+  flipped = id
+  notify()
+}
+
+export function flippedDeviceId(): string | null {
+  return flipped
+}
+
+/** Re-render only when the expanded device changes. */
+export function useFlippedDeviceId(): string | null {
+  return useSyncExternalStore(subscribe, flippedDeviceId, flippedDeviceId)
+}
+
+let flipHost: HTMLElement | null = null
+
+/** The frame's expanded-view host hands its element (or withdraws it, with null). */
+export function publishFlipHost(element: HTMLElement | null): void {
+  if (flipHost === element) return
+  flipHost = element
+  notify()
+}
+
+/** The element an expanded view is drawn into, while the frame stands one. */
+export function useFlipHost(): HTMLElement | null {
+  return useSyncExternalStore(subscribe, () => flipHost, () => flipHost)
 }
 
 /** Re-render only when this device comes onto the door or leaves it. */

@@ -69,7 +69,7 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
       <ModeModeRail mode={mode} chooseMode={chooseMode} />
       {centerPanels.map(panel => <button key={panel.id} type="button" aria-label={panel.title} aria-pressed={activeCenter === panel.id} title={panel.note ?? panel.title} onClick={() => openCenter(panel.id)}><Icon name={panel.icon ?? 'element'} size={17} /></button>)}
     </nav>
-    <button className="chrome-toggle" aria-label="Toggle detail" aria-pressed={detail} onClick={toggleDetail} title="Detail panel · ⌘⌥L"><CutIcon name="detail" size={15} /></button><button className="chrome-toggle" aria-label="Toggle agents and context" aria-pressed={dock} onClick={toggleDock} title="Agents & context"><CutIcon name="dock" size={15} /></button>
+    <button className="chrome-toggle" aria-label="Toggle detail" aria-pressed={detail} onClick={toggleDetail} title="Detail panel · ⌘⌥L"><CutIcon name="detail" size={15} /></button><button className="chrome-toggle" aria-label="Toggle agents and context" aria-pressed={dock} onClick={toggleDock} title="Agents & context · ⌘⌥R"><CutIcon name="dock" size={15} /></button>
   </div></header>
 }
 
