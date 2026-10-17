@@ -5,8 +5,11 @@
 // in the wide frame (the catalogue's panels/popout.tsx flippedOf, `dp-wide dp-flip`). The host holds nothing of its own.
 // Esc folds the expanded view (lead, 16 Oct: "Esc folds a flipped-up device"): the band claims Escape while it stands
 // (`data-claims-keys`, frame/keys/keyMap.ts escapeClaimed), so the window's Stop leaves that press to it.
+// Beside the band the host stands the layer of the devices' own windows (DeviceWindows.tsx: Pop-out, any number open): the frame
+// mounts the two together, the layer fixed above the shell and taking no part in the frame's grid.
 import {useCallback, useEffect} from 'react'
 import {flipDevice, flippedDeviceId, publishFlipHost} from './deviceDoor'
+import {DeviceWindowLayer} from './DeviceWindows'
 import {suppressed} from '../keys/keyMap'
 
 /** Whether a key press folds the expanded view now: Esc alone, not while typing, with a device expanded. Pure. */
@@ -27,5 +30,8 @@ export function DeviceFlipHost() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
-  return <div ref={hand} className="device-flip-host" role="region" aria-label="Expanded device" />
+  return <>
+    <div ref={hand} className="device-flip-host" role="region" aria-label="Expanded device" />
+    <DeviceWindowLayer />
+  </>
 }
