@@ -1,0 +1,35 @@
+{
+  "id": "dlw",
+  "name": "DLW",
+  "appearance": "dark",
+  "source": {
+    "format": "oi-house-theme",
+    "name": "DLW",
+    "repo": "EpiLogos/O-I",
+    "license": "house",
+    "url": "desktop/cradle/docs/world-shell/world-shell-mockup.html"
+  },
+  "tokens": {
+    "--oi-shell-ground": "#26292d",
+    "--oi-sidebar-ground": "#33363b",
+    "--oi-canvas-ground": "#3f4348",
+    "--oi-wash": "#4a4e54",
+    "--oi-surface": "#43464c",
+    "--oi-hairline": "#24262a",
+    "--oi-control-edge": "#3d4147",
+    "--oi-foreground": "#d4d7da",
+    "--oi-muted-2": "#a2a7ad",
+    "--oi-muted-3": "#71767c",
+    "--oi-accent": "#ffbe00",
+    "--oi-active-ground": "#b09035",
+    "--oi-accent-soft": "rgba(255, 190, 0, 0.13)",
+    "--oi-terminal-ansi-blue": "#7ec3e6",
+    "--oi-terminal-ansi-red": "#e0523f",
+    "--oi-terminal-ansi-green": "#8fd0a8",
+    "--oi-terminal-ansi-yellow": "#ff9b4a",
+    "--oi-rule": "#30343a",
+    "--oi-active-ink": "#1d1f22",
+    "--oi-terminal-ansi-bright-red": "#f3b4a0",
+    "--oi-syntax-invalid": "#e3806f"
+  }
+}

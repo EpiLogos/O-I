@@ -1,5 +1,5 @@
 /* The DLW mockup's colours (world-shell-mockup.html :root, the craft floor — owner, 14 Oct: "mockups are the minimal standard"); they replace UI-EVIDENCE.md rev 1's measured Live greys. Original glyphs; no captured assets. */
-:root { --bg-0:#26292d; --bg-1:#33363b; --bg-2:#3f4348; --bg-3:#4a4e54; --surface:#43464c; --line:#24262a; --line-strong:#3d4147; --text:#d4d7da; --text-dim:#a2a7ad; --text-faint:#71767c; --accent:#ffbe00; --accent-dim:#b09035; --accent-soft:rgba(255,190,0,.13); --sel:#7ec3e6; --rec:#e0523f; --green:#8fd0a8; --stall:#ff9b4a; --mono:ui-monospace,'SF Mono',Menlo,monospace; --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+:root { --bg-0:#26292d; --bg-1:#33363b; --bg-2:#3f4348; --bg-3:#4a4e54; --surface:#43464c; --line:#24262a; --line-strong:#3d4147; --text:#d4d7da; --text-dim:#a2a7ad; --text-faint:#71767c; --accent:#ffbe00; --accent-dim:#b09035; --accent-soft:rgba(255,190,0,.13); --sel:#7ec3e6; --rec:#e0523f; --green:#8fd0a8; --stall:#ff9b4a; --edge:#30343a; --on-accent:#1d1f22; --accent-wash:rgba(255,190,0,.2); --fault:#f3b4a0; --disputed:#e3806f; --gutter:#1b1d20; --mono:ui-monospace,'SF Mono',Menlo,monospace; --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   /* The cut's palette (icon-cut.html :14–17): the agents', worlds' and kinds' own colours the marks paint with — undefined until
      now, so place, palace, journey, expression and occurrence marks painted nothing (lane F, 14 Oct). */
   --fizz:#5cc6b4; --honey:#e2a35e; --bumble:#d985a6; --drone:#8fbfb6; --fixgen:#a8c9c2; --parasakti:#c79ae0;
@@ -7,6 +7,16 @@
   --mercurius:#c9a0dc; --selfc:#9fc7e8; --tower:#d8c89a;
   --paper:#EFEFED; --pfield:#FAFAF8; --ink:#111; --pmid:#6E6E6A; --hl:#FFE97A;
   --serif:Charter,"Iowan Old Style",Palatino,Georgia,serif }
+/* The theme bridge. A theme chosen in Settings › Appearance lands on the body as data-oi-theme (the presentation owner's reading,
+   projected by desktop/cradle/src/visuals/ParticleExpression.tsx applyTheme), and the library's generated block
+   (oi-design-system/themes/themes.css, brought in by shell/theme) sets that theme's --oi-* roles on the root above that body.
+   Each chrome token is then the theme's role, the palette above its fallback where a theme leaves the role unset; the status
+   hues are the theme's terminal hues; the inhabitant devices' copy of the palette follows the tokens. It sits on the root so
+   what is derived from these tokens at :root (the device kit's --dp-*) follows too. With no theme chosen nothing here matches
+   and the shell paints the palette above. Identity hues (the cut's palette, tracks, modes) and the paper page are not chrome
+   and stay. The DLW theme (themes/house/dlw.json) sets these roles to the palette above, so choosing it paints exactly this. */
+:root:has(> body[data-oi-theme]) { --bg-0:var(--oi-shell-ground,#26292d); --bg-1:var(--oi-sidebar-ground,#33363b); --bg-2:var(--oi-canvas-ground,#3f4348); --bg-3:var(--oi-wash,#4a4e54); --surface:var(--oi-surface,#43464c); --line:var(--oi-hairline,#24262a); --line-strong:var(--oi-control-edge,#3d4147); --text:var(--oi-foreground,#d4d7da); --text-dim:var(--oi-muted-2,#a2a7ad); --text-faint:var(--oi-muted-3,#71767c); --accent:var(--oi-accent,#ffbe00); --accent-dim:var(--oi-active-ground,#b09035); --accent-soft:var(--oi-accent-soft,rgba(255,190,0,.13)); --sel:var(--oi-terminal-ansi-blue,#7ec3e6); --rec:var(--oi-terminal-ansi-red,#e0523f); --green:var(--oi-terminal-ansi-green,#8fd0a8); --stall:var(--oi-terminal-ansi-yellow,#ff9b4a); --edge:var(--oi-rule,#30343a); --on-accent:var(--oi-active-ink,#1d1f22); --accent-wash:color-mix(in srgb,var(--accent) 20%,transparent); --fault:var(--oi-terminal-ansi-bright-red,#f3b4a0); --disputed:var(--oi-syntax-invalid,#e3806f); --gutter:color-mix(in srgb,var(--bg-0) 71%,black);
+  --inh-bg-0:var(--bg-0); --inh-bg-1:var(--bg-1); --inh-bg-2:var(--bg-2); --inh-bg-3:var(--bg-3); --inh-line:var(--line); --inh-line-strong:var(--line-strong); --inh-text:var(--text); --inh-dim:var(--text-dim); --inh-faint:var(--text-faint); --inh-accent:var(--accent); --inh-accent-soft:var(--accent-soft); --inh-sel:var(--sel); --inh-rec:var(--rec); --inh-green:var(--green); --inh-stall:var(--stall) }
 * { box-sizing:border-box }
 html,body,#root { height:100%; margin:0 }
 body { background:var(--bg-0); color:var(--text); font:11px/1.35 var(--font-ui); overflow:hidden; -webkit-font-smoothing:antialiased }
