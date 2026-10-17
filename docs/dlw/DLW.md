@@ -1883,11 +1883,11 @@ caption: World, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded World shows the name of the body, the scale and the aperture. Click the title to unfold it.
+The folded World shows the name of the body, the scale and the aperture.
 
 ##### Compact
 
-Where: on a chain. The compact World shows a small live picture of the body, with its phase, and four macros.
+The compact World shows a small live picture of the body, with its phase, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -1896,11 +1896,11 @@ Where: on a chain. The compact World shows a small live picture of the body, wit
 | View as | Shows your world as Me, Field or Public sees it. |
 | Occasion | Sets the moment: Now, a date or a stop. |
 
-Set a macro and the picture changes at once. Click the plate to show the World whole in the pool. Click ▦ to open it full in a pane.
+Set a macro and the picture changes at once.
 
 ##### Whole
 
-Where: the pool under the browser. The whole World shows every parameter, in seven groups.
+The whole World shows every parameter, in seven groups.
 
 | Group | Parameters |
 |---|---|
@@ -1912,11 +1912,9 @@ Where: the pool under the browser. The whole World shows every parameter, in sev
 | Locations | Place kind |
 | Earth layers | Earth layers |
 
-A change you make in the pool applies at once. It does not add the World to your rack. Click ▦ to open the World full in a pane.
-
 ##### Full
 
-Where: a pane. The full World shows the body, or the graph, at the chosen scale. The controls stay in Device view, below the pane.
+The full World shows the body, or the graph, at the chosen scale.
 
 On the Space side, a star lights the body and the body shows its phase. Locations stand on the body at their names. Anchor lines run to real places on Earth. Relations show as lines across the dark.
 
@@ -1932,7 +1930,7 @@ The World edits no clip. It draws the place of the stop that you select.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows your planet, small, with its phase and today's sky. Click it to open the World in a pane at the same scale. The widget stays when you change mode.
+The widget shows your planet, small, with its phase and today's sky. Click it to open the World in a pane at the same scale.
 
 #### Transport
 | Control | Effect on the World |
@@ -2045,11 +2043,11 @@ caption: Knowledge graph, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded Knowledge graph shows the scope, the depth and the node count. Click the title to unfold it.
+The folded Knowledge graph shows the scope, the depth and the node count.
 
 ##### Compact
 
-Where: on a chain. The compact Knowledge graph shows the graph of the selected note, small and live, and four macros.
+The compact Knowledge graph shows the graph of the selected note, small and live, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -2058,11 +2056,9 @@ Where: on a chain. The compact Knowledge graph shows the graph of the selected n
 | Ghosts | Shows or hides links that have no target. |
 | Labels | Sets Automatic, All or Focus. |
 
-Click the plate to show the Knowledge graph whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Knowledge graph shows every parameter, in four groups.
+The whole Knowledge graph shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -2071,11 +2067,9 @@ Where: the pool under the browser. The whole Knowledge graph shows every paramet
 | Display | View, Ghosts, Labels, Arrows, Minimap |
 | Groups | The highlighted groups that you coloured |
 
-A change you make in the pool applies at once. It does not add the Knowledge graph to your rack. Click ▦ to open it full in a pane.
-
 ##### Full
 
-Where: a pane. The full Knowledge graph shows the notes as nodes and the links as lines, with the minimap in the corner. The controls stay in Device view, below the pane.
+The full Knowledge graph shows the notes as nodes and the links as lines, with the minimap in the corner.
 
 A small node is quiet. Its label shows as you zoom in, or when you select it. A ghost is a dashed, hollow node. Its label says how many sources hold the link and that none opens. Each filter that you apply stays on screen as a chip.
 
@@ -2087,7 +2081,7 @@ The Knowledge graph edits no clip. It starts from the note that you select.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the neighbourhood of the selection. The centre is marked. A coloured node is a node that the agent touched. A link that does not resolve shows as a ghost node. Click a node to move the centre. Click the open mark to open the full graph in a pane. The widget stays when you change mode.
+The widget shows the neighbourhood of the selection. The centre is marked. A coloured node is a node that the agent touched. A link that does not resolve shows as a ghost node. Click a node to move the centre. Click the open mark to open the full graph in a pane.
 
 #### Transport
 | Control | Effect on the Knowledge graph |
@@ -2187,11 +2181,11 @@ caption: Canvas, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded Canvas shows the title of the Canvas and the number of proposals that wait. Click the title to unfold it.
+The folded Canvas shows the title of the Canvas and the number of proposals that wait.
 
 ##### Compact
 
-Where: on a chain. The compact Canvas shows a small live map of the Canvas and four macros.
+The compact Canvas shows a small live map of the Canvas and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -2200,11 +2194,9 @@ Where: on a chain. The compact Canvas shows a small live map of the Canvas and f
 | Relation type | Sets Echo, Influence, Cause or Transform for the next line. |
 | Standing | Sets Fact, Claim, Inference or Guess for the next line. |
 
-Click the plate to show the Canvas whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Canvas shows every parameter, in five groups.
+The whole Canvas shows every parameter, in five groups.
 
 | Group | Parameters |
 |---|---|
@@ -2214,11 +2206,9 @@ Where: the pool under the browser. The whole Canvas shows every parameter, in fi
 | Look | Layout, Minimap |
 | Views | View, Autosave |
 
-A change you make in the pool applies at once. It does not add the Canvas to your rack. Click ▦ to open the Canvas full in a pane.
-
 ##### Full
 
-Where: a pane. The full Canvas shows cards, sticky notes, shapes, text, embeds, frames and lines on one board, with the minimap in the corner. The controls stay in Device view, below the pane.
+The full Canvas shows cards, sticky notes, shapes, text, embeds, frames and lines on one board, with the minimap in the corner.
 
 Pan and zoom the board. Drag a card to move it. Guide lines show where it aligns with other items. Double-click a card to open its thing in its own instrument. Drag a note or a source from the browser onto the board to add a card.
 
@@ -2230,7 +2220,7 @@ The Canvas edits no clip. It holds references to real things.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the map of the Canvas you hold and the count of proposals that wait. Click it to open the Canvas. The widget stays when you change mode.
+The widget shows the map of the Canvas you hold and the count of proposals that wait. Click it to open the Canvas.
 
 #### Transport
 | Control | Effect on the Canvas |
@@ -2345,11 +2335,11 @@ caption: Timeline, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded Timeline shows the lens and the window. Click the title to unfold it.
+The folded Timeline shows the lens and the window.
 
 ##### Compact
 
-Where: on a chain. The compact Timeline shows the ruler in miniature, with the density of events, and four macros.
+The compact Timeline shows the ruler in miniature, with the density of events, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -2358,11 +2348,9 @@ Where: on a chain. The compact Timeline shows the ruler in miniature, with the d
 | Standing floor | Hides events that stand below the chosen level. |
 | Readings | Shows or hides each layer. |
 
-Click the plate to show the Timeline whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Timeline shows every parameter, in four groups.
+The whole Timeline shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -2371,11 +2359,9 @@ Where: the pool under the browser. The whole Timeline shows every parameter, in 
 | Standing | Standing floor |
 | Window | Window, Time scale, Overview strip, View |
 
-A change you make in the pool applies at once. It does not add the Timeline to your rack. Click ▦ to open the Timeline full in a pane.
-
 ##### Full
 
-Where: a pane. The full Timeline shows the ruler with its tracks, epoch bands, events and spans. The overview strip shows the whole domain, with the view marked. The controls stay in Device view, below the pane.
+The full Timeline shows the ruler with its tracks, epoch bands, events and spans. The overview strip shows the whole domain, with the view marked.
 
 The major unit shows in one row. The minor unit shows in the row below. Both rows change as you zoom. Where events crowd, the ruler draws a count. Click the count to zoom in once.
 
@@ -2387,7 +2373,7 @@ An event is a clip. In Clip view, the event that you select opens with its passa
 
 ##### Widget
 
-Where: the rail on the right. The widget shows a thin ruler with a marker at the present window. Click it to open the Timeline. The widget stays when you change mode.
+The widget shows a thin ruler with a marker at the present window. Click it to open the Timeline.
 
 #### Transport
 | Control | Effect on the Timeline |
@@ -2495,11 +2481,11 @@ caption: Journey, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded Journey shows the name of the walk and the stop you are on. Click the title to unfold it.
+The folded Journey shows the name of the walk and the stop you are on.
 
 ##### Compact
 
-Where: on a chain. The compact Journey shows the stops as small cells, with the current stop marked, and four macros.
+The compact Journey shows the stops as small cells, with the current stop marked, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -2508,11 +2494,9 @@ Where: on a chain. The compact Journey shows the stops as small cells, with the 
 | Loop | Sets Off, On, or On with leave at end of scene. |
 | Narration | Speaks or shows the words of each stop, or not. |
 
-Click the plate to show the Journey whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Journey shows every parameter, in four groups.
+The whole Journey shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -2521,11 +2505,9 @@ Where: the pool under the browser. The whole Journey shows every parameter, in f
 | Transitions | Transition time, Curve, Switch |
 | Takes | Take |
 
-A change you make in the pool applies at once. It does not add the Journey to your rack. Click ▦ to open the Journey full in a pane.
-
 ##### Full
 
-Where: a pane. The full Journey shows the walk as rows of stops. Each row holds the place, the moment, the thing, the scene, the narration and the arrival of one stop. The controls stay in Device view, below the pane.
+The full Journey shows the walk as rows of stops. Each row holds the place, the moment, the thing, the scene, the narration and the arrival of one stop.
 
 A stop with no place, no moment or no scene shows that it holds none. Each transition shows its length and its curve between its two stops. While the walk plays, the transition shows its progress. The next stop and the path ahead stay visible.
 
@@ -2537,7 +2519,7 @@ A stop is a row, not a clip. The scene that a stop carries is a clip of its Expr
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the stop you are on, its narration and a play button. Click the play button to walk the stops. The widget stays when you change mode.
+The widget shows the stop you are on, its narration and a play button. Click the play button to walk the stops.
 
 #### Transport
 | Control | Effect on the Journey |
@@ -2645,11 +2627,11 @@ caption: Palace, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded Palace shows the name of the Palace and the room you stand in. Click the title to unfold it.
+The folded Palace shows the name of the Palace and the room you stand in.
 
 ##### Compact
 
-Where: on a chain. The compact Palace shows the plan of the rooms, with the path drawn and your room marked, and four macros.
+The compact Palace shows the plan of the rooms, with the path drawn and your room marked, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -2658,11 +2640,9 @@ Where: on a chain. The compact Palace shows the plan of the rooms, with the path
 | Audience | Shows the Palace as Me, Field or Public sees it. |
 | Return | Chooses the route that receives the proposal of Return. |
 
-Click the plate to show the Palace whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Palace shows every parameter, in four groups.
+The whole Palace shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -2671,11 +2651,9 @@ Where: the pool under the browser. The whole Palace shows every parameter, in fo
 | Board | Arrangement, Snap, Connections, Audience |
 | Return | Return route |
 
-A change you make in the pool applies at once. It does not add the Palace to your rack. Click ▦ to open the Palace full in a pane.
-
 ##### Full
 
-Where: a pane. The full Palace shows the board with its rooms, its objects and its walk. The controls stay in Device view, below the pane.
+The full Palace shows the board with its rooms, its objects and its walk.
 
 Each room holds objects. A line joins an object to the object it is part of. A named member that is missing draws as broken. Each room shows whether it rests on a warranted structure, with its source, or on free composition. A private room stays under cloud for every audience but you. A portal draws as a door in a wall.
 
@@ -2687,7 +2665,7 @@ The Palace edits no clip. Each object opens in its own instrument, at its own re
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the plan of the Palace you hold, small, with the room you stand in. Click a room to enter it. The widget stays when you change mode.
+The widget shows the plan of the Palace you hold, small, with the room you stand in. Click a room to enter it.
 
 #### Transport
 | Control | Effect on the Palace |
@@ -2794,11 +2772,11 @@ caption: Document, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded Document shows the title of the page and its save state. Click the title to unfold it.
+The folded Document shows the title of the page and its save state.
 
 ##### Compact
 
-Where: on a chain. The compact Document shows a small preview of the page, the size of its packet and four macros.
+The compact Document shows a small preview of the page, the size of its packet and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -2807,11 +2785,9 @@ Where: on a chain. The compact Document shows a small preview of the page, the s
 | Packet scope | Sets Selection, Page, or Page and linked. |
 | Selection act | Sets what a plain selection does: Highlight, Note, To packet or Answer this. |
 
-Click the plate to show the Document whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Document shows every parameter, in four groups.
+The whole Document shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -2820,11 +2796,9 @@ Where: the pool under the browser. The whole Document shows every parameter, in 
 | Agent | Agent writes, Overdub |
 | Save | Autosave |
 
-A change you make in the pool applies at once. It does not add the Document to your rack. Click ▦ to open the Document full in a pane.
-
 ##### Full
 
-Where: a pane. The full Document shows the page as its template draws it. Read and write here. The controls stay in Device view, below the pane.
+The full Document shows the page as its template draws it. Read and write here.
 
 The page may be a Day, a Flow, a Being or a Thing. A Day shows its six faces; the Day on the Main track turns the die. A Flow names its people and agents at the top. Choose Dialogue, Flow or Journal to change how it reads. A Being or a Thing shows the bindings that tie it to its world, its sources and its place.
 
@@ -2836,7 +2810,7 @@ In Clip view, the clip that you select in Central is an entry or a document. The
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the page you hold, small, with its save state and the size of its packet. Click it to open the page. The widget stays when you change mode.
+The widget shows the page you hold, small, with its save state and the size of its packet. Click it to open the page.
 
 #### Transport
 | Control | Effect on the Document |
@@ -2919,11 +2893,11 @@ caption: Terminal, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded Terminal shows the folder and the name of the shell. Click the title to unfold it.
+The folded Terminal shows the folder and the name of the shell.
 
 ##### Compact
 
-Where: on a chain. The compact Terminal shows the last lines of output and four macros.
+The compact Terminal shows the last lines of output and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -2932,11 +2906,9 @@ Where: on a chain. The compact Terminal shows the last lines of output and four 
 | Font size | Sets the size of the text: 10 to 18 points. |
 | Wrap | Wraps long lines, or not. |
 
-Click the plate to show the Terminal whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Terminal shows every parameter, in three groups.
+The whole Terminal shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -2944,11 +2916,9 @@ Where: the pool under the browser. The whole Terminal shows every parameter, in 
 | Input | Input |
 | Display | Scrollback, Font size, Wrap |
 
-A change you make in the pool applies at once. It does not add the Terminal to your rack. Click ▦ to open the Terminal full in a pane.
-
 ##### Full
 
-Where: a pane. The full Terminal shows the shell at full size, live. The controls stay in Device view, below the pane.
+The full Terminal shows the shell at full size, live.
 
 The shell starts in the folder of its scope. When the Terminal follows an agent's run, it shows that shell and the name of the agent. A command that an agent ran shows as the agent's, not as yours. Output stays in the scrollback.
 
@@ -2958,7 +2928,7 @@ The Terminal edits no clip. It follows the run of the clip that you select.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the live shell. A line below it says "following" and shows the name of the agent. It follows the agent that you select. A shell that waits for a yes or no shows in the stall colour. Type your answer in the shell. The widget stays when you change mode.
+The widget shows the live shell. A line below it says "following" and shows the name of the agent. It follows the agent that you select. A shell that waits for a yes or no shows in the stall colour. Type your answer in the shell.
 
 #### Transport
 | Control | Effect on the Terminal |
@@ -3288,12 +3258,12 @@ caption: Day device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the Main track's chain. The folded Day shows its name, the date and
-the number of the open face. Click the title to unfold it.
+The folded Day shows its name, the date and
+the number of the open face.
 
 ##### Compact
 
-Where: on the Main track's chain. The compact Day shows the net of the die,
+The compact Day shows the net of the die,
 with the open face filled, and four macros.
 
 | Macro | What it does |
@@ -3303,12 +3273,12 @@ with the open face filled, and four macros.
 | Rollover | Sets the rollover time, or Off. |
 | Close now | Runs the close routine. |
 
-Click the plate to show the Day whole in the pool. Click ▦ to open it full in a
+Click ▦ to open it full in a
 pane.
 
 ##### Whole
 
-Where: the pool under the browser. The whole Day shows every parameter, in
+The whole Day shows every parameter, in
 four groups.
 
 | Group | Parameters |
@@ -3319,13 +3289,13 @@ four groups.
 | Close | Close routine |
 
 Each face also shows a count: tasks on face 1, sessions on face 2, patterns on
-face 3. A change you make in the pool applies at once. It does not add the Day
+face 3. It does not add the Day
 to your rack.
 
 ##### Full
 
-Where: a pane. The full Day shows the open face as the template draws it. Read
-and write here. The controls stay in Device view, below the pane.
+The full Day shows the open face as the template draws it. Read
+and write here.
 
 ```ui
 src: ../../desktop/cradle/documents/ql-daily-die.html
@@ -3339,9 +3309,9 @@ a tab to open that Day.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows today's die and three counts:
+The widget shows today's die and three counts:
 open tasks, running sessions and new patterns. Click a count to open that face
-in the pane that has focus. The widget stays when you change mode.
+in the pane that has focus.
 
 #### Transport
 
@@ -3408,11 +3378,11 @@ caption: Packet, on a fixture of readings.
 
 ##### Folded
 
-Where: a document's chain, after Notes. The folded Packet shows the name Packet and its size in tokens. Click the title to unfold it.
+The folded Packet shows the name Packet and its size in tokens.
 
 ##### Compact
 
-Where: a document's chain, after Notes. The compact Packet shows the items as short bars. Each bar is as long as the size of its item. It has four macros.
+The compact Packet shows the items as short bars. Each bar is as long as the size of its item. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -3421,11 +3391,9 @@ Where: a document's chain, after Notes. The compact Packet shows the items as sh
 | After sending | Sets Clear or Keep. |
 | Clear now | Empties the packet. |
 
-Click the plate to show the Packet whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Packet shows every parameter, in three groups.
+The whole Packet shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -3433,17 +3401,15 @@ Where: the pool under the browser. The whole Packet shows every parameter, in th
 | Add | Add |
 | Limit | Limit |
 
-A change you make in the pool applies at once. It does not add the Packet to your rack.
-
 ##### Full
 
-Where: a pane. The full Packet shows every item in full. Each item shows its source, its size and a mark to remove it. The total size is at the foot. Read the whole packet here, before you send it. The controls stay in Device view, below the pane.
+The full Packet shows every item in full. Each item shows its source, its size and a mark to remove it. The total size is at the foot. Read the whole packet here, before you send it.
 
 In Clip view, the Packet holds passages of the document clip and of other clips. It sends nothing until you press Play.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the list of items. Each line names the source and the text. The size shows beside the Answer button. Press Capture to put the selection in the packet. Press Play to send it. The widget stays when you change mode.
+The widget shows the list of items. Each line names the source and the text. The size shows beside the Answer button. Press Capture to put the selection in the packet. Press Play to send it.
 
 #### Transport
 
@@ -3560,11 +3526,11 @@ caption: Search, on a fixture of readings.
 
 ##### Folded
 
-Where: on a chain. The folded Search shows the @ mark and your last search. Click the title to unfold it.
+The folded Search shows the @ mark and your last search.
 
 ##### Compact
 
-Where: on a chain. The compact Search shows the search line, a chip for each kind that is On, and the number of results. It has four macros.
+The compact Search shows the search line, a chip for each kind that is On, and the number of results. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -3573,11 +3539,9 @@ Where: on a chain. The compact Search shows the search line, a chip for each kin
 | Order | Sets Best match, Newest or Name. |
 | On Enter | Sets Send or Open. |
 
-Click the plate to show the Search whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Search shows every parameter, in four groups.
+The whole Search shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -3586,17 +3550,15 @@ Where: the pool under the browser. The whole Search shows every parameter, in fo
 | Results | Order, Results shown, On Enter |
 | Aliases | Aliases |
 
-A change you make in the pool applies at once. It does not add Search to your rack.
-
 ##### Full
 
-Where: a pane. The full Search is the search pane. The search line is at the top. The results are below it, in groups by kind. The selected passage is at the side, with the place where each tag would send it. Press ⌘F in a pane to open it. The controls stay in Device view, below the pane.
+The full Search is the search pane. The search line is at the top. The results are below it, in groups by kind. The selected passage is at the side, with the place where each tag would send it. Press ⌘F in a pane to open it.
 
 In Clip view, Search sends the passage that you selected in the document clip. The clip stays unchanged.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the search line, the last results and your aliases. Type @ in the widget to search from any mode. Click an alias to run it. The widget stays when you change mode.
+The widget shows the search line, the last results and your aliases. Type @ in the widget to search from any mode. Click an alias to run it.
 
 #### Transport
 
@@ -3691,11 +3653,11 @@ caption: Ground hygiene, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of a workspace track whose folder holds code. The folded Ground hygiene shows the number of findings. Click the title to unfold it.
+The folded Ground hygiene shows the number of findings.
 
 ##### Compact
 
-Where: on the chain of a workspace track whose folder holds code. The compact Ground hygiene shows three small rings, for seats, worktrees and branches. A dot on a ring marks each finding. It has four macros.
+The compact Ground hygiene shows three small rings, for seats, worktrees and branches. A dot on a ring marks each finding. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -3704,11 +3666,9 @@ Where: on the chain of a workspace track whose folder holds code. The compact Gr
 | Tending | Sets Off, Propose or Write. |
 | Refresh | Sets Manual, On open or Every 5 minutes. |
 
-Click the plate to show the Ground hygiene whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Ground hygiene shows every parameter, in four groups.
+The whole Ground hygiene shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -3717,17 +3677,15 @@ Where: the pool under the browser. The whole Ground hygiene shows every paramete
 | Tend | Tending, Allowed tenders |
 | Machine | Machine |
 
-A change you make in the pool applies at once. It does not add Ground hygiene to your rack.
-
 ##### Full
 
-Where: a pane. The full Ground hygiene shows three lists: seats, worktrees and branches. Each row shows its finding, what the finding rests on and the tender that fits. Select a row to read it. Press a tender to run it. The controls stay in Device view, below the pane.
+The full Ground hygiene shows three lists: seats, worktrees and branches. Each row shows its finding, what the finding rests on and the tender that fits. Select a row to read it. Press a tender to run it.
 
 In Clip view, Ground hygiene edits no clip. It reads the folder of the workspace track.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the number of findings and the first three. Click a finding to open the list in a pane. The widget stays when you change mode.
+The widget shows the number of findings and the first three. Click a finding to open the list in a pane.
 
 #### Transport
 
@@ -3795,11 +3753,11 @@ caption: Impact, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of a folder or a note on a workspace track. The folded Impact shows the name of the subject and the number of items around it. Click the title to unfold it.
+The folded Impact shows the name of the subject and the number of items around it.
 
 ##### Compact
 
-Where: on the chain of a folder or a note on a workspace track. The compact Impact shows a small graph with the subject at the centre. Three counts show references, links and sessions. It has four macros.
+The compact Impact shows a small graph with the subject at the centre. Three counts show references, links and sessions. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -3808,11 +3766,9 @@ Where: on the chain of a folder or a note on a workspace track. The compact Impa
 | Sessions | Sets Open only or Open and closed. |
 | Pin | Keeps the subject when you select something else. |
 
-Click the plate to show the Impact whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Impact shows every parameter, in three groups.
+The whole Impact shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -3820,17 +3776,15 @@ Where: the pool under the browser. The whole Impact shows every parameter, in th
 | Reach | Depth, Relation |
 | Lists | Show, Sessions |
 
-A change you make in the pool applies at once. It does not add Impact to your rack.
-
 ##### Full
 
-Where: a pane. The full Impact shows the neighbourhood of the subject as a graph. The three lists stand beside it: references, links and sessions. Click an item to open it beside the graph. The controls stay in Device view, below the pane.
+The full Impact shows the neighbourhood of the subject as a graph. The three lists stand beside it: references, links and sessions. Click an item to open it beside the graph.
 
 In Clip view, Impact reads the subject of the clip and changes nothing.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the subject, its three counts and the first session. Click the first session to open it. The widget stays when you change mode.
+The widget shows the subject, its three counts and the first session. Click the first session to open it.
 
 #### Transport
 
@@ -4090,11 +4044,11 @@ caption: Gateway, on a fixture of readings.
 
 ##### Folded
 
-Where: on a Factory session's chain, as the first device. The folded Gateway shows the title "Gateway" and the harness name. A child session shows "via lead". Click the title to unfold it.
+The folded Gateway shows the title "Gateway" and the harness name. A child session shows "via lead".
 
 ##### Compact
 
-Where: on a Factory session's chain. The compact Gateway shows the link diagram, with the frames in flight, the replay ring and the heartbeat pulse. It also shows the readout of epoch, sequence, peers and heartbeat age. It has four macros.
+The compact Gateway shows the link diagram, with the frames in flight, the replay ring and the heartbeat pulse. It also shows the readout of epoch, sequence, peers and heartbeat age. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -4103,11 +4057,11 @@ Where: on a Factory session's chain. The compact Gateway shows the link diagram,
 | Stall after | Sets the time without progress after which the session counts as stalled. |
 | Connect | Attaches or detaches the session. |
 
-Click a Transport or Approvals value to change it. Click the plate to show the Gateway whole in the pool. Click ▦ to open it full in a pane.
+Click a Transport or Approvals value to change it.
 
 ##### Whole
 
-Where: the pool under the browser. The whole Gateway shows every parameter, in four groups.
+The whole Gateway shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -4116,15 +4070,15 @@ Where: the pool under the browser. The whole Gateway shows every parameter, in f
 | Liveness | Stall after, Auto-continue |
 | Readiness | Readiness |
 
-A setting that the harness refuses to change shows as read-only, with the reason. A change you make in the pool applies at once.
+A setting that the harness refuses to change shows as read-only, with the reason.
 
 ##### Full
 
-Where: a pane. The full Gateway is the frame monitor. It fills the pane with the frames the gateway sent and received, in order. Beside the frames, four readings show: Readiness, Liveness, Replay and Upstream. Filter the frames by session. The controls stay in Device view, below the pane. See the Frames monitor.
+The full Gateway is the frame monitor. It fills the pane with the frames the gateway sent and received, in order. Beside the frames, four readings show: Readiness, Liveness, Replay and Upstream. Filter the frames by session. See the Frames monitor.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the link diagram, the readiness state and the count of frames in flight. Click it to open the Frames widget. The widget stays when you change mode.
+The widget shows the link diagram, the readiness state and the count of frames in flight. Click it to open the Frames widget.
 
 #### Transport
 | Control | Effect on the Gateway |
@@ -4189,21 +4143,21 @@ caption: Gateways rack, on a fixture of readings.
 
 ##### Folded
 
-Where: on the Main track's chain, as the first device. The folded rack shows the title "Gateways" and the number of ready chains. Click the title to unfold it.
+The folded rack shows the title "Gateways" and the number of ready chains.
 
 ##### Compact
 
-Where: on the Main track's chain. The compact rack shows the four chains, each with a state dot. Green is ready, amber is composed and faint is refused. It has one macro.
+The compact rack shows the four chains, each with a state dot. Green is ready, amber is composed and faint is refused. It has one macro.
 
 | Macro | What it does |
 |---|---|
 | Fan-out | Sets the observers allowed for each session, from 0 to 8. |
 
-Click a chain to show its gateway whole in the pool. Click ▦ to open the selected gateway full in a pane.
+Click a chain to show its gateway whole in the pool.
 
 ##### Whole
 
-Where: the pool under the browser. The whole rack shows every parameter, in two groups.
+The whole rack shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -4214,11 +4168,11 @@ A Refused chain shows its reason. The reason stays visible.
 
 ##### Full
 
-Where: a pane. The full rack shows the selected gateway at full size, with its frames and its readiness. Open a different chain to see its gateway. The controls stay in Device view, below the pane.
+The full rack shows the selected gateway at full size, with its frames and its readiness. Open a different chain to see its gateway.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows one line for each chain, with its state dot. Click a line to open that gateway in the pane that has focus. The widget stays when you change mode.
+The widget shows one line for each chain, with its state dot. Click a line to open that gateway in the pane that has focus.
 
 #### Transport
 | Control | Effect on the Gateways rack |
@@ -4437,11 +4391,11 @@ caption: Experiment, on a fixture of readings.
 
 ##### Folded
 
-Where: on any Factory track's chain. The folded Experiment shows the question and the number of runs finished. Click the title to unfold it.
+The folded Experiment shows the question and the number of runs finished.
 
 ##### Compact
 
-Where: on any Factory track's chain. The compact Experiment shows a small plot of one reading over the runs. It has four macros.
+The compact Experiment shows a small plot of one reading over the runs. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -4450,11 +4404,9 @@ Where: on any Factory track's chain. The compact Experiment shows a small plot o
 | Repeats | Sets the number of runs for each level. |
 | Stop when | Sets the condition that ends each run. |
 
-Click the plate to show the Experiment whole in the pool. Click ▦ to open the result full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Experiment shows every parameter, in four groups.
+The whole Experiment shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -4467,13 +4419,13 @@ After you press Play, the declared statements do not change. A change starts a n
 
 ##### Full
 
-Where: a pane. The full Experiment is the result. It fills the pane with one line for each run, the readings as lanes, and the runs side by side. A reading that has no source shows as absent. The controls stay in Device view, below the pane.
+The full Experiment is the result. It fills the pane with one line for each run, the readings as lanes, and the runs side by side. A reading that has no source shows as absent.
 
-In Clip view, the Experiment's clip shows each run as a take. Arrangement view draws the Experiment as a track with one lane for each reading.
+Each run of an Experiment is a take. Arrangement view draws the Experiment as a track, with a take lane for each run and a lane for each reading.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the question, the runs finished and the runs in the plan, and the best reading so far. The widget stays when you change mode.
+The widget shows the question, the runs finished and the runs in the plan, and the best reading so far.
 
 #### Transport
 | Control | Effect on the Experiment |
@@ -4529,11 +4481,11 @@ caption: Frames monitor, on a fixture of readings.
 
 ##### Folded
 
-Where: in a pane of Factory. The folded monitor shows the title "Frames" and the frame rate. Click the title to unfold it.
+The folded monitor shows the title "Frames" and the frame rate.
 
 ##### Compact
 
-Where: in a pane of Factory. The compact monitor shows the last four frames of the selected session. It has four macros.
+The compact monitor shows the last four frames of the selected session. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -4542,11 +4494,9 @@ Where: in a pane of Factory. The compact monitor shows the last four frames of t
 | Direction | Chooses Both, Sent or Received. |
 | Pause | Holds the list still. The gateway keeps the frames. |
 
-Click the plate to show the monitor whole in the pool. Click ▦ to open the full frame list in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole monitor shows every parameter, in two groups.
+The whole monitor shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -4555,11 +4505,11 @@ Where: the pool under the browser. The whole monitor shows every parameter, in t
 
 ##### Full
 
-Where: a pane. The full monitor is the frame list. Each frame shows its session, its direction and its time. Beside the list, four readings show: Readiness, Liveness, Replay and Upstream. Select a frame to see its task, turn and step. The controls stay in Device view, below the pane.
+The full monitor is the frame list. Each frame shows its session, its direction and its time. Beside the list, four readings show: Readiness, Liveness, Replay and Upstream. Select a frame to see its task, turn and step.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the last eleven frames of the selected session, newest at the bottom. A frame is an event such as tool.start or approval.request. The widget only reads. It sends no frame. Click the open mark to open the monitor in a pane. The widget stays when you change mode.
+The widget shows the last eleven frames of the selected session, newest at the bottom. A frame is an event such as tool.start or approval.request. The widget only reads. It sends no frame. Click the open mark to open the monitor in a pane.
 
 #### Transport
 | Control | Effect on the Frames monitor |
@@ -4661,12 +4611,12 @@ caption: The Skillset rack on Central's documentation set. Turn a member off and
 
 ##### Folded
 
-Where: on a Factory session's chain, as the third device. The folded rack shows
-the set's name and how many members are loaded. Click the title to unfold it.
+The folded rack shows
+the set's name and how many members are loaded.
 
 ##### Compact
 
-Where: on a Factory session's chain. The compact rack shows its members as a
+The compact rack shows its members as a
 chain list: your request as a square, the member's mark in its state, its name
 and its ten steps of evidence. Methodologies come first, then methods, skills
 and child sets. A long list pages.
@@ -4678,11 +4628,11 @@ and child sets. A long list pages.
 | Loaded | Shows how many members are loaded, of all that the set carries. |
 
 Click a square to turn a member on or off. Click the plate to show the rack
-whole in the pool. Click ▦ to open the set full in a pane.
+whole in the pool.
 
 ##### Whole
 
-Where: the pool under the browser. The whole rack has two bands.
+The whole rack has two bands.
 
 | Band | Sections |
 |---|---|
@@ -4693,14 +4643,14 @@ Select a member to show it whole in the pool (see §19.8).
 
 ##### Full
 
-Where: a pane. The full rack is the set as a page, grouped by kind:
+The full rack is the set as a page, grouped by kind:
 methodologies, methods, skills and sets. Each member shows its mark, its
 revision, its evidence, its state and what it is for. The controls stay in
 Device view, below the pane.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the four marks with a count
+The widget shows the four marks with a count
 under each, and three counts: available, loaded and invoked. The widget stays
 when you change mode.
 
@@ -4780,12 +4730,12 @@ caption: One member device, three forms. Switch the fixture: a Method and its pa
 
 ##### Folded
 
-Where: on one chain inside a Skillset rack. The folded member shows its name,
-its form and its revision. Click the title to unfold it.
+The folded member shows its name,
+its form and its revision.
 
 ##### Compact
 
-Where: on one chain inside a Skillset rack. The compact member shows its mark
+The compact member shows its mark
 large, its form and the question the form answers, and its evidence.
 
 | Control | What it does |
@@ -4797,7 +4747,7 @@ large, its form and the question the form answers, and its evidence.
 
 ##### Whole
 
-Where: the pool under the browser. Band one holds the mark with the ten steps
+Band one holds the mark with the ten steps
 named, then Standing (Enabled, Trust, Revision), then the form's own section:
 Run for a Method, Orients for a Methodology, Reach for a Skill. Band two holds
 the form's body: the path that a Method composes, the table of which Method
@@ -4805,14 +4755,14 @@ applies when for a Methodology, or what a Skill is for.
 
 ##### Full
 
-Where: a pane. The full member is its text: its form, what it says, a Method's
+The full member is its text: its form, what it says, a Method's
 steps, a Methodology's table. Its evidence and state stand under the text. The
 controls stay in Device view, below the pane.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the mark, the evidence, and Run
-for a Method. The widget stays when you change mode.
+The widget shows the mark, the evidence, and Run
+for a Method.
 
 #### Transport
 
@@ -4872,11 +4822,11 @@ caption: Knowledge route, on a fixture of readings.
 
 ##### Folded
 
-Where: inside the Scope device, in a Factory session's chain. The folded route shows the title "Knowledge" and the count of sources. Click the title to unfold it.
+The folded route shows the title "Knowledge" and the count of sources.
 
 ##### Compact
 
-Where: inside the Scope device. The compact route shows a small graph of the sources in reach. It has four macros.
+The compact route shows a small graph of the sources in reach. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -4885,11 +4835,11 @@ Where: inside the Scope device. The compact route shows a small graph of the sou
 | Link depth | Sets the number of links the agent follows from a hit. |
 | Read budget | Sets the most pages the agent reads in one task. |
 
-Click the Scope title to open its reads and writes whole in the pool. Click ▦ to open the knowledge full in a pane.
+Click the Scope title to open its reads and writes whole in the pool.
 
 ##### Whole
 
-Where: the pool under the browser. The whole route shows every parameter, in two groups.
+The whole route shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -4900,11 +4850,11 @@ The route cannot reach farther than Scope allows.
 
 ##### Full
 
-Where: a pane. The full route shows the knowledge in reach, as a list and as a graph. A page that the agent read shows with its source. Open the source from the page. The controls stay in Device view, below the pane.
+The full route shows the knowledge in reach, as a list and as a graph. A page that the agent read shows with its source. Open the source from the page.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the pages that the agent read in this task, with their sources. The widget stays when you change mode.
+The widget shows the pages that the agent read in this task, with their sources.
 
 #### Transport
 | Control | Effect on the Knowledge route |
@@ -4955,11 +4905,11 @@ caption: Agency gateway, on a fixture of readings.
 
 ##### Folded
 
-Where: as one chain in the Gateways rack, on the Main track. The folded gateway shows the title "Agency gateway" and its state dot. Click the title to unfold it.
+The folded gateway shows the title "Agency gateway" and its state dot.
 
 ##### Compact
 
-Where: as one chain in the Gateways rack. The compact gateway shows the surfaces on the left, the agents on the right, and the messages between them. It has four macros.
+The compact gateway shows the surfaces on the left, the agents on the right, and the messages between them. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -4968,11 +4918,11 @@ Where: as one chain in the Gateways rack. The compact gateway shows the surfaces
 | Agent to agent | Sets Allow, Ask or Deny for a call from one agent to another. |
 | State | Shows Ready, Composed or Refused. |
 
-Click the row to read its state. Click the plate to show the gateway whole in the pool. Click ▦ to open it full in a pane.
+Click the row to read its state.
 
 ##### Whole
 
-Where: the pool under the browser. The whole gateway shows every parameter, in three groups.
+The whole gateway shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -4982,11 +4932,11 @@ Where: the pool under the browser. The whole gateway shows every parameter, in t
 
 ##### Full
 
-Where: a pane. The full gateway shows the messages that passed. It also lists the refusals with their reasons. A refused call is also an event in the activity record. The controls stay in Device view, below the pane.
+The full gateway shows the messages that passed. It also lists the refusals with their reasons. A refused call is also an event in the activity record.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the count of messages that wait, and the state dot. The widget stays when you change mode.
+The widget shows the count of messages that wait, and the state dot.
 
 #### Transport
 | Control | Effect on the Agency gateway |
@@ -5035,11 +4985,11 @@ caption: Capture skill, on a fixture of readings.
 
 ##### Folded
 
-Where: on the armed Factory track's chain. The folded device shows the title "Capture skill" and a dot. The dot is red while it records. Click the title to unfold it.
+The folded device shows the title "Capture skill" and a dot. The dot is red while it records.
 
 ##### Compact
 
-Where: on the armed Factory track's chain. The compact device shows the steps found so far, as a short list. It has four macros.
+The compact device shows the steps found so far, as a short list. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -5048,11 +4998,11 @@ Where: on the armed Factory track's chain. The compact device shows the steps fo
 | Scope | Sets This project or All my work. |
 | Name | Sets the skill's name. |
 
-Remove a step that does not belong. Click the plate to show the device whole in the pool. Click ▦ to open the proposed skill full in a pane.
+Remove a step that does not belong.
 
 ##### Whole
 
-Where: the pool under the browser. The whole device shows every parameter, in two groups.
+The whole device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -5061,13 +5011,13 @@ Where: the pool under the browser. The whole device shows every parameter, in tw
 
 ##### Full
 
-Where: a pane. The full device shows the proposed skill. It fills the pane with the skill's text and its steps, with the example beside them. The skill goes to Approvals as a proposal. The controls stay in Device view, below the pane.
+The full device shows the proposed skill. It fills the pane with the skill's text and its steps, with the example beside them. The skill goes to Approvals as a proposal.
 
 In Clip view, a clip that you select can serve as the Source.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the proposal that waits, with Accept and Remove. The widget stays when you change mode.
+The widget shows the proposal that waits, with Accept and Remove.
 
 #### Transport
 | Control | Effect on Capture skill |
@@ -5206,11 +5156,11 @@ caption: Ledger, on a fixture of readings.
 
 ##### Folded
 
-Where: on the Main track's chain. The folded Ledger shows the title "Ledger" and the count of tasks today. Click the title to unfold it.
+The folded Ledger shows the title "Ledger" and the count of tasks today.
 
 ##### Compact
 
-Where: on the Main track's chain. The compact Ledger shows one line for each task: the agent's mark, the task and its state. It has four macros.
+The compact Ledger shows one line for each task: the agent's mark, the task and its state. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -5219,11 +5169,11 @@ Where: on the Main track's chain. The compact Ledger shows one line for each tas
 | Outcome | Shows tasks with one outcome. |
 | Order | Sets Newest first, By agent or By task. |
 
-Click a task to open its log in Clip view. Click the plate to show the Ledger whole in the pool. Click ▦ to open it full in a pane.
+Click a task to open its log in Clip view.
 
 ##### Whole
 
-Where: the pool under the browser. The whole Ledger shows every parameter, in two groups.
+The whole Ledger shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -5232,11 +5182,11 @@ Where: the pool under the browser. The whole Ledger shows every parameter, in tw
 
 ##### Full
 
-Where: a pane. The full Ledger shows the list of tasks, with each receipt open beside its task. A receipt holds the task number, the agent, the outcome, the start revision, who accepted it, and the files that changed. The controls stay in Device view, below the pane.
+The full Ledger shows the list of tasks, with each receipt open beside its task. A receipt holds the task number, the agent, the outcome, the start revision, who accepted it, and the files that changed.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the last receipts. Each line is a task and its receipt, for example "#212 re-plan port · landed". Select a receipt to read it in full. Click the task to open its log. The widget stays when you change mode.
+The widget shows the last receipts. Each line is a task and its receipt, for example "#212 re-plan port · landed". Select a receipt to read it in full. Click the task to open its log.
 
 #### Transport
 | Control | Effect on the Ledger |
@@ -5286,11 +5236,11 @@ caption: Approvals, on a fixture of readings.
 
 ##### Folded
 
-Where: on the Main track's chain. The folded Approvals shows the title "Approvals" and the count of items that wait. Click the title to unfold it.
+The folded Approvals shows the title "Approvals" and the count of items that wait.
 
 ##### Compact
 
-Where: on the Main track's chain. The compact Approvals shows one line for each item: the agent's mark, the item and a button. It has four macros.
+The compact Approvals shows one line for each item: the agent's mark, the item and a button. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -5299,11 +5249,11 @@ Where: on the Main track's chain. The compact Approvals shows one line for each 
 | Wait | Sets how long a request waits before it counts as unanswered. |
 | On no answer | Sets Hold or Deny. |
 
-Click Open to read an item. Click Approve to accept it. Click the plate to show Approvals whole in the pool. Click ▦ to open the queue full in a pane.
+Click Open to read an item. Click Approve to accept it.
 
 ##### Whole
 
-Where: the pool under the browser. The whole Approvals shows every parameter, in two groups.
+The whole Approvals shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -5312,11 +5262,11 @@ Where: the pool under the browser. The whole Approvals shows every parameter, in
 
 ##### Full
 
-Where: a pane. The full Approvals shows the queue. Beside it, the diff of the selected proposal shows. The queue shows the author of each item. The controls stay in Device view, below the pane.
+The full Approvals shows the queue. Beside it, the diff of the selected proposal shows. The queue shows the author of each item.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the proposal cards. Each card names the agent and the change. Each card has Approve, Changes and Open. Click Open to read the diff. Click Approve to accept the proposal. Click Changes to ask for a different result. Nothing lands until you answer. The widget stays when you change mode.
+The widget shows the proposal cards. Each card names the agent and the change. Each card has Approve, Changes and Open. Click Open to read the diff. Click Approve to accept the proposal. Click Changes to ask for a different result. Nothing lands until you answer.
 
 #### Transport
 | Control | Effect on Approvals |
@@ -5372,11 +5322,11 @@ caption: Agentset rack, on a fixture of readings.
 
 ##### Folded
 
-Where: on a group's chain in Factory. The folded rack shows the crew name and the count of members. Click the title to unfold it.
+The folded rack shows the crew name and the count of members.
 
 ##### Compact
 
-Where: on a group's chain. The compact rack shows the member chains, nested as they were spawned. A chip on each chain names the member's model. A stalled member has an orange outline. It has four macros.
+The compact rack shows the member chains, nested as they were spawned. A chip on each chain names the member's model. A stalled member has an orange outline. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -5385,11 +5335,11 @@ Where: on a group's chain. The compact rack shows the member chains, nested as t
 | Hand-back | Sets Raw, Digest or Summary for what a helper returns. |
 | Subagent model | Sets the default model for everything the group spawns. |
 
-With many members, the chains group by state, and each group shows its count. Click a member to open its thread. Click the plate to show the rack whole in the pool. Click ▦ to open the crew full in a pane.
+With many members, the chains group by state, and each group shows its count. Click a member to open its thread.
 
 ##### Whole
 
-Where: the pool under the browser. The whole rack shows every parameter, in three groups.
+The whole rack shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -5401,11 +5351,11 @@ Drag an agent from the browser onto the rack to add a member. The rack sets no u
 
 ##### Full
 
-Where: a pane. The full rack shows the crew as a tree. Each member shows its thread and the files it touched. The controls stay in Device view, below the pane.
+The full rack shows the crew as a tree. Each member shows its thread and the files it touched.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the crew tree with a light on each member. The widget stays when you change mode.
+The widget shows the crew tree with a light on each member.
 
 #### Transport
 | Control | Effect on the Agentset rack |
@@ -5467,11 +5417,11 @@ caption: Git / landing, on a fixture of readings.
 
 ##### Folded
 
-Where: on a Factory session's chain, as the last device. The folded device shows the title "Git" and the branch name. A child session shows "shared with lead". Click the title to unfold it.
+The folded device shows the title "Git" and the branch name. A child session shows "shared with lead".
 
 ##### Compact
 
-Where: on a Factory session's chain. The compact device shows the branch diagram. The line at the bottom is main. Each dot is a commit. A pulsing hollow dot is uncommitted work. It has four macros.
+The compact device shows the branch diagram. The line at the bottom is main. Each dot is a commit. A pulsing hollow dot is uncommitted work. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -5480,11 +5430,9 @@ Where: on a Factory session's chain. The compact device shows the branch diagram
 | Land as | Sets Draft merge request, Merge request or Merge. |
 | Land | Lands the branch as set in Land as. |
 
-Click the plate to show the device whole in the pool. Click ▦ to open the branch full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole device shows every parameter, in three groups.
+The whole device shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -5496,11 +5444,11 @@ The checks come from the remote. The device does not make them up.
 
 ##### Full
 
-Where: a pane. The full device shows the branch. It lists the commits, the files and the checks, with the diff beside them. The controls stay in Device view, below the pane.
+The full device shows the branch. It lists the commits, the files and the checks, with the diff beside them.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the branch, the changes, the checks and the Land button. The widget stays when you change mode.
+The widget shows the branch, the changes, the checks and the Land button.
 
 #### Transport
 | Control | Effect on Git / landing |
@@ -5556,11 +5504,11 @@ caption: Seat, on a fixture of readings.
 
 ##### Folded
 
-Where: inside the Git / landing device. The folded Seat shows the title "Seat" and the claim. Click the title to unfold it.
+The folded Seat shows the title "Seat" and the claim.
 
 ##### Compact
 
-Where: inside the Git / landing device. The compact Seat shows the seat name, the lane and the co-workers. It has four macros.
+The compact Seat shows the seat name, the lane and the co-workers. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -5569,11 +5517,11 @@ Where: inside the Git / landing device. The compact Seat shows the seat name, th
 | Lane | Sets the branch name of the line of work. |
 | Release | Releases the seat after the work has landed. |
 
-Click the Git title to show the Seat whole in the pool. Click ▦ to open the seats full in a pane.
+Click the Git title to show the Seat whole in the pool.
 
 ##### Whole
 
-Where: the pool under the browser. The whole Seat shows every parameter, in two groups.
+The whole Seat shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -5584,11 +5532,11 @@ A new lane does not replace uncommitted work.
 
 ##### Full
 
-Where: a pane. The full Seat shows the seats of the machine. Each seat shows its lane, its claim and its uncommitted work. The controls stay in Device view, below the pane.
+The full Seat shows the seats of the machine. Each seat shows its lane, its claim and its uncommitted work.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the seat name, the lane and the claim. The widget stays when you change mode.
+The widget shows the seat name, the lane and the claim.
 
 #### Transport
 | Control | Effect on the Seat |
@@ -5640,11 +5588,11 @@ caption: Remote carrier, on a fixture of readings.
 
 ##### Folded
 
-Where: as the fourth chain of the Gateways rack. The folded carrier shows the title "Remote carrier" and its state dot. Click the title to unfold it.
+The folded carrier shows the title "Remote carrier" and its state dot.
 
 ##### Compact
 
-Where: as the fourth chain of the Gateways rack. The compact carrier shows the machines, each with a dot. It has four macros.
+The compact carrier shows the machines, each with a dot. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -5653,11 +5601,11 @@ Where: as the fourth chain of the Gateways rack. The compact carrier shows the m
 | Standing | Shows Ready, Composed or Refused. |
 | Round trip | Shows the time for a message to go and return. |
 
-Click the row to read its Standing. Click the plate to show the carrier whole in the pool. Click ▦ to open the machine full in a pane.
+Click the row to read its Standing.
 
 ##### Whole
 
-Where: the pool under the browser. The whole carrier shows every parameter, in two groups.
+The whole carrier shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -5668,11 +5616,11 @@ A refused carrier shows its reason. An expired credential and a revoked credenti
 
 ##### Full
 
-Where: a pane. The full carrier shows one machine. The pane shows its readiness, its sessions and its grant. The controls stay in Device view, below the pane.
+The full carrier shows one machine. The pane shows its readiness, its sessions and its grant.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the machine name, its dot and the round trip. The widget stays when you change mode.
+The widget shows the machine name, its dot and the round trip.
 
 #### Transport
 | Control | Effect on the Remote carrier |
@@ -5721,11 +5669,11 @@ caption: Link, on a fixture of readings.
 
 ##### Folded
 
-Where: on the Main track's chain. The folded Link shows the title "Link" and the number of peers. Click the title to unfold it.
+The folded Link shows the title "Link" and the number of peers.
 
 ##### Compact
 
-Where: on the Main track's chain. The compact Link shows the machines as dots joined by lines. It has four macros.
+The compact Link shows the machines as dots joined by lines. It has four macros.
 
 | Macro | What it does |
 |---|---|
@@ -5734,11 +5682,9 @@ Where: on the Main track's chain. The compact Link shows the machines as dots jo
 | Machines | Chooses the machines in the link. |
 | Lag | Shows the time for a change to reach the others. |
 
-Click the plate to show the Link whole in the pool. Click ▦ to open the machines full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Link shows every parameter, in two groups.
+The whole Link shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -5749,11 +5695,11 @@ A machine that is not reachable shows as such. It stays in the list.
 
 ##### Full
 
-Where: a pane. The full Link shows the machines. Each machine shows its sessions and its seats. Select a session of another machine to read its thread. The controls stay in Device view, below the pane.
+The full Link shows the machines. Each machine shows its sessions and its seats. Select a session of another machine to read its thread.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the peers and the link state. The widget stays when you change mode.
+The widget shows the peers and the link state.
 
 #### Transport
 | Control | Effect on the Link |
@@ -6123,11 +6069,11 @@ In Clip view, the Field plays the scene clip that you select. The clip sets how 
 
 ##### Folded
 
-Where: on the chain of an Expression, as its first device. The folded Field shows its name and the sound light. The light is on only when the field sounds. Click the title to unfold it.
+The folded Field shows its name and the sound light. The light is on only when the field sounds.
 
 ##### Compact
 
-Where: on the chain of an Expression, as its first device. The compact Field shows a small live picture of the plate and the particles, and four macros.
+The compact Field shows a small live picture of the plate and the particles, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -6136,11 +6082,9 @@ Where: on the chain of an Expression, as its first device. The compact Field sho
 | Resonance | Sets the frequency that the field is tuned to. |
 | Hold to change | Sets how long a scene holds a figure compared with how long it changes. |
 
-Click the plate to show the Field whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Field shows every parameter, in three groups.
+The whole Field shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -6148,15 +6092,13 @@ Where: the pool under the browser. The whole Field shows every parameter, in thr
 | Time | Tempo, Hold to change, Pulse |
 | Voices | Symbol voices, Lights |
 
-A change you make in the pool applies at once. It does not add the Field to a chain.
-
 ##### Full
 
-Where: a pane. The full Field is the living field stage. Particles gather into the shapes of the symbols. The plate shows the pattern that you hear. Press Play in the transport. Move the pointer through the field to stir the particles. Set Lights to Dim in Device view to let one symbol stand alone. The controls stay in Device view, below the pane.
+The full Field is the living field stage. Particles gather into the shapes of the symbols. The plate shows the pattern that you hear. Press Play in the transport. Move the pointer through the field to stir the particles. Set Lights to Dim in Device view to let one symbol stand alone.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows a small copy of the field and a level meter. The meter shows the level of the whole field. Click the copy to open the Field in the pane that has focus. The widget stays when you change mode.
+The widget shows a small copy of the field and a level meter. The meter shows the level of the whole field. Click the copy to open the Field in the pane that has focus.
 
 #### Transport
 
@@ -6340,11 +6282,11 @@ caption: Physics device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Physics device shows its name, the viscosity and the vortex force. Click the title to unfold it.
+The folded Physics device shows its name, the viscosity and the vortex force.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Physics device shows a small picture of the swirl, and four macros.
+The compact Physics device shows a small picture of the swirl, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -6353,11 +6295,9 @@ Where: on the chain of an Expression, after the Field. The compact Physics devic
 | Gravity Y | Sets the vertical push on every particle. |
 | Time scale | Sets the pace of the whole simulation. 0 holds the field. |
 
-Click the plate to show the Physics device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Physics device shows every parameter, in two groups.
+The whole Physics device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -6366,15 +6306,13 @@ Where: the pool under the browser. The whole Physics device shows every paramete
 
 The whole Physics device also has three actions: Pause, Disperse and Reset.
 
-A change you make in the pool applies at once. It does not add the Physics device to a chain.
-
 ##### Full
 
-Where: a pane. The full Physics device fills the pane with the field. Each swirl shows as a ring that has the size of Vortex radius. An arrow shows the push of Gravity. Press Play and watch the particles move through the swirls. The controls stay in Device view, below the pane.
+The full Physics device fills the pane with the field. Each swirl shows as a ring that has the size of Vortex radius. An arrow shows the push of Gravity. Press Play and watch the particles move through the swirls.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the swirl picture and the four macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the swirl picture and the four macros. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -6436,11 +6374,11 @@ caption: Pointer device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Pointer device shows its mode, the radius and the strength. Click the title to unfold it.
+The folded Pointer device shows its mode, the radius and the strength.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Pointer device shows a disc with a falloff curve, and four macros.
+The compact Pointer device shows a disc with a falloff curve, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -6449,26 +6387,22 @@ Where: on the chain of an Expression, after the Field. The compact Pointer devic
 | Falloff | Sets how fast the force fades from the centre of the disc to its edge. |
 | Click strength | Sets the punch of a click. |
 
-Click the plate to show the Pointer device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Pointer device shows every parameter, in two groups.
+The whole Pointer device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Pointer | Mode, Radius, Strength, Falloff, Velocity inject, Scope |
 | Click effect | Click effect, Click strength, Click radius |
 
-A change you make in the pool applies at once. It does not add the Pointer device to a chain.
-
 ##### Full
 
-Where: a pane. The full Pointer device fills the pane with the field. The disc of the pointer shows at your pointer, with its radius and its falloff. Move the pointer through the field. The particles answer the disc. Click to try the click effect. The controls stay in Device view, below the pane.
+The full Pointer device fills the pane with the field. The disc of the pointer shows at your pointer, with its radius and its falloff. Move the pointer through the field. The particles answer the disc. Click to try the click effect.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the disc and the four macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the disc and the four macros. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -6532,11 +6466,11 @@ caption: Relational device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Relational device shows its law, the number of centres and the gravity pull. Click the title to unfold it.
+The folded Relational device shows its law, the number of centres and the gravity pull.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Relational device shows the centres and their paths, and four macros.
+The compact Relational device shows the centres and their paths, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -6545,11 +6479,9 @@ Where: on the chain of an Expression, after the Field. The compact Relational de
 | Spin | Sets the strength of the whirl around each centre. |
 | Chaos factor | Sets how much turbulence the centres add. |
 
-Click the plate to show the Relational device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Relational device shows every parameter, in three groups.
+The whole Relational device shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -6557,15 +6489,13 @@ Where: the pool under the browser. The whole Relational device shows every param
 | Placement | Orbit speed, Orbit radius, Wander speed |
 | Swirl and turbulence | Spin, Swirl radius, Chaos factor |
 
-A change you make in the pool applies at once. It does not add the Relational device to a chain.
-
 ##### Full
 
-Where: a pane. The full Relational device fills the pane with the field. Each centre shows as a mark, with the path that it follows. Watch the particles gather round the centres and follow their paths. The controls stay in Device view, below the pane.
+The full Relational device fills the pane with the field. Each centre shows as a mark, with the path that it follows. Watch the particles gather round the centres and follow their paths.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the centres, the four macros and the light. Click the light to turn the centres on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the centres, the four macros and the light. Click the light to turn the centres on or off. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -6628,11 +6558,11 @@ caption: Medium device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Medium device shows its name, the light, the pressure and the coupling. Click the title to unfold it.
+The folded Medium device shows its name, the light, the pressure and the coupling.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Medium device shows a small picture of the flow, and four macros.
+The compact Medium device shows a small picture of the flow, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -6641,25 +6571,21 @@ Where: on the chain of an Expression, after the Field. The compact Medium device
 | Persistence | Sets the share of the flow that remains each frame. |
 | Splat gain | Sets how much motion the particles give to the flow. |
 
-Click the plate to show the Medium device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Medium device shows every parameter, in one group.
+The whole Medium device shows every parameter, in one group.
 
 | Group | Parameters |
 |---|---|
 | Shared collision medium | On, Pressure, Coupling, Persistence, Splat gain, Pressure iterations, Grid, Extent, Dimension |
 
-A change you make in the pool applies at once. It does not add the Medium device to a chain.
-
 ##### Full
 
-Where: a pane. The full Medium device fills the pane with the field. The flow shows as lines that follow the movement of the fluid. Move the pointer through the field and watch the flow that the particles leave behind. The controls stay in Device view, below the pane.
+The full Medium device fills the pane with the field. The flow shows as lines that follow the movement of the fluid. Move the pointer through the field and watch the flow that the particles leave behind.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the flow picture, the four macros and the light. Click the light to turn the shared fluid on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the flow picture, the four macros and the light. Click the light to turn the shared fluid on or off. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -6720,11 +6646,11 @@ caption: Contacts device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Contacts device shows its name, the wall mode and the bounce. Click the title to unfold it.
+The folded Contacts device shows its name, the wall mode and the bounce.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Contacts device shows a particle that touches a wall and a pair of particles, and four macros.
+The compact Contacts device shows a particle that touches a wall and a pair of particles, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -6733,26 +6659,22 @@ Where: on the chain of an Expression, after the Field. The compact Contacts devi
 | Contact radius | Sets how close two particles must be to touch. |
 | Contact stiffness | Sets the spring that pushes touching particles apart. |
 
-Click the plate to show the Contacts device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Contacts device shows every parameter, in two groups.
+The whole Contacts device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Glyph colliders | Glyph walls, Wall mode, Wall bounce, Wall friction, Wall band, Wall strength, Wall integrity |
 | Pairwise contacts | Particle contacts, Contact radius, Contact stiffness, Contact bounce, Contact viscosity and extent |
 
-A change you make in the pool applies at once. It does not add the Contacts device to a chain.
-
 ##### Full
 
-Where: a pane. The full Contacts device fills the pane with the field. The walls of the letter strokes show as lines. A ring shows the contact reach of a particle. Watch the particles bounce off the walls and off each other. The controls stay in Device view, below the pane.
+The full Contacts device fills the pane with the field. The walls of the letter strokes show as lines. A ring shows the contact reach of a particle. Watch the particles bounce off the walls and off each other.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the two pictures, the four macros and the light. Click the light to turn the walls or the contacts on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the two pictures, the four macros and the light. Click the light to turn the walls or the contacts on or off. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -6815,11 +6737,11 @@ caption: Morph device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Morph device shows its name and the two rates. Click the title to unfold it.
+The folded Morph device shows its name and the two rates.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Morph device shows the drive curve and a phase handle, and four macros.
+The compact Morph device shows the drive curve and a phase handle, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -6830,11 +6752,9 @@ Where: on the chain of an Expression, after the Field. The compact Morph device 
 
 Drag the phase handle to set both phases.
 
-Click the plate to show the Morph device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Morph device shows every parameter, in three groups.
+The whole Morph device shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -6842,15 +6762,13 @@ Where: the pool under the browser. The whole Morph device shows every parameter,
 | Physical morph | On, Oscillating drive, Scrub, Trajectory, Drive shape, Drive depth and dwell, Breathing |
 | Manifold detail | Winding, Manifold |
 
-A change you make in the pool applies at once. It does not add the Morph device to a chain.
-
 ##### Full
 
-Where: a pane. The full Morph device fills the pane with the field. The torus shows as a wire, with a mark at the point where the field stands between its two forms. Press Play and watch the field move from the first form to the second form along the torus. The controls stay in Device view, below the pane.
+The full Morph device fills the pane with the field. The torus shows as a wire, with a mark at the point where the field stands between its two forms. Press Play and watch the field move from the first form to the second form along the torus.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the drive curve, the four macros and the light. Click the light to turn the morph on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the drive curve, the four macros and the light. Click the light to turn the morph on or off. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -6913,11 +6831,11 @@ caption: Focus device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Focus device shows its mode, the number of formations on the route, the dwell and the glide. Click the title to unfold it.
+The folded Focus device shows its mode, the number of formations on the route, the dwell and the glide.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Focus device shows the route as a row of steps, with the loop length, and three macros.
+The compact Focus device shows the route as a row of steps, with the loop length, and three macros.
 
 | Macro | What it does |
 |---|---|
@@ -6925,11 +6843,9 @@ Where: on the chain of an Expression, after the Field. The compact Focus device 
 | Glide | Sets how long the focus takes to travel to the next formation. |
 | Focus tint | Sets how strongly the focus colours the formation that it holds. |
 
-Click the plate to show the Focus device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Focus device shows every parameter, in two groups.
+The whole Focus device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -6938,15 +6854,13 @@ Where: the pool under the browser. The whole Focus device shows every parameter,
 
 The route list shows above the groups. Move a formation earlier or later.
 
-A change you make in the pool applies at once. It does not add the Focus device to a chain.
-
 ##### Full
 
-Where: a pane. The full Focus device fills the pane with the field. The route shows as a line from formation to formation. A mark shows the formation that holds the focus. Set Mode to Travelling and press Play. Watch the focus visit each formation. The controls stay in Device view, below the pane.
+The full Focus device fills the pane with the field. The route shows as a line from formation to formation. A mark shows the formation that holds the focus. Set Mode to Travelling and press Play. Watch the focus visit each formation.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the route and the three macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the route and the three macros. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -7014,11 +6928,11 @@ caption: Colour device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Colour device shows its name, the number of colours and the distribution. Click the title to unfold it.
+The folded Colour device shows its name, the number of colours and the distribution.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Colour device shows the palette across a small field, with a centre handle and an angle handle, and four macros.
+The compact Colour device shows the palette across a small field, with a centre handle and an angle handle, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -7027,11 +6941,9 @@ Where: on the chain of an Expression, after the Field. The compact Colour device
 | Wave frequency | Sets how many bands of the palette cross the field. |
 | Contrast | Sets the contrast of the palette response. |
 
-Click the plate to show the Colour device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Colour device shows every parameter, in four groups.
+The whole Colour device shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -7040,15 +6952,13 @@ Where: the pool under the browser. The whole Colour device shows every parameter
 | Geometry | Wave frequency, Gradient angle, Palette centre |
 | Atmosphere and paper | Background, Glow and paper grain |
 
-A change you make in the pool applies at once. It does not add the Colour device to a chain.
-
 ##### Full
 
-Where: a pane. The full Colour device fills the pane with the field in colour. The handles of the geometry show on the field: one for the centre of the bands, and one for their angle. Drag the centre handle to move the bands. Drag the angle handle to turn them. The controls stay in Device view, below the pane.
+The full Colour device fills the pane with the field in colour. The handles of the geometry show on the field: one for the centre of the bands, and one for their angle. Drag the centre handle to move the bands. Drag the angle handle to turn them.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the palette strip, the four macros and the light. Click the light to turn the palette on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the palette strip, the four macros and the light. Click the light to turn the palette on or off. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -7114,11 +7024,11 @@ caption: Ink device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Ink device shows the count and the size range. Click the title to unfold it.
+The folded Ink device shows the count and the size range.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Ink device shows a patch of marks at true size, and four macros.
+The compact Ink device shows a patch of marks at true size, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -7127,26 +7037,22 @@ Where: on the chain of an Expression, after the Field. The compact Ink device sh
 | Softness | Sets how soft the edge of a mark is. |
 | Max size | Sets the size of the largest mark. |
 
-Click the plate to show the Ink device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Ink device shows every parameter, in two groups.
+The whole Ink device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Size and opacity | Particle count, Mark size, Opacity, Mark shape |
 | Mark profile | Extended grain profile, Size distribution, Roundness and softness, Imperfect edges and elongation, Orientation, Density contrast, Density bands, Edge and halo |
 
-A change you make in the pool applies at once. It does not add the Ink device to a chain.
-
 ##### Full
 
-Where: a pane. The full Ink device fills the pane with the field, zoomed so that single marks show. You see the size, the edge and the density of each mark. Read the marks at their size. Compare thin areas with dense areas. The controls stay in Device view, below the pane.
+The full Ink device fills the pane with the field, zoomed so that single marks show. You see the size, the edge and the density of each mark. Read the marks at their size. Compare thin areas with dense areas.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the patch of marks and the four macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the patch of marks and the four macros. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -7212,11 +7118,11 @@ caption: Depth device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Depth device shows the profile, the body depth and the projection. Click the title to unfold it.
+The folded Depth device shows the profile, the body depth and the projection.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Depth device shows a cross-section of the body and a lens cone, and four macros.
+The compact Depth device shows a cross-section of the body and a lens cone, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -7225,26 +7131,22 @@ Where: on the chain of an Expression, after the Field. The compact Depth device 
 | Aerial fade | Sets how far distance dims the ink. |
 | Field of view | Sets the width of the lens. |
 
-Click the plate to show the Depth device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Depth device shows every parameter, in two groups.
+The whole Depth device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | 3D body | 3D body, Profile, Body depth, Flank share, Face and fill, Sheet and band, Taper and reach, Density to depth and jitter, Occlusion |
 | Projection and aerial depth | Projection, Lens, Size with distance, Aerial depth, Depth in the swirl, Depth in the bridge |
 
-A change you make in the pool applies at once. It does not add the Depth device to a chain.
-
 ##### Full
 
-Where: a pane. The full Depth device fills the pane with the field, turned so that the bodies show their thickness. Distant marks are smaller and dimmer. Turn the view and watch the thickness of each symbol. The controls stay in Device view, below the pane.
+The full Depth device fills the pane with the field, turned so that the bodies show their thickness. Distant marks are smaller and dimmer. Turn the view and watch the thickness of each symbol.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the cross-section, the four macros and the light. Click the light to turn the 3D body on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the cross-section, the four macros and the light. Click the light to turn the 3D body on or off. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -7311,11 +7213,11 @@ caption: Resonance device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of an Expression, after the Field. The folded Resonance device shows the drive frequency and the Q factor. Click the title to unfold it.
+The folded Resonance device shows the drive frequency and the Q factor.
 
 ##### Compact
 
-Where: on the chain of an Expression, after the Field. The compact Resonance device shows the plate with its nodal lines and the nearest mode, and four macros.
+The compact Resonance device shows the plate with its nodal lines and the nearest mode, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -7324,11 +7226,9 @@ Where: on the chain of an Expression, after the Field. The compact Resonance dev
 | Drive strength | Sets how hard the drive shakes the plate. |
 | Dominance | Sets how far the plate takes over from the formation springs. |
 
-Click the plate to show the Resonance device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Resonance device shows every parameter, in three groups.
+The whole Resonance device shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -7336,15 +7236,13 @@ Where: the pool under the browser. The whole Resonance device shows every parame
 | Resonator and drive | Drive strength and scale, Transport and agitation, Plate, Mode count, Dimension, Compatibility |
 | Station sweep | Sweep, Sweep time |
 
-A change you make in the pool applies at once. It does not add the Resonance device to a chain.
-
 ##### Full
 
-Where: a pane. The full Resonance device fills the pane with the field on the plate. The nodal lines show where the plate stands still. The particles settle on those lines. Press Play. Sweep Drive frequency in Device view, and watch the pattern change. The controls stay in Device view, below the pane.
+The full Resonance device fills the pane with the field on the plate. The nodal lines show where the plate stands still. The particles settle on those lines. Press Play. Sweep Drive frequency in Device view, and watch the pattern change.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the plate picture, the four macros and the light. Click the light to turn the plate on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
+The widget shows the plate picture, the four macros and the light. Click the light to turn the plate on or off. Turn a macro on the widget to set the same value as the macro on the chain.
 
 #### Transport
 
@@ -7661,11 +7559,11 @@ In Clip view, the Torus plays the notes of the clip that you select. The piano r
 
 ##### Folded
 
-Where: on the chain of a Live part, after the note devices. The folded Torus shows its name, the level and the number of notes that sound. Click the title to unfold it.
+The folded Torus shows its name, the level and the number of notes that sound.
 
 ##### Compact
 
-Where: on the chain of a Live part, after the note devices. The compact Torus shows a small live torus, and four macros.
+The compact Torus shows a small live torus, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -7674,11 +7572,9 @@ Where: on the chain of a Live part, after the note devices. The compact Torus sh
 | Drive | Sets how hard the pulses shake the body. |
 | Release | Sets how long a note takes to fade. |
 
-Click the plate to show the Torus whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Torus shows every parameter, in four groups.
+The whole Torus shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
@@ -7687,15 +7583,13 @@ Where: the pool under the browser. The whole Torus shows every parameter, in fou
 | Envelope | Attack, Release |
 | Voices and output | Voices, Level and pan, View |
 
-A change you make in the pool applies at once. It does not add the Torus to a chain.
-
 ##### Full
 
-Where: a pane. The full Torus is the playable torus simulation. It fills the pane and turns at the centre. The surface shows the pattern of the vibration. The Jankó keyboard is beneath it. Touch the surface and it rings. Press a key on the keyboard and a point on the torus lights. The controls stay in Device view, below the pane.
+The full Torus is the playable torus simulation. It fills the pane and turns at the centre. The surface shows the pattern of the vibration. The Jankó keyboard is beneath it. Touch the surface and it rings. Press a key on the keyboard and a point on the torus lights.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the small live torus with a level meter. Click the torus to open it full in the pane that has focus. The widget stays when you change mode.
+The widget shows the small live torus with a level meter. Click the torus to open it full in the pane that has focus.
 
 #### Transport
 
@@ -7785,11 +7679,11 @@ In Clip view, the device follows the mode of the open clip. When the clip has no
 
 ##### Folded
 
-Where: on the chain of a Live part, before the torus. The folded Scale mapping device shows the root and the mode name. Click the title to unfold it.
+The folded Scale mapping device shows the root and the mode name.
 
 ##### Compact
 
-Where: on the chain of a Live part, before the torus. The compact Scale mapping device shows the notes of the mode on a small ring, and four macros.
+The compact Scale mapping device shows the notes of the mode on a small ring, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -7798,26 +7692,22 @@ Where: on the chain of a Live part, before the torus. The compact Scale mapping 
 | Basis | Sets the basis the lens mode is addressed in. |
 | Tie | Sets where a note an equal way from the mode above and below goes. |
 
-Click the plate to show the Scale mapping device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Scale mapping device shows every parameter, in two groups.
+The whole Scale mapping device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Mode in force | Root, Family, Basis, Mode name, Source scale |
 | Fold | Tie |
 
-A change you make in the pool applies at once. It does not add the Scale mapping device to a chain.
-
 ##### Full
 
-Where: a pane. The full Scale mapping device fills the pane with the torus. The notes of the mode show on the two helices. The other notes stay dim. Play a key that is outside the mode and watch the note move onto the mode. The controls stay in Device view, below the pane.
+The full Scale mapping device fills the pane with the torus. The notes of the mode show on the two helices. The other notes stay dim. Play a key that is outside the mode and watch the note move onto the mode.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the mode name and the ring. Click the ring to open the device in the pane that has focus. The widget stays when you change mode.
+The widget shows the mode name and the ring. Click the ring to open the device in the pane that has focus.
 
 #### Transport
 
@@ -7880,11 +7770,11 @@ caption: Exact-ratio tuning device, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of a Live part, before the torus. The folded Exact-ratio tuning device shows the reference note and frequency, and the ratio set. Click the title to unfold it.
+The folded Exact-ratio tuning device shows the reference note and frequency, and the ratio set.
 
 ##### Compact
 
-Where: on the chain of a Live part, before the torus. The compact Exact-ratio tuning device shows the twelve notes on a ring, each with its ratio, and four macros.
+The compact Exact-ratio tuning device shows the twelve notes on a ring, each with its ratio, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -7893,26 +7783,22 @@ Where: on the chain of a Live part, before the torus. The compact Exact-ratio tu
 | Comma | Keeps the gap that twelve fifths leave open, or folds it into the octave. |
 | Readout | Sets how the tuning of a note shows: ratio, cents or hertz. |
 
-Click the plate to show the Exact-ratio tuning device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Exact-ratio tuning device shows every parameter, in two groups.
+The whole Exact-ratio tuning device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Tuning | Reference note, Reference frequency, Ratio set, Octave, Comma, Readout, Error |
 | Export | Export, Bend range |
 
-A change you make in the pool applies at once. It does not add the Exact-ratio tuning device to a chain.
-
 ##### Full
 
-Where: a pane. The full Exact-ratio tuning device fills the pane with the torus. The twelve notes show on the helices. Each note has its ratio and its error from the equal scale. Play a chord and read the ratio of each note. The controls stay in Device view, below the pane.
+The full Exact-ratio tuning device fills the pane with the torus. The twelve notes show on the helices. Each note has its ratio and its error from the equal scale. Play a chord and read the ratio of each note.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the reference note and a short list of ratios. Click the list to open the device in the pane that has focus. The widget stays when you change mode.
+The widget shows the reference note and a short list of ratios. Click the list to open the device in the pane that has focus.
 
 #### Transport
 
@@ -8132,11 +8018,11 @@ caption: Sky, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of a Technē reading. The folded Sky shows the date and the sky name. Click the title to unfold it.
+The folded Sky shows the date and the sky name.
 
 ##### Compact
 
-Where: on the chain of a Technē reading. The compact Sky shows a small ring with the bodies, and four macros.
+The compact Sky shows a small ring with the bodies, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -8145,11 +8031,9 @@ Where: on the chain of a Technē reading. The compact Sky shows a small ring wit
 | Run speed | Sets how fast the sky moves when the clock runs. |
 | Natal ring | Draws the sky of your birth round the sky of the date. |
 
-Click the plate to show the Sky whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Sky shows every parameter, in three groups.
+The whole Sky shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -8159,15 +8043,13 @@ Where: the pool under the browser. The whole Sky shows every parameter, in three
 
 The list of what each body moves shows below the groups.
 
-A change you make in the pool applies at once. It does not add the Sky to a chain.
-
 ##### Full
 
-Where: a pane. The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies. The controls stay in Device view, below the pane.
+The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows each body with its degree. The Sky widget is on the rail in every mode. Tap the widget to return the date to now. The widget stays when you change mode.
+The widget shows each body with its degree. The Sky widget is on the rail in every mode. Tap the widget to return the date to now.
 
 #### Transport
 
@@ -8233,11 +8115,11 @@ caption: Sky modulation device, on a fixture of readings.
 
 ##### Folded
 
-Where: on any track's chain. The folded Sky modulation device shows the date and the number of assignments. Click the title to unfold it.
+The folded Sky modulation device shows the date and the number of assignments.
 
 ##### Compact
 
-Where: on any track's chain. The compact Sky modulation device shows a small ring with the planets, and four macros.
+The compact Sky modulation device shows a small ring with the planets, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -8246,26 +8128,22 @@ Where: on any track's chain. The compact Sky modulation device shows a small rin
 | The third planet | Sets the amount of the third assignment. |
 | The fourth planet | Sets the amount of the fourth assignment. |
 
-Click the plate to show the Sky modulation device whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Sky modulation device shows every parameter, in two groups.
+The whole Sky modulation device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Sky | Date, Observer |
 | Assignments | Assignments, Planet, Target, Use, Amount, Scope, Smoothing |
 
-A change you make in the pool applies at once. It does not add the Sky modulation device to a chain.
-
 ##### Full
 
-Where: a pane. The full Sky modulation device fills the pane with the sky ring. A line leads from each planet to the parameter that it moves. Play a note and watch the lines move with the planets. The controls stay in Device view, below the pane.
+The full Sky modulation device fills the pane with the sky ring. A line leads from each planet to the parameter that it moves. Play a note and watch the lines move with the planets.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the planets, with their degrees. Click a planet to open its assignment in Device view. The widget stays when you change mode.
+The widget shows the planets, with their degrees. Click a planet to open its assignment in Device view.
 
 #### Transport
 
@@ -8355,11 +8233,11 @@ caption: M3 clock, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of a reading. The folded M3 clock shows the position and the aperture. Click the title to unfold it.
+The folded M3 clock shows the position and the aperture.
 
 ##### Compact
 
-Where: on the chain of a reading. The compact M3 clock shows the wheel with a needle, and four macros.
+The compact M3 clock shows the wheel with a needle, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -8368,26 +8246,22 @@ Where: on the chain of a reading. The compact M3 clock shows the wheel with a ne
 | Swap | Cuts the wheel by the matching cut. |
 | Turn | Sets which turn of the wheel to show: first, second or both. |
 
-Click the plate to show the M3 clock whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole M3 clock shows every parameter, in two groups.
+The whole M3 clock shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Cut | Aperture, Reciprocal, Turn, Open |
 | Position | Position, Readout, Swap |
 
-A change you make in the pool applies at once. It does not add the M3 clock to a chain.
-
 ##### Full
 
-Where: a pane. The full M3 clock fills the pane with the wheel at full size. The four directions, the governors and the chambers show on the wheel. A needle marks the position. Set Open to Exploded in Device view. The parts of the wheel draw apart and the subject stays. The controls stay in Device view, below the pane.
+The full M3 clock fills the pane with the wheel at full size. The four directions, the governors and the chambers show on the wheel. A needle marks the position. Set Open to Exploded in Device view. The parts of the wheel draw apart and the subject stays.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows a small wheel with its position. Click the wheel to open the M3 clock in the pane that has focus. The widget stays when you change mode.
+The widget shows a small wheel with its position. Click the wheel to open the M3 clock in the pane that has focus.
 
 #### Transport
 
@@ -8475,11 +8349,11 @@ caption: Deck, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of a reading. The folded Deck shows the deck and the spread. Click the title to unfold it.
+The folded Deck shows the deck and the spread.
 
 ##### Compact
 
-Where: on the chain of a reading. The compact Deck shows the positions as small cards, and four macros.
+The compact Deck shows the positions as small cards, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -8488,26 +8362,22 @@ Where: on the chain of a reading. The compact Deck shows the positions as small 
 | Draw | Sets how the cards or the lines come: random or by hand. |
 | Agent reads | Sets Off, Propose or Write. |
 
-Click the plate to show the Deck whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Deck shows every parameter, in two groups.
+The whole Deck shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Reading | Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Journey |
 | Agent | Agent reads |
 
-A change you make in the pool applies at once. It does not add the Deck to a chain.
-
 ##### Full
 
-Where: a pane. The full Deck fills the pane with the spread. The six positions P0 to P5 lie out, each with its question. The reading of each position shows under its card. Read the pairs: P0 with P5, P1 with P4, and P2 with P3. The controls stay in Device view, below the pane.
+The full Deck fills the pane with the spread. The six positions P0 to P5 lie out, each with its question. The reading of each position shows under its card. Read the pairs: P0 with P5, P1 with P4, and P2 with P3.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the last spread, with its theme. Click the spread to open the Deck in the pane that has focus. The widget stays when you change mode.
+The widget shows the last spread, with its theme. Click the spread to open the Deck in the pane that has focus.
 
 #### Transport
 
@@ -8587,11 +8457,11 @@ caption: Chakra, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of a reading. The folded Chakra shows the centre that has the most hits today. Click the title to unfold it.
+The folded Chakra shows the centre that has the most hits today.
 
 ##### Compact
 
-Where: on the chain of a reading. The compact Chakra shows seven small discs, lit by their hits, and four macros.
+The compact Chakra shows seven small discs, lit by their hits, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -8600,26 +8470,22 @@ Where: on the chain of a reading. The compact Chakra shows seven small discs, li
 | Colour source | Sets where the colour of a centre comes from. |
 | Natal distribution | Shows how your birth sky spreads over the centres. |
 
-Click the plate to show the Chakra whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Chakra shows every parameter, in two groups.
+The whole Chakra shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Sky | View, Date, Routes, Hits, Colour source, Detail |
 | Personal | Natal distribution |
 
-A change you make in the pool applies at once. It does not add the Chakra to a chain.
-
 ##### Full
 
-Where: a pane. The full Chakra fills the pane with the seven centres at full size. Route lines run from the planets to the centres that they reach. The Earth stands under the Root. Follow a route line from a planet to its centre. The controls stay in Device view, below the pane.
+The full Chakra fills the pane with the seven centres at full size. Route lines run from the planets to the centres that they reach. The Earth stands under the Root. Follow a route line from a planet to its centre.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows seven discs with the planet of each. Click a disc to open its centre in the pane that has focus. The widget stays when you change mode.
+The widget shows seven discs with the planet of each. Click a disc to open its centre in the pane that has focus.
 
 #### Transport
 
@@ -8692,11 +8558,11 @@ caption: M′ matrices, on a fixture of readings.
 
 ##### Folded
 
-Where: on the chain of a reading. The folded M′ matrices show the matrix name and the cell. Click the title to unfold it.
+The folded M′ matrices show the matrix name and the cell.
 
 ##### Compact
 
-Where: on the chain of a reading. The compact M′ matrices show a small grid of the matrix, and four macros.
+The compact M′ matrices show a small grid of the matrix, and four macros.
 
 | Macro | What it does |
 |---|---|
@@ -8705,11 +8571,9 @@ Where: on the chain of a reading. The compact M′ matrices show a small grid of
 | Lens | Sets the lens that anchors the reading. |
 | Context frame | Sets the mode of the lens. |
 
-Click the plate to show the M′ matrices whole in the pool. Click ▦ to open them full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole M′ matrices show every parameter, in two groups.
+The whole M′ matrices show every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -8718,15 +8582,13 @@ Where: the pool under the browser. The whole M′ matrices show every parameter,
 
 The grid shows with every value.
 
-A change you make in the pool applies at once. It does not add the M′ matrices to a chain.
-
 ##### Full
 
-Where: a pane. The full M′ matrices fill the pane with the matrix at full size. A line leads from a cell to the parameter that it moves. Follow the line from a cell to its parameter. The controls stay in Device view, below the pane.
+The full M′ matrices fill the pane with the matrix at full size. A line leads from a cell to the parameter that it moves. Follow the line from a cell to its parameter.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the small grid with the cell marked. Click the grid to open the matrices in the pane that has focus. The widget stays when you change mode.
+The widget shows the small grid with the cell marked. Click the grid to open the matrices in the pane that has focus.
 
 #### Transport
 
@@ -8849,11 +8711,11 @@ caption: Files, on a fixture of readings.
 
 ##### Folded
 
-Where: the launcher on the rail, and on a chain. The folded Files shows as a launcher square with the name Files. A dot marks an open tile. Click the square to open the tile on the rail.
+The folded Files shows as a launcher square with the name Files. A dot marks an open tile. Click the square to open the tile on the rail.
 
 ##### Compact
 
-Where: on a chain. The compact Files shows the changed files. Each file shows the lines added and removed. It has three macros.
+The compact Files shows the changed files. Each file shows the lines added and removed. It has three macros.
 
 | Macro | What it does |
 |---|---|
@@ -8861,26 +8723,22 @@ Where: on a chain. The compact Files shows the changed files. Each file shows th
 | Blocked | Sets Show or Hide. |
 | Follow | Sets On or Off. |
 
-Click the plate to show the Files whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Files shows every parameter, in two groups.
+The whole Files shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Tree | Show, Blocked |
 | Agent | Follow |
 
-A change you make in the pool applies at once.
-
 ##### Full
 
-Where: a pane. The full Files shows one file at pane size: the file that you clicked in the tree. Read it here. The tree stays on the rail. The controls stay in Device view, below the pane.
+The full Files shows one file at pane size: the file that you clicked in the tree. Read it here. The tree stays on the rail.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the tree of the files that the selected agent touched. M marks a changed file, with the lines added and removed. An arrow marks a file that the agent read. A red line marks a blocked place. Click a file to open it in a pane. Click a blocked place to read why it is blocked. The widget stays when you change mode.
+The widget shows the tree of the files that the selected agent touched. M marks a changed file, with the lines added and removed. An arrow marks a file that the agent read. A red line marks a blocked place. Click a file to open it in a pane. Click a blocked place to read why it is blocked.
 
 #### Transport
 | Control | Effect on Files |
@@ -8922,11 +8780,11 @@ caption: Web, on a fixture of readings.
 
 ##### Folded
 
-Where: the launcher on the rail, and on a chain. The folded Web shows as a launcher square with the name Web. A dot marks an open tile. Click the square to open the tile on the rail.
+The folded Web shows as a launcher square with the name Web. A dot marks an open tile. Click the square to open the tile on the rail.
 
 ##### Compact
 
-Where: on a chain. The compact Web shows the address and the first lines of the page. It has three macros.
+The compact Web shows the address and the first lines of the page. It has three macros.
 
 | Macro | What it does |
 |---|---|
@@ -8934,26 +8792,22 @@ Where: on a chain. The compact Web shows the address and the first lines of the 
 | Mark used text | Sets On or Off. |
 | Follow | Sets On or Off. |
 
-Click the plate to show the Web whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Web shows every parameter, in two groups.
+The whole Web shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Page | Page, Follow |
 | Marks | Mark used text |
 
-A change you make in the pool applies at once.
-
 ##### Full
 
-Where: a pane. The full Web shows the page in a pane, as the agent got it. The text that the agent used is marked. The controls stay in Device view, below the pane.
+The full Web shows the page in a pane, as the agent got it. The text that the agent used is marked.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the page that the selected agent read last. The text that the agent used is marked. Click the address to open the page in a pane. The widget stays when you change mode.
+The widget shows the page that the selected agent read last. The text that the agent used is marked. Click the address to open the page in a pane.
 
 #### To use Web
 1. Open Web from the launcher.
@@ -8990,11 +8844,11 @@ caption: Diff, on a fixture of readings.
 
 ##### Folded
 
-Where: the launcher on the rail, and on a chain. The folded Diff shows as a launcher square with the name Diff. A dot marks an open tile. Click the square to open the tile on the rail.
+The folded Diff shows as a launcher square with the name Diff. A dot marks an open tile. Click the square to open the tile on the rail.
 
 ##### Compact
 
-Where: on a chain. The compact Diff shows the first lines of the diff. It has three macros.
+The compact Diff shows the first lines of the diff. It has three macros.
 
 | Macro | What it does |
 |---|---|
@@ -9002,26 +8856,22 @@ Where: on a chain. The compact Diff shows the first lines of the diff. It has th
 | Session | Sets The selected session or All. |
 | Layout | Sets Unified or Side by side. |
 
-Click the plate to show the Diff whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Diff shows every parameter, in two groups.
+The whole Diff shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Changes | Show, Session |
 | Layout | Layout |
 
-A change you make in the pool applies at once.
-
 ##### Full
 
-Where: a pane. The full Diff shows the diff of one file in a pane. Lines added are green. Lines removed are red. A proposed change shows its author. The controls stay in Device view, below the pane.
+The full Diff shows the diff of one file in a pane. Lines added are green. Lines removed are red. A proposed change shows its author.
 
 ##### Widget
 
-Where: the rail on the right. The widget lists the files that changed in the selected session. Each file shows its lines added in green and removed in red. Click a file to open its diff in a pane. Go to Approvals to accept a proposal. The widget stays when you change mode.
+The widget lists the files that changed in the selected session. Each file shows its lines added in green and removed in red. Click a file to open its diff in a pane. Go to Approvals to accept a proposal.
 
 #### Transport
 | Control | Effect on Diff |
@@ -9063,37 +8913,33 @@ caption: Trail, on a fixture of readings.
 
 ##### Folded
 
-Where: the launcher on the rail, and on a chain. The folded Trail shows as a launcher square with the name Trail. A dot marks an open tile. Click the square to open the tile on the rail.
+The folded Trail shows as a launcher square with the name Trail. A dot marks an open tile. Click the square to open the tile on the rail.
 
 ##### Compact
 
-Where: on a chain. The compact Trail shows the last stops. It has two macros.
+The compact Trail shows the last stops. It has two macros.
 
 | Macro | What it does |
 |---|---|
 | Limit | Sets how many stops show, from 8 to 24. |
 | Return | Returns to the stop that you select. |
 
-Click the plate to show the Trail whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Trail shows every parameter, in two groups.
+The whole Trail shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Stops | Stops, Limit |
 | Return | Return |
 
-A change you make in the pool applies at once.
-
 ##### Full
 
-Where: a pane. The full Trail shows the trail in a pane. Each stop shows its time, the kind of work and the place. Select a stop to return to it. The controls stay in Device view, below the pane.
+The full Trail shows the trail in a pane. Each stop shows its time, the kind of work and the place. Select a stop to return to it.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the stops, newest first. Each stop shows its time and the kind of work. Click a stop to return to the same place, the same page and the same point in the reading. The widget stays when you change mode.
+The widget shows the stops, newest first. Each stop shows its time and the kind of work. Click a stop to return to the same place, the same page and the same point in the reading.
 
 #### Transport
 | Control | Effect on Trail |
@@ -9135,36 +8981,34 @@ caption: NOWs, on a fixture of readings.
 
 ##### Folded
 
-Where: the launcher on the rail, and on a chain. The folded NOWs shows as a launcher square with the name NOWs. A dot marks an open tile. Click the square to open the tile on the rail.
+The folded NOWs shows as a launcher square with the name NOWs. A dot marks an open tile. Click the square to open the tile on the rail.
 
 ##### Compact
 
-Where: on a chain. The compact NOWs shows one line for each open moment, with its state. It has one macro.
+The compact NOWs shows one line for each open moment, with its state. It has one macro.
 
 | Macro | What it does |
 |---|---|
 | Machines | Sets All or One machine. |
 
-Click the plate to show the NOWs whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole NOWs shows every parameter, in two groups.
+The whole NOWs shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Day | Day, Now |
 | Machines | Machines |
 
-A change you make in the pool applies at once. Day and Now are readings. You cannot set them.
+Day and Now are readings. You cannot set them.
 
 ##### Full
 
-Where: a pane. The full NOWs shows the moments of the day in a pane. Each moment shows its machine, the agent at work on it and its state. Click a moment to open it. The controls stay in Device view, below the pane.
+The full NOWs shows the moments of the day in a pane. Each moment shows its machine, the agent at work on it and its state. Click a moment to open it.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the day, the time and the open moments. It lists the machines and the agent at work on each, with a state. Click a moment to open it. Close each moment that you have finished. The widget stays when you change mode.
+The widget shows the day, the time and the open moments. It lists the machines and the agent at work on each, with a state. Click a moment to open it. Close each moment that you have finished.
 
 #### To use NOWs
 1. Open NOWs from the launcher.
@@ -9200,36 +9044,32 @@ caption: Wiki, on a fixture of readings.
 
 ##### Folded
 
-Where: the launcher on the rail, and on a chain. The folded Wiki shows as a launcher square with the name Wiki. A dot marks an open tile. Click the square to open the tile on the rail.
+The folded Wiki shows as a launcher square with the name Wiki. A dot marks an open tile. Click the square to open the tile on the rail.
 
 ##### Compact
 
-Where: on a chain. The compact Wiki shows the title and the first lines of a page. It has three macros.
+The compact Wiki shows the title and the first lines of a page. It has three macros.
 
 | Macro | What it does |
 |---|---|
 | Page | Chooses a page from the list. |
 | Follow | Sets On or Off. |
 
-Click the plate to show the Wiki whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Wiki shows every parameter, in two groups.
+The whole Wiki shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Page | Page, Follow |
 
-A change you make in the pool applies at once.
-
 ##### Full
 
-Where: a pane. The full Wiki shows the page in a pane, with its links. Read the page here. You cannot edit it. The controls stay in Device view, below the pane.
+The full Wiki shows the page in a pane, with its links. Read the page here. You cannot edit it.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the wiki page that the selected agent read last, with its links. Click a link to follow it. A link that does not resolve shows as it is. Click the open mark to read the page in a pane. The widget stays when you change mode.
+The widget shows the wiki page that the selected agent read last, with its links. Click a link to follow it. A link that does not resolve shows as it is. Click the open mark to read the page in a pane.
 
 #### To use Wiki
 1. Open Wiki from the launcher.
@@ -9266,11 +9106,11 @@ caption: Calendar, on a fixture of readings.
 
 ##### Folded
 
-Where: the launcher on the rail, and on a chain. The folded Calendar shows as a launcher square with the name Calendar. A dot marks an open tile. A badge marks it as a widget from outside. Click the square to open the tile on the rail.
+The folded Calendar shows as a launcher square with the name Calendar. A dot marks an open tile. A badge marks it as a widget from outside. Click the square to open the tile on the rail.
 
 ##### Compact
 
-Where: on a chain. The compact Calendar shows the next events. It has three macros.
+The compact Calendar shows the next events. It has three macros.
 
 | Macro | What it does |
 |---|---|
@@ -9278,26 +9118,22 @@ Where: on a chain. The compact Calendar shows the next events. It has three macr
 | Range | Sets Day or Week. |
 | This work only | Sets On or Off. |
 
-Click the plate to show the Calendar whole in the pool. Click ▦ to open it full in a pane.
-
 ##### Whole
 
-Where: the pool under the browser. The whole Calendar shows every parameter, in two groups.
+The whole Calendar shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
 | Source | Calendar |
 | View | Range, This work only |
 
-A change you make in the pool applies at once.
-
 ##### Full
 
-Where: a pane. The full Calendar shows the calendar in a pane, if the provider supplies a full form. If the provider supplies none, Calendar has no Full view. The controls stay in Device view, below the pane.
+The full Calendar shows the calendar in a pane, if the provider supplies a full form. If the provider supplies none, Calendar has no Full view.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the events that are due around this work. Click an event to read it. A badge on the widget marks it as supplied from outside. The widget shows only what its provider supplies. The widget stays when you change mode.
+The widget shows the events that are due around this work. Click an event to read it. A badge on the widget marks it as supplied from outside. The widget shows only what its provider supplies.
 
 #### To use Calendar
 1. Open the browser. Install Calendar from the Context category.
