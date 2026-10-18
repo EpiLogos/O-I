@@ -9,8 +9,11 @@
 //     (agent/devices/threadBinding.ts sessionRowsOf);
 //   - the log: the session's temporal events (the sessions provider's one read, agentRunModel.ts eventsForSession), within the task's
 //     own span (its start to the next task's), each the owner's own row — its time, its kind and what it says (FactoryTaskLogDetail).
-// Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, which refuses in its owner's words
-// today and stands disabled with them; the owner op wires in one line there. Pure, apart from the hook at the end.
+//   - the task's own settings — its name and colour as the person set them, its activator, output style, Launch, Then, Hand off to,
+//     Quantize and envelopes — from the session's settings on their owner (AIKit `encounter-session-settings`, agent/sessionSettings.ts),
+//     every default stated by the owner.
+// Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
+// revision. Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
@@ -18,9 +21,15 @@ import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import {useTimelinePanePresentation} from '../projections/timelinePaneHost'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
+import {useSettingsAnswer} from '../owners/readers'
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
 import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type TemporalEventLike} from './agentRunModel'
-import {TASK_SEAMS, type TaskAddress, type TaskSetting} from './devices/taskBindings'
+import {TASK_SEAMS, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
+import {clipValuesOfSettings, settingsRefusal} from './sessionSettings'
+
+/** The register the sessions provider reads its agency in (AgentSessionsProvider.tsx PROJECT): the session's settings are read there. */
+export const SETTINGS_PROJECT = 'O-I'
+const UNAVAILABLE = {kind: 'unavailable', reason: 'No sessions provider is mounted here.'} as const
 
 /** The log keeps the latest rows of a long thread (FactoryTaskLogDetail's LOG_ROWS). */
 export const LOG_ROWS = 200
@@ -69,13 +78,17 @@ export interface FactoryClipInput {
   readonly colour?: string | null
   /** The clip stands on Arrangement view's ruler: no Launch tab. */
   readonly placed?: boolean
+  /** The selected session's settings on their owner, and where they are written; null where nothing reads them. */
+  readonly settings?: TaskSeamContext | null
 }
 
 /** The task's readings on the design's keys. A key no owner reports is left out (the design draws "—"). Pure. */
-export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour'>): Values {
+export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings'>): Values {
   const values: Record<string, Value> = {}
   put(values, 'name', task?.title ?? track.purpose)
   put(values, 'colour', input.colour)
+  // The bound task's settings, as the owner states them (its name as set, else its purpose; a colour set, else the track's).
+  if (task && task.n === 1) Object.assign(values, clipValuesOfSettings(input.settings?.settings ?? null))
   if (task && task.state !== 'unknown') values.state = task.state
   // The turns are the session's budget reading: the agency reading budgets a session, and a task runs on its session's turns.
   put(values, 'turns.used', track.budget.used)
@@ -98,28 +111,29 @@ const SETTING_OF: Readonly<Record<string, TaskSetting>> = {
 }
 
 /** clip:factory's wiring: every key the design draws or sets. */
-export function factoryWiring(task: TaskAddress | null): ClipWiring {
+export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null): ClipWiring {
   const acts: Record<string, (value: Value) => Promise<void>> = {}
   const refused: Record<string, string> = {}
+  const why = task ? settingsRefusal(context, task.n) : 'No task is selected: select a task on a session\'s track.'
   for (const [key, setting] of Object.entries(SETTING_OF)) {
     const seam = TASK_SEAMS[setting]
-    if (seam.refused || !task) refused[key] = seam.refused ?? 'No task is selected: select a task on a session\'s track.'
-    else acts[key] = value => seam.send(task, value)
+    if (seam.refused) refused[key] = seam.refused
+    else if (why || !task || !context) refused[key] = why ?? 'No task is selected: select a task on a session\'s track.'
+    else acts[key] = value => seam.send(task, value, context)
   }
   return {
     reads: {
-      name: 'the task\'s title (agency reading: TaskClip.title), else its session\'s purpose', colour: 'the session track\'s colour (the tracks pane)',
+      name: 'the task\'s name as set on the session\'s settings, else its purpose (the task\'s title)', colour: 'the colour set on the session\'s settings, else the session track\'s colour (the tracks pane)',
+      active: 'the session\'s settings: the task\'s activator', 'style.register': 'the session\'s settings: the task\'s register', 'style.form': 'the session\'s settings: the task\'s form',
+      launch: 'the session\'s settings: Launch', then: 'the session\'s settings: Then', handoff: 'the session\'s settings: Hand off to',
+      quantize: 'the session\'s settings: Quantize', 'env.mode': 'the session\'s settings: the envelopes\' mode', 'env.linked': 'the session\'s settings: the envelopes\' link',
+      'env.agent.effort': 'the session\'s settings: the Effort envelope', 'env.agent.autonomy': 'the session\'s settings: the Autonomy envelope',
       state: 'the task\'s state: queued · running · stalled · done (agentRunModel.ts), left out where the owner and the activity do not say',
       'turns.used': 'the session\'s budget: turns used', 'turns.cap': 'the session\'s budget: turns allowed',
       sessions: 'the other sessions of the agency reading, for Hand off to', log: 'the session\'s temporal events inside the task\'s span',
       elapsed: 'the task\'s start to its last activity, in seconds',
     },
-    absent: {
-      'style.register': 'no owner reports an output style for one task', 'style.form': 'no owner reports an output style for one task',
-      launch: 'no task record holds a launch mode', then: 'no task record holds a follow action', handoff: 'no task record holds a hand-off',
-      quantize: 'no task record holds a launch quantize', 'env.agent.effort': 'no owner reports a per-task effort', 'env.agent.autonomy': 'no owner reports a per-task autonomy',
-      active: 'no owner reports a task\'s activator', 'env.mode': 'no task envelope is reported', 'env.linked': 'no task envelope is reported',
-    },
+    absent: {},
     acts,
     view: {
       fold: 'Fold keeps only the lanes of the tools the agent used: how the log shows, not the log',
@@ -136,7 +150,7 @@ export function factoryClipBinding(input: FactoryClipInput): ClipBinding | null 
   const {track, task, trackId} = chosen
   const address: TaskAddress | null = task ? {sessionRef: track.sessionRef, n: task.n} : null
   return clipBinding({mode: 'factory', ref: task ? `${trackId}#task/${task.n}` : trackId, values: factoryClipValues(track, task, input),
-    wiring: factoryWiring(address), placed: input.placed, viewDefaults: {'view.panel': 'launch', 'view.editor': 'log', fold: true}})
+    wiring: factoryWiring(address, input.settings ?? null), placed: input.placed, viewDefaults: {'view.panel': 'launch', 'view.editor': 'log', fold: true}})
 }
 
 /** The selected task's clip binding, from the frame's detail reading, THE selection and the sessions provider. */
@@ -148,5 +162,10 @@ export function useFactoryClip(): ClipBinding | null {
   useViewHoldsVersion()
   const trackId = selected.ref ? parseFactoryTaskRef(selected.ref)?.trackId ?? selected.ref : null
   const colour = selected.set?.tracks.find(item => item.id === trackId)?.color ?? selected.track?.color ?? null
-  return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement'})
+  const sessionRef = factoryTaskOf(selected.ref, factory.tracks)?.track.sessionRef ?? null
+  const transport = sessions?.transport ?? UNAVAILABLE
+  const answer = useSettingsAnswer(transport, sessions ? sessionRef : null, SETTINGS_PROJECT)
+  const settings: TaskSeamContext | null = sessions && sessionRef
+    ? {transport, project: SETTINGS_PROJECT, settings: answer.reading.status === 'answered' ? answer.reading.value : null} : null
+  return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings})
 }

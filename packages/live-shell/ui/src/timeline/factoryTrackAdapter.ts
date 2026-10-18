@@ -31,8 +31,10 @@
 //   the shell moves only when the owner accepts); the way in is the Gateway and the way out the landing, routes not settings. The
 //   Main track holds the gateways, the Experiment, Approvals, the Ledger and the Link; Stop All is the harness's stop. Under each
 //   session its event lanes, one per kind of event the temporal stream gives for it (agent/agentRunModel.ts eventsForSession),
-//   each event where it happened on the run's ruler. Watch, Telemetry and Solo have no owner op, the attempts (takes) and the
-//   effort over a run (automation) no owner reading: each stands disabled or absent with the op it lacks.
+//   each event where it happened on the run's ruler. Telemetry and Solo are the session's own settings on their owner (AIKit
+//   `encounter-session-settings`, read for every track at once and written one session at a time, against the revision that
+//   stands); Watch has no owner op, the attempts (takes) and the effort over a run (automation) no owner reading: each stands
+//   disabled or absent with the op it lacks.
 // - status: done → done (manual §19.1: Done is "dim and settled"; Stopped is ready, in full colour).
 //
 // Pure TypeScript. No React.
@@ -77,6 +79,17 @@ export const FACTORY_SEAT_OP = 'harness_agent_control:new — starts a NEW agent
 export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · harness_agent_control:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
 export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · harness_agent_control:resume — the bound harness's queued tasks; the owner takes no row`
 
+/** The sessions' own settings (AIKit `encounter-session-settings`): each session's Telemetry and Solo as its owner states them
+ * (absent while unread), and the write of one, which answers with the owner's reading or its refusal. */
+export interface FactorySettingsPort {
+  of(sessionRef: string): {telemetry: boolean; solo: boolean} | null
+  set(sessionRef: string, setting: 'telemetry' | 'solo', on: boolean): Promise<unknown>
+}
+
+/** The ops the mixer's settings name. */
+export const FACTORY_TELEMETRY_OP = 'encounter_session_settings {track: {telemetry}} — the session\'s own Telemetry on AIKit, against the revision that stands'
+export const FACTORY_SOLO_OP = 'encounter_session_settings {track: {solo}} — the session\'s own Solo on AIKit, against the revision that stands'
+
 /** The shell's one write arm (the transport's `shell.setWriteArm`, agent/shellSetterBridge.ts): its flag, which moves only when
  * the owner accepts (null when no shell holds one), and its dispatch, which answers with the owner's receipt or refusal. */
 export interface FactoryWriteArm {
@@ -95,6 +108,8 @@ export interface FactorySessionsReading {
   events?: readonly TemporalEventLike[]
   /** The shell's write arm, for every session's Arm. Absent: no shell holds one, and Arm stands disabled. */
   writeArm?: FactoryWriteArm
+  /** The sessions' own settings, for every session's Telemetry and Solo. Absent: unread here, and both stand disabled. */
+  settings?: FactorySettingsPort
 }
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
@@ -298,12 +313,32 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     set.main = {name: 'Main', chain: FACTORY_MAIN_CHAIN}
     const arm = reading.writeArm
     if (arm && arm.on !== null) for (const track of tracks) track.mix = {arm: arm.on}
+    // Telemetry and Solo: each session's own settings, as the owner states them; a session unread draws them unread.
+    const port = reading.settings
+    const sessionOf = new Map(agency.filter(track => !track.group).map(track => [trackKey(track), track.sessionRef]))
+    if (port) {
+      for (const track of tracks) {
+        const session = sessionOf.get(track.id)
+        const own = session ? port.of(session) : null
+        if (own) track.mix = {...track.mix, activator: own.telemetry, solo: own.solo}
+      }
+      const {disabled: _telemetry, ...activator} = FACTORY_MIXER.activator!
+      const {disabled: _solo, ...solo} = FACTORY_MIXER.solo!
+      set.mixer = {...FACTORY_MIXER, activator, solo}
+    }
     const events = reading.events
       ? agency.flatMap(track => track.group ? [] : factoryEventLanes(trackKey(track), track.sessionRef, reading.events!, secs))
       : []
     set.lanes = {events, absent: {...FACTORY_LANES_ABSENT, ...(reading.events ? {} : {events: 'The temporal events are unread here: the sessions provider is not mounted above this pane.'})}}
     if (controls) set.actions = actionsFor(controls, tracks, clips, columns)
     if (arm) set.actions = {...set.actions, mixer: {arm: {op: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it', run: (_trackId, on) => arm.set(on)}}}
+    if (port) {
+      const own = (setting: 'telemetry' | 'solo') => (trackId: string, on: boolean) => {
+        const session = sessionOf.get(trackId)
+        return session ? port.set(session, setting, on) : Promise.resolve({ok: false, error: `"${trackId}" is not a session of this work.`})
+      }
+      set.actions = {...set.actions, mixer: {...set.actions?.mixer, activator: {op: FACTORY_TELEMETRY_OP, run: own('telemetry')}, solo: {op: FACTORY_SOLO_OP, run: own('solo')}}}
+    }
     return set
   },
 }

@@ -90,6 +90,13 @@ export class OwnerReadingEntry<T> {
     return this.ask(epoch)
   }
 
+  /** An answer the owner gave this key in a wider read (one list read for many keys): it stands for `epoch` as if read here.
+   * A read of this key in flight for the same epoch answers after it and wins. */
+  accept(value: T, epoch: string): void {
+    if (this.inFlight?.epoch === epoch) return
+    this.publish({status: 'answered', value, error: null, readAtUnixMs: this.now(), epoch, refreshing: false})
+  }
+
   /** The age of the standing answer at `at`, or null when none stands. */
   ageAt(at: number): number | null {
     return this.state.readAtUnixMs == null ? null : at - this.state.readAtUnixMs

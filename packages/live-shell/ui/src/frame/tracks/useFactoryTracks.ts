@@ -22,7 +22,10 @@ import {useAgentShellOptional} from '../../agent/AgentShellContext'
 import {useHarnessBinding} from '../../agent/useHarnessBinding'
 import {harnessAgentControl} from '../../agent/harnessAgentControl'
 import {shellSetter} from '../../inhabitants/sdk/shellSetters'
-import {factoryTrackAdapter, type FactoryControls, type FactoryWriteArm} from '../../timeline/factoryTrackAdapter'
+import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, type FactoryWriteArm} from '../../timeline/factoryTrackAdapter'
+import {useSettingsAnswers} from '../../owners/readers'
+import {trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
+import {SETTINGS_PROJECT} from '../../agent/clipBinding'
 import type {UseModeTracks} from './modeTracks'
 
 const WRITE_ARM = 'shell.setWriteArm'
@@ -61,7 +64,19 @@ export const useFactoryTracks: UseModeTracks = reading => {
     () => owned ? {control: control => harnessAgentControl(transport, harness.binding, control)} : undefined,
     [owned, transport, harness.binding],
   )
+  // Every session's Telemetry and Solo: its own settings, all read in one owner call and each written on its own.
+  const sessionRefs = useMemo(() => agency.tracks.filter(track => !track.group).map(track => track.sessionRef), [agency.tracks])
+  const own = useSettingsAnswers(transport, sessionRefs, SETTINGS_PROJECT)
+  const settings = useMemo<FactorySettingsPort | undefined>(() => transport.kind === 'unavailable' ? undefined : {
+    of: session => { const reading = own.get(session); return reading ? {telemetry: reading.track.telemetry, solo: reading.track.solo} : null },
+    set: async (session, setting, on) => {
+      try {
+        await writeSessionSettings(transport, SETTINGS_PROJECT, session, trackSettingChange(setting, on))
+        return {ok: true, note: `${setting === 'telemetry' ? 'Telemetry' : 'Solo'} ${on ? 'on' : 'off'} for this session (its own settings, on AIKit).`}
+      } catch (cause) { return {ok: false, error: cause instanceof Error ? cause.message : String(cause)} }
+    },
+  }, [transport, own])
   if (!agency.tracks.length && agency.error) return {waiting: `The agent sessions are unread: ${agency.error}`}
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
-  return factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm})
+  return factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {})})
 }

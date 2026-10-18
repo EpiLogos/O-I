@@ -608,6 +608,30 @@ pub enum KernelOp {
         project: String,
         agent_session: String,
     },
+    /// One session's own settings and its bound task's, through the owner's
+    /// `encounter-session-settings` (`aikit.encounter-session-settings/v1`):
+    /// the track's Telemetry and Solo, the task's name, colour, activator,
+    /// output style, Launch, Then, Hand off to, Quantize and envelopes. Read
+    /// without `request`; with it, a change made against `expected_revision`
+    /// (absent while the session has none). The session must be attached to
+    /// one of the Project's spaces; the owner's reading or refusal passes
+    /// through verbatim, and the kernel keeps nothing.
+    EncounterSessionSettings {
+        project: String,
+        agent_session: String,
+        #[serde(default)]
+        request: Option<serde_json::Value>,
+        #[serde(default)]
+        expected_revision: Option<String>,
+    },
+    /// Several sessions' settings read at once (the owner's
+    /// `aikit.encounter-session-settings-list/v1`), so a view of many tracks
+    /// asks once. Every session must be attached to one of the Project's
+    /// spaces; read-only.
+    EncounterSessionSettingsList {
+        project: String,
+        agent_sessions: Vec<String>,
+    },
     /// The human Day route: read the current today pointer (or one exact
     /// DayRef) through the owner. The disclosure carries the Day source's
     /// canonical ref — the only identity the desktop opens it by.
@@ -1290,6 +1314,12 @@ pub enum KernelOpResult {
         data: serde_json::Value,
     },
     EncounterTaskReading {
+        data: serde_json::Value,
+    },
+    EncounterSessionSettingsReading {
+        data: serde_json::Value,
+    },
+    EncounterSessionSettingsListReading {
         data: serde_json::Value,
     },
     FactoryDevelopmentReading {
@@ -3103,6 +3133,8 @@ impl Kernel {
             | KernelOp::Encounter { .. }
             | KernelOp::AgencyRead { .. }
             | KernelOp::EncounterTaskRead { .. }
+            | KernelOp::EncounterSessionSettings { .. }
+            | KernelOp::EncounterSessionSettingsList { .. }
             | KernelOp::ModelRoster { .. }
             | KernelOp::HarnessAgentRead { .. }
             | KernelOp::HarnessStatus
