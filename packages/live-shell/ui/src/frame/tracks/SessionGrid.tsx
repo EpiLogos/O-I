@@ -10,10 +10,16 @@
 // its standing mark (trackMarks.ts), and the rows nest under the sections they stand in, each head in its section's atmosphere
 // and folding as a group folds (trackSections.ts). A track the set marks read-only (one merged in from another reading, the
 // spine's cron firings) is offered none of the set's actions.
+// R3 (manual §16.6; lock §0.3 item 3): under each head the track's mixer row after Live's — activator, solo, arm, monitor In · Auto
+// · Off, input and output — with what each means in the mode (trackLanes.ts mixerCells); a track flagged `main` is the Main
+// track's own material and stands in the Main column at the end, which carries each row's launcher, Stop All and Back to
+// Arrangement (lit when what plays differs from the ruler); an armed track's empty slots are record buttons (Live cap 35).
 import {useRef, useState, type CSSProperties, type ReactNode} from 'react'
 import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
+import {mixerCells, type MixerCell} from './trackLanes'
+import {CutIcon} from '../../agent/agentIcons'
 import './tracks.css'
 
 export interface TracksSelection {
@@ -22,7 +28,7 @@ export interface TracksSelection {
   select(target: {kind: 'clip' | 'track'; ref: string; title: string; track?: string}): void
 }
 
-export const STATUS_WORD: Record<string, string> = {waiting: 'Waiting', running: 'Running', stopped: 'Stopped', recording: 'Recording', stalled: 'Stalled'}
+export const STATUS_WORD: Record<string, string> = {waiting: 'Waiting', running: 'Running', stopped: 'Stopped', recording: 'Recording', stalled: 'Stalled', done: 'Done'}
 
 /** The Main track's ref (Live's Main track: the stops column's head is a track you select, and the Device side then shows its chain).
  * One ref for every set: what a mode's Main track holds is its own detail's (shell/modeDetails.tsx), never a branch here. */
@@ -133,6 +139,45 @@ export interface PressedReceipt extends ActionReceipt {
 const receiptMark = (receipt: PressedReceipt | null, key: string): 'ok' | 'refused' | undefined =>
   receipt?.key === key ? (receipt.ok ? 'ok' : 'refused') : undefined
 
+/** A track's mixer row (manual §16.6), as Live draws it under the slots' head: the switches and the monitor on one line, the routes
+ * on the next. A control with no owner write stands disabled, its title naming the op it lacks; an unread value is drawn unread. */
+export function MixerRow({cells, shown, routes: withRoutes = true, trackId, receipt, onPress}: {cells: readonly MixerCell[]; shown: boolean; routes?: boolean
+  trackId: string; receipt: PressedReceipt | null; onPress(key: string, what: string, run: () => unknown): void}) {
+  if (!shown) return null
+  // A column with no row of its own (the Main column, a track read from another reading) keeps the row's height, so the slots align.
+  if (!cells.length) return <div className="trk-mix" aria-hidden="true" />
+  const switches = cells.filter(cell => cell.state !== 'route' && cell.id !== 'input' && cell.id !== 'output')
+  const routes = withRoutes ? cells.filter(cell => cell.id === 'input' || cell.id === 'output') : []
+  return <div className={withRoutes ? 'trk-mix' : 'tl-mix'} role="group" aria-label="Mixer" data-mixer={trackId}>
+    {switches.length > 0 && <div className="mx-row">{switches.map(cell => {
+      const key = `mix:${cell.id}:${trackId}`
+      const press = cell.press
+      return <button key={cell.id} type="button" className={`mx mx-${cell.id}`} data-mix={cell.id} data-state={cell.state}
+        aria-label={cell.label} aria-pressed={cell.state === 'on' ? true : cell.state === 'off' ? false : undefined} disabled={!press}
+        data-receipt={receiptMark(receipt, key)} title={cell.title}
+        onClick={() => { if (press) onPress(key, press.what, press.run) }}>{cell.id === 'arm' ? <CutIcon name="rec" size={9} /> : cell.text}</button>
+    })}</div>}
+    {routes.length > 0 && <div className="mx-io">{routes.map(cell => <span key={cell.id} className={`mx-route mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} title={cell.title}>
+      <small>{cell.id === 'input' ? 'in' : 'out'}</small>{cell.text}</span>)}</div>}
+  </div>
+}
+
+/** The Main column's status row (Live cap 35, 41): Stop All, and Back to Arrangement — lit when what plays differs from the ruler.
+ * Each runs only through the set's owner op; without one it stands disabled and says so. */
+export function MainFoot({set, receipt, onPress}: {set: WorldTrackSet; receipt: PressedReceipt | null; onPress(key: string, what: string, run: () => unknown): void}) {
+  const stopAll = set.actions?.stopAll, back = set.actions?.backToArrangement
+  const differs = set.main?.differs
+  return <div className="trk-foot main-foot" role="group" aria-label="Main status">
+    <button type="button" className="sa" aria-label="Stop All" disabled={!stopAll} data-receipt={receiptMark(receipt, 'stop-all')}
+      title={stopAll ? `Stop All: every clip stops (${stopAll.op}). Pressed twice, it cancels at once.` : 'Stop All: the owner gives no op that stops every clip here'}
+      onClick={() => { if (stopAll) onPress('stop-all', 'Stop All', () => stopAll.run()) }}><CutIcon name="stop" size={10} /></button>
+    <button type="button" className={`ba${differs ? ' lit' : ''}`} aria-label="Back to Arrangement" disabled={!back} data-receipt={receiptMark(receipt, 'back')}
+      data-differs={differs === undefined ? 'unread' : String(differs)}
+      title={`Back to Arrangement${differs === undefined ? ' · the owner reports no play state to compare with the ruler' : differs ? ' · lit: what plays differs from the ruler' : ' · what plays is the ruler'}${back ? ` (${back.op})` : ' · the owner gives no op that plays the ruler again'}`}
+      onClick={() => { if (back) onPress('back', 'Back to Arrangement', () => back.run()) }}><CutIcon name="arrangement" size={10} /></button>
+  </div>
+}
+
 export interface SessionGridViewProps {
   set: WorldTrackSet
   selection: TracksSelection
@@ -159,12 +204,17 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const inRow = new Map<string, WorldTrackClip>()
   for (const clip of set.clips) if (clip.columnId) inRow.set(`${clip.trackId}\u0000${clip.columnId}`, clip)
   // Grouped lanes (sight and sound of one Expression) are one track in the Session grid: the visual lane stands for it.
-  const lanes = set.tracks.filter(track => !track.groupId || !track.lane || track.lane === 'visual')
+  // The Main track's own material (a track flagged `main`) stands in the Main column, not among the tracks.
+  const lanes = set.tracks.filter(track => !track.main && (!track.groupId || !track.lane || track.lane === 'visual'))
+  const mainTrack = set.tracks.find(track => track.main)
   const tree = trackTree(set.tracks)
   // A group's members fold away with it (agent/AgentSessionGrid.tsx:92-96); every ancestor folded hides them, not only the parent.
   const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
   const {here: stalledHere} = stalledLanes(set, tree)
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
+  const recordSlot = set.actions?.recordSlot, launchTrack = set.actions?.launchTrack
+  const mainName = set.main?.name
+  const mainTitle = set.main ? `${mainName} · its chain: ${set.main.chain.length ? set.main.chain.join(', ') : 'none named'}` : undefined
   // The rows, nested under the sections they stand in (a set with no sections lays them as they come), less what is folded.
   const layout = shownRowLayout(sessionRowLayout(set), folded)
   const spanWords = (section: WorldTrackSection) => {
@@ -178,7 +228,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const grain = set.actions?.grain ? ` (${set.actions.grain})` : ''
   // An empty work draws Live's empty Session: the stops down the right and the drop area where tracks will stand, with the
   // reason in it — never a blank box (world-shell-mockup.html .sg; Live's "Drop Files and Devices Here").
-  if (!lanes.length) return <div className="sg-pane" data-tracks-view="session" data-empty="true">
+  if (!lanes.length && !mainTrack) return <div className="sg-pane" data-tracks-view="session" data-empty="true">
     <div className="sg" role="grid" aria-label="Session">
       <div className="sg-drop" role="status">{empty ?? 'No tracks in this work yet.'}</div>
       <div className="trk trk-main" role="row" aria-label="Stops">
@@ -187,6 +237,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
           <button type="button" className="stop-launch" disabled title="No row launch: this work has no tracks yet">▸</button>
           <span className="cs-label">{row.name || index + 1}</span>
         </div>)}
+        <MainFoot set={set} receipt={receipt} onPress={onPress} />
       </div>
     </div>
   </div>
@@ -214,6 +265,9 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             title={`${open ? 'Fold' : 'Unfold'} the ${members.length} under ${track.name}`} onClick={() => onFold(track.id)}>{open ? '▼' : '▶'}</button>}
           <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} aria-pressed={selectedTrack}
             onClick={() => selection.select({kind: 'track', ref: track.id, title: track.name})}>{track.name}</button>
+          {launchTrack && owned && <button type="button" className="trk-launch" aria-label={`Launch ${track.name}`} data-receipt={receiptMark(receipt, `track:${track.id}`)}
+            title={`Launch ${track.name} (${launchTrack.op})`} onClick={() => onPress(`track:${track.id}`, `Launch ${track.name}`, () => launchTrack.run(track.id))}>▸</button>}
+          <MixerRow cells={mixerCells(set, track, column)} shown={!!set.mixer} trackId={track.id} receipt={receipt} onPress={onPress} />
           {layout.map((item, at) => {
             // A section's head row: a band in the section's atmosphere across every track (its name stands in the stops column).
             // The first track's band carries the section's name too, so the head reads from the left however wide the grid is.
@@ -236,6 +290,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
                 <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${trackLaunch.op})` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
                   onClick={event => { event.stopPropagation(); if (trackLaunch) onPress(key, `Launch ${clip.label}`, () => trackLaunch.run(clip.id)) }} />
                 <span className="cs-label">{clip.label}{clipStandingTag(mark)}</span>
+                {clip.status === 'recording' && <i className="cs-rec" role="img" aria-label="Recording" />}
                 {clip.note && <span className="cs-note" role="img" aria-label={clip.note} title={clip.note}>⚑</span>}
                 {!!clip.takes?.length && <span className="cs-takes" aria-label={`${clip.takes.length} takes`}>{clip.takes.length}</span>}
               </div>
@@ -248,6 +303,15 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
               return <div key={row.id} role="gridcell" className="cs roll" data-rollup={rolled.length}
                 title={`${rolled.length} ${rolled.length === 1 ? 'clip' : 'clips'} from the ${members.length} under ${track.name} in this row${stalledCount ? ` · ${stalledCount} stalled` : ''}`}>
                 {rolled.map(c => <i key={c.id} data-status={c.status ?? 'undisclosed'} />)}
+              </div>
+            }
+            // An armed track's empty slots are record buttons, as Live draws them (cap 35); every other empty slot is a stop square.
+            if (track.mix?.arm === true && owned) {
+              const recordKey = `rec:${track.id}:${row.id}`
+              return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, recordKey)} title="Empty slot · the track is armed: its button records here">
+                <button type="button" className="sg-rec" aria-label={`Record on ${track.name}${grain}`} disabled={!recordSlot}
+                  title={recordSlot ? `Record into this slot (${recordSlot.op})` : 'No record: the owner gives no op that records into a slot'}
+                  onClick={() => { if (recordSlot) onPress(recordKey, `Record on ${track.name}`, () => recordSlot.run(track.id, row.id)) }}><CutIcon name="rec" size={9} /></button>
               </div>
             }
             const key = `stop:${track.id}:${row.id}`
@@ -269,7 +333,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         onDragOver={seat ? event => { if (event.dataTransfer.types.includes(seat.accepts)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } } : undefined}
         onDrop={seat ? event => { const payload = event.dataTransfer.getData(seat.accepts); if (!payload) return; event.preventDefault(); onPress('seat', 'Seat', () => seat.run(payload)) } : undefined} />
       <div className="trk trk-main" role="row" aria-label="Stops">
-        <MainHead selection={selection} title={grain ? `every control here acts on the${grain.replace(/[()]/g, '')}: the owner takes nothing finer` : undefined}>Main{grain && <span className="sg-grain">{set.actions?.grain}</span>}</MainHead>
+        <MainHead selection={selection} title={[mainTitle, grain ? `every control here acts on the${grain.replace(/[()]/g, '')}: the owner takes nothing finer` : undefined].filter(Boolean).join(' · ') || undefined}>{mainName ?? 'Main'}{grain && <span className="sg-grain">{set.actions?.grain}</span>}</MainHead>
+        <MixerRow cells={[]} shown={!!set.mixer} trackId="main" receipt={receipt} onPress={onPress} />
         {layout.map((item, at) => {
           // A section's head: its rails, its fold, its name — the rows under it carry its rail (worldTimelinePresentation.tsx:418-430).
           if (item.kind === 'head') {
@@ -287,14 +352,20 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
           const {column: row, index} = item
           const key = `row:${row.id}`
           const rowLaunch = readOnlyRow(row.id) ? undefined : launchStop
-          return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)}
-            style={item.chain.length ? {'--rails': item.chain.length} as CSSProperties : undefined} data-section-rails={item.chain.length || undefined}>
+          // The Main track's own clip in this row (Central: the day's face) stands beside the row's launcher, as its name.
+          const own = mainTrack ? inRow.get(`${mainTrack.id}\u0000${row.id}`) : undefined
+          return <div key={row.id} className={`cs${own ? ' main-clip' : ''}${own && selection.ref === own.id ? ' sel' : ''}`} role="gridcell" data-receipt={receiptMark(receipt, key)}
+            style={item.chain.length ? {'--rails': item.chain.length} as CSSProperties : undefined} data-section-rails={item.chain.length || undefined} data-clip={own?.id}>
             {sectionRails(item.chain)}
             <button type="button" className="stop-launch" disabled={!rowLaunch} title={rowLaunch ? `Launch the row: every clip in it (${rowLaunch.op})` : launchStop ? 'No row launch: every clip in this row is read, not launched' : 'No row launch: the owner discloses none'}
               onClick={() => { if (rowLaunch) onPress(key, `Launch row ${row.name || index + 1}`, () => rowLaunch.run(row.id)) }}>▸</button>
-            <span className="cs-label">{row.name || index + 1}</span>
+            {own
+              ? <button type="button" className="cs-label main-face" title={`${own.label} · on ${mainTrack!.name}${own.note ? ` · ${own.note}` : ''}`}
+                onClick={() => selection.select({kind: 'clip', ref: own.id, title: own.label, track: own.trackId})}>{own.label}</button>
+              : <span className="cs-label">{row.name || index + 1}</span>}
           </div>
         })}
+        <MainFoot set={set} receipt={receipt} onPress={onPress} />
       </div>
     </div>
     {receipt && <p className="sg-receipt" role="status" data-ok={receipt.ok}>

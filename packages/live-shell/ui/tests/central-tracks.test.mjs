@@ -1,5 +1,6 @@
-// T-TRACKS-CENTRAL: Central's five streams as tracks for the shared Session and Arrangement (manual §3 and §5; lock §9.1
-// Central row). Over recorded readings, headless.
+// T-TRACKS-CENTRAL, re-cut by R3 (manual §18.1; lock §0.3 item 4): Central's tracks are its workspaces and the Day is the Main
+// track; the five stream tracks are gone (the Day remains, last, flagged main; the Flows stand on it). Over recorded readings,
+// headless. Each assertion R3 replaced names what replaces it.
 //
 // Channels (each claim below is carried by exactly one):
 // - REAL CAPTURE (text redacted): tests/fixtures/central-vertical/*.capture.json — the shape of read-only `ctrl` answers on
@@ -83,20 +84,28 @@ const listing = {entries: ['2026-09-06.md', '2026-09-06.sources', '2026-09-07.md
 const records = adapter.dayRecordsOf(listing)
 const reading = {records: {state: 'read', records}, civil: {state: 'live', events, absences: []}}
 const set = adapter.projectCentralTracks(reading)
-const DAY = 'central:stream:day'
+const DAY = adapter.CENTRAL_DAY_TRACK_ID
 const dayClips = set.clips.filter(clip => clip.trackId === DAY)
 
 // ── 1 — the five streams ─────────────────────────────────────────────────────────────────────────
 
-test('Central shows five tracks, always in the manual\'s order, whatever has been read', () => {
-  const order = [['central:stream:day', 'Day'], ['central:stream:flows', 'Flows'], ['central:stream:beings', 'Beings'], ['central:stream:things', 'Things'], ['central:stream:goals', 'Goals']]
-  assert.deepEqual(set.tracks.map(track => [track.id, track.name]), order)
-  assert.deepEqual([...adapter.CENTRAL_STREAM_IDS], ['day', 'flows', 'beings', 'things', 'goals'])
+// R3 replaces "Central shows five tracks, always in the manual's order" (and CENTRAL_STREAM_IDS): the tracks are the book's
+// workspaces in its order, and the Day — the Main track — stands last, whatever has been read.
+test('Central\'s tracks are the book\'s workspaces, in its order, and the Day is the Main track at the end, whatever has been read', () => {
+  assert.deepEqual(set.tracks.map(track => [track.id, track.name, track.main ?? false]), [['central:day', 'Day', true]], 'no book in this reading: the Day stands alone')
+  // FIXTURE: two workspaces as the book holds them, one opened twice on the 12th.
+  const workspaces = {state: 'read', workspaces: [
+    {id: 'w1', name: 'Mercurius', active: true, pages: [{path: 'Control/user/flows/flow-2026-09-12-0930.html', label: 'Flow 09:30', visitedAt: Date.UTC(2026, 8, 12, 9, 31)}]},
+    {id: 'w2', name: 'Bollingen', active: false, pages: []}]}
+  const booked = adapter.projectCentralTracks({...reading, workspaces})
+  assert.deepEqual(booked.tracks.map(track => [track.id, track.name, track.main ?? false]),
+    [['central:workspace:w1', 'Mercurius', false], ['central:workspace:w2', 'Bollingen', false], ['central:day', 'Day', true]])
   for (const unread of [{state: 'reading'}, {state: 'unavailable', reason: 'no carrier'}]) {
     const bare = adapter.projectCentralTracks({records: unread, civil: unread})
-    assert.deepEqual(bare.tracks.map(track => [track.id, track.name]), order, `${unread.state}: the streams still stand`)
+    assert.deepEqual(bare.tracks.map(track => track.id), ['central:day'], `${unread.state}: the Day still stands`)
     assert.deepEqual([bare.columns, bare.clips, bare.ruler], [[], [], undefined], `${unread.state}: nothing is drawn that was not read`)
   }
+  assert.equal(adapter.centralStreamTrackId('day'), adapter.CENTRAL_DAY_TRACK_ID, 'the Day is still found under the old name')
 })
 
 // ── 2 — the Day track's clips are the selection's own refs ───────────────────────────────────────
@@ -141,23 +150,14 @@ test('the Day track\'s entries are the World cut\'s own day-lane clips, under th
 
 // ── 3 — streams whose owner read has not landed ──────────────────────────────────────────────────
 
-test('Beings, Things and Goals stand as named, empty tracks; Flows unread by a caller says so; the absence is in the name tooltip, never a clip', () => {
+// R3 replaces "Beings, Things and Goals stand as named, empty tracks; Flows unread by a caller says so": the streams are no tracks
+// (their pages arrive as a workspace's pages); the Day carries the Flows' read in its words, and nothing unread is a clip.
+test('the stream tracks are gone; the Day names the Flows\' read; what is unread is in the Day\'s words, never a clip', () => {
   const categories = browserCategoriesOf('base')
   assert.equal(categories.find(category => category.id === 'central-days').state, 'cut', 'Days has an owner read')
-  // Lane L (15 Oct): the browser's Flows compose from the owner's Flow listing; the Flows track reads the same listing (its own
-  // test below). A reading that carries no Flows read says so — never an empty track that looks read.
   assert.equal(categories.find(category => category.id === 'central-flows').state, 'cut', 'Flows list in the browser')
-  const flows = set.tracks.find(item => item.id === 'central:stream:flows')
-  assert.equal(set.clips.filter(clip => clip.trackId === flows.id).length, 0, 'flows has no clip')
-  assert.equal(flows.kind, 'stream · Flows unread by this Session')
-  for (const [stream, category] of [['beings', 'central-beings'], ['things', 'central-things'], ['goals', 'central-goals']]) {
-    const declared = categories.find(item => item.id === category)
-    assert.equal(declared.state, 'waiting', `${category} is waiting in the mode grammar: this adapter has no reader for it`)
-    const track = set.tracks.find(item => item.id === `central:stream:${stream}`)
-    assert.equal(set.clips.filter(clip => clip.trackId === track.id).length, 0, `${stream} has no clip`)
-    assert.equal(track.kind, `stream · waiting — ${declared.hint}`, `${stream}: the owner's absence, in the grammar's words`)
-    assert.match(track.kind, /not landed/)
-  }
+  assert.equal(set.tracks.some(track => ['Flows', 'Beings', 'Things', 'Goals'].includes(track.name)), false, 'no stream is a track')
+  assert.match(set.tracks.find(track => track.main).kind, /Flows unread by this Session/)
 })
 
 // ── 4 — rows and the ruler ───────────────────────────────────────────────────────────────────────
@@ -257,14 +257,17 @@ test('nothing is placed on the ruler by a guess: an entry with no instant, or wh
 // ── 5 — honesty ──────────────────────────────────────────────────────────────────────────────────
 
 test('what has not been read, or was refused, is named in the Day track — never an empty list passed off as read', () => {
-  const kind = state => adapter.projectCentralTracks(state).tracks[0].kind
-  assert.equal(kind({records: {state: 'reading'}, civil: {state: 'reading'}}), 'stream · day records being read · civil field being read')
+  // R3: the Day's words lead with what it is (the Main track) and close with the Flows' read, which stand on it. Replaces the
+  // "stream · …" strings, word for word otherwise.
+  const kind = state => adapter.projectCentralTracks(state).tracks.find(track => track.main).kind
+  const FLOWS = ' · Flows unread by this Session'
+  assert.equal(kind({records: {state: 'reading'}, civil: {state: 'reading'}}), `the Day · the Main track · day records being read · civil field being read${FLOWS}`)
   assert.equal(kind({records: {state: 'unavailable', reason: 'the day-records read refused'}, civil: {state: 'unavailable', reason: 'no carrier'}}),
-    'stream · day records unread (the day-records read refused) · civil field unread (no carrier)')
-  assert.equal(kind(reading), `stream · 6 day records · ${nowEvents.length + wikiEvents.length} ${nowEvents.length + wikiEvents.length === 1 ? 'entry' : 'entries'} from the civil field · a day's face stands its entries: the Session draws the face, the Arrangement every entry`)
+    `the Day · the Main track · day records unread (the day-records read refused) · civil field unread (no carrier)${FLOWS}`)
+  assert.equal(kind(reading), `the Day · the Main track · 6 day records · ${nowEvents.length + wikiEvents.length} ${nowEvents.length + wikiEvents.length === 1 ? 'entry' : 'entries'} from the civil field · a day's face stands its entries: the Session draws the face, the Arrangement every entry${FLOWS}`)
   const absences = [{stream: 'central-now', reason: 'owner-timeout', owner_words: 'the NOW register did not answer'}, {stream: 'aikit-history', reason: 'owner-absent', owner_words: ''}]
   assert.equal(kind({records: {state: 'read', records: []}, civil: {state: 'live', events: [], absences}}),
-    'stream · 0 day records · 0 entries from the civil field · central-now gave nothing: owner-timeout — the NOW register did not answer',
+    `the Day · the Main track · 0 day records · 0 entries from the civil field · central-now gave nothing: owner-timeout — the NOW register did not answer${FLOWS}`,
     'a Day stream\'s absence is named with the owner\'s words; a machine stream\'s is the World cut\'s to name, not this track\'s')
 })
 
@@ -274,20 +277,21 @@ test('the adapter reads and presents; it launches, records and stops nothing, an
     for (const field of ['status', 'launch', 'takes', 'span', 'state']) assert.equal(clip[field], undefined, `${clip.id} claims no ${field}`)
   }
   assert.equal(set.tracks.some(track => track.needle !== undefined), false, 'no needle without an owner reading of where the day has got to')
-  assert.equal(adapter.centralTrackAdapter.id, 'central-stream-tracks')
+  // R3: the adapter is the workspace tracks' (replaces 'central-stream-tracks').
+  assert.equal(adapter.centralTrackAdapter.id, 'central-workspace-tracks')
   assert.deepEqual(adapter.centralTrackAdapter.project(reading).tracks.map(track => track.id), set.tracks.map(track => track.id), 'the registered adapter is the same projection')
 })
 
 // ── 6 — the shared views draw it ─────────────────────────────────────────────────────────────────
 
-test('the shared Session grid draws the five streams, a row per day, and the Day track\'s one face per row', () => {
+// R3 replaces "the five streams … the Day track's one face per row": the Day is the Main track, so its faces stand in the Main
+// column beside each row's launcher (Live keeps Main at the end); no stream is a column.
+test('the shared Session grid draws the Day in the Main column: a row per day, the day\'s one face beside its launcher', () => {
   const markup = renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: {ref: records[0].path, select() {}}}))
-  assert.equal((markup.match(/data-track="/g) ?? []).length, 5)
-  assert.deepEqual([...markup.matchAll(/class="thd[^"]*" title="([^"]*)"/g)].map(match => match[1].split(' · ')[0]).slice(0, 5), ['Day', 'Flows', 'Beings', 'Things', 'Goals'])
-  assert.match(markup, /title="Beings · stream · waiting — /, 'the owner\'s absence is in the name tooltip')
-  assert.match(markup, /title="Flows · stream · Flows unread by this Session"/, 'a reading with no Flows read names it on the track')
+  assert.equal((markup.match(/data-track="/g) ?? []).length, 0, 'no workspace in this reading: no track column')
+  assert.match(markup, /data-track-head="main" title="Main · Day · its chain: Day, Approvals">Day</, 'the Main head is the Day, its chain named')
   assert.match(markup, /data-clip="Control\/agents\/now\/day\/2026-09-12\.md"/)
-  assert.match(markup, /class="cs clip sel"/, 'the selected day record stands lit')
+  assert.match(markup, /class="cs main-clip sel"/, 'the selected day record stands lit')
   const drawn = [...markup.matchAll(/data-clip="([^"]*)"/g)].map(match => match[1])
   assert.equal(drawn.length, set.columns.length, 'one clip per row: the day\'s face')
   assert.deepEqual(drawn.sort(), set.walks[0].stops.map(stop => stop.clipId).sort(), 'the clip each row draws is its stop\'s clip')
@@ -296,7 +300,9 @@ test('the shared Session grid draws the five streams, a row per day, and the Day
 
 test('the shared Arrangement lays the same clips on one civil ruler, each at its own place', () => {
   const markup = renderToStaticMarkup(React.createElement(ArrangementRuler, {set, selection: {select() {}}}))
-  assert.equal((markup.match(/data-track="/g) ?? []).length, 5)
+  // R3: one lane, the Day's — the Main track's — last (replaces 5, one per stream).
+  assert.equal((markup.match(/data-track="/g) ?? []).length, 1)
+  assert.match(markup, /data-track="central:day" data-main="true"/)
   assert.equal((markup.match(/data-clip="/g) ?? []).length, set.clips.length, 'the ruler shows every entry, which the Session stands inside each day\'s face')
   assert.match(markup, /aria-label="Ruler in minutes \(UTC\) over the covered days, end to end"/)
   const {placed, end} = placeClips(set)
@@ -306,18 +312,20 @@ test('the shared Arrangement lays the same clips on one civil ruler, each at its
 
 // ── 7 — the hook ─────────────────────────────────────────────────────────────────────────────────
 
-test('the hook reads the World cut\'s civil read as it is published, names the day records still being read, and returns five tracks', () => {
+test('the hook reads the World cut\'s civil read as it is published, names the day records still being read, and returns the Day', () => {
   const live = {status: 'live', error: null, events, absences: [], readAtUnixMs: 1}
   const Probe = ({transport, world}) => {
     const tracks = useCentralTracks({transport, set: null, document: null, world})
-    return React.createElement('pre', null, JSON.stringify({tracks: tracks.tracks.map(track => track.name), kind: tracks.tracks[0].kind, entries: tracks.clips.length}))
+    return React.createElement('pre', null, JSON.stringify({tracks: tracks.tracks.map(track => track.name), kind: tracks.tracks.find(track => track.main).kind, entries: tracks.clips.length}))
   }
   const rendered = JSON.parse(/<pre>(.*)<\/pre>/.exec(renderToStaticMarkup(React.createElement(Probe, {transport: {kind: 'unavailable', reason: 'carrier down'}, world: {source: live}})))[1].replaceAll('&quot;', '"'))
-  assert.deepEqual(rendered.tracks, ['Day', 'Flows', 'Beings', 'Things', 'Goals'])
+  // R3: with no workspace book mounted above the probe, the Day stands alone (replaces the five stream names).
+  assert.deepEqual(rendered.tracks, ['Day'])
+  assert.match(rendered.kind, /workspaces unread \(no workspace book is mounted above this pane\)/, 'the missing book is named on the Day')
   assert.equal(rendered.entries, nowEvents.length + wikiEvents.length, 'the entries come from the published reading; no second poller')
   assert.match(rendered.kind, /day records being read/, 'the first render has not read the day records yet, and says so')
   const none = JSON.parse(/<pre>(.*)<\/pre>/.exec(renderToStaticMarkup(React.createElement(Probe, {transport: undefined, world: undefined})))[1].replaceAll('&quot;', '"'))
-  assert.deepEqual(none.tracks, ['Day', 'Flows', 'Beings', 'Things', 'Goals'], 'with no published reading the streams still stand')
+  assert.deepEqual(none.tracks, ['Day'], 'with no published reading the Day still stands')
   assert.match(none.kind, /civil field unread \(the shell publishes no civil reading to this pane\)/)
 })
 
@@ -371,7 +379,7 @@ test('a day subject is named by its date — every day on the surface is a day.m
   assert.equal(surface.subjectWords('Control/user/flows/flow-1.html'), 'flow-1.html', 'anything else by its file name')
 })
 
-test('the Flows track reads the owner\'s Flow documents: each in its civil day\'s row at its minted moment, one named by hand in "no time" (15 Oct)', async () => {
+test('the Flows on the Day are the owner\'s Flow documents: each in its civil day\'s row at its minted moment, one named by hand in "no time" (15 Oct; R3)', async () => {
   const listing = {entries: [
     {name: 'flow-2026-10-07-1343.html', kind: 'file', location: {path: 'Control/user/flows/flow-2026-10-07-1343.html'}},
     {name: 'flow-2026-10-07-1350.html', kind: 'file', location: {path: 'Control/user/flows/flow-2026-10-07-1350.html'}},
@@ -384,14 +392,15 @@ test('the Flows track reads the owner\'s Flow documents: each in its civil day\'
     ['oi203-multiagent-20260930.html', null]], 'the folder\'s .html files, minted ones oldest first, the hand-named after')
   assert.equal(records[0].instantMs, new Date(2026, 9, 7, 13, 43).getTime(), 'read back through the clock that minted it (flow/placement.ts)')
   const set = adapter.projectCentralTracks({records: {state: 'read', records: []}, civil: {state: 'reading'}, flows: {state: 'read', records}})
-  const flowsTrack = adapter.centralStreamTrackId('flows')
-  const flowClips = set.clips.filter(clip => clip.trackId === flowsTrack)
+  // R3: the Flows stand on the Day, the Main track, until a workspace's Folder holds them (replaces the Flows stream track).
+  const flowClips = set.clips.filter(clip => clip.trackId === adapter.CENTRAL_DAY_TRACK_ID)
   assert.deepEqual(flowClips.map(clip => [clip.label, clip.columnId]), [['Flow 13:43', 'central:day-row:2026-10-07'], ['Flow 13:50', 'central:day-row:2026-10-07'],
     ['oi203-multiagent-20260930', 'central:day-row:none']], 'the day\'s newest Flow is listed last, so the row\'s slot shows it')
   assert.ok(flowClips[1].at.start > flowClips[0].at.start, 'on the ruler at their moments')
   assert.match(flowClips[2].note, /named by hand/)
-  assert.equal(set.clips.filter(clip => clip.trackId === adapter.centralStreamTrackId('day')).length, 0, 'a row only Flows stand in has no Day face')
-  assert.equal(set.tracks.find(track => track.id === flowsTrack).kind, 'stream · 3 Flows from your Flows folder · 1 is named by hand and stands in "no time"')
+  // Replaces "a row only Flows stand in has no Day face" (a count of Day clips): no day record and no entry, so no face and no stop.
+  assert.equal(set.walks, undefined, 'a row only Flows stand in has no day face, so no stop')
+  assert.match(set.tracks.find(track => track.main).kind, / · 3 Flows from your Flows folder, on the Day at their moment · 1 is named by hand and stands in "no time"$/)
   assert.deepEqual(adapter.centralSubjectOfClip('Control/user/flows/flow-2026-10-07-1343.html'), {kind: 'note', path: 'Control/user/flows/flow-2026-10-07-1343.html'},
     'a Flow clip selects as the browser\'s Flows row does')
   const instances = await readFile(new URL('../../../../desktop/cradle/src/flow/instances.ts', import.meta.url), 'utf8')

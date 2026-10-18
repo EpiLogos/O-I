@@ -38,6 +38,11 @@
 //   in the atlas) and launches the Expression it carries through the shell's own door (JourneyPresentation.openExpression, the
 //   workspace's requestExpression). No controls handed in, or no stop in the set, no actions: the grid stays read-only. There is
 //   no owner op that stops a walk or records one, so neither is offered.
+// - R3 (manual §17.1 "The mixer row", §16.6): every track's mixer row — Activator shows or hides the reading, Solo shows only the
+//   soloed, Arm lets the instrument write into the track; its input is its sources, its output the instrument it plays through;
+//   Monitor is none. None of the three has an owner op yet, and each says which. The Main track is the stops. A reading that
+//   extends another lies under it as a take lane (lock §9.1: "readings that extend a reading (layers, never rewrites)"): its events
+//   are the take's stretches, and since a later reading never erases an earlier one, no comp copies it into the main lane.
 //
 // Pure TypeScript. No React, no transport.
 import {browserCategoriesOf} from '../shell/modeGrammar'
@@ -47,6 +52,8 @@ import type {WorldTimelineSource} from '../projections/useWorldTemporalReading'
 import {journeyWalksOf} from './journeyWalks'
 import {eventDayKey, type TemporalEventRow} from './timeSpine'
 import type {
+  WorldMixer,
+  WorldTakeLane,
   WorldTrack,
   WorldTrackActions,
   WorldTrackAdapter,
@@ -60,6 +67,42 @@ import type {
 } from './worldTrackAdapter'
 
 export const TECHNE_TRACK_ADAPTER_ID = 'techne-stream-tracks'
+
+const missingOp = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
+
+/** Technē's mixer row (manual §17.1), each control's meaning in the manual's words. Monitor is none. */
+export const TECHNE_MIXER: WorldMixer = {
+  activator: {meaning: 'Shows or hides the reading on the ruler and in the instruments',
+    disabled: missingOp('Activator', 'shell.setReadingShown(layerId, on) — a shown/hidden reading the ruler and every instrument read (the atlas, the Timeline, the Journey, the Palace, the graph)', 'shell · Technē')},
+  solo: {meaning: 'Shows only the soloed readings',
+    disabled: missingOp('Solo', 'shell.setReadingSolo(layerId, on) — read by the ruler and the instruments as the Activator is', 'shell · Technē')},
+  arm: {meaning: 'Lets the instrument write into the track: a recorded walk, or a stop you place',
+    disabled: missingOp('Arm', 'a walk the instrument records and a stop it places — atlas walk.record {walk_ref, stops: [{clip_ref, year?, place?}]} and walk.place_stop {walk_ref, at, clip_ref} through the atlas provider', 'Technē')},
+  input: {meaning: 'A track\'s material comes from its sources, each at its revision', route: 'Sources'},
+  output: {meaning: 'The instrument it plays through: the World, the Timeline, the Journey, the Palace or the graph', route: 'Instrument'},
+}
+
+/** Why the lanes Technē's owners do not give are absent, in their terms. */
+export const TECHNE_LANES_ABSENT = {
+  automation: missingOp('Automation lanes', 'a recorded move of an instrument parameter over the ruler (the pace of a walk, the sky\'s pull on a filter) kept by its owner — the atlas provider\'s walk pace and the sky device keep one value, never its moves', 'Technē · Quaternal Logic'),
+  events: 'Event lanes are Factory\'s: a session\'s messages, files, terminal and pages read.',
+} as const
+
+/** A reading's take lanes: each later reading that extends it (its layer `extends` the reading's), with that reading's events as the
+ * take's stretches on the ruler. A point stands one ruler unit wide. Only a reading's own event track carries take lanes. */
+export function techneTakeLanes(tracks: readonly WorldTrack[], clips: readonly WorldTrackClip[], layers: readonly WorldTrackLayer[]): WorldTakeLane[] {
+  const readings = tracks.filter(track => track.layerId !== undefined && track.kind.startsWith('reading'))
+  const takes: WorldTakeLane[] = []
+  for (const track of readings) {
+    for (const layer of layers.filter(candidate => candidate.extends === track.layerId)) {
+      const spans = readings.filter(other => other.layerId === layer.id)
+        .flatMap(other => clips.filter(clip => clip.trackId === other.id && clip.at))
+        .map(clip => ({start: clip.at!.start, end: Math.max(clip.at!.end ?? clip.at!.start, clip.at!.start + 1), label: clip.label}))
+      takes.push({id: `techne:take:${track.id}:${layer.id}`, trackId: track.id, name: `${layer.name} · extends`, spans})
+    }
+  }
+  return takes
+}
 
 /** The ruler's length, in its own units. Large enough that the row-end-to-end fallback the shared Arrangement keeps for a clip
  * with no place can never outrun it. */
@@ -492,6 +535,10 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   if (outWalks.length) set.walks = outWalks
   const actions = reading.controls ? actionsFor(reading.controls, outWalks) : undefined
   if (actions) set.actions = actions
+  // R3: the mixer row, the Main track (the stops), and the readings that extend a reading as its take lanes.
+  set.mixer = TECHNE_MIXER
+  set.main = {name: 'Main', chain: []}
+  set.lanes = {takes: techneTakeLanes(tracks, clips, layers), absent: TECHNE_LANES_ABSENT}
   return set
 }
 

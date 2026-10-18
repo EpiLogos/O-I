@@ -94,17 +94,19 @@ test('three layers of delegation: depth is the groups above a track, walked up t
   assert.match(markup, /data-track="S2:S2" data-depth="1"/); assert.match(markup, /data-track="S2:leaf" data-depth="2"/)
 })
 
-test('tasks are clips drawn by state: queued waits, running runs, done stops, stalled is striped, and an undisclosed state is not guessed', () => {
+test('tasks are clips drawn by state: queued waits, running runs, done settles, stalled is striped, and an undisclosed state is not guessed', () => {
   const states = [task(1, 'plan', 'done', NOW - 900_000, NOW - 600_000), task(2, 'port', 'running', NOW - 500_000, NOW - 20_000),
     task(3, 'review', 'queued'), task(4, 'fixtures', 'stalled', NOW - 400_000, NOW - 300_000), task(5, 'mystery', 'unknown'), soft(6)]
   const set = project([blank({sessionRef: 'a', spaceRef: 'sp', purpose: 'Agent', tasks: states})])
   assert.deepEqual(set.clips.map(c => [c.label, c.state, c.status ?? null]),
-    [['plan', 'done', 'stopped'], ['port', 'running', 'running'], ['review', 'queued', 'waiting'], ['fixtures', 'stalled', 'stalled'], ['mystery', 'unknown', null]])
+    // R3 (manual §19.1: Done is "dim and settled", Stopped "ready, in full colour"): done maps to done. Replaces ['plan', 'done', 'stopped'].
+    [['plan', 'done', 'done'], ['port', 'running', 'running'], ['review', 'queued', 'waiting'], ['fixtures', 'stalled', 'stalled'], ['mystery', 'unknown', null]])
   assert.equal(set.clips.length, 5, 'the trailing soft-stop slot is not a task')
   assert.equal('status' in set.clips[4], false, 'no owner state, no status')
   const grid = renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: SELECT}))
   assert.match(grid, /data-clip-status="stalled"/); assert.match(grid, /class="cs clip stalled"/, 'the shared grid stripes the stalled clip')
-  assert.match(grid, /class="cs clip waiting"/); assert.match(grid, /class="cs clip running"/); assert.match(grid, /class="cs clip stopped"/)
+  // Replaces /class="cs clip stopped"/: the finished task draws done.
+  assert.match(grid, /class="cs clip waiting"/); assert.match(grid, /class="cs clip running"/); assert.match(grid, /class="cs clip done"/)
   assert.match(grid, /data-clip-status="undisclosed"/)
   assert.match(renderToStaticMarkup(React.createElement(ArrangementRuler, {set, selection: SELECT})), /class="tl-clip stalled"/, 'and the ruler stripes it too')
   const unlabelled = project([blank({sessionRef: 'b', spaceRef: 'sp', tasks: [task(1, null, 'running'), soft(2)]})])
@@ -184,13 +186,14 @@ test('no controls handed in, no action: the grid is read-only and says so; no gr
   assert.match(markup, /aria-label="Stop lead" disabled=""/)
 })
 
-test('with the owner\'s path, five actions name their ops and reach only harness_agent_control, and only for ids the set holds', async () => {
+test('with the owner\'s path, six actions name their ops and reach only harness_agent_control, and only for ids the set holds', async () => {
   const calls = []
   const answer = {ok: true, note: 'stop → state stopped'}
   const set = project(agencyTracks().concat([blank({sessionRef: 'many', spaceRef: 'sp-many', purpose: 'Many', tasks: [
     task(1, 'done one', 'done', NOW - 900_000, NOW - 800_000), task(2, 'live one', 'running', NOW - 90_000, NOW - 5_000),
     task(3, 'queued one', 'queued'), task(4, 'unread one', 'unknown'), soft(5)]})]), {control: async control => { calls.push(control); return answer }})
-  assert.deepEqual(Object.keys(set.actions).filter(key => key !== 'grain').sort(), ['launch', 'launchStop', 'retry', 'seat', 'stopTrack'], 'no record: the owner has no capture path')
+  // R3: the Main track's Stop All joins them (the harness's stop, at the whole-harness grain).
+  assert.deepEqual(Object.keys(set.actions).filter(key => key !== 'grain').sort(), ['launch', 'launchStop', 'retry', 'seat', 'stopAll', 'stopTrack'], 'no record: the owner has no capture path')
   assert.equal(set.actions.grain, 'whole harness', 'the grid says the grain on every control it applies to')
   const {AGENT_CHAIN_MIME, encodeChainDrag} = await import('../src/agent/agentChainDrag.ts')
   assert.equal(set.actions.seat.accepts, AGENT_CHAIN_MIME, 'the empty track takes what the agent browser drags')

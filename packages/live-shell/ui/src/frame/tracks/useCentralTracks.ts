@@ -6,10 +6,17 @@
 // - the day's entries: the World cut's one temporal read, which the frame already publishes as `reading.world` — the hook
 //   calls no `useWorldTemporalReading` of its own (one poller per frame).
 // - the Flows: `files_list` at Control/user/flows (the browser's Flows rows' read), re-read with the day records.
-// It returns the five streams always — a read that has not landed, or was refused, is named in its track's `kind` text, and the
-// three streams without an owner read stand as named, empty tracks (timeline/centralTrackAdapter.ts). Registered as
-// `base: worldCut(useCentralTracks)` in modeTracks.ts.
-import {useEffect, useMemo, useState} from 'react'
+// It returns the Day always — a read that has not landed, or was refused, is named in the Day's `kind` text
+// (timeline/centralTrackAdapter.ts). Registered as `base: worldCut(useCentralTracks)` in modeTracks.ts.
+//
+// R3 (manual §18.1; lock §0.3 item 4): the tracks are the workspaces of the candidate's workspace book (continuity/workspace.tsx
+// `useOptionalContinuity`, the one book the window holds — never a second store), each with the pages the book recorded it opening
+// (`recentPlaces` of kind file); launching one is the book's `activate`; every workspace's Arm is the shell's one write arm, as
+// Factory's is (useFactoryTracks.ts shellWriteArm). The Day is the Main track. With no book mounted the Day stands alone.
+import {useEffect, useMemo, useRef, useState} from 'react'
+import {useOptionalContinuity} from '../../continuity/workspace'
+import {useAgentShellOptional} from '../../agent/AgentShellContext'
+import {shellWriteArm} from './useFactoryTracks'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {
@@ -21,6 +28,8 @@ import {
   projectCentralTracks,
   type CentralDayRecordsReading,
   type CentralFlowsReading,
+  type CentralWorkspace,
+  type CentralWorkspacesReading,
 } from '../../timeline/centralTrackAdapter'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {TracksReading} from './modeTracks'
@@ -49,7 +58,26 @@ export async function readFlows(transport: KernelTransportStatus | undefined): P
   }
 }
 
+/** The book's workspaces as Central's tracks read them: each with the files it recorded opening, newest last. */
+export function workspacesOf(book: {workspaces: readonly {id: string; name: string; recentPlaces?: readonly {kind: string; label: string; path: string; visitedAt: number; location?: {path: string}}[]}[]; current: {id: string}} | null): CentralWorkspacesReading {
+  if (!book) return {state: 'unavailable', reason: 'no workspace book is mounted above this pane'}
+  return {state: 'read', workspaces: book.workspaces.map((workspace): CentralWorkspace => ({
+    id: workspace.id, name: workspace.name, active: workspace.id === book.current.id,
+    pages: (workspace.recentPlaces ?? []).filter(place => place.kind === 'file').map(place => ({path: place.location?.path ?? place.path, label: place.label, visitedAt: place.visitedAt})),
+  }))}
+}
+
 export function useCentralTracks(reading: TracksReading): WorldTrackSet {
+  const book = useOptionalContinuity()
+  const shell = useAgentShellOptional()
+  const armOn = shell ? shell.writeArm : null
+  const bookWorkspaces = book?.workspaces, currentId = book?.current.id
+  const workspaces = useMemo(() => workspacesOf(bookWorkspaces && currentId !== undefined ? {workspaces: bookWorkspaces, current: {id: currentId}} : null), [bookWorkspaces, currentId])
+  // The book remakes `activate` on every render: the press reads the current one, so the projection is not remade for it.
+  const activate = useRef(book?.activate)
+  activate.current = book?.activate
+  const hasBook = !!book
+  const controls = useMemo(() => ({...(hasBook ? {activate: (id: string) => activate.current?.(id)} : {}), writeArm: shellWriteArm(armOn)}), [hasBook, armOn])
   const transport = reading.transport
   const source = reading.world?.source
   const readAt = source?.readAtUnixMs ?? null
@@ -62,5 +90,5 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
     return () => { live = false }
   }, [transport, readAt])
   const civil = useMemo(() => civilReadingOf(source), [source])
-  return useMemo(() => projectCentralTracks({records, civil, flows}), [records, civil, flows])
+  return useMemo(() => projectCentralTracks({records, civil, flows, workspaces, controls}), [records, civil, flows, workspaces, controls])
 }
