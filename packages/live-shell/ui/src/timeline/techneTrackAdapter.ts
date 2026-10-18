@@ -50,6 +50,7 @@ import {createTimeScale, formatYear} from '../projections/atlas/src/data/time'
 import type {SuiteStanding} from '../projections/atlas/provider/suiteStanding'
 import type {WorldTimelineSource} from '../projections/useWorldTemporalReading'
 import {journeyWalksOf} from './journeyWalks'
+import {readingStands, type ReadingShown} from './readingShown'
 import {eventDayKey, type TemporalEventRow} from './timeSpine'
 import type {
   WorldMixer,
@@ -81,6 +82,13 @@ export const TECHNE_MIXER: WorldMixer = {
   input: {meaning: 'A track\'s material comes from its sources, each at its revision', route: 'Sources'},
   output: {meaning: 'The instrument it plays through: the World, the Timeline, the Journey, the Palace or the graph', route: 'Instrument'},
 }
+
+/** The op the reading's Activator and Solo name: the shell's own hold of what stands on the ruler. */
+export const READING_SHOWN_OP = 'shell · which readings stand on the ruler (timeline/readingShown.ts): how the work is looked at, never a change to a reading'
+/** The mixer row with the reading's visibility held: Activator and Solo write it. */
+const TECHNE_MIXER_SHOWN: WorldMixer = {...TECHNE_MIXER,
+  activator: {meaning: 'Shows or hides the reading on the ruler; the atlas and the Journey keep their own layers'},
+  solo: {meaning: 'Shows only the soloed reading on the ruler'}}
 
 /** Why the lanes Technē's owners do not give are absent, in their terms. */
 export const TECHNE_LANES_ABSENT = {
@@ -172,6 +180,8 @@ export interface TechneReading {
   earth?: SuiteStanding
   /** The owners behind the actions; absent, the set has none. */
   controls?: TechneControls
+  /** Which readings stand on the ruler (timeline/readingShown.ts), and its writes; absent, every reading stands and the row says so. */
+  shown?: {state: ReadingShown; show(trackId: string, on: boolean): void; solo(trackId: string, on: boolean): void}
 }
 
 /** The World cut's temporal read as this adapter reads it. */
@@ -517,7 +527,13 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
 
   // ── walks, re-pointed at the clips this set holds ────────────────────────────────────────────────────────────────────────
   const outWalks: WorldWalk[] = orderedWalks.map(walk => ({...walk, stops: walk.stops.map((stop, index) => ({...stop, clipId: (stopClipIds.get(walk) as string[])[index]}))}))
-  const set: WorldTrackSet = {columns, tracks, clips}
+  // A reading's visibility (timeline/readingShown.ts): its track stays and reads its Activator and Solo; its events stand on the ruler
+  // only while it is shown (and, with one soloed, only that one's).
+  // Only readings that were read stand or leave the ruler: with no World reading the row has nothing to show or hide.
+  const shown = world.state === 'live' ? reading.shown : undefined
+  if (shown) for (const track of tracks) track.mix = {activator: !shown.state.hidden.has(track.id), solo: shown.state.soloed === track.id}
+  const standing = shown ? clips.filter(clip => readingStands(shown.state, clip.trackId)) : clips
+  const set: WorldTrackSet = {columns, tracks, clips: standing}
   if (noTime || hasDeep || hasToday) set.ruler = {unit, label, ...(hasToday ? {instant} : {})}
   if (layers.length) set.layers = layers
   // Sections on the ruler: a year span by the deep-time scale; a stop-index span over the places its stops' clips stand (the last
@@ -536,7 +552,10 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   const actions = reading.controls ? actionsFor(reading.controls, outWalks) : undefined
   if (actions) set.actions = actions
   // R3: the mixer row, the Main track (the stops), and the readings that extend a reading as its take lanes.
-  set.mixer = TECHNE_MIXER
+  set.mixer = shown ? TECHNE_MIXER_SHOWN : TECHNE_MIXER
+  if (shown) set.actions = {...set.actions, mixer: {...set.actions?.mixer,
+    activator: {op: READING_SHOWN_OP, run: (trackId, on) => { shown.show(trackId, on); return {ok: true, note: on ? 'The reading stands on the ruler.' : 'The reading leaves the ruler; its track stays.'} }},
+    solo: {op: READING_SHOWN_OP, run: (trackId, on) => { shown.solo(trackId, on); return {ok: true, note: on ? 'Only this reading stands on the ruler.' : 'Every shown reading stands again.'} }}}}
   set.main = {name: 'Main', chain: []}
   set.lanes = {takes: techneTakeLanes(tracks, clips, layers), absent: TECHNE_LANES_ABSENT}
   return set
