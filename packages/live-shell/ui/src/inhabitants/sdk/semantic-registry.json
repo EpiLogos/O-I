@@ -607,8 +607,12 @@
       "techne"
     ],
     "formats": {},
-    "invariant": null,
-    "writePaths": [],
+    "invariant": {
+      "generates": "kernel:m3_reception"
+    },
+    "writePaths": [
+      "kernel:m3_reception"
+    ],
     "heldBy": [
       "techne:m2",
       "techne:m3"
