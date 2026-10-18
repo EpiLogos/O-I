@@ -95,7 +95,7 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   assert.equal(JSON.stringify(schema.inhabitantManifest('central')), JSON.stringify(central))
 })
 
-test('quaternal-logic: every face but the sky is declared waiting with a named owner; telemetry is an honest null; the family is the chronos contributor', () => {
+test('quaternal-logic: every face but the sky and the M3 clock is declared waiting with a named owner; telemetry is an honest null; the family is the chronos contributor', () => {
   door.resetFamilyManifestsForTest()
   qlogic.quaternalLogicFamilyManifest()
   const manifest = schema.inhabitantManifest('quaternal-logic')
@@ -104,6 +104,8 @@ test('quaternal-logic: every face but the sky is declared waiting with a named o
   for (const face of manifest.faces) {
     // The sky draws on its owner (lane BL, aba3ddaea): the kernel's nara_identity transit, with its honest absence of a write.
     if (face.id === 'sky') { assert.notEqual(face.admission, 'waiting', 'sky: admitted on the transit read'); continue }
+    // The M3 clock draws on its owner (R5): the person's M3 form through the kernel's m3_reception.
+    if (face.id === 'm3-clock') { assert.notEqual(face.admission, 'waiting', 'm3-clock: admitted on m3_reception'); assert.equal(face.invariant.generates, 'kernel:m3_reception'); continue }
     assert.equal(face.admission, 'waiting', `${face.id}: declared, waiting`)
     assert.ok(face.note && face.note.length > 40, `${face.id}: the note names what it waits for`)
     assert.equal(schema.faceKind(face), 'parameter', `${face.id}: declared faces carry no body until an owner lands`)
