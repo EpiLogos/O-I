@@ -22,6 +22,7 @@ import {Lamp, PanelHead, type LightState, type Page} from '../../inhabitants/sdk
 import type {FacePresentation} from '../../inhabitants/sdk/define'
 import type {IconName} from '../../inhabitants/sdk/icons'
 import {DeviceView} from './DeviceView'
+import {holdInBand, publishedDevice} from './deviceDoor'
 import {lightOf, type DeviceInstance} from './deviceRuntime'
 import {usePlateFit, type PlateFit} from './plateFit'
 import type {HeldDevice} from './plateControls'
@@ -153,7 +154,7 @@ export interface SectionDevice {
   /** The device's mark on the section's selector. */
   readonly mark: IconName
   readonly picture?: ReactNode
-  /** The plate's marks: `detail` (show it whole in the pool) is the press on the plate; `pane` opens it full size. */
+  /** The plate's marks: `detail` (select it) is the press on the plate; `pane` opens it full size. */
   readonly actions?: readonly {icon: 'detail' | 'pane' | 'back' | 'cmd' | 'plus'; label: string; onPress: () => void}[]
   /** The host's wrap for one of its controls (a modulation line under a moved value). */
   readonly wrapRow?: Parameters<typeof DeviceView>[0]['wrapRow']
@@ -185,11 +186,16 @@ export function SectionDevices({devices, initial, label}: {devices: readonly Sec
   </div>
 }
 
-/** The devices a section holds as its marks (plateControls.tsx HeldMarks): the acts their boxed plates offered — every setting in the
- * pool, full size in a pane — kept, where the section's own controls are drawn from the same owner. */
+/** The devices a section holds as its marks (plateControls.tsx HeldMarks): every setting whole in its band above the chain (held there:
+ * the device stands on no chain plate of its own), full size in a pane — kept, where the section's own controls are drawn from the
+ * same owner. A device not on the door is selected only. */
 export function heldMarksOf(entries: readonly SectionDevice[]): HeldDevice[] {
   const act = (entry: SectionDevice, icon: 'detail' | 'pane') => () => entry.actions?.find(action => action.icon === icon)?.onPress()
-  return entries.map(entry => ({id: entry.device.id, title: entry.device.face.title, mark: entry.mark, light: lightOf(entry.device), onPool: act(entry, 'detail'), onPane: act(entry, 'pane')}))
+  const whole = (entry: SectionDevice) => () => {
+    const published = publishedDevice(entry.device.id)
+    if (published) holdInBand(entry.device.id, published); else act(entry, 'detail')()
+  }
+  return entries.map(entry => ({id: entry.device.id, title: entry.device.face.title, mark: entry.mark, light: lightOf(entry.device), onWhole: whole(entry), onPane: act(entry, 'pane')}))
 }
 
 /** A group whose owner discloses nothing here says so in one short line; its whole words are the status line's. With `word`, the line is

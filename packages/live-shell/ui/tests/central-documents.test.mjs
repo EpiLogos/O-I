@@ -366,15 +366,17 @@ test('the browser rows draw without a pane tree or a workspace book mounted (the
 })
 
 // Seen on screen (computer-use, native b9a0a8048, 14 Oct): the Flow pane carried "Save to native source" and "Re-read current
-// document" on its face — options inside a pane. In a pane the document's head reads its revision and save standing; the
-// actions stand in the browser's aperture for the document the hand reached (central/documents/documentDoor.ts).
-test('in a pane a document carries a head reading and no buttons; as a device it keeps its own row', async () => {
+// document" on its face — options inside a pane. In a pane the document's head reads its revision and save standing, and since W1
+// (the browser's aperture slot retired, T-WORLDS §3) carries the owner's two acts on it, Save and Re-read, beside them.
+test('in a pane a document\'s head reads its standing and carries Save and Re-read; as a device it keeps its own row', async () => {
   const {FlowFace} = await import('../src/inhabitants/DocumentFlowFace.tsx')
   const transport = {kind: 'unavailable', reason: 'test'}
   const inPane = html(createElement(FlowFace, {transport, location: FLOW, presentation: 'pane'}))
   assert.match(inPane, /data-document-head="flow"/)
   assert.match(inPane, /class="document-pane-state"[^>]*>as read</, 'the standing is a reading: nothing read, nothing saved')
-  assert.doesNotMatch(inPane, /<button/, 'no control on the document\'s face')
+  assert.equal((inPane.match(/<button/g) ?? []).length, 2, 'two acts in the head, nothing else on the document\'s face')
+  assert.match(inPane, /class="document-pane-acts"><button type="button" data-action="save" disabled=""[^>]*>Save<\/button><button type="button" data-action="reread"/,
+    'Save waits for the form; Re-read is the owner\'s read again')
   const asDevice = html(createElement(FlowFace, {transport, location: FLOW}))
   assert.match(asDevice, /Save to native source/, 'the device keeps its action row')
   assert.doesNotMatch(asDevice, /data-document-head/)
@@ -403,13 +405,11 @@ test('the aperture follows the document the hand reached, and lets it go when th
   assert.equal(door.documentStateWords({pending: false, dirty: false, blocked: 'moved'}), 'blocked — moved')
 })
 
-test('a document reached in a pane names its pane, and the aperture matches the focused pane by it (lane F)', async () => {
+test('a document reached in a pane names its pane (lane F)', async () => {
   const door = await import('../src/central/documents/documentDoor.ts')
   door.publishDocument({key: 'day:p', paneId: 'pane-a', form: 'Day', title: 'today', state: 'as read'}, true)
   assert.equal(door.reachedDocument()?.paneId, 'pane-a')
   door.withdrawDocument('day:p')
-  const views = await readFile(new URL('../src/frame/browser/apertureViews.tsx', import.meta.url), 'utf8')
-  assert.match(views, /reached\.paneId \? reached\.paneId === pane\.id/)
   const pane = await readFile(new URL('../src/central/documents/CentralDocumentPane.tsx', import.meta.url), 'utf8')
   assert.match(pane, /<DocumentPaneContext\.Provider value=\{binding\.id\}>/)
 })

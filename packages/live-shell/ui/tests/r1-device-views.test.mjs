@@ -36,9 +36,8 @@ const door = await import('../src/frame/devices/deviceDoor.ts')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const designs = await import('../src/frame/devices/designs.ts')
 const view = await import('../src/frame/devices/DeviceView.tsx')
-const {foldsExpanded} = await import('../src/frame/devices/DeviceFlip.tsx')
+const {foldsExpanded, DeviceFlipHost} = await import('../src/frame/devices/DeviceFlip.tsx')
 const {DeviceWindowLayer} = await import('../src/frame/devices/DeviceWindows.tsx')
-const {DevicePool} = await import('../src/frame/devices/DevicePool.tsx')
 const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
 const {headMenu, MISSING_OPS} = await import('../src/frame/devices/DeviceMenu.tsx')
 const win = await import('../src/frame/devices/deviceWindow.ts')
@@ -122,10 +121,10 @@ test('a concealed chain expands nothing: the band stands only while ▸ is press
 
 // ── the six views, each with its frame and room ────────────────────────────────────────────────────────────────────────────
 
-test('every view reaches its design with its own frame: chain, pool, flip, pane, window, rail — and the room its place gives', () => {
+test('every view reaches its design with its own frame: chain, flip, pane, window, rail — and the room its place gives', () => {
   withProbe('r1:places', device => {
     assert.deepEqual(probes(html(createElement(ChainDevice, {device}))).compact, {frame: 'chain', room: 'none'}, 'Compact on the chain (room once measured)')
-    assert.deepEqual(probes(html(createElement(PlacedDevice, {device, view: 'whole'}))).whole, {frame: 'pool', room: 'none'}, 'Whole in the pool')
+    assert.deepEqual(probes(html(createElement(PlacedDevice, {device, view: 'whole'}))).whole, {frame: 'flip', room: 'none'}, 'Whole in its band (W1: the pool holds no device)')
     assert.deepEqual(probes(html(createElement(PlacedDevice, {device, view: 'whole', frame: 'flip', room: {w: 1300, h: WIDE_WHOLE_H}}))).whole,
       {frame: 'flip', room: `1300x${WIDE_WHOLE_H}`}, 'Whole expanded, in the band\'s room')
     assert.deepEqual(probes(html(createElement(PlacedDevice, {device, view: 'full'}))).full, {frame: 'pane', room: 'none'}, 'Full in a pane')
@@ -135,7 +134,7 @@ test('every view reaches its design with its own frame: chain, pool, flip, pane,
     // Most devices need no pop-out of their own: the window shows Full over Whole (popout.tsx popoutOf), each in the window's frame.
     assert.deepEqual(popout.full, {frame: 'window', room: `1000x${600 - WIDE_WHOLE_H}`}, 'Full, the material, above')
     assert.deepEqual(popout.whole, {frame: 'window', room: `1000x${WIDE_WHOLE_H}`}, 'Whole docked under it')
-    assert.deepEqual(FRAME_OF_VIEW, {whole: 'pool', full: 'pane', popout: 'window', widget: 'rail'})
+    assert.deepEqual(FRAME_OF_VIEW, {whole: 'flip', full: 'pane', popout: 'window', widget: 'rail'})
   })
 })
 
@@ -180,20 +179,19 @@ test('the head reads as Live\'s in every place: ▸ and ↗ where the device is 
 
 // ── the pool and the pane ──────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('pressing a chain plate shows the device whole in the pool; a browser row holds a device there without adding it to a chain', () => {
+test('pressing a plate selects the device and fills no pool; a device held from the browser stands whole in its band (W1, §16.4, §16.7)', () => {
   withProbe('r1:pool', device => {
-    assert.match(html(createElement(DevicePool)), /data-device-pool="empty"/)
     door.selectDevice(device.id)
-    const pool = html(createElement(DevicePool))
-    assert.match(pool, /data-device-pool="r1:pool"/)
-    assert.match(pool, /data-device-frame="pool"[\s\S]*data-device-size="whole"/, 'Whole, in the pool\'s frame')
+    assert.equal(door.flippedDeviceId(), null, 'selecting shows no Whole of its own: ▸ does, as a band above the chain')
+    door.selectDevice(null)
     const browsed = deviceOf('r1:browsed', 'Browsed')
-    door.holdInPool(browsed.id, {device: browsed})
-    assert.equal(door.selectedDeviceId(), browsed.id, 'the browser\'s choice is the pool\'s')
-    assert.match(html(createElement(DevicePool)), /data-device="r1:browsed"/)
-    door.holdInPool(browsed.id, null)
-    assert.equal(door.publishedDevice(browsed.id), undefined)
-    assert.equal(door.selectedDeviceId(), null, 'let go, the pool shows nothing of it')
+    door.holdInBand(browsed.id, {device: browsed})
+    assert.equal(door.selectedDeviceId(), browsed.id); assert.equal(door.flippedDeviceId(), browsed.id, 'held, it takes the band')
+    const band = html(createElement(DeviceFlipHost))
+    assert.match(band, /data-device-held="true"[\s\S]*data-device-frame="flip"[\s\S]*data-device="r1:browsed"[\s\S]*data-device-size="whole"/, 'the band host draws it whole')
+    door.holdInBand(browsed.id, null)
+    assert.equal(door.publishedDevice(browsed.id), undefined); assert.equal(door.flippedDeviceId(), null, 'let go, its band folds')
+    assert.doesNotMatch(html(createElement(DeviceFlipHost)), /r1:browsed/)
   })
 })
 

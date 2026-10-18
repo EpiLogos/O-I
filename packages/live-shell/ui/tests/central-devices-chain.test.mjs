@@ -46,7 +46,14 @@ const model = await import('../src/central/devices/centralDeviceModel.ts')
 const chain = await import('../src/central/devices/CentralDevices.tsx')
 const dayDie = await import('../src/central/devices/dayDie.ts')
 const door = await import('../src/frame/devices/deviceDoor.ts')
-const {DevicePool} = await import('../src/frame/devices/DevicePool.tsx')
+const {PlacedDevice: WholePlaced} = await import('../src/frame/devices/DeviceView.tsx')
+const wholeDoor = await import('../src/frame/devices/deviceDoor.ts')
+/** The selected device's Whole, as its band draws it above the chain (W1, manual §16.7: the pool holds no device; DevicePool retired). */
+function WholeBand() {
+  const held = wholeDoor.useDeviceDoor()
+  const entry = held.selected ? held.device(held.selected) : undefined
+  return entry ? createElement(WholePlaced, {device: entry.device, view: 'whole', picture: entry.picture, binding: entry.binding}) : null
+}
 const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
 const {lightOf, compactRows} = await import('../src/frame/devices/deviceRuntime.ts')
 const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
@@ -129,7 +136,7 @@ test('every device is compact on the chain: a picture, at most four readings, no
       assert.match(device, /<svg[^>]*(?:role="img"|viewBox)/, `${id} draws a mark`)
     }
     assert.ok((device.match(/class="dv-param"/g) ?? []).length <= 4, `${id}: at most four controls drawn`)
-    assert.match(device, /Show every setting in the pool/, `${id} opens whole (the press on the plate, said on its head)`)
+    assert.match(device, /Select it: the keys and the status bar speak to it; its expanded view stands whole above the chain/, `${id}: the press on the plate selects it, and says where Whole stands (W1)`)
     assert.match(device, /full size in a pane/, `${id} opens full (⤢)`)
   }
   for (const entry of entries()) assert.ok(compactRows(entry.device.rows).length <= 4, `${entry.id}: at most four`)
@@ -194,13 +201,13 @@ test('the owners\' readings fill the rows: the roster\'s first accepted agent, t
   assert.match(device('day-die', {day: {standing: uninitialised, face: null, revision: null}}).rows.find(row => row.key === 'day').disclosure, /central · initialise-day/, 'an uninitialised Day names the owner op that admits it')
 })
 
-test('the door shows the same device whole in the pool and full in a pane', () => {
+test('the door shows the same device whole in its band and full in a pane', () => {
   const set = entries({reads: {day: {standing: ready, face: 3, revision: REVISION}}, day: DAY})
   for (const entry of set) door.publishDevice(entry.id, {device: entry.device, picture: entry.picture})
   try {
     door.selectDevice('central:day-die')
-    const pool = html(createElement(DevicePool))
-    assert.match(pool, /data-device-pool="central:day-die"/)
+    const pool = html(createElement(WholeBand))
+    assert.match(pool, /data-device-frame="flip"[\s\S]*data-device="central:day-die"/)
     assert.match(pool, /data-device-size="whole"/)
     assert.match(pool, /class="dp-sec-label">Die<[\s\S]*class="dp-sec-label">Source</, 'every setting, grouped')
     assert.match(pool, /data-param="source"/, 'the whole size shows the rows the compact one folds')
@@ -269,7 +276,7 @@ test('the Day die carries its generating control at every size — compact, whol
     assert.ok(control(compact(die), 'face', 'enum'), 'compact: the die turns')
     // whole: the pool
     door.selectDevice('central:day-die')
-    assert.ok(control(html(createElement(DevicePool)), 'face', 'enum'), 'whole: the die turns')
+    assert.ok(control(html(createElement(WholeBand)), 'face', 'enum'), 'whole: the die turns')
     // full: a pane holds the hosted body itself; the controls stay in Device view under it (DLW §16.1)
     const diePane = html(createElement(DeviceFullPane, {id: 'central:day-die'}))
     assert.match(diePane, /data-document-device="ql-daily-die"/)

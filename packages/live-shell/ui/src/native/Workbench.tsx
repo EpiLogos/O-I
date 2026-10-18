@@ -186,7 +186,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const pinned = groups.filter(group => {const id = group.active ?? group.tabs[0]; return !!(id && layout.surfaces[id]?.projection?.subject_ref)}).length
     publishWorkbenchAperture(presented ? {panes: groups.length, pinned} : null)
   }, [book.current.layout, presented])
-  // The browser's aperture slot reads the focused pane (world-shell-mockup.html renderSlot): its kind and tab, which pane of how
+  // The encounter bar reads the focused pane (frame/encounter/EncounterBar.tsx; once the browser's aperture slot): its kind and tab, which pane of how
   // many, its pin — and pins or lets it follow through the pane's own Follow/Pin action (surface.pin-subject).
   useEffect(() => {
     const layout = book.current.layout

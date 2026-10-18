@@ -259,7 +259,7 @@ function OpenDevice({entry}: {entry: TechneEntry}) {
   const title = device.face.title
   return <div className="techne-device" data-face-id={face.id} data-expanded="true" data-family={device.family} data-device-id={device.id}>
     <DeviceView device={device} size="compact" binding={entry.binding} picture={entry.picture('compact')} actions={[
-      {icon: 'detail', label: `Show every setting of ${title} in the pool`, onPress: () => selectDevice(device.id)},
+      {icon: 'detail', label: `Select ${title}: the keys and the status bar speak to it; its expanded view stands whole above the chain`, onPress: () => selectDevice(device.id)},
       {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: device.id, title})},
     ]} />
   </div>
@@ -282,7 +282,7 @@ function sectionDeviceOf(entry: TechneEntry): SectionDevice & {face: string} {
   const {device, face} = entry
   const title = device.face.title
   return {device, face: face.id, mark: TECHNE_FACE_ICONS[face.id] ?? 'form', picture: entry.picture('compact'), actions: [
-    {icon: 'detail', label: `Show every setting of ${title} in the pool`, onPress: () => selectDevice(device.id)},
+    {icon: 'detail', label: `Select ${title}: the keys and the status bar speak to it; its expanded view stands whole above the chain`, onPress: () => selectDevice(device.id)},
     {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: device.id, title})},
   ]}
 }

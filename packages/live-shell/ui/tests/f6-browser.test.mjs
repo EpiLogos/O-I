@@ -47,13 +47,13 @@ test('the four kinds are the manual\'s, in its order', () => {
   assert.deepEqual(BROWSER_KINDS.map(k => k.kind), ['material', 'instruments', 'devices', 'running'])
 })
 
-test('every mode browses its own rows, the running sessions, the sets and the instruments — each category under one kind', () => {
+test('every mode browses its own rows, the running sessions and the instruments — each category under one kind; the named sets are workspaces now', () => {
   assert.deepEqual(Object.keys(MODE_BROWSERS).sort(), [...SURF_MODES].sort())
   for (const mode of SURF_MODES) {
     const sources = browserSourcesOf(mode)
     const categories = sources.flatMap(s => s.categories)
     for (const c of categories) assert.ok(BROWSER_KINDS.some(k => k.kind === c.kind), `${mode}:${c.id} has a kind`)
-    assert.ok(categories.some(c => c.id === 'sets' && c.kind === 'material'), `${mode}: Sets`)
+    assert.ok(!categories.some(c => c.id === 'sets'), `${mode}: no Sets row (W1: a kept arrangement is a workspace in the pool)`)
     assert.ok(categories.some(c => c.id === 'instruments' && c.kind === 'instruments'), `${mode}: Instruments`)
     assert.ok(categories.some(c => c.id === 'sess' && c.kind === 'running'), `${mode}: the running sessions`)
   }
@@ -75,7 +75,8 @@ test('the chrome groups by kind, holds one search and one pool, and draws the ch
   assert.match(markup, /data-browser-kind="material".*data-browser-kind="devices"/s, 'kinds in the manual\'s order, empty kinds left out')
   assert.doesNotMatch(markup, /data-browser-kind="(instruments|running)"/)
   assert.match(markup, /rows of one/); assert.equal(seen[0].query, '')
-  assert.match(markup, /aria-label="Pool"/); assert.match(markup, /data-device-pool="empty"/, 'the device pool beneath')
+  assert.match(markup, /aria-label="Pool"/); assert.doesNotMatch(markup, /data-device-pool|aria-label="Aperture"/, 'the pool holds no device and no aperture (W1)')
+  assert.match(markup, /class="one-browser-preview" aria-label="Preview"/, 'the selected row\'s preview stands at the foot of the list')
 })
 
 test('the frame\'s browser names no mode, and App has one browser residence with no per-mode browser body', async () => {

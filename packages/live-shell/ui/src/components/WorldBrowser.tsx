@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 're
 import {createPortal} from 'react-dom'
 import type {BrowserCategory as OneBrowserCategory, BrowserKind, ControlledBrowser} from '../frame/browser/browserKinds'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
-import {SetsSection} from '../shell/SetsSection'
 import type { NativeDirectory, NativeFileEntry } from '@epilogos/expressions-boundary/cradle'
 import {createCradleOwners} from '@epilogos/expressions-boundary/cradle'
 import {sameEditorBasis} from '@epilogos/expressions-boundary/editor'
@@ -22,7 +21,12 @@ import {NativeDevicePool, type DeviceRequest} from './NativeDevicePool'
 import {countLabel, deviceRows, objectRows, rowAfter, type RowKey} from './nativeBrowserModel'
 import {deviceCatalogue} from './nativeDeviceCatalogue.ts'
 import {OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT, admittedDeviceOpen, parameterBrowsePatch} from './nativeDrag'
+import {flipDevice, useFlipHost, useFlippedDeviceId} from '../frame/devices/deviceDoor'
 import './WorldBrowser.css'
+
+/** The band a native device chosen in the browser stands in (manual §16.4, §16.7: "A device opens whole in its band above the chain"):
+ * one id on the device door's expanded view, so Esc folds it and another device's ▸ takes the band from it. */
+export const NATIVE_DEVICE_BAND = 'expressions:browser-device'
 
 type BrowserCategory = 'works' | 'material' | 'objects' | 'properties' | 'devices' | 'files' | 'knowledge'
 const CATEGORIES: {id: BrowserCategory; name: string; icon: string}[] = [
@@ -58,7 +62,6 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
   const [openingGraph, setOpeningGraph] = useState(false)
   const [ownCategory, setCategory] = useState<BrowserCategory>('works')
   const category = (controlled?.category as BrowserCategory | undefined) ?? ownCategory
-  const [poolOpen, setPoolOpen] = useState(true)
   // The pool's device role is independent of the category: closing it shows the category that was open.
   const [device, setDevice] = useState<DeviceRequest | null>(null)
   const deviceRef = useRef<DeviceRequest | null>(null)
@@ -73,7 +76,7 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
   const reportCount = useCallback((id: string, count: number) => setCounts(before => before[id] === count ? before : {...before, [id]: count}), [])
 
   useEffect(() => {
-    const browseParameters = () => {const patch = parameterBrowsePatch(); setCategory(patch.category); setPoolOpen(patch.poolOpen); setQuery(patch.query)}
+    const browseParameters = () => {const patch = parameterBrowsePatch(); setCategory(patch.category); setQuery(patch.query)}
     window.addEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
     return () => window.removeEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
   }, [])
@@ -84,7 +87,6 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
       const request = admittedDeviceOpen((event as CustomEvent<unknown>).detail)
       if (!request) return
       if (!deviceRef.current) deviceOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-      setPoolOpen(true)
       setDevice(previous => ({...request, nonce: (previous?.nonce ?? 0) + 1}))
     }
     window.addEventListener(OPEN_DEVICE_EVENT, openDevice)
@@ -120,6 +122,19 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
     setDevice(null)
     requestAnimationFrame(() => {if (back?.isConnected) back.focus({preventScroll: true})})
   }
+  // The device chosen in the browser stands whole in the band (never in the pool): each request takes the band; when the band is
+  // folded (Esc) or another device takes it, the request closes.
+  const flipHost = useFlipHost()
+  const flipped = useFlippedDeviceId()
+  const banded = useRef(false)
+  useEffect(() => { if (device) { banded.current = false; flipDevice(NATIVE_DEVICE_BAND) } }, [device?.nonce])
+  useEffect(() => {
+    if (!device) return
+    if (flipped === NATIVE_DEVICE_BAND) { banded.current = true; return }
+    if (banded.current) { banded.current = false; closeDevice() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flipped])
+  const closeBand = () => { if (flipped === NATIVE_DEVICE_BAND) flipDevice(null); banded.current = false; closeDevice() }
   function navigate(nextPath: string) { ++fileEpoch.current; setOpening(null); setQuery(''); workspace.navigateFiles(nextPath) }
   async function selectFile(entry: NativeFileEntry) {
     if (!entry.retrieval_allowed || entry.kind !== 'file' || transport.kind === 'unavailable' || !accessReady) return
@@ -212,24 +227,21 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
       {directory && !entries.length && <p className="native-empty">{needle ? 'No files match in this folder.' : 'This folder has no visible entries.'}</p>}
     </section>
   </>
-  const pool = <section className={`world-context-pool${device ? ' is-device' : ''}`} aria-label="Browser context">
-      <header><button type="button" aria-expanded={poolOpen} aria-controls="world-browser-pool-body" onClick={() => setPoolOpen(value => !value)}><span aria-hidden="true">{poolOpen ? '▾' : '▸'}</span> {device ? 'Device' : category === 'properties' ? 'Parameter' : category === 'material' ? 'Material' : category === 'objects' ? 'Objects' : category === 'devices' ? 'Devices' : 'Context'}</button></header>
-      <div id="world-browser-pool-body" className="world-pool-body" hidden={!poolOpen}>
-        {device && <NativeDevicePool request={device} onClose={closeDevice}/>}
-        <div hidden={device !== null}>
-          <div ref={setMaterialHost} hidden={category !== 'material'}/>
-          <div ref={setPropertyHost} hidden={category !== 'properties'}/>
-          {category === 'works' && previewWork && <p className="world-browser-preview" role="status">Previewing {previewWork.title}. Enter opens it.</p>}
-          {category === 'works' && <p className="native-empty">{reading?.nativeScene ? 'The open Expression keeps its own Scenes, objects and chosen controls.' : 'Open a native Expression to continue its work.'}</p>}
-          {category === 'objects' && <p className="native-empty">Adds a formation or force pin to the open Scene, one native edit each. Drag onto the stage is not available yet.</p>}
-          {category === 'devices' && <p className="native-empty">Select a device to open its whole panel here. Editing here never adds to the rack; + Add or a drag onto the rack does.</p>}
-          {category === 'files' && <div className="world-file-context"><strong>Central</strong><p>{directory?.location.path || 'Personal ground'}</p><button type="button" disabled={loading || transport.kind === 'unavailable' || !accessReady} onClick={() => resources.ensureDirectory(workspaceId, path, true)}>Refresh folder</button></div>}
-          {category === 'knowledge' && <p className="native-empty">Instruments open over the current native work. Graph keeps the selected subject and its Canvas Return.</p>}
-        </div>
-      </div>
+  // The foot of the list (manual §16.7): the selected row's preview — a material's detail, a parameter's, the category's own words.
+  const preview = <section className="world-browser-preview-foot" aria-label="Preview">
+      <div ref={setMaterialHost} hidden={category !== 'material'}/>
+      <div ref={setPropertyHost} hidden={category !== 'properties'}/>
+      {category === 'works' && previewWork && <p className="world-browser-preview" role="status">Previewing {previewWork.title}. Enter opens it.</p>}
+      {category === 'objects' && <p className="native-empty">Adds a formation or force pin to the open Scene, one native edit each.</p>}
+      {category === 'devices' && <p className="native-empty">Select a device to open it whole in its band above the chain. Editing there never adds to the rack; + Add or a drag onto the rack does.</p>}
+      {category === 'files' && <div className="world-file-context"><strong>Central</strong><p>{directory?.location.path || 'Personal ground'}</p><button type="button" disabled={loading || transport.kind === 'unavailable' || !accessReady} onClick={() => resources.ensureDirectory(workspaceId, path, true)}>Refresh folder</button></div>}
     </section>
-  if (controlled) return <div className="world-browser-body" onKeyDown={onBrowserKeyDown}>{results}{controlled.poolHost && createPortal(pool, controlled.poolHost)}</div>
-  return <aside className={`world-browser world-browser-categories${poolOpen ? '' : ' pool-collapsed'}`} aria-label="World browser" onKeyDown={onBrowserKeyDown}>
+  // A native device chosen here stands whole in the band above the chain.
+  const band = device && flipHost && flipped === NATIVE_DEVICE_BAND ? createPortal(<div className="dp-wide dp-flip device-flip native-device-band" data-device-flip={NATIVE_DEVICE_BAND} data-claims-keys="escape">
+      <NativeDevicePool request={device} onClose={closeBand}/>
+    </div>, flipHost) : null
+  if (controlled) return <div className="world-browser-body" onKeyDown={onBrowserKeyDown}>{results}{controlled.previewHost && createPortal(preview, controlled.previewHost)}{band}</div>
+  return <aside className="world-browser world-browser-categories" aria-label="World browser" onKeyDown={onBrowserKeyDown}>
     <div className="world-browser-searchrow"><label className="world-browser-search"><span className="sr-only">Search {CATEGORIES.find(row => row.id === category)?.name}</span><input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search (⌘ F)" /></label><output className="world-browser-count" aria-live="polite">{countText}</output></div>
     <div className="world-browser-main">
       <nav className="world-category-list" aria-label="World browser categories"><h3>Library</h3>{CATEGORIES.map(row => <button type="button" key={row.id} aria-pressed={category === row.id} onClick={() => {setCategory(row.id); setQuery('')}}><span aria-hidden="true">{row.icon}</span><span>{row.name}</span></button>)}</nav>
@@ -237,7 +249,7 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
         {results}
       </div>
     </div>
-    {pool}
-    <InstrumentsSection /><SetsSection />
+    {preview}{band}
+    <InstrumentsSection />
   </aside>
 }

@@ -54,7 +54,6 @@
  */
 
 import {InstrumentsSection} from '../frame/InstrumentsSection'
-import {SetsSection} from './SetsSection'
 import {useContext, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import {subscribeSuiteStanding, suiteStanding} from '../projections/atlas/provider/suiteStanding'
 import {useTimelineReading} from '../projections/timelinePaneHost'
@@ -191,7 +190,7 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}
       </nav>
       <div className="world-browser-results">{results}</div>
     </div>
-    <InstrumentsSection /><SetsSection />
+    <InstrumentsSection />
   </aside>
 }
 
