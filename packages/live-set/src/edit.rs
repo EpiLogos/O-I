@@ -17,6 +17,17 @@
 //! `LoopStart + StartRelative` and its end at `OutMarker`; an unlooped clip
 //! keeps its start and end in `LoopStart`/`LoopEnd` and its loop brace in
 //! `HiddenLoopStart`/`HiddenLoopEnd`.
+//!
+//! Beside the clip: each track's sends (`Mixer/Sends/TrackSendHolder`, one
+//! per return track, in the returns' order) read and written; a stretch of a
+//! take lane comped into the main lane; and the set's Groove Pool read and
+//! written. Comping follows Live 12's own record, read off a real comped set
+//! (the template "Piano and voices mastering", 3-LABS): a comped main-lane
+//! clip is a copy of its take's clip carrying the take's `TakeId`, its
+//! `CurrentStart`/`CurrentEnd` the stretch and its `LoopStart`/`LoopEnd`
+//! moved by the stretch's offset into the take; `OutMarker` and the hidden
+//! loop stay the take's. The main lane names which take each stretch came
+//! from by that `TakeId`, and the take lane's stretch is marked by the same.
 
 use crate::xml::Element;
 use serde_json::{json, Map, Value};
@@ -63,6 +74,17 @@ pub const MODES: &[(&str, &str)] = &[
 ];
 /// Monitoring, in Live's `MonitoringEnum` order.
 pub const MONITOR: &[&str] = &["in", "auto", "off"];
+/// A groove's Base, in Live's `Grid` order: read off Live 12's own Quantize
+/// grooves (Core Library `Grooves/Utility`: "Quantize 4" stores 0, "Quantize
+/// 8" 1, "Quantize 8T" 2, "Quantize 16" 3, "Quantize 16T" 4, "Quantize 32" 5).
+pub const GROOVE_BASE: &[&str] = &["1/4", "1/8", "1/8t", "1/16", "1/16t", "1/32"];
+/// A groove's four amounts: the design's word and Live's own element.
+const GROOVE_AMOUNTS: &[(&str, &str)] = &[
+    ("quantize", "QuantizationAmount"),
+    ("timing", "TimingAmount"),
+    ("random", "RandomAmount"),
+    ("velocity", "VelocityAmount"),
+];
 
 // ---------------------------------------------------------------------------- the document's values
 
@@ -247,8 +269,26 @@ fn clip_at_mut(track: &mut Element, at: ClipAt) -> Result<&mut Element, String> 
 
 // ---------------------------------------------------------------------------- automation targets
 
+/// The name Live gives a track's send: "Send A" feeds the first return track,
+/// "Send B" the next, in the returns' order.
+fn send_name(index: usize) -> String {
+    match u8::try_from(index).ok().filter(|i| *i < 26) {
+        Some(i) => format!("Send {}", char::from(b'A' + i)),
+        None => format!("Send {}", index + 1),
+    }
+}
+
+/// A mixer's sends, in the document's order (one `TrackSendHolder` per return track).
+fn send_holders(mixer: &Element) -> impl Iterator<Item = &Element> {
+    mixer
+        .child("Sends")
+        .into_iter()
+        .flat_map(|sends| sends.children_named("TrackSendHolder"))
+}
+
 /// Every `AutomationTarget` id in the document, with the parameter (its
-/// holder) and the device (the holder's holder) it moves.
+/// holder) and the device (the holder's holder) it moves. A mixer's sends
+/// are named as Live names them: device "Mixer", parameter "Send A" onward.
 fn automation_targets(root: &Element) -> std::collections::HashMap<String, (String, String)> {
     fn walk(
         element: &Element,
@@ -256,6 +296,18 @@ fn automation_targets(root: &Element) -> std::collections::HashMap<String, (Stri
         out: &mut std::collections::HashMap<String, (String, String)>,
     ) {
         for child in &element.children {
+            if child.name == "Sends" && element.name == "Mixer" {
+                for (index, holder) in send_holders(element).enumerate() {
+                    if let Some(id) = holder
+                        .child("Send")
+                        .and_then(|send| send.child("AutomationTarget"))
+                        .and_then(|target| target.attr("Id"))
+                    {
+                        out.insert(id.to_string(), ("Mixer".into(), send_name(index)));
+                    }
+                }
+                continue;
+            }
             if child.name == "AutomationTarget" {
                 if let Some(id) = child.attr("Id") {
                     out.insert(
@@ -763,12 +815,15 @@ fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), String> {
         let pitch = field("p")
             .filter(|p| p.fract() == 0.0 && (0.0..=127.0).contains(p))
             .ok_or("A note's pitch is 0 to 127")? as i64;
+        // Live keeps notes before the clip's start too (real Live 12 sets hold MidiNoteEvent Time="-0.96…"), so a clip's
+        // notes written back as read stand: a note's place is any beat of the clip's own time.
         let at = field("at")
-            .filter(|t| t.is_finite() && *t >= 0.0)
-            .ok_or("A note starts at a beat from 0")?;
+            .filter(|t| t.is_finite() && t.abs() <= 1.0e6)
+            .ok_or("A note starts at a beat of the clip's own time")?;
+        // A real Live 12 set holds a note of Duration="0" too: a length from 0, as Live keeps it.
         let len = field("len")
-            .filter(|l| l.is_finite() && *l > 0.0)
-            .ok_or("A note lasts more than nothing")?;
+            .filter(|l| l.is_finite() && *l >= 0.0)
+            .ok_or("A note's length is a number of beats from 0")?;
         let vel = field("vel").unwrap_or(100.0);
         if !(1.0..=127.0).contains(&vel) {
             return Err("A note's velocity is 1 to 127".into());
@@ -946,10 +1001,49 @@ fn apply_envelopes(track: &Element, clip: &mut Element, envelopes: &[Value]) -> 
 
 // ---------------------------------------------------------------------------- the track
 
-/// A track's mixer row: Activator, Solo, Arm, Monitor, and where its input
-/// comes from and its output goes, in the routing's own words. A control the
-/// track has no element for (Arm on a return, Solo on the Main track) is absent.
-pub fn mixer_json(track: &Element) -> Value {
+/// The set's return tracks' names, in the document's order: the order of
+/// every track's sends.
+fn return_names(root: &Element) -> Vec<String> {
+    tracks(root)
+        .into_iter()
+        .filter(|track| track.name == "ReturnTrack")
+        .map(|track| {
+            track
+                .child("Name")
+                .and_then(|n| value_of(n, "EffectiveName"))
+                .unwrap_or("")
+                .to_string()
+        })
+        .collect()
+}
+
+/// A track's sends: each named by the return track it feeds and by Live's
+/// letter, its level as the document keeps it (linear gain, Live's
+/// `MidiControllerRange` beside it), and whether the send is on for this track
+/// (`EnabledByUser`: a return's own sends are off until turned on in Live).
+fn sends_json(mixer: &Element, returns: &[String]) -> Vec<Value> {
+    send_holders(mixer)
+        .enumerate()
+        .map(|(index, holder)| {
+            let send = holder.child("Send");
+            let range = send.and_then(|s| s.child("MidiControllerRange"));
+            json!({
+                "name": returns.get(index).cloned().unwrap_or_else(|| send_name(index)),
+                "send": send_name(index),
+                "value": send.and_then(|s| num(s, "Manual")),
+                "min": range.and_then(|r| num(r, "Min")),
+                "max": range.and_then(|r| num(r, "Max")),
+                "on": flag(holder, "EnabledByUser") != Some(false),
+            })
+        })
+        .collect()
+}
+
+/// A track's mixer row: Activator, Solo, Arm, Monitor, its sends, and where
+/// its input comes from and its output goes, in the routing's own words. A
+/// control the track has no element for (Arm on a return, Solo or sends on the
+/// Main track) is absent.
+pub fn mixer_json(track: &Element, returns: &[String]) -> Value {
     let chain = track.child("DeviceChain");
     let mixer = chain.and_then(|c| c.child("Mixer"));
     let sequencer = chain.and_then(|c| c.child("MainSequencer"));
@@ -1000,6 +1094,12 @@ pub fn mixer_json(track: &Element) -> Value {
     {
         out.insert("monitor".into(), json!(v));
     }
+    if let Some(sends) = mixer
+        .map(|m| sends_json(m, returns))
+        .filter(|s| !s.is_empty())
+    {
+        out.insert("sends".into(), Value::Array(sends));
+    }
     if let Some(v) = input {
         out.insert("input".into(), v);
     }
@@ -1009,8 +1109,49 @@ pub fn mixer_json(track: &Element) -> Value {
     Value::Object(out)
 }
 
-fn apply_mixer(track: &mut Element, control: &str, value: &Value) -> Result<(), String> {
+fn apply_mixer(
+    track: &mut Element,
+    control: &str,
+    value: &Value,
+    index: Option<usize>,
+) -> Result<(), String> {
     let missing = |what: &str| format!("This track has no {what} in the document");
+    if control == "send" {
+        let index = index.ok_or("A send is named by its index: 0 for Send A, 1 for Send B")?;
+        let name = send_name(index);
+        let holder = track
+            .child_mut("DeviceChain")
+            .and_then(|c| c.child_mut("Mixer"))
+            .and_then(|m| m.child_mut("Sends"))
+            .and_then(|sends| {
+                sends
+                    .children
+                    .iter_mut()
+                    .filter(|h| h.name == "TrackSendHolder")
+                    .nth(index)
+            })
+            .ok_or_else(|| missing(&name))?;
+        if flag(holder, "EnabledByUser") == Some(false) {
+            return Err(format!(
+                "{name} is off on this track: Live turns a return's own sends on from the send's menu"
+            ));
+        }
+        let send = holder.child_mut("Send").ok_or_else(|| missing(&name))?;
+        let range = send.child("MidiControllerRange");
+        let (low, high) = range
+            .and_then(|r| Some((num(r, "Min")?, num(r, "Max")?)))
+            .ok_or_else(|| format!("{name} carries no range in the document"))?;
+        let level = value
+            .as_f64()
+            .filter(|v| v.is_finite() && (low..=high).contains(v))
+            .ok_or_else(|| {
+                format!("{name} is a level from {low} to {high} (the gain Live keeps)")
+            })?;
+        return set_value(send, "Manual", &number_text(level));
+    }
+    if index.is_some() {
+        return Err(format!("The {control} takes no index: only a send does"));
+    }
     let chain = track
         .child_mut("DeviceChain")
         .ok_or_else(|| missing("chain"))?;
@@ -1048,8 +1189,45 @@ fn apply_mixer(track: &mut Element, control: &str, value: &Value) -> Result<(), 
     }
 }
 
-/// A track's take lanes: each lane's name and its takes' places on the ruler.
+/// The main lane's clips of a track (the `Sample` lane, then the
+/// `ClipTimeable` lane, as `clip_at` walks them).
+fn main_lane(track: &Element) -> Vec<&Element> {
+    let sequencer = track
+        .child("DeviceChain")
+        .and_then(|dc| dc.child("MainSequencer"));
+    ["Sample", "ClipTimeable"]
+        .iter()
+        .filter_map(|holder| {
+            sequencer
+                .and_then(|s| s.child(holder))
+                .and_then(|h| h.child("ArrangerAutomation"))
+                .and_then(|a| a.child("Events"))
+        })
+        .flat_map(|events| events.children.iter())
+        .filter(|clip| CLIPS.contains(&clip.name.as_str()))
+        .collect()
+}
+
+/// A track's take lanes: each lane's name and its takes' places on the
+/// ruler; each take with its `TakeId` and the stretches of the main lane that
+/// came from it (the main-lane clips carrying the same `TakeId`).
 pub fn take_lanes_json(track: &Element) -> Value {
+    let main: Vec<(Option<f64>, f64, f64)> = main_lane(track)
+        .into_iter()
+        .map(|clip| {
+            (
+                num(clip, "TakeId"),
+                num(clip, "CurrentStart").unwrap_or(0.0),
+                num(clip, "CurrentEnd").unwrap_or(0.0),
+            )
+        })
+        .collect();
+    let gave = |take: Option<f64>| -> Vec<Value> {
+        main.iter()
+            .filter(|(id, _, _)| take.is_some() && *id == take)
+            .map(|(_, start, end)| json!({"start": start, "end": end}))
+            .collect()
+    };
     let lanes = track
         .child("TakeLanes")
         .and_then(|t| t.child("TakeLanes"))
@@ -1066,8 +1244,12 @@ pub fn take_lanes_json(track: &Element) -> Value {
                                 .children
                                 .iter()
                                 .filter(|clip| CLIPS.contains(&clip.name.as_str()))
-                                .map(|clip| json!({"name": value_of(clip, "Name").unwrap_or(""),
-                                    "start": num(clip, "CurrentStart").unwrap_or(0.0), "end": num(clip, "CurrentEnd").unwrap_or(0.0)}))
+                                .map(|clip| {
+                                    let take = num(clip, "TakeId");
+                                    json!({"name": value_of(clip, "Name").unwrap_or(""),
+                                        "start": num(clip, "CurrentStart").unwrap_or(0.0), "end": num(clip, "CurrentEnd").unwrap_or(0.0),
+                                        "takeId": take, "gave": gave(take)})
+                                })
                                 .collect()
                         })
                         .unwrap_or_default();
@@ -1098,10 +1280,332 @@ pub fn automation_json(root: &Element, track: &Element) -> Value {
 
 /// The mixer, take lanes and automation of every track, in document order.
 pub fn tracks_extra_json(root: &Element) -> Vec<Value> {
+    let returns = return_names(root);
     tracks(root)
         .into_iter()
-        .map(|track| json!({"mixer": mixer_json(track), "takeLanes": take_lanes_json(track), "automation": automation_json(root, track)}))
+        .map(|track| json!({"mixer": mixer_json(track, &returns), "takeLanes": take_lanes_json(track), "automation": automation_json(root, track)}))
         .collect()
+}
+
+// ---------------------------------------------------------------------------- the comp
+
+/// The set's tempo when it stands still over the whole set: the Main track's
+/// `Tempo`, unless an automation envelope moves it to more than one value.
+fn steady_tempo(root: &Element) -> Option<f64> {
+    let main = root.find("LiveSet")?.child("MainTrack")?;
+    let tempo = main.child("DeviceChain")?.child("Mixer")?.child("Tempo")?;
+    let manual = num(tempo, "Manual")?;
+    let target = tempo.child("AutomationTarget").and_then(|t| t.attr("Id"));
+    let mut values = main
+        .child("AutomationEnvelopes")
+        .and_then(|a| a.child("Envelopes"))
+        .into_iter()
+        .flat_map(|e| e.children.iter())
+        .filter(|env| {
+            target.is_some()
+                && env
+                    .child("EnvelopeTarget")
+                    .and_then(|t| value_of(t, "PointeeId"))
+                    == target
+        })
+        .flat_map(|env| {
+            env.child("Automation")
+                .and_then(|a| a.child("Events"))
+                .into_iter()
+                .flat_map(|events| events.children.iter())
+        })
+        .filter_map(|event| event.attr("Value")?.parse::<f64>().ok());
+    match values.next() {
+        None => Some(manual),
+        Some(first) => values.all(|v| v == first).then_some(first),
+    }
+}
+
+/// How far a clip's markers move for one beat on the ruler: one beat for a
+/// MIDI clip or a warped audio clip; for an unwarped audio clip, whose markers
+/// Live keeps in seconds (real sets: an unwarped clip's markers span its
+/// length in beats × 60 / tempo), the seconds of one beat at the set's tempo.
+fn marker_scale(clip: &Element, tempo: Option<f64>) -> Result<f64, String> {
+    if clip.name == "AudioClip" && flag(clip, "IsWarped") == Some(false) {
+        tempo
+            .filter(|bpm| *bpm > 0.0)
+            .map(|bpm| 60.0 / bpm)
+            .ok_or_else(|| {
+                "An unwarped audio clip keeps its markers in seconds, and this set's tempo moves: warp the clip to comp it".into()
+            })
+    } else {
+        Ok(1.0)
+    }
+}
+
+/// Cut a clip to `[from, to]` on the ruler (within its own span), its markers
+/// moved so its material stays where it stood: unlooped, `LoopStart` moves by
+/// the cut's offset and `LoopEnd` follows the length; looped, the play
+/// position (`StartRelative`) moves within the loop. `OutMarker` and the
+/// hidden loop stay, as Live's comped clips keep them.
+fn crop(clip: &mut Element, from: f64, to: f64, scale: f64) -> Result<(), String> {
+    let start = num(clip, "CurrentStart").ok_or("the clip carries no place in the document")?;
+    let lp = clip
+        .child_mut("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    fn get(lp: &Element, name: &str) -> Result<f64, String> {
+        num(lp, name).ok_or_else(|| format!("the clip carries no {name} in the document"))
+    }
+    let shift = (from - start) * scale;
+    if flag(lp, "LoopOn") == Some(true) {
+        let span = get(lp, "LoopEnd")? - get(lp, "LoopStart")?;
+        let moved = get(lp, "StartRelative")? + shift;
+        let within = if span > 0.0 {
+            moved.rem_euclid(span)
+        } else {
+            moved
+        };
+        set_value(lp, "StartRelative", &number_text(within))?;
+    } else {
+        let loop_start = get(lp, "LoopStart")? + shift;
+        set_value(lp, "LoopStart", &number_text(loop_start))?;
+        set_value(
+            lp,
+            "LoopEnd",
+            &number_text(loop_start + (to - from) * scale),
+        )?;
+    }
+    set_value(clip, "CurrentStart", &number_text(from))?;
+    set_value(clip, "CurrentEnd", &number_text(to))?;
+    clip.set_attr("Time", &number_text(from));
+    Ok(())
+}
+
+/// Copy the stretch `[from, to]` of take lane `lane` into the track's main
+/// lane, replacing what the main lane held there: a main-lane clip under the
+/// stretch is removed, one across its edge is cut at it, one across the whole
+/// stretch is split around it. Each copy is the take's clip, with its
+/// `TakeId`, cut to the stretch.
+fn comp(
+    track: &mut Element,
+    lane: usize,
+    from: f64,
+    to: f64,
+    tempo: Option<f64>,
+) -> Result<(), String> {
+    let take = track
+        .child("TakeLanes")
+        .and_then(|t| t.child("TakeLanes"))
+        .and_then(|t| t.children_named("TakeLane").nth(lane))
+        .ok_or_else(|| format!("The track has no take lane {lane}"))?;
+    let mut pieces = Vec::new();
+    for clip in take
+        .child("ClipAutomation")
+        .and_then(|c| c.child("Events"))
+        .into_iter()
+        .flat_map(|events| events.children.iter())
+        .filter(|clip| CLIPS.contains(&clip.name.as_str()))
+    {
+        let (start, end) = (
+            num(clip, "CurrentStart").unwrap_or(0.0),
+            num(clip, "CurrentEnd").unwrap_or(0.0),
+        );
+        let (a, b) = (from.max(start), to.min(end));
+        if b > a {
+            let mut copy = clip.clone();
+            crop(&mut copy, a, b, marker_scale(clip, tempo)?)?;
+            pieces.push(copy);
+        }
+    }
+    if pieces.is_empty() {
+        return Err(format!(
+            "The take holds nothing between beat {} and beat {}",
+            number_text(from),
+            number_text(to)
+        ));
+    }
+    let (holder, kind) = if track.name == "MidiTrack" {
+        ("ClipTimeable", "MidiClip")
+    } else {
+        ("Sample", "AudioClip")
+    };
+    if pieces.iter().any(|piece| piece.name != kind) {
+        return Err(format!(
+            "A take of this track is no {kind}: it cannot stand in its main lane"
+        ));
+    }
+    let mut next_id = main_lane(track)
+        .iter()
+        .filter_map(|clip| clip.attr("Id")?.parse::<u64>().ok())
+        .max()
+        .map_or(0, |id| id + 1);
+    let events = track
+        .child_mut("DeviceChain")
+        .and_then(|dc| dc.child_mut("MainSequencer"))
+        .and_then(|s| s.child_mut(holder))
+        .and_then(|h| h.child_mut("ArrangerAutomation"))
+        .and_then(|a| a.child_mut("Events"))
+        .ok_or("the track keeps no main lane in the document")?;
+    let mut kept = Vec::with_capacity(events.children.len() + pieces.len() + 1);
+    for clip in std::mem::take(&mut events.children) {
+        let place = (num(&clip, "CurrentStart"), num(&clip, "CurrentEnd"));
+        let (Some(start), Some(end)) = place else {
+            kept.push(clip);
+            continue;
+        };
+        if !CLIPS.contains(&clip.name.as_str()) || end <= from || start >= to {
+            kept.push(clip);
+            continue;
+        }
+        let scale = marker_scale(&clip, tempo)?;
+        if start < from {
+            let mut before = clip.clone();
+            crop(&mut before, start, from, scale)?;
+            kept.push(before);
+        }
+        if end > to {
+            let mut after = clip.clone();
+            crop(&mut after, to, end, scale)?;
+            if start < from {
+                after.set_attr("Id", &next_id.to_string());
+                next_id += 1;
+            }
+            kept.push(after);
+        }
+    }
+    for mut piece in pieces {
+        piece.set_attr("Id", &next_id.to_string());
+        next_id += 1;
+        kept.push(piece);
+    }
+    let at = |clip: &Element| num(clip, "CurrentStart").unwrap_or(f64::NEG_INFINITY);
+    kept.sort_by(|a, b| {
+        at(a)
+            .partial_cmp(&at(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    events.children = kept;
+    Ok(())
+}
+
+/// A track's main lane and take lanes, as a comp leaves them: each main-lane
+/// clip's name, place and the take it came from.
+fn comp_json(track: &Element) -> Value {
+    let clips: Vec<Value> = main_lane(track)
+        .into_iter()
+        .map(|clip| json!({"name": value_of(clip, "Name").unwrap_or(""), "start": num(clip, "CurrentStart").unwrap_or(0.0),
+            "end": num(clip, "CurrentEnd").unwrap_or(0.0), "takeId": num(clip, "TakeId")}))
+        .collect();
+    json!({"clips": clips, "takeLanes": take_lanes_json(track)})
+}
+
+// ---------------------------------------------------------------------------- the groove pool
+
+fn global_groove(root: &Element) -> Option<&Element> {
+    root.find("LiveSet")?
+        .child("MainTrack")?
+        .child("DeviceChain")?
+        .child("Mixer")?
+        .child("GlobalGrooveAmount")
+}
+
+/// The set's Groove Pool: each groove's id, name, Base and its Quantize,
+/// Timing, Random and Velocity amounts (Live's `Grid`, `QuantizationAmount`,
+/// `TimingAmount`, `RandomAmount`, `VelocityAmount`), and the set's Global
+/// Amount (the Main track's `GlobalGrooveAmount`) with the range Live keeps
+/// beside it.
+pub fn groove_pool_json(root: &Element) -> Value {
+    let grooves: Vec<Value> = root
+        .find("LiveSet")
+        .and_then(|set| set.child("GroovePool"))
+        .and_then(|pool| pool.child("Grooves"))
+        .into_iter()
+        .flat_map(|grooves| grooves.children_named("Groove"))
+        .map(|groove| {
+            let mut reading = json!({
+                "id": groove.attr("Id").and_then(|id| id.parse::<u64>().ok()),
+                "name": value_of(groove, "Name").unwrap_or(""),
+                "base": num(groove, "Grid").and_then(|i| GROOVE_BASE.get(i as usize)).map(|w| json!(w)).unwrap_or(Value::Null),
+            });
+            for (word, element) in GROOVE_AMOUNTS {
+                reading[*word] = json!(num(groove, element));
+            }
+            reading
+        })
+        .collect();
+    let global = global_groove(root);
+    let range = global.and_then(|g| g.child("MidiControllerRange"));
+    json!({
+        "grooves": grooves,
+        "amount": global.and_then(|g| num(g, "Manual")),
+        "amountRange": range.and_then(|r| Some(json!({"min": num(r, "Min")?, "max": num(r, "Max")?}))),
+    })
+}
+
+/// Write one groove's setting, or (no groove named) the set's Global Amount.
+fn apply_groove(
+    root: &mut Element,
+    groove: Option<u64>,
+    field: &str,
+    value: &Value,
+) -> Result<(), String> {
+    let Some(id) = groove else {
+        if field != "amount" {
+            return Err(format!(
+                "The pool's own setting is its Global Amount (\"amount\"); a groove's {field} names its groove"
+            ));
+        }
+        let global = root
+            .find_mut("LiveSet")
+            .and_then(|set| set.child_mut("MainTrack"))
+            .and_then(|main| main.child_mut("DeviceChain"))
+            .and_then(|dc| dc.child_mut("Mixer"))
+            .and_then(|mixer| mixer.child_mut("GlobalGrooveAmount"))
+            .ok_or("the set carries no Global Amount in the document")?;
+        let (low, high) = global
+            .child("MidiControllerRange")
+            .and_then(|r| Some((num(r, "Min")?, num(r, "Max")?)))
+            .ok_or("the set's Global Amount carries no range in the document")?;
+        let amount = value
+            .as_f64()
+            .filter(|v| v.is_finite() && (low..=high).contains(v))
+            .ok_or_else(|| {
+                format!(
+                    "Global Amount is from {} to {} percent",
+                    number_text(low),
+                    number_text(high)
+                )
+            })?;
+        return set_value(global, "Manual", &number_text(amount));
+    };
+    let wanted = id.to_string();
+    let groove = root
+        .find_mut("LiveSet")
+        .and_then(|set| set.child_mut("GroovePool"))
+        .and_then(|pool| pool.child_mut("Grooves"))
+        .and_then(|grooves| {
+            grooves
+                .children
+                .iter_mut()
+                .find(|g| g.name == "Groove" && g.attr("Id") == Some(wanted.as_str()))
+        })
+        .ok_or_else(|| format!("The set's groove pool holds no groove {id}"))?;
+    if field == "base" {
+        let index = index_of("Base", value, GROOVE_BASE)?;
+        return set_value(groove, "Grid", &index.to_string());
+    }
+    let element = GROOVE_AMOUNTS
+        .iter()
+        .find(|(word, _)| *word == field)
+        .map(|(_, element)| *element)
+        .ok_or_else(|| {
+            if field == "amount" {
+                "Global Amount is the pool's, not a groove's: name no groove to write it".to_string()
+            } else {
+                format!("A groove has no setting {field}: it has base, quantize, timing, random and velocity")
+            }
+        })?;
+    // Live's own grooves keep each amount from 0 to 100 (all 86 readable Core Library grooves, and the sets on this machine).
+    let amount = value
+        .as_f64()
+        .filter(|v| v.is_finite() && (0.0..=100.0).contains(v))
+        .ok_or_else(|| format!("A groove's {field} is from 0 to 100 percent"))?;
+    set_value(groove, element, &number_text(amount))
 }
 
 // ---------------------------------------------------------------------------- the operations
@@ -1174,18 +1678,74 @@ pub fn clip_write(
     Ok(json!({"clip": clip_reading(&root, clip), "revision": new_revision}))
 }
 
-/// Change one control of a track's mixer row; answer the row and the new revision.
+/// Change one control of a track's mixer row (a send by its index); answer
+/// the row and the new revision.
 pub fn mixer_write(
     path: &str,
     expected_revision: &str,
     track: usize,
     control: &str,
     value: &Value,
+    index: Option<usize>,
 ) -> Result<Value, String> {
     let (root, new_revision) = edit(path, expected_revision, |root| {
-        apply_mixer(track_at_mut(root, track)?, control, value)
+        apply_mixer(track_at_mut(root, track)?, control, value, index)
     })?;
-    Ok(json!({"mixer": mixer_json(track_at(&root, track)?), "revision": new_revision}))
+    let returns = return_names(&root);
+    Ok(json!({"mixer": mixer_json(track_at(&root, track)?, &returns), "revision": new_revision}))
+}
+
+/// Comp: copy the stretch `range` (`{start, end}` in beats) of a track's take
+/// lane `take` into its main lane; answer the main lane and take lanes as they
+/// now stand, and the new revision.
+pub fn take_comp(
+    path: &str,
+    expected_revision: &str,
+    track: usize,
+    take: usize,
+    range: &Value,
+) -> Result<Value, String> {
+    let from = beat(
+        "The comp's start",
+        range.get("start").unwrap_or(&Value::Null),
+    )?;
+    let to = beat("The comp's end", range.get("end").unwrap_or(&Value::Null))?;
+    if to <= from {
+        return Err("The comp's end lies after its start".into());
+    }
+    let (root, new_revision) = edit(path, expected_revision, |root| {
+        let tempo = steady_tempo(root);
+        comp(track_at_mut(root, track)?, take, from, to, tempo)
+    })?;
+    let mut reading = comp_json(track_at(&root, track)?);
+    reading["revision"] = json!(new_revision);
+    Ok(reading)
+}
+
+/// The set's Groove Pool, with the set's revision.
+pub fn groove_pool_read(path: &str) -> Result<Value, String> {
+    let (bytes, root) = open(path)?;
+    let mut reading = groove_pool_json(&root);
+    reading["revision"] = json!(revision(&bytes));
+    Ok(reading)
+}
+
+/// Change one groove's setting (`base`, `quantize`, `timing`, `random`,
+/// `velocity`), or with no groove the set's Global Amount (`amount`); answer
+/// the pool as it now stands and the new revision.
+pub fn groove_pool_write(
+    path: &str,
+    expected_revision: &str,
+    groove: Option<u64>,
+    field: &str,
+    value: &Value,
+) -> Result<Value, String> {
+    let (root, new_revision) = edit(path, expected_revision, |root| {
+        apply_groove(root, groove, field, value)
+    })?;
+    let mut reading = groove_pool_json(&root);
+    reading["revision"] = json!(new_revision);
+    Ok(reading)
 }
 
 #[cfg(test)]
@@ -1256,6 +1816,9 @@ mod tests {
         }
     }
     fn set_file() -> (SetFile, String) {
+        set_file_of(SET)
+    }
+    fn set_file_of(xml: &str) -> (SetFile, String) {
         use std::sync::atomic::{AtomicUsize, Ordering};
         static NEXT: AtomicUsize = AtomicUsize::new(0);
         let dir = std::env::temp_dir().join(format!(
@@ -1265,7 +1828,7 @@ mod tests {
         ));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("set.als");
-        let root = crate::xml::parse(SET).unwrap();
+        let root = crate::xml::parse(xml).unwrap();
         std::fs::write(&path, crate::write_gz(&root).unwrap()).unwrap();
         (SetFile(dir), path.to_str().unwrap().to_string())
     }
@@ -1459,6 +2022,18 @@ mod tests {
         )
         .unwrap_err();
         assert!(bad.contains("pitch is 0 to 127"));
+        // A note before the clip's start stands, as Live keeps it (real sets hold notes at negative times).
+        let early = clip_write(
+            &path,
+            rev,
+            0,
+            SLOT,
+            None,
+            Some(&[json!({"p": 60, "at": -0.5, "len": 1})]),
+            None,
+        )
+        .unwrap();
+        assert_eq!(early["clip"]["notes"][0]["at"].as_f64(), Some(-0.5));
     }
 
     #[test]
@@ -1527,7 +2102,7 @@ mod tests {
         );
         assert_eq!(
             extra[0]["takeLanes"],
-            json!([{"name": "Lane", "clips": [{"name": "Take 1", "start": 0.0, "end": 16.0}]}])
+            json!([{"name": "Lane", "clips": [{"name": "Take 1", "start": 0.0, "end": 16.0, "takeId": null, "gave": []}]}])
         );
         assert_eq!(
             extra[0]["automation"],
@@ -1543,18 +2118,388 @@ mod tests {
             ("monitor", json!("in")),
             ("activator", json!(false)),
         ] {
-            let wrote = mixer_write(&path, &rev, 0, control, &value).unwrap();
+            let wrote = mixer_write(&path, &rev, 0, control, &value, None).unwrap();
             assert_eq!(wrote["mixer"][control], value, "{control}");
             rev = wrote["revision"].as_str().unwrap().to_string();
         }
-        assert!(mixer_write(&path, &rev, 1, "solo", &json!(true))
+        assert!(mixer_write(&path, &rev, 1, "solo", &json!(true), None)
             .unwrap_err()
             .contains("no solo"));
-        assert!(mixer_write(&path, &rev, 0, "monitor", &json!("always"))
-            .unwrap_err()
-            .contains("Monitor takes one of in, auto, off"));
-        assert!(mixer_write(&path, &rev, 0, "output", &json!("Main"))
+        assert!(
+            mixer_write(&path, &rev, 0, "monitor", &json!("always"), None)
+                .unwrap_err()
+                .contains("Monitor takes one of in, auto, off")
+        );
+        assert!(mixer_write(&path, &rev, 0, "output", &json!("Main"), None)
             .unwrap_err()
             .contains("routings Live offers"));
+    }
+
+    /// A comped set in Live 12's own shape: element names, nesting and values copied from real sets on this machine — the
+    /// sends of `waddamaess.als` (two returns; a return's own sends off), the take lanes and `TakeId`s of the template "Piano and
+    /// voices mastering" (3-LABS), its Groove Pool's two grooves, and an unwarped audio take whose markers are in seconds.
+    const COMPED: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton MajorVersion="5" MinorVersion="12.0_12049">
+<LiveSet>
+<Tracks>
+<MidiTrack Id="12">
+<Name><EffectiveName Value="Keys"/><UserName Value=""/></Name>
+<TakeLanes><TakeLanes>
+<TakeLane Id="0"><Height Value="51"/><IsContentSelectedInDocument Value="false"/><ClipAutomation><Events>
+<MidiClip Id="0" Time="0"><LomId Value="0"/><CurrentStart Value="0"/><CurrentEnd Value="16"/><Loop><LoopStart Value="0"/><LoopEnd Value="16"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="16"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="16"/></Loop><Name Value="Keys"/><Color Value="9"/><Envelopes><Envelopes/></Envelopes><IsWarped Value="true"/><TakeId Value="1"/><Notes><KeyTracks><KeyTrack Id="0"><Notes><MidiNoteEvent Time="1" Duration="1" Velocity="100" VelocityDeviation="0" OffVelocity="64" Probability="1" IsEnabled="true" NoteId="1"/></Notes><MidiKey Value="60"/></KeyTrack></KeyTracks><NoteIdGenerator><NextId Value="2"/></NoteIdGenerator></Notes></MidiClip>
+</Events></ClipAutomation><Name Value="Lane"/><Annotation Value=""/><Audition Value="false"/></TakeLane>
+<TakeLane Id="1"><Height Value="51"/><IsContentSelectedInDocument Value="false"/><ClipAutomation><Events>
+<MidiClip Id="0" Time="4"><LomId Value="0"/><CurrentStart Value="4"/><CurrentEnd Value="12"/><Loop><LoopStart Value="1"/><LoopEnd Value="9"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="9"/><HiddenLoopStart Value="1"/><HiddenLoopEnd Value="9"/></Loop><Name Value="Keys 2"/><Color Value="9"/><Envelopes><Envelopes/></Envelopes><IsWarped Value="true"/><TakeId Value="2"/><Notes><KeyTracks><KeyTrack Id="0"><Notes><MidiNoteEvent Time="3" Duration="0.5" Velocity="90" VelocityDeviation="0" OffVelocity="64" Probability="1" IsEnabled="true" NoteId="1"/><MidiNoteEvent Time="5" Duration="0.5" Velocity="90" VelocityDeviation="0" OffVelocity="64" Probability="1" IsEnabled="true" NoteId="2"/></Notes><MidiKey Value="64"/></KeyTrack></KeyTracks><NoteIdGenerator><NextId Value="3"/></NoteIdGenerator></Notes></MidiClip>
+</Events></ClipAutomation><Name Value="Lane"/><Annotation Value=""/><Audition Value="false"/></TakeLane>
+</TakeLanes><AreTakeLanesFolded Value="false"/></TakeLanes>
+<DeviceChain>
+<Mixer><Sends>
+<TrackSendHolder Id="0"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="30"><LockEnvelope Value="0"/></AutomationTarget><ModulationTarget Id="31"><LockEnvelope Value="0"/></ModulationTarget></Send><EnabledByUser Value="true"/></TrackSendHolder>
+<TrackSendHolder Id="1"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="32"><LockEnvelope Value="0"/></AutomationTarget><ModulationTarget Id="33"><LockEnvelope Value="0"/></ModulationTarget></Send><EnabledByUser Value="true"/></TrackSendHolder>
+</Sends><Speaker><Manual Value="true"/></Speaker><SoloSink Value="false"/><Volume><Manual Value="1"/><AutomationTarget Id="40"><LockEnvelope Value="0"/></AutomationTarget></Volume></Mixer>
+<MainSequencer>
+<ClipTimeable><ArrangerAutomation><Events>
+<MidiClip Id="5" Time="0"><LomId Value="0"/><CurrentStart Value="0"/><CurrentEnd Value="16"/><Loop><LoopStart Value="0"/><LoopEnd Value="16"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="16"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="16"/></Loop><Name Value="Keys"/><Color Value="9"/><Envelopes><Envelopes/></Envelopes><IsWarped Value="true"/><TakeId Value="1"/><Notes><KeyTracks><KeyTrack Id="0"><Notes><MidiNoteEvent Time="1" Duration="1" Velocity="100" VelocityDeviation="0" OffVelocity="64" Probability="1" IsEnabled="true" NoteId="1"/></Notes><MidiKey Value="60"/></KeyTrack></KeyTracks><NoteIdGenerator><NextId Value="2"/></NoteIdGenerator></Notes></MidiClip>
+</Events></ArrangerAutomation></ClipTimeable>
+<Recorder><IsArmed Value="false"/><TakeCounter Value="3"/></Recorder>
+</MainSequencer>
+</DeviceChain>
+</MidiTrack>
+<AudioTrack Id="13">
+<Name><EffectiveName Value="Voice"/><UserName Value=""/></Name>
+<TakeLanes><TakeLanes>
+<TakeLane Id="0"><Height Value="51"/><IsContentSelectedInDocument Value="false"/><ClipAutomation><Events>
+<AudioClip Id="0" Time="0"><LomId Value="0"/><CurrentStart Value="0"/><CurrentEnd Value="8"/><Loop><LoopStart Value="0"/><LoopEnd Value="4"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="4"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="4"/></Loop><Name Value="Voice"/><Color Value="22"/><Envelopes><Envelopes/></Envelopes><IsWarped Value="false"/><TakeId Value="1"/></AudioClip>
+</Events></ClipAutomation><Name Value="Lane"/><Annotation Value=""/><Audition Value="false"/></TakeLane>
+</TakeLanes><AreTakeLanesFolded Value="false"/></TakeLanes>
+<DeviceChain>
+<Mixer><Sends>
+<TrackSendHolder Id="0"><Send><LomId Value="0"/><Manual Value="0.25"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="34"><LockEnvelope Value="0"/></AutomationTarget></Send><EnabledByUser Value="true"/></TrackSendHolder>
+<TrackSendHolder Id="1"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="36"><LockEnvelope Value="0"/></AutomationTarget></Send><EnabledByUser Value="true"/></TrackSendHolder>
+</Sends><Speaker><Manual Value="true"/></Speaker></Mixer>
+<MainSequencer><Sample><ArrangerAutomation><Events/></ArrangerAutomation></Sample></MainSequencer>
+</DeviceChain>
+</AudioTrack>
+<ReturnTrack Id="2">
+<Name><EffectiveName Value="A-Reverb"/><UserName Value=""/></Name>
+<DeviceChain><Mixer><Sends>
+<TrackSendHolder Id="0"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="50"><LockEnvelope Value="0"/></AutomationTarget></Send><EnabledByUser Value="false"/></TrackSendHolder>
+<TrackSendHolder Id="1"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="52"><LockEnvelope Value="0"/></AutomationTarget></Send><EnabledByUser Value="false"/></TrackSendHolder>
+</Sends><Speaker><Manual Value="true"/></Speaker></Mixer></DeviceChain>
+</ReturnTrack>
+<ReturnTrack Id="3">
+<Name><EffectiveName Value="B-Delay"/><UserName Value=""/></Name>
+<DeviceChain><Mixer><Sends>
+<TrackSendHolder Id="0"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="54"><LockEnvelope Value="0"/></AutomationTarget></Send><EnabledByUser Value="false"/></TrackSendHolder>
+<TrackSendHolder Id="1"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="56"><LockEnvelope Value="0"/></AutomationTarget></Send><EnabledByUser Value="false"/></TrackSendHolder>
+</Sends><Speaker><Manual Value="true"/></Speaker></Mixer></DeviceChain>
+</ReturnTrack>
+</Tracks>
+<MainTrack>
+<AutomationEnvelopes><Envelopes/></AutomationEnvelopes>
+<DeviceChain><Mixer><Sends/><Speaker><Manual Value="true"/></Speaker>
+<Tempo><LomId Value="0"/><Manual Value="120"/><MidiControllerRange><Min Value="60"/><Max Value="200"/></MidiControllerRange><AutomationTarget Id="8"><LockEnvelope Value="0"/></AutomationTarget></Tempo>
+<GlobalGrooveAmount><LomId Value="0"/><Manual Value="100"/><MidiControllerRange><Min Value="0"/><Max Value="131.25"/></MidiControllerRange><AutomationTarget Id="11"><LockEnvelope Value="0"/></AutomationTarget></GlobalGrooveAmount>
+</Mixer></DeviceChain>
+</MainTrack>
+<Scenes><Scene Id="0"/></Scenes>
+<GroovePool><LomId Value="0"/><Grooves>
+<Groove Id="0"><LomId Value="0"/><Name Value="2 Step Shuffled 16ths"/><Clip><Value><MidiClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="4"/></MidiClip></Value></Clip><Grid Value="3"/><QuantizationAmount Value="0"/><TimingAmount Value="100"/><RandomAmount Value="0"/><VelocityAmount Value="100"/><Annotation Value=""/><Selection Value="false"/><SourceContext><SourceContext Id="1"/></SourceContext></Groove>
+<Groove Id="1"><LomId Value="0"/><Name Value="Disco Live Feel 16ths"/><Clip><Value><MidiClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="4"/></MidiClip></Value></Clip><Grid Value="3"/><QuantizationAmount Value="0"/><TimingAmount Value="100"/><RandomAmount Value="20"/><VelocityAmount Value="50"/><Annotation Value=""/><Selection Value="false"/><SourceContext><SourceContext Id="0"/></SourceContext></Groove>
+</Grooves></GroovePool>
+</LiveSet>
+</Ableton>"#;
+
+    fn revision_of(path: &str) -> String {
+        groove_pool_read(path).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
+    fn main_lane_of(reading: &Value) -> Vec<(String, f64, f64, Option<f64>)> {
+        reading["clips"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| {
+                (
+                    c["name"].as_str().unwrap().to_string(),
+                    c["start"].as_f64().unwrap(),
+                    c["end"].as_f64().unwrap(),
+                    c["takeId"].as_f64(),
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn each_send_reads_by_the_return_it_feeds_and_writes_on_the_revision() {
+        let (_dir, path) = set_file_of(COMPED);
+        let (_, root) = open(&path).unwrap();
+        let extra = tracks_extra_json(&root);
+        let floor = 0.0003162277571;
+        assert_eq!(
+            extra[0]["mixer"]["sends"],
+            json!([{"name": "A-Reverb", "send": "Send A", "value": floor, "min": floor, "max": 1.0, "on": true},
+                   {"name": "B-Delay", "send": "Send B", "value": floor, "min": floor, "max": 1.0, "on": true}])
+        );
+        assert_eq!(
+            extra[2]["mixer"]["sends"][0]["on"], false,
+            "a return's own sends are off until Live turns them on"
+        );
+        assert!(
+            extra[4]["mixer"].get("sends").is_none(),
+            "the Main track has no sends"
+        );
+        let rev = revision_of(&path);
+        let wrote = mixer_write(&path, &rev, 0, "send", &json!(0.5), Some(1)).unwrap();
+        assert_eq!(wrote["mixer"]["sends"][1]["value"].as_f64(), Some(0.5));
+        assert_eq!(
+            wrote["mixer"]["sends"][0]["value"].as_f64(),
+            Some(floor),
+            "only the named send moves"
+        );
+        assert_eq!(
+            wrote["mixer"]["activator"], true,
+            "the row's other controls stand"
+        );
+        let rev = wrote["revision"].as_str().unwrap();
+        for (track, value, index, said) in [
+            (0, json!(2.0), Some(0), "Send A is a level from"),
+            (0, json!(0.5), None, "named by its index"),
+            (0, json!(0.5), Some(2), "no Send C"),
+            (2, json!(0.5), Some(1), "Send B is off on this track"),
+        ] {
+            let refused = mixer_write(&path, rev, track, "send", &value, index).unwrap_err();
+            assert!(refused.contains(said), "{refused} lacks {said}");
+        }
+        assert!(mixer_write(&path, rev, 0, "solo", &json!(true), Some(0))
+            .unwrap_err()
+            .contains("takes no index"));
+        assert!(
+            mixer_write(&path, &rev_stale(), 0, "send", &json!(0.5), Some(0))
+                .unwrap_err()
+                .contains("changed since it was read")
+        );
+    }
+    fn rev_stale() -> String {
+        "sha256:0".into()
+    }
+
+    #[test]
+    fn a_clip_envelope_moves_a_send_named_as_live_names_it() {
+        let (_dir, path) = set_file_of(COMPED);
+        let rev = revision_of(&path);
+        let send_b =
+            vec![json!({"device": "Mixer", "parameter": "Send B", "points": [[0, 0.5], [8, 1.0]]})];
+        let wrote = clip_write(
+            &path,
+            &rev,
+            0,
+            ClipAt::Arrangement(0),
+            None,
+            None,
+            Some(&send_b),
+        )
+        .unwrap();
+        assert_eq!(
+            wrote["clip"]["envelopes"],
+            json!([{"target": "32", "device": "Mixer", "parameter": "Send B", "points": [[0.0, 0.5], [8.0, 1.0]]}]),
+            "Send B is the track's own second send, resolved within the clip's track"
+        );
+        let rev = wrote["revision"].as_str().unwrap();
+        let send_c = vec![json!({"device": "Mixer", "parameter": "Send C", "points": [[0, 1]]})];
+        assert!(clip_write(
+            &path,
+            rev,
+            0,
+            ClipAt::Arrangement(0),
+            None,
+            None,
+            Some(&send_c)
+        )
+        .unwrap_err()
+        .contains("no Mixer Send C"));
+    }
+
+    #[test]
+    fn a_comp_copies_the_takes_stretch_into_the_main_lane_and_names_its_take() {
+        let (_dir, path) = set_file_of(COMPED);
+        let rev = revision_of(&path);
+        let comped = take_comp(&path, &rev, 0, 1, &json!({"start": 6, "end": 10})).unwrap();
+        assert_eq!(
+            main_lane_of(&comped),
+            vec![
+                ("Keys".into(), 0.0, 6.0, Some(1.0)),
+                ("Keys 2".into(), 6.0, 10.0, Some(2.0)),
+                ("Keys".into(), 10.0, 16.0, Some(1.0)),
+            ],
+            "the stretch replaces what the main lane held, the clip around it split"
+        );
+        assert_eq!(
+            comped["takeLanes"][1]["clips"][0]["gave"],
+            json!([{"start": 6.0, "end": 10.0}]),
+            "the take lane marks the stretch it gave"
+        );
+        assert_eq!(
+            comped["takeLanes"][0]["clips"][0]["gave"],
+            json!([{"start": 0.0, "end": 6.0}, {"start": 10.0, "end": 16.0}])
+        );
+        // The copy is the take's own clip, its markers moved by the stretch's offset (Live's comp: LoopStart = the take's +
+        // the offset, LoopEnd = LoopStart + the length, OutMarker and the hidden loop the take's), its notes the take's.
+        let rev = comped["revision"].as_str().unwrap();
+        let copy = clip_json(&path, 0, ClipAt::Arrangement(1)).unwrap();
+        assert_eq!(copy["revision"], json!(rev));
+        let copy = &copy["clip"];
+        assert_eq!(
+            (copy["start"].as_f64(), copy["end"].as_f64()),
+            (Some(3.0), Some(7.0))
+        );
+        assert_eq!(copy["notes"].as_array().unwrap().len(), 2);
+        let (_, root) = open(&path).unwrap();
+        let track = track_at(&root, 0).unwrap();
+        let lane = main_lane(track);
+        let loop_of = |clip: &Element, name: &str| clip.child("Loop").and_then(|l| num(l, name));
+        assert_eq!(loop_of(lane[1], "OutMarker"), Some(9.0));
+        assert_eq!(
+            (loop_of(lane[2], "LoopStart"), loop_of(lane[2], "LoopEnd")),
+            (Some(10.0), Some(16.0)),
+            "the piece after the stretch keeps its material where it stood"
+        );
+        assert_eq!(
+            (lane[0].attr("Id"), lane[1].attr("Id"), lane[2].attr("Id")),
+            (Some("5"), Some("7"), Some("6")),
+            "the split piece and the copy take the main lane's next ids"
+        );
+        assert_eq!(lane[1].attr("Time"), Some("6"));
+        // Comping the whole of take 1 again leaves its one stretch standing.
+        let whole = take_comp(&path, rev, 0, 0, &json!({"start": 0, "end": 16})).unwrap();
+        assert_eq!(
+            main_lane_of(&whole),
+            vec![("Keys".into(), 0.0, 16.0, Some(1.0))]
+        );
+    }
+
+    #[test]
+    fn a_comp_outside_the_take_or_on_a_moved_set_is_refused_and_writes_nothing() {
+        let (_dir, path) = set_file_of(COMPED);
+        let rev = revision_of(&path);
+        for (lane, range, said) in [
+            (
+                1,
+                json!({"start": 13, "end": 15}),
+                "holds nothing between beat 13 and beat 15",
+            ),
+            (5, json!({"start": 0, "end": 4}), "no take lane 5"),
+            (1, json!({"start": 8, "end": 6}), "end lies after its start"),
+            (1, json!({"start": -1, "end": 6}), "a place in beats"),
+        ] {
+            let refused = take_comp(&path, &rev, 0, lane, &range).unwrap_err();
+            assert!(refused.contains(said), "{refused} lacks {said}");
+        }
+        assert!(
+            take_comp(&path, "sha256:0", 0, 1, &json!({"start": 6, "end": 10}))
+                .unwrap_err()
+                .contains("changed since it was read")
+        );
+        assert_eq!(revision_of(&path), rev, "a refusal writes nothing");
+    }
+
+    #[test]
+    fn an_unwarped_audio_take_comps_in_seconds_at_a_steady_tempo_only() {
+        let (_dir, path) = set_file_of(COMPED);
+        let rev = revision_of(&path);
+        let comped = take_comp(&path, &rev, 1, 0, &json!({"start": 2, "end": 6})).unwrap();
+        assert_eq!(
+            main_lane_of(&comped),
+            vec![("Voice".into(), 2.0, 6.0, Some(1.0))]
+        );
+        let (_, root) = open(&path).unwrap();
+        let lane = main_lane(track_at(&root, 1).unwrap());
+        let loop_of = |name: &str| lane[0].child("Loop").and_then(|l| num(l, name));
+        assert_eq!(
+            (loop_of("LoopStart"), loop_of("LoopEnd")),
+            (Some(1.0), Some(3.0)),
+            "two beats at 120 BPM is one second"
+        );
+        let moving = COMPED.replace(
+            "<AutomationEnvelopes><Envelopes/></AutomationEnvelopes>",
+            r#"<AutomationEnvelopes><Envelopes><AutomationEnvelope Id="0"><EnvelopeTarget><PointeeId Value="8"/></EnvelopeTarget><Automation><Events><FloatEvent Id="1" Time="-63072000" Value="120"/><FloatEvent Id="2" Time="16" Value="90"/></Events></Automation></AutomationEnvelope></Envelopes></AutomationEnvelopes>"#,
+        );
+        let (_moving_dir, moving_path) = set_file_of(&moving);
+        let rev = revision_of(&moving_path);
+        assert!(
+            take_comp(&moving_path, &rev, 1, 0, &json!({"start": 2, "end": 6}))
+                .unwrap_err()
+                .contains("tempo moves")
+        );
+        assert!(
+            take_comp(&moving_path, &rev, 0, 1, &json!({"start": 6, "end": 10})).is_ok(),
+            "a MIDI take keeps its markers in beats whatever the tempo"
+        );
+    }
+
+    #[test]
+    fn the_groove_pool_reads_and_writes_lives_own_elements() {
+        let (_dir, path) = set_file_of(COMPED);
+        let pool = groove_pool_read(&path).unwrap();
+        assert_eq!(
+            pool["grooves"][1],
+            json!({"id": 1, "name": "Disco Live Feel 16ths", "base": "1/16", "quantize": 0.0, "timing": 100.0, "random": 20.0, "velocity": 50.0})
+        );
+        assert_eq!(pool["amount"].as_f64(), Some(100.0));
+        assert_eq!(pool["amountRange"], json!({"min": 0.0, "max": 131.25}));
+        let mut rev = pool["revision"].as_str().unwrap().to_string();
+        for (groove, field, value) in [
+            (Some(1), "base", json!("1/8t")),
+            (Some(1), "random", json!(35)),
+            (Some(0), "velocity", json!(12.5)),
+            (None, "amount", json!(120)),
+        ] {
+            let wrote = groove_pool_write(&path, &rev, groove, field, &value).unwrap();
+            rev = wrote["revision"].as_str().unwrap().to_string();
+        }
+        let pool = groove_pool_read(&path).unwrap();
+        assert_eq!(pool["grooves"][1]["base"], "1/8t");
+        assert_eq!(pool["grooves"][1]["random"].as_f64(), Some(35.0));
+        assert_eq!(pool["grooves"][0]["velocity"].as_f64(), Some(12.5));
+        assert_eq!(pool["amount"].as_f64(), Some(120.0));
+        let (_, root) = open(&path).unwrap();
+        assert_eq!(
+            root.find("Grooves")
+                .and_then(|grooves| value_of(&grooves.children[1], "Grid")),
+            Some("2"),
+            "Base is Live's Grid index"
+        );
+        for (groove, field, value, said) in [
+            (Some(1), "velocity", json!(150), "velocity is from 0 to 100"),
+            (
+                Some(1),
+                "base",
+                json!("1/64"),
+                "Base takes one of 1/4, 1/8, 1/8t, 1/16, 1/16t, 1/32",
+            ),
+            (
+                None,
+                "amount",
+                json!(140),
+                "Global Amount is from 0 to 131.25",
+            ),
+            (Some(9), "timing", json!(50), "holds no groove 9"),
+            (Some(1), "swing", json!(50), "no setting swing"),
+            (None, "timing", json!(50), "names its groove"),
+            (Some(1), "amount", json!(50), "the pool's, not a groove's"),
+        ] {
+            let refused = groove_pool_write(&path, &rev, groove, field, &value).unwrap_err();
+            assert!(refused.contains(said), "{refused} lacks {said}");
+        }
+        assert_eq!(revision_of(&path), rev, "a refusal writes nothing");
+        // A set whose pool is empty reads no grooves ("Drop clips or grooves here"), and no Global Amount where it keeps none.
+        let (_none_dir, none) = set_file_of(&SET.replace(
+            r#"<Groove Id="7"><Name Value="Swing 16ths 57"/></Groove>"#,
+            "",
+        ));
+        assert_eq!(groove_pool_read(&none).unwrap()["grooves"], json!([]));
+        assert_eq!(groove_pool_read(&none).unwrap()["amount"], Value::Null);
     }
 }

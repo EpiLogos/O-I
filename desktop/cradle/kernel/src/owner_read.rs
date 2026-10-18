@@ -443,6 +443,9 @@ impl PreparedRead {
             | KernelOp::LiveClipRead { .. }
             | KernelOp::LiveClipWrite { .. }
             | KernelOp::LiveTrackMixerWrite { .. }
+            | KernelOp::LiveTakeComp { .. }
+            | KernelOp::LiveGroovePoolRead { .. }
+            | KernelOp::LiveGroovePoolWrite { .. }
             | KernelOp::CompositionRead { .. }
             // Central's own route and Workcell's status record nothing in the
             // kernel. Central's Day writes are prepared writes (owner_write.rs):
@@ -454,6 +457,13 @@ impl PreparedRead {
             // The bounded telemetry follow waits on the owner for its whole
             // window; it reads only the owner's state file, never the kernel's.
             | KernelOp::FactoryOwner { request: crate::factory::OwnerRequest::TelemetryWatch { .. } } => Some(Self {
+                client: client.clone(),
+                world,
+                op: op.clone(),
+                temporal: None,
+                graph: None,
+            }),
+            KernelOp::Page { request } if !request.is_write() => Some(Self {
                 client: client.clone(),
                 world,
                 op: op.clone(),
@@ -622,6 +632,19 @@ impl PreparedRead {
         // Central's route, its Day reading and Workcell's status need no
         // World, so none pays for its discovery; a NOW reading reads it only
         // to gate a named project.
+        // A page and a world's pages: the file owner's reads, each island
+        // placed by its form (page.rs); no World is read.
+        if let KernelOp::Page { request } = &self.op {
+            let data = match request {
+                crate::page::Request::Read { location } => crate::page::read(&self.client, location)?,
+                crate::page::Request::List { path, limit } => crate::page::list_pages(&self.client, path, *limit)?,
+                crate::page::Request::MutateField { .. } => return Err("A page's write is the owner write's, not a read".into()),
+            };
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::PageReading { data },
+            });
+        }
         if let KernelOp::Central { project, request } = &self.op {
             return Ok(KernelOpOutcome {
                 receipts: vec![],

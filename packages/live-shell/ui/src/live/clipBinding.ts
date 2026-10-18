@@ -10,7 +10,9 @@
 //   - the clip whole — its markers, signature, groove, own mode, follow actions, launch, notes and envelopes — from the set's owner
 //     (kernel live_clip_read, packages/live-set/src/edit.rs), read again whenever the set is.
 // Every setting writes to the set's owner against the set's revision (live/liveWrites.ts writeLiveClip); the MIDI tools rewrite the
-// notes (live/liveClipTools.ts) and write them; the Mixer envelopes write the clip's own Volume and Pan envelopes. An arrangement
+// notes (live/liveClipTools.ts) and write them; the Mixer envelopes write the clip's own Volume, Pan and Send envelopes ("Send A"
+// onward, one for each return the part sends to). The clip's colour is its own palette index, drawn and chosen as Live's 70-colour
+// palette (live/livePalette.ts); until the clip is read whole it wears its track's colour. An arrangement
 // clip is placed, not launched: no Launch tab (Live cap 47). An audio clip has no Notes, no MPE and no MIDI tools; its Sample tab is
 // not in the design yet (PROPOSE). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
@@ -23,7 +25,8 @@ import type {SetSelection} from '../shell/liveSelection'
 import type {SetSummary} from '../shell/useSet'
 import {liveClipOf, type LiveClipReading} from './LiveClip'
 import type {ModeInForce} from './modes'
-import type {LiveClipAt, LiveClipReading as LiveClipWholeReading} from '../../../../../desktop/cradle/src/kernel/types'
+import type {LiveClipAt, LiveClipReading as LiveClipWholeReading, LiveSend} from '../../../../../desktop/cradle/src/kernel/types'
+import {liveColour, liveColourIndex} from './livePalette'
 import {clipAtOf, useLiveClipWhole, writeLiveClip} from './liveWrites'
 import * as tools from './liveClipTools'
 
@@ -42,10 +45,13 @@ export function setModeValues(mode: ModeInForce): Values {
 
 /** The clip's readings on the design's keys: the selection's own reading, the set's mode in force, and the owner's whole clip
  * where it is read. A value the owner does not report is left out. Pure. */
-export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour: string | null | undefined, whole: LiveClipWholeReading | null = null): Values {
+export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour: string | null | undefined, whole: LiveClipWholeReading | null = null,
+  sends: readonly LiveSend[] | null = null): Values {
   const values: Record<string, Value> = {name: clip.name, ...setModeValues(mode)}
   if (colour) values.colour = colour
   if (!whole) return values
+  const own = liveColour(whole.colourIndex)
+  if (own) values.colour = own
   const put = (key: string, value: Value | null | undefined) => { if (value !== null && value !== undefined) values[key] = value }
   put('name', whole.name)
   put('active', whole.active)
@@ -57,7 +63,7 @@ export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour:
   put('linked', whole.linked); put('multiplier', whole.multiplier)
   put('launch', whole.launch); put('legato', whole.legato); put('quantize', whole.quantize); put('launchVelocity', whole.launchVelocity)
   if (whole.notes) values.notes = JSON.stringify(whole.notes.map(n => ({id: String(n.id), p: n.p, at: n.at, len: n.len, vel: n.vel, chance: n.chance})))
-  for (const [key, mixer] of Object.entries(MIXER_ENVELOPES)) {
+  for (const [key, mixer] of Object.entries({...MIXER_ENVELOPES, ...sendEnvelopes(sends)})) {
     const env = whole.envelopes.find(e => e.device === 'Mixer' && e.parameter === mixer.parameter)
     if (env) values[key] = JSON.stringify(env.points.map(([at, v]) => [at, mixer.toDesign(v)]))
   }
@@ -66,10 +72,29 @@ export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour:
 
 const SET_OWNER = 'Live set (live-set, the .als document)'
 
+type MixerEnvelope = {parameter: string; toDesign: (v: number) => number; toSet: (v: number) => number}
+
 /** The design's Mixer envelopes and the set's own: Live keeps Volume as linear gain (1 = 0 dB) and Pan as −1…1. */
-const MIXER_ENVELOPES: Readonly<Record<string, {parameter: string; toDesign: (v: number) => number; toSet: (v: number) => number}>> = {
+const MIXER_ENVELOPES: Readonly<Record<string, MixerEnvelope>> = {
   'env.mixer.volume': {parameter: 'Volume', toDesign: v => (v > 0 ? 20 * Math.log10(v) : -60), toSet: db => (db <= -60 ? 0 : 10 ** (db / 20))},
   'env.mixer.pan': {parameter: 'Pan', toDesign: v => v * 50, toSet: p => Math.max(-1, Math.min(1, p / 50))},
+}
+
+/** A send's lowest level, as Live 12 keeps it in every set (each Send's MidiControllerRange Min: −70 dB). */
+const SEND_FLOOR = 0.0003162277571
+
+/** The part's send envelopes, one for each send the set's owner reads on its track: `env.mixer.sendA` moves "Send A", and onward.
+ * Live keeps a send as linear gain within its range; the design draws dB. */
+export function sendEnvelopes(sends: readonly LiveSend[] | null): Record<string, MixerEnvelope> {
+  const out: Record<string, MixerEnvelope> = {}
+  for (const send of sends ?? []) {
+    const letter = /^Send ([A-Z])$/.exec(send.send)?.[1]
+    if (!letter) continue
+    const low = send.min ?? SEND_FLOOR, high = send.max ?? 1
+    out[`env.mixer.send${letter}`] = {parameter: send.send, toDesign: v => 20 * Math.log10(Math.max(v, low)),
+      toSet: db => Math.max(low, Math.min(high, 10 ** (db / 20)))}
+  }
+  return out
 }
 
 /** The settings the design draws, each the owner's own word (packages/live-set/src/edit.rs apply_settings). */
@@ -96,7 +121,6 @@ const VIEW: Readonly<Record<string, string>> = {
 const REFUSED: Readonly<Record<string, string>> = {
   'env.torus.*': 'The Torus is the shell\'s own instrument, not a device of the set: a clip envelope of it has no owner in the .als document.',
   'env.scale.*': 'Scale mapping is the shell\'s own device, not a device of the set: a clip envelope of it has no owner in the .als document.',
-  'env.mixer.sendA': missingOp('Send A envelope', 'live_clip_write envelopes naming a track send (the document keeps sends under TrackSendHolder, one per return)', SET_OWNER),
   'env.mode': missingOp('Envelope mode', 'Live\'s modulation envelopes are not read from the document yet', SET_OWNER),
   'env.linked': missingOp('Envelope link', 'an envelope\'s own loop length is not read from the document yet', SET_OWNER),
 }
@@ -154,7 +178,8 @@ const NOTE_PRESSES = ['duplicate', 'fitToScale', 'invert', 'addInterval', 'doubl
 
 /** clip:live's wiring on the set's owner: where the clip is read whole, every setting, tool and Mixer envelope writes to it; where it
  * is not (no set path, the kernel out of reach), each says why. */
-export function liveWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading | null, hostId: string, unread: string | null): ClipWiring {
+export function liveWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading | null, hostId: string, unread: string | null,
+  sends: readonly LiveSend[] | null = null): ClipWiring {
   const why = !address ? 'No clip of an open set is selected.' : !whole ? `The clip is not read whole yet${unread ? `: ${unread}` : ''}.` : null
   const acts: Record<string, (value: Value) => Promise<void>> = {}
   const refused: Record<string, string> = {...REFUSED}
@@ -173,18 +198,30 @@ export function liveWiring(address: LiveClipAddress | null, whole: LiveClipWhole
       await write({notes: result.notes, ...(result.set ? {set: result.set} : {})})
     }
   }
-  for (const [key, mixer] of Object.entries(MIXER_ENVELOPES)) {
+  const sendsOf = sendEnvelopes(sends)
+  for (const [key, mixer] of Object.entries({...MIXER_ENVELOPES, ...sendsOf})) {
     if (why) { refused[key] = why; continue }
     acts[key] = async value => {
       const rows = typeof value === 'string' ? JSON.parse(value) as [number, number][] : []
       await write({envelopes: [{device: 'Mixer', parameter: mixer.parameter, points: rows.map(([at, v]) => [at, mixer.toSet(v)])}]})
     }
   }
+  if (!Object.keys(sendsOf).length) {
+    const none = why ?? (sends ? 'This part sends nowhere: the set has no return track.' : 'The set\'s owner reports no sends for this part.')
+    refused['env.mixer.sendA'] = none
+    refused['env.mixer.send*'] = none
+  }
+  if (why) refused.colour = why
+  else acts.colour = async value => {
+    const index = liveColourIndex(value)
+    if (index === null) throw new Error('A Live clip\'s colour is one of Live\'s 70 palette colours.')
+    await write({set: {colourIndex: index}})
+  }
   return {
     reads: {
-      name: 'the clip\'s name (the set\'s owner)', colour: 'the clip\'s track colour (the tracks pane)',
+      name: 'the clip\'s name (the set\'s owner)', colour: 'the clip\'s own colour, its palette index in Live\'s palette (the set\'s owner); until read whole, its track\'s colour (the tracks pane)',
       'set.root': 'the set\'s mode in force: its root (the kernel\'s mode catalogue)', 'set.mode': 'the set\'s mode in force: its lens mode, where it is one of the seven',
-      notes: 'the clip\'s notes (the set\'s owner)', 'env.mixer.*': 'the clip\'s own Volume and Pan envelopes (the set\'s owner)',
+      notes: 'the clip\'s notes (the set\'s owner)', 'env.mixer.*': 'the clip\'s own Volume, Pan and Send envelopes (the set\'s owner)',
       ...Object.fromEntries(SETTINGS.map(key => [key, 'the clip\'s own setting (the set\'s owner, packages/live-set/src/edit.rs)'])),
     },
     acts,
@@ -225,8 +262,11 @@ export function liveClipBinding(input: LiveClipInput): ClipBinding | null {
   const at = clipAtOf(input.selection)
   const address = input.set?.path && at ? {path: input.set.path, track: input.selection.track, at} : null
   const whole = input.whole ?? null
-  return clipBinding({mode: 'live', ref, values: liveClipValues(clip, input.mode, input.colour, whole),
-    wiring: liveWiring(address, whole, clipHostId('live', ref), input.unread ?? null),
+  // The part's sends, as the set's owner reads its mixer row: the Send envelopes Clip view offers.
+  const mixer = input.document?.tracks[input.selection.track]?.mixer
+  const sends = mixer ? mixer.sends ?? [] : null
+  return clipBinding({mode: 'live', ref, values: liveClipValues(clip, input.mode, input.colour, whole, sends),
+    wiring: liveWiring(address, whole, clipHostId('live', ref), input.unread ?? null, sends),
     placed: clip.at !== null, lacks: clip.kind ? LACKS_OF_KIND[clip.kind] : undefined})
 }
 

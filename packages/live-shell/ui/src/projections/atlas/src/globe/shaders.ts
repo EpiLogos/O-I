@@ -76,6 +76,7 @@ attribute vec3 aDir;
 attribute vec3 aColor;
 attribute vec4 aMeta;   // x: year u, y: seed radius, z: precision (0 place,1 region,2 culture,3 none), w: seed
 attribute float aRel;
+attribute float aLocus; // 1: a mythic locus (a place of the story), 0: any other (presences.ts; aMeta is full)
 uniform vec3 uCamDir;
 uniform float uCamDist;
 uniform vec2 uRes;
@@ -98,6 +99,7 @@ varying float vPin;
 varying float vAfter;
 varying float vRing;
 varying float vRingPx;
+varying float vMyth;
 ${TIME_GLSL}
 ${REL_GLSL}
 void main() {
@@ -152,6 +154,7 @@ void main() {
   vRingPx = ringPx;
   vPrec = prec;
   vSel = clamp(aRel - 1.6, 0.0, 1.0);
+  vMyth = aLocus;
 }
 `;
 
@@ -169,6 +172,7 @@ varying float vPin;
 varying float vAfter;
 varying float vRing;
 varying float vRingPx;
+varying float vMyth;
 void main() {
   float rPx = length(vC) * vHalf;           // css px from the centre
   if (rPx > vHalf) discard;
@@ -189,6 +193,14 @@ void main() {
   vec3 tone = mix(vCol, warm, vLeave * 0.7);
   vec3 hot = mix(tone, vec3(1.0), 0.6);
   vec3 live = hot * core + tone * (halo + unc);
+  // a mythic locus looks mythic in every view (manual §17.2 rules): a dotted ring round its core, the mythic dash of the
+  // arrangement ruler and the timeline (dlw__arrangement-ruler.tsx, techne__timeline.tsx), never the look of a factual place
+  if (vMyth > 0.5) {
+    float mr = rcL * 2.7;
+    float band = exp(-pow((rPx - mr) / 0.75, 2.0));
+    float dots = smoothstep(0.25, 0.75, 0.5 + 0.5 * cos(atan(vC.y, vC.x) * 9.0));
+    live += tone * band * dots * 0.6;
+  }
 
   // ── attentionally receded: a small hollow ring, drained of colour (unchanged)
   float gr = 4.4;

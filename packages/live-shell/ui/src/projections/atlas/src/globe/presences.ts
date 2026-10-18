@@ -5,6 +5,7 @@ import type { Model } from '../data/model';
 import { pickablePresence, type TimeWindow } from '../data/time';
 import { PRESENCE_FRAG, PRESENCE_VERT, SPLAT_FRAG, SPLAT_VERT } from './shaders';
 import type { Shared } from './shared';
+import { fnv1a } from '../../provider/suiteReading';
 
 const PREC: Record<string, number> = { place: 0, region: 1, culture: 2, none: 3 };
 /** [T-ATLAS-SEAM] spare slots past the count, so a host that adds an occurrence at the tail does not regrow the buffers */
@@ -24,7 +25,7 @@ export class Presences {
   private capacity: number;
   private geo: THREE.InstancedBufferGeometry;
   private sgeo: THREE.InstancedBufferGeometry;
-  private buf: { dir: Float32Array; ll: Float32Array; col: Float32Array; glow: Float32Array; meta: Float32Array };
+  private buf: { dir: Float32Array; ll: Float32Array; col: Float32Array; glow: Float32Array; meta: Float32Array; locus: Float32Array };
   private focusCore = { value: new THREE.Vector3(1, 1, 1) };
   private focusMix = { value: 0 };
   private focusMixTarget = 0;
@@ -45,14 +46,16 @@ export class Presences {
       col: new Float32Array(this.capacity * 3),
       glow: new Float32Array(this.capacity * 3),
       meta: new Float32Array(this.capacity * 4),
+      locus: new Float32Array(this.capacity),
     };
     for (let i = 0; i < n; i++) this.writeSlot(i);
-    const { dir, ll, col, glow, meta } = this.buf;
+    const { dir, ll, col, glow, meta, locus } = this.buf;
     const aDir = new THREE.InstancedBufferAttribute(dir, 3);
     const aLL = new THREE.InstancedBufferAttribute(ll, 2);
     const aColor = new THREE.InstancedBufferAttribute(col, 3);
     const aGlow = new THREE.InstancedBufferAttribute(glow, 3);
     const aMeta = new THREE.InstancedBufferAttribute(meta, 4);
+    const aLocus = new THREE.InstancedBufferAttribute(locus, 1);
     this.relAttr = new THREE.InstancedBufferAttribute(this.rel, 1);
     this.relAttr.setUsage(THREE.DynamicDrawUsage);
 
@@ -68,6 +71,7 @@ export class Presences {
     geo.setAttribute('aDir', aDir);
     geo.setAttribute('aColor', aColor);
     geo.setAttribute('aMeta', aMeta);
+    geo.setAttribute('aLocus', aLocus);
     geo.setAttribute('aRel', this.relAttr);
     const mat = new THREE.ShaderMaterial({
       vertexShader: PRESENCE_VERT,
@@ -126,18 +130,22 @@ export class Presences {
   private writeSlot(i: number): void {
     const m = this.model;
     const o = m.occ[i];
-    const { dir, ll, col, glow, meta } = this.buf;
+    const { dir, ll, col, glow, meta, locus } = this.buf;
     dir.set(m.dir[i], i * 3);
     ll[i * 2] = (o.lon * Math.PI) / 180;
     ll[i * 2 + 1] = (o.lat * Math.PI) / 180;
     col.set(m.colour[i], i * 3);
     glow.set(m.famPalette.get(o.familyId)?.glow ?? m.colour[i], i * 3);
     const prec = m.located[i] ? PREC[o.geoPrecision] ?? 0 : 3;
-    const seed = hash01(i);
+    // The presence's own look is keyed by its subject (the native identity, absent ⇒ its id), never by its slot: a reorder of the
+    // field never changes how a presence looks (T-WORLDS §5 identity; fnv1a is the suite reading's own, suiteReading.ts).
+    const seed = seedOf(o.subject_ref ?? o.id);
     meta[i * 4] = m.u[i];
     meta[i * 4 + 1] = 5.4 + seed * 1.8;
     meta[i * 4 + 2] = prec;
     meta[i * 4 + 3] = seed;
+    // a mythic locus looks mythic in every view (manual §17.2 rules): aMeta is full, so its standing rides its own attribute
+    locus[i] = o.locusType === 'myth-episode' ? 1 : 0;
   }
 
   /**
@@ -161,7 +169,7 @@ export class Presences {
       this.writeSlot(slot);
     }
     for (const g of [this.geo, this.sgeo]) {
-      for (const name of ['aDir', 'aLL', 'aColor', 'aGlow', 'aMeta', 'aRel']) {
+      for (const name of ['aDir', 'aLL', 'aColor', 'aGlow', 'aMeta', 'aLocus', 'aRel']) {
         const attr = g.getAttribute(name) as THREE.InstancedBufferAttribute | undefined;
         if (attr) attr.needsUpdate = true;
       }
@@ -178,16 +186,17 @@ export class Presences {
       return out;
     };
     const b = this.buf;
-    this.buf = { dir: fit(b.dir, 3, 0), ll: fit(b.ll, 2, 0), col: fit(b.col, 3, 0), glow: fit(b.glow, 3, 0), meta: fit(b.meta, 4, 0) };
+    this.buf = { dir: fit(b.dir, 3, 0), ll: fit(b.ll, 2, 0), col: fit(b.col, 3, 0), glow: fit(b.glow, 3, 0), meta: fit(b.meta, 4, 0), locus: fit(b.locus, 1, 0) };
     this.rel = fit(this.rel, 1, 1);
     this.relTarget = fit(this.relTarget, 1, 1);
     this.capacity = capacity;
     this.relAttr = new THREE.InstancedBufferAttribute(this.rel, 1);
     this.relAttr.setUsage(THREE.DynamicDrawUsage);
-    const { dir, ll, col, glow, meta } = this.buf;
+    const { dir, ll, col, glow, meta, locus } = this.buf;
     this.geo.setAttribute('aDir', new THREE.InstancedBufferAttribute(dir, 3));
     this.geo.setAttribute('aColor', new THREE.InstancedBufferAttribute(col, 3));
     this.geo.setAttribute('aMeta', new THREE.InstancedBufferAttribute(meta, 4));
+    this.geo.setAttribute('aLocus', new THREE.InstancedBufferAttribute(locus, 1));
     this.geo.setAttribute('aRel', this.relAttr);
     this.sgeo.setAttribute('aLL', new THREE.InstancedBufferAttribute(ll, 2));
     this.sgeo.setAttribute('aGlow', new THREE.InstancedBufferAttribute(glow, 3));
@@ -313,8 +322,9 @@ function prefersCalm(): boolean {
   return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function hash01(i: number): number {
-  let x = (i + 1) * 2654435761;
+/** A presence's seed, 0–1, from its subject's identity: FNV-1a of the ref, then the avalanche the slot hash used. */
+export function seedOf(ref: string): number {
+  let x = fnv1a(ref);
   x ^= x >>> 15;
   x = Math.imul(x, 2246822519);
   x ^= x >>> 13;

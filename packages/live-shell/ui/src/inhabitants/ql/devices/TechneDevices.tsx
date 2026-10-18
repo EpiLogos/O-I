@@ -41,7 +41,7 @@ import type {InhabitantFaceDeclaration, InhabitantManifest} from '../../manifest
 import {AtlasFaceBody, isAtlasFaceId} from '../../atlasFaceBodies'
 import {KnowledgeFaceBody, isKnowledgeFaceId} from '../../knowledgeGraphFaceBodies'
 import {QlInstrumentBody, QlInstrumentControl, qlInstrumentStanding, type QlInstrumentChange} from '../../qlInstrumentDevice'
-import {atlasDevice, atlasReading, ATLAS_FAMILY, type AtlasReading} from './atlasDevices'
+import {atlasDevice, atlasGlobeBinding, atlasReading, ATLAS_FAMILY, type AtlasReading} from './atlasDevices'
 import {knowledgeDevice, KNOWLEDGE_FAMILY} from './knowledgeDevices'
 import {qlInstrumentDevice, waitingDevice, QL_FAMILY, QL_INSTRUMENT_FACE} from './qlDevices'
 import {qlSkyBinding, qlSkyDevice, useQlSky, QL_SKY_FACE, type QlSkyState} from './qlSky'
@@ -117,7 +117,9 @@ export function techneEntries(manifests: readonly InhabitantManifest[], readings
     if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3)
     if (!waiting && manifest.id === ATLAS_FAMILY && isAtlasFaceId(face.id)) {
       const faceId = face.id
-      return {family: manifest.id, face, device: atlasDevice(face, readings.atlas), picture: size => <Picture size={size} face={faceId}><AtlasFaceBody faceId={faceId} /></Picture>}
+      return {family: manifest.id, face, device: atlasDevice(face, readings.atlas), picture: size => <Picture size={size} face={faceId}><AtlasFaceBody faceId={faceId} /></Picture>,
+        // The World's designed face (its Body page among them) over the atlas's own readings and the body record (T-WORLDS W3).
+        ...(faceId === 'globe-engine' ? {binding: atlasGlobeBinding(readings.atlas)} : {})}
     }
     if (!waiting && manifest.id === KNOWLEDGE_FAMILY && isKnowledgeFaceId(face.id)) {
       const faceId = face.id

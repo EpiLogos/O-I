@@ -10,7 +10,8 @@ import type { TimeModel } from '../state/timeModel';
 import { DEFAULT_RAMP } from '../data/time';
 import { CameraRig } from './controls';
 import { Arcs, Marker } from './arcs';
-import { Aura, AtmosphereShell, Backdrop, Earth, hiResChoice, loadBaseHi, loadBaseLo } from './earth';
+import { Aura, AtmosphereShell, Backdrop, Earth, bodyTexture, hiResChoice, loadBaseHi, loadBaseLo } from './earth';
+import { bodyImage, type WorldBodyRecord } from './body';
 import { Presences } from './presences';
 import { createShared, type Shared } from './shared';
 import { TileLayer } from './tiles';
@@ -145,6 +146,8 @@ export class GlobeEngine {
     this.presences = new Presences(this.model, this.shared, this.renderer);
     this.earth = new Earth(this.shared, lo, this.presences.densityTarget.texture);
     this.tiles = new TileLayer(this.renderer, this.earth.u, this.reduced);
+    // a body asked for before the Earth stood is drawn now
+    if (this.bodyRecord) this.drawBody(this.bodyRecord, this.bodyKey);
     this.scene.add(this.backdrop.mesh, this.earth.mesh, this.tiles.group, this.shell.mesh, this.presences.mesh, this.arcs.group, this.aura.points, this.markers.sel.mesh, this.markers.hover.mesh, this.markers.head.mesh);
     this.palDirty = true;
     this.last = performance.now();
@@ -198,6 +201,8 @@ export class GlobeEngine {
     this.running = false;
     this.cancelFrame();
     this.tiles?.release();
+    // a generated body gives the Earth's imagery back first, so the release frees both (the held imagery is in no material)
+    this.earth?.setGenerated(null);
     releaseObjectTree(this.scene);
     this.presences?.densityTarget.dispose();
     try {
@@ -487,7 +492,8 @@ export class GlobeEngine {
     this.presences.step(dt);
     if (render) this.presences.renderDensity();
     this.earth.step(dt, this.reduced);
-    this.tiles.update(this.camera, dt, this.width, this.height);
+    // the close-zoom tiles are the Earth's imagery (NASA GIBS, tilemath.ts): none is fetched or drawn over a generated body
+    if (!this.earth.generated) this.tiles.update(this.camera, dt, this.width, this.height);
     this.markers.sel.step(dt, this.camera, this.height);
     this.markers.hover.step(dt, this.camera, this.height);
     this.markers.head.step(dt, this.camera, this.height);
@@ -517,8 +523,48 @@ export class GlobeEngine {
     this.presences.mesh.visible = on;
     this.aura.points.visible = on;
     this.arcs.group.visible = on;
-    this.tiles.group.visible = on;
+    this.tiles.group.visible = on && !this.earth.generated;
     for (const m of [this.markers.sel, this.markers.hover, this.markers.head]) m.suppressed = !on;
+  }
+
+  // ── the body the globe draws (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────────────────────────
+  //
+  // The Earth's imagery by default: the atlas exactly as it was. Given an owner's record (`aikit.world-body/v1`, read by the
+  // kernel's world_body_read), the generated body (body.ts) stands in the Earth's place through the Earth's own texture seam:
+  // a small base at once, the sharp one a moment later and blended in, as the Earth's own 2k and 4k/8k are. Earth stays given.
+
+  private bodyRecord: WorldBodyRecord | null = null;
+  private bodyKey = '';
+
+  /** Draw the owner's body in the Earth's place, or (null) the Earth. The same record twice does nothing. */
+  setBody(record: WorldBodyRecord | null) {
+    const key = record ? JSON.stringify(record) : '';
+    if (key === this.bodyKey) return;
+    this.bodyKey = key;
+    this.bodyRecord = record;
+    if (!this.earth || this.released) return; // drawn when the Earth stands (init)
+    if (!record) {
+      this.earth.setGenerated(null);
+      return;
+    }
+    this.drawBody(record, key);
+  }
+
+  /** The body the globe draws: its record, or null for the Earth. */
+  get body(): WorldBodyRecord | null {
+    return this.bodyRecord;
+  }
+
+  private drawBody(record: WorldBodyRecord, key: string) {
+    this.earth.setGenerated(bodyTexture(bodyImage(record, 512), this.renderer));
+    if (!hiResChoice(this.renderer)) return;
+    later(() => {
+      // a later record, a return to the Earth or a release since: this sharp base is not drawn
+      if (this.released || this.bodyKey !== key) return;
+      const hi = bodyTexture(bodyImage(record, 1024), this.renderer);
+      this.renderer.initTexture(hi);
+      this.earth.setGeneratedHi(hi);
+    }, 250);
   }
 
   /** Test/debug hook: current camera state. */

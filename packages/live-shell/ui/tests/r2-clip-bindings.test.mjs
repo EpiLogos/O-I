@@ -41,7 +41,7 @@ const {trackKey} = await import('../src/agent/agentRunModel.ts')
 const live = await import('../src/live/clipBinding.ts')
 const techne = await import('../src/techne/clipBinding.ts')
 const central = await import('../src/central/clipBinding.ts')
-const {HIGHLIGHT_WIRING} = await import('../src/central/devices/pageBindings.ts')
+const {HIGHLIGHT_WIRING, BEINGS_WIRING} = await import('../src/central/devices/pageBindings.ts')
 const expressions = await import('../src/components/expressions/clip/clipBinding.ts')
 
 const tabsOf = design => ({panel: design.panel.map(tab => tab.id), tools: design.tools.map(tab => tab.id), editor: design.editor.map(tab => tab.id)})
@@ -250,25 +250,50 @@ test('Central: a page is placed (no Launch tab); its tools refuse in the page fa
   assert.equal(central.centralSubjectName({kind: 'day', path: 'Control/agents/now/day/2026-10-08.md'}).startsWith('Day · '), true)
 })
 
-test('Central: a Flow\'s name is its title, written on its file from Clip view; a pane holding it with unsaved edits refuses; other pages refuse', async () => {
+test('Central: a page\'s own fields are written through the page owner from Clip view; the passage acts mark and note the selection; unsaved edits refuse', async () => {
   const location = {schema: 'central.path-ref/v1', ref: 'central:path:control:user/flows/flow-1.html', root: 'control', path: 'user/flows/flow-1.html'}
-  const reading = {ref: 'subject:note:user/flows/flow-1.html', values: {kind: 'flow', name: 'Untitled exchange'}, location}
-  const titles = []
-  const rename = async title => { titles.push(title) }
-  const flow = central.centralClipBinding(reading, {rename})
+  const island = {meta: {title: 'Untitled exchange'}, entries: [{id: 'e1', author: 'F', html: '<p>Hello</p>'}, {id: 'e2', author: 'F', html: '<p><mark>Marked</mark></p>'}]}
+  const reading = {ref: 'subject:note:user/flows/flow-1.html#w', values: {kind: 'flow', name: 'Untitled exchange'}, location, island}
+  const writes = []
+  const write = async (field, value) => { writes.push([field, value]) }
+  const flow = central.centralClipBinding(reading, {write})
   assert.equal(flow.writes('name'), true); assert.equal(flow.standing.name, undefined, 'the name is no longer held refused')
-  await flow.write([{key: 'name', value: 'Morning exchange'}])
-  assert.deepEqual(titles, ['Morning exchange'])
-  const held = central.centralClipBinding(reading, {rename, reached: {key: 'k', form: 'Flow', title: 't', state: 'edited', location, dirty: true}})
+  await flow.write([{key: 'name', value: 'Morning exchange'}, {key: 'container', value: 'inquiry'}, {key: 'opensAs', value: 'journal'}, {key: 'seats', value: false}])
+  assert.deepEqual(writes, [['title', 'Morning exchange'], ['container', 'inquiry'], ['launch', {opensAs: 'journal'}], ['launch', {seats: false}]])
+  await assert.rejects(flow.write([{key: 'act.highlight', value: 1}]), /Select a paragraph or an entry first/)
+  flow.local.selected('e1'); flow.local['hl.colour']('green')
+  await flow.write([{key: 'act.highlight', value: 1}])
+  flow.local.selected('e2')
+  await flow.write([{key: 'act.highlight', value: 2}, {key: 'act.note', value: 3}])
+  assert.deepEqual(writes.slice(4), [['highlight.add', {entry: 'e1', colour: 'green'}], ['highlight.remove', {entry: 'e2'}], ['note.add', {entry: 'e2', timing: 'during', text: ''}]],
+    'Highlight on a marked entry takes its marks away (choose it again to remove it)')
+  await assert.rejects(flow.write([{key: 'office', value: '1'}]), {message: BEINGS_WIRING.refused.o1}, 'a Flow takes no office')
+  const held = central.centralClipBinding(reading, {write, reached: {key: 'k', form: 'Flow', title: 't', state: 'edited', location, dirty: true}})
+  const before = writes.length
   await assert.rejects(held.write([{key: 'name', value: 'Other'}]), /holds edits its owner does not/)
-  assert.deepEqual(titles, ['Morning exchange'], 'nothing reaches the owner while the page holds unsaved edits')
-  const elsewhere = central.centralClipBinding(reading, {rename, reached: {key: 'k', form: 'Flow', title: 't', state: 'edited', location: {...location, ref: 'central:path:other'}, dirty: true}})
-  await elsewhere.write([{key: 'name', value: 'Third'}])
-  assert.deepEqual(titles, ['Morning exchange', 'Third'], 'another page\'s unsaved edits do not hold this one')
-  const being = central.centralClipBinding({...reading, values: {kind: 'being', name: 'Hildegard'}}, {rename})
-  await assert.rejects(being.write([{key: 'name', value: 'X'}]), /Only a Flow keeps a title of its own/)
+  assert.equal(writes.length, before, 'nothing reaches the owner while the page holds unsaved edits')
+
+  const pageIsland = {profile: 'oi.page/v1', meta: {title: 'Hildegard', family: 'beings'}, bindings: {categories: ['C2']}, page: {sections: [{id: 's1', heading: 'Music', text: 'Wide leaps.'}]},
+    highlights: [{id: 'h1', part: 's1', passage: null, colour: 'blue'}]}
+  const being = central.centralClipBinding({ref: 'subject:note:user/flows/beings-1.html#w', values: {kind: 'being', name: 'Hildegard'}, location, island: pageIsland}, {write})
+  being.local.selected('s1:h')
+  await being.write([{key: 'being', value: 'agent'}, {key: 'office', value: '1,3'}, {key: 'tone', value: 'ink'}, {key: 'act.highlight', value: 1}])
+  assert.deepEqual(writes.slice(before), [['kind', 'agent'], ['office', ['C1', 'C3']], ['tone', 'ink'], ['highlight.remove', {part: 's1'}]],
+    'a section\'s heading stands for its section; its whole-part highlight is taken away')
+  const thing = central.centralClipBinding({ref: 'subject:note:user/flows/things-1.html#w', values: {kind: 'thing', name: 'Lyre'}, location, island: {...pageIsland, meta: {family: 'things'}}}, {write})
+  await assert.rejects(thing.write([{key: 'being', value: 'agent'}]), {message: BEINGS_WIRING.refused.kind}, 'a Thing is no kind of being')
   const unwritten = central.centralClipBinding(reading, {})
-  await assert.rejects(unwritten.write([{key: 'name', value: 'X'}]), /Only a Flow keeps a title of its own/)
+  await assert.rejects(unwritten.write([{key: 'name', value: 'X'}]), {message: central.CENTRAL_WIRING.refused.name})
+})
+
+test('Central: a page\'s own colour, launch, kind of being and highlights read back into Clip view', () => {
+  const values = central.fileValues(island({profile: 'oi.page/v1', meta: {title: 'Hildegard', family: 'beings', colour: 'var(--honey)', launch: {opensAs: 'reading'}},
+    bindings: {kind: 'person', categories: ['C2'], sources: []}, appearance: {layout: 'portrait', tone: 'paper'},
+    page: {subtitle: '', introduction: 'She wrote what she saw.', sections: []}, highlights: [{id: 'h1', part: 'introduction', passage: 'what she saw', colour: 'green'}]}), 'note')
+  assert.equal(values.colour, 'var(--honey)'); assert.equal(values.opensAs, 'reading'); assert.equal(values.being, 'person')
+  assert.deepEqual(parse(values, 'page').find(p => p.id === 'introduction').parts, [{text: 'She wrote '}, {text: 'what she saw', mark: 'green'}, {text: '.'}])
+  const binding = central.centralClipBinding({ref: 'r', values}, {colour: 'var(--sel)'})
+  assert.equal(binding.values.colour, 'var(--honey)', 'the page\'s own colour stands over its track\'s')
 })
 
 // ---------------------------------------------------------------------------------------------------------------- Expressions

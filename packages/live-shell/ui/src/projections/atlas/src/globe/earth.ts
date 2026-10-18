@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { EARTH_FRAG, EARTH_VERT, SHELL_FRAG, SHELL_VERT, AURA_FRAG, AURA_VERT, BACKDROP_FRAG, BACKDROP_VERT } from './shaders';
 import type { Shared } from './shared';
+import type { BodyImage } from './body';
 
 const BASE = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '');
 
@@ -82,6 +83,26 @@ export async function loadBaseHi(renderer: THREE.WebGLRenderer, which: '8k' | '4
   return baseTexture(await loadDecoded(`${BASE}/textures/earth-${which}.jpg`), renderer);
 }
 
+/** A generated body's base (T-WORLDS §5 W3): body.ts's equirect image, in the place loadBaseLo/loadBaseHi fill for the Earth, with
+ * the same sampling as the Earth's base (baseTexture). The image's rows run north to south, as a decoded image does; a data texture
+ * is uploaded bottom row first, so the rows are turned over here instead of with flipY. */
+export function bodyTexture(image: BodyImage, renderer: THREE.WebGLRenderer): THREE.Texture {
+  const { width, height, data } = image;
+  const row = width * 4;
+  const rows = new Uint8Array(data.length);
+  for (let j = 0; j < height; j++) rows.set(data.subarray(j * row, (j + 1) * row), (height - 1 - j) * row);
+  const t = new THREE.DataTexture(rows, width, height, THREE.RGBAFormat);
+  t.colorSpace = THREE.NoColorSpace; // graded in display space by the earth shader, as the Earth's base is
+  t.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.ClampToEdgeWrapping;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.magFilter = THREE.LinearFilter;
+  t.generateMipmaps = true;
+  t.needsUpdate = true;
+  return t;
+}
+
 export class Earth {
   readonly mesh: THREE.Mesh;
   /** shared with the tile layer so both are graded identically */
@@ -115,24 +136,75 @@ export class Earth {
     this.mesh.renderOrder = 0;
   }
 
-  /** Blend the sharp base in over about half a second, then let the small one go. */
+  /** The Earth's own imagery while a generated body is drawn in its place: given back unchanged when the body is put down. */
+  private given: THREE.Texture | null = null;
+
+  /** Blend the Earth's sharp base in over about half a second, then let the small one go. While a generated body stands in the
+   * Earth's place, the sharp base replaces the Earth's held imagery instead, and shows when the Earth is shown again. */
   setHi(hi: THREE.Texture) {
+    if (this.given) {
+      this.given.dispose();
+      this.given = hi;
+      return;
+    }
+    this.blend(hi);
+  }
+
+  private blend(hi: THREE.Texture) {
     this.baseHi.value = hi;
     this.hiMix.value = 0;
     this.fade = 0;
+  }
+
+  /** Whether a generated body stands in the Earth's place. */
+  get generated(): boolean {
+    return this.given !== null;
+  }
+
+  /**
+   * Draw a generated body in the Earth's place (its small base; `setGeneratedHi` blends its sharp one in), or, with null, give the
+   * Earth's imagery back exactly as it was. The Earth stays given: its imagery is held, never disposed, while a body is shown.
+   */
+  setGenerated(lo: THREE.Texture | null) {
+    if (this.fade >= 0) this.finishFade();
+    const shown = this.baseLo.value;
+    if (lo) {
+      if (this.given) shown.dispose();
+      else this.given = shown;
+      this.baseLo.value = lo;
+      this.baseHi.value = lo;
+    } else if (this.given) {
+      shown.dispose();
+      this.baseLo.value = this.given;
+      this.baseHi.value = this.given;
+      this.given = null;
+    }
+    this.hiMix.value = 0;
+  }
+
+  /** The generated body's sharp base, blended in as the Earth's is; ignored when no generated body stands. */
+  setGeneratedHi(hi: THREE.Texture) {
+    if (!this.given) {
+      hi.dispose();
+      return;
+    }
+    if (this.fade >= 0) this.finishFade();
+    this.blend(hi);
+  }
+
+  private finishFade() {
+    this.fade = -1;
+    const lo = this.baseLo.value;
+    this.baseLo.value = this.baseHi.value;
+    this.hiMix.value = 0;
+    if (lo !== this.baseLo.value) lo.dispose();
   }
 
   step(dt: number, reduced: boolean) {
     if (this.fade < 0) return;
     this.fade = Math.min(1, this.fade + dt / (reduced ? 0.05 : 0.7));
     this.hiMix.value = this.fade * this.fade * (3 - 2 * this.fade);
-    if (this.fade >= 1) {
-      this.fade = -1;
-      const lo = this.baseLo.value;
-      this.baseLo.value = this.baseHi.value;
-      this.hiMix.value = 0;
-      lo.dispose();
-    }
+    if (this.fade >= 1) this.finishFade();
   }
 }
 

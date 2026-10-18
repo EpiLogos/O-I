@@ -18,10 +18,16 @@
 // output — read from the set's owner (`live_set_read`, packages/live-set/src/edit.rs) and, where a writer is handed in, written to it
 // (`live_track_mixer_write`) against the set's revision; the routings are read, not chosen. Under each track its take lanes and its
 // automation envelopes, as the set holds them. A control the track has no element for stays absent.
+//
+// The sends (manual §21.1 "Sends: How much of the part goes to each return track"): each part's sends ride its `mix` as `sends`, one
+// for each return in the set's order, named by the return it feeds, its level in dB; where a writer is handed in, `actions.mixer.send`
+// writes one (`live_track_mixer_write` control "send"). The comp (§21.1 "Select a range in a take and press Enter to bring it into the
+// main lane … the take lane marks the range it gave"): `lanes.comp` lays each main-lane stretch under the take it came from (Live's own
+// record, the TakeId a comped clip shares with its take), and `actions.comp` runs `live_take_comp` with the take lane and the stretch.
 import type {SetDocument} from '../shell/document'
 import type {SetSummary} from '../shell/useSet'
-import type {WorldAutomationLane, WorldMixer, WorldTakeLane, WorldTrackAdapter, WorldTrackClip, WorldTrackSet} from './worldTrackAdapter'
-import type {LiveEnvelope} from '../../../../../desktop/cradle/src/kernel/types'
+import type {WorldAutomationLane, WorldCompStretch, WorldMixer, WorldTakeLane, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackMix, WorldTrackSet} from './worldTrackAdapter'
+import type {LiveEnvelope, LiveSend, LiveTakeLane, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
 
 const missing = (what: string, op: string) => `${what}: no owner operation carries it yet — missing op: ${op} (kernel · live-set).`
 const MIXER_READ = 'live_set_read reporting each track\'s mixer {activator, solo, arm, monitor: "in" | "auto" | "off", input, output} from the .als (TrackActivator, Solo, Arm, MonitoringEnum, AudioInputRouting / MidiInputRouting, AudioOutputRouting)'
@@ -39,7 +45,7 @@ export const LIVE_MIXER: WorldMixer = {
 
 /** Why the set's lanes are absent, in its owner's terms. */
 export const LIVE_LANES_ABSENT = {
-  takes: missing('Take lanes', 'live_set_read reporting each track\'s TakeLanes {name, clips: [{name, start, end}]} and the main lane\'s comp, and live_take_comp {path, track, lane, start, end} for the comp'),
+  takes: missing('Take lanes', 'live_set_read reporting each track\'s TakeLanes {name, clips: [{name, start, end, takeId, gave}]}, the main lane\'s stretches each take gave'),
   automation: missing('Automation lanes', 'live_set_read reporting each track\'s AutomationEnvelopes {device, parameter, points: [{beat, value}]}'),
   events: 'Event lanes are Factory\'s: a session\'s messages, files, terminal and pages read.',
 } as const
@@ -51,7 +57,37 @@ export interface LiveSetReading {
   colors?: readonly string[]
   /** The set owner's mixer write (live/liveWrites.ts writeLiveMixer); absent, the row is read only and says why. */
   mixerWrite?: (track: number, control: 'activator' | 'solo' | 'arm' | 'monitor', value: boolean | 'in' | 'auto' | 'off') => Promise<unknown>
+  /** The set owner's send write (live/liveWrites.ts writeLiveSend): a send by its index, its level as linear gain. */
+  sendWrite?: (track: number, index: number, value: number) => Promise<unknown>
+  /** The set owner's comp (live/liveWrites.ts writeLiveComp): a take lane by its index, a stretch in beats. */
+  compWrite?: (track: number, take: number, range: {start: number; end: number}) => Promise<unknown>
 }
+
+/** One send on a part's mixer row: Live's name for it ("Send A"), the return track it feeds, its level in dB within the range the set
+ * keeps (Live's −70 dB floor to 0 dB), and why it cannot be moved when Live has it off on this part (a return's own sends). */
+export interface LiveMixSend {id: string; name: string; value: number | null; min: number; max: number; unit: 'dB'; disabled?: string}
+/** A part's mixer readings with its sends (worldTrackAdapter's WorldTrackMix carries no sends yet: PROPOSE). */
+export type LiveTrackMix = WorldTrackMix & {sends?: readonly LiveMixSend[]}
+/** The mixer row's writes with the send's (WorldTrackActions.mixer carries no send yet: PROPOSE). */
+export type LiveMixerActions = NonNullable<WorldTrackActions['mixer']> & {send?: {op: string; run(trackId: string, sendId: string, db: number): unknown}}
+
+/** A send's level, linear gain as the set keeps it, in dB; and back within the send's own range. */
+const gainToDb = (gain: number, floor: number): number => 20 * Math.log10(Math.max(gain, floor))
+const dbToGain = (db: number, floor: number, top: number): number => Math.max(floor, Math.min(top, 10 ** (db / 20)))
+/** Live 12's send floor, as every set keeps it (each Send's MidiControllerRange Min). */
+const SEND_FLOOR = 0.0003162277571
+
+/** A part's sends on its row, in the set's order. */
+export function liveMixSends(sends: readonly LiveSend[]): LiveMixSend[] {
+  return sends.map(send => {
+    const floor = send.min ?? SEND_FLOOR, top = send.max ?? 1
+    return {id: send.send, name: send.name, value: send.value === null ? null : gainToDb(send.value, floor), min: gainToDb(floor, floor),
+      max: gainToDb(top, floor), unit: 'dB' as const, ...(send.on ? {} : {disabled: `${send.send} is off on this part: Live turns a return's own sends on from the send's menu.`})}
+  })
+}
+
+export const LIVE_SEND_WRITE_OP = 'live_track_mixer_write {path, track, control: "send", index, value} — the part\'s send to a return, against the set\'s revision'
+export const LIVE_COMP_OP = 'live_take_comp {path, track, take, range: {start, end}} — the take\'s stretch copied into the main lane, as Live records a comp'
 
 /** The ops the mixer row names when it writes. */
 export const LIVE_MIXER_WRITE_OP = (control: string) => `live_track_mixer_write {path, track, control: "${control}"} — the set's own ${control}, against its revision`
@@ -81,14 +117,16 @@ const barBeat = (beats: number): string => `${Math.floor(beats / 4) + 1}.${Math.
 
 export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
   id: LIVE_SET_TRACK_ADAPTER_ID,
-  project({set, document, colors, mixerWrite}): WorldTrackSet {
+  project({set, document, colors, mixerWrite, sendWrite, compWrite}): WorldTrackSet {
     if (!set) return {columns: [], tracks: [], clips: []}
     const trackRef = (index: number) => `als:${set.path}#track/${index}`
     // The set's master track is Live's Main track: its material stands at the end, and its chain is the devices the set lists on it.
     const tracks = set.tracks.map((track, index) => {
       const mixer = document?.tracks[index]?.mixer
+      const {sends, ...row}: LiveTrackMixer = mixer ?? {}
+      const mix: LiveTrackMix = {...row, ...(sends?.length ? {sends: liveMixSends(sends)} : {})}
       return {id: trackRef(index), name: track.name, kind: track.kind, ...(colors?.[index] ? {color: colors[index]} : {}),
-        ...(track.kind === 'master' ? {main: true as const} : {}), ...(mixer && Object.keys(mixer).length ? {mix: {...mixer}} : {})}
+        ...(track.kind === 'master' ? {main: true as const} : {}), ...(Object.keys(mix).length ? {mix} : {})}
     })
     const master = set.tracks.find(track => track.kind === 'master')
     const columns = Array.from({length: set.scene_count}, (_, scene) => ({id: `scene:${scene}`, name: String(scene + 1)}))
@@ -105,12 +143,18 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       })
     })
     // The take lanes and automation the set holds under each track.
-    const takes: WorldTakeLane[] = [], automation: WorldAutomationLane[] = []
+    const takes: WorldTakeLane[] = [], automation: WorldAutomationLane[] = [], comp: WorldCompStretch[] = []
     const read = !!document?.tracks.some(track => track.takeLanes !== undefined || track.automation !== undefined)
     document?.tracks.forEach((track, index) => {
       if (index >= tracks.length) return
-      track.takeLanes?.forEach((lane, at) => takes.push({id: `${trackRef(index)}#take/${at}`, trackId: trackRef(index), name: lane.name || `Take ${at + 1}`,
-        spans: lane.clips.map(clip => ({start: clip.start, end: clip.end, label: clip.name}))}))
+      const lanes: readonly LiveTakeLane[] = track.takeLanes ?? [], own: WorldCompStretch[] = []
+      lanes.forEach((lane, at) => {
+        const id = `${trackRef(index)}#take/${at}`
+        takes.push({id, trackId: trackRef(index), name: lane.name || `Take ${at + 1}`, spans: lane.clips.map(clip => ({start: clip.start, end: clip.end, label: clip.name}))})
+        // Each stretch of the main lane that came from this lane's takes (Live: the comped clip shares its take's TakeId).
+        for (const clip of lane.clips) for (const stretch of clip.gave ?? []) own.push({trackId: trackRef(index), takeId: id, start: stretch.start, end: stretch.end})
+      })
+      comp.push(...own.sort((a, b) => a.start - b.start))
       track.automation?.forEach((env, at) => { if (env.points.length) automation.push(automationLane(trackRef(index), at, env, track)) })
     })
     const absent: Record<string, string> = {events: LIVE_LANES_ABSENT.events}
@@ -122,9 +166,19 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
     const writing = mixerWrite && read
     const result: WorldTrackSet = {columns, tracks, clips, ruler: {unit: 'beats', label: barBeat},
       mixer: writing ? LIVE_MIXER_WRITTEN : LIVE_MIXER, main: {name: 'Main', chain: master ? [...master.devices] : []},
-      lanes: {...(takes.length ? {takes} : {}), ...(automation.length ? {automation} : {}), absent}}
+      lanes: {...(takes.length ? {takes} : {}), ...(comp.length ? {comp} : {}), ...(automation.length ? {automation} : {}), absent}}
+    const indexOf = (trackId: string) => tracks.findIndex(track => track.id === trackId)
+    const receipt = (done: Promise<unknown>, note: string) => done.then(
+      () => ({ok: true as const, note}),
+      (cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
+    if (compWrite && read) {
+      result.actions = {comp: {op: LIVE_COMP_OP, run: (trackId, takeId, range) => {
+        const index = indexOf(trackId), lane = /#take\/(\d+)$/.exec(takeId)?.[1]
+        if (index < 0 || lane === undefined || !takeId.startsWith(`${trackId}#take/`)) return Promise.resolve({ok: false as const, error: `"${takeId}" is not a take lane of this set.`})
+        return receipt(compWrite(index, Number(lane), range), `The take's stretch stands in the main lane.`)
+      }}}
+    }
     if (writing) {
-      const indexOf = (trackId: string) => tracks.findIndex(track => track.id === trackId)
       const run = (control: 'activator' | 'solo' | 'arm' | 'monitor') => (trackId: string, value: boolean | 'in' | 'auto' | 'off') => {
         const index = indexOf(trackId)
         if (index < 0) return Promise.resolve({ok: false, error: `"${trackId}" is not a track of this set.`})
@@ -132,8 +186,18 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
           () => ({ok: true, note: `${control} written to the set.`}),
           (cause: unknown) => ({ok: false, error: cause instanceof Error ? cause.message : String(cause)}))
       }
-      result.actions = {mixer: {activator: {op: LIVE_MIXER_WRITE_OP('activator'), run: run('activator')}, solo: {op: LIVE_MIXER_WRITE_OP('solo'), run: run('solo')},
-        arm: {op: LIVE_MIXER_WRITE_OP('arm'), run: run('arm')}, monitor: {op: LIVE_MIXER_WRITE_OP('monitor'), run: run('monitor')}}}
+      const mixer: LiveMixerActions = {activator: {op: LIVE_MIXER_WRITE_OP('activator'), run: run('activator')}, solo: {op: LIVE_MIXER_WRITE_OP('solo'), run: run('solo')},
+        arm: {op: LIVE_MIXER_WRITE_OP('arm'), run: run('arm')}, monitor: {op: LIVE_MIXER_WRITE_OP('monitor'), run: run('monitor')}}
+      if (sendWrite) mixer.send = {op: LIVE_SEND_WRITE_OP, run: (trackId, sendId, db) => {
+        const index = indexOf(trackId)
+        const sends = index < 0 ? [] : document?.tracks[index]?.mixer?.sends ?? []
+        const at = sends.findIndex(send => send.send === sendId), send = sends[at]
+        if (!send) return Promise.resolve({ok: false as const, error: `${sendId} is no send of this part.`})
+        if (!send.on) return Promise.resolve({ok: false as const, error: `${sendId} is off on this part: Live turns a return's own sends on from the send's menu.`})
+        if (!Number.isFinite(db)) return Promise.resolve({ok: false as const, error: `${sendId} takes a level in dB.`})
+        return receipt(sendWrite(index, at, dbToGain(db, send.min ?? SEND_FLOOR, send.max ?? 1)), `${sendId} written to the set.`)
+      }}
+      result.actions = {...result.actions, mixer}
     }
     return result
   },
