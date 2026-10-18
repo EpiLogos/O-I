@@ -17,9 +17,10 @@
 //                       parameter's own value now.
 //   routes              the assignments: [{id, planet, target}]; and for each, use:<id> ('position' | 'interval'), amount:<id>
 //                       (−100..100 %), scope:<id> ('global' | 'note'), smoothing:<id> (0..10 s).
-// No owner runs a modulation plan yet: the compiled plan (inhabitants/ql/qlModulationSources.ts) routes the twelve M2 observables,
-// not planets, to quaternal-logic addresses only, and nothing in the shell holds or runs one (live/torusDevice.ts: "no compiled
-// modulation plan runs in the shell"). The assignments are the entry's own, and `reason` names the absence in the well.
+// The owner on a Live part: the plan the shell holds and runs on the Sky's reading (live/designBindings/skyModulation.ts). A target's
+// base is its owner's value when a planet first takes it; each move is written through that target's own owner, ramped over the
+// route's Smoothing, and the base goes back when the last route on it goes. Scope is the part's: nothing is per note, so Note is
+// refused with its reason. `reason` names an absent reading in the well.
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './quaternal-logic__sky-modulation.css'
