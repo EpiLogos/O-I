@@ -1,4 +1,5 @@
-// The Central family's devices as devices of the runtime (FOUNDATION F5; manual §10.4): the Day die, the Nara conversation,
+// The Central family's devices as devices of the runtime (FOUNDATION F5; manual §10.4; the chains R4 leaves standing are
+// CENTRAL_MAIN_FACES and CENTRAL_WORKSPACE_FACES below): the Day die, the Nara conversation,
 // and the Context-world, Agent identity, Ground hygiene and Impact readings, each a `DeviceInstance` the three sizes draw; and the
 // page family (lane BC2; DLW §17.8, §18.1–§18.1): the Workspace, the Document, the Flow (an instrument first on a Flow document's
 // chain, §18.3 — no longer a clip), the Beings and Things pages and the document effects Text, Highlight and Notes, whose designs
@@ -27,30 +28,19 @@ import {DIE_POSITIONS, dieFaceLabel} from './dayDie'
 
 export const CENTRAL_FAMILY = 'central'
 
-/** The device faces this module knows, in the order the chain draws them (DLW §16.2, Central: "A workspace. The Day is the Main
- * track. The document effects, then the agent that answers. On the Main track: the Day"): the Day (the Main track's device), the
- * Workspace (the workspace track's instrument), the reached document's chain — its form device first (§18.3 Flow, §18.4 Beings,
- * §18.5 Things: "first on a … document's chain, before the document effects"), the Document, then Text, Highlight and Notes, each
- * after the one before (§18.6–§18.8), then the Packet (§18.9 "a document's chain, after Notes") — then the agent that answers, with
- * its identity before it (§18.15 "before the agent") and its Context & world after it (§18.14 "after the agent"; lane BC3), then Search
- * (§18.11, on a chain), then the ground's readings. A device face the family declares that is not named here is still drawn,
- * generically, after these. A face the family declares a `clip` is not a device: it stands on the Clip side (`clipFaces`). */
-export const CENTRAL_DEVICE_FACES = ['day-die', 'workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes', 'packet',
-  'agent-identity', 'nara-conversation', 'context-world', 'search', 'ground-hygiene', 'impact'] as const
+/** The family's faces that stand on a chain, in the order the chains draw them (DLW §16.2, lock §0.3.4; R4): on the Main track the Day;
+ * on a workspace the Packet — then the Agent and Scope, devices of Actuation and Software Factory that CentralDevices.tsx places — then,
+ * on a workspace that holds code, Ground hygiene and Impact. */
+export const CENTRAL_MAIN_FACES = ['day-die'] as const
+export const CENTRAL_WORKSPACE_FACES = ['packet', 'ground-hygiene', 'impact'] as const
+export const CENTRAL_DEVICE_FACES: readonly string[] = [...CENTRAL_MAIN_FACES, ...CENTRAL_WORKSPACE_FACES]
 
-/** The faces a reached document's chain holds (they stand only while a document is reached; central/devices/CentralDevices.tsx
- * placedFaces), by the page's form: its form device and the effects that read its material. */
-export const PAGE_CHAIN_FACES: Readonly<Record<'Day' | 'Flow' | 'Being' | 'Thing', readonly string[]>> = {
-  // A Day's form device is the die, the Main track's device; its fields are no entries, so the effects that read entries do not
-  // stand on it (the Document reads its marks, notes and packet).
-  // The Packet ends every document's chain (§18.9 "a document's chain, after Notes"): what the agent that answers reads from you.
-  Day: ['document', 'packet'],
-  Flow: ['flow-document', 'document', 'text', 'highlight', 'notes', 'packet'],
-  Being: ['beings', 'document', 'packet'],
-  Thing: ['things', 'document', 'packet'],
-}
-/** Every face that stands only on a reached document's chain. */
-export const PAGE_FACES: ReadonlySet<string> = new Set(Object.values(PAGE_CHAIN_FACES).flat())
+/** The faces the family still declares that stand on no chain (R4; DLW §16.1): the page family — the Workspace (the track head and its
+ * kept context), the Document, the Flow, Beings and Things (a page's Clip panel and editor tabs), Text, Highlight and Notes (a page's
+ * tools) — and the agent's former devices: the Answer, Agent identity and Context & world (one Agent and one Scope carry them), and
+ * Search (a pane, and the line where you type @). Their designs and bindings stay, for Clip view and the views. */
+export const CENTRAL_OFF_CHAIN_FACES: readonly string[] = ['workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes',
+  'nara-conversation', 'agent-identity', 'context-world', 'search']
 
 export const centralDeviceId = (faceId: string): string => `${CENTRAL_FAMILY}:${faceId}`
 
@@ -350,18 +340,20 @@ export function centralDevice(face: InhabitantFaceDeclaration, reads: CentralRea
   return {id: centralDeviceId(face.id), family: CENTRAL_FAMILY, face: centralDeclaration(face), rows, values, ...(enabledKey ? {enabledKey} : {}), ...(submit ? {submit} : {})}
 }
 
-/** The family's declared faces in chain order: the known ones first, then any other the family declares. */
+/** The family's declared faces in chain order: the chain's ones first, then any other the family declares. */
 export function orderedFaces(faces: readonly InhabitantFaceDeclaration[]): InhabitantFaceDeclaration[] {
   const known = CENTRAL_DEVICE_FACES.flatMap(id => faces.filter(face => face.id === id))
-  return [...known, ...faces.filter(face => !(CENTRAL_DEVICE_FACES as readonly string[]).includes(face.id))]
+  return [...known, ...faces.filter(face => !CENTRAL_DEVICE_FACES.includes(face.id))]
 }
 
 /** A face the family declares a `clip` is the Clip side's, not a device's (lock §0.1: an element that does not keep a
  * semantic's invariant may not claim it; §2.2: the Flow is a document, the Device chain is the effects on it). */
 export const isClipFace = (face: Pick<InhabitantFaceDeclaration, 'liveSemantic'>): boolean => face.liveSemantic === 'clip'
 
-/** The faces that stand on the Device chain: every declared face but the clips. */
-export const chainFaces = (faces: readonly InhabitantFaceDeclaration[]): InhabitantFaceDeclaration[] => orderedFaces(faces).filter(face => !isClipFace(face))
+/** The faces that stand on a Device chain (DLW §16.2): the chain's faces the family declares, never a clip, in chain order. A face the
+ * family declares beside them stands on no chain (CENTRAL_OFF_CHAIN_FACES, or a face no chain names yet). */
+export const chainFaces = (faces: readonly InhabitantFaceDeclaration[]): InhabitantFaceDeclaration[] =>
+  orderedFaces(faces).filter(face => !isClipFace(face) && CENTRAL_DEVICE_FACES.includes(face.id))
 
 /** The faces that stand on the Clip side: the family's clips (the Flow). */
 export const clipFaces = (faces: readonly InhabitantFaceDeclaration[]): InhabitantFaceDeclaration[] => faces.filter(isClipFace)

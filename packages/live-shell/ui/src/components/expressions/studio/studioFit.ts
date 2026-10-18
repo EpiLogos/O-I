@@ -5,8 +5,9 @@
 // stands in view. The person's own folds and opens always hold. Pure: nothing here touches the page.
 import {foldsToFit as plateFoldsToFit, pressFold, sameSet, type FitInput as PlateFitInput} from '../../../frame/devices/plateFit'
 
-/** The columns that may fold to make room, in the order they fold: from the one nearest Capture back toward Tools. Capture never. */
-export const STUDIO_FOLD_ORDER = ['studio:nara-m4', 'studio:body', 'studio:motion', 'studio:material', 'studio:formation', 'studio:selected', 'studio:tools'] as const
+/** The columns that may fold to make room, in the order they fold: the Studio's chains from the last (the holder table's, semantics.ts
+ * STUDIO_SECTIONS; R4 drew the Studio as its design, whose Chains page lists them, and its old eight columns left). */
+export const STUDIO_FOLD_ORDER = ['studio:nara', 'studio:body', 'studio:motion', 'studio:material'] as const
 
 export type FitInput = Omit<PlateFitInput, 'order'> & {readonly order?: readonly string[]}
 

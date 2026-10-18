@@ -184,10 +184,15 @@ test('the three designs draw on their bindings in all five views — no NaN, no 
   host.resetHost()
 })
 
-test('the chain places them where the manual does: Custody in the Agent\'s slot, the Run after the landing, the Agentset rack leading a group\'s chain', () => {
+test('the chain places them where the manual does: Custody on the one Agent, the Run on no chain, the Agentset rack leading a group\'s chain', () => {
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /slot\.id === 'agent' && placed\(CUSTODY_ID, ownDevices\.custody, custodyDesignBinding, [^)]*\{member: true\}\)/, 'Custody stands in the Agent\'s slot (§19.13)')
-  assert.match(view, /sessionTrack && placed\(RUN_ID, ownDevices\.run, runDesignBinding/, 'the Run on the session\'s chain (§19.17)')
+  // REPLACED (R4): Custody stood in the Agent's slot as its own device; it is the one Agent's Custody page (custody.*) now.
+  assert.doesNotMatch(view, /placed\(CUSTODY_ID/, 'no Custody device beside the Agent')
+  assert.match(view, /composeAgentBinding\(agentDesignBinding, \{custody: custodyDesignBinding/, 'Custody composed onto the Agent')
+  // REPLACED (R4): the Run stood after the landing; the chain is §16.2's (Gateway, Agent, skills rack, Scope, landing) — the Run is
+  // published for the browser's Runs only.
+  assert.doesNotMatch(view, /placed\(RUN_ID/, 'the Run stands on no chain')
+  assert.match(view, /\[RUN_ID, ownDevices\.run, runDesignBinding\]/, 'the Run stays published')
   assert.match(view, /groupTrack && placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/, 'the Agentset rack on a group\'s chain (§19.18)')
   assert.match(view, /custodyBinding\(\{sessionRef, autonomy: reading\.autonomy, agent: agentDesignBinding\?\.values \?\? \{\}\}, scopeDesignBinding\)/, 'Custody and Scope, one row')
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')

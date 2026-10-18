@@ -84,26 +84,28 @@ test('the address in words: the Scene\'s name, the time, the marker\'s name — 
 test('the Studio\'s head says where the work stands and its link mark copies the whole address in the frame\'s own form', () => {
   Door.publishHostedChrome({state: {...READY, address: {scene: 'scene:one', t: 12.5, marker: 'm1', markerName: 'Arrival'}}, run: async () => ({ok: true}), faults: []})
   const html = studio()
-  assert.match(html, /<header class="dp-head dp-head--plate" data-i="Studio\|Expressions engine · “the stone” at 0:12\.5 · marker “Arrival”">/, 'where the work stands: the head\'s status-bar words (lane BT: the kit\'s head)')
-  assert.match(html, /data-plate-mark="link" title="Copy address: \?expression=expression%3Akept&amp;scene=scene%3Aone&amp;t=12\.5&amp;marker=m1"/)
+  // R4: the plate beside the Studio is the Stage; its head carries where the work stands (the Studio is its design, whose own corner says
+  // the save state).
+  assert.match(html, /<header class="dp-head dp-head--plate" data-i="Stage\|Expressions engine · “the stone” at 0:12\.5 · marker “Arrival”">/, 'where the work stands: the head\'s status-bar words (lane BT: the kit\'s head)')
+  // R4: the link mark stands in the Studio's head (its place's own marks, ExpressionsStudio.tsx Mark).
+  assert.match(html, /data-studio-mark="link" aria-label="Copy address: \?expression=expression%3Akept&amp;scene=scene%3Aone&amp;t=12\.5&amp;marker=m1"/)
   Door.publishHostedChrome({state: READY, run: async () => ({ok: true}), faults: []})
   const quiet = studio()
-  assert.doesNotMatch(quiet, /data-plate-mark="link"/, 'no announced address, nothing to copy')
+  assert.doesNotMatch(quiet, /data-studio-mark="link"/, 'no announced address, nothing to copy')
   assert.match(quiet, /Expressions engine · no work is open/)
   Door.publishHostedChrome(null)
 })
 
-test('the columns fold from the one nearest Capture back toward Tools until Capture is in view; the person\'s choice holds', () => {
-  const columns = ['studio:tools', 'studio:selected', 'studio:formation', 'studio:material', 'studio:motion', 'studio:body', 'studio:nara-m4', 'studio:capture']
-  // The widths measured headless at 1440×900 with no work open (176 each, Formation 149, Body 296, Capture 221; 1002 shown).
-  const widths = new Map([[columns[0], 176], [columns[1], 176], [columns[2], 149], [columns[3], 176], [columns[4], 176], [columns[5], 296], [columns[6], 176], [columns[7], 221]])
+test('the chains fold from the last back toward Material; the person\'s choice holds (REPLACED: the eight columns, Capture never folding — R4)', () => {
+  const columns = ['studio:material', 'studio:motion', 'studio:body', 'studio:nara']
+  const widths = new Map([[columns[0], 176], [columns[1], 176], [columns[2], 296], [columns[3], 176]])
   const none = new Set()
-  const fit = (over = {}) => [...Fit.foldsToFit({columns, widths, strip: 26, available: 1002, folded: none, opened: none, ...over})]
-  assert.deepEqual(fit(), ['studio:nara-m4', 'studio:body', 'studio:motion'])
+  const fit = (over = {}) => [...Fit.foldsToFit({columns, widths, strip: 26, available: 600, folded: none, opened: none, ...over})]
+  assert.deepEqual(fit(), ['studio:nara', 'studio:body'])
   assert.deepEqual(fit({available: 2000}), [], 'a row wide enough folds nothing')
-  assert.deepEqual(fit({opened: new Set(['studio:body'])}), ['studio:nara-m4', 'studio:motion', 'studio:material', 'studio:formation'], 'a column the person opened stays open; the next ones fold')
-  assert.deepEqual(fit({folded: new Set(['studio:tools'])}), ['studio:tools', 'studio:nara-m4', 'studio:body'])
-  assert.ok(!fit({available: 300}).includes('studio:capture'), 'Capture never folds to make room')
+  assert.deepEqual(fit({opened: new Set(['studio:body'])}), ['studio:nara', 'studio:motion'], 'a column the person opened stays open; the next ones fold')
+  assert.deepEqual(fit({folded: new Set(['studio:material'])}), ['studio:material', 'studio:nara'])
+  assert.deepEqual(fit({available: 0}), ['studio:nara', 'studio:body', 'studio:motion', 'studio:material'], 'every chain can fold')
   const pressed = Fit.pressFold('studio:body', true, {folded: new Set(), opened: new Set()})
   assert.deepEqual([[...pressed.folded], [...pressed.opened]], [[], ['studio:body']])
   const back = Fit.pressFold('studio:body', false, pressed)

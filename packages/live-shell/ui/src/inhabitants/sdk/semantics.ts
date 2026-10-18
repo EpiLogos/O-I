@@ -226,24 +226,25 @@ export interface HolderDeclaration {
   readonly holds?: readonly string[]
 }
 
-/** The Expressions device chain: the Studio's eight sections, in the mockup's
- * order (world-shell-mockup.html, the Expressions Studio block). Effects are
- * audio-fx; Body 3:3 is the physics instrument's modulation chain. */
+/** The Expressions rack: the Studio's four chains (DLW §20.3 "The chains"; lock §0.3.7 "The Studio is the Expression's rack … the field
+ * devices stand in its chains"; R4, the design `expressions:studio`): Material, Motion, Body and Nara. Effects are audio-fx; Body is the
+ * physics instrument with its resonator and the torus; Nara is the personal layer over the field. The old eight sections' Tools,
+ * Selected, Formation's scene devices and Capture left the Studio: the pointer's tools, the selected symbol's controls and the scene's
+ * tools are the scene's Clip view's (DETAIL_CLIP_HOLDER below holds their faces), Capture is the transport's. */
 export const STUDIO_SECTIONS: readonly HolderDeclaration[] = [
-  {id: 'studio:tools', title: 'Tools', liveSemantic: 'device-audio-fx', holds: ['expressions/pointer']},
-  {id: 'studio:selected', title: 'Selected', liveSemantic: 'device-audio-fx', holds: ['expressions/force', 'expressions/sound', 'expressions/meaning']},
-  {id: 'studio:formation', title: 'Formation', liveSemantic: 'device-audio-fx', holds: ['expressions/formation', 'expressions/arrange', 'expressions/blueprint', 'expressions/text']},
   {id: 'studio:material', title: 'Material', liveSemantic: 'device-audio-fx', holds: ['expressions/colour', 'expressions/ink', 'expressions/depth', 'expressions/medium']},
-  {id: 'studio:motion', title: 'Motion', liveSemantic: 'device-audio-fx', holds: ['expressions/relational', 'expressions/contacts', 'expressions/morph', 'expressions/focus']},
-  {id: 'studio:body', title: 'Body · 3:3', provenance: 'M1+M2+M3', liveSemantic: 'device-instrument', holds: ['expressions/physics', 'expressions/glyph', 'expressions/body', 'expressions/resonance', 'quaternal-logic/torus', 'quaternal-logic/ql-instrument']},
-  {id: 'studio:nara-m4', title: 'Nara · M4', liveSemantic: 'modulation'},
-  {id: 'studio:capture', title: 'Capture', liveSemantic: 'capture'},
+  {id: 'studio:motion', title: 'Motion', liveSemantic: 'device-audio-fx', holds: ['expressions/pointer', 'expressions/relational', 'expressions/contacts', 'expressions/morph', 'expressions/focus']},
+  {id: 'studio:body', title: 'Body', provenance: 'M1+M2+M3', liveSemantic: 'device-instrument', holds: ['expressions/physics', 'expressions/resonance', 'quaternal-logic/torus', 'quaternal-logic/ql-instrument']},
+  {id: 'studio:nara', title: 'Nara', liveSemantic: 'modulation'},
 ]
 
-/** The Clip detail: the selected scene is the clip, so its Clip detail holds the
- * Expressions scene and its automation (lock §9.1, §9.4). */
+/** The Clip detail: the selected scene is the clip, so its Clip detail holds the Expressions scene and its automation (lock §9.1, §9.4),
+ * and — since the Studio became the Expression's rack (R4; lock §0.3.7) — what belongs to one scene or one symbol: the selected symbol's
+ * Formation, glyph, Force, Sound and Meaning, the scene's Text, Blueprint and Arrange, and its Body & triggers. */
 export const DETAIL_CLIP_HOLDER: HolderDeclaration = {
-  id: 'detail:clip', title: 'Clip detail', liveSemantic: 'detail-clip', holds: ['expressions/scene', 'expressions/automation'],
+  id: 'detail:clip', title: 'Clip detail', liveSemantic: 'detail-clip', holds: ['expressions/scene', 'expressions/automation',
+    'expressions/formation', 'expressions/glyph', 'expressions/force', 'expressions/sound', 'expressions/meaning',
+    'expressions/text', 'expressions/blueprint', 'expressions/arrange', 'expressions/body'],
 }
 
 /** The six Technē instruments: each an instrument, its plain name kept beside

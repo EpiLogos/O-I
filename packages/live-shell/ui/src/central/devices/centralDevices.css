@@ -11,3 +11,9 @@
 .central-flow-clip-rows { display: flex; flex-wrap: wrap; gap: 2px 14px; padding: 4px 0 }
 .central-flow-clip-body { width: 100%; text-align: left }
 .inhabitant-device-head .central-popout { position: static; margin-left: auto }
+/* Central's two chains (DLW §16.2; R4): the Main track's (the Day, Approvals) and a workspace's (the Packet, the Agent, Scope, Ground
+   hygiene, Impact), each a row of its own; the Main track's closes with a rule, as Factory's Main track does (factoryDevices.css). */
+.central-track-chain { display: flex; flex: none; flex-wrap: wrap; gap: 8px; align-items: flex-start }
+.central-track-chain[data-track="main"] { padding-right: 8px; border-right: 1px solid var(--line-strong) }
+.central-devices-chain[data-central-track="main"] .central-track-chain[data-track="main"] { border-right: 0; padding-right: 0 }
+.central-track-chain:empty { display: none }

@@ -1,19 +1,17 @@
-// The Expressions Studio's plan (manual §7: "The studio sits in the device area: the field's tools; what you can do with the symbol
-// you have selected …; then formation, material, motion, the body of the field, a personal layer that stays yours however the scene
-// is shared, and capture"; lock §2.4 Device = Studio; the mockup's Studio at world-shell-mockup.html:1432-1441). The sections and
-// what each holds are the holder table's (inhabitants/sdk/semantics.ts STUDIO_SECTIONS, lock §4.8): this module only sorts the
-// catalogue's devices (components/nativeDeviceCatalogue.ts) into those sections, in the table's order. Pure: no React, no owner call.
+// The Expressions Studio's chains (DLW §20.3 "The chains": Material, Motion, Body, Nara; lock §0.3.7 "the field devices stand in its
+// chains"; R4 — the eight sections of the old Studio, world-shell-mockup.html:1432-1441, are gone: Tools, Selected and Formation's scene
+// devices are the scene's Clip view's, Capture is the transport's). The chains and what each holds are the holder table's
+// (inhabitants/sdk/semantics.ts STUDIO_SECTIONS, lock §4.8): this module only sorts the catalogue's devices (components/
+// nativeDeviceCatalogue.ts) into those chains, in the table's order. Pure: no React, no owner call.
 import type {NativeEditorReading} from '@epilogos/expressions-boundary/editor'
 import type {HostedAppState} from '@epilogos/expressions-boundary'
 import {STUDIO_SECTIONS} from '../../../inhabitants/sdk/semantics'
 import {deviceCatalogue, type RackDevice} from '../../nativeDeviceCatalogue'
 import {standingWord} from '../clip/sceneClip'
+import {CHAIN_OF_HOLDER, type StudioChainHolding} from './studioBinding'
 
 const EXPRESSIONS = 'expressions/'
 const QUATERNAL_LOGIC = 'quaternal-logic/'
-
-/** The headings the mockup gives the sections where they say more than the holder's name (world-shell-mockup.html:1436). */
-const HEADINGS: Readonly<Record<string, string>> = {'studio:selected': 'Selected · the glyph'}
 
 export interface StudioSection {
   readonly id: string
@@ -38,12 +36,27 @@ export function studioSections(): StudioSection[] {
     const held = holds.filter(ref => ref.startsWith(EXPRESSIONS)).map(ref => catalogue.find(device => device.family === ref.slice(EXPRESSIONS.length)))
       .filter((device): device is RackDevice => !!device)
     return {
-      id: holder.id, title: HEADINGS[holder.id] ?? holder.title, note: holder.provenance ?? null,
+      id: holder.id, title: holder.title, note: holder.provenance ?? null,
       field: held.filter(device => device.scope === 'field'),
       entity: held.filter(device => device.scope === 'entity'),
       scene: held.filter(device => device.scope === 'scene'),
       ql: holds.filter(ref => ref.startsWith(QUATERNAL_LOGIC)).map(ref => ref.slice(QUATERNAL_LOGIC.length)),
     }
+  })
+}
+
+/** The Studio's four chains as its binding reads them (studioBinding.ts): each chain's field devices, and the Quaternal Logic faces Body
+ * holds, titled and marked waiting as the family admits them. `faces` is the QL family's faces (id, admission); `title` names one. */
+export function studioChains(faces: readonly {readonly id: string; readonly admission?: string}[], title: (faceId: string) => string,
+  sections: readonly StudioSection[] = studioSections()): StudioChainHolding[] {
+  return sections.flatMap(section => {
+    const chain = CHAIN_OF_HOLDER[section.id]
+    if (!chain) return []
+    const ql = section.ql.flatMap(id => {
+      const face = faces.find(item => item.id === id)
+      return face ? [{id, title: title(id), waiting: face.admission === 'waiting'}] : []
+    })
+    return [{chain, field: section.field, ql}]
   })
 }
 
@@ -90,22 +103,21 @@ export function onRack(reading: NativeEditorReading | null, family: string): boo
 }
 
 /** The frame's chrome controls (T-FRAME-CHROME-ONTO-PLATES; their ids as the frame's chrome door reads them, presentedChrome.ts
- * `region/key`) that another device of Expressions already carries, so the Studio does not stand them twice. Each names its carrier:
+ * `region/key`) that another device of Expressions already carries, so the Stage does not stand them twice. Each names its carrier:
  *   • rail/a:pointer-options — the transport's Draw slot pointer group (shell/transports/useExpressionsTransport.tsx `draw`, BarPointerGroup);
  *   • rail/a:objects — Selected's Object chooser (ExpressionsStudio.tsx SelectedGlyph);
  *   • workspace/a:studio — this Studio; workspace/a:blueprint — the Studio's Blueprint device (Scene devices, studioSections);
- *   • workspace/a:quick-guide — the Clip side's Guide (components/expressions/clip/SceneControls.tsx :87);
  *   • save/a:capture-image, save/a:record-video, save/a:capture-options — Capture (StudioStage.tsx StageCaptureTools: ◉ Capture still |
  *     video, Edition… with the Image suite's options);
- *   • scene/a:previous, scene/a:next, scene/a:timeline, scene/a:play-journey — the Clip side's Scene ‹ › selector, Scene strip and Saved
- *     scenes (SceneControls.tsx :63-66, :82); scene/a:toggle-play — the transport's Play and Stop (useExpressionsTransport.tsx `play`);
- *     scene/a:present — Capture's Present;
+ *   • scene/a:toggle-play — the transport's Play and Stop (useExpressionsTransport.tsx `play`); scene/a:present — Capture's Present;
+ * (R2 retired the Clip side's SceneControls, which carried workspace/a:quick-guide and scene/a:previous, next, timeline and play-journey:
+ * the frame's own controls for them stand on the Stage's Frame tools until the scene's Clip view carries them.)
  *   • side/a:toolbelt — Your controls, the toolbelt's own entries with + Parameter (NativeChosenControls.tsx :225);
  *   • view/a:grid, view/a:snap, view/a:face-plane, view/a:guides — Tools' Guides and snap and Camera (StudioStage.tsx StageViewTools);
  *   • present/a:exit-present, recording/a:stop-record — Capture's Present and its Stop. */
 export const STUDIO_CARRIED: ReadonlySet<string> = new Set([
-  'rail/a:pointer-options', 'rail/a:objects', 'workspace/a:studio', 'workspace/a:blueprint', 'workspace/a:quick-guide',
+  'rail/a:pointer-options', 'rail/a:objects', 'workspace/a:studio', 'workspace/a:blueprint',
   'save/a:capture-image', 'save/a:record-video', 'save/a:capture-options',
-  'scene/a:previous', 'scene/a:next', 'scene/a:timeline', 'scene/a:play-journey', 'scene/a:toggle-play', 'scene/a:present',
+  'scene/a:toggle-play', 'scene/a:present',
   'side/a:toolbelt', 'view/a:grid', 'view/a:snap', 'view/a:face-plane', 'view/a:guides', 'present/a:exit-present', 'recording/a:stop-record',
 ])

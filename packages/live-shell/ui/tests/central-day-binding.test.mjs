@@ -382,7 +382,8 @@ test('with no Day selected the Day device stands on today as Central\'s ground r
   // The chain's own plate: the binding stands as soon as the ground answers (no shell design to wait for), so the Day's design draws
   // on today's date, the light off.
   const markup = html(createElement(chain.CentralDevicesChain, {transport: bridge, dayStanding: null}))
-  const day = markup.slice(markup.indexOf(`data-device="${ID}"`), markup.indexOf('data-device="central:nara-conversation"'))
+  // The Day closes the Main track's chain; the workspace's chain follows it (R4: the Answer no longer stands after it).
+  const day = markup.slice(markup.indexOf(`data-device="${ID}"`), markup.indexOf('data-track="workspace"'))
   assert.match(day, /data-device-light="off"/, 'the owner says no Day stands for today: off')
   assert.match(day, /data-device-design="central:day-die"/, 'the design draws on the chain')
   assert.match(day, /<span class="dp-display-corner">Fri 16<\/span>/, 'on civil today')
@@ -402,18 +403,16 @@ test('the Day design is the catalogue\'s own in all five views; its Full is the 
   assert.doesNotMatch(source, /DayDieNet|DieFaceList|\/dayDesign'|registerDesignedDevice/, 'the net and face list the design replaces are not drawn, and the shell stands no Day of its own')
 })
 
-test('the Day\'s designed head carries its place\'s pop-out — on the chain and in the pool — as the generic plate\'s does; out, its redock', () => {
+test('the Day\'s designed head carries the door\'s ↗ — its own window (R1) — and no native pop-out of the chain\'s (REPLACED: the face\'s pop-out and redock marks, R4)', () => {
   const ready = factsOf(READY)
   const windows = popped => ({popOut() {}, redock() {}, poppedOut: () => popped})
   hosting(ready, bind.dayValuesOf(ready, {face: 2, payload: PAYLOAD}), (entry, binding) => {
     const compact = html(createElement(DeviceView, {device: entry.device, size: 'compact', picture: entry.picture('compact'), binding, marks: entry.marks}))
     assert.match(compact, /data-device-design="central:day-die"/, 'the design draws')
-    assert.match(compact, /<header class="dp-head"[\s\S]*<span class="dp-head-x"><button type="button" class="dp-full" data-action="pop-out"[^>]*aria-label="Pop out day-die"/,
-      'the pop-out stands in the design\'s kit head, before the rail mark and ⤢')
-    door.selectDevice(ID)
-    assert.match(html(createElement(DevicePool)), /data-device-design="central:day-die"[\s\S]*data-action="pop-out"/, 'the pool\'s head carries it too')
+    assert.match(compact, /<span class="dp-head-x">[\s\S]*class="dp-full dp-popout" aria-label="Pop Day out into its own window"/, 'the door\'s ↗ stands alone in the head')
+    assert.doesNotMatch(compact, /data-action="(?:pop-out|redock)"/, 'no native pop-out mark of the chain\'s own')
   }, {deviceWindows: windows(false), manifest: central})
   hosting(ready, bind.dayValuesOf(ready, {face: 2, payload: PAYLOAD}), (entry, binding) => {
-    assert.match(html(createElement(DeviceView, {device: entry.device, size: 'compact', picture: entry.picture('compact'), binding, marks: entry.marks})), /data-action="redock"/)
+    assert.doesNotMatch(html(createElement(DeviceView, {device: entry.device, size: 'compact', picture: entry.picture('compact'), binding, marks: entry.marks})), /data-action="redock"/)
   }, {deviceWindows: windows(true), manifest: central})
 })

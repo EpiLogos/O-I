@@ -118,6 +118,9 @@ test('the Seat without the instrument\'s reading (the shell: no kernel op runs `
   assert.deepEqual(binding.values, {joinAs: 'attach'})
   assert.equal(binding.standing.product.disabled, cell.SEAT_UNREAD)
   assert.equal(binding.standing.seat.disabled, cell.SEAT_UNREAD)
+  // R4 (lane K1's seat_status_read): a refusal is the owner's words on the Seat's choosers.
+  assert.equal(cell.seatBinding({status: null, unread: 'seat status: the register is locked', project: 'O-I', branch: null, holds: bind.chainHolds()}).standing.product.disabled,
+    'seat status: the register is locked')
   for (const key of ['join', 'release']) {
     assert.match(binding.standing[key].disabled, /missing op: seat (join|release) through the kernel/)
     await assert.rejects(() => binding.write([{key, value: true}]), /missing op/)
@@ -169,9 +172,18 @@ test('the Link on `workcell status` and `gateway who` (the kernel\'s inhabitatio
     {id: 'central:position:project:O-I:workcell-guardian', name: 'Workcell Product Guardian'},
   ]}, 'the occupied Positions on this Workcell; the vacant ones are no session')
   assert.deepEqual(machines[1], {id: 'workcell:omarchy', in: true, state: 'unreachable', why: 'connect gateway at 100.92.62.101:7788: connection timed out'},
-    'an unreachable machine reports no sessions, and no endpoint is read (`gateway remote list` has no kernel op)')
+    'an unreachable machine reports no sessions; with no remotes reading handed, no endpoint')
   for (const key of ['share', 'threads']) assert.equal(binding.values[key], undefined, `${key}: no reading`)
   for (const machine of machines) for (const key of ['lag', 'clock', 'endpoint', 'seats']) assert.equal(machine[key], undefined, `${machine.id} ${key}: no reading`)
+  // R4 (lane K1's gateway_remotes_read, aikit.gateway-remotes/v1 — the REAL shape of K1's shapes/gateway-remotes.json): each declared
+  // machine's endpoint, and the link joined because an endpoint is declared.
+  const REMOTES = {schema: 'aikit.gateway-remotes/v1', remotes: [{token_location: 'file:/Users/admin/.aikit/credentials/remote-workcell-omarchy.token',
+    websocket_bind: '100.92.62.101:7788', websocket_path: '/', workcell_ref: 'workcell:omarchy'}]}
+  const withRemotes = cell.linkBinding(answered(REAL.workcellStatus), bind.chainHolds(), answered(REAL.population), answered(REMOTES))
+  assert.equal(JSON.parse(withRemotes.values.machines)[1].endpoint, '100.92.62.101:7788')
+  assert.equal(withRemotes.values.link, true)
+  assert.equal(cell.linkValues(answered(REAL.workcellStatus), bind.chainHolds(), answered(REAL.population), answered({...REMOTES, remotes: []})).link, false, 'no endpoint declared: not joined')
+  assert.doesNotMatch(withRemotes.values.machines, /token/, 'the token\'s location is never drawn')
   // The owner's other standings (FIXTURE rows in RemoteSurvey::statuses' own words, ai-kit gateway_contact.rs:663-697).
   const remote = (gateway_ref, detail, status = 'reachable') => ({workcell_ref: 'workcell:omarchy', gateway_ref, status, detail})
   assert.equal(cell.linkState(remote('gateway:omarchy', 'answered from its Workcell\'s Actuation at 100.92.62.101:7788')), 'answered')
@@ -237,8 +249,9 @@ test('the chain places them where the manual does: the Seat inside Git / landing
   assert.match(view, /placed\(LINK_ID, cells\.link, linkDesignBinding, [^\n]*'data-main-slot': 'link'/, 'the Link on the Main track (§19.22)')
   assert.match(view, /gatewaysRackBinding\(\{reading, holds, carrier\}/, 'the rack\'s fourth chain reads the carrier')
   assert.match(view, /chain === 'remote-carrier' \? CARRIER_ID/, 'choosing that chain shows the carrier whole')
-  assert.match(view, /seatBinding\(\{status: null, project: RACK_PROJECT/, 'no kernel op reads the seat instrument in the shell')
-  assert.match(view, /linkBinding\(workcell, holds, population\)/, 'the Link reads Workcell\'s status and AIKit\'s population')
+  // REPLACED (R4, lane K1): the Seat reads the seat instrument through the kernel (seat_status_read), the Link the declared remotes too.
+  assert.match(view, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null/, 'the seat instrument through the kernel')
+  assert.match(view, /linkBinding\(workcell, holds, population, remotes\)/, 'the Link reads Workcell\'s status, AIKit\'s population and its declared remotes')
   assert.match(read('agent/devices/usePopulationAnswer.ts'), /readPopulation\(transport, project\)/, 'through the cradle\'s own population read (inhabitation_read)')
   for (const file of ['agent/devices/workcellBindings.ts', 'agent/devices/usePopulationAnswer.ts']) {
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture`)

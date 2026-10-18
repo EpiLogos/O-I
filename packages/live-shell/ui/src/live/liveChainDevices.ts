@@ -2,7 +2,6 @@
 // material always passes through them in that order"; lock §0.2.5: "note devices before the torus"; §0.2.1: the Live corpus's
 // capacities "appear as chain devices … never as Ableton's catalogue"). Each builder re-presents a reading the shell already
 // has as a DeviceInstance the frame's DeviceView draws as the mockup's plate (world-shell-mockup.html `dev()` :1410):
-// - the keyboard (live/janko/JankoDevice.tsx) — its layout is the device's own choice, held in the shell;
 // - a note device (live/noteDevices) — the session hold writes it (noteDeviceHold.ts), the mode in force is the owner's;
 // - a set device with a stored-parameter table (panels/devices/DevicePanel.tsx) — its rows are the owner's table, its values
 //   the stored ones, and a change is the Live document owner's own write (kernel live_device_param_write);
@@ -18,30 +17,12 @@ import {NOTE_DEVICE_LABEL, TIE_RULES, TIE_RULE_LABEL, scalePlan, type NoteDevice
 const row = (family: string, deviceInstance: string, fields: Omit<SdkParamRow, 'family' | 'deviceInstance'>): SdkParamRow =>
   ({family, deviceInstance, ...fields}) as SdkParamRow
 
-// ── the keyboard ─────────────────────────────────────────────────────────────
+// ── the keyboard's layout ────────────────────────────────────────────────────
+// The keyboard is the part's input, not a chain device (DLW §21.1 The input; lock §0.3.6): R4 took its plate (`live:keyboard`) off the
+// chain — KeyboardOnChain.tsx PartInput keeps its MIDI path, the Torus's Full keeps the playing surface. Its layout stays the shell's
+// (keyboardLayout.ts), the input's Layout setting (Jankó · Piano), which the part's track input and the Notes editor's key column read.
 
-export const KEYBOARD_DEVICE_ID = 'live:keyboard'
 export type KeyboardLayoutName = 'janko' | 'piano'
-const KEYBOARD_LAYOUTS: readonly {value: KeyboardLayoutName; label: string}[] = [{value: 'janko', label: 'Jankó'}, {value: 'piano', label: 'Piano'}]
-
-/** The keyboard the torus is played from (DLW §9: "the keyboard is the torus unwound"), first on the chain: the notes start
- * here. Its one row is the layout, the device's own presentation, held in the shell. */
-export function keyboardDevice(layout: KeyboardLayoutName, choose: (layout: KeyboardLayoutName) => void): DeviceInstance {
-  const face = {id: 'keyboard', title: 'Keyboard', icon: 'keys', liveSemantic: 'key-map',
-    note: 'The Jankó surface, the torus unwound; the piano layout the alternative. Every key reaches the torus through the note devices.'} as DeviceDeclaration
-  return {
-    id: KEYBOARD_DEVICE_ID, family: 'live', face,
-    rows: [row('live', KEYBOARD_DEVICE_ID, {key: 'layout', type: 'enumerated', title: 'Layout', values: KEYBOARD_LAYOUTS.map(item => item.label), writePath: 'shell.keyboardLayout', compact: true})],
-    values: {layout: KEYBOARD_LAYOUTS.find(item => item.value === layout)!.label},
-    submit: async changes => {
-      for (const change of changes) {
-        const next = KEYBOARD_LAYOUTS.find(item => item.label === change.value)
-        if (change.key !== 'layout' || !next) throw Error(`${change.key}: not one of the keyboard's layouts`)
-        choose(next.value)
-      }
-    },
-  }
-}
 
 // ── note devices ─────────────────────────────────────────────────────────────
 
