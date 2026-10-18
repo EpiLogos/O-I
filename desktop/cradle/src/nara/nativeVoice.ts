@@ -2,6 +2,7 @@ import {kernelOp} from '../kernel/bridge';
 import type {KernelTransportStatus} from '../kernel/types';
 import type {NativeDialogueRequest} from './nativeDialogue';
 import type {NaraDialogueContext} from './dialogueContext';
+import {spokenContext} from './practice';
 
 export type NativeVoiceRequest =
   | {operation: 'open'; binding: NativeDialogueRequest; context: NaraDialogueContext}
@@ -16,7 +17,10 @@ export interface NativeVoiceResult {
   audio?: {audio_base64: string; content_type: string; [key: string]: unknown};
   answer?: {text: string; answer_block_ids: number[]}; closed?: boolean;
 }
+/** A voice opens on the body's branch whatever practice the conversation stands in: a spoken turn stays M4.1 (practice.ts; the
+ * kernel's voice gate, nara_voice.rs, admits nothing else). */
 export async function nativeVoice(transport: KernelTransportStatus, project: string, request: NativeVoiceRequest): Promise<NativeVoiceResult> {
+  if (request.operation === 'open') request = {...request, context: spokenContext(request.context)};
   const reply = await kernelOp(transport, {op: 'nara_voice', project, request});
   if (reply.error || reply.outcome?.result !== 'nara_voice') throw new Error(reply.error ?? 'The native voice owner did not return.');
   const result = reply.outcome.data;

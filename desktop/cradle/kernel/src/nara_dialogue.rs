@@ -265,6 +265,9 @@ pub(crate) fn read_context_with_state(
         disclosed.push(json!({"ref_id":state.personal_current["reading_ref"],"revision":state.personal_current["reading_revision"],
             "standing":"derived","disclosure":"personal-consent","disclosed_via_ref":context_ref}));
     }
+    // The branch and the focus are the Bimba map's: the host names neither. `m4_branch: null` and `active_m_focus: "m0"` are the
+    // empty values QL's context resolution replaces from the registry (QL nara_dialogue_command.rs `resolve`), and the kernel
+    // admits the resolution only when its coordinate stands inside the branch it names (`mapped_branch`, below).
     let context = json!({"schema":"ql.nara-dialogue-context/v1","context_ref":context_ref,
         "nara_ref":request.nara_ref,"subject_ref":request.person_ref,"agent_session_ref":canonical.agent_session,
         "m4_branch":null,"coordinate_ref":coordinate,"bimba":null,
@@ -285,6 +288,7 @@ pub(crate) fn read_context_with_state(
     {
         return Err("QL returned a context outside the native Expression basis".into());
     }
+    mapped_branch(&resolved["context"])?;
     if source_basis.is_object()
         && (source_basis["revision"] != resolved["world"]["registry_revision"]
             || profile["profile_ref"] != resolved["coordinate_binding"]["resolved_profile_ref"]
@@ -543,5 +547,69 @@ mod tests {
         state["agent_sessions"][&binding.agent_session] = binding.attachment();
         state["definition"]["projects"] = json!(["Another Project"]);
         assert!(binding.validate_state(&state, "Central").is_err());
+    }
+}
+
+/// QL's resolution of a coordinate context, admitted only when it agrees with itself: a branch QL names is one of M4's six and the
+/// coordinate stands inside it (QL `M4Branch::coordinate`), and a context standing in M4 names its branch.
+fn mapped_branch(context: &Value) -> Result<(), String> {
+    const BRANCHES: [(&str, &str); 6] = [
+        ("identity", "M4.0"),
+        ("embodied", "M4.1"),
+        ("oracle", "M4.2"),
+        ("transformation", "M4.3"),
+        ("context", "M4.4"),
+        ("integration", "M4.5"),
+    ];
+    let coordinate = context["coordinate_ref"].as_str().unwrap_or_default();
+    match context["m4_branch"].as_str() {
+        Some(branch) => {
+            let prefix = BRANCHES
+                .iter()
+                .find(|(name, _)| *name == branch)
+                .map(|(_, prefix)| *prefix)
+                .ok_or("QL named an M4 branch the map does not have")?;
+            if context["active_m_focus"] != "m4" || !coordinate.starts_with(prefix) {
+                return Err(
+                    "QL's context places its coordinate outside the branch it names".into(),
+                );
+            }
+        }
+        None if context["active_m_focus"] == "m4" => {
+            return Err("QL's context stands in M4 without naming its branch".into())
+        }
+        None => {}
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod branch_tests {
+    use super::*;
+
+    #[test]
+    fn a_resolved_context_stands_inside_the_branch_the_map_gives_it() {
+        for (branch, focus, coordinate) in [
+            (json!("embodied"), "m4", "M4.1.1"),
+            (json!("context"), "m4", "M4.4.4.2"),
+            (Value::Null, "m2", "M2.3"),
+        ] {
+            let context =
+                json!({"m4_branch": branch, "active_m_focus": focus, "coordinate_ref": coordinate});
+            assert!(mapped_branch(&context).is_ok(), "{context}");
+        }
+        for (branch, focus, coordinate, said) in [
+            (json!("oracle"), "m4", "M4.1", "outside the branch"),
+            (json!("embodied"), "m0", "M4.1", "outside the branch"),
+            (json!("lenses"), "m4", "M4.4", "does not have"),
+            (Value::Null, "m4", "M4.1", "without naming its branch"),
+        ] {
+            let context =
+                json!({"m4_branch": branch, "active_m_focus": focus, "coordinate_ref": coordinate});
+            assert!(
+                mapped_branch(&context).unwrap_err().contains(said),
+                "{context}"
+            );
+        }
     }
 }

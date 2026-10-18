@@ -676,6 +676,14 @@ pub fn apply_field(
             object(island, "meta")?.insert("view".into(), json!(chosen));
             json!(chosen)
         }
+        // A journey's state as QL returned it (nara_journey.rs; T-WORLDS W4): kept whole in the Flow's meta, never edited here.
+        "journey" if !page => {
+            if !value.is_object() {
+                return Err("A Flow's journey is a record: the state QL returned".into());
+            }
+            object(island, "meta")?.insert("journey".into(), value.clone());
+            value.clone()
+        }
         "note.add" => add_note(island, form, value, stamp)?,
         "note.remove" => remove_note(island, value)?,
         "highlight.add" | "highlight.remove" if !page => {
@@ -1304,6 +1312,32 @@ mod tests {
             Value::Null
         );
         assert!(exchange["meta"].get("container").is_none());
+    }
+
+    #[test]
+    fn a_flow_keeps_its_journey_whole_and_refuses_a_non_record() {
+        let mut exchange = flow();
+        let journey = json!({"schema": "ql.nara-oracle-journey/v1", "journey_ref": "journey:d", "revision": 2,
+            "shuffle": {"order": [3, 1, 2]}, "placements": []});
+        assert_eq!(
+            apply_field(&mut exchange, "journey", &journey, &stamp()).unwrap(),
+            journey
+        );
+        assert_eq!(exchange["meta"]["journey"], journey, "kept whole");
+        assert_eq!(exchange["meta"]["revision"], json!(4));
+        for wrong in [json!("journey:d"), json!([1]), Value::Null] {
+            assert!(apply_field(&mut exchange, "journey", &wrong, &stamp())
+                .unwrap_err()
+                .contains("is a record"));
+        }
+        assert_eq!(
+            exchange["meta"]["journey"], journey,
+            "a refusal changes nothing"
+        );
+        let mut island = being();
+        assert!(apply_field(&mut island, "journey", &journey, &stamp())
+            .unwrap_err()
+            .contains("no field journey"));
     }
 
     /// A Central stand-in holding real files in a temporary folder: `central.files.read`/`write` with the owner's CAS, and

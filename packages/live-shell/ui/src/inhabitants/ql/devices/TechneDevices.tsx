@@ -46,6 +46,8 @@ import {knowledgeDevice, KNOWLEDGE_FAMILY} from './knowledgeDevices'
 import {qlInstrumentDevice, waitingDevice, QL_FAMILY, QL_INSTRUMENT_FACE} from './qlDevices'
 import {qlSkyBinding, qlSkyDevice, useQlSky, QL_SKY_FACE, type QlSkyState} from './qlSky'
 import {qlM3Binding, qlM3Device, useQlM3, QL_M3_FACE, type QlM3State} from './qlM3Clock'
+import {qlDeckBinding, qlDeckDevice, useQlDeck, QL_DECK_FACE, type QlDeckState} from './qlDeck'
+import {qlChakraBinding, qlChakraDevice, useQlChakra, QL_CHAKRA_FACE, type QlChakraState} from './qlChakra'
 import type {DesignBinding} from '../../../frame/devices/designed'
 import {startsExpanded, TECHNE_FACE_ICONS} from './faces'
 import {ProjectPlate} from './ProjectPlate'
@@ -64,6 +66,10 @@ export interface TechneReadings {
   readonly sky?: QlSkyState
   /** The person's M3 form for the open Expression (qlM3Clock.ts), with the view's own choices. */
   readonly m3?: QlM3State
+  /** The open journey's reading (qlDeck.ts), with the view's own choices. */
+  readonly deck?: QlDeckState
+  /** Your elements from your saved identity (qlChakra.ts), with the view's own choices. */
+  readonly chakra?: QlChakraState
 }
 
 /** One face on the chain: its declaration, the device the runtime draws, and the device's own picture at each size. */
@@ -114,7 +120,7 @@ function WaitingPicture({size, face}: {size: DeviceSize; face: InhabitantFaceDec
 export function techneEntries(manifests: readonly InhabitantManifest[], readings: TechneReadings): TechneEntry[] {
   return manifests.flatMap(manifest => manifest.faces.map((face): TechneEntry => {
     const waiting = face.admission === 'waiting'
-    if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3)
+    if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3, readings.deck, readings.chakra)
     if (!waiting && manifest.id === ATLAS_FAMILY && isAtlasFaceId(face.id)) {
       const faceId = face.id
       return {family: manifest.id, face, device: atlasDevice(face, readings.atlas), picture: size => <Picture size={size} face={faceId}><AtlasFaceBody faceId={faceId} /></Picture>,
@@ -131,11 +137,15 @@ export function techneEntries(manifests: readonly InhabitantManifest[], readings
 
 /** One Quaternal Logic face as a device: the field/PCM owner over its reading, any other face as the waiting device it is declared.
  * The Expressions Studio's Body · 3:3 holds two of them (sdk/semantics.ts STUDIO_SECTIONS) and draws them from here. */
-export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusState | null, instrumentReading: unknown, sky?: QlSkyState, m3?: QlM3State): TechneEntry {
+export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusState | null, instrumentReading: unknown, sky?: QlSkyState, m3?: QlM3State,
+  deck?: QlDeckState, chakra?: QlChakraState): TechneEntry {
   // The Sky draws its catalogue design on the dated sky the kernel reads (qlSky.ts); its picture is the design's own ring.
   if (face.id === QL_SKY_FACE && sky) return {family: QL_FAMILY, face, device: qlSkyDevice(face, sky), binding: qlSkyBinding(sky), picture: () => null}
   // The M3 clock draws its catalogue design on the person's M3 form (qlM3Clock.ts).
   if (face.id === QL_M3_FACE && m3) return {family: QL_FAMILY, face, device: qlM3Device(face, m3), binding: qlM3Binding(m3), picture: () => null}
+  // The Deck draws its catalogue design on the open journey (qlDeck.ts); the Chakra on your elements (qlChakra.ts).
+  if (face.id === QL_DECK_FACE && deck) return {family: QL_FAMILY, face, device: qlDeckDevice(face, deck), binding: qlDeckBinding(deck), picture: () => null}
+  if (face.id === QL_CHAKRA_FACE && chakra) return {family: QL_FAMILY, face, device: qlChakraDevice(face, chakra), binding: qlChakraBinding(chakra, sky), picture: () => null}
   if (face.admission !== 'waiting' && face.id === QL_INSTRUMENT_FACE) {
     return {family: QL_FAMILY, face, device: qlInstrumentDevice(face, torus), status: <StandingChip reading={instrumentReading} />,
       picture: size => <QlPicture size={size} face={face.id} reading={instrumentReading} torus={torus} />}
@@ -398,11 +408,13 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const torus = useLiveTorusReading()
   const sky = useQlSky()
   const m3 = useQlM3()
+  const deck = useQlDeck()
+  const chakra = useQlChakra()
   const manifestKey = manifests.map(manifest => manifest.id).join('|')
   // The manifests are the door's, named by their ids; the QL reading the caller hands in is the one reader's own, derived from the same
   // `torus` state in the same render, so it changes exactly when `torus` does (its absent form is a new object each call, and would
   // otherwise re-publish every device on every render).
-  const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading, sky, m3}), [manifestKey, atlas, surface, torus, sky, m3])
+  const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading, sky, m3, deck, chakra}), [manifestKey, atlas, surface, torus, sky, m3, deck, chakra])
   usePublished(entries)
   // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open. While a palace
   // is entered the atlas stands at its palace scale, so the Earth pane's instrument stands as M5′ (atlasInstrumentNow).
