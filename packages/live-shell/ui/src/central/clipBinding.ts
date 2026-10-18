@@ -34,6 +34,7 @@ import {conversationGap, nowReturnFacts, parseCentralPathRef, resolveCentralOcca
 import {FLOW_WIRING, HIGHLIGHT_WIRING, NOTES_WIRING, BEINGS_WIRING, TEXT_WIRING} from './devices/pageBindings'
 import {faceOfField, readFlowPage, wordsOfHtml, type FlowPage} from './devices/pageReadings'
 import {useReachedDocument, type DocumentInPane} from './documents/documentDoor'
+import {setFlowMeta} from './devices/centralDeviceWrites'
 import {useCentralDayStanding} from './useCentralDayStanding'
 import {subjectWords} from './daySurface'
 
@@ -185,7 +186,7 @@ export const CENTRAL_WIRING: ClipWiring = {
     'notes.order': 'the order of the list of notes (NOTES_WIRING local)',
   },
   refused: {
-    name: 'A Flow\'s title is set on its Document device, written on its file; a Day has no title: its heading is its date.', colour: 'A page takes its workspace\'s colour: no owner operation sets a page\'s own colour yet.',
+    name: 'Only a Flow keeps a title of its own, in its file: a Day\'s heading is its date, and another page\'s name is its file\'s.', colour: 'A page takes its workspace\'s colour: no owner operation sets a page\'s own colour yet.',
     'text.style': TEXT_WIRING.refused.styles!, 'text.emphasis': TEXT_WIRING.refused.marks!, 'text.size': TEXT_WIRING.refused.size!,
     'hl.colour': HIGHLIGHT_WIRING.refused.colour!, 'hl.show': HIGHLIGHT_WIRING.refused.show!, 'hl.pen': HIGHLIGHT_WIRING.refused.pen!, 'hl.tool': HIGHLIGHT_WIRING.refused.tool!,
     'act.highlight': HIGHLIGHT_WIRING.refused.marks!, 'act.note': HIGHLIGHT_WIRING.refused.note!, 'act.topacket': HIGHLIGHT_WIRING.refused.toPacket!,
@@ -212,13 +213,30 @@ export interface CentralReading {
   readonly location?: CentralLocation | null
 }
 
-/** The page's binding over its reading: the save outcome where the reached page is this file. Pure. */
-export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null}): ClipBinding {
+const DIRTY = 'The page holds edits its owner does not: save or re-read them first, so the title joins the revision you read.'
+
+/** A Flow's wiring: its name is its title, written on its own file (centralDeviceWrites.ts setFlowMeta), as Live names a clip in Clip
+ * view. The page family's Document device carries the same writer but stands on no chain (CentralDevices.tsx, R4), so Clip view is
+ * where the hand reaches it. The pane holding this file with unsaved edits refuses first. */
+function flowWiring(rename: (title: string) => Promise<void>, held: DocumentInPane | null): ClipWiring {
+  const {name: _refused, ...refused} = CENTRAL_WIRING.refused
+  return {...CENTRAL_WIRING, refused, acts: {...CENTRAL_WIRING.acts, name: async value => {
+    if (held?.dirty) throw new Error(DIRTY)
+    await rename(String(value ?? ''))
+  }}}
+}
+
+/** The page's binding over its reading: the save outcome where the reached page is this file; a Flow's title written where a writer is
+ * given. Pure. */
+export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null;
+  rename?: ((title: string) => Promise<void>) | null}): ClipBinding {
   const values: Record<string, Value> = {...reading.values}
   if (input.colour) values.colour = input.colour
   const reached = input.reached
-  if (reached?.outcome && reading.location && reached.location?.ref === reading.location.ref) values.save = reached.outcome
-  return clipBinding({mode: 'central', ref: reading.ref, values, wiring: CENTRAL_WIRING, placed: true,
+  const here = reached && reading.location && reached.location?.ref === reading.location.ref ? reached : null
+  if (here?.outcome) values.save = here.outcome
+  const wiring = input.rename && values.kind === 'flow' && reading.location ? flowWiring(input.rename, here) : CENTRAL_WIRING
+  return clipBinding({mode: 'central', ref: reading.ref, values, wiring, placed: true,
     viewDefaults: {'view.panel': 'clip', 'view.tools': 'highlight', 'view.editor': values.kind === 'flow' ? 'dialogue' : 'page', 'notes.order': 'place',
       ...(typeof values.participants === 'string' ? speakerDefault(values.participants) : {})}})
 }
@@ -325,7 +343,9 @@ export function useCentralClip(): ClipBinding | null {
   const subject = centralSubject
   const resolved = subject || !world ? null : resolveCentralOccasion(world.spine.occasion(), world.source.events)
   const occasion = resolved?.state === 'selected' ? resolved.selection : null
-  const subjectAnswer = useAnswer(subject ? `subject:${subject.kind}:${subject.path}` : null, () => readSubject(transport, subject!))
+  // A Flow's title written from Clip view reads the file again (the key moves) and the pane holding it reads it again too.
+  const [written, setWritten] = useState(0)
+  const subjectAnswer = useAnswer(subject ? `subject:${subject.kind}:${subject.path}#${written}` : null, () => readSubject(transport, subject!))
   const occasionAnswer = useAnswer(occasion && occasion.kind !== 'day' ? `occasion:${occasion.subjectRef}:${occasion.instantUnixMs ?? 'undated'}` : null, () => readOccasion(transport, occasion!))
   const day = useDayValues(transport, occasion)
   const colour = selected.track?.color ?? null
@@ -333,8 +353,14 @@ export function useCentralClip(): ClipBinding | null {
     const ref = `subject:${subject.kind}:${subject.path}`
     const answer = subjectAnswer ?? {phase: 'reading' as const}
     const name = centralSubjectName(subject)
-    return centralClipBinding({ref, values: answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : answer.values,
-      location: answer.phase === 'read' ? answer.location ?? subject.location ?? null : subject.location ?? null}, {colour, reached})
+    const location = answer.phase === 'read' ? answer.location ?? subject.location ?? null : subject.location ?? null
+    const rename = location ? async (title: string) => {
+      try { await setFlowMeta(transport, location, {title}) } finally {
+        setWritten(value => value + 1)
+        if (reached?.location?.ref === location.ref) reached.reread?.()
+      }
+    } : null
+    return centralClipBinding({ref, values: answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : answer.values, location}, {colour, reached, rename})
   }
   if (resolved?.state === 'absent') return centralClipBinding({ref: `occasion:${resolved.ref}`, values: {name: resolved.ref,
     page: JSON.stringify(pageOfText(`The retained occasion ${resolved.ref} is no longer in the temporal reading. The spine keeps its basis; nothing opens for it here.`))}}, {colour})
