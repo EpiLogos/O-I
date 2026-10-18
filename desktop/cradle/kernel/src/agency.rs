@@ -486,6 +486,158 @@ impl Client {
     }
 }
 
+impl Client {
+    /// One session's own settings through the owner's
+    /// `encounter-session-settings` (`aikit.encounter-session-settings/v1`):
+    /// a read without `request`, a change with it. The session must be
+    /// attached to one of the Project's SessionSpaces, as an encounter's must;
+    /// the owner keeps the revision and the history, and its refusal (a stale
+    /// revision, another task, a word outside the manual's) passes through.
+    pub fn session_settings(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_session: &str,
+        request: Option<&Value>,
+        expected_revision: Option<&str>,
+    ) -> Result<Value, String> {
+        if request.is_none() && expected_revision.is_some() {
+            return Err("A settings revision goes with a change".into());
+        }
+        let spaces = self.read_project(cwd, project_ref)?;
+        let attached = spaces.as_array().is_some_and(|rows| {
+            rows.iter().any(|space| {
+                space["agent_sessions"]
+                    .as_object()
+                    .is_some_and(|sessions| sessions.contains_key(agent_session))
+            })
+        });
+        if !attached {
+            return Err(
+                "The session is not attached to this native Project's SessionSpaces".into(),
+            );
+        }
+        let mut command = Command::new(&self.executable);
+        if self.suite_route {
+            command.arg("aikit");
+        }
+        command.arg("session-space");
+        if let Some(home) = &self.home {
+            command.env("AIKIT_HOME", home);
+        }
+        command.arg("-C").arg(cwd);
+        command.args([
+            "encounter-session-settings",
+            "--agent-session",
+            agent_session,
+        ]);
+        if let Some(request) = request {
+            command.arg("--request-json").arg(request.to_string());
+        }
+        if let Some(revision) = expected_revision {
+            command.args(["--expected-revision", revision]);
+        }
+        let bound = crate::owner_process::Bound {
+            owner: "AIKit",
+            operation: "encounter-session-settings",
+            limit: DISCOVER_LIMIT,
+            effect: if request.is_some() {
+                crate::owner_process::Effect::Write
+            } else {
+                crate::owner_process::Effect::Read
+            },
+        };
+        let output = crate::owner_process::output(&mut command, None, bound)
+            .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
+        if !output.status.success() {
+            return Err(owner_process_failure("encounter-session-settings", &output));
+        }
+        let data: Value = serde_json::from_slice(&output.stdout)
+            .map_err(|e| format!("AIKit SessionSpace returned unreadable session settings: {e}"))?;
+        if data["schema"].as_str() != Some("aikit.encounter-session-settings/v1")
+            || data["agent_session"].as_str() != Some(agent_session)
+        {
+            return Err("Unsupported or misaddressed native session settings reading".into());
+        }
+        Ok(data)
+    }
+}
+
+impl Client {
+    /// Several sessions' settings in one owner call (several
+    /// `--agent-session`, `aikit.encounter-session-settings-list/v1`). Every
+    /// session must be attached to one of the Project's SessionSpaces.
+    pub fn session_settings_list(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_sessions: &[String],
+    ) -> Result<Value, String> {
+        if agent_sessions.is_empty() || agent_sessions.len() > 256 {
+            return Err("Read from 1 to 256 sessions' settings at once".into());
+        }
+        let spaces = self.read_project(cwd, project_ref)?;
+        let attached = |session: &String| {
+            spaces.as_array().is_some_and(|rows| {
+                rows.iter().any(|space| {
+                    space["agent_sessions"]
+                        .as_object()
+                        .is_some_and(|sessions| sessions.contains_key(session))
+                })
+            })
+        };
+        if let Some(outside) = agent_sessions.iter().find(|session| !attached(session)) {
+            return Err(format!(
+                "{outside} is not attached to this native Project's SessionSpaces"
+            ));
+        }
+        let mut command = Command::new(&self.executable);
+        if self.suite_route {
+            command.arg("aikit");
+        }
+        command.arg("session-space");
+        if let Some(home) = &self.home {
+            command.env("AIKIT_HOME", home);
+        }
+        command.arg("-C").arg(cwd);
+        command.arg("encounter-session-settings");
+        for session in agent_sessions {
+            command.args(["--agent-session", session]);
+        }
+        let bound = crate::owner_process::Bound {
+            owner: "AIKit",
+            operation: "encounter-session-settings",
+            limit: DISCOVER_LIMIT,
+            effect: crate::owner_process::Effect::Read,
+        };
+        let output = crate::owner_process::output(&mut command, None, bound)
+            .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
+        if !output.status.success() {
+            return Err(owner_process_failure("encounter-session-settings", &output));
+        }
+        let data: Value = serde_json::from_slice(&output.stdout)
+            .map_err(|e| format!("AIKit SessionSpace returned unreadable session settings: {e}"))?;
+        // One session answers its own reading; the kernel's outcome is always the list.
+        let data = if agent_sessions.len() == 1 && data["readings"].is_null() {
+            serde_json::json!({"schema": "aikit.encounter-session-settings-list/v1", "readings": [data]})
+        } else {
+            data
+        };
+        let readings = data["readings"].as_array();
+        if data["schema"].as_str() != Some("aikit.encounter-session-settings-list/v1")
+            || readings.map(Vec::len) != Some(agent_sessions.len())
+            || readings.is_some_and(|rows| {
+                rows.iter()
+                    .zip(agent_sessions)
+                    .any(|(row, session)| row["agent_session"].as_str() != Some(session))
+            })
+        {
+            return Err("Unsupported or misaddressed native session settings list".into());
+        }
+        Ok(data)
+    }
+}
+
 pub fn executable() -> PathBuf {
     // The session-space verbs live in the main aikit binary (O-I #376 fold);
     // callers prepend the `session-space` subcommand to their native args.

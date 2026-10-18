@@ -337,6 +337,13 @@ export type KernelOp =
   | { op: "material_read"; target: { receipt: string; state_root: string; endpoint?: string | null; expected_world_ref?: string | null } }
   | { op: "a2a_exchange"; request: Record<string, unknown> }
   | {op:"encounter_task_read";project:string;agent_session:string}
+  /** One session's own settings and its bound task's (AIKit `encounter-session-settings`, aikit.encounter-session-settings/v1):
+   * the track's Telemetry and Solo; the task's name, colour, activator, output style, Launch, Then, Hand off to, Quantize and
+   * envelopes. Without `request` it reads; with it, a change made against `expected_revision` (absent while the session has none).
+   * The owner's reading or refusal passes through verbatim. */
+  | {op:"encounter_session_settings";project:string;agent_session:string;request?:EncounterSessionSettingsRequest;expected_revision?:string}
+  /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
+  | {op:"encounter_session_settings_list";project:string;agent_sessions:string[]}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
@@ -500,6 +507,8 @@ export type KernelOpResult =
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }
+  | { result:"encounter_session_settings_reading";data:EncounterSessionSettingsReading }
+  | { result:"encounter_session_settings_list_reading";data:EncounterSessionSettingsList }
   | { result:"encounter_joined";reading:unknown }
   | { result:"native_owner_reading";owner:string;data:unknown;failure:unknown }
   | { result:"a2a_exchange_difference";data:unknown }
@@ -657,3 +666,33 @@ export type KnowledgeRequest = {action:"resolve";query:string} | { action: "sear
 export interface KnowledgeReading { document?: unknown; resource: string; provider: string; revision?: string; authority: string; content?: string; evidence: string[]; why_selected: string }
 export interface KnowledgeHit { address: KnowledgeAddress; resource: string; label: string; kind: string; snippet: string; provider: string; authority: string }
 export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string; address?: KnowledgeAddress}[]; edges: {from: string; to: string; relation: string;reference?:string;authored_relation?:import('../knowledge/wikiDocument').WikiEvidence;origin?:string|{provider?:string;revision?:string;authority?:string}}[]; truncated: boolean; warnings: string[] }
+
+/** Several sessions' readings in the order asked; a session no retained SessionSpace holds answers its refusal. */
+export interface EncounterSessionSettingsList {
+  schema: 'aikit.encounter-session-settings-list/v1'
+  readings: (EncounterSessionSettingsReading | {agent_session: string; refused: string})[]
+}
+/** A change to one session's settings: `null` returns a field to its default. Task fields bind to the session's bound task. */
+export interface EncounterSessionSettingsRequest {
+  track?: {telemetry?: boolean | null; solo?: boolean | null}
+  task?: {task_ref: string; set: Partial<Record<EncounterTaskSettingKey, unknown>>}
+}
+export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'launch' | 'then' | 'handoff_to' | 'quantize'
+  | 'envelope_mode' | 'envelope_linked' | 'effort' | 'autonomy'
+/** An envelope point: [seconds from the task's start, a level word under Automation or a step −2…+2 under Modulation]. */
+export type EncounterEnvelopePoint = [number, string | number]
+/** The owner's reading: every value as it stands (defaults stated), `set` naming what the person set. */
+export interface EncounterSessionSettingsReading {
+  schema: 'aikit.encounter-session-settings/v1'
+  agent_session: string
+  revision: string | null
+  track: {telemetry: boolean; solo: boolean; set: string[]}
+  task: null | {
+    task_ref: string; name: string; colour: string | null; active: boolean; register: 'plain' | 'warm' | 'terse'
+    form: 'technical' | 'narrative' | 'list'; launch: 'once' | 'hold' | 'loop'; then: 'next' | 'handoff' | 'stop'; handoff_to: string | null
+    quantize: 'global' | 'now' | 'next-tool' | 'next-turn'; envelope_mode: 'automation' | 'modulation'; envelope_linked: boolean
+    effort: EncounterEnvelopePoint[]; autonomy: EncounterEnvelopePoint[]; set: string[]
+  }
+  previous_task: null | {task_ref: string; set: Record<string, unknown>}
+  standing: string
+}

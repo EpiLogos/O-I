@@ -6,9 +6,11 @@
 // task THE selection names (`<track>#task/<n>`, timeline/factoryTrackAdapter.ts parseFactoryTaskRef). Launch quantize is the
 // transport's Quantize — the Agent's interrupt timing (one binding feeds both). A new task goes the Agent's own way (its declared
 // new-task row, kernel:harness_agent_control configure {prompt}). Launch, Retry and Stop after have only the whole bound harness
-// as their grain (factoryTrackAdapter.ts FACTORY_GRAIN), never one task, so they stand disabled with that reason; the per-task
-// settings (mode, then, effort, autonomy, register, form) have no owner at all. The task's log is not read: the temporal stream
-// names the session, not the task's tools along its time.
+// as their grain (factoryTrackAdapter.ts FACTORY_GRAIN), never one task, so they stand disabled with that reason. The per-task
+// settings (Mode, Then, To, Effort, Autonomy, Register, Form here; every setting of the Clip view through TASK_SEAMS) are the
+// session's settings on their owner, AIKit's `encounter-session-settings` (kernel encounter_session_settings, agent/sessionSettings.ts),
+// written against the revision that stands. The task's log is not read: the temporal stream names the session, not the task's
+// tools along its time.
 //
 // Runs lists a piece of work's attempts (kernel factory_attempt_read, addressed by a Factory state path and a run ref). The agency
 // reading names neither for a session (shell/ModeDetail.tsx FactoryTaskLogDetail: "the sessions reading names none"), so its
@@ -20,6 +22,9 @@ import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {sessionRowsOf} from './threadBinding'
 import {familyFaceDevice} from './mainTrackBindings'
+import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import {SETTINGS_WHY, TASKS_DEVICE_SETTINGS, settingsRefusal, taskSettingChange, tasksDeviceChange, tasksDeviceValues, writeSessionSettings,
+  type TasksDeviceSetting} from '../sessionSettings'
 
 export const TASKS_DESIGN = 'software-factory:tasks'
 export const RUNS_DESIGN = 'software-factory:attempt-review'
@@ -46,13 +51,14 @@ export const TASKS_REFUSE: Readonly<Record<string, string>> = {
   launch: GRAIN('Launch'),
   retry: GRAIN('Retry'),
   stopAfter: GRAIN('Stop after'),
-  mode: missing('Mode', 'a task\'s launch mode in its task record', 'Software Factory'),
-  then: missing('Then', 'a task\'s follow action in its task record', 'Software Factory'),
-  to: missing('To', 'a hand-off to another session', 'Software Factory'),
-  effort: missing('Effort for this task', 'a per-task effort (the Agent\'s Effort is the session\'s)', 'Actuation'),
-  autonomy: missing('Autonomy for this task', 'a per-task autonomy (Custody sets the session\'s)', 'Software Factory'),
-  register: missing('Register', 'an output style for one task', 'Actuation'),
-  form: missing('Form', 'an output style for one task', 'Actuation'),
+}
+
+/** Where the session's settings are written: the transport and register its owner is reached through, and the reading the
+ * change is made against (null while it is read). */
+export interface TaskSeamContext {
+  readonly transport: KernelTransportStatus
+  readonly project: string
+  readonly settings: EncounterSessionSettingsReading | null
 }
 
 // ---------------------------------------------------------------------------------------------------------------- one task's own ops
@@ -69,53 +75,41 @@ export interface TaskAddress {
 export type TaskSetting = 'name' | 'colour' | 'active' | 'register' | 'form' | 'launch' | 'then' | 'handoff' | 'quantize' | 'effort' | 'autonomy'
   | 'envelopeMode' | 'envelopeLink'
 
-/** The seam each task setting writes through (T-REALIGN R2: "Owner ops that do not exist yet are built, not listed"). Today every one
- * refuses in its owner's words and stands disabled with them (`refused`); the owner op wires in one line — replace the entry with
- * `{send: (task, value) => <the op>}` and the Clip view control enables, its change going to the owner on release. The op shapes the
- * owners need are TASK_OP_SHAPES. */
+/** The seam each task setting writes through (T-REALIGN R2: "Owner ops that do not exist yet are built, not listed"): the session's
+ * settings on their owner. A seam whose owner op does not stand names why (`refused`) and its control stands disabled with it. */
 export interface TaskSeam {
-  /** Why no owner takes it yet; absent once the op stands. */
+  /** Why no owner takes it; absent once the op stands. */
   readonly refused?: string
-  readonly send: (task: TaskAddress, value: Value) => Promise<void>
+  readonly send: (task: TaskAddress, value: Value, context: TaskSeamContext) => Promise<void>
 }
-const refusedSeam = (why: string): TaskSeam => ({refused: why, send: async () => { throw new Error(why) }})
 
-export const TASK_REFUSE: Readonly<Record<TaskSetting, string>> = {
-  name: missing('Name', 'a task\'s title in its task record', 'Software Factory'),
-  colour: missing('Colour', 'a task clip\'s colour in its task record (a task takes its session\'s colour)', 'Software Factory'),
-  active: missing('Clip activator', 'a task\'s activator: an off task stays queued and does not run', 'Software Factory'),
-  register: TASKS_REFUSE.register!,
-  form: TASKS_REFUSE.form!,
-  launch: TASKS_REFUSE.mode!,
-  then: TASKS_REFUSE.then!,
-  handoff: TASKS_REFUSE.to!,
-  quantize: missing('Quantize for this task', 'a task\'s launch quantize in its task record (Global follows the transport\'s Quantize, the Agent\'s interrupt timing)', 'Software Factory'),
-  effort: TASKS_REFUSE.effort!,
-  autonomy: TASKS_REFUSE.autonomy!,
-  envelopeMode: missing('Envelope mode', 'a task envelope\'s Automation or Modulation (the per-task effort and autonomy op carries it)', 'Actuation'),
-  envelopeLink: missing('Envelope link', 'a task envelope\'s own length and loop (the per-task effort and autonomy op carries it)', 'Actuation'),
-}
+const settingSeam = (setting: TaskSetting): TaskSeam => ({
+  send: async (task, value, context) => {
+    if (task.n !== 1) throw new Error(SETTINGS_WHY.oneTask)
+    const made = taskSettingChange(setting, value, context.settings)
+    if ('refused' in made) throw new Error(made.refused)
+    await writeSessionSettings(context.transport, context.project, task.sessionRef, made.change)
+  },
+})
 
 export const TASK_SEAMS: Readonly<Record<TaskSetting, TaskSeam>> = {
-  name: refusedSeam(TASK_REFUSE.name),
-  colour: refusedSeam(TASK_REFUSE.colour),
-  active: refusedSeam(TASK_REFUSE.active),
-  register: refusedSeam(TASK_REFUSE.register),
-  form: refusedSeam(TASK_REFUSE.form),
-  launch: refusedSeam(TASK_REFUSE.launch),
-  then: refusedSeam(TASK_REFUSE.then),
-  handoff: refusedSeam(TASK_REFUSE.handoff),
-  quantize: refusedSeam(TASK_REFUSE.quantize),
-  effort: refusedSeam(TASK_REFUSE.effort),
-  autonomy: refusedSeam(TASK_REFUSE.autonomy),
-  envelopeMode: refusedSeam(TASK_REFUSE.envelopeMode),
-  envelopeLink: refusedSeam(TASK_REFUSE.envelopeLink),
+  name: settingSeam('name'),
+  colour: settingSeam('colour'),
+  active: settingSeam('active'),
+  register: settingSeam('register'),
+  form: settingSeam('form'),
+  launch: settingSeam('launch'),
+  then: settingSeam('then'),
+  handoff: settingSeam('handoff'),
+  quantize: settingSeam('quantize'),
+  effort: settingSeam('effort'),
+  autonomy: settingSeam('autonomy'),
+  envelopeMode: settingSeam('envelopeMode'),
+  envelopeLink: settingSeam('envelopeLink'),
 }
 
-/** The owner ops the seams wait for, in their exact shapes (the lead builds them; PROPOSE). */
+/** The owner op the task's own acts wait for, in its exact shape. */
 export const TASK_OP_SHAPES: Readonly<Record<string, string>> = {
-  'Software Factory · task_record_set': 'request {session_ref, task: n, set: {title?, colour?, active?, launch?: once|hold|loop, then?: next|handoff|stop, handoff_to?: session_ref, quantize?: global|now|next tool|next turn}} → answer the task record at its new revision, or the refusal in words',
-  'Actuation · harness_task_settings': 'request {session_ref, task: n, effort?: inherit|low|medium|high|max (or steps as [[second, step]…]), autonomy?: inherit|suggest|review|auto, mode?: automation|modulation, linked?: boolean, style?: {register?: plain|warm|terse, form?: technical|narrative|list}} → answer the task\'s settings as the agent will read them',
   'Actuation · harness_task_control': 'request {session_ref, task: n, act: launch|retry|stop} → answer the task\'s state (one task, not the whole bound harness)',
 }
 
@@ -129,6 +123,8 @@ export interface TasksInput {
   readonly selectedTask: number | null
   /** The Agent's values (its light and interrupt timing). */
   readonly agent: Values
+  /** The session's settings on their owner, and where they are written; null where nothing reads them. */
+  readonly settings?: TaskSeamContext | null
 }
 
 /** The session's tasks as the design reads them (software-factory__tasks.tsx:8-9): {n, name, state, idle} — a state the owner and the
@@ -156,8 +152,12 @@ export function tasksValues(input: TasksInput): Values {
     values.task = task.n
     if (task.startUnixMs != null && task.lastActivityUnixMs != null) values.elapsed = Math.max(0, Math.round((task.lastActivityUnixMs - task.startUnixMs) / 1000))
   }
+  // The settings are the bound task's: the first on the track.
+  if (input.settings?.settings && (task?.n ?? 1) === 1) Object.assign(values, tasksDeviceValues(input.settings.settings, typeof values.elapsed === 'number' ? values.elapsed : 0))
   return values
 }
+
+const isDeviceSetting = (key: string): key is TasksDeviceSetting => (TASKS_DEVICE_SETTINGS as readonly string[]).includes(key)
 
 export interface TasksPorts {
   /** Move THE selection to a task of the session (its clip). */
@@ -167,12 +167,13 @@ export interface TasksPorts {
 }
 
 export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'write'> | null, ports: TasksPorts): DesignBinding {
+  const settingsWhy = input.session ? settingsRefusal(input.settings, input.selectedTask) : null
   return {
     id: TASKS_ID,
     values: tasksValues(input),
-    standing: disabled(TASKS_REFUSE),
+    standing: {...disabled(TASKS_REFUSE), ...(settingsWhy ? Object.fromEntries(TASKS_DEVICE_SETTINGS.map(key => [key, {disabled: settingsWhy}])) : {})},
     local: {task: value => { const n = typeof value === 'number' ? value : Number(value); if (Number.isSafeInteger(n) && n >= 1) ports.selectTask(n) }},
-    writes: key => key === 'quantize' || key === 'newTask' || key in TASKS_REFUSE,
+    writes: key => key === 'quantize' || key === 'newTask' || key in TASKS_REFUSE || isDeviceSetting(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'quantize') {
@@ -184,6 +185,16 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
           const text = String(value).trim()
           if (!input.session) throw Error('No session is selected: a task is written on a session\'s track.')
           if (text) await ports.queue(text)
+          continue
+        }
+        if (isDeviceSetting(key)) {
+          const context = input.settings
+          if (!input.session) throw Error('No session is selected: a task\'s settings are its session\'s.')
+          const why = settingsRefusal(context, input.selectedTask)
+          if (why || !context) throw Error(why ?? SETTINGS_WHY.notHere)
+          const made = tasksDeviceChange(key, value, context.settings)
+          if ('refused' in made) throw Error(made.refused)
+          await writeSessionSettings(context.transport, context.project, input.session.sessionRef, made.change)
           continue
         }
         throw Error(TASKS_REFUSE[key] ?? `${key} is a reading: its owner reports it; nothing here changes it.`)

@@ -35,7 +35,8 @@ export async function load(u, c, n) {
 const {clipShape, wiredKey, resetViewHolds, viewHoldsOf, READING} = await import('../src/frame/detail/clipBinding.ts')
 const {loadClip, CLIP_MODES} = await import('../src/inhabitants/catalogue/clips/index.ts')
 const factory = await import('../src/agent/clipBinding.ts')
-const {TASK_REFUSE, TASK_SEAMS} = await import('../src/agent/devices/taskBindings.ts')
+const {TASK_SEAMS} = await import('../src/agent/devices/taskBindings.ts')
+const {SETTINGS_WHY} = await import('../src/agent/sessionSettings.ts')
 const {trackKey} = await import('../src/agent/agentRunModel.ts')
 const live = await import('../src/live/clipBinding.ts')
 const techne = await import('../src/techne/clipBinding.ts')
@@ -84,28 +85,30 @@ test('Factory: the task THE selection names maps onto clip:factory — its name,
   assert.equal(factory.factoryClipBinding({ref: trackKey(track), tracks: [track], events}).ref, taskRef, 'a session track opens its first task')
 })
 
-test('Factory: every per-task setting stands disabled in its owner\'s words, and a refused change keeps them', async () => {
+test('Factory: where the session\'s settings are not read, every per-task setting stands disabled saying so, and a refused change keeps it', async () => {
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null})
-  for (const [key, setting] of [['launch', 'launch'], ['then', 'then'], ['handoff', 'handoff'], ['quantize', 'quantize'], ['env.agent.effort', 'effort'],
-    ['env.agent.autonomy', 'autonomy'], ['style.register', 'register'], ['name', 'name']]) {
-    assert.equal(binding.standing[key]?.disabled, TASK_REFUSE[setting], `${key} stands disabled with the owner's words`)
-    assert.match(TASK_REFUSE[setting], /no owner operation carries it yet — missing op: .* \((Software Factory|Actuation)\)\.$/)
-    await assert.rejects(binding.write([{key, value: 'x'}]), {message: TASK_REFUSE[setting]})
+  for (const key of ['launch', 'then', 'handoff', 'quantize', 'env.agent.effort', 'env.agent.autonomy', 'style.register', 'name']) {
+    assert.equal(binding.standing[key]?.disabled, SETTINGS_WHY.notHere, `${key} stands disabled saying why`)
+    await assert.rejects(binding.write([{key, value: 'x'}]), {message: SETTINGS_WHY.notHere})
   }
   await assert.rejects(binding.write([{key: 'state', value: 'done'}]), {message: READING('state')}, 'a reading is never written')
   assert.equal(binding.writes('state'), false)
   assert.equal(binding.values.log, undefined, 'no sessions provider: the log is not read, so it is absent')
 })
 
-test('Factory: the owner op wires into its seam in one line, and the control then writes to it', async () => {
+test('Factory: a setting writes through its seam with the session\'s settings (factory-session-settings.test.mjs drives the owner)', async () => {
   const was = TASK_SEAMS.launch
   const sent = []
-  TASK_SEAMS.launch = {send: async (task, value) => { sent.push([task, value]) }}
+  TASK_SEAMS.launch = {send: async (task, value, context) => { sent.push([task, value, context.project]) }}
   try {
-    const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null})
+    const context = {transport: {kind: 'unavailable', reason: 'test'}, project: 'O-I', settings: {schema: 'aikit.encounter-session-settings/v1', agent_session: 'ses-214',
+      revision: null, track: {telemetry: true, solo: false, set: []}, task: {task_ref: 'task:t', name: 'correlate occurrences', launch: 'once', then: 'next', quantize: 'global',
+        envelope_mode: 'automation', envelope_linked: true, effort: [], autonomy: [], register: 'plain', form: 'technical', active: true, colour: null, handoff_to: null, set: []},
+      previous_task: null, standing: 's'}}
+    const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: context})
     assert.equal(binding.standing.launch, undefined, 'no longer disabled')
     await binding.write([{key: 'launch', value: 'loop'}])
-    assert.deepEqual(sent, [[{sessionRef: 'ses-214', n: 1}, 'loop']])
+    assert.deepEqual(sent, [[{sessionRef: 'ses-214', n: 1}, 'loop', 'O-I']])
   } finally { TASK_SEAMS.launch = was }
 })
 
