@@ -88,7 +88,7 @@ async function send(effect: TorusEffect, changes: readonly ValueChange[]): Promi
 
 /** The binding the runtime hosts the effect's design on: the owner's state, the stage channel for its edits, and every key the owner
  * does not take now disabled with the reason. */
-export function torusEffectBinding(effect: TorusEffect, state: LiveTorusState | null): DesignBinding {
+export function torusEffectBinding(effect: TorusEffect, state: LiveTorusState | null, held: Readonly<Record<string, string>> = {}): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of ['light', ...Object.keys(EFFECT_LAW[effect]).filter(key => key !== 'on'), ...(effect === 'dynamics' ? ['reduction'] : [])]) {
     const why = writeStanding(effect, state, key)
@@ -101,6 +101,8 @@ export function torusEffectBinding(effect: TorusEffect, state: LiveTorusState | 
     writes: key => writeStanding(effect, state, key) === null,
     standing,
     ...(writable ? {write: (changes: readonly ValueChange[]) => send(effect, changes)} : {}),
+    // A key a planet moves (Sky modulation, skyModulation.ts skyHeldKeys): the status bar names the planet.
+    ...(Object.keys(held).length ? {modulatedBy: held} : {}),
   }
 }
 

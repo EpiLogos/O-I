@@ -24,6 +24,7 @@ import {LIVE_TORUS_ABSENT_REASON, useLiveTorusReading, type LiveTorusState} from
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
 import {MidiMapTarget} from './midiMap/midiMapControls'
+import {skyHeldTorusKeys, useSkyModulationPlan} from './designBindings/skyModulation'
 
 // Colour is the tokens' alone: the near side takes the instrument's accent when it is at work, the far side is fainter.
 const STROKE = {lit: 'var(--accent)', rising: 'var(--text-dim)', unlit: 'var(--text-faint)'} as const
@@ -70,7 +71,8 @@ export const torusMapWrap = (row: SdkParamRow, control: ReactNode): ReactNode =>
 
 export function TorusOnChain({state}: {state: LiveTorusState}) {
   const device = useMemo(() => torusDevice(state), [state])
-  const binding = useMemo(() => torusDesignBinding(state, device), [state, device])
+  const plan = useSkyModulationPlan()
+  const binding = useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan)), [state, device, plan])
   useEffect(() => {
     publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} />, full: {draw: () => <TorusFull />}})
   }, [device, binding, state])
