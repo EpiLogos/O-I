@@ -63,6 +63,6 @@ function Relayed({bindingId, fallback, onClose}: {bindingId: string; fallback: (
   if (!snapshot) return waited ? <>{fallback()}</> : <p role="status" data-device-relay="waiting">Reaching the device in the main window…</p>
   const device = snapshot.device as unknown as DeviceInstance
   return <div className="device-relayed" data-device-relay="relayed" data-device-relay-of={snapshot.deviceId}>
-    <PlacedDevice device={device} view="popout" binding={binding} onClose={onClose} />
+    <PlacedDevice device={device} view="popout" binding={binding} onClose={onClose} relayed />
   </div>
 }
