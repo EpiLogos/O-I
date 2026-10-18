@@ -303,9 +303,8 @@ test('the World cut modes take the cron track through their registration; with n
   const spine = firedSpine()
   const view = worldView(spine)
   const central = registered('base', {set: null, document: null, world: view})
-  // R3: Central's five stream tracks became the Day as the Main track (no workspace book is mounted in this probe); the cron
-  // track still joins after it. Replaces the five `central:stream:*` ids.
-  assert.deepEqual(central.tracks.map(t => t.id), ['central:day', 'cron'])
+  // T-WORLDS W2: your world stands always, then the Day as the Main track; the cron track still joins after it.
+  assert.deepEqual(central.tracks.map(t => t.id), ['central:world:central:wiki:root', 'central:day', 'cron'])
   assert.equal(central.tracks.at(-1).kind, 'cron · civil-field read · every 90s · 1 firing landed')
   const technē = registered('techne', {set: null, document: null, world: view})
   assert.equal(technē.tracks.length, 7)
@@ -443,10 +442,10 @@ test('through the registration, a stop stands its occasion on the spine by the o
   const spine = firedSpine()
   const entry = dayEvent('central:now:entry', t0 - 3_600_000, 'an entry')
   const central = registered('base', {set: null, document: null, world: worldView(spine, [entry])})
-  const days = central.walks.find(walk => walk.id === 'central:days')
-  assert.ok(days, 'Central\'s day is a walk')
+  const days = central.walks.find(walk => walk.id === 'central:today')
+  assert.ok(days, 'today is a walk: its entries are its stops (T-WORLDS W2)')
   assert.equal(spine.occasion(), null)
-  assert.deepEqual(await central.actions.focusStop.run('central:days', 0), {ok: true, note: `Stood ${days.stops[0].label}.`})
+  assert.deepEqual(await central.actions.focusStop.run('central:today', 0), {ok: true, note: `Stood ${days.stops[0].label}.`})
   assert.equal(spine.occasion().basis.ref, 'central:now:entry', 'the day\'s face is an entry: its occasion stands on the spine')
 })
 

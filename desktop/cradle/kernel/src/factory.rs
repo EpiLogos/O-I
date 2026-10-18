@@ -365,8 +365,13 @@ pub enum OwnerRequest {
 pub struct AuthorityToken(String);
 
 impl AuthorityToken {
-    fn as_str(&self) -> &str {
+    pub(crate) fn as_str(&self) -> &str {
         &self.0
+    }
+
+    #[cfg(test)]
+    pub(crate) fn for_test(token: &str) -> Option<Self> {
+        Some(Self(token.to_owned()))
     }
 }
 
@@ -1562,7 +1567,7 @@ fn authority_under(state_path: &Path, central_root: Option<PathBuf>) -> Option<P
 /// The token the native host holds for Central's native actions: the host's
 /// `CENTRAL_NATIVE_TOKEN`, else `~/.central/native-token` (owner-rotatable).
 /// Read here, in the native process — never supplied by the desk.
-fn host_native_token() -> Option<AuthorityToken> {
+pub(crate) fn host_native_token() -> Option<AuthorityToken> {
     host_native_token_from(
         std::env::var("CENTRAL_NATIVE_TOKEN").ok(),
         std::env::var_os("HOME").map(PathBuf::from),

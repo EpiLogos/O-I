@@ -540,7 +540,10 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const {origin, current, workspaceId} = capture(binding, true)
     const form = DOCUMENT_FORMS.find(entry => entry.kind === kind)
     if (form) {
-      const copy = await ownerIO(current, () => createFormInPlace(origin.kernel.transport, form, {project, projects: origin.kernel.snapshot.navigator?.root?.work.projects}))
+      // A world's page lands in the world of the scope it is made in (your world, or the project's) and names it (T-WORLDS W2).
+      const root = origin.kernel.snapshot.navigator?.root
+      const worldRef = project ? root?.work.projects.find(item => item.name === project)?.projectcentral?.agent_wiki?.wiki?.space_ref : root?.control.agent_wiki.wiki.space_ref
+      const copy = await ownerIO(current, () => createFormInPlace(origin.kernel.transport, form, {project, projects: root?.work.projects, ...(worldRef ? {worldRef} : {})}))
       current(); origin.book.replaceSurface(workspaceId, {id, kind: 'file', ref: copy.location.ref, location: copy.location, title: copy.location.path.split('/').pop() ?? form.label, project})
     } else if (kind === 'flow') await createFlow(id)
     else if (kind === 'search') {current(); origin.book.replaceSurface(workspaceId, {id, kind: 'sources', title: 'Sources', project})}

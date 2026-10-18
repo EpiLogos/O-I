@@ -47,6 +47,7 @@ export async function load(u, c, n) {
 
 const bind = await import('../src/central/devices/dayBinding.ts')
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
+const daySet = await import('../src/central/daySet.ts')
 const readings = await import('../src/central/devices/useCentralReadings.ts')
 const chain = await import('../src/central/devices/CentralDevices.tsx')
 const {day: catalogueDay} = await import('../src/inhabitants/catalogue/panels/day.tsx')
@@ -112,11 +113,14 @@ const DAY_16 = {...DAY_13, day_ref: 'central:day:control:root:2026-10-16', docum
   temporal: {...DAY_13.temporal, civil_date: '2026-10-16', day_ref: 'central:day:control:root:2026-10-16'},
   today: {civil_date: '2026-10-16', day_ref: 'central:day:control:root:2026-10-16', updated_at_unix_seconds: 1792110000}}
 const READY = groundOf({state: 'ready', action: 'central.day.read', data: DAY_16})
+// Today ensured, its document not made yet (T-WORLDS W2: Open today makes it from the Day form).
+const POLICY = {state: 'ready', action: 'central.work.policy', data: {revision: 'policy-rev'}}
+const UNMADE = {...groundOf({state: 'ready', action: 'central.day.read', data: {...DAY_16, document_state: 'uninitialised', document: null}}), placement: POLICY}
 
 /** The owner behind a stubbed kernel bridge (FIXTURE): it answers `central` inspect from a sequence of grounds, records each
  * ensure-day it is asked, and holds one Day document behind `receiving` (Document, MutateField, CAS-checked). */
 function fakeOwner({grounds = [STALE, READY], refuseEnsure = null} = {}) {
-  const sent = [], ensures = []
+  const sent = [], ensures = [], initialised = []
   let inspected = 0
   const state = {revision: 1, payload: structuredClone(PAYLOAD)}
   const ok = (result, data) => ({json: async () => ({ok: true, outcome: {result, data}})})
@@ -131,7 +135,14 @@ function fakeOwner({grounds = [STALE, READY], refuseEnsure = null} = {}) {
         ensures.push(body.request)
         return ok('central_reading', {schema: 'central.day-ensure/v1', day_ref: 'central:day:control:root:2026-10-16'})
       }
+      if (body.request.kind === 'initialise-day') { initialised.push(body.request); return ok('central_reading', {schema: 'central.document-create/v1'}) }
     }
+    // The Day form, where Central's file route finds it (flow/documentForms.ts resolveDocumentForm).
+    const formAt = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Work/O-I/desktop/cradle/documents/ql-daily-die.html', root: '/ground', path: 'Work/O-I/desktop/cradle/documents/ql-daily-die.html'}
+    if (body.op === 'world_browse') return {json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {work: {projects: [{name: 'O-I', path: 'Work/O-I'}]}}}}}})}
+    if (body.op === 'files_list') return {json: async () => ({ok: true, outcome: {result: 'directory_read', directory: {schema: 'central.directory-reading/v1', location: {...formAt, path: body.path},
+      entries: [{name: 'ql-daily-die.html', kind: 'file', byte_len: 1, retrieval_allowed: true, location: formAt}]}}})}
+    if (body.op === 'file_read') return {json: async () => ({ok: true, outcome: {result: 'file_read', reading: {schema: 'central.file-reading/v1', location: formAt, revision: 'form-rev', content: '<html></html>', byte_len: 13, content_encoding: 'utf-8'}}})}
     if (body.op === 'receiving') {
       const {Document, MutateField} = body.request
       if (Document) return ok('receiving_reading', documentReading(state.payload, `rev-${state.revision}`))
@@ -147,7 +158,7 @@ function fakeOwner({grounds = [STALE, READY], refuseEnsure = null} = {}) {
     }
     return refused(`unexpected op ${body.op} ${body.request?.kind ?? ''}`)
   }
-  return {fetch, sent, ensures, state, mutations: () => sent.filter(body => body.request?.MutateField).map(body => body.request.MutateField)}
+  return {fetch, sent, ensures, initialised, state, mutations: () => sent.filter(body => body.request?.MutateField).map(body => body.request.MutateField)}
 }
 async function withOwner(owner, run) {
   const real = globalThis.fetch
@@ -234,9 +245,10 @@ test('Open today is the person\'s press: on release one ensure-day goes to Centr
     assert.equal(await host.flushDrafts(binding, 0), null, 'the owner took it')
   })
   assert.deepEqual(owner.ensures, [{kind: 'ensure-day', expected_time_policy_revision: TIME.revision}], 'one ensure, under the time policy the owner read')
-  assert.deepEqual(owner.sent.map(body => body.request.kind), ['inspect', 'ensure-day'], 'the ground read again first, then the ensure — nothing else')
+  assert.deepEqual(owner.sent.map(body => body.request.kind), ['inspect', 'ensure-day', 'inspect'],
+    'the ground read again first, then the ensure, then read again: today\'s Day has its document, so nothing more')
   // The owner now holds today's Day: a second press reads the ground and ensures nothing.
-  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false})))
+  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: false})))
   assert.equal(owner.ensures.length, 1)
   host.resetHost(ID)
 })
@@ -422,4 +434,32 @@ test('the Day\'s designed head carries the door\'s ↗ — its own window (R1) �
   hosting(ready, bind.dayValuesOf(ready, {face: 2, payload: PAYLOAD}), (entry, binding) => {
     assert.doesNotMatch(html(createElement(DeviceView, {device: entry.device, size: 'compact', picture: entry.picture('compact'), binding, marks: entry.marks})), /data-action="redock"/)
   }, {deviceWindows: windows(true), manifest: central})
+})
+
+test('Open today makes today\'s document from the Day form when it has none: initialise-day, with the form\'s revision and the placement policy\'s (T-WORLDS W2)', async () => {
+  const owner = fakeOwner({grounds: [UNMADE]})
+  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: true})))
+  assert.equal(owner.ensures.length, 0, 'today is current: nothing is ensured')
+  assert.equal(owner.initialised.length, 1)
+  const [made] = owner.initialised
+  assert.equal(made.day_ref, 'central:day:control:root:2026-10-16')
+  assert.equal(made.expected_revision, 'rev-1'); assert.equal(made.expected_policy_revision, 'policy-rev'); assert.equal(made.expected_form_revision, 'form-rev')
+  assert.equal(made.form.path, 'Work/O-I/desktop/cradle/documents/ql-daily-die.html', 'the roster\'s own Day form, read through Central\'s file route')
+  assert.match(made.document_id, /^document:/)
+})
+
+test('today\'s set is kept in the Day: a world brought in is written through the Day\'s own meta field on the revision read; the same set writes nothing', async () => {
+  const owner = fakeOwner({grounds: [READY]})
+  const day = {project: null, sourceRef: SOURCE_16, documentId: DOC_16}
+  await withOwner(owner, async () => {
+    const first = await daySet.writeDaySet(bridge, day, set => daySet.withWorld(set, 'central:wiki:project:O-I', 'O-I'))
+    assert.deepEqual(first, {revision: 'rev-2', wrote: true})
+    const again = await daySet.writeDaySet(bridge, day, set => daySet.withWorld(set, 'central:wiki:project:O-I', 'O-I'))
+    assert.equal(again.wrote, false, 'a world already in the set is not written twice')
+  })
+  const [write] = owner.mutations()
+  assert.equal(write.field_id, 'original:meta'); assert.equal(write.expected_revision, 'rev-1')
+  assert.deepEqual(write.value.set, {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}], rows: []})
+  assert.equal(write.value.face, 2, 'the rest of the Day\'s meta stands as it was')
+  assert.deepEqual(daySet.daySetOf(owner.state.payload).tracks, [{world: 'central:wiki:project:O-I', name: 'O-I'}])
 })

@@ -17,6 +17,7 @@ import {AgentShellBrowser, AGENT_BROWSER_CATEGORIES} from '../agent/AgentShellBr
 import {Icon} from '../inhabitants/sdk/Icon'
 import type {IconName} from '../inhabitants/sdk/icons'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
+import {LiveGroovePool} from '../frame/browser/LiveGroovePool'
 import {useWorkbenchOpeners} from '../native/workbenchDoor'
 
 /** What the bodies read from the App: Live's panel context, the ground subject the browser selects, the agency reading. */
@@ -94,9 +95,14 @@ export const MODE_BROWSERS: Readonly<Record<SurfMode, () => readonly BrowserSour
   factory: () => [AGENTS],
 }
 
+/** What a mode's pool face is given: the set open in Live (its grooves are the set's own). */
+export interface PoolFaceContext {readonly setPath: string | null}
+
 /** The pool's other face by mode (manual §16.7: "In Live a switch at the pool's head shows the set's grooves instead, as Live's pool
  * does"): a table, never a branch. A mode not named here has the workspaces alone. */
-export const MODE_POOL_FACES: Readonly<Partial<Record<SurfMode, () => {label: string; face: ReactNode}>>> = {}
+export const MODE_POOL_FACES: Readonly<Partial<Record<SurfMode, (context: PoolFaceContext) => {label: string; face: ReactNode}>>> = {
+  live: ({setPath}) => ({label: 'Grooves', face: <LiveGroovePool path={setPath} />}),
+}
 
 /** A mode's row sources, then the ones every mode shares. */
 export const browserSourcesOf = (mode: SurfMode): readonly BrowserSource[] => [...MODE_BROWSERS[mode](), ...SHARED]

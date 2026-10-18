@@ -28,3 +28,13 @@ export const listWorldPages = (transport: KernelTransportStatus, path: string, l
   page<PageListing>(transport, limit === undefined ? {operation: "list", path} : {operation: "list", path, limit});
 export const writePageField = (transport: KernelTransportStatus, location: CentralLocation, expectedRevision: string, field: PageField, value: unknown) =>
   page<PageMutation>(transport, {operation: "mutate_field", location, expected_revision: expectedRevision, field, value});
+
+/** A page launched: the NOW clearing tied to it (one per page; launching again rejoins it). */
+export interface PageLaunch {schema: "oi.page-launch/v1"; location: CentralLocation; form: PageForm; title: string | null; now_ref: string; allocated: unknown; reopened: unknown}
+export interface PageStop {schema: "oi.page-stop/v1"; now_ref: string; outcome: "closed" | "unchanged"; receipt?: unknown}
+/** The task a page's clearing is allocated under (kernel/src/page.rs `page_task`): how a NOW is known as a page's moment. */
+export const pageTask = (location: Pick<CentralLocation, "ref">): string => `oi:page:${location.ref}`;
+export const launchPage = (transport: KernelTransportStatus, location: CentralLocation) =>
+  page<PageLaunch>(transport, {operation: "launch", location});
+export const stopPage = (transport: KernelTransportStatus, nowRef: string, project?: string | null) =>
+  page<PageStop>(transport, project === undefined ? {operation: "stop", now_ref: nowRef} : {operation: "stop", now_ref: nowRef, project});

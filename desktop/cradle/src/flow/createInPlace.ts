@@ -21,6 +21,11 @@
  *   Flow, Day, Beings, Things, Epi-Card
  *             Control/user/flows/<form>-<stamp>.html — the owner's dated,
  *             self-contained documents, filed into their day when it closes
+ *   A world's page (Flow, Beings, Things) in a project's scope
+ *             Work/<project>/ProjectCentral/user/<form>-<stamp>.html — the
+ *             project's world keeps its pages in its own folder (T-WORLDS
+ *             W2; manual §18.1 "A world's pages stay in its folder"), through
+ *             the same source door; the page's island names its world
  *   Goal      <human ground>/telos/goal-<stamp>.html (without a telos
  *             folder, <human ground>/goal-<stamp>.html)
  *   Vision    Work/<project>/ProjectCentral/user/<project>.html — refused
@@ -81,12 +86,35 @@ async function createThroughSourceDoor(transport: KernelTransportStatus, project
 }
 
 /** Create one copy of `form` in place and return its location. */
-export async function createFormInPlace(transport: KernelTransportStatus, form: DocumentForm, options: {project?: string; projects?: readonly {name?: string; path?: string}[]; now?: Date}): Promise<CreatedCopy> {
+/** The forms that are a world's pages (manual §18.1 "A clip is a page: a Being, a Thing, a Flow"). */
+const WORLD_PAGE_FORMS: ReadonlySet<string> = new Set(["document-01", "document-beings", "document-things"]);
+
+/** A page's island tied to its world: a Being's or Thing's `bindings.worldRef`, a Flow's `meta.world` (kernel/src/page.rs reads
+ * the same keys). Every other byte stays as it was; a page with no island is returned as it is. */
+export function tieWorld(html: string, worldRef: string): string {
+  const QL_DOC = /(<script type="application\/json" id="ql-doc">)([\s\S]*?)(<\/script>)/;
+  const match = html.match(QL_DOC);
+  if (!match) return html;
+  let doc: {profile?: string; meta?: Record<string, unknown>; bindings?: Record<string, unknown>; entries?: unknown};
+  try { doc = JSON.parse(match[2].replace(/<\\\/script/gi, "</script").replace(/<\\!--/g, "<!--")); } catch { return html; }
+  if (doc.profile === "oi.page/v1") doc.bindings = {...(doc.bindings ?? {}), worldRef};
+  else if (doc.meta && Array.isArray(doc.entries)) doc.meta = {...doc.meta, world: worldRef};
+  else return html;
+  const json = JSON.stringify(doc).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+  return html.replace(QL_DOC, (_all, open: string, _body: string, close: string) => open + json + close);
+}
+
+export async function createFormInPlace(transport: KernelTransportStatus, form: DocumentForm, options: {project?: string; projects?: readonly {name?: string; path?: string}[]; now?: Date;
+  /** The world the page belongs to (its register's wiki space ref): a page form's island is tied to it. */
+  worldRef?: string}): Promise<CreatedCopy> {
   const now = options.now ?? new Date();
   // Goal, Vision and Mockup are asked for in the scope's own human ground —
-  // through the owner's authored creation door. Every other form lands at
-  // Central's first-save door (Control/user/flows).
-  const inPlace = form.kind === "document-goal" || form.kind === "document-vision" || form.kind === "document-mockup";
+  // through the owner's authored creation door; so is a world's page in a
+  // project's scope (the project's world keeps its pages in its own folder).
+  // Every other form lands at Central's first-save door (Control/user/flows).
+  const worldPage = WORLD_PAGE_FORMS.has(form.kind);
+  const tie = (html: string) => worldPage && options.worldRef ? tieWorld(html, options.worldRef) : html;
+  const inPlace = form.kind === "document-goal" || form.kind === "document-vision" || form.kind === "document-mockup" || (worldPage && !!options.project);
   if (inPlace && (form.kind !== "document-goal") && !options.project) {
     throw new Error(`A ${form.label} belongs to a project — choose a project scope first.`);
   }
@@ -107,12 +135,12 @@ export async function createFormInPlace(transport: KernelTransportStatus, form: 
   const stamp = localStamp(now);
   let lastError: unknown;
   if (inPlace) {
-    const html = stampCopy(template, now);
+    const html = tie(form.kind === "document-01" ? template : stampCopy(template, now));
     // The door names paths relative to the project root; the ground's own
     // listing is the truth of where the human ground sits inside it.
     const groundScope = ground.basePath.replace(/^Work\/[^/]+\//, "");
     for (let attempt = 0; attempt < 8; attempt++) {
-      const relative = inPlacePlacementFor(form, {...ground, telos}, stamp, attempt);
+      const relative = worldPage ? `${form.kind === "document-01" ? "flow" : slug(form.label)}-${stamp}${attempt ? `-${attempt + 1}` : ""}.html` : inPlacePlacementFor(form, {...ground, telos}, stamp, attempt);
       const projectRelative = `${groundScope}/${relative}`;
       const created = await createThroughSourceDoor(transport, ground.project!, projectRelative, html);
       if (created.ok) {
@@ -132,7 +160,7 @@ export async function createFormInPlace(transport: KernelTransportStatus, form: 
   for (let attempt = 0; attempt < 8; attempt++) {
     const relative = placementFor(form, stamp, attempt);
     const location: CentralLocation = {schema: "central.path-ref/v1", ref: `${ground.baseRef}/${relative}`, root: ground.root, path: `${ground.basePath}/${relative}`};
-    const html = form.kind === "document-01" ? template : stampCopy(template, now);
+    const html = tie(form.kind === "document-01" ? template : stampCopy(template, now));
     try {
       const result = await fileOperation<FileMutation>(transport, location, {action: "write", expected_revision: "", content: html});
       if (result.outcome !== "created") throw new Error(`Central did not create the ${form.label} (${result.outcome}).`);

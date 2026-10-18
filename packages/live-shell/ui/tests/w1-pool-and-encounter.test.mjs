@@ -229,3 +229,15 @@ test('the pool holds the workspaces and nothing else; Whole stands only as the b
   for (const face of ['inhabitants/DocumentFlowFace.tsx', 'inhabitants/DocumentDayDieFace.tsx'])
     assert.match(await source(face), /className="document-pane-acts"[\s\S]*data-action="save"[\s\S]*data-action="reread"/, `${face}: Save and Re-read in its own head`)
 })
+
+test('in Live the pool\'s other face is the set\'s own Groove Pool, read and written through the set\'s owner (code-reading)', async () => {
+  const faces = await readFile(new URL('../src/shell/modeBrowsers.tsx', import.meta.url), 'utf8')
+  assert.match(faces, /live: \(\{setPath\}\) => \(\{label: 'Grooves', face: <LiveGroovePool path=\{setPath\} \/>\}\)/)
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /poolFace=\{MODE_POOL_FACES\[frameMode\]\?\.\(\{setPath: state\.set\?\.path \?\? null\}\) \?\? null\}/)
+  const face = await readFile(new URL('../src/frame/browser/LiveGroovePool.tsx', import.meta.url), 'utf8')
+  for (const write of [/writeLiveGroove\(path, index, 'base', event\.target\.value\)/, /writeLiveGroove\(path, index, amount\.field, value\)/, /writeLiveGlobalGroove\(path, value\)/])
+    assert.match(face, write)
+  assert.match(face, /useLiveGrooves\(path\)/, 'the face holds no groove of its own: it reads the set\'s')
+  assert.match(face, /Global Amount/)
+})

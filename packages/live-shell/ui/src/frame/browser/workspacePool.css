@@ -28,6 +28,7 @@
 .workspace-pool-footer select { height: 17px; min-height: 0; padding: 0 2px; font-size: 9.5px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line); border-radius: 2px }
 
 /* Live's own face: Groove, Base, Quantize, Timing, Random, Velocity, and Global Amount at the foot. */
+.groove-pool { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column }
 .groove-pool-columns, .groove-pool-row { display: grid; grid-template-columns: minmax(64px, 1fr) 40px 40px 34px 34px 34px; gap: 3px; align-items: center; padding: 0 4px }
 .groove-pool-columns { flex: none; height: 21px; font-size: 9.5px; color: var(--text-faint); background: var(--bg-0); white-space: nowrap; overflow: hidden }
 .groove-pool-rows { flex: 1 1 auto; min-height: 0; overflow: auto; list-style: none; margin: 0; padding: 0 }
