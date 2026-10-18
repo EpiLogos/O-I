@@ -126,6 +126,13 @@ Torus walked whole); Factory's session chain and the Agent there (no agent sessi
 Live (no task, no scene selected, no reading, no set open); the effects, Sky modulation, Scale mapping and the M3 clock (r4). Found: a Day
 whose document is empty reads "No reading of the page yet" (its revision is the empty hash) — it should say the page is empty.
 
+The native screen pass of r4 (`0bd22128a`, 18 Oct ~04:05, computer-use): **R5** — Live's chain after the Torus shows the effects'
+strip; Filter placed draws its design on the owner (LP curve, Cutoff 8.00 kHz, Res 20 %, Drive, Mix); Sky modulation placed after it draws
+the ecliptic ring with the planets at their places for 18 Oct, and comes off again; the M3 clock draws on the Journey's Quaternal Logic
+section and says "No reading of the clock" (no person's identity open); the rail's **Diff reads Central's real working diff** of the O-I
+checkout once Central was reinstalled with GitState (`0bd22128a`). Fault, sent to the documentation lane: the last effect on the chain does
+not come off when pressed (Filter stayed on). Not seen: Scale mapping (needs an open set).
+
 Owner operations the R1–R3 returns name, each control disabled with its reason until built (the lead's, after the screen checks):
 Software Factory `task_record_set` (a task's launch, then, hand-off, quantize); Actuation `harness_task_settings` / `harness_task_control`
 (per-task effort, autonomy, mode; launch, retry, stop of one task), telemetry and solo of a session; AIKit/Factory attempts as takes
