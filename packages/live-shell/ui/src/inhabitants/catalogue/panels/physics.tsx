@@ -1,8 +1,8 @@
 // Physics (manual §20.4): the field's motion law — swirl, return, curl, gravity, drag, time. Live's nearest: Auto Filter and
 // Corpus — a well that draws the law with handles, and columns of dials ruled off beside it. The shell's own diagram
 // (components/NativeFieldFace.physics.tsx) draws the same law from the engine's readings; this panel hosts a diagram of it.
-import {Action, Band, Readout, Dial, Display, Folded, Handle, Panel, Radio, Section, Tile, ValueBox, type LightState} from '../../sdk/panel'
-import {boolOf, clampTo, fixed, num, on, signed, st, str, type DesignedDevice, type ViewProps} from './design'
+import {Action, Band, COL, Readout, Dial, Display, Folded, Handle, Panel, Radio, Section, Tile, ValueBox, type LightState} from '../../sdk/panel'
+import {boolOf, clampTo, fixed, grown, num, on, signed, st, str, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 const RADIUS = {min: 20, max: 2000, log: true}, CURL = {min: .02, max: 16, log: true}, SPEED = {min: 50, max: 60000, log: true}
@@ -30,6 +30,10 @@ function Streams({v, cx, cy, ring, w, h, seeds}: {v: V; cx: number; cy: number; 
 }
 
 const ringPx = (v: V, reach: number) => 6 + (reach - 6) * Math.log(num(v, 'radius') / RADIUS.min) / Math.log(RADIUS.max / RADIUS.min)
+
+/** What else Whole's first page stands beside the swirl in a wide frame: the Swirl section (two columns), Spring, Curl and stir, and
+ * Field, with their rules and padding. */
+const WHOLE_BESIDE_SWIRL = 2 * COL + 12 + 78 + 186 + COL + 40 + 12
 
 function SwirlDisplay({v, set, w, h}: {v: V; set?: ViewProps['set']; w: number; h: number}) {
   const cx = w * .42, cy = h * .46, reach = Math.min(w, h) * .4, ring = ringPx(v, reach)
@@ -99,11 +103,13 @@ export const physics: DesignedDevice = {
     <Section label="Macros" cols={2}>{macros(p)}</Section>
   </Panel>,
 
-  whole: p => <Panel title="Physics" view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}
+  whole: p => { const sw = grown(p, 186, WHOLE_BESIDE_SWIRL, 560)
+    return <Panel title="Physics" view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}
     pages={[{id: 'fluid', label: 'Fluid'}, {id: 'plus', label: 'Physics+'}]} page={p.page} onPage={p.setPage}>
     {p.page !== 'plus' ? <>
       <Band>
-        <Section width={198}><SwirlDisplay v={p.v} set={p.set} w={186} h={146} /></Section>
+        {/* Expanded or in its window, the swirl grows into the room: its streams read across the field. */}
+        <Section width={sw + 12}><SwirlDisplay v={p.v} set={p.set} w={sw} h={146} /></Section>
         <Section label="Swirl" cols={2} grow>
           {DIAL(p, 'viscosity', 'Viscosity', 'The share of speed a particle keeps each step.', .94, {min: .2, max: 1.01}, d2)}
           {DIAL(p, 'vortex', 'Vortex', 'The strength of the swirl. Below zero it turns the other way.', 1.4, {min: -25, max: 25}, signed(1), true)}
@@ -161,7 +167,7 @@ export const physics: DesignedDevice = {
         </Section>
       </Band>
     </>}
-  </Panel>,
+  </Panel> },
 
   full: p => {
     const w = 760, h = 420, cx = w * .46, cy = h * .5, ring = ringPx(p.v, 180)
