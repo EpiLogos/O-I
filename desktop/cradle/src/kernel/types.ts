@@ -111,6 +111,14 @@ export type NativeComposeRequest = { texture: [number, number]; units_per_metre:
 export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "prepare_world"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "observe"; lease: string; instance_ref: string; event_ref: string; subject_ref: string; expected_generation: string; expected_samples_elapsed: string; expected_request_id?: string} | {operation: "close"; lease: string};
 /** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
 export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; ql_executable_sha256: string; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
+/** The page owner's fields (kernel/src/page.rs `apply_field`): a Being's or Thing's ties, a Flow's World, View and Container, and
+ * a note or a highlight added or taken away. */
+export type PageField = "title" | "colour" | "world" | "subject" | "kind" | "office" | "sources" | "place" | "anchor" | "expression"
+  | "layout" | "tone" | "view" | "container" | "launch" | "note.add" | "note.remove" | "highlight.add" | "highlight.remove";
+export type PageRequest =
+  | { operation: "read"; location: CentralLocation }
+  | { operation: "list"; path: string; limit?: number }
+  | { operation: "mutate_field"; location: CentralLocation; expected_revision: string; field: PageField; value: unknown };
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
 export interface NativeDirectory { schema: "central.directory-reading/v1"; location: CentralLocation; entries: NativeFileEntry[]; automatic_agent_or_model_invocation: false }
 export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }
@@ -221,6 +229,8 @@ export interface DecisionReading {schema:"oi.decision-reading/v1";sites:{name:st
 export interface DictationStipulation {revision:number;stt_url:string}
 export type NativeDictationOutcome={kind:"transcript";text:string}|{kind:"service-down";detail:string;endpoint:string}|{kind:"failed";detail:string}|{kind:"empty"};
 export interface RetainedFileRecovery {retained:{standing:"last-native-reading";observed_at_unix_ms:number;reading:NativeFileReading}|null;migration_allowed:boolean;reason:string}
+/** A register's world body as the Wiki owner reads it (kernel construction.rs read_body; AIKit `aikit.world-body/v1`). `body` is null while the root space carries none. */
+export interface WorldBodyReading {schema:"oi.world-body-reading/v1";register:string|null;space:{ref:string;revision:number;title?:string|null};disclosed_revision:number;body:unknown;wiki_source:{path:string;ref:string;revision:string};owner_operation:string}
 export type KernelOp =
   | {op:"file_last_reading";location:CentralLocation}
   | {op:"dictation_read"}
@@ -233,6 +243,7 @@ export type KernelOp =
   | {op:"decision_episode_revoke";authority_ref:string}
   | {op:"git_repository_read";project:string}
   | {op:"git_diff_read";request:{repo_root:string;from:string;to:string;ignore_whitespace?:boolean;max_bytes?:number;max_files?:number}}
+  | {op:"world_body_read";project?:string|null}
   | {op:"presentation_read"}
   | {op:"presentation_observe";window_id:string;visuals:unknown;arrangement:unknown}
   | {op:"theme_import";theme:PresentationCustomTheme}
@@ -290,8 +301,14 @@ export type KernelOp =
   | {op:"live_clip_read";path:string;track:number;clip:LiveClipAt}
   // Change a clip's settings (the design's words) and/or a MIDI clip's notes against the set's revision; refusals name Live's values.
   | {op:"live_clip_write";path:string;expected_revision:string;track:number;clip:LiveClipAt;set?:Record<string,unknown>;notes?:LiveNote[];envelopes?:{device:string;parameter:string;points:[number,number][]}[]}
-  // Change one control of a track's mixer row (activator, solo, arm, monitor) against the set's revision.
-  | {op:"live_track_mixer_write";path:string;expected_revision:string;track:number;control:"activator"|"solo"|"arm"|"monitor";value:boolean|"in"|"auto"|"off"}
+  // Change one control of a track's mixer row (activator, solo, arm, monitor, or a send by its index, 0 = Send A) against the set's revision.
+  | {op:"live_track_mixer_write";path:string;expected_revision:string;track:number;control:"activator"|"solo"|"arm"|"monitor"|"send";value:boolean|"in"|"auto"|"off"|number;index?:number}
+  // Comp: copy a stretch (beats) of a track's take lane into its main lane against the set's revision; the copy carries its take's TakeId.
+  | {op:"live_take_comp";path:string;expected_revision:string;track:number;take:number;range:{start:number;end:number}}
+  // The set's Groove Pool (each groove's Base, Quantize, Timing, Random, Velocity; the set's Global Amount) with its revision.
+  | {op:"live_groove_pool_read";path:string}
+  // One groove's setting, or with no groove the set's Global Amount ("amount"), against the set's revision.
+  | {op:"live_groove_pool_write";path:string;expected_revision:string;groove?:number;field:LiveGrooveField|"amount";value:number|string}
   // The configuration-plane binding (#299 C6 live leg): every operation
   // routes through the installed `oi` executable — the same engine
   // `oi config` / `oi profile` drive — so the Desktop keeps no parallel
@@ -317,6 +334,8 @@ export type KernelOp =
   | { op: "file_resolve"; reference: string }
   | { op: "files_list"; path: string; /** Explicit refresh: bypass the kernel's short-horizon read cache for this one read. */ fresh?: boolean }
   | { op: "file_read"; location: CentralLocation }
+  /** A page (a Being, a Thing, a Flow): read, a world's pages listed, or one field written on the revision read (kernel/src/page.rs). */
+  | { op: "page"; request: PageRequest }
   | { op: "file_bytes"; location: CentralLocation }
   | {op:"working_surface_read";project:string;agent_session:string;binding?:string}
   | {op:"working_surface_attachment";project:string;agent_session:string;binding:string}
@@ -456,6 +475,7 @@ export type KernelOpResult =
   | {result:"decision_made";receipt:DecisionReceipt}
   | {result:"git_repository_reading";document:unknown}
   | {result:"git_diff_reading";document:unknown}
+  | {result:"world_body_reading";document:WorldBodyReading}
   | {result:"presentation_reading";document:PresentationDocument}
   | {result:"nara_decision_recorded";decision:unknown}
   | {result: "native_expression"; data: unknown}
@@ -487,6 +507,8 @@ export type KernelOpResult =
   | {result:"live_set_reading";reading:{summary:unknown;document:unknown;revision:string}}
   | {result:"live_clip_reading";reading:{clip:LiveClipReading;revision:string}}
   | {result:"live_track_mixer_reading";reading:{mixer:LiveTrackMixer;revision:string}}
+  | {result:"live_take_comp_reading";reading:LiveCompReading & {revision:string}}
+  | {result:"live_groove_pool_reading";reading:LiveGroovePool & {revision:string}}
   | {result:"live_device_descriptors_reading";descriptors:Record<string,unknown[]>}
   | {result:"live_device_params_reading";reading:{params:unknown[]}}
   | {result:"live_device_param_written";reading:{param:unknown}}
@@ -508,6 +530,8 @@ export type KernelOpResult =
   | { result: "profile_edited"; document: unknown }
   | { result: "config_receipts"; document: unknown }
   | {result:"file_operation";data:unknown}
+  /** `oi.page-reading/v1`, `oi.page-list/v1` or `oi.page-mutation/v1` (kernel/src/page.rs). */
+  | { result: "page_reading"; data: unknown }
   | { result:"encounter_reading";data:unknown }
   | { result:"encounter_provisioned";data:unknown }
   | { result: "agent_definition_reading"; data: unknown }
@@ -722,4 +746,17 @@ export interface LiveClipReading {
 /** An envelope: what it moves (the device and parameter its target sits under) and its points [[beat, value]…]. */
 export interface LiveEnvelope {target: string; device: string; parameter: string; points: [number, number][]}
 /** A track's mixer row; a control the track has no element for is absent. */
-export interface LiveTrackMixer {activator?: boolean; solo?: boolean; arm?: boolean; monitor?: 'in' | 'auto' | 'off'; input?: string; output?: string}
+export interface LiveTrackMixer {activator?: boolean; solo?: boolean; arm?: boolean; monitor?: 'in' | 'auto' | 'off'; input?: string; output?: string; sends?: LiveSend[]}
+/** One send of a track (Mixer/Sends/TrackSendHolder): the return track it feeds and Live's name for it ("Send A"), its level as the
+ * document keeps it (linear gain) and the range beside it, and whether it is on for this track (a return's own sends are off). */
+export interface LiveSend {name: string; send: string; value: number | null; min: number | null; max: number | null; on: boolean}
+/** A track's take lane: its takes on the ruler, each with its TakeId and the main-lane stretches that came from it. */
+export interface LiveTakeLane {name: string; clips: {name: string; start: number; end: number; takeId?: number | null; gave?: {start: number; end: number}[]}[]}
+/** A track's main lane and take lanes as a comp leaves them; each main-lane clip names the take it came from. */
+export interface LiveCompReading {clips: {name: string; start: number; end: number; takeId: number | null}[]; takeLanes: LiveTakeLane[]}
+/** A groove's settings, as the Groove Pool shows them. */
+export type LiveGrooveField = 'base' | 'quantize' | 'timing' | 'random' | 'velocity'
+/** One groove of the set's pool: Base is Live's Grid ("1/4" … "1/32", triplets "1/8t", "1/16t"); the amounts are 0–100. */
+export interface LiveGroove {id: number | null; name: string; base: string | null; quantize: number | null; timing: number | null; random: number | null; velocity: number | null}
+/** The set's Groove Pool and its Global Amount (with the range Live keeps beside it). */
+export interface LiveGroovePool {grooves: LiveGroove[]; amount: number | null; amountRange: {min: number; max: number} | null}

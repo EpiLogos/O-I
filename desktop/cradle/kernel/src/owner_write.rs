@@ -69,6 +69,7 @@ impl PreparedWrite {
             KernelOp::Receiving { request, .. } => receiving_write(request),
             KernelOp::Central { request, .. } => central_write(request),
             KernelOp::FactoryOwner { request } => !request.is_read(),
+            KernelOp::Page { request } => request.is_write(),
             KernelOp::InvokeAction { invocation, .. } => {
                 // The decision actions are the decision form's (decision.rs)
                 // and its ordered arm's: they act on kernel-held authority.
@@ -109,7 +110,8 @@ impl PreparedWrite {
             KernelOp::Central { .. }
             | KernelOp::FactoryOwner { .. }
             | KernelOp::HarnessAgentControl { .. }
-            | KernelOp::FileOperation { .. } => false,
+            | KernelOp::FileOperation { .. }
+            | KernelOp::Page { .. } => false,
             _ => true,
         }
     }
@@ -229,7 +231,17 @@ impl PreparedWrite {
                         records.push(Record::RetireListing(files::parent_path(&path)));
                         records.push(Record::Event(Box::new(KernelEvent::FileChanged {
                             summary: if invocation.action == crate::construction::APPLY_FACTS {
-                                "The native Wiki owner saved time and place facts.".into()
+                                // A body set (T-WORLDS W3) is the world's body, not a fact of a node.
+                                let body = invocation.input.as_ref().is_some_and(|input| {
+                                    input["request"]["changes"]
+                                        .as_array()
+                                        .is_some_and(|changes| changes.iter().any(|change| change["change"] == "body_set"))
+                                });
+                                if body {
+                                    "The native Wiki owner saved your world's body.".into()
+                                } else {
+                                    "The native Wiki owner saved time and place facts.".into()
+                                }
                             } else {
                                 "The native Wiki owner saved a constructive whole.".into()
                             },
@@ -337,6 +349,30 @@ impl PreparedWrite {
                     }
                 }
                 KernelOpResult::FileOperation { data }
+            }
+            // One field of a page written on the revision read (page.rs):
+            // the file owner's write, retiring and disclosing as a file
+            // write does; an unchanged write emits nothing.
+            KernelOp::Page {
+                request:
+                    crate::page::Request::MutateField {
+                        location,
+                        expected_revision,
+                        field,
+                        value,
+                    },
+            } => {
+                let data = crate::page::mutate_field(&self.client, location, expected_revision, field, value)?;
+                records.push(Record::RetireListing(files::parent_path(&location.path)));
+                records.push(Record::RetireDerived);
+                records.push(Record::RetireTemporal);
+                if matches!(data["outcome"].as_str(), Some("created" | "written")) {
+                    records.push(Record::Event(Box::new(KernelEvent::FileChanged {
+                        path: location.path.clone(),
+                        summary: format!("A page's {field} changed through the page owner's write."),
+                    })));
+                }
+                KernelOpResult::PageReading { data }
             }
             KernelOp::Routine { project, request } => {
                 let cwd = crate::agent_prepared::location(&self.world.read()?, project.as_deref())?;

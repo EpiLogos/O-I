@@ -29,6 +29,7 @@ import {bindSharedTimeClock, windowYear} from './sharedClock'
 import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
 import {bindPlaces, type PlacesBinding} from './places/placesHost'
 import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
+import {bindWorldBody, kernelWorldBodyOwner} from './body/worldBody'
 import './atlasHost.css'
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
@@ -399,6 +400,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let unsubscribeView: () => void = () => {}
   let places: PlacesBinding | null = null
   let palaces: PalacesBinding | null = null
+  let body: {dispose(): void} | null = null
   // The Sun's words stand in the Info view's hover and on the M4 plate's Sky section (T-PLACES-ONTO-ATLAS), the same words in both.
   const setSunLine = (text: string | null) => {
     words.sun(text)
@@ -420,6 +422,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     unsubscribeView()
     places?.dispose()
     palaces?.dispose()
+    body?.dispose()
     cancelReread()
     follower?.dispose()
     // the words directly: a teardown may run before the Sun's first state is made
@@ -446,6 +449,9 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // at the atlas's palace scale; its owners read and write through this transport, and its presence through the atlas's workspace memory
   // (palaces/palacesHost.ts).
   palaces = bindPalaces({element, transport, storage: atlasMemoryStorage})
+  // Your world's body (T-WORLDS §5 W3): read from its owner (the root register's space, AIKit's `aikit.world-body/v1`), drawn in the
+  // Earth's place only while the World device chooses your own body; the Earth stays given (body/worldBody.ts).
+  body = bindWorldBody({engine: mounted.engine, owner: kernelWorldBodyOwner(transport), changed: () => mounted.ctl.facesChanged?.()})
 
   // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
   // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the

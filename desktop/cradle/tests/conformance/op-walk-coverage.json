@@ -774,6 +774,24 @@
       "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_device_params_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "live_groove_pool_read",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/dlw/DLW.md \u00a716.7 (the pool's other face is Live's own); packages/live-set/src/edit.rs",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 18 Oct with live-set unit tests, copies of real Live 12 sets and kernel tests; no executed native walk is recorded here for live_groove_pool_read; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
+      "op": "live_groove_pool_write",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/dlw/DLW.md \u00a716.7 (each groove is the set's, read from it and written into it); packages/live-set/src/edit.rs",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 18 Oct with live-set unit tests (Base, the four amounts, Global Amount, the revision guard) and kernel tests; no executed native walk is recorded here for live_groove_pool_write; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "live_set_read",
       "native_owner": "kernel/src/live_set_owner.rs",
       "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
@@ -781,6 +799,15 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_set_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "live_take_comp",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/dlw/DLW.md \u00a716.6 Arrangement view (take lanes) and \u00a721.1 Takes and Arrangement lanes; packages/live-set/src/edit.rs",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 18 Oct with live-set unit tests, comps on copies of real comped Live 12 sets, and kernel tests; no executed native walk is recorded here for live_take_comp; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
       "op": "live_track_mixer_write",
@@ -936,6 +963,15 @@
       ],
       "owner_lane": "A/native verification",
       "reason": "now is directly named in these existing scenario sources; no run is claimed by this register."
+    },
+    {
+      "op": "page",
+      "native_owner": "kernel/src/page.rs",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md \u00a74 (W2); manual \u00a718.1",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "DLW/W2 native verification",
+      "reason": "The page owner op is new (W2); its kernel tests stand in page.rs. Executed native evidence of a page field written through it is required before acceptance."
     },
     {
       "op": "presentation_observe",
@@ -1321,6 +1357,15 @@
       "owner_lane": "B/native verification",
       "reason": "Implementation added; executed native native terminal capture evidence required before acceptance.",
       "scenarios": []
+    },
+    {
+      "op": "world_body_read",
+      "native_owner": "kernel/src/construction.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md \u00a75 (W3); docs/dlw/DLW.md \u00a717.2",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "W3/world body",
+      "reason": "A register's world body read through the Wiki owner (aikit wiki-construct facts-inspect on the root space). Kernel unit tests cover the root-space choice and the space target; no executed native walk yet, and the installed AIKit reads a body only once the world-body owner lands."
     },
     {
       "op": "world_browse",
