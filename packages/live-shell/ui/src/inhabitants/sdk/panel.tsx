@@ -317,7 +317,7 @@ export interface RowItem {
 /** Rows with lights (a rack's chains, a scope's places). A long list pages; it never scrolls. `onSelect`: pressing a row's name
  * chooses it (a rack's chain: Live's chain list selection); the chosen row is `selected`. `onMove`: the order is yours to change, as
  * Live's chain list is — the chosen row carries ▲ ▼, and ⌥↑ ⌥↓ on a row's name move it one place. */
-export function Rows({label, does, items, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1}: {readonly label?: string; readonly does?: string; readonly items: readonly RowItem[]; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly onMove?: (id: string, by: -1 | 1) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: 1 | 2}) {
+export function Rows({label, does, items, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1}: {readonly label?: string; readonly does?: string; readonly items: readonly RowItem[]; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly onMove?: (id: string, by: -1 | 1) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: number}) {
   const pages = Math.max(1, Math.ceil(items.length / size)), at = Math.min(page, pages - 1)
   const shown = items.slice(at * size, at * size + size)
   return <div className="dp-cell dp-cell--rows" data-i={said(label, does)}>
@@ -329,7 +329,7 @@ export function Rows({label, does, items, onRequest, onSelect, selected, onMove,
         <button type="button" aria-label="Next page" disabled={at === pages - 1 || !onPage} onClick={() => onPage?.(at + 1)}>›</button>
       </span>}
     </div>}
-    <ul className="dp-rows" data-columns={columns} style={{'--rows': Math.ceil(size / columns)} as CSSProperties}>
+    <ul className="dp-rows" data-columns={columns} style={{'--rows': Math.ceil(size / columns), ...(columns > 2 ? {gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`} : {})} as CSSProperties}>
       {shown.map(item => <li key={item.id} className="dp-row" data-dim={item.light !== 'lit' ? 'true' : undefined} data-selected={item.id === selected ? 'true' : undefined}
         data-i={said(item.name, item.why ?? item.does ?? (item.light === 'unknown' ? 'No reading yet.' : undefined))}>
         {onRequest && item.request !== undefined && <button type="button" className="dp-row-request" aria-pressed={item.request}
