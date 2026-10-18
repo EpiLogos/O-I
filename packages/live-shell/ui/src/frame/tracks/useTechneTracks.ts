@@ -25,6 +25,7 @@ import {projectTechneTracks, worldReadingOf, type TechneControls} from '../../ti
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {WorldTimelineView} from '../../projections/useWorldTemporalReading'
 import type {TracksReading} from './modeTracks'
+import {setReadingShown, setReadingSolo, useReadingShown} from '../../timeline/readingShown'
 
 /** The published reading, with the Expression door the frame hands it. */
 export type TechneTracksReading = TracksReading & {journey?: JourneyPresentation}
@@ -59,5 +60,7 @@ export function useTechneTracks(reading: TracksReading): WorldTrackSet {
   // The owners are read through `now` at launch, so only the door's presence changes the controls.
   const controls = useMemo(() => techneControls(() => now.current), [hasDoor])
   const world = useMemo(() => worldReadingOf(source), [source])
-  return useMemo(() => projectTechneTracks({world, earth, controls}), [world, earth, controls])
+  const shownState = useReadingShown()
+  const shown = useMemo(() => ({state: shownState, show: setReadingShown, solo: setReadingSolo}), [shownState])
+  return useMemo(() => projectTechneTracks({world, earth, controls, shown}), [world, earth, controls, shown])
 }
