@@ -30,6 +30,9 @@ pub mod runtime;
 #[cfg(feature = "native_shell")]
 #[path = "continuity_admission.rs"]
 pub mod continuity_admission;
+#[cfg(feature = "native_shell")]
+#[path = "workspace_book.rs"]
+pub mod workspace_book;
 
 #[cfg(feature = "native_shell")]
 mod candidate {
@@ -540,6 +543,19 @@ mod candidate {
         super::continuity_admission::confirm(&data, &backing, admission, applied, preserved)
     }
 
+    /// The workspace book's home: `workspace-book/` in the candidate's own data home (workspace_book.rs).
+    fn book_home() -> Result<PathBuf, String> {
+        Ok(continuity_home()?.0.join("workspace-book"))
+    }
+
+    pub fn book_read() -> Result<Value, String> {
+        super::workspace_book::read(&book_home()?)
+    }
+
+    pub fn book_write(expected: Option<&str>, book: &Value) -> Result<Value, String> {
+        super::workspace_book::write(&book_home()?, expected, book)
+    }
+
     pub fn attach_act_store(kernel: &mut oi_cradle_kernel::Kernel) -> Result<(), String> {
         let home = RUNTIME
             .get()
@@ -772,6 +788,51 @@ pub async fn live_shell_continuity_confirm(
     #[cfg(not(feature = "native_shell"))]
     {
         let _ = (admission, applied, preserved);
+        Err("This native host was built without the shell candidate".into())
+    }
+}
+
+/// The workspace book as its native owner keeps it, with its revision (workspace_book.rs). Main webview only.
+#[tauri::command]
+pub async fn live_shell_book_read(webview: tauri::WebviewWindow) -> Result<serde_json::Value, String> {
+    if webview.label() != "main" {
+        return Err("The workspace book is read by the main shell webview only".into());
+    }
+    #[cfg(feature = "native_shell")]
+    admit_candidate_webview(&webview)?;
+    #[cfg(feature = "native_shell")]
+    {
+        tauri::async_runtime::spawn_blocking(candidate::book_read)
+            .await
+            .map_err(|error| error.to_string())?
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        Err("This native host was built without the shell candidate".into())
+    }
+}
+
+/// Keep the workspace book on the revision it was read at; refused, overwriting nothing, when it moved since. Main webview only.
+#[tauri::command]
+pub async fn live_shell_book_write(
+    webview: tauri::WebviewWindow,
+    expected_revision: Option<String>,
+    book: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    if webview.label() != "main" {
+        return Err("The workspace book is written by the main shell webview only".into());
+    }
+    #[cfg(feature = "native_shell")]
+    admit_candidate_webview(&webview)?;
+    #[cfg(feature = "native_shell")]
+    {
+        tauri::async_runtime::spawn_blocking(move || candidate::book_write(expected_revision.as_deref(), &book))
+            .await
+            .map_err(|error| error.to_string())?
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (expected_revision, book);
         Err("This native host was built without the shell candidate".into())
     }
 }
