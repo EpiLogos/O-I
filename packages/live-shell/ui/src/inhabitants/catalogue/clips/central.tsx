@@ -11,7 +11,7 @@
 // text}).
 import type {ReactNode} from 'react'
 import {Action, Chooser, Radio, TextField, Toggle, ValueBox} from '../../sdk/panel'
-import {numOf, strOf} from '../panels/design'
+import {has, numOf, strOf} from '../panels/design'
 import {COLOURS, Fact, Fields, Rows, Row, Rule, Said, Wide, choice, flag, read} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
@@ -149,13 +149,18 @@ function Paper({p, children}: {p: ClipProps; children: ReactNode}) {
 }
 
 function PageTab(p: ClipProps) {
-  const page = read<Para[]>(p.v, 'page', [])
-  if (!page.length) return <Said>No reading of the page yet.</Said>
+  // Absent: the owner has not read the page. Read and holding nothing ('[]', as an empty file reads: 0 B, the empty hash): the page is
+  // empty, which is a reading, not its absence.
+  if (!has(p.v, 'page')) return <Said>No reading of the page yet.</Said>
+  const page = read<unknown>(p.v, 'page', null)
+  if (!Array.isArray(page)) return <Said>The page's reading is not a list of paragraphs.</Said>
+  if (!page.length) return <Said>The page is empty.</Said>
+  const paras = page as Para[]
   const selected = strOf(p.v, 'selected')
   const part = (part: Part, i: number) => part.mark ? <mark key={i} data-colour={part.mark}>{part.text}</mark>
     : part.note ? <span key={i} className="clv-anchor">{part.text}</span> : <span key={i} className="clv-plain">{part.text}</span>
   return <Paper p={p}>
-    {page.map(para => {
+    {paras.map(para => {
       const body = para.parts.map(part)
       const sel = para.id === selected && p.v['hl.tool'] !== false
       const inner = para.kind === 'h1' ? <h1>{body}</h1> : para.kind === 'h2' ? <h2>{body}</h2> : para.kind === 'intro' ? <p className="clv-intro">{body}</p>
