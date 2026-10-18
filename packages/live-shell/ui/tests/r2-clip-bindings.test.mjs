@@ -153,15 +153,16 @@ test('Live: an arrangement clip is placed (no Launch tab), carries the set\'s mo
   assert.deepEqual(tabsOf(clipShape(design, slot)), {panel: ['clip', 'launch'], tools: ['pitch', 'transform', 'generate'], editor: ['notes', 'envelopes', 'mpe']})
 })
 
-test('Live: an audio clip lacks Notes, MPE and the MIDI tools; a source scale names no mode of the seven; a clip write refuses in the set owner\'s words', async () => {
+test('Live: an audio clip lacks Notes, MPE and the MIDI tools; a source scale names no mode of the seven; a clip not read whole refuses its writes saying so', async () => {
   const design = await loadClip('live')
   const audio = live.liveClipBinding({set: liveSet, document: liveDoc, selection: {track: 1, scene: 0}, mode: dorian})
   assert.deepEqual(tabsOf(clipShape(design, audio)), {panel: ['clip', 'launch'], tools: [], editor: ['envelopes']})
   const maqam = {...dorian, selection: {root: 9, scale: {kind: 'source', key: 'm', label: 'Rast', family: 'maqam', pitches: null, tuning: null, provenance: {}}}}
   assert.deepEqual(live.setModeValues(maqam), {'set.root': 9})
   assert.deepEqual(live.setModeValues({state: 'waiting', selection: null, line: 'reading'}), {})
-  await assert.rejects(audio.write([{key: 'loop', value: true}]), /Loop: no owner operation carries it yet — missing op: clip_set .*loop/)
-  await assert.rejects(audio.write([{key: 'transform.press', value: 1}]), /Notes: no owner operation carries it yet — missing op: clip_notes_read/)
+  // Unread whole, every setting and tool says so (live-set-ops.test.mjs drives the clip read whole).
+  await assert.rejects(audio.write([{key: 'loop', value: true}]), /The clip is not read whole yet/)
+  await assert.rejects(audio.write([{key: 'transform.press', value: 1}]), /The clip is not read whole yet/)
   assert.equal(live.liveClipBinding({set: liveSet, document: liveDoc, selection: {track: 0, scene: null}, mode: dorian}), null)
 })
 

@@ -169,3 +169,81 @@ fn document_enumerates_template_device_parameters() {
     // every listed device exposes at least its On parameter
     assert!(master.devices.iter().all(|dev| !dev.params.is_empty()));
 }
+
+/// A copy of a real set named by LIVE_SET_EVIDENCE (skipped when unset): every track's mixer row, take lanes and automation
+/// read; the first session clip read whole, renamed and its loop toggled through the edit ops, and the rest of the reading
+/// unchanged.
+#[test]
+fn edits_a_copy_of_a_real_set() {
+    let Ok(source) = std::env::var("LIVE_SET_EVIDENCE") else {
+        return;
+    };
+    let dir = std::env::temp_dir().join(format!("live-set-evidence-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("copy.als");
+    std::fs::copy(&source, &path).unwrap();
+    let path = path.to_str().unwrap();
+    let set = live_set::api::set_json(path).unwrap();
+    let tracks = set["document"]["tracks"].as_array().unwrap();
+    for track in tracks {
+        assert!(
+            track.get("mixer").is_some()
+                && track.get("takeLanes").is_some()
+                && track.get("automation").is_some()
+        );
+    }
+    // The first session clip, else the first arrangement clip.
+    let session = tracks.iter().enumerate().find_map(|(i, t)| {
+        t["sessionSlots"].as_object().and_then(|slots| {
+            slots
+                .iter()
+                .find(|(_, v)| !v.is_null())
+                .map(|(s, _)| (i, live_set::edit::ClipAt::Slot(s.parse().unwrap())))
+        })
+    });
+    let arrangement = || {
+        tracks.iter().enumerate().find_map(|(i, t)| {
+            (!t["arrangementClips"].as_array()?.is_empty())
+                .then_some((i, live_set::edit::ClipAt::Arrangement(0)))
+        })
+    };
+    let (index, at) = session.or_else(arrangement).expect("a clip");
+    let scene = format!("{at:?}");
+    let before = live_set::edit::clip_json(path, index, at).unwrap();
+    let rev = before["revision"].as_str().unwrap();
+    let looped = before["clip"]["loop"].as_bool().unwrap();
+    let set_change = serde_json::json!({"name": "Probe", "loop": !looped});
+    let after =
+        live_set::edit::clip_write(path, rev, index, at, set_change.as_object(), None, None)
+            .unwrap();
+    assert_eq!(after["clip"]["name"], "Probe");
+    assert_eq!(after["clip"]["loop"], serde_json::json!(!looped));
+    for key in [
+        "start", "end", "position", "length", "launch", "quantize", "followA", "mode", "notes",
+    ] {
+        assert_eq!(after["clip"][key], before["clip"][key], "{key} stands");
+    }
+    // The notes written back as read stand exactly as they were.
+    if let Some(notes) = after["clip"]["notes"].as_array().filter(|n| !n.is_empty()) {
+        let rev = after["revision"].as_str().unwrap();
+        let again =
+            live_set::edit::clip_write(path, rev, index, at, None, Some(notes), None).unwrap();
+        assert_eq!(
+            again["clip"]["notes"], after["clip"]["notes"],
+            "a notes round-trip changes nothing"
+        );
+    }
+    let reread = live_set::api::set_json(path).unwrap();
+    assert_eq!(
+        reread["document"]["tracks"].as_array().unwrap().len(),
+        tracks.len()
+    );
+    eprintln!(
+        "evidence: track {index} clip {scene}: {} notes; mixer {}; {} take lanes; {} envelopes",
+        after["clip"]["notes"].as_array().map(Vec::len).unwrap_or(0),
+        tracks[index]["mixer"],
+        tracks[index]["takeLanes"].as_array().unwrap().len(),
+        tracks[index]["automation"].as_array().unwrap().len()
+    );
+    std::fs::remove_dir_all(&dir).unwrap();
+}
