@@ -38,6 +38,10 @@ import {FLOW_WIRING, HIGHLIGHT_WIRING, NOTES_WIRING, BEINGS_WIRING, TEXT_WIRING}
 import {faceOfField, readFlowPage, wordsOfHtml, type FlowPage} from './devices/pageReadings'
 import {useReachedDocument, type DocumentInPane} from './documents/documentDoor'
 import {useCentralDayStanding} from './useCentralDayStanding'
+import {useCentralGroundAnswer} from './devices/useCentralReadings'
+import {currentDayOf} from './devices/dayBinding'
+import {MAIN_TRACK_REF} from '../frame/tracks/SessionGrid'
+import {CENTRAL_DAY_TRACK_ID} from '../timeline/centralTrackAdapter'
 import {subjectWords} from './daySurface'
 
 const READ_PREVIEW_CHARS = 4000
@@ -458,11 +462,18 @@ export function useCentralClip(): ClipBinding | null {
   const subject = centralSubject
   const resolved = subject || !world ? null : resolveCentralOccasion(world.spine.occasion(), world.source.events)
   const occasion = resolved?.state === 'selected' ? resolved.selection : null
+  // The Main track selected (its head, or the Day's own track): Clip view opens today's Day, its open face for writing (manual §18.1
+  // "select the Main track and Clip view opens the Day's open face for writing"). Today is the ground's Day reading.
+  const ground = useCentralGroundAnswer(transport)
+  const today = ground.reading ? currentDayOf(ground.reading).standing : null
+  const mainDay: CentralClipSelection | null = !subject && !occasion && (selected.ref === MAIN_TRACK_REF || selected.ref === CENTRAL_DAY_TRACK_ID) && today
+    ? {kind: 'day', returnKind: null, subjectRef: today.dayRef, stream: null, summary: 'Today', instantUnixMs: null, dayRef: today.dayRef, civilDate: today.civilDate, evidenceRefs: []}
+    : null
   // A page field written from Clip view reads the file again (the key moves) and the pane holding it reads it again too.
   const [written, setWritten] = useState(0)
   const subjectAnswer = useAnswer(subject ? `subject:${subject.kind}:${subject.path}#${written}` : null, () => readSubject(transport, subject!))
   const occasionAnswer = useAnswer(occasion && occasion.kind !== 'day' ? `occasion:${occasion.subjectRef}:${occasion.instantUnixMs ?? 'undated'}` : null, () => readOccasion(transport, occasion!))
-  const day = useDayValues(transport, occasion)
+  const day = useDayValues(transport, occasion?.kind === 'day' ? occasion : mainDay)
   const colour = selected.track?.color ?? null
   if (subject) {
     const ref = `subject:${subject.kind}:${subject.path}`
@@ -482,6 +493,7 @@ export function useCentralClip(): ClipBinding | null {
   }
   if (resolved?.state === 'absent') return centralClipBinding({ref: `occasion:${resolved.ref}`, values: {name: resolved.ref,
     page: JSON.stringify(pageOfText(`The retained occasion ${resolved.ref} is no longer in the temporal reading. The spine keeps its basis; nothing opens for it here.`))}}, {colour})
+  if (mainDay) return centralClipBinding({ref: `main:${mainDay.dayRef}`, values: day ?? {kind: 'day', name: `Day · ${mainDay.civilDate}`}}, {colour})
   if (!occasion) return null
   const ref = `occasion:${occasion.subjectRef}:${occasion.instantUnixMs ?? 'undated'}`
   if (occasion.kind === 'day') return centralClipBinding({ref, values: day ?? {kind: 'day'}}, {colour})

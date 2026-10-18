@@ -118,7 +118,11 @@ export type PageField = "title" | "colour" | "world" | "subject" | "kind" | "off
 export type PageRequest =
   | { operation: "read"; location: CentralLocation }
   | { operation: "list"; path: string; limit?: number }
-  | { operation: "mutate_field"; location: CentralLocation; expected_revision: string; field: PageField; value: unknown };
+  | { operation: "mutate_field"; location: CentralLocation; expected_revision: string; field: PageField; value: unknown }
+  /** The page plays: its NOW clearing allocated, or rejoined and made active. */
+  | { operation: "launch"; location: CentralLocation }
+  /** The playing page stops: its NOW clearing closed on the revision read. */
+  | { operation: "stop"; now_ref: string; project?: string | null };
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
 export interface NativeDirectory { schema: "central.directory-reading/v1"; location: CentralLocation; entries: NativeFileEntry[]; automatic_agent_or_model_invocation: false }
 export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }

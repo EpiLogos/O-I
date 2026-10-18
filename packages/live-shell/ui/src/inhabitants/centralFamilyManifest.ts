@@ -10,7 +10,7 @@ export function centralFamilyManifest(): FamilyManifest {
     browser: [],
     browserEntries: [
       {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', kindMark: 'agent', modes: ['base'], state: 'cut',
-        hint: 'Agent identities from the kernel roster (central.agent-profile-roster/v1, read-only), as the agent-sessions provider reads it.'},
+        hint: 'The Being pages of your world, placed by their island through the page owner (kernel page op): each by its title, its kind of being and its world.'},
       {id: 'central-ground', label: 'Ground', group: 'Project', mark: 'pane', modes: ['base'], state: 'waiting',
         hint: 'Worktrees, seats and branches as readings — ops ground and git_repository_read, and workcell_status_read for seats. No row source is composed in this browser yet; tenders (prune, sweep) wait for their writer.'},
     ],

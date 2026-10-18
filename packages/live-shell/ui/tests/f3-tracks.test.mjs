@@ -95,10 +95,9 @@ test('every mode has its tracks by registration, and the views know no mode', as
   const out = {}
   const Probe = ({mode, reading}) => { out[mode] = MODE_TRACKS[mode](reading); return null }
   renderToStaticMarkup(React.createElement(Probe, {mode: 'base', reading: {set: null, document: null}}))
-  // R3 (manual §18.1, lock §0.3 item 4): Central's tracks are its workspaces and the Day is the Main track. Replaces "its five
-  // streams, even unread": with no workspace book mounted here, the Day — the Main track — stands alone, flagged main.
-  assert.deepEqual(out.base.tracks.map(t => t.id), ['central:day'], 'Central: the Day, the Main track, even unread')
-  assert.equal(out.base.tracks[0].main, true)
+  // T-WORLDS W2 (manual §18.1): Central's tracks are today's worlds — yours always — and the Day is the Main track, flagged main.
+  assert.deepEqual(out.base.tracks.map(t => t.id), ['central:world:central:wiki:root', 'central:day'], 'Central: your world and the Day, the Main track, even unread (T-WORLDS W2)')
+  assert.equal(out.base.tracks.at(-1).main, true, 'the Day is last, as Live keeps its Main track')
   renderToStaticMarkup(React.createElement(Probe, {mode: 'factory', reading: {set: null, document: null}}))
   assert.match(out.factory.waiting, /agent sessions/, 'Factory: waiting on the agency, said')
   renderToStaticMarkup(React.createElement(Probe, {mode: 'techne', reading: {set: null, document: null}}))

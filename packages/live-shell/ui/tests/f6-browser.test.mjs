@@ -63,7 +63,7 @@ test('every mode browses its own rows, the running sessions and the instruments 
   assert.equal(expressions.find(c => c.id === 'works')?.kind, 'material'); assert.equal(expressions.find(c => c.id === 'devices')?.kind, 'devices')
   const factory = browserSourcesOf('factory').flatMap(s => s.categories)
   assert.deepEqual(factory.filter(c => c.kind === 'running').map(c => c.id), ['sess', 'agents'], 'Factory: sessions and agents are running things')
-  assert.equal(browserSourcesOf('base')[0].categories[0].id, 'central-days', 'Central opens on its days')
+  assert.equal(browserSourcesOf('base')[0].categories[0].id, 'central-worlds', 'Central opens on its worlds (T-WORLDS W2: a world is dragged onto the empty track)')
 })
 
 test('the chrome groups by kind, holds one search and one pool, and draws the chosen category\'s body under its control', () => {

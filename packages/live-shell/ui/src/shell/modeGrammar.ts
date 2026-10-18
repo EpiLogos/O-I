@@ -253,14 +253,16 @@ const base: SurfModeGrammar = {
   // Flow listing for Flows, the ground listing for Files and the form roster
   // for New.
   browser: [
+    {id: 'central-worlds', label: 'Worlds', group: 'Central', mark: 'orbit', kindMark: 'world', family: 'central', state: 'cut',
+      hint: 'The worlds you work in: your own and each project\'s, from Central\'s disclosure of its registers. Drag one onto the empty track to bring it into today.'},
     {id: 'central-days', label: 'Days', group: 'Central', mark: 'die', kindMark: 'day', family: 'central', state: 'cut',
       hint: 'The civil calendar: a day per row, its record beneath — rows from the kernel\'s temporal read (L4) and the day records.'},
     {id: 'central-flows', label: 'Flows', group: 'Central', mark: 'trav', kindMark: 'doc', family: 'central', state: 'cut',
-      hint: 'The flow documents (Dialogue · Flow · Journal), from the owner\'s Flow listing at Control/user/flows — each Flow by its own title, its agents and its revision.'},
-    {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', kindMark: 'agent', family: 'central', state: 'waiting',
-      hint: 'Beings with their bindings (world, subject, office, sources). The oi-beings form\'s owner has not landed its listing read — designed empty until it is.'},
-    {id: 'central-things', label: 'Things', group: 'Central', mark: 'chain', kindMark: 'source', family: 'central', state: 'waiting',
-      hint: 'Things with their bindings. The oi-things form\'s owner has not landed its listing read — designed empty until it is.'},
+      hint: 'The flow documents (Dialogue · Flow · Journal) of your world, placed by their island through the page owner — each Flow by its own title, its agents and its revision.'},
+    {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', kindMark: 'agent', family: 'central', state: 'cut',
+      hint: 'The Being pages of your world, placed by their island through the page owner: each by its title, its kind of being and its world.'},
+    {id: 'central-things', label: 'Things', group: 'Central', mark: 'chain', kindMark: 'source', family: 'central', state: 'cut',
+      hint: 'The Thing pages of your world, placed by their island through the page owner: each by its title and its world.'},
     {id: 'central-goals', label: 'Goals', group: 'Central', mark: 'direct', kindMark: 'archetype', family: 'central', state: 'waiting',
       hint: 'The goals lane of the day. The goals listing\'s owner read is not landed — designed empty until it is.'},
     {id: 'central-files', label: 'Files', group: 'Project', mark: 'detail', kindMark: 'doc',
@@ -549,9 +551,11 @@ export type DeclaredBrowserCategory = ModeBrowserCategory & {
 /** The row sources the shell composes for its own category ids: ModeBrowser's `CategoryRows` dispatches on these ids. Each
  * maps to the owner whose read the rows come from; `null` is the shell's own listing, which no family declares. */
 export const ROW_SOURCE_OWNERS: ReadonlyMap<string, string | null> = new Map([
+  ['central-worlds', 'central'],
   ['central-days', 'central'],
   ['central-flows', 'central'],
   ['central-beings', 'central'],
+  ['central-things', 'central'],
   ['central-files', null],
   ['central-new', null],
   ['techne-files', null],

@@ -636,9 +636,17 @@ impl PreparedRead {
         // placed by its form (page.rs); no World is read.
         if let KernelOp::Page { request } = &self.op {
             let data = match request {
-                crate::page::Request::Read { location } => crate::page::read(&self.client, location)?,
-                crate::page::Request::List { path, limit } => crate::page::list_pages(&self.client, path, *limit)?,
-                crate::page::Request::MutateField { .. } => return Err("A page's write is the owner write's, not a read".into()),
+                crate::page::Request::Read { location } => {
+                    crate::page::read(&self.client, location)?
+                }
+                crate::page::Request::List { path, limit } => {
+                    crate::page::list_pages(&self.client, path, *limit)?
+                }
+                crate::page::Request::MutateField { .. }
+                | crate::page::Request::Launch { .. }
+                | crate::page::Request::Stop { .. } => {
+                    return Err("A page's write is the owner write's, not a read".into())
+                }
             };
             return Ok(KernelOpOutcome {
                 receipts: vec![],
