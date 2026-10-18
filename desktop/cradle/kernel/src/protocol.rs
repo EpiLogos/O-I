@@ -36,6 +36,9 @@ pub struct KernelProtocol {
     pub replay: ReplayContract,
     /// The configuration-plane documents owners and the engine exchange.
     pub configuration: ConfigurationContracts,
+    /// The always-on slow-op record (slow_ops.rs): where it is kept, the
+    /// limits it enforces, and how many of its lines could not be written.
+    pub slow_ops: SlowOpsContract,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -62,10 +65,37 @@ pub struct ConfigurationContracts {
     pub error: String,
 }
 
+/// The slow-op record's limits, from slow_ops.rs's own constants, beside
+/// this process's record: its file (absent with no state home) and its lost
+/// writes — a line that could not be written is counted here, never hidden.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SlowOpsContract {
+    pub file: Option<String>,
+    pub threshold_ms: u64,
+    pub rotate_bytes: u64,
+    pub keep: usize,
+    pub lost_writes: u64,
+}
+
+impl SlowOpsContract {
+    /// The disclosure of the process's one record (`slow_ops::global`).
+    pub fn current() -> Self {
+        let record = crate::slow_ops::global();
+        Self {
+            file: record.path().map(|path| path.display().to_string()),
+            threshold_ms: crate::slow_ops::THRESHOLD.as_millis() as u64,
+            rotate_bytes: crate::slow_ops::ROTATE_BYTES,
+            keep: crate::slow_ops::KEEP,
+            lost_writes: record.lost_writes(),
+        }
+    }
+}
+
 impl KernelProtocol {
     /// Derive the disclosure from the enforcing constants beside the live
-    /// event log's generation. No argument here is configurable on purpose:
-    /// configuration cannot change what the kernel enforces.
+    /// event log's generation and the slow-op record's lost writes. No
+    /// argument here is configurable on purpose: configuration cannot change
+    /// what the kernel enforces.
     pub fn for_event_log(generation: &str) -> Self {
         Self {
             schema: KERNEL_PROTOCOL_SCHEMA.to_owned(),
@@ -88,6 +118,7 @@ impl KernelProtocol {
                 changeset: CHANGEST_SCHEMA.to_owned(),
                 error: ERROR_SCHEMA.to_owned(),
             },
+            slow_ops: SlowOpsContract::current(),
         }
     }
 }

@@ -119,6 +119,7 @@ pub mod retained_files;
 pub mod routine;
 pub mod setup;
 pub mod shared_field;
+pub mod slow_ops;
 pub mod system_composition;
 pub mod temporal_events;
 pub mod temporal_sources;
@@ -730,6 +731,29 @@ pub enum KernelOp {
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
+    /// The seat instrument's own reading (`seat status --json`,
+    /// `central.workcell-status/v1`): this machine's workcells, their seats,
+    /// claims, zones and disk. Read only — the kernel never joins, releases,
+    /// tends or curates a seat (owner_read.rs `seat_status`).
+    SeatStatusRead,
+    /// Central's returned-work proposals for one project
+    /// (`projectcentral.source.returns`, `central.source-returns/v1`): each
+    /// return's status against its source's current revision. `project`
+    /// absent is the configured project query; `limit` and `before` are the
+    /// owner's own pagination, passed through.
+    SourceReturnsRead {
+        #[serde(default)]
+        project: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        limit: Option<u64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        before: Option<String>,
+    },
+    /// AIKit's declared gateway endpoints of other Workcells
+    /// (`aikit gateway remote list --json`, `aikit.gateway-remotes/v1`):
+    /// each remote's Workcell ref, websocket bind and path, and where its
+    /// token is kept (never the token). Read only.
+    GatewayRemotesRead,
     /// The read-only temporal-events field (`oi.temporal-events/v1`) over
     /// the streams the adapters already wire — no second store.
     TemporalEventsRead {
@@ -1282,6 +1306,21 @@ pub enum KernelOpResult {
     },
     WorkcellStatusReading {
         data: serde_json::Value,
+    },
+    /// The seat instrument's reading, verbatim after its schema check.
+    SeatStatusReading {
+        data: serde_json::Value,
+    },
+    /// Central's source returns, as the owner listed them.
+    SourceReturnsReading {
+        data: flow::SourceReturns,
+    },
+    /// AIKit's declared remotes (the envelope's `data`, verbatim after its
+    /// schema check) and the envelope's warnings.
+    GatewayRemotesReading {
+        data: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        warnings: Vec<serde_json::Value>,
     },
     TemporalEventsReading {
         document: serde_json::Value,
@@ -2923,7 +2962,10 @@ impl Kernel {
             | KernelOp::ConfigReceipts
             | KernelOp::AgentCard { .. }
             | KernelOp::EncounterJoin { .. }
-            | KernelOp::FlowChangedSince { .. }) => self
+            | KernelOp::FlowChangedSince { .. }
+            | KernelOp::SeatStatusRead
+            | KernelOp::SourceReturnsRead { .. }
+            | KernelOp::GatewayRemotesRead) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the owner read")?
                 .execute(),

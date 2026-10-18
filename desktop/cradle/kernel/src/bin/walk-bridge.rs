@@ -523,16 +523,19 @@ fn handle_with_diagnostic(
             // One line per op: when it was answered, how long it waited for
             // the kernel lock, held it, and spent in owner work outside it —
             // the rest of its total is the bridge's own.
+            let total = started.elapsed();
             eprintln!(
                 "[bridge] {} op {name} {} total_ms={:.1} lock_wait_ms={:.1} lock_held_ms={:.1} owner_ms={:.1} form={}",
                 unix_ms(),
                 if result.is_ok() { "ok" } else { "err" },
-                millis(started.elapsed()),
+                millis(total),
                 millis(timing.lock_wait),
                 millis(timing.lock_held),
                 millis(timing.owner),
                 timing.form,
             );
+            // A slow op also goes to the kernel's own slow-op record (lane K1).
+            oi_cradle_kernel::slow_ops::record("bridge", &name, result.is_ok(), total, &timing);
             let serialization_started = diagnostic
                 .filter(|trace| trace.active.get())
                 .map(|_| Instant::now());
@@ -634,9 +637,15 @@ fn material(kernel: &Mutex<Kernel>, rest: &str) -> BridgeResponse {
         }
     }
     // The kernel's one dispatch serves each listing and the bytes: their
-    // owner calls run outside the kernel lock (files.rs `read_material`).
-    let (target, bytes) = match oi_cradle_kernel::files::read_material(kernel, &location, &relative)
-    {
+    // owner calls run outside the kernel lock (files.rs `read_material`). A
+    // slow one goes to the kernel's slow-op record, as /op's do (lane K1).
+    let mut slow =
+        |name: &str, ok: bool, total: Duration, timing: &oi_cradle_kernel::dispatch::Timing| {
+            oi_cradle_kernel::slow_ops::record("bridge", name, ok, total, timing);
+        };
+    let (target, bytes) = match oi_cradle_kernel::files::read_material_observed(
+        kernel, &location, &relative, &mut slow,
+    ) {
         Ok(resolved) => resolved,
         Err(MaterialRouteError::Forbidden(message)) => return json_error(403, message),
         Err(MaterialRouteError::NotFound(message)) => return json_error(404, message),
