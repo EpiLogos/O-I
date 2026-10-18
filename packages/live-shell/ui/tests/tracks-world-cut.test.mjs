@@ -303,7 +303,9 @@ test('the World cut modes take the cron track through their registration; with n
   const spine = firedSpine()
   const view = worldView(spine)
   const central = registered('base', {set: null, document: null, world: view})
-  assert.deepEqual(central.tracks.map(t => t.id), [...['day', 'flows', 'beings', 'things', 'goals'].map(s => `central:stream:${s}`), 'cron'])
+  // R3: Central's five stream tracks became the Day as the Main track (no workspace book is mounted in this probe); the cron
+  // track still joins after it. Replaces the five `central:stream:*` ids.
+  assert.deepEqual(central.tracks.map(t => t.id), ['central:day', 'cron'])
   assert.equal(central.tracks.at(-1).kind, 'cron · civil-field read · every 90s · 1 firing landed')
   const technē = registered('techne', {set: null, document: null, world: view})
   assert.equal(technē.tracks.length, 7)

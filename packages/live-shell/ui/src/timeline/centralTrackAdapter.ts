@@ -1,7 +1,20 @@
-// Central's five streams as tracks for the shared Session and Arrangement (T-TRACKS-CENTRAL; manual §3 "In Central the day is
-// a track, and so are your Flows, the people and things you are writing about, and your goals", "In Central, the day's face
-// stands the entries you made while it was turned up"; lock §9.1 Central row: track = a stream, clip = an entry or document,
-// stop = the day's face standing its entries, takes = revisions).
+// Central's tracks for the shared Session and Arrangement. R3 (manual §18.1 "Track: a workspace · Clip: a page · Main track: the
+// Day", §16.6; lock §0.3 item 4 "the tracks are workspaces and the Day is the Main track", which supersedes the five streams the
+// rest of this note was first written for — T-TRACKS-CENTRAL, lock §9.1's old Central row):
+// - tracks: the workspaces of the workspace book (desktop/cradle/src/workspace/store.ts `workspaces`, read through the candidate's
+//   continuity book), in the book's order (`central:workspace:<id>`). A workspace's clips are the pages it has opened — the book's
+//   own record of them (`recentPlaces` of kind file, each at the moment it was last opened) — each in that day's row and at that
+//   moment on the ruler. The book carries no Folder for a workspace yet (manual §18.1 "The input of a workspace is its Folder"),
+//   so a folder's files are not its clips: the Input control says which op is missing;
+// - the Day is the Main track (`central:day`, flagged `main`): the day records, the day's entries and the Flows, which until a
+//   workspace's Folder holds them stand on the Day at the moment their minted name gives. The Beings, Things and Goals streams,
+//   which had no owner read and stood as named, empty tracks, are no longer tracks: their pages arrive as a workspace's pages;
+// - the mixer row (manual §18.1): Output is the Day (a route, not a setting); Activator is Send to Day, which the book does not
+//   carry; Arm is the shell's one write arm (the transport's `shell.setWriteArm`); Solo and Monitor are none;
+// - launching a workspace's track is the book's `activate` (manual §18.1 "Launch the workspace and that context comes back");
+// - takes (revisions: draft, saved, edited since save) and automation have no owner reading here, each named in `lanes.absent`.
+//
+// The rest of this note stands for the Day, the Main track:
 //
 // Projection, over two reads Central mode already makes — nothing is copied into a second store, nothing is written:
 // - tracks: Day, Flows, Beings, Things, Goals, always in that order (`central:stream:<name>`). Day and Flows have owner reads;
@@ -36,15 +49,14 @@
 // launched — lock §9.4).
 //
 // Pure TypeScript. No React, no transport.
-import {browserCategoriesOf, type ModeBrowserCategory} from '../shell/modeGrammar'
 import {dayClipEventIndex, dayTrackLaneOf, projectDayTracks} from './dayTrackAdapter'
 import {eventDayKey, type TemporalEventRow, type TemporalStreamAbsence} from './timeSpine'
-import type {WorldTrack, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldWalk, WorldWalkStop} from './worldTrackAdapter'
+import type {WorldMixer, WorldTrack, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldWalk, WorldWalkStop} from './worldTrackAdapter'
 import type {WorldTimelineSource} from '../projections/useWorldTemporalReading'
 import {CENTRAL_DAYS_PATH, dateOfDayPath, dayEntriesOf} from '../central/daySurface'
 import type {NativeFileEntry} from '../../../../../desktop/cradle/src/kernel/types'
 
-export const CENTRAL_TRACK_ADAPTER_ID = 'central-stream-tracks'
+export const CENTRAL_TRACK_ADAPTER_ID = 'central-workspace-tracks'
 
 /** The root register's day surface — where the civil calendar's records live. Ported from shell/ModeBrowser.tsx
  * `DAY_RECORDS_PATH` (line 52); tests/central-tracks.test.mjs holds the two together. */
@@ -57,22 +69,60 @@ const DAY_LANE_KIND = 'day'
 
 const MINUTES_PER_DAY = 1440
 
-/** The five streams, in the order the manual and the lock give them. `category` is the mode grammar's browser category for
- * the stream; `readable` marks the streams this adapter has an owner read for. `colour` is the mockup's column identity as
- * the shell's tokens (shell/modeSurface.css `--mode-*`), falling back to the track default where a scope does not define them. */
-const STREAMS = [
-  {id: 'day', name: 'Day', category: 'central-days', readable: true, colour: 'var(--mode-day, var(--track-default, var(--bg-3)))'},
-  {id: 'flows', name: 'Flows', category: 'central-flows', readable: true, colour: 'var(--mode-flows, var(--track-default, var(--bg-3)))'},
-  {id: 'beings', name: 'Beings', category: 'central-beings', readable: false, colour: 'var(--mode-beings, var(--track-default, var(--bg-3)))'},
-  {id: 'things', name: 'Things', category: 'central-things', readable: false, colour: 'var(--mode-things, var(--track-default, var(--bg-3)))'},
-  {id: 'goals', name: 'Goals', category: 'central-goals', readable: false, colour: 'var(--mode-goals, var(--track-default, var(--bg-3)))'},
-] as const
+/** The Day, the Main track: its id, and its colour as the shell's token (shell/modeSurface.css `--mode-day`). */
+export const CENTRAL_DAY_TRACK_ID = 'central:day'
+const DAY_COLOUR = 'var(--mode-day, var(--track-default, var(--bg-3)))'
+/** The Day's track id, under the name the five streams used (`centralStreamTrackId('day')`): the streams are gone and only the
+ * Day remains, as the Main track. Kept so a reader that asks for the Day by that name still finds it; new code reads
+ * CENTRAL_DAY_TRACK_ID. */
+export const centralStreamTrackId = (_stream: 'day'): string => CENTRAL_DAY_TRACK_ID
+/** A workspace's track id. */
+export const centralWorkspaceTrackId = (workspaceId: string): string => `central:workspace:${workspaceId}`
+/** A page a workspace opened: its clip id (the track's id and the page's path, so the same page in two workspaces is two clips). */
+export const centralPageClipId = (workspaceId: string, path: string): string => `${centralWorkspaceTrackId(workspaceId)}#page/${path}`
+const PAGE_MARK = '#page/'
 
-export type CentralStreamId = (typeof STREAMS)[number]['id']
-/** The five stream ids, in track order. */
-export const CENTRAL_STREAM_IDS: readonly CentralStreamId[] = STREAMS.map(stream => stream.id)
-/** A stream's track id. */
-export const centralStreamTrackId = (stream: CentralStreamId): string => `central:stream:${stream}`
+/** One workspace of the book, as Central's tracks read it. `pages` are the files it has opened (the book's `recentPlaces` of kind
+ * file), each with the moment it was last opened. */
+export interface CentralWorkspace {
+  id: string
+  name: string
+  /** The book stands in it now. */
+  active: boolean
+  pages: readonly {path: string; label: string; visitedAt: number}[]
+}
+
+/** The workspaces, as the book stands. */
+export type CentralWorkspacesReading =
+  | {state: 'unavailable'; reason: string}
+  | {state: 'read'; workspaces: readonly CentralWorkspace[]}
+
+/** The book's own acts the tracks press, and the shell's one write arm. */
+export interface CentralControls {
+  /** The book's `activate`: the workspace's kept context comes back. */
+  activate?: (workspaceId: string) => void
+  writeArm?: {on: boolean | null; set(on: boolean): Promise<unknown>}
+}
+
+const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
+
+/** Central's mixer row (manual §18.1), each control's meaning in the manual's words. */
+export const CENTRAL_MIXER: WorldMixer = {
+  activator: {meaning: 'Send to Day: on, the work of the workspace reaches the Day; off, it stays out of the Day. On by default',
+    disabled: missing('Send to Day', 'a workspace field `sendToDay: boolean` in the workspace book (desktop/cradle/src/workspace/store.ts Workspace) and its setter `book.setSendToDay(workspaceId, on)`, read by the Day\'s closure', 'shell · Central')},
+  arm: {meaning: 'Lets the agent of the workspace write into its pages directly, each write with a receipt; off, every agent write arrives as a proposal',
+    grain: 'the shell\'s one write arm: arming one workspace arms every one'},
+  input: {meaning: 'Its Folder: a file you add to the folder shows as a clip; a file you change in any editor shows the change on its clip',
+    disabled: missing('Folder', 'a workspace field `folder: central.path-ref/v1 | null` in the workspace book and its setter `book.setFolder(workspaceId, ref)` (a folder dropped on an empty track makes a workspace); its files listed through files_list', 'shell · Central')},
+  output: {meaning: 'Every workspace sends its work to the Day, the Main track', route: 'Day'},
+}
+
+/** Why the lanes Central's owners do not give are absent, in their terms. */
+export const CENTRAL_LANES_ABSENT = {
+  takes: missing('Revisions as take lanes', 'central.document.revisions {source_ref, document_id} → [{revision, saved_at, state: "draft" | "saved" | "edited-since-save"}], and central.document.keep_revision {source_ref, document_id, revision, range?} for the comp that keeps a revision', 'Central'),
+  automation: 'No parameter of a page moves over the day: Central keeps no envelope (lock §9.4, Envelopes "—"); a Day device\'s move recorded over the day needs an owner that keeps its moves.',
+  events: 'Event lanes are Factory\'s: a session\'s messages, files, terminal and pages read.',
+} as const
 
 /** One day record the owner lists. `path` is the Central-relative path the browser's Days row selects. */
 export interface CentralDayRecord {
@@ -114,8 +164,11 @@ export type CentralFlowsReading =
 export interface CentralReading {
   records: CentralDayRecordsReading
   civil: CentralCivilReading
-  /** The Flows track's read (absent: not read by this caller — the track says so). */
+  /** The Flows' read (absent: not read by this caller — the Day says so). */
   flows?: CentralFlowsReading
+  /** The workspace book's workspaces (absent: no book here — no workspace tracks, and the Day stands alone). */
+  workspaces?: CentralWorkspacesReading
+  controls?: CentralControls
 }
 
 /** The owner's Flows folder: flow/instances.ts USER_FLOWS_DIR, named here because that module's imports reach the Flow document
@@ -153,6 +206,9 @@ export function dayRecordsOf(directory: {entries: readonly {name: string; byte_l
  * (CentralSubjectSelection, inhabitants/CentralSubjectDetail.tsx). The regular expression is the browser's own
  * (shell/ModeBrowser.tsx line 295). An entry's clip id (an occasion) is not a ground subject: null. */
 export function centralSubjectOfClip(ref: string): {kind: 'day' | 'note'; path: string} | null {
+  // A page a workspace opened names its path after the track's id; it opens as the same subject the path would.
+  const page = ref.startsWith('central:workspace:') ? ref.indexOf(PAGE_MARK) : -1
+  if (page > 0) return centralSubjectOfClip(ref.slice(page + PAGE_MARK.length))
   if (dateOfDayPath(ref)) return {kind: 'day', path: ref}
   // A Flow on the Flows track selects as the browser's Flows row does (shell/ModeBrowser.tsx FlowRowList: a `note` subject).
   return FLOW_PATH.test(ref) ? {kind: 'note', path: ref} : null
@@ -207,24 +263,24 @@ function dayKindText(reading: CentralReading, records: number, entries: number):
     }
   }
   if (entries > 0) parts.push('a day\'s face stands its entries: the Session draws the face, the Arrangement every entry')
-  return `stream · ${parts.join(' · ')}`
+  return `the Day · the Main track · ${parts.join(' · ')}`
 }
 
-/** The Flows track's read, in words. */
+/** The Flows' read, in words (they stand on the Day until a workspace's Folder holds them). */
 function flowsKindText(reading: CentralFlowsReading | undefined, placed: number, unstamped: number): string {
-  if (!reading) return 'stream · Flows unread by this Session'
-  if (reading.state === 'reading') return 'stream · Flows being read'
-  if (reading.state === 'unavailable') return `stream · Flows unread (${reading.reason})`
-  const parts = [plural(placed + unstamped, 'Flow', 'Flows') + ' from your Flows folder']
+  if (!reading) return 'Flows unread by this Session'
+  if (reading.state === 'reading') return 'Flows being read'
+  if (reading.state === 'unavailable') return `Flows unread (${reading.reason})`
+  const parts = [plural(placed + unstamped, 'Flow', 'Flows') + ' from your Flows folder, on the Day at their moment']
   if (unstamped) parts.push(`${plural(unstamped, 'is', 'are')} named by hand and stand${unstamped === 1 ? 's' : ''} in "no time"`)
-  return `stream · ${parts.join(' · ')}`
+  return parts.join(' · ')
 }
 
-/** A stream with no reader here: its owner's absence, in the mode grammar's own words. */
-function waitingKindText(category: ModeBrowserCategory | undefined, label: string): string {
-  if (!category) return 'stream · waiting — no owner read is declared for this stream'
-  if (category.state === 'waiting') return `stream · waiting — ${category.hint}`
-  return `stream · ${label} lists in the browser, but this Session reads none of it yet`
+/** A workspace's track text: what the book says of it. */
+function workspaceKindText(workspace: CentralWorkspace, placed: number): string {
+  const parts = ['workspace', workspace.active ? 'the book stands in it now' : 'launch it and its context comes back',
+    `${plural(placed, 'page', 'pages')} it opened, at the moment it last opened each`, 'its Folder is not carried by the book yet']
+  return parts.join(' · ')
 }
 
 /** The World cut's temporal read as the Day track's entries read it. */
@@ -238,7 +294,13 @@ export function civilReadingOf(source: WorldTimelineSource | undefined): Central
 export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
   const records = reading.records.state === 'read' ? reading.records.records : []
   const entries = reading.civil.state === 'live' ? dayEntries(reading.civil.events) : []
-  const categories = browserCategoriesOf('base')
+  // The workspaces' pages: each at the civil day (UTC, the ruler's clock) and the moment the book last opened it.
+  const workspaces = reading.workspaces?.state === 'read' ? reading.workspaces.workspaces : []
+  const pageDay = (visitedAt: number): string | null => Number.isFinite(visitedAt) ? new Date(visitedAt).toISOString().slice(0, 10) : null
+  const pages = workspaces.flatMap(workspace => workspace.pages.flatMap(page => {
+    const key = pageDay(page.visitedAt)
+    return key ? [{workspace, page, key}] : []
+  }))
   // The Flows: a minted one stands in its civil day's row at its moment; one named by hand in "no time" (no time invented).
   const flows = reading.flows?.state === 'read' ? reading.flows.records : []
   const stamped = flows.filter((flow): flow is CentralFlowRecord & {day: string; instantMs: number} => flow.day !== null && flow.instantMs !== null)
@@ -253,27 +315,27 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     if (group) group.push(entry)
     else entriesByDay.set(entry.key, [entry])
   }
-  const dayKeys = [...new Set<string>([...recordByDay.keys(), ...[...entriesByDay.keys()].filter((key): key is string => key !== null), ...stamped.map(flow => flow.day)])]
+  const dayKeys = [...new Set<string>([...recordByDay.keys(), ...[...entriesByDay.keys()].filter((key): key is string => key !== null), ...stamped.map(flow => flow.day),
+    ...pages.map(page => page.key)])]
 
   // The ruler: an optional first segment for entries with no instant, then each day that has a record or a placed entry.
   const unplaced = entries.filter(entry => entry.minute === null)
   const rulerKeys = [...new Set<string>([...recordByDay.keys(), ...entries.filter(entry => entry.minute !== null && entry.key !== null).map(entry => entry.key as string),
-    ...stamped.map(flow => flow.day)])].sort()
+    ...stamped.map(flow => flow.day), ...pages.map(page => page.key)])].sort()
   const segments: {key: string | null; start: number}[] = []
   if (unplaced.length || unstamped.length) segments.push({key: null, start: 0})
   for (const key of rulerKeys) segments.push({key, start: segments.length * MINUTES_PER_DAY})
   const startOfDay = new Map(segments.filter(segment => segment.key !== null).map(segment => [segment.key as string, segment.start]))
   const unplacedAt = new Map([...unplaced.map(entry => entry.clip.id), ...unstamped.map(flow => flow.path)].map((id, order) => [id, order]))
 
-  const dayTrack = centralStreamTrackId('day')
-  const flowsTrack = centralStreamTrackId('flows')
+  const dayTrack = CENTRAL_DAY_TRACK_ID
   const flowClip = (flow: CentralFlowRecord, columnId: string): WorldTrackClip => {
     const placed = flow.day !== null && flow.instantMs !== null
     const minted = MINTED_FLOW.exec(flow.name)
     // Held inside its day, as an entry is: its moment's minutes from the civil day's UTC midnight (the ruler's own clock).
     const start = placed ? (startOfDay.get(flow.day!) ?? 0) + Math.min(MINUTES_PER_DAY - 1, Math.max(0, Math.round((flow.instantMs! - dayStartMs(flow.day!)) / 60000)))
       : unplacedAt.get(flow.path) ?? 0
-    return {id: flow.path, trackId: flowsTrack, columnId, label: minted ? `Flow ${minted[4]}:${minted[5]}` : flow.name.replace(/\.html$/i, ''), at: {start},
+    return {id: flow.path, trackId: dayTrack, columnId, label: minted ? `Flow ${minted[4]}:${minted[5]}` : flow.name.replace(/\.html$/i, ''), at: {start},
       ...(placed ? {} : {note: 'no time: this Flow was named by hand, so its name gives no moment, and it stands in the ruler\'s "no time" segment'})}
   }
   const columns: WorldTrackColumn[] = []
@@ -295,7 +357,13 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     const columnId = `central:day-row:${key ?? 'none'}`
     columns.push({id: columnId, name: key ?? 'no day'})
     const entryClips = ordered.map(entry => entryClip(entry, columnId))
-    // The day's Flows, oldest first: the Flows track's slot in the row shows the day's newest.
+    // The pages each workspace opened that day, oldest first: a workspace's slot in the row shows the one it opened last.
+    if (key !== null) for (const {workspace, page} of pages.filter(item => item.key === key).sort((a, b) => a.page.visitedAt - b.page.visitedAt)) {
+      const minute = Math.min(MINUTES_PER_DAY - 1, Math.max(0, Math.round((page.visitedAt - dayStartMs(key)) / 60000)))
+      clips.push({id: centralPageClipId(workspace.id, page.path), trackId: centralWorkspaceTrackId(workspace.id), columnId, label: page.label,
+        at: {start: (startOfDay.get(key) ?? 0) + minute}, note: `last opened in ${workspace.name} at ${clock(minute)} UTC`})
+    }
+    // The day's Flows, oldest first, on the Day before its face: the Day's slot in the row shows the face when the day has one.
     clips.push(...(key === null ? unstamped : stamped.filter(flow => flow.day === key)).map(flow => flowClip(flow, columnId)))
     // The day's face: its record when the owner lists one, else its first entry. It is the Session's slot. A row only Flows
     // stand in has no face on the Day track.
@@ -309,14 +377,16 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
   }
   const walks: WorldWalk[] = stops.length ? [{id: 'central:days', name: 'Days', kind: 'day', derived: true, stops}] : []
 
-  const tracks: WorldTrack[] = STREAMS.map(stream => ({
-    id: centralStreamTrackId(stream.id),
-    name: stream.name,
-    color: stream.colour,
-    kind: stream.id === 'day' ? dayKindText(reading, records.length, entries.length)
-      : stream.id === 'flows' ? flowsKindText(reading.flows, stamped.length, unstamped.length)
-      : waitingKindText(categories.find(category => category.id === stream.category), stream.name),
-  }))
+  // The workspaces, in the book's order, then the Day — the Main track, at the end where Live keeps it.
+  const armOn = reading.controls?.writeArm?.on
+  const placedOf = new Map<string, number>()
+  for (const {workspace} of pages) placedOf.set(workspace.id, (placedOf.get(workspace.id) ?? 0) + 1)
+  const tracks: WorldTrack[] = [
+    ...workspaces.map((workspace): WorldTrack => ({id: centralWorkspaceTrackId(workspace.id), name: workspace.name, kind: workspaceKindText(workspace, placedOf.get(workspace.id) ?? 0),
+      ...(typeof armOn === 'boolean' ? {mix: {arm: armOn}} : {})})),
+    {id: dayTrack, name: 'Day', color: DAY_COLOUR, main: true,
+      kind: `${dayKindText(reading, records.length, entries.length)} · ${flowsKindText(reading.flows, stamped.length, unstamped.length)}${reading.workspaces?.state === 'unavailable' ? ` · workspaces unread (${reading.workspaces.reason})` : ''}`},
+  ]
 
   const label = (at: number): string => {
     const segment = segments[Math.min(segments.length - 1, Math.max(0, Math.floor(at / MINUTES_PER_DAY)))]
@@ -332,13 +402,35 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     const start = startOfDay.get(key)
     return start === undefined ? undefined : start + Math.min(MINUTES_PER_DAY - 1, Math.max(0, Math.round((unixMs - dayStartMs(key)) / 60000)))
   }
+  const actions = centralActions(reading.controls, workspaces)
   return {
     columns,
     tracks,
     clips,
     ...(segments.length ? {ruler: {unit: 'minutes (UTC) over the covered days, end to end', label, instant}} : {}),
     ...(walks.length ? {walks} : {}),
+    mixer: CENTRAL_MIXER,
+    main: {name: 'Day', chain: ['Day', 'Approvals']},
+    lanes: {absent: CENTRAL_LANES_ABSENT},
+    ...(actions ? {actions} : {}),
   }
+}
+
+/** The book's acts over this set's own workspace tracks; an id that is no workspace of the book is refused before the book is called. */
+function centralActions(controls: CentralControls | undefined, workspaces: readonly CentralWorkspace[]): WorldTrackActions | undefined {
+  if (!controls) return undefined
+  const actions: WorldTrackActions = {}
+  const byTrack = new Map(workspaces.map(workspace => [centralWorkspaceTrackId(workspace.id), workspace]))
+  const activate = controls.activate
+  if (activate && workspaces.length) actions.launchTrack = {op: 'the workspace book\'s activate (desktop/cradle/src/workspace/store.ts): the workspace\'s kept context comes back', run: trackId => {
+    const workspace = byTrack.get(trackId)
+    if (!workspace) return {ok: false, error: `"${trackId}" is no workspace of the book.`}
+    activate(workspace.id)
+    return {ok: true, note: `The book now stands in ${workspace.name}.`}
+  }}
+  const arm = controls.writeArm
+  if (arm) actions.mixer = {arm: {op: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it', run: (_trackId, on) => arm.set(on)}}
+  return Object.keys(actions).length ? actions : undefined
 }
 
 /** The entries a day's face stands — for the Clip side to list under the face the Session shows. The face's clip id in, the other

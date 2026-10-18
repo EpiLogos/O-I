@@ -10,6 +10,11 @@
 // and walks (ordered stops, Live's follow-action chains through clips). Every
 // addition is optional: an adapter that declares none stays valid.
 //
+// R3 (manual §16.6, §16.8; lock §0.3 item 3): every track's mixer row (`mixer` + `WorldTrack.mix`, written through
+// `actions.mixer`), the Main track (`main` + a track flagged `main`, Stop All, Back to Arrangement), and the lanes under the
+// tracks in Arrangement view (`lanes`: automation, take lanes with the comp, a session's event lanes). Live 12's model is the
+// reference: Work/reverse-engineering/ableton-live-12.0.25/ui/DLW-CLIP-VIEW-MAPPING.md §1.1, CLIP-VIEW-EVIDENCE.md cap 35–45.
+//
 // Pure TypeScript. No React, no family names.
 
 /** A clip's standing as the one standing authority reads it: the visual class
@@ -27,9 +32,104 @@ export interface WorldTrackColumn {
   name: string;
 }
 
-/** How a clip stands right now (manual §3: "Every clip shows its state — waiting, running, stopped, recording, stalled —
- * so you can read a whole grid at a glance"). Disclosed by the family from its owner's reading; absent = not disclosed. */
-export type ClipStatus = 'waiting' | 'running' | 'stopped' | 'recording' | 'stalled';
+/** How a clip stands right now (manual §16.6 Session view: Waiting, Running, Stopped, Recording, Stalled, Done). Disclosed by the
+ * family from its owner's reading; absent = not disclosed. Stopped is ready, in full colour; Done is dimmed and settled. */
+export type ClipStatus = 'waiting' | 'running' | 'stopped' | 'recording' | 'stalled' | 'done';
+
+/** Live's mixer controls, as every track's row carries them (manual §16.6 "The track": Activator, Solo, Arm, Monitor, Input and
+ * output). What each means is the mode's (§17.1–§21.1). */
+export type MixerControlId = 'activator' | 'solo' | 'arm' | 'monitor' | 'input' | 'output';
+/** Live's Monitor: In, Auto or Off. */
+export type MonitorSetting = 'in' | 'auto' | 'off';
+/** One mixer control as this mode has it: what it does here (the mode's own table), and — when no owner op writes it — why it
+ * cannot be pressed, in the owner's terms. A control the mode has none of ("None.") is absent from the set's `mixer`. */
+export interface WorldMixerControl {
+  meaning: string;
+  /** The route is the mode's own, not a setting (an output that is always the Main track's material; a way in that is the head of the chain): drawn as words,
+   * never pressed and never read as an owner's value. */
+  route?: string;
+  /** No owner op writes it: "no owner operation carries it yet — missing op: … (Owner)". Absent when `actions.mixer` writes it. */
+  disabled?: string;
+  /** The grain the owner's op takes when it is coarser than one track (the shell's one write arm): said on every track's control. */
+  grain?: string;
+}
+export type WorldMixer = Partial<Record<MixerControlId, WorldMixerControl>>;
+/** A track's mixer readings, as its owner reports them. A control the owner reports nothing for is absent: the row draws it
+ * unread, never filled in. */
+export interface WorldTrackMix {
+  activator?: boolean;
+  solo?: boolean;
+  arm?: boolean;
+  monitor?: MonitorSetting;
+  input?: string;
+  output?: string;
+}
+
+/** The Main track (manual §16.6: "The Main track sits at the end, where Live keeps it. It carries each row's launch button, Stop
+ * All, and Back to Arrangement … Its own chain holds what works on the whole"). Its rows' launchers are the set's `columns`; a track
+ * of the set flagged `main` is the material it carries as its own (a day that every track sends its work to). */
+export interface WorldMainTrack {
+  /** What the Main track is in this mode, in the mode's words ("Main", or the day it is). */
+  name: string;
+  /** Its own chain, by device name in order — what works on the whole; the Device side shows it when the Main track is selected. */
+  chain: readonly string[];
+  /** What plays differs from the ruler, as the owner reports it: Back to Arrangement lights. Absent: no play state is reported. */
+  differs?: boolean;
+}
+
+/** The lanes under a track in Arrangement view (manual §16.6: automation, take and event lanes). */
+export type TrackLaneKind = 'takes' | 'automation' | 'events';
+/** An automation lane: one parameter that moves, naming its device and its parameter. */
+export interface WorldAutomationLane {
+  id: string;
+  trackId: string;
+  device: string;
+  parameter: string;
+  /** Its breakpoints, value 0–1 of `range`: in the ruler's units, or — with `clipId` — in that clip's own time from its start. */
+  points: readonly {at: number; value: number}[];
+  clipId?: string;
+  /** The value's range, as the owner gives it. */
+  range?: {min: number; max: number};
+  /** What moves it, when it is modulated (§14: nothing moves without a visible cause). */
+  modulatedBy?: string;
+  /** Held off its lane by hand, as the owner reports: Re-enable gives it back (`actions.reenable`). */
+  overridden?: boolean;
+}
+/** A take lane: one take, laid on the ruler as Live's take lanes are. */
+export interface WorldTakeLane {
+  id: string;
+  trackId: string;
+  name: string;
+  /** The take's stretches on the ruler, each with its owner's label. */
+  spans: readonly {start: number; end: number; label: string}[];
+  /** This take stands, as the owner reports it. */
+  standing?: boolean;
+}
+/** A stretch of a track's main lane and the take it came from (Live: "the main lane shows which take each stretch came from"). */
+export interface WorldCompStretch {
+  trackId: string;
+  takeId: string;
+  start: number;
+  end: number;
+}
+/** An event lane (an agent session's): one kind of a session's events, in the owner's word for the kind. */
+export interface WorldEventLane {
+  id: string;
+  trackId: string;
+  kind: string;
+  name: string;
+  events: readonly {id: string; at: number; label: string; detail?: string; ref?: string}[];
+}
+export interface WorldTrackLanes {
+  automation?: WorldAutomationLane[];
+  takes?: WorldTakeLane[];
+  comp?: WorldCompStretch[];
+  events?: WorldEventLane[];
+  /** Why a kind of lane has nothing under this mode's tracks, in the owner's terms (said beside the Lanes setting). */
+  absent?: Partial<Record<TrackLaneKind, string>>;
+  /** How many parameters are held off their automation by hand, as the owner counts them (Re-enable lights while any are). */
+  held?: number;
+}
 /** When a launch lands and what comes after (manual §3: launch quantize and follow actions). Words are the family's own. */
 export interface ClipLaunch {
   quantize?: string;
@@ -61,6 +161,27 @@ export interface WorldTrackActions {
   /** Stand a walk's stop (T-TIMELINE-WALKS leg 3: a stop focuses its occasion, or the epoch of the reading its walk belongs
    * to): the Arrangement's walk rails press it. `walkId` and the stop's index in that walk name the stop. Absent, a rail's stops are read, not pressed. */
   focusStop?: {op: string; run(walkId: string, stopIndex: number): unknown};
+  /** The mixer row's writes, each through its owner (manual §16.6). A control absent here stands disabled with the reason the
+   * set's `mixer` gives. */
+  mixer?: {
+    activator?: {op: string; run(trackId: string, on: boolean): unknown};
+    solo?: {op: string; run(trackId: string, on: boolean): unknown};
+    arm?: {op: string; run(trackId: string, on: boolean): unknown};
+    monitor?: {op: string; run(trackId: string, setting: MonitorSetting): unknown};
+  };
+  /** Launch the track itself (a workspace: "Launch the workspace and that context comes back"). */
+  launchTrack?: {op: string; run(trackId: string): unknown};
+  /** Record into an armed track's empty slot (Live: an armed track's empty slots are record buttons). */
+  recordSlot?: {op: string; run(trackId: string, columnId: string): unknown};
+  /** The Main track's Stop All, and its Back to Arrangement (play the ruler again). */
+  stopAll?: {op: string; run(): unknown};
+  backToArrangement?: {op: string; run(): unknown};
+  /** Copy a stretch of a take into the main lane (Live: select a range of a take lane and press Return): the comp. */
+  comp?: {op: string; run(trackId: string, takeId: string, range: {start: number; end: number}): unknown};
+  /** Audition a take from its lane. */
+  audition?: {op: string; run(trackId: string, takeId: string): unknown};
+  /** Give overridden parameters back to their lanes (Re-enable); a lane's id when one lane is meant. */
+  reenable?: {op: string; run(laneId?: string): unknown};
 }
 /** What an owner op answers when it answers in words (the shell's own control receipt): a note, or the refusal. An action's
  * `run` may return one, or a promise of one; the Session shows it where the action was pressed. Any other return is not shown. */
@@ -90,6 +211,10 @@ export interface WorldTrack {
   /** No owner op of the set reaches this track: a track merged in from another reading (the time spine's cron firings beside a
    * mode's own tracks). The shared views offer none of the set's actions on it. Absent: the set's actions apply. */
   readOnly?: boolean;
+  /** Its mixer readings (manual §16.6), as its owner reports them. */
+  mix?: WorldTrackMix;
+  /** This track is the Main track's own material (the day the tracks send their work to). The views draw it at the end, as Live keeps Main. */
+  main?: true;
 }
 
 export interface WorldTrackClip {
@@ -214,6 +339,12 @@ export interface WorldTrackSet {
   layers?: WorldTrackLayer[];
   sections?: WorldTrackSection[];
   walks?: WorldWalk[];
+  /** The mode's mixer row: which of Live's controls it has and what each does here (§17.1–§21.1). Absent: no row is drawn. */
+  mixer?: WorldMixer;
+  /** The Main track: its name, its chain, and whether what plays differs from the ruler. */
+  main?: WorldMainTrack;
+  /** The lanes under the tracks in Arrangement view. */
+  lanes?: WorldTrackLanes;
 }
 
 /** The retained occasion as the shared views read it: its basis words exactly as first read, where it stands on this set's

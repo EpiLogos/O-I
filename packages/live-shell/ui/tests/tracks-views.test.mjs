@@ -154,7 +154,9 @@ test('a waiting clip is drawn waiting, distinct from stopped; a clip\'s owner-di
   assert.equal((markup.match(/class="cs-note"/g) ?? []).length, 1, 'only the clip that carries a note')
   const css = rule => new RegExp(`${rule.replaceAll('.', '\\.')}\\s*\\{([^}]*)\\}`).exec(cssText)?.[1] ?? ''
   assert.match(css('.cs.clip.waiting'), /dashed/); assert.match(css('.cs.clip.waiting .tri'), /animation/)
-  assert.match(css('.cs.clip.stopped'), /opacity/); assert.doesNotMatch(css('.cs.clip.stopped'), /dashed/)
+  // R3 (manual §16.6 Session view: "Stopped — Ready, in full colour"; "Done — Dimmed and settled"): the dimming moved from stopped
+  // to done. Replaces `assert.match(css('.cs.clip.stopped'), /opacity/)`: stopped carries no rule of its own (full colour), done dims.
+  assert.equal(css('.cs.clip.stopped'), '', 'stopped is ready, in full colour'); assert.match(css('.cs.clip.done'), /opacity/)
 })
 
 // ── retry and the receipt ──────────────────────────────────────────────────────────────────────

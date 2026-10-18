@@ -22,7 +22,8 @@
 
 .cs { height: 28px; flex: none; position: relative; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10px; white-space: nowrap; overflow: hidden; color: var(--text-dim) }
 .cs.clip { background: var(--tc); color: var(--bg-0); cursor: pointer }
-.cs.clip.stopped { opacity: .55 }
+/* Stopped is ready, in full colour; Done is dimmed and settled (manual §16.6 Session view). */
+.cs.clip.done { opacity: .5; filter: saturate(.6) }
 .cs.clip.sel { box-shadow: inset 0 0 0 1px var(--accent) }
 .cs.clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 7px, color-mix(in srgb, var(--stalled) 33%, transparent) 7px 9px) }
 .cs.clip.stalled .tri { border-left-color: var(--stalled) }
@@ -30,6 +31,10 @@
 .cs.clip.waiting { background: color-mix(in srgb, var(--tc) 30%, var(--bg-2)); color: var(--text); outline: 1px dashed var(--tc); outline-offset: -2px }
 .cs.clip.waiting .tri { border-left-color: var(--tc); animation: tracks-blink .35s steps(2) infinite }
 .cs.clip.recording { box-shadow: inset 3px 0 0 var(--rec) }
+.cs .cs-rec { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--rec); margin-left: auto }
+/* Running: a slow blink and a fill that grows, with no end drawn — the fill never meets the slot's right edge. */
+.cs.clip.running::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0; pointer-events: none; background: linear-gradient(90deg, color-mix(in srgb, var(--bg-0) 18%, transparent), transparent); animation: tracks-fill 4s linear infinite }
+@keyframes tracks-fill { from { width: 0 } to { width: 92% } }
 .cs .cs-label { overflow: hidden; text-overflow: ellipsis }
 .cs .cs-note { flex: none; font-size: 9px; opacity: .8 }
 .cs .cs-takes { margin-left: auto; font-size: 9px; padding: 0 3px; border: 1px solid currentColor; opacity: .7 }
@@ -84,7 +89,7 @@
 .tl-clip { position: absolute; top: 3px; bottom: 3px; background: var(--tc); color: var(--bg-0); border: 0; font-size: 9.5px; padding: 0 4px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
 .tl-clip.sel { box-shadow: inset 0 0 0 1px var(--accent) }
 .tl-clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 6px, color-mix(in srgb, var(--stalled) 33%, transparent) 6px 9px) }
-.tl-clip.stopped { opacity: .55 }
+.tl-clip.done { opacity: .5; filter: saturate(.6) }
 .tl-clip.recording { box-shadow: inset 3px 0 0 var(--rec) }
 /* A running clip has no right edge: its needle is the edge, so it fades out at the end. */
 .tl-clip.running { -webkit-mask-image: linear-gradient(90deg, currentColor calc(100% - 30px), transparent); mask-image: linear-gradient(90deg, currentColor calc(100% - 30px), transparent) }
@@ -104,7 +109,7 @@
 .tl[data-empty] .sg-drop { border-right: 0 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cs.clip.running .tri, .cs.clip.waiting .tri, .trk-foot .rt.lit { animation: none }
+  .cs.clip.running .tri, .cs.clip.waiting .tri, .trk-foot .rt.lit, .cs.clip.running::before, .main-foot .ba.lit { animation: none }
 }
 
 /* The owner's grain, when its ops act on more than a control looks (Factory: the whole harness). */
@@ -167,3 +172,86 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-stop[data-receipt="refused"] { box-shadow: 0 0 0 1px var(--rec) }
 .tl-receipt { margin-top: auto }
 .tl-receipt + .tl-note { margin-top: 0 }
+
+/* R3 — the mixer row under each head (manual §16.6; Live cap 37, 43): the switches and the monitor on one line, the routes on the
+   next. A control's light is its owner's reading: on lit, off dark, unread hatched; a control no owner op writes stands dimmed. */
+.trk-mix { height: 32px; flex: none; display: flex; flex-direction: column; gap: 1px; padding: 2px 4px; background: var(--bg-1); border-bottom: 1px solid var(--line); box-sizing: border-box }
+.trk-mix .mx-row { display: flex; gap: 2px; height: 14px }
+.mx { min-width: 14px; height: 14px; padding: 0 3px; display: inline-grid; place-items: center; position: relative; background: var(--bg-0); border: 1px solid var(--line); color: var(--text-dim); font: 8.5px/12px var(--mono, ui-monospace, monospace) }
+.mx[data-state="on"] { background: var(--tc); border-color: var(--tc); color: var(--bg-0) }
+.mx-solo[data-state="on"] { background: var(--sel, var(--accent)); border-color: var(--sel, var(--accent)) }
+.mx-arm[data-state="on"] { background: var(--rec); border-color: var(--rec) }
+.mx-monitor { min-width: 26px }
+.mx[data-state="unread"] { background: repeating-linear-gradient(135deg, var(--bg-0) 0 3px, var(--bg-1) 3px 5px); color: var(--text-faint) }
+.mx:disabled { opacity: .55 }
+.mx:hover:not(:disabled) { border-color: var(--accent) }
+.mx[data-receipt]::after { content: ''; position: absolute; right: -1px; top: -1px; width: 4px; height: 4px; background: var(--accent) }
+.mx[data-receipt="refused"]::after { background: var(--rec) }
+.trk-mix .mx-io { display: flex; gap: 4px; height: 12px; overflow: hidden; font-size: 8.5px; color: var(--text-dim); white-space: nowrap }
+.mx-route { min-width: 0; overflow: hidden; text-overflow: ellipsis }
+.mx-route small { margin-right: 2px; color: var(--text-faint); font-size: 7.5px; text-transform: uppercase; letter-spacing: .04em }
+.mx-route[data-state="unread"] { color: var(--text-faint) }
+/* A track that launches itself (Central's workspace): a small launcher at the head's right. */
+.trk .trk-launch { position: absolute; top: 0; right: 0; width: 16px; height: 24px; z-index: 3; padding: 0; background: none; border: 0; color: var(--bg-0); font-size: 9px }
+.trk .trk-launch[data-receipt="refused"] { color: var(--rec) }
+/* An armed track's empty slot records (Live's round record button). */
+.cs .sg-rec { width: 13px; height: 13px; padding: 0; display: grid; place-items: center; background: none; border: 1px solid var(--line); border-radius: 50%; color: var(--rec); flex: none }
+.cs .sg-rec:disabled { opacity: .45 }
+/* The Main column: a row's own clip on the Main track (Central: the day's face) as its name, and the status row — Stop All and Back to
+   Arrangement, lit while what plays differs from the ruler. */
+.trk-main .cs.main-clip { background: color-mix(in srgb, var(--bg-1) 70%, var(--bg-2)) }
+.trk-main .cs.main-clip.sel { box-shadow: inset 0 0 0 1px var(--accent) }
+.trk-main .main-face { min-width: 0; padding: 0; background: none; border: 0; color: var(--text); font-size: 10px; text-align: left; cursor: pointer }
+.main-foot .sa, .main-foot .ba { position: relative; width: 20px; height: 16px; padding: 0; display: grid; place-items: center; background: var(--bg-0); border: 1px solid var(--line); color: var(--text-dim) }
+.main-foot .sa:disabled, .main-foot .ba:disabled { opacity: .4 }
+.main-foot .ba.lit { background: var(--accent); border-color: var(--accent); color: var(--bg-0); animation: tracks-blink 1.2s steps(2) infinite }
+.main-foot [data-receipt]::after { content: ''; position: absolute; right: 1px; top: 1px; width: 4px; height: 4px; background: var(--accent) }
+.main-foot [data-receipt="refused"]::after { background: var(--rec) }
+
+/* R3 — Arrangement: the head's mixer switches, the Lanes setting, and the lanes under each track (Live cap 43–45). */
+.tl-track-head { padding-right: 4px }
+.tl-track-head .tl-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.tl-mix { flex: none; display: flex; gap: 1px }
+.tl-mix .mx { min-width: 12px; height: 12px; font-size: 8px; line-height: 10px }
+.tl-mix .mx-monitor { min-width: 22px }
+.tl-lane[data-main] { border-top: 1px solid var(--line-strong) }
+.tl-lane.tl-setbar { height: 18px; position: sticky; top: 22px; z-index: 4; background: var(--bg-1); border-bottom: 1px solid var(--line-strong) }
+.tl-setbar-head { color: var(--text-faint); font-size: 9px; text-transform: uppercase; letter-spacing: .05em; border-left-color: var(--line-strong) }
+.tl-setbar-body { display: flex; align-items: center; gap: 3px; padding: 0 4px }
+.tl-lanes-kind, .tl-reenable { height: 14px; padding: 0 5px; display: inline-flex; align-items: center; gap: 4px; background: var(--bg-0); border: 1px solid var(--line); color: var(--text-dim); font-size: 9px }
+.tl-lanes-kind[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg-0) }
+.tl-lanes-kind small { font-size: 8px; opacity: .8 }
+.tl-reenable { margin-left: auto; position: relative }
+.tl-reenable.lit:not(:disabled) { background: var(--accent-dim, var(--accent)); border-color: var(--accent); color: var(--bg-0) }
+.tl-reenable:disabled { opacity: .45 }
+/* A take lane: the take's stretches in the track's colour, quieter than the main lane; the stretch chosen outlined in the accent; a
+   stretch of the main lane names the take it came from along its foot. */
+.tl-lane.tl-take { height: 20px; background: var(--bg-2) }
+.tl-take-head, .tl-auto-head, .tl-events-head { gap: 5px; padding-left: 16px; color: var(--text-dim); font-size: 9.5px }
+.tl-take-head small, .tl-auto-head small, .tl-events-head small { flex: none; color: var(--text-faint); font-size: 8.5px }
+.tl-audition { flex: none; width: 16px; height: 13px; margin-left: auto; padding: 0; display: grid; place-items: center; background: var(--bg-0); border: 1px solid var(--line); color: var(--text-dim) }
+.tl-audition:disabled { opacity: .4 }
+.tl-take-body { cursor: crosshair; outline: 0 }
+.tl-take-body:focus-visible { box-shadow: inset 0 0 0 1px var(--accent) }
+.tl-take-span { position: absolute; top: 3px; bottom: 3px; padding: 0 3px; background: color-mix(in srgb, var(--tc) 45%, var(--bg-2)); color: var(--text); font-size: 8.5px; line-height: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; pointer-events: none }
+.tl-lane.tl-take[data-standing] .tl-take-span { background: var(--tc); color: var(--bg-0) }
+.tl-take-sel { position: absolute; top: 1px; bottom: 1px; outline: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); pointer-events: none }
+.tl-comp { position: absolute; bottom: 0; height: 7px; z-index: 2; padding: 0 2px; background: var(--bg-0); border-top: 1px solid var(--tc); color: var(--text-faint); font-size: 6.5px; line-height: 7px; overflow: hidden; white-space: nowrap; pointer-events: auto }
+/* An automation lane: the line through its breakpoints in the record red (Live draws automation red); a modulated one names what moves it. */
+.tl-lane.tl-auto { height: 26px; background: var(--bg-2) }
+.tl-auto-head .tl-mod { overflow: hidden; text-overflow: ellipsis }
+.tl-auto-line { position: absolute; inset: 3px 0; width: 100%; height: calc(100% - 6px); overflow: visible; pointer-events: none }
+.tl-auto-line polyline { fill: none; stroke: var(--rec); stroke-width: 1.5 }
+.tl-mod-band { position: absolute; inset: 6px 0; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--rec) 22%, transparent) 0 6px, transparent 6px 12px); pointer-events: none }
+.tl-lane.tl-auto .tl-reenable { margin-left: auto; height: 13px; font-size: 8px }
+/* An event lane (Factory): each event a tick; the open one is marked, and opens beside the ruler. */
+.tl-lane.tl-events { height: 18px; background: var(--bg-2) }
+.tl-event { position: absolute; top: 3px; bottom: 3px; width: 3px; margin-left: -1px; padding: 0; background: var(--tc); border: 0; opacity: .85 }
+.tl-event:hover, .tl-event.sel { width: 5px; margin-left: -2px; background: var(--accent); opacity: 1 }
+.tl-event-open { position: sticky; bottom: 0; left: 100%; z-index: 5; width: 240px; margin: 0 0 0 auto; padding: 6px 8px; background: var(--bg-1); border: 1px solid var(--line-strong); color: var(--text); font-size: 10px }
+.tl-event-open header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px }
+.tl-event-open header span { color: var(--text-faint); font: 9px var(--mono, ui-monospace, monospace) }
+.tl-event-open header button { margin-left: auto; padding: 0 4px; background: none; border: 0; color: var(--text-faint) }
+.tl-event-open p { margin: 0 0 4px; overflow-wrap: anywhere }
+.tl-event-open .tl-event-detail { color: var(--text-dim) }
+.tl-event-open code { display: block; color: var(--text-faint); font-size: 9px; overflow-wrap: anywhere }
