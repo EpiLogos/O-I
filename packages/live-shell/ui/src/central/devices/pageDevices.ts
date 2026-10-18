@@ -22,7 +22,7 @@ import {useRosterAgents} from '../../owners/readers'
 import {revealDocumentPane, subjectOf} from '../documents/centralDocuments'
 import {useReachedDocument, type DocumentInPane} from '../documents/documentDoor'
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
-import {appendFlowEntry} from './centralDeviceWrites'
+import {appendFlowEntry, setFlowMeta} from './centralDeviceWrites'
 import {civilDayName, type DayAperture} from './dayBinding'
 import {documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
   type PageMaterial, type ReachedPage} from './pageBindings'
@@ -183,7 +183,12 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
         page: null, refresh: refreshFlow}
     }
     const open: OwnFull | undefined = setLayout ? {open: () => setLayout(layout => revealDocumentPane(layout, doc.paneId, doc.location ?? null))} : undefined
-    bindings[id('document')] = documentBinding(id('document'), reached, material, clipboard)
+    const meta = doc.form === 'Flow' && location ? async (change: {readonly title?: string; readonly view?: string}) => {
+      await setFlowMeta(transport, location, change)
+      refreshFlow()
+      doc.reread?.()
+    } : null
+    bindings[id('document')] = documentBinding(id('document'), reached, material, clipboard, meta)
     if (open) fulls[id('document')] = open
     if (doc.form === 'Flow') {
       const writers = location ? {append: async (entry: Parameters<typeof appendFlowEntry>[2]) => {
@@ -191,7 +196,7 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
         refreshFlow()
         // The hosted face holds no draft (the append refuses while it does): it reads the page again, with the entry on it.
         doc.reread?.()
-      }} : null
+      }, ...(meta ? {meta} : {})} : null
       bindings[id('flow-document')] = flowBinding(id('flow-document'), reached, material, agents, writers)
       bindings[id('text')] = textBinding(id('text'), reached, material)
       bindings[id('highlight')] = highlightBinding(id('highlight'), reached, material)

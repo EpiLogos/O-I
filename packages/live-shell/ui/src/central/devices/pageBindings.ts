@@ -83,9 +83,7 @@ export const DOCUMENT_WIRING: DesignWiring = {
     copied: 'whether this device copied the packet',
   },
   refused: {
-    title: 'No owner operation renames a page from here: the title is written on the page itself.',
     template: 'A page keeps the template it opened with; no owner operation changes it from here.',
-    flowView: `The Flow keeps its view in meta.view: choose Dialogue, Flow or Journal on the page — ${ON_THE_PAGE}.`,
     ground: 'A Day or a Flow keeps its template\'s paper; only a Being or a Thing sets its own.',
     layout: 'A Day or a Flow keeps its template\'s layout; only a Being or a Thing sets its own.',
     pinned: 'Pin is the pane\'s: pin the document\'s tab in its pane.',
@@ -128,7 +126,6 @@ export const FLOW_WIRING: DesignWiring = {
     bring: 'the agent chosen to bring in',
   },
   refused: {
-    view: `The Flow keeps its view in meta.view: choose Dialogue, Flow or Journal on the page — ${ON_THE_PAGE}.`,
     upgraded: `The page upgrades its own form (ql-flow.html meta.upgrade) — ${ON_THE_PAGE}.`,
     'in:<agent>': `A participant joins on the page itself (ql-flow.html participants) — ${ON_THE_PAGE}.`,
     'left:<initial>': `A participant leaves on the page itself (ql-flow.html participants) — ${ON_THE_PAGE}.`,
@@ -365,6 +362,7 @@ const markedRuns = (entries: readonly PageEntry[]): number => entries.reduce((su
   sum + wordsOfHtml(entry.html).reduce((runs, word, at, all) => runs + (word.marked && !all[at - 1]?.marked ? 1 : 0), 0), 0)
 
 const NO_ACT = (form: string) => `The ${form}'s face has not answered its first read yet: wait for it, or re-read it in its pane.`
+const DIRTY = 'The page holds edits its owner does not: save or re-read them first, so the change joins the revision you read.'
 
 /** The Document's readings (DOCUMENT_WIRING). */
 export function documentValues(id: string, reached: ReachedPage, material: PageMaterial | null): Values {
@@ -405,15 +403,30 @@ export function documentValues(id: string, reached: ReachedPage, material: PageM
   return withHeld(id, DOCUMENT_WIRING, values, {view: 'page', copied: false})
 }
 
-/** The Document's binding: its readings, the hosted face's Save and Re-read, Copy to the clipboard. */
-export function documentBinding(id: string, reached: ReachedPage, material: PageMaterial | null, clipboard?: (text: string) => Promise<void>): DesignBinding {
+/** A Flow's own metadata write (central/devices/centralDeviceWrites.ts setFlowMeta), handed in where the reached page is a Flow. */
+export type FlowMetaWriter = (change: {readonly title?: string; readonly view?: string}) => Promise<void>
+
+/** The Document's binding: its readings, the hosted face's Save and Re-read, Copy to the clipboard, and a Flow's title and view. */
+export function documentBinding(id: string, reached: ReachedPage, material: PageMaterial | null, clipboard?: (text: string) => Promise<void>,
+  meta?: FlowMetaWriter | null): DesignBinding {
   const values = documentValues(id, reached, material)
   const form = reached.form
   const acts: PageActs = {
     save: async () => { if (!reached.save) throw new Error(NO_ACT(form)); reached.save() },
     reread: async () => { if (!reached.reread) throw new Error(NO_ACT(form)); reached.reread() },
+    // A Flow's title and view are its own file's meta, written on its revision; the page must hold no unsaved edits first.
+    ...(form === 'Flow' && meta ? {
+      title: async (value: Value) => { if (reached.dirty) throw new Error(DIRTY); await meta({title: String(value ?? '')}) },
+      flowView: async (value: Value) => { if (reached.dirty) throw new Error(DIRTY); await meta({view: String(value ?? '')}) },
+    } : {}),
   }
   const why: Record<string, string> = {}
+  if (form === 'Day') {
+    why.title = 'A Day has no title of its own: its heading is its date.'
+    why.flowView = 'A Day has no view of its own: Dialogue, Flow and Journal are a Flow\'s.'
+  } else if (!meta) {
+    why.title = why.flowView = 'The Flow\'s file is not reached here: open it from the browser, and its title and view are written on its file.'
+  }
   if (!reached.save) why.save = NO_ACT(form)
   if (!reached.reread) why.reread = NO_ACT(form)
   const binding = pageBinding(id, DOCUMENT_WIRING, values, acts, why)
@@ -470,6 +483,8 @@ interface Composed {readonly by: string; readonly head: string; readonly rel?: {
 /** What the Flow's write needs: append one entry as the person, connected to an earlier one, through the Flow's own write. */
 export interface FlowWriters {
   readonly append: (entry: {readonly text: string; readonly speaker: string; readonly relation: {readonly type: 'reply' | 'branch' | 'correct'; readonly entryId: string} | null}) => Promise<void>
+  /** The Flow's own meta (its view), written on its file's revision (centralDeviceWrites.ts setFlowMeta). */
+  readonly meta?: FlowMetaWriter
 }
 
 /** The Flow's binding: its readings, the person's next entry through the Flow's own write, the hosted face's Save and Re-read. */
@@ -496,8 +511,15 @@ export function flowBinding(id: string, reached: ReachedPage, material: PageMate
         await writers.append({text: line.head, speaker: speaker.initial, relation: to && type ? {type: type as 'reply' | 'branch' | 'correct', entryId: to.id} : null})
       }
     },
+    // The view the Flow opens in: its file's meta.view, written on its revision.
+    view: async value => {
+      if (!writers?.meta) throw new Error('The Flow\'s file is not reached here: open it from the browser, and its view is written on its file.')
+      if (reached.dirty) throw new Error(DIRTY)
+      await writers.meta({view: String(value ?? '')})
+    },
   }
   const why: Record<string, string> = {}
+  if (!writers?.meta) why.view = 'The Flow\'s file is not reached here: open it from the browser, and its view is written on its file.'
   if (!reached.save) why.save = NO_ACT('Flow')
   if (!reached.reread) why.reread = NO_ACT('Flow')
   const standing: Record<string, Standing> = {}
