@@ -69,8 +69,8 @@ take wears a path.
 The same holds in every kind of work. In Factory a task is a small world being
 made, its agents circling it and the helpers they spin up riding smaller
 orbits inside theirs, so that a whole programme of work hangs in front of you
-as a system you can take in at a glance. A Live set is a world, its tracks the
-bodies in it. You can go from your day to the work you commissioned to the
+as a system you can take in at a glance. A song you are making in Live is a
+world, its parts the bodies in it. You can go from your day to the work you commissioned to the
 song you are making and never learn a new way to look.
 
 Earth is there too, the one world nobody built. It carries real geography,
@@ -124,9 +124,10 @@ not change from one kind of work to the next. Only what it holds changes.
 
 Start with a **track**. In Live a track is a lane for one kind of sound —
 drums, a bassline, a voice — and it plays one clip at a time. In the DLW a
-track is a lane for one stream of your work. In Central each workspace is a
-track — a project, a book, a practice — and every workspace sends its work to
-the Day, the way every Live track sends its sound to the Main track. In
+track is a lane for one stream of your work. In Central the day is the set and
+each world you work in is a track — your own, a project's, a book's — and
+every world sends its work to the Day, the way every Live track sends its
+sound to the Main track. In
 Factory each agent session is a track. In Expressions each
 Expression is one. In Technē a track might be the thread of a single reading
 of history, or every place a subject turned up, in order.
@@ -225,12 +226,23 @@ what didn't work and why, what you want to remember. The work and your account
 of the work end up in the same place, and the evening never has to reconstruct
 the morning.
 
-Each workspace is a track. A project, a book you are writing, a practice you
-keep: each holds its own documents and files as clips, and each remembers how
-you like to work on it in every mode — which panes are open, which
-instruments, which widgets. Launch a workspace and all of that comes back at
-once, in Central and in every other mode. Every workspace sends its work to the
-Day, which sits at the end of the session grid where Live keeps its Main track.
+Today is a set, as a song is in Live, and every world you touch today has a
+track in it. Say you are writing a book. Its world is a track, and the people
+in it, the objects and sources it turns on and the conversations you have
+about it are that track's clips. Open the chapter's flow and it plays, with
+the agent you were talking to back in its seat; open a person and you can
+read them, walk to where they lived, or find them in the sky. Whatever is
+still playing is what is open now. It carries into tomorrow's set until you
+close it, while everything you opened and wrote lays itself down along the
+day's timeline, so that by evening the Day's arrangement is the day as you
+lived it. The Day itself sits at the end of the grid, where Live keeps its
+Main track, and every world sends its work there.
+
+How you work is kept apart from what you work on. Under the browser, where
+Live keeps its grooves, the pool holds your workspaces: each remembers which
+panes are open, which instruments, which widgets, and the layout every mode
+opens with. Launch one and all of it comes back at once, in Central and in
+every other mode.
 
 Every document in Central starts from a template, and every template is yours
 to change. A **Day** is shaped like a die, four faces for the work and two at
@@ -535,7 +547,7 @@ working on it.
 
 To hide a part, click its toggle. The other parts grow to fill the space.
 
-### 10.2 Panes and sets
+### 10.2 Panes and layouts
 
 Panes let you keep several things in front of you at once: a document beside
 the day it belongs to, an agent's thread beside the files it is changing, the
@@ -553,22 +565,33 @@ Some instruments come in more than one build, the way Live has more than one
 reverb. Each build answers to the same controls, so you can change the build
 without losing your settings.
 
-A set is an arrangement of panes, instruments, widgets and detail. Each kind
-of work opens with its own set. To keep an arrangement, save it as a set and
-give it a name. To return to it, select it from the browser.
+A layout is an arrangement of panes, instruments, widgets and detail. Each kind
+of work opens with its own layout, and the workspace you are in remembers
+which. To keep an arrangement, keep it into a workspace in the pool.
 
-### 10.3 The browser
+### 10.3 The browser and the pool
 
 The browser holds four kinds of thing: material to open, instruments to open
 in a pane, devices to put on a chain, and running things you can work with
 where they are.
 
 Preview, open and add are three separate actions. To preview something,
-select it once. To open it, double-click it or drag it into a pane. To add a
+select it once: its preview shows at the foot of the list, where Live plays a
+sample you select. To open it, double-click it or drag it into a pane. To add a
 device, drag it onto a chain. To seat an agent, drag it onto an empty track.
 
-The pool under the browser shows the selected device in full. Changes you
-make in the pool apply at once and do not add the device to your rack.
+Under the browser is the pool, where Live keeps its Groove Pool. A groove
+shapes how a clip plays without being part of the clip, and the pool holds
+what shapes how you work without being the work itself: your workspaces. A
+workspace is a way of working on something, kept: which panes are open and
+what they hold, which instruments and builds, which widgets on the rail, and
+the layout each mode opens with. Launch one and all of it comes back. Drop
+what is in front of you onto the pool and it becomes a new workspace, the way
+a clip dropped on Live's pool gives up its groove. In Live the pool also holds
+the set's grooves, as Live's does.
+
+The pool shows nothing else. A device opens whole in its band above the
+chain, and an instrument opens in a pane.
 
 ### 10.4 Devices
 
@@ -589,7 +612,7 @@ Every device has six views, and all six show the same live settings:
 |---|---|---|
 | Folded | Your chain, along the bottom | The device's name and a reading or two, in a narrow strip |
 | Compact | Your chain | A small live picture and up to four controls |
-| Whole | Expanded above the chain, or in the pool under the browser | Every setting, grouped, round a larger picture |
+| Whole | Expanded above the chain | Every setting, grouped, round a larger picture |
 | Full | A pane | The device's material at full size, to work in |
 | Pop-out | Its own window, which can fill the screen | The material with every setting under it |
 | Widget | The rail on the right | A small picture and a few readings, in every mode |
@@ -597,8 +620,8 @@ Every device has six views, and all six show the same live settings:
 The head opens a device each way. ▸ beside its light shows its expanded
 view, a band above the chain, as Live's does; ▦ opens it in a pane, and ↗ pops
 it out into a window, as Live opens a plug-in. Double-click the head to fold
-the device to its title. Select a device in the browser and it shows whole in
-the pool, where you can change it without adding it to a chain.
+the device to its title. Select a device in the browser to read what it does;
+drag it onto a chain to use it.
 
 A light on a device is a reading. It is on only when the device reports that
 it is on. If the state is not known, the light stays dark.
@@ -675,6 +698,7 @@ be linked to and opened again.
 |---|---|
 | Switch between Session view and Arrangement view | Tab |
 | Show or hide the browser | ⌘⌥B |
+| Show or hide the pool | ⌥⌘6 |
 | Show or hide the detail area | ⌘⌥L |
 | Switch between Clip view and Device view | ⇧Tab |
 | Show or hide the widget rail | ⌘⌥R |
@@ -839,6 +863,14 @@ it recognition: finding that what you are was never missing. One path runs
 inward and the other outward, and Epi-Logos wagers that they meet. A child's
 taunt says it best. It takes one to know one.
 
+That change is practised in Nara, a world of your own that nobody else can
+see into. Say a decision has stayed with you for a month. On the first morning
+you opened it as a journey and drew three cards. Since then you have written
+beside them, dreamt twice about the house in question, and sat with it most
+evenings. Nara has read all of it as you wrote it. Ask it now and it answers
+from those pages, naming each passage it used. The cards are still where they
+fell, and the I Ching shows how the question has turned.
+
 The machines have work in the game too. They are made of words carried on
 numbers, so they can read back over everything we have written and help find
 what it means. They read, gather, propose and build, and they defer — to what
@@ -913,7 +945,7 @@ them.
 
 | Thing | What it is | What belongs to it |
 |---|---|---|
-| Track | One stream of material, and the chain that works on it. | Its name, colour, the I/O of its work, its mixer row, and its chain. In Central a workspace; in Factory a session; in Expressions an Expression; in Technē a reading; in Live a part. |
+| Track | One stream of material, and the chain that works on it. | Its name, colour, the I/O of its work, its mixer row, and its chain. In Central a world; in Factory a session; in Expressions an Expression; in Technē a reading; in Live a part. |
 | Clip | A piece of the material on a track. | Its name, colour and length, how it launches and what follows it, and its content. Everything that changes the clip itself belongs here: a highlight on a page, a symbol's place in a scene, a task's instruction. |
 | Clip view | The clip's editor, in the detail area. | Panels after Live's: Clip, Launch, the editor, and Envelopes. What each mode's editor holds is in §16.5. |
 | Device | Works on the material as it passes along the chain. | What changes how the material sounds, looks or acts, without rewriting the clip, for every clip on the track. |
@@ -959,7 +991,7 @@ material passes through, from left to right.
 
 | Mode | Track | Chain, left to right |
 |---|---|---|
-| Central | A workspace. The Day is the Main track. | The packet, the agent that answers, and its scope; on a workspace that holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
+| Central | A world. The set is the Day; its die is on the Main track. | The packet, the agent of the world, and its scope; on a world whose folder holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
 | Factory | An agent session. | Gateway, agent, skills rack, scope, landing. On the Main track: the gateways rack, the experiments, Approvals, the ledger and Link. |
 | Expressions | An Expression. | The Studio: the field, then its field devices. |
 | Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
@@ -978,15 +1010,13 @@ the others at once.
 |---|---|---|---|
 | Folded | The chain | The activator, the name and up to two short readings, read downward, in a strip 22 px wide. | A folded device. |
 | Compact | The chain | The display and up to four macros, at the chain's height. The width comes from the sections. | The device on its chain; a rack with only its macros showing. |
-| Whole | Expanded above the chain, or in the pool under the browser | Every parameter, grouped, and the display with all its handles. Expanded, it is a band as wide as the detail area: the bands stand side by side and the display grows into the room. In the pool they stack at the pool's width, with pages when more is needed. | The expanded view of EQ Eight or Wavetable. |
+| Whole | Expanded above the chain | Every parameter, grouped, and the display with all its handles, in a band as wide as the detail area: the bands stand side by side and the display grows into the room. | The expanded view of EQ Eight or Wavetable. |
 | Full | A pane | The material itself: the page, the field, the torus, the world. No controls. | Wavetable's large display, without its controls. |
 | Pop-out | Its own window, which can fill the screen | The material with every control docked under it. | A plug-in's window. |
 | Widget | The rail | A small display and up to three readings or macros, in a tile of 136 × 136 px or 280 × 136 px. | Live has none. Push's display is the nearest. |
 
-- Whole expanded and Whole in the pool are one view in two places. The pool
-  shows the device you select in the browser, and changes there apply
-  without adding it to a chain. Expanded, it is the device you are working
-  on.
+- Whole stands in one place, its band above the chain. A device you have not
+  put on a chain has no Whole: select it in the browser to read what it does.
 - Most devices need no pop-out of their own. The window shows Full above
   and Whole below it. A device writes its own only where its controls
   belong beside the material rather than under it.
@@ -1007,7 +1037,8 @@ A device's head reads as Live's does, from the left:
 | Name | Double-click the head to fold the device to its title, or choose Fold from its context menu. Press the folded title to open it again. |
 | Rail, ▦ Pane, ↗ Pop out | At the right. Keep the device on the widget rail; open it full in the pane that has focus; open it in its own window. Press ↗ in the window to close it. |
 
-Press the plate to show the device whole in the pool. Right-click the head for
+Press the plate to select the device: the keys and the status bar speak to it.
+Right-click the head for
 Fold, Rename, Group, Save as preset, Hot-swap, Show automation and Map. A
 rack's head has three more marks, as Live's do: show or hide the macros, the
 chain list, and the devices of the selected chain.
@@ -1027,7 +1058,8 @@ shows.
 | The detail area | ⌘⌥L, or its toggle in the status bar. |
 | Clip view or Device view | ⇧Tab, or the switches in the status bar. |
 | Clip view in the main area | ⌥⌘E. The clip's editor takes the space of the panes; press again to return. |
-| The browser and its pool | ⌘⌥B. Drag the line between the browser and the pool to give either the height. |
+| The browser | ⌘⌥B. |
+| The pool | ⌥⌘6, as Live shows its Groove Pool. Drag the line between the browser and the pool to give either the height. |
 | The widget rail | ⌘⌥R. Drag its edge to widen it. Fold the launcher to give the tiles the height. |
 | A device's expanded view | ▸ on its head, or Esc. |
 | A device's window | ↗ on its head, or the window's own close. |
@@ -1075,7 +1107,7 @@ any set of tracks.
 
 | Mode | Track | Clip | Stop (a row) | Takes |
 |---|---|---|---|---|
-| Central | A workspace. The Day is the Main track. | A page. | The face of the Day, which stands its entries together. | Revisions: draft, saved, edited since save. |
+| Central | A world. The set is the Day; its die is on the Main track. | A page: a being, a thing or a flow. | Pages you open together. | Revisions: draft, saved, edited since save. |
 | Factory | An agent session. | A task. | A batch of tasks that launch together. | Attempts. You choose the attempt that lands. |
 | Expressions | An Expression. | A scene. | A moment across several Expressions. | Captured takes of a scene. |
 | Technē | A reading, a journey or the occurrences of a subject. | An event, an occurrence or a revision at its time and place. | A stop of a walk: it stands its event and launches the scenes it carries. | Readings that extend a reading. |
@@ -1208,14 +1240,61 @@ hold Alt to turn it off while you drag.
 - Every edit is one labelled step that can be undone alone.
 - Every mode uses the same states, the same stop buttons and the same keys.
 
-### 16.7 The browser
+### 16.7 The browser and the pool
 
 In every mode the browser holds four kinds of thing. Material comes from the
-mode's owners: workspaces and documents in Central, sessions in Factory,
-scenes in Expressions, sources in Technē, sets in Live. Instruments, devices
-and widgets are the same in every mode, grouped by the product that makes
-them. Select a device to show it whole in the pool. Drag it onto a chain to
-add it. Drag an instrument into a pane to open it.
+mode's owners: worlds, their beings, things and flows, and past days in
+Central; sessions in Factory; scenes in Expressions; sources in Technē; sets in
+Live. Instruments, devices and widgets are the same in every mode, grouped by
+the product that makes them. Select a row to preview it at the foot of the
+list: a page's first lines, a material's picture, a device's account of what
+it does. Drag a device onto a chain to add it. Drag an instrument into a pane
+to open it.
+
+#### The pool
+
+The pool stands under the browser in every mode, where Live keeps its Groove
+Pool, and holds your workspaces. A workspace keeps a way of working; it never
+holds the work. In Live a switch at the pool's head shows the set's grooves
+instead, as Live's pool does.
+
+| Column | Values | What it does |
+|---|---|---|
+| Workspace | A name, on its colour | The workspace. The one you are in is lit. |
+| Panes | On · Off | Keeps the panes, how they are split and pinned, and what each holds. |
+| Instruments | On · Off | Keeps the instrument in each pane and its build. |
+| Widgets | On · Off | Keeps the widgets on the rail and their presets. |
+| Layouts | On · Off | Keeps the layout each mode opens with. |
+| Opens in | Last mode · Central · Factory · Expressions · Technē · Live | The mode that comes forward after a launch. |
+
+Each row has two acts, as a groove has hot-swap and Commit:
+
+| Act | What it does |
+|---|---|
+| ▶ Launch | Brings the workspace's context back, in the modes the footer says. |
+| Keep | Stores what is in front of you now into the workspace. |
+
+The footer stands where Live's Global Amount does:
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| On launch | Restore all modes · Restore open mode · Restore nothing | Restore all modes | What comes back when you launch a workspace. |
+| Keep context | On change · On leave · Manual | On change | When the workspace you are in stores your context. |
+
+Drop a pane's tab onto the pool and the arrangement around it becomes a new
+workspace. Drag a workspace onto a world's track to make it that world's way of
+working: opening the world's pages brings it forward.
+
+In Live the pool's other face is Live's own: Groove, Base, Quantize, Timing,
+Random and Velocity for each of the set's grooves, Global Amount at the foot,
+and "Drop clips or grooves here" when it is empty. Each groove is the set's,
+read from it and written into it.
+
+- The pool holds workspaces and, in Live, grooves. It holds no device, no
+  instrument and no pane's contents.
+- A workspace stores context. The pages and files stay where they are.
+- Launching a workspace changes no page, no world and no Day.
+- A layout you keep belongs to the workspace you are in.
 
 ### 16.8 Play, record and automation
 
@@ -1274,14 +1353,12 @@ All measures are in pixels at 100 %. The grid is 4 px.
 | Hit area of any control | 22 or more in each direction |
 | Row of a list | 17 high |
 | Display on a compact plate | 140 × 146 |
-| Display on Whole in the pool | up to 194 × 146 |
 | Whole expanded | The detail area's width. One band high, its bands side by side; a display may grow the band up to half the height of the panes. |
 | Pop-out window | 1180 × 640 when it first opens, then the size you leave it at. Whole is docked under the material, one band high. |
 | Section label | 9 px capitals, 13 high |
 | Names and values | 10 to 11 px |
 | Folded strip | 22 wide |
 | Widget tile | 136 × 136, or 280 × 136 |
-| Pool | 400 wide |
 
 The plate does not reflow. When the detail area is shorter or taller, the
 whole plate scales between 80 % and 125 %, as Live's zoom scales its devices.
@@ -1308,8 +1385,8 @@ Right-click the head for Save as preset, Hot-swap, Show automation and Map.
 
 #### The body
 
-The body is one band on a chain. Whole in the pool stacks one or two bands;
-Whole expanded and in a window sets them side by side. A band is a row of
+The body is one band on a chain. Whole, expanded or in a window, sets its
+bands side by side. A band is a row of
 sections. A section is a column of controls with a label. The display stands
 in a section of its own, at the left.
 
@@ -1466,8 +1543,8 @@ A device is done when all of these are true:
 
 - Its views draw in the device gallery on its declared parameters, and move
   together.
-- Whole reads both in the pool and expanded above the chain, and the
-  pop-out window shows the material with every control.
+- Whole reads expanded above the chain, and the pop-out window shows the
+  material with every control.
 - Every control says what it does in the status bar, and works from the
   keyboard.
 - Nothing scrolls inside a plate, and no box sits inside a box.
@@ -1815,9 +1892,37 @@ Your own world is a body you build. Earth is given, so you only place things on 
 - Choose how warm and wet the climate is, and how far the ice caps reach.
 - Choose the atmosphere, the clouds and the tilt of the axis.
 - Click the body to place a place, a palace, a portal or a route. The World suggests a name from the seed. Keep it or type your own.
-- Reroll the seed to get a new body from the same settings. Your locations keep their names and settle on the new land.
+- Reroll the seed to get a new body from the same settings. Every location keeps its name and the position you gave it. Where that spot is now sea, the World draws the location on the nearest shore and says so; nothing moves until you move it.
 
-Most building happens without your notice. Every project you start becomes a place. Every walk you take wears a path between places.
+Most building happens without your notice. Every world you start lands as a place on your planet and turns as a body in your sky. Every walk you take wears a path between places.
+
+#### Your system
+
+Each world you work in is a body of its own. Bring a world onto a Central track, or start one, and it takes a body in your system, built from its own seed, with a landing place on your planet's surface. Enter the place and you are on that world. A book's world can be a small grey moon you have barely shaped; a project you have lived in for a year can be a planet with weather. Its colour is the world's colour everywhere it shows: on its track, its clips and its body.
+
+What you hold circles the body it belongs to. Agents at work and the moments open now ride the inner ring, each keeping its place on the ring however the list around it changes. Files and context you have to hand ride the outer ring and drift off when you put them down.
+
+#### What grows on a world
+
+A world grows its ground from what happens in it, and every form on it stands for something real. Nothing on a body is decoration.
+
+| Form | What it shows | Read from |
+|---|---|---|
+| A bee | An agent at work. Its wings beat while it works and it rests when idle, in the agent's own colour. | The roster and each session's state. |
+| A tree | A body of knowledge that persists, its branches the sections under it. | The world's wiki and its child spaces. |
+| Roots | Where a claim comes from. | The sources a node names. |
+| A vine, a web of fungus | Links between pages, thicker where a link is used more. | The links between pages, with their counts. |
+| A seed | New work at its first revision. | Pages and nodes at revision 1. |
+| Fruit | Work that has landed. | Returns and landed changes. |
+| A flower | A scene you have shown. | The Expressions you share. |
+| A river | Work flowing: runs, returns, edits, in the order they happen. | The day's stream of events. |
+| A lake | What has gathered: the day, the open moments. | The Day and the NOW field. |
+| A cliff | A boundary you cannot cross without leave. | Protected ground and the grants of authority. |
+| A pass, a bridge | A crossing between worlds. | Links across registers, and the worlds an agent may act in. |
+| An island | A place apart where work can run without touching the rest. | The seats of the machine. |
+| A forest | Knowledge dense enough to get lost in. | How closely the graph's pages are joined. |
+
+A form grows where its data is and fades when the data goes. A tree that stands for a body of knowledge stays that tree when you reroll the body; its branches follow its sections, not the seed.
 
 The body is lit by its star, so it shows phases. A place you anchor to Earth draws a line to the real place on the ground, such as a house, a town or a coast.
 
@@ -1970,6 +2075,8 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 - Raising a thing into wider view always asks you first.
 - Being findable is not being reachable. Being reachable is not being in touch. Being in touch is not being trusted. The owner of a world gives each step.
 - The idle body is still. It does not spin by itself.
+- A reroll changes the land, never what stands on it. A location keeps the position you gave it, and a form keeps the thing it stands for.
+- A form grows only where its data is. A world with no agents has no bees.
 - Live imagery and terrain need your consent. The World names the source of each layer. Imagery does not turn back in time. The occasion filters the places, not the pictures.
 
 #### Tips
@@ -2961,54 +3068,65 @@ The widget shows the live shell. A line below it says "following" and shows the 
 
 ## 18. Central
 
-Central keeps the day's work, your documents and your ground in one place. It works like a code editor: your files down the left, documents side by side, and the day as one of the documents. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
+Central keeps the day's work, your documents and your ground in one place. It works like a code editor: your files down the left, documents side by side, and the day as the set they all belong to. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
 
-### 18.1 Central: tracks and clips
+### 18.1 Central: the Day, its worlds and their pages
 
-**Product:** Central · **Track:** a workspace · **Clip:** a page · **Main track:** the Day
+**Product:** Central · **Set:** the Day · **Track:** a world · **Clip:** a page: a being, a thing or a flow · **Main track:** the Day's die
 
-You need to pick up a project, a book or a practice where you left it, and to write in its pages without leaving the work. In Central each workspace is a track, and its pages are its clips. Select a page and Clip view opens it for writing, with its facts and its tools beside it. Device view below shows what works on it: the packet, the agent that answers and its scope.
+You need the people, objects and conversations of each part of your life to hand, to pick each one up where you left it, and to find the day written down at the end of it. In Central today is the set. Each world you work in is a track, and its pages are its clips. Select a page and Clip view opens it for writing, with its facts and its tools beside it. Device view below shows what works on it: the packet, the agent of that world and its scope.
+
+#### The set
+
+The Day is Central's set, as a song is Live's. Central opens on today.
+
+| In Live | In Central |
+|---|---|
+| The set | Today's Day. The transport shows its date. |
+| A track | A world you work in today. |
+| A clip | A page of that world: a being, a thing, a flow, or a page of a kind you made. |
+| A scene | A row of pages you open together, named as you like: a morning's practice, an afternoon's writing. |
+| The Main track | The Day's die, then Approvals. |
+| Session view | What you keep to hand today. A clip that plays is open now. |
+| Arrangement view | The day as you lived it, from the first entry to the last. |
+| Saving the set | The day's close. |
+
+Earlier Days are earlier sets. Open one from the browser to read it and walk through it again. A closed Day cannot be rewritten. After rollover, tomorrow's set opens beside today's, in a second tab (§18.2).
 
 #### The track
 
-A track is a workspace: a project, a book, a practice or another body of work. It holds the documents and files of that work as clips. It remembers how you like to work on it in every mode, and it sends its work to the Day.
+A track is a world: your own, Earth, the world of a project or a book you are writing, or a world someone has let you visit. Its clips are that world's pages, and it sends its work to the Day.
 
-To make a workspace, drag a folder from the browser onto an empty track. The track becomes a workspace, and the files of the folder show as its clips.
+To bring a world into today, drag it from the browser onto an empty track. To start a new world, drag a folder there: the folder's pages become its clips, it takes a place on your planet, and it joins the bodies of your sky (§2).
 
-The track head shows the workspace's name and colour. Its settings stand on the head:
-
-| Setting | Values | Default | What it does |
-|---|---|---|---|
-| Name | Text | New workspace | The name on the track and in the browser. |
-| Kind | Project · Book · Practice · Other | Project | Chooses the starting set of a new workspace. |
-| Folder | A folder of your ground, or none | None | The folder whose files show as clips. |
-| Place | A place on your world, or none | Its own place | Where the workspace stands on your planet. A new project gets its own place. |
-
-A workspace keeps your context: the panes and how they are split and pinned, the instrument in each pane and its build, the widgets on the rail and their preset, and the set each mode opens with. Launch the workspace and that context comes back.
+The track head shows the world's name and colour. Its settings stand on the head:
 
 | Setting | Values | Default | What it does |
 |---|---|---|---|
-| Remember | Panes · Instruments · Widgets · Sets: each On or Off | All On | Which parts of your context the workspace keeps. |
-| Remember in | Every mode · Open mode only | Every mode | Keeps context for all five modes, or only for the mode that is open. |
-| On launch | Restore all modes · Restore open mode · Restore nothing | Restore all modes | What comes back when you launch the workspace. |
-| Open in | Last mode · Central · Factory · Expressions · Technē · Live | Last mode | The mode that comes forward after a launch. |
-| Keep context | On change · On leave · Manual | On change | When the workspace stores your context. |
+| Name | Text | The world's name | The name on the track and in the browser. |
+| World | A world | A new world | The world the track holds. |
+| Kind | Project · Book · Practice · Other | Project | Chooses the pages a new world starts with. A Practice starts with a journal and keeps itself to you. |
+| Folder | A folder of your ground, or none | None | The folder where the world's pages are kept. |
+| Place | A place on your planet, or none | Its own place | Where the world lands on your planet's surface. Its body turns in your sky. |
+| Workspace | A workspace from the pool, or none | None | The way of working that comes forward when you open this world's pages. |
 
 ##### The mixer row
 
 | Live's control | What it does here |
 |---|---|
-| Output | The Day. Every workspace sends its work to the Day, the Main track. |
-| Activator | Send to Day. On, the work of the workspace reaches the Day. Off, it stays out of the Day. On by default. |
-| Arm | Lets the agent of the workspace write into its pages directly, each write with a receipt. Off, every agent write arrives as a proposal. |
-| Solo | None. A workspace does not run, so nothing is soloed. |
-| Monitor | None. |
+| Output | The Day. Every world sends its work to the Day, the Main track. |
+| Activator | Send to Day. On, the work in this world reaches the Day's faces. Off, it stays out of the Day. On by default. |
+| Arm | Lets the agent of this world write into its pages directly, each write with a receipt. Off, every agent write arrives as a proposal. |
+| Solo | Shows only this world in the Day's faces and in the world instrument. |
+| Monitor | For a world you visit. In follows its changes as they happen. Off keeps it as you last saw it. Auto follows while one of its pages plays. Your own worlds have none. |
 
-The input of a workspace is its Folder. A file you add to the folder shows as a clip. A file you change in any editor shows the change on its clip.
+The input of a world is its Folder. A file you add to the folder shows as a clip. A file you change in any editor shows the change on its clip.
 
 #### The clip
 
-A clip is a page: a Flow, a Being, a Thing, a Day, or a page of a kind you made. Every page starts from a template, and the template draws it. The editor edits the page itself: its words, its marks and the notes beside it.
+A clip is a page: a Being, a Thing, a Flow, or a page of a kind you made. Every page starts from a template, and the template draws it. The editor edits the page itself: its words, its marks and the notes beside it. The Day is not a clip. It is the set, and its die stands on the Main track; select the Main track and Clip view opens the Day's open face for writing.
+
+A page plays when you open it to work in. A flow resumes with its people and agents in their seats. A being or a thing opens to be read, walked to or found in the sky. What plays is open now, and the NOWs widget lists it with its machine and the agent at work on it. Press the track's Stop, or the clip's square, to close the moment you have finished.
 
 A clip shows its state on the grid and on the ruler: Draft, Saved or Edited since save.
 
@@ -3027,8 +3145,8 @@ height: 1120
 | Field | Values | Default | What it does |
 |---|---|---|---|
 | Title | Text | From the template | The page's title, on the clip's colour. |
-| Colour | The palette | The workspace's colour | The colour of the clip on the grid and the ruler. |
-| Kind | Flow · Being · Thing · Day · a kind you made | The template's | What sort of page it is. The kind sets the form fields below. |
+| Colour | The palette | The world's colour | The colour of the clip on the grid and the ruler. |
+| Kind | Being · Thing · Flow · a kind you made | The template's | What sort of page it is. The kind sets the form fields below. |
 | Template | A template, at a version | The kind's standard template | The design that draws the page. A page keeps the version it opened with. A new version of the template does not change an old page. |
 | Revision | A revision (reading) | Read from the owner | The saved revision the page stands on. |
 | Save state | Saved · Unchanged · Stale · Conflict · Refused (reading) | Read from the last save | The outcome of the last save. A stale or conflicting save keeps your draft and shows what changed. |
@@ -3038,6 +3156,7 @@ A Flow adds its participants:
 | Field | Values | Default | What it does |
 |---|---|---|---|
 | Participants | A list of names. Each is a Person or an Agent. | You | Who is in the exchange. Each has a name and an initial. A person is drawn solid, an agent as points. An agent can be tied to a session. |
+| World | A world | The world of its track | The world the exchange belongs to. |
 
 A Being or a Thing adds its ties. The ties belong to the page, not to its design.
 
@@ -3058,7 +3177,15 @@ A Being or a Thing page has a title, a line of introduction, an opening, numbere
 
 ##### The Launch panel
 
-A page has no Launch panel. Pages are read and written, not launched. Like a clip laid on Live's Arrangement view, a page stands where it is in the day.
+Launching a page opens it to work in, and it plays until you close the moment.
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Opens as | A flow: Dialogue · Flow · Journal. A being or a thing: Page · Reading · Walk · Sky | Dialogue for a flow, Page for a being or a thing | How the page opens. Reading opens it in the world's reading view, Walk opens the Journey at the page's stop, Sky opens the Sky at the page's placements. |
+| Opens in | The focused pane · A new pane · Its own window | The focused pane | Where it opens. |
+| Seats | On · Off | On | A flow only. Brings its people and agents back to their seats: each agent's session resumes where it stopped. |
+
+A being or a thing with no place, no stop or no placement in the sky says so beside that choice, and the choice stays closed.
 
 ##### Tools
 
@@ -3071,7 +3198,7 @@ Select a passage and four acts appear above it. They are the selection tool.
 | Highlight | Marks the passage in the chosen colour. Choose it again on a highlight to remove it. |
 | Note | Opens a note anchored to the passage. |
 | To packet | Adds the passage to the packet. |
-| Answer this | Sends the packet and the passage to the agent on the workspace's chain. The answer arrives as a new entry, with its sources. Overdub in the transport decides whether it joins as a new entry or replaces the passage. |
+| Answer this | Sends the packet and the passage to the agent on the world's chain. The answer arrives as a new entry, with its sources. Overdub in the transport decides whether it joins as a new entry or replaces the passage. |
 
 **Text** sets how the words are set: the paragraph style, the emphasis and the size you read at.
 
@@ -3142,30 +3269,35 @@ A page has no envelopes. Nothing in a page moves over the page's own time.
 
 #### Takes and Arrangement lanes
 
-A page's revisions are its takes. In Arrangement view they lie as take lanes under the workspace's track: each saved revision, and the draft when it differs from the last save. Select a range in an earlier revision and press Enter to bring it back into the page, as comping does in Live. Saving the page makes its state a new revision.
+A page's revisions are its takes. In Arrangement view they lie as take lanes under its world's track: each saved revision, and the draft when it differs from the last save. Select a range in an earlier revision and press Enter to bring it back into the page, as comping does in Live. Saving the page makes its state a new revision.
 
-In Arrangement view the ruler measures today, from the first entry to the last. Each workspace is a track along it, with its pages where you worked on them, and the Day is the Main track below them. Under a track, an automation lane shows the recorded moves of one parameter of its chain.
+In Arrangement view the ruler measures today, from the first entry to the last. Nothing needs recording by hand: each page lays itself along its world's track for as long as it played, the way Live records Session view into Arrangement view, and the Day's die lies on the Main track below them. Under a track, an automation lane shows the recorded moves of one parameter of its chain.
 
 #### The Main track
 
-The Day is Central's Main track. It collects the work of the day from every workspace and every mode into one page, and its chain holds the Day, then Approvals. Every proposal an agent makes in a page waits in Approvals, and in the page it belongs to. The Day has no workspace of its own.
+The Main track carries the Day's own instrument. Its chain holds the Day's die, then Approvals. The die collects the work of the day from every world and every mode onto its faces; every proposal an agent makes in a page waits in Approvals, and in the page it belongs to.
 
-In Session view the Main track's row launchers stand at the end of the grid. In Central a row is a face of the Day, and it stands the entries you made while that face was turned up.
+In Session view the Main track's row launchers stand at the end of the grid. A row launcher opens every page in its row at once.
+
+#### What carries to tomorrow
+
+When the day closes, what still plays carries into tomorrow's set, playing, with today added to its history. Each carried page says why it stays open and when to look at it again. What you stopped leaves tomorrow's grid and stays where it lay in today's Arrangement view, which the close keeps exactly as it was.
 
 #### On the rail
 
 | Tile | What it shows |
 |---|---|
-| Agent | The agent of the workspace: its face, its state, the last lines of its thread and a composer. |
+| Agent | The agent of the selected world: its face, its state, the last lines of its thread and a composer. |
 | Packet | Exactly what the agent will read, and its size. |
-| Approvals | The proposals that wait for you, from every workspace. |
+| Approvals | The proposals that wait for you, from every world. |
+| NOWs | What is open now: the pages playing on every machine, and the agent at work on each. |
 
 #### Rules
 
-- A workspace stores context. It does not store content. The files stay in the folder as ordinary files.
-- A launch restores context. It does not change a page.
-- A set that you save in a mode belongs to the workspace that is open.
-- Every workspace sends to the Day. The Day is the Main track and has no workspace of its own.
+- A world's pages stay in its folder as ordinary files. The track shows them; it does not hold them.
+- Opening a page changes nothing in it. Only writing does.
+- Every world sends to the Day unless its activator is off.
+- A closed Day keeps its arrangement as it was. A page carried forward is a new day's clip, with the old day in its history.
 - A page keeps the template version it opened with.
 - The ties of a page belong to the page. A page you redesign keeps its ties and still knows where it stands on the map.
 - An empty Place stays empty. Nothing guesses a place.
@@ -3186,10 +3318,10 @@ In Session view the Main track's row launchers stand at the end of the grid. In 
 
 #### Tips
 
-- To resume a book after a month, launch its workspace.
-- To keep a side project out of the Day, turn off its track's activator.
+- To resume a book after a month, bring its world onto a track and launch the flow where you stopped.
+- To keep a side project out of the Day, turn off its world's activator.
 - To work on one project on two machines, turn Link on.
-- To start a new project in your usual layout, copy a workspace and change its Folder.
+- To start a new project in your usual way of working, set its world's Workspace to the workspace you use.
 - To keep a thinking journal, choose the Journal tab and set Speak as to you.
 - To follow a second idea without losing the first, select the entry and set Relation to Branch.
 - To correct an agent, write a Correct entry. The agent's text stays on the page.
@@ -3211,7 +3343,7 @@ In Session view the Main track's row launchers stand at the end of the grid. In 
 
 **Product:** Central · **Kind:** instrument · **Track:** Central's Main track
 
-The Day collects the work of one day from every workspace and every mode into
+The Day collects the work of one day from every world and every mode into
 one document. Use it to set the day going, see what runs, notice what repeats,
 and say what the day taught.
 
@@ -3594,7 +3726,7 @@ The widget shows the search line, the last results and your aliases. Type @ in t
 
 ### 18.5 Ground hygiene
 
-**Product:** Central · **Kind:** effect · **Chain:** a workspace track whose folder holds code
+**Product:** Central · **Kind:** effect · **Chain:** a world's track whose folder holds code
 
 Use Ground hygiene to find the branches, worktrees and seats that no longer belong to any work, and to clear them. It reads the ground, shows what each one is, and tends the ones you approve.
 
@@ -3681,7 +3813,7 @@ The whole Ground hygiene shows every parameter, in four groups.
 
 The full Ground hygiene shows three lists: seats, worktrees and branches. Each row shows its finding, what the finding rests on and the tender that fits. Select a row to read it. Press a tender to run it.
 
-In Clip view, Ground hygiene edits no clip. It reads the folder of the workspace track.
+In Clip view, Ground hygiene edits no clip. It reads the folder of the world's track.
 
 ##### Widget
 
@@ -3696,7 +3828,7 @@ The widget shows the number of findings and the first three. Click a finding to 
 
 #### To use Ground hygiene
 
-1. Select a workspace track that holds code.
+1. Select a world's track whose folder holds code.
 2. Read the findings. A claimed seat is not a fault.
 3. Select a finding. Read what it rests on and which tender fits.
 4. Press the tender. In Propose, read what it will do and confirm.
@@ -3721,7 +3853,7 @@ The widget shows the number of findings and the first three. Click a finding to 
 
 ### 18.6 Impact
 
-**Product:** Central · **Kind:** effect · **Chain:** a folder or a note on a workspace track
+**Product:** Central · **Kind:** effect · **Chain:** a folder or a note on a world's track
 
 Use Impact to see what a change to a folder or a note will touch. It shows the neighbourhood of what you select: its references, its links and the sessions that touch it.
 
@@ -4153,7 +4285,7 @@ The compact rack shows the four chains, each with a state dot. Green is ready, a
 |---|---|
 | Fan-out | Sets the observers allowed for each session, from 0 to 8. |
 
-Click a chain to show its gateway whole in the pool.
+Click a chain to expand its gateway above the rack.
 
 ##### Whole
 
@@ -4183,7 +4315,7 @@ The widget shows one line for each chain, with its state dot. Click a line to op
 #### To use the Gateways rack
 1. Select the Main track. Open Device view.
 2. Read the dot of each chain. Green means a session can use it now.
-3. Click a chain to show it whole in the pool.
+3. Click a chain to expand it above the rack.
 4. Click the arrow on a chain to open that gateway in a pane.
 
 #### Rules
@@ -4197,7 +4329,7 @@ The widget shows one line for each chain, with its state dot. Click a line to op
 
 ### 19.4 Agent
 
-**Product:** Actuation, with Software Factory and Central · **Kind:** instrument · **Chain:** on any track an agent works on: second on a Factory session's chain, after the gateway; last on a Central workspace's chain, after the packet
+**Product:** Actuation, with Software Factory and Central · **Kind:** instrument · **Chain:** on any track an agent works on: second on a Factory session's chain, after the gateway; last on a Central world's chain, after the packet
 
 You need an agent that works for you at the pace, effort and budget you
 choose, that you can talk to while it works, and whose every act you can read
@@ -4317,7 +4449,7 @@ value that an agent moved shows that agent's name.
 #### To use the Agent
 
 1. Drag an agent from the browser onto an empty track. The agent takes the
-   seat. In Central, the agent of the workspace answers on its pages.
+   seat. In Central, the agent of the world answers on its pages.
 2. Select the track and open Device view. Read the agent's card on the
    Identity page if you do not know it.
 3. Choose Effort and Budget. Use a low budget for a short task.
@@ -4627,8 +4759,8 @@ and child sets. A long list pages.
 | Preview, Apply | Shows the change, then applies it. |
 | Loaded | Shows how many members are loaded, of all that the set carries. |
 
-Click a square to turn a member on or off. Click the plate to show the rack
-whole in the pool.
+Click a square to turn a member on or off. Press ▸ on the head to expand the
+rack above the chain.
 
 ##### Whole
 
@@ -4639,7 +4771,7 @@ The whole rack has two bands.
 | One | Set: the set, its members by kind, the revision, the author. Compose: Scope, Preview and Apply, Profile. Package: the target, Export, the unsupported count. |
 | Two | Every member, in two columns, with its square, mark, evidence and revision. |
 
-Select a member to show it whole in the pool (see §19.8).
+Select a member to expand it above the rack (see §19.8).
 
 ##### Full
 
@@ -4773,7 +4905,7 @@ for a Method.
 
 #### To use the member device
 
-1. Select a member in the Skillset rack. It shows whole in the pool.
+1. Select a member in the Skillset rack. It expands above the rack.
 2. Read its mark and its evidence.
 3. If the mark is orange, read the reason. Click Review, read the revision,
    then confirm.
@@ -4835,7 +4967,7 @@ The compact route shows a small graph of the sources in reach. It has four macro
 | Link depth | Sets the number of links the agent follows from a hit. |
 | Read budget | Sets the most pages the agent reads in one task. |
 
-Click the Scope title to open its reads and writes whole in the pool.
+Press ▸ on the Scope's head to expand its reads and writes above the chain.
 
 ##### Whole
 
@@ -4865,7 +4997,7 @@ The widget shows the pages that the agent read in this task, with their sources.
 
 #### To use the Knowledge route
 1. Select a session. Open Device view.
-2. Open the Scope device whole in the pool.
+2. Expand the Scope device above the chain.
 3. Choose the Sources.
 4. Set the Reach. Use a small Reach for a narrow task.
 5. Set Link depth. Use 0 when the agent must stay on the page you pointed at.
@@ -5045,7 +5177,7 @@ The widget shows the proposal that waits, with Accept and Remove.
 
 ### 19.12 Scope
 
-**Product:** Software Factory · **Kind:** effect · **Chain:** after the agent, on any track an agent works on: fourth on a Factory session's chain; last on a Central workspace's chain
+**Product:** Software Factory · **Kind:** effect · **Chain:** after the agent, on any track an agent works on: fourth on a Factory session's chain; last on a Central world's chain
 
 You need to limit the part of your world an agent may touch, and decide how
 its writes arrive, wherever the agent works. Scope is the world device, the
@@ -5306,7 +5438,7 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Members | A list of agents | The lead | The chains of the rack. Drag an agent from the browser to add one. |
-| Selected member | One member | The lead | The chain whose device shows in the pool. |
+| Selected member | One member | The lead | The chain whose devices show in the rack. |
 | Fan-out | A number · No limit | 2 | The most helpers that run at once. The default is a start value, not a limit. |
 | Depth | A number · No limit | 2 | How deep helpers may spawn their own helpers. The default is a start value, not a limit. |
 | Hand-back | Raw · Digest · Summary | Summary | What a helper returns to its parent. |
@@ -5479,7 +5611,7 @@ The widget shows the branch, the changes, the checks and the Land button.
 
 ### 19.17 Seat
 
-**Product:** Workcell · **Kind:** effect · **Chain:** inside the Git / landing device; whole in the pool
+**Product:** Workcell · **Kind:** effect · **Chain:** inside the Git / landing device
 
 You need a place where an agent can change a project without touching other work. A seat is a checkout of a project that agents share. The Seat device claims one for a session, and releases it when the work has landed.
 
@@ -5517,7 +5649,7 @@ The compact Seat shows the seat name, the lane and the co-workers. It has four m
 | Lane | Sets the branch name of the line of work. |
 | Release | Releases the seat after the work has landed. |
 
-Click the Git title to show the Seat whole in the pool.
+Press ▸ on the Git / landing head to expand the Seat above the chain.
 
 ##### Whole
 
@@ -5546,7 +5678,7 @@ The widget shows the seat name, the lane and the claim.
 | Stop | Keeps the claim. Release gives the seat up. |
 
 #### To use the Seat
-1. Select a session. Open the Git card whole in the pool.
+1. Select a session. Expand the Git / landing device above the chain.
 2. Read Claim. If another agent holds the seat, choose Attach to join as a co-worker.
 3. To start different work on the same project, choose Start a new lane.
 4. Work. Land the branch.
@@ -6228,7 +6360,7 @@ owner answers a change.
 2. Press + Parameter and choose the controls you play most.
 3. Play them on the compact view's dials, or drag the handles in its display.
 4. To keep a field value the same in every scene, choose its macro and turn on All scenes.
-5. Open Chains to see which devices are on. Choose a device and press Show to see every setting in the pool.
+5. Open Chains to see which devices are on. Choose a device and press Show to expand it above the chain.
 6. To change one symbol, select it in the scene's editor in Clip view.
 
 #### Rules
@@ -6239,7 +6371,7 @@ owner answers a change.
 - A field macro cannot follow or bind a symbol, and a symbol's macro cannot become a field macro.
 - When the owner cannot find a macro's parameter, as for a bound symbol that is not in the scene, the macro says why and keeps its place.
 - A macro set to All scenes is not recorded. Turn All scenes off to record its moves.
-- Your Nara layer never enters the Expression. Saving or sharing the Expression does not carry it.
+- Your Nara readings never enter the Expression. Nara may move its focus, with a checkpoint you can return to; saving or sharing the Expression carries none of your layer (§24.7).
 - A control that you hold shows the hand-back light. Press the light to give control back.
 
 #### Tips
@@ -8523,7 +8655,7 @@ The widget shows seven discs with the planet of each. Click a disc to open its c
 
 ### 22.6 M′ matrices
 
-**Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It opens in the pool and as a pane.
+**Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It opens on a chain and as a pane.
 
 The M′ matrices show what the torus is made of, in four layers. Use them to see where a value comes from, and which parameter it moves.
 
@@ -8602,7 +8734,7 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 
 #### To use the M′ matrices
 
-1. Open the M′ matrices in the pool. The Oscillator matrix shows.
+1. Expand the M′ matrices above the chain. The Oscillator matrix shows.
 2. Play a note. The cell for that note and tick is marked.
 3. Select the Reading matrix. Set a lens and a context frame.
 4. Select a cell. A line shows the parameter that it moves.
@@ -9149,3 +9281,197 @@ The widget shows the events that are due around this work. Click an event to rea
 
 #### Tips
 - To plan a task around a deadline, set Range to Week.
+
+## 24. Nara: practice
+
+You need somewhere to keep a practice for years: the pages you write in the morning, the dreams you wake with, the time you sit, the questions you carry and read the cards on. It has to stay yours, remember what you wrote rather than a summary of it, and answer from your own words. Nara is that place. It comes to know you through your days and your flows, and it is the part of Epi-Logos that is about you.
+
+### 24.1 The practice world
+
+**Product:** Central, with Quaternal Logic · **Track:** your practice world · **Clip:** a journal, a dream journal, a sitting, a journey · **Agent:** Nara
+
+Your practice is a world of its own, kept on your planet as a room fogged to everyone but you (§2). In Central it is a track of Kind Practice. Its chain is the packet, Nara and Nara's scope: Nara is the agent of this world, and it reads only what you give it.
+
+| Clip | What it is | Opens as |
+|---|---|---|
+| Journal | A flow you write in alone, one page a day. | Journal |
+| Dream journal | A flow whose entries are dreams. | Journal |
+| A sitting | One time you sat: its length, its focus and what you noticed. | Page |
+| A journey | A concern you carry over days or months, read with one deck. | Flow, or Reading as an Expression |
+
+Nara comes to know you from the days and flows you give it. Every passage it draws on keeps its source, its revision, who wrote it, when it happened and when it arrived. A correction stands beside what it corrects; nothing earlier is rewritten. Select a passage and choose Answer this, and Nara answers into the page from what you wrote, naming each passage it used. A turn you speak aloud stands with your body: Nara hears it as embodied.
+
+| Live's control | What it does on the practice world |
+|---|---|
+| Activator | Send to Day. On, what you choose to share from a practice page reaches the Day's faces 0 and 5. Off by default: the practice stays out of the Day. |
+| Arm | Lets Nara write into your practice pages directly, each write with a receipt. Off by default: every answer arrives as a proposal. |
+| Solo | Shows only your practice in the Day's faces and on your planet. |
+
+#### Rules
+
+- The practice world is fogged to everyone but you. Raising any of it into wider view asks you first, page by page.
+- Nara keeps no second journal. Everything it knows of you is in your own pages, at their revisions.
+- What you write never changes your identity. A correction to your identity is its own act.
+
+### 24.2 Journal and dreams
+
+**Product:** Central, with Quaternal Logic · **Clip:** a journal or a dream journal on the practice world
+
+Write the journal as any flow, in its Journal tab, speaking as yourself. A dream journal works the same way, and each entry is a dream: what happened, who was there, how it felt, and what the day before it held.
+
+Select an image in a dream and choose **Amplify**. Nara lays beside it the places that image has stood before: in your own pages, in your knowledge and in the works your worlds hold, each as a Source entry with where it comes from. Amplifying does not interpret. It shows what the image has meant to others and to you, and leaves the meaning to you.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Entry | Dream · Waking note | Dream | What the next entry is. |
+| Day before | On · Off | On | Links the dream to the Day before it, so you can read what it answers. |
+| Amplify from | Your pages · Your knowledge · The works of your worlds: each On or Off | All On | Where Amplify looks. |
+
+#### Rules
+
+- Dreams are kept in the dream journal's page, in your ground. Nothing is kept in the window alone.
+- An amplification names its source. Nara does not say what a dream means.
+
+### 24.3 Sitting
+
+**Product:** Quaternal Logic, with Expressions · **Kind:** instrument · **Clip:** a sitting on the practice world
+
+You need a still place to sit, a bell to begin and end, and a record that you sat. Launch a sitting and Expressions opens your field: your seven centres as your identity and today's sky give them, around the torus. Press Play and the torus rings the bell; it rings again at each interval and at the end. Close your eyes. When the bell ends the sitting, write a line about it, or nothing.
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Length | 1 to 120 minutes | 20 minutes | How long the sitting lasts. |
+| Bell | A note of the scale, or Off | The torus's root | The tone the torus rings at the start, the intervals and the end. |
+| Intervals | Off · every 5 · 10 · 15 · 30 minutes | Off | Rings the bell during the sitting. |
+| Focus | Breath · A centre · An inquiry · Open | Breath | What you rest your attention on. |
+| Centre | One of the seven centres | The heart | With Focus on a centre, lights that centre in the field. |
+| Inquiry | Text | Empty | With Focus on an inquiry, the question you hold. |
+| After | Write a line · Nothing | Write a line | What opens when the bell ends the sitting. |
+
+#### Views
+
+The folded sitting shows its length and focus. The compact sitting shows the time left as a ring, and four macros: Length, Bell, Intervals and Focus. Whole shows every parameter in two groups, Time (Length, Bell, Intervals) and Attention (Focus, Centre, Inquiry, After). Full is the field itself, with nothing on it but your centres and the ring of time. The widget shows today's sittings and their lengths.
+
+#### Transport
+
+| Control | Effect on the sitting |
+|---|---|
+| Play | Rings the bell and begins. |
+| Stop | Ends the sitting now. It keeps the length you actually sat. |
+| Loop | Shows the intervals. |
+
+#### Rules
+
+- A sitting keeps the time you actually sat.
+- Nothing scores a sitting, and the field does not tell you how you are. It shows your centres as their sources give them.
+- You can end a sitting at any moment.
+
+### 24.4 Journeys
+
+**Product:** Quaternal Logic, with Central · **Clip:** a journey on the practice world · **Device:** the Deck (§22.4)
+
+A journey is a concern you carry: a decision, a grief, a piece of work, a season. You read it with one tarot deck for its whole life, so the cards become its vocabulary, and with the I Ching for how it changes. It plays while the concern is open, and it carries from day to day until you close it.
+
+Each act on a journey is its own, and shows who made it:
+
+| Act | What it does |
+|---|---|
+| Draw | Deals a card from the deck, or casts a line. It needs your consent to chance each time. |
+| Assign | Places a card where you choose. It is not a draw and never claims to be. |
+| Move | Moves a card already placed to a new position. |
+| Link | Ties a card or a line to an entry you wrote. |
+| Turn | Changes a card's orientation under the spread's rule. |
+| Comment | Writes a reading. A later comment stands beside the earlier one. |
+
+Launch a journey as Reading and it opens as an Expression: its cards and lines laid out in a scene you can walk, with each card's codon and the entries it is linked to. Your writing stays in the journey's flow, which remains where you write.
+
+#### Rules
+
+- A journey has one deck. Reopening it never deals again, and a new day never resets it.
+- A draw, an assignment, a reading and an act on your clock are four different things, and the journey keeps them apart.
+- A correction supersedes without erasing. The first reading stays.
+- A card's place in your journey does not change your identity, and an act on your M3 clock happens only when you make it.
+
+### 24.5 Containers
+
+**Product:** Central, with Quaternal Logic · **Clip:** a flow held as a container
+
+Some conversations need a form to hold them. Set a flow's Container and its entries follow that form's rules.
+
+| Container | Form |
+|---|---|
+| Dialogue | Bohm's dialogue: assumptions are held in view rather than defended. Replies name what they suspend. |
+| Circle | A talking circle: Speak as passes round the participants in order, and only the holder writes. |
+| Inquiry | An inquiry into your own experience: each entry is what is here now, then what you notice about it. |
+
+In a container, an entry also says what kind of entry it is:
+
+| Kind | What it says |
+|---|---|
+| Observe | What happened, or what is here. |
+| Interpret | What you take it to mean. |
+| Choose | What you decide to do. |
+
+#### Rules
+
+- An observation, an interpretation and a choice stay apart. A later interpretation does not rewrite an observation.
+- Leaving a container is an entry of its own.
+
+### 24.6 Identity and your sky
+
+**Product:** Quaternal Logic, with Central · **Clip:** your own Being page
+
+You are a Being in your own world. Your Being page holds your identity by reference, never as a copy: your birth, your natal chart, your Jungian functions, your Gene Keys, your Human Design and what they make together. Each layer shows with its source, or as absent with the reason. Nothing fills a missing layer.
+
+Launch your page as Sky and your natal sky opens beside today's: the planets where they stood when you were born, and where they stand now. A Being page of another person opens their sky only when their identity is shared with you.
+
+#### Rules
+
+- A corrected birth time is a new revision of the same identity, never a new person.
+- Your identity is kept in your ground. Practice, journeys and answers never write it.
+- Your natal sky comes from your identity. The shell does not compute a second chart.
+
+### 24.7 Nara over the field
+
+**Product:** Expressions, with Quaternal Logic · **Chain:** the Studio's Nara chain (§20.3)
+
+Open the Nara chain in an Expression and your personal layer lies over the field: your identity, your centres (§22.5), your form and clock (§22.3), your sky (§22.1) and your open journey's deck (§22.4). Nara reads the selection you make in the Expression and can move the Expression's focus to answer, with a checkpoint you can return to.
+
+#### Rules
+
+- Your readings never enter the Expression. Saving or sharing the Expression carries none of your layer.
+- A move of focus is undone by its checkpoint.
+
+### 24.8 Lenses and returns
+
+**Product:** Technē, with Quaternal Logic
+
+Select a passage in a practice page and read it through a lens. Each lens reads from its own sources and leaves its reading as a Source entry in the page, with the lens named.
+
+| Lens | Reads the passage as |
+|---|---|
+| Gebser | A structure of consciousness: archaic, magic, mythical, mental or integral. |
+| Ontological | What it assumes there is. |
+| Epistemological | How it assumes we know. |
+| Depth | Jung's terms: the functions, the shadow, the complexes, the stages of the work, the Self. |
+| Phenomenological | First-person experience, its history and its body. |
+| Trika | Kashmir Śaivism's recognition. Offered, never a verdict. |
+
+What a practice teaches you can return to the Day's face 5, and from there, once you have read it, into your knowledge. A return names what it drew on and how.
+
+#### Rules
+
+- A lens reading is a reading. It does not replace what you wrote.
+- Nothing in a practice writes the shared map. A pattern reaches your knowledge only after you review it.
+
+### 24.9 Where each practice stands in Nara's map
+
+| Practice | Nara's branch |
+|---|---|
+| Identity and natal sky | M4.0 Mahamaya identity matrix: birthdate (M4.0-0), chart (M4.0-1), Jungian (M4.0-2), Gene Keys (M4.0-3), Human Design (M4.0-4), quintessence (M4.0-5) |
+| Sitting, centres, today's sky on you | M4.1 Sympathetic medicine: elemental ground (M4.1-0), energy body (M4.1-1), timing (M4.1-4), feedback and safety (M4.1-5) |
+| Journeys | M4.2 Divinatory frameworks: tarot (M4.2-1), I Ching (M4.2-2), casting with consent (M4.2-3), interpretation (M4.2-4) |
+| Containers, and how a concern changes | M4.3 Mediating transformation: Bohmian dialogue (M4.3-2.0), talking circle (M4.3-2.1), Diamond Approach inquiry (M4.3-2.2), phase history (M4.3-5) |
+| Lenses; journal and dreams as lived history | M4.4 Context and lenses: Gebser (M4.4.0) to Trika (M4.4.5); temporal sedimentation (M4.4.4.2), symbolic body (M4.4.4.3) |
+| You, where all of it meets | M4.4.4.4 Personal Pratibimba |
+| Returns | M4.5 Epii integration |
