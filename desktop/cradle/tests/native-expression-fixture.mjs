@@ -51,6 +51,13 @@ export class ControlledOwner {
 export class ControlledAudio {
  sampleRate=48000;currentTime=0;state='running';destination={};nodes=[];listeners=[];
  createGain(){return{gain:{value:1,setValueAtTime(v){this.value=v;}},connect(){},disconnect(){}};}
+ // The torus's effects stage (native-field/presentationEffects.ts): nodes with their parameters, wired and inert.
+ param(value){return{value,setValueAtTime(v){this.value=v;},setTargetAtTime(v){this.value=v;}};}
+ node(extra){return{connect(target){return target;},disconnect(){},...extra};}
+ createBiquadFilter(){return this.node({type:'lowpass',frequency:this.param(350),Q:this.param(1)});}
+ createDynamicsCompressor(){return this.node({threshold:this.param(-24),ratio:this.param(12),attack:this.param(.003),release:this.param(.25),knee:this.param(30)});}
+ createDelay(){return this.node({delayTime:this.param(0)});}
+ createConvolver(){return this.node({buffer:null,normalize:true});}
  createBuffer(_channels,count){return{data:new Float32Array(count),copyToChannel(values){this.data.set(values);}};}
  createBufferSource(){const ctx=this;return{playbackRate:{value:1},detune:{value:0},connect(){},disconnect(){this.disconnected=true;},start(time){this.time=time;ctx.nodes.push(this);},stop(){this.stopped=true;}};}
  addEventListener(_event,cb){this.listeners.push(cb);}removeEventListener(_event,cb){this.listeners=this.listeners.filter(x=>x!==cb);}

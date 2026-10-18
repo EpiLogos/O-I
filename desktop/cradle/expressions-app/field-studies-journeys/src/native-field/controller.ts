@@ -5,6 +5,8 @@ import type {NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
 import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
+import {editEffectChain,editEffects,initialEffects,type EffectValue,type EffectsState,type PresentationEffect} from './effectsLaw';
+import {PresentationEffects} from './presentationEffects';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -57,6 +59,9 @@ export class NativeFieldController {
  private refusal:{operation:string;reason:string;at:number}|null=null;
  private played:{at:number;strikes:number;last_ms:number}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
+ /** The torus's four effects (manual §21.5): their state outlives an instrument's lifetime, as the level's does; their sound stands
+  * only while an audio stage does. */
+ private effects:EffectsState=initialEffects();private effectsGraph:PresentationEffects|null=null;
  private closeOwner(opened:any){
   if(!opened)return Promise.resolve();
   if(opened.closing)return opened.closing as Promise<void>;
@@ -125,6 +130,7 @@ export class NativeFieldController {
   presentation_mode:!this.projection?'manual':this.projection.scale===this.opened.presentation.units_per_metre?'domain-follow':'manual-presentation-override',
   presentation_units_per_metre:this.projection?.scale??null,
   presentation_level:{value:this.levelValue,...PRESENTATION_LEVEL},
+  presentation_effects:this.effects,
   native:this.session?.reading??this.lastNative,muted:this.muted,
   domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
@@ -135,7 +141,7 @@ export class NativeFieldController {
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
   exact_seek:false,restart:'explicit new native process; no implicit rewind',
   domain_owned:['M1/M2/M3 native targets','native PCM','native clock'],
-  presentation_owned:['resident particle mechanics','camera','presentation scale','presentation level'],
+  presentation_owned:['resident particle mechanics','camera','presentation scale','presentation level','presentation effects'],
   presentation_changes_requiring_rebind:['scene membership','target topology or density','authored scene configuration while leased'],
   unavailable_consumers:unavailable,
   causal_trace:trace,
@@ -158,9 +164,11 @@ export class NativeFieldController {
   return this.admit(sampleRate,()=>this.port.request({operation:'open',path,expected_revision:revision}));
  }
  private stage(context:AudioContext){
-  // One presentation gain stage between the native receiver and the device.
-  // The receiver keeps its own gain and clip law; nothing is synthesised here.
-  const level=context.createGain();level.gain.value=this.levelValue;level.connect(context.destination);this.level=level;
+  // One presentation gain stage between the native receiver and the device, then the torus's four effects (Filter, Dynamics,
+  // Delay, Reverb; each passes its input unchanged while off). The receiver keeps its own gain and clip law; nothing is synthesised here.
+  const level=context.createGain();level.gain.value=this.levelValue;
+  const effects=new PresentationEffects(context,context.destination,this.effects);level.connect(effects.input);
+  this.level=level;this.effectsGraph?.dispose();this.effectsGraph=effects;
   return new Proxy(context,{get:(target,key)=>{if(key==='destination')return level;const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}}) as AudioContext;
  }
  private async admit(sampleRate:number,open:()=>Promise<any>){
@@ -527,6 +535,16 @@ export class NativeFieldController {
   if(gain&&context&&typeof gain.setTargetAtTime==='function')gain.setTargetAtTime(value,context.currentTime,.02);else if(gain)gain.value=value;
   this.changed();
  }
+ /** One parameter of one of the torus's effects (effectsLaw.ts): refused in the owner's words outside its law. Presentation only; the
+  * native PCM, its clock and the receiver's gain are unchanged. Taken while no instrument is open too: it sounds when one opens. */
+ setEffect(effect:PresentationEffect,key:string,value:EffectValue){
+  this.effects=editEffects(this.effects,effect,key,value);this.effectsGraph?.apply(this.effects);this.changed();
+ }
+ /** Which of the torus's effects stand after the level and in what order (the sound passes them left to right); refused in words for
+  * an unknown or repeated effect. */
+ setEffectChain(chain:readonly PresentationEffect[]){
+  this.effects=editEffectChain(this.effects,chain);this.effectsGraph?.apply(this.effects);this.changed();
+ }
  saveCheckpoint(){return this.serial(async()=>{
   this.hold('checkpoint hold');const session=await this.idle();await session.recover('checkpoint current cursor');this.hold('checkpoint hold');
   if(!this.current(session))throw new Error('checkpoint belongs to a released lifetime');
@@ -544,7 +562,7 @@ export class NativeFieldController {
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
-  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;
+  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   this.stageReading=null;this.stageStale=false;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}

@@ -137,6 +137,20 @@ test('the owner parameters are carried exact: sound, level, scale, cadence and t
   assert.deepEqual(carried.parameters, {muted: false, level: 2.5, scale: {unitsPerMetre: null, mode: 'manual'}, cadence: null, refusal: 'determinant: lens is already acting'});
 });
 
+test('the torus\'s four effects ride the parameters exact, every value inside the owner\'s law, or the reading is refused by name', () => {
+  const effects = {chain: ['reverb', 'filter'], filter: {on: true, type: 'bandpass', cutoff: 900, resonance: 70, drive: 6, mix: 80},
+    dynamics: {on: false, threshold: -12, ratio: 4, attack: 1, release: 100, makeup: 2},
+    delay: {on: false, sync: true, division: '1/8', time: 250, feedback: 35, tone: 6000, mix: 25, tempo: 120},
+    reverb: {on: true, size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22}};
+  const carried = readHostedInstrument({reading: ownerReading(), determinants: null, parameters: {...parameters(), effects}});
+  assert.equal(carried.ok, true); assert.deepEqual(carried.parameters.effects, effects);
+  assert.equal('effects' in readHostedInstrument({reading: ownerReading(), determinants: null, parameters: parameters()}).parameters, false, 'a frame that announces none carries none');
+  const bad = readHostedInstrument({reading: ownerReading(), determinants: null, parameters: {...parameters(), effects: {...effects, dynamics: {...effects.dynamics, release: 2000}}}});
+  assert.equal(bad.ok, false); assert.match(bad.fault, /parameters\.effects: dynamics\.release: Dynamics release goes from 5 to 1000 ms/);
+  const twice = readHostedInstrument({reading: ownerReading(), determinants: null, parameters: {...parameters(), effects: {...effects, chain: ['filter', 'filter']}}});
+  assert.equal(twice.ok, false); assert.match(twice.fault, /parameters\.effects: chain: Each effect stands on the chain at most once/);
+});
+
 test('parameters are exact or refused: a missing, out-of-range or unknown owner value is named, never defaulted', () => {
   const refused = (p, pattern) => {
     const instrument = readHostedInstrument({reading: ownerReading(), determinants: null, parameters: p});

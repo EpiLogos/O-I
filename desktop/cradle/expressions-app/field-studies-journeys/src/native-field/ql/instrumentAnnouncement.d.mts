@@ -5,6 +5,7 @@ export interface InstrumentAnnouncement {
   parameters: {muted: boolean; level: number | null;
     scale: {unitsPerMetre: number | null; mode: string};
     cadence: {rate: number; playing: boolean; source: string} | null;
-    refusal: string | null};
+    refusal: string | null;
+    effects?: Record<'filter' | 'dynamics' | 'delay' | 'reverb', Record<string, number | boolean | string>> & {chain: ('filter' | 'dynamics' | 'delay' | 'reverb')[]}};
 }
 export function announceInstrument(reading: unknown): InstrumentAnnouncement | undefined;

@@ -4,17 +4,19 @@
 // of its rise; Makeup lifts the whole. The second display is the gain reduction in time for a burst at full level: it deepens
 // toward its full depth with the attack (63 % after one Attack), and returns with the release (to 37 % after one Release).
 //
-// Owner. None yet: the torus sounds through one gain stage to the output (native-field/ql/native-audio.mjs: a buffer source into a
-// gain node into the destination), so no dynamics stands on its sound. The value keys are the entry's: light, threshold, ratio,
-// attack, release, makeup; `reduction` would be the owner's gain reduction now, and `reason` names the absence in the well. The Live
-// set document's stored tables for Live's Compressor and Glue (packages/live-dynamics params.rs COMPRESSOR, GLUE_COMPRESSOR) edit a
-// set's device in Live's own units, not the torus's sound.
+// Owner. The torus's presentation stage (desktop/cradle/expressions-app/field-studies-journeys/src/native-field/presentationEffects.ts,
+// after the level, before the device; law in effectsLaw.ts), bound by live/designBindings/torusEffects.ts: the hosted reading carries
+// its state (`parameters.effects`) and the stage channel's `effect` instrument edit changes it, refused in the owner's words outside
+// its law. It opens off. The value keys are the entry's: light, threshold, ratio, attack, release, makeup; Release goes to 1 s, as the
+// browser's compressor does. `reduction` would be the owner's gain reduction now, which the hosted reading does not announce;
+// `reason` names an absence in the well. The Live set document's stored tables for Live's Compressor and Glue (packages/live-dynamics
+// params.rs COMPRESSOR, GLUE_COMPRESSOR) edit a set's device in Live's own units, not the torus's sound.
 import {Band, Dial, Display, Folded, Handle, Panel, Readout, Section, Tile, type LightState} from '../../sdk/panel'
 import {NONE, clampTo, has, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 
-const RATIO = {min: 1, max: 20, log: true} as const, ATTACK = {min: .01, max: 200, log: true} as const, RELEASE = {min: 5, max: 2000, log: true} as const
+const RATIO = {min: 1, max: 20, log: true} as const, ATTACK = {min: .01, max: 200, log: true} as const, RELEASE = {min: 5, max: 1000, log: true} as const
 const AXIS = {lo: -60, hi: 6}
 const f1 = (x: number) => x.toFixed(1)
 const dbWord = (x: number) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(1)} dB`
@@ -85,7 +87,7 @@ function Envelope({p, w, h, handles}: {p: ViewProps; w: number; h: number; handl
 }
 
 const lightOf = (p: ViewProps): LightState => { const l = strOf(p.owner ?? p.v, 'light'); return l === 'lit' || l === 'dark' ? l : 'unknown' }
-const head = (p: ViewProps) => ({light: lightOf(p), lightWhy: st(p, 'light').disabled ?? (has(p.v, 'light') ? undefined : 'No reading of on or off: no dynamics stands on the torus\'s sound.'),
+const head = (p: ViewProps) => ({light: lightOf(p), lightWhy: st(p, 'light').disabled ?? (has(p.v, 'light') ? undefined : 'No reading of on or off: the torus\'s effects report nothing here.'),
   onFold: p.nav.fold, onFull: p.nav.full, onLight: () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit')})
 const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const TRANSFER_DOES = 'Input across, output up. Under the threshold the sound passes; above it, it rises by one part in Ratio.'
@@ -110,7 +112,7 @@ export const design: DesignedDevice = {
   fixtures: {
     'Even out the torus': {},
     'Hard and slow': {threshold: -30, ratio: 12, attack: 30, release: 800, makeup: 9},
-    'As the torus has it': {light: undefined, threshold: undefined, ratio: undefined, attack: undefined, release: undefined, makeup: undefined, reason: 'No dynamics on the torus\'s sound'},
+    'No owner reading': {light: undefined, threshold: undefined, ratio: undefined, attack: undefined, release: undefined, makeup: undefined, reason: 'No owner reading in this host'},
   },
 
   folded: p => <Folded title="Dynamics" light={lightOf(p)} readings={[has(p.v, 'threshold') ? dbWord(numOf(p.v, 'threshold')!) : NONE, has(p.v, 'ratio') ? ratioWord(numOf(p.v, 'ratio')!) : NONE]} onUnfold={p.nav.unfold} />,
