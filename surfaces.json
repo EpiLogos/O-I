@@ -45,9 +45,14 @@
           "build": [
             "cargo",
             "build",
-            "--workspace",
             "--locked",
-            "--release"
+            "--release",
+            "-p",
+            "ctrl",
+            "--bin",
+            "ctrl",
+            "--features",
+            "cli-git-sync"
           ],
           "executable_path": "target/release/ctrl"
         },
