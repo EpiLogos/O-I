@@ -1,0 +1,10 @@
+seat=/Users/admin/Central/worktrees/env-2/o-i
+branch=dlw/native-build
+head=0bd22128af1cd408c0517a43555225240ad39ab5
+stamp=20261018T-r4
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261018T-r4
+target=/Users/admin/Central/Work/O-I/target
+backing=full-suite
+mode=quit
+runner_sha256=0a26931bf14fbc63ac265526ae775dcb4acdd184024b78304a362c13872dc440
+status:
