@@ -302,7 +302,25 @@ export function convertTheme(theme, { id, name, appearance, source }) {
     if (!value) continue;
     for (const role of roles) tokens[role] = value;
   }
-  completeTokens(tokens, ground, ink, appearance);
+  // Appearance defaults first, so an explicit workbench key always wins the tie.
+  tokens['--oi-surface'] = tokens['--oi-surface'] ?? mix(ground, ink, 0.015);
+  tokens['--oi-accent'] = tokens['--oi-accent'] ?? mix(ink, ground, 0.12);
+  tokens['--oi-accent-ink'] = tokens['--oi-accent-ink'] ?? mix(ink, ground, 0.06);
+  tokens['--oi-accent-soft'] = tokens['--oi-accent-soft'] ?? mix(ground, ink, 0.22);
+  tokens['--oi-composer-rule'] = tokens['--oi-composer-rule'] ?? mix(ground, ink, 0.16);
+  tokens['--oi-inverse-canvas-ground'] = appearance === 'dark' ? '#fbfbf9' : '#121211';
+  tokens['--oi-inverse-foreground'] = appearance === 'dark' ? '#161614' : '#e9e9e4';
+  for (const [role, t] of DERIVED) {
+    if (!(role in tokens)) tokens[role] = mix(ground, ink, t);
+  }
+  for (const [role, value] of Object.entries(SHADOWS[appearance])) {
+    tokens[role] = tokens[role] ?? value;
+  }
+  // Glass planes take the derived grounds at the house opacities.
+  tokens['--oi-sidebar-ground-glass'] ??= withAlpha(tokens['--oi-sidebar-ground'], 0.92);
+  tokens['--oi-popover-ground-glass'] ??= withAlpha(tokens['--oi-surface'], appearance === 'dark' ? 0.88 : 0.9);
+  tokens['--oi-card-glass'] ??= withAlpha(tokens['--oi-surface'], appearance === 'dark' ? 0.42 : 0.56);
+  tokens['--oi-card-solid'] ??= withAlpha(tokens['--oi-surface'], 0.97);
 
   const syntax = resolveSyntaxColors(flattenTokenColors(theme.tokenColors), ground);
   const terminal = resolveTerminalColors(colors, ground, ink);
@@ -330,33 +348,9 @@ function previewOf(tokens, syntax, ground, ink) {
   return { ground, ink, accent, strip: strip.slice(0, 3) };
 }
 
-/** The roles every theme carries, derived from its ground/ink pair where the theme does not declare them (in place). */
-function completeTokens(tokens, ground, ink, appearance) {
-  // Appearance defaults first, so an explicit workbench key always wins the tie.
-  tokens['--oi-surface'] = tokens['--oi-surface'] ?? mix(ground, ink, 0.015);
-  tokens['--oi-accent'] = tokens['--oi-accent'] ?? mix(ink, ground, 0.12);
-  tokens['--oi-accent-ink'] = tokens['--oi-accent-ink'] ?? mix(ink, ground, 0.06);
-  tokens['--oi-accent-soft'] = tokens['--oi-accent-soft'] ?? mix(ground, ink, 0.22);
-  tokens['--oi-composer-rule'] = tokens['--oi-composer-rule'] ?? mix(ground, ink, 0.16);
-  tokens['--oi-inverse-canvas-ground'] = appearance === 'dark' ? '#fbfbf9' : '#121211';
-  tokens['--oi-inverse-foreground'] = appearance === 'dark' ? '#161614' : '#e9e9e4';
-  for (const [role, t] of DERIVED) {
-    if (!(role in tokens)) tokens[role] = mix(ground, ink, t);
-  }
-  for (const [role, value] of Object.entries(SHADOWS[appearance])) {
-    tokens[role] = tokens[role] ?? value;
-  }
-  // Glass planes take the derived grounds at the house opacities.
-  tokens['--oi-sidebar-ground-glass'] ??= withAlpha(tokens['--oi-sidebar-ground'], 0.92);
-  tokens['--oi-popover-ground-glass'] ??= withAlpha(tokens['--oi-surface'], appearance === 'dark' ? 0.88 : 0.9);
-  tokens['--oi-card-glass'] ??= withAlpha(tokens['--oi-surface'], appearance === 'dark' ? 0.42 : 0.56);
-  tokens['--oi-card-solid'] ??= withAlpha(tokens['--oi-surface'], 0.97);
-  return tokens;
-}
-
 /** A house theme: authored in the --oi-* roles themselves (themes/house/<id>.json — {id, name, appearance, source, tokens}),
- * not converted from a VS Code file. It may set only existing roles (law 11); the rest derive from its ground
- * (--oi-canvas-ground) and ink (--oi-foreground) exactly as a converted theme's do. */
+ * not converted from a VS Code file. It may set only existing roles (law 11), and it sets exactly the roles it declares —
+ * nothing is derived — so a house palette paints exactly what it names and leaves every other role as it was. */
 export function houseTheme(source) {
   const { id, name, appearance, tokens: declared } = source ?? {};
   if (typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id)) throw new Error(`house theme: invalid id ${String(id)}`);
@@ -369,8 +363,8 @@ export function houseTheme(source) {
   }
   const ground = declared['--oi-canvas-ground'];
   const ink = declared['--oi-foreground'];
-  if (!/^#[0-9a-f]{6}$/.test(ground ?? '') || !/^#[0-9a-f]{6}$/.test(ink ?? '')) throw new Error(`${id}: a house theme declares its --oi-canvas-ground and --oi-foreground as #rrggbb`);
-  const tokens = completeTokens({ ...declared }, ground, ink, appearance);
+  if (!/^#[0-9a-f]{6}$/.test(ground ?? '') || !/^#[0-9a-f]{6}$/.test(ink ?? '') || !/^#[0-9a-f]{6}$/.test(declared['--oi-accent'] ?? '')) throw new Error(`${id}: a house theme declares its --oi-canvas-ground, --oi-foreground and --oi-accent (its preview) as #rrggbb`);
+  const tokens = { ...declared };
   return {
     schema: 'oi.theme/v1',
     id,
