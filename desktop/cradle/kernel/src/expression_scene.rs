@@ -219,6 +219,52 @@ fn curve_handle(value: &Value) -> Result<(f64, f64), String> {
     Ok((finite("dt")?, finite("dv")?))
 }
 
+/// A Scene's clip settings (DLW §20.1, field-studies-journeys model.ts sceneClipRefusal): a palette colour, whether it plays, its ratio
+/// of hold to change, whether it is locked, and where its launch lands. Each is optional; nothing else stands in it.
+fn scene_clip(material: &serde_json::Map<String, Value>) -> Result<(), String> {
+    let Some(clip) = material.get("clip") else {
+        return Ok(());
+    };
+    let clip = clip
+        .as_object()
+        .ok_or_else(|| "The scene's clip settings are an object".to_string())?;
+    for (key, value) in clip {
+        match key.as_str() {
+            "colour" => {
+                let colour = value.as_str().unwrap_or("");
+                let palette = colour
+                    .strip_prefix("var(--")
+                    .and_then(|rest| rest.strip_suffix(')'))
+                    .is_some_and(|name| {
+                        (1..=40).contains(&name.len())
+                            && name
+                                .bytes()
+                                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+                    });
+                let hex = colour.len() == 7
+                    && colour.starts_with('#')
+                    && colour[1..].bytes().all(|b| b.is_ascii_hexdigit());
+                if !(palette || hex) {
+                    return Err("A scene's colour is a palette colour".into());
+                }
+            }
+            "enabled" | "locked" if value.is_boolean() => {}
+            "enabled" => return Err("A scene plays or does not (true or false)".into()),
+            "locked" => return Err("A scene is locked or not (true or false)".into()),
+            "signature" if matches!(value.as_str(), Some("5:3" | "4:2" | "3:3" | "2:1")) => {}
+            "signature" => {
+                return Err("A scene's ratio of hold to change is one of 5:3, 4:2, 3:3, 2:1".into())
+            }
+            "quantize" if matches!(value.as_str(), Some("global" | "now" | "beat" | "scene")) => {}
+            "quantize" => {
+                return Err("A scene's launch lands at one of global, now, beat, scene".into())
+            }
+            other => return Err(format!("A scene has no clip setting {other}")),
+        }
+    }
+    Ok(())
+}
+
 /// lane-5 T8: a Scene's loop exit, the one Scene field the edge grammar adds. It is a flag on the Scene whose exit wraps, on or off.
 fn loop_exit(material: &serde_json::Map<String, Value>) -> Result<(), String> {
     match material.get("breakAtEnd") {
@@ -267,6 +313,7 @@ pub fn validate(
         "transitionSpec",
         "breakAtEnd",
         "entryOffset",
+        "clip",
     ];
     if material.keys().any(|key| !KEYS.contains(&key.as_str())) {
         return Err("Unsupported authoring Scene field; original input was not rewritten".into());
@@ -300,6 +347,7 @@ pub fn validate(
         transition_spec(spec)?;
     }
     loop_exit(material)?;
+    scene_clip(material)?;
     for key in ["view", "field", "composition", "morph", "engine"] {
         object(&presentation.scene[key], key)?;
     }
@@ -2486,6 +2534,40 @@ mod tests {
             loop_exit(flag(json!("yes")).as_object().unwrap()).unwrap_err(),
             "Scene loop exit is on or off"
         );
+    }
+
+    #[test]
+    fn a_scene_clip_carries_only_the_designed_settings() {
+        use super::scene_clip;
+        use serde_json::json;
+        let clip = |v: serde_json::Value| json!({ "clip": v });
+        for good in [
+            json!({}),
+            json!({"colour": "#a1B2c3", "enabled": false, "locked": true, "signature": "4:2", "quantize": "beat"}),
+            json!({"colour": "var(--clip-3)"}),
+        ] {
+            assert!(
+                scene_clip(clip(good.clone()).as_object().unwrap()).is_ok(),
+                "{good}"
+            );
+        }
+        assert!(
+            scene_clip(json!({}).as_object().unwrap()).is_ok(),
+            "absent is no settings"
+        );
+        for (bad, message) in [
+            (json!([]), "are an object"),
+            (json!({"colour": "red"}), "palette colour"),
+            (json!({"colour": "var(--Bad)"}), "palette colour"),
+            (json!({"locked": "yes"}), "locked or not"),
+            (json!({"enabled": 1}), "plays or does not"),
+            (json!({"signature": "1:1"}), "hold to change"),
+            (json!({"quantize": "bar"}), "launch lands"),
+            (json!({"follow": "next"}), "no clip setting follow"),
+        ] {
+            let error = scene_clip(clip(bad.clone()).as_object().unwrap()).unwrap_err();
+            assert!(error.contains(message), "{bad}: {error}");
+        }
     }
 
     #[test]
