@@ -80,6 +80,12 @@ try{
  // At this viewport the workspace header cluster is in its compact form
  // (the "Studio" button rides the collapsed "•••" menu, per the 1100px
  // breakpoint in workspace.css), so open that menu first when present.
+ // The entry gate can open after the first look (it stood over Studio in the 18 Oct runs): dismiss it wherever it stands now.
+ const lateGate=frame.locator('#entry-gate:not([hidden]) [data-action="entry-dismiss"]');
+ if(await lateGate.count()){
+  await lateGate.click();
+  await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});
+ }
  const workspaceMenuToggle=frame.locator('.workspace-cluster>.header-menu-toggle');
  if(await workspaceMenuToggle.isVisible())await workspaceMenuToggle.click({force:true});
  await frame.locator('[data-action="studio"]').click({force:true});
