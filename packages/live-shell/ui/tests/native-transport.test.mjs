@@ -31,7 +31,7 @@ const boundary = new URL('packages/expressions-boundary/src/', root)
 const [P, C, SC, EXT, NSE, Scenes, Host, Retained, Bridge, Model, Store] = await Promise.all([
   import('../src/components/nativeScenePlayback.ts'),
   import('../src/shell/nativeContent.ts'),
-  import('../src/components/expressions/clip/SceneControls.tsx'),
+  import('../src/components/expressions/clip/sceneCalls.ts'),
   import('../src/shell/transports/useExpressionsTransport.tsx'),
   import('../src/components/NativeSceneEditor.tsx'),
   import(new URL('scenes.ts', boundary)),
@@ -212,21 +212,10 @@ function bound(nativeTransport) {
   return out.bindings
 }
 
-test('the Scene controls stand on the Clip side with their reasons; the bar keeps only what has a slot', () => {
+test('the bar keeps what has a slot (R2 retired the Scene\'s Clip-side column; a scene\'s Clip view is clip:expressions)', () => {
   const reading = ownerReading(true)
   const content = C.readNativeExpressionsContent(reading)
   const actions = C.createNativeContentActions(content, {request: async () => ({ok: true, reading})})
-  const markup = renderToStaticMarkup(createElement(SC.SceneControls, {source: source(reading, content, actions)}))
-  assert.match(markup, /aria-label="Scene"/)
-  assert.match(markup, /aria-label="Previous Scene"/); assert.match(markup, /aria-label="Next Scene"/)
-  assert.match(markup, /aria-label="Native Scene"/)
-  assert.match(markup, />Saved scenes</)
-  assert.match(markup, /aria-label="Expression time"/)
-  assert.match(markup, /aria-label="Save Expression"/); assert.match(markup, /aria-label="Expressions guide"/)
-  assert.match(markup, /aria-label="Pinned controls"/, 'the pins strip stands in the column')
-  assert.doesNotMatch(markup, /aria-label="Play Scene"|aria-label="Stop Scene"|aria-label="Scene position"|aria-label="Stage tool"|aria-label="Time Scale"|aria-label="Arm automation recording"/,
-    'the bar\'s controls are not drawn twice')
-  assert.doesNotMatch(markup, /aria-label="Hold/); assert.doesNotMatch(markup, />Hold</)
   // The bar binds the rest: play, stop, the scrub and Scene time, the time scale, the tool rail, Map, the engine light, arm, take mode, loop.
   const bindings = bound(source(reading, content, actions))
   for (const id of ['play', 'stop', 'position', 'tempo', 'draw', 'key-map', 'cpu', 'arm', 'overdub', 'loop']) assert.ok(bindings[id], `${id} is bound on the one bar`)

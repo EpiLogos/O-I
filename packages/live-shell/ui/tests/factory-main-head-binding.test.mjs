@@ -61,13 +61,12 @@ test('Factory routes the Main track: its Device side is the Main track\'s chain 
   assert.match(read('shell/modeDetails.tsx'), /if \(!track\) return \{name: 'Main', line: 'Factory\\'s Main track: the gateways, the Experiment, the Ledger, Approvals and the Link'\}/)
 })
 
-test('the Clip side draws the selected task\'s Tasks device beside its log, from the door (the same binding as the chain)', () => {
+test('the Clip side hosts the selected task\'s clip (R2): clip:factory on its binding — Launch beside the log — never the Tasks device', async () => {
   const details = read('shell/modeDetails.tsx')
-  assert.match(details, /<div className="factory-clip"><TaskClipDevice \/>\s*<FactoryTaskLogDetail /, 'the task beside its log, the log kept')
-  const clip = read('agent/devices/TaskClipDevice.tsx')
-  assert.match(clip, /useDeviceDoor\(\)\.device\(TASKS_ID\)/)
-  assert.match(clip, /<DeviceView device=\{entry\.device\} size="compact" binding=\{entry\.binding\}/)
-  assert.match(clip, /if \(!entry\) return null/, 'with no chain published, the log stands alone')
+  assert.match(details, /function FactoryClip\(\{place\}: \{place: ClipPlace\}\) \{ return <Hosted binding=\{useFactoryClip\(\)\}/)
+  const {existsSync} = await import('node:fs')
+  assert.equal(existsSync(new URL('../src/agent/devices/TaskClipDevice.tsx', import.meta.url)), false, 'TaskClipDevice became the task\'s Clip, Launch and Envelopes panels')
+  assert.match(read('agent/clipBinding.ts'), /TASK_SEAMS\[setting\]/, 'the per-task settings write through their named seams')
 })
 
 test('the browser\'s Runs: the Factory browser draws the Run and the Runs as devices, a press showing each whole in the pool', () => {

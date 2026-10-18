@@ -2,11 +2,10 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 
-// Live's Clip side in the shared Clip view anatomy (ticket D; manual §3; lock §0.2.5; frame/detail/ClipView.tsx; the mockup's
-// liveDetail() clip, world-shell-mockup.html:1761): the clip's name on its track's colour, its props as the set's owner discloses
-// them and "—" where it does not, the mode it plays in, and beside them the Notes column — the roll's frame marked by the mode in
-// force and one line for the notes the owner does not disclose yet. Rendered headless from fixture readings (scripted).
-// Loader as detail-host.test.mjs.
+// Live's Clip side (manual §21.1; lock §0.2.5): since R2 the clip is clip:live — Live's Clip view panel for panel — on Live's clip
+// binding (live/clipBinding.ts): the clip's name on its track's colour, the set's mode in force for the roll to follow, and what the
+// set's owner does not disclose left absent (the design draws "—"). An arrangement clip is placed, with no Launch tab; an audio clip
+// lacks the notes' tabs. Fixture readings (scripted); loader as detail-host.test.mjs.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -36,8 +35,7 @@ globalThis.document = {getElementById: () => null, createElement: () => ({}), he
 const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
-const chain = await import('../src/components/DeviceChainPanel.tsx')
-const clipView = await import('../src/live/LiveClip.tsx')
+const live = await import('../src/live/clipBinding.ts')
 const modes = await import('../src/live/modes.ts')
 const {publishTimelineReading} = await import('../src/projections/timelinePaneHost.ts')
 const {publishShownTracks} = await import('../src/frame/tracks/tracksDoor.ts')
@@ -51,8 +49,7 @@ const DOC = {path: '/sets/mercurius.als', tempo: 120, scenes: 2, tracks: [
   {kind: 'midi', name: 'Torus', devices: [], arrangementClips: [{name: 'Swell', kind: 'midi', start: 8, end: 24}], sessionSlots: {0: 'Kit 1', 1: null}},
   {kind: 'audio', name: 'Voice', devices: [], arrangementClips: [], sessionSlots: {0: 'Take 3'}},
 ]}
-const clipSide = selection => renderToStaticMarkup(createElement(chain.DeviceChainPanel, {ctx: {set: SET, loading: false, error: null}, document: DOC, selection, mode: 'clip'}))
-const rows = markup => Object.fromEntries([...markup.matchAll(/data-row="([^"]+)"[^>]*><span>[^<]*<\/span><span[^>]*>([^<]*)<\/span>/g)].map(match => [match[1], match[2]]))
+const clipOf = (selection, mode = inForce) => live.liveClipBinding({set: SET, document: DOC, selection, mode, colour: '#e2a35e'})
 /** THE selection on the shared grid, and the tracks the pane draws (Live's set adapter), as the frame publishes them. */
 const select = ref => {
   const reading = {mode: 'live', set: SET, document: DOC, colors: ['#e2a35e', '#c9a0dc'], selection: {track: 0, scene: null}, select() {}, setColor() {}, selectedRef: ref, selectTrackItem() {}}
@@ -69,47 +66,29 @@ const catalogue = modes.parseQlMusicModes({schema: 'ql.music-modes/v1', lens_cf:
 assert.equal(catalogue.ok, true, catalogue.refusal)
 const inForce = modes.resolveModeInForce(catalogue.catalogue.scales, {key: aeolian.key, root: 10})
 
-test('nothing of the set selected: the Clip side is one line in the host\'s waiting idiom', () => {
-  const markup = clipSide({track: 0, scene: 1})
-  assert.equal(markup, '<p class="clip-empty" role="status">Select a clip in the Session or the Arrangement to see it here.</p>')
+test('nothing of the set selected: no clip, so the Clip side is the host\'s one waiting line', () => {
+  assert.equal(clipOf({track: 0, scene: null}), null)
+  assert.match(MODE_DETAILS.live.clipWaits, /Select a clip in the Session or the Arrangement/)
 })
 
-test('an arrangement clip: its name on its track\'s colour, its place on the set\'s ruler, and "—" for what the owner does not disclose', () => {
-  select('als:/sets/mercurius.als#track/0/clip/0')
-  try {
-    const markup = clipSide({track: 0, scene: null, clip: 0})
-    assert.match(markup, /<div class="clipv" data-clip-view="live">/, 'the shared Clip view')
-    assert.match(markup, /<div class="cph" style="--cph:#e2a35e;--cph-ink:var\(--bg-0\)" title="Swell">Swell<\/div>/, 'the name on its track\'s colour')
-    assert.deepEqual(rows(markup), {track: 'Torus', start: '3.1', end: '7.1', length: '16 beats', loop: '—', launch: '—', then: '—', signature: '—', groove: '—', mode: '—', transpose: '—'})
-    assert.match(markup, /title="8 beats from the set&#x27;s start \(the document&#x27;s own value\)"/, 'the lossless value stands behind the ruler\'s label')
-    assert.match(markup, /<section class="ccol" aria-label="Notes" data-column="Notes"><h5>Notes<\/h5>/)
-    assert.equal((markup.match(/class="live-roll-row"/g) ?? []).length, 12, 'the roll\'s twelve pitch classes')
-    assert.match(markup, /The set&#x27;s owner does not disclose a clip&#x27;s notes yet; the roll fills when it does\./)
-    for (const gone of [/<button/, /<input/, /clip-inspector/, /note-editor/, /Fit to Scale/, /Duplicate/]) assert.doesNotMatch(markup, gone, 'no control without an owner write')
-  } finally { clear() }
+test('an arrangement clip: its name on its track\'s colour; placed on the ruler, so no Launch; its own markers not disclosed', () => {
+  const binding = clipOf({track: 0, scene: null, clip: 0})
+  assert.equal(binding.values.name, 'Swell'); assert.equal(binding.values.colour, '#e2a35e')
+  assert.equal(binding.placed, true, 'a clip laid on Arrangement view\'s ruler is not launched (Live cap 47)')
+  for (const key of ['start', 'end', 'loop', 'length', 'sig.num', 'groove', 'launch', 'follow', 'notes']) assert.equal(key in binding.values, false, `${key}: not disclosed, drawn "—"`)
 })
 
-test('a session clip on an audio track: its start and end are not disclosed, and its column is the sample', () => {
-  select('als:/sets/mercurius.als#track/1/slot/0')
-  try {
-    const markup = clipSide({track: 1, scene: 0})
-    assert.match(markup, />Take 3<\/div>/)
-    assert.equal(rows(markup).start, '—'); assert.equal(rows(markup).length, '—')
-    assert.match(markup, /data-column="Sample"/)
-    assert.match(markup, /The set&#x27;s owner does not disclose an audio clip&#x27;s sample yet\./)
-  } finally { clear() }
+test('a session clip on an audio track: it launches, and lacks Notes, MPE and the MIDI tools', () => {
+  const binding = clipOf({track: 1, scene: 0})
+  assert.equal(binding.values.name, 'Take 3'); assert.equal(binding.placed, undefined)
+  assert.deepEqual(binding.lacks, ['notes', 'mpe', 'pitch', 'transform', 'generate'])
 })
 
-test('the mode the clip plays in: the set\'s mode in force (no clip carries its own yet), and the roll marks its pitch classes', () => {
-  const clip = {name: 'Swell', track: 'Torus', kind: 'midi', at: {start: 8, end: 24}}
-  const mode = clipView.liveClipRows(clip, [], inForce, beats => String(beats)).find(row => row.key === 'mode')
-  assert.equal(mode.value, "A♯ aeolian on L0', chromatic basis")
-  assert.match(mode.title, /^The set's mode in force; this clip carries no mode of its own yet\./)
-  const roll = renderToStaticMarkup(createElement(clipView.LiveNoteRoll, {clip, mode: inForce, label: beats => String(beats)}))
-  const marks = [...roll.matchAll(/data-in-mode="(yes|no)"><span class="live-roll-key">([^<]+)</g)].map(match => `${match[2]}:${match[1]}`)
-  assert.deepEqual(marks.filter(mark => mark.endsWith(':yes')).map(mark => mark.split(':')[0]).sort(), ['A♯', 'C', 'C♯', 'D♯', 'F', 'F♯', 'G♯'].sort(), 'the owner\'s pitch set, lifted')
-  assert.match(roll, /class="live-roll-ruler"/, 'the clip\'s bars along the top')
-  assert.equal((roll.match(/<span>(8|12|16|20)<\/span>/g) ?? []).length, 4, 'four bars of four beats')
+test('the mode the clip plays in: the set\'s mode in force, which the roll follows while the clip carries none of its own', () => {
+  const binding = clipOf({track: 0, scene: 0}, inForce)
+  assert.equal(binding.values['set.root'], 10); assert.equal(binding.values['set.mode'], 'aeolian')
+  assert.equal('scale' in binding.values, false, 'the clip\'s own scale is not disclosed')
+  assert.equal('set.root' in clipOf({track: 0, scene: 0}, {state: 'waiting', selection: null, line: modes.LIVE_MODE_SEAM}).values, false, 'no mode is invented while it is read')
 })
 
 test('the head: the clip and its track (the mockup\'s "Kit 1 — Drums · clip")', () => {
@@ -118,20 +97,10 @@ test('the head: the clip and its track (the mockup\'s "Kit 1 — Drums · clip")
   assert.deepEqual(MODE_DETAILS.live.head.clip({detail: {live: {ctx: {set: SET}, document: DOC, selection: {track: 0, scene: 1}}}, selected: {ref: null, clip: null, track: null, set: null}, instrument: null}), {name: 'Clip'})
 })
 
-test('in the host: the clip box stands down over the Clip view, whose props carry its facts', () => {
-  select('als:/sets/mercurius.als#track/0/clip/0')
-  try {
-    const detail = {mode: 'live', transport: {kind: 'unavailable'}, world: null, worldCut: false, centralSubject: null, native: {}, factory: {tracks: [], task: {taskLabel: null}},
-      focusedInstrument: null, live: {ctx: {set: SET, loading: false, error: null, openSet() {}}, document: DOC, selection: {track: 0, scene: null, clip: 0}}}
-    const markup = renderToStaticMarkup(createElement(DetailContext.Provider, {value: detail}, createElement(DetailHost, {side: 'clip'})))
-    assert.match(markup, /<header class="detail-head"[^>]*><b>Swell<\/b><span class="detail-head-line"> — Torus · clip<\/span><\/header>/)
-    assert.match(markup, /data-detail-body="live:clip"/)
-    assert.match(markup, /data-clip-view="live"/)
-  } finally { clear() }
-})
-
-test('code-reading: the Clip side names the reader it replaces and draws through the shared anatomy', async () => {
-  const source = await readFile(new URL('../src/live/LiveClip.tsx', import.meta.url), 'utf8')
-  assert.match(source, /Replaces components\/DeviceChainPanel\.tsx:62-63's clip side/)
-  assert.match(source, /<ClipView kind="live"/)
+test('code-reading: Live\'s Clip side hosts clip:live on its binding; the old props rows and empty roll are retired', async () => {
+  const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
+  assert.match(details, /function LiveClip\(\{place\}: \{place: ClipPlace\}\) \{ return <Hosted binding=\{useLiveClip\(\)\}/)
+  const clip = await readFile(new URL('../src/live/LiveClip.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(clip, /ClipView|LiveNoteRoll|liveClipRows/)
+  assert.match(clip, /export function liveClipOf\(/, 'the clip reader stays: the head and the binding read it')
 })

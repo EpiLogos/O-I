@@ -79,7 +79,7 @@ test('the Device-side gate: Expressions keeps its native rack for its own panes;
   const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
   assert.match(details, /live: \{clip: LiveClip, device: LiveChain, ownsDeviceSide: true/, 'Live registers its own Device side once')
   const host = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
-  assert.match(host, /side === 'device' && !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'the host vetoes the instrument for a mode that owns its Device side')
+  assert.match(host, /const instrument = !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'the host vetoes the instrument for a mode that owns its Device side')
   const source = await readFile(new URL('../src/shell/paneInstrument.ts', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /[!=]==\s*'(?:live|base|factory|expressions|techne)'/, 'paneInstrument.ts holds no mode comparison: a mode\'s difference is a registration')
   assert.equal(deviceInstrumentFor('expressions', 'world.expressions', null, 'graph'), null, 'the Expressions pane keeps its native rack')

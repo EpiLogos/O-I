@@ -196,7 +196,7 @@ test('the focused Factory tab routes the Device side through the existing device
   assert.match(app, /const focusedPane = settingsPresented \? 'world\.settings' : centerPanel !== 'native\.workbench' \? centerPanel : paneFocus\.pane/)
   // The one detail host (FOUNDATION F4) gives a focused instrument the Device side over the mode's own chain.
   assert.match(modeDetails, /factory: \{clip: FactoryClip, device: FactoryChain, dropHint: /, 'Factory\'s chain is its registered Device side')
-  assert.match(detailHost, /const instrument = side === 'device' && !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'a focused instrument pane takes the Device side')
+  assert.match(detailHost, /const instrument = !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'a focused instrument pane takes the Device side')
 })
 
 test('an instrument opens as a pane inside the tree, never by leaving the centre (the browser\'s Instruments, FOUNDATION F2)', () => {
@@ -234,7 +234,7 @@ test('Factory opens with the agent tab focused, and every agent-shell chrome pie
   const modeBrowsers = await readFile(new URL('../src/shell/modeBrowsers.tsx', import.meta.url), 'utf8')
   assert.match(modeBrowsers, /factory: \(\) => \[AGENTS\]/); assert.match(modeBrowsers, /<AgentShellBrowser rows=/)
   assert.ok(app.includes('<Browser key={frameMode} sources={browserSources}'), 'App mounts the one browser')
-  for (const piece of ['<FactoryTaskLogDetail', '<AgentShellDeviceDetail']) assert.ok(modeDetails.includes(piece), `${piece} is Factory's registered detail`)
+  for (const piece of ['useFactoryClip()', '<AgentShellDeviceDetail']) assert.ok(modeDetails.includes(piece), `${piece} is Factory's registered detail (its clip hosted, R2)`)
   const bridge = appLines.find(l => l.includes('{agentShell ? <AgentStatusBarBridge'))
   assert.ok(bridge, 'the status bar switches on the agent shell, not on the retired centre panel')
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/)

@@ -34,7 +34,7 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const {ModeContextDock} = await import('../src/shell/ModeContextDock.tsx')
-const {BaseDocumentDetail, TechneClipDetail, FactoryTaskLogDetail} = await import('../src/shell/ModeDetail.tsx')
+const {factoryClipBinding} = await import('../src/agent/clipBinding.ts')
 const {StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx')
 const {ModeBrowser} = await import('../src/shell/ModeBrowser.tsx')
 
@@ -49,35 +49,23 @@ const UNAVAILABLE = {kind: 'unavailable', reason: 'the test carrier is down'}
 // ————————————————————————————————————————————————————————————————————————
 // The detail row — device cards, the clip craft, the task log.
 
-test('base document (empty): one line saying what it waits for — no device cards in the pane (their chain is the Device side)', () => {
-  const out = html(createElement(BaseDocumentDetail, {transport: UNAVAILABLE, subject: null, waits: 'Select a document to see it as data here.'}))
-  assert.equal(out, '<p class="clip-empty" role="status">Select a document to see it as data here.</p>')
-  assert.doesNotMatch(out, /mode-detail-devcard|mode-detail-dropzone/, 'the six dark document-device cards are retired')
-})
+// The Clip side's bodies drawn here as data rows (BaseDocumentDetail, TechneClipDetail, FactoryTaskLogDetail) are retired by R2: each
+// mode's Clip view is its designed clip on its binding (r2-clip-bindings.test.mjs; the Central and Technē readings there).
 
-test('techne clip: the event as a Clip view — its props and ladder, relations, constellation, source; "—" where the reading is silent', () => {
-  const out = html(createElement(TechneClipDetail, {world: null}))
-  assert.ok(out.includes('data-clip-view="techne-event"'), 'drawn through the one Clip view')
-  for (const key of ['kind', 'standing', 'world', 'revision', 'occasion', 'place', 'provenance']) assert.ok(out.includes(`data-row="${key}"`), `the ${key} row`)
-  for (const column of ['Relations · typed, in standing', 'Constellation · bounded whole', 'Source']) assert.ok(out.includes(`data-column="${column}"`), `the ${column} column`)
-  assert.ok(out.includes('techne-ladder'), 'the disclosure ladder under the props')
-  assert.ok(!out.includes('mode-detail-standing-chip') && !out.includes('declared, waiting'), 'no placeholder relation list, no waiting prose')
-})
-
-test('factory task log: the task as data through the Clip view — its session\'s readings, "—" where nothing is disclosed', () => {
+test('factory task: its session\'s readings on the task\'s clip — turns, state, a log row per owner event — nothing filled in', () => {
   const tasks = [
     {n: 1, title: 'correlate occurrences', state: 'running', startUnixMs: Date.UTC(2026, 9, 10, 14, 2), lastActivityUnixMs: null, softStop: false, disclosure: 'the running clip draws no end of its own'},
     {n: 2, title: null, state: 'unknown', startUnixMs: null, lastActivityUnixMs: null, softStop: true, disclosure: null},
   ]
   const track = {sessionRef: 'session:test', purpose: 'correlate occurrences', agentRef: null, agentName: 'Fizz', agentAccepted: null, spaceRef: 'space:test',
     spaceLabel: null, depth: 0, parentRef: null, group: false, memberRefs: [], tasks, needle: null, telemetryOn: false, budget: {used: 2, max: 12}, disclosure: null}
-  const out = html(createElement(FactoryTaskLogDetail, {track, name: 'Fizz · lead', events: [
+  const binding = factoryClipBinding({ref: 'space:test:session:test#task/1', tracks: [track], events: [
     {stream: 'agency', kind: 'run', subject_ref: 'agency/session:test/turn', instant_unix_ms: Date.UTC(2026, 9, 10, 14, 2), summary: 'attempt 2 started'},
-  ]}))
-  assert.ok(out.includes('2 / 12 turns'), 'the budget reading carried')
-  assert.ok(out.includes('<span>running</span>'), 'the task\'s own state drawn')
-  assert.equal((out.match(/class="hl2"/g) ?? []).length, 1, 'a log row per owner event')
-  assert.ok(!out.includes('declared, waiting'), 'undisclosed rows read "—", never prose')
+  ]})
+  assert.equal(binding.values['turns.used'], 2); assert.equal(binding.values['turns.cap'], 12, 'the budget reading carried')
+  assert.equal(binding.values.state, 'running', 'the task\'s own state')
+  assert.deepEqual(JSON.parse(binding.values.log).map(row => row.text), ['attempt 2 started'], 'a log row per owner event')
+  assert.equal('launch' in binding.values, false, 'undisclosed: absent, never prose')
 })
 
 // ————————————————————————————————————————————————————————————————————————

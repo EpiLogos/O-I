@@ -55,7 +55,7 @@ const openings = await import('../src/techne/subject/subjectOpenings.ts')
 const {openWorldSubject, presentStage, STAGE_KIND, TECHNE_EXAMINE_EVENT} = await import('../src/techne/subject/openSubject.ts')
 const {UNSTOOD_WORDS} = await import('../src/techne/subject/subjectScenes.ts')
 const {focusGraphOnOpen, noNodeWords} = await import('../src/techne/subject/graphFocus.ts')
-const {WorldSubjectClipView} = await import('../src/techne/subject/WorldSubjectClip.tsx')
+const techneClip = await import('../src/techne/clipBinding.ts')
 const {projectWikiExpression} = await import(`${cradle}techne/wikiExpression.ts`)
 const {projectedSubjectStandings, wikiProjectionOf} = await import(`${cradle}techne/wikiProjectionStore.ts`)
 const {parseWiki} = await import(`${cradle}techne/wikiReading.ts`)
@@ -316,24 +316,24 @@ test('SSR: the World rows as drawn — mark · name in words · standing, the do
   assert.deepEqual(cells(searched).map(([name]) => name), ['Chartres'], 'the search filters the rows by name')
 })
 
-test('SSR: Technē\'s Clip side for a held World subject names it and lists the Scenes that carry it; another is a press away', async () => {
+test('Technē\'s Clip side for a held World subject (R2: clip:techne on its binding) names it and lists the Scenes that carry it', async () => {
   const asked = openings.openingOf(await openWorldSubject({ref: 'central:wiki:project:O-I', title: 'O-I'}, doorSource()))
   const subject = {kind: 'location', ref: 'central:wiki:project:O-I', title: 'O-I'}
-  const markup = html(createElement(WorldSubjectClipView, {subject, opening: asked, onChoose() {}}))
-  assert.match(markup, /<div class="cph" title="O-I">O-I<\/div>/, 'the subject in words heads it')
-  assert.match(markup, /location · a project space on your planet/)
-  assert.match(markup, /asked · O I/)
-  assert.match(html(createElement(WorldSubjectClipView, {subject, opening: {...asked, state: 'shown', expression_ref: asked.opened.expression_ref}, onChoose() {}})), /open · O I/)
-  const refusedClip = html(createElement(WorldSubjectClipView, {subject, opening: {...asked, state: 'refused', reason: 'The stage refused it.'}, onChoose() {}}))
-  assert.match(refusedClip, /not open · O I/)
-  assert.match(refusedClip, /The stage refused it\./, 'the refusal, in its words, on the Clip side')
-  assert.match(markup, /Central — wiki overview/, 'the other Scene that carries it, listed')
-  assert.equal((markup.match(/<button type="button" class="hl2"/g) ?? []).length, asked.scenes.length - 1, 'each other Scene is a press that opens it')
-  const absent = html(createElement(WorldSubjectClipView, {subject: {kind: 'place', ref: 'place:chartres', title: 'Chartres'}, opening: {state: 'absent', reason: UNSTOOD_WORDS}, onChoose() {}}))
-  assert.match(absent, /stands in no Scene/)
-  assert.ok(absent.includes(UNSTOOD_WORDS.replace(/'/g, '&#x27;')), 'the owner\'s words, said')
-  const unasked = html(createElement(WorldSubjectClipView, {subject, opening: undefined, onChoose() {}}))
-  assert.match(unasked, /Double-click its row in the browser, or press Enter there, to find the Scenes that carry it\./)
+  const values = techneClip.worldSubjectValues(subject, asked)
+  assert.equal(values.name, 'O-I', 'the subject in words heads it')
+  assert.equal(values['event.kind'], 'Location · a project space on your planet')
+  const material = JSON.parse(values.material)
+  assert.equal(material[0].at, 'asked', 'the Scene asked for first')
+  assert.ok(material.some(row => row.text === 'Central — wiki overview'), 'the other Scene that carries it, listed')
+  assert.equal(material.length, asked.scenes.length)
+  const refused = techneClip.worldSubjectValues(subject, {...asked, state: 'refused', reason: 'The stage refused it.'})
+  assert.equal(refused['source.admitted'], 'The stage refused it.', 'the refusal, in its words, on the Clip side')
+  const binding = techneClip.techneClipBinding({worldCut: false, world: null, worldSubject: subject, opening: asked, selected: {ref: null, clip: null, track: null, set: null}})
+  assert.equal(binding.writes('material.open'), true, 'another Scene is the subject door\'s act (chooseHeldScene), ready for the row\'s press')
+  await assert.rejects(binding.write([{key: 'material.open', value: 99}]), /holds no such Scene/)
+  const absent = techneClip.worldSubjectValues({kind: 'place', ref: 'place:chartres', title: 'Chartres'}, {state: 'absent', reason: UNSTOOD_WORDS})
+  assert.equal(absent['source.admitted'], UNSTOOD_WORDS, 'the owner\'s words, said')
+  assert.equal('material' in techneClip.worldSubjectValues(subject, undefined), false, 'unasked: nothing is claimed it gathers')
   assert.deepEqual(rows.worldSubjectOf({kind: 'location', ref: 'central:wiki:project:O-I', title: 'O-I', mode: 'techne'}), subject)
   assert.equal(rows.worldSubjectOf({kind: 'journey', ref: 'w', title: 'W'}), null, 'a walk is not the door\'s subject')
   assert.equal(rows.worldSubjectOf({kind: 'day', ref: 'Control/user/day/2026-10-08/day.md', title: 'Thu 08 Oct'}), null)
@@ -388,7 +388,7 @@ test('source: the World dispatch, the one Graph focus call, no mode branch, and 
   assert.equal((host.match(/focusGraphOnOpen\(/g) ?? []).length, 1, 'one Graph focus call')
   assert.match(host, /if \(view === 'graph'\) focusGraphOnOpen\(\{subject: context\.subject, encounter: context\.encounter, held: attachment\.held, atlas: atlasHandle\(\), stateFor: stateForSubject\}\)/)
   const MODE = /[!=]==\s*'(?:live|base|central|factory|expressions|techne|audio)'|'(?:live|base|central|factory|expressions|techne|audio)'\s*[!=]==|\bis[A-Z]\w*Mode\(/
-  for (const file of ['techne/subject/worldRows.ts', 'techne/subject/subjectOpenings.ts', 'techne/subject/graphFocus.ts', 'techne/subject/WorldSubjectClip.tsx',
+  for (const file of ['techne/subject/worldRows.ts', 'techne/subject/subjectOpenings.ts', 'techne/subject/graphFocus.ts', 'techne/clipBinding.ts',
     'techne/subject/openSubject.ts', 'shell/ModeBrowser.tsx', 'frame/InstrumentsSection.tsx', 'frame/instruments.ts']) {
     assert.doesNotMatch(await source(file), MODE, `${file} adds no mode branch`)
   }

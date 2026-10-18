@@ -8,8 +8,9 @@ import {renderToStaticMarkup} from 'react-dom/server'
 
 // Expressions' Clip side (DEVICE-SEMANTICS-LOCK §9.1: a scene is a clip; manual §3: "Clip view shows the thing itself, with
 // everything you can do to it"; FOUNDATION F4/F7). The selection of a scene clip reaches the Expressions owner as one scene
-// focus; the Scene's own controls (the Scene selector, Saved scenes, Save and its Ctrl or ⌘ S chord, Guide, the pins strip, the
-// Expression time) stand on the Clip side; the Expressions bar is the one bar. Production modules in memory, as
+// focus; Save keeps its Ctrl or ⌘ S chord; the Expressions bar is the one bar. R2 (T-REALIGN): a scene's Clip view is the one clip
+// host's, drawing clip:expressions on components/expressions/clip/clipBinding.ts — the Scene's column (SceneControls, SceneStrip)
+// and the Sequence column of NativeWorldDetail.tsx are retired. Production modules in memory, as
 // scene-sequence-editor.test.mjs loads them; the owner's reading comes from the retained editor over a minimal native document.
 const root = new URL('../../../../', import.meta.url)
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
@@ -52,7 +53,7 @@ const [SCLIP, CALLS, STATE, KEEP, SC, C, TRACKS, Retained, Bridge, Model, Store,
   import(src('components/expressions/clip/sceneCalls.ts').href),
   import(src('components/expressions/clip/sceneState.ts').href),
   import(src('components/expressions/clip/sceneKeepers.ts').href),
-  import(src('components/expressions/clip/SceneControls.tsx').href),
+  import(src('components/expressions/clip/clipBinding.ts').href),
   import(src('shell/nativeContent.ts').href),
   import(src('frame/tracks/modeTracks.ts').href),
   import(new URL('hostEditor.ts', author).href),
@@ -270,26 +271,17 @@ test('one Scene request at a time, whichever door it came through', async () => 
 
 // ——— the Clip side draws them; the bar does not ———
 
-test('the Clip side carries each moved control with its owner call, as the mockup\'s clip properties', () => {
-  const dirty = threeScenes({...ownerReading().standing, dirty: true, pending: false})
-  const {source} = sourceOf(dirty)
-  const markup = renderToStaticMarkup(createElement(SC.SceneControls, {source}))
-  const tag = label => markup.match(new RegExp(`<button[^>]*aria-label="${label}"[^>]*>`))?.[0] ?? ''
-  assert.match(markup, /<aside class="scene-props"[^>]*aria-label="Scene"/)
-  assert.match(markup, /<div class="scene-head cph"/, 'the mockup\'s .cph header carries the Scene\'s name')
-  assert.match(markup, /<output[^>]*aria-label="Native Scene"[^>]*>Main</)
-  assert.match(tag('Previous Scene'), /disabled=""/); assert.doesNotMatch(tag('Next Scene'), /disabled=""/)
-  assert.match(tag('Next Scene'), /Focus the next Scene/)
-  assert.match(markup, /<div class="kvs"><span>sequence<\/span>/); assert.match(markup, />Saved scenes</)
-  assert.match(markup.match(/<button[^>]*class="scene-saved"[^>]*>/)[0], /Save the Scene sequence before playing it/, 'Saved scenes names why it waits')
-  assert.match(markup, /<span>time<\/span>[^]*aria-label="Expression time"[^>]*>0\.00 s</)
-  assert.match(markup, /<span>state<\/span>[^]*>edited since save</)
-  assert.doesNotMatch(tag('Save Expression'), /disabled=""/); assert.match(tag('Save Expression'), /Ctrl or ⌘ S/)
-  assert.match(tag('Expressions guide'), /aria-expanded="false"/)
-  assert.match(markup, /<div class="sec">Pinned controls<\/div>[^]*aria-label="Pinned controls"/, 'the pins strip')
-  assert.doesNotMatch(markup, /role="dialog"/)
-  // Without the owner's content the column is not drawn: nothing is claimed.
-  assert.equal(renderToStaticMarkup(createElement(SC.SceneControls, {source: {...source, content: null, actions: null}})), '')
+test('the scene\'s Clip view reads the owner\'s own scene: its name, duration and transition, and writes them as scene edits', async () => {
+  const {reading} = threeScenes()
+  const values = SC.expressionsClipValues(reading)
+  const row = reading.scenes.scenes.find(item => item.scene_ref === reading.basis.scene_ref)
+  assert.equal(values.name, row.title, 'the presented Scene\'s own title, as the Scene selector showed it')
+  assert.equal(values.duration, row.working?.duration ?? reading.scene.duration)
+  assert.deepEqual(JSON.parse(values.scenes).map(item => item.id), reading.scenes.scenes.map(item => item.scene_ref), 'the Expression\'s scenes, for Jump')
+  const sent = []
+  const binding = SC.expressionsClipBinding({reading, request: async operation => { sent.push(operation); return {ok: true, reading} }})
+  await binding.write([{key: 'transition', value: 3}])
+  assert.equal(sent[0].operation, 'scene-edit'); assert.deepEqual(sent[0].intent, {operation: 'pacing', scene_ref: reading.basis.scene_ref, transition: 3})
 })
 
 /** The detail's residence as the shell hands it: the workspace in Expressions, holding the owner's reading. */
@@ -300,34 +292,21 @@ function detailMarkup(props, reading) {
     createElement(Detail.NativeWorldDetail, {expand: noop, collapse: noop, presentMode: noop, ...props})))
 }
 
-test('the editor carries the Scene controls beside the clip surfaces only when it is the Expressions clip', () => {
+test('the retained editor draws only the Studio: its Clip side is the clip host\'s, never a second column', () => {
   const {reading} = threeScenes()
-  const clipWith = detailMarkup({mode: 'clip', sceneControls: true}, reading)
-  assert.match(clipWith, /<div class="clipv native-detail-view native-clip-view has-scene-controls">/, 'the clip view is the mockup\'s .clipv: properties column, then the editors')
-  assert.match(clipWith, /<aside class="scene-props"[^>]*>[^]*<\/aside><div class="ccol scene-strip" aria-label="Scenes">[^]*<div class="ccol native-clip-sequence" aria-label="Sequence">[^]*<div class="native-clip-surfaces">/,
-    'the properties, then the Scenes, then the Sequence holding the surfaces, which are wrapped as one')
-  for (const label of ['Previous Scene', 'Next Scene', 'Save Expression', 'Expressions guide']) assert.match(clipWith, new RegExp(`aria-label="${label}"`))
-  assert.equal((clipWith.match(/<aside class="scene-props"/g) ?? []).length, 1, 'one set of controls in the instance')
-  // Technē's native clip is the same editor without them; the Device side never draws them (one chord, one column).
-  assert.doesNotMatch(detailMarkup({mode: 'clip'}, reading), /scene-props/)
-  assert.match(detailMarkup({mode: 'clip'}, reading), /<div class="clipv native-detail-view native-clip-view">/)
-  assert.doesNotMatch(detailMarkup({mode: 'device', sceneControls: true}, reading), /scene-props/)
-  // With no reading there is nothing to say about a Scene: the column is not drawn, and nothing is claimed.
-  assert.doesNotMatch(detailMarkup({mode: 'clip', sceneControls: true}, null), /scene-props/)
-  // The three clip surfaces are still the editor's own, in the same order.
-  const order = [...clipWith.matchAll(/class="native-clip-surface"/g)].length
-  assert.equal(order, 3, 'Scene, States and Takes surfaces stand as before')
+  for (const mode of ['clip', 'device']) {
+    const markup = detailMarkup({mode}, reading)
+    for (const gone of [/scene-props/, /native-clip-view/, /native-clip-sequence/, /scene-strip/]) assert.doesNotMatch(markup, gone, `${mode}: no Scene column`)
+  }
 })
 
-test('Expressions\' clip entry carries the Scene controls; Technē\'s native clip is the same editor without them', async () => {
+test('Expressions\' clip entry hosts its designed clip on the scene\'s binding; the Scene\'s old column is gone from the tree', async () => {
   const details = await read('shell/modeDetails.tsx')
-  assert.match(details, /function ExpressionsClip\(\)[^\n]*<NativeWorldDetail mode="clip" sceneControls \{\.\.\.native\} \/>/)
-  assert.match(details, /<NativeWorldDetail mode="clip" \{\.\.\.native\} \/>/, 'Technē\'s clip passes none: its bar never had them')
+  assert.match(details, /function ExpressionsClip\(\{place\}: \{place: ClipPlace\}\) \{ return <Hosted binding=\{useExpressionsClip\(\)\} place=\{place\}/)
   const detail = await read('components/NativeWorldDetail.tsx')
-  assert.match(detail, /const showSceneControls=sceneControls&&mode==='clip'/, 'the Device-side instance never mounts them (one chord, one set of controls)')
-  assert.match(detail, /\{showSceneControls&&<SceneControls source=\{clipSource\}\/>\}/)
-  assert.match(detail, /request:operation=>clipPresented\(\)\?request\(operation,true\)/, 'the owner\'s refusal is said in the Scene\'s column, not again in the editor\'s header')
-  assert.match(detail, /native-clip-view\$\{showSceneControls \? ' has-scene-controls' : ''\}/)
+  assert.doesNotMatch(detail, /SceneControls|SceneStrip|showSceneControls/)
+  const {existsSync} = await import('node:fs')
+  assert.equal(existsSync(src('components/expressions/clip/SceneControls.tsx')), false)
 })
 
 test('Expressions\' own bar is gone and the window has one Ctrl or ⌘ S, which the F9 keys layer does not double', async () => {

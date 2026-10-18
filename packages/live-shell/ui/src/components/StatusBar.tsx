@@ -9,6 +9,7 @@ import {RunContextReading} from '../shell/runContext'
 import {parseDataI, type DataIStatusInfo} from '../agent/statusInfo'
 import {useFoundationPending} from '../native/foundationDoor'
 import {apertureWords, useWorkbenchAperture} from '../native/workbenchDoor'
+import {useShownSides, type DetailSide} from '../frame/detail/detailSides'
 
 /** The Info line's words with nothing read yet (Live's Info view; the mockup's `#info`). */
 export const INFO_IDLE = 'Hover anything to read what it does.'
@@ -45,14 +46,15 @@ export function useInfoView(): DataIStatusInfo | null {
   return info
 }
 
-export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, detailMode, changeDetailMode, agentInfo }: { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands (kept for the callers; the title line now names the work). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject (kept for the callers; THE selection now stands in the title line). */ subjectLabel?: string }) {
+export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, detailMode, changeDetailMode, toggleDetailSide, agentInfo }: { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; /** Show or hide one side of the detail area (manual §16.4: "Hide either one … or the switches in the status bar"); absent, a switch brings its side to the front. */ toggleDetailSide?: (side: DetailSide) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands (kept for the callers; the title line now names the work). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject (kept for the callers; THE selection now stands in the title line). */ subjectLabel?: string }) {
   const { set, path, error, loading } = state
   const aperture = useWorkbenchAperture()
-  // The detail row's pair is per mode (WORLD-SHELL-DESIGN Rev 4): Clip |
-  // Device in Live, Document | Devices in Base·Central, Task log | Agent
-  // chain in Factory, Scene | Studio in Expressions, Clip | Instruments in
-  // Technē. The switch is still the only "tab" over the detail area.
+  // The detail area's two switches read Clip | Device in every mode (FOUNDATION F4; manual §16.4); what each side holds in this mode
+  // is the mode's own registration (WORLD-SHELL-DESIGN Rev 4's pair: Document | Devices, Task log | Agent chain, Scene | Studio,
+  // Clip | Instruments), said on the Info line. Each switch shows or hides its side; both stand pressed while both stand.
   const pair = detailPairOf(mode) ?? detailPairOf('audio')!
+  const shownSides = useShownSides()
+  const press = (side: DetailSide) => (toggleDetailSide ? toggleDetailSide(side) : changeDetailMode(side))
   // What the status bar carries beside the Info line is each mode's registration (shell/modeStatus.ts), never a branch here:
   // Live's open set (its counts, the armed track), Expressions' Scene snapshot. The work's identity is the title line's
   // (components/TransportBar.tsx), as in the mockup.
@@ -81,11 +83,12 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
     {/* The run context stands in every mode: which world this shell runs in, from the host's own disclosure. */}
     <RunContextReading />
     <nav className="status-detail-views" aria-label="Detail view">
-      {/* Clip | Device in every mode (manual §10.1, FOUNDATION F4), each side named as the mode names it (the mockup's DVN, :1643):
-        Document | Devices, Task log | Agent chain, Scene | Studio, Clip | Instruments, Clip | Device — the mode's own registration
-        (shell/modeGrammar.ts `detail`, Rev 4's table), never a branch here. */}
-      <button aria-label={pair.clip.label} data-detail-side="clip" data-i={`${pair.clip.label}|${pair.clip.meaning}`} title={`${pair.clip.label} — ${pair.clip.meaning}`} aria-pressed={detailMode === 'clip'} onClick={() => changeDetailMode('clip')}><Icon name="set" size={12} /><span>{pair.clip.label}</span></button>
-      <button aria-label={pair.device.label} data-detail-side="device" data-i={`${pair.device.label}|${pair.device.meaning}`} title={`${pair.device.label} — ${pair.device.meaning}`} aria-pressed={detailMode === 'device'} onClick={() => changeDetailMode('device')}><Icon name="device" size={12} /><span>{pair.device.label}</span></button>
+      {/* Clip | Device in every mode (manual §16.4, FOUNDATION F4): each shows or hides its side of the detail area; the mode's own
+        name for what the side holds (shell/modeGrammar.ts `detail`) is said on the Info line, never a branch here. */}
+      <button aria-label="Clip view" data-detail-side="clip" data-i={`Clip view|${pair.clip.label}: ${pair.clip.meaning}. Shows or hides Clip view; ⇧Tab switches when only one side shows, ⌥⌘E gives it the main area.`}
+        title={`Clip view — ${pair.clip.label}: ${pair.clip.meaning}`} aria-pressed={toggleDetailSide ? shownSides.clip : detailMode === 'clip'} onClick={() => press('clip')}><Icon name="set" size={12} /><span>Clip</span></button>
+      <button aria-label="Device view" data-detail-side="device" data-i={`Device view|${pair.device.label}: ${pair.device.meaning}. Shows or hides Device view; ⇧Tab switches when only one side shows.`}
+        title={`Device view — ${pair.device.label}: ${pair.device.meaning}`} aria-pressed={toggleDetailSide ? shownSides.device : detailMode === 'device'} onClick={() => press('device')}><Icon name="device" size={12} /><span>Device</span></button>
     </nav>
   </footer>
 }
