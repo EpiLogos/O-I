@@ -6,6 +6,7 @@ import {candidateApplicationEnvelope, readCandidateApplicationView} from './appl
 import {admissionReport, applyPendingAdmission, type AdmissionOutcome, type PendingAdmission} from './admission'
 import {nativeHost} from '../native/application'
 import {setsAsWorkspaces} from './workspacePool'
+import {createBookKeeper, seedFromNative, type BookHost, type NativeBookReading} from './nativeBook'
 
 export const CANDIDATE_WORKSPACE_KEY = 'oi.live-shell.candidate.workspace.v2'
 export const CANDIDATE_LEGACY_LAYOUT_KEY = 'oi.live-shell.candidate.layout.v1'
@@ -68,6 +69,18 @@ function withinReadBound<T>(read: Promise<T>): Promise<T> {
   return Promise.race([read, bound]).finally(() => clearTimeout(timer))
 }
 
+/** The workspace book's native owner (continuity/nativeBook.ts; the host's live_shell_book_read and live_shell_book_write). */
+const NATIVE_BOOK: BookHost = {
+  read: () => withinReadBound(tauriInvoke<NativeBookReading>('live_shell_book_read', {})),
+  write: (expectedRevision, book) => tauriInvoke<{revision: string; unchanged?: boolean}>('live_shell_book_write', {expectedRevision, book}),
+}
+/** One seed per page load, after the admission: the owner's book over the working copy when it is of another revision. */
+let seedRun: Promise<{seeded: boolean; revision: string | null; fault?: string}> | null = null
+function seedOnce(skip: boolean) {
+  seedRun ??= skip ? Promise.resolve({seeded: false, revision: null}) : seedFromNative(NATIVE_BOOK, localStorage, CANDIDATE_WORKSPACE_KEY)
+  return seedRun
+}
+
 /** One apply per page load. React StrictMode runs effects twice, and two applies must never race. */
 let admissionRun: Promise<AdmissionOutcome> | null = null
 function runAdmissionOnce(): Promise<AdmissionOutcome> {
@@ -100,13 +113,23 @@ export function ContinuityProvider({children}: {children: ReactNode}) {
   // The owner's way out of a held apply: start on the candidate's own data, leaving the admission pending (unconfirmed),
   // so the next start re-verifies it and retries.
   const [startWithout, setStartWithout] = useState(false)
+  // The workspace book's native owner is read after the admission and before the book mounts (a book the admission just wrote is
+  // the newer, and is kept on the owner at its first change).
+  const [seeded, setSeeded] = useState<{fault?: string} | null>(gated ? null : {})
   useEffect(() => {
     if (outcome) return
     let live = true
     void runAdmissionOnce().then(next => { if (live) setOutcome(next) })
     return () => { live = false }
   }, [outcome])
+  useEffect(() => {
+    if (!outcome || seeded) return
+    let live = true
+    void seedOnce(outcome.status === 'applied').then(result => { if (live) setSeeded(result.fault ? {fault: result.fault} : {}) })
+    return () => { live = false }
+  }, [outcome, seeded])
   if (!outcome) return <p role="status" data-region="continuity-admission" style={holdStyle}>Reading the owner-admitted continuity…</p>
+  if (!seeded) return <p role="status" data-region="continuity-admission" style={holdStyle}>Reading the workspace book…</p>
   // Hold only after a partial write: a read failure or a stop before any admitted write leaves the namespace as it was.
   if (outcome.status === 'failed' && outcome.written > 0 && !startWithout) {
     return <div role="alert" data-region="continuity-admission" data-admission="failed" style={holdStyle}>
@@ -115,17 +138,31 @@ export function ContinuityProvider({children}: {children: ReactNode}) {
       <button type="button" data-action="start-without-admission" onClick={() => setStartWithout(true)}>Start without the admitted continuity</button>
     </div>
   }
-  const report = dismissed ? null : admissionReport(outcome)
+  const report = dismissed ? null : [admissionReport(outcome), seeded.fault].filter(Boolean).join(' ') || null
   return (
     <>
       {report && <p role="status" data-region="continuity-admission" style={noticeStyle}>{report} <button type="button" onClick={() => setDismissed(true)}>Dismiss</button></p>}
-      <ContinuityBook>{children}</ContinuityBook>
+      <ContinuityBook keep={gated}>{children}</ContinuityBook>
     </>
   )
 }
-function ContinuityBook({children}: {children: ReactNode}) {
+function ContinuityBook({children, keep}: {children: ReactNode; keep: boolean}) {
   const workspace = useCandidateWorkspace()
+  useNativeBookKeeper(keep ? workspace.book : null)
   return <Continuity.Provider value={workspace}>{children}</Continuity.Provider>
+}
+
+/** Every change of the book is kept on its native owner (a pause after a burst; flushed when the page hides). */
+function useNativeBookKeeper(book: unknown) {
+  const [fault, setFault] = useState<string | null>(null)
+  const keeper = useMemo(() => createBookKeeper(NATIVE_BOOK, localStorage, CANDIDATE_WORKSPACE_KEY, setFault), [])
+  useEffect(() => { if (book) keeper.keep(book) }, [book, keeper])
+  useEffect(() => {
+    const flush = () => { void keeper.flush() }
+    window.addEventListener('pagehide', flush)
+    return () => { window.removeEventListener('pagehide', flush); void keeper.flush() }
+  }, [keeper])
+  useEffect(() => { if (fault) console.warn(fault) }, [fault])
 }
 /** The book when one is mounted, else null — for a part that can stand without it (it then shows nothing of the book). */
 export function useOptionalContinuity(): CandidateWorkspace | null {
