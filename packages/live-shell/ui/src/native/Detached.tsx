@@ -8,7 +8,7 @@ import {CANDIDATE_WORKSPACE_KEY} from '../continuity/workspace'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig} from './application'
 import {admitContribution} from './contributions'
-import {deviceBindingId, deviceIdentityFault, deviceIdentityOf, deviceRelayIdentityFault, nativeDetachedBodySupported} from './detachedKinds'
+import {deviceBindingId, deviceIdentityFault, deviceIdentityOf, deviceRelayAdmissionFault, nativeDetachedBodySupported} from './detachedKinds'
 import {allInhabitantManifests} from '../inhabitants/manifest'
 import {loadWorldShellFamilies} from '../inhabitants/worldShellFamilies'
 import {DeviceFace} from '../inhabitants/inhabitantRack'
@@ -33,11 +33,12 @@ export function NativeDetached() {
     current(epoch)
     if (!nativeDetachedBodySupported(binding.kind)) throw Error('This surface has no native detached receiving body. Its binding has been retained.')
     if (binding.kind === 'device') {
-      // A device is admitted by the manifests that declare it, never as a hosted contribution. The named fault is the refusal. Its
-      // body draws on the binding the main window relays, so its identity is what is admitted here; a face drawn alone, where no
-      // relay answers, is held to the standalone face's own rule in the body (DeviceWindowBody).
+      // A device is never admitted as a hosted contribution. Its body draws on the binding the main window relays (the device that
+      // window already draws, Live's own effects among them, which no inhabitant manifest declares), so a well-formed identity is
+      // what is admitted here; a face drawn alone, where no relay answers, is held to the manifests' rule in the body
+      // (DeviceWindowBody). The named fault is the refusal.
       loadWorldShellFamilies()
-      const fault = deviceRelayAdmissionFault(binding, allInhabitantManifests())
+      const fault = deviceRelayAdmissionFault(binding)
       current(epoch)
       if (fault) throw Error(fault)
       return
@@ -58,17 +59,8 @@ export function NativeDetached() {
     ownerEpoch={`${workspace.accessEpoch}:${workspace.accessReady}`} />
 }
 
-/** The named refusal for a device window's binding, or null where the admitted manifests stand for it (seam 8). The
- * device's own identity is checked against the manifests, never against a hosted contribution. */
-/** The named refusal for a relayed device window (deviceRelay.ts): its identity must name a declared family and face. */
-export function deviceRelayAdmissionFault(binding: SurfaceBinding, manifests: readonly InhabitantManifest[]): string | null {
-  const identity = deviceIdentityOf(binding)
-  if (!identity) return 'The device window carries no device identity.'
-  if (binding.id !== deviceBindingId(identity)) return 'The device binding id does not name its family and face.'
-  const fault = deviceRelayIdentityFault(identity, manifests)
-  return fault ? `This device cannot be shown: ${fault}.` : null
-}
-
+/** The named refusal for a device face drawn alone, where no relay answers, or null where the admitted manifests stand for it
+ * (seam 8). The device's own identity is checked against the manifests, never against a hosted contribution. */
 export function deviceAdmissionFault(binding: SurfaceBinding, manifests: readonly InhabitantManifest[]): string | null {
   const identity = deviceIdentityOf(binding)
   if (!identity) return 'The device window carries no device identity.'
@@ -89,7 +81,7 @@ export function DeviceWindowBody({binding, transport, manifests = allInhabitantM
 }) {
   const instrumentReading = useQlInstrumentFeed()
   const identity = deviceIdentityOf(binding)
-  const relayFault = deviceRelayAdmissionFault(binding, manifests)
+  const relayFault = deviceRelayAdmissionFault(binding)
   if (relayFault || !identity) return <p role="alert" data-device-fault>{relayFault ?? 'The device window carries no device identity.'}</p>
   // The device's own Pop-out on the binding the main window relays (frame/devices/deviceRelay.ts); where none answers, the face
   // drawn alone, held to the standalone face's own rule (it must stand alone, declare pop-out and carry its aperture).
