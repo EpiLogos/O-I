@@ -142,6 +142,7 @@ before asking" for anything that changes what a product can do),
 
 ## Decisions so far
 
+- [The run to the owner's UX testing](tickets/T-WORLDS-the-run-to-ux-testing.md) — owner, 18 Oct 2026: four lanes before the build runs further on the realigned UI — W1 the pool holds workspaces (and Live's grooves), never a device; W2 Central's Day is the set, its worlds the tracks, their pages (Beings, Things, Flows) the clips, the templates redone and open; W3 worlds you build (a body record per world, your system, what grows read from real data); W4 Nara's practice (journal, dreams, sitting, journeys, containers, identity and sky) with the M4 tree mapped to its code. U0, a readiness walk on the native candidate, ends the run; the owner's testing starts there. Manual O-I main `614b86de5` (§5, §10, §13, §16, §17.2, §18.1, §24).
 - [Device semantics lock — Live's ontology is the DLW's](DEVICE-SEMANTICS-LOCK.md) — 12 Oct 2026: every designed element sits in a Live semantic per mode, the gate enforces it, the owner's settled facts are recorded there; PATH.md (rewritten) is the route and EXECUTE.md the execution prompt; one Opus lead, ≤3 Haiku builders, one Sonnet reviewer. DLW-VISION is superseded.
 - [Build model map: Opus conducts, Haiku builds, Sonnet reviews at seams](PATH.md) — owner, 12 Oct 2026. Supersedes the orchestration notes above where they differ: builders get bounded briefs (`BRIEF-BUILDER.md`), not the full protocol pack; ≤3 builders coding at once; one reviewer at R0–R6 seams (`BRIEF-REVIEWER.md`); PATH.md is the route every agent reads first. Seat is now `worktrees/env-1/o-i` lane `dlw/build-20261012` off `main` (the shell landed on main 11 Oct); new tickets live in `tickets/` beside this file.
 - [The vision of record and the five-mode ruling](DLW-VISION.md) — owner, 12 Oct 2026. DLW-VISION.md is the vision of record, compiled from the owner's contemplation ([CONTEMPLATION-DLW-INSTRUMENT.md](CONTEMPLATION-DLW-INSTRUMENT.md)): the DLW is the instrument of Epi-Logos. The owner's ruling the same day (CONTEMPLATION-DLW-INSTRUMENT.md:232-252) is settled law: five modes stand, **Live (base) · Central · Factory · Expressions · Technē**, with Epi-Logos a lens, not a mode; Live is the reverse-engineering basis, ported not approximated, and its destination is Expressions with audio and video track layers on one timeline, when the owner times it. The vision governs figure and framing; owner rulings and settled law govern specification. DLW-PLAN carries both as its *(12 Oct)* revisions.
@@ -180,10 +181,10 @@ Decisions. What genuinely remains:)*
   SharedField, A2A binding, returned difference, root-ground transfer);
   what remains is one live cross-machine visit flow run in the shell
   against a real federated ground.
-- **QL-side procedural body-generation contract** — planet building's
-  controls are drawn (Revision 3) and the GPU globe engine is named (§3.1);
-  the per-World seed→body contract on the QL side is the remaining
-  specification.
+- ~~**QL-side procedural body-generation contract**~~ — specified 18 Oct
+  2026 in T-WORLDS §5: an `aikit.world-body/v1` record on each register's
+  root space, written as a wiki-facts `BodySet` with CAS, drawn by a pure
+  generator through the Earth's texture seam.
 - **Agent-native remainders** — pushed turn streaming (gateway convergence
   backlog item 1) and the owner's remote-posture ruling (composed vs live).
 - **Multi-machine physical acceptance** — Workcell #24/#26/#27 and #13's
