@@ -26,6 +26,8 @@ import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, typ
 import {useSettingsAnswers} from '../../owners/readers'
 import {trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
 import {SETTINGS_PROJECT} from '../../agent/clipBinding'
+import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
+import {tellOwnerChanged} from '../../owners/notices'
 import type {UseModeTracks} from './modeTracks'
 
 const WRITE_ARM = 'shell.setWriteArm'
@@ -76,7 +78,16 @@ export const useFactoryTracks: UseModeTracks = reading => {
       } catch (cause) { return {ok: false, error: cause instanceof Error ? cause.message : String(cause)} }
     },
   }, [transport, own])
+  // A track's Stop: that session's running turn cancelled on its own encounter owner, as the Thread's Hard stop does
+  // (desktop/cradle/src/encounter/session.ts cancel); the harness's other sessions run on.
+  const sessionStop = useMemo(() => transport.kind === 'unavailable' ? undefined : async (session: string) => {
+    try {
+      await encounter(transport, SETTINGS_PROJECT, {action: 'cancel', agent_session: session, reason: 'Stopped on its track'})
+      tellOwnerChanged({topic: 'agency', cause: 'a session was stopped on its track', agentSession: session})
+      return {ok: true as const, note: 'Stopped this session\'s running turn; the session stays, and the harness\'s other sessions run on.'}
+    } catch (cause) { return {ok: false as const, error: cause instanceof Error ? cause.message : String(cause)} }
+  }, [transport])
   if (!agency.tracks.length && agency.error) return {waiting: `The agent sessions are unread: ${agency.error}`}
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
-  return factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {})})
+  return factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(sessionStop ? {sessionStop} : {})})
 }
