@@ -131,7 +131,7 @@ test('published with its picture, a device draws it whole in the pool, full in a
 test('code reading: the keyboard, each note device and each set device publish their pictures; the torus publishes its binding and its own Full, and draws its design', async () => {
   assert.match(await read('live/KeyboardOnChain.tsx'), /usePublishedDevice\(KEYBOARD_DEVICE_ID, device, picture\)/)
   assert.match(await read('live/KeyboardOnChain.tsx'), /<JankoDevice plate layout=\{layout\} midi=\{false\} \/>/, 'the published surface is deaf to MIDI')
-  assert.match(await read('live/noteDevices/NoteDeviceChain.tsx'), /usePublishedDevice\(instance\.id, instance, picture\)/)
+  assert.match(await read('live/noteDevices/NoteDeviceChain.tsx'), /usePublishedDevice\(instance\.id, instance, picture, binding\)/, 'a Scale plate publishes its design\'s binding with it')
   assert.match(await read('live/SetDeviceOnChain.tsx'), /usePublishedDevice\(id, device, picture\)/)
   const torus = await read('live/TorusOnChain.tsx')
   assert.match(torus, /publishDevice\(TORUS_DEVICE_ID, \{device, binding, picture: .*, full: \{draw: \(\) => <TorusFull \/>\}\}\)/)
