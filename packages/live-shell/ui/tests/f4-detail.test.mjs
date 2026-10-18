@@ -2,8 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 
-// FOUNDATION F4: one detail host. Every clip editor sits under the same shell-owned clip box, which reads THE selection
-// and the clip as the mode's tracks give it. Loader as live-browser-chain.test.mjs.
+// FOUNDATION F4: one detail host. THE selection is read once, as the mode's tracks give it (frame/detail/ClipBox.tsx
+// selectedClipOf), and every mode's Clip view is its designed clip on its binding (R2; the shell-owned clip box strip is retired:
+// a clip's name, colour, launch and follow are its Clip view's head, Clip and Launch panels). Loader as live-browser-chain.test.mjs.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -30,7 +31,7 @@ globalThis.document = {getElementById: () => null, createElement: () => ({}), he
 const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {publishTimelineReading} = await import('../src/projections/timelinePaneHost.ts')
-const {ClipBox} = await import('../src/frame/detail/ClipBox.tsx')
+const {selectedClipOf} = await import('../src/frame/detail/ClipBox.tsx')
 const {publishShownTracks} = await import('../src/frame/tracks/tracksDoor.ts')
 const {MODE_TRACKS} = await import('../src/frame/tracks/modeTracks.ts')
 const {readFile} = await import('node:fs/promises')
@@ -39,31 +40,21 @@ const set = {path: '/sets/demo.als', tempo_bpm: 120, scene_count: 1, arrangement
 const doc = {path: '/sets/demo.als', tempo: 120, scenes: 1, tracks: [{kind: 'midi', name: 'Pad', devices: [], arrangementClips: [{name: 'Intro', kind: 'midi', start: 4, end: 12}], sessionSlots: {'0': 'A'}}]}
 const reading = (selectedRef) => ({mode: 'live', set, document: doc, colors: ['#79b6ce'], selection: {track: 0, scene: null}, select() {}, setColor() {}, selectedRef, selectTrackItem() {}})
 
-test('the clip box shows the selected clip as its mode\'s tracks give it: name, colour, track, place, and what is not disclosed', () => {
+test('THE selection names the clip in the tracks the pane shows: the clip, its track and the set, read once', () => {
   const shown = reading('als:/sets/demo.als#track/0/clip/0')
-  publishTimelineReading(shown)
-  // The tracks pane publishes the set it draws (frame/tracks/tracksDoor.ts); the clip box reads that, never the owner again.
-  publishShownTracks(MODE_TRACKS[shown.mode](shown))
-  const markup = renderToStaticMarkup(React.createElement(ClipBox))
-  assert.match(markup, /data-clip-box="als:\/sets\/demo\.als#track\/0\/clip\/0"/)
-  assert.match(markup, />Intro</); assert.match(markup, />Pad</)
-  assert.match(markup, />2\.1 – 4\.1</, 'where it starts and ends, on the set\'s own ruler')
-  assert.match(markup, /state not disclosed/); assert.match(markup, /launch not disclosed/)
-  assert.match(markup, /--tc:#79b6ce/)
+  const set = MODE_TRACKS[shown.mode](shown)
+  const selected = selectedClipOf(shown.selectedRef, set)
+  assert.equal(selected.clip?.label, 'Intro'); assert.equal(selected.track?.name, 'Pad'); assert.equal(selected.set, set)
+  assert.equal(selectedClipOf('Control/agents/now/day/2026-10-14.md', set).clip, null, 'a selection that is no shown clip names none')
+  assert.equal(selectedClipOf(null, null).clip, null)
 })
 
-test('with nothing of this mode selected, the clip box stands down', () => {
-  publishTimelineReading(reading('Control/agents/now/day/2026-10-14.md'))
-  assert.equal(renderToStaticMarkup(React.createElement(ClipBox)), '')
-  publishTimelineReading(null); publishShownTracks(null)
-})
-
-test('App mounts one detail residence, the host, and the status bar reads Clip | Device in every mode, each side named as the mode names it', async () => {
+test('App mounts one detail residence, the host with its sides, and the status bar reads Clip | Device in every mode', async () => {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.equal((app.match(/className="detail-residence"/g) ?? []).length, 1)
-  assert.match(app, /<DetailHost side=\{detailMode\} \/>/)
+  assert.match(app, /<DetailHost sides=\{\{front: detailMode, hidden: hiddenSides\}\} expanded=\{clipExpanded\} \/>/)
   const bar = await readFile(new URL('../src/components/StatusBar.tsx', import.meta.url), 'utf8')
-  // The two sides stand in every mode; their names are the mode's registration (the mockup's DVN: Document | Devices, Task log |
-  // Agent chain, …), rendered per mode in detail-host.test.mjs.
-  assert.match(bar, /data-detail-side="clip"[^\n]*<span>\{pair\.clip\.label\}<\/span>/); assert.match(bar, /data-detail-side="device"[^\n]*<span>\{pair\.device\.label\}<\/span>/)
+  // The two switches read Clip | Device in every mode; what each side holds is the mode's registration, said on the Info line
+  // (rendered per mode in detail-host.test.mjs).
+  assert.match(bar, /data-detail-side="clip"[\s\S]{0,500}<span>Clip<\/span>/); assert.match(bar, /data-detail-side="device"[\s\S]{0,500}<span>Device<\/span>/)
 })

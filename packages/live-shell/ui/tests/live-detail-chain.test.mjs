@@ -168,7 +168,7 @@ test('the head names the track and its devices in order (the mockup\'s "Drums �
 test('in the host: one head over the row, the plates, and the drop zone the registration names', () => withInstrument(() => {
   const detail = {mode: 'live', transport: {kind: 'unavailable'}, world: null, worldCut: false, centralSubject: null, native: {}, factory: {tracks: [], task: {taskLabel: null}},
     focusedInstrument: null, live: {ctx: {set: SET, loading: false, error: null, openSet() {}}, document: DOC, selection: {track: 0, scene: null}}}
-  const markup = renderToStaticMarkup(createElement(DetailContext.Provider, {value: detail}, createElement(DetailHost, {side: 'device'})))
+  const markup = renderToStaticMarkup(createElement(DetailContext.Provider, {value: detail}, createElement(DetailHost, {sides: {front: 'device', hidden: {clip: false, device: false}}})))
   assert.equal((markup.match(/class="detail-head"/g) ?? []).length, 1, 'one head')
   assert.match(markup, /<header class="detail-head"[^>]*><b>Torus<\/b><span class="detail-head-line"> — Glue Compressor → Plug-in → Reverb<\/span><\/header>/)
   assert.ok(at(markup, 'data-chain-device="Reverb"') < at(markup, '<div class="dropz" data-chain-end="receives"'), 'the chain ends in the drop zone')

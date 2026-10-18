@@ -233,8 +233,9 @@ function applyConfiguration(mode,family,alter=()=>{}){
 }
 test('actual Scene detail effect enters device configuration and retains clip Scene routing',()=>{
   assert.deepEqual(applyConfiguration('device','scene'),[['configure',true],['family','scene']]);
-  assert.deepEqual(applyConfiguration('clip','scene'),[['clip','scene']]);
-  assert.deepEqual(applyConfiguration('clip',undefined),[['clip','glyph']]);
+  // R2: a clip intent opens Clip view, which the one clip host draws; the retained editor keeps no clip surface to route to.
+  assert.deepEqual(applyConfiguration('clip','scene'),[]);
+  assert.deepEqual(applyConfiguration('clip',undefined),[]);
   for(const alter of [b=>{b.workspace.mode='audio'},b=>{b.workspace.accessEpoch++},b=>{b.configurationIntent.mode='clip'},b=>{b.configurationIntent.scene_ref='scene:unrelated'},b=>{b.residence.current.getClientRects=()=>[]}])assert.deepEqual(applyConfiguration('device','scene',alter),[]);
 });
 
@@ -251,16 +252,20 @@ test('actual devicePresented requires the device cut, exact native access and re
  assert.equal(execute(initializer,{...bindings,residence:{current:{getClientRects:()=>[]}}})(),false);
 });
 
-test('actual Deep Return restores the captured exact height and refuses a departed native residence',()=>{
- // The native detail's expand and collapse ride the one detail host's reading (FOUNDATION F4), not a JSX residence in App.
+test('actual Deep Return restores the captured exact height and refuses a departed native residence',async()=>{
+ // The native detail's expand and collapse ride the one detail host's reading (FOUNDATION F4), not a JSX residence in App. Each frame
+ // (a workspace in a mode) keeps its own return (R1, shell/workspaceAreas.ts expandDetail / collapseDetail; was one detailExpansionReturn).
+ const areas=await import('../src/shell/workspaceAreas.ts');
  const reading=find(appSource,n=>ts.isVariableDeclaration(n)&&n.name.getText(appSource)==='detailReading').initializer;
  const attribute=name=>find(reading,n=>ts.isPropertyAssignment(n)&&n.name.getText(appSource)===name).initializer.getText(appSource);
  for(const height of [null,319.997,421]){
-  const detailExpansionReturn={current:null},effects=[],workspace={workspaceId:'current-native-residence',accessEpoch:7};
-  const bindings={detailExpansionReturn,detailHeight:height,workspace,viewport:[1200,577],resizeDetail:value=>effects.push(value)};
+  const detailExpansions={current:{}},effects=[],workspace={workspaceId:'current-native-residence',accessEpoch:7},frame='techne|current-native-residence';
+  const detailFrame=()=>({frame,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch});
+  const bindings={detailExpansions,detailFrame,detailHeight:height,workspace,viewport:[1200,577],resizeDetail:value=>effects.push(value),
+   expandDetail:areas.expandDetail,collapseDetail:areas.collapseDetail,expandedDetailHeight:areas.expandedDetailHeight};
   const expand=execute(attribute('expand'),bindings),collapse=execute(attribute('collapse'),bindings);
-  expand();assert.equal(detailExpansionReturn.current.height,height);expand();collapse();
-  assert.deepEqual(effects,[421,421,height]);assert.equal(detailExpansionReturn.current,null);
+  expand();assert.equal(detailExpansions.current[frame].height,height);expand();collapse();
+  assert.deepEqual(effects,[421,421,height]);assert.deepEqual(detailExpansions.current,{});
   expand();workspace.accessEpoch++;collapse();assert.deepEqual(effects,[421,421,height,421]);
  }
 });
@@ -314,20 +319,20 @@ test('actual installed Glyph expand is ensure-open and never toggles an existing
  const expandGlyphDevice=find(detailSource,n=>ts.isVariableDeclaration(n)&&n.name.getText(detailSource)==='expandGlyphDevice').initializer.getText(detailSource);
  for(const state of [{expanded:true,fullscreen:false},{expanded:false,fullscreen:true},{expanded:true,fullscreen:true},{expanded:false,fullscreen:false}]){
   const effects=[],receive=execute(expandGlyphDevice,{...state,setClipSurface:value=>effects.push(['surface',value]),presentMode:value=>effects.push(['mode',value]),deep:()=>effects.push(['deep','capture-and-expand'])});
-  receive();assert.deepEqual(effects,[['surface','glyph'],['mode','clip'],...(!state.expanded&&!state.fullscreen?[['deep','capture-and-expand']]:[])]);
+  // R2: the glyph device opens the scene's Clip view (its Sequence), drawn by the one clip host; nothing toggles the Studio's depth.
+  receive();assert.deepEqual(effects,[['mode','clip']]);
  }
 });
 
-test('actual compact and full Glyph presentation predicates admit only their visible sibling and exact native access',()=>{
+test('actual compact Glyph presentation predicate admits only the visible Device side and exact native access (R2 retired the clip-side Glyph surface)',()=>{
  const compact=find(detailSource,n=>ts.isVariableDeclaration(n)&&n.name.getText(detailSource)==='compactGlyphPresented').initializer.getText(detailSource);
- const full=find(detailSource,n=>ts.isVariableDeclaration(n)&&n.name.getText(detailSource)==='glyphPresented').initializer.getText(detailSource);
- const state={mode:'device',configure:false,configuration:'device',clipSurface:'glyph',workspaceId:'captured-native-detail',accessEpoch:7},scenePresentation={current:state};
+ assert.doesNotMatch(detailSource.getFullText(),/const glyphPresented=/,'no clip-side Glyph surface remains');
+ const state={mode:'device',configure:false,configuration:'device',workspaceId:'captured-native-detail',accessEpoch:7},scenePresentation={current:state};
  const bindings={scenePresentation,sceneWorkspaceId:state.workspaceId,sceneAccessEpoch:7,workspace:{nativeAccessCurrent:epoch=>epoch===7},residence:{current:{getClientRects:()=>[{}]}}};
- assert.equal(execute(compact,bindings)(),true);assert.equal(execute(full,bindings)(),false);
- scenePresentation.current={...state,mode:'clip'};assert.equal(execute(compact,bindings)(),false);assert.equal(execute(full,bindings)(),true);
- scenePresentation.current={...state,mode:'clip',clipSurface:'scene'};assert.equal(execute(full,bindings)(),false);
- for(const mode of ['device','clip'])for(const retire of [b=>{b.scenePresentation={current:{...state,mode,workspaceId:'other'}}},b=>{b.scenePresentation={current:{...state,mode,accessEpoch:8}}},b=>{b.workspace={nativeAccessCurrent:()=>false}},b=>{b.residence={current:{getClientRects:()=>[]}}}]){
-  const b={...bindings,scenePresentation:{current:{...state,mode}}};retire(b);assert.equal(execute(compact,b)(),false);assert.equal(execute(full,b)(),false);
+ assert.equal(execute(compact,bindings)(),true);
+ scenePresentation.current={...state,mode:'clip'};assert.equal(execute(compact,bindings)(),false);
+ for(const retire of [b=>{b.scenePresentation={current:{...state,workspaceId:'other'}}},b=>{b.scenePresentation={current:{...state,accessEpoch:8}}},b=>{b.workspace={nativeAccessCurrent:()=>false}},b=>{b.residence={current:{getClientRects:()=>[]}}}]){
+  const b={...bindings,scenePresentation:{current:{...state}}};retire(b);assert.equal(execute(compact,b)(),false);
  }
 });
 
@@ -335,8 +340,9 @@ test('actual detail destination waits for its matching mode before consuming the
  const p=presentation(),reading=p.currentEditorReading.current,configurationIntent={id:42,workspaceId:'source-test-workspace',accessEpoch:7,expression_ref:reading.basis.expression_ref,scene_ref:reading.basis.scene_ref,mode:'clip',material:'glyph'},consumedConfiguration={current:null},effects=[];
  const bindings={configurationIntent,mode:'device',consumedConfiguration,workspace:{mode:'expressions',workspaceId:'source-test-workspace',accessEpoch:7},reading,residence:{current:{getClientRects:()=>[{}]}},setClipSurface:value=>effects.push(['clip',value]),setConfigure:()=>{throw Error('Clip destination cannot configure another editor')},chooseConfiguration:()=>{throw Error('Clip destination cannot choose a device family')}};
  execute(configurationEffect,bindings)();assert.equal(consumedConfiguration.current,null);assert.deepEqual(effects,[]);
- execute(configurationEffect,{...bindings,mode:'clip'})();assert.equal(consumedConfiguration.current,42);assert.deepEqual(effects,[['clip','glyph']]);
- execute(configurationEffect,{...bindings,mode:'clip'})();assert.deepEqual(effects,[['clip','glyph']]);
+ // R2: consumed once its mode stands; it opens Clip view, which the one clip host draws (no clip surface is routed here).
+ execute(configurationEffect,{...bindings,mode:'clip'})();assert.equal(consumedConfiguration.current,42);assert.deepEqual(effects,[]);
+ execute(configurationEffect,{...bindings,mode:'clip'})();assert.deepEqual(effects,[]);
 });
 
 test('actual queued Deep Return keeps same Scene edited work but refuses departed owner before scroll or focus restoration',()=>{
@@ -478,10 +484,12 @@ test('actual queued large native editor Return cannot focus behind newly opened 
 
 
 test('actual checkpoint view keeps origin only during active large residence and preserves nullable pre-Deep height',async()=>{
+ // The height a frame keeps in the book while expanded is the height it returns to (R1, shell/workspaceAreas.ts keptDetailHeight).
+ const areas=await import('../src/shell/workspaceAreas.ts');
  const app=await parse('packages/live-shell/ui/src/App.tsx');
  const effect=find(app,n=>ts.isCallExpression(n)&&n.expression.getText(app)==='useEffect'&&n.arguments[0]?.getText(app).includes('continuity.checkpointApplicationView')).arguments[0].getText(app);
  for(const active of [true,false])for(const height of [null,319.997]){
-  const writes=[],bindings={browserCategory:undefined,restoredKey:'retained-native-workspace|techne|',restoreKey:'retained-native-workspace|techne|',workspace:{workspaceId:'retained-native-workspace',mode:'techne'},continuity:{checkpointApplicationView:value=>writes.push(value)},state:{path:null},restored:null,tab:'arrangement',liveHeld:{track:0,scene:null},browser:true,detail:false,dock:true,browserWidth:null,detailHeight:421,detailExpansionReturn:{current:{height,workspaceId:'retained-native-workspace',accessEpoch:7}},centerPanel:active?'world.expressions':'native.workbench',detailMode:'device',nativeEditorPresented:active,nativeEditorReturn:{centerPanel:'native.arrangement',detail:true,detailMode:'clip'},settingsPresented:false};
+  const writes=[],bindings={browserCategory:undefined,restoredKey:'retained-native-workspace|techne|',restoreKey:'retained-native-workspace|techne|',workspace:{workspaceId:'retained-native-workspace',mode:'techne'},continuity:{checkpointApplicationView:value=>writes.push(value)},state:{path:null},restored:null,tab:'arrangement',liveHeld:{track:0,scene:null},browser:true,detail:false,dock:true,browserWidth:null,detailHeight:421,detailExpansions:{current:{'techne|retained':{height,workspaceId:'retained-native-workspace',accessEpoch:7}}},frameKey:'techne|retained',keptDetailHeight:areas.keptDetailHeight,centerPanel:active?'world.expressions':'native.workbench',detailMode:'device',nativeEditorPresented:active,nativeEditorReturn:{centerPanel:'native.arrangement',detail:true,detailMode:'clip'},settingsPresented:false};
   execute(effect,bindings)();assert.equal(writes.length,1);assert.equal(writes[0].detailHeight,height);assert.equal(writes[0].centerPanel,active?'native.arrangement':'native.workbench');assert.equal(writes[0].detail,active);assert.equal(writes[0].detailMode,active?'clip':'device');
  }
 });

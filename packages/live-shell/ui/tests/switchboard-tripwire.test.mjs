@@ -54,7 +54,7 @@ const CEILING = {
     'src/components/NativeSceneFace.automation.tsx': 1,
     'src/components/nativeSceneFace.body.ts': 1,
     'src/components/NativeTechneBrowser.tsx': 1,
-    'src/components/NativeWorldDetail.tsx': 3,
+    'src/components/NativeWorldDetail.tsx': 2,
     'src/components/WorldBrowser.tsx': 2,
     'src/continuity/workspace.tsx': 2,
     'src/inhabitants/sdk/modes.ts': 1,

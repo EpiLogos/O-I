@@ -209,10 +209,8 @@ test('the Jankó surface recolours to the mode in force, and marks nothing witho
   assert.match(plain, /data-janko-mode="none"/)
 })
 
-test('the Clip view\'s mode row reads the set\'s mode in force, not an empty document value', () => {
-  // live/LiveClip.tsx (was the clip inspector's Scale pair in components/DeviceChainPanel.tsx; rendered in live-detail-clip.test.mjs)
-  const clip = readFileSync(new URL('../src/live/LiveClip.tsx', import.meta.url), 'utf8')
-  assert.match(clip, /useLiveModeInForce\(\)/)
-  assert.match(clip, /\{key: 'mode', value: held \? `\$\{PITCH_CLASS_NAMES\[held\.root\]\} \$\{held\.scale\.label\}` : null,/)
-  assert.match(clip, /this clip carries no mode of its own yet/)
+test('the Clip view\'s roll follows the set\'s mode in force, not an empty document value (R2: live/clipBinding.ts)', () => {
+  const binding = readFileSync(new URL('../src/live/clipBinding.ts', import.meta.url), 'utf8')
+  assert.match(binding, /const \{mode\} = useLiveModeInForce\(\)/)
+  assert.match(binding, /const values: Record<string, Value> = \{'set\.root': mode\.selection\.root\}/, 'the root of the mode in force, never a document default')
 })

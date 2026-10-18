@@ -1,28 +1,32 @@
-// Each mode's detail bodies (FOUNDATION F4): the clip editor its clips open in, the chain on its Device side, and the row's
-// head line over each (world-shell-mockup.html `#dth`, set by clipDetail() and deviceDetail()). A table read by the one detail
-// host (frame/detail/DetailHost.tsx), never a branch in the frame. The bodies are the ones each mode already had; the host
-// gives every mode the same head, the same clip box, the same Clip | Device pair and the same one line while nothing is
-// selected.
+// Each mode's detail bodies (FOUNDATION F4): its Clip view (the mode's designed clip on its clip binding, hosted by the one clip
+// host, frame/detail/ClipHost.tsx), the chain on its Device side, and the head line over the chain (world-shell-mockup.html `#dth`,
+// set by deviceDetail()). A table read by the one detail host (frame/detail/DetailHost.tsx), never a branch in the frame; the host
+// gives every mode the same Clip view over Device view (manual §16.4), the same Clip | Device pair and the same one line while
+// nothing is selected.
 import type {ComponentType} from 'react'
 import type {SurfMode} from './modeGrammar'
 import {useDetailReading, type DetailReading} from '../frame/detail/detailReading'
-import {clipBoxRows, useSelectedClip, type SelectedClip} from '../frame/detail/ClipBox'
+import {useSelectedClip, type SelectedClip} from '../frame/detail/ClipBox'
 import {ClipWaiting} from '../frame/detail/ClipView'
+import {HostedClip, type ClipPlace} from '../frame/detail/ClipHost'
+import type {ClipBinding} from '../frame/detail/clipBinding'
 import {DeviceChainPanel, LIVE_CLIP_WAITS} from '../components/DeviceChainPanel'
 import {liveClipOf} from '../live/LiveClip'
+import {useLiveClip} from '../live/clipBinding'
 import {trackDeviceFaceTitle} from '../live/liveChain'
 import {addNoteDevice} from '../live/noteDevices/noteDeviceHold'
 import {NOTE_DEVICE_MIME, parseNoteDeviceDrag} from '../live/noteDevices/noteDeviceDrag'
 import {displayDeviceName} from './document'
 import {NativeWorldDetail} from '../components/NativeWorldDetail'
-import {CentralClipChooser} from '../central/CentralClipChooser'
-import {centralSubjectName} from '../central/CentralClipDetail'
-import {BaseDevicesDetail, FactoryTaskLogDetail, TechneClipDetail, TechneInstrumentsDetail} from './ModeDetail'
+import {centralSubjectName, useCentralClip} from '../central/clipBinding'
+import {BaseDevicesDetail, TechneInstrumentsDetail} from './ModeDetail'
 import {AgentShellDeviceDetail} from '../agent/AgentShellDeviceDetail'
-import {TaskClipDevice} from '../agent/devices/TaskClipDevice'
-import {WorldSubjectClip} from '../techne/subject/WorldSubjectClip'
-import {useAgentSessionsOptional} from '../agent/AgentSessionsProvider'
-import {eventsForSession, trackKey, type AgentSessionTrack} from '../agent/agentRunModel'
+import {useFactoryClip} from '../agent/clipBinding'
+import {useTechneClip} from '../techne/clipBinding'
+import {useExpressionsClip} from '../components/expressions/clip/clipBinding'
+import {sceneOfClipRef} from '../components/expressions/clip/sceneClip'
+import {useWorkspace} from './workspaceContext'
+import {trackKey, type AgentSessionTrack} from '../agent/agentRunModel'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
 import {STANDALONE_INSTRUMENTS, TECHNE_INSTRUMENTS} from '../inhabitants/sdk/semantics'
 import type {PaneInstrumentId} from './paneInstrument'
@@ -42,7 +46,9 @@ export interface DetailHead {
 }
 
 export interface ModeDetail {
-  clip: ComponentType
+  /** The mode's Clip view: its clip binding hosted at the place the detail host measured (frame/detail/ClipHost.tsx), or the one
+   * line it waits with. */
+  clip: ComponentType<{place: ClipPlace}>
   device: ComponentType
   /** The mode's own devices lead a focused instrument's chain (Central's ground devices are never removed by the ruling). */
   devicesLeadInstrument?: boolean
@@ -90,39 +96,36 @@ function factorySessionName(track: AgentSessionTrack, taskTitle: string | null |
 const centralDocument = ({detail, selected}: DetailHeadReading): string | null =>
   detail.centralSubject ? centralSubjectName(detail.centralSubject) : selected.clip?.label ?? null
 
-function LiveClip() { const {live} = useDetailReading(); return <DeviceChainPanel ctx={live.ctx} document={live.document} selection={live.selection} mode="clip" /> }
+/** A mode's clip, hosted: its binding's designed clip at the place, or the mode's one line while the binding names no clip. */
+function Hosted({binding, place, waits}: {binding: ClipBinding | null; place: ClipPlace; waits: string}) {
+  return binding ? <HostedClip binding={binding} place={place} /> : <ClipWaiting line={waits} />
+}
+
+// Each mode's clip (T-REALIGN R2; manual §16.5): one clip host draws the mode's designed clip on the mode's clip binding, which ports
+// the readings of the bodies it replaces (live/LiveClip.tsx; central/CentralClipChooser.tsx and CentralClipDetail.tsx;
+// agent/devices/TaskClipDevice.tsx and ModeDetail.tsx FactoryTaskLogDetail; the Expressions clip column of NativeWorldDetail.tsx;
+// ModeDetail.tsx TechneClipDetail and techne/subject/WorldSubjectClip.tsx).
+function LiveClip({place}: {place: ClipPlace}) { return <Hosted binding={useLiveClip()} place={place} waits={LIVE_CLIP_WAITS} /> }
 function LiveChain() { const {live} = useDetailReading(); return <DeviceChainPanel ctx={live.ctx} document={live.document} selection={live.selection} mode="device" /> }
-function CentralClip() {
-  const {transport, centralSubject, world} = useDetailReading()
-  const selected = useSelectedClip()
-  return <CentralClipChooser transport={transport} subject={centralSubject} world={world} waits={MODE_DETAILS.base.clipWaits} colour={selected.track?.color} />
-}
+function CentralClip({place}: {place: ClipPlace}) { return <Hosted binding={useCentralClip()} place={place} waits={MODE_DETAILS.base.clipWaits} /> }
 function CentralChain() { const {transport, centralSubject, world} = useDetailReading(); return <BaseDevicesDetail transport={transport} world={world} subject={centralSubject} /> }
-/** The selected task: THE selection names it (`<session track>#task/<n>`, timeline/factoryTrackAdapter.ts), or a session track
- * whose first task it opens; its session is the agency reading's own track, its log the sessions provider's one temporal read. Beside
- * the log stands the task itself, the Tasks device the chain publishes (DLW §19.1 "In Clip view, the task is the clip"; lane BF3). */
-function FactoryClip() {
-  const {factory} = useDetailReading()
-  const selected = useSelectedClip()
-  const sessions = useAgentSessionsOptional()
-  const task = selected.ref ? parseFactoryTaskRef(selected.ref) : null
-  const trackId = task?.trackId ?? selected.ref
-  const track = trackId ? factory.tracks.find(item => trackKey(item) === trackId) ?? null : null
-  if (!track) return <ClipWaiting line={MODE_DETAILS.factory.clipWaits} />
-  const shown = selected.set?.tracks.find(item => item.id === trackId)
-  const title = track.tasks.find(item => !item.softStop && (task ? item.n === task.n : true))?.title
-  return <div className="factory-clip"><TaskClipDevice />
-    <FactoryTaskLogDetail track={track} n={task?.n ?? null} name={factorySessionName(track, title, shown?.name)} colour={shown?.color} box={clipBoxRows(selected)}
-      events={sessions ? eventsForSession(sessions.events, track.sessionRef) : null} /></div>
-}
+/** The selected task (THE selection names it, `<session track>#task/<n>`, or a session track whose first task it opens): its Clip
+ * view after Live — Clip and Launch beside the log, the Agent's effort and autonomy for this task as its envelopes (§19.1). */
+function FactoryClip({place}: {place: ClipPlace}) { return <Hosted binding={useFactoryClip()} place={place} waits={MODE_DETAILS.factory.clipWaits} /> }
 function FactoryChain() { const {factory} = useDetailReading(); return <AgentShellDeviceDetail tracks={factory.tracks} /> }
-// An Expressions clip is a scene (lock §9.1). Beside its editor stand the Scene's own controls — the Scene selector, Saved scenes,
-// Save, Guide, the pins strip and Expression time — which stood on the Expressions bar until they had a home on the clip
-// (components/expressions/clip/SceneControls.tsx). Technē's native clip below is the same editor without them: its bar never had them.
-function ExpressionsClip() { const {native} = useDetailReading(); return <NativeWorldDetail mode="clip" sceneControls {...native} /> }
+// An Expressions clip is a scene (lock §9.1): the open Expression's presented scene.
+function ExpressionsClip({place}: {place: ClipPlace}) { return <Hosted binding={useExpressionsClip()} place={place} waits={MODE_DETAILS.expressions.clipWaits} /> }
 function ExpressionsChain() { const {native} = useDetailReading(); return <NativeWorldDetail mode="device" {...native} /> }
-// Technē's clips are World cut events while the tracks pane stands over the World cut, else the open work's native clip.
-function TechneClip() { const {worldCut, world, native, worldSubject} = useDetailReading(); return worldSubject ? <WorldSubjectClip subject={worldSubject} /> : worldCut ? <TechneClipDetail world={world} /> : <NativeWorldDetail mode="clip" {...native} /> }
+// Technē's clips are a World subject in hand, a walk's stop, or the World cut's event; a scene clip of the open Expression selected in
+// Technē is an Expressions clip (the selected clip's mode).
+function TechneClip({place}: {place: ClipPlace}) {
+  const techne = useTechneClip()
+  const expressions = useExpressionsClip()
+  const selected = useSelectedClip()
+  const reading = useWorkspace().editorReading
+  const scene = !techne && expressions && reading && sceneOfClipRef({basis: reading.basis, scenes: reading.scenes ?? null}, selected.ref) ? expressions : null
+  return <Hosted binding={techne ?? scene} place={place} waits={MODE_DETAILS.techne.clipWaits} />
+}
 function TechneChain() { const {transport} = useDetailReading(); return <TechneInstrumentsDetail transport={transport} /> }
 
 export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
@@ -150,20 +153,20 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
       },
     }},
   base: {clip: CentralClip, device: CentralChain, devicesLeadInstrument: true, dropHint: 'Add a document device',
-    clipWaits: 'Select a day, a document or an entry, in the browser or on the day\'s tracks, to see it as data here.',
+    clipWaits: 'Select a day, a page or an entry, in the browser or on the day\'s tracks, to open it in Clip view.',
     head: {
-      clip: reading => ({name: centralDocument(reading) ?? 'Document', line: centralDocument(reading) ? 'the document as data' : undefined}),
+      clip: reading => ({name: centralDocument(reading) ?? 'Page', line: centralDocument(reading) ? 'the page in Clip view' : undefined}),
       device: reading => ({name: centralDocument(reading) ?? 'No document selected',
         line: `document devices: each modifies the open document${reading.instrument ? ` · then ${instrumentName(reading.instrument)}, open on the focused pane` : ''}`}),
     }},
   factory: {clip: FactoryClip, device: FactoryChain, dropHint: null,
-    clipWaits: 'Select a task on a session\'s track to read its tool-run log here.',
+    clipWaits: 'Select a task on a session\'s track to open it in Clip view: its launch, its log and its envelopes.',
     head: {
       clip: ({detail, selected}) => {
         if (!selected.clip) return {name: 'Task log'}
         const track = detail.factory.tracks.find(item => trackKey(item) === selected.clip!.trackId)
         const session = track ? factorySessionName(track, selected.clip.label, selected.track?.name) : selected.track?.name ?? selected.clip.trackId
-        return {name: selected.clip.label, line: `${session} · the task's tool-run log`}
+        return {name: selected.clip.label, line: `${session} · the task in Clip view`}
       },
       device: ({detail, selected, instrument}) => {
         if (instrument) return instrumentHead(instrument)
