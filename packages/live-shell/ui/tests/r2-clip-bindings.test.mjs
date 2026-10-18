@@ -250,6 +250,27 @@ test('Central: a page is placed (no Launch tab); its tools refuse in the page fa
   assert.equal(central.centralSubjectName({kind: 'day', path: 'Control/agents/now/day/2026-10-08.md'}).startsWith('Day · '), true)
 })
 
+test('Central: a Flow\'s name is its title, written on its file from Clip view; a pane holding it with unsaved edits refuses; other pages refuse', async () => {
+  const location = {schema: 'central.path-ref/v1', ref: 'central:path:control:user/flows/flow-1.html', root: 'control', path: 'user/flows/flow-1.html'}
+  const reading = {ref: 'subject:note:user/flows/flow-1.html', values: {kind: 'flow', name: 'Untitled exchange'}, location}
+  const titles = []
+  const rename = async title => { titles.push(title) }
+  const flow = central.centralClipBinding(reading, {rename})
+  assert.equal(flow.writes('name'), true); assert.equal(flow.standing.name, undefined, 'the name is no longer held refused')
+  await flow.write([{key: 'name', value: 'Morning exchange'}])
+  assert.deepEqual(titles, ['Morning exchange'])
+  const held = central.centralClipBinding(reading, {rename, reached: {key: 'k', form: 'Flow', title: 't', state: 'edited', location, dirty: true}})
+  await assert.rejects(held.write([{key: 'name', value: 'Other'}]), /holds edits its owner does not/)
+  assert.deepEqual(titles, ['Morning exchange'], 'nothing reaches the owner while the page holds unsaved edits')
+  const elsewhere = central.centralClipBinding(reading, {rename, reached: {key: 'k', form: 'Flow', title: 't', state: 'edited', location: {...location, ref: 'central:path:other'}, dirty: true}})
+  await elsewhere.write([{key: 'name', value: 'Third'}])
+  assert.deepEqual(titles, ['Morning exchange', 'Third'], 'another page\'s unsaved edits do not hold this one')
+  const being = central.centralClipBinding({...reading, values: {kind: 'being', name: 'Hildegard'}}, {rename})
+  await assert.rejects(being.write([{key: 'name', value: 'X'}]), /Only a Flow keeps a title of its own/)
+  const unwritten = central.centralClipBinding(reading, {})
+  await assert.rejects(unwritten.write([{key: 'name', value: 'X'}]), /Only a Flow keeps a title of its own/)
+})
+
 // ---------------------------------------------------------------------------------------------------------------- Expressions
 
 const entity = (id, name, x, extra = {}) => ({id, name, kind: 'formation', position: {x, y: 0.5, z: 0}, size: {x: 0.65, y: 0.86}, rotation: 0, shape: 'ring', text: '', share: 1,
