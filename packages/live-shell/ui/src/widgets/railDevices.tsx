@@ -234,6 +234,8 @@ function useWikiBinding(transport: KernelTransportStatus | undefined): DesignBin
 
 // ---------------------------------------------------------------------------------------------------------------- the NOWs
 
+/** How often the NOWs re-read the ground's civil time (a minute: the finest its clock draws). */
+const NOWS_REREAD_MS = 60_000
 type GroundReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; ground: CentralGroundReading}
 function useGround(transport: KernelTransportStatus | undefined): GroundReading {
   const [reading, setReading] = useState<GroundReading>({status: 'reading'})
@@ -241,8 +243,12 @@ function useGround(transport: KernelTransportStatus | undefined): GroundReading 
   useEffect(() => {
     const ask = ++asked.current
     if (!transport || transport.kind === 'unavailable') { setReading({status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}); return }
-    readGround(transport, null).then(ground => { if (ask === asked.current) setReading({status: 'read', ground}) },
+    const read = () => readGround(transport, null).then(ground => { if (ask === asked.current) setReading({status: 'read', ground}) },
       cause => { if (ask === asked.current) setReading({status: 'refused', words: cause instanceof Error ? cause.message : String(cause)}) })
+    void read()
+    // The tile shows the ground's civil time: read again each minute, so the clock it draws is never older than that.
+    const every = setInterval(() => { void read() }, NOWS_REREAD_MS)
+    return () => clearInterval(every)
   }, [transport])
   return reading
 }
