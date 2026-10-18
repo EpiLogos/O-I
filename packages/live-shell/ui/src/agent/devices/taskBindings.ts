@@ -59,6 +59,8 @@ export interface TaskSeamContext {
   readonly transport: KernelTransportStatus
   readonly project: string
   readonly settings: EncounterSessionSettingsReading | null
+  /** The owner's refusal of the read, in its words, when it refused. */
+  readonly refused?: string | null
 }
 
 // ---------------------------------------------------------------------------------------------------------------- one task's own ops

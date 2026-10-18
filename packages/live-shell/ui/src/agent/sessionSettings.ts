@@ -21,9 +21,10 @@ export const SETTINGS_WHY = {
 } as const
 
 /** Why the settings of a session's task `n` cannot be changed with this context, or null when they can. */
-export function settingsRefusal(context: {readonly settings: EncounterSessionSettingsReading | null} | null | undefined, n: number | null): string | null {
+export function settingsRefusal(context: {readonly settings: EncounterSessionSettingsReading | null; readonly refused?: string | null} | null | undefined,
+  n: number | null): string | null {
   if (!context) return SETTINGS_WHY.notHere
-  if (!context.settings) return SETTINGS_WHY.reading
+  if (!context.settings) return context.refused ? `The session's settings are unread — the owner refused: ${context.refused}` : SETTINGS_WHY.reading
   if (!context.settings.task) return SETTINGS_WHY.noTask
   if (n !== null && n !== 1) return SETTINGS_WHY.oneTask
   return null

@@ -166,6 +166,6 @@ export function useFactoryClip(): ClipBinding | null {
   const transport = sessions?.transport ?? UNAVAILABLE
   const answer = useSettingsAnswer(transport, sessions ? sessionRef : null, SETTINGS_PROJECT)
   const settings: TaskSeamContext | null = sessions && sessionRef
-    ? {transport, project: SETTINGS_PROJECT, settings: answer.reading.status === 'answered' ? answer.reading.value : null} : null
+    ? {transport, project: SETTINGS_PROJECT, settings: answer.reading.status === 'answered' ? answer.reading.value : null, refused: answer.reading.error} : null
   return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings})
 }

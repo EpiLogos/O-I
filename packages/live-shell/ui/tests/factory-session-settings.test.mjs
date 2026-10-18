@@ -235,3 +235,9 @@ test('a track\'s Stop is that session\'s own: its running turn cancelled on its 
   const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8')
   assert.match(source, /trackStop\.grain !== undefined \? \(trackStop\.grain \?/, 'the grid says a stop\'s own grain, or none')
 })
+
+test('a read the owner refused says so in its words, not that it is still being read', () => {
+  const refused = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null,
+    settings: {transport, project, settings: null, refused: "unrecognized subcommand 'encounter-session-settings'"}})
+  assert.equal(refused.standing.launch?.disabled, "The session's settings are unread — the owner refused: unrecognized subcommand 'encounter-session-settings'")
+})
