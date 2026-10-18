@@ -1,7 +1,9 @@
-// The agent's devices on Central's chain (lane BC3; DLW §16.2 "Central — A workspace … the document effects, then the agent that
-// answers"; §18.9–§18.11, §18.14, §18.15): the readings and bindings of the Packet, Search, Agent identity and Context & world, over
-// the owners the shell already reads (packetBinding.ts, searchBinding.ts, identityBinding.ts, contextWorldBinding.ts). The chain
-// (CentralDevices.tsx) places and publishes them, and mounts the encounter observers the Packet and the Answer share.
+// The agent's devices on Central's chain (lane BC3, folded by R4; DLW §16.2 "Central — A workspace … The packet, the agent that answers,
+// and its scope"; §18.3, §19.4, §19.12): the readings and bindings of the Packet, the Agent's Identity page, Scope and Search, over the
+// owners the shell already reads (packetBinding.ts, identityBinding.ts, contextWorldBinding.ts centralScopeBinding, searchBinding.ts).
+// The chain (CentralDevices.tsx) places and publishes the Packet, the Agent and Scope, and mounts the encounter observers the Packet
+// and the Agent share; Search is no chain device (§18.4: a pane, and the line where you type @) — its pane (central/searchPane.tsx)
+// reads it through useSearchDevice.
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
@@ -13,7 +15,7 @@ import type {ObservedHandle} from '../../agent/devices/EncounterObservers'
 import {useRosterAgents, useRosterAnswer} from '../../owners/readers'
 import {centralDeviceId} from './centralDeviceModel'
 import {editPacket} from './centralDeviceWrites'
-import {contextWorldBinding, type ContextWorldInput} from './contextWorldBinding'
+import {CENTRAL_SCOPE_ID, centralScopeBinding, type ContextWorldInput} from './contextWorldBinding'
 import {identityAgentOf, identityBinding, identityWorldOf, profileExtrasOf, type IdentityInput, type ProfileExtras} from './identityBinding'
 import {holdsVersion, subscribeHolds} from './pageBindings'
 import {packetBinding, type PacketConversation} from './packetBinding'
@@ -21,8 +23,11 @@ import {searchBinding, searchProjectOf, searchQueryOf, type SearchAnswer} from '
 
 export const PACKET_DEVICE_ID = centralDeviceId('packet')
 export const SEARCH_DEVICE_ID = centralDeviceId('search')
+/** The hold Central's Agent keeps its Identity page's choices under (the agent, the World, Proposed): Agent identity's own id, so the
+ * choice made before R4 stands. */
 export const IDENTITY_DEVICE_ID = centralDeviceId('agent-identity')
 export const CONTEXT_WORLD_DEVICE_ID = centralDeviceId('context-world')
+export {CENTRAL_SCOPE_ID}
 
 const message = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause))
 
@@ -72,8 +77,9 @@ export function useSearchDevice(transport: KernelTransportStatus, projects: read
 
 const NO_EXTRAS: ReadonlyMap<string, ProfileExtras> = new Map()
 
-/** Agent identity: the shared roster answer, and the chosen agent's card in the chosen World (op agent_card). */
-export function useIdentityDevice(transport: KernelTransportStatus, talkingTo: string | null): DesignBinding {
+/** Agent identity — the one Agent's Identity page (`id.*`, oneAgentBinding.ts): the shared roster answer, and the chosen agent's card in
+ * the chosen World (op agent_card). `id` keys the page's holds: Central's Agent's, or Factory's (FactoryDeviceChain.tsx). */
+export function useIdentityDevice(transport: KernelTransportStatus, talkingTo: string | null, id: string = IDENTITY_DEVICE_ID): DesignBinding {
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
   const roster = useRosterAgents(transport)
@@ -81,8 +87,8 @@ export function useIdentityDevice(transport: KernelTransportStatus, talkingTo: s
   const extras = useMemo(() => (raw.reading.status === 'answered' ? profileExtrasOf(raw.reading.value) : NO_EXTRAS), [raw.reading])
   const list = useMemo((): IdentityInput['roster'] => (roster.state === 'ready' ? {agents: roster.agents} : roster.state === 'error' ? {error: roster.error ?? 'The agent roster did not answer'} : null),
     [roster.state, roster.agents, roster.error])
-  const agent = identityAgentOf(IDENTITY_DEVICE_ID, {roster: list, talkingTo})
-  const world = identityWorldOf(IDENTITY_DEVICE_ID)
+  const agent = identityAgentOf(id, {roster: list, talkingTo})
+  const world = identityWorldOf(id)
   const [card, setCard] = useState<IdentityInput['card']>(null)
   useEffect(() => {
     if (!agent || transport.kind === 'unavailable') return
@@ -94,14 +100,15 @@ export function useIdentityDevice(transport: KernelTransportStatus, talkingTo: s
     return () => { alive = false }
   }, [transport, agent, world])
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
-  return useMemo(() => identityBinding(IDENTITY_DEVICE_ID, {roster: list, extras, talkingTo, card}), [list, extras, talkingTo, card, version])
+  return useMemo(() => identityBinding(id, {roster: list, extras, talkingTo, card}), [id, list, extras, talkingTo, card, version])
 }
 
-/** Context & world: the Answer's session's scope over Central's ground (its change horizon) and the Packet's reading. */
-export function useContextWorldDevice(input: ContextWorldInput): DesignBinding {
+/** Scope on Central (one Scope, R4): Context & world's readings — the Agent's session's scope over Central's ground (its change horizon)
+ * and the Packet's reading — in Scope's keys (contextWorldBinding.ts centralScopeBinding). */
+export function useScopeDevice(input: ContextWorldInput): DesignBinding {
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
   const {answer, horizon, groundError, document, packet} = input
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the parts are the input; the holds' version re-binds the view's own keys
-  return useMemo(() => contextWorldBinding(CONTEXT_WORLD_DEVICE_ID, {answer, horizon, groundError, document, packet}), [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, version])
+  return useMemo(() => centralScopeBinding(CENTRAL_SCOPE_ID, {answer, horizon, groundError, document, packet}), [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, version])
 }

@@ -69,16 +69,15 @@ test('empty: the chain is one line saying what it waits for — no card, no chip
   assert.doesNotMatch(markup, /class="device /, 'no plate stands while nothing is there')
 })
 
-test('the instrument published, no set: keyboard, note devices, torus, in the order the notes pass — each a plate of the runtime — then the line', () => withInstrument(() => {
+test('the instrument published, no set: the part\'s input, note devices, torus, in the order the notes pass — each device a plate of the runtime — then the line (REPLACED: the keyboard\'s plate first — R4)', () => withInstrument(() => {
   hold.addNoteDevice('scale')
   const markup = panel({set: null, loading: false, error: null})
-  const keys = at(markup, 'data-chain-instrument="live:keyboard"'), note = at(markup, 'data-note-device="scale"'), ring = at(markup, 'data-live-torus=')
+  const input = at(markup, 'data-part-input='), note = at(markup, 'data-note-device="scale"'), ring = at(markup, 'data-live-torus=')
   const line = at(markup, 'data-live-chain-waits')
-  assert.ok(keys < note && note < ring && ring < line, 'keyboard → note devices → torus, the line where the track would stand')
-  assert.equal((markup.match(/data-device-size="compact"/g) ?? []).length, 3, 'three plates, every one the runtime\'s compact size')
+  assert.ok(input < note && note < ring && ring < line, 'the input → note devices → torus, the line where the track would stand')
+  assert.equal((markup.match(/data-device-size="compact"/g) ?? []).length, 2, 'two plates, every one the runtime\'s compact size: the keyboard is no device')
   assert.match(markup, /Open a set to bring a track&#x27;s devices here\./)
-  assert.match(markup, /data-janko-layout="janko"/, 'the keyboard\'s picture is the playing surface')
-  assert.doesNotMatch(markup, /class="janko-head"|class="janko-hint"/, 'the plate holds its name and its layout; the surface stands bare')
+  assert.doesNotMatch(markup, /data-chain-instrument="live:keyboard"|data-janko-layout=/, 'no keyboard plate on the chain: its surface stands under the Torus\'s Full')
 }))
 
 test('a set open: the selected track\'s own devices stand after the torus, one plate each, read losslessly and read-only', () => withInstrument(() => {
@@ -147,12 +146,15 @@ test('a note device: its tie and power write the session hold, what it does to t
   assert.equal(devices.noteDeviceReading({...scale, enabled: false}, waiting).word, 'bypassed')
 })
 
-test('the keyboard\'s one control is its layout, held by its plate', async () => {
-  let chosen = null
-  const keys = devices.keyboardDevice('janko', layout => { chosen = layout })
-  assert.deepEqual(keys.values, {layout: 'Jankó'})
-  await keys.submit([{key: 'layout', value: 'Piano'}])
-  assert.equal(chosen, 'piano')
+test('REPLACED — the keyboard is no chain device (R4; lock §0.3.6): no keyboard plate is built, and the part\'s input hears MIDI without one', async () => {
+  // Was: "the keyboard's one control is its layout, held by its plate" (keyboardDevice, live:keyboard). The keyboard is the part's input
+  // and the Notes editor's key column now; its layout stays the shell's (keyboardLayout.ts), its surface under the Torus's Full.
+  assert.equal(devices.keyboardDevice, undefined, 'no keyboard device')
+  assert.equal(devices.KEYBOARD_DEVICE_ID, undefined)
+  const input = await readFile(new URL('../src/live/KeyboardOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(input, /export function PartInput\(\)/)
+  assert.match(input, /subscribeLiveMidi\(\{/, 'the part\'s MIDI path, heard once')
+  assert.doesNotMatch(input, /<DeviceView /, 'no plate')
 })
 
 test('the head names the track and its devices in order (the mockup\'s "Drums — Drum Rack → Glue Compressor → Reverb"), read from the open set alone', () => withInstrument(() => {
@@ -199,6 +201,8 @@ test('code-reading: the chain draws through the runtime, holds no mode branch, a
     assert.doesNotMatch(source, /[!=]==\s*'(live|base|central|factory|expressions|techne|audio)'/, 'no mode branch')
     assert.doesNotMatch(source, /#[0-9a-fA-F]{3,8}\b(?![^\n]*\/\/)/, 'shell tokens only')
   }
-  for (const plate of sources.slice(1, 4)) assert.match(plate, /<DeviceView /, 'every plate is the runtime\'s DeviceView')
+  // The keyboard's plate left the chain (R4): KeyboardOnChain.tsx is the part's input now, no plate.
+  for (const plate of [sources[1], sources[3]]) assert.match(plate, /<DeviceView /, 'every plate is the runtime\'s DeviceView')
+  assert.doesNotMatch(sources[2], /<DeviceView /, 'the part\'s input draws no plate')
   assert.doesNotMatch(sources[6], /DetailEmptyFrame|mode-detail-chip|clip-inspector|note-editor/)
 })

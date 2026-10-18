@@ -8,18 +8,18 @@
 //     expires_at_unix_ms}], connection_grants {active, expired, revoked}, …} — the Remote carrier's machines and the Link's here;
 //   `seat status --json` (schema central.workcell-status/v1: workcells [{name, path, disk_free_gb, min_free_gb, hard_free_gb, seats
 //     [{product, state, registered_branch/head, claimed_by, zones [{actor, regions, since_unix_seconds}], live_branch/head,
-//     tracked_changes, untracked, ahead_main, behind_main, admission}]}]) — the seat instrument's own reading; no kernel op runs it, so
-//     in the shell the Seat reads no seats and says so (the hygiene device reads it only where a host supplies the read,
-//     CentralHygieneDevice.tsx:46). A free seat still lists the zones of lanes that left (release clears workers, not zones): a zone
-//     on a free seat is no claim, so it is not read as one;
+//     tracked_changes, untracked, ahead_main, behind_main, admission}]}]) — the seat instrument's own reading, which the kernel runs
+//     since lane K1 as `seat_status_read` (workcellReads.ts useSeatStatusAnswer: slow, read once and on demand). A free seat still lists
+//     the zones of lanes that left (release clears workers, not zones): a zone on a free seat is no claim, so it is not read as one;
 //   git_repository_read — the chain's git reading (agentChainDevices.ts gitRepoReading: head_branch, the repo root's dirty_files);
 //     `central.git.census` answered `unavailable_capability: No eligible Connector implements GitState` through the CLI here;
 //   `aikit gateway who --project-world project:O-I --json` (aikit.population-reading/v1), which the kernel runs as inhabitation_read
 //     {kind: population} (usePopulationAnswer.ts): local_workcell_ref, remotes [{workcell_ref, gateway_ref, status reachable |
 //     unreachable, detail}] — the declared remote Workcells, each asked once — and positions [{position_ref, label, handle, occupancy
 //     {state, workcell_ref, …}}]: the Link's machines, their standing and who runs on each. Here omarchy answered `unreachable`
-//     ("connection timed out") and five Positions stood occupied on workcell:mac. `gateway remote list` (the endpoints) has no kernel
-//     op, so a machine's endpoint stays absent; the lag, the clock and the threads have no reading either.
+//     ("connection timed out") and five Positions stood occupied on workcell:mac. `gateway remote list` (aikit.gateway-remotes/v1, the
+//     kernel's `gateway_remotes_read` since lane K1: workcellReads.ts) gives each declared machine its endpoint (websocket_bind) and says
+//     whether the link is joined; the lag, the clock and the threads have no reading.
 // The writes: `seat join` and `seat release` have no kernel op; `workcell-cli git commit|push` and `seat land` do not exist; moving a
 // session to another machine, joining the link and its Share have no owner operation. Each stands disabled with that reason.
 // Pure, apart from the view holds (designBindings.ts holdView).
@@ -106,7 +106,7 @@ export const SEAT_REFUSE = {
   join: missing('Join', 'seat join through the kernel (the seat instrument runs only from a shell on this machine)', 'Workcell'),
   release: missing('Release', 'seat release through the kernel', 'Workcell'),
 } as const
-export const SEAT_UNREAD = 'No kernel op reads the seat instrument (`seat status --json`): the seats are not read here.'
+export const SEAT_UNREAD = 'The seat instrument has not answered yet (kernel seat_status_read, `seat status --json`: it takes 20–30 s).'
 const SEAT_LOCAL = ['product', 'seat', 'lane', 'joinAs', 'zone', 'keepDirt', 'floor', 'sel', 'page:zones'] as const
 
 /** The seat instrument's reading as the Seat's rows and disk (workcell__seat.tsx:7-12): the hygiene model's seat rows
@@ -135,8 +135,10 @@ export function seatReading(status: unknown): {seats: Record<string, unknown>[];
 }
 
 export interface SeatInput {
-  /** The seat instrument's reading (`seat status --json`), null where nothing reads it. */
+  /** The seat instrument's reading (`seat status --json`, kernel seat_status_read), null while it has not answered. */
   readonly status: unknown
+  /** Why there is no reading, in the owner's words (its refusal), when there is none; absent while it reads. */
+  readonly unread?: string
   /** The project the chain's session works in (agency_read's project), whose product the Seat starts on. */
   readonly project: string
   /** The chain's checkout branch (its git reading), to find the seat the session stands in. */
@@ -169,7 +171,7 @@ export function seatValues(input: SeatInput): Values {
 
 export function seatBinding(input: SeatInput): DesignBinding {
   const standing: Record<string, Standing> = disabled(SEAT_REFUSE)
-  if (input.status == null || !seatReading(input.status)) for (const key of ['product', 'seat']) standing[key] = {disabled: SEAT_UNREAD}
+  if (input.status == null || !seatReading(input.status)) for (const key of ['product', 'seat']) standing[key] = {disabled: input.unread ?? SEAT_UNREAD}
   return {
     id: SEAT_ID,
     values: seatValues(input),
@@ -270,7 +272,7 @@ function occupiedOn(positions: readonly unknown[], workcell: string): Record<str
 /** The population as the Link's machines (workcell__link.tsx:16-22): this machine first, {id (its Workcell ref), self, sessions}, then
  * each declared remote, {id, state, why (the owner's detail), in (declared, so in the link), sessions — only where its gateway answered:
  * an unreachable or refused machine reports none}. Null when the reading carries no remotes. */
-export function linkMachines(population: unknown, here: string | undefined): Record<string, Value | null | readonly unknown[]>[] | null {
+export function linkMachines(population: unknown, here: string | undefined, endpoints: ReadonlyMap<string, string> = new Map()): Record<string, Value | null | readonly unknown[]>[] | null {
   if (!isObj(population) || !Array.isArray(population.remotes)) return null
   const positions = Array.isArray(population.positions) ? population.positions : []
   const self = here ?? str(population.local_workcell_ref)
@@ -278,16 +280,26 @@ export function linkMachines(population: unknown, here: string | undefined): Rec
   for (const remote of population.remotes) {
     if (!isObj(remote) || !str(remote.workcell_ref) || remote.workcell_ref === self) continue
     const state = linkState(remote)
-    machines.push({id: String(remote.workcell_ref), in: true, ...(state ? {state} : {}), ...(str(remote.detail) ? {why: String(remote.detail)} : {}),
+    const endpoint = endpoints.get(String(remote.workcell_ref))
+    machines.push({id: String(remote.workcell_ref), in: true, ...(endpoint ? {endpoint} : {}), ...(state ? {state} : {}), ...(str(remote.detail) ? {why: String(remote.detail)} : {}),
       ...(state === 'answered' || state === 'limited' ? {sessions: occupiedOn(positions, String(remote.workcell_ref))} : {})})
   }
   return machines
 }
 
+/** The declared gateway endpoints (aikit.gateway-remotes/v1 `remotes[]`), by Workcell ref: each machine's websocket bind. */
+export function remoteEndpoints(remotes: unknown): Map<string, string> | null {
+  if (!isObj(remotes) || !Array.isArray(remotes.remotes)) return null
+  const out = new Map<string, string>()
+  for (const remote of remotes.remotes) if (isObj(remote) && str(remote.workcell_ref) && str(remote.websocket_bind)) out.set(String(remote.workcell_ref), String(remote.websocket_bind))
+  return out
+}
+
 /** The Link's values: this machine's Workcell ref (`workcell status`, else AIKit's own word for it), and from `gateway who` the machines,
- * whether the link is joined (a remote is declared), and the light (a machine answered; dark when none did; hollow with none declared).
- * The lag, the clock, the endpoints, Share and the threads have no reading. */
-export function linkValues(answer: WorkcellAnswer, holds: ChainHolds, population?: WorkcellAnswer): Values {
+ * the light (a machine answered; dark when none did; hollow with none declared); from `gateway remote list` each machine's endpoint
+ * and whether the link is joined (an endpoint is declared — else, unread, a remote in `gateway who`). A declared machine `gateway who`
+ * does not name stands with its endpoint alone. The lag, the clock, Share and the threads have no reading. */
+export function linkValues(answer: WorkcellAnswer, holds: ChainHolds, population?: WorkcellAnswer, remotes?: WorkcellAnswer): Values {
   const values: Record<string, Value> = {}
   const view = viewHolds(holds, LINK_ID)
   put(values, 'sel', view.sel)
@@ -295,20 +307,25 @@ export function linkValues(answer: WorkcellAnswer, holds: ChainHolds, population
   const known = population?.status === 'answered' && isObj(population.value) ? population.value : null
   const here = answer.status === 'answered' && isObj(answer.value) ? str(answer.value.workcell_ref) : undefined
   put(values, 'here', here ?? (known ? str(known.local_workcell_ref) : undefined))
-  const machines = known ? linkMachines(known, here) : null
+  const endpoints = remotes?.status === 'answered' ? remoteEndpoints(remotes.value) : null
+  const machines = known ? linkMachines(known, here, endpoints ?? undefined) : null
   if (machines) {
+    for (const [ref, endpoint] of endpoints ?? []) if (!machines.some(machine => machine.id === ref)) machines.push({id: ref, in: true, endpoint})
     values.machines = JSON.stringify(machines)
-    const remotes = machines.filter(machine => !machine.self)
-    values.link = remotes.length > 0
-    if (remotes.length) values.light = remotes.some(machine => machine.state === 'answered') ? 'lit' : 'dark'
+    const others = machines.filter(machine => !machine.self)
+    values.link = endpoints ? endpoints.size > 0 : others.length > 0
+    if (others.length) values.light = others.some(machine => machine.state === 'answered') ? 'lit' : 'dark'
+  } else if (endpoints) {
+    values.link = endpoints.size > 0
+    values.machines = JSON.stringify([...(values.here ? [{id: values.here, self: true}] : []), ...[...endpoints].map(([id, endpoint]) => ({id, in: true, endpoint}))])
   }
   return values
 }
 
-export function linkBinding(answer: WorkcellAnswer, holds: ChainHolds, population?: WorkcellAnswer): DesignBinding {
+export function linkBinding(answer: WorkcellAnswer, holds: ChainHolds, population?: WorkcellAnswer, remotes?: WorkcellAnswer): DesignBinding {
   return {
     id: LINK_ID,
-    values: linkValues(answer, holds, population),
+    values: linkValues(answer, holds, population, remotes),
     standing: disabled(LINK_REFUSE),
     local: held(LINK_ID, ['sel', 'session']),
     writes: key => key in LINK_REFUSE || key.startsWith('in:'),

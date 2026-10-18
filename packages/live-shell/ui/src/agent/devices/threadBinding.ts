@@ -234,9 +234,10 @@ export interface ThreadInput {
   readonly holds: ChainHolds
 }
 
-/** The session the Thread shows: its pinned session, else the selection's. */
-export function shownSession(input: Pick<ThreadInput, 'selected' | 'holds'>): string | null {
-  const view = viewHolds(input.holds, THREAD_DEVICE_ID)
+/** The session the Thread shows: its pinned session, else the selection's. `id` keys the view's holds: the Factory Thread's own, or the
+ * page an Agent carries elsewhere (oneAgentBinding.ts; Central's Agent holds its thread page under its own id). */
+export function shownSession(input: Pick<ThreadInput, 'selected' | 'holds'>, id: string = THREAD_DEVICE_ID): string | null {
+  const view = viewHolds(input.holds, id)
   return view.pin === true && typeof view.session === 'string' ? view.session : input.selected
 }
 
@@ -245,10 +246,10 @@ const put = (values: Record<string, Value>, key: string, value: Value | null | u
 }
 
 /** The Thread's values: each key from the owner that reports it, the Agent's shared keys, and the view's own. */
-export function threadValues(input: ThreadInput): Values {
+export function threadValues(input: ThreadInput, id: string = THREAD_DEVICE_ID): Values {
   const values: Record<string, Value> = {}
-  const shown = shownSession(input)
-  const view = viewHolds(input.holds, THREAD_DEVICE_ID)
+  const shown = shownSession(input, id)
+  const view = viewHolds(input.holds, id)
   for (const [key, value] of Object.entries(VIEW_DEFAULTS)) values[key] = view[key] ?? value
   put(values, 'selected', input.selected)
   if (shown == null) return values
@@ -277,8 +278,8 @@ const THREAD_WRITES = new Set([...AGENT_KEYS, 'approve', 'hardStop', 'retry', 'd
 
 /** The Thread's binding: its values; the composer, Input and timing through the Agent's binding; Approve and Hard stop to the shown
  * session's encounter; the view's keys held here; every act no owner carries refused by name. */
-export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'write'> | null, ports: ThreadPorts): DesignBinding {
-  const shown = shownSession(input)
+export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'write'> | null, ports: ThreadPorts, id: string = THREAD_DEVICE_ID): DesignBinding {
+  const shown = shownSession(input, id)
   const reading = input.encounter?.reading
   const consent = pendingPermissions(reading)[0]
   const standing: Record<string, Standing> = Object.fromEntries(Object.entries(THREAD_REFUSED).map(([key, why]) => [key, {disabled: why}]))
@@ -286,15 +287,15 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
   if (consentWhy) standing.approve = {disabled: consentWhy}
   const stopWhy = shown == null ? THREAD_REFUSE.noSession : verbStanding(reading, 'cancel')
   if (stopWhy) standing.hardStop = {disabled: stopWhy}
-  if (shown != null && shown !== input.chainSession) standing.sent = {disabled: viewHolds(input.holds, THREAD_DEVICE_ID).pin === true ? THREAD_REFUSE.pinned : THREAD_REFUSE.notChain}
-  const hold = (key: string) => (value: Value | undefined) => holdView(THREAD_DEVICE_ID, key, value)
+  if (shown != null && shown !== input.chainSession) standing.sent = {disabled: viewHolds(input.holds, id).pin === true ? THREAD_REFUSE.pinned : THREAD_REFUSE.notChain}
+  const hold = (key: string) => (value: Value | undefined) => holdView(id, key, value)
   return {
-    id: THREAD_DEVICE_ID,
-    values: threadValues(input),
+    id,
+    values: threadValues(input, id),
     standing,
     local: {
       // Pinned, the Thread keeps the session it shows; unpinned, it follows the selection again.
-      pin: value => { holdView(THREAD_DEVICE_ID, 'session', value === true ? shown ?? undefined : undefined); holdView(THREAD_DEVICE_ID, 'pin', value === true) },
+      pin: value => { holdView(id, 'session', value === true ? shown ?? undefined : undefined); holdView(id, 'pin', value === true) },
       session: value => hold('session')(typeof value === 'string' ? value : undefined),
       selected: value => { if (typeof value === 'string' && value) ports.select(value) },
       toolRows: hold('toolRows'), subagents: hold('subagents'), messages: hold('messages'),

@@ -47,6 +47,7 @@ const {createTimeSpine} = await import('../src/timeline/timeSpine.ts')
 const vertical = await import('../src/central/centralVertical.ts')
 const rack = await import('../src/central/centralRack.ts')
 const devices = await import('../src/central/devices/CentralDevices.tsx')
+const {NaraConversationFace} = await import('../src/inhabitants/ConversationNaraFace.tsx')
 const model = await import('../src/central/devices/centralDeviceModel.ts')
 const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
 const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
@@ -92,8 +93,8 @@ const deviceMarkup = (markup, faceId) => {
 }
 
 test('no selected occasion: the chain is unchanged by a world with nothing retained', () => {
-  // Lane BC3: Search joins the agent's devices on the chain (DLW §18.4); the Packet stands only on a reached document's chain.
-  assert.match(todayMarkup, /data-central-devices="7"/, 'the seven device faces of the Central family stand on the chain while no document is reached')
+  // R4 (DLW §16.2): the family's chain faces are the Day, the Packet, Ground hygiene and Impact (REPLACED: lane BC3's seven).
+  assert.match(todayMarkup, /data-central-devices="4"/, 'the four chain faces of the Central family stand, reached document or not')
   const empty = worldWith([nowEvent], null)
   assert.equal(html(createElement(BaseDevicesDetail, {transport, world: empty, standing: null})), todayMarkup, 'a world with no retained occasion: unchanged')
   assert.equal(html(createElement(BaseDevicesDetail, {transport, standing: readyStanding})), todayMarkup, 'a Day standing with no occasion draws no Day: the die has no aperture')
@@ -126,19 +127,17 @@ test('a selected Day occasion with an uninitialised Day: the owner state is name
   assert.match(deviceMarkup(markup, 'day-die'), /data-device-light="off"/, 'the owner says the Day is not ready: off, not dark and not on')
 })
 
-test('a selected conversation occasion: the Nara device stands unbound with no identity; the owner gap shows whole and in its body', () => {
+test('a selected conversation occasion: the Nara face reads unbound with no identity; the owner gap shows whole and in its body (REPLACED: on the chain — the one Agent stands there now, r4-one-agent.test.mjs)', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport, world: worldWith([conversationEvent], conversationEvent)}))
-  const nara = deviceMarkup(markup, 'nara-conversation')
-  assert.match(nara, /no identity — disclosed absence/, 'no Nara identity is current: disclosed, not filled')
-  assert.match(nara, /data-device-light="off"/, 'unbound is a known standing: off, not on')
+  assert.ok(!markup.includes('data-device="central:nara-conversation"'), 'the Answer is no chain device: the Agent answers on the workspace chain')
+  assert.match(markup, /data-device="central:agent"/, 'the one Agent stands on the workspace chain')
   const face = central.faces.find(item => item.id === 'nara-conversation')
   const gap = vertical.conversationGap(CONVERSATION_SPACE)
   const device = model.centralDevice(face, {nara: {state: 'no-identity', conversation: CONVERSATION_SPACE, gap, expression: null, session: null}})
   assert.equal(device.values.conversation, CONVERSATION_SPACE, 'the device names this conversation')
   assert.match(html(createElement(DeviceView, {device, size: 'whole'})), /session-space/, 'whole: the expression row names the owner that owes the binding')
-  const entry = devices.centralDeviceEntries(chainInput({conversation: {project: null, expressionRef: null, conversation: CONVERSATION_SPACE}}))
-    .find(item => item.id === 'central:nara-conversation')
-  const full = html(entry.picture('full'))
+  // The face's hosted body names the gap where it is drawn (its Full), on or off a chain.
+  const full = html(createElement(NaraConversationFace, {transport, project: null, expressionRef: null, conversation: CONVERSATION_SPACE}))
   assert.match(full, new RegExp(`data-conversation-gap="${CONVERSATION_SPACE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), 'full: the body names this conversation')
 })
 

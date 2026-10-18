@@ -5,11 +5,10 @@ import {register} from 'node:module'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
-// Expressions' Device side is the Studio (manual §3 "In Expressions it is the studio that shapes the field"; §7; lock §2.4 Device =
-// Studio; world-shell-mockup.html:1432-1441): one plate through the device runtime whose columns are the holder table's sections
-// (inhabitants/sdk/semantics.ts STUDIO_SECTIONS), the field devices standing in them through DeviceView, the object and Scene devices
-// listed with their light, and the old device chain's controls ported — the Object chooser, Configure as the plate's settings, Deep
-// edit as its door, the rack, the chosen controls and the macros in the settings. Production modules in memory (the loader of
+// Expressions' Device side is the Studio (DLW §20.3; lock §0.3.7; R4): the Expression's rack drawn by its design (`expressions:studio`)
+// on the device runtime, the holder table's four chains (inhabitants/sdk/semantics.ts STUDIO_SECTIONS), then the Stage — the stage's
+// own controls the manual gives no home — beside it; the old plate's ported controls kept: Configure as the settings, Deep edit as its
+// door, the rack, the chosen controls and the macros in the settings; the selected symbol's controls exported for the scene's Clip view. Production modules in memory (the loader of
 // expressions-clip.test.mjs); the reading is a fixture shaped as the retained editor discloses it, not a native owner.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -82,85 +81,68 @@ const sectionOf = (html, id) => {
   return html.slice(start, next < 0 ? undefined : next)
 }
 
-test('the Studio\'s sections are the holder table\'s, in its order, each holding the catalogue devices the table names', () => {
+test('the Studio\'s chains are the holder table\'s four, in its order, each holding the catalogue devices the table names; what left is the clip\'s', () => {
   const sections = Model.studioSections()
   assert.deepEqual(sections.map(section => section.id), Semantics.STUDIO_SECTIONS.map(holder => holder.id))
-  assert.deepEqual(sections.map(section => section.title), ['Tools', 'Selected · the glyph', 'Formation', 'Material', 'Motion', 'Body · 3:3', 'Nara · M4', 'Capture'])
+  // REPLACED (R4; DLW §20.3; lock §0.3.7): ['Tools', 'Selected · the glyph', 'Formation', 'Material', 'Motion', 'Body · 3:3', 'Nara · M4', 'Capture'].
+  assert.deepEqual(sections.map(section => section.title), ['Material', 'Motion', 'Body', 'Nara'])
   assert.equal(sections.find(section => section.id === 'studio:body').note, 'M1+M2+M3')
   const placed = sections.flatMap(section => [...section.field, ...section.entity, ...section.scene].map(device => device.family))
-  assert.equal(new Set(placed).size, placed.length, 'a device stands in one section only')
+  assert.equal(new Set(placed).size, placed.length, 'a device stands in one chain only')
   const clipHeld = Semantics.DETAIL_CLIP_HOLDER.holds.map(ref => ref.split('/')[1])
   for (const device of Catalogue.deviceCatalogue()) {
     assert.ok(placed.includes(device.family) || clipHeld.includes(device.family), `${device.family} stands in the Studio or on the clip`)
   }
+  assert.deepEqual(sections.flatMap(section => [...section.entity, ...section.scene]), [], 'no object or Scene device in the Studio: those are the scene\'s Clip view\'s')
   assert.deepEqual(sections.find(section => section.id === 'studio:body').ql, ['torus', 'ql-instrument'])
   assert.deepEqual(Model.studioFieldFamilies(sections).sort(), Catalogue.deviceCatalogue().filter(device => device.scope === 'field').map(device => device.family).sort())
 })
 
-test('the Device side is one Studio plate: its head the owner\'s standing and the ported marks, its columns the eight sections', () => {
+test('the Device side is the Studio — its design on the runtime, the ported marks in its head — then the Stage beside it (REPLACED: one eight-section plate)', () => {
   const html = studio(reading({selection: ['e-stone'], devices: [{id: 'colour-1', family: 'colour'}, {id: 'sound-1', family: 'sound'}], dirty: true}))
-  assert.equal((html.match(/class="inst-plate"/g) ?? []).length, 1, 'one plate')
-  assert.match(html, /data-studio="sections"/)
-  // lane BT: the head is the panel kit's (DEVICE-UI §4.1); who owns the plate and where the work stands is the status bar's words
-  assert.match(html, /<header class="dp-head dp-head--plate" data-i="Studio\|Expressions engine · the stone · edited since save">.*?<span class="dp-title">Studio<\/span>/, 'the owner\'s standing, in its words')
+  assert.match(html, /data-studio="rack"/)
+  assert.match(html, /data-device="expressions:studio"[^>]*data-design="expressions:studio"/, 'the Studio stands as its design\'s device')
   for (const label of ['Configure: your rack, chosen controls, macros and the Scene', 'Deep edit: the Studio at full height', 'Read the retained editor again']) {
-    assert.match(html, new RegExp(`aria-label="${label}"`), `${label}: a mark on the plate's head`)
+    assert.match(html, new RegExp(`aria-label="${label}"`), `${label}: a mark on the Studio's head`)
   }
-  const order = Semantics.STUDIO_SECTIONS.map(holder => html.indexOf(`data-section="${holder.id}"`))
-  assert.ok(order.every((at, index) => at >= 0 && (index === 0 || at > order[index - 1])), 'the sections stand in the table\'s order')
-  assert.doesNotMatch(html, /native-detail-header|>Configure<|Deep edit ↗/, 'the old chrome is gone from the body')
-  // T-FRAME-CHROME-ONTO-PLATES (owner, 15 Oct: "the rack device view was meant to be the toolbar, which should be letting you curate the
-  // settings and macros"): the chosen controls — the frame's toolbelt — always stand, as the Studio's own Your controls, with + Parameter.
-  const yours = html.slice(html.indexOf('data-section="chosen"'))
-  assert.ok(html.indexOf('data-section="chosen"') > html.indexOf('data-section="studio:capture"'), 'Your controls stand after the eight sections')
-  assert.match(yours, /<button type="button" class="dp-action"[^>]*>\+ Parameter<\/button>/, 'the curation stands on the Studio, its browse one press away: the kit\'s action')
-  assert.equal((html.match(/aria-label="Chosen native controls"/g) ?? []).length, 1, 'once')
-  assert.doesNotMatch(yours, /<strong>Chosen controls<\/strong>|native-chosen-editor/, 'no box of its own in the section (lane BE): the section\'s title names it')
+  for (const id of ['studio:tools', 'studio:selected', 'studio:formation', 'studio:capture', 'chosen']) assert.ok(!html.includes(`data-section="${id}"`), `${id}: no longer a Studio section`)
+  // The stage's own controls the manual gives no home stand beside the Studio as the Stage (OPEN), never inside its design.
+  assert.match(html, /data-studio-stage="unplaced"/)
+  assert.ok(html.indexOf('data-studio-stage') > html.indexOf('data-device="expressions:studio"'), 'the Stage after the Studio')
+  assert.match(html, /data-section="stage:capture"/)
+  assert.match(html, /data-section="stage:view"/)
+  assert.doesNotMatch(html, /aria-label="Chosen native controls"/, 'Your controls are the Studio\'s macros now (its Macros page), not a section')
 })
 
-test('a field section stands its devices through the runtime, one shown behind its mark, the one on the rack first', () => {
+test('REPLACED — a chain\'s devices are rows of the Studio, not compact plates in sections: their light, On, Show and Pane are the design\'s (r4-studio.test.mjs)', () => {
   const html = studio(reading({devices: [{id: 'colour-1', family: 'colour'}]}))
-  const material = sectionOf(html, 'studio:material')
-  assert.match(material, /role="tablist" aria-label="Material: the devices it holds"/)
-  for (const name of ['Colour Field', 'Particles', '3D body &amp; depth', 'Shared Medium']) assert.match(material, new RegExp(`role="tab"[^>]*aria-label="${name}"`))
-  assert.match(material, /data-device-shown="expressions:colour"/, 'the device on the rack is shown first')
-  assert.match(material, /data-device="expressions:colour" data-device-size="compact"/, 'drawn by DeviceView, compact')
-  assert.match(material, /role="slider"/, 'its controls are real')
-  assert.match(material, /aria-label="Open Colour Field full size in a pane"/)
-  const tools = sectionOf(html, 'studio:tools')
-  assert.doesNotMatch(tools, /role="tablist"/, 'a section of one device has no selector')
-  assert.match(tools, /data-device="expressions:pointer"/)
-  const body = sectionOf(html, 'studio:body')
-  assert.match(body, /aria-label="QL field \/ PCM owner"/, 'Body · 3:3 holds the M1 field\/PCM owner beside the physics')
-  assert.match(body, /aria-label="Physics"/)
+  assert.doesNotMatch(html, /data-device-shown=/, 'no section shows a device behind its mark')
+  assert.doesNotMatch(html, /role="tablist" aria-label="Material: the devices it holds"/)
 })
 
-test('Selected · the glyph holds the Object chooser, the Force card\'s modes for the one object, and its object devices', () => {
-  const none = sectionOf(studio(reading()), 'studio:selected')
+test('REPLACED — the selected symbol\'s controls are the scene\'s Clip view\'s: SelectedObject keeps the Object chooser and the Force card\'s modes for it to mount', async () => {
+  const {SelectedObject} = await import(src('components/expressions/studio/ExpressionsStudio.tsx'))
+  const draw = r => renderToStaticMarkup(createElement(SelectedObject, {reading: r, selectEntity: noop, locked: false, send: noop}))
+  const none = draw(reading())
   assert.match(none, /<select class="dp-chooser" aria-label="Native editor selection">/, 'the kit\'s chooser')
   assert.match(none, /Choose one object to act on it\./)
-  const one = sectionOf(studio(reading({selection: ['e-stone'], devices: [{id: 'sound-1', family: 'sound'}]})), 'studio:selected')
+  const one = draw(reading({selection: ['e-stone']}))
   assert.match(one, /<option value="e-stone" selected="">the stone<\/option>/)
   assert.match(one, /role="group" aria-label="Force mode"/)
   assert.match(one, /aria-pressed="true"[^>]*>attract</, 'the object\'s own mode is lit')
-  assert.match(one, /data-family="sound" data-on-rack="true"/, 'a device on the rack says so')
-  assert.match(one, /aria-label="Add Meaning to the rack"/, 'one that is not can be added')
+  assert.doesNotMatch(studio(reading({selection: ['e-stone']})), /aria-label="Native editor selection"/, 'not on the Studio')
 })
 
-test('a section whose owner discloses nothing says so in one line; no work open, no field device and no default values', () => {
-  const html = studio(reading())
-  assert.match(sectionOf(html, 'studio:nara-m4'), /class="inst-section-line" data-i="\|No owner discloses the Nara layer[^"]*">No owner discloses the Nara layer/, 'one line; its whole words on the status line')
-  // Capture is no longer empty: the stage's capture moved here from the Expressions pane (14 Oct; expressions-pane-studio-stage.test.mjs).
-  assert.match(sectionOf(html, 'studio:capture'), /role="group" aria-label="Capture"/)
-  assert.doesNotMatch(sectionOf(html, 'studio:capture'), /No owner discloses capture/)
+test('no work open: the Studio stands unlit, no field device and no default value; the Stage says why its keys are off', () => {
   const closed = studio(null)
   assert.match(closed, /Expressions engine · no work is open/)
-  assert.doesNotMatch(closed, /data-device="expressions:/, 'no reading, no field device')
-  assert.match(sectionOf(closed, 'studio:material'), /Open a native Expression to see its Colour Field, Particles, 3D body &amp; depth, Shared Medium\./)
-  assert.doesNotMatch(closed, /aria-label="Deep edit: the Studio/, "no work, no door")
+  assert.doesNotMatch(closed, /data-device="expressions:(?!studio)/, 'no reading, no field device')
+  assert.match(closed, /data-device="expressions:studio"/)
+  assert.match(closed, /data-section="stage:capture"/)
+  assert.doesNotMatch(closed, /aria-label="Deep edit: the Studio/, 'no work, no door')
 })
 
-test('the settings are the old configuration, in the plate: Configure swaps the sections for your rack, chosen controls, macros, settings', async () => {
+test('the settings are the old configuration: Configure swaps the Studio for your rack, chosen controls, macros, settings', async () => {
   const {ExpressionsStudio} = await import(src('components/expressions/studio/ExpressionsStudio.tsx'))
   const r = reading()
   const props = {reading: r, request: async () => ({ok: false, error: 'fixture'}), selectEntity: noop, drafts: new Map(), onExpandGlyph: noop, glyphPresented: () => false,
@@ -169,22 +151,24 @@ test('the settings are the old configuration, in the plate: Configure swaps the 
   const open = renderToStaticMarkup(createElement(ExpressionsStudio, {...props, configure: true}))
   assert.match(open, /data-studio="settings"/)
   for (const id of ['rack', 'controls', 'macros', 'settings']) assert.match(open, new RegExp(`data-section="${id}"`))
-  assert.doesNotMatch(open, /data-section="studio:/, 'the settings stand in place of the sections')
+  assert.doesNotMatch(open, /data-device="expressions:studio"/, 'the settings stand in place of the Studio')
   assert.match(open, /aria-label="Close the settings"/)
-  const closed = renderToStaticMarkup(createElement(ExpressionsStudio, {...props, configure: false, own: [{id: 'chosen', title: 'Your controls', children: 'mine'}]}))
-  assert.match(closed, /data-section="studio:capture"[^]*data-section="chosen"/, 'the person\'s own controls stand after the sections')
+  const closed = renderToStaticMarkup(createElement(ExpressionsStudio, {...props, configure: false,
+    own: [{id: 'chosen', title: 'Your controls', children: 'mine'}, {id: 'macros', title: 'Macros', children: 'racks'}]}))
+  assert.doesNotMatch(closed, /data-section="chosen"/, 'your chosen controls are the Studio\'s macros, not drawn twice')
+  assert.match(closed, /data-section="stage:capture"[^]*data-section="macros"/, 'the person\'s macro racks stand after the Stage\'s own')
   const detail = await readFile(new URL('../src/components/NativeWorldDetail.tsx', import.meta.url), 'utf8')
   for (const id of ['rack', 'controls', 'macros', 'settings']) assert.ok(detail.includes(`{id:'${id}',`), `the ${id} column is composed from the old configuration`)
 })
 
-test('the Studio is ported, not recreated: the rack\'s drop, the owner paths, the runtime', async () => {
+test('the Studio is ported, not recreated: the drops, the owner paths, the runtime', async () => {
   const studioSource = await readFile(new URL('../src/components/expressions/studio/ExpressionsStudio.tsx', import.meta.url), 'utf8')
-  assert.match(studioSource, /from '\.\.\/\.\.\/\.\.\/frame\/devices\/InstrumentPlate'/, 'the plate is the runtime\'s')
+  assert.match(studioSource, /<DeviceView device=\{STUDIO_DEVICE\} size="compact" binding=\{binding\}/, 'the Studio is a device of the runtime, drawn by its design')
   assert.match(studioSource, /useFieldDevices\(FIELD_FAMILIES/, 'the field devices are the rack\'s and the pool\'s own')
-  assert.match(studioSource, /DEVICE_MIME/, 'a device dragged from the browser drops on the plate')
+  assert.match(studioSource, /DEVICE_MIME/, 'a device dragged from the browser drops on the Studio')
   assert.match(studioSource, /kind: 'device-add', family, after_id: afterIdFor/, 'and goes on the rack as the rack\'s own drop does')
-  assert.match(studioSource, /kind: 'force-mode', entity_id: entity\.id, value: mode/, 'the Force card\'s one write')
-  assert.match(studioSource, /editor\.apply\(\[deviceAddChange\(family\)\]\)/, 'the rack\'s + Device')
+  assert.match(studioSource, /editor\.apply\(\[chosenAddChange\(active\.drag\)\]\)/, 'a parameter dropped becomes a macro: the chosen controls\' own add')
+  assert.match(studioSource, /kind: 'force-mode', entity_id: entity\.id, value: mode/, 'the Force card\'s one write, kept for Clip view')
   const detail = await readFile(new URL('../src/components/NativeWorldDetail.tsx', import.meta.url), 'utf8')
   for (const part of ['<NativeDeviceRack reading={reading} request={request} onOpen={dispatchOpenDevice}/>', '<NativeChosenControls', '<NativeRackEditor', '<NativeSceneTransport source={sceneSource}/>']) {
     assert.ok(detail.includes(part), `${part} stays reachable in the settings`)

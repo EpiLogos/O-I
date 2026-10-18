@@ -6,12 +6,12 @@
 // packetBinding.ts — AIKit's prepared context, the one read the Packet widget and the transport share), shown only when it is prepared
 // for this session: the encounter's Send carries its own session's prepared context (encounter/session.ts send → reviewedContext), so
 // "an answer shows the packet that it came from" (DLW §18.3 Rules) and never another's. Pure: no React, no transport.
-import type {DesignBinding, Value, Values} from '../../frame/devices/designed'
+import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
 import type {EncounterReading, EncounterStatus} from '../../../../../../desktop/cradle/src/encounter/client'
 import {threadJson} from '../../agent/devices/threadBinding'
 import type {NaraState} from './centralDeviceModel'
-import {heldOf, pageBinding, type DesignWiring, type PageActs} from './pageBindings'
+import {heldOf, pageBinding, setHeld, type DesignWiring, type PageActs} from './pageBindings'
 
 export const ANSWER_DESIGN = 'central:nara-conversation'
 
@@ -117,4 +117,93 @@ export function answerBinding(id: string, input: AnswerInput, ports: AnswerPorts
   if (!bound || !ports.send) why.sent = NOT_BOUND
   if (!ports.bind) why.light = 'No conversation is selected. The binding resolves for the encounter\'s subject once one is.'
   return pageBinding(id, ANSWER_WIRING, answerValues(id, input), acts, why)
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the one Agent
+// R4 (DLW §16.1 "The agent that answers in a Central page and the agent that runs a Factory task is one Agent"; §19.4; lock §0.3.5
+// "Answer is the Agent on a page's chain"): on Central's workspace chain the Answer's owners draw the one Agent's design
+// (actuation:harness-model) — the Nara dialogue binding is its light, the roster's agent of the binding's role its name, the bound
+// session's exchange its thread, the encounter's Send its composer. The Agent's run settings have no owner for the Nara dialogue (the
+// binding carries its role, its expression and its session, nothing more), so each stands disabled with the operation it lacks. Its
+// Custody, Identity and Thread pages are composed on by agent/devices/oneAgentBinding.ts (CentralDevices.tsx).
+
+/** The Agent on Central: `central:agent` (the chain's device id; its design is Actuation's, actuation:harness-model). */
+export const CENTRAL_AGENT_ID = 'central:agent'
+
+/** One operation would carry every run setting of the dialogue's agent: AIKit's nara_dialogue binding, configured on its session. */
+const NARA_CONFIGURE = (what: string, field: string) =>
+  `${what}: no owner operation carries it yet — missing op: kernel:nara_dialogue {action: configure, session_ref, ${field}} (AIKit).`
+
+/** The Agent's own controls on Central that no owner takes, each with the operation it lacks (the host draws each disabled). */
+export const CENTRAL_AGENT_REFUSED: Readonly<Record<string, string>> = {
+  effort: NARA_CONFIGURE('Effort', 'effort: low | medium | high | max'),
+  cap: NARA_CONFIGURE('Budget', 'turn_budget: 1–40'),
+  input: NARA_CONFIGURE('Input', 'input: steer | queue'),
+  quantize: NARA_CONFIGURE('Interrupt', 'interrupt: now | next tool | next turn'),
+  heartbeat: NARA_CONFIGURE('Heartbeat', 'heartbeat: on | off'),
+  model: NARA_CONFIGURE('Model', 'model'),
+  harness: NARA_CONFIGURE('Harness', 'harness'),
+}
+
+/** The Agent's own readings on Central (actuation__harness-model.tsx keys): its light (the dialogue binding), its name (the roster's agent
+ * of the binding's role), its thread (the bound session's exchange), and the composer's words and the last line it sent (the view's).
+ * Model, harness, effort, budget, turns, input, interrupt, heartbeat and the needle have no reading for the dialogue: absent. */
+export function centralAgentValues(id: string, input: AnswerInput): Values {
+  const values: Record<string, Value> = {}
+  const state = input.nara?.state
+  if (state === 'bound') values.light = 'lit'
+  else if (state === 'unbound' || state === 'refused') values.light = 'dark'
+  const answering = (input.roster ?? []).filter(agent => agent.accepted).find(agent => agent.role === ROLE)
+  if (answering) values.agent = answering.name || answering.ref
+  if (state === 'bound') {
+    const thread = threadJson(input.observed, answering?.name ?? null)
+    if (thread !== undefined) values.thread = thread
+  }
+  const held = heldOf(id)
+  values.draft = held.draft ?? ''
+  if (held.sent !== undefined) values.sent = held.sent
+  return values
+}
+
+/** The roster ref of the agent that answers on Central (the dialogue binding's role), for its Identity page. */
+export function centralAgentRef(input: Pick<AnswerInput, 'roster'>): string | null {
+  return (input.roster ?? []).filter(agent => agent.accepted).find(agent => agent.role === ROLE)?.ref ?? null
+}
+
+/** The Agent's own binding on Central: the light binds the dialogue (op nara_dialogue resolve), `sent` is the session's next turn (the
+ * encounter's draft and Send — the thread pane's), the draft is the view's; every run setting refused with the op it lacks. */
+export function centralAgentBinding(id: string, input: AnswerInput, ports: AnswerPorts): DesignBinding {
+  const bound = input.nara?.state === 'bound'
+  const NOT_BOUND = 'The conversation is not bound: no session receives your words. Bind it (the light), on an expression with its identity.'
+  const NO_SUBJECT = 'No conversation is selected. The binding resolves for the encounter\'s subject once one is.'
+  const standing: Record<string, Standing> = Object.fromEntries(Object.entries(CENTRAL_AGENT_REFUSED).map(([key, why]) => [key, {disabled: why}]))
+  if (!bound || !ports.send) standing.sent = {disabled: NOT_BOUND}
+  if (!ports.bind) standing.light = {disabled: NO_SUBJECT}
+  return {
+    id,
+    values: centralAgentValues(id, input),
+    standing,
+    local: {draft: value => setHeld(id, 'draft', value === undefined ? undefined : String(value))},
+    writes: key => key === 'light' || key === 'sent' || key in CENTRAL_AGENT_REFUSED,
+    write: async (changes: readonly ValueChange[]) => {
+      for (const {key, value} of changes) {
+        if (key === 'light') {
+          if (value !== 'lit') throw Error('A face cannot unbind a conversation: AIKit holds the session, and the nara_dialogue op declares no release.')
+          if (!ports.bind) throw Error(NO_SUBJECT)
+          await ports.bind()
+          continue
+        }
+        if (key === 'sent') {
+          const text = String(value ?? '').trim()
+          if (!text) continue
+          if (!bound || !ports.send) throw Error(NOT_BOUND)
+          await ports.send(text)
+          setHeld(id, 'sent', text)
+          setHeld(id, 'draft', undefined)
+          continue
+        }
+        throw Error(CENTRAL_AGENT_REFUSED[key] ?? `${key} is a reading: its owner reports it; nothing here changes it.`)
+      }
+    },
+  }
 }

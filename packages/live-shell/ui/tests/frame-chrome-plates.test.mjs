@@ -134,11 +134,15 @@ test('the Studio stands only what no Expressions device carries; each carried co
     control('side/a:toolbelt', 'side', 'Toolbelt', {kind: 'toggle'}),
   ]}
   const kept = controlsAt(chrome, ['work', 'tools', 'scene', 'side', 'capture'], STUDIO_CARRIED).map(item => item.id)
-  assert.deepEqual(kept, ['save/a:native-save', 'rail/a:tool-select', 'scene/a:open-timeline'])
+  // R4: R2 retired the Clip side's SceneControls, so its scene ‹ › is carried by no device: the Stage stands it.
+  assert.deepEqual(kept, ['save/a:native-save', 'rail/a:tool-select', 'scene/a:previous', 'scene/a:open-timeline'])
   const model = await source('../src/components/expressions/studio/studioModel.ts')
   for (const id of STUDIO_CARRIED) assert.ok(model.includes(id), `${id} is named with its carrier`)
   const studio2 = await source('../src/components/expressions/studio/ExpressionsStudio.tsx')
-  assert.match(studio2, /NativeChosenControls reading=\{reading\} request=\{request\} configure=\{false\}/, 'Your controls always stand: the toolbelt\'s curation, + Parameter')
+  // REPLACED (R4): "Your controls always stand" as a NativeChosenControls section — your chosen controls are the Studio's macros, the
+  // toolbelt's curation and + Parameter on its design (studioBinding.ts `controls`, `add`); the frame's Nara control is its `on:nara`.
+  assert.match(studio2, /studioBinding\(\{reading, chains, nara\}/, 'the Studio\'s macros are your chosen controls')
+  assert.match(studio2, /controlsAt\(frame\.reading, 'nara'\)/, 'the frame\'s own Nara control')
 })
 
 test('the presentation: the frame\'s own controls only in a pane at full size; declared from the transport in every mode', async () => {

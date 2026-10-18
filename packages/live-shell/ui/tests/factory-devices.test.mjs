@@ -360,7 +360,8 @@ test('the Device side is these devices, wired to the door, the pane and the owne
   assert.match(view, /selectDevice\(chainDeviceId\(slotId\)\)/, 'choosing one shows it whole in the pool')
   assert.match(view, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: id, title\}\)/, 'opening one full puts it in a pane')
   assert.match(view, /const openFull = \(slotId: string, title: string\) => openDevice\(chainDeviceId\(slotId\), title\)/, 'by its chain id')
-  assert.match(view, /const openAgentThread = \(\) => openDevice\(THREAD_DEVICE_ID, 'Thread'\)/, 'the Agent\'s ⤢ opens its thread (§19.3): the Thread device\'s own Full (lane BF2)')
+  // REPLACED (R4): the Agent's ⤢ opened the Thread device's Full; it opens the one Agent full now, whose Full is its thread.
+  assert.match(view, /const openAgentThread = \(\) => openDevice\(chainDeviceId\('agent'\), 'Agent'\)/, 'the Agent\'s ⤢ opens the Agent full: its thread (§19.4 Full)')
   assert.match(view, /onThread: \(\) => shell\.openThread\(sessionRef\)/, 'the agent tab\'s conversation stays reachable from the chain picture')
   assert.match(view, /fireWritePath\(row, value, \{transport, binding\}\)/, 'a change goes to the row\'s own write path through the one resolver')
   assert.match(view, /chainDropDecision\(active\.drag\)/, 'the aperture law\'s drop receiver is kept')

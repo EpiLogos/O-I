@@ -60,11 +60,10 @@ const inForce = modes.resolveModeInForce(catalogue.catalogue.scales, {key: aeoli
 const none = {state: 'waiting', selection: null, line: 'No mode is in force.'}
 const scale = (over = {}) => ({id: 'n1', kind: 'scale', enabled: true, params: {tie: 'up'}, ...over})
 
-test('the keyboard\'s layout is one, held in the shell: the plate\'s choice moves every drawing of it', async () => {
+test('the keyboard\'s layout is one, held in the shell: a choice moves every drawing of it (REPLACED: the plate\'s write — the keyboard has no plate since R4)', async () => {
   assert.equal(layout.keyboardLayout(), 'janko')
-  const device = devices.keyboardDevice(layout.keyboardLayout(), layout.setKeyboardLayout)
-  await device.submit([{key: 'layout', value: 'Piano'}])
-  assert.equal(layout.keyboardLayout(), 'piano', 'the plate\'s write is the shell\'s layout')
+  layout.setKeyboardLayout('piano')
+  assert.equal(layout.keyboardLayout(), 'piano', 'the shell\'s layout')
   layout.setKeyboardLayout('janko')
 })
 
@@ -116,8 +115,8 @@ test('a set device\'s well is its stored values on their ranges — the owner\'s
   assert.match(renderToStaticMarkup(h(setPicture.SetDevicePicture, {marks: [], size: 'compact'})), /No stored value/)
 })
 
-test('published with its picture, a device draws it whole in the pool, full in a pane and on the rail', () => {
-  const device = devices.keyboardDevice('janko', layout.setKeyboardLayout)
+test('published with its picture, a device draws it whole in the pool, full in a pane and on the rail (REPLACED: the keyboard device — a stand-in device carries the same surface since R4)', () => {
+  const device = {id: 'live:surface-probe', family: 'live', rows: [], values: {}, face: {id: 'surface-probe', title: 'Surface', icon: 'keys', liveSemantic: 'key-map'}}
   door.publishDevice(device.id, {device, picture: () => h(JankoDevice, {plate: true, layout: 'janko', midi: false})})
   try {
     for (const view of ['whole', 'full', 'widget']) {
@@ -129,8 +128,10 @@ test('published with its picture, a device draws it whole in the pool, full in a
 })
 
 test('code reading: the keyboard, each note device and each set device publish their pictures; the torus publishes its binding and its own Full, and draws its design', async () => {
-  assert.match(await read('live/KeyboardOnChain.tsx'), /usePublishedDevice\(KEYBOARD_DEVICE_ID, device, picture\)/)
-  assert.match(await read('live/KeyboardOnChain.tsx'), /<JankoDevice plate layout=\{layout\} midi=\{false\} \/>/, 'the published surface is deaf to MIDI')
+  // REPLACED (R4): the keyboard published its plate and its picture; it is the part's input now, no device (PartInput), and its
+  // surface stands deaf to MIDI under the Torus's Full.
+  assert.doesNotMatch(await read('live/KeyboardOnChain.tsx'), /usePublishedDevice/)
+  assert.match(await read('live/TorusOnChain.tsx'), /<JankoDevice plate layout=\{layout\} midi=\{false\} \/>/, 'the Torus\'s surface is deaf to MIDI')
   assert.match(await read('live/noteDevices/NoteDeviceChain.tsx'), /usePublishedDevice\(instance\.id, instance, picture, binding\)/, 'a Scale plate publishes its design\'s binding with it')
   assert.match(await read('live/SetDeviceOnChain.tsx'), /usePublishedDevice\(id, device, picture\)/)
   const torus = await read('live/TorusOnChain.tsx')

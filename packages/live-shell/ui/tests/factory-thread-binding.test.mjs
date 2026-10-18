@@ -296,12 +296,14 @@ test('the Agent\'s light only reads: its standing names Power, so its activator 
 
 // ---- the chain ------------------------------------------------------------------------------------------------------------
 
-test('the chain draws the Thread beside the Agent on the session\'s conversation, and the Agent\'s ⤢ opens the Thread\'s Full', () => {
+test('the Thread is the one Agent\'s Full on the session\'s conversation (REPLACED: the Thread beside the Agent and its own pane — R4)', () => {
   const view = read('devices/FactoryDeviceChain.tsx')
-  assert.match(view, /slot\.id === 'agent' && thread && \(/, 'the Thread stands inside the Agent\'s slot (where its family admits the face)')
-  assert.match(view, /<DeviceView device=\{thread\} size="compact" binding=\{threadDesignBinding\}/)
-  assert.match(view, /publishDevice\(THREAD_DEVICE_ID, thread \? \{device: thread, binding: threadDesignBinding\} : null\)/, 'the pool, a pane and the rail read the same binding')
-  assert.match(view, /const openAgentThread = \(\) => openDevice\(THREAD_DEVICE_ID, 'Thread'\)/)
+  // Was: the Thread stood inside the Agent's slot as its own device, published on the door, and the Agent's ⤢ opened the Thread's Full.
+  // Now the Agent carries it as its Thread page (thread.*), composed onto the Agent's binding: one device, its Full the thread.
+  assert.doesNotMatch(view, /slot\.id === 'agent' && thread && \(/, 'no Thread stands beside the Agent')
+  assert.doesNotMatch(view, /publishDevice\(THREAD_DEVICE_ID, thread/, 'the Thread is not published apart from the Agent')
+  assert.match(view, /composeAgentBinding\(agentDesignBinding, \{custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding\}\)/, 'the Thread page on the Agent')
+  assert.match(view, /const openAgentThread = \(\) => openDevice\(chainDeviceId\('agent'\), 'Agent'\)/)
   assert.match(view, /threadTrackOf\(tracks, shell\.selectedTrackId, shell\.threadTrackId\)/, 'the session the thread pane shows (AgentThreadView.tsx)')
   assert.match(view, /useEncounterSessions\(observed\)/, 'through the pane\'s own encounter observer')
   assert.match(view, /\{observers\}/)
