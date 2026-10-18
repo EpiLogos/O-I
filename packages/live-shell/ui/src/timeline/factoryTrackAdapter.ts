@@ -23,7 +23,9 @@
 //   and each op leads with it (FACTORY_GRAIN), as does each receipt: a Stop pressed on one track says it stopped the harness, a
 //   Retry says it restarted the harness's stalled task, a seat says it started a NEW agent and names the one dragged. The mockup
 //   draws these per session (agent-shell-mockup.html:625); that needs a per-session owner op, which does not exist. No controls
-//   handed in (no carrier, no resolved binding), no actions: the grid stays read-only.
+//   handed in (no carrier, no resolved binding), no actions: the grid stays read-only. One act is finer: a track's Stop, where
+//   `sessionStop` is handed in, cancels that session's running turn on its own encounter owner (`encounter` cancel, as the
+//   Thread's Hard stop does), and its control says no grain; Stop All stays the harness's.
 // - takes (attempts) are absent: the attempts owner (`factory_attempt_read`) is addressed by run, and the sessions reading names
 //   none. Launch quantize and follow are absent: the armed timing is shell state, not a reading of the task.
 // - R3 (manual §19.1 "The mixer row", §16.6): each session's mixer row — Monitor is Watch (In · Auto · Off), the activator is
@@ -87,6 +89,7 @@ export interface FactorySettingsPort {
 }
 
 /** The ops the mixer's settings name. */
+export const FACTORY_SESSION_STOP_OP = 'encounter cancel — this session\'s running turn, on its own resident owner; the session stays and the harness\'s other sessions run on'
 export const FACTORY_TELEMETRY_OP = 'encounter_session_settings {track: {telemetry}} — the session\'s own Telemetry on AIKit, against the revision that stands'
 export const FACTORY_SOLO_OP = 'encounter_session_settings {track: {solo}} — the session\'s own Solo on AIKit, against the revision that stands'
 
@@ -110,6 +113,8 @@ export interface FactorySessionsReading {
   writeArm?: FactoryWriteArm
   /** The sessions' own settings, for every session's Telemetry and Solo. Absent: unread here, and both stand disabled. */
   settings?: FactorySettingsPort
+  /** Stop one session: cancel its running turn on its own encounter owner. Absent: a track's Stop is the harness's. */
+  sessionStop?: (sessionRef: string) => Promise<FactoryControlReceipt>
 }
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
@@ -315,7 +320,7 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     if (arm && arm.on !== null) for (const track of tracks) track.mix = {arm: arm.on}
     // Telemetry and Solo: each session's own settings, as the owner states them; a session unread draws them unread.
     const port = reading.settings
-    const sessionOf = new Map(agency.filter(track => !track.group).map(track => [trackKey(track), track.sessionRef]))
+    const sessionOf: Map<string, string> = new Map(agency.filter(track => !track.group).map(track => [trackKey(track), track.sessionRef]))
     if (port) {
       for (const track of tracks) {
         const session = sessionOf.get(track.id)
@@ -332,6 +337,12 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     set.lanes = {events, absent: {...FACTORY_LANES_ABSENT, ...(reading.events ? {} : {events: 'The temporal events are unread here: the sessions provider is not mounted above this pane.'})}}
     if (controls) set.actions = actionsFor(controls, tracks, clips, columns)
     if (arm) set.actions = {...set.actions, mixer: {arm: {op: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it', run: (_trackId, on) => arm.set(on)}}}
+    // A track's Stop is that session's own: its running turn cancelled on its encounter owner (Stop All stays the harness's).
+    const sessionStop = reading.sessionStop
+    if (sessionStop) set.actions = {...set.actions, stopTrack: {op: FACTORY_SESSION_STOP_OP, grain: null, run: trackId => {
+      const session = sessionOf.get(trackId)
+      return session ? sessionStop(session) : refused(`"${trackId}" is not a session of this work.`)
+    }}}
     if (port) {
       const own = (setting: 'telemetry' | 'solo') => (trackId: string, on: boolean) => {
         const session = sessionOf.get(trackId)
