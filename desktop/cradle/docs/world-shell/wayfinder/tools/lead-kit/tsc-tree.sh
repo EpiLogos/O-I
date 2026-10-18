@@ -7,6 +7,10 @@
 set -u
 TREE="$1"; OUT="$2"
 SEAT="$(git rev-parse --show-toplevel)"
+# The scratch dir is deleted before and after: refuse one inside the seat (18 Oct, `tsc-tree.sh HEAD packages/live-shell/ui` emptied
+# the seat's shell package, uncommitted work and node_modules with it).
+case "$OUT" in /*) OUT_ABS="$OUT";; *) OUT_ABS="$PWD/$OUT";; esac
+case "$OUT_ABS/" in "$SEAT"/*|"$(cd "$SEAT" && pwd -P)"/*) echo "tsc-tree.sh: refusing $OUT: the scratch dir is deleted, so it must lie outside the seat" >&2; exit 1;; esac
 ROOTS=(packages/live-shell/ui packages/expressions-boundary packages/oi-design-system desktop/cradle/src desktop/cradle/expressions-app desktop/cradle/documents desktop/cradle/kernel/src/expression_blueprint_sixfold.json shared-field suite/configuration)
 rm -rf "$OUT"; mkdir -p "$OUT"
 git -C "$SEAT" archive "$TREE" "${ROOTS[@]}" | tar -x -C "$OUT"
