@@ -17,8 +17,8 @@
 // [from, to, basis ('jung', 'inferred' or 'site')]; `subject` is the id of the node the graph is drawn from. The sample readings sit
 // in the defaults below. A reading that the owner does not report is never drawn: the well names it ("No reading of the places"). The
 // filters that only narrow the globe (scope, whole field, relation) narrow when they are reported and leave it whole when they are not.
-import {useMemo} from 'react'
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing} from '../../sdk/panel'
+import {useMemo, type ReactNode} from 'react'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './atlas-earth__globe-engine.css'
 
@@ -492,6 +492,128 @@ function GraphDisplay({v, set, standing, w, h, size}: {v: V; set?: Put; standing
 }
 const WorldDisplay = (props: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) => (strOf(props.v, 'view') === 'graph' ? <GraphDisplay {...props} /> : <SpaceDisplay {...props} />)
 
+// ---------------------------------------------------------------- the body you build (manual §17.2 "Build a planet", "Your system")
+//
+// Owner, to be built (T-WORLDS §5): a body record per world, `aikit.world-body/v1` on the register's root space, written as a wiki-facts
+// BodySet with CAS (ai-kit knowledge_wiki_facts.rs beside PlaceSet; kernel construction.rs dispatch), drawn by a pure generator through
+// the Earth's texture seam (projections/atlas/src/globe/body.ts). Until it reads, the host stands these controls disabled with that reason.
+// Value keys: `body` ('own' | 'earth' | 'other'), `bodyName`, `seed` (u32), `seaLevel`, `continents`, `relief`, `coast`, `warmth`,
+// `moisture`, `iceCaps`, `atmosphere`, `clouds` (0–1 each but continents 0.6–3.6), `tilt` (degrees), `placeKind`, `locations` (JSON
+// {id, name, lat, lon, kind}), and the act `reroll`. The picture below is the design's own preview of a seed: the same settings, a
+// coarse value-noise body, so a person sees what each control does; the shell draws the real body with the atlas's globe.
+
+const BODY_CHOICES = [{value: 'own', label: 'Your world'}, {value: 'earth', label: 'Earth'}, {value: 'other', label: 'Another world'}] as const
+const COASTS = [{value: 'smooth', label: 'Smooth'}, {value: 'fjord', label: 'Fjord'}, {value: 'archipelago', label: 'Archipelago'}] as const
+const PLACE_KINDS = [{value: 'place', label: 'Place'}, {value: 'palace', label: 'Palace'}, {value: 'portal', label: 'Portal'}, {value: 'route', label: 'Route'}] as const
+const GIVEN = 'Earth is given: you place things on it, and its land stays as it is.'
+const READ_ONLY = 'Another world’s body is its owner’s: you see what they show.'
+
+/** Value noise on the unit sphere, seeded: a hash at the lattice corners, smoothly blended. */
+function hash3(seed: number, x: number, y: number, z: number): number {
+  let h = (seed ^ Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(z, 2147483647)) >>> 0
+  h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295
+}
+function noise3(seed: number, x: number, y: number, z: number): number {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), s = (t: number) => t * t * (3 - 2 * t)
+  const u = s(x - xi), w = s(y - yi), t = s(z - zi), mix = (a: number, b: number, k: number) => a + (b - a) * k
+  const c = (dx: number, dy: number, dz: number) => hash3(seed, xi + dx, yi + dy, zi + dz)
+  return mix(mix(mix(c(0, 0, 0), c(1, 0, 0), u), mix(c(0, 1, 0), c(1, 1, 0), u), w), mix(mix(c(0, 0, 1), c(1, 0, 1), u), mix(c(0, 1, 1), c(1, 1, 1), u), w), t)
+}
+function fbm(seed: number, x: number, y: number, z: number, octaves: number, rough: number): number {
+  let sum = 0, amp = 1, norm = 0, f = 1
+  for (let o = 0; o < octaves; o++) { sum += amp * noise3(seed + o * 101, x * f, y * f, z * f); norm += amp; amp *= rough; f *= 2.02 }
+  return sum / norm
+}
+
+interface BodyLook {seed: number; sea: number; continents: number; relief: number; coast: string; warmth: number; moisture: number; ice: number; atmosphere: number; clouds: number; tilt: number}
+function lookOf(v: V): BodyLook | undefined {
+  const seed = numOf(v, 'seed'), sea = numOf(v, 'seaLevel'), continents = numOf(v, 'continents'), relief = numOf(v, 'relief'), coast = strOf(v, 'coast')
+  const warmth = numOf(v, 'warmth'), moisture = numOf(v, 'moisture'), ice = numOf(v, 'iceCaps'), atmosphere = numOf(v, 'atmosphere'), clouds = numOf(v, 'clouds'), tilt = numOf(v, 'tilt')
+  if ([seed, sea, continents, relief, warmth, moisture, ice, atmosphere, clouds, tilt].some(x => x === undefined) || !coast) return undefined
+  return {seed: seed!, sea: sea!, continents: continents!, relief: relief!, coast, warmth: warmth!, moisture: moisture!, ice: ice!, atmosphere: atmosphere!, clouds: clouds!, tilt: tilt!}
+}
+/** Height at a point of the sphere, 0–1, and whether it stands above the sea. */
+function heightAt(look: BodyLook, x: number, y: number, z: number): number {
+  const k = look.continents * 1.1, detail = look.coast === 'fjord' ? .62 : look.coast === 'archipelago' ? .7 : .48
+  const base = fbm(look.seed, x * k + 7, y * k + 7, z * k + 7, look.coast === 'smooth' ? 3 : 5, detail)
+  return clampTo(0, 1, .5 + (base - .5) * (1 + look.relief * 1.6))
+}
+const isLand = (look: BodyLook, height: number) => height > .28 + look.sea * .44
+
+interface Location {readonly id: string; readonly name: string; readonly lat: number; readonly lon: number; readonly kind?: string}
+const locationsOf = (v: V): readonly Location[] | undefined => json<Location[] | undefined>(v, 'locations', undefined)
+const unit = (lat: number, lon: number) => ({x: Math.cos(lat * D2R) * Math.cos(lon * D2R), y: Math.sin(lat * D2R), z: Math.cos(lat * D2R) * Math.sin(lon * D2R)})
+/** Where a location is drawn: its own point when that is land, else the nearest shore within 20°, said so; the point itself is never changed. */
+function drawnAt(look: BodyLook, at: Location): {lat: number; lon: number; shore: boolean} {
+  const here = unit(at.lat, at.lon)
+  if (isLand(look, heightAt(look, here.x, here.y, here.z))) return {lat: at.lat, lon: at.lon, shore: false}
+  for (let r = 2; r <= 20; r += 2) for (let a = 0; a < 360; a += 30) {
+    const lat = clampTo(-89, 89, at.lat + r * Math.sin(a * D2R)), lon = at.lon + r * Math.cos(a * D2R), q = unit(lat, lon)
+    if (isLand(look, heightAt(look, q.x, q.y, q.z))) return {lat, lon, shore: true}
+  }
+  return {lat: at.lat, lon: at.lon, shore: true}
+}
+
+const SEA = 'color-mix(in srgb, var(--sel) 46%, var(--bg-0))', SEA_DEEP = 'color-mix(in srgb, var(--sel) 30%, var(--bg-0))'
+const LAND_WET = 'color-mix(in srgb, var(--green) 62%, var(--bg-1))', LAND_DRY = 'color-mix(in srgb, var(--honey) 58%, var(--bg-1))'
+const ICE = 'color-mix(in srgb, var(--text) 82%, var(--sel))', CLOUD = 'color-mix(in srgb, var(--text) 70%, transparent)'
+
+function BodyArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
+  const look = lookOf(v), which = strOf(v, 'body'), cx = w / 2, cy = h / 2, R = Math.min(w, h) * .42
+  if (which === 'earth') return <text x={cx} y={cy} textAnchor="middle" className="dp-ink-dim">Earth is given: see Space</text>
+  if (!look) return <Gaps gaps={['the body']} x={cx} y={cy} centred size={size} />
+  const n = size === 'big' ? 72 : size === 'whole' ? 46 : 30, cell = (2 * R) / n, cells: ReactNode[] = [], cloud: ReactNode[] = []
+  const lit = {x: -.55, y: .35, z: .76}
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const xm = -1 + (i + .5) * 2 / n, ym = 1 - (j + .5) * 2 / n, r2 = xm * xm + ym * ym
+    if (r2 >= 1) continue
+    const zm = Math.sqrt(1 - r2), tilt = look.tilt * D2R
+    // The body seen from its equator, its axis leaned by the tilt: rotate the view point back into the body's frame.
+    const bx = xm * Math.cos(tilt) + ym * Math.sin(tilt), by = -xm * Math.sin(tilt) + ym * Math.cos(tilt), bz = zm
+    const height = heightAt(look, bx, by, bz), land = isLand(look, height), polar = Math.abs(by) > 1 - look.ice * .45
+    const wet = clampTo(0, 1, look.moisture * 1.2 - (look.warmth - .5) * .6 + (fbm(look.seed + 9, bx * 3, by * 3, bz * 3, 2, .5) - .5))
+    const fill = polar ? ICE : land ? (wet > .5 ? LAND_WET : LAND_DRY) : height < .2 + look.sea * .3 ? SEA_DEEP : SEA
+    const shade = .45 + .55 * Math.max(0, xm * lit.x + ym * lit.y + zm * lit.z)
+    const x = cx - R + i * cell, y = cy - R + j * cell
+    cells.push(<rect key={`${i}.${j}`} x={x} y={y} width={cell + .4} height={cell + .4} fill={fill} opacity={shade} />)
+    if (fbm(look.seed + 51, bx * 2.4, by * 2.4, bz * 2.4, 3, .55) > 1 - look.clouds * .55) cloud.push(<rect key={`c${i}.${j}`} x={x} y={y} width={cell + .4} height={cell + .4} fill={CLOUD} opacity={.55 * shade} />)
+  }
+  const locations = locationsOf(v) ?? [], pin = (lat: number, lon: number) => {
+    const q = unit(lat, lon), t = look.tilt * D2R, xm = q.x * Math.cos(t) - q.y * Math.sin(t), ym = q.x * Math.sin(t) + q.y * Math.cos(t)
+    return q.z > 0 ? {x: cx + R * xm, y: cy - R * ym} : undefined
+  }
+  const axis = {dx: Math.sin(look.tilt * D2R) * (R + 8), dy: Math.cos(look.tilt * D2R) * (R + 8)}
+  return <g>
+    <circle cx={cx} cy={cy} r={R + 1 + look.atmosphere * 4} fill="none" stroke="var(--sel)" strokeOpacity={.15 + look.atmosphere * .45} strokeWidth={1 + look.atmosphere * 3} />
+    {cells}{cloud}
+    <line x1={cx - axis.dx} y1={cy + axis.dy} x2={cx + axis.dx} y2={cy - axis.dy} className="dp-faint" strokeDasharray="2 3" />
+    {locations.map(at => { const d = drawnAt(look, at), p = pin(d.lat, d.lon); return p && <g key={at.id}>
+      <circle cx={p.x} cy={p.y} r={2.4} fill={d.shore ? 'none' : 'var(--accent)'} stroke="var(--accent)" strokeWidth={1} />
+      {size !== 'compact' && size !== 'tile' && <text x={p.x > cx ? p.x - 4 : p.x + 4} y={p.y + 3} textAnchor={p.x > cx ? 'end' : 'start'} className="dp-ink"
+        style={{fontSize: SIZES[size].font, paintOrder: 'stroke', stroke: 'var(--dp-well)', strokeWidth: 3}}>{at.name}{d.shore ? ' · shore' : ''}</text>}
+    </g> })}
+  </g>
+}
+
+function BodyDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
+  return <Display w={w} h={h} label="Your body" corner={strOf(v, 'bodyName') ?? NONE}
+    does="Your planet from its settings and its seed. A location keeps its position; where that spot is now sea it is drawn on the nearest shore, hollow.">
+    <BodyArt v={v} w={w} h={h} size={size} />
+  </Display>
+}
+
+/** A body control's standing: Earth's land and another world's are not yours to change. */
+const bodyWhy = (v: V): string | undefined => (strOf(v, 'body') === 'earth' ? GIVEN : strOf(v, 'body') === 'other' ? READ_ONLY : undefined)
+const pct = (x: number) => `${Math.round(x * 100)} %`
+const bodyDial = (p: ViewProps, key: string, label: string, does: string, def: number, scale = {min: 0, max: 1}, format: (x: number) => string = pct) =>
+  <Dial {...stand(p, key, bodyWhy(p.v))} key={key} label={label} does={does} value={numOf(p.v, key) ?? NaN} def={def} scale={scale} format={format} onChange={x => p.set(key, Math.round(x * 100) / 100)} />
+const locationRows = (v: V): RowItem[] => {
+  const all = locationsOf(v), look = lookOf(v)
+  if (!all) return [{id: 'none', name: 'No reading of the locations', light: 'unknown'}]
+  return all.map(at => { const d = look ? drawnAt(look, at) : undefined; return {id: at.id, name: at.name, light: d ? (d.shore ? 'dark' : 'lit') : 'unknown', tone: 'value', note: d?.shore ? 'shore' : at.kind ?? 'place'} })
+}
+
 // ---------------------------------------------------------------- the pane: the material itself
 
 const MARK = {exact: 'solid', region: 'outline'} as const
@@ -598,15 +720,25 @@ export const design: DesignedDevice = {
       ],
     }),
     subject: 'quaternity',
+    // The body you build (the design's own sample: no owner keeps one yet).
+    body: 'own', bodyName: 'Teraphim', seed: 20261018, seaLevel: .5, continents: 1.7, relief: .55, coast: 'smooth', warmth: .58, moisture: .6, iceCaps: .3,
+    atmosphere: .6, clouds: .35, tilt: 18, placeKind: 'place',
+    locations: JSON.stringify([
+      {id: 'study', name: 'The study', lat: 22, lon: 10, kind: 'place'}, {id: 'book', name: 'The book', lat: -8, lon: 34, kind: 'palace'},
+      {id: 'oi', name: 'O:I', lat: 38, lon: -18, kind: 'place'}, {id: 'mara', name: 'To Mara’s world', lat: -30, lon: -6, kind: 'portal'},
+    ]),
   },
   fixtures: {
     'Whole Earth, all time': {},
     'Year 450 in the window': {allTime: false, cursor: toU(450)},
     'Region, one scope': {scale: 'region', scope: 'this reading', selected: 'athens'},
     'Graph, three steps': {view: 'graph', depth: 3, skyAnchors: true},
+    'A wetter, rougher body': {seed: 7, seaLevel: .38, continents: 3.1, relief: .9, coast: 'fjord', moisture: .85, warmth: .4, iceCaps: .55, clouds: .6, tilt: 32},
+    'Earth chosen': {body: 'earth'},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
-      'places', 'sky', 'graph', 'subject'].map(k => [k, undefined])),
+      'places', 'sky', 'graph', 'subject', 'body', 'bodyName', 'seed', 'seaLevel', 'continents', 'relief', 'coast', 'warmth', 'moisture', 'iceCaps', 'atmosphere', 'clouds', 'tilt',
+      'placeKind', 'locations'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -629,8 +761,39 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => <Panel title="World" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'space', label: 'Space'}, {id: 'graph', label: 'Graph'}]} page={p.page === 'graph' ? 'graph' : 'space'} onPage={p.setPage}>
-    {p.page !== 'graph' ? <>
+    pages={[{id: 'space', label: 'Space'}, {id: 'body', label: 'Body'}, {id: 'graph', label: 'Graph'}]} page={p.page === 'graph' || p.page === 'body' ? p.page : 'space'} onPage={p.setPage}>
+    {p.page === 'body' ? <>
+      <Band>
+        <Section width={198}><BodyDisplay v={p.v} w={186} h={146} size="whole" /></Section>
+        <Section label="Body" width={96}>
+          <Chooser {...st(p, 'body')} wide label="Body" does="The body to show and build: your world, Earth, or a world you visit." value={strOf(p.v, 'body') ?? ''} options={BODY_CHOICES} onChange={x => p.set('body', x)} />
+          <Readout label="seed" value={numOf(p.v, 'seed')} does="The seed your body grows from. The same seed and settings give the same body." />
+          <Action {...stand(p, 'reroll', bodyWhy(p.v))} label="Reroll" does="A new body from the same settings. Every location keeps its name and its position." onPress={() => p.set('reroll', Date.now())} />
+        </Section>
+        <Section label="Landmass" cols={2} grow>
+          {bodyDial(p, 'seaLevel', 'Sea level', 'How much of the body lies under the sea.', .5)}
+          {bodyDial(p, 'continents', 'Continents', 'How many land masses: fewer and larger, or more and smaller.', 1.7, {min: .6, max: 3.6}, x => `${x.toFixed(1)}×`)}
+          {bodyDial(p, 'relief', 'Relief', 'How rugged the land rises.', .55)}
+          <Radio {...stand(p, 'coast', bodyWhy(p.v))} label="Coast" does="How the coast runs." value={strOf(p.v, 'coast') ?? ''} options={COASTS} stack onChange={x => p.set('coast', x)} />
+        </Section>
+      </Band>
+      <Band>
+        <Section label="Climate" width={150} cols={3}>
+          {bodyDial(p, 'warmth', 'Warmth', 'How warm the body runs: dry and gold, or green.', .58)}
+          {bodyDial(p, 'moisture', 'Moisture', 'How wet the land is.', .6)}
+          {bodyDial(p, 'iceCaps', 'Ice caps', 'How far the ice reaches from the poles.', .3)}
+        </Section>
+        <Section label="Sky" width={150} cols={3}>
+          {bodyDial(p, 'atmosphere', 'Atmosphere', 'How thick the air shows at the rim.', .6)}
+          {bodyDial(p, 'clouds', 'Clouds', 'How much cloud covers the body.', .35)}
+          {bodyDial(p, 'tilt', 'Tilt', 'How far the axis leans.', 18, {min: 0, max: 45}, x => `${Math.round(x)}°`)}
+        </Section>
+        <Section label="Locations" grow>
+          <Radio {...st(p, 'placeKind')} label="Place kind" does="What the next click on the body places." value={strOf(p.v, 'placeKind') ?? ''} options={PLACE_KINDS} onChange={x => p.set('placeKind', x)} />
+          <Rows does="Your locations. A dim light means its spot is sea on this body, so it is drawn on the nearest shore." size={3} items={locationRows(p.v)} />
+        </Section>
+      </Band>
+    </> : p.page !== 'graph' ? <>
       <Band>
         <Section width={198}><SpaceDisplay v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
         <Section label="Look" width={70}>

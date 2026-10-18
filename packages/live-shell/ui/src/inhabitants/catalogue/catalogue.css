@@ -23,8 +23,6 @@ html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
 .cat-rail { height: 230px; display: flex; flex-direction: column; }
 /* The reference devices' frames: the pool is the browser's width, the pane a pane, the rail the rail with its tiles. */
 .cat-views--ref { align-items: flex-start; }
-.cat-pool { width: 400px; padding: 6px; background: var(--bg-1, #33363b); border: 1px solid var(--line-strong, #3d4147); }
-.cat-pool > .dp { width: 100%; }
 .cat-pane--ref { width: 760px; height: 420px; padding: 0; }
 .cat-rail--ref { height: auto; min-height: 180px; }
 .cat-rail-tiles { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; }
