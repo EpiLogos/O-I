@@ -57,12 +57,31 @@ export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global
  breakAtEnd?:boolean;
  /** E06 slip: seconds into the scene's own evolution at which it starts (its property tracks read local time + entryOffset). Absent = 0. A timeline fact. */
  entryOffset?:number;
+ /** DLW §20.1 the scene as a clip: its colour on the grid and the ruler (a palette token or #rrggbb), whether it plays (absent = on),
+  * its ratio of hold to change, whether it refuses edits, and when its launch lands. Absent fields are the scene's defaults. */
+ clip?:SceneClip;
  view:{nativeScaffold?:'off'|'axis'|'grid';nativeCamera?:CameraOrbState;mode:'2d'|'3d';yaw:number;pitch:number;zoom:number;panX:number;panY:number};
  field:{background:string;palette:string[];material:Material;params:Record<string,number>};
  entities:Entity[];text:TextLayer[];
  composition:{blueprint?:SceneBlueprint;layout:string;plane:Plane;focus:'parallel'|'travelling';focusDuration:number;focusDwell?:number;carryTint:boolean;carryStation:boolean;frequencyDriver:'manual'|'focus'|'automation'};
  morph:{thetaRate:number;phiRate:number;thetaOffset:number;phiOffset:number;law:'theta'|'product'|'sum'|'beat';depth:number;dwell:number};
  automation:AutomationLane[];
+}
+export const SCENE_SIGNATURES=['5:3','4:2','3:3','2:1'] as const;
+export const SCENE_LAUNCH_QUANTIZE=['global','now','beat','scene'] as const;
+export interface SceneClip {colour?:string;enabled?:boolean;signature?:(typeof SCENE_SIGNATURES)[number];locked?:boolean;quantize?:(typeof SCENE_LAUNCH_QUANTIZE)[number]}
+/** The scene-as-clip settings' law: closed fields, each in its own words. Null when sound, else the refusal. */
+export function sceneClipRefusal(value:unknown):string|null{
+ if(value===undefined)return null;
+ if(!value||typeof value!=='object'||Array.isArray(value))return 'The scene\'s clip settings are an object.';
+ const c=value as Record<string,unknown>;
+ for(const key of Object.keys(c))if(!['colour','enabled','signature','locked','quantize'].includes(key))return `A scene has no clip setting ${key}.`;
+ if(c.colour!==undefined&&!(typeof c.colour==='string'&&/^(var\(--[a-z0-9-]{1,40}\)|#[\da-f]{6})$/i.test(c.colour)))return 'A scene\'s colour is a palette colour.';
+ if(c.enabled!==undefined&&typeof c.enabled!=='boolean')return 'A scene plays or does not (true or false).';
+ if(c.locked!==undefined&&typeof c.locked!=='boolean')return 'A scene is locked or not (true or false).';
+ if(c.signature!==undefined&&!(SCENE_SIGNATURES as readonly unknown[]).includes(c.signature))return `A scene\'s ratio of hold to change is one of ${SCENE_SIGNATURES.join(', ')}.`;
+ if(c.quantize!==undefined&&!(SCENE_LAUNCH_QUANTIZE as readonly unknown[]).includes(c.quantize))return `A scene\'s launch lands at one of ${SCENE_LAUNCH_QUANTIZE.join(', ')}.`;
+ return null;
 }
 export interface Journey {shared?:SharedSettings;savedScenes?:Record<string,Scene>;schema:'oi.journey';version:1;id:string;name:string;description:string;loop:boolean;scenes:Scene[];updatedAt:string;
  /** E12 journey markers and E13 loop region: journey-level presentation, persisted with the envelope. */
@@ -190,6 +209,7 @@ export function validateJourney(value:unknown):Journey {
  for(const s of j.scenes){if(s.pointerScope!==undefined&&!['local','global'].includes(s.pointerScope))throw new Error('Invalid pointer scope.');if(s.propertyTakeRange&&(!Number.isFinite(s.propertyTakeRange.start)||!Number.isFinite(s.propertyTakeRange.end)||s.propertyTakeRange.start<0||s.propertyTakeRange.end<=s.propertyTakeRange.start||s.propertyTakeRange.end>3600))throw new Error('Invalid property take interval');if(s.toolbelt!==undefined)s.toolbelt=validateWorkspace({version:1,appearance:'scene',entries:s.toolbelt}).entries;if(s.propertyTracks!==undefined)s.propertyTracks=validateTracks(s.propertyTracks);if(s.transitionSpec!==undefined){const spec=validateTransitionSpec(s.transitionSpec);if(spec)s.transitionSpec=spec;else delete s.transitionSpec;}if(s.breakAtEnd!==undefined){if(typeof s.breakAtEnd!=='boolean')throw new Error('A loop exit is on or off.');if(!s.breakAtEnd)delete s.breakAtEnd;}s.engine={...DEFAULT_ENGINE_SETTINGS,...s.engine};if(!safeId(s.id)||ids.has(s.id)||!str(s.name,160)||!str(s.character)||!finite(s.duration,SCENE_DURATION_MIN,SCENE_DURATION_MAX)||!finite(s.transition,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX))throw new Error('Invalid or duplicate scene.');
   // The document rule is 0 to SCENE_DURATION_MAX. A later trim or split may leave the entry past the scene's new end, which is still a valid start into the evolution; the gesture keeps it inside the duration (sceneWorkflow.slipScene).
   if(s.entryOffset!==undefined&&!finite(s.entryOffset,0,SCENE_DURATION_MAX))throw new Error('Invalid scene entry offset.');ids.add(s.id);
+  {const refused=sceneClipRefusal(s.clip);if(refused)throw new Error(refused);}
   if(!s.view)s.view={mode:'2d',yaw:0,pitch:0,zoom:1,panX:0,panY:0};
   if(s.view.nativeScaffold!==undefined&&!['off','axis','grid'].includes(s.view.nativeScaffold))throw new Error('Invalid native scaffold.');
   if(!['2d','3d'].includes(s.view.mode)||!finite(s.view.yaw,-1000,1000)||!finite(s.view.pitch,-1000,1000)||!finite(s.view.zoom,.01,100)||!finite(s.view.panX,-10,10)||!finite(s.view.panY,-10,10))throw new Error('Invalid scene framing.');

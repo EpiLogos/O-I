@@ -282,7 +282,9 @@ test('Expressions: the presented scene maps onto clip:expressions — its pacing
   assert.deepEqual(parse(v, 'lanes')[0], {id: 'l1', device: 'Field', target: 'field.viscosity', type: 'oscillator', wave: 'sine', rate: 0.25, phase: 0, min: 0.2, max: 0.8,
     blend: 'replace', duration: 4, delay: 0, loop: 'loop', enabled: true})
   assert.equal(parse(v, 'layers')[0].heading, 'A moment')
-  for (const key of ['signature', 'locked', 'quantize', 'plate', 'active']) assert.equal(key in v, false, `${key} is not reported`)
+  for (const key of ['signature', 'plate']) assert.equal(key in v, false, `${key} is not reported`)
+  // The scene as a clip: unset, its settings stand at the scene's defaults (model.ts SceneClip).
+  assert.deepEqual([v.active, v.locked, v.quantize], [true, false, 'global'])
 })
 
 test('Expressions: an edit of a symbol\'s own controls is the owner\'s own change; Meaning is refused naming the change it needs', () => {
@@ -302,7 +304,7 @@ test('Expressions: an edit of a symbol\'s own controls is the owner\'s own chang
   assert.deepEqual(expressions.layerChanges(nativeReading, layers), [{kind: 'text-layer-set', layer_id: 't1', values: {kicker: 'Another moment'}}])
 })
 
-test('Expressions: a rename goes to the owner as one scene edit on the captured basis; the owner\'s refusal comes back in its words', async () => {
+test('Expressions: a rename and the scene\'s clip settings go to the owner as scene edits on the captured basis; the owner\'s refusal comes back in its words', async () => {
   const sent = []
   const request = async operation => { sent.push(operation); return operation.operation === 'scene-edit' ? {ok: true, reading: nativeReading} : {ok: false, error: 'The owner refused: stale basis'} }
   const binding = expressions.expressionsClipBinding({reading: nativeReading, request})
@@ -310,7 +312,11 @@ test('Expressions: a rename goes to the owner as one scene edit on the captured 
   assert.deepEqual(sent[0], {operation: 'scene-edit', basis: nativeReading.basis, intent_epoch: 3, native_selection: nativeReading.nativeSelection,
     intent: {operation: 'rename', scene_ref: 'scene:a', title: 'Dawn chorus'}})
   await assert.rejects(binding.write([{key: 'symbol', value: 'moon'}]), {message: 'The owner refused: stale basis'})
-  await assert.rejects(binding.write([{key: 'quantize', value: 'now'}]), /Quantize: no owner operation carries it yet — missing op: scene_launch_quantize_set/)
+  // The scene's clip settings go as one scene edit, as a rename does; Global returns the setting to the scene's default.
+  sent.length = 0
+  await binding.write([{key: 'quantize', value: 'now'}, {key: 'quantize', value: 'global'}, {key: 'locked', value: true}])
+  assert.deepEqual(sent.map(op => op.intent), [{operation: 'clip', scene_ref: 'scene:a', set: {quantize: 'now'}},
+    {operation: 'clip', scene_ref: 'scene:a', set: {quantize: null}}, {operation: 'clip', scene_ref: 'scene:a', set: {locked: true}}])
   assert.equal(binding.values['ar.rule'], 'ring', 'Arrange opens on the scene\'s last applied rule'); assert.equal(binding.values['ar.plane'], 'XY')
   assert.equal(expressions.expressionsClipBinding({reading: null, request}), null)
 })
