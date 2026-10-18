@@ -521,6 +521,10 @@ impl PreparedRead {
             | KernelOp::GatewayRemotesRead => true,
             KernelOp::FactoryOwner { request } => request.is_read(),
             KernelOp::SharedField { request } => crate::shared_field::is_read(request),
+            // Nara's practice reads (T-WORLDS W4): QL over what Central's owners read; none needs the World. A journey's
+            // opening and acts are prepared writes (owner_write.rs).
+            KernelOp::NaraJourney { request } => !request.is_write(),
+            KernelOp::NaraLivedContext { .. } | KernelOp::NaraElemental { .. } => true,
             _ => false,
         }
     }
@@ -826,6 +830,15 @@ impl PreparedRead {
                 )
                 .map(|outcome| outcome.result)
             }
+            KernelOp::NaraJourney { request } => KernelOpResult::NaraJourney {
+                data: crate::nara_journey::execute(&self.client, request)?,
+            },
+            KernelOp::NaraLivedContext { request } => KernelOpResult::NaraLivedContext {
+                data: crate::nara_lived_context::execute(&self.client, request)?,
+            },
+            KernelOp::NaraElemental { request } => KernelOpResult::NaraElemental {
+                data: crate::nara_elemental::execute(&self.client, request)?,
+            },
             KernelOp::FactoryBuildSnapshot {
                 project,
                 state_path,

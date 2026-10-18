@@ -114,7 +114,9 @@ export interface NativeComposedSource { schema: "oi.native-expression-composed-s
 /** The page owner's fields (kernel/src/page.rs `apply_field`): a Being's or Thing's ties, a Flow's World, View and Container, and
  * a note or a highlight added or taken away. */
 export type PageField = "title" | "colour" | "world" | "subject" | "kind" | "office" | "sources" | "place" | "anchor" | "expression"
-  | "layout" | "tone" | "view" | "container" | "launch" | "note.add" | "note.remove" | "highlight.add" | "highlight.remove";
+  | "layout" | "tone" | "view" | "container" | "launch" | "note.add" | "note.remove" | "highlight.add" | "highlight.remove"
+  /** A Flow's journey, as QL returned it (nara_journey.rs saves it; page.rs keeps it whole). */
+  | "journey";
 export type PageRequest =
   | { operation: "read"; location: CentralLocation }
   | { operation: "list"; path: string; limit?: number }
@@ -264,6 +266,12 @@ export type KernelOp =
   | {op:"nara_identity";request:import("../nara/identity/types").NaraIdentityRequest}
   | {op:"nara_voice";project:string;request:import("../nara/nativeVoice").NativeVoiceRequest}
   | {op:"nara_dialogue";project:string;request:import("../nara/nativeDialogue").NativeDialogueRequest}
+  /** A journey on its Flow page (kernel/src/nara_journey.rs): opened once, an act, or read. */
+  | {op:"nara_journey";request:import("../nara/journey").NaraJourneyRequest}
+  /** Nara's lived context from your pages and Day (kernel/src/nara_lived_context.rs). */
+  | {op:"nara_lived_context";request:import("../nara/livedContext").LivedContextRequest}
+  /** Your elemental map from your saved identity (kernel/src/nara_elemental.rs). */
+  | {op:"nara_elemental";request:import("../nara/elemental").NaraElementalRequest}
   | {op: "native_expression"; request: NativeExpressionRequest}
   | {op: "world_resolve"; world_id?: string; verify?: boolean}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
@@ -493,6 +501,9 @@ export type KernelOpResult =
   | {result: "nara_identity"; data: import("../nara/identity/types").NaraIdentityResult}
   | {result:"nara_voice";data:import("../nara/nativeVoice").NativeVoiceResult}
   | {result:"nara_dialogue";data:import("../nara/nativeDialogue").NativeDialogueResult|import("../nara/nativeDialogue").NativeCoordinateContextResult}
+  | {result:"nara_journey";data:import("../nara/journey").NaraJourneyResult}
+  | {result:"nara_lived_context";data:import("../nara/livedContext").LivedContextResult}
+  | {result:"nara_elemental";data:import("../nara/elemental").NaraElementalResult}
   | {result: "setup_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}

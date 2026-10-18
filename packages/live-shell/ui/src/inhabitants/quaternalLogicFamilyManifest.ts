@@ -17,8 +17,12 @@ import type {InhabitantManifest} from './manifest.ts'
  *   still waits, with its owner named.
  * - The torus lives in the retained M4 body's stage (the QL instrument
  *   presentation); the M3 clock/inscription is #281's packet — law today,
- *   not landed. Deck, chakra and the M1–M3 matrices have no shell-side
- *   owner. All wait.
+ *   not landed. The M1–M3 matrices have no shell-side owner and wait.
+ * - The Deck reads the open journey (`ql.nara-oracle-journey/v1`, the kernel's
+ *   nara_journey) and the Chakra your elements (`ql.nara-elemental-reading/v1`,
+ *   the kernel's nara_elemental): both cut (T-WORLDS W4), each held by the
+ *   Studio's Nara chain, your personal layer (manual §24.7), and by a Technē
+ *   instrument: the Deck by the Journey, the Chakra by the Timeline.
  *
  * §16 — four surfaces and nowhere else: this manifest is the family's whole
  * exposure; nothing renders from it until an owner lands. */
@@ -68,15 +72,21 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         id: 'deck',
         presentations: ['compact'],
         liveSemantic: 'device-instrument',
-        admission: 'waiting',
-        note: 'Deck work (quaternal tarot/i-ching decks) as device faces. No shell-side owner exists; waits for the QL family\'s declaration of its deck owners.',
+        // Your personal layer over the field (the Studio's Nara chain, manual §24.7) and Technē's Journey, beside the M3 clock whose
+        // codon names the card now.
+        heldBy: ['studio:nara', 'techne:m3'],
+        invariant: {generates: 'kernel:nara_journey'},
+        note: 'The open journey\'s reading (manual §22.4, §24.4): QL\'s continuing oracle journey (ql.nara-oracle-journey/v1), kept in its Flow page and read and acted on through the kernel\'s nara_journey (ql/devices/qlDeck.ts). A draw and a cast need your consent to chance, each time; the chance is the kernel\'s. With no journey open the device says so.',
       },
       {
         id: 'chakra',
         presentations: ['compact'],
         liveSemantic: 'device-instrument',
-        admission: 'waiting',
-        note: 'Chakra correspondences (the ten-body/nine-voice/chakra reading of the sky contract) as a device face. Waits for the QL family\'s correspondence owner.',
+        // Your personal layer over the field (the Studio's Nara chain, manual §24.7) and Technē's Timeline, beside the Sky whose date it
+        // follows.
+        heldBy: ['studio:nara', 'techne:m2'],
+        invariant: {generatesAbsent: 'Your elements are read, never written: the kernel\'s nara_elemental answers from your saved identity, and no owner operation takes a value back (lock §7).'},
+        note: 'Your centres\' elements (manual §22.5, M4.1): QL\'s elemental map of your saved identity (ql.nara-elemental-reading/v1) and its natal distribution, read through the kernel\'s nara_elemental (ql/devices/qlChakra.ts). Today\'s centres and routes are the scene\'s (ql.scene/v1), which no owner carries to the shell yet; the device says so.',
       },
       {
         id: 'm-prime-matrices',

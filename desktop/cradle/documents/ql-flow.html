@@ -270,6 +270,8 @@ var QlPlural = (() => {
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var stdin_exports = {};
   __export(stdin_exports, {
+    CONTAINER_FORMS: () => CONTAINER_FORMS,
+    ENTRY_KINDS: () => ENTRY_KINDS,
     FORMAT_VERSION: () => FORMAT_VERSION,
     RELATION_TYPES: () => RELATION_TYPES,
     Refusal: () => Refusal,
@@ -280,6 +282,8 @@ var QlPlural = (() => {
     authorOf: () => authorOf,
     buildThreads: () => buildThreads,
     canonicalJson: () => canonicalJson,
+    circleHolder: () => circleHolder,
+    containerOf: () => containerOf,
     defaultParticipants: () => defaultParticipants,
     describeRelation: () => describeRelation,
     draftEntry: () => draftEntry,
@@ -300,6 +304,8 @@ var QlPlural = (() => {
   const FORMAT_VERSION = 4;
   const TEMPLATE_V4 = "ql-dialogue-flow v0.4";
   const RELATION_TYPES = ["reply", "branch", "converge", "correct", "source", "artifact"];
+  const CONTAINER_FORMS = ["dialogue", "circle", "inquiry"];
+  const ENTRY_KINDS = ["observe", "interpret", "choose"];
   class Refusal extends Error {
     code;
     constructor(code, message) {
@@ -486,6 +492,7 @@ var QlPlural = (() => {
       if (relations.filter((r) => r.type === "reply").length > 1) issues.push({ code: "reply-multiple", path: `${at}.relations` });
       const converge = relations.filter((r) => r.type === "converge").length;
       if (converge === 1) issues.push({ code: "converge-needs-two", path: `${at}.relations` });
+      if (entry.kind !== void 0 && !ENTRY_KINDS.includes(entry.kind)) issues.push({ code: "invalid-entry-kind", path: `${at}.kind` });
       if (entry.request) {
         const { digest: stored } = entry.request;
         if (stored !== requestDigest(entry)) issues.push({ code: "request-digest-mismatch", path: `${at}.request` });
@@ -597,6 +604,30 @@ var QlPlural = (() => {
     if (claimed === "verified") throw new Refusal("attribution-overclaim", "a system caller cannot verify an author");
     return { basis: "declared" };
   }
+  function containerOf(doc) {
+    const form = doc.meta.container;
+    return typeof form === "string" && CONTAINER_FORMS.includes(form) ? form : null;
+  }
+  function circleHolder(doc) {
+    const round = participantsOf(doc).filter((p) => !p.left && (p.role ?? "contributor") === "contributor");
+    if (!round.length) return void 0;
+    const last = doc.entries.at(-1);
+    if (!last) return round[0];
+    const author = authorOf(doc, last);
+    const at = author ? round.findIndex((p) => p.key === author.key) : -1;
+    return round[(at + 1) % round.length];
+  }
+  function checkContainer(doc, author, kind) {
+    const form = containerOf(doc);
+    if (kind !== void 0) {
+      if (typeof kind !== "string" || !ENTRY_KINDS.includes(kind)) throw new Refusal("invalid-entry-kind", "an entry is an observation, an interpretation or a choice");
+      if (!form) throw new Refusal("not-in-a-container", "only an entry in a container says what kind of entry it is");
+    }
+    if (form === "circle") {
+      const holder = circleHolder(doc);
+      if (holder && holder.key !== author.key) throw new Refusal("not-the-holder", `in a circle only the holder writes: the word is with ${holder.name ?? holder.initial}`);
+    }
+  }
   function appendContribution(doc, request, caller) {
     if (!request.operationRef) throw new Refusal("empty-operation", "a native operation reference is required");
     if (formatVersionOf(doc) > FORMAT_VERSION) throw new Refusal("unsupported-format", `flow format v${formatVersionOf(doc)} needs a newer writer`);
@@ -633,6 +664,7 @@ var QlPlural = (() => {
     if (claimedBehalf && (!participants.some((p) => p.key === claimedBehalf.key && !p.left) || claimedBehalf.key === author.key || !String(claimedBehalf.authority ?? "").trim())) throw new Refusal("unknown-behalf-of", "on behalf of names another participant who is still here, and the authority claimed");
     const behalf = claimedBehalf ? { key: claimedBehalf.key, authority: claimedBehalf.authority, basis: "declared" } : void 0;
     const attribution = checkCaller(author, caller, request, participants);
+    checkContainer(doc, author, request.kind);
     const ids = new Set(doc.entries.map((e) => e.id));
     if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
     const keys = new Set(participants.map((p) => p.key));
@@ -660,6 +692,7 @@ var QlPlural = (() => {
     entry.replyTo = reply ? { entryId: reply.entryId, anchor: reply.anchor ?? null } : null;
     for (const key of ["addressees", "audience", "intent", "basisRevision"]) if (entry[key] === void 0) delete entry[key];
     if (!relations.length) delete entry.relations;
+    if (request.kind) entry.kind = request.kind;
     const next = JSON.parse(JSON.stringify(doc));
     next.entries.push(entry);
     next.meta.revision = doc.meta.revision + 1;
@@ -682,6 +715,7 @@ var QlPlural = (() => {
     if (relations?.length) entry.relations = relations;
     if (options?.addressees?.length) entry.addressees = [...options.addressees];
     if (options?.intent) entry.intent = options.intent;
+    if (options?.kind && containerOf(doc)) entry.kind = options.kind;
     return entry;
   }
   function defaultParticipants(documentId) {
@@ -807,7 +841,7 @@ var QlPlural = (() => {
     next.notes = [];
     next.packet = [];
     next.media = [];
-    const known = ["documentId", "created", "title", "revision", "view", "current", "journalCurrent", "exported", "template", "format", "participants", "upgrade"];
+    const known = ["documentId", "created", "title", "revision", "view", "current", "journalCurrent", "exported", "template", "format", "participants", "upgrade", "container"];
     const meta = next.meta;
     for (const key of Object.keys(meta)) if (!known.includes(key)) delete meta[key];
     next.meta.current = null;

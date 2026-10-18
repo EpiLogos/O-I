@@ -92,9 +92,12 @@ pub mod material;
 pub mod nara_coordinate;
 pub mod nara_current;
 pub mod nara_dialogue;
+pub mod nara_elemental;
 pub mod nara_epii;
 pub mod nara_expressive_act;
 pub mod nara_identity;
+pub mod nara_journey;
+pub mod nara_lived_context;
 pub mod nara_presence;
 pub mod nara_voice;
 mod nara_voice_actor;
@@ -448,6 +451,18 @@ pub enum KernelOp {
     NaraVoice {
         project: String,
         request: nara_voice::Request,
+    },
+    /// A journey on its Flow page (nara_journey.rs): opened once, an act applied, or read; QL computes, the page keeps it.
+    NaraJourney {
+        request: nara_journey::Request,
+    },
+    /// Nara's lived context from your own pages and Day (nara_lived_context.rs): composed by QL, written nowhere.
+    NaraLivedContext {
+        request: nara_lived_context::Request,
+    },
+    /// Your elemental map from your saved identity (nara_elemental.rs): QL's reading, written nowhere.
+    NaraElemental {
+        request: nara_elemental::Request,
     },
     /// Pull the whole kernel state (read model; emits nothing).
     State,
@@ -1315,6 +1330,18 @@ pub enum KernelOpResult {
         data: serde_json::Value,
     },
     NaraVoice {
+        data: serde_json::Value,
+    },
+    /// `oi.nara-journey/v1` (nara_journey.rs).
+    NaraJourney {
+        data: serde_json::Value,
+    },
+    /// `oi.nara-lived-context/v1` (nara_lived_context.rs).
+    NaraLivedContext {
+        data: serde_json::Value,
+    },
+    /// `oi.nara-elemental/v1` (nara_elemental.rs).
+    NaraElemental {
         data: serde_json::Value,
     },
     State {
@@ -3376,6 +3403,23 @@ impl Kernel {
             KernelOp::Page { request } if request.is_write() => {
                 self.apply_owner_write(KernelOp::Page { request })
             }
+            // A journey opened or acted on: QL computes, its page keeps it on the revision read — the prepared write's own steps
+            // (owner_write.rs), run under the lock.
+            KernelOp::NaraJourney { request } if request.is_write() => {
+                self.apply_owner_write(KernelOp::NaraJourney { request })
+            }
+            // Nara's practice reads (a journey read, your pages' lived context, your elemental map): owner reads with nothing
+            // kernel-owned to record (owner_read.rs `reads_owner`).
+            op @ (KernelOp::NaraJourney { .. }
+            | KernelOp::NaraLivedContext { .. }
+            | KernelOp::NaraElemental { .. }) => owner_read::PreparedRead::prepare(
+                &self.client,
+                agent_prepared::PreparedWorld::held_only(self.client.clone(), None),
+                &op,
+                None,
+            )
+            .ok_or("Cannot prepare the owner read")?
+            .execute(),
             // Central's Day writes: the prepared write's own steps
             // (owner_write.rs), run under the lock.
             KernelOp::Central { project, request } if owner_write::central_write(&request) => {
@@ -3383,16 +3427,16 @@ impl Kernel {
             }
             // Owner reads with nothing kernel-owned to record: the prepared
             // read's own execution (owner_read.rs `PreparedRead`).
-            op @ (KernelOp::Central { .. } | KernelOp::Page { .. } | KernelOp::WorkcellStatusRead) => {
-                owner_read::PreparedRead::prepare(
-                    &self.client,
-                    agent_prepared::PreparedWorld::held_only(self.client.clone(), None),
-                    &op,
-                    None,
-                )
-                .ok_or("Cannot prepare the owner read")?
-                .execute()
-            }
+            op @ (KernelOp::Central { .. }
+            | KernelOp::Page { .. }
+            | KernelOp::WorkcellStatusRead) => owner_read::PreparedRead::prepare(
+                &self.client,
+                agent_prepared::PreparedWorld::held_only(self.client.clone(), None),
+                &op,
+                None,
+            )
+            .ok_or("Cannot prepare the owner read")?
+            .execute(),
             KernelOp::DaySourceOpen { day_ref } => {
                 // The owner's Day route is the only reader of a
                 // root-register Day source: the buffer is built from

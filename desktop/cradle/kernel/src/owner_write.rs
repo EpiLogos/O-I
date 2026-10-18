@@ -70,6 +70,7 @@ impl PreparedWrite {
             KernelOp::Central { request, .. } => central_write(request),
             KernelOp::FactoryOwner { request } => !request.is_read(),
             KernelOp::Page { request } => request.is_write(),
+            KernelOp::NaraJourney { request } => request.is_write(),
             KernelOp::InvokeAction { invocation, .. } => {
                 // The decision actions are the decision form's (decision.rs)
                 // and its ordered arm's: they act on kernel-held authority.
@@ -111,7 +112,8 @@ impl PreparedWrite {
             | KernelOp::FactoryOwner { .. }
             | KernelOp::HarnessAgentControl { .. }
             | KernelOp::FileOperation { .. }
-            | KernelOp::Page { .. } => false,
+            | KernelOp::Page { .. }
+            | KernelOp::NaraJourney { .. } => false,
             _ => true,
         }
     }

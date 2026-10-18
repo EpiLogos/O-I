@@ -565,9 +565,14 @@
       "techne"
     ],
     "formats": {},
-    "invariant": null,
+    "invariant": {
+      "generatesAbsent": "Your elements are read, never written: the kernel's nara_elemental answers from your saved identity, and no owner operation takes a value back (lock §7)."
+    },
     "writePaths": [],
-    "heldBy": [],
+    "heldBy": [
+      "studio:nara",
+      "techne:m2"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -579,9 +584,16 @@
       "techne"
     ],
     "formats": {},
-    "invariant": null,
-    "writePaths": [],
-    "heldBy": [],
+    "invariant": {
+      "generates": "kernel:nara_journey"
+    },
+    "writePaths": [
+      "kernel:nara_journey"
+    ],
+    "heldBy": [
+      "studio:nara",
+      "techne:m3"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
