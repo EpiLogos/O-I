@@ -55,6 +55,15 @@ export function popOutApertureFault(face: {readonly id: string}, aperture: Devic
  * must declare the device detached kind, and the face must draw its body in a window of its own (a parameter face, or an
  * atlas or knowledge-graph face that drives the main window's handle, is refused by name). Null when the identity stands
  * in the manifests; otherwise the fault. */
+/** The fault for a RELAYED device window (frame/devices/deviceRelay.ts): the device draws on the binding the main window relays, so
+ * only its identity must be one an admitted family declares; whether its face stands alone, declares pop-out or needs an aperture
+ * is the standalone face's question (deviceIdentityFault), asked only when no relay answers. */
+export function deviceRelayIdentityFault(identity: DeviceDetachIdentity, manifests: readonly InhabitantManifest[]): string | null {
+  const manifest = manifests.find(entry => entry.id === identity.family)
+  if (!manifest) return `no admitted family "${identity.family}" declares this device`
+  return manifest.faces.some(entry => entry.id === identity.face) ? null : `${identity.family} declares no face "${identity.face}"`
+}
+
 export function deviceIdentityFault(identity: DeviceDetachIdentity, manifests: readonly InhabitantManifest[]): string | null {
   const manifest = manifests.find(entry => entry.id === identity.family)
   if (!manifest) return `no admitted family "${identity.family}" declares this device`
