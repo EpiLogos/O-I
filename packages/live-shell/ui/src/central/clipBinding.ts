@@ -186,7 +186,7 @@ export const CENTRAL_WIRING: ClipWiring = {
     'notes.order': 'the order of the list of notes (NOTES_WIRING local)',
   },
   refused: {
-    name: 'Only a Flow keeps a title of its own, in its file: a Day\'s heading is its date, and another page\'s name is its file\'s.', colour: 'A page takes its workspace\'s colour: no owner operation sets a page\'s own colour yet.',
+    name: 'Only a Flow keeps a title of its own, in its file: a Day\'s heading is its date, and another page\'s name is its file\'s.', colour: 'A page takes its world\'s colour: no owner operation sets a page\'s own colour yet.',
     'text.style': TEXT_WIRING.refused.styles!, 'text.emphasis': TEXT_WIRING.refused.marks!, 'text.size': TEXT_WIRING.refused.size!,
     'hl.colour': HIGHLIGHT_WIRING.refused.colour!, 'hl.show': HIGHLIGHT_WIRING.refused.show!, 'hl.pen': HIGHLIGHT_WIRING.refused.pen!, 'hl.tool': HIGHLIGHT_WIRING.refused.tool!,
     'act.highlight': HIGHLIGHT_WIRING.refused.marks!, 'act.note': HIGHLIGHT_WIRING.refused.note!, 'act.topacket': HIGHLIGHT_WIRING.refused.toPacket!,
@@ -195,11 +195,18 @@ export const CENTRAL_WIRING: ClipWiring = {
     being: BEINGS_WIRING.refused.kind!, office: BEINGS_WIRING.refused.o1!, layout: BEINGS_WIRING.refused.layout!, tone: BEINGS_WIRING.refused.ground!,
     world: BEINGS_WIRING.refused.world!, subject: BEINGS_WIRING.refused.subject!,
     addParticipant: FLOW_WIRING.refused['in:<agent>']!, media: 'Media joins an entry on the page itself: the hosted form is the page\'s one writer while it holds the page (DocumentFlowFace.tsx).',
+    // Launch and the container (manual §18.1, §24.5; T-WORLDS W2): the page owner op keeps them once it exists.
+    opensAs: 'No owner keeps how a page opens yet: the page owner op carries it (T-WORLDS W2).', opensIn: 'No owner keeps where a page opens yet (T-WORLDS W2).',
+    seats: 'No owner reseats a Flow\'s people and agents yet (T-WORLDS W2).', container: 'A Flow\'s form keeps no container yet: meta.container joins the flow form (T-WORLDS W2, W4).',
+    entryKind: 'A Flow\'s entries carry no kind yet: observe, interpret and choose join the flow form (T-WORLDS W4).',
   },
   absent: {
     being: BEINGS_WIRING.absent.kind!, place: BEINGS_WIRING.absent.place!, anchor: BEINGS_WIRING.absent.anchor!, 'text.style': 'The page\'s selection does not cross the host bridge.',
     'text.emphasis': 'not read', 'text.size': TEXT_WIRING.absent.size!, 'hl.show': HIGHLIGHT_WIRING.absent.show!, 'hl.pen': HIGHLIGHT_WIRING.absent.pen!, 'hl.tool': HIGHLIGHT_WIRING.absent.tool!,
     'notes.timing': NOTES_WIRING.absent.timing!, 'notes.anchor': NOTES_WIRING.absent.anchor!, 'notes.show': NOTES_WIRING.absent.show!,
+    journalPages: 'The Journal\'s dated pages are not read from the Flow\'s journal[] yet (T-WORLDS W2).',
+    open: 'No NOW clearing is tied to a page yet: launching a page allocates one (T-WORLDS W2).',
+    stop: 'A page is a stop on no walk until it joins the atlas as an occurrence (T-WORLDS W2).',
   },
 }
 

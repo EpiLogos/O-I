@@ -1,8 +1,8 @@
 // The catalogue gallery (npx vite --config src/inhabitants/catalogue/vite.config.mjs, port 5208). It draws every device the
 // families declare at the door, through the shell's own runtime (frame/devices/DeviceView.tsx), in each view the manual names
-// (docs/dlw/DLW.md §16.3): folded, compact, whole (in the pool, and expanded above the chain), full, pop-out and widget. The
+// (docs/dlw/DLW.md §16.3): folded, compact, whole (expanded above the chain; the pool holds no device, §16.7), full, pop-out and widget. The
 // DLW manual embeds it beside each device's spec:
-//   ?device=<family>:<face>&view=all|folded|compact|whole|flip|full|popout|widget   one device (or a comma list of views)
+//   ?device=<family>:<face>&view=all|folded|compact|whole|full|popout|widget   one device (or a comma list of views; flip names whole)
 //   (no device)                                                          the index of every declared device
 // Readings are a labelled fixture (?values=none shows the owner-less state): the gallery writes no owner.
 import {createRoot} from 'react-dom/client'
@@ -26,15 +26,15 @@ import './panels/panels.css'
 
 loadWorldShellFamilies()
 
-const VIEWS = ['folded', 'compact', 'whole', 'flip', 'full', 'popout', 'widget'] as const
+const VIEWS = ['folded', 'compact', 'flip', 'full', 'popout', 'widget'] as const
 /** What each frame shows, as its title: the view, and where it stands when that is not the view's only place. */
-const FRAME_TITLE: Readonly<Record<View, string>> = {folded: 'folded', compact: 'compact', whole: 'whole · the pool', flip: 'whole · expanded above the chain', full: 'full · a pane', popout: 'pop-out · its own window', widget: 'widget · the rail'}
+const FRAME_TITLE: Readonly<Record<View, string>> = {folded: 'folded', compact: 'compact', flip: 'whole · expanded above the chain', full: 'full · a pane', popout: 'pop-out · its own window', widget: 'widget · the rail'}
 type View = typeof VIEWS[number]
 
 /** The views a query names: all, one, or a comma list (?view=flip,popout). */
 const viewsOf = (param: string): readonly View[] => {
   if (param === 'all') return VIEWS
-  const named = param.split(',').filter((name): name is View => (VIEWS as readonly string[]).includes(name))
+  const named = param.split(',').map(name => (name === 'whole' ? 'flip' : name)).filter((name): name is View => (VIEWS as readonly string[]).includes(name))
   return named.length ? named : VIEWS
 }
 
@@ -87,9 +87,8 @@ function DeviceViews({device, views}: {device: DeviceInstance; views: readonly V
     switch (view) {
       case 'folded': return <FacePlate presentation={presentation} power="unknown" folded>{null}</FacePlate>
       case 'compact': return <DeviceView device={device} size="compact" />
-      case 'whole': return <DeviceView device={device} size="whole" />
       case 'full': return <div className="cat-pane"><DeviceView device={device} size="full" /></div>
-      // The generic plate has no wide frame or window of its own: a device without a design shows Whole in both.
+      // The generic plate has no wide frame or window of its own: a device without a design shows Whole there.
       case 'flip': return <DeviceView device={device} size="whole" />
       case 'popout': return <div className="cat-pane"><DeviceView device={device} size="full" /></div>
       case 'widget': return <div className="cat-rail"><div className="cat-rail-head">{device.face.title}</div><DeviceView device={device} size="compact" /></div>
@@ -114,8 +113,8 @@ function StatusLine() {
   return <div className="cat-status" role="status">{said || 'Point at a control to read what it does.'}</div>
 }
 
-/** A designed device in its six views, all on one set of values: move a macro on the chain and the pool, the expanded band,
- * the pane, the window and the rail move with it. */
+/** A designed device in its six views, all on one set of values: move a macro on the chain and the expanded band, the pane,
+ * the window and the rail move with it. */
 function DesignedViews({design, views, fixture: first}: {design: DesignedDevice; views: readonly View[]; fixture?: string | null}) {
   const names = Object.keys(design.fixtures ?? {})
   const [fixture, setFixture] = useState(first && names.includes(first) ? first : names[0] ?? '')
@@ -142,7 +141,6 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
     switch (view) {
       case 'folded': return design.folded({...props, nav: {}})
       case 'compact': return folded ? design.folded(props) : design.compact(props)
-      case 'whole': return <div className="cat-pool">{design.whole({...props, frame: 'pool', room: {w: 400, h: 360}})}</div>
       // Live's expanded view: a band as wide as the detail area, above the chain; the panes above shrink to make room.
       case 'flip': return <div className="cat-flip" ref={flip}>
         <div className="cat-flip-panes" aria-hidden="true">Panes</div>
