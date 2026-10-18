@@ -7836,7 +7836,9 @@ The widget shows the reference note and a short list of ratios. Click the list t
 
 **Product:** Live · **Kind:** effect · **Chain:** A Live part's chain, after the torus
 
-Four effects shape the sound of the torus: a Filter, a Dynamics effect, a Delay and a Reverb. Each is a device of its own, with its own light. Put any of them on the chain, in any order. The sound passes through them from left to right, so a reverb before a filter sounds different from a filter before a reverb.
+Four effects shape the sound of the torus: a Filter, a Dynamics effect, a Delay and a Reverb. Each is a device of its own, with its own light. Put any of them on the chain, in any order: after the effects on the chain stand the four names, and a name you press goes on at the end. Press it again to take the effect off; it keeps its settings for when it returns. ◂ on an effect moves it one place earlier. With none on the chain, the torus sounds as it is.
+
+The sound passes through the effects from left to right. The order is heard where Dynamics stands in it: before a Delay it lowers the sound and its repeats apart, after the Delay it lowers them together, so the repeats come out quieter. A Filter, a Delay and a Reverb on their own sound the same in any order.
 
 The sky can move any parameter of an effect. The control shows the planet that moves it.
 
@@ -7876,7 +7878,7 @@ Use the Dynamics effect to lower the loud parts of the torus and lift the whole.
 | Threshold | −60 to 0 dB | −12 | The level above which the effect acts. |
 | Ratio | 1:1 to 20:1 | 4:1 | How much it lowers sound above the threshold. |
 | Attack | 0.01 to 200 ms | 1 ms | How fast it starts. |
-| Release | 5 ms to 2 s | 100 ms | How fast it stops. |
+| Release | 5 ms to 1 s | 100 ms | How fast it stops. |
 | Makeup | 0 to 24 dB | 2 | The gain that it adds after it lowers the level. |
 
 Two displays show what it does. The curve shows the level out for each level in: under the threshold the sound passes, above it the sound rises more slowly. The second display shows how far the effect lowers a loud burst over time, and how it lets go.
@@ -7901,7 +7903,7 @@ Use the Delay to repeat the torus after a time.
 | On | On · Off | On | Turns the delay on. |
 | Sync | On · Off | On | On: the time is a note length at the set's tempo. Off: a time in milliseconds. |
 | Note length | 1/32 · 1/16 · 1/8 · 1/4 · 1/2 · 1 bar | 1/8 | The time between repeats while Sync is on. |
-| Time | 1 ms to 4 s | 250 ms | The time between repeats while Sync is off. |
+| Time | 6 ms to 4 s | 250 ms | The time between repeats while Sync is off. |
 | Feedback | 0 to 95% | 35% | How much of each repeat returns. |
 | Tone | 200 Hz to 12 kHz | 6 kHz | How dark the repeats are. Lower is darker. |
 | Mix | 0 to 100% | 25% | How loud the repeats are. |
