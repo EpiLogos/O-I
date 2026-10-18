@@ -1,0 +1,92 @@
+// The native Pop-out (manual §16.3): on the host, a device pops out into the host's own window, a separate page, and its binding —
+// readings, standing, the keys it reads, the view's holds, its writes to the owner — is relayed there from the main window's door
+// (frame/devices/deviceRelay.ts); the page draws the device's own Pop-out on it (RelayedDevice.tsx). Channels: SCRIPTED bindings in
+// memory (the relay's pure halves); CODE-READING for the wiring the host's event bus carries.
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {register} from 'node:module'
+import {readFile} from 'node:fs/promises'
+const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
+register(`data:text/javascript,${encodeURIComponent(`
+import ts from ${JSON.stringify(compiler)};
+import {readFile} from 'node:fs/promises';
+export async function resolve(s, c, n) {
+  let r = null
+  try { r = await n(s, c) } catch (e) { if (!s.startsWith('.')) throw e }
+  if (r) {
+    if (r.url.endsWith('.html') || r.url.endsWith('.css')) return {...r, format: 'module'}
+    return r
+  }
+  if (s.endsWith('.js')) { try { return await n(s.slice(0, -3) + '.ts', c) } catch {} }
+  for (const x of ['.ts', '.tsx']) { try { return await n(s + x, c) } catch {} }
+  for (const x of ['/index.ts', '/index.tsx']) { try { return await n(s + x, c) } catch {} }
+  throw new Error('cannot resolve ' + s)
+}
+export async function load(u, c, n) {
+  if (u.endsWith('.css')) return {format: 'module', shortCircuit: true, source: 'export {}'};
+  if (u.includes('?raw') || u.includes('.html')) return {format: 'module', shortCircuit: true, source: 'export default ""'};
+  if (u.endsWith('.json')) return {format: 'module', shortCircuit: true, source: 'export default ' + await readFile(new URL(u), 'utf8')};
+  if (!u.endsWith('.ts') && !u.endsWith('.tsx')) return n(u, c);
+  return {format: 'module', shortCircuit: true, source: ts.transpileModule(await readFile(new URL(u), 'utf8'), {fileName: new URL(u).pathname,
+    compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
+}`)}`, import.meta.url)
+
+const relay = await import('../src/frame/devices/deviceRelay.ts')
+const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
+
+const device = {id: 'factory:tasks', family: 'software-factory', face: {id: 'tasks', title: 'Tasks', icon: 'tasks', liveSemantic: 'session'},
+  rows: [{key: 'mode', label: 'Mode'}, {key: 'elapsed', label: 'Elapsed'}], values: {mode: 'once'}, enabledKey: undefined}
+function ownerBinding() {
+  const sent = [], held = []
+  return {sent, held, binding: {
+    id: 'factory:tasks', values: {mode: 'once', elapsed: 42, 'view.tab': 'log'}, standing: {retry: {disabled: 'Retry: whole harness only.'}},
+    heldBy: {effort: 'the sky'}, enabledKey: 'on',
+    write: async changes => { if (changes.some(c => c.key === 'mode' && c.value === 'twice')) throw new Error('Launch takes one of once, hold, loop'); sent.push(...changes) },
+    writes: key => key !== 'elapsed',
+    local: {'view.tab': value => held.push(value)},
+  }}
+}
+
+test('the relay carries the binding as data: readings, standing, holds, the keys it reads and the view\'s', () => {
+  const {binding} = ownerBinding()
+  const snap = relay.relaySnapshot('device:software-factory/tasks', 'factory:tasks', device, binding)
+  assert.equal(snap.bindingId, 'device:software-factory/tasks')
+  assert.deepEqual(snap.binding.values, {mode: 'once', elapsed: 42, 'view.tab': 'log'})
+  assert.deepEqual(snap.binding.standing, {retry: {disabled: 'Retry: whole harness only.'}})
+  assert.deepEqual(snap.binding.reads, ['elapsed'], 'a key the owner does not take is carried as a reading')
+  assert.deepEqual(snap.binding.local, ['view.tab'])
+  assert.equal(snap.binding.writes, true)
+  assert.equal(JSON.stringify(snap).includes('function'), false, 'no function crosses')
+  assert.equal(relay.relaySnapshot('b', 'd', device, undefined).binding, null)
+})
+
+test('the second window\'s binding sends every act back, and the main window applies it on the owner\'s binding', async () => {
+  const owner = ownerBinding()
+  const snap = relay.relaySnapshot('b', 'factory:tasks', device, owner.binding)
+  const acts = []
+  const far = relay.relayedBinding(snap.binding, async act => { acts.push(act); await relay.applyRelayAct(owner.binding, act) })
+  assert.equal(far.writes('mode'), true); assert.equal(far.writes('elapsed'), false)
+  await far.write([{key: 'mode', value: 'loop'}])
+  assert.deepEqual(owner.sent, [{key: 'mode', value: 'loop'}])
+  await assert.rejects(far.write([{key: 'mode', value: 'twice'}]), /Launch takes one of once, hold, loop/, 'the owner\'s words come back')
+  far.local['view.tab']('envelopes')
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(owner.held, ['envelopes'], 'a view hold goes to the binding\'s own hand')
+  await assert.rejects(relay.applyRelayAct(undefined, {kind: 'write', changes: []}), /nothing writes it/)
+  await assert.rejects(relay.applyRelayAct(owner.binding, {kind: 'local', key: 'mode', value: 1}), /not the view's to hold/)
+})
+
+test('code-reading: the main window routes Pop-out to the host on the host only; the detached page draws the relayed device, else its face', async () => {
+  const windows = await source('frame/devices/DeviceWindows.tsx')
+  assert.match(windows, /if \(!nativeHostMain\(\) \|\| !workspaceId\) return/)
+  assert.match(windows, /openDeviceWindowHere\(id\)/, 'a refusal opens it here')
+  const door = await source('frame/devices/deviceDoor.ts')
+  assert.match(door, /if \(popOutRoute\?\.\(id\)\) return\n  openDeviceWindowHere\(id\)/)
+  const detached = await source('native/Detached.tsx')
+  assert.match(detached, /<RelayedDevice bindingId=\{binding\.id\}/)
+  assert.match(detached, /fallback=\{\(\) => <DeviceFace/)
+  const relayed = await source('frame/devices/RelayedDevice.tsx')
+  assert.match(relayed, /<PlacedDevice device=\{device\} view="popout" binding=\{binding\}/)
+  const rust = await readFile(new URL('../../../../desktop/cradle/src-tauri/src/windows.rs', import.meta.url), 'utf8')
+  assert.match(rust, /"device"/, 'the host admits a device binding')
+})
