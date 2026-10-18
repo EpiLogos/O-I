@@ -1902,30 +1902,6 @@ Each world you work in is a body of its own. Bring a world onto a Central track,
 
 What you hold circles the body it belongs to. Agents at work and the moments open now ride the inner ring, each keeping its place on the ring however the list around it changes. Files and context you have to hand ride the outer ring and drift off when you put them down.
 
-#### What grows on a world
-
-A world grows its ground from what happens in it, and every form on it stands for something real. Nothing on a body is decoration.
-
-| Form | What it shows | Read from |
-|---|---|---|
-| A bee | An agent at work. Its wings beat while it works and it rests when idle, in the agent's own colour. | The roster and each session's state. |
-| A tree | A body of knowledge that persists, its branches the sections under it. | The world's wiki and its child spaces. |
-| Roots | Where a claim comes from. | The sources a node names. |
-| A vine, a web of fungus | Links between pages, thicker where a link is used more. | The links between pages, with their counts. |
-| A seed | New work at its first revision. | Pages and nodes at revision 1. |
-| Fruit | Work that has landed. | Returns and landed changes. |
-| A flower | A scene you have shown. | The Expressions you share. |
-| A river | Work flowing: runs, returns, edits, in the order they happen. | The day's stream of events. |
-| A lake | What has gathered: the day, the open moments. | The Day and the NOW field. |
-| A cliff | A boundary you cannot cross without leave. | Protected ground and the grants of authority. |
-| A pass, a bridge | A crossing between worlds. | Links across registers, and the worlds an agent may act in. |
-| An island | A place apart where work can run without touching the rest. | The seats of the machine. |
-| A forest | Knowledge dense enough to get lost in. | How closely the graph's pages are joined. |
-
-A form grows where its data is and fades when the data goes. A tree that stands for a body of knowledge stays that tree when you reroll the body; its branches follow its sections, not the seed.
-
-The body is lit by its star, so it shows phases. A place you anchor to Earth draws a line to the real place on the ground, such as a house, a town or a coast.
-
 #### The sky and its occasions
 
 Every world has a sky, and the sky belongs to the world. The planets move as the real ones do. The sky comes from its owner. The World does not compute it. If the owner is not available, the sky layer says why and draws nothing in its place.
@@ -2075,8 +2051,7 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 - Raising a thing into wider view always asks you first.
 - Being findable is not being reachable. Being reachable is not being in touch. Being in touch is not being trusted. The owner of a world gives each step.
 - The idle body is still. It does not spin by itself.
-- A reroll changes the land, never what stands on it. A location keeps the position you gave it, and a form keeps the thing it stands for.
-- A form grows only where its data is. A world with no agents has no bees.
+- A reroll changes the land, never what stands on it. A location keeps the position you gave it.
 - Live imagery and terrain need your consent. The World names the source of each layer. Imagery does not turn back in time. The occasion filters the places, not the pictures.
 
 #### Tips
