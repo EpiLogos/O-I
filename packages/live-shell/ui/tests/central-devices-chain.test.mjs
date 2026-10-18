@@ -59,9 +59,11 @@ const html = (element) => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 const central = inhabitantManifest('central')
 assert.ok(central, 'the central family is admitted by the shell\'s own door')
-// Lane BC3 (DLW §18.4, §19.12, §19.4): the agent that answers stands with its identity before it and its Context & world after it,
-// then Search; the Packet stands only on a reached document's chain (central-agent-chain-binding.test.mjs).
-const FACES = ['day-die', 'agent-identity', 'nara-conversation', 'context-world', 'search', 'ground-hygiene', 'impact']
+// R4 (DLW §16.2; lock §0.3.4): the family's faces on the chains are the Day (the Main track's) and the Packet, Ground hygiene and Impact
+// (a workspace's); the Agent and Scope stand between the Packet and Ground hygiene as devices of their own families (r4-chains.test.mjs).
+// REPLACED: lane BC3's seven (the Day, Agent identity, the Answer, Context & world, Search, Ground hygiene, Impact) — Agent identity and
+// the Answer are the one Agent's, Context & world is Scope's, Search is a pane.
+const FACES = ['day-die', 'packet', 'ground-hygiene', 'impact']
 const DAY_REF = 'central:day:control:root:2026-10-06'
 const ready = vertical.interpretDayOpen(DAY_REF, {data: {schema: 'oi.central-day-open/v1', project: null, day: {
   document_state: 'ready', source: {ref: 'central:source:control:root:Control/user/day/2026-10-06/day.md'},
@@ -84,7 +86,7 @@ const deviceMarkup = (markup, faceId) => {
 }
 function DeviceViewOf({entry, size}) { return createElement(DeviceView, {device: entry.device, size, picture: entry.picture(size), marks: entry.marks}) }
 
-test('the family\'s device faces are seven devices, in chain order, each its own family\'s declaration, while no document is reached and no workspace book stands', () => {
+test('the family\'s faces on the chains are four devices, in chain order, each its own family\'s declaration; no page face and no moved face stands', () => {
   const set = entries()
   assert.deepEqual(set.map(entry => entry.id), FACES.map(id => `central:${id}`))
   for (const entry of set) {
@@ -99,17 +101,20 @@ test('the family\'s device faces are seven devices, in chain order, each its own
   // an instrument, first on a Flow document's chain: it stands there while a Flow is reached (central-page-family-binding.test.mjs).
   assert.equal(central.faces.find(face => face.id === 'flow-document').liveSemantic, 'device-instrument')
   assert.deepEqual(model.clipFaces(central.faces).map(face => face.id), [], 'the family declares no clip')
-  assert.ok(!set.some(entry => model.PAGE_FACES.has(entry.id.slice('central:'.length))), 'with no document reached, no page device stands')
-  assert.ok(!set.some(entry => entry.id === 'central:workspace'), 'with no workspace book, the Workspace does not stand')
+  // REPLACED: "with no document reached, no page device stands" and "with no workspace book, the Workspace does not stand" — no page
+  // face stands on any chain now, reached or not (§16.1: a page's Clip panel, editor tabs and tools).
+  for (const id of model.CENTRAL_OFF_CHAIN_FACES) assert.ok(!set.some(entry => entry.id === `central:${id}`), `${id} stands on no chain`)
 })
 
-test('a face the family declares but this chain does not know is drawn generically, never dropped', () => {
+test('REPLACED — a face the family declares that no chain names stands on no chain (the chains are §16.2\'s exactly); a model of it still draws generically', () => {
+  // Was: "a face the family declares but this chain does not know is drawn generically, never dropped". The chains are the manual's
+  // now (R4); a declared face no chain names is drawn where it is placed (the gallery, Clip view), never appended to a chain.
   const extra = {id: 'day-now', presentations: ['compact'], liveSemantic: 'transport-slot', note: 'The civil stratum.'}
   const set = entries({faces: [...central.faces, extra]})
-  assert.equal(set.length, FACES.length + 1)
-  assert.equal(set.at(-1).id, 'central:day-now')
-  assert.equal(set.at(-1).device.face.title, 'Day Now')
-  assert.match(compact(set.at(-1)), /data-central-picture="day-now"/, 'a picture, not a card of text')
+  assert.deepEqual(set.map(entry => entry.id), FACES.map(id => `central:${id}`))
+  const generic = model.centralDevice(extra, {})
+  assert.equal(generic.face.title, 'Day Now')
+  assert.equal(model.centralPicture('day-now', {}).caption, 'declared by the family')
 })
 
 test('every device is compact on the chain: a picture, at most four readings, no text-only card, and the doors to whole and full', () => {
@@ -147,12 +152,16 @@ test('the rows are the family\'s declared rows; a row is a reading unless the fa
   const set = entries()
   const rowsOf = id => set.find(entry => entry.id === `central:${id}`).device.rows
   const declared = (instance) => AGENT_SHELL_ADDRESS_TABLE.filter(row => row.family === 'central' && row.deviceInstance === instance).map(row => row.key)
-  assert.deepEqual(rowsOf('context-world').map(row => row.key), declared('world'), 'the Context-world\'s rows are Central\'s world addresses')
-  assert.deepEqual(rowsOf('agent-identity').map(row => row.key).filter(key => declared('agent').includes(key)), declared('agent'), 'the identity row is Central\'s agent address')
+  // The two faces that left the chain (R4) keep their declared rows where they are drawn (the gallery's generic plate).
+  const model_ = id => model.centralDevice(central.faces.find(face => face.id === id), {})
+  assert.deepEqual(model_('context-world').rows.map(row => row.key), declared('world'), 'the Context-world\'s rows are Central\'s world addresses')
+  assert.deepEqual(model_('agent-identity').rows.map(row => row.key).filter(key => declared('agent').includes(key)), declared('agent'), 'the identity row is Central\'s agent address')
+  assert.ok(rowsOf('packet'))
   // The two instruments declare `generates`; their write row goes through exactly that path. Every other row is a reading.
   const writing = Object.fromEntries(set.map(entry => [entry.id.slice('central:'.length), entry.device.rows.filter(row => row.writePath).map(row => [row.key, row.writePath])]))
-  assert.deepEqual(writing, {'day-die': [['face', 'kernel:receiving']], 'nara-conversation': [['bound', 'kernel:nara_dialogue']],
-    'context-world': [], 'agent-identity': [], 'search': [], 'ground-hygiene': [], 'impact': []})
+  // REPLACED: the Answer's ['bound', 'kernel:nara_dialogue'] row and the readings of Agent identity, Context & world and Search are no chain
+  // entries now; the dialogue's binding is the one Agent's light (r4-one-agent.test.mjs).
+  assert.deepEqual(writing, {'day-die': [['face', 'kernel:receiving']], 'packet': [], 'ground-hygiene': [], 'impact': []})
   for (const entry of set) {
     const declaredPath = entry.device.face.invariant?.generates
     assert.equal(typeof entry.device.submit, declaredPath ? 'function' : 'undefined', `${entry.id}: a write door exactly where the declaration names a generating path`)
@@ -201,8 +210,7 @@ test('the door shows the same device whole in the pool and full in a pane', () =
     assert.match(pane, /data-document-device="ql-daily-die"/, 'the full size is the face\'s own hosted form, ported')
     assert.equal(set[0].device.values.face, '#3 Pattern — Observations', 'the same device, the same live settings')
     assert.doesNotMatch(pane, /data-param=/, 'a pane holds the material; its controls stay in Device view (DLW §16.1)')
-    door.selectDevice('central:nara-conversation')
-    assert.match(html(createElement(DeviceFullPane, {id: 'central:nara-conversation'})), /data-conversation-device="nara"/)
+    // REPLACED: the Answer's pane (the Nara conversation's hosted body) — the Answer is the one Agent, whose Full is its thread.
     assert.match(html(createElement(DeviceFullPane, {id: 'central:ground-hygiene'})), /data-central-device="ground-hygiene"/)
     assert.match(html(createElement(DeviceFullPane, {id: 'central:impact'})), /data-central-picture="impact"/, 'no subject: the full size is its picture, not a blank')
   } finally {
@@ -218,26 +226,17 @@ test('the impact opens full over the subject the browser selected', () => {
   assert.match(html(entry.picture('full')), /data-central-device="impact"[^>]*data-subject="Work\/O-I"/)
 })
 
-test('pop-out is kept where the face declares it: offered with a host and an aperture, disabled without, redock when out — a mark of the head', () => {
-  const calls = []
-  const host = (popped = false) => ({popOut: identity => calls.push(['pop', identity.face]), redock: identity => calls.push(['redock', identity.face]), poppedOut: () => popped})
+test('REPLACED — no native pop-out mark of the family\'s own: the door\'s ↗ (the device\'s own window, R1) stands alone; a face the host holds popped out says so in its Full', () => {
+  // Was: "pop-out is kept where the face declares it: offered with a host and an aperture, disabled without, redock when out — a mark of
+  // the head". R1 gave every device its own window through the door (frame/devices/deviceDoor.ts openDeviceWindow); the chain adds none.
+  const host = (popped = false) => ({popOut: () => {}, redock: () => {}, poppedOut: () => popped})
   const withHost = entries({deviceWindows: host(), day: DAY})
-  assert.match(compact(withHost.find(entry => entry.id === 'central:day-die')), /data-action="pop-out"(?![^>]*disabled)/, 'the die pops out on its Day')
-  // MOVED: the pop-out stood in the picture's well; it is the place's mark in the head now, before ⤢ (DEVICE-UI §4.1).
-  assert.match(compact(withHost.find(entry => entry.id === 'central:nara-conversation')), /<span class="dp-head-x"><button type="button" class="dp-full" data-action="pop-out"/,
-    'in the head\'s marks, as the kit draws a place\'s mark')
-  assert.doesNotMatch(html(withHost.find(entry => entry.id === 'central:nara-conversation').picture('compact')), /pop-out|redock/, 'the picture is the picture alone')
-  assert.match(compact(withHost.find(entry => entry.id === 'central:nara-conversation')), /data-action="pop-out"/)
-  assert.doesNotMatch(compact(withHost.find(entry => entry.id === 'central:context-world')), /pop-out/, 'a parameter face does not pop out')
-  // MOVED (lane BC2): the Flow was a clip whose pop-out went with it to the Clip side; it is the Flow document's instrument now, on
-  // the chain while a Flow is reached, and keeps the pop-out its face declares.
-  assert.ok(!withHost.some(entry => entry.id === 'central:flow-document'), 'no Flow reached: the Flow does not stand')
-  const flowLocation = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Control/user/flows/mercurius.html', root: '/ground', path: 'Control/user/flows/mercurius.html'}
-  const withFlow = entries({deviceWindows: host(), flow: {location: flowLocation}, placement: {form: 'Flow', book: false}})
-  assert.match(compact(withFlow.find(entry => entry.id === 'central:flow-document')), /data-action="pop-out"(?![^>]*disabled)/, 'the Flow pops out on its document')
-  assert.doesNotMatch(compact(entries({day: DAY}).find(entry => entry.id === 'central:day-die')), /pop-out/, 'no host door: no pop-out')
+  for (const entry of withHost) {
+    assert.equal(entry.marks, undefined, `${entry.id}: no mark of its own`)
+    assert.doesNotMatch(compact(entry), /data-action="(?:pop-out|redock)"/, entry.id)
+  }
+  assert.ok(!withHost.some(entry => entry.id === 'central:nara-conversation' || entry.id === 'central:flow-document'), 'no Answer or Flow on the chain')
   const out = entries({deviceWindows: host(true), day: DAY}).find(entry => entry.id === 'central:day-die')
-  assert.match(compact(out), /data-action="redock"/)
   assert.match(html(out.picture('full')), /data-popped-out="true"[\s\S]*Popped out/, 'the pane does not hold a second copy of a popped-out device')
 })
 
@@ -258,34 +257,25 @@ const bridge = {kind: 'bridge', url: 'http://owner.fixture'}
 // writes the row (frame/devices/deviceHost.tsx).
 const KIND = {enum: '(?:radio|radio-stack|chooser)', bool: 'toggle'}
 const control = (markup, key, kind) => new RegExp(`data-param="${key}"[^>]*data-control="${KIND[kind]}"`).test(markup)
-// The conversation's binding is its light (enabledKey `bound`): the plate's activator, pressed to ask the owner (DEVICE-UI §4.1).
-const activator = markup => /<button type="button" class="dp-activator" data-light="(?:dark|lit)"[^>]*>/.exec(markup)?.[0] ?? ''
 const NARA_UNBOUND = {state: 'unbound', conversation: null, gap: null, expression: null, session: null}
 
-test('the Day die and the conversation carry a generating control at every size — compact, whole and full — and the instance carries the door that writes it', () => {
+test('the Day die carries its generating control at every size — compact, whole and full — and the instance carries the door that writes it (REPLACED: the conversation\'s activator — the Answer is the one Agent, r4-one-agent.test.mjs)', () => {
   const reads = {day: {standing: ready, face: 3, revision: REVISION}, nara: NARA_UNBOUND}
   const set = entries({reads, day: DAY, conversation: {project: null, expressionRef: 'expression:x', conversation: null}})
   for (const entry of set) door.publishDevice(entry.id, {device: entry.device, picture: entry.picture})
   try {
-    const die = set.find(entry => entry.id === 'central:day-die'), nara = set.find(entry => entry.id === 'central:nara-conversation')
+    const die = set.find(entry => entry.id === 'central:day-die')
     // compact: the chain's own markup
     assert.ok(control(compact(die), 'face', 'enum'), 'compact: the die turns')
-    assert.ok(activator(compact(nara)) && !activator(compact(nara)).includes('disabled'), 'compact: the conversation binds, by its activator')
     // whole: the pool
     door.selectDevice('central:day-die')
     assert.ok(control(html(createElement(DevicePool)), 'face', 'enum'), 'whole: the die turns')
-    door.selectDevice('central:nara-conversation')
-    const naraPool = html(createElement(DevicePool))
-    assert.ok(activator(naraPool) && !activator(naraPool).includes('disabled'), 'whole: the conversation binds, by its activator')
     // full: a pane holds the hosted body itself; the controls stay in Device view under it (DLW §16.1)
     const diePane = html(createElement(DeviceFullPane, {id: 'central:day-die'}))
     assert.match(diePane, /data-document-device="ql-daily-die"/)
     assert.ok(!control(diePane, 'face', 'enum'), 'full: the die\'s own form, no plate controls over it')
-    const naraPane = html(createElement(DeviceFullPane, {id: 'central:nara-conversation'}))
-    assert.match(naraPane, /data-conversation-device="nara"/)
     // one device: the three sizes read the same instance, so one `submit` writes all three
     assert.equal(typeof die.device.submit, 'function')
-    assert.equal(typeof nara.device.submit, 'function')
     // the other rows stay readings at every size
     assert.ok(!control(compact(die), 'revision', 'enum') && !control(compact(die), 'day', 'enum'), 'the Day and its revision are readings')
   } finally {
@@ -389,7 +379,11 @@ test('a die turn the owner cannot take is refused in the owner\'s words or by na
 
 test('binding the conversation resolves the dialogue through the nara_dialogue op, as the encounter surface does; unbinding has no owner op', async () => {
   const conversation = {project: null, expressionRef: 'expression:bind-1', conversation: null}
-  const device = (extra = {}) => entries({transport: bridge, reads: {nara: NARA_UNBOUND}, conversation, ...extra}).find(entry => entry.id === 'central:nara-conversation').device
+  // The conversation face stands on no chain since R4 (the one Agent binds the dialogue); its device and write door stand as the model
+  // builds them, over the same writers the chain held (centralDeviceWrites.ts bindConversation).
+  const face = central.faces.find(item => item.id === 'nara-conversation')
+  const device = ({conversation: aperture = conversation, afterWrite} = {}) => model.centralDevice(face, {nara: NARA_UNBOUND},
+    writes.centralWriters({transport: bridge, day: null, conversation: aperture, afterWrite}))
   // no current identity: the face's own words
   identity.clearCurrentIdentity()
   const owner = fakeOwner()

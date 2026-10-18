@@ -238,7 +238,7 @@ test('a pointer press and a MIDI note both reach the owner through the same chai
 
 // ── 6 — the chain shows in Live's device chain, before the torus ──────────────
 
-test('the note devices render in the Live device chain after the keyboard and before the torus, each a plate of the runtime', () => {
+test('the note devices render in the Live device chain after the part\'s input and before the torus, each a plate of the runtime', () => {
   resetNoteDeviceChain()
   addNoteDevice('scale')
   torus.publishLiveTorusState({ok: false, fault: 'test reading'})
@@ -248,10 +248,12 @@ test('the note devices render in the Live device chain after the keyboard and be
     const html = renderToStaticMarkup(createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'device'}))
     const at = html.indexOf('data-note-device-chain="note-devices"')
     const torusAt = html.indexOf('data-live-torus=')
-    const jankoAt = html.indexOf('data-janko-layout=')
+    // REPLACED (R4): "the keyboard the notes start from stands before them" — the keyboard is the part's input, no plate (lock §0.3.6).
+    const inputAt = html.indexOf('data-part-input=')
     assert.ok(at >= 0, 'the note-device chain is in the Live device chain')
     assert.ok(torusAt > at, 'before the torus')
-    assert.ok(jankoAt >= 0 && jankoAt < at, 'the keyboard the notes start from stands before them (manual §10.4: in the order the material passes)')
+    assert.ok(inputAt >= 0 && inputAt < at, 'the part\'s input the notes start from stands before them (manual §10.4: in the order the material passes)')
+    assert.equal(html.indexOf('data-janko-layout='), -1, 'no keyboard plate on the chain')
     assert.match(html.slice(at), /data-note-device="scale"/, 'the Scale plate is in the chain')
     assert.match(html.slice(at), /data-device="live:note\/note-device-\d+" data-device-size="compact"/, 'drawn by the device runtime at its compact size')
     assert.match(html.slice(at), /data-param="tie"[^>]*>(?:(?!data-param=)[\s\S])*?<span class="dp-label">Tie<\/span>/, 'the tie parameter shows on the device it moves (the kit\'s control)')
@@ -300,12 +302,15 @@ test('source reading: the one hook point is the input path\'s transform, applied
   assert.equal(noteDeviceChain().length, 0, 'no device is present until one is added: the chain is empty by default')
 })
 
-test('source reading: Live\'s chain mounts the keyboard, the note devices, then the torus, and the clip detail carries none', async () => {
+test('source reading: Live\'s chain mounts the part\'s input, the note devices, then the torus, and the clip detail carries none', async () => {
   const chainSource = readFileSync(new URL('../src/live/LiveDeviceChain.tsx', import.meta.url), 'utf8')
-  const jankoAt = chainSource.indexOf('<KeyboardOnChain />')
+  // REPLACED (R4; DLW §16.2 "The note devices, the torus, then its effects"): the keyboard's plate is no chain device; the part's input
+  // (no device) stands before the note devices.
+  assert.equal(chainSource.indexOf('<KeyboardOnChain />'), -1, 'no keyboard plate')
+  const jankoAt = chainSource.indexOf('<PartInput />')
   const note = chainSource.indexOf('<NoteDeviceChain />')
   const torusAt = chainSource.indexOf('<TorusOnChain state={torus} />')
-  assert.ok(jankoAt > 0 && note > jankoAt && torusAt > note, 'the keyboard, then the note devices, then the torus')
+  assert.ok(jankoAt > 0 && note > jankoAt && torusAt > note, 'the input, then the note devices, then the torus')
   assert.match(chainSource, /import \{NoteDeviceChain\} from '\.\/noteDevices\/NoteDeviceChain'/)
   assert.doesNotMatch(readFileSync(new URL('../src/live/LiveClip.tsx', import.meta.url), 'utf8'), /NoteDeviceChain/)
 })

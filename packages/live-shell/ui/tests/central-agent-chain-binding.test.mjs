@@ -106,8 +106,9 @@ test('each device is published under the id its design draws, from a face the fa
   assert.deepEqual([chain.PACKET_DEVICE_ID, chain.SEARCH_DEVICE_ID, chain.IDENTITY_DEVICE_ID, chain.CONTEXT_WORLD_DEVICE_ID],
     ['central:packet', 'central:search', 'central:agent-identity', 'central:context-world'])
   assert.deepEqual([...validateInhabitantManifest(central)], [], 'the composed manifest validates with the agent chain declared')
-  // The Packet stands on a reached document's chain only (§18.9 "a document's chain, after Notes").
-  for (const form of ['Day', 'Flow', 'Being', 'Thing']) assert.equal(model.PAGE_CHAIN_FACES[form].at(-1), 'packet', `${form}: the Packet ends the document's chain`)
+  // REPLACED (R4): "the Packet ends a reached document's chain" — the Packet leads a workspace's chain, reached document or not (§16.2
+  // "The packet, the agent that answers, and its scope"); r4-chains.test.mjs holds the order.
+  assert.equal(model.CENTRAL_WORKSPACE_FACES[0], 'packet', 'the Packet leads a workspace\'s chain')
 })
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── the Packet

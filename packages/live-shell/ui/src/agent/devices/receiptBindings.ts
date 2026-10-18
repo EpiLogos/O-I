@@ -15,13 +15,16 @@
 // (the Gateway row, kernel harness_agent_control configure {approvals}); its queue is the shown session's pending consent requests
 // (AIKit's encounter view `permissions`, the Thread's own reading, threadBinding.ts pendingPermissions), each answered with the
 // harness's own choice (allow once, allow always, reject) through the encounter's `permission` verb. Wait and On no answer have no
-// owner write (Hermes' approvals.timeout is not a harness_agent_control configure field, harnessAgentControl.ts:14-25); the proposals
-// (Approve, Changes) are source returns, which no kernel op reads or answers here. Pure, apart from the view holds (designBindings.ts holdView).
+// owner write (Hermes' approvals.timeout is not a harness_agent_control configure field, harnessAgentControl.ts:14-25); the proposals are
+// Central's source returns, which the kernel reads since lane K1 (`source_returns_read`, central.source-returns/v1: workcellReads.ts) —
+// the pending and applying ones stand in the queue — while answering one (Approve, Changes) has no kernel op yet. Pure, apart from the
+// view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
 import {describePermission} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
+import type {SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {familyFaceDevice} from './mainTrackBindings'
 import {pendingPermissions, verbStanding} from './threadBinding'
@@ -168,7 +171,7 @@ export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBin
 export const APPROVALS_REFUSE = {
   wait: missing('Wait', 'Hermes\' approvals.timeout through harness_agent_control configure (it carries approvals, transport, connect and stall-after only)', 'Actuation'),
   noAnswer: missing('On no answer', 'a timed-out request\'s outcome through harness_agent_control configure', 'Actuation'),
-  approve: missing('Approve', 'a proposal\'s acceptance through the kernel (projectcentral.source.returns has no kernel op, so no proposal is read)', 'Central'),
+  approve: missing('Approve', 'kernel:source_return_accept {project, return_ref, accepted_by_ref} — Central\'s projectcentral.source.return.accept, authenticated', 'Central'),
   changes: missing('Changes', 'a comment on a source return', 'Central'),
 } as const
 
@@ -179,6 +182,11 @@ const APPROVALS_LOCAL = [...Object.keys(APPROVALS_VIEW), 'pick'] as const
 export interface ApprovalsInput {
   /** The Gateway's values (designBindings.ts gatewayValues): its `approvals` is this device's Default answer. */
   readonly gateway: Values
+  /** Central's source returns of the project (kernel source_returns_read), null while unread; the agency tracks name their agents. */
+  readonly returns?: {readonly entries: readonly SourceReturnEntry[]} | null
+  readonly tracks?: readonly AgentSessionTrack[] | null
+  /** The instant the queue is read at, for a proposal's age (its return was minted at the instant its ref names). */
+  readonly nowUnixMs?: number
   /** The session whose requests the queue shows (the Thread's shown session), null when none. */
   readonly session: AgentSessionTrack | null
   /** That session's encounter view, while it is observed. */
@@ -205,14 +213,38 @@ export function queueRows(requests: readonly NativePermission[], session: AgentS
   })
 }
 
+/** A source path as the return names it (`central:source:<world>:<path>`), else the ref itself. */
+const pathOfSource = (ref: string): string => ref.replace(/^central:source:(?:control:root|project:[^:]+):/, '')
+/** The instant a return was minted, from its ref (Central's source_return.rs mints `<prefix><unix nanos>-<pid>`), in ms; else null. */
+export function returnMintedMs(returnRef: string): number | null {
+  const match = /:(\d{13,})-\d+$/.exec(returnRef)
+  return match ? Math.floor(Number(match[1]) / 1e6) : null
+}
+
+/** Central's returned work that waits as the queue's proposals (software-factory__approvals.tsx:14-16): each return pending or applying,
+ * {id (its ref), kind proposal, who (the session's agent, else its session), text and where (the source it proposes to change), session,
+ * age (seconds since it was minted)}. Accepted and rejected returns wait no more. */
+export function proposalRows(entries: readonly SourceReturnEntry[], tracks: readonly AgentSessionTrack[] | null | undefined, nowUnixMs: number | undefined): Record<string, Value>[] {
+  return entries.filter(entry => entry.status === 'pending' || entry.status === 'applying').map(entry => {
+    const track = tracks?.find(item => item.sessionRef === entry.agent_session_ref)
+    const minted = returnMintedMs(entry.return_ref)
+    const path = pathOfSource(entry.source_ref)
+    return {id: entry.return_ref, kind: 'proposal', who: track?.agentName ?? track?.agentRef ?? entry.agent_session_ref, text: path, where: path,
+      session: track?.purpose ?? entry.agent_session_ref, ...(entry.status === 'applying' ? {flag: 'applying'} : {}),
+      ...(minted !== null && nowUnixMs ? {age: Math.max(0, Math.round((nowUnixMs - minted) / 1000))} : {})}
+  })
+}
+
 export function approvalsValues(input: ApprovalsInput): Values {
   const values: Record<string, Value> = {}
   const view = viewHolds(input.holds, APPROVALS_ID)
   for (const [key, value] of Object.entries(APPROVALS_VIEW)) values[key] = view[key] ?? value
   put(values, 'pick', view.pick)
   put(values, 'approvals', input.gateway.approvals)
-  if (input.session && input.encounter) {
-    const rows = queueRows(pendingPermissions(input.encounter), input.session)
+  const requests = input.session && input.encounter ? queueRows(pendingPermissions(input.encounter), input.session) : null
+  const proposals = input.returns ? proposalRows(input.returns.entries, input.tracks, input.nowUnixMs) : null
+  if (requests || proposals) {
+    const rows = [...(proposals ?? []), ...(requests ?? [])]
     values.queue = JSON.stringify(rows)
     values.light = rows.length ? 'lit' : 'dark'
   }
@@ -239,7 +271,7 @@ function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways
 /** Approvals' binding: the Default answer through the Gateway's own write (one key, one row); each answer to a request through the
  * shown session's encounter, with the harness's own choice; the view's settings held by the shell; Wait, On no answer and the proposal
  * answers stand disabled with what they lack. */
-export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBinding, 'write' | 'standing'> | null, ports: ApprovalsPorts): DesignBinding {
+export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBinding, 'write' | 'standing'> | null, ports: ApprovalsPorts, id: string = APPROVALS_ID): DesignBinding {
   const requests = input.encounter ? pendingPermissions(input.encounter) : []
   const standing: Record<string, Standing> = disabled(APPROVALS_REFUSE)
   const verb = !input.session ? 'No session is shown: select one, or pin the Thread to one.' : !input.encounter ? 'The session\'s conversation is not read yet.'
@@ -247,7 +279,8 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
   if (verb) for (const key of ['allowOnce', 'allowAlways', 'deny']) standing[key] = {disabled: verb}
   if (gateway?.standing?.approvals) standing.approvals = gateway.standing.approvals
   return {
-    id: APPROVALS_ID,
+    // `id` is the chain's own (Factory's Main track, or Central's: CentralDevices.tsx); the view's settings are the one Approvals'.
+    id,
     values: approvalsValues(input),
     standing,
     local: Object.fromEntries(APPROVALS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(APPROVALS_ID, key, value)])),

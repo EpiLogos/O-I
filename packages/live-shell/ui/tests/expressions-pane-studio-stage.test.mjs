@@ -96,9 +96,9 @@ const OPTIONS = {width: 1920, aspect: '16:9', includeText: false, transparent: t
 const captureBody = (state, over = {}) => createElement(Stage.StageCaptureBody, {sender: senderFor(state), chosen: 'still', options: OPTIONS, edition: false,
   editionId: 'edition', onChoose: noop, onOptions: noop, onEdition: noop, ...over})
 
-test('Tools holds the stage\'s view: the camera, the guides and the view, read from the hosted state, beside the Pointer', () => {
+test('the Stage\'s View holds the stage\'s view: the camera, the guides and the view, read from the hosted state (REPLACED: Tools, beside the Pointer — R4)', () => {
   Door.publishHostedChrome({state: staged(), run: async () => ({ok: true}), faults: []})
-  const tools = sectionOf(studio(), 'studio:tools')
+  const tools = sectionOf(studio(), 'stage:view')
   for (const group of ['Camera', 'Guides and snap', 'View']) assert.match(tools, new RegExp(`role="group" aria-label="${group}"`), `${group} stands in Tools`)
   const on = stageButtons(tools)
   assert.deepEqual(Object.keys(on), ['view-2d', 'view-3d', 'face-plane', 'grid', 'snap', 'guides', 'fit-view', 'keep-view', 'restore-view'])
@@ -109,13 +109,14 @@ test('Tools holds the stage\'s view: the camera, the guides and the view, read f
   assert.match(on.snap, /aria-pressed="false"/)
   assert.doesNotMatch(on['fit-view'], /aria-pressed/, 'an action claims no pressed state')
   assert.match(on['fit-view'], /aria-label="Fit view"[^>]*data-i="Fit view\|Return the camera to its default framing, facing the plane\."/, 'the owner\'s label, what it does in the hover words')
-  assert.match(tools, /Open a native Expression to see its Pointer\./, 'the Pointer field device keeps its place in Tools')
+  // REPLACED: "the Pointer field device keeps its place in Tools" — the Pointer is a row of the Studio's Motion chain (§20.3).
+  assert.doesNotMatch(tools, /Pointer/, 'the Pointer is the Studio\'s, not the Stage\'s')
   Door.publishHostedChrome(null)
 })
 
-test('Capture holds still | video, ◉ Capture, Present and Edition…; no line says capture is undisclosed', () => {
+test('the Stage\'s Capture holds still | video, ◉ Capture, Present and Edition…; no line says capture is undisclosed (MOVED: the Studio\'s Capture section → the Stage, R4)', () => {
   Door.publishHostedChrome({state: staged({videoTake: false}, {presenting: false}), run: async () => ({ok: true}), faults: []})
-  const capture = sectionOf(studio(), 'studio:capture')
+  const capture = sectionOf(studio(), 'stage:capture')
   assert.doesNotMatch(capture, /No owner discloses capture/)
   assert.match(capture, /role="group" aria-label="Capture kind"/)
   assert.match(capture, /aria-pressed="true"[^>]*>still<\/button>/, 'a still is the first choice (the mockup\'s x.cap)')
@@ -126,23 +127,23 @@ test('Capture holds still | video, ◉ Capture, Present and Edition…; no line 
   assert.match(on.present, /aria-pressed="false"/)
   assert.match(capture, /aria-expanded="false"[^>]*>Edition…<\/button>/)
   Door.publishHostedChrome({state: staged(), run: async () => ({ok: true}), faults: []})
-  assert.doesNotMatch(stageButtons(sectionOf(studio(), 'studio:capture')).present, /aria-pressed/, 'no presenting reading, no pressed claim')
+  assert.doesNotMatch(stageButtons(sectionOf(studio(), 'stage:capture')).present, /aria-pressed/, 'no presenting reading, no pressed claim')
   Door.publishHostedChrome(null)
 })
 
 test('with no frame, every stage control is off and keeps its owner\'s reason in its hover words', () => {
   Door.publishHostedChrome(null)
   const html = studio()
-  const off = {...stageButtons(sectionOf(html, 'studio:tools')), ...stageButtons(sectionOf(html, 'studio:capture'))}
+  const off = {...stageButtons(sectionOf(html, 'stage:view')), ...stageButtons(sectionOf(html, 'stage:capture'))}
   assert.equal(Object.keys(off).length, 11)
   for (const [id, attrs] of Object.entries(off)) {
     assert.match(attrs, /disabled=""/, id)
     assert.match(attrs, /title="No Expressions application is mounted\."/, id)
     assert.match(attrs, /data-i="[^|"]+\|No Expressions application is mounted\."/, `${id}: the Info view reads the reason`)
   }
-  assert.match(sectionOf(html, 'studio:capture'), /class="inst-section-line studio-stage-reason">No Expressions application is mounted\./, 'the reason stands once, in Capture')
+  assert.match(sectionOf(html, 'stage:capture'), /class="inst-section-line studio-stage-reason">No Expressions application is mounted\./, 'the reason stands once, in Capture')
   Door.publishHostedChrome({state: {hostMode: 'expressions', sceneCount: 0}, run: async () => ({ok: true}), faults: []})
-  const closed = stageButtons(sectionOf(studio(), 'studio:tools'))
+  const closed = stageButtons(sectionOf(studio(), 'stage:view'))
   assert.match(closed['view-2d'], /title="Open a native Expression to use its stage\."/, 'no native Scene: the owner\'s own reason')
   Door.publishHostedChrome(null)
 })
@@ -187,11 +188,13 @@ test('ported, not recreated: one sender, the same builders, the Studio draws the
   assert.match(stage, /const why = sender\.reason \?\? blocked \?\? null/, 'the shared reason wins over a control\'s own, as before')
   const studioSource = await source('components/expressions/studio/ExpressionsStudio.tsx')
   assert.match(studioSource, /const chrome = useHostedChrome\(\)\s*const stage = useStageSender\(chrome\?\.state \?\? null, chrome\?\.run \?\? null\)/)
-  // T-FRAME-CHROME-ONTO-PLATES: Tools stands the frame's tools no other device carries before the stage's view; the work's own acts
-  // (Save, Undo, Redo) stand in the Studio's head, where the mockup draws Save (lane E, InstrumentPlate `head`).
-  assert.match(studioSource, /if \(section\.id === 'studio:tools'\) parts\.push\(<FrameControls key="frame-tools"[^\n]*\n\s*<StageViewTools key="stage" sender=\{stage\} \/>\)/)
-  assert.match(studioSource, /const work = frameAt\('work'\)[\s\S]*<FrameControls label="Work" controls=\{work\} view=\{frame\} \/>[\s\S]*head=\{head\}/, 'Save, Undo and Redo in the head')
-  assert.match(studioSource, /if \(section\.id === 'studio:capture'\) parts\.push\(<StageCaptureTools key="stage" sender=\{stage\} \/>\)/)
+  // R4: the Stage stands the frame's tools no other device carries, then the stage's view, then capture; the work's own acts (Save, Undo,
+  // Redo) are the Studio design's head acts on the editor's own requests (studioBinding.ts) — REPLACED: the frame's Work controls in the
+  // old plate's head.
+  assert.match(studioSource, /\{id: 'stage:frame', title: 'Frame tools', children: <FrameControls label="Frame tools" controls=\{frameTools\} view=\{frame\} \/>\}/)
+  assert.match(studioSource, /\{id: 'stage:view', title: 'View', children: <StageViewTools sender=\{stage\} \/>\}/)
+  assert.match(studioSource, /\{id: 'stage:capture', title: 'Capture', children: <StageCaptureTools sender=\{stage\} \/>\}/)
+  assert.match(await source('components/expressions/studio/studioBinding.ts'), /ports\.request\(\{operation: key, basis: reading\.basis\}\)/, 'Save, Undo and Redo: the editor\'s own requests')
   // The centre residence's strip (components/NativeStageTools.tsx) drew the same two bodies; it was drawn by nothing and was deleted on
   // 15 Oct (FOUNDATION §7), so the Studio is the one place the stage's controls stand.
   const {existsSync} = await import('node:fs')

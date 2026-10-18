@@ -13,8 +13,8 @@
 //     source_horizon.rs:138-140 actor, actor_kind, agent_session_ref; before and after revisions).
 // The Reach, the Writes to list, Writes elsewhere, Knowledge search and the proposals that wait have no owner a kernel op reaches: each
 // is absent, and a change of it refused, in words. Pure: no React, no transport.
-import type {DesignBinding, Value, Values} from '../../frame/devices/designed'
-import {heldOf, pageBinding, type DesignWiring} from './pageBindings'
+import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
+import {heldOf, pageBinding, setHeld, type DesignWiring} from './pageBindings'
 
 export const CONTEXT_WORLD_DESIGN = 'central:context-world'
 
@@ -147,4 +147,55 @@ export function contextWorldBinding(id: string, input: ContextWorldInput): Desig
   const places = [...(typeof values.reads === 'string' ? JSON.parse(values.reads) as {id: string}[] : [])]
   const standing = Object.fromEntries(places.flatMap(place => [[`r:${place.id}`, {disabled: NO_REQUEST}], [`w:${place.id}`, {disabled: NO_REQUEST}]]))
   return pageBinding(id, CONTEXT_WORLD_WIRING, values, {}, {}, standing)
+}
+
+// ---------------------------------------------------------------------------------------------------------------- one Scope
+// R4 (DLW §16.1 "What an agent may read and where it may write is one Scope (§19.12) … on any track an agent works on"; §19.12 "last on
+// a Central workspace's chain"; lock §0.3.5 "Context & world is Scope"): Context & world's owners draw Scope's design on Central
+// (software-factory:context-write-mode, inhabitants/catalogue/panels/scope.tsx) — the light, the places the agent may read (the packet
+// its turn carries, your world's retrievable sources: each a place on its ring, the shape Scope reads), and the receipts of the
+// session's writes. The Reach, the Writes list, the write mode and Knowledge have no owner a kernel op reaches, as before: each absent,
+// and a change of it refused with the operation it lacks. The raised reach is the view's, held until Confirm (Scope's own ask).
+
+/** Scope on Central's workspace chain (its design is Software Factory's: software-factory:context-write-mode). */
+export const CENTRAL_SCOPE_ID = 'central:scope'
+
+const SCOPE_MISSING = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
+/** Scope's controls on Central that no owner takes, each with the operation it lacks. */
+export const CENTRAL_SCOPE_REFUSED: Readonly<Record<string, string>> = {
+  reach: SCOPE_MISSING('Reach', 'the scope reach write on the session\'s context, enforced on its reads (WO-SF2)', 'Software Factory'),
+  writeMode: SCOPE_MISSING('Write mode', 'write-arm enforcement on the session\'s writes (WO-SF2): propose · draft · direct', 'Software Factory'),
+  knowledge: SCOPE_MISSING('Knowledge', 'the Knowledge route\'s source bounds for the session (protocol_read is available but unwired)', 'AIKit'),
+}
+const NO_PLACE_REQUEST = SCOPE_MISSING('A place in Writes', 'central.world-relations.save through the kernel', 'Central')
+
+/** Scope's readings on Central: Context & world's (contextWorldValues), in Scope's keys. `reads` keeps Scope's place shape ({id, name,
+ * ring}; the place's path rides along); `receipts` is the session's source changes, newest first (the manual's Receipts list — the design
+ * sums a place's receipts from `writes`, which no owner lists, so it draws the count as missing). */
+export function centralScopeValues(id: string, input: ContextWorldInput): Values {
+  const world = contextWorldValues(id, input)
+  const values: Record<string, Value> = {}
+  for (const key of ['light', 'reads', 'receipts', 'reachPending'] as const) if (world[key] !== undefined) values[key] = world[key]!
+  return values
+}
+
+/** Scope's binding on Central: readings only; a raised reach held until Confirm; every write refused with the op it lacks. */
+export function centralScopeBinding(id: string, input: ContextWorldInput): DesignBinding {
+  const values = centralScopeValues(id, input)
+  const places = typeof values.reads === 'string' ? (JSON.parse(values.reads) as {id: string}[]) : []
+  const standing: Record<string, Standing> = Object.fromEntries(Object.entries(CENTRAL_SCOPE_REFUSED).map(([key, why]) => [key, {disabled: why}]))
+  for (const place of places) standing[`w:${place.id}`] = {disabled: NO_PLACE_REQUEST}
+  return {
+    id,
+    values,
+    standing,
+    local: {reachPending: value => setHeld(id, 'reachPending', value === undefined ? undefined : value)},
+    writes: key => key in CENTRAL_SCOPE_REFUSED || key.startsWith('w:'),
+    write: async (changes: readonly ValueChange[]) => {
+      for (const {key} of changes) {
+        if (key === 'reach') setHeld(id, 'reachPending', undefined)
+        throw Error(CENTRAL_SCOPE_REFUSED[key] ?? (key.startsWith('w:') ? NO_PLACE_REQUEST : `${key} is a reading: its owner reports it; nothing here changes it.`))
+      }
+    },
+  }
 }

@@ -548,8 +548,11 @@ test('the Agent, the rack, the member and Scope draw their designs on their bind
 
 test('the chain publishes each designed device with its binding, draws the member inside the rack, and names why a design waits', () => {
   const view = read('devices/FactoryDeviceChain.tsx')
-  assert.match(view, /publishDevice\(device\.id, \{device, picture: size => chainPicture\(slot\.id, pictures, size\), \.\.\.\(bindings\[slot\.id\] \? \{binding: bindings\[slot\.id\]!\} : \{\}\), \.\.\.\(slot\.id === 'agent' \? \{full: \{open: \(\) => threadOpener\.current\(\)\}\} : \{\}\),/,
+  // REPLACED (R4): the Agent's publication no longer overrides its Full with the Thread device's pane — the one Agent's own Full is its
+  // thread (actuation__harness-model.tsx `full`, on the Thread page it carries).
+  assert.match(view, /publishDevice\(device\.id, \{device, picture: size => chainPicture\(slot\.id, pictures, size\), \.\.\.\(bindings\[slot\.id\] \? \{binding: bindings\[slot\.id\]!\} : \{\}\),/,
     'the pool, a pane and the rail draw the same design on the same binding')
+  assert.doesNotMatch(view, /threadOpener/, 'no Full override for the Agent')
   assert.match(view, /\.\.\.\(slot\.id === 'gateway' && main\.frames \? \{full: \{open: \(\) => openDevice\(FRAMES_ID, 'Frames'\)\}\} : \{\}\)\}\)/,
     'the Gateway\'s own Full is the Frames monitor (§19.1, lane BF2)')
   assert.match(view, /<DeviceView device=\{device\} size="compact" picture=\{chainPicture\(slot\.id, pictures, 'compact'\)\} binding=\{bindings\[slot\.id\] \?\? undefined\}/)

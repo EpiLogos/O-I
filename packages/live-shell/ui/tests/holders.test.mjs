@@ -75,19 +75,15 @@ test('the standing world passes the holder rules: every door face names known ho
 // ---------------------------------------------------------------------------
 // 1 — the tables: the Studio chain, the Clip detail, the six Technē instruments.
 
-test('the Studio is the Expressions device chain: eight sections, in the mockup order, and each section is a device', async () => {
-  const mockup = await readFile(new URL('desktop/cradle/docs/world-shell/world-shell-mockup.html', root), 'utf8')
-  const start = mockup.indexOf("instFrame('','Studio'")
-  assert.ok(start > 0, 'the mockup carries the Expressions Studio block')
-  const end = mockup.indexOf("$('#dth').innerHTML=head;$('#chain').innerHTML=html;return}", start)
-  const titles = [...mockup.slice(start, end).matchAll(/\{h:'([^']+)'/g)].map(match => match[1])
-  assert.equal(titles.length, 8, `the mockup's Studio has eight sections (${titles.join(' | ')})`)
-  const ids = titles.map(title => semantics.STUDIO_SECTIONS.find(section => title.startsWith(section.title))?.id)
-  assert.deepEqual(ids, semantics.STUDIO_SECTIONS.map(section => section.id), 'the Studio table follows the mockup order exactly')
-  assert.deepEqual(semantics.STUDIO_SECTIONS.map(section => section.liveSemantic), [
-    'device-audio-fx', 'device-audio-fx', 'device-audio-fx', 'device-audio-fx', 'device-audio-fx',
-    'device-instrument', 'modulation', 'capture',
-  ], 'the Studio sections carry the semantics of the table (Body is the instrument; Nara · M4 and Capture are designed)')
+test('the Studio is the Expression\'s rack: its four chains, in the design\'s order (REPLACED: the mockup\'s eight sections — R4, DLW §20.3, lock §0.3.7)', async () => {
+  // Was: the eight sections of world-shell-mockup.html's Studio block (Tools, Selected, Formation, Material, Motion, Body 3:3, Nara · M4,
+  // Capture). The design (inhabitants/catalogue/panels/expressions__studio.tsx CHAINS) and the manual's §20.3 table name four chains.
+  const design = await readFile(new URL('packages/live-shell/ui/src/inhabitants/catalogue/panels/expressions__studio.tsx', root), 'utf8')
+  const chains = [...design.slice(design.indexOf('const CHAINS'), design.indexOf('\n]', design.indexOf('const CHAINS'))).matchAll(/label: '([^']+)'/g)].map(match => match[1])
+  assert.deepEqual(chains, ['Material', 'Motion', 'Body', 'Nara'])
+  assert.deepEqual(semantics.STUDIO_SECTIONS.map(section => section.title), chains, 'the Studio table is the design\'s chains, in order')
+  assert.deepEqual(semantics.STUDIO_SECTIONS.map(section => section.liveSemantic), ['device-audio-fx', 'device-audio-fx', 'device-instrument', 'modulation'],
+    'the chains carry the semantics of the table (Body is the instrument; Nara the personal layer\'s modulation)')
   assert.equal(semantics.STUDIO_SECTIONS.find(section => section.id === 'studio:body').provenance, 'M1+M2+M3')
 })
 
@@ -108,8 +104,9 @@ test('every holder names a legal Live semantic and a unique id; the six Technē 
   assert.equal(semantics.isHolder('studio:nowhere'), false)
 })
 
-test('the Clip detail holds the Expressions scene and its automation (a scene is a clip; lock §9.1, §9.4)', () => {
-  assert.deepEqual(semantics.DETAIL_CLIP_HOLDER.holds, ['expressions/scene', 'expressions/automation'])
+test('the Clip detail holds the Expressions scene and its automation, and what left the Studio for the scene\'s Clip view (lock §9.1, §9.4, §0.3.7; R4)', () => {
+  assert.deepEqual(semantics.DETAIL_CLIP_HOLDER.holds, ['expressions/scene', 'expressions/automation', 'expressions/formation', 'expressions/glyph', 'expressions/force',
+    'expressions/sound', 'expressions/meaning', 'expressions/text', 'expressions/blueprint', 'expressions/arrange', 'expressions/body'])
 })
 
 // ---------------------------------------------------------------------------
@@ -131,12 +128,13 @@ test('every Expressions face is held by exactly one holder, and the Studio table
     }
   }
   const holderOf = Object.fromEntries(family.faces.map(face => [face.id, face.heldBy[0]]))
-  assert.equal(holderOf.pointer, 'studio:tools')
+  assert.equal(holderOf.pointer, 'studio:motion', 'the Pointer joins Motion (REPLACED: studio:tools — R4)')
   assert.equal(holderOf.physics, 'studio:body')
   assert.equal(holderOf.resonance, 'studio:body')
   assert.equal(holderOf.scene, 'detail:clip')
   assert.equal(holderOf.automation, 'detail:clip')
-  assert.equal(holderOf.meaning, 'studio:selected')
+  assert.equal(holderOf.meaning, 'detail:clip', 'the selected symbol\'s controls are the scene\'s Clip view\'s (REPLACED: studio:selected — R4)')
+  for (const face of ['force', 'sound', 'formation', 'glyph', 'text', 'blueprint', 'arrange', 'body']) assert.equal(holderOf[face], 'detail:clip', `${face}: the clip's`)
 })
 
 // ---------------------------------------------------------------------------
@@ -162,9 +160,9 @@ test('an Expressions face held twice, or not at all, is refused at the family ga
   const pointer = {id: 'pointer', liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field under the pointer'}}
   const none = semantics.validateHolderCoverage('expressions', [pointer])
   assert.ok(none.some(fault => /held by exactly one holder — heldBy names 0/.test(fault)), none.join(' | '))
-  const twice = semantics.validateHolderCoverage('expressions', [{...pointer, heldBy: ['studio:tools', 'studio:selected']}])
+  const twice = semantics.validateHolderCoverage('expressions', [{...pointer, heldBy: ['studio:motion', 'detail:clip']}])
   assert.ok(twice.some(fault => /held by exactly one holder — heldBy names 2/.test(fault)), twice.join(' | '))
-  assert.deepEqual(semantics.validateHolderCoverage('expressions', [{...pointer, heldBy: ['studio:tools']}]), [], 'one holder is admitted')
+  assert.deepEqual(semantics.validateHolderCoverage('expressions', [{...pointer, heldBy: ['studio:motion']}]), [], 'one holder is admitted')
   assert.deepEqual(semantics.validateHolderCoverage('probe-world', [pointer]), [], 'coverage is the Expressions family\'s law; other families are not held to it')
 })
 

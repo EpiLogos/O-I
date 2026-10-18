@@ -26,7 +26,7 @@ export const HYGIENE_WIRING: DesignWiring = {
     machineRef: 'Workcell\'s own workcell_ref (op workcell_status_read; centralHygieneModel.ts workcellRefOf)',
     machines: 'the machine the readings stand on', readAge: 'seconds since the census was read',
     tend: 'Off — no tender has a writer yet (HYGIENE_TENDERS)', refresh: 'On open — the device reads when it opens, and when you press Read now',
-    seats: 'the seat instrument\'s rows (seat status --json, else its text), where a host supplies that read',
+    seats: 'the seat instrument\'s rows (seat status --json, through the kernel\'s seat_status_read: groundDevices.ts hygieneMachineRead)',
     worktrees: 'git worktree list --porcelain, where a host supplies that read', branches: 'git for-each-ref, where a host supplies that read',
     sources: 'each read with its operation, and the owner\'s refusal in its own words', findings: 'the model\'s classification (hygieneFindings)',
   },

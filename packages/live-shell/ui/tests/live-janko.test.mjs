@@ -274,18 +274,19 @@ test('a request publishes the owner\'s window or its refusal, and a stale reply 
   janko.publishLiveJankoWindow(null)
 })
 
-test('the device heads the chain, before the torus it plays, only once the owner has published a reading', () => {
+test('the part\'s input heads the chain, before the torus it plays, only once the owner has published a reading (REPLACED: the keyboard device heading it — R4, lock §0.3.6)', () => {
   const ctx = {set: null, loading: false, error: null}
   const selection = {track: 0, clip: undefined, scene: null}
   torus.publishLiveTorusState(null)
   const before = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'device'}))
-  assert.doesNotMatch(before, /data-janko-layout=/, 'no keyboard without a reading')
+  assert.doesNotMatch(before, /data-part-input=|data-janko-layout=/, 'no input without a reading')
   torus.publishLiveTorusState({ok: true, determinants: null, parameters: null,
     value: {schema: 'ql.instrument-reading/v1', standing: 'following', identity: {event_ref: 'event:janko'}}})
   let after
   try { after = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'device'})) }
   finally { torus.publishLiveTorusState(null) }
-  assert.ok(after.indexOf('data-janko-layout=') >= 0 && after.indexOf('data-janko-layout=') < after.indexOf('data-live-torus='), 'the keyboard heads the chain: the notes start there and pass to the torus (manual §10.4)')
+  assert.ok(after.indexOf('data-part-input=') >= 0 && after.indexOf('data-part-input=') < after.indexOf('data-live-torus='), 'the part\'s input heads the chain: the notes start there and pass to the torus (manual §10.4)')
+  assert.equal(after.indexOf('data-janko-layout='), -1, 'the keyboard is no plate on the chain: its surface stands under the Torus\'s Full')
   assert.doesNotMatch(after, /data-chain-device=/, 'with no set there is no track, so no device faces: the chain is never the registry')
   assert.ok(after.indexOf('data-live-torus=') < after.indexOf('data-live-chain-waits'), 'and the line where the track\'s devices would stand comes after')
 })

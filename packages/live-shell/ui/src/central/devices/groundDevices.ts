@@ -1,7 +1,9 @@
 // Ground hygiene and Impact as designed devices on Central's chain (lane BC2; DLW §18.5, §18.6): the census and the
 // neighbourhood read through the same owner ops the devices' earlier bodies read, and their bindings (groundBindings.ts).
 //   - Ground hygiene reads when it opens and when you press Read now (DLW §18.5 Refresh "On open"), through the one census reader
-//     (inhabitants/CentralHygieneDevice.tsx readHygieneCensus);
+//     (inhabitants/CentralHygieneDevice.tsx readHygieneCensus), its seats the seat instrument's own reading through the kernel (lane K1's
+//     seat_status_read, the one shared entry the Seat reads: agent/devices/workcellReads.ts — slow, so read once and again on Read now);
+//     the read-only git census (worktree list, for-each-ref) has no kernel op, and the census names that refusal;
 //   - Impact reads its subject's three legs when the subject changes — the knowledge graph (`op graph`, readGraph), a folder's
 //     listing (`op files_list`), the NOW register (`op now` kind:list) — ported from inhabitants/CentralImpactDevice.tsx's `read`
 //     (which reads through these three since lane BC3: one implementation of each leg), and the NOW leg again when the kernel says
@@ -11,7 +13,8 @@ import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {readGraph, type GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
 import type {KernelTransportStatus, NativeDirectory} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {DesignBinding} from '../../frame/devices/designed'
-import {readHygieneCensus} from '../../inhabitants/CentralHygieneDevice'
+import {readHygieneCensus, type HygieneMachineRead} from '../../inhabitants/CentralHygieneDevice'
+import {SEAT_STATUS_EPOCH, seatStatusEntry} from '../../agent/devices/workcellReads'
 import {assembleImpact, type ImpactReading, type ImpactSubject, type NowListRow} from '../../inhabitants/centralImpactModel'
 import {receiptMovesNow} from '../../owners/notices'
 import {useSpineEpoch} from '../../owners/spine'
@@ -73,16 +76,31 @@ export const HYGIENE_DEVICE_ID = centralDeviceId('ground-hygiene')
 export const IMPACT_DEVICE_ID = centralDeviceId('impact')
 
 /** Ground hygiene's census, read when the device opens and on Read now; its binding. */
+/** The census's machine reads through the kernel: the seat instrument (seat_status_read; `again`: Read now asks it afresh, else the shared
+ * answer stands); the read-only git census has no kernel op, refused by name. */
+export function hygieneMachineRead(transport: KernelTransportStatus, again: boolean): HygieneMachineRead {
+  return async kind => {
+    if (kind !== 'seat-status') return {boundaryOp: kind === 'worktree-list' ? 'git worktree list --porcelain' : 'git for-each-ref refs/heads', stdout: '',
+      refused: 'No kernel op runs the read-only git census here (worktree list, for-each-ref): the worktrees and branches stand on the git repository reading.'}
+    const entry = seatStatusEntry(transport)
+    await (again ? entry.retry(SEAT_STATUS_EPOCH) : entry.ensure(SEAT_STATUS_EPOCH))
+    const seats = entry.snapshot()
+    const boundaryOp = 'op seat_status_read (seat status --json)'
+    return seats.status === 'answered' ? {boundaryOp, stdout: JSON.stringify(seats.value)} : {boundaryOp, stdout: '', refused: seats.error ?? 'The seat instrument did not answer.'}
+  }
+}
+
 export function useHygieneDevice(transport: KernelTransportStatus, open: boolean): DesignBinding {
   const epoch = useSpineEpoch()
   const [read, setRead] = useState<HygieneRead | null>(null)
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
-  const run = useCallback(async () => {
-    const {census, findings} = await readHygieneCensus({transport, epoch})
+  const census = useCallback(async (again: boolean) => {
+    const {census, findings} = await readHygieneCensus({transport, epoch, machineRead: hygieneMachineRead(transport, again)})
     setRead({census, findings, at: Date.now()})
   }, [transport, epoch])
-  useEffect(() => { if (open) void run() }, [open, run])
+  const run = useCallback(() => census(true), [census])
+  useEffect(() => { if (open) void census(false) }, [open, census])
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
   return useMemo(() => hygieneBinding(HYGIENE_DEVICE_ID, read, Date.now(), run), [read, run, version])
 }
