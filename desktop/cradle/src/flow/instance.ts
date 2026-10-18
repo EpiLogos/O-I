@@ -1,5 +1,5 @@
 import templateHtml from "../../documents/ql-flow.html?raw";
-import {appendContribution, defaultParticipants, isCurrentFormat, legacyParticipantKey, type PluralEntry, type PluralParticipant, type Relation} from "./plural";
+import {appendContribution, containerOf, defaultParticipants, isCurrentFormat, legacyParticipantKey, type EntryKind, type PluralEntry, type PluralParticipant, type Relation} from "./plural";
 /** The ratified flow carrier (PROPOSAL-FLOW-DAY-LOGICS-2026-09-13-2): a flow
  * file is one self-contained instance of the 0/1 form — `entries` (the
  * conversational thread), `journal` pages, `notes`, `packet`, `media` — with
@@ -148,9 +148,11 @@ export function mintBlankInstance(participants?: QlDocParticipant[], now = new D
  * authored by the person's identity unless a declared participant is given —
  * an answering agent's entry declares the live agent's own initial and the
  * session ref it answered from. */
-export function appendEntry(instanceHtml: string, text: string, opts?: {participant?: QlDocParticipant; replyTo?: {entryId: string; anchor: string | null}; relations?: Relation[]; addressees?: string[]; operationRef?: string; html?: string; entryId?: string; basisRevision?: number}, now = new Date()): { html: string; documentId: string | null; entry: QlDocEntry } {
+export function appendEntry(instanceHtml: string, text: string, opts?: {participant?: QlDocParticipant; replyTo?: {entryId: string; anchor: string | null}; relations?: Relation[]; addressees?: string[]; operationRef?: string; html?: string; entryId?: string; basisRevision?: number; kind?: EntryKind}, now = new Date()): { html: string; documentId: string | null; entry: QlDocEntry } {
   const doc = parseInstance(instanceHtml);
   if (isCurrentFormat(doc)) return appendPlural(instanceHtml, doc, text, opts, now);
+  // A container's rules (an entry's kind, the circle's holder) are the plural form's: an earlier form keeps none of them.
+  if (containerOf(doc) || opts?.kind) throw new Error("A container keeps its rules in the plural form: upgrade this flow (its document menu, Upgrade to the plural form) before writing in it.");
   const declared = opts?.participant;
   const initial = declared?.initial ?? doc.meta.participants?.find(p => p.kind === "person")?.initial ?? "F";
   if (declared && !(doc.meta.participants ?? []).some(p => p.initial === declared.initial)) {
@@ -196,6 +198,7 @@ function appendPlural(instanceHtml: string, doc: QlDoc, text: string, opts: Para
   const operationRef = opts?.operationRef ?? `ui:${crypto.randomUUID()}`;
   const result = appendContribution(next, {
     operationRef, authorKey: author.key, html: opts?.html ?? textToHtml(text), at: now.toISOString(), relations, addressees: opts?.addressees, basisRevision: opts?.basisRevision, entryId: opts?.entryId,
+    ...(opts?.kind ? {kind: opts.kind} : {}),
   }, {kind: "system"});
   return {html: embedDocument(instanceHtml, result.doc), documentId: result.doc.meta.documentId, entry: result.entry};
 }

@@ -60,16 +60,27 @@ export interface PluralEntry extends QlDocEntry {
   request?: {ref: string; digest: string};
   /** Document revision the author composed against. */
   basisRevision?: number;
+  /** In a container, what kind of entry it is (manual §24.5): an observation, an interpretation or a choice. */
+  kind?: EntryKind;
 }
+/** The form that holds a conversation (manual §24.5): Bohm's dialogue, a talking circle, an inquiry. Kept in `meta.container` (the page
+ * owner op writes it, kernel/src/page.rs). */
+export type ContainerForm = "dialogue" | "circle" | "inquiry";
+export const CONTAINER_FORMS: readonly string[] = ["dialogue", "circle", "inquiry"];
+/** What an entry in a container says: what happened or is here, what you take it to mean, what you decide to do. */
+export type EntryKind = "observe" | "interpret" | "choose";
+export const ENTRY_KINDS: readonly string[] = ["observe", "interpret", "choose"];
 export interface PluralMeta {
   format?: {version: number; minReader: number};
   upgrade?: {from: string; at: string; originalDigest: string; receipt: string};
+  container?: ContainerForm;
 }
 
 export type IssueCode =
   | "duplicate-entry-id" | "duplicate-participant-key" | "unknown-author-key" | "author-initial-mismatch"
   | "unknown-addressee" | "unknown-audience-key" | "relation-target-missing" | "relation-cycle"
-  | "relation-shape" | "reply-multiple" | "converge-needs-two" | "request-digest-mismatch" | "legacy-format" | "invalid-audience";
+  | "relation-shape" | "reply-multiple" | "converge-needs-two" | "request-digest-mismatch" | "legacy-format" | "invalid-audience"
+  | "invalid-entry-kind";
 export interface Issue {code: IssueCode; path: string; detail?: string}
 
 export type RefusalCode =
@@ -77,7 +88,8 @@ export type RefusalCode =
   | "observer-cannot-contribute" | "participant-left" | "unknown-addressee" | "unknown-audience-key"
   | "relation-target-missing" | "relation-revision-ahead" | "relation-shape" | "reply-multiple" | "converge-needs-two"
   | "request-conflict" | "duplicate-entry-id" | "empty-operation" | "attribution-overclaim" | "authentication-required"
-  | "invalid-relation-type" | "invalid-basis-revision" | "empty-contribution" | "unknown-behalf-of" | "invalid-audience" | "addressee-left";
+  | "invalid-relation-type" | "invalid-basis-revision" | "empty-contribution" | "unknown-behalf-of" | "invalid-audience" | "addressee-left"
+  | "invalid-entry-kind" | "not-in-a-container" | "not-the-holder";
 export class Refusal extends Error {
   code: RefusalCode;
   constructor(code: RefusalCode, message: string) {
@@ -225,6 +237,7 @@ export function validateDocument(doc: QlDoc): Issue[] {
     if (relations.filter(r => r.type === "reply").length > 1) issues.push({code: "reply-multiple", path: `${at}.relations`});
     const converge = relations.filter(r => r.type === "converge").length;
     if (converge === 1) issues.push({code: "converge-needs-two", path: `${at}.relations`});
+    if (entry.kind !== undefined && !ENTRY_KINDS.includes(entry.kind)) issues.push({code: "invalid-entry-kind", path: `${at}.kind`});
     if (entry.request) {
       const {digest: stored} = entry.request;
       if (stored !== requestDigest(entry)) issues.push({code: "request-digest-mismatch", path: `${at}.request`});
@@ -311,6 +324,9 @@ export interface AppendRequest {
   attribution?: Partial<Attribution>;
   /** Native-supplied entry id; otherwise derived from the operation. */
   entryId?: string;
+  /** In a container, what kind of entry this is. Kept on the entry beside the request, not in its digest: the digest is the one the
+   * native owners compute byte for byte (Central's flow_append.rs), and it does not carry a kind yet. */
+  kind?: EntryKind;
 }
 export interface AppendResult {
   doc: QlDoc;
@@ -380,6 +396,41 @@ function checkCaller(author: PluralParticipant, caller: Caller, request: AppendR
   return {basis: "declared"};
 }
 
+// ---------- containers (manual §24.5) ----------
+
+/** The form a Flow is held in, or none. */
+export function containerOf(doc: QlDoc): ContainerForm | null {
+  const form = (doc as Doc).meta.container;
+  return typeof form === "string" && CONTAINER_FORMS.includes(form) ? form : null;
+}
+
+/** Who holds the word in a talking circle: Speak as passes round the participants in their order — each contributor still here, the
+ * person and the agents alike — so the holder is the one after the author of the last entry, and the first when nobody has spoken or
+ * the last speaker has left the round. Undefined when nobody is in the round. */
+export function circleHolder(doc: QlDoc): PluralParticipant | undefined {
+  const round = participantsOf(doc).filter(p => !p.left && (p.role ?? "contributor") === "contributor");
+  if (!round.length) return undefined;
+  const last = (doc.entries as PluralEntry[]).at(-1);
+  if (!last) return round[0];
+  const author = authorOf(doc, last);
+  const at = author ? round.findIndex(p => p.key === author.key) : -1;
+  return round[(at + 1) % round.length];
+}
+
+/** A container's rules on one entry: only an entry in a container says its kind, and the kind is one of the three; in a circle only the
+ * holder writes. */
+function checkContainer(doc: QlDoc, author: PluralParticipant, kind: unknown): void {
+  const form = containerOf(doc);
+  if (kind !== undefined) {
+    if (typeof kind !== "string" || !ENTRY_KINDS.includes(kind)) throw new Refusal("invalid-entry-kind", "an entry is an observation, an interpretation or a choice");
+    if (!form) throw new Refusal("not-in-a-container", "only an entry in a container says what kind of entry it is");
+  }
+  if (form === "circle") {
+    const holder = circleHolder(doc);
+    if (holder && holder.key !== author.key) throw new Refusal("not-the-holder", `in a circle only the holder writes: the word is with ${holder.name ?? holder.initial}`);
+  }
+}
+
 /** Append one distinct contribution. Rereads nothing itself — the caller
  * supplies the current document — but refuses, never mutates on refusal,
  * preserves every other byte of state, and recovers an identical replay. */
@@ -409,6 +460,7 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   // The authority is the caller's own statement, never something the owner checked.
   const behalf = claimedBehalf ? {key: claimedBehalf.key, authority: claimedBehalf.authority, basis: "declared" as const} : undefined;
   const attribution = checkCaller(author, caller, request, participants);
+  checkContainer(doc, author, request.kind);
   const ids = new Set(doc.entries.map(e => e.id));
   if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
   const keys = new Set(participants.map(p => p.key));
@@ -434,6 +486,7 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   entry.replyTo = reply ? {entryId: reply.entryId as string, anchor: reply.anchor ?? null} : null;
   for (const key of ["addressees", "audience", "intent", "basisRevision"] as const) if (entry[key] === undefined) delete entry[key];
   if (!relations.length) delete entry.relations;
+  if (request.kind) entry.kind = request.kind;
   const next = JSON.parse(JSON.stringify(doc)) as Doc;
   next.entries.push(entry);
   next.meta.revision = doc.meta.revision + 1;
@@ -455,7 +508,7 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
  * claimed. Insertion position is the page's business; the relations,
  * author key and reply mirror follow the same shape `appendContribution`
  * produces. */
-export function draftEntry(doc: QlDoc, authorKey: string, at: string, id: string, options?: {relations?: Relation[]; addressees?: string[]; intent?: PluralEntry["intent"]}): PluralEntry {
+export function draftEntry(doc: QlDoc, authorKey: string, at: string, id: string, options?: {relations?: Relation[]; addressees?: string[]; intent?: PluralEntry["intent"]; kind?: EntryKind}): PluralEntry {
   const author = participantsOf(doc).find(p => p.key === authorKey);
   const relations = options?.relations?.map(r => ({...r}));
   const reply = relations?.find(r => r.type === "reply");
@@ -464,6 +517,7 @@ export function draftEntry(doc: QlDoc, authorKey: string, at: string, id: string
   if (relations?.length) entry.relations = relations;
   if (options?.addressees?.length) entry.addressees = [...options.addressees];
   if (options?.intent) entry.intent = options.intent;
+  if (options?.kind && containerOf(doc)) entry.kind = options.kind;
   return entry;
 }
 /** Default participants for a blank v0.4 form: the person and one agent
@@ -596,7 +650,7 @@ export function portableCopy(doc: QlDoc, at?: string): QlDoc {
   (next.meta.participants as PluralParticipant[] | undefined)?.forEach(p => { delete p.ref; });
   next.journal = []; next.notes = []; next.packet = []; next.media = [];
   // Only the form's own meta travels; unknown embedded keys may hold anything.
-  const known = ["documentId", "created", "title", "revision", "view", "current", "journalCurrent", "exported", "template", "format", "participants", "upgrade"];
+  const known = ["documentId", "created", "title", "revision", "view", "current", "journalCurrent", "exported", "template", "format", "participants", "upgrade", "container"];
   const meta = next.meta as unknown as Record<string, unknown>;
   for (const key of Object.keys(meta)) if (!known.includes(key)) delete meta[key];
   next.meta.current = null; next.meta.journalCurrent = null;

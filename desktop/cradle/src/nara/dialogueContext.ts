@@ -245,6 +245,16 @@ export interface DialogueContextInput {
   expressive_act?:ExpressiveActState|null;
 }
 
+/** The M focus a context stands in when its builder names none: an M4 branch is M4's; otherwise the root its coordinate names
+ * (`M2…`, or QL's `ql:m-coordinate:bimba:M2…`). A coordinate that names no root leaves the focus for the builder to name —
+ * the focus is never assumed. */
+export function focusOf(branch:M4Branch|null,coordinate:string):MFocus {
+  if(branch)return "m4";
+  const root=/^(?:ql:m-coordinate:(?:bimba|pratibimba):)?[M#]([0-5])/.exec(coordinate);
+  if(!root)throw new Error("Name the dialogue's M focus: its coordinate names no M root.");
+  return `m${root[1]}` as MFocus;
+}
+
 export function buildDialogueContext(input:DialogueContextInput):NaraDialogueContext {
   return validateDialogueContext({
     schema:NARA_DIALOGUE_CONTEXT_VERSION,
@@ -260,7 +270,7 @@ export function buildDialogueContext(input:DialogueContextInput):NaraDialogueCon
     profile_ref:input.profile_ref,
     profile_revision:input.profile_revision,
     scene_ref:input.scene_ref??null,
-    active_m_focus:input.active_m_focus??"m4",
+    active_m_focus:input.active_m_focus??focusOf(input.m4_branch??null,input.coordinate_ref),
     pointed_ref:input.pointed_ref??null,
     hovered_ref:input.hovered_ref??null,
     pinned_refs:input.pinned_refs??[],

@@ -10,6 +10,7 @@ import type {NativeDialogue} from './nativeDialogue';
 import {nativeTextRuns} from './nativeTranscript';
 import {nativeEpii} from './nativeEpii';
 import type {NativeEpiiReview} from './epiiTypes';
+import {drawnFromHtml, livedOfInput, livedRelations} from './livedContext';
 
 type ObjectValue = Record<string, unknown>;
 function object(value: unknown): ObjectValue {
@@ -31,9 +32,10 @@ export interface NativeAnswer {
   /** Set only from the original native inquiry; interpretation comes from its native review owner. */
   structuredEpii?: boolean;
   epii?: Pick<NativeEpiiReview, 'enrichment' | 'provenance'>;
-  /** Exact submitted basis, deliberately excludes the full private identity matrix. */
+  /** Exact submitted basis, deliberately excludes the full private identity matrix. `lived` names the person's own passages the
+   * turn carried (livedContext.ts), each by its key, when Nara was asked from their pages. */
   basis: {context: ObjectValue; selected: ObjectValue; identity_source: ObjectValue;
-    input_revision: string; expression: ObjectValue};
+    input_revision: string; expression: ObjectValue; lived?: ReturnType<typeof livedOfInput>};
 }
 export function nativeAnswer(dialogue: NativeDialogue, reading: EncounterReading, blockId: number): NativeAnswer {
   if (reading.agent_session !== dialogue.provisioning.agent_session) throw new Error('The selected answer belongs to another native session.');
@@ -72,7 +74,7 @@ export function nativeAnswer(dialogue: NativeDialogue, reading: EncounterReading
   const result: NativeAnswer = {dialogue, blockId: blocks[index].id, answerBlockIds: blocks[index].blockIds,
     questionBlockId: prompt.id, questionBlockIds: prompt.blockIds, answer: blocks[index].text,
     question: text(input.question), basis: {context, selected: object(input.selected), identity_source: source,
-      input_revision: text(identity.input_revision), expression}};
+      input_revision: text(identity.input_revision), expression, ...(input.lived_context ? {lived: livedOfInput(input.lived_context)} : {})}};
   if (dialogue.role === 'epii' && input.epii_delegation) result.structuredEpii = true;
   if (new TextEncoder().encode(JSON.stringify(result)).length > 256 * 1024) throw new Error('This answer and its basis exceed the bounded retention size.');
   return result;
@@ -156,7 +158,16 @@ function renderAnswerHtml(answer: NativeAnswer, destination: 'flow' | 'day', cur
   const content = reviewed
     ? `${textToHtml(reviewed.enrichment.synthesis)}${proposal ? `<h4>Proposed development work</h4>${textToHtml(proposal.discrepancy)}<p>Proposed for Factory review. Retaining this return does not start the work.</p>` : ''}<details><summary>Source Inspect — original Epii answer</summary>${textToHtml(answer.answer)}<pre>${escaped(JSON.stringify(reviewed, null, 2))}</pre></details>`
     : textToHtml(answer.answer);
-  return `<p>${escaped(explanation)}</p><p><strong>Question</strong> ${escaped(answer.question)}</p>${content}<details><summary>Original person, Expression and source basis</summary><pre>${escaped(JSON.stringify(provenance, null, 2))}</pre></details>`;
+  return `<p>${escaped(explanation)}</p><p><strong>Question</strong> ${escaped(answer.question)}</p>${content}${drawnFrom(answer)}<details><summary>Original person, Expression and source basis</summary><pre>${escaped(JSON.stringify(provenance, null, 2))}</pre></details>`;
+}
+/** The person's own passages the answer was drawn from (livedContext.ts drawnFromHtml); empty when Nara was not asked from them. */
+function drawnFrom(answer: NativeAnswer): string {
+  return drawnFromHtml(answer.basis.lived, escaped);
+}
+/** How a retained answer stands among the Flow's entries (livedContext.ts livedRelations): a reply to the passage it answers when that
+ * passage is in this Flow, and a source relation to each passage it was drawn from. */
+export function answerRelations(instance: FlowInstance, answer: NativeAnswer): ReturnType<typeof livedRelations> {
+  return livedRelations(instance, answer.basis.lived);
 }
 function participant(instance: FlowInstance, answer: NativeAnswer): QlDocParticipant {
   const session = answer.dialogue.provisioning.agent_session;
@@ -184,7 +195,9 @@ export async function composeFlowAnswer(instance: FlowInstance, answer: NativeAn
   }
   // The prepared rich body and the deterministic id go in with the append, so a
   // v0.4 document's request digest describes the bytes actually retained.
-  const appended = appendEntry(instance.html, answer.answer, {participant: participant(instance, answer), html, entryId, operationRef: `nara-retain:${entryId}`});
+  const {relations, replyTo} = answerRelations(instance, answer);
+  const appended = appendEntry(instance.html, answer.answer, {participant: participant(instance, answer), html, entryId, operationRef: `nara-retain:${entryId}`,
+    ...(relations.length ? {relations} : {}), ...(replyTo ? {replyTo} : {})});
   return {html: appended.html, entryId, already: false};
 }
 const busy = new Set<string>();

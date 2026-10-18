@@ -163,6 +163,64 @@ pub(crate) fn run_ql_selected(
     command.args([family, operation, "-", "--json"]);
     run_ql_command(command, input)
 }
+/// The Epi-Logos agent's typed invocation (QL `crates/ql-cli/src/epi_agent_command.rs`).
+pub(crate) const EPI_AGENT_INVOCATION: &str = "ql.epi-logos-agent-invocation/v1";
+
+/// One operation of Nara's faculty (#4) of QL's Epi-Logos agent — `nara.journey.open|apply|read`,
+/// `nara.lived-context.compose`, `nara.elemental-map` — through `ql epi-agent invoke - --json`, on the same configured
+/// executables, bounded stdin and timeout as every Nara op here. `owner` is a selected absolute QL executable (a test's
+/// stand-in, or an owner the host captured); none is the installed suite (`$OI_BIN ql …`, else `oi ql …`). The answer is
+/// QL's `result`, admitted only when QL answered this operation at this faculty and claims no canonical mutation.
+pub(crate) fn run_ql_epi_agent(
+    owner: Option<&Path>,
+    operation: &str,
+    input: &Value,
+) -> Result<Value, String> {
+    let envelope = serde_json::json!({"schema": EPI_AGENT_INVOCATION, "position": "#4",
+        "operation": operation, "input": input});
+    if serde_json::to_vec_pretty(&envelope)
+        .map_err(|e| e.to_string())?
+        .len()
+        > MAX_PROFILE
+    {
+        return Err(format!(
+            "The {operation} request exceeds the 2 MiB a QL Nara operation takes"
+        ));
+    }
+    let answer = match owner {
+        Some(executable) => run_ql_selected(executable, "epi-agent", "invoke", &envelope)?,
+        None => run_ql_owner("epi-agent", "invoke", &envelope)?,
+    };
+    if answer["schema"] != "ql.epi-logos-agent-invocation-result/v1"
+        || answer["operation"] != operation
+        || answer["position"] != "#4"
+        || answer["canonical_mutation"] != false
+    {
+        return Err(format!(
+            "QL answered {operation} with another invocation, or claimed a canonical mutation"
+        ));
+    }
+    Ok(answer["result"].clone())
+}
+
+/// QL's identity reading of a saved profile (`ql nara inspect`), on a selected owner or the installed suite; admitted only
+/// when it reads this exact profile.
+pub(crate) fn inspect_with(owner: Option<&Path>, profile: &Value) -> Result<Value, String> {
+    match owner {
+        None => ql("inspect", profile),
+        Some(executable) => {
+            let reading = run_ql_selected(executable, "nara", "inspect", profile)?;
+            if reading["schema"] != "ql.nara-identity-reading/v1"
+                || !same_input(&reading["profile"], profile)
+                || reading["person_ref"] != profile["person_ref"]
+            {
+                return Err("QL identity returned a different input or unsupported reading".into());
+            }
+            Ok(reading)
+        }
+    }
+}
+
 fn run_ql_command(mut command: Command, input: &Value) -> Result<Value, String> {
     let bytes = profile_bytes(input)?;
     let mut child = command
