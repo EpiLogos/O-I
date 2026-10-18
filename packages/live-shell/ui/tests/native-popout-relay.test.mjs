@@ -85,19 +85,25 @@ test('code-reading: the main window routes Pop-out to the host on the host only;
   const detached = await source('native/Detached.tsx')
   assert.match(detached, /<RelayedDevice bindingId=\{binding\.id\}/)
   assert.match(detached, /fallback=\{\(\) => alone \?/, 'where no relay answers, the face drawn alone, held to its own rule')
-  assert.match(detached, /const fault = deviceRelayAdmissionFault\(binding, allInhabitantManifests\(\)\)/, 'the window admits a relayed device by its identity')
+  assert.match(detached, /const fault = deviceRelayAdmissionFault\(binding\)/, 'the window admits a relayed device by its identity')
   const relayed = await source('frame/devices/RelayedDevice.tsx')
   assert.match(relayed, /<PlacedDevice device=\{device\} view="popout" binding=\{binding\}/)
   const rust = await readFile(new URL('../../../../desktop/cradle/src-tauri/src/windows.rs', import.meta.url), 'utf8')
   assert.match(rust, /"device"/, 'the host admits a device binding')
 })
 
-test('a relayed device is admitted by its identity alone; the standalone face keeps its own rule (the torus, seen refused on r6)', async () => {
+test('a relayed device is admitted by its identity alone, declared or not; the standalone face keeps the manifests\' rule (the torus on r6, Live\'s Filter on r7)', async () => {
   const kinds = await import('../src/native/detachedKinds.ts')
   const manifests = [{id: 'quaternal-logic', faces: [{id: 'torus', dock: ['dock']}], detachedKinds: []}]
-  const identity = {family: 'quaternal-logic', face: 'torus', aperture: {day: null, flow: null, conversation: null, instrument: null}}
-  assert.equal(kinds.deviceRelayIdentityFault(identity, manifests), null)
-  assert.match(kinds.deviceIdentityFault(identity, manifests), /does not declare pop-out/)
-  assert.match(kinds.deviceRelayIdentityFault({...identity, face: 'nothing'}, manifests), /declares no face "nothing"/)
-  assert.match(kinds.deviceRelayIdentityFault({...identity, family: 'nobody'}, manifests), /no admitted family "nobody"/)
+  const aperture = {day: null, flow: null, conversation: null, instrument: null}
+  const torus = {family: 'quaternal-logic', face: 'torus', aperture}
+  const filter = {family: 'live', face: 'filter', aperture}
+  for (const identity of [torus, filter]) {
+    const binding = {kind: 'device', id: kinds.deviceBindingId(identity), device: identity}
+    assert.equal(kinds.deviceRelayAdmissionFault(binding), null, `${identity.family}/${identity.face} is admitted for its relay`)
+  }
+  assert.match(kinds.deviceIdentityFault(torus, manifests), /does not declare pop-out/, 'drawn alone, the torus is refused')
+  assert.match(kinds.deviceIdentityFault(filter, manifests), /no admitted family "live"/, 'drawn alone, Live\'s Filter is refused')
+  assert.match(kinds.deviceRelayAdmissionFault({kind: 'device', id: 'device:live/other', device: filter}), /does not name its family and face/)
+  assert.match(kinds.deviceRelayAdmissionFault({kind: 'device', id: 'device:live/filter'}), /carries no device identity/)
 })
