@@ -52,10 +52,12 @@ fn request_valid(target: &str, input: &Input) -> Result<(), String> {
     let identity_matches = match input.request["schema"].as_str() {
         Some("aikit.constellation-action/v1") => input.request["frame_ref"] == target,
         Some("aikit.wiki-facts-action/v1") => {
+            // A `space` target is a register's root space carrying its world body
+            // (BodySet, `aikit.world-body/v1`); the Wiki owner refuses any other pairing.
             input.request["target"]["ref"] == target
                 && matches!(
                     input.request["target"]["kind"].as_str(),
-                    Some("node" | "whole")
+                    Some("node" | "whole" | "space")
                 )
         }
         _ => false,
@@ -364,6 +366,116 @@ pub fn invoke(
         data: saved,
     }
 }
+/// The world body reading's schema, and the owner extension it carries.
+pub const BODY_READING: &str = "oi.world-body-reading/v1";
+const BODY_READ_OP: &str = "aikit wiki-construct facts-inspect";
+/// A register's root space as Central's Wiki reading discloses it: the one space
+/// no other space of the same register holds as a child. A project's root names
+/// `central:wiki:root`, which is a peer register's, so it still stands as root.
+fn root_space(wiki: &Value) -> Result<(String, u64, Value), String> {
+    let spaces = wiki["spaces"]
+        .as_array()
+        .ok_or("Central's Wiki reading lists no spaces")?;
+    let refs: Vec<&str> = spaces.iter().filter_map(|s| s["ref"].as_str()).collect();
+    let roots: Vec<&Value> = spaces
+        .iter()
+        .filter(|space| {
+            !space["parent_space_refs"]
+                .as_array()
+                .is_some_and(|parents| {
+                    parents
+                        .iter()
+                        .any(|p| p.as_str().is_some_and(|p| refs.contains(&p)))
+                })
+        })
+        .collect();
+    let [root] = roots.as_slice() else {
+        return Err(format!(
+            "The register discloses {} root spaces; a world body stands on exactly one",
+            roots.len()
+        ));
+    };
+    let reference = root["ref"]
+        .as_str()
+        .filter(|r| !r.trim().is_empty())
+        .ok_or("The register's root space has no reference")?;
+    let revision = root["revision"]
+        .as_u64()
+        .filter(|r| *r > 0)
+        .ok_or("The register's root space has no revision")?;
+    Ok((reference.into(), revision, root["title"].clone()))
+}
+/// Read a register's world body through its owner: Central discloses the
+/// register (the same `central.wiki.read` / `projectcentral.wiki.read` the
+/// construction write reads), and AIKit's `facts-inspect` reads the root
+/// space's `aikit.world-body/v1` from the native file. The kernel keeps no copy;
+/// an owner that cannot read a body says so, verbatim.
+pub fn read_body(
+    client: &CentralClient,
+    cwd: &Path,
+    project: Option<&str>,
+) -> Result<Value, String> {
+    let wiki = client
+        .run(
+            if project.is_some() {
+                "projectcentral.wiki.read"
+            } else {
+                "central.wiki.read"
+            },
+            json!({"project":project}),
+        )
+        .map_err(|e| e.to_string())?;
+    if wiki["schema"] != "central.wiki-reading/v1"
+        || wiki["automatic_agent_or_model_invocation"] != false
+    {
+        return Err("Central did not disclose the native Wiki register".into());
+    }
+    let path = wiki["source"]["path"]
+        .as_str()
+        .filter(|p| relative(p))
+        .ok_or("The native Wiki source location is absent")?;
+    let (space_ref, revision, title) = root_space(&wiki)?;
+    let file = cwd.join(path);
+    let file = file
+        .to_str()
+        .ok_or("The native register path is not UTF-8")?;
+    let read = knowledge::run(
+        cwd,
+        &[
+            "wiki-construct",
+            "facts-inspect",
+            &space_ref,
+            "--file",
+            file,
+        ],
+    )
+    .map_err(|error| match error {
+        knowledge::CallError::Unavailable { detail } => {
+            format!("The Wiki owner is unavailable ({BODY_READ_OP}): {detail}")
+        }
+        knowledge::CallError::Refused { message } => message,
+        knowledge::CallError::Malformed { detail } => detail,
+    })?;
+    let reading = &read["reading"];
+    if reading["object"]["ref"] != space_ref.as_str() || reading["object"]["object"] != "space" {
+        return Err("The Wiki owner read a different object than the register's root space".into());
+    }
+    let Some(body) = reading.get("world_body") else {
+        return Err(
+            "The installed Wiki owner reads the space but not its world body: it carries no `aikit.world-body/v1` reader yet"
+                .into(),
+        );
+    };
+    Ok(json!({
+        "schema": BODY_READING,
+        "register": project,
+        "space": {"ref": space_ref, "revision": reading["object"]["revision"], "title": title},
+        "disclosed_revision": revision,
+        "body": body,
+        "wiki_source": wiki["source"],
+        "owner_operation": BODY_READ_OP,
+    }))
+}
 fn contains_ref(value: &Value, reference: &str) -> bool {
     match value {
         Value::Object(object) => object.iter().any(|(key, value)| {
@@ -467,6 +579,44 @@ mod tests {
             .remove("source_revision");
         command.sources.clear();
         assert!(request_valid("wiki:whole", &command).is_err());
+    }
+    #[test]
+    fn a_body_set_targets_the_root_space_and_needs_no_source_basis() {
+        let mut command = input();
+        let body = json!({"body_ref":"body:central","seed":7,"generator":{"id":"fbm-sphere","version":1},
+            "landmass":{"sea_level":0.5,"continents":1.7,"relief":0.55,"coast":"smooth"},
+            "climate":{"warmth":0.58,"moisture":0.6,"ice_caps":0.3},
+            "sky":{"atmosphere":0.6,"clouds":0.35,"axial_tilt_deg":18.0}});
+        command.request = json!({"schema":"aikit.wiki-facts-action/v1","target":{"kind":"space","ref":"central:wiki:root"},
+            "changes":[{"change":"body_set","body":body}]});
+        assert!(request_valid("central:wiki:root", &command).is_ok());
+        assert!(request_valid("central:wiki:project:O-I", &command).is_err());
+        command.request["target"]["kind"] = json!("register");
+        assert!(request_valid("central:wiki:root", &command).is_err());
+        command.request["target"]["kind"] = json!("space");
+        // A body names no source; a smuggled source still needs its disclosed basis.
+        command.request["changes"][0]["body"]["evidence"] =
+            json!([{"source_ref":"source:private","source_revision":"r1"}]);
+        assert!(request_valid("central:wiki:root", &command).is_err());
+    }
+    #[test]
+    fn the_root_space_is_the_one_no_space_of_the_register_holds() {
+        let root = json!({"spaces":[
+            {"ref":"central:wiki:root","revision":67,"title":"Central","parent_space_refs":[]},
+            {"ref":"wiki:space:child","revision":2,"parent_space_refs":["central:wiki:root"]}
+        ]});
+        assert_eq!(
+            root_space(&root).unwrap(),
+            ("central:wiki:root".into(), 67, json!("Central"))
+        );
+        let project = json!({"spaces":[{"ref":"central:wiki:project:O-I","revision":3,"parent_space_refs":["central:wiki:root"]}]});
+        assert_eq!(root_space(&project).unwrap().0, "central:wiki:project:O-I");
+        assert!(root_space(&json!({"spaces":[]}))
+            .unwrap_err()
+            .contains("0 root spaces"));
+        let two = json!({"spaces":[{"ref":"a","revision":1},{"ref":"b","revision":1}]});
+        assert!(root_space(&two).unwrap_err().contains("2 root spaces"));
+        assert!(root_space(&json!({"spaces":[{"ref":"a","revision":0}]})).is_err());
     }
     #[test]
     fn receipts_and_titles_are_not_indexed_subjects() {

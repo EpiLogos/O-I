@@ -18,6 +18,12 @@ import {CLOCK_DOMAIN, DEPTH_RANGE, KIND_NAMES, TIE_BASE_IDS} from '../../atlasFa
 import {techneFaceDeclaration, techneDeviceId} from './faces'
 import {memberKey, memberRows, type SetMember} from './rowSets'
 import {submitThroughOwner, writeThroughOwner} from './ownerWrite'
+import type {DesignBinding, Standing, ValueChange} from '../../../frame/devices/designed'
+import {COASTS} from '../../../projections/atlas/src/globe/body'
+import {
+  BODY_CHOICES, NO_LOCATIONS, NO_OTHER, WORLD_BODY_SETTINGS, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
+  type BodyChoice, type WorldBodyState,
+} from '../../../projections/atlas/body/worldBody'
 
 export const ATLAS_FAMILY = 'atlas-earth'
 
@@ -78,11 +84,14 @@ export interface AtlasReading {
   }
   readonly clock: null | {readonly mode: 'all' | 'cursor'; readonly cursorU: number; readonly playing: boolean; readonly cumulative: boolean}
   readonly globe: null | {readonly scopeLabel: string | null; readonly wholeField: boolean}
+  /** Your world's body as its owner last answered, and the body the view chose (projections/atlas/body/worldBody.ts). */
+  readonly body: {readonly state: WorldBodyState; readonly choice: BodyChoice}
 }
 
 /** Read the mounted atlas (null while none stands) and the view the lens bar presents. */
 export function atlasReading(handle: AtlasHandle | null, view: AtlasView): AtlasReading {
-  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null}
+  const body = {state: worldBodyState(), choice: bodyChoice()}
+  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body}
   const controls = handle.ctl.graphControls?.controls() ?? null
   const {scope, wholeField} = handle.ctl.globeScope
   return {
@@ -93,6 +102,87 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView): Atlas
     },
     clock: {mode: handle.time.mode, cursorU: handle.time.cursorU, playing: handle.time.playing, cumulative: handle.time.cumulative},
     globe: {scopeLabel: scope ? scope.label : null, wholeField},
+    body,
+  }
+}
+
+// ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
+//
+// The rows follow the declared rows above: each names the setter that writes it (agent/shellSetterBridge.ts
+// registerWorldBodyShellSetters), which builds the whole body from the owner's record and asks the owner for it as one BodySet
+// (projections/atlas/body/worldBody.ts writeWorldBody: the `aikit.wiki.facts.apply` Action, CAS on the root space's revision). The
+// body choice is the view's own (which body the World shows). They are not among the family's declared rows (agentNativeP0.ts):
+// the World's body page is this lane's, and the declared rows stay the family's.
+
+export const WORLD_BODY_ROWS: readonly SdkParamRow[] = [
+  decl('globe-engine', 'body', 'Body', 'enumerated', {values: [...BODY_CHOICES], writePath: 'shell.setWorldBodyChoice'}),
+  decl('globe-engine', 'seed', 'Seed', 'number', {writePath: bodyWriter('seed')}),
+  ...WORLD_BODY_SETTINGS.map(setting => decl('globe-engine', setting.key, setting.title, 'number', {range: setting.range, writePath: bodyWriter(setting.key)})),
+  decl('globe-engine', 'coast', 'Coast', 'enumerated', {values: [...COASTS], writePath: bodyWriter('coast')}),
+]
+/** The keys of the body itself (every one goes to the owner as part of one BodySet), the act `reroll` among them. */
+export const WORLD_BODY_KEYS: readonly string[] = ['seed', 'reroll', 'coast', ...WORLD_BODY_SETTINGS.map(setting => setting.key)]
+
+/** The body page's readings: the body chosen, and your body's record where it reads (another world's body is not read here). */
+export function bodyValues(body: AtlasReading['body']): Record<string, ParamValue> {
+  const values: Record<string, ParamValue> = {body: body.choice}
+  const state = body.state
+  if (state.state !== 'read' || body.choice === 'other') return values
+  values.bodyName = typeof state.reading.space.title === 'string' && state.reading.space.title ? state.reading.space.title : state.reading.space.ref
+  const record = state.record
+  if (!record) return values
+  values.seed = record.seed
+  values.seaLevel = record.landmass.sea_level
+  values.continents = record.landmass.continents
+  values.relief = record.landmass.relief
+  values.coast = record.landmass.coast
+  values.warmth = record.climate.warmth
+  values.moisture = record.climate.moisture
+  values.iceCaps = record.climate.ice_caps
+  values.atmosphere = record.sky.atmosphere
+  values.clouds = record.sky.clouds
+  values.tilt = record.sky.axial_tilt_deg
+  return values
+}
+
+/** Why the body's settings cannot be written now, or null: the Earth not mounted, then the owner's own standing. */
+export function bodyRefusal(reading: AtlasReading): string | null {
+  if (!reading.mounted) return NOT_MOUNTED
+  if (reading.body.choice === 'other') return NO_OTHER
+  return bodyWriteRefusal()
+}
+
+/** The World design's binding (inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx, the Body page and the globe's whole-field
+ * choice): the owner's readings by the design's value keys, its writes through the owners' setters, and each value's standing. A body
+ * change and a reroll go to the owner as one BodySet; the body choice is the view's own hand. Values no owner reads here (the places,
+ * the sky, the graph, the locations on your body) are absent, never defaulted. */
+export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
+  const values: Record<string, ParamValue> = {...bodyValues(reading.body), view: reading.view, mounted: reading.mounted}
+  if (reading.globe) {
+    values.scope = reading.globe.scopeLabel ?? ''
+    if (reading.globe.scopeLabel != null) values.wholeField = reading.globe.wholeField
+  }
+  const refusal = bodyRefusal(reading)
+  const standing: Record<string, Standing> = {locations: {disabled: NO_LOCATIONS}, placeKind: {disabled: NO_LOCATIONS}}
+  if (refusal) for (const key of WORLD_BODY_KEYS) standing[key] = {disabled: refusal}
+  if (!reading.mounted) standing.body = {disabled: NOT_MOUNTED}
+  if (!reading.mounted) standing.wholeField = {disabled: NOT_MOUNTED}
+  else if (reading.globe?.scopeLabel == null) standing.wholeField = {disabled: NO_SCOPE}
+  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : WORLD_BODY_KEYS.includes(key) && !refusal
+  return {
+    id: techneDeviceId(ATLAS_FAMILY, 'globe-engine'), values, standing, enabledKey: 'mounted',
+    writes: writable,
+    write: async (changes: readonly ValueChange[]) => {
+      const body: Record<string, unknown> = {}
+      for (const change of changes) {
+        if (change.key === 'wholeField') await writeThroughOwner('shell.setAtlasWholeField', change.value)
+        else if (WORLD_BODY_KEYS.includes(change.key)) body[change.key] = change.value
+        else throw Error(`${change.key} is not written from the World's own controls`)
+      }
+      // every body change of one gesture is one BodySet: the owner sees the whole body once, at the revision it was read at
+      if (Object.keys(body).length) await writeThroughOwner('shell.setWorldBody', body)
+    },
+    local: {body: value => { if (value === 'own' || value === 'earth' || value === 'other') chooseBody(value) }},
   }
 }
 
@@ -164,8 +254,16 @@ export function atlasDevice(face: InhabitantFaceDeclaration, reading: AtlasReadi
   } else if (faceId === 'globe-engine') {
     const whole = !reading.mounted ? readingOf(declared(faceId, 'whole-field'), NOT_MOUNTED)
       : reading.globe?.scopeLabel == null ? readingOf(declared(faceId, 'whole-field'), NO_SCOPE) : declared(faceId, 'whole-field')
-    rows = [placed(whole, 'Globe', true)]
+    // your world's body after the globe's own choice: the body chosen (the view's), then its settings, each written through its
+    // setter while the owner can take it, else a reading with the owner's reason
+    const refusal = bodyRefusal(reading)
+    const bodyRows = WORLD_BODY_ROWS.map(row => row.key === 'body'
+      ? placed(reading.mounted ? row : readingOf(row, NOT_MOUNTED), 'Body')
+      : placed(refusal ? readingOf(row, refusal) : row, WORLD_BODY_SETTINGS.find(setting => setting.key === row.key)?.group ?? 'Body'))
+    rows = [placed(whole, 'Globe', true), ...bodyRows]
     if (reading.globe && reading.globe.scopeLabel != null) values['whole-field'] = reading.globe.wholeField
+    Object.assign(values, bodyValues(reading.body))
+    delete values.bodyName
     values.mounted = reading.mounted
     enabledKey = 'mounted'
   } else if (faceId === 'time-control') {
@@ -186,7 +284,7 @@ export function atlasDevice(face: InhabitantFaceDeclaration, reading: AtlasReadi
     throw new Error(`${faceId} is not an atlas face`)
   }
 
-  const writes = {declared: ATLAS_DECLARED_ROWS.filter(row => row.deviceInstance === faceId), sets, decode}
+  const writes = {declared: [...ATLAS_DECLARED_ROWS.filter(row => row.deviceInstance === faceId), ...(faceId === 'globe-engine' ? WORLD_BODY_ROWS : [])], sets, decode}
   return {
     id: techneDeviceId(ATLAS_FAMILY, faceId), family: ATLAS_FAMILY, face: techneFaceDeclaration(face), rows, values, enabledKey,
     ...(heldBy ? {heldBy} : {}),

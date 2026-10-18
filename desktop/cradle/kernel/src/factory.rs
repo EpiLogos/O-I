@@ -893,7 +893,7 @@ fn current_sensing_field(state_path: &Path, project_world_ref: &str) -> Result<V
 }
 
 /// RFC 3339 UTC for "now", without a date crate (civil-from-days).
-fn now_rfc3339() -> String {
+pub(crate) fn now_rfc3339() -> String {
     let secs = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)

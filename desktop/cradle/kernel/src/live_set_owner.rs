@@ -15,6 +15,13 @@
 //! the device panels always read before they write, so an op naming any other
 //! `.als` on disk is refused. The write itself replaces the file atomically
 //! (`live_set::api`), so a crash never leaves a half-written set.
+//!
+//! Beside the clip and the mixer row (`live_set::edit`): a track's sends
+//! written through the mixer write (`control: "send"` with its index), a
+//! stretch of a take comped into the main lane (`live_take_comp`), and the
+//! set's Groove Pool read and written (`live_groove_pool_read`,
+//! `live_groove_pool_write`) — each write admitted, gated and refused as the
+//! others are.
 
 use crate::{KernelOp, KernelOpResult};
 use std::collections::HashSet;
@@ -128,14 +135,50 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
             track,
             control,
             value,
+            index,
         } => native_document(path)
             .and_then(|()| admitted_for_write(path))
             .and_then(|()| {
                 let _gate = WRITE_GATE
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                live_set::edit::mixer_write(path, expected_revision, *track, control, value)
+                live_set::edit::mixer_write(path, expected_revision, *track, control, value, *index)
                     .map(|reading| KernelOpResult::LiveTrackMixerReading { reading })
+            }),
+        KernelOp::LiveTakeComp {
+            path,
+            expected_revision,
+            track,
+            take,
+            range,
+        } => native_document(path)
+            .and_then(|()| admitted_for_write(path))
+            .and_then(|()| {
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                live_set::edit::take_comp(path, expected_revision, *track, *take, range)
+                    .map(|reading| KernelOpResult::LiveTakeCompReading { reading })
+            }),
+        KernelOp::LiveGroovePoolRead { path } => native_document(path).and_then(|()| {
+            let reading = live_set::edit::groove_pool_read(path)?;
+            remember_read(path);
+            Ok(KernelOpResult::LiveGroovePoolReading { reading })
+        }),
+        KernelOp::LiveGroovePoolWrite {
+            path,
+            expected_revision,
+            groove,
+            field,
+            value,
+        } => native_document(path)
+            .and_then(|()| admitted_for_write(path))
+            .and_then(|()| {
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                live_set::edit::groove_pool_write(path, expected_revision, *groove, field, value)
+                    .map(|reading| KernelOpResult::LiveGroovePoolReading { reading })
             }),
         _ => return None,
     })
@@ -449,11 +492,182 @@ mod tests {
             track: 0,
             control: "solo".into(),
             value: json!(true),
+            index: None,
         });
         assert!(
             matches!(mixed, Some(Ok(KernelOpResult::LiveTrackMixerReading { ref reading })) if reading["mixer"]["solo"] == json!(true))
         );
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// A MIDI track with two take lanes (TakeId 1 and 2), its main lane holding take 1, sends to one return, and a Groove Pool
+    /// of one groove: element names and nesting as real Live 12 sets keep them (live-set's own tests carry the full shapes).
+    const COMP_FIXTURE: &str = r#"<Ableton><LiveSet><Tracks><MidiTrack Id="1"><Name><EffectiveName Value="Keys" /></Name><TakeLanes><TakeLanes><TakeLane Id="0"><ClipAutomation><Events><MidiClip Id="0" Time="0"><CurrentStart Value="0" /><CurrentEnd Value="8" /><Loop><LoopStart Value="0" /><LoopEnd Value="8" /><StartRelative Value="0" /><LoopOn Value="false" /><OutMarker Value="8" /><HiddenLoopStart Value="0" /><HiddenLoopEnd Value="8" /></Loop><Name Value="Keys" /><TakeId Value="1" /></MidiClip></Events></ClipAutomation><Name Value="Lane" /></TakeLane><TakeLane Id="1"><ClipAutomation><Events><MidiClip Id="0" Time="2"><CurrentStart Value="2" /><CurrentEnd Value="6" /><Loop><LoopStart Value="0" /><LoopEnd Value="4" /><StartRelative Value="0" /><LoopOn Value="false" /><OutMarker Value="4" /><HiddenLoopStart Value="0" /><HiddenLoopEnd Value="4" /></Loop><Name Value="Keys 2" /><TakeId Value="2" /></MidiClip></Events></ClipAutomation><Name Value="Lane" /></TakeLane></TakeLanes></TakeLanes><DeviceChain><Mixer><Sends><TrackSendHolder Id="0"><Send><Manual Value="0.0003162277571" /><MidiControllerRange><Min Value="0.0003162277571" /><Max Value="1" /></MidiControllerRange><AutomationTarget Id="30" /></Send><EnabledByUser Value="true" /></TrackSendHolder></Sends><Speaker><Manual Value="true" /></Speaker></Mixer><MainSequencer><ClipTimeable><ArrangerAutomation><Events><MidiClip Id="3" Time="0"><CurrentStart Value="0" /><CurrentEnd Value="8" /><Loop><LoopStart Value="0" /><LoopEnd Value="8" /><StartRelative Value="0" /><LoopOn Value="false" /><OutMarker Value="8" /><HiddenLoopStart Value="0" /><HiddenLoopEnd Value="8" /></Loop><Name Value="Keys" /><TakeId Value="1" /></MidiClip></Events></ArrangerAutomation></ClipTimeable></MainSequencer></DeviceChain></MidiTrack><ReturnTrack Id="2"><Name><EffectiveName Value="A-Reverb" /></Name><DeviceChain><Mixer><Speaker><Manual Value="true" /></Speaker></Mixer></DeviceChain></ReturnTrack></Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /><AutomationTarget Id="8" /></Tempo><GlobalGrooveAmount><Manual Value="100" /><MidiControllerRange><Min Value="0" /><Max Value="131.25" /></MidiControllerRange></GlobalGrooveAmount></Mixer></DeviceChain></MainTrack><Scenes><Scene /></Scenes><GroovePool><Grooves><Groove Id="0"><Name Value="Swing 16ths 57" /><Grid Value="3" /><QuantizationAmount Value="0" /><TimingAmount Value="100" /><RandomAmount Value="0" /><VelocityAmount Value="100" /></Groove></Grooves></GroovePool></LiveSet></Ableton>"#;
+
+    fn comp_fixture(name: &str) -> String {
+        let path =
+            std::env::temp_dir().join(format!("live-set-owner-{}-{name}.als", std::process::id()));
+        std::fs::write(
+            &path,
+            live_set::write_gz(&live_set::xml::parse(COMP_FIXTURE).unwrap()).unwrap(),
+        )
+        .unwrap();
+        path.to_string_lossy().into_owned()
+    }
+
+    fn pool(path: &str) -> serde_json::Value {
+        match execute(&KernelOp::LiveGroovePoolRead { path: path.into() }) {
+            Some(Ok(KernelOpResult::LiveGroovePoolReading { reading })) => reading,
+            other => panic!("groove pool reading expected, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_comp_a_send_and_a_groove_are_written_only_after_a_read_and_on_its_revision() {
+        let path = comp_fixture("comp");
+        let comp = |revision: &str| {
+            execute(&KernelOp::LiveTakeComp {
+                path: path.clone(),
+                expected_revision: revision.into(),
+                track: 0,
+                take: 1,
+                range: json!({"start": 3, "end": 5}),
+            })
+            .unwrap()
+        };
+        assert!(comp("sha256:none")
+            .unwrap_err()
+            .contains("Read this Live set before writing"));
+        let read = pool(&path);
+        assert_eq!(read["grooves"][0]["name"], "Swing 16ths 57");
+        assert_eq!(read["grooves"][0]["base"], "1/16");
+        let revision = read["revision"].as_str().unwrap().to_string();
+        let comped = match comp(&revision) {
+            Ok(KernelOpResult::LiveTakeCompReading { reading }) => reading,
+            other => panic!("comp reading expected, got {other:?}"),
+        };
+        let main: Vec<_> = comped["clips"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| (c["start"].clone(), c["end"].clone(), c["takeId"].clone()))
+            .collect();
+        assert_eq!(
+            main,
+            vec![
+                (json!(0.0), json!(3.0), json!(1.0)),
+                (json!(3.0), json!(5.0), json!(2.0)),
+                (json!(5.0), json!(8.0), json!(1.0)),
+            ]
+        );
+        assert!(comp(&revision)
+            .unwrap_err()
+            .contains("changed since it was read"));
+        let revision = comped["revision"].as_str().unwrap().to_string();
+        let sent = match execute(&KernelOp::LiveTrackMixerWrite {
+            path: path.clone(),
+            expected_revision: revision,
+            track: 0,
+            control: "send".into(),
+            value: json!(0.5),
+            index: Some(0),
+        }) {
+            Some(Ok(KernelOpResult::LiveTrackMixerReading { reading })) => reading,
+            other => panic!("mixer reading expected, got {other:?}"),
+        };
+        assert_eq!(sent["mixer"]["sends"][0]["name"], "A-Reverb");
+        assert_eq!(sent["mixer"]["sends"][0]["value"].as_f64(), Some(0.5));
+        let grooved = execute(&KernelOp::LiveGroovePoolWrite {
+            path: path.clone(),
+            expected_revision: sent["revision"].as_str().unwrap().into(),
+            groove: None,
+            field: "amount".into(),
+            value: json!(80),
+        });
+        assert!(
+            matches!(grooved, Some(Ok(KernelOpResult::LiveGroovePoolReading { ref reading })) if reading["amount"] == json!(80.0))
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The kernel's own dispatch serves the comp and the Groove Pool (lib.rs `apply`), as the native host runs them.
+    #[test]
+    fn the_kernel_serves_the_comp_and_the_groove_pool() {
+        let path = comp_fixture("apply");
+        let mut kernel = crate::Kernel::new(crate::CentralClient::discover());
+        let read = kernel
+            .apply(KernelOp::LiveGroovePoolRead { path: path.clone() })
+            .unwrap();
+        let KernelOpResult::LiveGroovePoolReading { reading } = read.result else {
+            panic!("groove pool reading expected");
+        };
+        assert!(
+            read.receipts.is_empty(),
+            "a Live op records nothing in the kernel"
+        );
+        let wrote = kernel
+            .apply(KernelOp::LiveGroovePoolWrite {
+                path: path.clone(),
+                expected_revision: reading["revision"].as_str().unwrap().into(),
+                groove: Some(0),
+                field: "base".into(),
+                value: json!("1/8"),
+            })
+            .unwrap();
+        let KernelOpResult::LiveGroovePoolReading { reading } = wrote.result else {
+            panic!("groove pool reading expected");
+        };
+        assert_eq!(reading["grooves"][0]["base"], "1/8");
+        let comped = kernel.apply(KernelOp::LiveTakeComp {
+            path: path.clone(),
+            expected_revision: reading["revision"].as_str().unwrap().into(),
+            track: 0,
+            take: 0,
+            range: json!({"start": 0, "end": 8}),
+        });
+        assert!(matches!(
+            comped,
+            Ok(crate::KernelOpOutcome {
+                result: KernelOpResult::LiveTakeCompReading { .. },
+                ..
+            })
+        ));
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn the_wire_names_of_the_comp_the_send_and_the_groove_pool() {
+        let comp: KernelOp = serde_json::from_value(
+            json!({"op": "live_take_comp", "path": "/a.als", "expected_revision": "sha256:x",
+            "track": 0, "take": 1, "range": {"start": 2, "end": 4}}),
+        )
+        .unwrap();
+        assert!(matches!(comp, KernelOp::LiveTakeComp { take: 1, .. }));
+        let send: KernelOp = serde_json::from_value(json!({"op": "live_track_mixer_write", "path": "/a.als", "expected_revision": "sha256:x",
+            "track": 0, "control": "send", "value": 0.5, "index": 1}))
+        .unwrap();
+        assert!(matches!(
+            send,
+            KernelOp::LiveTrackMixerWrite { index: Some(1), .. }
+        ));
+        let solo: KernelOp = serde_json::from_value(json!({"op": "live_track_mixer_write", "path": "/a.als", "expected_revision": "sha256:x",
+            "track": 0, "control": "solo", "value": true}))
+        .unwrap();
+        assert!(
+            matches!(solo, KernelOp::LiveTrackMixerWrite { index: None, .. }),
+            "the existing controls' wire stands"
+        );
+        let global: KernelOp = serde_json::from_value(json!({"op": "live_groove_pool_write", "path": "/a.als", "expected_revision": "sha256:x",
+            "field": "amount", "value": 90}))
+        .unwrap();
+        assert!(matches!(
+            global,
+            KernelOp::LiveGroovePoolWrite { groove: None, .. }
+        ));
+        let read: KernelOp =
+            serde_json::from_value(json!({"op": "live_groove_pool_read", "path": "/a.als"}))
+                .unwrap();
+        assert!(matches!(read, KernelOp::LiveGroovePoolRead { .. }));
     }
 
     #[test]

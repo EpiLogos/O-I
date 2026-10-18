@@ -1957,6 +1957,12 @@ export class Controller {
     for (const listener of this.faceListeners) listener();
   }
 
+  /** A reading the faces show changed outside the controller (your world's body, body/worldBody.ts): the face bodies and the
+   * devices read again, on the same notice the controller's own changes give. */
+  facesChanged(): void {
+    this.emitFaces();
+  }
+
   private toggleAion() {
     if (!this.history) return;
     const reading = defaultReadingId(this.history.readings);

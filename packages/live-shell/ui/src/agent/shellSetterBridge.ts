@@ -50,6 +50,10 @@ import {
   allTime, DEPTH_RANGE, KIND_NAMES, playOrPause, scrubClock, setForce, stepDepth, TIE_BASE_IDS, toggleCumulative, toggleKind,
   toggleOccurrences, toggleSky, toggleTie, setWholeField,
 } from '../inhabitants/atlasFaceActions.ts'
+import {COASTS} from '../projections/atlas/src/globe/body.ts'
+import {
+  BODY_CHOICES, WORLD_BODY_SETTINGS, baseBody, bodyWriteRefusal, bodyWriter, changedBody, chooseBody, worldBodyState, writeWorldBody, type BodyChoice,
+} from '../projections/atlas/body/worldBody.ts'
 // [T-KNOWLEDGE-GRAPH-DEVICE] the knowledge graph's writers (the block at the end of this file) drive the open surface's handle.
 import {knowledgeGraphSurface} from '../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle.ts'
 import type {KnowledgeGraphSurface} from '../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle.ts'
@@ -341,6 +345,80 @@ export function registerAtlasShellSetters(): void {
     if (handle.time.cumulative !== value) toggleCumulative(handle.time)
     return done(`The trail is ${value ? 'cumulative' : 'single'}.`)
   })
+
+  // The World's body page arms with the Earth's other writers (ownerWrite.ts armTechneSetters arms this function).
+  registerWorldBodyShellSetters()
+}
+
+// ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
+//
+// Each writer validates its value against the range the owner keeps (ai-kit knowledge_wiki_facts.rs WorldBody::validate; the rows,
+// inhabitants/ql/devices/atlasDevices.ts WORLD_BODY_ROWS), builds the whole body from the owner's record as it reads now, and asks the
+// owner for it as one BodySet (projections/atlas/body/worldBody.ts writeWorldBody). The receipt fires only once the owner saved it and
+// it read back. A reroll is a BodySet with a new seed named from the record (globe/body.ts nextSeed): nothing here is random, nothing
+// is clamped, and a location's coordinate is never touched (a location is not part of the body). The body choice is the view's own.
+
+/** Every path the World's body page names. */
+export const WORLD_BODY_SHELL_SETTERS: readonly string[] = [
+  'shell.setWorldBody', 'shell.setWorldBodyChoice', 'shell.rerollWorldBody', bodyWriter('seed'), bodyWriter('coast'),
+  ...WORLD_BODY_SETTINGS.map(setting => bodyWriter(setting.key)),
+]
+
+/** One change of the body, validated by name: a setting within its range, a coast by name, a whole seed, or a reroll. */
+function bodyChange(key: string, value: unknown): string | null {
+  if (key === 'reroll') return null
+  if (key === 'seed') return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 0xffffffff ? null : `the seed is a whole number from 0 to 4294967295, and ${String(value)} is not one`
+  if (key === 'coast') return (COASTS as readonly unknown[]).includes(value) ? null : `the coast is ${orList([...COASTS])}, and ${String(value)} is none of them`
+  const setting = WORLD_BODY_SETTINGS.find(row => row.key === key)
+  if (!setting) return `${key} is not a setting of the body`
+  return within(value, setting.range.min, setting.range.max, setting.title)
+}
+
+/** Build the whole body from the owner's record and these changes, and ask the owner for it. Resolves with its acknowledgement. */
+async function writeBodyChanges(changes: Readonly<Record<string, unknown>>): Promise<string> {
+  const keys = Object.keys(changes)
+  if (!keys.length) throw Error('no change of the body was named')
+  for (const key of keys) {
+    const bad = bodyChange(key, changes[key])
+    if (bad) throw Error(bad)
+  }
+  const refusal = bodyWriteRefusal()
+  if (refusal) throw Error(refusal)
+  const state = worldBodyState()
+  if (state.state !== 'read') throw Error('your world’s body is not read')
+  return writeWorldBody(changedBody(baseBody(state), state.reading.space.revision, changes))
+}
+
+/** Register one body writer: its owner's acknowledgement fires the receipt, its refusal names why. */
+function bodyWriter$(path: string, act: (value: unknown) => Promise<string> | string): void {
+  registerShellSetter(path, async value => {
+    try {
+      const note = await act(value)
+      const fired: DispatchReceipt = {kind: 'fired', channel: 'shell', writePath: path, note}
+      return fired
+    } catch (cause) {
+      const refused: DispatchReceipt = {kind: 'refused', channel: 'shell', writePath: path, reason: `${path} refuses — ${cause instanceof Error ? cause.message : String(cause)}`}
+      return refused
+    }
+  })
+}
+
+const CHOSEN: Readonly<Record<BodyChoice, string>> = {own: 'your world', earth: 'the Earth', other: 'another world'}
+
+export function registerWorldBodyShellSetters(): void {
+  bodyWriter$('shell.setWorldBodyChoice', value => {
+    if (!(BODY_CHOICES as readonly unknown[]).includes(value)) throw Error(`the body is ${orList([...BODY_CHOICES])}, and ${String(value)} is none of them`)
+    chooseBody(value as BodyChoice)
+    return `The World shows ${CHOSEN[value as BodyChoice]}.`
+  })
+  bodyWriter$('shell.setWorldBody', value => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('the body’s changes are named by key, such as {"seaLevel": 0.4}')
+    return writeBodyChanges(value as Record<string, unknown>)
+  })
+  bodyWriter$('shell.rerollWorldBody', () => writeBodyChanges({reroll: true}))
+  for (const key of ['seed', 'coast', ...WORLD_BODY_SETTINGS.map(setting => setting.key)]) {
+    bodyWriter$(bodyWriter(key), value => writeBodyChanges({[key]: value}))
+  }
 }
 
 // ── the knowledge graph's parameters: the open surface's own handle (T-KNOWLEDGE-GRAPH-DEVICE; lock §8.1) ─────────────────

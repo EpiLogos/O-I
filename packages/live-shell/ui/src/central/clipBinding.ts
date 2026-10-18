@@ -12,9 +12,11 @@
 //   - a Day clip: the owner's open-day and its Day document's payload (CentralClipDetail.tsx DayClip, useDayDocumentPayload);
 //   - a NOW return (`central.now-reading/v1`), a wiki return (its own file), a conversation (CentralClipDetail.tsx);
 //   - the page in a pane, where the hand reached it (central/documents/documentDoor.ts): its save router outcome.
-// A page is placed, not launched: no Launch tab (Live cap 47). The page's tools and its forms' fields refuse in the page family's
-// own words (pageBindings.ts DOCUMENT_WIRING, FLOW_WIRING, TEXT_WIRING, HIGHLIGHT_WIRING, NOTES_WIRING, BEINGS_WIRING): the hosted
-// form is the page's one writer while it holds the page. Pure apart from the reading hooks at the end.
+// A page is placed, not launched: no Launch tab (Live cap 47). A page's own fields — its title and colour, a Being's or Thing's
+// ties and appearance, a Flow's container, how it opens, and the highlights and notes the passage acts make — are written through the
+// page owner (kernel/src/page.rs, T-WORLDS W2), each on the revision read, and read again after; a pane holding the page with unsaved
+// edits refuses first. What no owner takes still refuses in the page family's own words (pageBindings.ts). Pure apart from the
+// reading hooks at the end.
 import {useEffect, useState} from 'react'
 import {nowReading} from '../../../../../desktop/cradle/src/receiving/now'
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
@@ -22,9 +24,10 @@ import {validateDocumentBasis} from '../../../../../desktop/cradle/src/central/d
 import {islandSpan} from '../../../../../desktop/cradle/src/document/identity'
 import {listFiles, readFile} from '../../../../../desktop/cradle/src/files/client'
 import {parseInstance, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
-import type {CentralLocation, KernelTransportStatus, NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
+import type {CentralLocation, KernelTransportStatus, NativeDirectory, PageField} from '../../../../../desktop/cradle/src/kernel/types'
+import {writePageField} from '../../../../../desktop/cradle/src/personal/pageOwner'
 import type {Value, Values} from '../frame/devices/designed'
-import {clipBinding, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
+import {clipBinding, clipHostId, useViewHoldsVersion, viewHoldsOf, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
@@ -34,7 +37,6 @@ import {conversationGap, nowReturnFacts, parseCentralPathRef, resolveCentralOcca
 import {FLOW_WIRING, HIGHLIGHT_WIRING, NOTES_WIRING, BEINGS_WIRING, TEXT_WIRING} from './devices/pageBindings'
 import {faceOfField, readFlowPage, wordsOfHtml, type FlowPage} from './devices/pageReadings'
 import {useReachedDocument, type DocumentInPane} from './documents/documentDoor'
-import {setFlowMeta} from './devices/centralDeviceWrites'
 import {useCentralDayStanding} from './useCentralDayStanding'
 import {subjectWords} from './daySurface'
 
@@ -111,23 +113,57 @@ export function pageIslandValues(doc: unknown): Values | null {
   const template = text(meta.template), version = text(meta.templateVersion)
   if (template) values.template = `${template.replace(/^oi\.template\//, '').replace(/^./, c => c.toUpperCase())}${version ? ` @ ${version}` : ''}`
   for (const [key, from] of [['world', bindings.worldRef], ['subject', bindings.subjectRef], ['expression', bindings.expressionRef]] as const) if (typeof from === 'string' && from) values[key] = from
+  if (family === 'beings' && (bindings.kind === 'person' || bindings.kind === 'agent')) values.being = bindings.kind
+  Object.assign(values, ownValues(meta))
   if (Array.isArray(bindings.categories)) values.office = [1, 2, 3, 4].filter(n => (bindings.categories as unknown[]).includes(`C${n}`)).join(',')
   if (Array.isArray(bindings.sources)) values.sources = JSON.stringify(bindings.sources.map(record).filter((s): s is Record<string, unknown> => s !== null)
     .map(source => `${text(source.ref) ?? ''}${text(source.revision) ? ` @ ${text(source.revision)}` : ''}`))
   if (appearance.layout === 'portrait' || appearance.layout === 'editorial') values.layout = appearance.layout
   if (appearance.tone === 'paper' || appearance.tone === 'ink') values.tone = appearance.tone
   const paras: Para[] = []
-  if (title) paras.push({id: 'title', kind: 'h1', parts: [{text: title}]})
+  const marks = Array.isArray(page.highlights) ? page.highlights.map(record).filter((m): m is Record<string, unknown> => m !== null) : []
+  const marked = (id: string, words: string): Para['parts'] => markedParts(words, marks.filter(m => m.part === id))
+  if (title) paras.push({id: 'title', kind: 'h1', parts: marked('title', title)})
   const subtitle = text(body.subtitle), introduction = text(body.introduction)
-  if (subtitle) paras.push({id: 'subtitle', kind: 'intro', parts: [{text: subtitle}]})
-  if (introduction) paras.push({id: 'introduction', kind: 'p', parts: [{text: introduction}]})
+  if (subtitle) paras.push({id: 'subtitle', kind: 'intro', parts: marked('subtitle', subtitle)})
+  if (introduction) paras.push({id: 'introduction', kind: 'p', parts: marked('introduction', introduction)})
   if (Array.isArray(body.sections)) body.sections.map(record).filter((s): s is Record<string, unknown> => s !== null).forEach((section, i) => {
     const id = text(section.id) ?? `section-${i + 1}`
     paras.push({id: `${id}:h`, kind: 'h2', parts: [{text: `${i + 1}. ${text(section.heading) ?? ''}`}]})
-    if (text(section.text)) paras.push({id, kind: 'p', parts: [{text: text(section.text)!}]})
+    if (text(section.text)) paras.push({id, kind: 'p', parts: marked(id, text(section.text)!)})
   })
   values.page = JSON.stringify(paras)
   return values
+}
+
+/** A page's own colour and how it opens, from its meta (kernel/src/page.rs writes `colour`, `launch`, a Flow's `container`). Pure. */
+function ownValues(meta: Record<string, unknown>): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  if (typeof meta.colour === 'string' && meta.colour) values.colour = meta.colour
+  if (typeof meta.container === 'string' && meta.container) values.container = meta.container
+  const launch = record(meta.launch) ?? {}
+  if (typeof launch.opensAs === 'string') values.opensAs = launch.opensAs
+  if (typeof launch.opensIn === 'string') values.opensIn = launch.opensIn
+  if (typeof launch.seats === 'boolean') values.seats = launch.seats
+  return values
+}
+
+/** A part's words with its highlights marked: a highlight with no passage marks the whole part, one with a passage its first run. */
+function markedParts(words: string, marks: readonly Record<string, unknown>[]): Para['parts'] {
+  const whole = marks.find(m => m.passage === null || m.passage === undefined)
+  if (whole) return [{text: words, mark: text(whole.colour) ?? 'yellow'}]
+  let parts: {text: string; mark?: string}[] = [{text: words}]
+  for (const mark of marks) {
+    const passage = text(mark.passage)
+    if (!passage) continue
+    parts = parts.flatMap(part => {
+      const at = part.mark ? -1 : part.text.indexOf(passage)
+      if (at < 0) return [part]
+      return [...(at ? [{text: part.text.slice(0, at)}] : []), {text: passage, mark: text(mark.colour) ?? 'yellow'},
+        ...(at + passage.length < part.text.length ? [{text: part.text.slice(at + passage.length)}] : [])]
+    })
+  }
+  return parts
 }
 
 /** A Day document's payload as a page (its fields, each a section of the page; their marks) and its notes. Pure. */
@@ -155,24 +191,28 @@ export function dayPayloadValues(payload: unknown): Values {
   return values
 }
 
-/** A file's own content as the page's readings: a Flow, an oi.page page, or its own text. Pure. */
-export function fileValues(content: string, fallbackKind: string): Values {
+/** A file's own content as the page's readings — a Flow, an oi.page page, or its own text — with the island they were read from (the
+ * passage acts read it to know what is marked). Pure. */
+export function fileReading(content: string, fallbackKind: string): {values: Values; island: unknown} {
   if (islandSpan(content, 'ql-doc')) {
     let doc: unknown = null
     try { doc = parseInstance(content) } catch { doc = null }
     const page = pageIslandValues(doc)
-    if (page) return page
-    if (doc && Array.isArray((doc as QlDoc).entries)) return flowValues(readFlowPage(doc as QlDoc))
+    if (page) return {values: page, island: doc}
+    if (doc && Array.isArray((doc as QlDoc).entries)) return {values: {...flowValues(readFlowPage(doc as QlDoc)), ...ownValues(record((doc as QlDoc).meta) ?? {})}, island: doc}
   }
-  return {kind: fallbackKind, page: JSON.stringify(pageOfText(content)), source: content.length > READ_PREVIEW_CHARS ? `${content.slice(0, READ_PREVIEW_CHARS)}…` : content}
+  return {values: {kind: fallbackKind, page: JSON.stringify(pageOfText(content)), source: content.length > READ_PREVIEW_CHARS ? `${content.slice(0, READ_PREVIEW_CHARS)}…` : content}, island: null}
 }
+
+/** A file's own content as the page's readings: a Flow, an oi.page page, or its own text. Pure. */
+export const fileValues = (content: string, fallbackKind: string): Values => fileReading(content, fallbackKind).values
 
 // ---------------------------------------------------------------------------------------------------------------- the wiring
 
 /** clip:central's wiring: every key the design draws or sets, in the page family's own words. */
 export const CENTRAL_WIRING: ClipWiring = {
   reads: {
-    name: 'the page\'s title: a Flow\'s meta.title, an oi.page meta.title, else the file\'s or the clip\'s own name', colour: 'the clip\'s track colour (the tracks pane)',
+    name: 'the page\'s title: a Flow\'s meta.title, an oi.page meta.title, else the file\'s or the clip\'s own name', colour: 'the page\'s own colour (meta.colour), else its track\'s colour (the tracks pane)',
     kind: 'the page\'s form: Flow, Being, Thing, Day, or the file\'s kind', template: 'the template the page names, at its version', revision: 'the owner\'s CAS revision of the bytes',
     save: 'the save router\'s outcome, where the page stands reached in a pane', page: 'the page\'s own text, as paragraphs', source: 'the page\'s source text',
     notes: 'the page\'s notes', participants: 'a Flow\'s participants', entries: 'a Flow\'s entries, their relations and depth', world: 'bindings.worldRef', subject: 'bindings.subjectRef',
@@ -218,40 +258,107 @@ export interface CentralReading {
   readonly values: Values
   /** The owner location of the page's file, when it is a file (the reached page's save outcome is matched by it). */
   readonly location?: CentralLocation | null
+  /** The page's island as read (a Flow's or an oi.page page's), for the passage acts; absent for any other file. */
+  readonly island?: unknown
 }
 
-const DIRTY = 'The page holds edits its owner does not: save or re-read them first, so the title joins the revision you read.'
+/** One field of the page written through the page owner on the revision read (kernel/src/page.rs `mutate_field`): resolves when
+ * the owner answered with its receipt, or throws the owner's words. */
+export type PageWrite = (field: PageField, value: unknown) => Promise<void>
 
-/** A Flow's wiring: its name is its title, written on its own file (centralDeviceWrites.ts setFlowMeta), as Live names a clip in Clip
- * view. The page family's Document device carries the same writer but stands on no chain (CentralDevices.tsx, R4), so Clip view is
- * where the hand reaches it. The pane holding this file with unsaved edits refuses first. */
-function flowWiring(rename: (title: string) => Promise<void>, held: DocumentInPane | null): ClipWiring {
-  const {name: _refused, ...refused} = CENTRAL_WIRING.refused
-  return {...CENTRAL_WIRING, refused, acts: {...CENTRAL_WIRING.acts, name: async value => {
+const DIRTY = 'The page holds edits its owner does not: save or re-read them first, so the change joins the revision you read.'
+const NO_SELECTION_ACT = 'Select a paragraph or an entry first: the act stands on it.'
+
+/** Where the selection stands, as the page owner names it: a Flow's entry, or a page's part (a section's heading stands for its section). */
+export function selectedAt(kind: Value | undefined, selected: Value | undefined): {entry: string} | {part: string} | null {
+  if (typeof selected !== 'string' || !selected) return null
+  return kind === 'flow' ? {entry: selected} : {part: selected.replace(/:h$/, '')}
+}
+
+/** Whether the selection already holds a highlight (choosing Highlight again takes it away): a Flow entry with a mark in its words,
+ * a page part with a whole-part highlight. Pure. */
+export function selectionMarked(island: unknown, at: {entry: string} | {part: string}): boolean {
+  const doc = record(island)
+  if (!doc) return false
+  if ('entry' in at) {
+    const entry = (Array.isArray(doc.entries) ? doc.entries : []).map(record).find(e => e?.id === at.entry)
+    return typeof entry?.html === 'string' && entry.html.includes('<mark')
+  }
+  return (Array.isArray(doc.highlights) ? doc.highlights : []).map(record).some(m => m?.part === at.part && (m.passage === null || m.passage === undefined))
+}
+
+/** A page's wiring over the page owner: its own fields written, the passage acts making highlights and notes on the selection, the
+ * next highlight's colour and the next note's timing and anchor held by the view. A pane holding the page with unsaved edits refuses
+ * every write first. */
+function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, held: DocumentInPane | null, view: () => Values): ClipWiring {
+  const flow = kind === 'flow'
+  const page = kind === 'being' || kind === 'thing'
+  // The keys the page owner takes for this kind of page (the design's keys; kernel/src/page.rs `apply_field` holds each rule).
+  const writes = new Set<string>(flow ? ['name', 'colour', 'container', 'opensAs', 'opensIn', 'seats', 'act.highlight', 'act.note']
+    : ['name', 'colour', ...(kind === 'being' ? ['being'] : []), 'office', 'layout', 'tone', 'opensAs', 'opensIn', 'act.highlight', 'act.note'])
+  const send = (field: PageField, value: unknown) => {
     if (held?.dirty) throw new Error(DIRTY)
-    await rename(String(value ?? ''))
-  }}}
+    return write(field, value)
+  }
+  const all: Record<string, (value: Value) => Promise<void>> = {
+    name: async value => send('title', String(value ?? '')),
+    colour: async value => send('colour', value ?? null),
+    being: async value => send('kind', value),
+    office: async value => send('office', String(value ?? '').split(',').filter(Boolean).map(n => `C${n}`)),
+    layout: async value => send('layout', value),
+    tone: async value => send('tone', value),
+    container: async value => send('container', value ?? 'none'),
+    opensAs: async value => send('launch', {opensAs: value}),
+    opensIn: async value => send('launch', {opensIn: value}),
+    seats: async value => send('launch', {seats: value === true}),
+    'act.highlight': async () => {
+      const at = selectedAt(kind, view().selected)
+      if (!at) throw new Error(NO_SELECTION_ACT)
+      if (selectionMarked(island, at)) return send('highlight.remove', at)
+      return send('highlight.add', {...at, colour: typeof view()['hl.colour'] === 'string' ? view()['hl.colour'] : 'yellow'})
+    },
+    'act.note': async () => {
+      const held = view()
+      const anchor = held['notes.anchor'] ?? 'selection'
+      const at = anchor === 'document' && !flow ? {} : selectedAt(kind, held.selected)
+      if (!at) throw new Error(flow ? 'A Flow\'s note stands on an entry: select one first.' : NO_SELECTION_ACT)
+      return send('note.add', {...at, timing: held['notes.timing'] === 'after' ? 'after' : 'during', text: ''})
+    },
+  }
+  const acts = Object.fromEntries(Object.entries(all).filter(([key]) => writes.has(key)))
+  const refused = Object.fromEntries(Object.entries(CENTRAL_WIRING.refused).filter(([key]) => !(key in acts) && !(key in PAGE_VIEW && (flow || page))))
+  return {...CENTRAL_WIRING, refused, acts: {...CENTRAL_WIRING.acts, ...acts}, view: {...CENTRAL_WIRING.view, ...(flow || page ? PAGE_VIEW : {})}}
 }
 
-/** The page's binding over its reading: the save outcome where the reached page is this file; a Flow's title written where a writer is
- * given. Pure. */
-export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null;
-  rename?: ((title: string) => Promise<void>) | null}): ClipBinding {
+/** What the view holds for the passage acts (the next highlight's colour, the next note's timing and anchor). */
+const PAGE_VIEW: Readonly<Record<string, string>> = {
+  'hl.colour': 'the colour of the next highlight (the page owner keeps each highlight in its own colour)',
+  'notes.timing': 'whether the next note is made during reading or after',
+  'notes.anchor': 'what the next note stands on: the selection, its entry, or the page',
+}
+
+/** The page's binding over its reading: the save outcome where the reached page is this file; the page's own fields written through
+ * the page owner where a writer is given. Pure. */
+export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null; write?: PageWrite | null}): ClipBinding {
   const values: Record<string, Value> = {...reading.values}
-  if (input.colour) values.colour = input.colour
+  if (input.colour && !values.colour) values.colour = input.colour
   const reached = input.reached
   const here = reached && reading.location && reached.location?.ref === reading.location.ref ? reached : null
   if (here?.outcome) values.save = here.outcome
-  const wiring = input.rename && values.kind === 'flow' && reading.location ? flowWiring(input.rename, here) : CENTRAL_WIRING
-  return clipBinding({mode: 'central', ref: reading.ref, values, wiring, placed: true,
-    viewDefaults: {'view.panel': 'clip', 'view.tools': 'highlight', 'view.editor': values.kind === 'flow' ? 'dialogue' : 'page', 'notes.order': 'place',
-      ...(typeof values.participants === 'string' ? speakerDefault(values.participants) : {})}})
+  const ref = reading.ref
+  const viewDefaults: Record<string, Value> = {'view.panel': 'clip', 'view.tools': 'highlight', 'view.editor': values.kind === 'flow' ? 'dialogue' : 'page', 'notes.order': 'place',
+    'hl.colour': 'yellow', 'notes.timing': 'during', 'notes.anchor': 'selection',
+    ...(typeof values.participants === 'string' ? speakerDefault(values.participants) : {})}
+  const view = (): Values => ({...values, ...viewDefaults, ...viewHoldsOf(clipHostId('central', ref))})
+  const writable = input.write && reading.location && reading.island && ['flow', 'being', 'thing'].includes(String(values.kind))
+  const wiring = writable ? pageWiring(input.write!, values.kind, reading.island, here, view) : CENTRAL_WIRING
+  return clipBinding({mode: 'central', ref, values, wiring, placed: true, viewDefaults})
 }
 const speakerDefault = (participants: string): Record<string, Value> => {
   try { const person = (JSON.parse(participants) as {name: string; kind: string}[]).find(item => item.kind === 'person'); return person ? {speakAs: person.name} : {} } catch { return {} }
 }
 
-type Answer = {phase: 'reading'} | {phase: 'read'; values: Values; location?: CentralLocation | null} | {phase: 'refused'; values: Values}
+type Answer = {phase: 'reading'} | {phase: 'read'; values: Values; location?: CentralLocation | null; revision?: string; island?: unknown} | {phase: 'refused'; values: Values}
 
 const FORM: Record<CentralSubjectSelection['kind'], string> = {folder: 'folder', note: 'note', day: 'day'}
 
@@ -273,9 +380,10 @@ function readSubject(transport: KernelTransportStatus, subject: CentralSubjectSe
     throw new Error(`the owner lists no ${subject.path.slice(cut + 1)} in ${cut > 0 ? subject.path.slice(0, cut) : 'the ground'}`)
   })()
   return located.then(location => readFile(transport, location).then(file => {
-    const values: Record<string, Value> = {name, ...fileValues(file.content, FORM[subject.kind])}
+    const read = fileReading(file.content, FORM[subject.kind])
+    const values: Record<string, Value> = {name, ...read.values}
     if (file.revision) values.revision = casShort(file.revision)
-    return {phase: 'read' as const, values, location: file.location ?? location}
+    return {phase: 'read' as const, values, location: file.location ?? location, revision: file.revision, island: read.island}
   }))
 }
 
@@ -350,7 +458,7 @@ export function useCentralClip(): ClipBinding | null {
   const subject = centralSubject
   const resolved = subject || !world ? null : resolveCentralOccasion(world.spine.occasion(), world.source.events)
   const occasion = resolved?.state === 'selected' ? resolved.selection : null
-  // A Flow's title written from Clip view reads the file again (the key moves) and the pane holding it reads it again too.
+  // A page field written from Clip view reads the file again (the key moves) and the pane holding it reads it again too.
   const [written, setWritten] = useState(0)
   const subjectAnswer = useAnswer(subject ? `subject:${subject.kind}:${subject.path}#${written}` : null, () => readSubject(transport, subject!))
   const occasionAnswer = useAnswer(occasion && occasion.kind !== 'day' ? `occasion:${occasion.subjectRef}:${occasion.instantUnixMs ?? 'undated'}` : null, () => readOccasion(transport, occasion!))
@@ -361,13 +469,16 @@ export function useCentralClip(): ClipBinding | null {
     const answer = subjectAnswer ?? {phase: 'reading' as const}
     const name = centralSubjectName(subject)
     const location = answer.phase === 'read' ? answer.location ?? subject.location ?? null : subject.location ?? null
-    const rename = location ? async (title: string) => {
-      try { await setFlowMeta(transport, location, {title}) } finally {
-        setWritten(value => value + 1)
+    const revision = answer.phase === 'read' ? answer.revision : undefined
+    // Each write is made on the revision this read stands on; the owner refuses one the file moved past, overwriting nothing.
+    const write: PageWrite | null = location && revision ? async (field, value) => {
+      try { await writePageField(transport, location, revision, field, value) } finally {
+        setWritten(n => n + 1)
         if (reached?.location?.ref === location.ref) reached.reread?.()
       }
     } : null
-    return centralClipBinding({ref, values: answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : answer.values, location}, {colour, reached, rename})
+    return centralClipBinding({ref, values: answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : answer.values, location,
+      island: answer.phase === 'read' ? answer.island : undefined}, {colour, reached, write})
   }
   if (resolved?.state === 'absent') return centralClipBinding({ref: `occasion:${resolved.ref}`, values: {name: resolved.ref,
     page: JSON.stringify(pageOfText(`The retained occasion ${resolved.ref} is no longer in the temporal reading. The spine keeps its basis; nothing opens for it here.`))}}, {colour})

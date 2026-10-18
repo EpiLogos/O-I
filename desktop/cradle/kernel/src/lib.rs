@@ -108,6 +108,7 @@ mod native_wire;
 mod owner_process;
 pub mod owner_read;
 pub mod owner_write;
+pub mod page;
 pub mod presentation;
 pub mod protocol;
 pub mod ql_music;
@@ -353,6 +354,13 @@ pub enum KernelOp {
     },
     GitDiffRead {
         request: git::DiffRequest,
+    },
+    /// A register's world body (`aikit.world-body/v1` on its root space), read
+    /// by the Wiki owner (construction.rs `read_body`). Its write is the
+    /// `aikit.wiki.facts.apply` Action with a `body_set` change.
+    WorldBodyRead {
+        #[serde(default)]
+        project: Option<String>,
     },
     // Presentation-state authority (Lane B).
     PresentationRead,
@@ -1044,12 +1052,41 @@ pub enum KernelOp {
         envelopes: Option<Vec<serde_json::Value>>,
     },
     /// Change one control of a track's mixer row (activator, solo, arm,
-    /// monitor) against the set's revision; the routings are read, not chosen.
+    /// monitor, or a send by its `index`: 0 is Send A) against the set's
+    /// revision; the routings are read, not chosen.
     LiveTrackMixerWrite {
         path: String,
         expected_revision: String,
         track: usize,
         control: String,
+        value: serde_json::Value,
+        #[serde(default)]
+        index: Option<usize>,
+    },
+    /// Comp: copy the stretch `range` (`{start, end}` in beats) of a track's
+    /// take lane `take` into its main lane against the set's revision, as
+    /// Live records a comp (the copy carries its take's `TakeId`).
+    LiveTakeComp {
+        path: String,
+        expected_revision: String,
+        track: usize,
+        take: usize,
+        range: serde_json::Value,
+    },
+    /// The set's Groove Pool: each groove's Base, Quantize, Timing, Random
+    /// and Velocity, and the set's Global Amount, with the revision. An
+    /// owner read.
+    LiveGroovePoolRead {
+        path: String,
+    },
+    /// Change one groove's setting, or with no `groove` the set's Global
+    /// Amount (`field: "amount"`), against the set's revision.
+    LiveGroovePoolWrite {
+        path: String,
+        expected_revision: String,
+        #[serde(default)]
+        groove: Option<u64>,
+        field: String,
         value: serde_json::Value,
     },
     /// `fresh` bypasses the cached listing for this one read — the explicit
@@ -1068,6 +1105,10 @@ pub enum KernelOp {
     },
     FileRead {
         location: files::Location,
+    },
+    /// A page (a Being, a Thing, a Flow) read, a world's pages listed, or one field written on the revision read (page.rs).
+    Page {
+        request: page::Request,
     },
     /// Binary-safe material read (FND-04): the owner's base64 encoding,
     /// never the UTF-8 text contract. Distinct name from the Workcell
@@ -1219,6 +1260,9 @@ pub enum KernelOpResult {
         document: serde_json::Value,
     },
     GitDiffReading {
+        document: serde_json::Value,
+    },
+    WorldBodyReading {
         document: serde_json::Value,
     },
     PresentationReading {
@@ -1538,6 +1582,10 @@ pub enum KernelOpResult {
     FileOperation {
         data: serde_json::Value,
     },
+    /// `oi.page-reading/v1`, `oi.page-list/v1` or `oi.page-mutation/v1` (page.rs).
+    PageReading {
+        data: serde_json::Value,
+    },
     NativeOwnerReading {
         owner: String,
         data: Option<serde_json::Value>,
@@ -1579,6 +1627,14 @@ pub enum KernelOpResult {
     },
     /// `{mixer, revision}`: a track's mixer row as a write left it.
     LiveTrackMixerReading {
+        reading: serde_json::Value,
+    },
+    /// `{clips, takeLanes, revision}`: a track's main lane and take lanes as a comp left them.
+    LiveTakeCompReading {
+        reading: serde_json::Value,
+    },
+    /// `{grooves, amount, amountRange, revision}`: the set's Groove Pool, read or as a write left it.
+    LiveGroovePoolReading {
         reading: serde_json::Value,
     },
     SystemCompositionReading {
@@ -2717,13 +2773,26 @@ impl Kernel {
                     document: git::diff(&self.client, request)?,
                 },
             }),
+            KernelOp::WorldBodyRead { project } => {
+                // Central discloses the scope, as the construction write's Action does.
+                let cwd = self.agent_location(project.as_deref())?;
+                Ok(KernelOpOutcome {
+                    receipts: vec![],
+                    result: KernelOpResult::WorldBodyReading {
+                        document: construction::read_body(&self.client, &cwd, project.as_deref())?,
+                    },
+                })
+            }
             op @ (KernelOp::LiveSetRead { .. }
             | KernelOp::LiveDeviceDescriptors
             | KernelOp::LiveDeviceParamsRead { .. }
             | KernelOp::LiveDeviceParamWrite { .. }
             | KernelOp::LiveClipRead { .. }
             | KernelOp::LiveClipWrite { .. }
-            | KernelOp::LiveTrackMixerWrite { .. }) => self
+            | KernelOp::LiveTrackMixerWrite { .. }
+            | KernelOp::LiveTakeComp { .. }
+            | KernelOp::LiveGroovePoolRead { .. }
+            | KernelOp::LiveGroovePoolWrite { .. }) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the Live document owner operation")?
                 .execute(),
@@ -3302,6 +3371,11 @@ impl Kernel {
                     result: KernelOpResult::DayReading { data },
                 })
             }
+            // A page's field written on the revision read: the prepared
+            // write's own steps (owner_write.rs), run under the lock.
+            KernelOp::Page { request } if request.is_write() => {
+                self.apply_owner_write(KernelOp::Page { request })
+            }
             // Central's Day writes: the prepared write's own steps
             // (owner_write.rs), run under the lock.
             KernelOp::Central { project, request } if owner_write::central_write(&request) => {
@@ -3309,7 +3383,7 @@ impl Kernel {
             }
             // Owner reads with nothing kernel-owned to record: the prepared
             // read's own execution (owner_read.rs `PreparedRead`).
-            op @ (KernelOp::Central { .. } | KernelOp::WorkcellStatusRead) => {
+            op @ (KernelOp::Central { .. } | KernelOp::Page { .. } | KernelOp::WorkcellStatusRead) => {
                 owner_read::PreparedRead::prepare(
                     &self.client,
                     agent_prepared::PreparedWorld::held_only(self.client.clone(), None),
