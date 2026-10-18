@@ -143,10 +143,13 @@ export function harmonicEdit(value: string): InstrumentEdit {
 let current: LiveTorusState | null = null
 const listeners = new Set<() => void>()
 
+/** Two states are the same when the whole of what the owner announced is: its reading, its determinants and its parameters. Comparing
+ * the reading alone dropped a change of parameters while the instrument stood still — the last effect taken off its chain, a level set
+ * while held (native screen pass r4, 18 Oct). */
 function same(a: LiveTorusState | null, b: LiveTorusState | null): boolean {
   if (a === null || b === null) return a === b
   if (a.ok !== b.ok) return false
-  return a.ok ? JSON.stringify(a.value) === JSON.stringify((b as {value: unknown}).value) : a.fault === (b as {fault: string}).fault
+  return a.ok ? JSON.stringify(a) === JSON.stringify(b) : a.fault === (b as {fault: string}).fault
 }
 
 /** Publish the instrument state the hosted frame validated (`state` or `null` to withdraw). Readers are told only of a change:

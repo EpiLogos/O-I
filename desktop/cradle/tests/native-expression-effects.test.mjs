@@ -157,6 +157,10 @@ test('an empty chain joins the level to the device; the chain\'s order is the pa
   assert.deepEqual(path(graph, p, out), ['filter', 'dynamics', 'delay']);
   assert.equal(p.modules.reverb.in.out.has(p.pre), false, 'off the chain, the room leaves the path');
   assert.equal(p.modules.reverb.out.out.size, 0, 'and the reverb leads nowhere');
+  const back = law.editEffectChain(state, []); graph.apply(back);
+  assert.deepEqual([...graph.input.out], [out], 'the last effect taken off: the level joins the device again');
+  assert.equal(p.modules.delay.out.out.size, 0, 'and no module leads anywhere');
+  graph.apply(state);
   const edges = r.nodes.reduce((n, node) => n + node.out.size, 0);
   state = law.editEffects(state, 'filter', 'cutoff', 500); graph.apply(state);
   assert.equal(r.nodes.reduce((n, node) => n + node.out.size, 0), edges, 'a parameter edit rewires nothing');
