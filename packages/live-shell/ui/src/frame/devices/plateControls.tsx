@@ -234,20 +234,21 @@ export interface HeldDevice {
   readonly title: string
   readonly mark: IconName
   readonly light: 'on' | 'off' | 'unknown'
-  /** Show the device whole in the pool (the plate's press on a chain). */
-  readonly onPool: () => void
+  /** Show the device whole in its band above the chain (deviceDoor.ts holdInBand). */
+  readonly onWhole: () => void
   /** Open it full size in a pane. */
   readonly onPane: () => void
 }
 
-/** The devices a section of the instrument holds, as marks at its head: a press shows one whole in the pool, ⤢ opens it in a pane. Its
+/** The devices a section of the instrument holds, as marks at its head: a press shows one whole in its band above the chain, ⤢ opens it
+ * in a pane. Its
  * controls stand in the section itself, read from the same owner. */
 export function HeldMarks({devices}: {readonly devices: readonly HeldDevice[]}) {
   if (!devices.length) return null
   return <span className="plate-held" role="group" aria-label="Devices held here">
     {devices.map(device => <span key={device.id} className="plate-held-mark" data-device={device.id} data-device-light={device.light}>
-      <button type="button" aria-label={`Show every setting of ${device.title} in the pool`} data-i={said(device.title, `Show every setting of ${device.title} in the pool.`)}
-        onClick={device.onPool}><Icon name={device.mark} size={10} /></button>
+      <button type="button" aria-label={`Show every setting of ${device.title} above the chain`} data-i={said(device.title, `Show every setting of ${device.title} whole, in its band above the chain.`)}
+        onClick={device.onWhole}><Icon name={device.mark} size={10} /></button>
       <button type="button" aria-label={`Open ${device.title} full size in a pane`} data-i={said(device.title, `Open ${device.title} full size in a pane.`)}
         onClick={device.onPane}>⤢</button>
     </span>)}

@@ -45,8 +45,15 @@ export interface Workspace {
   context?: WorldContext;
   /** Bounded reference-only recency. Contents and owner readings never live here. */
   recentPlaces?: WorkspaceRecentPlace[];
-  /** Named sets (manual §10.2), newest first. */
+  /** Named sets (manual §10.2), newest first. The pool (§16.7) makes each one a workspace of its own on mount; nothing new
+   * is written here. */
   sets?: NamedSet[];
+  /** What this workspace keeps (the pool's columns, manual §16.7): absent, every part. */
+  keeps?: WorkspaceKeeps;
+  /** The mode that comes forward after a launch (the pool's Opens in): absent, the last mode it stood in. */
+  opensIn?: WorkspaceOpensIn;
+  /** The context it last kept, when keeping is not on every change (the pool's Keep context): what a launch brings back. */
+  kept?: KeptContext;
   /** The widget rail (manual §10.6): one open set for the whole world, so a widget opened in one mode is open in every
    * mode; each widget's pin; the rail's presets and width. Beside the per-mode trees, never inside them. */
   widgets?: WidgetRail;
@@ -78,6 +85,34 @@ export interface WorldContext {
 /** A named set (manual §10.2): an arrangement of panes, instruments and the frame's parts, kept under a name and
  * returned to from the browser. The layout is the mode's own tree with its application view; refs only. */
 export interface NamedSet { id: string; name: string; mode: WorkspaceMode; layout: LayoutState; savedAt: number }
+/** The pool (manual §16.7): a workspace keeps a way of working — its panes, the instrument in each, the rail's widgets and the
+ * layout each mode opens with — each part On or Off; a launch brings it back in the modes the footer says. */
+export type WorkspaceKeepPart = "panes" | "instruments" | "widgets" | "layouts";
+export type WorkspaceKeeps = Record<WorkspaceKeepPart, boolean>;
+export const KEEPS_ALL: WorkspaceKeeps = { panes: true, instruments: true, widgets: true, layouts: true };
+export type WorkspaceOpensIn = "last" | WorkspaceMode;
+/** The footer: what a launch restores, and when the workspace you are in keeps your context. */
+export interface PoolSettings { onLaunch: "all" | "open" | "nothing"; keepContext: "change" | "leave" | "manual" }
+export const POOL_DEFAULTS: PoolSettings = { onLaunch: "all", keepContext: "change" };
+/** A workspace's kept context: the active mode's tree, the other modes' trees and the rail, as they stood when kept. */
+export interface KeptContext { layout: LayoutState; modeLayouts?: Partial<Record<WorkspaceMode, LayoutState>>; widgets?: WidgetRail; keptAt: number }
+const KEEP_PARTS: readonly WorkspaceKeepPart[] = ["panes", "instruments", "widgets", "layouts"];
+function decodeKeeps(raw: unknown): WorkspaceKeeps | undefined {
+  const o = raw as Record<string, unknown> | null;
+  if (!o || typeof o !== "object") return undefined;
+  const keeps = Object.fromEntries(KEEP_PARTS.map(part => [part, o[part] !== false])) as WorkspaceKeeps;
+  return KEEP_PARTS.every(part => keeps[part]) ? undefined : keeps;
+}
+function decodeOpensIn(raw: unknown): WorkspaceOpensIn | undefined {
+  return raw === "last" || isWorkspaceMode(raw) ? raw as WorkspaceOpensIn : undefined;
+}
+export function decodePoolSettings(raw: unknown): PoolSettings | undefined {
+  const o = raw as Record<string, unknown> | null;
+  if (!o || typeof o !== "object") return undefined;
+  const onLaunch = o.onLaunch === "open" || o.onLaunch === "nothing" ? o.onLaunch : "all";
+  const keepContext = o.keepContext === "leave" || o.keepContext === "manual" ? o.keepContext : "change";
+  return onLaunch === "all" && keepContext === "change" ? undefined : { onLaunch, keepContext };
+}
 const SET_LIMIT = 64;
 const TRAIL_LIMIT = 24;
 const text = (value: unknown, max = 512): string | undefined => typeof value === "string" && value.length > 0 && value.length <= max ? value : undefined;
@@ -136,7 +171,10 @@ export function decodeWorldContext(raw: unknown): WorldContext | undefined {
 /** What crosses a mode switch on the layout itself: the side-region widths,
  * the live accompanying session (one canonical conversation), and the
  * panel's remembered plane per mode. Everything else belongs to a mode. */
-function sharedAcrossModes(layout: LayoutState): Partial<LayoutState> {
+/** A tree's own mode field: Central's (base) tree names no mode. */
+export const layoutModeField = (mode: WorkspaceMode): WorkspaceMode | undefined => mode === "base" ? undefined : mode;
+/** The frame parts that stay with the person across modes (side widths, the accompanying session, the panel planes). */
+export function sharedAcrossModes(layout: LayoutState): Partial<LayoutState> {
   return { leftWidth: layout.leftWidth, rightWidth: layout.rightWidth, accompanying: layout.accompanying, panelPlanes: layout.panelPlanes, subjectPlanes: layout.subjectPlanes };
 }
 /** Leave the active mode's tree where it stands and stand on `next`'s: its
@@ -304,7 +342,7 @@ export function dropDetachedAcrossWorkspaces(workspaces: Workspace[], surfaceId:
  * rest on its next save), so the version is bumped; a v1-only build meeting a
  * v2 book retains it byte-exact through the recovery path, never overwrites.
  */
-export interface WorkspaceBook { version: 2; active: string; workspaces: Workspace[] }
+export interface WorkspaceBook { version: 2; active: string; workspaces: Workspace[]; pool?: PoolSettings }
 const KEY = "oi-cradle.workspaces.v1";
 export interface WorkspaceStorageOptions { storageKey?: string; legacyLayoutKey?: string | null }
 export function workspaceStorageNamespace(options: WorkspaceStorageOptions = {}) {
@@ -408,7 +446,20 @@ function restoreWorkspace(w: Workspace, draftPrefix?: string): {workspace: Works
     }));
     // A named set that no longer restores is dropped on its own, never the workspace with it.
     const sets = decodeNamedSets(w.sets, raw => { const before = notes.length; try { return restore(raw); } finally { notes.length = before; } });
-    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), sets, widgets: decodeWidgetRail(w.widgets), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }, draftPrefix), notes};
+    // A kept context restores under the same law as the live trees; one that no longer restores is dropped on its own.
+    const kept = ((): KeptContext | undefined => {
+      const raw = w.kept as KeptContext | undefined;
+      if (!raw || typeof raw !== "object" || typeof raw.keptAt !== "number") return undefined;
+      const before = notes.length;
+      try {
+        const keptLayout = restore(raw.layout);
+        const keptMode: WorkspaceMode = keptLayout.mode ?? "base";
+        const keptModes = Object.fromEntries(WORKSPACE_MODES.filter(mode => mode !== keptMode && raw.modeLayouts?.[mode]).map(mode => [mode, { ...restore(raw.modeLayouts![mode]!), mode: mode === "base" ? undefined : mode }]));
+        return { layout: keptLayout, ...(Object.keys(keptModes).length ? { modeLayouts: keptModes } : {}), ...(decodeWidgetRail(raw.widgets) ? { widgets: decodeWidgetRail(raw.widgets) } : {}), keptAt: raw.keptAt };
+      } catch { notes.length = before; return undefined; }
+    })();
+    const keeps = decodeKeeps(w.keeps), opensIn = decodeOpensIn(w.opensIn);
+    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), sets, widgets: decodeWidgetRail(w.widgets), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined, ...(keeps ? { keeps } : {}), ...(opensIn ? { opensIn } : {}), ...(kept ? { kept } : {}) }, draftPrefix), notes};
   } catch (error) {
     // The record still names itself when its name is readable; its
     // identifier survives only when it is a string no healthy workspace
@@ -445,7 +496,8 @@ function restoreBook(parsed: {version?: unknown; active?: unknown; workspaces?: 
   // its first in-session activation.
   if (!workspaces.length) throw new Error("Invalid workspace selection");
   const active = workspaces.some((w: Workspace) => w.id === parsed.active) ? parsed.active as string : workspaces[0].id;
-  return { book: { version: 2, active, workspaces: workspaces.map(w => w.id === active ? { ...w, lastVisitedAt: Date.now() } : w) }, quarantine };
+  const pool = decodePoolSettings((parsed as {pool?: unknown}).pool);
+  return { book: { version: 2, active, workspaces: workspaces.map(w => w.id === active ? { ...w, lastVisitedAt: Date.now() } : w), ...(pool ? { pool } : {}) }, quarantine };
 }
 export function loadWorkspaceBook(options: WorkspaceStorageOptions = {}): LoadedBook {
   const {key: KEY, legacyKey, journalKey, draftPrefix} = workspaceStorageNamespace(options);
@@ -604,6 +656,9 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   /** The one scope's writer (scope.ts): Central, a project, or Factory's All projects. */
   const browseAll = () => update(w => ({ ...w, allProjects: true }));
   const switchMode = (next: WorkspaceMode) => update(w => switchWorkspaceMode(w, next));
+  /** The whole book's one change (the pool's launch, keep and its footer, the shell's own pure functions). A recovery book
+   * that holds nobody's data is never changed. */
+  const changeBook = (change: (book: WorkspaceBook) => WorkspaceBook) => { if (recovery && !recovery.key) return; setBook(b => change(b)); };
   const saveSet = (name: string) => update(w => saveNamedSet(w, name));
   const applySet = (id: string) => update(w => applyNamedSet(w, id));
   const removeSet = (id: string) => update(w => ({ ...w, sets: w.sets?.filter(held => held.id !== id) }));
@@ -694,5 +749,5 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   };
   const showRecovery=()=>{const saved=latest();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
-  return { flushCheckpoint: flushNow, storageNamespace: namespace, switchMode, saveSet, applySet, removeSet, toggleWidgetOpen, pinWidgetAt, saveWidgets, applyWidgets, widenWidgets, select, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, dropDetachedEverywhere, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
+  return { flushCheckpoint: flushNow, storageNamespace: namespace, book, changeBook, switchMode, saveSet, applySet, removeSet, toggleWidgetOpen, pinWidgetAt, saveWidgets, applyWidgets, widenWidgets, select, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, dropDetachedEverywhere, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }

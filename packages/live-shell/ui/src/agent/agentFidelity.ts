@@ -165,7 +165,7 @@ export const AGENT_DATA_I_FACTORIES = {
   gatewayN: (n: number | string) => agentDataI(`Gateway · ${n}`, 'Where the session runs: the harness connection (Hermes tui_gateway, JSON-RPC over stdio or WebSocket). Frames flow along the link; the ring is the replay buffer; the outer pulse is the heartbeat.'),
   gatewayFoldedN: (n: number | string) => agentDataI(`${n} (folded)`, 'A device folded to its title, as in Live.'),
   agentset: (name: string) => agentDataI(`Agentset · ${name}`, 'One chain per member, nested as spawned, each with its model. Click a member to open its thread.'),
-  agentFace: (name: string) => agentDataI(`${name} · agent`, 'Compact. Click: expand in the pool. ↗: open its thread full.'),
+  agentFace: (name: string) => agentDataI(`${name} · agent`, 'Compact. Click: select it; its expanded view stands above the chain. ↗: open its thread full.'),
 } as const
 
 /** Control ids the F2 oracle requires on the transport (fidelity.transport.orderHint). */

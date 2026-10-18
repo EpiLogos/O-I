@@ -54,7 +54,14 @@ const designs = await import('../src/frame/devices/designs.ts')
 const door = await import('../src/frame/devices/deviceDoor.ts')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const {DeviceView, PlacedDevice} = await import('../src/frame/devices/DeviceView.tsx')
-const {DevicePool} = await import('../src/frame/devices/DevicePool.tsx')
+const {PlacedDevice: WholePlaced} = await import('../src/frame/devices/DeviceView.tsx')
+const wholeDoor = await import('../src/frame/devices/deviceDoor.ts')
+/** The selected device's Whole, as its band draws it above the chain (W1, manual §16.7: the pool holds no device; DevicePool retired). */
+function WholeBand() {
+  const held = wholeDoor.useDeviceDoor()
+  const entry = held.selected ? held.device(held.selected) : undefined
+  return entry ? createElement(WholePlaced, {device: entry.device, view: 'whole', picture: entry.picture, binding: entry.binding}) : null
+}
 const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
 const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
 const {loadWorldShellFamilies} = await import('../src/inhabitants/worldShellFamilies.ts')
@@ -313,7 +320,7 @@ test('the Day draws its catalogue design on the chain, in the pool, on the rail 
     assert.doesNotMatch(compact, /aria-checked="true" aria-label="\d /, 'no face of the net is open: no Day document stands')
     assert.match(compact, /aria-label="Face"[^>]*aria-valuetext="no reading"/, 'the Face dial: no reading, drawn "—"')
     door.selectDevice(ID)
-    const whole = html(createElement(DevicePool))
+    const whole = html(createElement(WholeBand))
     assert.match(whole, /data-device-design="central:day-die"/)
     assert.match(whole, /role="tab" aria-selected="true">Fri 16<\/button>/, 'the page: today, by the owner\'s civil date')
     assert.doesNotMatch(whole, /Sat 17<\/button>/, 'no tomorrow page while no reading reports tomorrow\'s Day')
@@ -349,7 +356,7 @@ test('the five views move together: the hand\'s face shows in every view at once
   hosting(ready, bind.dayValuesOf(ready, {face: 2, payload: PAYLOAD}), (entry, binding) => {
     const views = () => [
       html(createElement(DeviceView, {device: entry.device, size: 'compact', picture: entry.picture('compact'), binding})),
-      (door.selectDevice(ID), html(createElement(DevicePool))),
+      (door.selectDevice(ID), html(createElement(WholeBand))),
       html(createElement(PlacedDevice, {device: entry.device, view: 'widget', picture: entry.picture, binding})),
     ]
     for (const markup of views()) assert.match(markup, /aria-checked="true" aria-label="2 Operation"/, 'the owner\'s open face, 2, in the net of every view')

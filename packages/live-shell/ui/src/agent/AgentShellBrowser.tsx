@@ -1,22 +1,17 @@
-import {useEffect, useMemo, useState, type DragEvent, type ReactNode} from 'react'
+import {useMemo, useState, type DragEvent, type ReactNode} from 'react'
 import {Icon as CutIcon} from '../inhabitants/sdk/Icon'
 import {KindMark, WoodMark} from '../inhabitants/sdk/marks.tsx'
-import {createPortal} from 'react-dom'
 import type {BrowserCategory, BrowserKind, ControlledBrowser} from '../frame/browser/browserKinds'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
-import {SetsSection} from '../shell/SetsSection'
 import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
-import {AgentDevicePool} from './AgentDevicePool'
 import {useAgentShell} from './AgentShellContext'
 import {useAgentSessionsOptional, type AgentSessionsValue} from './AgentSessionsProvider'
 import {agentState, sessionState, type SessionWord} from '../frame/browser/rowWords'
 import {useWorkspace} from '../shell/workspaceContext'
 import {useRosterAnswer, useWorkcellAnswer} from '../owners/readers'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import {refusalLine, safeJson} from './RefusalCard'
 import {AGENT_CHAIN_MIME, encodeChainDrag, setActiveChainDrag, type AgentChainDrag} from './agentChainDrag'
 import {missingOpRemedy, OWNER_BINDINGS, ownerRefusalLine} from './agentChainDrag'
-import {DEVICE_PANE_KIND, selectDevice, useIsPublished} from '../frame/devices/deviceDoor'
+import {DEVICE_PANE_KIND, holdInBand, publishedDevice, useIsPublished} from '../frame/devices/deviceDoor'
 import {openInstrument} from '../frame/instrumentDoor'
 import {RUNS_ID} from './devices/taskBindings'
 import {RUN_ID} from './devices/sessionChainBindings'
@@ -32,7 +27,7 @@ const CATEGORIES = [
 ] as const
 
 /** The Runs category (softwareFactoryFamilyManifest.ts factory-runs, lane BF3): the selected session's Run (DLW §19.1) and its Runs
- * (§19.11), each a device the chain publishes. A press shows it whole in the pool (§16.4 "Select a device to show it whole in the
+ * (§19.11), each a device the chain publishes. A press shows it whole in its band above the chain (§16.7; was: "Select a device to show it whole in the
  * pool"); a double-click opens it full in a pane. */
 const RUN_DEVICES = [
   {id: RUN_ID, name: 'Run', says: 'the selected session\'s lane along the clock'},
@@ -244,9 +239,8 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   // The sessions' states and the agents' names, from the one agent-sessions provider (its task reads, its needles, its roster).
   const sessions = useAgentSessionsOptional()
   const {transport} = useWorkspace()
-  // The gateway is no longer read here: its card in the pool is gone, and the Gateway on the chain reads harness_agent_read
-  // itself (devices/useAgentChainReading.ts), drawn whole in the runtime's pool (lane BF).
-  const [git, setGit] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading seat…', receipt: null, refused: false})
+  // The gateway is not read here: the Gateway on the chain reads harness_agent_read itself (devices/useAgentChainReading.ts). The
+  // Git seat's settings and its Land are the landing device's (workcell:git-seat), whole in its band above the chain (W1).
   // The roster and the seat are the window's shared answers (owners/readers.ts): the same ones the Factory chain, the sessions
   // provider and the Central devices read — one owner read between them, a refusal remembered for its epoch.
   const rosterAnswer = useRosterAnswer(transport, null).reading
@@ -257,28 +251,6 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   const seatOutcome = useMemo<KernelOutcome>(() => seatAnswer.status === 'answered' ? {result: 'workcell_status_reading', data: seatAnswer.value} : null, [seatAnswer])
   const seatError = unreached ?? (seatAnswer.status === 'refused' ? seatAnswer.error : null)
 
-  useEffect(() => {
-    let live = true
-    void (async () => {
-      if (transport.kind === 'unavailable') {
-        if (live) {
-          const reason = transport.reason ?? 'Transport unavailable'
-          setGit({line: ownerRefusalLine('workcell', reason, 'not-reached'), receipt: null, refused: true})
-        }
-        return
-      }
-      // The Skillsets rows' admitted source (the roster reading the chain's skillset admit light consumes) and the Git rows'
-      // (the workcell family's seat reading) are the shared answers above.
-      const gitOp = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
-      if (live) {
-        const doc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null
-        setGit(doc
-          ? {line: 'repository read answered — receipt holds the document', receipt: safeJson(doc), refused: false}
-          : {line: refusalLine(gitOp.error, 'git_repository_read unavailable'), receipt: gitOp.error ? safeJson(gitOp.error) : null, refused: true})
-      }
-    })()
-    return () => { live = false }
-  }, [transport])
 
   // Rows that carry a drag payload are exactly the rows a real owner reading
   // disclosed: sessions (the track key), agents (the roster/session ref),
@@ -306,7 +278,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
     if (category === 'runs') return RUN_DEVICES.map((device): BrowserRow => {
       const on = published(device.id)
       return {key: device.id, label: device.name, meta: device.says, standing: on ? 'on chain' : 'no chain',
-        hover: `${device.name} · ${device.says}. ${on ? 'Press: show it whole in the pool. Double-click: open it full in a pane.' : 'No Factory chain is drawn: open Device view in Factory.'}`}
+        hover: `${device.name} · ${device.says}. ${on ? 'Press: show it whole above the chain. Double-click: open it full in a pane.' : 'No Factory chain is drawn: open Device view in Factory.'}`}
     })
     return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: '', standing: ''}]
   }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError, sessions, runOn, runsOn])
@@ -337,7 +309,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
               onClick={() => {
                 if (category === 'context') shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
                 if (category === 'git') shell.toggleTile('diff')
-                if (category === 'runs' && published(item.key)) selectDevice(item.key)
+                if (category === 'runs' && published(item.key)) { const entry = publishedDevice(item.key); if (entry) holdInBand(item.key, entry) }
                 if (category === 'sess') {
                   shell.setSelectedTrackId(item.key, item.label)
                   shell.openThread(item.key)
@@ -352,14 +324,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
           ))}
           <p id={`chain-drag-hint-${category}`} hidden>Drag onto the device chain: through → who → how → where → lands.</p>
   </>
-  const pool = (
-      <AgentDevicePool
-        gitLine={git.line}
-        gitReceipt={git.receipt}
-        gitRefused={git.refused}
-      />
-  )
-  if (controlled) return <div className="agent-browser-body">{results}{controlled.poolHost && createPortal(pool, controlled.poolHost)}</div>
+  if (controlled) return <div className="agent-browser-body">{results}</div>
   return (
     <aside className="agent-shell-browser" data-region="browser">
       <div className="browser-search"><input readOnly placeholder="Search (⌘F)" aria-label="Search browser" /></div>
@@ -376,8 +341,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
           {results}
         </div>
       </div>
-      {pool}
-      <InstrumentsSection /><SetsSection />
+      <InstrumentsSection />
     </aside>
   )
 }

@@ -69,11 +69,12 @@ test('the Clip side hosts the selected task\'s clip (R2): clip:factory on its bi
   assert.match(read('agent/clipBinding.ts'), /TASK_SEAMS\[setting\]/, 'the per-task settings write through their named seams')
 })
 
-test('the browser\'s Runs: the Factory browser draws the Run and the Runs as devices, a press showing each whole in the pool', () => {
+test('the browser\'s Runs: the Factory browser draws the Run and the Runs as devices, a press holding each whole in its band', () => {
   const browser = read('agent/AgentShellBrowser.tsx')
   assert.match(browser, /\{id: 'runs', label: 'Runs'\}/)
   assert.match(browser, /runs: 'devices'/, 'a Runs row is a device')
-  assert.match(browser, /if \(category === 'runs' && published\(item\.key\)\) selectDevice\(item\.key\)/)
+  assert.match(browser, /if \(category === 'runs' && published\(item\.key\)\) \{ const entry = publishedDevice\(item\.key\); if \(entry\) holdInBand\(item\.key, entry\) \}/,
+    'W1: the pool holds no device; a Run chosen in the browser stands whole above the chain')
   assert.match(browser, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: item\.key, title: item\.label\}\)/, 'a double-click opens it full in a pane')
   const manifest = read('inhabitants/softwareFactoryFamilyManifest.ts')
   assert.match(manifest, /id: 'factory-runs'[^\n]*state: 'cut'/, 'the family\'s Runs entry is cut, not waiting')

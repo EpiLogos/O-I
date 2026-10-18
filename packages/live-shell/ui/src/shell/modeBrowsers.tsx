@@ -14,7 +14,6 @@ import {BrowserPane, liveBrowserCategories} from '../components/BrowserPane'
 import {WorldBrowser, WORLD_BROWSER_CATEGORIES} from '../components/WorldBrowser'
 import {ModeBrowser, modeBrowserCategories} from './ModeBrowser'
 import {AgentShellBrowser, AGENT_BROWSER_CATEGORIES} from '../agent/AgentShellBrowser'
-import {SetsSection} from './SetsSection'
 import {Icon} from '../inhabitants/sdk/Icon'
 import type {IconName} from '../inhabitants/sdk/icons'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
@@ -51,7 +50,6 @@ function AgentRows({controlled}: {controlled: ControlledBrowser}) {
   const reading = useBrowserReading()
   return reading ? <AgentShellBrowser rows={reading.agency.rows} error={reading.agency.error} loading={reading.agency.loading} controlled={controlled} /> : null
 }
-function SetsRows() { return <SetsSection /> }
 /** A surface's mark, from the cut, by the opener's id; every other surface opens as a pane. */
 const SURFACE_MARKS: Readonly<Record<string, IconName>> = {browser: 'browser', 'surface.sources': 'search'}
 /** The openers that make a new document of a form (`form.<kind>`) belong to Central's New… grid (shell/ModeBrowser.tsx NewForms),
@@ -82,7 +80,6 @@ const AGENTS: BrowserSource = {id: 'agents', categories: AGENT_BROWSER_CATEGORIE
 /** Outside Factory, the running agent sessions only (Factory browses the whole agent browser). */
 const SESSIONS: BrowserSource = {id: 'sessions', categories: AGENT_BROWSER_CATEGORIES.filter(category => category.id === 'sess'), Body: AgentRows}
 const SHARED: readonly BrowserSource[] = [
-  {id: 'sets', categories: [{id: 'sets', label: 'Sets', kind: 'material', mark: <Icon name="pane" size={12} />, hint: 'named arrangements of panes, detail and browser'}], Body: SetsRows},
   {id: 'instruments', categories: [{id: 'instruments', label: 'Instruments', kind: 'instruments', mark: <Icon name="techne" size={12} />, hint: 'open one in a pane'}], Body: InstrumentsRows},
   {id: 'surfaces', categories: [{id: 'surfaces', label: 'Surfaces', kind: 'instruments', mark: <Icon name="browser" size={12} />, hint: 'sources, hosted surfaces, a terminal, a web page — open in a pane'}], Body: SurfacesRows},
 ]
@@ -96,6 +93,10 @@ export const MODE_BROWSERS: Readonly<Record<SurfMode, () => readonly BrowserSour
   expressions: () => [{id: 'expressions', categories: WORLD_BROWSER_CATEGORIES, Body: ExpressionsRows}, SESSIONS],
   factory: () => [AGENTS],
 }
+
+/** The pool's other face by mode (manual §16.7: "In Live a switch at the pool's head shows the set's grooves instead, as Live's pool
+ * does"): a table, never a branch. A mode not named here has the workspaces alone. */
+export const MODE_POOL_FACES: Readonly<Partial<Record<SurfMode, () => {label: string; face: ReactNode}>>> = {}
 
 /** A mode's row sources, then the ones every mode shares. */
 export const browserSourcesOf = (mode: SurfMode): readonly BrowserSource[] => [...MODE_BROWSERS[mode](), ...SHARED]

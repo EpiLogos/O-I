@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
 import {BOOK_MODE_OF_SHELL, useContinuity, type ShellMode} from './continuity/workspace'
-import { OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
+import { PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
 import type { NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
 import { useWorkspace } from './shell/workspace'
@@ -31,7 +31,8 @@ import type {WidgetRailBook} from './frame/widgets/widgets'
 import {worldWidgets, WidgetReadingProvider} from './shell/widgets'
 import {RailDevices} from './widgets/railDevices'
 import {DEFAULT_WIDGETS} from './shell/widgetDefaults'
-import {BrowserReadingProvider, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
+import {BrowserReadingProvider, MODE_POOL_FACES, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
+import {EncounterBar} from './frame/encounter/EncounterBar'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
 import {liveWorldSelection, setSelectionOf} from './shell/liveSelection'
@@ -64,7 +65,6 @@ import {subjectWords} from './central/daySurface'
 import {worldSubjectOf} from './techne/subject/worldRows'
 import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, draggedSize, enteredDetailHeight, expandDetail,
   expandedDetailHeight, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions} from './shell/workspaceAreas'
-import {useSelectedDeviceId} from './frame/devices/deviceDoor'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
 registerAtlasHost()
 registerTimelineHost()
@@ -246,12 +246,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     presentSettings(true)
   }, [settingsHost.request])
   const [browser, setBrowser] = useState(restored?.browser ?? opening.browser)
-  // An open device request shows the Browser: the expanded panel lives in its pool, not on the bottom rack.
-  useEffect(() => {const openDevice = () => {if (workspace.mode !== 'audio') setBrowser(true)}; window.addEventListener(OPEN_DEVICE_EVENT, openDevice); return () => window.removeEventListener(OPEN_DEVICE_EVENT, openDevice)}, [workspace.mode])
-  // A device chosen for the pool (a press on its plate: "Press a plate on a chain to show its device whole in the pool") shows the
-  // browser the pool stands under, so Whole is never chosen out of sight.
-  const poolDevice = useSelectedDeviceId()
-  useEffect(() => { if (poolDevice) setBrowser(true) }, [poolDevice])
+  // The pool under the browser (manual §16.7): your workspaces, and in Live the set's grooves. ⌥⌘6 shows or hides it. A device chosen
+  // on a chain or in the browser never fills it, and never opens the browser: a device stands whole in its band above the chain.
+  const [pool, setPool] = useState(true)
   useEffect(() => {
     const browseParameters = () => {
       if (workspace.mode === 'audio') return
@@ -428,6 +425,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       if (part === 'detail') setDetail(current => !current)
       if (part === 'browser') setBrowser(current => !current)
       if (part === 'rail') setDock(current => !current)
+      if (part === 'pool') setPool(current => { if (!current) setBrowser(true); return !current })
     }
     window.addEventListener('keydown', onChord, true)
     return () => window.removeEventListener('keydown', onChord, true)
@@ -575,9 +573,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     <FrameKeys paused={settingsPresented} focusedGroupId={continuity.current.layout.focusedGroupId} revealBrowser={() => setBrowser(true)} />
     {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
     {/* The one browser (F6): the mode's row sources and the shared ones, under one search, grouped by the four kinds. */}
-    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} category={browserCategory} onCategory={chooseBrowserCategory} /></BrowserReadingProvider></div>
+    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} category={browserCategory} onCategory={chooseBrowserCategory} pool={pool} poolFace={MODE_POOL_FACES[frameMode]?.() ?? null} /></BrowserReadingProvider></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(clampBrowserWidth(shownBrowserWidth() + (event.key === 'ArrowRight' ? RESIZE_STEP : -RESIZE_STEP), viewport[0], shownRailWidth()))} }} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); areaDrag.current = {at: event.clientX, size: shownBrowserWidth()} }} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId) && areaDrag.current) resizeBrowser(clampBrowserWidth(draggedSize(areaDrag.current, event.clientX, 1), viewport[0], shownRailWidth())) }} onPointerUp={() => { areaDrag.current = null }} />}
-    <main className="center"><div className={`center-body${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
+    <main className="center"><EncounterBar /><div className={`center-body${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
       {tracks === 'native' && !settingsPresented && nativeProjection.error && <div className="native-composition-fault" role="alert">{nativeProjection.error}</div>}
       {panels.map(panel => { const Panel = panel.component; const placed = expressionsPlaced && panel.id === 'world.expressions'; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}${frameMode === 'live' && panel.id === 'world.expressions' ? ' live-centre-torus' : ''}`} style={placed ? PLACED_RESIDENCE_STYLE : undefined} hidden={placed ? false : panel.id === 'world.settings' ? !settingsPresented : settingsPresented || centerPanel !== panel.id} key={panel.id}><Panel {...ctx} /></div> })}

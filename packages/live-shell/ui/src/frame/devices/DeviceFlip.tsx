@@ -8,8 +8,9 @@
 // Beside the band the host stands the layer of the devices' own windows (DeviceWindows.tsx: Pop-out, any number open): the frame
 // mounts the two together, the layer fixed above the shell and taking no part in the frame's grid.
 import {useCallback, useEffect} from 'react'
-import {flipDevice, flippedDeviceId, publishFlipHost} from './deviceDoor'
+import {flipDevice, flippedDeviceId, heldInBand, publishFlipHost, useDeviceDoor, useFlippedDeviceId} from './deviceDoor'
 import {DeviceWindowLayer} from './DeviceWindows'
+import {PlacedDevice} from './DeviceView'
 import {suppressed} from '../keys/keyMap'
 
 /** Whether a key press folds the expanded view now: Esc alone, not while typing, with a device expanded. Pure. */
@@ -31,7 +32,19 @@ export function DeviceFlipHost() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
   return <>
-    <div ref={hand} className="device-flip-host" role="region" aria-label="Expanded device" />
+    <div ref={hand} className="device-flip-host" role="region" aria-label="Expanded device"><HeldBand /></div>
     <DeviceWindowLayer />
   </>
+}
+
+/** A device held in its band (deviceDoor.ts holdInBand: chosen in the browser or the Studio's rack, on no chain): drawn whole here,
+ * on the binding it was held with, while its band stands. A device on a chain draws its own band from its plate. */
+function HeldBand() {
+  const id = useFlippedDeviceId()
+  const door = useDeviceDoor()
+  const entry = id && heldInBand(id) ? door.device(id) : undefined
+  if (!id || !entry) return null
+  return <div className="dp-wide dp-flip device-flip" data-device-flip={id} data-device-held="true" data-claims-keys="escape">
+    <PlacedDevice device={entry.device} view="whole" frame="flip" picture={entry.picture} binding={entry.binding} />
+  </div>
 }

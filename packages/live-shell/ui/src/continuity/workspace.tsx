@@ -5,6 +5,7 @@ import {tauriInvoke} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {candidateApplicationEnvelope, readCandidateApplicationView} from './applicationView'
 import {admissionReport, applyPendingAdmission, type AdmissionOutcome, type PendingAdmission} from './admission'
 import {nativeHost} from '../native/application'
+import {setsAsWorkspaces} from './workspacePool'
 
 export const CANDIDATE_WORKSPACE_KEY = 'oi.live-shell.candidate.workspace.v2'
 export const CANDIDATE_LEGACY_LAYOUT_KEY = 'oi.live-shell.candidate.layout.v1'
@@ -36,6 +37,10 @@ export function useCandidateWorkspace() {
   const savedTree = Object.keys(book.current.layout.surfaces ?? {}).length > 0
   const standsInOldLive = storedMode === 'base' && savedTree && book.current.context?.world !== 'central' && !book.current.modeLayouts?.live && !holdsCentralDocuments(book.current.layout)
   useEffect(() => { if (standsInOldLive) book.setLayout(layout => holdsCentralDocuments(layout) ? layout : {...layout, mode: 'live'}) }, [standsInOldLive, book.current.id])
+  // The browser's named sets became workspaces of their own (manual §10.2, §16.7: "To keep an arrangement, keep it into a workspace in
+  // the pool"): any still in the book move into the pool once, as the book opens, each keeping its arrangement and its mode.
+  const holdsSets = book.workspaces.some(workspace => workspace.sets?.length)
+  useEffect(() => { if (holdsSets) book.changeBook(next => setsAsWorkspaces(next)) }, [holdsSets])
   const mode: ShellMode = standsInOldLive ? 'audio' : SHELL_MODE_OF_BOOK[storedMode] ?? 'base'
   const setMode = (next: ShellMode) => book.switchMode(BOOK_MODE_OF_SHELL[next])
   const warmTrees = warmWorkspaceTrees(book.workspaces, book.current.id, storedMode)

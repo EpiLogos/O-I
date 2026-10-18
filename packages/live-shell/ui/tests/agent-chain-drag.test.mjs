@@ -254,11 +254,9 @@ test('the browser names the owner that actually refused: Central for the roster,
   assert.doesNotMatch(refused[0].label, /ai-kit skillset registry.*refused/)
   const empty = browser.skillsetRowsFromRoster({result: 'agent_definition_reading', data: {profiles: []}}, null)
   assert.match(empty[0].label, /waiting on AIKit: AIKit builds agent-chain skillset admit/)
-  // The rack is drawn whole by the runtime's pool (lane BF): its old text card, and the roster admission that fed it, are gone;
-  // no shell default reaches the pool as a reading.
-  const pool = await read('AgentDevicePool.tsx')
-  assert.match(pool, /POOL_DRAWN_BY_RUNTIME: ReadonlySet<string> = new Set\(\['gateway', 'agent', 'skillset', 'world'\]\)/)
-  assert.match(pool, /if \(POOL_DRAWN_BY_RUNTIME\.has\(selected\.id\)\) return null/)
+  // The pool holds no device (W1, manual §16.7): the Factory device pool is retired — the rack, the Gateway, the Agent and Scope stand
+  // whole in their bands above the chain, and the Git seat's Commit, Push and Land are the landing device's (workcell:git-seat).
+  await assert.rejects(read('AgentDevicePool.tsx'), {code: 'ENOENT'})
   const source = await read('AgentShellBrowser.tsx')
   assert.doesNotMatch(source, /budgetCap=\{12\}|budgetUsed=\{0\}|effort=\{shell\.effort\}|autonomy=\{shell\.steer/, 'the shell\'s defaults are not passed as readings')
   assert.doesNotMatch(source, /op: 'harness_agent_read'/, 'nor is the gateway read a second time for a card the chain\'s Gateway replaces')

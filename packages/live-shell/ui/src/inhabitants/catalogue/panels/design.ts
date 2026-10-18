@@ -56,7 +56,7 @@ export interface ViewProps {
 }
 
 export interface Room {readonly w: number; readonly h: number}
-export type Frame = 'chain' | 'pool' | 'flip' | 'pane' | 'window' | 'rail'
+export type Frame = 'chain' | 'flip' | 'pane' | 'window' | 'rail'
 /** The six views (manual §16.3). */
 export type ViewName = 'folded' | 'compact' | 'whole' | 'full' | 'popout' | 'widget'
 

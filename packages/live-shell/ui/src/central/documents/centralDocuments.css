@@ -133,8 +133,8 @@
   color: var(--oi-muted-2);
 }
 
-/* The document's head (the mockup's `.doc .bar` :200): its form on the left, its revision and save standing on the right —
-   a reading. Save and Review stand in the browser's aperture for the document reached (documentDoor.ts). */
+/* The document's head (the mockup's `.doc .bar` :200): its form on the left, its revision and save standing, then its own Save and
+   Re-read (Review for a Day) — the owner's acts on the document the pane holds (W1: the browser's aperture slot is gone). */
 .central-document-pane .document-pane-head {
   order: 0;
   flex: none;
@@ -148,5 +148,9 @@
   color: var(--pmid);
 }
 .central-document-pane .document-pane-form { text-transform: uppercase; white-space: nowrap }
-.central-document-pane .document-pane-state { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .02em }
+.central-document-pane .document-pane-state { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .02em; text-align: right }
+.central-document-pane .document-pane-acts { flex: none; display: flex; gap: 6px }
+.central-document-pane .document-pane-acts button { height: 20px; min-height: 0; padding: 0 8px; font: 10.5px/1 var(--oi-font-sans); letter-spacing: .02em; color: var(--pmid);
+  background: transparent; border: 1px solid currentColor; border-radius: 2px; cursor: pointer }
+.central-document-pane .document-pane-acts button:disabled { opacity: .4; cursor: default }
 .central-document-absence { font-family: var(--serif) }

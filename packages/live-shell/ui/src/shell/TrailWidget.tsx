@@ -5,7 +5,7 @@
 //
 // A stop's time is the book's when it holds one (`at`, epoch ms); the book's TrailStop records none yet
 // (desktop/cradle/src/workspace/store.ts), so a stop without one draws no time rather than a guessed one.
-import {useOptionalContinuity} from '../continuity/workspace'
+import {useOptionalContinuity, type CandidateWorkspace} from '../continuity/workspace'
 import type {TrailStop} from '../../../../../desktop/cradle/src/workspace/store'
 import {MODE_CURATION} from '../../../../../desktop/cradle/src/workspace/mode'
 import type {WidgetBodyProps, WidgetGlance} from '../frame/widgets/widgets'
@@ -26,19 +26,22 @@ export function trailGlance(stops: readonly TrailStop[]): WidgetGlance | null {
     lines: stops.slice(0, 8).map(stop => ({lead: stopTime(stop) ?? MODE_CURATION[stop.mode].label, text: stop.label}))}
 }
 
+/** Return to a stop: the mode it was in, and the same thing selected (the move adds no stop of its own). The one return the Trail
+ * widget and the encounter bar's Back and Forward share. */
+export function returnToStop(continuity: Pick<CandidateWorkspace, 'switchMode' | 'setContext'>, stop: TrailStop): void {
+  continuity.switchMode(stop.mode)
+  if (stop.surfaceRef && stop.surfaceKind) {
+    const selection = {mode: stop.mode, kind: stop.surfaceKind, ref: stop.surfaceRef, title: stop.label, track: stop.position}
+    continuity.setContext(current => ({...current, selection}))
+  }
+}
+
 export function TrailWidget({glance}: Partial<WidgetBodyProps> = {}) {
   const continuity = useOptionalContinuity()
   const context = continuity?.current.context
   const stops = [...(context?.trail ?? [])].reverse()
   useGlance(glance, trailGlance(stops))
-  const returnTo = (stop: TrailStop) => {
-    if (!continuity) return
-    continuity.switchMode(stop.mode)
-    if (stop.surfaceRef && stop.surfaceKind) {
-      const selection = {mode: stop.mode, kind: stop.surfaceKind, ref: stop.surfaceRef, title: stop.label, track: stop.position}
-      continuity.setContext(current => ({...current, selection}))
-    }
-  }
+  const returnTo = (stop: TrailStop) => { if (continuity) returnToStop(continuity, stop) }
   return <TrailStops stops={stops} here={context?.selection ?? null} onReturn={returnTo} />
 }
 

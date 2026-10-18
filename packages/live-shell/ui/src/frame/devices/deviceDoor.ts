@@ -60,19 +60,27 @@ export function publishedDevices(): readonly PublishedDevice[] {
   return [...devices.values()]
 }
 
-/** The device the pool shows whole: the one last chosen on a chain, or in the browser. */
+/** The device chosen last, on a chain or in the browser: its plate is lit. Choosing a device never fills the pool (manual §16.7: the
+ * pool holds no device); it stands whole in its band when its ▸ is pressed, or when it is held there (holdInBand). */
 export function selectDevice(id: string | null): void {
   if (selected === id) return
   selected = id
   notify()
 }
 
-/** A device chosen in the browser (manual §16.3: "The pool shows the device you select in the browser, and changes there apply
- * without adding it to a chain"): the row hands the device on its own owner's binding, and the pool shows it whole. Held here it
- * stands on no chain — no chain draws from the door. Null lets it go, and the pool shows nothing of it. */
-export function holdInPool(id: string, entry: PublishedDevice | null): void {
+const heldInBands = new Set<string>()
+/** A device chosen outside a chain (the browser, the Studio's rack): it opens whole in its band above the chain (manual §16.7: "A
+ * device opens whole in its band above the chain"), on its own owner's binding, and changes there apply without adding it to a
+ * chain. No chain plate draws it, so the band host does (DeviceFlip.tsx HeldBand). Null lets it go and folds its band. */
+export function holdInBand(id: string, entry: PublishedDevice | null): void {
   publishDevice(id, entry)
-  if (entry) selectDevice(id); else if (selected === id) selectDevice(null)
+  if (entry) { heldInBands.add(id); selectDevice(id); flipDevice(id) }
+  else { heldInBands.delete(id); if (selected === id) selectDevice(null); if (flipped === id) flipDevice(null) }
+}
+
+/** Whether a device stands in its band held, drawn by the band host rather than by a chain plate. */
+export function heldInBand(id: string): boolean {
+  return heldInBands.has(id)
 }
 
 export function selectedDeviceId(): string | null {
