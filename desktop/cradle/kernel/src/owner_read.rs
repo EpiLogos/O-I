@@ -500,7 +500,12 @@ impl PreparedRead {
             | KernelOp::ConfigReceipts
             | KernelOp::AgentCard { .. }
             | KernelOp::EncounterJoin { .. }
-            | KernelOp::FlowChangedSince { .. } => true,
+            | KernelOp::FlowChangedSince { .. }
+            // Lane K1: the seat instrument, Central's source returns and
+            // AIKit's declared remotes — each needs no World.
+            | KernelOp::SeatStatusRead
+            | KernelOp::SourceReturnsRead { .. }
+            | KernelOp::GatewayRemotesRead => true,
             KernelOp::FactoryOwner { request } => request.is_read(),
             KernelOp::SharedField { request } => crate::shared_field::is_read(request),
             _ => false,
@@ -1045,6 +1050,30 @@ impl PreparedRead {
                     .map_err(|e| e.to_string())?,
                 }
             }
+            KernelOp::SeatStatusRead => KernelOpResult::SeatStatusReading {
+                data: seat_status().map_err(failed("seat status read failed"))?,
+            },
+            KernelOp::SourceReturnsRead {
+                project,
+                limit,
+                before,
+            } => KernelOpResult::SourceReturnsReading {
+                data: self
+                    .client
+                    .source_returns(
+                        project
+                            .as_deref()
+                            .unwrap_or_else(|| self.client.configured_project()),
+                        *limit,
+                        before.as_deref(),
+                    )
+                    .map_err(|e| e.to_string())?,
+            },
+            KernelOp::GatewayRemotesRead => {
+                let (data, warnings) =
+                    gateway_remotes().map_err(failed("gateway remote list failed"))?;
+                KernelOpResult::GatewayRemotesReading { data, warnings }
+            }
             _ => return Err("This operation cannot execute as an independent owner read".into()),
         })
     }
@@ -1148,6 +1177,99 @@ fn workcell_status() -> Result<Value, String> {
     args.extend(["status".into(), "--json".into()]);
     crate::material::invoke(&executable, &args, None).map_err(|e| {
         serde_json::to_string(&e).unwrap_or_else(|_| "workcell status read failed".into())
+    })
+}
+
+/// The seat instrument's schema (`seat status --json`).
+pub const SEAT_STATUS_SCHEMA: &str = "central.workcell-status/v1";
+/// AIKit's declared-remotes schema (`aikit gateway remote list --json`).
+pub const GATEWAY_REMOTES_SCHEMA: &str = "aikit.gateway-remotes/v1";
+/// The seat instrument reads every seat's git standing; measured on
+/// 17 Oct 2026 it answered in 22–30 s for 24 seats. The bound is for one
+/// that never answers.
+const SEAT_STATUS_LIMIT: std::time::Duration = std::time::Duration::from_secs(60);
+
+/// The seat instrument (`OI_SEAT_BIN`, else `seat` on PATH, else
+/// `~/.local/bin/seat` — a Finder launch's PATH never holds it).
+fn seat_executable() -> PathBuf {
+    if let Some(bin) = std::env::var_os("OI_SEAT_BIN").filter(|bin| !bin.is_empty()) {
+        return PathBuf::from(bin);
+    }
+    let runnable = |candidate: &std::path::Path| {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::metadata(candidate)
+            .is_ok_and(|meta| meta.is_file() && meta.permissions().mode() & 0o111 != 0)
+    };
+    std::env::var_os("PATH")
+        .iter()
+        .flat_map(std::env::split_paths)
+        .map(|dir| dir.join("seat"))
+        .find(|candidate| candidate.is_absolute() && runnable(candidate))
+        .or_else(|| {
+            std::env::var_os("HOME")
+                .map(|home| PathBuf::from(home).join(".local/bin/seat"))
+                .filter(|managed| managed.is_absolute() && runnable(managed))
+        })
+        .unwrap_or_else(|| PathBuf::from("seat"))
+}
+
+/// The seat instrument's own reading, read only (`seat status --json`):
+/// bounded, its refusal in its own words, another schema refused by name.
+fn seat_status() -> Result<Value, crate::material::Error> {
+    let source = "seat status";
+    let data = crate::inhabitation::run_bounded(
+        &seat_executable(),
+        &["status".into(), "--json".into()],
+        None,
+        SEAT_STATUS_LIMIT,
+        source,
+    )?;
+    schema_is(data, SEAT_STATUS_SCHEMA, source)
+}
+
+/// AIKit's declared gateway remotes (`aikit gateway remote list --json`,
+/// AIKit's own route — `OI_AIKIT_BIN`, else the suite's `oi aikit`): the
+/// envelope's reading and warnings, bounded like every inhabitation read.
+fn gateway_remotes() -> Result<(Value, Vec<Value>), crate::material::Error> {
+    let source = "aikit gateway remote list";
+    let (executable, suite_route) = crate::inhabitation::aikit_executable();
+    let mut args: Vec<std::ffi::OsString> = Vec::new();
+    if suite_route {
+        args.push("aikit".into());
+    }
+    args.extend([
+        "gateway".into(),
+        "remote".into(),
+        "list".into(),
+        "--json".into(),
+    ]);
+    let document = crate::inhabitation::run_bounded(
+        &executable,
+        &args,
+        None,
+        crate::factory::inhabitation_read_timeout(),
+        source,
+    )?;
+    let (data, warnings) = crate::inhabitation::unwrap_envelope(document, source)?;
+    Ok((schema_is(data, GATEWAY_REMOTES_SCHEMA, source)?, warnings))
+}
+
+/// An owner reading of the schema asked for, or the owner's other answer
+/// named.
+fn schema_is(data: Value, schema: &str, source: &str) -> Result<Value, crate::material::Error> {
+    let answered = data
+        .get("schema")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if answered == schema {
+        return Ok(data);
+    }
+    Err(crate::material::Error {
+        kind: "incompatible".into(),
+        message: format!(
+            "{source} answered an unexpected reading ({answered}) where {schema} was asked for"
+        ),
+        operation_may_have_run: false,
     })
 }
 

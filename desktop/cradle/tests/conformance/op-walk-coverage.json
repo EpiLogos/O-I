@@ -572,6 +572,15 @@
       "reason": "The plural-flow walk brings two registered agents into a flow through this operation over the real kernel and a candidate AIKit owner, then reads their answers back."
     },
     {
+      "op": "gateway_remotes_read",
+      "native_owner": "kernel/src/owner_read.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; lane K1 (17 Oct 2026, BF3's proposal of 16 Oct)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_reads.rs against fake owners and the private stack's /op against the real owner; no directly attributable executed native walk is recorded here for gateway_remotes_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
       "op": "git_diff_read",
       "native_owner": "kernel/src/git.rs",
       "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a73",
@@ -1019,6 +1028,15 @@
       "reason": "Native list/show/history and run/disable handler implemented; executed native app walk not yet recorded."
     },
     {
+      "op": "seat_status_read",
+      "native_owner": "kernel/src/owner_read.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; lane K1 (17 Oct 2026, BF3's proposal of 16 Oct)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_reads.rs against fake owners and the private stack's /op against the real owner; no directly attributable executed native walk is recorded here for seat_status_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
       "op": "settings_reveal",
       "native_owner": "kernel/src/lib.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -1094,6 +1112,15 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for source_restore; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "source_returns_read",
+      "native_owner": "kernel/src/owner_read.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; lane K1 (17 Oct 2026, BF3's proposal of 16 Oct)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_reads.rs against fake owners and the private stack's /op against the real owner; no directly attributable executed native walk is recorded here for source_returns_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "source_save",

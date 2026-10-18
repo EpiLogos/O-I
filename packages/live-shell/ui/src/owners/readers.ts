@@ -1,8 +1,7 @@
 // The shared owner answers several views read at once, each held once for the window (owners/ownerReading.ts):
 //
 //   - `encounter_task_read` — one session's task record (AIKit `aikit.encounter-task/v1`), keyed by project and session;
-//     read by the sessions provider's clips and budget, the Factory chain's lights, the transport's metrics and the dock's
-//     ledger tile;
+//     read by the sessions provider's clips and budget, the Factory chain's lights and the transport's metrics;
 //   - `agent_definition` roster — Central's accepted agent profiles (`central.agent-profile-roster/v1`), keyed by register
 //     (null = the root, else a project); read by the sessions provider, the agent browser's Skillsets, the Factory chain, the
 //     Central devices and the agent widget;

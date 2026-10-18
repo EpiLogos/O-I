@@ -118,6 +118,19 @@ export interface NativeFileReading { schema: "central.file-reading/v1"; location
  * `encoding: "base64"`, distinct from the UTF-8 `NativeFileReading` above. */
 export interface NativeFileBytes { location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string; source: ListedSource | null }
 
+/** The seat instrument's reading (`seat status --json`, kernel `seat_status_read`, owner_read.rs `seat_status`), verbatim. */
+export interface SeatStatusReading { schema: "central.workcell-status/v1"; recorded_at_unix_seconds: number; workcells: SeatWorkcellRow[] }
+export interface SeatWorkcellRow { name: string; path: string; disk_free_gb: number; min_free_gb: number | null; hard_free_gb: number | null; last_tend: {at_unix_seconds: number; freed_mb: number; removed: unknown[]} | null; seats: SeatRow[]; drift: string[] }
+export interface SeatRow { product: string; state: string; registered_branch: string | null; registered_head: string | null; claimed_by: string | null; now_ref: string | null; zones: {actor: string; regions: string[]; since_unix_seconds: number}[]; admission: {free_gb: number; soft_floor_gb: number; hard_floor_gb: number; tended_freed_mb: number; standing: string} | null; live_branch?: string | null; live_head?: string; tracked_changes?: number; untracked?: number; behind_main?: number | null; ahead_main?: number | null }
+/** Central's returned-work proposals for one project (`projectcentral.source.returns`, kernel `source_returns_read`, flow.rs `SourceReturns`). */
+export interface SourceReturnsReading { schema: "central.source-returns/v1"; entries: SourceReturnEntry[]; more: boolean; next_before: string | null; authored_source_mutated: boolean }
+/** One return: `status` is Central's own word — pending, applying, accepted or rejected. */
+export interface SourceReturnEntry { return_ref: string; source_ref: string; basis_revision: string; status: string; agent_session_ref: string; current_revision: string }
+/** AIKit's declared gateway endpoints of other Workcells (`aikit gateway remote list --json`, kernel `gateway_remotes_read`): the envelope's data, verbatim. */
+export interface GatewayRemotesReading { schema: "aikit.gateway-remotes/v1"; remotes: GatewayRemote[] }
+/** One declared remote: its token's location, never the token. */
+export interface GatewayRemote { workcell_ref: string; websocket_bind: string; websocket_path: string; token_location: string }
+
 /** W1.5 changed-since-thought compose (`flow_cognition.rs`): ONE typed
  * reading with both owner sides explicit — a side that could not be queried
  * is named, never faked empty. */
@@ -333,6 +346,13 @@ export type KernelOp =
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
   | {op:"factory_owner";request:{kind:string;[field:string]:unknown}}
   | {op:"workcell_status_read"}
+  /** The seat instrument's own reading, read only (`seat status --json`): never a join, release, tend or curation. */
+  | {op:"seat_status_read"}
+  /** Central's source returns for one project; absent, the kernel's configured project. `limit` (1–100, owner default 20) and
+   * `before` (a return file name, the listing's `next_before`) are the owner's own pagination. */
+  | {op:"source_returns_read";project?:string|null;limit?:number;before?:string}
+  /** AIKit's declared gateway remotes (`aikit gateway remote list --json`). */
+  | {op:"gateway_remotes_read"}
   | {op:"temporal_events_read";query?:{window?:{window:"all"}|{window:"day";day_ref:string}|{window:"between";from_unix_ms:number;to_unix_ms:number};kind?:string;subject?:string;stream?:string}}
   /** World inhabitation (WORLD-INHABITATION-V1 §4): AIKit's population,
    * joined whoami and Refocus readings, schema-checked and bounded by a
@@ -488,6 +508,9 @@ export type KernelOpResult =
   | { result:"factory_attempt_task_list_reading";data:unknown }
   | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
+  | { result:"seat_status_reading";data:SeatStatusReading }
+  | { result:"source_returns_reading";data:SourceReturnsReading }
+  | { result:"gateway_remotes_reading";data:GatewayRemotesReading;warnings?:unknown[] }
   | { result:"temporal_events_reading";document:unknown }
   | { result:"inhabitation_reading";data:unknown;warnings?:unknown[] }
   | { result:"wiki_projection_reading";data:unknown }
