@@ -4,8 +4,10 @@
 import {useEffect, type ReactNode} from 'react'
 import {publishDevice} from '../frame/devices/deviceDoor'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
+import type {DesignBinding} from '../frame/devices/designed'
 
-export function usePublishedDevice(id: string, device: DeviceInstance, picture?: (size: 'compact' | 'whole' | 'full') => ReactNode): void {
-  useEffect(() => { publishDevice(id, {device, ...(picture ? {picture} : {})}) }, [id, device, picture])
+/** Publish a plate, with its design's binding where its family has written one, so every place draws the design on the same owner. */
+export function usePublishedDevice(id: string, device: DeviceInstance, picture?: (size: 'compact' | 'whole' | 'full') => ReactNode, binding?: DesignBinding): void {
+  useEffect(() => { publishDevice(id, {device, ...(picture ? {picture} : {}), ...(binding ? {binding} : {})}) }, [id, device, picture, binding])
   useEffect(() => () => publishDevice(id, null), [id])
 }
