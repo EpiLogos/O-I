@@ -36,8 +36,10 @@ const agentTile = (id: AgentTileId) => function AgentTileWidget() {
   return <AgentDockTileBody id={id} sessionRef={track?.sessionRef ?? null} />
 }
 
-const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'results', 'sky'] as const
-const AGENT_TILES: readonly AgentTileId[] = ['sessions', 'agents', 'terminal', 'files', 'web', 'graph', 'diff', 'frames', 'ledger', 'approvals']
+// Sessions, Agents and Results are views now, not widgets (DLW §16.1 "The views are not devices"; lock §0.3.1; R4): the sessions are
+// Factory's tracks, the agents at work their needles, a run's results its takes in Arrangement view.
+const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'sky'] as const
+const AGENT_TILES: readonly AgentTileId[] = ['terminal', 'files', 'web', 'graph', 'diff', 'frames', 'ledger', 'approvals']
 /** The tiles that are their own widget bodies now, by id. */
 const OWN_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {packet: PacketWidget, trail: TrailWidget}
 /** What each holds, for its launcher cell (the mockup's WID hints, world-shell-mockup.html 1624–1626). */

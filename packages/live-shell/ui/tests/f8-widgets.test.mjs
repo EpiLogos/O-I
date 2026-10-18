@@ -50,7 +50,9 @@ test('the registry holds every tile of both old docks, once each (code-reading: 
   const listed = name => JSON.parse(registry.match(new RegExp(`${name}[^=]*= (\\[[^\\]]*\\])`))[1].replace(/'/g, '"'))
   const ids = ['agent', ...listed('MODE_TILES'), ...listed('AGENT_TILES')]
   assert.equal(new Set(ids).size, ids.length, 'no widget twice')
-  for (const id of ['agent', 'packet', 'trail', 'field', 'nows', 'results', 'sky', 'sessions', 'agents', 'terminal', 'files', 'web', 'graph', 'diff', 'frames', 'ledger', 'approvals']) assert.ok(ids.includes(id), id)
+  for (const id of ['agent', 'packet', 'trail', 'field', 'nows', 'sky', 'terminal', 'files', 'web', 'graph', 'diff', 'frames', 'ledger', 'approvals']) assert.ok(ids.includes(id), id)
+  // Sessions, Agents and Results left the rail: they are views now (DLW §16.1 "The views are not devices"; lock §0.3.1; R4).
+  for (const id of ['sessions', 'agents', 'results']) assert.ok(!ids.includes(id), `${id} is a view, not a widget`)
   for (const id of DEFAULT_WIDGETS) assert.ok(ids.includes(id), `default ${id} is registered`)
 })
 
