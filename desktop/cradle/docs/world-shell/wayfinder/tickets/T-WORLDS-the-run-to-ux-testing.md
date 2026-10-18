@@ -14,7 +14,7 @@ by, and the walk that says the shell is ready for the owner to test. PATH stays 
    ops. These finish first; nothing below reopens them.
 1. **W1 — the pool** (§3). It goes first: the owner's condition for running further builds on the realigned UI.
 2. **W2 — Central: the Day as the set, worlds as tracks, pages as clips** (§4), with the page templates redone.
-3. **W3 — worlds you build: procedural bodies, your system, what grows** (§5).
+3. **W3 — worlds you build: procedural bodies and your system** (§5).
 4. **W4 — Nara: personal practice in the shell** (§6).
 5. **U0 — the readiness walk** (§7). When it passes on the native candidate, the run stops and the owner tests.
 
@@ -27,9 +27,12 @@ instrument packets (#281).
 **Settled, not to be asked** (derived from code and law, 18 Oct):
 - A reroll never rewrites a location's coordinate: the atlas never writes a coordinate (`projections/atlas/places/placeTool.ts:1-20`),
   so "settling on the new land" is drawing only (manual §17.2 rules).
-- Agency is drawn as the bee the icon cut already has (`icon-cut.html`, the bee portraits: wings beat while working, breathe while
-  idle, the agent's own colour). No other animal roster exists anywhere in the corpus (searched: the seat, ai-kit crates/docs/json,
-  Control agents/user/machines, the cradle, the world-shell design pack); none is invented.
+- **Withdrawn (owner, 18 Oct evening):** the ecology — animals and environs — is not a World feature, and agency is not "the bee".
+  The animals are the owner's rigged creature roster (`Work/face-rig`, `creatures-roster.js`, `creature-kit.js`), to be mapped to
+  agent types by their real behaviour (a pattern contract: Start, Stay, Count, Reach, Link, Join, Change, Failure) and carried as
+  the faces of agent devices and instruments; the environs (plants, water, landforms) are of the same nature, the faces of process
+  types. The Earth, its places and its weather are the World's and a separate feature. Nothing of the ecology is built in this run
+  until the owner places it.
 
 ## 2. The source
 
@@ -37,7 +40,7 @@ The manual, O-I main (`614b86de5` or later; `docs/dlw/DLW.html`):
 - §5 Central (the Day as the set, worlds as tracks, the pool holding workspaces);
 - §10.2 panes and layouts (a pane arrangement is a **layout**; "set" now means Live's set, which in Central is the Day);
 - §10.3 and §16.7 the browser and the pool; §16.3, §16.4, §16.9, §16.14 (Whole stands only as the band above the chain);
-- §17.2 World (your system; what grows on a world; the reroll rule);
+- §17.2 World (your system; the reroll rule);
 - §18.1 Central: the Day, its worlds and their pages (the set table, the world track, the Launch panel, what carries to tomorrow);
 - §13 and §24 Nara: practice (W4), with §24.9 placing each practice in M4.
 
@@ -179,11 +182,6 @@ union of ten bodies plus `terra` (`src/types/sky.ts:7-11`). Scales differ: code 
 - **Your system**: each Central world track's register is a body in the System scale, built from its own record, landing at its place
   on your planet; satellites keyed by `subject_ref` on `PlanetOrbits` (`sky/orbits.ts:72`) — inner ring agents at work and open moments,
   outer ring files and context — with a separate orbit-body key space, not a widened `BodyKey`. Scales follow the manual.
-- **What grows** (manual §17.2 table): forms read from real data only. This run builds the bee (roster + session state; the icon cut's
-  portrait), the tree (a register's child spaces), the river (the day's event stream), the lake (the Day and NOW field) and the island
-  (seats, `Control/machines/workcells.register.json`); roots, vines, seeds, fruit, flowers, cliffs, passes and forests follow once the
-  first five stand on screen. The graph's 48-document cap on wiki links (`kernel/src/graph.rs:56`) bounds the vine and forest reads; say
-  so where they draw.
 - **The World device**: the Whole gains Body, Landmass, Climate, Sky and Locations (the documentation lane updates the design; the
   binding rows follow `inhabitants/ql/devices/atlasDevices.ts:32-50` with `writeThroughOwner`); the Bodies row of Technē's World group
   flips to cut when the record reads (`shell/modeGrammar.ts:454-462`).
@@ -192,8 +190,8 @@ union of ten bodies plus `terra` (`src/types/sky.ts:7-11`). Scales differ: code 
 `knowledge_wiki_facts.rs` and `knowledge_wiki.rs`, `desktop/cradle/kernel/src/construction.rs` (the branch).
 
 **Done when:** on the native candidate: your world builds from its sliders and rerolls, every location keeping its name and position;
-one project's world shows as a second body landing at its place; bees ride your world's inner ring for the agents at work; a tree, a
-river, a lake and an island grow from their data and none draws without it.
+one project's world shows as a second body landing at its place; the agents at work and the open moments ride your world's inner
+ring.
 
 ## 6. W4 — Nara: personal practice
 
