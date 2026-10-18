@@ -120,7 +120,7 @@ function actTransition(seconds:number,easing?:string){
  transitionEasing=(['smoothstep','linear','kineticSnap','whip'] as const).includes(easing as ChainEasing)?easing as ChainEasing:'smoothstep';
  needsFrame=true;
 }
-import {mountSoundControls} from './soundControls.js';
+import {mountSoundControls} from './soundControls.js';import {objectSoundIsMuted,setObjectSoundMuted} from './native-field/entitySound.js';
 // E05 trim state, declared before any top-level code can render the timeline.
 let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 let trimClickGuardUntil=0;
@@ -2140,7 +2140,7 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...chromeState()};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
@@ -2252,6 +2252,8 @@ async function runStageCommand(command:StageCommand){
  switch(command.command){
   case 'view':await action(command.action,body);break;
   case 'present':await action(command.on?'present':'exit-present',body);break;
+  // The Expression's own sound: the object-sound mute every sound bank and the Sound panel follow (native-field/entitySound.ts).
+  case 'sound':setObjectSoundMuted(command.muted);renderAll();break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;
   /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':

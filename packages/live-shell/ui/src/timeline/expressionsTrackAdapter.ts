@@ -63,6 +63,10 @@ export interface ExpressionsWorkReading {
 
 /** The owner ops the views press, each answering in the shell's receipt words. */
 export interface ExpressionsControls {
+  /** The Expression's own sound (native/frameSound.ts): its mute as it stands, the one soloed, and the writes of each. */
+  sound?: {op: string; muted: boolean | null; soloed: string | null; mute(expressionId: string, muted: boolean): unknown; solo(expressionId: string, on: boolean): unknown};
+  /** The transport's Studio arm (native/frameSound.ts publishStudioArm): armed, Play records a take. One arm for the open Expression. */
+  arm?: {op: string; on: boolean; set(on: boolean): unknown};
   playScene?: {op: string; run(expressionId: string, sceneId: string): unknown};
   stopAll?: {op: string; run(): unknown};
   playSaved?: {op: string; run(): unknown};
@@ -81,6 +85,10 @@ export const EXPRESSIONS_MIXER: WorldMixer = {
     disabled: missing('Arm', 'the transport\'s Studio arm published to the shell (shell.setStudioArm(on) with its flag readable — today it is the transport hook\'s own state, shell/transports/useExpressionsTransport.tsx:96)', 'shell')},
   output: {meaning: 'Its sound goes to the Main track; its picture goes to the stage', route: 'Main · stage'},
 };
+
+/** The mixer row where the frame's sound stands behind it: Activator and Solo write it. */
+const EXPRESSIONS_MIXER_SOUNDED: WorldMixer = {...EXPRESSIONS_MIXER,
+  activator: {meaning: EXPRESSIONS_MIXER.activator!.meaning}, solo: {meaning: EXPRESSIONS_MIXER.solo!.meaning}}
 
 /** Why the lanes Expressions' owners do not give are absent, in their terms. */
 export const EXPRESSIONS_LANES_ABSENT = {
@@ -183,8 +191,16 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
     clipId: `${sceneKey(scene.expressionId, scene.sceneId)}:visual`, device: lane.device, parameter: lane.parameter, points: lane.points,
     ...(lane.range ? {range: lane.range} : {}), ...(lane.modulatedBy ? {modulatedBy: lane.modulatedBy} : {}),
   })));
+  // The Expression's own sound: each of its lanes carries the Activator and Solo the frame's sound stands at.
+  const sound = reading.controls?.sound
+  if (sound) for (const track of tracks) {
+    const expressionId = track.groupId?.slice('expression:'.length) ?? ''
+    track.mix = {...(sound.muted !== null ? {activator: !sound.muted} : {}), solo: sound.soloed === expressionId}
+  }
+  const arm = reading.controls?.arm
+  if (arm) for (const track of tracks) track.mix = {...track.mix, arm: arm.on}
   const set: WorldTrackSet = {columns, tracks, clips, transport: {takes},
-    mixer: EXPRESSIONS_MIXER,
+    mixer: {...(sound ? EXPRESSIONS_MIXER_SOUNDED : EXPRESSIONS_MIXER), ...(arm ? {arm: {meaning: EXPRESSIONS_MIXER.arm!.meaning, grain: 'the Studio arm: one arm for the open Expression'}} : {})},
     main: {name: 'Main', chain: [], ...(reading.differs !== undefined ? {differs: reading.differs} : {})},
     lanes: {automation, absent: {...EXPRESSIONS_LANES_ABSENT, ...(reading.automation ? {} : {automation: 'The presented scene\'s reading is not published to this pane, so its lanes are unread.'})},
       ...(reading.held !== undefined ? {held: reading.held} : {})}};
@@ -210,6 +226,14 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   if (controls.stopAll) actions.stopAll = controls.stopAll;
   if (controls.playSaved) actions.backToArrangement = controls.playSaved;
   if (controls.reenable) actions.reenable = {op: controls.reenable.op, run: () => controls.reenable!.run()};
+  const sound = controls.sound
+  if (sound) {
+    const expressionOf = (trackId: string) => trackId.replace(/^expression:/, '').replace(/:(visual|audio)$/, '')
+    actions.mixer = {...actions.mixer, activator: {op: sound.op, run: (trackId, on) => sound.mute(expressionOf(trackId), !on)},
+      solo: {op: sound.op, run: (trackId, on) => sound.solo(expressionOf(trackId), on)}}
+  }
+  const arm = controls.arm
+  if (arm) actions.mixer = {...actions.mixer, arm: {op: arm.op, run: (_trackId, on) => arm.set(on)}}
   return Object.keys(actions).length ? actions : undefined;
 }
 
