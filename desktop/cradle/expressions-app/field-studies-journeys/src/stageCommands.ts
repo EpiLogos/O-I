@@ -4,6 +4,7 @@
  * application's own action body (app.ts action()); nothing here re-implements a
  * control. Camera pan/zoom/orbit stay pointer gestures on the stage itself. */
 import {NATIVE_BINDINGS} from './nativeParameters.js';
+import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome'] as const;
 export type StageCommandName = (typeof STAGE_COMMANDS)[number];
 /** How the shell presents the frame (T-FRAME-CHROME-ONTO-PLATES; manual §16.1: "A pane is a device at full size. Its controls stay out
@@ -144,8 +145,11 @@ export function stageLiveRefusal(target: unknown, value: unknown): string | null
   return null;
 }
 /** The Live instrument's edits: the owner's determinant edits (the scene's lens, context frame, harmonic basis and transcription) and its
- * presentation writes (sound, tick cadence, level, scale). Each runs the same controller operation the Studio's native controls run. The
- * cadence presets and the level and scale ranges are the Studio's own controls; the owner's bounds are the outer law. */
+ * presentation writes (sound, tick cadence, level, scale, the torus's effects chain and one parameter of one of its four effects, manual
+ * §21.5). Each runs
+ * the same controller operation the Studio's native controls run. The cadence presets and the level and scale ranges are the Studio's
+ * own controls; the owner's bounds are the outer law. An effect's operands are closed and typed here; its range is the owner's to
+ * refuse in its own words (native-field/effectsLaw.ts). */
 export const STAGE_INSTRUMENT_CADENCES = ['hold', 1, 12] as const;
 export const STAGE_INSTRUMENT_LEVEL = {min: 0, max: 4} as const;
 export const STAGE_INSTRUMENT_SCALE_MAX = 1000000;
@@ -158,7 +162,9 @@ export type InstrumentEdit =
   | {kind: 'cadence'; rate: (typeof STAGE_INSTRUMENT_CADENCES)[number]}
   | {kind: 'level'; value: number}
   | {kind: 'scale'; units_per_metre: number}
-  | {kind: 'follow-scale'};
+  | {kind: 'follow-scale'}
+  | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
+  | {kind: 'effect-chain'; chain: PresentationEffect[]};
 /** A closed, validated instrument edit, or null. Every operand is exact: a determinant outside the owner's range is refused here. */
 export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
   if (!plain(raw) || typeof raw.kind !== 'string') return null;
@@ -179,6 +185,8 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
     case 'level': return closed(raw, ['kind', 'value']) && typeof raw.value === 'number' && Number.isFinite(raw.value) && raw.value >= STAGE_INSTRUMENT_LEVEL.min && raw.value <= STAGE_INSTRUMENT_LEVEL.max ? {kind: 'level', value: raw.value} : null;
     case 'scale': return closed(raw, ['kind', 'units_per_metre']) && typeof raw.units_per_metre === 'number' && Number.isFinite(raw.units_per_metre) && raw.units_per_metre > 0 && raw.units_per_metre <= STAGE_INSTRUMENT_SCALE_MAX ? {kind: 'scale', units_per_metre: raw.units_per_metre} : null;
     case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
+    case 'effect-chain': return closed(raw, ['kind', 'chain']) && effectChainRefusal(raw.chain) === null ? {kind: 'effect-chain', chain: [...(raw.chain as PresentationEffect[])]} : null;
+    case 'effect': { const operands = closed(raw, ['kind', 'effect', 'key', 'value']) ? readEffectOperands(raw) : null; return operands ? {kind: 'effect', ...operands} : null; }
   }
   return null;
 }

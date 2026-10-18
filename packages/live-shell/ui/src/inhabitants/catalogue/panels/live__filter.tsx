@@ -4,11 +4,12 @@
 // rising with Resonance so that a low- or high-pass rings to −3 dB at 0 % and +21 dB at 100 %; Drive lifts the signal before the
 // filter; Mix blends the filtered sound with the dry: |Mix·H + (1 − Mix)|. Every mark is drawn from the values by that law.
 //
-// Owner. None yet: the torus sounds through one gain stage to the output (desktop/cradle/expressions-app/field-studies-journeys/src/
-// native-field/ql/native-audio.mjs: a buffer source into a gain node into the destination), so no filter stands on its sound. The
-// value keys are the entry's: light, type, cutoff, resonance, drive, mix; `reason` names the absence in the well. The Live set
-// document carries stored tables for Live's own Auto Filter (packages/live-dynamics params.rs AUTOFILTER, kernel live_device_param_write);
-// those edit a set's device in Live's own units, not the torus's sound, and are not this device's owner.
+// Owner. The torus's presentation stage (desktop/cradle/expressions-app/field-studies-journeys/src/native-field/presentationEffects.ts,
+// after the level, before the device; law in effectsLaw.ts), bound by live/designBindings/torusEffects.ts: the hosted reading carries
+// its state (`parameters.effects`) and the stage channel's `effect` instrument edit changes it, refused in the owner's words outside
+// its law. It opens off. The value keys are the entry's: light, type, cutoff, resonance, drive, mix; `reason` names an absent reading
+// in the well. The Live set document carries stored tables for Live's own Auto Filter (packages/live-dynamics params.rs AUTOFILTER,
+// kernel live_device_param_write); those edit a set's device in Live's own units, not the torus's sound, and are not this owner.
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, type LightState} from '../../sdk/panel'
 import {NONE, clampTo, has, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
@@ -82,7 +83,7 @@ function Response({p, w, h, handles, axes}: {p: ViewProps; w: number; h: number;
 // ---------------------------------------------------------------- the parts the views share
 
 const lightOf = (p: ViewProps): LightState => { const l = strOf(p.owner ?? p.v, 'light'); return l === 'lit' || l === 'dark' ? l : 'unknown' }
-const head = (p: ViewProps) => ({light: lightOf(p), lightWhy: st(p, 'light').disabled ?? (has(p.v, 'light') ? undefined : 'No reading of on or off: no filter stands on the torus\'s sound.'),
+const head = (p: ViewProps) => ({light: lightOf(p), lightWhy: st(p, 'light').disabled ?? (has(p.v, 'light') ? undefined : 'No reading of on or off: the torus\'s effects report nothing here.'),
   onFold: p.nav.fold, onFull: p.nav.full, onLight: () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit')})
 const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const typeWord = (v: V) => TYPES.find(t => t.value === strOf(v, 'type'))?.label
@@ -108,7 +109,7 @@ export const design: DesignedDevice = {
     'Low-pass at 8 kHz': {},
     'A ringing band': {type: 'bandpass', cutoff: 900, resonance: 70, drive: 6, mix: 80},
     'Off': {light: 'dark', type: 'highpass', cutoff: 180},
-    'As the torus has it': {light: undefined, type: undefined, cutoff: undefined, resonance: undefined, drive: undefined, mix: undefined, reason: 'No filter on the torus\'s sound'},
+    'No owner reading': {light: undefined, type: undefined, cutoff: undefined, resonance: undefined, drive: undefined, mix: undefined, reason: 'No owner reading in this host'},
   },
 
   folded: p => <Folded title="Filter" light={lightOf(p)} readings={[typeWord(p.v) ?? NONE, has(p.v, 'cutoff') ? hz(numOf(p.v, 'cutoff')!) : NONE]} onUnfold={p.nav.unfold} />,

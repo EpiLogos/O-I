@@ -40,6 +40,20 @@ test('an edit outside the owner law, or with an extra operand, is refused before
   }
 });
 
+test('an effect edit carries closed, typed operands; its range is the owner\'s to refuse in words, not the wire\'s', () => {
+  for (const edit of [{kind: 'effect', effect: 'filter', key: 'on', value: true}, {kind: 'effect', effect: 'filter', key: 'type', value: 'notch'},
+    {kind: 'effect', effect: 'delay', key: 'division', value: '1/16'}, {kind: 'effect', effect: 'reverb', key: 'decay', value: 99},
+    {kind: 'effect-chain', chain: []}, {kind: 'effect-chain', chain: ['reverb', 'filter', 'delay', 'dynamics']}]) {
+    assert.deepEqual(readInstrumentEdit(edit), edit, JSON.stringify(edit));
+    assert.deepEqual(readStageRequest(stageRequestMessage(4, {command: 'instrument', edit})), {req: 4, command: {command: 'instrument', edit}});
+  }
+  for (const edit of [{kind: 'effect', effect: 'chorus', key: 'on', value: true}, {kind: 'effect', effect: 'filter', key: 'width', value: 1},
+    {kind: 'effect', effect: 'filter', key: 'cutoff', value: '900'}, {kind: 'effect', effect: 'filter', key: 'on', value: 1},
+    {kind: 'effect', effect: 'filter', key: 'on', value: true, extra: 1}, {kind: 'effect', effect: 'delay', key: 'time'},
+    {kind: 'effect-chain', chain: ['filter', 'filter']}, {kind: 'effect-chain', chain: ['phaser']}, {kind: 'effect-chain', chain: 'filter'}, {kind: 'effect-chain'}])
+    assert.equal(readInstrumentEdit(edit), null, JSON.stringify(edit));
+});
+
 test('the host posts the instrument command and settles with the frame answer; a named refusal reaches the shell', async t => {
   const wire = messageWire();
   const frame = new EventTarget();

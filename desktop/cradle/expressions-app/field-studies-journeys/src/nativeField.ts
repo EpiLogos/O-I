@@ -446,6 +446,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   else if(edit.kind==='cadence'){if(edit.rate==='hold')controller.pause('held by you');else controller.play(edit.rate);}
   else if(edit.kind==='level')controller.setLevel(edit.value);
   else if(edit.kind==='scale')controller.setScale(edit.units_per_metre);
+  else if(edit.kind==='effect')controller.setEffect(edit.effect,edit.key,edit.value);
+  else if(edit.kind==='effect-chain')controller.setEffectChain(edit.chain);
   else controller.followDomain();
   update();
  };

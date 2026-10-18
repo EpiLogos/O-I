@@ -52,6 +52,8 @@ export function announceInstrument(reading) {
       scale: {unitsPerMetre: reading.presentation_units_per_metre ?? null, mode: reading.presentation_mode ?? 'manual'},
       cadence: cadence ? {rate: cadence.playing ? cadence.rate : 0, playing: cadence.playing === true, source: String(cadence.source ?? '')} : null,
       refusal: instrument?.refusal ? `${instrument.refusal.operation}: ${instrument.refusal.reason}` : null,
+      // The torus's four effects (native-field/effectsLaw.ts), as the controller keeps them; a reading without them announces none.
+      ...(reading.presentation_effects ? {effects: reading.presentation_effects} : {}),
     },
   };
 }
