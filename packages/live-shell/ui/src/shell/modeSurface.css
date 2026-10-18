@@ -28,7 +28,7 @@
 .center-body { position: relative }
 .techne-lens-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 3px; height: 25px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin }
 .techne-lens-title { font-size: 10px; color: var(--text-faint); margin-right: 5px; flex: none }
-.techne-lens { display: flex; align-items: center; gap: 4px; height: 19px; padding: 1px 6px; font-size: 10px; background: var(--bg-0); border: 1px solid #30343a; color: var(--text-dim); white-space: nowrap; flex: none }
+.techne-lens { display: flex; align-items: center; gap: 4px; height: 19px; padding: 1px 6px; font-size: 10px; background: var(--bg-0); border: 1px solid var(--edge); color: var(--text-dim); white-space: nowrap; flex: none }
 .techne-lens[aria-pressed="true"] { color: var(--accent); border-color: var(--accent-dim) }
 .techne-lens[disabled] { color: var(--text-faint); opacity: 0.75; cursor: default }
 .techne-lens[disabled]:hover { background: var(--bg-0) }
@@ -89,7 +89,7 @@
 .mode-centre-ruler-row { position: relative; height: 22px; border-bottom: 2px solid var(--line-strong); background: repeating-linear-gradient(90deg, transparent 0, transparent calc(100%/18 - 1px), var(--line) calc(100%/18 - 1px), var(--line) calc(100%/18)) }
 .mode-centre-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); font-size: 9px; color: var(--text-faint) }
 .mode-centre-tick i { position: absolute; top: 2px; left: 3px; font-style: normal; white-space: nowrap }
-.mode-centre-window { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--accent-dim, var(--accent)); border-right: 2px solid var(--accent-dim, var(--accent)); background: var(--accent-soft, rgba(255,190,0,.08)); pointer-events: none }
+.mode-centre-window { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--accent-dim, var(--accent)); border-right: 2px solid var(--accent-dim, var(--accent)); background: var(--accent-soft); pointer-events: none }
 .mode-centre-now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); box-shadow: 0 0 0 1px #0006; pointer-events: none }
 .mode-centre-ruler-lanes { display: flex; flex-direction: column; gap: 4px }
 .mode-centre-ruler-lane { position: relative; min-height: 40px; border: 1px dashed var(--line-strong); display: grid; grid-template-columns: 118px 1fr; align-items: center }
@@ -126,12 +126,12 @@
    violet dashed · inferred dotted · disputed red broken · ghost faint). */
 .mode-centre-standing, .mode-detail-standing-chip { display: inline-flex; align-items: center; height: 14px; padding: 0 6px; font-size: 9px; border: 1px solid var(--line-strong); color: var(--text-dim) }
 .mode-centre-standing-fact { border-style: solid; color: var(--text) }
-.mode-centre-standing-claim { border-style: dashed; border-color: var(--mercurius, #c79ae0); color: var(--mercurius, #c79ae0) }
+.mode-centre-standing-claim { border-style: dashed; border-color: var(--mercurius); color: var(--mercurius) }
 .mode-centre-standing-inferred { border-style: dotted; color: var(--text-dim) }
-.mode-centre-standing-disputed { border-style: dashed; border-color: #e3806f; color: #e3806f; text-decoration: line-through }
+.mode-centre-standing-disputed { border-style: dashed; border-color: var(--disputed); color: var(--disputed); text-decoration: line-through }
 .mode-centre-standing-ghost { border-style: dashed; color: var(--text-faint); opacity: .8 }
 .mode-centre-standing-live { border-style: solid; border-color: var(--accent); color: var(--accent) }
-.mode-centre-standing-run { border-style: solid; border-color: var(--fizz, #5cc6b4); color: var(--fizz, #5cc6b4) }
+.mode-centre-standing-run { border-style: solid; border-color: var(--fizz); color: var(--fizz) }
 .mode-detail-standing-chip { width: 22px; padding: 0; justify-content: center }
 
 /* The unread-reading disclosure — a styled component INSIDE the frame. */
@@ -163,7 +163,7 @@
 .mode-browser-empty-read { margin: 4px 8px 0; font-size: 10px; color: var(--text-faint); line-height: 1.45 }
 .mode-browser-empty-read b { color: var(--text-dim) }
 .mode-browser-waiting-dot { width: 5px; height: 5px; flex: none; border: 1px dashed var(--text-faint); margin-left: auto }
-.mode-browser-fault { margin: 7px; padding: 6px 8px; border: 1px solid var(--rec); color: #f3b4a0; font-size: 11px; background: var(--bg-1) }
+.mode-browser-fault { margin: 7px; padding: 6px 8px; border: 1px solid var(--rec); color: var(--fault); font-size: 11px; background: var(--bg-1) }
 
 
 /* ——— the per-mode detail frames (device density, the guide's §3.7 chain
@@ -231,7 +231,7 @@
    `.launch`/`.lh`/`.lgrid`/`.lcell`/`.pv`/`.nm` 379–387): tiles above, the launcher below, the wedge that widens it ——— */
 .mode-dock { position: relative; height: 100%; min-height: 0; min-width: 0; display: flex; flex-direction: column; background: var(--bg-1); border-left: 4px solid var(--line) }
 .mode-dock-wedge { position: absolute; left: -7px; top: 0; bottom: 0; width: 9px; cursor: ew-resize; z-index: 5 }
-.mode-dock-wedge:hover { background: rgba(255, 190, 0, .2) }
+.mode-dock-wedge:hover { background: var(--accent-wash) }
 .mode-dock-tilesh { flex: none; height: 24px; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--bg-2); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--text) }
 .mode-dock-count { font-size: 11px; color: var(--text-faint) }
 .mode-dock-tiles { flex: 1; min-height: 0; overflow: auto; padding: 5px; display: flex; flex-direction: column; gap: 5px }
@@ -271,7 +271,7 @@ button.mode-dock-line { cursor: pointer }
 .mode-dock-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 5px 8px }
 .mode-dock-act { height: 20px; padding: 0 9px; font-size: 10.5px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-dim); white-space: nowrap }
 .mode-dock-act:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
-.mode-dock-act.pri { background: var(--accent); border-color: var(--accent); color: #1d1f22 }
+.mode-dock-act.pri { background: var(--accent); border-color: var(--accent); color: var(--on-accent) }
 .mode-dock-act:disabled { opacity: .45 }
 .mode-dock-acts-note { font-size: 10px; color: var(--text-faint) }
 /* The launcher: two columns of 122px cells, each a live miniature of what the open widget read, or its designed mark. */
@@ -345,7 +345,7 @@ button.mode-dock-line { cursor: pointer }
 .widget-agent .chat-composer textarea { min-height: 18px; max-height: 90px; font-size: 11px; line-height: 1.45 }
 .widget-agent .chat-composer-row > .oi-tool, .widget-agent .chat-composer-chip { height: 20px }
 .widget-agent .chat-composer-row > .oi-tool { width: 20px }
-.widget-agent .chat-send { width: 20px; height: 20px; border-radius: 0; color: #1d1f22 }
+.widget-agent .chat-send { width: 20px; height: 20px; border-radius: 0; color: var(--on-accent) }
 
 /* Sets (manual §10.2, FOUNDATION F1): the browser's named arrangements, in every browser until F6 makes them one. */
 .browser-sets { flex: none; border-top: 1px solid var(--line); background: var(--bg-1); padding: 4px 0 6px; font-size: 10.5px; color: var(--text-dim) }

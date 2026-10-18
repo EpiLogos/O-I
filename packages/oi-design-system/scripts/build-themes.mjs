@@ -4,7 +4,8 @@
  *   node scripts/build-themes.mjs
  *
  * reads themes/upstream/*.color-theme.json (+ <id>.include.json inheritance
- * parents, + PROVENANCE.json for identity/appearance/source) and writes
+ * parents, + PROVENANCE.json for identity/appearance/source) and the house
+ * themes authored in the --oi-* roles themselves, themes/house/*.json, and writes
  *
  *   themes/oi/<id>.json   normalized oi.theme/v1 documents
  *   themes/themes.css     one [data-oi-theme] variable block per theme
@@ -14,10 +15,11 @@
  */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { convertTheme, emitCss, emitIndexModule, emitImportRules, mergeInclude, parseJsonc } from './convert.mjs';
+import { convertTheme, emitCss, emitIndexModule, emitImportRules, houseTheme, mergeInclude, parseJsonc } from './convert.mjs';
 
 const HERE = fileURLToPath(new URL('../', import.meta.url));
 const UPSTREAM = `${HERE}themes/upstream/`;
+const HOUSE = `${HERE}themes/house/`;
 const OUT = `${HERE}themes/`;
 
 const provenance = JSON.parse(readFileSync(`${UPSTREAM}PROVENANCE.json`, 'utf8'));
@@ -42,6 +44,13 @@ for (const file of files) {
   if (includeSource) theme = mergeInclude(theme, includeSource);
   docs.push(convertTheme(theme, { id: entry.id, name: entry.name, appearance: entry.appearance, source: entry.source }));
   console.log(`converted ${id} (${entry.appearance}, ${Object.keys(theme.colors ?? {}).length} workbench colours)`);
+}
+// The house themes: the shell's own palettes, in the roles (fetch-upstream-themes.mjs never touches this directory).
+for (const file of readdirSync(HOUSE).filter((name) => name.endsWith('.json'))) {
+  const doc = houseTheme(JSON.parse(readFileSync(`${HOUSE}${file}`, 'utf8')));
+  if (docs.some((other) => other.id === doc.id)) throw new Error(`${file}: the id ${doc.id} is already a library theme`);
+  docs.push(doc);
+  console.log(`house ${doc.id} (${doc.appearance}, ${Object.keys(doc.tokens).length} roles)`);
 }
 
 docs.sort((a, b) => (a.appearance === b.appearance ? a.name.localeCompare(b.name) : a.appearance === 'dark' ? -1 : 1));

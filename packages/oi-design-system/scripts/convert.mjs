@@ -325,13 +325,6 @@ export function convertTheme(theme, { id, name, appearance, source }) {
   const syntax = resolveSyntaxColors(flattenTokenColors(theme.tokenColors), ground);
   const terminal = resolveTerminalColors(colors, ground, ink);
 
-  const accent = tokens['--oi-accent'];
-  const strip = ['--oi-syntax-keyword', '--oi-syntax-string', '--oi-syntax-type']
-    .map((role) => syntax[role])
-    .filter(Boolean);
-  if (!strip.length) strip.push(accent);
-  const preview = { ground, ink, accent, strip: strip.slice(0, 3) };
-
   return {
     schema: 'oi.theme/v1',
     id,
@@ -341,7 +334,47 @@ export function convertTheme(theme, { id, name, appearance, source }) {
     tokens,
     syntax,
     terminal,
-    preview,
+    preview: previewOf(tokens, syntax, ground, ink),
+  };
+}
+
+/** The picker's preview: ground, ink, the accent, and up to three syntax colours (the accent when the theme has none). */
+function previewOf(tokens, syntax, ground, ink) {
+  const accent = tokens['--oi-accent'];
+  const strip = ['--oi-syntax-keyword', '--oi-syntax-string', '--oi-syntax-type']
+    .map((role) => syntax[role])
+    .filter(Boolean);
+  if (!strip.length) strip.push(accent);
+  return { ground, ink, accent, strip: strip.slice(0, 3) };
+}
+
+/** A house theme: authored in the --oi-* roles themselves (themes/house/<id>.json — {id, name, appearance, source, tokens}),
+ * not converted from a VS Code file. It may set only existing roles (law 11), and it sets exactly the roles it declares —
+ * nothing is derived — so a house palette paints exactly what it names and leaves every other role as it was. */
+export function houseTheme(source) {
+  const { id, name, appearance, tokens: declared } = source ?? {};
+  if (typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id)) throw new Error(`house theme: invalid id ${String(id)}`);
+  if (appearance !== 'light' && appearance !== 'dark') throw new Error(`${id}: a house theme declares light or dark`);
+  if (!declared || typeof declared !== 'object') throw new Error(`${id}: a house theme declares its role values`);
+  const roles = new Set(themeImportRules().roles);
+  for (const [role, value] of Object.entries(declared)) {
+    if (!roles.has(role)) throw new Error(`${id}: ${role} is not an --oi-* role (roles never change, law 11)`);
+    if (!/^#[0-9a-f]{6}$/.test(value) && !/^rgba\(\d{1,3}, \d{1,3}, \d{1,3}, (?:0|1|0\.\d+)\)$/.test(value)) throw new Error(`${id}: ${role} must be #rrggbb or rgba(r, g, b, a), not ${value}`);
+  }
+  const ground = declared['--oi-canvas-ground'];
+  const ink = declared['--oi-foreground'];
+  if (!/^#[0-9a-f]{6}$/.test(ground ?? '') || !/^#[0-9a-f]{6}$/.test(ink ?? '') || !/^#[0-9a-f]{6}$/.test(declared['--oi-accent'] ?? '')) throw new Error(`${id}: a house theme declares its --oi-canvas-ground, --oi-foreground and --oi-accent (its preview) as #rrggbb`);
+  const tokens = { ...declared };
+  return {
+    schema: 'oi.theme/v1',
+    id,
+    name,
+    appearance,
+    source: source.source,
+    tokens,
+    syntax: {},
+    terminal: {},
+    preview: previewOf(tokens, {}, ground, ink),
   };
 }
 
@@ -421,11 +454,20 @@ export function emitImportRules(docs) {
   return `${JSON.stringify(themeImportRules(docs), null, 2)}\n`;
 }
 
-/** One `.oi-desktop[data-oi-theme="<id>"]` block per theme. */
+/** The elements a theme's block grounds. The presentation owner's choice lands on document.body as `data-oi-theme`
+ * (desktop/cradle/src/visuals/ParticleExpression.tsx applyTheme). The desktop's body is `.oi-desktop`, where the block keeps
+ * its (0,2,0) tie with the house `.oi-desktop[data-theme]` tokens. The candidate shell grounds its tokens at :root (its own
+ * and those derived from them there, e.g. the device kit's), so its block is the root over that body — any body but the
+ * desktop's, which this second selector never matches. */
+export function themeSelector(id) {
+  return `.oi-desktop[data-oi-theme="${id}"], :root:has(> body:not(.oi-desktop)[data-oi-theme="${id}"])`;
+}
+
+/** One `[data-oi-theme="<id>"]` block per theme (themeSelector). */
 export function emitCss(docs) {
   const blocks = docs.map((doc) => {
     const lines = Object.entries(themeVariables(doc)).map(([role, value]) => `  ${role}: ${value};`);
-    return `.oi-desktop[data-oi-theme="${doc.id}"] {\n  color-scheme: ${doc.appearance};\n${lines.join('\n')}\n}`;
+    return `${themeSelector(doc.id)} {\n  color-scheme: ${doc.appearance};\n${lines.join('\n')}\n}`;
   });
   return `${CSS_COMMENT}\n${blocks.join('\n\n')}\n`;
 }
