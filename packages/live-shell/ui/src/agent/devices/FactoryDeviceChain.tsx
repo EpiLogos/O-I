@@ -41,7 +41,8 @@ import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {useDesign} from '../../frame/devices/designs'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
-import {useRosterAnswer} from '../../owners/readers'
+import {useRosterAnswer, useSettingsAnswer} from '../../owners/readers'
+import {SETTINGS_PROJECT} from '../clipBinding'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {threadTrackOf} from '../threadTrack'
@@ -223,7 +224,13 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   }, [selection, sessionTrack])
   const tasks = useMemo(() => tasksDevice(), [])
   const runs = useMemo(() => runsDevice(), [])
-  const tasksDesignBinding = useMemo(() => tasksBinding({session: sessionTrack, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0, selectedTask, agent: agentDesignBinding?.values ?? {}},
+  // The session's own settings (AIKit encounter-session-settings): the selected task's Mode, Then, To, Effort, Autonomy and style.
+  const settingsAnswer = useSettingsAnswer(sessions?.transport ?? {kind: 'unavailable', reason: 'No sessions provider is mounted here.'},
+    sessions && sessionTrack ? sessionTrack.sessionRef : null, SETTINGS_PROJECT)
+  const settingsReading = settingsAnswer.reading.status === 'answered' ? settingsAnswer.reading.value : null
+  const settingsContext = useMemo(() => sessions && sessionTrack ? {transport: sessions.transport, project: SETTINGS_PROJECT, settings: settingsReading} : null,
+    [sessions, sessionTrack, settingsReading])
+  const tasksDesignBinding = useMemo(() => tasksBinding({session: sessionTrack, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0, selectedTask, agent: agentDesignBinding?.values ?? {}, settings: settingsContext},
     agentDesignBinding, {
       selectTask: n => {
         if (!sessionTrack || !continuity) return
@@ -231,7 +238,7 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
         continuity.select({mode: 'factory', kind: 'clip', ref: `${trackKey(sessionTrack)}#task/${n}`, title, track: trackKey(sessionTrack)})
       },
       queue: async text => { const receipt = await write(AGENT_P0_ROWS.newTask, text); if (receipt.kind === 'refused') throw Error(receipt.reason) },
-    }), [sessionTrack, tracks, sessions?.nowUnixMs, selectedTask, agentDesignBinding, continuity, write])
+    }), [sessionTrack, tracks, sessions?.nowUnixMs, selectedTask, agentDesignBinding, continuity, write, settingsContext])
   const runsDesignBinding = useMemo(() => runsBinding(sessionTrack?.sessionRef ?? null, holds), [sessionTrack, holds])
 
   // Factory's Main track: the Gateways rack with the Agency gateway as its chain, and the Experiment; the Frames monitor the Gateway

@@ -95,7 +95,7 @@ test('Tasks reads the session\'s clips as the run model holds them — a state n
   }
 })
 
-test('Tasks writes the owners\' way: the timing through the Agent, a new task the Agent\'s new-task row; the harness-grained acts and per-task settings refused by name', async () => {
+test('Tasks writes the owners\' way: the timing through the Agent, a new task the Agent\'s new-task row; the harness-grained acts refused by name, the per-task settings saying where they are read', async () => {
   const calls = []
   const binding = tasks.tasksBinding(input(), {write: async changes => { calls.push(['agent', ...changes.map(change => [change.key, change.value])]) }},
     {selectTask: n => calls.push(['select', n]), queue: async text => { calls.push(['queue', text]) }})
@@ -107,7 +107,8 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
     assert.match(binding.standing[key].disabled, /harness_agent_control addresses the whole bound harness; the owner takes no task/, key)
     await assert.rejects(() => binding.write([{key, value: true}]), /missing op/)
   }
-  for (const key of ['mode', 'then', 'to', 'effort', 'autonomy', 'register', 'form']) assert.match(binding.standing[key].disabled, /missing op/, key)
+  // The per-task settings are the session's settings on their owner (factory-session-settings.test.mjs): not read here, they say so.
+  for (const key of ['mode', 'then', 'to', 'effort', 'autonomy', 'register', 'form']) assert.equal(binding.standing[key].disabled, 'The session\'s settings are not read here.', key)
   assert.equal(calls.length, 3, 'no refusal dispatched anything')
   const none = tasks.tasksBinding(input({session: null}), null, {selectTask() {}, queue: async () => {}})
   await assert.rejects(() => none.write([{key: 'newTask', value: 'x'}]), /No session is selected/)
@@ -131,7 +132,7 @@ test('Tasks and Runs draw their designs on their bindings in all five views — 
   bind.resetHolds()
   host.resetHost()
   const cases = [
-    [tasksDesign, tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}}), /generate fixtures|pnpm test bridge2|lead session|#5cc6b4/, [tasks.TASKS_REFUSE.retry, tasks.TASKS_REFUSE.effort]],
+    [tasksDesign, tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}}), /generate fixtures|pnpm test bridge2|lead session|#5cc6b4/, [tasks.TASKS_REFUSE.retry, 'The session\'s settings are not read here.']],
     [runsDesign, tasks.runsBinding('agent-session/fx-aletheia', bind.chainHolds()), /01ARZ3NDEKTSV4RRFFQ69G5FAA|3\.4\.2/, []],
   ]
   for (const [design, binding, fixture, reasons] of cases) {

@@ -99,6 +99,8 @@ export const KERNEL_OPS = [
   'material_read',
   'a2a_exchange',
   'encounter_task_read',
+  'encounter_session_settings',
+  'encounter_session_settings_list',
   'receiving',
   'now',
   'factory_development_read',

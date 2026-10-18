@@ -2,6 +2,8 @@
 //
 //   - `encounter_task_read` — one session's task record (AIKit `aikit.encounter-task/v1`), keyed by project and session;
 //     read by the sessions provider's clips and budget, the Factory chain's lights and the transport's metrics;
+//   - `encounter_session_settings` — one session's own settings and its bound task's (AIKit
+//     `aikit.encounter-session-settings/v1`), keyed by project and session; read by Factory's Clip view and its mixer row;
 //   - `agent_definition` roster — Central's accepted agent profiles (`central.agent-profile-roster/v1`), keyed by register
 //     (null = the root, else a project); read by the sessions provider, the agent browser's Skillsets, the Factory chain, the
 //     Central devices and the agent widget;
@@ -19,9 +21,9 @@
 // Ported reads: agent/useAgentMetrics.ts at 98385f92d :7-14 (`readEncounterTask`), desktop/cradle/src/agency/nativeAgentClient.ts:4-10
 // (`nativeAgentOwner`, the roster request), central/devices/useCentralReadings.ts at 98385f92d :111-133 (`useWorkcellReading`);
 // `composeRoster` is desktop/cradle/src/agency/roster.ts:70-76 `readRoster`'s composition over two held answers.
-import {useEffect, useMemo} from 'react'
+import {useEffect, useMemo, useReducer} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {rosterFromReading, type RosterAgent} from '../../../../../desktop/cradle/src/agency/roster'
 import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadings, type OwnerReadingEntry} from './ownerReading'
 import {useSpineEpoch} from './spine'
@@ -50,6 +52,27 @@ export function readTaskOf(transport: KernelTransportStatus, project: string, ag
 
 export function taskReadingEntry(transport: KernelTransportStatus, project: string, agentSession: string, registry: OwnerReadings = ownerReadings): OwnerReadingEntry<unknown> {
   return registry.entry(taskReadingKey(transport, project, agentSession), readTaskOf(transport, project, agentSession))
+}
+
+// ---- encounter_session_settings ---------------------------------------------------------------------------------------
+
+export const SETTINGS_OP = 'encounter_session_settings'
+export const settingsReadingKey = (transport: KernelTransportStatus, project: string, agentSession: string): string =>
+  JSON.stringify([SETTINGS_OP, transport, project, agentSession])
+
+/** One session's settings and its bound task's (`aikit.encounter-session-settings/v1`): every value as it stands, defaults stated. */
+export function readSettingsOf(transport: KernelTransportStatus, project: string, agentSession: string): OwnerRead<EncounterSessionSettingsReading> {
+  return async () => {
+    const unavailable = unavailableReason(transport)
+    if (unavailable) return {error: unavailable}
+    const result = await kernelOp(transport, {op: 'encounter_session_settings', project, agent_session: agentSession})
+    if (result.error || result.outcome?.result !== 'encounter_session_settings_reading') return {error: result.error ?? 'AIKit did not return the session\'s settings'}
+    return {value: result.outcome.data}
+  }
+}
+
+export function settingsReadingEntry(transport: KernelTransportStatus, project: string, agentSession: string, registry: OwnerReadings = ownerReadings): OwnerReadingEntry<EncounterSessionSettingsReading> {
+  return registry.entry(settingsReadingKey(transport, project, agentSession), readSettingsOf(transport, project, agentSession))
 }
 
 // ---- agent_definition roster -----------------------------------------------------------------------------------------
@@ -133,7 +156,12 @@ function installNotices() {
   // An act on one session re-reads that session's task record. The window regained and an act that names no session reach the
   // task records through the agency driver instead (owners/agency.ts): each agency read re-reads the selected session's record,
   // as the agency cadence always carried it; the others were read once and are read again only when an act names them.
-  onOwnerChanged('agency', change => { if (change.agentSession) refreshHeld(ownerReadings, TASK_OP, {agentSession: change.agentSession}) })
+  // A rebound task changes which task the session's settings answer for: its settings are read with it.
+  onOwnerChanged('agency', change => {
+    if (!change.agentSession) return
+    refreshHeld(ownerReadings, TASK_OP, {agentSession: change.agentSession})
+    refreshHeld(ownerReadings, SETTINGS_OP, {agentSession: change.agentSession})
+  })
 }
 
 // ---- hooks -----------------------------------------------------------------------------------------------------------
@@ -144,6 +172,49 @@ export function useTaskAnswer(transport: KernelTransportStatus, sessionRef: stri
   const epoch = useSpineEpoch()
   const key = sessionRef ? taskReadingKey(transport, project, sessionRef) : null
   return useOwnerReading(key, sessionRef ? readTaskOf(transport, project, sessionRef) : NOTHING, epoch)
+}
+
+/** One session's settings, shared with every other reader of them. `sessionRef` null reads nothing. */
+export function useSettingsAnswer(transport: KernelTransportStatus, sessionRef: string | null, project = 'O-I') {
+  installNotices()
+  const epoch = useSpineEpoch()
+  const key = sessionRef ? settingsReadingKey(transport, project, sessionRef) : null
+  return useOwnerReading(key, sessionRef ? readSettingsOf(transport, project, sessionRef) : NOTHING, epoch)
+}
+
+/** Many sessions' settings (a view of many tracks: the mixer row's Telemetry and Solo), in one owner read: each answer stands in
+ * its session's shared entry, where the Clip view and the Tasks device read it too. Sessions are read again when the epoch moves;
+ * a write to one re-reads that one (agent/sessionSettings.ts). The map holds the sessions answered. */
+export function useSettingsAnswers(transport: KernelTransportStatus, sessionRefs: readonly string[], project = 'O-I'): ReadonlyMap<string, EncounterSessionSettingsReading> {
+  installNotices()
+  const epoch = useSpineEpoch()
+  const wanted = sessionRefs.join('\n')
+  const transportKey = JSON.stringify(transport)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const entries = useMemo(() => wanted ? wanted.split('\n').map(ref => settingsReadingEntry(transport, project, ref)) : [], [transportKey, project, wanted])
+  const [, changed] = useReducer((n: number) => n + 1, 0)
+  useEffect(() => {
+    const offs = entries.map(entry => entry.subscribe(changed))
+    const unread = entries.filter(entry => entry.snapshot().epoch !== epoch || entry.snapshot().status === 'reading')
+    if (unread.length && transport.kind !== 'unavailable') {
+      const refs = unread.map(entry => (JSON.parse(entry.key) as unknown[])[3] as string)
+      void kernelOp(transport, {op: 'encounter_session_settings_list', project, agent_sessions: refs}).then(result => {
+        if (result.error || result.outcome?.result !== 'encounter_session_settings_list_reading') return
+        for (const reading of result.outcome.data.readings) {
+          const entry = unread.find(item => (JSON.parse(item.key) as unknown[])[3] === reading.agent_session)
+          if (entry && !('refused' in reading)) entry.accept(reading, epoch)
+        }
+      })
+    }
+    return () => offs.forEach(off => off())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, epoch])
+  const held = new Map<string, EncounterSessionSettingsReading>()
+  for (const entry of entries) {
+    const standing = entry.snapshot()
+    if (standing.status === 'answered' && standing.value) held.set(standing.value.agent_session, standing.value)
+  }
+  return held
 }
 
 /** One register's roster (project null = the root), shared. `enabled` false defers the read (nothing subscribes). */
