@@ -585,6 +585,8 @@ export interface HostedAppState {
   /** The frame's cut presents its native instrument full-stage (the Live cut's torus): it draws with no Expression open. In
    * every other cut a frame with no native scene draws nothing, and the pane it stands over says what it waits for. */
   presentsInstrument?: boolean;
+  /** The Expression's own sound is silenced (the stage command `sound`; the Sound panel's "Mute all object sound here"). */
+  soundMuted?: boolean;
   /** lane-3 E22: where the frame stands, as its own deep link names it (deepLinks.ts `?scene=&t=&marker=`): the Scene's ref
    * always, the time and the marker while the transport stands still, and the marker's name for words. Absent until a link the
    * frame opened at has settled. */

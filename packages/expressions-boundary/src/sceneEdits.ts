@@ -2,7 +2,7 @@
  * Preparation is inert: the caller submits snapshot through NativeWorking's
  * existing commit/checkpoint/acknowledgement path. No store or clock lives here.
  */
-import {blankScene, clone, type Journey, type Scene} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {blankScene, clone, sceneClipRefusal, type Journey, type Scene, type SceneClip} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import type {KernelConversion, KernelExpressionDocument} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {prepareCompositionEdit, type CompositionEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition';
 import {nextSceneFrom} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
@@ -24,7 +24,10 @@ export type NativeSceneEditIntent =
   /** The Expression description (journey.description); carried by composition_set. */
   | {operation: 'expression-description'; description: string}
   /** The saved-sequence loop flag, carried as composition_set. */
-  | {operation: 'loop'; loop: boolean};
+  | {operation: 'loop'; loop: boolean}
+  /** The scene as a clip (DLW §20.1): its colour, whether it plays, its ratio of hold to change, its lock and its launch quantize;
+   * null returns a setting to the scene's default. Carried in the scene's material, as pacing is. */
+  | {operation: 'clip'; scene_ref: string; set: {[K in keyof SceneClip]?: SceneClip[K] | null}};
 export type NativeSceneSnapshotIntent =
   | {operation: 'save-snapshot'; scene_ref: string; title?: string; next?: boolean}
   | {operation: 'restore-snapshot'; scene_ref: string};
@@ -114,7 +117,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   let affected: Scene[], created: Scene | null = null;
   const labels: Record<NativeSceneEditIntent['operation'], string> = {
     rename: 'Rename Scene', pacing: 'Set Scene pacing', reorder: 'Reorder Scenes', duplicate: 'Duplicate Scene',
-    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop',
+    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', clip: 'Set the scene\'s clip settings',
     'expression-title': 'Rename Expression', 'expression-description': 'Set Expression description',
   };
   if (intent.operation === 'expression-title') {
@@ -149,7 +152,16 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
       const material = projectNativeScenes(working, view).scenes.find(row => row.scene_ref === intent.scene_ref)?.material;
       if (!material?.available) throw Error('This operation needs authored native Scene material; compatibility defaults were not saved as authored work');
     }
-    if (intent.operation === 'rename') scene.name = title(intent.title);
+    // A locked scene refuses edits (DLW §20.1 "A locked scene refuses edits"); only unlocking it is taken.
+    const unlocking = intent.operation === 'clip' && Object.keys(intent.set).length === 1 && (intent.set.locked === false || intent.set.locked === null);
+    if (scene.clip?.locked && !unlocking) throw Error('This Scene is locked: unlock it to change it');
+    if (intent.operation === 'clip') {
+      const next: Record<string, unknown> = {...(scene.clip ?? {})};
+      for (const [key, value] of Object.entries(intent.set)) { if (value === null || value === undefined) delete next[key]; else next[key] = value; }
+      const refused = sceneClipRefusal(next);
+      if (refused) throw Error(refused);
+      if (Object.keys(next).length) scene.clip = next as SceneClip; else delete scene.clip;
+    } else if (intent.operation === 'rename') scene.name = title(intent.title);
     else if (intent.operation === 'pacing') {
       if (intent.duration === undefined && intent.transition === undefined) throw Error('Supply a Scene duration or transition');
       if (intent.duration !== undefined) {
@@ -236,13 +248,15 @@ function boundedSceneIntent(intent: NativeSceneEditIntent): void {
   const allowed: Record<NativeSceneEditIntent['operation'], string[]> = {
     rename: ['operation', 'scene_ref', 'title'], pacing: ['operation', 'scene_ref', 'duration', 'transition'],
     reorder: ['operation', 'scene_refs'], duplicate: ['operation', 'scene_ref', 'title'], remove: ['operation', 'scene_ref'],
-    add: ['operation', 'title'], loop: ['operation', 'loop'],
+    add: ['operation', 'title'], loop: ['operation', 'loop'], clip: ['operation', 'scene_ref', 'set'],
     'expression-title': ['operation', 'title'], 'expression-description': ['operation', 'description'],
   };
   if (!Object.prototype.hasOwnProperty.call(allowed, intent.operation) || Object.keys(intent).some(key => !allowed[intent.operation].includes(key)))
     throw Error('Unsupported native Scene intent or operands');
   if (intent.operation === 'reorder' && (!Array.isArray(intent.scene_refs) || !intent.scene_refs.every(ref => typeof ref === 'string')))
     throw Error('Scene order requires exact native refs');
+  if (intent.operation === 'clip' && (!intent.set || typeof intent.set !== 'object' || Array.isArray(intent.set) || !Object.keys(intent.set).length))
+    throw Error('Name the scene\'s clip settings to change');
 }
 
 /** One real DocumentStore gesture and one NativeWorking commit. Native success

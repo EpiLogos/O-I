@@ -17,6 +17,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import type {NativeEditorReply} from '../../../../../expressions-boundary/src/editor'
 import {STAGE_TAKE_MODES, type StageTakeMode} from '@epilogos/expressions-boundary'
+import {publishStudioArm} from '../../native/frameSound'
 import {BarEngineLight, BarPointerGroup, BarTools, BarValue, type BarApply} from '../../components/NativeBarControls'
 import {barEngineLight, barParameter, barPlayRoute, barResume} from '../../components/nativeBarModel'
 import {createLiveSession} from '../../components/nativeBarSession'
@@ -94,6 +95,9 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   const [takeMode, setTakeMode] = useState<StageTakeMode>('replace'), [takeBusy, setTakeBusy] = useState(false), [takeFault, setTakeFault] = useState<Said | null>(null) // :62
   // Arm is shell presentation only: it decides what Play does. It is never a document value and survives Scene changes like a transport toggle (:63-64).
   const [armed, setArmed] = useState(false)
+  // The mixer row's Arm is this same arm (native/frameSound.ts): published while the transport stands.
+  useEffect(() => { publishStudioArm({on: armed, set: setArmed}) }, [armed])
+  useEffect(() => () => publishStudioArm(null), [])
   useEffect(() => {if (link.state?.takeMode) setTakeMode(link.state.takeMode)}, [link.state?.takeMode])          // :65
   useEffect(() => {setFault(null); setTakeFault(null); draftRef.current = null; setDraft(null)}, [identity])       // :66
   // Space reaches the transport only through this ref, so it is retired with the content (:67-84). Ctrl/⌘ S travelled with Save (sceneKeepers.ts).

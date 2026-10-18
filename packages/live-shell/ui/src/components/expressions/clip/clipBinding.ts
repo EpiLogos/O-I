@@ -77,7 +77,12 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
   const scene = reading.scene
   const row = reading.scenes?.scenes.find(item => item.scene_ref === reading.basis.scene_ref)
   put(values, 'name', row?.title ?? scene.name)
-  put(values, 'colour', colour)
+  // The scene as a clip (model.ts SceneClip): its own colour over the track's, and its own settings, each the scene's default when unset.
+  put(values, 'colour', scene.clip?.colour ?? colour)
+  values.active = scene.clip?.enabled !== false
+  values.locked = scene.clip?.locked === true
+  values.quantize = scene.clip?.quantize ?? 'global'
+  put(values, 'signature', scene.clip?.signature)
   put(values, 'duration', row?.working?.duration ?? scene.duration)
   put(values, 'transition', row?.working?.transition ?? scene.transition)
   // The owner's own law: "Absent = 0" (field-studies-journeys model.ts Scene.entryOffset).
@@ -237,7 +242,9 @@ export function expressionsWiring(reading: NativeEditorReading, request: EditorR
   }
   return {
     reads: {
-      name: 'the presented Scene\'s title (the native inventory), else the scene\'s name', colour: 'the scene clip\'s track colour (the tracks pane)',
+      name: 'the presented Scene\'s title (the native inventory), else the scene\'s name', colour: 'the scene\'s own colour (Scene.clip), else its track\'s colour (the tracks pane)',
+      active: 'Scene.clip.enabled (absent: the scene plays)', locked: 'Scene.clip.locked (absent: unlocked)', quantize: 'Scene.clip.quantize (absent: Global)',
+      signature: 'Scene.clip.signature, the scene\'s ratio of hold to change',
       duration: 'the Scene\'s working duration', transition: 'the Scene\'s working transition', start: 'Scene.entryOffset (absent is 0, the owner\'s law)',
       carrier: 'the native body\'s carrier (none: the live engine composition)', presentation: 'the native body\'s presentation', reference: 'the native body\'s subject ref',
       'span.from': 'the native body\'s span', 'span.to': 'the native body\'s span', triggers: 'the native Scene\'s triggers', scenes: 'the Expression\'s scenes',
@@ -246,6 +253,11 @@ export function expressionsWiring(reading: NativeEditorReading, request: EditorR
       lanes: 'Scene.automation', layers: 'Scene.text', 'bp.bound': 'the native blueprint', 'bp.*': 'the native blueprint\'s transform',
     },
     acts: {
+      colour: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {colour: value === null || value === '' ? null : String(value)}})),
+      active: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {enabled: value === false ? false : null}})),
+      locked: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {locked: value === true ? true : null}})),
+      signature: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {signature: String(value) as '5:3'}})),
+      quantize: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {quantize: value === 'global' ? null : String(value) as 'now'}})),
       name: async value => send(sceneEdit(reading, {operation: 'rename', scene_ref, title: String(value)})),
       duration: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, duration: Number(value)})),
       transition: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, transition: Number(value)})),
@@ -281,11 +293,6 @@ export function expressionsWiring(reading: NativeEditorReading, request: EditorR
       'ar.objects': 'the symbols Arrange moves on Apply', 'ar.rule': 'the rule Arrange applies', 'ar.plane': 'the plane Arrange works in',
     },
     refused: {
-      colour: missingOp('Colour', 'scene_colour_set {expression, scene_ref, colour}', EXPRESSIONS),
-      active: missingOp('Clip activator', 'scene_enabled_set {expression, scene_ref, enabled}', EXPRESSIONS),
-      signature: missingOp('Signature', 'scene_signature_set {expression, scene_ref, hold_to_change}', EXPRESSIONS),
-      locked: missingOp('Locked', 'scene_lock_set {expression, scene_ref, locked}', EXPRESSIONS),
-      quantize: missingOp('Quantize', 'scene_launch_quantize_set {expression, scene_ref, quantize: global|now|beat|scene} (Global follows the transport\'s Quantize)', EXPRESSIONS),
       start: 'Start is set by Slip on Arrangement view\'s ruler (Scene.entryOffset), not from Clip view.',
       follow: NOT_COMPOSED('The follow action', 'a scene-material trigger "Scene leaves → Jump to a scene" (nativeSceneFace.body.ts)'),
       jumpTo: NOT_COMPOSED('Jump to', 'a scene-material trigger "Scene leaves → Jump to a scene" (nativeSceneFace.body.ts)'),
@@ -299,7 +306,7 @@ export function expressionsWiring(reading: NativeEditorReading, request: EditorR
       library: 'The Library opens from the browser\'s Library.',
     },
     absent: {
-      signature: 'no scene holds a ratio of hold to change', locked: 'no scene lock is read', quantize: 'no scene launch quantize is read', active: 'not read',
+      signature: 'the scene has no ratio of hold to change of its own until one is chosen',
       plate: 'no reading of the plate\'s pitch over the scene reaches Clip view', 'objects.meaning': 'the Meaning page is not read into Clip view yet',
     },
   }

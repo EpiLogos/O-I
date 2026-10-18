@@ -5,7 +5,7 @@
  * control. Camera pan/zoom/orbit stay pointer gestures on the stage itself. */
 import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome', 'sound'] as const;
 export type StageCommandName = (typeof STAGE_COMMANDS)[number];
 /** How the shell presents the frame (T-FRAME-CHROME-ONTO-PLATES; manual §16.1: "A pane is a device at full size. Its controls stay out
  * of the pane and appear in Device view below it"). 'devices': a pane — the frame draws only its field, and every control its chrome
@@ -213,7 +213,10 @@ export type StageCommand =
   | {command: 'instrument'; edit: InstrumentEdit}
   | {command: 'janko'; action: 'play'; pitch_classes: number[]; amplitude: number}
   | {command: 'presentation'; chrome: FramePresentation}
-  | {command: 'chrome'; id: string; value?: string};
+  | {command: 'chrome'; id: string; value?: string}
+  /** The Expression's own sound (DLW §20.1 the mixer row's Activator and Solo): every object sound of the open Expression silenced or
+   * not, as the Sound panel's own "Mute all object sound here" does. The picture still plays. */
+  | {command: 'sound'; muted: boolean};
 /** A Jankó note: one to twelve distinct pitch classes (0–11) struck together as one act, at an amplitude in (0, 1] (modal metres; the owner's strike bound). */
 export const STAGE_JANKO_AMPLITUDE_MAX = 1;
 export type StageResult = {ok: true} | {ok: false; error: string};
@@ -259,6 +262,8 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (raw.action === 'save' && settings === undefined) return {req, command: {command: 'capture', mediaKind: 'video', action: 'save'}};
       return null;
     }
+    case 'sound':
+      return closed(raw, [...BASE_KEYS, 'muted']) && typeof raw.muted === 'boolean' ? {req, command: {command: 'sound', muted: raw.muted}} : null;
     case 'present':
       return closed(raw, [...BASE_KEYS, 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'present', on: raw.on}} : null;
     case 'export':

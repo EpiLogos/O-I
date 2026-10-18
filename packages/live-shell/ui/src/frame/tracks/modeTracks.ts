@@ -23,6 +23,7 @@ import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {writeLiveMixer} from '../../live/liveWrites'
+import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
@@ -127,6 +128,18 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
   const run = link.run
   if (run) controls.reenable = {op: 'expressions stage · automation resume (native/stageCommands.ts STAGE_AUTOMATION_RESUME)', run: () =>
     run(STAGE_AUTOMATION_RESUME).then(result => result.ok ? {ok: true, note: 'Every held value went back to its automation.'} : {ok: false, error: result.error})}
+  // The Expression's own sound: the open Expression's frame is the one that sounds.
+  const presented = link.state?.nativeScene?.expression_ref ?? null
+  if (run && presented) {
+    const reading = frameSoundReading(link)
+    const answer = (note: string) => (result: {ok: boolean; error?: string}) => result.ok ? {ok: true, note} : {ok: false, error: result.error}
+    controls.sound = {op: 'expressions stage · sound {muted} (the open Expression\'s object sound, native-field/entitySound.ts)', ...reading,
+      mute: (_expression, muted) => setExpressionMuted(link, presented, muted).then(answer(muted ? 'The Expression\'s sound is silenced; its picture plays on.' : 'The Expression sounds again.')),
+      solo: (expression, on) => setExpressionSolo(link, presented, expression, on).then(answer(on ? 'Only this Expression sounds.' : 'Every Expression sounds again.'))}
+  }
+  const arm = readStudioArm()
+  if (arm) controls.arm = {op: 'the transport\'s Studio arm (shell/transports/useExpressionsTransport.tsx): armed, Play records a take', on: arm.on,
+    set: on => { arm.set(on); return {ok: true, note: on ? 'Armed: Play records a take of the chosen properties.' : 'Disarmed: Play plays.'} }}
   return controls
 }
 

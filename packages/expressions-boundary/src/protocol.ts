@@ -177,7 +177,7 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (!isDeepInstrument(raw.lens)) return null;
     state.lens = raw.lens;
   }
-  for (const key of ['playing', 'journeyPlaying', 'fieldPaused', 'libraryOpen', 'recording', 'presenting', 'automationLoop', 'propertyRecording', 'propertyPreview', 'presentsInstrument'] as const) {
+  for (const key of ['playing', 'journeyPlaying', 'fieldPaused', 'libraryOpen', 'recording', 'presenting', 'automationLoop', 'propertyRecording', 'propertyPreview', 'presentsInstrument', 'soundMuted'] as const) {
     if (raw[key] === undefined) continue;
     if (typeof raw[key] !== 'boolean') return null;
     state[key] = raw[key] as boolean;
