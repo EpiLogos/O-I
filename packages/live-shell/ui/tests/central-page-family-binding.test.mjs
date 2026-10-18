@@ -183,7 +183,8 @@ test('Save and Re-read are the hosted face\'s own acts; a refused key is refused
   await binding.write([{key: 'save', value: true}])
   await binding.write([{key: 'reread', value: true}])
   assert.deepEqual(calls, ['save', 'reread'])
-  await assert.rejects(() => binding.write([{key: 'flowView', value: 'journal'}]), /meta\.view/)
+  // Not reached on its file here, a Flow's view says so (centralDeviceWrites.ts setFlowMeta writes it where it is).
+  await assert.rejects(() => binding.write([{key: 'flowView', value: 'journal'}]), /The Flow's file is not reached here/)
   await assert.rejects(() => binding.write([{key: 'clear', value: true}]), /packet/)
   assert.equal(binding.writes('dirty'), false, 'a pure reading is the host\'s to refuse')
   // A face that has not answered: Save stands disabled with the reason, and a press is refused in it.
@@ -285,7 +286,7 @@ test('the Flow refuses in words: an agent\'s entry, a page holding a draft, a mo
   await withOwner(owner, async () => {
     await assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'extra', value: line('C')}]), /agent's entry comes from the agent/)
     await assert.rejects(() => bindings.flowBinding('t', reachedFlow({...FLOW_DOOR, dirty: true}), flowMaterial, [], writers).write([{key: 'extra', value: line('F')}]), /holds edits its owner does not/)
-    await assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'view', value: 'journal'}]), /meta\.view/)
+    await assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'view', value: 'journal'}]), /The Flow's file is not reached here/)
     await assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'in:agent/central-guardian', value: true}]), /joins on the page itself/)
   })
   assert.equal(owner.sent.filter(body => body.op === 'file_operation').length, 0, 'nothing was written')
@@ -439,4 +440,26 @@ test('the Answer is wired on every key, and draws the bound session\'s exchange 
   await assert.rejects(() => unbound.write([{key: 'light', value: 'lit'}]), /No conversation is selected/)
   const props = b => ({v: b.values, owner: b.values, set: () => {}, nav: {}, page: '', setPage: () => {}, standing: b.standing})
   for (const view of [...VIEWS, 'full']) assert.doesNotThrow(() => html(createElement(() => ANSWER[view](props(binding)))), `Answer ${view} draws`)
+})
+
+test('a Flow\'s title and view are its file\'s meta: written on the revision read, the page\'s counter moved by one; a Day has neither', async () => {
+  bindings.resetHolds()
+  const owner = fakeFlowOwner()
+  const meta = change => writes.setFlowMeta(bridge, LOCATION, change)
+  const document = bindings.documentBinding('central:document', reachedFlow(), flowMaterial, undefined, meta)
+  const flow = bindings.flowBinding('central:flow-document', reachedFlow(), flowMaterial, [], {append: async () => {}, meta})
+  assert.equal(document.standing.title, undefined); assert.equal(flow.standing.view, undefined)
+  await withOwner(owner, () => document.write([{key: 'title', value: '  Planning the units  '}]))
+  await withOwner(owner, () => flow.write([{key: 'view', value: 'journal'}]))
+  const sent = owner.sent.filter(body => body.op === 'file_operation')
+  assert.deepEqual(sent.map(body => body.request.expected_revision), ['rev-1', 'rev-2'], 'each write checked against the revision it read')
+  const after = parseInstance(owner.state.html)
+  assert.equal(after.meta.title, 'Planning the units'); assert.equal(after.meta.view, 'journal')
+  assert.equal(after.meta.revision, 10, 'the page\'s own counter moves by one per write')
+  await withOwner(owner, async () => {
+    await assert.rejects(() => document.write([{key: 'flowView', value: 'scroll'}]), /a Dialogue, a Flow or a Journal/)
+    await assert.rejects(() => bindings.documentBinding('t', reachedFlow({...FLOW_DOOR, dirty: true}), flowMaterial, undefined, meta).write([{key: 'title', value: 'x'}]), /holds edits its owner does not/)
+  })
+  const day = bindings.documentBinding('t', {...reachedFlow(), form: 'Day'}, null, undefined, meta)
+  assert.match(day.standing.title.disabled, /A Day has no title of its own/)
 })

@@ -631,7 +631,8 @@ fn receiving_ref(request: &ReceivingRequest, data: &Value, project: Option<&str>
         ReceivingRequest::Review { return_ref, .. }
         | ReceivingRequest::Include { return_ref, .. }
         | ReceivingRequest::Recover { return_ref, .. } => Some(return_ref.clone()),
-        ReceivingRequest::MutateField { source_ref, .. } => Some(source_ref.clone()),
+        ReceivingRequest::MutateField { source_ref, .. }
+        | ReceivingRequest::MutateMeta { source_ref, .. } => Some(source_ref.clone()),
         _ => None,
     };
     answer_ref(data, &["return_ref"])

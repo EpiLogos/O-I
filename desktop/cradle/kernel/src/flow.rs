@@ -82,7 +82,7 @@ impl ReceivingRequest {
             Self::Review { .. } => "central.receiving.review",
             Self::Include { .. } => "central.receiving.include",
             Self::Recover { .. } => "central.receiving.recover",
-            Self::MutateField { .. } => "central.document.mutate",
+            Self::MutateField { .. } | Self::MutateMeta { .. } => "central.document.mutate",
         }
     }
 }
@@ -187,6 +187,39 @@ pub enum ReceivingRequest {
         field_id: String,
         value: Value,
     },
+    /// One human edit of a page's own metadata (`central.document.mutate`
+    /// `title.set` | `summary.set` | `lifecycle.set`): its title, its summary,
+    /// or whether it stands open or closed. The owner refuses non-human
+    /// authors, CAS-checks `expected_revision` and deduplicates on
+    /// `request_id`, as for a field.
+    MutateMeta {
+        source_ref: String,
+        document_id: String,
+        expected_revision: String,
+        request_id: String,
+        key: MetaKey,
+        value: String,
+    },
+}
+
+/// A page's own metadata the owner takes from a person.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum MetaKey {
+    Title,
+    Summary,
+    Lifecycle,
+}
+
+impl MetaKey {
+    /// The owner's own operation for this key.
+    pub fn operation(self) -> &'static str {
+        match self {
+            MetaKey::Title => "title.set",
+            MetaKey::Summary => "summary.set",
+            MetaKey::Lifecycle => "lifecycle.set",
+        }
+    }
 }
 
 /// One NOW-relations reading (queue cell 1). `central.now.list` /
@@ -594,6 +627,22 @@ impl CentralClient {
                 input.insert("operation".to_owned(), json!("field.set"));
                 input.insert("field_id".to_owned(), json!(field_id));
                 input.insert("value".to_owned(), value.clone());
+                "central.document.mutate"
+            }
+            ReceivingRequest::MutateMeta {
+                source_ref,
+                document_id,
+                expected_revision,
+                request_id,
+                key,
+                value,
+            } => {
+                input.insert("source_ref".to_owned(), json!(source_ref));
+                input.insert("document_id".to_owned(), json!(document_id));
+                input.insert("expected_revision".to_owned(), json!(expected_revision));
+                input.insert("request_id".to_owned(), json!(request_id));
+                input.insert("operation".to_owned(), json!(key.operation()));
+                input.insert("value".to_owned(), json!(value));
                 "central.document.mutate"
             }
         };
@@ -1181,6 +1230,7 @@ mod tests {
             serde_json::json!({"Include":{"return_ref":"return:1","expected_return_revision":"r1","expected_source_revision":"s1"}}),
             serde_json::json!({"Recover":{"return_ref":"return:1","expected_return_revision":"r1"}}),
             serde_json::json!({"MutateField":{"source_ref":"source:1","document_id":"doc:1","expected_revision":"r1","request_id":"request:1","field_id":"field:1","value":"value"}}),
+            serde_json::json!({"MutateMeta":{"source_ref":"source:1","document_id":"doc:1","expected_revision":"r1","request_id":"request:1","key":"title","value":"Monday"}}),
         ];
         for value in values {
             serde_json::from_value::<ReceivingRequest>(value)
@@ -1190,6 +1240,20 @@ mod tests {
             serde_json::json!({"kind":"document","source_ref":"source:1","document_id":"doc:1"})
         )
         .is_err());
+    }
+
+    #[test]
+    fn a_pages_own_metadata_goes_to_the_owners_own_operation() {
+        assert_eq!(MetaKey::Title.operation(), "title.set");
+        assert_eq!(MetaKey::Summary.operation(), "summary.set");
+        assert_eq!(MetaKey::Lifecycle.operation(), "lifecycle.set");
+        let request: ReceivingRequest = serde_json::from_value(serde_json::json!({"MutateMeta":{
+            "source_ref":"source:1","document_id":"doc:1","expected_revision":"r1","request_id":"request:1","key":"lifecycle","value":"closed"}}))
+        .unwrap();
+        assert_eq!(request.action(), "central.document.mutate");
+        assert!(serde_json::from_value::<ReceivingRequest>(serde_json::json!({"MutateMeta":{
+            "source_ref":"source:1","document_id":"doc:1","expected_revision":"r1","request_id":"request:1","key":"author","value":"x"}}))
+        .is_err(), "a key the owner does not take is refused at the wire");
     }
 
     #[test]

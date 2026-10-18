@@ -20,7 +20,7 @@
 import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
-import {appendEntry} from '../../../../../../desktop/cradle/src/flow/instance'
+import {appendEntry, embedDocument} from '../../../../../../desktop/cradle/src/flow/instance'
 import {readFlowInstance, writeFlowInstance} from '../../../../../../desktop/cradle/src/flow/instances'
 import {isCurrentFormat, type PluralParticipant, type Relation} from '../../../../../../desktop/cradle/src/flow/plural'
 import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -105,6 +105,27 @@ export async function appendFlowEntry(transport: KernelTransportStatus, location
   const {html} = appendEntry(instance.html, text, plural ? {participant: writer, relations, basisRevision: instance.doc.meta.revision} : undefined)
   const result = await writeFlowInstance(transport, instance.location, instance.revision, html)
   if (result.outcome === 'conflict') throw new Error(`The Flow moved while the entry was written (the owner holds ${result.current?.revision ?? 'a newer revision'}): nothing was overwritten. Re-read the Flow and write the entry again.`)
+  return {revision: result.revision ?? null}
+}
+
+/** A Flow's own metadata — its title and the view it opens in — written the way its entries are: the owner's file read again, the
+ * document's meta set and the document embedded back (flow/instance.ts embedDocument, its revision advanced), and the Flow's
+ * revision-checked file write, whose conflict overwrites nothing and says so. */
+export async function setFlowMeta(transport: KernelTransportStatus, location: CentralLocation, change: {readonly title?: string; readonly view?: string}): Promise<{revision: string | null}> {
+  const instance = await readFlowInstance(transport, location)
+  const meta = instance.doc.meta
+  if (change.title !== undefined) {
+    const title = change.title.trim()
+    if (!title || title.length > 160 || /[\u0000-\u001f]/.test(title)) throw new Error('A Flow\'s title is 1–160 characters of text.')
+    meta.title = title
+  }
+  if (change.view !== undefined) {
+    if (!['dialogue', 'flow', 'journal'].includes(change.view)) throw new Error('A Flow opens as a Dialogue, a Flow or a Journal.')
+    meta.view = change.view as typeof meta.view
+  }
+  meta.revision = meta.revision + 1
+  const result = await writeFlowInstance(transport, instance.location, instance.revision, embedDocument(instance.html, instance.doc))
+  if (result.outcome === 'conflict') throw new Error(`The Flow moved while its title or view was written (the owner holds ${result.current?.revision ?? 'a newer revision'}): nothing was overwritten. Re-read the Flow and set it again.`)
   return {revision: result.revision ?? null}
 }
 

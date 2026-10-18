@@ -12,11 +12,13 @@ export type ReceivingRequest =
   | {kind:"review";return_ref:string;expected_return_revision:string;disposition:ReviewDisposition;expected_source_revision?:string;note?:string;answer?:string}
   | {kind:"include";return_ref:string;expected_return_revision:string;expected_source_revision?:string;realisation_ref?:string;realisation_owner_ref?:string}
   | {kind:"recover";return_ref:string;expected_return_revision:string}
-  | {kind:"mutate-field";source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown};
+  | {kind:"mutate-field";source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown}
+  /** A page's own metadata (title.set, summary.set, lifecycle.set): human-only, CAS-checked, deduplicated like a field. */
+  | {kind:"mutate-meta";source_ref:string;document_id:string;expected_revision:string;request_id:string;key:"title"|"summary"|"lifecycle";value:string};
 export type ReceivingWireRequest=
  | {List:{after?:number;limit?:number;open?:boolean}}|{Read:{return_ref:string}}|{Submit:{producer_key:string;source_ref?:string;document_id?:string;expected_source_revision?:string;occurred_at_unix_seconds:number;task_ref?:string;proposal?:Record<string,unknown>;request?:OwnerRequest;summary?:string;evidence_refs?:string[];declared_producer?:DeclaredProducer;now_ref?:string}}
  | {Document:{source_ref:string;document_id:string}}|{Review:{return_ref:string;expected_return_revision:string;disposition:ReviewDisposition;expected_source_revision?:string;note?:string;answer?:string}}|{Include:{return_ref:string;expected_return_revision:string;expected_source_revision?:string;realisation_ref?:string;realisation_owner_ref?:string}}
- | {Recover:{return_ref:string;expected_return_revision:string}}|{MutateField:{source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown}};
+ | {Recover:{return_ref:string;expected_return_revision:string}}|{MutateField:{source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown}}|{MutateMeta:{source_ref:string;document_id:string;expected_revision:string;request_id:string;key:"title"|"summary"|"lifecycle";value:string}};
 export function receivingWire(request:ReceivingRequest):ReceivingWireRequest{switch(request.kind){
  case"list":return {List:{after:request.after,limit:request.limit,open:request.open}};
  case"read":return {Read:{return_ref:request.return_ref}};
@@ -27,6 +29,7 @@ export function receivingWire(request:ReceivingRequest):ReceivingWireRequest{swi
  case"include":return {Include:{return_ref:request.return_ref,expected_return_revision:request.expected_return_revision,expected_source_revision:request.expected_source_revision,realisation_ref:request.realisation_ref,realisation_owner_ref:request.realisation_owner_ref}};
  case"recover":return {Recover:{return_ref:request.return_ref,expected_return_revision:request.expected_return_revision}};
  case"mutate-field":return {MutateField:{source_ref:request.source_ref,document_id:request.document_id,expected_revision:request.expected_revision,request_id:request.request_id,field_id:request.field_id,value:request.value}};
+ case"mutate-meta":return {MutateMeta:{source_ref:request.source_ref,document_id:request.document_id,expected_revision:request.expected_revision,request_id:request.request_id,key:request.key,value:request.value}};
  }}
 
 /** accepted/rejected: contributions and proposals; answered/rejected:
@@ -69,4 +72,11 @@ export async function receiving<T>(transport:KernelTransportStatus,project:strin
 export async function mutateField(transport:KernelTransportStatus,project:string|null,input:{source_ref:string;document_id:string;expected_revision:string;field_id:string;value:unknown}):Promise<{operation_receipt?:{revision?:string;status?:string};[key:string]:unknown}> {
   const request_id=`req/desktop-${typeof crypto!=="undefined"&&"randomUUID" in crypto?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
   return receiving(transport,project,{kind:"mutate-field",...input,request_id});
+}
+/** One human edit of a page's own metadata through `central.document.mutate` (`title.set`, `summary.set`, `lifecycle.set`): the
+ * owner refuses non-human authors, CAS-checks `expected_revision` and deduplicates on `request_id`; its receipt carries the
+ * advanced revision. */
+export async function mutateMeta(transport:KernelTransportStatus,project:string|null,input:{source_ref:string;document_id:string;expected_revision:string;key:"title"|"summary"|"lifecycle";value:string}):Promise<{operation_receipt?:{revision?:string;status?:string}}> {
+  const request_id=`req/desktop-${typeof crypto!=="undefined"&&"randomUUID" in crypto?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
+  return receiving(transport,project,{kind:"mutate-meta",...input,request_id});
 }
