@@ -87,7 +87,12 @@ test('code-reading: the main window routes Pop-out to the host on the host only;
   assert.match(detached, /fallback=\{\(\) => alone \?/, 'where no relay answers, the face drawn alone, held to its own rule')
   assert.match(detached, /const fault = deviceRelayAdmissionFault\(binding\)/, 'the window admits a relayed device by its identity')
   const relayed = await source('frame/devices/RelayedDevice.tsx')
-  assert.match(relayed, /<PlacedDevice device=\{device\} view="popout" binding=\{binding\}/)
+  assert.match(relayed, /<PlacedDevice device=\{device\} view="popout" binding=\{binding\} onClose=\{onClose\} relayed \/>/, 'drawn as relayed, so its design draws')
+  // Seen on r8: Ground hygiene popped out drew the generic plate (two readings), because a design loads only for a device published
+  // on the window's own door, and the Pop-out is its own page. A relayed device counts as published there.
+  const view = await source('frame/devices/DeviceView.tsx')
+  assert.match(view, /const published = useIsPublished\(device\.id\) \|\| relayed/)
+  assert.match(view, /useHosting\(device, picture, actions, wrapRow, binding, generic, false, relayed\)/)
   const rust = await readFile(new URL('../../../../desktop/cradle/src-tauri/src/windows.rs', import.meta.url), 'utf8')
   assert.match(rust, /"device"/, 'the host admits a device binding')
 })
