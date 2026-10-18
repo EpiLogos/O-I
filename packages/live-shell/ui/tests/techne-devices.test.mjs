@@ -348,7 +348,8 @@ test('the QL field/PCM owner is a device: its light is the owner\'s availability
 test('a face declared waiting is a dark device with no control: its standing and the owner it waits for', () => {
   // The sky is admitted (lane BL): it reads the kernel's nara_identity transit and draws the catalogue's Sky design.
   assert.notEqual(faceOf('quaternal-logic', 'sky').admission, 'waiting', 'the sky draws on its owner')
-  for (const id of ['torus', 'm3-clock', 'deck', 'chakra', 'm-prime-matrices']) {
+  assert.notEqual(faceOf('quaternal-logic', 'm3-clock').admission, 'waiting', 'the M3 clock draws on its owner (m3_reception)')
+  for (const id of ['torus', 'deck', 'chakra', 'm-prime-matrices']) {
     const face = faceOf('quaternal-logic', id)
     assert.equal(face.admission, 'waiting')
     const device = chain.techneEntries(manifests('quaternal-logic'), readings()).find(entry => entry.face.id === id).device
@@ -423,13 +424,14 @@ test('a fold opens its instrument: the door each instrument opens through is the
   assert.deepEqual(chain.rackInstruments(null).map(holder => holder.id), ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5'])
 })
 
-test('a focused Timeline stands its waiting faces open as dark devices beside the clock', () => {
+test('a focused Timeline stands the sky and the M3 clock open beside the clock, dark until their owners read', () => {
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m2'}))
   for (const id of ['sky', 'm3-clock']) {
     assert.match(out, new RegExp(`data-face-id="${id}"[^>]*data-expanded="true"`))
     assert.match(out, new RegExp(`data-device="quaternal-logic:${id}"[^>]*data-device-light="unknown"`), `${id}: dark`)
   }
-  assert.match(out, /data-waiting="true"/)
+  // Both now draw on their owners (the sky's transit, the M3 form's m3_reception): neither stands as a waiting face.
+  assert.doesNotMatch(out, /data-face-id="m3-clock"[^>]*data-waiting="true"/)
 })
 
 test('the knowledge graph\'s devices stand open on its own chain, each with its body, and Central\'s lead them', () => {

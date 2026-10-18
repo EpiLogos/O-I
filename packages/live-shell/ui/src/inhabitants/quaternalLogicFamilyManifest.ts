@@ -60,9 +60,9 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         id: 'm3-clock',
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-instrument',
-        admission: 'waiting',
+        invariant: {generates: 'kernel:m3_reception'},
         heldBy: ['techne:m2', 'techne:m3'],
-        note: 'M3 clock/inscription/lens — inscription circles and lens phases as device controls. The sequence-clock grammar exists in the retained app; the M3 packet (#281) is commissioned, not landed. Waits for its owner.',
+        note: 'The M3 clock on the person\'s own M3 form (ql.m3-state/v1), read and moved through the kernel\'s m3_reception on the encounter the frame\'s Nara instrument uses (the chosen identity and the open Expression): the double-cover degree advances by advance-clock, the cut is set-aperture (ql/devices/qlM3Clock.ts). Private: no form is shared, and with no identity, Expression or opened form the device says which.',
       },
       {
         id: 'deck',
