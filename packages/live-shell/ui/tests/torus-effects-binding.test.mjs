@@ -161,3 +161,19 @@ test('placing, taking off and moving are the owner\'s chain edit; the Delay keep
     assert.deepEqual(sent, [{command: 'instrument', edit: {kind: 'effect', effect: 'delay', key: 'tempo', value: 98.46}}])
   } finally { instrument.setLiveInstrumentCommander(null) }
 })
+
+test('a state that changes only its parameters is published: the last effect taken off reaches the chain (native screen pass r4)', () => {
+  instrument.publishLiveTorusState(null)
+  const placed = state(parameters({effects: effects(['filter'])}))
+  instrument.publishLiveTorusState(placed)
+  assert.deepEqual(fx.torusEffectsChain(instrument.liveTorusState()), ['filter'])
+  // The owner took the Filter off: the QL reading is unchanged (a held instrument does not move), only its parameters are.
+  instrument.publishLiveTorusState(state(parameters({effects: effects([])})))
+  assert.deepEqual(fx.torusEffectsChain(instrument.liveTorusState()), [], 'the empty chain is published')
+  instrument.publishLiveTorusState(state(parameters({effects: effects([]), level: 2})))
+  assert.equal(instrument.liveTorusState().parameters.level, 2, 'so is a level the owner took while held')
+  const kept = instrument.liveTorusState()
+  instrument.publishLiveTorusState(state(parameters({effects: effects([]), level: 2})))
+  assert.equal(instrument.liveTorusState(), kept, 'an identical publish keeps the same state object')
+  instrument.publishLiveTorusState(null)
+})
