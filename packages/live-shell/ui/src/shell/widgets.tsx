@@ -17,6 +17,8 @@ import {AgentWidget, AgentWidgetName} from '../widgets/AgentWidget'
 import {PacketWidget} from '../widgets/PacketWidget'
 import {getPanels} from './panels'
 import {panelWidgets} from '../frame/widgets/panelWidgets'
+// The devices born on the rail claim the rail's widget of their id when their module loads (widgets/railDevices.tsx).
+import '../widgets/railDevices'
 
 export {WidgetReadingProvider, type WidgetReading} from '../widgets/widgetReading'
 
@@ -47,10 +49,18 @@ const HINTS: Record<string, string> = {
   approvals: 'the task\'s approval hooks',
 }
 
+/** The devices born on the rail that no old tile held (DLW §23): registered so the rail lists them; each draws its device
+ * (widgets/railDevices.tsx claims it), so the body here never draws. */
+const RAIL_BORN: readonly WidgetDeclaration[] = [
+  {id: 'wiki', name: 'Wiki', mark: 'orbit', hint: 'the wiki pages an agent may use, read here', Body: () => null},
+  {id: 'calendar', name: 'Calendar', mark: 'metro', hint: 'what is due around your work, from a calendar provider', Body: () => null},
+]
+
 export const WIDGETS: readonly WidgetDeclaration[] = [
   {id: 'agent', name: 'Agent', Name: AgentWidgetName, mark: TILES.agent.mark, hint: 'the agent you are talking to', Body: AgentWidget},
   ...MODE_TILES.map((id): WidgetDeclaration => ({id, name: TILES[id].name, mark: TILES[id].mark, hint: HINTS[id], Body: OWN_BODIES[id] ?? modeTile(id)})),
   ...AGENT_TILES.map((id): WidgetDeclaration => ({id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),
+  ...RAIL_BORN,
 ]
 
 /** Every widget of the world: the rail's own, then each panel a family registers in the widget slot (frame/widgets/
