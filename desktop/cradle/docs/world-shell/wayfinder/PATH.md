@@ -112,6 +112,22 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | KS — AIKit knowledge search within the kernel's 20 s bound (measured 22 s from the Central root: why Search refuses) | session 2 (ai-kit `env-1`) | ai-kit | 17 Oct |
 | AC1 — Actuation's harness-detection cache (the agent device's 2–3 s mount) | session 2, queued | Actuation | 17 Oct |
 
+The native screen pass of r3 (`a3c542ffc`, 18 Oct 03:32–03:45, computer-use, the owner's real ground). Seen: **R1** — the Torus in all
+six views on its owner (Folded by the head's double-click and back by its title; Compact on Live's chain; Whole in the pool; Whole as the
+band, full width, its sections spread, the panes shrinking, Esc folding; Full in a pane by ▦ — the torus with the Jankó surface under it,
+no controls; Pop-out by ↗ — Full over Whole in its own window, ↗ closing it; Widget on the rail by its mark); ⌘⌥B and ⌘⌥R hide and restore
+the browser and the rail. **R2** — Clip view on a Central page (Day · Tue 13 Oct): the clip's panel with no Launch tab ("a page is placed,
+not launched"), Text · Highlight · Notes as its tools, Page · Source; Clip view alone when the detail area is too short for both; ⌥⌘E
+gives it the panes' space and back; the status bar reads Clip | Device. **R3** — Arrangement view's Lanes bar (Takes, Automation, Events),
+the Day as Central's Main track (labelled Main, last in Session view), the Days walk with its 29 stops. **R4** — Central's chain with nothing
+selected: Day, Approvals (Main), Packet, the Agent (the merged design); the Studio's design on its owner (six chosen controls as macros
+with their reach and values, saved; Chains: 2 of 14 on, Material 1/4 with Colour Field, Motion 0/5, Body 1/4, Nara 0/1); Live's chain with
+no keyboard plate (the MIDI input in its place). Not seen, and why: the Day, Physics, the Skillset rack and Scope in all six views (only the
+Torus walked whole); Factory's session chain and the Agent there (no agent session: "Connect a provider"); a mixer row on an owned track
+(Central's book holds no workspace yet, so only the readOnly cron track and the Day stand); Clip view in Factory, Expressions, Technē and
+Live (no task, no scene selected, no reading, no set open); the effects, Sky modulation, Scale mapping and the M3 clock (r4). Found: a Day
+whose document is empty reads "No reading of the page yet" (its revision is the empty hash) — it should say the page is empty.
+
 Owner operations the R1–R3 returns name, each control disabled with its reason until built (the lead's, after the screen checks):
 Software Factory `task_record_set` (a task's launch, then, hand-off, quantize); Actuation `harness_task_settings` / `harness_task_control`
 (per-task effort, autonomy, mode; launch, retry, stop of one task), telemetry and solo of a session; AIKit/Factory attempts as takes
