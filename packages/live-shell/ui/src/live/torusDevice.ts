@@ -85,7 +85,7 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   helixBalance: `No helix balance: ${NO_FIELD_PARAMETER}.`,
   strike: `No strike: ${NO_FIELD_PARAMETER}. The field's strike depth is its material policy, which the hosted instrument does not announce.`,
   damping: `No damping: ${NO_FIELD_PARAMETER}. Damping is per M2 mode in the field's own panel (nativeField.ts editBasis), not announced to the shell.`,
-  drive: `No drive: ${NO_FIELD_PARAMETER}. No sky route moves it either: no compiled modulation plan runs in the shell.`,
+  drive: `No drive: ${NO_FIELD_PARAMETER}. No sky route moves it either: a planet takes only what the owner reports (designBindings/skyModulation.ts).`,
   modes: `No mode count: ${NO_FIELD_PARAMETER}.`,
   agitation: `No agitation: ${NO_FIELD_PARAMETER}.`,
   attack: `No attack: ${NO_FIELD_PARAMETER}.`,
@@ -97,7 +97,7 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   notes: 'The owner counts no sounding notes: a struck chord is one act through the stage channel, answered yes or no, never counted back.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
   sounding: 'The owner reports no sounding keys: a struck key is one act through the stage channel, answered yes or no, never reported back as sounding.',
-  driveMod: 'Nothing moves the drive: the owner announces no drive, and no compiled modulation plan runs in the shell, so no range is drawn round it.',
+  driveMod: 'Nothing moves the drive: the owner announces no drive, so no planet can take it and no range is drawn round it.',
 }
 
 const NOT_WRITABLE = 'The owner takes edits only while the instrument follows or is held.'
@@ -157,7 +157,7 @@ const TORUS_KEYS = ['light', 'standing', 'level', ...QL_PRESENTATION_KEYS.filter
 
 /** The binding the runtime hosts the Torus design on: the owner's readings, the device's one submit (the stage channel), and every
  * key the owner does not take disabled with the reason. */
-export function torusDesignBinding(state: LiveTorusState | null, device: DeviceInstance = torusDevice(state)): DesignBinding {
+export function torusDesignBinding(state: LiveTorusState | null, device: DeviceInstance = torusDevice(state), skyHeld: Readonly<Record<string, string>> = {}): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of TORUS_KEYS) {
     const why = writeStanding(state, key)
@@ -170,6 +170,8 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
     writes: key => writeStanding(state, key) === null,
     standing,
     ...(submit ? {write: async (changes: readonly ValueChange[]) => { await submit(torusRowChanges(changes)) }} : {}),
+    // The level or scale a planet moves (designBindings/skyModulation.ts): the status bar names the planet.
+    ...(Object.keys(skyHeld).length ? {modulatedBy: skyHeld} : {}),
   }
 }
 

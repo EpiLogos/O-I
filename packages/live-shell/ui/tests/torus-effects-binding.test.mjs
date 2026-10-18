@@ -136,7 +136,8 @@ test('on the chain stand the effects the owner\'s chain names, in its order, the
   const drawn = renderToStaticMarkup(h(onChain.TorusEffectsOnChain, {state: state(parameters({effects: effects(['reverb', 'filter'])}))}))
   assert.deepEqual([...drawn.matchAll(/data-chain-effect="([^"]+)"/g)].map(m => m[1]), ['live:torus-reverb', 'live:torus-filter'])
   const pressed = [...drawn.matchAll(/aria-pressed="(true|false)"[^>]*>([A-Za-z]+)</g)].map(m => [m[2], m[1]])
-  assert.deepEqual(pressed, [['Filter', 'true'], ['Dynamics', 'false'], ['Delay', 'false'], ['Reverb', 'true']], 'the four, pressed while on the chain')
+  assert.deepEqual(pressed, [['Filter', 'true'], ['Dynamics', 'false'], ['Delay', 'false'], ['Reverb', 'true'], ['Sky', 'false']],
+    'the four, pressed while on the chain, and the Sky modulator, off it until put there')
   assert.equal(renderToStaticMarkup(h(onChain.TorusEffectsOnChain, {state: null})), '', 'no owner reading: nothing stands')
 })
 
