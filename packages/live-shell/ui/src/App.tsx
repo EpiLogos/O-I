@@ -39,6 +39,7 @@ import type {WorldSelection} from '../../../../desktop/cradle/src/workspace/stor
 import type {ModeTransportReadouts} from './shell/ModeTransportBar'
 import {worldNowReadout} from './shell/ModeDetail'
 import {DetailHost} from './frame/detail/DetailHost'
+import {expandsClip, shownSidesNow, toggleSide, type DetailSide} from './frame/detail/detailSides'
 import {DetailContext, type DetailReading} from './frame/detail/detailReading'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
@@ -135,6 +136,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const state = useSetSummary(initialPath, workspace.workspaceId)
   const deep = useSetDocument(state.set)
   const [detailMode, changeDetailMode] = useState<DetailMode>(restored?.detailMode ?? opening.detailMode)
+  // The detail area's sides (manual §16.4; frame/detail/detailSides.ts): `detailMode` is the front side (⇧Tab, a selection), these
+  // are the sides hidden from the status bar's switches, and ⌥⌘E gives Clip view the main area. The front side always shows.
+  const [hiddenSides, setHiddenSides] = useState<Readonly<Record<DetailSide, boolean>>>({clip: false, device: false})
+  const [clipExpanded, setClipExpanded] = useState(false)
+  useEffect(() => { setHiddenSides(hidden => hidden[detailMode] ? {...hidden, [detailMode]: false} : hidden) }, [detailMode])
+  const toggleDetailSide = (side: DetailSide) => {
+    const next = toggleSide({front: detailMode, hidden: hiddenSides}, side, shownSidesNow())
+    changeDetailMode(next.front); setHiddenSides(next.hidden); setDetail(true)
+  }
   const [browserWidth, resizeBrowser] = useState<number | null>(restored?.browserWidth ?? null)
   const [detailHeight, resizeDetail] = useState<number | null>(restored?.detailHeight ?? null)
   // The browser category each mode stands on, restored with its frame (F1).
@@ -435,8 +445,11 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey && !settingsPresented) {
         event.preventDefault(); chooseView(tab === 'session' ? 'arrangement' : 'session')
       }
-      // ⇧Tab: Clip view ⇄ Device view (shell/workspaceAreas.ts), unless a control below already took it.
+      // ⇧Tab: Clip view ⇄ Device view (shell/workspaceAreas.ts), unless a control below already took it. While both stand it only
+      // changes which side is kept in front if the area narrows (Live 12 cap 31); when one shows, the other takes its place.
       if (switchesDetailSide(event) && !event.defaultPrevented && !settingsPresented) { event.preventDefault(); changeDetailMode(side => side === 'clip' ? 'device' : 'clip'); setDetail(true) }
+      // ⌥⌘E: Clip view in the main area, and back (Live's Expand Clip View, cap 29; frame/detail/detailSides.ts expandsClip).
+      if (expandsClip(event) && !event.defaultPrevented && !settingsPresented) { event.preventDefault(); setClipExpanded(expanded => !expanded); setDetail(true) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -578,10 +591,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(clampDetailHeight(shownDetailHeight() + (event.key === 'ArrowUp' ? RESIZE_STEP : -RESIZE_STEP), viewport[1]))} }} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); areaDrag.current = {at: event.clientY, size: shownDetailHeight()} }} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId) && areaDrag.current) resizeDetail(clampDetailHeight(draggedSize(areaDrag.current, event.clientY, -1), viewport[1])) }} onPointerUp={() => { areaDrag.current = null }} />}
     {/* The detail row (manual §3, §10.1; FOUNDATION F4): one host for every mode. The mode's clip editor and chain come from
       its registration (shell/modeDetails.tsx); a pane holding an instrument takes the Device side in every mode but Live. */}
-    <div className="detail-residence" hidden={!detail}><DetailContext.Provider value={detailReading}><DetailHost side={detailMode} /></DetailContext.Provider></div></NativeInputRetentionProvider>
+    <div className="detail-residence" hidden={!detail}><DetailContext.Provider value={detailReading}><DetailHost sides={{front: detailMode, hidden: hiddenSides}} expanded={clipExpanded} /></DetailContext.Provider></div></NativeInputRetentionProvider>
     {/* A device's expanded view: a band across the detail area above the chain (frame/devices/DeviceFlip.tsx). */}
     <DeviceFlipHost />
-    {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
+    {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} toggleDetailSide={toggleDetailSide} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} toggleDetailSide={toggleDetailSide} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)
   // Each part at the size chosen for it, held inside the window as it stands (a smaller window never pushes the rail off its edge).
   const drawn = drawnSizes({browserW: browserWidth, railW: continuity.current.widgets?.width ?? null, detailH: detailHeight}, {browser, rail: dock}, [viewport[0], viewport[1]], 300)

@@ -9,11 +9,10 @@
  *   context-world, agent identity, hygiene and impact readings, each compact on
  *   the chain, whole in the pool, full in a pane. With no material selected a
  *   device's rows name what would dock and its light stays dark.
- * - Base · Document: the selected subject as data through the one Clip view
- *   (frame/detail/ClipView.tsx) — file, revision, state, bindings, Highlights
- *   and Notes; one line saying what it waits for until a subject is selected.
- * - Factory · Task log: the selected task as data through the same Clip view —
- *   its session, agent, status, attempt, workcell, budget and its Log.
+ * - The Clip side of every mode is the one clip host's (frame/detail/ClipHost.tsx,
+ *   T-REALIGN R2): the Central document, the Factory task log and the Technē
+ *   event that were drawn here as data rows now open in Clip view after Live,
+ *   on their clip bindings (central/, agent/, techne/clipBinding.ts).
  * - Technē · Instruments: the Quaternal Logic family's faces through the
  *   device runtime (inhabitants/ql/devices) — the admitted field/PCM owner's
  *   device with its honest refusing state, the declared-waiting faces as dark
@@ -35,7 +34,6 @@
  * the rack renders what the manifests declare — no more.
  */
 
-import {useEffect, useState} from 'react'
 import {loadWorldShellFamilies, QUATERNAL_LOGIC_FAMILY_ID} from '../inhabitants/worldShellFamilies'
 import {inhabitantManifest, type InhabitantManifest} from '../inhabitants/manifest'
 import {useQlInstrumentFeed} from '../live/torusInstrument'
@@ -55,12 +53,6 @@ import {useCentralDayStanding} from '../central/useCentralDayStanding'
 import {CentralDayNotice} from '../central/CentralDayNotice'
 import {CentralDevicesChain} from '../central/devices/CentralDevices'
 import {TechneDevices} from '../inhabitants/ql/devices/TechneDevices'
-import type {AgentSessionTrack} from '../agent/useAgencySessions'
-import type {TemporalEventLike} from '../agent/agentRunModel'
-import {ClipNone, ClipLine, ClipView, ClipWaiting, type ClipRow} from '../frame/detail/ClipView'
-import {useSelectedClip} from '../frame/detail/ClipBox'
-import {standingOf} from '../../../../../desktop/cradle/src/techne/m0m5/timeline/standing'
-import {CentralSubjectClip} from '../central/CentralClipDetail'
 import './modeSurface.css'
 
 // The door is idempotent (a second identical load composes nothing new);
@@ -105,22 +97,6 @@ export function BaseDevicesDetail({transport, world = null, subject = null, stan
   )
 }
 
-/** Base · Document — the selected Central subject as data, through the one Clip view (frame/detail/ClipView.tsx): its form,
- * file, revision, state and bindings beside its Highlights and Notes (central/CentralClipDetail.tsx CentralSubjectClip, which
- * reads the owner's file route). With no subject the side says what it waits for in one line (`waits`, the mode's own words,
- * shell/modeDetails.tsx); the document's devices stand on the Device side, never as cards here. */
-export function BaseDocumentDetail({transport, subject, waits = 'Select a document to see it as data here.', colour}: {
-  transport: KernelTransportStatus
-  subject: CentralSubjectSelection | null
-  /** The one line shown while no subject is selected. */
-  waits?: string
-  /** The selected clip's track colour, when the subject came from the shown tracks. */
-  colour?: string | null
-}) {
-  if (!subject) return <ClipWaiting line={waits} />
-  return <CentralSubjectClip key={`${subject.kind}:${subject.path}`} transport={transport} subject={subject} colour={colour} />
-}
-
 /** Technē · Instruments — the instruments rack (lock §2.5; the mockup's Technē device side): the six instruments in their order,
  * folded to their titles by the runtime's fold around the one open instrument — the focused pane's — drawn as one plate whose
  * columns are the families whose devices it holds (inhabitants/ql/devices/TechneDevices.tsx). With no instrument focused, the six
@@ -138,131 +114,6 @@ export function TechneInstrumentsDetail({focusInstrument}: {
       <TechneDevices manifests={manifests} focusInstrument={focusInstrument ?? null} instrumentReading={instrumentReading} />
     </div>
   )
-}
-
-/** Factory · Task log — the selected task as data, through the one Clip view (frame/detail/ClipView.tsx; world-shell-mockup.html
- * clipDetail(), its Factory branch, :1669-1671): the props column holds the task's session, agent, status, attempt, workcell and
- * budget, then the clip box's facts (where it ran, when a launch lands, what follows it); the Log column lays the session's
- * thread activity along the task's time — each row the owner's own event (time · kind · what it says), from the one temporal
- * read the task's span is derived from (agent/agentRunModel.ts buildTaskClips, eventsForSession). A fact no owner discloses is
- * "—". Legacy: this function's own task-identity rows, task list and log rows over the session's clips (and the Desk's run
- * join beneath — retired, and deleted on 15 Oct: nothing in the candidate selects a Desk run). */
-export function FactoryTaskLogDetail({track, n, name, colour, box = [], events}: {
-  /** The task's session: the agency reading's own track. */
-  track: AgentSessionTrack
-  /** The task's ordinal in its session (`#task/<n>`); absent, the session's first real task. */
-  n?: number | null
-  /** The session's name as the tracks pane shows it. */
-  name?: string
-  /** The session's track colour. */
-  colour?: string | null
-  /** The clip box's rows for the selected clip (frame/detail/ClipBox.tsx clipBoxRows). */
-  box?: readonly ClipRow[]
-  /** The session's temporal events (the sessions provider's one read); null when no provider reads them here. */
-  events: readonly TemporalEventLike[] | null
-}) {
-  const task = track.tasks.find(clip => !clip.softStop && (n == null || clip.n === n)) ?? null
-  const clock = (unixMs: number | null | undefined) => unixMs == null ? '—'
-    : new Date(unixMs).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hourCycle: 'h23'})
-  const budget = track.budget.used != null || track.budget.max != null ? `${track.budget.used ?? '—'} / ${track.budget.max ?? '—'} turns` : null
-  const rows: ClipRow[] = [
-    {key: 'session', value: name ?? track.purpose ?? track.sessionRef, title: track.sessionRef},
-    {key: 'agent', value: track.agentName, title: track.agentRef ?? 'The agency reading names no agent for this session'},
-    {key: 'status', value: task && task.state !== 'unknown' ? task.state : null, title: task?.disclosure ?? 'How the task stands, as its owner or its activity says'},
-    {key: 'attempt', value: null, title: 'Attempts come from the Factory owner (factory_attempt_read), addressed by run; the sessions reading names none'},
-    {key: 'workcell', value: null, title: 'No reading names the workcell this session runs in'},
-    {key: 'budget', value: budget, title: 'Turns used / allowed — the track\'s budget reading'},
-    ...box.filter(row => row.key !== 'track' && row.key !== 'state'),
-  ]
-  const log = events ? [...events].sort((a, b) => (a.instant_unix_ms ?? Infinity) - (b.instant_unix_ms ?? Infinity)) : null
-  const shown = log ? log.slice(-LOG_ROWS) : null
-  return <ClipView kind="factory-task" name={task?.title ?? track.purpose ?? 'untitled task'} colour={colour} rows={rows} columns={[{name: 'Log', body: !shown
-    ? <ClipNone>The thread's activity is not read here: no agent sessions reading stands above the detail row.</ClipNone>
-    : !shown.length
-      ? <ClipNone>No temporal event names this session in the last day's reading (temporal_events_read).</ClipNone>
-      : <div data-task-log={shown.length}>
-          {log!.length > shown.length && <ClipNone>{log!.length - shown.length} earlier rows are not shown.</ClipNone>}
-          {shown.map((event, index) => <ClipLine key={`${event.subject_ref}:${event.instant_unix_ms ?? 'none'}:${index}`} lead={clock(event.instant_unix_ms)}
-            chip={event.kind ?? event.stream ?? 'event'} title={`${event.stream ?? 'stream'} · ${event.subject_ref}`}>{event.summary ?? event.subject_ref}</ClipLine>)}
-        </div>}]} />
-}
-
-/** The Log column keeps the latest rows of a long thread. */
-const LOG_ROWS = 200
-
-/** Technē · Clip — the event in focus as a clip (manual §3: "Open an event in Technē and you see its span, what it gathered, and how
- * sure anyone is of it"; lock §2.5 Clip detail: identity, place and time, disclosure, typed relations, bounded constellation, source;
- * the mockup's clipDetail() techne branch, world-shell-mockup.html:1653-1659) through the one Clip view (frame/detail/ClipView.tsx).
- * Fed only from the World cut's reading (projections/useWorldTemporalReading.ts): the retained occasion's basis and its current
- * admission, and the event row it was retained from. A field that reading does not carry shows "—"; standing is the owner's verbatim
- * word or none (techne/m0m5/timeline/standing.ts: a class never upgrades it); no relation is drawn that the event does not name. */
-export function TechneClipDetail({world}: {world: WorldTimelineView | null}) {
-  const [, setTick] = useState(0)
-  useEffect(() => world?.spine.subscribe(() => setTick(value => value + 1)), [world])
-  const selected = useSelectedClip()
-  const occasion = world?.spine.occasion() ?? null
-  const admission = occasion?.admission ?? null
-  const event = occasion ? world?.source.events.find(row => row.subject_ref === occasion.basis.ref
-    && (row.instant_unix_ms ?? null) === occasion.basis.instantUnixMs) ?? null : null
-  const evidence = occasion?.basis.evidenceRefs ?? event?.evidence_refs ?? []
-  const standing = standingOf({standing: undefined, evidence_refs: evidence})
-  const instant = occasion?.basis.instantUnixMs != null ? new Date(occasion.basis.instantUnixMs).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : null
-  const day = occasion?.basis.civilDayRef ?? event?.day_ref ?? null
-  const rows: ClipRow[] = [
-    {key: 'kind', value: event?.kind ?? null, title: 'The event\'s kind as its stream names it'},
-    {key: 'standing', value: standing.verbatim, title: `How sure anyone is of it: the owner's own word — ${standing.rule}`},
-    {key: 'world', value: null, title: 'The World cut\'s reading names no world for an event'},
-    {key: 'revision', value: null, title: 'The World cut\'s reading carries no revision for an event'},
-    {key: 'occasion', value: instant ? `${instant}${day ? ` · ${day}` : ''}` : null, title: 'When it happened: the retained occasion\'s instant and civil day'},
-    {key: 'place', value: null, title: 'The World cut\'s reading places no event'},
-    {key: 'provenance', value: event?.stream ? `${event.stream}${event.stream_position ? ` @ ${event.stream_position}` : ''}` : null, title: 'Where the reading took it from: its stream and its place in that stream'},
-    {key: 'admission', value: admission ? (admission.admitted ? 'admitted' : 'no longer in the reading') : null, title: admission?.disclosure ?? 'Current admission: not yet qualified against a newer reading'},
-  ]
-  // The disclosure ladder (the mockup's LADDER, :591): which rung the event stands on. The World cut's reading discloses none, so every
-  // rung stays dark and the rung reads "—".
-  const ladder = <div className="techne-ladder" title="The World cut's reading discloses no disclosure rung for an event">
-    <span className="techne-ladder-head"><span>Disclosure</span><span>—</span></span>
-    <span className="techne-ladder-rungs" aria-hidden="true">{DISCLOSURE_LADDER.map(rung => <i key={rung} title={rung} />)}</span>
-  </div>
-  const relations = evidence.length
-    ? evidence.map(ref => <ClipLine key={ref} chip="evidence" right={standing.verbatim ?? '—'} title={`${ref} — ${standing.rule}`}>{ref}</ClipLine>)
-    : <ClipNone>{occasion ? 'The reading names no relation of this event.' : 'Select an event: its relations stand here.'}</ClipNone>
-  return (
-    <div className="mode-detail" data-mode-detail="techne-clip">
-      <ClipView kind="techne-event" name={occasion ? (occasion.basis.summary ?? occasion.basis.ref) : 'No event selected'} colour={selected.track?.color}
-        rows={rows} note={ladder}
-        columns={[
-          {name: 'Relations · typed, in standing', width: 330, body: relations},
-          {name: 'Constellation · bounded whole', width: 320, body: evidence.length
-            ? <TechneConstellation focus={occasion?.basis.summary ?? occasion?.basis.ref ?? ''} neighbours={evidence} />
-            : <ClipNone>{occasion ? 'The reading discloses no neighbours of this event.' : 'Select an event: its local whole stands here.'}</ClipNone>},
-          {name: 'Source', body: occasion
-            ? <div className="techne-source">
-                <div className="techne-source-ref">{event?.stream ?? '—'}{event?.stream_position ? ` · ${event.stream_position}` : ''}</div>
-                <p>{occasion.basis.summary ?? '—'}</p>
-                <div className="techne-source-note">the event as the reading gives it{occasion.basis.retainedAtUnixMs ? ` · retained ${new Date(occasion.basis.retainedAtUnixMs).toISOString().slice(11, 16)} UTC` : ''}</div>
-              </div>
-            : <ClipNone>Select an event: its source stands here.</ClipNone>},
-        ]} />
-    </div>
-  )
-}
-
-/** The disclosure ladder's rungs, as the mockup names them (world-shell-mockup.html:591). */
-const DISCLOSURE_LADDER = ['local source', 'addressable', 'retrieved', 'rendered', 'selected for projection', 'admitted to field', 'public'] as const
-
-/** The bounded local whole (the mockup's constellation, :1656): the event at the centre, what it names around it — only what the
- * reading gives, never a neighbour it does not name. */
-function TechneConstellation({focus, neighbours}: {focus: string; neighbours: readonly string[]}) {
-  const shown = neighbours.slice(0, 12)
-  const label = (ref: string) => (ref.split(/[/:#]/).filter(Boolean).pop() ?? ref).slice(0, 18)
-  return <svg className="techne-constellation" width="300" height="190" viewBox="0 0 300 190" role="img" aria-label={`${focus} and the ${shown.length} it names`}>
-    {shown.map((ref, index) => {
-      const angle = index / shown.length * Math.PI * 2 - Math.PI / 2, x = 150 + Math.cos(angle) * 112, y = 95 + Math.sin(angle) * 72
-      return <g key={ref}><line x1="150" y1="95" x2={x} y2={y} /><circle cx={x} cy={y} r="4.5" /><text x={x} y={y + 13} textAnchor="middle">{label(ref)}</text><title>{ref}</title></g>
-    })}
-    <circle className="techne-constellation-focus" cx="150" cy="95" r="8"><title>{focus}</title></circle>
-  </svg>
 }
 
 /** The instrument device side for a focused pane's instrument (owner ruling,

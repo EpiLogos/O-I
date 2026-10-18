@@ -55,6 +55,70 @@ export const TASKS_REFUSE: Readonly<Record<string, string>> = {
   form: missing('Form', 'an output style for one task', 'Actuation'),
 }
 
+// ---------------------------------------------------------------------------------------------------------------- one task's own ops
+
+/** One task, as its owner would address it: its session and its ordinal in that session (`<track>#task/<n>`). */
+export interface TaskAddress {
+  readonly sessionRef: string
+  readonly n: number
+}
+
+/** The settings that belong to one task (manual §19.1 Clip view: its name, colour and activator, its output style, its Launch, Then,
+ * Hand off to and Quantize, and its envelopes — the Agent's Effort and Autonomy for this task, as Automation or Modulation, linked or
+ * not). */
+export type TaskSetting = 'name' | 'colour' | 'active' | 'register' | 'form' | 'launch' | 'then' | 'handoff' | 'quantize' | 'effort' | 'autonomy'
+  | 'envelopeMode' | 'envelopeLink'
+
+/** The seam each task setting writes through (T-REALIGN R2: "Owner ops that do not exist yet are built, not listed"). Today every one
+ * refuses in its owner's words and stands disabled with them (`refused`); the owner op wires in one line — replace the entry with
+ * `{send: (task, value) => <the op>}` and the Clip view control enables, its change going to the owner on release. The op shapes the
+ * owners need are TASK_OP_SHAPES. */
+export interface TaskSeam {
+  /** Why no owner takes it yet; absent once the op stands. */
+  readonly refused?: string
+  readonly send: (task: TaskAddress, value: Value) => Promise<void>
+}
+const refusedSeam = (why: string): TaskSeam => ({refused: why, send: async () => { throw new Error(why) }})
+
+export const TASK_REFUSE: Readonly<Record<TaskSetting, string>> = {
+  name: missing('Name', 'a task\'s title in its task record', 'Software Factory'),
+  colour: missing('Colour', 'a task clip\'s colour in its task record (a task takes its session\'s colour)', 'Software Factory'),
+  active: missing('Clip activator', 'a task\'s activator: an off task stays queued and does not run', 'Software Factory'),
+  register: TASKS_REFUSE.register!,
+  form: TASKS_REFUSE.form!,
+  launch: TASKS_REFUSE.mode!,
+  then: TASKS_REFUSE.then!,
+  handoff: TASKS_REFUSE.to!,
+  quantize: missing('Quantize for this task', 'a task\'s launch quantize in its task record (Global follows the transport\'s Quantize, the Agent\'s interrupt timing)', 'Software Factory'),
+  effort: TASKS_REFUSE.effort!,
+  autonomy: TASKS_REFUSE.autonomy!,
+  envelopeMode: missing('Envelope mode', 'a task envelope\'s Automation or Modulation (the per-task effort and autonomy op carries it)', 'Actuation'),
+  envelopeLink: missing('Envelope link', 'a task envelope\'s own length and loop (the per-task effort and autonomy op carries it)', 'Actuation'),
+}
+
+export const TASK_SEAMS: Readonly<Record<TaskSetting, TaskSeam>> = {
+  name: refusedSeam(TASK_REFUSE.name),
+  colour: refusedSeam(TASK_REFUSE.colour),
+  active: refusedSeam(TASK_REFUSE.active),
+  register: refusedSeam(TASK_REFUSE.register),
+  form: refusedSeam(TASK_REFUSE.form),
+  launch: refusedSeam(TASK_REFUSE.launch),
+  then: refusedSeam(TASK_REFUSE.then),
+  handoff: refusedSeam(TASK_REFUSE.handoff),
+  quantize: refusedSeam(TASK_REFUSE.quantize),
+  effort: refusedSeam(TASK_REFUSE.effort),
+  autonomy: refusedSeam(TASK_REFUSE.autonomy),
+  envelopeMode: refusedSeam(TASK_REFUSE.envelopeMode),
+  envelopeLink: refusedSeam(TASK_REFUSE.envelopeLink),
+}
+
+/** The owner ops the seams wait for, in their exact shapes (the lead builds them; PROPOSE). */
+export const TASK_OP_SHAPES: Readonly<Record<string, string>> = {
+  'Software Factory · task_record_set': 'request {session_ref, task: n, set: {title?, colour?, active?, launch?: once|hold|loop, then?: next|handoff|stop, handoff_to?: session_ref, quantize?: global|now|next tool|next turn}} → answer the task record at its new revision, or the refusal in words',
+  'Actuation · harness_task_settings': 'request {session_ref, task: n, effort?: inherit|low|medium|high|max (or steps as [[second, step]…]), autonomy?: inherit|suggest|review|auto, mode?: automation|modulation, linked?: boolean, style?: {register?: plain|warm|terse, form?: technical|narrative|list}} → answer the task\'s settings as the agent will read them',
+  'Actuation · harness_task_control': 'request {session_ref, task: n, act: launch|retry|stop} → answer the task\'s state (one task, not the whole bound harness)',
+}
+
 export interface TasksInput {
   /** The chain's session (its track), null when none is selected. */
   readonly session: AgentSessionTrack | null

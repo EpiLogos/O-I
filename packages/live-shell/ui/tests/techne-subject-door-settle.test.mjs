@@ -171,7 +171,7 @@ test('source: the stage answers through the one seam — settled asks, the frame
   assert.doesNotMatch(panel, /\baskFault\(|notShownWords\(|answerAsk\(/, 'an ask\'s refusal stands on its own pane\'s fault line (askFault.ts), never in the panel\'s faults')
   assert.match(panel, /live = false; setExpressionOwner\(null\); stageAnswers\.dispose\(\)/, 'the wiring leaves with the panel')
   const MODE = /[!=]==\s*'(?:live|base|central|factory|expressions|techne|audio)'|'(?:live|base|central|factory|expressions|techne|audio)'\s*[!=]==|\bis[A-Z]\w*Mode\(/
-  for (const file of ['techne/subject/subjectAsks.ts', 'techne/subject/subjectOpenings.ts', 'techne/subject/openSubject.ts', 'techne/subject/worldRows.ts', 'techne/subject/WorldSubjectClip.tsx', 'techne/subject/askFault.ts']) {
+  for (const file of ['techne/subject/subjectAsks.ts', 'techne/subject/subjectOpenings.ts', 'techne/subject/openSubject.ts', 'techne/subject/worldRows.ts', 'techne/clipBinding.ts', 'techne/subject/askFault.ts']) {
     assert.doesNotMatch(await source(file), MODE, `${file} adds no mode branch`)
   }
   const door = await source('techne/subject/subjectOpenings.ts')

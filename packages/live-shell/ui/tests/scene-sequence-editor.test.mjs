@@ -188,7 +188,9 @@ test('edits go through the existing requests only: select a state, or open its n
   assert.deepEqual(openStateRequest(reading, 'entity-a', 'a1'), {operation: 'open', basis: reading.basis, entity_id: 'entity-a', step_id: 'a1', editor: 'source'})
 })
 
-test('the piano roll is mounted on the Expressions clip side only', async () => {
+test('the scene\'s roll is its Clip view\'s Sequence tab (R2: clip:expressions); the retained editor mounts no second roll', async () => {
   const detail = await readFile(new URL('src/components/NativeWorldDetail.tsx', new URL('../', import.meta.url)), 'utf8')
-  assert.ok(detail.includes("{workspace.mode==='expressions'&&<SceneSequenceEditor reading={reading} request={request}/>}"))
+  assert.doesNotMatch(detail, /<SceneSequenceEditor /)
+  const design = await readFile(new URL('src/inhabitants/catalogue/clips/expressions.tsx', new URL('../', import.meta.url)), 'utf8')
+  assert.match(design, /\{id: 'sequence', label: 'Sequence'/)
 })

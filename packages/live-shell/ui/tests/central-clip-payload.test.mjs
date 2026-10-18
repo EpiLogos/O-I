@@ -7,8 +7,9 @@ import {renderToStaticMarkup} from 'react-dom/server'
 // Central's Clip view reads the document's own Highlights, Notes and Packet from its payload (manual §5; world-shell-mockup.html
 // clipDetail() :1663). The pure reading (central/documentPayload.ts) over synthetic payloads shaped as the forms write them
 // (desktop/cradle/documents/ql-flow.html :1074-1076, ql-daily-die.html :649-651, and a v0.1 Flow's {at, html} notes and
-// {kind, html} packet items), then the Clip view's columns rendered on the server. Production modules in memory (the
-// detail-clip-view loader).
+// {kind, html} packet items). R2 retired the Clip view's three columns (central/CentralClipDetail.tsx documentColumns): a page's
+// Clip view is clip:central (central/clipBinding.ts — its marks in the page, its notes in the margin; the packet is the Packet
+// device's on the chain), tested in r2-clip-bindings.test.mjs. Production modules in memory (the detail-clip-view loader).
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -35,8 +36,6 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const {readDocumentPayload, readDayPayload, markedPassages, payloadText, payloadLine, packetHead, bounded, PAYLOAD_ROWS} = await import('../src/central/documentPayload.ts')
-const {documentColumns, CentralSubjectClip} = await import('../src/central/CentralClipDetail.tsx')
-const {ClipView} = await import('../src/frame/detail/ClipView.tsx')
 
 // A document file as the forms write it: the payload island, `<` escaped the way every ql-doc family serialises it.
 const page = doc => `<!doctype html><html><head><title>fixture</title></head><body><main id="app"></main>
@@ -71,7 +70,6 @@ const day = {
   capture: [], sessions: [], completed: [], media: [], contributions: [],
 }
 const html = element => renderToStaticMarkup(element)
-const columnsOf = state => html(createElement(ClipView, {name: 'Flow', kind: 'probe', rows: [], columns: documentColumns(state)}))
 const count = (markup, pattern) => (markup.match(pattern) ?? []).length
 
 test('a Flow\'s payload: the passages its entries mark, with the entry\'s anchor — outermost marks, html reduced to text', () => {
@@ -135,56 +133,15 @@ test('text only: the payload\'s html is reduced, never carried — scripts, hand
     notes: [{id: 'hn', entryId: 'h1', text: '<a href="javascript:alert(3)">a link</a> &lt;script&gt;', at: AT}],
     packet: [{id: 'hp', at: AT, kind: 'note', html: '<iframe src="https://example.invalid"></iframe><p>plain</p>'}],
   })
-  const out = columnsOf({phase: 'read', reading: readDocumentPayload(page(hostile))})
-  for (const banned of [/<img/, /<script/, /<iframe/, /onerror/, /javascript:/, /<a /]) assert.doesNotMatch(out, banned)
-  assert.match(out, /<span class="hl2-text">marked words<\/span>/)
-  assert.match(out, /<span class="hl2-text">a link &lt;script&gt;<\/span>/, 'decoded words are escaped text, not markup')
+  // The reading carries text only (the rendered columns that drew it are retired, R2): no tag survives into its words.
+  const read = readDocumentPayload(page(hostile))
+  const words = [...read.highlights, ...read.packet].map(row => row.text).join(' ')
+  for (const banned of [/<img/, /<script/, /<iframe/, /onerror/, /javascript:/, /<a /]) assert.doesNotMatch(words, banned)
+  assert.equal(read.highlights[0].text, 'marked words')
+  assert.equal(read.notes[0].text, 'a link <script>', 'decoded words are text, escaped wherever they are drawn')
 })
 
-test('the Clip view\'s columns: Highlights (mark · words · anchor), Notes (anchor · words), Packet (size · kind · source — words) under its count', () => {
-  const out = columnsOf({phase: 'read', reading: readDocumentPayload(page(flow()))})
-  assert.equal(count(out, /<section class="ccol"/g), 3)
-  assert.match(out, /<section class="ccol" aria-label="Highlights" data-column="Highlights" style="width:320px;flex:none"><h5>Highlights<\/h5><div data-payload-column="highlights" data-rows="3">/)
-  assert.match(out, /<div class="hl2" title="Marked in entry 1 \(F\)"><span class="hl2-lead"><i class="hl2-dot" aria-hidden="true"><\/i><\/span><span class="hl2-text">the stone&#x27;s other face<\/span><span class="r">F1<\/span><\/div>/)
-  assert.match(out, /aria-label="Notes" data-column="Notes" style="width:300px;flex:none"><h5>Notes<\/h5><div data-payload-column="notes" data-rows="3">/)
-  assert.match(out, /<span class="hl2-lead">Fz2<\/span><span class="hl2-text">Check against Rosarium pl\. 10 before admitting\.<\/span>/)
-  assert.match(out, /<span class="hl2-lead">—<\/span><span class="hl2-text">A v0\.1 note that names no entry\.<\/span>/, 'a note naming no entry: "—", never an invented anchor')
-  assert.match(out, /<span class="hl2-text">“words of a removed entry”<\/span>/, 'an empty note shows the passage it was made on')
-  assert.match(out, /<h5>Packet · 2 items · 70 chars<\/h5><div data-payload-column="packet" data-rows="2">/)
-  assert.match(out, /<span class="hl2-lead">36<\/span><span class="hl2-chip">selection<\/span><span class="hl2-text">entry 1 \(F\) — the vessel is the stone’s other face<\/span>/)
-  assert.match(out, /<span class="hl2-lead">34<\/span><span class="hl2-chip">note<\/span><span class="hl2-text">A packet item withheld by default\.<\/span>/)
-})
-
-test('each column is bounded: the first rows, then how many more the payload holds', () => {
-  const many = n => Array.from({length: n}, (_, i) => ({id: `n${i}`, entryId: 'e1', text: `note ${i + 1}`, at: AT}))
+test('each column\'s reading is bounded: the first rows, then how many more the payload holds', () => {
   assert.deepEqual(bounded([1, 2, 3], 2), {shown: [1, 2], more: 1})
-  const out = columnsOf({phase: 'read', reading: readDocumentPayload(page(flow({notes: many(PAYLOAD_ROWS + 5)})))})
-  assert.match(out, /data-payload-column="notes" data-rows="17">/)
-  assert.equal(count(out.slice(out.indexOf('data-payload-column="notes"'), out.indexOf('aria-label="Packet')), /class="hl2"/g), PAYLOAD_ROWS)
-  assert.match(out, /<span class="hl2-text">note 12<\/span>/); assert.doesNotMatch(out, /note 13</)
-  assert.match(out, /<p class="ccol-none">… 5 more in the payload<\/p>/)
-})
-
-test('one line per column: an empty payload names what was read; no payload keeps today\'s line; waiting and refused say so', () => {
-  const empty = columnsOf({phase: 'read', reading: readDocumentPayload(page(flow({entries: [], notes: [], packet: []})))})
-  assert.match(empty, /<h5>Highlights<\/h5><p class="ccol-none">This Flow&#x27;s payload holds no highlights\.<\/p>/)
-  assert.match(empty, /<h5>Notes<\/h5><p class="ccol-none">This Flow&#x27;s payload holds no notes\.<\/p>/)
-  assert.match(empty, /<h5>Packet<\/h5><p class="ccol-none">This Flow&#x27;s payload holds no packet items\.<\/p>/)
-  for (const state of [{phase: 'none'}, {phase: 'read', reading: {state: 'absent'}}]) {
-    const none = columnsOf(state)
-    assert.match(none, /<h5>Highlights<\/h5><p class="ccol-none">No highlights reading: the document&#x27;s owner discloses none\.<\/p>/)
-    assert.match(none, /<h5>Notes<\/h5><p class="ccol-none">No notes reading: the document&#x27;s owner discloses none\.<\/p>/)
-    assert.match(none, /<h5>Packet<\/h5><p class="ccol-none">No packet reading: the document&#x27;s owner discloses none\.<\/p>/)
-  }
-  const malformed = columnsOf({phase: 'read', reading: readDocumentPayload('<script type="application/json" id="ql-doc">{</script>')})
-  assert.match(malformed, /<p class="ccol-none">This document&#x27;s payload does not parse, so its notes are not read\.<\/p>/)
-  assert.equal(count(columnsOf({phase: 'reading'}), /<p class="ccol-none">Waiting for the owner&#x27;s reading\.<\/p>/g), 3)
-  assert.equal(count(columnsOf({phase: 'refused', message: 'denied'}), /<p class="ccol-none">Not read: the owner refused the document reading\.<\/p>/g), 3)
-})
-
-test('a browser subject before the owner answers: its three columns wait, and nothing is claimed of its payload', () => {
-  const out = html(createElement(CentralSubjectClip, {transport: {kind: 'unavailable', reason: 'the test carrier is down'}, subject: {kind: 'note', path: 'Control/user/flows/flow-fixture.html'}}))
-  assert.match(out, /data-row="template"[^>]*><span>template<\/span><span data-undisclosed="true">—<\/span>/)
-  assert.equal(count(out, /<p class="ccol-none">Waiting for the owner&#x27;s reading\.<\/p>/g), 3)
-  assert.match(out, /<h5>Packet<\/h5>/)
+  assert.equal(PAYLOAD_ROWS, 12)
 })

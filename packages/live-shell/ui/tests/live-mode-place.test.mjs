@@ -172,8 +172,9 @@ test('Device face with an empty chain or no track: one line in the host\'s waiti
   assert.doesNotMatch(noTrack, /data-detail-empty/)
 })
 
-test('Clip face with no selection: one line in the host\'s waiting idiom, nothing under it', () => {
-  const html = htmlOf(React.createElement(DeviceChainPanel, {ctx: fakeCtx, document: fakeDocument, selection: {track: 0, scene: null}, mode: 'clip'}))
-  assert.equal(html, '<p class="clip-empty" role="status">Select a clip in the Session or the Arrangement to see it here.</p>')
-  assert.doesNotMatch(html, /mode-detail-chip|data-detail-empty|detail-no-selection/, 'no card, no chips, no float')
+test('Clip face with no selection: no clip, so the host says its one line; the chain panel draws no Clip side of its own (R2)', async () => {
+  const {liveClipBinding} = await import('../src/live/clipBinding.ts')
+  assert.equal(liveClipBinding({set: fakeCtx.set, document: fakeDocument, selection: {track: 0, scene: null}, mode: {state: 'waiting', selection: null, line: ''}}), null)
+  assert.equal(htmlOf(React.createElement(DeviceChainPanel, {ctx: fakeCtx, document: fakeDocument, selection: {track: 0, scene: null}, mode: 'clip'})), '',
+    'Live\'s Clip side is the one clip host\'s (clip:live on live/clipBinding.ts)')
 })
