@@ -68,6 +68,9 @@ import type {NativeDirectory, NativeFileEntry, KernelTransportStatus} from '../.
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
 import {dayRead} from '../../../../../desktop/cradle/src/day/client'
 import {readFlowInstance, USER_FLOWS_DIR} from '../../../../../desktop/cradle/src/flow/instances'
+import {listWorldPages, type PageForm, type PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
+import {readWorlds, type CentralWorldsReading} from '../central/centralWorlds'
+import {CENTRAL_WORLD_DRAG} from '../timeline/centralTrackAdapter'
 import {DOCUMENT_FORMS, type DocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import {useCentralDocumentOpener} from '../central/documents/useOpenCentralDocument'
 import {dayRefOfDate} from '../central/documents/centralDocuments'
@@ -218,9 +221,11 @@ function CategoryRows({category, needle, mode, onSelectSubject, selectedSubject}
   if (category.state === 'waiting') {
     return <DesignedEmptyCategory category={category} />
   }
+  if (category.id === 'central-worlds') return <WorldsRows needle={needle} />
   if (category.id === 'central-days') return <DaysRows needle={needle} onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />
   if (category.id === 'central-flows') return <FlowsRows needle={needle} onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />
-  if (category.id === 'central-beings') return <BeingsRows needle={needle} />
+  if (category.id === 'central-beings') return <PageRows form="being" label="Beings" needle={needle} onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />
+  if (category.id === 'central-things') return <PageRows form="thing" label="Things" needle={needle} onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />
   if (category.id === 'central-files' || category.id === 'techne-files') return <GroundRows needle={needle} onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} opens={category.id === 'central-files'} note={ROW_NOTES[category.id]} />
   if (category.id === 'techne-sources') return <SourceRows needle={needle} />
   if (category.id === 'central-new') return <NewForms />
@@ -392,8 +397,9 @@ function FlowsRows({needle, onSelectSubject, selectedSubject}: {
     let live = true
     setFault(null); setListing(null)
     if (transport.kind === 'unavailable') return
-    listFiles(transport, USER_FLOWS_DIR).then(
-      directory => {if (live) setListing(directory.entries.filter(entry => entry.kind === 'file' && /\.html$/i.test(entry.name)))},
+    // The page owner places each file by its island: only a Flow lists here (a Being or a Thing in the same folder is no Flow).
+    listWorldPages(transport, USER_FLOWS_DIR).then(
+      listing => {if (live) setListing(entriesOfForm(listing, 'flow'))},
       // The owner refuses a listing of a folder that does not exist: that is exactly "no Flow written yet" (flow/instances.ts).
       reason => {if (live) { if (/No such file or directory/i.test(String(reason))) setListing([]); else setFault(message(reason)) }})
     return () => {live = false}
@@ -412,6 +418,89 @@ function FlowsRows({needle, onSelectSubject, selectedSubject}: {
   const shown = flows.filter(entry => !needleText || `${entry.name} ${flowRowWords(entry.name, readings.get(entry.location.ref)).name}`.toLocaleLowerCase().includes(needleText))
   if (!shown.length) return <p className="native-empty">{needleText ? 'No Flows match this search.' : 'No Flow written yet.'}</p>
   return <FlowRowList flows={shown} readings={readings} selectedSubject={selectedSubject} onSelectSubject={onSelectSubject} openFile={openFile} openFault={openFault} />
+}
+
+/** The pages of one form in a page listing, as the rows' file entries. Pure. */
+export function entriesOfForm(listing: PageListing, form: PageForm): NativeFileEntry[] {
+  return listing.pages.filter(page => page.form === form)
+    .map(page => ({name: page.name, location: page.location, kind: 'file' as const, byte_len: 0, retrieval_allowed: true}))
+}
+
+/** The Worlds rows (manual §18.1 "The track": "To bring a world into today, drag it from the browser onto an empty track"): your
+ * world and each project's, from Central's disclosure of its registers. A row is dragged, not opened: it carries the world's ref. */
+function WorldsRows({needle}: {needle: string}) {
+  const {transport} = useWorkspace()
+  const [worlds, setWorlds] = useState<CentralWorldsReading>({state: 'reading'})
+  useEffect(() => {
+    let live = true
+    void readWorlds(transport).then(next => { if (live) setWorlds(next) })
+    return () => {live = false}
+  }, [transport])
+  if (worlds.state === 'reading') return <p className="native-empty" role="status">Reading the worlds…</p>
+  if (worlds.state === 'unavailable') return <DesignedRead absence="Central did not disclose its worlds" reason={worlds.reason} affordance="op world_browse — the root register and each project's ProjectCentral." />
+  const needleText = needle.trim().toLocaleLowerCase()
+  const shown = worlds.worlds.filter(world => !needleText || `${world.name} ${world.ref}`.toLocaleLowerCase().includes(needleText))
+  if (!shown.length) return <p className="native-empty">No world matches this search.</p>
+  return <section className="mode-browser-rows" aria-label="Worlds"><ul>
+    {shown.map(world => {
+      const hover = `${world.name} — ${world.kind === 'yours' ? 'your own world' : `${world.project}'s world`}; its pages are kept in ${world.folder}. Drag it onto the empty track to bring it into today.`
+      return <li key={world.ref}>
+        <div className="mode-browser-row" data-world={world.ref} draggable data-i={`${world.name}|${hover}`} title={hover}
+          onDragStart={event => { event.dataTransfer.setData(CENTRAL_WORLD_DRAG, world.ref); event.dataTransfer.setData('text/plain', world.name); event.dataTransfer.effectAllowed = 'copy' }}>
+          <span aria-hidden="true"><KindMark kind="world" size={12} /></span><span>{world.name}</span>
+          <span className="mode-browser-row-meta">{world.kind === 'yours' ? 'yours' : 'project'}</span>
+        </div>
+      </li>
+    })}
+  </ul></section>
+}
+
+/** The Beings or Things rows: the pages of that form in your world, placed by their island through the page owner. Select previews
+ * the page in Clip view; double-click or Enter opens it in the focused pane. */
+function PageRows({form, label, needle, onSelectSubject, selectedSubject}: {
+  form: PageForm
+  label: string
+  needle: string
+  onSelectSubject: (subject: CentralSubjectSelection | null) => void
+  selectedSubject: CentralSubjectSelection | null
+}) {
+  const {transport} = useWorkspace()
+  const [listing, setListing] = useState<PageListing | null>(null)
+  const [fault, setFault] = useState<string | null>(null)
+  const {openFile, openFault} = useOpening()
+  useEffect(() => {
+    let live = true
+    setFault(null); setListing(null)
+    if (transport.kind === 'unavailable') return
+    listWorldPages(transport, USER_FLOWS_DIR).then(
+      next => {if (live) setListing(next)},
+      reason => {if (live) { if (/No such file or directory/i.test(String(reason))) setListing({schema: 'oi.page-list/v1', path: USER_FLOWS_DIR, pages: [], not_pages: [], more: false}); else setFault(message(reason)) }})
+    return () => {live = false}
+  }, [transport])
+  if (transport.kind === 'unavailable') return <DesignedRead absence="The kernel carrier is unavailable" reason={transport.reason} affordance={`The ${label} of your world list when the carrier answers.`} />
+  if (fault) return <DesignedRead absence={`The ${label} listing refused`} reason={fault} affordance={`op page {operation: list} at ${USER_FLOWS_DIR}.`} />
+  if (!listing) return <p className="native-empty" role="status">Reading the {label}…</p>
+  const needleText = needle.trim().toLocaleLowerCase()
+  const pages = listing.pages.filter(page => page.form === form && (!needleText || `${page.title ?? ''} ${page.name}`.toLocaleLowerCase().includes(needleText)))
+  if (!pages.length) return <p className="native-empty">{needleText ? `No ${label} match this search.` : `Your world holds no ${label} yet: make one from New….`}</p>
+  return <section className="mode-browser-rows" aria-label={label}><ul>
+    {pages.map(page => {
+      const path = page.location.path
+      const selected = selectedSubject?.path === path
+      const name = page.title || page.name.replace(/\.html$/i, '')
+      const entry: NativeFileEntry = {name: page.name, location: page.location, kind: 'file', byte_len: 0, retrieval_allowed: true}
+      return <li key={page.location.ref}>
+        <button type="button" data-browser-row className={`mode-browser-row${selected ? ' selected' : ''}`} aria-current={selected || undefined} data-page={page.name}
+          data-i={`${name}|select the page — it opens in Clip view; double-click or Enter opens it in the focused pane. ${path}`} title={`${path} — double-click or Enter opens it in the focused pane.`}
+          onClick={() => onSelectSubject({kind: 'note', path, location: page.location})}
+          onDoubleClick={() => openFile(entry, path)}
+          onKeyDown={event => { if (event.key === 'Enter') openFile(entry, path) }}>
+          <span aria-hidden="true"><KindMark kind={form === 'being' ? 'agent' : 'source'} size={12} /></span><span>{name}</span>
+          <span className="mode-browser-row-meta">{form === 'being' ? 'being' : 'thing'}{page.world ? ` · ${page.world.replace(/^central:wiki:(project:)?/, '')}` : ''}</span>
+        </button>
+      </li>
+    })}
+  </ul>{openFault && <p className="native-error" role="alert" data-open-fault>{openFault}</p>}</section>
 }
 
 /** The Flows rows as drawn (the mockup's `FLOWS` rows): the Flow's mark, its title, its agents and revision. Select previews in
@@ -444,39 +533,6 @@ export function FlowRowList({flows, readings, selectedSubject, onSelectSubject, 
       </li>
     })}
   </ul>{openFault && <p className="native-error" role="alert" data-open-fault>{openFault}</p>}</section>
-}
-
-/** The Beings rows: the agent identities of the kernel roster (central.agent-profile-roster/v1, `agent_definition` roster), as the
- * one agent-sessions provider already reads it — the source the central family names for its Beings
- * (inhabitants/centralFamilyManifest.ts). They draw while the family declares the category `cut`; until then it stands designed
- * empty. */
-function BeingsRows({needle}: {needle: string}) {
-  const sessions = useAgentSessionsOptional()
-  if (!sessions) return <DesignedRead absence="No roster reading here" reason="The agent-sessions provider is not mounted above this browser." affordance="The roster's agents list here when the provider reads them." />
-  if (sessions.rosterError && !sessions.roster.size) return <DesignedRead absence="The roster read refused" reason={sessions.rosterError} affordance="op agent_definition (roster) — central.agent-profile-roster/v1, read-only." />
-  const needleText = needle.trim().toLocaleLowerCase()
-  const beings = [...sessions.roster].map(([ref, entry]) => ({ref, name: entry.name, accepted: entry.accepted}))
-    .filter(being => !needleText || `${being.name} ${being.ref}`.toLocaleLowerCase().includes(needleText))
-    .sort((a, b) => a.name.localeCompare(b.name))
-  if (!beings.length) return <p className="native-empty">{needleText ? 'No beings match this search.' : 'The roster names no agent yet.'}</p>
-  return <BeingRowList beings={beings} />
-}
-
-/** The Beings rows as drawn (the mockup's "Fizz · agent"): the agent's mark, its name, its standing on the roster. A being is read
- * here, not opened: no Beings document opens from a roster entry yet. */
-export function BeingRowList({beings}: {beings: readonly {ref: string; name: string; accepted: boolean | null}[]}) {
-  return <section className="mode-browser-rows" aria-label="Beings"><ul>
-    {beings.map(being => {
-      const standing = being.accepted === false ? 'agent · not accepted' : 'agent'
-      const hover = `${being.name} (${being.ref}) — an agent on the kernel roster${being.accepted === true ? ', accepted' : being.accepted === false ? ', not accepted' : ''}.`
-      return <li key={being.ref}>
-        <div className="mode-browser-row" data-being={being.ref} data-i={`${being.name}|${hover}`} title={hover}>
-          <span aria-hidden="true"><KindMark kind="agent" size={12} /></span><span>{being.name}</span>
-          <span className="mode-browser-row-meta">{standing}</span>
-        </div>
-      </li>
-    })}
-  </ul></section>
 }
 
 /** The Files rows: the ground's listing through the workspace's directory

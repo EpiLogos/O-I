@@ -8,16 +8,19 @@
 //   - the conversation binds the way the encounter surface binds it before a turn: the kernel's `nara_dialogue` op in its
 //     `resolve` operation (`acquireNativeDialogue`, nara/nativeDialogue.ts; nara/NaraSurface.tsx `ensureDialogue`). The
 //     hosted face only looks the binding up (`lookupNativeDialogue`) and names this operation in its unbound notice;
-//   - the Day's "Open today" ensures the current Day the way the ground panel and the cradle's Today do: Central's ground read
-//     again, then the `central` op `ensure-day` with the civil-time policy's revision (desktop/cradle/src/CradleFrame.tsx:734-740
-//     `openToday`; desktop/cradle/src/central/CentralGround.tsx:49,75 `canEnsure` and its press). It is the person's press: nothing
-//     calls it on a timer, and it neither closes an old Day nor initialises the new Day's document;
+//   - the Day's "Open today" opens the current Day the way the cradle's Today does (desktop/cradle/src/CradleFrame.tsx:734-754
+//     `openToday`): Central's ground read again; the `central` op `ensure-day` with the civil-time policy's revision when today's Day
+//     is not current; then, when today's Day has no document yet, `initialise-day` from the roster's own Day form
+//     (ql-daily-die.html, read through Central's file route, its revision checked) with the placement policy's revision (T-WORLDS W2
+//     "New Day calls initialise-day"). It is the person's press: nothing calls it on a timer, and it closes no old Day;
 //   - the Flow takes the person's next entry the way the Flow's own surface writes one: the owner's file read again, the entry
 //     appended through the template's own contract (flow/instance.ts appendEntry, relations and the composing basis on the current
 //     form), and the Flow's revision-checked file write (flow/instances.ts writeFlowInstance — central.files.write, op
 //     file_operation), whose conflict keeps the words and says so (desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`).
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
+import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {readFile} from '../../../../../../desktop/cradle/src/files/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {appendEntry, embedDocument} from '../../../../../../desktop/cradle/src/flow/instance'
@@ -70,21 +73,41 @@ export async function turnDieFace(transport: KernelTransportStatus, day: DayDieW
   return {revision: session.basis.revision, wrote: true}
 }
 
-/** Open today: ensure the current Day through Central, when the owner's own reading says that is the act that stands. Central's
- * ground is read again first, so the decision is the owner's present one (CradleFrame.tsx:735 reads it before it ensures): a Day
- * someone else already ensured is not ensured twice (`ensured: false`). Resolves once the owner has answered the ensure; rejects
- * with the owner's words. */
-export async function openToday(transport: KernelTransportStatus): Promise<{ensured: boolean}> {
-  const ground = await readGround(transport, null)
+/** Open today: ensure the current Day through Central when the owner's own reading says that is the act that stands, then make its
+ * document from the Day form when it has none. Central's ground is read again first, so each decision is the owner's present one
+ * (CradleFrame.tsx:735 reads it before it ensures): a Day someone else already ensured is not ensured twice (`ensured: false`), a
+ * document someone else made is not made twice (`initialised: false`). Resolves once the owner has answered; rejects with its
+ * words. */
+export async function openToday(transport: KernelTransportStatus): Promise<{ensured: boolean; initialised: boolean}> {
+  let ground = await readGround(transport, null)
   if (ground.time.state !== 'ready' || !ground.time.data) {
     throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; the current Day cannot be ensured`)
   }
-  if (ground.day.state === 'ready' && ground.day.data?.temporal.civil_date === ground.time.data.civil_date) return {ensured: false}
-  if (!canEnsureDay(ground)) {
-    throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; the owner admits no ensure from here`)
+  let ensured = false
+  if (!(ground.day.state === 'ready' && ground.day.data?.temporal.civil_date === ground.time.data.civil_date)) {
+    if (!canEnsureDay(ground)) {
+      throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; the owner admits no ensure from here`)
+    }
+    await central(transport, null, {kind: 'ensure-day', expected_time_policy_revision: ground.time.data.revision})
+    ensured = true
+    ground = await readGround(transport, null)
   }
-  await central(transport, null, {kind: 'ensure-day', expected_time_policy_revision: ground.time.data.revision})
-  return {ensured: true}
+  const day = ground.day.data
+  if (!day || ground.day.state !== 'ready') throw new Error(`Central's Day reading is ${ground.day.state} after the ensure; there is no Day to make a document for`)
+  if (day.document_state === 'ready') return {ensured, initialised: false}
+  // The Day's document from the roster's own Day form — never an invented payload (CradleFrame.tsx:744-752). The roster is read
+  // only when a document is to be made (it carries the forms' JSON, which the rest of this module's readers never need).
+  const {DOCUMENT_FORMS, resolveDocumentForm} = await import('../../../../../../desktop/cradle/src/flow/documentForms')
+  const form = DOCUMENT_FORMS.find(candidate => candidate.kind === 'document-42' && candidate.file === 'ql-daily-die.html')
+  if (!form) throw new Error('The Day form is missing from the document roster')
+  if (ground.placement.state !== 'ready' || !ground.placement.data) throw new Error('Central\'s native placement authority is unavailable; the Day document cannot be made')
+  const world = await kernelOp(transport, {op: 'world_browse'})
+  const projects = world.outcome?.result === 'world_read' ? world.outcome.snapshot.navigator?.root?.work.projects : undefined
+  const formLocation = await resolveDocumentForm(transport, form, projects)
+  const original = await readFile(transport, formLocation)
+  await central(transport, null, {kind: 'initialise-day', day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision,
+    expected_policy_revision: ground.placement.data.revision, form: formLocation, expected_form_revision: original.revision})
+  return {ensured, initialised: true}
 }
 
 /** Append the person's entry to a Flow: read the file again (the revision the write is checked against), append the entry as the

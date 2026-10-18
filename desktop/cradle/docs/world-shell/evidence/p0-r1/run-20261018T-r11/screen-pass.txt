@@ -1,0 +1,25 @@
+r11 screen pass — 9ac21bd68, 18 Oct 2026 18:35–18:42 UTC, computer use on the native candidate, the owner's real ground (Control/user/flows
+backed up with sha256 first; both Flows written in the pass restored to their original bytes after; the folder's file set unchanged).
+
+Seen:
+- W2 page op from Clip view (Central): a Flow's Title written (Enter) lands in its file's meta.title, its page counter moves, Clip view reads
+  the new revision; its Colour (Teal) lands as meta.colour = var(--fizz) and the clip's head takes the colour; on a Flow with entries, Green
+  then Highlight on the selected entry marks every run of its words <mark data-colour="green"> without crossing its <code> or link, the
+  revision moving 93261 → 93506 B. Highlight's Colour is the view's own (no longer refused).
+- W1: the pool holds the workspaces only (Central, Factory, Live), with its columns and footer; ⌥⌘6 hides and shows it; a device's ▸ opens
+  it whole in the band above the chain (Packet: every setting, full width, the panes shrinking), never in the pool; ▦ opens Full in a pane.
+- Live (a copy of "Piano and voices mastering" at ~/Music/O-I screen pass/screen-pass-r11.als): 21 tracks, 8 scenes, each mixer row;
+  Arrangement draws 3-LABS's eleven take lanes and its automation lanes (Takes 184, Automation 61); Clip view reads an arrangement clip
+  whole (LABS 8: Clip panel, Pitch/Time tools, the notes) on the clip's own colour.
+
+Found:
+- The first press of Live on the mode rail from Central lit the icon and said "Live … restored" on the Info line but left the frame in
+  Central; from Factory the same press switched. Not reproduced since; watch it in r12.
+- Live's recent set "screen-pass-copy" points at a file that no longer exists: "Open failed: No such file or directory (os error 2)"
+  on the status line until another set is opened.
+- A device head's ▸ at the window's left edge sits under Stage Manager's strip (the pass used Packet's).
+
+Not seen, and why: the Day, Physics, the Skillset rack and Scope in all six views; Clip view in Factory (no session holds a task),
+Expressions and Technē; the effects chain, Sky modulation, Scale mapping and the M3 clock; a comp pressed on a take lane; a send on a mixer
+row (the row draws no sends yet); Live's Grooves in the pool (in the W2 batch, after r11). Today's Day was not opened (Open today makes
+today's document only from the W2 batch).

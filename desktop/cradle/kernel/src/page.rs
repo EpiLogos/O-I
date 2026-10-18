@@ -2,13 +2,18 @@
 //! whose fields live in its `ql-doc` island (desktop/cradle/src/document/identity.ts QL_DOC; personal/page.mjs, flow/instance.ts).
 //! The kernel reads a page and lists a world's pages through Central's file owner (files.rs), and writes one field of a page on the
 //! revision it was read at: the island is read, the field set by its own rule, the page's counter moved by one, and the file
-//! written back through `central.files.write` with that revision — refused, overwriting nothing, when the file moved since. Every
-//! write answers with a receipt: the field, the revision it stood on and the one it now stands on.
+//! written back with that revision — through the source owner's CAS for a page in a project's human ground, else through
+//! `central.files.write` — refused, overwriting nothing, when the file moved since. Every write answers with a receipt: the
+//! field, the revision it stood on and the one it now stands on.
 //!
 //! The fields (manual §18.1 "The Clip panel", the Being/Thing ties and the Flow's World; the tools' notes and highlights):
 //! title, colour, world, subject, kind (a Being: person or agent), office (C1–C4), sources, place, anchor, expression, layout,
-//! tone, container (a Flow: dialogue, circle or inquiry), and a note or a highlight added or taken away. A Day is no page here:
-//! it is the set, and its die is turned through the Day's own owner (central.rs).
+//! tone, a Flow's view and container (dialogue, circle or inquiry), how the page opens (launch), and a note or a highlight
+//! added or taken away. A Day is no page here: it is the set, and its die is turned through the Day's own owner (central.rs).
+//!
+//! A page plays when launched (manual §18.1): Launch allocates the NOW clearing tied to the page, one per page, so launching it
+//! again rejoins it; Stop closes it. The lifecycle act carries the person's native authority (`CentralClient::for_person`) and
+//! nothing else does.
 use crate::files::{self, Location};
 use crate::flow::CentralClient;
 use serde::{Deserialize, Serialize};
@@ -37,11 +42,25 @@ pub enum Request {
         field: String,
         value: Value,
     },
+    /// A page played (manual §18.1 "A page plays when launched"): the NOW clearing tied to the page is allocated, or rejoined
+    /// when it already stands, and stands active.
+    Launch {
+        location: Location,
+    },
+    /// A playing page stopped: its NOW clearing is closed on the revision read.
+    Stop {
+        now_ref: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        project: Option<String>,
+    },
 }
 
 impl Request {
     pub fn is_write(&self) -> bool {
-        matches!(self, Request::MutateField { .. })
+        matches!(
+            self,
+            Request::MutateField { .. } | Request::Launch { .. } | Request::Stop { .. }
+        )
     }
 }
 
@@ -466,7 +485,7 @@ fn highlight_page(
 }
 
 /// How a page opens when it is launched (manual §18.1 "The Launch panel"): kept in the page's `meta.launch`.
-fn launch(island: &mut Value, page: bool, value: &Value) -> Result<Value, String> {
+fn launch_field(island: &mut Value, page: bool, value: &Value) -> Result<Value, String> {
     let asked = value
         .as_object()
         .ok_or("A page's launch is a record: opensAs, opensIn, seats")?;
@@ -648,7 +667,7 @@ pub fn apply_field(
                 }
             }
         }
-        "launch" => launch(island, page, value)?,
+        "launch" => launch_field(island, page, value)?,
         "view" if !page => {
             let chosen = value
                 .as_str()
@@ -799,6 +818,121 @@ pub fn mutate_field(
         json!({"schema": "oi.page-mutation/v1", "location": location, "field": field, "value": set,
         "before_revision": expected_revision, "revision": written["revision"], "outcome": written["outcome"],
         "receipt": written}),
+    )
+}
+
+/// The task a page's moment is allocated under: one per page, so launching it again rejoins the same clearing.
+pub fn page_task(location: &Location) -> String {
+    format!("oi:page:{}", location.ref_id)
+}
+
+/// The purpose a page's clearing carries. It stays the same for the page's life (the allocator refuses a second purpose
+/// for one task), so it names the page by its ref, not by its title.
+pub fn page_purpose(location: &Location) -> String {
+    format!("A page is open: {}", location.path)
+}
+
+fn policy_revision(client: &CentralClient, project: Option<&str>) -> Result<String, String> {
+    let policy = client
+        .run("central.work.policy", json!({ "project": project }))
+        .map_err(|error| error.to_string())?;
+    policy["revision"]
+        .as_str()
+        .map(str::to_owned)
+        .ok_or_else(|| "Central's work policy names no revision".into())
+}
+
+/// Launch: the page is read (its project scopes the clearing), the clearing allocated (idempotent per page) and, when it
+/// stood quiescent or closed, made active again on the revision read. `person` carries the host's native authority for the
+/// lifecycle transition: the person pressed Launch.
+pub fn launch(
+    client: &CentralClient,
+    person: &CentralClient,
+    location: &Location,
+) -> Result<Value, String> {
+    let reading = files::read(client, location)?;
+    let island = read_island(&reading.content)?;
+    let form = form_of(&island);
+    if form == "unknown" {
+        return Err("This file is no page: only a Being, a Thing or a Flow plays".into());
+    }
+    let project = reading.project.as_ref().map(|project| project.name.clone());
+    let policy = policy_revision(client, project.as_deref())?;
+    let allocated = client
+        .run(
+            "central.now.allocate",
+            json!({"project": project, "task_ref": page_task(location), "purpose": page_purpose(location),
+                "expected_policy_revision": policy, "source_refs": [location.ref_id]}),
+        )
+        .map_err(|error| error.to_string())?;
+    let now_ref = allocated["now_ref"]
+        .as_str()
+        .or_else(|| allocated["now"]["now_ref"].as_str())
+        .ok_or("Central allocated no NOW for the page")?
+        .to_string();
+    let lifecycle = allocated["lifecycle"]
+        .as_str()
+        .or_else(|| allocated["now"]["lifecycle"].as_str())
+        .unwrap_or("active");
+    let rejoined = if lifecycle != "active" {
+        let now = client
+            .run(
+                "central.now.read",
+                json!({"project": project, "now_ref": now_ref}),
+            )
+            .map_err(|error| error.to_string())?;
+        let revision = now["revision"]["revision"]
+            .as_str()
+            .ok_or("Central's NOW reading names no revision")?;
+        Some(
+            person
+                .run(
+                    "central.now.lifecycle",
+                    json!({"project": project, "now_ref": now_ref, "expected_revision": revision,
+                        "expected_policy_revision": policy, "lifecycle": "active"}),
+                )
+                .map_err(|error| error.to_string())?,
+        )
+    } else {
+        None
+    };
+    Ok(
+        json!({"schema": "oi.page-launch/v1", "location": location, "form": form, "title": island["meta"]["title"],
+        "now_ref": now_ref, "allocated": allocated, "reopened": rejoined}),
+    )
+}
+
+/// Stop: the page's clearing closed on the revision read, with the host's native authority (the person pressed Stop).
+pub fn stop(
+    client: &CentralClient,
+    person: &CentralClient,
+    now_ref: &str,
+    project: Option<&str>,
+) -> Result<Value, String> {
+    let now = client
+        .run(
+            "central.now.read",
+            json!({"project": project, "now_ref": now_ref}),
+        )
+        .map_err(|error| error.to_string())?;
+    if now["lifecycle"] == "closed" {
+        return Ok(
+            json!({"schema": "oi.page-stop/v1", "now_ref": now_ref, "outcome": "unchanged"}),
+        );
+    }
+    let revision = now["revision"]["revision"]
+        .as_str()
+        .ok_or("Central's NOW reading names no revision")?;
+    let policy = policy_revision(client, project)?;
+    let closed = person
+        .run(
+            "central.now.lifecycle",
+            json!({"project": project, "now_ref": now_ref, "expected_revision": revision,
+                "expected_policy_revision": policy, "lifecycle": "closed"}),
+        )
+        .map_err(|error| error.to_string())?;
+    Ok(
+        json!({"schema": "oi.page-stop/v1", "now_ref": now_ref, "outcome": "closed", "receipt": closed}),
     )
 }
 
@@ -1184,7 +1318,9 @@ def ok(data): print(json.dumps({"ok": True, "data": data}))
 def rev(text): return "r-" + hashlib.sha256(text.encode()).hexdigest()[:12]
 def loc(path): return {"schema": "central.path-ref/v1", "ref": "ref:" + path, "root": "R", "path": path}
 def source(path): return {"ref": "central:source:project:P:" + path, "path": path, "exists": True} if "ProjectCentral" in path else None
-with open(os.path.join(home, "log"), "a") as log: log.write(action + "\n")
+with open(os.path.join(home, "log"), "a") as log: log.write(action + (" person" if os.environ.get("CENTRAL_NATIVE_TOKEN") else "") + "\n")
+def refuse(message): print(json.dumps({"ok": False, "status": "refused", "error": {"message": message}})); sys.exit(1)
+def now_file(ref): return os.path.join(home, "now-" + hashlib.sha256(ref.encode()).hexdigest()[:12] + ".json")
 if action == "central.files.read":
     path = payload["location"]["path"]; text = open(os.path.join(home, path.replace("/", "_"))).read()
     ok({"schema": "central.file-reading/v1", "location": loc(path), "revision": rev(text), "byte_len": len(text), "content_encoding": "utf-8",
@@ -1212,6 +1348,26 @@ elif action in ("projectcentral.source.read", "projectcentral.source.write"):
         ok({"receipt": {"schema": "central.project-world-source-write-receipt/v1", "world_ref": "central:project:P", "source": binding,
             "previous_revision": "s-" + rev(text), "revision": {"revision": "s-" + rev(payload["content"]), "byte_len": 1}, "changed": True,
             "actor": payload["actor"], "actor_kind": payload["actor_kind"], "automatic_agent_or_model_invocation": False}})
+elif action == "central.work.policy":
+    ok({"schema": "central.work-policy/v1", "revision": "policy-1"})
+elif action == "central.now.allocate":
+    assert payload["expected_policy_revision"] == "policy-1"
+    ref = "central:now:control:root:" + hashlib.sha256(payload["task_ref"].encode()).hexdigest()[:12]
+    created = not os.path.exists(now_file(ref))
+    if created: json.dump({"now_ref": ref, "lifecycle": "active", "task_ref": payload["task_ref"], "purpose": payload["purpose"], "n": 1}, open(now_file(ref), "w"))
+    record = json.load(open(now_file(ref)))
+    if record["purpose"] != payload["purpose"]: refuse("allocation id already has a different task/purpose/relationship basis")
+    ok({"now_ref": ref, "lifecycle": record["lifecycle"], "created": created})
+elif action == "central.now.read":
+    record = json.load(open(now_file(payload["now_ref"])))
+    ok({"now_ref": record["now_ref"], "lifecycle": record["lifecycle"], "revision": {"revision": "now-%d" % record["n"], "byte_len": 1}})
+elif action == "central.now.lifecycle":
+    if os.environ.get("CENTRAL_NATIVE_TOKEN") != "person-token": refuse("native action authority is required for central.now.lifecycle")
+    record = json.load(open(now_file(payload["now_ref"])))
+    if payload["expected_revision"] != "now-%d" % record["n"]: refuse("the NOW moved since it was read")
+    record["lifecycle"] = payload["lifecycle"]; record["n"] += 1
+    json.dump(record, open(now_file(payload["now_ref"]), "w"))
+    ok({"now_ref": record["now_ref"], "lifecycle": record["lifecycle"], "revision": {"revision": "now-%d" % record["n"], "byte_len": 1}})
 else:
     ok({})
 "#;
@@ -1376,5 +1532,59 @@ else:
             .as_str()
             .unwrap()
             .contains("no ql-doc island"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_page_plays_in_one_now_clearing_and_stop_closes_it_with_the_person_s_authority_only() {
+        let stub = Stub::new("launch");
+        let at = stub.put("Control/user/flows/flow-1.html", &page(flow()));
+        let person = stub.client.with_person_token("person-token");
+        let launched = launch(&stub.client, &person, &at).unwrap();
+        assert_eq!(launched["form"], "flow");
+        let now_ref = launched["now_ref"].as_str().unwrap().to_string();
+        assert!(
+            launched["reopened"].is_null(),
+            "a first launch allocates an active clearing"
+        );
+        let again = launch(&stub.client, &person, &at).unwrap();
+        assert_eq!(
+            again["now_ref"],
+            json!(now_ref),
+            "launching it again rejoins the same clearing"
+        );
+        assert_eq!(again["allocated"]["created"], json!(false));
+        let refused = stop(&stub.client, &stub.client, &now_ref, None).unwrap_err();
+        assert!(
+            refused.contains("native action authority"),
+            "the kernel's own client carries no authority: {refused}"
+        );
+        let stopped = stop(&stub.client, &person, &now_ref, None).unwrap();
+        assert_eq!(stopped["outcome"], "closed");
+        assert_eq!(
+            stop(&stub.client, &person, &now_ref, None).unwrap()["outcome"],
+            "unchanged"
+        );
+        let reopened = launch(&stub.client, &person, &at).unwrap();
+        assert_eq!(
+            reopened["reopened"]["lifecycle"], "active",
+            "a closed page launched again plays again"
+        );
+        let log = std::fs::read_to_string(stub.home.join("log")).unwrap();
+        assert!(
+            !log.contains("central.now.allocate person")
+                && !log.contains("central.files.read person"),
+            "only the lifecycle act carries the person's token: {log}"
+        );
+        assert!(log.contains("central.now.lifecycle person"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_file_that_is_no_page_does_not_play() {
+        let stub = Stub::new("no-page");
+        let at = stub.put("Control/user/flows/plain.html", "<html>no island</html>");
+        let refused = launch(&stub.client, &stub.client, &at).unwrap_err();
+        assert!(refused.contains("no ql-doc island"), "{refused}");
     }
 }

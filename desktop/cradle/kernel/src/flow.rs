@@ -252,6 +252,10 @@ pub struct CentralClient {
     project_query: String,
     suite_route: bool,
     central_executable: Option<PathBuf>,
+    /// The host's native action token, carried only by a client made for one press of the person's (`for_person`): Central's
+    /// authenticated actions read it from their environment. Never set on the kernel's own client, so no read and no
+    /// agent-driven path acts with the person's authority. Its Debug output is redacted.
+    person: Option<crate::factory::AuthorityToken>,
 }
 
 impl CentralClient {
@@ -278,7 +282,25 @@ impl CentralClient {
             project_query,
             suite_route: false,
             central_executable: None,
+            person: None,
         }
+    }
+
+    /// The same client, carrying the host's native action token for one act the person pressed (a page's Launch or Stop): the
+    /// token the native host holds (`CENTRAL_NATIVE_TOKEN`, else `~/.central/native-token`), read here in the native process and
+    /// never supplied by the desk. Without one, the owner refuses the act in its own words.
+    pub(crate) fn for_person(&self) -> Self {
+        let mut client = self.clone();
+        client.person = crate::factory::host_native_token();
+        client
+    }
+
+    /// A client carrying the given token (tests stand in for the host's).
+    #[cfg(test)]
+    pub(crate) fn with_person_token(&self, token: &str) -> Self {
+        let mut client = self.clone();
+        client.person = crate::factory::AuthorityToken::for_test(token);
+        client
     }
 
     /// Explicit suite-level configuration for parity tests and embedded
@@ -362,6 +384,9 @@ impl CentralClient {
             if let Some(owner) = &self.central_executable {
                 command.env("OI_CENTRAL_CTRL_BIN", owner);
             }
+        }
+        if let Some(token) = &self.person {
+            command.env("CENTRAL_NATIVE_TOKEN", token.as_str());
         }
         command.arg("--json");
         if let Some(root) = &self.central_root {

@@ -235,7 +235,11 @@ impl PreparedWrite {
                                 let body = invocation.input.as_ref().is_some_and(|input| {
                                     input["request"]["changes"]
                                         .as_array()
-                                        .is_some_and(|changes| changes.iter().any(|change| change["change"] == "body_set"))
+                                        .is_some_and(|changes| {
+                                            changes
+                                                .iter()
+                                                .any(|change| change["change"] == "body_set")
+                                        })
                                 });
                                 if body {
                                     "The native Wiki owner saved your world's body.".into()
@@ -362,17 +366,87 @@ impl PreparedWrite {
                         value,
                     },
             } => {
-                let data = crate::page::mutate_field(&self.client, location, expected_revision, field, value)?;
+                let data = crate::page::mutate_field(
+                    &self.client,
+                    location,
+                    expected_revision,
+                    field,
+                    value,
+                )?;
                 records.push(Record::RetireListing(files::parent_path(&location.path)));
                 records.push(Record::RetireDerived);
                 records.push(Record::RetireTemporal);
                 if matches!(data["outcome"].as_str(), Some("created" | "written")) {
                     records.push(Record::Event(Box::new(KernelEvent::FileChanged {
                         path: location.path.clone(),
-                        summary: format!("A page's {field} changed through the page owner's write."),
+                        summary: format!(
+                            "A page's {field} changed through the page owner's write."
+                        ),
                     })));
                 }
                 KernelOpResult::PageReading { data }
+            }
+            // A page played or stopped (page.rs): its NOW clearing allocated or
+            // closed, the lifecycle act carrying the person's native authority
+            // (the person pressed Launch or Stop). One NOW change, one event.
+            KernelOp::Page {
+                request: crate::page::Request::Launch { location },
+            } => {
+                let data = crate::page::launch(&self.client, &self.client.for_person(), location)?;
+                records.push(Record::RetireTemporal);
+                records.push(Record::RetireDerived);
+                records.push(Record::Event(Box::new(KernelEvent::NowChanged {
+                    owner: CENTRAL.into(),
+                    action: "central.now.allocate".into(),
+                    reference: data["now_ref"].as_str().unwrap_or_default().to_owned(),
+                    project: data["allocated"]["project"].as_str().map(str::to_owned),
+                    revision: owner_revision(&data["allocated"]),
+                })));
+                KernelOpResult::PageReading { data }
+            }
+            KernelOp::Page {
+                request: crate::page::Request::Stop { now_ref, project },
+            } => {
+                let data = crate::page::stop(
+                    &self.client,
+                    &self.client.for_person(),
+                    now_ref,
+                    project.as_deref(),
+                )?;
+                records.push(Record::RetireTemporal);
+                records.push(Record::RetireDerived);
+                if data["outcome"] == "closed" {
+                    records.push(Record::Event(Box::new(KernelEvent::NowChanged {
+                        owner: CENTRAL.into(),
+                        action: "central.now.lifecycle".into(),
+                        reference: now_ref.clone(),
+                        project: project.clone(),
+                        revision: owner_revision(&data["receipt"]),
+                    })));
+                }
+                KernelOpResult::PageReading { data }
+            }
+            // A journey opened or acted on (nara_journey.rs): QL's state saved into its Flow page through the page owner's
+            // CAS, retiring and disclosing as a page write does; a replay QL reconciled writes nothing and emits nothing.
+            KernelOp::NaraJourney { request } => {
+                let data = crate::nara_journey::execute(&self.client, request)?;
+                let location = request.location();
+                records.push(Record::RetireListing(files::parent_path(&location.path)));
+                records.push(Record::RetireDerived);
+                records.push(Record::RetireTemporal);
+                if matches!(
+                    data["page"]["outcome"].as_str(),
+                    Some("created" | "written")
+                ) {
+                    records.push(Record::Event(Box::new(KernelEvent::FileChanged {
+                        path: location.path.clone(),
+                        summary: format!(
+                            "A journey's {} was kept in its page.",
+                            data["operation"].as_str().unwrap_or("act")
+                        ),
+                    })));
+                }
+                KernelOpResult::NaraJourney { data }
             }
             KernelOp::Routine { project, request } => {
                 let cwd = crate::agent_prepared::location(&self.world.read()?, project.as_deref())?;

@@ -48,7 +48,6 @@ const {techneTakeLanes, TECHNE_MIXER} = await import('../src/timeline/techneTrac
 const {liveSetTrackAdapter, LIVE_MIXER} = await import('../src/timeline/liveSetTrackAdapter.ts')
 const {nativeTracks, sceneAutomationOf} = await import('../src/frame/tracks/modeTracks.ts')
 const {shellWriteArm} = await import('../src/frame/tracks/useFactoryTracks.ts')
-const {workspacesOf} = await import('../src/frame/tracks/useCentralTracks.ts')
 const {SessionGrid, SessionGridView, answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
 const {ArrangementRuler, ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const lanes = await import('../src/frame/tracks/trackLanes.ts')
@@ -83,61 +82,56 @@ const firstDay = new Date(Math.min(...nowEvents.map(event => event.instant_unix_
 // FIXTURE: the workspace book as desktop/cradle/src/workspace/store.ts holds it — two workspaces, the first opened a Flow on the day
 // the first NOW clearing was made (its recentPlaces, the book's own record of the files it opened).
 const visited = Date.parse(`${firstDay}T10:15:00Z`)
-const book = {current: {id: 'w1'}, workspaces: [
-  {id: 'w1', name: 'Mercurius', recentPlaces: [
-    {kind: 'file', label: 'Flow 10:14', path: '/ground/Control/user/flows/flow-2026-10-07-1014.html', visitedAt: visited, location: {path: 'Control/user/flows/flow-2026-10-07-1014.html'}},
-    {kind: 'directory', label: 'flows', path: '/ground/Control/user/flows', visitedAt: visited - 60_000}]},
-  {id: 'w2', name: 'Bollingen'}]}
+// FIXTURE: Central's worlds (central/centralWorlds.ts) and their pages (the page owner's listing), T-WORLDS W2.
+const worlds = [{ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: 'Control/user/flows', project: null},
+  {ref: 'central:wiki:project:O-I', name: 'O-I', kind: 'project', folder: 'Work/O-I/ProjectCentral/user', project: 'O-I'}]
+const at = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
+const pages = new Map([['central:wiki:root', {state: 'read', listing: {schema: 'oi.page-list/v1', path: 'Control/user/flows', more: false, not_pages: [],
+  pages: [{location: at('Control/user/flows/flow-2026-10-07-1014.html'), name: 'flow-2026-10-07-1014.html', form: 'flow', title: 'Closing the day', revision: 'r', world: null}]}}]])
+const daySetReading = {state: 'read', civilDate: firstDay, set: {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I'}], rows: []}}
 
-test('Central: the book\'s workspaces are the tracks, each with the pages it opened; the Day is the Main track, last, with the day\'s entries', () => {
-  const workspaces = workspacesOf(book)
-  assert.deepEqual(workspaces.workspaces.map(w => [w.id, w.active, w.pages.length]), [['w1', true, 1], ['w2', false, 0]], 'only files are pages; the book\'s current one is active')
-  assert.deepEqual(workspacesOf(null), {state: 'unavailable', reason: 'no workspace book is mounted above this pane'})
-  const set = central.projectCentralTracks({records: {state: 'read', records: []}, civil: {state: 'live', events: nowEvents, absences: []}, workspaces})
-  assert.deepEqual(set.tracks.map(track => [track.id, track.main ?? false]), [['central:workspace:w1', false], ['central:workspace:w2', false], ['central:day', true]])
-  assert.deepEqual(set.main, {name: 'Day', chain: ['Day', 'Approvals']}, 'the Main track\'s own chain: the Day, then Approvals (§18.1)')
-  const day = set.clips.filter(clip => clip.trackId === central.CENTRAL_DAY_TRACK_ID)
-  assert.equal(day.length, nowEvents.length, 'every NOW clearing is an entry on the Day')
-  const page = set.clips.find(clip => clip.trackId === 'central:workspace:w1')
-  assert.equal(page.id, 'central:workspace:w1#page/Control/user/flows/flow-2026-10-07-1014.html')
-  assert.equal(set.columns.find(column => column.id === page.columnId).name, firstDay, 'the page stands in the row of the day it was opened')
-  assert.equal(set.ruler.label(page.at.start), `${firstDay.slice(5)} 10:15`, 'and on the ruler at the moment it was opened')
+test('Central: today\'s worlds are the tracks, each with its pages; the Day is the Main track, last, with the day\'s entries', () => {
+  const set = central.projectCentralTracks({civil: {state: 'live', events: nowEvents, absences: []}, worlds: {state: 'read', worlds}, set: daySetReading, pages})
+  assert.deepEqual(set.tracks.map(track => [track.id, track.main ?? false]), [['central:world:central:wiki:root', false], ['central:world:central:wiki:project:O-I', false], ['central:day', true]])
+  assert.deepEqual(set.main, {name: `Day · ${firstDay}`, chain: ['Day', 'Approvals']}, 'the Main track\'s own chain: the Day, then Approvals (§18.1)')
+  const page = set.clips.find(clip => clip.trackId === 'central:world:central:wiki:root')
+  assert.equal(page.id, 'Control/user/flows/flow-2026-10-07-1014.html')
+  assert.equal(set.columns.find(column => column.id === page.columnId).id, 'central:slot:1', 'a page no named row holds stands in its slot\'s row')
   assert.deepEqual(central.centralSubjectOfClip(page.id), {kind: 'note', path: 'Control/user/flows/flow-2026-10-07-1014.html'}, 'it opens as the page the path names')
-  // The Session: the workspaces are columns, the Day stands in the Main column at the end; the Arrangement lays the Day last.
+  // The Session: the worlds are columns, the Day stands in the Main column at the end; the Arrangement lays the Day last.
   const grid = session(set)
-  assert.deepEqual([...grid.matchAll(/data-track="([^"]*)"/g)].map(m => m[1]), ['central:workspace:w1', 'central:workspace:w2'])
-  assert.ok(grid.lastIndexOf('aria-label="Stops"') > grid.lastIndexOf('data-track="central:workspace:w2"'), 'the Main column is last')
+  assert.deepEqual([...grid.matchAll(/data-track="([^"]*)"/g)].map(m => m[1]), ['central:world:central:wiki:root', 'central:world:central:wiki:project:O-I'])
+  assert.ok(grid.lastIndexOf('aria-label="Stops"') > grid.lastIndexOf('data-track="central:world:central:wiki:project:O-I"'), 'the Main column is last')
   const ruler = arrangement(set)
   const order = [...ruler.matchAll(/data-track="([^"]*)"/g)].map(m => m[1])
   assert.equal(order.at(-1), 'central:day', 'the Day lies last on the ruler')
 })
 
-test('Central\'s mixer row says what each control means here; Arm is the shell\'s write arm; launching a workspace is the book\'s activate', async () => {
-  const activated = [], armed = []
+test('Central\'s mixer row says what each control means here; Arm is the shell\'s write arm; a world\'s Stop closes the pages that play', async () => {
+  const armed = [], stopped = []
   const writeArm = {on: false, set: async on => { armed.push(on); return {ok: false, error: 'refused: write-arm enforcement is Factory receiving (WO-SF2)'} }}
-  const set = central.projectCentralTracks({records: {state: 'read', records: []}, civil: {state: 'reading'}, workspaces: workspacesOf(book),
-    controls: {activate: id => activated.push(id), writeArm}})
-  assert.deepEqual(Object.keys(set.mixer), ['activator', 'arm', 'input', 'output'], 'Solo and Monitor are none (§18.1)')
+  const set = central.projectCentralTracks({civil: {state: 'reading'}, worlds: {state: 'read', worlds}, set: daySetReading, pages,
+    playing: [{pageRef: at('Control/user/flows/flow-2026-10-07-1014.html').ref, nowRef: 'now:1', project: null, sinceMs: null}],
+    controls: {stop: async item => stopped.push(item.nowRef), writeArm}})
+  assert.deepEqual(Object.keys(set.mixer), ['activator', 'arm', 'solo', 'input', 'output'], 'Monitor is for a world you visit; yours have none (§18.1)')
   assert.equal(set.mixer.output.route, 'Day', 'the output is the Day: a route, never a setting')
   assert.match(set.mixer.activator.meaning, /^Send to Day/)
   assert.match(set.mixer.activator.disabled, /missing op: .*sendToDay/, 'Send to Day has no owner field yet, and says which')
-  assert.match(set.mixer.input.disabled, /missing op: .*folder/, 'the Folder has no owner field yet, and says which')
-  assert.deepEqual(set.tracks.filter(track => !track.main).map(track => track.mix), [{arm: false}, {arm: false}], 'Arm reads the shell\'s flag on every workspace')
-  const w1 = 'central:workspace:w1'
-  assert.deepEqual(await answerOf(() => set.actions.launchTrack.run(w1)), {ok: true, text: 'The book now stands in Mercurius.'})
-  assert.deepEqual(activated, ['w1'])
-  assert.deepEqual(await answerOf(() => set.actions.launchTrack.run('central:day')), {ok: false, text: '"central:day" is no workspace of the book.'}, 'the Day is not a workspace')
+  assert.equal(set.mixer.input.route, 'the world\'s folder', 'the input of a world is its folder')
+  assert.deepEqual(set.tracks.filter(track => !track.main).map(track => track.mix), [{arm: false}, {arm: false}], 'Arm reads the shell\'s flag on every world')
+  assert.deepEqual(await answerOf(() => set.actions.stopTrack.run('central:world:central:wiki:root')), {ok: true, text: '1 page of Your world stopped.'})
+  assert.deepEqual(stopped, ['now:1'])
+  assert.deepEqual(await answerOf(() => set.actions.stopTrack.run('central:day')), {ok: false, text: '"central:day" is no world of today\'s set.'}, 'the Day is not a world')
   const cells = lanes.mixerCells(set, set.tracks[0], 0)
-  assert.deepEqual(cells.map(cell => [cell.id, cell.state, !!cell.press]), [['activator', 'unread', false], ['arm', 'off', true], ['input', 'unread', false], ['output', 'route', false]])
-  assert.deepEqual(await answerOf(cells[1].press.run), {ok: false, text: 'refused: write-arm enforcement is Factory receiving (WO-SF2)'}, 'the owner\'s refusal is the receipt')
+  assert.deepEqual(cells.map(cell => [cell.id, cell.state, !!cell.press]), [['activator', 'unread', false], ['solo', 'unread', false], ['arm', 'off', true], ['input', 'route', false], ['output', 'route', false]])
+  assert.deepEqual(await answerOf(cells[2].press.run), {ok: false, text: 'refused: write-arm enforcement is Factory receiving (WO-SF2)'}, 'the owner\'s refusal is the receipt')
   assert.deepEqual(armed, [true])
   assert.match(set.lanes.absent.takes, /missing op: central\.document\.revisions/, 'revisions as takes: the op they lack')
-  // The view: the mixer row under each workspace's head, its controls disabled where no owner writes them.
+  // The view: the mixer row under each world's head, its controls disabled where no owner writes them.
   const grid = session(set)
-  assert.equal((grid.match(/data-mixer="central:workspace:/g) ?? []).length, 2, 'a mixer row under every workspace')
+  assert.equal((grid.match(/data-mixer="central:world:/g) ?? []).length, 2, 'a mixer row under every world')
   assert.match(grid, /data-mix="activator" data-state="unread" aria-label="Activator" disabled=""/)
   assert.match(grid, /data-mix="arm" data-state="off" aria-label="Arm" aria-pressed="false" title="Arm · Lets the agent/)
-  assert.match(grid, /class="trk-launch" aria-label="Launch Mercurius"/, 'a workspace launches from its head')
 })
 
 test('the shell\'s write arm, pressed from a track, is the transport\'s registered setter: its receipt, or the refusal that none is registered', async () => {

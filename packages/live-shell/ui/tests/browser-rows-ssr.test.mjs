@@ -36,7 +36,7 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {ModeBrowser, DayRowList, NowSection, FlowRowList, NewForms, formOpenerId, BeingRowList} = await import('../src/shell/ModeBrowser.tsx')
+const {ModeBrowser, DayRowList, NowSection, FlowRowList, NewForms, formOpenerId} = await import('../src/shell/ModeBrowser.tsx')
 const {Workspace, StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx')
 const {AgentShellProvider} = await import('../src/agent/AgentShellContext.tsx')
 const agentBrowser = await import('../src/agent/AgentShellBrowser.tsx')
@@ -128,7 +128,8 @@ test('code-reading: a Flow row previews on select and opens on double-click or E
   assert.match(flows, /onDoubleClick=\{\(\) => openFile\(entry, path\)\}/)
   assert.match(flows, /event\.key === 'Enter'\) openFile\(entry, path\)/)
   const listing = source.slice(source.indexOf('function FlowsRows'), source.indexOf('export function FlowRowList'))
-  assert.match(listing, /listFiles\(transport, USER_FLOWS_DIR\)/, 'the owner\'s Flow listing, the route the Flow pane reads')
+  assert.match(listing, /listWorldPages\(transport, USER_FLOWS_DIR\)/, 'the page owner\'s listing of your world\'s folder')
+  assert.match(listing, /setListing\(entriesOfForm\(listing, 'flow'\)\)/, 'only a Flow lists as a Flow: a Being or a Thing in the same folder does not (T-WORLDS W2)')
   assert.match(listing, /readFlowInstance\(transport, byRef\.get\(ref\)!\.location\)\s*\.then\(instance => flowReadingOf\(instance\.doc\)/, 'each Flow\'s own payload, by the Flow\'s parser')
   assert.match(source, /if \(category\.id === 'central-flows'\) return <FlowsRows/)
 })
@@ -162,11 +163,19 @@ test('New: the four document forms as the mockup\'s grid, each lit only by the W
   assert.equal(made, null)
 })
 
-test('Beings: the roster\'s agents by name and standing; the category stays designed empty while its family declares it waiting', () => {
-  const markup = html(createElement(BeingRowList, {beings: [{ref: 'agent:fizz', name: 'Fizz', accepted: true}, {ref: 'agent:x', name: 'Probe', accepted: false}]}))
-  assert.deepEqual(cells(markup), [['Fizz', 'agent'], ['Probe', 'agent · not accepted']])
-  assert.match(markup, /title="Fizz \(agent:fizz\) — an agent on the kernel roster, accepted\."/)
-  assert.match(browse('base', 'central-beings'), /data-waiting="central-beings"/, 'the central family declares Beings waiting: designed empty')
+test('Beings and Things: the pages of that form in your world, through the page owner; Worlds: dragged onto the empty track (T-WORLDS W2)', async () => {
+  const beings = browse('base', 'central-beings')
+  assert.match(beings, /The kernel carrier is unavailable/, 'with no carrier the rows say so, never an empty list')
+  assert.match(beings, /The Beings of your world list when the carrier answers\./)
+  assert.match(browse('base', 'central-things'), /The Things of your world list when the carrier answers\./)
+  const source = await read('shell/ModeBrowser.tsx')
+  const rows = source.slice(source.indexOf('function PageRows'), source.indexOf('/** The Flows rows as drawn'))
+  assert.match(rows, /listWorldPages\(transport, USER_FLOWS_DIR\)/)
+  assert.match(rows, /page\.form === form/)
+  assert.match(rows, /onClick=\{\(\) => onSelectSubject\(\{kind: 'note', path, location: page\.location\}\)\}/, 'a page previews in Clip view on select')
+  const worlds = source.slice(source.indexOf('function WorldsRows'), source.indexOf('function PageRows'))
+  assert.match(worlds, /event\.dataTransfer\.setData\(CENTRAL_WORLD_DRAG, world\.ref\)/, 'a world row carries its ref to the Session\'s empty track')
+  assert.match(source, /if \(category\.id === 'central-worlds'\) return <WorldsRows/)
 })
 
 test('a waiting category is drawn at the rows\' rhythm, naming its owner', () => {
