@@ -113,7 +113,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
   const [threadTrackId, setThreadTrackId] = useState<string | null>(null)
   // The tiles are widgets of the one rail (F8): open in the book's one open set for the whole world, so a terminal opened
   // here is still open in Central. With no book mounted the choice is held here only.
-  const [unbookedTiles, setOpenTiles] = useState<AgentTileId[]>(['sessions'])
+  const [unbookedTiles, setOpenTiles] = useState<AgentTileId[]>([])
   const bookTiles = continuity?.current.widgets?.open ?? DEFAULT_WIDGETS
   const openTiles = continuity ? bookTiles.filter((id): id is AgentTileId => AGENT_TILE_IDS.includes(id as AgentTileId)) : unbookedTiles
   const [dockWidth, setDockWidth] = useState(300)
