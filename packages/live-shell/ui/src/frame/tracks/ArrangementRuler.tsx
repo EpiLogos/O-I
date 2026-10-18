@@ -19,9 +19,16 @@
 //   pane's insert marker, snapped to the grid, coarsely, or freely (Shift frees one press, Alt coarsens it), and keyboard zoom
 //   holds it still (rulerWindow.ts; nativeArrangementTimeline.tsx:92-111, :142-148, :173-226, :296-315). The window, the snap
 //   and the marker are the pane's presentation: nothing here writes time to any owner.
+// R3 (manual §16.6 "Arrangement view", §16.8; lock §0.3 item 3; Live cap 43–45): each track's head carries its mixer switches; the
+// Main track's material lies last; under each track lie its lanes by the Lanes setting (Takes On, Automation On, Events Off): take
+// lanes, each with its audition, where a stretch selected and Return copies it into the main lane through the owner's comp (the
+// main lane shows which take each stretch came from); automation lanes naming device and parameter, what modulates them, and
+// Re-enable for a value held by hand; Factory's event lanes, an event clicked opening beside the ruler (trackLanes.ts).
 import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
-import type {WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import {answerOf, STATUS_WORD, stalledLanes, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
+import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import {answerOf, MixerRow, STATUS_WORD, stalledLanes, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
+import {automationPoints, compRange, DEFAULT_LANES, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
+import {CutIcon} from '../../agent/agentIcons'
 import {clipAccessibleName, clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {narrowestSectionOf, sectionLanes} from './trackSections'
 import {railKindText, railSegments, railStopTitle, walkRails, type WalkRail} from './trackRails'
@@ -34,7 +41,7 @@ import './tracks.css'
 
 interface Placed {clip: WorldTrackClip; start: number; end: number}
 /** A grouped track's two sides, as the ruler names them (lock §9.3: sight and sound of one state). */
-const LANE_WORD = {visual: 'sight', audio: 'sound'} as const
+const SIDE_WORD = {visual: 'sight', audio: 'sound'} as const
 
 /** Every clip's place on one ruler: its own `at`; else, on a set with no ruler, its row's offset plus its span (rows end to
  * end). On a set with a ruler a clip with no `at` has no place. `end` is the ruler's fixed window when the set gives one
@@ -88,11 +95,27 @@ export interface RulerWindowProps {
 /** A press on the ruler: where it began, the window then, px per ruler unit, and whether it has moved into a pan. */
 export interface RulerGesture {pointer: number; startX: number; start: TimeRange; scale: number; moved: boolean}
 
+/** A stretch of a take being chosen (the pane's own, until Return hands it to the owner's comp). */
+export interface TakeSelection {trackId: string; takeId: string; from: number; to: number}
+
+/** The pane's lanes state: the Lanes setting, the stretch of a take being chosen, and the event opened beside the ruler. */
+export interface LanesViewProps {
+  shown: LanesShown
+  onShown(next: LanesShown): void
+  take: TakeSelection | null
+  onTake(next: TakeSelection | null): void
+  opened: {laneId: string; eventId: string} | null
+  onOpened(next: {laneId: string; eventId: string} | null): void
+}
+const STILL_LANES: LanesViewProps = {shown: DEFAULT_LANES, onShown: () => {}, take: null, onTake: () => {}, opened: null, onOpened: () => {}}
+
 export interface ArrangementRulerViewProps {
   set: WorldTrackSet
   selection: TracksSelection
   empty?: string
   view: RulerWindowProps
+  /** The lanes under the tracks; absent, the Lanes setting's defaults with nothing chosen. */
+  lanes?: LanesViewProps
   receipt: PressedReceipt | null
   /** A rail's stop pressed: `key` names the control, `what` the press, `run` calls the owner. */
   onPress(key: string, what: string, run: () => unknown): void
@@ -113,7 +136,7 @@ function rulerTools(view: RulerWindowProps, range: TimeRange, bounds: ReturnType
   </span>
 }
 
-export function ArrangementRulerView({set, selection, empty, view, receipt, onPress, onDismiss}: ArrangementRulerViewProps) {
+export function ArrangementRulerView({set, selection, empty, view, lanes: lanesView = STILL_LANES, receipt, onPress, onDismiss}: ArrangementRulerViewProps) {
   const {placed, end} = placeClips(set)
   const bounds = rangeBounds(end)
   const range = clampRange(view.window ?? fitRange(bounds), bounds)
@@ -230,6 +253,76 @@ export function ArrangementRulerView({set, selection, empty, view, receipt, onPr
     </div>
   }
 
+  const colourOf = (track: {color?: string}) => ({'--tc': track.color ?? 'var(--track-default, var(--bg-3))'}) as CSSProperties
+  const receiptOn = (key: string) => receipt?.key === key ? (receipt.ok ? 'ok' : 'refused') : undefined
+  // A point on a lane's body from the pointer: the body spans the same window as the ruler's marks.
+  const bodyAt = (element: HTMLElement, clientX: number): number | null => {
+    const box = element.getBoundingClientRect()
+    return box.width > 0 ? range.start + (clientX - box.left) / box.width * span : null
+  }
+
+  // A take lane (Live cap 44–45): its name and its audition; a stretch dragged across it is the pane's choice, and Return copies it
+  // into the main lane through the owner's comp. The stretch chosen and the take that stands are marked; nothing is copied here.
+  const comp = set.actions?.comp, audition = set.actions?.audition
+  const takeLane = (take: WorldTakeLane, colour: CSSProperties) => {
+    const chosen = lanesView.take?.takeId === take.id && lanesView.take.trackId === take.trackId ? lanesView.take : null
+    const stretch = chosen ? compRange(take, chosen.from, chosen.to) : null
+    const auditionKey = `audition:${take.trackId}:${take.id}`, compKey = `comp:${take.trackId}:${take.id}`
+    const press = () => { if (comp && stretch) onPress(compKey, `Comp ${take.name} ${label(stretch.start)} – ${label(stretch.end)}`, () => comp.run(take.trackId, take.id, stretch)) }
+    return <div key={`take:${take.id}`} className="tl-lane tl-take" data-take={take.id} data-standing={take.standing ? 'true' : undefined} style={colour}>
+      <span className="tl-head tl-take-head" title={`${take.name} · a take${take.standing ? ' · it stands' : ''} · select a stretch and press Return to copy it into the main lane`}>
+        <span className="tl-lane-name">{take.name}</span>
+        <button type="button" className="tl-audition" aria-label={`Audition ${take.name}`} disabled={!audition} data-receipt={receiptOn(auditionKey)}
+          title={audition ? `Audition ${take.name} (${audition.op})` : 'Audition: the owner gives no op that plays a take alone'}
+          onClick={() => { if (audition) onPress(auditionKey, `Audition ${take.name}`, () => audition.run(take.trackId, take.id)) }}><CutIcon name="play" size={10} /></button>
+      </span>
+      <div className="tl-body tl-take-body" tabIndex={0} role="group" aria-label={`Take ${take.name}`} data-receipt={receiptOn(compKey)}
+        title={comp ? `Drag across the take to choose a stretch; Return copies it into the main lane (${comp.op})` : 'Comp: the owner gives no op that copies a stretch of a take into the main lane'}
+        onPointerDown={event => { if (event.button !== 0) return; const at = bodyAt(event.currentTarget, event.clientX); if (at === null) return
+          event.currentTarget.setPointerCapture?.(event.pointerId); lanesView.onTake({trackId: take.trackId, takeId: take.id, from: at, to: at}) }}
+        onPointerMove={event => { if (!chosen || !(event.buttons & 1)) return; const at = bodyAt(event.currentTarget, event.clientX); if (at !== null) lanesView.onTake({...chosen, to: at}) }}
+        onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); press() } else if (event.key === 'Escape' && chosen) { event.preventDefault(); lanesView.onTake(null) } }}>
+        {take.spans.map((piece, i) => <span key={i} className="tl-take-span" style={{left: pct(piece.start), width: `max(4px, ${Math.max(0, held(piece.end) - held(piece.start)) / span * 100}%)`}}
+          title={`${piece.label} · ${label(piece.start)} – ${label(piece.end)}`}>{piece.label}</span>)}
+        {stretch && <span className="tl-take-sel" style={{left: pct(stretch.start), width: `${Math.max(0, held(stretch.end) - held(stretch.start)) / span * 100}%`}}
+          title={`Chosen: ${label(stretch.start)} – ${label(stretch.end)} · press Return to copy it into the main lane`} aria-hidden="true" />}
+      </div>
+    </div>
+  }
+
+  // An event lane (Factory): a session's events of one kind, each a tick; clicked, it opens beside the ruler.
+  const eventLane = (lane: WorldEventLane, colour: CSSProperties) => <div key={`events:${lane.id}`} className="tl-lane tl-events" data-event-lane={lane.id} data-event-kind={lane.kind} style={colour}>
+    <span className="tl-head tl-events-head" title={`${lane.name} · ${lane.events.length} ${lane.events.length === 1 ? 'event' : 'events'}`}>
+      <span className="tl-lane-name">{lane.name}</span><small>{lane.events.length}</small>
+    </span>
+    <div className="tl-body">
+      {lane.events.map(event => <button type="button" key={event.id} className={`tl-event${lanesView.opened?.eventId === event.id && lanesView.opened.laneId === lane.id ? ' sel' : ''}`}
+        data-event={event.id} style={{left: pct(event.at)}} title={`${event.label} · ${label(event.at)}`} aria-label={`${lane.name}: ${event.label}`}
+        onClick={() => lanesView.onOpened({laneId: lane.id, eventId: event.id})} />)}
+    </div>
+  </div>
+  const openedLane = lanesView.opened ? set.lanes?.events?.find(lane => lane.id === lanesView.opened!.laneId) : undefined
+  const openedEvent = openedLane?.events.find(event => event.id === lanesView.opened!.eventId)
+
+  // The Lanes setting (manual §16.6 settings table): Takes, Automation, Events, each On or Off; why a kind has nothing, beside it;
+  // and Re-enable, lit while the owner counts parameters held off their automation by hand.
+  const heldCount = set.lanes?.held
+  const reenableAll = set.actions?.reenable
+  const lanesBar = <div className="tl-lane tl-setbar" role="group" aria-label="Lanes">
+    <span className="tl-head tl-setbar-head">Lanes</span>
+    <div className="tl-body tl-setbar-body">
+      {(['takes', 'automation', 'events'] as TrackLaneKind[]).map(kind => {
+        const count = laneCount(set, kind), why = set.lanes?.absent?.[kind]
+        return <button type="button" key={kind} className="tl-lanes-kind" data-lanes={kind} aria-pressed={lanesView.shown[kind]} data-count={count}
+          title={`${LANE_WORD[kind]} · ${lanesView.shown[kind] ? 'On' : 'Off'} · ${count} ${count === 1 ? 'lane' : 'lanes'}${why ? ` · ${why}` : ''}`}
+          onClick={() => lanesView.onShown({...lanesView.shown, [kind]: !lanesView.shown[kind]})}>{LANE_WORD[kind]}<small>{count}</small></button>
+      })}
+      {(heldCount !== undefined || reenableAll) && <button type="button" className={`tl-reenable${heldCount ? ' lit' : ''}`} disabled={!reenableAll || !heldCount} data-receipt={receiptOn('reenable')}
+        title={heldCount === undefined ? 'Re-enable: the owner reports no count of values held by hand' : heldCount ? `Re-enable: ${heldCount} ${heldCount === 1 ? 'parameter is' : 'parameters are'} held off ${heldCount === 1 ? 'its' : 'their'} automation${reenableAll ? ` (${reenableAll.op})` : ''}` : 'Re-enable: nothing is held off its automation'}
+        onClick={() => { if (reenableAll && heldCount) onPress('reenable', 'Re-enable', () => reenableAll.run()) }}>Re-enable</button>}
+    </div>
+  </div>
+
   return <div ref={view.rootRef as RefObject<HTMLDivElement>} className="tl" aria-label="Arrangement" data-tracks-view="arrangement" data-window={isFit(range, bounds) ? undefined : 'zoomed'}>
     <div className="tl-ruler" aria-label={`Ruler${set.ruler ? ` in ${set.ruler.unit}` : ''}`}>
       {rulerTools(view, range, bounds, anchor)}
@@ -240,6 +333,7 @@ export function ArrangementRulerView({set, selection, empty, view, receipt, onPr
         {markerMark}
       </div>
     </div>
+    {(set.lanes || set.mixer) && lanesBar}
     {lanesOfSections.map(lane => <div key={`sections:${lane.layerId ?? ''}`} className="tl-lane tl-sections" data-section-layer={lane.layerId}
       style={{'--levels': lane.levels} as CSSProperties}>
       <span className="tl-head tl-sections-head" title={`${lane.name} · sections · nested`}><span className="tl-lane-name">{lane.name}</span><small>sections</small></span>
@@ -256,7 +350,7 @@ export function ArrangementRulerView({set, selection, empty, view, receipt, onPr
         })}
       </div>
     </div>)}
-    {set.tracks.flatMap(track => {
+    {mainLast(set.tracks).flatMap((track, position) => {
       const style = {'--tc': trackColour(track)} as CSSProperties
       const clips = placed.filter(p => p.clip.trackId === track.id)
       // A rail per level, in each ancestor's colour, as the Session draws them (manual §6).
@@ -264,11 +358,22 @@ export function ArrangementRulerView({set, selection, empty, view, receipt, onPr
       const stoppedNeedle = track.needle !== undefined && stalled.has(track.id)
       const age = stoppedNeedle && now !== undefined ? (set.ruler?.duration ?? plainDuration(set.ruler?.unit ?? ''))(Math.max(0, now - track.needle!)) : undefined
       const readout = stoppedNeedle ? `${track.name} · stalled${age ? ` ${age}` : ''}` : undefined
-      return [<div key={track.id} className={`tl-lane${track.lane ? ` lane-${track.lane}` : ''}`} style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-track={track.id}>
-        <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`}
-          onClick={() => selection.select({kind: 'track', ref: track.id, title: track.name})}>
-          {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
-          {track.name}{track.lane ? <small>{LANE_WORD[track.lane]}</small> : null}</button>
+      // The head carries the track's mixer switches, as Live's Arrangement header does (cap 43); a head with none is the name alone.
+      const cells = mixerCells(set, track, position).filter(cell => cell.id !== 'input' && cell.id !== 'output')
+      const headName = <>
+        {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
+        {track.name}{track.lane ? <small>{SIDE_WORD[track.lane]}</small> : null}{track.main ? <small>Main</small> : null}</>
+      const selectTrack = () => selection.select({kind: 'track', ref: track.id, title: track.name})
+      const under = lanesUnder(set, track.id, lanesView.shown)
+      const comps = (set.lanes?.comp ?? []).filter(stretch => stretch.trackId === track.id)
+      const takeName = (takeId: string) => set.lanes?.takes?.find(take => take.id === takeId)?.name ?? takeId
+      return [<div key={track.id} className={`tl-lane${track.lane ? ` lane-${track.lane}` : ''}`} style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-track={track.id} data-main={track.main ? 'true' : undefined}>
+        {cells.length
+          ? <div className={`tl-head tl-track-head${selection.ref === track.id ? ' sel' : ''}`}>
+            <button type="button" className="tl-name" title={`${track.name} · ${track.kind}`} onClick={selectTrack}>{headName}</button>
+            <MixerRow cells={cells} shown routes={false} trackId={track.id} receipt={receipt} onPress={onPress} />
+          </div>
+          : <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} onClick={selectTrack}>{headName}</button>}
         <div className="tl-body">
           {now !== undefined && <span className="tl-now" style={{left: pct(now)}} aria-hidden="true" />}
           {occasionAt !== undefined && <span className="tl-occ" style={{left: lineAt(occasionAt)}} aria-hidden="true" />}
@@ -294,12 +399,46 @@ export function ArrangementRulerView({set, selection, empty, view, receipt, onPr
               {...clipStandingAttributes(mark)} data-section={section?.id} aria-label={mark ? clipAccessibleName(clip.label, mark) : undefined}
               onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>{dash ? `▸ ${clip.label}` : clip.label}{clipStandingTag(mark)}</button>
           })}
+          {comps.map((stretch, i) => <span key={`comp:${i}`} className="tl-comp" data-comp-take={stretch.takeId}
+            style={{left: pct(stretch.start), width: `${Math.max(0, held(stretch.end) - held(stretch.start)) / span * 100}%`}}
+            title={`${label(stretch.start)} – ${label(stretch.end)} came from ${takeName(stretch.takeId)}`}>{takeName(stretch.takeId)}</span>)}
           {track.needle !== undefined && <span className="tl-needle" style={{left: pct(track.needle)}} data-stalled={stoppedNeedle ? 'true' : undefined} data-edge={percentOf(held(track.needle), range) > 60 ? 'end' : undefined}
             title={readout ?? `${track.name} has got to ${label(track.needle)}`}>{readout && <span className="tl-readout">{readout}</span>}</span>}
         </div>
-      </div>, ...(railsUnder.get(track.id) ?? []).map(rail => railLane(rail, trackColour(track)))]
+      </div>,
+      ...under.takes.map(take => takeLane(take, colourOf(track))),
+      ...under.automation.map(lane => {
+        const points = automationPoints(lane, clipId => placed.find(p => p.clip.id === clipId)?.start)
+        const line = points.map(point => `${percentOf(point.at, range).toFixed(3)},${(100 - Math.min(1, Math.max(0, point.value)) * 100).toFixed(3)}`).join(' ')
+        const reenable = set.actions?.reenable
+        const key = `reenable:${lane.id}`
+        return <div key={`auto:${lane.id}`} className="tl-lane tl-auto" data-automation={lane.id} data-overridden={lane.overridden ? 'true' : undefined} style={colourOf(track)}>
+          <span className="tl-head tl-auto-head" title={`${lane.device} / ${lane.parameter}${lane.range ? ` · ${lane.range.min} – ${lane.range.max}` : ''}${lane.modulatedBy ? ` · moved by ${lane.modulatedBy}` : ''}${points.length ? ` · ${points.length} points` : ' · no points on this ruler'}`}>
+            <span className="tl-lane-name">{lane.device} / {lane.parameter}</span>
+            {lane.modulatedBy && <small className="tl-mod">{lane.modulatedBy}</small>}
+            {lane.overridden && <button type="button" className="tl-reenable lit" disabled={!reenable} data-receipt={receipt?.key === key ? (receipt.ok ? 'ok' : 'refused') : undefined}
+              title={reenable ? `Re-enable: give ${lane.parameter} back to its lane (${reenable.op})` : 'Re-enable: the owner gives no op that gives the value back'}
+              onClick={() => { if (reenable) onPress(key, `Re-enable ${lane.parameter}`, () => reenable.run(lane.id)) }}>Re-enable</button>}
+          </span>
+          <div className="tl-body">
+            {lane.modulatedBy && !points.length && <span className="tl-mod-band" aria-hidden="true" />}
+            {points.length > 0 && <svg className="tl-auto-line" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={`${lane.device} / ${lane.parameter}: ${points.length} points`}>
+              <polyline points={line} vectorEffect="non-scaling-stroke" />
+            </svg>}
+          </div>
+        </div>
+      }),
+      ...under.events.map(lane => eventLane(lane, colourOf(track))),
+      ...(railsUnder.get(track.id) ?? []).map(rail => railLane(rail, trackColour(track)))]
     })}
     {rails.filter(rail => rail.trackId === undefined).map(rail => railLane(rail))}
+    {openedLane && openedEvent && <aside className="tl-event-open" role="dialog" aria-label={`${openedLane.name}: ${openedEvent.label}`} data-event={openedEvent.id}>
+      <header><b>{openedLane.name}</b><span>{label(openedEvent.at)}</span>
+        <button type="button" aria-label="Close" onClick={() => lanesView.onOpened(null)}>×</button></header>
+      <p>{openedEvent.label}</p>
+      {openedEvent.detail && <p className="tl-event-detail">{openedEvent.detail}</p>}
+      {openedEvent.ref && <code>{openedEvent.ref}</code>}
+    </aside>}
     {receipt && <p className="sg-receipt tl-receipt" role="status" data-ok={receipt.ok}>
       <b>{receipt.what}</b>
       <span>{receipt.text}</span>
@@ -317,6 +456,9 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   const [marker, setMarker] = useState<number | null>(null)
   const [width, setWidth] = useState(0)
   const [receipt, setReceipt] = useState<PressedReceipt | null>(null)
+  const [shownLanes, setShownLanes] = useState<LanesShown>(DEFAULT_LANES)
+  const [take, setTake] = useState<TakeSelection | null>(null)
+  const [opened, setOpened] = useState<{laneId: string; eventId: string} | null>(null)
   const latest = useRef(0)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const marksRef = useRef<HTMLDivElement | null>(null)
@@ -390,6 +532,7 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
     void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
   }
   return <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press}
+    lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, opened, onOpened: setOpened}}
     onDismiss={() => { latest.current += 1; setReceipt(null) }}
     view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, width, marksRef, rootRef, gesture}} />
 }

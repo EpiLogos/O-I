@@ -26,12 +26,22 @@
 //   handed in (no carrier, no resolved binding), no actions: the grid stays read-only.
 // - takes (attempts) are absent: the attempts owner (`factory_attempt_read`) is addressed by run, and the sessions reading names
 //   none. Launch quantize and follow are absent: the armed timing is shell state, not a reading of the task.
+// - R3 (manual §19.1 "The mixer row", §16.6): each session's mixer row — Monitor is Watch (In · Auto · Off), the activator is
+//   Telemetry, Solo, and Arm, which is the shell's one write arm (`shell.setWriteArm`, the transport's own; its light is the flag
+//   the shell moves only when the owner accepts); the way in is the Gateway and the way out the landing, routes not settings. The
+//   Main track holds the gateways, the Experiment, Approvals, the Ledger and the Link; Stop All is the harness's stop. Under each
+//   session its event lanes, one per kind of event the temporal stream gives for it (agent/agentRunModel.ts eventsForSession),
+//   each event where it happened on the run's ruler. Watch, Telemetry and Solo have no owner op, the attempts (takes) and the
+//   effort over a run (automation) no owner reading: each stands disabled or absent with the op it lacks.
+// - status: done → done (manual §19.1: Done is "dim and settled"; Stopped is ready, in full colour).
 //
 // Pure TypeScript. No React.
 import {AGENT_CHAIN_MIME, decodeChainDrag} from '../agent/agentChainDrag'
-import {sharedAxis, trackKey, type AgentSessionTrack, type TaskClip, type TaskState} from '../agent/agentRunModel'
+import {eventsForSession, sharedAxis, trackKey, type AgentSessionTrack, type TaskClip, type TaskState, type TemporalEventLike} from '../agent/agentRunModel'
 import type {
   ClipStatus,
+  WorldEventLane,
+  WorldMixer,
   WorldTrack,
   WorldTrackActions,
   WorldTrackAdapter,
@@ -61,10 +71,18 @@ export const FACTORY_GRAIN = 'whole harness'
 
 /** The ops the actions name, each leading with its grain (the grid prints an op in the control's title). */
 export const FACTORY_STOP_OP = `${FACTORY_GRAIN} · harness_agent_control:stop — the bound harness's conversation; the owner takes no session, so this is not a stop of this track alone`
+export const FACTORY_STOP_ALL_OP = `${FACTORY_GRAIN} · harness_agent_control:stop — Stop All: the bound harness's conversation, the one the owner reaches`
 export const FACTORY_LAUNCH_OP = `${FACTORY_GRAIN} · harness_agent_control:restart (a stalled task) · resume (a queued one) — the bound harness's conversation; the owner takes no task`
 export const FACTORY_SEAT_OP = 'harness_agent_control:new — starts a NEW agent conversation on the bound harness; the agent dropped is named in the receipt, not sent (the owner takes no agent ref)'
 export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · harness_agent_control:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
 export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · harness_agent_control:resume — the bound harness's queued tasks; the owner takes no row`
+
+/** The shell's one write arm (the transport's `shell.setWriteArm`, agent/shellSetterBridge.ts): its flag, which moves only when
+ * the owner accepts (null when no shell holds one), and its dispatch, which answers with the owner's receipt or refusal. */
+export interface FactoryWriteArm {
+  on: boolean | null
+  set(on: boolean): Promise<unknown>
+}
 
 export interface FactorySessionsReading {
   /** The agency tracks with their tasks and needles (agent/useAgencySessions.ts). */
@@ -73,7 +91,37 @@ export interface FactorySessionsReading {
   nowUnixMs: number
   /** The owner call for the actions; absent, the set has no actions. */
   controls?: FactoryControls
+  /** The temporal events the sessions provider holds (AgentSessionsProvider `events`): each session's event lanes. Absent: unread. */
+  events?: readonly TemporalEventLike[]
+  /** The shell's write arm, for every session's Arm. Absent: no shell holds one, and Arm stands disabled. */
+  writeArm?: FactoryWriteArm
 }
+
+const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
+
+/** Factory's mixer row (manual §19.1), each control's meaning in the manual's words. */
+export const FACTORY_MIXER: WorldMixer = {
+  activator: {meaning: 'Telemetry: on, the session feeds the widgets, the Ledger and other agents; off, it is muted — it keeps working, in silence, and stops sending to the tiles',
+    disabled: missing('Telemetry', 'harness_agent_control {binding, control: "telemetry", session_ref, on: bool} → {ok, note} | {ok: false, error}; agency_read rows report `telemetry: bool` (the shell\'s flag is its own, never the owner\'s)', 'Actuation')},
+  solo: {meaning: 'Only soloed sessions may run',
+    disabled: missing('Solo', 'harness_agent_control {binding, control: "solo", session_ref, on: bool} — pauses every other session of the harness; agency_read rows report `solo: bool`', 'Actuation')},
+  arm: {meaning: 'Lets the session\'s agent write directly, with receipts, where Scope allows; off, every write is a proposal. Arm and press Record to speak a new task onto it',
+    grain: 'the shell\'s one write arm: arming one session arms every one'},
+  monitor: {meaning: 'Watch: In streams the session into the widgets always; Auto streams it when it is armed or selected; Off does not stream it',
+    disabled: missing('Watch', 'shell.setSessionWatch(sessionRef, "in" | "auto" | "off") — a per-session watch the widgets read (the Run device holds one Watch for its chain)', 'shell')},
+  input: {meaning: 'The way in: the Gateway at the head of the chain decides what the agent must ask your permission for', route: 'Gateway'},
+  output: {meaning: 'The way out: the landing at the end of the chain — commits, and a request to merge with the checks that tested it', route: 'Landing'},
+}
+
+/** Factory's Main track (manual §19.1): what works on the whole run. */
+export const FACTORY_MAIN_CHAIN = ['Gateways', 'Experiment', 'Approvals', 'Ledger', 'Link'] as const
+
+/** Why the lanes the owners do not give are absent, in their terms. */
+export const FACTORY_LANES_ABSENT = {
+  takes: missing('Attempts as take lanes', 'agency_read rows naming each session\'s Factory run {state_path, run_ref}, so factory_attempt_read can be addressed; and factory_attempt_land {state_path, run_ref, attempt_ref, range?} → {ok, note} for the comp that chooses the attempt that lands', 'AIKit · Software Factory'),
+  automation: missing('The Agent\'s effort over a run', 'a recorded automation of the Agent\'s effort per session — harness_agent_control {binding, control: "configure", effort} carries one value, and no owner keeps its moves over time', 'Actuation'),
+  events: 'The temporal stream gives each session\'s events by their kind (run, return, generation …): those kinds are the lanes. Messages, Files, Terminal and Pages read are not kinds it names — missing op: temporal_events_read rows with `lane: "messages" | "files" | "terminal" | "pages"` for a session\'s tool runs (Actuation · kernel).',
+} as const
 
 const TASK_MARK = '#task/'
 const BATCH_PREFIX = 'batch:'
@@ -89,7 +137,7 @@ export function parseFactoryTaskRef(ref: string): {trackId: string; n: number} |
   return Number.isSafeInteger(n) && n >= 1 ? {trackId: ref.slice(0, at), n} : null
 }
 
-const STATUS: Record<TaskState, ClipStatus | undefined> = {queued: 'waiting', running: 'running', done: 'stopped', stalled: 'stalled', unknown: undefined}
+const STATUS: Record<TaskState, ClipStatus | undefined> = {queued: 'waiting', running: 'running', done: 'done', stalled: 'stalled', unknown: undefined}
 
 /** The header the grid draws (agent/AgentSessionGrid.tsx:67-70). */
 const trackName = (track: AgentSessionTrack): string =>
@@ -114,6 +162,20 @@ function ancestorsOf(tracks: readonly AgentSessionTrack[], track: AgentSessionTr
 
 const refused = (error: string): Promise<FactoryControlReceipt> => Promise.resolve({ok: false, error})
 
+/** A session's event lanes: one per kind of event the temporal stream gives for it, each event at its instant on the run's ruler.
+ * An event with no instant has no place on the ruler and is left out; a kind with none placed has no lane. */
+export function factoryEventLanes(trackId: string, sessionRef: string, events: readonly TemporalEventLike[], secs: (unixMs: number) => number): WorldEventLane[] {
+  const byKind = new Map<string, WorldEventLane['events'][number][]>()
+  eventsForSession([...events], sessionRef).forEach((event, index) => {
+    if (typeof event.instant_unix_ms !== 'number' || !Number.isFinite(event.instant_unix_ms)) return
+    const kind = event.kind ?? event.stream ?? 'event'
+    const list = byKind.get(kind) ?? []
+    list.push({id: `${trackId}#event/${index}`, at: secs(event.instant_unix_ms), label: event.summary || kind, ...(event.stream ? {detail: `${event.stream} · ${kind}`} : {}), ref: event.subject_ref})
+    byKind.set(kind, list)
+  })
+  return [...byKind].map(([kind, list]) => ({id: `${trackId}#events/${kind}`, trackId, kind, name: kind, events: list}))
+}
+
 /** The owner's answer with the grain said first. The control was pressed on one session, task or row, but the owner takes none of
  * them, so what it reached is the bound harness; the receipt (the grid prints it where the press was) says that, then the owner's
  * own words. */
@@ -132,6 +194,8 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
   const clipById = new Map(clips.map(clip => [clip.id, clip]))
   return {
     grain: FACTORY_GRAIN,
+    // The Main track's Stop All (Live cap 41): the bound harness's stop, which is every session the owner can reach.
+    stopAll: {op: FACTORY_STOP_ALL_OP, run: () => atWholeHarness(controls.control('stop'), 'Stop All')},
     stopTrack: {op: FACTORY_STOP_OP, run: trackId => {
       const track = trackById.get(trackId)
       return track ? atWholeHarness(controls.control('stop'), `Stop on “${track.name}”`) : refused(`"${trackId}" is not a session of this work.`)
@@ -142,7 +206,7 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
       const pressed = `Launch of “${clip.label}”`
       if (clip.status === 'stalled') return atWholeHarness(controls.control('restart'), pressed)
       if (clip.status === 'waiting') return atWholeHarness(controls.control('resume'), pressed)
-      const word = clip.status === 'stopped' ? 'finished' : clip.status ?? 'in a state its owner does not disclose'
+      const word = clip.status === 'done' ? 'finished' : clip.status ?? 'in a state its owner does not disclose'
       return refused(`${clip.label} is ${word}: the owner has no op that launches a task in that state.`)
     }},
     launchStop: {op: FACTORY_BATCH_OP, run: columnId => {
@@ -171,7 +235,8 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
 
 export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
   id: FACTORY_TRACK_ADAPTER_ID,
-  project({tracks: agency, nowUnixMs, controls}): WorldTrackSet {
+  project(reading): WorldTrackSet {
+    const {tracks: agency, nowUnixMs, controls} = reading
     if (!agency.length) return {columns: [], tracks: [], clips: []}
     // The one shared axis: the provider's own (every needle carries it), else an hour ending now.
     const needled = agency.find(track => track.needle)?.needle
@@ -228,7 +293,17 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
       ruler: {unit: 'seconds', label: at => new Date(axis.startUnixMs + at * 1000).toTimeString().slice(0, 8),
         end: secs(axis.endUnixMs), now: secs(axis.endUnixMs), duration: span => `${Math.floor(span / 60)}m ${String(Math.floor(span % 60)).padStart(2, '0')}s`},
     }
+    // R3: the mixer row, the Main track and the lanes.
+    set.mixer = FACTORY_MIXER
+    set.main = {name: 'Main', chain: FACTORY_MAIN_CHAIN}
+    const arm = reading.writeArm
+    if (arm && arm.on !== null) for (const track of tracks) track.mix = {arm: arm.on}
+    const events = reading.events
+      ? agency.flatMap(track => track.group ? [] : factoryEventLanes(trackKey(track), track.sessionRef, reading.events!, secs))
+      : []
+    set.lanes = {events, absent: {...FACTORY_LANES_ABSENT, ...(reading.events ? {} : {events: 'The temporal events are unread here: the sessions provider is not mounted above this pane.'})}}
     if (controls) set.actions = actionsFor(controls, tracks, clips, columns)
+    if (arm) set.actions = {...set.actions, mixer: {arm: {op: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it', run: (_trackId, on) => arm.set(on)}}}
     return set
   },
 }
