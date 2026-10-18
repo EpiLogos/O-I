@@ -7,7 +7,7 @@ import {useState} from 'react'
 import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
 import {Action, Band, Chooser, Folded, Ladder, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type RowItem} from '../../sdk/panel'
-import {NONE, has, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, grown, has, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {DOCUMENTATION, FORM_NAME, ORDER, RUNGS, markState, reaching, type Member} from './practice'
 
 type V = ViewProps['v']
@@ -54,7 +54,12 @@ function Compose({p, stack = true}: {p: ViewProps; stack?: boolean}) {
   </>
 }
 
-function ChainList({p, size, columns}: {p: ViewProps; size: number; columns: 1 | 2}) {
+/** The Members list's columns: two in the pool; expanded or in a window, as many as the room beside the set, the composition and the
+ * package holds at a member's width (manual §16.3: the room goes to what reads across it), up to six. */
+const MEMBER_WIDTH = 250, BESIDE_MEMBERS = 136 + 104 + 74 + 20
+const memberColumns = (p: ViewProps): number => Math.min(6, Math.max(2, Math.floor(grown(p, 2 * MEMBER_WIDTH, BESIDE_MEMBERS) / MEMBER_WIDTH)))
+
+function ChainList({p, size, columns}: {p: ViewProps; size: number; columns: number}) {
   const [page, setPage] = useState(0)
   const requests = st(p, 'members').disabled ? undefined : (id: string, x: boolean) => { p.set(`req:${id}`, x); p.set('compose', 'changed') }
   return <Rows label={has(p.v, 'members') ? `Members · ${reaching(effective(p.v), 2)} of ${members(p.v).length} available` : 'Members · no reading'}
@@ -125,7 +130,7 @@ export const skills: DesignedDevice = {
       </Section>
     </Band>
     <Band>
-      <Section grow><ChainList p={p} size={16} columns={2} /></Section>
+      <Section grow><ChainList p={p} size={8 * memberColumns(p)} columns={memberColumns(p)} /></Section>
     </Band>
   </Panel>,
 

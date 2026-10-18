@@ -118,6 +118,14 @@ export const clock = (minutes: number) => `${String(Math.floor(minutes / 60) % 2
 export const signed = (d: number) => (x: number) => `${x > 0 ? '+' : ''}${x.toFixed(d)}`
 export const clampTo = (low: number, high: number, x: number) => Math.min(high, Math.max(low, x))
 
+/** Whole in a wide frame — expanded above the chain (frame 'flip') or under the material in its window ('window') — with its room. */
+export const wideFrame = (p: ViewProps): boolean => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
+/** A measure that grows into a wide frame's room (manual §16.3: "the bands stand side by side and the display grows into the room"):
+ * `base` in the pool; in a wide frame, the room less what else the view stands there (`others`, px), never under `base` nor over
+ * `max`. For a display whose drawing reads across its width; a figure bound by the band's height keeps its size. */
+export const grown = (p: ViewProps, base: number, others: number, max = Infinity): number =>
+  wideFrame(p) ? Math.round(clampTo(base, max, p.room!.w - others)) : base
+
 declare global {
   /** Where the gallery serves the cradle's document templates (vite.config.mjs `define`). */
   const __CRADLE_DOCUMENTS__: string
