@@ -302,8 +302,10 @@ interface Lane {
 
 export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   const world = reading.world
-  const sets = world.state === 'live' ? world.sets : []
-  const eventByClipId: ReadonlyMap<string, TemporalEventRow> = world.state === 'live' ? world.eventByClipId : new Map()
+  // Whether the World cut was read (its state, not a mode): everything below that stands on the reading asks this once.
+  const worldRead = world.state === 'live'
+  const sets = worldRead ? world.sets : []
+  const eventByClipId: ReadonlyMap<string, TemporalEventRow> = worldRead ? world.eventByClipId : new Map()
 
   // What the World cut carries, indexed. First sight wins, as the World cut's own consumers read it.
   const trackById = new Map<string, WorldTrack>()
@@ -476,7 +478,7 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   const todayStart = deepStart + deepWidth
   const dayWidth = hasToday ? (hasDeep ? TECHNE_RULER_UNITS - deepShare : TECHNE_RULER_UNITS) / civilDays.length : 0
   let lowYear = -1000
-  let highYear = world.state === 'live' && world.todayYear !== null ? world.todayYear : Number.NEGATIVE_INFINITY
+  let highYear = worldRead && world.todayYear !== null ? world.todayYear : Number.NEGATIVE_INFINITY
   for (const year of years) {
     if (year < lowYear) lowYear = year
     if (year > highYear) highYear = year
@@ -530,7 +532,7 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   // A reading's visibility (timeline/readingShown.ts): its track stays and reads its Activator and Solo; its events stand on the ruler
   // only while it is shown (and, with one soloed, only that one's).
   // Only readings that were read stand or leave the ruler: with no World reading the row has nothing to show or hide.
-  const shown = world.state === 'live' ? reading.shown : undefined
+  const shown = worldRead ? reading.shown : undefined
   if (shown) for (const track of tracks) track.mix = {activator: !shown.state.hidden.has(track.id), solo: shown.state.soloed === track.id}
   const standing = shown ? clips.filter(clip => readingStands(shown.state, clip.trackId)) : clips
   const set: WorldTrackSet = {columns, tracks, clips: standing}
