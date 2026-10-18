@@ -136,3 +136,12 @@ test('both document faces take their iframe\'s document from the transport switc
   const day = await readFile(new URL('../src/inhabitants/DocumentDayDieFace.tsx', import.meta.url), 'utf8')
   assert.match(day, /event\.source !== frame\.current\?\.contentWindow/, 'the die\'s bridge still answers only its own frame')
 })
+
+test('a Flow\'s re-read takes the owner\'s page as the new baseline: seen on r7, a title written from Clip view left the pane "edited since save"', async () => {
+  const flow = await readFile(new URL('../src/inhabitants/DocumentFlowFace.tsx', import.meta.url), 'utf8')
+  const reread = flow.match(/const reread = useCallback\(\(\) => \{([\s\S]*?)\}, \[load\]\)/)
+  assert.ok(reread, 'the face keeps one re-read')
+  for (const step of ['baselineText.current = undefined', 'draftBasis.current = undefined', 'setBaselined(false)', 'setDirty(false)', 'void load()'])
+    assert.ok(reread[1].includes(step), `the re-read does ${step}`)
+  assert.match(flow, /reread: pending \? undefined : reread,/, 'the door carries that re-read, never the bare load')
+})

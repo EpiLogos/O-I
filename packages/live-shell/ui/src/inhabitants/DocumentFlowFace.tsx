@@ -147,6 +147,17 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
     }
   }, [captureIsland, instance, load, transport])
 
+  // A re-read takes the owner's page as it now stands, and that page is the new baseline: the one read before would make the
+  // owner's own change (a title written from Clip view, an entry appended by the Flow device) read as a draft. Re-reading is how
+  // the person sets a draft aside (the page family's refusals say "save or re-read them first"), so the draft fact clears too.
+  const reread = useCallback(() => {
+    baselineText.current = undefined
+    draftBasis.current = undefined
+    setBaselined(false)
+    setDirty(false)
+    void load()
+  }, [load])
+
   const markDraft = useCallback(() => {
     draftBasis.current = revision
     setDirty(true)
@@ -192,7 +203,7 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
   // Flow's file and its save standing from the face that holds it (central/devices/pageDevices.tsx), never a second copy.
   const standing: DocumentInPane = {key, paneId, form: 'Flow', title: documentLabel, revision: revision || undefined,
     state: face && !baselined && !save ? 'form not answered yet' : documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
-    reread: pending ? undefined : () => void load(), rereadLabel: 'Re-read', location: instance?.location ?? location, dirty,
+    reread: pending ? undefined : reread, rereadLabel: 'Re-read', location: instance?.location ?? location, dirty,
     ...(save ? {outcome: save.outcome} : {})}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
