@@ -147,7 +147,8 @@ export interface WorldClipTake {
 export interface WorldTrackActions {
   launch?: {op: string; run(clipId: string): unknown};
   launchStop?: {op: string; run(columnId: string): unknown};
-  stopTrack?: {op: string; run(trackId: string): unknown};
+  /** `grain`, when given, is this stop's own (null: it acts on the one track pressed), said instead of the set's. */
+  stopTrack?: {op: string; run(trackId: string): unknown; grain?: string | null};
   record?: {op: string; run(clipId: string): unknown};
   /** Restart a stalled lane from its last good step (manual §6: "its track lights a retry"). The Session shows a retry on
    * each track only where the set carries this, and lights it while the lane has stalled. */

@@ -219,3 +219,19 @@ test('the mixer row: each session\'s Telemetry and Solo read its own settings, a
   // The write a press makes: the track's own setting, no task in it.
   assert.deepEqual(settings.trackSettingChange('telemetry', false), {track: {telemetry: false}})
 })
+
+test('a track\'s Stop is that session\'s own: its running turn cancelled on its encounter owner, said without the harness\'s grain', async () => {
+  const {factoryTrackAdapter, FACTORY_SESSION_STOP_OP, FACTORY_STOP_ALL_OP} = await import('../src/timeline/factoryTrackAdapter.ts')
+  const stopped = [], harness = []
+  const set = factoryTrackAdapter.project({tracks: [track], nowUnixMs: T(14, 30),
+    controls: {control: async word => { harness.push(word); return {ok: true, note: word} }},
+    sessionStop: async session => { stopped.push(session); return {ok: true, note: 'stopped'} }})
+  assert.equal(set.actions.stopTrack.op, FACTORY_SESSION_STOP_OP)
+  assert.equal(set.actions.stopTrack.grain, null, 'it acts on the one track pressed')
+  assert.deepEqual(await set.actions.stopTrack.run(trackKey(track)), {ok: true, note: 'stopped'})
+  assert.deepEqual(stopped, ['ses-214']); assert.deepEqual(harness, [], 'the harness is not stopped')
+  assert.equal(set.actions.stopAll.op, FACTORY_STOP_ALL_OP, 'Stop All stays the harness\'s')
+  assert.deepEqual(await set.actions.stopTrack.run('space:none:nobody'), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8')
+  assert.match(source, /trackStop\.grain !== undefined \? \(trackStop\.grain \?/, 'the grid says a stop\'s own grain, or none')
+})
