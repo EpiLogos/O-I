@@ -440,6 +440,9 @@ impl PreparedRead {
             | KernelOp::LiveDeviceDescriptors
             | KernelOp::LiveDeviceParamsRead { .. }
             | KernelOp::LiveDeviceParamWrite { .. }
+            | KernelOp::LiveClipRead { .. }
+            | KernelOp::LiveClipWrite { .. }
+            | KernelOp::LiveTrackMixerWrite { .. }
             | KernelOp::CompositionRead { .. }
             // Central's own route and Workcell's status record nothing in the
             // kernel. Central's Day writes are prepared writes (owner_write.rs):

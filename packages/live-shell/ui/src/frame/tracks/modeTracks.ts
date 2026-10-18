@@ -22,6 +22,7 @@ import type {WorldTimelineView} from '../../projections/useWorldTemporalReading'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
+import {writeLiveMixer} from '../../live/liveWrites'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
@@ -153,7 +154,8 @@ export const tracksOf = (answer: WorldTrackSet | ModeTracksWaiting | null): Worl
 
 export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   // With no set open Live is waiting — the empty Session says how to open one (the reading's waiting words), not "no tracks".
-  live: reading => reading.set ? liveSetTrackAdapter.project({set: reading.set, document: reading.document, colors: reading.colors}) : null,
+  live: reading => reading.set ? liveSetTrackAdapter.project({set: reading.set, document: reading.document, colors: reading.colors,
+    mixerWrite: (track, control, value) => writeLiveMixer(reading.set!.path, track, control, value)}) : null,
   base: worldCut(useCentralTracks),
   factory: worldCut(useFactoryTracks),
   techne: worldCut(useTechneTracks),

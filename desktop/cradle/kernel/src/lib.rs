@@ -1013,6 +1013,45 @@ pub enum KernelOp {
         param_id: String,
         value: serde_json::Value,
     },
+    /// One clip of the set read whole — its markers, launch, follow actions,
+    /// scale, notes and envelopes — with the set's revision (`live_set::edit`).
+    /// `track` is the track's place in the document; `clip` is
+    /// `{"arrangement": j}` or `{"slot": scene}`. An owner read.
+    LiveClipRead {
+        path: String,
+        track: usize,
+        clip: serde_json::Value,
+    },
+    /// Change one clip's settings (the design's words: name, active, start,
+    /// end, loop, position, length, sig.num, sig.den, groove, scale, root,
+    /// mode, follow, followA, followB, chance, linked, multiplier, launch,
+    /// legato, quantize, launchVelocity), replace a MIDI clip's notes, and
+    /// replace its envelopes' points, against the set's revision. Writes the user's file, not kernel
+    /// state; a moved revision or a value outside Live's is refused in words.
+    LiveClipWrite {
+        path: String,
+        expected_revision: String,
+        track: usize,
+        clip: serde_json::Value,
+        #[serde(default)]
+        set: Option<serde_json::Map<String, serde_json::Value>>,
+        #[serde(default)]
+        notes: Option<Vec<serde_json::Value>>,
+        /// `[{device, parameter, points: [[beat, value]…]}]`: each named
+        /// envelope's points replaced (made when the clip lacks it, removed
+        /// when empty).
+        #[serde(default)]
+        envelopes: Option<Vec<serde_json::Value>>,
+    },
+    /// Change one control of a track's mixer row (activator, solo, arm,
+    /// monitor) against the set's revision; the routings are read, not chosen.
+    LiveTrackMixerWrite {
+        path: String,
+        expected_revision: String,
+        track: usize,
+        control: String,
+        value: serde_json::Value,
+    },
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
     FileResolve {
@@ -1532,6 +1571,14 @@ pub enum KernelOpResult {
     },
     /// `{param: {...}}`: the persisted reading of one written parameter.
     LiveDeviceParamWritten {
+        reading: serde_json::Value,
+    },
+    /// `{clip, revision}`: one clip whole, read or as a write left it.
+    LiveClipReading {
+        reading: serde_json::Value,
+    },
+    /// `{mixer, revision}`: a track's mixer row as a write left it.
+    LiveTrackMixerReading {
         reading: serde_json::Value,
     },
     SystemCompositionReading {
@@ -2673,7 +2720,10 @@ impl Kernel {
             op @ (KernelOp::LiveSetRead { .. }
             | KernelOp::LiveDeviceDescriptors
             | KernelOp::LiveDeviceParamsRead { .. }
-            | KernelOp::LiveDeviceParamWrite { .. }) => self
+            | KernelOp::LiveDeviceParamWrite { .. }
+            | KernelOp::LiveClipRead { .. }
+            | KernelOp::LiveClipWrite { .. }
+            | KernelOp::LiveTrackMixerWrite { .. }) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the Live document owner operation")?
                 .execute(),

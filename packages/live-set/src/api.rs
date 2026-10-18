@@ -14,9 +14,24 @@ pub fn set_json(path: &str) -> Result<serde_json::Value, String> {
     use sha2::{Digest, Sha256};
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     let root = crate::open_gz(&bytes).map_err(|e| e.to_string())?;
+    let mut document =
+        serde_json::to_value(document_json(path, &root).ok_or("No LiveSet in native document")?)
+            .map_err(|e| e.to_string())?;
+    // Each track's mixer row, take lanes and automation (edit.rs), beside what the document already lists.
+    if let Some(tracks) = document
+        .get_mut("tracks")
+        .and_then(serde_json::Value::as_array_mut)
+    {
+        for (track, extra) in tracks.iter_mut().zip(crate::edit::tracks_extra_json(&root)) {
+            if let (Some(track), serde_json::Value::Object(extra)) = (track.as_object_mut(), extra)
+            {
+                track.extend(extra);
+            }
+        }
+    }
     Ok(serde_json::json!({
         "summary": summary_json(path, &root).ok_or("No LiveSet in native document")?,
-        "document": document_json(path, &root).ok_or("No LiveSet in native document")?,
+        "document": document,
         "revision": format!("sha256:{:x}", Sha256::digest(&bytes)),
     }))
 }
@@ -449,7 +464,7 @@ pub fn device_param_set(
 /// after. A crash or kill leaves either the old set or the new one, never a
 /// truncated file. A symlinked set is written at its target, so the link stays.
 /// Extended attributes (Finder tags, quarantine) are not carried to the new file.
-fn replace_file_atomically(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
+pub(crate) fn replace_file_atomically(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
     use std::io::Write;
     let target = std::fs::canonicalize(path).map_err(|e| e.to_string())?;
     let dir = target

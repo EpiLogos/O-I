@@ -286,6 +286,12 @@ export type KernelOp =
   | {op:"live_device_params_read";path:string;track:string;device:string}
   // Validate one stored parameter against its table's extent and write the set back in place; refusals name the law.
   | {op:"live_device_param_write";path:string;track:string;device_name:string;param_id:string;value:unknown}
+  // One clip read whole (markers, launch, follow actions, scale, notes, envelopes) with the set's revision; track by its place in the document.
+  | {op:"live_clip_read";path:string;track:number;clip:LiveClipAt}
+  // Change a clip's settings (the design's words) and/or a MIDI clip's notes against the set's revision; refusals name Live's values.
+  | {op:"live_clip_write";path:string;expected_revision:string;track:number;clip:LiveClipAt;set?:Record<string,unknown>;notes?:LiveNote[];envelopes?:{device:string;parameter:string;points:[number,number][]}[]}
+  // Change one control of a track's mixer row (activator, solo, arm, monitor) against the set's revision.
+  | {op:"live_track_mixer_write";path:string;expected_revision:string;track:number;control:"activator"|"solo"|"arm"|"monitor";value:boolean|"in"|"auto"|"off"}
   // The configuration-plane binding (#299 C6 live leg): every operation
   // routes through the installed `oi` executable — the same engine
   // `oi config` / `oi profile` drive — so the Desktop keeps no parallel
@@ -479,6 +485,8 @@ export type KernelOpResult =
   | {result:"janko_window_reading";document:unknown}
   // Live document owner results: the 8787 seam's contract documents, verbatim.
   | {result:"live_set_reading";reading:{summary:unknown;document:unknown;revision:string}}
+  | {result:"live_clip_reading";reading:{clip:LiveClipReading;revision:string}}
+  | {result:"live_track_mixer_reading";reading:{mixer:LiveTrackMixer;revision:string}}
   | {result:"live_device_descriptors_reading";descriptors:Record<string,unknown[]>}
   | {result:"live_device_params_reading";reading:{params:unknown[]}}
   | {result:"live_device_param_written";reading:{param:unknown}}
@@ -696,3 +704,22 @@ export interface EncounterSessionSettingsReading {
   previous_task: null | {task_ref: string; set: Record<string, unknown>}
   standing: string
 }
+
+/** Where a clip stands on its track: its arrangement index or its session slot's scene. */
+export type LiveClipAt = {arrangement: number} | {slot: number}
+/** One note of a MIDI clip: MIDI pitch, place and length in beats, velocity 1–127, chance 0–1. */
+export interface LiveNote {id?: number; p: number; at: number; len: number; vel?: number; chance?: number; on?: boolean}
+/** A clip whole, in the design's words (packages/live-set/src/edit.rs clip_reading). A value the document lacks is null. */
+export interface LiveClipReading {
+  kind: 'midi' | 'audio'; name: string; colourIndex: number | null; active: boolean | null
+  loop?: boolean; start?: number; end?: number; position?: number; length?: number
+  sig: {num: number | null; den: number | null} | null; groove: string | null
+  scale: boolean | null; root: number | null; mode: string | null; scaleName: string | null
+  follow: boolean | null; followA: string | null; followB: string | null; chance: number | null; linked: boolean | null; multiplier: number | null
+  launch: string | null; legato: boolean | null; quantize: string | null; launchVelocity: number | null
+  envelopes: LiveEnvelope[]; notes?: (LiveNote & {id: number; vel: number; chance: number; on: boolean})[]
+}
+/** An envelope: what it moves (the device and parameter its target sits under) and its points [[beat, value]…]. */
+export interface LiveEnvelope {target: string; device: string; parameter: string; points: [number, number][]}
+/** A track's mixer row; a control the track has no element for is absent. */
+export interface LiveTrackMixer {activator?: boolean; solo?: boolean; arm?: boolean; monitor?: 'in' | 'auto' | 'off'; input?: string; output?: string}
