@@ -228,8 +228,9 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   const settingsAnswer = useSettingsAnswer(sessions?.transport ?? {kind: 'unavailable', reason: 'No sessions provider is mounted here.'},
     sessions && sessionTrack ? sessionTrack.sessionRef : null, SETTINGS_PROJECT)
   const settingsReading = settingsAnswer.reading.status === 'answered' ? settingsAnswer.reading.value : null
-  const settingsContext = useMemo(() => sessions && sessionTrack ? {transport: sessions.transport, project: SETTINGS_PROJECT, settings: settingsReading} : null,
-    [sessions, sessionTrack, settingsReading])
+  const settingsRefused = settingsAnswer.reading.error
+  const settingsContext = useMemo(() => sessions && sessionTrack ? {transport: sessions.transport, project: SETTINGS_PROJECT, settings: settingsReading, refused: settingsRefused} : null,
+    [sessions, sessionTrack, settingsReading, settingsRefused])
   const tasksDesignBinding = useMemo(() => tasksBinding({session: sessionTrack, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0, selectedTask, agent: agentDesignBinding?.values ?? {}, settings: settingsContext},
     agentDesignBinding, {
       selectTask: n => {
