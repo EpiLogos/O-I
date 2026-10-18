@@ -50,7 +50,14 @@ const qlDevs = await import('../src/inhabitants/ql/devices/qlDevices.ts')
 const faces = await import('../src/inhabitants/ql/devices/faces.ts')
 const rowSets = await import('../src/inhabitants/ql/devices/rowSets.ts')
 const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
-const {DevicePool} = await import('../src/frame/devices/DevicePool.tsx')
+const {PlacedDevice: WholePlaced} = await import('../src/frame/devices/DeviceView.tsx')
+const wholeDoor = await import('../src/frame/devices/deviceDoor.ts')
+/** The selected device's Whole, as its band draws it above the chain (W1, manual §16.7: the pool holds no device; DevicePool retired). */
+function WholeBand() {
+  const held = wholeDoor.useDeviceDoor()
+  const entry = held.selected ? held.device(held.selected) : undefined
+  return entry ? createElement(WholePlaced, {device: entry.device, view: 'whole', picture: entry.picture, binding: entry.binding}) : null
+}
 const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
 const {lightOf, compactRows} = await import('../src/frame/devices/deviceRuntime.ts')
 const deviceDoor = await import('../src/frame/devices/deviceDoor.ts')
@@ -374,7 +381,7 @@ test('the focused 0 instrument stands open as one plate of the faces it holds, t
   const sections = ['view', 'graph', 'forces', 'time'].map(id => out.indexOf(`data-section="${id}"`))
   assert.ok(sections.every((at, index) => at > 0 && (index === 0 || at > sections[index - 1])), 'View, Graph, Forces, Deep time, in order')
   for (const id of ['globe-engine', 'graph-tools', 'mode-switch', 'time-control']) {
-    assert.match(out, new RegExp(`class="plate-held-mark" data-device="atlas-earth:${id}"`), `${id} stands as its mark: every setting in the pool, full size in a pane`)
+    assert.match(out, new RegExp(`class="plate-held-mark" data-device="atlas-earth:${id}"`), `${id} stands as its mark: every setting above the chain, full size in a pane`)
   }
   assert.doesNotMatch(out, /data-device-size="compact"/, 'no device plate is boxed inside the instrument')
   const order = ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5'].map(id => out.indexOf(`data-instrument="${id}"`))
@@ -471,7 +478,7 @@ test('the QL owner\'s standing and the reader\'s named reason reach the device\'
 
 // ── one device, three sizes, one door ──────────────────────────────────────────────────────────────────────────────
 
-test('a device is published by id: chosen, it is whole in the pool; opened, it is full in a pane — the same device, the same settings', async () => {
+test('a device is published by id: chosen, it is whole in its band; opened, it is full in a pane — the same device, the same settings', async () => {
   const graph = new FakeGraph({local: true})
   await mounted(atlasHandle({graph}), () => {
     const entries = chain.techneEntries(INSTRUMENTS(), readings({atlas: atlasDevs.atlasReading(atlasHandle({graph}), 'graph')}))
@@ -481,10 +488,10 @@ test('a device is published by id: chosen, it is whole in the pool; opened, it i
     const entry = entryOf(entries, 'atlas-earth', 'graph-tools')
     assert.equal(deviceDoor.publishedDevice(id).device, entry.device, 'the door holds the very device the chain draws')
     deviceDoor.selectDevice(id)
-    const pool = everyPage(id, () => html(createElement(DevicePool)))
-    assert.match(pool, new RegExp(`data-device-pool="${id}"`))
+    const pool = everyPage(id, () => html(createElement(WholeBand)))
+    assert.match(pool, new RegExp(`data-device-frame="flip"[\\s\\S]*data-device="${id}"`))
     assert.match(pool, /data-device-size="whole"/)
-    assert.match(pool, /data-atlas-face="graph-tools"/, 'the body is the picture in the pool')
+    assert.match(pool, /data-atlas-face="graph-tools"/, 'the body is the picture in the band')
     assert.deepEqual(params(pool), entry.device.rows.filter(row => row.key !== entry.device.enabledKey).map(row => row.key), 'the pool shows every setting, grouped, on its pages')
     const pane = html(createElement(DeviceFullPane, {id}))
     assert.match(pane, /data-device-size="full"/)
@@ -515,7 +522,7 @@ test('the chain publishes through the door and opens a pane through the instrume
   const {readFile} = await import('node:fs/promises')
   const source = await readFile(new URL('../src/inhabitants/ql/devices/TechneDevices.tsx', import.meta.url), 'utf8')
   assert.match(source, /usePublished\(entries\)/, 'the chain publishes while it stands')
-  assert.match(source, /selectDevice\(device\.id\)/, 'choosing a device shows it whole in the pool')
+  assert.match(source, /selectDevice\(device\.id\)/, 'choosing a device selects it (its Whole stands in its band)')
   assert.match(source, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: device\.id, title\}\)/, 'opening a device puts it in a pane')
 })
 

@@ -223,6 +223,12 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
       {inPane ? <div className="document-pane-head" data-document-head="flow">
         <span className="document-pane-form">Flow</span>
         <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revisionShort(revision)} · ` : ''}{standing.state}</span>
+        <span className="document-pane-acts">
+          <button type="button" data-action="save" disabled={!standing.save} onClick={() => standing.save?.()}
+            data-i="Save to Central|The owner's revision-checked write of the Flow as it stands in its pane.">Save</button>
+          <button type="button" data-action="reread" disabled={!standing.reread} onClick={() => standing.reread?.()}
+            data-i="Re-read|Read the Flow again from its owner; a draft not saved is set aside.">Re-read</button>
+        </span>
       </div> : <div className="inhabitant-body-actions">
         <button type="button" className="inhabitant-act" data-action="save" disabled={!face || pending} onClick={() => void saveToOwner()}>Save to native source</button>
         <button type="button" className="inhabitant-act" data-action="reread" disabled={pending} onClick={() => void load()}>Re-read current document</button>

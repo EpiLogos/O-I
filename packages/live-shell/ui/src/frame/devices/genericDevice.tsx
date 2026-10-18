@@ -118,9 +118,9 @@ export function genericDevice(src: GenericSource): DesignedDevice {
       const cells = compactCells(rows, src.enabledKey)
       const plan = planCompact(cells)
       const macros = cells.length > 0 && cells.every(cell => (cell.row.macro?.maps.length ?? 0) > 0)
-      return <Panel view="compact" {...head(p)} onFold={p.nav.fold} onSelect={p.nav.select} selected={src.selected} hint={hint(p, p.nav.select ? src.hint ?? 'Show every setting in the pool.' : undefined)}>
+      return <Panel view="compact" {...head(p)} onFold={p.nav.fold} onSelect={p.nav.select} selected={src.selected} hint={hint(p, p.nav.select ? src.hint ?? 'Press to select it; its expanded view shows every setting above the chain.' : undefined)}>
         {src.picture && <Section width={MEASURE.compactDisplay[0] + 12}>
-          <Display raw w={MEASURE.compactDisplay[0]} h={MEASURE.compactDisplay[1]} label={src.title} does={`${src.title}: its live picture. Press the plate to see every setting in the pool.`}>
+          <Display raw w={MEASURE.compactDisplay[0]} h={MEASURE.compactDisplay[1]} label={src.title} does={`${src.title}: its live picture. Its expanded view shows every setting above the chain.`}>
             <div className="dv-picture">{src.picture('compact')}</div>
           </Display>
         </Section>}

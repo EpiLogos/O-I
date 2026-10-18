@@ -94,7 +94,7 @@ test('icon marks come from the specimen set, not ad-hoc paths', async () => {
 })
 
 test('no raw JSON renders as a panel surface — receipts fold, cards name', async () => {
-  for (const name of ['devices/FactoryDeviceChain.tsx', 'AgentShellBrowser.tsx', 'AgentDockTileBody.tsx', 'AgentDevicePool.tsx']) {
+  for (const name of ['devices/FactoryDeviceChain.tsx', 'AgentShellBrowser.tsx', 'AgentDockTileBody.tsx']) {
     const source = await read(name)
     // The only allowed JSON.stringify is through safeJson (a folded receipt).
     const raw = [...source.matchAll(/JSON\.stringify\(/g)].length

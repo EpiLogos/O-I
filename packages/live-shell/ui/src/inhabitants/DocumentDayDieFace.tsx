@@ -285,6 +285,12 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
       {inPane && <div className="document-pane-head" data-document-head="day">
         <span className="document-pane-form">Day · #{open.n} {open.name}</span>
         <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revisionShort(revision)} · ` : ''}{standing.state}</span>
+        <span className="document-pane-acts">
+          <button type="button" data-action="save" disabled={!standing.save} onClick={() => standing.save?.()}
+            data-i="Save to Central|The owner's revision-checked write of the Day as it stands in its pane.">Save</button>
+          <button type="button" data-action="reread" disabled={!standing.reread} onClick={() => standing.reread?.()}
+            data-i={`${standing.rereadLabel ?? 'Re-read'}|Read the Day again from its owner.`}>Review</button>
+        </span>
       </div>}
       {/* The die net — the device's compact face, a reading of the die's own
           face position (icon-cut's Day-die drawing, the open face inked). */}

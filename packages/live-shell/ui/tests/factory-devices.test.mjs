@@ -38,7 +38,14 @@ const {validateFaceSemantic} = await import('../src/inhabitants/sdk/semantics.ts
 const {compactRows, lightOf} = await import('../src/frame/devices/deviceRuntime.ts')
 const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
 const door = await import('../src/frame/devices/deviceDoor.ts')
-const {DevicePool} = await import('../src/frame/devices/DevicePool.tsx')
+const {PlacedDevice: WholePlaced} = await import('../src/frame/devices/DeviceView.tsx')
+const wholeDoor = await import('../src/frame/devices/deviceDoor.ts')
+/** The selected device's Whole, as its band draws it above the chain (W1, manual §16.7: the pool holds no device; DevicePool retired). */
+function WholeBand() {
+  const held = wholeDoor.useDeviceDoor()
+  const entry = held.selected ? held.device(held.selected) : undefined
+  return entry ? createElement(WholePlaced, {device: entry.device, view: 'whole', picture: entry.picture, binding: entry.binding}) : null
+}
 const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
 const model = await import('../src/agent/devices/agentChainDevices.ts')
 const pictures = await import('../src/agent/devices/AgentDevicePictures.tsx')
@@ -325,14 +332,14 @@ test('one device in three sizes: the same live rows, a picture in each — no te
   assert.match(agent, /data-param="autonomy"[^>]*data-control="readout"[\s\S]*?<span class="dp-label">Autonomy<\/span>/, 'autonomy is a reading until the task record discloses it')
 })
 
-test('the door shows the chosen device whole in the pool and full in a pane — the same device, the same live settings', () => {
+test('the door shows the chosen device whole in its band and full in a pane — the same device, the same live settings', () => {
   const set = chain({reading: {chains: model.rosterChains(ROSTER)}})
   const ctx = context({reading: {chains: model.rosterChains(ROSTER)}})
   for (const {slot, device} of set) door.publishDevice(device.id, {device, picture: size => pictures.chainPicture(slot.id, ctx, size)})
   try {
     door.selectDevice('factory:skillset')
-    const pool = html(createElement(DevicePool))
-    assert.match(pool, /data-device-pool="factory:skillset"/)
+    const pool = html(createElement(WholeBand))
+    assert.match(pool, /data-device-frame="flip"[\s\S]*data-device="factory:skillset"/)
     assert.match(pool, /data-device-size="whole"/)
     assert.match(pool, /class="dp-sec-label">Settings</)
     assert.doesNotMatch(pool, /class="dp-sec-label">Macros</, 'the rack\'s settings are not offered as macros')
@@ -357,7 +364,7 @@ test('the Device side is these devices, wired to the door, the pane and the owne
   assert.match(view, /<DeviceView device=\{device\} size="compact"/, 'every device draws through DeviceView at its compact size')
   assert.match(view, /publishDevice\(device\.id, \{device, picture:/, 'each device is published to the door')
   assert.match(view, /publishDevice\(id, null\)/, 'and withdrawn with the chain')
-  assert.match(view, /selectDevice\(chainDeviceId\(slotId\)\)/, 'choosing one shows it whole in the pool')
+  assert.match(view, /selectDevice\(chainDeviceId\(slotId\)\)/, 'choosing one selects it (its Whole stands in its band, ▸)')
   assert.match(view, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: id, title\}\)/, 'opening one full puts it in a pane')
   assert.match(view, /const openFull = \(slotId: string, title: string\) => openDevice\(chainDeviceId\(slotId\), title\)/, 'by its chain id')
   // REPLACED (R4): the Agent's ⤢ opened the Thread device's Full; it opens the one Agent full now, whose Full is its thread.

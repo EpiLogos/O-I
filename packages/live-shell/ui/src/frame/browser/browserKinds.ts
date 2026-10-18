@@ -12,12 +12,13 @@ export const BROWSER_KINDS: readonly {kind: BrowserKind; label: string; hint: st
   {kind: 'running', label: 'Running', hint: 'running things to work with where they are: drag an agent onto an empty track seats it'},
 ]
 
-/** A row body's controls when the one browser holds it: the category it shows, the search, and where its pool goes. */
+/** A row body's controls when the one browser holds it: the category it shows, the search, and where its preview goes. */
 export interface ControlledBrowser {
   category: string
   query: string
-  /** The one pool under the browser: a body's own pool content is portalled here. */
-  poolHost: HTMLElement | null
+  /** The foot of the list (manual §16.7: "Select a row to preview it at the foot of the list"): a body portals its selected
+   * row's preview here — a page's first lines, a material's picture, a device's account of what it does. */
+  previewHost: HTMLElement | null
 }
 
 export interface BrowserCategory {

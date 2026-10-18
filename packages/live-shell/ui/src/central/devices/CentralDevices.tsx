@@ -430,12 +430,12 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const openFull = (id: string, title: string) => openInstrument(DEVICE_PANE_KIND, undefined, {ref: id, title})
   const familySlot = (entry: CentralDeviceEntry) => <div key={entry.id} className="central-device-slot" data-face-id={entry.id.slice(CENTRAL_FAMILY.length + 1)}>
     <DeviceView device={entry.device} size="compact" picture={entry.picture('compact')} marks={entry.marks} binding={bindingOf(entry.id) ?? undefined} actions={[
-      {icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(entry.id)},
+      {icon: 'detail', label: 'Select it: the keys and the status bar speak to it; its expanded view stands whole above the chain', onPress: () => selectDevice(entry.id)},
       {icon: 'pane', label: `Open ${entry.device.face.title} full size in a pane`, onPress: () => openFull(entry.id, entry.device.face.title)},
     ]} /></div>
   const otherSlot = (id: string, device: DeviceInstance | null, binding: DesignBinding, title: string, full: string) => device && <div key={id} className="central-device-slot" data-device-id={id}>
     <DeviceView device={device} size="compact" binding={binding} actions={[
-      {icon: 'detail', label: `Show ${title} whole in the pool`, onPress: () => selectDevice(id)},
+      {icon: 'detail', label: `Select ${title}: the keys and the status bar speak to it; its expanded view stands whole above the chain`, onPress: () => selectDevice(id)},
       {icon: 'pane', label: full, onPress: () => openFull(id, title)},
     ]} /></div>
   const of = (faces: readonly string[]) => faces.flatMap(face => entries.filter(entry => entry.id === centralDeviceId(face)))

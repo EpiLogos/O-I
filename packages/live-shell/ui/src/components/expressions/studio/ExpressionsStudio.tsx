@@ -24,7 +24,7 @@ import {OwnerValueBox, PlateRadio, PlateReading} from '../../../frame/devices/pl
 import {DeviceView} from '../../../frame/devices/DeviceView'
 import type {DeviceInstance} from '../../../frame/devices/deviceRuntime'
 import {Action} from '../../../inhabitants/sdk/panel'
-import {holdInPool, publishDevice, selectDevice} from '../../../frame/devices/deviceDoor'
+import {flipDevice, holdInBand, publishDevice, selectDevice} from '../../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../../frame/devices/devicePane'
 import {openInstrument} from '../../../frame/instrumentDoor'
 import {Icon} from '../../../inhabitants/sdk/Icon'
@@ -140,8 +140,8 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
   const browse = useCallback(() => window.dispatchEvent(new CustomEvent(PARAMETER_BROWSE_EVENT)), [])
   const show = (family: string) => {
     const ql = qlEntries.find(entry => entry.face.id === family)
-    if (ql) holdInPool(ql.device.id, {device: ql.device, picture: ql.picture, ...(ql.binding ? {binding: ql.binding} : {})})
-    else if (family !== 'nara') selectDevice(expressionsDeviceId(family))
+    if (ql) holdInBand(ql.device.id, {device: ql.device, picture: ql.picture, ...(ql.binding ? {binding: ql.binding} : {})})
+    else if (family !== 'nara') { selectDevice(expressionsDeviceId(family)); flipDevice(expressionsDeviceId(family)) }
   }
   const pane = (family: string) => {
     const ql = qlEntries.find(entry => entry.face.id === family)
@@ -224,7 +224,7 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
     onDrop={onDrop}>
     <div className="expressions-studio-slot" data-device={STUDIO_DEVICE_ID} data-design="expressions:studio">
       <DeviceView device={STUDIO_DEVICE} size="compact" binding={binding} marks={marks} actions={[
-        {icon: 'detail', label: 'Show the Studio whole in the pool: its Macros and Chains', onPress: () => selectDevice(STUDIO_DEVICE_ID)},
+        {icon: 'detail', label: 'Select the Studio: the keys and the status bar speak to it; its expanded view holds its Macros and Chains above the chain', onPress: () => selectDevice(STUDIO_DEVICE_ID)},
         {icon: 'pane', label: 'Open the Studio full in a pane', onPress: () => { try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: STUDIO_DEVICE_ID, title: 'Studio'}) } catch (cause) { setPaneFault(cause instanceof Error ? cause.message : String(cause)) } }},
       ]} />
     </div>

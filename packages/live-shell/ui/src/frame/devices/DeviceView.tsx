@@ -6,7 +6,7 @@
 // The places:
 //   ChainDevice — compact, or folded by ▾ (§2: "Press ▾ in the head to fold the device. Press the folded title to open it"), on a
 //                 chain; the press on the plate shows the device whole in the pool; it scales 80–125 % with the detail area's height;
-//   DeviceView size="whole" — the pool's view (DevicePool.tsx); size="full" — the pane's (devicePane.tsx): the material, no controls;
+//   DeviceView size="whole" — the band's view (above the chain; the pool holds no device); size="full" — the pane's (devicePane.tsx): the material, no controls;
 //   DeviceWidgetView — the rail's tile (frame/widgets/deviceWidgets.tsx).
 // DeviceView keeps the runtime's earlier API (device, size, picture, actions, wrapRow; ported from the former DeviceView.tsx:18-30)
 // so every chain site draws on the kit at once.
@@ -20,7 +20,7 @@
 // draws (DeviceWindows.tsx; PlacedDevice view="popout": the design's own, or Full over Whole).
 //
 // Every view gets its frame and its room (design.ts ViewProps; manual §16.3): Compact on the chain ('chain', the chain row's box),
-// Whole in the pool ('pool', the pool's box) or expanded ('flip', the band), Full in a pane ('pane', the pane's box), Pop-out in its
+// Whole in its band above the chain ('flip', the band's box; manual §16.7: the pool holds no device), Full in a pane ('pane', the pane's box), Pop-out in its
 // window ('window', the window's room), Widget on the rail ('rail', the tile's box) — each measured where it stands (useHolderRoom),
 // at 100 %, never a fixed guess where a box exists.
 import {useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react'
@@ -187,12 +187,11 @@ export function bandStands(expanded: boolean | undefined, host: HTMLElement | nu
   return !!expanded && !!host && !!shown
 }
 
-/** Where each place's room is read: the element the place stands in. The chain row, the pool, the window's room and the band (its
+/** Where each place's room is read: the element the place stands in. The chain row, the window's room and the band (its
  * content box: as wide as the detail area, one wide Whole high — popout.tsx WIDE_WHOLE_H) are holders above the plate; a pane's Full
  * stands inset in its pane, and a widget's tile is the place itself, so those read their own box. */
 const HOLDERS: Readonly<Record<Frame, (place: HTMLElement) => Element | null>> = {
   chain: place => place.parentElement?.closest('.detail-chain') ?? null,
-  pool: place => place.parentElement?.closest('.device-pool') ?? null,
   flip: place => place.parentElement?.closest('.device-flip') ?? null,
   window: place => place.parentElement?.closest('.device-window-room') ?? null,
   pane: place => place,
@@ -283,8 +282,8 @@ export function PlacedDevice({device, view, picture, actions, wrapRow, binding, 
   </div>
 }
 
-/** Each view's own place (design.ts Frame): Whole in the pool, Full in a pane, Pop-out in its window, Widget on the rail. */
-export const FRAME_OF_VIEW: Readonly<Record<'whole' | 'full' | 'popout' | 'widget', Frame>> = {whole: 'pool', full: 'pane', popout: 'window', widget: 'rail'}
+/** Each view's own place (design.ts Frame): Whole in its band above the chain, Full in a pane, Pop-out in its window, Widget on the rail. */
+export const FRAME_OF_VIEW: Readonly<Record<'whole' | 'full' | 'popout' | 'widget', Frame>> = {whole: 'flip', full: 'pane', popout: 'window', widget: 'rail'}
 
 /** What the head offers in each place (manual §16.4: activator, ▸, name; the rail, ▦ and ↗ at the right). Whole — in the pool, expanded,
  * docked in the window — carries ▸, the rail, ▦ and ↗; in its window ↗ closes the window. A widget opens full, pops out, and leaves

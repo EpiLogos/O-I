@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-import {DevicePool} from '../frame/devices/DevicePool'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
-import {SetsSection} from '../shell/SetsSection'
 import type { PanelContext } from '../shell/panels'
 import { getPanels } from '../shell/panels'
 import { displayDeviceName } from '../shell/document'
@@ -105,5 +103,5 @@ export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: strin
       <details open><summary>Collections</summary><button onClick={() => setCategory('Sets')} className={category === 'Sets' ? 'active' : ''}><span className="collection-square" />Favorites</button></details>
       <details open><summary>Library</summary>{CATEGORIES.map(name => <button key={name} onClick={() => setCategory(name)} className={category === name ? 'active' : ''} title="Browse material disclosed by the opened set"><span className="category-icon">{mark(name)}</span>{name}</button>)}</details>
       <details open><summary>Places</summary><button onClick={() => setCategory('Sets')}>{mark('Sets')}Sets</button><button onClick={() => setCategory('Open set')} className={category === 'Open set' ? 'active' : ''}>{mark('Open set')}Open set</button>{getPanels('browser-section').filter(panel => !CATEGORIES.includes(panel.id)).map(panel => <button key={panel.id} onClick={() => setCategory(panel.id)}>{panel.title}</button>)}</details>
-    </nav>{results}</div><div className="browser-pool"><DevicePool /></div><InstrumentsSection /><SetsSection /></aside>
+    </nav>{results}</div><InstrumentsSection /></aside>
 }

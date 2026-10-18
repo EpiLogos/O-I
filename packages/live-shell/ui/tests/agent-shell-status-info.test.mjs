@@ -96,9 +96,12 @@ test('AGENT_DATA_I_FACTORIES covers the parametric controls with oracle strings'
       'A device folded to its title, as in Live.'],
     ['agentset', () => AGENT_DATA_I_FACTORIES.agentset('Port crew'), 'Agentset · Port crew', 'Agentset · Port crew',
       'One chain per member, nested as spawned, each with its model. Click a member to open its thread.'],
+    // The mockup's words ("Click: expand in the pool") are superseded by manual §16.4 and §16.7 (W1): the pool holds no device; a
+    // press selects it and its expanded view stands above the chain.
     ['agentFace', () => AGENT_DATA_I_FACTORIES.agentFace('Fizz'), 'Fizz · agent', '${a.name} · agent',
-      'Compact. Click: expand in the pool. ↗: open its thread full.'],
+      'Compact. Click: select it; its expanded view stands above the chain. ↗: open its thread full.'],
   ]
+  const SUPERSEDED_BY_MANUAL = {agentFace: 'manual §16.4, §16.7 (W1): the pool holds no device'}
   for (const [key, make, expected, oracleLabel, oracleFn] of cases) {
     assert.equal(typeof AGENT_DATA_I_FACTORIES[key], 'function', `missing factory ${key}`)
     const parsed = parseDataI(make())
@@ -108,7 +111,8 @@ test('AGENT_DATA_I_FACTORIES covers the parametric controls with oracle strings'
     // oracle label it derives from must exist on that same or another control.
     const fnVerbatim = dataIControls.some(control => control.function === oracleFn)
     const labelVerbatim = dataIControls.some(control => control.label === oracleLabel)
-    assert.ok(fnVerbatim, `${key} function text not found in the oracle controls`)
+    // A function text the manual has since superseded is named here with the section that supersedes it; every other is the oracle's.
+    if (!SUPERSEDED_BY_MANUAL[key]) assert.ok(fnVerbatim, `${key} function text not found in the oracle controls`)
     assert.ok(labelVerbatim, `${key} oracle label template not found: ${oracleLabel}`)
     assert.equal(parsed.fn, oracleFn, `${key} function text`)
   }

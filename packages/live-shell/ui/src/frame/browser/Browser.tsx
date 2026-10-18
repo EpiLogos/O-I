@@ -1,16 +1,15 @@
-// The one browser (FOUNDATION F6; manual §10.3): one search, the categories grouped by the four kinds, a category's rows,
-// and the pool beneath. It knows no mode: the frame hands it the mode's row sources (shell/modeBrowsers.tsx) and the
-// sources every mode shares, and each source's body draws its rows under the browser's control. The pool is the aperture
-// slot first — the focused pane's own context (apertureViews.tsx) — then a body's own pool content (a material's detail, a
-// native device, the agent chain's readings), portalled in, then the selected device whole (frame/devices/DevicePool.tsx),
-// which takes the slot's place while it is chosen. A category's words are its row's Info (data-i). Drawn at the mockup's
-// floor (world-shell-mockup .bsearch/.bcats/.bres/.bitem/.slot; browser.css, apertureViews.css).
-import {useEffect, useMemo, useRef, useState} from 'react'
-import {DevicePool} from '../devices/DevicePool'
+// The one browser (FOUNDATION F6; manual §10.3, §16.7): one search, the categories grouped by the four kinds, a category's rows,
+// a selected row's preview at the foot of the list ("its preview shows at the foot of the list, where Live plays a sample you
+// select"), and the pool beneath. It knows no mode: the frame hands it the mode's row sources (shell/modeBrowsers.tsx), the
+// sources every mode shares, and the pool's other face where the mode has one (Live's grooves); each source's body draws its
+// rows under the browser's control and portals its preview into the foot. The pool holds your workspaces and nothing else
+// (WorkspacePool.tsx): a device stands whole in its band above the chain, an instrument in a pane. A category's words are its
+// row's Info (data-i). Drawn at the mockup's floor (world-shell-mockup .bsearch/.bcats/.bres/.bitem; browser.css).
+import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {useBrowserSearchRequest} from '../keys/keyDoors'
 import {BROWSER_KINDS, type BrowserCategory, type BrowserSource} from './browserKinds'
 import {EMPTY_TRAIL, visitCategory, walkTrail} from './browserTrail'
-import {ApertureSlot} from './apertureViews'
+import {WorkspacePool} from './WorkspacePool'
 import '../../components/WorldBrowser.css'
 import './browser.css'
 
@@ -23,17 +22,21 @@ export interface BrowserProps {
    * here falls back to the first. Left out, the browser holds the choice itself. */
   category?: string | null
   onCategory?: (key: string) => void
+  /** The pool's other face, where the mode registers one (Live's grooves, manual §16.7): its switch label and face. */
+  poolFace?: {label: string; face: ReactNode} | null
+  /** Whether the pool stands under the browser (⌥⌘6 shows or hides it, as Live's Groove Pool). */
+  pool?: boolean
 }
 
 /** How a category is named in the book: its source and its own id. */
 export const categoryKey = (source: {id: string}, category: {id: string}): string => `${source.id}:${category.id}`
 
-export function Browser({sources, category, onCategory}: BrowserProps) {
+export function Browser({sources, category, onCategory, poolFace = null, pool = true}: BrowserProps) {
   const categories = useMemo<Placed[]>(() => sources.flatMap(source => source.categories.map(entry => ({...entry, source}))), [sources])
   const [held, hold] = useState<string | null>(null)
   const active = onCategory ? category ?? null : held
   const [query, setQuery] = useState('')
-  const [poolHost, setPoolHost] = useState<HTMLDivElement | null>(null)
+  const [previewHost, setPreviewHost] = useState<HTMLDivElement | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   useBrowserSearchRequest(searchRef)
   const current = categories.find(item => key(item) === active) ?? categories[0] ?? null
@@ -77,14 +80,11 @@ export function Browser({sources, category, onCategory}: BrowserProps) {
         })}
       </nav>
       <div className="world-browser-results">
-        {current && Body && <Body key={key(current)} controlled={{category: current.id, query, poolHost}} />}
+        {current && Body && <Body key={key(current)} controlled={{category: current.id, query, previewHost}} />}
+        <div ref={setPreviewHost} className="one-browser-preview" aria-label="Preview" />
       </div>
     </div>
-    <section className="world-context-pool one-browser-pool" aria-label="Pool">
-      <ApertureSlot />
-      <div ref={setPoolHost} className="one-browser-pool-host" />
-      <DevicePool />
-    </section>
+    {pool && <section className="one-browser-pool" aria-label="Pool"><WorkspacePool grooves={poolFace} /></section>}
   </aside>
 }
 

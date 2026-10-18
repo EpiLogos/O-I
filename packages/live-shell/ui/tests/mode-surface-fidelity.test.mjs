@@ -99,8 +99,8 @@ test('the dock: the agents tile reads the agency surface — and discloses its a
 
 // ————————————————————————————————————————————————————————————————————————
 // The browser — rail marks, the results header, the New affordance. The
-// aperture slot is the one browser's (frame/browser/apertureViews.tsx,
-// tests/aperture-slot-context.test.mjs): the focused pane's own context.
+// focused pane's context is the encounter bar's (frame/encounter/EncounterBar.tsx,
+// tests/w1-pool-and-encounter.test.mjs), above the panes; the browser holds no aperture.
 
 test('the browser: results header, the New… category in the Project group; the rows draw no aperture of their own', () => {
   const out = html(createElement(StubWorkspaceProvider, {transport: UNAVAILABLE},

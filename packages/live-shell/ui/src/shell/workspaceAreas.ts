@@ -107,16 +107,18 @@ export function enteredDetailHeight(held: DetailExpansions, frame: string, kept:
 
 // ------------------------------------------------------------------------------------------------------------------- the keys
 
-/** Which part a key shows or hides (manual §10.8; the documentation lane, 16 Oct: "⌘⌥L hides both; ⌘⌥R the rail"): ⌘⌥B the browser,
- * ⌘⌥L the detail area, ⌘⌥R the widget rail. Read by the physical key as well as the character: with ⌥ held, macOS gives the
- * character the key makes under Option (⌥B is "∫", ⌥L is "¬", ⌥R is "®"), so the letter alone would miss on the Mac. Pure. */
+/** Which part a key shows or hides (manual §10.8, §16.4; the documentation lane, 16 Oct: "⌘⌥L hides both; ⌘⌥R the rail"): ⌘⌥B the
+ * browser, ⌘⌥L the detail area, ⌘⌥R the widget rail, ⌥⌘6 the pool (as Live shows its Groove Pool). Read by the physical key as well as
+ * the character: with ⌥ held, macOS gives the character the key makes under Option (⌥B is "∫", ⌥L is "¬", ⌥R is "®", ⌥6 is "§"),
+ * so the letter alone would miss on the Mac. Pure. */
 export function frameToggleOf(event: {readonly key: string; readonly code?: string; readonly metaKey: boolean; readonly altKey: boolean;
-  readonly ctrlKey?: boolean; readonly shiftKey?: boolean}): 'browser' | 'detail' | 'rail' | null {
+  readonly ctrlKey?: boolean; readonly shiftKey?: boolean}): 'browser' | 'detail' | 'rail' | 'pool' | null {
   if (!event.metaKey || !event.altKey || event.shiftKey || event.ctrlKey) return null
   const key = event.key.toLowerCase()
   if (event.code === 'KeyB' || key === 'b' || key === '∫') return 'browser'
   if (event.code === 'KeyL' || key === 'l' || key === '¬') return 'detail'
   if (event.code === 'KeyR' || key === 'r' || key === '®') return 'rail'
+  if (event.code === 'Digit6' || key === '6' || key === '§') return 'pool'
   return null
 }
 

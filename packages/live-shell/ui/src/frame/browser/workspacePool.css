@@ -1,0 +1,42 @@
+/* The pool (manual §16.7): Live's Groove Pool table under the browser — the columns row on bg-0, the rows at the browser's rhythm, the
+   footer where Global Amount stands (the groove table's measures, styles.css .groove-columns / .groove-footer). Shell tokens only. */
+.workspace-pool { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; font-size: 10px; color: var(--text-dim); background: var(--bg-2) }
+.workspace-pool.is-over { outline: 1px dashed var(--accent); outline-offset: -2px }
+.workspace-pool-head { flex: none; display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line) }
+.workspace-pool-title { flex: 1; min-width: 0; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.workspace-pool-switch { height: 17px; min-height: 0; padding: 0 6px; font-size: 9.5px; color: var(--text-dim); background: var(--bg-3); border: 1px solid var(--line); border-radius: 2px }
+.workspace-pool-switch[aria-pressed="true"] { color: var(--bg-0); background: var(--accent); border-color: var(--accent) }
+.workspace-pool-columns, .workspace-pool-row { display: grid; grid-template-columns: minmax(64px, 1fr) repeat(4, 26px) 64px 44px; gap: 3px; align-items: center; padding: 0 4px }
+.workspace-pool-columns { flex: none; height: 21px; font-size: 9.5px; color: var(--text-faint); background: var(--bg-0); white-space: nowrap; overflow: hidden }
+.workspace-pool-columns > span { overflow: hidden; text-overflow: ellipsis }
+.workspace-pool-rows { flex: 1 1 auto; min-height: 0; overflow: auto; list-style: none; margin: 0; padding: 0 }
+.workspace-pool-row { min-height: 22px; border-bottom: 1px solid var(--line) }
+.workspace-pool-row:hover { background: var(--bg-3) }
+.workspace-pool-name { display: flex; align-items: center; min-width: 0; height: 17px; padding: 0 5px; border-left: 3px solid var(--workspace-tint, var(--bg-3)); color: var(--text);
+  font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: color-mix(in srgb, var(--workspace-tint, var(--bg-3)) 14%, transparent) }
+.workspace-pool-row.is-here .workspace-pool-name { color: var(--bg-0); background: var(--workspace-tint, var(--accent)); font-weight: 600 }
+.workspace-pool-part { height: 17px; min-height: 0; padding: 0; font-size: 9px; color: var(--text-faint); background: var(--bg-1); border: 1px solid var(--line); border-radius: 2px }
+.workspace-pool-part[aria-pressed="true"] { color: var(--text); background: var(--bg-3); border-color: var(--line-strong) }
+.workspace-pool-opens select { width: 100%; height: 17px; min-height: 0; padding: 0 2px; font-size: 9.5px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line); border-radius: 2px }
+.workspace-pool-acts { display: flex; gap: 2px; justify-content: flex-end }
+.workspace-pool-acts button { height: 17px; min-height: 0; padding: 0 4px; font-size: 9.5px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line); border-radius: 2px }
+.workspace-pool-acts button[data-action="launch"] { color: var(--accent) }
+.workspace-pool-acts button:hover { color: var(--text); border-color: var(--line-strong) }
+.workspace-pool-drop { flex: none; margin: 0; padding: 4px 6px; font-size: 9.5px; color: var(--text-faint); text-align: center }
+.workspace-pool-footer { flex: none; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; min-height: 23px; padding: 2px 4px; border-top: 1px solid var(--line); font-size: 10px }
+.workspace-pool-footer label { display: flex; align-items: center; gap: 4px; min-width: 0 }
+.workspace-pool-footer select { height: 17px; min-height: 0; padding: 0 2px; font-size: 9.5px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line); border-radius: 2px }
+
+/* Live's own face: Groove, Base, Quantize, Timing, Random, Velocity, and Global Amount at the foot. */
+.groove-pool-columns, .groove-pool-row { display: grid; grid-template-columns: minmax(64px, 1fr) 40px 40px 34px 34px 34px; gap: 3px; align-items: center; padding: 0 4px }
+.groove-pool-columns { flex: none; height: 21px; font-size: 9.5px; color: var(--text-faint); background: var(--bg-0); white-space: nowrap; overflow: hidden }
+.groove-pool-rows { flex: 1 1 auto; min-height: 0; overflow: auto; list-style: none; margin: 0; padding: 0 }
+.groove-pool-row { min-height: 22px; border-bottom: 1px solid var(--line); color: var(--text) }
+.groove-pool-row input, .groove-pool-row select, .groove-pool-footer input { width: 100%; height: 17px; min-height: 0; padding: 0 3px; font-size: 9.5px; text-align: right;
+  color: var(--text); background: var(--bg-1); border: 1px solid var(--line); border-radius: 2px }
+.groove-pool-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.groove-pool-empty { flex: 1; display: grid; place-items: center; margin: 0; color: var(--text-faint); font-size: 10px }
+.groove-pool-footer { flex: none; display: flex; align-items: center; gap: 4px; height: 23px; padding: 2px 4px; border-top: 1px solid var(--line) }
+.groove-pool-footer span:first-child { flex: 1 }
+.groove-pool-footer input { width: 40px }
+.groove-pool-fault { margin: 0; padding: 3px 6px; color: var(--rec); font-size: 10px; overflow-wrap: anywhere }
