@@ -383,6 +383,24 @@
       "reason": "No directly attributable executed native walk is recorded here for encounter_provision; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "encounter_session_settings",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 FT row; AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-session-settings)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 18 Oct with kernel tests (agent_prepared session_settings_pass_through) and AIKit unit tests; no executed native walk is recorded here for encounter_session_settings; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
+      "op": "encounter_session_settings_list",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 FT row; AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-session-settings)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 18 Oct with a kernel test (the list read, its membership refusal); no executed native walk is recorded here for encounter_session_settings_list; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "encounter_task_read",
       "native_owner": "kernel/src/encounter.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -711,6 +729,24 @@
       "reason": "No directly attributable executed native walk is recorded here for knowledge; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "live_clip_read",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 (the Live set's own edits); packages/live-set/src/edit.rs",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 18 Oct with live-set unit tests and copies of real Live 12 sets, and a kernel test; no executed native walk is recorded here for live_clip_read; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
+      "op": "live_clip_write",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 (the Live set's own edits); packages/live-set/src/edit.rs",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 18 Oct with live-set unit tests (settings, markers, notes, envelopes, the revision guard) and a kernel test; no executed native walk is recorded here for live_clip_write; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "live_device_descriptors",
       "native_owner": "kernel/src/live_set_owner.rs",
       "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
@@ -745,6 +781,15 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_set_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "live_track_mixer_write",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 (the Live set's own edits); packages/live-set/src/edit.rs",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 18 Oct with live-set unit tests and a kernel test; no executed native walk is recorded here for live_track_mixer_write; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
       "op": "m3_reception",
