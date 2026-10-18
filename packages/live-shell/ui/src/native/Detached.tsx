@@ -85,7 +85,7 @@ export function DeviceWindowBody({binding, transport, manifests = allInhabitantM
     fallback={() => <DeviceFace identity={identity} manifests={manifests} transport={transport} instrumentReading={instrumentReading}/>} />
 }
 
-/** Close this window (the host re-docks what it carried). */
+/** Close this window: the host's own re-dock (windows.rs window_redock), the one release this window's capability holds. */
 function closeThisWindow() {
-  void import('@tauri-apps/api/window').then(({getCurrentWindow}) => getCurrentWindow().close())
+  void import('@tauri-apps/api/core').then(({invoke}) => invoke('window_redock'))
 }
