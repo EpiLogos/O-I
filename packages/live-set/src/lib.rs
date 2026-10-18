@@ -7,6 +7,7 @@
 //! vocabulary; no Ableton material.
 
 pub mod api;
+pub mod edit;
 pub mod model;
 pub mod rules;
 pub mod xml;

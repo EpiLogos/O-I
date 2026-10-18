@@ -5,7 +5,13 @@ import {readSet} from '../native/application'
 export interface SetParameter { id: string; value: string; min?: string; max?: string }
 export interface SetDevice { name: string; params: SetParameter[] }
 export interface SetClip { name: string; kind: 'audio' | 'midi'; start: number; end: number }
-export interface SetTrack { kind: TrackKind; name: string; devices: SetDevice[]; arrangementClips: SetClip[]; sessionSlots: Record<string, string | null> }
+export interface SetTrack {
+  kind: TrackKind; name: string; devices: SetDevice[]; arrangementClips: SetClip[]; sessionSlots: Record<string, string | null>
+  /** The track's mixer row, take lanes and automation (packages/live-set/src/edit.rs); absent from an owner that reads none. */
+  mixer?: import('../../../../../desktop/cradle/src/kernel/types').LiveTrackMixer
+  takeLanes?: {name: string; clips: {name: string; start: number; end: number}[]}[]
+  automation?: import('../../../../../desktop/cradle/src/kernel/types').LiveEnvelope[]
+}
 export interface SetDocument { path: string; tempo: number; scenes: number; tracks: SetTrack[] }
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const finite = (value: unknown) => typeof value === 'number' && Number.isFinite(value)

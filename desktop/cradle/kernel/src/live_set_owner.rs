@@ -90,6 +90,53 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
                 live_set::api::device_param_set(path, track, device_name, param_id, value)
                     .map(|reading| KernelOpResult::LiveDeviceParamWritten { reading })
             }),
+        KernelOp::LiveClipRead { path, track, clip } => native_document(path).and_then(|()| {
+            let at = live_set::edit::ClipAt::of(clip)?;
+            let reading = live_set::edit::clip_json(path, *track, at)?;
+            remember_read(path);
+            Ok(KernelOpResult::LiveClipReading { reading })
+        }),
+        KernelOp::LiveClipWrite {
+            path,
+            expected_revision,
+            track,
+            clip,
+            set,
+            notes,
+            envelopes,
+        } => native_document(path)
+            .and_then(|()| admitted_for_write(path))
+            .and_then(|()| {
+                let at = live_set::edit::ClipAt::of(clip)?;
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                live_set::edit::clip_write(
+                    path,
+                    expected_revision,
+                    *track,
+                    at,
+                    set.as_ref(),
+                    notes.as_deref(),
+                    envelopes.as_deref(),
+                )
+                .map(|reading| KernelOpResult::LiveClipReading { reading })
+            }),
+        KernelOp::LiveTrackMixerWrite {
+            path,
+            expected_revision,
+            track,
+            control,
+            value,
+        } => native_document(path)
+            .and_then(|()| admitted_for_write(path))
+            .and_then(|()| {
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                live_set::edit::mixer_write(path, expected_revision, *track, control, value)
+                    .map(|reading| KernelOpResult::LiveTrackMixerReading { reading })
+            }),
         _ => return None,
     })
 }
@@ -341,6 +388,72 @@ mod tests {
             value: json!(0.5),
         });
         assert!(write.contains("absolute native .als"), "{write}");
+    }
+
+    /// One MIDI track holding a session clip, in Live 12's own shape.
+    const CLIP_FIXTURE: &str = r#"<Ableton><LiveSet><Tracks><MidiTrack Id="1"><Name><EffectiveName Value="Keys" /></Name><DeviceChain><Mixer><Speaker><Manual Value="true" /></Speaker><SoloSink Value="false" /></Mixer><MainSequencer><MonitoringEnum Value="1" /><Recorder><IsArmed Value="false" /></Recorder><ClipSlotList><ClipSlot Id="0"><ClipSlot><Value><MidiClip Id="0" Time="0"><Loop><LoopStart Value="0" /><LoopEnd Value="4" /><StartRelative Value="0" /><LoopOn Value="true" /><OutMarker Value="4" /><HiddenLoopStart Value="0" /><HiddenLoopEnd Value="4" /></Loop><Name Value="Riff" /><LaunchMode Value="0" /><LaunchQuantisation Value="0" /><Notes><KeyTracks /><NoteIdGenerator><NextId Value="1" /></NoteIdGenerator></Notes></MidiClip></Value></ClipSlot></ClipSlot></ClipSlotList></MainSequencer></DeviceChain></MidiTrack></Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene /></Scenes></LiveSet></Ableton>"#;
+
+    #[test]
+    fn a_clip_and_a_mixer_row_are_written_only_after_a_read_and_on_its_revision() {
+        let path =
+            std::env::temp_dir().join(format!("live-set-owner-{}-clip.als", std::process::id()));
+        std::fs::write(
+            &path,
+            live_set::write_gz(&live_set::xml::parse(CLIP_FIXTURE).unwrap()).unwrap(),
+        )
+        .unwrap();
+        let path = path.to_string_lossy().into_owned();
+        let slot = json!({"slot": 0});
+        let write = |revision: &str, set: serde_json::Value| {
+            execute(&KernelOp::LiveClipWrite {
+                path: path.clone(),
+                expected_revision: revision.into(),
+                track: 0,
+                clip: slot.clone(),
+                set: set.as_object().cloned(),
+                notes: None,
+                envelopes: None,
+            })
+            .unwrap()
+        };
+        assert!(write("sha256:none", json!({"name": "x"}))
+            .unwrap_err()
+            .contains("Read this Live set before writing"));
+        let read = match execute(&KernelOp::LiveClipRead {
+            path: path.clone(),
+            track: 0,
+            clip: slot.clone(),
+        }) {
+            Some(Ok(KernelOpResult::LiveClipReading { reading })) => reading,
+            other => panic!("clip reading expected, got {other:?}"),
+        };
+        assert_eq!(read["clip"]["name"], "Riff");
+        let revision = read["revision"].as_str().unwrap().to_string();
+        let wrote = match write(&revision, json!({"name": "Hook", "launch": "toggle"})) {
+            Ok(KernelOpResult::LiveClipReading { reading }) => reading,
+            other => panic!("clip reading expected, got {other:?}"),
+        };
+        assert_eq!(
+            (
+                wrote["clip"]["name"].clone(),
+                wrote["clip"]["launch"].clone()
+            ),
+            (json!("Hook"), json!("toggle"))
+        );
+        assert!(write(&revision, json!({"name": "y"}))
+            .unwrap_err()
+            .contains("changed since it was read"));
+        let mixed = execute(&KernelOp::LiveTrackMixerWrite {
+            path: path.clone(),
+            expected_revision: wrote["revision"].as_str().unwrap().into(),
+            track: 0,
+            control: "solo".into(),
+            value: json!(true),
+        });
+        assert!(
+            matches!(mixed, Some(Ok(KernelOpResult::LiveTrackMixerReading { ref reading })) if reading["mixer"]["solo"] == json!(true))
+        );
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
