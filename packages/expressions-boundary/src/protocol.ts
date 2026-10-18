@@ -13,6 +13,9 @@ import {formatDeepLink, parseDeepLink} from '../../../desktop/cradle/expressions
 export {formatDeepLink, parseDeepLink, DEEP_LINK_KEYS, type DeepLinkAddress} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/deepLinks.ts';
 // The QL instrument reading parser (the owner shape, ql.instrument-reading/v1), owned by this package: the boundary validates the instrument with it.
 import {parseQlInstrumentReading} from './qlInstrumentReading.ts';
+import {readEffectsState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts';
+/** The torus's four effects' law (manual §21.5), the owner's: the shell's effect devices draw and refuse by it. */
+export {PRESENTATION_EFFECTS, EFFECT_LAW, EFFECT_TITLES, DELAY_DIVISIONS, effectRefusal, effectChainRefusal, isPresentationEffect, type PresentationEffect, type EffectValue, type EffectParameterLaw, type EffectsState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts';
 export type {TechneReading, TechneActionRoute, TechneActionReceipt, NativeActionRef} from '../../../desktop/cradle/src/techne/contract.ts';
 export {assertReading, resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
 
@@ -83,7 +86,11 @@ export function readHostedParameters(raw: unknown): HostedInstrumentParameters |
     cadence = {rate: c.rate, playing: c.playing, source: c.source};
   }
   if (raw.refusal !== null && !boundedText(raw.refusal, 512)) return 'parameters.refusal: expected bounded text or null';
-  return {muted: raw.muted, level: raw.level, scale: {unitsPerMetre: scale.unitsPerMetre as number | null, mode: scale.mode}, cadence, refusal: raw.refusal as string | null};
+  // The torus's four effects: every parameter within the owner's law, or the fault named; a frame that announces none carries none.
+  const effects = raw.effects === undefined ? undefined : readEffectsState(raw.effects);
+  if (typeof effects === 'string') return `parameters.effects: ${effects}`;
+  return {muted: raw.muted, level: raw.level, scale: {unitsPerMetre: scale.unitsPerMetre as number | null, mode: scale.mode}, cadence, refusal: raw.refusal as string | null,
+    ...(effects ? {effects} : {})};
 }
 
 /** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader), the owner's determinants and its presentation parameters.

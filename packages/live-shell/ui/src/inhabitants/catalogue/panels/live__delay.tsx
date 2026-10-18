@@ -4,10 +4,13 @@
 // each pass, so the bright part of a repeat (the inner bar) falls faster than its whole. Time runs across on a square-root scale,
 // so a 10 ms slap and a 4 s echo both read. Synced, Time is the note length at the set's tempo.
 //
-// Owner. None yet: the torus sounds through one gain stage to the output (native-field/ql/native-audio.mjs), so no delay stands on
-// its sound. The value keys are the entry's: light, sync, division, time, feedback, tone, mix; `tempo` is the Live transport's
-// reading of the set's tempo (shell/modeTransports.tsx tempoBpm), and `reason` names the absence in the well. The Live set
-// document's stored table for Live's Delay (packages/live-dynamics params.rs DELAY) edits a set's device, not the torus's sound.
+// Owner. The torus's presentation stage (desktop/cradle/expressions-app/field-studies-journeys/src/native-field/presentationEffects.ts,
+// after the level, before the device; law in effectsLaw.ts), bound by live/designBindings/torusEffects.ts: the hosted reading carries
+// its state (`parameters.effects`) and the stage channel's `effect` instrument edit changes it, refused in the owner's words outside
+// its law. It opens off. The value keys are the entry's: light, sync, division, time, feedback, tone, mix, and `tempo`, the tempo the
+// owner's delay syncs to; Time starts at 6 ms (a browser's feedback loop takes two render quanta). `reason` names an absence in the
+// well. The Live set document's stored table for Live's Delay (packages/live-dynamics params.rs DELAY) edits a set's device, not
+// the torus's sound.
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
@@ -15,7 +18,7 @@ type V = ViewProps['v']
 
 const DIVISIONS = [{value: '1/32', label: '1/32', beats: .125}, {value: '1/16', label: '1/16', beats: .25}, {value: '1/8', label: '1/8', beats: .5},
   {value: '1/4', label: '1/4', beats: 1}, {value: '1/2', label: '1/2', beats: 2}, {value: '1', label: '1 bar', beats: 4}] as const
-const TIME = {min: 1, max: 4000, log: true} as const, TONE = {min: 200, max: 12000, log: true} as const, SPAN = 4000
+const TIME = {min: 6, max: 4000, log: true} as const, TONE = {min: 200, max: 12000, log: true} as const, SPAN = 4000
 const f1 = (x: number) => x.toFixed(1)
 const ms = (x: number) => (x >= 1000 ? `${(x / 1000).toFixed(2)} s` : `${Math.round(x)} ms`)
 const hz = (x: number) => (x >= 1000 ? `${(x / 1000).toFixed(1)} kHz` : `${Math.round(x)} Hz`)
@@ -62,7 +65,7 @@ function Repeats({p, w, h, handles}: {p: ViewProps; w: number; h: number; handle
 }
 
 const lightOf = (p: ViewProps): LightState => { const l = strOf(p.owner ?? p.v, 'light'); return l === 'lit' || l === 'dark' ? l : 'unknown' }
-const head = (p: ViewProps) => ({light: lightOf(p), lightWhy: st(p, 'light').disabled ?? (has(p.v, 'light') ? undefined : 'No reading of on or off: no delay stands on the torus\'s sound.'),
+const head = (p: ViewProps) => ({light: lightOf(p), lightWhy: st(p, 'light').disabled ?? (has(p.v, 'light') ? undefined : 'No reading of on or off: the torus\'s effects report nothing here.'),
   onFold: p.nav.fold, onFull: p.nav.full, onLight: () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit')})
 const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const DISPLAY_DOES = 'The dry sound at zero, then each repeat: its height its level, the bar inside it its bright part.'
@@ -92,7 +95,7 @@ export const design: DesignedDevice = {
     'An eighth at 120': {},
     'A long dark echo': {sync: false, time: 900, feedback: 70, tone: 900, mix: 40},
     'No tempo': {tempo: undefined},
-    'As the torus has it': {light: undefined, sync: undefined, division: undefined, time: undefined, feedback: undefined, tone: undefined, mix: undefined, reason: 'No delay on the torus\'s sound'},
+    'No owner reading': {light: undefined, sync: undefined, division: undefined, time: undefined, feedback: undefined, tone: undefined, mix: undefined, reason: 'No owner reading in this host'},
   },
 
   folded: p => <Folded title="Delay" light={lightOf(p)} readings={[timeWord(p.v) ?? NONE, has(p.v, 'feedback') ? pct(numOf(p.v, 'feedback')!) : NONE]} onUnfold={p.nav.unfold} />,
