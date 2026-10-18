@@ -185,7 +185,7 @@ export const CENTRAL_WIRING: ClipWiring = {
     'notes.order': 'the order of the list of notes (NOTES_WIRING local)',
   },
   refused: {
-    name: DOCUMENT_WIRING.refused.title!, colour: 'A page takes its workspace\'s colour: no owner operation sets a page\'s own colour yet.',
+    name: 'A Flow\'s title is set on its Document device, written on its file; a Day has no title: its heading is its date.', colour: 'A page takes its workspace\'s colour: no owner operation sets a page\'s own colour yet.',
     'text.style': TEXT_WIRING.refused.styles!, 'text.emphasis': TEXT_WIRING.refused.marks!, 'text.size': TEXT_WIRING.refused.size!,
     'hl.colour': HIGHLIGHT_WIRING.refused.colour!, 'hl.show': HIGHLIGHT_WIRING.refused.show!, 'hl.pen': HIGHLIGHT_WIRING.refused.pen!, 'hl.tool': HIGHLIGHT_WIRING.refused.tool!,
     'act.highlight': HIGHLIGHT_WIRING.refused.marks!, 'act.note': HIGHLIGHT_WIRING.refused.note!, 'act.topacket': HIGHLIGHT_WIRING.refused.toPacket!,
