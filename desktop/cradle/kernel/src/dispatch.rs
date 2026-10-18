@@ -73,7 +73,12 @@ pub fn op_name(op: &KernelOp) -> String {
 /// the file `OI_KERNEL_TRACE_FILE` names. A Finder or Dock launch has no
 /// stderr; a file the environment names survives it. Without the variable
 /// nothing is written. `host` names the writer (`native`).
+///
+/// Every op traced here is also offered to the always-on slow-op record
+/// (slow_ops.rs, lane K1), with or without the variable: one of 250 ms or
+/// more appends its line to the kernel's own `slow-ops.jsonl`.
 pub fn trace_op(host: &str, name: &str, ok: bool, total: Duration, timing: &Timing) {
+    crate::slow_ops::record(host, name, ok, total, timing);
     trace_line(|| {
         format!(
             "[{host}] {} op {name} {} total_ms={:.1} lock_wait_ms={:.1} lock_held_ms={:.1} owner_ms={:.1} form={}\n",
@@ -520,6 +525,18 @@ mod tests {
         assert_eq!(form(KernelOp::ModelCatalogue), "agent");
         assert_eq!(form(KernelOp::ConfigReceipts), "owner-read");
         assert_eq!(form(KernelOp::ChatDefaultRead), "owner-read");
+        // Lane K1: the seat instrument, Central's source returns and AIKit's
+        // declared remotes.
+        assert_eq!(form(KernelOp::SeatStatusRead), "owner-read");
+        assert_eq!(
+            form(KernelOp::SourceReturnsRead {
+                project: None,
+                limit: None,
+                before: None,
+            }),
+            "owner-read"
+        );
+        assert_eq!(form(KernelOp::GatewayRemotesRead), "owner-read");
         assert_eq!(
             form(KernelOp::FileBytes {
                 location: crate::files::Location {
