@@ -80,6 +80,8 @@ export function selectedDeviceId(): string | null {
 }
 
 const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }
+/** The door's own notice, outside React: a device published, withdrawn, selected or flipped (frame/devices/deviceRelay.ts). */
+export const subscribeDeviceDoor = subscribe
 
 /** Re-render when any published device or the selection changes. */
 export function useDeviceDoor(): {device: (id: string) => PublishedDevice | undefined; selected: string | null} {
@@ -207,8 +209,21 @@ const setWindows = (next: readonly DeviceWindowState[]) => {
   for (const listener of windowListeners) listener()
 }
 
-/** Open a device's own window, or bring it to the front where it already stands. */
+/** Where a Pop-out opens instead of this window, when one is set: the native host's own window (DeviceWindows.tsx registers it on
+ * the host; frame/devices/deviceRelay.ts popOutNative). It answers whether it took the device. */
+let popOutRoute: ((id: string) => boolean) | null = null
+export function setPopOutRoute(route: ((id: string) => boolean) | null): void {
+  popOutRoute = route
+}
+
+/** Open a device's own window — the host's own window where the route takes it, else here — or bring it to the front. */
 export function openDeviceWindow(id: string): void {
+  if (popOutRoute?.(id)) return
+  openDeviceWindowHere(id)
+}
+
+/** Open a device's window in this window, as a layer over the shell, or bring it to the front where it already stands. */
+export function openDeviceWindowHere(id: string): void {
   const at = windows.findIndex(open => open.id === id)
   if (at === windows.length - 1 && at >= 0) return
   setWindows(at >= 0 ? [...windows.filter(open => open.id !== id), windows[at]!] : [...windows, {id, box: null, filled: false, shaded: false}])

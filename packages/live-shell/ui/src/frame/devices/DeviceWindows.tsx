@@ -5,15 +5,17 @@
 // `.cat-window`: three marks and the name in a 26 px bar, the room under it) — holding the device's Pop-out view on the same binding
 // every other place reads (DeviceView.tsx PlacedDevice view="popout": the design's own, or Full over Whole, popout.tsx popoutOf).
 //
-// The native host's second window (desktop/cradle/src-tauri/src/windows.rs window_detach) is a separate page: it can draw a face its
-// manifest stands alone (native/Detached.tsx DeviceFace), never a device whose binding and own Full live in this window's door. Until
-// the door reaches that page, every device pops out here, in the browser and in the native candidate alike.
+// On the native host a Pop-out opens the host's own window (desktop/cradle/src-tauri/src/windows.rs window_detach), a separate page
+// that draws the device's Pop-out on the binding this window relays to it (frame/devices/deviceRelay.ts): one door, one owner. In the
+// browser, and wherever the host refuses, the device pops out here.
 //
 // The bar: close, roll up to the bar, fill the shell's window (and the native window can then fill the screen); drag it to move the
 // window, double-click it to fill. The corner sizes it. A press anywhere brings it to the front.
 import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
-import {closeDeviceWindow, raiseDeviceWindow, setDeviceWindow, useDeviceDoor, useDeviceWindows, type DeviceWindowBox, type DeviceWindowState,
-  type PublishedDevice} from './deviceDoor'
+import {closeDeviceWindow, openDeviceWindowHere, raiseDeviceWindow, setDeviceWindow, setPopOutRoute, useDeviceDoor, useDeviceWindows, type DeviceWindowBox,
+  type DeviceWindowState, type PublishedDevice} from './deviceDoor'
+import {nativeHostMain, popOutNative} from './deviceRelay'
+import {useOptionalContinuity} from '../../continuity/workspace'
 import {heldInView, movedWindowBox, openedWindowBox, sizedWindowBox, windowRoom, type WindowDrag} from './deviceWindow'
 import {PlacedDevice, useShownBox} from './DeviceView'
 import {RESIZE_STEP} from '../../shell/workspaceAreas'
@@ -31,8 +33,26 @@ function useViewport(): readonly [number, number] {
   return viewport
 }
 
+/** On the native host, a Pop-out opens the host's own window, its binding relayed there (deviceRelay.ts); where the host refuses,
+ * the device pops out here instead and the refusal is logged in the host's words. */
+function useNativePopOut() {
+  const workspaceId = useOptionalContinuity()?.current.id ?? null
+  useEffect(() => {
+    if (!nativeHostMain() || !workspaceId) return
+    setPopOutRoute(id => {
+      void popOutNative(id, workspaceId).catch((cause: unknown) => {
+        console.warn(`The host's own window refused the Pop-out; it opens here instead: ${cause instanceof Error ? cause.message : String(cause)}`)
+        openDeviceWindowHere(id)
+      })
+      return true
+    })
+    return () => setPopOutRoute(null)
+  }, [workspaceId])
+}
+
 /** The frame's window layer: every device window standing, the front one last. Mounted once, beside the expanded view's host. */
 export function DeviceWindowLayer() {
+  useNativePopOut()
   const open = useDeviceWindows()
   const door = useDeviceDoor()
   const viewport = useViewport()

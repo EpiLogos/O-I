@@ -13,6 +13,7 @@ import {allInhabitantManifests} from '../inhabitants/manifest'
 import {loadWorldShellFamilies} from '../inhabitants/worldShellFamilies'
 import {DeviceFace} from '../inhabitants/inhabitantRack'
 import {useQlInstrumentFeed} from '../live/torusInstrument'
+import {RelayedDevice} from '../frame/devices/RelayedDevice'
 
 // The receiving window loads the families the main window loads (ModeDetail calls the same loader at module load): one
 // loader, one door. A device body reads the registry at render, so the registry stands before the first admission.
@@ -79,5 +80,12 @@ export function DeviceWindowBody({binding, transport, manifests = allInhabitantM
   const fault = deviceAdmissionFault(binding, manifests)
   const identity = deviceIdentityOf(binding)
   if (fault || !identity) return <p role="alert" data-device-fault>{fault ?? 'The device window carries no device identity.'}</p>
-  return <DeviceFace identity={identity} manifests={manifests} transport={transport} instrumentReading={instrumentReading}/>
+  // The device's own Pop-out on the binding the main window relays (frame/devices/deviceRelay.ts); the standalone face where none answers.
+  return <RelayedDevice bindingId={binding.id} onClose={closeThisWindow}
+    fallback={() => <DeviceFace identity={identity} manifests={manifests} transport={transport} instrumentReading={instrumentReading}/>} />
+}
+
+/** Close this window (the host re-docks what it carried). */
+function closeThisWindow() {
+  void import('@tauri-apps/api/window').then(({getCurrentWindow}) => getCurrentWindow().close())
 }
