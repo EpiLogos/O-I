@@ -8,7 +8,7 @@ import {CANDIDATE_WORKSPACE_KEY} from '../continuity/workspace'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig} from './application'
 import {admitContribution} from './contributions'
-import {deviceBindingId, deviceIdentityFault, deviceIdentityOf, nativeDetachedBodySupported} from './detachedKinds'
+import {deviceBindingId, deviceIdentityFault, deviceIdentityOf, deviceRelayIdentityFault, nativeDetachedBodySupported} from './detachedKinds'
 import {allInhabitantManifests} from '../inhabitants/manifest'
 import {loadWorldShellFamilies} from '../inhabitants/worldShellFamilies'
 import {DeviceFace} from '../inhabitants/inhabitantRack'
@@ -33,9 +33,11 @@ export function NativeDetached() {
     current(epoch)
     if (!nativeDetachedBodySupported(binding.kind)) throw Error('This surface has no native detached receiving body. Its binding has been retained.')
     if (binding.kind === 'device') {
-      // A device is admitted by the manifests that declare it, never as a hosted contribution. The named fault is the refusal.
+      // A device is admitted by the manifests that declare it, never as a hosted contribution. The named fault is the refusal. Its
+      // body draws on the binding the main window relays, so its identity is what is admitted here; a face drawn alone, where no
+      // relay answers, is held to the standalone face's own rule in the body (DeviceWindowBody).
       loadWorldShellFamilies()
-      const fault = deviceAdmissionFault(binding, allInhabitantManifests())
+      const fault = deviceRelayAdmissionFault(binding, allInhabitantManifests())
       current(epoch)
       if (fault) throw Error(fault)
       return
@@ -58,6 +60,15 @@ export function NativeDetached() {
 
 /** The named refusal for a device window's binding, or null where the admitted manifests stand for it (seam 8). The
  * device's own identity is checked against the manifests, never against a hosted contribution. */
+/** The named refusal for a relayed device window (deviceRelay.ts): its identity must name a declared family and face. */
+export function deviceRelayAdmissionFault(binding: SurfaceBinding, manifests: readonly InhabitantManifest[]): string | null {
+  const identity = deviceIdentityOf(binding)
+  if (!identity) return 'The device window carries no device identity.'
+  if (binding.id !== deviceBindingId(identity)) return 'The device binding id does not name its family and face.'
+  const fault = deviceRelayIdentityFault(identity, manifests)
+  return fault ? `This device cannot be shown: ${fault}.` : null
+}
+
 export function deviceAdmissionFault(binding: SurfaceBinding, manifests: readonly InhabitantManifest[]): string | null {
   const identity = deviceIdentityOf(binding)
   if (!identity) return 'The device window carries no device identity.'
@@ -77,12 +88,15 @@ export function DeviceWindowBody({binding, transport, manifests = allInhabitantM
   manifests?: readonly InhabitantManifest[]
 }) {
   const instrumentReading = useQlInstrumentFeed()
-  const fault = deviceAdmissionFault(binding, manifests)
   const identity = deviceIdentityOf(binding)
-  if (fault || !identity) return <p role="alert" data-device-fault>{fault ?? 'The device window carries no device identity.'}</p>
-  // The device's own Pop-out on the binding the main window relays (frame/devices/deviceRelay.ts); the standalone face where none answers.
+  const relayFault = deviceRelayAdmissionFault(binding, manifests)
+  if (relayFault || !identity) return <p role="alert" data-device-fault>{relayFault ?? 'The device window carries no device identity.'}</p>
+  // The device's own Pop-out on the binding the main window relays (frame/devices/deviceRelay.ts); where none answers, the face
+  // drawn alone, held to the standalone face's own rule (it must stand alone, declare pop-out and carry its aperture).
+  const alone = deviceAdmissionFault(binding, manifests)
   return <RelayedDevice bindingId={binding.id} onClose={closeThisWindow}
-    fallback={() => <DeviceFace identity={identity} manifests={manifests} transport={transport} instrumentReading={instrumentReading}/>} />
+    fallback={() => alone ? <p role="alert" data-device-fault>{alone}</p>
+      : <DeviceFace identity={identity} manifests={manifests} transport={transport} instrumentReading={instrumentReading}/>} />
 }
 
 /** Close this window: the host's own re-dock (windows.rs window_redock), the one release this window's capability holds. */
