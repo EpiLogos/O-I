@@ -1,6 +1,8 @@
-import { Suspense, lazy, useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import {createPortal} from 'react-dom'
-import type {BrowserCategory as OneBrowserCategory, BrowserKind, ControlledBrowser} from '../frame/browser/browserKinds'
+import type {ControlledBrowser} from '../frame/browser/browserKinds'
+import {CATEGORIES, type BrowserCategory} from './worldBrowserCategories'
+import {loadWhenDrawn} from '../shell/loadWhenDrawn'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import type { NativeDirectory, NativeFileEntry } from '@epilogos/expressions-boundary/cradle'
 import {createCradleOwners} from '@epilogos/expressions-boundary/cradle'
@@ -23,28 +25,15 @@ import {OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT, admittedDeviceOpen, parameter
 import {flipDevice, useFlipHost, useFlippedDeviceId} from '../frame/devices/deviceDoor'
 import './WorldBrowser.css'
 
+export {WORLD_BROWSER_CATEGORIES} from './worldBrowserCategories'
+
 /** The band a native device chosen in the browser stands in (manual §16.4, §16.7: "A device opens whole in its band above the chain"):
  * one id on the device door's expanded view, so Esc folds it and another device's ▸ takes the band from it. */
 export const NATIVE_DEVICE_BAND = 'expressions:browser-device'
 
 // The works' collections carry the starting points' examples (1.5 MB of generated data): they load when Expressions' Works
 // list draws, not with the shell (scripts/load-census.mjs).
-const NativeExpressionCollections = lazy(() => import('./NativeExpressionCollections').then(module => ({default: module.NativeExpressionCollections})))
-type BrowserCategory = 'works' | 'material' | 'objects' | 'properties' | 'devices' | 'files' | 'knowledge'
-const CATEGORIES: {id: BrowserCategory; name: string; icon: string}[] = [
-  {id: 'works', name: 'Expressions', icon: '◇'},
-  {id: 'material', name: 'Material', icon: '▧'},
-  {id: 'objects', name: 'Objects', icon: '+'},
-  {id: 'properties', name: 'Parameters', icon: '○'},
-  {id: 'devices', name: 'Devices', icon: '▤'},
-  {id: 'files', name: 'Files', icon: '▸'},
-  {id: 'knowledge', name: 'Knowledge', icon: '⌘'},
-]
-
-/** Each Expressions category's kind in the one browser (F6): works, material and files are material to open; objects,
- * parameters and devices go on the open scene's chain; knowledge opens instruments over the work. */
-const WORLD_KINDS: Record<BrowserCategory, BrowserKind> = {works: 'material', material: 'material', files: 'material', objects: 'devices', properties: 'devices', devices: 'devices', knowledge: 'instruments'}
-export const WORLD_BROWSER_CATEGORIES: readonly OneBrowserCategory[] = CATEGORIES.map(row => ({id: row.id, label: row.name, kind: WORLD_KINDS[row.id], mark: row.icon}))
+const NativeExpressionCollections = loadWhenDrawn('Expressions\' collections', () => import('./NativeExpressionCollections').then(module => module.NativeExpressionCollections))
 
 /** Navigation over the native Central listing. Locations and retrieval grants
  * come from that owner; this component holds only a displayed directory. */
@@ -208,7 +197,7 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
   const results = <>
     <div hidden={category !== 'knowledge'}><NativeTechneBrowser query={category==='knowledge'?query:''} onOpenGraph={openSelectedGraph} openingGraph={openingGraph} graphError={category==='knowledge'?error:null}/></div>
     <section hidden={category !== 'works'} className="world-works" aria-label="Saved native works"><h3>Name</h3><ul>{works.map(work => <li key={work.expression_ref}><button type="button" data-browser-row className={`world-work-row${reading?.nativeScene?.expression_ref === work.expression_ref ? ' selected' : ''}${previewRef === work.expression_ref ? ' previewed' : ''}`} aria-current={reading?.nativeScene?.expression_ref === work.expression_ref ? 'true' : undefined} title={`${work.expression_ref} · revision ${work.revision}. Enter opens; Space previews.`} onClick={() => openWork(work.expression_ref)} onKeyDown={event => {if (event.key === ' ') {event.preventDefault(); setPreviewRef(work.expression_ref)}}} onKeyUp={event => {if (event.key === ' ') event.preventDefault()}}><span aria-hidden="true"><KindMark kind="expression" size={12} /></span><span>{work.title}</span><span className="mode-browser-row-meta mono">r{work.revision}</span></button></li>)}</ul>{!works.length && <p className="native-empty">{nativeWorks.length ? 'No works match this search.' : 'No native works disclosed.'}</p>}</section>
-    {category === 'works' && <Suspense fallback={null}><NativeExpressionCollections query={query}/></Suspense>}
+    {category === 'works' && <NativeExpressionCollections query={query}/>}
     <div hidden={category !== 'material'}><NativeMaterialBrowser query={category === 'material' ? query : ''} detailHost={materialHost} onCount={count => reportCount('material', count)}/></div>
     <div hidden={category !== 'properties'}><NativePropertyBrowser query={category === 'properties' ? query : ''} detailHost={propertyHost} onCount={count => reportCount('properties', count)}/></div>
     <div hidden={category !== 'objects'}><NativeObjectBrowser rows={objectList} reading={workspace.editorReading} request={(changes, basis) => applyDeviceChanges(workspace, changes, basis)}/></div>
