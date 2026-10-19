@@ -469,3 +469,25 @@ test('one window listener, and the layer names no mode', async () => {
   const hook = await readFile(new URL('FrameKeys.tsx', dir), 'utf8')
   assert.match(hook, /window\.addEventListener\('keydown'/); assert.match(hook, /window\.removeEventListener\('keydown'/)
 })
+
+test('Backspace never steps the shell back an encounter: held where no element takes it, kept where it is typed or taken (r20)', () => {
+  // WebKit (the native candidate) steps the page back on a Backspace no element takes, and the shell's history is its encounters
+  // (projections/encounterLink.ts): a Delete on a selection that held no focus walked the person out of where they stood.
+  const key = (target, defaultPrevented = false) => { const event = {key: 'Backspace', target, defaultPrevented, prevented: 0, preventDefault() { event.prevented += 1 }}; return event }
+  const quiet = {querySelectorAll: () => []}
+  const loose = key(body)
+  handleKey(loose, doors(), {}, () => {}, quiet, () => {})
+  assert.equal(loose.prevented, 1, 'on the page: held, so WebKit does not go back')
+  const held = key(body)
+  handleKey(held, doors(), {paused: true}, () => {}, quiet, () => {})
+  assert.equal(held.prevented, 1, 'under a modal too')
+  const typed = key(el('INPUT', {}, body))
+  handleKey(typed, doors(), {}, () => {}, quiet, () => {})
+  assert.equal(typed.prevented, 0, 'in a field it deletes what is typed')
+  const taken = key(el('BUTTON', {}, body), true)
+  handleKey(taken, doors(), {}, () => {}, quiet, () => {})
+  assert.equal(taken.prevented, 0, 'a handler that took it already is left alone')
+  const other = {key: 'Delete', target: body, defaultPrevented: false, prevented: 0, preventDefault() { other.prevented += 1 }}
+  handleKey(other, doors(), {}, () => {}, quiet, () => {})
+  assert.equal(other.prevented, 0, 'forward Delete has no Back to hold')
+})

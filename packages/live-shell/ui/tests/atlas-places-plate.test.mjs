@@ -200,3 +200,15 @@ test('the shared spatial focus turns the Earth: the subject where the Earth draw
   assert.equal(host.turnToPlace(undefined, occ), null, 'a ref the world does not hold turns nothing, and is no error')
   assert.equal(host.framingDistance('exact'), 2.25)
 })
+
+test('a click on your planet is read in the sky lens while no sky layer stands: the globe drawn there is the one the camera orbits (r20)', () => {
+  // your system is drawn only in the sky lens (system/systemOverlay.ts systemWanted), so a landing is clicked there; the port ships no
+  // sky grid (provider/skyProvider.ts), and with no sky layer the globe's own rig is the camera. Where a layer stands, its camera moves.
+  const handle = (sky, layer) => ({ctl: {state: {sky, graph: false}}, engine: {sky: layer, rig: {lat: 10, lon: 20, dist: 3, shiftX: 0, shiftY: 0},
+    camera: {fov: 40, aspect: 1}, renderer: {domElement: {getBoundingClientRect: () => ({left: 0, top: 0, width: 100, height: 100})}}}})
+  const centre = host.pointUnder(handle(null, null), 50, 50)
+  assert.ok(centre && Math.abs(centre.lat - 10) < 0.01 && Math.abs(centre.lon - 20) < 0.01, 'the Earth lens: the point the camera faces')
+  assert.deepEqual(host.pointUnder(handle({mode: 'system'}, null), 50, 50), centre, 'the sky lens with no sky layer: the same point')
+  assert.equal(host.pointUnder(handle({mode: 'system'}, {}), 50, 50), null, 'a sky layer standing: its camera moves, so no point is read')
+  assert.equal(host.pointUnder(handle(null, null), 2, 2), null, 'off the globe: none')
+})

@@ -64,7 +64,8 @@ export interface PlaceToolSubject {
 export type PlaceToolTone = 'said' | 'refused' | 'saved'
 
 export type PlaceToolState =
-  | {readonly phase: 'idle'; readonly notice: string | null; readonly tone: PlaceToolTone | null}
+  /** `world`: the notice is a landing's answer, about that world, said where the worlds stand (PlacesPlate.tsx WorldsSection) */
+  | {readonly phase: 'idle'; readonly notice: string | null; readonly tone: PlaceToolTone | null; readonly world?: LandingTarget}
   | {readonly phase: 'armed'; readonly subject: PlaceToolSubject}
   | {readonly phase: 'offered'; readonly subject: PlaceToolSubject; readonly draft: PlaceDraft; readonly notice: string}
   /** [T-WORLDS §5 W3] armed to land a world of your system on your planet: the next click on your planet is its landing */
@@ -156,7 +157,7 @@ export const LAND_ON_YOURS = 'A world lands on your planet: choose Your world as
 
 /** Arm the tool to land a world of today's set on your planet: the next click on your planet is its landing. */
 export function armLanding(target: LandingTarget | null): void {
-  if (!owner?.land) { set({phase: 'idle', notice: NO_LANDING_OWNER, tone: 'refused'}); return }
+  if (!owner?.land) { set({phase: 'idle', notice: NO_LANDING_OWNER, tone: 'refused', ...(target ? {world: target} : {})}); return }
   if (!target) { set({phase: 'idle', notice: 'Choose a world of today’s set to land.', tone: 'refused'}); return }
   set({phase: 'landing', target});
 }
@@ -212,15 +213,15 @@ export function placeAt(point: {lat: number; lon: number} | null, on: DrawnBody 
 
 /** The landing click: on your planet only, written through the landed world's owner, its answer said in its own words. */
 async function landAt(target: LandingTarget, point: {lat: number; lon: number} | null, on: DrawnBody | null): Promise<void> {
-  if (!point) { set({phase: 'idle', notice: `The click was off the globe, so ${target.name} did not land. Press Land again and click your planet.`, tone: 'refused'}); return }
-  if (!on) { set({phase: 'idle', notice: LAND_ON_YOURS, tone: 'refused'}); return }
-  if (!owner?.land) { set({phase: 'idle', notice: NO_LANDING_OWNER, tone: 'refused'}); return }
+  if (!point) { set({phase: 'idle', notice: `The click was off your planet, so ${target.name} did not land. Press it again and click your planet.`, tone: 'refused', world: target}); return }
+  if (!on) { set({phase: 'idle', notice: LAND_ON_YOURS, tone: 'refused', world: target}); return }
+  if (!owner?.land) { set({phase: 'idle', notice: NO_LANDING_OWNER, tone: 'refused', world: target}); return }
   set({phase: 'saving', target});
   try {
     const said = await owner.land(target, point.lat, point.lon);
-    set({phase: 'idle', notice: said, tone: 'saved'});
+    set({phase: 'idle', notice: said, tone: 'saved', world: target});
   } catch (error) {
-    set({phase: 'idle', notice: error instanceof Error ? error.message : String(error), tone: 'refused'});
+    set({phase: 'idle', notice: error instanceof Error ? error.message : String(error), tone: 'refused', world: target});
   }
 }
 
@@ -229,12 +230,12 @@ async function landAt(target: LandingTarget, point: {lat: number; lon: number} |
 export async function unlandArmed(): Promise<void> {
   if (state.phase !== 'landing') return;
   const target = state.target;
-  if (!owner?.unland) { set({phase: 'idle', notice: NO_LANDING_OWNER, tone: 'refused'}); return }
+  if (!owner?.unland) { set({phase: 'idle', notice: NO_LANDING_OWNER, tone: 'refused', world: target}); return }
   set({phase: 'saving', target});
   try {
-    set({phase: 'idle', notice: await owner.unland(target), tone: 'saved'});
+    set({phase: 'idle', notice: await owner.unland(target), tone: 'saved', world: target});
   } catch (error) {
-    set({phase: 'idle', notice: error instanceof Error ? error.message : String(error), tone: 'refused'});
+    set({phase: 'idle', notice: error instanceof Error ? error.message : String(error), tone: 'refused', world: target});
   }
 }
 

@@ -319,8 +319,24 @@ function OwnersReturned() {
 export function WorldsSection() {
   const tool = useSyncExternalStore(subscribePlaceTool, placeToolState, placeToolState)
   const system = useSyncExternalStore(subscribeSystem, systemReading, systemReading)
+  // Escape gives an armed landing back here too: a folded section is not mounted, so Locations' own key may not stand (r20)
+  useEffect(() => {
+    if (tool.phase !== 'landing') return
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') disarmPlaceTool() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [tool.phase])
+  // the landing's line and its owner's answer, said where it was pressed (r20: with Locations folded, a refused landing said nothing)
+  const said = tool.phase === 'landing' ? {name: tool.target.name, text: `Click your planet where ${tool.target.name} lands. Esc stops.`, word: 'armed', tone: 'landing'}
+    : tool.phase === 'saving' ? {name: tool.target.name, text: `${tool.target.name}’s landing is with its owner.`, word: 'saving', tone: 'saving'}
+      : tool.phase === 'idle' && tool.world && tool.notice ? {name: tool.world.name, text: tool.notice, word: tool.tone === 'refused' ? 'refused' : 'saved', tone: tool.tone ?? undefined}
+        : null
+  const line = said && <PlateLine text={said.text} word={said.word} name={said.name} tone={said.tone} />
   if (system.state !== 'read' || !system.bodies.some(body => !body.yours)) {
-    return <PlateLine text={system.state === 'read' ? 'Today\'s set holds no world but yours: bring one in on Central\'s tracks to land it here.' : 'Your system is read while the Earth stands.'} word="none" name="Worlds" />
+    return <>
+      <PlateLine text={system.state === 'read' ? 'Today\'s set holds no world but yours: bring one in on Central\'s tracks to land it here.' : 'Your system is read while the Earth stands.'} word="none" name="Worlds" />
+      {line}
+    </>
   }
   return <>
     {/* [T-WORLDS §5 W3] the worlds of today's set and where each lands on your planet: a press arms the tool to land it, and the next
@@ -332,6 +348,7 @@ export function WorldsSection() {
         disabled: body.state === 'reading' || body.state === 'refused',
         does: `${body.world.name}: ${body.standing}; ${body.landing ? 'lands on your planet here' : body.unlanded ?? ''}. Press, then click your planet, to land it there.`}))}
       onPress={key => { const body = system.bodies.find(entry => entry.key === key); if (body) armLanding({key: body.key, name: body.world.name}) }} />
+    {line}
     {/* A landing is undone as it is made: a landed world, pressed, either moves (click your planet) or comes off your planet here, its
         body kept without the landing (system/SystemReadings.tsx unlandWorld). */}
     {tool.phase === 'landing' && system.state === 'read' && system.bodies.find(body => body.key === tool.target.key)?.landing && <div className="plate-span plate-tool-row">
