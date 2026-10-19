@@ -13,7 +13,7 @@
 // here as a mirror of the atlas controller's own mode, which the atlas writes to body[data-mode] (graph/switch.ts). The
 // atlas owns the state; the lens bar reads the mirror.
 
-import {Suspense, lazy, useEffect, useRef, useState, useSyncExternalStore} from 'react'
+import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useContinuity} from '../../continuity/workspace'
 import {useWorkspace} from '../../shell/workspace'
@@ -34,10 +34,6 @@ import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
 import {bindWorldBody, kernelWorldBodyOwner} from './body/worldBody'
 import type {SystemOverlayBinding} from './system/systemOverlay'
 import './atlasHost.css'
-
-/** Your system's readings (T-WORLDS §5 W3 phase B), loaded only by the pane that holds the Earth: they read Central's worlds, today's
- * set, what plays and what is to hand, and bind the acts that open them (system/SystemReadings.tsx). */
-const SystemReadings = lazy(() => import('./system/SystemReadings').then(module => ({default: module.SystemReadings})))
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
 function shownYearNow(): number | null {
@@ -536,15 +532,11 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   unsubscribeStanding = subscribeSuiteStanding(paintStanding)
   unsubscribeView = subscribeView(paintStanding)
   // A page launched as Reading (central/launchOpening.ts) opens its occurrence's reading here: the manifestation of the occurrence
-  // whose subject is the page, in its family, read deep (the controller's own reading state, through its public navigate).
+  // whose subject is the page, in its family, read deep (the atlas's own handle, mount.ts openReading).
   void import('../../central/earthReading').then(({registerEarthReading}) => {
     if (retired) return
-    withdrawReading = registerEarthReading(subjectRef => {
-      const occurrence = mounted.model.occ.find(item => item.subject_ref === subjectRef)
-      if (!occurrence) return {ok: false, why: 'the Earth holds no occurrence of this page yet'}
-      mounted.ctl.navigate({view: {kind: 'manifest', occId: occurrence.id, context: {type: 'family', id: occurrence.familyId}}, deep: true})
-      return {ok: true}
-    })
+    withdrawReading = registerEarthReading(subjectRef => mounted.openReading(subjectRef)
+      ? {ok: true} : {ok: false, why: 'the Earth holds no occurrence of this page yet'})
   })
   paintStanding()
 
@@ -722,7 +714,6 @@ export function AtlasEarthPane() {
   return (
     <div ref={wrapper} className="atlas-host" data-atlas-phase={phase.state} data-projection-kind="projection.earth">
       <div ref={body} className="atlas-host-body" />
-      {phase.state === 'ready' && <Suspense fallback={null}><SystemReadings /></Suspense>}
       {text && <p role={phase.state === 'failed' ? 'alert' : 'status'} className="atlas-host-status">{text}</p>}
     </div>
   )

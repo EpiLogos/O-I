@@ -82,6 +82,9 @@ export interface AtlasHandle {
   /** [T-ATLAS-SEAM] One occurrence of the drawn field replaced in place (`occ` null takes it away): the Earth's Sun follows
    * the shared window through this, and nothing else is redrawn. A refusal names its rule and leaves the field as it was. */
   replaceOccurrence(occ: Occurrence | null, id: string, family?: Family): SeamChange;
+  /** [T-WORLDS §4 W2] Open the reading of the occurrence whose subject is `subjectRef` (a page launched as Reading): its manifestation in
+   * its family, read deep, as the controller reaches one. False when the field holds no occurrence of that subject. */
+  openReading(subjectRef: string): boolean;
   /** Release the atlas: the frames and the GPU resources of the globe, every listener, timer and observer it installed
    * (the atlas lifetime), and its DOM. Idempotent. Nothing of the atlas runs after it. */
   dispose(): void;
@@ -147,6 +150,12 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
         const change = engine.replaceOccurrence(occ, id, family);
         if (change.changed) ctl!.refreshOccurrences(change);
         return change;
+      },
+      openReading(subjectRef) {
+        const occurrence = model.occ.find(item => item.subject_ref === subjectRef);
+        if (!occurrence || !ctl) return false;
+        ctl.navigate({view: {kind: 'manifest', occId: occurrence.id, context: {type: 'family', id: occurrence.familyId}}, deep: true});
+        return true;
       },
       dispose() {
         binding?.dispose();
