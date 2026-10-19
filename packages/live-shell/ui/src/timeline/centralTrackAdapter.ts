@@ -120,6 +120,8 @@ export interface CentralControls {
   stop?: (playing: CentralPlaying) => Promise<unknown>
   /** Bring a world into today's set (the Day's write). */
   addWorld?: (world: CentralWorld) => Promise<unknown>
+  /** Take a world out of today's set (the Day's write): its pages stay in its folder. */
+  removeWorld?: (world: CentralWorld) => Promise<unknown>
   writeArm?: {on: boolean | null; set(on: boolean): Promise<unknown>}
 }
 
@@ -393,6 +395,16 @@ function centralActions(reading: CentralReading, worlds: readonly CentralWorld[]
     if (worlds.some(held => held.ref === world.ref)) return {ok: true, note: `${world.name} is already in today's set.`}
     await addWorld(world)
     return {ok: true, note: `${world.name} is in today's set.`}
+  }}
+  // A world leaves today's set as it came in (Live: select the track, Delete): the Day's set written without it. Its pages stay in its
+  // folder, its body and any landing stay its own; your world is in every day's set and does not leave it.
+  const removeWorld = controls.removeWorld
+  if (removeWorld && reading.set?.state === 'read') actions.removeTrack = {op: 'today\'s set written into the Day without the world (central/daySet.ts withoutWorld): its pages stay in its folder', run: async trackId => {
+    const world = worlds.find(candidate => centralWorldTrackId(candidate.ref) === trackId)
+    if (!world) return {ok: false, error: `"${trackId}" is no world of today's set.`}
+    if (world.kind === 'yours') return {ok: false, error: 'Your world is in every day\'s set; it does not leave it.'}
+    await removeWorld(world)
+    return {ok: true, note: `${world.name} is out of today's set; its pages stay in its folder.`}
   }}
   const arm = controls.writeArm
   if (arm) actions.mixer = {arm: {op: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it', run: (_trackId, on) => arm.set(on)}}

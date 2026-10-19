@@ -17,6 +17,9 @@ export interface SystemActs {
   /** Land a world of today's set on your planet at a point of it: one BodySet on that world's register, on the revision read (its
    * body as it reads, or the body seeded from its ref, with the landing). Resolves with the owner's acknowledgement. */
   land(body: SystemBody, lat: number, lon: number): Promise<string>
+  /** Take a landed world off your planet: its body kept whole, without the landing, as one BodySet on its register at the revision
+   * read. A landing is never permanent. Resolves with the owner's acknowledgement. */
+  unland(body: SystemBody): Promise<string>
 }
 
 let reading: SystemReading = {state: 'unbound'}

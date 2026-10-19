@@ -26,7 +26,7 @@ import type {CentralPlaying} from '../../../timeline/centralTrackAdapter'
 import type {CentralLocation} from '../../../../../../../desktop/cradle/src/kernel/location'
 import type {PageForm} from '../../../../../../../desktop/cradle/src/personal/pageOwner'
 import {baseBody, kernelWorldBodyOwner, subscribeWorldBody, worldBodyState, type WorldBodyOwner, type WorldBodyState} from '../body/worldBody'
-import {isWorldBody, parseWorldBody} from '../src/globe/body'
+import {isWorldBody, parseWorldBody, type WorldBodyRecord} from '../src/globe/body'
 import {systemOf, systemWorlds, type SystemBody, type SystemBodyReading, type SystemSatellite} from './systemModel'
 import {bindSystemActs, publishSystem} from './systemStore'
 
@@ -66,6 +66,21 @@ export async function landWorld(owner: WorldBodyOwner, body: SystemBody, yours: 
     throw Error('The owner confirmed the save, but the landing did not read back as written. Read before retrying.')
   }
   return `${body.world.name} lands on your planet at ${lat.toFixed(2)}, ${lon.toFixed(2)}: its body is saved at revision ${after.reading.space.revision}.`
+}
+
+/** Take a world off your planet: its body as it reads, written whole without the landing as one BodySet on its register at the revision
+ * read, and read back to show none. Every setting and the seed stay; only where it lands goes. The owner's refusal is thrown in its words. */
+export async function unlandWorld(owner: WorldBodyOwner, body: SystemBody, reading: SystemBodyReading | undefined): Promise<string> {
+  if (body.yours) throw Error('Your own world is the planet the others land on; it lands nowhere, so there is nothing to take off.')
+  if (!reading || reading.state !== 'read') throw Error(`${body.world.name}’s body is not read, so its landing cannot be taken off: ${body.standing}.`)
+  if (!reading.record?.landing) return `${body.world.name} does not land on your planet; nothing was written.`
+  const {landing: _landing, ...kept} = baseBody({state: 'read', reading: reading.reading, record: reading.record}) as WorldBodyRecord & {landing?: unknown}
+  const parsed = parseWorldBody(kept)
+  if (!isWorldBody(parsed)) throw Error(`Taking the landing off is refused before it is sent: ${parsed.refused}.`)
+  await owner.write(parsed, {space_ref: reading.reading.space.ref, revision: reading.reading.space.revision})
+  const after = await readBodyOf(owner)
+  if (after.state !== 'read' || after.record?.landing) throw Error('The owner confirmed the save, but the body still reads with its landing. Read before retrying.')
+  return `${body.world.name} is off your planet: its body is kept, without a landing, at revision ${after.reading.space.revision}.`
 }
 
 type Listing = {project: string | null; listing: NowListing}
@@ -163,6 +178,13 @@ export function SystemReadings(): null {
         if (transport.kind === 'unavailable') throw Error(transport.reason)
         if (!body.world.project) throw Error(`${body.world.name} is not a project’s world, so no register of its own keeps its body.`)
         const said = await landWorld(kernelWorldBodyOwner(transport, body.world.project), body, system.find(entry => entry.yours), allBodies.get(body.world.ref), lat, lon)
+        setMoved(n => n + 1)
+        return said
+      },
+      unland: async body => {
+        if (transport.kind === 'unavailable') throw Error(transport.reason)
+        if (!body.world.project) throw Error(`${body.world.name} is not a project’s world, so no register of its own keeps its body.`)
+        const said = await unlandWorld(kernelWorldBodyOwner(transport, body.world.project), body, allBodies.get(body.world.ref))
         setMoved(n => n + 1)
         return said
       },
