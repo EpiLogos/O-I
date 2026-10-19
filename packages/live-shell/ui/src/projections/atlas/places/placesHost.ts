@@ -7,8 +7,8 @@
 //   placeFocusFromSession's law): when the session's `spatial_focus_ref` names a place the world holds, the Earth selects the subject
 //   that declares it there, or flies to the point at the atlas's own framing distance for its precision (app/controller.ts frames a
 //   place at 2.25 globe radii and a region at 2.6). A ref the world does not hold turns nothing, and is not an error.
-// - The camera's scale, for the plate's head (system · body · region; palace while one is entered, palaces/palaceSession.ts), read on the
-//   globe's own frame and published only on change.
+// - The camera's scale, for the plate's head (the manual's: system · body · region · place, a palace entered being a place you are in,
+//   palaces/palaceSession.ts; the field is the shared field's, never reached here), read on the globe's own frame and published only on change.
 // - The Place tool's click (placeTool.ts): while it is armed, the point under a click on the globe is read through the atlas's own
 //   surface maths (globe/zoom.ts surfacePointAt, data/geo.ts latLonFromDir) — the click itself stays the globe's.
 // - The Place tool's owner (placeTool.ts PlaceOwner): the draft is offered to the subject's time-and-place editor
@@ -25,8 +25,19 @@ import {listen} from '../src/ui/lifetime';
 import type {SuitePlace} from '../provider/suiteStanding';
 import {suitePlaces} from '../provider/suiteStanding';
 import {atlasScaleOf, type AtlasScale} from './placesModel';
-import {bindPlaceOwner, notePlaceTool, placeAnswered, placeAt, placeToolState, subscribePlaceTool, type PlaceOwner, type PlaceToolSubject} from './placeTool';
+import {bindPlaceOwner, notePlaceTool, placeAnswered, placeAt, placeToolState, subscribePlaceTool, type DrawnBody, type PlaceOwner, type PlaceToolSubject} from './placeTool';
 import {palaceState} from '../palaces/palaceSession';
+import {shownBody} from '../body/worldBody';
+import {systemActs, systemBodies} from '../system/systemStore';
+
+/** The body the globe draws under a click: your world's body while it is shown, else null (the Earth). */
+export function drawnBody(): DrawnBody | null {
+  const body = shownBody();
+  return body ? {body_ref: body.body_ref, seed: body.seed} : null;
+}
+
+/** Whether the tool takes the next click on the globe: armed to place, or to land a world. */
+const takesClick = (): boolean => placeToolState().phase === 'armed' || placeToolState().phase === 'landing';
 
 // ── the camera's scale ────────────────────────────────────────────────────
 
@@ -120,19 +131,19 @@ export function pointUnder(handle: AtlasHandle, clientX: number, clientY: number
 function capturePlaceClicks(handle: AtlasHandle): () => void {
   const canvas = handle.engine.renderer.domElement;
   let down: {x: number; y: number; at: number} | null = null;
-  const onDown = (event: PointerEvent) => { down = placeToolState().phase === 'armed' ? {x: event.clientX, y: event.clientY, at: performance.now()} : null };
+  const onDown = (event: PointerEvent) => { down = takesClick() ? {x: event.clientX, y: event.clientY, at: performance.now()} : null };
   const onUp = (event: PointerEvent) => {
     const start = down;
     down = null;
-    if (!start || placeToolState().phase !== 'armed') return;
+    if (!start || !takesClick()) return;
     if (performance.now() - start.at > CLICK_MS || Math.hypot(event.clientX - start.x, event.clientY - start.y) > CLICK_SLOP_PX) return;
-    placeAt(pointUnder(handle, event.clientX, event.clientY));
+    placeAt(pointUnder(handle, event.clientX, event.clientY), drawnBody());
   };
   // through the atlas lifetime (ui/lifetime.ts), as every listener the atlas installs: released with it
   const offDown = listen<PointerEvent>(canvas, 'pointerdown', onDown, true);
   const offUp = listen<PointerEvent>(canvas, 'pointerup', onUp, true);
   // the globe says the tool is armed by its pointer, nothing drawn over it (atlasHost.css)
-  const mark = () => { if (canvas.dataset) canvas.dataset.placing = placeToolState().phase === 'armed' ? 'true' : 'false' };
+  const mark = () => { if (canvas.dataset) canvas.dataset.placing = takesClick() ? 'true' : 'false' };
   const offMark = subscribePlaceTool(mark);
   mark();
   return () => {
@@ -178,6 +189,14 @@ function placeOwner(handle: AtlasHandle, transport: KernelTransportStatus, said:
     reread: subjectRef => {
       void redrawSubject(handle, transport, subjectRef).then(line => { if (line) said(line) }, error => said(error instanceof Error ? error.message : String(error)));
     },
+    // a world's landing goes to its own body owner, through the acts your system's readings bind (system/SystemReadings.tsx)
+    land: async (target, lat, lon) => {
+      const acts = systemActs();
+      const body = systemBodies().find(entry => entry.key === target.key);
+      if (!acts) throw Error('Your system’s owners are not bound in this pane, so no world can be landed from here.');
+      if (!body) throw Error(`${target.name} is no longer in today’s set, so it does not land.`);
+      return acts.land(body, lat, lon);
+    },
   };
 }
 
@@ -193,7 +212,8 @@ export function bindPlaces({handle, transport, session, said = notePlaceTool}: {
   let live = true;
   handle.engine.onFrame(() => {
     if (!live) return;
-    publishScale(atlasScaleOf({sky: !!handle.ctl.state.sky, graph: !!handle.ctl.state.graph, dist: handle.engine.rig.dist, palace: palaceState().phase === 'inside'}));
+    publishScale(atlasScaleOf({sky: !!handle.ctl.state.sky, graph: !!handle.ctl.state.graph, dist: handle.engine.rig.dist, palace: palaceState().phase === 'inside',
+      placeHeld: handle.ctl.state.view.kind === 'manifest'}));
   });
   const offFocus = followSpatialFocus(handle, session);
   const offClicks = capturePlaceClicks(handle);

@@ -8,18 +8,22 @@
 //     the places an owner declares (`kind: 'declared'`), each by the owner's own ref, name and standing;
 //   - the World cut's walks (the published World reading, timeline/journeyWalks.ts `journeyWalksOf`), sorted as the tracks sort
 //     them (timeline/techneTrackAdapter.ts: a walk of no reading and not a field thread is a journey);
-//   - the subject door's answer for a row (subjectOpenings.ts), whose words stand in the row's standing slot.
+//   - the subject door's answer for a row (subjectOpenings.ts), whose words stand in the row's standing slot;
+//   - [T-WORLDS §5 W3] your planet's body (projections/atlas/body/worldBody.ts, the owner's `aikit.world-body/v1` record) and your
+//     system's worlds (projections/atlas/system/systemStore.ts): the Bodies.
 // It makes up no place, no body, no walk and no Scene; a group the owners have not answered says so in the standing's words.
 //
 // Pure TypeScript: no React, no DOM, no transport.
 
-import {SUITE_INPUT_LABELS, describeProgress, describeStanding, type SuiteInputName, type SuitePlace, type SuiteStanding} from '../../projections/atlas/provider/suiteStanding'
+import {describeProgress, describeStanding, type SuitePlace, type SuiteStanding} from '../../projections/atlas/provider/suiteStanding'
 import {FIELD_THREAD_WALK_KIND, type TechneWorldReading} from '../../timeline/techneTrackAdapter'
 import {journeyWalksOf} from '../../timeline/journeyWalks'
 import type {WorldWalk} from '../../timeline/worldTrackAdapter'
 import type {KindShapeName} from '../../inhabitants/sdk/icons'
 import type {SubjectScene, WorldSubject} from './subjectScenes'
 import type {SubjectOpening} from './subjectOpenings'
+import type {WorldBodyState} from '../../projections/atlas/body/worldBody'
+import type {SystemReading} from '../../projections/atlas/system/systemStore'
 
 /** An answer that carries Scenes (the door found where the subject stands), whatever the stage has answered since. */
 const hasScenes = (opening: SubjectOpening | undefined): opening is Extract<SubjectOpening, {opened: SubjectScene}> => !!opening && 'opened' in opening
@@ -35,14 +39,15 @@ export const isWorldGroup = (id: string): id is WorldGroupId => (WORLD_GROUP_IDS
 export interface WorldRow {
   key: string
   subject: WorldSubject & {title: string}
-  kind: 'location' | 'place' | 'journey' | 'palace'
+  /** [T-WORLDS §5 W3] `body`: a world's body (your planet, or a world of today's set), from its owner's record */
+  kind: 'location' | 'place' | 'journey' | 'palace' | 'body'
   mark: KindShapeName
   name: string
   standing: string
   hover: string
   /** A journey opens by standing its first stop (the tracks' own rule); a subject opens through the subject door; a palace is entered on
-   * the Earth (FOUNDATION N4). */
-  opens: 'subject' | 'walk' | 'palace'
+   * the Earth (FOUNDATION N4); your planet's body opens the World on it. */
+  opens: 'subject' | 'walk' | 'palace' | 'body'
   /** The walk a journey row stands for. */
   walk?: WorldWalk
 }
@@ -68,6 +73,10 @@ export interface WorldReadings {
   standing: SuiteStanding
   world: TechneWorldReading
   carrier: {available: true} | {available: false; reason: string}
+  /** [T-WORLDS §5 W3] your world's body as its owner last answered (projections/atlas/body/worldBody.ts worldBodyState), and your system
+   * (projections/atlas/system/systemStore.ts): the Bodies group's rows. Absent: not read here. */
+  body?: WorldBodyState
+  system?: SystemReading
 }
 
 /** The World's walks as the World reading carries them, or why there are none to read (the reading is not in). */
@@ -97,16 +106,6 @@ export function standingWords(standing: SuiteStanding): string {
   if (standing.phase === 'idle') return ''
   if (standing.phase === 'reading') return describeProgress(standing)
   return describeStanding(standing)
-}
-
-/** One input as the standing names it ("Central’s wiki: still being read"; "The shared field: unavailable — <the owner's detail>"). */
-function inputWords(standing: SuiteStanding, name: SuiteInputName): string {
-  const input = standing.inputs[name]
-  const label = input?.label ?? SUITE_INPUT_LABELS[name]
-  if (!input || standing.phase === 'idle') return `${label}: not read yet`
-  if (input.state === 'available') return `${label}: read (${plural(input.rows, 'row', 'rows')})`
-  if (input.state === 'reading') return `${label}: still being read`
-  return `${label}: ${input.state === 'deferred' ? 'not read' : 'unavailable'}${input.detail ? ` — ${input.detail}` : ''}`
 }
 
 /** The words a group says when the suite has not been read, or is being read with nothing for it yet. */
@@ -242,15 +241,7 @@ export function worldGroupOf(id: WorldGroupId, readings: WorldReadings, hint: st
       ? {state: 'rows', rows, note: null}
       : {state: 'waiting', word: 'waiting', words: hint, detail: 'The World reading carries no walk: the atlas publishes one only from a reading that holds a history, and the suite reading yields none.'}
   }
-  if (id === 'techne-bodies') {
-    // The suite reading composes your World's registers (Central's root, each hosted World) into the Earth's field, but its standing
-    // publishes their places, not the bodies: the group names the inputs the bodies come from, in the standing's words.
-    const unread = unreadWords(readings, 'the bodies')
-    const inputs = `${inputWords(standing, 'central_wiki')}. ${inputWords(standing, 'shared_field')}.`
-    return {state: 'waiting', word: unread?.word ?? 'waiting',
-      words: unread?.words ?? 'Your planet comes from Central’s wiki and the Worlds around it from the shared field; the suite reading’s standing lists their places, not the bodies, so none is listed here.',
-      detail: inputs}
-  }
+  if (id === 'techne-bodies') return bodiesGroup(readings, hint)
   const rows = id === 'techne-locations' ? locationRows(standing.places) : earthPlaceRows(standing.places)
   const what = id === 'techne-locations' ? 'the project spaces on your planet' : 'the places your owners declare'
   if (!rows.length) {
@@ -262,6 +253,36 @@ export function worldGroupOf(id: WorldGroupId, readings: WorldReadings, hint: st
   // The mockup's World rows stand under no separator (renderBrowser :1501–1505); while the owners are still read, the provider's
   // own progress words stand under the rows that have arrived.
   return {state: 'rows', rows, note: standing.phase === 'reading' ? describeProgress(standing) : null}
+}
+
+/** The browser's World › Bodies (T-WORLDS §5 W3; manual §17.2 "Your system": each world you work in is a body of its own): your planet,
+ * from its owner's record (`aikit.world-body/v1` on your register's root space, read through the kernel's world_body_read), then each
+ * other world of today's set from its own register's record, or the body seeded from its ref, said so. While your planet's body is not
+ * read, the group says why, in the owner's words. Opening your planet shows the World on it; another world opens as its register. */
+export function bodiesGroup(readings: WorldReadings, hint: string): WorldGroup {
+  const body = readings.body
+  if (!body || body.state === 'unbound') {
+    return {state: 'waiting', word: 'waiting', words: hint, detail: 'Your planet’s body is read when the Earth stands: open the World in a pane.'}
+  }
+  if (body.state === 'reading') return {state: 'waiting', word: 'reading', words: 'Your planet’s body is being read from its owner.', detail: null}
+  if (body.state === 'refused') return {state: 'waiting', word: 'waiting', words: hint, detail: sentence(body.reason)}
+  const space = body.reading.space
+  const name = typeof space.title === 'string' && space.title ? space.title : 'Your world'
+  const own: WorldRow = {
+    key: `body:${space.ref}`, kind: 'body', mark: 'world', name, opens: 'body',
+    subject: {ref: space.ref, title: name},
+    standing: body.record ? `seed ${body.record.seed}` : 'no body yet',
+    hover: body.record
+      ? `${name} — your planet, built from seed ${body.record.seed} (${body.record.body_ref}, revision ${space.revision}). Double-click or Enter opens the World on it.`
+      : `${name} — your planet has no body yet: its owner keeps it on your register’s root space (${space.ref}). Double-click or Enter opens the World, where you build it.`,
+  }
+  const others = readings.system?.state === 'read' ? readings.system.bodies.filter(entry => !entry.yours).map((entry): WorldRow => ({
+    key: entry.key, kind: 'body', mark: 'world', name: entry.world.name, opens: 'subject',
+    subject: {ref: entry.world.ref, title: entry.world.name},
+    standing: entry.state === 'built' ? `seed ${entry.record!.seed}` : entry.state === 'seeded' ? 'seeded' : entry.state === 'reading' ? 'reading' : 'unread',
+    hover: `${entry.world.name} — a world of today’s set: ${entry.standing}; ${entry.landing ? `it lands on your planet at ${entry.landing.lat.toFixed(2)}, ${entry.landing.lon.toFixed(2)}` : entry.unlanded ?? ''}. ${SELECTS}`,
+  })) : []
+  return {state: 'rows', rows: [own, ...others], note: readings.system?.state === 'read' && readings.system.set ? sentence(readings.system.set) : null}
 }
 
 /** The browser's World › Palaces (FOUNDATION N4; the atlas's palaces, projections/atlas/palaces/palacesModel.ts palaceRows): one row per

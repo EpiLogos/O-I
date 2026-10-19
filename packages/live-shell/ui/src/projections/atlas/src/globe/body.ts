@@ -222,3 +222,112 @@ export function nextSeed(record: WorldBodyRecord, revision: number): number {
   const seed = h >>> 0
   return seed === record.seed ? (seed + 1) >>> 0 : seed
 }
+
+// ── the sky of the body: its clouds, its air and its tilt (T-WORLDS §5 W3 phase B; manual §17.2 "Choose the atmosphere, the clouds
+// and the tilt of the axis") ─────────────────────────────────────────────────────────────────────────────────────────────────
+//
+// The clouds are a layer of their own, never baked into the body's image: white over land in the base would read as land through
+// EARTH_FRAG's waterOf, and the land test the shore and the Place tool read must not see weather. The cover is the World design's own
+// preview (atlas-earth__globe-engine.tsx BodyArt: fbm at seed + 51, scale 2.4, three octaves, roughness .55, above 1 − clouds × .55),
+// with a soft edge so the globe does not draw the preview's cells.
+
+/** The cloud cover as an equirect mask in the body image's convention (row 0 the north edge, column 0 longitude −180): its red, green
+ * and blue are the cover 0–255, alpha 255. `width` × `width / 2`. Deterministic, and empty (all 0) when the record asks for no cloud. */
+export function cloudImage(record: WorldBodyRecord, width = 512): BodyImage {
+  const w = Math.max(8, Math.floor(width / 2) * 2), h = w / 2
+  const data = new Uint8ClampedArray(w * h * 4)
+  const cover = record.sky.clouds, edge = 1 - cover * .55
+  for (let j = 0; j < h; j++) {
+    const lat = (90 - (j + .5) * 180 / h) * D2R, cl = Math.cos(lat), sl = Math.sin(lat)
+    for (let i = 0; i < w; i++) {
+      const lon = (-180 + (i + .5) * 360 / w) * D2R
+      const k = cover <= 0 ? 0 : smooth(edge - .05, edge + .05, fbm(record.seed + 51, cl * Math.cos(lon) * 2.4, sl * 2.4, cl * Math.sin(lon) * 2.4, 3, .55))
+      const at = (j * w + i) * 4, v = byte(k)
+      data[at] = v; data[at + 1] = v; data[at + 2] = v; data[at + 3] = 255
+    }
+  }
+  return {width: w, height: h, data}
+}
+
+/** How thick the body's air shows, as the globe's atmosphere takes it: 1 is the Earth's own (the World device's default 60 %), 0 none. */
+export const airOf = (record: WorldBodyRecord): number => Math.min(1.7, record.sky.atmosphere / .6)
+
+/** The Earth's own obliquity, degrees: the scene's frame is the Earth's, so the Sun's declination there carries it. */
+export const EARTH_OBLIQUITY_DEG = 23.4393
+
+/** The Sun's direction as the body's own tilt casts it: the same hour (its direction about the axis is kept), at the declination the
+ * body's axial tilt gives at the Sun's ecliptic longitude (sin δ = sin τ · sin λ), in place of the Earth's. A body tilted as the Earth
+ * is lit as the Earth is; an upright body has no seasons; a body tilted further has deeper ones. Pure: `sun` is a unit vector in the
+ * scene's axes (y the axis). */
+export function bodySunDir(sun: {x: number; y: number; z: number}, sunLongitudeDeg: number, tiltDeg: number): {x: number; y: number; z: number} {
+  const decl = Math.asin(Math.max(-1, Math.min(1, Math.sin(tiltDeg * D2R) * Math.sin(sunLongitudeDeg * D2R))))
+  const flat = Math.hypot(sun.x, sun.z)
+  if (flat < 1e-9) return {x: Math.cos(decl), y: Math.sin(decl), z: 0}
+  const k = Math.cos(decl) / flat
+  return {x: sun.x * k, y: Math.sin(decl), z: sun.z * k}
+}
+
+// ── a location's name, suggested from the seed (manual §17.2: "The World suggests a name from the seed. Keep it or type your own") ──
+
+const ONSETS = ['b', 'd', 'f', 'g', 'h', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v', 'th', 'sh', 'br', 'tr', 'gl']
+const VOWELS = ['a', 'e', 'i', 'o', 'u', 'ae', 'ei', 'ou']
+const CODAS = ['', '', 'n', 'r', 's', 'l', 'th', 'm']
+
+/** A name for a spot of the body, from the body's seed and the spot (to a tenth of a degree): the same spot of the same body is always
+ * offered the same name. A suggestion only: the person keeps it or types their own, and it is written only with the place. Pure. */
+export function suggestName(record: Pick<WorldBodyRecord, 'seed'>, lat: number, lon: number): string {
+  let h = 0x811c9dc5
+  const text = `${record.seed}|${lat.toFixed(1)}|${lon.toFixed(1)}`
+  for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0 }
+  const pick = <T,>(list: readonly T[]): T => { h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0; return list[h % list.length]! }
+  const syllables = 2 + (h % 2)
+  let name = ''
+  for (let s = 0; s < syllables; s++) name += pick(ONSETS) + pick(VOWELS) + (s === syllables - 1 ? pick(CODAS) : '')
+  return name[0]!.toUpperCase() + name.slice(1)
+}
+
+// ── the body as a disc (the System scale draws each world's body small, beside your planet) ──────────────────────────────────────
+
+/** The body seen whole as a small disc, `size` × `size` RGBA (transparent outside it): from over its equator at longitude 0, its axis
+ * leaned by the tilt (the World design's BodyArt, its view rotated back into the body's frame), lit from the upper left, its clouds
+ * over the land and its air at the rim. For a picture beside your planet, not for the globe. Deterministic. */
+export function bodyDisc(record: WorldBodyRecord, size = 48): BodyImage {
+  const n = Math.max(8, Math.floor(size)), data = new Uint8ClampedArray(n * n * 4)
+  const sea = seaHeight(record), {warmth, moisture, ice_caps} = record.climate, {clouds, atmosphere} = record.sky
+  const tilt = record.sky.axial_tilt_deg * D2R, ct = Math.cos(tilt), st = Math.sin(tilt), polar = 1 - ice_caps * .45
+  const lit = {x: -.55, y: .35, z: .76}, edge = 1 - clouds * .55
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const xm = -1 + (i + .5) * 2 / n, ym = 1 - (j + .5) * 2 / n, r2 = xm * xm + ym * ym, at = (j * n + i) * 4
+      if (r2 >= 1) {
+        // the air: a thin glow just past the rim, as thick as the atmosphere
+        const out = Math.sqrt(r2) - 1, glow = atmosphere * Math.exp(-out * 14) * (out < .18 ? 1 : 0)
+        data[at] = byte(.55); data[at + 1] = byte(.72); data[at + 2] = byte(.95); data[at + 3] = byte(glow * .7)
+        continue
+      }
+      const zm = Math.sqrt(1 - r2)
+      const bx = xm * ct + ym * st, by = -xm * st + ym * ct, bz = zm
+      const height = heightAt(record, bx, by, bz)
+      let r: number, g: number, b: number
+      if (height <= sea) {
+        const k = smooth(sea - .14, sea, height)
+        r = DEEP[0] + (SHELF[0] - DEEP[0]) * k; g = DEEP[1] + (SHELF[1] - DEEP[1]) * k; b = DEEP[2] + (SHELF[2] - DEEP[2]) * k
+      } else {
+        const wet = smooth(.35, .65, clamp01(moisture * 1.2 - (warmth - .5) * .6 + (fbm(record.seed + 9, bx * 3, by * 3, bz * 3, 2, .5) - .5)))
+        const rock = smooth(.45, .9, (height - sea) / Math.max(1 - sea, .05))
+        r = (DRY[0] + (WET[0] - DRY[0]) * wet) * (1 - rock) + ROCK[0] * rock
+        g = (DRY[1] + (WET[1] - DRY[1]) * wet) * (1 - rock) + ROCK[1] * rock
+        b = (DRY[2] + (WET[2] - DRY[2]) * wet) * (1 - rock) + ROCK[2] * rock
+      }
+      if (Math.abs(by) > polar) { r += (ICE[0] - r) * .9; g += (ICE[1] - g) * .9; b += (ICE[2] - b) * .9 }
+      if (clouds > 0) {
+        const c = smooth(edge - .05, edge + .05, fbm(record.seed + 51, bx * 2.4, by * 2.4, bz * 2.4, 3, .55)) * .85
+        r += (.95 - r) * c; g += (.96 - g) * c; b += (.97 - b) * c
+      }
+      const shade = .35 + .65 * Math.max(0, xm * lit.x + ym * lit.y + zm * lit.z)
+      const rim = atmosphere * Math.pow(1 - zm, 2.6) * .5
+      data[at] = byte(r * shade + .45 * rim); data[at + 1] = byte(g * shade + .62 * rim); data[at + 2] = byte(b * shade + .9 * rim); data[at + 3] = 255
+    }
+  }
+  return {width: n, height: n, data}
+}

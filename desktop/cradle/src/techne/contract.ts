@@ -263,6 +263,9 @@ export interface TechnePlaceFacet {
   valid_to?: string | null;
   observer_frame?: string | null;
   source_ref?: string | null;
+  /** The body the place stands on: a world body's `body_ref` (AIKit `aikit.world-body/v1`, a register's root space), verbatim.
+   * Absent or null: the Earth (AIKit knowledge_facets.rs PlaceFacet.body_ref; T-WORLDS §5 W3, locations on your own body). */
+  body_ref?: string | null;
 }
 
 /** Exact source selector where the native producer supplies one. */
@@ -616,13 +619,13 @@ export function validateTemporalFacet(value: unknown, label: string, errors: str
 
 export function validatePlaceFacet(value: unknown, label: string, errors: string[]): void {
   if (!isObject(value)) { errors.push(`${label}: must be an object`); return; }
-  keysAllowed(value, ["place_ref", "relation", "identity", "geometry", "precision", "uncertainty", "hierarchy", "valid_from", "valid_to", "observer_frame", "source_ref"], label, errors);
+  keysAllowed(value, ["place_ref", "relation", "identity", "geometry", "precision", "uncertainty", "hierarchy", "valid_from", "valid_to", "observer_frame", "source_ref", "body_ref"], label, errors);
   if (!ref(value.place_ref)) errors.push(`${label}.place_ref: required`);
   if (!PLACE_PRECISIONS.includes(value.precision as string)) errors.push(`${label}.precision: not a place precision`);
   if (value.relation !== undefined && !stringOrNull(value.relation)) errors.push(`${label}.relation: must be a string or null`);
   if (value.uncertainty !== undefined && !stringOrNull(value.uncertainty)) errors.push(`${label}.uncertainty: must be a string or null`);
   for (const key of ["valid_from", "valid_to"]) if (value[key] !== undefined && !stringOrNull(value[key])) errors.push(`${label}.${key}: must be a string or null`);
-  for (const key of ["observer_frame", "source_ref"]) if (value[key] !== undefined && !nullableRef(value[key])) errors.push(`${label}.${key}: must be a ref or null`);
+  for (const key of ["observer_frame", "source_ref", "body_ref"]) if (value[key] !== undefined && !nullableRef(value[key])) errors.push(`${label}.${key}: must be a ref or null`);
   if (value.identity !== undefined) {
     const identity = value.identity;
     if (!isObject(identity)) { errors.push(`${label}.identity: must be an object`); return; }

@@ -29,13 +29,39 @@ export interface CardNode {
 }
 
 export interface Satellite {
-  /** stable key (the tie's target) */
+  /** stable key (the tie's target; for your system, the subject's ref) */
   id: string;
   name: string;
-  /** Jung's own link (inner orbit) or one the atlas draws (outer) */
+  /** Jung's own link (inner orbit) or one the atlas draws (outer); for your system, the agents at work and the moments open now
+   * (inner) or the files and context to hand (outer) */
   inner: boolean;
   open(): void;
+  /** [T-WORLDS §5 W3] its own place on its ring, radians, keyed by its subject (system/systemModel.ts ringPhase): given, the
+   * satellite keeps that place however the list around it changes; absent, the ring spreads its satellites evenly (the lens's way) */
+  phase?: number;
+  /** what the control says on hover; absent, the lens's words for its two orbits */
+  title?: string;
+  /** a class for what it is (`po-kind-<kind>`), so a page, a session and a file read apart */
+  kind?: string;
 }
+
+/** [T-WORLDS §5 W3] The key space of the bodies orbits ride: the sky's own bodies (BodyKey, unchanged) or a world of your system,
+ * `world:<the world's ref>` (system/systemModel.ts worldKey). A world body is drawn by your system, not by the sky layer, so its disc
+ * is handed to `update` by the one who draws it. */
+export type WorldOrbitKey = `world:${string}`;
+export type OrbitKey = BodyKey | WorldOrbitKey;
+export const isWorldOrbitKey = (key: OrbitKey | null): key is WorldOrbitKey => typeof key === 'string' && key.startsWith('world:');
+
+/** A body's disc on the screen, as the sky layer's `screenDisc` gives it (or your system draws it). */
+export interface OrbitDisc { x: number; y: number; px: number; held: number; on: boolean }
+
+/** What `update` is told for a body the sky layer does not draw: its disc, whether its rings are wanted now, and the least radius its
+ * inner ring is drawn at (a small planet's rings stand clear of it). */
+export interface OrbitAt { disc: OrbitDisc | null; wanted: boolean; minRing?: number }
+
+/** How an orbit set stands: the lens's own (the line home and the Whole-sky control, the phone's holding mark) or a body of your
+ * system's (its rings alone). */
+export interface OrbitOptions { home?: boolean; className?: string }
 
 const SVG = 'http://www.w3.org/2000/svg';
 const TILT = 0.34; // the orbits' apparent flattening: a ring seen from a little above its plane
@@ -82,13 +108,15 @@ export class PlanetOrbits {
   private ticks: SVGLineElement[] = [];
   private cards: { n: CardNode; btn: HTMLButtonElement; p1: number; p2: number }[] = [];
   private cardsKey: BodyKey | null = null;
-  private key: BodyKey | null = null;
+  private key: OrbitKey | null = null;
+  private readonly home: boolean;
   private t = 0;
   private shown = 0;
   /** whether the controls take clicks this frame (false while they fade or are hidden) */
   private interactive = false;
 
-  constructor(parent: HTMLElement, private onEarth: () => void) {
+  constructor(parent: HTMLElement, private onEarth: () => void, options: OrbitOptions = {}) {
+    this.home = options.home ?? true;
     this.svg = document.createElementNS(SVG, 'svg');
     this.svg.setAttribute('class', 'po-svg');
     this.svg.setAttribute('aria-hidden', 'true');
@@ -117,27 +145,29 @@ export class PlanetOrbits {
       this.svg.append(t);
     }
     this.earthBtn = el('button', { type: 'button', class: 'po-earth', text: 'Whole sky', 'aria-label': 'Back to the whole sky around the Earth', onclick: () => this.onEarth() });
-    this.root = el('div', { class: 'po', hidden: true }, [this.earthBtn]);
+    this.root = el('div', { class: `po${options.className ? ` ${options.className}` : ''}`, hidden: true }, this.home ? [this.earthBtn] : []);
     this.root.prepend(this.svg);
     parent.append(this.root);
   }
 
-  /** The planet the walk holds and its satellites; null clears. */
-  set(key: BodyKey | null, sats: Satellite[] = []) {
+  /** The planet the walk holds (or a world of your system) and its satellites; null clears. */
+  set(key: OrbitKey | null, sats: Satellite[] = []) {
     this.key = key;
     this.setCards(null, []);
     for (const x of this.sats) { x.dot.remove(); x.tether.remove(); x.label.remove(); }
     // spread each orbit's satellites evenly, the inner and outer offset so no two names start together
     const inner = sats.filter((s) => s.inner);
     const outer = sats.filter((s) => !s.inner);
-    const place = (list: Satellite[], off: number) => list.map((s, i) => ({ s, phase: off + (i / Math.max(1, list.length)) * Math.PI * 2 }));
+    // a satellite that names its own place keeps it (keyed by its subject); the others are spread evenly, as the lens has always done
+    const place = (list: Satellite[], off: number) => list.map((s, i) => ({ s, phase: s.phase ?? off + (i / Math.max(1, list.length)) * Math.PI * 2 }));
     this.sats = [...place(inner, 0.6), ...place(outer, 0.6 + Math.PI / Math.max(2, outer.length))].map(({ s, phase }) => {
       const tether = document.createElementNS(SVG, 'line');
       tether.setAttribute('class', 'po-tether');
       const dot = document.createElementNS(SVG, 'circle');
-      dot.setAttribute('class', `po-dot ${s.inner ? 'po-inner' : 'po-outer'}`);
+      const kind = s.kind ? ` po-kind-${s.kind}` : '';
+      dot.setAttribute('class', `po-dot ${s.inner ? 'po-inner' : 'po-outer'}${kind}`);
       this.svg.append(tether, dot);
-      const label = el('button', { type: 'button', class: `po-sat ${s.inner ? 'po-inner' : 'po-outer'}`, title: s.inner ? 'Jung’s own link' : 'A link the atlas draws', onclick: () => s.open() }, [el('span', { text: s.name })]);
+      const label = el('button', { type: 'button', class: `po-sat ${s.inner ? 'po-inner' : 'po-outer'}${kind}`, title: s.title ?? (s.inner ? 'Jung’s own link' : 'A link the atlas draws'), onclick: () => s.open() }, [el('span', { text: s.name })]);
       this.root.append(label);
       // a new control stands hidden until update() shows it: its own opacity and pointer-events say so, not the stylesheet's
       // defaults (1 and auto), which a hidden root would otherwise leave reading as a clickable satellite
@@ -145,7 +175,7 @@ export class PlanetOrbits {
       label.style.pointerEvents = 'none';
       return { s, dot, tether, label, phase };
     });
-    if (!key) { this.root.hidden = true; this.shown = 0; document.body.classList.remove('po-holding'); }
+    if (!key) { this.root.hidden = true; this.shown = 0; if (this.home) document.body.classList.remove('po-holding'); }
   }
 
   /**
@@ -176,24 +206,27 @@ export class PlanetOrbits {
     }
   }
 
-  /** Each frame: follow the planet's drawn disc; show only once the approach has arrived (see `orbitsWanted`). */
-  update(layer: SkyLayer | null, dt: number, reduced: boolean) {
+  /** Each frame: follow the planet's drawn disc; show only once the approach has arrived (see `orbitsWanted`). A world of your
+   * system is not the sky layer's: its disc and whether it is wanted are given (`at`). */
+  update(layer: SkyLayer | null, dt: number, reduced: boolean, at?: OrbitAt) {
     const key = this.key;
-    const disc = key && layer ? layer.screenDisc(key) : null;
+    const world = isWorldOrbitKey(key);
+    const disc = at ? at.disc : key && layer && !world ? layer.screenDisc(key) : null;
     const phase = document.body.dataset.skyPhase;
     const isEarth = key === 'terra';
     // the held body's own disc: for the Sun, its true size and not the glow (whose floor kept its rings up at any distance)
     const heldPx = disc ? disc.held : 0;
-    const wanted = orbitsWanted(phase, document.body.classList.contains('sky-gazing'), layer?.approach ?? 0, disc && { on: disc.on, px: heldPx });
+    const wanted = at ? at.wanted && !!disc?.on : orbitsWanted(phase, document.body.classList.contains('sky-gazing'), layer?.approach ?? 0, disc && { on: disc.on, px: heldPx });
     // the orbits leave at once in the gaze, descend, return and system phases: a fade would leave the line on screen
-    if (!wanted && orbitsSnapOff(phase)) this.shown = 0;
+    if (!wanted && (at ? true : orbitsSnapOff(phase))) this.shown = 0;
     else this.shown += ((wanted ? 1 : 0) - this.shown) * (1 - Math.exp(-dt * 4));
     // while a body is held, a phone gives the sky's own controls (names, the held note) back to it
-    document.body.classList.toggle('po-holding', this.shown > 0.5);
+    if (this.home) document.body.classList.toggle('po-holding', this.shown > 0.5);
     const R = heldPx / 2;
-    // the rings go with the body on a zoom out: its disc is the one measure of how much of them stands
-    const presence = ringPresence(R);
-    if (this.shown * presence < 0.02 || !disc || !layer) { this.root.hidden = true; this.setInteractive(false); return; }
+    // the rings go with the body on a zoom out: its disc is the one measure of how much of them stands (a world of your system keeps
+    // its rings at their least radius however small its disc is drawn)
+    const presence = at ? 1 : ringPresence(R);
+    if (this.shown * presence < 0.02 || !disc || (!layer && !at)) { this.root.hidden = true; this.setInteractive(false); return; }
     this.root.hidden = false;
     // while fading out nothing takes a click (nor while the body is too small to hang anything on): the children's own
     // pointer-events (set in the stylesheet) are overridden here
@@ -201,7 +234,8 @@ export class PlanetOrbits {
     this.root.style.opacity = (this.shown * presence).toFixed(3);
     if (!reduced) this.t += dt;
     const cx = disc.x, cy = disc.y;
-    const radii = [R * 1.42, R * 1.86];
+    const least = at?.minRing ?? 0;
+    const radii = [Math.max(R * 1.42, least), Math.max(R * 1.86, least * 1.31)];
     const cos = Math.cos(ROT), sin = Math.sin(ROT);
     this.rings.forEach((e, i) => {
       e.setAttribute('cx', cx.toFixed(1)); e.setAttribute('cy', cy.toFixed(1));
@@ -209,7 +243,7 @@ export class PlanetOrbits {
       e.setAttribute('transform', `rotate(${(ROT * 180) / Math.PI} ${cx.toFixed(1)} ${cy.toFixed(1)})`);
     });
     // the line home: from the planet toward where the Earth stands (off screen, it runs to the edge)
-    const earth = layer.screenDisc('terra');
+    const earth = layer ? layer.screenDisc('terra') : null;
     // the open panel is the screen's edge: a side panel on a desktop, a bottom sheet on a phone
     let W = this.root.clientWidth || hostSize(this.root).w, H = this.root.clientHeight || hostSize(this.root).h;
     const panel = document.querySelector<HTMLElement>('.lens-panel:not([hidden])')?.getBoundingClientRect();
@@ -226,7 +260,7 @@ export class PlanetOrbits {
     ex = cx + dx * tEdge; ey = cy + dy * tEdge;
     const sx = cx + (dx / len) * R * 1.02, sy = cy + (dy / len) * R * 1.02;
     // the Earth held has no line home: it is home
-    const homeVis = isEarth ? 'hidden' : 'visible';
+    const homeVis = isEarth || !this.home ? 'hidden' : 'visible';
     this.earthLine.setAttribute('visibility', homeVis);
     this.earthMark.setAttribute('visibility', homeVis);
     this.earthLine.setAttribute('x1', sx.toFixed(1)); this.earthLine.setAttribute('y1', sy.toFixed(1));
@@ -269,7 +303,7 @@ export class PlanetOrbits {
       const lxClamped = Math.min(W - lw - 8, Math.max(8, lxPlaced));
       x.label.style.transform = `translate(${Math.round(lxClamped)}px, ${Math.round(ly - x.label.offsetHeight / 2)}px)`;
     }
-    this.placeCards(layer, key!, cx, cy, R, { left: 8, right: W - 8, top: TOP, bottom: H - 120 }, reduced);
+    if (layer && key && !isWorldOrbitKey(key)) this.placeCards(layer, key, cx, cy, R, { left: 8, right: W - 8, top: TOP, bottom: H - 120 }, reduced);
   }
 
   /** The card rings: the wheel through the camera, each card at its longitude (or its spread place), floating. */
@@ -356,5 +390,5 @@ export class PlanetOrbits {
     for (const c of this.cards) c.btn.style.pointerEvents = on ? 'auto' : 'none';
   }
 
-  destroy() { document.body.classList.remove('po-holding'); this.root.remove(); }
+  destroy() { if (this.home) document.body.classList.remove('po-holding'); this.root.remove(); }
 }

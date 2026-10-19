@@ -7,9 +7,10 @@
 // a radio for one of a few, rows for places, the sections side by side and folded to fit; the atlas pane carries no chrome (owner,
 // 14 Oct: "controls live in device UI, never as chrome inside a pane").
 //
-// The body is Earth, the one world nobody built (manual §2; "Earth is given. You cannot change its land", §17.1 Rules): no owner builds
-// a body in this suite (PATH §7), so the planet builder's knobs stand with no reading and say why — never a value nobody holds. What the
-// plate shows is only what the owners return: the suite's places (provider/suiteStanding.ts), the QL owner's Sun (the attach's Sun
+// The body is the one the World shows (T-WORLDS §5 W3; manual §17.2 "Build a planet"): your world's, from its owner's record
+// (`aikit.world-body/v1` on your register's root space, body/worldBody.ts), each knob its setting, written through the World's own body
+// setters as one BodySet on the revision read; or Earth, the one world nobody built ("Earth is given. You cannot change its land"), whose
+// knobs stand with no reading and say why — never a value nobody holds. What the plate shows is only what the owners return: the suite's places (provider/suiteStanding.ts), the QL owner's Sun (the attach's Sun
 // reading), the atlas's own state. What it writes goes through the owners: the Earth ⇄ Graph switch is the atlas's own
 // (presentAtlasView, the lens bar's), Whole field the globe's own (atlasFaceActions setWholeField, the face body's), a press on a place
 // turns the Earth (the atlas's own navigation), a Relations row narrows the globe through the atlas's one filter (shell/filter.ts), the
@@ -24,7 +25,7 @@
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import {InstrumentPlate, heldMarksOf, type PlateSection} from '../../../frame/devices/InstrumentPlate'
 import {usePlateFit} from '../../../frame/devices/plateFit'
-import {HeldMarks, PlateField, PlateLine, PlateRadio, PlateReading, PlateRows, WaitingDial, said, type PlateRow} from '../../../frame/devices/plateControls'
+import {HeldMarks, OwnerDial, PlateField, PlateLine, PlateRadio, PlateReading, PlateRows, WaitingDial, said, type PlateRow} from '../../../frame/devices/plateControls'
 import {Action, Chooser, Lamp, Readout, Toggle, type Option} from '../../../inhabitants/sdk/panel'
 import {Icon} from '../../../inhabitants/sdk/Icon'
 import type {IconName} from '../../../inhabitants/sdk/icons'
@@ -41,7 +42,17 @@ import {disclosureSession} from '../../../../../../../desktop/cradle/src/techne/
 import {windowEdgeYear, writeSharedWindow} from '../sharedClock'
 import {atlasScale, subscribeAtlasScale, turnAtlasTo} from './placesHost'
 import {findPlaceRows, placeRows, precisionCounts, relationRows, routeRows, withinRows, type PlaceRow, type RelationRow} from './placesModel'
-import {armPlaceTool, disarmPlaceTool, draftLine, openOfferedEditor, placeToolState, subscribePlaceTool, type PlaceToolSubject} from './placeTool'
+import {
+  PLACE_KINDS, PLACE_KIND_WAITS, armLanding, armPlaceTool, choosePlaceKind, disarmPlaceTool, draftLine, notePlaceTool, openOfferedEditor, placeKindChoice,
+  placeToolState, subscribePlaceTool, type PlaceKind, type PlaceToolSubject,
+} from './placeTool'
+import {
+  BODY_CHOICES, GIVEN, NO_BODY, NO_OTHER, WORLD_BODY_SETTINGS, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, subscribeWorldBody, worldBodyState,
+  type BodyChoice,
+} from '../body/worldBody'
+import {COASTS} from '../src/globe/body'
+import {subscribeSystem, systemReading} from '../system/systemStore'
+import {writeThroughOwner} from '../../../inhabitants/ql/devices/ownerWrite'
 import {palaceLocationRows} from '../palaces/palacesModel'
 import {palacesWaiting, readPalaces, usePalaces} from '../palaces/palacesWorld'
 import {enterPalace} from '../palaces/palaceSession'
@@ -54,12 +65,8 @@ const SKY_FAMILY = 'ql-sky-subsolar'
 
 /** The mockup's location kinds (`pl.kind`): a place has an owner that declares it, and a palace stands where its rooms' subjects are
  * placed (T-PALACES-ONTO-ATLAS: the world's palaces are listed here, entered from here or the M5 plate); the others say why they wait. */
-const KINDS: readonly {id: string; mark: IconName; why: string | null}[] = [
-  {id: 'place', mark: 'placed', why: null},
-  {id: 'palace', mark: 'palace', why: null},
-  {id: 'portal', mark: 'direct', why: 'A portal leads through to another world: no owner opens one yet.'},
-  {id: 'route', mark: 'journey', why: 'A route is the walk of a subject\'s TRAVELLED_TO places, each declared as a place.'},
-]
+const KIND_MARKS: Readonly<Record<PlaceKind, IconName>> = {place: 'placed', palace: 'palace', portal: 'direct', route: 'journey'}
+const KINDS: readonly {id: PlaceKind; mark: IconName; why: string | null}[] = PLACE_KINDS.map(id => ({id, mark: KIND_MARKS[id], why: PLACE_KIND_WAITS[id]}))
 
 /** The words for a locus, as the atlas's own kind filter names it (shell/filter.ts KIND_LABELS' sense, in plain words). */
 const LOCUS_WORDS: Partial<Record<LocusType, string>> = {
@@ -69,8 +76,8 @@ const LOCUS_WORDS: Partial<Record<LocusType, string>> = {
 /** Why the planet builder waits on Earth (manual §17.2 "Earth is given … Earth and other worlds are read-only"; the mockup's own Earth
  * branch, world-shell-mockup.html:1449). */
 const EARTH_GIVEN = 'Earth is given — its land is not built. Place and name locations on it; anchor your body’s locations to it.'
-const EARTH_CLIMATE = 'You cannot reshape Earth: no owner builds a body’s climate in this suite.'
-const EARTH_SKY = 'You cannot reshape Earth’s air or tilt: no owner builds a body’s sky in this suite.'
+const EARTH_CLIMATE = 'You cannot reshape Earth: its climate is given. Choose Your world to set your own body’s.'
+const EARTH_SKY = 'You cannot reshape Earth’s air or tilt: they are given. Choose Your world to set your own body’s.'
 const NOT_MOUNTED = 'The Earth has not mounted in this session. Its controls stand once the Earth pane is shown.'
 
 /** The mounted atlas, re-read on its own notices (its clock, its controller's face notices — a state, a filter, a walk). */
@@ -169,44 +176,102 @@ function ViewSection({handle}: {handle: AtlasHandle | null}) {
   </>
 }
 
-// ── Body: whose body ──
+// ── Body: whose body (the body store, body/worldBody.ts: your world's record, the view's own choice) ──
+
+/** Your world's body as the plate reads it: the store's reading and the view's choice, and why its knobs cannot write now. */
+function useBodyReading() {
+  const state = useSyncExternalStore(subscribeWorldBody, worldBodyState, worldBodyState)
+  const choice = useSyncExternalStore(subscribeWorldBody, bodyChoice, bodyChoice)
+  const record = choice === 'own' && state.state === 'read' ? state.record : null
+  // Earth's land and air are given; another world's are its owner's; your own body's knobs write while its owner can take them
+  const why = choice === 'earth' ? null : choice === 'other' ? NO_OTHER : bodyWriteRefusal()
+  return {state, choice, record, why}
+}
+
+/** A setting written through the World's own body setter (agent/shellSetterBridge.ts): one BodySet on the revision read. A refusal is
+ * said on the plate's line, in the owner's words. */
+const writeBody = (key: string, value: unknown) => {
+  void writeThroughOwner(bodyWriter(key), value).catch(error => notePlaceTool(error instanceof Error ? error.message : String(error)))
+}
+
+const BODY_WORDS: Readonly<Record<BodyChoice, string>> = {own: 'Your world', earth: 'Earth', other: 'Another world'}
 
 function BodySection() {
+  const {state, choice, record, why} = useBodyReading()
+  const name = state.state === 'read' && typeof state.reading.space.title === 'string' && state.reading.space.title ? state.reading.space.title : 'Your world'
+  const seedWords = choice === 'earth' ? 'Earth is given, so it has no seed to reroll.' : record ? 'The seed your body grows from: the same seed and settings give the same body.'
+    : state.state === 'read' ? NO_BODY : why ?? 'Your world’s body is read from its owner.'
   return <>
-    <PlateRadio label="Body" does="Whose body the World shows. Earth is the one world nobody built: your root anchor." value="earth"
-      options={[{value: 'central', label: 'Central', why: 'Your own body has no builder in this suite yet: the atlas draws Earth.'}, {value: 'earth', label: 'Earth', does: 'Earth, the one world nobody built: your root anchor.'}]} />
-    <PlateReading label="Name" value="Earth" does="The body's name. Earth is given its own." />
-    <PlateReading label="Seed" value="—" does="Earth is given, so it has no seed to reroll." />
+    <PlateRadio label="Body" does="Whose body the World shows and builds: your world, Earth (the one world nobody built: your root anchor), or another world." value={choice}
+      options={BODY_CHOICES.map(value => ({value, label: BODY_WORDS[value], ...(value === 'other' ? {why: NO_OTHER} : {})}))} onChange={next => chooseBody(next as BodyChoice)} />
+    <PlateReading label="Name" value={choice === 'earth' ? 'Earth' : choice === 'other' ? '—' : name} does={choice === 'earth' ? 'The body\'s name. Earth is given its own.' : 'Your world\'s name: its register\'s.'} />
+    <PlateReading label="Seed" value={record ? String(record.seed) : '—'} does={seedWords} />
+    <Action label="Reroll" does="A new body from the same settings. Every location keeps its name and its position." onPress={() => writeBody('reroll', true)}
+      disabled={choice === 'earth' ? GIVEN : why ?? (state.state !== 'read' ? 'Your world’s body is read from its owner.' : undefined)} />
   </>
 }
 
-// ── the planet builder: Landmass, Climate, Sky (each waiting on Earth, with why) ──
+// ── the planet builder: Landmass, Climate, Sky (your body's settings; each waiting on Earth, with why) ──
+
+/** One setting of your body as a dial over its owner, or waiting with why (Earth's are given). */
+function BodyDial({settingKey, why, earth}: {settingKey: string; why: string | null; earth: string}) {
+  const {choice, record} = useBodyReading()
+  const setting = WORLD_BODY_SETTINGS.find(entry => entry.key === settingKey)!
+  // the plate keeps the mockup's own knob names (world-shell-mockup.html:1385-1397: "Axial tilt")
+  const label = settingKey === 'tilt' ? 'Axial tilt' : setting.title
+  const unit = setting.range.unit ?? (setting.range.max === 1 ? '%' : '')
+  if (choice === 'earth') return <WaitingDial label={label} why={earth} unit={unit} />
+  const value = record ? settingValue(record, settingKey) : null
+  const format = (v: number) => (unit === '%' ? `${Math.round(v * 100)} %` : unit === '°' ? `${Math.round(v)}°` : `${v.toFixed(1)}×`)
+  return <OwnerDial label={label} value={value} def={setting.range.min} scale={{min: setting.range.min, max: setting.range.max}} format={format}
+    why={why ?? (record ? undefined : NO_BODY)} onCommit={why || !record ? undefined : v => writeBody(settingKey, Math.round(v * 100) / 100)} />
+}
+
+/** A setting's value on the owner's record, by the World device's key (body/worldBody.ts WORLD_BODY_SETTINGS). */
+function settingValue(record: NonNullable<ReturnType<typeof useBodyReading>['record']>, key: string): number | null {
+  switch (key) {
+    case 'seaLevel': return record.landmass.sea_level
+    case 'continents': return record.landmass.continents
+    case 'relief': return record.landmass.relief
+    case 'warmth': return record.climate.warmth
+    case 'moisture': return record.climate.moisture
+    case 'iceCaps': return record.climate.ice_caps
+    case 'atmosphere': return record.sky.atmosphere
+    case 'clouds': return record.sky.clouds
+    case 'tilt': return record.sky.axial_tilt_deg
+    default: return null
+  }
+}
 
 function LandmassSection() {
+  const {choice, record, why} = useBodyReading()
   return <>
-    <WaitingDial label="Sea level" why={EARTH_GIVEN} unit="%" />
-    <WaitingDial label="Continents" why={EARTH_GIVEN} />
-    <WaitingDial label="Relief" why={EARTH_GIVEN} unit="%" />
-    <PlateRadio label="Coast" value={null} options={[{value: 'smooth', label: 'smooth'}, {value: 'fjord', label: 'fjord'}, {value: 'archipelago', label: 'archipelago'}]} disabled={EARTH_GIVEN} />
+    <BodyDial settingKey="seaLevel" why={why} earth={EARTH_GIVEN} />
+    <BodyDial settingKey="continents" why={why} earth={EARTH_GIVEN} />
+    <BodyDial settingKey="relief" why={why} earth={EARTH_GIVEN} />
+    <PlateRadio label="Coast" value={record ? record.landmass.coast : null} options={COASTS.map(value => ({value, label: value}))}
+      onChange={record && !why ? next => writeBody('coast', next) : undefined} disabled={choice === 'earth' ? EARTH_GIVEN : why ?? (record ? undefined : NO_BODY)} />
   </>
 }
 
 function ClimateSection() {
+  const {why} = useBodyReading()
   return <>
-    <WaitingDial label="Warmth" why={EARTH_CLIMATE} unit="%" />
-    <WaitingDial label="Moisture" why={EARTH_CLIMATE} unit="%" />
-    <WaitingDial label="Ice caps" why={EARTH_CLIMATE} unit="%" />
+    <BodyDial settingKey="warmth" why={why} earth={EARTH_CLIMATE} />
+    <BodyDial settingKey="moisture" why={why} earth={EARTH_CLIMATE} />
+    <BodyDial settingKey="iceCaps" why={why} earth={EARTH_CLIMATE} />
   </>
 }
 
 function SkySection({handle}: {handle: AtlasHandle | null}) {
   const sun = useAtlasSun()
+  const {why} = useBodyReading()
   const sunWords = !handle || !sun ? 'The Sun is read once the Earth stands.'
     : sun.line ?? (sun.placed ? 'Drawn overhead where the QL owner states it, for the instant the Earth shows.' : 'Not placed.')
   return <>
-    <WaitingDial label="Atmosphere" why={EARTH_SKY} unit="%" />
-    <WaitingDial label="Clouds" why={EARTH_SKY} unit="%" />
-    <WaitingDial label="Axial tilt" why={EARTH_SKY} unit="°" />
+    <BodyDial settingKey="atmosphere" why={why} earth={EARTH_SKY} />
+    <BodyDial settingKey="clouds" why={why} earth={EARTH_SKY} />
+    <BodyDial settingKey="tilt" why={why} earth={EARTH_SKY} />
     <PlateReading label="Sun" light={!handle || !sun ? 'unknown' : sun.placed ? 'lit' : 'dark'} value={!handle || !sun ? '—' : sun.placed ? 'placed' : 'not placed'} does={sunWords} />
   </>
 }
@@ -252,7 +317,8 @@ function OwnersReturned() {
 function LocationsSection({handle}: {handle: AtlasHandle | null}) {
   const standing = useSuiteStanding()
   const tool = useSyncExternalStore(subscribePlaceTool, placeToolState, placeToolState)
-  const [kind, setKind] = useState<'place' | 'palace'>('place')
+  const kind = useSyncExternalStore(subscribePlaceTool, placeKindChoice, placeKindChoice)
+  const system = useSyncExternalStore(subscribeSystem, systemReading, systemReading)
   const [query, setQuery] = useState('')
   const [chosen, setChosen] = useState<string | null>(null)
   const [windowSaid, setWindowSaid] = useState<string | null>(null)
@@ -264,7 +330,7 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
   const counts = precisionCounts(rows)
   // Escape gives the tool back, as the frame map's context menu closed on Escape
   useEffect(() => {
-    if (tool.phase !== 'armed') return
+    if (tool.phase !== 'armed' && tool.phase !== 'landing') return
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') disarmPlaceTool() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -283,10 +349,12 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
     if (handle) turnAtlasTo(handle, standing.places.find(place => place.ref === ref))
   }
   const line = tool.phase === 'armed'
-    ? `Click the Earth to place ${tool.subject.moving ? `${tool.subject.moving.name} anew` : 'a point'} for ${tool.subject.title}. Esc stops.`
-    : tool.phase === 'offered' ? `${draftLine(tool.draft)}. ${tool.notice}` : tool.notice
+    ? `Click the body to place ${tool.subject.moving ? `${tool.subject.moving.name} anew` : 'a point'} for ${tool.subject.title}. Esc stops.`
+    : tool.phase === 'landing' ? `Click your planet where ${tool.target.name} lands. Esc stops.`
+      : tool.phase === 'saving' ? `${tool.target.name}’s landing is with its owner.`
+        : tool.phase === 'offered' ? `${draftLine(tool.draft)}. ${tool.notice}` : tool.notice
   // The tool's state in one word, its whole line the status bar's (manual §16.9).
-  const toolWord = tool.phase === 'armed' ? 'armed' : tool.phase === 'offered' ? 'offered' : tool.tone === 'refused' ? 'refused' : 'placed'
+  const toolWord = tool.phase === 'armed' || tool.phase === 'landing' ? 'armed' : tool.phase === 'saving' ? 'saving' : tool.phase === 'offered' ? 'offered' : tool.tone === 'refused' ? 'refused' : 'placed'
   const placeDoes = (kind === 'palace' ? 'A palace stands where its rooms\' subjects are placed: placing a subject a room holds places that room. ' : '')
     + (subject ? `Place a point for ${subject.title}: the next click on the Earth is offered to its time-and-place editor, never written here.` : 'Choose a subject on the Earth first: a place is declared by a subject.')
   const placeRowsShown: PlateRow[] = [
@@ -298,7 +366,7 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
   return <>
     <PlateRadio inline label="Kind" does="What the locations list: places, declared by their subjects; or palaces, each standing where its rooms' subjects are placed."
       value={kind} options={KINDS.map(entry => ({value: entry.id, label: entry.id, why: entry.why}))}
-      onChange={id => { if (id === 'place' || id === 'palace') setKind(id) }} />
+      onChange={id => { if (id === 'place' || id === 'palace') choosePlaceKind(id) }} />
     <div className="plate-span plate-tool-row">
       <Toggle label="✎ Place" does={subject || tool.phase === 'armed' ? placeDoes : 'Place a point for the subject the Earth has selected.'} on={tool.phase === 'armed'} onChange={press}
         disabled={subject || tool.phase === 'armed' ? undefined : 'Choose a subject on the Earth first: a place is declared by a subject.'} />
@@ -311,6 +379,15 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
           empty={rows.length ? 'No place of your world matches.' : standing.phase === 'reading' ? 'Reading your world…' : 'No owner declares a place yet.'}
           emptyWord={rows.length ? 'no match' : standing.phase === 'reading' ? 'reading' : 'none'}
           onPress={id => { if (id.startsWith('field:')) { const result = field.find(entry => `field:${entry.key}` === id); if (result) handle?.ctl.chooseResult(result) } else turn(id) }} />}
+    {/* [T-WORLDS §5 W3] the worlds of today's set and where each lands on your planet: a press arms the tool to land it, and the next
+        click on your planet is its landing, which that world's own body owner writes (system/SystemReadings.tsx landWorld) */}
+    {system.state === 'read' && system.bodies.some(body => !body.yours) && <PlateRows label="Worlds" size={3}
+      active={tool.phase === 'landing' || tool.phase === 'saving' ? tool.target.key : null}
+      rows={system.bodies.filter(body => !body.yours).map(body => ({id: body.key, name: body.world.name, mark: <Icon name="placed" size={10} />,
+        note: body.landing ? `${body.landing.lat.toFixed(1)}, ${body.landing.lon.toFixed(1)}` : 'land', dim: !body.landing,
+        disabled: body.state === 'reading' || body.state === 'refused',
+        does: `${body.world.name}: ${body.standing}; ${body.landing ? 'lands on your planet here' : body.unlanded ?? ''}. Press, then click your planet, to land it there.`}))}
+      onPress={key => { const body = system.bodies.find(entry => entry.key === key); if (body) armLanding({key: body.key, name: body.world.name}) }} />}
     {chosenRow
       ? <div className="plate-keys places-chosen">
           <PlateLine text={`${chosenRow.provenance}${chosenRow.validity ? ` · valid ${chosenRow.validity}` : ''}${chosenRow.reason ? ` · ${chosenRow.reason}` : ''}${windowSaid ? ` · ${windowSaid}` : ''}`}

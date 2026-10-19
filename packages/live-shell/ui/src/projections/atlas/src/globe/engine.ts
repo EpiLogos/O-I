@@ -11,7 +11,8 @@ import { DEFAULT_RAMP } from '../data/time';
 import { CameraRig } from './controls';
 import { Arcs, Marker } from './arcs';
 import { Aura, AtmosphereShell, Backdrop, Earth, bodyTexture, hiResChoice, loadBaseHi, loadBaseLo } from './earth';
-import { bodyImage, type WorldBodyRecord } from './body';
+import { airOf, bodyImage, bodySunDir, type WorldBodyRecord } from './body';
+import { renderBody } from './bodyRender';
 import { Presences } from './presences';
 import { createShared, type Shared } from './shared';
 import { TileLayer } from './tiles';
@@ -357,7 +358,14 @@ export class GlobeEngine {
   private stepSun(dt: number) {
     const target = this.sky?.sunKnown ? sunWeight(this.stageDist) : 0;
     this.sunShare = this.reduced || Math.abs(target - this.sunShare) < 1e-4 ? target : this.sunShare + (target - this.sunShare) * (1 - Math.exp(-dt * 3.5));
-    if (this.sky?.sunKnown) this.earth.sunDir.value.copy(this.sky.sunDir);
+    if (this.sky?.sunKnown) {
+      this.earth.sunDir.value.copy(this.sky.sunDir);
+      // [T-WORLDS §5 W3] a generated body is lit at its own season: the Sun at the declination its axial tilt gives (body.ts bodySunDir)
+      if (this.bodyRecord) {
+        const lit = bodySunDir(this.sky.sunDir, this.sky.sunLongitude(), this.bodyRecord.sky.axial_tilt_deg);
+        this.earth.sunDir.value.set(lit.x, lit.y, lit.z);
+      }
+    }
     this.earth.sunMix.value = this.sunShare;
   }
 
@@ -545,10 +553,17 @@ export class GlobeEngine {
     if (!this.earth || this.released) return; // drawn when the Earth stands (init)
     if (!record) {
       this.earth.setGenerated(null);
+      this.earth.setSky(null, 0, 1);
+      this.shell.air.value = 1;
+      this.bodyPictureState = 'earth';
       return;
     }
     this.drawBody(record, key);
   }
+
+  /** How far the body's pictures are made: the Earth's own, a coarse base while the sharp one is made, the sharp one with its clouds,
+   * or why the sharp one could not be made (the coarse base then stands). */
+  bodyPictureState: 'earth' | 'coarse' | 'sharp' | { readonly refused: string } = 'earth';
 
   /** The body the globe draws: its record, or null for the Earth. */
   get body(): WorldBodyRecord | null {
@@ -556,15 +571,26 @@ export class GlobeEngine {
   }
 
   private drawBody(record: WorldBodyRecord, key: string) {
-    this.earth.setGenerated(bodyTexture(bodyImage(record, 512), this.renderer));
-    if (!hiResChoice(this.renderer)) return;
-    later(() => {
-      // a later record, a return to the Earth or a release since: this sharp base is not drawn
+    // at once, on the main thread: a coarse base (128 wide, a few milliseconds) and the body's air; its clouds come with the sharp base
+    this.earth.setGenerated(bodyTexture(bodyImage(record, 128), this.renderer));
+    this.earth.setSky(null, 0, airOf(record));
+    this.shell.air.value = airOf(record);
+    this.bodyPictureState = 'coarse';
+    // the sharp base and the cloud layer are made off the main thread (bodyRender.ts: a module worker, else the main thread), then
+    // blended in as the Earth's sharp base is (the Earth's 2k and 4k/8k): 1024 wide where the GPU takes it, 512 on weak hardware
+    const width = hiResChoice(this.renderer) ? 1024 : 512;
+    void renderBody(record, width, 512).then(({ image, clouds }) => {
+      // a later record, a return to the Earth or a release since: these pictures are not drawn
       if (this.released || this.bodyKey !== key) return;
-      const hi = bodyTexture(bodyImage(record, 1024), this.renderer);
+      const hi = bodyTexture(image, this.renderer);
       this.renderer.initTexture(hi);
       this.earth.setGeneratedHi(hi);
-    }, 250);
+      this.earth.setSky(bodyTexture(clouds, this.renderer), record.sky.clouds, airOf(record));
+      this.bodyPictureState = 'sharp';
+    }, (error: unknown) => {
+      if (this.released || this.bodyKey !== key) return;
+      this.bodyPictureState = { refused: error instanceof Error ? error.message : String(error) };
+    });
   }
 
   /** Test/debug hook: current camera state. */

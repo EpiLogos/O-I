@@ -16,12 +16,15 @@ const message=(error:unknown)=>error instanceof Error?error.message:String(error
  * A route is keyed by its subject, expires, and is consumed only after the owner's read of that subject succeeds, so a
  * failed read keeps it for the retry. Never saved. A later open of the same subject replaces it. */
 export const CONSTELLATION_ROUTE_TTL_MS=10*60*1000;
-export interface ConstellationRoute {subject:string;draft?:PlaceDraft;offered_at:number}
+/** A draft from the map, and, for a place on a body other than the Earth (T-WORLDS §5 W3: a location on your own body), the body it
+ * stands on and the name the World suggests from the body's seed (projections/atlas/places/placeTool.ts). Absent: an Earth place. */
+export type MapPlaceDraft=PlaceDraft&{body_ref?:string;name?:string};
+export interface ConstellationRoute {subject:string;draft?:MapPlaceDraft;offered_at:number}
 const constellationRoutes=new Map<string,ConstellationRoute>();
 /** The constellation a time/place editor opened through, so its save answer can return to whoever opened it. */
 export interface PlaceRoute {frame_ref:string;place_ref?:string}
 const isFresh=(route:ConstellationRoute,now:number)=>now-route.offered_at<=CONSTELLATION_ROUTE_TTL_MS;
-export function offerConstellationRoute(frameRef:string,draft?:PlaceDraft,now:number=Date.now()):void{
+export function offerConstellationRoute(frameRef:string,draft?:MapPlaceDraft,now:number=Date.now()):void{
  for(const [subject,route] of constellationRoutes)if(!isFresh(route,now))constellationRoutes.delete(subject);
  constellationRoutes.set(frameRef,{subject:frameRef,draft:draft?structuredClone(draft):undefined,offered_at:now});
 }
@@ -45,21 +48,23 @@ export function consumeConstellationRoute(subject:string):void{constellationRout
 export function dropConstellationRoute(subject:string):void{constellationRoutes.delete(subject);}
 const coordinateLabel=(lat:number,lon:number)=>`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
 /** The place facet's geometry and precision start from the map's draft. The source basis is left empty: it stays required. Pure. */
-export function applyPlaceDraft(values:TimePlaceValues,draft:PlaceDraft):{values:TimePlaceValues;notice:string}{
+export function applyPlaceDraft(values:TimePlaceValues,draft:MapPlaceDraft):{values:TimePlaceValues;notice:string}{
  const places=values.places??[],at=[draft.lon,draft.lat];
  const moved=draft.from?` moved from ${coordinateLabel(draft.from.lat,draft.from.lon)}`:'';
- const notice=`Draft from the map: ${draft.precision} point at ${coordinateLabel(draft.lat,draft.lon)}${moved}. Not saved. Choose and read an evidence source for this place, then Save time and place.`;
+ const notice=`Draft from the map: ${draft.precision} point at ${coordinateLabel(draft.lat,draft.lon)}${draft.body_ref?` on ${draft.body_ref}`:''}${moved}. Not saved. Choose and read an evidence source for this place, then Save time and place.`;
  const index=draft.place_ref?places.findIndex(fact=>fact.place_ref===draft.place_ref):-1;
  if(index>=0){
   const fact=places[index];
   if(fact.geometry?.type==='polygon')return {values,notice:'The saved region keeps its polygon, so the map draft was not applied.'};
   // A moved position is new evidence: its previous basis is not carried over, so the person chooses one again.
+  // The body a place stands on is its own: a move on another body than the place's is not this place's move.
+  if((fact.body_ref??undefined)!==(draft.body_ref??undefined))return {values,notice:'The map draft stands on another body than this place, so it was not applied.'};
   const next=places.map((row,i)=>i===index?{...row,geometry:{type:'point',coordinates:at},precision:draft.precision,source_ref:undefined} as TechnePlaceFacet:row);
   return {values:{...values,places:next},notice};
  }
  // A move names a marker this constellation does not hold: there is nothing to move, so nothing is drafted.
  if(draft.from&&draft.place_ref)return {values,notice:'The moved place is not in this constellation, so the map draft was not applied.'};
- const fact={place_ref:draft.place_ref??newRef('wiki:place'),precision:draft.precision,identity:{names:[{name:''}]},geometry:{type:'point',coordinates:at}} as TechnePlaceFacet;
+ const fact={place_ref:draft.place_ref??newRef('wiki:place'),precision:draft.precision,identity:{names:[{name:draft.name??''}]},geometry:{type:'point',coordinates:at},...(draft.body_ref?{body_ref:draft.body_ref}:{})} as TechnePlaceFacet;
  return {values:{...values,places:[...places,fact]},notice};
 }
 const reportRoute=(route:PlaceRoute|undefined,outcome:{kind:'saved'}|{kind:'refused';reason:string})=>{if(route&&typeof window!=='undefined')window.dispatchEvent(new CustomEvent('oi:constellation-result',{detail:{target:route,...outcome}}));};

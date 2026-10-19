@@ -49,6 +49,9 @@ import {admitFamilyManifest, familyManifest, onFamilyManifestReset} from './fami
 import {atlasFamilyManifest} from '../projections/atlas/atlasFamilyManifest.ts'
 import {FORCE_ROWS, type Forces} from '../projections/atlas/src/graph/forces.ts'
 import {CLOCK_DOMAIN, DEPTH_RANGE, KIND_NAMES, TIE_BASE_IDS} from './atlasFaceActions.ts'
+// [T-WORLDS §5 W3] your world's body on the globe: its choices, its settings and their ranges (the owner's, ai-kit WorldBody::validate).
+import {BODY_CHOICES, WORLD_BODY_SETTINGS, bodyWriter} from '../projections/atlas/body/worldBody.ts'
+import {COASTS} from '../projections/atlas/src/globe/body.ts'
 // [T-KNOWLEDGE-GRAPH-DEVICE] the knowledge graph's own domains (the cradle's vocabularies and clamps, knowledgeGraphFaceActions.ts).
 import {
   DEPTH_RANGE as DEPTH_RANGE_KNOWLEDGE, KNOWLEDGE_CONTEXTS, KNOWLEDGE_DIRECTIONS, KNOWLEDGE_KINDS, KNOWLEDGE_LABELS,
@@ -213,13 +216,35 @@ const P0_ROWS: AdoptedArtifacts[] = [
   }),
   row({
     family: 'atlas-earth', deviceInstance: 'globe-engine', faceId: 'globe-engine', title: 'Globe', icon: 'map',
-    writers: ['shell.setAtlasWholeField'],
-    writerAuthority: P0_AUTHORITY,
+    writers: ['shell.setAtlasWholeField', 'shell.setWorldBodyChoice', bodyWriter('seed'), ...WORLD_BODY_SETTINGS.map(setting => bodyWriter(setting.key)), bodyWriter('coast')],
+    writerAuthority: `${P0_AUTHORITY}; the world body's writers: lane W3 (worlds you build, T-WORLDS §5), dispatched by the DLW lead, 2026-10-18`,
     rows: [
       {
         family: 'atlas-earth', deviceInstance: 'globe-engine', key: 'whole-field', title: 'Whole field', type: 'boolean',
         writePath: 'shell.setAtlasWholeField',
-        disclosure: 'The globe’s one exposed parameter: while a mode’s own set stands aside on the globe, show the whole field instead. With no set aside there is no choice to make, and the writer says so. The base texture is a reading, not a parameter.',
+        disclosure: 'The globe’s choice of the field: while a mode’s own set stands aside on the globe, show the whole field instead. With no set aside there is no choice to make, and the writer says so. The base texture is a reading, not a parameter.',
+      },
+      // Your world's body (T-WORLDS §5 W3; manual §17.2 "Build a planet"): the body the World shows is the view's own choice; every
+      // other row is a setting of the owner's record (`aikit.world-body/v1` on your register's root space), written as one BodySet on
+      // the revision read, through the setters agent/shellSetterBridge.ts registers. Earth's land and another world's are not yours.
+      {
+        family: 'atlas-earth', deviceInstance: 'globe-engine', key: 'body', title: 'Body', type: 'enumerated',
+        values: [...BODY_CHOICES], writePath: 'shell.setWorldBodyChoice',
+        disclosure: 'The body the World shows and builds: your world, the Earth or another world. The view’s own choice: it moves no owner state.',
+      },
+      {
+        family: 'atlas-earth', deviceInstance: 'globe-engine', key: 'seed', title: 'Seed', type: 'number', writePath: bodyWriter('seed'),
+        disclosure: 'The seed your world’s body grows from, a whole number from 0 to 4294967295. The same seed and settings give the same body; a reroll is a new seed from the same settings, and no location moves.',
+      },
+      ...WORLD_BODY_SETTINGS.map(setting => ({
+        family: 'atlas-earth' as const, deviceInstance: 'globe-engine', key: setting.key, title: setting.title, type: 'number' as const,
+        range: setting.range, writePath: bodyWriter(setting.key),
+        disclosure: `${setting.group}: your world’s ${setting.title.toLowerCase()}, ${setting.range.min} to ${setting.range.max}${setting.range.unit ?? ''}, as its owner keeps it. A value outside the range is refused by name, never clamped.`,
+      })),
+      {
+        family: 'atlas-earth', deviceInstance: 'globe-engine', key: 'coast', title: 'Coast', type: 'enumerated',
+        values: [...COASTS], writePath: bodyWriter('coast'),
+        disclosure: 'How the coast of your world runs: smooth, fjord or archipelago.',
       },
     ],
   }),

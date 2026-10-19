@@ -442,8 +442,11 @@ const techne: SurfModeGrammar = {
   // bodies, locations, earth places, palaces, journeys. Sources and Files
   // compose from landed owners. Of the World groups, Locations and Places
   // compose from the suite reading (N3, provider/suiteStanding.ts `places`;
-  // rows in techne/subject/worldRows.ts); Bodies and Journeys draw from their
-  // owners when those carry them and otherwise wait, saying on what; Palaces
+  // rows in techne/subject/worldRows.ts); Bodies from the world body records
+  // (T-WORLDS §5 W3: your planet's and your system's, projections/atlas/body
+  // and system); Journeys draws from its owners when they carry it and
+  // otherwise waits, saying on what; a World group's waiting dot is its own
+  // state (shell/ModeBrowser.tsx WorldGroupDot); Palaces
   // waits for its owner (N4) — each drawn as a designed empty category that
   // names its owner, never another mode's content.
   browser: [
@@ -453,8 +456,8 @@ const techne: SurfModeGrammar = {
     {id: 'techne-files', label: 'Files', group: 'To hand', mark: 'detail', kindMark: 'doc',
       state: 'cut',
       hint: 'Reference files from the ground\'s listing — add a reference to the lens from here.'},
-    {id: 'techne-bodies', label: 'Bodies', group: 'World', mark: 'earth', kindMark: 'world', family: 'quaternal-logic', state: 'waiting',
-      hint: 'The field\'s bodies — your planet and the Worlds around it: the registers the suite reading composes, Central\'s root from Central\'s wiki and each hosted World from the shared field. Its standing publishes their places, not the bodies, so the group waits, naming those inputs.'},
+    {id: 'techne-bodies', label: 'Bodies', group: 'World', mark: 'earth', kindMark: 'world', family: 'quaternal-logic', state: 'cut',
+      hint: 'The bodies of your system — your planet, from its owner\'s record on your register\'s root space, and each world of today\'s set from its own register\'s, or seeded from its ref until you build it. Double-click or Enter on your planet opens the World on it.'},
     {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', kindMark: 'location', family: 'quaternal-logic', state: 'cut',
       hint: 'Locations on your planet — the project spaces the suite reading names (projects are places on Central\'s surface). Select one to hold it as the subject; double-click or Enter opens it in the Scene that carries it.'},
     {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', kindMark: 'place', family: 'quaternal-logic', state: 'cut',

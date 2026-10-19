@@ -164,6 +164,18 @@ interface Unlocated {
  * region are a region, and "unlocated" is unlocated whatever else the facet carries. A polygon is not a point, so the Earth, which
  * draws points, does not draw it; a malformed coordinate is named. No centroid is computed, no coordinate inferred. */
 export function locateFacet(facet: TechnePlaceFacet): Located | Unlocated {
+  // [T-WORLDS §5 W3] a place on another body (the facet names its body_ref; absent is the Earth) is not on the Earth: the Earth draws
+  // its own places only, and the body the place stands on draws it (locateOnBody)
+  if (said(facet.body_ref)) return {located: false, reason: `the owner places it on another body (${facet.body_ref}), not on the Earth`};
+  return locatePoint(facet);
+}
+
+/** Where a place stands on the body it names (its own point, read as the Earth's are), or why it has none; null for an Earth place. */
+export function locateOnBody(facet: TechnePlaceFacet): {body_ref: string; where: Located | Unlocated} | null {
+  return said(facet.body_ref) ? {body_ref: facet.body_ref, where: locatePoint(facet)} : null;
+}
+
+function locatePoint(facet: TechnePlaceFacet): Located | Unlocated {
   if (facet.precision === 'unlocated') return {located: false, reason: 'the owner declares it unlocated'};
   const geometry = facet.geometry;
   if (!geometry) return {located: false, reason: 'the owner declares no geometry'};
@@ -185,9 +197,11 @@ const said = (value: string | null | undefined): value is string => typeof value
 
 /** [T-PLACES-ONTO-ATLAS] The facet's own fields a place row carries, verbatim and only when the owner declares them: its uncertainty
  * words, the evidence it cites (`source_ref`), its validity edges and the places it sits in (`hierarchy`). Nothing is derived. */
-export function facetFieldsOf(facet: TechnePlaceFacet): Pick<SuitePlace, 'uncertainty' | 'evidence' | 'valid_from' | 'valid_to' | 'within'> {
+export function facetFieldsOf(facet: TechnePlaceFacet): Pick<SuitePlace, 'uncertainty' | 'evidence' | 'valid_from' | 'valid_to' | 'within' | 'body_ref' | 'on_body'> {
   const within = (facet.hierarchy ?? []).filter(entry => said(entry.place_ref) && said(entry.relation)).map(entry => ({place_ref: entry.place_ref, relation: entry.relation}));
+  const body = locateOnBody(facet);
   return {
+    ...(body ? {body_ref: body.body_ref, ...(body.where.located ? {on_body: {lat: body.where.lat, lon: body.where.lon}} : {})} : {}),
     ...(said(facet.uncertainty) ? {uncertainty: facet.uncertainty} : {}),
     ...(said(facet.source_ref) ? {evidence: facet.source_ref} : {}),
     ...(said(facet.valid_from) ? {valid_from: facet.valid_from} : {}),
