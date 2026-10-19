@@ -389,7 +389,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Built 18 Oct with kernel tests (agent_prepared session_settings_pass_through) and AIKit unit tests; no executed native walk is recorded here for encounter_session_settings; retain explicit operation-specific coverage debt until a walk names it."
+      "reason": "Built 18 Oct with kernel tests (agent_prepared session_settings_pass_through) and AIKit unit tests. 19 Oct: the settings' own effect (not this kernel op's native candidate walk, still absent) was seen end to end at the AIKit layer against a real CAW-bound task in an isolated AIKit home \u2014 Launch=loop and Quantize=now produced two executor-drafted turns on consecutive TurnEnded events from one human Prompt, and active=false then produced none; required fixing ai-kit#534 (the mint's world_ref), first, since encounter-task-configure refused every task before that. Effort/Autonomy's own effect is still unseen: the installed pi provider exposes neither a reasoning-effort nor a permission-mode selector. No executed native walk through the kernel/candidate shell is recorded here for encounter_session_settings; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
       "op": "encounter_session_settings_list",
@@ -398,7 +398,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Built 18 Oct with a kernel test (the list read, its membership refusal); no executed native walk is recorded here for encounter_session_settings_list; retain explicit operation-specific coverage debt until a walk names it."
+      "reason": "Built 18 Oct with a kernel test (the list read, its membership refusal). 19 Oct: the underlying single-session read was exercised repeatedly while verifying encounter_session_settings's own effect (see that entry); the list form itself and its native candidate walk remain unexercised. No executed native walk is recorded here for encounter_session_settings_list; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
       "op": "encounter_task_attempts_list",
