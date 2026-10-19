@@ -296,7 +296,8 @@ float waterOf(vec3 s) {
   return smoothstep(0.3, 0.56, (s.b - s.r) / (s.b + 0.05));
 }
 
-vec3 shadeEarth(vec3 src, vec3 N, vec3 V, vec2 densUv) {
+// air: how thick the body's own atmosphere shows at the rim, 1.0 for the Earth (a generated body's sky.atmosphere, body.ts airOf)
+vec3 shadeEarth(vec3 src, vec3 N, vec3 V, vec2 densUv, float air) {
   float l = lumaOf(src);
   float water = waterOf(src);
   vec3 L = normalize(uLightDir);
@@ -345,8 +346,8 @@ vec3 shadeEarth(vec3 src, vec3 N, vec3 V, vec2 densUv) {
 
   // inner rim — the planet's own atmosphere seen edge-on
   float fres = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 2.8);
-  col += mix(uGlow, uCore, 0.2) * fres * 0.36;
-  col += mix(uGlow, uCore, 0.5) * pow(fres, 7.0) * 0.24;
+  col += mix(uGlow, uCore, 0.2) * fres * 0.36 * air;
+  col += mix(uGlow, uCore, 0.5) * pow(fres, 7.0) * 0.24 * air;
   return col;
 }
 `;
@@ -367,13 +368,28 @@ export const EARTH_FRAG = /* glsl */ `
 uniform sampler2D uBaseLo;
 uniform sampler2D uBaseHi;
 uniform float uHiMix;
+// [T-WORLDS §5 W3] a generated body's own sky: its cloud layer (a mask in the base's equirect, body.ts cloudImage) and how much of it
+// is drawn (0 for the Earth, whose imagery carries no cloud layer), and the thickness of its air (1.0 for the Earth)
+uniform sampler2D uCloud;
+uniform float uCloudMix;
+uniform float uAir;
 ${EARTH_COMMON}
 varying vec2 vUv;
 varying vec3 vN;
 varying vec3 vView;
 void main() {
   vec3 src = mix(texture2D(uBaseLo, vUv).rgb, texture2D(uBaseHi, vUv).rgb, uHiMix);
-  gl_FragColor = vec4(shadeEarth(src, normalize(vN), normalize(vView), vUv), 1.0);
+  vec3 N = normalize(vN);
+  vec3 col = shadeEarth(src, N, normalize(vView), vUv, uAir);
+  // the clouds stand over the graded land and sea as a layer of their own, never in the base: white there would read as land
+  // (waterOf), and the land the shore and the Place tool read stays the body's own. Lit by the same light as the ground.
+  if (uCloudMix > 0.0) {
+    float cover = texture2D(uCloud, vUv).r * uCloudMix;
+    float lit = mix(0.46, 1.0, smoothstep(0.1, 1.0, 0.5 + 0.5 * dot(N, normalize(uLightDir))));
+    if (uSunMix > 0.0) lit = mix(lit, mix(0.1, 1.0, smoothstep(-0.07, 0.16, dot(N, normalize(uSunDir)))), uSunMix);
+    col = mix(col, mix(uCore, vec3(1.0), 0.55) * lit, cover * 0.82);
+  }
+  gl_FragColor = vec4(col, 1.0);
 }
 `;
 
@@ -408,7 +424,7 @@ void main() {
   // sample texel centres at the tile border so neighbours meet without a seam
   vec2 uv = (vTile * 255.0 + 0.5) / 256.0;
   vec3 src = texture2D(uMap, uv).rgb;
-  gl_FragColor = vec4(shadeEarth(src, normalize(vN), normalize(vView), vDens), uAlpha);
+  gl_FragColor = vec4(shadeEarth(src, normalize(vN), normalize(vView), vDens, 1.0), uAlpha);
 }
 `;
 
@@ -426,6 +442,8 @@ export const SHELL_FRAG = /* glsl */ `
 uniform vec3 uGlow;
 uniform vec3 uCore;
 uniform float uSpec;
+// [T-WORLDS §5 W3] how thick the air shows: 1.0 for the Earth, a generated body's own atmosphere otherwise (body.ts airOf)
+uniform float uAir;
 varying vec3 vWorld;
 void main() {
   vec3 D = normalize(vWorld - cameraPosition);
@@ -437,7 +455,7 @@ void main() {
   float edge = exp(-over * 55.0);
   float cut = 1.0 - smoothstep(1.1, 1.52, b);
   vec3 c = mix(uGlow, uCore, 0.12) * halo * mix(0.4, 0.3, uSpec) + mix(uGlow, uCore, 0.55) * edge * 0.3;
-  gl_FragColor = vec4(c * cut, 1.0);
+  gl_FragColor = vec4(c * cut * uAir, 1.0);
 }
 `;
 

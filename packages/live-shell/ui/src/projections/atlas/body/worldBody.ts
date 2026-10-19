@@ -43,9 +43,6 @@ export const NO_BODY = 'Your world has no body yet. Build one: its owner keeps i
 export const GIVEN = 'Earth is given: you place things on it, and its land stays as it is.'
 export const READ_ONLY = 'Another world’s body is its owner’s: you see what they show.'
 export const NO_OTHER = 'No other world’s body is read in this session; the World shows only the worlds whose owners show their bodies.'
-/** Locations on your own body: the place facet is on the Earth (desktop/cradle/src/techne/contract.ts:254-266 has no body field), and
- * the landings of your other worlds are read with the System scale. */
-export const NO_LOCATIONS = 'No owner keeps locations on your own body yet: a place facet stands on the Earth, and your worlds’ landings are read with the System scale.'
 
 /** One setting of the body: its value key on the World design (inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx:774-789),
  * its words, its group on the Body page and the range its owner keeps (ai-kit knowledge_wiki_facts.rs WorldBody::validate). */
@@ -92,9 +89,13 @@ export function chooseBody(next: BodyChoice): void {
   notify()
 }
 
-/** The record the globe draws now: your own body while it is chosen and reads, else null (the Earth). */
+/** The record the globe draws now: your own body while it is chosen and reads, else null (the Earth). While your register's root space
+ * carries no body yet, the body seeded from its ref (firstBody: the very body its first change builds on) is drawn, and the Body page
+ * says there is none yet (NO_BODY): nothing is written until the person acts (T-WORLDS §5 W3 phase B, "a world with no record yet is
+ * drawn from a body seeded from its ref, and says so"). */
 export function shownBody(): WorldBodyRecord | null {
-  return choice === 'own' && current.state === 'read' ? current.record : null
+  if (choice !== 'own' || current.state !== 'read') return null
+  return current.record ?? firstBody(current.reading.space.ref, current.reading.space.revision)
 }
 
 /** Why a body control cannot write now, or null when it can. */

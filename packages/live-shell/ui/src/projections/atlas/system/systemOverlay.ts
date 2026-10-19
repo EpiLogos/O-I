@@ -1,0 +1,293 @@
+// Your system on the globe's sky (T-WORLDS §5 W3 phase B; manual §17.2 "Your system", the System scale: "Your planet under its star.
+// The agents at work, the open moments of today and your recent scenes circle it. The files and context you hold drift in orbit"). Bound
+// by the atlas's attach (AtlasProjectionPanel.tsx) for as long as the Earth stands, released with it. It draws only in the System scale
+// (the sky drawn, the camera at the system and no lens holding a planet), and only what system/systemStore.ts holds:
+//   - your planet is the body the globe draws while you choose your world (the Earth's own mesh, drawing your world's body; while the
+//     Earth is chosen the planet is the Earth, and your system stands down): its rings ride the sky layer's own disc of it
+//     (sky/layer.ts screenDisc('terra'));
+//   - each other world of today's set stands on the ring of worlds around your planet, at the place its ref keys, as a small disc of its
+//     own body (globe/body.ts bodyDisc: the owner's record, or the body seeded from its ref; hollow while it is not read), in its colour,
+//     its axis leaned by its tilt, its name beneath;
+//   - what each world holds rides its own two rings on PlanetOrbits (sky/orbits.ts), keyed in the orbits' world key space (never a
+//     widened BodyKey): the pages that play and the agents at work inside, the files and context to hand outside, each at the place its
+//     subject keys. A press opens it through the act the readings bound.
+// And at the Body and Region scales, while the globe draws your own body: the locations on it (system/bodyLocations.ts — the places
+// declared on your body and the worlds that land on it), each at its point, or hollow on the nearest shore where its spot is sea
+// (globe/body.ts shoreOf: drawing only, its coordinate never changes), named.
+// Screen-space and DOM, as PlanetOrbits is: it reads the sky layer's drawn disc each frame, so it follows the planet exactly.
+import {PlanetOrbits, type OrbitAt, type Satellite} from '../src/sky/orbits'
+import {bodyDisc, shoreOf, type WorldBodyRecord} from '../src/globe/body'
+import {el} from '../src/ui/dom'
+import {hostSize} from '../src/ui/hostSize'
+import {dirFromLatLon} from '../src/data/geo'
+import type {ScreenPoint} from '../src/globe/engine'
+import type {AtlasHandle} from '../mount'
+import {subscribeWorldBody, worldBodyState} from '../body/worldBody'
+import {subscribeSuiteStanding, suiteStanding} from '../provider/suiteStanding'
+import {systemActs, systemReading, subscribeSystem} from './systemStore'
+import type {SystemBody} from './systemModel'
+import {yourLocations, type BodyLocation} from './bodyLocations'
+import './systemOverlay.css'
+
+/** A location drawn on the body the globe shows: where it is drawn (its own point, or the nearest shore) and whether that is a shore. */
+export interface DrawnLocation {
+  readonly location: BodyLocation
+  readonly lat: number
+  readonly lon: number
+  readonly shore: boolean
+}
+
+/** Where each location of your body is drawn on that body: at its own point where that is land, else on the nearest shore, said so.
+ * The location's coordinate is never changed (shoreOf). Pure. */
+export function drawnLocations(record: WorldBodyRecord, locations: readonly BodyLocation[]): DrawnLocation[] {
+  return locations.map(location => {
+    const at = shoreOf(record, location.lat, location.lon)
+    return {location, lat: at.lat, lon: at.lon, shore: at.shore}
+  })
+}
+
+const SVG = 'http://www.w3.org/2000/svg'
+/** The ring of worlds, as the orbits' own rings are seen: a little from above its plane, turned a little off the horizontal. */
+const TILT = 0.38
+const ROT = (-14 * Math.PI) / 180
+/** Your planet's rings stand at least this far out (px), however small the planet is drawn at the system's distance. */
+const YOUR_RING = 34
+/** The ring of worlds stands outside your outer ring, at least this far (px) from your planet. */
+const WORLDS_RING = 112
+/** A world's disc, and its rings' least radius (px). */
+const DISC = 26
+const WORLD_RING = 21
+
+/** `#rrggbb` as the `r g b` the orbits' stylesheet reads (`--core-rgb`). */
+export function rgbOf(hex: string): string {
+  const n = Number.parseInt(hex.replace('#', ''), 16)
+  return Number.isFinite(n) ? `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}` : '214 214 232'
+}
+
+/** Whether your system stands this frame: the sky drawn and not the Graph, the camera at the system (no lens holding a planet, no gaze
+ * from the ground), a reading of today's worlds, and your own body drawn as the planet (while the globe draws the Earth, the planet in
+ * the sky is the Earth, and your system is not hung on it). Pure. */
+export function systemWanted(view: {readonly sky: boolean; readonly graph: boolean}, phase: string | undefined, read: boolean, yoursShown: boolean): boolean {
+  return read && yoursShown && view.sky && !view.graph && (phase === undefined || phase === 'system')
+}
+
+/** A world's place on the ring of worlds around your planet, px from its centre: its keyed phase on the flattened, turned ring. Pure. */
+export function worldPlace(phase: number, radius: number): {x: number; y: number; behind: boolean} {
+  const ox = Math.cos(phase) * radius, oy = Math.sin(phase) * radius * TILT
+  return {x: ox * Math.cos(ROT) - oy * Math.sin(ROT), y: ox * Math.sin(ROT) + oy * Math.cos(ROT), behind: Math.sin(phase) < 0}
+}
+
+const satellitesOf = (body: SystemBody, open: (body: SystemBody, index: number) => void): Satellite[] =>
+  body.satellites.map((satellite, index) => ({
+    id: satellite.id, name: satellite.name, inner: satellite.ring === 'inner', phase: satellite.phase, title: satellite.hint, kind: satellite.kind,
+    open: () => open(body, index),
+  }))
+
+interface WorldMark {
+  key: string
+  root: HTMLElement
+  canvas: HTMLCanvasElement
+  name: HTMLElement
+  axis: SVGLineElement
+  orbits: PlanetOrbits
+  drawn: string
+}
+
+export interface SystemOverlayBinding {
+  dispose(): void
+}
+
+/** The overlay's DOM, made the first time there is something to draw (a reading of your system, or a location on your body): an atlas
+ * whose system is never read builds none of it. */
+interface OverlayDom {
+  readonly root: HTMLElement
+  readonly svg: SVGSVGElement
+  readonly ring: SVGEllipseElement
+  readonly yourAxis: SVGLineElement
+  readonly yours: PlanetOrbits
+  readonly places: HTMLElement
+}
+
+/** Bind your system to the mounted atlas: the overlay over its canvas, redrawn on each reading and placed on each frame. */
+export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (text: string) => void}): SystemOverlayBinding {
+  const parent = handle.engine.renderer.domElement.parentElement ?? document.body
+  let dom: OverlayDom | null = null
+  const ensureDom = (): OverlayDom => {
+    if (dom) return dom
+    const svg = document.createElementNS(SVG, 'svg')
+    svg.setAttribute('class', 'sys-svg')
+    svg.setAttribute('aria-hidden', 'true')
+    const ring = document.createElementNS(SVG, 'ellipse')
+    ring.setAttribute('class', 'sys-ring')
+    const yourAxis = document.createElementNS(SVG, 'line')
+    yourAxis.setAttribute('class', 'sys-axis')
+    svg.append(ring, yourAxis)
+    const root = el('div', {class: 'sys', hidden: true, role: 'group', 'aria-label': 'Your system: the worlds of today’s set'})
+    root.append(svg)
+    parent.append(root)
+    // the locations on your body (Body and Region scales), in a layer of their own
+    const places = el('div', {class: 'sys-places', hidden: true, role: 'group', 'aria-label': 'Locations on your body'})
+    parent.append(places)
+    dom = {root, svg, ring, yourAxis, yours: new PlanetOrbits(parent, () => {}, {home: false, className: 'po-sys'}), places}
+    return dom
+  }
+  let placeMarks: {drawn: DrawnLocation; node: HTMLElement; dir: [number, number, number]}[] = []
+  let placesKey = ''
+  const syncPlaces = () => {
+    const record = handle.engine.body
+    const standing = suiteStanding(), system = systemReading()
+    const read = record ? yourLocations(worldBodyState(), standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null) : null
+    const rows = read && 'rows' in read ? read.rows : []
+    const key = record && rows.length ? JSON.stringify([record, rows]) : ''
+    if (key === placesKey) return
+    placesKey = key
+    for (const mark of placeMarks) mark.node.remove()
+    placeMarks = []
+    if (!record || !rows.length) return
+    const {places} = ensureDom()
+    placeMarks = drawnLocations(record, rows).map(drawn => {
+      const node = el('div', {class: `sys-place${drawn.shore ? ' is-shore' : ''}`, role: 'img',
+        'aria-label': `${drawn.location.name}${drawn.shore ? ': its spot is sea on this body, so it is drawn on the nearest shore' : ''}`},
+      [el('span', {class: 'sys-place-dot'}), el('span', {class: 'sys-place-name', text: `${drawn.location.name}${drawn.shore ? ' · shore' : ''}`})])
+      places.append(node)
+      return {drawn, node, dir: dirFromLatLon(drawn.lat, drawn.lon) as [number, number, number]}
+    })
+  }
+  const offBody = subscribeWorldBody(syncPlaces)
+  const offStanding = subscribeSuiteStanding(syncPlaces)
+  const screen: ScreenPoint = {x: 0, y: 0, facing: 0}
+  let marks: WorldMark[] = []
+  let bodies: readonly SystemBody[] = []
+  let live = true
+
+  const open = (body: SystemBody, index: number) => {
+    const satellite = body.satellites[index]
+    const acts = systemActs()
+    if (!satellite) return
+    if (!acts) { said?.('Your system’s owners are not bound in this pane, so nothing in orbit opens from here.'); return }
+    void acts.open(satellite, body).catch(error => said?.(error instanceof Error ? error.message : String(error)))
+  }
+
+  const draw = (canvas: HTMLCanvasElement, record: WorldBodyRecord | null) => {
+    const context = canvas.getContext('2d')
+    if (!context) return
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    if (!record) return
+    const image = bodyDisc(record, canvas.width)
+    context.putImageData(new ImageData(image.data as Uint8ClampedArray<ArrayBuffer>, image.width, image.height), 0, 0)
+  }
+
+  const sync = () => {
+    const reading = systemReading()
+    bodies = reading.state === 'read' ? reading.bodies : []
+    if (!bodies.length && !dom) return
+    const {root, svg, yours} = ensureDom()
+    const own = bodies.find(body => body.yours)
+    yours.set(own ? own.key : null, own ? satellitesOf(own, open) : [])
+    if (own) yours.root.style.setProperty('--core-rgb', rgbOf(own.colour.core))
+    const others = bodies.filter(body => !body.yours)
+    for (const mark of marks) if (!others.some(body => body.key === mark.key)) { mark.root.remove(); mark.axis.remove(); mark.orbits.destroy() }
+    marks = others.map(body => {
+      const held = marks.find(mark => mark.key === body.key)
+      const mark = held ?? (() => {
+        const canvas = el('canvas', {class: 'sys-disc', width: String(DISC * 2), height: String(DISC * 2)}) as HTMLCanvasElement
+        const name = el('span', {class: 'sys-name'})
+        const markRoot = el('div', {class: 'sys-world', role: 'img'}, [canvas, name])
+        root.append(markRoot)
+        const axis = document.createElementNS(SVG, 'line')
+        axis.setAttribute('class', 'sys-axis')
+        svg.append(axis)
+        return {key: body.key, root: markRoot, canvas, name, axis, orbits: new PlanetOrbits(parent, () => {}, {home: false, className: 'po-sys'}), drawn: ''}
+      })()
+      const picture = body.record ? JSON.stringify(body.record) : ''
+      if (picture !== mark.drawn) { draw(mark.canvas, body.record); mark.drawn = picture }
+      mark.name.textContent = body.world.name
+      mark.root.dataset.state = body.state
+      mark.root.style.setProperty('--core-rgb', rgbOf(body.colour.core))
+      mark.root.setAttribute('aria-label', `${body.world.name}: ${body.standing}${body.landing ? `; it lands on your planet at ${body.landing.lat.toFixed(1)}, ${body.landing.lon.toFixed(1)}` : body.unlanded ? `; ${body.unlanded}` : ''}`)
+      mark.root.title = mark.root.getAttribute('aria-label') ?? ''
+      mark.orbits.set(body.key, satellitesOf(body, open))
+      mark.orbits.root.style.setProperty('--core-rgb', rgbOf(body.colour.core))
+      return mark
+    })
+  }
+  const offSystem = subscribeSystem(() => { sync(); syncPlaces() })
+  sync()
+  syncPlaces()
+
+  handle.engine.onFrame(dt => {
+    if (!live) return
+    // the locations on your body stand at the Body and Region scales, on the body the globe draws (the Earth draws its own places)
+    syncPlaces()
+    if (!dom) return
+    const {root, ring, yourAxis, yours, places} = dom
+    const onBody = !handle.ctl.state.sky && !handle.ctl.state.graph && !!handle.engine.body && placeMarks.length > 0
+    places.hidden = !onBody
+    if (onBody) {
+      for (const mark of placeMarks) {
+        handle.engine.project(mark.dir, screen, 1.002)
+        const shown = screen.facing > 0.02
+        mark.node.style.visibility = shown ? 'visible' : 'hidden'
+        if (shown) mark.node.style.transform = `translate(${Math.round(screen.x)}px, ${Math.round(screen.y)}px)`
+      }
+    }
+    const layer = handle.engine.sky ?? null
+    const reading = systemReading()
+    const wanted = systemWanted({sky: !!handle.ctl.state.sky, graph: !!handle.ctl.state.graph}, document.body.dataset.skyPhase, reading.state === 'read', !!handle.engine.body) && !!layer
+    const terra = wanted && layer ? layer.screenDisc('terra') : null
+    const here = !!terra && terra.on
+    root.hidden = !here
+    const at: OrbitAt = {disc: here ? terra : null, wanted: here, minRing: YOUR_RING}
+    yours.update(layer, dt, handle.engine.reduced, at)
+    if (!here || !terra) {
+      for (const mark of marks) mark.orbits.update(layer, dt, handle.engine.reduced, {disc: null, wanted: false})
+      return
+    }
+    const {w, h} = hostSize(root)
+    const R = Math.max(terra.held / 2, 2)
+    const radius = Math.max(R * 2.9, WORLDS_RING)
+    ring.setAttribute('cx', terra.x.toFixed(1)); ring.setAttribute('cy', terra.y.toFixed(1))
+    ring.setAttribute('rx', radius.toFixed(1)); ring.setAttribute('ry', (radius * TILT).toFixed(1))
+    ring.setAttribute('transform', `rotate(${(ROT * 180) / Math.PI} ${terra.x.toFixed(1)} ${terra.y.toFixed(1)})`)
+    ring.setAttribute('visibility', marks.length ? 'visible' : 'hidden')
+    // your planet's axis, leaned by its tilt, where your own body is drawn (the Earth draws its own, so none is drawn for it)
+    const shownTilt = handle.engine.body ? handle.engine.body.sky.axial_tilt_deg : null
+    axisAt(yourAxis, terra.x, terra.y, Math.max(R, 8) + 6, shownTilt)
+    for (const mark of marks) {
+      const body = bodies.find(entry => entry.key === mark.key)
+      if (!body) continue
+      const place = worldPlace(body.phase, radius)
+      const x = Math.min(w - DISC, Math.max(DISC, terra.x + place.x)), y = Math.min(h - DISC, Math.max(DISC, terra.y + place.y))
+      mark.root.style.transform = `translate(${Math.round(x - DISC / 2)}px, ${Math.round(y - DISC / 2)}px)`
+      mark.root.style.opacity = place.behind ? '0.8' : '1'
+      mark.root.style.zIndex = place.behind ? '1' : '2'
+      axisAt(mark.axis, x, y, DISC / 2 + 5, body.record ? body.record.sky.axial_tilt_deg : null)
+      mark.orbits.update(layer, dt, handle.engine.reduced, {disc: {x, y, px: DISC, held: DISC, on: true}, wanted: true, minRing: WORLD_RING})
+    }
+  })
+
+  return {
+    dispose() {
+      if (!live) return
+      live = false
+      offSystem()
+      offBody()
+      offStanding()
+      for (const mark of marks) mark.orbits.destroy()
+      if (dom) {
+        dom.places.remove()
+        dom.yours.destroy()
+        dom.root.remove()
+      }
+    },
+  }
+}
+
+/** A body's axis through its disc, leaned by its tilt from the ring's upright (none for a body whose tilt is not read). */
+function axisAt(line: SVGLineElement, x: number, y: number, half: number, tiltDeg: number | null): void {
+  if (tiltDeg === null) { line.setAttribute('visibility', 'hidden'); return }
+  const a = (tiltDeg * Math.PI) / 180 + ROT, dx = Math.sin(a) * half, dy = Math.cos(a) * half
+  line.setAttribute('x1', (x - dx).toFixed(1)); line.setAttribute('y1', (y + dy).toFixed(1))
+  line.setAttribute('x2', (x + dx).toFixed(1)); line.setAttribute('y2', (y - dy).toFixed(1))
+  line.setAttribute('visibility', 'visible')
+}

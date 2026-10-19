@@ -4,9 +4,10 @@
 // owner's armed setters (agent/shellSetterBridge.ts `registerAtlasShellSetters`), which drive the same face actions the face
 // bodies call. A control the owner cannot take now has no write path and says why, in the words the body uses; nothing is a default.
 //
-// The rows are the family's declared rows. They stand here, restated from inhabitants/agentNativeP0.ts:163-252, because the shell
-// never loads that batch (only the tests call `loadAgentNativeP0`) and loading it registers the Factory's transport bindings, which
-// the mode bar reads; tests/techne-devices.test.mjs loads the batch and fails on any drift between the two.
+// The rows are the family's declared rows. They stand here, restated from inhabitants/agentNativeP0.ts (the atlas rows, the globe's
+// with your world's body among them), because the shell never loads that batch (only the tests call `loadAgentNativeP0`) and loading
+// it registers the Factory's transport bindings, which the mode bar reads; tests/techne-devices.test.mjs loads the batch and fails on
+// any drift between the two.
 import type {SdkParamRow} from '../../sdk/define'
 import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
@@ -21,9 +22,13 @@ import {submitThroughOwner, writeThroughOwner} from './ownerWrite'
 import type {DesignBinding, Standing, ValueChange} from '../../../frame/devices/designed'
 import {COASTS} from '../../../projections/atlas/src/globe/body'
 import {
-  BODY_CHOICES, NO_LOCATIONS, NO_OTHER, WORLD_BODY_SETTINGS, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
+  BODY_CHOICES, NO_OTHER, WORLD_BODY_SETTINGS, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
   type BodyChoice, type WorldBodyState,
 } from '../../../projections/atlas/body/worldBody'
+import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
+import {systemReading} from '../../../projections/atlas/system/systemStore'
+import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
+import {PLACE_KINDS, choosePlaceKind, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
 
 export const ATLAS_FAMILY = 'atlas-earth'
 
@@ -35,8 +40,19 @@ const FORCE_WRITERS: Readonly<Record<string, string>> = {
 }
 const FORCE_KEYS = ['centre', 'repel', 'link', 'distance'] as const
 
-/** The atlas family's declared rows, agentNativeP0.ts:163-252 (depth, the four forces, relations, kinds, occurrences, sky anchors,
- * the view, the whole-field choice, and the clock's four rows). */
+/** Your world's body on the globe (T-WORLDS §5 W3; manual §17.2 "Build a planet"): the body chosen (the view's own), its seed, its
+ * settings and its coast. Each names the setter that writes it (agent/shellSetterBridge.ts registerWorldBodyShellSetters), which builds
+ * the whole body from the owner's record and asks the owner for it as one BodySet (projections/atlas/body/worldBody.ts writeWorldBody:
+ * the `aikit.wiki.facts.apply` Action, CAS on the root space's revision). Declared with the family's rows (agentNativeP0.ts, the globe). */
+const BODY_ROWS: readonly SdkParamRow[] = [
+  decl('globe-engine', 'body', 'Body', 'enumerated', {values: [...BODY_CHOICES], writePath: 'shell.setWorldBodyChoice'}),
+  decl('globe-engine', 'seed', 'Seed', 'number', {writePath: bodyWriter('seed')}),
+  ...WORLD_BODY_SETTINGS.map(setting => decl('globe-engine', setting.key, setting.title, 'number', {range: setting.range, writePath: bodyWriter(setting.key)})),
+  decl('globe-engine', 'coast', 'Coast', 'enumerated', {values: [...COASTS], writePath: bodyWriter('coast')}),
+]
+
+/** The atlas family's declared rows, agentNativeP0.ts (depth, the four forces, relations, kinds, occurrences, sky anchors, the view,
+ * the whole-field choice and your world's body, and the clock's four rows). */
 export const ATLAS_DECLARED_ROWS: readonly SdkParamRow[] = [
   decl('graph-tools', 'depth', 'Steps from subject', 'number', {range: {min: DEPTH_RANGE.min, max: DEPTH_RANGE.max, unit: 'steps'}, writePath: 'shell.setAtlasDepth'}),
   ...FORCE_KEYS.map(key => {
@@ -50,6 +66,7 @@ export const ATLAS_DECLARED_ROWS: readonly SdkParamRow[] = [
   decl('graph-tools', 'sky-anchors', 'Sky anchors', 'boolean', {writePath: 'shell.setAtlasSkyAnchors'}),
   decl('mode-switch', 'view', 'View', 'enumerated', {values: ['earth', 'graph'], writePath: 'shell.setAtlasView'}),
   decl('globe-engine', 'whole-field', 'Whole field', 'boolean', {writePath: 'shell.setAtlasWholeField'}),
+  ...BODY_ROWS,
   decl('time-control', 'cursor', 'Deep time', 'number', {range: {min: CLOCK_DOMAIN.min, max: CLOCK_DOMAIN.max}, writePath: 'shell.setAtlasCursor'}),
   decl('time-control', 'all-time', 'All time', 'boolean', {writePath: 'shell.setAtlasAllTime'}),
   decl('time-control', 'play', 'Play', 'boolean', {writePath: 'shell.setAtlasPlay'}),
@@ -67,6 +84,7 @@ const NOT_MOUNTED = 'The Earth has not mounted in this session. Its controls sta
 const NOT_OPENED = 'The constellation has not been opened in this session. Its controls stand when the Graph view is first shown.'
 const NOT_LOCAL = 'Steps count from a subject, so they apply in a local graph.'
 const NO_SCOPE = 'No mode’s set is set aside on the globe, so there is no whole-field choice to make.'
+const EARTH_LOCATIONS = 'Earth’s places stand on the Space page’s Places; these are the locations on your own body.'
 
 /** What the shell reads of the one mounted atlas, taken once so a device and its picture agree. */
 export interface AtlasReading {
@@ -86,12 +104,19 @@ export interface AtlasReading {
   readonly globe: null | {readonly scopeLabel: string | null; readonly wholeField: boolean}
   /** Your world's body as its owner last answered, and the body the view chose (projections/atlas/body/worldBody.ts). */
   readonly body: {readonly state: WorldBodyState; readonly choice: BodyChoice}
+  /** [T-WORLDS §5 W3] the locations on your own body, or why they are not read (system/bodyLocations.ts yourLocations); and the place
+   * kind, the view's own */
+  readonly locations: {readonly rows: readonly BodyLocation[]} | {readonly unread: string}
+  readonly placeKind: PlaceKind
 }
 
 /** Read the mounted atlas (null while none stands) and the view the lens bar presents. */
 export function atlasReading(handle: AtlasHandle | null, view: AtlasView): AtlasReading {
   const body = {state: worldBodyState(), choice: bodyChoice()}
-  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body}
+  const standing = suiteStanding(), system = systemReading()
+  const locations = yourLocations(body.state, standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null)
+  const placeKind = placeKindChoice()
+  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body, locations, placeKind}
   const controls = handle.ctl.graphControls?.controls() ?? null
   const {scope, wholeField} = handle.ctl.globeScope
   return {
@@ -102,24 +127,17 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView): Atlas
     },
     clock: {mode: handle.time.mode, cursorU: handle.time.cursorU, playing: handle.time.playing, cumulative: handle.time.cumulative},
     globe: {scopeLabel: scope ? scope.label : null, wholeField},
-    body,
+    body, locations, placeKind,
   }
 }
 
 // ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
 //
-// The rows follow the declared rows above: each names the setter that writes it (agent/shellSetterBridge.ts
-// registerWorldBodyShellSetters), which builds the whole body from the owner's record and asks the owner for it as one BodySet
-// (projections/atlas/body/worldBody.ts writeWorldBody: the `aikit.wiki.facts.apply` Action, CAS on the root space's revision). The
-// body choice is the view's own (which body the World shows). They are not among the family's declared rows (agentNativeP0.ts):
-// the World's body page is this lane's, and the declared rows stay the family's.
+// The body rows are among the family's declared rows above (BODY_ROWS, declared in agentNativeP0.ts with the globe): the body choice is
+// the view's own (which body the World shows), every other row a setting of the owner's record.
 
-export const WORLD_BODY_ROWS: readonly SdkParamRow[] = [
-  decl('globe-engine', 'body', 'Body', 'enumerated', {values: [...BODY_CHOICES], writePath: 'shell.setWorldBodyChoice'}),
-  decl('globe-engine', 'seed', 'Seed', 'number', {writePath: bodyWriter('seed')}),
-  ...WORLD_BODY_SETTINGS.map(setting => decl('globe-engine', setting.key, setting.title, 'number', {range: setting.range, writePath: bodyWriter(setting.key)})),
-  decl('globe-engine', 'coast', 'Coast', 'enumerated', {values: [...COASTS], writePath: bodyWriter('coast')}),
-]
+/** The globe's body rows, as the family declares them (ATLAS_DECLARED_ROWS). */
+export const WORLD_BODY_ROWS: readonly SdkParamRow[] = BODY_ROWS
 /** The keys of the body itself (every one goes to the owner as part of one BodySet), the act `reroll` among them. */
 export const WORLD_BODY_KEYS: readonly string[] = ['seed', 'reroll', 'coast', ...WORLD_BODY_SETTINGS.map(setting => setting.key)]
 
@@ -163,7 +181,15 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     if (reading.globe.scopeLabel != null) values.wholeField = reading.globe.wholeField
   }
   const refusal = bodyRefusal(reading)
-  const standing: Record<string, Standing> = {locations: {disabled: NO_LOCATIONS}, placeKind: {disabled: NO_LOCATIONS}}
+  const standing: Record<string, Standing> = {}
+  // the locations on your own body: a reading (the places stand on it through their owners' PlaceSet, the landings through each world's
+  // own BodySet); the place kind is the view's own choice of what the next click places
+  values.placeKind = reading.placeKind
+  if (reading.body.choice === 'earth') standing.locations = {disabled: EARTH_LOCATIONS}
+  else if (reading.body.choice === 'other') standing.locations = {disabled: NO_OTHER}
+  else if ('unread' in reading.locations) standing.locations = {disabled: reading.locations.unread}
+  else values.locations = JSON.stringify(reading.locations.rows)
+  if (!reading.mounted) standing.placeKind = {disabled: NOT_MOUNTED}
   if (refusal) for (const key of WORLD_BODY_KEYS) standing[key] = {disabled: refusal}
   if (!reading.mounted) standing.body = {disabled: NOT_MOUNTED}
   if (!reading.mounted) standing.wholeField = {disabled: NOT_MOUNTED}
@@ -182,7 +208,10 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
       // every body change of one gesture is one BodySet: the owner sees the whole body once, at the revision it was read at
       if (Object.keys(body).length) await writeThroughOwner('shell.setWorldBody', body)
     },
-    local: {body: value => { if (value === 'own' || value === 'earth' || value === 'other') chooseBody(value) }},
+    local: {
+      body: value => { if (value === 'own' || value === 'earth' || value === 'other') chooseBody(value) },
+      placeKind: value => { if ((PLACE_KINDS as readonly unknown[]).includes(value)) choosePlaceKind(value as PlaceKind) },
+    },
   }
 }
 
@@ -284,7 +313,7 @@ export function atlasDevice(face: InhabitantFaceDeclaration, reading: AtlasReadi
     throw new Error(`${faceId} is not an atlas face`)
   }
 
-  const writes = {declared: [...ATLAS_DECLARED_ROWS.filter(row => row.deviceInstance === faceId), ...(faceId === 'globe-engine' ? WORLD_BODY_ROWS : [])], sets, decode}
+  const writes = {declared: ATLAS_DECLARED_ROWS.filter(row => row.deviceInstance === faceId), sets, decode}
   return {
     id: techneDeviceId(ATLAS_FAMILY, faceId), family: ATLAS_FAMILY, face: techneFaceDeclaration(face), rows, values, enabledKey,
     ...(heldBy ? {heldBy} : {}),

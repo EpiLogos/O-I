@@ -136,12 +136,16 @@ const SAMPLE = {
   depth: 2, centre: 1.5, repel: 1.1, link: 0.9, distance: 1.4, ties: ['jung'], kinds: ['archetype'], occurrences: false,
   'sky-anchors': true, view: 'graph', 'whole-field': true, cursor: 0.25, 'all-time': true, play: true, cumulative: true,
 }
+/** [T-WORLDS §5 W3] your world's body on the globe, declared with the family's rows: its owner is the world body record, not the atlas
+ * (tests/w3-world-body-device.test.mjs and tests/w3b-your-system.test.mjs carry its writes). */
+const BODY_KEYS = ['body', 'seed', 'seaLevel', 'continents', 'relief', 'warmth', 'moisture', 'iceCaps', 'atmosphere', 'clouds', 'tilt', 'coast']
 
 test('the atlas-earth rows declare the atlas’s own parameters, under the keys the atlas names them by', () => {
   standWorld()
   const expected = [
     ...FORCE_ROWS.map(spec => spec.key),
     'depth', 'ties', 'kinds', 'occurrences', 'sky-anchors', 'view', 'whole-field', 'cursor', 'all-time', 'play', 'cumulative',
+    ...BODY_KEYS,
   ].sort()
   assert.deepEqual(atlasRows().map(row => row.key).sort(), expected)
   assert.equal(atlasRows().some(row => row.key === 'occasion-window'), false, 'the clock takes no occasion window')
@@ -319,7 +323,7 @@ test('an out-of-range or malformed value is refused by name, and the atlas state
 test('with no atlas mounted, every writer that needs the atlas refuses by name; the view stands, as the face body’s does', async () => {
   standWorld()
   publishAtlasHandle(null)
-  const all = atlasRows().filter(row => row.writePath)
+  const all = atlasRows().filter(row => row.writePath && !BODY_KEYS.includes(row.key))
   for (const row of all) assert.ok(row.key in SAMPLE, `${row.key} has a valid sample`)
   try {
     const view = await dispatch.fireWritePath(rowOf('view'), 'graph', CTX)
