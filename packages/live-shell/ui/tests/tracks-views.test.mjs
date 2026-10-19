@@ -37,7 +37,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
 const cssText = await readFile(new URL('../src/frame/tracks/tracks.css', import.meta.url), 'utf8')
 const grid = await import('../src/frame/tracks/SessionGrid.tsx')
-const {ArrangementRuler, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRuler, ArrangementRulerView, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const {SessionGridView, trackTree, stalledLanes, receiptOf, answerOf} = grid
 
 const SELECT = {select() {}}
@@ -253,6 +253,18 @@ test('with a ruler, only a clip that has an `at` has a place on it, and the ones
     clips: [clip('x1', 't', 'x', 'x1', {span: {start: 0, end: 2}}), clip('y1', 't', 'y', 'y1', {span: {start: 0, end: 1}})]}
   assert.deepEqual(placeClips(rows).placed.map(p => [p.clip.id, p.start, p.end]), [['x1', 0, 2], ['y1', 2, 3]])
   assert.doesNotMatch(ruler(rows), /tl-note/)
+})
+
+test('the ruler\'s foot keeps the owner\'s answer and the note in view: one sticky foot under the lanes, the answer above the note', () => {
+  const set = ruled()
+  const view = {window: null, onWindow: noop, snap: 'free', onSnap: noop, marker: null, onMarker: noop, width: 0}
+  const foot = receipt => renderToStaticMarkup(React.createElement(ArrangementRulerView, {set, selection: SELECT, view, receipt, onPress: noop, onDismiss: noop}))
+  const said = foot({key: 'comp:a:t1', what: 'Comp take 2', ok: false, text: 'This Run is associated with no Central Flow.'})
+  assert.match(said, /<div class="tl-foot"><p class="sg-receipt tl-receipt" role="status" data-ok="false"><b>Comp take 2<\/b><span title="This Run is associated with no Central Flow\.">This Run is associated with no Central Flow\.<\/span>.*<\/p><p class="tl-note" role="status">/)
+  assert.match(foot(null), /<div class="tl-foot"><p class="tl-note" role="status">/, 'no answer: the note alone stands in the foot')
+  assert.match(cssText, /\.tl-foot \{[^}]*position: sticky; bottom: 0/, 'the foot stays at the pane\'s foot however many lanes scroll above it')
+  const placedOnly = {...set, clips: set.clips.filter(c => c.at)}
+  assert.doesNotMatch(renderToStaticMarkup(React.createElement(ArrangementRulerView, {set: placedOnly, selection: SELECT, view, receipt: null, onPress: noop, onDismiss: noop})), /tl-foot/, 'nothing to say: no foot')
 })
 
 test('a fixed window ends where the ruler says; a point past it stands at its edge; the now line is where the ruler says now is', () => {

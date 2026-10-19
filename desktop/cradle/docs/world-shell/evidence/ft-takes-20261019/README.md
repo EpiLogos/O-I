@@ -1,4 +1,4 @@
-# FT — Factory attempts as takes, seen over the real kernel and owners (19 Oct 2026)
+# FT — Factory attempts as takes, seen over the real kernel and owners, then in the sealed native candidate (19 Oct 2026)
 
 What was walked, and what it does and does not prove.
 
@@ -38,14 +38,35 @@ over `project:Factory`); then the Run's reading was read and named no Central Fl
   `AIKIT_HOME=<copy>` and `OI_CENTRAL_ROOT=~/Central`. The screenshots are headless Chromium over the same stack from a clean profile.
 - No Central Flow association and no receiving was made: the Run has no Flow, so a choice cannot reach Central.
 
-## What this is not
+## Seen again in the sealed native candidate (r27)
 
-It is not the sealed native candidate. Every full-suite candidate freeze fails today at `freeze-product-bindings.py`
-("QL export source input changed: Quaternal-Logic/fixtures/kernel/m2-retained-c-v1.json"): QL rebuilt that fixture in
-`6501591` (17:13) after the `full-suite-inputs-20261014` export receipt was made, and the default `…20261008` inputs fail
-earlier ("QL export artifact digest/size mismatch"). The software-factory owner is only in the `full-suite` backing, so there
-is no smaller candidate that carries Factory. A native pass is owed after QL's export is refreshed. Candidate runs r26 and r26ft
-died at that step; their logs are in the lead's notes folder (failed-r26-evidence) and the scratch of the FT session.
+The full-suite candidate froze at last (the lead's r27, source `86832d711`, with QL's export refreshed), and the same walk was made
+in it: Factory mode → Session · Arrangement, opened from the Instruments list, with the bundle's own owners (Factory `4e22ffa0`,
+AIKit `5f08539c`) and `AIKIT_HOME` on the same credential-free copy, the fixture Factory state as above.
+
+| Image | What it shows |
+|---|---|
+| `native-1-take-lanes.jpg` | Lanes: Takes 2; take 1 and take 2 under the session's track, each with its returned stretch |
+| `native-2-stretch-selected.jpg` | the stretch dragged across take 2's span, the lane focused, Return pressed |
+| `native-3-owner-refusal.jpg` | the owner's refusal at the foot of the lane list, in red: "Comp take 2 21:56:46 – 21:57:46 · This Run is associated with no Central Flow, so its Return has no…" (the pane cuts it at its width; the span's title holds the whole sentence) |
+
+Afterwards `Control/user/flows` and both wiki files hash the same as before the pass, nothing was received into Central, the candidate
+(its own pid) was quit, its leftover `encounter-serve` (found by its `AIKIT_HOME`) stopped, and the AIKit-home copy deleted.
+
+## What the native pass found
+
+The refusal was invisible at first. The ruler is one scroll container and the answer line sat after the last lane, so with 26 session
+lanes it was at the end of the scroll: a person pressed Return and saw nothing happen. (The stack pass read the line from the DOM, which
+is why `3-owner-refusal.png` shows no line.) The answer and the note under it are now one sticky foot (`tl-foot`, in
+`ArrangementRuler.tsx` and `tracks.css`), and the answer's span carries its whole sentence as a title. `foot-before.png` /
+`foot-after.png` are the same pane of 26 lanes and a receipt, laid out headless by Chromium from the real stylesheet: the answer was at
+849–875px in a pane 350px tall, and is now at 305–331px, above the note. This is not in r27: it is seen headless only, until the next
+native candidate.
+
+## Still owed
+
+A Run associated with a Central Flow (`flowAssociations`), to see a choice reach Central; none exists on this Mac and none was faked in
+the real Central.
 
 ## Found on the way
 
