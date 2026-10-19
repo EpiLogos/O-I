@@ -81,3 +81,37 @@ test('pages are admitted through the one path: their families declared, the fiel
   const refused = pages.admitPages(FIELD, [reading('Control/user/flows/flow-1.html', 'flow', {meta: {}})])
   assert.match(refused.refused[0].reason, /not a Being or a Thing/)
 })
+
+test('the Earth reads every world\'s Beings and Things through the page owner; a world or page that does not answer is named', async () => {
+  const root = {control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}}, work: {projects: [{name: 'O-I', path: 'Work/O-I',
+    projectcentral: {user: {exists: true, path: 'Work/O-I/ProjectCentral/user'}, agent_wiki: {wiki: {space_ref: 'central:wiki:project:O-I'}}}}]}}
+  const answer = outcome => ({json: async () => ({ok: true, outcome})})
+  const listed = {schema: 'oi.page-list/v1', path: 'Control/user/flows', more: false, not_pages: [], pages: [
+    {location: loc('Control/user/flows/beings-1.html'), name: 'beings-1.html', form: 'being', title: 'A', revision: 'r', world: 'central:wiki:root'},
+    {location: loc('Control/user/flows/flow-1.html'), name: 'flow-1.html', form: 'flow', title: 'F', revision: 'r', world: 'central:wiki:root'},
+    {location: loc('Control/user/flows/things-1.html'), name: 'things-1.html', form: 'thing', title: 'T', revision: 'r', world: 'central:wiki:root'}]}
+  const asked = []
+  const real = globalThis.fetch
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    if (body.op === 'world_browse') return answer({result: 'world_read', snapshot: {navigator: {root}}})
+    if (body.op === 'page' && body.request.operation === 'list') {
+      if (body.request.path.startsWith('Work/O-I')) return {json: async () => ({ok: false, error: 'the project ground is not readable'})}
+      return answer({result: 'page_reading', data: listed})
+    }
+    if (body.op === 'page' && body.request.operation === 'read') {
+      asked.push(body.request.location.path)
+      if (body.request.location.path.endsWith('things-1.html')) return {json: async () => ({ok: false, error: 'the page moved'})}
+      return answer({result: 'page_reading', data: HILDEGARD})
+    }
+    return {json: async () => ({ok: false, error: `unexpected ${body.op}`})}
+  }
+  try {
+    const {readings, unread} = await pages.readWorldPagesForEarth({kind: 'bridge', url: 'http://central.fixture'})
+    assert.deepEqual(asked, ['Control/user/flows/beings-1.html', 'Control/user/flows/things-1.html'], 'only Beings and Things are read; a Flow is no occurrence')
+    assert.equal(readings.length, 1)
+    assert.equal(unread.length, 2)
+    assert.match(unread[0], /things-1\.html: .*the page moved/)
+    assert.match(unread[1], /^O-I: .*the project ground is not readable/)
+  } finally { globalThis.fetch = real }
+})
