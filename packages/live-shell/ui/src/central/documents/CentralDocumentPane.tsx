@@ -25,13 +25,17 @@ import {USER_FLOWS_DIR} from '../../../../../../desktop/cradle/src/flow/instance
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DocumentDayDieFace} from '../../inhabitants/DocumentDayDieFace'
 import {FlowFace} from '../../inhabitants/DocumentFlowFace'
+import {PageFace} from '../../inhabitants/DocumentPageFace'
+import {openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
+import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
+import {readPageOwned} from '../../../../../../desktop/cradle/src/personal/pageOwner'
 import type {DayDocumentStanding} from '../centralVertical'
 import {CentralDayNotice} from '../CentralDayNotice'
-import {CENTRAL_DOCUMENT_PANE_KIND, parseDocumentSubject} from './centralDocuments'
+import {CENTRAL_DOCUMENT_PANE_KIND, openCentralDocumentAt, parseDocumentSubject} from './centralDocuments'
 import {readLatestFlow, type FlowReading} from './documentReadings'
 import {useDayAnswer} from '../../owners/day'
 import './centralDocuments.css'
-import {DocumentPaneContext} from './documentDoor'
+import {DocumentPaneContext, documentLayoutWriter} from './documentDoor'
 
 /** A count that advances when the window regains focus or becomes visible: a document that can change outside this shell (a
  * Day initialised elsewhere) is read again then — never polled. */
@@ -116,6 +120,33 @@ export function LatestFlowDocument({transport}: {transport: KernelTransportStatu
   return <LatestFlowView transport={transport} reading={useLatestFlow(transport)} />
 }
 
+/** Open what a page's link names, in the shell: an http(s) address in a web pane; a page of a world by the owner's own listing of its
+ * folder (never a minted ref) and the page owner's reading of its form — a Flow as its Flow, a Being or a Thing as its page. */
+export async function openPageLink(transport: KernelTransportStatus, target: {kind: 'page'; path: string} | {kind: 'web'; url: string}): Promise<void> {
+  const write = documentLayoutWriter()
+  if (!write) throw new Error('No pane tree is mounted to open the link in.')
+  if (target.kind === 'web') {
+    write(layout => openBinding(layout, {id: crypto.randomUUID(), kind: 'browser', title: target.url, browser: {url: target.url}}))
+    return
+  }
+  const cut = target.path.lastIndexOf('/')
+  const folder = await listFiles(transport, target.path.slice(0, cut))
+  const entry = folder.entries.find(item => item.kind === 'file' && item.name === target.path.slice(cut + 1))
+  if (!entry) throw new Error(`The owner lists no ${target.path.slice(cut + 1)} in ${target.path.slice(0, cut)}.`)
+  const page = await readPageOwned(transport, entry.location)
+  write(layout => openCentralDocumentAt(layout, page.form === 'flow' ? {form: 'flow', location: entry.location}
+    : {form: 'page', kind: page.form === 'thing' ? 'thing' : 'being', location: entry.location}))
+}
+
+/** One Being or Thing page, by its owner location; its links open in the shell. */
+export function PageDocument({transport, kind, location}: {transport: KernelTransportStatus; kind: 'being' | 'thing'; location: CentralLocation}) {
+  const [fault, setFault] = useState<string>()
+  return <>
+    <PageFace transport={transport} kind={kind} location={location} openLink={target => { setFault(undefined); void openPageLink(transport, target).catch(error => setFault(String(error instanceof Error ? error.message : error))) }} />
+    {fault && <p className="inhabitant-device-fault" role="alert">{fault}</p>}
+  </>
+}
+
 /** The pane's body for its subject ref. A ref that names no document this pane holds is said, never another document drawn. */
 export function CentralDocumentPane({transport, subjectRef}: {transport: KernelTransportStatus; subjectRef: string | undefined}) {
   const subject = parseDocumentSubject(subjectRef)
@@ -125,6 +156,8 @@ export function CentralDocumentPane({transport, subjectRef}: {transport: KernelT
         ? <Absence form="Document" state="unknown"><p>This pane’s subject, <span className="mono">{subjectRef}</span>, is no Day or Flow. Documents open from the browser’s Days and Files rows: double-click one, or press Enter on it.</p></Absence>
         : subject.form === 'day'
           ? <DayDocument transport={transport} dayRef={subject.dayRef} />
+          : subject.form === 'page'
+            ? <PageDocument transport={transport} kind={subject.kind} location={subject.location} />
           : subject.location
             ? <FlowDocument transport={transport} location={subject.location} />
             : <LatestFlowDocument transport={transport} />}
