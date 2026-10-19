@@ -1890,6 +1890,22 @@ export class Controller {
     this.navigate(next, { replace: !next.sky });
   }
 
+  /** [pages lane] Walk the family of an occurrence from the occurrence's own stop (a page launched as Walk, manual §18.1): the walk the
+   * field draws for the family, paused at the step that reaches it. False when the field draws no walk of the family that reaches it
+   * (a walk needs two placed occurrences; an unplaced one is reached from the step nearest it in time). */
+  walkFrom(occId: string): boolean {
+    const i = this.m.occIndex.get(occId);
+    if (i === undefined) return false;
+    const target: ThreadTarget = { type: 'family', id: this.m.occ[i].familyId };
+    // the step it is, or the step it is listed with (a page with no place is reached from the step nearest it in time)
+    const steps = this.plan(target.type, target.id), at = steps.findIndex((step) => step.occ === i || step.also.includes(i));
+    if (steps.length < 2 || at < 0) return false;
+    this.navigate(startThread(this.state, target));
+    const stop = () => { if (!this.tour || this.tour.target.id !== target.id) return; this.tourPause(); this.tourJump(at); };
+    if (this.tour) stop(); else queueMicrotask(stop);
+    return true;
+  }
+
   /** Open a body from outside the sky (See in sky, a family's reveal): enter Astrology on that body. */
   openBody(key: BodyKey) {
     if (this.graphMode || this.state.history) return;
