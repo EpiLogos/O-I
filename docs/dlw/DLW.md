@@ -2224,6 +2224,55 @@ A line you draw is a proposal. It becomes a relation when the owner of the relat
 
 A line may bind to a side of a card. The line then stays on that side when you move the card. An elbow line reroutes by itself around a moved card.
 
+#### Give the board a form
+
+Some questions have a shape before they have answers. You know there is a
+ground to find, a way it works, a form it takes and a place it stands, before
+you know what fills any of them. Give the board that shape, and what you have
+not found yet shows as a gap you can see.
+
+Open the Form page and choose a form and its centre, the whole the form
+gathers round: a question, a subject, a source. Each form sets roles round it, and
+each role is a position of Quaternal Logic: 1 the material, 2 the process, 3
+the form, 4 the context, 0 the ground it comes from, and 5 the synthesis it
+comes to.
+
+| Form | Roles round the whole |
+|---|---|
+| Pair | Two positions of one family: 0/1, 2/3 or 4/5; 1/2, 3/4 or 5/0; 0/5, 1/4 or 2/3. |
+| Threefold 1–2–3 | Material, process and form. |
+| Threefold 4–5–0 | Context, synthesis and ground. |
+| Fourfold 1–2–3–4 | Material, process, form and context. |
+| Fourfold and its ground | 0 to 4. |
+| Fourfold and its synthesis | 1 to 5. |
+| Sixfold | 0 to 5. |
+| Sixfold and its conjugate | Each of the six twice: direct, and conjugate (′) on the outer ring. |
+
+Put a card on a role: select it, choose an open role and press Place. Or press
+Suggest. The Decision helper (§19.20) reads where the card stands on the board
+and picks the open role it fits, or none. Its pick stands dashed, with its
+confidence, until you accept it; place the card yourself to refuse it. Set
+Layout to Form and the board stands in the form, role 0 at the top and the rest
+clockwise, so the gaps sit where you can see them.
+
+A role is not a relation. Two cards on neighbouring roles are not linked until
+you draw a line and its owner accepts it.
+
+Check runs the form's rules: each role holds one card, a conjugate stands only
+on a filled direct role, and every card is a real thing. Declare writes the
+constellation, its whole, its form and each card on its role, into your wiki
+through its owner, and the Knowledge graph shows it from then on. When the form
+is the sixfold and its conjugate, Fields counts the pairs whose two roles and
+their conjugates are all filled, each a four-by-four field of the whole, and
+once every role is filled, Fold shows the twelve folding into one.
+
+```ui
+device: techne:canvas
+fixture: Three placed, one suggested
+page: form
+caption: Canvas, on its Form page: three domains placed round Quaternal Logic, and the helper's pick for Nara.
+```
+
 #### Move and find
 
 While you drag an item, guide lines show where it aligns with other items, and it settles on them. Grid snap is a separate choice. Fit brings every item, or the selection, into view with a margin. A minimap in the corner shows all items and the view. Click it to jump.
@@ -2243,7 +2292,10 @@ The Canvas imports and exports a file that other note tools open. Presentation i
 |---|---|---|---|
 | Tool | Select · Frame · Relate · Note · Shape · Text | Select | Chooses what a click or a drag makes. |
 | Snap | Off · Grid · Guides | Guides | Sets how a dragged item aligns. |
-| Layout | Free · Radial · Form | Free | Arranges the items by hand, around a centre, or in the form of a whole. |
+| Layout | Free · Radial · Form | Free | Leaves the cards where you put them, stands them evenly round the centre, or stands each on its role in the form. Layout moves no source. |
+| Form | None, or a form of Quaternal Logic | None | The shape of the whole: the roles round its centre. |
+| Centre | A card or sticky note on the board | None | The whole the form gathers round. |
+| Role | An open role of the form | None | The role the next card takes when you press Place. |
 | Line kind | Straight · Curved · Elbow | Straight | Sets the path of the next line. |
 | Relation type | Echo · Influence · Cause · Transform | Echo | Sets the type of the next line. |
 | Standing | Fact · Claim · Inference · Guess | Claim | Sets the standing of the next line. |
@@ -2278,14 +2330,15 @@ The compact Canvas shows a small live map of the Canvas and four macros.
 
 ##### Whole
 
-The whole Canvas shows every parameter, in five groups.
+The whole Canvas shows every parameter, in six groups.
 
 | Group | Parameters |
 |---|---|
 | Tools | Tool, Snap, Shape, Sticky colour |
 | Lines | Line kind, Line label |
 | Relation | Relation type, Standing |
-| Look | Layout, Minimap |
+| Look | Minimap |
+| Form | On its own page: Form, Centre and Layout; Role, Place, Suggest and Accept; Check, Fold and Declare |
 | Views | View, Autosave |
 
 ##### Full
@@ -2322,6 +2375,11 @@ The widget shows the map of the Canvas you hold and the count of proposals that 
 6. To make the line a relation, choose Promote. The owner of the relation decides.
 7. To see an item in the wiki, choose Show in graph. The Knowledge graph opens on the same subject, and Back returns you here.
 8. To save the arrangement, save a view and give it a name.
+9. To give the board a form, open the Form page. Choose a form and its centre,
+   and set Layout to Form.
+10. Select a card, choose an open role and press Place. Or press Suggest, and
+    accept the helper's pick if it fits.
+11. Press Check. When the form passes, press Declare to keep it in your wiki.
 
 #### Rules
 - Every card is a real thing. Double-click it and it opens at its own revision. Remove a card and the thing stays.
@@ -2330,6 +2388,8 @@ The widget shows the map of the Canvas you hold and the count of proposals that 
 - A note on the Canvas is presentation. It is not a source.
 - A saved view keeps the references of its items, not copies. When an item leaves, the view says so.
 - Moving two items close together does not state a relation.
+- A role is presentation until you declare the form. Declaring writes the constellation through its owner and states no relation.
+- The helper's pick waits for you. It never places a card.
 
 #### Tips
 - To start from a question, drop the question as a sticky note in the middle and drag related sources around it.
@@ -2337,6 +2397,7 @@ The widget shows the map of the Canvas you hold and the count of proposals that 
 - To walk a colleague through an argument, put one idea in each frame and choose Present.
 - To share a map with someone who uses another tool, export the file.
 - To find a card in a large map, use Find, then Fit.
+- To see what a question still lacks, give it a form. The open roles are what you have not found yet.
 
 ### 17.5 Timeline
 
@@ -4367,7 +4428,8 @@ which of a closed set applies. The helpers are decision agents, and their
 faces are animals. Any member may call any helper, and the team decides which
 helpers run. A helper's answer is evidence: the engine checks it, and it
 never stands in for something the agent saw. The collaboration gate is yours.
-No member and no helper answers it.
+No member and no helper answers it. A helper stands on the team's chain as the
+Decision helper (§19.20).
 
 #### The thread
 
@@ -5848,6 +5910,112 @@ The widget shows the peers and the link state.
 #### Tips
 - To follow a run on a far machine, turn Link on and select its session.
 - To keep a machine private for a while, remove it from Machines.
+
+### 19.20 Decision helper
+
+**Product:** AIKit, with Quaternal Logic · **Kind:** effect · **Chain:** a team's chain in Factory, after its members; one helper answers every member
+
+You need small choices settled without spending an agent's turn or your
+attention on them: which of four gate readings fits, which thought a passage
+answers, whether a search came back grounded. The Decision helper answers such
+questions and nothing else. It is a small model on your machine. A member
+asks, the helper picks among the labels the owner allows or picks none, and
+the engine checks the pick before anything uses it.
+
+#### What it is asked
+
+A question comes only when the rules leave a choice open. What the rules
+settle never reaches the helper, and an act the rules settle whole asks it
+nothing. Each question names its field, the labels its owner allows, how many
+the answer may hold, and what to do when no label stands out: keep the
+candidates, abstain, or give one only if it is supported.
+
+The team space (§19.4) gives each team its questions:
+
+| Instrument | Asked by | Labels |
+|---|---|---|
+| Vāk block | Anima, at CF5 | The seven heads of an act's path: CPF, CT, CP, CF, CFP, CS and direction |
+| Gate reading, 1 to 5 | Aletheia, at the gate's row | aligned, annotated, hold, redirect |
+| Thought reading | Aletheia | T0 to T5, and T0′ to T5′ |
+| Gnosis retrieval | Aletheia | grounded, partial, empty |
+| Stack traverse | Aletheia, for each layer | healthy, drift, gap, unverified |
+| Plugin integration | Aletheia | redundant, complementary or conflicting; adopt, reference only or decline |
+| Improvement proposal | Aletheia | implementation, addendum, owner-issue, no-change |
+| Klein telemetry | Anima, for each skill | effective, suboptimal, ineffective |
+
+Gate 6, the collaboration gate, is yours. The helper never answers it.
+
+#### The spread
+
+The helper says how strongly it holds each label, and what it picks. The
+device draws this as the spread: a bar for each label, as tall as the helper's
+confidence, with the pick lit. A flat spread means nothing stood out. The
+helper then abstains, and the abstention is kept as an answer. The engine
+reads the pick against its rules and validates it or refuses it, with its
+reason. A pick is evidence for the act. It is never a receipt, and it never
+overrides what an agent saw.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Provider | None · This machine · Your endpoint · Hosted | This machine | Who answers. On this machine nothing the helper reads leaves it. None sends every open question back to the member who asked. |
+| When | Background · Before the act | Background | Background: the act goes on, and the answer joins it if it comes in time. Before the act: the act waits for it. |
+| Deadline | 1–120 s | 10 s | How long an answer may take. A later one is dropped, and the question stays open. |
+| Instruments | On · Off, for each | On | Which of the team's questions the helper may answer. Its light shows whether the team has measured it and admits it. |
+| Model | Reading | Read from AIKit | The model that answers, where it runs, and whether it is loaded. |
+| Counts | Reading | Read from the team | Acts settled by rule, questions asked, abstentions, and picks the engine refused. |
+
+#### Views
+
+```ui
+device: ai-kit:decision-helper
+caption: Decision helper, on a fixture of readings.
+```
+
+| View | Holds |
+|---|---|
+| Folded | The helper's name and light, the questions asked today and the last pick. |
+| Compact | The spread of the last question. Macros: When, Deadline, Provider, Probe. |
+| Whole | Pages Ask, Instruments and Provider. Ask: the spread; the question, who asked it, its row and field, how many labels it may hold and what to do if none stands out; the pick, its status, its clarity and its time; the engine's verdict and the counts. Instruments: the team's questions with your request and the team's admission, and the labels of the one you select. Provider: Provider, the model and where it runs, When, Deadline and Probe. |
+| Full | The open question and its spread, and today's questions in order: who asked, which instrument, the pick and what the engine did. |
+| Widget | The last spread, the counts, and the last pick. |
+
+#### Transport
+
+| Control | Effect on the Decision helper |
+|---|---|
+| Tap | Probes the helper with one small question and reports how long it took. |
+| Key | Counts tokens in and out. |
+
+#### To use the Decision helper
+
+1. Drag the Decision helper from the browser onto a team's chain, after its
+   members.
+2. Open Device view and choose the Provider. Press Probe to see that it
+   answers.
+3. On the Instruments page, turn off any question you do not want it to
+   answer.
+4. Leave When on Background, so that no act waits for it.
+5. Open it in a pane to read what it picked today and what the engine did.
+
+#### Rules
+
+- An act the rules settle whole asks the helper nothing.
+- The helper picks only among the labels the owner allows, or picks none.
+- A pick is evidence. The engine checks it, and it never stands in for
+  something an agent saw.
+- An abstention is an answer, and it is kept.
+- The helper is never one of the agents acting, nor a member of the team.
+- The collaboration gate is yours. A helper's answer to it is refused, even an
+  abstention.
+- A model on your machine has no price, and the device shows none.
+
+#### Tips
+
+- When the spread stays flat question after question, the labels may be too
+  alike for a small model. Look at the question before you blame the helper.
+- To watch it work, keep its widget on the rail.
 
 ## 20. Expressions
 
@@ -9499,3 +9667,229 @@ What a practice teaches you can return to the Day's face 5, and from there, once
 | Lenses; journal and dreams as lived history | M4.4 Context and lenses: Gebser (M4.4.0) to Trika (M4.4.5); temporal sedimentation (M4.4.4.2), symbolic body (M4.4.4.3) |
 | You, where all of it meets | M4.4.4.4 Personal Pratibimba |
 | Returns | M4.5 Epii integration |
+
+## 25. The agent world
+
+You need the agents you work with to be the same agents in every mode, doing
+the same work the same way, so that what you learn about one in Central still
+holds when you meet it in Technē. The agent world is that one way of working,
+and Ta-Onta is its interface: one set of operations, reached by the same names
+whether an agent calls them, you press them, or a program sends them.
+
+### 25.1 Two faces of one field
+
+Everything in the DLW stands in one field of six positions, and the field has
+two faces. Each face holds three of the six.
+
+<figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
+<svg viewBox="0 0 960 300" role="img" aria-label="Two faces of one field. M1-2-3′ sounds and keeps time: M1′ generates, M2′ shapes, M3′ forms; Live plays M1′ and M2′, Expressions holds all three. M4/5/0′ knows and acts: M4′ reads the situation, M5′ synthesises, M0′ is the ground; what you accept returns to the ground" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
+<defs><marker id="dlw-arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--dim)"/></marker><marker id="dlw-arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
+<text x="24" y="30" style="fill:var(--ink);font-size:17px;font-weight:600">M1-2-3′</text>
+<text x="104" y="30" style="fill:var(--dim);font-size:12.5px">sounds and keeps time</text>
+<rect x="24" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="36" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M1′ generates</text>
+<text x="36" y="92" style="fill:var(--dim);font-size:11px">the torus and its</text>
+<text x="36" y="107" style="fill:var(--dim);font-size:11px">two pulses: the only</text>
+<text x="36" y="122" style="fill:var(--dim);font-size:11px">source of sound</text>
+<rect x="172" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="184" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M2′ shapes</text>
+<text x="184" y="92" style="fill:var(--dim);font-size:11px">the synth, moved by</text>
+<text x="184" y="107" style="fill:var(--dim);font-size:11px">the sky and tuned</text>
+<text x="184" y="122" style="fill:var(--dim);font-size:11px">by the lenses</text>
+<rect x="320" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="332" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M3′ forms</text>
+<text x="332" y="92" style="fill:var(--dim);font-size:11px">the codons, the</text>
+<text x="332" y="107" style="fill:var(--dim);font-size:11px">clock and the deck:</text>
+<text x="332" y="122" style="fill:var(--dim);font-size:11px">the form it rings in</text>
+<line x1="160" y1="95" x2="171" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
+<line x1="308" y1="95" x2="319" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
+<path d="M24 160 V168 H308 V160" style="fill:none;stroke:var(--accent);stroke-width:1.4"/>
+<text x="166" y="186" text-anchor="middle" style="fill:var(--ink);font-size:12px">Live plays M1′ and M2′ as one instrument</text>
+<path d="M24 204 V212 H456 V204" style="fill:none;stroke:var(--line-strong);stroke-width:1.4"/>
+<text x="240" y="230" text-anchor="middle" style="fill:var(--ink);font-size:12px">Expressions holds all three in a scene</text>
+<line x1="480" y1="16" x2="480" y2="250" style="stroke:var(--line);stroke-width:1"/>
+<text x="504" y="30" style="fill:var(--ink);font-size:17px;font-weight:600">M4/5/0′</text>
+<text x="584" y="30" style="fill:var(--dim);font-size:12.5px">knows and acts</text>
+<rect x="504" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="516" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ situation</text>
+<text x="516" y="92" style="fill:var(--dim);font-size:11px">Kev, on this machine:</text>
+<text x="516" y="107" style="fill:var(--dim);font-size:11px">picks among labels</text>
+<text x="516" y="122" style="fill:var(--dim);font-size:11px">the owner allows</text>
+<rect x="652" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="664" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ synthesis</text>
+<text x="664" y="92" style="fill:var(--dim);font-size:11px">the language model:</text>
+<text x="664" y="107" style="fill:var(--dim);font-size:11px">reads, writes and</text>
+<text x="664" y="122" style="fill:var(--dim);font-size:11px">proposes</text>
+<rect x="800" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
+<text x="812" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ ground</text>
+<text x="812" y="92" style="fill:var(--dim);font-size:11px">the graph: settles</text>
+<text x="812" y="107" style="fill:var(--dim);font-size:11px">by rule, checks, and</text>
+<text x="812" y="122" style="fill:var(--dim);font-size:11px">names the gaps</text>
+<line x1="640" y1="95" x2="651" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
+<line x1="788" y1="95" x2="799" y2="95" style="stroke:var(--accent);stroke-width:1.3" marker-end="url(#dlw-arrow-b)"/>
+<path d="M868 140 V164 H572 V144" style="fill:none;stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
+<text x="720" y="182" text-anchor="middle" style="fill:var(--ink);font-size:12px">5/0: what you accept becomes ground,</text>
+<text x="720" y="198" text-anchor="middle" style="fill:var(--ink);font-size:12px">and the next act starts from it</text>
+<text x="720" y="230" text-anchor="middle" style="fill:var(--dim);font-size:12px">Ta-Onta reaches all three, in every mode</text>
+<text x="480" y="282" text-anchor="middle" style="fill:var(--dim);font-size:12px">One field: turning from one face to the other keeps the coordinate, the moment and the reading.</text>
+</svg>
+<figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">The two faces. The first sounds and keeps time; the second knows and acts, and its synthesis returns as ground.</figcaption>
+</figure>
+
+**M1-2-3′** sounds and keeps time. M1′ generates: the torus and its two
+pulses are the only source of sound in the DLW (§21.2). M2′ shapes what M1′
+makes. It is the synth, moved by the planets of the live sky and tuned and
+filtered by the lenses, and it makes no sound of its own (§22.1, §22.2). Live
+plays M1′ and M2′ together as one instrument (§9). M3′ closes the pattern into
+form: the 64 codons, the clock of 360 degrees and its 24 fixed points, and the
+deck (§22.3, §22.4). Expressions holds all three in a scene, the torus at the
+centre, the shaped field round it, and the symbols that give it form (§7).
+
+**M4/5/0′** knows and acts, and an agent works in it. Each of its three
+positions has its own kind of mind.
+
+- **M4′ reads the situation.** Position 4 is context: the why and the where of
+  an act. Its frame holds a whole world inside it, your own (§24.9). On the
+  agent side, M4′ is Kev, a small decision model that runs on your machine. It
+  reads the situation an act stands in, not the item in front of it, and it
+  answers only typed questions over labels an owner allows (§19.20). What it
+  reads never leaves the machine.
+- **M5′ synthesises.** Position 5 is where things come together and go back.
+  On the agent side, M5′ is the language model each agent works with (§19.4).
+  It reads, writes, quotes, explains and argues. What it writes is a proposal
+  until it is reviewed.
+- **M0′ is the ground.** Position 0 is where everything comes from: the Bimba
+  map, your wikis and sources, and the rules of Quaternal Logic. On the agent
+  side, M0′ is the graph knowledge system. It settles by rule what can be
+  settled, checks every answer against the map, and where the map has a gap
+  it names the gap as a question instead of filling it.
+
+The two ends of M4/5/0′ meet. What M5′ writes and you accept goes back into
+M0′ as ground, and the next act starts from it. This is the 5/0 of the field:
+a synthesis settles into the ground of what comes next.
+
+The two faces are one field seen from opposite sides. Turning from one to the
+other keeps the coordinate you stand on, the moment and the reading. It
+changes only which face is in front of you, and never what a thing is, where
+it came from or who owns it.
+
+### 25.2 One act, in order
+
+Every act an agent takes passes through M4/5/0′ in the same order.
+
+<figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
+<svg viewBox="0 0 960 200" role="img" aria-label="One act in order: M0′ settles what the rules can; M4′ picks where a choice is open; M5′ writes where reading or writing is needed; M0′ checks; you decide; the owner keeps it and it becomes ground. When nothing is open, no model is asked" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
+<defs><marker id="dlw-arrow-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--dim)"/></marker><marker id="dlw-arrow-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
+<path d="M90 50 C90 22, 558 22, 558 48" style="fill:none;stroke:var(--accent);stroke-width:1.3;stroke-dasharray:5 4" marker-end="url(#dlw-arrow-d)"/>
+<text x="324" y="20" text-anchor="middle" style="fill:var(--ink);font-size:12px">when nothing is open, no model is asked</text>
+<rect x="20" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
+<text x="32" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ settles</text>
+<text x="32" y="92" style="fill:var(--dim);font-size:11px">what the rules can:</text>
+<text x="32" y="107" style="fill:var(--dim);font-size:11px">what was seen, and</text>
+<text x="32" y="122" style="fill:var(--dim);font-size:11px">what follows from it</text>
+<rect x="176" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="188" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ picks</text>
+<text x="188" y="92" style="fill:var(--dim);font-size:11px">where a choice is</text>
+<text x="188" y="107" style="fill:var(--dim);font-size:11px">open, or abstains</text>
+<rect x="332" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="344" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ writes</text>
+<text x="344" y="92" style="fill:var(--dim);font-size:11px">where reading or</text>
+<text x="344" y="107" style="fill:var(--dim);font-size:11px">writing is needed</text>
+<rect x="488" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
+<text x="500" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ checks</text>
+<text x="500" y="92" style="fill:var(--dim);font-size:11px">each pick and claim</text>
+<text x="500" y="107" style="fill:var(--dim);font-size:11px">against the rules, and</text>
+<text x="500" y="122" style="fill:var(--dim);font-size:11px">says why it refuses</text>
+<rect x="644" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="656" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">You decide</text>
+<text x="656" y="92" style="fill:var(--dim);font-size:11px">accept, change</text>
+<text x="656" y="107" style="fill:var(--dim);font-size:11px">or refuse</text>
+<rect x="800" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="812" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">It is kept</text>
+<text x="812" y="92" style="fill:var(--dim);font-size:11px">the owner saves it,</text>
+<text x="812" y="107" style="fill:var(--dim);font-size:11px">reads it back and</text>
+<text x="812" y="122" style="fill:var(--dim);font-size:11px">makes it findable</text>
+<line x1="160" y1="95" x2="175" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<line x1="316" y1="95" x2="331" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<line x1="472" y1="95" x2="487" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<line x1="628" y1="95" x2="643" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<line x1="784" y1="95" x2="799" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<path d="M870 140 V164 H90 V144" style="fill:none;stroke:var(--accent);stroke-width:1.3" marker-end="url(#dlw-arrow-d)"/>
+<text x="480" y="186" text-anchor="middle" style="fill:var(--ink);font-size:12px">5/0: what is kept is ground for the next act</text>
+</svg>
+<figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">One act, in order. The ground goes first and last; a model is asked only where the rules leave something open.</figcaption>
+</figure>
+
+The ground goes first. M0′ sets out what was seen and what follows from it by
+rule, and what is still open. If nothing is open, no model is asked. A choice
+among labels an owner allows goes to M4′, which picks one or abstains, in the
+background unless the act must wait. Reading and writing go to M5′. M0′ then
+checks every pick and every claim against its rules and names its reason when
+it refuses one. You accept, change or refuse what is left. The product that
+owns the thing saves it, reads it back and makes it findable, and from then on
+it is ground for the next act.
+
+| Position | What works there | What it does | What it never does |
+|---|---|---|---|
+| M0′ ground | The graph knowledge system: the Bimba map, your wikis and sources, the rules of Quaternal Logic | Settles by rule, checks every answer, names each gap as a question, keeps what you accept | Guess, or fill a gap with a likely answer |
+| M4′ situation | Kev, the Decision helper (§19.20), on your machine | Picks among the labels an owner allows, in the situation of the act, or abstains | Act, write, answer the collaboration gate, or send what it reads off the machine |
+| M5′ synthesis | The agent's language model (§19.4) | Reads, writes, quotes, explains and proposes | Make its own proposal true |
+
+Each result keeps the mark of how it was reached: seen in a source, settled by
+rule, picked by the helper, written by an agent, accepted by you. A later step
+adds its own mark and never wipes out an earlier one.
+
+### 25.3 Six powers
+
+Ta-Onta gives an agent six powers. Each reaches through to the product that
+owns its work, so the agent never keeps a second copy of anything.
+
+| Power | Organ | What it does | Its owners |
+|---|---|---|---|
+| Enter | Khora, S0′ | Enters a world and picks up where it left off: the project, the subject, the sources, the session and the machine. | Central, AIKit, Actuation, Workcell |
+| Form | Hen, S1′ | Keeps each thing in its form: sources, wiki pages, constellations, typed relations and templates. | Central, AIKit, Quaternal Logic |
+| Find | Pleroma, S2′ | Finds what can be used: knowledge, models, skills, methods, tools and instruments. | AIKit, and every product's actions |
+| Time | Chronos, S3′ | Holds the times of the act together: the day, the session, the sky, the clock and the run. | Central, Quaternal Logic, Factory |
+| Compose | Anima, S4′ | Composes the act: who takes part, what each does, in what order, toward what return. | Quaternal Logic, Factory, Actuation |
+| Return | Aletheia, S5′ | Says what happened, sets it against what was meant, and brings back what was learned. | Central, AIKit, Factory |
+
+A power is the same power in every mode. What it meets changes.
+
+| Power | Central | Factory | Technē | Expressions | Live |
+|---|---|---|---|---|---|
+| Enter | Opens the Day and the world you work in | Seats the agent on its session | Opens the subject and its readings | Opens the Expression at its scene | Opens the set |
+| Form | Keeps each page to its template | Keeps each task with its receipts | Gives a board its form (§17.4) | Ties each figure to what it shows | Ties each clip to its source |
+| Find | Searches with @ | Racks skills and routes knowledge | Reads the wiki and the graph | Finds premade scenes and material first | Finds devices, sounds and grooves |
+| Time | Keeps the day and its close | Keeps the run and its needle | Keeps the ruler, from deep time to now | Steps the scene | Keeps the tempo and the clock |
+| Compose | Answers into the page | Plans and runs the task | Lays out walks and palaces | Composes the scene | Writes clips and automation |
+| Return | Files what the day taught | Lands the work with its checks | Saves what was built and reads it back | Saves what it made as material to reuse | Keeps the take |
+
+The teams in §19.4 carry these powers: Anima composes the act, and Aletheia
+returns it. Each member stands at a depth, one of the six M domains, and the
+Decision helper answers any of them.
+
+### 25.4 Carried practice
+
+The six powers come to an agent as practice it carries (§19.7), in the same
+four forms as every other practice.
+
+| Form | In the agent world |
+|---|---|
+| Methodology | The agent world: how to find your bearings in it, which power applies when, and where each return goes. It is loaded before work in any mode. |
+| Method | One for each power, from claim to return: Enter, Form, Find, Time, Compose and Return. |
+| Skill | The steps the Methods call: the coordinate frame of an act, retrieval, giving a board its form, keeping an act's continuity, composing a scene, the gates, and returning an act. |
+| Skillset | Ta-Onta. It holds the Methodology, and one set for each power with its Method and skills. |
+
+A person, an agent and a program reach each operation by the same name,
+through the product that owns it. An operation that does not exist yet says
+so, and nothing stands in for it.
+
+### 25.5 Agents and M1-2-3′
+
+Agents reach the other face through the modes that play it, with the same six
+powers. In Live an agent writes clips and automation for the torus and the
+synth that shapes it, M1′ and M2′ together, and keeps the take you choose. In
+Expressions it composes a scene over all three: it finds premade characters,
+scenes and material before it makes anything new, steps the scene in time, and
+saves what it made as material others can reuse, tied to its sources. What M0′
+knows and M5′ writes can then be seen and heard, not only read.

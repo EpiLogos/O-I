@@ -1,14 +1,23 @@
 // Renders a page of the manual (DLW.md by default, or the name of another page beside it) into the
 // standalone HTML beside it. The Markdown is the source; run this from the repo root after editing it (needs `npm ci` in
-// site/ for the marked parser).
+// site/ for the marked parser, and in packages/live-shell/ui for the device gallery).
+//
+// The page carries the device gallery inside it (gallery.mjs), so it draws every device opened straight from disk, with
+// no server running. DLW_GALLERY=<url> points the embeds at a running gallery instead (the catalogue's Vite server,
+// http://127.0.0.1:5208/), for working on a device and seeing each change at once.
 import {readFileSync, writeFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
+import {gzipSync} from 'node:zlib'
 import {Marked} from '../../site/node_modules/marked/lib/marked.esm.js'
+import {buildGallery, TEMPLATES} from './gallery.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
-// The device gallery (packages/live-shell/ui/src/inhabitants/catalogue, on the build branch). Override with DLW_GALLERY.
-const GALLERY = process.env.DLW_GALLERY || 'http://127.0.0.1:5208/'
+const repo = process.env.DLW_REPO || join(here, '..', '..')
+// The device gallery (packages/live-shell/ui/src/inhabitants/catalogue): carried in the page unless DLW_GALLERY names a server.
+const GALLERY = process.env.DLW_GALLERY || null
+const carried = GALLERY ? null : await buildGallery(repo)
+const DOCUMENTS = '../../desktop/cradle/documents/'
 const name = process.argv[2] || 'DLW'
 const source = readFileSync(join(here, `${name}.md`), 'utf8')
 const heading = (source.match(/^# (.+)$/m) ?? [null, name])[1]
@@ -41,18 +50,25 @@ const marked = new Marked({
       return `<div class="table-wrap">${this.constructor.prototype.table.call(this, token)}</div>\n`
     },
     // A ```ui block embeds the device's real UI beside its spec:
-    //   src: path relative to this folder · device: <family>:<face> · clip: <mode> · height: px · caption: text
+    //   src: path relative to this folder · device: <family>:<face> (fixture:, page:) · clip: <mode> · height: px · caption: text
     code({text, lang}) {
       if (lang !== 'ui') return false
       const f = Object.fromEntries(text.split('\n').map(l => l.split(/:\s*/)).filter(([k, v]) => k && v).map(([k, ...v]) => [k.trim(), v.join(':').trim()]))
       // device: <family>:<face> embeds the device gallery (the shell's own runtime, every view) instead of a page.
-      if (f.device) Object.assign(f, {src: `${GALLERY}?device=${f.device}&view=${f.view || 'all'}`, width: f.width || '1100', height: f.height || '760'})
+      // fixture: and page: open the device on a named fixture and page.
+      if (f.device) Object.assign(f, {query: `device=${f.device}&view=${f.view || 'all'}${['fixture', 'page'].map(k => (f[k] ? `&${k}=${encodeURIComponent(f[k])}` : '')).join('')}`, width: f.width || '1100', height: f.height || '760'})
       // clip: <mode> embeds the mode's Clip view, drawn by the gallery at the detail area's size and expanded.
-      if (f.clip) Object.assign(f, {src: `${GALLERY}?clip=${f.clip.replace(/^clip:/, '')}`, width: f.width || '1240', height: f.height || '1000'})
+      if (f.clip) Object.assign(f, {query: `clip=${f.clip.replace(/^clip:/, '')}`, width: f.width || '1240', height: f.height || '1000'})
       const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
       // Drawn at its design width (default 1440 px), scaled to fit the column.
       const w = parseInt(f.width || '1440', 10), h = parseInt(f.height || '560', 10)
-      return `<figure class="ui"><div class="ui-stage" data-w="${w}" data-h="${h}"><iframe src="${esc(f.src)}" loading="lazy" style="width:${w}px;height:${h}px" sandbox="allow-scripts allow-same-origin" title="${esc(f.caption)}"></iframe></div><figcaption>${esc(f.caption)} · <a href="${esc(f.src)}" target="_blank" rel="noopener">open on its own</a></figcaption></figure>\n`
+      // Carried, a frame names what it draws and the page draws it from its own copy (the script at the foot of the page).
+      const template = f.src?.startsWith(DOCUMENTS) && TEMPLATES.includes(f.src.slice(DOCUMENTS.length)) ? f.src.slice(DOCUMENTS.length) : null
+      const what = f.query !== undefined ? (carried ? `data-dlw-q="${esc(f.query)}"` : `src="${esc(`${GALLERY}?${f.query}`)}" loading="lazy"`)
+        : carried && template ? `data-dlw-doc="${esc(template)}"` : `src="${esc(f.src)}" loading="lazy"`
+      const open = f.query !== undefined ? (carried ? `href="#" data-dlw-open="${esc(f.query)}"` : `href="${esc(`${GALLERY}?${f.query}`)}" target="_blank" rel="noopener"`)
+        : carried && template ? `href="#" data-dlw-open-doc="${esc(template)}"` : `href="${esc(f.src)}" target="_blank" rel="noopener"`
+      return `<figure class="ui"><div class="ui-stage" data-w="${w}" data-h="${h}"><iframe ${what} style="width:${w}px;height:${h}px" sandbox="allow-scripts allow-same-origin" title="${esc(f.caption)}"></iframe></div><figcaption>${esc(f.caption)} · <a ${open}>open on its own</a></figcaption></figure>\n`
     },
   },
 })
@@ -66,6 +82,8 @@ const marks = html => html.replace(/(Record\s)?([●◐○])(?!\s?Record)/g, (al
 })
 
 const body = marks(marked.parse(source))
+// The carried gallery and templates, gzipped and in base64 (which holds no "<", so it cannot close its script element).
+const payload = carried ? gzipSync(JSON.stringify({gallery: carried.html, docs: carried.docs}), {level: 9}).toString('base64') : ''
 const tocHtml = toc.map(entry => entry.depth === 1
   ? `<li class="toc-part"><a href="#${entry.id}">${entry.text}</a></li>`
   : `<li><a href="#${entry.id}">${entry.text}</a></li>`).join('\n')
@@ -94,7 +112,7 @@ const page = `<!doctype html>
   --sel:#7ec3e6;--th:#2e3135;--code:#2e3135;--built:#6cc28a;--part:#ffbe00;--designed:#71767c;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:16px}
+html{scroll-padding-top:16px;overflow-anchor:none}
 body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
 .layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1320px;margin:0 auto}
 nav{position:sticky;top:0;height:100vh;overflow:auto;padding:28px 18px 40px 24px;border-right:1px solid var(--line);font-size:13px}
@@ -167,7 +185,7 @@ ${tocHtml}
 ${body}
 </article></main>
 </div>
-<script>
+${payload ? `<script type="application/octet-stream" id="dlw-gallery">${payload}</script>\n` : ''}<script>
 (()=>{
   const root=document.documentElement
   try{const t=localStorage.getItem('dlw-theme');if(t)root.dataset.theme=t}catch(e){}
@@ -179,7 +197,21 @@ ${body}
   const fit=()=>document.querySelectorAll('.ui-stage').forEach(st=>{const w=+st.dataset.w,h=+st.dataset.h,k=Math.min(1,st.clientWidth/w);st.style.height=(h*k)+'px';st.firstElementChild.style.transform='scale('+k+')'})
   fit();addEventListener('resize',fit)
   // The device gallery tells the page its height: the embed grows to every view it draws.
-  addEventListener('message',e=>{const h=e.data&&e.data.dlwGallery&&+e.data.dlwGallery.h;if(!h)return;document.querySelectorAll('.ui-stage iframe').forEach(f=>{if(f.contentWindow===e.source){f.style.height=h+'px';f.parentElement.dataset.h=h;fit()}})})
+  // An embed that grows wholly above the screen moves what you are reading down; the page scrolls by as much, so you stay put.
+  addEventListener('message',e=>{const h=e.data&&e.data.dlwGallery&&+e.data.dlwGallery.h;if(!h)return;document.querySelectorAll('.ui-stage iframe').forEach(f=>{if(f.contentWindow===e.source){const st=f.parentElement,was=st.getBoundingClientRect();f.style.height=h+'px';st.dataset.h=h;fit();if(was.bottom<=0)scrollBy({top:st.getBoundingClientRect().height-was.height,behavior:'instant'})}})})
+  // The carried gallery: unpacked once, then each frame draws from it as it nears the screen, with its own query.
+  const carried=document.getElementById('dlw-gallery')
+  if(carried){
+    const ready=(async()=>{const bytes=Uint8Array.from(atob(carried.textContent.trim()),c=>c.charCodeAt(0))
+      return JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text())})()
+    const page=(g,q)=>g.gallery.replace('<head>','<head><script>window.__DLW_SEARCH__='+JSON.stringify('?'+q)+'<\\/script>')
+    const draw=f=>ready.then(g=>{f.srcdoc=f.dataset.dlwQ!==undefined?page(g,f.dataset.dlwQ):(g.docs[f.dataset.dlwDoc]??'')},
+      ()=>{f.srcdoc='<p style="font:13px system-ui;color:#888;padding:12px">This browser cannot unpack the devices carried in the manual.</p>'})
+    const near=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){near.unobserve(e.target);draw(e.target.firstElementChild)}},{rootMargin:'1200px 0px'})
+    document.querySelectorAll('.ui-stage').forEach(st=>{if(st.firstElementChild.matches('[data-dlw-q],[data-dlw-doc]'))near.observe(st)})
+    document.addEventListener('click',e=>{const a=e.target.closest('a[data-dlw-open],a[data-dlw-open-doc]');if(!a)return;e.preventDefault()
+      ready.then(g=>{const html=a.dataset.dlwOpen!==undefined?page(g,a.dataset.dlwOpen):g.docs[a.dataset.dlwOpenDoc];window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})),'_blank')})})
+  }
   const nav=document.querySelector('nav')
   document.querySelector('.menu').onclick=()=>nav.classList.toggle('open')
   nav.addEventListener('click',e=>{if(e.target.closest('a'))nav.classList.remove('open')})
