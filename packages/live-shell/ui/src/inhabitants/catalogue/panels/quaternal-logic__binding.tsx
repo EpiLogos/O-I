@@ -33,6 +33,7 @@ const REGISTER_OPTIONS = REGISTERS.map(r => ({value: r, label: r, does: `Each ju
 const SKINS = [{value: 'torus', label: 'Torus', does: 'The binding drawn on the Torus.'}, {value: 'plate', label: 'Plate', does: 'The binding drawn on this plate.'},
   {value: 'clock', label: 'Clock', does: 'The binding drawn on the M3 clock.'}] as const
 const EVENTS: Record<string, string> = {inscription: 'an inscription', matrix: 'a matrix transform', line: 'a line change'}
+const EVENT_WORD: Record<string, string> = {inscription: 'Inscription', matrix: 'Matrix change', line: 'Line change'}
 const BASES = 'ATCG', HBARC = .197327
 const COLOUR = ['hsl(2 78% 60%)', 'hsl(128 55% 52%)', 'hsl(218 80% 64%)'], ANTI = ['hsl(182 70% 55%)', 'hsl(302 62% 64%)', 'hsl(52 85% 58%)']
 
@@ -142,20 +143,21 @@ function controls(p: ViewProps) {
   }
 }
 
-/** The kernel's cell and the event behind the last motion, as rows: what it is at the left, where it comes from at the right. */
-function readingRows(v: V): RowItem[] {
+/** The kernel's cell and the event behind the last motion, as rows: what it is at the left, where it comes from at the right. `full`
+ * names the event in its own words; a row on the plate names its kind. */
+function readingRows(v: V, full = false): RowItem[] {
   const lo = strOf(v, 'cell.lower'), up = strOf(v, 'cell.upper'), hex = numOf(v, 'cell.hexagram'), one = boolOf(v, 'cell.nonDual'), k = strOf(v, 'event.kind')
   const row = (id: string, name: string | undefined, note: string): RowItem => ({id, name: name ?? NONE, light: name === undefined ? 'unknown' : 'lit', tone: 'value', note})
   return [
     row('cell', lo === undefined || up === undefined ? undefined : `${lo} under ${up}`, hex === undefined ? 'cell' : `hex ${hex}`),
     row('positive', codonOf(v, 'cell.positive') && sideWord(v, 'positive'), 'a·c·d'),
     row('negative', one === true ? 'the same codon: a singlet' : codonOf(v, 'cell.negative') && sideWord(v, 'negative'), 'a·b·d'),
-    row('moved', eventWord(v) === NONE ? undefined : eventWord(v), k === undefined ? 'moved by' : k),
+    row('moved', eventWord(v) === NONE ? undefined : full ? eventWord(v) : EVENT_WORD[k!], 'moved by'),
   ]
 }
 const physics = (v: V) => [
   <Readout key="a" label="α_s" does="The coupling at the chosen scale, from the device's engine." value={numOf(v, 'coupling.alpha') === undefined ? NONE : fixed(3)(numOf(v, 'coupling.alpha')!)} />,
-  <Readout key="e" label="Energy" does="The string's energy at its stretch, from the device's engine." value={numOf(v, 'string.energy') === undefined ? NONE : `${fixed(3)(numOf(v, 'string.energy')!)} GeV`} />,
+  <Readout key="e" label="Energy" does="The string's energy at its stretch, from the device's engine." value={numOf(v, 'string.energy') === undefined ? NONE : `${fixed(2)(numOf(v, 'string.energy')!)} GeV`} />,
 ]
 
 export const design: DesignedDevice = {
@@ -197,14 +199,14 @@ export const design: DesignedDevice = {
       <Section label="Macros" cols={2}>{c.matrixChooser}{c.registerChooser}{c.tension}{c.coupling}</Section>
     </Panel> },
 
-  whole: p => { const c = controls(p), wide = (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined, w = wide ? Math.round(clampTo(260, p.room!.w - 640, 420)) : 260
+  whole: p => { const c = controls(p), wide = (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined, w = wide ? Math.round(clampTo(220, p.room!.w - 620, 420)) : 220
     return <Panel title="Binding" view="whole" {...head(p)}>
       <Band>
         <Section width={w + 12}><Display w={w} h={146} label="The binding" does={FIELD_DOES}><Field v={p.v} w={w} h={146} small={false} /></Display></Section>
         <Section label="Pairing" width={96}>{c.matrix}</Section>
         <Section label="Physics" cols={2} width={124}>{c.tension}{c.coupling}{physics(p.v)}</Section>
-        <Section label="Charge and skin" width={156}>{c.register}{c.skin}{c.nonets}{c.sound}</Section>
-        <Section width={120}><Display w={108} h={70} label="Potential" does="V(r) = −(4/3)·α_s·ħc/r + σr over the string's length, the engine's stretch marked."><Potential v={p.v} w={108} h={70} /></Display></Section>
+        <Section label="Charge and skin" width={150}>{c.register}{c.skin}{c.nonets}{c.sound}</Section>
+        <Section width={104}><Display w={92} h={70} label="Potential" does="V(r) = −(4/3)·α_s·ħc/r + σr over the string's length, the engine's stretch marked."><Potential v={p.v} w={92} h={70} /></Display></Section>
         <Section label="Reading" grow><Rows does="The kernel's cell and the event behind the last motion." items={readingRows(p.v)} size={4} /></Section>
       </Band>
     </Panel> },
@@ -213,7 +215,7 @@ export const design: DesignedDevice = {
     <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The binding">
       <g className="dp-display" style={{background: 'none', border: 'none'}}>
         <Field v={p.v} w={760} h={340} small={false} />
-        {readingRows(p.v).map((r, i) => <g key={r.id} transform={`translate(${24 + (i % 2) * 360} ${360 + Math.floor(i / 2) * 26})`}>
+        {readingRows(p.v, true).map((r, i) => <g key={r.id} transform={`translate(${24 + (i % 2) * 360} ${360 + Math.floor(i / 2) * 26})`}>
           <text className="dp-axis">{r.note}</text><text x={84} className={r.light === 'unknown' ? 'dp-ink-dim' : 'dp-ink'}>{r.name}</text></g>)}
       </g>
     </svg>

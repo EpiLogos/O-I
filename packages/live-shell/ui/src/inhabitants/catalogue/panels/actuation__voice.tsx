@@ -1,4 +1,4 @@
-// Voice (manual §19.20, actuation:voice): how an agent speaks, after the Agent on its chain. Listening is the track's own input row
+// Voice (manual §19.21, actuation:voice): how an agent speaks, after the Agent on its chain. Listening is the track's own input row
 // (Input, Listen, Pause, Recogniser: manual §24.1), as Live keeps input on the track and sound on the devices. Live's nearest: a vocal
 // chain's last device, with its pitch-and-timing display. The display is the last spoken turn on one audio clock: each sentence with the
 // affect K-E-V chose for it, its words across the sentence's measured speech, and, under them, the phone intervals that drive the
