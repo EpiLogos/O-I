@@ -25,7 +25,7 @@ import {ShellConfigContext} from '../useSet'
 import {Workspace} from '../workspaceContext'
 import type {UseModeTransport} from '../modeTransports'
 import {centralBindings, dayDieOf} from './transportReadings'
-import {useReachedDocument} from '../../central/documents/documentDoor'
+import {turnDay, useDayInPane, useReachedDocument} from '../../central/documents/documentDoor'
 
 const NO_CARRIER: KernelTransportStatus = {kind: 'unavailable', reason: 'The shell has published no kernel carrier for this reading.'}
 const message = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause)
@@ -83,15 +83,19 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
   const [turning, setTurning] = useState(false)
   const [turned, setTurned] = useState<string | null>(null)
   const die = dayDieOf(ground.reading, ground.error)
-  // ‹ › turn the die one face either way, wrapping as the die does (the mockup's `(face + 1 | 5) % 6`), through its write route.
-  const turn = die.state === 'ready' && !turning ? (direction: 1 | -1) => {
-    const face = (die.face + direction + 6) % 6
+  // A Day held open in a pane shows its own face (the owner holds it at that Day's next Save): Tempo names and turns that one.
+  const inPane = useDayInPane(die.state === 'ready' ? die.aperture.documentId : null)
+  const shownFace = die.state === 'ready' ? inPane?.face ?? die.face : null
+  // ‹ › turn the die one face either way, wrapping as the die does (the mockup's `(face + 1 | 5) % 6`): in the pane that holds it, else
+  // through its write route.
+  const turn = die.state === 'ready' && shownFace !== null && !turning ? (direction: 1 | -1) => {
+    const face = (shownFace + direction + 6) % 6
     setTurning(true)
-    turnDieFace(transport, die.aperture, face).then(
+    turnDay(die.aperture.documentId, face, () => turnDieFace(transport, die.aperture, face)).then(
       () => setTurned(`↳ Turned to ${dieFaceLabel(face)}.`),
       cause => setTurned(`↳ Refused — ${message(cause)}`),
     ).finally(() => { setTurning(false); ground.refresh() })
   } : undefined
   const document = useReachedDocument()
-  return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document})
+  return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document, ...(shownFace !== null ? {face: shownFace} : {})})
 }

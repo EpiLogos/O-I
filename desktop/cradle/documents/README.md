@@ -125,4 +125,25 @@ own initial and the session ref it answered from.
 
 The operative `ql-flow.html` exposes its existing live closure payload through `__OI_DOCUMENT_PAYLOAD_READ__`, a read-only observation consumed by the original `document-host.js` read contract. Title/entry edits and the form’s own debounced revision remain owned by the original form. This observer introduces no write route or second document model. `src/flow/instance.ts` imports this operative form directly, so fresh Flow copies and candidate builds carry the same seam.
 
-The byte-exact received 0/1 and 4+2 files above remain unchanged. The receiving `document/frame.ts` adapts their exact original closure declaration only in the rendered copy when a live snapshot reader is needed. Generated Beings/Things pages already update their own `ql-doc` island on editing; `src/personal/page.mjs` remains their sole generator source.
+The byte-exact received 0/1 file above remains unchanged; the 4+2 form stayed byte-exact until its v0.4 revision (below). The receiving `document/frame.ts` adapts their exact original closure declaration only in the rendered copy when a live snapshot reader is needed. Generated Beings/Things pages already update their own `ql-doc` island on editing; `src/personal/page.mjs` remains their sole generator source.
+
+## Day form v0.4 — onto the shell's paper, the die hardened (2026-10-19)
+
+The owner asked for the existing templates to be brought onto the UI of the current system and the daily die fixed and hardened (wayfinder
+MAP, "Lanes now", the pages lane). `ql-daily-die.html` is revised from the retained 0.3 bytes recorded above (`c8e81e8a…`, 466,929 bytes)
+to `ql-template: daily-die v0.4` (78,474 bytes, sha-256 `b9104284de58877785047db7c2b76b830ca9bb6745588e13302f18fb24c5cca3`); `forms.json`
+names it `authored-current`. The payload is unchanged (`meta.template: ql-daily v0.1`), so every Day the owner holds projects as before.
+
+- **The shell's paper family.** The form's colours, type families and mono are the shell's tokens (`packages/live-shell/ui/src/styles.css`
+  `--paper … --psans`); the die stands on the pane's paper, its writing fields on `--pfield`. `ql-flow.html` and `src/personal/page.mjs`
+  (Beings, Things, Goal, Vision) take the same family; `tests/pages-lane.test.mjs` in the shell holds all of them to the shell's values.
+- **No example asset.** The "Example asset, not a record" image (`oi-point-cloud.jpg`, 391 KB) is withdrawn from the island. Days made
+  from 0.3 carry it in their own payload; the form no longer draws media whose standing is `example`, and leaves the payload as it is.
+- **Links through the host.** A ⌘-click (Ctrl-click) on a link in a writing field, or a click on one elsewhere, is sent to the host as
+  `oi:page-link`; the frame grants no popups and no navigation, so standing alone the browser follows it.
+- **The die, from the census of 19 Oct** (`tests/day-die-browser.mjs`): an open die shows pages, never pips, and the faces around the open
+  one go once the net lies flat; the open face stands below the header; the label names the face the die is going to at once, and a turn
+  asked while it turns runs on without opening between; Enter, Esc and a double click asked during a turn are kept, and Esc on an open
+  turn goes out from the shut die; the face's head fits its rows. The host's bridge (`src/central/dayForm.ts projectDieDocument`) turns,
+  opens and closes the die and hears the face the form shows.
+

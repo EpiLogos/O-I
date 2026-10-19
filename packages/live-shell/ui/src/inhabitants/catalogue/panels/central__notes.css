@@ -18,8 +18,7 @@
 .nts-last-empty { display: flex; align-items: center; font-size: 10.5px; color: var(--text-faint, #71767c); }
 
 /* the pane: the page at the left, its notes at the right */
-.nts-pane { --paper: #efefed; --field: #fafaf8; --ink: #1a1a18; --mid: #6e6e6a; --faint: #a3a39e; --rule: #c9c9c4; --hl: #ffe97a;
-  --serif: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+.nts-pane { --field: var(--pfield); --mid: var(--pmid); --faint: var(--pfaint); --rule: var(--prule);
   position: relative; flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px; background: var(--paper); color: var(--ink); font: 14px/1.5 var(--serif); }
 .nts-page { min-width: 0; overflow: auto; padding: 16px 24px 24px; user-select: text; -webkit-user-select: text; }
 .nts-title { margin: 0 0 4px; font: 400 18px/1.25 var(--serif); }

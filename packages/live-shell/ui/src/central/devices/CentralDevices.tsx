@@ -58,6 +58,7 @@ import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
 import {CENTRAL_FAMILY, CENTRAL_MAIN_FACES, CENTRAL_WORKSPACE_FACES, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
 import {centralWriters, closeDay, openToday, turnDieFace} from './centralDeviceWrites'
+import {turnDay, useDayInPane} from '../documents/documentDoor'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
 import {useCentralGroundAnswer, useDayDieReading, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
 import {usePageDevices} from './pageDevices'
@@ -274,12 +275,15 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ground.reading, ground.error, selectedKey])
   const document = useDayDieReading(transport, facts.aperture)
+  // A Day held open in a pane shows its own face, which the owner holds at that Day's next Save: the device reads and turns that one.
+  const inPane = useDayInPane(facts.aperture?.documentId ?? null)
+  const shownFace = inPane?.face ?? document.face
   const refreshGround = ground.refresh, refreshDocument = document.refresh
   const binding = useMemo(() => {
     if (!facts.civilDate) return null
-    const values = dayValuesOf(facts, facts.aperture && document.face !== null ? {face: document.face, payload: document.payload} : null)
+    const values = dayValuesOf(facts, facts.aperture && shownFace !== null ? {face: shownFace, payload: document.payload} : null)
     return dayDesignBinding(DAY_DEVICE_ID, facts, values, {
-      turn: async (aperture, face) => { await turnDieFace(transport, aperture, face); refreshDocument() },
+      turn: async (aperture, face) => { if (await turnDay(aperture.documentId, face, () => turnDieFace(transport, aperture, face)) === 'owner') refreshDocument() },
       openToday: async () => {
         try { await openToday(transport) } finally {
           // The owner's answer moved the Day: read the ground again, and the current Day's answer the Day's page reads, whose stale
@@ -295,7 +299,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
         }
       },
     })
-  }, [facts, document.face, document.payload, transport, refreshDocument, refreshGround, epoch])
+  }, [facts, shownFace, document.payload, transport, refreshDocument, refreshGround, epoch])
   return {facts, document, binding}
 }
 

@@ -152,14 +152,22 @@ export function projectDieDocument(shell:string,payload:unknown):string|null {
  // contract changes we refuse rather than inventing a replacement form.
  const seam="/* ---------- go ---------- */";
  if(shell.split(seam).length!==2||!shell.includes("function touch(){ dirty=true;"))return null;
- const bridge=`\n/* Native host snapshot bridge: projection only, no source writes. */
+ // The host may also turn the die and open or close its face (the Day device's ‹ ›, the transport's Tempo): presentation only, the
+ // same acts as the form's own keys. The open face the form shows is announced back, so the host's head names the face it shows.
+ const bridge=`\n/* Native host bridge: projection only, no source writes. */
 window.addEventListener('message',function(e){
- if(e.source!==window.parent||!e.data||e.data.source!=='oi-day-host'||e.data.type!=='snapshot'||typeof e.data.nonce!=='string')return;
+ if(e.source!==window.parent||!e.data||e.data.source!=='oi-day-host')return;
+ if(e.data.type==='turn'&&Number.isInteger(e.data.face)&&e.data.face>=0&&e.data.face<=5){turn(e.data.face);return;}
+ if(e.data.type==='open'){zoomIn();return;}
+ if(e.data.type==='close'){zoomOut();return;}
+ if(e.data.type!=='snapshot'||typeof e.data.nonce!=='string')return;
  try{derive();window.parent.postMessage({source:'oi-cradle-die-face',type:'snapshot',nonce:e.data.nonce,payload:JSON.parse(JSON.stringify(D))},'*');}
  catch(error){window.parent.postMessage({source:'oi-cradle-die-face',type:'snapshot-error',nonce:e.data.nonce,error:String(error)},'*');}
 });\n`;
  let projected=shell.replace(DATA,()=>`<script type="application/json" id="ql-doc">${embed(payload)}</script>`).replace(seam,bridge+seam);
  projected=projected.replace("function touch(){ dirty=true;","function touch(){ dirty=true; if(window.parent!==window)window.parent.postMessage({source:'oi-cradle-die-face',type:'dirty'},'*');");
+ // A form without the face seam (an older template) still projects; its host then names only the face the owner holds.
+ projected=projected.replace("function syncChrome(){ ","function syncChrome(){ if(window.parent!==window)window.parent.postMessage({source:'oi-cradle-die-face',type:'face',face:targetFace,open:!!D.meta.zoomed},'*'); ");
  // The frame is opaque-origin. No network, top navigation, bridge, or external
  // script is allowed; the original inline editor and explicit copy still work.
  const csp=`<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; media-src data: blob:; font-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none'">`;

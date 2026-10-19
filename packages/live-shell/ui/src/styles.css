@@ -5,8 +5,13 @@
   --fizz:#5cc6b4; --honey:#e2a35e; --bumble:#d985a6; --drone:#8fbfb6; --fixgen:#a8c9c2; --parasakti:#c79ae0;
   --w-ariadne:#d1a46c; --w-satya:#5fb3b0; --w-kestrel:#a9c4dc; --w-field:#7ec3e6;
   --mercurius:#c9a0dc; --selfc:#9fc7e8; --tower:#d8c89a;
-  --paper:#EFEFED; --pfield:#FAFAF8; --ink:#111; --pmid:#6E6E6A; --hl:#FFE97A;
-  --serif:Charter,"Iowan Old Style",Palatino,Georgia,serif }
+  /* The paper family (world-shell-mockup.html :38–40): every page — the Day, a Flow, a Being, a Thing — draws on it, in the shell and
+     in its template (desktop/cradle/documents/*.html and personal/page.mjs carry the same values; tests/pages-lane.test.mjs holds
+     them to these). A page's Ink tone (the mockup's `.doc.ink` :198) is the --pi-* set, which `[data-paper="ink"]` below puts on. */
+  --paper:#EFEFED; --pfield:#FAFAF8; --ink:#111; --pmid:#6E6E6A; --pfaint:#A3A39E; --prule:#C9C9C4; --hl:#FFE97A;
+  --pi-paper:#20231f; --pi-pfield:#282c26; --pi-ink:#eeeee8; --pi-pmid:#b2b7aa; --pi-pfaint:#8e9688; --pi-prule:#555e50;
+  --serif:Charter,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; --psans:'Helvetica Neue',Helvetica,Arial,sans-serif }
+[data-paper="ink"] { --paper:var(--pi-paper); --pfield:var(--pi-pfield); --ink:var(--pi-ink); --pmid:var(--pi-pmid); --pfaint:var(--pi-pfaint); --prule:var(--pi-prule) }
 /* The theme bridge. A theme chosen in Settings › Appearance lands on the body as data-oi-theme (the presentation owner's reading,
    projected by desktop/cradle/src/visuals/ParticleExpression.tsx applyTheme), and the library's generated block
    (oi-design-system/themes/themes.css, brought in by shell/theme) sets that theme's --oi-* roles on the root above that body.

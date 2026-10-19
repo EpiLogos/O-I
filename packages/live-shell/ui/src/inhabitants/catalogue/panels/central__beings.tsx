@@ -37,11 +37,10 @@ const GROUNDS = [
   {value: 'ink', label: 'Ink', does: 'Light ink on dark ground.'},
 ] as const
 
-/** The tokens of the template, light (`paper`) and dark (`ink`): body[data-tone] in oi-beings.html. */
-const PAPER = {
-  paper: {bg: '#EFEFED', field: '#FAFAF8', ink: '#000000', mid: '#6E6E6A', faint: '#A3A39E', rule: '#C9C9C4'},
-  ink: {bg: '#20231f', field: '#282c26', ink: '#eeeee8', mid: '#b2b7aa', faint: '#8e9688', rule: '#555e50'},
-} as const
+/** The tokens of the template, light (`paper`) and dark (`ink`): the shell's paper family (styles.css :root), which the template
+ * draws in too. The tone is the drawing's `data-paper` (styles.css `[data-paper="ink"]`), so each tone names the same tokens. */
+const TOKENS = {bg: 'var(--paper)', field: 'var(--pfield)', ink: 'var(--ink)', mid: 'var(--pmid)', faint: 'var(--pfaint)', rule: 'var(--prule)'} as const
+const PAPER = {paper: TOKENS, ink: TOKENS} as const
 
 // ---------------------------------------------------------------- readings, from the values
 
@@ -191,12 +190,12 @@ function Sheet({v, x, y, w, h, small}: Box & {v: V; small?: boolean}) {
   const rows = sections === undefined ? 0 : Math.max(0, Math.min(Math.floor(room / rowPitch), Math.max(1, Math.round(sections))))
   const relations = links === undefined ? 0 : Math.max(0, Math.min(Math.floor((room - 6) / 6), Math.round(links)))
   const s = markW / 120
-  return <g>
+  return <g data-paper={tone}>
     <rect x={x} y={y} width={w} height={h} fill={p.bg} />
     <rect x={introX} y={y0} width={introW * 0.34} height={1.2} fill={p.mid} />
     {title === undefined
-      ? <text x={introX} y={y0 + 10} fill={p.mid} style={{font: `${size}px Charter, Georgia, serif`}}>{NONE}</text>
-      : lines.length ? lines.map((line, i) => <text key={i} x={introX} y={y0 + 10 + i * pitch} fill={p.ink} style={{font: `${size}px Charter, Georgia, serif`}}>{line}</text>)
+      ? <text x={introX} y={y0 + 10} fill={p.mid} style={{font: `${size}px var(--serif)`}}>{NONE}</text>
+      : lines.length ? lines.map((line, i) => <text key={i} x={introX} y={y0 + 10 + i * pitch} fill={p.ink} style={{font: `${size}px var(--serif)`}}>{line}</text>)
         : [0.6, 0.36].map((f, i) => <rect key={i} x={introX} y={y0 + 5 + i * 7} width={introW * f} height={3.6} fill={p.faint} opacity={0.6} />)}
     <rect x={introX} y={subY} width={introW * 0.5} height={1.8} fill={p.mid} opacity={0.8} />
     {[0.82, 0.6].map((f, i) => <rect key={i} x={introX} y={subY + 5 + i * 3.6} width={introW * f} height={1.2} fill={p.rule} />)}
@@ -259,7 +258,7 @@ function OfficeCells({p, x, y, cw}: {p: ViewProps; x: number; y: number; cw: num
 function GroundSwatches({p, x, y}: {p: ViewProps; x: number; y: number}) {
   const ground = groundOf(p.v), lock = st(p, 'ground').disabled, at = ground === 'ink' ? x + 15 : x
   return <g>
-    {GROUNDS.map((g, i) => <g key={g.value} onClick={lock ? undefined : () => p.set('ground', g.value)} style={{cursor: lock ? 'default' : 'pointer'}}>
+    {GROUNDS.map((g, i) => <g key={g.value} data-paper={g.value} onClick={lock ? undefined : () => p.set('ground', g.value)} style={{cursor: lock ? 'default' : 'pointer'}}>
       <rect x={x + i * 15 + 0.5} y={y + 0.5} width={11} height={9} fill={PAPER[g.value].bg} stroke={PAPER[g.value].rule} />
     </g>)}
     {ground && <Handle x={at + 5.5} y={y + 5} n={2} shape="square" label="Ground" does={['Drag to the paper or the ink swatch to set the ground.', lock].filter(Boolean).join(' ')}
