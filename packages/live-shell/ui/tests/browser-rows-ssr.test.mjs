@@ -90,14 +90,18 @@ test('the NOW section: the machines sessions run on and what runs there; absent 
 test('code-reading: the Days rows read the owner\'s Day reading once per listing, and the NOW section reads what the shell holds', async () => {
   const source = await read('shell/ModeBrowser.tsx')
   const days = source.slice(source.indexOf('function DaysRows'), source.indexOf('export function DayRowList'))
-  assert.match(days, /useRowReadings<DayStanding>\(transport, dates, date => dayRead\(transport, dayRefOfDate\(date\)\)\.then\(dayStandingOf,/,
+  assert.match(days, /useRowReadings<DayStanding>\('day_standing', transport, dates, date => dayRead\(transport, dayRefOfDate\(date\)\)\.then\(dayStandingOf,/,
     'day_read for each listed day, by the root register\'s day ref')
   assert.match(days, /<NowSection rows=\{now\} \/>/)
   const now = source.slice(source.indexOf('function useNowRows'), source.indexOf('export function NowSection'))
   assert.match(now, /useAgentSessionsOptional\(\)/, 'the one agent-sessions provider, no new read')
   assert.match(now, /config\?\.world_scope\?\.workcell_ref/, 'the World scope names this machine')
+  // The rows read through the window's owner readings (owners/ownerReading.ts): asked one after another, each row's last answer
+  // drawn at once when the rows come back (MAP's loading item).
   const readings = source.slice(source.indexOf('function useRowReadings'), source.indexOf('/** The Days rows'))
-  assert.match(readings, /for \(const key of keys\) \{\n\s+const reading = await read\(key\)/, 'one at a time, so the carrier never sees a pile')
+  assert.match(readings, /useOwnerReadingsOf<T>\(/, 'the row readings are owner readings')
+  const owner = await read('owners/ownerReading.ts')
+  assert.match(owner.slice(owner.indexOf('export async function ensureInOrder')), /for \(const entry of entries\) \{\n\s+if \(!live\(\)\) return\n\s+await entry\.ensure\(epoch\)/, 'one at a time, so the carrier never sees a pile')
   assert.doesNotMatch(readings, /setInterval|setTimeout/, 'read once per listing, never polled')
 })
 
@@ -129,7 +133,7 @@ test('code-reading: a Flow row previews on select and opens on double-click or E
   assert.match(flows, /event\.key === 'Enter'\) openFile\(entry, path\)/)
   const listing = source.slice(source.indexOf('function FlowsRows'), source.indexOf('export function FlowRowList'))
   assert.match(listing, /listWorldPages\(transport, USER_FLOWS_DIR\)/, 'the page owner\'s listing of your world\'s folder')
-  assert.match(listing, /setListing\(entriesOfForm\(listing, 'flow'\)\)/, 'only a Flow lists as a Flow: a Being or a Thing in the same folder does not (T-WORLDS W2)')
+  assert.match(listing, /entriesOfForm\(listed\.value, 'flow'\)/, 'only a Flow lists as a Flow: a Being or a Thing in the same folder does not (T-WORLDS W2)')
   assert.match(listing, /readFlowInstance\(transport, byRef\.get\(ref\)!\.location\)\s*\.then\(instance => flowReadingOf\(instance\.doc\)/, 'each Flow\'s own payload, by the Flow\'s parser')
   assert.match(source, /if \(category\.id === 'central-flows'\) return <FlowsRows/)
 })

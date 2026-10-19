@@ -23,7 +23,7 @@
 //
 // Pure TypeScript apart from `useOwnerReading`, a subscription.
 
-import {useCallback, useEffect, useMemo, useSyncExternalStore} from 'react'
+import {useCallback, useEffect, useMemo, useReducer, useSyncExternalStore} from 'react'
 
 /** 'reading' — no answer stands for this epoch yet; 'answered' — the owner's answer; 'refused' — the owner's refusal. */
 export type OwnerReadStatus = 'reading' | 'answered' | 'refused'
@@ -236,4 +236,41 @@ export function useOwnerReading<T>(key: string | null, read: OwnerRead<T>, epoch
   const refresh = useCallback(() => { if (entry) void entry.refresh(epoch) }, [entry, epoch])
   const retry = useCallback(() => { if (entry) void entry.retry(epoch) }, [entry, epoch])
   return {reading, refresh, retry}
+}
+
+/** Many rows' standing answers under `epoch`, by row: what a reader of many rows draws at once — the last answer included, and
+ * never another world's. */
+export function answersOf<T>(rows: readonly (readonly [string, OwnerReadingEntry<T>])[], epoch: string): ReadonlyMap<string, T> {
+  const answers = new Map<string, T>()
+  for (const [row, entry] of rows) {
+    const standing = entry.snapshot()
+    if (standing.status === 'answered' && sameWorld(standing.epoch, epoch)) answers.set(row, standing.value as T)
+  }
+  return answers
+}
+
+/** Make each entry's answer stand for `epoch`, one after another, so the carrier never sees a pile; stops when `live()` turns
+ * false (its reader left). */
+export async function ensureInOrder(entries: readonly OwnerReadingEntry<unknown>[], epoch: string, live: () => boolean = () => true): Promise<void> {
+  for (const entry of entries) {
+    if (!live()) return
+    await entry.ensure(epoch)
+  }
+}
+
+/** One reader of many rows (a browser list's per-row readings): each row an entry under `keyOf(row)`, read by `read(row)`, asked
+ * one after another; each row's last answer drawn at once. */
+export function useOwnerReadingsOf<T>(rows: readonly string[], keyOf: (row: string) => string, read: (row: string) => OwnerRead<T>, epoch: string,
+  registry: OwnerReadings = ownerReadings): ReadonlyMap<string, T> {
+  const basis = JSON.stringify(rows.map(keyOf))
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the basis names the rows' keys
+  const entries = useMemo(() => rows.map(row => [row, registry.entry(keyOf(row), read(row))] as const), [basis, registry])
+  const [, arrived] = useReducer((count: number) => count + 1, 0)
+  useEffect(() => {
+    const offs = entries.map(([, entry]) => entry.subscribe(arrived))
+    let live = true
+    void ensureInOrder(entries.map(([, entry]) => entry as OwnerReadingEntry<unknown>), epoch, () => live)
+    return () => { live = false; for (const off of offs) off() }
+  }, [entries, epoch])
+  return answersOf(entries, epoch)
 }
