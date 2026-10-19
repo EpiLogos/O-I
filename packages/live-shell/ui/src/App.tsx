@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
 import {BOOK_MODE_OF_SHELL, useContinuity, type ShellMode} from './continuity/workspace'
 import { PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
 import type { NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
@@ -59,7 +59,7 @@ import {registerDevicePane} from './frame/devices/devicePane'
 import {createSpineEncounterBridge} from './projections/encounterBridge'
 import {createEncounterLink, type EncounterLink} from './projections/encounterLink'
 import {setTimelinePanePresentation, useTimelinePanePresentation, usePublishTimelineReading} from './projections/timelinePaneHost'
-import {useAtlasView} from './projections/atlas/AtlasProjectionPanel'
+import {useAtlasHandle, useAtlasView} from './projections/atlas/AtlasProjectionPanel'
 import {deviceInstrumentFor, factoryFocusedPane, type HostedLens} from './shell/paneInstrument'
 import {focusedSurfaceKind, isFactoryMode} from './agent/factoryCentre'
 import {subjectWords} from './central/daySurface'
@@ -68,6 +68,9 @@ import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, dr
   expandedDetailHeight, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions} from './shell/workspaceAreas'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
 registerAtlasHost()
+/** Your system's readings (T-WORLDS §5 W3 phase B), loaded with the Earth: they read Central's worlds, today's set, what plays and what is
+ * to hand, and bind the acts that open them and land worlds (projections/atlas/system/SystemReadings.tsx). */
+const SystemReadings = lazy(() => import('./projections/atlas/system/SystemReadings').then(module => ({default: module.SystemReadings})))
 registerTimelineHost()
 registerCentralDocumentPane()
 registerDevicePane()
@@ -81,6 +84,7 @@ export function App() {
 
 function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>}) {
   const workspace = useWorkspace()
+  const atlas = useAtlasHandle()
   const currentEditorReading=useRef(workspace.editorReading)
   // The qualified owner publishes its reply before React presents that reading.
   // Detail return must compare with that exact publisher, including the same
@@ -576,6 +580,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const frameBody = (<>
     {/* The frame's keys (F9): Space, Esc, ⌘F, the row and macro keys, Enter and ⌥Enter — through the controls' own doors. */}
     <FrameKeys paused={settingsPresented} focusedGroupId={continuity.current.layout.focusedGroupId} revealBrowser={() => setBrowser(true)} />
+    {/* Your system's readings (T-WORLDS §5 W3): read while an Earth stands, whichever pane holds it. They stand here, in the shell's
+        own tree, because the Earth's pane is a projection module drawn in a root of its own, without the workspace they read through
+        (r18: the system was never read, so no world but yours was drawn and none could land). */}
+    {atlas && <Suspense fallback={null}><SystemReadings /></Suspense>}
     {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
     {/* The one browser (F6): the mode's row sources and the shared ones, under one search, grouped by the four kinds. */}
     <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} category={browserCategory} onCategory={chooseBrowserCategory} pool={pool} poolFace={MODE_POOL_FACES[frameMode]?.({setPath: state.set?.path ?? null}) ?? null} /></BrowserReadingProvider></div>
