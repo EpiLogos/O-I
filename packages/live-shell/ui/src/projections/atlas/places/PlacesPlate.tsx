@@ -314,11 +314,37 @@ function OwnersReturned() {
   </div>
 }
 
+/** Your system's worlds and where each lands on your planet (T-WORLDS §5 W3), in a section of their own so the band shows them like any
+ * section (r19: stacked under the place list they stood below the band's fold, and no world could be landed). */
+export function WorldsSection() {
+  const tool = useSyncExternalStore(subscribePlaceTool, placeToolState, placeToolState)
+  const system = useSyncExternalStore(subscribeSystem, systemReading, systemReading)
+  if (system.state !== 'read' || !system.bodies.some(body => !body.yours)) {
+    return <PlateLine text={system.state === 'read' ? 'Today\'s set holds no world but yours: bring one in on Central\'s tracks to land it here.' : 'Your system is read while the Earth stands.'} word="none" name="Worlds" />
+  }
+  return <>
+    {/* [T-WORLDS §5 W3] the worlds of today's set and where each lands on your planet: a press arms the tool to land it, and the next
+        click on your planet is its landing, which that world's own body owner writes (system/SystemReadings.tsx landWorld) */}
+    <PlateRows label="Worlds" size={3}
+      active={tool.phase === 'landing' || tool.phase === 'saving' ? tool.target.key : null}
+      rows={system.bodies.filter(body => !body.yours).map(body => ({id: body.key, name: body.world.name, mark: <Icon name="placed" size={10} />,
+        note: body.landing ? `${body.landing.lat.toFixed(1)}, ${body.landing.lon.toFixed(1)}` : 'land', dim: !body.landing,
+        disabled: body.state === 'reading' || body.state === 'refused',
+        does: `${body.world.name}: ${body.standing}; ${body.landing ? 'lands on your planet here' : body.unlanded ?? ''}. Press, then click your planet, to land it there.`}))}
+      onPress={key => { const body = system.bodies.find(entry => entry.key === key); if (body) armLanding({key: body.key, name: body.world.name}) }} />
+    {/* A landing is undone as it is made: a landed world, pressed, either moves (click your planet) or comes off your planet here, its
+        body kept without the landing (system/SystemReadings.tsx unlandWorld). */}
+    {tool.phase === 'landing' && system.state === 'read' && system.bodies.find(body => body.key === tool.target.key)?.landing && <div className="plate-span plate-tool-row">
+      <Action label="Off your planet" does={`Take ${tool.target.name} off your planet: its body is kept whole, without a landing, written on its own register on the revision read. Or click your planet to move it there.`}
+        onPress={() => void unlandArmed()} />
+    </div>}
+  </>
+}
+
 function LocationsSection({handle}: {handle: AtlasHandle | null}) {
   const standing = useSuiteStanding()
   const tool = useSyncExternalStore(subscribePlaceTool, placeToolState, placeToolState)
   const kind = useSyncExternalStore(subscribePlaceTool, placeKindChoice, placeKindChoice)
-  const system = useSyncExternalStore(subscribeSystem, systemReading, systemReading)
   const [query, setQuery] = useState('')
   const [chosen, setChosen] = useState<string | null>(null)
   const [windowSaid, setWindowSaid] = useState<string | null>(null)
@@ -379,21 +405,6 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
           empty={rows.length ? 'No place of your world matches.' : standing.phase === 'reading' ? 'Reading your world…' : 'No owner declares a place yet.'}
           emptyWord={rows.length ? 'no match' : standing.phase === 'reading' ? 'reading' : 'none'}
           onPress={id => { if (id.startsWith('field:')) { const result = field.find(entry => `field:${entry.key}` === id); if (result) handle?.ctl.chooseResult(result) } else turn(id) }} />}
-    {/* [T-WORLDS §5 W3] the worlds of today's set and where each lands on your planet: a press arms the tool to land it, and the next
-        click on your planet is its landing, which that world's own body owner writes (system/SystemReadings.tsx landWorld) */}
-    {system.state === 'read' && system.bodies.some(body => !body.yours) && <PlateRows label="Worlds" size={3}
-      active={tool.phase === 'landing' || tool.phase === 'saving' ? tool.target.key : null}
-      rows={system.bodies.filter(body => !body.yours).map(body => ({id: body.key, name: body.world.name, mark: <Icon name="placed" size={10} />,
-        note: body.landing ? `${body.landing.lat.toFixed(1)}, ${body.landing.lon.toFixed(1)}` : 'land', dim: !body.landing,
-        disabled: body.state === 'reading' || body.state === 'refused',
-        does: `${body.world.name}: ${body.standing}; ${body.landing ? 'lands on your planet here' : body.unlanded ?? ''}. Press, then click your planet, to land it there.`}))}
-      onPress={key => { const body = system.bodies.find(entry => entry.key === key); if (body) armLanding({key: body.key, name: body.world.name}) }} />}
-    {/* A landing is undone as it is made: a landed world, pressed, either moves (click your planet) or comes off your planet here, its
-        body kept without the landing (system/SystemReadings.tsx unlandWorld). */}
-    {tool.phase === 'landing' && system.state === 'read' && system.bodies.find(body => body.key === tool.target.key)?.landing && <div className="plate-span plate-tool-row">
-      <Action label="Off your planet" does={`Take ${tool.target.name} off your planet: its body is kept whole, without a landing, written on its own register on the revision read. Or click your planet to move it there.`}
-        onPress={() => void unlandArmed()} />
-    </div>}
     {chosenRow
       ? <div className="plate-keys places-chosen">
           <PlateLine text={`${chosenRow.provenance}${chosenRow.validity ? ` · valid ${chosenRow.validity}` : ''}${chosenRow.reason ? ` · ${chosenRow.reason}` : ''}${windowSaid ? ` · ${windowSaid}` : ''}`}
@@ -473,7 +484,7 @@ function FramesSection({handle}: {handle: AtlasHandle | null}) {
 
 /** The order the sections fold in when the row is too narrow: the manual's further groups first (the frames, the Earth's layers, the
  * view), then Relations, then the builder; the mockup's Body, Landmass, Climate, Sky and Locations stand longest (:1447-1461). */
-const FOLD_ORDER = ['frames', 'layers', 'view', 'relations', 'climate', 'sky', 'landmass', 'locations']
+const FOLD_ORDER = ['frames', 'layers', 'view', 'relations', 'climate', 'sky', 'landmass', 'worlds', 'locations']
 
 /** The M4′ World / Places plate over the open atlas. `held` are the devices the families declare this instrument holds (the globe,
  * the Earth ⇄ Graph switch, the QL sky): each stands as a mark on the section that draws its controls — none is dropped. */
@@ -494,6 +505,7 @@ export function PlacesPlate({held, focused, onFold, onFull}: Pick<OwnPlateProps,
     {id: 'climate', title: 'Climate', cols: 2, children: <ClimateSection />},
     {id: 'sky', title: 'Sky', cols: 3, note: <HeldMarks devices={inSection(['sky'])} />, children: <SkySection handle={handle} />},
     {id: 'locations', title: 'Locations', width: 264, note: standing.phase === 'idle' ? '—' : `${located} placed · ${unlocated}`, children: <LocationsSection handle={handle} />},
+    {id: 'worlds', title: 'Worlds', width: 220, children: <WorldsSection />},
     {id: 'relations', title: 'Relations', width: 224, children: <RelationsSection handle={handle} />},
     {id: 'view', title: 'View', width: 196, children: <ViewSection handle={handle} />},
     {id: 'layers', title: 'Earth layers', width: 178, children: <LayersSection handle={handle} />},
