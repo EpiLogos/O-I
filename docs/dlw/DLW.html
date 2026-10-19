@@ -7923,6 +7923,12 @@ belongs to Scope (§19.12), the next device on the chain.</p>
 <td>Dark</td>
 <td>Lit when you edited something the agent holds.</td>
 </tr>
+<tr>
+<td>Team cell</td>
+<td>Row, question and depth (reading)</td>
+<td>Read from the team space</td>
+<td>Where the agent stands in Anima or Aletheia. Empty when the agent is in no team.</td>
+</tr>
 </tbody></table>
 </div>
 <p>Identity is a reading of your roster: the agent&#39;s name and colour, its
@@ -7934,6 +7940,17 @@ what it may read and write comes from Scope.</p>
 <p>How a write arrives is not set here. Scope sets the most the agent may do in
 each part of the world, and Arm decides whether it writes directly or
 proposes.</p>
+<h4 id="in-a-team"><a class="anchor" href="#in-a-team" aria-hidden="true">#</a>In a team</h4>
+<p>In Anima and Aletheia an agent stands in a team space. Each row of the space
+is a context frame, with its member in each team and the questions that frame
+asks by day and by night. Each member also stands at a depth, one of the six
+M domains. Team cell reads where the agent stands.</p>
+<p>A member may call helpers to settle small typed questions: which label fits,
+which of a closed set applies. The helpers are decision agents, and their
+faces are animals. Any member may call any helper, and the team decides which
+helpers run. A helper&#39;s answer is evidence: the engine checks it, and it
+never stands in for something the agent saw. The collaboration gate is yours.
+No member and no helper answers it.</p>
 <h4 id="the-thread"><a class="anchor" href="#the-thread" aria-hidden="true">#</a>The thread</h4>
 <p>The agent&#39;s material is its thread: one conversation and its tool use, full
 width, in the order things happened. Helpers the agent started each have a
@@ -7960,6 +7977,10 @@ thread of their own, nested under it.</p>
 <tr>
 <td>Spawn row</td>
 <td>A helper the agent started, with a link to its thread and its live state.</td>
+</tr>
+<tr>
+<td>Ask row</td>
+<td>A typed question the agent put to a decision helper: the labels it allowed and the answer, marked as evidence.</td>
 </tr>
 <tr>
 <td>Steer line</td>
@@ -9841,6 +9862,7 @@ short.</li>
 </ol>
 <h4 id="rules-29"><a class="anchor" href="#rules-29" aria-hidden="true">#</a>Rules</h4>
 <ul>
+<li>The collaboration gate is always yours. An agent&#39;s or a helper&#39;s answer to it is refused, even an abstention.</li>
 <li>Deny is always yours. Only the On no answer setting can deny for you, and you set it.</li>
 <li>An approved proposal lands with a receipt.</li>
 <li>A request that is not answered stays in the queue. It does not land.</li>
@@ -9903,6 +9925,12 @@ short.</li>
 <td>The default model for everything the group spawns. A member can set its own.</td>
 </tr>
 <tr>
+<td>Join</td>
+<td>All · Relay · Weighted · Count</td>
+<td>All</td>
+<td>How the members&#39; returns combine. All keeps every return. Relay gives each member only what the last left open. Weighted weighs the returns together. Count commits when enough agree.</td>
+</tr>
+<tr>
 <td>Member state</td>
 <td>Working · Idle · Stalled · Done (reading)</td>
 <td>Read from each session</td>
@@ -9961,7 +9989,7 @@ short.</li>
 </tr>
 <tr>
 <td>Return</td>
-<td>Hand-back, Subagent model</td>
+<td>Hand-back, Subagent model, Join</td>
 </tr>
 </tbody></table>
 </div>
@@ -10021,6 +10049,7 @@ short.</li>
 <li>To keep a lead&#39;s context small, set Hand-back to Summary.</li>
 <li>To save cost, set Subagent model to a smaller model for the group.</li>
 <li>To find the slow member, look for the orange outline.</li>
+<li>To fuse several readings into one, set Join to Weighted.</li>
 </ul>
 <h3 id="19-16-git-landing"><a class="anchor" href="#19-16-git-landing" aria-hidden="true">#</a>19.16 Git / landing</h3>
 <p><strong>Product:</strong> Workcell · <strong>Kind:</strong> effect · <strong>Chain:</strong> last device on a Factory session&#39;s chain</p>
@@ -15883,6 +15912,34 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 </tbody></table>
 </div>
 <p>The wheel has two circles. The inscription circle carries what is written. The lensing circle carries how it is seen. The two together make the clock.</p>
+<h4 id="what-a-hexagram-yields"><a class="anchor" href="#what-a-hexagram-yields" aria-hidden="true">#</a>What a hexagram yields</h4>
+<p>Each governor names a hexagram. Under a matrix, the hexagram is a generation cell. Its lower trigram gives one pair of bases and its upper trigram another. The cell yields two codons. The positive codon takes the first base of the lower pair and the whole upper pair. The negative codon takes the whole lower pair and the last base of the upper pair. When the lower pair ends with the base that starts the upper pair, the two codons are one codon, and the cell is non-dual.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Matrix</th>
+<th>Pairs the bases</th>
+<th>Mixed trigrams take</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Complementary</td>
+<td>A with T, C with G</td>
+<td>AT, TA, CG, GC</td>
+</tr>
+<tr>
+<td>Moving and resting</td>
+<td>A with G, T with C</td>
+<td>AG, GA, CT, TC</td>
+</tr>
+<tr>
+<td>Same quality</td>
+<td>A with C, T with G</td>
+<td>AC, CA, GT, TG</td>
+</tr>
+</tbody></table>
+</div>
+<p>The four trigrams that mirror themselves, Qian, Kun, Kan and Li, take TT, AA, CC and GG in every matrix. Each matrix has 64 cells, 16 of them non-dual.</p>
 <h4 id="parameters-49"><a class="anchor" href="#parameters-49" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -15931,9 +15988,27 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 </tr>
 <tr>
 <td>Readout</td>
-<td>Quadrant · Governor · Hexagram and codon</td>
+<td>Quadrant · Governor · Hexagram and codon · Generation</td>
 <td>Governor</td>
-<td>What the position shows.</td>
+<td>What the position shows. Generation shows the cell of the position&#39;s hexagram: its two pairs, its positive and negative codons, and whether it is non-dual.</td>
+</tr>
+<tr>
+<td>Matrix</td>
+<td>Complementary · Moving and resting · Same quality</td>
+<td>Complementary</td>
+<td>The matrix that makes the hexagram a generation cell.</td>
+</tr>
+<tr>
+<td>Seed</td>
+<td>Sum and difference · Four charge</td>
+<td>Sum and difference</td>
+<td>How a codon becomes the turn that picks its pose: from the sum and difference of its bases, or from its four charges. The two laws pick a different pose for about half the readings.</td>
+</tr>
+<tr>
+<td>Pose map</td>
+<td>Raw bin · Lawful slot</td>
+<td>Raw bin</td>
+<td>How the turn lands on the eight poses. Lawful slot moves a non-dual codon from the eighth pose to its mirror, the first.</td>
 </tr>
 </tbody></table>
 </div>
@@ -16011,7 +16086,7 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 </tbody></table>
 </div>
 <h5 id="whole-46"><a class="anchor" href="#whole-46" aria-hidden="true">#</a>Whole</h5>
-<p>The whole M3 clock shows every parameter, in two groups.</p>
+<p>The whole M3 clock shows every parameter, in three groups.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -16026,6 +16101,10 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 <tr>
 <td>Position</td>
 <td>Position, Readout, Swap</td>
+</tr>
+<tr>
+<td>Law</td>
+<td>Matrix, Seed, Pose map</td>
 </tr>
 </tbody></table>
 </div>
@@ -16067,10 +16146,14 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 <li>Turn Reciprocal on. The matching cut shows with it.</li>
 <li>Set Turn to Both. The shadow turn shows beside the first.</li>
 <li>Set Open to Exploded. The parts of the wheel move apart while the subject stays.</li>
+<li>Set Readout to Generation. Change Matrix. The cell of the same hexagram changes with the matrix.</li>
 </ol>
 <h4 id="rules-56"><a class="anchor" href="#rules-56" aria-hidden="true">#</a>Rules</h4>
 <ul>
 <li>A degree takes its governor from its quadrant. The governors are the first source of its reading.</li>
+<li>A generation cell yields a positive and a negative codon. In a non-dual cell they are the same codon.</li>
+<li>No matrix has a gap. Every hexagram has a cell in each of the three matrices.</li>
+<li>Seed and Pose map are laws you can test. A reading keeps the seed and the pose map it was read with.</li>
 <li>An aperture is a way to cut the wheel. It is not a place or a time.</li>
 <li>The Sky is not a second clock. The Sky is the dated state of the planets.</li>
 <li>The cuts in a pair are reciprocal. The reciprocal of 15° × 24 is 24° × 15.</li>
@@ -16083,6 +16166,7 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 <li>To read the quarter of the year, set Aperture to 90° × 4.</li>
 <li>To study one part, set Open to Exploded and select that part.</li>
 <li>To read the shadow of a moment, set Turn to Second.</li>
+<li>To compare the two seeds, read a position, change Seed, and read it again.</li>
 </ul>
 <h3 id="22-4-deck"><a class="anchor" href="#22-4-deck" aria-hidden="true">#</a>22.4 Deck</h3>
 <p><strong>Product:</strong> Quaternal Logic · <strong>Kind:</strong> instrument · <strong>Track:</strong> Any track. It is a device on a reading, and a pane when you open it full.</p>
@@ -16144,7 +16228,8 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 </tr>
 </tbody></table>
 </div>
-<p>For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, the nuclear hexagram and the two compasses.</p>
+<p>For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, the nuclear hexagram and the two compasses. It also shows the hexagram&#39;s generation cell under the matrix you choose: its two pairs of bases, its positive and negative codons, and whether the cell is non-dual.</p>
+<p>A line cast as 6 or 9 moves; a line cast as 7 or 8 rests. The bases carry the same four values. A is Old Yin (6) and T is Old Yang (9): the moving bases. C is Young Yin (8) and G is Young Yang (7): the resting bases.</p>
 <h4 id="parameters-50"><a class="anchor" href="#parameters-50" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -16196,6 +16281,12 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 <td>Show · Hide</td>
 <td>Show</td>
 <td>Marks the lines that change, in an I Ching reading.</td>
+</tr>
+<tr>
+<td>Matrix</td>
+<td>Complementary · Moving and resting · Same quality</td>
+<td>Complementary</td>
+<td>For the I Ching, the matrix whose generation cell shows.</td>
 </tr>
 <tr>
 <td>Agent reads</td>
@@ -16253,7 +16344,7 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 </thead>
 <tbody><tr>
 <td>Reading</td>
-<td>Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Journey</td>
+<td>Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Matrix, Journey</td>
 </tr>
 <tr>
 <td>Agent</td>
@@ -16303,7 +16394,7 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 <h4 id="rules-57"><a class="anchor" href="#rules-57" aria-hidden="true">#</a>Rules</h4>
 <ul>
 <li>The Deck answers and explains. It does not score the reading or pick it for you.</li>
-<li>Each card and each hexagram shows the codon it belongs to.</li>
+<li>Each card and each hexagram shows the codon it belongs to. A hexagram shows the codons its cell yields under the chosen matrix.</li>
 <li>A reading is an act on your journey. Each act shows its author.</li>
 <li>An agent does not write behind your back. The Agent reads parameter is your choice.</li>
 <li>The night reading does not contradict the day reading. It shows what the day rests on.</li>
@@ -16614,6 +16705,24 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 <td>World</td>
 <td>The occasion the Situation matrix shows. Each context keeps its own state.</td>
 </tr>
+<tr>
+<td>Partner</td>
+<td>Complementary · Moving and resting · Same quality</td>
+<td>Complementary</td>
+<td>In the Form matrix, the matrix whose partner shows beside each codon.</td>
+</tr>
+<tr>
+<td>Scale</td>
+<td>Codon · Hexagram</td>
+<td>Codon</td>
+<td>Codon takes the partner base by base. Hexagram takes it trigram by trigram, each trigram going to the trigram whose pair is the partner of its pair.</td>
+</tr>
+<tr>
+<td>Apply</td>
+<td>An action</td>
+<td>—</td>
+<td>Moves the cell to its partner.</td>
+</tr>
 </tbody></table>
 </div>
 <h4 id="views-53"><a class="anchor" href="#views-53" aria-hidden="true">#</a>Views</h4>
@@ -16662,7 +16771,7 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 </tr>
 <tr>
 <td>Cell</td>
-<td>Family, Cell</td>
+<td>Family, Cell, Partner, Scale, Apply</td>
 </tr>
 </tbody></table>
 </div>
@@ -16701,6 +16810,7 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 <li>Select a cell. A line shows the parameter that it moves.</li>
 <li>Select the Form matrix to see the body that rings.</li>
 <li>Select the Situation matrix and change the context. The sound changes only where the context is set to differ.</li>
+<li>In the Form matrix, set Partner and press Apply. The cell moves to its partner. Press Apply again to return.</li>
 </ol>
 <h4 id="rules-59"><a class="anchor" href="#rules-59" aria-hidden="true">#</a>Rules</h4>
 <ul>
@@ -16710,6 +16820,8 @@ planetary scales of Ficino and the Shem names are not served yet; the device nam
 <li>The 72 spaces and the 84 modes are different counts.</li>
 <li>A pitch class, a frequency and a vibration mode are related, and they are not the same value.</li>
 <li>A change in the Situation matrix keeps the shared source unchanged. A private context does not enter a shared preset.</li>
+<li>Each matrix gives every codon a partner, at both scales. No matrix leaves a gap.</li>
+<li>A matrix applied twice returns the cell. Complementary then Moving and resting is Same quality.</li>
 </ul>
 <h4 id="tips-58"><a class="anchor" href="#tips-58" aria-hidden="true">#</a>Tips</h4>
 <ul>

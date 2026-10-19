@@ -4342,6 +4342,7 @@ belongs to Scope (§19.12), the next device on the chain.
 | On no answer | Hold · Deny | Hold | What the agent does when nobody answers. |
 | Held | A list (reading) | Read from the agent | What the agent holds now, such as a file or a setting. |
 | Hand back | Lit · Dark (reading) | Dark | Lit when you edited something the agent holds. |
+| Team cell | Row, question and depth (reading) | Read from the team space | Where the agent stands in Anima or Aletheia. Empty when the agent is in no team. |
 
 Identity is a reading of your roster: the agent's name and colour, its
 character in one line, the program that runs it, the skills it carries, the
@@ -4353,6 +4354,20 @@ what it may read and write comes from Scope.
 How a write arrives is not set here. Scope sets the most the agent may do in
 each part of the world, and Arm decides whether it writes directly or
 proposes.
+
+#### In a team
+
+In Anima and Aletheia an agent stands in a team space. Each row of the space
+is a context frame, with its member in each team and the questions that frame
+asks by day and by night. Each member also stands at a depth, one of the six
+M domains. Team cell reads where the agent stands.
+
+A member may call helpers to settle small typed questions: which label fits,
+which of a closed set applies. The helpers are decision agents, and their
+faces are animals. Any member may call any helper, and the team decides which
+helpers run. A helper's answer is evidence: the engine checks it, and it
+never stands in for something the agent saw. The collaboration gate is yours.
+No member and no helper answers it.
 
 #### The thread
 
@@ -4366,6 +4381,7 @@ thread of their own, nested under it.
 | Message | What you said and what the agent said, each with its avatar. |
 | Tool row | One tool the agent used: a key chip and a summary. Click it to open the output. |
 | Spawn row | A helper the agent started, with a link to its thread and its live state. |
+| Ask row | A typed question the agent put to a decision helper: the labels it allowed and the answer, marked as evidence. |
 | Steer line | Words you sent in the middle of a turn. It reads "heard at next tool" until the agent takes it. |
 | Proposal card | A change the agent proposes, with Approve, Changes and Diff. |
 | Stall card | A card with an orange border. It names the prompt the agent waits for, with Retry, Hard stop, Steer and Tell parent. |
@@ -5390,6 +5406,7 @@ The widget shows the proposal cards. Each card names the agent and the change. E
 5. Empty the queue before you end the day.
 
 #### Rules
+- The collaboration gate is always yours. An agent's or a helper's answer to it is refused, even an abstention.
 - Deny is always yours. Only the On no answer setting can deny for you, and you set it.
 - An approved proposal lands with a receipt.
 - A request that is not answered stays in the queue. It does not land.
@@ -5418,6 +5435,7 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 | Depth | A number · No limit | 2 | How deep helpers may spawn their own helpers. The default is a start value, not a limit. |
 | Hand-back | Raw · Digest · Summary | Summary | What a helper returns to its parent. |
 | Subagent model | A model | The lead's model | The default model for everything the group spawns. A member can set its own. |
+| Join | All · Relay · Weighted · Count | All | How the members' returns combine. All keeps every return. Relay gives each member only what the last left open. Weighted weighs the returns together. Count commits when enough agree. |
 | Member state | Working · Idle · Stalled · Done (reading) | Read from each session | The state of each chain. |
 
 #### Views
@@ -5452,7 +5470,7 @@ The whole rack shows every parameter, in three groups.
 |---|---|
 | Members | Members, Selected member, Member state |
 | Limits | Fan-out, Depth |
-| Return | Hand-back, Subagent model |
+| Return | Hand-back, Subagent model, Join |
 
 Drag an agent from the browser onto the rack to add a member. The rack sets no upper limit on members.
 
@@ -5491,6 +5509,7 @@ The widget shows the crew tree with a light on each member.
 - To keep a lead's context small, set Hand-back to Summary.
 - To save cost, set Subagent model to a smaller model for the group.
 - To find the slow member, look for the orange outline.
+- To fuse several readings into one, set Join to Weighted.
 
 ### 19.16 Git / landing
 
@@ -8308,6 +8327,18 @@ The wheel has 360 degrees. A full return takes two turns, 720 degrees. The secon
 
 The wheel has two circles. The inscription circle carries what is written. The lensing circle carries how it is seen. The two together make the clock.
 
+#### What a hexagram yields
+
+Each governor names a hexagram. Under a matrix, the hexagram is a generation cell. Its lower trigram gives one pair of bases and its upper trigram another. The cell yields two codons. The positive codon takes the first base of the lower pair and the whole upper pair. The negative codon takes the whole lower pair and the last base of the upper pair. When the lower pair ends with the base that starts the upper pair, the two codons are one codon, and the cell is non-dual.
+
+| Matrix | Pairs the bases | Mixed trigrams take |
+|---|---|---|
+| Complementary | A with T, C with G | AT, TA, CG, GC |
+| Moving and resting | A with G, T with C | AG, GA, CT, TC |
+| Same quality | A with C, T with G | AC, CA, GT, TG |
+
+The four trigrams that mirror themselves, Qian, Kun, Kan and Li, take TT, AA, CC and GG in every matrix. Each matrix has 64 cells, 16 of them non-dual.
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -8318,7 +8349,10 @@ The wheel has two circles. The inscription circle carries what is written. The l
 | Turn | First · Second · Both | First | Which turn of the wheel to show. Second is the shadow. |
 | Position | 0 to 359 degrees | 0 | The degree to read. |
 | Open | Closed · Exploded | Closed | Exploded draws the parts of the wheel apart, like a flower with an eye at the centre. |
-| Readout | Quadrant · Governor · Hexagram and codon | Governor | What the position shows. |
+| Readout | Quadrant · Governor · Hexagram and codon · Generation | Governor | What the position shows. Generation shows the cell of the position's hexagram: its two pairs, its positive and negative codons, and whether it is non-dual. |
+| Matrix | Complementary · Moving and resting · Same quality | Complementary | The matrix that makes the hexagram a generation cell. |
+| Seed | Sum and difference · Four charge | Sum and difference | How a codon becomes the turn that picks its pose: from the sum and difference of its bases, or from its four charges. The two laws pick a different pose for about half the readings. |
+| Pose map | Raw bin · Lawful slot | Raw bin | How the turn lands on the eight poses. Lawful slot moves a non-dual codon from the eighth pose to its mirror, the first. |
 
 The 16 even cuts come in eight reciprocal pairs. In each pair, the size of one part is the number of parts in the other.
 
@@ -8357,12 +8391,13 @@ The compact M3 clock shows the wheel with a needle, and four macros.
 
 ##### Whole
 
-The whole M3 clock shows every parameter, in two groups.
+The whole M3 clock shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
 | Cut | Aperture, Reciprocal, Turn, Open |
 | Position | Position, Readout, Swap |
+| Law | Matrix, Seed, Pose map |
 
 ##### Full
 
@@ -8389,10 +8424,14 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 4. Turn Reciprocal on. The matching cut shows with it.
 5. Set Turn to Both. The shadow turn shows beside the first.
 6. Set Open to Exploded. The parts of the wheel move apart while the subject stays.
+7. Set Readout to Generation. Change Matrix. The cell of the same hexagram changes with the matrix.
 
 #### Rules
 
 - A degree takes its governor from its quadrant. The governors are the first source of its reading.
+- A generation cell yields a positive and a negative codon. In a non-dual cell they are the same codon.
+- No matrix has a gap. Every hexagram has a cell in each of the three matrices.
+- Seed and Pose map are laws you can test. A reading keeps the seed and the pose map it was read with.
 - An aperture is a way to cut the wheel. It is not a place or a time.
 - The Sky is not a second clock. The Sky is the dated state of the planets.
 - The cuts in a pair are reciprocal. The reciprocal of 15° × 24 is 24° × 15.
@@ -8405,6 +8444,7 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 - To read the quarter of the year, set Aperture to 90° × 4.
 - To study one part, set Open to Exploded and select that part.
 - To read the shadow of a moment, set Turn to Second.
+- To compare the two seeds, read a position, change Seed, and read it again.
 
 ### 22.4 Deck
 
@@ -8433,7 +8473,9 @@ Positions pair up: P0 with P5, P1 with P4, P2 with P3. A pair shows what the two
 | Torus | Six cards, one for each position. The day reading. |
 | Klein | Six day cards and six night cards. The night reading is the shadow of the day reading. |
 
-For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, the nuclear hexagram and the two compasses.
+For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, the nuclear hexagram and the two compasses. It also shows the hexagram's generation cell under the matrix you choose: its two pairs of bases, its positive and negative codons, and whether the cell is non-dual.
+
+A line cast as 6 or 9 moves; a line cast as 7 or 8 rests. The bases carry the same four values. A is Old Yin (6) and T is Old Yang (9): the moving bases. C is Young Yin (8) and G is Young Yang (7): the resting bases.
 
 #### Parameters
 
@@ -8446,6 +8488,7 @@ For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, t
 | Pairs | Show · Hide | Show | Marks the pairs P0 and P5, P1 and P4, P2 and P3. |
 | Lemniscate | On · Off | Off | Opens the reading of position P4. |
 | Moving lines | Show · Hide | Show | Marks the lines that change, in an I Ching reading. |
+| Matrix | Complementary · Moving and resting · Same quality | Complementary | For the I Ching, the matrix whose generation cell shows. |
 | Agent reads | Off · Propose · Write | Propose | Off: the agent does not read. Propose: each reading waits for you to accept it. Write: readings go in directly, each with a receipt. |
 | Journey | The open journey | The open journey | The journey that the reading joins. |
 
@@ -8477,7 +8520,7 @@ The whole Deck shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
-| Reading | Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Journey |
+| Reading | Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Matrix, Journey |
 | Agent | Agent reads |
 
 ##### Full
@@ -8509,7 +8552,7 @@ The widget shows the last spread, with its theme. Click the spread to open the D
 #### Rules
 
 - The Deck answers and explains. It does not score the reading or pick it for you.
-- Each card and each hexagram shows the codon it belongs to.
+- Each card and each hexagram shows the codon it belongs to. A hexagram shows the codons its cell yields under the chosen matrix.
 - A reading is an act on your journey. Each act shows its author.
 - An agent does not write behind your back. The Agent reads parameter is your choice.
 - The night reading does not contradict the day reading. It shows what the day rests on.
@@ -8657,6 +8700,9 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Family | 0 to 5 | 0 | The family of the Oscillator's source values. The fifth has no single value. |
 | Cell | Row and position in the Oscillator; lens and mode in the Reading; the codon in the Form | The cell for now | The cell to inspect. |
 | Context | World · Personal · Shared | World | The occasion the Situation matrix shows. Each context keeps its own state. |
+| Partner | Complementary · Moving and resting · Same quality | Complementary | In the Form matrix, the matrix whose partner shows beside each codon. |
+| Scale | Codon · Hexagram | Codon | Codon takes the partner base by base. Hexagram takes it trigram by trigram, each trigram going to the trigram whose pair is the partner of its pair. |
+| Apply | An action | — | Moves the cell to its partner. |
 
 #### Views
 
@@ -8687,7 +8733,7 @@ The whole M′ matrices show every parameter, in two groups.
 | Group | Parameters |
 |---|---|
 | Matrix | Matrix, Basis, Lens, Context frame, Value form, Context |
-| Cell | Family, Cell |
+| Cell | Family, Cell, Partner, Scale, Apply |
 
 The grid shows with every value.
 
@@ -8715,6 +8761,7 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 4. Select a cell. A line shows the parameter that it moves.
 5. Select the Form matrix to see the body that rings.
 6. Select the Situation matrix and change the context. The sound changes only where the context is set to differ.
+7. In the Form matrix, set Partner and press Apply. The cell moves to its partner. Press Apply again to return.
 
 #### Rules
 
@@ -8724,6 +8771,8 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - The 72 spaces and the 84 modes are different counts.
 - A pitch class, a frequency and a vibration mode are related, and they are not the same value.
 - A change in the Situation matrix keeps the shared source unchanged. A private context does not enter a shared preset.
+- Each matrix gives every codon a partner, at both scales. No matrix leaves a gap.
+- A matrix applied twice returns the cell. Complementary then Moving and resting is Same quality.
 
 #### Tips
 
