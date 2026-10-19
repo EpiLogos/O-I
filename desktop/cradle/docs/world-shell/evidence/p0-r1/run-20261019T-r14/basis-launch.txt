@@ -1,0 +1,11 @@
+seat=/Users/admin/Central/worktrees/env-2/o-i
+branch=dlw/native-build
+head=023a9975637f8ddda54540ff18654c53ae946da6
+stamp=20261019T-r14
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261019T-r14
+target=/Users/admin/Central/Work/O-I/target
+backing=full-suite
+mode=launch
+runner_sha256=0a26931bf14fbc63ac265526ae775dcb4acdd184024b78304a362c13872dc440
+status:
+?? desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261019T-r14/

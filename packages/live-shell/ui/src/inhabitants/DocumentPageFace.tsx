@@ -7,6 +7,10 @@ import {useCallback, useContext, useEffect, useRef, useState} from 'react'
  * - the page is read through Central's file route (`readFile`); it is its own file in its world's folder, never copied into a store;
  * - the body is the sandboxed frame carrying the page with the observation and document-host scripts; the only host↔frame traffic is
  *   the bounded island read (`useDocumentHostRead`) and the page's own link message (below);
+ * - the page is drawn by the current template from its own island (personal/page.mjs readPage → renderPage), never by the script the
+ *   file was copied with: a page made from an older template carries an older runtime, which never shows what the page owner writes
+ *   into the island (r14: a title written from Clip view stood in the island while the page still drew its placeholder). Save splices
+ *   only the island back over the file, so the file's other bytes stay as they are. A file that is no page is hosted as it is;
  * - Save is the document host's revision-checked save (`document/hostSave.ts saveDocumentPayload`): the island the frame holds, spliced
  *   over the saved source; a page in a project's human ground goes through the source owner's own CAS, any other through the file
  *   owner's. A basis that moved before the write is `stale`, a write the owner refuses keeps the draft and says why;
@@ -18,6 +22,7 @@ import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import {saveDocumentPayload, type DocumentSaveOutcome} from '../../../../../desktop/cradle/src/document/hostSave'
 import {documentScripts, useDocumentFrame, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
 import {readDocumentIdentity} from '../../../../../desktop/cradle/src/document/identity'
+import {readPage, renderPage} from '../../../../../desktop/cradle/src/personal/page.mjs'
 import type {CentralLocation, KernelTransportStatus, NativeFileReading} from '../../../../../desktop/cradle/src/kernel/types'
 import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
@@ -40,6 +45,11 @@ export function linkTarget(href: unknown): {kind: 'page'; path: string} | {kind:
   const path = value.replace(/^central:path:[^:]*:/, '').replace(/^\.?\//, '')
   if (/^(?:Control\/user\/flows\/[^/]+|Work\/[^/]+\/ProjectCentral\/user\/(?:[^/]+\/)*[^/]+)\.html$/i.test(path)) return {kind: 'page', path}
   return {kind: 'none', why: `${value} is neither a page of a world nor an http(s) address.`}
+}
+
+/** The page as the current template draws it from its own island; a file that does not read as a page is kept as it is. */
+export function currentPage(html: string): string {
+  try { return renderPage(readPage(html)) } catch { return html }
 }
 
 /** The hosted copy: the observation and document-host scripts, injected as the cradle's hosting surfaces do. */
@@ -77,7 +87,7 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
     try {
       const read = await readFile(transport, location)
       setReading(read)
-      setFace(projectPage(read.content))
+      setFace(projectPage(currentPage(read.content)))
     } catch (error) { setFailure(String(error)) }
   }, [location, transport])
   useEffect(() => { void load() }, [load])
