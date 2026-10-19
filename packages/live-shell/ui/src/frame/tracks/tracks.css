@@ -100,7 +100,7 @@
 .tl-needle[data-stalled] { background: var(--stalled) }
 .tl-readout { position: absolute; top: 2px; left: 5px; padding: 0 4px; background: var(--bg-1); border-left: 2px solid var(--stalled); color: var(--stalled); font: 9px ui-monospace, 'SF Mono', Menlo, monospace; white-space: nowrap }
 .tl-needle[data-edge="end"] .tl-readout { left: auto; right: 5px; border-left: 0; border-right: 2px solid var(--stalled) }
-.tl-note { position: sticky; bottom: 0; flex: none; margin: auto 0 0; padding: 3px 8px; font-size: 10px; color: var(--text-faint); background: var(--bg-1); border-top: 1px solid var(--line) }
+.tl-note { flex: none; margin: 0; padding: 3px 8px; font-size: 10px; color: var(--text-faint); background: var(--bg-1); border-top: 1px solid var(--line) }
 .tracks-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-faint); font-size: 11px; background: var(--bg-2) }
 /* Where the tracks will stand (Live's "Drop Files and Devices Here"): the empty area of the grid or the lanes, the reason in
    it, quiet. */
@@ -170,8 +170,8 @@
 button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-stop[data-receipt="ok"] { box-shadow: 0 0 0 1px var(--accent) }
 .tl-stop[data-receipt="refused"] { box-shadow: 0 0 0 1px var(--rec) }
-.tl-receipt { margin-top: auto }
-.tl-receipt + .tl-note { margin-top: 0 }
+/* The foot: the owner's last answer and the note under it stay in view at the pane's foot however many lanes scroll above. */
+.tl-foot { position: sticky; bottom: 0; z-index: 3; flex: none; margin-top: auto; display: flex; flex-direction: column }
 
 /* R3 — the mixer row under each head (manual §16.6; Live cap 37, 43): the switches and the monitor on one line, the routes on the
    next. A control's light is its owner's reading: on lit, off dark, unread hatched; a control no owner op writes stands dimmed. */

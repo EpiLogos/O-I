@@ -439,12 +439,14 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       {openedEvent.detail && <p className="tl-event-detail">{openedEvent.detail}</p>}
       {openedEvent.ref && <code>{openedEvent.ref}</code>}
     </aside>}
-    {receipt && <p className="sg-receipt tl-receipt" role="status" data-ok={receipt.ok}>
-      <b>{receipt.what}</b>
-      <span>{receipt.text}</span>
-      <button type="button" aria-label="Dismiss" onClick={onDismiss}>×</button>
-    </p>}
-    {left > 0 && <p className="tl-note" role="status">{left} {left === 1 ? 'clip has' : 'clips have'} no place on this ruler: its owner gives none. The Session grid holds {left === 1 ? 'it' : 'them'}.</p>}
+    {(receipt || left > 0) && <div className="tl-foot">
+      {receipt && <p className="sg-receipt tl-receipt" role="status" data-ok={receipt.ok}>
+        <b>{receipt.what}</b>
+        <span title={receipt.text}>{receipt.text}</span>
+        <button type="button" aria-label="Dismiss" onClick={onDismiss}>×</button>
+      </p>}
+      {left > 0 && <p className="tl-note" role="status">{left} {left === 1 ? 'clip has' : 'clips have'} no place on this ruler: its owner gives none. The Session grid holds {left === 1 ? 'it' : 'them'}.</p>}
+    </div>}
   </div>
 }
 
