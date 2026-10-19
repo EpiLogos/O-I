@@ -36,6 +36,10 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  /* The page stands clear of the pane's edge band (native/workbench.css --pane-edge-band), as the Session grid does. The page is a
+     frame from another origin, and in the native candidate a pointer over such a frame goes to the frame even where the band lies
+     above it, so a band over the page never opened the tab rail (r15). The paper runs under the band; the page begins after it. */
+  padding-left: var(--pane-edge-band, 0);
   background: var(--oi-canvas-ground);
   color: var(--oi-foreground);
   font-family: var(--oi-font-sans);
