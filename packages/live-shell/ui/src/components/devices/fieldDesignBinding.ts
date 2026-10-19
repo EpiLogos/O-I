@@ -43,6 +43,10 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   depth: {},
   resonance: {
     stations: 'The plate\'s stations are computed inside the Expression from its modes and reach no reader outside it.',
+    'body.source': 'No body source: the engine takes its Q factor, agitation and edge as rows of its own; no tattva sets them here.',
+    'tattva.name': 'No tattva reaches the shell: the M2 condition the plate rings under is not announced to it.',
+    'tattva.fibre': 'No tattva reaches the shell, so no element fibre does.',
+    'tattva.standing': 'No tattva reaches the shell, so no table of body constants stands here.',
   },
 }
 

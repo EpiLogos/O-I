@@ -323,10 +323,11 @@ export function deckActOf(change: ValueChange, deck: QlDeckState = qlDeckState()
   }
 }
 
+const NO_CELL = 'The journey\'s reading carries the hexagram\'s lines, not its generation cell: the kernel generates one under a matrix (ql_m3_generate), and the journey does not ask it.'
 const ACT_KEYS = ['act.draw', 'act.cast', 'act.assign', 'act.link', 'act.comment', 'act.close']
 /** Why each key the binding does not take has no owner write (manual §16.12). */
 const STANDING_WHY: Readonly<Record<string, string>> = {theme: CONCERN_SET, journey: 'The Deck reads the journey whose page is open.', placements: 'A reading: cards come by the journey\'s acts.',
-  iching: 'A reading: lines come by a cast.', 'm3.card': M3_CARD, 'act.move': NO_MOVE, 'act.turn': NO_TURN}
+  iching: 'A reading: lines come by a cast.', 'm3.card': M3_CARD, 'act.move': NO_MOVE, 'act.turn': NO_TURN, matrix: NO_CELL, generation: NO_CELL}
 
 /** The binding the runtime hosts the Deck design on: the journey's readings, its acts through the kernel, the view's own keys in its
  * own hand, and every key no act takes disabled with the reason. */

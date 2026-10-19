@@ -13,9 +13,12 @@
 //   m2.tonics     the 84 lens modes of the basis (`ql music modes`, `ql.music-modes/v1` lens_cf): for each lens, each mode's tonic.
 //   m3.codons     the 64 codons in address order (`ql.m3-state/v1` transcription for each form address); form.address the form in use
 //                 (written by m3_reception `select-form`).
+//   form.partner  'complementary' | 'moving-resting' | 'same-quality', and form.scale 'codon' | 'hexagram': the matrix whose partner
+//                 shows beside each codon, base by base or trigram by trigram; form.partners the kernel's 64 partner addresses for
+//                 them (ql_m3_apply_matrix, ql_m3_apply_matrix_hexagram). Apply moves the form to its partner through `select-form`.
 // The Situation matrix has no owner yet (the M′ packets, QL-MEF #281, are commissioned, not landed), so it is named absent. Follow
 // has no owner operation (nothing reports the notes played or moves the cell with the sky), so it is not offered.
-import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, ValueBox, type LightState} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, ValueBox, type LightState} from '../../sdk/panel'
 import {PITCH_CLASS_NAMES} from '../../../live/modes'
 import {NONE, clampTo, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
@@ -27,6 +30,9 @@ const MATRICES = [{value: 'oscillator', label: 'Oscillator', does: 'The field of
   {value: 'situation', label: 'Situation', does: 'The world that receives the sound, and the seven centres.'}] as const
 const BASES = [{value: 'chromatic', label: 'Chromatic', does: 'The twelve notes in the order of semitones.'}, {value: 'fifths', label: 'Fifths', does: 'The twelve notes in the order of fifths.'}] as const
 const FORMS = [{value: 'raw', label: 'Raw', does: 'The source value as it stands.'}, {value: 'dr', label: 'Root', does: 'Its digital root.'}, {value: 'decimal', label: 'Decimal', does: 'Its decimal value, within ten by ten.'}] as const
+const PARTNERS = [{value: 'complementary', label: 'Complementary', does: 'Complementary: A with T, C with G.'}, {value: 'moving-resting', label: 'Moving and resting', does: 'Moving and resting: A with G, T with C.'},
+  {value: 'same-quality', label: 'Same quality', does: 'Same quality: A with C, T with G.'}] as const
+const SCALES = [{value: 'codon', label: 'Codon', does: 'The partner base by base.'}, {value: 'hexagram', label: 'Hexagram', does: "The partner trigram by trigram: each trigram goes to the trigram whose pair is the partner of its pair."}] as const
 const MODES = ['Ionian', 'Dorian', 'Phrygian', 'Lydian', 'Mixolydian', 'Aeolian', 'Locrian']
 const lensLabel = (i: number) => `L${i >> 1}${i & 1 ? '′' : ''}`
 
@@ -37,6 +43,7 @@ function cellsOf(v: V): (readonly (number | null)[])[][] | undefined {
 }
 const tonicsOf = (v: V) => { const g = json<unknown>(v, 'm2.tonics', undefined); return Array.isArray(g) && g.length === 12 && g.every(r => Array.isArray(r) && r.length === 7) ? g as number[][] : undefined }
 const codonsOf = (v: V) => { const g = json<unknown>(v, 'm3.codons', undefined); return Array.isArray(g) && g.length === 64 && g.every(x => typeof x === 'string') ? g as string[] : undefined }
+const partnersOf = (v: V) => { const g = json<unknown>(v, 'form.partners', undefined); return Array.isArray(g) && g.length === 64 && g.every(x => Number.isInteger(x) && x >= 0 && x < 64) ? g as number[] : undefined }
 const formIndex = (v: V) => (strOf(v, 'valueForm') === 'dr' ? 1 : strOf(v, 'valueForm') === 'decimal' ? 2 : 0)
 
 /** What the grid shows for the matrix: its size, each cell's word and weight (0..1), the cell in use, and the reason when absent. */
@@ -54,8 +61,9 @@ function gridOf(v: V) {
       word: (i: number, j: number) => (t ? PITCH_CLASS_NAMES[t[i]![j]!] ?? NONE : NONE), weight: (i: number, j: number) => (t ? .25 + .55 * (t[i]![j]! / 11) : 0), absent: t ? undefined : 'No reading of the lens modes'}
   }
   if (m === 'form') {
-    const cod = codonsOf(v), a = intIn(v, 'form.address', 0, 63)
+    const cod = codonsOf(v), a = intIn(v, 'form.address', 0, 63), partners = partnersOf(v), to = a === undefined ? undefined : partners?.[a]
     return {rows: 8, cols: 8, rowLabel: (i: number) => String(i * 8), colLabel: (j: number) => String(j), at: a === undefined ? undefined : [a >> 3, a & 7] as const,
+      partner: to === undefined ? undefined : [to >> 3, to & 7] as const, under: (i: number, j: number) => { const t = partners?.[i * 8 + j]; return t === undefined ? undefined : cod?.[t] },
       word: (i: number, j: number) => cod?.[i * 8 + j] ?? NONE, weight: () => (cod ? .3 : 0), absent: cod ? undefined : 'No reading of the codons'}
   }
   return {rows: 7, cols: 3, rowLabel: (i: number) => `C${7 - i}`, colLabel: (j: number) => ['world', 'personal', 'shared'][j]!, at: undefined, word: () => NONE, weight: () => 0,
@@ -72,11 +80,18 @@ function Grid({p, w, h, handles, text}: {p: ViewProps; w: number; h: number; han
   return <g>
     {Array.from({length: g.rows}, (_, i) => Array.from({length: g.cols}, (_, j) => <rect key={`${i}-${j}`} x={x0 + j * cs + .5} y={y0 + i * cs + .5} width={cs - 1} height={cs - 1}
       fill="var(--dp-value)" opacity={g.absent ? 0 : .08 + .55 * g.weight(i, j)} stroke="var(--dp-value-dim)" strokeWidth={.4} strokeDasharray={g.absent ? '2 2' : undefined} />))}
-    {text && !g.absent && cs >= 14 && Array.from({length: g.rows}, (_, i) => Array.from({length: g.cols}, (_, j) => <text key={`t${i}-${j}`} x={x0 + (j + .5) * cs} y={y0 + (i + .5) * cs + fs * .35}
-      textAnchor="middle" className="dp-ink" style={{fontSize: fs}}>{g.word(i, j)}</text>))}
+    {text && !g.absent && cs >= 14 && Array.from({length: g.rows}, (_, i) => Array.from({length: g.cols}, (_, j) => { const under = cs >= 40 ? g.under?.(i, j) : undefined
+      return <g key={`t${i}-${j}`}>
+        <text x={x0 + (j + .5) * cs} y={y0 + (i + .5) * cs + fs * .35 - (under ? fs * .5 : 0)} textAnchor="middle" className="dp-ink" style={{fontSize: fs}}>{g.word(i, j)}</text>
+        {under && <text x={x0 + (j + .5) * cs} y={y0 + (i + .5) * cs + fs * 1.05} textAnchor="middle" className="dp-axis" style={{fontSize: fs * .72}}>↔ {under}</text>}
+      </g> }))}
     {!g.absent && (text || cs >= 9) && Array.from({length: g.rows}, (_, i) => (g.rows <= 12 && (text || i % 3 === 0)) && <text key={`r${i}`} x={x0 - 3} y={y0 + (i + .5) * cs + 3} textAnchor="end" className="dp-axis" style={{fontSize: text ? 9 : 7}}>{g.rowLabel(i)}</text>)}
     {!g.absent && (text || cs >= 9) && Array.from({length: g.cols}, (_, j) => (text || j % 3 === 0 || g.cols <= 8) && <text key={`c${j}`} x={x0 + (j + .5) * cs} y={y0 - 3} textAnchor="middle" className="dp-axis" style={{fontSize: text ? 9 : 7}}>{g.colLabel(j)}</text>)}
     {g.absent && <text x={x0 + cs * g.cols / 2} y={y0 + cs * g.rows / 2} textAnchor="middle" className="dp-ink-dim" style={{fontSize: text ? 13 : 9}}>{g.absent}</text>}
+    {g.partner && g.at && !g.absent && <g>
+      <path d={`M${x0 + (g.at[1] + .5) * cs} ${y0 + (g.at[0] + .5) * cs}L${x0 + (g.partner[1] + .5) * cs} ${y0 + (g.partner[0] + .5) * cs}`} stroke="var(--dp-on)" strokeWidth={.8} strokeDasharray="3 2" opacity={.7} />
+      <rect x={x0 + g.partner[1] * cs + .5} y={y0 + g.partner[0] * cs + .5} width={cs - 1} height={cs - 1} fill="none" stroke="var(--dp-on)" strokeWidth={1} strokeDasharray="2 2" />
+    </g>}
     {g.at && <rect x={x0 + g.at[1] * cs - .5} y={y0 + g.at[0] * cs - .5} width={cs + 1} height={cs + 1} fill="none" stroke="var(--dp-on)" strokeWidth={1.5} />}
     {handles && g.at && !g.absent && <Handle n={1} x={x0 + (g.at[1] + .5) * cs} y={y0 + (g.at[0] + .5) * cs} label="Cell" shape="ring"
       does={`Drag to another cell: the cell to inspect.${held ? ` ${held}` : ''}`}
@@ -98,6 +113,11 @@ function cellWord(v: V) { const g = gridOf(v), m = strOf(v, 'matrix') ?? 'oscill
 function cellValue(v: V) { const g = gridOf(v); return g.at && !g.absent ? g.word(g.at[0], g.at[1]) : undefined }
 const DISPLAY_DOES = 'The matrix, cell by cell, as its owner states it. The ringed cell is the one in use.'
 
+const formOnly = (v: V) => ((strOf(v, 'matrix') ?? 'oscillator') === 'form' ? undefined : 'Only the Form matrix has partners.')
+/** The partner of the form in use, in words: "TAT ↔ ATA". */
+const partnerWord = (v: V) => { const a = intIn(v, 'form.address', 0, 63), cod = codonsOf(v), to = a === undefined ? undefined : partnersOf(v)?.[a]
+  return a === undefined || to === undefined || !cod ? undefined : `${cod[a]} ↔ ${cod[to]}` }
+
 function controls(p: ViewProps) {
   const v = p.v
   return {
@@ -110,6 +130,13 @@ function controls(p: ViewProps) {
       disabled={st(p, 'valueForm').disabled ?? ((strOf(v, 'matrix') ?? 'oscillator') === 'oscillator' ? undefined : 'Only the Oscillator holds source values.')} />,
     row: <ValueBox {...st(p, 'm1.row12')} label="Row" does="The row of the cell to inspect." value={intIn(v, 'm1.row12', 0, 11) ?? NaN} def={0} scale={{min: 0, max: 11, step: 1}} format={x => String(x)} onChange={x => p.set('m1.row12', x)} />,
     col: <ValueBox {...st(p, 'm1.col12')} label="Position" does="The position of the cell to inspect." value={intIn(v, 'm1.col12', 0, 11) ?? NaN} def={0} scale={{min: 0, max: 11, step: 1}} format={x => String(x)} onChange={x => p.set('m1.col12', x)} />,
+    partner: <Chooser {...st(p, 'form.partner')} wide label="Partner" does="In the Form matrix, the matrix whose partner shows beside each codon." value={strOf(v, 'form.partner') ?? ''} options={PARTNERS}
+      onChange={x => p.set('form.partner', x)} disabled={st(p, 'form.partner').disabled ?? formOnly(v)} />,
+    scale: <Radio {...st(p, 'form.scale')} label="Scale" does="Base by base, or trigram by trigram." value={strOf(v, 'form.scale') ?? ''} options={SCALES} onChange={x => p.set('form.scale', x)}
+      disabled={st(p, 'form.scale').disabled ?? formOnly(v)} />,
+    apply: <Action {...st(p, 'form.address')} label="Apply" does="Moves the cell to its partner. Press again to return."
+      onPress={() => { const a = intIn(v, 'form.address', 0, 63), to = a === undefined ? undefined : partnersOf(v)?.[a]; if (to !== undefined) p.set('form.address', to) }}
+      disabled={st(p, 'form.address').disabled ?? formOnly(v) ?? (intIn(v, 'form.address', 0, 63) === undefined || !partnersOf(v) ? 'No partner from the kernel for this cell.' : undefined)} />,
     family: <ValueBox {...st(p, 'm1.family')} label="Family" does="The family of the source values: 0 to 5; the fifth, the Quintessence, has no scalar." value={intIn(v, 'm1.family', 0, 5) ?? NaN} def={0}
       scale={{min: 0, max: 5, step: 1}} format={x => String(x)} onChange={x => p.set('m1.family', x)} />,
   }
@@ -127,6 +154,8 @@ export const design: DesignedDevice = {
     'm2.tonics': JSON.stringify([[0, 2, 4, 5, 7, 9, 11], [1, 3, 5, 6, 8, 10, 0], [2, 4, 6, 7, 9, 11, 1], [3, 5, 7, 8, 10, 0, 2], [4, 6, 8, 9, 11, 1, 3], [5, 7, 9, 10, 0, 2, 4],
       [6, 8, 10, 11, 1, 3, 5], [7, 9, 11, 0, 2, 4, 6], [8, 10, 0, 1, 3, 5, 7], [9, 11, 1, 2, 4, 6, 8], [10, 0, 2, 3, 5, 7, 9], [11, 1, 3, 4, 6, 8, 10]]),
     // `ql kernel m3`, the codon of each form address 0..63.
+    // ql_m3_apply_matrix(0, a) on main (61c0e16): each address's complementary partner, base by base.
+    'form.partner': 'complementary', 'form.scale': 'codon', 'form.partners': '[21,20,23,22,17,16,19,18,29,28,31,30,25,24,27,26,5,4,7,6,1,0,3,2,13,12,15,14,9,8,11,10,53,52,55,54,49,48,51,50,61,60,63,62,57,56,59,58,37,36,39,38,33,32,35,34,45,44,47,46,41,40,43,42]',
     'm3.codons': JSON.stringify('AAA AAT AAC AAG ATA ATT ATC ATG ACA ACT ACC ACG AGA AGT AGC AGG TAA TAT TAC TAG TTA TTT TTC TTG TCA TCT TCC TCG TGA TGT TGC TGG CAA CAT CAC CAG CTA CTT CTC CTG CCA CCT CCC CCG CGA CGT CGC CGG GAA GAT GAC GAG GTA GTT GTC GTG GCA GCT GCC GCG GGA GGT GGC GGG'.split(' ')),
   },
   fixtures: {
@@ -136,8 +165,10 @@ export const design: DesignedDevice = {
       'm2.tonics': JSON.stringify([[0, 2, 4, 5, 7, 9, 11], [6, 8, 10, 11, 1, 3, 5], [7, 9, 11, 0, 2, 4, 6], [1, 3, 5, 6, 8, 10, 0], [2, 4, 6, 7, 9, 11, 1], [8, 10, 0, 1, 3, 5, 7],
         [9, 11, 1, 2, 4, 6, 8], [3, 5, 7, 8, 10, 0, 2], [4, 6, 8, 9, 11, 1, 3], [10, 0, 2, 3, 5, 7, 9], [11, 1, 3, 4, 6, 8, 10], [5, 7, 9, 10, 0, 2, 4]])},
     'The form': {matrix: 'form'},
+    // ql_m3_apply_matrix_hexagram(1, a): each address read as a hexagram, its moving-and-resting partner trigram by trigram.
+    'The form, partner by hexagram': {matrix: 'form', 'form.partner': 'moving-resting', 'form.scale': 'hexagram', 'form.partners': '[45,43,47,41,46,40,44,42,29,27,31,25,30,24,28,26,61,59,63,57,62,56,60,58,13,11,15,9,14,8,12,10,53,51,55,49,54,48,52,50,5,3,7,1,6,0,4,2,37,35,39,33,38,32,36,34,21,19,23,17,22,16,20,18]'},
     'The situation': {matrix: 'situation'},
-    'No readings': {'m1.cells': undefined, 'm2.tonics': undefined, 'm3.codons': undefined, 'm1.row12': undefined, 'm1.col12': undefined, 'm1.lens12': undefined, 'm1.context_frame': undefined, 'form.address': undefined},
+    'No readings': {'m1.cells': undefined, 'm2.tonics': undefined, 'm3.codons': undefined, 'm1.row12': undefined, 'm1.col12': undefined, 'm1.lens12': undefined, 'm1.context_frame': undefined, 'form.address': undefined, 'form.partner': undefined, 'form.scale': undefined, 'form.partners': undefined},
   },
 
   folded: p => <Folded title="M′ matrices" light="unknown" readings={[matrixWord(p.v) ?? NONE, cellWord(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -163,10 +194,12 @@ export const design: DesignedDevice = {
         <Section label="Cell" width={72}>{c.row}{c.col}{c.family}</Section>
         <Section label="Show" width={72}>{c.form}</Section>
         <Section label="Frame" width={64}>{c.cf}</Section>
+        <Section label="Partner" width={128}>{c.partner}{c.scale}{c.apply}</Section>
         <Section label="In use" grow>
           <Readout big label={cellWord(p.v) ?? 'cell'} does="The value of the cell in use, in the form chosen." value={cellValue(p.v)} tone="value" />
           <Readout label="tick" does="The tick of the M1 clock." value={intIn(p.v, 'm1.tick12', 0, 11)} />
           <Readout label="mode" does="The mode of the lens: the context frame's mode." value={intIn(p.v, 'm1.context_frame', 1, 7) === undefined ? undefined : MODES[intIn(p.v, 'm1.context_frame', 1, 7)! - 1]} />
+          {(strOf(p.v, 'matrix') ?? 'oscillator') === 'form' && <Readout label="partner" does="The form in use and its partner under the matrix." value={partnerWord(p.v)} />}
         </Section>
       </Band>
     </Panel> },
@@ -179,6 +212,8 @@ export const design: DesignedDevice = {
         <text x={530} y={80} className="dp-ink-dim">{MATRICES.find(m => m.value === (strOf(p.v, 'matrix') ?? 'oscillator'))?.does}</text>
         {[['cell', cellWord(p.v) ?? NONE], ['value', cellValue(p.v) ?? NONE], ['basis', strOf(p.v, 'm1.basis') ?? NONE],
           ['lens', intIn(p.v, 'm1.lens12', 0, 11) === undefined ? NONE : lensLabel(intIn(p.v, 'm1.lens12', 0, 11)!)], ['frame', intIn(p.v, 'm1.context_frame', 1, 7) === undefined ? NONE : `CF${intIn(p.v, 'm1.context_frame', 1, 7)}`],
+          ...((strOf(p.v, 'matrix') ?? 'oscillator') === 'form' ? [['partner', partnerWord(p.v) ?? NONE],
+            ['under', `${PARTNERS.find(m => m.value === strOf(p.v, 'form.partner'))?.label ?? NONE}, by ${strOf(p.v, 'form.scale') ?? NONE}`]] : []),
           ['moves', 'not named by any owner']].map(([k, val], i) =>
           <g key={k}><text x={530} y={120 + i * 24} className="dp-axis">{k}</text><text x={590} y={120 + i * 24} className="dp-ink">{val}</text></g>)}
       </g>

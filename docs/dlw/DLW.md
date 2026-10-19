@@ -3102,6 +3102,116 @@ The widget shows the live shell. A line below it says "following" and shows the 
 - To search a long log, raise Scrollback before you start the command.
 - To hand a routine to an agent, press Capture, run it once, and give the example to the agent.
 
+### 17.10 Light
+
+**Product:** Technē · **Kind:** effect · **Chain:** A reading's chain, over the Canvas
+
+You need to see how much of a source's force reaches a conclusion through the chain of readings you drew. Light lays an optical bench over the Canvas. Your cards stay your cards: the light follows the lines between them and shows what arrives where.
+
+#### How the light travels
+
+You choose one card as the source. The light leaves it and follows the lines you drew.
+
+- A card shares the light it receives equally among its lines out. A conclusion never holds more force than its source gave.
+- A line passes the share that its standing allows. A fact passes the most, a guess the least.
+- A line loses light along its length. A long chain of readings reaches its end dimmer.
+- An element on a card changes what leaves that card.
+- A sensor on a card reads the power that reaches it. The source is 100%.
+
+| Element | What it does to the light |
+|---|---|
+| None | The card shares the light among its lines out. |
+| Lens | Sends all of it down the line out that passes the most. |
+| Prism | Fans it into the bands of the spectrum. |
+| Mirror | Sends it back along the line it came by. |
+| Absorber | Keeps a quarter of it. |
+| Stop | Ends it. |
+| Sensor | Reads what arrives, and ends it. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns the light on. |
+| Source | A card on the Canvas | — | The card that the light leaves. |
+| Card and Element | A card · None, Lens, Prism, Mirror, Absorber, Stop, Sensor | None | Choose a card, then what it does to the light. |
+| Bounces | 1 to 100 | 35 | How many lines deep the light travels. |
+| Segments | 500 to 20,000 | 4,500 | How finely each ray is traced. |
+| Spectrum | 5 · 9 · 13 bands | 9 | How many bands a prism fans the light into. |
+| Transmission | Fact · Claim · Inference · Guess: each 0 to 100% | 100 · 85 · 60 · 35% | How much of the light a line of each standing passes. These values are a starting point. Tune them to the way you read. |
+| Rays | On · Off | On | Draws the rays over the Canvas. |
+
+The readings at the sensors come from the bench's engine. The rays show where the light goes.
+
+#### Views
+
+```ui
+device: techne:light
+caption: Light, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Light shows the source card and the number of sensors.
+
+##### Compact
+
+The compact Light shows a small bench, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Spectrum | Sets how many bands a prism fans the light into. |
+| Bounces | Sets how many lines deep the light travels. |
+| Transmit | Moves the four standings' transmission together, each within its range. |
+| Rays | Draws the rays, or hides them. |
+
+##### Whole
+
+The whole Light shows every parameter, in three groups, and the reading at each sensor.
+
+| Group | Parameters |
+|---|---|
+| Source | Source, Card and Element |
+| Rays | Bounces, Segments, Spectrum, Rays |
+| Transmission | Fact, Claim, Inference, Guess |
+
+##### Full
+
+The full Light draws the bench over the Canvas at full size. Each card shows its element, and each sensor its reading. A ray is as bright as the light it carries. Change a line's standing on the Canvas and watch the sensors after it.
+
+##### Widget
+
+The widget shows a small bench and the reading at each sensor. Click the bench to open Light in the pane that has focus.
+
+#### Transport
+
+| Control | Effect on Light |
+|---|---|
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use Light
+
+1. Drag Light onto the chain of a reading. The bench lies over the Canvas.
+2. Set Source to the card where the reading begins.
+3. Choose each conclusion under Card, and set its Element to Sensor.
+4. Read the power at each sensor.
+5. Choose the card where the reading divides, and set its Element to Lens. All its light goes down the line that passes the most.
+6. Lower Guess. A conclusion that rests on guesses goes dark.
+
+#### Rules
+
+- A ray is a picture. It never becomes a relation. To change a relation, change it on the Canvas.
+- The light has no chance in it. The same bench gives the same readings.
+- A card never sends out more light than it received.
+- Light reads the Canvas. It does not move a card or change a standing.
+
+#### Tips
+
+- To see which conclusion your reading supports most, put a sensor on each and compare them.
+- To see what one weak link costs, lower its standing and watch the sensor after it.
+- To follow every way the source reads, put a prism on the source.
+
 ## 18. Central
 
 Central keeps the day's work, your documents and your ground in one place. It works like a code editor: your files down the left, documents side by side, and the day as the set they all belong to. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
@@ -6017,6 +6127,111 @@ caption: Decision helper, on a fixture of readings.
   alike for a small model. Look at the question before you blame the helper.
 - To watch it work, keep its widget on the rail.
 
+### 19.21 Voice
+
+**Product:** Actuation, with Quaternal Logic · **Kind:** effect · **Chain:** after the Agent, on any track an agent speaks on
+
+You need to hear an agent, to see its face move with what it says, and to keep its spoken words on your machine unless you let them go. Voice is how an agent speaks. It speaks the agent's words through a body and moves the face's mouth with each sound. Listening stays with the track: the track's input row hears you (§24.1).
+
+#### Bodies
+
+A body is what speaks. Each body reports what it can do: hear while it speaks, let you talk over it, stop in the middle of a sentence. A body that cannot run now stands closed, with its reason.
+
+| Body | What speaks | The mouth |
+|---|---|---|
+| Local | A voice on this machine. Nothing leaves it. | Follows the loudness. This body measures no timing. |
+| Face | A voice on this machine that measures every sound to the sample. | Moves with each sound. |
+| Realtime, aligned | A cloud voice, its words aligned on this machine. | Moves with each sound. |
+| Realtime, own voice | A cloud voice, in the service's own voice. | Follows the loudness. |
+| Off | Nothing. The agent writes and does not speak. | Still. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Body | Local · Face · Realtime, aligned · Realtime, own voice · Off | Face | What speaks. |
+| Voice | The voices that the body offers | The body's first voice | The voice that the agent speaks in. |
+| Speed | 0.5× to 2× | 1× | How fast the agent speaks. |
+| Mouth | Aligned · Loudness · Off | Aligned | What moves the face's mouth. Aligned needs a body that measures each sound. |
+| Affect | On · Off | On | Before each sentence is spoken, K-E-V chooses the face's feeling for it. |
+| Interrupt | Off · Stop · Barge-in | Stop | What happens when you talk while the agent speaks. Stop ends its sentence. Barge-in ends it and hears what you say. |
+| Egress | Local only · Ask · Allowed | Local only | Whether what you say to Nara may leave this machine. Under Local only, the cloud bodies stand closed. |
+| Console | On · Off | Off | Shows Epii's console beside the face. |
+
+The body also reports how long a sentence takes to start sounding, and a receipt for each spoken turn.
+
+#### Views
+
+```ui
+device: actuation:voice
+caption: Voice, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Voice shows the body and the voice.
+
+##### Compact
+
+The compact Voice shows the last spoken turn, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Body | Sets what speaks. |
+| Speed | Sets how fast the agent speaks. |
+| Mouth | Sets what moves the face's mouth. |
+| Interrupt | Sets what happens when you talk while the agent speaks. |
+
+##### Whole
+
+The whole Voice shows every parameter, in five groups, and what the body can do.
+
+| Group | Parameters |
+|---|---|
+| Body | Body |
+| Voice | Voice, Speed |
+| Mouth | Mouth, Affect |
+| Turn-taking | Interrupt |
+| Privacy | Egress, Console |
+
+##### Full
+
+The full Voice draws the last spoken turn on one clock. Each sentence shows the feeling chosen for it. Its words lie across the time they took, and under them lie the sounds that moved the mouth. Play a turn, and watch the mouth follow its sounds.
+
+##### Widget
+
+The widget shows the last turn, the body, and the feeling of the last sentence. Click it to open Voice in the pane that has focus.
+
+#### Transport
+
+| Control | Effect on Voice |
+|---|---|
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use Voice
+
+1. Drag Voice onto the chain, after the Agent.
+2. Set Body to Face. The agent speaks, and the face's mouth moves with each sound.
+3. Set Interrupt to Stop. Start to talk while the agent speaks. It stops.
+4. Set Body to Local. The mouth now follows the loudness.
+5. Open the full Voice. Read the feeling of each sentence, and the sounds under its words.
+
+#### Rules
+
+- Voice speaks. It does not listen. The track's input row hears you.
+- Under Local only, what you say to Nara stays on this machine. Under Ask, a cloud body asks you first, each time.
+- A body that cannot do a thing says so. Voice offers nothing that the body cannot do.
+- The face stays on the Agent. Voice moves its mouth; it draws no second face.
+- K-E-V chooses the feeling before the sentence is spoken. It does not change the words.
+- Every spoken turn keeps a receipt.
+
+#### Tips
+
+- To keep everything on your machine, set Body to Local or Face, and Egress to Local only.
+- To see consonants on the lips, use a body that measures each sound and set Mouth to Aligned.
+- To talk over the agent, set Interrupt to Barge-in.
+
 ## 20. Expressions
 
 Expressions is where the DLW makes things you can see and hear. Particles and symbols move on a plate, and the plate sounds.
@@ -7498,6 +7713,17 @@ The Resonance device tunes the plate that the field sounds on. Use it to set the
 
 The device also has a Compatibility switch: Resonator · Template (default Resonator). Template keeps the older fixed pattern.
 
+The device has a Body source: Declared · Tattva (default Declared). Under Tattva, the tattva of the M2 condition sets Q factor, Agitation and Boundary strength through its element, by the same table as the Torus (§21.2). Space carries no element: under it, the plate keeps the values you set.
+
+| Fibre | Tattva | Q factor | Agitation | Boundary strength |
+|---|---|---|---|---|
+| Earth | Pṛthvī | 12 | 0.1 | 20 |
+| Water | Āpas | 6 | 0.6 | 10 |
+| Fire | Tejas | 3 | 2 | 4 |
+| Air | Vāyu | 1.5 | 3.5 | 2 |
+
+The values are a starting point. Tune them to what you hear.
+
 #### Views
 
 ```ui
@@ -7527,7 +7753,7 @@ The whole Resonance device shows every parameter, in three groups.
 | Group | Parameters |
 |---|---|
 | Tuning band and mix | On, Drive frequency, Frequency driver, Dominance, Q factor |
-| Resonator and drive | Drive strength and scale, Transport and agitation, Plate, Mode count, Dimension, Compatibility |
+| Resonator and drive | Drive strength and scale, Transport and agitation, Plate, Mode count, Dimension, Body source, Compatibility |
 | Station sweep | Sweep, Sweep time |
 
 ##### Full
@@ -7836,11 +8062,25 @@ The torus has two helices, which wind round it. A full return takes two turns. A
 | Drive | 0 to 6 | 1 | How hard the pulses shake the body. |
 | Modes | 1 to 64 | 64 | How many modes of the body take part. |
 | Agitation | 0 to 5 | 0.3 | How much the surface is kicked about. |
+| Body source | Declared · Tattva | Declared | Where Strike, Damping and Agitation come from. Declared keeps the values you set. Tattva takes them from the tattva of the M2 condition, through its element. |
 | Attack | 0 to 10 s | 0.01 | How long a note takes to rise. |
 | Release | 0 to 30 s | 1.2 | How long a note takes to fade. |
 | Voices | 1 to 32 | 16 | How many notes sound at once. The oldest note makes way for a new one. |
 | Level and pan | Level −60 to 6 dB · Pan −1 to 1 | −6 dB · 0 | The loudness and the place of the sound. |
 | View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws. Receiver On makes your camera the place where the torus is heard. |
+
+#### The body source
+
+Under Tattva, the tattva of the M2 condition sets the body. Four tattvas carry an element, and each element gives the body its constants. Space, Ākāśa, carries none: under it the body keeps the values you set. While a tattva sets them, Strike, Damping and Agitation show its values and hold them.
+
+| Fibre | Tattva | Strike | Damping and Q factor | Agitation | Boundary strength |
+|---|---|---|---|---|---|
+| Earth | Pṛthvī | 45% | 12 | 0.1 | 20 |
+| Water | Āpas | 55% | 6 | 0.6 | 10 |
+| Fire | Tejas | 85% | 3 | 2 | 4 |
+| Air | Vāyu | 65% | 1.5 | 3.5 | 2 |
+
+The values are a starting point. Tune them to what you hear. The Resonance device takes the same values for its plate (§20.14).
 
 #### Views
 
@@ -7873,7 +8113,7 @@ The whole Torus shows every parameter, in four groups.
 | Group | Parameters |
 |---|---|
 | Pulses | Pulse mix, Helix balance, Drive |
-| Body | Strike, Damping, Modes, Agitation |
+| Body | Strike, Damping, Modes, Agitation, Body source |
 | Envelope | Attack, Release |
 | Voices and output | Voices, Level and pan, View |
 
@@ -7919,6 +8159,7 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - Each key is a point on a helix. The place of each key is calculated from the geometry of the torus. It is not set by eye.
 - A saved state keeps every parameter. A preset in the browser opens with the same sound.
 - A held note keeps its own tail. A key release does not cut the ringing of the body.
+- Under Tattva, the body's constants are the tattva's. To set them by hand, set Body source to Declared.
 
 #### Tips
 
@@ -7951,6 +8192,7 @@ The planetary scales were composed to draw the quality of each planet into the p
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | On | On · Off | On | Turns the device on. Off passes every note as you play it. |
+| Set by | Hand · Sky | Hand | Who sets the mode in force. Hand is you. Sky is the planet of the hour: a maqām that the map binds to that planet. |
 | Root | The twelve notes | C | The root of the mode in force. |
 | Family | Lens mode · Source scale | Lens mode | A lens mode, or a source scale with its own intervals. |
 | Mode name | The seven modes | Ionian | The mode of the root. |
@@ -7961,6 +8203,8 @@ The planetary scales were composed to draw the quality of each planet into the p
 The device has no mode of its own. Root, Family, Mode name, Basis and Source scale are the mode in force: the set's mode, or the open
 clip's own, which the roll and the keyboard show too. A note outside the mode always moves to the nearest note of the mode. The
 planetary scales of Ficino and the Shem names are not served yet; the device names them and offers none.
+
+Under Sky, the planet of the hour sets the mode in force. The Sky reads the planet (§22.1). The map binds each planet to a few maqām: by its tonic, by its dominant, or as a chromatic bridge. Your intent chooses among them, and the lens settles a tie. While the Sky sets the mode, Root, Mode name and Source scale show its choice and hold it. When the Sky has no place to count the hours from, Sky stands closed.
 
 #### Views
 
@@ -7992,7 +8236,7 @@ The whole Scale mapping device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
-| Mode in force | Root, Family, Basis, Mode name, Source scale |
+| Mode in force | Set by, Root, Family, Basis, Mode name, Source scale |
 | Fold | Tie |
 
 ##### Full
@@ -8026,12 +8270,14 @@ The widget shows the mode name and the ring. Click the ring to open the device i
 - A lens, a root and a mode name are not interchangeable. The 84 modes are 12 roots times 7 modes.
 - A source scale keeps its own intervals, its tonic and its dominant. The device does not turn them into an equal scale.
 - A note that is already in the mode passes unchanged.
+- Under Sky, the mode changes when the hour changes. A phrase that you play across the hour moves to the next planet's maqām.
 
 #### Tips
 
 - To change the mood of a phrase, give its clip a new mode.
 - To play a phrase in a planet's scale, set Family to Source scale and pick the planet.
 - To hear a mode without any wrong notes, turn the device on and play freely.
+- To play in the hour's maqām, set Set by to Sky.
 
 ### 21.4 Exact-ratio tuning
 
@@ -8292,6 +8538,12 @@ The sky is ten bodies and the Earth. The bodies stand where the real planets sta
 
 The positions come from a calculated sky. They are not an observed sky. The sky is not a second clock.
 
+#### The day and the hour
+
+Each day has a ruling planet, and so does each hour. The day's planet rules its first hour, from sunrise. The hours then follow the old order of the planets: Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon, and round again. Twelve hours run from sunrise to sunset, and twelve from sunset to the next sunrise, so a summer day hour is longer than a winter one.
+
+The hours are counted at a place: the world's place when Observer is Shared, yours when it is Private. With no place, the Sky reads no rulers. The ring marks the planet of the hour. Scale mapping can take its mode from it (§21.3).
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -8337,11 +8589,11 @@ The whole Sky shows every parameter, in three groups.
 | Bodies | Bodies, Observer |
 | Overlay | Aspects, Natal ring |
 
-The list of what each body moves shows below the groups.
+The list of what each body moves shows below the groups. Beside the groups, the Sky reads the day's planet, the hour and its planet, and the place where the hours are counted.
 
 ##### Full
 
-The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies.
+The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. A line under the date reads the day's planet and the hour's. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies.
 
 ##### Widget
 
@@ -8372,6 +8624,7 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - A body with no value for the date is shown as missing.
 - A shared view does not show a private observer's place.
 - The Sky gives sources. It does not decide what a reading means.
+- The rulers of the day and the hour are counted at a place. Without a place, the Sky shows none.
 
 #### Tips
 
@@ -8379,6 +8632,7 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - To compare today with your birth, turn the Natal ring on.
 - To use the Sky as a clock for a walk, set Day clock to Run.
 - To tune the field to the sky, set Key source to Sky on the Field.
+- To know whose hour it is, read the marked planet on the ring.
 
 ### 22.2 Sky modulation
 
@@ -8511,9 +8765,8 @@ The four trigrams that mirror themselves, Qian, Kun, Kan and Li, take TT, AA, CC
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Aperture | One of the 16 even cuts, from 1° × 360 to 360° × 1 | 30° × 12 | How the wheel is cut. The Fibonacci ground (60 × 6°) and the Void ring (16 × 22.5°) are drawn, and are not a cut you choose. |
+| Aperture | One of the 16 even cuts, from 1° × 360 to 360° × 1 (reading) | 30° × 12 | How the wheel is cut. The Resonator bank holds the cut and sounds it (§22.7); the clock draws it. The Fibonacci ground (60 × 6°) and the Void ring (16 × 22.5°) are drawn, and are not a cut you choose. |
 | Reciprocal | Show · Hide | Hide | Shows the matching cut, dashed. The cuts come in pairs, such as 15° × 24 and 24° × 15. |
-| Swap | An action | — | Cuts the wheel by the matching cut. |
 | Turn | First · Second · Both | First | Which turn of the wheel to show. Second is the shadow. |
 | Position | 0 to 359 degrees | 0 | The degree to read. |
 | Open | Closed · Exploded | Closed | Exploded draws the parts of the wheel apart, like a flower with an eye at the centre. |
@@ -8552,10 +8805,10 @@ The compact M3 clock shows the wheel with a needle, and four macros.
 
 | Macro | What it does |
 |---|---|
-| Aperture | Sets how the wheel is cut. |
 | Position | Sets the degree to read. |
-| Swap | Cuts the wheel by the matching cut. |
 | Turn | Sets which turn of the wheel to show: first, second or both. |
+| Reciprocal | Shows the matching cut, dashed. |
+| Open | Draws the parts of the wheel apart, or closes them. |
 
 ##### Whole
 
@@ -8564,7 +8817,7 @@ The whole M3 clock shows every parameter, in three groups.
 | Group | Parameters |
 |---|---|
 | Cut | Aperture, Reciprocal, Turn, Open |
-| Position | Position, Readout, Swap |
+| Position | Position, Readout |
 | Law | Matrix, Seed, Pose map |
 
 ##### Full
@@ -8588,7 +8841,7 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 
 1. Open the M3 clock. The wheel shows at 0.
 2. Set Position to 100. Read the governor.
-3. Set Aperture to 15° × 24. The wheel shows 24 arcs.
+3. On the Resonator bank, set Aperture to 15° × 24. The wheel shows 24 arcs.
 4. Turn Reciprocal on. The matching cut shows with it.
 5. Set Turn to Both. The shadow turn shows beside the first.
 6. Set Open to Exploded. The parts of the wheel move apart while the subject stays.
@@ -8601,6 +8854,7 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 - No matrix has a gap. Every hexagram has a cell in each of the three matrices.
 - Seed and Pose map are laws you can test. A reading keeps the seed and the pose map it was read with.
 - An aperture is a way to cut the wheel. It is not a place or a time.
+- The clock draws the cut. The Resonator bank holds it. To change the cut, change it on the bank.
 - The Sky is not a second clock. The Sky is the dated state of the planets.
 - The cuts in a pair are reciprocal. The reciprocal of 15° × 24 is 24° × 15.
 - The twelve lenses, the 18 apertures and the 12 steps of the clock are different counts. Do not confuse them.
@@ -8608,8 +8862,8 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 
 #### Tips
 
-- To see the twelve lenses on the wheel, set Aperture to 30° × 12.
-- To read the quarter of the year, set Aperture to 90° × 4.
+- To see the twelve lenses on the wheel, set the bank's Aperture to 30° × 12.
+- To read the quarter of the year, set the bank's Aperture to 90° × 4.
 - To study one part, set Open to Exploded and select that part.
 - To read the shadow of a moment, set Turn to Second.
 - To compare the two seeds, read a position, change Seed, and read it again.
@@ -8948,6 +9202,209 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - To compare two lenses, pin a cell and change the lens.
 - To see what the sky changes, set Follow to Sky.
 - To check a source value, set Value form to Raw, then to Digital root.
+
+### 22.7 Resonator bank
+
+**Product:** Quaternal Logic · **Kind:** effect · **Chain:** after the torus, on a Live part or in the Studio's body chain
+
+You need to hear how the wheel is cut. The Resonator bank gives the cut a sound. It holds the cut that the M3 clock draws, and sets one tuned body ringing at each part of it. The sound of the torus passes through the bank, and each body rings at its own pitch.
+
+#### How the bank rings
+
+The bank turns one octave into a circle, with the root at the top. The cut divides the circle into equal parts, and a body rings at each part. Thirty degrees cuts the octave into twelve, and the twelve bodies ring at the twelve semitones. Twenty-four degrees cuts it into fifteen: the bank rings between the notes.
+
+| Cut | Bodies to the octave | What you hear |
+|---|---|---|
+| 30° × 12 | 12 | The twelve semitones. |
+| 24° × 15 | 15 | Fifteen even steps, between the semitones. |
+| 8° × 45 | 45 | A dense shimmer. |
+| 360° × 1 | 1 | The root alone. |
+
+The bodies repeat in each octave of the span. Each body rings as long as Decay says, and Tilt makes the high octaves brighter or darker than the low.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns the bank on. |
+| Aperture | One of the 16 even cuts, from 1° × 360 to 360° × 1 | 30° × 12 | How the octave is cut: one body at each part. |
+| Swap | An action | — | Cuts by the matching cut. The cuts come in pairs, such as 15° × 24 and 24° × 15. |
+| Decay | 0.05 to 10 s | 1 s | How long each body rings. |
+| Tilt | −1 to 1 | 0 | The low octaves against the high. Above 0 is brighter. |
+| Span | 1 to 4 octaves | 2 | How many octaves the bodies repeat over. |
+| Mix | 0 to 100% | 50% | The dry sound against the ringing. |
+| Gain | −24 to 12 dB | 0 dB | The loudness of the ringing. |
+
+The bank tunes to the root of the mode in force: the transport's, or Scale mapping's when the Sky sets it.
+
+#### Views
+
+```ui
+device: quaternal-logic:resonator-bank
+caption: Resonator bank, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Resonator bank shows the cut and the root.
+
+##### Compact
+
+The compact Resonator bank shows the octave circle with a spoke at each body, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Aperture | Sets how the octave is cut. |
+| Decay | Sets how long each body rings. |
+| Mix | Sets the dry sound against the ringing. |
+| Swap | Cuts by the matching cut. |
+
+##### Whole
+
+The whole Resonator bank shows every parameter, in three groups, and its reading: how many bodies ring, the root, and the lowest and highest pitch.
+
+| Group | Parameters |
+|---|---|
+| Cut | Aperture, Swap |
+| Ring | Decay, Tilt, Span |
+| Output | Mix, Gain |
+
+##### Full
+
+The full Resonator bank draws the octave circle with a spoke at each body, and the matching cut dashed. Beside it, each body stands as a line at its pitch across the span, as tall as Tilt makes it. Drag handle 1 round the circle to change the cut.
+
+##### Widget
+
+The widget shows the small circle with its cut. Click it to open the bank in the pane that has focus.
+
+#### Transport
+
+| Control | Effect on the Resonator bank |
+|---|---|
+| Key, root and scale | Sets the root that the bank tunes to. |
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use the Resonator bank
+
+1. Drag the Resonator bank onto the chain, after the torus.
+2. Play a chord. The twelve bodies ring with it.
+3. Set Aperture to 24° × 15. The bank rings between the notes.
+4. Press Swap. The bank cuts by 15° × 24.
+5. Open the M3 clock. The wheel shows the same cut.
+
+#### Rules
+
+- The bank holds the cut. The M3 clock draws it. There is one cut, not two.
+- The bank does not make sound. It rings with the sound that reaches it.
+- A cut divides the octave into equal parts. The bank does not round them to the semitones.
+- The cuts in a pair are reciprocal. Swap moves to the other cut of the pair.
+
+#### Tips
+
+- To hear the semitones ring, set Aperture to 30° × 12.
+- To hear the space between the notes, set an aperture that does not divide twelve.
+- To make a long, bright wash, raise Decay and Tilt.
+
+### 22.8 Binding
+
+**Product:** Quaternal Logic · **Kind:** instrument · **Track:** any track. It also sits in the Studio's body chain, and can be drawn on the Torus or the M3 clock.
+
+You need to see which codons a matrix holds together, and how strongly. Binding draws the charge-bearing units of M3 as colour charges, bound by strings. It runs its own physics over the kernel's symbols. It claims no measured constant.
+
+#### What Binding draws
+
+A codon is a three-way junction. Its three sites sit on three arms, 120° apart. The positive codon's sites are coloured red, green and blue; the negative codon's take the anticolours. The junction turns by its leading pair: the pair's place among the sixteen, times 22.5°.
+
+The matrix pairs the codons. At the form's hexagram, the matrix's generation cell gives a positive and a negative codon (§22.3). Binding ties the two by a string, as a meson. When the cell is non-dual, the two are one codon: a singlet, handed to the torus.
+
+Nonets show nine M2 positions resolving into eight M3 positions. Two of the nine land on one place. Whether that collision is the singlet handed to the torus is for the instrument to test, so Binding draws the two and does not join them.
+
+Every motion comes from a kernel event: an inscription, a matrix change, or a line change. None comes from chance.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns Binding on. |
+| Pairing | Complementary · Moving and resting · Same quality | Moving and resting | The matrix whose cell gives the two codons. |
+| Charge | pp · mm · mp · pm | pp | Which of the codon's four charges each junction carries. |
+| Nonets | Show · Hide | Show | Draws the nine M2 positions resolving into eight. |
+| Tension | 0.1 to 2 GeV/fm | 0.9 | The string's tension. It belongs to Binding's own physics. |
+| Coupling | 0.3 to 10 GeV | 1 | The scale the coupling runs at. It belongs to Binding's own physics. |
+| Skin | Torus · Plate · Clock | Plate | Where Binding is drawn. |
+| Stretch → Q | On · Off | On | The string's stretch sounds as the Resonance's Q factor, through M2. |
+
+Binding's engine reports the coupling at its scale, the string's stretch and its energy. The energy follows V(r) = −(4/3)·α_s·ħc/r + σr: close in, the pull falls away; far out, it grows with the length.
+
+#### Views
+
+```ui
+device: quaternal-logic:binding
+caption: Binding, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Binding shows the two codons, or the singlet, and the event that last moved it.
+
+##### Compact
+
+The compact Binding shows the junctions and their string, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Pairing | Sets the matrix that gives the two codons. |
+| Charge | Sets which charge each junction carries. |
+| Tension | Sets the string's tension. |
+| Coupling | Sets the scale the coupling runs at. |
+
+##### Whole
+
+The whole Binding shows every parameter, in three groups, with the potential and its reading: the cell, the positive and negative codons with their charges, and the event that last moved it.
+
+| Group | Parameters |
+|---|---|
+| Pairing | Pairing |
+| Physics | Tension, Coupling |
+| Charge and skin | Charge, Skin, Nonets, Stretch → Q |
+
+##### Full
+
+The full Binding draws the junctions, their string and the nonet at full size, with the cell and its codons under them. Change Pairing and watch the cell give new codons. A non-dual cell draws one junction, ringed, handed to the torus.
+
+##### Widget
+
+The widget shows the small junctions, the two codons and the event that last moved them. Click it to open Binding in the pane that has focus.
+
+#### Transport
+
+| Control | Effect on Binding |
+|---|---|
+| Play | Moves Binding with the inscription of the clock. |
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use Binding
+
+1. Open Binding. The cell of the form's hexagram shows its two codons, tied by a string.
+2. Set Pairing to Complementary. When the cell is non-dual, one junction shows, handed to the torus.
+3. Set Charge to mm. Each junction shows its mm charge.
+4. Lower Tension. The string slackens, and its energy falls.
+5. Turn Stretch → Q on, and play. The stretch rings in the Resonance.
+
+#### Rules
+
+- Binding runs its own physics. Its tension and its coupling are its own. They are not measured constants.
+- Binding takes from the kernel only its symbols: the codons, their charges, their pairing and their counts.
+- Every motion has a kernel event behind it. Binding draws nothing by chance.
+- A collision in a nonet is drawn. It is not declared to be the singlet.
+
+#### Tips
+
+- To compare the three matrices, read one hexagram and change Pairing.
+- To see what a line change does, change a line on the Deck and watch the codons.
+- To hear the binding, turn Stretch → Q on and put the Resonance after the torus.
 
 ## 23. Widgets
 
@@ -9498,6 +9955,15 @@ Nara comes to know you from the days and flows you give it. Every passage it dra
 | Activator | Send to Day. On, what you choose to share from a practice page reaches the Day's faces 0 and 5. Off by default: the practice stays out of the Day. |
 | Arm | Lets Nara write into your practice pages directly, each write with a receipt. Off by default: every answer arrives as a proposal. |
 | Solo | Shows only your practice in the Day's faces and on your planet. |
+
+The practice track's input row is how Nara hears you. It sits on the track, as Live keeps a track's input on the track. Voice, on the chain, is how Nara speaks (§19.21).
+
+| Input row | Values | Default | What it does |
+|---|---|---|---|
+| Input | Mic · Off | Off | Whether the track hears you. |
+| Listen | Push to talk · Hands-free | Push to talk | Push to talk hears you while you hold the key. Hands-free hears you whenever you speak. |
+| Pause | 0.5 to 4 s | 2 s | Under Hands-free, how long a silence ends your turn. |
+| Recogniser | Fast · Accurate | Fast | How your speech becomes text, on this machine. Accurate is slower. |
 
 #### Rules
 

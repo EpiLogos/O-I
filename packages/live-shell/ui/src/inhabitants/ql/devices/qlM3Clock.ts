@@ -7,7 +7,9 @@
 // Owners write, faces read (lock §0.4):
 //   clock.degree720, clock.tick12, clock.backbone, aperture.index, form.address, form.codon   the state's own readings;
 //   a new degree is the owner's `advance-clock{steps}` forward by the difference on the double cover, a new cut its `set-aperture`.
-// Turn, Open, Readout and Reciprocal are the view's own (DesignBinding.local). With no identity chosen, no Expression open, or no form
+// Turn, Open, Readout and Reciprocal are the view's own (DesignBinding.local). The generation law (law.matrix, law.seed, law.poseMap)
+// and the generation cell it gives (generation.*) stand absent with their reason: the reading carries the form's hexagram and its
+// matrix axis, not the cell, the seed or the pose map. With no identity chosen, no Expression open, or no form
 // opened for them (status 'absent': the Nara instrument's M3 page opens it), every value stands absent and the well says which.
 // Pure apart from the one kernel call, which takes the call it is given, and the small store the views share.
 import {useEffect, useSyncExternalStore} from 'react'
@@ -153,6 +155,13 @@ export const QL_M3_READINGS: Readonly<Record<string, string>> = {
   'form.address': 'A reading here: the form is chosen in the Nara instrument\'s M3 page (select-form).',
   'form.codon': 'A reading: the codon is the form\'s transcription.',
 }
+const NO_LAW = 'The M3 reading carries no generation law: it names the form\'s hexagram and its matrix axis, not the matrix that makes the hexagram a cell, the seed or the pose map (ql.m3-state/v1).'
+const NO_CELL = 'The M3 reading carries no generation cell: the kernel generates one (ql_m3_generate) and the reception does not ask it.'
+/** Why each key of the generation law has no reading here (manual §16.12: "say which one"). */
+export const QL_M3_ABSENT: Readonly<Record<string, string>> = {
+  'law.matrix': NO_LAW, 'law.seed': NO_LAW, 'law.poseMap': NO_LAW,
+  'generation.lower': NO_CELL, 'generation.upper': NO_CELL, 'generation.positive': NO_CELL, 'generation.negative': NO_CELL, 'generation.nonDual': NO_CELL,
+}
 /** The keys the view holds: how the clock is drawn, not what it is. */
 export const QL_M3_LOCAL = ['turn', 'open', 'readout', 'reciprocal'] as const
 
@@ -198,7 +207,7 @@ export function qlM3Operations(m3: QlM3State, changes: readonly ValueChange[]): 
 export function qlM3Binding(m3: QlM3State): DesignBinding {
   const live = m3.reading?.status === 'available' && !!m3.reading.state
   const standing: Record<string, Standing> = {}
-  for (const [key, why] of Object.entries(QL_M3_READINGS)) standing[key] = {disabled: why}
+  for (const [key, why] of Object.entries({...QL_M3_READINGS, ...QL_M3_ABSENT})) standing[key] = {disabled: why}
   if (!live) for (const key of ['clock.degree720', 'aperture.index']) standing[key] = {disabled: m3.reason ?? NO_FORM}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_M3_LOCAL) local[key] = value => setQlM3View({[key]: value})

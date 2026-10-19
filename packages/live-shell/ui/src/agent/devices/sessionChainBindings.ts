@@ -194,6 +194,7 @@ export const AGENTSET_REFUSE = {
   handBack: DELEGATION('Hand-back', 'the helper\'s return form'),
   returnCap: DELEGATION('Summary cap', 'delegation.max_summary_chars'),
   model: DELEGATION('Subagent model', 'delegation.model'),
+  join: missing('Join', 'the agent set\'s join, how its members\' returns combine, through the kernel: no agent-set record carries it', 'Central'),
   retry: missing('Retry', 'Factory\'s RetryGrant (factory/src/orchestration.rs) through the kernel', 'Software Factory'),
 } as const
 

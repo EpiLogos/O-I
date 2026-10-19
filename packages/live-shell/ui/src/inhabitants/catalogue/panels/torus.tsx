@@ -1,6 +1,11 @@
 // The Torus (manual §21.2): Live's one instrument, a ring with a tube driven by two pulses (3·3 and 4·2) and wound by two helices
 // (the two whole-tone families). Live's nearest: Wavetable — a large display of the oscillator with handles, an envelope display,
 // a global column of volume and voices. Every line drawn below is computed from the device's values.
+//
+// Body source (M2's physical constants, manual §21.2): 'declared' keeps the body's own Strike, Damping and Agitation; 'tattva' takes
+// them from the tattva of the M2 condition through its element fibre (m2-correspondences `material_fibre`), by M2's table of body
+// constants, every value of which stands proposed and tunable. The owner reports the tattva (`tattva.name`), its fibre
+// (`tattva.fibre`, absent where the map gives the tattva none) and the values in force; under Tattva the three dials are held.
 import type {CSSProperties} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
 import {LIVE_CADENCE_OPTIONS, LIVE_CONTEXT_FRAME_OPTIONS, LIVE_HARMONIC_OPTIONS, LIVE_LENS_OPTIONS} from '../../../live/torusInstrument'
@@ -130,6 +135,22 @@ function Janko({w, y, sounding}: {w: number; y: number; sounding: readonly numbe
 // The light reads the owner alone; hollow while it has not said.
 const light = (v: V, owner?: V) => (strOf(owner ?? v, 'light') ?? 'unknown') as LightState
 const VIEWS = [{value: 'surface', label: 'Surface'}, {value: 'wire', label: 'Wire'}, {value: 'both', label: 'Both'}] as const
+const BODY_SOURCES = [{value: 'declared', label: 'Declared', does: 'The body keeps its own constants.'},
+  {value: 'tattva', label: 'Tattva', does: "The tattva of the M2 condition sets Strike, Damping and Agitation through its element fibre."}] as const
+/** Why a body constant is held: under Tattva, the tattva with a fibre sets it. */
+export const tattvaHold = (v: V): string | undefined => {
+  if (strOf(v, 'body.source') !== 'tattva') return undefined
+  const name = strOf(v, 'tattva.name'), fibre = strOf(v, 'tattva.fibre')
+  return fibre ? `Body source is Tattva: ${name ?? 'the tattva'}'s ${fibre} fibre sets it.` : undefined
+}
+/** The tattva's reading label: its fibre, or that it has none. */
+export const tattvaLabel = (v: V): string => {
+  const name = strOf(v, 'tattva.name'), fibre = strOf(v, 'tattva.fibre')
+  return name === undefined ? 'tattva' : fibre ?? 'no fibre'
+}
+/** What the tattva reading says on the status bar, with the standing of the constants it sets. */
+export const tattvaDoes = (v: V): string => `The tattva of the M2 condition and its element fibre. Under Tattva its fibre sets the body's constants${
+  strOf(v, 'tattva.standing') ? `, which stand ${strOf(v, 'tattva.standing')}` : ''}; a tattva with no fibre leaves them declared.`
 
 /** The owner's own choices for the field's four determinants and its cadence (live/torusInstrument.ts), by the labels the binding
  * reads and writes. The pulses, body and envelope below are the instrument as the manual specifies it; the field announces none
@@ -168,11 +189,16 @@ export const torus: DesignedDevice = {
     // The field's own controls, as the binding reads them (labels of the owner's choices).
     lens: 'L0', 'context-frame': 'CF1', 'harmonic-basis': 'B1', 'm3-transcription': 'DNA', sound: true, cadence: 'Hold', scale: 100, standing: 'following',
     sounding: JSON.stringify([0, 4, 8]), driveMod: JSON.stringify([.6, 2.2]),
+    // The tattva of the M2 condition (the M2 request's tattva selection) and its fibre; Declared keeps the body's own constants.
+    'body.source': 'declared', 'tattva.name': 'Prithvi', 'tattva.fibre': 'earth', 'tattva.standing': 'proposed',
   },
   firstPage: 'field',
   fixtures: {
     'Ringing': {},
-    'No readings': Object.fromEntries(['light', 'pulseMix', 'helixBalance', 'strike', 'damping', 'drive', 'modes', 'agitation', 'attack', 'release', 'voices', 'level', 'pan', 'view', 'receiver', 'notes', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'driveMod'].map(k => [k, undefined])),
+    // M2's proposed body constants for the earth fibre: Damping 12, Strike 45 %, Agitation 0.1.
+    'Tattva: Prithvi, earth': {'body.source': 'tattva', damping: 12, strike: 45, agitation: .1},
+    'Tattva without a fibre': {'body.source': 'tattva', 'tattva.name': 'Akasha', 'tattva.fibre': undefined},
+    'No readings': Object.fromEntries(['light', 'pulseMix', 'helixBalance', 'strike', 'damping', 'drive', 'modes', 'agitation', 'attack', 'release', 'voices', 'level', 'pan', 'view', 'receiver', 'notes', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'driveMod', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
     'As the field reports it': {pulseMix: undefined, helixBalance: undefined, strike: undefined, damping: undefined, drive: undefined, modes: undefined, agitation: undefined, attack: undefined, release: undefined, voices: undefined, pan: undefined, view: undefined, receiver: undefined, notes: undefined, meter: undefined, driveMod: undefined},
   },
 
@@ -208,11 +234,14 @@ export const torus: DesignedDevice = {
       </Section>
     </Band>
     <Band>
-      <Section label="Body" cols={2}>
-        <Dial {...st(p, 'strike')} label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
-        <Dial {...st(p, 'damping')} label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
+      <Section label="Body" cols={3}>
+        <Dial {...st(p, 'strike')} disabled={st(p, 'strike').disabled ?? tattvaHold(p.v)} label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
+        <Dial {...st(p, 'damping')} disabled={st(p, 'damping').disabled ?? tattvaHold(p.v)} label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
+        <Radio {...st(p, 'body.source')} label="Source" does="Where the body's constants come from: its own, or the tattva of the M2 condition." value={strOf(p.v, 'body.source') ?? ''} options={BODY_SOURCES} stack onChange={x => p.set('body.source', x)} />
         <Dial {...st(p, 'modes')} label="Modes" does="How many modes of the body take part." value={num(p.v, 'modes')} def={64} scale={{min: 1, max: 64, step: 1}} format={x => `${x}`} onChange={x => p.set('modes', x)} />
-        <Dial {...st(p, 'agitation')} label="Agitation" does="How much the surface is kicked about." value={num(p.v, 'agitation')} def={.3} scale={{min: 0, max: 5}} format={fixed(2)} onChange={x => p.set('agitation', x)} />
+        <Dial {...st(p, 'agitation')} disabled={st(p, 'agitation').disabled ?? tattvaHold(p.v)} label="Agitation" does="How much the surface is kicked about." value={num(p.v, 'agitation')} def={.3} scale={{min: 0, max: 5}} format={fixed(2)} onChange={x => p.set('agitation', x)} />
+        <Readout label={tattvaLabel(p.v)} does={tattvaDoes(p.v)}
+          value={strOf(p.v, 'tattva.name')} tone={tattvaHold(p.v) ? 'accent' : undefined} />
       </Section>
       <Section label="Envelope" width={150}>
         <EnvelopeDisplay v={p.v} set={p.set} w={136} h={96} />

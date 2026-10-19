@@ -11,6 +11,8 @@
 //   shape, so one binding feeds both. kind is you | agent | tool | steer | queued | proposal | stall, and a row may also be `spawn`
 //   (a sub-agent started: `link` names its session). A tool row says `state` runs | waits (none: done) and may carry `out`, its
 //   output. A proposal or stall row says in `state` how it was answered (approve | changes | diff, retry | stop | steer | parent).
+//   An `ask` row is a typed question a member put to a decision helper: `tool` names the helper (its face is an animal), `labels`
+//   the answers it allowed, `out` the answer. The answer is evidence the engine checks; it never stands for what the agent saw.
 // - `sessions`: the list the Session chooser offers, as rows of {id, name, short, agent, model, used, cap, parent?, thread?}. A
 //   row's own `thread` is that session's stream: it shows when the session is opened, and under a spawn row set to Inline.
 import {memo, useLayoutEffect, useMemo, useRef, useState, type ReactNode} from 'react'
@@ -27,7 +29,7 @@ const PITCH = 13
 
 // ---------------------------------------------------------------- the owner's rows, read safely
 
-const KINDS = ['you', 'agent', 'tool', 'spawn', 'steer', 'queued', 'proposal', 'stall'] as const
+const KINDS = ['you', 'agent', 'tool', 'spawn', 'steer', 'queued', 'proposal', 'stall', 'ask'] as const
 type Kind = (typeof KINDS)[number]
 /** A row of `thread`; a kind that is not known draws as plain text. */
 interface Row {
@@ -39,6 +41,8 @@ interface Row {
   readonly out?: string
   readonly state?: string
   readonly link?: string
+  /** An ask row: the answers the helper was allowed. */
+  readonly labels?: readonly string[]
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
@@ -52,7 +56,7 @@ function parseRows(raw: unknown): Row[] | undefined {
     if (!item || typeof item !== 'object') continue
     const o = item as Record<string, unknown>
     rows.push({kind: KINDS.find(k => k === o.kind) ?? 'text', who: word(o.who), text: typeof o.text === 'string' ? o.text : '', tool: word(o.tool), out: word(o.out),
-      state: word(o.state), link: word(o.link)})
+      state: word(o.state), link: word(o.link), labels: Array.isArray(o.labels) ? o.labels.filter((l): l is string => typeof l === 'string') : undefined})
   }
   return rows
 }
@@ -109,6 +113,8 @@ interface Item {
   readonly lines?: readonly Item[]
   /** A proposal or a stall, once answered: how. */
   readonly answer?: string
+  /** An ask row: the answers the helper was allowed. */
+  readonly labels?: readonly string[]
 }
 
 const STALL_ANSWERS = {
@@ -145,6 +151,7 @@ function toItems(rows: readonly Row[], at: string, ctx: ItemContext): Item[] {
       case 'queued': return {id, k: 'queued', who: row.who, text: row.text, sub: 'queued · runs as the next task'}
       case 'proposal': return {id, k: 'proposal', who: row.who, tool: row.tool, text: row.text, answer: answerIn(PROPOSAL_ANSWERS, row.state)}
       case 'stall': return {id, k: 'stall', who: row.who, tool: row.tool, text: row.text, answer: answerIn(STALL_ANSWERS, row.state)}
+      case 'ask': return {id, k: 'ask', who: row.who ?? ctx.agent, tool: row.tool, text: row.text, out: row.out, labels: row.labels}
       default: return {id, k: 'text', who: row.who, text: row.text}
     }
   })
@@ -228,7 +235,7 @@ const steerHeard = (v: V, items: readonly Item[] | undefined): string | undefine
 
 /** Which of the Messages choices an item belongs to. A task divider always shows. */
 const GROUP: Readonly<Record<ItemKind, 'task' | 'yours' | 'agent' | 'tools' | 'other'>> = {
-  task: 'task', you: 'yours', steer: 'yours', queued: 'yours', agent: 'agent', proposal: 'agent', stall: 'agent', work: 'agent', tool: 'tools', spawn: 'tools', text: 'other',
+  task: 'task', you: 'yours', steer: 'yours', queued: 'yours', agent: 'agent', proposal: 'agent', stall: 'agent', ask: 'agent', work: 'agent', tool: 'tools', spawn: 'tools', text: 'other',
 }
 function visible(v: V, items: readonly Item[]): Item[] {
   // a filter the owner does not report shows the whole stream
@@ -354,6 +361,13 @@ function Mark({it, x, y, w, v}: {it: Item; x: number; y: number; w: number; v: V
         <rect x={x + 22} y={y + 5} width={barLen(it.text, room - 26)} height={2.4} fill={answered ? 'var(--text-dim)' : colour} opacity={answered ? 0.6 : 1} />
         {!answered && <rect x={x + 22} y={y + 5 + 9} width={Math.min(room - 40, 34)} height={1.6} fill="var(--text-faint)" opacity={0.7} />}</g>
     }
+    case 'ask': {
+      const helper = it.tool ?? NONE, cw = 8 + helper.length * 4.6
+      return <g><path d={`M${x + 10} ${mid - 3}L${x + 13} ${mid}L${x + 10} ${mid + 3}L${x + 7} ${mid}Z`} fill="var(--dp-value)" />
+        <rect x={x + 16} y={y + 1.5} width={cw} height={10} rx={5} fill="none" stroke="var(--dp-value)" strokeWidth={1} strokeDasharray="2 1.5" />
+        <text x={x + 16 + cw / 2} y={y + 9.3} textAnchor="middle" className="dp-axis" style={{fill: 'var(--dp-value)'}}>{helper}</text>
+        <rect x={x + 21 + cw} y={y + 5.8} width={barLen(it.out ?? it.text, room - cw - 18)} height={1.6} fill="var(--dp-value)" opacity={0.55} /></g>
+    }
     case 'work': return <g><circle cx={x + 10} cy={mid} r={4.6} fill="none" stroke="var(--dp-value)" opacity={0.35} /><circle cx={x + 10} cy={mid} r={2} fill="var(--dp-value)" />
       <rect x={x + 20} y={y + 5.6} width={26} height={2} fill="var(--dp-value)" opacity={0.45} /></g>
   }
@@ -454,7 +468,7 @@ function ThreadPane({p}: {p: ViewProps}) {
   const askChange = () => { if (input !== 'steer' && !st(p, 'input').disabled) p.set('input', 'steer'); composer.current?.focus() }
   /** A row with its avatar. `named`: the speaker's name stands before the words (a card needs none: the face says who). */
   const bubble = (it: Item, body: ReactNode, named = true) => {
-    const mine = it.k === 'you' || it.k === 'steer' || it.k === 'queued', who = it.who ?? (mine ? 'you' : NONE), agent = it.k === 'agent' || it.k === 'proposal' || it.k === 'stall'
+    const mine = it.k === 'you' || it.k === 'steer' || it.k === 'queued', who = it.who ?? (mine ? 'you' : NONE), agent = it.k === 'agent' || it.k === 'proposal' || it.k === 'stall' || it.k === 'ask'
     return <div className="th-row" key={it.id}>
       <span className="th-av" data-agent={agent || undefined}>{agent ? <Avatar size={18} /> : who === 'you' ? 'Y' : who.slice(0, 1)}</span>
       <div className="th-body">{named && <span className="th-who" data-agent={agent || undefined}>{who}</span>}{body}</div>
@@ -503,6 +517,10 @@ function ThreadPane({p}: {p: ViewProps}) {
               <button type="button" onClick={askChange} data-i="Steer|Say what the agent should do instead, in the composer.">Steer</button>
               {cardButton(p, 'tellParent', 'Tell parent', 'Hand the stall to the parent session.')}</span></div>, false)
       }
+      case 'ask': return bubble(it, <div className="th-card" data-kind="ask" data-done="true"
+        data-i={`Ask row|${it.who ?? 'A member'} put a typed question to ${it.tool ?? 'a helper'}. The answer is evidence the engine checks; it never stands for what the agent saw.`}>
+        <b>Asked {it.tool ?? NONE} · {it.text || NONE}</b>
+        <small>{it.labels?.length ? it.labels.join(' · ') : 'No labels read'} → {it.out ?? 'no answer yet'} · evidence</small></div>)
       case 'work': return <div className="th-row th-row--tool" key={it.id}><span className="th-av th-av--tool" aria-hidden="true" /><p className="th-work"><i />{it.text}</p></div>
     }
   }
@@ -587,6 +605,8 @@ export const design: DesignedDevice = {
     'Stalled, answered': {age: 140, thread: sampleThread({stalled: true, answered: true})},
     'Queued input': {input: 'queue', sent: 'Run the tests after the type-check.'},
     'Pinned, selection moved': {pin: true, selected: 'model'},
+    'A helper answers': {thread: JSON.stringify([...JSON.parse(sampleThread()) as unknown[],
+      {who: 'Flint', kind: 'ask', tool: 'Owl', text: 'Which standing fits "the cradle root is untouched"?', labels: ['fact', 'claim', 'inference', 'guess'], out: 'inference'}])},
     'No readings': Object.fromEntries(['light', 'session', 'selected', 'pin', 'toolRows', 'subagents', 'messages', 'input', 'voice', 'draft', 'sent', 'quantize', 'heard', 'age', 'writes',
       'thread', 'sessions'].map(k => [k, undefined])),
   },
