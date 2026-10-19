@@ -15,7 +15,7 @@
 // declared on your body and the worlds that land on it), each at its point, or hollow on the nearest shore where its spot is sea
 // (globe/body.ts shoreOf: drawing only, its coordinate never changes), named.
 // Screen-space and DOM, as PlanetOrbits is: it reads the sky layer's drawn disc each frame, so it follows the planet exactly.
-import {PlanetOrbits, type OrbitAt, type Satellite} from '../src/sky/orbits'
+import {PlanetOrbits, type OrbitAt, type OrbitDisc, type Satellite} from '../src/sky/orbits'
 import {bodyDisc, shoreOf, type WorldBodyRecord} from '../src/globe/body'
 import {el} from '../src/ui/dom'
 import {hostSize} from '../src/ui/hostSize'
@@ -67,8 +67,17 @@ export function rgbOf(hex: string): string {
 /** Whether your system stands this frame: the sky drawn and not the Graph, the camera at the system (no lens holding a planet, no gaze
  * from the ground), a reading of today's worlds, and your own body drawn as the planet (while the globe draws the Earth, the planet in
  * the sky is the Earth, and your system is not hung on it). Pure. */
-export function systemWanted(view: {readonly sky: boolean; readonly graph: boolean}, phase: string | undefined, read: boolean, yoursShown: boolean): boolean {
-  return read && yoursShown && view.sky && !view.graph && (phase === undefined || phase === 'system')
+export function systemWanted(view: {readonly sky: boolean; readonly graph: boolean}, phase: string | undefined, read: boolean, yoursShown: boolean, skyStands = true): boolean {
+  // The sky layer's camera phases speak only while that layer stands: with none (the port ships no sky grid, provider/skyProvider.ts),
+  // the sky lens alone is the System.
+  return read && yoursShown && view.sky && !view.graph && (!skyStands || phase === undefined || phase === 'system')
+}
+
+/** Your planet's disc from the globe's own (engine.globeDisc: its centre and radius on screen), as the orbits take a disc, for when no
+ * sky layer stands to give it. A disc too small to hold rings holds none. Pure. */
+export function globeTerra(disc: {readonly x: number; readonly y: number; readonly r: number}): OrbitDisc {
+  const px = Math.max(0, disc.r * 2)
+  return {x: disc.x, y: disc.y, px, held: px, on: disc.r >= 1}
 }
 
 /** A world's place on the ring of worlds around your planet, px from its centre: its keyed phase on the flattened, turned ring. Pure. */
@@ -233,8 +242,9 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     }
     const layer = handle.engine.sky ?? null
     const reading = systemReading()
-    const wanted = systemWanted({sky: !!handle.ctl.state.sky, graph: !!handle.ctl.state.graph}, document.body.dataset.skyPhase, reading.state === 'read', !!handle.engine.body) && !!layer
-    const terra = wanted && layer ? layer.screenDisc('terra') : null
+    const wanted = systemWanted({sky: !!handle.ctl.state.sky, graph: !!handle.ctl.state.graph}, document.body.dataset.skyPhase, reading.state === 'read', !!handle.engine.body, !!layer)
+    // your planet's disc: on the sky layer when it stands, else the globe's own (your system stands on your planet either way; r19)
+    const terra = !wanted ? null : layer ? layer.screenDisc('terra') : (() => { const disc = {x: 0, y: 0, r: 0}; handle.engine.globeDisc(disc); return globeTerra(disc) })()
     const here = !!terra && terra.on
     root.hidden = !here
     const at: OrbitAt = {disc: here ? terra : null, wanted: here, minRing: YOUR_RING}

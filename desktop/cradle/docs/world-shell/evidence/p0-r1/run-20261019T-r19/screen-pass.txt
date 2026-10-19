@@ -1,0 +1,18 @@
+r19 screen pass — a70894862 (your system read wherever the Earth stands), with AIKit 2d93f171, 19 Oct 2026 10:30–10:37 UTC, computer
+use on the native candidate, the owner's real ground. Control/user/flows and the root and O-I wikis were backed up first; nothing was
+written (all 13 flows files match; both wikis keep their hashes).
+
+Seen:
+- Your system is read: Technē's Bodies lists your planet ("no body yet") and O-I, seeded (no record yet, drawn from its ref). r18 had
+  only your planet.
+- The World on your planet, the sky lens on, the scale reading system.
+
+Found and fixed after the pass (not in r19):
+- Your system's worlds were still not drawn: the overlay stood on the sky layer's disc for your planet, and the port ships no sky grid
+  (provider/skyProvider.ts: Sky mode is unbound until N3's QL sky producer), so no sky layer ever attaches and the overlay never stood.
+  Your planet's disc now comes from the globe's own (engine.globeDisc) when no sky layer stands, and the sky's camera phases gate the
+  overlay only while that layer stands.
+- The plate's Worlds rows (where a world lands and comes off) stood under the place list, below the band's fold: the plate does not
+  scroll, so no world could be pressed to land. They now stand in a section of their own, Worlds, after Locations.
+
+Not seen: O-I drawn in your system; landing O-I and taking it off; taking O-I out of today's set (r20).
