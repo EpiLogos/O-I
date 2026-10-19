@@ -656,6 +656,7 @@ mod tests {
             // Central's Day writes.
             json!({"op": "central", "project": null, "request": {"kind": "ensure-day", "expected_time_policy_revision": "v"}}),
             json!({"op": "central", "project": null, "request": {"kind": "initialise-day", "day_ref": "d", "document_id": "x", "expected_revision": "v", "expected_policy_revision": "v", "form": location, "expected_form_revision": "v"}}),
+            json!({"op": "central", "project": null, "request": {"kind": "close-day", "day_ref": "d", "expected_revision": "v", "expected_relations_revision": "v"}}),
         ];
         let ordered: Vec<String> = table
             .into_iter()

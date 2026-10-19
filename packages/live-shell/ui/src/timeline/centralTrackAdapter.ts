@@ -26,6 +26,7 @@ import {CENTRAL_DAYS_PATH, dateOfDayPath, dayEntriesOf} from '../central/daySurf
 import type {DaySet} from '../central/daySet'
 import type {CentralWorld, CentralWorldsReading, WorldPagesReading} from '../central/centralWorlds'
 import type {CentralLocation, NativeFileEntry} from '../../../../../desktop/cradle/src/kernel/types'
+import type {NowListing} from '../../../../../desktop/cradle/src/receiving/now'
 
 export const CENTRAL_TRACK_ADAPTER_ID = 'central-world-tracks'
 
@@ -101,6 +102,17 @@ export interface CentralPlaying {
   readonly sinceMs: number | null
 }
 
+/** The task a page's clearing carries (kernel/src/page.rs `page_task`). */
+const PAGE_TASK = 'oi:page:'
+
+/** The pages that play now, from NOW listings: each active clearing whose task is a page's. Pure. */
+export function playingOf(listings: readonly {project: string | null; listing: NowListing}[]): CentralPlaying[] {
+  return listings.flatMap(({project, listing}) => listing.records
+    .filter(row => row.lifecycle === 'active' && row.task_ref.startsWith(PAGE_TASK))
+    .map(row => ({pageRef: row.task_ref.slice(PAGE_TASK.length), nowRef: row.now_ref, project,
+      sinceMs: Number.isFinite(row.created_at_unix_seconds) ? row.created_at_unix_seconds * 1000 : null})))
+}
+
 /** The owner's acts the tracks press. */
 export interface CentralControls {
   launch?: (page: {location: CentralLocation; path: string}) => Promise<unknown>
@@ -154,6 +166,8 @@ export function centralSubjectOfClip(ref: string): {kind: 'day' | 'note'; path: 
 
 const isDate = (key: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(key)
 const dayStartMs = (key: string): number => Date.UTC(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, Number(key.slice(8, 10)))
+/** The ruler's day (its UTC date) an instant falls on: dayStartMs's inverse. */
+const dayOfMs = (unixMs: number): string => new Date(unixMs).toISOString().slice(0, 10)
 const clock = (minute: number): string => `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`
 const plural = (count: number, one: string, many: string): string => `${count} ${count === 1 ? one : many}`
 
@@ -270,11 +284,16 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
   const pageClip = (page: Page, columnId: string): WorldTrackClip => {
     const plays = playing.get(page.location.ref)
     const since = plays?.sinceMs ?? null
-    const start = since !== null ? minuteOf(since) : null
+    // A page carried from an earlier Day (manual §18.1 "What carries to tomorrow") plays through today from its start, and says
+    // since when it plays and when to look at it again: the day-close law's review, three days on (Control/agents/governance/
+    // field-and-now/day-close.md; central-day-close "carried 3 or more days is re-justified").
+    const carried = since !== null && todayStart !== null && since < todayStart
+    const start = since === null ? null : carried ? 0 : minuteOf(since)
+    const carriedWords = carried ? ` · carried, open since ${dayOfMs(since!)}; look at it again ${dayOfMs(since! + 3 * 86_400_000)}` : ''
     return {id: page.path, trackId: centralWorldTrackId(page.world), columnId, label: page.title,
       ...(plays ? {status: 'running' as const} : {}),
       ...(start !== null ? {at: {start, end: MINUTES_PER_DAY - 1}} : {}),
-      note: `${page.form === 'flow' ? 'A Flow' : page.form === 'being' ? 'A Being' : page.form === 'thing' ? 'A Thing' : 'A page'} · ${page.path}${plays ? ` · plays now (${plays.nowRef})` : ''}`}
+      note: `${page.form === 'flow' ? 'A Flow' : page.form === 'being' ? 'A Being' : page.form === 'thing' ? 'A Thing' : 'A page'} · ${page.path}${plays ? ` · plays now (${plays.nowRef})${carriedWords}` : ''}`}
   }
   // Each row's pages, by its column: a named row's in the order it names them, a slot's one page from each world.
   const rowPages = new Map<string, Page[]>(columns.map(column => [column.id, []]))

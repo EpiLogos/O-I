@@ -8,6 +8,8 @@ export interface DayReading {
   day_ref: string;
   source: {ref: string; path: string; roles?: string[]; treatment?: string; agent_retrieval_allowed?: boolean};
   revision: {revision: string};
+  /** The Day relations' revision (Central's day reading): what a close is checked against with the content revision. */
+  relations_revision?: string;
   content: string;
   temporal: {day_ref: string; civil_date: string; lifecycle?: string} & Record<string, unknown>;
   today?: {day_ref: string; civil_date: string};
