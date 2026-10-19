@@ -1,0 +1,20 @@
+r24 screen pass — 0a6a0e45f (a device's Pop-out admitted and re-docked on its identity alone, its own Full relayed as data), 19 Oct
+2026 15:50–15:55 UTC, computer use on the native candidate in the background, the owner's real ground. Control/user/flows and the root
+and O-I wikis were backed up first; nothing was written (all 13 flows files match; both wikis keep their hashes; today's Day keeps its
+revision 400715:e9d0292a — the Day's details editor, opened by a stray click on its date, was closed by its own Done unchanged).
+
+Seen:
+- A device's Pop-out is admitted at once: Scope's window and the Day's opened on "Reaching the device in the main window…", with no
+  access error (r23's Day read "the detached native World/access epoch is unavailable").
+- Re-dock closes a device's window (Scope's, twice); r23's did nothing.
+
+Found and fixed after the pass (not in r24):
+- Neither window ever reached its device: after the 1.5 s wait each fell back to its face alone and was refused by name (Scope:
+  "software-factory/context-write-mode does not declare pop-out"; the Day: "day-die needs its Day in the aperture"). r24's admission
+  no longer waits on the window's own access, so the device mounted before that access arrived; when it did, the window's frame re-ran
+  its admission and remounted the device, and the remount's bye made the main window forget the binding, so the fresh hello found
+  nothing to publish. In r23 admission waited, the device mounted once, and the relay answered. The main window now keeps the devices
+  it popped out across a bye, and a hello from the same binding stands it again (frame/devices/deviceRelay.ts relayRegistry; red, then
+  green).
+
+Not seen: the Day's page drawn as its Pop-out's Full; Physics, the Skillset rack and Scope in the six views (r25).

@@ -141,3 +141,20 @@ test('a device\'s own Full crosses as data and its Pop-out draws it there: the D
   const central = await source('central/devices/CentralDevices.tsx')
   assert.match(central, /registerRelayedFull\(DAY_PAGE_RELAY/, 'Central registers the Day page as the Day\'s relayed Full')
 })
+
+test('a popped-out device stays relayed across its window remounting: a bye then a hello from the same binding finds it again (r24)', () => {
+  // r24: the Day and Scope popped out and never reached the main window. Their window's frame re-ran its admission when the window's
+  // own access arrived, remounting the device: the remount's bye made the main window forget the binding, and the fresh hello found
+  // nothing to publish.
+  const registry = relay.relayRegistry()
+  registry.popped('device:central/day-die', 'central:day-die')
+  assert.deepEqual([...registry.entries()], [['device:central/day-die', 'central:day-die']])
+  registry.bye('device:central/day-die')
+  assert.deepEqual([...registry.entries()], [], 'a window that left is not published to')
+  assert.equal(registry.hello('device:central/day-die'), true, 'its window came back: it is relayed again')
+  assert.deepEqual([...registry.entries()], [['device:central/day-die', 'central:day-die']])
+  assert.equal(registry.deviceOf('device:central/day-die'), 'central:day-die', 'its acts reach the device')
+  assert.equal(registry.hello('device:nobody/never'), false, 'a binding never popped out is not relayed')
+  registry.refused('device:central/day-die')
+  assert.equal(registry.hello('device:central/day-die'), false, 'a pop-out the host refused is forgotten')
+})

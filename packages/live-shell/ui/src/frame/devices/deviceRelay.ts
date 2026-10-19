@@ -96,7 +96,30 @@ export function relayedBinding(snapshot: NonNullable<RelayedSnapshot['binding']>
 // ---------------------------------------------------------------------------------------------------------------- the main window
 
 type Emit = (event: string, payload: unknown) => Promise<void>
-const relayed = new Map<string, string>() // binding id → the door's device id
+/** The main window's record of its popped-out devices: binding id → the door's device id. `entries` are the windows standing now,
+ * which every door change is published to. A window that sends bye is no longer published to, but the device stays popped out: its
+ * window remounts the device when its own access arrives (DetachedFrame re-runs its admission), and the remount's hello must find it
+ * again (r24: the Day and Scope popped out and never reached the main window). A pop-out the host refused is forgotten. Pure. */
+export function relayRegistry() {
+  const standing = new Map<string, string>()
+  const popped = new Map<string, string>()
+  return {
+    popped(bindingId: string, deviceId: string) { popped.set(bindingId, deviceId); standing.set(bindingId, deviceId) },
+    refused(bindingId: string) { popped.delete(bindingId); standing.delete(bindingId) },
+    /** Its window greets the main window: true where the binding is one this window popped out, which stands again. */
+    hello(bindingId: string): boolean {
+      const deviceId = popped.get(bindingId)
+      if (deviceId === undefined) return false
+      standing.set(bindingId, deviceId)
+      return true
+    },
+    bye(bindingId: string) { standing.delete(bindingId) },
+    deviceOf: (bindingId: string): string | undefined => standing.get(bindingId),
+    entries: (): IterableIterator<[string, string]> => standing.entries(),
+  }
+}
+
+const relayed = relayRegistry()
 let installed: Promise<Emit> | null = null
 
 /** The native host's main window (not a detached page): the one that can open a second window and relay to it. */
@@ -109,7 +132,7 @@ export function nativeHostMain(): boolean {
 const relayOf = (published: PublishedDevice): RelayedFull | undefined => (published.full && 'draw' in published.full ? published.full.relay : undefined)
 
 function publishAll(emit: Emit) {
-  for (const [bindingId, deviceId] of relayed) {
+  for (const [bindingId, deviceId] of relayed.entries()) {
     const published = publishedDevice(deviceId)
     if (published) void emit(RELAY_EVENTS.publish, relaySnapshot(bindingId, deviceId, published.device, published.binding, relayOf(published)))
   }
@@ -122,17 +145,17 @@ function install(): Promise<Emit> {
     let last = ''
     subscribeDeviceDoor(() => {
       // Publish only when what the relayed devices show moved.
-      const now = JSON.stringify([...relayed].map(([bindingId, deviceId]) => {
+      const now = JSON.stringify([...relayed.entries()].map(([bindingId, deviceId]) => {
         const p = publishedDevice(deviceId)
         return p ? relaySnapshot(bindingId, deviceId, p.device, p.binding, relayOf(p)) : null
       }))
       if (now !== last) { last = now; publishAll(send) }
     })
-    await listen<{bindingId: string}>(RELAY_EVENTS.hello, event => { if (relayed.has(event.payload.bindingId)) publishAll(send) })
-    await listen<{bindingId: string}>(RELAY_EVENTS.bye, event => { relayed.delete(event.payload.bindingId) })
+    await listen<{bindingId: string}>(RELAY_EVENTS.hello, event => { if (relayed.hello(event.payload.bindingId)) publishAll(send) })
+    await listen<{bindingId: string}>(RELAY_EVENTS.bye, event => { relayed.bye(event.payload.bindingId) })
     await listen<{bindingId: string; requestId: string; act: RelayAct}>(RELAY_EVENTS.act, event => {
       const {bindingId, requestId, act} = event.payload
-      const deviceId = relayed.get(bindingId)
+      const deviceId = relayed.deviceOf(bindingId)
       const published = deviceId ? publishedDevice(deviceId) : undefined
       const answer = published ? applyRelayAct(published.binding, act) : Promise.reject(new Error('The device left its chain: its window no longer reaches it.'))
       void answer.then(() => send(RELAY_EVENTS.ack, {requestId}), cause => send(RELAY_EVENTS.ack, {requestId, error: cause instanceof Error ? cause.message : String(cause)}))
@@ -148,13 +171,13 @@ export async function popOutNative(deviceId: string, workspaceId: string): Promi
   if (!published) throw new Error('The device is not on the door.')
   const identity = {family: published.device.family, face: published.device.face.id, aperture: {day: null, flow: null, conversation: null, instrument: null}}
   const bindingId = `device:${identity.family}/${identity.face}`
-  relayed.set(bindingId, deviceId)
+  relayed.popped(bindingId, deviceId)
   await install()
   const {invoke} = await import('@tauri-apps/api/core')
   try {
     await invoke('window_detach', {workspaceId, binding: {id: bindingId, kind: 'device', title: published.device.face.title, ref: bindingId, device: identity}, bounds: null})
   } catch (cause) {
-    relayed.delete(bindingId)
+    relayed.refused(bindingId)
     throw cause instanceof Error ? cause : new Error(String(cause))
   }
 }
