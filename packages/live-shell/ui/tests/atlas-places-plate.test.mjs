@@ -108,6 +108,9 @@ test('the focused M4′ stands as one plate in the mockup\'s six sections; the o
   assert.match(out, /Choose a subject on the Earth first/, 'Place waits for a subject')
   assert.match(out, /<select class="dp-chooser" aria-label="Lens"[^>]*disabled=""/, 'the atlas\'s lens chooser stands on the plate, waiting for the Earth')
   assert.doesNotMatch(out, /overflow: ?(auto|scroll)|places-list/, 'no list scrolls inside the plate')
+  // r19: your system's worlds stand in a section of their own after Locations (under the place list they stood below the band's fold)
+  assert.ok(out.indexOf('data-section="worlds"') > out.indexOf('data-section="locations"'), 'Worlds stands after Locations')
+  assert.match(out.slice(out.indexOf('data-section="worlds"')), /Your system is read while the Earth stands\./, 'with no system read, it says so')
 })
 
 test('Locations and Relations read the owners\' places: precision marks, the mythic named, absences said, the legend by relation', () => {

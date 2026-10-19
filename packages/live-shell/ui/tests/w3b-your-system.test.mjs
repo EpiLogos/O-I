@@ -41,7 +41,7 @@ const model = await import('../src/projections/atlas/system/systemModel.ts')
 const systemStore = await import('../src/projections/atlas/system/systemStore.ts')
 const {landWorld, unlandWorld, readBodyOf, yourBodyReading} = await import('../src/projections/atlas/system/SystemReadings.tsx')
 const {yourLocations, LOCATIONS_READING} = await import('../src/projections/atlas/system/bodyLocations.ts')
-const {drawnLocations, systemWanted, worldPlace, rgbOf} = await import('../src/projections/atlas/system/systemOverlay.ts')
+const {drawnLocations, systemWanted, worldPlace, rgbOf, globeTerra} = await import('../src/projections/atlas/system/systemOverlay.ts')
 const store = await import('../src/projections/atlas/body/worldBody.ts')
 const body = await import('../src/projections/atlas/src/globe/body.ts')
 const {renderBody, bodyRenderThread} = await import('../src/projections/atlas/src/globe/bodyRender.ts')
@@ -161,6 +161,12 @@ test('the overlay stands in the System scale only, places worlds round your plan
   assert.equal(systemWanted({sky: true, graph: false}, undefined, true, true), true)
   assert.equal(systemWanted({sky: true, graph: false}, 'approach', true, true), false, 'a lens holding a planet owns the screen')
   assert.equal(systemWanted({sky: false, graph: false}, 'system', true, true), false, 'not at the Body scale')
+  // r19: the port ships no sky grid (provider/skyProvider.ts), so no sky layer stands and its camera phases are none of the system's:
+  // with the sky lens on and your planet shown, your system stands on the globe's own disc
+  assert.equal(systemWanted({sky: true, graph: false}, 'approach', true, true, false), true, 'no sky layer: the lens alone is the System')
+  assert.equal(systemWanted({sky: false, graph: false}, undefined, true, true, false), false, 'no sky layer, no lens: the Body')
+  assert.deepEqual(globeTerra({x: 400, y: 300, r: 120}), {x: 400, y: 300, px: 240, held: 240, on: true})
+  assert.equal(globeTerra({x: 0, y: 0, r: 0.4}).on, false, 'a planet too small to hold rings holds none')
   assert.equal(systemWanted({sky: true, graph: true}, 'system', true, true), false)
   assert.equal(systemWanted({sky: true, graph: false}, 'system', false, true), false, 'nothing read, nothing drawn')
   assert.equal(systemWanted({sky: true, graph: false}, 'system', true, false), false, 'the Earth drawn: the planet is the Earth, not your world')
@@ -223,6 +229,22 @@ test('a landing comes off as it went on: the body written whole without it, on t
   // a stale reading is the owner's refusal, verbatim
   owner.record = landed
   await assert.rejects(unlandWorld(owner, bodies[1], reading), /reread before editing its facts/)
+})
+
+test('the plate\'s Worlds section lists today\'s worlds with where each lands, and offers a landed world\'s way off while it is armed', async () => {
+  const {createElement} = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const {WorldsSection} = await import('../src/projections/atlas/places/PlacesPlate.tsx')
+  const bodies = model.systemOf(input()).map((body, i) => i === 1 ? {...body, landing: {lat: 12.5, lon: -40.25}} : body)
+  systemStore.publishSystem({state: 'read', bodies, set: null})
+  const listed = renderToStaticMarkup(createElement(WorldsSection))
+  assert.match(listed, />O-I</); assert.match(listed, /12\.5, -40\.3/)
+  assert.doesNotMatch(listed, /Off your planet/, 'nothing is armed: no way off is offered')
+  tool.bindPlaceOwner({offer() {}, open() {}, reread() {}, async land() { return '' }, async unland() { return '' }})
+  tool.armLanding({key: bodies[1].key, name: 'O-I'})
+  assert.match(renderToStaticMarkup(createElement(WorldsSection)), /Off your planet/, 'a landed world armed: its way off stands')
+  tool.disarmPlaceTool(); tool.bindPlaceOwner(null)
+  systemStore.publishSystem({state: 'unbound'})
 })
 
 test('the plate takes an armed landed world off through its owner, and says the answer', async () => {
