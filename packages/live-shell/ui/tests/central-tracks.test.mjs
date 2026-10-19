@@ -268,6 +268,23 @@ test('a day subject is named by its date — every day on the surface is a day.m
 })
 
 
+test('a world leaves today\'s set as it came in: its track taken out writes the set without it; your world never leaves', async () => {
+  const calls = []
+  const controls = {addWorld: async world => calls.push(['add', world.ref]), removeWorld: async world => calls.push(['remove', world.ref])}
+  const live = adapter.projectCentralTracks({...reading, controls})
+  const oi = live.tracks.find(track => track.id === 'central:world:central:wiki:project:O-I')
+  assert.ok(oi, 'O-I is a track of today\'s set')
+  assert.deepEqual(await live.actions.removeTrack.run(oi.id), {ok: true, note: 'O-I is out of today\'s set; its pages stay in its folder.'})
+  assert.deepEqual(calls, [['remove', 'central:wiki:project:O-I']])
+  assert.deepEqual(await live.actions.removeTrack.run('central:world:central:wiki:root'), {ok: false, error: 'Your world is in every day\'s set; it does not leave it.'})
+  assert.equal((await live.actions.removeTrack.run('central:world:nowhere')).ok, false)
+  assert.equal(calls.length, 1)
+  assert.equal(adapter.projectCentralTracks({...reading, controls: {addWorld: controls.addWorld}}).actions.removeTrack, undefined, 'no removal without the Day\'s write')
+  const daySet = await import('../src/central/daySet.ts')
+  const set = {schema: 'oi.day-set/v1', tracks: [{world: 'a'}, {world: 'b'}], rows: []}
+  assert.deepEqual(daySet.withoutWorld(daySet.withWorld(set, 'c'), 'c'), set, 'in then out leaves the set as it was')
+})
+
 test('the bodies the tracks read are one value until the system changes: a snapshot read twice is the same (r16: the grid drew nothing)', async () => {
   const store = await import('../src/projections/atlas/system/systemStore.ts')
   assert.equal(store.systemBodies(), store.systemBodies(), 'unread, the bodies are one empty list, not a new one per read')

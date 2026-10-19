@@ -81,6 +81,8 @@ export interface PlaceOwner {
   /** [T-WORLDS §5 W3] land a world of your system on your planet: one BodySet on that world's register, on the revision read
    * (system/SystemReadings.tsx landWorld). Resolves with the owner's acknowledgement; rejects with its refusal. */
   land?(target: LandingTarget, lat: number, lon: number): Promise<string>;
+  /** Take a landed world off your planet (system/SystemReadings.tsx unlandWorld). */
+  unland?(target: LandingTarget): Promise<string>;
 }
 
 const IDLE: PlaceToolState = {phase: 'idle', notice: null, tone: null};
@@ -217,6 +219,20 @@ async function landAt(target: LandingTarget, point: {lat: number; lon: number} |
   try {
     const said = await owner.land(target, point.lat, point.lon);
     set({phase: 'idle', notice: said, tone: 'saved'});
+  } catch (error) {
+    set({phase: 'idle', notice: error instanceof Error ? error.message : String(error), tone: 'refused'});
+  }
+}
+
+/** Take the armed world off your planet, through its own body owner; its answer said in its own words. A landing is undone as it is
+ * made: one write of the world's body, on the revision read. */
+export async function unlandArmed(): Promise<void> {
+  if (state.phase !== 'landing') return;
+  const target = state.target;
+  if (!owner?.unland) { set({phase: 'idle', notice: NO_LANDING_OWNER, tone: 'refused'}); return }
+  set({phase: 'saving', target});
+  try {
+    set({phase: 'idle', notice: await owner.unland(target), tone: 'saved'});
   } catch (error) {
     set({phase: 'idle', notice: error instanceof Error ? error.message : String(error), tone: 'refused'});
   }

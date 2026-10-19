@@ -197,6 +197,13 @@ function placeOwner(handle: AtlasHandle, transport: KernelTransportStatus, said:
       if (!body) throw Error(`${target.name} is no longer in today’s set, so it does not land.`);
       return acts.land(body, lat, lon);
     },
+    unland: async target => {
+      const acts = systemActs();
+      const body = systemBodies().find(entry => entry.key === target.key);
+      if (!acts) throw Error('Your system’s owners are not bound in this pane, so no world can be taken off from here.');
+      if (!body) throw Error(`${target.name} is no longer in today’s set, so it is not taken off from here.`);
+      return acts.unland(body);
+    },
   };
 }
 

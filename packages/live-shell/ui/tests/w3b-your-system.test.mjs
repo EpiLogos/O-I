@@ -39,7 +39,7 @@ export async function load(u, c, n) {
 globalThis.__CRADLE_WALK__ = false
 const model = await import('../src/projections/atlas/system/systemModel.ts')
 const systemStore = await import('../src/projections/atlas/system/systemStore.ts')
-const {landWorld, readBodyOf, yourBodyReading} = await import('../src/projections/atlas/system/SystemReadings.tsx')
+const {landWorld, unlandWorld, readBodyOf, yourBodyReading} = await import('../src/projections/atlas/system/SystemReadings.tsx')
 const {yourLocations, LOCATIONS_READING} = await import('../src/projections/atlas/system/bodyLocations.ts')
 const {drawnLocations, systemWanted, worldPlace, rgbOf} = await import('../src/projections/atlas/system/systemOverlay.ts')
 const store = await import('../src/projections/atlas/body/worldBody.ts')
@@ -195,6 +195,48 @@ test('a landing is one BodySet on the landed world\'s register at the revision r
   assert.equal(owner.revision, 10)
   assert.deepEqual(yourBodyReading({state: 'unbound'}), {state: 'reading'})
   assert.deepEqual(yourBodyReading({state: 'refused', reason: 'no'}), {state: 'refused', reason: 'no'})
+})
+
+test('a landing comes off as it went on: the body written whole without it, on the revision read, everything else kept', async () => {
+  const landed = {...store.firstBody(OI.ref, 9), landing: {on_ref: RECORD.body_ref, lat: 12.5, lon: -40.25}}
+  const owner = {record: landed, revision: 10, writes: [],
+    async read() { return readingOf(OI.ref, owner.record, owner.revision, 'O-I') },
+    async write(next, basis) {
+      owner.writes.push({body: next, basis})
+      if (basis.revision !== owner.revision) throw Error('the exact native target changed; reread before editing its facts')
+      owner.record = next; owner.revision += 1
+    }}
+  const bodies = model.systemOf(input())
+  const reading = await readBodyOf(owner)
+  const said = await unlandWorld(owner, bodies[1], reading)
+  assert.match(said, /O-I is off your planet: its body is kept, without a landing, at revision 11\./)
+  assert.equal(owner.writes.length, 1)
+  assert.deepEqual(owner.writes[0].basis, {space_ref: OI.ref, revision: 10})
+  const {landing, ...rest} = landed
+  assert.deepEqual(owner.writes[0].body, rest, 'the seed and every setting stay; only the landing goes')
+  assert.equal('landing' in owner.writes[0].body, false)
+  // nothing to take off: said, and nothing written
+  assert.match(await unlandWorld(owner, bodies[1], await readBodyOf(owner)), /does not land on your planet; nothing was written/)
+  assert.equal(owner.writes.length, 1)
+  await assert.rejects(unlandWorld(owner, bodies[0], reading), /lands nowhere, so there is nothing to take off/)
+  await assert.rejects(unlandWorld(owner, bodies[2], undefined), /Book’s body is not read/)
+  // a stale reading is the owner's refusal, verbatim
+  owner.record = landed
+  await assert.rejects(unlandWorld(owner, bodies[1], reading), /reread before editing its facts/)
+})
+
+test('the plate takes an armed landed world off through its owner, and says the answer', async () => {
+  const said = []
+  tool.bindPlaceOwner({offer() {}, open() {}, reread() {}, async land() { return '' }, async unland(target) { said.push(target.key); return `${target.name} is off your planet.` }})
+  tool.armLanding({key: 'world:central:wiki:project:O-I', name: 'O-I'})
+  await tool.unlandArmed()
+  assert.deepEqual(said, ['world:central:wiki:project:O-I'])
+  assert.deepEqual(tool.placeToolState(), {phase: 'idle', notice: 'O-I is off your planet.', tone: 'saved'})
+  tool.bindPlaceOwner({offer() {}, open() {}, reread() {}, async land() { return '' }, async unland() { throw Error('the owner refused') }})
+  tool.armLanding({key: 'k', name: 'O-I'})
+  await tool.unlandArmed()
+  assert.deepEqual(tool.placeToolState(), {phase: 'idle', notice: 'the owner refused', tone: 'refused'})
+  tool.bindPlaceOwner(null)
 })
 
 // ── the place facet names its body; the Earth draws its own places only ───────────────────────────────────────────────

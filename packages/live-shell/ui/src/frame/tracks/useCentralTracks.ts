@@ -19,7 +19,7 @@ import {launchPage, stopPage} from '../../../../../../desktop/cradle/src/persona
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading, type WorldPagesReading} from '../../central/centralWorlds'
-import {daySetOf, withWorld, writeDaySet} from '../../central/daySet'
+import {daySetOf, withWorld, withoutWorld, writeDaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
 import {openLaunched} from '../../central/launchOpening'
 import {documentLayoutWriter} from '../../central/documents/documentDoor'
@@ -124,7 +124,10 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
         return openLaunched(transport, write, page)
       }),
       stop: (item: CentralPlaying) => after(() => stopPage(transport, item.nowRef, item.project)),
-      ...(aperture ? {addWorld: (world: CentralWorld) => after(() => writeDaySet(transport, aperture, held => withWorld(held, world.ref, world.name)).finally(refreshGround))} : {}),
+      ...(aperture ? {
+        addWorld: (world: CentralWorld) => after(() => writeDaySet(transport, aperture, held => withWorld(held, world.ref, world.name)).finally(refreshGround)),
+        removeWorld: (world: CentralWorld) => after(() => writeDaySet(transport, aperture, held => withoutWorld(held, world.ref)).finally(refreshGround)),
+      } : {}),
       writeArm: shellWriteArm(armOn),
     }
   }, [transport, armOn, aperture?.sourceRef, aperture?.documentId, after, refreshGround]) // eslint-disable-line react-hooks/exhaustive-deps
