@@ -178,16 +178,19 @@ test('while the owners are read a group says so in the standing\'s words; with n
   assert.match(midway.note, /waiting for the shared field, AIKit knowledge…$/)
 })
 
-test('Bodies name the owner inputs the bodies come from, in the standing\'s words: its standing lists places, not bodies', () => {
-  const group = rows.worldGroupOf('techne-bodies', readings(readyStanding()), hintOf('techne-bodies'))
-  assert.deepEqual([group.state, group.word], ['waiting', 'waiting'])
-  assert.equal(group.words, 'Your planet comes from Central’s wiki and the Worlds around it from the shared field; the suite reading’s standing lists their places, not the bodies, so none is listed here.')
-  assert.match(group.detail, /^Central’s wiki: read \(6 rows\)\. The shared field: read \(\d+ rows\)\.$/, 'each input as the standing holds it')
-  const reading = rows.worldGroupOf('techne-bodies', readings(IDLE_STANDING), hintOf('techne-bodies'))
-  assert.deepEqual([reading.word, reading.words], ['reading', 'Reading your world — the bodies come from the suite reading of your owners.'])
-  const failed = standingOf('unavailable', {inputs: {central_wiki: {name: 'shared_field', state: 'unavailable', owner_operation: 'central.wiki.read', detail: 'the bridge is not running'}}, readAt: READ_AT}, null)
-  assert.match(rows.worldGroupOf('techne-bodies', readings(failed), hintOf('techne-bodies')).detail, /Central’s wiki: unavailable — the bridge is not running\./)
-  assert.equal(categoryOf('techne-bodies').state, 'waiting', 'and the category stands declared, waiting')
+test('Bodies are your planet\'s body from its owner\'s record and your system\'s worlds (T-WORLDS §5 W3); they wait while it is not read', () => {
+  const unread = rows.worldGroupOf('techne-bodies', readings(readyStanding()), hintOf('techne-bodies'))
+  assert.deepEqual([unread.state, unread.word], ['waiting', 'waiting'], 'no body reading here: the group waits, naming on what')
+  assert.match(unread.detail, /Your planet’s body is read when the Earth stands/)
+  const RECORD = {body_ref: 'body:central:wiki:root', seed: 7, generator: {id: 'fbm-sphere', version: 1},
+    landmass: {sea_level: .5, continents: 1.7, relief: .55, coast: 'smooth'}, climate: {warmth: .5, moisture: .5, ice_caps: .3}, sky: {atmosphere: .6, clouds: .3, axial_tilt_deg: 18}}
+  const space = {ref: 'central:wiki:root', revision: 67, title: 'Central'}
+  const built = rows.worldGroupOf('techne-bodies', {...readings(readyStanding()), body: {state: 'read', reading: {space}, record: RECORD}}, hintOf('techne-bodies'))
+  assert.equal(built.state, 'rows')
+  assert.deepEqual(built.rows.map(row => [row.kind, row.mark, row.name, row.standing, row.opens]), [['body', 'world', 'Central', 'seed 7', 'body']])
+  const refused = rows.worldGroupOf('techne-bodies', {...readings(readyStanding()), body: {state: 'refused', reason: 'The Wiki owner is unavailable'}}, hintOf('techne-bodies'))
+  assert.equal(refused.detail, 'The Wiki owner is unavailable.', 'the owner\'s words')
+  assert.equal(categoryOf('techne-bodies').state, 'cut', 'and the category is cut: the record reads (T-WORLDS §5 W3a, ai-kit#522)')
 })
 
 test('Journeys list the World\'s walks the tracks call journeys, and keep the grammar\'s hint when the World carries none', () => {
@@ -309,7 +312,7 @@ test('SSR: the World rows as drawn — mark · name in words · standing, the do
     needle: '', openings: new Map(), stood: new Map(), selected: null, onSelect() {}, onOpen() {}, onChoose() {}}))
   assert.match(waiting, /data-waiting="techne-bodies"/)
   assert.match(waiting, /<span class="mode-browser-empty-state">waiting<\/span>/)
-  assert.match(waiting, /Central’s wiki: read \(6 rows\)/, 'the inputs, in the standing\'s words')
+  assert.match(waiting, /Your planet’s body is read when the Earth stands/, 'on what it waits, in the owner\'s terms')
   const places = rows.worldGroupOf('techne-places', readings(readyStanding()), hintOf('techne-places'))
   const searched = html(createElement(WorldGroupBody, {category: categoryOf('techne-places'), group: places, needle: 'chart', openings: new Map(), stood: new Map(),
     selected: null, onSelect() {}, onOpen() {}, onChoose() {}}))
@@ -393,8 +396,8 @@ test('source: the World dispatch, the one Graph focus call, no mode branch, and 
     assert.doesNotMatch(await source(file), MODE, `${file} adds no mode branch`)
   }
   const states = Object.fromEntries(browserCategoriesOf('techne').filter(category => category.group === 'World').map(category => [category.id, category.state]))
-  assert.deepEqual(states, {'techne-bodies': 'waiting', 'techne-locations': 'cut', 'techne-places': 'cut', 'techne-palaces': 'cut', 'techne-journeys': 'waiting'},
-    'Locations and Places compose from the suite reading; Bodies and Journeys draw when their owners carry them; Palaces are the atlas\'s (N4, b5a935661)')
+  assert.deepEqual(states, {'techne-bodies': 'cut', 'techne-locations': 'cut', 'techne-places': 'cut', 'techne-palaces': 'cut', 'techne-journeys': 'waiting'},
+    'Locations and Places compose from the suite reading; Bodies from the world body records (T-WORLDS §5 W3); Journeys draws when its owners carry it; Palaces are the atlas\'s (N4, b5a935661)')
 })
 
 test('World › Palaces lists the atlas\'s palaces and enters one on the Earth; with none, it says what the palace list says (N4)', async () => {

@@ -166,7 +166,9 @@ test('with no body yet, the first change builds one on the device\'s own default
   await bind(owner)
   store.chooseBody('own')
   assert.equal(store.worldBodyState().record, null)
-  assert.equal(store.shownBody(), null, 'nothing is drawn until the person builds')
+  // [phase B] a world with no body yet is drawn from the body seeded from its ref, and says so: nothing is written until the person acts
+  assert.deepEqual(store.shownBody(), store.firstBody('central:wiki:root', 3), 'the seeded body is drawn, the very one the first change builds on')
+  assert.equal(owner.writes.length, 0, 'and nothing is written for it')
   const receipt = await set('shell.setWorldBodyWarmth', .7)
   assert.equal(receipt.kind, 'fired', receipt.reason)
   const sent = owner.writes[0].body
@@ -213,8 +215,10 @@ test('the globe device carries the body rows after its own choice; the design bi
   const design = atlasDevs.atlasGlobeBinding(atlasDevs.atlasReading(handle(), 'earth'))
   assert.equal(design.values.bodyName, 'Central')
   assert.equal(design.values.tilt, 18)
-  assert.equal(design.values.locations, undefined, 'no owner keeps locations on your body yet: absent, never defaulted')
-  assert.match(design.standing.locations.disabled, /No owner keeps locations/)
+  // [phase B] the locations on your body are read with the owners' places and your system's worlds; neither has answered here
+  assert.equal(design.values.locations, undefined, 'not read yet: absent, never defaulted')
+  assert.match(design.standing.locations.disabled, /read with your owners’ places and your system’s worlds/)
+  assert.equal(design.values.placeKind, 'place', 'the place kind is the view\'s own, and stands')
   assert.equal(design.writes('seaLevel'), true)
   await design.write([{key: 'clouds', value: .1}, {key: 'reroll', value: 1760000000000}])
   const last = owner.writes.at(-1)

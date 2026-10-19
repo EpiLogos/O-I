@@ -1,0 +1,23 @@
+/* Your system over the globe's sky (system/systemOverlay.ts; T-WORLDS §5 W3 phase B). Laid like the planet's orbits (src/style/shell.css
+ * .po): fixed in the pane, taking no pointer itself. Every colour is the world's own (`--core-rgb`, from its body's ref) or a token. */
+.sys { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
+.sys[hidden] { display: none; }
+.sys-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sys-ring { fill: none; stroke: rgb(var(--core-rgb) / 0.18); stroke-width: 1; stroke-dasharray: 1 6; }
+.sys-axis { stroke: rgb(var(--core-rgb) / 0.6); stroke-width: 1; stroke-dasharray: 2 3; }
+.sys-world { position: absolute; left: 0; top: 0; width: 26px; height: 26px; display: block; }
+.sys-disc { display: block; width: 26px; height: 26px; border-radius: 50%; box-shadow: 0 0 0 1px rgb(var(--core-rgb) / 0.75), 0 0 10px rgb(var(--core-rgb) / 0.45); }
+.sys-world[data-state="seeded"] .sys-disc { box-shadow: 0 0 0 1px rgb(var(--core-rgb) / 0.75), 0 0 0 3px rgb(var(--core-rgb) / 0.2); }
+.sys-world[data-state="reading"] .sys-disc, .sys-world[data-state="refused"] .sys-disc { box-shadow: inset 0 0 0 1px rgb(var(--core-rgb) / 0.8); background: none; }
+.sys-name { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 500 11.5px/1.2 var(--sans); color: var(--ink); text-shadow: 0 0 6px rgb(var(--deep-rgb) / 0.95), 0 0 2px rgb(var(--deep-rgb)); }
+.po-sys .po-ring.po-inner { stroke: rgb(var(--core-rgb) / 0.5); }
+.po-sys .po-ring.po-outer { stroke: rgb(var(--core-rgb) / 0.24); }
+.po-sys .po-dot.po-kind-file, .po-sys .po-dot.po-kind-work { fill: rgb(var(--core-rgb) / 0.55); }
+.po-sys .po-sat { font-size: 11.5px; }
+/* the locations on your body (Body and Region scales): a dot at the point, hollow on a shore, the name beside it */
+.sys-places { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
+.sys-places[hidden] { display: none; }
+.sys-place { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 5px; margin: -4px 0 0 -4px; }
+.sys-place-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.sys-place.is-shore .sys-place-dot { background: none; box-shadow: inset 0 0 0 1.5px var(--accent); }
+.sys-place-name { font: 500 11.5px/1.2 var(--sans); color: var(--ink); white-space: nowrap; text-shadow: 0 0 6px rgb(var(--deep-rgb) / 0.95), 0 0 2px rgb(var(--deep-rgb)); }

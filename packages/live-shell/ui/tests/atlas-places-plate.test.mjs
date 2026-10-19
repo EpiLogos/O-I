@@ -99,7 +99,11 @@ test('the focused M4′ stands as one plate in the mockup\'s six sections; the o
   assert.match(out, /Earth is given — its land is not built\. Place and name locations on it; anchor your body’s locations to it\./, 'the mockup\'s own Earth words')
   assert.match(out, /aria-label="Coast"[^>]*>(<button[^>]*aria-checked="false"[^>]*disabled=""[^>]*>[a-z]+<\/button>){3}/, 'Coast is a switch with nothing lit')
   assert.match(body, /role="radio" aria-checked="true"[^>]*>Earth</, 'the body is Earth, the one world nobody built')
-  assert.match(body, /data-i="Central\|Your own body has no builder in this suite yet: the atlas draws Earth\." disabled="">Central</, 'Central waits, and says why')
+  // [T-WORLDS §5 W3 phase B] the body store answers: your world is a choice of its own (its knobs read its owner's record), another
+  // world's body is its owner's and waits, saying so
+  assert.match(body, /role="radio" aria-checked="false"[^>]*>Your world</, 'your world stands to be chosen')
+  assert.match(body, /data-i="Another world\|No other world’s body is read in this session[^"]*" disabled="">Another world</, 'another world waits, and says why')
+  assert.doesNotMatch(out, /has no builder in this suite/, 'the stale words are gone')
   assert.match(out, /data-i="[^"]*\|No owner declares a place yet\."[^>]*><span class="dp-lamp" data-light="unknown"><\/span><span class="dp-label">none<\/span>/, 'no standing read: no place, a light and a word; the sentence is the status bar\'s')
   assert.match(out, /Choose a subject on the Earth first/, 'Place waits for a subject')
   assert.match(out, /<select class="dp-chooser" aria-label="Lens"[^>]*disabled=""/, 'the atlas\'s lens chooser stands on the plate, waiting for the Earth')

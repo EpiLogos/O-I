@@ -165,17 +165,26 @@ export function routeRows(places: readonly SuitePlace[]): RouteRow[] {
   return [...bySubject].map(([subject_ref, stops]) => ({subject_ref, stops, walkable: stops >= 2}));
 }
 
-/** The scale the atlas stands at, as the plate's head names it (lock §2.5: system · body · region · palace). The sky is the system;
- * a camera at or inside the atlas's own regional framing distance is a region (app/controller.ts frames a regional occurrence at
- * 2.6 globe radii and a place at 2.25); the Graph is not a scale of the Earth and says so. A palace is a place you enter (N4): while
- * one is entered the atlas stands inside it (palaces/PalaceFloor.tsx), whatever the camera does beneath. */
-export type AtlasScale = 'system' | 'body' | 'region' | 'palace' | 'graph';
-export const REGION_DISTANCE = 2.6;
+/** The five scales, as the manual names them (§17.2 "The five scales": Field · System · Body · Region · Place; T-WORLDS §5 W3 "Scales
+ * follow the manual"), in their order from the farthest. */
+export const ATLAS_SCALES = ['field', 'system', 'body', 'region', 'place'] as const;
 
-export function atlasScaleOf(view: {readonly sky: boolean; readonly graph: boolean; readonly dist: number; readonly palace?: boolean}): AtlasScale {
-  if (view.palace) return 'palace';
+/** The scale the atlas stands at, as the plate's head names it. The sky is the System (your planet under its star, and your system's
+ * worlds round it); the body whole is the Body; a camera at or inside the atlas's own regional framing distance is a Region
+ * (app/controller.ts frames a regional occurrence at 2.6 globe radii and a place at 2.25); one place held at its own framing is the Place,
+ * and so is a palace entered (N4: a palace is a place you enter, palaces/PalaceFloor.tsx, whatever the camera does beneath). The Field
+ * (the worlds of a shared field round a shared star) is the shared field's, which no owner opens to the atlas yet (Aperture stands
+ * disabled on that reason), so the atlas never stands at it. The Graph is not a scale of the Earth and says so: 'graph'. */
+export type AtlasScale = (typeof ATLAS_SCALES)[number] | 'graph';
+export const REGION_DISTANCE = 2.6;
+/** The atlas frames one place at 2.25 globe radii (app/controller.ts); held there, or nearer, the scale is the Place. */
+export const PLACE_DISTANCE = 2.3;
+
+export function atlasScaleOf(view: {readonly sky: boolean; readonly graph: boolean; readonly dist: number; readonly palace?: boolean; readonly placeHeld?: boolean}): AtlasScale {
+  if (view.palace) return 'place';
   if (view.graph) return 'graph';
   if (view.sky) return 'system';
+  if (view.placeHeld && view.dist <= PLACE_DISTANCE) return 'place';
   return view.dist <= REGION_DISTANCE ? 'region' : 'body';
 }
 

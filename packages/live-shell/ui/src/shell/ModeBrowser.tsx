@@ -63,6 +63,8 @@ import {useOptionalContinuity} from '../continuity/workspace'
 import {isWorldGroup, openingWords, palaceWorldGroup, sceneRowsOf, worldGroupOf, type SceneRow, type WorldGroup, type WorldGroupId, type WorldRow} from '../techne/subject/worldRows'
 import {enterFromOutside, palacesWaiting, readPalaces, usePalaces} from '../projections/atlas/palaces/palacesWorld'
 import {bringInstrumentIntoView} from '../frame/instrumentDoor'
+import {chooseBody, subscribeWorldBody, worldBodyState} from '../projections/atlas/body/worldBody'
+import {subscribeSystem, systemReading} from '../projections/atlas/system/systemStore'
 import {chooseHeldScene, openHeldSubject, useSubjectOpenings, type SubjectOpening} from '../techne/subject/subjectOpenings'
 import type {NativeDirectory, NativeFileEntry, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
@@ -187,7 +189,8 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}
             title={`${category.label} — ${category.hint}${category.state === 'waiting' ? ' (declared, waiting)' : ''}`}
             onClick={() => {setActive(category.id); setNeedle('')}}>
             <span aria-hidden="true"><CategoryMark category={category} /></span><span>{category.label}</span>
-            {category.state === 'waiting' && <span className="mode-browser-waiting-dot" aria-label="declared, waiting" />}
+            {isWorldGroup(category.id) ? <WorldGroupDot id={category.id} hint={category.hint} />
+              : category.state === 'waiting' && <span className="mode-browser-waiting-dot" aria-label="declared, waiting" />}
           </button>)}
         </div>)}
       </nav>
@@ -682,13 +685,14 @@ function PalaceGroupRows({category, mode, needle}: {category: ModeBrowserCategor
     selected={selection ? {ref: selection.ref, kind: selection.kind} : null} onSelect={select} onOpen={open} onChoose={() => {}} />
 }
 
-function WorldGroupRows({category, id, mode, needle}: {category: ModeBrowserCategory; id: WorldGroupId; mode: SurfMode; needle: string}) {
+/** One World group from its owners' readings: the suite standing, the World reading's walks, and (T-WORLDS §5 W3) your planet's body and
+ * your system. The rows and the category's waiting dot both read it, so the dot stands only while the group itself waits. */
+function useWorldGroup(id: WorldGroupId, hint: string) {
   const {transport} = useWorkspace()
   const standing = useSyncExternalStore(subscribeSuiteStanding, suiteStanding, suiteStanding)
+  const body = useSyncExternalStore(subscribeWorldBody, worldBodyState, worldBodyState)
+  const system = useSyncExternalStore(subscribeSystem, systemReading, systemReading)
   const reading = useTimelineReading()
-  const continuity = useOptionalContinuity()
-  const openings = useSubjectOpenings()
-  const [stood, setStood] = useState<ReadonlyMap<string, string>>(new Map())
   useEffect(() => {
     if (transport.kind === 'unavailable' || suiteStanding().phase !== 'idle') return
     // The provider is loaded on demand, as the atlas loads it: the shell's import of the standing stays light.
@@ -696,14 +700,30 @@ function WorldGroupRows({category, id, mode, needle}: {category: ModeBrowserCate
   }, [transport])
   const world = reading?.world
   const group = worldGroupOf(id, {
-    standing, world: worldReadingOf(world?.source),
+    standing, world: worldReadingOf(world?.source), body, system,
     carrier: transport.kind === 'unavailable' ? {available: false, reason: transport.reason} : {available: true},
-  }, category.hint)
+  }, hint)
+  return {group, world, reading}
+}
+
+/** A World group's waiting dot in the category list, from the group's own state (not the grammar's declaration). */
+function WorldGroupDot({id, hint}: {id: WorldGroupId; hint: string}) {
+  const {group} = useWorldGroup(id, hint)
+  return group.state === 'waiting' ? <span className="mode-browser-waiting-dot" aria-label={`waiting: ${group.words}`} /> : null
+}
+
+function WorldGroupRows({category, id, mode, needle}: {category: ModeBrowserCategory; id: WorldGroupId; mode: SurfMode; needle: string}) {
+  const continuity = useOptionalContinuity()
+  const openings = useSubjectOpenings()
+  const [stood, setStood] = useState<ReadonlyMap<string, string>>(new Map())
+  const {group, world, reading} = useWorldGroup(id, category.hint)
   const selection = continuity?.current.context?.selection ?? null
   const select = (row: WorldRow) => continuity?.select({mode, kind: row.kind, ref: row.subject.ref, title: row.subject.title})
   const open = (row: WorldRow) => {
     select(row)
     if (row.opens === 'subject') { void openHeldSubject(row.subject); return }
+    // your planet: the World shows your own body, brought into view (the Earth's pane, never behind a held Canvas or document)
+    if (row.opens === 'body') { chooseBody('own'); bringInstrumentIntoView('projection.earth'); return }
     const walk = row.walk, first = walk?.stops[0]
     if (!walk || !first) { setStood(before => new Map(before).set(row.key, 'This walk has no stop to stand.')); return }
     const controls = techneControls(() => ({view: world, door: reading?.journey?.openExpression}))

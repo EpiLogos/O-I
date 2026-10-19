@@ -13,7 +13,7 @@
 // here as a mirror of the atlas controller's own mode, which the atlas writes to body[data-mode] (graph/switch.ts). The
 // atlas owns the state; the lens bar reads the mirror.
 
-import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
+import {Suspense, lazy, useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useContinuity} from '../../continuity/workspace'
 import {useWorkspace} from '../../shell/workspace'
@@ -28,9 +28,15 @@ import {sunStanding} from '../../inhabitants/qlSkyEarthAdapter'
 import {bindSharedTimeClock, windowYear} from './sharedClock'
 import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
 import {bindPlaces, type PlacesBinding} from './places/placesHost'
+import {notePlaceTool} from './places/placeTool'
 import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
 import {bindWorldBody, kernelWorldBodyOwner} from './body/worldBody'
+import type {SystemOverlayBinding} from './system/systemOverlay'
 import './atlasHost.css'
+
+/** Your system's readings (T-WORLDS §5 W3 phase B), loaded only by the pane that holds the Earth: they read Central's worlds, today's
+ * set, what plays and what is to hand, and bind the acts that open them (system/SystemReadings.tsx). */
+const SystemReadings = lazy(() => import('./system/SystemReadings').then(module => ({default: module.SystemReadings})))
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
 function shownYearNow(): number | null {
@@ -401,6 +407,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let places: PlacesBinding | null = null
   let palaces: PalacesBinding | null = null
   let body: {dispose(): void} | null = null
+  let system: SystemOverlayBinding | null = null
   // The Sun's words stand in the Info view's hover and on the M4 plate's Sky section (T-PLACES-ONTO-ATLAS), the same words in both.
   const setSunLine = (text: string | null) => {
     words.sun(text)
@@ -423,6 +430,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     places?.dispose()
     palaces?.dispose()
     body?.dispose()
+    system?.dispose()
     cancelReread()
     follower?.dispose()
     // the words directly: a teardown may run before the Sun's first state is made
@@ -452,6 +460,10 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // Your world's body (T-WORLDS §5 W3): read from its owner (the root register's space, AIKit's `aikit.world-body/v1`), drawn in the
   // Earth's place only while the World device chooses your own body; the Earth stays given (body/worldBody.ts).
   body = bindWorldBody({engine: mounted.engine, owner: kernelWorldBodyOwner(transport), changed: () => mounted.ctl.facesChanged?.()})
+  // Your system (T-WORLDS §5 W3 phase B): today's worlds as bodies in the System scale, each with what it holds on its rings, drawn over
+  // the sky from the readings the pane holds (system/SystemReadings.tsx); what an act there answers is said on the M4 plate.
+  // (loaded with the atlas's own modules, as the mount is: the shell's import of the panel stays light)
+  void import('./system/systemOverlay').then(overlay => { if (!retired) system = overlay.bindSystemOverlay({handle: mounted, said: notePlaceTool}) })
 
   // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
   // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the
@@ -672,6 +684,7 @@ export function AtlasEarthPane() {
   return (
     <div ref={wrapper} className="atlas-host" data-atlas-phase={phase.state} data-projection-kind="projection.earth">
       <div ref={body} className="atlas-host-body" />
+      {phase.state === 'ready' && <Suspense fallback={null}><SystemReadings /></Suspense>}
       {text && <p role={phase.state === 'failed' ? 'alert' : 'status'} className="atlas-host-status">{text}</p>}
     </div>
   )

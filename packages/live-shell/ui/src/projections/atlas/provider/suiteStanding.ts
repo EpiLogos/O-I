@@ -68,6 +68,10 @@ export interface SuitePlace {
   valid_from?: string;
   valid_to?: string;
   within?: readonly {readonly place_ref: string; readonly relation: string}[];
+  /** [T-WORLDS §5 W3] the body the place stands on, verbatim (the facet's body_ref), for a place on a body other than the Earth; such a
+   * place is never located on the Earth. `on_body` is its point on that body, where it declares one. */
+  body_ref?: string;
+  on_body?: {readonly lat: number; readonly lon: number};
 }
 
 /** A body of the field (manual §2 "every world is drawn as a body in space"): Central's root, or a hosted world, as the suite composed

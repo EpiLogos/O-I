@@ -115,6 +115,10 @@ export class Earth {
   private baseHi: THREE.IUniform<THREE.Texture>;
   private baseLo: THREE.IUniform<THREE.Texture>;
   private fade = -1;
+  /** [T-WORLDS §5 W3] a generated body's cloud layer and how much of it is drawn (0: none, the Earth's), and its air (1: the Earth's) */
+  private cloud: THREE.IUniform<THREE.Texture>;
+  private cloudMix = { value: 0 };
+  readonly air = { value: 1 };
 
   constructor(shared: Shared, lo: THREE.Texture, density: THREE.Texture) {
     this.u = {
@@ -126,11 +130,12 @@ export class Earth {
     };
     this.baseLo = { value: lo };
     this.baseHi = { value: lo };
+    this.cloud = { value: noCloud() };
     const geo = new THREE.SphereGeometry(1, 192, 96);
     const mat = new THREE.ShaderMaterial({
       vertexShader: EARTH_VERT,
       fragmentShader: EARTH_FRAG,
-      uniforms: { ...this.u, uBaseLo: this.baseLo, uBaseHi: this.baseHi, uHiMix: this.hiMix },
+      uniforms: { ...this.u, uBaseLo: this.baseLo, uBaseHi: this.baseHi, uHiMix: this.hiMix, uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air },
     });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.renderOrder = 0;
@@ -182,6 +187,19 @@ export class Earth {
     this.hiMix.value = 0;
   }
 
+  /**
+   * A generated body's own sky over its base (T-WORLDS §5 W3 phase B): its cloud layer (body.ts cloudImage, as a texture), drawn while
+   * `cover` is above 0, and its air. For the Earth, null and 1: no cloud layer and the Earth's own air. The previous layer is freed.
+   */
+  setSky(clouds: THREE.Texture | null, cover: number, air: number) {
+    const before = this.cloud.value;
+    this.cloud.value = clouds ?? noCloud();
+    if (before !== this.cloud.value) before.dispose();
+    // the mask carries the cover itself (cloudImage draws more cloud for more cover): it is drawn whole, or not at all
+    this.cloudMix.value = clouds && cover > 0 ? 1 : 0;
+    this.air.value = air;
+  }
+
   /** The generated body's sharp base, blended in as the Earth's is; ignored when no generated body stands. */
   setGeneratedHi(hi: THREE.Texture) {
     if (!this.given) {
@@ -208,13 +226,22 @@ export class Earth {
   }
 }
 
+/** The cloud layer of a body that has none: one clear texel (the Earth's imagery carries its own weather, so it takes no layer). */
+function noCloud(): THREE.Texture {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, THREE.RGBAFormat);
+  t.needsUpdate = true;
+  return t;
+}
+
 export class AtmosphereShell {
   readonly mesh: THREE.Mesh;
+  /** [T-WORLDS §5 W3] how thick the air shows: 1 is the Earth's, a generated body's own otherwise (body.ts airOf) */
+  readonly air = { value: 1 };
   constructor(shared: Shared) {
     const mat = new THREE.ShaderMaterial({
       vertexShader: SHELL_VERT,
       fragmentShader: SHELL_FRAG,
-      uniforms: { uGlow: shared.glow, uCore: shared.core, uSpec: shared.spec },
+      uniforms: { uGlow: shared.glow, uCore: shared.core, uSpec: shared.spec, uAir: this.air },
       side: THREE.BackSide,
       transparent: true,
       depthWrite: false,
