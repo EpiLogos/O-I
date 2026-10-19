@@ -1,0 +1,25 @@
+r27 screen pass — 86832d711 (the Earth goes where you look, 7d16a539e; the Pop-out fixes of r23–r24; FT's code), built with a
+refreshed QL export (target/p0-r1/20261019T-r26-ql-export: QL #332 rewrote fixtures/kernel/m2-retained-c-v1.json at 17:13, so the
+14 Oct inputs no longer freeze), ai-kit 5f08539c and software-factory 4e22ffa0 installed. 19 Oct 2026 20:51–20:56 UTC, computer use
+on the native candidate in front, the owner's real ground. Control/user/flows and the root and O-I wikis were backed up first;
+nothing was written (all 13 flows files match; both wikis keep their hashes; today's Day keeps 400715:e9d0292a).
+
+Seen:
+- The Earth goes where you look (W3, 7d16a539e): the Earth opened in Technē's pane; then, in Central, an Earth opened in Central's
+  focused pane drew the globe there — not "already open in another pane", Technē's pane being hidden; back in Technē, its pane drew
+  the Earth again. One Earth at a time, in the pane on screen. r23 found Technē's pane told to wait while a hidden pane held it.
+- R1, Scope in the six views on Central's workspace chain: Compact (the radar, reads and writes); Whole as the band (Reach Session ·
+  Scene · Expression · Central, Writes Propose · Draft · Direct, its reads and writes, Knowledge), Esc folding it; Folded to a strip
+  ("Scope —") and open again by it; Full in the focused pane (the reach radar at pane size); Pop-out in its own window, the radar
+  with its rings named Central, Expression, Scene and Session as Full over its Whole band from the main window's relay, closed by ↗
+  in its own band; Widget on the rail (the radar, reach, writes), taken off again by its ✕.
+
+Found:
+- A rail tile whose head carries more (the Day's: its light, "Day · Mon 19", its marks) clips its ↗ and ✕ past the rail's edge on a
+  narrow window: only ⊞ shows before the scrollbar, so the tile cannot be taken off from the rail. Scope's shorter head shows all
+  three. The Day's tile, kept on the rail during r23, stays there.
+
+Not seen, and why: Physics — "+ Add" from Expressions' Devices puts it on the Studio's rack as a member, not as a device of its own
+on the chain (taken off again by Studio's Undo; the scene keeps its saved revision 6), so its own six views were not reached; the
+Skillset rack — Factory's session chain stands with no agent session on this machine; Clip view in Factory, Expressions, Technē and
+Live (as r23).
