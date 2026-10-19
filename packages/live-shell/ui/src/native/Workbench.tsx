@@ -55,6 +55,7 @@ import '../frame/paneGrammar.css'
 import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import {isRetainedCentreKind, WARM_WORKSPACES, type WarmTreeRef} from '../../../../../desktop/cradle/src/surface/warmTrees'
 import {RETAINED_VIEW_BUDGET} from '../../../../../desktop/cradle/src/surface/runtime'
+import {CENTRAL_DOCUMENT_PANE_KIND, openCentralDocumentAt, subjectOf, type CentralDocumentTarget} from '../central/documents/centralDocuments'
 import './workbench.css'
 
 const OMIT_BODY_KINDS = ['expressions'] as const
@@ -534,6 +535,15 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     }
     throw Error('The native owner refused all eight collision-safe Flow filenames. Your device draft remains intact.')
   }
+  /** Resolves once the book holds the surface `id` (a tab just inserted is in the book after the book renders); refuses in words when
+   * it never arrives. */
+  const inBook = async (id: string): Promise<void> => {
+    for (let wait = 0; wait < 40; wait++) {
+      if (workbenchMembership(latest.current.book).has(id)) return
+      await new Promise(resolve => setTimeout(resolve, 25))
+    }
+    throw Error('The new tab did not open in the focused pane, so nothing was made.')
+  }
   const freshChoice = async (id: string, kind: string, project?: string) => {
     const binding = workbenchMembership(latest.current.book).get(id)
     if (!binding || binding.kind !== 'blank') return
@@ -544,7 +554,16 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       const root = origin.kernel.snapshot.navigator?.root
       const worldRef = project ? root?.work.projects.find(item => item.name === project)?.projectcentral?.agent_wiki?.wiki?.space_ref : root?.control.agent_wiki.wiki.space_ref
       const copy = await ownerIO(current, () => createFormInPlace(origin.kernel.transport, form, {project, projects: root?.work.projects, ...(worldRef ? {worldRef} : {})}))
-      current(); origin.book.replaceSurface(workspaceId, {id, kind: 'file', ref: copy.location.ref, location: copy.location, title: copy.location.path.split('/').pop() ?? form.label, project})
+      current()
+      // A Flow, a Being or a Thing opens in its own document pane, as its browser row opens it (T-WORLDS W2: "every Full view hosts
+      // the bound page, never the blank carrier"); any other form opens as its file.
+      const page: CentralDocumentTarget | null = form.kind === 'document-01' ? {form: 'flow', location: copy.location}
+        : form.kind === 'document-beings' ? {form: 'page', kind: 'being', location: copy.location}
+        : form.kind === 'document-things' ? {form: 'page', kind: 'thing', location: copy.location} : null
+      if (page) {
+        const {ref, title} = subjectOf(page)
+        origin.book.replaceSurface(workspaceId, {id, kind: CENTRAL_DOCUMENT_PANE_KIND, title, projection: {kind: CENTRAL_DOCUMENT_PANE_KIND, subject_ref: ref}, project})
+      } else origin.book.replaceSurface(workspaceId, {id, kind: 'file', ref: copy.location.ref, location: copy.location, title: copy.location.path.split('/').pop() ?? form.label, project})
     } else if (kind === 'flow') await createFlow(id)
     else if (kind === 'search') {current(); origin.book.replaceSurface(workspaceId, {id, kind: 'sources', title: 'Sources', project})}
     else if (['library', 'terminal', 'browser'].includes(kind)) openKind(kind, id, project)
@@ -871,11 +890,20 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       ...(tauri ? [{id: 'terminal', title: 'Terminal', hint: 'a shell in a pane', open: kind('terminal')}, {id: 'browser', title: 'Web browser', hint: 'a web page in a pane', open: kind('browser')}] : []),
       // The browser's New… grid (lane L): each of the four document forms opens a new tab and makes the form in it through the
       // same fresh choice a blank tab's form picker uses — the owner writes the new document.
+      // The Day is not copied: New Day is Central's own (T-WORLDS W2 "New Day calls central initialise-day"), Open today's press —
+      // today's Day ensured and made from the Day form when it has none — and today's Day opens in its pane.
       ...DOCUMENT_FORMS.filter(form => NEW_DOCUMENT_FORMS.includes(form.kind)).map(form => ({id: `form.${form.kind}`, title: form.label, hint: form.hint,
         open: run(() => {
+          if (form.kind === 'document-42') {
+            void import('../central/devices/centralDeviceWrites').then(({openToday}) => openToday(latest.current.kernel.transport))
+              .then(() => latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'day', date: null})))
+              .catch(openerActions.current.report)
+            return
+          }
           const id = crypto.randomUUID()
           callbacks.current.insert({id, kind: 'blank', title: 'New tab', project: latest.current.book.current.project})
-          void callbacks.current.freshChoice(id, form.kind).catch(openerActions.current.report)
+          // The tab is in the book once the book has rendered it: the fresh choice reads the book then, never the one before.
+          void inBook(id).then(() => callbacks.current.freshChoice(id, form.kind)).catch(openerActions.current.report)
         })})),
     ])
   }, [tauri])

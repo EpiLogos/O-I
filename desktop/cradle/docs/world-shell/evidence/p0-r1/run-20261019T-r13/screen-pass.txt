@@ -1,0 +1,29 @@
+r13 screen pass — 08b8cd988 (W2 pages in their panes; the person's presses carry their authority), 19 Oct 2026 04:00–04:08 UTC,
+computer use on the native candidate, the owner's real ground (Control/user/flows backed up with sha256 first; unchanged after —
+all 13 files match, none added).
+
+Seen:
+- Open today works: the Day device was dark on Central's stale pointer (13 Oct). Today, pressed once, ensured 19 Oct and made its
+  document from the Day form, under the person's native authority (r12's refusal, "missing bounded CENTRAL_NATIVE_TOKEN", is gone).
+  The device lit on Mon 19 at face 0 Ground, its Today press now disabled. The Day pane opened "Monday, 19 October 2026,
+  Europe/London, revision 0" with the die. Central reads central:day:control:root:2026-10-19, open, document ready.
+- The pane's left-edge band no longer covers the Session grid's first column: hovering the first clip's ▶ leaves the tab rail
+  closed, and hovering the gutter left of it opens the rail, as the owner's correction of 18 Sep has it.
+
+Found and fixed after the pass (not in r13):
+- No HTML5 drop can land in the native candidate. A world dragged from the Worlds rows onto the empty track wrote nothing (Central's
+  Day shows no contributions and no set), with the drag reaching the target (the Info line read "Empty track: drop to seat"). The
+  cause is the host: Tauri's file-drop handler is on by default, and tauri-runtime-wry 2.12.1 returns true for every drag, so wry
+  answers Copy on macOS and never hands the drag to WebKit. Every in-page drop is dead with it (worlds onto tracks, devices into
+  chains). The candidate's window now sets dragDropEnabled false, and detached windows disable the handler (windows.rs). Nothing in
+  the code takes a file dropped from outside.
+- New… made nothing. Beings opened an empty tab and no file: the opener inserted the blank tab and made the form in the same tick,
+  before the book held the tab, so the fresh choice found no tab and returned silently. It now waits for the tab (and says so when
+  the tab never arrives). A new Flow, Being or Thing now opens in its own document pane, not as a plain file; New Day is Open today
+  and opens today's Day, where before it copied the Day form into your flows folder as a loose file.
+- The Worlds rows first said "Central did not disclose its worlds — Central returned no root disclosure", then listed every world
+  when opened again: the kernel answers its first world browse before it has a root. The read now asks again, a few times apart,
+  before it says the root is absent; a refusal is still said at once.
+
+Not seen: a world on today's set and a Being in its pane (both wait on the fixes above — r14); Close now (the design draws it
+disabled until the documentation lane binds closeNow); W3b and W4b (building).

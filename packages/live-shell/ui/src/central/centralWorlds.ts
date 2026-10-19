@@ -41,15 +41,23 @@ export function worldsOf(root: RootWorld): CentralWorld[] {
   return [yours, ...projects]
 }
 
-/** Central's root disclosure through the kernel's world browse, as its worlds. A refusal is the reading, named. */
-export async function readWorlds(transport: KernelTransportStatus | undefined): Promise<CentralWorldsReading> {
+/** How often, and how far apart, the world browse is asked again while its first browse has not yet disclosed a root. */
+export const ROOT_SETTLE = {tries: 6, apartMs: 400} as const
+
+/** Central's root disclosure through the kernel's world browse, as its worlds. A refusal is the reading, named. The kernel answers
+ * before its first browse has finished (a snapshot with no navigator root and no error): that is asked again, a few times apart,
+ * and only then read as the absence it is (r13: the browser's Worlds rows read the first answer and kept it). */
+export async function readWorlds(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE): Promise<CentralWorldsReading> {
   if (!transport) return {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'}
   if (transport.kind === 'unavailable') return {state: 'unavailable', reason: transport.reason}
-  const answer = await kernelOp(transport, {op: 'world_browse'})
-  if (answer.error || answer.outcome?.result !== 'world_read') return {state: 'unavailable', reason: answer.error ?? 'Central did not disclose its worlds'}
-  const root = answer.outcome.snapshot.navigator?.root
-  if (!root) return {state: 'unavailable', reason: answer.outcome.snapshot.navigator?.error ?? 'Central returned no root disclosure'}
-  return {state: 'read', worlds: worldsOf(root)}
+  for (let attempt = 1; ; attempt++) {
+    const answer = await kernelOp(transport, {op: 'world_browse'})
+    if (answer.error || answer.outcome?.result !== 'world_read') return {state: 'unavailable', reason: answer.error ?? 'Central did not disclose its worlds'}
+    const navigator = answer.outcome.snapshot.navigator
+    if (navigator?.root) return {state: 'read', worlds: worldsOf(navigator.root)}
+    if (navigator?.error || attempt >= settle.tries) return {state: 'unavailable', reason: navigator?.error ?? 'Central returned no root disclosure'}
+    await new Promise(resolve => setTimeout(resolve, settle.apartMs))
+  }
 }
 
 export type WorldPagesReading =
