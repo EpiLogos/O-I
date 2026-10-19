@@ -182,3 +182,12 @@ test('a Flow in a project world\'s own ground opens as its Flow; the Goals, Bein
     assert.equal(docs.isFlowPath(other), false, other)
   }
 })
+
+test('a document page stands clear of its pane\'s edge band, so the band answers over it as over any pane (r15: the rail did not open)', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const sheet = await readFile(new URL('../src/central/documents/centralDocuments.css', import.meta.url), 'utf8')
+  const pane = sheet.slice(sheet.indexOf('.central-document-pane {'), sheet.indexOf('}', sheet.indexOf('.central-document-pane {')))
+  assert.match(pane, /padding-left:\s*var\(--pane-edge-band,\s*0(px)?\)/, 'the page frame never lies under the band')
+  const shell = await readFile(new URL('../src/native/workbench.css', import.meta.url), 'utf8')
+  assert.match(shell, /--pane-edge-band:\s*14px/, 'the pane names the band\'s width')
+})
