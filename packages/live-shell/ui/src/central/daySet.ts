@@ -28,6 +28,9 @@ export interface DaySet {
   readonly schema: typeof DAY_SET_SCHEMA
   readonly tracks: readonly DaySetTrack[]
   readonly rows: readonly DaySetRow[]
+  /** The Days this set carried from, oldest first (manual §18.1 "What carries to tomorrow": "with today added to its history"). A set
+   * made fresh carries none. */
+  readonly lineage?: readonly string[]
 }
 
 export const EMPTY_SET: DaySet = {schema: DAY_SET_SCHEMA, tracks: [], rows: []}
@@ -48,7 +51,8 @@ export function daySetOf(payload: unknown): DaySet {
     if (!isObject(row) || !text(row.id) || !text(row.name)) return []
     return [{id: row.id as string, name: row.name as string, pages: (Array.isArray(row.pages) ? row.pages : []).filter((page): page is string => !!text(page))}]
   })
-  return {schema: DAY_SET_SCHEMA, tracks, rows}
+  const lineage = (Array.isArray(set.lineage) ? set.lineage : []).filter((day): day is string => !!text(day))
+  return {schema: DAY_SET_SCHEMA, tracks, rows, ...(lineage.length ? {lineage} : {})}
 }
 
 /** The set with a world brought into today, at the end (a world already there stays where it is). Pure. */
@@ -65,6 +69,22 @@ export function withoutWorld(set: DaySet, world: string): DaySet {
 /** The set with a row named, holding the given pages (a row of that id is replaced). Pure. */
 export function withRow(set: DaySet, row: DaySetRow): DaySet {
   return {...set, rows: [...set.rows.filter(held => held.id !== row.id), row]}
+}
+
+/** Tomorrow's set from a closed Day's (manual §18.1 "What carries to tomorrow": "When the day closes, what still plays carries into
+ * tomorrow's set, playing, with today added to its history … What you stopped leaves tomorrow's grid"): the worlds of the set that
+ * hold a page still playing, in their order, then the world of any other playing page; each row with only its playing pages, a row
+ * left with none dropped; the closed Day added to the lineage. Your world is every set's first track, so it is not named. The pages
+ * keep playing on their own: Central carries their NOW clearings across the boundary (central.day.ensure "the live NOW horizon
+ * crosses the Day boundary untouched"). Pure. */
+export function carriedSet(closed: DaySet, closedDay: string, playing: readonly string[], worldOfPage: (pageRef: string) => {readonly ref: string; readonly name?: string; readonly yours?: boolean} | null): DaySet {
+  const plays = new Set(playing)
+  const worlds = playing.flatMap(ref => { const world = worldOfPage(ref); return world && !world.yours ? [world] : [] })
+  const held = new Set(worlds.map(world => world.ref))
+  let set: DaySet = {schema: DAY_SET_SCHEMA, tracks: closed.tracks.filter(track => held.has(track.world)), rows: [], lineage: [...(closed.lineage ?? []), closedDay]}
+  for (const world of worlds) set = withWorld(set, world.ref, world.name)
+  const rows = closed.rows.flatMap(row => { const pages = row.pages.filter(page => plays.has(page)); return pages.length ? [{...row, pages}] : [] })
+  return {...set, rows}
 }
 
 /** Write today's set: read the Day document again (the revision the write is checked against), let `change` make the next set from

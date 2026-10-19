@@ -169,8 +169,9 @@ impl PreparedWrite {
                 KernelOpResult::ReceivingReading { data }
             }
             KernelOp::Central { project, request } => {
-                // Ensuring and making today's Day are the person's presses
-                // (Open today): they carry the person's native authority.
+                // Ensuring, making and closing a Day are the person's presses
+                // (Open today, Close now): they carry the person's native
+                // authority.
                 let data =
                     central::operate(&self.client.for_person(), project.as_deref(), request)?;
                 if moved(&data) {
@@ -178,6 +179,9 @@ impl PreparedWrite {
                         central::Request::EnsureDay { .. } => ("central.day.ensure", None),
                         central::Request::InitialiseDay { day_ref, .. } => {
                             ("central.document.create", Some(day_ref.as_str()))
+                        }
+                        central::Request::CloseDay { day_ref, .. } => {
+                            ("central.day.lifecycle", Some(day_ref.as_str()))
                         }
                         _ => unreachable!("only Central's Day writes are prepared writes"),
                     };
@@ -607,7 +611,9 @@ fn receiving_person_act(request: &ReceivingRequest) -> bool {
 pub(crate) fn central_write(request: &central::Request) -> bool {
     matches!(
         request,
-        central::Request::EnsureDay { .. } | central::Request::InitialiseDay { .. }
+        central::Request::EnsureDay { .. }
+            | central::Request::InitialiseDay { .. }
+            | central::Request::CloseDay { .. }
     )
 }
 
@@ -923,6 +929,13 @@ elif action == "central.day.ensure":
         "revision": {"revision": "rev-day-1"}})
 elif action == "projectcentral.now.return":
     ok({"handoff": {"id": "h1"}, "source": "ProjectCentral/agents/now/x.json", "revision": "rev-now-1"})
+elif action == "central.day.read":
+    day = json.loads(args[i + 3])["day_ref"]
+    ok({"day_ref": day, "temporal": {"day_ref": day, "lifecycle": "closed" if day.endswith("-closed") else "open"}})
+elif action == "central.day.lifecycle":
+    given = json.loads(args[i + 3])
+    ok({"day_ref": given["day_ref"], "temporal": {"lifecycle": given["lifecycle"]},
+        "revision": {"revision": "rev-day-" + given["lifecycle"] + "-" + given["expected_revision"] + "-" + given["expected_relations_revision"]}})
 else:
     ok({})
 "#;
@@ -1118,6 +1131,32 @@ else:
         assert_eq!(receipt[0]["action"], "central.day.ensure");
         assert_eq!(receipt[0]["ref"], "central:day:2026-10-16");
         assert_eq!(receipt[0]["revision"], "rev-day-1");
+    }
+
+    /// Close now closes the Day on both of its revisions and records the Day
+    /// it moved; a Day already closed is refused before Central is asked to
+    /// close it again.
+    #[test]
+    fn a_closed_day_records_the_day_and_a_second_close_is_refused() {
+        let central = FakeCentral::new("day-close");
+        let kernel = Mutex::new(central.kernel());
+        let close = |day: &str| {
+            op(serde_json::json!({"op": "central", "project": null,
+                "request": {"kind": "close-day", "day_ref": day, "expected_revision": "rev-day-1",
+                    "expected_relations_revision": "rel-1"}}))
+        };
+        let (written, timing) = dispatch(&kernel, close("central:day:2026-10-18"));
+        let written = written.unwrap();
+        assert_eq!(timing.form, "owner-write");
+        let receipt = serde_json::to_value(&written.receipts).unwrap();
+        assert_eq!(receipt[0]["event"], "day_changed");
+        assert_eq!(receipt[0]["action"], "central.day.lifecycle");
+        assert_eq!(receipt[0]["ref"], "central:day:2026-10-18");
+        assert_eq!(receipt[0]["revision"], "rev-day-closed-rev-day-1-rel-1");
+        let (refused, _) = dispatch(&kernel, close("central:day:2026-10-17-closed"));
+        assert!(format!("{:?}", refused.unwrap_err()).contains("closed already"));
+        let log = std::fs::read_to_string(&central.log).unwrap();
+        assert_eq!(log.matches("central.day.lifecycle").count(), 1, "{log}");
     }
 
     /// A receipt reports what the owner did: an idempotent answer that says

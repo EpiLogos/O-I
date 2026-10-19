@@ -119,8 +119,8 @@ const UNMADE = {...groundOf({state: 'ready', action: 'central.day.read', data: {
 
 /** The owner behind a stubbed kernel bridge (FIXTURE): it answers `central` inspect from a sequence of grounds, records each
  * ensure-day it is asked, and holds one Day document behind `receiving` (Document, MutateField, CAS-checked). */
-function fakeOwner({grounds = [STALE, READY], refuseEnsure = null} = {}) {
-  const sent = [], ensures = [], initialised = []
+function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}} = {}) {
+  const sent = [], ensures = [], initialised = [], closes = []
   let inspected = 0
   const state = {revision: 1, payload: structuredClone(PAYLOAD)}
   const ok = (result, data) => ({json: async () => ({ok: true, outcome: {result, data}})})
@@ -136,10 +136,14 @@ function fakeOwner({grounds = [STALE, READY], refuseEnsure = null} = {}) {
         return ok('central_reading', {schema: 'central.day-ensure/v1', day_ref: 'central:day:control:root:2026-10-16'})
       }
       if (body.request.kind === 'initialise-day') { initialised.push(body.request); return ok('central_reading', {schema: 'central.document-create/v1'}) }
+      if (body.request.kind === 'close-day') { closes.push(body.request); return ok('central_reading', {schema: 'central.day-reading/v1', day_ref: body.request.day_ref}) }
     }
+    // Each register's NOW listing, as the test gives it (your register under `root`).
+    if (body.op === 'now') return ok('now_reading', now[body.project ?? 'root'] ?? {schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records: []})
     // The Day form, where Central's file route finds it (flow/documentForms.ts resolveDocumentForm).
     const formAt = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Work/O-I/desktop/cradle/documents/ql-daily-die.html', root: '/ground', path: 'Work/O-I/desktop/cradle/documents/ql-daily-die.html'}
-    if (body.op === 'world_browse') return {json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {work: {projects: [{name: 'O-I', path: 'Work/O-I'}]}}}}}})}
+    if (body.op === 'world_browse') return {json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}},
+      work: {projects: [{name: 'O-I', path: 'Work/O-I', projectcentral: {user: {exists: true, path: 'Work/O-I/ProjectCentral/user'}, agent_wiki: {wiki: {space_ref: 'central:wiki:project:O-I'}}}}]}}}}}})}
     if (body.op === 'files_list') return {json: async () => ({ok: true, outcome: {result: 'directory_read', directory: {schema: 'central.directory-reading/v1', location: {...formAt, path: body.path},
       entries: [{name: 'ql-daily-die.html', kind: 'file', byte_len: 1, retrieval_allowed: true, location: formAt}]}}})}
     if (body.op === 'file_read') return {json: async () => ({ok: true, outcome: {result: 'file_read', reading: {schema: 'central.file-reading/v1', location: formAt, revision: 'form-rev', content: '<html></html>', byte_len: 13, content_encoding: 'utf-8'}}})}
@@ -158,7 +162,7 @@ function fakeOwner({grounds = [STALE, READY], refuseEnsure = null} = {}) {
     }
     return refused(`unexpected op ${body.op} ${body.request?.kind ?? ''}`)
   }
-  return {fetch, sent, ensures, initialised, state, mutations: () => sent.filter(body => body.request?.MutateField).map(body => body.request.MutateField)}
+  return {fetch, sent, ensures, initialised, closes, state, mutations: () => sent.filter(body => body.request?.MutateField).map(body => body.request.MutateField)}
 }
 async function withOwner(owner, run) {
   const real = globalThis.fetch
@@ -248,7 +252,7 @@ test('Open today is the person\'s press: on release one ensure-day goes to Centr
   assert.deepEqual(owner.sent.map(body => body.request.kind), ['inspect', 'ensure-day', 'inspect'],
     'the ground read again first, then the ensure, then read again: today\'s Day has its document, so nothing more')
   // The owner now holds today's Day: a second press reads the ground and ensures nothing.
-  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: false})))
+  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: false, carried: null})))
   assert.equal(owner.ensures.length, 1)
   host.resetHost(ID)
 })
@@ -438,7 +442,7 @@ test('the Day\'s designed head carries the door\'s ↗ — its own window (R1) �
 
 test('Open today makes today\'s document from the Day form when it has none: initialise-day, with the form\'s revision and the placement policy\'s (T-WORLDS W2)', async () => {
   const owner = fakeOwner({grounds: [UNMADE]})
-  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: true})))
+  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: true, carried: null})))
   assert.equal(owner.ensures.length, 0, 'today is current: nothing is ensured')
   assert.equal(owner.initialised.length, 1)
   const [made] = owner.initialised
@@ -462,4 +466,62 @@ test('today\'s set is kept in the Day: a world brought in is written through the
   assert.deepEqual(write.value.set, {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}], rows: []})
   assert.equal(write.value.face, 2, 'the rest of the Day\'s meta stands as it was')
   assert.deepEqual(daySet.daySetOf(owner.state.payload).tracks, [{world: 'central:wiki:project:O-I', name: 'O-I'}])
+})
+
+// ── The close, and what it carries (manual §18.1 "What carries to tomorrow"; §18.2 "Close now"; T-WORLDS W2 "The close carries") ────
+const PAGE = path => `central:path:/ground:${path}`
+const PLAYS_OI = PAGE('Work/O-I/ProjectCentral/user/beings-1.html')
+const PLAYS_MINE = PAGE('Control/user/flows/flow-1.html')
+const STOPPED = PAGE('Work/O-I/ProjectCentral/user/things-1.html')
+const SET_15 = {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}, {world: 'central:wiki:project:Old', name: 'Old'}],
+  rows: [{id: 'r1', name: 'Morning', pages: [PLAYS_OI, STOPPED]}, {id: 'r2', name: 'Stopped', pages: [STOPPED]}], lineage: ['central:day:control:root:2026-10-14']}
+// The 15th's Day, closed, its document keeping the set (the ground's check: the document's revision and Day are the Day's own).
+const DOC_15 = documentReading({...PAYLOAD, meta: {...PAYLOAD.meta, date: '2026-10-15', set: SET_15}}, 'rev-15')
+const DAY_15_CLOSED = {...DAY_16, day_ref: 'central:day:control:root:2026-10-15', revision: {revision: 'rev-15'},
+  document: {...DOC_15, document: {...DOC_15.document, day_ref: 'central:day:control:root:2026-10-15'}},
+  temporal: {...DAY_16.temporal, civil_date: '2026-10-15', day_ref: 'central:day:control:root:2026-10-15', lifecycle: 'closed'}}
+const CLOSED_15 = groundOf({state: 'stale', action: 'central.day.read', data: DAY_15_CLOSED, error: {message: STALE_WORDS}})
+const clearing = (nowRef, page, lifecycle) => ({now_ref: nowRef, task_ref: `oi:page:${page}`, lifecycle, created_at_unix_seconds: 1792000000,
+  scope_ref: 'control:root', purpose: `A page is open: ${page}`, source_refs: [], participant_refs: [], work_refs: []})
+const listing = records => ({schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records})
+const NOW_PLAYING = {root: listing([clearing('now:mine', PLAYS_MINE, 'active')]),
+  'O-I': listing([clearing('now:oi', PLAYS_OI, 'active'), clearing('now:stopped', STOPPED, 'closed')])}
+
+test('what still plays carries into tomorrow\'s set: the worlds holding a playing page, each row with only its playing pages, the closed Day in the lineage', () => {
+  const worldOf = ref => ref.includes('Work/O-I/') ? {ref: 'central:wiki:project:O-I', name: 'O-I'} : ref.includes('Control/user/flows/') ? {ref: 'central:wiki:root', name: 'Your world', yours: true} : null
+  const next = daySet.carriedSet(SET_15, 'central:day:control:root:2026-10-15', [PLAYS_OI, PLAYS_MINE], worldOf)
+  assert.deepEqual(next, {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}],
+    rows: [{id: 'r1', name: 'Morning', pages: [PLAYS_OI]}], lineage: ['central:day:control:root:2026-10-14', 'central:day:control:root:2026-10-15']},
+    'Old holds nothing that plays and leaves; the stopped page leaves its row, and a row left empty goes; your world is every set\'s first track, never named')
+  assert.deepEqual(daySet.carriedSet({...SET_15, tracks: []}, 'd', [PLAYS_OI], worldOf).tracks, [{world: 'central:wiki:project:O-I', name: 'O-I'}],
+    'a world the closed set did not hold comes in when a page of it still plays')
+  assert.deepEqual(daySet.daySetOf({meta: {set: next}}).lineage, next.lineage, 'the lineage reads back as written')
+})
+
+test('Close now closes the Day Central names on both of its revisions; a closed Day, or one you selected, offers no close, and nothing is sent', async () => {
+  const owner = fakeOwner({grounds: [READY]})
+  await withOwner(owner, () => writes.closeDay(bridge).then(result => assert.deepEqual(result, {closed: 'central:day:control:root:2026-10-16', civilDate: '2026-10-16'})))
+  assert.deepEqual(owner.closes, [{kind: 'close-day', day_ref: 'central:day:control:root:2026-10-16', expected_revision: 'rev-1', expected_relations_revision: DAY_13.relations_revision}])
+  const closedOwner = fakeOwner({grounds: [CLOSED_15]})
+  await withOwner(closedOwner, () => assert.rejects(writes.closeDay(bridge), /closed already/))
+  assert.equal(closedOwner.closes.length, 0)
+  assert.equal(factsOf(READY).canClose, true)
+  assert.equal(factsOf(STALE).canClose, true, 'an earlier Day still open is closed after its boundary')
+  assert.equal(factsOf(CLOSED_15).canClose, false)
+  assert.equal(factsOf(READY, {standing: null, aperture: null}).canClose, false, 'a Day you selected is never the one closed')
+  assert.equal(bind.dayValuesOf(factsOf(READY), null).canClose, true, 'the design reads it as canClose')
+})
+
+test('Open today after a closed Day: today\'s Day is made, and what still plays is carried into its set through the Day\'s own meta', async () => {
+  const owner = fakeOwner({grounds: [CLOSED_15, UNMADE, READY], now: NOW_PLAYING})
+  const result = await withOwner(owner, () => writes.openToday(bridge))
+  assert.deepEqual(result, {ensured: true, initialised: true, carried: {from: 'central:day:control:root:2026-10-15', worlds: 1, rows: 1, pages: 2}})
+  const [write] = owner.mutations()
+  assert.equal(write.field_id, 'original:meta')
+  assert.deepEqual(daySet.daySetOf(owner.state.payload), {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}],
+    rows: [{id: 'r1', name: 'Morning', pages: [PLAYS_OI]}], lineage: ['central:day:control:root:2026-10-14', 'central:day:control:root:2026-10-15']})
+  assert.deepEqual(owner.sent.filter(body => body.op === 'now').map(body => body.project), [null, 'O-I'], 'NOW is read at your register and at each project world the closed set held')
+  const open = fakeOwner({grounds: [STALE, UNMADE, READY], now: NOW_PLAYING})
+  const plain = await withOwner(open, () => writes.openToday(bridge))
+  assert.equal(plain.carried, null, 'an earlier Day never closed carries nothing'); assert.equal(open.mutations().length, 0)
 })

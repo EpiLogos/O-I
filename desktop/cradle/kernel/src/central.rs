@@ -27,6 +27,15 @@ pub enum Request {
         form: files::Location,
         expected_form_revision: String,
     },
+    /// Close a Day (`central.day.lifecycle`, lifecycle `closed`) on its exact
+    /// content and relations revisions: the person's own press (Close now).
+    /// Central keeps every authored byte; a Day already closed is refused here,
+    /// never stamped closed a second time.
+    CloseDay {
+        day_ref: String,
+        expected_revision: String,
+        expected_relations_revision: String,
+    },
     /// One authored root agent-set (`central.agent-set.read`), verbatim: who
     /// carries commissioned work is Central's record, never a desktop constant.
     AgentSet {
@@ -201,6 +210,12 @@ pub fn operate(
         }
         Request::AgentSet{agent_set_ref} => client.run("central.agent-set.read",json!({"scope":"root","ref":agent_set_ref})).map_err(|e|e.to_string()),
         Request::EnsureDay{expected_time_policy_revision} => client.run("central.day.ensure",json!({"project":project,"expected_time_policy_revision":expected_time_policy_revision})).map_err(|e|e.to_string()),
+        Request::CloseDay{day_ref,expected_revision,expected_relations_revision} => {
+            let day=client.run("central.day.read",json!({"project":project,"day_ref":day_ref})).map_err(|e|e.to_string())?;
+            if day["temporal"]["lifecycle"]=="closed" { return Err("This Day is closed already; a closed Day is not closed again".into()); }
+            client.run("central.day.lifecycle",json!({"project":project,"day_ref":day_ref,"expected_revision":expected_revision,
+                "expected_relations_revision":expected_relations_revision,"lifecycle":"closed"})).map_err(|e|e.to_string())
+        }
         Request::InitialiseDay{day_ref,document_id,expected_revision,expected_policy_revision,form,expected_form_revision} => {
             let original=files::read(client,form)?;
             if original.revision!=*expected_form_revision {return Err("Selected original form changed; review its new revision before initialising".into());}

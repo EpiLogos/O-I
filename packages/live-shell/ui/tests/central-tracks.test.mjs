@@ -149,6 +149,15 @@ test('a page plays in its NOW clearing: its clip runs and lies on the ruler from
   const live = adapter.projectCentralTracks({...reading, playing, controls})
   const clip = live.clips.find(item => item.id === 'Control/user/flows/oi203.html')
   assert.equal(clip.status, 'running'); assert.equal(clip.at.start, 570, 'it lies on the ruler from 09:30')
+  // A page carried from an earlier Day plays through today from its start, and says since when and when to look at it again (the
+  // day-close law's review, three days on).
+  const carried = adapter.projectCentralTracks({...reading, playing: [{...playing[0], sinceMs: Date.parse(`${today}T00:00:00Z`) - 86_400_000 + 3_600_000}], controls})
+    .clips.find(item => item.id === 'Control/user/flows/oi203.html')
+  assert.equal(carried.at.start, 0, 'a carried page lies from the start of today')
+  const yesterday = new Date(Date.parse(`${today}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10)
+  const review = new Date(Date.parse(`${today}T00:00:00Z`) + 2 * 86_400_000).toISOString().slice(0, 10)
+  assert.match(carried.note, new RegExp(`carried, open since ${yesterday}; look at it again ${review}`))
+  assert.doesNotMatch(clip.note, /carried/, 'a page opened today is not carried')
   assert.match(live.tracks[0].kind, /1 page plays now/)
   assert.deepEqual(await live.actions.stopTrack.run('central:world:central:wiki:project:O-I'), {ok: true, note: 'No page of O-I plays.'})
   await live.actions.stopTrack.run('central:world:central:wiki:root')

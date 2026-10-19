@@ -58,16 +58,9 @@ export function setReadingOf(ground: CentralGroundReading | null, error: string 
   return {state: 'read', set: daySetOf(basis.payload), civilDate: standing.civilDate}
 }
 
-/** The task a page's clearing carries (kernel/src/page.rs `page_task`). */
-const PAGE_TASK = 'oi:page:'
-
-/** The pages that play now, from NOW listings: each active clearing whose task is a page's. Pure. */
-export function playingOf(listings: readonly {project: string | null; listing: NowListing}[]): CentralPlaying[] {
-  return listings.flatMap(({project, listing}) => listing.records
-    .filter(row => row.lifecycle === 'active' && row.task_ref.startsWith(PAGE_TASK))
-    .map(row => ({pageRef: row.task_ref.slice(PAGE_TASK.length), nowRef: row.now_ref, project,
-      sinceMs: Number.isFinite(row.created_at_unix_seconds) ? row.created_at_unix_seconds * 1000 : null})))
-}
+// The pages that play now (each active clearing whose task is a page's) are read by the pure adapter, which the Day's close reads too.
+import {playingOf} from '../../timeline/centralTrackAdapter'
+export {playingOf}
 
 export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   const shell = useAgentShellOptional()
