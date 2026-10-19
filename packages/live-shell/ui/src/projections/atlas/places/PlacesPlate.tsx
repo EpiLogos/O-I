@@ -161,7 +161,7 @@ function ViewSection({handle}: {handle: AtlasHandle | null}) {
   const whole = handle?.ctl.globeScope
   const wholeWhy = !handle ? NOT_MOUNTED : !whole?.scope ? 'No mode’s set is set aside on the globe, so there is no whole-field choice to make.' : undefined
   return <>
-    <PlateReading label="Scale" value={scale ?? '—'} does="How close you look, as the atlas stands: system, body, region or palace. The camera sets it." />
+    <PlateReading label="Scale" value={scale ?? '—'} does="How close you look, as the atlas stands: field, system, body, region or place. The camera sets it." />
     <PlateRadio inline label="View" does="Space or Graph: the same material, as bodies or by connection — the atlas's own switch, the lens bar's."
       value={view} options={[{value: 'earth', label: 'Space'}, {value: 'graph', label: 'Graph'}]} onChange={next => presentAtlasView(next)} />
     <PlateRadio inline label="Aperture" value={null} options={['World', 'Local', 'Shared', 'Federated'].map(label => ({value: label.toLowerCase(), label}))}

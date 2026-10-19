@@ -54,7 +54,7 @@ export function mount(ctx: LensContext): LensInstance {
       try { const r = practice.importAll(await f.text()); alert(`Read back ${r.added} entr${r.added === 1 ? 'y' : 'ies'}.`); journal(); } catch (err) { alert(err instanceof Error ? err.message : 'That file could not be read.'); }
     } });
     show('Dreams', [
-      privacyLine(practice.persistent ? 'Your dreams are kept only in this browser’s storage.' : 'This browser is not letting the page store anything, so entries last only until you close the tab.'),
+      privacyLine('Your dreams are kept in your dream journal, a page of your practice world, written through its owner.'),
       el('p', { class: 'th-line', text: 'Write a dream down. The images in it that the field knows are picked out; each one opens onto the dreams and visions in the corpus that carry the same image. That is how Jung read a dream: by lining it up with its parallels.' }),
       el('div', { class: 'lp-row' }, [el('button', { type: 'button', class: 'lp-btn primary', onclick: () => ctx.setPath(['new']) }, [icon('plus', 14), el('span', { text: 'Record a dream' })])]),
       list.length ? el('ol', { class: 'dr-list' }, list.map((d) => el('li', {}, [el('button', { type: 'button', class: 'dr-row', onclick: () => ctx.setPath([d.id]) }, [

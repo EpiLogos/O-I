@@ -58,7 +58,7 @@ function ViewSection({handle}: {handle: AtlasHandle | null}) {
   return <>
     <PlateRadio inline label="View" does="Space or Graph: the same material, as bodies or by connection — the atlas's own switch, the lens bar's."
       value={view} options={[{value: 'earth', label: 'Space'}, {value: 'graph', label: 'Graph'}]} onChange={next => presentAtlasView(next)} />
-    <PlateReading label="Scale" value={scale ?? '—'} does="How close you look, as the atlas stands: system, body, region or palace. The camera sets it." />
+    <PlateReading label="Scale" value={scale ?? '—'} does="How close you look, as the atlas stands: field, system, body, region or place. The camera sets it." />
     <PlateRadio inline label="Scope" does={scope?.scope ? `The globe draws ${scope.scope.label} alone, or the whole field.` : 'The mode’s set alone, or the whole field.'}
       value={scope?.scope ? (scope.wholeField ? 'field' : 'set') : null} options={[{value: 'set', label: scope?.scope?.label ?? 'Set'}, {value: 'field', label: 'Field'}]}
       onChange={handle && scope?.scope ? next => setWholeField(handle.engine, next === 'field') : undefined} disabled={!handle ? NOT_MOUNTED : !scope?.scope ? NO_SCOPE : undefined} />

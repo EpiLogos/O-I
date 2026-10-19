@@ -137,6 +137,17 @@ test('the Day track lays today\'s entries at their instant on today\'s ruler, an
   assert.equal(tracks.main.name, `Day · ${today}`)
 })
 
+test('each world wears its body\'s colour; the practice world stands as Practice, fogged, its Activator off (T-WORLDS W3, W4)', () => {
+  const coloured = adapter.projectCentralTracks({...reading, colours: new Map([['central:wiki:project:O-I', '#abcdef']]), practice: 'central:wiki:project:O-I'})
+  const oi = coloured.tracks.find(track => track.id === 'central:world:central:wiki:project:O-I')
+  assert.equal(oi.color, '#abcdef')
+  assert.match(oi.kind, /^Practice · fogged: .* its chain Packet · Nara · Scope · /)
+  assert.equal(oi.mix.activator, false)
+  const yours = coloured.tracks.find(track => track.id === 'central:world:central:wiki:root')
+  assert.equal(yours.color, undefined, 'a world given no colour draws the default')
+  assert.doesNotMatch(yours.kind, /Practice/)
+})
+
 test('a page plays in its NOW clearing: its clip runs and lies on the ruler from when it opened; Stop closes only that world\'s playing pages', async () => {
   const since = Date.parse(`${today}T09:30:00Z`)
   const playing = playingOf([{project: null, listing: {schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records: [
