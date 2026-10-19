@@ -236,12 +236,17 @@ found the views, the interactions and the flipped-up devices short of Live's; it
    the shell — and harden the daily die. Seen standalone on 19 Oct: hidden faces' pips bleed through the edges and the page; an
    opened face covers the header; the template ships a sample image ("Example asset, not a record"); a key pressed while it turns
    leaves it oversized under the old face's label until it settles. A full census of its bugs on the native app.
-   The form alone was hardened (`c111bf242`); the die as the shell draws it is not. Seen the evening of 19 Oct in the Day pane
-   (`89cadd7c9`, the shell's own forms): the die rests turned, the open face's page printed on its side face and its lower edge
-   cut, where the form alone rests square on a pip face; a two-line instruction sits under it; in the gallery the tabs' date
-   (Wed 15 Oct, the fixture) and the head's (Monday 19 October) disagree — to check on the native app. The compact Day device's
-   Close now, made its fourth control in `30a491d6e`, spills past the device's edge. The die is judged on the native app (WebKit);
-   headless WebKit draws no 3D, so a Chromium capture is a first look only.
+   The form alone was hardened (`c111bf242`). The evening of 19 Oct, in the Day pane, the die rested turned, the open face's page
+   printed on the face and cut at its foot, with a two-line instruction under it. That was the form's own resting pose, the same
+   alone (the gallery's "Full · a pane" is the form file in a pane-size frame): a tilt, the front face peeking at its page, and in a
+   narrow pane the page taller than the face. The square five-pip face seen for "the form alone" was headless WebKit drawing
+   face 5 flat. Fixed in `eca60b926`: the die rests square on its open face and wears its pips. No page shows on a face until it
+   is opened, so none is cut. It breathes rather than sways, and settles square after a drag. The instruction line is gone. The
+   compact Day's Close now (`30a491d6e`) takes a row across both macro columns, inside the device, in Compact and under Whole.
+   Open: the native look of the die (WebKit), owed to the owner's next native pass on a candidate that carries `eca60b926`. The
+   gallery's tabs (Wed 15 Oct, its fixture) against its head (Monday 19 October) are the gallery's alone: in the shell the
+   Day's Full is the owner's Day face (`centralPublication`'s own Full), which draws no tabs. So the manual's today and tomorrow
+   tabs are drawn nowhere yet: no owner reports tomorrow's Day.
 2. **Then:** each page works as its own page and as a view in the workspace; Beings and Things join walks, the reading view and
    the sky view as the Archetypal-Earth entries do (W2 built the page op, launch and the Earth join).
 3. **Later, with the owner:** a redesign from the function up and the pages taken into the device ontology. Time: the Day is the
