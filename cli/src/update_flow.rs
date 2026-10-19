@@ -331,6 +331,34 @@ fn stage_binary(data_root: &Path, id: &str, exe: &str, sha256: &str, source_bina
     Ok(managed)
 }
 
+/// Run a staged generation's version command: it must start and succeed
+/// before anything resolves to it. The binary was copied into the store
+/// moments ago in this process, and a sibling thread that spawns a child
+/// between that copy's open and its close carries the write descriptor until
+/// the child execs; Linux answers an exec of the binary in that instant with
+/// ETXTBSY. The binary is sound — only the instant is wrong — so the check
+/// waits the window out (as `world_recognition` does for its artifacts)
+/// rather than refusing the update.
+fn smoke_check_staged(id: &str, staged: &Path, version_command: &[String]) -> Result<(), String> {
+    let mut attempt = 0;
+    let smoke = loop {
+        match Command::new(staged).args(version_command)
+            .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).status()
+        {
+            Ok(status) => break status,
+            Err(error) if error.kind() == std::io::ErrorKind::ExecutableFileBusy && attempt < 20 => {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(25));
+            }
+            Err(error) => return Err(format!("{id}: cannot smoke-check staged binary: {error}")),
+        }
+    };
+    if !smoke.success() {
+        return Err(format!("{id}: staged binary failed its version smoke check"));
+    }
+    Ok(())
+}
+
 /// Flip `bin/<exe>` to a staged generation: the one step that changes what the
 /// next invocation resolves.
 fn link_managed(data_root: &Path, id: &str, exe: &str, sha256: &str) -> Result<(), String> {
@@ -912,12 +940,7 @@ fn prepare_entry(
     if sha256_file(&staged)? != sha256 {
         return Err(format!("{id}: staged binary digest changed during staging"));
     }
-    let smoke = Command::new(&staged).args(&target.version_command)
-        .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).status()
-        .map_err(|error| format!("{id}: cannot smoke-check staged binary: {error}"))?;
-    if !smoke.success() {
-        return Err(format!("{id}: staged binary failed its version smoke check"));
-    }
+    smoke_check_staged(id, &staged, &target.version_command)?;
     let gate_ref = gate_path.as_ref().map(|path| path.display().to_string()).unwrap_or_default();
     let gate_receipt = json!({
         "schema": "oi.managed-update-gate/v1",
@@ -2406,6 +2429,27 @@ mod update_flow_tests {
              chmod 755 \"$CARGO_TARGET_DIR/release/tool\" \"$CARGO_TARGET_DIR/release/tool-host\"\n").unwrap();
         let revision = commit_all(&repo, "broken");
         (repo, revision)
+    }
+
+    /// A staged binary still held open for writing is waited out, not refused:
+    /// Linux answers its exec with ETXTBSY while any descriptor writes it, and in
+    /// a loaded `oi update` (or `cargo test`) a sibling thread that forks between
+    /// the store copy and its close carries that descriptor until its child
+    /// execs. CI's `rust` job read "tool: cannot smoke-check staged binary: Text
+    /// file busy" from the test below on 19 Oct.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn the_smoke_check_waits_out_a_staged_binary_still_held_open_for_writing() {
+        let temp = tempfile::tempdir().unwrap();
+        let staged = script_executable(&temp.path().join("tool"), "#!/bin/sh\nexit 0\n");
+        let writer = fs::OpenOptions::new().append(true).open(&staged).unwrap();
+        let release = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            drop(writer);
+        });
+        let checked = smoke_check_staged("tool", &staged, &["--version".to_owned()]);
+        release.join().unwrap();
+        checked.unwrap();
     }
 
     #[cfg(unix)]
