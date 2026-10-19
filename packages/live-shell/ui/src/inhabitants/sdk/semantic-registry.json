@@ -653,6 +653,27 @@
   },
   {
     "family": "quaternal-logic",
+    "face": "sitting",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": {
+      "generates": "kernel:invoke_action"
+    },
+    "writePaths": [
+      "kernel:invoke_action"
+    ],
+    "heldBy": [
+      "studio:nara",
+      "techne:m2"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
     "face": "sky",
     "kind": "parameter",
     "liveSemantic": "device-instrument",

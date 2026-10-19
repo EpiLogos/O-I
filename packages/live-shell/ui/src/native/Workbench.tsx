@@ -33,6 +33,7 @@ import {DOCUMENT_FORMS} from '../../../../../desktop/cradle/src/flow/documentFor
 /** The four forms the browser's New… grid makes (shell/ModeBrowser.tsx NEW_FORMS). */
 const NEW_DOCUMENT_FORMS: readonly string[] = ['document-42', 'document-01', 'document-beings', 'document-things']
 import {createFormInPlace} from '../../../../../desktop/cradle/src/flow/createInPlace'
+import {openPractice, PRACTICE_OPENERS} from '../inhabitants/ql/devices/practiceLaunch'
 import {userFlowsArea} from '../../../../../desktop/cradle/src/flow/instances'
 import {mintBlankInstance, mintInstance, instanceFileName, parseInstance} from '../../../../../desktop/cradle/src/flow/instance'
 import {personParticipant} from '../../../../../desktop/cradle/src/flow/identity'
@@ -904,6 +905,13 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           callbacks.current.insert({id, kind: 'blank', title: 'New tab', project: latest.current.book.current.project})
           // The tab is in the book once the book has rendered it: the fresh choice reads the book then, never the one before.
           void inBook(id).then(() => callbacks.current.freshChoice(id, form.kind)).catch(openerActions.current.report)
+        })})),
+      // Your practice's pages (T-WORLDS W4; inhabitants/ql/devices/practiceLaunch.ts): made in your practice world, or the one it keeps,
+      // and opened in a pane of their own; a journey's Deck asks for its theme.
+      ...PRACTICE_OPENERS.map(entry => ({id: `form.practice-${entry.practice}`, title: entry.title, hint: entry.hint,
+        open: run(() => {
+          void openPractice(entry.practice, latest.current.kernel.transport, location => latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'flow', location})))
+            .catch(openerActions.current.report)
         })})),
     ])
   }, [tauri])

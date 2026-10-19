@@ -23,6 +23,9 @@ import type {InhabitantManifest} from './manifest.ts'
  *   the kernel's nara_elemental): both cut (T-WORLDS W4), each held by the
  *   Studio's Nara chain, your personal layer (manual §24.7), and by a Technē
  *   instrument: the Deck by the Journey, the Chakra by the Timeline.
+ * - The Sitting (manual §24.3) is timed by the transport, rings its bell on
+ *   the torus and keeps its record as a page in your practice world (T-WORLDS
+ *   W4); it is held by the Studio's Nara chain and Technē's Timeline.
  *
  * §16 — four surfaces and nowhere else: this manifest is the family's whole
  * exposure; nothing renders from it until an owner lands. */
@@ -87,6 +90,16 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         heldBy: ['studio:nara', 'techne:m2'],
         invariant: {generatesAbsent: 'Your elements are read, never written: the kernel\'s nara_elemental answers from your saved identity, and no owner operation takes a value back (lock §7).'},
         note: 'Your centres\' elements (manual §22.5, M4.1): QL\'s elemental map of your saved identity (ql.nara-elemental-reading/v1) and its natal distribution, read through the kernel\'s nara_elemental (ql/devices/qlChakra.ts). Today\'s centres and routes are the scene\'s (ql.scene/v1), which no owner carries to the shell yet; the device says so.',
+      },
+      {
+        id: 'sitting',
+        presentations: ['compact'],
+        liveSemantic: 'device-instrument',
+        // Your personal layer (the Studio's Nara chain, manual §24.7), and Technē's Timeline beside the Chakra: a sitting stands with your
+        // centres, M4.1 (§24.9), and is a stretch of the day's time.
+        heldBy: ['studio:nara', 'techne:m2'],
+        invariant: {generates: 'kernel:invoke_action'},
+        note: 'A sitting (manual §24.3): the transport times it, the torus rings its bell through the one instrument\'s own strike, and Stop keeps the time actually sat. Its record is a page in your practice world, made through Central\'s own creation door (projectcentral.source.create; ql/devices/qlSitting.ts). Nothing scores it; today\'s centres are the scene\'s, which no owner carries to the shell yet, and the device says so.',
       },
       {
         id: 'm-prime-matrices',

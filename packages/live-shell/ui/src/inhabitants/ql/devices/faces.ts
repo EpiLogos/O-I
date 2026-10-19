@@ -21,6 +21,7 @@ export const TECHNE_FACE_TITLES: Readonly<Record<string, string>> = Object.freez
   'm3-clock': 'M3 clock',
   'deck': 'Deck',
   'chakra': 'Chakra',
+  'sitting': 'Sitting',
   'm-prime-matrices': 'M′ matrices',
   'ql-instrument': 'QL field / PCM owner',
 })
@@ -41,6 +42,7 @@ export const TECHNE_FACE_ICONS: Readonly<Record<string, IconName>> = Object.free
   'm3-clock': 'metro',
   'deck': 'lib',
   'chakra': 'form',
+  'sitting': 'loop',
   'm-prime-matrices': 'techne',
   'ql-instrument': 'expr',
 })
