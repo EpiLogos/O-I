@@ -16,7 +16,7 @@ export interface DocumentInPane {
   key: string
   /** The hosting pane's binding id, when the face stands in a pane. */
   paneId?: string
-  form: 'Day' | 'Flow'
+  form: 'Day' | 'Flow' | 'Being' | 'Thing'
   title: string
   /** The owner's revision of the bytes the face stands on, when read. */
   revision?: string
@@ -79,3 +79,13 @@ export function revisionShort(revision: string): string {
   const digest = revision.includes(':') ? revision.slice(revision.lastIndexOf(':') + 1) : revision
   return digest.slice(0, 8)
 }
+
+/** The book's layout writer, registered by the shell that holds the book (App.tsx): a document pane renders in a root of its own, so it
+ * reaches the pane tree only through this — a link a page follows opens beside it here. Null where no book is mounted. */
+type LayoutWriter = (update: (layout: import('../../../../../../desktop/cradle/src/surface/types').LayoutState) => import('../../../../../../desktop/cradle/src/surface/types').LayoutState) => void
+let layoutWriter: LayoutWriter | null = null
+export function registerDocumentLayoutWriter(writer: LayoutWriter | null): () => void {
+  layoutWriter = writer
+  return () => { if (layoutWriter === writer) layoutWriter = null }
+}
+export function documentLayoutWriter(): LayoutWriter | null { return layoutWriter }

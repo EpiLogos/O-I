@@ -13,6 +13,8 @@
 //   `central:day:…:<date>`      the owner's Day of one civil date
 //   `document:latest-flow`      the most recent Flow in Control/user/flows (the seed's right-hand pane)
 //   `central:path:<root>:<path>` one Flow document, by the owner's path ref
+//   `page:<being|thing>:<ref>`  one Being or Thing page, by its owner's path ref (T-WORLDS W2: they open as panes with a hosted
+//                               face, like a Flow, never as a bare file tab)
 // Nothing here reads the owner, so nothing here can fabricate a document: a subject that names none the owner holds is
 // said by the pane, in the owner's words.
 import {activateSurface, dropOnEdge, focusGroup, groupOf, moveTab, openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
@@ -54,6 +56,11 @@ export function isFlowPath(path: string): boolean {
 export type DocumentSubject =
   | {readonly form: 'day'; readonly dayRef: string | null}
   | {readonly form: 'flow'; readonly location: CentralLocation | null}
+  | {readonly form: 'page'; readonly kind: PageKind; readonly location: CentralLocation}
+
+/** A reference page's kind: a Being or a Thing (oi.page/v1, its family). */
+export type PageKind = 'being' | 'thing'
+const PAGE_SUBJECT = /^page:(being|thing):(.+)$/
 
 /** Read a subject ref. A pane of this kind with no subject holds the most recent Flow. Null: the ref names no document this
  * pane holds (the pane says so; it never guesses another). */
@@ -61,6 +68,11 @@ export function parseDocumentSubject(ref: string | undefined): DocumentSubject |
   if (ref === undefined || ref === LATEST_FLOW_REF) return {form: 'flow', location: null}
   if (ref === TODAY_REF) return {form: 'day', dayRef: null}
   if (ref.startsWith('central:day:')) return {form: 'day', dayRef: ref}
+  const page = PAGE_SUBJECT.exec(ref)
+  if (page) {
+    const at = parseCentralPathRef(page[2]!)
+    return at ? {form: 'page', kind: page[1] as PageKind, location: {schema: 'central.path-ref/v1', ref: page[2]!, root: at.root, path: at.path}} : null
+  }
   const located = parseCentralPathRef(ref)
   if (located && isFlowPath(located.path)) return {form: 'flow', location: {schema: 'central.path-ref/v1', ref, root: located.root, path: located.path}}
   return null
@@ -72,6 +84,7 @@ export function parseDocumentSubject(ref: string | undefined): DocumentSubject |
 export type CentralDocumentTarget =
   | {readonly form: 'day'; readonly date: string | null}
   | {readonly form: 'flow'; readonly location: CentralLocation | null}
+  | {readonly form: 'page'; readonly kind: PageKind; readonly location: CentralLocation}
 
 /** A listed row, as the browser holds it. */
 export type DocumentEntry = Pick<NativeFileEntry, 'name' | 'location' | 'kind' | 'retrieval_allowed'>
@@ -94,6 +107,7 @@ const baseName = (path: string): string => path.split('/').filter(Boolean).pop()
 /** The ref and the tab's title a target is held under. */
 export function subjectOf(target: CentralDocumentTarget): {ref: string; title: string} {
   if (target.form === 'day') return target.date ? {ref: dayRefOfDate(target.date), title: `Day · ${target.date}`} : {ref: TODAY_REF, title: 'Day'}
+  if (target.form === 'page') return {ref: `page:${target.kind}:${target.location.ref}`, title: `${target.kind === 'being' ? 'Being' : 'Thing'} · ${baseName(target.location.path).replace(/\.html$/i, '')}`}
   return target.location ? {ref: target.location.ref, title: `Flow · ${baseName(target.location.path).replace(/\.html$/i, '')}`} : {ref: LATEST_FLOW_REF, title: 'Flow'}
 }
 

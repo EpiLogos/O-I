@@ -1,0 +1,28 @@
+r12 screen pass — def25d9ba (W2 + W4a), 19 Oct 2026 03:20–03:26 UTC, computer use on the native candidate, the owner's real ground
+(Control/user/flows backed up with sha256 first; unchanged after — all 13 files match, none added).
+
+Seen:
+- Live's Grooves in the pool: the switch at the pool's head shows the set's own Groove Pool (a copy of "Piano and voices mastering":
+  its pool empty, said so); Global Amount 100 → 80 written into the set, read back from the .als (GlobalGrooveAmount Manual = 80).
+- Central's tracks are worlds: Session · Arrangement draws "Your world" with its twelve pages as clips (titles where the page has one),
+  the cron track, and the Day as the Main track with its twelve row launchers; the mixer row's input reads "the world's folder".
+- A page plays: the Day's row-12 launcher → "Launch row 12 · 1 page plays"; Central holds the page's NOW clearing active
+  ("A page is open: Control/user/flows/oi203-multiagent-20260930.html", task oi:page:<ref>); the clip says Running; the transport and the
+  Main track read today (19 Oct). The empty slot's stop on Your world → "1 page of Your world stopped"; Central holds the clearing closed —
+  the lifecycle act carried the person's native authority, read from ~/.central/native-token by the native process.
+- The browser: Worlds lists your world and each project's; Beings says "Your world holds no Beings yet: make one from New…".
+- W4a: the Deck stands in the Journey instrument's Quaternal Logic fold on its design and says what it waits for ("No journey is open:
+  open a journey page (a Flow on your practice world) and the Deck reads it").
+
+Found and fixed after the pass (not in r12):
+- Open today was refused: "Central owner Action refused: missing bounded CENTRAL_NATIVE_TOKEN; declared H/human attribution is not …".
+  The Day's own presses (ensure and make today's Day; a die face turn; today's set written into the Day; a review, an inclusion, a
+  recovery) now carry the person's native authority as Launch and Stop do; a producer's submission never does (owner_write.rs
+  receiving_person_act, with its test).
+
+Found, open:
+- A pane's left-edge hot zone opens its tab list over the first column's clip ▶ and stop squares; the pass reached them a few pixels in.
+- The grammar's Session words still say "the day as clips: Day, Flows, Beings, Things and Goals as tracks" (modeGrammar).
+
+Not seen: a world dragged onto the empty track (today's Day has no document until Open today works — r13); Clip view's Answer this,
+the Sitting, dreams (W4b, building); your system (W3b, building).

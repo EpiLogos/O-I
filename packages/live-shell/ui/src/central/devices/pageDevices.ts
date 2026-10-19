@@ -55,7 +55,7 @@ export function dirtyOfWords(state: string): boolean | null {
 const baseName = (path: string): string => (path.split('/').filter(Boolean).pop() ?? path).replace(/\.html$/i, '')
 
 /** The door's document as the bindings read it. `date` is the Day's civil date, when the Day is the Day device's document. */
-export function reachedPageOf(doc: DocumentInPane, date: string | null): ReachedPage {
+export function reachedPageOf(doc: DocumentInPane & {form: 'Day' | 'Flow'}, date: string | null): ReachedPage {
   const tabTitle = doc.form === 'Flow'
     ? subjectOf({form: 'flow', location: doc.location ?? null}).title
     : subjectOf({form: 'day', date}).title
@@ -143,7 +143,9 @@ const clipboard = (text: string): Promise<void> => (typeof navigator !== 'undefi
 
 /** The page family's readings and bindings over the reached document, the Day device's document, the roster and the workspace book. */
 export function usePageDevices(transport: KernelTransportStatus, day: DayDocumentReading): PageDevices {
-  const doc = useReachedDocument()
+  // The page family's devices speak of a Day or a Flow; a Being or a Thing reached in its pane leaves them as when none is reached.
+  const reachedNow = useReachedDocument()
+  const doc = reachedNow && (reachedNow.form === 'Day' || reachedNow.form === 'Flow') ? reachedNow as DocumentInPane & {form: 'Day' | 'Flow'} : null
   const book = useOptionalContinuity()
   const roster = useRosterAgents(transport)
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)

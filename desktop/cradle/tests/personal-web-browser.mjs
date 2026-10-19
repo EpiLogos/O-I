@@ -38,6 +38,23 @@ try{
   assert.equal(requests,0);assert.deepEqual(errors,[]);checks+=2;await context.close();
  }
  const context=await browser.newContext();const page=await context.newPage();const d=blankPage("things");d.meta.title='</script><script>globalThis.compromised=1</script>';await load(page,renderPage(d));assert.equal(await page.evaluate(()=>globalThis.compromised),undefined);assert.equal(await page.locator("h1").innerText(),d.meta.title);checks+=2;await context.close();
+ // The native page owner writes the island alone (kernel/src/page.rs): on load the page draws its fields from it, its highlights in
+ // their colours and its notes (stored escaped, shown as text); hosted, a followed link goes to the host and the frame stays put.
+ {const owned=blankPage("beings");owned.page.links=[{id:"l1",label:"A neighbour",href:"https://example.org/a",relation:"knows"}];const html=renderPage(owned);
+  const island=JSON.parse(/<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/.exec(html)[1].replace(/\\u003c/g,"<"));
+  island.meta.title="Written by its owner";island.page.introduction="She wrote what she saw.";island.page.sections=[{id:"section-1",heading:"Music",text:"Wide leaps."}];
+  island.highlights=[{id:"h1",part:"introduction",passage:"what she saw",colour:"green"},{id:"h2",part:"section-1",passage:null,colour:"pink"}];
+  island.notes=[{id:"n1",part:"section-1",anchor:null,text:"a &lt;b&gt; note",timing:"after"}];
+  const written=html.replace(/(<script type="application\/json" id="ql-doc">)[\s\S]*?(<\/script>)/,(_,a,b)=>a+JSON.stringify(island).replace(/</g,"\\u003c")+b);
+  const context=await browser.newContext();const page=await context.newPage();const errors=[];page.on("pageerror",e=>errors.push(e.message));const messages=[];await page.exposeFunction("hostHeard",value=>messages.push(value));
+  await page.setContent('<iframe id="f" sandbox="allow-scripts"></iframe><script>addEventListener("message",e=>hostHeard(e.data))</script>');await page.$eval("#f",(f,h)=>{f.srcdoc=h;},written);
+  const frame=await(await page.$("#f")).contentFrame();await frame.waitForSelector("h1");await frame.waitForFunction(()=>document.querySelector("mark"));
+  assert.equal(await frame.locator("h1").innerText(),"Written by its owner");checks++;
+  assert.equal(await frame.locator("[data-field=introduction]").evaluate(el=>el.innerHTML),'She wrote <mark data-colour="green">what she saw</mark>.');checks++;
+  assert.deepEqual(await frame.locator('[data-section="section-1"][data-field=text] mark').evaluate(el=>[el.dataset.colour,el.textContent,getComputedStyle(el).backgroundColor]),["pink","Wide leaps.","rgb(255, 184, 214)"]);checks++;
+  assert.deepEqual(await frame.locator(".note p").allTextContents(),["a <b> note"]);assert.equal(await frame.locator(".note b").count(),0);checks+=2;
+  await frame.locator(".relation a").click();await page.waitForTimeout(200);assert.deepEqual(messages,[{type:"oi:page-link",href:"https://example.org/a"}]);assert.equal(frame.url(),"about:srcdoc");checks+=2;
+  assert.deepEqual(errors,[]);checks++;await context.close();}
  const noscript=await browser.newContext({javaScriptEnabled:false});const staticPage=await noscript.newPage();const d2=blankPage("beings");d2.meta.title="Readable without scripts";await load(staticPage,renderPage(d2));assert.equal(await staticPage.locator("h1").innerText(),d2.meta.title);checks++;await noscript.close();
  console.log(`${checks} reference-carrier browser assertions passed; no native Save, publication, machine or human acceptance claimed.`);
 }finally{await browser.close();}
