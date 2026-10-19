@@ -115,3 +115,49 @@ test('the Earth reads every world\'s Beings and Things through the page owner; a
     assert.match(unread[1], /^O-I: .*the project ground is not readable/)
   } finally { globalThis.fetch = real }
 })
+
+test('your pages come to the Earth after it stands: each page\'s occurrence with its family, what was not read said', async () => {
+  const root = {control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}}, work: {projects: []}}
+  const answer = outcome => ({json: async () => ({ok: true, outcome})})
+  const listing = {schema: 'oi.page-list/v1', path: 'Control/user/flows', more: false, not_pages: [], pages: [
+    {location: HILDEGARD.location, name: 'beings-2026-10-18-0930.html', form: 'being', title: 'H', revision: 'r', world: 'central:wiki:root'},
+    {location: loc('Control/user/flows/things-9.html'), name: 'things-9.html', form: 'thing', title: 'T', revision: 'r', world: 'central:wiki:root'}]}
+  const real = globalThis.fetch
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    if (body.op === 'world_browse') return answer({result: 'world_read', snapshot: {navigator: {root}}})
+    if (body.op === 'page' && body.request.operation === 'list') return answer({result: 'page_reading', data: listing})
+    if (body.op === 'page' && body.request.operation === 'read' && body.request.location.path === HILDEGARD.location.path) return answer({result: 'page_reading', data: HILDEGARD})
+    return {json: async () => ({ok: false, error: 'the page is gone'})}
+  }
+  try {
+    const said = []
+    const pagesOnEarth = await pages.yourPagesForEarth({kind: 'bridge', url: 'http://central.fixture'}, 2026, text => said.push(text))
+    assert.deepEqual(pagesOnEarth.map(item => [item.occurrence.subject_ref, item.family.id]), [[HILDEGARD.location.ref, 'oi-page-being']])
+    assert.equal(said.length, 1); assert.match(said[0], /^Not on the Earth: Control\/user\/flows\/things-9\.html: .*the page is gone\.$/)
+  } finally { globalThis.fetch = real }
+})
+
+test('pages join the Earth through the seam behind the Sun: the Sun steps off the tail and is put back last; a refusal says what joined', () => {
+  // A stand-in for the mounted Earth that keeps the seam's own rule: only the last occurrence may be taken away.
+  const earth = (occ, refuse = null) => ({model: {occ}, calls: [], replaceOccurrence(item, id) {
+    this.calls.push([item ? 'put' : 'take', id])
+    if (item === null) { if (occ.at(-1)?.id !== id) throw new Error(`${id} is not last`); occ.pop(); return }
+    if (refuse === id) throw new Error(`${id} is placed at a recorded place`)
+    const at = occ.findIndex(entry => entry.id === id); if (at >= 0) occ[at] = item; else occ.push(item)
+  }})
+  const sun = {id: 'sky-subsolar'}, one = {id: 'o1'}
+  const page = id => ({occurrence: {id}, family: pages.PAGE_FAMILIES.being})
+  const withSun = earth([one, sun])
+  assert.equal(pages.joinPagesToEarth(withSun, [page('page:a'), page('page:b')], 'sky-subsolar', () => {}), 2)
+  assert.deepEqual(withSun.model.occ.map(entry => entry.id), ['o1', 'page:a', 'page:b', 'sky-subsolar'], 'the Sun stays last, so it can still leave')
+  const noSun = earth([one])
+  pages.joinPagesToEarth(noSun, [page('page:a')], 'sky-subsolar', () => {})
+  assert.deepEqual(noSun.model.occ.map(entry => entry.id), ['o1', 'page:a'], 'with no Sun drawn the pages simply join')
+  const said = []
+  const refusing = earth([one, sun], 'page:b')
+  assert.equal(pages.joinPagesToEarth(refusing, [page('page:a'), page('page:b'), page('page:c')], 'sky-subsolar', text => said.push(text)), 1)
+  assert.deepEqual(refusing.model.occ.map(entry => entry.id), ['o1', 'page:a', 'sky-subsolar'], 'the Sun is put back even when a page is refused')
+  assert.match(said[0], /^1 of your 3 pages joined the Earth; the next was refused: page:b is placed at a recorded place\.$/)
+  assert.equal(pages.joinPagesToEarth(earth([sun]), [], 'sky-subsolar', () => {}), 0)
+})
