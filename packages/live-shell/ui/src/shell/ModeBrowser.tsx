@@ -54,6 +54,7 @@
  */
 
 import {InstrumentsSection} from '../frame/InstrumentsSection'
+import {trackRows, type TrackRows} from '../frame/keys/keyDoors'
 import {useContext, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import {subscribeSuiteStanding, suiteStanding} from '../projections/atlas/provider/suiteStanding'
 import {useTimelineReading} from '../projections/timelinePaneHost'
@@ -71,7 +72,7 @@ import {listFiles} from '../../../../../desktop/cradle/src/files/client'
 import {dayRead} from '../../../../../desktop/cradle/src/day/client'
 import {readFlowInstance, USER_FLOWS_DIR} from '../../../../../desktop/cradle/src/flow/instances'
 import {listWorldPages, type PageForm, type PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
-import {readWorlds, type CentralWorldsReading} from '../central/centralWorlds'
+import {readWorlds, type CentralWorld, type CentralWorldsReading} from '../central/centralWorlds'
 import {CENTRAL_WORLD_DRAG} from '../timeline/centralTrackAdapter'
 import {DOCUMENT_FORMS, type DocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import {useCentralDocumentOpener} from '../central/documents/useOpenCentralDocument'
@@ -431,10 +432,12 @@ export function entriesOfForm(listing: PageListing, form: PageForm): NativeFileE
 }
 
 /** The Worlds rows (manual §18.1 "The track": "To bring a world into today, drag it from the browser onto an empty track"): your
- * world and each project's, from Central's disclosure of its registers. A row is dragged, not opened: it carries the world's ref. */
+ * world and each project's, from Central's disclosure of its registers. A row is not opened: it carries the world's ref onto the
+ * set, dragged onto the empty track or, as Live loads a browser item, double-clicked or Entered (seatWorldFromBrowser). */
 function WorldsRows({needle}: {needle: string}) {
   const {transport} = useWorkspace()
   const [worlds, setWorlds] = useState<CentralWorldsReading>({state: 'reading'})
+  const [said, setSaid] = useState<string | null>(null)
   useEffect(() => {
     let live = true
     void readWorlds(transport).then(next => { if (live) setWorlds(next) })
@@ -445,18 +448,43 @@ function WorldsRows({needle}: {needle: string}) {
   const needleText = needle.trim().toLocaleLowerCase()
   const shown = worlds.worlds.filter(world => !needleText || `${world.name} ${world.ref}`.toLocaleLowerCase().includes(needleText))
   if (!shown.length) return <p className="native-empty">No world matches this search.</p>
+  return <WorldRowList worlds={shown} said={said} onSeat={world => {
+    setSaid(null)
+    void seatWorldFromBrowser(world).then(answer => setSaid(answer.ok ? answer.note ?? `${world.name} is in today's set.` : answer.error ?? `${world.name} did not come into today.`))
+  }} />
+}
+
+/** The Worlds rows as drawn: each world's mark, name and kind; dragged, double-clicked or Entered to bring it into today; the set's
+ * last answer under them. */
+export function WorldRowList({worlds, onSeat, said}: {readonly worlds: readonly CentralWorld[]; onSeat(world: CentralWorld): void; readonly said: string | null}) {
   return <section className="mode-browser-rows" aria-label="Worlds"><ul>
-    {shown.map(world => {
-      const hover = `${world.name} — ${world.kind === 'yours' ? 'your own world' : `${world.project}'s world`}; its pages are kept in ${world.folder}. Drag it onto the empty track to bring it into today.`
+    {worlds.map(world => {
+      const hover = `${world.name} — ${world.kind === 'yours' ? 'your own world' : `${world.project}'s world`}; its pages are kept in ${world.folder}. Drag it onto the empty track, or double-click it or press Enter, to bring it into today.`
       return <li key={world.ref}>
-        <div className="mode-browser-row" data-world={world.ref} draggable data-i={`${world.name}|${hover}`} title={hover}
-          onDragStart={event => { event.dataTransfer.setData(CENTRAL_WORLD_DRAG, world.ref); event.dataTransfer.setData('text/plain', world.name); event.dataTransfer.effectAllowed = 'copy' }}>
+        <div className="mode-browser-row" data-world={world.ref} draggable tabIndex={0} data-i={`${world.name}|${hover}`} title={hover}
+          onDragStart={event => { event.dataTransfer.setData(CENTRAL_WORLD_DRAG, world.ref); event.dataTransfer.setData('text/plain', world.name); event.dataTransfer.effectAllowed = 'copy' }}
+          onDoubleClick={() => onSeat(world)}
+          onKeyDown={event => { if (event.key === 'Enter' && !event.altKey && !event.metaKey && !event.ctrlKey) { event.preventDefault(); onSeat(world) } }}>
           <span aria-hidden="true"><KindMark kind="world" size={12} /></span><span>{world.name}</span>
           <span className="mode-browser-row-meta">{world.kind === 'yours' ? 'yours' : 'project'}</span>
         </div>
       </li>
     })}
-  </ul></section>
+  </ul>{said && <p className="native-empty" role="status">{said}</p>}</section>
+}
+
+/** Bring a world into today's set from its browser row (Live: double-click or Enter loads a browser item): through the set the Session
+ * pane draws, the same seat its empty track takes a drop on, so it writes what a drop writes. With no such set drawn nothing is
+ * written, and it says where a world is seated. */
+export async function seatWorldFromBrowser(world: Pick<CentralWorld, 'ref' | 'name'>, rows: TrackRows | null = trackRows()): Promise<{ok: boolean; note?: string; error?: string}> {
+  const seat = rows?.set.actions?.seat
+  if (!seat || seat.accepts !== CENTRAL_WORLD_DRAG) return {ok: false, error: `Open Central's Session to bring ${world.name} into today: a world is seated on its empty track.`}
+  try {
+    const answer = await seat.run(world.ref) as {ok?: boolean; note?: string; error?: string} | undefined
+    return answer && typeof answer.ok === 'boolean' ? {ok: answer.ok, ...(answer.note ? {note: answer.note} : {}), ...(answer.error ? {error: answer.error} : {})} : {ok: true}
+  } catch (error) {
+    return {ok: false, error: error instanceof Error ? error.message : String(error)}
+  }
 }
 
 /** The Beings or Things rows: the pages of that form in your world, placed by their island through the page owner. Select previews
