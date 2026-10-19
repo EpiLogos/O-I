@@ -511,6 +511,17 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   }
   stateSun()
   unsubscribeSun = disclosureSession.subscribe(stateSun)
+  // Your Beings and Things join the Earth once read (T-WORLDS §4 W2; central/pageOccurrences.ts): the mount never waits on them, as it
+  // never waits on the Sun. Each is appended through the occurrence seam. The seam takes away only its last occurrence, and the Sun is
+  // taken away when it is not placed, so a Sun already drawn steps off the tail while the pages join and is put back after them.
+  void import('../../central/pageOccurrences')
+    .then(({yourPagesForEarth}) => yourPagesForEarth(transport, mounted.model.field.meta.yearMax ?? new Date().getUTCFullYear(), notePlaceTool))
+    .then(async pages => {
+      if (retired) return
+      const {joinPagesToEarth} = await import('../../central/pageOccurrences')
+      joinPagesToEarth(mounted, pages, SUBSOLAR_OCCURRENCE_ID, notePlaceTool)
+    })
+    .catch((error: unknown) => notePlaceTool(`Your Beings and Things did not join the Earth: ${error instanceof Error ? error.message : String(error)}.`))
   // The present sky is offered again each minute: the follower reads it only when its ten-minute bucket has moved, so a
   // Sun read long ago does not stand as the current sky (T-ATLAS-SUN, the present sky)
   const reread = () => {

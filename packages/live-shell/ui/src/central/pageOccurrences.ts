@@ -133,3 +133,43 @@ export async function readWorldPagesForEarth(transport: KernelTransportStatus): 
   return {readings, unread}
 }
 
+/** Your Beings and Things as the Earth takes them once it stands (the atlas never waits on them before its mount, as it never waits on
+ * the Sun): each page of your worlds as its checked occurrence with its family, in reading order, one per page. `undatedYear` is the
+ * mounted field's yearMax (the contract's placeholder for an undated occurrence). What was not read, or not admitted, is said through
+ * `say` (the M4 plate's notice). */
+export async function yourPagesForEarth(transport: KernelTransportStatus, undatedYear: number, say: (text: string) => void): Promise<{occurrence: Occurrence; family: Family}[]> {
+  const read = await readWorldPagesForEarth(transport).catch((error: unknown) => ({readings: [] as PageReading[], unread: [error instanceof Error ? error.message : String(error)]}))
+  const unsaid = [...read.unread]
+  const ids = new Set<string>()
+  const taken: {occurrence: Occurrence; family: Family}[] = []
+  for (const reading of read.readings) {
+    const checked = pageOccurrence(reading, undatedYear)
+    if (!checked.ok) { unsaid.push(checked.reason); continue }
+    if (ids.has(checked.value.id)) continue
+    ids.add(checked.value.id)
+    taken.push({occurrence: checked.value, family: PAGE_FAMILIES[reading.form as PageOccurrenceKind]})
+  }
+  if (unsaid.length) say(`Not on the Earth: ${unsaid.slice(0, 3).join('; ')}${unsaid.length > 3 ? `; and ${unsaid.length - 3} more` : ''}.`)
+  return taken
+}
+
+/** Append your pages to the Earth through its occurrence seam (projections/atlas/src/data/occurrenceSeam.ts), keeping `lastId` last:
+ * the seam takes away only its last occurrence, and the Sun is taken away when it is not placed, so a Sun already drawn steps off the
+ * tail while the pages join and is put back after them. A page the seam refuses stops the joining, and what joined is said. */
+export function joinPagesToEarth(earth: {readonly model: {readonly occ: readonly Occurrence[]}; replaceOccurrence(occ: Occurrence | null, id: string, family?: Family): unknown},
+  pages: readonly {occurrence: Occurrence; family: Family}[], lastId: string, say: (text: string) => void): number {
+  if (!pages.length) return 0
+  const tail = earth.model.occ.at(-1)
+  const kept = tail?.id === lastId ? tail : null
+  let joined = 0
+  try {
+    if (kept) earth.replaceOccurrence(null, lastId)
+    for (const {occurrence, family} of pages) { earth.replaceOccurrence(occurrence, occurrence.id, family); joined++ }
+  } catch (error) {
+    say(`${joined} of your ${pages.length} pages joined the Earth; the next was refused: ${error instanceof Error ? error.message : String(error)}.`)
+  } finally {
+    if (kept) earth.replaceOccurrence(kept, lastId)
+  }
+  return joined
+}
+
