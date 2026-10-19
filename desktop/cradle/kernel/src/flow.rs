@@ -290,9 +290,16 @@ impl CentralClient {
     /// token the native host holds (`CENTRAL_NATIVE_TOKEN`, else `~/.central/native-token`), read here in the native process and
     /// never supplied by the desk. Without one, the owner refuses the act in its own words.
     pub(crate) fn for_person(&self) -> Self {
-        let mut client = self.clone();
-        client.person = crate::factory::host_native_token();
-        client
+        // Under test the host's token is never read: a test that needs the person's authority gives its own (with_person_token).
+        let person = if cfg!(test) {
+            self.person.clone()
+        } else {
+            crate::factory::host_native_token()
+        };
+        Self {
+            person,
+            ..self.clone()
+        }
     }
 
     /// A client carrying the given token (tests stand in for the host's).
@@ -385,9 +392,12 @@ impl CentralClient {
                 command.env("OI_CENTRAL_CTRL_BIN", owner);
             }
         }
-        if let Some(token) = &self.person {
-            command.env("CENTRAL_NATIVE_TOKEN", token.as_str());
-        }
+        // Only the person's own press carries the person's authority: any other call goes without it, even when the host's
+        // environment holds it.
+        match &self.person {
+            Some(token) => command.env("CENTRAL_NATIVE_TOKEN", token.as_str()),
+            None => command.env_remove("CENTRAL_NATIVE_TOKEN"),
+        };
         command.arg("--json");
         if let Some(root) = &self.central_root {
             command.arg("--root").arg(root);

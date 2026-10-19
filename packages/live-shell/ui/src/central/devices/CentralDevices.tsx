@@ -57,7 +57,7 @@ import {useSpineEpoch} from '../../owners/spine'
 import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
 import {CENTRAL_FAMILY, CENTRAL_MAIN_FACES, CENTRAL_WORKSPACE_FACES, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
-import {centralWriters, openToday, turnDieFace} from './centralDeviceWrites'
+import {centralWriters, closeDay, openToday, turnDieFace} from './centralDeviceWrites'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
 import {useCentralGroundAnswer, useDayDieReading, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
 import {usePageDevices} from './pageDevices'
@@ -284,6 +284,12 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
         try { await openToday(transport) } finally {
           // The owner's answer moved the Day: read the ground again, and the current Day's answer the Day's page reads, whose stale
           // refusal is otherwise remembered for its epoch (owners/day.ts).
+          refreshGround()
+          void ownerReadings.entries().find(entry => entry.key === dayStandingKey(transport, null))?.retry(epoch)
+        }
+      },
+      closeNow: async () => {
+        try { await closeDay(transport) } finally {
           refreshGround()
           void ownerReadings.entries().find(entry => entry.key === dayStandingKey(transport, null))?.retry(epoch)
         }

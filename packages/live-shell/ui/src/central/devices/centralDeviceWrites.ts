@@ -12,7 +12,10 @@
 //     `openToday`): Central's ground read again; the `central` op `ensure-day` with the civil-time policy's revision when today's Day
 //     is not current; then, when today's Day has no document yet, `initialise-day` from the roster's own Day form
 //     (ql-daily-die.html, read through Central's file route, its revision checked) with the placement policy's revision (T-WORLDS W2
-//     "New Day calls initialise-day"). It is the person's press: nothing calls it on a timer, and it closes no old Day;
+//     "New Day calls initialise-day"). It is the person's press: nothing calls it on a timer, and it closes no old Day. When the
+//     Day Central named before is closed, the Day made now carries what still plays (daySet.ts carriedSet, written as the set is);
+//   - the Day's "Close now" closes the Day Central names on its exact content and relations revisions (the `central` op
+//     `close-day`, central.day.lifecycle `closed`; the central-day-close method's root close), the person's press as Open today is;
 //   - the Flow takes the person's next entry the way the Flow's own surface writes one: the owner's file read again, the entry
 //     appended through the template's own contract (flow/instance.ts appendEntry, relations and the composing basis on the current
 //     form), and the Flow's revision-checked file write (flow/instances.ts writeFlowInstance — central.files.write, op
@@ -33,7 +36,12 @@ import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identit
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from './dayDie'
-import {canEnsureDay} from './dayBinding'
+import {canEnsureDay, currentDayOf} from './dayBinding'
+import {carriedSet, daySetOf, writeDaySet, type DaySet} from '../daySet'
+import {readWorlds} from '../centralWorlds'
+import {nowReading, type NowListing} from '../../../../../../desktop/cradle/src/receiving/now'
+import {playingOf} from '../../timeline/centralTrackAdapter'
+import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import type {CentralWriters} from './centralDeviceModel'
 
 export interface DayDieWriteAperture {
@@ -78,11 +86,13 @@ export async function turnDieFace(transport: KernelTransportStatus, day: DayDieW
  * (CradleFrame.tsx:735 reads it before it ensures): a Day someone else already ensured is not ensured twice (`ensured: false`), a
  * document someone else made is not made twice (`initialised: false`). Resolves once the owner has answered; rejects with its
  * words. */
-export async function openToday(transport: KernelTransportStatus): Promise<{ensured: boolean; initialised: boolean}> {
+export async function openToday(transport: KernelTransportStatus): Promise<{ensured: boolean; initialised: boolean; carried: CarriedInto | null}> {
   let ground = await readGround(transport, null)
   if (ground.time.state !== 'ready' || !ground.time.data) {
     throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; the current Day cannot be ensured`)
   }
+  // The Day Central named before this press: when it is an earlier Day, closed, what still plays carries into the Day made now.
+  const closed = closedEarlierDayOf(ground)
   let ensured = false
   if (!(ground.day.state === 'ready' && ground.day.data?.temporal.civil_date === ground.time.data.civil_date)) {
     if (!canEnsureDay(ground)) {
@@ -94,7 +104,7 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
   }
   const day = ground.day.data
   if (!day || ground.day.state !== 'ready') throw new Error(`Central's Day reading is ${ground.day.state} after the ensure; there is no Day to make a document for`)
-  if (day.document_state === 'ready') return {ensured, initialised: false}
+  if (day.document_state === 'ready') return {ensured, initialised: false, carried: null}
   // The Day's document from the roster's own Day form — never an invented payload (CradleFrame.tsx:744-752). The roster is read
   // only when a document is to be made (it carries the forms' JSON, which the rest of this module's readers never need).
   const {DOCUMENT_FORMS, resolveDocumentForm} = await import('../../../../../../desktop/cradle/src/flow/documentForms')
@@ -107,7 +117,65 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
   const original = await readFile(transport, formLocation)
   await central(transport, null, {kind: 'initialise-day', day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision,
     expected_policy_revision: ground.placement.data.revision, form: formLocation, expected_form_revision: original.revision})
-  return {ensured, initialised: true}
+  const carried = closed ? await carryInto(transport, closed) : null
+  return {ensured, initialised: true, carried}
+}
+
+/** What the close carried into the Day made now: the closed Day it came from, and what tomorrow's grid holds of it. */
+export interface CarriedInto {
+  readonly from: string
+  readonly worlds: number
+  readonly rows: number
+  readonly pages: number
+}
+
+/** The Day Central's ground names when it is an earlier Day than civil today, closed, with its document: its ref and the set it kept.
+ * Any other Day carries nothing (an open earlier Day was never closed: close it first). Pure. */
+export function closedEarlierDayOf(ground: CentralGroundReading): {readonly dayRef: string; readonly set: DaySet} | null {
+  const day = ground.day.data
+  const today = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? null : null
+  if (!day || !today || day.temporal.civil_date === today || day.temporal.lifecycle !== 'closed') return null
+  if (day.document_state !== 'ready' || !day.document) return null
+  const basis = validateDocumentBasis(day.document, day.document.source.ref, day.document.document_id)
+  return {dayRef: day.day_ref, set: daySetOf(basis.payload)}
+}
+
+/** Carry a closed Day's set into the Day Central now names (daySet.ts carriedSet): the pages that still play, read from NOW at your
+ * register and at each project world the closed set held; each page's world by the folder that holds it (centralWorlds.ts). Written
+ * through the Day's own meta on the revision read, as today's set is written. */
+async function carryInto(transport: KernelTransportStatus, closed: {readonly dayRef: string; readonly set: DaySet}): Promise<CarriedInto> {
+  const ground = await readGround(transport, null)
+  const aperture = currentDayOf(ground).aperture
+  if (!aperture) throw new Error('Today\'s Day was made, but Central names no document for it yet; nothing was carried into its set')
+  const worlds = await readWorlds(transport)
+  if (worlds.state !== 'read') throw new Error(`Today's Day was made, but Central's worlds are ${worlds.state}${worlds.state === 'unavailable' ? `: ${worlds.reason}` : ''}; nothing was carried into its set`)
+  const projects = worlds.worlds.filter(world => world.project && closed.set.tracks.some(track => track.world === world.ref)).map(world => world.project!)
+  const listings = await Promise.all([null, ...projects].map(project => nowReading(transport, project, {kind: 'list'})
+    .then(listing => ({project, listing: listing as NowListing}), (cause: unknown) => {
+      throw new Error(`Today's Day was made, but NOW at ${project ?? 'your register'} did not answer (${cause instanceof Error ? cause.message : String(cause)}); nothing was carried into its set`)
+    })))
+  const playing = playingOf(listings).map(item => item.pageRef)
+  const worldOfPage = (pageRef: string) => {
+    const path = pageRef.replace(/^central:path:[^:]*:/, '')
+    const world = worlds.worlds.find(candidate => path.startsWith(`${candidate.folder}/`))
+    return world ? {ref: world.ref, name: world.name, yours: world.kind === 'yours'} : null
+  }
+  const next = carriedSet(closed.set, closed.dayRef, playing, worldOfPage)
+  await writeDaySet(transport, aperture, () => next)
+  return {from: closed.dayRef, worlds: next.tracks.length, rows: next.rows.length, pages: playing.length}
+}
+
+/** Close now (manual §18.2: "Close now: Runs the close routine"): Central closes the Day it names, on its exact content and
+ * relations revisions read here (the central-day-close method's root close, central.day.lifecycle `closed`). A Day already closed is
+ * refused in words; Central keeps every authored byte, and what still plays carries into the next Day when Open today makes it. */
+export async function closeDay(transport: KernelTransportStatus): Promise<{closed: string; civilDate: string}> {
+  const ground = await readGround(transport, null)
+  const day = ground.day.data
+  if (!day) throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; there is no Day to close`)
+  if (day.temporal.lifecycle === 'closed') throw new Error(`The Day of ${day.temporal.civil_date} is closed already.`)
+  if (!day.relations_revision) throw new Error('Central\'s Day reading carries no relations revision, so the close cannot be checked against it; nothing was closed')
+  await central(transport, null, {kind: 'close-day', day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision})
+  return {closed: day.day_ref, civilDate: day.temporal.civil_date}
 }
 
 /** Append the person's entry to a Flow: read the file again (the revision the write is checked against), append the entry as the

@@ -10,6 +10,7 @@ export type CentralRequest =
  | {kind:"open-day";day_ref?:string}
  | {kind:"ensure-day";expected_time_policy_revision:string}
  | {kind:"initialise-day";day_ref:string;document_id:string;expected_revision:string;expected_policy_revision:string;form:CentralLocation;expected_form_revision:string}
+ | {kind:"close-day";day_ref:string;expected_revision:string;expected_relations_revision:string}
  | {kind:"agent-set";agent_set_ref:string};
 /** One authored root agent-set, as `central.agent-set.read` returns it. */
 export interface AgentSetReading {kind:"agent-set";ref:string;revision:string;source_path:string;record:{orchestrator_agent_ref?:string|null;members:{kind:string;agent_ref?:string;agent_set_ref?:string}[]}}
