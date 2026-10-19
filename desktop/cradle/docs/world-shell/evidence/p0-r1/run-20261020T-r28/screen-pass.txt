@@ -1,0 +1,33 @@
+r28 screen pass — d9d402ed1 (a device's tile wider than the rail stands at its width, d4883c703; the shell's first script split
+by window, mode and part, 334db7345, 3a6e62d26, 854cfa2da; owner readings drawn last-first, f05d71754; the staged binary's smoke
+check, 8fd4e3a75), built with the refreshed QL export of r27 (its receipt still matched QL main 74e9c8e). 19 Oct 2026 23:17–23:22
+UTC, computer use on the native candidate, the owner's real ground, with OI_KERNEL_TRACE_FILE set (kernel-trace.log beside this
+file: every op the native host answered, its time and its owner time). Control/user/flows and the root and O-I wikis were backed up
+first; nothing was written (all 13 flows files match; both wikis keep their hashes; the Day of 19 Oct keeps 466929:c4a931ad).
+
+Seen:
+- The window draws its frame and then each part as it arrives: it opened in Factory (the conversation pane, the browser's
+  instruments, the rail with Fizz's and Trail's bodies). Each mode pressed drew its own parts: Central (its Session grid, the
+  browser's Flows, the chain Day · Approvals · Packet · Agent), Expressions (the browser's Devices, the Studio and Stage on its
+  chain, the rail's agent named Anima), Technē (the Project instrument: the Earth under Central's wiki reading; the instruments
+  chain), Live (the set's 21 tracks in Arrangement view; then, with its clips read, a Clip view of LABS 8 with its notes — Clip
+  view in Live, owed since r23), Factory's Device side (Main's Gateways, the Agency gateway, the Remote carrier). Settings opened
+  on its pages and returned by Back to work.
+- The Day's tile on the rail (r27: its ↗ and ✕ lay past the rail's edge): its head keeps ⊞, ↗ and ✕ inside the rail, the counts'
+  labels shortened ("runni…", "patte…"); its ✕ took it off the rail (10 widgets open → 9).
+- A device's Pop-out boots its own window's frame: ↗ on Gateways opened "Gateways — O-I", the device's Full (the four gateways as
+  tabs) over its Whole band from the main window's relay.
+
+Found:
+- Returning to Central, the browser's Flows list said "Reading the Flows…" for 3–5 s before the list drew again: that list reads on
+  its own, not through the owner readings that now draw their last answer first. The Day device on the chain stood drawn.
+- Start-up (kernel-trace.log): 50 ops in the first 4.5 s, 19 s of owner time between them, nearly all in owner processes the
+  kernel starts per read — encounter ×10 (3.2 s, up to 612 ms each), encounter_task_read ×14 (2.4 s), knowledge 2.1 s, central
+  1.9 s, temporal_events_read 1.9 s, harness_status 1.8 s, git_repository_read 1.4 s, agent_definition ×3 (1.4 s), nara_identity
+  1.3 s, agency_read 0.8 s. Over the pass: 255 ops, 117 s.
+- Expressions' Studio: "Open live instrument" stood unavailable — "native-expression.compose_refused: ql scene binding exited
+  exit status: 2: ql: sky snapshot and M2 registry revision differ".
+
+Not seen, and why: Re-dock of the Gateways window — a background press on its title-bar Re-dock did not reach it, and its band's
+↗ left it parked off the screen by Stage Manager (r24 saw Re-dock close a device window on the screen); Physics in its own six views
+and the Skillset rack (as r27).
