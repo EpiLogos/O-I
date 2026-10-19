@@ -29,6 +29,7 @@ import {bindSharedTimeClock, windowYear} from './sharedClock'
 import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
 import {bindPlaces, type PlacesBinding} from './places/placesHost'
 import {notePlaceTool} from './places/placeTool'
+import type {DreamJournalBinding} from './practice/dreamsHost'
 import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
 import {bindWorldBody, kernelWorldBodyOwner} from './body/worldBody'
 import type {SystemOverlayBinding} from './system/systemOverlay'
@@ -215,6 +216,9 @@ function workspaceStorage(): Storage {
 
 const sharedStorage = workspaceStorage()
 
+/** The dream journal the practice store's dreams are bound to (practice/dreamsHost.ts), one per attach. */
+let practiceDreams: DreamJournalBinding | null = null
+
 /** The atlas's memory Storage, as the host binds it (exported for the host tests). */
 export function atlasMemoryStorage(): Storage {
   return sharedStorage
@@ -364,7 +368,14 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // The found app's onboarding never stands over the shell's world (T-PLACES-ONTO-ATLAS; the lead saw it over the globe at 11475cc3d):
   // unbound, the landing counts as seen — the O:I shell is its own front door (src/shell/landing.ts, the port's own adaptation note).
   landing.setLandingStore(null)
-  practice.setPracticeStorage(sharedStorage)
+  // Your dreams are kept in your dream journal (practice/dreamsHost.ts; T-WORLDS W4): the store's dream collection is that Flow's
+  // entries, read through their owner once the Earth has mounted (the mount never waits on it: a dream asked for before the read lands
+  // is refused in words, never kept in the window); every other collection stays the workspace's store. The lens's Amplify lays Source
+  // entries from the mounted field's model.
+  practiceDreams?.dispose()
+  const {bindDreamJournal, kernelDreamOwners} = await import('./practice/dreamsHost')
+  practiceDreams = bindDreamJournal({base: sharedStorage, owners: kernelDreamOwners(transport, notePlaceTool), model: () => mountedAtlas?.model ?? null, deferred: true})
+  practice.setPracticeStorage(practiceDreams.storage)
   const [{registerCorpusProvider}, {suiteProvider}, {mountAtlas}] = await Promise.all([
     import('./provider/corpusProvider'),
     import('./provider/suiteProvider'),
@@ -431,6 +442,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     palaces?.dispose()
     body?.dispose()
     system?.dispose()
+    practiceDreams?.dispose()
     cancelReread()
     follower?.dispose()
     // the words directly: a teardown may run before the Sun's first state is made
@@ -450,6 +462,8 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   }
   progress.teardown = unmount
   publishAtlasHandle(mounted)
+  // The Earth has mounted on its own owners' reads: your dream journal is read now (practice/dreamsHost.ts).
+  practiceDreams?.start()
   // Places is the atlas (T-PLACES-ONTO-ATLAS): the shared spatial focus turns it, the M4 plate reads its scale, and the Place tool
   // reads the point under a click and offers it to the owner's editor (places/placesHost.ts).
   places = bindPlaces({handle: mounted, transport, session: disclosureSession})

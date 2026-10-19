@@ -139,6 +139,7 @@ const FACE_MARKS: Readonly<Record<string, IconName | KindShapeName>> = Object.fr
   'm3-clock': 'metro',
   'deck': 'lib',
   'chakra': 'form',
+  'sitting': 'loop',
   'm-prime-matrices': 'techne',
 })
 
@@ -366,6 +367,7 @@ const FACE_TITLES: Readonly<Record<string, string>> = Object.freeze({
   'm3-clock': 'M3 clock',
   'deck': 'Deck',
   'chakra': 'Chakra',
+  'sitting': 'Sitting',
   'm-prime-matrices': 'M′ matrices',
   'ql-instrument': 'QL field / PCM owner',
 })

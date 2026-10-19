@@ -63,6 +63,7 @@ test('the standing world passes the holder rules: every door face names known ho
   // T-WORLDS W4: the Deck and the Chakra read their owners — your personal layer (the Studio's Nara chain) and a Technē instrument.
   assert.deepEqual(find('quaternal-logic', 'deck').heldBy, ['studio:nara', 'techne:m3'])
   assert.deepEqual(find('quaternal-logic', 'chakra').heldBy, ['studio:nara', 'techne:m2'])
+  assert.deepEqual(find('quaternal-logic', 'sitting').heldBy, ['studio:nara', 'techne:m2'], 'the Sitting: your personal layer, and the Timeline that times it')
   // The Studio table and the faces agree: a holder's non-Expressions references name it back.
   for (const holder of semantics.HOLDERS) {
     for (const reference of holder.holds ?? []) {
