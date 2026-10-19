@@ -63,9 +63,11 @@ const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 const shortDate = (v: ViewProps['v'], key: string) => strOf(v, key)?.slice(0, 6) ?? NONE
 const faceName = (v: ViewProps['v']) => { const f = numOf(v, 'face'); return f === undefined ? 'No face open' : `${f} · ${FACES[f] ?? NONE}` }
-const NO_CLOSE = 'Central has no close operation for the Day yet.'
 const openToday = (p: ViewProps, label = 'Open today') => <Action label={label} does="Asks Central to open today's Day. Used when the Day it points at is stale."
   onPress={() => p.set('openToday', true)} disabled={on(p.v, 'canOpenToday') ? undefined : 'Today is open, or Central cannot open it now.'} />
+/** Close now (manual §18.2): Central closes the Day; what still plays carries into the next Day. The owner reports `canClose`. */
+const closeNow = (p: ViewProps) => <Action label="Close now" does="Closes the Day through Central; what still plays carries into the next Day."
+  onPress={() => p.set('closeNow', true)} disabled={on(p.v, 'canClose') ? undefined : 'The Day shown is closed already, or is one you selected.'} />
 const toggle = (p: ViewProps, key: string, label: string, does: string, tone?: 'value') => {
   const now = boolOf(p.v, key)
   return <Toggle key={key} label={label} does={does} tone={tone} on={now === true} unknown={now === undefined} onChange={x => p.set(key, x)} />
@@ -83,12 +85,12 @@ export const day: DesignedDevice = {
     date: 'Wed 15 Oct', tomorrow: 'Thu 16 Oct', tomorrowOpen: true, c0: 3, c1: 6, c1p: 2, c2done: 4, c2run: 2, c2queue: 3, c3: 2, c3p: 1, c4: 7, c5: 0,
   },
   fixtures: {
-    'A working day': {},
-    'Stale pointer': {light: 'dark', refusal: 'The native today pointer is stale: it names 13 Oct. Open today to move it.', canOpenToday: true, face: undefined,
+    'A working day': {canClose: true},
+    'Stale pointer': {light: 'dark', refusal: 'The native today pointer is stale: it names 13 Oct. Open today to move it.', canOpenToday: true, canClose: undefined, face: undefined,
       date: 'Fri 16 Oct', tomorrow: undefined, tomorrowOpen: undefined, c0: undefined, c1: undefined, c1p: undefined, c2done: undefined, c2run: undefined,
       c2queue: undefined, c3: undefined, c3p: undefined, c4: undefined, c5: undefined},
     'No readings': Object.fromEntries(['light', 'face', 'view', 'dayStart', 'rollover', 'closeRoutine', 'agentWrites', 'template', 'src_central', 'src_factory',
-      'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5'].map(k => [k, undefined])),
+      'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="Day" light={light(p)} readings={[shortDate(p.v, 'date'), `Face ${shown(p.v, 'face')}`]} onUnfold={p.nav.unfold} />,
@@ -104,7 +106,7 @@ export const day: DesignedDevice = {
       <Dial label="Face" does="Turns the die." value={numOf(p.v, 'face') ?? NaN} def={0} scale={{min: 0, max: 5, step: 1}} format={f => `${f}`} onChange={x => p.set('face', x)} />
       <ValueBox label="Rollover" does="When tomorrow's Day opens beside today's." value={numOf(p.v, 'rollover') ?? NaN} def={-15} scale={TIME} format={timeOrOff} onChange={x => p.set('rollover', x)} />
       <Radio label="Agent" does="How agent entries arrive." value={strOf(p.v, 'agentWrites') ?? ''} options={WRITES} stack onChange={x => p.set('agentWrites', x)} />
-      {openToday(p, 'Today')}
+      {closeNow(p)}
     </Section>
   </Panel>,
 
@@ -144,7 +146,7 @@ export const day: DesignedDevice = {
       </Section>
       <Section label="Close" grow>
         {toggle(p, 'closeRoutine', 'Routine', "At day close: summarise, send what you learned to your knowledge, carry face 5's proposal to tomorrow's face 0.")}
-        <Action label="Close now" does="Runs the close routine now." disabled={NO_CLOSE} />
+        {closeNow(p)}
         {openToday(p)}
         <Readout label="closes" does="The time today closes." value={has(p.v, 'dayStart') ? (numOf(p.v, 'dayStart')! < 0 ? 'civil' : clock(numOf(p.v, 'dayStart')!)) : undefined} />
       </Section>
