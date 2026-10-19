@@ -17,7 +17,8 @@ test('Lane A §2: all registered native commands have a bounded role',()=>{
 test('Lane A §2: native shell filesystem access is limited to its two declared host duties',()=>{
  const actual=files('src-tauri/src',/\.rs$/).flatMap(owner=>[...rustRuntime(read(owner)).matchAll(/(?:std::fs|tokio::fs|fs)::[A-Za-z_]+/g)].map(m=>({owner,operation:m[0]})));
  assert.deepEqual(actual,rules.filesystem.map(({rationale,spec_ref,...site})=>site));
- const imports=files('src-tauri/src',/\.rs$/).flatMap(file=>[...rustRuntime(read(file)).matchAll(/use\s+(?:std|tokio)::fs\b/g)].map(m=>`${file}:${m[0]}`));assert.deepEqual(imports,['src-tauri/src/native_shell.rs:use std::fs'],'new fs import/alias needs explicit owner review, not a scanner bypass');
+ const imports=files('src-tauri/src',/\.rs$/).flatMap(file=>[...rustRuntime(read(file)).matchAll(/use\s+(?:std|tokio)::fs\b/g)].map(m=>`${file}:${m[0]}`));// reviewed: the native shell's host duties, and the workspace book's native owner (T-WORLDS §3 W1, 7545677a3), whose file sites are each registered
+ assert.deepEqual(imports,['src-tauri/src/native_shell.rs:use std::fs','src-tauri/src/workspace_book.rs:use std::fs'],'new fs import/alias needs explicit owner review, not a scanner bypass');
 });
 test('the authority guard detects introduced direct egress, dynamic privileged imports and window mutation',()=>{
  for(const snippet of ['fetch("https://example.invalid")','new WebSocket("wss://example.invalid")','navigator.sendBeacon("/egress", data)','import("@tauri-apps/plugin-shell")','getCurrentWindow().setTitle("x")'])assert.ok(rendererAuthority('probe.ts',snippet).length,snippet);

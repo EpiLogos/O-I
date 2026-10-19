@@ -29,6 +29,12 @@ const files = readdirSync(join(ui, 'tests'))
   .sort()
   .map(name => join('tests', name))
 
+// The page templates the pages suites read (desktop/cradle/documents/oi-beings.html, oi-things.html …) are generated, never kept:
+// they are built here first, as the cradle's own build does (desktop/cradle/package.json prebuild), so the suite needs no earlier
+// step (r22: CI ran it before the step that built them, and tests/w2-pages.test.mjs found no oi-beings.html).
+const pages = spawnSync(process.execPath, [join(ui, '../../../desktop/cradle/documents/build-personal.mjs')], {cwd: ui, stdio: 'inherit'})
+if (pages.status !== 0) process.exit(1)
+
 const unit = spawnSync(process.execPath, ['--experimental-strip-types', '--test', '--test-concurrency=4', ...files],
   {cwd: ui, stdio: 'inherit'})
 const storage = spawnSync(process.execPath, [join(ui, 'scripts/test-webstorage.mjs')], {cwd: ui, stdio: 'inherit'})
