@@ -33,8 +33,9 @@
       "hint": "The six-position Day die (4+2)",
       "file": "ql-daily-die.html",
       "templateRef": "ql-template:daily-die",
-      "version": "0.3",
-      "standing": "retained-source"
+      "version": "0.4",
+      "standing": "authored-current",
+      "source": "revised 2026-10-19 from the retained 0.3 bytes (sha-256 c8e81e8a\u2026, documents/README.md): the shell's paper family, the example asset withdrawn, links opening through the host, the die's turning, opening and closing hardened; the payload is unchanged (meta.template ql-daily v0.1)"
     },
     {
       "kind": "document-beings",

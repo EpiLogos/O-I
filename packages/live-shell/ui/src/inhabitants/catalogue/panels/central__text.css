@@ -1,9 +1,9 @@
-/* Text (manual §18.1): the page sample in the well and the document in the pane. The paper and the ink are the template's own
- * (desktop/cradle/documents/ql-flow.html), because a colour inside a display carries a meaning of the material. Everything else is
- * the shell's and the panel's tokens. */
+/* Text (manual §18.1): the page sample in the well and the document in the pane. The paper and the ink are the page's own — the
+ * shell's paper family (styles.css :root), which the templates draw in too — because a colour inside a display carries a meaning
+ * of the material. Everything else is the shell's and the panel's tokens. */
 .ctext-sample, .ctext-pane {
-  --paper: #EFEFED; --ink: #1a1a18; --mid: #6E6E6A; --faint: #A3A39E; --rule: #C9C9C4;
-  background: var(--paper); color: var(--ink); font-family: Charter, Georgia, 'Times New Roman', serif;
+  --mid: var(--pmid); --faint: var(--pfaint); --rule: var(--prule);
+  background: var(--paper); color: var(--ink); font-family: var(--serif);
 }
 
 /* A paragraph as the page sets it: ql-flow.html `.body p`, `.body blockquote`; the head after oi-beings.html `h2` (1.5 times the body). */

@@ -17,7 +17,7 @@
 // Lifetime: the module mounts its own React root into the pane element and unmounts that root alone. A concealed pane keeps
 // its root mounted (the hidden-inhabitant law), so an unsaved draft in a hosted form survives a tab switch. A new kernel
 // connection generation remounts the module (surface/projectionPane.tsx), and the owner is read again.
-import {useEffect, useRef, useState, type ReactNode} from 'react'
+import {useCallback, useEffect, useRef, useState, type ReactNode} from 'react'
 import {createRoot} from 'react-dom/client'
 import {registerProjectionModule} from '../../../../../../desktop/cradle/src/surface/projectionModules'
 import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -25,7 +25,7 @@ import {USER_FLOWS_DIR} from '../../../../../../desktop/cradle/src/flow/instance
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DocumentDayDieFace} from '../../inhabitants/DocumentDayDieFace'
 import {FlowFace} from '../../inhabitants/DocumentFlowFace'
-import {PageFace} from '../../inhabitants/DocumentPageFace'
+import {PageFace, type PageLinkTarget} from '../../inhabitants/DocumentPageFace'
 import {openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
 import {readPageOwned} from '../../../../../../desktop/cradle/src/personal/pageOwner'
@@ -80,13 +80,54 @@ const Absence = ({form, state, children}: {form: string; state: string; children
   </div>
 )
 
-/** The Day as the owner stands it: its die when the owner has stood the Day up, else the owner's own words for why not. */
+/** Open what a page's link names, in the shell, and say why not when it cannot: the opener every hosted page in a pane follows its
+ * links with (the Day's form, a Flow, a Being, a Thing), and the words its pane shows under the page when the opening fails. */
+export function useLinkOpener(transport: KernelTransportStatus): {openLink: (target: PageLinkTarget) => void; fault: string | undefined} {
+  const [fault, setFault] = useState<string>()
+  const openLink = useCallback((target: PageLinkTarget) => {
+    setFault(undefined)
+    void openPageLink(transport, target).catch(error => setFault(String(error instanceof Error ? error.message : error)))
+  }, [transport])
+  return {openLink, fault}
+}
+
+type ReadyDay = Extract<DayDocumentStanding, {state: 'ready'}>
+
+/** Which Day a Day pane shows (Two Days at a time, manual §18.2). `held` is the Day it showed, `ready` the owner's Day for its subject
+ * now, `dirty` whether the shown Day's form holds a draft. A draft keeps its Day in the pane when the owner's Day moves on (a new civil
+ * Day, a rollover) or stands no document yet; without one the pane follows the owner. `kept` says the pane shows a Day the owner no
+ * longer names for its subject. Pure. */
+export function keptDay(held: ReadyDay | null, ready: ReadyDay | null, dirty: boolean): {held: ReadyDay | null; shown: ReadyDay | null; kept: boolean} {
+  const same = (a: ReadyDay | null, b: ReadyDay | null) => !!a && !!b && a.sourceRef === b.sourceRef && a.documentId === b.documentId
+  const next = ready && !same(held, ready) && (!dirty || !held) ? ready : held
+  const shown = dirty && next ? next : ready
+  return {held: next, shown, kept: !!shown && !same(shown, ready)}
+}
+
+/** The Day as the owner stands it: its die when the owner has stood the Day up, else the owner's own words for why not.
+ *
+ * Two Days at a time (manual §18.2): a pane that holds the current Day keeps the Day it shows while that Day's draft stands, when the
+ * owner's current Day moves on (the civil boundary, a rollover — read again when the window returns) or the new Day has no
+ * document yet (keptDay). The die is not unmounted under its draft; the pane says which Day it keeps and why, and moves on once the
+ * draft is saved or set aside. */
 export function DayView({transport, standing}: {transport: KernelTransportStatus; standing: DayDocumentStanding | null}) {
-  if (!standing) return <Absence form="Day" state="reading"><p>Reading the owner’s Day…</p></Absence>
-  if (standing.state === 'ready') {
-    return <DocumentDayDieFace transport={transport} project={null} sourceRef={standing.sourceRef} documentId={standing.documentId} presentation="pane" />
+  const {openLink, fault} = useLinkOpener(transport)
+  const [held, setHeld] = useState<ReadyDay | null>(null)
+  const [dirty, setDirty] = useState(false)
+  const view = keptDay(held, standing?.state === 'ready' ? standing : null, dirty)
+  useEffect(() => { if (view.held !== held) setHeld(view.held) }, [view.held, held])
+  const shown = view.shown, moved = view.kept
+  if (!shown) {
+    if (!standing || standing.state === 'ready') return <Absence form="Day" state="reading"><p>Reading the owner’s Day…</p></Absence>
+    return <Absence form="Day" state={standing.state}><CentralDayNotice notice={standing} /></Absence>
   }
-  return <Absence form="Day" state={standing.state}><CentralDayNotice notice={standing} /></Absence>
+  return <>
+    {moved && <p className="inhabitant-device-notice central-document-kept" role="status" data-day-kept={shown.civilDate}>
+      Central’s current Day is {standing?.civilDate ?? 'not read'}{standing && standing.state !== 'ready' ? ` (${standing.state})` : ''}. This pane keeps {shown.civilDate}’s Day while its draft stands: save it or set it aside, and the pane moves on.</p>}
+    <DocumentDayDieFace key={`${shown.sourceRef}|${shown.documentId}`} transport={transport} project={null} sourceRef={shown.sourceRef} documentId={shown.documentId}
+      presentation="pane" openLink={openLink} onDirty={setDirty} />
+    {fault && <p className="inhabitant-device-fault" role="alert">{fault}</p>}
+  </>
 }
 
 /** The Day of one civil date, or (`dayRef` null) the owner's current Day. */
@@ -94,9 +135,13 @@ export function DayDocument({transport, dayRef}: {transport: KernelTransportStat
   return <DayView transport={transport} standing={useDayStanding(transport, dayRef)} />
 }
 
-/** One Flow, by its owner location. */
+/** One Flow, by its owner location; its links open in the shell. */
 export function FlowDocument({transport, location}: {transport: KernelTransportStatus; location: CentralLocation}) {
-  return <FlowFace transport={transport} location={location} presentation="pane" />
+  const {openLink, fault} = useLinkOpener(transport)
+  return <>
+    <FlowFace transport={transport} location={location} presentation="pane" openLink={openLink} />
+    {fault && <p className="inhabitant-device-fault" role="alert">{fault}</p>}
+  </>
 }
 
 /** The most recent Flow as the owner lists it, or what the owner says about there being none. */
@@ -140,9 +185,9 @@ export async function openPageLink(transport: KernelTransportStatus, target: {ki
 
 /** One Being or Thing page, by its owner location; its links open in the shell. */
 export function PageDocument({transport, kind, location}: {transport: KernelTransportStatus; kind: 'being' | 'thing'; location: CentralLocation}) {
-  const [fault, setFault] = useState<string>()
+  const {openLink, fault} = useLinkOpener(transport)
   return <>
-    <PageFace transport={transport} kind={kind} location={location} openLink={target => { setFault(undefined); void openPageLink(transport, target).catch(error => setFault(String(error instanceof Error ? error.message : error))) }} />
+    <PageFace transport={transport} kind={kind} location={location} openLink={openLink} />
     {fault && <p className="inhabitant-device-fault" role="alert">{fault}</p>}
   </>
 }

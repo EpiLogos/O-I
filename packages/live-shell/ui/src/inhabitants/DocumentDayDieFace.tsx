@@ -22,11 +22,17 @@ import {useContext, useCallback, useEffect, useMemo, useRef, useState} from 'rea
  *
  * The device's compact face draws the die NET — the icon-cut Day-die
  * drawing (four faces across, one above, one below, fold dashes between;
- * the open face inked) — as a READING of the die's own face position from
- * the payload (`meta.face`, exactly the state the form's own dots turn).
- * The ‹ › affordance is drawn but named-unfireable: the die turns inside
- * its own form, and the host declares no turn channel — the honest
- * disabled/soon law, not a dead button.
+ * the open face inked) — as a READING of the die's own face position: the
+ * face the form announces it shows (the bridge's `face` message), else the
+ * payload's (`meta.face`, exactly the state the form's own dots turn). The
+ * ‹ › turn the form itself through the bridge (`turn`), as its own keys do;
+ * the owner holds the turn at the Day's next Save (`/meta` is a field).
+ * A Day held in a pane stands at the document door (documentDoor.ts
+ * holdDayInPane), so the Day device and the transport turn the die you see.
+ *
+ * A link the form follows (⌘-click in a writing field) reaches the host as
+ * `oi:page-link`; the host opens it in the shell (`openLink`), or says why
+ * not. The frame grants the form no popups and no navigation of its own.
  *
  * A message from the sandbox may stage material but never authorizes a
  * native write. Drafts are retained in the session, same-basis, while the
@@ -41,13 +47,14 @@ import {
   type DayDocumentField,
 } from '../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
-import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
+import {DocumentPaneContext, documentStateWords, holdDayInPane, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import {useDocumentFrame} from '../../../../../desktop/cradle/src/document/frame'
 import {DOCUMENT_FORMS, resolveDocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
+import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPageFace'
 import './inhabitantDevices.css'
 
 const DIE_SHELL = DOCUMENT_FORMS.find(form => form.kind === 'document-42' && form.file === 'ql-daily-die.html')
@@ -66,6 +73,10 @@ export interface DocumentDayDieFaceProps {
    * turns inside the form itself, and Save / Review stand in the browser's aperture for the document reached
    * (central/documents/documentDoor.ts). As a device the face keeps its die net and its own action row. */
   readonly presentation?: 'device' | 'pane'
+  /** Open a followed link in the shell (the pane host gives it: a page in a pane, an address in the Web widget). */
+  readonly openLink?: (target: PageLinkTarget) => void
+  /** Told whenever the face's draft fact changes (the pane keeps a Day under its draft when the owner's current Day moves on). */
+  readonly onDirty?: (dirty: boolean) => void
 }
 
 interface DieBasis {sourceRef: string; documentId: string; revision: string; payload: unknown; fields: DayDocumentField[]}
@@ -88,7 +99,7 @@ function dieFaceOf(payload: unknown): number {
   return typeof face === 'number' && Number.isInteger(face) && face >= 0 && face <= 5 ? face : 0
 }
 
-export function DocumentDayDieFace({transport, project, sourceRef, documentId, projects, presentation = 'device'}: DocumentDayDieFaceProps) {
+export function DocumentDayDieFace({transport, project, sourceRef, documentId, projects, presentation = 'device', openLink, onDirty}: DocumentDayDieFaceProps) {
   const session = useMemo(() => new DayFormSession({sourceRef, documentId, revision: '', payload: undefined, fields: []}), [sourceRef, documentId])
   const [basis, setBasis] = useState<DieBasis>()
   const [face, setFace] = useState<string>()
@@ -99,6 +110,8 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   const [save, setSave] = useState<SaveRouterReading>()
   const [review, setReview] = useState<DieBasis>()
   const [revision, setRevision] = useState<string>('')
+  /** The face the form announces it shows, and whether it stands open; absent until the form speaks (an older form never does). */
+  const [live, setLive] = useState<{face: number; open: boolean}>()
   const frame = useRef<HTMLIFrameElement>(null)
   const frameProps = useDocumentFrame(frame, face, transport)
   const snapshot = useRef<{nonce: string; resolve: (value: unknown) => void; reject: (reason: Error) => void; timer: number}>()
@@ -136,7 +149,21 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   // The bounded host↔frame bridge: dirty announcements and one snapshot at a time.
   useEffect(() => {
     const receive = (event: MessageEvent) => {
-      if (event.source !== frame.current?.contentWindow || !isObject(event.data) || event.data.source !== 'oi-cradle-die-face') return
+      if (event.source !== frame.current?.contentWindow || !isObject(event.data)) return
+      // A link the form follows: opened in the shell, or said why not.
+      if (event.data.type === PAGE_LINK_MESSAGE) {
+        const target = linkTarget(event.data.href)
+        if (target.kind === 'none') setNotice(target.why)
+        else if (!openLink) setNotice('No pane tree is mounted to open the link in.')
+        else { setNotice(undefined); openLink(target) }
+        return
+      }
+      if (event.data.source !== 'oi-cradle-die-face') return
+      if (event.data.type === 'face') {
+        const at = event.data.face
+        if (Number.isInteger(at) && (at as number) >= 0 && (at as number) <= 5) setLive({face: at as number, open: event.data.open === true})
+        return
+      }
       if (event.data.type === 'dirty') {
         session.markDirty()
         editEpoch.current++
@@ -153,7 +180,15 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
     }
     window.addEventListener('message', receive)
     return () => window.removeEventListener('message', receive)
-  }, [session])
+  }, [session, openLink])
+  useEffect(() => { onDirty?.(dirty) }, [dirty, onDirty])
+  // A new projection is a new form: what the old one announced no longer stands.
+  useEffect(() => { setLive(undefined) }, [face])
+
+  /** Turn the die the form shows (presentation; the owner holds it at the next Save). Nothing to turn until the form has spoken. */
+  const turnTo = useCallback((to: number) => {
+    frame.current?.contentWindow?.postMessage({source: 'oi-day-host', type: 'turn', face: ((to % 6) + 6) % 6}, '*')
+  }, [])
 
   const capture = useCallback(async (): Promise<unknown> => {
     if (snapshot.current || !frame.current?.contentWindow) throw new Error('Day snapshot is not available')
@@ -256,7 +291,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   }, [review, session])
 
   const blocked = session.blocked !== undefined
-  const openFace = dieFaceOf(basis?.payload)
+  const openFace = live?.face ?? dieFaceOf(basis?.payload)
   const open = DIE_POSITIONS[openFace]
   const inPane = presentation === 'pane'
   const key = useRef(`day:${Math.random().toString(36).slice(2)}`).current
@@ -267,10 +302,13 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
     reread: pending || !face ? undefined : () => void reviewNative(), rereadLabel: 'Review the native source',
     // The Day's document as the owner names it, the face's draft fact and the save router's last outcome (lane BC3): any reached Day's
     // devices read its document, its face and its date by them (central/devices/pageDevices.ts), not only the Day device's own.
-    day: {project, sourceRef, documentId}, dirty, ...(save?.outcome ? {outcome: save.outcome} : {})}
+    day: {project, sourceRef, documentId}, face: openFace, dirty, ...(save?.outcome ? {outcome: save.outcome} : {})}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
   useEffect(() => () => withdrawDocument(key), [key])
+  // Held at the door while the form can be turned: the Day device and the transport turn the die you see, not only the owner's.
+  const turnable = live !== undefined
+  useEffect(() => turnable ? holdDayInPane(documentId, key, {face: openFace, turn: turnTo}) : undefined, [documentId, key, openFace, turnTo, turnable])
 
   return (
     <div
@@ -295,7 +333,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
       {/* The die net — the device's compact face, a reading of the die's own
           face position (icon-cut's Day-die drawing, the open face inked). */}
       {!inPane && <div className="inhabitant-die-net" data-die-face={openFace}
-        title={`The die's own face position, read from the payload: #${open.n} ${open.name} — ${open.role}. The die turns inside its own form; the host declares no turn channel, so ‹ › stand named and unfireable.`}>
+        title={`The die's open face: #${open.n} ${open.name} — ${open.role}${live ? ', as its form shows it' : ', as the owner holds it'}. ‹ › turn the die in its form; the owner holds the turn at the Day's next Save.`}>
         <svg width="140" height="72" viewBox="0 0 140 72" aria-label="Day die — six positions, the open face inked">
           <path d="M55 22V26M38 36H42M68 36H72M98 36H102M55 46V50" stroke="var(--inh-faint)" strokeWidth="1" strokeDasharray="1.5 1.5"/>
           {DIE_POSITIONS.map(pos => {
@@ -305,10 +343,10 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
             return (
               <g key={pos.n}>
                 <rect x={x} y={y} width={26} height={20} rx={1.5}
-                  fill={isOpen ? 'var(--inh-ink)' : 'var(--inh-paper)'}
-                  stroke={isOpen ? 'var(--inh-ink)' : '#b9b9b3'}/>
+                  fill={isOpen ? 'var(--ink)' : 'var(--paper)'}
+                  stroke={isOpen ? 'var(--ink)' : 'var(--prule)'}/>
                 <text x={x + 13} y={y + 13} textAnchor="middle" fontSize="8.5"
-                  fill={isOpen ? 'var(--inh-paper)' : '#6e6e6a'} fontFamily="var(--inh-mono)">
+                  fill={isOpen ? 'var(--paper)' : 'var(--pmid)'} fontFamily="var(--inh-mono)">
                   #{pos.n}
                 </text>
               </g>
@@ -318,11 +356,11 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
         <span className="inhabitant-die-net-caption" data-die-face-label>
           #{open.n} {open.name} — {open.role}
         </span>
-        <span className="inhabitant-die-turn" data-die-turn aria-hidden="true">
-          <button type="button" className="inhabitant-die-turn-btn" disabled
-            title="‹ › turn the die inside its own form. The hosted form owns its dots and no host turn channel is declared — the affordance holds its place, named and unfireable.">‹</button>
-          <button type="button" className="inhabitant-die-turn-btn" disabled
-            title="‹ › turn the die inside its own form. The hosted form owns its dots and no host turn channel is declared — the affordance holds its place, named and unfireable.">›</button>
+        <span className="inhabitant-die-turn" data-die-turn>
+          <button type="button" className="inhabitant-die-turn-btn" disabled={!turnable} aria-label="Turn the die back one face" onClick={() => turnTo(openFace - 1)}
+            title={turnable ? 'Turn the die back one face, in its form.' : 'The form has not said which face it shows yet.'}>‹</button>
+          <button type="button" className="inhabitant-die-turn-btn" disabled={!turnable} aria-label="Turn the die on one face" onClick={() => turnTo(openFace + 1)}
+            title={turnable ? 'Turn the die on one face, in its form.' : 'The form has not said which face it shows yet.'}>›</button>
         </span>
       </div>}
       {!inPane && <div className="inhabitant-body-actions">

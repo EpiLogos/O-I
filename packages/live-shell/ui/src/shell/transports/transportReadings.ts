@@ -200,8 +200,11 @@ export function centralBindings(input: {
   turned?: string | null
   /** The document the hand last reached in a pane (central/documents/documentDoor.ts): its save standing is the Load slot. */
   document?: {form: string; title: string; state: string; revision?: string} | null
+  /** The face the Day shows where a pane holds it open (documentDoor.ts useDayInPane), which the owner holds at its next Save. */
+  face?: number
 }): TransportBindings {
-  const die = dayDieOf(input.ground, input.groundError)
+  const read = dayDieOf(input.ground, input.groundError)
+  const die = read.state === 'ready' && input.face !== undefined ? {...read, face: input.face} : read
   const faces = dieReadouts(die)
   const bounds = dayBounds(input.ground)
   const sized = packetReadouts(input.packet)

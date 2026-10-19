@@ -148,7 +148,7 @@ const said = (does: string, why?: string) => (why ? `${does} ${why}` : does)
 // ---------------------------------------------------------------- the display: the page as words
 
 interface Box {readonly x: number; readonly y: number; readonly w: number; readonly h: number}
-const PAPER = {bg: '#EFEFED', ink: '#1a1a18', mid: '#6E6E6A', faint: '#A3A39E'}
+const PAPER = {bg: 'var(--paper)', ink: 'var(--ink)', mid: 'var(--pmid)', faint: 'var(--pfaint)'}
 
 interface Spot {readonly e: number; readonly k: number; readonly x: number; readonly y: number; readonly w: number}
 /** Lay the words out: each word is a bar as long as its letters, wrapped at the sheet's edge. Words below the sheet are left out. */
