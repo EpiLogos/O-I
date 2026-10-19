@@ -7,7 +7,8 @@
 // storage namespace, the pane says how many of the owners' subjects the Earth cannot place and which owner input did not answer
 // (the suite standing), and the pane's
 // lifecycle is the shell's: the atlas mounts on first view, pauses while concealed (the hidden-inhabitant law: the
-// instance survives), and is destroyed with its pane.
+// instance survives), and is destroyed with its pane — or moves to a held pane on screen while its own pane is concealed
+// (the claim, below).
 //
 // The view (Earth or Graph) has no home in the spine: the spine holds no presentation (projectionModules.ts). It is held
 // here as a mirror of the atlas controller's own mode, which the atlas writes to body[data-mode] (graph/switch.ts). The
@@ -256,11 +257,12 @@ export interface AtlasAttachment {
   unmount(): void
 }
 
-/** What a held pane is handed when the claim frees: the atlas mounted into it, or the mount's own refusal. */
+/** What a pane is handed when its attachment changes: the atlas mounted into it once the claim frees or comes to it, the mount's own
+ * refusal, or (a concealed holder whose claim went to a pane on screen) the held state it now waits in. */
 export type AtlasHandover = {readonly attachment: AtlasAttachment} | {readonly error: unknown}
 
 /** What a pane that is not the atlas's holder says, in its own body. One atlas stands in a session (ui/lifetime.ts). */
-export const ATLAS_HELD_MESSAGE = 'The Earth atlas is already open in another pane of this session. It is drawn once, in the pane that opened it first.'
+export const ATLAS_HELD_MESSAGE = 'The Earth atlas is open in another pane on screen. It is drawn once, in the pane that opened it first, and comes here when that pane is out of sight or closed.'
 
 export interface AtlasAttachOptions {
   /** the pane body the atlas fills */
@@ -271,24 +273,38 @@ export interface AtlasAttachOptions {
   follow: boolean
   /** the fixed view when not following */
   view?: AtlasView
-  /** A held pane waits for the claim to free. When it does, the first pane that asked mounts the atlas (one claim, one
-   * owner); the other held panes stay held. Called once, with the handover's outcome, for the pane that mounts. */
+  /** A held pane waits for the claim to free, or to come to it (below). When it does, the pane mounts the atlas (one claim, one
+   * owner); the other held panes stay held. Called with each change of the pane's attachment: the atlas handed to it (or the
+   * mount's refusal), and, for a holder concealed while a held pane is on screen, the held state it now waits in. A pane that
+   * passes none is never moved: it cannot be told. */
   onHandover?: (outcome: AtlasHandover) => void
 }
 
 /** The one atlas this session holds: claimed from the first attach until its pane is unmounted, and the atlas disposed.
  * A second pane that asks while the claim stands is given the held state (heldBy), not a second atlas: the atlas's memories,
- * its document marks and its view mirror are one set per session (named OPEN in the lane report). */
+ * its document marks and its view mirror are one set per session (named OPEN in the lane report).
+ *
+ * The Earth goes where the person is looking (r23, 19 Oct). Panes of other modes' layouts stay mounted while concealed
+ * (desktop/cradle/src/surface/projectionPaneSession.ts), so the first pane to attach can be one nobody sees. When a held pane is
+ * shown while the holder is concealed, the claim moves: the holder tears its atlas down through its own teardown, which hands the
+ * claim to the pane on screen (first in line), and the concealed pane becomes a held pane that waits. A holder on screen keeps the
+ * Earth; of two panes on screen, the one that opened it first holds it. */
 let claimed = false
 
-/** The held panes, in the order they asked. Released in that order: the first one mounts when the claim frees. */
-const waiting: {readonly options: AtlasAttachOptions}[] = []
+/** The settled holder: its pane's last concealment notice, its options (to tell it, and to make it wait), and its teardown. Null
+ * while no atlas stands, and while the claimed atlas is still mounting (nothing moves until it stands). */
+let holding: {visible: boolean; readonly options: AtlasAttachOptions; readonly teardown: () => void} | null = null
 
-/** Free the claim, and hand it to the first waiting pane, which mounts the atlas (its attach takes the claim before its first
- * await, so the panes behind it keep waiting). */
+/** The held panes, in the order they asked, each with its pane's last concealment notice (not shown until told). */
+const waiting: {readonly options: AtlasAttachOptions; visible: boolean}[] = []
+
+/** Free the claim, and hand it to the first waiting pane on screen, else the first in line, which mounts the atlas (its attach
+ * takes the claim before its first await, so the panes behind it keep waiting). */
 function releaseClaim(): void {
   claimed = false
-  const first = waiting.shift()
+  holding = null
+  const shown = waiting.findIndex(entry => entry.visible)
+  const [first] = waiting.splice(shown >= 0 ? shown : 0, 1)
   if (!first) return
   attachAtlas(first.options).then(
     attachment => first.options.onHandover?.({attachment}),
@@ -296,9 +312,21 @@ function releaseClaim(): void {
   )
 }
 
+/** Move the claim to a held pane on screen when the holder is concealed. Both panes must be able to be told (onHandover). */
+function followSight(): void {
+  const holder = holding
+  if (!holder || holder.visible || !holder.options.onHandover) return
+  const at = waiting.findIndex(entry => entry.visible && entry.options.onHandover)
+  if (at < 0) return
+  waiting.unshift(...waiting.splice(at, 1))
+  // the holder's own teardown disposes its atlas, empties its pane and releases the claim to the pane on screen, first in line
+  holder.teardown()
+  holder.options.onHandover({attachment: heldBy(holder.options, false)})
+}
+
 /** The pane that is not the holder: its body says the atlas is open elsewhere. Nothing is mounted and nothing is claimed; the
- * pane waits, and its attachment's unmount drops it from the waiting. */
-function heldBy(options: AtlasAttachOptions): AtlasAttachment {
+ * pane waits, and its attachment's unmount drops it from the waiting. Shown while the holder is concealed, it takes the claim. */
+function heldBy(options: AtlasAttachOptions, visible = false): AtlasAttachment {
   const {element} = options
   element.replaceChildren()
   const line = document.createElement('p')
@@ -306,11 +334,14 @@ function heldBy(options: AtlasAttachOptions): AtlasAttachment {
   line.setAttribute('role', 'status')
   line.textContent = ATLAS_HELD_MESSAGE
   element.append(line)
-  const entry = {options}
+  const entry = {options, visible}
   waiting.push(entry)
   return {
     held: ATLAS_HELD_MESSAGE,
-    setVisible: () => {},
+    setVisible: next => {
+      entry.visible = next
+      if (next && waiting.includes(entry)) followSight()
+    },
     unmount: () => {
       const at = waiting.indexOf(entry)
       if (at >= 0) waiting.splice(at, 1)
@@ -452,8 +483,8 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     observer?.disconnect()
     if (reconcileFollowed === reconcile) reconcileFollowed = null
     // the atlas is disposed: its frames and GPU resources, every listener, timer and observer it installed, and its marks on
-    // the body. The pane is emptied, and the claim is released, so the next pane that asks mounts a fresh atlas, or the first
-    // waiting pane takes it.
+    // the body. The pane is emptied, and the claim is released, so the next pane that asks mounts a fresh atlas, or a waiting
+    // pane takes it (the first on screen, else the first that asked).
     mounted.dispose()
     element.replaceChildren()
     releaseClaim()
@@ -553,12 +584,17 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   }
   reconcile()
 
+  // The atlas stands: from here a held pane on screen can take the claim while this pane is concealed (followSight).
+  const holder = {visible, options, teardown: unmount}
+  holding = holder
   const setVisible = (next: boolean) => {
     if (retired) return
     visible = next
+    holder.visible = next
     // the globe is not seen while concealed, and the graph is the view while the graph is on
     mounted.engine.setPaused(!next || !!mounted.ctl.state.graph)
     if (next) reconcile()
+    else followSight()
   }
   return {held: null, setVisible, unmount}
 }
