@@ -131,3 +131,24 @@ test('a link a page follows opens in the shell: a page of a world as its page, a
   assert.match(linkTarget('javascript:alert(1)').why, /neither a page of a world nor an http\(s\) address/)
   assert.equal(linkTarget('').kind, 'none')
 })
+
+test('the worlds wait for Central\'s first browse: a snapshot with no root yet is asked again, a refusal is said at once (r13)', async () => {
+  const {readWorlds} = await import('../src/central/centralWorlds.ts')
+  const root = {control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}}, work: {projects: [{name: 'O-I', path: 'Work/O-I',
+    projectcentral: {user: {exists: true, path: 'Work/O-I/ProjectCentral/user'}, agent_wiki: {wiki: {space_ref: 'central:wiki:project:O-I'}}}}]}}
+  const browse = answers => {
+    let asked = 0
+    return {fetch: async () => ({json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: answers[Math.min(asked++, answers.length - 1)]}}})}), asked: () => asked}
+  }
+  const settle = {tries: 4, apartMs: 1}
+  const late = browse([null, {}, {root}])
+  const read = await withBridge(late, transport => readWorlds(transport, settle))
+  assert.equal(read.state, 'read'); assert.deepEqual(read.worlds.map(world => world.ref), ['central:wiki:root', 'central:wiki:project:O-I'])
+  assert.equal(late.asked(), 3, 'asked until the root was disclosed')
+  const refused = browse([{error: 'the map is unreadable'}])
+  assert.deepEqual(await withBridge(refused, transport => readWorlds(transport, settle)), {state: 'unavailable', reason: 'the map is unreadable'})
+  assert.equal(refused.asked(), 1, 'a refusal is not asked again')
+  const never = browse([null])
+  assert.deepEqual(await withBridge(never, transport => readWorlds(transport, settle)), {state: 'unavailable', reason: 'Central returned no root disclosure'})
+  assert.equal(never.asked(), 4)
+})

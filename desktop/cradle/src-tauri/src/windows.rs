@@ -168,6 +168,10 @@ pub fn window_detach(
         .inner_size(800.0, 650.0)
         .min_inner_size(400.0, 300.0)
         .initialization_script("window.__OI_DETACHED__ = true;")
+        // The page's own drags (a world onto a track, a device into a chain) are HTML5 drops: with the native file-drop handler on,
+        // Tauri answers every drag itself (tauri-runtime-wry returns true for each), so on macOS WebKit never sees one. Nothing
+        // here takes a file dropped from outside, so the handler is off, as on the main window (tauri.candidate.conf.json).
+        .disable_drag_drop_handler()
         // A detached pane exports as the main window does (downloads.rs): without a receiver wry cancels the file.
         .on_download(crate::downloads::receiver());
     #[cfg(target_os = "macos")]
