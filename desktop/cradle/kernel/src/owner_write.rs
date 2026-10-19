@@ -145,8 +145,15 @@ impl PreparedWrite {
                 if let Some(project) = project {
                     owner_read::disclosed(&self.world.read()?, project)?;
                 }
-                let data = self
-                    .client
+                // The person's own acts on a document (an authored field, a
+                // review, an inclusion, a recovery) carry the person's native
+                // authority; a producer's submission never does.
+                let client = if receiving_person_act(request) {
+                    self.client.for_person()
+                } else {
+                    self.client.clone()
+                };
+                let data = client
                     .receiving(project.as_deref(), request)
                     .map_err(|e| e.to_string())?;
                 if moved(&data) {
@@ -162,7 +169,10 @@ impl PreparedWrite {
                 KernelOpResult::ReceivingReading { data }
             }
             KernelOp::Central { project, request } => {
-                let data = central::operate(&self.client, project.as_deref(), request)?;
+                // Ensuring and making today's Day are the person's presses
+                // (Open today): they carry the person's native authority.
+                let data =
+                    central::operate(&self.client.for_person(), project.as_deref(), request)?;
                 if moved(&data) {
                     let (action, requested) = match request {
                         central::Request::EnsureDay { .. } => ("central.day.ensure", None),
@@ -578,6 +588,21 @@ fn receiving_write(request: &ReceivingRequest) -> bool {
     )
 }
 
+/// The receiving acts that are the person's own (Central refuses them from any
+/// other author): an authored field or metadata edit, a review, an inclusion,
+/// a recovery.
+/// A submission is a producer's and never carries the person's authority.
+fn receiving_person_act(request: &ReceivingRequest) -> bool {
+    matches!(
+        request,
+        ReceivingRequest::MutateField { .. }
+            | ReceivingRequest::MutateMeta { .. }
+            | ReceivingRequest::Review { .. }
+            | ReceivingRequest::Include { .. }
+            | ReceivingRequest::Recover { .. }
+    )
+}
+
 /// Central's Day writes; its other requests are prepared reads.
 pub(crate) fn central_write(request: &central::Request) -> bool {
     matches!(
@@ -843,6 +868,29 @@ mod tests {
     use crate::dispatch::dispatch;
     use std::sync::{Arc, Mutex};
     use std::time::{Duration, Instant};
+
+    /// The person's own receiving acts carry the person's authority; a
+    /// producer's submission and every read never do.
+    #[test]
+    fn only_the_person_s_own_receiving_acts_carry_the_person_s_authority() {
+        let request = |value: serde_json::Value| -> ReceivingRequest {
+            serde_json::from_value(value).unwrap()
+        };
+        assert!(receiving_person_act(&request(
+            serde_json::json!({"MutateField": {"source_ref": "s", "document_id": "d",
+            "expected_revision": "r", "request_id": "q", "field_id": "original:meta", "value": {}}})
+        )));
+        assert!(receiving_person_act(&request(
+            serde_json::json!({"Review": {"return_ref": "return:one",
+            "expected_return_revision": "v", "disposition": "accepted"}})
+        )));
+        assert!(!receiving_person_act(&request(
+            serde_json::json!({"Submit": {"producer_key": "p", "occurred_at_unix_seconds": 1}})
+        )));
+        assert!(!receiving_person_act(&request(
+            serde_json::json!({"Document": {"source_ref": "s", "document_id": "d"}})
+        )));
+    }
 
     /// A Central stand-in for owner writes: logs each action as it starts,
     /// holds every write while its gate file exists, then answers the shape

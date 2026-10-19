@@ -238,13 +238,14 @@ function CategoryRows({category, needle, mode, onSelectSubject, selectedSubject}
  * in the focused pane — a Days row its Day, a Files row its Flow or its own file tab (central/documents). A refusal is the
  * owner's own words, said by the rows. */
 function useOpening() {
-  const {openDay, openFile} = useCentralDocumentOpener()
+  const {openDay, openFile, openPage} = useCentralDocumentOpener()
   const [openFault, setOpenFault] = useState<string | null>(null)
   const said = (opening: Promise<void>) => opening.catch(reason => setOpenFault(reason instanceof Error ? reason.message : String(reason)))
   return {
     openFault,
     openDay: (entry: NativeFileEntry, path: string) => { setOpenFault(null); void said(openDay(entry, path)) },
     openFile: (entry: NativeFileEntry, path: string) => { setOpenFault(null); void said(openFile(entry, path)) },
+    openPage: (entry: NativeFileEntry, kind: 'being' | 'thing') => { setOpenFault(null); void said(openPage(entry, kind)) },
   }
 }
 
@@ -467,7 +468,7 @@ function PageRows({form, label, needle, onSelectSubject, selectedSubject}: {
   const {transport} = useWorkspace()
   const [listing, setListing] = useState<PageListing | null>(null)
   const [fault, setFault] = useState<string | null>(null)
-  const {openFile, openFault} = useOpening()
+  const {openPage, openFault} = useOpening()
   useEffect(() => {
     let live = true
     setFault(null); setListing(null)
@@ -493,8 +494,8 @@ function PageRows({form, label, needle, onSelectSubject, selectedSubject}: {
         <button type="button" data-browser-row className={`mode-browser-row${selected ? ' selected' : ''}`} aria-current={selected || undefined} data-page={page.name}
           data-i={`${name}|select the page — it opens in Clip view; double-click or Enter opens it in the focused pane. ${path}`} title={`${path} — double-click or Enter opens it in the focused pane.`}
           onClick={() => onSelectSubject({kind: 'note', path, location: page.location})}
-          onDoubleClick={() => openFile(entry, path)}
-          onKeyDown={event => { if (event.key === 'Enter') openFile(entry, path) }}>
+          onDoubleClick={() => openPage(entry, form === 'thing' ? 'thing' : 'being')}
+          onKeyDown={event => { if (event.key === 'Enter') openPage(entry, form === 'thing' ? 'thing' : 'being') }}>
           <span aria-hidden="true"><KindMark kind={form === 'being' ? 'agent' : 'source'} size={12} /></span><span>{name}</span>
           <span className="mode-browser-row-meta">{form === 'being' ? 'being' : 'thing'}{page.world ? ` · ${page.world.replace(/^central:wiki:(project:)?/, '')}` : ''}</span>
         </button>

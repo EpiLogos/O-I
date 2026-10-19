@@ -24,6 +24,7 @@ import {useWorldTemporalReading, type WorldTimelineView} from './projections/use
 import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import {MODE_FRAMES, MODE_TRACK_SOURCES} from './shell/modeFrames'
 import {centralSubjectOfClip} from './timeline/centralTrackAdapter'
+import {registerDocumentLayoutWriter} from './central/documents/documentDoor'
 import {Browser} from './frame/browser/Browser'
 import {FrameKeys} from './frame/keys/FrameKeys'
 import {WidgetRail} from './frame/widgets/WidgetRail'
@@ -86,6 +87,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // acknowledgement turn, rather than a previous render's selection basis.
   useEffect(()=>{currentEditorReading.current=workspace.editorReading;return workspace.editor?.subscribe(reading=>{currentEditorReading.current=reading})},[workspace.editor])
   const continuity = useContinuity()
+  // A document pane renders in a root of its own: the links its page follows reach the pane tree through the book's writer.
+  const continuityNow = useRef(continuity)
+  continuityNow.current = continuity
+  useEffect(() => registerDocumentLayoutWriter(update => continuityNow.current.setLayout(update)), [])
   const currentContinuity=useRef(continuity);currentContinuity.current=continuity
   // The encounter link (seam 3): the URL projects the spine's encounter, Back walks it, and the store stays the one writer.
   const encounterSpine = useRef({book: continuity, workspace})

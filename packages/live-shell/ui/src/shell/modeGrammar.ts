@@ -240,7 +240,7 @@ const base: SurfModeGrammar = {
   title: 'Central',
   mark: 'die',
   hint: 'The Central ground — the day and its documents',
-  session: {label: 'Session', meaning: 'the day as clips: Day, Flows, Beings, Things and Goals as tracks'},
+  session: {label: 'Session', meaning: 'today as clips: your worlds as tracks, their pages as clips, the Day as the Main track'},
   arrangement: {label: 'Arrangement', meaning: 'today on one ruler'},
   detail: {
     clip: {label: 'Document', meaning: 'form, file, revision, bindings; highlights; notes; packet'},
@@ -275,7 +275,7 @@ const base: SurfModeGrammar = {
       hint: 'New document — exactly Day · Flow · Beings · Things, the four document forms of the owner\'s form roster; each is made through the Workbench\'s own opener for it.'},
   ],
   centre: {
-    session: {label: 'Day · Session', meaning: 'the day as clips — Day, Flows, Beings, Things, Goals as tracks; documents and entries as clips'},
+    session: {label: 'Day · Session', meaning: 'today as clips — your worlds as tracks, their pages as clips, the Day as the Main track'},
     arrangement: {label: 'Today', meaning: 'today on one ruler'},
   },
   status: {label: 'Central', fn: 'the ground — the day as clips, documents and entries'},

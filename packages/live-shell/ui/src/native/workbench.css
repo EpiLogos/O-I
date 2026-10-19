@@ -1184,6 +1184,10 @@
  * at either edge opens the rail with its tabs and, at its foot, the pane tools (⊞). */
 :where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"] > .tab-reveal-zone[data-orientation="vertical"] { right: 0; width: auto;
   clip-path: polygon(0 0, 100% 0, 100% 8px, 14px 8px, 14px 100%, 0 100%); }
+/* The band answers the pointer before the face beneath it, so a face whose first column holds controls keeps them clear of it
+ * (r12: the Session grid's first ▶ and stop squares sat under the band and opened the rail). The pane names the band's width;
+ * the face reads it (frame/tracks/tracks.css .sg). */
+:where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"]:has(> .tab-reveal-zone[data-orientation="vertical"]) { --pane-edge-band: 14px; }
 
 /* The vertical list's width separator (the .region-resizer grammar,
  * shell.css): a transparent hit area on the strip's inner edge whose

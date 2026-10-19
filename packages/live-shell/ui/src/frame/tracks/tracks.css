@@ -6,7 +6,7 @@
 
 /* Session */
 .sg-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-2) }
-.sg { flex: 1; min-height: 0; display: flex; overflow: auto; background: var(--bg-2) }
+.sg { flex: 1; min-height: 0; display: flex; overflow: auto; background: var(--bg-2); padding-left: var(--pane-edge-band, 0) }
 .trk { flex: none; width: 122px; display: flex; flex-direction: column; border-right: 2px solid var(--line); position: relative }
 .trk .thd { height: 26px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 6px; padding-left: calc(6px + var(--rails, 0) * 4px); background: var(--tc); color: var(--bg-0); font-size: 10px; font-weight: 500; border: 0; border-bottom: 2px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left }
 .trk .thd.sel { box-shadow: inset 0 0 0 1px var(--accent) }

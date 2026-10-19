@@ -43,6 +43,8 @@ export interface CentralDocumentOpener {
   openDay: (entry: DocumentEntry, path?: string) => Promise<void>
   /** A Files row: its Flow in the focused pane, or the file as its own tab. */
   openFile: (entry: DocumentEntry, path?: string) => Promise<void>
+  /** A Beings or Things row: its page in a pane of its own, its hosted face (T-WORLDS W2). */
+  openPage: (entry: DocumentEntry, kind: 'being' | 'thing') => Promise<void>
 }
 
 /** The opener over what is held: the workspace the file route reads through, and the book whose layout the pane opens in (absent
@@ -64,6 +66,10 @@ export function centralDocumentOpener(held: {readonly workspace: {readonly curre
       const flow = flowOfEntry(entry, path)
       if (flow) return hold(flow)
       return openGroundFile(held.workspace, entry)
+    },
+    openPage: async (entry, kind) => {
+      if (entry.kind !== 'file' || !entry.location) throw new Error(`${entry.name} is no page file, so it does not open as a page.`)
+      hold({form: 'page', kind, location: entry.location})
     },
   }
 }

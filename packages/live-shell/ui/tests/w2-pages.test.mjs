@@ -21,6 +21,7 @@ export async function resolve(specifier,context,next){
   }
 }
 export async function load(url,context,next){
+  if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export default null'};
   if(url.endsWith('?raw'))return {format:'module',shortCircuit:true,source:'export default '+JSON.stringify(await readFile(new URL(url.slice(0,-4)),'utf8'))};
   if(url.endsWith('.json'))return {format:'module',shortCircuit:true,source:'export default '+await readFile(new URL(url),'utf8')};
   if(url.endsWith('.ts')||url.endsWith('.tsx')){
@@ -103,4 +104,30 @@ test('a Thing made in no project\'s scope lands in your world\'s folder through 
   await withBridge(stub, transport => create.createFormInPlace(transport, formOf('document-things'), {worldRef: 'central:wiki:root', now: new Date(2026, 9, 18, 9, 31)}))
   assert.deepEqual([stub.created[0].door, stub.created[0].path.replace(/^.*Control/, 'Control')], ['central.files.write', 'Control/user/flows/things-2026-10-18-0931.html'])
   assert.equal(islandOf(stub.created[0].content).bindings.worldRef, 'central:wiki:root')
+})
+
+test('a Being or a Thing opens in a document pane of its own: its subject names its kind and its owner ref; its tab says which it is', async () => {
+  const docs = await import('../src/central/documents/centralDocuments.ts')
+  const ref = 'central:path:/ground:Work/O-I/ProjectCentral/user/beings-2026-10-18-0930.html'
+  const subject = docs.parseDocumentSubject(`page:being:${ref}`)
+  assert.deepEqual(subject, {form: 'page', kind: 'being', location: {schema: 'central.path-ref/v1', ref, root: '/ground', path: 'Work/O-I/ProjectCentral/user/beings-2026-10-18-0930.html'}})
+  assert.deepEqual(docs.subjectOf({form: 'page', kind: 'thing', location: subject.location}), {ref: `page:thing:${ref}`, title: 'Thing · beings-2026-10-18-0930'})
+  assert.equal(docs.parseDocumentSubject('page:goal:x'), null, 'only a Being or a Thing is a page subject')
+  const opener = await import('../src/central/documents/useOpenCentralDocument.ts')
+  let layout = {groups: {}, surfaces: {}}
+  const held = {workspace: {current: {}}, book: {current: {setLayout: update => { layout = update(layout) }}}}
+  const open = opener.centralDocumentOpener(held)
+  const ok = await open.openPage({name: 'beings-1.html', kind: 'file', retrieval_allowed: true, location: subject.location}, 'being').then(() => true, () => true)
+  assert.ok(ok)
+  await assert.rejects(open.openPage({name: 'folder', kind: 'directory', retrieval_allowed: true, location: null}, 'being'), /no page file/)
+})
+
+test('a link a page follows opens in the shell: a page of a world as its page, an http(s) address in a web pane, anything else said', async () => {
+  const {linkTarget} = await import('../src/inhabitants/DocumentPageFace.tsx')
+  assert.deepEqual(linkTarget('https://example.org/a?b=1'), {kind: 'web', url: 'https://example.org/a?b=1'})
+  assert.deepEqual(linkTarget('central:path:/ground:Control/user/flows/beings-1.html'), {kind: 'page', path: 'Control/user/flows/beings-1.html'})
+  assert.deepEqual(linkTarget('Work/O-I/ProjectCentral/user/things-1.html'), {kind: 'page', path: 'Work/O-I/ProjectCentral/user/things-1.html'})
+  assert.equal(linkTarget('https://user:pw@example.org').kind, 'none', 'credentials in a link are not opened')
+  assert.match(linkTarget('javascript:alert(1)').why, /neither a page of a world nor an http\(s\) address/)
+  assert.equal(linkTarget('').kind, 'none')
 })
