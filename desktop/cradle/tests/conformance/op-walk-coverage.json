@@ -401,6 +401,15 @@
       "reason": "Built 18 Oct with a kernel test (the list read, its membership refusal); no executed native walk is recorded here for encounter_session_settings_list; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
+      "op": "encounter_task_attempts_list",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "docs/world-shell/wayfinder/PATH.md \u00a77 FT row; AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-task-attempts)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 19 Oct with a kernel test (the list read, its membership refusal) and AIKit unit tests, and smoked through the real aikit in an isolated home copy; no executed native walk is recorded here for encounter_task_attempts_list; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "encounter_task_read",
       "native_owner": "kernel/src/encounter.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",

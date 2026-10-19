@@ -112,6 +112,7 @@ export const KERNEL_OPS = [
   'encounter_task_read',
   'encounter_session_settings',
   'encounter_session_settings_list',
+  'encounter_task_attempts_list',
   'receiving',
   'now',
   'factory_development_read',

@@ -356,6 +356,27 @@ pub enum OwnerRequest {
         #[serde(default)]
         authority_grant: Option<String>,
     },
+    /// `factory attempt admission` → `factory.attempt-admission/v1`: the
+    /// desktop caller Factory expects and the native action, scope and actor
+    /// kind a grant must carry for the person to act on its attempts. A
+    /// reading; it grants nothing.
+    AttemptAdmission {},
+    /// The person chooses an attempt: its retained Return is proposed to
+    /// Central's receiving field, in the Central Flow the Run is associated
+    /// with (`factory attempt receiving`). The caller, the capability and the
+    /// native action come from Factory's own admission reading; the target
+    /// Flow, the Central root and the state revision from its Run and attempt
+    /// readings; the grant is resolved by the host against Central's native
+    /// action authority contract with the host's own token, which reaches
+    /// Factory's environment and never the request or the reply. Absent
+    /// `authority_grant`, the host resolves the principal its token belongs to.
+    AttemptReceiving {
+        state_path: PathBuf,
+        run_ref: String,
+        attempt_ref: String,
+        #[serde(default)]
+        authority_grant: Option<String>,
+    },
 }
 
 /// The host's native action token. It never crosses the webview: the native
@@ -409,6 +430,7 @@ impl OwnerRequest {
                 | OwnerRequest::ActionList { .. }
                 | OwnerRequest::Inhabitation { .. }
                 | OwnerRequest::CurrentWork { .. }
+                | OwnerRequest::AttemptAdmission { .. }
         )
     }
 }
@@ -436,6 +458,17 @@ const OWNER_CALL_LIMIT: std::time::Duration = std::time::Duration::from_secs(300
 /// its refusal as a diagnostic document on stdout, so the refusal message is
 /// the diagnostic's own words when present, else stderr.
 fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value, Error> {
+    owner_call_env(args, input, &[])
+}
+
+/// The same, with environment variables the owner's own process is given: the
+/// host's native action token, for the one act that reaches Central through
+/// Factory (`AttemptReceiving`).
+fn owner_call_env(
+    args: &[std::ffi::OsString],
+    input: Option<&[u8]>,
+    env: &[(&str, String)],
+) -> Result<Value, Error> {
     let (executable, suite_route) = owner_executable();
     let mut argv: Vec<std::ffi::OsString> = Vec::new();
     if suite_route {
@@ -457,7 +490,9 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
         .collect::<Vec<_>>()
         .join(" ");
     let output = crate::owner_process::output(
-        std::process::Command::new(&executable).args(&argv),
+        std::process::Command::new(&executable)
+            .args(&argv)
+            .envs(env.iter().map(|(key, value)| (key, value))),
         input.map(<[u8]>::to_vec),
         crate::owner_process::Bound {
             owner: "Software Factory",
@@ -1315,6 +1350,45 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &["factory.commission-receipt/v1"],
             )
         }
+        OwnerRequest::AttemptAdmission {} => expect_contract(
+            owner_call(
+                &["attempt".into(), "admission".into(), "--json".into()],
+                None,
+            )?,
+            &[receiving::ADMISSION_CONTRACT],
+        ),
+        OwnerRequest::AttemptReceiving {
+            state_path,
+            run_ref,
+            attempt_ref,
+            authority_grant,
+        } => {
+            let token = host_native_token();
+            let contract = authority_contract_for(&state_path);
+            let environment: Vec<(&str, String)> = token
+                .iter()
+                .map(|token| ("CENTRAL_NATIVE_TOKEN", token.as_str().to_owned()))
+                .collect();
+            let mut read =
+                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
+            let mut receive = |args: &[std::ffi::OsString], input: Option<&[u8]>| {
+                owner_call_env(args, input, &environment)
+            };
+            Ok(receiving::attempt_receiving(
+                &mut read,
+                &mut receive,
+                &state_path,
+                &run_ref,
+                &attempt_ref,
+                receiving::ReceivingAuthority {
+                    grant: authority_grant,
+                    token,
+                    contract: contract.as_deref(),
+                    now_unix_seconds: now_unix_seconds(),
+                    central_binary: std::env::var_os("OI_CENTRAL_CTRL_BIN").map(PathBuf::from),
+                },
+            ))
+        }
         OwnerRequest::RunClose {
             state_path,
             run_ref,
@@ -1533,6 +1607,24 @@ const AUTHORITY_GRANT_PREFIX: &str = "central:native-action-authority#";
 const RUN_CLOSE_ACTION: &str = "factory.run.close";
 const RUN_CLOSE_SCOPE: &str = "project:Factory";
 
+/// What a grant must carry for one native action: the action it lists, the
+/// scope it covers and, when the act is a particular kind of actor's, that
+/// kind.
+pub(crate) struct Wanted<'a> {
+    pub action: &'a str,
+    pub scope: &'a str,
+    pub actor_kind: Option<&'a str>,
+}
+
+const RUN_CLOSE: Wanted<'static> = Wanted {
+    action: RUN_CLOSE_ACTION,
+    scope: RUN_CLOSE_SCOPE,
+    actor_kind: None,
+};
+
+#[path = "factory_receiving.rs"]
+mod receiving;
+
 /// The host's native action authority for one close: the grant ref and token
 /// it holds, the contract the grant resolves against, and the reading clock.
 pub struct CloseAuthority<'a> {
@@ -1582,7 +1674,7 @@ fn host_native_token_from(env: Option<String>, home: Option<PathBuf>) -> Option<
     (!token.is_empty()).then(|| AuthorityToken(token.to_owned()))
 }
 
-fn now_unix_seconds() -> u64 {
+pub(crate) fn now_unix_seconds() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|elapsed| elapsed.as_secs())
@@ -1590,7 +1682,7 @@ fn now_unix_seconds() -> u64 {
 }
 
 /// The lowercase hex sha256 of a token, as the contract records it.
-fn token_sha256(token: &str) -> String {
+pub(crate) fn token_sha256(token: &str) -> String {
     use sha2::{Digest, Sha256};
     Sha256::digest(token.as_bytes())
         .iter()
@@ -1602,11 +1694,12 @@ fn token_sha256(token: &str) -> String {
 /// contract document. Returns the refusal reason, or `None` when the grant
 /// exists, its token matches, it lists the close, covers the Factory scope and
 /// has not expired. The token is compared, never echoed.
-fn grant_refusal(
+pub(crate) fn grant_refusal(
     contract: &Value,
     grant: &str,
     token: Option<&AuthorityToken>,
     now_unix_seconds: u64,
+    wanted: &Wanted<'_>,
 ) -> Option<String> {
     if contract["schema"] != AUTHORITY_CONTRACT_SCHEMA {
         return Some(format!(
@@ -1636,20 +1729,29 @@ fn grant_refusal(
                 .into(),
         );
     }
-    let lists_close = entry["actions"]
+    if let Some(kind) = wanted.actor_kind {
+        if entry["actor_kind"].as_str() != Some(kind) {
+            return Some(format!(
+                "actor not granted: the grant is not a {kind} principal's."
+            ));
+        }
+    }
+    let lists_action = entry["actions"]
         .as_array()
-        .is_some_and(|actions| actions.iter().any(|action| action == RUN_CLOSE_ACTION));
-    if !lists_close {
+        .is_some_and(|actions| actions.iter().any(|action| action == wanted.action));
+    if !lists_action {
         return Some(format!(
-            "action not granted: the grant does not list {RUN_CLOSE_ACTION}."
+            "action not granted: the grant does not list {}.",
+            wanted.action
         ));
     }
     let covers_scope = entry["scope_refs"]
         .as_array()
-        .is_some_and(|scopes| scopes.iter().any(|scope| scope == RUN_CLOSE_SCOPE));
+        .is_some_and(|scopes| scopes.iter().any(|scope| scope == wanted.scope));
     if !covers_scope {
         return Some(format!(
-            "scope not granted: the grant does not cover {RUN_CLOSE_SCOPE}."
+            "scope not granted: the grant does not cover {}.",
+            wanted.scope
         ));
     }
     match entry["expires_at_unix_seconds"].as_u64() {
@@ -1664,29 +1766,57 @@ fn grant_refusal(
 /// The grant gate for a close: the contract is read and the grant resolved
 /// against it. A contract that cannot be read refuses the same way.
 fn close_grant_refusal(authority: &CloseAuthority<'_>, grant: &str) -> Option<String> {
-    let Some(path) = authority.contract else {
-        return Some(
+    match read_authority_contract(authority.contract) {
+        Ok(contract) => grant_refusal(
+            &contract,
+            grant,
+            authority.token.as_ref(),
+            authority.now_unix_seconds,
+            &RUN_CLOSE,
+        ),
+        Err(reason) => Some(reason),
+    }
+}
+
+/// The native action authority contract, read from where the host's lookup
+/// found it; the refusal names why it could not be.
+pub(crate) fn read_authority_contract(path: Option<&Path>) -> Result<Value, String> {
+    let Some(path) = path else {
+        return Err(
             "The native action authority contract is not found above this Factory state, so the grant cannot be resolved."
                 .into(),
         );
     };
-    let contract: Value = match std::fs::read(path)
+    std::fs::read(path)
         .map_err(|error| error.to_string())
         .and_then(|bytes| serde_json::from_slice(&bytes).map_err(|error| error.to_string()))
-    {
-        Ok(contract) => contract,
-        Err(error) => {
-            return Some(format!(
-                "The native action authority contract cannot be read: {error}."
-            ))
-        }
-    };
-    grant_refusal(
-        &contract,
-        grant,
-        authority.token.as_ref(),
-        authority.now_unix_seconds,
-    )
+        .map_err(|error| format!("The native action authority contract cannot be read: {error}."))
+}
+
+/// The grant ref of the one principal of the given kind whose token is the
+/// host's: the host presents the grant it holds, resolved from its own
+/// token, rather than a ref the desk names. None when no principal, or more
+/// than one, holds it.
+pub(crate) fn grant_held_by(
+    contract: &Value,
+    token: &AuthorityToken,
+    actor_kind: &str,
+) -> Option<String> {
+    let presented = token_sha256(token.as_str());
+    let mut held = contract["grants"].as_array()?.iter().filter(|entry| {
+        entry["actor_kind"].as_str() == Some(actor_kind)
+            && entry["token_sha256"]
+                .as_str()
+                .is_some_and(|recorded| recorded.eq_ignore_ascii_case(&presented))
+    });
+    let first = held.next()?;
+    if held.next().is_some() {
+        return None;
+    }
+    Some(format!(
+        "{AUTHORITY_GRANT_PREFIX}{}",
+        first["principal_ref"].as_str()?
+    ))
 }
 
 /// Close a Run's own lifecycle after the person's Recognition. Returns the

@@ -655,6 +655,16 @@ pub enum KernelOp {
         project: String,
         agent_sessions: Vec<String>,
     },
+    /// Several sessions' served attempts read at once (the owner's
+    /// `aikit.encounter-task-attempts-list/v1`): for each session, the Factory
+    /// attempts its bound task serves, each with its Run and Factory state, as
+    /// the Software Factory that dispatched them recorded them. Every session
+    /// must be attached to one of the Project's spaces; read-only. The
+    /// attempts themselves are Factory's (`factory_attempt_read`).
+    EncounterTaskAttemptsList {
+        project: String,
+        agent_sessions: Vec<String>,
+    },
     /// The human Day route: read the current today pointer (or one exact
     /// DayRef) through the owner. The disclosure carries the Day source's
     /// canonical ref — the only identity the desktop opens it by.
@@ -1430,6 +1440,9 @@ pub enum KernelOpResult {
         data: serde_json::Value,
     },
     EncounterSessionSettingsListReading {
+        data: serde_json::Value,
+    },
+    EncounterTaskAttemptsListReading {
         data: serde_json::Value,
     },
     FactoryDevelopmentReading {
@@ -3281,6 +3294,7 @@ impl Kernel {
             | KernelOp::EncounterTaskRead { .. }
             | KernelOp::EncounterSessionSettings { .. }
             | KernelOp::EncounterSessionSettingsList { .. }
+            | KernelOp::EncounterTaskAttemptsList { .. }
             | KernelOp::ModelRoster { .. }
             | KernelOp::HarnessAgentRead { .. }
             | KernelOp::HarnessStatus

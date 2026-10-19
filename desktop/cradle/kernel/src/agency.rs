@@ -573,8 +573,55 @@ impl Client {
         project_ref: &str,
         agent_sessions: &[String],
     ) -> Result<Value, String> {
+        self.sessions_list(
+            cwd,
+            project_ref,
+            agent_sessions,
+            ListedVerb {
+                verb: "encounter-session-settings",
+                list_schema: "aikit.encounter-session-settings-list/v1",
+                what: "session settings",
+            },
+        )
+    }
+
+    /// Several sessions' served attempts in one owner call (several
+    /// `--agent-session`, `aikit.encounter-task-attempts-list/v1`): which
+    /// Factory attempts each session's bound task serves, as the Software
+    /// Factory that dispatched them recorded them. Every session must be
+    /// attached to one of the Project's SessionSpaces; read-only.
+    pub fn task_attempts_list(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_sessions: &[String],
+    ) -> Result<Value, String> {
+        self.sessions_list(
+            cwd,
+            project_ref,
+            agent_sessions,
+            ListedVerb {
+                verb: "encounter-task-attempts",
+                list_schema: "aikit.encounter-task-attempts-list/v1",
+                what: "task attempts",
+            },
+        )
+    }
+
+    fn sessions_list(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_sessions: &[String],
+        listed: ListedVerb,
+    ) -> Result<Value, String> {
+        let ListedVerb {
+            verb,
+            list_schema,
+            what,
+        } = listed;
         if agent_sessions.is_empty() || agent_sessions.len() > 256 {
-            return Err("Read from 1 to 256 sessions' settings at once".into());
+            return Err(format!("Read from 1 to 256 sessions' {what} at once"));
         }
         let spaces = self.read_project(cwd, project_ref)?;
         let attached = |session: &String| {
@@ -600,31 +647,31 @@ impl Client {
             command.env("AIKIT_HOME", home);
         }
         command.arg("-C").arg(cwd);
-        command.arg("encounter-session-settings");
+        command.arg(verb);
         for session in agent_sessions {
             command.args(["--agent-session", session]);
         }
         let bound = crate::owner_process::Bound {
             owner: "AIKit",
-            operation: "encounter-session-settings",
+            operation: verb,
             limit: DISCOVER_LIMIT,
             effect: crate::owner_process::Effect::Read,
         };
         let output = crate::owner_process::output(&mut command, None, bound)
             .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(owner_process_failure("encounter-session-settings", &output));
+            return Err(owner_process_failure(verb, &output));
         }
         let data: Value = serde_json::from_slice(&output.stdout)
-            .map_err(|e| format!("AIKit SessionSpace returned unreadable session settings: {e}"))?;
+            .map_err(|e| format!("AIKit SessionSpace returned unreadable {what}: {e}"))?;
         // One session answers its own reading; the kernel's outcome is always the list.
         let data = if agent_sessions.len() == 1 && data["readings"].is_null() {
-            serde_json::json!({"schema": "aikit.encounter-session-settings-list/v1", "readings": [data]})
+            serde_json::json!({"schema": list_schema, "readings": [data]})
         } else {
             data
         };
         let readings = data["readings"].as_array();
-        if data["schema"].as_str() != Some("aikit.encounter-session-settings-list/v1")
+        if data["schema"].as_str() != Some(list_schema)
             || readings.map(Vec::len) != Some(agent_sessions.len())
             || readings.is_some_and(|rows| {
                 rows.iter()
@@ -632,10 +679,18 @@ impl Client {
                     .any(|(row, session)| row["agent_session"].as_str() != Some(session))
             })
         {
-            return Err("Unsupported or misaddressed native session settings list".into());
+            return Err(format!("Unsupported or misaddressed native {what} list"));
         }
         Ok(data)
     }
+}
+
+/// One of the owner's per-session list verbs: its name, the schema of the list
+/// it answers and what it reads, in the words a refusal uses.
+struct ListedVerb {
+    verb: &'static str,
+    list_schema: &'static str,
+    what: &'static str,
 }
 
 pub fn executable() -> PathBuf {
