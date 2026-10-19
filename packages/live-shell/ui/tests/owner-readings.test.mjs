@@ -26,7 +26,7 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {createOwnerReadings, useOwnerReading, KEPT_UNREAD} = await import('../src/owners/ownerReading.ts')
+const {createOwnerReadings, useOwnerReading, KEPT_UNREAD, answersOf, ensureInOrder} = await import('../src/owners/ownerReading.ts')
 const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {readTaskOf, readRosterOf, readWorkcellOf, taskReadingKey, rosterReadingKey, workcellReadingKey, refreshHeld, composeRoster, TASK_OP} = await import('../src/owners/readers.ts')
@@ -245,6 +245,29 @@ test('a reader in another world never draws an answer kept from this one, not ev
   }
   assert.equal(renderToStaticMarkup(createElement(Reader, {epoch: '1|elsewhere'})), '<p>reading:-</p>')
   assert.equal(renderToStaticMarkup(createElement(Reader, {epoch: '2|central'})), '<p>answered:central&#x27;s</p>', 'the same world draws its last reading')
+})
+
+test('many rows: each row\'s last answer is drawn at once and another world\'s never; the rows are asked one after another', async () => {
+  const registry = createOwnerReadings()
+  const started = []
+  const finish = {}
+  const read = row => () => { started.push(row); return new Promise(resolve => { finish[row] = () => resolve({value: `${row} read`}) }) }
+  const rows = ['a', 'b', 'c'].map(row => [row, registry.entry(`row:${row}`, read(row))])
+  assert.equal(answersOf(rows, '1|central').size, 0, 'nothing answered yet: nothing drawn')
+  const done = ensureInOrder(rows.map(([, entry]) => entry), '1|central')
+  await settle()
+  assert.deepEqual(started, ['a'], 'one row at a time: the carrier never sees a pile')
+  finish.a(); await settle()
+  assert.deepEqual(started, ['a', 'b'])
+  assert.deepEqual([...answersOf(rows, '1|central')], [['a', 'a read']], 'a row is drawn as soon as it answers')
+  finish.b(); await settle(); finish.c(); await done
+  assert.deepEqual([...answersOf(rows, '1|central').keys()], ['a', 'b', 'c'])
+  assert.equal(answersOf(rows, '2|central').size, 3, 'a renewed access in the same world draws the last answers')
+  assert.equal(answersOf(rows, '2|elsewhere').size, 0, 'another world draws none of them')
+  let asked = 0
+  const stopped = ensureInOrder([registry.entry('row:d', async () => { asked++; return {value: 'd'} }), registry.entry('row:e', async () => { asked++; return {value: 'e'} })], '1|central', () => asked < 1)
+  await stopped
+  assert.equal(asked, 1, 'a reader that left stops the asking')
 })
 
 test('a notice re-reads a held task record behind its standing answer, only for the session it names', async () => {

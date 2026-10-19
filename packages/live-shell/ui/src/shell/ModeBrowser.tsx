@@ -91,6 +91,8 @@ import {civilDateOfDayFile, dayStandingHover, dayStandingOf, dayStandingWords, d
 import './modeSurface.css'
 import type {BrowserCategory, ControlledBrowser} from '../frame/browser/browserKinds'
 import {CENTRAL_DAYS_PATH, dayEntriesOf} from '../central/daySurface'
+import {useOwnerReading, useOwnerReadingsOf, type OwnerReading} from '../owners/ownerReading'
+import {useSpineEpoch} from '../owners/spine'
 
 /** The root register's day surface — where the civil calendar's records
  * live (`centralDayNowModel`'s subjectDayRef reads this shape). */
@@ -255,27 +257,33 @@ function useOpening() {
 
 const message = (reason: unknown): string => reason instanceof Error ? reason.message : String(reason)
 
-/** One owner reading per listed row, once per listing: `read` answers each key in turn (in order, so the carrier never sees a
- * pile), and the map fills as they answer. A new listing starts again; nothing is polled. */
-function useRowReadings<T>(transport: KernelTransportStatus, keys: readonly string[], read: (key: string) => Promise<T>): ReadonlyMap<string, T> {
-  const [held, setHeld] = useState<{basis: string; readings: ReadonlyMap<string, T>}>({basis: '', readings: new Map()})
-  const basis = JSON.stringify([transport, keys])
-  useEffect(() => {
-    let live = true
-    setHeld({basis, readings: new Map()})
-    if (transport.kind === 'unavailable') return
-    void (async () => {
-      for (const key of keys) {
-        const reading = await read(key)
-        if (!live) return
-        setHeld(before => before.basis === basis ? {basis, readings: new Map(before.readings).set(key, reading)} : before)
-      }
-    })()
-    return () => {live = false}
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the basis names the carrier and the keys
-  }, [basis])
-  return held.basis === basis ? held.readings : new Map()
+/** One owner reading per listed row, through the window's owner readings (owners/ownerReading.ts): asked one row after another,
+ * so the carrier never sees a pile; each row's last answer drawn at once when the rows come back, and read again behind it. */
+function useRowReadings<T>(family: string, transport: KernelTransportStatus, keys: readonly string[], read: (key: string) => Promise<T>): ReadonlyMap<string, T> {
+  const epoch = useSpineEpoch()
+  return useOwnerReadingsOf<T>(transport.kind === 'unavailable' ? [] : keys, key => JSON.stringify([family, transport, key]),
+    key => async () => ({value: await read(key)}), epoch)
 }
+
+/** A listing a category draws, through the window's owner readings: its last answer drawn at once when the rows come back and read
+ * again behind it, one read shared by the categories that list the same place (Flows, Beings and Things list your world's pages).
+ * `absent` turns a refusal that means "nothing here yet" into the empty listing; any other refusal is the owner's words. With no
+ * carrier nothing is read, unless `always` (a read that answers the carrier's absence itself). */
+function useListing<T>(family: string, transport: KernelTransportStatus, place: string, read: () => Promise<T>,
+  absent: (reason: unknown) => T | null = () => null, always = false): OwnerReading<T> {
+  const epoch = useSpineEpoch()
+  const key = transport.kind === 'unavailable' && !always ? null : JSON.stringify([family, transport, place])
+  return useOwnerReading<T>(key, async () => {
+    try { return {value: await read()} } catch (reason) {
+      const empty = absent(reason)
+      return empty === null ? {error: message(reason)} : {value: empty}
+    }
+  }, epoch).reading
+}
+
+/** The owner refuses a listing of a folder that does not exist: that is exactly "nothing written yet" (flow/instances.ts). */
+const notYet = (reason: unknown): boolean => /No such file or directory/i.test(String(reason))
+const NO_PAGES: PageListing = {schema: 'oi.page-list/v1', path: USER_FLOWS_DIR, pages: [], not_pages: [], more: false}
 
 /** The Days rows: the day records at the root register's day surface, read
  * through the same owner route the L7 craft uses; each day's standing from
@@ -286,23 +294,15 @@ function DaysRows({needle, onSelectSubject, selectedSubject}: {
   selectedSubject: CentralSubjectSelection | null
 }) {
   const {transport} = useWorkspace()
-  const [directory, setDirectory] = useState<NativeDirectory | null>(null)
-  const [fault, setFault] = useState<string | null>(null)
+  const listed = useListing<NativeDirectory>('files_list', transport, DAY_RECORDS_PATH, () => listFiles(transport, DAY_RECORDS_PATH))
+  const directory = listed.status === 'answered' ? listed.value : null
+  const fault = listed.status === 'refused' ? listed.error : null
   const {openDay, openFault} = useOpening()
-  useEffect(() => {
-    let live = true
-    setFault(null)
-    if (transport.kind === 'unavailable') {setDirectory(null); return}
-    listFiles(transport, DAY_RECORDS_PATH)
-      .then(reading => {if (live) setDirectory(reading)})
-      .catch(reason => {if (live) setFault(message(reason))})
-    return () => {live = false}
-  }, [transport])
   const records = useMemo(() => dayEntriesOf(directory?.entries ?? [])
     .filter(entry => civilDateOfDayFile(entry.name) !== null)
     .sort((a, b) => b.name.localeCompare(a.name)), [directory])
   const dates = useMemo(() => records.slice(0, ROWS_READ).map(entry => civilDateOfDayFile(entry.name) as string), [records])
-  const standings = useRowReadings<DayStanding>(transport, dates, date => dayRead(transport, dayRefOfDate(date)).then(dayStandingOf,
+  const standings = useRowReadings<DayStanding>('day_standing', transport, dates, date => dayRead(transport, dayRefOfDate(date)).then(dayStandingOf,
     (reason): DayStanding => ({state: 'refused', message: message(reason)})))
   const now = useNowRows()
   const needleText = needle.trim().toLocaleLowerCase()
@@ -395,24 +395,15 @@ function FlowsRows({needle, onSelectSubject, selectedSubject}: {
   selectedSubject: CentralSubjectSelection | null
 }) {
   const {transport} = useWorkspace()
-  const [listing, setListing] = useState<readonly NativeFileEntry[] | null>(null)
-  const [fault, setFault] = useState<string | null>(null)
+  const listed = useListing<PageListing>('page_list', transport, USER_FLOWS_DIR, () => listWorldPages(transport, USER_FLOWS_DIR), reason => notYet(reason) ? NO_PAGES : null)
+  // The page owner places each file by its island: only a Flow lists here (a Being or a Thing in the same folder is no Flow).
+  const listing = useMemo(() => listed.status === 'answered' && listed.value ? entriesOfForm(listed.value, 'flow') : null, [listed])
+  const fault = listed.status === 'refused' ? listed.error : null
   const {openFile, openFault} = useOpening()
-  useEffect(() => {
-    let live = true
-    setFault(null); setListing(null)
-    if (transport.kind === 'unavailable') return
-    // The page owner places each file by its island: only a Flow lists here (a Being or a Thing in the same folder is no Flow).
-    listWorldPages(transport, USER_FLOWS_DIR).then(
-      listing => {if (live) setListing(entriesOfForm(listing, 'flow'))},
-      // The owner refuses a listing of a folder that does not exist: that is exactly "no Flow written yet" (flow/instances.ts).
-      reason => {if (live) { if (/No such file or directory/i.test(String(reason))) setListing([]); else setFault(message(reason)) }})
-    return () => {live = false}
-  }, [transport])
   const flows = useMemo(() => [...(listing ?? [])].sort(flowOrder), [listing])
   const refs = useMemo(() => flows.slice(0, ROWS_READ).map(entry => entry.location.ref), [flows])
   const byRef = useMemo(() => new Map(flows.map(entry => [entry.location.ref, entry])), [flows])
-  const readings = useRowReadings<FlowReading>(transport, refs, ref => readFlowInstance(transport, byRef.get(ref)!.location)
+  const readings = useRowReadings<FlowReading>('flow_read', transport, refs, ref => readFlowInstance(transport, byRef.get(ref)!.location)
     .then(instance => flowReadingOf(instance.doc), (reason): FlowReading => ({state: 'refused', message: message(reason)})))
   if (transport.kind === 'unavailable') {
     return <DesignedRead absence="The kernel carrier is unavailable" reason={transport.reason} affordance={`The Flows list at ${USER_FLOWS_DIR} when the carrier answers.`} />
@@ -436,13 +427,10 @@ export function entriesOfForm(listing: PageListing, form: PageForm): NativeFileE
  * set, dragged onto the empty track or, as Live loads a browser item, double-clicked or Entered (seatWorldFromBrowser). */
 function WorldsRows({needle}: {needle: string}) {
   const {transport} = useWorkspace()
-  const [worlds, setWorlds] = useState<CentralWorldsReading>({state: 'reading'})
+  const listed = useListing<CentralWorldsReading>('world_browse', transport, 'worlds', () => readWorlds(transport), () => null, true)
+  const worlds: CentralWorldsReading = listed.status === 'answered' && listed.value ? listed.value
+    : listed.status === 'refused' ? {state: 'unavailable', reason: listed.error ?? 'Central did not answer'} : {state: 'reading'}
   const [said, setSaid] = useState<string | null>(null)
-  useEffect(() => {
-    let live = true
-    void readWorlds(transport).then(next => { if (live) setWorlds(next) })
-    return () => {live = false}
-  }, [transport])
   if (worlds.state === 'reading') return <p className="native-empty" role="status">Reading the worlds…</p>
   if (worlds.state === 'unavailable') return <DesignedRead absence="Central did not disclose its worlds" reason={worlds.reason} affordance="op world_browse — the root register and each project's ProjectCentral." />
   const needleText = needle.trim().toLocaleLowerCase()
@@ -497,18 +485,10 @@ function PageRows({form, label, needle, onSelectSubject, selectedSubject}: {
   selectedSubject: CentralSubjectSelection | null
 }) {
   const {transport} = useWorkspace()
-  const [listing, setListing] = useState<PageListing | null>(null)
-  const [fault, setFault] = useState<string | null>(null)
+  const listed = useListing<PageListing>('page_list', transport, USER_FLOWS_DIR, () => listWorldPages(transport, USER_FLOWS_DIR), reason => notYet(reason) ? NO_PAGES : null)
+  const listing = listed.status === 'answered' ? listed.value : null
+  const fault = listed.status === 'refused' ? listed.error : null
   const {openPage, openFault} = useOpening()
-  useEffect(() => {
-    let live = true
-    setFault(null); setListing(null)
-    if (transport.kind === 'unavailable') return
-    listWorldPages(transport, USER_FLOWS_DIR).then(
-      next => {if (live) setListing(next)},
-      reason => {if (live) { if (/No such file or directory/i.test(String(reason))) setListing({schema: 'oi.page-list/v1', path: USER_FLOWS_DIR, pages: [], not_pages: [], more: false}); else setFault(message(reason)) }})
-    return () => {live = false}
-  }, [transport])
   if (transport.kind === 'unavailable') return <DesignedRead absence="The kernel carrier is unavailable" reason={transport.reason} affordance={`The ${label} of your world list when the carrier answers.`} />
   if (fault) return <DesignedRead absence={`The ${label} listing refused`} reason={fault} affordance={`op page {operation: list} at ${USER_FLOWS_DIR}.`} />
   if (!listing) return <p className="native-empty" role="status">Reading the {label}…</p>
