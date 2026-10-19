@@ -161,6 +161,12 @@ test('New: the four document forms as the mockup\'s grid, each lit only by the W
   assert.equal((lit.match(/disabled=""/g) ?? []).length, 3, 'the Flow lights when its opener exists')
   assert.match(lit, /data-new-form="document-01"[^>]*data-i="New Flow\|Dialogue · Flow · Journal \(0\/1\)\. Makes a new one in the focused pane\."/)
   assert.equal(made, null)
+  assert.doesNotMatch(lit, /Your practice/, 'with no practice opener published, no practice row stands')
+  const practice = html(createElement(NewForms, {openers: [{id: 'form.practice-journal', title: 'Journal', hint: 'your journal', open: () => { made = 'journal' }},
+    {id: 'form.practice-dreams', title: 'Dream journal', hint: 'your dream journal', open: () => {}}, {id: 'surface.new', title: 'New tab', hint: 'x', open: () => {}}]}))
+  assert.match(practice, /<span>Your practice<\/span>/)
+  const kept = [...practice.matchAll(/data-new-form="(form\.practice-[^"]+)"[^>]*>(?:<b[^>]*>.*?<\/b>)([^<]+)<\/button>/g)].map(match => [match[1], match[2]])
+  assert.deepEqual(kept, [['form.practice-journal', 'Journal'], ['form.practice-dreams', 'Dream journal']], 'one button per practice opener; no other opener joins them')
 })
 
 test('Beings and Things: the pages of that form in your world, through the page owner; Worlds: dragged onto the empty track (T-WORLDS W2)', async () => {
