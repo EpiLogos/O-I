@@ -212,6 +212,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
   const {here: stalledHere} = stalledLanes(set, tree)
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
+  const removeTrack = set.actions?.removeTrack
   const recordSlot = set.actions?.recordSlot, launchTrack = set.actions?.launchTrack
   const mainName = set.main?.name
   const mainTitle = set.main ? `${mainName} · its chain: ${set.main.chain.length ? set.main.chain.join(', ') : 'none named'}` : undefined
@@ -263,8 +264,13 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
           {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
           {foldable && <button type="button" className="gf" aria-expanded={open} aria-label={`${open ? 'Fold' : 'Unfold'} ${track.name}`}
             title={`${open ? 'Fold' : 'Unfold'} the ${members.length} under ${track.name}`} onClick={() => onFold(track.id)}>{open ? '▼' : '▶'}</button>}
-          <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} aria-pressed={selectedTrack}
-            onClick={() => selection.select({kind: 'track', ref: track.id, title: track.name})}>{track.name}</button>
+          <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${removeTrack && owned ? ' · select it and press Delete to take it out of the set' : ''}`} aria-pressed={selectedTrack}
+            onClick={() => selection.select({kind: 'track', ref: track.id, title: track.name})}
+            onKeyDown={removeTrack && owned ? event => { if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id)) } } : undefined}>{track.name}</button>
+          {/* Live's Delete on a selected track, also under the pointer: the selected track's own way out of the set (the inverse of a
+              drop on the empty track). What it holds stays where its owner keeps it. */}
+          {removeTrack && owned && selectedTrack && <button type="button" className="trk-remove" aria-label={`Take ${track.name} out of the set`} data-receipt={receiptMark(receipt, `remove:${track.id}`)}
+            title={`Take ${track.name} out of the set (${removeTrack.op})`} onClick={() => onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id))}>×</button>}
           {launchTrack && owned && <button type="button" className="trk-launch" aria-label={`Launch ${track.name}`} data-receipt={receiptMark(receipt, `track:${track.id}`)}
             title={`Launch ${track.name} (${launchTrack.op})`} onClick={() => onPress(`track:${track.id}`, `Launch ${track.name}`, () => launchTrack.run(track.id))}>▸</button>}
           <MixerRow cells={mixerCells(set, track, column)} shown={!!set.mixer} trackId={track.id} receipt={receipt} onPress={onPress} />

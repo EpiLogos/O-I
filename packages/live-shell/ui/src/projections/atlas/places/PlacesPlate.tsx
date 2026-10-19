@@ -44,7 +44,7 @@ import {atlasScale, subscribeAtlasScale, turnAtlasTo} from './placesHost'
 import {findPlaceRows, placeRows, precisionCounts, relationRows, routeRows, withinRows, type PlaceRow, type RelationRow} from './placesModel'
 import {
   PLACE_KINDS, PLACE_KIND_WAITS, armLanding, armPlaceTool, choosePlaceKind, disarmPlaceTool, draftLine, notePlaceTool, openOfferedEditor, placeKindChoice,
-  placeToolState, subscribePlaceTool, type PlaceKind, type PlaceToolSubject,
+  placeToolState, subscribePlaceTool, unlandArmed, type PlaceKind, type PlaceToolSubject,
 } from './placeTool'
 import {
   BODY_CHOICES, GIVEN, NO_BODY, NO_OTHER, WORLD_BODY_SETTINGS, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, subscribeWorldBody, worldBodyState,
@@ -388,6 +388,12 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
         disabled: body.state === 'reading' || body.state === 'refused',
         does: `${body.world.name}: ${body.standing}; ${body.landing ? 'lands on your planet here' : body.unlanded ?? ''}. Press, then click your planet, to land it there.`}))}
       onPress={key => { const body = system.bodies.find(entry => entry.key === key); if (body) armLanding({key: body.key, name: body.world.name}) }} />}
+    {/* A landing is undone as it is made: a landed world, pressed, either moves (click your planet) or comes off your planet here, its
+        body kept without the landing (system/SystemReadings.tsx unlandWorld). */}
+    {tool.phase === 'landing' && system.state === 'read' && system.bodies.find(body => body.key === tool.target.key)?.landing && <div className="plate-span plate-tool-row">
+      <Action label="Off your planet" does={`Take ${tool.target.name} off your planet: its body is kept whole, without a landing, written on its own register on the revision read. Or click your planet to move it there.`}
+        onPress={() => void unlandArmed()} />
+    </div>}
     {chosenRow
       ? <div className="plate-keys places-chosen">
           <PlateLine text={`${chosenRow.provenance}${chosenRow.validity ? ` · valid ${chosenRow.validity}` : ''}${chosenRow.reason ? ` · ${chosenRow.reason}` : ''}${windowSaid ? ` · ${windowSaid}` : ''}`}

@@ -193,6 +193,9 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .mx-route[data-state="unread"] { color: var(--text-faint) }
 /* A track that launches itself (Central's workspace): a small launcher at the head's right. */
 .trk .trk-launch { position: absolute; top: 0; right: 0; width: 16px; height: 24px; z-index: 3; padding: 0; background: none; border: 0; color: var(--bg-0); font-size: 9px }
+/* A selected track's way out of the set, on its head beside the launcher (Live's Delete on a selected track). */
+.trk .trk-remove { position: absolute; top: 0; right: 16px; width: 16px; height: 24px; z-index: 3; padding: 0; background: none; border: 0; color: var(--bg-0); font-size: 12px; line-height: 1 }
+.trk .trk-remove:hover, .trk .trk-remove:focus-visible { color: var(--text) }
 .trk .trk-launch[data-receipt="refused"] { color: var(--rec) }
 /* An armed track's empty slot records (Live's round record button). */
 .cs .sg-rec { width: 13px; height: 13px; padding: 0; display: grid; place-items: center; background: none; border: 1px solid var(--line); border-radius: 50%; color: var(--rec); flex: none }
