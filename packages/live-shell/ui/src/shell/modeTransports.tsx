@@ -25,6 +25,7 @@ import type {NativeCompositionViewSource} from './compositionViews'
 import {useFactoryTransport} from './transports/useFactoryTransport'
 import {useExpressionsTransport} from './transports/useExpressionsTransport'
 import {useCentralTransport} from './transports/useCentralTransport'
+import {useSittingTransport} from '../inhabitants/ql/devices/qlSitting'
 import {civilDayLabel} from './transports/transportReadings'
 import {civilDateOfDayRef} from '../central/centralVertical'
 import {useAtlasTimeBindings} from '../projections/atlas/places/placesTransport'
@@ -115,12 +116,17 @@ const useTechneTransport: UseModeTransport = ({readouts, timeSpine, focusedInstr
   }
 }
 
+/** A mode's transport with the sitting in front of you over it (manual §24.3 "Transport": Play rings the bell and begins, Stop ends it
+ * and keeps the time sat, Loop shows the intervals): while a sitting is armed or plays its three slots are the sitting's, and the mode's
+ * own stand again when it ends (inhabitants/ql/devices/qlSitting.ts). */
+const withSitting = (use: UseModeTransport): UseModeTransport => reading => ({...use(reading), ...useSittingTransport()})
+
 export const MODE_TRANSPORT: Readonly<Record<SurfMode, UseModeTransport>> = {
   live: useLiveTransport,
   base: useCentralTransport,
   factory: useFactoryTransport,
-  expressions: useExpressionsTransport,
-  techne: useTechneTransport,
+  expressions: withSitting(useExpressionsTransport),
+  techne: withSitting(useTechneTransport),
 }
 
 /** The mode's bar: its bindings over the one transport. Keyed by mode where it is mounted, so each mode keeps its hook order. */

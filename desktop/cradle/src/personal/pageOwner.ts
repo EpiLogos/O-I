@@ -34,7 +34,21 @@ export interface PageLaunch {schema: "oi.page-launch/v1"; location: CentralLocat
 export interface PageStop {schema: "oi.page-stop/v1"; now_ref: string; outcome: "closed" | "unchanged"; receipt?: unknown}
 /** The task a page's clearing is allocated under (kernel/src/page.rs `page_task`): how a NOW is known as a page's moment. */
 export const pageTask = (location: Pick<CentralLocation, "ref">): string => `oi:page:${location.ref}`;
-export const launchPage = (transport: KernelTransportStatus, location: CentralLocation) =>
-  page<PageLaunch>(transport, {operation: "launch", location});
+/** What answers a page's Launch once its owner has opened its moment: a journey's page opens its Deck journey, a Being launched as Sky
+ * gives the Sky its natal source (T-WORLDS W4). Each is told after the owner answered, and none can undo the Launch. */
+export type PageLaunchListener = (launched: PageLaunch, transport: KernelTransportStatus) => void | Promise<void>;
+const launchListeners = new Set<PageLaunchListener>();
+export function onPageLaunched(listener: PageLaunchListener): () => void {
+  launchListeners.add(listener);
+  return () => { launchListeners.delete(listener); };
+}
+export const launchPage = async (transport: KernelTransportStatus, location: CentralLocation): Promise<PageLaunch> => {
+  const launched = await page<PageLaunch>(transport, {operation: "launch", location});
+  for (const listener of [...launchListeners]) {
+    try { void Promise.resolve(listener(launched, transport)).catch(cause => console.error("A page's launch was not answered:", cause)); }
+    catch (cause) { console.error("A page's launch was not answered:", cause); }
+  }
+  return launched;
+};
 export const stopPage = (transport: KernelTransportStatus, nowRef: string, project?: string | null) =>
   page<PageStop>(transport, project === undefined ? {operation: "stop", now_ref: nowRef} : {operation: "stop", now_ref: nowRef, project});

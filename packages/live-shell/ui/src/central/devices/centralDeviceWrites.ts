@@ -28,7 +28,8 @@ import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {appendEntry, embedDocument} from '../../../../../../desktop/cradle/src/flow/instance'
 import {readFlowInstance, writeFlowInstance} from '../../../../../../desktop/cradle/src/flow/instances'
-import {isCurrentFormat, type PluralParticipant, type Relation} from '../../../../../../desktop/cradle/src/flow/plural'
+import {circleHolder, containerOf, isCurrentFormat, type EntryKind, type PluralParticipant, type Relation} from '../../../../../../desktop/cradle/src/flow/plural'
+import {clipHostId, viewHoldsOf} from '../../frame/detail/clipBinding'
 import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
 import {acquireNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
 import {announceContext, nativeContext, type ContextMutation, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
@@ -184,19 +185,37 @@ export async function closeDay(transport: KernelTransportStatus): Promise<{close
  * hand still holds it). The person is the Flow's person participant who has not left (FlowSurface.tsx writerOf); a Flow with none
  * is refused by the template's own words. */
 export async function appendFlowEntry(transport: KernelTransportStatus, location: CentralLocation, entry: {readonly text: string; readonly speaker?: string;
-  readonly relation: {readonly type: 'reply' | 'branch' | 'correct'; readonly entryId: string} | null}): Promise<{revision: string | null}> {
+  readonly relation: {readonly type: 'reply' | 'branch' | 'correct'; readonly entryId: string} | null;
+  /** In a container, what the entry is (manual §24.5: observe, interpret, choose), as Clip view's Entry sets it; written with the entry. */
+  readonly kind?: EntryKind | null}): Promise<{revision: string | null}> {
   const text = entry.text.trim()
   if (!text) throw new Error('The entry has no words.')
   const instance = await readFlowInstance(transport, location)
   const plural = isCurrentFormat(instance.doc)
   const people = ((instance.doc.meta.participants ?? []) as PluralParticipant[]).filter(person => person.kind === 'person' && !person.left)
-  const writer = people.find(person => person.initial === entry.speaker) ?? people[0]
+  // Speak as names a participant by initial or name; unnamed, in a Circle the word is with its holder (flow/plural.ts circleHolder), else
+  // with you. The circle's own rule refuses anyone else.
+  const holder = plural && containerOf(instance.doc) === 'circle' ? circleHolder(instance.doc) : undefined
+  const writer = people.find(person => person.initial === entry.speaker || (!!entry.speaker && person.name === entry.speaker))
+    ?? (!entry.speaker && holder && people.some(person => person.key === holder.key) ? holder : undefined) ?? people[0]
   if (entry.relation && !instance.doc.entries.some(candidate => candidate.id === entry.relation!.entryId)) throw new Error('The entry this one connects to is no longer in the Flow.')
   const relations: Relation[] = plural && entry.relation ? [{type: entry.relation.type, entryId: entry.relation.entryId, revision: instance.doc.meta.revision, anchor: null}] : []
-  const {html} = appendEntry(instance.html, text, plural ? {participant: writer, relations, basisRevision: instance.doc.meta.revision} : undefined)
+  // The kind is the container's: written only while the Flow is held in one (outside one the form refuses it, plural.ts checkContainer).
+  const kind = entry.kind && containerOf(instance.doc) ? entry.kind : undefined
+  const {html} = appendEntry(instance.html, text, plural ? {participant: writer, relations, basisRevision: instance.doc.meta.revision, ...(kind ? {kind} : {})} : undefined)
   const result = await writeFlowInstance(transport, instance.location, instance.revision, html)
   if (result.outcome === 'conflict') throw new Error(`The Flow moved while the entry was written (the owner holds ${result.current?.revision ?? 'a newer revision'}): nothing was overwritten. Re-read the Flow and write the entry again.`)
   return {revision: result.revision ?? null}
+}
+
+/** The controls for the next entry as Clip view holds them for this Flow (manual §18.1 "In a Flow, the controls for the next entry stand
+ * at the head of the editor": Speak as; in a container, Entry): the view's own holds of the page's clip (central/clipBinding.ts, ref
+ * `subject:note:<path>`), none when Clip view has not held them. */
+export function composerOf(location: CentralLocation): {speaker?: string; kind: EntryKind} {
+  const held = viewHoldsOf(clipHostId('central', `subject:note:${location.path}`))
+  // The Entry control's default is Observe (manual §24.5; the clip design's `entryKind`): a kind is written only in a container.
+  const kind = typeof held.entryKind === 'string' && ['observe', 'interpret', 'choose'].includes(held.entryKind) ? held.entryKind as EntryKind : 'observe'
+  return {...(typeof held.speakAs === 'string' && held.speakAs ? {speaker: held.speakAs} : {}), kind}
 }
 
 /** A Flow's own metadata — its title and the view it opens in — written the way its entries are: the owner's file read again, the
@@ -267,7 +286,7 @@ export function centralWriters(input: {
       entry: async value => {
         if (!page?.location) throw new Error('No Flow document is reached: open one from the browser, or press in its pane.')
         if (page.dirty) throw new Error('The page holds edits its owner does not: save or re-read them first, so the entry joins the revision you read.')
-        await appendFlowEntry(transport, page.location, {text: String(value ?? ''), relation: null})
+        await appendFlowEntry(transport, page.location, {text: String(value ?? ''), relation: null, ...composerOf(page.location)})
         afterWrite?.page?.()
       },
     },

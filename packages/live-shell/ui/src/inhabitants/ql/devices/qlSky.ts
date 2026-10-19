@@ -141,6 +141,24 @@ export interface QlSkyState {
   /** The ask the reading answers (a reading for an earlier ask stands until the newer one answers). */
   readonly answered: SkyAsk | null
   readonly view: SkyView
+  /** The birth sky drawn as the natal ring: a person's saved identity, given by Launch as Sky on their Being page (beingSky.ts); absent,
+   * the ring stays closed, with `natalWhy` saying why when a launch found none. */
+  readonly natal?: SkyNatal | null
+  readonly natalWhy?: string | null
+}
+
+/** A birth sky as the person's saved identity carries it (`ql.nara-natal/v1` `sky.bodies`, read through nara_identity open): whose,
+ * from which saved identity at which revision, and each body's place. The shell computes no second chart (manual §24.6). */
+export interface SkyNatal {
+  readonly person_ref: string
+  readonly name: string | null
+  readonly source: {readonly source_ref: string; readonly revision: string}
+  readonly bodies: readonly {readonly body: string; readonly longitude_degrees: number; readonly retrograde: boolean}[]
+}
+
+/** Give the Sky its natal source, or take it away with the reason: the natal ring opens on it. */
+export function setQlSkyNatal(natal: SkyNatal | null, why: string | null = null): void {
+  setState({...state, natal, natalWhy: natal ? null : why, view: natal ? {...state.view, natal: true} : state.view})
 }
 
 const INITIAL: QlSkyState = {ask: {now: true}, reading: null, answered: null, view: {aspects: false, natal: false, hidden: []}}
@@ -220,7 +238,7 @@ export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   speed: 'No clock runs the sky here, so it has no speed.',
   observer: 'The shell asks for the shared geocentric sky: no observer place reaches it, so the private sky cannot be asked.',
   havePlace: 'No observer place reaches the shell.',
-  natalBodies: 'The birth sky is the person\'s saved Nara identity (ql.nara-natal/v1); no identity is chosen for this device, so none is read.',
+  natalBodies: 'The birth sky is the person\'s saved Nara identity (ql.nara-natal/v1): launch your Being page as Sky, and the Sky reads it from your identity.',
   aspectList: 'The transit lists no aspects; the view finds them from the bodies by the owner\'s rule.',
   moves: 'No compiled modulation plan runs in the shell: nothing the sky moves is evaluated, so no move is reported.',
 }
@@ -251,6 +269,7 @@ export function qlSkyValues(sky: QlSkyState): Record<string, Value> {
   if (from !== undefined) Object.assign(values, partsOf(from))
   values.aspects = sky.view.aspects
   values.natal = sky.view.natal
+  if (sky.natal) values.natalBodies = JSON.stringify(sky.natal.bodies.map(body => ({body: body.body, longitude_degrees: body.longitude_degrees, retrograde: body.retrograde})))
   for (const body of SKY_BODIES) values[`b:${body}`] = !sky.view.hidden.includes(body)
   return values
 }
@@ -286,6 +305,8 @@ export function qlSkyHand(key: string, value: Value | undefined, sky: QlSkyState
 export function qlSkyBinding(sky: QlSkyState): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(QL_SKY_ABSENT)) standing[key] = {disabled: why}
+  // The birth sky is a reading of the person's saved identity, never written here; absent, why it is not drawn.
+  standing.natalBodies = {disabled: sky.natal ? 'Your birth sky, read from your saved identity: correct the identity, never the sky.' : sky.natalWhy ?? QL_SKY_ABSENT.natalBodies!}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_SKY_LOCAL) local[key] = value => qlSkyHand(key, value)
   return {id: QL_SKY_DEVICE_ID, values: qlSkyValues(sky), writes: () => false, standing, local}

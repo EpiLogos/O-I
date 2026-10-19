@@ -104,16 +104,38 @@ export function tieWorld(html: string, worldRef: string): string {
   return html.replace(QL_DOC, (_all, open: string, _body: string, close: string) => open + json + close);
 }
 
+/** The keys of a Flow's meta that are its mint's own: what it is made for never names them. */
+const MINTED_META: ReadonlySet<string> = new Set(["documentId", "created", "revision", "participants", "format", "upgrade"]);
+
+/** A Flow page with `meta` merged into its island's meta (the same island read and write as tieWorld). A key of the mint's own is
+ * refused, so a page's identity is never set this way. Pure. */
+export function withFlowMeta(html: string, meta: Readonly<Record<string, unknown>>): string {
+  const own = Object.keys(meta).filter(key => MINTED_META.has(key));
+  if (own.length) throw new Error(`A new Flow's ${own.join(", ")} ${own.length > 1 ? "are" : "is"} its own: nothing sets ${own.length > 1 ? "them" : "it"} at creation.`);
+  const QL_DOC = /(<script type="application\/json" id="ql-doc">)([\s\S]*?)(<\/script>)/;
+  const match = html.match(QL_DOC);
+  if (!match) throw new Error("The Flow carries no ql-doc island, so nothing is kept in its meta.");
+  const doc = JSON.parse(match[2].replace(/<\\\/script/gi, "</script").replace(/<\\!--/g, "<!--")) as {meta?: Record<string, unknown>; entries?: unknown};
+  if (!doc.meta || !Array.isArray(doc.entries)) throw new Error("This page is no Flow, so it keeps no Flow meta.");
+  doc.meta = {...doc.meta, ...meta};
+  const json = JSON.stringify(doc).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+  return html.replace(QL_DOC, (_all, open: string, _body: string, close: string) => open + json + close);
+}
+
 export async function createFormInPlace(transport: KernelTransportStatus, form: DocumentForm, options: {project?: string; projects?: readonly {name?: string; path?: string}[]; now?: Date;
   /** The world the page belongs to (its register's wiki space ref): a page form's island is tied to it. */
-  worldRef?: string}): Promise<CreatedCopy> {
+  worldRef?: string;
+  /** What a Flow page is made for, kept in its meta from its first write (T-WORLDS W4: a practice page's `meta.practice`, a sitting's
+   * record): merged into a Flow's meta. Its identity (documentId, created, revision, participants, format) is the mint's, never this. */
+  meta?: Readonly<Record<string, unknown>>}): Promise<CreatedCopy> {
   const now = options.now ?? new Date();
   // Goal, Vision and Mockup are asked for in the scope's own human ground —
   // through the owner's authored creation door; so is a world's page in a
   // project's scope (the project's world keeps its pages in its own folder).
   // Every other form lands at Central's first-save door (Control/user/flows).
   const worldPage = WORLD_PAGE_FORMS.has(form.kind);
-  const tie = (html: string) => worldPage && options.worldRef ? tieWorld(html, options.worldRef) : html;
+  const tied = (html: string) => worldPage && options.worldRef ? tieWorld(html, options.worldRef) : html;
+  const tie = (html: string) => options.meta && form.kind === "document-01" ? withFlowMeta(tied(html), options.meta) : tied(html);
   const inPlace = form.kind === "document-goal" || form.kind === "document-vision" || form.kind === "document-mockup" || (worldPage && !!options.project);
   if (inPlace && (form.kind !== "document-goal") && !options.project) {
     throw new Error(`A ${form.label} belongs to a project — choose a project scope first.`);

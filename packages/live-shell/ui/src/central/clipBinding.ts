@@ -24,6 +24,11 @@ import {validateDocumentBasis} from '../../../../../desktop/cradle/src/central/d
 import {islandSpan} from '../../../../../desktop/cradle/src/document/identity'
 import {listFiles, readFile} from '../../../../../desktop/cradle/src/files/client'
 import {parseInstance, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
+import {circleHolder, containerOf, ENTRY_KINDS} from '../../../../../desktop/cradle/src/flow/plural'
+import {currentIdentity} from '../../../../../desktop/cradle/src/nara/identity/current'
+import {ANSWER_NO_EXPRESSION, ANSWER_NO_IDENTITY, answerThis} from '../../../../../desktop/cradle/src/nara/answerThis'
+import {useHostedChrome} from '../projections/expressionsPaneHost'
+import {useBeingSky} from '../inhabitants/ql/devices/beingSky'
 import type {CentralLocation, KernelTransportStatus, NativeDirectory, PageField} from '../../../../../desktop/cradle/src/kernel/types'
 import {writePageField} from '../../../../../desktop/cradle/src/personal/pageOwner'
 import type {Value, Values} from '../frame/devices/designed'
@@ -195,6 +200,17 @@ export function dayPayloadValues(payload: unknown): Values {
   return values
 }
 
+/** A Flow's entries with the kind each says it is, in a container (manual §24.5; flow/plural.ts PluralEntry.kind): the design draws it
+ * beside the author. Pure. */
+function withEntryKinds(values: Values, doc: unknown): Values {
+  const kinds = new Map((Array.isArray(record(doc)?.entries) ? record(doc)!.entries as unknown[] : []).map(record)
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry.id === 'string' && ENTRY_KINDS.includes(String(entry.kind)))
+    .map(entry => [entry.id as string, entry.kind as string]))
+  if (!kinds.size || typeof values.entries !== 'string') return values
+  const entries = (JSON.parse(values.entries) as {id: string}[]).map(entry => kinds.has(entry.id) ? {...entry, kind: kinds.get(entry.id)} : entry)
+  return {...values, entries: JSON.stringify(entries)}
+}
+
 /** A file's own content as the page's readings — a Flow, an oi.page page, or its own text — with the island they were read from (the
  * passage acts read it to know what is marked). Pure. */
 export function fileReading(content: string, fallbackKind: string): {values: Values; island: unknown} {
@@ -203,7 +219,7 @@ export function fileReading(content: string, fallbackKind: string): {values: Val
     try { doc = parseInstance(content) } catch { doc = null }
     const page = pageIslandValues(doc)
     if (page) return {values: page, island: doc}
-    if (doc && Array.isArray((doc as QlDoc).entries)) return {values: {...flowValues(readFlowPage(doc as QlDoc)), ...ownValues(record((doc as QlDoc).meta) ?? {})}, island: doc}
+    if (doc && Array.isArray((doc as QlDoc).entries)) return {values: withEntryKinds({...flowValues(readFlowPage(doc as QlDoc)), ...ownValues(record((doc as QlDoc).meta) ?? {})}, doc), island: doc}
   }
   return {values: {kind: fallbackKind, page: JSON.stringify(pageOfText(content)), source: content.length > READ_PREVIEW_CHARS ? `${content.slice(0, READ_PREVIEW_CHARS)}…` : content}, island: null}
 }
@@ -222,11 +238,14 @@ export const CENTRAL_WIRING: ClipWiring = {
     notes: 'the page\'s notes', participants: 'a Flow\'s participants', entries: 'a Flow\'s entries, their relations and depth', world: 'bindings.worldRef', subject: 'bindings.subjectRef',
     office: 'bindings.categories (C1–C4)', sources: 'bindings.sources, each at its revision', expression: 'bindings.expressionRef', layout: 'appearance.layout', tone: 'appearance.tone',
     'hl.colour': 'the Flow template\'s one marker colour',
+    sky: 'a Being\'s birth sky: its Subject\'s saved identity\'s own natal chart, read through nara_identity (inhabitants/ql/devices/beingSky.ts)',
+    identity: 'a Being\'s identity layers, each with its source or absent with its reason (nara_identity open)',
   },
   acts: {},
   view: {
     selected: 'the paragraph or entry the selection stands in, in Clip view', speakAs: 'who writes the next entry (FLOW_WIRING local: speaker)',
     relation: 'how the next entry connects (FLOW_WIRING local)', journalPage: 'the journal page Clip view shows (FLOW_WIRING local: page)',
+    entryKind: 'what the next entry is, in a container: observe, interpret or choose (written with the entry, flow/plural.ts)',
     'notes.order': 'the order of the list of notes (NOTES_WIRING local)',
   },
   refused: {
@@ -242,7 +261,6 @@ export const CENTRAL_WIRING: ClipWiring = {
     // Launch and the container (manual §18.1, §24.5; T-WORLDS W2): the page owner op keeps them once it exists.
     opensAs: 'No owner keeps how a page opens yet: the page owner op carries it (T-WORLDS W2).', opensIn: 'No owner keeps where a page opens yet (T-WORLDS W2).',
     seats: 'No owner reseats a Flow\'s people and agents yet (T-WORLDS W2).', container: 'A Flow\'s form keeps no container yet: meta.container joins the flow form (T-WORLDS W2, W4).',
-    entryKind: 'A Flow\'s entries carry no kind yet: observe, interpret and choose join the flow form (T-WORLDS W4).',
   },
   absent: {
     being: BEINGS_WIRING.absent.kind!, place: BEINGS_WIRING.absent.place!, anchor: BEINGS_WIRING.absent.anchor!, 'text.style': 'The page\'s selection does not cross the host bridge.',
@@ -294,7 +312,7 @@ export function selectionMarked(island: unknown, at: {entry: string} | {part: st
 /** A page's wiring over the page owner: its own fields written, the passage acts making highlights and notes on the selection, the
  * next highlight's colour and the next note's timing and anchor held by the view. A pane holding the page with unsaved edits refuses
  * every write first. */
-function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, held: DocumentInPane | null, view: () => Values): ClipWiring {
+function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, held: DocumentInPane | null, view: () => Values, answer: AnswerHand | null = null): ClipWiring {
   const flow = kind === 'flow'
   const page = kind === 'being' || kind === 'thing'
   // The keys the page owner takes for this kind of page (the design's keys; kernel/src/page.rs `apply_field` holds each rule).
@@ -330,9 +348,23 @@ function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, 
     },
   }
   const acts = Object.fromEntries(Object.entries(all).filter(([key]) => writes.has(key)))
-  const refused = Object.fromEntries(Object.entries(CENTRAL_WIRING.refused).filter(([key]) => !(key in acts) && !(key in PAGE_VIEW && (flow || page))))
+  // Answer this (manual §18.1, §24.1; nara/answerThis.ts): on a Flow, Nara answers the selected entry's words from your pages, and the
+  // answer is kept in the Flow naming each passage. Where no bound conversation can stand, it stays refused in words naming what is
+  // missing.
+  const answering = flow && answer && 'ask' in answer ? answer : null
+  if (answering) acts['act.answerthis'] = async () => {
+    if (held?.dirty) throw new Error(DIRTY)
+    const at = selectedAt(kind, view().selected)
+    if (!at || !('entry' in at)) throw new Error('Select an entry of the Flow first: Nara answers its words.')
+    await answering.ask(at.entry)
+  }
+  const refused: Record<string, string> = Object.fromEntries(Object.entries(CENTRAL_WIRING.refused).filter(([key]) => !(key in acts) && !(key in PAGE_VIEW && (flow || page))))
+  if (flow && answer && 'refused' in answer) refused['act.answerthis'] = answer.refused
   return {...CENTRAL_WIRING, refused, acts: {...CENTRAL_WIRING.acts, ...acts}, view: {...CENTRAL_WIRING.view, ...(flow || page ? PAGE_VIEW : {})}}
 }
+
+/** Answer this on a Flow (nara/answerThis.ts): the act on the selected entry, or why it cannot be made now. */
+export type AnswerHand = {readonly ask: (entryId: string) => Promise<void>} | {readonly refused: string}
 
 /** What the view holds for the passage acts (the next highlight's colour, the next note's timing and anchor). */
 const PAGE_VIEW: Readonly<Record<string, string>> = {
@@ -343,7 +375,7 @@ const PAGE_VIEW: Readonly<Record<string, string>> = {
 
 /** The page's binding over its reading: the save outcome where the reached page is this file; the page's own fields written through
  * the page owner where a writer is given. Pure. */
-export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null; write?: PageWrite | null}): ClipBinding {
+export function centralClipBinding(reading: CentralReading, input: {colour?: string | null; reached?: DocumentInPane | null; write?: PageWrite | null; answer?: AnswerHand | null}): ClipBinding {
   const values: Record<string, Value> = {...reading.values}
   if (input.colour && !values.colour) values.colour = input.colour
   const reached = input.reached
@@ -352,14 +384,25 @@ export function centralClipBinding(reading: CentralReading, input: {colour?: str
   const ref = reading.ref
   const viewDefaults: Record<string, Value> = {'view.panel': 'clip', 'view.tools': 'highlight', 'view.editor': values.kind === 'flow' ? 'dialogue' : 'page', 'notes.order': 'place',
     'hl.colour': 'yellow', 'notes.timing': 'during', 'notes.anchor': 'selection',
-    ...(typeof values.participants === 'string' ? speakerDefault(values.participants) : {})}
+    ...(typeof values.participants === 'string' ? speakerDefault(values.participants, reading.island) : {}),
+    ...(values.container && values.container !== 'none' ? {entryKind: 'observe'} : {})}
   const view = (): Values => ({...values, ...viewDefaults, ...viewHoldsOf(clipHostId('central', ref))})
   const writable = input.write && reading.location && reading.island && ['flow', 'being', 'thing'].includes(String(values.kind))
-  const wiring = writable ? pageWiring(input.write!, values.kind, reading.island, here, view) : CENTRAL_WIRING
+  const wiring = writable ? pageWiring(input.write!, values.kind, reading.island, here, view, input.answer ?? null) : CENTRAL_WIRING
   return clipBinding({mode: 'central', ref, values, wiring, placed: true, viewDefaults})
 }
-const speakerDefault = (participants: string): Record<string, Value> => {
-  try { const person = (JSON.parse(participants) as {name: string; kind: string}[]).find(item => item.kind === 'person'); return person ? {speakAs: person.name} : {} } catch { return {} }
+/** Who the next entry belongs to by default: in a Circle the one who holds the word (flow/plural.ts circleHolder: Speak as passes round
+ * the participants in order, manual §24.5), else you. */
+const speakerDefault = (participants: string, island: unknown): Record<string, Value> => {
+  try {
+    const people = JSON.parse(participants) as {name: string; initial: string; kind: string}[]
+    const doc = island as QlDoc | null
+    const holder = doc && Array.isArray(doc.entries) && containerOf(doc) === 'circle' ? circleHolder(doc) : undefined
+    const held = holder ? people.find(person => person.initial === holder.initial) ?? (holder.name ? {name: holder.name} : null) : null
+    if (held) return {speakAs: held.name}
+    const person = people.find(item => item.kind === 'person')
+    return person ? {speakAs: person.name} : {}
+  } catch { return {} }
 }
 
 type Answer = {phase: 'reading'} | {phase: 'read'; values: Values; location?: CentralLocation | null; revision?: string; island?: unknown} | {phase: 'refused'; values: Values}
@@ -475,6 +518,10 @@ export function useCentralClip(): ClipBinding | null {
   const occasionAnswer = useAnswer(occasion && occasion.kind !== 'day' ? `occasion:${occasion.subjectRef}:${occasion.instantUnixMs ?? 'undated'}` : null, () => readOccasion(transport, occasion!))
   const day = useDayValues(transport, occasion?.kind === 'day' ? occasion : mainDay)
   const colour = selected.track?.color ?? null
+  // The open Expression a Nara conversation is bound to (the frame's native scene, as the M3 clock reads it), and a Being page's sky:
+  // its Subject's saved identity, when it carries a natal chart (inhabitants/ql/devices/beingSky.ts).
+  const scene = useHostedChrome()?.state?.nativeScene ?? null
+  const beingSky = useBeingSky(transport, subjectAnswer?.phase === 'read' ? subjectAnswer.island : undefined)
   if (subject) {
     const ref = `subject:${subject.kind}:${subject.path}`
     const answer = subjectAnswer ?? {phase: 'reading' as const}
@@ -488,8 +535,19 @@ export function useCentralClip(): ClipBinding | null {
         if (reached?.location?.ref === location.ref) reached.reread?.()
       }
     } : null
-    return centralClipBinding({ref, values: answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : answer.values, location,
-      island: answer.phase === 'read' ? answer.island : undefined}, {colour, reached, write})
+    // Answer this: the bound Nara conversation is found for the chosen identity and the open Expression (nara/answerThis.ts); the
+    // answer kept, the page is read again.
+    const island = answer.phase === 'read' ? answer.island : undefined
+    const identity = currentIdentity()
+    const answering: AnswerHand | null = !location || !island ? null : !identity ? {refused: ANSWER_NO_IDENTITY} : !scene ? {refused: ANSWER_NO_EXPRESSION}
+      : {ask: async entryId => {
+        try { await answerThis({transport, identity, expressionRef: scene.expression_ref, location, island, entryId}) } finally {
+          setWritten(n => n + 1)
+          if (reached?.location?.ref === location.ref) reached.reread?.()
+        }
+      }}
+    const values = answer.phase === 'reading' ? {kind: FORM[subject.kind], name} : {...answer.values, ...beingSky}
+    return centralClipBinding({ref, values, location, island}, {colour, reached, write, answer: answering})
   }
   if (resolved?.state === 'absent') return centralClipBinding({ref: `occasion:${resolved.ref}`, values: {name: resolved.ref,
     page: JSON.stringify(pageOfText(`The retained occasion ${resolved.ref} is no longer in the temporal reading. The spine keeps its basis; nothing opens for it here.`))}}, {colour})

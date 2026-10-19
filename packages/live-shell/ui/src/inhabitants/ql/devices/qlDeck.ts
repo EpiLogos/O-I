@@ -16,7 +16,7 @@
 import {useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import type {CentralLocation, KernelOp} from '../../../../../../../desktop/cradle/src/kernel/types'
-import type {JourneyAct, JourneyRequest, NaraJourneyRequest, NaraJourneyResult, PlacementView, SpreadKind, SpreadView} from '../../../../../../../desktop/cradle/src/nara/journey'
+import type {DeckDefinition, JourneyAct, JourneyRequest, NaraJourneyRequest, NaraJourneyResult, PlacementView, SpreadKind, SpreadView} from '../../../../../../../desktop/cradle/src/nara/journey'
 import type {SdkParamRow} from '../../sdk/define'
 import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../../frame/devices/designed'
@@ -41,6 +41,46 @@ export interface DeckJourney {
   readonly actor_ref: string
   readonly day_ref: string
   readonly title?: string
+  /** A journey's page that holds no journey yet (made from New…): the Deck opens it, by its theme, with consent to chance. */
+  readonly unopened?: boolean
+  /** Whose journey it is (QL's subject): the person the chosen identity names. Absent, the journey cannot open. */
+  readonly subject_ref?: string | null
+}
+
+export const NOT_OPENED = 'This journey is not open yet: write its theme, the concern in its deeper form, turn Consent on, and it opens with its one deck, shuffled once by chance.'
+export const NO_SUBJECT = 'A journey is yours: choose your identity in the Nara instrument, then open it.'
+/** The one deck a journey opens with: the Thoth deck, the person's own practice (Work/personal/Nara-Personal AGENTS.md "Tarot Protocol":
+ * "Two Thoth decks, read in sequence"), as QL's DeckDefinition carries it (kernel/src/nara_journey.rs tests). */
+export const JOURNEY_DECK: Readonly<DeckDefinition> = Object.freeze({deck_ref: 'deck:thoth', system: 'tarot-thoth', register: 'thoth', extra_cards: [], source_refs: []})
+
+/** Open the journey of a page that holds none (manual §24.4; nara_journey.rs `open`): its concern is the theme written, its one deck the
+ * Thoth deck, shuffled once by the kernel's own chance with the consent given for it, which the opening spends. The page is read first
+ * for the revision the opening is made on. A refusal comes back in the owner's words. */
+export async function openJourneyByTheme(theme: string): Promise<void> {
+  const at = state, journey = at.journey
+  if (!journey?.unopened) throw new Error(journey ? CONCERN_SET : NO_JOURNEY)
+  const title = theme.trim()
+  if (!title) throw new Error('A journey opens on its theme: write the concern in its deeper form.')
+  if (!journey.subject_ref) throw new Error(NO_SUBJECT)
+  if (at.view.consent !== true) throw new Error(NO_CONSENT)
+  const ticket = ++sequence
+  setState({...at, busy: true, view: {...at.view, consent: false}})
+  let revision: string
+  try {
+    const read = await call({op: 'page', request: {operation: 'read', location: journey.location}})
+    const data = (read.outcome as {result?: string; data?: {revision?: string; location?: CentralLocation}} | null | undefined)
+    if (data?.result !== 'page_reading' || typeof data.data?.revision !== 'string' || data.data.location?.ref !== journey.location.ref) throw new Error(read.error ?? 'The journey\'s page did not answer its read.')
+    revision = data.data.revision
+  } catch (error) {
+    if (ticket === sequence) setState({...state, busy: false})
+    throw error instanceof Error ? error : new Error(String(error))
+  }
+  const answer = await ask({operation: 'open', location: journey.location, expected_revision: revision, subject_ref: journey.subject_ref,
+    concern: {concern_ref: `concern:journey:${journey.location.ref}`, title: title.slice(0, 240), basis_sources: []}, deck: {...JOURNEY_DECK},
+    day_ref: journey.day_ref, actor_ref: journey.actor_ref, consent_to_chance: true})
+  if (ticket !== sequence) return
+  if (!answer.ok) { setState({...state, busy: false}); throw new Error(answer.reason) }
+  setState({...state, busy: false, journey: {...journey, unopened: false, title}, result: answer.result, reason: null})
 }
 
 export type DeckCall = (op: KernelOp) => Promise<KernelOpCall>
@@ -100,6 +140,8 @@ async function ask(request: NaraJourneyRequest): Promise<DeckAnswer> {
 export async function openDeckJourney(journey: DeckJourney | null): Promise<void> {
   const ticket = ++sequence
   if (!journey) { setState({...state, journey: null, result: null, reason: NO_JOURNEY, busy: false}); return }
+  // A journey's page made from New… holds no journey until the person opens it: nothing is read, and the Deck asks for its theme.
+  if (journey.unopened) { setState({...state, journey, result: null, reason: NOT_OPENED, busy: false}); return }
   setState({...state, journey, result: null, reason: null, busy: true})
   const answer = await ask({operation: 'read', location: journey.location})
   if (ticket !== sequence) return
@@ -296,13 +338,26 @@ export function qlDeckBinding(deck: QlDeckState): DesignBinding {
   else if (deck.view.consent !== true) for (const key of ['act.draw', 'act.cast']) standing[key] = {disabled: NO_CONSENT}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_DECK_LOCAL) local[key] = value => setQlDeckView({[key]: value})
+  // A journey's page that holds no journey yet opens on its theme, with consent to chance (openJourneyByTheme).
+  const unopened = !!deck.journey?.unopened && !deck.result
+  if (unopened) {
+    if (!deck.journey!.subject_ref) standing.theme = {disabled: NO_SUBJECT}
+    else if (deck.view.consent !== true) standing.theme = {disabled: NO_CONSENT}
+    else delete standing.theme
+  }
   return {
     id: QL_DECK_DEVICE_ID,
     values: qlDeckValues(deck),
-    writes: key => live && ACT_KEYS.includes(key),
+    writes: key => (live && ACT_KEYS.includes(key)) || (unopened && key === 'theme'),
     standing,
     local,
-    ...(live ? {write: async (changes: readonly ValueChange[]) => { for (const change of changes) await deckAct(deckActOf(change, qlDeckState())) }} : {}),
+    ...(live ? {write: async (changes: readonly ValueChange[]) => { for (const change of changes) await deckAct(deckActOf(change, qlDeckState())) }}
+      : unopened ? {write: async (changes: readonly ValueChange[]) => {
+        for (const change of changes) {
+          if (change.key !== 'theme') throw new Error(NOT_OPENED)
+          await openJourneyByTheme(typeof change.value === 'string' ? change.value : '')
+        }
+      }} : {}),
   }
 }
 
