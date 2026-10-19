@@ -257,6 +257,18 @@
       "classification": "window-lifecycle",
       "rationale": "Native window identity, placement and lifecycle projection.",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "native_shell::live_shell_book_read",
+      "classification": "window-lifecycle",
+      "rationale": "Live-shell host command: the workspace book read, or written on the revision read (T-WORLDS §3 W1); the shell's per-person context in the candidate's data home, main webview only.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "native_shell::live_shell_book_write",
+      "classification": "window-lifecycle",
+      "rationale": "Live-shell host command: the workspace book read, or written on the revision read (T-WORLDS §3 W1); the shell's per-person context in the candidate's data home, main webview only.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
     }
   ],
   "filesystem": [
@@ -577,6 +589,66 @@
       "operation": "fs::read_to_string",
       "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::read",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::create_dir_all",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::read",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::read_dir",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::create_dir_all",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::read_dir",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::remove_file",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::File",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::rename",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "owner": "src-tauri/src/workspace_book.rs",
+      "operation": "fs::File",
+      "rationale": "The workspace book's native owner (T-WORLDS §3 W1): the shell's per-person context — workspaces, what each keeps, each mode's opening layout — as one JSON file in the candidate's own data home beside the continuity admission, written atomically on the revision read with its last copies kept; never authored ground, never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
     }
   ]
 }

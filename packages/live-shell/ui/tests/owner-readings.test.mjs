@@ -83,21 +83,40 @@ for (const family of [
   })
 }
 
-test('a read in flight is shared: readers that ask while it runs are served by it', async () => {
+test('a read in flight is shared by readers that ask while it runs; a refresh asks once more after it, never a pile (r22)', async () => {
+  // r22: the Day's set was written while a ground read ran; the refresh after the write was served by that read, which began before
+  // the write, so the grid kept drawing the world the set no longer held.
   const registry = createOwnerReadings()
   let asks = 0
-  let release
-  const read = () => { asks++; return new Promise(resolve => { release = () => resolve({value: 'answer'}) }) }
+  let owner = 'before the write'
+  const releases = []
+  const read = () => { asks++; const said = owner; return new Promise(resolve => { releases.push(() => resolve({value: said})) }) }
   const entry = registry.entry('k', read)
   const first = entry.ensure(EPOCH)
   const second = entry.ensure(EPOCH)
+  assert.equal(first, second, 'a reader that only needs an answer is served by the read in flight')
+  owner = 'after the write'
   const third = entry.refresh(EPOCH)
-  assert.equal(first, second)
-  assert.equal(first, third)
+  const fourth = entry.retry(EPOCH)
+  assert.notEqual(first, third, 'a refresh is not served by a read that began before it')
+  assert.equal(third, fourth, 'one more read, however many ask while one runs')
   assert.equal(asks, 1)
-  release()
+  releases[0]()
   await first
-  assert.equal(entry.snapshot().value, 'answer')
+  assert.equal(entry.snapshot().value, 'before the write')
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.equal(asks, 2, 'the follow-up read starts once the first is done')
+  releases[1]()
+  await third
+  assert.equal(entry.snapshot().value, 'after the write')
+  assert.equal(asks, 2)
+  // with nothing in flight a refresh simply reads
+  owner = 'later'
+  const fifth = entry.refresh(EPOCH)
+  releases[2]()
+  await fifth
+  assert.equal(entry.snapshot().value, 'later')
+  assert.equal(asks, 3)
 })
 
 // ---- a refusal is remembered for its epoch -------------------------------------------------------------------------

@@ -1,0 +1,31 @@
+r22 screen pass — c8af7bbd2 (a landing read back by value; the system read again after any landing answer; a world comes into today
+by double-click or Enter), 19 Oct 2026 14:02–14:10 UTC, computer use on the native candidate in front, the owner's real ground.
+Control/user/flows and the root and O-I wikis were backed up first. Flows: all 13 files match. Root wiki: its hash kept. O-I's register
+moved with the landings the owner allowed for this test: revision 4 (r21's landing) to 5 (the landing moved) to 6 (taken off); its body
+is kept, seed 3172107618, without a landing. Today's set ends as it began r20: Your world and O-I (Day revision 399835:31f9791b).
+
+Seen:
+- A world comes into today from its Worlds row: double-click on O-I wrote today's set with O-I (Day 398407 to 398955), the grid drew
+  the O-I track, and the row said "O-I is in today's set." Enter on the focused row did the same later (Day 399287 to 399835). The row's
+  hover words name all three ways in: drag onto the empty track, double-click, Enter.
+- Delete on the selected O-I head took it out of today's set (Day 398955 to 399287), with the receipt "O-I is out of today's set; its
+  pages stay in its folder", and the shell stayed in Central: no step back an encounter (r20's Backspace walked into Technē).
+- Bodies reads O-I from its own record now ("seed 317…"), not seeded from its ref.
+- The sky lens (S) on the World on your planet: your system drawn, O-I at the top right; the Worlds section reads O-I's landing from its
+  owner, -23.2, 11.9 (written in r21).
+- O-I pressed: "armed", and "Off your planet" stands. A click on your planet moved the landing: "saved", the row reading -20.1, 38.4,
+  and the status line "O-I lands on your planet at -20.10, 38.41: its body is saved at revision 5." r21 said refused over a saved
+  landing.
+- Off your planet: "saved", the row reading "land" again, and "O-I is off your planet: its body is kept, without a landing, at
+  revision 6."
+
+Found and fixed after the pass (not in r22):
+- After Delete took O-I out, the grid kept drawing O-I, and Enter on its row answered "O-I is already in today's set": the Day was
+  written, but the set view never took the new Day until the mode was left and re-entered. The owner readings served a refresh with
+  the read already in flight, and a ground read that began before the write answered for the refresh after it. A refresh or retry now
+  asks once more after a read in flight (one read, however many ask while it runs); a reader that only needs an answer still shares
+  it. tests/owner-readings.test.mjs, rewritten to that law, failed before the fix.
+- The first double-click, made while the Day was still being read after launch, answered "Open Central's Session to bring O-I into
+  today": no seat stands until the set is read. That answer is honest; it is left as it is.
+
+Not seen: the grid redrawn at once after a removal (r23).
