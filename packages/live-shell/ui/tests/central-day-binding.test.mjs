@@ -525,3 +525,15 @@ test('Open today after a closed Day: today\'s Day is made, and what still plays 
   const plain = await withOwner(open, () => writes.openToday(bridge))
   assert.equal(plain.carried, null, 'an earlier Day never closed carries nothing'); assert.equal(open.mutations().length, 0)
 })
+
+test('the Day publishes its page as its own Full, and names it as data for its Pop-out: its aperture, never a drawing (r23)', () => {
+  const aperture = {project: null, sourceRef: 'central:source:control:root:Control/user/day/2026-10-19/day.md', documentId: 'day-doc'}
+  const entry = chain.centralDeviceEntries(input({day: aperture})).find(item => item.id === ID)
+  assert.deepEqual(entry.fullRelay, {kind: chain.DAY_PAGE_RELAY, data: aperture})
+  const published = chain.centralPublication(entry, null)
+  assert.equal(typeof published.full.draw, 'function', 'the main window draws the page itself')
+  assert.deepEqual(published.full.relay, {kind: 'central:day-page', data: aperture}, 'and names it for the second window')
+  const none = chain.centralDeviceEntries(input()).find(item => item.id === ID)
+  assert.equal(none.fullRelay, undefined, 'no Day document stands: nothing to relay')
+  assert.equal(chain.centralPublication(none, null).full.relay, undefined)
+})

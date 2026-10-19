@@ -8,9 +8,10 @@
 //
 // Off the native host (the browser, the dev server) and wherever the host refuses, a device pops out in this window instead
 // (DeviceWindows.tsx), as before.
+import type {RelayedFull} from './relayedFulls'
 import type {DeviceInstance} from './deviceRuntime'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from './designed'
-import {publishedDevice, subscribeDeviceDoor} from './deviceDoor'
+import {publishedDevice, subscribeDeviceDoor, type PublishedDevice} from './deviceDoor'
 
 export const RELAY_EVENTS = {publish: 'oi:device-relay', act: 'oi:device-relay-act', ack: 'oi:device-relay-ack', hello: 'oi:device-relay-hello', bye: 'oi:device-relay-bye'} as const
 
@@ -18,6 +19,8 @@ export const RELAY_EVENTS = {publish: 'oi:device-relay', act: 'oi:device-relay-a
 export interface RelayedSnapshot {
   readonly bindingId: string
   readonly deviceId: string
+  /** The device's own Full named as data (relayedFulls.ts), or null where its Full is its design's. */
+  readonly full: RelayedFull | null
   readonly device: Pick<DeviceInstance, 'id' | 'family' | 'face' | 'rows' | 'values' | 'heldBy' | 'enabledKey'>
   readonly binding: null | {
     readonly id: string
@@ -41,14 +44,15 @@ export type RelayAct =
   | {readonly kind: 'handBack'; readonly key: string}
 
 /** A binding as the relay carries it. Pure. */
-export function relaySnapshot(bindingId: string, deviceId: string, device: DeviceInstance, binding: DesignBinding | undefined): RelayedSnapshot {
+export function relaySnapshot(bindingId: string, deviceId: string, device: DeviceInstance, binding: DesignBinding | undefined, ownFull?: RelayedFull): RelayedSnapshot {
+  const full = ownFull ? JSON.parse(JSON.stringify(ownFull)) as RelayedFull : null
   const data = JSON.parse(JSON.stringify({id: device.id, family: device.family, face: device.face, rows: device.rows, values: device.values,
     heldBy: device.heldBy ?? {}, enabledKey: device.enabledKey})) as RelayedSnapshot['device']
-  if (!binding) return {bindingId, deviceId, device: data, binding: null}
+  if (!binding) return {bindingId, deviceId, full, device: data, binding: null}
   const local = binding.local ? Object.keys(binding.local) : []
   const asked = new Set([...Object.keys(binding.values), ...Object.keys(binding.standing ?? {}), ...device.rows.map(row => row.key)])
   const reads = binding.write && binding.writes ? [...asked].filter(key => !local.includes(key) && !binding.writes!(key)) : []
-  return {bindingId, deviceId, device: data, binding: {id: binding.id, values: JSON.parse(JSON.stringify(binding.values)) as Values,
+  return {bindingId, deviceId, full, device: data, binding: {id: binding.id, values: JSON.parse(JSON.stringify(binding.values)) as Values,
     standing: JSON.parse(JSON.stringify(binding.standing ?? {})) as Record<string, Standing>, heldBy: {...(binding.heldBy ?? {})},
     modulatedBy: {...(binding.modulatedBy ?? {})}, enabledKey: binding.enabledKey ?? null, local, writes: !!binding.write, reads,
     handBack: !!binding.handBack}}
@@ -101,10 +105,13 @@ export function nativeHostMain(): boolean {
   return !!w?.__TAURI_INTERNALS__ && !w.__OI_DETACHED__
 }
 
+/** The published device's own Full as data, where it names one. */
+const relayOf = (published: PublishedDevice): RelayedFull | undefined => (published.full && 'draw' in published.full ? published.full.relay : undefined)
+
 function publishAll(emit: Emit) {
   for (const [bindingId, deviceId] of relayed) {
     const published = publishedDevice(deviceId)
-    if (published) void emit(RELAY_EVENTS.publish, relaySnapshot(bindingId, deviceId, published.device, published.binding))
+    if (published) void emit(RELAY_EVENTS.publish, relaySnapshot(bindingId, deviceId, published.device, published.binding, relayOf(published)))
   }
 }
 
@@ -117,7 +124,7 @@ function install(): Promise<Emit> {
       // Publish only when what the relayed devices show moved.
       const now = JSON.stringify([...relayed].map(([bindingId, deviceId]) => {
         const p = publishedDevice(deviceId)
-        return p ? relaySnapshot(bindingId, deviceId, p.device, p.binding) : null
+        return p ? relaySnapshot(bindingId, deviceId, p.device, p.binding, relayOf(p)) : null
       }))
       if (now !== last) { last = now; publishAll(send) }
     })

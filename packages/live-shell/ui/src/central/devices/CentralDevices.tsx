@@ -38,6 +38,7 @@ import {useEffect, useMemo, useRef, type ReactNode} from 'react'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, selectDevice, type OwnFull, type PublishedDevice} from '../../frame/devices/deviceDoor'
+import {registerRelayedFull, type RelayedFull} from '../../frame/devices/relayedFulls'
 import {DEVICE_PANE_KIND} from '../../frame/devices/devicePane'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -125,7 +126,19 @@ export interface CentralDeviceEntry {
   readonly picture: (size: Size) => ReactNode
   /** The device's pop-out, or its redock once out: a mark of its place, in its head. */
   readonly marks?: ReactNode
+  /** Its own Full named as data, for a Pop-out window to draw (relayedFulls.ts): the Day's page by its aperture. */
+  readonly fullRelay?: RelayedFull
 }
+
+/** The Day's page as its own Full in a Pop-out window (relayedFulls.ts): the face the chain's pane draws, by the Day's aperture,
+ * on that window's own carrier (r23: the Day popped out drew a blank Full). */
+export const DAY_PAGE_RELAY = 'central:day-page'
+registerRelayedFull(DAY_PAGE_RELAY, (data, transport) => {
+  const day = data as DayDieAperture
+  return <div className="central-device-body" data-central-body="day-die">
+    <DocumentDayDieFace transport={transport} project={day.project} sourceRef={day.sourceRef} documentId={day.documentId} />
+  </div>
+})
 
 /** The Day device's id on the chain (its design is `central:day-die`, inhabitants/catalogue/panels/day.tsx). */
 export const DAY_DEVICE_ID = centralDeviceId('day-die')
@@ -138,7 +151,7 @@ export function centralPublication(entry: CentralDeviceEntry, binding: DesignBin
     device: entry.device, picture: entry.picture,
     ...(entry.marks ? {marks: entry.marks} : {}),
     ...(binding ? {binding} : {}),
-    ...(entry.id === DAY_DEVICE_ID ? {full: {draw: () => entry.picture('full')}} : full ? {full} : {}),
+    ...(entry.id === DAY_DEVICE_ID ? {full: {draw: () => entry.picture('full'), ...(entry.fullRelay ? {relay: entry.fullRelay} : {})}} : full ? {full} : {}),
   }
 }
 
@@ -242,6 +255,7 @@ export function centralDeviceEntries(input: CentralDeviceInput): CentralDeviceEn
       },
       // No head mark of its own (R1): the door's ↗ — the device's own window — stands alone. A face the native host already holds popped
       // out says so in its Full above.
+      ...(designed && input.day ? {fullRelay: {kind: DAY_PAGE_RELAY, data: {project: input.day.project, sourceRef: input.day.sourceRef, documentId: input.day.documentId}}} : {}),
     }
   })
 }

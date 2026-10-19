@@ -3,6 +3,7 @@
 // selected device whole, a pane shows a device full, the rail keeps a device's widget, its own window shows it popped out. One device,
 // one set of live settings, six views (manual §16.3). A device can carry its own Full — its material, or the act that opens it —
 // over its design's.
+import type {RelayedFull} from './relayedFulls'
 import {useSyncExternalStore, type ReactNode} from 'react'
 import type {DesignBinding} from './designed'
 import type {DeviceInstance} from './deviceRuntime'
@@ -35,7 +36,8 @@ export interface PublishedDevice {
 /** The head's context-menu acts beyond Fold, in Live's order (manual §16.4). */
 export type HeadAct = 'rename' | 'group' | 'save-preset' | 'hot-swap' | 'show-automation' | 'map'
 
-export type OwnFull = {readonly draw: () => ReactNode} | {readonly open: () => void}
+/** `relay`: the material named as data, so a Pop-out window draws it too (relayedFulls.ts). */
+export type OwnFull = {readonly draw: () => ReactNode; readonly relay?: RelayedFull} | {readonly open: () => void}
 
 const devices = new Map<string, PublishedDevice>()
 let selected: string | null = null
