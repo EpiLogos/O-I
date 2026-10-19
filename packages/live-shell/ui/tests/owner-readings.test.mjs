@@ -26,7 +26,9 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {createOwnerReadings} = await import('../src/owners/ownerReading.ts')
+const {createOwnerReadings, useOwnerReading, KEPT_UNREAD} = await import('../src/owners/ownerReading.ts')
+const {createElement} = await import('react')
+const {renderToStaticMarkup} = await import('react-dom/server')
 const {readTaskOf, readRosterOf, readWorkcellOf, taskReadingKey, rosterReadingKey, workcellReadingKey, refreshHeld, composeRoster, TASK_OP} = await import('../src/owners/readers.ts')
 const {createAgencyDriver, agencyReadingKey, readAgencyOf, AGENCY_FLOOR_MS, agencyFingerprint} = await import('../src/owners/agency.ts')
 const {receiptMovesTemporal, receiptMovesAgency} = await import('../src/owners/notices.ts')
@@ -151,43 +153,98 @@ test('a refusal is remembered for its epoch: notices do not ask again; the perso
   } finally { stub.restore() }
 })
 
-test('an answer belongs to its epoch: a moved epoch retires it before the new one arrives, never shown as the new epoch\'s', async () => {
+// MAP, the build lane's loading item (the owner's review, 19 Oct): "a pane draws its last reading at once and refreshes behind
+// it". The last answer stands, carried, while the owner is asked again — when access renews in the same world, and when a reader
+// comes back after the last one left. Never across worlds: the world is half the spine's key (owners/spine.ts spineEpochKey).
+test('a renewed access in the same world keeps the last answer drawn, carried, while the new one is read; a moved world retires it', async () => {
   const registry = createOwnerReadings(() => 1_000)
   let n = 0
   let release
-  const entry = registry.entry('k', () => { n++; return n === 1 ? Promise.resolve({value: 'first'}) : new Promise(resolve => { release = () => resolve({value: 'second'}) }) })
+  const entry = registry.entry('k', () => { n++; return n === 1 ? Promise.resolve({value: 'first'}) : n === 2 ? new Promise(resolve => { release = () => resolve({value: 'second'}) }) : Promise.resolve({value: 'elsewhere'}) })
   await entry.ensure('1|central')
   assert.equal(entry.snapshot().value, 'first')
   assert.equal(entry.snapshot().readAtUnixMs, 1_000, 'a reading says when it was read')
+  assert.equal(entry.snapshot().carried, false)
   const pending = entry.ensure('2|central')
-  assert.equal(entry.snapshot().status, 'reading')
-  assert.equal(entry.snapshot().value, null, 'the old epoch\'s answer is not carried into the new one')
+  assert.equal(entry.snapshot().status, 'answered', 'the last answer is drawn at once')
+  assert.equal(entry.snapshot().value, 'first')
+  assert.equal(entry.snapshot().carried, true, 'marked as carried from before')
+  assert.equal(entry.snapshot().refreshing, true, 'and read again behind it')
+  assert.equal(entry.snapshot().readAtUnixMs, 1_000, 'it keeps the instant it was read')
   release()
   await pending
   assert.equal(entry.snapshot().value, 'second')
   assert.equal(entry.snapshot().epoch, '2|central')
+  assert.equal(entry.snapshot().carried, false)
+  const moved = entry.ensure('2|elsewhere')
+  assert.equal(entry.snapshot().status, 'reading', 'another world\'s answer is never drawn')
+  assert.equal(entry.snapshot().value, null)
+  await moved
+  assert.equal(entry.snapshot().value, 'elsewhere')
 })
 
-test('an answer is let go when its last reader leaves; a later reader asks the owner again', async () => {
+test('when its last reader leaves, the answer stays as the last reading: the next reader draws it at once while the owner is asked again', async () => {
   const registry = createOwnerReadings()
   let asks = 0
-  const read = async () => { asks++; return {value: asks} }
+  let release = null
+  const read = () => { asks++; return asks === 1 ? Promise.resolve({value: asks}) : new Promise(resolve => { release = () => resolve({value: asks}) }) }
   const entry = registry.entry('k', read)
   const off = entry.subscribe(() => {})
   await entry.ensure(EPOCH)
   off()
   await settle()
   const next = registry.entry('k', read)
-  assert.notEqual(next, entry, 'the answer nobody held was let go')
-  await next.ensure(EPOCH)
-  assert.equal(asks, 2)
-  // React's replay (unsubscribe, then subscribe, in one task) does not let go.
-  const offA = next.subscribe(() => {})
-  offA()
+  assert.equal(next, entry, 'the answer nobody reads stays as the last reading')
+  assert.equal(next.snapshot().value, 1, 'drawn at once')
+  const offNext = next.subscribe(() => {})
+  const pending = next.ensure(EPOCH)
+  assert.equal(asks, 2, 'the owner is asked again: nobody was told of what moved meanwhile')
+  assert.equal(next.snapshot().carried, true)
+  assert.equal(next.snapshot().refreshing, true)
+  release()
+  await pending
+  assert.equal(next.snapshot().value, 2)
+  assert.equal(next.snapshot().carried, false)
+  // React's replay (unsubscribe, then subscribe, in one task) is not a leaving: nothing is asked again.
+  offNext()
   const offB = next.subscribe(() => {})
   await settle()
-  assert.equal(registry.entry('k', read), next)
+  await next.ensure(EPOCH)
+  assert.equal(asks, 2)
   offB()
+})
+
+test('the window keeps a bounded number of answers nobody reads, letting the longest unread go first; an unread key never answered is let go', async () => {
+  const registry = createOwnerReadings()
+  const read = async () => ({value: 'v'})
+  for (let index = 0; index < KEPT_UNREAD + 3; index++) {
+    const entry = registry.entry(`k${index}`, read)
+    const off = entry.subscribe(() => {})
+    await entry.ensure(EPOCH)
+    off()
+  }
+  const never = registry.entry('never', () => new Promise(() => {}))
+  never.subscribe(() => {})()
+  await settle()
+  const keys = registry.entries().map(entry => entry.key)
+  assert.equal(keys.length, KEPT_UNREAD, 'bounded')
+  assert.ok(!keys.includes('k0') && !keys.includes('k2') && keys.includes('k3') && keys.includes(`k${KEPT_UNREAD + 2}`), 'the longest unread go first')
+  assert.ok(!keys.includes('never'), 'nothing to draw, nothing kept')
+})
+
+test('a reader in another world never draws an answer kept from this one, not even before its first read', async () => {
+  const registry = createOwnerReadings()
+  const entry = registry.entry('k', async () => ({value: 'central\'s'}))
+  const off = entry.subscribe(() => {})
+  await entry.ensure('1|central')
+  off()
+  await settle()
+  const Reader = ({epoch}) => {
+    const {reading} = useOwnerReading('k', async () => ({value: 'unused'}), epoch, registry)
+    return createElement('p', null, `${reading.status}:${reading.value ?? '-'}`)
+  }
+  assert.equal(renderToStaticMarkup(createElement(Reader, {epoch: '1|elsewhere'})), '<p>reading:-</p>')
+  assert.equal(renderToStaticMarkup(createElement(Reader, {epoch: '2|central'})), '<p>answered:central&#x27;s</p>', 'the same world draws its last reading')
 })
 
 test('a notice re-reads a held task record behind its standing answer, only for the session it names', async () => {
