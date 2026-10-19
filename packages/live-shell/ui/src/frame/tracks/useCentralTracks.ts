@@ -10,7 +10,7 @@
 // The acts: Launch and Stop are the page owner's (pageOwner.ts launchPage, stopPage); a world dropped on the empty track is written
 // into the Day's set (writeDaySet); every world's Arm is the shell's one write arm. After an act the readings it moved are read
 // again. Registered as `base: worldCut(useCentralTracks)` in modeTracks.ts.
-import {useCallback, useEffect, useMemo, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {useAgentShellOptional} from '../../agent/AgentShellContext'
 import {shellWriteArm} from './useFactoryTracks'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
@@ -21,6 +21,8 @@ import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/k
 import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading, type WorldPagesReading} from '../../central/centralWorlds'
 import {daySetOf, withWorld, writeDaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
+import {openLaunched} from '../../central/launchOpening'
+import {useOptionalContinuity} from '../../continuity/workspace'
 import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {
@@ -100,13 +102,20 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   }, [transport, inSetKey, readAt, moved])
   const aperture = ground.reading ? currentDayOf(ground.reading).aperture : null
   const refreshGround = ground.refresh
+  // A launched page opens where its launch says (central/launchOpening.ts), in the pane tree the shell holds.
+  const book = useOptionalContinuity()
+  const heldBook = useRef(book)
+  heldBook.current = book
   const after = useCallback(async <T,>(act: () => Promise<T>): Promise<T> => {
     try { return await act() } finally { setMoved(n => n + 1) }
   }, [])
   const controls = useMemo(() => {
     if (!transport || transport.kind === 'unavailable') return {writeArm: shellWriteArm(armOn)}
     return {
-      launch: (page: {location: Parameters<typeof launchPage>[1]}) => after(() => launchPage(transport, page.location)),
+      launch: (page: {location: Parameters<typeof launchPage>[1]; form?: string}) => after(async () => {
+        await launchPage(transport, page.location)
+        return openLaunched(transport, heldBook.current ? update => heldBook.current?.setLayout(update) : null, page)
+      }),
       stop: (item: CentralPlaying) => after(() => stopPage(transport, item.nowRef, item.project)),
       ...(aperture ? {addWorld: (world: CentralWorld) => after(() => writeDaySet(transport, aperture, held => withWorld(held, world.ref, world.name)).finally(refreshGround))} : {}),
       writeArm: shellWriteArm(armOn),
