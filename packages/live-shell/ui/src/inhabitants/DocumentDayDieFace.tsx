@@ -4,9 +4,13 @@ import {useContext, useCallback, useEffect, useMemo, useRef, useState} from 'rea
  *
  * The DayDieFace pattern (desktop/cradle/src/receiving/DayDieFace.tsx)
  * composed onto the shell rack over the SAME owners, none reimplemented:
- * - the retained form (ql-daily-die.html) is read through Central's own file
- *   route and projected with `projectDieDocument` (the supplied editor's own
- *   closure/serialization seam, with its snapshot bridge and CSP);
+ * - the form is this shell's own copy of ql-daily-die.html (bundled, as the
+ *   Flow's minting copy is, flow/instance.ts), projected with the owner's
+ *   payload by `projectDieDocument` (the supplied editor's own closure/
+ *   serialization seam, with its snapshot bridge and CSP). The copy in the
+ *   owner's ground (Work/O-I's documents, the primary checkout) is the one
+ *   Days are made from; it can be older than the bridge this shell speaks,
+ *   so the die is drawn by the form the shell was built with;
  * - the body is the sandboxed opaque-origin iframe; the only host↔frame
  *   traffic is the bounded snapshot request and the dirty announcement.
  *   Under Tauri the iframe is the native document frame written with the
@@ -48,16 +52,14 @@ import {
 } from '../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
 import {DocumentPaneContext, documentStateWords, holdDayInPane, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
-import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import {useDocumentFrame} from '../../../../../desktop/cradle/src/document/frame'
-import {DOCUMENT_FORMS, resolveDocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
+import dieForm from '../../../../../desktop/cradle/documents/ql-daily-die.html?raw'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPageFace'
 import './inhabitantDevices.css'
 
-const DIE_SHELL = DOCUMENT_FORMS.find(form => form.kind === 'document-42' && form.file === 'ql-daily-die.html')
 
 export interface DocumentDayDieFaceProps {
   readonly transport: KernelTransportStatus
@@ -65,9 +67,8 @@ export interface DocumentDayDieFaceProps {
   readonly project: string | null
   readonly sourceRef: string
   readonly documentId: string
-  /** The projects listing from the navigator root, when the host holds one
-   * (the form resolver's owner path); absent, the resolver falls back to the
-   * cradle's canonical Work/O-I path. */
+  /** The projects listing from the navigator root, when the host holds one. The die no longer resolves its form through it (the form is
+   * the shell's own); kept so the hosts that pass it need not change. */
   readonly projects?: readonly {name?: string; path?: string}[]
   /** In a pane the document is the face (the mockup's Day pane): its head reads the revision and the save standing, the die
    * turns inside the form itself, and Save / Review stand in the browser's aperture for the document reached
@@ -99,7 +100,7 @@ function dieFaceOf(payload: unknown): number {
   return typeof face === 'number' && Number.isInteger(face) && face >= 0 && face <= 5 ? face : 0
 }
 
-export function DocumentDayDieFace({transport, project, sourceRef, documentId, projects, presentation = 'device', openLink, onDirty}: DocumentDayDieFaceProps) {
+export function DocumentDayDieFace({transport, project, sourceRef, documentId, presentation = 'device', openLink, onDirty}: DocumentDayDieFaceProps) {
   const session = useMemo(() => new DayFormSession({sourceRef, documentId, revision: '', payload: undefined, fields: []}), [sourceRef, documentId])
   const [basis, setBasis] = useState<DieBasis>()
   const [face, setFace] = useState<string>()
@@ -118,25 +119,21 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   const templateRef = useRef<string>()
   const editEpoch = useRef(0)
 
-  // Load: the owner's document reading, then the retained form, then the projection.
+  // Load: the owner's document reading, then the projection onto the shell's own form.
   useEffect(() => {
     let alive = true
     setFailure(undefined)
     setFace(undefined)
     ;(async () => {
       try {
-        if (!DIE_SHELL) throw new Error('The original form roster entry is unavailable')
         const reading = await receiving<unknown>(transport, project, {kind: 'document', source_ref: sourceRef, document_id: documentId})
         const validated = validateDocumentBasis(reading, sourceRef, documentId)
         if (!alive) return
         setBasis(validated)
         session.basis = validated
         setRevision(validated.revision)
-        const location = await resolveDocumentForm(transport, DIE_SHELL, projects)
-        const original = await readFile(transport, location)
-        if (!alive) return
-        templateRef.current = original.content
-        const projected = projectDieDocument(original.content, validated.payload)
+        templateRef.current = dieForm
+        const projected = projectDieDocument(dieForm, validated.payload)
         if (!projected) throw new Error('Original editor snapshot seam is unavailable; its source remains intact')
         if (alive) setFace(projected)
       } catch (error) {
@@ -144,7 +141,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
       }
     })()
     return () => {alive = false}
-  }, [transport, project, sourceRef, documentId, projects, session])
+  }, [transport, project, sourceRef, documentId, session])
 
   // The bounded host↔frame bridge: dirty announcements and one snapshot at a time.
   useEffect(() => {
@@ -380,7 +377,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
         </div>
       )}
       {face === undefined || !frameProps
-        ? <p role="status" className="inhabitant-quiet">Reading the original Daily Die source…</p>
+        ? <p role="status" className="inhabitant-quiet">Reading the Day from its owner…</p>
         : <iframe key={frameProps.key} ref={frame} className="inhabitant-document-frame" title="Day die — the document's supplied form, projected from its native payload" sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" src={frameProps.src} srcDoc={frameProps.srcDoc}/>}
     </div>
   )

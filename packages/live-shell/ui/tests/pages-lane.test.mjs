@@ -180,3 +180,26 @@ test('the shell\'s page faces carry no paper of their own: every page sheet read
     assert.doesNotMatch(text, PAPER_HEX, file)
   }
 })
+
+test('a Flow on the form\'s current schema is drawn by the shell\'s own form from its island; an earlier Flow as it was made', async () => {
+  const {currentFlow} = await import('../src/inhabitants/DocumentFlowFace.tsx')
+  const {parseInstance, embedDocument} = await import('../../../../desktop/cradle/src/flow/instance.ts')
+  const flowForm = read('../../../../desktop/cradle/documents/ql-flow.html')
+  const doc = parseInstance(flowForm); doc.meta.title = 'Closing the day'; doc.meta.template = 'ql-dialogue-flow v0.4'
+  // A Flow minted from an earlier copy of the form: the same island, an older runtime (no link handling, the old paper).
+  const older = embedDocument(flowForm.replace("ev.preventDefault(); window.parent.postMessage({type:'oi:page-link',href},'*');", '').replace('--pfield:#FAFAF8', '--field:#FAFAF8'), doc)
+  const drawn = currentFlow(older)
+  assert.deepEqual(parseInstance(drawn), doc, 'the island is drawn whole')
+  assert.match(drawn, /type:'oi:page-link'/, 'by the current form: its links reach the host')
+  assert.equal(drawn.replace(/<script type="application\/json" id="ql-doc">[\s\S]*?<\/script>/, ''), flowForm.replace(/<script type="application\/json" id="ql-doc">[\s\S]*?<\/script>/, ''))
+  const v01 = embedDocument(flowForm, {...doc, meta: {...doc.meta, template: 'ql-dialogue-flow v0.1'}})
+  assert.equal(currentFlow(v01), v01, 'a Flow of an earlier schema is hosted as it is')
+  assert.equal(currentFlow('<html>no island</html>'), '<html>no island</html>')
+})
+
+test('the Day is drawn by the shell\'s own form, never the copy in the primary checkout, which can be older than its bridge', () => {
+  const face = read('../src/inhabitants/DocumentDayDieFace.tsx')
+  assert.match(face, /import dieForm from '\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/desktop\/cradle\/documents\/ql-daily-die\.html\?raw'/)
+  assert.match(face, /projectDieDocument\(dieForm, validated\.payload\)/)
+  assert.doesNotMatch(face, /resolveDocumentForm|readFile\(/, 'no form is read from the owner\'s ground for drawing')
+})
