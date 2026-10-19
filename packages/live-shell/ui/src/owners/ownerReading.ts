@@ -12,7 +12,7 @@
 //     another world's answer is retired, never drawn, not even for a render;
 //   - when its last reader leaves, the answer stays as the last reading (the window keeps KEPT_UNREAD of them, letting the
 //     longest unread go first): a later reader draws it at once, carried, and the owner is asked again, since nobody was
-//     told of what moved meanwhile;
+//     told of what moved meanwhile; across a relaunch the same, from the window's kept answers (owners/keptReadings.ts);
 //   - a refusal is remembered for its epoch: the same read is not asked again until the epoch moves or the person asks
 //     (`retry`), and the refusal stays visible in the owner's own words meanwhile.
 //
@@ -24,6 +24,7 @@
 // Pure TypeScript apart from `useOwnerReading`, a subscription.
 
 import {useCallback, useEffect, useMemo, useReducer, useSyncExternalStore} from 'react'
+import {windowKeptReadings, type KeptAnswer, type KeptReadings} from './keptReadings'
 
 /** 'reading' — no answer stands for this epoch yet; 'answered' — the owner's answer; 'refused' — the owner's refusal. */
 export type OwnerReadStatus = 'reading' | 'answered' | 'refused'
@@ -70,7 +71,14 @@ export class OwnerReadingEntry<T> {
   /** How many times the owner was actually asked — the census a reader-count test reads. */
   asks = 0
 
-  constructor(readonly key: string, private read: OwnerRead<T>, private readonly now: () => number, private readonly release: (entry: OwnerReadingEntry<T>) => void) {}
+  constructor(readonly key: string, private read: OwnerRead<T>, private readonly now: () => number, private readonly release: (entry: OwnerReadingEntry<T>) => void,
+    kept: KeptAnswer | null = null, private readonly keep: (answer: KeptAnswer | null) => void = () => {}) {
+    // An answer kept from an earlier window is this window's last reading: drawn at once, carried, the owner asked again when read.
+    if (kept) {
+      this.state = {status: 'answered', value: kept.value as T, error: null, readAtUnixMs: kept.readAtUnixMs, epoch: kept.epoch, refreshing: false, carried: true}
+      this.unread = true
+    }
+  }
 
   snapshot = (): OwnerReading<T> => this.state
 
@@ -128,7 +136,9 @@ export class OwnerReadingEntry<T> {
    * A read of this key in flight for the same epoch answers after it and wins. */
   accept(value: T, epoch: string): void {
     if (this.inFlight?.epoch === epoch) return
-    this.publish({status: 'answered', value, error: null, readAtUnixMs: this.now(), epoch, refreshing: false, carried: false})
+    const readAtUnixMs = this.now()
+    this.publish({status: 'answered', value, error: null, readAtUnixMs, epoch, refreshing: false, carried: false})
+    this.keep({value, readAtUnixMs, epoch})
   }
 
   /** The age of the standing answer at `at`, or null when none stands. */
@@ -166,6 +176,8 @@ export class OwnerReadingEntry<T> {
       this.publish('error' in outcome
         ? {status: 'refused', value: null, error: outcome.error, readAtUnixMs, epoch, refreshing: false, carried: false}
         : {status: 'answered', value: outcome.value, error: null, readAtUnixMs, epoch, refreshing: false, carried: false})
+      // The window keeps its last answer across a relaunch; a refusal forgets it.
+      this.keep('error' in outcome ? null : {value: outcome.value, readAtUnixMs, epoch})
     })()
     this.inFlight = {epoch, promise}
     return promise
@@ -179,8 +191,9 @@ export interface OwnerReadings {
   entries(): OwnerReadingEntry<unknown>[]
 }
 
-/** A registry of entries. The window has one (`ownerReadings`); a test makes its own. */
-export function createOwnerReadings(now: () => number = Date.now): OwnerReadings {
+/** A registry of entries. The window has one (`ownerReadings`); a test makes its own. `kept` holds the last answers across a
+ * relaunch (the window's own storage, owners/keptReadings.ts); without it nothing outlives the registry. */
+export function createOwnerReadings(now: () => number = Date.now, kept?: KeptReadings): OwnerReadings {
   const held = new Map<string, OwnerReadingEntry<unknown>>()
   /** The answers nobody reads, longest unread first. */
   const unread = new Map<string, OwnerReadingEntry<unknown>>()
@@ -204,7 +217,7 @@ export function createOwnerReadings(now: () => number = Date.now): OwnerReadings
       let entry = held.get(key) as OwnerReadingEntry<T> | undefined
       unread.delete(key)
       if (!entry) {
-        entry = new OwnerReadingEntry<T>(key, read, now, release as (entry: OwnerReadingEntry<T>) => void)
+        entry = new OwnerReadingEntry<T>(key, read, now, release as (entry: OwnerReadingEntry<T>) => void, kept?.get(key) ?? null, answer => kept?.put(key, answer))
         held.set(key, entry as OwnerReadingEntry<unknown>)
       } else entry.rebind(read)
       return entry
@@ -214,7 +227,7 @@ export function createOwnerReadings(now: () => number = Date.now): OwnerReadings
 }
 
 /** The window's one registry. */
-export const ownerReadings: OwnerReadings = createOwnerReadings()
+export const ownerReadings: OwnerReadings = createOwnerReadings(Date.now, windowKeptReadings())
 
 /** Subscribe to one owner answer under the spine `epoch`. `key` null reads nothing (no subject yet). The answer is asked for
  * on the first subscription and whenever the epoch moves; `refresh` and `retry` are the notices' and the person's asks. */
