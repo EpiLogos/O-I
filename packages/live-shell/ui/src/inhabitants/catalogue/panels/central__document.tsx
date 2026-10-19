@@ -40,11 +40,10 @@ const ISLAND: Readonly<Record<KindId, readonly string[]>> = {
 const FACES = ['Ground', 'Definition', 'Operation', 'Pattern', 'Context', 'Synthesis'] as const
 const AT: Record<number, [number, number]> = {2: [1, 0], 4: [0, 1], 0: [1, 1], 1: [2, 1], 5: [3, 1], 3: [1, 2]}
 
-/** The paper of a page: the oi.page/v1 tokens, light (`paper`) and dark (`ink`) — body[data-tone] in oi-beings.html. */
-const PAPER = {
-  paper: {bg: '#EFEFED', ink: '#1a1a18', mid: '#6E6E6A', faint: '#A3A39E', rule: '#C9C9C4'},
-  ink: {bg: '#20231f', ink: '#eeeee8', mid: '#b2b7aa', faint: '#8e9688', rule: '#555e50'},
-} as const
+/** The paper of a page, light (`paper`) and dark (`ink`): the shell's paper family (styles.css :root), which the templates draw in
+ * too. The tone is the drawing's `data-paper` (styles.css `[data-paper="ink"]`), so each tone names the same tokens. */
+const TOKENS = {bg: 'var(--paper)', ink: 'var(--ink)', mid: 'var(--pmid)', faint: 'var(--pfaint)', rule: 'var(--prule)'} as const
+const PAPER = {paper: TOKENS, ink: TOKENS} as const
 
 const WRITES = [
   {value: 'off', label: 'Off', does: 'The agent does not write.'},
@@ -190,7 +189,7 @@ function FlowPage({entries, x, y, w, h}: Box & {entries: readonly Ent[]}) {
   if (!e) return null
   return <g>
     <text x={x + 7} y={y + 12} fill={PAPER.paper.mid} style={{font: '7.5px var(--font-ui)'}}>{at} of {entries.length} · {e.by === 'F' ? 'You' : e.by === 'C' ? 'Coordinator' : NONE}</text>
-    {wrap(e.head, per, 3).map((line, i) => <text key={i} x={x + 7} y={y + 28 + i * 12} fill={PAPER.paper.ink} style={{font: '9.5px Charter, Georgia, serif'}}>{line}</text>)}
+    {wrap(e.head, per, 3).map((line, i) => <text key={i} x={x + 7} y={y + 28 + i * 12} fill={PAPER.paper.ink} style={{font: '9.5px var(--serif)'}}>{line}</text>)}
     {[0, 1, 2].map(i => <rect key={i} x={x + 7} y={y + 52 + i * 7} width={(w - 14) * (i === 2 ? .45 : .9)} height={1.6} fill={PAPER.paper.rule} />)}
     <text x={x + 7} y={y + h - 6} fill={PAPER.paper.mid} style={{font: '9px var(--font-ui)'}}>◂</text>
     <text x={x + w - 7} y={y + h - 6} textAnchor="end" fill={PAPER.paper.faint} style={{font: '9px var(--font-ui)'}}>▸</text>
@@ -247,13 +246,13 @@ function PageSheet({v, x, y, w, h}: Box & {v: V}) {
   const p = PAPER[ground], editorial = layout === 'editorial', pad = 7
   const rail = Math.round(w * .27), left = x + pad + (editorial ? 20 : 0), colW = x + w - pad - rail - 6 - left
   const markX = editorial ? x + pad + 7 : x + w - pad - 7, title = titleOf(v)
-  return <g>
+  return <g data-paper={ground}>
     <rect x={x} y={y} width={w} height={h} fill={p.bg} />
     <circle cx={markX} cy={y + pad + 7} r={6.5} fill="none" stroke={p.ink} strokeWidth={.8} />
     <circle cx={markX} cy={y + pad + 7} r={3} fill="none" stroke={p.ink} strokeWidth={.8} strokeDasharray="1 2" />
     <rect x={left} y={y + pad} width={22} height={1.6} fill={p.mid} />
     {title === undefined ? <text x={left} y={y + pad + 14} fill={p.faint} style={{font: '9.5px var(--font-ui)'}}>{NONE}</text>
-      : title ? wrap(title, Math.max(8, Math.floor(colW / 5)), 2).map((line, i) => <text key={i} x={left} y={y + pad + 14 + i * 10} fill={p.ink} style={{font: '9.5px Charter, Georgia, serif'}}>{line}</text>)
+      : title ? wrap(title, Math.max(8, Math.floor(colW / 5)), 2).map((line, i) => <text key={i} x={left} y={y + pad + 14 + i * 10} fill={p.ink} style={{font: '9.5px var(--serif)'}}>{line}</text>)
       : [.62, .4].map((f, i) => <rect key={i} x={left} y={y + pad + 6 + i * 8} width={(editorial ? colW : colW - 14) * f} height={4} fill={p.ink} opacity={.8} />)}
     <rect x={x + pad} y={y + pad + 25} width={w - pad * 2} height={.8} fill={p.rule} />
     {[0, 1].map(i => <g key={i}>

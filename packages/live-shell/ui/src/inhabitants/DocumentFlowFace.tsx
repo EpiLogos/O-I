@@ -20,6 +20,12 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
  *   `conflict` and keeps the draft; a basis that moved before the write is
  *   `stale`; the owner's own `unchanged` outcome passes through named.
  *
+ * A link the page follows (⌘-click in an entry, a click elsewhere) reaches the
+ * host as `oi:page-link` (ql-flow.html); the host opens it in the shell
+ * (`openLink`: a page of a world as its page, an http(s) address in the Web
+ * widget), or says why not. The frame grants the page no popups and no
+ * navigation of its own, so a followed link never takes the Flow's place.
+ *
  * The page's own internal Save keeps its existing meaning (a portable HTML
  * copy inside the sandbox); only the host button sends writes to the owner.
  * The strip's save outcome renders as the router's named chip — five
@@ -31,6 +37,7 @@ import {documentPayloadSource, documentScripts, useDocumentFrame, useDocumentHos
 import type {KernelTransportStatus, CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
+import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPageFace'
 import './inhabitantDevices.css'
 import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 
@@ -43,6 +50,8 @@ export interface DocumentFlowFaceProps {
    * Save / Re-read stand in the browser's aperture for the document reached (central/documents/documentDoor.ts). As a device
    * the face keeps its own action row. */
   readonly presentation?: 'device' | 'pane'
+  /** Open a followed link in the shell (the pane host gives it: a page in a pane, an address in the Web widget). */
+  readonly openLink?: (target: PageLinkTarget) => void
 }
 
 /** The hosted copy: payload read seam + the bounded host bridge, injected
@@ -54,7 +63,7 @@ function projectFlowDocument(html: string): string {
     : withSeam
 }
 
-export function FlowFace({transport, location, presentation = 'device'}: DocumentFlowFaceProps) {
+export function FlowFace({transport, location, presentation = 'device', openLink}: DocumentFlowFaceProps) {
   const [instance, setInstance] = useState<FlowInstance>()
   const [face, setFace] = useState<string>()
   const [failure, setFailure] = useState<string>()
@@ -194,6 +203,20 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
     const timer = window.setInterval(() => void refreshDraftStanding(), 2500)
     return () => window.clearInterval(timer)
   }, [face, refreshDraftStanding])
+
+  // A link the page follows reaches its host as a message from this frame only; the host opens it in the shell, or says why not.
+  useEffect(() => {
+    const listener = (event: MessageEvent) => {
+      if (event.source !== frame.current?.contentWindow || (event.data as {type?: unknown})?.type !== PAGE_LINK_MESSAGE) return
+      const target = linkTarget((event.data as {href?: unknown}).href)
+      if (target.kind === 'none') { setNotice(target.why); return }
+      if (!openLink) { setNotice('No pane tree is mounted to open the link in.'); return }
+      setNotice(undefined)
+      openLink(target)
+    }
+    window.addEventListener('message', listener)
+    return () => window.removeEventListener('message', listener)
+  }, [openLink])
 
   const documentLabel = instance?.doc.meta.title || instance?.doc.meta.documentId || location.path
   const inPane = presentation === 'pane'

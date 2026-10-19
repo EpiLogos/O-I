@@ -6,14 +6,12 @@
    stands here. */
 
 .central-document-pane {
-  /* The paper (world-shell-mockup.html :39, `.doc` :197): a document is light paper and dark ink in every mode. The `--oi-*`
-     names this sheet and the hosted faces read are defined here — the candidate's shell defines none of them, so the pane
-     drew on no ground at all. */
-  --paper: #EFEFED; --pfield: #FAFAF8; --ink: #111; --pmid: #6E6E6A; --pfaint: #A3A39E; --prule: #C9C9C4;
-  --serif: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  /* The paper (world-shell-mockup.html :39, `.doc` :197): a document is light paper and dark ink in every mode, in the shell's
+     paper family (styles.css :root). The `--oi-*` names this sheet and the hosted faces read are defined here — the candidate's
+     shell defines none of them, so the pane drew on no ground at all. */
   --oi-canvas-ground: var(--paper); --oi-pane-bar-ground: var(--pfield); --oi-wash: rgba(0, 0, 0, .04); --oi-wash-strong: rgba(0, 0, 0, .08);
   --oi-hairline-soft: var(--prule); --oi-hairline: var(--pfaint); --oi-foreground: var(--ink); --oi-muted: var(--pmid); --oi-muted-2: var(--pfaint);
-  --oi-accent-ink: var(--ink); --oi-font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif; --oi-font-mono: var(--mono);
+  --oi-accent-ink: var(--ink); --oi-font-sans: var(--psans); --oi-font-mono: var(--mono);
   --oi-shell-type-ui: 12px; --oi-shell-type-meta: 11px; --oi-shell-type-nav: 13px; --oi-shell-type-prose: 15px;
   /* inhabitantDevices.css reads the card's `--inh-*`; in a pane they resolve to the paper's tones (status colours stay). */
   --inh-bg-0: var(--oi-canvas-ground);

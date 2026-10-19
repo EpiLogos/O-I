@@ -36,6 +36,61 @@ export interface DocumentInPane {
   outcome?: SaveRouterReading['outcome']
   /** A Day's document, as the owner names it, when the face publishes it (the Day's devices read its document by it). */
   day?: {readonly project: string | null; readonly sourceRef: string; readonly documentId: string}
+  /** A Day's open face as its form shows it now (0–5): the die turns in its pane before the owner holds the turn, at its next Save. */
+  face?: number
+}
+
+/** A Day held open in a pane: the face its form shows and the turn that reaches it (the form's own turn, through the face's bridge). */
+export interface DayInPane {
+  readonly face: number | null
+  readonly turn: (face: number) => void
+}
+
+const openDays = new Map<string, Map<string, DayInPane>>()
+const dayListeners = new Set<() => void>()
+let daysVersion = 0
+const daysMoved = () => { daysVersion++; for (const listener of dayListeners) listener() }
+
+/** A Day face stands in a pane (or turns there): it can be turned there. Returns its withdrawal. */
+export function holdDayInPane(documentId: string, key: string, day: DayInPane): () => void {
+  const held = openDays.get(documentId) ?? new Map<string, DayInPane>()
+  held.set(key, day)
+  openDays.set(documentId, held)
+  daysMoved()
+  return () => {
+    const now = openDays.get(documentId)
+    if (now?.get(key) !== day) return
+    now.delete(key)
+    if (!now.size) openDays.delete(documentId)
+    daysMoved()
+  }
+}
+
+/** The Day a pane holds open, by the owner's document id: the one the hand last reached when it stands in more than one pane. Null
+ * when no pane holds it — a turn then goes to the owner (central/devices/centralDeviceWrites.ts turnDieFace). */
+export function dayInPane(documentId: string): DayInPane | null {
+  const held = openDays.get(documentId)
+  if (!held?.size) return null
+  return (reached?.day?.documentId === documentId ? held.get(reached.key) : undefined) ?? [...held.values()].pop() ?? null
+}
+
+const subscribeDays = (listener: () => void) => { dayListeners.add(listener); return () => { dayListeners.delete(listener) } }
+const daysNow = () => daysVersion
+
+/** The Day a pane holds open, as a reading that follows it: the face its form shows, as it turns. Null when no pane holds it. */
+export function useDayInPane(documentId: string | null): DayInPane | null {
+  useSyncExternalStore(subscribeDays, daysNow, daysNow)
+  return documentId ? dayInPane(documentId) : null
+}
+
+/** Turn a Day to `face` where it is seen: in the pane that holds it open (its form turns, and the owner holds the turn with the Day's
+ * next Save, so the pane's basis never moves under its draft), else through the owner's own write route (`owner`, the die's
+ * mutate-field — centralDeviceWrites.ts turnDieFace). Resolves with where the turn went. */
+export async function turnDay(documentId: string, face: number, owner: () => Promise<unknown>): Promise<'pane' | 'owner'> {
+  const held = dayInPane(documentId)
+  if (held) { held.turn(face); return 'pane' }
+  await owner()
+  return 'owner'
 }
 
 let reached: DocumentInPane | null = null

@@ -28,11 +28,15 @@ import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocumen
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import './inhabitantDevices.css'
 
-/** The message a page sends its host when a link in it is followed (oi-beings.html / oi-things.html runtime). */
+/** The message a page sends its host when a link in it is followed (the page templates' runtime: oi-beings.html, oi-things.html, and
+ * the Day's and the Flow's forms, ql-daily-die.html and ql-flow.html). */
 export const PAGE_LINK_MESSAGE = 'oi:page-link'
 
+/** Where a followed link opens in the shell: a page of a world, by its path, or an http(s) address, in the Web widget. */
+export type PageLinkTarget = {kind: 'page'; path: string} | {kind: 'web'; url: string}
+
 /** Where a followed link goes in the shell: a page of a world by its path, an http(s) address, or nowhere (said why). Pure. */
-export function linkTarget(href: unknown): {kind: 'page'; path: string} | {kind: 'web'; url: string} | {kind: 'none'; why: string} {
+export function linkTarget(href: unknown): PageLinkTarget | {kind: 'none'; why: string} {
   if (typeof href !== 'string' || !href.trim()) return {kind: 'none', why: 'The link names no address.'}
   const value = href.trim()
   if (/^https?:\/\//i.test(value)) {
@@ -65,7 +69,7 @@ export interface DocumentPageFaceProps {
   readonly location: CentralLocation
   readonly kind: 'being' | 'thing'
   /** Open a followed link in the shell (the pane host gives it: a page in a pane, an address in a web pane). */
-  readonly openLink?: (target: {kind: 'page'; path: string} | {kind: 'web'; url: string}) => void
+  readonly openLink?: (target: PageLinkTarget) => void
 }
 
 export function PageFace({transport, location, kind, openLink}: DocumentPageFaceProps) {
