@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-19T20:24:43.598Z",
+  "lanesBar": [
+    {
+      "kind": "takes",
+      "count": "2"
+    },
+    {
+      "kind": "automation",
+      "count": "0"
+    },
+    {
+      "kind": "events",
+      "count": "0"
+    }
+  ],
+  "takeLanes": [
+    {
+      "id": "attempt:fixture-1",
+      "standing": true,
+      "name": "take 1",
+      "span": "returned and chosen (receiving:fixture-1) · 20:38:01 – 20:40:32",
+      "receipt": null
+    },
+    {
+      "id": "attempt:fixture-2",
+      "standing": false,
+      "name": "take 2",
+      "span": "returned, not yet chosen · 20:40:32 – 20:43:02",
+      "receipt": "refused"
+    }
+  ],
+  "comp": [
+    "20:38:01 – 20:40:32 came from take 1"
+  ],
+  "receiptLine": "Comp take 2 20:40:32 – 20:43:02This Run is associated with no Central Flow, so its Return has nowhere to be received.×"
+}
