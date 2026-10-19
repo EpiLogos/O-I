@@ -123,7 +123,116 @@ before asking" for anything that changes what a product can do),
   their owners' manifests; all 126 targets pending until each target's
   stated behavior is exercised; UI acceptance by direct computer use.
 
-## Lanes — everything comes off and back to this map
+## Lanes now (19 Oct 2026)
+
+The plan of record stands: `DLW-PLAN.md` §9 (phases, gates, the 126-target register as the only progress statement), §6.9 (the
+operator's walk), `FOUNDATION.md`, `PATH.md`, the manual (`docs/dlw/DLW.md`). The 16–19 Oct runs (T-REALIGN, then T-WORLDS) added
+features without returning to its acceptance: the register reads 105 of 126 implemented, 0 exercised, 0 passed (last updated
+15 Oct). Lanes meet in this map and their tickets; they do not message each other.
+
+### The build lane — the main build session, on `dlw/build`
+
+Core O:I systems, reverse engineering and foundations, so the base products, the shell and the kernel run, perform and integrate
+before the return to substantive UI work. Up to four Opus subagents.
+
+1. **Finish its own half-finished state first:** the screen checks T-REALIGN still owes (R1's five devices in six views; R2's Clip
+   view in Factory, Expressions, Technē and Live; R3's mixer row on an owned track) and OO's open ops; the candidate check red on
+   PR #677; AIKit reinstalled so W3b's system can be seen; #677 landed on `main` in parts (it is past the size that rebase-merges).
+2. **Follow the established plan.** The current tranche comes from PATH, FOUNDATION and the open issues, not a new roadmap.
+3. **Reverse engineering into the product.** With the REA tooling and Ghidra, on the implementations themselves (source,
+   decompiled code, binaries, runtime behaviour): Claude Code (agent harness, execution, orchestration), OpenRig (agent and runtime
+   integration for Factory and the kernel), Kasetto, no-mistakes (CI to adapt or port), and the Grok bot, Buzz and Codex from the
+   findings already on disk (`campaign-evidence/`, the RE investigator's map recorded in PATH §7). Each finding is judged by
+   whether it makes O:I more capable, reliable, performant or maintainable, and the smallest useful integration is built where it
+   belongs in the tranche — not reported.
+4. **Foundations:** kernel and core infrastructure; agent and intelligence infrastructure — Redis, Kev/Jev and the context
+   sources, so agents get the right context, decide, use capabilities and execute through the systems meant for it; the six
+   products working through their intended relationships; performance and reliability against real bottlenecks (the Graph read at
+   88 s cold, knowledge search at 4.7–6.2 s); operational reuse — saving and reusing scripts, commands, aliases — finished.
+5. **Technē's construction chain, working end to end:** AIKit construction → QL-MEF structure and geometry
+   (`StructuralConstellation`, `ShapeBinding`, `FramedReading`) → the Expression binding → visible, selectable composition → native
+   save and read-back, keeping subject, participation, relation and shape binding through each step. Its plan:
+   `.wayfinder/maps/techne-expression-mode.md` (O-I `main`), QL-MEF's `L5-TECHNE-DUAL-READING-LOCK.md` and
+   `L5-TECHNE-WIKI-CONSTELLATION-WAYFINDER.md`. Open connections: source linking (what becomes a Wiki object, what stays a source
+   descriptor, how exact passages enter a construction); QL staging (`wiki stage`, construction and shape validation into the
+   desktop); where the model proposes and where native ops validate and persist; the live `ShapeBinding` to the renderer (hit
+   testing, multiple occurrences, saved arrangements).
+6. **The owner ops drag and drop needs:** `agent-chain order`, `agent-chain skillset admit`, `workcell git-seat attach`,
+   `world scope setter`, `gateway transport attach` (`agent/agentChainDrag.ts` MISSING_OPS), and a drop target in the shared chain
+   host (`frame/devices/**` takes no drag today).
+7. **Shell refinements in this lane:** the view labels say the views' names ("5 views" goes); the device rack and the widget
+   rail collapse and expand independently; the plumbing for a device's compact, expanded and pop-out states; the Settings theme
+   system made usable, moving off the Ableton-derived CSS; the shell kept true to its product arrangements and routes.
+8. **Not this lane:** UI redesign, the manual, the objective-internality and worldhood material.
+
+### The UI/UX planning lane — this documentation session
+
+The clip, Session view and Arrangement view work is done (manual §16.5–§16.6, §17.1–§21.1). What is left:
+
+1. **The window and device logic in the manual, then the app to match.** One place for each control in the top strip (Central's
+   strip holds 26 controls in one line today, Map twice); the bottom right as the home of the Clip and Device switches and what
+   belongs with them; a component carries no explanatory line its place already says (today: "No document selected — document
+   devices: each modifies the open document", "Widgets 2 open", the pool's empty line, Save/Review/Re-read in pane heads, the
+   Agent widget's paragraph); the device head keeps activator, expand and name, and keeping on the rail, opening full and popping
+   out become what a drag or a double-click does. The encounter bar W1 put above the panes comes out.
+2. **Drag, drop and chain order, specified:** what order means in each chain and whether it can change (Live's audio heard in
+   order through nonlinear stages; Factory's road gateway → agent → skills → scope → landing; Central's packet → agent → scope),
+   and what each drag does (browser → chain, within a chain, device → rail, device → pane, instrument → pane, agent → track,
+   world → track, tab → pool).
+3. **Technē's knowledge field as UX:** the browser over AIKit's federated knowledge (`SemanticWiki`, `SourcePoolProvider`,
+   `CodeIndexProvider`, `ProjectMap`, `KnowledgeRoute`, `KnowledgeApplication`) — lists, trees, graphs and search as ways through
+   one addressable world, each provider keeping its authority; the construction's frame and roles, relations, alternatives and
+   the move between staged construction and live composition made discoverable. The six instruments keep their canonical
+   meanings (M5-0′ Project/Wiki/Graph … M5-5′ Palace/Integral Whole; Expressions as the 3:3 conjugate).
+4. **The objective-internality and worldhood material** where it changes design.
+5. **The design requests the build sends** (19 Oct: the World's scales and a Land control; clip:central's Subject, identity row
+   and dream journal controls; the Sitting's reason), after item 1 settles.
+6. **The owner's review on screen of what T-WORLDS built** (W1 pool, W2 Central's set, W3 your world and system, W4 Nara),
+   against the manual.
+
+### The pages lane — Day, Flow, Being, Thing
+
+1. **First:** bring the four existing templates (`desktop/cradle/documents/ql-daily-die.html`, `ql-flow.html`, `oi-beings.html`,
+   `oi-things.html`, `forms.json`) onto the shell's current UI — its tokens, type and spacing; sample assets out; links opening in
+   the shell — and harden the daily die. Seen standalone on 19 Oct: hidden faces' pips bleed through the edges and the page; an
+   opened face covers the header; the template ships a sample image ("Example asset, not a record"); a key pressed while it turns
+   leaves it oversized under the old face's label until it settles. A full census of its bugs on the native app.
+2. **Then:** each page works as its own page and as a view in the workspace; Beings and Things join walks, the reading view and
+   the sky view as the Archetypal-Earth entries do (W2 built the page op, launch and the Earth join).
+3. **Later, with the owner:** a redesign from the function up and the pages taken into the device ontology. Time: the Day is the
+   lived horizon, the Flow how work unfolds, a Being continuity through change, Things the products with their provenance.
+
+### The creatures and environs lane — `Work/face-rig`
+
+The face-rig creatures and their environs as one SDK for agency. A creature in its habitat is an agent type: the habitat comes
+with the animal, and where in it a creature stands sets its role. Creatures map to agent behaviour by real mechanism (the thread
+contract: Start, Stay, Count, Reach, Link, Join, Change, Failure; the patterns in six families), each with its symbolic and
+astrological layers. Environs are the same kind of thing for processes, read in time: a tree and its fruit are a run and its
+artefacts; producer and product kept apart; state, event and trajectory; the ground keeps its history. The SDK covers the full
+expressive range (skin ripples, colours and inks), driven by the run's real events. The serpent and the tree is the first worked
+example, an offshoot. It reaches the DLW as the faces of agent and process devices. Earth, places and weather are not this lane's.
+
+### Queued — after the foundations
+
+- **Nara, personal practice in M4:** meditation and imaginal practice, journalling, dream work, the other M4 layers, Nara's role,
+  practice that continues, and the relation to Central (the situated world) — reworking the basis W4 built.
+- **Procedural Central:** generated, customisable planets and system objects on the atlas's foundations, each keeping its identity
+  through change, one world through many instruments; Earth, its places and its weather. W3 built the body record, generator and
+  your system. Reference: youtu.be/VRZ3H_FWwxI.
+- **UX acceptance — the real testing:** the operator's walk; the two verticals (a Factory task and a day recovered across the
+  instruments); the register's exercised and passed columns lane by lane (3, then 2 and 4, then 1 and 5); a manual-against-app
+  pass, section by section.
+
+### Order
+
+The build lane finishes and lands what is in flight, then its foundations run beside the planning lane's window, device and drag
+rules — together the prerequisite for resuming UI building. The pages lane's first step and the creatures lane run now, beside
+them. Nara and procedural Central follow the foundations. The UX acceptance comes last.
+
+Other work touching the DLW and outside it: QL-MEF #281 (M′ music), the Archetypal-Earth re-port (on the owner's word), Live 12
+RE, the Palace prop-hunt scope (`.wayfinder/maps/palace-prop-hunt.md`), Central's intelligence and context layers.
+
+## Lanes as they stood on 8 Oct (history; the lanes now are above)
 
 | Lane | Commission / owner | Ground | State (8 Oct) | Returns to the map as |
 |---|---|---|---|---|
