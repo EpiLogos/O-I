@@ -270,6 +270,64 @@ test('many rows: each row\'s last answer is drawn at once and another world\'s n
   assert.equal(asked, 1, 'a reader that left stops the asking')
 })
 
+// MAP's loading item across a relaunch: the window keeps its last answers (owners/keptReadings.ts), bounded and disposable; a new
+// window draws each at once, carried, and asks the owner again behind it. A refusal forgets the kept answer.
+const {keptReadingsIn, KEPT_BYTES, KEPT_ONE_BYTES} = await import('../src/owners/keptReadings.ts')
+
+/** A Storage over a Map, as the window's localStorage behaves; `full` makes every write throw (a full quota). */
+function memoryStorage(full = false) {
+  const items = new Map()
+  return {items, getItem: key => items.get(key) ?? null, setItem: (key, value) => { if (full) throw new Error('QuotaExceededError'); items.set(key, String(value)) }, removeItem: key => items.delete(key)}
+}
+
+test('a relaunch draws the last answer kept from before, carried, and asks the owner again; a refusal forgets it', async () => {
+  const storage = memoryStorage()
+  const first = createOwnerReadings(() => 1_000, keptReadingsIn(storage, {saveAfterMs: 0}))
+  const entry = first.entry('k', async () => ({value: {flows: 3}}))
+  const off = entry.subscribe(() => {})
+  await entry.ensure('4|central')
+  off()
+  await settle()
+  let release
+  const relaunched = createOwnerReadings(() => 9_000, keptReadingsIn(storage, {saveAfterMs: 0}))
+  const again = relaunched.entry('k', () => new Promise(resolve => { release = () => resolve({value: {flows: 4}}) }))
+  assert.equal(again.snapshot().status, 'answered', 'drawn at once on the first look after a relaunch')
+  assert.deepEqual(again.snapshot().value, {flows: 3})
+  assert.equal(again.snapshot().readAtUnixMs, 1_000, 'with the instant it was read')
+  const pending = again.ensure('0|central')
+  assert.equal(again.snapshot().carried, true)
+  assert.equal(again.snapshot().refreshing, true, 'the owner is asked again behind it')
+  release()
+  await pending
+  assert.deepEqual(again.snapshot().value, {flows: 4})
+  const refused = relaunched.entry('r', async () => ({error: 'the owner refused'}))
+  const kept = keptReadingsIn(storage, {saveAfterMs: 0})
+  kept.put('r', {value: 'old', readAtUnixMs: 1, epoch: '0|central'})
+  const third = createOwnerReadings(() => 1, kept)
+  const r = third.entry('r', async () => ({error: 'the owner refused'}))
+  await r.ensure('0|central')
+  assert.equal(r.snapshot().status, 'refused')
+  assert.equal(keptReadingsIn(storage, {saveAfterMs: 0}).get('r'), null, 'a refusal forgets the kept answer')
+  void refused
+})
+
+test('the kept answers stay bounded and never break the window: the oldest go first, an answer too large is not kept, a full store is survived', () => {
+  const storage = memoryStorage()
+  const kept = keptReadingsIn(storage, {saveAfterMs: 0})
+  const big = 'x'.repeat(KEPT_ONE_BYTES - 100)
+  for (let index = 0; index < 8; index++) kept.put(`k${index}`, {value: big, readAtUnixMs: index, epoch: '0|central'})
+  const stored = [...storage.items.values()][0]
+  assert.ok(stored.length <= KEPT_BYTES, `the stored record stays within ${KEPT_BYTES} characters (${stored.length})`)
+  const reread = keptReadingsIn(storage, {saveAfterMs: 0})
+  assert.equal(reread.get('k0'), null, 'the oldest were let go')
+  assert.equal(reread.get('k7')?.value, big, 'the newest stand')
+  kept.put('huge', {value: 'y'.repeat(KEPT_ONE_BYTES + 1), readAtUnixMs: 9, epoch: '0|central'})
+  assert.equal(keptReadingsIn(storage, {saveAfterMs: 0}).get('huge'), null, 'one answer past the bound is not kept')
+  const full = keptReadingsIn(memoryStorage(true), {saveAfterMs: 0})
+  assert.doesNotThrow(() => full.put('k', {value: 1, readAtUnixMs: 1, epoch: '0|central'}), 'a full store is survived')
+  assert.equal(keptReadingsIn(null).get('k'), null, 'no storage: nothing kept')
+})
+
 test('a notice re-reads a held task record behind its standing answer, only for the session it names', async () => {
   const registry = createOwnerReadings()
   const asks = {a: 0, b: 0}
