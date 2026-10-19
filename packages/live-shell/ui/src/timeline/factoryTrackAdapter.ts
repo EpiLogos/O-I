@@ -374,7 +374,7 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
           const start = take.startUnixMs !== null ? secs(take.startUnixMs) : null
           const end = start === null ? null : take.endUnixMs !== null ? Math.max(start, secs(take.endUnixMs)) : take.state === 'running' ? secs(axis.endUnixMs) : start
           const id = `${trackId}#take/${take.attemptRef}`
-          const name = names.get(take.attemptRef) ?? take.unit
+          const name = names.get(take.attemptRef) ?? 'take'
           takeOfLane.set(id, take)
           takeLanes.push({id, trackId, name, spans: start === null || end === null ? [] : [{start, end, label: takeWords(take)}], ...(take.receivingRef ? {standing: true} : {})})
           if (take.receivingRef && start !== null && end !== null) comp.push({trackId, takeId: id, start, end})
