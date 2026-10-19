@@ -1,0 +1,31 @@
+r23 screen pass — b5f16dc8b (a refresh reads after the read in flight; #677's head, landed on main as #678–#682), 19 Oct 2026
+15:03–15:18 UTC, computer use on the native candidate driven in the background (its window parked behind the person's), the owner's
+real ground. Control/user/flows and the root and O-I wikis were backed up first; nothing was written but today's set, which ends as it
+began (Your world and O-I; Day revision 400715:e9d0292a): all 13 flows files match; both wikis keep their hashes.
+
+Seen (T-REALIGN's owed checks, and r22's fix):
+- R1, the Day in the six views on its owner: Compact on Central's chain (the face net, Face, Rollover, Agent, Close now); Whole as the
+  band under the detail head, full width, every section (faces, view, template, time, agent, sources, close), the panes shrunk above
+  it, and Esc folding it; Folded by a double-click of its name, a strip reading "Day · Mon 19 · Face 0", opened again by its title;
+  Full in the focused pane by ⊞ (the Day's page with its face picker and native-source save and review); Widget on the rail by ◎ (the
+  "Day · Mon 19" tile: the die net and today's tasks). Pop-out by ↗ opened its own window but failed there (below).
+- R3, a mixer row on an owned track: O-I's track in Central's Session grid carries its row (its number as Activator, Solo, Arm, In and
+  Out), dimmed: Central's set gives a world's track no mixer acts.
+- Today's set: O-I taken out by × redraws the grid at once without it ("O-I is out of today's set; its pages stay in its folder"), and
+  a double-click on its Worlds row brings it back; the grid draws it once the ground's read returns. r22's grid kept the removed world.
+
+Found and fixed after the pass (not in r23):
+- The Day's Pop-out window first read "The detached native World/access epoch is unavailable or has retired. Retry opening surface";
+  Retry drew it. A device window waited on its own native World/access, which a device never uses (it draws on the binding the main
+  window relays and reads no file there) and which its window may never receive. Its Re-dock did nothing for the same reason: letting a
+  device go asked for that access too. A device window is now admitted and let go on its identity alone; a file, flow or encounter
+  window still stands on its access (native/detachedAdmission.ts; red on the old order, green after).
+- The Day's Pop-out drew a blank Full over its Whole: the Day's Full is its page as the main window draws it, which no second window
+  holds, so the design's template stood in, with no template root on the native host. The Day now names its page as data (its
+  aperture) beside the drawing; the relay carries it and the Pop-out draws the same page on its own carrier (frame/devices/relayedFulls.ts).
+
+Noted: Technē's centre pane read "The Earth atlas is already open in another pane of this session. It is drawn once, in the pane that
+opened it first." — the pane that holds it was not on screen.
+
+Not seen, and why: Physics, the Skillset rack and Scope in the six views (the Pop-out fixes come first, r24); Clip view in Factory,
+Expressions, Technē and Live — Technē's work held no clip in any track, Factory no task, Expressions no scene, Live no open set.

@@ -2,10 +2,14 @@
 // binding the main window relays — readings and standing as they stand there, every change sent back to the owner through it and
 // answered in the owner's words. While no relay answers (a face popped out from elsewhere, a main window that relays none), the page
 // draws what it drew before.
+import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import {relayedFullDraw} from './relayedFulls'
 import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {PlacedDevice} from './DeviceView'
 import type {DeviceInstance} from './deviceRuntime'
 import {RELAY_EVENTS, relayedBinding, type RelayAct, type RelayedSnapshot} from './deviceRelay'
+
+const NO_CARRIER: KernelTransportStatus = {kind: 'unavailable', reason: 'This window has no carrier to draw the device\'s own material on.'}
 
 /** How long the page waits for the main window's relay before drawing the standalone face. */
 export const RELAY_WAIT_MS = 1500
@@ -49,20 +53,22 @@ export function useRelayedSnapshot(bindingId: string): {snapshot: RelayedSnapsho
 }
 
 /** The device's Pop-out on the relayed binding, or `fallback` once no relay answered. */
-export function RelayedDevice({bindingId, fallback, onClose}: {bindingId: string; fallback: () => ReactNode; onClose?: () => void}) {
+export function RelayedDevice({bindingId, fallback, onClose, transport}: {bindingId: string; fallback: () => ReactNode; onClose?: () => void
+  /** This window's carrier, which the device's own Full is drawn on here (relayedFulls.ts). */
+  transport?: KernelTransportStatus}) {
   // Off the host there is no event bus to relay on: the page draws what it drew before, at once.
   if (!onHost()) return <>{fallback()}</>
-  return <Relayed bindingId={bindingId} fallback={fallback} onClose={onClose} />
+  return <Relayed bindingId={bindingId} fallback={fallback} onClose={onClose} transport={transport} />
 }
 
 const onHost = () => typeof window !== 'undefined' && !!(window as unknown as {__TAURI_INTERNALS__?: unknown}).__TAURI_INTERNALS__
 
-function Relayed({bindingId, fallback, onClose}: {bindingId: string; fallback: () => ReactNode; onClose?: () => void}) {
+function Relayed({bindingId, fallback, onClose, transport}: {bindingId: string; fallback: () => ReactNode; onClose?: () => void; transport?: KernelTransportStatus}) {
   const {snapshot, waited, send} = useRelayedSnapshot(bindingId)
   const binding = useMemo(() => (snapshot?.binding ? relayedBinding(snapshot.binding, send) : undefined), [snapshot, send])
   if (!snapshot) return waited ? <>{fallback()}</> : <p role="status" data-device-relay="waiting">Reaching the device in the main window…</p>
   const device = snapshot.device as unknown as DeviceInstance
   return <div className="device-relayed" data-device-relay="relayed" data-device-relay-of={snapshot.deviceId}>
-    <PlacedDevice device={device} view="popout" binding={binding} onClose={onClose} relayed />
+    <PlacedDevice device={device} view="popout" binding={binding} onClose={onClose} relayed ownFull={relayedFullDraw(snapshot.full, transport ?? NO_CARRIER)} />
   </div>
 }

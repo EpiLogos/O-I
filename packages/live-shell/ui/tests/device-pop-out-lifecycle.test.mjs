@@ -197,3 +197,27 @@ test('an extension of a parameter device composes without the device kind or any
   const central = schema.inhabitantManifest('central')
   assert.equal(central.faces.find(face => face.id === 'qa-parameter').dock, undefined)
 })
+
+test('a device window is admitted and let go on its identity alone; a file window waits on this window\'s World/access (r23)', async () => {
+  // r23: the Day's first Pop-out read "The detached native World/access epoch is unavailable or has retired", and its Re-dock did
+  // nothing: a device draws on the main window's relay and reads no native file, yet its window waited on an access it may never get.
+  const {detachedAdmission, DETACHED_ACCESS_RETIRED} = await import('../src/native/detachedAdmission.ts')
+  const calls = []
+  let access = {ready: false, epoch: 0, current: () => false}
+  const admission = detachedAdmission({access: () => access, loadFamilies: () => calls.push('families'),
+    readConfig: async () => { calls.push('config'); return {product_ids: [], contributions: []} },
+    admitContribution: binding => calls.push(`contribution:${binding.id}`), checkpoint: async ids => { calls.push(`checkpoint:${ids.join(',')}`) }})
+  const device = {id: 'device:central/day-die', kind: 'device', device: {family: 'central', face: 'day-die', aperture: {day: {project: null, sourceRef: 's', documentId: 'd'}}}}
+  await admission.admitBinding(device)
+  await admission.beforeRelease(device)
+  assert.deepEqual(calls, ['families'], 'admitted and let go with no access, no config read and no checkpoint')
+  await assert.rejects(admission.admitBinding({...device, id: 'device:central/other'}), /does not name its family and face/)
+  const file = {id: 'file-1', kind: 'file', ref: 'central:path:x'}
+  await assert.rejects(admission.admitBinding(file), new RegExp(DETACHED_ACCESS_RETIRED.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')), 'a file still waits on access')
+  await assert.rejects(admission.beforeRelease(file), /World\/access/)
+  access = {ready: true, epoch: 3, current: epoch => epoch === 3}
+  calls.length = 0
+  await admission.admitBinding(file)
+  await admission.beforeRelease(file)
+  assert.deepEqual(calls, ['config', 'contribution:file-1', 'checkpoint:file-1'])
+})

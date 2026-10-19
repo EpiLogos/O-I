@@ -90,7 +90,8 @@ interface Hosting {
  * plate; the place's wrap reaches the generic plate by its rows, and a design's kit controls by their value keys (a design key that is
  * one of the device's rows is wrapped as that row is). A device published with its own Full draws that as Full, over either. */
 function useHosting(device: DeviceInstance, picture: ((size: 'compact' | 'whole' | 'full') => ReactNode) | undefined, actions: readonly DeviceAction[] | undefined,
-  wrapRow: DeviceViewProps['wrapRow'], given: DesignBinding | undefined, generic: boolean | undefined, selected: boolean, relayed = false): Hosting {
+  wrapRow: DeviceViewProps['wrapRow'], given: DesignBinding | undefined, generic: boolean | undefined, selected: boolean, relayed = false,
+  relayedFull?: () => ReactNode): Hosting {
   // A relayed device is published on the main window's door, not this window's (a Pop-out is its own page): it counts as published.
   const published = useIsPublished(device.id) || relayed
   const entry = published ? publishedDevice(device.id) : undefined
@@ -107,7 +108,7 @@ function useHosting(device: DeviceInstance, picture: ((size: 'compact' | 'whole'
   const designed = own && !generic && (wired || isRegisteredDesign(key)) ? own : plain
   // A design reads its own value keys through the family's binding; a shell-registered design, the device's rows.
   const binding = designed === plain ? rowBinding : wired ?? rowBinding
-  const draw = entry?.full && 'draw' in entry.full ? entry.full.draw : undefined
+  const draw = (entry?.full && 'draw' in entry.full ? entry.full.draw : undefined) ?? relayedFull
   const withOwnFull = (views: DesignedDevice): DesignedDevice => (draw ? {...views, full: () => <div className="dv-full"
     data-i={`${device.face.title}|The device at pane size, as its owner draws it. Its controls stay in Device view.`}>{draw()}</div>} : views)
   const shownPlain = withOwnFull(plain)
@@ -258,15 +259,17 @@ export function DeviceView({device, size, picture, actions, wrapRow, binding, ge
 /** A device whole (the pool, or its expanded view above the chain), full (a pane), in its own window (pop-out) or as its widget (the rail).
  * The pool's plate is 400 wide, scaled to the pool's width. The place's frame is the view's own place unless the caller names another
  * (Whole expanded is 'flip'); its room is the caller's, else the box it stands in (useHolderRoom). */
-export function PlacedDevice({device, view, picture, actions, wrapRow, binding, generic, marks, onClose, frame, room, relayed}: {device: DeviceInstance;
+export function PlacedDevice({device, view, picture, actions, wrapRow, binding, generic, marks, onClose, frame, room, relayed, ownFull}: {device: DeviceInstance;
   view: 'whole' | 'full' | 'popout' | 'widget'; picture?: (size: 'compact' | 'whole' | 'full') => ReactNode; actions?: readonly DeviceAction[]
   wrapRow?: DeviceViewProps['wrapRow']; binding?: DesignBinding; generic?: boolean; marks?: ReactNode
   /** Widget: take it off the rail (its tile's ✕). Pop-out: close its window (↗ in the window). */
   onClose?: () => void; frame?: Frame; room?: Room
   /** Drawn on the binding the main window relays (RelayedDevice.tsx): the device is published there, so its design draws here. */
-  relayed?: boolean}) {
+  relayed?: boolean
+  /** The device's own Full where this window's door holds none: a Pop-out's, relayed as data and drawn here (relayedFulls.ts). */
+  ownFull?: () => ReactNode}) {
   const root = useRef<HTMLDivElement>(null)
-  const hosting = useHosting(device, picture, actions, wrapRow, binding, generic, false, relayed)
+  const hosting = useHosting(device, picture, actions, wrapRow, binding, generic, false, relayed, ownFull)
   const nav = useNav(device, actions, root, marks)
   const scale = useContainerScale(root, '.device-pool', (box, natural) => poolScale(box.width, box.height, natural.height || undefined))
   const zoom = view === 'whole' && scale !== 1 ? scale : undefined

@@ -1,4 +1,4 @@
-import {useCallback, useRef} from 'react'
+import {useMemo, useRef} from 'react'
 import {DetachedFrame} from '../../../../../desktop/cradle/src/workspace/DetachedFrame'
 import {checkpointDocuments} from '../../../../../desktop/cradle/src/document/frame'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
@@ -8,12 +8,15 @@ import {CANDIDATE_WORKSPACE_KEY} from '../continuity/workspace'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig} from './application'
 import {admitContribution} from './contributions'
-import {deviceBindingId, deviceIdentityFault, deviceIdentityOf, deviceRelayAdmissionFault, nativeDetachedBodySupported} from './detachedKinds'
+import {deviceBindingId, deviceIdentityFault, deviceIdentityOf, deviceRelayAdmissionFault} from './detachedKinds'
+import {detachedAdmission} from './detachedAdmission'
 import {allInhabitantManifests} from '../inhabitants/manifest'
 import {loadWorldShellFamilies} from '../inhabitants/worldShellFamilies'
 import {DeviceFace} from '../inhabitants/inhabitantRack'
 import {useQlInstrumentFeed} from '../live/torusInstrument'
 import {RelayedDevice} from '../frame/devices/RelayedDevice'
+// The Central family registers the Day's page as the Day's relayed Full (relayedFulls.ts registerRelayedFull), drawn in its Pop-out.
+import '../central/devices/CentralDevices'
 
 // The receiving window loads the families the main window loads (ModeDetail calls the same loader at module load): one
 // loader, one door. A device body reads the registry at render, so the registry stands before the first admission.
@@ -25,34 +28,15 @@ export function NativeDetached() {
   const workspace = useWorkspace()
   const latest = useRef(workspace)
   latest.current = workspace
-  const current = (epoch: number) => {
-    if (!latest.current.accessReady || !latest.current.nativeAccessCurrent(epoch)) throw Error('The detached native World/access epoch is unavailable or has retired.')
-  }
-  const admitBinding = useCallback(async (binding: SurfaceBinding) => {
-    const epoch = latest.current.accessEpoch
-    current(epoch)
-    if (!nativeDetachedBodySupported(binding.kind)) throw Error('This surface has no native detached receiving body. Its binding has been retained.')
-    if (binding.kind === 'device') {
-      // A device is never admitted as a hosted contribution. Its body draws on the binding the main window relays (the device that
-      // window already draws, Live's own effects among them, which no inhabitant manifest declares), so a well-formed identity is
-      // what is admitted here; a face drawn alone, where no relay answers, is held to the manifests' rule in the body
-      // (DeviceWindowBody). The named fault is the refusal.
-      loadWorldShellFamilies()
-      const fault = deviceRelayAdmissionFault(binding)
-      current(epoch)
-      if (fault) throw Error(fault)
-      return
-    }
-    const config = await readShellConfig()
-    current(epoch)
-    admitContribution(binding, config.product_ids, config.contributions)
-  }, [])
-  const beforeRelease = useCallback(async (binding: SurfaceBinding) => {
-    const epoch = latest.current.accessEpoch
-    current(epoch)
-    if (binding.kind !== 'device') await checkpointDocuments([binding.id])
-    current(epoch)
-  }, [])
+  // What this window admits and settles before it lets a binding go (detachedAdmission.ts): a device on its identity alone, every
+  // other kind on this window's current World/access epoch.
+  const {admitBinding, beforeRelease} = useMemo(() => detachedAdmission({
+    access: () => ({ready: latest.current.accessReady, epoch: latest.current.accessEpoch, current: epoch => latest.current.nativeAccessCurrent(epoch)}),
+    loadFamilies: loadWorldShellFamilies,
+    readConfig: () => readShellConfig(),
+    admitContribution,
+    checkpoint: ids => checkpointDocuments(ids),
+  }), [])
   const transport = workspace.transport
   return <DetachedFrame workspaceStorageKey={CANDIDATE_WORKSPACE_KEY} admitBinding={admitBinding}
     beforeRelease={beforeRelease} renderDevice={binding => <DeviceWindowBody binding={binding} transport={transport}/>}
@@ -86,7 +70,7 @@ export function DeviceWindowBody({binding, transport, manifests = allInhabitantM
   // The device's own Pop-out on the binding the main window relays (frame/devices/deviceRelay.ts); where none answers, the face
   // drawn alone, held to the standalone face's own rule (it must stand alone, declare pop-out and carry its aperture).
   const alone = deviceAdmissionFault(binding, manifests)
-  return <RelayedDevice bindingId={binding.id} onClose={closeThisWindow}
+  return <RelayedDevice bindingId={binding.id} onClose={closeThisWindow} transport={transport}
     fallback={() => alone ? <p role="alert" data-device-fault>{alone}</p>
       : <DeviceFace identity={identity} manifests={manifests} transport={transport} instrumentReading={instrumentReading}/>} />
 }
