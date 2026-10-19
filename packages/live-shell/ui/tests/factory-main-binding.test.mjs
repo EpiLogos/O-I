@@ -209,7 +209,7 @@ test('the rail\'s Frames is the Frames monitor\'s own widget (§23.8): bare, on 
     assert.match(tile, /data-device-size="widget"/)
     assert.match(tile, /data-device-design="actuation:frames-monitor"|data-device-design="generic"/)
   } finally { door.publishDevice(device.id, null) }
-  assert.match(read('agent/AgentDockTileBody.tsx'), /claimRailWidget\('frames', FRAMES_ID\)/, 'the Frames tile\'s own module claims it for the monitor')
+  assert.match(read('agent/agentDockTiles.ts'), /claimRailWidget\('frames', FRAMES_ID\)/, 'the agent tiles\' marks module claims the Frames tile for the monitor, before any tile body loads')
   assert.doesNotMatch(read('agent/AgentDockTileBody.tsx'), /op: 'harness_agent_read'/, 'its raw gateway receipt is gone (MOVED)')
   assert.match(read('frame/widgets/WidgetRail.tsx'), /widgets\.map\(claimedWidget\)/)
 })

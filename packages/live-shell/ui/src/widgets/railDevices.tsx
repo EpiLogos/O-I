@@ -17,7 +17,7 @@ import {listFiles, readFile} from '../../../../../desktop/cradle/src/files/clien
 import {parseWiki, type WikiNode} from '../../../../../desktop/cradle/src/techne/wikiReading'
 import type {TapeRow} from '../../../../../desktop/cradle/src/agent/tape/model'
 import {useAgencySessions} from '../agent/useAgencySessions'
-import {COMPANIONS} from '../shell/ModeContextDock'
+import {COMPANIONS} from '../shell/modeDockTiles'
 import {CONVERSATION_PROJECT, conversationOf} from './agentConversation'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {publishDevice} from '../frame/devices/deviceDoor'
