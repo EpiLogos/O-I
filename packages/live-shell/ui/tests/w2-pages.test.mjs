@@ -152,3 +152,20 @@ test('the worlds wait for Central\'s first browse: a snapshot with no root yet i
   assert.deepEqual(await withBridge(never, transport => readWorlds(transport, settle)), {state: 'unavailable', reason: 'Central returned no root disclosure'})
   assert.equal(never.asked(), 4)
 })
+
+test('a Being\'s pane draws the page by the current template from its island, whatever script the file was copied with (r14)', async () => {
+  const {currentPage} = await import('../src/inhabitants/DocumentPageFace.tsx')
+  const {blankPage, renderPage, readPage} = await import('../../../../desktop/cradle/src/personal/page.mjs')
+  // A page copied from an older template: its HTML shows the blank page, its island holds what the owner wrote since.
+  const old = renderPage(blankPage('beings')).replace(/(<script type="application\/json" id="ql-doc">)([\s\S]*?)(<\/script>)/, (_, open, body, close) => {
+    const island = JSON.parse(body.replace(/\\u003c/g, '<'))
+    island.meta.title = 'Hildegard of Bingen'
+    island.highlights = [{id: 'h1', part: 'introduction', passage: null, colour: 'green'}]
+    return open + JSON.stringify(island).replace(/</g, '\\u003c') + close
+  })
+  assert.doesNotMatch(old.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)[1], /Hildegard/, 'the copied HTML still shows the blank title')
+  const drawn = currentPage(old)
+  assert.match(drawn.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)[1], /Hildegard of Bingen/)
+  assert.deepEqual(readPage(drawn).highlights, [{id: 'h1', part: 'introduction', passage: null, colour: 'green'}], 'the island is kept whole, the owner\'s keys with it')
+  assert.equal(currentPage('<html><body>no page here</body></html>'), '<html><body>no page here</body></html>', 'a file that is no page is hosted as it is')
+})
