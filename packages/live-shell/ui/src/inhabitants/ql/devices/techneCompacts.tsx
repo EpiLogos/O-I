@@ -118,7 +118,7 @@ function WorldCompact(): CompactBody {
   const clock = handle?.time
   const occasion = clock ? (clock.mode === 'cursor' ? 'cursor' : 'all') : null
   return {well, macros: <>
-    <Readout label="Scale" value={scale ?? '—'} does="How close you look: system, body, region or palace, as the camera stands." />
+    <Readout label="Scale" value={scale ?? '—'} does="How close you look: field, system, body, region or place, as the camera stands." />
     {waitingChooser('Aperture', ['World', 'Local', 'Shared', 'Federated'], 'No owner opens the shared or federated field to the atlas yet.')}
     {waitingChooser('View as', ['Me', 'Field', 'Public'], 'No owner discloses how the field or the public sees your world yet.')}
     <PlateRadio stack label="Occasion" does={clock && clock.mode === 'cursor' && handle ? `The moment the Earth shows: ${formatYear(handle.model.scale.fromU(clock.cursorU))}.` : 'The moment the Earth shows: all time, or the cursor.'}

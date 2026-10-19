@@ -133,6 +133,12 @@ export interface CentralReading {
   pages?: ReadonlyMap<string, WorldPagesReading>
   /** The pages that play now. */
   playing?: readonly CentralPlaying[]
+  /** Each world's colour, its body's (manual §17.2 "Your system": "on its track, its clips and its body"; projections/atlas/system/
+   * systemModel.ts worldColourOf), by the world's ref. A world with none draws the default. */
+  colours?: ReadonlyMap<string, string>
+  /** Your practice world's ref (desktop/cradle/src/nara/practiceWorld.ts practiceWorldOf): its track is of Kind Practice, fogged, its
+   * Activator off, its chain Packet · Nara · Scope (T-WORLDS §6 W4). */
+  practice?: string | null
   controls?: CentralControls
 }
 
@@ -322,8 +328,12 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
   const tracks: WorldTrack[] = [
     ...worlds.map(({world, disclosed}): WorldTrack => {
       const plays = (pages.get(world.ref) ?? []).filter(page => playing.has(page.location.ref)).length
-      return {id: centralWorldTrackId(world.ref), name: world.name, kind: worldKindText(world, disclosed, reading.pages?.get(world.ref), plays),
-        ...(typeof armOn === 'boolean' ? {mix: {arm: armOn}} : {})}
+      const practice = reading.practice === world.ref
+      const colour = reading.colours?.get(world.ref)
+      const kind = worldKindText(world, disclosed, reading.pages?.get(world.ref), plays)
+      return {id: centralWorldTrackId(world.ref), name: world.name, ...(colour ? {color: colour} : {}),
+        kind: practice ? `Practice · fogged: its pages stay out of the Day unless you send them · its chain Packet · Nara · Scope · ${kind}` : kind,
+        ...(typeof armOn === 'boolean' || practice ? {mix: {...(typeof armOn === 'boolean' ? {arm: armOn} : {}), ...(practice ? {activator: false} : {})}} : {})}
     }),
     {id: CENTRAL_DAY_TRACK_ID, name: 'Day', color: DAY_COLOUR, main: true, kind: dayKindText(reading, entries.filter(entry => entry.key === today).length)},
   ]
