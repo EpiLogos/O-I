@@ -24,8 +24,8 @@ export interface FactoryTake {
   runRef: string
   statePath: string
   taskRef: string
-  /** The workflow unit the attempt works, in the owner's words, shortened. */
-  unit: string
+  /** The workflow unit the attempt works, in short readable words; null when the owner's ref is an opaque identity. */
+  unit: string | null
   state: TakeState
   /** Admission time, when the owner disclosed one (older states carry none). */
   startUnixMs: number | null
@@ -44,13 +44,16 @@ const time = (value: unknown): number | null => { const at = typeof value === 's
 /** The key a Run's attempts are read under: the Factory state that holds it, and its ref. */
 export const runKey = (statePath: string, runRef: string): string => JSON.stringify([statePath, runRef])
 
-/** The unit in short words: the owner's own ref carries a workflow and a unit; the unit is what tells takes apart. */
-export function unitWords(unit: unknown): string {
-  if (typeof unit === 'string') return unit.split(/[:/]/).filter(Boolean).pop() ?? unit
+/** The unit in short words, when its ref says something: a key (`inspect-source`), not the opaque identity Factory mints for a unit
+ * (`workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW`), which tells takes apart no better than their number does. */
+export function unitWords(unit: unknown): string | null {
+  if (typeof unit === 'string') {
+    const tail = unit.split(/[:/]/).filter(Boolean).pop() ?? ''
+    return !tail || /^[0-9A-Z]{20,}$/.test(tail) ? null : tail
+  }
   const row = object(unit)
   const named = row && (text(row.unit) ?? text(row.key) ?? text(row.unitKey) ?? text(row.reference) ?? text(row.ref))
-  if (named) return unitWords(named)
-  return 'attempt'
+  return named ? unitWords(named) : null
 }
 
 /** Each session's served attempts, in the order the owner gave them. A session the owner refused, or whose bound task serves
@@ -105,13 +108,14 @@ export function takesBySession(served: ReadonlyMap<string, readonly ServedAttemp
   return out
 }
 
-/** A take's name on its lane: the unit, numbered among the takes of the same unit. */
+/** A take's name on its lane: its number among the takes of its unit, with the unit's key when the owner's ref carries one. Takes
+ * are numbered in the order the owner served them. */
 export function takeNames(takes: readonly FactoryTake[]): Map<string, string> {
   const seen = new Map<string, number>()
   return new Map(takes.map(take => {
-    const n = (seen.get(take.unit) ?? 0) + 1
-    seen.set(take.unit, n)
-    return [take.attemptRef, `${take.unit} · take ${n}`]
+    const n = (seen.get(take.unit ?? '') ?? 0) + 1
+    seen.set(take.unit ?? '', n)
+    return [take.attemptRef, take.unit ? `${take.unit} · take ${n}` : `take ${n}`]
   }))
 }
 
