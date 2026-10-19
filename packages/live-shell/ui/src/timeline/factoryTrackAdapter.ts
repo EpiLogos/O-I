@@ -26,8 +26,12 @@
 //   handed in (no carrier, no resolved binding), no actions: the grid stays read-only. One act is finer: a track's Stop, where
 //   `sessionStop` is handed in, cancels that session's running turn on its own encounter owner (`encounter` cancel, as the
 //   Thread's Hard stop does), and its control says no grain; Stop All stays the harness's.
-// - takes (attempts) are absent: the attempts owner (`factory_attempt_read`) is addressed by run, and the sessions reading names
-//   none. Launch quantize and follow are absent: the armed timing is shell state, not a reading of the task.
+// - takes (attempts): each Software Factory attempt a session's bound task serves is a take lane under its track (agent/factoryTakes.ts:
+//   AIKit says which attempts the task serves, Factory says what each is), laid on the ruler from its admission to its Return or
+//   failure, a running one reaching the live edge. The take that stands is the one whose Return Central has received, and the main
+//   lane shows it. Choosing a take is Factory's own op, the comp action: the attempt's Return proposed to Central's receiving field
+//   (`factory_owner` attempt-receiving); Factory receives a whole attempt, so a stretch dragged across a take chooses the take and
+//   copies no part of it. Launch quantize and follow are absent: the armed timing is shell state, not a reading of the task.
 // - R3 (manual §19.1 "The mixer row", §16.6): each session's mixer row — Monitor is Watch (In · Auto · Off), the activator is
 //   Telemetry, Solo, and Arm, which is the shell's one write arm (`shell.setWriteArm`, the transport's own; its light is the flag
 //   the shell moves only when the owner accepts); the way in is the Gateway and the way out the landing, routes not settings. The
@@ -41,16 +45,20 @@
 //
 // Pure TypeScript. No React.
 import {AGENT_CHAIN_MIME, decodeChainDrag} from '../agent/agentChainDrag'
+import {takeNames, takeWords, type FactoryTake} from '../agent/factoryTakes'
 import {eventsForSession, sharedAxis, trackKey, type AgentSessionTrack, type TaskClip, type TaskState, type TemporalEventLike} from '../agent/agentRunModel'
 import type {
   ClipStatus,
+  WorldCompStretch,
   WorldEventLane,
   WorldMixer,
+  WorldTakeLane,
   WorldTrack,
   WorldTrackActions,
   WorldTrackAdapter,
   WorldTrackClip,
   WorldTrackColumn,
+  WorldTrackLanes,
   WorldTrackSet,
 } from './worldTrackAdapter'
 
@@ -88,6 +96,16 @@ export interface FactorySettingsPort {
   set(sessionRef: string, setting: 'telemetry' | 'solo', on: boolean): Promise<unknown>
 }
 
+/** The sessions' attempts as takes (agent/factoryTakes.ts): a session's takes as its owners state them (null while unread, empty
+ * when its task serves none), and the choice of one, which answers with the owner's receipt in words or its refusal. */
+export interface FactoryTakesPort {
+  of(sessionRef: string): readonly FactoryTake[] | null
+  choose(take: FactoryTake): Promise<unknown>
+}
+
+/** The op the comp names: choosing an attempt, which the owner does whole. */
+export const FACTORY_CHOOSE_OP = 'factory_owner attempt-receiving — the attempt\'s Return proposed to Central\'s receiving field, in the Flow its Run is associated with; Factory receives a whole attempt, so the stretch dragged chooses the take and copies no part of it'
+
 /** The ops the mixer's settings name. */
 export const FACTORY_SESSION_STOP_OP = 'encounter cancel — this session\'s running turn, on its own resident owner; the session stays and the harness\'s other sessions run on'
 export const FACTORY_TELEMETRY_OP = 'encounter_session_settings {track: {telemetry}} — the session\'s own Telemetry on AIKit, against the revision that stands'
@@ -113,6 +131,8 @@ export interface FactorySessionsReading {
   writeArm?: FactoryWriteArm
   /** The sessions' own settings, for every session's Telemetry and Solo. Absent: unread here, and both stand disabled. */
   settings?: FactorySettingsPort
+  /** The sessions' attempts as takes. Absent: unread here, and the take lanes stand absent with that reason. */
+  takes?: FactoryTakesPort
   /** Stop one session: cancel its running turn on its own encounter owner. Absent: a track's Stop is the harness's. */
   sessionStop?: (sessionRef: string) => Promise<FactoryControlReceipt>
 }
@@ -138,10 +158,13 @@ export const FACTORY_MAIN_CHAIN = ['Gateways', 'Experiment', 'Approvals', 'Ledge
 
 /** Why the lanes the owners do not give are absent, in their terms. */
 export const FACTORY_LANES_ABSENT = {
-  takes: missing('Attempts as take lanes', 'agency_read rows naming each session\'s Factory run {state_path, run_ref}, so factory_attempt_read can be addressed; and factory_attempt_land {state_path, run_ref, attempt_ref, range?} → {ok, note} for the comp that chooses the attempt that lands', 'AIKit · Software Factory'),
+  takes: 'The attempts are unread here: the sessions\' served attempts (AIKit encounter_task_attempts_list) and the Runs that hold them (factory_attempt_read) arrive when the shell publishes a kernel carrier.',
   automation: missing('The Agent\'s effort over a run', 'a recorded automation of the Agent\'s effort per session — harness_agent_control {binding, control: "configure", effort} carries one value, and no owner keeps its moves over time', 'Actuation'),
   events: 'The temporal stream gives each session\'s events by their kind (run, return, generation …): those kinds are the lanes. Messages, Files, Terminal and Pages read are not kinds it names — missing op: temporal_events_read rows with `lane: "messages" | "files" | "terminal" | "pages"` for a session\'s tool runs (Actuation · kernel).',
 } as const
+
+/** Why a take lane is absent when the attempts were read and none is served. */
+export const FACTORY_NO_ATTEMPTS = 'No session\'s task serves a Factory attempt yet: Factory records each attempt it dispatches on the session\'s AIKit task.'
 
 const TASK_MARK = '#task/'
 const BATCH_PREFIX = 'batch:'
@@ -334,8 +357,42 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     const events = reading.events
       ? agency.flatMap(track => track.group ? [] : factoryEventLanes(trackKey(track), track.sessionRef, reading.events!, secs))
       : []
-    set.lanes = {events, absent: {...FACTORY_LANES_ABSENT, ...(reading.events ? {} : {events: 'The temporal events are unread here: the sessions provider is not mounted above this pane.'})}}
+    // The takes: a lane for each attempt a session's task serves, the one that stands marked and shown on the main lane.
+    const takePort = reading.takes
+    const takeOfLane = new Map<string, FactoryTake>()
+    const takeLanes: WorldTakeLane[] = []
+    const comp: WorldCompStretch[] = []
+    if (takePort) {
+      for (const track of agency) {
+        if (track.group) continue
+        const trackId = trackKey(track)
+        const takes = takePort.of(track.sessionRef) ?? []
+        const names = takeNames(takes)
+        for (const take of takes) {
+          // Where it ran: from its admission to its Return or failure, a running one to the live edge. An attempt whose owner
+          // disclosed no admission time has no place on the ruler (its lane stands with no stretch).
+          const start = take.startUnixMs !== null ? secs(take.startUnixMs) : null
+          const end = start === null ? null : take.endUnixMs !== null ? Math.max(start, secs(take.endUnixMs)) : take.state === 'running' ? secs(axis.endUnixMs) : start
+          const id = `${trackId}#take/${take.attemptRef}`
+          const name = names.get(take.attemptRef) ?? take.unit
+          takeOfLane.set(id, take)
+          takeLanes.push({id, trackId, name, spans: start === null || end === null ? [] : [{start, end, label: takeWords(take)}], ...(take.receivingRef ? {standing: true} : {})})
+          if (take.receivingRef && start !== null && end !== null) comp.push({trackId, takeId: id, start, end})
+        }
+      }
+    }
+    const absent: NonNullable<WorldTrackLanes['absent']> = {...FACTORY_LANES_ABSENT, ...(reading.events ? {} : {events: 'The temporal events are unread here: the sessions provider is not mounted above this pane.'})}
+    if (takePort && takeLanes.length) delete absent.takes
+    else if (takePort) absent.takes = FACTORY_NO_ATTEMPTS
+    set.lanes = {events, ...(takePort ? {takes: takeLanes, comp} : {}), absent}
     if (controls) set.actions = actionsFor(controls, tracks, clips, columns)
+    // Choosing a take: the comp action, through the attempt's owner. An id the set does not hold is refused before any owner call.
+    if (takePort) {
+      set.actions = {...set.actions, comp: {op: FACTORY_CHOOSE_OP, run: (_trackId, takeId) => {
+        const take = takeOfLane.get(takeId)
+        return take ? takePort.choose(take) : refused(`"${takeId}" is not an attempt of this work.`)
+      }}}
+    }
     if (arm) set.actions = {...set.actions, mixer: {arm: {op: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it', run: (_trackId, on) => arm.set(on)}}}
     // A track's Stop is that session's own: its running turn cancelled on its encounter owner (Stop All stays the harness's).
     const sessionStop = reading.sessionStop

@@ -790,6 +790,7 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::Recognise { .. } => "development mutate",
         factory::OwnerRequest::DevelopmentCommission { .. } => "development commission",
         factory::OwnerRequest::RunClose { .. } => "run close",
+        factory::OwnerRequest::AttemptReceiving { .. } => "attempt receiving",
         _ => "factory",
     }
 }
@@ -799,9 +800,9 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
 fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
     use factory::OwnerRequest;
     match request {
-        OwnerRequest::ActionInvoke { run_ref, .. } | OwnerRequest::RunClose { run_ref, .. } => {
-            run_ref.clone()
-        }
+        OwnerRequest::ActionInvoke { run_ref, .. }
+        | OwnerRequest::RunClose { run_ref, .. }
+        | OwnerRequest::AttemptReceiving { run_ref, .. } => run_ref.clone(),
         OwnerRequest::Recognise {
             journey_ref,
             state_path,

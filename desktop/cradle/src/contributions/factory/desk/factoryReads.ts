@@ -31,6 +31,8 @@ export type FactoryOwnerRequest =
   | {kind: "action-invoke"; state_path: string; project_ref: string; run_ref: string; request: unknown}
   | {kind: "recognise"; state_path: string; journey_ref: string; subject_ref: string; basis_refs?: string[]}
   | {kind: "run-close"; state_path: string; run_ref: string; recognition_ref: string; next_unit?: unknown; authority_grant?: string}
+  | {kind: "attempt-admission"}
+  | {kind: "attempt-receiving"; state_path: string; run_ref: string; attempt_ref: string; authority_grant?: string}
   | {kind: "development-commission"; state_path: string; request: unknown}
   | {kind: "inhabitation"; state_path: string; run_ref?: string; position_ref?: string}
   | {kind: "current-work"; state_path: string; position_ref: string};
@@ -143,6 +145,51 @@ export interface RunCloseTarget {statePath: string; runRef: string; recognitionR
 export async function closeRun(transport: KernelTransportStatus, target: RunCloseTarget): Promise<RunCloseReceipt> {
   const answer = await factoryOwner(transport, {kind: "run-close", state_path: target.statePath, run_ref: target.runRef, recognition_ref: target.recognitionRef, ...(target.authorityGrant ? {authority_grant: target.authorityGrant} : {})});
   return readRunClose(answer, {runRef: target.runRef, recognitionRef: target.recognitionRef});
+}
+
+/** Choosing an attempt: its Return proposed to Central's receiving field, in the Central Flow the Run is associated with.
+ * The kernel assembles the request from Factory's own admission reading and the host's grant; the desk names the attempt only.
+ * The document is checked against this Run and this attempt before anything shows it. */
+export interface AttemptReceivingTarget {statePath: string; runRef: string; attemptRef: string}
+export const ATTEMPT_RECEIVING_CONTRACT = "oi.factory-attempt-receiving/v1";
+const RECEIVING_STATUSES = ["received", "already-received", "needs-reconciliation", "uncertain", "refused"] as const;
+export interface AttemptReceivingReceipt {
+  contract: typeof ATTEMPT_RECEIVING_CONTRACT;
+  runRef: string;
+  attemptRef: string;
+  status: typeof RECEIVING_STATUSES[number];
+  /** Whether something may have moved at Central or in Factory. */
+  changed: boolean;
+  target: {sourceRef: string; documentId: string; sourceRevision: string; root: string} | null;
+  authorityRef: string | null;
+  receipt: {receivingRef?: string; [field: string]: unknown} | null;
+  refusal: {source: "owner" | "driver"; step?: string | null; message: string; operationMayHaveRun?: boolean} | null;
+}
+export function readAttemptReceiving(value: unknown, expect: {runRef: string; attemptRef: string}): AttemptReceivingReceipt {
+  const row = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+  const refusal = row?.refusal && typeof row.refusal === "object" ? row.refusal as Record<string, unknown> : undefined;
+  if (row?.contract !== ATTEMPT_RECEIVING_CONTRACT || row.runRef !== expect.runRef || row.attemptRef !== expect.attemptRef
+    || !RECEIVING_STATUSES.includes(row.status as typeof RECEIVING_STATUSES[number]) || typeof row.changed !== "boolean"
+    // A refusal carries its reason and nothing else does; an uncertain answer carries the owner's silence as its reason.
+    || (["refused", "uncertain"].includes(row.status as string)) !== (refusal !== undefined)
+    || (refusal !== undefined && (!["owner", "driver"].includes(refusal.source as string) || typeof refusal.message !== "string" || !refusal.message.trim())))
+    throw new Error("Factory did not answer this attempt's receiving.");
+  return value as AttemptReceivingReceipt;
+}
+export async function receiveAttempt(transport: KernelTransportStatus, target: AttemptReceivingTarget): Promise<AttemptReceivingReceipt> {
+  const answer = await factoryOwner(transport, {kind: "attempt-receiving", state_path: target.statePath, run_ref: target.runRef, attempt_ref: target.attemptRef});
+  return readAttemptReceiving(answer, {runRef: target.runRef, attemptRef: target.attemptRef});
+}
+/** The words for a choice, the owner's own where it gave them: the shell shows them where the press was. */
+export function attemptReceivingWords(receipt: AttemptReceivingReceipt): {ok: boolean; line: string} {
+  const where = receipt.target ? ` in the Flow ${receipt.target.documentId}` : "";
+  switch (receipt.status) {
+    case "received": return {ok: true, line: `Chosen: this attempt's Return was proposed to Central's receiving field${where}${receipt.receipt?.receivingRef ? ` (${receipt.receipt.receivingRef})` : ""}.`};
+    case "already-received": return {ok: true, line: `Already chosen: Central holds this attempt's Return${receipt.receipt?.receivingRef ? ` as ${receipt.receipt.receivingRef}` : ""}.`};
+    case "needs-reconciliation": return {ok: false, line: `Factory kept the call${where}, but Central's answer is not confirmed; it needs reconciling before the choice stands.`};
+    case "uncertain": return {ok: false, line: `The owner did not answer and may have run: ${receipt.refusal?.message ?? "no reason given"}. Read the attempt again before choosing it a second time.`};
+    default: return {ok: false, line: receipt.refusal?.source === "driver" ? receipt.refusal.message : `The owner refused the choice: ${receipt.refusal?.message ?? "no reason given"}`};
+  }
 }
 
 /** The owner's receipt for one commission (`factory.commission-receipt/v1`):

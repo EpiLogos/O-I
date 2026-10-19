@@ -173,7 +173,7 @@ test('Factory: each session\'s events lie in lanes by the kind the temporal stre
     'one lane per kind, its own session\'s events only, an event with no instant left off the ruler')
   assert.equal(set.ruler.label(eventLanes[0].events[1].at), new Date(NOW - 300_000).toTimeString().slice(0, 8), 'each where it happened on the run\'s ruler')
   assert.match(set.lanes.absent.events, /Messages, Files, Terminal and Pages read are not kinds it names — missing op/)
-  assert.match(set.lanes.absent.takes, /missing op: agency_read rows naming each session's Factory run .*factory_attempt_land/, 'attempts as takes: the ops they lack')
+  assert.match(set.lanes.absent.takes, /attempts are unread here.*encounter_task_attempts_list.*factory_attempt_read/, 'attempts as takes: unread here, and the ops that read them')
   assert.equal(set.clips[0].status, 'done', 'a finished task is done (dim and settled), not stopped')
   // The Lanes setting: Events are Off by default (§16.6), so the ruler draws none until they are turned on; clicked, one opens beside it.
   assert.doesNotMatch(arrangement(set), /data-event-lane=/)
