@@ -14,7 +14,7 @@ import {openInstrument} from '../instrumentDoor'
 import {DEVICE_PANE_KIND} from '../devices/devicePane'
 import {publishedDevice, selectedDeviceId} from '../devices/deviceDoor'
 import {browserSearchAvailable, openableNow, requestBrowserSearch, trackRows, transportKeys, type Openable} from './keyDoors'
-import {claimsAtOnce, escapeClaimed, intentOfKey, suppressed, type DocumentLike, type ElementLike, type KeyLike} from './keyMap'
+import {claimsAtOnce, escapeClaimed, intentOfKey, isTyping, suppressed, type DocumentLike, type ElementLike, type KeyLike} from './keyMap'
 import {planKey, type KeyDoors, type KeyOptions, type KeyReceipt} from './planKey'
 import './keys.css'
 
@@ -61,6 +61,10 @@ export function handleKey(
   event: KeyEventLike, doors: KeyDoors, options: FrameKeysOptions, show: (receipt: KeyReceipt) => void,
   doc: DocumentLike, settle: (task: () => void) => void = afterHandlers,
 ): boolean {
+  // Backspace is never Back. WebKit (the native candidate) steps the page back on a Backspace no element takes, and the shell's
+  // history is its encounters (projections/encounterLink.ts): a Delete pressed on a selection that held no focus walked the person
+  // out of where they stood (r20). Held here unless it is typed or a handler took it; the shell's Back is its own control.
+  if (event.key === 'Backspace' && !event.defaultPrevented && !isTyping(event.target as ElementLike | null)) event.preventDefault()
   if (options.paused || event.defaultPrevented) return false
   const intent = intentOfKey(event)
   if (!intent || suppressed(intent, event.target as ElementLike | null)) return false

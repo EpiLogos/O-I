@@ -116,10 +116,12 @@ function followSpatialFocus(handle: AtlasHandle, session: DisclosureSessionStore
 const CLICK_MS = 500;
 const CLICK_SLOP_PX = 10;
 
-/** The point on the Earth under a client position, read through the atlas's own surface maths; null off the globe, in the sky or in
- * the Graph (where the camera does not look at the Earth from its orbit). */
+/** The point on the Earth under a client position, read through the atlas's own surface maths; null off the globe, in the Graph, or
+ * in the sky while its layer stands (its camera moves: the camera does not look at the Earth from its orbit). In the sky lens with no
+ * sky layer (the port ships no sky grid, provider/skyProvider.ts) the globe drawn is the one the rig orbits, and your system is drawn
+ * only in that lens (system/systemOverlay.ts systemWanted), so a world's landing is clicked there (r20). */
 export function pointUnder(handle: AtlasHandle, clientX: number, clientY: number): {lat: number; lon: number} | null {
-  if (handle.ctl.state.sky || handle.ctl.state.graph) return null;
+  if (handle.ctl.state.graph || (handle.ctl.state.sky && handle.engine.sky)) return null;
   const {rig, camera, renderer} = handle.engine;
   const box = renderer.domElement.getBoundingClientRect();
   const nx = ((clientX - box.left) / Math.max(box.width, 1)) * 2 - 1;
