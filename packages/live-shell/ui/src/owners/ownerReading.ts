@@ -7,9 +7,12 @@
 //   - one read in flight per key: every reader that asks while it runs is served by it;
 //   - readers subscribe; the first one in asks, the rest read what stands;
 //   - an answer is read again only when a notice says it may have changed (`refresh`: an act's receipt, the window
-//     regained, an explicit ask) or its epoch moved — then it is retired, never shown as the new epoch's;
-//   - an answer is let go when its last reader leaves: a later reader asks the owner again rather than read an answer
-//     nobody was told about;
+//     regained, an explicit ask) or its epoch moved — in the same world the last answer stays drawn, carried, while the new
+//     one is read (MAP, the build lane's loading item: "a pane draws its last reading at once and refreshes behind it");
+//     another world's answer is retired, never drawn, not even for a render;
+//   - when its last reader leaves, the answer stays as the last reading (the window keeps KEPT_UNREAD of them, letting the
+//     longest unread go first): a later reader draws it at once, carried, and the owner is asked again, since nobody was
+//     told of what moved meanwhile;
 //   - a refusal is remembered for its epoch: the same read is not asked again until the epoch moves or the person asks
 //     (`retry`), and the refusal stays visible in the owner's own words meanwhile.
 //
@@ -37,12 +40,23 @@ export interface OwnerReading<T> {
   readonly epoch: string | null
   /** A read is in flight (the first, or a re-read behind a standing answer). */
   readonly refreshing: boolean
+  /** The answer stands from before — an earlier access in this world, or before its readers came back — while the owner is
+   * asked again; `readAtUnixMs` says when it was read. */
+  readonly carried: boolean
 }
 
 /** One owner read. An answer is `{value}`; a refusal is `{error}` in the owner's words. A thrown error counts as a refusal. */
 export type OwnerRead<T> = () => Promise<{value: T} | {error: string}>
 
-const READING: OwnerReading<never> = Object.freeze({status: 'reading', value: null, error: null, readAtUnixMs: null, epoch: null, refreshing: false})
+const READING: OwnerReading<never> = Object.freeze({status: 'reading', value: null, error: null, readAtUnixMs: null, epoch: null, refreshing: false, carried: false})
+
+/** How many answers nobody reads the window keeps as last readings. */
+export const KEPT_UNREAD = 64
+
+/** The world half of a spine key (owners/spine.ts spineEpochKey: `access|world`); a key of another shape is its own world. */
+const worldOf = (epoch: string): string => epoch.slice(epoch.indexOf('|') + 1)
+/** Whether an answer read under `read` may be drawn under `epoch`: the same world, whatever the access. */
+export const sameWorld = (read: string | null, epoch: string): boolean => read !== null && worldOf(read) === worldOf(epoch)
 
 export class OwnerReadingEntry<T> {
   private state: OwnerReading<T> = READING
@@ -51,6 +65,8 @@ export class OwnerReadingEntry<T> {
   /** The one read promised to follow the read in flight, for those who asked while it ran. */
   private following: {epoch: string; promise: Promise<void>} | null = null
   private ticket = 0
+  /** Its readers all left: whoever reads it next draws it at once and has the owner asked again. */
+  private unread = false
   /** How many times the owner was actually asked — the census a reader-count test reads. */
   asks = 0
 
@@ -74,11 +90,15 @@ export class OwnerReadingEntry<T> {
    * transport object is the one used. */
   rebind(read: OwnerRead<T>) { this.read = read }
 
-  /** Make an answer stand for `epoch`: ask the owner if none stands for it (a remembered refusal stands). */
+  /** Make an answer stand for `epoch`: ask the owner if none stands for it (a remembered refusal stands), or if its readers
+   * all left since it was read. */
   ensure(epoch: string): Promise<void> {
-    if (this.state.epoch === epoch && this.state.status !== 'reading') return Promise.resolve()
+    if (this.state.epoch === epoch && this.state.status !== 'reading' && !this.unread) return Promise.resolve()
     return this.ask(epoch)
   }
+
+  /** Its last reader left (the registry's release): the answer stays as the last reading, to be asked again when read. */
+  leave(): void { this.unread = true }
 
   /** A notice said the answer may have changed: ask again, behind the standing answer. A refusal remembered for this epoch is
    * not asked again — only `retry` (the person) or a new epoch asks it. */
@@ -108,7 +128,7 @@ export class OwnerReadingEntry<T> {
    * A read of this key in flight for the same epoch answers after it and wins. */
   accept(value: T, epoch: string): void {
     if (this.inFlight?.epoch === epoch) return
-    this.publish({status: 'answered', value, error: null, readAtUnixMs: this.now(), epoch, refreshing: false})
+    this.publish({status: 'answered', value, error: null, readAtUnixMs: this.now(), epoch, refreshing: false, carried: false})
   }
 
   /** The age of the standing answer at `at`, or null when none stands. */
@@ -122,11 +142,16 @@ export class OwnerReadingEntry<T> {
   }
 
   private ask(epoch: string): Promise<void> {
+    const unread = this.unread
+    this.unread = false
     if (this.inFlight?.epoch === epoch) return this.inFlight.promise
     const ticket = ++this.ticket
-    // An answer from another epoch is retired, never carried into this one.
-    if (this.state.epoch !== epoch) this.publish({...READING, epoch, refreshing: true})
-    else this.publish({...this.state, refreshing: true})
+    const standing = this.state
+    // The last answer is carried while the owner is asked again — across a renewed access in its world, or to a reader come
+    // back — and retired across worlds; a refusal is never carried into another epoch.
+    if (standing.status === 'answered' && sameWorld(standing.epoch, epoch) && (standing.epoch !== epoch || unread)) this.publish({...standing, epoch, refreshing: true, carried: true})
+    else if (standing.epoch !== epoch) this.publish({...READING, epoch, refreshing: true})
+    else this.publish({...standing, refreshing: true})
     this.asks++
     const promise = (async () => {
       let outcome: {value: T} | {error: string}
@@ -139,8 +164,8 @@ export class OwnerReadingEntry<T> {
       this.inFlight = null
       const readAtUnixMs = this.now()
       this.publish('error' in outcome
-        ? {status: 'refused', value: null, error: outcome.error, readAtUnixMs, epoch, refreshing: false}
-        : {status: 'answered', value: outcome.value, error: null, readAtUnixMs, epoch, refreshing: false})
+        ? {status: 'refused', value: null, error: outcome.error, readAtUnixMs, epoch, refreshing: false, carried: false}
+        : {status: 'answered', value: outcome.value, error: null, readAtUnixMs, epoch, refreshing: false, carried: false})
     })()
     this.inFlight = {epoch, promise}
     return promise
@@ -157,13 +182,27 @@ export interface OwnerReadings {
 /** A registry of entries. The window has one (`ownerReadings`); a test makes its own. */
 export function createOwnerReadings(now: () => number = Date.now): OwnerReadings {
   const held = new Map<string, OwnerReadingEntry<unknown>>()
+  /** The answers nobody reads, longest unread first. */
+  const unread = new Map<string, OwnerReadingEntry<unknown>>()
   const release = (entry: OwnerReadingEntry<unknown>) => {
-    // A refusal is remembered for its epoch even with nobody reading; an answer is let go.
-    if (held.get(entry.key) === entry && entry.snapshot().status !== 'refused') held.delete(entry.key)
+    if (held.get(entry.key) !== entry) return
+    const status = entry.snapshot().status
+    // A refusal is remembered for its epoch even with nobody reading; a read that never answered has nothing to draw.
+    if (status === 'refused') return
+    if (status !== 'answered') { held.delete(entry.key); return }
+    entry.leave()
+    unread.delete(entry.key)
+    unread.set(entry.key, entry)
+    for (const [key, kept] of unread) {
+      if (unread.size <= KEPT_UNREAD) break
+      unread.delete(key)
+      if (held.get(key) === kept && kept.readers === 0) held.delete(key)
+    }
   }
   return {
     entry<T>(key: string, read: OwnerRead<T>): OwnerReadingEntry<T> {
       let entry = held.get(key) as OwnerReadingEntry<T> | undefined
+      unread.delete(key)
       if (!entry) {
         entry = new OwnerReadingEntry<T>(key, read, now, release as (entry: OwnerReadingEntry<T>) => void)
         held.set(key, entry as OwnerReadingEntry<unknown>)
@@ -190,7 +229,9 @@ export function useOwnerReading<T>(key: string | null, read: OwnerRead<T>, epoch
   if (entry) entry.rebind(read)
   const subscribe = useCallback((listener: () => void) => entry ? entry.subscribe(listener) : () => {}, [entry])
   const snapshot = useCallback(() => entry ? entry.snapshot() : READING as OwnerReading<T>, [entry])
-  const reading = useSyncExternalStore(subscribe, snapshot, snapshot)
+  const held = useSyncExternalStore(subscribe, snapshot, snapshot)
+  // An answer kept from another world is never drawn, not even for the render before this reader's first read.
+  const reading = held.epoch !== null && !sameWorld(held.epoch, epoch) ? READING as OwnerReading<T> : held
   useEffect(() => { if (entry) void entry.ensure(epoch) }, [entry, epoch])
   const refresh = useCallback(() => { if (entry) void entry.refresh(epoch) }, [entry, epoch])
   const retry = useCallback(() => { if (entry) void entry.retry(epoch) }, [entry, epoch])
