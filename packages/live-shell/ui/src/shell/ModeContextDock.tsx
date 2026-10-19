@@ -22,34 +22,15 @@ import {TrailWidget} from './TrailWidget'
 import {useRef, useState, type PointerEvent as ReactPointerEvent} from 'react'
 import {MODE_GRAMMAR, type SurfMode} from './modeGrammar'
 import {useAgencySessions} from '../agent/useAgencySessions'
-import {Icon, type IconName} from '../inhabitants/sdk/Icon'
+import {Icon} from '../inhabitants/sdk/Icon'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {carrierOf} from './runContext'
 import './modeSurface.css'
+import {COMPANIONS, TILES} from './modeDockTiles'
 
-/** The dock's tile identities (Rev 4's tile set). `body: 'owner'` tiles
- * name the owner read that fills them — designed frames, honest empties. */
-interface TileSpec {
-  readonly id: string
-  readonly name: string
-  readonly mark: IconName
-  readonly launcherOnly?: boolean
-}
-
-export const TILES: Record<string, TileSpec> = {
-  agent: {id: 'agent', name: 'Agent', mark: 'dock'},
-  packet: {id: 'packet', name: 'Packet', mark: 'cap'},
-  trail: {id: 'trail', name: 'Trail', mark: 'trav'},
-  field: {id: 'field', name: 'Field', mark: 'browser'},
-  agents: {id: 'agents', name: 'Agents', mark: 'bind'},
-  nows: {id: 'nows', name: 'NOWs', mark: 'die'},
-  terminal: {id: 'terminal', name: 'Terminal', mark: 'keys', launcherOnly: true},
-  files: {id: 'files', name: 'Files', mark: 'lib', launcherOnly: true},
-  results: {id: 'results', name: 'Results', mark: 'detail', launcherOnly: true},
-  sky: {id: 'sky', name: 'Sky', mark: 'form', launcherOnly: true},
-}
+export {COMPANIONS, TILES} from './modeDockTiles'
 
 /** Per-mode tile sets and defaults (Rev 4's tile set, per arrangement). */
 const DOCKS: Record<SurfMode, {tiles: string[]; open: string[]}> = {
@@ -58,15 +39,6 @@ const DOCKS: Record<SurfMode, {tiles: string[]; open: string[]}> = {
   factory: {tiles: ['agents', 'terminal', 'results'], open: []},
   expressions: {tiles: ['agent', 'packet', 'trail', 'agents'], open: ['agent']},
   techne: {tiles: ['agent', 'field', 'trail', 'agents', 'nows'], open: ['agent', 'field', 'trail']},
-}
-
-/** The companion per mode (Rev 3's right-column row). */
-export const COMPANIONS: Record<SurfMode, {name: string; tabs: string; note: string}> = {
-  live: {name: 'Fizz', tabs: 'Conversation · Activity · Context · Inspect', note: 'The situated agent rides the shell in every mode; its chain docks in the detail row.'},
-  base: {name: 'Fizz', tabs: 'Conversation · Activity · Context · Inspect', note: 'The situated agent for the ground. The conversation device docks on the detail chain; the packet tile shows exactly what it receives.'},
-  factory: {name: 'Fizz', tabs: 'Activity · Context · Inspect · Results', note: 'The result desk — the agency surface carries the live dock.'},
-  expressions: {name: 'Anima', tabs: 'Nara · oracle', note: 'The Expressions companion — the Nara/oracle side of the retained body.'},
-  techne: {name: 'Epii', tabs: 'Epii · Source · Proposals · Field', note: 'The Technē companion — source, proposals and the field\'s arrivals.'},
 }
 
 export function ModeContextDock({mode, world, transport, subject, initialOpen}: {

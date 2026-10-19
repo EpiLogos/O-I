@@ -17,17 +17,13 @@ import {useRosterAgents} from '../owners/readers'
 import {useEncounterSession} from '../../../../../desktop/cradle/src/encounter/session'
 import type {AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import type {WorkspaceMode} from '../../../../../desktop/cradle/src/workspace/mode'
-import {COMPANIONS} from '../shell/ModeContextDock'
+import {COMPANIONS} from '../shell/modeDockTiles'
 import type {WidgetBodyProps} from '../frame/widgets/widgets'
 import {useGlance} from '../frame/widgets/useGlance'
 import {useWidgetReading} from './widgetReading'
 import {CONVERSATION_PROJECT, conversationAbsence, conversationGlance, conversationOf} from './agentConversation'
 
-/** The companion's name in the mode in front of you: the agent widget's name in its head and its launcher cell. */
-export function AgentWidgetName() {
-  const reading = useWidgetReading()
-  return <>{reading ? COMPANIONS[reading.mode].name : 'Agent'}</>
-}
+export {AgentWidgetName} from './AgentWidgetName'
 
 export function AgentWidget({subject, glance}: WidgetBodyProps) {
   const reading = useWidgetReading()
