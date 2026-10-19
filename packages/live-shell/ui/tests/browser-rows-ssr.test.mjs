@@ -36,7 +36,7 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {ModeBrowser, DayRowList, NowSection, FlowRowList, NewForms, formOpenerId} = await import('../src/shell/ModeBrowser.tsx')
+const {ModeBrowser, DayRowList, NowSection, FlowRowList, NewForms, formOpenerId, WorldRowList, seatWorldFromBrowser} = await import('../src/shell/ModeBrowser.tsx')
 const {Workspace, StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx')
 const {AgentShellProvider} = await import('../src/agent/AgentShellContext.tsx')
 const agentBrowser = await import('../src/agent/AgentShellBrowser.tsx')
@@ -264,4 +264,26 @@ test('Live sets: each set by its name without the extension, standing open, defa
   assert.deepEqual(sets({set: {path: '/sets/Default.als', tracks: []}, openSet: () => {}}), [['/sets/Default.als — the set open now; select opens it', 'Default', 'open']])
   const source = readFile(new URL('../src/components/BrowserPane.tsx', import.meta.url), 'utf8')
   return source.then(text => assert.match(text, /const standing = p === ctx\.set\?\.path \? 'open' : p === defaultSet \? 'default' : 'recent'/, 'a recent set stands as recent'))
+})
+
+// ── Central · Worlds ──────────────────────────────────────────────────────────────────────────────────
+
+test('a world comes into today from its row: dragged onto the empty track, or double-clicked or Entered (Live: load a browser item), through the seat the Session draws', async () => {
+  const {CENTRAL_WORLD_DRAG} = await import('../src/timeline/centralTrackAdapter.ts')
+  const worlds = [{ref: 'central:wiki:root', name: 'Central', kind: 'yours', folder: 'Control/user', project: null},
+    {ref: 'central:wiki:project:O-I', name: 'O-I', kind: 'project', folder: 'Work/O-I/ProjectCentral/user', project: 'O-I'}]
+  const markup = html(createElement(WorldRowList, {worlds, onSeat() {}, said: null}))
+  assert.deepEqual(cells(markup), [['Central', 'yours'], ['O-I', 'project']])
+  assert.equal((markup.match(/tabindex="0"/g) ?? []).length, 2, 'each row takes the keyboard')
+  assert.match(markup, /draggable="true"/)
+  assert.match(markup, /double-click it or press Enter/)
+  assert.match(html(createElement(WorldRowList, {worlds, onSeat() {}, said: 'O-I is in today\'s set.'})), /role="status"[^>]*>O-I is in today&#x27;s set\.</)
+  const seated = []
+  const session = seat => ({presented: 'session', set: {columns: [], tracks: [], clips: [], actions: {seat}}})
+  const rows = session({op: 'the set', accepts: CENTRAL_WORLD_DRAG, run: ref => { seated.push(ref); return {ok: true, note: 'O-I is in today\'s set.'} }})
+  assert.deepEqual(await seatWorldFromBrowser(worlds[1], rows), {ok: true, note: 'O-I is in today\'s set.'})
+  assert.deepEqual(seated, ['central:wiki:project:O-I'], 'the drop\'s own seat, with the world\'s ref')
+  assert.match((await seatWorldFromBrowser(worlds[1], null)).error, /Open Central's Session/, 'no set drawn: nothing written, and said')
+  assert.equal((await seatWorldFromBrowser(worlds[1], session({op: 'x', accepts: 'application/x-other', run() { throw Error('never') }}))).ok, false, 'a set that seats something else is not asked')
+  assert.deepEqual(await seatWorldFromBrowser(worlds[1], session({op: 'x', accepts: CENTRAL_WORLD_DRAG, run() { throw Error('the Day changed') }})), {ok: false, error: 'the Day changed'})
 })

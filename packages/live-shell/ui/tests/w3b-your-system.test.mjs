@@ -176,13 +176,17 @@ test('the overlay stands in the System scale only, places worlds round your plan
   assert.equal(rgbOf('#ff8000'), '255 128 0')
 })
 
+// AIKit keeps a record's keys sorted (r21: O-I's landing came back as lat, lon, on_ref), so the owners here store records as it does
+const sortedKeys = value => Array.isArray(value) ? value.map(sortedKeys) : value && typeof value === 'object'
+  ? Object.fromEntries(Object.keys(value).sort().map(key => [key, sortedKeys(value[key])])) : value
+
 test('a landing is one BodySet on the landed world\'s register at the revision read, with the body as it reads, and it reads back', async () => {
   const owner = {record: null, revision: 9, writes: [],
     async read() { return readingOf(OI.ref, owner.record, owner.revision, 'O-I') },
     async write(next, basis) {
       owner.writes.push({body: next, basis})
       if (basis.revision !== owner.revision) throw Error('the exact native target changed; reread before editing its facts')
-      owner.record = next; owner.revision += 1
+      owner.record = sortedKeys(next); owner.revision += 1
     }}
   const bodies = model.systemOf(input())
   const reading = await readBodyOf(owner)
@@ -205,12 +209,12 @@ test('a landing is one BodySet on the landed world\'s register at the revision r
 
 test('a landing comes off as it went on: the body written whole without it, on the revision read, everything else kept', async () => {
   const landed = {...store.firstBody(OI.ref, 9), landing: {on_ref: RECORD.body_ref, lat: 12.5, lon: -40.25}}
-  const owner = {record: landed, revision: 10, writes: [],
+  const owner = {record: sortedKeys(landed), revision: 10, writes: [],
     async read() { return readingOf(OI.ref, owner.record, owner.revision, 'O-I') },
     async write(next, basis) {
       owner.writes.push({body: next, basis})
       if (basis.revision !== owner.revision) throw Error('the exact native target changed; reread before editing its facts')
-      owner.record = next; owner.revision += 1
+      owner.record = sortedKeys(next); owner.revision += 1
     }}
   const bodies = model.systemOf(input())
   const reading = await readBodyOf(owner)

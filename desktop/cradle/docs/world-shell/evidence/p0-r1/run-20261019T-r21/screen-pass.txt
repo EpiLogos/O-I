@@ -1,0 +1,28 @@
+r21 screen pass — f865ff483 (a world lands where your system is drawn; the landing's answer in Worlds; a selected head takes its own
+Delete; Backspace is never Back), 19 Oct 2026 11:23–11:31 UTC, computer use on the native candidate in the background (its window
+parked in Stage Manager's strip; the person was working in front), the owner's real ground. Control/user/flows and the root and O-I
+wikis were backed up first. Flows: all 13 files match. Root wiki: its hash kept. Landing a world was allowed by the owner for this
+test, so O-I's register changed: its space went from revision 3 to 4 and now holds O-I's body, seeded from its ref (seed 3172107618),
+with its landing on your planet at -23.22, 11.93 (on body:central:wiki:root). Today's set no longer holds O-I (taken out in this pass).
+
+Seen:
+- The sky lens from the Earth's own key (S): Lens Astrology, scale system, your system drawn with O-I at the top right.
+- Worlds: pressing O-I arms the landing and the Worlds section says so itself ("armed"); a click on your planet in the sky lens is
+  taken as the landing ("saving"). r20 answered "the click was off the globe".
+- O-I's owner wrote the landing (O-I's register, above).
+- Central's grid: selecting O-I's head stands its ×; the × takes O-I out of today's set. The Day's set was written without it
+  (revision 398075:737736b4 to 398407:9a1f0787), the grid redrew without the track, and the receipt read "O-I is out of today's set;
+  its pages stay in its folder."
+
+Found and fixed after the pass (not in r21):
+- The landing was said refused although the owner had saved it. The shell compared the landing it sent with the one read back as
+  JSON strings, and AIKit keeps a record's keys sorted (lat, lon, on_ref), so they never matched. Landings are now compared by
+  value; the test's owners store records as AIKit does, which failed with r21's exact words before the fix.
+- After that refusal the shell never read the system again, so the plate kept O-I unlanded and offered no way off. Land and unland
+  now read the system again whatever the answer.
+- A world came into today's set only by a drag, which no keyboard and no background pointer can make. As Live loads a browser item,
+  a Worlds row now also takes double-click and Enter, through the same seat the empty track takes a drop on, and says the set's
+  answer under the rows.
+
+Not seen: Delete on the selected head (the background key route was refused by the computer-use host; the head's focus fix is proven
+in WebKit by tests/session-grid-keys.browser.mjs); O-I back into today's set; O-I's landing read and taken off your planet (r22).

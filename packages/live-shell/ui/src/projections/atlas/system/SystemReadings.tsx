@@ -49,6 +49,13 @@ export async function readBodyOf(owner: Pick<WorldBodyOwner, 'read'>): Promise<S
   }
 }
 
+/** Two landings are one when they name the same body at the same point. By value: the owner keeps a record's keys in its own order
+ * (AIKit sorts them), so a landing read back is never the same string as the one sent (r21). */
+function sameLanding(a: WorldBodyRecord['landing'] | null | undefined, b: WorldBodyRecord['landing'] | null | undefined): boolean {
+  if (!a || !b) return !a && !b
+  return a.on_ref === b.on_ref && a.lat === b.lat && a.lon === b.lon
+}
+
 /** Land a world on your planet: its body as it reads (or the body seeded from its ref, the one its first change builds on) with the
  * landing, written whole as one BodySet on its register at the revision read; the owner's refusal is thrown in its words. */
 export async function landWorld(owner: WorldBodyOwner, body: SystemBody, yours: SystemBody | undefined, reading: SystemBodyReading | undefined, lat: number, lon: number): Promise<string> {
@@ -62,7 +69,7 @@ export async function landWorld(owner: WorldBodyOwner, body: SystemBody, yours: 
   if (!isWorldBody(parsed)) throw Error(`The landing is refused before it is sent: ${parsed.refused}.`)
   await owner.write(parsed, {space_ref: reading.reading.space.ref, revision: reading.reading.space.revision})
   const after = await readBodyOf(owner)
-  if (after.state !== 'read' || JSON.stringify(after.record?.landing) !== JSON.stringify(parsed.landing)) {
+  if (after.state !== 'read' || !sameLanding(after.record?.landing, parsed.landing)) {
     throw Error('The owner confirmed the save, but the landing did not read back as written. Read before retrying.')
   }
   return `${body.world.name} lands on your planet at ${lat.toFixed(2)}, ${lon.toFixed(2)}: its body is saved at revision ${after.reading.space.revision}.`
@@ -177,16 +184,15 @@ export function SystemReadings(): null {
       land: async (body, lat, lon) => {
         if (transport.kind === 'unavailable') throw Error(transport.reason)
         if (!body.world.project) throw Error(`${body.world.name} is not a project’s world, so no register of its own keeps its body.`)
-        const said = await landWorld(kernelWorldBodyOwner(transport, body.world.project), body, system.find(entry => entry.yours), allBodies.get(body.world.ref), lat, lon)
-        setMoved(n => n + 1)
-        return said
+        // read again whatever the answer: a refusal after the owner wrote (a readback that needs reconciling) leaves its record moved (r21)
+        try { return await landWorld(kernelWorldBodyOwner(transport, body.world.project), body, system.find(entry => entry.yours), allBodies.get(body.world.ref), lat, lon) }
+        finally { setMoved(n => n + 1) }
       },
       unland: async body => {
         if (transport.kind === 'unavailable') throw Error(transport.reason)
         if (!body.world.project) throw Error(`${body.world.name} is not a project’s world, so no register of its own keeps its body.`)
-        const said = await unlandWorld(kernelWorldBodyOwner(transport, body.world.project), body, allBodies.get(body.world.ref))
-        setMoved(n => n + 1)
-        return said
+        try { return await unlandWorld(kernelWorldBodyOwner(transport, body.world.project), body, allBodies.get(body.world.ref)) }
+        finally { setMoved(n => n + 1) }
       },
     })
   }, [transport, system, allBodies, pages, opener, selectSession, requestExpression])
