@@ -26,12 +26,21 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
  * widget), or says why not. The frame grants the page no popups and no
  * navigation of its own, so a followed link never takes the Flow's place.
  *
+ * A Flow whose island is the form's current schema (`ql-dialogue-flow v0.4`)
+ * is drawn by this shell's own form from that island (`currentFlow`), as a
+ * Being's or a Thing's page is (DocumentPageFace.tsx currentPage): a Flow made
+ * from an earlier copy of the form carries that copy's runtime, so its look
+ * and its links stayed as they were made. Save still embeds the island into
+ * the file's own bytes. A Flow of an earlier schema is hosted as it is.
+ *
  * The page's own internal Save keeps its existing meaning (a portable HTML
  * copy inside the sandbox); only the host button sends writes to the owner.
  * The strip's save outcome renders as the router's named chip — five
  * outcomes, five visuals, detail verbatim in the title. */
 
-import {embedDocument, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
+import {embedDocument, parseInstance, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
+import {TEMPLATE_V4} from '../../../../../desktop/cradle/src/flow/plural'
+import flowForm from '../../../../../desktop/cradle/documents/ql-flow.html?raw'
 import {readFlowInstance, writeFlowInstance, type FlowInstance} from '../../../../../desktop/cradle/src/flow/instances'
 import {documentPayloadSource, documentScripts, useDocumentFrame, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
 import type {KernelTransportStatus, CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
@@ -52,6 +61,14 @@ export interface DocumentFlowFaceProps {
   readonly presentation?: 'device' | 'pane'
   /** Open a followed link in the shell (the pane host gives it: a page in a pane, an address in the Web widget). */
   readonly openLink?: (target: PageLinkTarget) => void
+}
+
+/** The Flow as this shell's form draws it from its own island, when the island is the form's current schema; any other file as it is. */
+export function currentFlow(html: string): string {
+  try {
+    const doc = parseInstance(html)
+    return doc.meta?.template === TEMPLATE_V4 ? embedDocument(flowForm, doc) : html
+  } catch { return html }
 }
 
 /** The hosted copy: payload read seam + the bounded host bridge, injected
@@ -88,7 +105,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       const read = await readFlowInstance(transport, location)
       setInstance(read)
       setRevision(read.revision)
-      setFace(projectFlowDocument(read.html))
+      setFace(projectFlowDocument(currentFlow(read.html)))
     } catch (error) {
       setFailure(String(error))
     }
