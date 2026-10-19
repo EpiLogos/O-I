@@ -11,7 +11,8 @@ import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/ag
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import type {BrowserSource, ControlledBrowser} from '../frame/browser/browserKinds'
 import {BrowserPane, liveBrowserCategories} from '../components/BrowserPane'
-import {WorldBrowser, WORLD_BROWSER_CATEGORIES} from '../components/WorldBrowser'
+import {WORLD_BROWSER_CATEGORIES} from '../components/worldBrowserCategories'
+import {loadWhenDrawn} from './loadWhenDrawn'
 import {ModeBrowser, modeBrowserCategories} from './ModeBrowser'
 import {AgentShellBrowser, AGENT_BROWSER_CATEGORIES} from '../agent/AgentShellBrowser'
 import {Icon} from '../inhabitants/sdk/Icon'
@@ -19,6 +20,9 @@ import type {IconName} from '../inhabitants/sdk/icons'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {LiveGroovePool} from '../frame/browser/LiveGroovePool'
 import {useWorkbenchOpeners} from '../native/workbenchDoor'
+
+// Expressions' browser loads with Expressions' rows, not with the shell (shell/loadWhenDrawn.ts).
+const WorldBrowser = loadWhenDrawn<{controlled?: ControlledBrowser}>('Expressions\' browser', () => import('../components/WorldBrowser').then(module => module.WorldBrowser))
 
 /** What the bodies read from the App: Live's panel context, the ground subject the browser selects, the agency reading. */
 export interface BrowserReading {

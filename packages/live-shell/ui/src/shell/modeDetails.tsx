@@ -17,10 +17,8 @@ import {trackDeviceFaceTitle} from '../live/liveChain'
 import {addNoteDevice} from '../live/noteDevices/noteDeviceHold'
 import {NOTE_DEVICE_MIME, parseNoteDeviceDrag} from '../live/noteDevices/noteDeviceDrag'
 import {displayDeviceName} from './document'
-import {NativeWorldDetail} from '../components/NativeWorldDetail'
 import {centralSubjectName, useCentralClip} from '../central/clipBinding'
 import {BaseDevicesDetail, TechneInstrumentsDetail} from './ModeDetail'
-import {AgentShellDeviceDetail} from '../agent/AgentShellDeviceDetail'
 import {useFactoryClip} from '../agent/clipBinding'
 import {useTechneClip} from '../techne/clipBinding'
 import {useExpressionsClip} from '../components/expressions/clip/clipBinding'
@@ -30,6 +28,11 @@ import {trackKey, type AgentSessionTrack} from '../agent/agentRunModel'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
 import {STANDALONE_INSTRUMENTS, TECHNE_INSTRUMENTS} from '../inhabitants/sdk/semantics'
 import type {PaneInstrumentId} from './paneInstrument'
+import {loadWhenDrawn} from './loadWhenDrawn'
+
+// A mode's own chain loads when that mode's Device side first draws, not with the shell (shell/loadWhenDrawn.ts).
+const NativeWorldDetail = loadWhenDrawn('Expressions\' chain', () => import('../components/NativeWorldDetail').then(module => module.NativeWorldDetail))
+const AgentShellDeviceDetail = loadWhenDrawn('Factory\'s chain', () => import('../agent/AgentShellDeviceDetail').then(module => module.AgentShellDeviceDetail))
 
 /** What a head is drawn from: the frame's detail reading, the selected clip as the shown tracks give it, and the focused
  * pane's instrument when it takes the Device side. Nothing more is read for a head. */
