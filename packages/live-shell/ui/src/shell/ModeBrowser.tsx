@@ -813,6 +813,7 @@ export function NewForms({forms = DOCUMENT_FORMS, openers}: {forms?: readonly Do
     const form = forms.find(entry => entry.kind === kind)
     return form ? [{form, mark, opener: doors.find(opener => opener.id === formOpenerId(kind)) ?? null}] : []
   })
+  const practice = doors.filter(opener => opener.id.startsWith('form.practice-'))
   return <section className="mode-browser-rows" aria-label="New">
     <div className="mode-browser-sep"><span>New document — the four forms</span></div>
     <div className="mode-browser-newforms">
@@ -823,6 +824,18 @@ export function NewForms({forms = DOCUMENT_FORMS, openers}: {forms?: readonly Do
         <b aria-hidden="true"><KindMark kind={mark} size={15} /></b>{form.label}
       </button>)}
     </div>
+    {/* Your practice (T-WORLDS W4; manual §24.5): the pages your practice keeps, made in your practice world through the Workbench's own
+        openers for them (inhabitants/ql/devices/practiceLaunch.ts) — a journal, a dream journal, a journey. */}
+    {practice.length > 0 && <>
+      <div className="mode-browser-sep"><span>Your practice</span></div>
+      <div className="mode-browser-newforms" data-new-practice>
+        {practice.map(opener => <button type="button" key={opener.id} data-new-form={opener.id} onClick={() => opener.open()}
+          data-i={`New ${opener.title}|${opener.hint}. Makes it in your practice world and opens it in the focused pane.`}
+          title={`${opener.title} — ${opener.hint}.`}>
+          <b aria-hidden="true"><KindMark kind="doc" size={15} /></b>{opener.title}
+        </button>)}
+      </div>
+    </>}
   </section>
 }
 
