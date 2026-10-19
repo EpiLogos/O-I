@@ -10,11 +10,14 @@
 //   - its place the page's anchor (bindings.anchor, a real place on Earth); a page with none stands unplaced, (0,0) at precision
 //     `none`, as the contract has it;
 //   - its date the day the page was made (meta.created); a page with none is undated, an honest state.
-// The page's notes are its reader's, and stay out. A page re-read replaces its occurrence, never adds a second. Pure.
+// The page's notes are its reader's, and stay out. A page re-read replaces its occurrence, never adds a second. Pure apart from
+// `readWorldPagesForEarth`, which reads the pages through their owner.
 import type {Cite, Family, Field, Occurrence} from '../projections/atlas/src/types/field'
 import {admitOccurrences, checkOccurrence, refuse, type AdmissionRefusal, type Checked} from '../projections/occurrence'
 import {paletteOfRef} from '../projections/atlas/provider/suiteReading'
-import type {PageReading} from '../../../../../desktop/cradle/src/personal/pageOwner'
+import {listWorldPages, readPageOwned, type PageReading} from '../../../../../desktop/cradle/src/personal/pageOwner'
+import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import {readWorlds} from './centralWorlds'
 
 export type PageOccurrenceKind = 'being' | 'thing'
 
@@ -109,3 +112,24 @@ export function admitPages(field: Field, readings: readonly PageReading[]): {fie
   const admitted = admitOccurrences({...base, families}, checked.flatMap(({checked: item}) => item.ok ? [item.value] : []))
   return {field: admitted.field, admitted: admitted.admitted, refused: [...refused, ...admitted.refused]}
 }
+
+/** How many pages one world gives the Earth (the page owner's own listing bound). */
+export const PAGES_PER_WORLD = 200
+
+/** The Beings and Things of every world Central discloses, each read through the page owner at its present revision, with the
+ * owner's own words for each world or page that did not answer. A world whose listing refuses is named, never dropped silently. */
+export async function readWorldPagesForEarth(transport: KernelTransportStatus): Promise<{readings: PageReading[]; unread: string[]}> {
+  const worlds = await readWorlds(transport)
+  if (worlds.state !== 'read') return {readings: [], unread: [worlds.state === 'unavailable' ? worlds.reason : 'Central\'s worlds are still being read']}
+  const readings: PageReading[] = [], unread: string[] = []
+  for (const world of worlds.worlds) {
+    try {
+      const listing = await listWorldPages(transport, world.folder, PAGES_PER_WORLD)
+      for (const page of listing.pages.filter(item => item.form === 'being' || item.form === 'thing')) {
+        try { readings.push(await readPageOwned(transport, page.location)) } catch (cause) { unread.push(`${page.location.path}: ${cause instanceof Error ? cause.message : String(cause)}`) }
+      }
+    } catch (cause) { unread.push(`${world.name}: ${cause instanceof Error ? cause.message : String(cause)}`) }
+  }
+  return {readings, unread}
+}
+
