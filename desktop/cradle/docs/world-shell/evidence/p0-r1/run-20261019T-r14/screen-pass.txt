@@ -1,0 +1,27 @@
+r14 screen pass — 023a99756 (r13's fixes; the Day design's Close now bound, 30a491d6e), 19 Oct 2026 04:27–04:31 UTC, computer
+use on the native candidate, the owner's real ground (Control/user/flows backed up with sha256 first; the one Being the pass made
+was removed after; all 13 files match, none added).
+
+Seen:
+- A world dropped on today's set: O-I, dragged from the Worlds rows onto the empty track, stands as the second track ("O-I", "IN
+  the world's folder"). Central's Day for 19 Oct keeps it in its meta: set {schema oi.day-set/v1, tracks [{name O-I, world
+  central:wiki:project:O-I}], rows []}, the Day's revision moving from …8af04ebef2f0 to …36b4ff1891a7. The same real drag
+  wrote nothing on r13, before the host's file-drop handler was turned off. (A drag made of a held button and plain moves still
+  writes nothing: the input tool sends no drag events that way. Only the real drag gesture is evidence.)
+- New… makes the page and opens it in its pane: Beings made beings-2026-10-19-0529.html in your world's folder, its island naming
+  your world (worldRef central:wiki:root) with its own documentId and created, and opened it in a Being pane ("BEING · r6bc18022 ·
+  as read", Save, Re-read).
+- A title written from Clip view reaches the page owner: Title "Hildegard of Bingen" moved the page from :bbc180221d9e (14,615 B)
+  to :873614b2b601 (14,634 B), and the island holds the title.
+- The Worlds rows list every world on their first open.
+- Close now stands on the Day device, enabled on today's open Day, with the bound words ("Closes the Day through Central; what
+  still plays carries into the next Day."). Not pressed: it would close the owner's real Day.
+
+Found and fixed after the pass (not in r14):
+- The Being's pane did not show its title after Re-read: it hosted the page with the script the file was copied with. New… copies
+  the template from the primary checkout (Work/O-I on main), whose generated oi-beings.html predates the page runtime that draws
+  from the island, so no write of the page owner would ever show in that page. The pane now draws the page by the current template
+  from its own island (readPage → renderPage), for any page however old; Save still splices only the island back.
+
+Left in the owner's ground on purpose: today's Day (made by r13's Open today) keeps O-I in its set.
+Not seen: Close now pressed; the page drawn from its island in the pane (r15); W3b and W4b (building).
