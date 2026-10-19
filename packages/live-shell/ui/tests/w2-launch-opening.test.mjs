@@ -43,7 +43,7 @@ const BEING = loc('Control/user/flows/beings-1.html'), FLOW = loc('Control/user/
 test('a launched page opens as its launch says: a Being as its page, a Flow as its Flow, in the focused pane unless it asks for one beside', () => {
   assert.deepEqual(opening.launchOpeningOf('being', BEING, {}), {open: {target: {form: 'page', kind: 'being', location: BEING}, beside: false}, words: 'opened as its page in the focused pane'})
   assert.deepEqual(opening.launchOpeningOf('thing', BEING, {launch: {opensAs: 'page', opensIn: 'pane'}}).open, {target: {form: 'page', kind: 'thing', location: BEING}, beside: true})
-  assert.match(opening.launchOpeningOf('being', BEING, {launch: {opensAs: 'sky'}}).words, /Sky opens from the Earth once it holds the page, so it opens as its page/)
+  assert.match(opening.launchOpeningOf('being', BEING, {launch: {opensAs: 'sky'}}).words, /Sky does not open from a launch yet, so it opens as its page/)
   const flow = opening.launchOpeningOf('flow', FLOW, {launch: {opensAs: 'journal', opensIn: 'window'}})
   assert.deepEqual(flow.open, {target: {form: 'flow', location: FLOW}, beside: false})
   assert.equal(flow.words, 'opened as its Flow in the focused pane; Journal is chosen at its head; a window is the pane\'s own ↗')
@@ -77,5 +77,28 @@ test('a page that asks for a pane beside opens beside the focused one; the focus
   assert.deepEqual(panes(beside), [[FLOW.ref], [`page:being:${BEING.ref}`]])
   const focused = opening.placeLaunched(openCentralDocumentAt, start, {target: {form: 'page', kind: 'being', location: BEING}, beside: false})
   assert.deepEqual(panes(focused), [[FLOW.ref, `page:being:${BEING.ref}`]])
+})
+
+test('a page launched as Reading opens its reading on the Earth when the Earth holds it; otherwise it opens as its page and says why', async () => {
+  const {registerEarthReading} = await import('../src/central/earthReading.ts')
+  const real = globalThis.fetch
+  globalThis.fetch = async () => ({json: async () => ({ok: true, outcome: {result: 'page_reading',
+    data: {schema: 'oi.page-reading/v1', location: BEING, revision: 'r', form: 'being', title: 'A', island: {launch: {opensAs: 'reading', opensIn: 'focused'}}}}})})
+  const transport = {kind: 'bridge', url: 'http://central.fixture'}
+  try {
+    const asked = []
+    const withdraw = registerEarthReading(ref => { asked.push(ref); return {ok: true} })
+    let layout = empty()
+    assert.deepEqual(await opening.openLaunched(transport, update => { layout = update(layout) }, {location: BEING}), {opened: 'opened as its reading on the Earth'})
+    assert.deepEqual(asked, [BEING.ref]); assert.deepEqual(layout.surfaces, {}, 'the reading opens on the Earth, no pane is opened')
+    withdraw()
+    const missing = registerEarthReading(() => ({ok: false, why: 'the Earth holds no occurrence of this page yet'}))
+    const answer = await opening.openLaunched(transport, update => { layout = update(layout) }, {location: BEING})
+    assert.equal(answer.opened, 'opened as its page in the focused pane; its reading did not open: the Earth holds no occurrence of this page yet')
+    assert.equal(Object.values(layout.surfaces)[0].projection.subject_ref, `page:being:${BEING.ref}`)
+    missing()
+    let none = empty()
+    assert.match((await opening.openLaunched(transport, update => { none = update(none) }, {location: BEING})).opened, /its reading did not open: no Earth stands in this session$/)
+  } finally { globalThis.fetch = real }
 })
 
