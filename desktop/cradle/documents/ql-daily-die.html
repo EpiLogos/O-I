@@ -46,9 +46,8 @@ svg.defs{position:absolute;width:0;height:0}
 .dots button[aria-current=true]::before{background:var(--ink);transform:scale(1.2)}
 .dots button:hover::before{background:var(--pmid)}
 .foot .name b{font-weight:600;color:var(--ink)}
-.foot .hint{color:var(--pfaint);font-size:12px;text-align:center;max-width:60ch}
 .chrome.in .foot{left:auto;right:16px;bottom:12px;justify-items:end;row-gap:2px}
-.chrome.in .foot .name,.chrome.in .foot .hint{display:none}
+.chrome.in .foot .name{display:none}
 .chrome.in .dots{gap:5px;opacity:.55}
 .chrome.in .dots button{width:14px;height:14px}
 .chrome.in .dots button::before{width:5px;height:5px;border-width:1px}
@@ -63,7 +62,9 @@ svg.defs{position:absolute;width:0;height:0}
 .cube{position:relative;width:var(--S);height:var(--S);transform-style:preserve-3d}
 .core{position:absolute;inset:0;background:var(--paper);backface-visibility:hidden}
 .face{position:absolute;inset:0;transform-style:preserve-3d;border-radius:calc(var(--S)*.06);background:var(--paper);box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
-.face .sheet{position:absolute;inset:0;overflow:hidden;border-radius:inherit;backface-visibility:hidden}
+.face .sheet{position:absolute;inset:0;overflow:hidden;border-radius:inherit;backface-visibility:hidden;transition:opacity .35s}
+/* In space a face is its pips: its page stands only while the die is open, so nothing of it shows through a breathing mask. */
+.stage.space .face .sheet{opacity:0}
 .face.live .sheet{overflow:auto}
 .face:not(.live) .sheet{pointer-events:none;user-select:none}
 .stage.space .face .sheet{pointer-events:none}
@@ -77,7 +78,6 @@ svg.defs{position:absolute;width:0;height:0}
 .mask i{visibility:hidden}
 .mask.p0{animation:breathe 6s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:1}50%{opacity:.76}}
-.mask.peek{transform:translateZ(calc(var(--S)*.012));opacity:.1;pointer-events:none;animation:none}
 .mask.off{transform:translateZ(calc(var(--S)*.05));opacity:0;pointer-events:none;animation:none;visibility:hidden;transition:transform .45s cubic-bezier(.3,.6,.2,1),opacity .35s,visibility 0s .45s}
 .shadow{position:absolute;left:50%;top:50%;width:calc(var(--S)*1.2);height:calc(var(--S)*.3);transform:translate(-50%,calc(var(--S)*.68));border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.4),rgba(0,0,0,0));filter:url(#stipple);opacity:.5;pointer-events:none;transition:opacity .8s}
 .stage.in .shadow{opacity:0}
@@ -555,7 +555,8 @@ function placeCore(){ const s=S(); $$('.core',cube).forEach((c,i)=>{ c.style.tra
 
 /* ---------- state machine: space / in, turning, folding ---------- */
 const TARGET=[Q.id,Q.axis(0,1,0,-90),Q.axis(1,0,0,-90),Q.axis(1,0,0,90),Q.axis(0,1,0,90),Q.axis(0,1,0,180)];
-let TILT=Q.mul(Q.axis(1,0,0,-16),Q.axis(0,1,0,26));
+/* At rest the die stands square on its open face; a drag turns it to look around, and it settles square again. */
+let TILT=Q.id;
 let targetFace=D.meta.face, queued=null, queuedAct=null, cur=TARGET[D.meta.face], anim=null, foldAnim=null, foldTh=0, idlePhase=0, last=performance.now(), currentScale=1, busy=false, settleTimer=null;
 const SCALE_OUT=.48;
 function setCube(q,lift){ const s=S(); cube.style.transform='translateZ('+(-s/2)+'px) translateY('+(-(lift||0)*s).toFixed(2)+'px) '+Q.matrix(q); }
@@ -563,29 +564,29 @@ function goal(){ return D.meta.zoomed? TARGET[D.meta.face] : Q.mul(TILT,TARGET[D
 /* The open face stands in the band between the header and the foot (the stage centres the die; the band is lower by half its difference). */
 const inDY=()=>{ const cs=getComputedStyle(document.documentElement); return (parseFloat(cs.getPropertyValue('--top'))-parseFloat(cs.getPropertyValue('--foot')))/2||0; };
 function setZoomScale(k,dur){ currentScale=k; zoom.style.transition=dur?'transform '+dur+'ms cubic-bezier(.25,.8,.25,1)':'none'; zoom.style.transform=k===1?'translateY('+inDY()+'px) scale(1)':k===SCALE_OUT?'translateY(-1vh) scale('+k+')':'translateY(0) scale('+k+')'; }
-/* The masks: out in space each face wears its pips and the front one peeks at its page; open, every mask is off, so no pip stands on a page. */
-function maskState(early){ maskEls.forEach((m,i)=>{ m.classList.remove('peek','off'); if(D.meta.zoomed) m.classList.add('off'); else if(i===D.meta.face&&(early||(!anim&&!busy))) m.classList.add('peek'); }); }
-function masksDown(){ if(D.meta.zoomed) return; maskEls.forEach(m=>m.classList.remove('peek','off')); }
+/* The masks: out in space every face wears its pips, the face it rests on too (its page shows when it is opened); open, every mask is
+   off, so no pip stands on a page. */
+function maskState(){ maskEls.forEach(m=>{ m.classList.remove('off'); if(D.meta.zoomed) m.classList.add('off'); }); }
+function masksDown(){ if(D.meta.zoomed) return; maskEls.forEach(m=>m.classList.remove('off')); }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-function rotateTo(dur){ return new Promise(res=>{ const a=cur,b=goal(); if(a.every((v,i)=>Math.abs(v-b[i])<1e-6)) return res(); anim={a,b,t0:performance.now(),dur:reduced()?0:dur,res}; }); }
+/* Nothing to turn (the die rests square on the face it opens): it still settles exactly, off the idle breath's lift and drift. */
+function rotateTo(dur){ return new Promise(res=>{ const a=cur,b=goal(); if(a.every((v,i)=>Math.abs(v-b[i])<1e-6)){ setCube(cur,0); return res(); } anim={a,b,t0:performance.now(),dur:reduced()?0:dur,res}; }); }
 function foldTo(th,dur){ return new Promise(res=>{ if(foldAnim) foldAnim.res(); foldAnim={a:foldTh,b:th,t0:performance.now(),dur:reduced()?0:dur,res}; }); }
 const reduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Turning goes where the die was last asked to go: a key pressed while it turns retargets it (the label names that face at once), and
    the die runs on to it without settling between, never the old face's mask at full size in between. */
-async function turnOn(dur,peek){
-  for(;;){ D.meta.face=targetFace; queued=null; const r=rotateTo(dur);
-    if(peek){ await Promise.race([r,wait(dur*.67)]); if(queued==null) maskState(true); }
-    await r; if(queued==null||queued===D.meta.face) break; if(peek) masksDown(); }
+async function turnOn(dur){
+  for(;;){ D.meta.face=targetFace; queued=null; await rotateTo(dur); if(queued==null||queued===D.meta.face) break; }
   queued=null;
 }
 async function turn(n){
   targetFace=n; syncChrome(); if(busy){ queued=n; return; } if(n===D.meta.face) return; busy=true; clearTimeout(settleTimer);
   faceEls[D.meta.face].classList.remove('live');
-  if(D.meta.zoomed){ setZoomScale(.5,460); await foldTo(0,460); await turnOn(640,false);
+  if(D.meta.zoomed){ setZoomScale(.5,460); await foldTo(0,460); await turnOn(640);
     /* Esc pressed on the way: the die is already shut, so it goes out from here rather than opening first. */
     if(queuedAct==='out'){ queuedAct=null; await goOut(); }
     else { const o=foldTo(90,540); setZoomScale(1,600); await Promise.all([o,wait(600)]); } }
-  else { masksDown(); await turnOn(700,true); }
+  else { masksDown(); await turnOn(700); }
   faceEls[D.meta.face].classList.add('live'); busy=false; maskState(); syncChrome(); drain();
 }
 /* What was asked while the die moved is done once it rests: a turn first, then an open or a close (Enter, Esc, a double click). */
@@ -601,15 +602,15 @@ async function zoomOut(){
   const f=foldTo(0,460); await wait(180); await Promise.all([goOut(),f]);
   faceEls[D.meta.face].classList.add('live'); busy=false; maskState(); syncChrome(); drain();
 }
-/* Out into space: the other faces wear their pips again, the die backs off and tilts, and the front face peeks at its page. */
+/* Out into space: the faces wear their pips again and the die backs off, square on the face it was open at. */
 async function goOut(){
   D.meta.zoomed=false; maskEls.forEach((m,i)=>{ if(i!==D.meta.face) m.classList.remove('off'); }); stage.classList.add('space'); stage.classList.remove('in'); $('#chrome').classList.remove('in');
-  setZoomScale(SCALE_OUT,780); const r=rotateTo(780); await wait(380); maskEls[D.meta.face].classList.remove('off'); maskEls[D.meta.face].classList.add('peek'); await r;
+  setZoomScale(SCALE_OUT,780); const r=rotateTo(780); await wait(380); maskEls[D.meta.face].classList.remove('off'); await r;
 }
 function frame(now){
   const dt=Math.min(64,now-last); last=now;
   if(anim){ const t=anim.dur?Math.min(1,(now-anim.t0)/anim.dur):1; const e=1-Math.pow(1-t,2.6); const wob=Math.sin(t*Math.PI); cur=Q.slerp(anim.a,anim.b,e); setCube(cur,D.meta.zoomed?0:0.06*wob); if(t>=1){ cur=goal(); setCube(cur,0); const r=anim.res; anim=null; r(); } }
-  else if(!D.meta.zoomed&&!busy){ idlePhase+=dt*0.0004; const w=Q.mul(Q.axis(0,1,0,Math.sin(idlePhase)*6),Q.axis(1,0,0,Math.cos(idlePhase*.7)*3.5)); setCube(Q.mul(w,cur),0.012*Math.sin(idlePhase*1.3)); }
+  else if(!D.meta.zoomed&&!busy){ idlePhase+=dt*0.0004; const w=Q.mul(Q.axis(0,1,0,Math.sin(idlePhase)*1.2),Q.axis(1,0,0,Math.cos(idlePhase*.7)*.8)); setCube(Q.mul(w,cur),0.012*Math.sin(idlePhase*1.3)); }
   if(foldAnim){ const t=foldAnim.dur?Math.min(1,(now-foldAnim.t0)/foldAnim.dur):1; const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; foldTh=foldAnim.a+(foldAnim.b-foldAnim.a)*e; setFold(D.meta.face,foldTh); if(t>=1){ const r=foldAnim.res; foldAnim=null; r(); } }
   requestAnimationFrame(frame);
 }
@@ -628,7 +629,7 @@ function faceAt(px,py){
     if(inside&&(!best||n[2]>best.z)) best={i,z:n[2]}; }
   return best?best.i:null;
 }
-stage.addEventListener('pointerup',e=>{ if(!drag) return; const d=drag; drag=null; stage.classList.remove('drag'); if(d.moved||busy) return; const n=faceAt(e.clientX,e.clientY); if(n==null) return; if(n===D.meta.face) zoomIn(); else turn(n); });
+stage.addEventListener('pointerup',e=>{ if(!drag) return; const d=drag; drag=null; stage.classList.remove('drag'); if(d.moved&&!busy){ TILT=Q.id; rotateTo(700); return; } if(d.moved||busy) return; const n=faceAt(e.clientX,e.clientY); if(n==null) return; if(n===D.meta.face) zoomIn(); else turn(n); });
 stage.addEventListener('dblclick',e=>{ if(!D.meta.zoomed) zoomIn(); });
 function next(d){ turn((targetFace+d+6)%6); }
 document.addEventListener('keydown',e=>{
@@ -649,7 +650,7 @@ function buildChrome(){
     h('div',{class:'title',contenteditable:'true','data-placeholder':'A title for the day, if it wants one.','aria-label':'Title',html:clean(m.title||''),oninput:e=>{ m.title=e.target.innerHTML; touch(); }})));
   chrome.append(h('div',{class:'icons'},h('button',{title:'Save HTML copy (Ctrl/Cmd+S)','aria-label':'Save HTML copy',onclick:exportCopy},svg(ICON.save)),h('button',{title:'Add media','aria-label':'Add media',onclick:()=>{ $('#media-pos').value=String(D.meta.face); $('#dlg-media').showModal(); }},svg(ICON.media)),h('button',{title:'Agent return','aria-label':'Agent return',onclick:openAgent},svg(ICON.agent)),h('button',{title:'Context packet','aria-label':'Context packet',id:'pk',onclick:openPacket},svg(ICON.packet),h('span',{class:'n',text:String(D.packet.length)}))));
   const dots=h('div',{class:'dots',role:'tablist'}); POS.forEach(p=>dots.append(h('button',{role:'tab','aria-label':'#'+p.n+' '+p.name,'data-p':p.n,onclick:()=>turn(p.n)})));
-  chrome.append(h('div',{class:'foot'},dots,h('div',{class:'name'}),h('div',{class:'hint',text:'Click a face to turn to it, click the front face or press Enter to open it. Drag to look around. ← → turn, ↑ ↓ flip to the mirror face, Esc closes.'})));
+  chrome.append(h('div',{class:'foot'},dots,h('div',{class:'name'})));
   chrome.classList.toggle('in',!!D.meta.zoomed); syncChrome();
 }
 function syncChrome(){ const p=POS[targetFace]; $$('.dots button').forEach(b=>b.setAttribute('aria-current',String(Number(b.dataset.p)===targetFace))); const nm=$('.foot .name'); if(nm){ nm.innerHTML=''; nm.append(h('b',{text:'#'+p.n+' '+p.name}),' ',p.role); } const pk=$('#pk .n'); if(pk) pk.textContent=String(D.packet.length); }

@@ -106,7 +106,8 @@ export const day: DesignedDevice = {
       <Dial label="Face" does="Turns the die." value={numOf(p.v, 'face') ?? NaN} def={0} scale={{min: 0, max: 5, step: 1}} format={f => `${f}`} onChange={x => p.set('face', x)} />
       <ValueBox label="Rollover" does="When tomorrow's Day opens beside today's." value={numOf(p.v, 'rollover') ?? NaN} def={-15} scale={TIME} format={timeOrOff} onChange={x => p.set('rollover', x)} />
       <Radio label="Agent" does="How agent entries arrive." value={strOf(p.v, 'agentWrites') ?? ''} options={WRITES} stack onChange={x => p.set('agentWrites', x)} />
-      {closeNow(p)}
+      {/* Close now is wider than a macro column (56 px): it takes a row across both, inside the device. */}
+      <div style={{gridColumn: 'span 2', width: '100%', display: 'flex', justifyContent: 'center'}}>{closeNow(p)}</div>
     </Section>
   </Panel>,
 
