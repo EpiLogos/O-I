@@ -160,7 +160,7 @@ before the return to substantive UI work. Up to four Opus subagents.
 6. **The owner ops drag and drop needs:** `agent-chain order`, `agent-chain skillset admit`, `workcell git-seat attach`,
    `world scope setter`, `gateway transport attach` (`agent/agentChainDrag.ts` MISSING_OPS), and a drop target in the shared chain
    host (`frame/devices/**` takes no drag today).
-7. **Shell refinements in this lane:** the view labels say the views' names ("5 views" goes); the device rack and the widget
+7. **Shell refinements in this lane:** the device rack and the widget
    rail collapse and expand independently; the plumbing for a device's compact, expanded and pop-out states; the Settings theme
    system made usable, moving off the Ableton-derived CSS; the shell kept true to its product arrangements and routes.
 8. **Not this lane:** UI redesign, the manual, the objective-internality and worldhood material.
