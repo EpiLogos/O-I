@@ -153,6 +153,29 @@ section stands.
 8. **The torus's effects** are four devices after the torus (§21.5: Filter, Dynamics, Delay, Reverb); Sky modulation is Quaternal
    Logic's modulator for any chain (§22.2).
 
+### 0.4 Two faces of one field; the instruments keep their names; a capability lands as a device (owner ruling, 19 Oct 2026)
+
+The manual carries it (O-I main `docs/dlw/DLW.md` §25, §17.4, §19.20, `495c7f86c`; the route:
+`tickets/T-AGENCY-the-agent-world-and-the-construction-chain.md`). Where a row below in this lock, or a plan in this folder, says
+otherwise, this section stands.
+
+1. **M1-2-3′ sounds and keeps time.** M1′ generates: the torus is the only source of sound. M2′ shapes it: the synth, moved by the
+   live sky and tuned by the lenses. M3′ forms: the codons, the clock and the deck. Live plays M1′ and M2′ as one instrument
+   (§0.2); Expressions holds all three in a scene.
+2. **M4/5/0′ knows and acts, and agents work in it.** M4′ reads the situation: Kev, the decision model on the person's machine,
+   answering typed questions over labels an owner allows. M5′ synthesises: the agent's language model, whose writing is a
+   proposal until reviewed. M0′ is the ground: the QL graph knowledge system, which settles by rule, checks every answer and names
+   a gap as a question. What the person accepts returns to M0′ (5/0). An act runs in that order (manual §25.2): the ground
+   first, and an act with nothing open asks no model.
+3. **Technē's instruments carry no M′ numbers.** The reading that set M0′–M5′ as Technē's instruments (Project/Wiki/Graph or
+   the Earth ⇄ Graph, Canvas/Constellation, Relation Field/Timeline, Journey/Scenes, Places/World, Palace; QL-MEF
+   `L5-TECHNE-DUAL-READING-LOCK.md`) is withdrawn: it does not hold what the coordinate system says of those layers. The
+   instruments keep their names and their work. Supersedes the M′ numbers in §0.1 item 3 and §2.5, and in DLW-VISION,
+   DLW-PLAN, WIDGET-GUIDE, DLW-PANES-ONTOLOGY and `.wayfinder/maps/techne-expression-mode.md`.
+4. **A capability lands as a device.** It enters the manual as a device's UI in the catalogue (a page of an existing device or a
+   device of its own) with its entry beside the embed, never as a section that restates the implementation. The constellation
+   is the Canvas's Form page (§17.4); the decision helper is its own device, on a team's chain (§19.20).
+
 ---
 
 ## 1. The ontology — Live semantic → DLW meaning → the Game

@@ -1,8 +1,8 @@
 # T-AGENCY — the agent world (M4/5/0′) and Technē's construction chain (19 Oct 2026)
 
-From the session the owner commissioned on 19 Oct to settle ground truth and design the agency side in the manual. Input for the
-lead's PATH §5/§7 and MAP's build lane (items 4–5) and planning lane (item 3), once the owner has looked at the manual. PATH stays
-the lead's.
+From the session the owner commissioned on 19 Oct to settle ground truth and design the agency side in the manual. The owner
+reviewed the manual the same evening; it landed as O-I `495c7f86c`, the ruling as `DEVICE-SEMANTICS-LOCK.md` §0.4, and MAP's build
+lane (items 4–5), planning lane (item 3) and queue now cite this route. PATH stays the lead's.
 
 ## 1. The owner's direction (19 Oct, verbatim)
 
@@ -115,8 +115,11 @@ the team space has the same three participants at each cell: the engine (M0′),
    stale revision and a restart. Negative tests: cut the relation-to-engine binding and the selection test fails; cut save and the
    read-back test fails.
 
-K1, K3 and K5 are foundations (MAP build lane item 4). K2, K4 and K6 are the construction chain (item 5). K7 runs in QL-MEF and
-AIKit beside them. K8 closes it.
+K1, K3 and K5 are foundations (MAP build lane item 4). K4 and K2 are the construction chain (item 5). K6 waits on the planning
+lane's answer to where the acts stand (item 3). K7 runs in QL-MEF and AIKit beside them. K8 closes it.
+
+Blocked-by, per item: K2 on K4 (the Form page binds to the one Canvas model); K5 on a `ql` built with `context-frame team-space`
+installed; K6 on the planning lane's device answer; K8 on K1–K5.
 
 ## 7. Open for the owner
 

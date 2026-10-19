@@ -149,18 +149,25 @@ before the return to substantive UI work. Up to four Opus subagents.
    sources, so agents get the right context, decide, use capabilities and execute through the systems meant for it; the six
    products working through their intended relationships; performance and reliability against real bottlenecks (the Graph read at
    88 s cold, knowledge search at 4.7–6.2 s); operational reuse — saving and reusing scripts, commands, aliases — finished.
-5. **Technē's construction chain, working end to end:** AIKit construction → QL-MEF structure and geometry
-   (`StructuralConstellation`, `ShapeBinding`, `FramedReading`) → the Expression binding → visible, selectable composition → native
-   save and read-back, keeping subject, participation, relation and shape binding through each step. Its plan:
-   `.wayfinder/maps/techne-expression-mode.md` (O-I `main`), QL-MEF's `L5-TECHNE-DUAL-READING-LOCK.md` and
-   `L5-TECHNE-WIKI-CONSTELLATION-WAYFINDER.md`. Open connections: source linking (what becomes a Wiki object, what stays a source
+   The agent side is built in its three positions (manual §25, `DEVICE-SEMANTICS-LOCK.md` §0.4; route
+   `tickets/T-AGENCY-the-agent-world-and-the-construction-chain.md`): **M0′**, one read path (O:I's wiki reads through AIKit's
+   knowledge route, K1) and the whole kept whole where a scene is projected (K3); **M4′**, the Decision helper
+   (`ai-kit:decision-helper`, manual §19.20) bound to `aikit decide` and the team space, with a `ql` that answers
+   `context-frame team-space` installed (K5); **M5′**, the Agent's proposals as they stand. An act runs ground first, and an act
+   with nothing open asks no model.
+5. **Technē's construction chain, working end to end, on the Canvas's Form page** (manual §17.4, `techne:canvas`): AIKit
+   construction → QL-MEF structure and geometry (`StructuralConstellation`, `ShapeBinding`, `FramedReading`) → the Expression
+   binding → visible, selectable composition → native save and read-back, keeping subject, participation, relation and shape
+   binding through each step. Route: T-AGENCY K4 (one Canvas model; roles and fold from `wiki-shape` and `ql techne reading`),
+   then K2 (the Form page bound to `aikit.constellation.apply` and `wiki-shape`, the detached construction panel retired), walked
+   by K8 (`.wayfinder/maps/techne-expression-mode.md` C1–C12; its M′ table is superseded by lock §0.4). Open connections: source linking (what becomes a Wiki object, what stays a source
    descriptor, how exact passages enter a construction); QL staging (`wiki stage`, construction and shape validation into the
    desktop); where the model proposes and where native ops validate and persist; the live `ShapeBinding` to the renderer (hit
    testing, multiple occurrences, saved arrangements).
 6. **The owner ops drag and drop needs:** `agent-chain order`, `agent-chain skillset admit`, `workcell git-seat attach`,
    `world scope setter`, `gateway transport attach` (`agent/agentChainDrag.ts` MISSING_OPS), and a drop target in the shared chain
    host (`frame/devices/**` takes no drag today).
-7. **Shell refinements in this lane:** the view labels say the views' names ("5 views" goes); the device rack and the widget
+7. **Shell refinements in this lane:** the device rack and the widget
    rail collapse and expand independently; the plumbing for a device's compact, expanded and pop-out states; the Settings theme
    system made usable, moving off the Ableton-derived CSS; the shell kept true to its product arrangements and routes.
 8. **Not this lane:** UI redesign, the manual, the objective-internality and worldhood material.
@@ -182,8 +189,9 @@ The clip, Session view and Arrangement view work is done (manual §16.5–§16.6
 3. **Technē's knowledge field as UX:** the browser over AIKit's federated knowledge (`SemanticWiki`, `SourcePoolProvider`,
    `CodeIndexProvider`, `ProjectMap`, `KnowledgeRoute`, `KnowledgeApplication`) — lists, trees, graphs and search as ways through
    one addressable world, each provider keeping its authority; the construction's frame and roles, relations, alternatives and
-   the move between staged construction and live composition made discoverable. The six instruments keep their canonical
-   meanings (M5-0′ Project/Wiki/Graph … M5-5′ Palace/Integral Whole; Expressions as the 3:3 conjugate).
+   the move between staged construction and live composition made discoverable. The instruments keep their names and their work,
+   with no M′ numbers (lock §0.4); the agent side follows manual §25. Where an agent's Find passages, Quote, Propose relations
+   and Explain stand (T-AGENCY K6) is this lane's device answer before the build takes them.
 4. **The objective-internality and worldhood material** where it changes design.
 5. **The design requests the build sends** (19 Oct: the World's scales and a Land control; clip:central's Subject, identity row
    and dream journal controls; the Sitting's reason), after item 1 settles.
@@ -219,6 +227,9 @@ example, an offshoot. It reaches the DLW as the faces of agent and process devic
 - **Procedural Central:** generated, customisable planets and system objects on the atlas's foundations, each keeping its identity
   through change, one world through many instruments; Earth, its places and its weather. W3 built the body record, generator and
   your system. Reference: youtu.be/VRZ3H_FWwxI.
+- **Ta-Onta as practice** (T-AGENCY K7), in QL-MEF and AIKit beside the build: one Methodology, six Methods (Enter, Form, Find,
+  Time, Compose, Return), the `ta-onta` set with a child set for each, and each operation answering by the same name from the CLI,
+  an agent and the SDK.
 - **UX acceptance — the real testing:** the operator's walk; the two verticals (a Factory task and a day recovered across the
   instruments); the register's exercised and passed columns lane by lane (3, then 2 and 4, then 1 and 5); a manual-against-app
   pass, section by section.
@@ -226,7 +237,8 @@ example, an offshoot. It reaches the DLW as the faces of agent and process devic
 ### Order
 
 The build lane finishes and lands what is in flight, then its foundations run beside the planning lane's window, device and drag
-rules — together the prerequisite for resuming UI building. The pages lane's first step and the creatures lane run now, beside
+rules — together the prerequisite for resuming UI building. The agent side's foundations (K1, K3, K5) are among them; the
+construction chain (K4, then K2) follows them; K8 walks it inside the UX acceptance. The pages lane's first step and the creatures lane run now, beside
 them. Nara and procedural Central follow the foundations. The UX acceptance comes last.
 
 Other work touching the DLW and outside it: QL-MEF #281 (M′ music), the Archetypal-Earth re-port (on the owner's word), Live 12
