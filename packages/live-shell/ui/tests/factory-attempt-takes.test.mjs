@@ -111,6 +111,9 @@ test('AIKit\'s list and Factory\'s Run readings join into takes: each attempt\'s
   assert.equal(lead[0].unit, 'write-the-lanes', 'the unit in short words')
   assert.deepEqual(bySession.get('ses-helper'), [], 'a session whose task serves none has an empty set')
   assert.deepEqual([...takes.takeNames(lead).values()], ['write-the-lanes · take 1', 'write-the-lanes · take 2', 'write-the-lanes · take 3', 'write-the-lanes · take 4', 'write-the-lanes · take 5'])
+  // Factory mints an opaque ref for a unit: the takes are then simply numbered, in the order served.
+  const opaque = lead.map(take => ({...take, unit: takes.unitWords('workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW')}))
+  assert.deepEqual([...takes.takeNames(opaque).values()], ['take 1', 'take 2', 'take 3', 'take 4', 'take 5'])
   assert.equal(takes.takeWords(lead[0]), 'returned and chosen (receiving:R1)')
   assert.equal(takes.takeWords(lead[1]), 'returned, not yet chosen')
 })
@@ -125,7 +128,8 @@ test('an attempt Factory\'s reading does not hold, or a Run it did not read, is 
   assert.deepEqual(earlier.get('ses-lead'), [], 'attempts of a task the session is no longer bound to are not on its track')
   assert.equal(takes.unitWords('workflow:build/unit:write'), 'write')
   assert.equal(takes.unitWords({reference: 'workflow:x:inspect'}), 'inspect')
-  assert.equal(takes.unitWords(7), 'attempt')
+  assert.equal(takes.unitWords(7), null, 'no ref, no words')
+  assert.equal(takes.unitWords('workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW'), null, 'the identity Factory mints for a unit says nothing readable')
 })
 
 // ---------------------------------------------------------------------------------------------------------------- the adapter
