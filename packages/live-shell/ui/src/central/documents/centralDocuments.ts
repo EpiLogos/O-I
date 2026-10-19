@@ -46,10 +46,14 @@ export function dayDateOfPath(path: string): string | null {
 }
 
 const FLOW_FILE = new RegExp(`(?:^|/)${USER_FLOWS_DIR}/[^/]+\\.html$`, 'i')
+/** A Flow in a project world's own folder, its human ground (T-WORLDS W2: a world's pages are kept in its folder): named as every Flow
+ * is minted (flow/instance.ts instanceFileName, `flow-<stamp>.html`), which tells it from the Goals, Visions, Mockups, Beings and
+ * Things kept beside it. */
+const WORLD_FLOW_FILE = /(?:^|\/)Work\/[^/]+\/ProjectCentral\/user\/(?:[^/]+\/)*flow-[^/]+\.html$/i
 
-/** Whether a path is a Flow document: an instance in the user section's flows folder (flow/instances.ts). */
+/** Whether a path is a Flow document: an instance in your world's flows folder, or a Flow in a project world's human ground. */
 export function isFlowPath(path: string): boolean {
-  return FLOW_FILE.test(path)
+  return FLOW_FILE.test(path) || WORLD_FLOW_FILE.test(path)
 }
 
 /** What a pane's subject names. */

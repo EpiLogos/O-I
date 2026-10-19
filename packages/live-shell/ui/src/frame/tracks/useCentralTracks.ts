@@ -22,6 +22,7 @@ import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading
 import {daySetOf, withWorld, writeDaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
 import {openLaunched} from '../../central/launchOpening'
+import {documentLayoutWriter} from '../../central/documents/documentDoor'
 import {subscribeSystem, systemBodies} from '../../projections/atlas/system/systemStore'
 import {worldColourOf} from '../../projections/atlas/system/systemModel'
 import {practiceWorldOf} from '../../../../../../desktop/cradle/src/nara/practiceWorld'
@@ -105,7 +106,9 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   }, [transport, inSetKey, readAt, moved])
   const aperture = ground.reading ? currentDayOf(ground.reading).aperture : null
   const refreshGround = ground.refresh
-  // A launched page opens where its launch says (central/launchOpening.ts), in the pane tree the shell holds.
+  // A launched page opens where its launch says (central/launchOpening.ts), in the pane tree the shell holds. The grid is drawn in a
+  // pane root of its own, outside the shell's book (r15: "no pane tree is mounted to open it in"), so the book's writer the shell
+  // registers for its panes is the way in when no book is held here.
   const book = useOptionalContinuity()
   const heldBook = useRef(book)
   heldBook.current = book
@@ -117,7 +120,8 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
     return {
       launch: (page: {location: Parameters<typeof launchPage>[1]; form?: string}) => after(async () => {
         await launchPage(transport, page.location)
-        return openLaunched(transport, heldBook.current ? update => heldBook.current?.setLayout(update) : null, page)
+        const write = heldBook.current ? (update: Parameters<NonNullable<typeof heldBook.current>['setLayout']>[0]) => heldBook.current?.setLayout(update) : documentLayoutWriter()
+        return openLaunched(transport, write, page)
       }),
       stop: (item: CentralPlaying) => after(() => stopPage(transport, item.nowRef, item.project)),
       ...(aperture ? {addWorld: (world: CentralWorld) => after(() => writeDaySet(transport, aperture, held => withWorld(held, world.ref, world.name)).finally(refreshGround))} : {}),

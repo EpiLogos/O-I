@@ -1,0 +1,37 @@
+r15 screen pass — f98c5681c (W3b, W4b, the launch opening, your pages on the Earth), 19 Oct 2026 08:57–09:05 UTC, computer use on
+the native candidate, the owner's real ground. Control/user/flows and Work/personal/ProjectCentral were backed up with sha256
+first. The pass made one Being in your flows folder and one Journal in the personal register's human ground; both were removed
+after (copies kept as evidence outside the repository). All 13 flows files match; the personal ProjectCentral matches its snapshot.
+Central's own change record for the personal register and its search index moved with the create, and are Central's to keep.
+
+Seen:
+- A title written from Clip view shows in the Being's pane after Re-read: "Hildegard of Bingen" drawn from the page's island
+  (revision 2b3f24b4). r14's defect is gone.
+- Launch and Stop on a page: the Being's ▶ in Your world's row 12 answered "Hildegard of Bingen plays", and Central held its NOW
+  clearing (oi:page:…beings-2026-10-19-0957.html); Your world's stop answered "1 page of Your world stopped", and Central holds the
+  clearing closed.
+- New… draws Your practice beneath the four forms: Journal, Dream journal, Journey. Journal made its page in the personal register
+  through Central's source door (Work/personal/ProjectCentral/user/flow-2026-10-19-1002.html; meta.practice journal, meta.world
+  central:wiki:project:personal) and opened a pane on it.
+- Central's Session words read "today as clips: your worlds as tracks, their pages as clips, the Day as the Main track".
+- Technē's browser lists Bodies under the World group; the Earth mounts, its Scale reading "body".
+
+Found and fixed after the pass (not in r15):
+- A launched page did not open: "Hildegard of Bingen plays: no pane tree is mounted to open it in". The grid is drawn in a pane
+  root of its own, outside the shell's book, so the tracks hook held no book. It now opens through the book's writer the shell
+  registers for its panes (documentDoor.ts documentLayoutWriter), as a page's own links do.
+- The Journal's pane refused its page: "…flow-2026-10-19-1002.html, is no Day or Flow". The document pane took a Flow only from
+  your world's flows folder; since W2 a project world keeps its pages in its own human ground. A Flow there, named as every Flow is
+  minted (flow-<stamp>.html), now opens as its Flow; the Goals, Visions, Beings and Things kept beside it do not.
+
+Found, open:
+- Bodies waits with the installed AIKit's words: "facts target must be an existing Wiki node or whole frame". The installed aikit
+  predates ai-kit#522 (aikit.world-body/v1), so no body record can be read or written, and your system (W3b) cannot be drawn. It
+  waits on #522 and #527 landing and AIKit being reinstalled.
+- With a document page in front, its pane's tab rail does not open from the pane's edge band, so another tab of that pane cannot be
+  reached by pointer. Reached here through the browser's Instruments (Session · Arrangement).
+- A mode switch by pointer at the toolbar's right was refused by the input tool as landing on the desktop; the same control worked
+  through the window's own accessibility element.
+
+Not seen: the Sitting rung, dreams in their journal, Answer this, your sky (W4b); your system and landings (W3b, waiting on AIKit);
+your Beings on the Earth (Hildegard has no anchor, so it is unplaced; Reading and the Graph would show it).
