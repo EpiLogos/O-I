@@ -218,7 +218,8 @@ test('the rail\'s Ledger and Approvals are their devices\' own widgets (§23.9, 
       assert.match(tile, new RegExp(`data-device-design="${design.id}"|data-device-design="generic"`))
     } finally { door.publishDevice(deviceId, null) }
   }
-  const tiles = read('agent/AgentDockTileBody.tsx')
+  // The claims stand with the tiles' marks (agentDockTiles.ts), before any tile body loads; the bodies stay in AgentDockTileBody.tsx.
+  const tiles = read('agent/agentDockTiles.ts') + read('agent/AgentDockTileBody.tsx')
   assert.match(tiles, /claimRailWidget\('ledger', LEDGER_ID\)/)
   assert.match(tiles, /claimRailWidget\('approvals', APPROVALS_ID\)/)
   assert.doesNotMatch(tiles, /Encounter task \(ledger basis\)|approval hooks/, 'the raw task-record receipts are gone (MOVED)')

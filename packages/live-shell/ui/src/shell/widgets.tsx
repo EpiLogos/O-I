@@ -7,20 +7,27 @@
 import type {ComponentType} from 'react'
 import type {SurfMode} from './modeGrammar'
 import type {WidgetBodyProps, WidgetDeclaration} from '../frame/widgets/widgets'
-import {COMPANIONS, TILES, TileBody} from './ModeContextDock'
-import {TrailWidget} from './TrailWidget'
-import {AgentDockTileBody, TILE_ICONS, tileTitle} from '../agent/AgentDockTileBody'
+import {COMPANIONS, TILES} from './modeDockTiles'
+import {TILE_ICONS, tileTitle} from '../agent/agentDockTiles'
 import {useAgentShell, type AgentTileId} from '../agent/AgentShellContext'
 import {useAgencySessions} from '../agent/useAgencySessions'
 import {useWidgetReading} from '../widgets/widgetReading'
-import {AgentWidget, AgentWidgetName} from '../widgets/AgentWidget'
-import {PacketWidget} from '../widgets/PacketWidget'
+import {AgentWidgetName} from '../widgets/AgentWidgetName'
+import {loadWhenDrawn} from './loadWhenDrawn'
 import {getPanels} from './panels'
 import {panelWidgets} from '../frame/widgets/panelWidgets'
 // The devices born on the rail claim the rail's widget of their id when their module loads (widgets/railDevices.tsx).
 import '../widgets/railDevices'
 
 export {WidgetReadingProvider, type WidgetReading} from '../widgets/widgetReading'
+
+// The bodies load when a widget first draws on the rail, not with the shell: the rail's names and marks above stand without
+// them (shell/loadWhenDrawn.ts; scripts/load-census.mjs).
+const TileBody = loadWhenDrawn('The mode dock\'s tiles', () => import('./ModeContextDock').then(module => module.TileBody))
+const TrailWidget = loadWhenDrawn('Trail', () => import('./TrailWidget').then(module => module.TrailWidget))
+const AgentDockTileBody = loadWhenDrawn('The agent dock\'s tiles', () => import('../agent/AgentDockTileBody').then(module => module.AgentDockTileBody))
+const AgentWidget = loadWhenDrawn('Agent', () => import('../widgets/AgentWidget').then(module => module.AgentWidget))
+const PacketWidget = loadWhenDrawn('Packet', () => import('../widgets/PacketWidget').then(module => module.PacketWidget))
 
 /** A mode-dock tile as a widget body: the tile's own body over the reading. */
 const modeTile = (id: string) => function ModeTileWidget() {
