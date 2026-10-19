@@ -1,4 +1,7 @@
 /* A device on the rail draws its own tile (the kit's Tile, 136 × 136; manual §16.9): the rail's tile around it stands down — no
-   ground, no edge, no head of its own. Shell tokens only. */
+   ground, no edge, no head of its own. A tile two squares wide (the Day's, 280) on a rail narrower than that (the rail's least and
+   default width is 260, shell/workspaceAreas.ts RAIL_MIN_W) stands at the rail's width: its name shortens, its ↗ and ✕ stay on the
+   rail (r27: they lay past its edge). Shell tokens only. */
 .mode-dock-tile--bare { background: none; border: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; min-height: 0 }
-.mode-dock-tile--bare > .device-place { flex: none }
+.mode-dock-tile--bare > .device-place, .mode-dock-tile--bare > .device-place > .device--widget,
+.mode-dock-tile--bare > .device-place > .device--widget > .dp-tile { flex: 0 1 auto; min-width: 0; max-width: 100% }
