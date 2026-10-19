@@ -1,0 +1,8 @@
+{
+  "phase": "native build",
+  "compiled_source_tree_sha256": "be6476ad544519ab6f9a50494a20daacaf2f66a6a6c473697facd3d8a04ab841",
+  "current_checkout_source_tree_sha256": "be6476ad544519ab6f9a50494a20daacaf2f66a6a6c473697facd3d8a04ab841",
+  "changed_files": [],
+  "changed_native_inputs": [],
+  "standing": "later-checkout-drift"
+}
