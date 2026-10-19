@@ -155,7 +155,17 @@ before the return to substantive UI work. Up to four Opus subagents.
    (`ai-kit:decision-helper`, manual §19.20) bound to `aikit decide` and the team space, with a `ql` that answers
    `context-frame team-space` installed (K5); **M5′**, the Agent's proposals as they stand. An act runs ground first, and an act
    with nothing open asks no model.
-5. **Technē's construction chain, working end to end, on the Canvas's Form page** (manual §17.4, `techne:canvas`): AIKit
+5. **Loading, as the owner meets it in the candidate** (measured the evening of 19 Oct):
+   - the shell loads as one 6.2 MB script (2.6 MB compressed) before it draws anything — split it by mode and device;
+   - each read a pane makes starts a fresh `ctrl` or `aikit` process from the kernel (`desktop/cradle/kernel/src`: agency, ground,
+     flow, knowledge, material, encounter) — 0.1–0.4 s each at load 12, stacking when a pane reads several in turn — so reads stop
+     paying a process start each time, through a resident reader per product or the product's own resident owner where it has one;
+   - a pane draws its last reading at once and refreshes behind it;
+   - Quaternal Logic in the candidate is 23 commits behind its `main` (built 15 Oct): its export refresh; AIKit is one behind
+     (ai-kit #532).
+   The machine was swapping at the time (14.7 of 15.4 GB of swap used, load 25 on 10 cores while builds ran), so each timing names
+   the load it was taken under.
+6. **Technē's construction chain, working end to end, on the Canvas's Form page** (manual §17.4, `techne:canvas`): AIKit
    construction → QL-MEF structure and geometry (`StructuralConstellation`, `ShapeBinding`, `FramedReading`) → the Expression
    binding → visible, selectable composition → native save and read-back, keeping subject, participation, relation and shape
    binding through each step. Route: T-AGENCY K4 (one Canvas model; roles and fold from `wiki-shape` and `ql techne reading`),
@@ -164,38 +174,67 @@ before the return to substantive UI work. Up to four Opus subagents.
    descriptor, how exact passages enter a construction); QL staging (`wiki stage`, construction and shape validation into the
    desktop); where the model proposes and where native ops validate and persist; the live `ShapeBinding` to the renderer (hit
    testing, multiple occurrences, saved arrangements).
-6. **The owner ops drag and drop needs:** `agent-chain order`, `agent-chain skillset admit`, `workcell git-seat attach`,
+7. **The owner ops drag and drop needs:** `agent-chain order`, `agent-chain skillset admit`, `workcell git-seat attach`,
    `world scope setter`, `gateway transport attach` (`agent/agentChainDrag.ts` MISSING_OPS), and a drop target in the shared chain
-   host (`frame/devices/**` takes no drag today).
-7. **Shell refinements in this lane:** the device rack and the widget
+   host (`frame/devices/**` takes no drag today); then the owner operations the planning lane's actions on tracks, clips and
+   scenes find missing (its item 2).
+8. **Shell refinements in this lane:** the device rack and the widget
    rail collapse and expand independently; the plumbing for a device's compact, expanded and pop-out states; the Settings theme
    system made usable, moving off the Ableton-derived CSS; the shell kept true to its product arrangements and routes.
-8. **Not this lane:** UI redesign, the manual, the objective-internality and worldhood material.
+9. **Not this lane:** UI redesign, the manual, the objective-internality and worldhood material.
 
 ### The UI/UX planning lane — this documentation session
 
-The clip, Session view and Arrangement view work is done (manual §16.5–§16.6, §17.1–§21.1). What is left:
+The clip, Session view and Arrangement view mapping is in the manual (§16.5–§16.6, §17.1–§21.1). The owner's review of 19 Oct
+found the views, the interactions and the flipped-up devices short of Live's; items 1–4 answer it and come first. What is left:
 
-1. **The window and device logic in the manual, then the app to match.** One place for each control in the top strip (Central's
+1. **Three layers per mode: Session, Arrangement, Pane.** Session and Arrangement are views of the mode's one set — the same
+   tracks, Tab between them, the Clip and Device views under both — not panes. Today they are "two presentations of one pane"
+   (`App.tsx` `chooseView`), and a device's Full view takes the same centre slot. The third layer holds the panes you open, so a
+   device's Full view has its own home and nothing else competes for the centre. The manual's window chapter and each mode's
+   "tracks and clips" section say it; the app follows.
+2. **The actions on every object, after Live,** with a context menu wherever Live has one. The shell opens a right-click menu
+   only on the device head today; clips, slots, scenes, tracks, browser rows and locators have none. Live's set, from its manual
+   (keyboard shortcuts; Session and Arrangement chapters): tracks — insert, rename (⌘R, Tab to the next), group, fold, freeze,
+   arm, solo, switch off, move, colour, delete; clips and slots — insert, rename, duplicate, cut, copy, paste, delete, colour,
+   Edit Info Text, switch off, launch, stop button, drag to move, ⌥-drag to copy, drop from the browser; scenes — Insert,
+   Capture and Insert, rename, duplicate, colour, move, delete; the Arrangement — split, consolidate, crop, time edits, Add
+   Locator, loop; everywhere — undo and redo, Shift and ⌘ selection, Delete, ⌘D. Each mode's tracks, clips and scenes get the
+   same set, each action naming the owner operation it calls (a new page, renaming a Flow, duplicating a world, deleting as
+   archiving); an action with no owner operation goes to the build lane as an op to build, as Factory's did.
+3. **The window and device logic in the manual, then the app to match.** One place for each control in the top strip (Central's
    strip holds 26 controls in one line today, Map twice); the bottom right as the home of the Clip and Device switches and what
    belongs with them; a component carries no explanatory line its place already says (today: "No document selected — document
    devices: each modifies the open document", "Widgets 2 open", the pool's empty line, Save/Review/Re-read in pane heads, the
-   Agent widget's paragraph); the device head keeps activator, expand and name, and keeping on the rail, opening full and popping
-   out become what a drag or a double-click does. The encounter bar W1 put above the panes comes out.
-2. **Drag, drop and chain order, specified:** what order means in each chain and whether it can change (Live's audio heard in
+   Agent widget's paragraph, the Day pane's two-line instruction under the die, the status strip's "aperture 2 pinned · 2 panes"
+   and "No host readback"); the device head keeps activator, expand and name, and keeping on the rail, opening full and popping
+   out become what a drag or a double-click does. The encounter bar W1 put above the panes comes out. Waiting and faults follow
+   Live: a field not yet read is drawn empty or dimmed, a fault is one line in the status bar, and what a control does shows in
+   the status bar on hover (the controls' `does` already works this way). The source holds over 200 distinct "Reading …" and
+   "No reading of …" lines drawn inside devices and panes; they go.
+4. **Devices flipped up, display first.** Live's expanded devices give the band to the display you work on — EQ Eight's curve
+   you drag, Compressor's graph, Simpler's waveform, Drum Rack's pads — with a few knobs at its edges. Ours put the visual in a
+   corner at compact size and fill the band with labelled boxes (the Day: a small die net beside Faces, Time, Agent, Sources and
+   Close). Per device: name its display, give it the band, turn the boxes into handles on it. Some devices need that thought from
+   the start.
+5. **Terminal, files and web as devices.** The working terminal and web page open through the Workbench path brought from the
+   cradle (`native/Workbench.tsx`); the Terminal device's design (`widgets__terminal.tsx`) is bound to nothing; the Files and Web
+   widgets show only what an agent read or fetched (`widgets/railBindings.ts`), not your files or the web. Each becomes a device
+   over the real thing, in the browser, the rail and a pane.
+6. **Drag, drop and chain order, specified:** what order means in each chain and whether it can change (Live's audio heard in
    order through nonlinear stages; Factory's road gateway → agent → skills → scope → landing; Central's packet → agent → scope),
    and what each drag does (browser → chain, within a chain, device → rail, device → pane, instrument → pane, agent → track,
    world → track, tab → pool).
-3. **Technē's knowledge field as UX:** the browser over AIKit's federated knowledge (`SemanticWiki`, `SourcePoolProvider`,
+7. **Technē's knowledge field as UX:** the browser over AIKit's federated knowledge (`SemanticWiki`, `SourcePoolProvider`,
    `CodeIndexProvider`, `ProjectMap`, `KnowledgeRoute`, `KnowledgeApplication`) — lists, trees, graphs and search as ways through
    one addressable world, each provider keeping its authority; the construction's frame and roles, relations, alternatives and
    the move between staged construction and live composition made discoverable. The instruments keep their names and their work,
    with no M′ numbers (lock §0.4); the agent side follows manual §25. Where an agent's Find passages, Quote, Propose relations
    and Explain stand (T-AGENCY K6) is this lane's device answer before the build takes them.
-4. **The objective-internality and worldhood material** where it changes design.
-5. **The design requests the build sends** (19 Oct: the World's scales and a Land control; clip:central's Subject, identity row
-   and dream journal controls; the Sitting's reason), after item 1 settles.
-6. **The owner's review on screen of what T-WORLDS built** (W1 pool, W2 Central's set, W3 your world and system, W4 Nara),
+8. **The objective-internality and worldhood material** where it changes design.
+9. **The design requests the build sends** (19 Oct: the World's scales and a Land control; clip:central's Subject, identity row
+   and dream journal controls; the Sitting's reason), after items 1–4 settle.
+10. **The owner's review on screen of what T-WORLDS built** (W1 pool, W2 Central's set, W3 your world and system, W4 Nara),
    against the manual.
 
 ### The pages lane — Day, Flow, Being, Thing
@@ -205,6 +244,17 @@ The clip, Session view and Arrangement view work is done (manual §16.5–§16.6
    the shell — and harden the daily die. Seen standalone on 19 Oct: hidden faces' pips bleed through the edges and the page; an
    opened face covers the header; the template ships a sample image ("Example asset, not a record"); a key pressed while it turns
    leaves it oversized under the old face's label until it settles. A full census of its bugs on the native app.
+   The form alone was hardened (`c111bf242`). The evening of 19 Oct, in the Day pane, the die rested turned, the open face's page
+   printed on the face and cut at its foot, with a two-line instruction under it. That was the form's own resting pose, the same
+   alone (the gallery's "Full · a pane" is the form file in a pane-size frame): a tilt, the front face peeking at its page, and in a
+   narrow pane the page taller than the face. The square five-pip face seen for "the form alone" was headless WebKit drawing
+   face 5 flat. Fixed in `eca60b926`: the die rests square on its open face and wears its pips. No page shows on a face until it
+   is opened, so none is cut. It breathes rather than sways, and settles square after a drag. The instruction line is gone. The
+   compact Day's Close now (`30a491d6e`) takes a row across both macro columns, inside the device, in Compact and under Whole.
+   Open: the native look of the die (WebKit), owed to the owner's next native pass on a candidate that carries `eca60b926`. The
+   gallery's tabs (Wed 15 Oct, its fixture) against its head (Monday 19 October) are the gallery's alone: in the shell the
+   Day's Full is the owner's Day face (`centralPublication`'s own Full), which draws no tabs. So the manual's today and tomorrow
+   tabs are drawn nowhere yet: no owner reports tomorrow's Day.
 2. **Then:** each page works as its own page and as a view in the workspace; Beings and Things join walks, the reading view and
    the sky view as the Archetypal-Earth entries do (W2 built the page op, launch and the Earth join).
 3. **Later, with the owner:** a redesign from the function up and the pages taken into the device ontology. Time: the Day is the
@@ -236,10 +286,11 @@ example, an offshoot. It reaches the DLW as the faces of agent and process devic
 
 ### Order
 
-The build lane finishes and lands what is in flight, then its foundations run beside the planning lane's window, device and drag
-rules — together the prerequisite for resuming UI building. The agent side's foundations (K1, K3, K5) are among them; the
-construction chain (K4, then K2) follows them; K8 walks it inside the UX acceptance. The pages lane's first step and the creatures lane run now, beside
-them. Nara and procedural Central follow the foundations. The UX acceptance comes last.
+The build lane finishes and lands what is in flight, then its foundations and loading run beside the planning lane's rules —
+the three layers, the actions on every object, the window and device logic, display-first devices and drag — together the
+prerequisite for resuming UI building. The agent side's foundations (K1, K3, K5) are among them; the construction chain (K4,
+then K2) follows them; K8 walks it inside the UX acceptance. The pages lane's first step (the die in the shell included) and the
+creatures lane run now, beside them. Nara and procedural Central follow the foundations. The UX acceptance comes last.
 
 Other work touching the DLW and outside it: QL-MEF #281 (M′ music), the Archetypal-Earth re-port (on the owner's word), Live 12
 RE, the Palace prop-hunt scope (`.wayfinder/maps/palace-prop-hunt.md`), Central's intelligence and context layers.
