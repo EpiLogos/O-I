@@ -1,0 +1,19 @@
+r17 screen pass — f7079bad9 (the grid fix; Launch as Reading), 19 Oct 2026 09:39–09:42 UTC, computer use on the native candidate,
+the owner's real ground. Control/user/flows and Work/personal/ProjectCentral were backed up with sha256 first. The pass made one
+Being in your flows folder, removed after (a copy kept outside the repository); all 13 flows files match, and the personal
+ProjectCentral is unchanged.
+
+Seen:
+- The Session grid draws again (r16's blank pane is gone), and the world tracks wear their worlds' colours: Your world green, O-I
+  violet, each from the body seeded from its ref until it is built.
+- A page launched from the grid opens: the new Being's ▶ in Your world played it (Central holds oi:page:…beings-2026-10-19-1040.html
+  active) and brought its page forward in the focused pane, as its launch says (it keeps none, so as its page, in the focused pane);
+  the grid's receipt names the launch. Your world's stop answered "1 page of Your world stopped", and Central holds the clearing
+  closed.
+
+Noted:
+- In a narrow pane the first column's ▶ sits a few pixels past the pane's edge band. A pointer that crosses the band on the way
+  opens the tab rail, which takes room in flow and moves the grid; a pointer that comes from the right reaches the ▶.
+
+Not seen: Launch as Reading (the Earth holds an unanchored page's occurrence but draws none on the globe; its reading needs a page
+with Opens as set to Reading, from Clip view's Launch panel).

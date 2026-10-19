@@ -1,0 +1,30 @@
+{
+  "source_revision": "f7079bad9c388d46b6305041c61e2bd891075b2c",
+  "source_tree_sha256": "09616106a4337e57e18e0154d23f0637ec9ee8b0a4a1b5c51de9471153257467",
+  "source_dirty": false,
+  "shell_assets_sha256": "4dd9cc3ae7d3a43dd7ec16c120495d017e209548e46daa678aab634648f7e422",
+  "expressions_assets_sha256": "ee8dde7f6052ff335158be7b03c0af03941af14e3ed7041505d00c369bef0125",
+  "schema": "oi.live-shell-native-host/v1",
+  "executable_sha256": "5b838d75b7b29c881d9ab6efeb0d728c1d2f965198ff22a3bff18c0fd49d7ec9",
+  "bootstrap": {
+    "shell_entry": "/app/index.html",
+    "expressions_entry": "/__application/expressions/index.html",
+    "transport": "tauri-kernel",
+    "configuration": "native-owner-discovery",
+    "product_resolution": "payload-only"
+  },
+  "executable_code_sha256": "4343c8229da3362088e19318684ef005d9da13525466223c385c8cc522c1fdd9",
+  "executable_code_bytes": 58617472,
+  "source_archive": {
+    "archive": {
+      "path": "Contents/Resources/live-shell-sources/sources.tar.gz",
+      "sha256": "a066b8504edc8d1c075ba3fa1b3cda8606f6af4e6d93ebbd3850bc6e05415c13",
+      "bytes": 66593398
+    },
+    "receipt": {
+      "path": "Contents/Resources/live-shell-sources/receipt.json",
+      "sha256": "4fdf6a785ff833a8105d9482e810eddbf13b10a2ee7fdcce8a6226b48a6fdb04",
+      "bytes": 2052
+    }
+  }
+}
