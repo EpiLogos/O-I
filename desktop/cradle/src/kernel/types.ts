@@ -381,6 +381,9 @@ export type KernelOp =
   | {op:"encounter_session_settings";project:string;agent_session:string;request?:EncounterSessionSettingsRequest;expected_revision?:string}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
   | {op:"encounter_session_settings_list";project:string;agent_sessions:string[]}
+  /** Several sessions' served attempts read at once (aikit.encounter-task-attempts-list/v1): for each session, the Factory attempts
+   * its bound task serves, as the Software Factory that dispatched them recorded them. The attempts themselves are Factory's. */
+  | {op:"encounter_task_attempts_list";project:string;agent_sessions:string[]}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
@@ -556,6 +559,7 @@ export type KernelOpResult =
   | { result:"encounter_task_reading";data:unknown }
   | { result:"encounter_session_settings_reading";data:EncounterSessionSettingsReading }
   | { result:"encounter_session_settings_list_reading";data:EncounterSessionSettingsList }
+  | { result:"encounter_task_attempts_list_reading";data:EncounterTaskAttemptsList }
   | { result:"encounter_joined";reading:unknown }
   | { result:"native_owner_reading";owner:string;data:unknown;failure:unknown }
   | { result:"a2a_exchange_difference";data:unknown }
@@ -718,6 +722,33 @@ export interface KnowledgeRelations { nodes: {resource: string; label: string; k
 export interface EncounterSessionSettingsList {
   schema: 'aikit.encounter-session-settings-list/v1'
   readings: (EncounterSessionSettingsReading | {agent_session: string; refused: string})[]
+}
+/** One Factory attempt a session's bound task serves, as the dispatcher recorded it (aikit.encounter-task-attempts/v1). */
+export interface ServedAttempt {
+  task_ref: string
+  attempt_ref: string
+  run_ref: string
+  /** Factory's native state holding the Run, an absolute path on this machine. */
+  state_path: string
+  workflow_unit: unknown
+  execution_ref: string | null
+  delivery_ref: string | null
+  recorded_by: string
+  recorded_at_unix_ms: number
+}
+/** One session's served attempts: those of its bound task, and those of the tasks it was bound to before. */
+export interface EncounterTaskAttemptsReading {
+  schema: 'aikit.encounter-task-attempts/v1'
+  agent_session: string
+  revision: string | null
+  task_ref: string | null
+  attempts: ServedAttempt[]
+  earlier: ServedAttempt[]
+}
+/** Several sessions' readings in the order asked; a session no retained SessionSpace holds answers its refusal. */
+export interface EncounterTaskAttemptsList {
+  schema: 'aikit.encounter-task-attempts-list/v1'
+  readings: (EncounterTaskAttemptsReading | {agent_session: string; refused: string})[]
 }
 /** A change to one session's settings: `null` returns a field to its default. Task fields bind to the session's bound task. */
 export interface EncounterSessionSettingsRequest {

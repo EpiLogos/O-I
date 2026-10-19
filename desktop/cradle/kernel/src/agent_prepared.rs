@@ -206,6 +206,9 @@ enum AgentRead {
     SettingsList {
         agent_sessions: Vec<String>,
     },
+    AttemptsList {
+        agent_sessions: Vec<String>,
+    },
     Definition(agent_definition::Request),
     ModelRoster,
     /// The AIKit gateway's session list for one harness binding; it needs
@@ -392,6 +395,15 @@ impl PreparedAgent {
                         .session_settings_list(&cwd, &project_ref, agent_sessions)?,
                 }
             }
+            AgentRead::AttemptsList { agent_sessions } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterTaskAttemptsListReading {
+                    data: self
+                        .aikit
+                        .task_attempts_list(&cwd, &project_ref, agent_sessions)?,
+                }
+            }
             AgentRead::ModelRoster => KernelOpResult::ModelRosterReading {
                 reading: retained(
                     &self.reads,
@@ -459,6 +471,15 @@ impl Kernel {
             } => (
                 Some(project.clone()),
                 AgentRead::SettingsList {
+                    agent_sessions: agent_sessions.clone(),
+                },
+            ),
+            KernelOp::EncounterTaskAttemptsList {
+                project,
+                agent_sessions,
+            } => (
+                Some(project.clone()),
+                AgentRead::AttemptsList {
                     agent_sessions: agent_sessions.clone(),
                 },
             ),
@@ -579,6 +600,15 @@ elif verb == "encounter-session-settings":
         print(json.dumps(reading(sessions[0])))
     else:
         print(json.dumps({"schema": "aikit.encounter-session-settings-list/v1",
+                          "readings": [reading(session) for session in sessions]}))
+elif verb == "encounter-task-attempts":
+    sessions = [args[i + 1] for i, arg in enumerate(args) if arg == "--agent-session"]
+    reading = lambda session: {"schema": "aikit.encounter-task-attempts/v1", "agent_session": session,
+                               "revision": None, "task_ref": None, "attempts": [], "earlier": []}
+    if len(sessions) == 1:
+        print(json.dumps(reading(sessions[0])))
+    else:
+        print(json.dumps({"schema": "aikit.encounter-task-attempts-list/v1",
                           "readings": [reading(session) for session in sessions]}))
 else:
     sys.exit(2)
@@ -873,5 +903,39 @@ else:
             .apply(list(&["agent-session/x", "agent-session/elsewhere"]))
             .is_err());
         assert_eq!(aikit.calls("encounter-session-settings"), 3);
+    }
+
+    #[test]
+    fn task_attempts_are_read_for_attached_sessions_only_and_always_as_a_list() {
+        let owner = crate::tests::FakeOwner::spawn_counter("task-attempts");
+        let aikit = FakeAikit::new("task-attempts");
+        let mut kernel = owner.kernel_with_agency(aikit.client());
+        let list = |agent_sessions: &[&str]| KernelOp::EncounterTaskAttemptsList {
+            project: String::new(),
+            agent_sessions: agent_sessions.iter().map(|s| s.to_string()).collect(),
+        };
+        let listed = kernel
+            .apply(list(&["agent-session/x", "agent-session/x"]))
+            .unwrap();
+        assert!(matches!(
+            listed.result,
+            KernelOpResult::EncounterTaskAttemptsListReading { ref data }
+                if data["schema"] == "aikit.encounter-task-attempts-list/v1"
+                    && data["readings"].as_array().map(Vec::len) == Some(2)
+        ));
+        // One session answers its own reading; the outcome is still the list.
+        let one = kernel.apply(list(&["agent-session/x"])).unwrap();
+        assert!(matches!(
+            one.result,
+            KernelOpResult::EncounterTaskAttemptsListReading { ref data }
+                if data["readings"][0]["schema"] == "aikit.encounter-task-attempts/v1"
+                    && data["readings"][0]["agent_session"] == "agent-session/x"
+        ));
+        // An empty list and another Project's session never reach the owner.
+        assert!(kernel.apply(list(&[])).is_err());
+        assert!(kernel
+            .apply(list(&["agent-session/x", "agent-session/elsewhere"]))
+            .is_err());
+        assert_eq!(aikit.calls("encounter-task-attempts"), 2);
     }
 }

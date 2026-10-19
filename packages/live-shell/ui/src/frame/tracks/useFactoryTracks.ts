@@ -10,6 +10,9 @@
 // The tasks and the needles come from the sessions provider (agent/AgentSessionsProvider.tsx). Mounted above this pane, every
 // caller reads its one poll; unmounted, `useAgencySessions` serves its own fallback — the sessions, with no tasks and no needles.
 //
+// Attempts as takes: each session's served attempts (AIKit) read with the Runs that hold them (Factory) lie as take lanes under its
+// track, and choosing one is Factory's own op (owners/attemptTakes.ts).
+//
 // R3: the event lanes read the same provider's temporal events (AgentSessionsProvider `events`, the frame's one temporal read),
 // and every session's Arm is the shell's one write arm — the transport's own press (shell/transports/useFactoryTransport.tsx:92
 // `dispatch('arm', 'shell.setWriteArm', …)`), through the same registered setter (inhabitants/sdk/shellSetters.ts), its light the
@@ -24,6 +27,7 @@ import {harnessAgentControl} from '../../agent/harnessAgentControl'
 import {shellSetter} from '../../inhabitants/sdk/shellSetters'
 import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, type FactoryWriteArm} from '../../timeline/factoryTrackAdapter'
 import {useSettingsAnswers} from '../../owners/readers'
+import {useAttemptTakes} from '../../owners/attemptTakes'
 import {trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
 import {SETTINGS_PROJECT} from '../../agent/clipBinding'
 import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
@@ -78,6 +82,8 @@ export const useFactoryTracks: UseModeTracks = reading => {
       } catch (cause) { return {ok: false, error: cause instanceof Error ? cause.message : String(cause)} }
     },
   }, [transport, own])
+  // Every session's attempts as takes: AIKit's served attempts and the Runs Factory holds them in, and the choice of one.
+  const takes = useAttemptTakes(transport, sessionRefs, SETTINGS_PROJECT)
   // A track's Stop: that session's running turn cancelled on its own encounter owner, as the Thread's Hard stop does
   // (desktop/cradle/src/encounter/session.ts cancel); the harness's other sessions run on.
   const sessionStop = useMemo(() => transport.kind === 'unavailable' ? undefined : async (session: string) => {
@@ -89,5 +95,5 @@ export const useFactoryTracks: UseModeTracks = reading => {
   }, [transport])
   if (!agency.tracks.length && agency.error) return {waiting: `The agent sessions are unread: ${agency.error}`}
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
-  return factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(sessionStop ? {sessionStop} : {})})
+  return factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {})})
 }
