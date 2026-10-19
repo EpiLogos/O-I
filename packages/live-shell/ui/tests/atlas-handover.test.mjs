@@ -234,3 +234,157 @@ test('a clean attach and close leave no observer or subscription behind', async 
   assert.equal(observersLive, 0)
   assert.equal(subscriptionsLive, 0)
 })
+
+// ── the Earth goes where the person is looking (r23, 19 Oct: Technē's centre pane said the atlas was open in another pane, and the
+// pane that held it was a concealed pane of another mode's layout, which stays mounted while concealed) ──
+//
+// A held pane shown while the holder is concealed takes the claim: the concealed holder tears its atlas down through its own teardown,
+// which releases the claim to the pane on screen, and becomes a held pane that waits. A holder on screen keeps the Earth.
+
+const settle = () => new Promise(resolve => setTimeout(resolve, 30))
+
+// The Earth pane kind through the module door (registerAtlasHost.ts), as the shell's panes mount it (projectionPaneSession.ts).
+const modules = await import(new URL('../../../../desktop/cradle/src/surface/projectionModules.ts', import.meta.url).href)
+const {registerAtlasHost} = await import(new URL('../src/projections/atlas/registerAtlasHost.ts', import.meta.url).href)
+registerAtlasHost()
+const earth = modules.projectionModule('projection.earth')
+const context = element => ({kind: 'projection.earth', binding: {id: 'earth', title: 'Earth'}, element, encounter: undefined, subject: undefined})
+
+test('a held pane shown while the holder is concealed takes the Earth; the concealed holder tears its atlas down and waits', async () => {
+  const {mounts, disposals} = {...stub.stubState()}
+  const holderTold = []
+  const holderElement = pane()
+  const holder = await panel.attachAtlas({element: holderElement, transport, follow: true, onHandover: o => holderTold.push(o)})
+  const waiterTold = []
+  const waiterElement = pane()
+  const waiter = await panel.attachAtlas({element: waiterElement, transport, follow: false, view: 'earth', onHandover: o => waiterTold.push(o)})
+  assert.equal(waiter.held, panel.ATLAS_HELD_MESSAGE)
+
+  holder.setVisible(false)
+  waiter.setVisible(true)
+  await until(() => waiterTold.length === 1)
+  assert.equal(waiterTold[0].attachment.held, null, 'the pane on screen holds the Earth')
+  assert.equal(heldText(waiterElement).includes(panel.ATLAS_HELD_MESSAGE), false, 'and no longer says it is held')
+  assert.equal(stub.stubState().disposals, disposals + 1, 'the concealed holder\'s atlas is disposed')
+  assert.equal(stub.stubState().mounts, mounts + 2, 'one fresh mount, in the pane on screen')
+  assert.equal(lifetimeLive(), true, 'one atlas stands')
+  assert.equal(holderTold.length, 1, 'the concealed pane is told it no longer holds the Earth')
+  assert.equal(holderTold[0].attachment.held, panel.ATLAS_HELD_MESSAGE, 'it is a held pane now')
+  assert.deepEqual(heldText(holderElement), [panel.ATLAS_HELD_MESSAGE], 'and says so in its body')
+
+  // the concealed pane waits in line: when the pane on screen closes, the claim passes back to it
+  waiterTold[0].attachment.unmount()
+  await until(() => holderTold.length === 2)
+  assert.equal(holderTold[1].attachment.held, null)
+  assert.equal(stub.stubState().mounts, mounts + 3)
+  holderTold[1].attachment.unmount()
+  assert.equal(lifetimeLive(), false)
+  waiter.unmount()
+  holder.unmount()
+})
+
+test('a holder on screen keeps the Earth; once it is concealed the Earth moves to the held pane on screen, and back again', async () => {
+  const {mounts, disposals} = {...stub.stubState()}
+  const aTold = []
+  const a = await panel.attachAtlas({element: pane(), transport, follow: true, onHandover: o => aTold.push(o)})
+  const bTold = []
+  const b = await panel.attachAtlas({element: pane(), transport, follow: false, view: 'graph', onHandover: o => bTold.push(o)})
+  a.setVisible(true)
+  b.setVisible(true)
+  await settle()
+  assert.equal(bTold.length, 0, 'two panes on screen: the one that opened it first keeps it')
+  assert.equal(stub.stubState().mounts, mounts + 1)
+
+  a.setVisible(false)
+  await until(() => bTold.length === 1)
+  assert.equal(bTold[0].attachment.held, null, 'the holder is concealed: the held pane on screen takes the Earth')
+  assert.equal(aTold.length, 1)
+  assert.equal(aTold[0].attachment.held, panel.ATLAS_HELD_MESSAGE)
+
+  // the person goes back: b is concealed, a is shown — the Earth follows, still drawn once
+  bTold[0].attachment.setVisible(false)
+  await settle()
+  assert.equal(aTold.length, 1, 'a concealed holder with no held pane on screen keeps the Earth')
+  aTold[0].attachment.setVisible(true)
+  await until(() => aTold.length === 2)
+  assert.equal(aTold[1].attachment.held, null)
+  assert.equal(bTold.length, 2)
+  assert.equal(bTold[1].attachment.held, panel.ATLAS_HELD_MESSAGE)
+  assert.equal(stub.stubState().mounts, mounts + 3, 'one mount per move, never two at once')
+  assert.equal(stub.stubState().disposals, disposals + 2)
+  aTold[1].attachment.unmount()
+  await until(() => bTold.length === 3)
+  bTold[2].attachment.unmount()
+  assert.equal(lifetimeLive(), false)
+  a.unmount()
+  b.unmount()
+})
+
+test('a held pane never told it is shown does not take the Earth from a concealed holder', async () => {
+  const {mounts} = {...stub.stubState()}
+  const holder = await panel.attachAtlas({element: pane(), transport, follow: true, onHandover: () => {}})
+  holder.setVisible(false)
+  const told = []
+  const waiter = await panel.attachAtlas({element: pane(), transport, follow: true, onHandover: o => told.push(o)})
+  await settle()
+  waiter.setVisible(false)
+  await settle()
+  assert.equal(told.length, 0, 'panes mounted concealed in other modes\' layouts do not pull the Earth between them')
+  assert.equal(stub.stubState().mounts, mounts + 1)
+  waiter.unmount()
+  holder.unmount()
+  assert.equal(lifetimeLive(), false)
+})
+
+test('when the claim frees, a held pane on screen is handed the Earth before a concealed one that asked earlier', async () => {
+  const holder = await panel.attachAtlas({element: pane(), transport, follow: true})
+  const concealedTold = []
+  const concealed = await panel.attachAtlas({element: pane(), transport, follow: true, onHandover: o => concealedTold.push(o)})
+  concealed.setVisible(false)
+  const shownTold = []
+  const shown = await panel.attachAtlas({element: pane(), transport, follow: true, onHandover: o => shownTold.push(o)})
+  shown.setVisible(true)
+  holder.unmount()
+  await until(() => shownTold.length === 1)
+  assert.equal(shownTold[0].attachment.held, null)
+  assert.equal(concealedTold.length, 0, 'the concealed pane keeps waiting')
+  shownTold[0].attachment.unmount()
+  await until(() => concealedTold.length === 1)
+  concealedTold[0].attachment.unmount()
+  concealed.unmount()
+  shown.unmount()
+  assert.equal(lifetimeLive(), false)
+})
+
+test('the Earth pane kind (the module door) adopts the Earth when it is handed over, and its unmount disposes it', async () => {
+  const {mounts, disposals} = {...stub.stubState()}
+  const concealedElement = pane()
+  const concealed = await earth.create(context(concealedElement))
+  concealed.setVisible(false)
+  const shownElement = pane()
+  const shown = await earth.create(context(shownElement))
+  shown.setVisible(true)
+  await until(() => stub.stubState().mounts === mounts + 2)
+  await until(() => heldText(concealedElement).includes(panel.ATLAS_HELD_MESSAGE))
+  assert.equal(heldText(shownElement).includes(panel.ATLAS_HELD_MESSAGE), false, 'the pane on screen draws the Earth')
+  assert.equal(stub.stubState().disposals, disposals + 1)
+  // the pane on screen closes: its handle tears down the atlas it was handed, and the claim passes to the concealed pane
+  shown.unmount()
+  assert.equal(stub.stubState().disposals, disposals + 2, 'the handed atlas is disposed with its pane')
+  await until(() => stub.stubState().mounts === mounts + 3)
+  concealed.unmount()
+  assert.equal(stub.stubState().disposals, disposals + 3)
+  assert.equal(lifetimeLive(), false, 'no claim is left behind')
+})
+
+test('a handover the mount refuses is said in the Earth pane\'s body', async () => {
+  const holder = await earth.create(context(pane()))
+  const waitingElement = pane()
+  const waiter = await earth.create(context(waitingElement))
+  stub.failNextMount()
+  holder.unmount()
+  await until(() => heldText(waitingElement).some(text => text.startsWith('The Earth could not mount:')))
+  assert.deepEqual(heldText(waitingElement), ['The Earth could not mount: stub mount refused'])
+  waiter.unmount()
+  assert.equal(lifetimeLive(), false)
+})

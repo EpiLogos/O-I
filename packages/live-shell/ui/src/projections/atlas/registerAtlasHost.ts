@@ -43,13 +43,42 @@ async function mountKind(context: ProjectionModuleContext, view: AtlasView): Pro
   // overlays inside the pane. Without it the globe stood 1440×900 over the whole window and took the pointer from the
   // transport (seen headless by the transport lane, 14 Oct).
   context.element.classList?.add('atlas-host')
-  const attachment = await attachAtlas({element: context.element, transport: detectTransport(), follow: false, view})
-  const turning = turnWithSubject(context.subject, attachment)
-  // G2: the Graph opens on the subject the instruments hold, through the atlas's own focus (techne/subject/graphFocus.ts).
-  if (view === 'graph') focusGraphOnOpen({subject: context.subject, encounter: context.encounter, held: attachment.held, atlas: atlasHandle(), stateFor: stateForSubject})
+  // The pane's attachment, however it was given: a held pane's is replaced when the atlas is handed to it, and a holder's when the
+  // claim moves to a pane on screen while this one is concealed (AtlasProjectionPanel.tsx, the claim). The pane's last concealment
+  // notice is passed to each attachment it adopts; none is passed before the session gives one.
+  let attachment: AtlasAttachment | null = null
+  let told: boolean | null = null
+  let live = true
+  let turning: {visible(next: boolean): void; stop(): void} | null = null
+  const adopt = (next: AtlasAttachment) => {
+    if (!live) { next.unmount(); return }
+    const was = attachment
+    attachment = next
+    was?.unmount()
+    if (told !== null) next.setVisible(told)
+    // G2: the Graph opens on the subject the instruments hold, through the atlas's own focus (techne/subject/graphFocus.ts).
+    if (view === 'graph') focusGraphOnOpen({subject: context.subject, encounter: context.encounter, held: attachment.held, atlas: atlasHandle(), stateFor: stateForSubject})
+    // an atlas handed to this pane turns to the pane's subject as a shown pane does
+    if (told !== false) turning?.visible(true)
+  }
+  // a handover the mount refused is said in the pane's body, in the centre pane's words (AtlasEarthPane)
+  const refused = (error: unknown) => {
+    if (!live) return
+    const line = document.createElement('p')
+    line.className = 'atlas-host-status'
+    line.setAttribute('role', 'alert')
+    line.textContent = `The Earth could not mount: ${error instanceof Error ? error.message : String(error)}`
+    context.element.replaceChildren(line)
+  }
+  const first = await attachAtlas({element: context.element, transport: detectTransport(), follow: false, view,
+    onHandover: outcome => ('attachment' in outcome ? adopt(outcome.attachment) : refused(outcome.error))})
+  // a handover that came before the first attachment was read supersedes it
+  if (attachment) first.unmount()
+  else adopt(first)
+  turning = turnWithSubject(context.subject, {get held() { return attachment?.held ?? null }})
   return {
-    setVisible: visible => { attachment.setVisible(visible); turning.visible(visible) },
-    unmount: () => { turning.stop(); attachment.unmount() },
+    setVisible: visible => { told = visible; attachment?.setVisible(visible); turning?.visible(visible) },
+    unmount: () => { live = false; turning?.stop(); attachment?.unmount(); attachment = null },
   }
 }
 
