@@ -2224,6 +2224,55 @@ A line you draw is a proposal. It becomes a relation when the owner of the relat
 
 A line may bind to a side of a card. The line then stays on that side when you move the card. An elbow line reroutes by itself around a moved card.
 
+#### Give the board a form
+
+Some questions have a shape before they have answers. You know there is a
+ground to find, a way it works, a form it takes and a place it stands, before
+you know what fills any of them. Give the board that shape, and what you have
+not found yet shows as a gap you can see.
+
+Open the Form page and choose a form and its centre, the whole the form
+gathers round: a question, a subject, a source. Each form sets roles round it, and
+each role is a position of Quaternal Logic: 1 the material, 2 the process, 3
+the form, 4 the context, 0 the ground it comes from, and 5 the synthesis it
+comes to.
+
+| Form | Roles round the whole |
+|---|---|
+| Pair | Two positions of one family: 0/1, 2/3 or 4/5; 1/2, 3/4 or 5/0; 0/5, 1/4 or 2/3. |
+| Threefold 1–2–3 | Material, process and form. |
+| Threefold 4–5–0 | Context, synthesis and ground. |
+| Fourfold 1–2–3–4 | Material, process, form and context. |
+| Fourfold and its ground | 0 to 4. |
+| Fourfold and its synthesis | 1 to 5. |
+| Sixfold | 0 to 5. |
+| Sixfold and its conjugate | Each of the six twice: direct, and conjugate (′) on the outer ring. |
+
+Put a card on a role: select it, choose an open role and press Place. Or press
+Suggest. The Decision helper (§19.20) reads where the card stands on the board
+and picks the open role it fits, or none. Its pick stands dashed, with its
+confidence, until you accept it; place the card yourself to refuse it. Set
+Layout to Form and the board stands in the form, role 0 at the top and the rest
+clockwise, so the gaps sit where you can see them.
+
+A role is not a relation. Two cards on neighbouring roles are not linked until
+you draw a line and its owner accepts it.
+
+Check runs the form's rules: each role holds one card, a conjugate stands only
+on a filled direct role, and every card is a real thing. Declare writes the
+constellation, its whole, its form and each card on its role, into your wiki
+through its owner, and the Knowledge graph shows it from then on. When the form
+is the sixfold and its conjugate, Fields counts the pairs whose two roles and
+their conjugates are all filled, each a four-by-four field of the whole, and
+once every role is filled, Fold shows the twelve folding into one.
+
+```ui
+device: techne:canvas
+fixture: Three placed, one suggested
+page: form
+caption: Canvas, on its Form page: three domains placed round Quaternal Logic, and the helper's pick for Nara.
+```
+
 #### Move and find
 
 While you drag an item, guide lines show where it aligns with other items, and it settles on them. Grid snap is a separate choice. Fit brings every item, or the selection, into view with a margin. A minimap in the corner shows all items and the view. Click it to jump.
@@ -2243,7 +2292,10 @@ The Canvas imports and exports a file that other note tools open. Presentation i
 |---|---|---|---|
 | Tool | Select · Frame · Relate · Note · Shape · Text | Select | Chooses what a click or a drag makes. |
 | Snap | Off · Grid · Guides | Guides | Sets how a dragged item aligns. |
-| Layout | Free · Radial · Form | Free | Arranges the items by hand, around a centre, or in the form of a whole. |
+| Layout | Free · Radial · Form | Free | Leaves the cards where you put them, stands them evenly round the centre, or stands each on its role in the form. Layout moves no source. |
+| Form | None, or a form of Quaternal Logic | None | The shape of the whole: the roles round its centre. |
+| Centre | A card or sticky note on the board | None | The whole the form gathers round. |
+| Role | An open role of the form | None | The role the next card takes when you press Place. |
 | Line kind | Straight · Curved · Elbow | Straight | Sets the path of the next line. |
 | Relation type | Echo · Influence · Cause · Transform | Echo | Sets the type of the next line. |
 | Standing | Fact · Claim · Inference · Guess | Claim | Sets the standing of the next line. |
@@ -2278,14 +2330,15 @@ The compact Canvas shows a small live map of the Canvas and four macros.
 
 ##### Whole
 
-The whole Canvas shows every parameter, in five groups.
+The whole Canvas shows every parameter, in six groups.
 
 | Group | Parameters |
 |---|---|
 | Tools | Tool, Snap, Shape, Sticky colour |
 | Lines | Line kind, Line label |
 | Relation | Relation type, Standing |
-| Look | Layout, Minimap |
+| Look | Minimap |
+| Form | On its own page: Form, Centre and Layout; Role, Place, Suggest and Accept; Check, Fold and Declare |
 | Views | View, Autosave |
 
 ##### Full
@@ -2322,6 +2375,11 @@ The widget shows the map of the Canvas you hold and the count of proposals that 
 6. To make the line a relation, choose Promote. The owner of the relation decides.
 7. To see an item in the wiki, choose Show in graph. The Knowledge graph opens on the same subject, and Back returns you here.
 8. To save the arrangement, save a view and give it a name.
+9. To give the board a form, open the Form page. Choose a form and its centre,
+   and set Layout to Form.
+10. Select a card, choose an open role and press Place. Or press Suggest, and
+    accept the helper's pick if it fits.
+11. Press Check. When the form passes, press Declare to keep it in your wiki.
 
 #### Rules
 - Every card is a real thing. Double-click it and it opens at its own revision. Remove a card and the thing stays.
@@ -2330,6 +2388,8 @@ The widget shows the map of the Canvas you hold and the count of proposals that 
 - A note on the Canvas is presentation. It is not a source.
 - A saved view keeps the references of its items, not copies. When an item leaves, the view says so.
 - Moving two items close together does not state a relation.
+- A role is presentation until you declare the form. Declaring writes the constellation through its owner and states no relation.
+- The helper's pick waits for you. It never places a card.
 
 #### Tips
 - To start from a question, drop the question as a sticky note in the middle and drag related sources around it.
@@ -2337,6 +2397,7 @@ The widget shows the map of the Canvas you hold and the count of proposals that 
 - To walk a colleague through an argument, put one idea in each frame and choose Present.
 - To share a map with someone who uses another tool, export the file.
 - To find a card in a large map, use Find, then Fit.
+- To see what a question still lacks, give it a form. The open roles are what you have not found yet.
 
 ### 17.5 Timeline
 
@@ -3040,6 +3101,116 @@ The widget shows the live shell. A line below it says "following" and shows the 
 - To keep a server in view, pin a Terminal to its folder and move it to the rail.
 - To search a long log, raise Scrollback before you start the command.
 - To hand a routine to an agent, press Capture, run it once, and give the example to the agent.
+
+### 17.10 Light
+
+**Product:** Technē · **Kind:** effect · **Chain:** A reading's chain, over the Canvas
+
+You need to see how much of a source's force reaches a conclusion through the chain of readings you drew. Light lays an optical bench over the Canvas. Your cards stay your cards: the light follows the lines between them and shows what arrives where.
+
+#### How the light travels
+
+You choose one card as the source. The light leaves it and follows the lines you drew.
+
+- A card shares the light it receives equally among its lines out. A conclusion never holds more force than its source gave.
+- A line passes the share that its standing allows. A fact passes the most, a guess the least.
+- A line loses light along its length. A long chain of readings reaches its end dimmer.
+- An element on a card changes what leaves that card.
+- A sensor on a card reads the power that reaches it. The source is 100%.
+
+| Element | What it does to the light |
+|---|---|
+| None | The card shares the light among its lines out. |
+| Lens | Sends all of it down the line out that passes the most. |
+| Prism | Fans it into the bands of the spectrum. |
+| Mirror | Sends it back along the line it came by. |
+| Absorber | Keeps a quarter of it. |
+| Stop | Ends it. |
+| Sensor | Reads what arrives, and ends it. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns the light on. |
+| Source | A card on the Canvas | — | The card that the light leaves. |
+| Card and Element | A card · None, Lens, Prism, Mirror, Absorber, Stop, Sensor | None | Choose a card, then what it does to the light. |
+| Bounces | 1 to 100 | 35 | How many lines deep the light travels. |
+| Segments | 500 to 20,000 | 4,500 | How finely each ray is traced. |
+| Spectrum | 5 · 9 · 13 bands | 9 | How many bands a prism fans the light into. |
+| Transmission | Fact · Claim · Inference · Guess: each 0 to 100% | 100 · 85 · 60 · 35% | How much of the light a line of each standing passes. These values are a starting point. Tune them to the way you read. |
+| Rays | On · Off | On | Draws the rays over the Canvas. |
+
+The readings at the sensors come from the bench's engine. The rays show where the light goes.
+
+#### Views
+
+```ui
+device: techne:light
+caption: Light, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Light shows the source card and the number of sensors.
+
+##### Compact
+
+The compact Light shows a small bench, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Spectrum | Sets how many bands a prism fans the light into. |
+| Bounces | Sets how many lines deep the light travels. |
+| Transmit | Moves the four standings' transmission together, each within its range. |
+| Rays | Draws the rays, or hides them. |
+
+##### Whole
+
+The whole Light shows every parameter, in three groups, and the reading at each sensor.
+
+| Group | Parameters |
+|---|---|
+| Source | Source, Card and Element |
+| Rays | Bounces, Segments, Spectrum, Rays |
+| Transmission | Fact, Claim, Inference, Guess |
+
+##### Full
+
+The full Light draws the bench over the Canvas at full size. Each card shows its element, and each sensor its reading. A ray is as bright as the light it carries. Change a line's standing on the Canvas and watch the sensors after it.
+
+##### Widget
+
+The widget shows a small bench and the reading at each sensor. Click the bench to open Light in the pane that has focus.
+
+#### Transport
+
+| Control | Effect on Light |
+|---|---|
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use Light
+
+1. Drag Light onto the chain of a reading. The bench lies over the Canvas.
+2. Set Source to the card where the reading begins.
+3. Choose each conclusion under Card, and set its Element to Sensor.
+4. Read the power at each sensor.
+5. Choose the card where the reading divides, and set its Element to Lens. All its light goes down the line that passes the most.
+6. Lower Guess. A conclusion that rests on guesses goes dark.
+
+#### Rules
+
+- A ray is a picture. It never becomes a relation. To change a relation, change it on the Canvas.
+- The light has no chance in it. The same bench gives the same readings.
+- A card never sends out more light than it received.
+- Light reads the Canvas. It does not move a card or change a standing.
+
+#### Tips
+
+- To see which conclusion your reading supports most, put a sensor on each and compare them.
+- To see what one weak link costs, lower its standing and watch the sensor after it.
+- To follow every way the source reads, put a prism on the source.
 
 ## 18. Central
 
@@ -4342,6 +4513,7 @@ belongs to Scope (§19.12), the next device on the chain.
 | On no answer | Hold · Deny | Hold | What the agent does when nobody answers. |
 | Held | A list (reading) | Read from the agent | What the agent holds now, such as a file or a setting. |
 | Hand back | Lit · Dark (reading) | Dark | Lit when you edited something the agent holds. |
+| Team cell | Row, question and depth (reading) | Read from the team space | Where the agent stands in Anima or Aletheia. Empty when the agent is in no team. |
 
 Identity is a reading of your roster: the agent's name and colour, its
 character in one line, the program that runs it, the skills it carries, the
@@ -4353,6 +4525,21 @@ what it may read and write comes from Scope.
 How a write arrives is not set here. Scope sets the most the agent may do in
 each part of the world, and Arm decides whether it writes directly or
 proposes.
+
+#### In a team
+
+In Anima and Aletheia an agent stands in a team space. Each row of the space
+is a context frame, with its member in each team and the questions that frame
+asks by day and by night. Each member also stands at a depth, one of the six
+M domains. Team cell reads where the agent stands.
+
+A member may call helpers to settle small typed questions: which label fits,
+which of a closed set applies. The helpers are decision agents, and their
+faces are animals. Any member may call any helper, and the team decides which
+helpers run. A helper's answer is evidence: the engine checks it, and it
+never stands in for something the agent saw. The collaboration gate is yours.
+No member and no helper answers it. A helper stands on the team's chain as the
+Decision helper (§19.20).
 
 #### The thread
 
@@ -4366,6 +4553,7 @@ thread of their own, nested under it.
 | Message | What you said and what the agent said, each with its avatar. |
 | Tool row | One tool the agent used: a key chip and a summary. Click it to open the output. |
 | Spawn row | A helper the agent started, with a link to its thread and its live state. |
+| Ask row | A typed question the agent put to a decision helper: the labels it allowed and the answer, marked as evidence. |
 | Steer line | Words you sent in the middle of a turn. It reads "heard at next tool" until the agent takes it. |
 | Proposal card | A change the agent proposes, with Approve, Changes and Diff. |
 | Stall card | A card with an orange border. It names the prompt the agent waits for, with Retry, Hard stop, Steer and Tell parent. |
@@ -5390,6 +5578,7 @@ The widget shows the proposal cards. Each card names the agent and the change. E
 5. Empty the queue before you end the day.
 
 #### Rules
+- The collaboration gate is always yours. An agent's or a helper's answer to it is refused, even an abstention.
 - Deny is always yours. Only the On no answer setting can deny for you, and you set it.
 - An approved proposal lands with a receipt.
 - A request that is not answered stays in the queue. It does not land.
@@ -5418,6 +5607,7 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 | Depth | A number · No limit | 2 | How deep helpers may spawn their own helpers. The default is a start value, not a limit. |
 | Hand-back | Raw · Digest · Summary | Summary | What a helper returns to its parent. |
 | Subagent model | A model | The lead's model | The default model for everything the group spawns. A member can set its own. |
+| Join | All · Relay · Weighted · Count | All | How the members' returns combine. All keeps every return. Relay gives each member only what the last left open. Weighted weighs the returns together. Count commits when enough agree. |
 | Member state | Working · Idle · Stalled · Done (reading) | Read from each session | The state of each chain. |
 
 #### Views
@@ -5452,7 +5642,7 @@ The whole rack shows every parameter, in three groups.
 |---|---|
 | Members | Members, Selected member, Member state |
 | Limits | Fan-out, Depth |
-| Return | Hand-back, Subagent model |
+| Return | Hand-back, Subagent model, Join |
 
 Drag an agent from the browser onto the rack to add a member. The rack sets no upper limit on members.
 
@@ -5491,6 +5681,7 @@ The widget shows the crew tree with a light on each member.
 - To keep a lead's context small, set Hand-back to Summary.
 - To save cost, set Subagent model to a smaller model for the group.
 - To find the slow member, look for the orange outline.
+- To fuse several readings into one, set Join to Weighted.
 
 ### 19.16 Git / landing
 
@@ -5829,6 +6020,217 @@ The widget shows the peers and the link state.
 #### Tips
 - To follow a run on a far machine, turn Link on and select its session.
 - To keep a machine private for a while, remove it from Machines.
+
+### 19.20 Decision helper
+
+**Product:** AIKit, with Quaternal Logic · **Kind:** effect · **Chain:** a team's chain in Factory, after its members; one helper answers every member
+
+You need small choices settled without spending an agent's turn or your
+attention on them: which of four gate readings fits, which thought a passage
+answers, whether a search came back grounded. The Decision helper answers such
+questions and nothing else. It is a small model on your machine. A member
+asks, the helper picks among the labels the owner allows or picks none, and
+the engine checks the pick before anything uses it.
+
+#### What it is asked
+
+A question comes only when the rules leave a choice open. What the rules
+settle never reaches the helper, and an act the rules settle whole asks it
+nothing. Each question names its field, the labels its owner allows, how many
+the answer may hold, and what to do when no label stands out: keep the
+candidates, abstain, or give one only if it is supported.
+
+The team space (§19.4) gives each team its questions:
+
+| Instrument | Asked by | Labels |
+|---|---|---|
+| Vāk block | Anima, at CF5 | The seven heads of an act's path: CPF, CT, CP, CF, CFP, CS and direction |
+| Gate reading, 1 to 5 | Aletheia, at the gate's row | aligned, annotated, hold, redirect |
+| Thought reading | Aletheia | T0 to T5, and T0′ to T5′ |
+| Gnosis retrieval | Aletheia | grounded, partial, empty |
+| Stack traverse | Aletheia, for each layer | healthy, drift, gap, unverified |
+| Plugin integration | Aletheia | redundant, complementary or conflicting; adopt, reference only or decline |
+| Improvement proposal | Aletheia | implementation, addendum, owner-issue, no-change |
+| Klein telemetry | Anima, for each skill | effective, suboptimal, ineffective |
+
+Gate 6, the collaboration gate, is yours. The helper never answers it.
+
+#### The spread
+
+The helper says how strongly it holds each label, and what it picks. The
+device draws this as the spread: a bar for each label, as tall as the helper's
+confidence, with the pick lit. A flat spread means nothing stood out. The
+helper then abstains, and the abstention is kept as an answer. The engine
+reads the pick against its rules and validates it or refuses it, with its
+reason. A pick is evidence for the act. It is never a receipt, and it never
+overrides what an agent saw.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Provider | None · This machine · Your endpoint · Hosted | This machine | Who answers. On this machine nothing the helper reads leaves it. None sends every open question back to the member who asked. |
+| When | Background · Before the act | Background | Background: the act goes on, and the answer joins it if it comes in time. Before the act: the act waits for it. |
+| Deadline | 1–120 s | 10 s | How long an answer may take. A later one is dropped, and the question stays open. |
+| Instruments | On · Off, for each | On | Which of the team's questions the helper may answer. Its light shows whether the team has measured it and admits it. |
+| Model | Reading | Read from AIKit | The model that answers, where it runs, and whether it is loaded. |
+| Counts | Reading | Read from the team | Acts settled by rule, questions asked, abstentions, and picks the engine refused. |
+
+#### Views
+
+```ui
+device: ai-kit:decision-helper
+caption: Decision helper, on a fixture of readings.
+```
+
+| View | Holds |
+|---|---|
+| Folded | The helper's name and light, the questions asked today and the last pick. |
+| Compact | The spread of the last question. Macros: When, Deadline, Provider, Probe. |
+| Whole | Pages Ask, Instruments and Provider. Ask: the spread; the question, who asked it, its row and field, how many labels it may hold and what to do if none stands out; the pick, its status, its clarity and its time; the engine's verdict and the counts. Instruments: the team's questions with your request and the team's admission, and the labels of the one you select. Provider: Provider, the model and where it runs, When, Deadline and Probe. |
+| Full | The open question and its spread, and today's questions in order: who asked, which instrument, the pick and what the engine did. |
+| Widget | The last spread, the counts, and the last pick. |
+
+#### Transport
+
+| Control | Effect on the Decision helper |
+|---|---|
+| Tap | Probes the helper with one small question and reports how long it took. |
+| Key | Counts tokens in and out. |
+
+#### To use the Decision helper
+
+1. Drag the Decision helper from the browser onto a team's chain, after its
+   members.
+2. Open Device view and choose the Provider. Press Probe to see that it
+   answers.
+3. On the Instruments page, turn off any question you do not want it to
+   answer.
+4. Leave When on Background, so that no act waits for it.
+5. Open it in a pane to read what it picked today and what the engine did.
+
+#### Rules
+
+- An act the rules settle whole asks the helper nothing.
+- The helper picks only among the labels the owner allows, or picks none.
+- A pick is evidence. The engine checks it, and it never stands in for
+  something an agent saw.
+- An abstention is an answer, and it is kept.
+- The helper is never one of the agents acting, nor a member of the team.
+- The collaboration gate is yours. A helper's answer to it is refused, even an
+  abstention.
+- A model on your machine has no price, and the device shows none.
+
+#### Tips
+
+- When the spread stays flat question after question, the labels may be too
+  alike for a small model. Look at the question before you blame the helper.
+- To watch it work, keep its widget on the rail.
+
+### 19.21 Voice
+
+**Product:** Actuation, with Quaternal Logic · **Kind:** effect · **Chain:** after the Agent, on any track an agent speaks on
+
+You need to hear an agent, to see its face move with what it says, and to keep its spoken words on your machine unless you let them go. Voice is how an agent speaks. It speaks the agent's words through a body and moves the face's mouth with each sound. Listening stays with the track: the track's input row hears you (§24.1).
+
+#### Bodies
+
+A body is what speaks. Each body reports what it can do: hear while it speaks, let you talk over it, stop in the middle of a sentence. A body that cannot run now stands closed, with its reason.
+
+| Body | What speaks | The mouth |
+|---|---|---|
+| Local | A voice on this machine. Nothing leaves it. | Follows the loudness. This body measures no timing. |
+| Face | A voice on this machine that measures every sound to the sample. | Moves with each sound. |
+| Realtime, aligned | A cloud voice, its words aligned on this machine. | Moves with each sound. |
+| Realtime, own voice | A cloud voice, in the service's own voice. | Follows the loudness. |
+| Off | Nothing. The agent writes and does not speak. | Still. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Body | Local · Face · Realtime, aligned · Realtime, own voice · Off | Face | What speaks. |
+| Voice | The voices that the body offers | The body's first voice | The voice that the agent speaks in. |
+| Speed | 0.5× to 2× | 1× | How fast the agent speaks. |
+| Mouth | Aligned · Loudness · Off | Aligned | What moves the face's mouth. Aligned needs a body that measures each sound. |
+| Affect | On · Off | On | Before each sentence is spoken, K-E-V chooses the face's feeling for it. |
+| Interrupt | Off · Stop · Barge-in | Stop | What happens when you talk while the agent speaks. Stop ends its sentence. Barge-in ends it and hears what you say. |
+| Egress | Local only · Ask · Allowed | Local only | Whether what you say to Nara may leave this machine. Under Local only, the cloud bodies stand closed. |
+| Console | On · Off | Off | Shows Epii's console beside the face. |
+
+The body also reports how long a sentence takes to start sounding, and a receipt for each spoken turn.
+
+#### Views
+
+```ui
+device: actuation:voice
+caption: Voice, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Voice shows the body and the voice.
+
+##### Compact
+
+The compact Voice shows the last spoken turn, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Body | Sets what speaks. |
+| Speed | Sets how fast the agent speaks. |
+| Mouth | Sets what moves the face's mouth. |
+| Interrupt | Sets what happens when you talk while the agent speaks. |
+
+##### Whole
+
+The whole Voice shows every parameter, in five groups, and what the body can do.
+
+| Group | Parameters |
+|---|---|
+| Body | Body |
+| Voice | Voice, Speed |
+| Mouth | Mouth, Affect |
+| Turn-taking | Interrupt |
+| Privacy | Egress, Console |
+
+##### Full
+
+The full Voice draws the last spoken turn on one clock. Each sentence shows the feeling chosen for it. Its words lie across the time they took, and under them lie the sounds that moved the mouth. Play a turn, and watch the mouth follow its sounds.
+
+##### Widget
+
+The widget shows the last turn, the body, and the feeling of the last sentence. Click it to open Voice in the pane that has focus.
+
+#### Transport
+
+| Control | Effect on Voice |
+|---|---|
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use Voice
+
+1. Drag Voice onto the chain, after the Agent.
+2. Set Body to Face. The agent speaks, and the face's mouth moves with each sound.
+3. Set Interrupt to Stop. Start to talk while the agent speaks. It stops.
+4. Set Body to Local. The mouth now follows the loudness.
+5. Open the full Voice. Read the feeling of each sentence, and the sounds under its words.
+
+#### Rules
+
+- Voice speaks. It does not listen. The track's input row hears you.
+- Under Local only, what you say to Nara stays on this machine. Under Ask, a cloud body asks you first, each time.
+- A body that cannot do a thing says so. Voice offers nothing that the body cannot do.
+- The face stays on the Agent. Voice moves its mouth; it draws no second face.
+- K-E-V chooses the feeling before the sentence is spoken. It does not change the words.
+- Every spoken turn keeps a receipt.
+
+#### Tips
+
+- To keep everything on your machine, set Body to Local or Face, and Egress to Local only.
+- To see consonants on the lips, use a body that measures each sound and set Mouth to Aligned.
+- To talk over the agent, set Interrupt to Barge-in.
 
 ## 20. Expressions
 
@@ -7311,6 +7713,17 @@ The Resonance device tunes the plate that the field sounds on. Use it to set the
 
 The device also has a Compatibility switch: Resonator · Template (default Resonator). Template keeps the older fixed pattern.
 
+The device has a Body source: Declared · Tattva (default Declared). Under Tattva, the tattva of the M2 condition sets Q factor, Agitation and Boundary strength through its element, by the same table as the Torus (§21.2). Space carries no element: under it, the plate keeps the values you set.
+
+| Fibre | Tattva | Q factor | Agitation | Boundary strength |
+|---|---|---|---|---|
+| Earth | Pṛthvī | 12 | 0.1 | 20 |
+| Water | Āpas | 6 | 0.6 | 10 |
+| Fire | Tejas | 3 | 2 | 4 |
+| Air | Vāyu | 1.5 | 3.5 | 2 |
+
+The values are a starting point. Tune them to what you hear.
+
 #### Views
 
 ```ui
@@ -7340,7 +7753,7 @@ The whole Resonance device shows every parameter, in three groups.
 | Group | Parameters |
 |---|---|
 | Tuning band and mix | On, Drive frequency, Frequency driver, Dominance, Q factor |
-| Resonator and drive | Drive strength and scale, Transport and agitation, Plate, Mode count, Dimension, Compatibility |
+| Resonator and drive | Drive strength and scale, Transport and agitation, Plate, Mode count, Dimension, Body source, Compatibility |
 | Station sweep | Sweep, Sweep time |
 
 ##### Full
@@ -7649,11 +8062,25 @@ The torus has two helices, which wind round it. A full return takes two turns. A
 | Drive | 0 to 6 | 1 | How hard the pulses shake the body. |
 | Modes | 1 to 64 | 64 | How many modes of the body take part. |
 | Agitation | 0 to 5 | 0.3 | How much the surface is kicked about. |
+| Body source | Declared · Tattva | Declared | Where Strike, Damping and Agitation come from. Declared keeps the values you set. Tattva takes them from the tattva of the M2 condition, through its element. |
 | Attack | 0 to 10 s | 0.01 | How long a note takes to rise. |
 | Release | 0 to 30 s | 1.2 | How long a note takes to fade. |
 | Voices | 1 to 32 | 16 | How many notes sound at once. The oldest note makes way for a new one. |
 | Level and pan | Level −60 to 6 dB · Pan −1 to 1 | −6 dB · 0 | The loudness and the place of the sound. |
 | View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws. Receiver On makes your camera the place where the torus is heard. |
+
+#### The body source
+
+Under Tattva, the tattva of the M2 condition sets the body. Four tattvas carry an element, and each element gives the body its constants. Space, Ākāśa, carries none: under it the body keeps the values you set. While a tattva sets them, Strike, Damping and Agitation show its values and hold them.
+
+| Fibre | Tattva | Strike | Damping and Q factor | Agitation | Boundary strength |
+|---|---|---|---|---|---|
+| Earth | Pṛthvī | 45% | 12 | 0.1 | 20 |
+| Water | Āpas | 55% | 6 | 0.6 | 10 |
+| Fire | Tejas | 85% | 3 | 2 | 4 |
+| Air | Vāyu | 65% | 1.5 | 3.5 | 2 |
+
+The values are a starting point. Tune them to what you hear. The Resonance device takes the same values for its plate (§20.14).
 
 #### Views
 
@@ -7686,7 +8113,7 @@ The whole Torus shows every parameter, in four groups.
 | Group | Parameters |
 |---|---|
 | Pulses | Pulse mix, Helix balance, Drive |
-| Body | Strike, Damping, Modes, Agitation |
+| Body | Strike, Damping, Modes, Agitation, Body source |
 | Envelope | Attack, Release |
 | Voices and output | Voices, Level and pan, View |
 
@@ -7732,6 +8159,7 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - Each key is a point on a helix. The place of each key is calculated from the geometry of the torus. It is not set by eye.
 - A saved state keeps every parameter. A preset in the browser opens with the same sound.
 - A held note keeps its own tail. A key release does not cut the ringing of the body.
+- Under Tattva, the body's constants are the tattva's. To set them by hand, set Body source to Declared.
 
 #### Tips
 
@@ -7764,6 +8192,7 @@ The planetary scales were composed to draw the quality of each planet into the p
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | On | On · Off | On | Turns the device on. Off passes every note as you play it. |
+| Set by | Hand · Sky | Hand | Who sets the mode in force. Hand is you. Sky is the planet of the hour: a maqām that the map binds to that planet. |
 | Root | The twelve notes | C | The root of the mode in force. |
 | Family | Lens mode · Source scale | Lens mode | A lens mode, or a source scale with its own intervals. |
 | Mode name | The seven modes | Ionian | The mode of the root. |
@@ -7774,6 +8203,8 @@ The planetary scales were composed to draw the quality of each planet into the p
 The device has no mode of its own. Root, Family, Mode name, Basis and Source scale are the mode in force: the set's mode, or the open
 clip's own, which the roll and the keyboard show too. A note outside the mode always moves to the nearest note of the mode. The
 planetary scales of Ficino and the Shem names are not served yet; the device names them and offers none.
+
+Under Sky, the planet of the hour sets the mode in force. The Sky reads the planet (§22.1). The map binds each planet to a few maqām: by its tonic, by its dominant, or as a chromatic bridge. Your intent chooses among them, and the lens settles a tie. While the Sky sets the mode, Root, Mode name and Source scale show its choice and hold it. When the Sky has no place to count the hours from, Sky stands closed.
 
 #### Views
 
@@ -7805,7 +8236,7 @@ The whole Scale mapping device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
-| Mode in force | Root, Family, Basis, Mode name, Source scale |
+| Mode in force | Set by, Root, Family, Basis, Mode name, Source scale |
 | Fold | Tie |
 
 ##### Full
@@ -7839,12 +8270,14 @@ The widget shows the mode name and the ring. Click the ring to open the device i
 - A lens, a root and a mode name are not interchangeable. The 84 modes are 12 roots times 7 modes.
 - A source scale keeps its own intervals, its tonic and its dominant. The device does not turn them into an equal scale.
 - A note that is already in the mode passes unchanged.
+- Under Sky, the mode changes when the hour changes. A phrase that you play across the hour moves to the next planet's maqām.
 
 #### Tips
 
 - To change the mood of a phrase, give its clip a new mode.
 - To play a phrase in a planet's scale, set Family to Source scale and pick the planet.
 - To hear a mode without any wrong notes, turn the device on and play freely.
+- To play in the hour's maqām, set Set by to Sky.
 
 ### 21.4 Exact-ratio tuning
 
@@ -8105,6 +8538,12 @@ The sky is ten bodies and the Earth. The bodies stand where the real planets sta
 
 The positions come from a calculated sky. They are not an observed sky. The sky is not a second clock.
 
+#### The day and the hour
+
+Each day has a ruling planet, and so does each hour. The day's planet rules its first hour, from sunrise. The hours then follow the old order of the planets: Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon, and round again. Twelve hours run from sunrise to sunset, and twelve from sunset to the next sunrise, so a summer day hour is longer than a winter one.
+
+The hours are counted at a place: the world's place when Observer is Shared, yours when it is Private. With no place, the Sky reads no rulers. The ring marks the planet of the hour. Scale mapping can take its mode from it (§21.3).
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -8150,11 +8589,11 @@ The whole Sky shows every parameter, in three groups.
 | Bodies | Bodies, Observer |
 | Overlay | Aspects, Natal ring |
 
-The list of what each body moves shows below the groups.
+The list of what each body moves shows below the groups. Beside the groups, the Sky reads the day's planet, the hour and its planet, and the place where the hours are counted.
 
 ##### Full
 
-The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies.
+The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. A line under the date reads the day's planet and the hour's. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies.
 
 ##### Widget
 
@@ -8185,6 +8624,7 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - A body with no value for the date is shown as missing.
 - A shared view does not show a private observer's place.
 - The Sky gives sources. It does not decide what a reading means.
+- The rulers of the day and the hour are counted at a place. Without a place, the Sky shows none.
 
 #### Tips
 
@@ -8192,6 +8632,7 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - To compare today with your birth, turn the Natal ring on.
 - To use the Sky as a clock for a walk, set Day clock to Run.
 - To tune the field to the sky, set Key source to Sky on the Field.
+- To know whose hour it is, read the marked planet on the ring.
 
 ### 22.2 Sky modulation
 
@@ -8308,17 +8749,31 @@ The wheel has 360 degrees. A full return takes two turns, 720 degrees. The secon
 
 The wheel has two circles. The inscription circle carries what is written. The lensing circle carries how it is seen. The two together make the clock.
 
+#### What a hexagram yields
+
+Each governor names a hexagram. Under a matrix, the hexagram is a generation cell. Its lower trigram gives one pair of bases and its upper trigram another. The cell yields two codons. The positive codon takes the first base of the lower pair and the whole upper pair. The negative codon takes the whole lower pair and the last base of the upper pair. When the lower pair ends with the base that starts the upper pair, the two codons are one codon, and the cell is non-dual.
+
+| Matrix | Pairs the bases | Mixed trigrams take |
+|---|---|---|
+| Complementary | A with T, C with G | AT, TA, CG, GC |
+| Moving and resting | A with G, T with C | AG, GA, CT, TC |
+| Same quality | A with C, T with G | AC, CA, GT, TG |
+
+The four trigrams that mirror themselves, Qian, Kun, Kan and Li, take TT, AA, CC and GG in every matrix. Each matrix has 64 cells, 16 of them non-dual.
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Aperture | One of the 16 even cuts, from 1° × 360 to 360° × 1 | 30° × 12 | How the wheel is cut. The Fibonacci ground (60 × 6°) and the Void ring (16 × 22.5°) are drawn, and are not a cut you choose. |
+| Aperture | One of the 16 even cuts, from 1° × 360 to 360° × 1 (reading) | 30° × 12 | How the wheel is cut. The Resonator bank holds the cut and sounds it (§22.7); the clock draws it. The Fibonacci ground (60 × 6°) and the Void ring (16 × 22.5°) are drawn, and are not a cut you choose. |
 | Reciprocal | Show · Hide | Hide | Shows the matching cut, dashed. The cuts come in pairs, such as 15° × 24 and 24° × 15. |
-| Swap | An action | — | Cuts the wheel by the matching cut. |
 | Turn | First · Second · Both | First | Which turn of the wheel to show. Second is the shadow. |
 | Position | 0 to 359 degrees | 0 | The degree to read. |
 | Open | Closed · Exploded | Closed | Exploded draws the parts of the wheel apart, like a flower with an eye at the centre. |
-| Readout | Quadrant · Governor · Hexagram and codon | Governor | What the position shows. |
+| Readout | Quadrant · Governor · Hexagram and codon · Generation | Governor | What the position shows. Generation shows the cell of the position's hexagram: its two pairs, its positive and negative codons, and whether it is non-dual. |
+| Matrix | Complementary · Moving and resting · Same quality | Complementary | The matrix that makes the hexagram a generation cell. |
+| Seed | Sum and difference · Four charge | Sum and difference | How a codon becomes the turn that picks its pose: from the sum and difference of its bases, or from its four charges. The two laws pick a different pose for about half the readings. |
+| Pose map | Raw bin · Lawful slot | Raw bin | How the turn lands on the eight poses. Lawful slot moves a non-dual codon from the eighth pose to its mirror, the first. |
 
 The 16 even cuts come in eight reciprocal pairs. In each pair, the size of one part is the number of parts in the other.
 
@@ -8350,19 +8805,20 @@ The compact M3 clock shows the wheel with a needle, and four macros.
 
 | Macro | What it does |
 |---|---|
-| Aperture | Sets how the wheel is cut. |
 | Position | Sets the degree to read. |
-| Swap | Cuts the wheel by the matching cut. |
 | Turn | Sets which turn of the wheel to show: first, second or both. |
+| Reciprocal | Shows the matching cut, dashed. |
+| Open | Draws the parts of the wheel apart, or closes them. |
 
 ##### Whole
 
-The whole M3 clock shows every parameter, in two groups.
+The whole M3 clock shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
 | Cut | Aperture, Reciprocal, Turn, Open |
-| Position | Position, Readout, Swap |
+| Position | Position, Readout |
+| Law | Matrix, Seed, Pose map |
 
 ##### Full
 
@@ -8385,15 +8841,20 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 
 1. Open the M3 clock. The wheel shows at 0.
 2. Set Position to 100. Read the governor.
-3. Set Aperture to 15° × 24. The wheel shows 24 arcs.
+3. On the Resonator bank, set Aperture to 15° × 24. The wheel shows 24 arcs.
 4. Turn Reciprocal on. The matching cut shows with it.
 5. Set Turn to Both. The shadow turn shows beside the first.
 6. Set Open to Exploded. The parts of the wheel move apart while the subject stays.
+7. Set Readout to Generation. Change Matrix. The cell of the same hexagram changes with the matrix.
 
 #### Rules
 
 - A degree takes its governor from its quadrant. The governors are the first source of its reading.
+- A generation cell yields a positive and a negative codon. In a non-dual cell they are the same codon.
+- No matrix has a gap. Every hexagram has a cell in each of the three matrices.
+- Seed and Pose map are laws you can test. A reading keeps the seed and the pose map it was read with.
 - An aperture is a way to cut the wheel. It is not a place or a time.
+- The clock draws the cut. The Resonator bank holds it. To change the cut, change it on the bank.
 - The Sky is not a second clock. The Sky is the dated state of the planets.
 - The cuts in a pair are reciprocal. The reciprocal of 15° × 24 is 24° × 15.
 - The twelve lenses, the 18 apertures and the 12 steps of the clock are different counts. Do not confuse them.
@@ -8401,10 +8862,11 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 
 #### Tips
 
-- To see the twelve lenses on the wheel, set Aperture to 30° × 12.
-- To read the quarter of the year, set Aperture to 90° × 4.
+- To see the twelve lenses on the wheel, set the bank's Aperture to 30° × 12.
+- To read the quarter of the year, set the bank's Aperture to 90° × 4.
 - To study one part, set Open to Exploded and select that part.
 - To read the shadow of a moment, set Turn to Second.
+- To compare the two seeds, read a position, change Seed, and read it again.
 
 ### 22.4 Deck
 
@@ -8433,7 +8895,9 @@ Positions pair up: P0 with P5, P1 with P4, P2 with P3. A pair shows what the two
 | Torus | Six cards, one for each position. The day reading. |
 | Klein | Six day cards and six night cards. The night reading is the shadow of the day reading. |
 
-For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, the nuclear hexagram and the two compasses.
+For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, the nuclear hexagram and the two compasses. It also shows the hexagram's generation cell under the matrix you choose: its two pairs of bases, its positive and negative codons, and whether the cell is non-dual.
+
+A line cast as 6 or 9 moves; a line cast as 7 or 8 rests. The bases carry the same four values. A is Old Yin (6) and T is Old Yang (9): the moving bases. C is Young Yin (8) and G is Young Yang (7): the resting bases.
 
 #### Parameters
 
@@ -8446,6 +8910,7 @@ For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, t
 | Pairs | Show · Hide | Show | Marks the pairs P0 and P5, P1 and P4, P2 and P3. |
 | Lemniscate | On · Off | Off | Opens the reading of position P4. |
 | Moving lines | Show · Hide | Show | Marks the lines that change, in an I Ching reading. |
+| Matrix | Complementary · Moving and resting · Same quality | Complementary | For the I Ching, the matrix whose generation cell shows. |
 | Agent reads | Off · Propose · Write | Propose | Off: the agent does not read. Propose: each reading waits for you to accept it. Write: readings go in directly, each with a receipt. |
 | Journey | The open journey | The open journey | The journey that the reading joins. |
 
@@ -8477,7 +8942,7 @@ The whole Deck shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
-| Reading | Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Journey |
+| Reading | Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Matrix, Journey |
 | Agent | Agent reads |
 
 ##### Full
@@ -8509,7 +8974,7 @@ The widget shows the last spread, with its theme. Click the spread to open the D
 #### Rules
 
 - The Deck answers and explains. It does not score the reading or pick it for you.
-- Each card and each hexagram shows the codon it belongs to.
+- Each card and each hexagram shows the codon it belongs to. A hexagram shows the codons its cell yields under the chosen matrix.
 - A reading is an act on your journey. Each act shows its author.
 - An agent does not write behind your back. The Agent reads parameter is your choice.
 - The night reading does not contradict the day reading. It shows what the day rests on.
@@ -8657,6 +9122,9 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Family | 0 to 5 | 0 | The family of the Oscillator's source values. The fifth has no single value. |
 | Cell | Row and position in the Oscillator; lens and mode in the Reading; the codon in the Form | The cell for now | The cell to inspect. |
 | Context | World · Personal · Shared | World | The occasion the Situation matrix shows. Each context keeps its own state. |
+| Partner | Complementary · Moving and resting · Same quality | Complementary | In the Form matrix, the matrix whose partner shows beside each codon. |
+| Scale | Codon · Hexagram | Codon | Codon takes the partner base by base. Hexagram takes it trigram by trigram, each trigram going to the trigram whose pair is the partner of its pair. |
+| Apply | An action | — | Moves the cell to its partner. |
 
 #### Views
 
@@ -8687,7 +9155,7 @@ The whole M′ matrices show every parameter, in two groups.
 | Group | Parameters |
 |---|---|
 | Matrix | Matrix, Basis, Lens, Context frame, Value form, Context |
-| Cell | Family, Cell |
+| Cell | Family, Cell, Partner, Scale, Apply |
 
 The grid shows with every value.
 
@@ -8715,6 +9183,7 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 4. Select a cell. A line shows the parameter that it moves.
 5. Select the Form matrix to see the body that rings.
 6. Select the Situation matrix and change the context. The sound changes only where the context is set to differ.
+7. In the Form matrix, set Partner and press Apply. The cell moves to its partner. Press Apply again to return.
 
 #### Rules
 
@@ -8724,6 +9193,8 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - The 72 spaces and the 84 modes are different counts.
 - A pitch class, a frequency and a vibration mode are related, and they are not the same value.
 - A change in the Situation matrix keeps the shared source unchanged. A private context does not enter a shared preset.
+- Each matrix gives every codon a partner, at both scales. No matrix leaves a gap.
+- A matrix applied twice returns the cell. Complementary then Moving and resting is Same quality.
 
 #### Tips
 
@@ -8731,6 +9202,209 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - To compare two lenses, pin a cell and change the lens.
 - To see what the sky changes, set Follow to Sky.
 - To check a source value, set Value form to Raw, then to Digital root.
+
+### 22.7 Resonator bank
+
+**Product:** Quaternal Logic · **Kind:** effect · **Chain:** after the torus, on a Live part or in the Studio's body chain
+
+You need to hear how the wheel is cut. The Resonator bank gives the cut a sound. It holds the cut that the M3 clock draws, and sets one tuned body ringing at each part of it. The sound of the torus passes through the bank, and each body rings at its own pitch.
+
+#### How the bank rings
+
+The bank turns one octave into a circle, with the root at the top. The cut divides the circle into equal parts, and a body rings at each part. Thirty degrees cuts the octave into twelve, and the twelve bodies ring at the twelve semitones. Twenty-four degrees cuts it into fifteen: the bank rings between the notes.
+
+| Cut | Bodies to the octave | What you hear |
+|---|---|---|
+| 30° × 12 | 12 | The twelve semitones. |
+| 24° × 15 | 15 | Fifteen even steps, between the semitones. |
+| 8° × 45 | 45 | A dense shimmer. |
+| 360° × 1 | 1 | The root alone. |
+
+The bodies repeat in each octave of the span. Each body rings as long as Decay says, and Tilt makes the high octaves brighter or darker than the low.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns the bank on. |
+| Aperture | One of the 16 even cuts, from 1° × 360 to 360° × 1 | 30° × 12 | How the octave is cut: one body at each part. |
+| Swap | An action | — | Cuts by the matching cut. The cuts come in pairs, such as 15° × 24 and 24° × 15. |
+| Decay | 0.05 to 10 s | 1 s | How long each body rings. |
+| Tilt | −1 to 1 | 0 | The low octaves against the high. Above 0 is brighter. |
+| Span | 1 to 4 octaves | 2 | How many octaves the bodies repeat over. |
+| Mix | 0 to 100% | 50% | The dry sound against the ringing. |
+| Gain | −24 to 12 dB | 0 dB | The loudness of the ringing. |
+
+The bank tunes to the root of the mode in force: the transport's, or Scale mapping's when the Sky sets it.
+
+#### Views
+
+```ui
+device: quaternal-logic:resonator-bank
+caption: Resonator bank, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Resonator bank shows the cut and the root.
+
+##### Compact
+
+The compact Resonator bank shows the octave circle with a spoke at each body, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Aperture | Sets how the octave is cut. |
+| Decay | Sets how long each body rings. |
+| Mix | Sets the dry sound against the ringing. |
+| Swap | Cuts by the matching cut. |
+
+##### Whole
+
+The whole Resonator bank shows every parameter, in three groups, and its reading: how many bodies ring, the root, and the lowest and highest pitch.
+
+| Group | Parameters |
+|---|---|
+| Cut | Aperture, Swap |
+| Ring | Decay, Tilt, Span |
+| Output | Mix, Gain |
+
+##### Full
+
+The full Resonator bank draws the octave circle with a spoke at each body, and the matching cut dashed. Beside it, each body stands as a line at its pitch across the span, as tall as Tilt makes it. Drag handle 1 round the circle to change the cut.
+
+##### Widget
+
+The widget shows the small circle with its cut. Click it to open the bank in the pane that has focus.
+
+#### Transport
+
+| Control | Effect on the Resonator bank |
+|---|---|
+| Key, root and scale | Sets the root that the bank tunes to. |
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use the Resonator bank
+
+1. Drag the Resonator bank onto the chain, after the torus.
+2. Play a chord. The twelve bodies ring with it.
+3. Set Aperture to 24° × 15. The bank rings between the notes.
+4. Press Swap. The bank cuts by 15° × 24.
+5. Open the M3 clock. The wheel shows the same cut.
+
+#### Rules
+
+- The bank holds the cut. The M3 clock draws it. There is one cut, not two.
+- The bank does not make sound. It rings with the sound that reaches it.
+- A cut divides the octave into equal parts. The bank does not round them to the semitones.
+- The cuts in a pair are reciprocal. Swap moves to the other cut of the pair.
+
+#### Tips
+
+- To hear the semitones ring, set Aperture to 30° × 12.
+- To hear the space between the notes, set an aperture that does not divide twelve.
+- To make a long, bright wash, raise Decay and Tilt.
+
+### 22.8 Binding
+
+**Product:** Quaternal Logic · **Kind:** instrument · **Track:** any track. It also sits in the Studio's body chain, and can be drawn on the Torus or the M3 clock.
+
+You need to see which codons a matrix holds together, and how strongly. Binding draws the charge-bearing units of M3 as colour charges, bound by strings. It runs its own physics over the kernel's symbols. It claims no measured constant.
+
+#### What Binding draws
+
+A codon is a three-way junction. Its three sites sit on three arms, 120° apart. The positive codon's sites are coloured red, green and blue; the negative codon's take the anticolours. The junction turns by its leading pair: the pair's place among the sixteen, times 22.5°.
+
+The matrix pairs the codons. At the form's hexagram, the matrix's generation cell gives a positive and a negative codon (§22.3). Binding ties the two by a string, as a meson. When the cell is non-dual, the two are one codon: a singlet, handed to the torus.
+
+Nonets show nine M2 positions resolving into eight M3 positions. Two of the nine land on one place. Whether that collision is the singlet handed to the torus is for the instrument to test, so Binding draws the two and does not join them.
+
+Every motion comes from a kernel event: an inscription, a matrix change, or a line change. None comes from chance.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns Binding on. |
+| Pairing | Complementary · Moving and resting · Same quality | Moving and resting | The matrix whose cell gives the two codons. |
+| Charge | pp · mm · mp · pm | pp | Which of the codon's four charges each junction carries. |
+| Nonets | Show · Hide | Show | Draws the nine M2 positions resolving into eight. |
+| Tension | 0.1 to 2 GeV/fm | 0.9 | The string's tension. It belongs to Binding's own physics. |
+| Coupling | 0.3 to 10 GeV | 1 | The scale the coupling runs at. It belongs to Binding's own physics. |
+| Skin | Torus · Plate · Clock | Plate | Where Binding is drawn. |
+| Stretch → Q | On · Off | On | The string's stretch sounds as the Resonance's Q factor, through M2. |
+
+Binding's engine reports the coupling at its scale, the string's stretch and its energy. The energy follows V(r) = −(4/3)·α_s·ħc/r + σr: close in, the pull falls away; far out, it grows with the length.
+
+#### Views
+
+```ui
+device: quaternal-logic:binding
+caption: Binding, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Binding shows the two codons, or the singlet, and the event that last moved it.
+
+##### Compact
+
+The compact Binding shows the junctions and their string, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Pairing | Sets the matrix that gives the two codons. |
+| Charge | Sets which charge each junction carries. |
+| Tension | Sets the string's tension. |
+| Coupling | Sets the scale the coupling runs at. |
+
+##### Whole
+
+The whole Binding shows every parameter, in three groups, with the potential and its reading: the cell, the positive and negative codons with their charges, and the event that last moved it.
+
+| Group | Parameters |
+|---|---|
+| Pairing | Pairing |
+| Physics | Tension, Coupling |
+| Charge and skin | Charge, Skin, Nonets, Stretch → Q |
+
+##### Full
+
+The full Binding draws the junctions, their string and the nonet at full size, with the cell and its codons under them. Change Pairing and watch the cell give new codons. A non-dual cell draws one junction, ringed, handed to the torus.
+
+##### Widget
+
+The widget shows the small junctions, the two codons and the event that last moved them. Click it to open Binding in the pane that has focus.
+
+#### Transport
+
+| Control | Effect on Binding |
+|---|---|
+| Play | Moves Binding with the inscription of the clock. |
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use Binding
+
+1. Open Binding. The cell of the form's hexagram shows its two codons, tied by a string.
+2. Set Pairing to Complementary. When the cell is non-dual, one junction shows, handed to the torus.
+3. Set Charge to mm. Each junction shows its mm charge.
+4. Lower Tension. The string slackens, and its energy falls.
+5. Turn Stretch → Q on, and play. The stretch rings in the Resonance.
+
+#### Rules
+
+- Binding runs its own physics. Its tension and its coupling are its own. They are not measured constants.
+- Binding takes from the kernel only its symbols: the codons, their charges, their pairing and their counts.
+- Every motion has a kernel event behind it. Binding draws nothing by chance.
+- A collision in a nonet is drawn. It is not declared to be the singlet.
+
+#### Tips
+
+- To compare the three matrices, read one hexagram and change Pairing.
+- To see what a line change does, change a line on the Deck and watch the codons.
+- To hear the binding, turn Stretch → Q on and put the Resonance after the torus.
 
 ## 23. Widgets
 
@@ -9282,6 +9956,15 @@ Nara comes to know you from the days and flows you give it. Every passage it dra
 | Arm | Lets Nara write into your practice pages directly, each write with a receipt. Off by default: every answer arrives as a proposal. |
 | Solo | Shows only your practice in the Day's faces and on your planet. |
 
+The practice track's input row is how Nara hears you. It sits on the track, as Live keeps a track's input on the track. Voice, on the chain, is how Nara speaks (§19.21).
+
+| Input row | Values | Default | What it does |
+|---|---|---|---|
+| Input | Mic · Off | Off | Whether the track hears you. |
+| Listen | Push to talk · Hands-free | Push to talk | Push to talk hears you while you hold the key. Hands-free hears you whenever you speak. |
+| Pause | 0.5 to 4 s | 2 s | Under Hands-free, how long a silence ends your turn. |
+| Recogniser | Fast · Accurate | Fast | How your speech becomes text, on this machine. Accurate is slower. |
+
 #### Rules
 
 - The practice world is fogged to everyone but you. Raising any of it into wider view asks you first, page by page.
@@ -9450,3 +10133,229 @@ What a practice teaches you can return to the Day's face 5, and from there, once
 | Lenses; journal and dreams as lived history | M4.4 Context and lenses: Gebser (M4.4.0) to Trika (M4.4.5); temporal sedimentation (M4.4.4.2), symbolic body (M4.4.4.3) |
 | You, where all of it meets | M4.4.4.4 Personal Pratibimba |
 | Returns | M4.5 Epii integration |
+
+## 25. The agent world
+
+You need the agents you work with to be the same agents in every mode, doing
+the same work the same way, so that what you learn about one in Central still
+holds when you meet it in Technē. The agent world is that one way of working,
+and Ta-Onta is its interface: one set of operations, reached by the same names
+whether an agent calls them, you press them, or a program sends them.
+
+### 25.1 Two faces of one field
+
+Everything in the DLW stands in one field of six positions, and the field has
+two faces. Each face holds three of the six.
+
+<figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
+<svg viewBox="0 0 960 300" role="img" aria-label="Two faces of one field. M1-2-3′ sounds and keeps time: M1′ generates, M2′ shapes, M3′ forms; Live plays M1′ and M2′, Expressions holds all three. M4/5/0′ knows and acts: M4′ reads the situation, M5′ synthesises, M0′ is the ground; what you accept returns to the ground" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
+<defs><marker id="dlw-arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--dim)"/></marker><marker id="dlw-arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
+<text x="24" y="30" style="fill:var(--ink);font-size:17px;font-weight:600">M1-2-3′</text>
+<text x="104" y="30" style="fill:var(--dim);font-size:12.5px">sounds and keeps time</text>
+<rect x="24" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="36" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M1′ generates</text>
+<text x="36" y="92" style="fill:var(--dim);font-size:11px">the torus and its</text>
+<text x="36" y="107" style="fill:var(--dim);font-size:11px">two pulses: the only</text>
+<text x="36" y="122" style="fill:var(--dim);font-size:11px">source of sound</text>
+<rect x="172" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="184" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M2′ shapes</text>
+<text x="184" y="92" style="fill:var(--dim);font-size:11px">the synth, moved by</text>
+<text x="184" y="107" style="fill:var(--dim);font-size:11px">the sky and tuned</text>
+<text x="184" y="122" style="fill:var(--dim);font-size:11px">by the lenses</text>
+<rect x="320" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="332" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M3′ forms</text>
+<text x="332" y="92" style="fill:var(--dim);font-size:11px">the codons, the</text>
+<text x="332" y="107" style="fill:var(--dim);font-size:11px">clock and the deck:</text>
+<text x="332" y="122" style="fill:var(--dim);font-size:11px">the form it rings in</text>
+<line x1="160" y1="95" x2="171" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
+<line x1="308" y1="95" x2="319" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
+<path d="M24 160 V168 H308 V160" style="fill:none;stroke:var(--accent);stroke-width:1.4"/>
+<text x="166" y="186" text-anchor="middle" style="fill:var(--ink);font-size:12px">Live plays M1′ and M2′ as one instrument</text>
+<path d="M24 204 V212 H456 V204" style="fill:none;stroke:var(--line-strong);stroke-width:1.4"/>
+<text x="240" y="230" text-anchor="middle" style="fill:var(--ink);font-size:12px">Expressions holds all three in a scene</text>
+<line x1="480" y1="16" x2="480" y2="250" style="stroke:var(--line);stroke-width:1"/>
+<text x="504" y="30" style="fill:var(--ink);font-size:17px;font-weight:600">M4/5/0′</text>
+<text x="584" y="30" style="fill:var(--dim);font-size:12.5px">knows and acts</text>
+<rect x="504" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="516" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ situation</text>
+<text x="516" y="92" style="fill:var(--dim);font-size:11px">Kev, on this machine:</text>
+<text x="516" y="107" style="fill:var(--dim);font-size:11px">picks among labels</text>
+<text x="516" y="122" style="fill:var(--dim);font-size:11px">the owner allows</text>
+<rect x="652" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="664" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ synthesis</text>
+<text x="664" y="92" style="fill:var(--dim);font-size:11px">the language model:</text>
+<text x="664" y="107" style="fill:var(--dim);font-size:11px">reads, writes and</text>
+<text x="664" y="122" style="fill:var(--dim);font-size:11px">proposes</text>
+<rect x="800" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
+<text x="812" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ ground</text>
+<text x="812" y="92" style="fill:var(--dim);font-size:11px">the graph: settles</text>
+<text x="812" y="107" style="fill:var(--dim);font-size:11px">by rule, checks, and</text>
+<text x="812" y="122" style="fill:var(--dim);font-size:11px">names the gaps</text>
+<line x1="640" y1="95" x2="651" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
+<line x1="788" y1="95" x2="799" y2="95" style="stroke:var(--accent);stroke-width:1.3" marker-end="url(#dlw-arrow-b)"/>
+<path d="M868 140 V164 H572 V144" style="fill:none;stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
+<text x="720" y="182" text-anchor="middle" style="fill:var(--ink);font-size:12px">5/0: what you accept becomes ground,</text>
+<text x="720" y="198" text-anchor="middle" style="fill:var(--ink);font-size:12px">and the next act starts from it</text>
+<text x="720" y="230" text-anchor="middle" style="fill:var(--dim);font-size:12px">Ta-Onta reaches all three, in every mode</text>
+<text x="480" y="282" text-anchor="middle" style="fill:var(--dim);font-size:12px">One field: turning from one face to the other keeps the coordinate, the moment and the reading.</text>
+</svg>
+<figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">The two faces. The first sounds and keeps time; the second knows and acts, and its synthesis returns as ground.</figcaption>
+</figure>
+
+**M1-2-3′** sounds and keeps time. M1′ generates: the torus and its two
+pulses are the only source of sound in the DLW (§21.2). M2′ shapes what M1′
+makes. It is the synth, moved by the planets of the live sky and tuned and
+filtered by the lenses, and it makes no sound of its own (§22.1, §22.2). Live
+plays M1′ and M2′ together as one instrument (§9). M3′ closes the pattern into
+form: the 64 codons, the clock of 360 degrees and its 24 fixed points, and the
+deck (§22.3, §22.4). Expressions holds all three in a scene, the torus at the
+centre, the shaped field round it, and the symbols that give it form (§7).
+
+**M4/5/0′** knows and acts, and an agent works in it. Each of its three
+positions has its own kind of mind.
+
+- **M4′ reads the situation.** Position 4 is context: the why and the where of
+  an act. Its frame holds a whole world inside it, your own (§24.9). On the
+  agent side, M4′ is Kev, a small decision model that runs on your machine. It
+  reads the situation an act stands in, not the item in front of it, and it
+  answers only typed questions over labels an owner allows (§19.20). What it
+  reads never leaves the machine.
+- **M5′ synthesises.** Position 5 is where things come together and go back.
+  On the agent side, M5′ is the language model each agent works with (§19.4).
+  It reads, writes, quotes, explains and argues. What it writes is a proposal
+  until it is reviewed.
+- **M0′ is the ground.** Position 0 is where everything comes from: the Bimba
+  map, your wikis and sources, and the rules of Quaternal Logic. On the agent
+  side, M0′ is the graph knowledge system. It settles by rule what can be
+  settled, checks every answer against the map, and where the map has a gap
+  it names the gap as a question instead of filling it.
+
+The two ends of M4/5/0′ meet. What M5′ writes and you accept goes back into
+M0′ as ground, and the next act starts from it. This is the 5/0 of the field:
+a synthesis settles into the ground of what comes next.
+
+The two faces are one field seen from opposite sides. Turning from one to the
+other keeps the coordinate you stand on, the moment and the reading. It
+changes only which face is in front of you, and never what a thing is, where
+it came from or who owns it.
+
+### 25.2 One act, in order
+
+Every act an agent takes passes through M4/5/0′ in the same order.
+
+<figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
+<svg viewBox="0 0 960 200" role="img" aria-label="One act in order: M0′ settles what the rules can; M4′ picks where a choice is open; M5′ writes where reading or writing is needed; M0′ checks; you decide; the owner keeps it and it becomes ground. When nothing is open, no model is asked" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
+<defs><marker id="dlw-arrow-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--dim)"/></marker><marker id="dlw-arrow-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
+<path d="M90 50 C90 22, 558 22, 558 48" style="fill:none;stroke:var(--accent);stroke-width:1.3;stroke-dasharray:5 4" marker-end="url(#dlw-arrow-d)"/>
+<text x="324" y="20" text-anchor="middle" style="fill:var(--ink);font-size:12px">when nothing is open, no model is asked</text>
+<rect x="20" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
+<text x="32" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ settles</text>
+<text x="32" y="92" style="fill:var(--dim);font-size:11px">what the rules can:</text>
+<text x="32" y="107" style="fill:var(--dim);font-size:11px">what was seen, and</text>
+<text x="32" y="122" style="fill:var(--dim);font-size:11px">what follows from it</text>
+<rect x="176" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="188" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ picks</text>
+<text x="188" y="92" style="fill:var(--dim);font-size:11px">where a choice is</text>
+<text x="188" y="107" style="fill:var(--dim);font-size:11px">open, or abstains</text>
+<rect x="332" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="344" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ writes</text>
+<text x="344" y="92" style="fill:var(--dim);font-size:11px">where reading or</text>
+<text x="344" y="107" style="fill:var(--dim);font-size:11px">writing is needed</text>
+<rect x="488" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
+<text x="500" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ checks</text>
+<text x="500" y="92" style="fill:var(--dim);font-size:11px">each pick and claim</text>
+<text x="500" y="107" style="fill:var(--dim);font-size:11px">against the rules, and</text>
+<text x="500" y="122" style="fill:var(--dim);font-size:11px">says why it refuses</text>
+<rect x="644" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="656" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">You decide</text>
+<text x="656" y="92" style="fill:var(--dim);font-size:11px">accept, change</text>
+<text x="656" y="107" style="fill:var(--dim);font-size:11px">or refuse</text>
+<rect x="800" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
+<text x="812" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">It is kept</text>
+<text x="812" y="92" style="fill:var(--dim);font-size:11px">the owner saves it,</text>
+<text x="812" y="107" style="fill:var(--dim);font-size:11px">reads it back and</text>
+<text x="812" y="122" style="fill:var(--dim);font-size:11px">makes it findable</text>
+<line x1="160" y1="95" x2="175" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<line x1="316" y1="95" x2="331" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<line x1="472" y1="95" x2="487" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<line x1="628" y1="95" x2="643" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<line x1="784" y1="95" x2="799" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-c)"/>
+<path d="M870 140 V164 H90 V144" style="fill:none;stroke:var(--accent);stroke-width:1.3" marker-end="url(#dlw-arrow-d)"/>
+<text x="480" y="186" text-anchor="middle" style="fill:var(--ink);font-size:12px">5/0: what is kept is ground for the next act</text>
+</svg>
+<figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">One act, in order. The ground goes first and last; a model is asked only where the rules leave something open.</figcaption>
+</figure>
+
+The ground goes first. M0′ sets out what was seen and what follows from it by
+rule, and what is still open. If nothing is open, no model is asked. A choice
+among labels an owner allows goes to M4′, which picks one or abstains, in the
+background unless the act must wait. Reading and writing go to M5′. M0′ then
+checks every pick and every claim against its rules and names its reason when
+it refuses one. You accept, change or refuse what is left. The product that
+owns the thing saves it, reads it back and makes it findable, and from then on
+it is ground for the next act.
+
+| Position | What works there | What it does | What it never does |
+|---|---|---|---|
+| M0′ ground | The graph knowledge system: the Bimba map, your wikis and sources, the rules of Quaternal Logic | Settles by rule, checks every answer, names each gap as a question, keeps what you accept | Guess, or fill a gap with a likely answer |
+| M4′ situation | Kev, the Decision helper (§19.20), on your machine | Picks among the labels an owner allows, in the situation of the act, or abstains | Act, write, answer the collaboration gate, or send what it reads off the machine |
+| M5′ synthesis | The agent's language model (§19.4) | Reads, writes, quotes, explains and proposes | Make its own proposal true |
+
+Each result keeps the mark of how it was reached: seen in a source, settled by
+rule, picked by the helper, written by an agent, accepted by you. A later step
+adds its own mark and never wipes out an earlier one.
+
+### 25.3 Six powers
+
+Ta-Onta gives an agent six powers. Each reaches through to the product that
+owns its work, so the agent never keeps a second copy of anything.
+
+| Power | Organ | What it does | Its owners |
+|---|---|---|---|
+| Enter | Khora, S0′ | Enters a world and picks up where it left off: the project, the subject, the sources, the session and the machine. | Central, AIKit, Actuation, Workcell |
+| Form | Hen, S1′ | Keeps each thing in its form: sources, wiki pages, constellations, typed relations and templates. | Central, AIKit, Quaternal Logic |
+| Find | Pleroma, S2′ | Finds what can be used: knowledge, models, skills, methods, tools and instruments. | AIKit, and every product's actions |
+| Time | Chronos, S3′ | Holds the times of the act together: the day, the session, the sky, the clock and the run. | Central, Quaternal Logic, Factory |
+| Compose | Anima, S4′ | Composes the act: who takes part, what each does, in what order, toward what return. | Quaternal Logic, Factory, Actuation |
+| Return | Aletheia, S5′ | Says what happened, sets it against what was meant, and brings back what was learned. | Central, AIKit, Factory |
+
+A power is the same power in every mode. What it meets changes.
+
+| Power | Central | Factory | Technē | Expressions | Live |
+|---|---|---|---|---|---|
+| Enter | Opens the Day and the world you work in | Seats the agent on its session | Opens the subject and its readings | Opens the Expression at its scene | Opens the set |
+| Form | Keeps each page to its template | Keeps each task with its receipts | Gives a board its form (§17.4) | Ties each figure to what it shows | Ties each clip to its source |
+| Find | Searches with @ | Racks skills and routes knowledge | Reads the wiki and the graph | Finds premade scenes and material first | Finds devices, sounds and grooves |
+| Time | Keeps the day and its close | Keeps the run and its needle | Keeps the ruler, from deep time to now | Steps the scene | Keeps the tempo and the clock |
+| Compose | Answers into the page | Plans and runs the task | Lays out walks and palaces | Composes the scene | Writes clips and automation |
+| Return | Files what the day taught | Lands the work with its checks | Saves what was built and reads it back | Saves what it made as material to reuse | Keeps the take |
+
+The teams in §19.4 carry these powers: Anima composes the act, and Aletheia
+returns it. Each member stands at a depth, one of the six M domains, and the
+Decision helper answers any of them.
+
+### 25.4 Carried practice
+
+The six powers come to an agent as practice it carries (§19.7), in the same
+four forms as every other practice.
+
+| Form | In the agent world |
+|---|---|
+| Methodology | The agent world: how to find your bearings in it, which power applies when, and where each return goes. It is loaded before work in any mode. |
+| Method | One for each power, from claim to return: Enter, Form, Find, Time, Compose and Return. |
+| Skill | The steps the Methods call: the coordinate frame of an act, retrieval, giving a board its form, keeping an act's continuity, composing a scene, the gates, and returning an act. |
+| Skillset | Ta-Onta. It holds the Methodology, and one set for each power with its Method and skills. |
+
+A person, an agent and a program reach each operation by the same name,
+through the product that owns it. An operation that does not exist yet says
+so, and nothing stands in for it.
+
+### 25.5 Agents and M1-2-3′
+
+Agents reach the other face through the modes that play it, with the same six
+powers. In Live an agent writes clips and automation for the torus and the
+synth that shapes it, M1′ and M2′ together, and keeps the take you choose. In
+Expressions it composes a scene over all three: it finds premade characters,
+scenes and material before it makes anything new, steps the scene in time, and
+saves what it made as material others can reuse, tied to its sources. What M0′
+knows and M5′ writes can then be seen and heard, not only read.

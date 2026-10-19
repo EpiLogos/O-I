@@ -122,7 +122,8 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
   const over = (name: string) => Object.fromEntries(Object.entries({...design.defaults, ...(design.fixtures?.[name] ?? {})})
     .filter(([, value]) => value !== undefined)) as Record<string, Value>
   const [values, setValues] = useState<Record<string, Value>>(over(fixture))
-  const [page, setPage] = useState(design.firstPage ?? '')
+  // ?page=<id> opens the device on that page (the manual's embed beside the page it describes).
+  const [page, setPage] = useState(new URLSearchParams(location.search).get('page') ?? design.firstPage ?? '')
   const [folded, setFolded] = useState(false)
   const pane = useRef<HTMLDivElement>(null), flip = useRef<HTMLDivElement>(null), win = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)

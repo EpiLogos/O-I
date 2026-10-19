@@ -12,9 +12,18 @@
 // (each {title, members}, members being item ids). The sample sits in `defaults`: the Seven centres scene (model.ts:172,
 // chakraEntities: its names, glyphs and tints) with the question sticky, six lines and one frame. The positions are an arrangement a
 // person made; positions are presentation. A board the owner does not report is named in the well, never drawn.
+//
+// The Form page gives the board the shape of a whole: a constellation. The forms are AIKit's (ai-kit
+// crates/aikit-adapters/src/wiki_shape_catalog.rs, over the QL shape contract), each a set of roles — a position 0–5, direct or
+// conjugate (′) — around one whole. `whole` is the card at the centre, `roles` maps each role to the card on it (a JSON object), and
+// Layout draws the board in the form (Technē's Canvas/Constellation: QL-MEF adapters/techne/.../canvas/layout.ts, the sixfold from
+// the top, clockwise, at 60°; radial when no form is chosen). Check runs the form's structural floor and Declare writes it as a
+// WikiFrame (`aikit wiki-shape validate` and `declare`); Fold proves a full sixfold and its conjugate fold into one (`compress`).
+// Suggest asks the Decision helper (ai-kit:decision-helper) which open role the selected card takes; its answer stands dashed in
+// `suggested` until you accept it. The roles a person sets are presentation until Declare: the owner writes the constellation.
 import type {CSSProperties, ReactNode} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState, type Standing} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 type SetFn = ViewProps['set']
@@ -188,7 +197,7 @@ function Pane({p, pr, look, boxes, w, h, handles}: {p: ViewProps; pr: Projection
 /** The board as the minimap draws it: grid dots when Grid snap is on, a line between box centres, each item as a box, the pane as a
  * rectangle. Without the owner's items the well says so; without a camera it draws the board and says that. */
 function Overview({p, w, h, handles}: {p: ViewProps; w: number; h: number; handles: 0 | 1 | 2}) {
-  const v = p.v, boxes = items(v)
+  const v = p.v, boxes = arranged(v, items(v))
   if (!boxes) return <Missing w={w} h={h} say={['No reading', 'of the items']} />
   if (!boxes.length) return <Missing w={w} h={h} say={['No items', 'on the board']} />
   const pr = project(boxes, w, h), sel = new Set(selected(v)), look = lookOf(v)
@@ -304,11 +313,146 @@ function LineDisplay({p}: {p: ViewProps}) {
   </Display>
 }
 
+// ---------------------------------------------------------------- the form: the board as a constellation
+
+const SIX = ['0', '1', '2', '3', '4', '5']
+const PAIRS: Record<string, readonly (readonly [number, number])[]> = {A: [[0, 1], [2, 3], [4, 5]], B: [[1, 2], [3, 4], [5, 0]], C: [[0, 5], [1, 4], [2, 3]]}
+/** AIKit's forms, in its catalogue's terms: the roles each holds. */
+const FORMS: readonly {value: string; label: string; roles: readonly string[]}[] = [
+  {value: 'sixfold', label: 'Sixfold', roles: SIX},
+  {value: 'twelvefold', label: 'Sixfold and its conjugate', roles: [...SIX, ...SIX.map(r => `${r}′`)]},
+  {value: 'threefold-123', label: 'Threefold 1–2–3', roles: ['1', '2', '3']},
+  {value: 'threefold-450', label: 'Threefold 4–5–0', roles: ['4', '5', '0']},
+  {value: 'fourfold', label: 'Fourfold 1–2–3–4', roles: ['1', '2', '3', '4']},
+  {value: 'fourfold-ground', label: 'Fourfold and its ground', roles: ['0', '1', '2', '3', '4']},
+  {value: 'fourfold-synthesis', label: 'Fourfold and its synthesis', roles: ['1', '2', '3', '4', '5']},
+  ...Object.entries(PAIRS).flatMap(([family, pairs]) => pairs.map(([a, b], i) => ({value: `pair-${family}${i}`, label: `Pair ${a}/${b} · ${family}`, roles: [String(a), String(b)]}))),
+]
+const LAYOUTS = [
+  {value: 'free', label: 'Free', does: 'The cards stand where you put them.'},
+  {value: 'radial', label: 'Radial', does: 'The cards stand evenly round the whole, in the order of the board.'},
+  {value: 'form', label: 'Form', does: 'Each card stands on its role in the form, round the whole.'},
+] as const
+const CHECK: Record<string, {label: string; tone?: 'green' | 'stall'}> = {passed: {label: 'Passed', tone: 'green'}, refused: {label: 'Refused', tone: 'stall'}}
+const DECLARED: Record<string, {label: string; tone?: 'green' | 'stall'}> = {saved: {label: 'In your wiki', tone: 'green'}, held: {label: 'Held'}, refused: {label: 'Refused', tone: 'stall'}}
+
+const formOf = (v: V) => FORMS.find(f => f.value === strOf(v, 'form'))
+/** The card on each role, as the owner reports it (absent: no reading). */
+function rolesOf(v: V): Record<string, string> | undefined {
+  if (!has(v, 'roles')) return undefined
+  const r = json<unknown>(v, 'roles', {})
+  return r && typeof r === 'object' && !Array.isArray(r) ? Object.fromEntries(Object.entries(r).filter(([, x]) => typeof x === 'string')) as Record<string, string> : {}
+}
+const openOf = (v: V) => { const f = formOf(v), r = rolesOf(v) ?? {}; return f ? f.roles.filter(x => r[x] === undefined) : [] }
+const placedOf = (v: V) => { const f = formOf(v), r = rolesOf(v); return f && r ? f.roles.filter(x => r[x] !== undefined).length : undefined }
+function suggestedOf(v: V): {role: string; item: string; confidence?: number} | undefined {
+  const s = json<unknown>(v, 'suggested', null) as {role?: unknown; item?: unknown; confidence?: unknown} | null
+  return s && typeof s.role === 'string' && typeof s.item === 'string' ? {role: s.role, item: s.item, confidence: typeof s.confidence === 'number' ? s.confidence : undefined} : undefined
+}
+/** A role's place: position × 60° from the top, clockwise; a conjugate on the outer ring, 1.45 out. */
+const placeOf = (role: string) => { const n = parseInt(role, 10), a = n * Math.PI / 3 - Math.PI / 2, r = role.endsWith('′') ? 1.45 : 1; return {x: Math.cos(a) * r, y: Math.sin(a) * r} }
+/** The pairs whose two places and two conjugates are all filled: each a four-by-four field of the whole. */
+const fieldsOf = (v: V) => {
+  const r = rolesOf(v) ?? {}
+  return Object.entries(PAIRS).flatMap(([f, pairs]) => pairs.flatMap(([a, b], i) => ([`${a}`, `${b}`, `${a}′`, `${b}′`].every(x => r[x]) ? [`${f}${i}`] : [])))
+}
+const complete = (v: V) => formOf(v)?.value === 'twelvefold' && openOf(v).length === 0
+
+/** The board drawn in its layout: Free leaves every card where it stands; Radial and Form move the cards round the whole (a
+ * presentation only). The whole keeps its place. */
+function arranged(v: V, boxes: Item[] | undefined): Item[] | undefined {
+  const layout = strOf(v, 'layout'), whole = boxes?.find(b => b.id === strOf(v, 'whole'))
+  if (!boxes || !whole || (layout !== 'form' && layout !== 'radial')) return boxes
+  const cx = whole.x + whole.w / 2, cy = whole.y + whole.h / 2, R = 3 * Math.max(whole.w, whole.h)
+  const at = (b: Item, p: {x: number; y: number}) => ({...b, x: cx + p.x * R - b.w / 2, y: cy + p.y * R - b.h / 2})
+  if (layout === 'form') {
+    const r = rolesOf(v) ?? {}, f = formOf(v), roleOf = new Map(Object.entries(r).filter(([role]) => f?.roles.includes(role)).map(([role, id]) => [id, role] as const))
+    return boxes.map(b => { const role = roleOf.get(b.id); return role ? at(b, placeOf(role)) : b })
+  }
+  const members = boxes.filter(b => b.kind === 'card' && b.id !== whole.id)
+  return boxes.map(b => { const i = members.indexOf(b); if (i < 0) return b; const a = (i / members.length) * 2 * Math.PI - Math.PI / 2; return at(b, {x: Math.cos(a), y: Math.sin(a)}) })
+}
+
+/** The form: the whole at the centre, each role round it, a filled role with its card, an open one dashed, the helper's suggestion
+ * dashed in the accent until you accept it. */
+function FormDisplay({p, w, h}: {p: ViewProps; w: number; h: number}) {
+  const v = p.v, f = formOf(v), boxes = items(v), r = rolesOf(v), whole = boxes?.find(b => b.id === strOf(v, 'whole')), s = suggestedOf(v)
+  const does = 'The whole at the centre and each role of the form round it. A dashed ring is an open role. A dashed amber name is the helper’s suggestion.'
+  const say = !has(v, 'form') ? ['No reading', 'of the form'] : !f ? ['No form', 'Choose one to give the board a shape'] : !boxes ? ['No reading', 'of the items'] : !r ? ['No reading', 'of the roles'] : undefined
+  if (say) return <Display w={w} h={h} label="The form" does={does} corner={NONE}><Missing w={w} h={h} say={say} /></Display>
+  const twelve = f!.roles.some(x => x.endsWith('′')), R = Math.min(w, h) * (twelve ? .26 : .34), cx = w / 2, cy = h / 2 + 4
+  const name = (id: string) => boxes!.find(b => b.id === id)
+  return <Display w={w} h={h} label="The form" does={does} corner={f!.label}>
+    <circle cx={cx} cy={cy} r={R} className="dp-faint" />
+    {twelve && <circle cx={cx} cy={cy} r={R * 1.45} className="dp-faint" strokeDasharray="2 3" />}
+    {f!.roles.map(role => {
+      const q = placeOf(role), x = cx + q.x * R, y = cy + q.y * R, card = r![role] ? name(r![role]!) : undefined, hint = s?.role === role ? name(s.item) : undefined
+      // The name stands outside the ring: to the right of a role on the right, to the left on the left, above or below at the poles.
+      const side = Math.abs(q.x) < .3 ? 'middle' : q.x > 0 ? 'start' : 'end', tx = x + (side === 'start' ? 10 : side === 'end' ? -10 : 0)
+      const ty = side !== 'middle' ? y + 3 : q.y > 0 ? y + 17 : y - 10
+      return <g key={role}>
+        <line x1={cx} y1={cy} x2={x} y2={y} className="dp-grid" />
+        {card ? <circle cx={x} cy={y} r={6} style={{fill: card.tint ?? 'var(--dp-value)', stroke: 'var(--dp-well)', strokeWidth: 1}} />
+          : <circle cx={x} cy={y} r={6} className={hint ? 'dp-curve-on' : 'dp-faint'} strokeDasharray="2 2" />}
+        <text x={x} y={y + 3} textAnchor="middle" className="dp-axis" style={{fill: card ? 'var(--dp-well)' : undefined}}>{role}</text>
+        {(card || hint) && <text x={tx} y={ty} textAnchor={side} className={card ? 'dp-ink' : 'dp-ink-dim'} style={hint && !card ? {fill: 'var(--dp-on)'} : undefined}>{clip((card ?? hint)!.name, twelve ? 9 : 13)}{hint && !card && s?.confidence !== undefined ? ` ${Math.round(s.confidence * 100)} %` : ''}</text>}
+      </g>
+    })}
+    <circle cx={cx} cy={cy} r={9} style={{fill: whole?.tint ?? 'var(--dp-on)', opacity: whole ? 1 : .35}} />
+    <text x={6} y={12} className="dp-ink">{whole ? clip(whole.name, 22) : 'No whole'}</text>
+    <text x={6} y={h - 6} className="dp-axis">{`${placedOf(v) ?? NONE} of ${f!.roles.length} placed`}</text>
+  </Display>
+}
+
+const formChooser = (p: ViewProps) => <Chooser {...st(p, 'form')} label="Form" does="The shape of the whole: its roles round one centre. Choosing a form moves no card until Layout is Form."
+  value={strOf(p.v, 'form') ?? ''} options={[{value: '', label: 'None'}, ...FORMS.map(({value, label}) => ({value, label}))]} onChange={x => p.set('form', x)} />
+const wholeChooser = (p: ViewProps) => {
+  const boxes = items(p.v)?.filter(b => b.kind === 'card' || b.kind === 'sticky')
+  return <Chooser {...st(p, 'whole')} label="Centre" does="The whole the form gathers round: a question, a subject, a source." value={strOf(p.v, 'whole') ?? ''}
+    options={(boxes ?? []).map(b => ({value: b.id, label: clip(b.name, 22)}))} disabled={st(p, 'whole').disabled ?? (boxes ? undefined : 'No reading of the items.')} onChange={x => p.set('whole', x)} />
+}
+const layout = (p: ViewProps) => <Radio {...st(p, 'layout')} label="Layout" does="How the board stands: as you placed it, evenly round the whole, or on the roles of the form. Layout moves no source."
+  value={strOf(p.v, 'layout') ?? ''} options={LAYOUTS} stack onChange={x => p.set('layout', x)} />
+const roleChooser = (p: ViewProps) => {
+  const open = openOf(p.v)
+  return <Chooser {...st(p, 'role')} label="Role" does="The open role the next card takes." value={strOf(p.v, 'role') ?? ''} options={open.map(x => ({value: x, label: x}))}
+    disabled={st(p, 'role').disabled ?? (formOf(p.v) ? (open.length ? undefined : 'Every role is filled.') : 'Choose a form first.')} onChange={x => p.set('role', x)} />
+}
+/** The one selected card that can take a role: on the board, not the whole, on no role yet. */
+const candidate = (v: V) => {
+  const ids = selected(v), r = rolesOf(v) ?? {}, b = ids.length === 1 ? items(v)?.find(x => x.id === ids[0]) : undefined
+  return b && b.id !== strOf(v, 'whole') && !Object.values(r).includes(b.id) ? b : undefined
+}
+const setRole = (p: ViewProps, role: string, id: string) => p.set('roles', JSON.stringify({...(rolesOf(p.v) ?? {}), [role]: id}))
+const place = (p: ViewProps) => {
+  const b = candidate(p.v), role = strOf(p.v, 'role'), s = st(p, 'roles')
+  return <Action {...s} label="Place" does="Puts the selected card on the chosen role."
+    disabled={s.disabled ?? (!formOf(p.v) ? 'Choose a form first.' : !b ? 'Select one card that is not on a role.' : !role || !openOf(p.v).includes(role) ? 'Choose an open role.' : undefined)}
+    onPress={() => { if (b && role) { setRole(p, role, b.id); p.set('role', '') } }} />
+}
+const suggest = (p: ViewProps) => {
+  const b = candidate(p.v), s = st(p, 'suggest')
+  return <Action {...s} label="Suggest" does="Asks the Decision helper which open role the selected card takes. Its answer stands dashed until you accept it."
+    disabled={s.disabled ?? (!formOf(p.v) ? 'Choose a form first.' : !openOf(p.v).length ? 'Every role is filled.' : !b ? 'Select one card that is not on a role.' : undefined)} onPress={() => p.set('suggest', true)} />
+}
+const accept = (p: ViewProps) => {
+  const sg = suggestedOf(p.v), s = st(p, 'roles')
+  return <Action {...s} label={sg ? `Accept ${sg.role}` : 'Accept'} does="Puts the card on the role the helper suggested. Refuse it by placing the card yourself."
+    disabled={s.disabled ?? (sg ? (openOf(p.v).includes(sg.role) ? undefined : 'That role is filled now.') : 'No suggestion waits.')}
+    onPress={() => { if (sg) { setRole(p, sg.role, sg.item); p.set('suggested', '') } }} />
+}
+const check = (p: ViewProps) => <Action {...st(p, 'check')} label="Check" does="Runs the form’s rules: each role once, every conjugate on a filled direct role, and every card a real thing."
+  disabled={st(p, 'check').disabled ?? (formOf(p.v) ? undefined : 'Choose a form first.')} onPress={() => p.set('checkAsk', true)} />
+const fold = (p: ViewProps) => <Action {...st(p, 'fold')} label="Fold" does="Shows that a full sixfold and its conjugate fold into one whole, through the ground of the form."
+  disabled={st(p, 'fold').disabled ?? (complete(p.v) ? undefined : 'Fill every role and its conjugate first.')} onPress={() => p.set('fold', true)} />
+const declare = (p: ViewProps) => <Action {...st(p, 'declare')} label="Declare" does="Writes the constellation into your wiki, through its owner, with the whole, the form and every role."
+  disabled={st(p, 'declare').disabled ?? (strOf(p.v, 'check') === 'passed' ? undefined : 'Check the form first.')} onPress={() => p.set('declare', true)} />
+
 // ---------------------------------------------------------------- the pane at full size
 
 /** The board in the pane: frames, lines, cards, the sticky note, the last object added; the pane is what the camera frames. */
 function World({v}: {v: V}) {
-  const boxes = items(v), look = lookOf(v)
+  const boxes = arranged(v, items(v)), look = lookOf(v)
   if (!boxes) return <Missing w={PANE.w} h={PANE.h} size={14} say={['No reading of the items']} />
   if (!look) return <Missing w={PANE.w} h={PANE.h} size={14} say={['No reading of the camera']} />
   if (!boxes.length) return <Missing w={PANE.w} h={PANE.h} size={14} say={['No items on the board']} />
@@ -502,8 +646,24 @@ const defaults = {
   ]),
   lines: JSON.stringify([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]]),
   frames: JSON.stringify([{title: 'Lower three', members: ['Root', 'Sacral', 'Solar']}]),
+  // The form: none chosen on this board.
+  form: '', whole: 'question', roles: '{}', layout: 'free', role: '', suggested: '',
   // Readings: what the device reports, never set from here.
-  label: 'rises to', save: 'saved', waiting: 4,
+  label: 'rises to', save: 'saved', waiting: 4, check: '', checkWhy: '', declared: '',
+}
+
+// A board given a form: the six M domains round Quaternal Logic, set out as a person left them; Layout Form stands each on its role.
+const DOMAINS = [
+  {id: 'M0', name: 'M0 Anuttara', glyph: '○', tint: '#737599', x: -420, y: 150}, {id: 'M1', name: 'M1 Paramaśiva', glyph: '△', tint: '#a94138', x: -150, y: -330},
+  {id: 'M2', name: 'M2 Paraśakti', glyph: '◯', tint: '#5898a4', x: 300, y: -260}, {id: 'M3', name: 'M3 Mahāmāyā', glyph: '✧', tint: '#c2a852', x: 420, y: 160},
+  {id: 'M4', name: 'M4 Nara', glyph: '△', tint: '#638c69', x: 60, y: 330}, {id: 'M5', name: 'M5 Epii', glyph: '∞', tint: '#a590b0', x: -330, y: -120},
+]
+const DOMAIN_BOARD = {
+  items: JSON.stringify([{id: 'QL', kind: 'card', x: -47, y: -47, w: 94, h: 94, name: 'Quaternal Logic', glyph: '◎', tint: '#c67c46'},
+    ...DOMAINS.map(d => ({...d, kind: 'card', w: 94, h: 94}))]),
+  lines: JSON.stringify([['M5', 'M0'], ['M4', 'M5']]), label: 'returns to',
+  frames: JSON.stringify([{title: '1-2-3', members: ['M1', 'M2', 'M3']}, {title: '4/5/0', members: ['M4', 'M5', 'M0']}]),
+  whole: 'QL', form: 'sixfold', zoom: 55, cx: 0, cy: 20, sel: 'M4', waiting: 2,
 }
 
 export const design: DesignedDevice = {
@@ -516,6 +676,12 @@ export const design: DesignedDevice = {
     'Seven centres': {},
     'A refused line, bound as an elbow': {promote: 'refused', refusal: 'Open the native Scene before recording a relationship.', lineKind: 'elbow', fromSide: 'right', toSide: 'right'},
     'Two cards selected': {sel: 'Heart,Throat'},
+    'A form: the six domains': {...DOMAIN_BOARD, layout: 'form', check: 'passed', checkWhy: 'Each role once; no conjugate.',
+      roles: JSON.stringify(Object.fromEntries(DOMAINS.map(d => [d.id.slice(1), d.id])))},
+    'Three placed, one suggested': {...DOMAIN_BOARD, layout: 'form', role: '4',
+      roles: JSON.stringify({1: 'M1', 2: 'M2', 3: 'M3'}), suggested: JSON.stringify({role: '4', item: 'M4', confidence: .38})},
+    'A conjugate with no direct': {...DOMAIN_BOARD, form: 'twelvefold', layout: 'form', sel: 'M5', check: 'refused', checkWhy: 'Role 4′ has no card on 4. A conjugate stands only on a filled direct role.',
+      roles: JSON.stringify({0: 'M0', 1: 'M1', 2: 'M2', 3: 'M3', 5: 'M5', '4′': 'M4'})},
     'No readings': Object.fromEntries(Object.keys(defaults).map(k => [k, undefined])),
   },
 
@@ -527,8 +693,25 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => <Panel title="Canvas" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'board', label: 'Board'}, {id: 'lines', label: 'Lines'}]} page={p.page} onPage={p.setPage}>
-    {p.page === 'lines' ? <>
+    pages={[{id: 'board', label: 'Board'}, {id: 'lines', label: 'Lines'}, {id: 'form', label: 'Form'}]} page={p.page} onPage={p.setPage}>
+    {p.page === 'form' ? <>
+      <Band>
+        <Section width={260}><FormDisplay p={p} w={248} h={146} /></Section>
+        <Section label="Form" cols={2} grow>
+          {span2(formChooser(p))}{span2(wholeChooser(p))}{span2(layout(p))}
+        </Section>
+      </Band>
+      <Band>
+        <Section label="Place" cols={2}>
+          {span2(roleChooser(p))}{place(p)}{suggest(p)}{span2(accept(p))}
+        </Section>
+        <Section label="Owner" cols={2} grow>
+          {check(p)}<Readout label="check" does={strOf(p.v, 'checkWhy') || 'What the form’s rules said, the last time you checked.'} value={CHECK[strOf(p.v, 'check') ?? '']?.label ?? (has(p.v, 'check') ? 'Not run' : undefined)} tone={CHECK[strOf(p.v, 'check') ?? '']?.tone} />
+          {fold(p)}<Readout label="fields" does="Pairs whose two roles and their conjugates are all filled. Each is a four-by-four field of the whole." value={formOf(p.v)?.value === 'twelvefold' ? `${fieldsOf(p.v).length} of 9` : 'none'} />
+          {declare(p)}<Readout label="wiki" does="Whether the constellation stands in your wiki." value={DECLARED[strOf(p.v, 'declared') ?? '']?.label ?? (has(p.v, 'declared') ? 'Not yet' : undefined)} tone={DECLARED[strOf(p.v, 'declared') ?? '']?.tone} />
+        </Section>
+      </Band>
+    </> : p.page === 'lines' ? <>
       <Band>
         <Section width={206}><LineDisplay p={p} /></Section>
         <Section label="Path" cols={2} grow>
