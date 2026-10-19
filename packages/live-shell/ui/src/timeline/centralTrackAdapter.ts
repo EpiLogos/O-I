@@ -115,7 +115,8 @@ export function playingOf(listings: readonly {project: string | null; listing: N
 
 /** The owner's acts the tracks press. */
 export interface CentralControls {
-  launch?: (page: {location: CentralLocation; path: string}) => Promise<unknown>
+  /** Launch a page; it may answer how it opened (`opened`, words for the note). */
+  launch?: (page: {location: CentralLocation; path: string; form?: string}) => Promise<unknown>
   stop?: (playing: CentralPlaying) => Promise<unknown>
   /** Bring a world into today's set (the Day's write). */
   addWorld?: (world: CentralWorld) => Promise<unknown>
@@ -354,13 +355,14 @@ function centralActions(reading: CentralReading, worlds: readonly CentralWorld[]
     actions.launch = {op: 'the page owner\'s launch (kernel/src/page.rs): its NOW clearing allocated, or rejoined, and active', run: async clipId => {
       const page = byPath.get(clipId)
       if (!page) return {ok: false, error: `"${clipId}" is no page of today's worlds.`}
-      await launchPage({location: page.location, path: page.path})
-      return {ok: true, note: `${page.title} plays: it is open now.`}
+      const answer = await launchPage({location: page.location, path: page.path, form: page.form})
+      const opened = (answer as {opened?: unknown} | null)?.opened
+      return {ok: true, note: `${page.title} plays: ${typeof opened === 'string' ? opened : 'it is open now'}.`}
     }}
     actions.launchStop = {op: 'every page in the row launched through the page owner', run: async columnId => {
       const inRow = rowPages.get(columnId) ?? []
       if (!inRow.length) return {ok: false, error: 'The row holds no page to launch.'}
-      for (const page of inRow) await launchPage({location: page.location, path: page.path})
+      for (const page of inRow) await launchPage({location: page.location, path: page.path, form: page.form})
       return {ok: true, note: `${plural(inRow.length, 'page plays', 'pages play')}.`}
     }}
   }
