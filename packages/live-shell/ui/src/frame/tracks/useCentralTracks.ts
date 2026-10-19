@@ -10,7 +10,7 @@
 // The acts: Launch and Stop are the page owner's (pageOwner.ts launchPage, stopPage); a world dropped on the empty track is written
 // into the Day's set (writeDaySet); every world's Arm is the shell's one write arm. After an act the readings it moved are read
 // again. Registered as `base: worldCut(useCentralTracks)` in modeTracks.ts.
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import {useAgentShellOptional} from '../../agent/AgentShellContext'
 import {shellWriteArm} from './useFactoryTracks'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
@@ -22,6 +22,9 @@ import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading
 import {daySetOf, withWorld, writeDaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
 import {openLaunched} from '../../central/launchOpening'
+import {subscribeSystem, systemBodies} from '../../projections/atlas/system/systemStore'
+import {worldColourOf} from '../../projections/atlas/system/systemModel'
+import {practiceWorldOf} from '../../../../../../desktop/cradle/src/nara/practiceWorld'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
@@ -122,5 +125,13 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
     }
   }, [transport, armOn, aperture?.sourceRef, aperture?.documentId, after, refreshGround]) // eslint-disable-line react-hooks/exhaustive-deps
   const civil = useMemo(() => civilReadingOf(source), [source])
-  return useMemo(() => projectCentralTracks({civil, worlds, set, pages, playing, controls}), [civil, worlds, set, pages, playing, controls])
+  // Each world wears its body's colour (manual §17.2 "Your system"); the practice world stands as Practice (T-WORLDS §6 W4).
+  const bodies = useSyncExternalStore(subscribeSystem, systemBodies, systemBodies)
+  const colours = useMemo(() => new Map(inSet.map(world => [world.ref, worldColourOf(bodies, world.ref).core])), [inSet, bodies])
+  // Only a register of its own is a practice track: when your world keeps the practice pages, your world stays your world.
+  const practice = useMemo(() => {
+    const found = worlds.state === 'read' ? practiceWorldOf(worlds.worlds) : null
+    return found?.register === 'practice' ? found.world.ref : null
+  }, [worlds])
+  return useMemo(() => projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice}), [civil, worlds, set, pages, playing, controls, colours, practice])
 }
