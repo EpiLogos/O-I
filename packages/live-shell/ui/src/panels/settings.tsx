@@ -1,9 +1,12 @@
 import { registerPanel } from '../shell/panels'
-import { SettingsWorkspace } from '../settings/SettingsWorkspace'
+import { loadWhenDrawn } from '../shell/loadWhenDrawn'
 import { useSettingsHost } from '../settings/host'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { createDevelopmentSettingsAdapter, developmentDrafts, scenarioNames, type DevelopmentScenario } from '../settings/development'
+
+// Settings' pages load when the panel first draws, not with the shell (shell/loadWhenDrawn.ts).
+const SettingsWorkspace = loadWhenDrawn('Settings', () => import('../settings/SettingsWorkspace').then(module => module.SettingsWorkspace))
 
 /** Preferences have their own usable depth even when the retained instrument
  * detail occupies most of the frame. Hiding the contribution hides the window;
