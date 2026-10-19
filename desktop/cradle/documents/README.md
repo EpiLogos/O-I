@@ -131,7 +131,7 @@ The byte-exact received 0/1 file above remains unchanged; the 4+2 form stayed by
 
 The owner asked for the existing templates to be brought onto the UI of the current system and the daily die fixed and hardened (wayfinder
 MAP, "Lanes now", the pages lane). `ql-daily-die.html` is revised from the retained 0.3 bytes recorded above (`c8e81e8a…`, 466,929 bytes)
-to `ql-template: daily-die v0.4` (78,474 bytes, sha-256 `b9104284de58877785047db7c2b76b830ca9bb6745588e13302f18fb24c5cca3`); `forms.json`
+to `ql-template: daily-die v0.4` (78,286 bytes, sha-256 `99300b1defddb803e8fe5c09cf7ce9688bba591b84226456d462d3e4be42e38c`); `forms.json`
 names it `authored-current`. The payload is unchanged (`meta.template: ql-daily v0.1`), so every Day the owner holds projects as before.
 
 - **The shell's paper family.** The form's colours, type families and mono are the shell's tokens (`packages/live-shell/ui/src/styles.css`
@@ -144,6 +144,8 @@ names it `authored-current`. The payload is unchanged (`meta.template: ql-daily 
 - **The die, from the census of 19 Oct** (`tests/day-die-browser.mjs`): an open die shows pages, never pips, and the faces around the open
   one go once the net lies flat; the open face stands below the header; the label names the face the die is going to at once, and a turn
   asked while it turns runs on without opening between; Enter, Esc and a double click asked during a turn are kept, and Esc on an open
-  turn goes out from the shut die; the face's head fits its rows. The host's bridge (`src/central/dayForm.ts projectDieDocument`) turns,
+  turn goes out from the shut die; the face's head fits its rows. In space the die rests square on its open face, wearing its
+  pips (no page peeks through, so none is cut at the face's foot), breathes rather than sways, and settles square after a drag; the
+  two-line instruction under it is gone (a component carries no explanatory line). The host's bridge (`src/central/dayForm.ts projectDieDocument`) turns,
   opens and closes the die and hears the face the form shows.
 

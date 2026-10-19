@@ -22,7 +22,7 @@ const eq=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);c
 /** What the die shows: the dot that is current, the masks' classes, the faces that are live or away, open or in space. */
 const reading=frame=>frame.evaluate(()=>({
  current:[...document.querySelectorAll(".dots button")].findIndex(b=>b.getAttribute("aria-current")==="true"),
- masks:[...document.querySelectorAll(".mask")].map(m=>m.classList.contains("off")?"off":m.classList.contains("peek")?"peek":"on"),
+ masks:[...document.querySelectorAll(".mask")].map(m=>m.classList.contains("off")?"off":"on"),
  live:[...document.querySelectorAll(".face")].findIndex(f=>f.classList.contains("live")),
  away:[...document.querySelectorAll(".face")].map(f=>f.classList.contains("away")),
  open:document.getElementById("chrome").classList.contains("in"),
@@ -43,7 +43,15 @@ try{
  const page=await browser.newPage({viewport:{width:1100,height:760}});const errors=[];page.on("pageerror",e=>errors.push(e.message));
  await page.setContent(form);await page.waitForTimeout(900);
  let r=await reading(page);
- eq(r.masks,["peek","on","on","on","on","on"],"in space each face wears its pips and the front one peeks at its page");
+ eq(r.masks,["on","on","on","on","on","on"],"in space every face wears its pips, the one it rests on too");
+ // Seen 19 Oct in the Day pane: the die rested turned, the open face's page printed on the face and cut at its foot; an instruction
+ // sat under it. It rests square on its face, the face is its pips, and no explanatory line stands in the form.
+ const rest=await page.evaluate(()=>{const f=document.querySelector('.face[data-face="0"]').getBoundingClientRect();
+   const shown=[...document.querySelectorAll('.face .sheet')].map(s=>getComputedStyle(s).opacity);
+   return {w:f.width,h:f.height,cx:f.left+f.width/2-innerWidth/2,sheets:shown,hint:document.querySelectorAll(".foot .hint").length,foot:document.querySelector(".foot").innerText};});
+ ok(Math.abs(rest.w-rest.h)<=rest.w*0.02&&Math.abs(rest.cx)<=2,`the die rests square and centred on its face (${Math.round(rest.w)}×${Math.round(rest.h)}, ${rest.cx.toFixed(1)} off centre)`);
+ eq(rest.sheets,["0","0","0","0","0","0"],"no page shows on a face while the die stands in space");
+ eq([rest.hint,/Click a face/.test(rest.foot)],[0,false],"no instruction line stands under the die");
 
  // Seen 19 Oct: an opened face covered the header (the date sat on the card), and the faces around it showed their pips at the edges.
  await key(page,"Enter");await page.waitForTimeout(SETTLE);r=await reading(page);
@@ -65,7 +73,7 @@ try{
  shots=await film(page,[[0,"ArrowLeft"],[120,"Escape"]],SETTLE+600);
  r=await reading(page);eq([r.open,r.current],[false,1],"Esc pressed during the turn is kept: the die rests in space on the face it turned to");
  ok(!shots.some(s=>s.t>120&&s.away.some(Boolean)),"it never lay open between the Esc and going out");
- eq(r.masks[1],"peek","the front face peeks at its page");
+ eq(r.masks[1],"on","back in space, the face it rests on wears its pips");
 
  // Enter pressed while the die turns in space: kept, and done once it rests.
  await film(page,[[0,"ArrowRight"],[100,"Enter"]],SETTLE+900);
