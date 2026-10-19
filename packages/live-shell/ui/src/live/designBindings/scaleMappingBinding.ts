@@ -67,6 +67,9 @@ function writeStanding(device: NoteDevice | null, reading: LiveModeCatalogueStat
   if (key === 'enabled' || key === 'tie') return device ? (key === 'tie' && device.kind !== 'scale' ? 'Only a Scale device has a tie.' : null) : NO_DEVICE
   if (key === 'mode.root' || key === 'mode.key') return catalogueWhy(reading)
   if (key === 'mode.lens' || key === 'mode.sources' || key === 'mode.absent') return 'A reading: the owner\'s catalogue, as the kernel serves it.'
+  if (key === 'mode.source') return 'Only your hand sets the mode here: the transport has no Sky key source, and the shell reads no hour ruler.'
+  if (key === 'sky.hourRuler') return 'No hour ruler reaches the shell: the hours are counted at a place, and no observer place reaches it.'
+  if (key === 'sky.bound') return 'No hour ruler reaches the shell, so no maqām is bound to it here.'
   return `${key}: no setting of the Scale device or the mode it folds onto.`
 }
 
@@ -104,7 +107,7 @@ export function applyScaleMappingChanges(device: NoteDevice | null, reading: Liv
 export function scaleMappingBinding(id: string, device: NoteDevice | null, reading: LiveModeCatalogueState, hold: LiveModeHold,
   writers: ScaleMappingWriters = OWNERS): DesignBinding {
   const standing: Record<string, Standing> = {}
-  for (const key of ['enabled', 'tie', 'mode.root', 'mode.key', 'mode.lens', 'mode.sources', 'mode.absent']) {
+  for (const key of ['enabled', 'tie', 'mode.root', 'mode.key', 'mode.lens', 'mode.sources', 'mode.absent', 'mode.source', 'sky.hourRuler', 'sky.bound']) {
     const why = writeStanding(device, reading, key)
     if (why) standing[key] = {disabled: why}
   }

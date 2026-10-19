@@ -241,6 +241,13 @@ export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   natalBodies: 'The birth sky is the person\'s saved Nara identity (ql.nara-natal/v1): launch your Being page as Sky, and the Sky reads it from your identity.',
   aspectList: 'The transit lists no aspects; the view finds them from the bodies by the owner\'s rule.',
   moves: 'No compiled modulation plan runs in the shell: nothing the sky moves is evaluated, so no move is reported.',
+  dayRuler: 'The rulers are counted from sunrise at a place, and no observer place reaches the shell.',
+  hourRuler: 'The rulers are counted from sunrise at a place, and no observer place reaches the shell.',
+  hourOf: 'The hours are counted from sunrise and sunset at a place, and no observer place reaches the shell.',
+  hourHalf: 'The hours are counted from sunrise and sunset at a place, and no observer place reaches the shell.',
+  sunrise: 'No observer place reaches the shell, so no sunrise is read.',
+  sunset: 'No observer place reaches the shell, so no sunset is read.',
+  place: 'No observer place reaches the shell.',
 }
 
 /** The keys the view holds (DesignBinding.local): the date it asks for, and its own drawing choices. */

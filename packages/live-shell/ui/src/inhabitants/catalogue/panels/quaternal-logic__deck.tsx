@@ -3,7 +3,10 @@
 // is the spread by its own law: the six positions laid in their pairs, P0 over P5, P1 over P4, P2 over P3 (a pair reads as one),
 // each card by its name and the codon it belongs to, a reversed card turned; the Sphere fills P0 and P1, the Torus all six, the
 // Klein adds the night cards P0′ to P5′ under the day. An I Ching reading draws its six lines from the bottom, the moving lines
-// (6 and 9) marked, and the hexagram they turn into beside it: a 6 becomes yang, a 9 yin.
+// (6 and 9) marked, and the hexagram they turn into beside it: a 6 becomes yang, a 9 yin. A line cast 6 or 9 moves, 7 or 8 rests,
+// and the bases carry the same four values: A Old Yin 6, T Old Yang 9 (the moving bases), C Young Yin 8, G Young Yang 7 (the resting).
+// Under the matrix you choose the hexagram is a generation cell: its lower trigram's pair under its upper trigram's, the positive
+// codon (a·c·d) and the negative (a·b·d), one codon when the cell is non-dual.
 //
 // Owners. The readings are Quaternal Logic's oracle journey (crates/ql-mef/src/nara/domain/oracle_journey.rs,
 // `ql.nara-oracle-journey/v1`, reached by `ql epi-agent invoke nara.journey.*`); no caller in the shell reaches it yet, so the
@@ -14,6 +17,8 @@
 //   placements    [{position: 'P0'..'P5' | "P0'".."P5'", name, codons: [n], reversed}] — a Placement with its CardIdentity
 //   iching        {lines: six of 6..9 from the bottom, nuclear} — an IChingReading
 //   m3.card       the card of the codon now, from the M3 state (`ql.m3-state/v1` `tarot`, through the kernel op m3_reception)
+//   matrix        'complementary' | 'moving-resting' | 'same-quality': the matrix whose generation cell shows, for the I Ching
+//   generation    {hexagram, lower, upper, positive, negative, nonDual} — the kernel's cell (ql_m3_generate) of the primary hexagram
 // Pairs, Lemniscate and Moving lines show or open parts of the reading; Agent reads is how an agent's reading arrives.
 import {Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -26,6 +31,10 @@ const SPREADS = [{value: 'sphere', label: 'Sphere', does: 'Two cards: a quick be
 const DRAWS = [{value: 'random', label: 'Random', does: 'The cards or the lines come at random.'}, {value: 'hand', label: 'By hand', does: 'You pick each card or line.'}] as const
 const AGENT = [{value: 'off', label: 'Off', does: 'The agent does not read.'}, {value: 'propose', label: 'Propose', does: 'Each reading the agent makes waits for you to accept it.'},
   {value: 'write', label: 'Write', does: 'The agent\'s readings go in directly, each with a receipt.'}] as const
+const MATRICES = [{value: 'complementary', label: 'Complementary', does: 'Complementary: A with T, C with G.'}, {value: 'moving-resting', label: 'Moving and resting', does: 'Moving and resting: A with G, T with C.'},
+  {value: 'same-quality', label: 'Same quality', does: 'Same quality: A with C, T with G.'}] as const
+/** The coin values the bases carry, as the lines do (M3-COIN-1). */
+const COIN: Record<string, number> = {A: 6, T: 9, C: 8, G: 7}
 const QUESTION = ['Why', 'What', 'How', 'Who', 'Where', 'Why for']
 /** Where a position stands: the day row P0 P1 P2 over P5 P4 P3, so each pair stands in one column. */
 const COLUMN = [0, 1, 2, 2, 1, 0], ROW = [0, 0, 0, 1, 1, 1]
@@ -45,6 +54,20 @@ function ichingOf(v: V): {lines: number[]; nuclear?: number} | undefined {
   if (!rec(raw) || !Array.isArray(raw.lines) || raw.lines.length !== 6 || !raw.lines.every(l => l === 6 || l === 7 || l === 8 || l === 9)) return undefined
   return {lines: raw.lines as number[], nuclear: Number.isInteger(raw.nuclear) ? raw.nuclear as number : undefined}
 }
+interface Cell {readonly hexagram?: number; readonly lower: string; readonly upper: string; readonly positive: string; readonly negative: string; readonly nonDual: boolean}
+function generationOf(v: V): Cell | undefined {
+  const raw = json<unknown>(v, 'generation', undefined), pair = /^[ATCG]{2}$/, codon = /^[ATCG]{3}$/
+  if (!rec(raw) || typeof raw.lower !== 'string' || !pair.test(raw.lower) || typeof raw.upper !== 'string' || !pair.test(raw.upper) || typeof raw.positive !== 'string' || !codon.test(raw.positive)
+    || typeof raw.negative !== 'string' || !codon.test(raw.negative) || typeof raw.nonDual !== 'boolean') return undefined
+  return {hexagram: Number.isInteger(raw.hexagram) ? raw.hexagram as number : undefined, lower: raw.lower, upper: raw.upper, positive: raw.positive, negative: raw.negative, nonDual: raw.nonDual}
+}
+/** A codon with its bases' values: "G7 G7 C8". */
+const valued = (codon: string) => [...codon].map(b => `${b}${COIN[b]}`).join(' ')
+/** The cell in the room it has. */
+const cellWords = (c: Cell, big: boolean) => big
+  ? `${c.lower} under ${c.upper}: ${c.nonDual ? `${valued(c.positive)}, non-dual` : `+ ${valued(c.positive)} · − ${valued(c.negative)}`}`
+  : `${c.lower}/${c.upper} → ${c.nonDual ? `${c.positive}, one` : `${c.positive} · ${c.negative}`}`
+
 /** The short rank of a card, for a small card. */
 const SHORT: Record<string, string> = {Ace: 'A', Two: '2', Three: '3', Four: '4', Five: '5', Six: '6', Seven: '7', Eight: '8', Nine: '9', Ten: '10', Page: 'Pg', Knight: 'Kn', Queen: 'Q', King: 'K', Princess: 'Pr', Prince: 'Pc'}
 
@@ -97,14 +120,15 @@ function Spread({p, w, h, handles, big}: {p: ViewProps; w: number; h: number; ha
 
 /** The hexagram, its lines from the bottom, the moving lines marked, and the hexagram they turn into. Handle 1 shows or hides the move. */
 function Hexagram({p, w, h, handles, big}: {p: ViewProps; w: number; h: number; handles: boolean; big: boolean}) {
-  const v = p.v, ic = ichingOf(v), moving = boolOf(v, 'movingLines') !== false, ms = st(p, 'movingLines')
+  const v = p.v, ic = ichingOf(v), moving = boolOf(v, 'movingLines') !== false, ms = st(p, 'movingLines'), cell = generationOf(v)
   if (!ic) return <text x={w / 2} y={h / 2} textAnchor="middle" className="dp-ink-dim">{strOf(v, 'reason') ?? 'No reading'}</text>
-  const hw = Math.min(w * .32, h * .55), lh = (h - 40) / 6, x0 = w * .1, x1 = w - w * .1 - hw
+  const hw = Math.min(w * .32, h * .55), lh = (h - 40) / 6, x0 = w * .1 + (big ? 14 : 0), x1 = w - w * .1 - hw
   const draw = (x: number, lines: number[], marks: boolean) => lines.map((l, i) => { const y = h - 16 - (i + .5) * lh, yang = l === 7 || l === 9, move = l === 6 || l === 9
     return <g key={i}>
       {yang ? <rect x={x} y={y - lh * .18} width={hw} height={lh * .36} fill="var(--dp-value)" />
         : <><rect x={x} y={y - lh * .18} width={hw * .42} height={lh * .36} fill="var(--dp-value)" /><rect x={x + hw * .58} y={y - lh * .18} width={hw * .42} height={lh * .36} fill="var(--dp-value)" /></>}
       {marks && move && moving && <circle cx={x + hw + 7} cy={y} r={2.6} fill="var(--dp-on)" />}
+      {marks && big && <text x={x - 8} y={y + 4} textAnchor="end" className={move ? 'dp-ink' : 'dp-axis'} style={{fontSize: 11}}>{l}</text>}
     </g> })
   const turned = ic.lines.map(l => (l === 6 ? 7 : l === 9 ? 8 : l))
   const anyMove = ic.lines.some(l => l === 6 || l === 9)
@@ -114,6 +138,7 @@ function Hexagram({p, w, h, handles, big}: {p: ViewProps; w: number; h: number; 
     {moving && anyMove && <><text x={x1} y={h - 3} className="dp-axis" style={{fontSize: big ? 11 : 8.5}}>becomes</text>{draw(x1, turned, false)}
       <path d={`M${f1(x0 + hw + 14)} ${f1(h / 2)}L${f1(x1 - 6)} ${f1(h / 2)}`} className="dp-curve-on" /></>}
     {big && ic.nuclear !== undefined && <text x={w - 4} y={14} textAnchor="end" className="dp-ink-dim">nuclear hexagram {ic.nuclear}</text>}
+    <text x={big ? x0 : 4} y={big ? 14 : 9} className={cell ? 'dp-ink' : 'dp-ink-dim'} style={{fontSize: big ? 12 : 8}}>{cell ? cellWords(cell, big) : big ? 'No generation cell from the kernel' : NONE}</text>
     {handles && anyMove && <Handle n={1} shape="square" x={moving ? x1 - 6 : x0 + hw + 14} y={h / 2} label="Moving lines"
       does={`Drag right to show the lines that change and what they become, left to hide them.${ms.disabled ? ` ${ms.disabled}` : ''}`}
       onDrag={ms.disabled ? undefined : x => { const show = x > (x0 + hw + x1) / 2; if (show !== moving) p.set('movingLines', show) }} onReset={ms.disabled ? undefined : () => p.set('movingLines', true)} />}
@@ -139,6 +164,8 @@ function controls(p: ViewProps) {
     lemniscate: <Toggle {...st(p, 'lemniscate')} label="Lemniscate" does="Open the reading of position P4." on={boolOf(v, 'lemniscate') === true} onChange={x => p.set('lemniscate', x)} disabled={st(p, 'lemniscate').disabled ?? why} />,
     moving: <Toggle {...st(p, 'movingLines')} label="Moving lines" does="Mark the lines that change, and show what they become." on={boolOf(v, 'movingLines') !== false} onChange={x => p.set('movingLines', x)}
       disabled={st(p, 'movingLines').disabled ?? (tarot ? 'A tarot spread has no lines.' : undefined)} />,
+    matrix: <Chooser {...st(p, 'matrix')} wide label="Matrix" does="For the I Ching, the matrix whose generation cell shows." value={strOf(v, 'matrix') ?? ''} options={MATRICES} onChange={x => p.set('matrix', x)}
+      disabled={st(p, 'matrix').disabled ?? (tarot ? 'A tarot spread has no generation cell.' : undefined)} />,
     theme: <TextField {...st(p, 'theme')} wide label="Theme" does="The concern, in its deeper form." placeholder="the concern" value={strOf(v, 'theme') ?? ''} onChange={x => p.set('theme', x)} />,
     journey: <Chooser {...st(p, 'journey')} wide label="Journey" does="The journey that the reading joins." value={strOf(v, 'journey') ?? ''}
       options={strOf(v, 'journey') ? [{value: strOf(v, 'journey')!, label: strOf(v, 'journey')!}] : []} onChange={x => p.set('journey', x)}
@@ -158,6 +185,8 @@ export const design: DesignedDevice = {
     placements: day([['P0', 'Five of Cups', [7]], ['P1', 'Ten of Wands', [17]], ['P2', 'Page of Pentacles', [40], true], ['P3', 'Six of Swords', [51]], ['P4', 'Two of Cups', [3]],
       ['P5', 'Three of Wands', [22]]]),
     iching: JSON.stringify({lines: [7, 8, 9, 7, 6, 8], nuclear: 32}),
+    // ql_m3_generate on main (61c0e16): the lines above are hexagram 13, Li under Zhen.
+    matrix: 'complementary', generation: JSON.stringify({hexagram: 13, lower: 'GG', upper: 'GC', positive: 'GGC', negative: 'GGC', nonDual: true}),
     'm3.card': 'Five of Cups',
   },
   fixtures: {
@@ -166,7 +195,8 @@ export const design: DesignedDevice = {
       ['P4', 'Two of Cups', [3]], ['P5', 'Three of Wands', [22]], ["P0'", 'Three of Swords', [62]], ["P1'", 'Six of Cups', [12]], ["P2'", 'King of Pentacles', [33, 36]], ["P3'", 'Seven of Pentacles', [45]],
       ["P4'", 'Eight of Swords', [58], true], ["P5'", 'Queen of Wands', [27, 30]]])},
     'An I Ching reading': {deck: 'iching'},
-    'As the shell has it': {placements: undefined, iching: undefined, theme: undefined, journey: undefined, reason: 'No journey owner reaches the shell'},
+    'I Ching, moving and resting': {deck: 'iching', matrix: 'moving-resting', generation: JSON.stringify({hexagram: 13, lower: 'GG', upper: 'CT', positive: 'GCT', negative: 'GGT', nonDual: false})},
+    'As the shell has it': {placements: undefined, iching: undefined, generation: undefined, theme: undefined, journey: undefined, reason: 'No journey owner reaches the shell'},
   },
 
   folded: p => <Folded title="Deck" light="unknown" readings={[DECKS.find(d => d.value === strOf(p.v, 'deck'))?.label ?? NONE, corner(p.v)]} onUnfold={p.nav.unfold} />,
@@ -186,7 +216,7 @@ export const design: DesignedDevice = {
           <Display w={w} h={146} label="The reading" does={`${DISPLAY_DOES} Drag handle 1.`} corner={corner(p.v)}><Picture p={p} w={w} h={146} handles big={false} /></Display>
         </Section>
         <Section label="Reading" width={76}>{c.deck}{c.spread}</Section>
-        <Section label="Show" grow>{c.pairs}{c.lemniscate}{c.moving}</Section>
+        <Section label="Show" grow>{c.pairs}{c.lemniscate}{c.moving}{c.matrix}</Section>
       </Band>
       <Band>
         <Section label="Concern" width={170}>{c.theme}{c.journey}

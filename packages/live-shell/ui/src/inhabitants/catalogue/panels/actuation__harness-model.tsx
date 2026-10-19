@@ -5,8 +5,11 @@
 // it is doing, a short row of macros, and pages for the rest. The well draws the agent's own
 // readings: its face (the shell's agent face, agent/maskFace.ts), the turns used against the budget as a ruler, the effort as four
 // rungs, where an interrupt lands, and the heartbeat needle on the shell's 90 s horizon (agent/agentRunModel.ts HEARTBEAT_HORIZON_MS).
+// In Anima or Aletheia the agent stands in a team space (QL `ql context-frame team-space`, `ql.vak-team-space/v1`): Team cell reads
+// its row (a context frame), the question that row asks of it by day or by night, and its depth (one of the six M domains), on
+// team.space ('Anima' | 'Aletheia', or 'none' when the agent is in no team), team.row, team.question and team.depth.
 import {memo, useLayoutEffect, useMemo, useState} from 'react'
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
+import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
 import {NONE, boolOf, clampTo, json, numOf, prefixed, scoped, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {CustodyBands, design as custody} from './software-factory__agent-custody'
@@ -48,6 +51,15 @@ const sampleThread = ({bash, queued, stalled}: {bash?: 'runs' | 'waits'; queued?
   {who: 'you', kind: queued ? 'queued' : 'steer', text: 'Skip the cradle root. Nothing changed there.'},
   {who: 'Flint', kind: 'proposal', tool: 'agentParamAddresses.ts', text: 'add the model row to the agent device'},
   ...(stalled ? [{who: 'stall', kind: 'stall', tool: 'Bash', text: 'tsc --noEmit waits for output.'}] : []),
+])
+
+/** A team member's stream: it asks a decision helper (its face the Owl) a typed question, and the answer stands as evidence. */
+const TEAM_THREAD = JSON.stringify([
+  {who: 'you', kind: 'you', text: 'Say where the October journey stands, from what was written this week.'},
+  {who: 'Eros', kind: 'agent', text: 'I will read the week\'s pages, then ask which of them are done.'},
+  {who: 'tool', kind: 'tool', tool: 'Read', text: 'October journey · 9 pages'},
+  {who: 'Eros', kind: 'ask', tool: 'Owl', text: 'Is the page "Threshold, second draft" done?', labels: ['done', 'in progress', 'not begun'], out: 'in progress'},
+  {who: 'Eros', kind: 'agent', text: 'Six pages are done and three are in progress. The threshold page is the furthest along.'},
 ])
 
 // ---------------------------------------------------------------- readings, each absent when the owner has not reported it
@@ -229,6 +241,15 @@ function Last({v}: {v: V}) {
     : last.kind === 'proposal' ? <><b>{last.who}</b> Proposal · {text}</> : <><b>{last.who}</b> {text}</>
 }
 
+/** Team cell: where the agent stands in Anima or Aletheia — its row, the question the row asks of it, and its depth. */
+function teamRows(v: V): RowItem[] {
+  const space = strOf(v, 'team.space'), row = strOf(v, 'team.row'), question = strOf(v, 'team.question'), depth = strOf(v, 'team.depth')
+  if (space === 'none') return [{id: 'none', name: 'In no team', light: 'dark', note: NONE}]
+  if (space === undefined && row === undefined) return [{id: 'none', name: 'No reading of the team space', light: 'unknown', note: NONE}]
+  const line = (id: string, name: string | undefined, note: string): RowItem => ({id, name: name ?? NONE, light: name === undefined ? 'unknown' : 'lit', tone: 'value', note})
+  return [line('row', row === undefined ? undefined : `${space ?? NONE} · ${row}`, 'row'), line('question', question, 'asks'), line('depth', depth, 'depth')]
+}
+
 /** The Run page: how the agent runs — its well, effort and budget, input, what it runs on, and its heartbeat. */
 function AgentBands({p}: {p: ViewProps}) {
   return <>
@@ -254,6 +275,7 @@ function AgentBands({p}: {p: ViewProps}) {
         <Chooser {...st(p, 'model')} label="Model" does="The model for this session." value={strOf(p.v, 'model') ?? ''} options={optionsOf(p.v, 'models', 'model', m => m.replace('model:', ''))} onChange={x => p.set('model', x)} />
         <Chooser {...st(p, 'harness')} label="Harness" does="The program that runs the agent." value={strOf(p.v, 'harness') ?? ''} options={optionsOf(p.v, 'harnesses', 'harness')} onChange={x => p.set('harness', x)} />
       </Section>
+      <Section label="Team cell" width={176}><Rows does="Where the agent stands in Anima or Aletheia: its row, the question the row asks of it, and its depth. Read from the team space." items={teamRows(p.v)} size={3} /></Section>
       <Section label="Heartbeat" cols={3} grow>
         <Toggle {...st(p, 'heartbeat')} label="Beat" does={SAYS.heartbeat} on={boolOf(p.v, 'heartbeat') === true} unknown={boolOf(p.v, 'heartbeat') === undefined} onChange={x => p.set('heartbeat', x)} />
         <Readout label="needle" does="Live while the agent checked in within 90 s. Stalled after that." value={needle(p.v) === 'unread' ? undefined : needle(p.v)} tone={needle(p.v) === 'stalled' ? 'stall' : 'value'} />
@@ -288,6 +310,9 @@ export const design: DesignedDevice = {
     'Agent moved Effort': {effort: 'max', effortHeld: 'Flint'},
     'You edited a held file': prefixed('custody.', custody.fixtures?.['You edited a file'] ?? {}, CUSTODY_SHARED),
     'A proposed agent': prefixed('id.', identity.fixtures?.['A proposed team lead'] ?? {}, IDENTITY_SHARED),
+    // `ql context-frame team-space` on main (61c0e16): Eros holds CF3 in Anima; by day the row asks 4.2.
+    'In a team': {agent: 'Eros', 'team.space': 'Anima', 'team.row': 'CF3', 'team.question': '4.2 What is being done?', 'team.depth': 'M3 Journey', thread: TEAM_THREAD, 'thread.thread': TEAM_THREAD,
+      'thread.session': 'journey', 'thread.selected': 'journey', 'thread.sessions': JSON.stringify([{id: 'journey', name: 'Where the October journey stands', short: 'journey', agent: 'Eros', model: 'claude-sonnet-4.6', used: 7, cap: 12, thread: JSON.parse(TEAM_THREAD)}])},
     Benched: {light: 'dark', age: -1, thread: sampleThread({})},
     'Not read': {light: 'unknown', used: -1, age: -1, thread: sampleThread({})},
     'No readings': {...Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',

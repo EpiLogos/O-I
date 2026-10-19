@@ -11,9 +11,10 @@
 //   named members and the orchestrator — central.agent-set.resolve; state is working · idle · stalled · done · failed, the host's words
 //   for Factory's LegStatus and Hermes' status; tail is subagent.tail; files are Factory's custody rows by member),
 //   fanOut (delegation.max_concurrent_children), depth (delegation.max_spawn_depth), handBack (summary · digest · raw), returnCap
-//   (delegation.max_summary_chars, 0 = no cap), model ('inherit', or the id of delegation.model), models (a JSON list of {id, label?}).
-// The owner is asked to write:  fanOut, depth, handBack, returnCap and model (the Hermes delegation block of the harness config; no
-//   config.set key carries it yet), and the action retry (Factory's RetryGrant, factory/src/orchestration.rs).
+//   (delegation.max_summary_chars, 0 = no cap), model ('inherit', or the id of delegation.model), models (a JSON list of {id, label?}),
+//   join (all · relay · weighted · count: how the members' returns combine).
+// The owner is asked to write:  fanOut, depth, handBack, returnCap, model and join (the Hermes delegation block of the harness config;
+//   no config.set key carries it yet), and the action retry (Factory's RetryGrant, factory/src/orchestration.rs).
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
 import {memo, useLayoutEffect, useMemo, useState, type CSSProperties} from 'react'
 import {KindMark} from '../../sdk/marks'
@@ -48,11 +49,18 @@ const HANDBACKS: readonly Option<string>[] = [
   {value: 'digest', label: 'Digest', does: 'The helper returns its closing note, its tool calls and the files it touched.'},
   {value: 'raw', label: 'Raw', does: 'The helper returns its whole thread.'},
 ]
+const JOINS: readonly Option<string>[] = [
+  {value: 'all', label: 'All', does: 'Every return is kept.'},
+  {value: 'relay', label: 'Relay', does: 'Each member gets only what the last left open.'},
+  {value: 'weighted', label: 'Weighted', does: 'The returns are weighed together into one reading.'},
+  {value: 'count', label: 'Count', does: 'The set commits when enough members agree.'},
+]
 const SAYS = {
   list: 'One chain for each member, nested as they were spawned. The light is the member\'s state and the chip its model. Where a number shows, it counts tool calls. Press a name to choose it.',
   fanOut: 'The most helpers that run at once. The group has no upper limit; you set one.',
   depth: 'How many levels of helpers may sit below the lead. At 1, helpers do not spawn helpers.',
   handBack: 'What a helper returns to its parent: its closing note, a digest or its whole thread.',
+  join: 'How the members\' returns combine.',
   cap: 'The most characters of a Summary that reach the parent. A longer one keeps its head and tail. 0 is no cap.',
   model: 'The model for everything the group spawns. A member can set its own.',
   retry: 'Run the chosen member\'s task again, when it is stalled or failed.',
@@ -177,6 +185,9 @@ const depthBox = (p: ViewProps) => <ValueBox label="Depth" does={SAYS.depth} val
   onChange={x => p.set('depth', Math.round(x))} {...st(p, 'depth')} />
 const handBack = (p: ViewProps) => <Radio label="Hand-back" does={SAYS.handBack} value={strOf(p.v, 'handBack') ?? ''} options={HANDBACKS} stack
   onChange={x => p.set('handBack', x)} {...st(p, 'handBack')} />
+
+const joinRadio = (p: ViewProps) => <Radio label="Join" does={SAYS.join} value={strOf(p.v, 'join') ?? ''} options={JOINS} stack
+  onChange={x => p.set('join', x)} {...st(p, 'join')} />
 
 /** The model options the owner reports, with "the lead's model" first; a pinned model the list lacks still stands in it. */
 const modelOptions = (v: V): Option<string>[] => {
@@ -330,7 +341,7 @@ const HELPERS = [
 const MODELS = [{id: 'glm-5.3-flash'}, {id: 'glm-5.2'}, {id: 'glm-5'}, {id: 'glm-4-9b'}]
 
 /** Every key the owners report: the "No readings" fixture drops all of them. */
-const KEYS = ['light', 'crew', 'member', 'members', 'fanOut', 'depth', 'handBack', 'returnCap', 'model', 'models']
+const KEYS = ['light', 'crew', 'member', 'members', 'fanOut', 'depth', 'handBack', 'returnCap', 'model', 'models', 'join']
 const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, undefined]))
 
 export const design: DesignedDevice = {
@@ -338,12 +349,13 @@ export const design: DesignedDevice = {
   title: 'Agentset rack',
   kind: 'rack',
   defaults: {
-    light: 'lit', crew: 'oi-guardians', member: LEAD, fanOut: FAN_DEFAULT, depth: DEPTH_DEFAULT, handBack: 'summary', returnCap: CAP_DEFAULT, model: INHERIT,
+    light: 'lit', crew: 'oi-guardians', member: LEAD, fanOut: FAN_DEFAULT, depth: DEPTH_DEFAULT, handBack: 'summary', returnCap: CAP_DEFAULT, model: INHERIT, join: 'all',
     models: JSON.stringify(MODELS), members: JSON.stringify(CREW),
   },
   fixtures: {
     'The oi-guardians crew': {},
     'Nested helpers': {depth: 2, fanOut: 6, model: 'glm-5.3-flash', member: 'agent/factory-guardian', members: JSON.stringify([...CREW, ...HELPERS])},
+    'Weighted returns': {join: 'weighted', handBack: 'digest'},
     'No readings': NOTHING,
   },
 
@@ -396,8 +408,9 @@ export const design: DesignedDevice = {
           {retryAction(p, chosen)}
           {openAction(p, chosen)}
         </Section>
-        <Section label="Return" cols={3}>
-          <div className="as-span">{handBack(p)}</div>
+        <Section label="Return" cols={2} width={176}>
+          {handBack(p)}
+          {joinRadio(p)}
           <div className="as-span">{capBox(p)}</div>
           <div className="as-span">{modelChooser(p)}</div>
         </Section>

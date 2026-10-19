@@ -15,6 +15,13 @@
 //   aspectList  [{a, b, angle, orb}], angle one of 0, 60, 90, 120, 180. Optional: absent, the aspects are found from `bodies`
 //               by the owner's rule below.
 //   moves       the compiled plan evaluated: [{id, source, group: 'o' | 'q', n, target, min, max, base, value, held}]
+//   dayRuler, hourRuler   the planets of the day and of the hour, by the Chaldean order (Saturn, Jupiter, Mars, Sun, Venus,
+//               Mercury, Moon) from the day's ruler at sunrise. The owner counts twelve hours from sunrise to sunset and twelve
+//               from sunset to the next sunrise, at the observer's place: the world's declared place when Observer is Shared,
+//               yours when it is Private. No place, no rulers.
+//   hourOf, hourHalf      which of the twelve hours, and whether it is a day or a night hour
+//   sunrise, sunset       at that place, in UTC (HH:MM)
+//   place       the name of the place the hours were counted at
 // A key the owner does not report arrives absent, and the view draws "—" and names the missing reading in the well.
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clock, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -179,6 +186,7 @@ function Ring({v, cx, cy, R, size}: {v: V; cx: number; cy: number; R: number; si
   order.forEach((b, i) => { const prev = order[i - 1]; tier.set(b, prev && lon(b) - lon(prev) < gap && tier.get(prev) === 0 ? 1 : 0) })
   const pairs = boolOf(v, 'aspects') === true ? pairsOf(v, sky).filter(x => x.kind > 0 && shown.includes(x.a) && shown.includes(x.b)) : []
   const natal = boolOf(v, 'natal') === true ? natalOf(v) : undefined
+  const ruler = strOf(v, 'hourRuler'), hourBody = isBody(ruler) && shown.includes(ruler) ? ruler : undefined
   const lines = (strOf(v, 'reason') ?? 'No reading of the sky.').split(' ').reduce<string[]>((acc, w) => { const last = acc[acc.length - 1]; if (last !== undefined && (last + ' ' + w).length <= 12) acc[acc.length - 1] = `${last} ${w}`; else acc.push(w); return acc }, [])
   return <g>
     <circle cx={cx} cy={cy} r={r.out} className="dp-faint" />
@@ -202,6 +210,8 @@ function Ring({v, cx, cy, R, size}: {v: V; cx: number; cy: number; R: number; si
     })}
     {natal && BODIES.map(b => { const n = natal[b]; if (!n) return null; const [x, y] = at(cx, cy, r.natal, n.lon)
       return <circle key={b} cx={x} cy={y} r={big ? 3.2 : 1.9} fill="none" stroke="var(--dp-value)" strokeWidth={1} opacity={.85} /> })}
+    {hourBody && (() => { const [x, y] = at(cx, cy, r.body, lon(hourBody))
+      return <circle cx={x} cy={y} r={big ? 9 : tiny ? 3.6 : 5} fill="none" stroke="var(--dp-on)" strokeWidth={big ? 1.6 : 1.1} /> })()}
     {shown.map(b => {
       const l = lon(b), [x, y] = at(cx, cy, r.body, l), [tx, ty] = at(cx, cy, tier.get(b) ? r.label2 : r.label, l)
       return <g key={b}>
@@ -298,6 +308,15 @@ const observerWord = (v: V) => { const o = strOf(v, 'observer'); return o === un
 const sunReading = (v: V) => { const sun = bodiesOf(v)?.Sun; return sun ? `Sun ${place(sun.lon, false)}` : NONE }
 const EPHEMERIS: Record<string, string> = {moshier: 'Moshier', 'swiss-files': 'Swiss'}
 const ephemeris = (v: V) => { const b = strOf(v, 'backend'); return b === undefined ? undefined : EPHEMERIS[b] ?? b }
+/** A ruler as a reading: the glyph and the planet, or undefined when the owner reports none. */
+const rulerWord = (v: V, key: string) => { const b = strOf(v, key); return isBody(b) ? `${GLYPH[b] + VS} ${b}` : undefined }
+/** Which hour: "7 of the day", or undefined. */
+const hourWord = (v: V) => { const n = fin(v, 'hourOf'), half = strOf(v, 'hourHalf'); return n === undefined || (half !== 'day' && half !== 'night') ? undefined : `${n} of the ${half}` }
+/** The rulers in one line, for the pane. */
+const rulersLine = (v: V) => {
+  const day = rulerWord(v, 'dayRuler'), hour = rulerWord(v, 'hourRuler'), which = hourWord(v), at = strOf(v, 'place')
+  return day === undefined || hour === undefined || which === undefined ? 'No place to count the hours from.' : `Day of ${day} · hour ${which}, ${hour}${at === undefined ? '' : ` · ${at}`}`
+}
 
 const bodyRows = (p: ViewProps): RowItem[] => {
   const sky = bodiesOf(p.v)
@@ -345,6 +364,7 @@ function FullSky({v}: {v: V}) {
     <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The sky over your world">
       <g className="dp-display" style={{background: 'none', border: 'none'}}>
         <Ring v={v} cx={cx} cy={cy} R={R} size="big" />
+        <text x={446} y={22} className="dp-ink">{rulersLine(v)}</text>
         <text x={474} y={44} className="dp-axis">body</text>
         <text x={534} y={44} className="dp-axis">position</text>
         <text x={626} y={44} className="dp-axis">interval</text>
@@ -404,6 +424,9 @@ export const design: DesignedDevice = {
       {id: 'o7', source: 'octet 7', group: 'o', n: 7, target: 'Agitation', min: 0, max: 5, base: .3, value: 5, held: true}]),
     now: false, year: 2026, day: 271, time: 720, run: false, speed: 3600,
     observer: 'shared', aspects: false, natal: false, havePlace: true, backend: 'moshier',
+    // Counted at the world's declared place, Greenwich (51.48 N): sunrise and sunset by the NOAA solar formula; Monday, so the
+    // Moon rules the day, and 12:00 falls in the seventh day hour, Mercury's.
+    dayRuler: 'Moon', hourRuler: 'Mercury', hourOf: 7, hourHalf: 'day', sunrise: '05:55', sunset: '17:45', place: 'Greenwich',
     ...Object.fromEntries(BODIES.map(b => [`b:${b}`, true])),
   },
   fixtures: {
@@ -419,12 +442,15 @@ export const design: DesignedDevice = {
         {a: 'Mercury', b: 'Saturn', angle: 180, orb: 4.69}, {a: 'Mercury', b: 'Uranus', angle: 120, orb: 2.37}, {a: 'Mercury', b: 'Neptune', angle: 180, orb: 4.77},
         {a: 'Mercury', b: 'Pluto', angle: 120, orb: 4.77}, {a: 'Venus', b: 'Pluto', angle: 90, orb: 0.11}, {a: 'Jupiter', b: 'Saturn', angle: 120, orb: 3.93},
         {a: 'Saturn', b: 'Neptune', angle: 0, orb: 9.46}, {a: 'Uranus', b: 'Neptune', angle: 60, orb: 2.4}, {a: 'Uranus', b: 'Pluto', angle: 120, orb: 2.41},
-        {a: 'Neptune', b: 'Pluto', angle: 60, orb: 0.01}])},
+        {a: 'Neptune', b: 'Pluto', angle: 60, orb: 0.01}]),
+      // Tuesday at Greenwich: Mars rules the day, and 13:46 falls in the eighth day hour, Mars again.
+      dayRuler: 'Mars', hourRuler: 'Mars', hourOf: 8, sunrise: '05:34', sunset: '18:15'},
     'Aspects and natal': {aspects: true, natal: true},
     'No answer': {bodies: undefined, epoch: undefined, aspectList: undefined},
     'No birth data': {natalBodies: undefined, havePlace: false},
+    'No place for the hours': {dayRuler: undefined, hourRuler: undefined, hourOf: undefined, hourHalf: undefined, sunrise: undefined, sunset: undefined, place: undefined},
     'No readings': Object.fromEntries(['light', 'reason', 'epoch', 'bodies', 'aspectList', 'natalBodies', 'moves', 'now', 'year', 'day', 'time', 'run', 'speed', 'observer',
-      'aspects', 'natal', 'havePlace', 'backend', ...BODIES.map(b => `b:${b}`)].map(k => [k, undefined])),
+      'aspects', 'natal', 'havePlace', 'backend', 'dayRuler', 'hourRuler', 'hourOf', 'hourHalf', 'sunrise', 'sunset', 'place', ...BODIES.map(b => `b:${b}`)].map(k => [k, undefined])),
   },
 
   folded: p => { const read = epochMs(p.v)
@@ -472,6 +498,11 @@ export const design: DesignedDevice = {
               <Readout label="ephemeris" value={ephemeris(p.v)} does="The ephemeris that the owner used for this sky." />
               <Readout label="zodiac" value={bodiesOf(p.v) ? 'Tropical' : undefined} does="The zodiac of the owner's reading. Aries starts at the equinox." />
             </div>
+          </Section>
+          <Section label="Hour" width={112}>
+            <Readout label="day" value={rulerWord(p.v, 'dayRuler')} tone="value" does="The planet that rules the day, by the Chaldean order."/>
+            <Readout label={hourWord(p.v) === undefined ? 'hour' : `hour ${hourWord(p.v)}`} value={rulerWord(p.v, 'hourRuler')} tone="accent" does="The planet that rules this hour: the ring marks it. Twelve hours run from sunrise to sunset and twelve from sunset to sunrise, at the observer's place."/>
+            <Readout label="place" value={strOf(p.v, 'place')} does="Where the hours are counted: the world's declared place when Observer is Shared, yours when it is Private."/>
           </Section>
           <Section label="Overlay" grow>
             {flag(p, 'aspects', 'Aspects', 'Draw a line between two bodies that stand 60, 90, 120 or 180 degrees apart, within a small allowance.')}

@@ -9,12 +9,20 @@
 //   clock.degree720      0..719, the double cover (`clock.degree720`); its degree is degree720 mod 360, its turn degree720 div 360
 //   clock.tick12         0..11 (`clock.tick12`)
 //   clock.backbone       the governor's ref, #3-5-q-i (`clock.backbone.ref`: quadrant 1..4, governor 0..5)
-//   aperture.index       0..15, the static cut (`aperture.index`; write `set-aperture`), its division the owner's table below
+//   aperture.index       0..15, the static cut, its division the owner's table below. The Resonator bank holds the cut (M2 owns the
+//                        apertures: manual §22.7); the clock draws it and shows it as a reading.
 //   form.address         0..63, the hexagram of the form (`form.address`); form.codon the codon's letters (`transcription.sequence`)
-// Writes are the owner's apply operations: a new degree is `advance-clock{steps}` by the difference, a new cut `set-aperture`, Swap
-// `reciprocal-aperture`. Turn, Open, Readout and showing the reciprocal are the view's own choices; no owner keeps them. The entry's
-// Run and Rate have no owner operation (m3_reception carries no spanda-advance, and nothing runs the wheel), so they are not offered.
-import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
+//   law.matrix           'complementary' | 'moving-resting' | 'same-quality': the matrix that makes the hexagram a generation cell
+//   law.seed             'sum-difference-mod' (FR 2.Q.9, the default) | 'four-charge' (FR 2.Q.17): the active pose's seed
+//   law.poseMap          'raw-bin' (the default) | 'lawful-slot': how the turn lands on the eight poses
+//                        (ql-core pole::generation, QuatSeed and PoseMap; m3_inscription's ActivePose names the laws it was read with)
+//   generation.lower, generation.upper, generation.positive, generation.negative, generation.nonDual
+//                        the cell of the form's hexagram under law.matrix (pole::generation::generate, C ql_m3_generate)
+//   pose.bin, pose.slot  the active pose under the laws: the raw bin 0..7 and the lawful slot
+// Writes are the owner's apply operations: a new degree is `advance-clock{steps}` by the difference. Turn, Open, Readout and showing
+// the reciprocal are the view's own choices; no owner keeps them. The entry's Run and Rate have no owner operation (m3_reception
+// carries no spanda-advance, and nothing runs the wheel), so they are not offered.
+import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
@@ -26,7 +34,14 @@ const TURNS = [{value: 'first', label: 'First', does: 'Show the first turn of th
   {value: 'both', label: 'Both', does: 'Show both turns: the shadow inside the first.'}] as const
 const OPENS = [{value: 'closed', label: 'Closed', does: 'The wheel whole.'}, {value: 'exploded', label: 'Exploded', does: 'The parts of the wheel drawn apart, the centre staying.'}] as const
 const READOUTS = [{value: 'quadrant', label: 'Quadrant', does: 'Show the direction of the position.'}, {value: 'governor', label: 'Governor', does: 'Show the governor of the position.'},
-  {value: 'hexagram', label: 'Hexagram', does: 'Show the hexagram and the codon of the position.'}] as const
+  {value: 'hexagram', label: 'Hexagram', does: 'Show the hexagram and the codon of the position.'},
+  {value: 'generation', label: 'Generation', does: 'Show the cell of the hexagram under the matrix: its two pairs and its positive and negative codons.'}] as const
+const MATRICES = [{value: 'complementary', label: 'Compl.', does: 'Complementary: A with T, C with G.'}, {value: 'moving-resting', label: 'Mov./rest.', does: 'Moving and resting: A with G, T with C.'},
+  {value: 'same-quality', label: 'Same q.', does: 'Same quality: A with C, T with G.'}] as const
+const SEEDS = [{value: 'sum-difference-mod', label: 'Sum/diff.', does: "The turn from the sum and difference of the codon's bases (FR 2.Q.9)."},
+  {value: 'four-charge', label: 'Charges', does: "The turn from the codon's four charges (FR 2.Q.17)."}] as const
+const POSE_MAPS = [{value: 'raw-bin', label: 'Raw bin', does: 'The turn lands on its bin, 0 to 7.'},
+  {value: 'lawful-slot', label: 'Lawful', does: 'A non-dual codon has seven poses: its eighth bin reads as its mirror, the first.'}] as const
 const DIRS = ['N', 'E', 'S', 'W']
 const f1 = (x: number) => x.toFixed(1)
 
@@ -39,13 +54,21 @@ function readingOf(v: V) {
     tick: numOf(v, 'clock.tick12'), hex: numOf(v, 'form.address'), codon: strOf(v, 'form.codon')}
 }
 type Reading = ReturnType<typeof readingOf>
-const readoutWord = (v: V, s: Reading) => {
+const readoutWord = (v: V, s: Reading, short = false) => {
   const how = strOf(v, 'readout') ?? 'governor'
   if (s.deg === undefined) return undefined
   if (how === 'quadrant') return `${DIRS[Math.floor(s.deg / 90)]} ${s.deg % 90}°`
   if (how === 'hexagram') return s.hex === undefined ? undefined : `Hex ${s.hex}${s.codon ? ` · ${s.codon}` : ''}`
+  if (how === 'generation') return generationWord(v, short)
   return s.governor === undefined ? undefined : `Gov ${s.governor + 1}`
 }
+
+/** The cell of the form's hexagram under the matrix: "GCC · non-dual", or the two codons "CCC · CTC". */
+const generationWord = (v: V, short = false) => {
+  const pos = strOf(v, 'generation.positive'), neg = strOf(v, 'generation.negative'), one = boolOf(v, 'generation.nonDual')
+  return pos === undefined || neg === undefined || one === undefined ? undefined : one ? (short ? pos : `${pos} · non-dual`) : short ? `${pos}/${neg}` : `${pos} · ${neg}`
+}
+const pairsWord = (v: V) => { const lo = strOf(v, 'generation.lower'), up = strOf(v, 'generation.upper'); return lo === undefined || up === undefined ? undefined : `${lo} under ${up}` }
 
 /** The wheel. Handle 1 is the needle (drag round: the degree); handle 2, in the pool, the first spoke of the cut (drag round: the
  * size of a part, to the nearest of the sixteen). */
@@ -68,7 +91,7 @@ function Wheel({p, w, h, handles, labels}: {p: ViewProps; w: number; h: number; 
     return `M${f1(x0)} ${f1(y0)}A${r1} ${r1} 0 0 1 ${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}A${r0} ${r0} 0 0 0 ${f1(x3)} ${f1(y3)}Z` }
   const divD = s.ap === undefined ? undefined : DIVISION_DEG10[s.ap]! / 10, recD = s.ap === undefined ? undefined : DIVISION_DEG10[15 - s.ap]! / 10
   const needleR = (turn === 'both' && s.layer === 1 ? inner : 1) * cut.o
-  const posSt = st(p, 'clock.degree720'), apSt = st(p, 'aperture.index')
+  const posSt = st(p, 'clock.degree720')
   return <g>
     {/* the governor of the position, lit: the reading starts from it */}
     {gStart !== undefined && (turn !== 'both' || s.layer === 0) && <path d={arcPath(gStart, gStart + 15, gov.i, gov.o)} className="dp-fill" stroke="var(--dp-value)" strokeWidth={.8} />}
@@ -86,11 +109,6 @@ function Wheel({p, w, h, handles, labels}: {p: ViewProps; w: number; h: number; 
         onDrag={posSt.disabled ? undefined : (x, y) => { const d = Math.round((Math.atan2(x - cx, cy - y) * 180 / Math.PI + 360) % 360); if (d !== s.deg) p.set('clock.degree720', (s.layer ?? 0) * 360 + d) }}
         onReset={posSt.disabled ? undefined : () => p.set('clock.degree720', (s.layer ?? 0) * 360)} />}
     </> : <text x={cx} y={cy + 18} textAnchor="middle" className="dp-ink-dim">{w > 90 ? 'No reading of the clock' : NONE}</text>}
-    {handles >= 2 && divD !== undefined && divD < 360 && <Handle n={2} shape="square" x={P(divD, (cut.i + cut.o) / 2)[0]} y={P(divD, (cut.i + cut.o) / 2)[1]} label="Aperture"
-      does={`Drag round: the size of a part of the cut.${apSt.disabled ? ` ${apSt.disabled}` : ''}`}
-      onDrag={apSt.disabled ? undefined : (x, y) => { const a = (Math.atan2(x - cx, cy - y) * 180 / Math.PI + 360) % 360
-        const i = DIVISION_DEG10.reduce((best, dd, k) => Math.abs(dd / 10 - a) < Math.abs(DIVISION_DEG10[best]! / 10 - a) ? k : best, 0)
-        if (i !== s.ap) p.set('aperture.index', i) }} onReset={apSt.disabled ? undefined : () => p.set('aperture.index', 9)} />}
   </g>
 }
 
@@ -103,12 +121,13 @@ const DISPLAY_DOES = 'The wheel: North at the top, the governors outside, the ch
 function controls(p: ViewProps) {
   const v = p.v, s = readingOf(v)
   return {
-    aperture: <Dial {...st(p, 'aperture.index')} label="Aperture" does="How the wheel is cut: the size of a part and how many." value={s.ap ?? NaN} def={9} scale={{min: 0, max: 15, step: 1}} format={cutWord}
-      onChange={x => p.set('aperture.index', x)} />,
+    cut: <Readout label="cut" does="How the wheel is cut: the size of a part and how many. The Resonator bank holds the cut; the clock draws it." value={s.ap === undefined ? undefined : cutWord(s.ap)} tone="value" />,
     position: <Dial {...st(p, 'clock.degree720')} label="Position" does="The degree to read." value={s.deg ?? NaN} def={0} scale={{min: 0, max: 359, step: 1}} format={x => `${x}°`}
       onChange={x => p.set('clock.degree720', (s.layer ?? 0) * 360 + x)} />,
     turn: <Radio {...st(p, 'turn')} label="Turn" does="Which turn of the wheel to show." value={strOf(v, 'turn') ?? ''} options={TURNS} stack onChange={x => p.set('turn', x)} />,
-    swap: <Action {...st(p, 'aperture.index')} label="Swap" does="Cut the wheel by the reciprocal: 15°×24 becomes 24°×15." onPress={s.ap === undefined ? undefined : () => p.set('aperture.index', 15 - s.ap!)} />,
+    matrix: <Radio {...st(p, 'law.matrix')} label="Matrix" does="The matrix that makes the position's hexagram a generation cell." value={strOf(v, 'law.matrix') ?? ''} options={MATRICES} onChange={x => p.set('law.matrix', x)} />,
+    seed: <Radio {...st(p, 'law.seed')} label="Seed" does="How a codon becomes the turn that picks its pose. The two laws pick a different pose for about half the readings." value={strOf(v, 'law.seed') ?? ''} options={SEEDS} onChange={x => p.set('law.seed', x)} />,
+    poseMap: <Radio {...st(p, 'law.poseMap')} label="Pose map" does="How the turn lands on the eight poses." value={strOf(v, 'law.poseMap') ?? ''} options={POSE_MAPS} onChange={x => p.set('law.poseMap', x)} />,
     show: <Toggle {...st(p, 'reciprocal')} label="Reciprocal" does="Show the matching cut with the cut, dashed." on={boolOf(v, 'reciprocal') === true} onChange={x => p.set('reciprocal', x)} />,
     open: <Radio {...st(p, 'open')} label="Open" does="Draw the parts of the wheel apart." value={strOf(v, 'open') ?? ''} options={OPENS} stack onChange={x => p.set('open', x)} />,
     readout: <Radio {...st(p, 'readout')} does="What the position shows." value={strOf(v, 'readout') ?? ''} options={READOUTS} stack onChange={x => p.set('readout', x)} />,
@@ -124,12 +143,20 @@ export const design: DesignedDevice = {
     // turn at 59°, tick 1, governor #3-5-1-3, form 17 (TAT), aperture 2 (4°).
     'clock.degree720': 419, 'clock.tick12': 1, 'clock.backbone': '#3-5-1-3', 'aperture.index': 2, 'form.address': 17, 'form.codon': 'TAT',
     turn: 'both', open: 'closed', readout: 'governor', reciprocal: false,
+    // ql_m3_generate(complementary, 17): GC under CC, one codon, GCC.
+    'law.matrix': 'complementary', 'law.seed': 'sum-difference-mod', 'law.poseMap': 'raw-bin',
+    'generation.lower': 'GC', 'generation.upper': 'CC', 'generation.positive': 'GCC', 'generation.negative': 'GCC', 'generation.nonDual': true,
   },
   fixtures: {
     'Second turn, 4° cut': {},
+    // ql_m3_generate(moving-resting, 17): CT under CC, two codons, CCC and CTC.
+    'Generation, moving and resting': {readout: 'generation', 'law.matrix': 'moving-resting', 'generation.lower': 'CT', 'generation.upper': 'CC',
+      'generation.positive': 'CCC', 'generation.negative': 'CTC', 'generation.nonDual': false},
     'Twelve lenses, reciprocal': {'clock.degree720': 100, 'clock.backbone': '#3-5-2-0', 'clock.tick12': 3, 'aperture.index': 9, reciprocal: true, turn: 'first', readout: 'quadrant'},
     'Exploded, 15° × 24': {'clock.degree720': 359, 'clock.tick12': 11, 'clock.backbone': '#3-5-4-5', 'aperture.index': 7, open: 'exploded', turn: 'first', 'form.codon': 'ATG', readout: 'hexagram'},
-    'No reading': {'clock.degree720': undefined, 'clock.tick12': undefined, 'clock.backbone': undefined, 'aperture.index': undefined, 'form.address': undefined, 'form.codon': undefined},
+    'No reading': {'clock.degree720': undefined, 'clock.tick12': undefined, 'clock.backbone': undefined, 'aperture.index': undefined, 'form.address': undefined, 'form.codon': undefined,
+      'law.matrix': undefined, 'law.seed': undefined, 'law.poseMap': undefined, 'generation.lower': undefined, 'generation.upper': undefined, 'generation.positive': undefined,
+      'generation.negative': undefined, 'generation.nonDual': undefined},
   },
 
   folded: p => { const s = readingOf(p.v)
@@ -140,19 +167,20 @@ export const design: DesignedDevice = {
       <Section width={152}>
         <Display w={140} h={146} label="The wheel" does={`${DISPLAY_DOES} Drag handle 1 for the position.`} corner={corner(s)}><Wheel p={p} w={140} h={146} handles={1} labels /></Display>
       </Section>
-      <Section label="Macros" cols={2}>{c.aperture}{c.position}{c.turn}{c.swap}</Section>
+      <Section label="Macros" cols={2}>{c.position}{c.turn}{c.show}{c.open}</Section>
     </Panel> },
 
   whole: p => { const c = controls(p), s = readingOf(p.v), w = wide(p) ? Math.round(clampTo(186, p.room!.h - 22, 186)) : 186
     return <Panel title="M3 clock" view="whole" {...head(p)}>
       <Band>
         <Section width={w + 12}>
-          <Display w={w} h={146} label="The wheel" does={`${DISPLAY_DOES} Drag handle 1 for the position and handle 2 for the cut.`} corner={corner(s)}>
+          <Display w={w} h={146} label="The wheel" does={`${DISPLAY_DOES} Drag handle 1 for the position.`} corner={corner(s)}>
             <Wheel p={p} w={w} h={146} handles={2} labels />
           </Display>
         </Section>
-        <Section label="Cut" width={72}>{c.aperture}{c.show}{c.swap}</Section>
-        <Section label="Show" grow>{c.turn}{c.open}</Section>
+        <Section label="Cut" width={72}>{c.cut}{c.show}</Section>
+        <Section label="Show" width={84}>{c.turn}{c.open}</Section>
+        <Section label="Law" grow>{c.matrix}{c.seed}{c.poseMap}</Section>
       </Band>
       <Band>
         <Section label="Position" width={72}>{c.position}
@@ -162,7 +190,9 @@ export const design: DesignedDevice = {
         <Section label="Reading" grow>
           <Readout big label={(strOf(p.v, 'readout') ?? 'governor')} does="What the position shows, as the owner reads it." value={readoutWord(p.v, s)} tone="value" />
           <Readout label="governor ref" does="The governor's coordinate, as the owner names it." value={s.ref} />
-          <Readout label="cut" does="The cut and its reciprocal." value={s.ap === undefined ? undefined : `${cutWord(s.ap)} · ${cutWord(15 - s.ap)}`} />
+          <Readout label="pairs" does="The two pairs of bases of the cell: the lower trigram's under the upper's." value={pairsWord(p.v)} />
+          <Readout label={`pose · ${strOf(p.v, 'law.poseMap') === 'lawful-slot' ? 'slot' : 'bin'}`} does="The active pose, read under the seed and the pose map." tone="accent"
+            value={strOf(p.v, 'law.poseMap') === 'lawful-slot' ? numOf(p.v, 'pose.slot') : numOf(p.v, 'pose.bin')} />
         </Section>
       </Band>
     </Panel> },
@@ -176,7 +206,8 @@ export const design: DesignedDevice = {
           <text x={500} y={80} className="dp-ink-dim">{s.layer === undefined ? 'No reading of the clock' : `${s.layer ? 'second turn, the shadow' : 'first turn'} · ${s.d720}° of 720`}</text>
           {[['governor', s.governor === undefined ? NONE : `${s.governor + 1} of 24 · ${s.ref ?? NONE}`], ['quadrant', s.deg === undefined ? NONE : `${['North', 'East', 'South', 'West'][Math.floor(s.deg / 90)]}`],
             ['chamber', s.deg === undefined ? NONE : `${Math.floor(s.deg / 40) + 1} of 9`], ['hexagram', s.hex === undefined ? NONE : `${s.hex}${s.codon ? ` · ${s.codon}` : ''}`],
-            ['tick', s.tick === undefined ? NONE : `${s.tick} of 12`], ['cut', s.ap === undefined ? NONE : `${cutWord(s.ap)}, reciprocal ${cutWord(15 - s.ap)}`]].map(([k, val], i) =>
+            ['tick', s.tick === undefined ? NONE : `${s.tick} of 12`], ['cut', s.ap === undefined ? NONE : `${cutWord(s.ap)}, reciprocal ${cutWord(15 - s.ap)}`],
+            ['generation', generationWord(p.v) === undefined ? NONE : `${pairsWord(p.v) ?? NONE} → ${generationWord(p.v)}`]].map(([k, val], i) =>
             <g key={k}><text x={500} y={122 + i * 26} className="dp-axis">{k}</text><text x={580} y={122 + i * 26} className="dp-ink">{val}</text></g>)}
         </g>
       </svg>
@@ -188,7 +219,7 @@ export const design: DesignedDevice = {
       <div className="ref-tile-side">
         <Readout label="degree" value={s.deg === undefined ? undefined : `${s.deg}°`} tone="value" />
         <Readout label="turn" value={s.layer === undefined ? undefined : s.layer ? '2nd' : '1st'} />
-        <Readout label={strOf(p.v, 'readout') ?? 'governor'} value={readoutWord(p.v, s)} />
+        <Readout label={strOf(p.v, 'readout') ?? 'governor'} value={readoutWord(p.v, s, true)} />
       </div>
     </Tile> },
 }

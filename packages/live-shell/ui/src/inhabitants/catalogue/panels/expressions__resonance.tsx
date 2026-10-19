@@ -17,8 +17,12 @@
 //   resonatorMode  resonator | template (legacy: no live medium)
 //   stations   the plate's seven anchors (the Studio's station ticks, inspector.ts): [{index, name, frequencyHz, m, n, color}]
 //   resonance.live  the frequency the medium sounds now (the Studio's live readout)
+//   body.source  'declared' | 'tattva' (manual §20.14, as on the Torus): under Tattva the tattva of the M2 condition sets the
+//   plate's Q, Agitation and Edge through its element fibre, by M2's proposed table of body constants; the owner reports
+//   tattva.name, tattva.fibre (absent where the map gives none) and tattva.standing, and those three controls are held.
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState, type Scale} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, fixed, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {tattvaDoes, tattvaHold, tattvaLabel} from './torus'
 
 type V = ViewProps['v']
 const d2 = fixed(2), hz = (x: number) => (x >= 1000 ? `${(x / 1000).toFixed(2)} kHz` : `${Math.round(x)} Hz`), secs = (x: number) => `${x.toFixed(1)} s`
@@ -39,8 +43,13 @@ const R = {
   dwell: {key: 'cymatics.sweep.dwellS', label: 'Dwell', scale: {min: 0, max: 30}, def: 2, format: secs, does: 'How long the sweep rests at each station.'},
 } satisfies Record<string, Rule>
 const fin = (v: V, r: Rule) => { const x = numOf(v, r.key); return x !== undefined && Number.isFinite(x) ? x : undefined }
-const dial = (p: ViewProps, r: Rule) => <Dial key={r.key} {...st(p, r.key)} label={r.label} does={r.does} value={fin(p.v, r) ?? NaN} def={r.def} scale={r.scale} format={r.format} onChange={x => p.set(r.key, Math.round(x * 100) / 100)} />
-const box = (p: ViewProps, r: Rule) => <ValueBox key={r.key} {...st(p, r.key)} label={r.label} does={r.does} value={fin(p.v, r) ?? NaN} def={r.def} scale={r.scale} format={r.format} onChange={x => p.set(r.key, Math.round(x * 100) / 100)} />
+/** The plate's body constants that a tattva with a fibre sets under Tattva. */
+const TATTVA_KEYS: readonly string[] = [R.q.key, R.agitation.key, R.edge.key]
+const held = (p: ViewProps, r: Rule) => st(p, r.key).disabled ?? (TATTVA_KEYS.includes(r.key) ? tattvaHold(p.v) : undefined)
+const BODY_SOURCES = [{value: 'declared', label: 'Declared', does: 'The plate keeps its own constants.'},
+  {value: 'tattva', label: 'Tattva', does: 'The tattva of the M2 condition sets Q, Agitation and Edge through its element fibre.'}] as const
+const dial = (p: ViewProps, r: Rule) => <Dial key={r.key} {...st(p, r.key)} disabled={held(p, r)} label={r.label} does={r.does} value={fin(p.v, r) ?? NaN} def={r.def} scale={r.scale} format={r.format} onChange={x => p.set(r.key, Math.round(x * 100) / 100)} />
+const box = (p: ViewProps, r: Rule) => <ValueBox key={r.key} {...st(p, r.key)} disabled={held(p, r)} label={r.label} does={r.does} value={fin(p.v, r) ?? NaN} def={r.def} scale={r.scale} format={r.format} onChange={x => p.set(r.key, Math.round(x * 100) / 100)} />
 const DRIVERS = [{value: 'manual', label: 'Manual', does: 'The drive frequency sets the tone.'}, {value: 'focus', label: 'Focus', does: 'The Focus device sets the tone.'}, {value: 'automation', label: 'Automation', does: 'A lane or the sweep sets the tone.'}] as const
 const DIMS = [{value: '2D', label: '2D', does: 'A flat plate.'}, {value: '3D', label: '3D', does: 'A volumetric chamber.'}] as const
 const SWEEPS = [{value: 'ascent', label: 'Up', does: 'The sweep climbs the stations.'}, {value: 'descent', label: 'Down', does: 'The sweep descends the stations.'}, {value: 'pingpong', label: 'Both', does: 'There and back.'}] as const
@@ -98,6 +107,7 @@ export const design: DesignedDevice = {
     resonanceEnabled: true, 'cymatics.frequencyHz': 396, frequencyDriver: 'manual', 'cymatics.dominance': 1, 'cymatics.dampingQFactor': 4.5, 'cymatics.driveStrength': 1, 'cymatics.driveScale': 1,
     'cymatics.transportGain': 1, 'cymatics.agitation': .3, 'cymatics.plateSize': 700, 'cymatics.boundaryStrength': 6, 'cymatics.baseFrequency': 40, 'cymatics.modeCount': 64,
     templateDimension: '2D', autoSweep: false, sweepDirection: 'ascent', 'cymatics.sweep.glideS': 8, 'cymatics.sweep.dwellS': 2, resonatorMode: 'resonator', 'resonance.live': 396,
+    'body.source': 'declared', 'tattva.name': 'Prithvi', 'tattva.fibre': 'earth', 'tattva.standing': 'proposed',
     // Seven anchors of the default plate: distinct (m, n) across the band, ascending, f = f0 (m² + n²) at f0 = 40 Hz.
     stations: JSON.stringify([{index: 0, name: 'Station 1', frequencyHz: 200, m: 1, n: 2}, {index: 1, name: 'Station 2', frequencyHz: 400, m: 1, n: 3}, {index: 2, name: 'Station 3', frequencyHz: 520, m: 2, n: 3},
       {index: 3, name: 'Station 4', frequencyHz: 680, m: 1, n: 4}, {index: 4, name: 'Station 5', frequencyHz: 800, m: 2, n: 4}, {index: 5, name: 'Station 6', frequencyHz: 1000, m: 3, n: 4}, {index: 6, name: 'Station 7', frequencyHz: 1040, m: 1, n: 5}]),
@@ -106,6 +116,8 @@ export const design: DesignedDevice = {
     'Tuned at 396 Hz': {},
     'At station 3, ringing': {'cymatics.frequencyHz': 520, 'cymatics.dampingQFactor': 24, 'resonance.live': 520},
     'Sweeping': {frequencyDriver: 'automation', autoSweep: true, sweepDirection: 'pingpong'},
+    // M2's proposed body constants for the earth fibre: Q 12, Agitation 0.1, Edge 20.
+    'Tattva: Prithvi, earth': {'body.source': 'tattva', 'cymatics.dampingQFactor': 12, 'cymatics.agitation': .1, 'cymatics.boundaryStrength': 20},
     'No readings': {resonanceEnabled: undefined, 'cymatics.frequencyHz': undefined, 'cymatics.dampingQFactor': undefined, stations: undefined, 'resonance.live': undefined, reason: 'The field has not announced its plate'},
   },
 
@@ -141,6 +153,10 @@ export const design: DesignedDevice = {
         </Band>
         <Band>
           <Section label="Dimension" width={84}><Radio {...st(p, 'templateDimension')} does="A flat plate or a volumetric chamber." value={strOf(p.v, 'templateDimension') ?? ''} options={DIMS} onChange={x => p.set('templateDimension', x)} /></Section>
+          <Section label="Body source" width={112}>
+            <Radio {...st(p, 'body.source')} does="Where the plate's constants come from: its own, or the tattva of the M2 condition." value={strOf(p.v, 'body.source') ?? ''} options={BODY_SOURCES} stack onChange={x => p.set('body.source', x)} />
+            <Readout label={tattvaLabel(p.v)} does={tattvaDoes(p.v)} value={strOf(p.v, 'tattva.name')} tone={tattvaHold(p.v) ? 'accent' : undefined} />
+          </Section>
           <Section label="Compatibility" grow><Chooser {...st(p, 'resonatorMode')} wide does="The medium's implementation. Legacy templates have no live medium." value={strOf(p.v, 'resonatorMode') ?? ''} options={MODES_IMPL} onChange={x => p.set('resonatorMode', x)} /></Section>
         </Band>
       </>}

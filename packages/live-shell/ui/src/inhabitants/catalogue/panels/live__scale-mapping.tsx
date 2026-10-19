@@ -13,6 +13,12 @@
 //   mode.lens    the owner's lens rows (ql.music-modes/v1 `lens_cf`, kernel music_modes_read): [{key, basis, lens, cf, mode, pitches}]
 //   mode.sources the owner's source scales (`source_scales`): [{key, label, cents}], cents from the root, exact quarter tones
 //   mode.absent  the sources the owner names absent (`sources_absent`): [{scale, status}]
+//   mode.source  'hand' | 'sky': who sets the mode in force (the transport's key source). Under Sky the hour's planet sets it: the
+//                owner chooses among the maqām the map binds to that planet, by your intent, the lens breaking a tie, and writes
+//                mode.root and mode.key itself; the mode controls stand held.
+//   sky.hourRuler the Sky's reading of the planet of the hour (quaternal-logic:sky `hourRuler`)
+//   sky.bound    the maqām the map binds to that planet (m2-correspondences rules: TONIC_ / DOMINANT_PLANETARY_RESONANCE, and the
+//                chromatic bridges): [{key, role: 'tonic' | 'dominant' | 'chromatic'}]
 // The device holds no pitch set of its own (noteDevices.ts): it always follows the mode in force, so the entry's Follow and Own mode
 // are not offered. Snap is the owner's one rule (nearest, ties by Tie); Off is the device's light. The roll and the keyboard always
 // mark the mode (LiveClip.tsx, JankoDevice.tsx) and nothing holds a fold-or-highlight choice, so Show is not offered either.
@@ -34,6 +40,9 @@ const BASES = [{value: 'chromatic', label: 'Chromatic', does: 'The lens modes ad
   {value: 'fifths', label: 'Fifths', does: 'The lens modes addressed by fifths of 3:2.'}] as const
 const FAMILIES = [{value: 'lens', label: 'Lens', does: 'One of the 84 lens modes on this basis: a root and a mode name.'},
   {value: 'source', label: 'Source', does: 'A source scale, with its own intervals. It serves no pitch set, so notes pass.'}] as const
+const PLANET_GLYPH: Record<string, string> = {Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀', Mars: '♂', Jupiter: '♃', Saturn: '♄', Uranus: '♅', Neptune: '♆', Pluto: '♇'}
+/** A planet as the control names it: its glyph and its name. */
+const planetWord = (b: string) => `${PLANET_GLYPH[b] ?? ''}${'︎'} ${b}`.trim()
 /** The owner's lens labels use a plain apostrophe; the shell writes the prime (scene.ts lensLabel). */
 const prime = (s: string) => s.replace(/'/g, '′')
 
@@ -56,6 +65,12 @@ function sourcesOf(v: V): Source[] | undefined {
   if (!Array.isArray(raw)) return undefined
   return raw.flatMap((e): Source[] => rec(e) && typeof e.key === 'string' && typeof e.label === 'string'
     ? [{key: e.key, label: e.label, cents: Array.isArray(e.cents) ? e.cents.filter((c): c is number => typeof c === 'number' && Number.isFinite(c)) : []}] : [])
+}
+interface Bound {readonly key: string; readonly role: 'tonic' | 'dominant' | 'chromatic'}
+const boundOf = (v: V): Bound[] | undefined => {
+  const raw = json<unknown>(v, 'sky.bound', undefined)
+  if (!Array.isArray(raw)) return undefined
+  return raw.flatMap((e): Bound[] => rec(e) && typeof e.key === 'string' && (e.role === 'tonic' || e.role === 'dominant' || e.role === 'chromatic') ? [{key: e.key, role: e.role}] : [])
 }
 const absentOf = (v: V): Absent[] => json<unknown[]>(v, 'mode.absent', []).flatMap((e): Absent[] => rec(e) && typeof e.scale === 'string' ? [{scale: e.scale, status: String(e.status ?? '')}] : [])
 /** An absent source by its first word (the owner's id: `ficino-planetary` reads Ficino), and its status in a word. */
@@ -87,7 +102,8 @@ function readingOf(v: V) {
   const word = !rows && !sources ? 'No mode catalogue' : root === undefined ? 'No root' : !lens && !source ? 'No mode on this root'
     : source ? 'No pitch set · passes' : enabled === undefined ? 'No reading of on' : enabled === false ? 'Off · passes'
     : tie === undefined && mask!.some((_, pc) => tied(pc)) ? 'No reading of tie' : `${moved} fold ${moved ? (tieWord ?? '').toLowerCase() : ''}`.trim()
-  return {rows, sources, root, key, lens, source, mask, enabled, tie, tieWord, tied, to, moved, state, word}
+  const via = strOf(v, 'mode.source'), ruler = strOf(v, 'sky.hourRuler'), bound = boundOf(v)
+  return {rows, sources, root, key, lens, source, mask, enabled, tie, tieWord, tied, to, moved, state, word, via, ruler, bound}
 }
 type Reading = ReturnType<typeof readingOf>
 
@@ -148,6 +164,7 @@ function FoldRing({p, w, h, handles, labels, rows = 0}: {p: ViewProps; w: number
     {s.root !== undefined && handles === 0 && <circle cx={at(s.root, r)[0]} cy={at(s.root, r)[1]} r={dot + 2.5} fill="none" stroke="var(--dp-on)" strokeWidth={1.2} />}
     <text x={cx} y={cy - (labels ? 2 : 0)} textAnchor="middle" className="dp-ink" style={{fontSize: labels ? 10.5 : 9}}>{s.lens ? `${rootWord(s)} ${cap(s.lens.mode)}` : s.source ? `${rootWord(s) ?? ''} maqam` : NONE}</text>
     {labels && s.lens && <text x={cx} y={cy + 11} textAnchor="middle" className="dp-axis">{`${prime(s.lens.lens)} · ${s.lens.cf}`}</text>}
+    {labels && !s.lens && s.via === 'sky' && <text x={cx} y={cy + 11} textAnchor="middle" className="dp-axis" fill="var(--dp-on)">{s.ruler ? `${planetWord(s.ruler)}'s hour` : 'no hour ruler'}</text>}
     {labels && <text x={4} y={h - 4} className="dp-ink-dim">{s.word}</text>}
     {rows > 0 && <FoldRows s={s} x={ringW} w={rows} h={h} />}
     {handles >= 1 && s.root !== undefined && <Handle n={1} shape="ring" x={at(s.root, r)[0]} y={at(s.root, r)[1]} label="Root"
@@ -196,10 +213,17 @@ const DISPLAY_DOES = 'The twelve classes. Teal: in the mode in force. An amber a
 const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 
 function controls(p: ViewProps, s: Reading) {
-  const keySt = st(p, 'mode.key'), noCatalogue = s.rows ? undefined : 'The kernel has not served the mode catalogue.'
+  const skyWhy = s.via === 'sky' ? `Source is Sky: ${s.ruler ? `${s.ruler}'s hour` : 'the hour'} sets the mode in force.` : undefined
+  const keySt0 = st(p, 'mode.key'), keySt = {...keySt0, disabled: keySt0.disabled ?? skyWhy}, noCatalogue = s.rows ? undefined : 'The kernel has not served the mode catalogue.'
   const sourceWhy = s.source ? 'A source scale has its own degrees: choose Lens for a mode name.' : undefined
+  const viaSt = st(p, 'mode.source')
   return {
-    root: <Dial {...st(p, 'mode.root')} label="Root" does="The root of the mode in force: the set's mode, which the roll and the keyboard show too." value={s.root ?? NaN} def={0}
+    via: <Radio {...viaSt} label="Set by" does="Who sets the mode in force: your hand, or the planet of the hour, through the maqām the map binds to it." value={s.via ?? ''} stack
+      options={[{value: 'hand', label: 'Hand', does: 'You set the root and the mode.'},
+        {value: 'sky', label: s.ruler ? `Sky · ${planetWord(s.ruler)}` : 'Sky', does: 'The planet of the hour sets it: a maqām bound to that planet, chosen by your intent, the lens breaking a tie.',
+          why: s.ruler ? undefined : 'The Sky reports no hour ruler: it has no place to count the hours from.'}]}
+      onChange={x => p.set('mode.source', x)} />,
+    root: <Dial {...st(p, 'mode.root')} disabled={st(p, 'mode.root').disabled ?? skyWhy} label="Root" does="The root of the mode in force: the set's mode, which the roll and the keyboard show too." value={s.root ?? NaN} def={0}
       scale={{min: 0, max: 11, step: 1}} format={x => PITCH_CLASS_NAMES[x] ?? NONE} onChange={x => choose(p, s, {root: x})} />,
     mode: (stack: boolean) => stack
       ? <Radio {...keySt} does="The mode name on this root and basis." value={s.lens?.mode ?? ''} stack
@@ -249,22 +273,32 @@ export const design: DesignedDevice = {
     // Nine of the owner's 72 maqam rows, with their cents from the root.
     'mode.sources': JSON.stringify([
       {key: 'maqam/00', label: 'Maqam 0 (family 0, mode 0)', cents: [0, 200, 350, 500, 700, 850, 1000, 1200]},
+      {key: 'maqam/02', label: 'Maqam 2 (family 0, mode 2)', cents: [0, 200, 350, 550, 700, 850, 1050, 1200]},
+      {key: 'maqam/05', label: 'Maqam 5 (family 0, mode 5)', cents: [0, 150, 350, 550, 700, 850, 1050, 1200]},
       {key: 'maqam/09', label: 'Maqam 9 (family 1, mode 0)', cents: [0, 200, 350, 500, 700, 900, 1050, 1200]},
       {key: 'maqam/18', label: 'Maqam 18 (family 2, mode 1)', cents: [0, 150, 350, 550, 700, 900, 1050, 1200]},
       {key: 'maqam/27', label: 'Maqam 27 (family 3, mode 2)', cents: [0, 150, 350, 500, 700, 850, 1000, 1200]},
       {key: 'maqam/36', label: 'Maqam 36 (family 4, mode 6)', cents: [0, 100, 200, 500, 600, 800, 900, 1200]},
       {key: 'maqam/45', label: 'Maqam 45 (family 6, mode 0)', cents: [0, 200, 400, 500, 700, 900, 1100, 1200]},
       {key: 'maqam/54', label: 'Maqam 54 (family 7, mode 3)', cents: [0, 200, 300, 500, 700, 800, 1000, 1200]},
-      {key: 'maqam/63', label: 'Maqam 63 (family 8, mode 5)', cents: [0, 200, 400, 550, 700, 800, 1100, 1200]}]),
+      {key: 'maqam/63', label: 'Maqam 63 (family 8, mode 5)', cents: [0, 200, 400, 550, 700, 800, 1100, 1200]},
+      {key: 'maqam/70', label: 'Maqam 70 (family 9, mode 3)', cents: [0, 200, 300, 600, 700, 800, 1100, 1200]}]),
     'mode.absent': JSON.stringify([{scale: 'shem', status: 'absent'}, {scale: 'ficino-planetary', status: 'needs owner authoring'}]),
+    // The Sky's hour (28 Sep 2026 12:00 at Greenwich: Mercury) and what the map binds to Mercury: Bastanikar, Buselik and Puselik,
+    // each by its dominant (m2-correspondences rules, registry 83278b28).
+    'mode.source': 'hand', 'sky.hourRuler': 'Mercury',
+    'sky.bound': JSON.stringify([{key: 'maqam/02', role: 'dominant'}, {key: 'maqam/05', role: 'dominant'}, {key: 'maqam/70', role: 'dominant'}]),
   },
   fixtures: {
     'C Ionian, ties up': {},
     'D Dorian on fifths, ties down': {'mode.root': 2, 'mode.key': 'fifths/L0/dorian', tie: 'Down'},
     'A maqam passes': {'mode.root': 9, 'mode.key': 'maqam/09'},
+    "Mercury's hour sets the maqam": {'mode.source': 'sky', 'mode.key': 'maqam/02'},
+    'Sky with no hour': {'mode.source': 'sky', 'mode.key': 'maqam/02', 'sky.hourRuler': undefined, 'sky.bound': undefined},
     'Off': {enabled: false},
     'No catalogue': {'mode.lens': undefined, 'mode.sources': undefined, 'mode.absent': undefined, 'mode.key': undefined},
-    'No readings': {enabled: undefined, tie: undefined, 'mode.root': undefined, 'mode.key': undefined, 'mode.lens': undefined, 'mode.sources': undefined, 'mode.absent': undefined},
+    'No readings': {enabled: undefined, tie: undefined, 'mode.root': undefined, 'mode.key': undefined, 'mode.lens': undefined, 'mode.sources': undefined, 'mode.absent': undefined,
+      'mode.source': undefined, 'sky.hourRuler': undefined, 'sky.bound': undefined},
   },
 
   folded: p => { const s = readingOf(p.v)
@@ -304,13 +338,15 @@ export const design: DesignedDevice = {
       </Band>
       <Band>
         <Section label="Mode name" width={96}>{c.mode(true)}</Section>
-        <Section label="Source scale" width={156}>{c.source}
-          <Rows label="Not served" does="Source scales the owner names and does not serve, with its reason." items={absent} size={3} />
+        <Section label="Source" width={156}>{c.via}{c.source}
+          <Rows label="Not served" does="Source scales the owner names and does not serve, with its reason." items={absent} size={2} />
         </Section>
         <Section label="Reading" grow>
           <Readout label="frame" does="The context frame of the mode name." value={s.lens?.cf} />
           <Readout label="steps" does="The semitone steps between the degrees, from the root." value={s.lens ? s.lens.pitches.map((x, i, a) => ((a[(i + 1) % 7]! - x + 12) % 12)).join(' ') : s.source ? '¼ tones' : undefined} />
           <Readout label="in mode" does="Classes in the mode in force." value={s.mask ? s.mask.filter(Boolean).length : undefined} tone="value" />
+          <Readout label={s.ruler ? `bound to ${s.ruler}` : 'bound'} does="The maqām the map binds to the planet of the hour: by its tonic, its dominant, or a chromatic bridge." tone="accent"
+            value={s.bound ? `${s.bound.length} maqām` : undefined} />
         </Section>
       </Band>
     </Panel>

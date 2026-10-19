@@ -77,7 +77,12 @@ test('the form is read once per encounter; a new degree advances forward on the 
   assert.deepEqual(calls[0], {op: 'm3_reception', project: 'O-I', request: {operation: 'read', binding: m3.m3Binding(basis)}})
   const values = m3.qlM3Values(m3.qlM3State())
   assert.deepEqual(values, {'clock.degree720': 419, 'clock.tick12': 1, 'clock.backbone': '#3-5-1-3', 'aperture.index': 2, 'form.address': 17, 'form.codon': 'TAT'})
-  for (const key of Object.keys(design.defaults).filter(key => !['turn', 'open', 'readout', 'reciprocal'].includes(key))) assert.ok(key in values, `${key} from the owner`)
+  for (const key of Object.keys(design.defaults).filter(key => !['turn', 'open', 'readout', 'reciprocal'].includes(key))) assert.ok(key in values || m3.QL_M3_ABSENT[key], `${key} from the owner, or named absent`)
+  for (const [key, why] of Object.entries(m3.QL_M3_ABSENT)) {
+    assert.equal(key in values, false, `${key}: the reading carries none, so the binding gives none`)
+    assert.ok(key in design.defaults, `${key} is a key of the design`)
+    assert.match(why, /^The M3 reading carries no generation (law|cell)/, `${key}: absent with its reason`)
+  }
   const binding = m3.qlM3Binding(m3.qlM3State())
   assert.equal(designKey('quaternal-logic', m3.QL_M3_FACE), design.id)
   next = reading({state: form({clock: {...form().clock, steps: 424, degree720: 4}, aperture: {...form().aperture, index: 5}})})

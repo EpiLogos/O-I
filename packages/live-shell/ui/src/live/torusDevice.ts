@@ -98,6 +98,10 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
   sounding: 'The owner reports no sounding keys: a struck key is one act through the stage channel, answered yes or no, never reported back as sounding.',
   driveMod: 'Nothing moves the drive: the owner announces no drive, so no planet can take it and no range is drawn round it.',
+  'body.source': `No body source: ${NO_FIELD_PARAMETER}. The body's constants are the field's own; no tattva sets them here.`,
+  'tattva.name': 'No tattva reaches the shell: the M2 condition the field rings under is not announced to it.',
+  'tattva.fibre': 'No tattva reaches the shell, so no element fibre does.',
+  'tattva.standing': 'No tattva reaches the shell, so no table of body constants stands here.',
 }
 
 const NOT_WRITABLE = 'The owner takes edits only while the instrument follows or is held.'
