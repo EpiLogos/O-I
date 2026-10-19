@@ -1,0 +1,22 @@
+r18 screen pass — e26c2d445 (the inverses; the tab rail fix), with AIKit 2d93f171 installed (#522, #527) and its gateway upgraded,
+19 Oct 2026 10:11–10:18 UTC, computer use on the native candidate, the owner's real ground. Control/user/flows and the root and O-I
+wikis were backed up first; nothing was written (all 13 flows files match; both wikis keep their hashes).
+
+Seen:
+- The tab rail opens over a document page: with a Flow page in front, the pane's edge band opens its tab list (Flow, Timeline, the
+  Flow, the projection, the Beings…). r15's defect is gone, now that the page begins after the band.
+- Your world's body reads from its owner: Technē's Bodies lists your planet, "Central — your planet has no body yet: its owner keeps it
+  on your register's root space", where r15 had only the installed AIKit's refusal. Double-clicking it opens the World on your planet,
+  drawn from the body seeded from its ref (land, sea and a polar cap). The World device reads Body Your world, Name Central, no seed
+  yet, Reroll.
+- With the Astrology lens (the sky) the device's scale reads system.
+
+Found and fixed after the pass (not in r18):
+- Your system was never read, so no world but yours was drawn, Bodies listed only your planet, and the plate's Worlds rows (where a
+  world lands and comes off) never stood. Its readings (SystemReadings) were rendered only by the atlas's older centre panel; the
+  Earth a pane opens from Instruments is the projection module, drawn in a root of its own without the workspace those readings read
+  through. They now stand once in the shell's own tree while an Earth is mounted, whichever pane holds it.
+- Launch as Reading opened a reading from the panel through the controller's navigate, which the atlas-host suite refuses (the panel
+  reimplements nothing of the atlas). The atlas's own handle (mount.ts openReading) now opens it.
+
+Not seen: your system with O-I in it; landing O-I on your planet and taking it off; taking O-I out of today's set (r19).
