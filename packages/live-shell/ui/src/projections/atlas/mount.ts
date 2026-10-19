@@ -85,6 +85,9 @@ export interface AtlasHandle {
   /** [T-WORLDS §4 W2] Open the reading of the occurrence whose subject is `subjectRef` (a page launched as Reading): its manifestation in
    * its family, read deep, as the controller reaches one. False when the field holds no occurrence of that subject. */
   openReading(subjectRef: string): boolean;
+  /** [pages lane] Open the walk of the occurrence whose subject is `subjectRef` (a page launched as Walk): its family's walk, paused at
+   * its own stop. Says why when there is none to open. */
+  openWalk(subjectRef: string): {readonly ok: true} | {readonly ok: false; readonly why: string};
   /** Release the atlas: the frames and the GPU resources of the globe, every listener, timer and observer it installed
    * (the atlas lifetime), and its DOM. Idempotent. Nothing of the atlas runs after it. */
   dispose(): void;
@@ -156,6 +159,13 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
         if (!occurrence || !ctl) return false;
         ctl.navigate({view: {kind: 'manifest', occId: occurrence.id, context: {type: 'family', id: occurrence.familyId}}, deep: true});
         return true;
+      },
+      openWalk(subjectRef) {
+        const occurrence = model.occ.find(item => item.subject_ref === subjectRef);
+        if (!occurrence || !ctl) return {ok: false, why: 'the Earth holds no occurrence of this page yet'};
+        if (ctl.walkFrom(occurrence.id)) return {ok: true};
+        const placed = model.occ.filter(item => item.familyId === occurrence.familyId && item.geoPrecision !== 'none').length;
+        return {ok: false, why: `a walk needs two placed pages of its kind, and the Earth holds ${placed === 0 ? 'none' : placed === 1 ? 'one' : placed}${occurrence.geoPrecision === 'none' ? '; this page has no anchor on Earth' : ''}`};
       },
       dispose() {
         binding?.dispose();

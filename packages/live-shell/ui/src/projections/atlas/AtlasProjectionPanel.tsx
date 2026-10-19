@@ -533,10 +533,13 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   unsubscribeView = subscribeView(paintStanding)
   // A page launched as Reading (central/launchOpening.ts) opens its occurrence's reading here: the manifestation of the occurrence
   // whose subject is the page, in its family, read deep (the atlas's own handle, mount.ts openReading).
-  void import('../../central/earthReading').then(({registerEarthReading}) => {
+  // As Walk, its family's walk from its own stop (mount.ts openWalk).
+  void import('../../central/earthReading').then(({registerEarthReading, registerEarthWalk}) => {
     if (retired) return
-    withdrawReading = registerEarthReading(subjectRef => mounted.openReading(subjectRef)
+    const reading = registerEarthReading(subjectRef => mounted.openReading(subjectRef)
       ? {ok: true} : {ok: false, why: 'the Earth holds no occurrence of this page yet'})
+    const walk = registerEarthWalk(subjectRef => mounted.openWalk(subjectRef))
+    withdrawReading = () => { reading(); walk() }
   })
   paintStanding()
 
