@@ -169,3 +169,16 @@ test('a Being\'s pane draws the page by the current template from its island, wh
   assert.deepEqual(readPage(drawn).highlights, [{id: 'h1', part: 'introduction', passage: null, colour: 'green'}], 'the island is kept whole, the owner\'s keys with it')
   assert.equal(currentPage('<html><body>no page here</body></html>'), '<html><body>no page here</body></html>', 'a file that is no page is hosted as it is')
 })
+
+test('a Flow in a project world\'s own ground opens as its Flow; the Goals, Beings and Things beside it do not (r15: a practice Journal)', async () => {
+  const docs = await import('../src/central/documents/centralDocuments.ts')
+  const journal = 'central:path:/Users/admin/Central:Work/personal/ProjectCentral/user/flow-2026-10-19-1002.html'
+  assert.deepEqual(docs.parseDocumentSubject(journal)?.form, 'flow')
+  assert.equal(docs.parseDocumentSubject(journal).location.path, 'Work/personal/ProjectCentral/user/flow-2026-10-19-1002.html')
+  assert.equal(docs.isFlowPath('Work/O-I/ProjectCentral/user/practice/flow-2026-10-19-1002-2.html'), true)
+  assert.equal(docs.isFlowPath('Control/user/flows/oi203-multiagent-20260930.html'), true, 'your world\'s flows folder keeps every name')
+  for (const other of ['Work/O-I/ProjectCentral/user/goal-2026-10-19-1002.html', 'Work/O-I/ProjectCentral/user/beings-2026-10-19-1002.html',
+    'Work/O-I/ProjectCentral/user/O-I.html', 'Work/O-I/ProjectCentral/agents/flow-1.html', 'Work/O-I/desktop/flow-1.html']) {
+    assert.equal(docs.isFlowPath(other), false, other)
+  }
+})
