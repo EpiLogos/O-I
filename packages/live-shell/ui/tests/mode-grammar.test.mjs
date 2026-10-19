@@ -132,7 +132,8 @@ test('Rev 5, first table: every mode\'s slot meanings carry the design\'s words'
 test('Rev 5, second table: Session and Arrangement mean what the design says, per mode', () => {
   const EXPECT = {
     live: ['clips and scenes', 'the song over time'],
-    base: ['the day as clips', 'today on one ruler'],
+    // Manual §18.1 (T-WORLDS W2): Central's set is the Day — its tracks are the worlds brought into today, their pages its clips.
+    base: ['your worlds as tracks', 'today on one ruler'],
     factory: ['sessions and tasks', 'the run viewer'],
     expressions: ['scene rows', 'the scenes over time'],
     // FOUNDATION F3: views of Technē's material, never its Journey and Timeline instruments.
