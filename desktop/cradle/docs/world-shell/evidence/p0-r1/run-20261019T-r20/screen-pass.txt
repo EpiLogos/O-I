@@ -1,0 +1,23 @@
+r20 screen pass — 8a8dbb4bd (your system on the globe's own disc; the plate's Worlds section), with AIKit 2d93f171, 19 Oct 2026
+10:49–11:00 UTC, computer use on the native candidate, the owner's real ground. Control/user/flows and the root and O-I wikis were
+backed up first; nothing was written (all 13 flows files match; both wikis keep their hashes; today's set still holds O-I).
+
+Seen:
+- Your system is drawn: with the World on your planet and the Astrology lens (the sky), the rings stand around your planet carrying
+  what you hold (desktop chat conversations, agent runs, Field studies, the open acceptance work), and O-I stands as its own small
+  body at the top right of the pane. r19 had it read but not drawn.
+- The plate's Worlds section, after Locations, lists O-I ("land"); pressing it arms the landing (its row lit).
+- Central's Session grid holds Your world and O-I; selecting O-I's head stands its × (take it out of the set).
+
+Found and fixed after the pass (not in r20):
+- A world could not land: the click on your planet answered "the click was off the globe". The globe pick refused whenever the sky
+  lens was on, and your system is drawn only in that lens. With no sky layer standing (the port ships none) the globe drawn there is
+  the one the camera orbits, so the pick now reads it; it still refuses while a sky layer stands, whose camera moves.
+- The landing's answer was said only in the Locations section, which was folded, so the refusal showed nowhere near the Worlds rows.
+  The Worlds section now says the landing's line and its owner's answer itself, and Escape gives an armed landing back there too.
+- Delete on the selected O-I head did not take it out of the set; Backspace instead stepped the shell back an encounter (into Technē
+  on O-I). WebKit focuses no button on a click, so the key reached no head, and WebKit's Backspace walked the encounter history. The
+  head now takes focus as it is selected (tests/session-grid-keys.browser.mjs, red in WebKit and green in Chromium before the fix),
+  and the frame's keys hold Backspace wherever nothing is typed or no handler took it: the shell's Back is its own control.
+
+Not seen: landing O-I and taking it off; taking O-I out of today's set and putting it back (r21).

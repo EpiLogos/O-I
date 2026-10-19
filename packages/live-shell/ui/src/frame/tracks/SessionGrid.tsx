@@ -265,7 +265,9 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
           {foldable && <button type="button" className="gf" aria-expanded={open} aria-label={`${open ? 'Fold' : 'Unfold'} ${track.name}`}
             title={`${open ? 'Fold' : 'Unfold'} the ${members.length} under ${track.name}`} onClick={() => onFold(track.id)}>{open ? '▼' : '▶'}</button>}
           <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${removeTrack && owned ? ' · select it and press Delete to take it out of the set' : ''}`} aria-pressed={selectedTrack}
-            onClick={() => selection.select({kind: 'track', ref: track.id, title: track.name})}
+            // the head takes focus as it is selected, so its keys reach it: WebKit (the native candidate) focuses no button on a click,
+            // and its Backspace then stepped the shell back a page instead of taking the track out (r20)
+            onClick={event => { event.currentTarget.focus(); selection.select({kind: 'track', ref: track.id, title: track.name}) }}
             onKeyDown={removeTrack && owned ? event => { if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id)) } } : undefined}>{track.name}</button>
           {/* Live's Delete on a selected track, also under the pointer: the selected track's own way out of the set (the inverse of a
               drop on the empty track). What it holds stays where its owner keeps it. */}
