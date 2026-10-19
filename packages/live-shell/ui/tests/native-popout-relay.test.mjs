@@ -85,14 +85,15 @@ test('code-reading: the main window routes Pop-out to the host on the host only;
   const detached = await source('native/Detached.tsx')
   assert.match(detached, /<RelayedDevice bindingId=\{binding\.id\}/)
   assert.match(detached, /fallback=\{\(\) => alone \?/, 'where no relay answers, the face drawn alone, held to its own rule')
-  assert.match(detached, /const fault = deviceRelayAdmissionFault\(binding\)/, 'the window admits a relayed device by its identity')
+  assert.match(await source('native/detachedAdmission.ts'), /const fault = deviceRelayAdmissionFault\(binding\)/, 'the window admits a relayed device by its identity')
+  assert.match(detached, /detachedAdmission\(\{/)
   const relayed = await source('frame/devices/RelayedDevice.tsx')
-  assert.match(relayed, /<PlacedDevice device=\{device\} view="popout" binding=\{binding\} onClose=\{onClose\} relayed \/>/, 'drawn as relayed, so its design draws')
+  assert.match(relayed, /<PlacedDevice device=\{device\} view="popout" binding=\{binding\} onClose=\{onClose\} relayed ownFull=\{relayedFullDraw\(snapshot\.full, transport \?\? NO_CARRIER\)\} \/>/, 'drawn as relayed, so its design draws, with its own Full where one is relayed')
   // Seen on r8: Ground hygiene popped out drew the generic plate (two readings), because a design loads only for a device published
   // on the window's own door, and the Pop-out is its own page. A relayed device counts as published there.
   const view = await source('frame/devices/DeviceView.tsx')
   assert.match(view, /const published = useIsPublished\(device\.id\) \|\| relayed/)
-  assert.match(view, /useHosting\(device, picture, actions, wrapRow, binding, generic, false, relayed\)/)
+  assert.match(view, /useHosting\(device, picture, actions, wrapRow, binding, generic, false, relayed, ownFull\)/)
   const rust = await readFile(new URL('../../../../desktop/cradle/src-tauri/src/windows.rs', import.meta.url), 'utf8')
   assert.match(rust, /"device"/, 'the host admits a device binding')
 })
@@ -111,4 +112,32 @@ test('a relayed device is admitted by its identity alone, declared or not; the s
   assert.match(kinds.deviceIdentityFault(filter, manifests), /no admitted family "live"/, 'drawn alone, Live\'s Filter is refused')
   assert.match(kinds.deviceRelayAdmissionFault({kind: 'device', id: 'device:live/other', device: filter}), /does not name its family and face/)
   assert.match(kinds.deviceRelayAdmissionFault({kind: 'device', id: 'device:live/filter'}), /carries no device identity/)
+})
+
+test('a device\'s own Full crosses as data and its Pop-out draws it there: the Day\'s page, never the design\'s template (r23)', async () => {
+  // r23: the Day popped out drew a blank Full — its page is the main window's own drawing (centralPublication's `full.draw`), which
+  // no second window holds, so the design's template stood in, with no template root on the native host.
+  const {createElement} = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const fulls = await import('../src/frame/devices/relayedFulls.ts')
+  const {binding} = ownerBinding()
+  const day = {project: null, sourceRef: 'central:source:control:root:Control/user/day/2026-10-19/day.md', documentId: 'day-doc'}
+  const snap = relay.relaySnapshot('device:central/day-die', 'central:day-die', device, binding, {kind: 'central:day-page', data: day})
+  assert.deepEqual(snap.full, {kind: 'central:day-page', data: day}, 'the Full\'s data crosses')
+  assert.equal(JSON.stringify(snap).includes('function'), false, 'no function crosses')
+  assert.equal(relay.relaySnapshot('b', 'd', device, binding).full, null, 'a device with no own Full carries none')
+  const drawn = []
+  fulls.registerRelayedFull('test:page', (data, transport) => { drawn.push([data, transport.kind]); return createElement('p', {'data-test-page': ''}, `page ${data.documentId}`) })
+  const transport = {kind: 'unavailable', reason: 'test'}
+  const draw = fulls.relayedFullDraw({kind: 'test:page', data: {documentId: 'd-1'}}, transport)
+  assert.equal(renderToStaticMarkup(draw()), '<p data-test-page="">page d-1</p>')
+  assert.deepEqual(drawn, [[{documentId: 'd-1'}, 'unavailable']])
+  assert.equal(fulls.relayedFullDraw({kind: 'nobody:draws-this', data: {}}, transport), undefined, 'a kind no window registered draws nothing of its own')
+  assert.equal(fulls.relayedFullDraw(null, transport), undefined)
+  // Central registers the Day's page for its Pop-out where the Detached window loads it
+  const detachedSource = await source('native/Detached.tsx')
+  assert.match(detachedSource, /transport=\{transport\}/, 'the Pop-out hands this window\'s carrier to the device it draws')
+  assert.match(detachedSource, /import '\.\.\/central\/devices\/CentralDevices'/, 'the Pop-out window loads the Central family\'s drawer')
+  const central = await source('central/devices/CentralDevices.tsx')
+  assert.match(central, /registerRelayedFull\(DAY_PAGE_RELAY/, 'Central registers the Day page as the Day\'s relayed Full')
 })
