@@ -23,7 +23,7 @@ import {daySetOf, withWorld, writeDaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
 import {openLaunched} from '../../central/launchOpening'
 import {documentLayoutWriter} from '../../central/documents/documentDoor'
-import {subscribeSystem, systemBodies} from '../../projections/atlas/system/systemStore'
+import {subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
 import {worldColourOf} from '../../projections/atlas/system/systemModel'
 import {practiceWorldOf} from '../../../../../../desktop/cradle/src/nara/practiceWorld'
 import {useOptionalContinuity} from '../../continuity/workspace'
@@ -130,8 +130,11 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   }, [transport, armOn, aperture?.sourceRef, aperture?.documentId, after, refreshGround]) // eslint-disable-line react-hooks/exhaustive-deps
   const civil = useMemo(() => civilReadingOf(source), [source])
   // Each world wears its body's colour (manual §17.2 "Your system"); the practice world stands as Practice (T-WORLDS §6 W4).
-  const bodies = useSyncExternalStore(subscribeSystem, systemBodies, systemBodies)
-  const colours = useMemo(() => new Map(inSet.map(world => [world.ref, worldColourOf(bodies, world.ref).core])), [inSet, bodies])
+  // The store's reading is one value until the system changes; the bodies are taken from it (a derived list per read would make
+  // React see a new snapshot on every render and drop the grid, r16).
+  const system = useSyncExternalStore(subscribeSystem, systemReading, systemReading)
+  const bodies = system.state === 'read' ? system.bodies : null
+  const colours = useMemo(() => new Map(inSet.map(world => [world.ref, worldColourOf(bodies ?? [], world.ref).core])), [inSet, bodies])
   // Only a register of its own is a practice track: when your world keeps the practice pages, your world stays your world.
   const practice = useMemo(() => {
     const found = worlds.state === 'read' ? practiceWorldOf(worlds.worlds) : null
