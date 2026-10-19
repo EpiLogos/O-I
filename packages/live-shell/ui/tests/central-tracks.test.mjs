@@ -267,3 +267,10 @@ test('a day subject is named by its date — every day on the surface is a day.m
   assert.equal(surface.subjectWords('Control/user/flows/flow-1.html'), 'flow-1.html', 'anything else by its file name')
 })
 
+
+test('the bodies the tracks read are one value until the system changes: a snapshot read twice is the same (r16: the grid drew nothing)', async () => {
+  const store = await import('../src/projections/atlas/system/systemStore.ts')
+  assert.equal(store.systemBodies(), store.systemBodies(), 'unread, the bodies are one empty list, not a new one per read')
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/tracks/useCentralTracks.ts', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /useSyncExternalStore\(subscribeSystem, systemBodies/, 'the hook subscribes to the stable reading, not a derived list')
+})
