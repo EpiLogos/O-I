@@ -415,6 +415,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let observer: MutationObserver | null = null
   let unsubscribeStanding: () => void = () => {}
   let unsubscribeView: () => void = () => {}
+  let withdrawReading: () => void = () => {}
   let places: PlacesBinding | null = null
   let palaces: PalacesBinding | null = null
   let body: {dispose(): void} | null = null
@@ -438,6 +439,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     unsubscribeSun()
     unsubscribeStanding()
     unsubscribeView()
+    withdrawReading()
     places?.dispose()
     palaces?.dispose()
     body?.dispose()
@@ -533,6 +535,17 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   publishAtlasAionReading(bundle.history ? {providerId: SUITE_PROVIDER_ID, history: bundle.history} : null)
   unsubscribeStanding = subscribeSuiteStanding(paintStanding)
   unsubscribeView = subscribeView(paintStanding)
+  // A page launched as Reading (central/launchOpening.ts) opens its occurrence's reading here: the manifestation of the occurrence
+  // whose subject is the page, in its family, read deep (the controller's own reading state, through its public navigate).
+  void import('../../central/earthReading').then(({registerEarthReading}) => {
+    if (retired) return
+    withdrawReading = registerEarthReading(subjectRef => {
+      const occurrence = mounted.model.occ.find(item => item.subject_ref === subjectRef)
+      if (!occurrence) return {ok: false, why: 'the Earth holds no occurrence of this page yet'}
+      mounted.ctl.navigate({view: {kind: 'manifest', occId: occurrence.id, context: {type: 'family', id: occurrence.familyId}}, deep: true})
+      return {ok: true}
+    })
+  })
   paintStanding()
 
   if (follow) {
