@@ -1,0 +1,19 @@
+r16 screen pass — 7457334b3 (r15's fixes; worlds wearing their bodies' colours, the practice track), 19 Oct 2026 09:23–09:26 UTC,
+computer use on the native candidate, the owner's real ground. Control/user/flows and Work/personal/ProjectCentral were backed up
+with sha256 first. The pass made one Being in your flows folder and one Journal in the personal register's human ground; both were
+removed after (copies kept outside the repository). All 13 flows files match; the personal ProjectCentral matches its snapshot.
+
+Seen:
+- A practice Journal opens as its Flow: Your practice → Journal made its page in the personal register and opened it in a Flow pane
+  ("FLOW · c5ed1bab · as read", titled Journal, its head Flow · Dialogue · Journal with Journal chosen, today's page "Monday 19
+  October 10:23" ready to write). r15's refusal ("is no Day or Flow") is gone. The pane the restored layout kept for r15's removed
+  Journal now reads as a Flow whose file is missing, said in words.
+- New… → Beings made a Being and opened it in its pane.
+
+Found and fixed after the pass (not in r16):
+- The Session grid drew nothing: an empty pane. The tracks hook read your system's bodies through useSyncExternalStore with a getter
+  that returned a new empty list on every read while the system is not read, so React saw a new snapshot each render and dropped the
+  grid (809816197, after r15's build). The store now keeps one empty list, and the hook subscribes to the store's stable reading and
+  takes the bodies from it. A test now reads the snapshot twice and holds the hook to the stable reading; it failed before the fix.
+
+Not seen (the grid was down): a page launched from the grid opening where its launch says (r17).

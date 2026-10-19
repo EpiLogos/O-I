@@ -44,5 +44,8 @@ export function bindSystemActs(next: SystemActs | null): void {
   notify()
 }
 
+/** No bodies: one list, so a reader that compares snapshots (useSyncExternalStore) sees the same value until the system is read. */
+const NO_BODIES: readonly SystemBody[] = []
+
 /** The bodies as they read now (none while the system is not read). */
-export const systemBodies = (): readonly SystemBody[] => (reading.state === 'read' ? reading.bodies : [])
+export const systemBodies = (): readonly SystemBody[] => (reading.state === 'read' ? reading.bodies : NO_BODIES)
