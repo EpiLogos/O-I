@@ -123,11 +123,10 @@ installed; K6 on the planning lane's device answer; K8 on K1–K5.
 
 ## 7. Open for the owner
 
-- QL-MEF carries the removed Technē association in the team space: `ANIMA-ALETHEIA-TEAMS.md` §10.2 ("The M_i′ instruments are
-  M0′ Project / Wiki / Graph, M1′ Canvas / Constellation, …") and the code it describes (`team_space.rs`: `M_PRIME_INSTRUMENTS`,
-  each depth's `m_prime` and `techne`). The owner asked for the line to go (19 Oct). The change is written and tested (17 team
-  space tests pass, fmt clean) and waits to land on QL-MEF main. Beyond it, the 4:2 reading also stands in
-  `docs/L5-TECHNE-DUAL-READING-LOCK.md`, `ANIMA-ALETHEIA-TEAMS.md` §6 item 2, and the `m_prime` office of `ql.techne/v1`.
+- Retired in QL-MEF `69c0d82` (19 Oct, on the owner's word): the team space's Technē association, `ANIMA-ALETHEIA-TEAMS.md` §10.2's
+  sentence and the code it described (`team_space.rs`: `M_PRIME_INSTRUMENTS`, each depth's `m_prime` and `techne`); the 17 team
+  space tests pass. The 4:2 reading still stands in `docs/L5-TECHNE-DUAL-READING-LOCK.md`, `ANIMA-ALETHEIA-TEAMS.md` §6 item 2,
+  and the `m_prime` office of `ql.techne/v1`; O-I's lock §0.4 stands over them for the DLW.
 - The plain descriptions of the forms in §17.4 and of the six powers in §25.3 are readings of QL-MEF's law. QL governs; correct
   them where they miss.
 - Where Ta-Onta's Methodology and six Methods live: QL-MEF `skills/` (beside the 39 domain skills) or Central's skills. This ticket
