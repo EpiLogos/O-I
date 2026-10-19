@@ -48,6 +48,8 @@ export class OwnerReadingEntry<T> {
   private state: OwnerReading<T> = READING
   private readonly listeners = new Set<() => void>()
   private inFlight: {epoch: string; promise: Promise<void>} | null = null
+  /** The one read promised to follow the read in flight, for those who asked while it ran. */
+  private following: {epoch: string; promise: Promise<void>} | null = null
   private ticket = 0
   /** How many times the owner was actually asked — the census a reader-count test reads. */
   asks = 0
@@ -82,12 +84,24 @@ export class OwnerReadingEntry<T> {
    * not asked again — only `retry` (the person) or a new epoch asks it. */
   refresh(epoch: string): Promise<void> {
     if (this.state.epoch === epoch && this.state.status === 'refused') return Promise.resolve()
-    return this.ask(epoch)
+    return this.askAfter(epoch)
   }
 
   /** The person asked: read again whatever stands, a refusal included. */
   retry(epoch: string): Promise<void> {
-    return this.ask(epoch)
+    return this.askAfter(epoch)
+  }
+
+  /** A read that begins after this call. One in flight may have begun before what moved (r22: a Day write landed while the ground
+   * was being read, and the refresh after it was answered by that older read), so one more read follows it — one, however many
+   * ask while it runs. With none in flight it simply reads. */
+  private askAfter(epoch: string): Promise<void> {
+    const running = this.inFlight
+    if (!running || running.epoch !== epoch) return this.ask(epoch)
+    if (this.following?.epoch === epoch) return this.following.promise
+    const promise = running.promise.then(() => { this.following = null; return this.ask(epoch) })
+    this.following = {epoch, promise}
+    return promise
   }
 
   /** An answer the owner gave this key in a wider read (one list read for many keys): it stands for `epoch` as if read here.
