@@ -14,18 +14,26 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
 
 ## Where it stands
 
-- `dlw/build` in the seat `worktrees/env-1/o-i`, at `e3b37bd3a` and equal to origin. #677 landed on `main` as #685 (20 Oct).
-  PR #683 carries everything since; it is open, mergeable, and its checks are green.
-- The last candidate is r28 (`Work/O-I/target/p0-r1/20261020T-r28`; evidence `desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261020T-r28/`). PATH §7 says
-  what each row was seen doing on the native app and what each still owes its screen check.
-- Loading (PATH L1):
-  - Done: the shell's first script is split (main window 6.38 → 2.80 MB), and panes draw their last reading at once.
-  - Owed: Central's browser rows on last-reading-first (they show "Reading the Flows…" for 3–5 s on every return); reads that
-    start a new owner process each time (start-up asks 50 ops in its first 4.5 s, 19 s of owner time,
-    `run-20261020T-r28/kernel-trace.log`); the last reading across a relaunch.
-  - A session on the first account began the resident readers on 20 Oct and was stopped. Look for its commits after
-    `e3b37bd3a` and its notes in PATH's L1 row before starting. Its uncommitted change to
-    `desktop/cradle/kernel/src/owner_process.rs` (130 lines, 20 Oct 10:15) is still in the env-1 tree.
+- `dlw/build` in the seat `worktrees/env-1/o-i`, clean and equal to origin. #677 landed on `main` as #685 (20 Oct). PR #683
+  carries everything since.
+- The last candidates are r28 (`Work/O-I/target/p0-r1/20261020T-r28`; evidence
+  `desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261020T-r28/`) and r29, built for the reads
+  (`run-20261020T-r29-reads/`). PATH §7 says what each row was seen doing on the native app and what each still owes its
+  screen check.
+- Loading (PATH L1, which carries the measurements):
+  - Done:
+    - the shell's first script is split (main window 6.38 → 2.80 MB), and panes draw their last reading at once;
+    - the reads were paying for re-deriving state on every call, not for the process start: a warm process saves only
+      about 5 ms;
+    - Central stopped re-deriving its source table on every action (EpiLogos/Central#284, merged), and AIKit's
+      session-space and lifecycle reads stopped building its whole Service (EpiLogos/ai-kit#535, merged). A day read now
+      takes 309 → 93 ms; start-up's 12 task reads take 1.9 → 0.18 s;
+    - the kernel notices an answering owner within a millisecond and traces every owner process (`72216b455`).
+  - Owed:
+    - Central's browser rows on last-reading-first (they show "Reading the Flows…" for 3–5 s on every return);
+    - the last reading across a relaunch;
+    - `central.files.read`, which starts 52 `ctrl` processes at start-up (4.4 s), one per file, to batch into one;
+    - the next cut inside AIKit's `Service::open`, for `client status`, `model-catalogue` and `knowledge resolve`.
 - Quaternal Logic is installed at `74e9c8e`, which is its `main`.
 - The device lane's designs are in the catalogue (`main` `b14b51b8f`; here `ce0edad3f` and `5e60d82d3`). Each binding names
   the keys no owner serves yet as absent, with the reason. O-I #684 lists the reading each needs: the M3 generation cell,
@@ -37,7 +45,7 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
 From MAP's build lane:
 
 1. What PATH §7 says is owed: the screen checks, and L1's three owes.
-2. Foundations (item 4) and loading (item 5), the resident readers first.
+2. Foundations (item 4) and loading (item 5): L1's owed reads first.
 3. Reverse engineering into the product (item 3).
 4. Technē's construction chain, end to end (item 6).
 5. The owner operations drag and drop needs, then those the planning lane's action table finds missing (item 7).
@@ -102,7 +110,7 @@ DeepSeek judges no UI, builds no candidate and writes nothing to the owner's gro
   - Live's keys on objects whose owner operation exists: rename ⌘R, duplicate ⌘D, Delete, insert scene ⌘I, fold U, switch off 0.
   - The shared context menu wired onto tracks, clips, scenes and browser rows from the action table.
 - **Not for it:**
-  - the resident readers in the kernel (process lifetimes, the owner's authority);
+  - cuts inside the owners' own start-up (AIKit's `Service::open`, Central's admission) and the kernel's owner processes;
   - anything judged on the native screen (the die, display-first devices, the three layers);
   - candidate builds and screen passes;
   - design.
