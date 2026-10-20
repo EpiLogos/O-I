@@ -36,6 +36,9 @@ import {DEFAULT_WIDGETS} from './shell/widgetDefaults'
 import {BrowserReadingProvider, MODE_POOL_FACES, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
 import {TracksPane} from './frame/tracks/TracksPane'
 import {showMainView, tabMainView, togglePaneView, useMainView, type MainView} from './shell/mainView'
+import {publishClipViewDoor} from './frame/menu/objectDoor'
+import {OBJECT_ACT_OF, runObjectCommand, type MenuCommand} from './frame/menu/commandDoor'
+import {redoStep, undoStep} from './frame/menu/undo'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
 import {liveWorldSelection, setSelectionOf} from './shell/liveSelection'
@@ -458,6 +461,40 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     window.addEventListener('keydown', onChord, true)
     return () => window.removeEventListener('keydown', onChord, true)
   }, [])
+  // The menu bar's commands (manual §10.9; the host's menus.rs emits each item's id as oi:command): the view keys' own parts, the
+  // object acts on the selection of the view that stands, Undo and Redo, Settings. While a text field holds the focus, Undo and Redo
+  // are the field's own.
+  const command = useRef<(id: string) => void>(() => {})
+  command.current = id => {
+    const editable = document.activeElement instanceof HTMLElement && document.activeElement.closest('input,textarea,[contenteditable="true"]')
+    if (id === 'edit.undo' || id === 'edit.redo') {
+      if (editable) document.execCommand(id === 'edit.undo' ? 'undo' : 'redo')
+      else void (id === 'edit.undo' ? undoStep() : redoStep())
+      return
+    }
+    const act = OBJECT_ACT_OF[id as MenuCommand]
+    if (act) { runObjectCommand(act); return }
+    if (id === 'app.settings') { settingsOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; presentSettings(true); return }
+    if (id === 'view.session' || id === 'view.arrangement') { presentSettings(false); chooseView(id === 'view.session' ? 'session' : 'arrangement'); return }
+    if (id === 'view.expand-clip') { setClipExpanded(expanded => !expanded); setDetail(true); return }
+    const parts: Record<string, FrameToggle> = {'view.pane': 'pane', 'view.browser': 'browser', 'view.pool': 'pool', 'view.rail': 'rail', 'view.clip': 'clip',
+      'view.device': 'device', 'view.detail': 'detail', 'view.mixer': 'mixer', 'view.io': 'io'}
+    if (parts[id]) chord.current(parts[id]!)
+  }
+  useEffect(() => {
+    if (!('__TAURI_INTERNALS__' in window)) return
+    let disposed = false, stop: (() => void) | undefined
+    void import('@tauri-apps/api/event').then(async ({listen}) => {
+      const unlisten = await listen<string>('oi:command', event => command.current(event.payload))
+      if (disposed) unlisten(); else stop = unlisten
+    })
+    return () => { disposed = true; stop?.() }
+  }, [])
+  // An act that writes a clip's own facts brings Clip view forward when it is hidden (frame/menu/objectDoor.ts).
+  useEffect(() => {
+    publishClipViewDoor(() => { changeDetailMode('clip'); setHiddenSides(hidden => ({...hidden, clip: false})); setDetail(true) })
+    return () => publishClipViewDoor(null)
+  }, [])
   // The focus keys (Live 12's Move Focus, manual §10.2): ⌥ and a digit brings the part forward and gives it the keys.
   const focusPart = useRef<(target: FocusTarget) => void>(() => {})
   focusPart.current = target => {
@@ -479,6 +516,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       if (event.key === 'Escape' && settingsPresented && !event.defaultPrevented) { event.preventDefault(); returnFromSettings(); return }
       const target = event.target as HTMLElement
       if (target.closest('input,textarea,select,[contenteditable="true"]')) return
+      // ⌘Z and ⇧⌘Z outside a field: the undo list (in the native window the menu bar's Undo and Redo take these keys first).
+      if (event.metaKey && !event.altKey && !event.ctrlKey && event.key.toLowerCase() === 'z' && !settingsPresented) {
+        event.preventDefault(); command.current(event.shiftKey ? 'edit.redo' : 'edit.undo'); return
+      }
       const focusTarget = focusKeyOf(event)
       if (focusTarget && !settingsPresented) { event.preventDefault(); focusPart.current(focusTarget); return }
       if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey && !settingsPresented) {

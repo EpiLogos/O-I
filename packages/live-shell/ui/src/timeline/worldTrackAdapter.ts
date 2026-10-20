@@ -186,6 +186,19 @@ export interface WorldTrackActions {
   audition?: {op: string; run(trackId: string, takeId: string): unknown};
   /** Give overridden parameters back to their lanes (Re-enable); a lane's id when one lane is meant. */
   reenable?: {op: string; run(laneId?: string): unknown};
+  /** The object acts (manual §10.9, frame/menu/objectActions.ts), each the owner op it runs; one absent here stands disabled in the
+   * object's menu and names the operation it waits for. A clip's own name, colour and activator are written by its Clip view. */
+  renameTrack?: {op: string; run(trackId: string, name: string): unknown};
+  colourTrack?: {op: string; run(trackId: string, colour: string): unknown};
+  duplicateClip?: {op: string; run(clipId: string): unknown};
+  deleteClip?: {op: string; run(clipId: string): unknown};
+  insertClip?: {op: string; run(trackId: string, rowId: string): unknown};
+  insertRow?: {op: string; run(afterRowId: string | null): unknown};
+  renameRow?: {op: string; run(rowId: string, name: string): unknown};
+  duplicateRow?: {op: string; run(rowId: string): unknown};
+  deleteRow?: {op: string; run(rowId: string): unknown};
+  /** Whose ops these are, in the words a missing act names (the mode's registration gives it, frame/tracks/modeTracks.ts). */
+  owner?: string;
 }
 /** What an owner op answers when it answers in words (the shell's own control receipt): a note, or the refusal. An action's
  * `run` may return one, or a promise of one; the Session shows it where the action was pressed. Any other return is not shown. */

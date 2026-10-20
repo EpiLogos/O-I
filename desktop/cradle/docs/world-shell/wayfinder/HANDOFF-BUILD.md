@@ -49,6 +49,20 @@ From MAP's build lane:
 3. Reverse engineering into the product (item 3).
 4. Technē's construction chain, end to end (item 6).
 5. The owner operations drag and drop needs, then those the planning lane's action table finds missing (item 7).
+   The UI/UX lane's phase 2 (manual §10.9) put every object's acts in its menu. Each act an owner cannot take yet stands dimmed
+   and names its operation, so this list can be re-read off the menus at any time (`frame/menu/objectActions.ts`). What waits, 20 Oct:
+   - **Every mode:**
+     - clip: cut, copy and paste (`clip.copy-to`, `clip.move-to`), info text, and Arrangement view's split, consolidate and crop;
+     - track: duplicate, colour, group and move;
+     - slot: its stop button;
+     - row: rename, duplicate and delete.
+   - **Live (kernel · live-set):** clip launch, stop, duplicate, delete and insert; track rename; row insert.
+   - **Central (the page owner, today's set in the Day):** page duplicate, delete and create in a world (Insert clip); a page's
+     switch (`active`); world rename; row insert.
+   - **Factory (AIKit's encounter, Factory):** task duplicate, delete and insert; session rename; taking a session off the set;
+     row insert.
+   - **Expressions:** taking an Expression off the set; a stop's rename.
+   - **Technē:** an event's name, colour and switch; event duplicate, delete and insert; a reading's rename and removal.
 6. The shell refinements (item 8).
 7. The readings the device lane's designs wait on (O-I #684).
 8. T-PROCEDURAL-BODY (20 Oct, built on the owner's second account in one run; `tickets/T-PROCEDURAL-BODY-at-the-earths-standard.md`): a
