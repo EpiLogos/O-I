@@ -10,8 +10,9 @@
 //                        your own world's body (or null for the Earth) and engine.setBodyTime(ms | null) for the occasion, and releases both;
 //                        occasionMs(window): the instant of a shared window, through the time authority (the midpoint of a bounded window, its
 //                        bounded edge when one is open, null for all time and for a window that does not parse)
-//   systemOverlay.ts     the disc of a world is bodyDisc(record, size, body.look, occasion): the look it is given, and the shared occasion in steps of
-//                        OCCASION_STEP_MS (null is Now); redrawn when the look or the occasion's step moves though the record does not
+//   systemOverlay.ts     the disc of a world is bodyDisc(record, size, body.look, occasion): the look it is given, and the shared occasion (the one the
+//                        body drawer reads from the window, bodyDraw.ts shownOccasion) in steps of OCCASION_STEP_MS (null is Now); redrawn when the
+//                        look or the occasion's step moves though the record does not
 //   AtlasProjectionPanel.tsx   binds bindBodyDraw to the mounted engine and the shared session, and gives bindWorldBody no engine to draw
 //                        with (it reads; one drawer draws)
 // The engine is a recording stub (the real one needs WebGL: UNVERIFIED headless, the lead's screen pass). The overlay runs in a minimal DOM
@@ -288,7 +289,7 @@ test('a window already standing when the atlas binds is the occasion at once, an
 
 // ── the system overlay's discs ──────────────────────────────────────────────────────────────────────────────────────────────────
 
-function overlayHarness({body = null, sky = true, store} = {}) {
+function overlayHarness({body = null, sky = true} = {}) {
   const parent = new FakeEl('div')
   const frames = []
   const handle = {
@@ -297,7 +298,7 @@ function overlayHarness({body = null, sky = true, store} = {}) {
     ctl: {state: {sky, graph: false}},
   }
   globalThis.__bodyDiscCalls = []; globalThis.__orbits = []
-  const binding = overlay.bindSystemOverlay({handle, said() {}, ...(store ? {store} : {})})
+  const binding = overlay.bindSystemOverlay({handle, said() {}})
   later(binding.dispose)
   return {handle, parent, frames, binding, frame: () => frames.forEach(fn => fn(0.016))}
 }
@@ -329,7 +330,8 @@ test('a world\'s disc carries the weather of the shared occasion, drawn again on
   const {OCCASION_STEP_MS, occasionStep, occasionMs} = drawMod
   setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, LIVED]])))
   const store = sharedSession()
-  overlayHarness({store})
+  later(drawMod.bindBodyDraw({engine: stubEngine(), store}).dispose)
+  overlayHarness()
   assert.equal(discsOf().length, 1)
   assert.equal(discsOf()[0][3], null, 'no window: Now')
   const from = '2020-03-01T00:00:00Z', to = '2020-03-05T00:00:00Z'

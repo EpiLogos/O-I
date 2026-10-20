@@ -516,7 +516,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // the M4 plate. The instant it is drawn for moves once a minute, under this atlas's lifetime, so what an agent made drifts off as it ages.
   systemClock = bindSystemClock()
   // (loaded with the atlas's own modules, as the mount is: the shell's import of the panel stays light)
-  void import('./system/systemOverlay').then(overlay => { if (!retired) system = overlay.bindSystemOverlay({handle: mounted, said: notePlaceTool, store: disclosureSession}) })
+  void import('./system/systemOverlay').then(overlay => { if (!retired) system = overlay.bindSystemOverlay({handle: mounted, said: notePlaceTool}) })
 
   // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
   // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the

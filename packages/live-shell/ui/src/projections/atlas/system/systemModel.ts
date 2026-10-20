@@ -23,10 +23,10 @@
 import type {WorldBodyReading} from '../../../../../../../desktop/cradle/src/kernel/types'
 import type {CentralWorld} from '../../../central/centralWorlds'
 import type {Palette} from '../src/types/field'
-import type {WorldBodyRecord} from '../src/globe/body'
+import type {BodyLook, WorldBodyRecord} from '../src/globe/body'
 import {fnv1a, paletteOfRef} from '../provider/suiteReading'
 import {firstBody} from '../body/worldBody'
-import {lookOf, maturityOf, type WorldFacts, type WorldLook} from './maturity'
+import {lookOf, maturityOf, type WorldFacts} from './maturity'
 
 /** A world's body as its owner last answered. */
 export type SystemBodyReading =
@@ -71,7 +71,7 @@ export interface SystemBody {
   readonly standing: string
   /** where it lands on your planet; null for your own world, and for a world that has not landed on it */
   /** how finished its body looks, read from how lived in the world is (system/maturity.ts): none for a world whose readings are not in */
-  readonly look: WorldLook
+  readonly look: BodyLook
   readonly landing: {readonly lat: number; readonly lon: number} | null
   /** why it has no landing on your planet (null for your own world and a landed one) */
   readonly unlanded: string | null
@@ -179,7 +179,7 @@ function satellitesOf(world: CentralWorld, input: SystemInput): SystemSatellite[
 }
 
 /** A world's look: from its own readings, your own world is not exempt; none (the generator's default) while they are not in. */
-function lookOfWorld(world: CentralWorld, input: SystemInput): WorldLook {
+function lookOfWorld(world: CentralWorld, input: SystemInput): BodyLook {
   const facts = input.facts?.get(world.ref)
   return facts ? lookOf(maturityOf(facts)) : {}
 }
