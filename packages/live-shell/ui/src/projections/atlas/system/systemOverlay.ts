@@ -5,8 +5,8 @@
 //     Earth is chosen the planet is the Earth, and your system stands down): its rings ride the sky layer's own disc of it
 //     (sky/layer.ts screenDisc('terra'));
 //   - each other world of today's set stands on the ring of worlds around your planet, at the place its ref keys, as a small disc of its
-//     own body (globe/body.ts bodyDisc: the owner's record, or the body seeded from its ref; hollow while it is not read), in its colour,
-//     its axis leaned by its tilt, its name beneath;
+//     own body (globe/body.ts bodyDisc: the owner's record, or the body seeded from its ref; hollow while it is not read), drawn with the
+//     look its world's readings give it and the weather of the shared occasion, in its colour, its axis leaned by its tilt, its name beneath;
 //   - what each world holds rides its own two rings on PlanetOrbits (sky/orbits.ts), keyed in the orbits' world key space (never a
 //     widened BodyKey): the agents at work inside, what they have just made outside, each at the place its subject keys, an artefact
 //     drifting outward and fading as it ages. A press opens it through the act the readings bound.
@@ -21,9 +21,12 @@ import {hostSize} from '../src/ui/hostSize'
 import {dirFromLatLon} from '../src/data/geo'
 import type {ScreenPoint} from '../src/globe/engine'
 import type {AtlasHandle} from '../mount'
+import type {DisclosureSessionStore} from '../../../../../../../desktop/cradle/src/techne/session'
 import {subscribeWorldBody, worldBodyState} from '../body/worldBody'
 import {subscribeSuiteStanding, suiteStanding} from '../provider/suiteStanding'
 import {systemActs, systemReading, subscribeSystem} from './systemStore'
+import {occasionMs, occasionStep} from './bodyDraw'
+import type {WorldLook} from './maturity'
 import type {SystemBody} from './systemModel'
 import {yourLocations, type BodyLocation} from './bodyLocations'
 import './systemOverlay.css'
@@ -140,8 +143,9 @@ interface OverlayDom {
   readonly places: HTMLElement
 }
 
-/** Bind your system to the mounted atlas: the overlay over its canvas, redrawn on each reading and placed on each frame. */
-export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (text: string) => void}): SystemOverlayBinding {
+/** Bind your system to the mounted atlas: the overlay over its canvas, redrawn on each reading and placed on each frame. `store` is the shared
+ * time window: each world's disc carries the weather of its occasion (none given, Now). */
+export function bindSystemOverlay({handle, said, store}: {handle: AtlasHandle; said?: (text: string) => void; store?: DisclosureSessionStore}): SystemOverlayBinding {
   const parent = handle.engine.renderer.domElement.parentElement ?? document.body
   let dom: OverlayDom | null = null
   const ensureDom = (): OverlayDom => {
@@ -201,12 +205,12 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     void acts.open(satellite, body).catch(error => said?.(error instanceof Error ? error.message : String(error)))
   }
 
-  const draw = (canvas: HTMLCanvasElement, record: WorldBodyRecord | null) => {
+  const draw = (canvas: HTMLCanvasElement, record: WorldBodyRecord | null, look: WorldLook, occasion: number | null) => {
     const context = canvas.getContext('2d')
     if (!context) return
     context.clearRect(0, 0, canvas.width, canvas.height)
     if (!record) return
-    const image = bodyDisc(record, canvas.width)
+    const image = bodyDisc(record, canvas.width, look, occasion)
     context.putImageData(new ImageData(image.data as Uint8ClampedArray<ArrayBuffer>, image.width, image.height), 0, 0)
   }
 
@@ -215,6 +219,8 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     bodies = reading.state === 'read' ? reading.bodies : []
     if (!bodies.length && !dom) return
     const {root, svg, yours, yourRings} = ensureDom()
+    // the weather the discs are drawn at: the shared occasion, in steps (bodyDraw.ts OCCASION_STEP_MS), Now being none
+    const occasion = occasionStep(occasionMs(store?.get()?.time_window))
     const own = bodies.find(body => body.yours)
     setRings(yours, yourRings, own ? own.key : null, own, open)
     if (own) yours.root.style.setProperty('--core-rgb', rgbOf(own.colour.core))
@@ -232,8 +238,8 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
         svg.append(axis)
         return {key: body.key, root: markRoot, canvas, name, axis, orbits: new PlanetOrbits(parent, () => {}, {home: false, className: 'po-sys'}), rings: {structure: '', sats: []}, drawn: ''}
       })()
-      const picture = body.record ? JSON.stringify(body.record) : ''
-      if (picture !== mark.drawn) { draw(mark.canvas, body.record); mark.drawn = picture }
+      const picture = body.record ? JSON.stringify([body.record, body.look, occasion]) : ''
+      if (picture !== mark.drawn) { draw(mark.canvas, body.record, body.look, occasion); mark.drawn = picture }
       mark.name.textContent = body.world.name
       mark.root.dataset.state = body.state
       mark.root.style.setProperty('--core-rgb', rgbOf(body.colour.core))
@@ -245,6 +251,7 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     })
   }
   const offSystem = subscribeSystem(() => { sync(); syncPlaces() })
+  const offOccasion = store?.subscribe(sync)
   sync()
   syncPlaces()
 
@@ -305,6 +312,7 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
       if (!live) return
       live = false
       offSystem()
+      offOccasion?.()
       offBody()
       offStanding()
       for (const mark of marks) mark.orbits.destroy()
