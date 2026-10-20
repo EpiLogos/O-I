@@ -156,6 +156,11 @@ the page file with a receipt.
 
 ## 5. W3 — worlds you build
 
+> **Reopened 20 Oct 2026 by T-PROCEDURAL-BODY.** The body record, the worker and the System scale below were built; the generator's
+> picture is far below the Earth's and is rebuilt as `fbm-sphere` version 2 under a gate measured on the Earth. The outer ring below
+> ("files and context") is withdrawn: the rings carry agents at work (inner) and the recent artefacts they made (outer), nothing
+> else. The record stays as specified here.
+
 **What it is now** (lane reading): nothing generates a body, in the seat or in AE (the only generator is the mockup's CPU fbm,
 `world-shell-mockup.html:858-916`, rerolled with `Math.random`). The planet builder's controls wait in `projections/atlas/places/PlacesPlate.tsx:174-200`
 ("Your own body has no builder in this suite yet", `:177`); the World design's Whole lacks Body, Landmass, Climate, Sky and Locations
