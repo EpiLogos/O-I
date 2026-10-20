@@ -327,7 +327,7 @@ function callArguments(text, open) {
   return ''
 }
 
-test('S1 the shader slides the cloud mask by `uWeatherT`: the uniform is declared and the cloud lookup depends on it (read as source: the GPU is not run)', pending, () => {
+test('S1 the shader slides the cloud mask by `uWeatherT`: the uniform is declared and the cloud lookup depends on it (read as source: the GPU is not run)', () => {
   const frag = shaders.EARTH_FRAG
   assert.ok(/uniform\s+(float|vec2|vec3|vec4|sampler2D)\s+uWeatherT\s*;/.test(frag), 'EARTH_FRAG declares the uniform uWeatherT')
   const main = frag.slice(frag.indexOf('void main'))
@@ -348,7 +348,7 @@ test('S2 the mask can be slid without a tear at the seam: the cloud texture repe
   assert.equal(texture.wrapS, THREE.RepeatWrapping, 'a texture the cloud mask is put in wraps in longitude')
 })
 
-test('S3 what feeds the uniform is the one table the tests hold: the earth material carries uWeatherT and the globe takes the wind from bodyWeather.ts', pending, () => {
+test('S3 what feeds the uniform is the one table the tests hold: the earth material carries uWeatherT and the globe takes the wind from bodyWeather.ts', () => {
   // The shader needs the wind at each fragment's own latitude, which one call of weatherShift (one latitude) cannot give: so the globe hands it the occasion's time and the body's
   // rate, and the shader sums the same bands (WEATHER_BANDS, shared with weatherShift) at the fragment's latitude. The first form of this test asked the globe's source to name
   // weatherShift; the table is what must be shared, and S4 below holds the two formulas to the same numbers.
@@ -358,7 +358,7 @@ test('S3 what feeds the uniform is the one table the tests hold: the earth mater
   assert.ok(/\bsetBodyTime\s*\(/.test(engine), 'the engine has setBodyTime(ms | null)')
 })
 
-test('S4 the shader’s wind is weatherShift’s: the bands the fragment shader sums, evaluated at the body’s rate, give weatherShift’s own shift at every latitude and time', pending, async () => {
+test('S4 the shader’s wind is weatherShift’s: the bands the fragment shader sums, evaluated at the body’s rate, give weatherShift’s own shift at every latitude and time', async () => {
   const {WEATHER_BANDS, weatherScale} = await import(new URL('bodyWeather.ts', globe).href)
   const frag = shaders.EARTH_FRAG, m = /float r = ([^;]*);/.exec(frag.slice(frag.indexOf('float weatherTurns')))
   assert.ok(m, 'EARTH_FRAG has weatherTurns, with the sum of the bands')
@@ -397,7 +397,7 @@ async function openGlobe({reduced = false} = {}) {
   }
 }
 
-test('W1 the globe has an occasion: `setBodyTime(ms)` sets it, null is Now, and the shader is handed the weather of it through uWeatherT', pending, async () => {
+test('W1 the globe has an occasion: `setBodyTime(ms)` sets it, null is Now, and the shader is handed the weather of it through uWeatherT', async () => {
   const globeUnderTest = await openGlobe()
   try {
     const {engine} = globeUnderTest
@@ -412,7 +412,7 @@ test('W1 the globe has an occasion: `setBodyTime(ms)` sets it, null is Now, and 
   } finally { globeUnderTest.close() }
 })
 
-test('W2 a past occasion holds its weather: the clouds do not move while the occasion is a day gone, and Now moves slowly', pending, async () => {
+test('W2 a past occasion holds its weather: the clouds do not move while the occasion is a day gone, and Now moves slowly', async () => {
   const globeUnderTest = await openGlobe()
   try {
     const {engine} = globeUnderTest
@@ -426,7 +426,7 @@ test('W2 a past occasion holds its weather: the clouds do not move while the occ
   } finally { globeUnderTest.close() }
 })
 
-test('W3 reduced motion holds the weather still: at Now nothing moves, and an occasion shows the weather it had, as with motion', pending, async () => {
+test('W3 reduced motion holds the weather still: at Now nothing moves, and an occasion shows the weather it had, as with motion', async () => {
   const still = await openGlobe({reduced: true})
   let stillAtOccasion, stillNow, stillLater
   try {
@@ -445,7 +445,7 @@ test('W3 reduced motion holds the weather still: at Now nothing moves, and an oc
   } finally { moving.close() }
 })
 
-test('W4 the occasion is the globe’s, whatever order it is told in: an occasion set before the body is drawn is the weather the body shows when it is', pending, async () => {
+test('W4 the occasion is the globe’s, whatever order it is told in: an occasion set before the body is drawn is the weather the body shows when it is', async () => {
   const first = await openGlobe()
   let before
   try {

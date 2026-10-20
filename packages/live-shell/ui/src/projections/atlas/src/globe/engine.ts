@@ -12,6 +12,7 @@ import { CameraRig } from './controls';
 import { Arcs, Marker } from './arcs';
 import { Aura, AtmosphereShell, Backdrop, Earth, bodyTexture, hiResChoice, loadBaseHi, loadBaseLo } from './earth';
 import { airOf, barrenOf, bodyImage, bodySunDir, BODY_WIDTHS, type BodyLook, type WorldBodyRecord } from './body';
+import { WEATHER_BANDS, weatherScale } from './bodyWeather';
 import { bodyTileSource, renderBody } from './bodyRender';
 import { hasTiles, tileLevelFor } from './bodyTiles';
 import { Presences } from './presences';
@@ -151,7 +152,7 @@ export class GlobeEngine {
     this.earth = new Earth(this.shared, lo, this.presences.densityTarget.texture);
     this.tiles = new TileLayer(this.renderer, this.earth.u, this.reduced);
     // a body asked for before the Earth stood is drawn now
-    if (this.bodyRecord) this.drawBody(this.bodyRecord, this.bodyLook, this.bodyKey);
+    if (this.bodyRecord) { this.drawBody(this.bodyRecord, this.bodyLook, this.bodyKey); this.applyWeather(); }
     this.scene.add(this.backdrop.mesh, this.earth.mesh, this.tiles.group, this.shell.mesh, this.presences.mesh, this.arcs.group, this.aura.points, this.markers.sel.mesh, this.markers.hover.mesh, this.markers.head.mesh);
     this.palDirty = true;
     this.last = performance.now();
@@ -441,6 +442,7 @@ export class GlobeEngine {
       if (dLon) this.rig.lon = wrapLon(this.rig.lon + dLon);
     }
     this.stepSun(dt);
+    if (this.bodyRecord && this.bodyTime === null && !this.reduced) this.earth.weatherT.value = Date.now() / 86400000;
     this.rig.update(dt);
     // the clip planes follow the altitude so depth stays precise from orbit to the ground
     const camDist = this.camera.position.length();
@@ -572,11 +574,23 @@ export class GlobeEngine {
       return;
     }
     this.drawBody(record, this.bodyLook, key);
+    this.applyWeather();
   }
 
-  /** The occasion the body's weather is shown at: a moment (ms), or null for Now. */
+  /** The occasion the body's weather is shown at: a moment (ms), or null for Now. A past occasion shows the weather it had; Now moves slowly (the wind carries the
+   * clouds a few tens of degrees a day), and reduced motion holds Now where the occasion was set. */
   setBodyTime(ms: number | null) {
     this.bodyTime = ms;
+    this.applyWeather();
+  }
+
+  /** Hand the shader the body's wind and the occasion's time in days: from the occasion where there is one, from the clock for Now. */
+  private applyWeather() {
+    if (!this.earth) return;
+    const record = this.bodyRecord;
+    const scale = record && record.generator.version >= 2 ? weatherScale(record.seed) : 0;
+    this.earth.weatherRate.value.set(WEATHER_BANDS[0]!.weight * scale, WEATHER_BANDS[1]!.weight * scale, WEATHER_BANDS[2]!.weight * scale);
+    this.earth.weatherT.value = (this.bodyTime ?? Date.now()) / 86400000;
   }
 
   /** The occasion the body is shown at (null: Now). */

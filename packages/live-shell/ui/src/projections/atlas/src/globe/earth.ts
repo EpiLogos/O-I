@@ -119,6 +119,9 @@ export class Earth {
   private cloud: THREE.IUniform<THREE.Texture>;
   private cloudMix = { value: 0 };
   readonly air = { value: 1 };
+  /** [T-PROCEDURAL-BODY] the occasion's weather: its time in days, and the wind of the body (bodyWeather.ts), which the shader carries the cloud mask by */
+  readonly weatherT = { value: 0 };
+  readonly weatherRate = { value: new THREE.Vector3() };
 
   constructor(shared: Shared, lo: THREE.Texture, density: THREE.Texture) {
     this.u = {
@@ -135,7 +138,7 @@ export class Earth {
     const mat = new THREE.ShaderMaterial({
       vertexShader: EARTH_VERT,
       fragmentShader: EARTH_FRAG,
-      uniforms: { ...this.u, uBaseLo: this.baseLo, uBaseHi: this.baseHi, uHiMix: this.hiMix, uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air },
+      uniforms: { ...this.u, uBaseLo: this.baseLo, uBaseHi: this.baseHi, uHiMix: this.hiMix, uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air, uWeatherT: this.weatherT, uWeatherRate: this.weatherRate },
     });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.renderOrder = 0;

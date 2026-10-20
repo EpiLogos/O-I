@@ -1,5 +1,6 @@
 // All GLSL for the globe, kept together so the time-visibility formula (also in
 // src/data/time.ts) and shared helpers stay identical across passes.
+import { WEATHER_BANDS } from './bodyWeather';
 
 export const TIME_GLSL = /* glsl */ `
 uniform float uCursor;
@@ -364,6 +365,16 @@ void main() {
 }
 `;
 
+/** The wind as the shader has it: the bands of bodyWeather.ts WEATHER_BANDS (the same latitudes and widths), each at the weight the body's own rate gives it. The
+ * shift is the rate times the days, in turns, within one turn: weatherShift's degrees over 360. */
+const WEATHER_GLSL = /* glsl */ `
+float weatherTurns(float latDeg, float days, vec3 rate) {
+  float a = abs(latDeg);
+  float r = ${WEATHER_BANDS.map((band, k) => `rate[${k}] * exp(-((a - ${band.centre.toFixed(1)}) / ${band.width.toFixed(1)}) * ((a - ${band.centre.toFixed(1)}) / ${band.width.toFixed(1)}))`).join(' + ')};
+  return fract(r * days / 360.0);
+}
+`;
+
 export const EARTH_FRAG = /* glsl */ `
 uniform sampler2D uBaseLo;
 uniform sampler2D uBaseHi;
@@ -373,6 +384,10 @@ uniform float uHiMix;
 uniform sampler2D uCloud;
 uniform float uCloudMix;
 uniform float uAir;
+// [T-PROCEDURAL-BODY] the occasion's weather: its time in days, and the wind of the body (degrees of longitude a day at each band's weight, bodyWeather.ts)
+uniform float uWeatherT;
+uniform vec3 uWeatherRate;
+${WEATHER_GLSL}
 ${EARTH_COMMON}
 varying vec2 vUv;
 varying vec3 vN;
@@ -383,8 +398,12 @@ void main() {
   vec3 col = shadeEarth(src, N, normalize(vView), vUv, uAir);
   // the clouds stand over the graded land and sea as a layer of their own, never in the base: white there would read as land
   // (waterOf), and the land the shore and the Place tool read stays the body's own. Lit by the same light as the ground.
+  // [T-PROCEDURAL-BODY] The mask is carried east by the wind of its latitude at the occasion's time (bodyWeather.ts weatherShift: the same bands, the same
+  // rate), so a past occasion shows the weather it had and Now moves slowly; the wind is 0 for a body of generator version 1.
   if (uCloudMix > 0.0) {
-    float cover = texture2D(uCloud, vUv).r * uCloudMix;
+    float turns = weatherTurns(degrees(asin(clamp(N.y, -1.0, 1.0))), uWeatherT, uWeatherRate);
+    vec2 cuv = vec2(vUv.x - turns, vUv.y);
+    float cover = texture2D(uCloud, cuv).r * uCloudMix;
     float lit = mix(0.46, 1.0, smoothstep(0.1, 1.0, 0.5 + 0.5 * dot(N, normalize(uLightDir))));
     if (uSunMix > 0.0) lit = mix(lit, mix(0.1, 1.0, smoothstep(-0.07, 0.16, dot(N, normalize(uSunDir)))), uSunMix);
     col = mix(col, mix(uCore, vec3(1.0), 0.55) * lit, cover * 0.82);
