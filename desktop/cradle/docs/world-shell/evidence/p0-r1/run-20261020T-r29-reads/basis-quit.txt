@@ -1,0 +1,11 @@
+seat=/Users/admin/Central/worktrees/env-1/o-i
+branch=dlw/build
+head=72216b4555e29f5f7beff8dd7fb0617006d0557b
+stamp=20261020T-r29-reads
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261020T-r29-reads
+target=/Users/admin/Central/Work/O-I/target
+backing=full-suite
+mode=quit
+runner_sha256=0a26931bf14fbc63ac265526ae775dcb4acdd184024b78304a362c13872dc440
+status:
+?? desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261020T-r29-reads/
