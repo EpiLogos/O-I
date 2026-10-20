@@ -232,6 +232,9 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
     // the distance above is a geometric one, the same off a gentle coast as off a steep one; and a gentle coast has a wide shelf (Sunda, Patagonia, the Yellow Sea): by where its slope
     // stands among the coasts', the gentlest few have a shelf of ten times the common width and more, and the steeper half the common
     gentle = 1 + (gentleOf(P, smoothSlope(P, x, y, z, 1)) - 1) * (1 - ice)
+    // the distance runs on to the deep's own (4) over the last fifth of the span, not in a step at its end: the colour and the lines read the shelf's measure of it, and a step is a straight edge
+    const into = smooth(.8 * DEEP_DN, DEEP_DN, dn)
+    if (into > 0) dist += (4 - dist) * into
   }
   // a shelf is also as wide as the land behind it is low: narrow where a mountain belt meets the sea, wide off a plain, changing slowly along the coast (never in blobs)
   const belt = beltAt(t, qx, qy, qz)
@@ -248,8 +251,8 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
     const fmax = .9 / detail
     // the plain's own shapes, quiet: broad basins and swells, and the long low lines of the mid-ocean ridges (shallow relief; the colour barely sees them)
     depth += plain * .045 * simplex3(t, qx * 1.35 + 8.2, qy * 1.35 - 5.1, qz * 1.35 + 2.7)
-    seaLines(t, qx, qy, qz, s, belt)
-    depth += plain * (.04 * LINES[2]! - .05 * LINES[0]!)
+    seaLines(t, qx, qy, qz)
+    depth -= plain * .05 * LINES[0]!
     let rf = 3.1, ra = .03
     for (let o = 0; o < 3 && rf <= fmax; o++, rf *= 2.3, ra *= .6) depth += plain * ra * simplex3(t, qx * rf - 3 + o * 4.1, qy * rf + 41, qz * rf + 19)
   }
@@ -266,20 +269,16 @@ export function beltAt(t: NoiseTables, x: number, y: number, z: number): number 
 
 /** The lines of the open sea floor at a point of the sphere, as weights 0-1 (set in `LINES`) for the floor's relief and the water's colour alike: [0] the mid-ocean ridge's axis, a long
  * line where a slow noise is nearly zero; [1] the fracture zones, thin straight lines, long round the world, in the ridge's reach (a noise that changes fast from the equator to the pole and
- * slowly round the globe, so that its zero lines are long, parallel and not loops); [2] the trench, a line along a steep margin (where
- * the land behind is a mountain belt) a few shelf-widths out, at `s`, the shelf's own measure of the distance (0 at the coast). `belt` is `beltAt` there. Few and long, in the place of a
- * mottle. [3] and [4] are the two noises the ridge and the fracture zones are the zero lines of, for a colour that draws them wider than the relief does, and [5] the latitude fade of the colour's
- * lines (none under the polar ice, where a line along the parallels would be a ring round the cap). */
-export const LINES = new Float64Array(6)
-export function seaLines(t: NoiseTables, x: number, y: number, z: number, s: number, belt: number): void {
-  const a = simplex3(t, x * 1.1 - 2.4, y * 1.1 + 7.7, z * 1.1 - 5.5), c = simplex3(t, x * 1.3 + 5.1, y * 7.5 - 2.9, z * 1.3 + 8.3), fade = 1 - smooth(.82, .94, Math.abs(y))
+ * slowly round the globe, so that its zero lines are long, parallel and not loops). Few and long, in the place of a mottle. [2] and [3] are the two noises the ridge and the fracture zones
+ * are the zero lines of, for a colour that draws them wider than the relief does, and [4] the latitude fade of the colour's lines (none under the polar ice, where a line along the parallels
+ * would be a ring round the cap). A trench at a constant distance from the shelf was tried and is not here: it closed round every island's shelf and read as an outline drawn on the sea. */
+export const LINES = new Float64Array(5)
+export function seaLines(t: NoiseTables, x: number, y: number, z: number): void {
+  const a = simplex3(t, x * 1.1 - 2.4, y * 1.1 + 7.7, z * 1.1 - 5.5), c = simplex3(t, x * 1.3 + 5.1, y * 7.5 - 2.9, z * 1.3 + 8.3)
   LINES[0] = Math.exp(-((a / .09) ** 2))
   LINES[1] = Math.exp(-((a / .55) ** 2)) * Math.exp(-((c / .12) ** 2))
-  LINES[2] = smooth(.5, .9, belt) * Math.exp(-(((s - TRENCH_AT) / TRENCH_WIDTH) ** 2))
-  LINES[3] = a; LINES[4] = c; LINES[5] = fade
+  LINES[2] = a; LINES[3] = c; LINES[4] = 1 - smooth(.82, .94, Math.abs(y))
 }
-/** Where the trench lies (shelf widths from the coast) and how wide it is. */
-const TRENCH_AT = 9, TRENCH_WIDTH = 1.4
 /** How much wider than the common the gentlest coast's shelf is (the shelf of a steep coast is a few pixels of a 2048 picture, the gentlest's is tens), and the share of coasts (the gentler end) that have a wider shelf at all. */
 const GENTLE_MAX = 6, GENTLE_SHARE = .5
 /** The factor a coast's shelf is wider by, from its regional slope: 1 for the steeper half of the coasts, and from there up to `GENTLE_MAX` for the gentlest, by the coast's rank among them. */
