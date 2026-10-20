@@ -213,6 +213,32 @@ test('H3 rivers run in valleys and lakes lie in basins: inland water stands lowe
   assert.ok(mean(low) >= .7, `and ${f(100 * mean(low), 1)}% of it lies below the median height of the land (at least 70%: a river starts in the hills and spends its length in the lowland)`)
 })
 
+test('H5 a river is in a valley at any scale it is drawn: where the river is drawn as water by a wide margin, the ground is lower than the ground two degrees round, nine times in ten', async () => {
+  // H3 reads the picture, and what it counts depends on the colour of a river's banks as much as on the ground. This reads the field itself where the generator draws a river
+  // (bodyRivers.ts waterAt, the river's own weight above .9) and asks the Place tool's height (`heightAt`) there and in a ring of eight points two degrees round: a river that
+  // has found its way down the grid's valleys but is drawn a pixel or two aside, across a ridge, is no river in a valley.
+  const riv = await optional('bodyRivers.ts'), fieldModule = await optional('bodyField.ts')
+  assert.equal(typeof riv.waterAt, 'function', 'bodyRivers.ts exports waterAt')
+  const D = Math.PI / 180, unit = (lat, lon) => [Math.cos(lat * D) * Math.cos(lon * D), Math.sin(lat * D), Math.cos(lat * D) * Math.sin(lon * D)]
+  let samples = 0, lowerThanRing = 0
+  for (const record of rivers) {
+    const P = fieldModule.landParamsOf(record), net = riv.riverNetworkOf(record, P), height = (lat, lon) => { const [x, y, z] = unit(lat, lon); return fieldModule.terrain(P, x, y, z, .0004) }
+    for (let lat = -70; lat <= 70; lat += .21) for (let lon = -180; lon < 180; lon += .21) {
+      const here = height(lat, lon)
+      if (here <= .5) continue
+      const [x, y, z] = unit(lat, lon)
+      riv.waterAt(net, x, y, z, here, .0031)
+      if (riv.WATER[0] < .9) continue
+      let sum = 0
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; sum += height(lat + 2.1 * Math.sin(a), lon + 2.1 * Math.cos(a) / Math.cos(lat * D)) }
+      samples++
+      if (here <= sum / 8) lowerThanRing++
+    }
+  }
+  assert.ok(samples >= 500, `there are river pixels to measure (${samples})`)
+  assert.ok(lowerThanRing / samples >= .9, `${f(100 * lowerThanRing / samples, 1)}% of the river's own points stand lower than the ground two degrees round (at least 90%: rivers run in valleys)`)
+})
+
 test('H4 lakes lie in basins and are not the sea: bodies of water that the sea does not hold sit lower than their shores', () => {
   // Every body of water on land that is not the sea's (the Caspian, the Great Lakes: 59 of them in the Earth at 1024 wide) is a basin: the land within five pixels of it is higher than it is.
   const verdicts = []

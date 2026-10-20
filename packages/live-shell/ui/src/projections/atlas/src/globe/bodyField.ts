@@ -164,6 +164,14 @@ export function maskE(P: LandParams, x: number, y: number, z: number, detail: nu
 
 // ── the terrain: land and sea floor ───────────────────────────────────────────────────────────────────────────────────────
 
+/** Rivers and lakes are drawn, and valleys cut for them, where a pixel is no wider than this (radians): a base of 1024 or more. */
+export const WATER_DETAIL = .0075
+
+/** The valley a river cuts, as a weight 0–1 at a point (set by bodyRivers.ts when it is loaded): the field is lower where the water goes, at every resolution that draws it. */
+type ValleyHook = (P: LandParams, x: number, y: number, z: number, detail: number) => number
+let valleyHook: ValleyHook | null = null
+export function setValleyHook(hook: ValleyHook | null): void { valleyHook = hook }
+
 /** What `terrain` finds at a point: [0] height 0–1, [1] continentality 0 (the coast) to 1 (a continent's heart), [2] the land's elevation 0–1 above the sea (0 at sea),
  * [3] the sea floor's depth 0 (at the coast) to ~1 (the abyss; 0 on land). */
 export const T = new Float64Array(8)
@@ -197,6 +205,11 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
     let micro = 0, mf = 52, ma = .0055 * (.55 + .9 * relief)
     for (let o = 0; o < 9 && mf <= fmax; o++, mf *= 2.1, ma *= .56) micro += ma * simplex3(t, qx * mf + 17 + o * 3.7, qy * mf - 29, qz * mf + 5 - o * 6.1)
     L += micro * smooth(.005, .06, cn)
+    // valleys: where a river runs the land is cut down toward its bed, a few hundredths of the plain's height at most, nothing at the coast (the sea floor is the sea's)
+    if (valleyHook !== null && detail <= WATER_DETAIL && cn > .015) {
+      const w = valleyHook(P, x, y, z, detail)
+      if (w > 0) L -= Math.min(.6 * L, .03) * w * smooth(.015, .12, cn)
+    }
     if (L > 1) L = 1
     else if (L < 1e-9) L = 1e-9
     T[1] = cn; T[2] = L; T[3] = 0
@@ -205,7 +218,11 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
   // the sea floor: shelf, slope, abyssal plain; ridges rise from the plain and trenches sink beside the continents
   // how deep: by the coast's own line close to it, and by its smooth outline farther out (a shelf has a smooth edge, whatever the coast's detail)
   const dnCoast = -above / P.seaSpan, u = Math.exp(-((dnCoast / .1) ** 2)), dnSmooth = Math.max(0, (P.Esea - SMOOTH) / P.seaSpan)
-  const dn = Math.min(1, u * dnCoast + (1 - u) * dnSmooth)
+  // a shelf is as wide as the land behind it is low: narrow where a mountain belt meets the sea (a steep coast drops at once), wide off a plain, and the width changes slowly along
+  // the coast, never in blobs: the belts of the ranges below, and a slow noise, set how many times the distance the shelf, slope and plain take
+  const belt = .22 + .78 * Math.exp(-((simplex3(t, qx * 1.7 + 4.4, qy * 1.7 - 8.1, qz * 1.7 + 6.2) / .19) ** 2))
+  const wide = 1.75 - 1.35 * belt + .45 * simplex3(t, qx * 2.6 + 19, qy * 2.6 + 5, qz * 2.6 - 3)
+  const dn = Math.min(1, (u * dnCoast + (1 - u) * dnSmooth) / (wide < .35 ? .35 : wide > 2 ? 2 : wide))
   let depth = .085 * smooth(0, .14, dn) + .7 * smooth(.07, .3, dn) + .17 * smooth(.28, 1, dn)
   const plain = smooth(.32, .7, dn)
   if (plain > 0) {
@@ -213,6 +230,9 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
     let rf = 3.1, ra = .085
     for (let o = 0; o < 4 && rf <= fmax; o++, rf *= 2.3, ra *= .6) depth -= plain * ra * (1 - Math.abs(simplex3(t, qx * rf - 3 + o * 4.1, qy * rf + 41, qz * rf + 19)))
     depth += plain * .06
+    // the deep sea has its own large shapes: broad basins and swells, and the long lines of the mid-ocean ridges, each a swath hundreds of pixels long
+    depth += plain * .1 * simplex3(t, qx * 1.35 + 8.2, qy * 1.35 - 5.1, qz * 1.35 + 2.7)
+    depth -= plain * .13 * Math.exp(-((simplex3(t, qx * 1.1 - 2.4, qy * 1.1 + 7.7, qz * 1.1 - 5.5) / .07) ** 2))
   }
   depth += .05 * Math.exp(-(((dn - .36) / .07) ** 2)) // the trench along the foot of the slope
   if (depth < 0) depth = 0
