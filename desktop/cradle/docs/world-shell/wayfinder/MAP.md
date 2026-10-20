@@ -263,8 +263,15 @@ implementation (owner, 19 Oct). What is left:
    reports tomorrow's Day).
 2. **Then:** each page works as its own page and as a view in the workspace; Beings and Things join walks, the reading view and
    the sky view as the Archetypal-Earth entries do (W2 built the page op, launch and the Earth join).
-3. **Later, with the owner:** a redesign from the function up and the pages taken into the device ontology. Time: the Day is the
+3. **With the owner:** a redesign from the function up and the pages taken into the device ontology. Time: the Day is the
    lived horizon, the Flow how work unfolds, a Being continuity through change, Things the products with their provenance.
+   Begun with the Day (`9a6d282e3`, the manual's §18.2 at O-I main `1fd6697c0`). Its work moves from face to face by five pads in
+   the well beside the die: Tasks 0 → 1, Patterns 2 → 3, Context 2 → 4, Synthesis 1–4 → 5, Close 5 → tomorrow's 0. Each pad shows
+   what it gave, when it last ran and when it runs by itself. Its Prompt and Runs at stand in the Whole's Moves group. Close is
+   Close now. The four other moves, their prompts and schedules, Agent writes, and faces 2 and 4 filled from every machine's NOW
+   have no owner yet. The binding names what each waits on: Central's Day/NOW contract (Central #150, #153), AIKit's NOW delivery
+   (ai-kit #275) and the machines' NOWs (Workcell #72), all build work for the owner's other account. Open: the manual's §16.15
+   Day row still describes the old Whole; the Flow, Being and Thing follow.
 
 ### The creatures and environs lane — `Work/face-rig`
 
