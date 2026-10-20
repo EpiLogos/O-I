@@ -244,17 +244,20 @@ found the views, the interactions and the flipped-up devices short of Live's; it
    the shell — and harden the daily die. Seen standalone on 19 Oct: hidden faces' pips bleed through the edges and the page; an
    opened face covers the header; the template ships a sample image ("Example asset, not a record"); a key pressed while it turns
    leaves it oversized under the old face's label until it settles. A full census of its bugs on the native app.
-   The form alone was hardened (`c111bf242`). The evening of 19 Oct, in the Day pane, the die rested turned, the open face's page
-   printed on the face and cut at its foot, with a two-line instruction under it. That was the form's own resting pose, the same
-   alone (the gallery's "Full · a pane" is the form file in a pane-size frame): a tilt, the front face peeking at its page, and in a
-   narrow pane the page taller than the face. The square five-pip face seen for "the form alone" was headless WebKit drawing
-   face 5 flat. Fixed in `eca60b926`: the die rests square on its open face and wears its pips. No page shows on a face until it
-   is opened, so none is cut. It breathes rather than sways, and settles square after a drag. The instruction line is gone. The
-   compact Day's Close now (`30a491d6e`) takes a row across both macro columns, inside the device, in Compact and under Whole.
-   Open: the native look of the die (WebKit), owed to the owner's next native pass on a candidate that carries `eca60b926`. The
-   gallery's tabs (Wed 15 Oct, its fixture) against its head (Monday 19 October) are the gallery's alone: in the shell the
-   Day's Full is the owner's Day face (`centralPublication`'s own Full), which draws no tabs. So the manual's today and tomorrow
-   tabs are drawn nowhere yet: no owner reports tomorrow's Day.
+   The form alone was hardened (`c111bf242`). The evening of 19 Oct, in the Day pane, the open face's page showed printed on the
+   face and cut at its foot, with a two-line instruction under the die. That was the form's own resting pose, the same alone (the
+   gallery's "Full · a pane" is the form file in a pane-size frame): the front face peeking at its page, which in a narrow pane is
+   taller than the face. A die reads as a die, never as one flat square face. Fixed in `825ba5a1a` (correcting `eca60b926`, whose
+   square rest was that broken state): at rest the die stands in three-quarter view, three faces wearing their pips, with its
+   sway, and settles back into that view after a drag. No page shows on a face until it is opened. An open die shut to turn folds
+   into the same view; before, it turned square to the screen at half size, one face for about a second. Only a face opened flat
+   is drawn alone. The instruction line is gone (`eca60b926`). `tests/day-die-browser.mjs` counts the faces drawn through every
+   state: three at rest, never fewer than two in motion. The compact Day's Close now (`30a491d6e`) takes a row across both macro
+   columns, inside the device, in Compact and under Whole (`eca60b926`). Open: the die's native look (WebKit; headless WebKit
+   composites no 3D, so its "square five-pip face" was face 5 drawn flat), owed through the owner on a candidate that carries
+   `825ba5a1a`. The gallery's tabs (Wed 15 Oct, its fixture) against its head are the gallery's alone: in the shell the Day's
+   Full is the owner's Day face, which draws no tabs, so the manual's today and tomorrow tabs are drawn nowhere yet (no owner
+   reports tomorrow's Day).
 2. **Then:** each page works as its own page and as a view in the workspace; Beings and Things join walks, the reading view and
    the sky view as the Archetypal-Earth entries do (W2 built the page op, launch and the Earth join).
 3. **Later, with the owner:** a redesign from the function up and the pages taken into the device ontology. Time: the Day is the
