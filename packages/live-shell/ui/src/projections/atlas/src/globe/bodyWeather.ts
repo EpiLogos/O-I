@@ -121,14 +121,22 @@ function cells(seed: number, x: number, y: number, z: number, f: number): number
 /** The cloud field at a point: noise stretched along the latitude circles (a cloud is longer than it is wide, east to west), curled by a slow vector noise (a front is a curve, not a
  * line), laid on the bands of the sky, the bands waved in longitude (a storm track meanders) and, in the subtropics, cellular lanes (open-cell convection over the sea: rings of cloud
  * round clear air). */
-export function cloudField(seed: number, x: number, y: number, z: number): number {
+export function cloudField(seed: number, x: number, y: number, z: number, fmax = 60): number {
   const t = tablesOf(seed ^ 0x51ed270b)
   // curl: the point carried by a slow vector noise, so features bend and turn
   const cx = x + .2 * simplex3(t, x * 1.25 + 7.3, y * 1.25 - 1.9, z * 1.25 + 4.4), cy = y + .2 * simplex3(t, x * 1.25 - 5.1, y * 1.25 + 8.2, z * 1.25 - 3.3), cz = z + .2 * simplex3(t, x * 1.25 + 2.6, y * 1.25 - 6.4, z * 1.25 + 9.1)
   const ys = cy * 2.4
   const wy = ys + .35 * simplex3(t, cx * 1.3 + 4.1, cy * 1.3 - 2.2, cz * 1.3 + 8.8)
-  let n = .42 * simplex3(t, cx * 2.3 + 1.2, wy * 2.3 - 5.0, cz * 2.3 + 3.3) + .27 * simplex3(t, cx * 4.9 - 7.7, wy * 4.9 + 2.5, cz * 4.9 - 1.1) + .19 * simplex3(t, cx * 10.7 + 6.6, wy * 10.7 - 8.4, cz * 10.7 + 9.2) +
-    .13 * simplex3(t, cx * 23 - 2.4, wy * 23 + 5.1, cz * 23 - 7.3) + .1 * simplex3(t, cx * 48 + 8.8, wy * 48 - 3.7, cz * 48 + 1.9)
+  let n = .42 * simplex3(t, cx * 2.3 + 1.2, wy * 2.3 - 5.0, cz * 2.3 + 3.3) + .27 * simplex3(t, cx * 4.9 - 7.7, wy * 4.9 + 2.5, cz * 4.9 - 1.1) + .19 * simplex3(t, cx * 10.7 + 6.6, wy * 10.7 - 8.4, cz * 10.7 + 9.2)
+  // the finer octaves take less and less of the stretch and none of the warp: at the equator the stretch squeezes a north-south wavelength by its factor, and an octave of 48 cycles to the
+  // radian then has 1.4 texels of the mask (a texel is 6 milliradians): under the two a picture can hold, so it folded into a comb of fine lines that the shear carried over the poles
+  n += .13 * simplex3(t, cx * 23 - 2.4, cy * 23 * 1.5 + 5.1, cz * 23 - 7.3) + .13 * simplex3(t, cx * 48 + 8.8, cy * 48 - 3.7, cz * 48 + 1.9)
+  // finer octaves, as fine as the picture asked for resolves them (the mask's 1024 texels do not: its texel is about 100 cycles to the radian): the window of the sky at a region view does
+  if (fmax > 96) n += .07 * simplex3(t, cx * 96 - 3.3, cy * 96 + 7.1, cz * 96 + 1.9)
+  if (fmax > 192) n += .05 * simplex3(t, cx * 192 + 5.5, cy * 192 - 2.6, cz * 192 - 8.4)
+  if (fmax > 384) n += .035 * simplex3(t, cx * 384 - 9.2, cy * 384 + 4.8, cz * 384 + 6.3)
+  if (fmax > 768) n += .025 * simplex3(t, cx * 768 + 2.1, cy * 768 - 7.7, cz * 768 - 3.5)
+  if (fmax > 1536) n += .018 * simplex3(t, cx * 1536 - 6.4, cy * 1536 + 1.2, cz * 1536 + 9.8)
   const alat = Math.abs(Math.asin(y < -1 ? -1 : y > 1 ? 1 : y)) * R2D, lon = Math.atan2(z, x)
   // the bands, waved: a storm track meanders in longitude (a few waves round the globe, the mid-latitudes' the larger), the convergence zone a little
   const phase = ((seed ^ 0x3c6ef372) >>> 0) / 4294967296 * 6.2831853

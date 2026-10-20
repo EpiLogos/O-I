@@ -160,10 +160,11 @@ export function iceOver(S: Surface, x: number, y: number, z: number, alat: numbe
   let r = edgeTone[0] + ((INNER_ICE[0] + (THICK_ICE[0] - INNER_ICE[0]) * thick) - edgeTone[0]) * inner
   let g = edgeTone[1] + ((INNER_ICE[1] + (THICK_ICE[1] - INNER_ICE[1]) * thick) - edgeTone[1]) * inner
   let b = edgeTone[2] + ((INNER_ICE[2] + (THICK_ICE[2] - INNER_ICE[2]) * thick) - edgeTone[2]) * inner
-  // ice is not one white: drifts and sastrugi (wind-cut ridges, long along the parallels), crevasses at a sheet's margin, pressure ridges where sea ice meets land
+  // ice is not one white: drifts and sastrugi, crevasses at a sheet's margin, pressure ridges where sea ice meets land
   const tex = .5 * simplex3(t, x * 23 + 2.7, y * 23 - 8.1, z * 23 + 4.3) + .3 * simplex3(t, x * 71 - 6.6, y * 71 + 1.9, z * 71 - 3.2) + .2 * simplex3(t, x * 190 + 9.4, y * 190 - 5.5, z * 190 + 7.7)
   let lift = 1 + .03 * tex, blue = 0
-  if (fmax > 26) { const sas = simplex3(t, x * 26 + 8.2, y * 26 * 7 - 1.1, z * 26 + 3.8) + .6 * simplex3(t, x * 61 - 2.2, y * 61 * 7 + 5.5, z * 61 - 9.1); lift += .03 * sas }
+  // (sastrugi are wind-cut ridges, long along the wind; the sphere's own y scaled up to make them long along the parallels is a stripe round every pole: the texture is isotropic)
+  if (fmax > 26) { const sas = simplex3(t, x * 26 + 8.2, y * 26 - 1.1, z * 26 + 3.8) + .6 * simplex3(t, x * 61 - 2.2, y * 61 + 5.5, z * 61 - 9.1); lift += .03 * sas }
   if (fmax > 12) {
     // crevasses and ridges: thin lines where a slow noise is near zero, darker and bluer than the white round them
     const crack = Math.exp(-((simplex3(t, x * 9 + 3.4, y * 9 - 6.1, z * 9 + 1.3) / .07) ** 2)) * (.6 + .4 * simplex3(t, x * 4 - 1.1, y * 4 + 2.9, z * 4 - 7.7))

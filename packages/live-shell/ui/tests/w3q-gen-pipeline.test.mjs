@@ -654,6 +654,78 @@ test('E9 the globe tells the shader how fine its pictures are: `uTexRad` for the
   } finally { g.close() }
 })
 
+test('E10 the sky has a window about the camera where it is close, made from the analytic field in chunks, shown when whole, carried by the wind, and given back with the body', async () => {
+  const cloudJobs = () => worker.jobs.filter(job => job.region !== undefined)
+  /** Let the worker answer what is held and the globe ask for more, until nothing is held (the lane takes two chunks at a time). */
+  const settle = async (g, rounds = 60) => { for (let k = 0; k < rounds; k++) { frames(g, .1); await answerWorker(); if (!worker.held.length && k > 2) break } }
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    const u = () => g.uniforms()
+    assert.ok(u().uCloudWin && u().uWinRect && u().uWinOn && u().uWinT, 'the earth material carries the sky window’s uniforms')
+    assert.equal(u().uWinOn.value, 0, 'no window for the Earth')
+    g.engine.setBody(make(5, {sky: {clouds: .9}})); await answerWorker(); frames(g, .2)
+    // far: the mask is the sky (the world is held still: at rest it turns two degrees a second, and a window is not begun on a view that sweeps)
+    g.engine.rig.autoRotate = false
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 3.2
+    await settle(g, 8)
+    assert.equal(cloudJobs().length, 0, 'at a world view no window is made')
+    // near: a window of 1024 x 1024 texels in chunks of 256, each asked once
+    g.engine.rig.dist = g.engine.rig.targetDist = 1.4; frames(g, .5)
+    const started = cloudJobs()
+    assert.ok(started.length >= 1 && started.length <= 2, `at a region view the window is begun (the lane takes two chunks at a time: ${started.length})`)
+    assert.ok(started.every(job => job.n === 1024 && job.part && job.part.w === 256 && job.part.h === 256 && typeof job.time === 'number' && job.record?.seed === 5), 'each chunk names the window’s size, its place in it, an occasion and the record')
+    const r = started[0].region
+    assert.ok(Math.abs(r.lat0 - 30) <= 1 && Math.abs(r.lon0 - 20) <= 1, `centred on the camera (${r.lat0}, ${r.lon0})`)
+    assert.ok(r.halfLat > 3 && r.halfLat < 30, `a half-height of ${r.halfLat} degrees: about what a region view sees`)
+    assert.equal(u().uWinOn.value, 0, 'it is not shown until it is whole')
+    await settle(g)
+    const all = cloudJobs()
+    assert.equal(all.length, 16, `the window was asked for in 16 chunks, each once (${all.length})`)
+    assert.equal(new Set(all.map(job => `${job.part.i0},${job.part.j0}`)).size, 16, 'at 16 places')
+    frames(g, 1)
+    assert.ok(u().uWinOn.value > .9, `and then fades in (${u().uWinOn.value})`)
+    const rect = u().uWinRect.value, window = u().uCloudWin.value
+    assert.equal(window.image.width, 1024, 'the window is a 1024-wide texture')
+    assert.ok(Math.abs(rect.x - 20 * Math.PI / 180) < 2e-2 && Math.abs(rect.y - 30 * Math.PI / 180) < 2e-2, 'its rectangle is the camera’s place (radians)')
+    assert.ok(Math.abs(rect.z * 2 * r.halfLon * Math.PI / 180 - 1) < 1e-6 && Math.abs(rect.w * 2 * r.halfLat * Math.PI / 180 - 1) < 1e-6, 'and its scales are the reciprocals of its spans')
+    // the camera standing, a degree of pan: the window stands
+    await settle(g, 6)
+    assert.equal(cloudJobs().length, 16, 'the camera standing, the window stands')
+    g.engine.rig.lat = 31; await settle(g, 6)
+    assert.equal(cloudJobs().length, 16, 'a degree of pan is inside the margin: no new window')
+    // the wind: an occasion far from the window's carries the sky further than its margin: a new one, the old one shown meanwhile
+    g.engine.setBodyTime(Date.UTC(2031, 0, 1)); frames(g, .5)
+    assert.ok(cloudJobs().length > 16, 'an occasion whose weather is far from the window’s asks for a new window')
+    assert.ok(u().uWinOn.value > .9, 'and the old one is shown meanwhile')
+    await settle(g)
+    assert.equal(cloudJobs().length, 32, 'the new window, whole, 16 more chunks and no more')
+    // a long pan: a new window
+    g.engine.rig.lat = 50; g.engine.rig.lon = 80; await settle(g)
+    assert.equal(cloudJobs().length, 48, 'a pan beyond the window asks for another')
+    // the Earth is given back
+    g.engine.setBody(null); frames(g, .3)
+    assert.equal(u().uWinOn.value, 0, 'the Earth has no window')
+    const after = cloudJobs().length; await settle(g, 6)
+    assert.equal(cloudJobs().length, after, 'and none is made for it')
+  } finally { g.close() }
+})
+
+test('E11 a barren world has no sky window, and the tiles of a generated body share the sphere’s', async () => {
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    g.engine.setBody(make(5, {sky: {clouds: .9}}), {barren: 1}); await answerWorker()
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.4
+    frames(g, .5)
+    assert.equal(worker.jobs.filter(job => job.region !== undefined).length, 0, 'no clouds, no window')
+    g.engine.setBody(make(5, {sky: {clouds: .9}})); await answerWorker()
+    g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1, 'tiles are made')
+    for (const mesh of made) for (const name of ['uCloudWin', 'uWinRect', 'uWinOn', 'uWinT']) assert.ok(g.uniforms()[name] && mesh.material.uniforms[name] === g.uniforms()[name], `a tile’s ${name} is the sphere’s own uniform`)
+  } finally { g.close() }
+})
+
 // ── the time a body takes ───────────────────────────────────────────────────────────────────────────────────────────────
 
 test('T1 a 2048-wide body is made in the time a CPU thread can spend on it (the ticket aims at 5 s; the gate allows 20)', () => {

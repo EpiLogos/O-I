@@ -42,6 +42,8 @@ const globe = new URL('../src/projections/atlas/src/globe/', import.meta.url)
 const body = await import(new URL('body.ts', globe).href)
 const {lonOfX, latOfY, yOfLat, TILE_PX} = await import(new URL('tilemath.ts', globe).href)
 const shaders = await import(new URL('shaders.ts', globe).href)
+const noiseModule = await import(new URL('bodyNoise.ts', globe).href)
+const noiseTables = () => noiseModule.tablesOf(12345), simplexOf = (t, x, y, z) => noiseModule.simplex3(t, x, y, z)
 /** A module this ticket adds: `{}` until it exists, so the test that needs it fails on an assertion, not on an import. */
 async function optional(name) {
   try { return await import(new URL(name, globe).href) } catch (error) {
@@ -442,6 +444,44 @@ test('I3 an ice sheet has a little texture at scale, and the sea ice is ridged w
   const near = rows.filter(r => !r.land && r.open >= 4 && r.fromLand <= 30), far = rows.filter(r => !r.land && r.open >= 4 && r.fromLand >= 60)
   assert.ok(near.length >= 300 && far.length >= 300, `there is sea ice near land and far from it (${near.length}, ${far.length})`)
   assert.ok(avg(near, r => r.res) >= 1.4 * avg(far, r => r.res), `sea ice against land is ridged: texture ${f(avg(near, r => r.res), 4)} within 30 px of it, ${f(avg(far, r => r.res), 4)} beyond 60 (at least 1.4 times)`)
+})
+
+/** East-west over north-south gradient energy of a picture's luma, pooled over the pixels of its interior (`inside(lat, lon)`) in a latitude band, on equal steps of the sphere (0.0025 radian,
+ * about 0.14 degree): the longitude step widens by 1 / cos(latitude), so that the energies are of equal distances and a texture stretched by the equirect shows. */
+function sphereGradients(image, lat0, lat1, inside) {
+  const {width: w, height: h} = image, luma = lumaPlane(image), step = .0025 / (Math.PI / 180)
+  const at = (lat, lon) => { const u = ((lon + 180) / 360) * w - .5, v = (90 - lat) / 180 * h - .5, i0 = Math.floor(u), j0 = Math.floor(v), fu = u - i0, fv = v - j0
+    const px = (i, j) => luma[Math.max(0, Math.min(h - 1, j)) * w + (((i % w) + w) % w)]
+    return (px(i0, j0) * (1 - fu) + px(i0 + 1, j0) * fu) * (1 - fv) + (px(i0, j0 + 1) * (1 - fu) + px(i0 + 1, j0 + 1) * fu) * fv }
+  let ew = 0, ns = 0, n = 0
+  for (let lat = lat0 + .5; lat < lat1; lat += 1) for (let lon = -180; lon < 180; lon += 3) {
+    const dLon = step / Math.cos(lat * Math.PI / 180)
+    if (!inside(lat, lon) || !inside(lat + 2 * step, lon) || !inside(lat - 2 * step, lon)) continue
+    ew += Math.abs(at(lat, lon + dLon) - at(lat, lon - dLon)); ns += Math.abs(at(lat + step, lon) - at(lat - step, lon)); n++
+  }
+  return {ratio: ew / Math.max(ns, 1e-12), n}
+}
+
+test('I4 the ice has no direction of its own near the pole: from 68 to 84 degrees the texture of the ice is as strong east-west as it is north-south', () => {
+  // The first sastrugi were stretched along the parallels by scaling the sphere's y, which near a pole is a stripe along the circles of latitude: concentric rings round the cap (the lead's
+  // system view). Pooled over 2048-wide pictures of three bodies, in the interior of the ice (10 or more pixels from open ground or water), 68 to 84 degrees, on equal steps of the sphere, the
+  // east-west over north-south energy of the luma was .82 to .98 (.82 and .93 at 68 to 84 on the second body). The estimator is first shown fair: a picture of an isotropic field (simplex noise at
+  // 30 cycles to the radian, in the same equirect) reads within .06 of one; the ice then within .1 of it.
+  const tables = noiseTables(), size = 1024, synthetic = {width: size * 2, height: size, data: new Uint8ClampedArray(size * size * 8)}
+  for (let j = 0; j < size; j++) for (let i = 0; i < 2 * size; i++) {
+    const p = body.unitOf(90 - (j + .5) * 180 / size, -180 + (i + .5) * 360 / (2 * size)), v = Math.round(127 + 100 * simplexOf(tables, p.x * 30, p.y * 30, p.z * 30))
+    synthetic.data.set([v, v, v, 255], (j * 2 * size + i) * 4)
+  }
+  const fair = sphereGradients(synthetic, 68, 84, () => true).ratio
+  assert.ok(Math.abs(fair - 1) <= .06, `an isotropic picture reads ${f(fair, 3)} east-west over north-south (within .06 of one)`)
+  for (const seed of SEEDS) {
+    const image = imageOf(make(seed), 2048), {width: w, height: h} = image, ice = iceMask(image), notIce = new Uint8Array(w * h)
+    for (let k = 0; k < w * h; k++) notIce[k] = ice[k] ? 0 : 1
+    const away = distanceTo(notIce, w, h), inside = (lat, lon) => { const i = Math.min(w - 1, Math.max(0, Math.floor((lon + 180) / 360 * w))), j = Math.min(h - 1, Math.max(0, Math.floor((90 - lat) / 180 * h))); return away[j * w + i] >= 10 }
+    const {ratio, n} = sphereGradients(image, 68, 84, inside)
+    assert.ok(n >= 600, `there is ice to measure at seed ${seed} (${n} samples)`)
+    assert.ok(Math.abs(ratio - 1) <= .1, `seed ${seed}: the ice at 68 to 84 degrees reads ${f(ratio, 3)} east-west over north-south (one within .1)`)
+  }
 })
 
 // ── the ground at the finest tile ──────────────────────────────────────────────────────────────────────────────────────────

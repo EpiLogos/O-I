@@ -425,21 +425,6 @@ test('B1 the grade does not tint a barren world toward the palette: the shader t
   assert.ok(reached.has('col'), 'and what is drawn is (the colour that leaves shadeEarth is graded by it)')
 })
 
-test('S6 a cloud’s edge is broken up as finely as the camera can see it and no finer: the detail is faded by the pixel’s size (`uPxRad`), so it is crisp close in and cannot shimmer from afar', () => {
-  // A cloud mask of 1024 texels is a blur at a region view (a texel is thirty pixels across). The shader adds noise to the mask's soft edge, octave on octave; an octave finer than
-  // the screen's pixel is aliasing, so each is faded out by the pixel's size in radians (the uniform the globe hands it), without screen derivatives (which band in 2 x 2 blocks and
-  // break at the texture's seam). The GLSL is read as text.
-  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
-    assert.ok(/uniform\s+float\s+uPxRad\s*;/.test(frag), `${name}’s shader declares uPxRad`)
-    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('uCloudMix'))
-    assert.ok(/\buPxRad\b/.test(sky), `${name}’s sky block reads uPxRad`)
-    assert.ok(!/\b(fwidth|dFdx|dFdy)\s*\(/.test(frag), `${name}’s shader takes no screen derivatives`)
-    const reached = new Set(['uPxRad'])
-    for (let pass = 0; pass < 4; pass++) for (const m of sky.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) if ([...reached].some(n => new RegExp(`\\b${n}\\b`).test(m[2]))) reached.add(m[1])
-    assert.ok(reached.has('cover'), `the cloud cover is reached by uPxRad (it reaches: ${[...reached].join(', ')}): the detail is faded by the pixel`)
-  }
-})
-
 test('S7 the ground is sharper than its picture where the camera is closer than the picture can show: detail is drawn finer than the texel, faded by how much the texel is magnified', () => {
   // Past the finest tile (zoom 8, a texel is 0.6 km) a close view magnifies the picture and it reads soft. The shader adds the grain and relief of ground that fine, octave on octave, each as
   // fine as a pixel can show: the amount follows how many pixels a texel spans (uTexRad over uPxRad), is none for the Earth (uDetail 0: the Earth's imagery is as it was) and none where
@@ -486,6 +471,40 @@ test('S9 the sky thins out as the camera comes down to the ground: at a place vi
     assert.ok(near, `${name}’s sky block takes a smoothstep of uPxRad`)
     assert.ok(+near[2] >= 1e-5 && +near[2] <= 6e-5 && +near[3] >= 1e-4 && +near[3] <= 2.5e-4, `between ${near[2]} and ${near[3]} radians (the place view's pixel is 7e-5, the region's 3e-4)`)
     assert.ok(new RegExp(`cover\\s*\\*=\\s*${near[1]}\\b`).test(sky) && new RegExp(`shade\\s*\\*=\\s*${near[1]}\\b`).test(sky), `the cover and its shadow are both multiplied by it (${near[1]})`)
+  }
+})
+
+test('S10 no noise is laid on the sphere in (longitude, latitude): every noise lookup takes a direction of the sphere, so nothing is pinched toward the poles', () => {
+  // The cloud edge and the ground grain were value noise on (longitude x cos(latitude), latitude): the sinusoidal projection, whose cells at a high latitude are slivers wound round the pole
+  // (the lead's system view: streaks fanning from the pole, concentric stripes on the cap). Noise on the unit direction of the sphere (the fragment's N, turned by the wind where the noise
+  // belongs to the clouds) has no pole. The GLSL is read as text: the noise functions are `sphereNoise(vec3)`; none of the old two-dimensional `cloudNoise` stays; and what each lookup is
+  // given is made from N, never from the texture coordinate (vUv, vDens, cuv).
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    assert.ok(!/\bcloudNoise\s*\(/.test(frag), `${name}’s shader keeps no two-dimensional noise`)
+    assert.ok(/\bvec3\s+sphereNoiseArg\b|\bfloat\s+sphereNoise\s*\(\s*vec3\b/.test(frag), `${name}’s shader defines sphereNoise(vec3)`)
+    const main = frag.slice(frag.indexOf('void main')), uv = ['vUv', 'vDens', 'cuv']
+    const derived = new Set(uv)
+    for (let pass = 0; pass < 5; pass++) for (const m of main.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) if ([...derived].some(n => new RegExp(`\\b${n}\\b`).test(m[2]))) derived.add(m[1])
+    for (const call of main.matchAll(/\bsphereNoise\s*\(([^;]*?)\)\s*[-+*;)]/g)) {
+      const arg = call[1]
+      assert.ok(![...derived].some(n => new RegExp(`\\b${n}\\b`).test(arg)), `a noise lookup (${arg.trim().slice(0, 60)}) is made from the texture coordinate`)
+    }
+  }
+})
+
+test('S11 the sky has a window of the field over the sphere: a texture of the analytic cloud field about the camera, carried by the same wind, read in place of the mask where it stands', () => {
+  // The mask is 1024 texels round the world; at a region view a texel is sixteen pixels. A window of the field itself, made for the view and read at about a texel to the pixel, replaces the
+  // mask where the fragment is inside it (fading at its edge). It was made at one occasion and the wind has carried the sky since: the lookup is turned by the wind's shift since then
+  // (`uWeatherT - uWinT`), so a window outlives a minute of weather and the shift is the one the mask takes. The GLSL is read as text.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    assert.ok(/uniform\s+sampler2D\s+uCloudWin\s*;/.test(frag), `${name}’s shader declares uCloudWin`)
+    for (const uniform of ['uWinOn', 'uWinT']) assert.ok(new RegExp(`uniform\\s+float\\s+${uniform}\\s*;`).test(frag), `${name}’s shader declares ${uniform}`)
+    assert.ok(/uniform\s+vec4\s+uWinRect\s*;/.test(frag), `${name}’s shader declares uWinRect`)
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('if (uCloudMix'))
+    assert.ok(/texture2D\(\s*uCloudWin\s*,/.test(sky), `${name}’s sky block looks at the window`)
+    assert.ok(/uWeatherT\s*-\s*uWinT/.test(sky), `and turns the lookup by the wind since the window was made (uWeatherT - uWinT)`)
+    const fromWindow = /(\w+)\s*=\s*texture2D\(\s*uCloudWin\s*,[^;]*\.r/.exec(sky)
+    assert.ok(fromWindow && new RegExp(`cover\\s*=\\s*mix\\([^;]*\\b${fromWindow[1]}\\b`).test(sky), `and the cover is made from what the window holds (${fromWindow ? fromWindow[1] : 'none'})`)
   }
 })
 

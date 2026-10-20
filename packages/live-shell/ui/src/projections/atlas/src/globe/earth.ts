@@ -24,6 +24,11 @@ export interface EarthUniforms {
   uPxRad: THREE.IUniform<number>;
   uTexRad: THREE.IUniform<number>;
   uDetail: THREE.IUniform<number>;
+  /** [T-PROCEDURAL-BODY] the window of the sky about the camera (globe/cloudWindow.ts), shared with the tiles: its texture, its rectangle, how much of it shows, the weather's clock when it was made */
+  uCloudWin: THREE.IUniform<THREE.Texture>;
+  uWinRect: THREE.IUniform<THREE.Vector4>;
+  uWinOn: THREE.IUniform<number>;
+  uWinT: THREE.IUniform<number>;
   uWeatherT: THREE.IUniform<number>;
   uWeatherRate: THREE.IUniform<THREE.Vector3>;
 }
@@ -140,6 +145,11 @@ export class Earth {
   /** [T-PROCEDURAL-BODY] the radians one texel of the sphere's picture spans (the widest picture it has: 2π over its width), and whether the ground is given detail finer than the picture (a generated body) */
   readonly texRad = { value: (2 * Math.PI) / 8192 };
   readonly detail = { value: 0 };
+  /** [T-PROCEDURAL-BODY] the sky's window: a clear texel until one is made, its rectangle (lon0, lat0, 1 / the longitude span, 1 / the latitude span: radians), how much of it shows, its clock */
+  readonly winTexture: THREE.IUniform<THREE.Texture> = { value: noCloud() };
+  readonly winRect = { value: new THREE.Vector4(0, 0, 1, 1) };
+  readonly winOn = { value: 0 };
+  readonly winT = { value: 0 };
   /** [T-PROCEDURAL-BODY] the occasion's weather: its time in days, and the wind of the body (bodyWeather.ts), which the shader carries the cloud mask by */
   readonly weatherT = { value: 0 };
   readonly weatherRate = { value: new THREE.Vector3() };
@@ -155,7 +165,7 @@ export class Earth {
       uSunDir: this.sunDir,
       uSunMix: this.sunMix,
       uFog: shared.fog, uGlow: shared.glow, uDeep: shared.deep, uCore: shared.core, uSpec: shared.spec,
-      uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air, uBarren: this.barren, uPxRad: this.pxRad, uTexRad: this.texRad, uDetail: this.detail, uWeatherT: this.weatherT, uWeatherRate: this.weatherRate,
+      uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air, uBarren: this.barren, uPxRad: this.pxRad, uTexRad: this.texRad, uDetail: this.detail, uCloudWin: this.winTexture, uWinRect: this.winRect, uWinOn: this.winOn, uWinT: this.winT, uWeatherT: this.weatherT, uWeatherRate: this.weatherRate,
     };
     const geo = new THREE.SphereGeometry(1, 192, 96);
     const mat = new THREE.ShaderMaterial({

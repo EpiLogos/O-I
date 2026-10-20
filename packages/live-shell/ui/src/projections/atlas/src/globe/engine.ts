@@ -15,6 +15,7 @@ import { airOf, barrenOf, bodyImage, bodySunDir, BODY_WIDTHS, type BodyLook, typ
 import { WEATHER_BANDS, weatherClock, weatherScale } from './bodyWeather';
 import { bodyTileSource, renderBody } from './bodyRender';
 import { hasTiles, tileLevelFor } from './bodyTiles';
+import { SkyWindow } from './cloudWindow';
 import { Presences } from './presences';
 import { createShared, type Shared } from './shared';
 import { gibsSource, TileLayer } from './tiles';
@@ -72,6 +73,12 @@ export class GlobeEngine {
   readonly arcs: Arcs;
   readonly markers: { sel: Marker; hover: Marker; head: Marker };
   presences!: Presences;
+  /** [T-PROCEDURAL-BODY] the window of the sky about the camera: the analytic cloud field over what the camera sees, in the mask's place where the camera is near (cloudWindow.ts) */
+  private skyWindow!: SkyWindow;
+  /** whether the body drawn has a sky and its cloud layer has arrived */
+  private skyCloudy = false;
+  /** the occasion the weather is drawn at (ms): the occasion set, or Now (held where reduced motion holds it) */
+  private weatherAt = 0;
   earth!: Earth;
   tiles!: TileLayer;
   /** the sky layer, once its data has loaded (absent: the atlas exactly as it was) */
@@ -151,6 +158,7 @@ export class GlobeEngine {
     this.presences = new Presences(this.model, this.shared, this.renderer);
     this.earth = new Earth(this.shared, lo, this.presences.densityTarget.texture);
     this.tiles = new TileLayer(this.renderer, this.earth.u, this.reduced);
+    this.skyWindow = new SkyWindow({ win: this.earth.winTexture, rect: this.earth.winRect, on: this.earth.winOn, time: this.earth.winT }, this.renderer);
     // a body asked for before the Earth stood is drawn now
     if (this.bodyRecord) { this.drawBody(this.bodyRecord, this.bodyLook, this.bodyKey); this.applyWeather(); }
     this.scene.add(this.backdrop.mesh, this.earth.mesh, this.tiles.group, this.shell.mesh, this.presences.mesh, this.arcs.group, this.aura.points, this.markers.sel.mesh, this.markers.hover.mesh, this.markers.head.mesh);
@@ -442,7 +450,7 @@ export class GlobeEngine {
       if (dLon) this.rig.lon = wrapLon(this.rig.lon + dLon);
     }
     this.stepSun(dt);
-    if (this.bodyRecord && this.bodyTime === null && !this.reduced) this.earth.weatherT.value = weatherClock(this.bodyRecord.seed, Date.now());
+    if (this.bodyRecord && this.bodyTime === null && !this.reduced) { this.weatherAt = Date.now(); this.earth.weatherT.value = weatherClock(this.bodyRecord.seed, this.weatherAt); }
     this.rig.update(dt);
     // the clip planes follow the altitude so depth stays precise from orbit to the ground
     const camDist = this.camera.position.length();
@@ -510,6 +518,8 @@ export class GlobeEngine {
     this.earth.step(dt, this.reduced);
     // the close-zoom tiles: the Earth's are NASA GIBS's (tilemath.ts); a generated body's are made by its own generator in a worker (bodyTiles.ts), never fetched
     this.tiles.update(this.camera, dt, this.width, this.height);
+    // the sky's window where the camera is near: asked for, made in chunks, shown when whole (a body with no cloud, the Earth and a far camera have none)
+    this.skyWindow.update(dt, { record: this.bodyRecord, look: this.bodyLook, cloudy: this.skyCloudy, dist: camDist, lat: this.rig.lat, lon: this.rig.lon, time: this.weatherAt });
     this.markers.sel.step(dt, this.camera, this.height);
     this.markers.hover.step(dt, this.camera, this.height);
     this.markers.head.step(dt, this.camera, this.height);
@@ -573,6 +583,8 @@ export class GlobeEngine {
       this.earth.barren.value = 0;
       this.earth.detail.value = 0;
       this.earth.texRad.value = (2 * Math.PI) / 8192;
+      this.skyCloudy = false;
+      this.skyWindow.clear();
       this.shell.air.value = 1;
       this.bodyPictureState = 'earth';
       // the Earth's own tiles again
@@ -598,7 +610,8 @@ export class GlobeEngine {
     const record = this.bodyRecord;
     const scale = record && record.generator.version >= 2 ? weatherScale(record.seed) : 0;
     this.earth.weatherRate.value.set(WEATHER_BANDS[0]!.weight * scale, WEATHER_BANDS[1]!.weight * scale, WEATHER_BANDS[2]!.weight * scale);
-    this.earth.weatherT.value = record ? weatherClock(record.seed, this.bodyTime ?? Date.now()) : 0;
+    this.weatherAt = this.bodyTime ?? Date.now();
+    this.earth.weatherT.value = record ? weatherClock(record.seed, this.weatherAt) : 0;
   }
 
   /** The occasion the body is shown at (null: Now). */
@@ -622,6 +635,9 @@ export class GlobeEngine {
     // its ground is drawn finer than its pictures where the camera is close (shaders.ts detailOver); the texel is the first picture's until a sharper one is in
     this.earth.detail.value = 1;
     this.earth.texRad.value = (2 * Math.PI) / BODY_WIDTHS.first;
+    // the old body's window is not this body's; this one's sky comes with its sharp base
+    this.skyCloudy = false;
+    this.skyWindow.clear();
     this.earth.setSky(null, 0, air);
     this.earth.barren.value = barrenOf(look);
     this.shell.air.value = air;
@@ -654,6 +670,7 @@ export class GlobeEngine {
       this.earth.setGeneratedHi(hi);
       this.earth.texRad.value = (2 * Math.PI) / width;
       this.earth.setSky(bodyTexture(pictures.clouds, this.renderer), cover, air);
+      this.skyCloudy = cover > 0;
       this.bodyPictureState = 'sharp';
     }
   }

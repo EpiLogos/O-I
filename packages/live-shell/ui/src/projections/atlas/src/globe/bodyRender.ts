@@ -4,7 +4,7 @@
 //
 // There are two workers, so that a close tile is not kept waiting behind the big base image: one makes the base pictures (a few seconds a job), the other the tiles (a few tenths of a
 // second a job, a couple at a time; a tile that has been given up on before it is sent is never made).
-import { bodyImage, cloudImage, type BodyImage, type BodyLook, type WorldBodyRecord } from './body';
+import { bodyImage, cloudImage, cloudWindow, type BodyImage, type BodyLook, type CloudPart, type CloudRegion, type WorldBodyRecord } from './body';
 import { bodyTile } from './bodyTiles';
 import type { TileSource } from './tiles';
 
@@ -25,9 +25,20 @@ export interface TileJob {
   readonly y: number;
   readonly look?: BodyLook;
 }
+/** A job for the tile worker: a chunk of the window of the sky about the camera (globe/bodyV2.ts cloudWindow): `part` of an `n` by `n` window over `region`, as the weather stands at `time`. */
+export interface CloudJob {
+  readonly id: number;
+  readonly record: WorldBodyRecord;
+  readonly region: CloudRegion;
+  readonly n: number;
+  readonly part: CloudPart;
+  readonly time: number;
+  readonly look?: BodyLook;
+}
 export type BodyJobAnswer =
   | { readonly id: number; readonly image: BodyImage; readonly clouds: BodyImage }
   | { readonly id: number; readonly tile: BodyImage }
+  | { readonly id: number; readonly cloud: BodyImage }
   | { readonly id: number; readonly refused: string };
 
 /** The body's base image and its cloud layer. */
@@ -80,7 +91,7 @@ function startWorker(lane: Lane): Worker | null {
 }
 
 /** Send a job to the lane's worker, or make it here where there is none. */
-function send(lane: Lane, job: BodyJob | TileJob, local: () => BodyJobAnswer): Promise<BodyJobAnswer> {
+function send(lane: Lane, job: BodyJob | TileJob | CloudJob, local: () => BodyJobAnswer): Promise<BodyJobAnswer> {
   const thread = startWorker(lane);
   if (!thread) {
     try { return Promise.resolve(local()); } catch (error) { return Promise.reject(error); }
@@ -109,13 +120,14 @@ export function renderBody(record: WorldBodyRecord, width: number, cloudWidth = 
 
 /** Tiles in flight at the worker at once: enough to keep it busy, few enough that a tile given up on is mostly never made. */
 const TILES_AT_ONCE = 2;
-interface QueuedTile { readonly signal: AbortSignal | undefined; run(): void }
+interface QueuedTile { readonly signal: AbortSignal | undefined; run(): void; /** a chunk of the sky's window: after every tile that waits (the ground first) */ readonly sky?: true }
 const tileQueue: QueuedTile[] = [];
 let tilesInFlight = 0;
 
 function pumpTiles(): void {
   while (tileQueue.length && tilesInFlight < TILES_AT_ONCE) {
-    const next = tileQueue.shift()!;
+    const ground = tileQueue.findIndex((queued) => !queued.sky);
+    const next = tileQueue.splice(ground >= 0 ? ground : 0, 1)[0]!;
     if (next.signal?.aborted) continue; // given up on before it was sent: not made (its caller has been told)
     tilesInFlight++;
     next.run();
@@ -134,6 +146,23 @@ export function renderTile(record: WorldBodyRecord, z: number, x: number, y: num
     };
     signal?.addEventListener('abort', () => reject(new DOMException('the tile was given up on', 'AbortError')), { once: true });
     tileQueue.push({ signal, run });
+    pumpTiles();
+  });
+}
+
+/** A chunk of the sky's window about the camera (the opacity as the mask's own channels), made off the main thread where it can be, in the lane the tiles use: a chunk whose `signal` aborts
+ * before its turn is never made. */
+export function renderCloudChunk(record: WorldBodyRecord, region: CloudRegion, n: number, part: CloudPart, time: number, look?: BodyLook, signal?: AbortSignal): Promise<BodyImage> {
+  return new Promise<BodyImage>((resolve, reject) => {
+    const run = () => {
+      const job: CloudJob = { id: nextId++, record, region, n, part, time, look };
+      send('tile', job, () => ({ id: job.id, cloud: cloudWindow(record, region, n, time, look, part) })).then((answer) => {
+        if (!('cloud' in answer)) throw new Error('the worker answered a sky job with something else');
+        resolve(answer.cloud);
+      }, reject).finally(() => { tilesInFlight = Math.max(0, tilesInFlight - 1); pumpTiles(); });
+    };
+    signal?.addEventListener('abort', () => reject(new DOMException('the chunk was given up on', 'AbortError')), { once: true });
+    tileQueue.push({ signal, run, sky: true });
     pumpTiles();
   });
 }

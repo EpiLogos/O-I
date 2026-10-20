@@ -148,6 +148,15 @@ export function cloudImage(record: WorldBodyRecord, width = 512, look?: BodyLook
   return legacyOf(record) ? legacy.cloudImage(record, width) : current.cloudImage(record, width, look)
 }
 
+export type {CloudPart, CloudRegion} from './bodyV2'
+
+/** The sky over a region of a body of generator version 2 as the analytic field has it, `part` of an `n` by `n` window (see bodyV2.ts cloudWindow): the opacity as the mask's own channels,
+ * row 0 the north edge, the weather at `timeMs`. A body of version 1 has no weather and no window: it is empty. */
+export function cloudWindow(record: WorldBodyRecord, region: current.CloudRegion, n: number, timeMs?: number | null, look?: BodyLook, part?: current.CloudPart): BodyImage {
+  if (legacyOf(record)) { const w = part?.w ?? n, h = part?.h ?? n, data = new Uint8ClampedArray(w * h * 4); for (let k = 0; k < w * h; k++) data[k * 4 + 3] = 255; return {width: w, height: h, data} }
+  return current.cloudWindow(record, region, n, timeMs, look, part)
+}
+
 /** How thick the body's air shows, as the globe's atmosphere takes it: 1 is the Earth's own (the World device's default 60 %), 0 none; a barren look thins it to 0. */
 export const airOf = (record: WorldBodyRecord, look?: BodyLook): number => (legacyOf(record) ? legacy.airOf(record) : current.airOf(record, look))
 

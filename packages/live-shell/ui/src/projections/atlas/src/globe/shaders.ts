@@ -282,18 +282,23 @@ float weatherTurns(float latDeg, float days, vec3 rate) {
 }
 `;
 
-/** Value noise for the sky's finest detail (a cheap hash on the lattice, smoothly blended): the cloud mask is a picture of 1024 texels, and this breaks its soft edge up as
- * finely as the camera can see. Nothing here is random: the same point gives the same value. */
-const CLOUD_GLSL = /* glsl */ `
-float cloudHash(vec2 p) {
-  p = fract(p * vec2(0.1031, 0.1030));
-  p += dot(p, p.yx + 33.33);
-  return fract((p.x + p.y) * p.x);
+/** Value noise on the unit sphere's own direction (a lattice of the three coordinates, hashed by Ashima Arts' mod-289 permutation, Ian McEwan; MIT), for the ground's grain finer than its picture:
+ * there is no pole in it and no seam, and a cell is a cell at every latitude. (Noise on (longitude, latitude) is the sinusoidal projection: its cells at a high latitude are slivers wound
+ * round the pole.) Nothing here is random: the same point gives the same value. */
+const SPHERE_NOISE_GLSL = /* glsl */ `
+float sphereHash(vec3 i) {
+  i = i - floor(i * (1.0 / 289.0)) * 289.0;
+  float h = i.x;
+  h = mod((h * 34.0 + 1.0) * h, 289.0) + i.y;
+  h = mod((h * 34.0 + 1.0) * h, 289.0) + i.z;
+  h = mod((h * 34.0 + 1.0) * h, 289.0);
+  return h * (1.0 / 289.0);
 }
-float cloudNoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p);
+float sphereNoise(vec3 p) {
+  vec3 i = floor(p), f = fract(p);
   f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(cloudHash(i), cloudHash(i + vec2(1.0, 0.0)), f.x), mix(cloudHash(i + vec2(0.0, 1.0)), cloudHash(i + vec2(1.0, 1.0)), f.x), f.y);
+  return mix(mix(mix(sphereHash(i), sphereHash(i + vec3(1.0, 0.0, 0.0)), f.x), mix(sphereHash(i + vec3(0.0, 1.0, 0.0)), sphereHash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+    mix(mix(sphereHash(i + vec3(0.0, 0.0, 1.0)), sphereHash(i + vec3(1.0, 0.0, 1.0)), f.x), mix(sphereHash(i + vec3(0.0, 1.0, 1.0)), sphereHash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
 }
 `;
 
@@ -308,17 +313,24 @@ const skyOver = (uv: string) => /* glsl */ `
   if (uCloudMix > 0.0) {
     float turns = weatherTurns(degrees(asin(clamp(N.y, -1.0, 1.0))), uWeatherT, uWeatherRate);
     vec2 cuv = vec2(${uv}.x - turns, ${uv}.y);
-    float cover = texture2D(uCloud, cuv).r;
-    // the mask is 1024 texels round: close in, its soft edge is a blur. It is broken up by noise, octave on octave, each as fine as a pixel can show (the cell of an octave
-    // against the pixel's span uPxRad: the finer ones fade out, so nothing shimmers from afar), only where the mask has cloud at all (a clear sky stays clear)
-    float cl = max(sqrt(max(1.0 - N.y * N.y, 0.0)), 0.1);
-    vec2 np = vec2(cuv.x * 6.2831853 * cl, (cuv.y - 0.5) * 3.14159265);
-    float foot = uPxRad / max(dot(N, normalize(vView)), 0.15) * 60.0;
-    float a1 = 1.0 - smoothstep(0.35, 0.95, foot), a2 = 1.0 - smoothstep(0.35, 0.95, foot * 2.3), a3 = 1.0 - smoothstep(0.35, 0.95, foot * 5.3);
-    float dn = (cloudNoise(np * 60.0) - 0.5) * 0.42 * a1 + (cloudNoise(np * 138.0 + 7.1) - 0.5) * 0.3 * a2 + (cloudNoise(np * 318.0 + 3.7) - 0.5) * 0.22 * a3;
-    // a soft edge and a thinner, thicker cover inside it: the cloud is feathered, never cut
-    float live = smoothstep(0.0, 0.12, cover);
-    cover = mix(cover, smoothstep(0.02, 0.98, cover + dn * live) * (1.0 - 0.18 * live * (1.0 - cloudNoise(np * 25.0 + 11.0))), a1) * uCloudMix;
+    float cover = texture2D(uCloud, cuv).r * uCloudMix;
+    float shade = texture2D(uCloud, cuv + vec2(0.0035, -0.0022)).r * uCloudMix;
+    // where the camera is near, the window of the field itself stands in the mask's place: made for the view, read at about a texel to the pixel (the mask's texel is sixteen pixels at a
+    // region view), crisp-edged and broken up inside. It was made at one occasion; the wind has carried the sky since, by the shift of each latitude's rate over the clock between
+    float wlat = asin(clamp(N.y, -1.0, 1.0));
+    if (uWinOn > 0.0) {
+      float wres = weatherTurns(degrees(wlat), uWeatherT - uWinT, uWeatherRate);
+      float wdl = (${uv}.x - 0.5 - wres) * 6.2831853 - uWinRect.x;
+      wdl -= 6.2831853 * floor((wdl + 3.14159265) / 6.2831853);
+      vec2 wc = vec2(wdl * uWinRect.z + 0.5, 0.5 - (wlat - uWinRect.y) * uWinRect.w);
+      float winside = smoothstep(0.0, 0.05, min(min(wc.x, 1.0 - wc.x), min(wc.y, 1.0 - wc.y))) * uWinOn;
+      if (winside > 0.0) {
+        float wcover = texture2D(uCloudWin, wc).r * uCloudMix;
+        float wshade = texture2D(uCloudWin, wc + vec2(0.022 * uWinRect.z / max(cos(wlat), 0.2), 0.0069 * uWinRect.w)).r * uCloudMix;
+        cover = mix(cover, wcover, winside);
+        shade = mix(shade, wshade, winside);
+      }
+    }
     float lit = mix(0.46, 1.0, smoothstep(0.1, 1.0, 0.5 + 0.5 * dot(N, normalize(uLightDir))));
     if (uSunMix > 0.0) lit = mix(lit, mix(0.1, 1.0, smoothstep(-0.07, 0.16, dot(N, normalize(uSunDir)))), uSunMix);
     // a cloud stands above the ground: the ground beside and under it is in its shadow (the mask looked at again a little toward the key light's far side, softly), and the cloud's own
@@ -326,7 +338,6 @@ const skyOver = (uv: string) => /* glsl */ `
     // the sky is below the camera and gone at a place view: its texel is far larger than a pixel there, and magnified it is a smear over the ground that was come to see
     float nearSky = smoothstep(0.00003, 0.00014, uPxRad);
     cover *= nearSky;
-    float shade = texture2D(uCloud, cuv + vec2(0.0035, -0.0022)).r * uCloudMix;
     shade *= nearSky;
     col *= 1.0 - 0.3 * shade * smoothstep(0.0, 0.5, shade) * lit;
     vec3 cloudTone = mix(mix(uCore, vec3(1.0), 0.6), vec3(0.74, 0.77, 0.82), smoothstep(0.55, 1.0, cover) * 0.7);
@@ -334,22 +345,22 @@ const skyOver = (uv: string) => /* glsl */ `
   }
 `;
 
-/** The ground drawn finer than its picture (a statement block for `main`, given the equirect coordinate `uv`, and `N`, `src`, `col`): where the camera is closer than the picture can
+/** The ground drawn finer than its picture (a statement block for `main`, given `N`, `src`, `col`): where the camera is closer than the picture can
  * show, a texel spans several pixels and the ground reads soft. Value noise is laid on it, octave on octave, each as fine as a pixel can show (a cell against the pixel's span,
  * uPxRad: the finer ones fade out, so nothing shimmers from afar), strongly on land and a little on water; none where a texel is no larger than a pixel, and none for the Earth. */
-const detailOver = (uv: string) => /* glsl */ `
+const detailOver = () => /* glsl */ `
   if (uDetail > 0.0) {
     float dfoot = uPxRad / max(dot(N, normalize(vView)), 0.15);
     float dmag = uTexRad / max(dfoot, 1e-9);
     float damt = uDetail * smoothstep(1.3, 4.0, dmag);
     if (damt > 0.0) {
-      float dcl = max(sqrt(max(1.0 - N.y * N.y, 0.0)), 0.1);
-      vec2 dp = vec2(${uv}.x * 6.2831853 * dcl, (${uv}.y - 0.5) * 3.14159265) / uTexRad;
+      // the sphere's own direction, in texels (the lattice is the texel and then finer): no pole, no seam
+      vec3 dp = N / uTexRad;
       float dpix = dfoot / uTexRad;
-      float dn = (cloudNoise(dp * 1.0 + 3.1) - 0.5) * 0.55 * (1.0 - smoothstep(0.35, 0.9, dpix * 1.0))
-        + (cloudNoise(dp * 2.1 + 9.7) - 0.5) * 0.4 * (1.0 - smoothstep(0.35, 0.9, dpix * 2.1))
-        + (cloudNoise(dp * 4.4 + 5.3) - 0.5) * 0.3 * (1.0 - smoothstep(0.35, 0.9, dpix * 4.4))
-        + (cloudNoise(dp * 9.3 + 1.9) - 0.5) * 0.22 * (1.0 - smoothstep(0.35, 0.9, dpix * 9.3));
+      float dn = (sphereNoise(dp * 1.0 + 3.1) - 0.5) * 0.55 * (1.0 - smoothstep(0.35, 0.9, dpix * 1.0))
+        + (sphereNoise(dp * 2.1 + 9.7) - 0.5) * 0.4 * (1.0 - smoothstep(0.35, 0.9, dpix * 2.1))
+        + (sphereNoise(dp * 4.4 + 5.3) - 0.5) * 0.3 * (1.0 - smoothstep(0.35, 0.9, dpix * 4.4))
+        + (sphereNoise(dp * 9.3 + 1.9) - 0.5) * 0.22 * (1.0 - smoothstep(0.35, 0.9, dpix * 9.3));
       col *= 1.0 + damt * dn * mix(0.2, 0.8, 1.0 - waterOf(src));
     }
   }
@@ -388,10 +399,16 @@ uniform float uPxRad;
 // body, 0 for the Earth, whose imagery is as it was)
 uniform float uTexRad;
 uniform float uDetail;
+// [T-PROCEDURAL-BODY] the window of the sky about the camera (globe/cloudWindow.ts): a texture of the analytic cloud field over a rectangle of the sphere (lon0, lat0, 1 / its longitude span, 1 / its
+// latitude span: radians), how much of it is shown, and the weather's clock (days) at the occasion it was made
+uniform sampler2D uCloudWin;
+uniform vec4 uWinRect;
+uniform float uWinOn;
+uniform float uWinT;
 uniform float uWeatherT;
 uniform vec3 uWeatherRate;
 ${WEATHER_GLSL}
-${CLOUD_GLSL}
+${SPHERE_NOISE_GLSL}
 float lumaOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 
 // 0 land · 1 water, from the Blue Marble colour: seas are strongly blue against red (even the
@@ -482,7 +499,7 @@ void main() {
   vec3 src = mix(texture2D(uBaseLo, vUv).rgb, texture2D(uBaseHi, vUv).rgb, uHiMix);
   vec3 N = normalize(vN);
   vec3 col = shadeEarth(src, N, normalize(vView), vUv, uAir);
-${detailOver('vUv')}${skyOver('vUv')}
+${detailOver()}${skyOver('vUv')}
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -521,7 +538,7 @@ void main() {
   vec3 N = normalize(vN);
   // [T-PROCEDURAL-BODY] the body's own air and sky, as the sphere under it has them: the Earth's tiles (GIBS) are drawn with air 1.0 and no cloud layer, as before
   vec3 col = shadeEarth(src, N, normalize(vView), vDens, uAir);
-${detailOver('vDens')}${skyOver('vDens')}
+${detailOver()}${skyOver('vDens')}
   gl_FragColor = vec4(col, uAlpha);
 }
 `;
