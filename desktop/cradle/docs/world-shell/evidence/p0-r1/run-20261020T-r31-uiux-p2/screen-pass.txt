@@ -1,0 +1,8 @@
+r31 — UI/UX lane phase 2 (acts and menus, manual §10.9), dlw/build d9c920cb4, full-suite backing. Built and sealed 20 Oct; launched
+23:23Z (pid 37782); quit 23:43Z.
+
+Not seen on screen. The window stood in Stage Manager's strip; the screen-takeover card that brings it forward got no answer in its
+time, so no right-click menu, rename, menu-bar command or undo was checked natively. Phase 2's code-level proof stands in
+tests/p2-object-menu.test.mjs. The native check moves to r32, which carries phase 2 and phase 3 together.
+
+Owner ground: Control/user/flows unchanged across the run (sha256 of all 13 files equal before launch and after quit).
