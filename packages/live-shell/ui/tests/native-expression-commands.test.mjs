@@ -169,8 +169,8 @@ test('every shortcut in the guide is bound by the handler it names', async () =>
   // was App.tsx's `event.key.toLowerCase() === 'l' && event.metaKey && event.altKey`, which macOS's ⌥L "¬" never matched).
   const areas = await read('shell/workspaceAreas.ts')
   assert.match(app, /const part = frameToggleOf\(event\)/)
-  assert.match(areas, /event\.code === 'KeyL' \|\| key === 'l'/)
-  assert.match(areas, /event\.code === 'KeyB' \|\| key === 'b'/)
+  assert.match(areas, /\['detail', \['KeyL'\], \['l', '¬'\]\]/)
+  assert.match(areas, /\['browser', \['KeyB', 'Digit5'\], \['b', '∫', '5', '∞'\]\]/)
   assert.match(app, /event\.key === 'Tab'/)
   assert.match(browser, /\['ArrowUp', 'ArrowDown', 'Home', 'End'\]\.includes\(event\.key\)/)
   assert.match(browser, /event\.key === 'Escape' && query/)

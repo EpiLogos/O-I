@@ -107,19 +107,44 @@ export function enteredDetailHeight(held: DetailExpansions, frame: string, kept:
 
 // ------------------------------------------------------------------------------------------------------------------- the keys
 
-/** Which part a key shows or hides (manual §10.8, §16.4; the documentation lane, 16 Oct: "⌘⌥L hides both; ⌘⌥R the rail"): ⌘⌥B the
- * browser, ⌘⌥L the detail area, ⌘⌥R the widget rail, ⌥⌘6 the pool (as Live shows its Groove Pool). Read by the physical key as well as
- * the character: with ⌥ held, macOS gives the character the key makes under Option (⌥B is "∫", ⌥L is "¬", ⌥R is "®", ⌥6 is "§"),
- * so the letter alone would miss on the Mac. Pure. */
+/** What a ⌥⌘ key shows or hides (manual §10.1, §10.8, Live 12's View menu): ⌥⌘B or ⌥⌘5 the browser, ⌥⌘6 the pool, ⌥⌘8 the widget
+ * rail, ⌥⌘3 Clip view, ⌥⌘4 Device view, ⌥⌘L both, ⌥⌘9 Pane view, ⌥⌘M the mixer, ⌥⌘I its In/Out section, ⌥⌘S the sends, ⌥⌘R the
+ * return tracks (Live's: the rail's key is ⌥⌘8 so that ⌥⌘R stays Live's). Read by the physical key as well as the character:
+ * with ⌥ held, macOS gives the character the key makes under Option (⌥B is "∫", ⌥L is "¬", ⌥5 is "∞"), so the letter alone would
+ * miss on the Mac. Pure. */
+export type FrameToggle = 'browser' | 'pool' | 'rail' | 'clip' | 'device' | 'detail' | 'pane' | 'mixer' | 'io' | 'sends' | 'returns'
+const FRAME_TOGGLES: ReadonlyArray<readonly [FrameToggle, readonly string[], readonly string[]]> = [
+  ['browser', ['KeyB', 'Digit5'], ['b', '∫', '5', '∞']],
+  ['pool', ['Digit6'], ['6', '§']],
+  ['rail', ['Digit8'], ['8', '•']],
+  ['clip', ['Digit3'], ['3', '£']],
+  ['device', ['Digit4'], ['4', '¢']],
+  ['detail', ['KeyL'], ['l', '¬']],
+  ['pane', ['Digit9'], ['9', 'ª']],
+  ['mixer', ['KeyM'], ['m', 'µ']],
+  ['io', ['KeyI'], ['i', 'ˆ']],
+  ['sends', ['KeyS'], ['s', 'ß']],
+  ['returns', ['KeyR'], ['r', '®']],
+]
 export function frameToggleOf(event: {readonly key: string; readonly code?: string; readonly metaKey: boolean; readonly altKey: boolean;
-  readonly ctrlKey?: boolean; readonly shiftKey?: boolean}): 'browser' | 'detail' | 'rail' | 'pool' | null {
+  readonly ctrlKey?: boolean; readonly shiftKey?: boolean}): FrameToggle | null {
   if (!event.metaKey || !event.altKey || event.shiftKey || event.ctrlKey) return null
   const key = event.key.toLowerCase()
-  if (event.code === 'KeyB' || key === 'b' || key === '∫') return 'browser'
-  if (event.code === 'KeyL' || key === 'l' || key === '¬') return 'detail'
-  if (event.code === 'KeyR' || key === 'r' || key === '®') return 'rail'
-  if (event.code === 'Digit6' || key === '6' || key === '§') return 'pool'
-  return null
+  const byCode = event.code ? FRAME_TOGGLES.find(([, codes]) => codes.includes(event.code!)) : undefined
+  return (byCode ?? FRAME_TOGGLES.find(([, , keys]) => keys.includes(key)))?.[0] ?? null
+}
+
+/** Where ⌥ and a digit moves the focus (Live 12's Move Focus keys, manual §10.2): ⌥0 the transport, ⌥1 Session view, ⌥2
+ * Arrangement view, ⌥3 Clip view, ⌥4 Device view, ⌥5 the browser, ⌥6 the pool, ⌥9 Pane view. Option alone with the digit's key;
+ * macOS gives ⌥1 as "¡", so the physical key is read. Pure. */
+export type FocusTarget = 'transport' | 'session' | 'arrangement' | 'clip' | 'device' | 'browser' | 'pool' | 'pane'
+const FOCUS_KEYS: Readonly<Record<string, FocusTarget>> = {
+  Digit0: 'transport', Digit1: 'session', Digit2: 'arrangement', Digit3: 'clip', Digit4: 'device', Digit5: 'browser', Digit6: 'pool', Digit9: 'pane',
+}
+export function focusKeyOf(event: {readonly code?: string; readonly metaKey: boolean; readonly altKey: boolean; readonly ctrlKey?: boolean;
+  readonly shiftKey?: boolean}): FocusTarget | null {
+  if (!event.altKey || event.metaKey || event.ctrlKey || event.shiftKey || !event.code) return null
+  return FOCUS_KEYS[event.code] ?? null
 }
 
 /** ⇧Tab switches the detail area between Clip view and Device view (Live's Shift-Tab; the documentation lane, 16 Oct). Pure. */

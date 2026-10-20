@@ -47,16 +47,27 @@ const live = MODE_TREE_SEEDS.live
 /** Central's first tree, as its registration lays it — the tree the rename moved into Live. */
 const centralSeed = () => MODE_TREE_SEEDS.base(empty())
 
-test('Central\'s seed is the tree the rename moved: its Day and a Flow side by side, the tracks pane a tab behind the Flow', () => {
+test('Central\'s seed is the tree the rename moved: its Day and a Flow side by side; the set\'s tracks are no pane (manual §10.2)', () => {
   const tree = centralSeed()
-  assert.deepEqual(placed(tree), [['projection.central-document'], ['projection.central-document', 'projection.timeline']])
+  assert.deepEqual(placed(tree), [['projection.central-document'], ['projection.central-document']])
   assert.equal(holdsCentralSeed(tree), true)
 })
 
-test('Live\'s seed heals that tree into Live\'s own default: the instrument beside the set\'s tracks; Central\'s documents leave Live\'s book', () => {
+test('a tree saved with the old tracks pane has it closed, and does not get it back (shell/tracksOutOfPanes.ts)', () => {
+  const old = docs.seedCentralDocuments(empty(), {alongside: ['projection.timeline']})
+  assert.deepEqual(placed(old), [['projection.central-document'], ['projection.central-document', 'projection.timeline']])
+  const healed = MODE_TREE_SEEDS.base(old)
+  assert.deepEqual(placed(healed), [['projection.central-document'], ['projection.central-document']])
+  assert.ok(!healed.closedStack.some(id => healed.surfaces[id]?.kind === 'projection.timeline'), 'Reopen closed does not bring it back')
+  assert.equal(MODE_TREE_SEEDS.base(healed), healed, 'healed once: the seed leaves it as it is')
+  const intoLive = live(old)
+  assert.deepEqual(placed(intoLive), [['projection.expressions']], 'the old Central tree moved into Live heals to the torus alone')
+})
+
+test('Live\'s seed heals that tree into Live\'s own default: the instrument; Central\'s documents leave Live\'s book', () => {
   const healed = live(centralSeed())
-  assert.deepEqual(placed(healed), [['projection.expressions'], ['projection.timeline']], 'the torus on the stage, beside the tracks')
-  assert.deepEqual(kindsOf(healed), ['projection.expressions', 'projection.timeline'], 'no Central document is held, open or closed')
+  assert.deepEqual(placed(healed), [['projection.expressions']], 'the torus on the stage; the set\'s tracks are Session view, a Tab away')
+  assert.deepEqual(kindsOf(healed), ['projection.expressions'], 'no Central document is held, open or closed')
   assert.deepEqual(healed.closedStack, [], 'nothing of Central\'s waits to be reopened in Live')
   const fresh = live(empty())
   const focusAt = layout => engine.groupsOf(layout.root).findIndex(g => g.id === layout.focusedGroupId)
@@ -88,7 +99,7 @@ test('a tree with a document standing in its own window is the owner\'s; an empt
   const day = Object.values(tree.surfaces).find(binding => binding.kind === docs.CENTRAL_DOCUMENT_PANE_KIND)
   const detached = {...tree, detached: [{surfaceId: day.id, groupId: 'g1', index: 0, pinned: false}]}
   assert.equal(holdsCentralSeed(detached), false)
-  assert.deepEqual(placed(live(empty())), placed(seedInstruments(['projection.expressions', 'projection.timeline'])(empty())))
+  assert.deepEqual(placed(live(empty())), placed(seedInstruments(['projection.expressions'])(empty())))
 })
 
 test('the heal is Live\'s alone: Central\'s own tree stands under Central\'s seed', () => {

@@ -7,9 +7,12 @@ import {seedInstruments} from '../frame/openInstrument'
 import {healLiveTree} from '../live/liveTreeHeal'
 import {seedFactoryCentre} from '../agent/factoryCentre'
 import {seedCentralDocuments} from '../central/documents/centralDocuments'
+import {seedWithoutTracksPane} from './tracksOutOfPanes'
 
 export interface ModeFrame {
   centerPanel: string
+  /** The view the main area opens on (manual §10.2): the set's Session or Arrangement view, or Pane view. */
+  view: 'session' | 'arrangement' | 'pane'
   tab: 'session' | 'arrangement'
   detailMode: 'clip' | 'device'
   browser: boolean
@@ -17,7 +20,7 @@ export interface ModeFrame {
   dock: boolean
 }
 
-const FRAME = {tab: 'session', detailMode: 'clip', browser: true, detail: true} as const
+const FRAME = {tab: 'session', view: 'pane', detailMode: 'clip', browser: true, detail: true} as const
 
 // The centre is the pane tree in every mode (FOUNDATION F2); what each mode holds in it is its seed below.
 // The detail side each mode opens on is the mockup's (world-shell-mockup.html `dv`: base device, factory clip, expressions
@@ -42,18 +45,19 @@ export const MODE_TRACK_SOURCES: Readonly<Record<SurfMode, TrackSource>> = {
   techne: 'world',
 }
 
-/** Each mode's first pane tree (FOUNDATION F2: panes are the centre in every mode), by the book mode it stands on. A seed
- * runs only on a tree with no tab, so a mode's own arrangement — and every named set — stands as it was left. */
+/** Each mode's first pane tree (Pane view, manual §10.2), by the book mode it stands on. A seed runs only on a tree with no
+ * tab, so a mode's own arrangement — and every named set — stands as it was left. The set's tracks are never a pane: they are
+ * Session view and Arrangement view, a Tab away (shell/tracksOutOfPanes.ts keeps them out of every tree). */
 export const MODE_TREE_SEEDS: Readonly<Record<string, (layout: LayoutState) => LayoutState>> = {
-  // Live: the instrument (the torus on the stage) beside the set's tracks — laid over a tree that is Central's seed standing in
-  // Live (live/liveTreeHeal.ts), never over one the owner arranged.
-  live: healLiveTree(seedInstruments(['projection.expressions', 'projection.timeline'])),
-  // Central: the Day and a Flow, side by side (the mockup's modes.base); the day's tracks a tab behind the Flow.
-  base: layout => seedCentralDocuments(layout, {alongside: ['projection.timeline']}),
+  // Live: the instrument, the torus on the stage — laid over a tree that is Central's seed standing in Live
+  // (live/liveTreeHeal.ts), never over one the owner arranged.
+  live: seedWithoutTracksPane(healLiveTree(seedInstruments(['projection.expressions']))),
+  // Central: the Day and a Flow, side by side (the mockup's modes.base).
+  base: seedWithoutTracksPane(layout => seedCentralDocuments(layout)),
   // Factory: the agent tab, pinned (agent/factoryCentre.ts), instruments open beside it.
-  factory: seedFactoryCentre,
-  // Expressions: the Expression, one pane (the mockup's modes.expressions); its scenes are its tracks, a Tab away in a pane.
-  expressions: seedInstruments(['projection.expressions']),
+  factory: seedWithoutTracksPane(seedFactoryCentre),
+  // Expressions: the Expression, one pane (the mockup's modes.expressions); its scenes are its tracks, a Tab away.
+  expressions: seedWithoutTracksPane(seedInstruments(['projection.expressions'])),
   // Technē: the world — the Earth and its system (the mockup's modes.techne: the M4 lens at system scale).
-  techne: seedInstruments(['projection.earth']),
+  techne: seedWithoutTracksPane(seedInstruments(['projection.earth'])),
 }

@@ -299,11 +299,11 @@ test('the hosted panel publishes every announcement to the one handle and withdr
 
 // ── 11 — Live's centre: the instrument over the Timeline, the audio cut's behaviour kept ──
 
-test('Live centre: the instrument stands in Live\'s first pane beside the set\'s tracks; the stage frame is placed, never remounted', async () => {
+test('Live centre: the instrument stands in Live\'s first pane, the set\'s tracks a Tab away in Session view; the stage frame is placed, never remounted', async () => {
   const app = await readFile(new URL('App.tsx', here), 'utf8')
   // The panes are the centre in every mode (FOUNDATION F2): Live's first tree holds the stage (the torus) beside its tracks,
   // and the one stage frame is placed over whichever pane holds it.
-  assert.match(await readFile(new URL('shell/modeFrames.ts', here), 'utf8'), /live: healLiveTree\(seedInstruments\(\['projection\.expressions', 'projection\.timeline'\]\)\)/, 'Live\'s first pane holds the instrument (and heals a tree that is Central\'s seed, live-tree-heal.test.mjs)')
+  assert.match(await readFile(new URL('shell/modeFrames.ts', here), 'utf8'), /live: seedWithoutTracksPane\(healLiveTree\(seedInstruments\(\['projection\.expressions'\]\)\)\)/, 'Live\'s first pane holds the instrument (and heals a tree that is Central\'s seed, live-tree-heal.test.mjs)')
   assert.match(app, /const expressionsPlaced = framePlacement !== null/)
   assert.match(app, /live-centre-torus/)
   const css = await readFile(new URL('live/liveCentre.css', here), 'utf8')

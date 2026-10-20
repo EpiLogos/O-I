@@ -20,8 +20,10 @@ export interface CandidateApplicationView {
   /** The dock was saved under the rail-in-every-mode registration (F8, 14 Oct). A view saved before it (Live then had no
    * rail) carries no stamp, and its `dock` is not read: the mode's registration stands until the person toggles it. */
   rail?: boolean
+  /** Whether each track's mixer row shows (manual §16.6: ⌥⌘M, or Mixer at the bottom right). */
+  mixer?: boolean
 }
-const fieldNames = ['alsPath','tab','selection','browser','detail','dock','browserWidth','detailHeight','centerPanel','detailMode','settingsPresented','settingsReturn','browserCategory','rail'] as const
+const fieldNames = ['alsPath','tab','selection','browser','detail','dock','browserWidth','detailHeight','centerPanel','detailMode','settingsPresented','settingsReturn','browserCategory','rail','mixer'] as const
 const fields = new Set<string>(fieldNames)
 const index = (value: unknown) => Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= 1_000_000
 /** The native core carries an envelope; only this application decides which
@@ -32,7 +34,7 @@ export function validateCandidateApplicationView(raw: unknown): CandidateApplica
   if (Object.keys(value).some(key => !fields.has(key))) return null
   for (const [key, field] of Object.entries(value)) {
     if (field === undefined) continue
-    if (['browser','detail','dock','settingsPresented','rail'].includes(key)) {if (typeof field !== 'boolean') return null}
+    if (['browser','detail','dock','settingsPresented','rail','mixer'].includes(key)) {if (typeof field !== 'boolean') return null}
     else if (key === 'alsPath') {if (field !== null && (typeof field !== 'string' || !field.trim() || field.length > 4096 || !field.toLowerCase().endsWith('.als'))) return null}
     else if (key === 'tab') {if (field !== 'session' && field !== 'arrangement') return null}
     else if (key === 'browserCategory') {if (typeof field !== 'string' || !field || field.length > 256) return null}

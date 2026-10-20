@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
-import {BOOK_MODE_OF_SHELL, useContinuity, type ShellMode} from './continuity/workspace'
+import {useContinuity} from './continuity/workspace'
 import { PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
 import type { NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
@@ -33,7 +33,9 @@ import {worldWidgets, WidgetReadingProvider} from './shell/widgets'
 import {RailDevices} from './widgets/railDevices'
 import {DEFAULT_WIDGETS} from './shell/widgetDefaults'
 import {BrowserReadingProvider, MODE_POOL_FACES, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
-import {EncounterBar} from './frame/encounter/EncounterBar'
+import {TracksPane} from './frame/tracks/TracksPane'
+import {useShownTracks} from './frame/tracks/tracksDoor'
+import {showMainView, tabMainView, togglePaneView, useMainView, type MainView} from './shell/mainView'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
 import {liveWorldSelection, setSelectionOf} from './shell/liveSelection'
@@ -65,7 +67,7 @@ import {focusedSurfaceKind, isFactoryMode} from './agent/factoryCentre'
 import {subjectWords} from './central/daySurface'
 import {worldSubjectOf} from './techne/subject/worldRows'
 import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, draggedSize, enteredDetailHeight, expandDetail,
-  expandedDetailHeight, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions} from './shell/workspaceAreas'
+  expandedDetailHeight, focusKeyOf, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions, type FocusTarget, type FrameToggle} from './shell/workspaceAreas'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
 registerAtlasHost()
 /** Your system's readings (T-WORLDS §5 W3 phase B), loaded with the Earth: they read Central's worlds, today's set, what plays and what is
@@ -133,11 +135,6 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // A move that changes mode AND asks for a centre (open Knowledge, reveal the stage, a lens press) names the frame it
   // is aimed at; the restore of that frame honours it instead of the mode's own centre.
   const centreIntent = useRef<{key: string; panel: string; tab?: 'session' | 'arrangement'} | null>(null)
-  const presentIn = (mode: ShellMode, panel: string, tab?: 'session' | 'arrangement') => {
-    centreIntent.current = {key: `${workspace.workspaceId}|${BOOK_MODE_OF_SHELL[mode]}`, panel, tab}
-    setCenterPanel(panel); if (tab) setTab(tab)
-    continuity.setMode(mode)
-  }
   const [restoration, restorePath] = useState({workspaceId: workspace.workspaceId, path: restored?.alsPath})
   const config = useShellConfig()
   const rememberedPath = restoration.workspaceId === workspace.workspaceId ? restoration.path : restored?.alsPath
@@ -168,6 +165,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [viewport, setViewport] = useState([window.innerWidth, window.innerHeight])
   useEffect(() => { const read = () => setViewport([window.innerWidth, window.innerHeight]); window.addEventListener('resize', read); return () => window.removeEventListener('resize', read) }, [])
   const [tab, setTab] = useState(restored?.tab ?? opening.tab)
+  // The main area's view (manual §10.2, shell/mainView.ts): Session view and Arrangement view of the mode's set, or Pane view. A
+  // saved view names the set's views as the centre `world.set`; any other saved centre is Pane view.
+  useState(() => { showMainView(restored ? (restored.centerPanel === 'world.set' ? restored.tab ?? 'session' : 'pane') : opening.view); return true })
+  const mainView = useMainView()
+  // The set's presentation (Session or Arrangement), the tracks' own (projections/timelinePaneHost.ts).
+  const timelinePane = useTimelinePanePresentation()
+  // Each track's mixer row and its sections (manual §16.6: ⌥⌘M, ⌥⌘I, ⌥⌘S, ⌥⌘R; Mixer at the bottom right).
+  const [mixer, setMixer] = useState(restored?.mixer ?? true)
+  const [mixerHidden, setMixerHidden] = useState<Readonly<{io: boolean; sends: boolean; returns: boolean}>>({io: false, sends: false, returns: false})
   // The Factory centre is the Workbench's pane tree (agent/factoryCentre.ts); the retired agent centre and the knowledge
   // centre both restore to the Workbench, so no saved centre names a panel the mode does not stand.
   // The centre is the pane tree in every mode (FOUNDATION F2). Only the knowledge panel, the stage's large native editor and
@@ -345,11 +351,11 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
           ...(mode==='clip'?{mode,material:family==='scene'?'scene' as const:'glyph' as const}:{mode,family:family??'controls'})}))
       }}
   }
-  const chooseView = (view: string) => {
-    if (view !== 'session' && view !== 'arrangement') return
-    // Session and Arrangement are two presentations of one pane (manual §3: "Tab moves you between the two"): the pane's own
-    // presentation moves, in every mode; Factory's agent tab carries the same two views of its sessions.
-    presentSettings(false); setTab(view); setTimelinePanePresentation(view)
+  const chooseView = (view: MainView) => {
+    // Session view and Arrangement view are two views of the mode's set, and Pane view holds the panes (manual §10.2). Switching
+    // changes only what is seen: the selection and what runs stay as they are.
+    if (view !== 'pane') setTab(view)
+    showMainView(view)
   }
   /** Enter a surf mode (Rev 5): one encounter transition over the spine —
    * mode and world context ride the one book (the bridge publishes both);
@@ -410,7 +416,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     // One presentation (R2 objection 2): the tracks pane presents what the mode's frame restores, so Tab, the transport and
     // the pane never disagree.
     const presentation = intent?.tab ?? view?.tab ?? opening.tab
-    setTab(presentation); setTimelinePanePresentation(presentation); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
+    const standing: MainView = intent ? intent.tab ?? 'pane' : view ? (view.centerPanel === 'world.set' ? presentation : 'pane') : opening.view
+    setTab(presentation); setTimelinePanePresentation(presentation); showMainView(standing); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
+    setMixer(view?.mixer ?? true)
     changeDetailMode(view?.detailMode ?? opening.detailMode); resizeBrowser(view?.browserWidth ?? null); resizeDetail(enteredDetailHeight(detailExpansions.current, frameKey, view?.detailHeight ?? null, viewport[1]))
     chooseBrowserCategory(view?.browserCategory)
     setBrowser(view?.browser ?? opening.browser); setDetail(view?.detail ?? opening.detail); setDock(view?.rail ? view.dock ?? opening.dock : opening.dock)
@@ -420,25 +428,46 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }, [restoreKey, restoredKey, continuity.applicationView])
   useEffect(() => {
     if (restoredKey !== restoreKey) return
-    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? undefined, rail: true, tab, selection: liveHeld, browserCategory,
-      browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:keptDetailHeight(detailExpansions.current,frameKey,detailHeight), centerPanel:nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined})
-  }, [restoredKey, restoreKey, state.path, tab, liveHeld, browserCategory, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
-  // ⌘⌥B, ⌘⌥L and ⌘⌥R show and hide the browser, the detail area and the rail (shell/workspaceAreas.ts frameToggleOf: by the key as well
-  // as its character — macOS gives ⌥L as "¬"). They are the window's: taken before any pane's own keys (the Workbench's keymap binds
-  // ⌘⌥R to its layout restore, desktop/cradle/src/surface/keys.ts:94), wherever the focus stands.
+    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? undefined, rail: true, tab: timelinePane, selection: liveHeld, browserCategory,
+      browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:keptDetailHeight(detailExpansions.current,frameKey,detailHeight), centerPanel:mainView !== 'pane' ? 'world.set' : nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined, mixer})
+  }, [restoredKey, restoreKey, state.path, timelinePane, mainView, mixer, liveHeld, browserCategory, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
+  // The view keys (manual §10.1, §10.8; shell/workspaceAreas.ts frameToggleOf, read by the key as well as its character — macOS
+  // gives ⌥L as "¬"). They are the window's: taken before any pane's own keys (the Workbench's keymap binds ⌥⌘R to its layout
+  // restore, desktop/cradle/src/surface/keys.ts:94; ⌥⌘R is Live's return tracks here), wherever the focus stands.
+  const chord = useRef<(part: FrameToggle) => void>(() => {})
+  chord.current = part => {
+    if (part === 'detail') setDetail(current => !current)
+    if (part === 'browser') setBrowser(current => !current)
+    if (part === 'rail') setDock(current => !current)
+    if (part === 'pool') setPool(current => { if (!current) setBrowser(true); return !current })
+    if (part === 'clip' || part === 'device') {
+      if (!detail) { changeDetailMode(part); setHiddenSides(hidden => ({...hidden, [part]: false})); setDetail(true) }
+      else toggleDetailSide(part)
+    }
+    if (part === 'pane') { presentSettings(false); togglePaneView() }
+    if (part === 'mixer') setMixer(current => !current)
+    if (part === 'io' || part === 'sends' || part === 'returns') { setMixer(true); setMixerHidden(hidden => ({...hidden, [part]: !hidden[part]})) }
+  }
   useEffect(() => {
     const onChord = (event: KeyboardEvent) => {
       const part = frameToggleOf(event)
       if (!part || event.repeat) return
-      event.preventDefault()
-      if (part === 'detail') setDetail(current => !current)
-      if (part === 'browser') setBrowser(current => !current)
-      if (part === 'rail') setDock(current => !current)
-      if (part === 'pool') setPool(current => { if (!current) setBrowser(true); return !current })
+      event.preventDefault(); event.stopPropagation()
+      chord.current(part)
     }
     window.addEventListener('keydown', onChord, true)
     return () => window.removeEventListener('keydown', onChord, true)
   }, [])
+  // The focus keys (Live 12's Move Focus, manual §10.2): ⌥ and a digit brings the part forward and gives it the keys.
+  const focusPart = useRef<(target: FocusTarget) => void>(() => {})
+  focusPart.current = target => {
+    if (target === 'session' || target === 'arrangement' || target === 'pane') { presentSettings(false); chooseView(target) }
+    if (target === 'clip' || target === 'device') { changeDetailMode(target); setHiddenSides(hidden => ({...hidden, [target]: false})); setDetail(true) }
+    if (target === 'browser') setBrowser(true)
+    if (target === 'pool') { setBrowser(true); setPool(true) }
+    const region = target === 'session' || target === 'arrangement' ? 'set' : target
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-focus-region="${region}"]`)?.focus({preventScroll: true}))
+  }
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === ',') {
@@ -447,10 +476,13 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
         presentSettings(true)
         return
       }
+      if (event.key === 'Escape' && settingsPresented && !event.defaultPrevented) { event.preventDefault(); returnFromSettings(); return }
       const target = event.target as HTMLElement
       if (target.closest('input,textarea,select,[contenteditable="true"]')) return
+      const focusTarget = focusKeyOf(event)
+      if (focusTarget && !settingsPresented) { event.preventDefault(); focusPart.current(focusTarget); return }
       if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey && !settingsPresented) {
-        event.preventDefault(); chooseView(tab === 'session' ? 'arrangement' : 'session')
+        event.preventDefault(); tabMainView()
       }
       // ⇧Tab: Clip view ⇄ Device view (shell/workspaceAreas.ts), unless a control below already took it. While both stand it only
       // changes which side is kept in front if the area narrows (Live 12 cap 31); when one shows, the other takes its place.
@@ -471,17 +503,6 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const panels = getPanels('center')
   const choose = (value: SetSelection) => { select(value); changeDetailMode(value.scene !== null || value.clip !== undefined ? 'clip' : 'device') }
   const agency = useAgencySessions(workspace.transport)
-  const openCenterPanel = (id: string) => {
-    if (id === 'world.settings') {
-      settingsOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-      presentSettings(true)
-    } else {
-      presentSettings(false)
-      if (id === 'native.agent') { presentIn('factory', 'native.workbench'); return }
-      // The knowledge panel stands over the panes in whatever mode you are in; the Workbench is the panes themselves.
-      setCenterPanel(id)
-    }
-  }
   // The mode system's frame readings (Rev 5): which presentation stands
   // (the encounter's, never a second store), what the World cut shows, and
   // the real readings the mode transport may wear.
@@ -489,9 +510,11 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // tree whose default tab is the agent surface (agent/factoryCentre.ts). The centre is that tree, not a separate panel.
   const agentShell = isFactoryMode(frameMode) && !settingsPresented
   // The pane the detail follows is the focused tab of the mode's pane tree (every mode, FOUNDATION F2).
-  const timelinePane = useTimelinePanePresentation()
-  const paneFocus = factoryFocusedPane(focusedSurfaceKind(continuity.current.layout), timelinePane)
-  // The World cut stands when the focused pane is the Session · Arrangement pane over the civil field.
+  // Session view and Arrangement view stand for the set's tracks, whatever pane Pane view has focused; the large native editor
+  // takes the main area from either (manual §10.2: only an expanded editor does).
+  const setStands = mainView !== 'pane' && centerPanel !== 'world.expressions'
+  const paneFocus = setStands ? {pane: 'projection.timeline', presentation: timelinePane} : factoryFocusedPane(focusedSurfaceKind(continuity.current.layout), timelinePane)
+  // The World cut stands when the set's views show the civil field.
   const worldCut = tracks === 'world' && paneFocus.pane === 'projection.timeline'
   // Central's selection route (Central vertical, WORLD-SHELL-DESIGN §17.2): a Timeline clip in Base selects the ONE spine's
   // occasion, and that selection clears the browser's subject, so exactly one selection stands in the Document row
@@ -505,7 +528,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // The focused pane's instrument (owner ruling, 13 Oct 2026): the Device side follows it in every mode but Live
   // (paneInstrument.ts). The instruments themselves open from the browser's Instruments group (frame/InstrumentsSection.tsx).
   const atlasView = useAtlasView()
-  const focusedPane = settingsPresented ? 'world.settings' : centerPanel !== 'native.workbench' ? centerPanel : paneFocus.pane
+  const focusedPane = settingsPresented ? 'world.settings' : setStands ? paneFocus.pane : centerPanel !== 'native.workbench' ? centerPanel : paneFocus.pane
   // The hosted Expressions lens the frame reports (publishReading, via the panel's onState). Null until it reports one.
   const hostedLens = workspace.reading?.lens ?? null
   // The stage's lens rows in the browser turn the stage through the retained-instrument event the expressions panel's
@@ -568,6 +591,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const framePlacement = useFramePlacement()
   // The one stage frame is placed over the pane that holds it, in every mode — unless the large native editor holds the centre.
   const expressionsPlaced = framePlacement !== null && centerPanel !== 'world.expressions'
+  // The stage placed over its pane shows only while Pane view stands; it stays mounted under the set's views, still playing.
+  const stageShown = mainView === 'pane'
   const detailFrame = () => ({frame: frameKey, workspaceId: workspace.workspaceId, accessEpoch: workspace.accessEpoch})
   const detailReading: DetailReading = {
     mode: frameMode, transport: workspace.transport, world: worldView, worldCut, centralSubject, worldSubject: worldSubjectOf(worldSelection), focusedInstrument,
@@ -577,6 +602,22 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       collapse: () => {const {held,restore}=collapseDetail(detailExpansions.current,detailFrame());detailExpansions.current=held;if(restore)resizeDetail(restore.height)}},
     factory: {tracks: agency.tracks},
   }
+  // The bottom right (manual §10.1): Clip and Device bring their view forward, ▲ beside each shows or hides it, ⌥-click shows both;
+  // Mixer shows or hides every track's mixer row. Each switch carries what its view holds: the selected clip, the selected track.
+  const shownTracks = useShownTracks()
+  const selectedTrackRef = worldSelection?.kind === 'track' ? worldSelection.ref : worldSelection?.track
+    ?? (worldSelection?.kind === 'clip' ? shownTracks?.clips.find(clip => clip.id === worldSelection.ref)?.trackId : undefined)
+  const statusSwitches = {
+    detailShown: detail, mixer, toggleMixer: () => setMixer(current => !current),
+    clipName: worldSelection?.kind === 'clip' ? worldSelection.title : undefined,
+    trackName: frameMode === 'live' ? state.set?.tracks[selection.track]?.name
+      : shownTracks?.tracks.find(track => track.id === selectedTrackRef)?.name ?? (worldSelection?.kind === 'track' ? worldSelection.title : undefined),
+    bringSide: (side: 'clip' | 'device', both: boolean) => {
+      setDetail(true); changeDetailMode(side)
+      setHiddenSides(hidden => both ? {clip: false, device: false} : {...hidden, [side]: false})
+    },
+    hideDetail: () => setDetail(false),
+  }
   const frameBody = (<>
     {/* The frame's keys (F9): Space, Esc, ⌘F, the row and macro keys, Enter and ⌥Enter — through the controls' own doors. */}
     <FrameKeys paused={settingsPresented} focusedGroupId={continuity.current.layout.focusedGroupId} revealBrowser={() => setBrowser(true)} />
@@ -584,15 +625,24 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
         own tree, because the Earth's pane is a projection module drawn in a root of its own, without the workspace they read through
         (r18: the system was never read, so no world but yours was drawn and none could land). */}
     {atlas && <Suspense fallback={null}><SystemReadings /></Suspense>}
-    {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
+    {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={mainView} setView={view => { presentSettings(false); chooseView(view) }} chooseMode={chooseMode} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDock={() => setDock(!dock)} />}
     {/* The one browser (F6): the mode's row sources and the shared ones, under one search, grouped by the four kinds. */}
     <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} category={browserCategory} onCategory={chooseBrowserCategory} pool={pool} poolFace={MODE_POOL_FACES[frameMode]?.({setPath: state.set?.path ?? null}) ?? null} /></BrowserReadingProvider></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(clampBrowserWidth(shownBrowserWidth() + (event.key === 'ArrowRight' ? RESIZE_STEP : -RESIZE_STEP), viewport[0], shownRailWidth()))} }} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); areaDrag.current = {at: event.clientX, size: shownBrowserWidth()} }} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId) && areaDrag.current) resizeBrowser(clampBrowserWidth(draggedSize(areaDrag.current, event.clientX, 1), viewport[0], shownRailWidth())) }} onPointerUp={() => { areaDrag.current = null }} />}
-    <main className="center"><EncounterBar /><div className={`center-body${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
+    <main className="center" data-main-view={mainView}><div className={`center-body${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
       {tracks === 'native' && !settingsPresented && nativeProjection.error && <div className="native-composition-fault" role="alert">{nativeProjection.error}</div>}
-      {panels.map(panel => { const Panel = panel.component; const placed = expressionsPlaced && panel.id === 'world.expressions'; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}${frameMode === 'live' && panel.id === 'world.expressions' ? ' live-centre-torus' : ''}`} style={placed ? PLACED_RESIDENCE_STYLE : undefined} hidden={placed ? false : panel.id === 'world.settings' ? !settingsPresented : settingsPresented || centerPanel !== panel.id} key={panel.id}><Panel {...ctx} /></div> })}
+      {/* Session view and Arrangement view (manual §10.2): the mode's set, drawn in the main area, never in a pane. */}
+      <div className="set-view-residence" data-focus-region="set" tabIndex={-1} hidden={!setStands}><TracksPane /></div>
+      {/* Pane view: the pane tree and what stands over it. The large native editor takes the main area from any view. */}
+      {panels.filter(panel => panel.id !== 'world.settings').map(panel => { const Panel = panel.component; const placed = expressionsPlaced && panel.id === 'world.expressions'; const editor = panel.id === 'world.expressions' && centerPanel === 'world.expressions'
+        return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}${frameMode === 'live' && panel.id === 'world.expressions' ? ' live-centre-torus' : ''}`} style={placed ? PLACED_RESIDENCE_STYLE : undefined} data-focus-region={panel.id === 'native.workbench' ? 'pane' : undefined} tabIndex={panel.id === 'native.workbench' ? -1 : undefined}
+          hidden={placed ? !stageShown : centerPanel !== panel.id || (mainView !== 'pane' && !editor)} key={panel.id}><Panel {...ctx} /></div> })}
     </div></main>
+    {/* Settings open in a window of their own (manual §10.1, ⌘, as Live's Preferences; panels/settings.tsx draws it over the frame);
+      the main area keeps its view behind it. */}
+    {panels.filter(panel => panel.id === 'world.settings').map(panel => { const Panel = panel.component
+      return <div className="inhabitant settings-residence" hidden={!settingsPresented} key={panel.id}><Panel {...ctx} /></div> })}
     {/* Rev 4's dock per mode: the mode context dock (tiles above, launcher
       below, the wedge that dies with the toggle) carries the non-agency
       modes; the agency surface keeps its own dock. */}
@@ -605,11 +655,11 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     <div className="detail-residence" hidden={!detail}><DetailContext.Provider value={detailReading}><DetailHost sides={{front: detailMode, hidden: hiddenSides}} expanded={clipExpanded} /></DetailContext.Provider></div></NativeInputRetentionProvider>
     {/* A device's expanded view: a band across the detail area above the chain (frame/devices/DeviceFlip.tsx). */}
     <DeviceFlipHost />
-    {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} toggleDetailSide={toggleDetailSide} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} toggleDetailSide={toggleDetailSide} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
+    {agentShell ? <AgentStatusBarBridge {...statusSwitches} detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} toggleDetailSide={toggleDetailSide} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar {...statusSwitches} detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} toggleDetailSide={toggleDetailSide} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)
   // Each part at the size chosen for it, held inside the window as it stands (a smaller window never pushes the rail off its edge).
   const drawn = drawnSizes({browserW: browserWidth, railW: continuity.current.widgets?.width ?? null, detailH: detailHeight}, {browser, rail: dock}, [viewport[0], viewport[1]], 300)
-  return <div ref={frameRef} style={{ ...(drawn.browserW === null ? {} : { '--browser-w': `${drawn.browserW}px` }), ...(drawn.detailH === null ? {} : { '--detail-h': `${drawn.detailH}px` }), ...(drawn.railW === null ? {} : {'--dock-w': `${drawn.railW}px`}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}{unlinkedSubject && <p role="status" data-region="encounter-link" style={{position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10000, margin: 0, padding: '8px 16px', font: '13px system-ui, sans-serif', background: 'Canvas', color: 'CanvasText', borderTop: '1px solid GrayText'}}>The linked subject {unlinkedSubject} could not be opened here; the rest of the link is applied. <button type="button" onClick={() => setUnlinkedSubject(null)}>Dismiss</button></p>}</div>
+  return <div ref={frameRef} style={{ ...(drawn.browserW === null ? {} : { '--browser-w': `${drawn.browserW}px` }), ...(drawn.detailH === null ? {} : { '--detail-h': `${drawn.detailH}px` }), ...(drawn.railW === null ? {} : {'--dock-w': `${drawn.railW}px`}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${mixer ? '' : ' mixer-hidden'}${mixerHidden.io ? ' io-hidden' : ''}${mixerHidden.sends ? ' sends-hidden' : ''}${mixerHidden.returns ? ' returns-hidden' : ''}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}{unlinkedSubject && <p role="status" data-region="encounter-link" style={{position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10000, margin: 0, padding: '8px 16px', font: '13px system-ui, sans-serif', background: 'Canvas', color: 'CanvasText', borderTop: '1px solid GrayText'}}>The linked subject {unlinkedSubject} could not be opened here; the rest of the link is applied. <button type="button" onClick={() => setUnlinkedSubject(null)}>Dismiss</button></p>}</div>
 }
 
 function AgentStatusBarBridge(props: ComponentProps<typeof StatusBar>) {
