@@ -393,6 +393,57 @@ test('C2 ice is as crisp as a pixel: a close tile at the margin of the sea ice h
   assert.ok(other / total <= .02, `and next to nothing that is neither: ${f(100 * other / total, 2)}% of the pixels (at most 2%)`)
 })
 
+// ── ice sheets ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** What the ice at a 1024-wide picture of a body is made of, beyond 60° either way: for every ice pixel (every second one), whether the field says land or sea under it, how far it is
+ * from a pixel that is not ice, and how far from the field's land (sea ice only); with the luma's residual about its 4-pixel blur and the blue over red of its colour. */
+function iceFacts(record, width = 1024) {
+  const image = imageOf(record, width), {width: w, height: h} = image, ice = iceMask(image), luma = lumaPlane(image), blur = boxBlur(luma, w, h, 4)
+  const notIce = new Uint8Array(w * h), landField = new Uint8Array(w * h)
+  for (let k = 0; k < w * h; k++) notIce[k] = ice[k] ? 0 : 1
+  const rows = []
+  for (let j = 0; j < h; j += 2) {
+    const lat = latOf(j, h); if (Math.abs(lat) < 60) continue
+    for (let i = 0; i < w; i += 2) { const p = body.unitOf(lat, -180 + (i + .5) * 360 / w); landField[j * w + i] = body.isLand(record, body.heightAt(record, p.x, p.y, p.z)) ? 1 : 0 }
+    rows.push(j)
+  }
+  const fromOpen = distanceTo(notIce, w, h), fromLand = distanceTo(landField, w, h), out = []
+  for (const j of rows) for (let i = 0; i < w; i += 2) {
+    const at = j * w + i; if (!ice[at]) continue
+    out.push({land: !!landField[at], open: fromOpen[at], fromLand: fromLand[at], res: Math.abs(luma[at] - blur[at]), blue: (image.data[at * 4 + 2] - image.data[at * 4]) / 255, luma: luma[at]})
+  }
+  return out
+}
+const avg = (rows, pick) => rows.length ? mean(rows.map(pick)) : NaN
+
+test('I1 an ice sheet is one white with the sea ice beside it: no ghost of the land under the ice, in tone or in blue', () => {
+  // The land under a cap showed through as a greyer shape (the land ice [.94, .955, .965] and the sea ice [.925, .952, .975] are two whites, and a sheet is shaded by its relief while sea ice is not).
+  // In the interior of the ice (15 pixels or more from open ground or water, at 1024 wide) the land ice and the sea ice differ in blue over red by at most .015 and in luma by at most .012 (they
+  // were .025 and .010 at 2048: the blue is the outline).
+  const rows = SEEDS.flatMap(seed => iceFacts(make(seed))).filter(r => r.open >= 15), land = rows.filter(r => r.land), sea = rows.filter(r => !r.land)
+  assert.ok(land.length >= 400 && sea.length >= 3000, `there is interior ice of both kinds (${land.length} land, ${sea.length} sea)`)
+  assert.ok(Math.abs(avg(land, r => r.blue) - avg(sea, r => r.blue)) <= .015, `land ice is ${f(avg(land, r => r.blue), 3)} blue over red inside, sea ice ${f(avg(sea, r => r.blue), 3)}: at most .015 apart`)
+  assert.ok(Math.abs(avg(land, r => r.luma) - avg(sea, r => r.luma)) <= .012, `and ${f(avg(land, r => r.luma), 3)} against ${f(avg(sea, r => r.luma), 3)} in luma: at most .012 apart`)
+})
+
+test('I2 a sheet is bluer where it is thick: the interior of the land ice is bluer than its margin', () => {
+  // The Earth's sheets are nearly neutral (blue .008 inside, .022 at the edge); the lead asked for a slightly bluer shade in the thick interior. The first sheet was .027 inside and .026 at the margin.
+  const rows = SEEDS.flatMap(seed => iceFacts(make(seed))).filter(r => r.land), inner = rows.filter(r => r.open >= 15), rim = rows.filter(r => r.open <= 3)
+  assert.ok(inner.length >= 400 && rim.length >= 100, `there is a margin and an interior (${rim.length}, ${inner.length})`)
+  assert.ok(avg(inner, r => r.blue) >= avg(rim, r => r.blue) + .02, `the interior is ${f(avg(inner, r => r.blue), 3)} blue over red, the margin ${f(avg(rim, r => r.blue), 3)}: at least .02 bluer`)
+})
+
+test('I3 an ice sheet has a little texture at scale, and the sea ice is ridged where it meets land, and no texture is a noise', () => {
+  // Sastrugi and crevasse fields; pressure ridges against a coast. The mean |luma - its 4-pixel blur| over the interior: land ice at least .008, sea ice at least .006 (they were .0099 and .0049
+  // at 2048; the Earth's sheets .0050), and neither over .03 (a texture, not a noise). Sea ice within 30 pixels of land has at least 1.4 times the residual of sea ice 60 or more from it.
+  const rows = SEEDS.flatMap(seed => iceFacts(make(seed))), landInner = rows.filter(r => r.land && r.open >= 15), seaInner = rows.filter(r => !r.land && r.open >= 15)
+  assert.ok(avg(landInner, r => r.res) >= .008 && avg(landInner, r => r.res) <= .03, `land ice interior texture ${f(avg(landInner, r => r.res), 4)} (between .008 and .03)`)
+  assert.ok(avg(seaInner, r => r.res) >= .006 && avg(seaInner, r => r.res) <= .03, `sea ice interior texture ${f(avg(seaInner, r => r.res), 4)} (between .006 and .03)`)
+  const near = rows.filter(r => !r.land && r.open >= 4 && r.fromLand <= 30), far = rows.filter(r => !r.land && r.open >= 4 && r.fromLand >= 60)
+  assert.ok(near.length >= 300 && far.length >= 300, `there is sea ice near land and far from it (${near.length}, ${far.length})`)
+  assert.ok(avg(near, r => r.res) >= 1.4 * avg(far, r => r.res), `sea ice against land is ridged: texture ${f(avg(near, r => r.res), 4)} within 30 px of it, ${f(avg(far, r => r.res), 4)} beyond 60 (at least 1.4 times)`)
+})
+
 // ── the ground at the finest tile ──────────────────────────────────────────────────────────────────────────────────────────
 
 /** The places are those of the lead's round 2: a mountain belt, a green lowland, a desert with a river, each in the zoom-8 tile that holds it, on the default body. */

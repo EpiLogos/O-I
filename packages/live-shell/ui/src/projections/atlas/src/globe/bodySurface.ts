@@ -52,6 +52,7 @@ const ROCK = [.43, .39, .34] as const
 const SNOW = [.95, .96, .97] as const
 const LAND_ICE = [.94, .955, .965] as const
 const SEA_ICE = [.925, .952, .975] as const
+const INNER_ICE = [.94, .957, .97] as const, THICK_ICE = [.9, .94, .98] as const
 
 /** How much snow (0) and ice (1) the surface just computed carries: the relief shading is kept off them so that they stay as bright as they are. */
 export const WHITE = new Float64Array(2)
@@ -128,7 +129,7 @@ export function seaColour(S: Surface, x: number, y: number, z: number, depth: nu
 /** The ice of the caps over a colour already written to `col`: the margin is lobed (a cap is not a ring: its edge runs tens of degrees of latitude in longitude), ragged, and the
  * sea ice breaks into floes toward it; sea ice and land ice differ at the margin and are one white inside; none where the dial is 0. Returns how much ice stands there 0–1.
  * `detail` is the wavelength the picture resolves (radians): the finest cracks are drawn only where a picture shows them. */
-export function iceOver(S: Surface, x: number, y: number, z: number, alat: number, sea: boolean, detail: number, col: Float64Array): number {
+export function iceOver(S: Surface, x: number, y: number, z: number, alat: number, sea: boolean, detail: number, col: Float64Array, shore = 1): number {
   WHITE[1] = 0
   if (S.capOn <= 0 || alat < S.capFloor || S.barren >= 1) return 0
   const t = S.t, fmax = .9 / detail
@@ -153,16 +154,28 @@ export function iceOver(S: Surface, x: number, y: number, z: number, alat: numbe
   k *= 1 - S.barren
   WHITE[1] = k
   if (k <= 0) return 0
-  const ice = sea ? SEA_ICE : LAND_ICE
-  // ice is not one white: pressure ridges, crevasses and drifts, a little blue in the hollows
+  // one white inside, two at the margin: the sea ice is bluer and a little darker where it breaks into floes, a sheet's edge a little warmer, and inside both are the same white that
+  // goes slightly bluer where the ice is thick (so the land under a cap does not show through as a shape of another tone)
+  const into = alat - edge, edgeTone = sea ? SEA_ICE : LAND_ICE, inner = smooth(0, 7, into), thick = smooth(1.5, 7, into)
+  let r = edgeTone[0] + ((INNER_ICE[0] + (THICK_ICE[0] - INNER_ICE[0]) * thick) - edgeTone[0]) * inner
+  let g = edgeTone[1] + ((INNER_ICE[1] + (THICK_ICE[1] - INNER_ICE[1]) * thick) - edgeTone[1]) * inner
+  let b = edgeTone[2] + ((INNER_ICE[2] + (THICK_ICE[2] - INNER_ICE[2]) * thick) - edgeTone[2]) * inner
+  // ice is not one white: drifts and sastrugi (wind-cut ridges, long along the parallels), crevasses at a sheet's margin, pressure ridges where sea ice meets land
   const tex = .5 * simplex3(t, x * 23 + 2.7, y * 23 - 8.1, z * 23 + 4.3) + .3 * simplex3(t, x * 71 - 6.6, y * 71 + 1.9, z * 71 - 3.2) + .2 * simplex3(t, x * 190 + 9.4, y * 190 - 5.5, z * 190 + 7.7)
   let lift = 1 + .03 * tex, blue = 0
+  if (fmax > 26) { const sas = simplex3(t, x * 26 + 8.2, y * 26 * 7 - 1.1, z * 26 + 3.8) + .6 * simplex3(t, x * 61 - 2.2, y * 61 * 7 + 5.5, z * 61 - 9.1); lift += .03 * sas }
   if (fmax > 12) {
-    // crevasses and pressure ridges: thin lines where a slow noise is near zero, darker and bluer than the white round them
+    // crevasses and ridges: thin lines where a slow noise is near zero, darker and bluer than the white round them
     const crack = Math.exp(-((simplex3(t, x * 9 + 3.4, y * 9 - 6.1, z * 9 + 1.3) / .07) ** 2)) * (.6 + .4 * simplex3(t, x * 4 - 1.1, y * 4 + 2.9, z * 4 - 7.7))
-    lift -= .045 * crack; blue = .035 * crack
+    const margin = 1 - smooth(0, 9, into)
+    lift -= (.045 + .06 * margin) * crack; blue = (.035 + .04 * margin) * crack
+    if (sea && fmax > 30) {
+      // sea ice against a coast is crushed into ridges (the water's own measure of the distance from the shore, T[1], is 0 at the coast)
+      const against = Math.pow(Math.max(0, 1 - shore), .4), ridge = Math.exp(-((simplex3(t, x * 34 + 5.1, y * 34 - 3.3, z * 34 + 7.7) / .1) ** 2)) + .6 * Math.exp(-((simplex3(t, x * 83 - 6.4, y * 83 + 2.8, z * 83 - 1.7) / .1) ** 2))
+      lift -= .13 * against * ridge; blue += .04 * against * ridge
+    }
   }
-  col[0] += (Math.min(1, ice[0] * lift * (1 + .02 * tex)) - col[0]) * k; col[1] += (Math.min(1, ice[1] * lift) - col[1]) * k; col[2] += (Math.min(1, ice[2] * lift * (1 - .015 * tex) + blue) - col[2]) * k
+  col[0] += (Math.min(1, r * lift * (1 + .02 * tex)) - col[0]) * k; col[1] += (Math.min(1, g * lift) - col[1]) * k; col[2] += (Math.min(1, b * lift * (1 - .015 * tex) + blue) - col[2]) * k
   return k
 }
 
@@ -225,7 +238,7 @@ export function seaSurface(S: Surface, x: number, y: number, z: number, depth: n
     const lum = (.299 * col[0]! + .587 * col[1]! + .114 * col[2]!) / (.299 * SHELF[0] + .587 * SHELF[1] + .114 * SHELF[2]), tone = (.55 + .45 * (1 - depth)) * (.8 + .2 * Math.min(1, lum * 2.2))
     col[0] += (DUST[0] * tone - col[0]) * b; col[1] += (DUST[1] * tone - col[1]) * b; col[2] += (DUST[2] * tone - col[2]) * b
   }
-  iceOver(S, x, y, z, alat, true, detail, col)
+  iceOver(S, x, y, z, alat, true, detail, col, depth)
 }
 
 /** The colour of the surface at a point where the field says the height is `h` (and, on land, the continentality `cn`): sets `col` to red, green, blue 0–1 before the relief
