@@ -608,9 +608,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const statusSwitches = {
     detailShown: detail, mixer, toggleMixer: () => setMixer(current => !current),
     clipName: worldSelection?.kind === 'clip' ? worldSelection.title : undefined,
-    trackName: frameMode === 'live' ? state.set?.tracks[selection.track]?.name : worldSelection?.kind === 'track' ? worldSelection.title : undefined,
-    trackRef: frameMode === 'live' ? undefined : worldSelection?.kind === 'track' ? worldSelection.ref : worldSelection?.track,
-    clipRef: frameMode !== 'live' && worldSelection?.kind === 'clip' ? worldSelection.ref : undefined,
+    trackName: worldSelection?.kind === 'track' ? worldSelection.title : undefined,
+    trackRef: worldSelection?.kind === 'track' ? worldSelection.ref : worldSelection?.track,
+    clipRef: worldSelection?.kind === 'clip' ? worldSelection.ref : undefined,
     bringSide: (side: 'clip' | 'device', both: boolean) => {
       setDetail(true); changeDetailMode(side)
       setHiddenSides(hidden => both ? {clip: false, device: false} : {...hidden, [side]: false})

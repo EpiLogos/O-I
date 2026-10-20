@@ -74,7 +74,8 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   // The Device switch names the selected track (manual §10.1), read from the tracks the set's views publish (frame/tracks/tracksDoor.ts).
   const shownTracks = useShownTracks()
   const deviceTrackRef = trackRef ?? (clipRef ? shownTracks?.clips.find(clip => clip.id === clipRef)?.trackId : undefined)
-  const deviceName = shownTracks?.tracks.find(track => track.id === deviceTrackRef)?.name ?? trackName
+  // Where the shown tracks hold no such track (Live's set, Factory's sessions), the mode's own name for the selected track stands.
+  const deviceName = shownTracks?.tracks.find(track => track.id === deviceTrackRef)?.name ?? trackName ?? selectedTrack
   const other = (side: DetailSide): DetailSide => side === 'clip' ? 'device' : 'clip'
   const shown = (side: DetailSide) => detailShown && shownSides[side]
   // A switch brings its view forward (⌥-click shows both); ▲ beside it shows or hides that view, and hiding the last one standing
