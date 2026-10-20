@@ -131,6 +131,8 @@ export const KERNEL_OPS = [
   'wiki_projection_sources',
   'harness_status',
   'model_catalogue',
+  'decision_status',
+  'team_space',
   'chat_default_read',
   'chat_default_hold',
   'chat_default_discard',

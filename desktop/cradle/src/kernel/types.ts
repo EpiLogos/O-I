@@ -414,6 +414,14 @@ export type KernelOp =
   /** The resolved model catalogue (`aikit model-catalogue show --json`):
    * the owner's entries verbatim. Pull read, machine-level. */
   | {op:"model_catalogue"}
+  /** The Decision helper's provider (`aikit --json decide status`, kernel
+   * `agency.rs`): AIKit's `aikit.decision-status/v1` verbatim. Pull read,
+   * machine-level; asks no model. */
+  | {op:"decision_status"}
+  /** The team space (`oi ql context-frame team-space --json`, kernel
+   * `team_space.rs`): QL-MEF's `ql.vak-team-space/v1` verbatim — the
+   * instruments the Decision helper may be asked. Pull read, machine-level. */
+  | {op:"team_space"}
   /** The desktop-held default provider for NEW chats (kernel
    * `chat_defaults.rs`, `oi:cradle:chat.default-provider`): a desired-entry
    * shaped document when held, null when the owner's rows decide. */
@@ -577,6 +585,8 @@ export type KernelOpResult =
   | { result:"wiki_projection_sources_reading";data:unknown }
   | { result:"harness_status_reading";data:unknown }
   | { result:"model_catalogue_reading";data:unknown }
+  | { result:"decision_status_reading";data:unknown }
+  | { result:"team_space_reading";data:unknown }
   | { result:"chat_default_reading";document:unknown }
   | { result:"chat_default_held";document:unknown }
   | { result:"chat_default_discarded";document:unknown }

@@ -855,6 +855,24 @@
       "reason": "No directly attributable executed native walk is recorded here for model_catalogue; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "decision_status",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/dlw/DLW.md \u00a719.20 (Decision helper); tickets/T-AGENCY K5",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "DLW build lane (T-AGENCY K5)",
+      "reason": "No executed native walk is recorded here for decision_status; the Decision helper's binding reads it, and its native screen pass is owed."
+    },
+    {
+      "op": "team_space",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/dlw/DLW.md \u00a719.20 (Decision helper); tickets/T-AGENCY K5",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "DLW build lane (T-AGENCY K5)",
+      "reason": "No executed native walk is recorded here for team_space; the Decision helper's binding reads it, and its native screen pass is owed."
+    },
+    {
       "op": "model_roster",
       "native_owner": "kernel/src/agency.rs",
       "spec_ref": "canonical plan Lane C \u00a74; ai-kit model_harness_binding/rank_model_roster",

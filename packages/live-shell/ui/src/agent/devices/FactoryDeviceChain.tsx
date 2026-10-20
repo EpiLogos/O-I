@@ -90,6 +90,8 @@ import {
   workcellDevices,
 } from './workcellBindings'
 import {usePopulationAnswer} from './usePopulationAnswer'
+import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
+import {useDecisionHelperReadings} from './decisionHelperReads'
 import {useGatewayRemotesAnswer, useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -307,6 +309,14 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   const runDesignBinding = useMemo(() => runBinding({session: sessionTrack, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0, agent: agentDesignBinding?.values ?? {}, holds},
     {select: ref => { selectSession(ref) }}), [sessionTrack, tracks, sessions?.nowUnixMs, agentDesignBinding, holds, selectSession])
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, tracks, models, holds}), [groupTrack, tracks, models, holds])
+  // The Decision helper (§19.20, T-AGENCY K5): on a group's chain, after its members (the Agentset rack), on AIKit's decision provider and
+  // QL's team space — read only while it stands there.
+  const helperDevice = useMemo(() => decisionHelperDevice(), [])
+  const helperDesign = useDesign(DECISION_HELPER_DESIGN, true)
+  const helperStands = sessionRef != null && !!groupTrack && !!helperDevice
+  const helperReadings = useDecisionHelperReadings(transport, helperStands)
+  const helperDesignBinding = useMemo(() => decisionHelperBinding({status: helperReadings.status, teamSpace: helperReadings.teamSpace, holds}),
+    [helperReadings.status, helperReadings.teamSpace, holds])
 
   // The Main track's readers: the Ledger on Central's change horizon (the root ground the window holds once), Approvals on the
   // Gateway's own approvals key, the shown session's consent requests and the project's source returns (lane K1's source_returns_read).
@@ -365,6 +375,9 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
     for (const [id, device, designBinding] of own) publishDevice(id, device ? {device, binding: designBinding} : null)
   }, [ownDevices, receipts, cells, runDesignBinding, agentsetDesignBinding, ledgerDesignBinding, approvalsDesignBinding, seatDesignBinding,
     carrierDesignBinding, linkDesignBinding])
+  useEffect(() => { publishDevice(DECISION_HELPER_ID, helperStands && helperDevice ? {device: helperDevice, binding: helperDesignBinding} : null) },
+    [helperStands, helperDevice, helperDesignBinding])
+  useEffect(() => () => { publishDevice(DECISION_HELPER_ID, null) }, [])
   useEffect(() => () => {
     // The Thread and Custody no longer publish (the Agent carries them); their ids are cleared once, so nothing stale stands on the door.
     for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, THREAD_DEVICE_ID, CUSTODY_ID, TASKS_ID, RUNS_ID, ...MAIN_DEVICE_IDS, ...SESSION_DEVICE_IDS, ...RECEIPT_DEVICE_IDS,
@@ -561,6 +574,9 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
         {/* A group's chain (§19.18): the Agentset rack leads it, one chain for each of the group's sessions. */}
         {sessionRef != null && groupTrack && placed(AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding, designsOwn.agentset ? AGENTSET_DESIGN : undefined, 'the Agentset rack',
           {attrs: {'data-session-slot': 'agentset'}})}
+        {/* The Decision helper after the team's members (§19.20): one helper answers every member. */}
+        {helperStands && placed(DECISION_HELPER_ID, helperDevice, helperDesignBinding, helperDesign ? DECISION_HELPER_DESIGN : undefined, 'the Decision helper',
+          {attrs: {'data-session-slot': 'decision-helper'}})}
         {sessionRef != null && chain.map(({slot, device}, index) => (
           <Fragment key={slot.id}>
             {/* The visible drop slot while a card slides — it opens under the pointer and closes on release. It never lies:
