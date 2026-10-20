@@ -876,7 +876,8 @@ anything, and every place can be linked to and opened again.
 | Send what you typed | Enter |
 | Steer the running turn | ⌥Enter |
 | Stop | Esc |
-| Search | ⌘F |
+| Search, in a pane | ⌘F |
+| Search, over anything: the same line | ⌘K |
 
 Keys never play notes, and single letters never act, while you are typing in a
 document.
@@ -1128,6 +1129,12 @@ the Order to teach a single pupil.
 - Whether the cycle of the word maps onto the kinds of work at all.
 - How someone who is not the corpus's author enters the corpus itself, and
   what its discipline asks of them.
+- Whether ⌘F and ⌘K are one line, as §18.4 writes them, and whether plain words
+  should jump or search by default.
+- Where the search history lives for someone who works in several worlds: in
+  each world, or once in their own ground.
+- Whether the line should ever offer acts, such as Fold all, beside places and
+  things. The instrument has none to list yet.
 
 ---
 
@@ -1583,7 +1590,8 @@ instrument with two displays is wide.
 **Nothing scrolls, and no box sits inside a box.** Sections are columns,
 ruled off from each other by a hairline and named in small capitals. The well
 is the only inset surface. When a panel holds more than fits, it gets pages in
-its head, as Wavetable has Osc 1 and Osc 2.
+its head, as Wavetable has Osc 1 and Osc 2. The shown page's face slides to the
+page you chose.
 
 **Values are short.** A control shows a number, a unit or a word. A sentence
 never appears in a panel. What a control does is said in the status bar when
@@ -1668,14 +1676,14 @@ A panel uses these controls and no others.
 | Dial | A number that you sweep | The name above, a 270° ring with a teal arc, the value below. A value that can turn either way starts its arc at zero. | A knob. |
 | Value box | A number where space is short, or one you set exactly | The value in a field that fills teal to its place in the range. | A slider, such as Wavetable's Volume. |
 | Toggle | On or off | The name in a box, amber when on. | Auto Filter's Hz button. |
-| Radio | One of two to five | Buttons side by side or stacked; the chosen one amber. A choice the owner cannot take stands dimmed, and the status bar says why. | Auto Filter's filter types. |
+| Radio | One of two to five | Buttons side by side or stacked; the chosen one amber, and the amber slides to a new choice. A choice the owner cannot take stands dimmed, and the status bar says why. | Auto Filter's filter types. |
 | Chooser | One of many | The value and ▾; a menu. A closed choice is dimmed in the menu, with its reason. | Wavetable's wavetable menu. |
 | Swatch | A colour | The colour in a small square, then its value. Press it to pick another. | A clip's or a track's colour. |
-| Rows | A list: a rack's chains, a scope's places | One row each: your request as a square; the owner's answer as a light, or the member's kind mark in its state; the name; a short meter; a short note. A long list pages. Where the order is yours, the chosen row carries ▲ ▼, and ⌥↑ ⌥↓ move it. | A rack's chain list. |
+| Rows | A list: a rack's chains, a scope's places | One row each: your request as a square; the owner's answer as a light, or the member's kind mark in its state; the name; a short meter; a short note. A long list pages. Where the order is yours, the chosen row carries a grip and ▲ ▼; drag the grip, or press ⌥↑ ⌥↓, to move it. | A rack's chain list. |
 | Ladder | Evidence in steps | One tick for each step: lit where it is established, dark where it is not, hollow where nobody has observed it. | A level meter's segments. |
-| Readout | A reading | A short value over its name. A large readout is the count that the view is for. | Hybrid Reverb's "100 % / 285 ms". |
-| Action | Something done once | The name in an outlined box. | A momentary button. |
-| Light | A state that the owner reports | A small round light. | A chain's activator. |
+| Readout | A reading | A short value over its name. A large readout is the count that the view is for. A readout you may copy shows a copy mark when you point at it. | Hybrid Reverb's "100 % / 285 ms". |
+| Action | Something done once | The name in an outlined box. An act that you cannot undo is held, not clicked. | A momentary button. |
+| Light | A state that the owner reports | A small round light. A light that is working carries a ring. | A chain's activator. |
 | Handle | A parameter that you move on the picture | An amber ring, numbered in order of importance. | EQ Eight's band dots. |
 
 The same moves work on every control that holds a number.
@@ -1704,7 +1712,53 @@ returns to the owner's value, and the status bar gives the owner's reason.
 
 Some changes ask you first. When you raise a scope's reach, the new reach
 waits, drawn dashed, with Confirm and Cancel beside it. Nothing is sent until
-you confirm.
+you confirm, and Confirm is held, not clicked (below).
+
+#### How a control moves
+
+A control moves only when its state changes, and only to show that change.
+Nothing moves by itself. Nothing makes you wait.
+
+Your hand is always answered at once. A drag, a key, a double-click: the value
+is there as you set it, and nothing eases it. What something else changed, the
+owner, an agent, the sky, a modulator, glides or rings once, so that you see it
+changed. The times are the same everywhere.
+
+| What changes | How it moves |
+|---|---|
+| A value you set | At once. It never eases under your hand. |
+| A value that something else sets | The arc or the fill glides to it in 0.12 s, and a thin ring stands round the control for a second. Where the host says who moved it, the name stands on the control for two seconds. |
+| A choice: a radio, a head's pages | The amber, or the page's face, slides to the new choice in 0.2 s. |
+| A light | It fills or empties in 0.16 s. |
+| A light that is working | A ring spreads from it and fades, again and again, for as long as the owner reports the device, or the row, working. When the owner stops, the ring stops. |
+| A reading that has not come yet | The empty ring or field breathes, slowly. A reading you already had shows at once and is asked for again behind it. The control never says Loading. |
+| A step of a ladder that is being worked on | Its tick pulses. |
+| Rows that come, go, move or change | Each row slides to its place in 0.18 s, and a new row fades up. A short meter grows or shrinks to its new value. |
+| A device opens or folds | ▸ turns to ▾ in 0.2 s. |
+| A copy | The mark turns to a tick for a moment, then back. |
+
+**A default is a detent.** A value box shows its default as a tick, and a dial
+as a notch on its ring. A drag that passes close to the default lands on it and
+the tick brightens; go on dragging and the hand leaves it. Hold Shift to drag
+past it. A stepped value has no detent: each step is its own stop.
+
+**An act that you cannot undo is held.** Raising a scope's reach, answering an
+approval, and taking a device off its chain wait for you, and each is a hold.
+Press the name and keep it down, or hold Space or Enter. A fill sweeps across
+the name in 0.9 s, and the act happens when it reaches the end. Let go early and
+it springs back, and nothing happens. An act that you can undo is never held.
+
+**Waiting keeps its width.** A control that has sent its change and waits for
+the owner shows a ring turning over its name. Nothing around it moves.
+
+**Rows that you order** carry a grip beside ▲ ▼ on the chosen row. Drag the
+grip and the other rows make room for it; ⌥↑ ⌥↓ still move the row one place.
+
+**A request for reduced motion** stops all of it. Nothing glides, slides, rings
+or spins. What it showed stays: a working light keeps a still ring, a rung being
+worked on stays half lit, a reading that has not come stays dimmed, a name still
+stands for two seconds and goes, and the hold still fills, so that you can see
+how long to hold.
 
 ### 16.11 Standing
 
@@ -1716,8 +1770,11 @@ Besides its value, a control shows who moves it.
 | Overridden | A hollow red dot. The transport's Re-enable lights. | Press Re-enable to give the value back to its lane. |
 | Modulated | A thin outer arc on the dial: the range that the modulator moves the value through. The status bar names the modulator. | Set the centre of the range with the dial. |
 | Held | The arc or the fill in orange, and the holder's name under the control. | Press the name to give the value back. |
+| Moved | A ring round the control for a second, and the name of what moved it for two seconds. | Nothing. Move it back if you want it back. |
 | Waiting | The value in italics, the arc dashed. | Wait for the owner, or move it again. |
 | Disabled | The control at 40 % strength. The status bar says why. | Do what the reason says. |
+| Working | A ring spreading from the light, for as long as the owner reports it. | Nothing. Wait, or stop it with the device's own act. |
+| Waiting for a reading | The empty ring or field breathes. | Nothing. The owner is being asked. |
 | No reading | A hollow light. | Nothing. The owner has not said. |
 
 ### 16.12 The display
@@ -4163,6 +4220,36 @@ use it, type `@name`. A `?` in the search is a gap that the next word fills.
 | `@why = @# ( ? x @1 source:ground )` | A question with a gap. Type `@why barrier` to ask what grounds the barrier. |
 | `@team = @ariadne / @fizz` | A group of targets. Type `@team` to tag both. |
 
+#### The line anywhere
+
+The search line is one line. ⌘F opens it in a pane, @ opens it in a document, and
+⌘K opens it over anything: the transport, a chain, a pane. It is the same line,
+with the same language, the same settings and the same results; where it opens
+only decides where a result goes. Esc closes it and you are where you were.
+
+Plain words are a jump. Type a few letters with no mark and the line offers what
+you open most: the best match first, and the rest after it, as one list. Every
+place, document, agent and person that you open or send to is counted, and how
+often and how lately you went there ranks the match. A place you opened this
+morning ranks above one you opened often last month. Any mark turns the jump
+into a search, and the results then come in groups by kind, as above.
+
+| You type | You get |
+|---|---|
+| Nothing | Your aliases, then what you opened most and last, in one list. |
+| `bol` | A jump: Bollingen first, if it is the place you open most that begins that way. |
+| `@bol` | An address: everything you can reach whose name matches, in groups. |
+| `@4 world:bollingen` | A search. |
+
+The line shows what it read. One small chip stands for each horizon, kind,
+include, leave-out, relation, alias and gap that it found in what you typed, so
+you can see what it made of it and learn the language as you use it.
+
+The history is yours. It lives in your own ground, no one else's search sees it,
+and nothing in it is sent. Each item shows how often and how lately you opened it.
+Press ✕ beside it and the line forgets it. Turn History off and the line never
+ranks by use.
+
 #### Five steps to fluency
 
 | Step | Practice |
@@ -4180,6 +4267,8 @@ use it, type `@name`. A `?` in the search is a gap that the next word fills.
 | Reach | Your world · Projects and agents · Shared field · Joined fields | Projects and agents | How far a search looks. |
 | Kinds | People · Agents · Places · Documents · Passages: each On or Off | All On | Which kinds of result appear. |
 | Order | Best match · Newest · Name | Best match | The order of the results. |
+| Jump | On · Off | On | Whether plain words jump to what you open most. Off: plain words search for the best match. |
+| History | Remember · Off | Remember | Whether opening and sending are counted. |
 | Results shown | 5 to 30 | 12 | The number of results in the list. |
 | On Enter | Send · Open | Send | What Enter does when text is selected. |
 | Aliases | A list. Each has a name and a search. | None | Your own short names for long searches. |
@@ -4208,13 +4297,14 @@ The compact Search shows the search line, a chip for each kind that is On, and t
 
 ##### Whole
 
-The whole Search shows every parameter, in four groups.
+The whole Search shows every parameter, in five groups.
 
 | Group | Parameters |
 |---|---|
 | Reach | Reach |
 | Kinds | Kinds |
-| Results | Order, Results shown, On Enter |
+| Results | Order, Results shown, On Enter, Jump |
+| History | History |
 | Aliases | Aliases |
 
 ##### Full
