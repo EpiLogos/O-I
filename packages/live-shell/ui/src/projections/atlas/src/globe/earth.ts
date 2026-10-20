@@ -16,6 +16,13 @@ export interface EarthUniforms {
   uDeep: THREE.IUniform<THREE.Vector3>;
   uCore: THREE.IUniform<THREE.Vector3>;
   uSpec: THREE.IUniform<number>;
+  /** [T-PROCEDURAL-BODY] the body's own sky, shared with the tiles so that a tile has the clouds, the air and the wind of the sphere under it (shaders.ts skyOver) */
+  uCloud: THREE.IUniform<THREE.Texture>;
+  uCloudMix: THREE.IUniform<number>;
+  uAir: THREE.IUniform<number>;
+  uBarren: THREE.IUniform<number>;
+  uWeatherT: THREE.IUniform<number>;
+  uWeatherRate: THREE.IUniform<THREE.Vector3>;
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {
@@ -118,27 +125,35 @@ export class Earth {
   /** [T-WORLDS §5 W3] a generated body's cloud layer and how much of it is drawn (0: none, the Earth's), and its air (1: the Earth's) */
   private cloud: THREE.IUniform<THREE.Texture>;
   private cloudMix = { value: 0 };
+  /** [T-PROCEDURAL-BODY] the field of archetypal intensity the Earth's presences tint the ground with, and the clear one a generated body is given in its place: the Earth's
+   * presences are the Earth's, and a body that is not the Earth carries no glow of them */
+  private density: THREE.Texture;
+  private noDensity: THREE.Texture | null = null;
   readonly air = { value: 1 };
+  /** [T-PROCEDURAL-BODY] how barren the body is (its look): the grade leaves a barren world's rock neutral and does not call its dust sea (shaders.ts uBarren) */
+  readonly barren = { value: 0 };
   /** [T-PROCEDURAL-BODY] the occasion's weather: its time in days, and the wind of the body (bodyWeather.ts), which the shader carries the cloud mask by */
   readonly weatherT = { value: 0 };
   readonly weatherRate = { value: new THREE.Vector3() };
 
   constructor(shared: Shared, lo: THREE.Texture, density: THREE.Texture) {
+    this.density = density;
+    this.baseLo = { value: lo };
+    this.baseHi = { value: lo };
+    this.cloud = { value: noCloud() };
     this.u = {
       uDensity: { value: density },
       uLightDir: this.lightDir,
       uSunDir: this.sunDir,
       uSunMix: this.sunMix,
       uFog: shared.fog, uGlow: shared.glow, uDeep: shared.deep, uCore: shared.core, uSpec: shared.spec,
+      uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air, uBarren: this.barren, uWeatherT: this.weatherT, uWeatherRate: this.weatherRate,
     };
-    this.baseLo = { value: lo };
-    this.baseHi = { value: lo };
-    this.cloud = { value: noCloud() };
     const geo = new THREE.SphereGeometry(1, 192, 96);
     const mat = new THREE.ShaderMaterial({
       vertexShader: EARTH_VERT,
       fragmentShader: EARTH_FRAG,
-      uniforms: { ...this.u, uBaseLo: this.baseLo, uBaseHi: this.baseHi, uHiMix: this.hiMix, uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air, uWeatherT: this.weatherT, uWeatherRate: this.weatherRate },
+      uniforms: { ...this.u, uBaseLo: this.baseLo, uBaseHi: this.baseHi, uHiMix: this.hiMix },
     });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.renderOrder = 0;
@@ -188,6 +203,14 @@ export class Earth {
       this.given = null;
     }
     this.hiMix.value = 0;
+    if (lo) {
+      this.noDensity ??= clearDensity();
+      this.u.uDensity.value = this.noDensity;
+    } else {
+      this.u.uDensity.value = this.density;
+      this.noDensity?.dispose();
+      this.noDensity = null;
+    }
   }
 
   /**
@@ -227,6 +250,13 @@ export class Earth {
     this.hiMix.value = this.fade * this.fade * (3 - 2 * this.fade);
     if (this.fade >= 1) this.finishFade();
   }
+}
+
+/** A field of no intensity at all: one texel of nothing, for the ground of a body that carries none of the Earth's presences. */
+function clearDensity(): THREE.Texture {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat);
+  t.needsUpdate = true;
+  return t;
 }
 
 /** The cloud layer of a body that has none: one clear texel (the Earth's imagery carries its own weather, so it takes no layer). */

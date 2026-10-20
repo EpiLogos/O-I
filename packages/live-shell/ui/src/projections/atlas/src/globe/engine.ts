@@ -12,7 +12,7 @@ import { CameraRig } from './controls';
 import { Arcs, Marker } from './arcs';
 import { Aura, AtmosphereShell, Backdrop, Earth, bodyTexture, hiResChoice, loadBaseHi, loadBaseLo } from './earth';
 import { airOf, barrenOf, bodyImage, bodySunDir, BODY_WIDTHS, type BodyLook, type WorldBodyRecord } from './body';
-import { WEATHER_BANDS, weatherScale } from './bodyWeather';
+import { WEATHER_BANDS, weatherClock, weatherScale } from './bodyWeather';
 import { bodyTileSource, renderBody } from './bodyRender';
 import { hasTiles, tileLevelFor } from './bodyTiles';
 import { Presences } from './presences';
@@ -442,7 +442,7 @@ export class GlobeEngine {
       if (dLon) this.rig.lon = wrapLon(this.rig.lon + dLon);
     }
     this.stepSun(dt);
-    if (this.bodyRecord && this.bodyTime === null && !this.reduced) this.earth.weatherT.value = Date.now() / 86400000;
+    if (this.bodyRecord && this.bodyTime === null && !this.reduced) this.earth.weatherT.value = weatherClock(this.bodyRecord.seed, Date.now());
     this.rig.update(dt);
     // the clip planes follow the altitude so depth stays precise from orbit to the ground
     const camDist = this.camera.position.length();
@@ -504,7 +504,7 @@ export class GlobeEngine {
     this.presences.setSizeFor(dist, surface);
     this.setSurface(surface);
     this.presences.step(dt);
-    if (render) this.presences.renderDensity();
+    if (render && !this.earth.generated) this.presences.renderDensity(); // the glow of the Earth's presences is the Earth's
     this.earth.step(dt, this.reduced);
     // the close-zoom tiles: the Earth's are NASA GIBS's (tilemath.ts); a generated body's are made by its own generator in a worker (bodyTiles.ts), never fetched
     this.tiles.update(this.camera, dt, this.width, this.height);
@@ -533,12 +533,15 @@ export class GlobeEngine {
   /** The atlas's surface layers fade as the pull-back passes the Moon; fully off, they are not drawn. */
   private setSurface(w: number) {
     const on = w > 0.002;
-    this.surfaceOn = on;
-    this.presences.mesh.visible = on;
+    // [T-PROCEDURAL-BODY] the presences, their arcs and markers are the Earth's occurrences: a generated body in the Earth's place carries none of them, drawn or picked
+    // (its tiles and its air are its own); they are the Earth's again when the Earth is
+    const earthly = on && !this.earth.generated;
+    this.surfaceOn = earthly;
+    this.presences.mesh.visible = earthly;
     this.aura.points.visible = on;
-    this.arcs.group.visible = on;
+    this.arcs.group.visible = earthly;
     this.tiles.group.visible = on;
-    for (const m of [this.markers.sel, this.markers.hover, this.markers.head]) m.suppressed = !on;
+    for (const m of [this.markers.sel, this.markers.hover, this.markers.head]) m.suppressed = !earthly;
   }
 
   // ── the body the globe draws (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────────────────────────
@@ -565,6 +568,7 @@ export class GlobeEngine {
     if (!record) {
       this.earth.setGenerated(null);
       this.earth.setSky(null, 0, 1);
+      this.earth.barren.value = 0;
       this.shell.air.value = 1;
       this.bodyPictureState = 'earth';
       // the Earth's own tiles again
@@ -590,7 +594,7 @@ export class GlobeEngine {
     const record = this.bodyRecord;
     const scale = record && record.generator.version >= 2 ? weatherScale(record.seed) : 0;
     this.earth.weatherRate.value.set(WEATHER_BANDS[0]!.weight * scale, WEATHER_BANDS[1]!.weight * scale, WEATHER_BANDS[2]!.weight * scale);
-    this.earth.weatherT.value = (this.bodyTime ?? Date.now()) / 86400000;
+    this.earth.weatherT.value = record ? weatherClock(record.seed, this.bodyTime ?? Date.now()) : 0;
   }
 
   /** The occasion the body is shown at (null: Now). */
@@ -612,6 +616,7 @@ export class GlobeEngine {
     // at once, on the main thread: the first picture (BODY_WIDTHS.first wide, a few tens of milliseconds) and the body's air; its clouds come with the sharp base
     this.earth.setGenerated(bodyTexture(bodyImage(record, BODY_WIDTHS.first, look), this.renderer));
     this.earth.setSky(null, 0, air);
+    this.earth.barren.value = barrenOf(look);
     this.shell.air.value = air;
     this.bodyPictureState = 'coarse';
     // its close-zoom tiles: made by its generator (a body of generator version 1 has none), wanted where they are denser than the base that will stand, as GIBS's are

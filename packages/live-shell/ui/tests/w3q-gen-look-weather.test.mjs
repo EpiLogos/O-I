@@ -359,18 +359,73 @@ test('S3 what feeds the uniform is the one table the tests hold: the earth mater
 })
 
 test('S4 the shader’s wind is weatherShift’s: the bands the fragment shader sums, evaluated at the body’s rate, give weatherShift’s own shift at every latitude and time', async () => {
-  const {WEATHER_BANDS, weatherScale} = await import(new URL('bodyWeather.ts', globe).href)
+  const {WEATHER_BANDS, weatherScale, weatherClock} = await import(new URL('bodyWeather.ts', globe).href)
   const frag = shaders.EARTH_FRAG, m = /float r = ([^;]*);/.exec(frag.slice(frag.indexOf('float weatherTurns')))
   assert.ok(m, 'EARTH_FRAG has weatherTurns, with the sum of the bands')
   const sum = new Function('a', 'rate', `const exp = Math.exp; return ${m[1]}`)
   for (const seed of SEEDS) {
     const record = make(seed), rate = WEATHER_BANDS.map(band => band.weight * weatherScale(seed)) // what the globe hands the shader (engine.ts applyWeather)
     for (const lat of [-80, -47, -10, 0, 12, 30, 52, 77, 90]) for (const days of [0, 1.5, 20, 20741.37]) {
-      const turns = (((sum(Math.abs(lat), rate) * days / 360) % 1) + 1) % 1, shader = turns * 360, cpu = ((body.weatherShift(record, lat, days * 86400000) % 360) + 360) % 360
+      const turns = (((sum(Math.abs(lat), rate) * weatherClock(seed, days * 86400000) / 360) % 1) + 1) % 1, shader = turns * 360, cpu = ((body.weatherShift(record, lat, days * 86400000) % 360) + 360) % 360
       const gap = Math.abs(shader - cpu)
       assert.ok(Math.min(gap, 360 - gap) < 1e-5, `seed ${seed}, ${lat}° after ${days} days: the shader’s bands give ${f(shader, 5)}°, weatherShift ${f(cpu, 5)}°`)
     }
   }
+})
+
+test('S5 the shear is bounded at every time: from one degree of latitude to the next the shift changes by at most three degrees of longitude, on any date in the past or the future (streaks, never a smear)', async () => {
+  // The wind differs by latitude, so the mask is sheared by the difference of the rates times the time: a clock that ran on for ever (the days since 1970, twenty thousand of
+  // them) sheared it by ten thousand degrees to the degree, and the globe was drawn in hairline rings from pole to pole (the owner's moiré). The weather's own clock is bounded
+  // so the shear is: a band of real cloud is sheared a degree or two to the degree.
+  const {weatherRate, weatherClock} = await import(new URL('bodyWeather.ts', globe).href)
+  const dates = [T0, 0, -1, 1e12, -1e12, 3.2e13, -3.2e13, 8.64e15, ...Array.from({length: 480}, (_, k) => T0 + (k - 240) * 17.3 * DAY)]
+  let worst = 0
+  for (const seed of SEEDS) {
+    const record = make(seed)
+    for (const t of dates) for (let lat = 0; lat < 90; lat++) {
+      const jump = Math.abs(wrap(body.weatherShift(record, lat + 1, t) - body.weatherShift(record, lat, t)))
+      worst = Math.max(worst, jump)
+      assert.ok(jump <= 3, `seed ${seed}, ${lat}° to ${lat + 1}° at ${t}: the shift changes by ${f(jump, 2)}° of longitude (at most 3)`)
+    }
+  }
+  assert.ok(worst > 0 && Number.isFinite(worst) && typeof weatherRate === 'function' && typeof weatherClock === 'function')
+  // and the clock the shader is given is the same bounded one: a day's reading of it, far in the future, is no larger than one a century back
+  const clock = t => Math.abs(weatherClock(SEEDS[0], t))
+  assert.ok(Math.max(...dates.map(clock)) < 2, `the weather's own clock stays within two days of its start (largest ${f(Math.max(...dates.map(clock)), 3)})`)
+})
+
+test('M1 the cloud lookup is continuous: the shader does not wrap the shift to a turn, which leaves a hairline ring at every latitude where it passes a whole turn', () => {
+  // The texture unit chooses its detail from how fast the lookup coordinate changes across the screen. Wrapped with `fract` (or `mod`), the coordinate jumps by a whole turn at
+  // the latitudes where the shift passes one, the change there is a turn, not a pixel, and the unit takes its coarsest picture: a hairline ring of smeared cloud, at each such
+  // latitude. The texture repeats in longitude (S2), so there is nothing to wrap.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    const at = frag.indexOf('float weatherTurns')
+    assert.ok(at >= 0, `${name}’s shader has weatherTurns`)
+    const fn = frag.slice(at, frag.indexOf('\n}', at) + 2)
+    assert.ok(fn.includes('return') && !/\b(fract|mod)\s*\(/.test(fn), `${name}’s weatherTurns does not wrap its result (fract or mod): ${fn.replace(/\s+/g, ' ').slice(0, 160)}`)
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('uCloudMix'))
+    assert.ok(!/\b(fract|mod)\s*\(/.test(sky), `nor does ${name}’s cloud lookup wrap its coordinate`)
+  }
+})
+
+test('B1 the grade does not tint a barren world toward the palette: the shader takes `uBarren`, the ramp and the sea test are driven by it, and dust is not sea', () => {
+  // The globe grades every picture into the site's world (shadeEarth): land and sea are ramps of the palette (uDeep, uFog, uGlow), a deep navy. A grey airless moon passed through
+  // it comes out blue (the owner's entered fresh world: red falls from 55 to 36 and blue rises from 47 to 79 between the picture and the screen). A barren body is graded toward
+  // neutral by a uniform, and the sea test, which reads a dark low-chroma pixel's blue against its red, never calls dust sea. The GLSL is read as text (the GPU is not run).
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    assert.ok(/uniform\s+float\s+uBarren\s*;/.test(frag), `${name}’s shader declares the uniform uBarren`)
+  }
+  const frag = shaders.EARTH_FRAG, start = frag.indexOf('vec3 shadeEarth'), end = frag.indexOf('\n}', start)
+  assert.ok(start >= 0 && end > start, 'the shader has shadeEarth')
+  const fn = frag.slice(start, end)
+  // the names uBarren reaches in shadeEarth, through the locals assigned from an expression that holds it (followed three steps)
+  const reached = new Set(['uBarren'])
+  for (let pass = 0; pass < 4; pass++) for (const m of fn.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) {
+    if ([...reached].some(name => new RegExp(`\\b${name}\\b`).test(m[2]))) reached.add(m[1])
+  }
+  assert.ok(reached.has('water'), `the sea test is driven by uBarren (it reaches: ${[...reached].join(', ')}): dust is not sea, whatever its blue`)
+  assert.ok(reached.has('land'), 'and the land ramp is: the palette’s navy is mixed away from a barren world’s rock')
+  assert.ok(reached.has('col'), 'and what is drawn is (the colour that leaves shadeEarth is graded by it)')
 })
 
 // ── the engine's occasion and its reduced motion ───────────────────────────────────────────────────────────────────────

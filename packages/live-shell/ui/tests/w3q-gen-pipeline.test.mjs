@@ -482,6 +482,136 @@ test('E4 and the Earth is given back its own layer: with no body the tiles are t
   } finally { g.close() }
 })
 
+// ── what the globe draws over a generated body ─────────────────────────────────────────────────────────────────────────
+// The owner's globe screen pass found: the Earth's presences (the white dots, arcs and markers of the Earth's occurrences, and the glow they tint the ground with) drawn over
+// a generated body; a rectangle of tile, clear and dark, in the middle of a base that has its clouds; a new empty world as a dark navy ball. None of these was a failure of
+// the pictures (the gate held every one of them) but of what the globe does with them, so these tests run the engine, not the generator.
+
+test('E5 a generated body is not the Earth: none of the Earth’s presences is drawn, tinted under or picked on it, and they all come back with the Earth', async () => {
+  const g = await openGlobe()
+  try {
+    const e = g.engine, state = () => ({
+      presences: e.presences.mesh.visible, arcs: e.arcs.group.visible,
+      markers: [e.markers.sel, e.markers.hover, e.markers.head].map(m => !m.suppressed),
+      glow: e.earth.u.uDensity.value === e.presences.densityTarget.texture, picked: e.surfaceOn,
+    })
+    const shown = {presences: true, arcs: true, markers: [true, true, true], glow: true, picked: true}, gone = {presences: false, arcs: false, markers: [false, false, false], glow: false, picked: false}
+    frames(g, .2)
+    assert.deepEqual(state(), shown, 'the Earth shows its presences, their arcs and markers, the glow under them, and picks them')
+    let rendered = 0
+    const renderDensity = e.presences.renderDensity.bind(e.presences)
+    e.presences.renderDensity = () => { rendered++; renderDensity() }
+    e.setBody(make(5)); frames(g, .2)
+    assert.deepEqual(state(), gone, 'a generated body shows none of them: the presences, the arcs, the markers, and the glow the presences tint the ground with, and nothing is picked')
+    const counted = rendered
+    frames(g, .3)
+    assert.equal(rendered, counted, 'and the glow is not even drawn for it')
+    await answerWorker(); frames(g, .2)
+    assert.deepEqual(state(), gone, 'nor when its sharp pictures have come')
+    g.engine.setBody(make(6)); frames(g, .2)
+    assert.deepEqual(state(), gone, 'nor for another body')
+    e.setBody(null); frames(g, .2)
+    assert.deepEqual(state(), shown, 'the Earth, given back, has them again')
+    assert.ok(rendered > counted, 'and draws the glow again')
+  } finally { g.close() }
+})
+
+/** The block of statements in a fragment shader's `main` that stands the body's clouds over the ground: from the cloud test to its closing brace, with the coordinate
+ * the lookup goes by (`UV`) written in place of the varying the shader has it in. */
+function skyBlock(frag, uv) {
+  const main = frag.slice(frag.indexOf('void main'))
+  const open = main.indexOf('if (uCloudMix'), from = main.indexOf('{', open)
+  if (open < 0) return ''
+  let depth = 0, end = from
+  for (; end < main.length; end++) { if (main[end] === '{') depth++; else if (main[end] === '}' && --depth === 0) break }
+  return main.slice(open, end + 1).replace(new RegExp(`\\b${uv}\\b`, 'g'), 'UV').replace(/\s+/g, ' ').trim()
+}
+
+test('E6 a tile has the sky its sphere has: the same clouds, from the same layer, carried by the same wind, over its ground, so a tile is not a clear rectangle in a clouded base', async () => {
+  const shaders = await import(new URL('shaders.ts', globe).href)
+  const sphere = skyBlock(shaders.EARTH_FRAG, 'vUv'), tile = skyBlock(shaders.TILE_FRAG, 'vDens')
+  assert.ok(sphere.includes('texture2D(uCloud'), 'the sphere’s shader stands the cloud layer over the ground')
+  assert.ok(tile.includes('texture2D(uCloud'), 'and the tile’s shader stands it over the ground as well (a tile without it is a clear, dark patch where its base is washed with cloud)')
+  assert.equal(tile, sphere, 'the same statements: the same mask, lit by the same light, the same cover, at the same place (a tile’s own coordinate, in the sphere’s equirect)')
+  assert.ok(/uCloudMix/.test(tile) && /uWeatherT/.test(tile), 'carried by the wind of the occasion')
+  // and the layer is the sphere's own, by reference, so that a sky that comes after a tile (the sharp base's clouds come seconds after the first tiles) reaches it
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    g.engine.setBody(make(5, {sky: {clouds: .9}}))
+    await answerWorker()
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1, 'tiles are made')
+    const own = g.uniforms()
+    assert.ok(own.uCloudMix.value === 1, 'the sphere draws the clouds')
+    for (const mesh of made) {
+      const u = mesh.material.uniforms
+      for (const name of ['uCloud', 'uCloudMix', 'uAir', 'uWeatherT', 'uWeatherRate']) assert.ok(u[name] && u[name] === own[name], `the tile’s ${name} is the sphere’s own uniform, not a copy of its value`)
+    }
+  } finally { g.close() }
+})
+
+test('E7 a new empty world is a grey dust moon on the globe, at every width and in every tile: no navy sea, no cloud, no air, the look carried to the tiles', async () => {
+  const record = make(5, {sky: {clouds: .9, atmosphere: .9}}), saturation = ({data}) => {
+    let s = 0, n = 0, blue = 0
+    for (let k = 0; k < data.length; k += 4) { const r = data[k], gr = data[k + 1], b = data[k + 2]; s += Math.max(r, gr, b) - Math.min(r, gr, b); blue += b - r; n++ }
+    return {chroma: s / n, blue: blue / n}
+  }
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    g.engine.setBody(record, {barren: 1})
+    const small = g.uniforms().uBaseLo.value.image, first = saturation(small)
+    assert.ok(first.chroma < 22 && first.blue < 10, `its first picture is grey, with a sea of dust and no blue (mean chroma ${first.chroma.toFixed(1)}, mean blue over red ${first.blue.toFixed(1)}); the lived world beside it is far from grey`)
+    const lived = (() => { g.engine.setBody(record); return saturation(g.uniforms().uBaseLo.value.image) })()
+    assert.ok(lived.chroma > 2 * first.chroma || lived.blue > 3 * Math.max(first.blue, 1), `and the unchanged look of the same record is not (chroma ${lived.chroma.toFixed(1)}, blue ${lived.blue.toFixed(1)})`)
+    g.engine.setBody(record, {barren: 1})
+    worker.held.length = 0
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    const before = worker.jobs.length
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const sent = worker.jobs.slice(before), bases = worker.jobs.filter(job => typeof job.width === 'number'), tilesAsked = sent.filter(job => typeof job.z === 'number')
+    assert.ok(bases.length >= 1 && tilesAsked.length >= 1, 'the sharp bases and the tiles are made')
+    assert.ok(tilesAsked.every(job => job.look && job.look.barren === 1), 'every tile asked of the worker is asked with the look barren 1: the look reaches the tiles, not only the base')
+    const u = g.uniforms()
+    assert.equal(u.uCloudMix.value, 0, 'no cloud layer is drawn over a barren world, whatever its clouds dial (the base’s cloud mask is empty and the mix is 0)')
+    assert.equal(u.uAir.value, 0, 'and its air is 0 (the rim of the sphere is its own, not an atmosphere)')
+    assert.equal(g.engine.shell.air.value, 0, 'nor is the shell round it lit')
+    // a tile the real handler made, for the same look, is the base's own grey
+    const grey = tilesAsked.find(job => job.look?.barren === 1)
+    worker.scope.postMessage = answer => { grey.answer = answer }
+    worker.scope.onmessage({data: {...grey, id: -1}})
+    const tile = saturation(grey.answer.tile)
+    assert.ok(tile.chroma < 22 && tile.blue < 10, `and so is a tile of it (mean chroma ${tile.chroma.toFixed(1)}, blue ${tile.blue.toFixed(1)})`)
+  } finally { g.close() }
+})
+
+test('B2 the globe hands the grade the look: `setBody(record, {barren})` sets `uBarren` (the sphere’s and the tiles’, the same uniform), a lived world and the Earth have 0', async () => {
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    const own = () => g.uniforms().uBarren
+    assert.ok(own(), 'the earth material carries uBarren')
+    assert.equal(own().value, 0, 'the Earth is not barren')
+    g.engine.setBody(make(5), {barren: 1}); frames(g, .1)
+    assert.equal(own().value, 1, 'a barren world is graded as one')
+    g.engine.setBody(make(5), {barren: .4}); frames(g, .1)
+    assert.equal(own().value, .4, 'a half barren one by half')
+    g.engine.setBody(make(5), {barren: 7}); frames(g, .1)
+    assert.equal(own().value, 1, 'a look out of range is held to its range (body.ts barrenOf)')
+    g.engine.setBody(make(5)); frames(g, .1)
+    assert.equal(own().value, 0, 'a lived world is not')
+    g.engine.setBody(make(5), {barren: 1}); await answerWorker()
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1, 'tiles are made')
+    for (const mesh of made) assert.ok(mesh.material.uniforms.uBarren === own(), 'a tile of it is graded by the sphere’s own uniform, so its grey is the sphere’s')
+    g.engine.setBody(null); frames(g, .1)
+    assert.equal(own().value, 0, 'the Earth, given back, is not barren')
+    assert.equal(g.uniforms().uAir.value, 1, 'and has its own air (a tile of the Earth is drawn with the air of its sphere: 1)')
+  } finally { g.close() }
+})
+
 // ── the time a body takes ───────────────────────────────────────────────────────────────────────────────────────────────
 
 test('T1 a 2048-wide body is made in the time a CPU thread can spend on it (the ticket aims at 5 s; the gate allows 20)', () => {

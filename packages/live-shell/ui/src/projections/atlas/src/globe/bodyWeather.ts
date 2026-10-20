@@ -44,11 +44,27 @@ export function weatherRate(seed: number, latDeg: number): number {
   return r * weatherScale(seed)
 }
 
-/** The degrees of longitude the cloud mask is carried at a latitude at a time (ms; the same record, latitude and time give the same number), within a turn. A body of
- * generator version 1 has no weather: its clouds do not move. */
+/** The weather's own clock, in days: a smooth, bounded function of the time (ms) and the seed, so that the wind carries the clouds back and forth about where they began and never
+ * winds them up. A wind that blew the same way for ever would shear the mask by the difference between neighbouring latitudes' rates times the days since 1970 (tens of thousands of
+ * degrees to the degree of latitude: the clouds would be dust, and a globe covered in rings); a clock of nine days still shears them ten degrees to the degree, and the sky is a
+ * smear of hairlines. The bound is the shear: the wind's rate changes by at most 1.7 degrees of longitude a day for each degree of latitude (at the fastest scale), so a clock
+ * of at most 1.4 days keeps the shear under about 2.4 degrees to the degree, which is a streak, as a band of real cloud is, and not a smear. Two swings (29 and 13 days) with
+ * the seed's own phases, up to a day and a third either way: the clouds are carried at most about 38 degrees from where they began, at most about eleven degrees a day at the
+ * fastest band (a few at the others), and stand still where a swing turns. */
+export function weatherClock(seed: number, timeMs: number): number {
+  const d = timeMs / 86400000
+  let h = (seed ^ 0x6a09e667) >>> 0
+  h = Math.imul(h ^ (h >>> 16), 0x7feb352d) >>> 0
+  h = Math.imul(h ^ (h >>> 15), 0x846ca68b) >>> 0
+  const p1 = ((h ^ (h >>> 16)) >>> 0) / 4294967296, p2 = (Math.imul(h, 0x9e3779b1) >>> 0) / 4294967296
+  return .85 * (Math.sin(2 * Math.PI * (d / 29.3 + p1)) + .6 * Math.sin(2 * Math.PI * (d / 13.1 + p2)))
+}
+
+/** The degrees of longitude the cloud mask is carried at a latitude at a time (ms; the same record, latitude and time give the same number), within a turn. A body of generator
+ * version 1 has no weather: its clouds do not move. */
 export function weatherShift(record: WorldBodyRecord, latDeg: number, timeMs: number): number {
   if (record.generator.version < 2) return 0
-  return (weatherRate(record.seed, latDeg) * (timeMs / 86400000)) % 360
+  return (weatherRate(record.seed, latDeg) * weatherClock(record.seed, timeMs)) % 360
 }
 
 // ── the cloud mask ────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -82,7 +98,7 @@ function fieldQuantiles(seed: number): Float64Array {
 export function cloudField(seed: number, x: number, y: number, z: number): number {
   const t = tablesOf(seed ^ 0x51ed270b), ys = y * 2.4
   const wy = ys + .35 * simplex3(t, x * 1.3 + 4.1, y * 1.3 - 2.2, z * 1.3 + 8.8)
-  let n = .5 * simplex3(t, x * 2.3 + 1.2, wy * 2.3 - 5.0, z * 2.3 + 3.3) + .3 * simplex3(t, x * 4.9 - 7.7, wy * 4.9 + 2.5, z * 4.9 - 1.1) + .2 * simplex3(t, x * 10.7 + 6.6, wy * 10.7 - 8.4, z * 10.7 + 9.2)
+  let n = .46 * simplex3(t, x * 2.3 + 1.2, wy * 2.3 - 5.0, z * 2.3 + 3.3) + .28 * simplex3(t, x * 4.9 - 7.7, wy * 4.9 + 2.5, z * 4.9 - 1.1) + .18 * simplex3(t, x * 10.7 + 6.6, wy * 10.7 - 8.4, z * 10.7 + 9.2) + .1 * simplex3(t, x * 23 - 2.4, wy * 23 + 5.1, z * 23 - 7.3)
   n += bandBias(Math.abs(Math.asin(y < -1 ? -1 : y > 1 ? 1 : y)) * R2D)
   return n
 }
@@ -100,5 +116,5 @@ export function cloudCover(seed: number, edge: number, x: number, y: number, z: 
     const a = -shiftDeg / R2D, c = Math.cos(a), s = Math.sin(a), nx = x * c - z * s, nz = x * s + z * c
     x = nx; z = nz
   }
-  return smooth(edge - .07, edge + .07, cloudField(seed, x, y, z))
+  return smooth(edge - .13, edge + .13, cloudField(seed, x, y, z))
 }
