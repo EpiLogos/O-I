@@ -1,0 +1,30 @@
+r30c screen pass — 74227032f (UI/UX lane, phase 1: Session, Arrangement and Pane view, fd48894d5; the Device switch's name read
+where it is drawn, 74227032f), full-suite, built from env-2 with a QL export made from QL main ddcb8fc (QL's main moved during
+r30's build: fa22041 rebuilt QL from the Bimba map and changed fixtures/kernel/m2-retained-c-v1.json, so r30's freeze refused).
+20 Oct 2026 13:51–13:56 UTC, computer use on the native candidate, the owner's real ground. Control/user/flows was copied first;
+all 13 files hash the same after.
+
+Found before this pass:
+- r30b (fd48894d5) opened blank: React #185, the frame subscribed to the tracks the set's views publish while its own render
+  republished the reading they draw from. Fixed in 74227032f; tests/f4-detail.test.mjs fails on fd48894d5 and passes on the fix.
+
+Seen:
+- The transport from the left: the browser's toggle, the mode's transport, Draw, the keys, Key and MIDI (no longer two "Map"),
+  the five modes, Session ||| · Arrangement ≡ · Pane ▦ (the standing one lit), the rail's toggle. No Workbench or Settings mark.
+- No bar above the panes; ‹ › at the head of the title line, which names the selected page, its world and its day.
+- The bottom right: ▲ Clip, ▲ Device (named for the selected track: Day in Central, 3-LABS in Live), Mixer.
+- Central: Pane view (the Day and a Flow); Session view draws Your world and cron · firings with the Day on the Main column;
+  a page selected in Session view stays selected after Tab into Arrangement view (the title line keeps it); ⌥⌘9 shows Pane view
+  and Tab returns to Arrangement view; ⌥⌘M takes the mixer switches off every track head and back.
+- Live: Session view draws the set (1-MIDI, 3-LABS, 4-LABS, 5-LABS) with each part's mixer row; Clip view holds LABS 8.
+- Factory: Pane view holds the agent's thread alone; Session view draws the agent sessions with their mixer rows; the browser's
+  Instruments list no longer offers Session · Arrangement.
+- Expressions: Pane view holds the stage. Technē: Pane view holds the Earth's pane (still drawing when left).
+- Leaving Central in Arrangement view and coming back returns to Arrangement view: each mode keeps its own view.
+
+Owed:
+- Live's Pane view fronts the book's Library tab ("This candidate has no built Expressions asset at the requested path"); the
+  torus is the tree's last tab. The tree never held the tracks pane, so this is the book's own arrangement, now in front.
+- A selected clip with no place on the ruler: its track's head does not light yet (manual §10.2).
+- The second window (⇧⌘W), the switches' small pictures, the Device switch's right-click list; sends and return tracks are not
+  drawn by the shared tracks views, so ⌥⌘S and ⌥⌘R change nothing visible.
