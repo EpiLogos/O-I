@@ -1890,7 +1890,39 @@ caption: Scope. Raise the reach and it waits for you to confirm. Teal is what th
 | Full | The world the agent may touch, with its receipts on the places it wrote. | |
 | Widget | Small rings, the reach, the write mode, the receipts. | |
 
-### 16.16 The entries that follow
+### 16.16 Instruments of the map
+
+You need to play the system's own structure, not a picture of it. Each
+subsystem of the Bimba map comes into the DLW as one instrument, built the way
+the subsystem is built. Its position 0 and its position 5 frame it: 0 is what
+it rises from, and 5 is what it becomes as a whole. Positions 1 to 4 are its
+working parts. Each stands as a device in a rack under the instrument, as
+Live's Instrument Rack holds its chains, and each of those devices is built
+again from its own six positions, as deep as the map goes.
+
+| Instrument | Its frame: 0 and 5 | Its rack: 1 to 4 | Where it plays |
+|---|---|---|---|
+| M1′, of Paramaśiva | 0, Bimba: the implicate loop the torus rises from. 5, the torus itself: its measure (R 16/9, r 1), its return in 720°, the half-turn that turns one side into the other, and the bridge where its shape becomes vibration. | 1, Pratibimba, the first reflection. 2, Ananda's six matrices with their digital roots. 3, Spanda: the two pulses and the two helices they drive. 4, Quaternal Logic's frames: inversion, the twelve-fold loop, the 84 modes and the harmonic frames. | Live, as the Torus (§21.2). |
+| M2′, of Paraśakti | 0, the archetypal numerical ground. 5, the planets, their just intervals and the seven centres they reach: the Sky is its face (§22.1). | 1, the MEF: six lens systems, each in six conditions. 2, the 36 tattvas: the material the body is made of. 3, the decans. 4, the vibrational templateure: the divine names, the mantras, the spiritual and musical maqāmāt, and the Shem. | Live, as what shapes the Torus: Sky modulation, Scale mapping and Exact-ratio tuning (§22.2, §21.3, §21.4). It makes no sound of its own. |
+| M3′, of Mahāmāyā | 0, the reception of the sky into form. 5, the wheel of 360 degrees with its 24 anchors: the M3 clock is its face (§22.3). | 1, the I Ching: 8 trigrams, 64 hexagrams. 2, the four nucleotides, their pairs and the 64 codons. 3, the transcription engine: three matrices and their 192 generation cells. 4, the Tarot. | Live, as form: the clock, the Deck, the Resonator bank and Binding (§22.3, §22.4, §22.7, §22.8). |
+| M4′, of Nara | 0, your identity matrix: birth date, chart, psychological type, Gene Keys and Human Design, and what they make together. 5, Epii's integration: what is answered, reviewed and kept. | 1, sympathetic medicine: the elements and the energy body with its seven centres. 2, the divinatory frameworks. 3, the containers of practice and dialogue. 4, context and lenses: journal, dreams and your own reflection. | Expressions and Nara's practice (§20, §24). The Chakra shows its energy body (§22.5). |
+
+An instrument shows itself whole in Full and Pop-out: the torus ringing, the
+sky over your world, the wheel turning. Its rack stands under it in Device
+view, and each device in the rack has its own six views. Which settings the
+instrument shows folded, compact, whole and on the rail, its entry says.
+
+The devices that serve an instrument are its parts, not its neighbours. The
+Sky is M2′'s position 5. The Chakra belongs to M4′: the energy body your
+identity matrix develops into, whose centres reach down through form to their
+planets and intervals in M2′. The Deck serves two instruments at once: its
+cards and hexagrams are M3′, and its reading (drawing, casting, the journey) is
+M4′'s divinatory frameworks.
+
+A part that nothing carries yet keeps its place in the rack, named and dark,
+so you can see what the instrument still lacks.
+
+### 16.17 The entries that follow
 
 Each device below has the same parts: what it is for, where it lives, its
 parameters, its views, what the transport does to it, how to use it, its
@@ -8124,7 +8156,7 @@ The widget shows the plate picture, the four macros and the light. Click the lig
 
 ## 21. Live
 
-Live holds one instrument. A torus makes the sound, and you play it from a keyboard that is the torus laid flat.
+Live holds one instrument made of three. M1′, the Torus, makes the sound; M2′ shapes it; M3′ gives it form (§16.16). A torus makes the sound, and you play it from a keyboard that is the torus laid flat.
 
 ### 21.1 Live: tracks and clips
 
@@ -8374,6 +8406,40 @@ The torus has two helices, which wind round it. A full return takes two turns. A
 | First helix | Carries the notes of the first whole-tone family. |
 | Second helix | Carries the notes of the second whole-tone family. |
 | Surface | Shows the pattern of the vibration. Touch it to excite the body at that point. |
+
+#### The Torus as M1′
+
+The Torus is M1′ whole (§16.16). The torus you see is its position 5, and the
+loop it rises from is its position 0. Its four working parts stand in its rack
+under it.
+
+| Position | What it is in the Torus | Where you work it |
+|---|---|---|
+| 0, Bimba | The implicate loop the torus rises from. It is why a pattern returns only after two turns. | It frames the instrument and has no setting. |
+| 1, Pratibimba | The reflection that answers Bimba: the second face of every value the Torus reads. | Its place in the rack. |
+| 2, Ananda | The six matrices of source values that drive the pulses, each with its digital root. | The Oscillator layer of the M′ matrices (§22.6). |
+| 3, Spanda | The two pulses, three and three and four and two, and the two helices they drive. Its fourth stage holds the context frames. | Pulse mix, Helix balance, Drive, and the context frame. |
+| 4, Quaternal Logic's frames | Inversion, which is the semitone across the rows; the twelve-fold loop; the 84 modes, each a lens in a context frame; the harmonic frames that lay out the keyboard. | Lens and context frame, Scale mapping (§21.3), Exact-ratio tuning (§21.4) and the keyboard. |
+| 5, the torus | Its measure (R 16/9, r 1), its return in 720°, the half-turn between its sides, and the bridge where its shape becomes vibration. | The surface, the View, and the Body group: Strike, Damping, Modes, Agitation and Body source. The material comes from M2′'s tattvas. |
+
+#### The keyboard
+
+The keyboard is part of the Torus, and it is the torus laid flat. Its six rows
+are the two helices, each a whole-tone family, interleaved. A semitone is a step
+from one row to the next, and moving along a row transposes without changing
+the shape under your fingers. A note appears at more than one place, so you can
+reach it from where your hand is.
+
+- Pointer, touch, the computer keys and MIDI play the same keys through one
+  path. A chord is several points struck at once.
+- Velocity and pressure set how hard each point is struck. Sustain holds the
+  notes, and each note rings on after you release it as long as Release says.
+- When more notes sound than Voices allows, the oldest makes way. Panic stops
+  every note at once.
+- When the keyboard loses focus, the notes it holds are released. A key you
+  hold while you type in a field does not play.
+- The keyboard shows its range and recolours to the mode in force.
+- An ordinary piano layout is there when you want it. It plays the same points.
 
 #### Parameters
 
@@ -8837,6 +8903,19 @@ caption: Reverb, on a fixture of readings.
 
 The planets stand where they really stand, and they move the sound, the field and anything else you route them to.
 
+Each device here is a part of one of the instruments of the map (§16.16), and it stands in that instrument's rack:
+
+| Device | Instrument | Its place |
+|---|---|---|
+| Sky (§22.1) | M2′ | Position 5: the planets, their intervals and the centres they reach. |
+| Sky modulation (§22.2) | M2′ | Position 5's routes: a planet moving any parameter. |
+| M3 clock (§22.3) | M3′ | Position 5: the wheel and its 24 anchors. Position 0, the reception, sets what the wheel receives. |
+| Deck (§22.4) | M3′ and M4′ | Its hexagrams and cards are M3′'s positions 1 and 4. Drawing, casting and the journey are M4′'s divinatory frameworks. |
+| Chakra (§22.5) | M4′ | Position 1: the energy body and its seven centres. |
+| M′ matrices (§22.6) | M1′ to M4′ | The insides of the racks: Oscillator is M1′'s Ananda; Reading is M1′'s modes with M2′'s lenses; Form is M3′; Situation is M4′'s centres. |
+| Resonator bank (§22.7) | M3′ | Position 5: it sounds the cut the wheel draws. |
+| Binding (§22.8) | M3′ | Positions 0 and 2: the codons bound into a form, and the reception from M2′'s planets. |
+
 ### 22.1 Sky
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a widget on the rail in every mode, and a device in the chain of a Technē reading.
@@ -9198,6 +9277,8 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 
 The Deck lays out a spread of cards or a hexagram for a concern that you carry. Use it to read the concern in six positions and to see how the positions answer one another. Keep the reading as part of your journey.
 
+The Deck serves two instruments. Its hexagrams and cards are M3′'s I Ching and Tarot; the reading you make with them, drawing, casting and walking the journey, is M4′'s divinatory frameworks (§16.16).
+
 #### The spreads
 
 A spread has six positions, P0 to P5. Each position asks one question.
@@ -9316,6 +9397,8 @@ The widget shows the last spread, with its theme. Click the spread to open the D
 
 The Chakra shows the seven centres of the body and what the sky does to each. Use it to see which planets reach which centre today, and how your own centres answer.
 
+The Chakra belongs to M4′ (§16.16). Your centres are the energy body that your identity matrix develops into: birth date, chart, type and profile read together give each centre its weight. From there each centre reaches down through form to its planet and its interval in the Sky, which is how the sky of the day touches your own centres.
+
 #### The centres
 
 There are seven centres and the Earth under them. The Earth grounds the Root. It is not an eighth centre.
@@ -9422,6 +9505,8 @@ The widget shows seven discs with the planet of each. Click a disc to open its c
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It opens on a chain and as a pane.
 
 The M′ matrices show what the torus is made of, in four layers. Use them to see where a value comes from, and which parameter it moves.
+
+The four layers are the insides of the instruments' racks (§16.16). Oscillator is M1′'s Ananda. Reading is M1′'s modes, each a lens in a context frame, with M2′'s lenses. Form is M3′. Situation is M4′'s seven centres. Open a layer from the rack of its instrument, or open all four here.
 
 #### The four matrices
 
