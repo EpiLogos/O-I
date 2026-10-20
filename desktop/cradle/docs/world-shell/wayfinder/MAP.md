@@ -149,11 +149,11 @@ before the return to substantive UI work. Up to four Opus subagents.
    sources, so agents get the right context, decide, use capabilities and execute through the systems meant for it; the six
    products working through their intended relationships; performance and reliability against real bottlenecks (the Graph read at
    88 s cold, knowledge search at 4.7–6.2 s); operational reuse — saving and reusing scripts, commands, aliases — finished.
-   The agent side is built in its three positions (manual §25; route
-   `tickets/T-AGENCY-the-agent-world-and-the-construction-chain.md`): **M0′**, one read path (O:I's wiki reads through AIKit's
-   knowledge route, K1) and the whole kept whole where a scene is projected (K3); **M4′**, the Decision helper
-   (`ai-kit:decision-helper`, manual §19.20) bound to `aikit decide` and the team space, with a `ql` that answers
-   `context-frame team-space` installed (K5); **M5′**, the Agent's proposals as they stand. An act runs ground first, and an act
+   The agent side is built (manual §25; route `tickets/T-AGENCY-the-agent-world-and-the-construction-chain.md`): the ground's one
+   read path (O:I's wiki reads through AIKit's knowledge route, K1) and the whole kept whole where a scene is projected (K3); the
+   Decision helper (`ai-kit:decision-helper`, manual §19.20) bound to `aikit decide`, where Kev runs as an AIKit model, and to the
+   team space, with a `ql` that answers `context-frame team-space` installed (K5); the Agent's proposals as they stand. The models
+   are AIKit (S2) capabilities the six agents at M5-4 use; they are not M′ layers. An act runs ground first, and an act
    with nothing open asks no model.
 5. **Loading, as the owner meets it in the candidate** (measured the evening of 19 Oct):
    - the shell loads as one 6.2 MB script (2.6 MB compressed) before it draws anything — split it by mode and device;

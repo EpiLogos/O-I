@@ -708,7 +708,19 @@ where they are.
 Preview, open and add are three separate actions. To preview something,
 select it once: its preview shows at the foot of the list, where Live plays a
 sample you select. To open it, double-click it or drag it into a pane. To add a
-device, drag it onto a chain. To seat an agent, drag it onto an empty track.
+device, drag it onto a chain. To seat an agent, drag it onto an empty track. To
+pick up an earlier chat with an agent, drag it onto an empty track or onto the
+rail.
+
+Each mode's browser leads with what its work is made of. Instruments, devices
+and surfaces follow in every mode.
+
+| Mode | What leads the browser |
+|---|---|
+| Central | Your whole field: every world, each opening to its pages; Earth and the worlds you visit; the earlier Days. Central is where you work across your projects, so the list is not divided by project (§18.1). |
+| Factory | Your projects, each opening to its chats: the sessions you had there, newest first, each with its agent, its state and its last exchange (§19.1). |
+
+The other modes keep what their sections name (§17.1, §20.1, §21.1).
 
 Under the browser is the pool, where Live keeps its Groove Pool. A groove
 shapes how a clip plays without being part of the clip, and the pool holds
@@ -1138,7 +1150,7 @@ material passes through, from left to right.
 | Mode | Track | Chain, left to right |
 |---|---|---|
 | Central | A world. The set is the Day; its die is on the Main track. | The packet, the agent of the world, and its scope; on a world whose folder holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
-| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. On the Main track: the gateways rack, the experiments, Approvals, the ledger and Link. |
+| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. On the Main track: the gateways rack, the experiments, Approvals, the ledger, Link and the prompt pads. |
 | Expressions | An Expression. | The Studio: the field, then its field devices. |
 | Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
 | Live | A part. | The note devices, the torus, then its effects. |
@@ -1881,7 +1893,39 @@ caption: Scope. Raise the reach and it waits for you to confirm. Teal is what th
 | Full | The world the agent may touch, with its receipts on the places it wrote. | |
 | Widget | Small rings, the reach, the write mode, the receipts. | |
 
-### 16.16 The entries that follow
+### 16.16 Instruments of the map
+
+You need to play the system's own structure, not a picture of it. Each
+subsystem of the Bimba map comes into the DLW as one instrument, built the way
+the subsystem is built. Its position 0 and its position 5 frame it: 0 is what
+it rises from, and 5 is what it becomes as a whole. Positions 1 to 4 are its
+working parts. Each stands as a device in a rack under the instrument, as
+Live's Instrument Rack holds its chains, and each of those devices is built
+again from its own six positions, as deep as the map goes.
+
+| Instrument | Its frame: 0 and 5 | Its rack: 1 to 4 | Where it plays |
+|---|---|---|---|
+| M1′, of Paramaśiva | 0, Bimba: the implicate loop the torus rises from. 5, the torus itself: its measure (R 16/9, r 1), its return in 720°, the half-turn that turns one side into the other, and the bridge where its shape becomes vibration. | 1, Pratibimba, the first reflection. 2, Ananda's six matrices with their digital roots. 3, Spanda: the two pulses and the two helices they drive. 4, Quaternal Logic's frames: inversion, the twelve-fold loop, the 84 modes and the harmonic frames. | Live, as the Torus (§21.2). |
+| M2′, of Paraśakti | 0, the archetypal numerical ground. 5, the planets, their just intervals and the seven centres they reach: the Sky is its face (§22.1). | 1, the MEF: six lens systems, each in six conditions. 2, the 36 tattvas: the material the body is made of. 3, the decans. 4, the vibrational templateure: the divine names, the mantras, the spiritual and musical maqāmāt, and the Shem. | Live, as what shapes the Torus: Sky modulation, Scale mapping and Exact-ratio tuning (§22.2, §21.3, §21.4). It makes no sound of its own. |
+| M3′, of Mahāmāyā | 0, the reception of the sky into form. 5, the wheel of 360 degrees with its 24 anchors: the M3 clock is its face (§22.3). | 1, the I Ching: 8 trigrams, 64 hexagrams. 2, the four nucleotides, their pairs and the 64 codons. 3, the transcription engine: three matrices and their 192 generation cells. 4, the Tarot. | Live, as form: the clock, the Deck, the Resonator bank and Binding (§22.3, §22.4, §22.7, §22.8). |
+| M4′, of Nara | 0, your identity matrix: birth date, chart, psychological type, Gene Keys and Human Design, and what they make together. 5, Epii's integration: what is answered, reviewed and kept. | 1, sympathetic medicine: the elements and the energy body with its seven centres. 2, the divinatory frameworks. 3, the containers of practice and dialogue. 4, context and lenses: journal, dreams and your own reflection. | Expressions and Nara's practice (§20, §24). The Chakra shows its energy body (§22.5). |
+
+An instrument shows itself whole in Full and Pop-out: the torus ringing, the
+sky over your world, the wheel turning. Its rack stands under it in Device
+view, and each device in the rack has its own six views. Which settings the
+instrument shows folded, compact, whole and on the rail, its entry says.
+
+The devices that serve an instrument are its parts, not its neighbours. The
+Sky is M2′'s position 5. The Chakra belongs to M4′: the energy body your
+identity matrix develops into, whose centres reach down through form to their
+planets and intervals in M2′. The Deck serves two instruments at once: its
+cards and hexagrams are M3′, and its reading (drawing, casting, the journey) is
+M4′'s divinatory frameworks.
+
+A part that nothing carries yet keeps its place in the rack, named and dark,
+so you can see what the instrument still lacks.
+
+### 16.17 The entries that follow
 
 Each device below has the same parts: what it is for, where it lives, its
 parameters, its views, what the transport does to it, how to use it, its
@@ -3418,7 +3462,7 @@ The widget shows a small bench and the reading at each sensor. Click the bench t
 
 ## 18. Central
 
-Central keeps the day's work, your documents and your ground in one place. It works like a code editor: your files down the left, documents side by side, and the day as the set they all belong to. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
+Central keeps the day's work, your documents and your ground in one place. It is where you work across all your projects at once: each project is a world, and the Day gathers them. It works like a code editor: your files down the left, documents side by side, and the day as the set they all belong to. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
 
 ### 18.1 Central: the Day, its worlds and their pages
 
@@ -3471,6 +3515,18 @@ The track head shows the world's name and colour. Its settings stand on the head
 | Monitor | For a world you visit. In follows its changes as they happen. Off keeps it as you last saw it. Auto follows while one of its pages plays. Your own worlds have none. |
 
 The input of a world is its Folder. A file you add to the folder shows as a clip. A file you change in any editor shows the change on its clip.
+
+#### Workspaces
+
+You rarely work on one project alone. A morning's practice wants your journal, the practice world and the sky. An afternoon on a book wants the book's world, the world of its research and a subject open in Technē. A workspace keeps a way of working like that: which worlds stand on today's tracks, which of their pages open in which panes, which instruments and widgets are out, and how the window is laid out.
+
+Launch a workspace from the pool and its worlds come onto today's tracks, its pages open where they were, and the window takes its layout. Worlds already on today's tracks stay. To keep the way you are working now, drop it onto the pool. A world's Workspace setting names the workspace its pages open with.
+
+A row is not a workspace. A row opens pages together inside today. A workspace brings worlds into today and sets the window round them.
+
+#### The browser
+
+Central's browser lists your whole field: every world you have, each opening to its pages, Earth and the worlds you visit, and the earlier Days. It does not divide your work by project, because Central is where you work across them. Drag a world onto an empty track to bring it into today. Drag a page into a pane to open it. Open an earlier Day to read it. The pool below the browser holds your workspaces.
 
 #### The clip
 
@@ -3672,6 +3728,7 @@ When the day closes, what still plays carries into tomorrow's set, playing, with
 - To keep a side project out of the Day, turn off its world's activator.
 - To work on one project on two machines, turn Link on.
 - To start a new project in your usual way of working, set its world's Workspace to the workspace you use.
+- To begin the morning the way you always do, launch your morning workspace from the pool.
 - To keep a thinking journal, choose the Journal tab and set Speak as to you.
 - To follow a second idea without losing the first, select the entry and set Relation to Branch.
 - To correct an agent, write a Correct entry. The agent's text stays on the page.
@@ -3710,6 +3767,43 @@ the poles. Opposite faces add to five.
 | 3 | Pattern | The patterns that appear across the day's work, with the items that show each pattern. | The agent proposes patterns. You keep or discard them. |
 | 4 | Context | Where the day sat: the moments, people, places and files it touched. | You and the agent together. Each entry shows its author. |
 | 5 | Synthesis | What the day taught, what stays open, and a proposal for tomorrow's face 0. | You and the agent together. Each entry shows its author. |
+
+#### Where the faces come from
+
+Every machine you work on keeps its own NOW: what is open there, with a smaller
+NOW inside it for each task, journey or piece of work handed to an agent. The
+Day reads all of them. Face 2 lists their sessions as done, running and queued,
+each linked to where it runs. Face 4 gathers the moments, people, places and
+files those sessions touched, each entry with its author. A machine that goes
+offline keeps working, and what it did arrives when it is back, at the time it
+happened. A NOW still open at the close carries into tomorrow's Day.
+
+#### Moves
+
+The Day moves its work from face to face in the order the faces read: what you
+want becomes tasks, what ran shows its patterns, and what the day taught
+becomes tomorrow's ground. Each move is a pad on the device. Press a pad and
+its move runs now. Give it a time and it runs then. The Day's agent runs every
+move under Agent writes, so a proposal waits for you and a write arrives with
+its receipt.
+
+| Pad | Faces | What the move does |
+|---|---|---|
+| Tasks | 0 → 1 | Reads face 0 and proposes tasks in three tiers: must, should, could. |
+| Patterns | 2 → 3 | Reads what ran and proposes patterns, each with the items that show it. |
+| Context | 2 → 4 | Gathers what the day's sessions touched. |
+| Synthesis | 1–4 → 5 | Drafts what the day taught, what stays open and a proposal for tomorrow's face 0. |
+| Close | 5 → tomorrow's 0 | Runs the close routine. |
+
+Face 2 needs no pad: it fills by itself as sessions start, run and finish.
+
+| Pad setting | Values | Default | What it does |
+|---|---|---|---|
+| Prompt | Text | The move's own | What the move asks of the agent. Change it to make the move yours. |
+| Runs at | Off · a time · Rollover · Day start | Off; Close at Day start | When the move runs by itself. |
+
+Each pad shows when it last ran and what it gave. Click it to open what it
+proposed on its face.
 
 #### Two Days at a time
 
@@ -3760,13 +3854,14 @@ pane.
 
 ##### Whole
 
-The whole Day shows every parameter, in
-four groups.
+The whole Day shows the net of the die beside its five pads and every
+parameter, in five groups.
 
 | Group | Parameters |
 |---|---|
 | Time | Day start, Rollover |
 | Faces | Face, View, Template |
+| Moves | Tasks, Patterns, Context, Synthesis, Close: each pad's Prompt and Runs at |
 | Agent | Agent writes, Sources |
 | Close | Close routine |
 
@@ -3809,10 +3904,12 @@ in the pane that has focus.
 #### To use the Day
 
 1. Open face 0. Write what you want from the day.
-2. Turn to face 1. Accept, re-tier or remove the tasks that the agent proposes.
+2. Press Tasks. Turn to face 1, and accept, re-tier or remove the tasks that
+   the agent proposes.
 3. Work in any mode. Face 2 fills as sessions start, run and finish.
-4. At the end of the day, open face 5. Write what the day taught. Read the
-   agent's proposal for tomorrow.
+4. In the afternoon, press Patterns and keep the ones that hold.
+5. At the end of the day, press Synthesis and open face 5. Write what the day
+   taught. Read the agent's proposal for tomorrow.
 5. After rollover, open tomorrow's Day. Prepare its face 0.
 
 #### Rules
@@ -3824,6 +3921,10 @@ in the pane that has focus.
 - A closed Day is kept. You can open it, read it and walk through it again.
 - A Day keeps the template version it opened with. A new template version does
   not change an old Day.
+- A move writes only as Agent writes allows.
+- A move that runs by itself shows its time on its pad and keeps a record of
+  every run. Nothing runs where you cannot see it.
+- A late result keeps the time it happened. The Day does not rewrite it as new.
 
 #### Tips
 
@@ -4304,7 +4405,7 @@ Factory is where you work with AI agents. Each agent session is a track. Its cha
 
 ### 19.1 Factory: tracks and clips
 
-**Product:** Software Factory, with Actuation · **Track:** an agent session · **Clip:** a task · **Main track:** the gateways, the Experiment, Approvals, the Ledger and the Link
+**Product:** Software Factory, with Actuation · **Track:** an agent session · **Clip:** a task · **Main track:** the gateways, the Experiment, Approvals, the Ledger, the Link and the Prompt pads
 
 You need to set agents to work, watch how each task stands, and step in where you are needed. In Factory each agent session is a track, and its tasks are its clips. Select a task and Clip view shows how it launches, what follows it, the effort the agent gives it, and its log. Device view below shows the session's chain: the gateway, the agent, its skills, its scope and the landing.
 
@@ -4432,9 +4533,13 @@ The takes open full in a pane as the tree of each attempt: its tasks as nested r
 
 Press Record and what the sessions do lays out on the ruler as clips, with their takes under them.
 
+#### Projects and chats
+
+Factory's browser lists your projects, and under each project its chats: every session you had there, newest first. A chat shows its agent, its state and its last exchange, as any list of chats does. To pick one up again, drag it onto an empty track: the session reopens where it stopped, with its tasks as clips. Drag it onto the rail and its agent's tile opens with the chat, ready to talk. Double-click it to read its thread in a pane.
+
 #### The Main track
 
-Factory's Main track carries what serves every session: the Gateways rack with the Agency gateway, the Experiment, Approvals, the Ledger and the Link. When no session is selected, Device view shows the Main track's chain.
+Factory's Main track carries what serves every session: the Gateways rack with the Agency gateway, the Experiment, Approvals, the Ledger, the Link and the Prompt pads (§19.22). When no session is selected, Device view shows the Main track's chain.
 
 In Session view the Main track's row launchers stand at the end of the grid. In Factory a row is a batch: launch it and one task starts on each session in the row. Press a row's number key to launch it.
 
@@ -4492,6 +4597,7 @@ The tiles take these settings:
 - To find the sessions that need you, set Sessions' Filter to Stalled.
 - To find a lost session, set Sessions' Filter to Running and read the names.
 - To see who is stuck, look for the amber stations in Agents.
+- To carry on yesterday's work with an agent, find the chat under its project and drag it onto an empty track.
 
 ### 19.2 Gateway
 
@@ -6436,6 +6542,77 @@ The widget shows the last turn, the body, and the feeling of the last sentence. 
 - To see consonants on the lips, use a body that measures each sound and set Mouth to Aligned.
 - To talk over the agent, set Interrupt to Barge-in.
 
+### 19.22 Prompt pads
+
+**Product:** Software Factory, with Actuation · **Kind:** instrument · **Chain:** Factory's Main track
+
+You ask agents for the same things again and again: run the checks, review a
+branch, write up the week. Prompt pads keeps those asks as pads, the way a
+Drum Rack keeps sounds. Press a pad and its task starts on the session it
+names. Give a pad a time and it starts then, so a routine you once hid in cron
+stands here, where you can see when it runs and how it went.
+
+#### The pads
+
+Each project has its own bank of sixteen pads. Choose the bank with the
+project chooser on the device's head.
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Name | Text | The prompt's first words | The name on the pad. |
+| Prompt | Text | Empty | What the task asks. |
+| Session | A session of the project, or New | New | Where the task starts. New opens a session with the agent below. |
+| Agent | An agent from your roster | The project's agent | Who works the task when the pad opens a session. |
+| Scope | A scope | The session's | What the task may read and write (§19.12). |
+| Seat | A seat, or none | None | The machine and checkout the task runs on (§19.17). |
+| Runs at | Off, or a schedule: a time, days of the week, or every so many hours | Off | When the pad starts its task by itself. |
+| Choke | Off, or a group from 1 to 8 | Off | Pads in one group never run at once: a pad waits while another in its group runs. Use it for tasks that cannot share a seat. |
+
+Each pad shows when it last ran and how that run ended: done, stalled,
+stopped or refused. Click the result to select that task's clip.
+
+#### Views
+
+##### Folded
+
+The folded pads show the project and how many pads have a schedule.
+
+##### Compact
+
+The compact pads show the sixteen pads of the chosen project. A pad lights
+while its task runs, and its corner shows how its last run ended.
+
+##### Whole
+
+The whole pads show the sixteen pads beside the selected pad's settings.
+
+##### Full
+
+The full pads list every pad of the project with its prompt, its schedule, its
+next run, its last run and how it ended.
+
+##### Widget
+
+The widget lists the pads that have a schedule, in the order they next run.
+
+#### Rules
+
+- A pad starts a task as any launch does: through the gateway, under Scope and
+  Arm.
+- A pad that runs by itself shows its next time and keeps a record of every
+  run. Nothing runs where you cannot see it.
+- Pads in one choke group never run at once.
+- Editing a pad changes its next run. A run already made keeps the prompt it
+  ran with.
+
+#### Tips
+
+- To run the checks every morning, give a pad the prompt and set Runs at to
+  08:00.
+- To keep two builds off one seat, put their pads in one choke group.
+- To hand a pad's routine to another agent, change its Agent. The schedule
+  stays.
+
 ## 20. Expressions
 
 Expressions is where the DLW makes things you can see and hear. Particles and symbols move on a plate, and the plate sounds.
@@ -8004,7 +8181,7 @@ The widget shows the plate picture, the four macros and the light. Click the lig
 
 ## 21. Live
 
-Live holds one instrument. A torus makes the sound, and you play it from a keyboard that is the torus laid flat.
+Live holds one instrument made of three. M1′, the Torus, makes the sound; M2′ shapes it; M3′ gives it form (§16.16). A torus makes the sound, and you play it from a keyboard that is the torus laid flat.
 
 ### 21.1 Live: tracks and clips
 
@@ -8254,6 +8431,40 @@ The torus has two helices, which wind round it. A full return takes two turns. A
 | First helix | Carries the notes of the first whole-tone family. |
 | Second helix | Carries the notes of the second whole-tone family. |
 | Surface | Shows the pattern of the vibration. Touch it to excite the body at that point. |
+
+#### The Torus as M1′
+
+The Torus is M1′ whole (§16.16). The torus you see is its position 5, and the
+loop it rises from is its position 0. Its four working parts stand in its rack
+under it.
+
+| Position | What it is in the Torus | Where you work it |
+|---|---|---|
+| 0, Bimba | The implicate loop the torus rises from. It is why a pattern returns only after two turns. | It frames the instrument and has no setting. |
+| 1, Pratibimba | The reflection that answers Bimba: the second face of every value the Torus reads. | Its place in the rack. |
+| 2, Ananda | The six matrices of source values that drive the pulses, each with its digital root. | The Oscillator layer of the M′ matrices (§22.6). |
+| 3, Spanda | The two pulses, three and three and four and two, and the two helices they drive. Its fourth stage holds the context frames. | Pulse mix, Helix balance, Drive, and the context frame. |
+| 4, Quaternal Logic's frames | Inversion, which is the semitone across the rows; the twelve-fold loop; the 84 modes, each a lens in a context frame; the harmonic frames that lay out the keyboard. | Lens and context frame, Scale mapping (§21.3), Exact-ratio tuning (§21.4) and the keyboard. |
+| 5, the torus | Its measure (R 16/9, r 1), its return in 720°, the half-turn between its sides, and the bridge where its shape becomes vibration. | The surface, the View, and the Body group: Strike, Damping, Modes, Agitation and Body source. The material comes from M2′'s tattvas. |
+
+#### The keyboard
+
+The keyboard is part of the Torus, and it is the torus laid flat. Its six rows
+are the two helices, each a whole-tone family, interleaved. A semitone is a step
+from one row to the next, and moving along a row transposes without changing
+the shape under your fingers. A note appears at more than one place, so you can
+reach it from where your hand is.
+
+- Pointer, touch, the computer keys and MIDI play the same keys through one
+  path. A chord is several points struck at once.
+- Velocity and pressure set how hard each point is struck. Sustain holds the
+  notes, and each note rings on after you release it as long as Release says.
+- When more notes sound than Voices allows, the oldest makes way. Panic stops
+  every note at once.
+- When the keyboard loses focus, the notes it holds are released. A key you
+  hold while you type in a field does not play.
+- The keyboard shows its range and recolours to the mode in force.
+- An ordinary piano layout is there when you want it. It plays the same points.
 
 #### Parameters
 
@@ -8717,6 +8928,19 @@ caption: Reverb, on a fixture of readings.
 
 The planets stand where they really stand, and they move the sound, the field and anything else you route them to.
 
+Each device here is a part of one of the instruments of the map (§16.16), and it stands in that instrument's rack:
+
+| Device | Instrument | Its place |
+|---|---|---|
+| Sky (§22.1) | M2′ | Position 5: the planets, their intervals and the centres they reach. |
+| Sky modulation (§22.2) | M2′ | Position 5's routes: a planet moving any parameter. |
+| M3 clock (§22.3) | M3′ | Position 5: the wheel and its 24 anchors. Position 0, the reception, sets what the wheel receives. |
+| Deck (§22.4) | M3′ and M4′ | Its hexagrams and cards are M3′'s positions 1 and 4. Drawing, casting and the journey are M4′'s divinatory frameworks. |
+| Chakra (§22.5) | M4′ | Position 1: the energy body and its seven centres. |
+| M′ matrices (§22.6) | M1′ to M4′ | The insides of the racks: Oscillator is M1′'s Ananda; Reading is M1′'s modes with M2′'s lenses; Form is M3′; Situation is M4′'s centres. |
+| Resonator bank (§22.7) | M3′ | Position 5: it sounds the cut the wheel draws. |
+| Binding (§22.8) | M3′ | Positions 0 and 2: the codons bound into a form, and the reception from M2′'s planets. |
+
 ### 22.1 Sky
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a widget on the rail in every mode, and a device in the chain of a Technē reading.
@@ -9078,6 +9302,8 @@ The widget shows a small wheel with its position. Click the wheel to open the M3
 
 The Deck lays out a spread of cards or a hexagram for a concern that you carry. Use it to read the concern in six positions and to see how the positions answer one another. Keep the reading as part of your journey.
 
+The Deck serves two instruments. Its hexagrams and cards are M3′'s I Ching and Tarot; the reading you make with them, drawing, casting and walking the journey, is M4′'s divinatory frameworks (§16.16).
+
 #### The spreads
 
 A spread has six positions, P0 to P5. Each position asks one question.
@@ -9196,6 +9422,8 @@ The widget shows the last spread, with its theme. Click the spread to open the D
 
 The Chakra shows the seven centres of the body and what the sky does to each. Use it to see which planets reach which centre today, and how your own centres answer.
 
+The Chakra belongs to M4′ (§16.16). Your centres are the energy body that your identity matrix develops into: birth date, chart, type and profile read together give each centre its weight. From there each centre reaches down through form to its planet and its interval in the Sky, which is how the sky of the day touches your own centres.
+
 #### The centres
 
 There are seven centres and the Earth under them. The Earth grounds the Root. It is not an eighth centre.
@@ -9302,6 +9530,8 @@ The widget shows seven discs with the planet of each. Click a disc to open its c
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It opens on a chain and as a pane.
 
 The M′ matrices show what the torus is made of, in four layers. Use them to see where a value comes from, and which parameter it moves.
+
+The four layers are the insides of the instruments' racks (§16.16). Oscillator is M1′'s Ananda. Reading is M1′'s modes, each a lens in a context frame, with M2′'s lenses. Form is M3′. Situation is M4′'s seven centres. Open a layer from the rack of its instrument, or open all four here.
 
 #### The four matrices
 
@@ -10349,10 +10579,11 @@ whether an agent calls them, you press them, or a program sends them.
 ### 25.1 Two faces of one field
 
 Everything in the DLW stands in one field of six positions, and the field has
-two faces. Each face holds three of the six.
+two faces. Each face holds three of the six. The six are the app layers of the
+six M subsystems, and O:I holds all of them: four modes over six layers.
 
 <figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
-<svg viewBox="0 0 960 300" role="img" aria-label="Two faces of one field. M1-2-3′ sounds and keeps time: M1′ generates, M2′ shapes, M3′ forms; Live plays M1′ and M2′, Expressions holds all three. M4/5/0′ knows and acts: M4′ reads the situation, M5′ synthesises, M0′ is the ground; what you accept returns to the ground" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
+<svg viewBox="0 0 960 300" role="img" aria-label="Two faces of one field. M1-2-3′ sounds and keeps time: M1′ generates, M2′ shapes, M3′ forms, and Live holds all three. M4/5/0′ is the return: M4′ is Expressions, M5′ is Technē, M0′ is the ground of graphs and the planet; what you accept returns to the ground" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
 <defs><marker id="dlw-arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--dim)"/></marker><marker id="dlw-arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
 <text x="24" y="30" style="fill:var(--ink);font-size:17px;font-weight:600">M1-2-3′</text>
 <text x="104" y="30" style="fill:var(--dim);font-size:12.5px">sounds and keeps time</text>
@@ -10373,70 +10604,64 @@ two faces. Each face holds three of the six.
 <text x="332" y="122" style="fill:var(--dim);font-size:11px">the form it rings in</text>
 <line x1="160" y1="95" x2="171" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
 <line x1="308" y1="95" x2="319" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
-<path d="M24 160 V168 H308 V160" style="fill:none;stroke:var(--accent);stroke-width:1.4"/>
-<text x="166" y="186" text-anchor="middle" style="fill:var(--ink);font-size:12px">Live plays M1′ and M2′ as one instrument</text>
+<path d="M24 160 V168 H456 V160" style="fill:none;stroke:var(--accent);stroke-width:1.4"/>
+<text x="240" y="186" text-anchor="middle" style="fill:var(--ink);font-size:12px">Live holds all three, played as one instrument</text>
 <path d="M24 204 V212 H456 V204" style="fill:none;stroke:var(--line-strong);stroke-width:1.4"/>
-<text x="240" y="230" text-anchor="middle" style="fill:var(--ink);font-size:12px">Expressions holds all three in a scene</text>
+<text x="240" y="230" text-anchor="middle" style="fill:var(--ink);font-size:12px">An Expression (M4′) sets all three in a scene</text>
 <line x1="480" y1="16" x2="480" y2="250" style="stroke:var(--line);stroke-width:1"/>
 <text x="504" y="30" style="fill:var(--ink);font-size:17px;font-weight:600">M4/5/0′</text>
-<text x="584" y="30" style="fill:var(--dim);font-size:12.5px">knows and acts</text>
+<text x="584" y="30" style="fill:var(--dim);font-size:12.5px">Expressions, Technē, the ground</text>
 <rect x="504" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
-<text x="516" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ situation</text>
-<text x="516" y="92" style="fill:var(--dim);font-size:11px">Kev, on this machine:</text>
-<text x="516" y="107" style="fill:var(--dim);font-size:11px">picks among labels</text>
-<text x="516" y="122" style="fill:var(--dim);font-size:11px">the owner allows</text>
+<text x="516" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ Expressions</text>
+<text x="516" y="92" style="fill:var(--dim);font-size:11px">of M4 Nara: the</text>
+<text x="516" y="107" style="fill:var(--dim);font-size:11px">lived Expression,</text>
+<text x="516" y="122" style="fill:var(--dim);font-size:11px">your own occasion</text>
 <rect x="652" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
-<text x="664" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ synthesis</text>
-<text x="664" y="92" style="fill:var(--dim);font-size:11px">the language model:</text>
-<text x="664" y="107" style="fill:var(--dim);font-size:11px">reads, writes and</text>
-<text x="664" y="122" style="fill:var(--dim);font-size:11px">proposes</text>
+<text x="664" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ Technē</text>
+<text x="664" y="92" style="fill:var(--dim);font-size:11px">of M5 Epii: knowing</text>
+<text x="664" y="107" style="fill:var(--dim);font-size:11px">and making, built</text>
+<text x="664" y="122" style="fill:var(--dim);font-size:11px">and reviewed</text>
 <rect x="800" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
 <text x="812" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ ground</text>
-<text x="812" y="92" style="fill:var(--dim);font-size:11px">the graph: settles</text>
-<text x="812" y="107" style="fill:var(--dim);font-size:11px">by rule, checks, and</text>
-<text x="812" y="122" style="fill:var(--dim);font-size:11px">names the gaps</text>
+<text x="812" y="92" style="fill:var(--dim);font-size:11px">graph systems and</text>
+<text x="812" y="107" style="fill:var(--dim);font-size:11px">the planet, local</text>
+<text x="812" y="122" style="fill:var(--dim);font-size:11px">and collective</text>
 <line x1="640" y1="95" x2="651" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
 <line x1="788" y1="95" x2="799" y2="95" style="stroke:var(--accent);stroke-width:1.3" marker-end="url(#dlw-arrow-b)"/>
 <path d="M868 140 V164 H572 V144" style="fill:none;stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
 <text x="720" y="182" text-anchor="middle" style="fill:var(--ink);font-size:12px">5/0: what you accept becomes ground,</text>
 <text x="720" y="198" text-anchor="middle" style="fill:var(--ink);font-size:12px">and the next act starts from it</text>
-<text x="720" y="230" text-anchor="middle" style="fill:var(--dim);font-size:12px">Ta-Onta reaches all three, in every mode</text>
+<text x="720" y="230" text-anchor="middle" style="fill:var(--dim);font-size:12px">the agents act through every layer (§25.2)</text>
 <text x="480" y="282" text-anchor="middle" style="fill:var(--dim);font-size:12px">One field: turning from one face to the other keeps the coordinate, the moment and the reading.</text>
 </svg>
-<figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">The two faces. The first sounds and keeps time; the second knows and acts, and its synthesis returns as ground.</figcaption>
+<figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">The two faces. The first sounds and keeps time; the second is the return, Expressions and Technē, and what you accept there becomes ground.</figcaption>
 </figure>
 
-**M1-2-3′** sounds and keeps time. M1′ generates: the torus and its two
-pulses are the only source of sound in the DLW (§21.2). M2′ shapes what M1′
-makes. It is the synth, moved by the planets of the live sky and tuned and
-filtered by the lenses, and it makes no sound of its own (§22.1, §22.2). Live
-plays M1′ and M2′ together as one instrument (§9). M3′ closes the pattern into
-form: the 64 codons, the clock of 360 degrees and its 24 fixed points, and the
-deck (§22.3, §22.4). Expressions holds all three in a scene, the torus at the
-centre, the shaped field round it, and the symbols that give it form (§7).
+**M1-2-3′** sounds and keeps time, and Live holds all three. M1′ generates:
+the torus and its two pulses are the only source of sound in the DLW (§21.2).
+M2′ shapes what M1′ makes. It is the synth, moved by the planets of the live
+sky and tuned and filtered by the lenses, and it makes no sound of its own
+(§22.1, §22.2). M3′ closes the pattern into form: the 64 codons, the clock of
+360 degrees and its 24 fixed points, and the deck (§22.3, §22.4). Live plays
+them as one instrument (§9).
 
-**M4/5/0′** knows and acts, and an agent works in it. Each of its three
-positions has its own kind of mind.
+**M4/5/0′** is the return: the layers where what sounds is lived, known and
+grounded.
 
-- **M4′ reads the situation.** Position 4 is context: the why and the where of
-  an act. Its frame holds a whole world inside it, your own (§24.9). On the
-  agent side, M4′ is Kev, a small decision model that runs on your machine. It
-  reads the situation an act stands in, not the item in front of it, and it
-  answers only typed questions over labels an owner allows (§19.20). What it
-  reads never leaves the machine.
-- **M5′ synthesises.** Position 5 is where things come together and go back.
-  On the agent side, M5′ is the language model each agent works with (§19.4).
-  It reads, writes, quotes, explains and argues. What it writes is a proposal
-  until it is reviewed.
-- **M0′ is the ground.** Position 0 is where everything comes from: the Bimba
-  map, your wikis and sources, and the rules of Quaternal Logic. On the agent
-  side, M0′ is the graph knowledge system. It settles by rule what can be
-  settled, checks every answer against the map, and where the map has a gap
-  it names the gap as a question instead of filling it.
+- **M4′ is Expressions,** the application of M4 Nara. Position 4 is context:
+  the why and the where of an act. An Expression sets the field of M1-2-3′ in
+  your own occasion, the torus at the centre, the shaped field round it and the
+  symbols that give it form (§7).
+- **M5′ is Technē,** the application of M5 Epii. Position 5 is where things
+  come together and go back: knowledge, construction and review, worked through
+  Technē's instruments (§17).
+- **M0′ is the ground:** the graph systems and the planet. Position 0 is where
+  everything comes from: the Bimba map and your knowledge graphs, and the
+  continuity between your own World and the shared field (§24).
 
-The two ends of M4/5/0′ meet. What M5′ writes and you accept goes back into
-M0′ as ground, and the next act starts from it. This is the 5/0 of the field:
-a synthesis settles into the ground of what comes next.
+The two ends meet. What Technē articulates and you accept goes back into M0′
+as ground, and the next act starts from it. This is the 5/0 of the field: a
+synthesis settles into the ground of what comes next.
 
 The two faces are one field seen from opposite sides. Turning from one to the
 other keeps the coordinate you stand on, the moment and the reading. It
@@ -10445,28 +10670,39 @@ it came from or who owns it.
 
 ### 25.2 One act, in order
 
-Every act an agent takes passes through M4/5/0′ in the same order.
+The agents are not layers of the field. The six Epi-Logos agents, one for
+each M domain (the Anuttara, Paramaśiva, Paraśakti, Mahāmāyā, Nara and Epii
+agents), act through the products and Ta-Onta's organs (§25.3). The models they
+use are AIKit's: the language model each agent works with (§19.4), and Kev, the
+small decision model on your machine that answers typed questions over labels
+an owner allows (§19.20). The Nara and Epii agents use them most; no model
+belongs to one agent or one position. Quaternal Logic sets the questions and
+settles what its rules can.
+
+Every act an agent takes runs in the same order.
 
 <figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
-<svg viewBox="0 0 960 200" role="img" aria-label="One act in order: M0′ settles what the rules can; M4′ picks where a choice is open; M5′ writes where reading or writing is needed; M0′ checks; you decide; the owner keeps it and it becomes ground. When nothing is open, no model is asked" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
+<svg viewBox="0 0 960 200" role="img" aria-label="One act in order: the rules settle what they can; Kev picks where a choice is open; the language model writes where reading or writing is needed; the rules check; you decide; the owner keeps it and it becomes ground. When nothing is open, no model is asked" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
 <defs><marker id="dlw-arrow-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--dim)"/></marker><marker id="dlw-arrow-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
 <path d="M90 50 C90 22, 558 22, 558 48" style="fill:none;stroke:var(--accent);stroke-width:1.3;stroke-dasharray:5 4" marker-end="url(#dlw-arrow-d)"/>
 <text x="324" y="20" text-anchor="middle" style="fill:var(--ink);font-size:12px">when nothing is open, no model is asked</text>
 <rect x="20" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
-<text x="32" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ settles</text>
-<text x="32" y="92" style="fill:var(--dim);font-size:11px">what the rules can:</text>
-<text x="32" y="107" style="fill:var(--dim);font-size:11px">what was seen, and</text>
-<text x="32" y="122" style="fill:var(--dim);font-size:11px">what follows from it</text>
+<text x="32" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">The rules settle</text>
+<text x="32" y="92" style="fill:var(--dim);font-size:11px">Quaternal Logic over</text>
+<text x="32" y="107" style="fill:var(--dim);font-size:11px">the ground: what was</text>
+<text x="32" y="122" style="fill:var(--dim);font-size:11px">seen, what follows</text>
 <rect x="176" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
-<text x="188" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ picks</text>
+<text x="188" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">Kev picks</text>
 <text x="188" y="92" style="fill:var(--dim);font-size:11px">where a choice is</text>
 <text x="188" y="107" style="fill:var(--dim);font-size:11px">open, or abstains</text>
+<text x="188" y="122" style="fill:var(--dim);font-size:11px">(AIKit, this machine)</text>
 <rect x="332" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
-<text x="344" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ writes</text>
+<text x="344" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">The model writes</text>
 <text x="344" y="92" style="fill:var(--dim);font-size:11px">where reading or</text>
 <text x="344" y="107" style="fill:var(--dim);font-size:11px">writing is needed</text>
+<text x="344" y="122" style="fill:var(--dim);font-size:11px">(AIKit)</text>
 <rect x="488" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
-<text x="500" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ checks</text>
+<text x="500" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">The rules check</text>
 <text x="500" y="92" style="fill:var(--dim);font-size:11px">each pick and claim</text>
 <text x="500" y="107" style="fill:var(--dim);font-size:11px">against the rules, and</text>
 <text x="500" y="122" style="fill:var(--dim);font-size:11px">says why it refuses</text>
@@ -10490,20 +10726,20 @@ Every act an agent takes passes through M4/5/0′ in the same order.
 <figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">One act, in order. The ground goes first and last; a model is asked only where the rules leave something open.</figcaption>
 </figure>
 
-The ground goes first. M0′ sets out what was seen and what follows from it by
-rule, and what is still open. If nothing is open, no model is asked. A choice
-among labels an owner allows goes to M4′, which picks one or abstains, in the
-background unless the act must wait. Reading and writing go to M5′. M0′ then
-checks every pick and every claim against its rules and names its reason when
-it refuses one. You accept, change or refuse what is left. The product that
-owns the thing saves it, reads it back and makes it findable, and from then on
-it is ground for the next act.
+The ground goes first. Quaternal Logic sets out what was seen and what follows
+from it by rule, and what is still open. If nothing is open, no model is asked.
+A choice among labels an owner allows goes to Kev, which picks one or abstains,
+in the background unless the act must wait. Reading and writing go to the
+language model. Quaternal Logic then checks every pick and every claim against
+its rules and names its reason when it refuses one. You accept, change or
+refuse what is left. The product that owns the thing saves it, reads it back
+and makes it findable, and from then on it is ground for the next act.
 
-| Position | What works there | What it does | What it never does |
+| Step | What works there | What it does | What it never does |
 |---|---|---|---|
-| M0′ ground | The graph knowledge system: the Bimba map, your wikis and sources, the rules of Quaternal Logic | Settles by rule, checks every answer, names each gap as a question, keeps what you accept | Guess, or fill a gap with a likely answer |
-| M4′ situation | Kev, the Decision helper (§19.20), on your machine | Picks among the labels an owner allows, in the situation of the act, or abstains | Act, write, answer the collaboration gate, or send what it reads off the machine |
-| M5′ synthesis | The agent's language model (§19.4) | Reads, writes, quotes, explains and proposes | Make its own proposal true |
+| Settle and check | Quaternal Logic's rules over the ground: the Bimba map, your wikis and sources | Settles by rule, checks every answer, names each gap as a question, keeps what you accept | Guess, or fill a gap with a likely answer |
+| Pick | Kev, AIKit's decision model on your machine, through the Decision helper (§19.20) | Picks among the labels an owner allows, in the situation of the act, or abstains | Act, write, answer the collaboration gate, or send what it reads off the machine |
+| Write | The agent's language model, through AIKit (§19.4) | Reads, writes, quotes, explains and proposes | Make its own proposal true |
 
 Each result keeps the mark of how it was reached: seen in a source, settled by
 rule, picked by the helper, written by an agent, accepted by you. A later step
@@ -10557,9 +10793,9 @@ so, and nothing stands in for it.
 ### 25.5 Agents and M1-2-3′
 
 Agents reach the other face through the modes that play it, with the same six
-powers. In Live an agent writes clips and automation for the torus and the
-synth that shapes it, M1′ and M2′ together, and keeps the take you choose. In
+powers. In Live an agent writes clips and automation for the torus, the synth
+that shapes it and the clock that keeps it, and keeps the take you choose. In
 Expressions it composes a scene over all three: it finds premade characters,
 scenes and material before it makes anything new, steps the scene in time, and
-saves what it made as material others can reuse, tied to its sources. What M0′
-knows and M5′ writes can then be seen and heard, not only read.
+saves what it made as material others can reuse, tied to its sources. What the
+ground knows and an agent writes can then be seen and heard, not only read.
