@@ -1,38 +1,38 @@
 # Technē dual-reading acceptance bridge
 
-**Standing:** owner-ratified experience/planning amendment, 2026-09-16.  
+**Standing:** owner-ratified experience/planning amendment, 2026-09-16; revised 19 Oct 2026, when the owner withdrew the four-and-two reading (Technē's instruments as M0′–M5′) because it does not hold what the coordinate system says of those layers. The instruments are named by their work; the one-field identity law (§3), native ownership (§2) and the acceptance cases (§5) stand.  
 **Campaign owner:** O:I #65.  
 **Architecture source:** `EpiLogos/QL-MEF/docs/L5-TECHNE-DUAL-READING-LOCK.md`.  
-**Scope:** binds the corrected Epi 3:3 / 4:2 relation into the existing #65 C0–C5 campaign without creating another campaign, renderer, graph, Agent runtime, Wiki, Scene store or desktop shell.
+**Scope:** binds the Epi 3:3 / Technē relation into the existing #65 C0–C5 campaign without creating another campaign, renderer, graph, Agent runtime, Wiki, Scene store or desktop shell.
 
 ---
 
 ## 0. What changed for the experience campaign
 
-The current Epi field has two principal application readings over the **same selected world/subject/source field**:
+The current Epi field has two operating modes over the **same selected world/subject/source field**:
 
 ```text
 3:3 EXPRESSION READING
     living/material/experiential
 
-4:2 TECHNĒ READING
+TECHNĒ
     deep/professional/research-authoring
 ```
 
 The earlier grouping of `Canvas · Timeline · Place · Story · Palace · Expressions` as six peer Technē instruments is superseded.
 
-The 4:2 deep instruments are now read as:
+Technē's deep instruments are:
 
 ```text
-M0′  Project / Wiki / Graph
-M1′  Canvas / Constellation
-M2′  Relation Field / Timeline
-M3′  Journey / Expression Scenes
-M4′  Places / World
-M5′  Palace / integral articulation and Return
+Project / Wiki / Graph
+Canvas / Constellation
+Relation Field / Timeline
+Journey / Expression Scenes
+Places / World
+Palace / integral articulation and Return
 ```
 
-Expressions remains the conjugate 3:3 body of the same M′ field rather than the sixth 4:2 peer.
+They carry no M′ numbers. Expressions remains the 3:3 body of the same field, not a sixth Technē instrument.
 
 This amendment does not change generic O:I ownership. Central, Actuation, AIKit, Factory, Workcell, QL-MEF and O:I keep their native domains.
 
@@ -62,12 +62,12 @@ The acceptance pass must begin by proving that each apparent instrument is opera
 
 | Experience | Native substrate to consume |
 |---|---|
-| M0′ Project/Wiki/Graph | Central World + Work/ProjectCentral; AIKit ProjectMap/SemanticWiki/Search/KnowledgeRoute; current O:I Wiki/graph projection; optional QL overlays |
-| M1′ Canvas | existing Wiki/ProjectMap subjects + Research Canvas interaction body + QL constellation/geometry where warranted |
-| M2′ Relation/Timeline | real typed relations + Research Canvas Timeline/relation field + Central DAY/NOW + AgentSession + Factory activity/evidence |
-| M3′ Journey | Research Canvas Story/Journey interaction + real O:I Expression Scene refs |
-| M4′ Places/World | Research Canvas Place/Map/Street/Globe + historical-geography ontology + real world/Earth/M2/M3/M4 readings where installed |
-| M5′ Palace | real Wiki subjects/Views/Journeys/Expressions/Sources composed through current O:I presentation/Expression owners |
+| Project/Wiki/Graph | Central World + Work/ProjectCentral; AIKit ProjectMap/SemanticWiki/Search/KnowledgeRoute; current O:I Wiki/graph projection; optional QL overlays |
+| Canvas | existing Wiki/ProjectMap subjects + Research Canvas interaction body + QL constellation/geometry where warranted |
+| Relation/Timeline | real typed relations + Research Canvas Timeline/relation field + Central DAY/NOW + AgentSession + Factory activity/evidence |
+| Journey | Research Canvas Story/Journey interaction + real O:I Expression Scene refs |
+| Places/World | Research Canvas Place/Map/Street/Globe + historical-geography ontology + real world/Earth/M2/M3/M4 readings where installed |
+| Palace | real Wiki subjects/Views/Journeys/Expressions/Sources composed through current O:I presentation/Expression owners |
 | 3:3 Expression | generic O:I Expression/Profile/Scene/Edition/Portal substrate specialised by current Ta-Onta/QL bindings |
 
 Acceptance fails if a UI succeeds only by creating a second semantic store, project tree, timeline truth, scene ontology, agent runtime or renderer-owned identity.
@@ -110,7 +110,7 @@ For any round that includes QL/Epi deep instruments:
 5. bind current Ta-Onta/Agent profiles, Actions, authority and providers without inventing missing runtime support;
 6. distinguish repository readiness, installed readiness and human-experience readiness.
 
-C0 should explicitly catch the obsolete assumption that Expressions is the sixth peer 4:2 instrument.
+C0 should explicitly catch the obsolete assumption that Expressions is the sixth peer Technē instrument.
 
 ## C1 — prepare the real world
 
@@ -145,13 +145,13 @@ The action must use native refs/Actions and preserve source standing.
 Run the joined path:
 
 ```text
-M0′ Project/Wiki/Graph
-  -> M1′ Canvas
-  -> M2′ Relation/Timeline
-  -> M3′ Journey
-  -> M4′ Places/World
-  -> M5′ Palace
-  -> Return to M0′ ground
+Project/Wiki/Graph
+  -> Canvas
+  -> Relation/Timeline
+  -> Journey
+  -> Places/World
+  -> Palace
+  -> Return to the Project ground
 ```
 
 This is an integration spine, not a mandatory user workflow. A missing facet may be skipped only with a truthful unavailable/degraded reading; the actor must not silently replace the subject.
@@ -195,7 +195,7 @@ No repository test can substitute for this H/EX verdict.
 
 # 5. Required joined acceptance cases
 
-## TD1 — M0′ is the existing World
+## TD1 — the Project instrument is the existing World
 
 Open a real Central/ProjectCentral Project, locate a subject through AIKit Search/Wiki/ProjectMap and move through available LIST/TREE/GRAPH projections.
 
@@ -209,13 +209,13 @@ Prove:
 
 ## TD2 — Canvas construction
 
-Take the same subject/whole into M1′ Canvas.
+Take the same subject/whole into the Canvas.
 
 Prove manual presentation state stays distinct from semantic relation mutation, while explicit relation/member Actions reach the actual owner.
 
 QL/constellation layout may inform presentation only when source-backed.
 
-## TD3 — M2 relation/time truth
+## TD3 — relation/time truth
 
 Use a case containing both datable and non-datable relation material.
 
@@ -223,7 +223,7 @@ Prove the UI preserves distinctions among chronology, cause/influence/echo/insta
 
 Where DAY/NOW/Run/Session are involved, occurrence, receipt and validity remain distinguishable.
 
-## TD4 — M3 cross-cut / Journey → Expression
+## TD4 — the cross-cut / Journey → Expression
 
 Compose a Journey from real refs and persist/resolve it through real Expression Scene identity.
 
@@ -238,7 +238,7 @@ open Journey
 
 Prove one Scene identity and one source basis. No Journey shadow scene store.
 
-## TD5 — M4 World / Places depth
+## TD5 — World / Places depth
 
 First prove one historical-geography case:
 
@@ -259,25 +259,15 @@ planetary/solar condition
 
 No renderer-local astronomical recomputation and no fake provider availability.
 
-## TD6 — M5 Palace / Return
+## TD6 — Palace / Return
 
-Compose several real subjects/Expressions/Views/Journey elements into the M5′ whole.
+Compose several real subjects/Expressions/Views/Journey elements into the Palace's whole.
 
 Prove arrangement is composition/presentation state; each underlying object remains independently addressable; one recognised result can return as attributable Wiki/source proposal/accepted knowledge through the native owner.
 
 ## TD7 — Anima / Technē Agency
 
-For one selected coordinate with both readings available:
-
-```text
-Anima_i
-    operates/co-refers to 3:3 Expression
-
-Aletheia_i in Technē_i role
-    operates/co-refers to M_i′ deep instrument
-```
-
-Prove both use the ordinary Actuation + AIKit + O:I session/Action infrastructure and preserve the canonical Guardian_i identity.
+For one selected subject with both modes available, Anima, the Expressions companion, works the 3:3 Expression and Epii, Technē's companion, works its instruments (the former "Aletheia_i in Technē_i role", bound to the M_i′ instrument, went with the four-and-two reading). Prove both use the ordinary Actuation + AIKit + O:I session/Action infrastructure and preserve the canonical Guardian_i identity.
 
 Do not create twelve bespoke runtime Agents merely because twelve operative profiles are conceptually distinguishable.
 
@@ -313,10 +303,9 @@ Anima_i = M_i × S4′
 
 Aletheia_i = M_i × S5′
     disclosure/Return operator
-
-Technē_i
-    = Aletheia_i when situated in and operating M_i′ through its deep instrument
 ```
+
+The former third line, Technē_i = Aletheia_i operating M_i′ through "its" deep instrument, went with the four-and-two reading: no instrument is an M_i′.
 
 The campaign must keep these non-identities visible:
 
@@ -335,13 +324,13 @@ returned reading != accepted source mutation
 
 The upcoming convergence pass should consume the existing lanes rather than restart them.
 
-- **M0′:** integrate the already-landed Central/ProjectCentral + AIKit ProjectMap/Wiki/Search + O:I graph work; no greenfield Projects application.
-- **M1′:** mature Canvas professional interaction over the shared adapter.
-- **M2′:** widen Timeline planning to the general Relation Field while preserving chronology/evidence semantics.
-- **M3′:** make Journey the explicit 4:2↔3:3 mediator through Expression Scenes.
-- **M4′:** deepen Places into World/Earth context and consume existing solar/planetary producers where real.
-- **M5′:** converge Palace onto real Expression/subject composition and explicit Return.
-- **Expression:** treat as the 3:3 body/cross-cut, not a sixth 4:2 peer.
+- **Project:** integrate the already-landed Central/ProjectCentral + AIKit ProjectMap/Wiki/Search + O:I graph work; no greenfield Projects application.
+- **Canvas:** mature professional interaction over the shared adapter.
+- **Relation Field:** widen Timeline planning to the general Relation Field while preserving chronology/evidence semantics.
+- **Journey:** make it the explicit mediator between Technē and Expressions through Expression Scenes.
+- **World:** deepen Places into World/Earth context and consume existing solar/planetary producers where real.
+- **Palace:** converge onto real Expression/subject composition and explicit Return.
+- **Expression:** treat as the 3:3 body/cross-cut, not a sixth Technē instrument.
 - **Agency:** materialise instrument-attuned Anima/Technē profiles through existing Ta-Onta + Actuation + AIKit Praxis, not a new runtime.
 - **UI:** retain the common Expressions-family visual/interaction grammar while each instrument keeps its native controls.
 
@@ -356,17 +345,17 @@ This amendment is successfully propagated when the active convergence tickets an
 ```text
 real World / Project ground
         ↓
-M0′ Project/Wiki/Graph
+Project/Wiki/Graph
         ↓
-M1′ Canvas
+Canvas
         ↓
-M2′ Relation/Timeline
+Relation/Timeline
         ↓
-M3′ Journey ↔ Expression Scenes ↔ 3:3 lived Expression
+Journey ↔ Expression Scenes ↔ 3:3 lived Expression
         ↓
-M4′ Places/World
+Places/World
         ↓
-M5′ Palace / articulation / Recognition
+Palace / articulation / Recognition
         ↓
 Return to native World/Wiki/source
 ```

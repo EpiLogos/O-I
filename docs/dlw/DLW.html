@@ -251,7 +251,9 @@ answer. <strong>Arrangement view</strong> lays the same material along one ruler
 can see the course of it: today from first entry to last, every thread of
 agent work with a needle showing where it has got to, an Expression&#39;s scenes
 in order with their sound beneath them, history from deep time to this
-morning. Tab moves you between the two.</p>
+morning. Tab moves you between the two. A third view, Pane view, holds the
+instruments you work in at full size: the world you stand on, a page, the
+torus.</p>
 <p>Select a clip, and the bottom of the window shows it in detail. Live splits
 that area in two, and so does the DLW. <strong>Clip view</strong> shows the thing itself,
 with everything you can do to it. <strong>Device view</strong> shows what is working on it.</p>
@@ -570,11 +572,12 @@ timeline, picture and sound together.</p>
 <h2 id="10-working-the-window"><a class="anchor" href="#10-working-the-window" aria-hidden="true">#</a>10. Working the window</h2>
 <p>Everything in this section is the same in every kind of work. Learn it once.</p>
 <h3 id="10-1-the-window"><a class="anchor" href="#10-1-the-window" aria-hidden="true">#</a>10.1 The window</h3>
-<p>The window has five parts, and each one has one job. The transport across the
-top runs things. The browser down the left holds what you can bring in. Your
-work fills the middle. The widget rail on the right keeps what you want at
-hand. The detail area along the bottom shows what is selected and what is
-working on it.</p>
+<p>The window has six parts, and each has one job. The transport across the top
+runs things. The browser down the left holds what you can bring in. The main
+area in the middle holds the work of the mode you are in. The widget rail on
+the right keeps what you want at hand. The detail area along the bottom shows
+what is selected and the chain that works on it. The status bar at the foot
+says what a control does.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -591,40 +594,336 @@ working on it.</p>
 <td>Find material, instruments and devices, and bring them in.</td>
 </tr>
 <tr>
-<td>Panes</td>
-<td>Hold your work. Each pane holds one instrument.</td>
+<td>Main area</td>
+<td>Hold the mode&#39;s work in one of three views: Session view, Arrangement view or Pane view (§10.2).</td>
 </tr>
 <tr>
 <td>Widget rail</td>
 <td>Keep context at hand in every kind of work: the agent you are talking to, the packet, the trail, a terminal, the sky.</td>
 </tr>
 <tr>
-<td>Detail</td>
-<td>See the selected clip, and the chain of devices that works on it, one above the other.</td>
+<td>Detail area</td>
+<td>See the selected clip in Clip view, and the chain that works on it in Device view, one above the other.</td>
 </tr>
 <tr>
 <td>Status bar</td>
-<td>Read what any control does. Show Clip view, Device view, or both.</td>
+<td>Read what a control does, or what went wrong, in one line. Switch Clip view, Device view and the mixer.</td>
 </tr>
 </tbody></table>
 </div>
-<p>To hide a part, click its toggle. The other parts grow to fill the space.</p>
-<h3 id="10-2-panes-and-layouts"><a class="anchor" href="#10-2-panes-and-layouts" aria-hidden="true">#</a>10.2 Panes and layouts</h3>
+<h4 id="the-transport"><a class="anchor" href="#the-transport" aria-hidden="true">#</a>The transport</h4>
+<p>Every control has one place in the transport, and the place is the same in
+every mode. A control that a mode does not use stays in its place, dimmed, so
+that nothing slides into its space. From the left:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Controls</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Browser</td>
+<td>Show or hide the browser.</td>
+</tr>
+<tr>
+<td>Time</td>
+<td>Link, Tap, Tempo, Time signature, Metronome, Quantize.</td>
+</tr>
+<tr>
+<td>Key</td>
+<td>Key, root and scale.</td>
+</tr>
+<tr>
+<td>Position</td>
+<td>Follow, then Position.</td>
+</tr>
+<tr>
+<td>Play</td>
+<td>Play, Stop, Record.</td>
+</tr>
+<tr>
+<td>Recording</td>
+<td>Overdub, Arm, Re-enable, Capture.</td>
+</tr>
+<tr>
+<td>Loop</td>
+<td>Where the loop starts, Punch in, Loop, Punch out, and the loop&#39;s length.</td>
+</tr>
+<tr>
+<td>Hands</td>
+<td>Draw, the playing keys, Key map, MIDI map.</td>
+</tr>
+<tr>
+<td>Readings</td>
+<td>Rate, Load.</td>
+</tr>
+<tr>
+<td>Mode</td>
+<td>Live, Central, Factory, Expressions, Technē.</td>
+</tr>
+<tr>
+<td>View</td>
+<td>Session, Arrangement, Pane.</td>
+</tr>
+<tr>
+<td>Rail</td>
+<td>Show or hide the widget rail.</td>
+</tr>
+</tbody></table>
+</div>
+<p>What each control does in each mode is in §10.5. Above the controls, the
+title line names what you have selected, its world and its day, with Back and
+Forward at its head (§10.7). The moment you stand in shows in Position.
+Instruments are not in the transport: they come from the browser. Settings
+open in a window of their own with ⌘, as Live&#39;s do, and never take the main
+area.</p>
+<h4 id="the-bottom-right"><a class="anchor" href="#the-bottom-right" aria-hidden="true">#</a>The bottom right</h4>
+<p>You switch Clip view and Device view where Live does, at the right end of the
+status bar.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clip</td>
+<td>Brings Clip view forward. The switch carries a small picture of the selected clip. ▲ beside it shows or hides Clip view.</td>
+</tr>
+<tr>
+<td>Device</td>
+<td>Brings Device view forward. The switch carries the selected track&#39;s name and a small picture of its chain. ▲ beside it shows or hides Device view. Right-click it for a list of the chain&#39;s devices, and choose one to go to it.</td>
+</tr>
+<tr>
+<td>Mixer</td>
+<td>Shows or hides the mixer row of every track (§16.6).</td>
+</tr>
+</tbody></table>
+</div>
+<p>⌥-click Clip or Device to show both views at once, one above the other. When
+only one shows, ⇧Tab switches to the other. The rest of the status bar is one
+line: what the control under the pointer does, or what went wrong.</p>
+<h4 id="showing-hiding-and-sizing"><a class="anchor" href="#showing-hiding-and-sizing" aria-hidden="true">#</a>Showing, hiding and sizing</h4>
+<p>The browser, the rail and the detail area work alike. Each has a toggle at the
+edge it stands on, a key, and an edge you drag to size it. Hide one and the
+main area takes its room. Show it again and it comes back at the size you
+left it.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Toggle</th>
+<th>Key</th>
+<th>To size it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Browser</td>
+<td>Top left</td>
+<td>⌥⌘B or ⌥⌘5</td>
+<td>Drag its right edge.</td>
+</tr>
+<tr>
+<td>Pool</td>
+<td>The foot of the browser</td>
+<td>⌥⌘6</td>
+<td>Drag the line between it and the browser.</td>
+</tr>
+<tr>
+<td>Widget rail</td>
+<td>Top right</td>
+<td>⌥⌘8</td>
+<td>Drag its left edge.</td>
+</tr>
+<tr>
+<td>Clip view</td>
+<td>▲ beside Clip, bottom right</td>
+<td>⌥⌘3</td>
+<td>Drag the line above the detail area.</td>
+</tr>
+<tr>
+<td>Device view</td>
+<td>▲ beside Device, bottom right</td>
+<td>⌥⌘4</td>
+<td>Drag the line above the detail area.</td>
+</tr>
+<tr>
+<td>Clip view and Device view together</td>
+<td>—</td>
+<td>⌥⌘L</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Mixer</td>
+<td>Mixer, bottom right</td>
+<td>⌥⌘M</td>
+<td>—</td>
+</tr>
+</tbody></table>
+</div>
+<p>⌃⌘F lets the window fill the screen.</p>
+<h3 id="10-2-session-view-arrangement-view-and-pane-view"><a class="anchor" href="#10-2-session-view-arrangement-view-and-pane-view" aria-hidden="true">#</a>10.2 Session view, Arrangement view and Pane view</h3>
+<p>Each mode has one set of tracks, and the main area shows it in one of three
+views. Session view lays the tracks across a grid of clips that you launch in
+any order. Arrangement view lays the same tracks along one ruler, so that you
+can follow the course of the work. Pane view holds the instruments you work in
+at full size: the world you stand on, a page, a graph, the torus.</p>
+<p>Switch with Session, Arrangement and Pane at the right of the transport, or
+with the keys:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>To</th>
+<th>Press</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Switch between Session view and Arrangement view</td>
+<td>Tab. From Pane view, Tab returns to the view you left.</td>
+</tr>
+<tr>
+<td>Show Pane view</td>
+<td>⌥⌘9. Press it again to return to the view you left.</td>
+</tr>
+<tr>
+<td>Open a second window</td>
+<td>⇧⌘W. Each window shows its own view of the same set, as Live&#39;s second window does: the grid on one screen, the ruler or the panes on the other.</td>
+</tr>
+</tbody></table>
+</div>
+<p>A mode has one selection: a track, a clip, a row, a stretch of time or a
+device. Every view and the detail area show the same one, and switching
+changes only what you see. What you selected stays selected, and what runs
+keeps running: a task launched in Session view runs on while you read its
+course in Arrangement view. Clip view keeps the selected clip. Where the clip
+has a place in the view you switch to, that place is selected and scrolled
+into sight. Where it has none, as with a task that has not yet run, its
+track&#39;s head lights. The browser, the rail and the detail area stay as they
+were.</p>
+<p>Only Clip view can take the main area from these three. Press ⌥⌘E and Clip
+view fills the main area while you edit. Press it again and the view you left
+comes back as it was.</p>
+<h4 id="pane-view"><a class="anchor" href="#pane-view" aria-hidden="true">#</a>Pane view</h4>
 <p>Panes let you keep several things in front of you at once: a document beside
 the day it belongs to, an agent&#39;s thread beside the files it is changing, the
 timeline beside the place it describes.</p>
+<p>A pane holds one device&#39;s Full view: its material at full size, with no
+controls on it (§16.3). The controls stay in Device view below. Focus a pane,
+and Device view shows the chain the device stands on, with the device
+selected. A device that stands on no chain shows there alone.</p>
 <p>To open an instrument, drag it from the browser into a pane. You can also
 click it, and it opens in the pane that has focus. To split a pane, click ⊞.
 Then select Beside, Below or Four ways. To move a tab, drag it onto the centre
-of another pane. To make a new split, drag a tab onto the edge of a pane.</p>
+of another pane. To make a new split, drag a tab onto the edge of a pane.
+Double-click a pane&#39;s tab and the pane fills the main area; double-click it
+again and the other panes come back.</p>
 <p>A pane follows what you select, unless you pin it. A pinned pane keeps its
 subject while you work elsewhere.</p>
 <p>Some instruments come in more than one build, the way Live has more than one
 reverb. Each build answers to the same controls, so you can change the build
 without losing your settings.</p>
-<p>A layout is an arrangement of panes, instruments, widgets and detail. Each kind
-of work opens with its own layout, and the workspace you are in remembers
-which. To keep an arrangement, keep it into a workspace in the pool.</p>
+<p>A layout is how a mode&#39;s window stands: the view in front, the panes and what
+they hold, the widgets on the rail, and the sizes of the browser, the rail and
+the detail area. Each kind of work opens with its own layout, and the
+workspace you are in remembers which. To keep a layout, keep it into a
+workspace in the pool.</p>
+<h4 id="the-three-views-side-by-side"><a class="anchor" href="#the-three-views-side-by-side" aria-hidden="true">#</a>The three views side by side</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Session view</th>
+<th>Arrangement view</th>
+<th>Pane view</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>For</td>
+<td>Trying things: launching clips in any order, setting several going at once, keeping today&#39;s work to hand.</td>
+<td>Following and shaping the course of the work: what happened, in what order, and for how long.</td>
+<td>Working in the material itself, at full size.</td>
+</tr>
+<tr>
+<td>What it acts on</td>
+<td>Tracks, clips, empty slots, rows and the Main track.</td>
+<td>Tracks, clips in time and the lanes under them, markers, the loop brace, and stretches of time.</td>
+<td>The device in each pane, and the material inside it: a page&#39;s words, a world&#39;s places, a graph&#39;s nodes.</td>
+</tr>
+<tr>
+<td>What you do there</td>
+<td>Launch and stop clips and rows. Start a clip in an empty slot. Drag clips between slots. Group and fold tracks.</td>
+<td>Place, move, trim and split clips. Select a stretch of time. Audition takes and comp them. Draw automation. Set the loop.</td>
+<td>Open, split, move and pin panes. Work the material with the instrument&#39;s own tools.</td>
+</tr>
+<tr>
+<td>Selecting</td>
+<td>Click a clip, a slot, a track&#39;s head or a row. The arrow keys move the selection.</td>
+<td>Click a clip or a lane, or drag across a stretch of time.</td>
+<td>Select inside the instrument. An event you select on the Timeline is the mode&#39;s selected clip.</td>
+</tr>
+<tr>
+<td>Focus</td>
+<td>⌥1</td>
+<td>⌥2</td>
+<td>⌥9</td>
+</tr>
+<tr>
+<td>Starting things</td>
+<td>Enter, or a clip&#39;s ▶, launches the clip. A row&#39;s ▶ launches the row.</td>
+<td>Space plays from the insert marker, and a clip plays when the playhead reaches it.</td>
+<td>Space plays the transport, and the instrument plays what the transport plays.</td>
+</tr>
+<tr>
+<td>Its forms</td>
+<td>Tracks narrow or wide, groups folded or open, the mixer row shown or hidden.</td>
+<td>Tracks folded to one line or open with their lanes, zoomed from the whole span to one clip, with the overview strip above.</td>
+<td>One pane, two beside or below each other, or four; or one pane filling the area.</td>
+</tr>
+<tr>
+<td>While it loads</td>
+<td>The tracks it last showed stand at once. Slots still being read are dimmed.</td>
+<td>The ruler and the tracks stand at once. Clips still being read are dimmed.</td>
+<td>Each pane shows its device&#39;s last picture, dimmed, until the device answers.</td>
+</tr>
+<tr>
+<td>Empty</td>
+<td>The grid waits for a drop: a world in Central, an agent in Factory, an Expression in Expressions.</td>
+<td>The ruler waits for what you record or place.</td>
+<td>An empty pane waits for an instrument from the browser.</td>
+</tr>
+<tr>
+<td>Switched off</td>
+<td>A deactivated clip is grey and does not launch. A track whose activator is off is dimmed.</td>
+<td>A deactivated clip is grey, and the playhead passes it by.</td>
+<td>A device that is off draws its material dimmed.</td>
+</tr>
+<tr>
+<td>When its owner cannot be reached</td>
+<td>The tracks keep what was last read, dimmed, and nothing launches.</td>
+<td>The same, on the ruler.</td>
+<td>The pane keeps its device&#39;s last picture, dimmed, and the device&#39;s light is dark.</td>
+</tr>
+<tr>
+<td>When something fails</td>
+<td>What failed stays as it was last read. One line in the status bar says what failed.</td>
+<td>The same.</td>
+<td>The same.</td>
+</tr>
+<tr>
+<td>What is kept</td>
+<td>The set is kept by its owner: its tracks, its clips, their order and their settings. How you look at it is kept by the workspace: the view in front, sizes, folds, zoom, and the panes with what they hold.</td>
+<td>The same.</td>
+<td>The same.</td>
+</tr>
+</tbody></table>
+</div>
+<p>The part with focus has a bright edge, and the keys act on what is selected in
+it. ⌥0 moves focus to the transport, ⌥3 to Clip view, ⌥4 to Device view, ⌥5
+to the browser and ⌥6 to the pool, as in Live. A drag, an open menu, a value
+you are typing, and Clip view expanded into the main area last only while you
+use them.</p>
 <h3 id="10-3-the-browser-and-the-pool"><a class="anchor" href="#10-3-the-browser-and-the-pool" aria-hidden="true">#</a>10.3 The browser and the pool</h3>
 <p>The browser holds four kinds of thing: material to open, instruments to open
 in a pane, devices to put on a chain, and running things you can work with
@@ -904,16 +1203,17 @@ agent is changing, the changes waiting for your approval, the wiki, a
 calendar, the sky. Each widget holds a piece of context that belongs to your
 whole world, not to one kind of work, so it stays with you when you move. Open
 a terminal in Factory and it is still there in Central.</p>
-<p>To open a widget, click its square in the launcher at the bottom right. To
+<p>To open a widget, click its square in the launcher at the foot of the rail. To
 stop a widget following your selection, pin it. To widen the rail, drag its
 edge. To keep a group of widgets, save it as a preset.</p>
 <p>Widgets are plugins. You can set each one up the way your work needs, and
 anyone can build new ones. To add a widget, install it from the browser.</p>
 <h3 id="10-7-going-back"><a class="anchor" href="#10-7-going-back" aria-hidden="true">#</a>10.7 Going back</h3>
-<p>Every place you go is kept on the trail. To go back, select a stop on the
-trail. You return to the same place, the same page and the same point in the
-reading. Changing your kind of work never closes anything, and every place can
-be linked to and opened again.</p>
+<p>Every place you go is kept on the trail. To go back, press Back at the head of
+the title line, or select a stop on the Trail widget (§23.5). You return to the
+same place, the same page and the same point in the reading. Forward goes the
+other way, until you go somewhere new. Changing your kind of work never closes
+anything, and every place can be linked to and opened again.</p>
 <h3 id="10-8-keys"><a class="anchor" href="#10-8-keys" aria-hidden="true">#</a>10.8 Keys</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -927,36 +1227,88 @@ be linked to and opened again.</p>
 <td>Tab</td>
 </tr>
 <tr>
+<td>Show Pane view, or return to the view you left</td>
+<td>⌥⌘9</td>
+</tr>
+<tr>
+<td>Open a second window</td>
+<td>⇧⌘W</td>
+</tr>
+<tr>
+<td>Let the window fill the screen</td>
+<td>⌃⌘F</td>
+</tr>
+<tr>
 <td>Show or hide the browser</td>
-<td>⌘⌥B</td>
+<td>⌥⌘B or ⌥⌘5</td>
 </tr>
 <tr>
 <td>Show or hide the pool</td>
 <td>⌥⌘6</td>
 </tr>
 <tr>
-<td>Show or hide the detail area</td>
-<td>⌘⌥L</td>
+<td>Show or hide the widget rail</td>
+<td>⌥⌘8</td>
+</tr>
+<tr>
+<td>Show or hide Clip view</td>
+<td>⌥⌘3</td>
+</tr>
+<tr>
+<td>Show or hide Device view</td>
+<td>⌥⌘4</td>
+</tr>
+<tr>
+<td>Hide Clip view and Device view, or bring them back</td>
+<td>⌥⌘L</td>
 </tr>
 <tr>
 <td>Switch between Clip view and Device view</td>
 <td>⇧Tab</td>
 </tr>
 <tr>
-<td>Show or hide the widget rail</td>
-<td>⌘⌥R</td>
+<td>Expand Clip view into the main area</td>
+<td>⌥⌘E</td>
+</tr>
+<tr>
+<td>Show or hide the mixer</td>
+<td>⌥⌘M</td>
+</tr>
+<tr>
+<td>Show or hide the In/Out section, the sends, the return tracks</td>
+<td>⌥⌘I, ⌥⌘S, ⌥⌘R</td>
+</tr>
+<tr>
+<td>Show or hide take lanes</td>
+<td>⌥⌘U</td>
+</tr>
+<tr>
+<td>Turn Automation Mode on or off</td>
+<td>A</td>
+</tr>
+<tr>
+<td>Fold or unfold the selected track</td>
+<td>U</td>
+</tr>
+<tr>
+<td>Move focus to the transport, Session view, Arrangement view, Clip view, Device view, the browser, the pool, Pane view</td>
+<td>⌥0, ⌥1, ⌥2, ⌥3, ⌥4, ⌥5, ⌥6, ⌥9</td>
 </tr>
 <tr>
 <td>Hide a device&#39;s expanded view</td>
 <td>Esc</td>
 </tr>
 <tr>
-<td>Expand Clip view into the main area</td>
-<td>⌥⌘E</td>
+<td>Open Settings</td>
+<td>⌘,</td>
 </tr>
 <tr>
 <td>Play or stop</td>
 <td>Space</td>
+</tr>
+<tr>
+<td>Launch the selected clip</td>
+<td>Enter</td>
 </tr>
 <tr>
 <td>Launch a row</td>
@@ -984,7 +1336,8 @@ be linked to and opened again.</p>
 </tr>
 </tbody></table>
 </div>
-<p>Keys never play notes while you are typing in a document.</p>
+<p>Keys never play notes, and single letters never act, while you are typing in a
+document.</p>
 <hr>
 <h1 id="part-two-the-game" class="part"><a class="anchor" href="#part-two-the-game" aria-hidden="true">#</a>Part Two — The Game</h1>
 <h2 id="11-the-figure"><a class="anchor" href="#11-the-figure" aria-hidden="true">#</a>11. The figure</h2>
@@ -1204,7 +1557,7 @@ them.</p>
 <tr>
 <td>View</td>
 <td>A way of seeing tracks and clips.</td>
-<td>Session view&#39;s grid, Arrangement view&#39;s ruler with its lanes and takes, the panes, the widget rail.</td>
+<td>Session view&#39;s grid, Arrangement view&#39;s ruler with its lanes and takes, the panes of Pane view, the widget rail.</td>
 </tr>
 </tbody></table>
 </div>
@@ -1230,10 +1583,11 @@ track, and in the page or scene it belongs to.</li>
 the terminal and the frames on the rail are the widget views of their
 devices. A widget with no device elsewhere, such as Files or Calendar, is
 a small device born on the rail.</li>
-<li><strong>The views are not devices.</strong> Session view and Arrangement view hold the
-tracks of every mode, and a pane can show either for any set of tracks.
-The course of a run is its track in Arrangement view; its attempts are
-takes; a task is a clip.</li>
+<li><strong>The views are not devices.</strong> Session view and Arrangement view are two
+views of the mode&#39;s one set of tracks, and Pane view holds the Full views
+of devices beside them (§10.2). No pane holds Session view or Arrangement
+view. The course of a run is its track in Arrangement view; its attempts
+are takes; a task is a clip.</li>
 <li><strong>A corpus is material, not an instrument.</strong> A body of work such as the
 Return of Zero or the Quaternal Logic is read, walked and played through
 the universal instruments: the world, the timeline, the journey, the
@@ -1314,7 +1668,7 @@ the others at once.</p>
 </tr>
 <tr>
 <td>Full</td>
-<td>A pane</td>
+<td>A pane, in Pane view</td>
 <td>The material itself: the page, the field, the torus, the world. No controls.</td>
 <td>Wavetable&#39;s large display, without its controls.</td>
 </tr>
@@ -1392,19 +1746,19 @@ shows.</p>
 </thead>
 <tbody><tr>
 <td>The detail area</td>
-<td>⌘⌥L, or its toggle in the status bar.</td>
+<td>⌥⌘L, or ▲ beside Clip and Device at the bottom right.</td>
 </tr>
 <tr>
 <td>Clip view or Device view</td>
-<td>⇧Tab, or the switches in the status bar.</td>
+<td>⌥⌘3 or ⌥⌘4, or ▲ beside its switch at the bottom right. ⇧Tab switches between them when only one shows.</td>
 </tr>
 <tr>
 <td>Clip view in the main area</td>
-<td>⌥⌘E. The clip&#39;s editor takes the space of the panes; press again to return.</td>
+<td>⌥⌘E. The clip&#39;s editor takes the main area; press again to return.</td>
 </tr>
 <tr>
 <td>The browser</td>
-<td>⌘⌥B.</td>
+<td>⌥⌘B or ⌥⌘5.</td>
 </tr>
 <tr>
 <td>The pool</td>
@@ -1412,7 +1766,11 @@ shows.</p>
 </tr>
 <tr>
 <td>The widget rail</td>
-<td>⌘⌥R. Drag its edge to widen it. Fold the launcher to give the tiles the height.</td>
+<td>⌥⌘8, or its toggle at the top right. Drag its edge to widen it. Fold the launcher to give the tiles the height.</td>
+</tr>
+<tr>
+<td>The mixer</td>
+<td>⌥⌘M, or Mixer at the bottom right.</td>
 </tr>
 <tr>
 <td>A device&#39;s expanded view</td>
@@ -1530,9 +1888,80 @@ passes through it and leaves the clip as it is (§16.1).</li>
 </tr>
 </tbody></table>
 </div>
+<h4 id="clip-view-and-device-view-side-by-side"><a class="anchor" href="#clip-view-and-device-view-side-by-side" aria-hidden="true">#</a>Clip view and Device view side by side</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Clip view</th>
+<th>Device view</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>For</td>
+<td>Changing the selected clip itself: its content, where it starts and ends, and how it launches.</td>
+<td>Shaping what works on a track&#39;s material, for every clip on the track, without changing any clip.</td>
+</tr>
+<tr>
+<td>What it acts on</td>
+<td>The selected clip.</td>
+<td>The chain of the selected track, or of the device in the focused pane.</td>
+</tr>
+<tr>
+<td>What you do there</td>
+<td>Edit the content, set the clip&#39;s facts, apply a tool, draw an envelope.</td>
+<td>Turn a device&#39;s controls; add, move and remove devices; open a device&#39;s expanded view.</td>
+</tr>
+<tr>
+<td>Selecting</td>
+<td>Select inside the editor: a note, a passage, a step.</td>
+<td>Click a device&#39;s plate.</td>
+</tr>
+<tr>
+<td>Focus</td>
+<td>⌥3, and ⌥8 for the selected panel.</td>
+<td>⌥4</td>
+</tr>
+<tr>
+<td>Its forms</td>
+<td>Under the main area, or above Device view when both show; or filling the main area with ⌥⌘E.</td>
+<td>Under Clip view, or alone; with one device standing expanded as a band above the chain.</td>
+</tr>
+<tr>
+<td>While it loads</td>
+<td>The clip&#39;s last content stands at once, dimmed until its owner answers.</td>
+<td>Each device shows its last picture, dimmed until its owner answers.</td>
+</tr>
+<tr>
+<td>Empty</td>
+<td>With no clip selected, Clip view stands empty.</td>
+<td>An empty chain waits for a device from the browser.</td>
+</tr>
+<tr>
+<td>Switched off</td>
+<td>A deactivated clip shows grey, and you can still edit it.</td>
+<td>A device that is off shows its plate dimmed, and its controls still turn.</td>
+</tr>
+<tr>
+<td>When its owner cannot be reached</td>
+<td>The clip keeps its last content, dimmed, and cannot be edited.</td>
+<td>The device keeps its last picture, dimmed, and its light is dark.</td>
+</tr>
+<tr>
+<td>When something fails</td>
+<td>The edit that failed stays in the editor. One line in the status bar says what failed.</td>
+<td>The value that failed returns to the owner&#39;s value. One line in the status bar says what failed.</td>
+</tr>
+<tr>
+<td>What is kept</td>
+<td>The clip&#39;s content and settings are kept by its owner. The tab in front is kept by the workspace.</td>
+<td>The chain and its settings are kept by their owners. Which device stands expanded is kept by the workspace.</td>
+</tr>
+</tbody></table>
+</div>
 <h3 id="16-6-tracks-session-view-and-arrangement-view"><a class="anchor" href="#16-6-tracks-session-view-and-arrangement-view" aria-hidden="true">#</a>16.6 Tracks, Session view and Arrangement view</h3>
-<p>Every mode draws its tracks the same way, and a pane can show either view for
-any set of tracks.</p>
+<p>Every mode draws its tracks the same way. Session view and Arrangement view
+are two views of the mode&#39;s one set (§10.2).</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1586,37 +2015,65 @@ any set of tracks.</p>
 fold under one header; the members of a group step in below it, with one
 coloured rail for each level, and a row in a group launches all its children
 at once.</p>
-<p>Under the head is the track&#39;s mixer row, after Live&#39;s. What each control means
-follows the mode; the mode&#39;s own section says how (§17.1–§21.1).</p>
+<p>Under the head is the track&#39;s mixer row, after Live&#39;s. In Session view it
+stands under the slots. In Arrangement view the same controls stand at the
+right of the track&#39;s head, and the whole mixer can stand under the tracks, as
+in Live 12. The row runs in Live&#39;s sections, from the top:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
+<th>Section</th>
 <th>Control</th>
 <th>Live&#39;s meaning</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Activator</td>
-<td>The track&#39;s work reaches the Main track, or runs silent.</td>
+<td>In/Out</td>
+<td>Input</td>
+<td>Where the track&#39;s material comes from.</td>
 </tr>
 <tr>
-<td>Solo</td>
-<td>Only the soloed tracks run, or show.</td>
-</tr>
-<tr>
-<td>Arm</td>
-<td>The track records, and its agent writes directly, with receipts.</td>
-</tr>
-<tr>
+<td>In/Out</td>
 <td>Monitor</td>
 <td>In, Auto or Off: when you watch the track&#39;s input.</td>
 </tr>
 <tr>
-<td>Input and output</td>
-<td>Where the track&#39;s material comes from, and where it goes: to the Main track by default.</td>
+<td>In/Out</td>
+<td>Output</td>
+<td>Where the track&#39;s material goes: to the Main track by default, or to a group.</td>
+</tr>
+<tr>
+<td>Sends</td>
+<td>A knob for each return track</td>
+<td>How much of the track reaches a return track, whose chain several tracks share.</td>
+</tr>
+<tr>
+<td>Volume and pan</td>
+<td>Volume, Pan</td>
+<td>The level and the place of the track&#39;s sound.</td>
+</tr>
+<tr>
+<td>Switches</td>
+<td>Activator</td>
+<td>The track&#39;s work reaches the Main track, or runs silent.</td>
+</tr>
+<tr>
+<td>Switches</td>
+<td>Solo</td>
+<td>Only the soloed tracks run, or show.</td>
+</tr>
+<tr>
+<td>Switches</td>
+<td>Arm</td>
+<td>The track records, and its agent writes directly, with receipts.</td>
 </tr>
 </tbody></table>
 </div>
+<p>⌥⌘M shows or hides the mixer in either view, and ⌥⌘I, ⌥⌘S and ⌥⌘R show or
+hide the In/Out section, the sends and the return tracks. A mode draws only
+the sections its tracks have. Sends and return tracks are Live&#39;s. Volume and
+pan stand where there is sound, in Expressions and Live. What each control
+means in each mode is in the mode&#39;s own section (§17.1–§21.1).</p>
 <p>The Main track sits at the end, where Live keeps it. It carries each row&#39;s
 launch button, Stop All, and Back to Arrangement, which lights when what plays
 differs from the ruler. Its own chain holds what works on the whole: the Day
@@ -1695,18 +2152,23 @@ every clip set to Global. The number keys launch rows.</p>
 </tr>
 </tbody></table>
 </div>
-<p>Under each track lie its lanes:</p>
+<p>Under each track lie its lanes. U folds the selected track to one line, or
+opens it with its lanes again:</p>
 <ul>
 <li><strong>Automation lanes</strong>, one for each parameter that moves: an agent&#39;s effort
 over a run, a field device over a scene, the sky&#39;s pull on a filter. Each
-names its device and its parameter. Arm the track and move the parameter,
-and the move becomes a lane. A modulated parameter shows what moves it. A
-value you override gives control back only when you press Re-enable.</li>
+lane&#39;s head names its device and its parameter. Press A for Automation
+Mode: the track&#39;s head gains a device chooser and a parameter chooser, the
+chosen parameter&#39;s moves lie over the clips, and you draw them there. + on
+the head opens the chosen parameter in a lane of its own; − on a lane hides
+the lane and keeps its moves. Arm the track and move the parameter, and the
+move is recorded. A modulated parameter shows what moves it. A value you
+override gives control back only when you press Re-enable.</li>
 <li><strong>Take lanes</strong>, one for each take, as Live&#39;s are. Audition a take from its
 lane. Select a stretch of a take and press Return to copy it into the main
 lane: that is how you choose the attempt that lands, the capture that
 stands, or the revision you keep. The main lane shows which take each
-stretch came from.</li>
+stretch came from. ⌥⌘U shows or hides the take lanes.</li>
 <li><strong>Event lanes</strong>, in Factory: each session&#39;s messages, files, terminal and
 pages read. Click an event and it opens beside the ruler.</li>
 </ul>
@@ -1830,6 +2292,8 @@ hold Alt to turn it off while you drag.</p>
 <ul>
 <li>A track holds the material of its owner. The views show it and never copy
 it.</li>
+<li>Switching between Session view, Arrangement view and Pane view changes
+neither the selection nor what runs.</li>
 <li>A clip that is running shows no end. A waiting clip shows no length. A
 stalled clip shows where it stopped and does not look done.</li>
 <li>A row launches only what is in it. Stop pressed twice cancels at once;
@@ -2705,8 +3169,8 @@ Each one is a way to look at your material: a world to stand on, a graph of
 linked notes and a table to think on, a ruler of time, a walk and a palace, a
 page and a terminal. They belong to no single mode. Drag one into any pane, in
 any mode, and it brings its own controls to Device view. Session view and
-Arrangement view are not among them: they are the window&#39;s own two views
-(§16.6), and a pane can show either.</p>
+Arrangement view are not among them: they are two views of the mode&#39;s set
+(§10.2), and no pane holds them.</p>
 <h3 id="17-1-technē-tracks-and-clips"><a class="anchor" href="#17-1-technē-tracks-and-clips" aria-hidden="true">#</a>17.1 Technē: tracks and clips</h3>
 <p><strong>Product:</strong> Technē · <strong>Track:</strong> a reading, a journey or the occurrences of a subject · <strong>Clip:</strong> an event, or a stop of a walk · <strong>Main track:</strong> the stops</p>
 <p>You need to set what you know at its time and place, keep how sure anyone is of it, and walk someone through it in an order that makes sense. In Technē a reading is a track, and its events are its clips. Select an event and Clip view shows its span, its place, its standing and what it gathered. Device view below shows the instrument the track plays through, then its lens and filter effects.</p>
@@ -18039,7 +18503,7 @@ widget is open. A tile has its device&#39;s light, its title, and the marks ▦ 
 mark. The close mark closes the tile, and the widget stays in the launcher.
 Each widget holds a piece of context that belongs to your whole world. A
 terminal that you open in Factory is still there in Central.</p>
-<p>Show or hide the rail with ⌘⌥R. Drag its edge to widen it; at 560 px and
+<p>Show or hide the rail with ⌥⌘8, or its toggle at the top right. Drag its edge to widen it; at 560 px and
 wider, tiles move into two columns. Fold the launcher to give the tiles the
 height.</p>
 <h4 id="settings"><a class="anchor" href="#settings" aria-hidden="true">#</a>Settings</h4>

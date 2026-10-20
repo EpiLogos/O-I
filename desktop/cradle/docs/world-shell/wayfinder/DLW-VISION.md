@@ -409,8 +409,10 @@ coordinate. The binding rules are collected in §6.
 - *Hesse:* the formal school takes its unity from the contents; the
   psychological school, which Knecht calls "pedagogical", from "the meditation
   which followed every stage" (MECH:90-102).
-- *Designed, owner-ratified 2026-09-16:* two readings of one field. 4:2 Technē
-  is deep and research-authoring; 3:3 Expression is lived. "Crossing… changes
+- *Designed, owner-ratified 2026-09-16; revised 19 Oct 2026:* two operating modes
+  of one field. Technē is deep and research-authoring; 3:3 Expression is lived.
+  The four-and-two reading of Technē (its six instruments as M0′–M5′) is
+  withdrawn (owner, 19 Oct 2026; lock §0.1 item 3). "Crossing… changes
   mode of disclosure and available operation, not subject identity"
   (LOCK:3,14-51; TDR:12-35). By the owner amendment, the Expressions system and
   the Technē HUD are "one application with two operating modes" (LOCK:390-392).
@@ -418,14 +420,14 @@ coordinate. The binding rules are collected in §6.
   Central and Technē, then names "the dual reading: 4:2 Technē / 3:3
   Expression" in the same paragraph (CONT:74-78). The study pairs formal with
   Technē and psychological with Expression (REL:51; PRAX:283-286,309). In the
-  lock, Central is disclosed as the 4:2 M0′ instrument and as an M0 depth in 3:3
-  (LOCK:181-218). Reading Central as "the ground both readings stand on" is
+  L5 lock, Central was disclosed as Technē's Project instrument and as an M0
+  depth in 3:3 (LOCK:181-218). Reading Central as "the ground both readings stand on" is
   **Inferred**; CONT:184 "All return to Central" supports it.
 - *Coordinate:* 0/1 = 4+2 = 5→0 = 0/1. 4:2 is the fourth (4/3) and 3:3 the
   fifth (3/2) (SEEDS/M'-SYSTEM-SPEC.md:364-374). The 3:3 halves are the physical
   and mental poles (SEEDS/epi-logos-kernel-spec.md:30), "cosmic played
-  instrument / personal lived return" (M'-ENGINE-FACES:94-97). Expression is not
-  a sixth 4:2 peer, and there is no M6 or M7 (LOCK:51,122).
+  instrument / personal lived return" (M'-ENGINE-FACES:94-97). There is no M6
+  or M7 (LOCK:51,122).
 
 **L-6 Editing: Technē and origin-return.**
 - *Hesse:* Knecht translates the Confucius game "back into its original
@@ -513,8 +515,9 @@ coordinate. The binding rules are collected in §6.
     edge (live Bimba map (queried 12 Oct 2026));
   - the Seeds make M4′ "Nara | journal, daily note, dream, oracle, personal
     Pratibimba" (M'-SYSTEM-SPEC.md:72);
-  - M4′'s 4:2 lens is Places/World (LOCK:300-301), and its whole-application body
-    is the Expressions application (LOCK:388-399). Same chain, two readings;
+  - M4′'s whole-application body is the Expressions application
+    (LOCK:388-399); the lock's lens reading of M4′ as Places/World is withdrawn
+    (owner, 19 Oct 2026);
   - in code the Expressions companion is Anima, with the tab "Nara · oracle",
     "the Nara/oracle side of the retained body" (DOCK:66);
   - `nara-conversation` is a Central-family rack face over
@@ -850,8 +853,8 @@ that surface" (LOCK:92-100).
 - CONT:179: "the ground — the field where material lives, where a day
   composes". WSD §6: "one World context" (WSD:533-536). All modes return to it
   (CONT:184).
-- Coordinates: S0 at M0 (LOCK:92). M0′ project/graph is the deep aperture over
-  Central's root World and its ProjectCentrals, "not a new Projects database"
+- Coordinates: S0 at M0 (LOCK:92). Technē's Project instrument is the deep aperture
+  over Central's root World and its ProjectCentrals, "not a new Projects database"
   (LOCK:181-218).
 - Rack: hygiene, impact, day-die, flow, nara-conversation, day-now
   (UI/inhabitants/worldShellFamilies.ts:40-91). Companion: Fizz (DOCK:64).
@@ -869,8 +872,8 @@ that surface" (LOCK:92-100).
   planned (APPB:254-259).
 
 **Expressions**
-- CONT:181: "the form — the sounding, the physical, the scene". The conjugate
-  3:3 body, "rather than the sixth 4:2 peer" (TDR:35).
+- CONT:181: "the form — the sounding, the physical, the scene". The 3:3
+  body (TDR:35).
 - Chain: M4 Nara ↔ S4 Workcell ↔ S4′ Anima → M4′ (LOCK:96), Nara in the
   foreground of the 3:3 reading (LOCK:31). M4′ is "the general Expressions application body, with the
   operative M1–M2–M3 backend" (LOCK:388-397); D-G: "remains the M4 body"
@@ -894,10 +897,10 @@ that surface" (LOCK:92-100).
   legacy cradle has landed models of all six (CRADLE/techne/m0m5/*; APPB:25-31).
   The atlas is ported and called only from a dev entry
   (UI/projections/atlas/dev/main.ts:11).
-- Companion: Epii (DOCK:67). **Tension:** the dock names the Expressions
-  companion by its S4′ operator (Anima) and the Technē companion by its M5
-  subsystem (Epii); the lock's S5′ operator is "Technē_i := Aletheia_i"
-  (LOCK:510-517). Same chain, different end (L21).
+- Companion: Epii (DOCK:67). The dock names the Expressions companion by its
+  S4′ operator (Anima) and the Technē companion by its M5 subsystem (Epii). The
+  lock's "Technē_i := Aletheia_i" (LOCK:510-517) went with the four-and-two
+  reading (owner, 19 Oct 2026), so the label stands (L21).
 - Out: Palace Return as an attributable proposal to M0′, a lane-5 target
   (PLAN:1700-1720).
 
@@ -922,7 +925,7 @@ that surface" (LOCK:92-100).
     titles only — never content" (BRIDGE:74-96). The one-field identity law
     preserves subject_ref, revision, constellation, ActionRefs and AgentSession
     (TDR:77-96). In the cradle, `encounter()` is "the only transition" (ENC:61-89).
-  - **The cut switch** crosses 4:2 ↔ 3:3 (WSD:266-268).
+  - **The cut switch** crosses between Technē and Expressions (WSD:266-268).
 - **The act's discipline:** "selection != disclosure; visible Action !=
   authorised invocation" (TDR:324-329). A crossing never sends, discloses or
   launches by itself (EXP/FACTORY-AGENCY.md:42,102).
@@ -1006,7 +1009,9 @@ that surface" (LOCK:92-100).
    Project/Wiki/Graph, M1′ Canvas/Constellation, M2′ Relation Field/Timeline, M3′
    Journey/Scenes, M4′ Places/World, M5′ Palace, the "professional Technē
    projection" (LOCK:767). Amendment §11a makes M4′ and M5′ whole-application
-   bodies (LOCK:388-418).
+   bodies (LOCK:388-418). **Withdrawn by the owner, 19 Oct 2026:** the lens
+   numbering does not hold what the coordinate system says of those layers;
+   the instruments keep their names (lock §0.1 item 3).
 3. **The lane documents:** instruments as M5-0′…M5-5′, mapped by PROG:106-108.
    - **Conflict, lane labels against the live map.** PROG:106-108 maps "M5-2′
      timeline · M5-3′ journey · M5-4′ places". The live map holds M5-2′
@@ -1025,15 +1030,15 @@ that surface" (LOCK:92-100).
      etymological archaeology inside M5-5 (M5-5.md:18); the site framing says
      "Keep the Logos Cycle and Logos Atelier distinct" (:491).
 
-The Seeds table and the lock are two readings of one chain, not rivals: the
-Seeds name each M′ by its domain, the lock by its 4:2 professional lens. Neither
-contradicts the live map, whose M4′ and M5′ are bare prime nodes: a name
+The Seeds table names each M′ by its domain, and it is the reading that stands
+(manual §25: M1-2-3′ sounds and keeps time, M4/5/0′ knows and acts). It does not
+contradict the live map, whose M4′ and M5′ are bare prime nodes: a name
 (`Nara'`, `Epii'`), structural metadata and an owner (`m_0_owned_by_coordinate`
 M5-3), with no descriptive content (live Bimba map (queried 12 Oct 2026)). Further
 grounded points:
 - "Do the six deep instruments map to L5-0…5? No… All are L5-5 Technē acts"
   (LOCK:766). "No M6 or M7" (LOCK:51).
-- The first traversal M0′→…→M5′→Return→M0′ is "not a compulsory workflow"
+- The first traversal through the six instruments and back is "not a compulsory workflow"
   (LOCK:424,775).
 - The Guardians (Anuttara/Central … Epii/QL-MEF, LOCK:489-497) are stewardship
   identities, "not renamed to Canvas/Timeline/etc." (LOCK:498).
@@ -1053,9 +1058,9 @@ Headlines from the repo reflection, confirmed (live map, 12 Oct) by P0-BIMBA.
 | M4.4 | "Context ledger and lens shelf… records transformation without performing it"; lens 0 is the "Gebser Lens"; M4.4.4, the "Phenomenological Lens", "Reduction - excavating to constitutional origins" | M4.4.md:14; live Bimba map (queried 12 Oct 2026), M4.4.0 and M4.4.4 `c_0_essence`; M4.4.4.md:18 |
 | M4.5 | "hosts epii consciousness in situ, running Logos Cycle over each Nara episode"; six children Curriculum Map, Core Epi-Logos Voice, Method Transparency Lab, Integration Lab, Pedagogy Lab, Logos Cycle Engine; M4.5-1 "pedagogical compassion" | M4.5.md:14; live Bimba map (queried 12 Oct 2026), M4.5-0…5; M4.5-1.md:17 |
 
-- **One chain, four uses of "M4", always qualified:** M4 Nara (Map); M4′
-  Places/World (lock lens); M4′ the Expressions body (§11a); "the M4 body"
-  (D-G). The lock writes them as one chain, M4 Nara ↔ S4 Workcell ↔ S4′ Anima
+- **One chain, three uses of "M4", always qualified:** M4 Nara (Map); M4′ the
+  Expressions body (§11a); "the M4 body" (D-G). (A fourth, M4′ as the
+  Places/World lens, is withdrawn.) The lock writes them as one chain, M4 Nara ↔ S4 Workcell ↔ S4′ Anima
   → M4′ (LOCK:96), with Nara foreground in 3:3 (LOCK:31); the live map holds M4
   `INVERTS_TO` M4′.
 - **Open.** The Nara identity decisions D1 and D3–D6 are "draft-for-review;
@@ -1103,13 +1108,13 @@ Status: **built** (in code at HEAD); **waiting** (declared, owner named);
 
 | Coordinate | What it grounds in the DLW | Status | Cite |
 |---|---|---|---|
-| M0 / M0′ | Central's ground; project/graph lens; the origin returns reach | rack/browser rows built; lens waiting | LOCK:181-218; GRAM:20-21; ModeDetail.tsx:321-327 |
-| M1 | sole oscillator (D13); instrument face; M1-phase stratum; canvas lens | faces waiting; canvas waiting | MPW:32-34; quaternalLogicFamilyManifest.ts:39-74; PLAN:1895-1908 |
-| M2 | modulation only (`ql:m2/audio-octet/0..7`, `nodal-quartet/0..3`, `generates:false`); tuning targets; M2-5 sky as chronos source; timeline lens | sources built; sky waiting; timeline cut | qlModulationSources.ts:31-54; manifest:89 |
-| M3 | score material in tracks and clips; m3-clock; journey lens (the 4:2↔3:3 seam, LOCK:664) | score material law (#281); m3-clock waiting; journey cut, writers waiting | WSD:933; PLAN:2082-2085,1704-1713 |
-| M4 / M4′ | Nara foreground in 3:3; Expressions body (§11a, D-G); nara-conversation face; Anima companion; places lens | face built (binding reading only); companion is a name and tabs; places waiting | LOCK:31,96,388-418; ConversationNaraFace.tsx:1-40; DOCK:66 |
-| M5 / M5′ | Technē as the whole deep mode; origin-return (5→0); Epii companion; palace lens with Return, the objectified pedagogy pole | companion is a name and tabs; palace waiting; `logos.return` has no shell binding | LOCK:358,399-410; M5-5.md:38; DOCK:67; PLAN:1700-1720 |
-| 4:2 / 3:3 | Technē and Expressions readings; the cut switch | switch specified; crossing is a lane-5 target | PLAN:1646-1651; WSD:266-268 |
+| M0 / M0′ | Central's ground; the origin returns reach | rack/browser rows built | LOCK:181-218; GRAM:20-21; ModeDetail.tsx:321-327 |
+| M1 | sole oscillator (D13); instrument face; M1-phase stratum | faces waiting | MPW:32-34; quaternalLogicFamilyManifest.ts:39-74; PLAN:1895-1908 |
+| M2 | modulation only (`ql:m2/audio-octet/0..7`, `nodal-quartet/0..3`, `generates:false`); tuning targets; M2-5 sky as chronos source | sources built; sky waiting | qlModulationSources.ts:31-54; manifest:89 |
+| M3 | score material in tracks and clips; m3-clock | score material law (#281); m3-clock waiting | WSD:933; PLAN:2082-2085,1704-1713 |
+| M4 / M4′ | Nara foreground in 3:3; Expressions body (§11a, D-G); nara-conversation face; Anima companion | face built (binding reading only); companion is a name and tabs | LOCK:31,96,388-418; ConversationNaraFace.tsx:1-40; DOCK:66 |
+| M5 / M5′ | Technē as the whole deep mode; origin-return (5→0); Epii companion; the objectified pedagogy pole (the Palace, L8) | companion is a name and tabs; `logos.return` has no shell binding | LOCK:358,399-410; M5-5.md:38; DOCK:67; PLAN:1700-1720 |
+| Technē / Expressions | the two operating modes; the cut switch | switch specified; crossing is a lane-5 target | PLAN:1646-1651; WSD:266-268 |
 
 **Unbound** (no source binds these to a mode, device, projection or stratum):
 the Logos cycle; `logos.return` in the shell; M4.1; M4.2 (the oracle exists only
@@ -1162,12 +1167,12 @@ Verdicts: **SOURCE** (the sources or an owner ruling settle it); **PARTLY**;
 | L13 | How a non-owner enters and plays (C9; items 3, 21, 27) | Four cradle doorways (PLAN:2717-2753). Minimal O:I needs no QL (OI/docs/VISION.md:33-45,133-137). Hosted visitors "need no local agent or API key" (EXP/WIKI-CONSTELLATION-UX.md:19,79). The EF-movement ruling, quoted by the study, keeps "a permanent supported entry" (REL:152-154; its own source not traced). Visiting is contract-only (PLAN:3233) | OWNER | No onboarding surface |
 | L14 | Mode-shift trigger and continuity (CONT §3.15; items 4, 28, 37) | Continuity answered; the crossings named (§2.4). Trigger rule, multi-select R1/R2 (PLAN:3088-3095), query grammar (PLAN:3168-3172) and the two trail shapes are open | PARTLY | Every shift goes through the one transition. No crossing sends, discloses or launches by itself |
 | L15 | Which state vocabulary material carries (items 35, 38) | L-2. QL already produces some standings, e.g. "calculated-ephemeris-not-observed-sky" (quaternalLogicFamilyManifest.ts:40-45) | PARTLY / OWNER | Render only produced standings. Keep the vocabularies named and apart. Unknown shows as unknown |
-| L16 *new* | Hesse's two schools vs the dual-reading pair | The pair is ratified: Technē 4:2 / Expression 3:3 (LOCK:3). The school assignment is a reading (L-5) | SOURCE (pair) / OWNER (schools) | Build to the lock |
+| L16 *new* | Hesse's two schools vs the dual-reading pair | The pair stood as Technē 4:2 / Expression 3:3 (LOCK:3); its four-and-two half is withdrawn (owner, 19 Oct 2026). The school assignment is a reading (L-5) | OWNER (schools) | Build to the two modes, with no M′ numbers on Technē's instruments |
 | L17 *new* | Does the plate sound; entity voices and D13; is the physics sim the M1 instrument device | Causal wording tension only (L-9). "M2 PCM owner" wording vs D13. No MPW role declared. CONT:124 vs WSD:922-924 on which body is the instrument | OWNER, with the QL owner (#281) | Keep the common-cause law. Add no generator. Label entity voices "retained-app voices, relation to M1 unruled". Send the wording repair to the QL owner |
 | L18 | Live audio-chain family and Live's leftover meanings (items 16, 18–20, 22, 24–26) | Home ruled: Live mode, the RE basis (CONT:244-246). Faces sit on the Live-corpus "M3" `POST device-param` seam (main.rs:174-176), outside the writers law. The seam has no owner op | PARTLY (home SOURCE; seam owner OWNER) | Faces stay readings until the seam has an owner op. Port only measured dynamics (LIVE/reconstruction-backlog.md). Every device count says what it counts |
 | L19 *new* | Technē instrument names | D-F plain names (PROG:97-108). LOCK:415 scoped "by this amendment". Code rename deferred (PROG:104-105). GRAM:415-416 still carries M′ labels | SOURCE | UI shows plain names; the M′ address is provenance only (T-LABELS) |
 | L20 | The product's full name (item 1) | "DLW" is never expanded in CONT (CONT:1,14,196) | PARTLY / OWNER | Write "DLW". Do not expand it in UI |
-| L21 *new* | Technē companion label: Epii or Aletheia | Tension, one chain (§2.3): DOCK:67 "Epii" (M5) vs LOCK:510-517 "Technē_i := Aletheia_i" (S5′); Anima is the S4′ operator (LOCK:507) | OWNER | Keep the label. Record the tension in WG §9 |
+| L21 *new* | Technē companion label: Epii or Aletheia | Settled: LOCK:510-517 "Technē_i := Aletheia_i" went with the four-and-two reading (owner, 19 Oct 2026), so DOCK:67 "Epii" (M5) stands; Anima is the S4′ operator (LOCK:507) | SETTLED | Keep the label |
 | L22 *new* | Review at M5-4, or M5-4 as the six agents | Both. The live M5-4 holds the "S4/S5 review" role, the six agents as internal components, and the M5-4′ "Agentic Control Room" affordance (live Bimba map (queried 12 Oct 2026); L-4). INTEGRATED-4-5-0:79,153 and the reflection (BMAP/M5/M5-4/*) agree with it | **SOURCE** (map, LAW:19) | No DLW surface claims the M5-4 or M5-4′ address until a ticket binds it; the address is provenance only (PROG:97-101) |
 | L23 *new* | When Live moves into Expressions; the audio+video track design | Direction ruled (CONT:247-250). No design or code names a video track. Track kinds enter as adapters (WSD:945-951; PLAN §5.2, §5.8) | OWNER (timing); design Open | T-LIVE-INTO-EXPRESSIONS waits on the owner. Nothing merges Live's rail entry meanwhile |
 

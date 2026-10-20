@@ -73,18 +73,21 @@ stated it.
    files are ephemeral objects in orbit. Factory: a NOW is a planet (a task
    becomes a world); agents are activity around it; subagents are nested
    orbits. Expressions: within every mode as well — the graph projection
-   (the 0 instrument) is as apt for Central and Factory as for Expressions
-   (projecting context, wayfinder mapping). Live shares the same grammar.
-3. **Technē's 0 instrument is the Earth and solar system together with its
-   graph view** — the ported atlas's Earth ⇄ Graph. This replaces §2.5's
-   earlier reading (M0′ = Project/Wiki/Graph, M4′ = World/Places). The other
-   five instruments work the underlying information differently, to develop
-   that 0-layer world; their restatement follows the vision spec being
-   rewritten in this shape (O-I PR #655, `docs/dlw/`), and until it lands
-   §2.5's names for M1′–M5′ stand.
-4. **Three forms, three times.** Worlds, expressions and graphs (M5 / M4 /
-   M0) can each be live, moved into creative composition, and recorded and
-   played back (and so shared).
+   (the Project instrument's Graph) is as apt for Central and Factory as for
+   Expressions (projecting context, wayfinder mapping). Live shares the same
+   grammar.
+3. **Technē's Project instrument is the Earth and solar system together with
+   its graph view** — the ported atlas's Earth ⇄ Graph, where it was
+   Project/Wiki/Graph. The other five instruments (§2.5) work the underlying
+   information differently, to develop that world. The instruments are named
+   by their work and carry no M′ numbers: the four-and-two reading that set
+   them as M0′–M5′ is withdrawn (owner, 19 Oct 2026), because it does not
+   hold what the coordinate system says of those layers. The M′ layers are
+   read from the seeds — M1-2-3′ sounds and keeps time, M4/5/0′ knows and
+   acts (manual §25).
+4. **Three forms, three times.** Worlds, expressions and graphs can each be
+   live, moved into creative composition, and recorded and played back (and
+   so shared).
 
 ### 0.2 Live mode is one instrument — the M1 torus (owner ruling, 13 Oct 2026)
 
@@ -152,29 +155,6 @@ section stands.
    Supersedes §2.4's Studio row and §4 item 8.
 8. **The torus's effects** are four devices after the torus (§21.5: Filter, Dynamics, Delay, Reverb); Sky modulation is Quaternal
    Logic's modulator for any chain (§22.2).
-
-### 0.4 Two faces of one field; the instruments keep their names; a capability lands as a device (owner ruling, 19 Oct 2026)
-
-The manual carries it (O-I main `docs/dlw/DLW.md` §25, §17.4, §19.20, `495c7f86c`; the route:
-`tickets/T-AGENCY-the-agent-world-and-the-construction-chain.md`). Where a row below in this lock, or a plan in this folder, says
-otherwise, this section stands.
-
-1. **M1-2-3′ sounds and keeps time.** M1′ generates: the torus is the only source of sound. M2′ shapes it: the synth, moved by the
-   live sky and tuned by the lenses. M3′ forms: the codons, the clock and the deck. Live plays M1′ and M2′ as one instrument
-   (§0.2); Expressions holds all three in a scene.
-2. **M4/5/0′ knows and acts, and agents work in it.** M4′ reads the situation: Kev, the decision model on the person's machine,
-   answering typed questions over labels an owner allows. M5′ synthesises: the agent's language model, whose writing is a
-   proposal until reviewed. M0′ is the ground: the QL graph knowledge system, which settles by rule, checks every answer and names
-   a gap as a question. What the person accepts returns to M0′ (5/0). An act runs in that order (manual §25.2): the ground
-   first, and an act with nothing open asks no model.
-3. **Technē's instruments carry no M′ numbers.** The reading that set M0′–M5′ as Technē's instruments (Project/Wiki/Graph or
-   the Earth ⇄ Graph, Canvas/Constellation, Relation Field/Timeline, Journey/Scenes, Places/World, Palace; QL-MEF
-   `L5-TECHNE-DUAL-READING-LOCK.md`) is withdrawn: it does not hold what the coordinate system says of those layers. The
-   instruments keep their names and their work. Supersedes the M′ numbers in §0.1 item 3 and §2.5, and in DLW-VISION,
-   DLW-PLAN, WIDGET-GUIDE, DLW-PANES-ONTOLOGY and `.wayfinder/maps/techne-expression-mode.md`.
-4. **A capability lands as a device.** It enters the manual as a device's UI in the catalogue (a page of an existing device or a
-   device of its own) with its entry beside the embed, never as a section that restates the implementation. The constellation
-   is the Canvas's Form page (§17.4); the decision helper is its own device, on a team's chain (§19.20).
 
 ---
 
@@ -278,11 +258,11 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
 
 | Semantic | Element | State |
 |---|---|---|
-| Session | **M3′ Journey**: a walk as scene rows (stops = scenes) | designed (`lens-M3`) |
-| Arrangement | **M2′ Relation Field** over time | designed (`lens-M2`) |
+| Session | **the Journey**: a walk as scene rows (stops = scenes) | designed (`lens-M3`) |
+| Arrangement | **the Relation Field** over time | designed (`lens-M2`) |
 | Browser | To hand: Sources · Files; World: Bodies · Locations · Earth places · Palaces · Journeys · Views | designed |
 | Clip detail | the encounter: identity, place and time, disclosure, typed relations, bounded constellation, source (ref + revision) | designed |
-| Device = **the six instruments** (each an instrument, drawn as one instrument frame with sections; the focused lens expanded, the others folded; in every mode the Device side follows the focused pane's instrument — §0.1) | **M0′** the Earth and solar system ⇄ Graph (§0.1.3; formerly Project/Wiki/Graph: depth, budget, view, kinds, ghosts, source) · **M1′** Canvas/Constellation (tools, snap, layout, relation type, standing, promote) · **M2′** Relation Field/Timeline (projection, strata, standing floor, deep time, window) · **M3′** Journey/Scenes (stops, pace, transition, loop) · **M4′** World/Places (planet builder: body, landmass, climate, sky, locations, relations; scales system · body · region · palace) · **M5′** Palace (rooms, path, guide, portals) | designed (mockup INST + deviceDetail); QL instrument faces built (`qlInstrumentDevice.tsx`, QL family: sky, torus, m3-clock, deck, chakra, m-prime-matrices) |
+| Device = **the six instruments** (each an instrument, drawn as one instrument frame with sections; the focused lens expanded, the others folded; in every mode the Device side follows the focused pane's instrument — §0.1) | **Project**: the Earth and solar system ⇄ Graph (§0.1.3; graph controls: depth, budget, view, kinds, ghosts, source) · **Canvas** (tools, snap, layout, relation type, standing, promote; a board's form, manual §17.4) · **Relation Field / Timeline** (projection, strata, standing floor, deep time, window) · **Journey / Scenes** (stops, pace, transition, loop) · **World / Places** (planet builder: body, landmass, climate, sky, locations, relations; scales system · body · region · palace) · **Palace** (rooms, path, guide, portals). Named by their work, with no M′ numbers (§0.1.3) | designed (mockup INST + deviceDetail); QL instrument faces built (`qlInstrumentDevice.tsx`, QL family: sky, torus, m3-clock, deck, chakra, m-prime-matrices) |
 | Acting on Expressions | instruments already act on Expressions (some); view → scene capture; journey stops carry Expression scenes | built in part |
 | Sky / astrology | the Archetypal-Earth astrology components (ported) with **Nara overlaid** — the Epi-Logos lens | AE port built (atlas modules); Nara overlay designed (`DLW-SKY-NARA-INTEGRATION.md`) |
 | Companion | **Epii**: Epii · Source · Proposals · Field | designed |
@@ -320,9 +300,10 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
    (run viewer); flow loop → Central Flow track + document devices; agent
    creation chain → Factory browser New (create a track); rooted world
    navigator → Browser places; CAS source editing → Central Text device;
-   CurrentWorld reading → status bar run context; living wiki → Technē M0′
-   + Central Wiki category; recursive worlds / world-relative knowledge →
-   Technē M4′ bodies + Graph; agentset primitive → Factory Agentset rack;
+   CurrentWorld reading → status bar run context; living wiki → Technē's
+   Project instrument + Central Wiki category; recursive worlds /
+   world-relative knowledge → Technē's World bodies + Graph; agentset
+   primitive → Factory Agentset rack;
    participant addressing → Flow Participants device; activity and
    attention → Factory Activity tile; workcell placement intent → Factory
    World device; versioned-world faculty → Arrangement (every mode) +
@@ -358,9 +339,10 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
    physics instrument).
 9. **The Technē instruments are drawn as one frame per lens in the mockup
    and as separate QL faces in code** (sky, torus, m3-clock, deck, chakra,
-   m-prime-matrices). **Fix:** the six M′ instruments are the instruments;
-   QL faces are devices inside the instrument whose lens they serve (sky →
-   M4′/M2′, torus → M1 body, m3-clock → M2′/M3′).
+   m-prime-matrices). **Fix:** the six Technē instruments are the
+   instruments; QL faces are devices inside the instrument whose lens they
+   serve (sky → World / Relation Field, torus → the M1 body, m3-clock →
+   Relation Field / Journey).
 10. **The right dock stretches Live** (§3). Kept, bounded: no fifth
     surface. (Panes are not a stretch: they are instrument types, §8.1.)
 
@@ -418,8 +400,8 @@ is made against this file and applied in one pass.
 
 Archetypal-Earth (`Work/Archetypal-Earth`, HEAD `35f76aa`) is not only the
 globe the shell ports: it is a finished instance of the instrument the DLW
-builds, and its threads and walks are the basis for the Timeline (M2′), the
-Journey (M3′) and how both eventuate in a full Expression.
+builds, and its threads and walks are the basis for the Timeline, the
+Journey and how both eventuate in a full Expression.
 
 ### 7.1 The instrument pattern (AE `ProjectCentral/docs/MODES-RFC.md` §2–4)
 
@@ -427,7 +409,7 @@ Journey (M3′) and how both eventuate in a full Expression.
 |---|---|---|
 | The shell: one title, one menu, one lens-controls slot, one panel host; owns all chrome | the instrument frame | the Technē instrument frame (one frame, sections) |
 | A **lens** = plugin `{mount, enter(route), leave}`; hands the shell its few controls; never touches another lens | device in the instrument's chain | a device inside the instrument; its controls go to Detail → Device |
-| Field (globe + graph), Theory (+ Dynamics), Aion, Red Book | devices of M0′/M4′ (field), M2′ (Aion), M3′ (Red Book, dynamics routes) | as listed |
+| Field (globe + graph), Theory (+ Dynamics), Aion, Red Book | devices of Project and World (field), the Relation Field (Aion), the Journey (Red Book, dynamics routes) | as listed |
 | Astrology (natal sky beside Jung's, walked planet by planet) | device on the sky scale | the **Epi-Logos lens's Nara overlay** on the ported sky |
 | Dreams, Symbols, Coincidences (practice, private) | devices, private storage | practice devices, personal store, never in a link |
 | **Filters** (works, cultures, era, kinds) — one mask, never a mode | browser filter / aperture | the aperture + browser filter; never a new mode |
@@ -436,7 +418,7 @@ Journey (M3′) and how both eventuate in a full Expression.
 
 ### 7.2 The time grammar (AE `src/types/history.ts`, `aion/`, `data/thread.ts`, `globe/chronology.ts`)
 
-| AE | Live semantic | M2′ Timeline (Arrangement) |
+| AE | Live semantic | Timeline (Arrangement) |
 |---|---|---|
 | **Reading** — one author's view of time; later readings `extends` and never rewrite | a track group / layer above | a reading is a layer of tracks; extensions stack as layers, never overwrite |
 | **Epoch** — nested half-open spans; the narrowest supplies the atmosphere (palette, polarity, spectrum) | arrangement sections (locators), nested | nested sections on the ruler; the narrowest colours what plays inside it |
@@ -449,7 +431,7 @@ Journey (M3′) and how both eventuate in a full Expression.
 
 ### 7.3 How a timeline eventuates in the full Expression
 
-**Thread (M2′, a walk track on the ruler) → walked (M3′ Journey: its stops
+**Thread (a walk track on the Timeline's ruler) → walked (the Journey: its stops
 as rows — Technē's Session) → each stop launches the Expression scene(s) it
 carries (a walk goes through a sequence of Expressions or through the scenes
 within one Expression — §9.2)
@@ -482,7 +464,7 @@ stop across.
    and dynamics routes through the same walk shape.
 3. **The Journey "waits for the journey owner"** (`shell/modeGrammar.ts:442`).
    The owner is the ported AE walk modules. **Fix (with T-TIMELINE-WALKS):**
-   Technē's Session (M3′) reads the walks; Play walks them (pace, stop n/N,
+   Technē's Session (the Journey) reads the walks; Play walks them (pace, stop n/N,
    arrival quantize, Follow) as the mockup's transport already specifies.
 
 ---
@@ -521,13 +503,13 @@ view; the knowledge graph stays distinct from it.
 
 ### 8.2 Palaces are curated systems within a corpus or project
 
-A **Palace** (M5′) is a curated system over one corpus or project.
+A **Palace** is a curated system over one corpus or project.
 Archetypal-Earth's modes are the worked foundation: Aion (a reading — epochs,
 events, threads), the Red Book (a folio walk), Theory with Dynamics (concepts
 and their routes), Astrology over the Sky (a walk planet by planet), all
 standing on the Field. Read as a palace: its **rooms** are its curated
 sections (epochs, folios, chapters, concepts, planets); its **path** is its
-walks (M3′); its **objects** open at their revision and are owned by the
+walks (the Journey); its **objects** open at their revision and are owned by the
 corpus, never by the room; its **portals** lead to other palaces and places;
 private rooms hold the practice material (dreams, coincidences); its Return
 proposes to the owner. Live: a palace is a curated Set — tracks, sections,
@@ -568,7 +550,7 @@ clips at once. Every mode reads the same three levels:
 |---|---|---|---|---|
 | Live | audio / MIDI / group / return | audio / MIDI clip | scene | take lanes, comping |
 | Expressions | **an Expression** | **a scene** | a moment across several Expressions | captured takes of a scene |
-| Technē (M2′ ruler / M3′ Journey) | a native stream: a reading's thread, a subject's occurrences, a journey, runs, revisions, sky | an event, occurrence or revision at its time and place | a **walk stop**: it stands its event and launches the Expression scene(s) it carries | readings that extend a reading (layers, never rewrites) |
+| Technē (the Timeline's ruler / the Journey) | a native stream: a reading's thread, a subject's occurrences, a journey, runs, revisions, sky | an event, occurrence or revision at its time and place | a **walk stop**: it stands its event and launches the Expression scene(s) it carries | readings that extend a reading (layers, never rewrites) |
 | Factory | a session | a task | a launched batch (Play: "every queued one") | **attempts** (attempt 1 failed · attempt 2 …); comping = choosing the attempt that lands (review) |
 | Central | a stream: Day · Flows · Beings · Things · Goals | an entry or document | the day's face (the die) standing its entries | revisions (draft · saved · edited since save) |
 

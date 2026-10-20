@@ -571,8 +571,8 @@ timeline, journey, places, palace** (owner ruling D-F's plain names; DLW-PLAN
 operation; subject identity and native Action ownership are preserved"
 (`lane-7-app-structure/STRUCTURE.md:15–19`). "The instrument is the
 instrument": no separate Technē rack; the detail row is the focused lens's
-own native control set (WSD :143–149). Session = M3′ Journey; Arrangement =
-M2′ Relation Field (Rev 5). The World views ARE instruments in every mode:
+own native control set (WSD :143–149). Session = the Journey; Arrangement =
+the Relation Field (Rev 5). The World views ARE instruments in every mode:
 the owner's 13 October 2026 ruling retires the earlier "plain apertures,
 without instrument controls" rule — the Device side follows the focused
 pane's instrument in Central, Factory, Expressions and Live at full
@@ -583,9 +583,9 @@ The **lens instrument** — the focused lens's body. The six types
 (`INST`, world-shell-mockup.html:803–809; landed as the lens bar,
 `ModeDetail.tsx:234–241`): project/graph (view `field`), canvas (`canvas`),
 timeline (`timeline`), journey (`scenes`), places (`world`), palace
-(`palace`). A new pane opens with the default lens M0′/project-graph
+(`palace`). A new pane opens with the default lens, the Project graph
 (`newPaneTab()` → `tab('lens',{lens:'M0',cnv:'form',scale:'system',body:'central'})`,
-:1602); the mode's default set opens **places at system scale** (M4′,
+:1602); the mode's default set opens **places at system scale** (the World,
 :750). Why: the mode is its instruments; a pane without a lens "is not an
 instrument" and the detail row says so (:1443).
 
@@ -614,7 +614,7 @@ another mode's content". Folder by folder:
   :1501). Waiting.
 - **Earth places** — *content*: gazetteer places with precision (PLACES;
   :1502). Waiting on the Places owner.
-- **Palaces** — *content that instantiates the palace instrument*: M5′
+- **Palaces** — *content that instantiates the palace instrument*: the
   compositions you enter (:1503). Waiting on the Palace owner.
 - **Journeys** — *content that instantiates the journey instrument*: walk
   compositions, "8 stops" (:1504). Waiting on the journey owner.
@@ -637,7 +637,7 @@ folded); dock tiles `['epii','field','trail']`; browser category `sources`;
 companion Epii (Epii · Source · Proposals · Field, :1534). Landed tonight
 (audit techne-1920): the **lens bar** above the centre (Project / graph ·
 Canvas · Timeline · Journey (on) · Places · Palace — the two `cut` lenses
-drive the landed World cut, four hold places disabled); the M3′ Journey
+drive the landed World cut, four hold places disabled); the Journey
 centre frame (stop 1/8 · 2/8 · 3/8 rows, five columns, "The walk's writers
 wait for the journey owner; the stops hold their places"); the **Clip**
 detail with six honest rows (identity — no occasion retained; place · time;
@@ -648,9 +648,9 @@ Sources live; status pair **Clip | instruments**.
 Covered: the planet builder as the places instrument's own controls (Body /
 Landmass / Climate / Sky / Locations / Relations sections —
 world-shell-mockup.html:1446–1454, with Earth's landmass disabled: "Earth is
-given"); each other lens's sections (M0′ Whole/View/Source; M1′ Tools/
-Relation/View with "Promote… (native Action)"; M2′ Projection/Standing/
-Window; M3′ Stops/Pacing/Take; M5′ Rooms/Path/Portals); the folded/expanded
+given"); each other lens's sections (Project: Whole/View/Source; Canvas: Tools/
+Relation/View with "Promote… (native Action)"; Relation Field: Projection/
+Standing/Window; Journey: Stops/Pacing/Take; Palace: Rooms/Path/Portals); the folded/expanded
 instrument strip; the aperture · view-as transport cluster. **SPEC-NEEDED
 (7):**
 1. The World group's listing reads — the Earth adapter's catalogue ops
@@ -659,8 +659,9 @@ instrument strip; the aperture · view-as transport cluster. **SPEC-NEEDED
 2. Palace and journey composition owners (which family declares them; the
    mockup's ROOMS/WALK fixtures shape the contracts, :602–619).
 3. The five non-places lenses' own controls as declared data — the mockup
-   draws M0′/M1′/M2′/M3′/M5′ sections; their parameter addresses and owner
-   ops are unlisted (M4′'s planet-builder controls are the drawn exemplar).
+   draws the Project, Canvas, Relation Field, Journey and Palace sections; their
+   parameter addresses and owner ops are unlisted (the World's planet-builder
+   controls are the drawn exemplar).
 4. View → scene capture (`capture` slot, `modeGrammar.ts:460`) — the owner
    op that turns the current view into a scene.
 5. The occasion window's owner (punch/loop slots as the retained-occasion
@@ -781,7 +782,7 @@ implementations works, but these two graphs no longer share one.
   dispatch (`WorldBrowser.tsx:96–115`, cited WSD §3.5), the Factory dock's
   **Graph** tile ("The knowledge-graph neighbourhood in play",
   AgentContextDock LAUNCHER; agent-shell-mockup.html CTX `graph`), and the
-  M0′/project-graph lens's content.
+  Project graph lens's content.
 - Implementation 1 is the atlas port's body: the **Constellation**
   projection (`projection.constellation` pane kind, `surface/types.ts:34`)
   hosting the atlas graph view; the world mockup offers it as the Expressions
@@ -830,7 +831,7 @@ kind + subject, never the pane" (`surface/types.ts:31–33`).
 - **Timeline** — the audio Session/Arrangement pair (`SessionView`/
   `ArrangementView`), the native variants (`NativeSessionContent`/
   `NativeSourceArrangement`, `shell/nativeContent.ts`), the atlas non-linear
-  scale (`atlas/src/data/time.ts`), the Timeline projection pane, the M2′
+  scale (`atlas/src/data/time.ts`), the Timeline projection pane, the
   Relation Field frame. One type, many bodies; the time model is the
   contract (lane-2 T1).
 - **Document** — the four QL forms (hosted HTML devices), the files craft

@@ -188,7 +188,7 @@ expose* devices; a device never hosts a pane. Three composable relations:
    controls over the graph instrument's tool state
    (`projections/atlas/src/graph/tools.ts:7-17,19-29`).
 
-The distinctions the owner drew hold: the **technē instrument** (M0′–M5′) is a
+The distinctions the owner drew hold: the **technē instrument** (the six of §2.5 in the lock) is a
 pane-instrument (it fills the focused pane and carries its own native controls
 — `WORLD-SHELL-DESIGN.md:143-148` Rev 3 "the instrument is the instrument");
 its *controls* are devices on the detail row (the Technē device column,
@@ -270,7 +270,7 @@ fork.
 **Base instrument per mode.** Each mode's default pane-instrument — what a new
 pane opens with in that mode — is grammar data. The mockup declares it
 (`world-shell-mockup.html:1602` `newPaneTab()`: Base → Things document;
-Factory → Terminal; Technē → M0′ lens as form; Expressions → Graph as form;
+Factory → Terminal; Technē → the Project lens as form; Expressions → Graph as form;
 Live → Session grid) and the per-mode Session|Arrangement presentations
 (`world-shell-mockup.html:1707` `VIEWMAP`; typed in `modeGrammar.ts:122-124`
 `session`/`arrangement`). Landed, the mode grammar holds the presentations and
@@ -291,7 +291,7 @@ panes hold (follow/pin). Two registers:
   categories, its Session/Arrangement presentations, its Clip|Device pair
   (`modeGrammar.ts:115-142` `SurfModeGrammar`) — with the mockup supplying the
   seed arrangement (Base: Day + Flow/Things panes; Factory: Sessions + Thread;
-  Expressions: the field; Technē: M4′ system; `world-shell-mockup.html:746-750`
+  Expressions: the field; Technē: the World at system scale; `world-shell-mockup.html:746-750`
   `S.modes`). The mockup's own header states the rule both registers obey:
   "Each arrangement keeps its own panes; the encounter carries across"
   (`world-shell-mockup.html:1596` data-i).
@@ -354,7 +354,7 @@ agent mockup's centre views and dock (`agent-shell-mockup.html:547,824`), and
 the landed body kinds. Sixteen types. Each entry: contract sketch · landed
 implementations (files) · mockup evidence · device set · standing.
 
-**T1. Earth / World** (`projection.earth`; Technē M4′ "World / Places").
+**T1. Earth / World** (`projection.earth`; Technē "World / Places").
 Contract: bodies, places, relations between bodies; scales
 system·body·region·palace; encounter following (aim/fly on subject change).
 Implementations: the atlas port — `projections/atlas/` (82 modules,
@@ -372,7 +372,7 @@ specified + implementation ported (admission as a shell pane still to prove —
 `modeGrammar.ts:426-427` keeps the Bodies category `waiting`: "the atlas port
 refused the merge" is the recorded state).
 
-**T2. Timeline** (`projection.timeline`; Technē M2′ "Relation Field"; Base
+**T2. Timeline** (`projection.timeline`; Technē "Relation Field"; Base
 "today on one ruler"; Live Arrangement). Contract: tracks, clips, ruler,
 lenses (chronology·causal·recurrence·concurrency), epistemic standing chips;
 Session and Arrangement are two presentations of one type
@@ -390,7 +390,7 @@ segment (`world-shell-mockup.html:812`, `:1523`), `musicarr` (`:1704`),
 specification landed (adapters + spine); pane-kind hosting landed; per-mode
 Session/Arrangement compositions are the mode chapters' work.
 
-**T3. Graph / Constellation** (`projection.constellation`; Technē M0′
+**T3. Graph / Constellation** (`projection.constellation`; Technē
 "Project / Wiki / Graph" field view). **Two implementations** — the
 commission's case study; see §3 for the full contract and both
 implementations. Mockup: `field` aperture with list·tree·graph·form views
@@ -411,7 +411,7 @@ pointer, focus, morph, colour; entity and scene families —
 `INSTRUMENTATION-CONTRACT.md:456-485`). Standing: largest port in flight (213
 actions; `INSTRUMENTATION-CONTRACT.md:487-509`).
 
-**T5. Canvas** (Technē M1′ "Canvas / Constellation"). Contract: arrange,
+**T5. Canvas** (Technē "Canvas / Constellation"). Contract: arrange,
 frame, relate artefacts; drag is presentation; drawn relations are proposals
 until promoted (`WORLD-SHELL-DESIGN.md:265-267`). Implementations: **none
 landed** (lane-1 targets A1–B4 all pending, `FUNCTIONAL-CROSSWALK.md:20-33`);
@@ -422,7 +422,7 @@ native graph… and Canvas"). Mockup: `canvas` aperture (`world-shell-mockup.htm
 controls — unspecified beyond the mockup. Standing: OPEN (design-specified,
 unbuilt).
 
-**T6. Scenes / Journey** (Technē M3′ "Journey / Scenes"). Contract: walks as
+**T6. Scenes / Journey** (Technē "Journey / Scenes"). Contract: walks as
 ordered scene rows; ▶ walks, ● records (`WORLD-SHELL-DESIGN.md:257-260`).
 Implementations: none as a pane (scene rows live inside the retained app and
 the mockup); lane-3 E-targets and lane-5 T1–T13 pending. Mockup: `scenes`
@@ -430,7 +430,7 @@ aperture (`world-shell-mockup.html:813`), walk stepping (`:1274-1275` stepWalk,
 `launchScene`). Devices: walk pace/stop/presence (transport slots, Technē
 column `modeGrammar.ts:442-471`). Standing: OPEN.
 
-**T7. Palace** (Technē M5′ "Palace / Integral Whole"). Contract: enter a
+**T7. Palace** (Technē "Palace / Integral Whole"). Contract: enter a
 location; rooms composing native refs; guided path; portals; private room
 fogs (`WORLD-SHELL-DESIGN.md:247-249`). Implementations: none landed
 (lane-5 T14–T24 pending). Mockup: `palace` aperture + `palaceSVG`
@@ -853,7 +853,7 @@ The existing one-module-per-kind refusal becomes the *default slot's* refusal
 
 **G3 · OPEN-QUESTION (for the owner) — the default Graph, per mode.** Which
 implementation opens when a pane pulls "Graph": the atlas coloured
-constellation, the knowledge graph, or mode-dependent defaults (Technē M0′ →
+constellation, the knowledge graph, or mode-dependent defaults (Technē's Project →
 knowledge; Expressions' Field → atlas)? Ableton ships defaults per device
 type; the owner chooses. The mockup hints (`APS.field` = the bounded local
 whole, the knowledge-graph shape; `INST.M0` view `field`), but no source

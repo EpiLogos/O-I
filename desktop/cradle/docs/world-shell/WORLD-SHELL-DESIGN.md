@@ -50,7 +50,7 @@ meaning changes:
 | Base | the day as clips: Day, Flows, Beings, Things and Goals as tracks | today on one ruler |
 | Factory | sessions and tasks | the run viewer |
 | Expressions | scene rows | the scenes over time |
-| Technē | M3′ Journey | M2′ Relation Field |
+| Technē | the Journey | the Relation Field |
 
 **Expressions follows Technē's example.** The pane holds only the living field.
 The tool rail, toolbelt and Library move into the Studio (Device), as Tools
@@ -88,7 +88,7 @@ These corrections apply on top of Revision 3.
 | Base | Document: form, file, revision, bindings; highlights; notes; packet | Devices: Text · Highlight · Notes · Packet · Answer · the form device |
 | Factory | Task log: the selected task's tool-run log | Agent chain: gateway → agent → skills → world → git |
 | Expressions | Scene: sequence, durations, bindings | Studio: the engine's own controls |
-| Technē | Clip: identity, place and time, disclosure, typed relations, bounded constellation, source | Instruments: the six M0′–M5′. The one open on the focused pane is expanded with its own controls; the others are folded, and clicking one opens it on the focused pane |
+| Technē | Clip: identity, place and time, disclosure, typed relations, bounded constellation, source | Instruments: the six Technē instruments. The one open on the focused pane is expanded with its own controls; the others are folded, and clicking one opens it on the focused pane |
 
 - **The right side is the agent-shell dock again.** Context tiles sit above:
   the agent (Fizz, Epii or Anima), Packet, Trail, Field, Agents, Terminal,
@@ -116,7 +116,7 @@ its own panes.
 | **Base** | Central: Days, Flows, Beings, Things, Goals; Files, Wiki; New (exactly Day · Flow · Beings · Things) | the documents themselves, paper-toned | the situated agent: Conversation · Activity · Context · Inspect | document devices |
 | **Factory** | Sessions, Agents, Runs, Chats, Files, Knowledge | session grid · thread | result desk: Activity · Context · Inspect · Results | the agent chain: gateway → agent → skills → world → git |
 | **Expressions** | the compact bounded graph, Scenes, Library | the living field: tool rail, toolbelt, scene strip, Library | Anima (Nara/oracle) | the Studio: the engine's own controls |
-| **Technē** | sources to hand (open in instrument / add reference), Bodies, Locations, Earth places, Palaces, Journeys | the current lens, M0′–M5′ on the lens bar | Epii: Epii · Source · Proposals · Field | the instrument's own controls |
+| **Technē** | sources to hand (open in instrument / add reference), Bodies, Locations, Earth places, Palaces, Journeys | the current lens, the six on the lens bar | Epii: Epii · Source · Proposals · Field | the instrument's own controls |
 
 **Base is Central's ground.** The four document forms
 (`desktop/cradle/documents`: `ql-daily-die.html`, `ql-flow.html`,
@@ -154,7 +154,7 @@ or Factory carries that instrument's full native controls through its
 devices' exposed parameters. The controls stay out of the pane body. The mode
 supplies the material; the instruments stay whole.
 
-**M4′ World / Places renders real bodies in one space.** Planets are lit by the
+**World / Places renders real bodies in one space.** Planets are lit by the
 field's star, so they show phases, and each is procedurally generated from its
 World's own parameters. Earth is your local root anchor, the Mūlādhāra
 relation: it carries real geography and is never the default body for anyone
@@ -173,7 +173,7 @@ Scales are System · Body · Region · Palace. In the Body scale your located
 artefacts draw anchor lines to their real places on Earth; Stone Bay, for
 example, anchors to Bollingen.
 
-**Planet building is a first-class part of M4′.** Its native controls:
+**Planet building is a first-class part of the World instrument.** Its native controls:
 - **Body:** your body, or Earth; name; seed and reroll.
 - **Landmass:** sea level, continents, relief, coast (smooth · fjord ·
   archipelago).
@@ -189,7 +189,7 @@ body is read-only.
 
 **Fewer titles.** The window title is the subject and the day. Only the
 companion has a header line. The Mercurius walk now appears only where it
-does work: the M3′ lens, the Journeys list, the palace loggia.
+does work: the Journey lens, the Journeys list, the palace loggia.
 
 **Renders:**
 - `world-shell-mockup.png`: Base, Day and Flow
@@ -201,7 +201,7 @@ does work: the M3′ lens, the Journeys list, the palace loggia.
 - `-techne-body`
 - `-techne-region`
 - `-techne-earth`
-- `-techne-m0`: M0′ as form
+- `-techne-m0`: the Project graph as form
 - `-techne-quad`
 
 Linkable states: `?mode=techne&lens=M4&scale=body&body=earth&ap=3`,
@@ -221,14 +221,14 @@ The owner asked for the world mockup to be brought to the agent-shell
 standard and to the intents worked out in conversation: your World is a
 planet in a solar-system-like shared field; local and shared are one UX at
 different apertures; the graph is the encounter engine; and Technē is
-accounted for at the UX level as the M0′–M5′ instruments. The mockup is meant
+accounted for at the UX level as its six instruments. The mockup is meant
 to be lifted by development agents, so it is written as a component reference
 (its header lists the functions to lift).
 
 **What it settles, in the mockup itself:**
 
 - **Three orthogonal axes.** *Arrangement* (Base · Factory · Expressions 3:3 ·
-  Technē 4:2 — the transport's surface buttons; each keeps its own panes) ×
+  Technē — the transport's surface buttons; each keeps its own panes) ×
   *projection* (Earth · Timeline · Constellation · Expression — per pane) ×
   *device* (the rack). Switching any one keeps the encounter.
 - **The spine is a bar** above the panes: Field › World › Subject ›
@@ -242,7 +242,7 @@ to be lifted by development agents, so it is written as a component reference
 - **View as** (where Live has key/scale): me · field · public. Your planet
   fogs everything not projected; the rack's Projection device shows the
   disclosure ladder; raising an audience always asks first.
-- **Earth / Solar system is the M4′ body at five scales**: *Field* (Worlds as
+- **Earth / Solar system is the World's body at five scales**: *Field* (Worlds as
   planets around the SharedField hub; a nested field ringed; a federated field
   at one remove; contributions travel as particles), *Orbit* (the homepage —
   your planet with agents, NOWs, recent Expressions and encounters, watched
@@ -250,13 +250,13 @@ to be lifted by development agents, so it is written as a component reference
   M2 sky · M3 clock around it), *Surface* (artefacts placed round the globe,
   clustered; walks drawn as routes; the agent's reading lines), *Place*
   (precision ring, the relation type per artefact, reference frame, scale
-  bar), and *Palace* — M5′ as a special location you enter: rooms composing
+  bar), and *Palace* — a special location you enter: rooms composing
   native refs, a guided path, portals out, a private room that fogs for every
   audience, Epii explaining why each room exists.
 - **Visiting another World** lands on its *projection*: tinted, fogged, only
   what it projected, its agent reachable (A2A contact → returned difference →
   admit as a claim attributed to its source).
-- **Timeline holds M2′ and M3′.** The Arrangement presentation is the Relation
+- **Timeline holds the Relation Field and the Journey.** The Arrangement presentation is the Relation
   Field: authored history beside development (runs, revisions, the Day,
   machine NOWs, FieldNow) on one non-linear ruler with a declared break into
   today; lenses chronology · causal · recurrence · concurrency; clips drawn in
@@ -265,18 +265,18 @@ to be lifted by development agents, so it is written as a component reference
   Journey: Live's scene rows as walk stops (place · occasion · artefact ·
   Expression · narration · transition). ▶ walks it; ● records a new walk from
   your encounters.
-- **Constellation holds M0′ and M1′.** *Field*: the bounded local whole
+- **Constellation holds the Project graph and the Canvas.** *Field*: the bounded local whole
   (depth, budget, ＋ expand, ghosts for unresolved links) as list · tree ·
   graph · **form** — the graph-expression of your World. *Canvas*: the
   artefact suite — drag is presentation, frames are presentation, a drawn
   relation is a proposal until promoted through the relation owner's Action.
-- **Expression is the 3:3 reading** with the M0–M5 conjugate layers; the rack's
-  cut switch crosses 4:2 ↔ 3:3 and highlights the conjugate of the instrument
-  you came from.
-- **The rack follows the focused pane's instrument** (chains per M′ and for
-  3:3), with the six instruments as chips. Every device has one parameter model
+- **Expression is the 3:3 reading** with its M0–M5 layers; the rack's cut switch
+  crosses between Technē and Expressions (the Journey's crossing into a scene and
+  back).
+- **The rack follows the focused pane's instrument** (chains per Technē
+  instrument and for 3:3), with the six instruments as chips. Every device has one parameter model
   with three presentations: compact face, expanded pool (header click), full pane
-  (⤢), plus a per-device Technēᵢ agency.
+  (⤢).
 
 **Transport functions** (Live control → World function): Link → field
 carrier · Tap → back to Now · tempo → walk pace · signature → walk stop ·
@@ -289,7 +289,7 @@ carrier and round-trip · CPU → share of your World projected.
 
 **Renders:** `world-shell-mockup.png` (home, orbit) · `-field` (aperture
 federated) · `-surface` · `-place` · `-palace` · `-quad` (Technē, all four
-projections of one encounter) · `-factory` (concurrency + M0′ graph) ·
+projections of one encounter) · `-factory` (concurrency + the Project graph) ·
 `-scenes` (a walk at stop 7) · `-canvas` · `-visit` (Ariadne's projection +
 A2A contact) · `-expressions` · `-viewas` (your World as the field sees it).
 Linkable states: `?arr=techne&scale=surface&subject=stone1950&ap=3&as=field&visit=ariadne&walk=6`.

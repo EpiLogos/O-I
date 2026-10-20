@@ -276,8 +276,8 @@ ruling (12 Oct 2026): Live (base) · Central · Factory · Expressions · Techn�
 `packages/live-shell/ui/src/shell/modeGrammar.ts:33`). The code and the
 Rev-5 tables title the Central icon "Base · Central"; under the ruling it is
 "Central" (a naming defect, ticket T-LABELS). Session/Arrangement per-mode
-meanings (Rev 5 second table): e.g. Technē Session = M3′ Journey,
-Arrangement = M2′ Relation Field; Central ("Base" in Rev 5) Session = the
+meanings (Rev 5 second table): e.g. Technē Session = the Journey,
+Arrangement = the Relation Field; Central ("Base" in Rev 5) Session = the
 day as clips, Arrangement = today on one ruler.
 
 **Central's punch row** *(12 Oct; DEVICE-SEMANTICS-LOCK §2.2, §4.7)*: the day
@@ -337,7 +337,7 @@ Toggled from the status bar as in the agent shell; each arrangement gives the
 pair its own meaning: Base = Document | Devices (Text · Highlight · Notes ·
 Packet · Answer · form device); Factory = Task log | agent chain; Expressions
 = Scene | Studio; Technē = Clip (identity, place and time, disclosure, typed
-relations, bounded constellation, source) | **Instruments — the six M0′–M5′;
+relations, bounded constellation, source) | **Instruments — the six Technē instruments;
 the focused lens's instrument is expanded with its own controls, others
 folded; clicking one opens it on the focused pane**. No separate "Technè
 rack" composes an instrument. In every arrangement the Device side follows
@@ -368,7 +368,7 @@ carries today (`packages/live-shell/ui/src/shell/ModeContextDock.tsx:62-68`).
   cosmos layers M1 torus · M2 sky · M3 clock around it) · **Surface**
   (artefacts placed round the globe, clustered; walks as routes; agent reading
   lines) · **Place** (precision ring, relation type per artefact, reference
-  frame, scale bar) · **Palace** (M5′ entered as a location).
+  frame, scale bar) · **Palace** (entered as a location).
 - **Earth law**: Earth is the local root anchor — the Mūlādhāra relation;
   real geography; never the default body for anyone in a shared field;
   landmass controls disabled ("Earth is given"); another World's body is
@@ -382,7 +382,7 @@ carries today (`packages/live-shell/ui/src/shell/ModeContextDock.tsx:62-68`).
   · contribution (with flow) · watch · projection · federate · A2A while a
   contact is open.
 
-### 4.8 Planet building (Rev 3 — first-class in M4′)
+### 4.8 Planet building (Rev 3 — first-class in the World instrument)
 
 Sections, each a named parameter group (mockup's live model): **Body** (your
 body or Earth; name; **seed + reroll**), **Landmass** (sea level %,
@@ -394,7 +394,7 @@ place; **names suggested from the seed**; list with anchors and portals),
 field's star (phases visible). Honesty note stands: mockup bodies are a CPU
 stand-in; the real engine is the GPU globe (port law: no rewrite).
 
-### 4.9 Timeline = M2′ + M3′ (Rev 2)
+### 4.9 Timeline = Relation Field + Journey (Rev 2)
 
 - **Relation Field** (arrangement): authored history beside development (runs,
   revisions, the Day, machine NOWs, FieldNow) on one non-linear ruler with a
@@ -407,7 +407,7 @@ stand-in; the real engine is the GPU globe (port law: no rewrite).
   transition); ▶ walks it; ● records a new walk from your encounters;
   scene launch chips ("Launch scene k — narration…").
 
-### 4.10 Constellation = M0′ + M1′ (Rev 2)
+### 4.10 Constellation = Project graph + Canvas (Rev 2)
 
 - **Field**: the bounded local whole (depth, budget, ＋ expand) as list ·
   tree · graph · **form** (the graph-expression of your World). Unresolved
@@ -423,13 +423,14 @@ stand-in; the real engine is the GPU globe (port law: no rewrite).
 
 ### 4.11 Expression 3:3 (Rev 2)
 
-The 3:3 reading with M0–M5 conjugate layers; the rack's **cut switch crosses
-4:2 ↔ 3:3 and highlights the conjugate** of the instrument you came from.
+The 3:3 reading with its M0–M5 layers; the rack's **cut switch crosses
+between Technē and Expressions** (the Journey's crossing into a scene and
+back).
 Tool rail acts on the field; **toolbelt** = the selected object's exact
 input/bind/follow/duplicate; scene strip sequences scenes; Capture (still or
 video) makes a new scene.
 
-### 4.12 Palace (M5′, Rev 2–3)
+### 4.12 Palace (Rev 2–3)
 
 Rooms composing native refs; a guided path; **portals out** ("an authored
 link out of the palace; walking through it is an encounter like any other" —
@@ -492,7 +493,7 @@ feature:
 | Ghost node | constellation | any unresolved link |
 | Proposal → Promote card | canvas/court | any presentation awaiting a native Action |
 | Occurrence chip (count·frame·precision) | earth surface | any situated material |
-| Planet-building parameter group | M4′ device | any per-World body parameter |
+| Planet-building parameter group | World device | any per-World body parameter |
 | Scene launcher row | timeline scenes / journey | any walk stop |
 | Portal chip | palace | any authored link-out |
 | Day die face / Flow participant / Being binding row | Base documents | Central material as devices |
@@ -619,7 +620,7 @@ acceptance happens by direct computer use, never from this document.
 
 **Tension recorded beside rule 6 — the Technē companion label** (DLW-VISION
 L21; DLW-PLAN §10 item 49): the dock names the Technē companion "Epii"
-(`ModeContextDock.tsx:67`), its M5 subsystem, while the lock's S5′ operator
-is "Technē_i := Aletheia_i" (`L5-TECHNE-DUAL-READING-LOCK.md:510-517`); the
-Expressions companion is named by its S4′ operator, Anima. Same chain,
-different end. The label stays until the owner rules.
+(`ModeContextDock.tsx:67`), its M5 subsystem; the Expressions companion is
+named by its S4′ operator, Anima. The other side of the tension, the L5
+lock's "Technē_i := Aletheia_i", went with the four-and-two reading (owner,
+19 Oct 2026), so the label stands.
