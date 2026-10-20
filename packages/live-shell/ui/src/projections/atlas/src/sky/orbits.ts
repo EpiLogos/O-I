@@ -32,8 +32,8 @@ export interface Satellite {
   /** stable key (the tie's target; for your system, the subject's ref) */
   id: string;
   name: string;
-  /** Jung's own link (inner orbit) or one the atlas draws (outer); for your system, the agents at work and the moments open now
-   * (inner) or the files and context to hand (outer) */
+  /** Jung's own link (inner orbit) or one the atlas draws (outer); for your system, the agents at work (inner) or what they have just made
+   * (outer) */
   inner: boolean;
   open(): void;
   /** [T-WORLDS §5 W3] its own place on its ring, radians, keyed by its subject (system/systemModel.ts ringPhase): given, the
@@ -41,8 +41,11 @@ export interface Satellite {
   phase?: number;
   /** what the control says on hover; absent, the lens's words for its two orbits */
   title?: string;
-  /** a class for what it is (`po-kind-<kind>`), so a page, a session and a file read apart */
+  /** a class for what it is (`po-kind-<kind>`), so a session and an artefact read apart */
   kind?: string;
+  /** [T-PROCEDURAL-BODY §6] how far along its window it is, 0 just made … 1 at the edge it drifts off at: its place on the ring drifts outward and it
+   * fades as it ages (a satellite that does not age leaves it out) */
+  age?: number;
 }
 
 /** [T-WORLDS §5 W3] The key space of the bodies orbits ride: the sky's own bodies (BodyKey, unchanged) or a world of your system,
@@ -76,6 +79,9 @@ const K_DECAN_MIN = 2.05;
 const K_RANK_MIN = 2.6;
 const RANK_PERIOD_S = 420; // one turn of the rank ring
 const SWAY_DEG = 5; // a decan card's sway about its longitude
+/** [T-PROCEDURAL-BODY §6] an aging satellite drifts outward by this share of its ring's radius by the time it has aged out, and fades to a quarter */
+const AGE_DRIFT = 0.2;
+const AGE_FADE = 0.75;
 
 /**
  * Whether the satellites, the Earth line and the Whole-sky control stand this frame (spec §2.5, the phase contract on
@@ -276,14 +282,15 @@ export class PlanetOrbits {
     this.earthBtn.style.transform = `translate(${Math.round(Math.min(W - bw - 8, Math.max(8, cx - bw / 2)))}px, ${Math.round(Math.min(H - 150, Math.max(TOP, by)))}px)`;
 
     for (const x of this.sats) {
-      const r = radii[x.s.inner ? 0 : 1];
+      const age = Math.min(1, Math.max(0, x.s.age ?? 0));
+      const r = radii[x.s.inner ? 0 : 1] * (1 + AGE_DRIFT * age);
       const a = x.phase + (this.t * Math.PI * 2) / PERIOD_S[x.s.inner ? 0 : 1];
       const ox = Math.cos(a) * r, oy = Math.sin(a) * r * TILT;
       const px = cx + ox * cos - oy * sin, py = cy + ox * sin + oy * cos;
       // the far half of the orbit passes behind the planet: inside the disc it is hidden, outside it is dimmer
       const behind = Math.sin(a) < 0;
       const occluded = behind && Math.hypot(px - cx, py - cy) < R * 0.98;
-      const o = occluded ? 0 : behind ? 0.55 : 1;
+      const o = (occluded ? 0 : behind ? 0.55 : 1) * (1 - AGE_FADE * age * age);
       x.dot.setAttribute('cx', px.toFixed(1)); x.dot.setAttribute('cy', py.toFixed(1));
       x.dot.setAttribute('r', (behind ? 3 : 4.5).toFixed(1));
       x.dot.style.opacity = String(o);

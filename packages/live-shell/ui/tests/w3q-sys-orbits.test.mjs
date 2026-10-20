@@ -57,17 +57,10 @@ export async function load(u, c, n) {
 
 globalThis.__CRADLE_WALK__ = false
 const model = await import('../src/projections/atlas/system/systemModel.ts')
-// a module the lane has not written yet is a failed assertion in each test that needs it, never an import error that hides the rest
-const optional = path => import(path).catch(error => ({absent: error instanceof Error ? error.message : String(error)}))
-const artifactsMod = await optional('../src/projections/atlas/system/artifacts.ts')
-const openMod = await optional('../src/projections/atlas/system/openSatellite.ts')
-const need = (mod, name, where) => {
-  assert.ok(!('absent' in mod) && typeof mod[name] === 'function', `${where} exports ${name}() — not written yet (${'absent' in mod ? mod.absent : `${name} is missing`})`)
-  return mod[name]
-}
-
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until the system lane lands'}
+const {artifactsOf} = await import('../src/projections/atlas/system/artifacts.ts')
+const {openSatellite} = await import('../src/projections/atlas/system/openSatellite.ts')
+const {projectOfSession, sessionsOf} = await import('../src/projections/atlas/system/sessionWorld.ts')
+const {bindSystemClock, systemNow, subscribeSystemNow, SYSTEM_TICK_MS} = await import('../src/projections/atlas/system/systemClock.ts')
 
 // ── fixtures ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -106,7 +99,7 @@ const windowMs = () => {
 
 // ── the rings: sessions inner, artefacts outer, nothing else ─────────────────────────────────────────────────────────────
 
-test('the inner ring is the agents at work and the outer is what they have just made, each world its own, and nothing else rides', pending, () => {
+test('the inner ring is the agents at work and the outer is what they have just made, each world its own, and nothing else rides', () => {
   const playing = [{pageRef: 'ref:Control/user/flows/morning.html', nowRef: 'now:a', project: null, sinceMs: 1}, {pageRef: 'ref:Work/O-I/ProjectCentral/user/being.html', nowRef: 'now:b', project: 'O-I', sinceMs: 2}]
   const hand = {file: {ref: 'ref:Work/O-I/README.md', path: 'Work/O-I/README.md'}, works: [{expression_ref: 'expr:essay', title: 'The essay'}]}
   const artifacts = [made('a', 5 * MIN), made('b', 2 * HOUR, {project: 'O-I', ref: sourceRef('b', 'project:O-I')})]
@@ -117,7 +110,7 @@ test('the inner ring is the agents at work and the outer is what they have just 
   assert.deepEqual(book.satellites, [], 'a world nothing agentic happens in has empty rings')
 })
 
-test('a page that plays, the file you have open and the works to hand never circle anything', pending, () => {
+test('a page that plays, the file you have open and the works to hand never circle anything', () => {
   const playing = [{pageRef: 'ref:Control/user/flows/morning.html', nowRef: 'now:a', project: null, sinceMs: 1}, {pageRef: 'ref:Work/O-I/ProjectCentral/user/being.html', nowRef: 'now:b', project: 'O-I', sinceMs: 2}]
   const hand = {file: {ref: 'ref:Work/O-I/README.md', path: 'Work/O-I/README.md'}, works: [{expression_ref: 'expr:essay', title: 'The essay'}, {expression_ref: 'expr:film', title: 'The film'}]}
   for (const body of model.systemOf(inputOf({playing, hand}))) {
@@ -146,7 +139,7 @@ test('an agent at work rides the inner ring at the place its session ref keys, h
   assert.ok(own.satellites[0].phase >= 0 && own.satellites[0].phase < Math.PI * 2)
 })
 
-test('a session rides the world its project names; one that names none rides your world, as every session does today', pending, () => {
+test('a session rides the world its project names; one that names none rides your world, as every session does today', () => {
   const sessions = [sessionOf('agent-session/kev', {project: null}), sessionOf('agent-session/oi-1', {project: 'O-I', agentName: 'Flint'}), sessionOf('agent-session/gone', {project: 'Gone'}), sessionOf('agent-session/bare')]
   const [own, oi, book] = model.systemOf(inputOf({sessions}))
   assert.deepEqual(idsOf(own), ['agent-session/kev', 'agent-session/bare'], 'the root register\'s agents, and one that names no project, ride your world')
@@ -155,7 +148,7 @@ test('a session rides the world its project names; one that names none rides you
   assert.ok(![...own.satellites, ...oi.satellites].some(s => s.id === 'agent-session/gone'), 'an agent of a world that is not in today\'s set rides nothing: it is never put on another world\'s ring')
 })
 
-test('what an agent made rides the outer ring of the world that holds it, keyed by its own ref, and says what it is', pending, () => {
+test('what an agent made rides the outer ring of the world that holds it, keyed by its own ref, and says what it is', () => {
   const a = made('a', 10 * MIN, {actor: 'agent:flint'}), b = made('b', 20 * MIN, {project: 'O-I', ref: sourceRef('b', 'project:O-I'), path: 'ProjectCentral/user/b.html'}), lost = made('c', MIN, {project: 'Gone'})
   const [own, oi, book] = model.systemOf(inputOf({artifacts: [a, b, lost]}))
   const [mine] = ringOf(own, 'outer'), [theirs] = ringOf(oi, 'outer')
@@ -182,7 +175,7 @@ test('what an agent made rides the outer ring of the world that holds it, keyed 
 // boundary because the boundary is the owner's policy (Control/user/civil-time-policy.json: Europe/London, day_boundary_minutes 0, a
 // rollover that may be automatic), and a boundary would empty every ring at once at midnight instead of letting each artefact drift off as
 // it ages. A civil-Day window is the one-line alternative (the model would take the Day's start as input); the lead rules.
-test('an artefact stays in orbit for a Day\'s length, with its age told, and drifts off at the edge: nothing older, nothing not yet made', pending, () => {
+test('an artefact stays in orbit for a Day\'s length, with its age told, and drifts off at the edge: nothing older, nothing not yet made', () => {
   const W = windowMs()
   assert.equal(W, DAY, 'the window is one Day (the reasoning above, from day-close.md)')
   const at = ago => model.systemOf(inputOf({artifacts: [made('x', ago)]}))[0].satellites.find(s => s.kind === 'artifact')
@@ -198,7 +191,7 @@ test('an artefact stays in orbit for a Day\'s length, with its age told, and dri
   assert.equal(model.systemOf(inputOf({sessions: [sessionOf('agent-session/kev')]}))[0].satellites[0].age, 0, 'an agent at work does not age out: it is at work now')
 })
 
-test('the newest six artefacts of a world ride and no more; the cap counts only what is in the window, per world, newest first', pending, () => {
+test('the newest six artefacts of a world ride and no more; the cap counts only what is in the window, per world, newest first', () => {
   assert.equal(model.ARTIFACTS_PER_WORLD, 6, 'systemModel.ts exports ARTIFACTS_PER_WORLD = 6')
   const names = ['f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6']
   const seven = names.map((name, i) => made(name, (i + 1) * 10 * MIN))
@@ -217,7 +210,7 @@ test('the newest six artefacts of a world ride and no more; the cap counts only 
   assert.deepEqual(one, two, 'artefacts made in the same instant are chosen by their ref, so the same six ride however the list is ordered')
 })
 
-test('an artefact keeps its place on the ring under reorder, under the removal of a neighbour, and when a newer one pushes the oldest off', pending, () => {
+test('an artefact keeps its place on the ring under reorder, under the removal of a neighbour, and when a newer one pushes the oldest off', () => {
   const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((name, i) => made(name, (i + 1) * HOUR))
   const phases = list => Object.fromEntries(ringOf(model.systemOf(inputOf({artifacts: list}))[0], 'outer').map(s => [s.name, s.phase]))
   const base = phases(six)
@@ -233,7 +226,7 @@ test('an artefact keeps its place on the ring under reorder, under the removal o
   assert.equal(pushed.n, model.ringPhase(sourceRef('n')))
 })
 
-test('a world with no agent has empty rings, whatever else is open', pending, () => {
+test('a world with no agent has empty rings, whatever else is open', () => {
   const playing = [{pageRef: 'ref:Control/user/flows/morning.html', nowRef: 'now:a', project: null, sinceMs: 1}]
   const hand = {file: {ref: 'ref:Control/user/flows/morning.html', path: 'Control/user/flows/morning.html'}, works: [{expression_ref: 'expr:essay', title: 'The essay'}]}
   for (const body of model.systemOf(inputOf({playing, hand, sessions: [], artifacts: []}))) assert.deepEqual(body.satellites, [], body.world.name)
@@ -264,8 +257,7 @@ const BY_AGENT = {...NATIVE, change_ref: 'central:change:control:root:831', curs
   source_path: 'Control/user/flows/flow-2026-10-20-0932.html', kind: 'added', observed_at_unix_seconds: 1792499520, actor: 'agent:aletheia', actor_kind: 'agent', agent_session_ref: 'agent-session/fx-aletheia'}
 const horizon = changes => ({schema: 'central.source-change-horizon/v1', world_ref: 'control:root', cursor: 900, sources: [], changes})
 
-test('the horizon\'s changes an agent made are the artefacts: its actor kind is agent, or it names an agent session; a human or native change is not', pending, () => {
-  const artifactsOf = need(artifactsMod, 'artifactsOf', 'system/artifacts.ts')
+test('the horizon\'s changes an agent made are the artefacts: its actor kind is agent, or it names an agent session; a human or native change is not', () => {
   assert.deepEqual(artifactsOf(horizon([REMOVED, NATIVE]), null), [], 'the real root horizon of 16 Oct holds no agent\'s work: the outer ring is empty, truly')
   assert.deepEqual(artifactsOf(horizon([NATIVE, BY_AGENT, REMOVED]), null), [{
     ref: BY_AGENT.source_ref, name: 'flow-2026-10-20-0932', path: 'Control/user/flows/flow-2026-10-20-0932.html', atMs: 1792499520 * 1000, project: null,
@@ -277,8 +269,7 @@ test('the horizon\'s changes an agent made are the artefacts: its actor kind is 
   assert.deepEqual(artifactsOf(horizon([BY_AGENT]), 'O-I').map(item => item.project), ['O-I'], 'it carries the world\'s project it was read from')
 })
 
-test('what an agent removed is no artefact; a change that cannot be keyed or dated is left out, never guessed; one file is one artefact, its newest change', pending, () => {
-  const artifactsOf = need(artifactsMod, 'artifactsOf', 'system/artifacts.ts')
+test('what an agent removed is no artefact; a change that cannot be keyed or dated is left out, never guessed; one file is one artefact, its newest change', () => {
   const row = (cursor, extra = {}) => ({...BY_AGENT, cursor, change_ref: `c${cursor}`, ...extra})
   assert.deepEqual(artifactsOf(horizon([row(1, {kind: 'removed'})]), null), [], 'a removal made nothing')
   assert.deepEqual(artifactsOf(horizon([row(2, {observed_at_unix_seconds: undefined}), row(3, {source_ref: undefined}), row(4, {observed_at_unix_seconds: 'soon'})]), null), [], 'no instant, no ref: nothing is invented')
@@ -292,8 +283,7 @@ test('what an agent removed is no artefact; a change that cannot be keyed or dat
 
 // ── pressing a satellite ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('a press on a session chooses it, on an artefact opens its file through the file route; a kind it does not know is refused by name, never silent', pending, async () => {
-  const openSatellite = need(openMod, 'openSatellite', 'system/openSatellite.ts')
+test('a press on a session chooses it, on an artefact opens its file through the file route; a kind it does not know is refused by name, never silent', async () => {
   const calls = []
   const ports = {selectSession: ref => calls.push(['session', ref]), openArtifact: async item => { calls.push(['artifact', item.id, item.path]) }}
   const [own] = model.systemOf(inputOf({sessions: [sessionOf('agent-session/kev')], artifacts: [made('a', MIN)]}))
@@ -301,4 +291,73 @@ test('a press on a session chooses it, on an artefact opens its file through the
   assert.deepEqual(calls, [['session', 'agent-session/kev'], ['artifact', sourceRef('a'), 'Control/user/flows/a.html']], 'a session is chosen in the sessions provider; an artefact opens as a file (the file route reads its path from the artefact itself)')
   await assert.rejects(openSatellite({id: 'x', name: 'x', ring: 'inner', kind: 'page', phase: 0, hint: '', age: 0}, own, ports), /page/, 'a kind that rides nothing now is refused in words (SystemReadings.tsx:172-183 used to do nothing for an unknown kind)')
   await assert.rejects(openSatellite(own.satellites[1], own, {selectSession() {}}), /open|file/i, 'a pane that cannot open a file says so rather than doing nothing')
+})
+
+// ── which world an agent is at work in ────────────────────────────────────────────────────────────────────────────────────────
+
+// An agency row is {spaceRef, spaceLabel, sessionRef, purpose, agentRef, raw}, and `raw` is the SessionSpace the owner disclosed
+// (desktop/cradle/src/agency/agencySources.ts:36-42). That space names the projects it belongs to: `definition.projects`, which the kernel
+// checks on every read (desktop/cradle/kernel/src/agency.rs:759-762). Read on 20 Oct with `aikit session-space discover --project O-I`: a space
+// of "Factory280 ordinary protected producer Pi" names ["Factory", "O-I"]; a root space ("Lilt") names ["control:root"]; a project's id is its
+// name (Work/O-I/ProjectCentral/project.json "project_id": "O-I"). So the row itself says where its session is at work.
+const spaceOf = projects => ({version: 'aikit.session-space-application/v1', definition: {id: 'session-space/x', projects}, label: 'x', agent_sessions: {}})
+
+test('an agent is at work in the world its space belongs to: the project its definition names that today\'s set holds, the first listed; the root, or nothing the set holds, is your world', () => {
+  const worlds = [YOURS, OI, BOOK]
+  const of = projects => projectOfSession({raw: spaceOf(projects)}, worlds)
+  assert.equal(of(['O-I']), 'O-I')
+  assert.equal(of(['control:root']), null, 'the root register\'s agents are at work in your world')
+  assert.equal(of(['Factory', 'O-I']), 'O-I', 'the real space of 20 Oct names Factory and O-I; Factory is not a world of this set, O-I is')
+  assert.equal(of(['Book', 'O-I']), 'Book', 'two worlds of the set: the first it lists')
+  assert.equal(of(['control:root', 'O-I']), 'O-I', 'a project before the root: the narrower world')
+  assert.equal(of(['Gone']), null, 'a project that is not a world of today\'s set is not derivable to one: your world, as every session rode before')
+  for (const nothing of [undefined, null, {}, {definition: {}}, {definition: {projects: 'O-I'}}, {definition: {projects: [4, null]}}, 'x']) {
+    assert.equal(projectOfSession({raw: nothing}, worlds), null, `no projects to read: ${JSON.stringify(nothing)}`)
+  }
+  assert.equal(projectOfSession({}, worlds), null, 'a row with no space payload')
+  assert.equal(projectOfSession({raw: spaceOf(['O-I'])}, [YOURS]), null, 'with only your world in the set')
+})
+
+test('the agents of the sessions provider become the System\'s sessions: a real session of a space, the world its space names, a group left out, a row not found says nothing of its world', () => {
+  const track = (sessionRef, extra = {}) => ({sessionRef, agentName: 'Kev', purpose: 'build', group: false, spaceRef: 'session-space/x', ...extra})
+  const rows = [{spaceRef: 'session-space/x', sessionRef: 'agent-session/a', raw: spaceOf(['O-I'])}, {spaceRef: 'session-space/y', sessionRef: 'agent-session/b', raw: spaceOf(['control:root'])}]
+  const tracks = [track('agent-session/a'), track('agent-session/b', {agentName: null, purpose: 'docs'}), track('agent-session/lost'), track('session-space/x', {group: true, agentName: null, purpose: null})]
+  assert.deepEqual(sessionsOf(tracks, rows, [YOURS, OI]), [
+    {sessionRef: 'agent-session/a', agentName: 'Kev', purpose: 'build', group: false, project: 'O-I'},
+    {sessionRef: 'agent-session/b', agentName: null, purpose: 'docs', group: false, project: null},
+    {sessionRef: 'agent-session/lost', agentName: 'Kev', purpose: 'build', group: false, project: null},
+    {sessionRef: 'session-space/x', agentName: null, purpose: null, group: true, project: null},
+  ], 'each track with the project its row\'s space names; the same four fields the model reads, nothing of the track\'s other readings')
+})
+
+// ── the System's instant ────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+// The model takes the instant as an input (nowMs) and reads no clock. The one clock is held here, told to its readers every minute so an
+// artefact drifts off the ring as it ages, under the atlas's own lifetime (src/ui/lifetime.ts later: cancelled when the atlas is disposed).
+test('the System\'s instant is held and told once a minute, under the atlas lifetime; released, a late tick changes nothing', () => {
+  assert.equal(SYSTEM_TICK_MS, 60_000, 'a minute: the least a person sees an artefact move by, and no cost to anyone')
+  let wall = NOW
+  const timers = []
+  const later = (run, ms) => { const timer = {run, ms, cancelled: false}; timers.push(timer); return () => { timer.cancelled = true } }
+  const told = []
+  const off = subscribeSystemNow(() => told.push(systemNow()))
+  const clock = bindSystemClock({now: () => wall, later})
+  assert.equal(systemNow(), NOW, 'bound: the instant is the clock\'s now')
+  assert.deepEqual(timers.map(timer => timer.ms), [SYSTEM_TICK_MS], 'one tick is waiting')
+  const bound = told.length
+  wall += SYSTEM_TICK_MS
+  timers[0].run()
+  assert.equal(systemNow(), NOW + SYSTEM_TICK_MS, 'the tick moved the instant')
+  assert.equal(told.length, bound + 1, 'and told its readers once')
+  assert.deepEqual(timers.map(timer => timer.ms), [SYSTEM_TICK_MS, SYSTEM_TICK_MS], 'and asked for the next')
+  assert.equal(systemNow(), systemNow(), 'between ticks the instant stands still (a reader that compares snapshots sees one value)')
+  clock.dispose()
+  assert.equal(timers.at(-1).cancelled, true, 'released: the waiting tick is cancelled')
+  wall += SYSTEM_TICK_MS
+  timers[1].run()
+  assert.equal(systemNow(), NOW + SYSTEM_TICK_MS, 'a tick that was already due does not move it')
+  assert.equal(timers.length, 2, 'and asks for no more')
+  off()
+  const source = readFileSync(new URL('../src/projections/atlas/system/systemClock.ts', import.meta.url), 'utf8')
+  assert.match(source, /from '\.\.\/src\/ui\/lifetime'/, 'the timer is the atlas lifetime\'s own')
 })
