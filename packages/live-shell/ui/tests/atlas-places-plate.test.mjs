@@ -195,7 +195,11 @@ test('Technē\'s transport presses the atlas\'s one time button and reads the sh
 test('the shared spatial focus turns the Earth: the subject where the Earth draws it there, else a flight at the atlas\'s framing (T24, lane-2 T21)', () => {
   const occ = [{id: 'o-stone', subject_ref: 'wiki:node:stone', lat: 47.22, lon: 8.84, geoPrecision: 'place'}, {id: 'o-liber', subject_ref: 'wiki:node:liber', lat: 50, lon: 9, geoPrecision: 'region'}]
   assert.deepEqual(host.turnToPlace(PLACES[0], occ), {kind: 'select', occId: 'o-stone'})
-  assert.deepEqual(host.turnToPlace(PLACES[1], occ), {kind: 'fly', lat: 47.3, lon: 8.6, dist: 2.6}, 'not drawn at that point: a flight, framed for its precision')
+  // [T-PROCEDURAL-BODY §6 item 4, manual §17.2: "An exact place gets a street, an approximate place gets a city, and a region gets the whole region"]
+  // PLACES[1] is approximate: its framing is a city's, between a street's (2.25) and the whole region's (2.6)
+  assert.deepEqual(host.turnToPlace(PLACES[1], occ), {kind: 'fly', lat: 47.3, lon: 8.6, dist: host.framingDistance('approximate')}, 'not drawn at that point: a flight, framed for its precision')
+  assert.equal(host.framingDistance('approximate'), 2.4)
+  assert.equal(host.framingDistance('region'), 2.6)
   assert.equal(host.turnToPlace(PLACES[2], occ), null, 'an unlocated place turns nothing')
   assert.equal(host.turnToPlace(undefined, occ), null, 'a ref the world does not hold turns nothing, and is no error')
   assert.equal(host.framingDistance('exact'), 2.25)
