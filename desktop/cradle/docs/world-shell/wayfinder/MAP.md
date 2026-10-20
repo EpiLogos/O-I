@@ -282,7 +282,9 @@ example, an offshoot. It reaches the DLW as the faces of agent and process devic
   practice that continues, and the relation to Central (the situated world) — reworking the basis W4 built.
 - **Procedural Central:** generated, customisable planets and system objects on the atlas's foundations, each keeping its identity
   through change, one world through many instruments; Earth, its places and its weather. W3 built the body record, generator and
-  your system. Reference: youtu.be/VRZ3H_FWwxI.
+  your system; the generator's picture and the rings' contents were reopened on 20 Oct as T-PROCEDURAL-BODY (the Earth's own
+  numbers as the gate; a generator that draws a planet; procedural tiles at close zoom; a look from how lived in a world is; weather
+  from the occasion; orbits for agents at work and what they make). Reference: youtu.be/VRZ3H_FWwxI.
 - **Ta-Onta as practice** (T-AGENCY K7), in QL-MEF and AIKit beside the build: one Methodology, six Methods (Enter, Form, Find,
   Time, Compose, Return), the `ta-onta` set with a child set for each, and each operation answering by the same name from the CLI,
   an agent and the SDK.
@@ -336,7 +338,7 @@ RE, the Palace prop-hunt scope (`.wayfinder/maps/palace-prop-hunt.md`), Central'
 - [Multi-machine placement is contracted](../../Work/Workcell/docs/MULTI-WORKCELL-PLACEMENT.md) — Workcell #16 (placement seam, named failures), #21 (`workcell.control/v1`), #26 (Fabric/Tailscale), #13 (Arrakis MicroVM); machines are distinguishable cells; remaining is physical acceptance and the owner's remote-posture ruling.
 - [Federation and visiting are contracted](../../Work/O-I/docs/contracts/WORLD-INHABITATION-V1.md) — occupancy asked-not-copied, Communique relay with `held`, root-ground transfer (Central#224), SharedField publication (O-I#505), participant/contribution/encounter floors (`SHARED-FIELD.md`), A2A binding with pending returned difference (O-I#24/#43); the machine-visibility map O-I#530 is in flight.
 - [Buzz agency behaviours are specified and landed in the shell](../../Work/reverse-engineering/2026-10-07-buzz-grok-agent-messaging-re/buzz-messaging/CONTRACT.md) — queue/steer/interrupt/diff-review/Return as behaviours of record → `AGENTIC-CONVERGENCE.md` devices (Gateway submit policy, stall card Retry/Hard-stop/Steer, diff cards, Land control) → `AGENT-SHELL-ACCEPTANCE.md` (9 Oct, live-verified).
-- [Planet-body engine is adopted, not invented](../new-shell/WORLD-SHELL-DESIGN.md) — the Archetypal-Earth GPU globe is the real body engine (`world-shell-mockup.html:863`; §3.1); the mockup's seeded CPU fbm is a stand-in; the QL-side per-World procedural body contract is the remaining specification.
+- [Planet-body engine is adopted, not invented](../new-shell/WORLD-SHELL-DESIGN.md) — the Archetypal-Earth GPU globe is the real body engine (`world-shell-mockup.html:863`; §3.1); the mockup's seeded CPU fbm is a stand-in; the QL-side per-World procedural body contract is the remaining specification. *20 Oct:* W3 built that stand-in as the generator and drew it far below the Earth; T-PROCEDURAL-BODY holds a generated body to the Earth's numbers.
 - [Agent-shell mockup is the agent/factory widget standard](../new-shell/agent-shell-mockup.html) — owner ruling 8 Oct 2026: devices validate against mockup component forms; capabilities plug into waiting forms.
 - [Port ledger method confirmed](../new-shell/EXPRESSIONS-PORT-STATUS.json) — per-action accounting with outward_home + boundary_op + status; extends per product.
 - [Two-clock doctrine stands](../lane-6-ableton-shell/SCOPE.md) — civil time keeps closure law; one work-time core (sample clock included); one typed bridge.
