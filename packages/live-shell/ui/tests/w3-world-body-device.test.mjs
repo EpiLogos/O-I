@@ -34,7 +34,6 @@ export async function load(u, c, n) {
   return {format: 'module', shortCircuit: true, source: out.split('import.meta.env').join('({BASE_URL: "/"})')};
 }`)}`, import.meta.url)
 
-const pending = process.env.W3Q_GATE === 'enforce' ? {} : {todo: 'T-PROCEDURAL-BODY: red until the system lane lands'}
 
 globalThis.__CRADLE_WALK__ = false
 const door = await import('../src/inhabitants/familyManifest.ts')
@@ -327,8 +326,8 @@ test('the binding hands the design the record the globe shows and the look it is
   assert.equal(atlasDevs.atlasGlobeBinding(reading('other', {barren: .4})).values.bodyRecord, undefined, 'and another world\'s body is not read here')
 })
 
-// Waits on the generator lane (Lane A): the design file is theirs to draw from the values above. Red until they land SpaceArt and BodyArt on bodyDisc.
-test('the design draws a body only with the globe\'s bodyDisc, from the record and look the binding hands it: it carries no value noise of its own', pending, () => {
+// The design file draws from the values above: SpaceArt and BodyArt stand on the globe's bodyDisc (T-PROCEDURAL-BODY step 5).
+test('the design draws a body only with the globe\'s bodyDisc, from the record and look the binding hands it: it carries no value noise of its own', () => {
   const panel = readFileSync(new URL('../src/inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx', import.meta.url), 'utf8')
   assert.match(panel, /from '[^']*projections\/atlas\/src\/globe\/body'/, 'the design imports the globe\'s body module')
   assert.match(panel, /\bbodyDisc\(/, 'and draws the body with its bodyDisc')

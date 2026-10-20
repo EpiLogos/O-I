@@ -203,6 +203,52 @@ export function seaTexture(image) {
   return n ? Math.sqrt(Math.max(0, sum2 / n - (sum / n) ** 2)) : 0
 }
 
+/** Distance in pixels from every pixel to the nearest pixel of `mask` (a 3-4 chamfer, wrapping in longitude). */
+export function distanceTo(mask, w, h) {
+  const d = new Float32Array(w * h).fill(1e9)
+  for (let at = 0; at < w * h; at++) if (mask[at]) d[at] = 0
+  const relax = (at, from, cost) => { if (from + cost < d[at]) d[at] = from + cost }
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const at = j * w + i, l = (i + w - 1) % w, r = (i + 1) % w
+    if (j > 0) { relax(at, d[at - w], 3); relax(at, d[(j - 1) * w + l], 4); relax(at, d[(j - 1) * w + r], 4) }
+    relax(at, d[j * w + l], 3)
+  }
+  for (let j = h - 1; j >= 0; j--) for (let i = w - 1; i >= 0; i--) {
+    const at = j * w + i, l = (i + w - 1) % w, r = (i + 1) % w
+    if (j < h - 1) { relax(at, d[at + w], 3); relax(at, d[(j + 1) * w + l], 4); relax(at, d[(j + 1) * w + r], 4) }
+    relax(at, d[j * w + r], 3)
+  }
+  for (let at = 0; at < w * h; at++) d[at] /= 3
+  return d
+}
+
+/** The sea's shelf and its deep tone, by distance from land (over sea inside ±BAND, at the image's own pixels):
+ *   nearOverDeep  the sea's luma within 3 px of land over its luma beyond 48 px (the shelf's brightness: a halo is many times the deep sea)
+ *   reach         the distance in px at which the sea's luma has fallen halfway from its shore value to its deep value (how wide the shelf is)
+ *   deepBroad     the spread of the deep sea (beyond 48 px of land) about its own tone over a 64 px box, as a share of its mean (basins
+ *                 and swirls of abyss that the open sea does not have; the Earth's open sea changes slowly, with the latitude)
+ * The Earth's shelf is narrow with a sharp edge; a soft bright halo round every coast, or a deep sea of dark swirls, is the tell of a
+ * painted body. */
+export function shelfMeasure(image) {
+  const {width: w, height: h} = image, L = lumaPlane(image), {land, sea} = bands(image), d = distanceTo(land, w, h)
+  const edges = [0, 3, 6, 12, 24, 48, 96, 1e9], centres = [1.5, 4.5, 9, 18, 36, 72, 140], sum = new Float64Array(7), n = new Float64Array(7)
+  const deepMask = new Float32Array(w * h), deepL = new Float32Array(w * h)
+  for (let at = 0; at < w * h; at++) {
+    if (!sea[at]) continue
+    for (let b = 0; b < 7; b++) if (d[at] > edges[b] && d[at] <= edges[b + 1]) { sum[b] += L[at]; n[b]++; break }
+    if (d[at] > 48) { deepMask[at] = 1; deepL[at] = L[at] }
+  }
+  const profile = [...sum].map((s, b) => (n[b] ? s / n[b] : NaN)), nDeep = n[5] + n[6]
+  if (!n[0] || !nDeep) return {nearOverDeep: NaN, reach: NaN, deepBroad: NaN}
+  const near = profile[0], deep = (sum[5] + sum[6]) / nDeep, half = deep + (near - deep) / 2
+  let reach = centres[6]
+  for (let b = 0; b < 6; b++) if (profile[b] >= half && profile[b + 1] < half) { reach = centres[b] + (profile[b] - half) / (profile[b] - profile[b + 1]) * (centres[b + 1] - centres[b]); break }
+  const tone = boxBlur(deepL, w, h, 64), share = boxBlur(deepMask, w, h, 64)
+  let s2 = 0, c = 0, m = 0
+  for (let at = 0; at < w * h; at++) if (deepMask[at] && share[at] > .5) { const x = L[at] - tone[at] / share[at]; s2 += x * x; m += L[at]; c++ }
+  return {nearOverDeep: near / Math.max(deep, 1e-9), reach, deepBroad: c ? Math.sqrt(s2 / c) / Math.max(m / c, 1e-9) : NaN}
+}
+
 /** Seam integrity at the wrap: the difference across the ±180° meridian relative to the ordinary difference between neighbours at
  * the same place (column 0 to 1, and the last column to the one before it). 1 is invisible; much larger shows a line. */
 export function seamRatio(image) {
@@ -229,6 +275,7 @@ export function measurePlanet(image) {
     palette: paletteMeasure(image),
     ice: iceEdge(image),
     seaTexture: seaTexture(image),
+    shelf: shelfMeasure(image),
     seamRatio: seamRatio(image),
   }
 }
@@ -240,6 +287,7 @@ export function measurePlanet(image) {
  *
  *   opts.caps       the body has polar caps to speak of (ice_caps above ~.15): the ice-edge clauses apply
  *   opts.minPieces  the fewest separate lands expected (default 10; the Earth has 21; an archipelago has more)
+ *   opts.shelf      false leaves the shelf clauses out (the gate runs them in a test of their own)
  */
 export function assessPlanet(m, reference, opts = {}) {
   const e = reference, fails = []
@@ -262,6 +310,13 @@ export function assessPlanet(m, reference, opts = {}) {
   if (opts.caps !== false) {
     need('ice edge spread', m.ice.spreadDeg >= .4 * e.ice.spreadDeg && m.ice.spreadDeg <= 3 * e.ice.spreadDeg, `${f(m.ice.spreadDeg)}° not in [${f(.4 * e.ice.spreadDeg)}, ${f(3 * e.ice.spreadDeg)}]`)
     need('ice edge coverage', m.ice.coverage >= .5, `${f(m.ice.coverage)} under .5`)
+  }
+  // the sea's shelf: narrow, not a bright halo; and an open sea that changes slowly (a measure absent from an older record is not judged)
+  if (opts.shelf !== false && m.shelf && e.shelf) {
+    const band = (name, x, lo, hi, ref) => need(name, Number.isFinite(x) && x >= lo * ref && x <= hi * ref, `${f(x)} not in [${f(lo * ref)}, ${f(hi * ref)}]`)
+    band('shelf brightness (shore over deep sea)', m.shelf.nearOverDeep, .6, 1.5, e.shelf.nearOverDeep)
+    band('shelf reach (px to half)', m.shelf.reach, .4, 1.6, e.shelf.reach)
+    band('deep sea broad tone', m.shelf.deepBroad, .4, 1.35, e.shelf.deepBroad)
   }
   need('seam at ±180°', m.seamRatio <= 2, `${f(m.seamRatio)} over 2`)
   return fails

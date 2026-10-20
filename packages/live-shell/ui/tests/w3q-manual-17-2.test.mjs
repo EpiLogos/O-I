@@ -1,8 +1,7 @@
 // T-PROCEDURAL-BODY — the manual's World (docs/dlw/DLW.md §17.2, and the places §2 repeats it) held to the code, so the two cannot drift
 // apart again. A doc/code tripwire: it reads the manual's words and the sources' declarations (no GPU, no network).
 //
-// The lead's. The tests that need the lanes' work carry `todo` until W3Q_GATE=enforce, as the gate does; the lead removes `pending`
-// when the lanes land.
+// The lead's. Every test is real: the ones that needed the lanes' work carried `todo` until it landed, and no longer do.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
@@ -11,9 +10,6 @@ const here = new URL('.', import.meta.url)
 const manual = readFileSync(new URL('../../../../docs/dlw/DLW.md', here), 'utf8')
 const atlas = new URL('../src/projections/atlas/', here)
 const read = path => readFileSync(new URL(path, atlas), 'utf8')
-
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until the lanes land'}
 
 const section = (from, to) => {
   const a = manual.indexOf(from)
@@ -49,30 +45,30 @@ test('M3 the manual says how a world is finished: a grey moon to a planet with w
   assert.match(world, /Until you land it yourself, a world stands at a spot named from its ref, and says so; Land keeps the spot you choose/, 'an unlanded world is drawn where its ref puts it, said so, and never written until the person acts')
 })
 
-test('M4 the code’s satellite kinds are the manual’s: a session and an artefact, nothing else', pending, () => {
+test('M4 the code’s satellite kinds are the manual’s: a session and an artefact, nothing else', () => {
   const model = read('system/systemModel.ts')
   assert.match(model, /export type SatelliteKind = 'session' \| 'artifact'(?![\w|])/, 'SatelliteKind is exactly session | artifact')
   assert.doesNotMatch(model, /kind: 'page'|kind: 'file'|kind: 'work'/, 'no satellite of a page, a file or a work is built')
 })
 
-test('M5 the code has what the manual describes: a look from how lived in a world is, weather from the occasion, body widths', pending, () => {
+test('M5 the code has what the manual describes: a look from how lived in a world is, weather from the occasion, body widths', () => {
   const body = read('src/globe/body.ts'), engine = read('src/globe/engine.ts')
   assert.match(body, /export (interface|type) BodyLook\b/, 'BodyLook (the look) is the contract’s')
-  assert.match(body, /export function weatherShift\b/, 'weather follows the occasion through weatherShift')
+  assert.match(body, /export (function|const) weatherShift\b/, 'weather follows the occasion through weatherShift')
   assert.match(body, /export const BODY_WIDTHS\b/)
   assert.match(engine, /setBodyTime\s*\(/, 'the engine takes the occasion')
   assert.match(engine, /setBody\s*\(\s*record[^)]*look/, 'the engine takes the look')
   assert.ok(read('system/maturity.ts').includes('export function maturityOf'), 'maturity is read by a pure function')
 })
 
-test('M6 a body’s look and weather are never written: no setting, no key, no record field carries them', pending, () => {
+test('M6 a body’s look and weather are never written: no setting, no key, no record field carries them', () => {
   const worldBody = read('body/worldBody.ts')
   assert.doesNotMatch(worldBody, /case 'barren'|case 'maturity'|case 'look'|case 'weather'/, 'changedBody has no key for the look or weather: the dials are the record’s')
   const bodyTs = read('src/globe/body.ts')
   assert.doesNotMatch(bodyTs.slice(bodyTs.indexOf('export interface WorldBodyRecord'), bodyTs.indexOf('const isObject')), /barren|maturity|weather/, 'the owner’s record has no field for them')
 })
 
-test('M7 an older body’s rule is the manual’s: the generator version is named and the current one is 2', pending, () => {
+test('M7 an older body’s rule is the manual’s: the generator version is named and the current one is 2', () => {
   assert.match(world, /A body built by an older generator draws as it always did, until you next change it/)
   assert.match(read('src/globe/body.ts'), /WORLD_BODY_GENERATOR_VERSION = 2\b/)
 })
