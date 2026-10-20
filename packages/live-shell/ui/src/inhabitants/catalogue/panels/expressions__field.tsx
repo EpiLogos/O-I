@@ -11,7 +11,7 @@ import {clampTo, num, on, str, type DesignedDevice, type ViewProps} from './desi
 type V = ViewProps['v']
 type SetFn = ViewProps['set']
 const HZ = {min: 20, max: 4000, log: true}, LEVEL = {min: 0, max: 4}, TEMPO = {min: 0, max: 4}, HOLD = {min: 0, max: .9}
-/** A voice's own gain unless the symbol sets one (DEFAULT_ENTITY_SOUND.gain, entitySound.ts:35). */
+/** A voice's own gain unless the symbol sets one (DEFAULT_ENTITY_SOUND.gain, native-field/entitySound.ts). */
 const VOICE_GAIN = .2
 
 // ---------------------------------------------------------------- the symbols: the Seven centres scene (model.ts:172)
@@ -137,7 +137,7 @@ function Strip({v, set, x0, x1, y, labels}: {v: V; set?: SetFn; x0: number; x1: 
     {ticks.map(f => <path key={f} d={`M${fx(f)} ${y - 3}V${y + 3}`} className="dp-faint" opacity={.7} />)}
     <path d={`M${fx(mode.hz)} ${y - 5}V${y + 5}`} className="dp-curve-on" />
     {labels && <><text x={x0} y={y + 12} className="dp-axis">20 Hz</text><text x={x1} y={y + 12} className="dp-axis" textAnchor="end">4 kHz</text></>}
-    <Handle n={1} x={fx(hz)} y={y} tone={str(v, 'driver') === 'focus' ? 'value' : 'accent'} label="Tone" does="Drag along the line: the tone the plate is tuned to. Ticks mark the plate's modes; the amber one is nearest."
+    <Handle n={1} x={fx(hz)} y={y} tone={str(v, 'keySource') === 'manual' ? 'accent' : 'value'} label="Tone" does="Drag along the line: the tone the plate is tuned to. Ticks mark the plate's modes; the amber one is nearest."
       onDrag={set && (x => set('resonance', Math.round(HZ.min * Math.pow(HZ.max / HZ.min, clampTo(0, 1, (x - x0) / (x1 - x0))))))} onReset={set && (() => set('resonance', 396))} />
   </g>
 }
@@ -182,10 +182,11 @@ const tone = (p: ViewProps) => DIAL(p, 'resonance', 'Tone', 'The frequency the p
 const holdDial = (p: ViewProps) => DIAL(p, 'hold', 'Hold', 'Sets how long a scene holds a figure compared with how long it changes, as hold to change.', 0, HOLD, ratio)
 
 const MEDIUMS = [{value: 'plate', label: 'Plate', does: 'A flat plate.'}, {value: 'chamber', label: 'Chamber', does: 'A three-dimensional chamber.'}] as const
-const DRIVERS = [
-  {value: 'manual', label: 'Manual', does: 'The value of Tone sets the tone.'},
-  {value: 'focus', label: 'Focus', does: 'The travelling focus sets the tone.'},
-  {value: 'automation', label: 'Auto', does: 'The automation sets the tone. A sweep steps it through the plate\'s stations.'},
+// Key source (manual §20.2): whose pitches tune the field. Torus is what the torus plays, Sky the sky over your world, Manual the resonance you set.
+const KEY_SOURCES = [
+  {value: 'torus', label: 'Torus', does: 'Tunes the field to what the torus plays.'},
+  {value: 'sky', label: 'Sky', does: 'Takes the key from the sky over your world.'},
+  {value: 'manual', label: 'Manual', does: 'Uses the resonance you set, to study the modes.'},
 ] as const
 
 export const design: DesignedDevice = {
@@ -196,7 +197,7 @@ export const design: DesignedDevice = {
   // plate at 396 Hz with f0 40 Hz and dominance 1 (fieldModel.ts DEFAULT_CYMATIC_MEDIUM), time scale 1, no hold (fieldDefaults.ts),
   // 200 000 particles (fieldDefaults.ts:102). The level is the object-sound bank's field-wide gain, 1 as the instrument's presentation level is.
   defaults: {
-    sound: true, level: 1, plate: true, medium: 'plate', driver: 'manual', resonance: 396, tempo: 1, hold: 0,
+    sound: true, level: 1, plate: true, medium: 'plate', keySource: 'torus', symbolVoices: true, resonance: 396, tempo: 1, hold: 0,
     voices: 0, particles: 200000, dominance: 1, baseFrequency: 40,
   },
   fixtures: {
@@ -217,7 +218,8 @@ export const design: DesignedDevice = {
     <Band>
       <Section width={198}><FieldDisplay v={p.v} set={p.set} w={186} h={146} hold /></Section>
       <Section label="Sound" cols={1}>
-        <Toggle label="Sound" does="Lets the object voices sound. The picture stays when sound is off." on={on(p.v, 'sound')} onChange={x => p.set('sound', x)} />
+        <Toggle label="Sound" does="Lets the field sound. The picture stays when sound is off." on={on(p.v, 'sound')} onChange={x => p.set('sound', x)} />
+        <Toggle label="Symbol voices" does="Lets symbols carry the torus's sound to where they stand." on={on(p.v, 'symbolVoices')} onChange={x => p.set('symbolVoices', x)} />
         {level(p)}
       </Section>
       <Section label="Time" cols={1}>
@@ -226,12 +228,12 @@ export const design: DesignedDevice = {
       </Section>
       <Section label="Tuning" grow>
         {tone(p)}
-        <Radio label="Driver" does="Chooses what sets the tone: Tone, the travelling focus or the automation." value={str(p.v, 'driver')} options={DRIVERS} stack onChange={x => p.set('driver', x)} />
+        <Radio label="Key source" does="Chooses whose pitches tune the field: the torus, the sky or the resonance you set." value={str(p.v, 'keySource')} options={KEY_SOURCES} stack onChange={x => p.set('keySource', x)} />
       </Section>
     </Band>
     <Band>
       <Section label="Plate" width={96}>
-        <Toggle label="Plate on" does="Turns the resonant plate on. Tone, Medium and Driver act only while it is on." on={on(p.v, 'plate')} onChange={x => p.set('plate', x)} />
+        <Toggle label="Plate on" does="Turns the resonant plate on. Tone, Medium and Key source act only while it is on." on={on(p.v, 'plate')} onChange={x => p.set('plate', x)} />
         <Radio label="Medium" does="Chooses a flat plate or a three-dimensional chamber." value={str(p.v, 'medium')} options={MEDIUMS} stack onChange={x => p.set('medium', x)} />
       </Section>
       <Section label="Nearest mode" cols={2}>
