@@ -89,15 +89,35 @@ export function turnToPlace(place: SuitePlace | undefined, occurrences: readonly
   return {kind: 'fly', lat: place.lat, lon: place.lon, dist: framingDistance(place.precision)};
 }
 
-/** How long the atlas is given to land on the Earth from the sky or the Graph before the flight to a place begins: the sky camera's descent and
- * its settle (app/controller.ts descendFromSky, which owns the camera while it runs) and the Graph's switch are about two seconds; a little over,
- * so the flight never starts under them. An estimate, not a measure: seen on screen, not headless. */
-export const LANDING_MS = 2500;
+/** How often a flight that waits for the sky's descent asks whether the descent has finished, and the most it waits: a descent that never reports
+ * done (the camera released under it) must not hold a flight forever, so after the limit the flight goes anyway. The sky camera's own descent
+ * is 3.2 s of drop and 1.9 s of landing (sky/camera.ts T.drop, T.land), about five seconds measured against the 2.5 s this once guessed. */
+export const LANDING_POLL_MS = 100;
+export const LANDING_LIMIT_MS = 12000;
+
+let waitingFlight: Cancel | null = null;
+
+/** Run `fly` once nothing holds the camera. The only thing that does is the sky camera's descent (controller.skyCam.busy: "true from the first
+ * frame of a request to its last callback"), which owns the rig while it runs (app/controller.ts descendFromSky); the Graph's switch does not
+ * touch the camera. A newer turn replaces an older one still waiting. */
+function whenCameraFree(handle: AtlasHandle, fly: () => void, later: (run: () => void, ms: number) => Cancel): void {
+  waitingFlight?.();
+  waitingFlight = null;
+  let waited = 0;
+  const check = () => {
+    waitingFlight = null;
+    if (!handle.ctl.skyCam?.busy || waited >= LANDING_LIMIT_MS) { fly(); return; }
+    waited += LANDING_POLL_MS;
+    waitingFlight = later(check, LANDING_POLL_MS);
+  };
+  check();
+}
 
 /** Turn the mounted atlas to a place of the world, from wherever it is (manual §17.2: "Fly to a place from anywhere"): select the subject the
  * Earth draws there, else fly to the point. From the sky or the Graph the atlas returns to the Earth first (the controller's own way: the plain
- * world view, or the switch out of the Graph) and the flight follows once it has landed (`later`, a timer under the atlas lifetime; at once
- * under reduced motion, which drops instantly). False when the place has no point to turn to. */
+ * world view, or the switch out of the Graph). Leaving the Graph frees the camera at once (measured: the globe wakes and a flight issued in the
+ * same breath moves from the first frame); leaving the sky starts the sky camera's descent, which owns the camera until it reports done, and the
+ * flight follows that signal. `later` is a timer under the atlas lifetime. False when the place has no point to turn to. */
 export function turnAtlasTo(handle: AtlasHandle, place: SuitePlace | undefined, later: (run: () => void, ms: number) => Cancel = lifetimeLater): boolean {
   const turn = turnToPlace(place, handle.model.occ, drawnBody());
   if (!turn) return false;
@@ -108,11 +128,9 @@ export function turnAtlasTo(handle: AtlasHandle, place: SuitePlace | undefined, 
       ...(handle.ctl.state.graph ? {graph: true as const} : {})});
     return true;
   }
-  const fly = () => handle.engine.rig.flyTo(turn.lat, turn.lon, turn.dist);
   const {sky, graph} = handle.ctl.state;
-  if (!sky && !graph) { fly(); return true; }
-  if (sky) handle.ctl.navigate(WORLD); else handle.ctl.toggleMode();
-  if (handle.engine.reduced) fly(); else later(fly, LANDING_MS);
+  if (sky) handle.ctl.navigate(WORLD); else if (graph) handle.ctl.toggleMode();
+  whenCameraFree(handle, () => handle.engine.rig.flyTo(turn.lat, turn.lon, turn.dist), later);
   return true;
 }
 

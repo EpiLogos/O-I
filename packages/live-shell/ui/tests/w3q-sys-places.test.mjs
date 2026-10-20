@@ -307,7 +307,8 @@ async function bodyWithPlaces(record, places, options = {}) {
   const harness = overlayHarness({record, ...options})
   return harness
 }
-const marks = parent => parent.all().filter(node => node.tagName === 'div' && /^sys-place( |$)/.test(node.className))
+/** The press of each location's mark: a button; the mark's wrapper (its position, its anchor line beside it) is its parent. */
+const marks = parent => parent.all().filter(node => node.tagName === 'button' && /^sys-place( |$)/.test(node.className))
 
 test('4b · the mark of a location drawn on a shore says so, in its words and its label', async () => {
   const {rerolled, lat, lon} = spotLostToTheSea()
@@ -358,40 +359,72 @@ test('7 · a place with no position does not fly, and is listed after the locate
 
 // ── 8 · Fly to a place from anywhere ────────────────────────────────────────────────────────────────────────────────────────────
 
-const atlasHandle = ({sky = false, graph = false} = {}) => {
+// `skyCam` is the controller's sky camera: `busy` is "true from the first frame of a request to its last callback" (sky/camera.ts), the one thing
+// that owns the rig while the atlas lands on the Earth. `descent` is how many polls the fake descent lasts; leaving the sky starts it.
+const atlasHandle = ({sky = false, graph = false, descent = 0} = {}) => {
   const log = []
-  const ctl = new Proxy({state: {sky, graph, view: {kind: 'field'}}, navigate: arg => log.push(['navigate', arg])}, {get: (target, key) => key in target ? target[key] : (...args) => { log.push([String(key), ...args]) }})
+  const skyCam = {busy: false, left: 0}
+  const ctl = new Proxy({state: {sky, graph, view: {kind: 'field'}}, skyCam, navigate: arg => { log.push(['navigate', arg]); if (sky && descent) { skyCam.busy = true; skyCam.left = descent } }},
+    {get: (target, key) => key in target ? target[key] : (...args) => { log.push([String(key), ...args]) }})
   return {log, model: {occ: [], occIndex: new Map()}, ctl, engine: {rig: {flyTo: (...args) => log.push(['flyTo', ...args])}}}
 }
 
-// NOT MET from the sky or the Graph (placesHost.ts:93: `if (handle.ctl.state.sky || handle.ctl.state.graph) return false`, "where the camera
-// does not orbit the Earth"). From the ground view it flies. From the sky or the Graph the atlas returns to the Earth first (the controller's own
-// way: navigate to the plain world view, controller.ts descendFromSky; toggleMode out of the Graph), and the flight follows once it has landed:
-// the descent owns the camera while it runs (controller.ts:2165). The settle is a timer under the atlas lifetime, given here as a fake.
-// UNVERIFIED headless: the descent and the flight are the controller's, seen on screen.
-test('8a · a place is flown to from the ground, the sky lens and the Graph alike: from the sky or the Graph the atlas returns to the Earth first, and the flight follows its landing', () => {
+// From the ground view the atlas flies at once. From the sky or the Graph it returns to the Earth first (the controller's own way: navigate to
+// the plain world view, controller.ts descendFromSky; toggleMode out of the Graph). Leaving the Graph does not take the camera, so the flight goes
+// in the same breath (measured in the real atlas: the globe wakes and a flight issued with the switch moves from the first frame, and the 2.5 s
+// this once waited was only delay). Leaving the sky starts the sky camera's descent, which owns the camera while it runs (controller.ts:2165;
+// 3.2 s drop and 1.9 s landing, sky/camera.ts T), and the flight follows the camera's own `busy` signal: not a guessed time.
+test('8a · a place is flown to from the ground, the sky lens and the Graph alike: the Graph and the ground fly at once, the sky once its descent has landed', () => {
   const spot = place('wiki:place:athens', {lat: 37.9, lon: 23.7})
   const timers = []
   const later = (run, ms) => { timers.push({run, ms}); return () => {} }
   const flights = handle => handle.log.filter(entry => entry[0] === 'flyTo')
+  const flown = [['flyTo', 37.9, 23.7, host.framingDistance('exact')]]
   const ground = atlasHandle()
   assert.equal(host.turnAtlasTo(ground, spot, later), true)
-  assert.deepEqual(flights(ground), [['flyTo', 37.9, 23.7, host.framingDistance('exact')]], 'from the ground it flies at once')
+  assert.deepEqual(flights(ground), flown, 'from the ground it flies at once')
   assert.deepEqual(timers, [], 'with nothing to wait for')
-  const sky = atlasHandle({sky: true})
-  assert.equal(host.turnAtlasTo(sky, spot, later), true, 'from the sky: "fly to a place from anywhere" — it said it could not')
-  assert.deepEqual(sky.log.filter(entry => entry[0] === 'navigate').map(entry => entry[1]), [{view: {kind: 'world'}, deep: false}], 'the atlas returns to the Earth, the controller\'s plain world view')
-  assert.deepEqual(flights(sky), [], 'the descent owns the camera while it runs: no flight yet')
-  assert.equal(timers.length, 1)
-  assert.ok(timers[0].ms >= 1000, 'the flight waits for the landing')
-  timers[0].run()
-  assert.deepEqual(flights(sky), [['flyTo', 37.9, 23.7, host.framingDistance('exact')]], 'then it flies to the point')
   const graph = atlasHandle({graph: true})
   assert.equal(host.turnAtlasTo(graph, spot, later), true, 'from the Graph')
   assert.ok(graph.log.some(entry => entry[0] === 'toggleMode'), 'the atlas returns to the Earth by the controller\'s own switch')
-  assert.deepEqual(flights(graph), [])
-  timers[1].run()
-  assert.deepEqual(flights(graph), [['flyTo', 37.9, 23.7, host.framingDistance('exact')]])
+  assert.deepEqual(flights(graph), flown, 'the switch does not take the camera: the flight goes with it')
+  assert.deepEqual(timers, [], 'and waits for nothing')
+  const sky = atlasHandle({sky: true, descent: 3})
+  assert.equal(host.turnAtlasTo(sky, spot, later), true, 'from the sky: "fly to a place from anywhere" - it said it could not')
+  assert.deepEqual(sky.log.filter(entry => entry[0] === 'navigate').map(entry => entry[1]), [{view: {kind: 'world'}, deep: false}], 'the atlas returns to the Earth, the controller\'s plain world view')
+  assert.deepEqual(flights(sky), [], 'the descent owns the camera while it runs: no flight yet')
+  assert.equal(timers.length, 1, 'the flight asks again, under the atlas lifetime')
+  for (let poll = 0; poll < 3; poll++) {
+    assert.deepEqual(flights(sky), [], 'still descending: it keeps waiting, whatever the clock says')
+    if (--sky.ctl.skyCam.left === 0) sky.ctl.skyCam.busy = false
+    timers.shift().run()
+  }
+  assert.deepEqual(flights(sky), flown, 'the descent reports done, and then it flies to the point')
+  assert.deepEqual(timers, [], 'once')
+})
+
+test('8a2 · a flight waiting on a descent that never reports done goes after a bound; a newer turn replaces the one still waiting', () => {
+  const spot = place('wiki:place:athens', {lat: 37.9, lon: 23.7})
+  const timers = []
+  const later = (run, ms) => { const timer = {run, ms, live: true}; timers.push(timer); return () => { timer.live = false } }
+  const flights = handle => handle.log.filter(entry => entry[0] === 'flyTo')
+  const stuck = atlasHandle({sky: true, descent: 1e9})
+  assert.equal(host.turnAtlasTo(stuck, spot, later), true)
+  let waited = 0
+  while (timers.some(timer => timer.live) && waited < 1e6) { const timer = timers.find(entry => entry.live); timer.live = false; waited += timer.ms; timer.run() }
+  assert.equal(flights(stuck).length, 1, 'a camera held forever does not hold the flight forever')
+  assert.ok(waited <= host.LANDING_LIMIT_MS + host.LANDING_POLL_MS, 'it waited no longer than the limit: ' + waited)
+  const first = atlasHandle({sky: true, descent: 1e9})
+  const second = atlasHandle({sky: true, descent: 1e9})
+  const other = place('wiki:place:delphi', {lat: 38.5, lon: 22.5})
+  timers.length = 0
+  host.turnAtlasTo(first, spot, later)
+  host.turnAtlasTo(second, other, later)
+  assert.equal(timers.filter(timer => timer.live).length, 1, 'the first turn was cancelled when the second began')
+  second.ctl.skyCam.busy = false
+  timers.find(timer => timer.live).run()
+  assert.deepEqual(flights(first), [], 'the older turn never flies')
+  assert.equal(flights(second).length, 1, 'the newer one does')
 })
 
 // NOT MET to a place on your own body: such a place is `located: false` on the Earth with its point in `on_body` (suiteReading.ts
@@ -521,7 +554,7 @@ test('12 · your body\'s locations stand at their names on the ground views and 
   assert.equal(layer.hidden, false, 'shown on the ground views (Body and Region)')
   const [mark] = marks(ground.parent)
   assert.match(mark.words(), /The study/, 'at its name')
-  assert.match(String(mark.style.transform), /translate\(/, 'at its point')
+  assert.match(String(mark.parentElement.style.transform), /translate\(/, 'at its point')
   const sky = await bodyWithPlaces(RECORD, places, {sky: true})
   sky.frame()
   assert.equal(sky.parent.all().find(node => /\bsys-places\b/.test(node.className)).hidden, true, 'away while the sky lens draws the System')
@@ -555,6 +588,22 @@ test('13b · following an anchor line chooses the Earth and flies to its place, 
 })
 
 // The anchor line stands by its location: a short dashed stub to the Earth's place it is anchored to, named, and pressing it follows it.
+// Found on screen: pressing a world's mark enters that world, the globe then draws ITS body (engine.body), and the overlay went on drawing the
+// marks of YOUR body over it ("Eleusis", "The study" over another world's globe). The marks are those of the body they stand on.
+test('12b · a globe drawing another world\'s body carries none of your body\'s marks; they return with your own body', async () => {
+  const places = [onYourBody('wiki:place:study', 22, 10, {name: 'The study'})]
+  const harness = await bodyWithPlaces(RECORD, places)
+  harness.frame()
+  assert.equal(marks(harness.parent).length >= 1, true, 'on your own body they stand')
+  const entered = {...RECORD, body_ref: 'body:someone-else', seed: RECORD.seed + 1}
+  harness.handle.engine.body = entered
+  harness.frame()
+  assert.deepEqual(marks(harness.parent).map(mark => mark.words()), [], 'another world\'s body: none of yours, not even a landed world\'s mark')
+  harness.handle.engine.body = RECORD
+  harness.frame()
+  assert.match(marks(harness.parent).map(mark => mark.words()).join(' '), /The study/, 'your own body again: they are back')
+})
+
 test('13c · a location anchored to Earth shows its anchor line, named by the real place, and pressing it follows the anchor', async () => {
   const followed = []
   const places = [
@@ -564,8 +613,11 @@ test('13c · a location anchored to Earth shows its anchor line, named by the re
   ]
   const {parent} = await bodyWithPlaces(RECORD, places, {follow: anchor => followed.push(anchor)})
   const [study, orphan] = marks(parent)
-  const lineOf = mark => mark.all().find(node => /\bsys-anchor\b/.test(node.className))
+  const lineOf = mark => mark.parentElement.all().find(node => /\bsys-anchor\b/.test(node.className))
   assert.ok(lineOf(study), 'the anchored location has its line')
+  assert.equal(lineOf(study).parentElement, study.parentElement, 'beside its mark, not inside it: a press holds no press')
+  assert.deepEqual(study.all().filter(node => node.tagName === 'button'), [], 'the mark\'s own button holds no button')
+  assert.equal(lineOf(study).tagName, 'button', 'and the line is a button of its own, reached by the keyboard as any button is')
   assert.match(lineOf(study).words(), /Athens/, 'named by the real place it runs to')
   assert.equal(lineOf(orphan), undefined, 'a location with no real place has none')
   lineOf(study).listeners.click[0]({stopPropagation() {}})

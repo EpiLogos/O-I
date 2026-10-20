@@ -312,7 +312,7 @@ test('a world\'s disc beside your planet is drawn from its record and its look: 
   const first = discsOf()
   assert.equal(first.length, 1, 'O-I\'s disc is drawn once')
   assert.deepEqual(first[0][0], OI_RECORD)
-  assert.equal(first[0][1], 52, 'at its disc size')
+  assert.equal(first[0][1], 2 * overlay.DISC, 'at its disc size (twice the pixels it is drawn at, for a sharp screen)')
   assert.deepEqual(first[0][2], lookFor(NEW), 'with the look its own readings give it: the overlay hands the generator the look, not the record alone')
   assert.equal(first[0][3], null, 'and no occasion: Now')
   setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, NEW]])))
