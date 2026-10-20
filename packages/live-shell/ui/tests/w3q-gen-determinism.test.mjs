@@ -265,7 +265,7 @@ test('C3 a worker that cannot start, or fails mid-job, is not tried again: its j
   }
 })
 
-test('C4 the worker refuses a body it cannot read in the owner’s words, and a body of a newer generator is named as newer', pending, async () => {
+test('C4 the worker refuses a body it cannot read in the owner’s words, and a body of a newer generator is named as newer', async () => {
   const {render} = await renderer('works')
   try {
     await assert.rejects(render.renderBody({...BODIES.default, seed: -1}, 32, 16), /seed is a whole number/, 'a record out of range is refused as the owner words it')
@@ -363,7 +363,7 @@ test('D3 version 2 is another body from version 1 at every entry point: image, c
 
 // ── E. version policy ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('E1 the shell draws generator version 2, reads versions 1 and 2, and refuses a newer one in words', pending, () => {
+test('E1 the shell draws generator version 2, reads versions 1 and 2, and refuses a newer one in words', () => {
   assert.equal(body.WORLD_BODY_GENERATOR_VERSION, 2, 'the shell draws generator version 2 (WORLD_BODY_GENERATOR_VERSION)')
   for (const version of [1, 2]) assert.ok(body.isWorldBody(body.parseWorldBody(base(1, {}, version))), `version ${version} reads`)
   const newer = body.parseWorldBody(base(1, {}, 3))
@@ -391,14 +391,14 @@ test('E3 the dials are refused outside their ranges for version 2 as for version
   }
 })
 
-test('E4 the first body a register is given is built by version 2', pending, () => {
+test('E4 the first body a register is given is built by version 2', () => {
   const first = store.firstBody('central:wiki:root', 3)
   assert.equal(first.generator.version, 2, 'firstBody writes generator version 2')
   assert.equal(first.generator.id, 'fbm-sphere')
   assert.ok(body.isWorldBody(body.parseWorldBody(first)))
 })
 
-test('E5 a version 1 body is rebuilt as version 2 by its next change, whichever dial that is, and by a reroll', pending, () => {
+test('E5 a version 1 body is rebuilt as version 2 by its next change, whichever dial that is, and by a reroll', () => {
   const old = {...base(20261018, {}, 1), body_ref: 'body:central:wiki:root'}
   const changes = [['seaLevel', .3], ['continents', 2], ['relief', .9], ['coast', 'fjord'], ['warmth', .2], ['moisture', .4], ['iceCaps', .6],
     ['atmosphere', .2], ['clouds', .8], ['tilt', 30], ['seed', 99], ['reroll', true]]

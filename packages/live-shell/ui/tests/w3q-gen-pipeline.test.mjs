@@ -149,7 +149,7 @@ async function openGlobe({reduced = false, maxTextureSize = 8192} = {}) {
 }
 const frames = (g, seconds, step = .05) => g.engine.advance(seconds, step)
 
-test('Q1 the globe is given the widths of the contract: first 256, then 2048 on a small GPU and 4096 on a capable one, each a power of two of tiles', pending, () => {
+test('Q1 the globe is given the widths of the contract: first 256, then 2048 on a small GPU and 4096 on a capable one, each a power of two of tiles', () => {
   assert.ok(body.BODY_WIDTHS, 'body.ts exports BODY_WIDTHS')
   assert.deepEqual({...body.BODY_WIDTHS}, {first: 256, lo: 2048, hi: 4096}, 'the contract of the ticket (§4)')
   // each width is 256 × 2^k, so that the level a base is denser than (tileLevelFor) is a whole level
@@ -165,7 +165,7 @@ test('Q2 a tile is wanted only where it is denser than the base: level log2(base
   for (const width of [256, 512, 1024, 2048, 4096, 8192]) assert.equal(2 ** tiles.tileLevelFor(width) * TILE_PX, 2 * width, `level ${tiles.tileLevelFor(width)} has twice the pixels round the equator that a ${width}-wide base has`)
 })
 
-test('Q3 the globe draws a first image at once: the call that gives it a body returns with the body drawn, `first` wide, before any worker has answered', pending, async () => {
+test('Q3 the globe draws a first image at once: the call that gives it a body returns with the body drawn, `first` wide, before any worker has answered', async () => {
   const g = await openGlobe()
   try {
     assert.equal(typeof body.BODY_WIDTHS, 'object', 'body.ts exports BODY_WIDTHS')
@@ -178,7 +178,7 @@ test('Q3 the globe draws a first image at once: the call that gives it a body re
   } finally { g.close() }
 })
 
-test('Q4 then the larger ones, as the worker finishes them: the pictures come in order of width and the last is `lo` on a small GPU and `hi` on a capable one', pending, async () => {
+test('Q4 then the larger ones, as the worker finishes them: the pictures come in order of width and the last is `lo` on a small GPU and `hi` on a capable one', async () => {
   assert.ok(body.BODY_WIDTHS, 'body.ts exports BODY_WIDTHS')
   for (const [maxTextureSize, expected] of [[2048, 'lo'], [4096, 'hi'], [8192, 'hi']]) {
     const g = await openGlobe({maxTextureSize})
@@ -195,7 +195,7 @@ test('Q4 then the larger ones, as the worker finishes them: the pictures come in
   }
 })
 
-test('Q5 each picture is swapped in as the Earth’s 2k and 8k are: uploaded ahead of its use, smaller before larger', pending, async () => {
+test('Q5 each picture is swapped in as the Earth’s 2k and 8k are: uploaded ahead of its use, smaller before larger', async () => {
   assert.ok(body.BODY_WIDTHS, 'body.ts exports BODY_WIDTHS')
   const g = await openGlobe({maxTextureSize: 8192})
   try {
@@ -208,7 +208,7 @@ test('Q5 each picture is swapped in as the Earth’s 2k and 8k are: uploaded ahe
   } finally { g.close() }
 })
 
-test('Q6 the same record and look drawn twice is one drawing; a new look or a new record is another; the Earth is given back for null', pending, async () => {
+test('Q6 the same record and look drawn twice is one drawing; a new look or a new record is another; the Earth is given back for null', async () => {
   const g = await openGlobe()
   try {
     const record = make(5)

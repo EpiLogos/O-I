@@ -11,7 +11,7 @@ import { DEFAULT_RAMP } from '../data/time';
 import { CameraRig } from './controls';
 import { Arcs, Marker } from './arcs';
 import { Aura, AtmosphereShell, Backdrop, Earth, bodyTexture, hiResChoice, loadBaseHi, loadBaseLo } from './earth';
-import { airOf, bodyImage, bodySunDir, type WorldBodyRecord } from './body';
+import { airOf, barrenOf, bodyImage, bodySunDir, BODY_WIDTHS, type BodyLook, type WorldBodyRecord } from './body';
 import { renderBody } from './bodyRender';
 import { Presences } from './presences';
 import { createShared, type Shared } from './shared';
@@ -148,7 +148,7 @@ export class GlobeEngine {
     this.earth = new Earth(this.shared, lo, this.presences.densityTarget.texture);
     this.tiles = new TileLayer(this.renderer, this.earth.u, this.reduced);
     // a body asked for before the Earth stood is drawn now
-    if (this.bodyRecord) this.drawBody(this.bodyRecord, this.bodyKey);
+    if (this.bodyRecord) this.drawBody(this.bodyRecord, this.bodyLook, this.bodyKey);
     this.scene.add(this.backdrop.mesh, this.earth.mesh, this.tiles.group, this.shell.mesh, this.presences.mesh, this.arcs.group, this.aura.points, this.markers.sel.mesh, this.markers.hover.mesh, this.markers.head.mesh);
     this.palDirty = true;
     this.last = performance.now();
@@ -542,14 +542,19 @@ export class GlobeEngine {
   // a small base at once, the sharp one a moment later and blended in, as the Earth's own 2k and 4k/8k are. Earth stays given.
 
   private bodyRecord: WorldBodyRecord | null = null;
+  private bodyLook: BodyLook | undefined = undefined;
   private bodyKey = '';
+  /** the occasion the body's weather is shown at (ms); null is Now */
+  private bodyTime: number | null = null;
 
-  /** Draw the owner's body in the Earth's place, or (null) the Earth. The same record twice does nothing. */
-  setBody(record: WorldBodyRecord | null) {
-    const key = record ? JSON.stringify(record) : '';
+  /** Draw the owner's body in the Earth's place, or (null) the Earth. The same record and look twice does nothing; an absent look, an empty one and barren 0 are one look. */
+  setBody(record: WorldBodyRecord | null, look?: BodyLook) {
+    const barren = barrenOf(look);
+    const key = record ? JSON.stringify([record, barren]) : '';
     if (key === this.bodyKey) return;
     this.bodyKey = key;
     this.bodyRecord = record;
+    this.bodyLook = record ? { barren } : undefined;
     if (!this.earth || this.released) return; // drawn when the Earth stands (init)
     if (!record) {
       this.earth.setGenerated(null);
@@ -558,7 +563,17 @@ export class GlobeEngine {
       this.bodyPictureState = 'earth';
       return;
     }
-    this.drawBody(record, key);
+    this.drawBody(record, this.bodyLook, key);
+  }
+
+  /** The occasion the body's weather is shown at: a moment (ms), or null for Now. */
+  setBodyTime(ms: number | null) {
+    this.bodyTime = ms;
+  }
+
+  /** The occasion the body is shown at (null: Now). */
+  get occasion(): number | null {
+    return this.bodyTime;
   }
 
   /** How far the body's pictures are made: the Earth's own, a coarse base while the sharp one is made, the sharp one with its clouds,
@@ -570,27 +585,37 @@ export class GlobeEngine {
     return this.bodyRecord;
   }
 
-  private drawBody(record: WorldBodyRecord, key: string) {
-    // at once, on the main thread: a coarse base (128 wide, a few milliseconds) and the body's air; its clouds come with the sharp base
-    this.earth.setGenerated(bodyTexture(bodyImage(record, 128), this.renderer));
-    this.earth.setSky(null, 0, airOf(record));
-    this.shell.air.value = airOf(record);
+  private drawBody(record: WorldBodyRecord, look: BodyLook | undefined, key: string) {
+    const air = airOf(record, look);
+    // at once, on the main thread: the first picture (BODY_WIDTHS.first wide, a few tens of milliseconds) and the body's air; its clouds come with the sharp base
+    this.earth.setGenerated(bodyTexture(bodyImage(record, BODY_WIDTHS.first, look), this.renderer));
+    this.earth.setSky(null, 0, air);
+    this.shell.air.value = air;
     this.bodyPictureState = 'coarse';
-    // the sharp base and the cloud layer are made off the main thread (bodyRender.ts: a module worker, else the main thread), then
-    // blended in as the Earth's sharp base is (the Earth's 2k and 4k/8k): 1024 wide where the GPU takes it, 512 on weak hardware
-    const width = hiResChoice(this.renderer) ? 1024 : 512;
-    void renderBody(record, width, 512).then(({ image, clouds }) => {
-      // a later record, a return to the Earth or a release since: these pictures are not drawn
+    // the larger pictures are made off the main thread (bodyRender.ts: a module worker, else the main thread), in order, and each blended in as the Earth's sharp
+    // base is (the Earth's 2k and 4k/8k): BODY_WIDTHS.lo where the GPU takes no more, then BODY_WIDTHS.hi where it does
+    void this.drawBases(record, look, key, hiResChoice(this.renderer) ? [BODY_WIDTHS.lo, BODY_WIDTHS.hi] : [BODY_WIDTHS.lo]);
+  }
+
+  private async drawBases(record: WorldBodyRecord, look: BodyLook | undefined, key: string, widths: readonly number[]) {
+    const air = airOf(record, look), cover = record.sky.clouds * (1 - barrenOf(look));
+    for (const width of widths) {
+      let pictures;
+      try {
+        pictures = await renderBody(record, width, Math.min(width, 1024), look);
+      } catch (error: unknown) {
+        // a later record, a return to the Earth or a release since: these pictures are not drawn
+        if (this.released || this.bodyKey !== key) return;
+        this.bodyPictureState = { refused: error instanceof Error ? error.message : String(error) };
+        return;
+      }
       if (this.released || this.bodyKey !== key) return;
-      const hi = bodyTexture(image, this.renderer);
+      const hi = bodyTexture(pictures.image, this.renderer);
       this.renderer.initTexture(hi);
       this.earth.setGeneratedHi(hi);
-      this.earth.setSky(bodyTexture(clouds, this.renderer), record.sky.clouds, airOf(record));
+      this.earth.setSky(bodyTexture(pictures.clouds, this.renderer), cover, air);
       this.bodyPictureState = 'sharp';
-    }, (error: unknown) => {
-      if (this.released || this.bodyKey !== key) return;
-      this.bodyPictureState = { refused: error instanceof Error ? error.message : String(error) };
-    });
+    }
   }
 
   /** Test/debug hook: current camera state. */
