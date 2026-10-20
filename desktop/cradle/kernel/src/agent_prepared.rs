@@ -220,6 +220,11 @@ enum AgentRead {
     /// catalogue: machine-level reads, no World, no directory.
     HarnessStatus,
     ModelCatalogue,
+    /// The Decision helper's two machine-level readings (manual §19.20):
+    /// AIKit's decision provider (`aikit decide status`) and QL's team space
+    /// (`ql context-frame team-space`). Neither asks a model.
+    DecisionStatus,
+    TeamSpace,
 }
 
 /// One agent-scoped op prepared under the kernel lock
@@ -284,6 +289,22 @@ impl PreparedAgent {
                     receipts: Vec::new(),
                     result: KernelOpResult::ModelCatalogueReading {
                         data: self.aikit.model_catalogue()?,
+                    },
+                })
+            }
+            AgentRead::DecisionStatus => {
+                return Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::DecisionStatusReading {
+                        data: self.aikit.decision_status()?,
+                    },
+                })
+            }
+            AgentRead::TeamSpace => {
+                return Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::TeamSpaceReading {
+                        data: crate::team_space::read()?,
                     },
                 })
             }
@@ -412,9 +433,11 @@ impl PreparedAgent {
                     || self.aikit.model_roster(&cwd),
                 )?,
             },
-            AgentRead::Harness { .. } | AgentRead::HarnessStatus | AgentRead::ModelCatalogue => {
-                unreachable!("answered before the World is read")
-            }
+            AgentRead::Harness { .. }
+            | AgentRead::HarnessStatus
+            | AgentRead::ModelCatalogue
+            | AgentRead::DecisionStatus
+            | AgentRead::TeamSpace => unreachable!("answered before the World is read"),
             AgentRead::Definition(request) => KernelOpResult::AgentDefinitionReading {
                 data: agent_definition::execute(
                     &self.client,
@@ -492,6 +515,8 @@ impl Kernel {
             ),
             KernelOp::HarnessStatus => (None, AgentRead::HarnessStatus),
             KernelOp::ModelCatalogue => (None, AgentRead::ModelCatalogue),
+            KernelOp::DecisionStatus => (None, AgentRead::DecisionStatus),
+            KernelOp::TeamSpace => (None, AgentRead::TeamSpace),
             KernelOp::AgentDefinition { project, request } => {
                 if project.as_deref() == Some("") {
                     return Err(
@@ -506,7 +531,11 @@ impl Kernel {
         // catalogue need no World: none is prepared.
         let world = if matches!(
             read,
-            AgentRead::Harness { .. } | AgentRead::HarnessStatus | AgentRead::ModelCatalogue
+            AgentRead::Harness { .. }
+                | AgentRead::HarnessStatus
+                | AgentRead::ModelCatalogue
+                | AgentRead::DecisionStatus
+                | AgentRead::TeamSpace
         ) {
             PreparedWorld::held_only(self.client.clone(), None)
         } else {

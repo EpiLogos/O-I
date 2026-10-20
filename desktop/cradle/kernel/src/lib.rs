@@ -125,6 +125,7 @@ pub mod setup;
 pub mod shared_field;
 pub mod slow_ops;
 pub mod system_composition;
+pub mod team_space;
 pub mod temporal_events;
 pub mod temporal_sources;
 pub mod working_surface;
@@ -839,6 +840,14 @@ pub enum KernelOp {
     /// through the suite route): first-party seed, provider sources and
     /// owner entries as the owner resolved them. Pull read.
     ModelCatalogue,
+    /// The Decision helper's provider (`aikit --json decide status` through
+    /// the suite route, manual §19.20): AIKit's `aikit.decision-status/v1`
+    /// verbatim. Pull read, machine-level; asks no model.
+    DecisionStatus,
+    /// The team space (`oi ql context-frame team-space --json`): QL-MEF's
+    /// `ql.vak-team-space/v1` verbatim — the instruments the Decision helper
+    /// may be asked, with their heads and labels. Pull read, machine-level.
+    TeamSpace,
     /// The desktop-held default provider for NEW chats
     /// (`chat_defaults.rs`): the desired-entry-shaped document when one is
     /// held, `None` when the owner's rows decide (`pi` row, else first).
@@ -1497,6 +1506,14 @@ pub enum KernelOpResult {
     },
     /// The resolved model catalogue, verbatim from the owner.
     ModelCatalogueReading {
+        data: serde_json::Value,
+    },
+    /// The decision provider's standing, verbatim from AIKit.
+    DecisionStatusReading {
+        data: serde_json::Value,
+    },
+    /// The team space, verbatim from Quaternal Logic.
+    TeamSpaceReading {
         data: serde_json::Value,
     },
     /// The held chat default — the desktop's own document, or `None` when
@@ -3298,7 +3315,9 @@ impl Kernel {
             | KernelOp::ModelRoster { .. }
             | KernelOp::HarnessAgentRead { .. }
             | KernelOp::HarnessStatus
-            | KernelOp::ModelCatalogue) => {
+            | KernelOp::ModelCatalogue
+            | KernelOp::DecisionStatus
+            | KernelOp::TeamSpace) => {
                 let prepared = self
                     .prepare_agent_read(&op)?
                     .ok_or("Cannot prepare the agent read")?;
