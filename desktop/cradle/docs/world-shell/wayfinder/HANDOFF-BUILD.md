@@ -24,8 +24,13 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
     start a new owner process each time (start-up asks 50 ops in its first 4.5 s, 19 s of owner time,
     `run-20261020T-r28/kernel-trace.log`); the last reading across a relaunch.
   - A session on the first account began the resident readers on 20 Oct and was stopped. Look for its commits after
-    `e3b37bd3a` and its notes in PATH's L1 row before starting.
+    `e3b37bd3a` and its notes in PATH's L1 row before starting. Its uncommitted change to
+    `desktop/cradle/kernel/src/owner_process.rs` (130 lines, 20 Oct 10:15) is still in the env-1 tree.
 - Quaternal Logic is installed at `74e9c8e`, which is its `main`.
+- The device lane's designs are in the catalogue (`main` `b14b51b8f`; here `ce0edad3f` and `5e60d82d3`). Each binding names
+  the keys no owner serves yet as absent, with the reason. O-I #684 lists the reading each needs: the M3 generation cell,
+  the sky's day and hour rulers, the Body source for Torus and Resonance, the agent-set Join, the agent's team cell, and
+  bindings for Light, Resonator bank, Binding and Voice.
 
 ## The work, in order
 
@@ -37,6 +42,7 @@ From MAP's build lane:
 4. Technē's construction chain, end to end (item 6).
 5. The owner operations drag and drop needs, then those the planning lane's action table finds missing (item 7).
 6. The shell refinements (item 8).
+7. The readings the device lane's designs wait on (O-I #684).
 
 These wait for the planning lane to write them into the manual; MAP's planning lane items 1–5 say what each is:
 - the three layers per mode (Session, Arrangement, Pane);
