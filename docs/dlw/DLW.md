@@ -48,19 +48,22 @@ there is nothing like it.
 Everything in the DLW is a world, and every world is drawn as a body in space.
 
 When you open it you see your own from close orbit: a planet turning slowly
-under its star, with the things you are living with gathered around it — the
-agents at work for you, the moments still open from today, the scenes you made
-last week, the people you have been talking to. Come down to the surface and
+under its star, with the agents at work for you in orbit around it, and what
+they have just made drifting out on a wider ring until it is no longer new.
+Come down to the surface and
 the places on it are the things you are making. A project is a place on the
 ground, with paths worn between its landmarks; a book you are writing is
 another; a practice you keep to yourself is a room fogged to everyone but you.
-The day's work leaves tracks across the surface. Lighter things stay up in
-orbit, the files and context you have to hand right now, and drift off when
-you put them down.
+The day's work leaves tracks across the surface. Nothing else circles: your
+files, your open pages and the works you have to hand are on the ground, not in
+the sky.
 
 Choose its seas and continents, how rugged the coasts run, how warm and wet
-the climate is, what colour the sky turns at evening, and reroll the seed if
-you want a new body from the same settings. Then place things on it and name
+the climate is, how much air and weather it has, and reroll the seed if
+you want a new body from the same settings. The land you build is a whole
+planet, with ranges, rivers, lakes, deserts, forests and ice, and it keeps its
+detail as you come down to it. A world you have barely begun is a grey moon;
+a world you have lived in for a year has seas, air and weather. Then place things on it and name
 them: a place, a palace you can walk into, a road between two of them, a
 portal through to someone else's world. Most of the building happens without
 your noticing. Every project you start becomes a place, and every walk you
@@ -2056,7 +2059,7 @@ The scale sets how much of the sky and the ground fills the pane. Each scale kee
 | Scale | What fills the pane | What you can do |
 |---|---|---|
 | Field | The worlds of a shared field as planets around a shared star. Joined fields stand at a remove. Contributions cross the gap as particles. | See who is near. See each relation between worlds. |
-| System | Your planet under its star. The agents at work, the open moments of today and your recent scenes circle it. The files and context you hold drift in orbit. | Start here. Open any object in orbit. Choose a body. |
+| System | Your planet under its star. The agents at work circle it, and what they have just made rides a wider ring. Nothing else is in orbit. | Start here. Open any object in orbit. Choose a body. |
 | Body | One body whole, with its locations, its anchor and its moons. | Turn the body. Place, name and select locations. Follow an anchor line to its place on Earth. |
 | Region | A close view over a coast, with locations at their names. | Move along a route. Select a place by its name. |
 | Place | One place with its exact position, its precision, and the frame in which it was measured. | Read where a thing stands and how sure that is. Open its source. Enter a palace. |
@@ -2071,21 +2074,39 @@ Your own world is a body you build. Earth is given, so you only place things on 
 - Choose how warm and wet the climate is, and how far the ice caps reach.
 - Choose the atmosphere, the clouds and the tilt of the axis.
 - Click the body to place a place, a palace, a portal or a route. The World suggests a name from the seed. Keep it or type your own.
+
+##### What a planet is made of
+
+Every body is made from its seed and its settings alone: the same seed and settings give the same planet on any machine, and nothing about it is random. It has:
+
+- **Land and sea.** Sea level sets how much of the surface is dry, near a third at the default. Continents set how many separate lands there are, from one supercontinent to six or more.
+- **Relief.** Plains where relief is low. Ranges of mountains where it is high, standing deepest inside a continent, with rock and snow on their heights.
+- **Coasts.** A smooth coast runs in broad curves. A fjord coast is cut by long inlets. An archipelago breaks into many islands. Each keeps its character at every scale you come down to.
+- **Water on the land.** Lakes lie in basins. Rivers run down valleys to the sea.
+- **The sea floor.** A shelf near the coast, a slope, a deep plain, with ridges and trenches in it.
+- **Climate and ground.** Warmth follows latitude and height. Moisture follows the wet equator, the dry subtropics, the wet temperate belts, the distance from the sea and your setting. Together they make desert, savanna, grassland, forest, jungle and tundra, with snow above a snow line.
+- **Ice.** Caps with ragged margins, ice over polar sea as well as land, drawing back as the climate warms.
+- **Air and weather.** An atmosphere you can see at the limb. Clouds that lie in bands by latitude, move at different speeds in different bands, and follow the occasion: choose a past moment and the weather is what it was.
+- **Seasons.** The Sun stands higher or lower with the tilt of the axis, and the snow line and the ice margin lean with it.
+
+The land does not change as you come closer. The World only shows more of it: from the whole planet to a coast to one valley, the same land stays where it is, and it keeps its detail down to the closest view, as Earth's does.
 - Reroll the seed to get a new body from the same settings. Every location keeps its name and the position you gave it. Where that spot is now sea, the World draws the location on the nearest shore and says so; nothing moves until you move it.
 
 Most building happens without your notice. Every world you start lands as a place on your planet and turns as a body in your sky. Every walk you take wears a path between places.
 
 #### Your system
 
-Each world you work in is a body of its own. Bring a world onto a Central track, or start one, and it takes a body in your system, built from its own seed, with a landing place on your planet's surface. Enter the place and you are on that world. A book's world can be a small grey moon you have barely shaped; a project you have lived in for a year can be a planet with weather. Its colour is the world's colour everywhere it shows: on its track, its clips and its body.
+Each world you work in is a body of its own. Bring a world onto a Central track, or start one, and it takes a body in your system, built from its own seed, with a landing place on your planet's surface. Enter the place and you are on that world. Its colour is the world's colour everywhere it shows: on its track, its clips and its body.
 
-What you hold circles the body it belongs to. Agents at work and the moments open now ride the inner ring, each keeping its place on the ring however the list around it changes. Files and context you have to hand ride the outer ring and drift off when you put them down.
+How lived in a world is sets how finished its body looks. A world you have barely begun is a small grey moon: dry, airless, with no cloud. As you work in it, it gains seas, air, colour and weather, until a project you have lived in for a year is a planet with weather. Three things count: how long the world has existed, how much it holds (its pages and flows), and how many times you have shaped its body. More of any makes it more finished; none of them ever makes it less. The look is read from those, never stored, and shaping a body by hand is itself a way of living in it. Earth is always as it is.
+
+Only agents at work and what they make circle a body. Agents at work ride the inner ring, each keeping its place on the ring however the list around it changes. What an agent has just made rides the outer ring, each thing keeping its own place, and drifts off as it ages. Your files, your open pages and the works you have to hand do not circle anything: they are on the ground, where the things you are making are.
 
 #### The sky and its occasions
 
 Every world has a sky, and the sky belongs to the world. The planets move as the real ones do. The sky comes from its owner. The World does not compute it. If the owner is not available, the sky layer says why and draws nothing in its place.
 
-An occasion is the moment you stand in. It is Now, a date you choose, or the moment of the stop you are on in a walk. Choose a past occasion and the sky, the shading of day and night on Earth, and the places that were valid then all follow it. Press Tap to return to Now.
+An occasion is the moment you stand in. It is Now, a date you choose, or the moment of the stop you are on in a walk. Choose a past occasion and the sky, the shading of day and night on Earth, the weather on every body you built, and the places that were valid then all follow it. Press Tap to return to Now.
 
 To mark a window of a past moment, set the occasion window. Only the places that were valid in that window show on the body.
 
@@ -2128,9 +2149,9 @@ The graph view has its own controls. Set how many hops it reaches, how far nodes
 | View as | Me · Field · Public | Me | Shows your world as the chosen audience sees it. |
 | Occasion | Now, a date, or a stop | Now | Sets the moment whose sky and valid places you see. |
 | Relations shown | All · Anchors · Field · None | All | Chooses which relations between bodies show. |
-| Landmass | Sea level 0–100 %, continents 0.6–3.6 times, relief 0–100 %, coast smooth · fjord · archipelago | 50 %, 1.7 times, 55 %, smooth | Shapes the land of your body. Earth and other worlds are read-only. |
-| Climate | Warmth, moisture and ice caps, each 0–100 % | 58 %, 60 %, 30 % | Sets the climate of your body. |
-| Sky | Atmosphere and clouds 0–100 %, axial tilt 0–45° | 60 %, 35 %, 18° | Sets the air and the tilt of your body. |
+| Landmass | Sea level 0–100 %, continents 0.6–3.6 times, relief 0–100 %, coast smooth · fjord · archipelago | 50 %, 1.7 times, 55 %, smooth | Shapes the land of your body: how much is dry, how many lands, how high the ranges stand and how the coast breaks. Earth and other worlds are read-only. |
+| Climate | Warmth, moisture and ice caps, each 0–100 % | 58 %, 60 %, 30 % | Sets the climate of your body: where desert, forest, jungle and tundra lie, where the snow line runs, how far the ice reaches. |
+| Sky | Atmosphere and clouds 0–100 %, axial tilt 0–45° | 60 %, 35 %, 18° | Sets the air, the weather and the tilt of your body: how thick the air shows at the limb, how much cloud there is, and how far the seasons swing. |
 | Place kind | Place · Palace · Portal · Route | Place | Chooses what the next click on the body places. |
 | Earth layers | Imagery: Offline · Live. Terrain: Off · On. Day and night: Off · On. Place layers: each relation, On · Off | Offline, Off, Off, all On | Adds layers to Earth. Live imagery and terrain need your consent and show their source. |
 
@@ -2176,7 +2197,7 @@ The whole World shows every parameter, in seven groups.
 
 The full World shows the body, or the graph, at the chosen scale.
 
-On the Space side, a star lights the body and the body shows its phase. Locations stand on the body at their names. Anchor lines run to real places on Earth. Relations show as lines across the dark.
+On the Space side, a star lights the body and the body shows its phase. A body you built keeps its detail all the way down: come to a coast, a valley or a lake and the ground is still finely drawn, as Earth's is. Its weather moves with the occasion. Locations stand on the body at their names. Anchor lines run to real places on Earth. Relations show as lines across the dark.
 
 The sky shows the planets at the moment of the occasion. If the owner of the sky is not available, the sky layer says why and draws nothing.
 
@@ -2231,6 +2252,10 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 - Being findable is not being reachable. Being reachable is not being in touch. Being in touch is not being trusted. The owner of a world gives each step.
 - The idle body is still. It does not spin by itself.
 - A reroll changes the land, never what stands on it. A location keeps the position you gave it.
+- A body built by an older generator draws as it always did, until you next change it. Then it is rebuilt by the current one, from the same seed and settings.
+- How finished a body looks is read from how lived in its world is. It is never stored, and it is never a setting.
+- Weather follows the occasion. The same occasion shows the same weather, on any machine.
+- Only agents at work and what they have just made are in orbit.
 - Live imagery and terrain need your consent. The World names the source of each layer. Imagery does not turn back in time. The occasion filters the places, not the pictures.
 
 #### Tips
