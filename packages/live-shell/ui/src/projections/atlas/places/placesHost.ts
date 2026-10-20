@@ -21,7 +21,8 @@ import type {DisclosureSessionStore} from '../../../../../../../desktop/cradle/s
 import type {AtlasHandle} from '../mount';
 import {surfacePointAt} from '../src/globe/zoom';
 import {latLonFromDir} from '../src/data/geo';
-import {listen} from '../src/ui/lifetime';
+import {later as lifetimeLater, listen, type Cancel} from '../src/ui/lifetime';
+import {WORLD} from '../src/state/store';
 import type {SuitePlace} from '../provider/suiteStanding';
 import {suitePlaces} from '../provider/suiteStanding';
 import {atlasScaleOf, type AtlasScale} from './placesModel';
@@ -62,15 +63,25 @@ function publishScale(next: AtlasScale | null): void {
 
 // ── the shared spatial focus ──────────────────────────────────────────────
 
-/** The atlas's own framing distance for a place's precision (app/controller.ts:2426: a place 2.25, a region 2.6). */
+/** The atlas's own framing distances, in globe radii, one for each precision a flight ends at (manual §17.2: "An exact place gets a street, an
+ * approximate place gets a city, and a region gets the whole region"). The street and the whole region are the atlas's own (app/controller.ts
+ * frames a place at 2.25 and a region at 2.6); a city stands between them. All three are within the Region scale (placesModel.ts REGION_DISTANCE),
+ * and the street is within the Place scale (PLACE_DISTANCE). */
+const FRAMING = {exact: 2.25, approximate: 2.4, region: 2.6} as const;
+
+/** The distance a flight to a place ends at, for its precision (a place with no coordinate does not fly: the widest). */
 export function framingDistance(precision: SuitePlace['precision']): number {
-  return precision === 'exact' ? 2.25 : 2.6;
+  return precision === 'exact' || precision === 'approximate' ? FRAMING[precision] : FRAMING.region;
 }
 
-/** How the Earth turns to a place: the subject's occurrence when the Earth draws it at that very point (it is then selected), else a
- * flight to the point; null when the place is not one the world holds or has no point. Pure. */
-export function turnToPlace(place: SuitePlace | undefined, occurrences: readonly {id: string; subject_ref?: string; lat: number; lon: number; geoPrecision: string}[]):
+/** How the globe turns to a place: the subject's occurrence when the Earth draws it at that very point (it is then selected), else a flight to
+ * the point; null when the place is not one the world holds or has no point here. A place on a body other than the Earth (the facet's body_ref,
+ * its point in `on_body`) has its point on that body: with that body drawn (`on`) it is flown to there; on any other it has none. Pure. */
+export function turnToPlace(place: SuitePlace | undefined, occurrences: readonly {id: string; subject_ref?: string; lat: number; lon: number; geoPrecision: string}[], on: DrawnBody | null = null):
   {kind: 'select'; occId: string} | {kind: 'fly'; lat: number; lon: number; dist: number} | null {
+  if (place?.body_ref) {
+    return on?.body_ref === place.body_ref && place.on_body ? {kind: 'fly', lat: place.on_body.lat, lon: place.on_body.lon, dist: framingDistance(place.precision)} : null;
+  }
   if (!place || !place.located || place.lat === undefined || place.lon === undefined) return null;
   const drawn = place.subject_ref ? occurrences.find(item => item.subject_ref === place.subject_ref && item.geoPrecision !== 'none'
     && Math.abs(item.lat - place.lat!) < 1e-9 && Math.abs(item.lon - place.lon!) < 1e-9) : undefined;
@@ -78,10 +89,17 @@ export function turnToPlace(place: SuitePlace | undefined, occurrences: readonly
   return {kind: 'fly', lat: place.lat, lon: place.lon, dist: framingDistance(place.precision)};
 }
 
-/** Turn the mounted Earth to a place of the world: select the subject the Earth draws there, else fly to the point (not from the sky
- * or the Graph, where the camera does not orbit the Earth). False when the place has no point the Earth can turn to. */
-export function turnAtlasTo(handle: AtlasHandle, place: SuitePlace | undefined): boolean {
-  const turn = turnToPlace(place, handle.model.occ);
+/** How long the atlas is given to land on the Earth from the sky or the Graph before the flight to a place begins: the sky camera's descent and
+ * its settle (app/controller.ts descendFromSky, which owns the camera while it runs) and the Graph's switch are about two seconds; a little over,
+ * so the flight never starts under them. An estimate, not a measure: seen on screen, not headless. */
+export const LANDING_MS = 2500;
+
+/** Turn the mounted atlas to a place of the world, from wherever it is (manual §17.2: "Fly to a place from anywhere"): select the subject the
+ * Earth draws there, else fly to the point. From the sky or the Graph the atlas returns to the Earth first (the controller's own way: the plain
+ * world view, or the switch out of the Graph) and the flight follows once it has landed (`later`, a timer under the atlas lifetime; at once
+ * under reduced motion, which drops instantly). False when the place has no point to turn to. */
+export function turnAtlasTo(handle: AtlasHandle, place: SuitePlace | undefined, later: (run: () => void, ms: number) => Cancel = lifetimeLater): boolean {
+  const turn = turnToPlace(place, handle.model.occ, drawnBody());
   if (!turn) return false;
   if (turn.kind === 'select') {
     const index = handle.model.occIndex.get(turn.occId);
@@ -90,9 +108,23 @@ export function turnAtlasTo(handle: AtlasHandle, place: SuitePlace | undefined):
       ...(handle.ctl.state.graph ? {graph: true as const} : {})});
     return true;
   }
-  if (handle.ctl.state.sky || handle.ctl.state.graph) return false;
-  handle.engine.rig.flyTo(turn.lat, turn.lon, turn.dist);
+  const fly = () => handle.engine.rig.flyTo(turn.lat, turn.lon, turn.dist);
+  const {sky, graph} = handle.ctl.state;
+  if (!sky && !graph) { fly(); return true; }
+  if (sky) handle.ctl.navigate(WORLD); else handle.ctl.toggleMode();
+  if (handle.engine.reduced) fly(); else later(fly, LANDING_MS);
   return true;
+}
+
+/** Select a location of your body: it becomes the shared spatial focus, the place every instrument follows (techne/session.ts setSpatialFocus;
+ * Follow keeps the other panes with the place you select). The refusal in words when no session stands to hold the focus; null once selected. */
+export function selectLocation(session: DisclosureSessionStore, location: {readonly id: string}): string | null {
+  try {
+    session.setSpatialFocus(location.id);
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
 }
 
 function followSpatialFocus(handle: AtlasHandle, session: DisclosureSessionStore): () => void {

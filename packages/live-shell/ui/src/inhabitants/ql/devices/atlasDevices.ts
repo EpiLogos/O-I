@@ -20,7 +20,7 @@ import {techneFaceDeclaration, techneDeviceId} from './faces'
 import {memberKey, memberRows, type SetMember} from './rowSets'
 import {submitThroughOwner, writeThroughOwner} from './ownerWrite'
 import type {DesignBinding, Standing, ValueChange} from '../../../frame/devices/designed'
-import {COASTS} from '../../../projections/atlas/src/globe/body'
+import {COASTS, WORLD_BODY_GENERATOR_VERSION, type BodyLook} from '../../../projections/atlas/src/globe/body'
 import {
   BODY_CHOICES, NO_OTHER, WORLD_BODY_SETTINGS, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
   type BodyChoice, type WorldBodyState,
@@ -108,6 +108,9 @@ export interface AtlasReading {
    * kind, the view's own */
   readonly locations: {readonly rows: readonly BodyLocation[]} | {readonly unread: string}
   readonly placeKind: PlaceKind
+  /** [T-PROCEDURAL-BODY §6 item 5] the look your own world's body is drawn with, as your system reads it (system/maturity.ts): the globe draws
+   * the same, so the device's pictures are the globe's own body; absent while your system is not read */
+  readonly look?: BodyLook
 }
 
 /** Read the mounted atlas (null while none stands) and the view the lens bar presents. */
@@ -116,7 +119,9 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView): Atlas
   const standing = suiteStanding(), system = systemReading()
   const locations = yourLocations(body.state, standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null)
   const placeKind = placeKindChoice()
-  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body, locations, placeKind}
+  const own = system.state === 'read' ? system.bodies.find(item => item.yours) : undefined
+  const look = own ? {look: own.look} : {}
+  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body, locations, placeKind, ...look}
   const controls = handle.ctl.graphControls?.controls() ?? null
   const {scope, wholeField} = handle.ctl.globeScope
   return {
@@ -127,7 +132,7 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView): Atlas
     },
     clock: {mode: handle.time.mode, cursorU: handle.time.cursorU, playing: handle.time.playing, cumulative: handle.time.cumulative},
     globe: {scopeLabel: scope ? scope.label : null, wholeField},
-    body, locations, placeKind,
+    body, locations, placeKind, ...look,
   }
 }
 
@@ -185,6 +190,15 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   // the locations on your own body: a reading (the places stand on it through their owners' PlaceSet, the landings through each world's
   // own BodySet); the place kind is the view's own choice of what the next click places
   values.placeKind = reading.placeKind
+  // the body the globe draws, for the design's pictures (the Compact, the Widget and the Body page draw the globe's own body, never a second one):
+  // the record and the look it is drawn with; and, for a body built by an older generator, what its next change does (the ticket's rule: it draws
+  // as it always did until it is changed, and the change rebuilds it)
+  const shown = reading.body.state.state === 'read' && reading.body.choice === 'own' ? reading.body.state.record : null
+  if (shown) {
+    values.bodyRecord = JSON.stringify(shown)
+    if (reading.look) values.bodyLook = JSON.stringify(reading.look)
+    if (shown.generator.version < WORLD_BODY_GENERATOR_VERSION) values.generationNote = `This body was built by generator ${shown.generator.version}; the current generator is ${WORLD_BODY_GENERATOR_VERSION}. Its next change rebuilds it.`
+  }
   if (reading.body.choice === 'earth') standing.locations = {disabled: EARTH_LOCATIONS}
   else if (reading.body.choice === 'other') standing.locations = {disabled: NO_OTHER}
   else if ('unread' in reading.locations) standing.locations = {disabled: reading.locations.unread}

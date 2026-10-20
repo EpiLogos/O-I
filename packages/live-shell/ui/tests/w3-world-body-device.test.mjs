@@ -291,7 +291,7 @@ test('every body row writes through the owner by every route — the design, the
 // NOT MET: nothing in the rows or the binding says a body was built by an older generator (atlasDevices.ts bodyValues reads the record's
 // settings and its seed; its generator is never named). The manual (M7 of tests/w3q-manual-17-2.test.mjs): "A body built by an older
 // generator draws as it always did, until you next change it."
-test('the device says when a body was built by an older generator, and that its next change rebuilds it; a current, an unread and the Earth\'s say nothing', pending, () => {
+test('the device says when a body was built by an older generator, and that its next change rebuilds it; a current, an unread and the Earth\'s say nothing', () => {
   const version = body.WORLD_BODY_GENERATOR_VERSION
   const reading = (record, choice = 'own', state = 'read') => ({mounted: true, view: 'earth', graph: null, clock: null, globe: {scopeLabel: null, wholeField: false},
     body: {state: state === 'read' ? {state: 'read', reading: readingOf(record, 67), record} : {state}, choice}, locations: {rows: []}, placeKind: 'place'})
@@ -311,17 +311,24 @@ test('the device says when a body was built by an older generator, and that its 
 // NOT MET: the Compact and the Widget draw `SpaceArt`, the Earth's picture, whatever body is chosen, and the Body page draws a preview with
 // the design's own value noise (inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx:480 SpaceDisplay, :512-542 hash3/noise3/fbm/
 // heightAt/isLand, :562 BodyArt). One body, one drawing: the binding hands the design the record the globe shows and the look it is drawn
-// with (values.bodyRecord, values.bodyLook), and the design draws them with the globe's bodyDisc.
-test('the device\'s pictures are the globe\'s own body: the binding hands the design the record shown and the look drawn; nothing is drawn from a second generator', pending, () => {
+// with (values.bodyRecord, values.bodyLook), and the design draws them with the globe's bodyDisc. The binding is the system lane's, the
+// drawing the generator lane's (it takes SpaceArt and BodyArt in the design file): two tests, one for each.
+test('the binding hands the design the record the globe shows and the look it is drawn with, for your own body only', () => {
   const record = {...RECORD, seed: 5}
   const reading = (choice, look) => ({mounted: true, view: 'earth', graph: null, clock: null, globe: {scopeLabel: null, wholeField: false},
     body: {state: {state: 'read', reading: readingOf(record, 67), record}, choice}, locations: {rows: []}, placeKind: 'place', ...(look ? {look} : {})})
   const own = atlasDevs.atlasGlobeBinding(reading('own', {barren: .4}))
   assert.deepEqual(JSON.parse(own.values.bodyRecord ?? 'null'), record, 'values.bodyRecord: the record the globe draws, the owner\'s own')
   assert.deepEqual(JSON.parse(own.values.bodyLook ?? 'null'), {barren: .4}, 'values.bodyLook: the look the globe draws it with')
+  assert.equal(atlasDevs.atlasGlobeBinding(reading('own')).values.bodyLook, undefined, 'no look read: none claimed')
   const earth = atlasDevs.atlasGlobeBinding(reading('earth', {barren: .4}))
   assert.equal(earth.values.bodyRecord, undefined, 'the Earth is drawn as the Earth: no body record is handed')
   assert.equal(earth.values.bodyLook, undefined)
+  assert.equal(atlasDevs.atlasGlobeBinding(reading('other', {barren: .4})).values.bodyRecord, undefined, 'and another world\'s body is not read here')
+})
+
+// Waits on the generator lane (Lane A): the design file is theirs to draw from the values above. Red until they land SpaceArt and BodyArt on bodyDisc.
+test('the design draws a body only with the globe\'s bodyDisc, from the record and look the binding hands it: it carries no value noise of its own', pending, () => {
   const panel = readFileSync(new URL('../src/inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx', import.meta.url), 'utf8')
   assert.match(panel, /from '[^']*projections\/atlas\/src\/globe\/body'/, 'the design imports the globe\'s body module')
   assert.match(panel, /\bbodyDisc\(/, 'and draws the body with its bodyDisc')
@@ -330,7 +337,7 @@ test('the device\'s pictures are the globe\'s own body: the binding hands the de
   assert.doesNotMatch(panel, /function (hash3|noise3|fbm|heightAt|drawnAt)\b|const isLand\b/, 'the design carries no value noise or land test of its own: the preview was a second drawing of the body')
 })
 
-test('the device reading carries the look of your own world from your system\'s reading, so the device and the globe agree', pending, () => {
+test('the device reading carries the look of your own world from your system\'s reading, so the device and the globe agree', () => {
   const bodies = [{key: 'world:central:wiki:root', yours: true, look: {barren: .25}, world: {ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: '', project: null}, state: 'built', record: RECORD,
     bodyRef: RECORD.body_ref, colour: {}, standing: '', landing: null, unlanded: null, phase: 0, satellites: []}]
   // the system reading the globe's drawer reads (system/systemStore.ts) is the one the device reads
