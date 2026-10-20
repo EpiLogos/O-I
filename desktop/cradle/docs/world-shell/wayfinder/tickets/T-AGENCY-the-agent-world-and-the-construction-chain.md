@@ -122,7 +122,8 @@ the team space has the same three participants at each cell: the engine (M0′),
    strings a person reads do: `inhabitants/capabilityHomes.ts:47-48` ("Technē M4′ bodies + Graph") and
    `projections/atlas/palaces/palaceSession.ts:621` ("the M0′ ground"). The legacy cradle keeps its copy of the old contract
    (`desktop/cradle/src/techne/contract.ts` `m_prime`, `mPrimeOf`; `instruments.ts` `mPrime`; `m0m5/palace/regions.ts`
-   `m_prime`); once QL stops sending the field (§7), it is dead there.
+   `m_prime`); QL no longer sends the field (QL-MEF `3c08974`), so it is dead there. QL's own TypeScript copy
+   (`adapters/techne/surfaces/cradle`) keeps the same coordinate role names, and the two copies are renamed together.
 
 K1, K3 and K5 are foundations (MAP build lane item 4). K4 and K2 are the construction chain (item 5). K6 waits on the planning
 lane's answer to where the acts stand (item 3). K7 runs in QL-MEF and AIKit beside them. K8 closes it. K9 waits on nothing.
@@ -134,8 +135,14 @@ installed; K6 on the planning lane's device answer; K8 on K1–K5.
 
 - Retired in QL-MEF `69c0d82` (19 Oct, on the owner's word): the team space's Technē association, `ANIMA-ALETHEIA-TEAMS.md` §10.2's
   sentence and the code it described (`team_space.rs`: `M_PRIME_INSTRUMENTS`, each depth's `m_prime` and `techne`); the 17 team
-  space tests pass. The 4:2 reading still stands in `docs/L5-TECHNE-DUAL-READING-LOCK.md`, `ANIMA-ALETHEIA-TEAMS.md` §6 item 2,
-  and the `m_prime` office of `ql.techne/v1`.
+  space tests pass. Retired in QL-MEF `3c08974`/`6d03a44` (PR #338, 20 Oct): the four-and-two reading at its source — the L5
+  lock rewritten without the numbering (§0 records the withdrawal), `ql.techne/v1` without `m_prime`, the Technē_i role no
+  longer bound to its coordinate's instrument, `ANIMA-ALETHEIA-TEAMS.md` §6 item 2, the execution maps, the K-AW alignment, the
+  Vāk execution lock and the `aletheia-m-prime-gate` skill. The reading kind keeps its wire names (`4:2-deep`, `3:3-conjugate`)
+  because the cradle validates them. Issues #212–#220 still carry M′ numbers in their titles.
+- The L5 lock's §11a (owner amendment, 19 Sep) still stands: M4′ as the Expressions application body, M5′ as the same
+  application in deep-working mode. The 19 Oct split reads M4′ as Kev and M5′ as the language model on the agency side.
+  Whether §11a holds beside it is the owner's to say; the PR left it as written.
 - The plain descriptions of the forms in §17.4 and of the six powers in §25.3 are readings of QL-MEF's law. QL governs; correct
   them where they miss.
 - Where Ta-Onta's Methodology and six Methods live: QL-MEF `skills/` (beside the 39 domain skills) or Central's skills. This ticket
