@@ -289,7 +289,11 @@ test('B1 bathymetry runs from the coast outward: the sea is lightest at the shor
   const levels = sums.map(([s, n]) => s / Math.max(1, n))
   assert.ok(sums.every(([, n]) => n >= 500), `every distance has sea to measure (${sums.map(([, n]) => n).join(', ')} pixels)`)
   for (let b = 1; b < levels.length; b++) assert.ok(levels[b] < levels[b - 1], `the sea darkens with distance from the coast: ${levels.map(x => f(x)).join(', ')}`)
-  assert.ok(levels[0] >= 2.5 * levels[4], `the shore is at least 2.5 times as light as the deep (${f(levels[0])} against ${f(levels[4])}; the Earth’s is 3.6 times)`)
+  // The ratio is held to the lead's gate (w3q-planet-gate.test.mjs `B shelf`, tests/lib/planetMetrics.mjs shelfMeasure), which supersedes the 2.5 this test took from its own reading of the
+  // Earth at this width (3.6 times: the 4-pixel box reduction mixes the Earth's bright land into the shore band, so that reading is dear to the land beside it): at 2048 wide, shore pixels
+  // within 3 of land over the open sea beyond 48, the Earth is 2.10 and a body must be within .6 to 1.5 of it, 1.26 to 3.16. Here, at 512 wide, a body measured 1.74 the day it was
+  // made to the gate and the Earth is held to the same band: not a halo (a shore over three times the deep is one), and not nothing.
+  assert.ok(levels[0] >= 1.26 * levels[4] && levels[0] <= 3.16 * levels[4], `the shore is 1.26 to 3.16 times as light as the deep (${f(levels[0])} against ${f(levels[4])}: ${f(levels[0] / levels[4], 2)} times; the gate’s band for the Earth’s 2.10)`)
   assert.ok(levels[4] <= .08, `the deep floor is at or under .08 (${f(levels[4])}; the Earth’s is .055)`)
 })
 
@@ -364,6 +368,29 @@ test('C1 the ice caps are sea ice and land ice: ice stands over both the sea and
   }
   assert.ok(sea + land >= 2000, `there is ice to measure (${sea + land} pixels)`)
   assert.ok(sea / (sea + land) >= .1 && land / (sea + land) >= .1, `sea ice is ${f(100 * sea / (sea + land), 0)}% and land ice ${f(100 * land / (sea + land), 0)}% of the ice (each at least 10%)`)
+})
+
+test('C2 ice is as crisp as a pixel: a close tile at the margin of the sea ice has ice and water and next to nothing between, not a haze over a hundred pixels', async () => {
+  // The margin's softness is set in pixels (bodySurface.ts iceOver): a ramp that is right for a 2048 base is a hundred pixels of translucent white in a tile at zoom 8, a fog between the
+  // ice and the sea that the Place tool's land test (the sea) and the eye (neither ice nor water) disagree about. Found at the 256-wide picture: a sea pixel beside an ice one, near the cap.
+  const tiles = await optional('bodyTiles.ts'), z = 8, n = 2 ** z, record = make(SEEDS[0]), small = imageOf(record, 256), ice0 = iceMask(small), water0 = waterMask(small), w = small.width
+  let found
+  for (let j = 8; j < small.height / 2 && !found; j++) for (let i = 1; i < w - 1; i++) {
+    const at = j * w + i, lat = latOf(j, small.height)
+    if (lat < 50 || !ice0[at] || !water0[at + 1] || !water0[at + 2]) continue
+    found = {lat, lon: -180 + (i + 1.5) * 360 / w}
+    break
+  }
+  assert.ok(found, 'the northern cap has a margin on the sea at this body')
+  const x = Math.floor((found.lon + 180) / 360 * n), y = Math.floor(n * (1 - Math.asinh(Math.tan(found.lat * Math.PI / 180)) / Math.PI) / 2)
+  let ice = 0, water = 0, other = 0
+  for (const dx of [0, 1]) for (const dy of [0, 1]) {
+    const tile = tiles.bodyTile(record, z, x + dx - 1, y + dy - 1), i2 = iceMask(tile), w2 = waterMask(tile)
+    for (let k = 0; k < tile.width * tile.height; k++) { if (i2[k]) ice++; else if (w2[k]) water++; else other++ }
+  }
+  const total = ice + water + other
+  assert.ok(ice / total >= .1 && water / total >= .1, `the four tiles round the margin hold ice and water (${f(100 * ice / total, 0)}% ice, ${f(100 * water / total, 0)}% water)`)
+  assert.ok(other / total <= .02, `and next to nothing that is neither: ${f(100 * other / total, 2)}% of the pixels (at most 2%)`)
 })
 
 // ── relief shading ──────────────────────────────────────────────────────────────────────────────────────────────────────

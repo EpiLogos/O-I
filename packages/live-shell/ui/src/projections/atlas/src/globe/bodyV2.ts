@@ -61,7 +61,7 @@ export function pixelColour(S: Surface, x: number, y: number, z: number, hgt: nu
       landSurface(S, x, y, z, (hgt - SEA) / LAND_RANGE, cn, detail, landC); shadePixel(SEA + 1e-6, slope, landC)
       seaSurface(S, x, y, z, .02, detail, seaC); shadePixel(SEA - 1e-6, slope, seaC)
     } else {
-      seaSurface(S, x, y, z, 1 - hgt / SEA, detail, seaC); shadePixel(SEA - 1e-6, slope, seaC)
+      seaSurface(S, x, y, z, cn, detail, seaC); shadePixel(SEA - 1e-6, slope, seaC)
       landSurface(S, x, y, z, .004, .01, detail, landC); shadePixel(SEA + 1e-6, slope, landC)
     }
     out[0] = landC[0]! * land + seaC[0]! * (1 - land); out[1] = landC[1]! * land + seaC[1]! * (1 - land); out[2] = landC[2]! * land + seaC[2]! * (1 - land)

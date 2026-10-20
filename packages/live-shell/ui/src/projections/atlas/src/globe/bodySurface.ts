@@ -55,7 +55,7 @@ const SEA_ICE = [.925, .952, .975] as const
 
 /** How much snow (0) and ice (1) the surface just computed carries: the relief shading is kept off them so that they stay as bright as they are. */
 export const WHITE = new Float64Array(2)
-const SHELF = [.1, .26, .47] as const, MID = [.04, .13, .31] as const, DEEP = [.012, .05, .19] as const, ABYSS = [.004, .017, .09] as const
+const SHELF = [.07, .22, .37] as const, MID = [.04, .14, .27] as const, DEEP = [.02, .08, .2] as const
 
 /** The zonal moisture of the sky: wet at the equator, dry at about 25°, wet again in the mid-latitudes (about 52°), dry at the poles; 0.1 to 1. */
 function zonal(alat: number): number {
@@ -104,15 +104,21 @@ export function landColour(S: Surface, x: number, y: number, z: number, L: numbe
   return snow
 }
 
-/** The sea's colour at a depth 0 (the coast) to ~1 (the abyss): turquoise on the shelf, navy in the deep, darker in the basins, with the floor's own mottle. */
+/** The sea's colour at a depth 0 (the coast) to ~1 (the plain): a thin turquoise rim at the shore, which darkens within a few pixels to the blue of the open sea, which is nearly one tone
+ * (teal navy) and changes slowly; the floor's own mottle on it, fine and weak at the broad scales. */
 export function seaColour(S: Surface, x: number, y: number, z: number, depth: number, fmax: number, col: Float64Array): void {
   const t = S.t
-  const k1 = smooth(0, .26, depth), k2 = smooth(.2, .72, depth), k3 = smooth(.74, 1.02, depth)
+  const k1 = smooth(0, .42, depth), k2 = smooth(.3, .95, depth)
   let r = SHELF[0] + (MID[0] - SHELF[0]) * k1, g = SHELF[1] + (MID[1] - SHELF[1]) * k1, b = SHELF[2] + (MID[2] - SHELF[2]) * k1
   r += (DEEP[0] - r) * k2; g += (DEEP[1] - g) * k2; b += (DEEP[2] - b) * k2
-  // the abyss is darker than the deep: its basins read against the ridges that rise from them
-  r += (ABYSS[0] - r) * k3; g += (ABYSS[1] - g) * k3; b += (ABYSS[2] - b) * k3
-  let mot = 1 + .15 * simplex3(t, x * 11 + 5.5, y * 11 + 1.1, z * 11 - 2.2) + .11 * simplex3(t, x * 3.7 - 1.9, y * 3.7 + 6.3, z * 3.7 + 2.4)
+  // the floor's texture, at the scales between a fracture zone and a pixel: no swirl (a broad, smooth, strong relief reads as one), a grain that is finer as the picture is, and
+  // busy in some places and calm in others, as a sea floor is
+  const act = .5 + 1.0 * smooth(-.35, .45, simplex3(t, x * 2.1 + 12.4, y * 2.1 - 4.2, z * 2.1 + 8.8))
+  let tex = .09 * simplex3(t, x * 3.7 - 1.9, y * 3.7 + 6.3, z * 3.7 + 2.4) + .2 * simplex3(t, x * 9 + 5.5, y * 9 + 1.1, z * 9 - 2.2) + .3 * simplex3(t, x * 22 - 3.3, y * 22 + 7.7, z * 22 + 4.1)
+  if (fmax > 52) tex += .13 * simplex3(t, x * 52 + 1.2, y * 52 - 6.4, z * 52 + 9.9)
+  if (fmax > 100) tex += .08 * simplex3(t, x * 100 - 8.8, y * 100 + 2.6, z * 100 - 5.7)
+  // however strong, never so dark that the water is no longer read as water (the shader and the tests read the sea by its blue above its red, which a very dark pixel has not)
+  let mot = 1 + .6 * Math.tanh(1.3 * act * tex / .6)
   for (let f = 130, amp = .05; f <= fmax && amp > .004; f *= 2.1, amp *= .66) mot += amp * simplex3(t, x * f - 4.7, y * f + 9.3, z * f + 2.2)
   col[0] = r * mot; col[1] = g * mot; col[2] = b * mot
 }
@@ -126,14 +132,22 @@ export function iceOver(S: Surface, x: number, y: number, z: number, alat: numbe
   const t = S.t, fmax = .9 / detail
   const edge = 95 - S.capOn * (95 - S.capBase) + 11 * simplex3(t, x * 1.5 - 12.4, y * 1.5 + 6.6, z * 1.5 + 3.7) + 5 * simplex3(t, x * 3.9 + 4.4, y * 3.9 - 9.1, z * 3.9 + 12.3)
     + 1.7 * simplex3(t, x * 14 - 3.8, y * 14 + 7.4, z * 14 + 2.6) + (fmax > 40 ? .7 * simplex3(t, x * 41 + 5.2, y * 41 - 2.2, z * 41 + 8.8) : 0)
+  // an edge is as soft as a pixel is wide: at a close view the ice has crisp margins (a floe, a sheet's edge), not a haze over a hundred pixels (the ramp widths below are those of a 2048 base)
+  const px = detail / .003
   let k: number
   if (sea) {
     // the marginal ice zone: ice thins over ten degrees of latitude into floes, and the floes into open water
     const c = smooth(edge - 8, edge + 3, alat)
-    const n = .5 * simplex3(t, x * 11 + 7.2, y * 11 - 1.8, z * 11 + 9.4) + .32 * simplex3(t, x * 27 - 3.1, y * 27 + 5.5, z * 27 - 6.4) + (fmax > 60 ? .18 * simplex3(t, x * 63 + 1.7, y * 63 - 8.3, z * 63 + 2.9) : 0)
-    const cc = c * 1.14 - .07
-    k = smooth(-.035, .035, cc - (.5 + .5 * n))
-  } else k = smooth(edge - .45, edge + .45, alat)
+    let n = .5 * simplex3(t, x * 11 + 7.2, y * 11 - 1.8, z * 11 + 9.4) + .32 * simplex3(t, x * 27 - 3.1, y * 27 + 5.5, z * 27 - 6.4) + (fmax > 60 ? .18 * simplex3(t, x * 63 + 1.7, y * 63 - 8.3, z * 63 + 2.9) : 0)
+    // finer floes where the picture shows them
+    if (fmax > 200) n += .12 * simplex3(t, x * 190 - 5.5, y * 190 + 3.1, z * 190 + 8.2)
+    if (fmax > 700) n += .08 * simplex3(t, x * 640 + 2.4, y * 640 - 9.6, z * 640 + 5.3)
+    const cc = c * 1.14 - .07, w = px < 1 ? (px < .05 ? .002 : .035 * px) : .035
+    k = smooth(-w, w, cc - (.5 + .5 * n))
+  } else {
+    const half = px < 1 ? (px < .03 ? .01 : .45 * px) : .45
+    k = smooth(edge - half, edge + half, alat)
+  }
   k *= 1 - S.barren
   WHITE[1] = k
   if (k <= 0) return 0
@@ -198,9 +212,9 @@ export function seaSurface(S: Surface, x: number, y: number, z: number, depth: n
 }
 
 /** The colour of the surface at a point where the field says the height is `h` (and, on land, the continentality `cn`): sets `col` to red, green, blue 0–1 before the relief
- * shading is laid over it. `detail` is the wavelength the picture resolves, in radians. Returns 1 if the point is land, 0 if sea. */
+ * shading is laid over it (`cn`: on land the continentality, at sea the water's colour depth). `detail` is the wavelength the picture resolves, in radians. Returns 1 if the point is land, 0 if sea. */
 export function surfaceAt(S: Surface, x: number, y: number, z: number, h: number, cn: number, detail: number, col: Float64Array): number {
   if (h > SEA) { landSurface(S, x, y, z, (h - SEA) / (1 - SEA), cn, detail, col); return 1 }
-  seaSurface(S, x, y, z, 1 - h / SEA, detail, col)
+  seaSurface(S, x, y, z, cn, detail, col)
   return 0
 }
