@@ -5,6 +5,10 @@
 // Channels: scripted. The models, the stores, the tool, the generator and the bindings are the shell's own code in memory; the owners are
 // FAKES standing for the kernel's `world_body_read` and the `aikit.wiki.facts.apply` Action (the real owner is ai-kit
 // knowledge_wiki_facts.rs and knowledge_facets.rs, tested there). Not covered here: anything drawn on screen (UNVERIFIED: the lead's pass).
+// [T-PROCEDURAL-BODY, 20 Oct] What rides a body's rings changed: only the agents at work (inner) and what they have just made (outer). The
+// test that held the old rule ("what you hold circles the body it belongs to": pages and agents inside, files and works outside) is rewritten
+// below and carries the gate until the system lane lands; what it held that still stands (a satellite's place is its subject's own, plain
+// satellites) is kept as a test of its own. tests/w3q-sys-orbits.test.mjs holds the rules in full.
 import test, {beforeEach} from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -35,6 +39,8 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText;
   return {format: 'module', shortCircuit: true, source: out.split('import.meta.env').join('({BASE_URL: "/"})')};
 }`)}`, import.meta.url)
+
+const pending = process.env.W3Q_GATE === 'enforce' ? {} : {todo: 'T-PROCEDURAL-BODY: red until the system lane lands'}
 
 globalThis.__CRADLE_WALK__ = false
 const model = await import('../src/projections/atlas/system/systemModel.ts')
@@ -71,8 +77,13 @@ const readingOf = (ref, record, revision = 4, register = null) => ({schema: 'oi.
   disclosed_revision: revision, body: record, wiki_source: {path: 'w.json', ref: 'central:source:wiki', revision: 'r'}, owner_operation: 'aikit wiki-construct facts-inspect'})
 const read = (ref, record, revision) => ({state: 'read', reading: readingOf(ref, record, revision), record})
 const NO_HAND = {file: null, works: []}
+// [T-PROCEDURAL-BODY] a location row gained fields (its locus, its precision, whether a landing is written): these assertions are about which
+// locations stand and where, so they read the five fields the row always had; tests/w3q-sys-places.test.mjs holds the new ones.
+const fiveOf = row => ({id: row.id, name: row.name, lat: row.lat, lon: row.lon, kind: row.kind})
+const placed = result => ('rows' in result ? {rows: result.rows.map(fiveOf)} : result)
+// `artifacts` and `nowMs` are the readings the rings take since T-PROCEDURAL-BODY (what agents made, and the instant the System is drawn for)
 const input = (extra = {}) => ({worlds: [YOURS, OI, BOOK], bodies: new Map([[YOURS.ref, read(YOURS.ref, RECORD, 67)], [OI.ref, read(OI.ref, null, 9)]]),
-  playing: [], sessions: [], hand: NO_HAND, ...extra})
+  playing: [], sessions: [], hand: NO_HAND, artifacts: [], nowMs: Date.UTC(2026, 9, 20, 12), ...extra})
 
 beforeEach(() => {
   tool.resetPlaceTool()
@@ -114,12 +125,14 @@ test('a world lands on your planet through its own record\'s landing; one on ano
   assert.deepEqual(bodies[1].landing, {lat: 12.5, lon: -40.25})
   assert.equal(bodies[2].landing, null)
   assert.match(bodies[2].unlanded, /lands on another body \(body:mara\)/)
-  assert.deepEqual(model.landingLocations(bodies), [{id: `world:${OI.ref}`, name: 'O-I', lat: 12.5, lon: -40.25, kind: 'place'}])
+  assert.deepEqual(model.landingLocations(bodies).map(fiveOf), [{id: `world:${OI.ref}`, name: 'O-I', lat: 12.5, lon: -40.25, kind: 'place'}], 'a world whose body is not read claims no landing')
   const seeded = model.systemOf(input())[1]
   assert.match(seeded.unlanded, /no body yet, so no landing/)
 })
 
-test('what you hold circles the body it belongs to: pages and agents inside, files and works outside, each at its own place', () => {
+test('what circles a body is the agents at work (inner) and what they have just made (outer): not a page that plays, the file open, the works to hand', pending, () => {
+  // [rewritten 20 Oct: this test held the old rule: "pages and agents inside, files and works outside" — pages [page, session, work] on your
+  // world and [page, file] on O-I. It fails against the code as it stands; that is the proof the old rule is what it encoded.]
   const playing = [
     {pageRef: 'ref:Control/user/flows/morning.html', nowRef: 'now:a', project: null, sinceMs: 1},
     {pageRef: 'ref:Work/O-I/ProjectCentral/user/being.html', nowRef: 'now:b', project: 'O-I', sinceMs: 2},
@@ -127,12 +140,21 @@ test('what you hold circles the body it belongs to: pages and agents inside, fil
   const sessions = [{sessionRef: 'session:1', agentName: 'Kev', purpose: 'build', group: false}, {sessionRef: 'space:group', agentName: null, purpose: null, group: true}]
   const hand = {file: {ref: 'ref:Work/O-I/README.md', path: 'Work/O-I/README.md'}, works: [{expression_ref: 'expr:essay', title: 'The essay'}]}
   const titles = new Map([['ref:Control/user/flows/morning.html', 'Morning']])
-  const [own, oi, book] = model.systemOf(input({playing, sessions, hand, titles}))
-  assert.deepEqual(own.satellites.map(s => [s.kind, s.name, s.ring]), [['page', 'Morning', 'inner'], ['session', 'Kev', 'inner'], ['work', 'The essay', 'outer']])
-  assert.deepEqual(oi.satellites.map(s => [s.kind, s.name, s.ring]), [['page', 'being', 'inner'], ['file', 'README', 'outer']],
-    'a page plays in its register\'s NOW; a file in a project\'s folder rides that project\'s world')
+  const now = Date.UTC(2026, 9, 20, 12)
+  const made = (name, project, ref) => ({ref, name, path: `${name}.html`, atMs: now - 3_600_000, project, sessionRef: 'session:1', actor: 'agent:kev'})
+  const artifacts = [made('notes', null, 'central:source:control:root:notes.html'), made('plan', 'O-I', 'central:source:project:O-I:plan.html')]
+  const [own, oi, book] = model.systemOf(input({playing, sessions, hand, titles, artifacts, nowMs: now}))
+  assert.deepEqual(own.satellites.map(s => [s.kind, s.name, s.ring]), [['session', 'Kev', 'inner'], ['artifact', 'notes', 'outer']],
+    'your world: its agent at work inside, what its agent made outside; its playing page and the works to hand ride nothing')
+  assert.deepEqual(oi.satellites.map(s => [s.kind, s.name, s.ring]), [['artifact', 'plan', 'outer']],
+    'O-I: what was made there; neither the page that plays in its register nor the file in its folder rides')
   assert.deepEqual(book.satellites, [])
-  // the place on the ring is the subject's own: the same ref, the same place, however the list around it changes
+})
+
+test('a satellite\'s place on its ring is its subject\'s own, from its ref alone, however the list around it changes; the satellites are plain', () => {
+  // [kept from the old test: this part of the rule stands, and passes against the code as it is]
+  const sessions = [{sessionRef: 'session:1', agentName: 'Kev', purpose: 'build', group: false}, {sessionRef: 'session:2', agentName: 'Flint', purpose: null, group: false}]
+  const [own] = model.systemOf(input({sessions}))
   const alone = model.systemOf(input({sessions: [sessions[0]]}))[0].satellites[0]
   assert.equal(alone.phase, own.satellites.find(s => s.id === 'session:1').phase)
   assert.equal(alone.phase, model.ringPhase('session:1'))
@@ -314,14 +336,14 @@ test('your body\'s locations are its declared places and the worlds that land on
   ]
   const landed = {...RECORD, body_ref: 'body:o-i', landing: {on_ref: RECORD.body_ref, lat: -8, lon: 34}}
   const system = model.systemOf(input({bodies: new Map([[YOURS.ref, read(YOURS.ref, RECORD, 67)], [OI.ref, read(OI.ref, landed, 9)]])}))
-  assert.deepEqual(yourLocations(state, places, true, system), {rows: [
+  assert.deepEqual(placed(yourLocations(state, places, true, system)), {rows: [
     {id: 'wiki:place:study', name: 'The study', lat: 22, lon: 10, kind: 'place'},
     {id: `world:${OI.ref}`, name: 'O-I', lat: -8, lon: 34, kind: 'place'},
   ]}, 'the Earth\'s places and another body\'s stand elsewhere')
   // a body not built yet is the body seeded from its ref, the one the globe draws: what stands on that ref stands on it
   const seededRef = store.firstBody(YOURS.ref, 3).body_ref
   assert.equal(seededRef, RECORD.body_ref, 'the seeded body keeps the ref its first write keeps')
-  assert.deepEqual(yourLocations({state: 'read', reading: readingOf(YOURS.ref, null, 3), record: null}, places, true, null), {rows: [{id: 'wiki:place:study', name: 'The study', lat: 22, lon: 10, kind: 'place'}]})
+  assert.deepEqual(placed(yourLocations({state: 'read', reading: readingOf(YOURS.ref, null, 3), record: null}, places, true, null)), {rows: [{id: 'wiki:place:study', name: 'The study', lat: 22, lon: 10, kind: 'place'}]})
   assert.deepEqual(yourLocations(state, places, false, null), {unread: LOCATIONS_READING})
   assert.deepEqual(yourLocations({state: 'refused', reason: 'gone'}, places, true, system), {unread: 'gone'})
   // where a location's spot is sea it is drawn on the nearest shore, its coordinate unchanged
