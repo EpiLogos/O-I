@@ -118,9 +118,6 @@ async function optional(name) {
   }
 }
 
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-/** Tests that are red until generator version 2 lands carry this (the lead's gate does the same); W3Q_GATE=enforce makes them real. */
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until generator v2 lands (W3Q_GATE=enforce runs it as a test)'}
 
 const DIALS = {landmass: {sea_level: .5, continents: 1.7, relief: .55, coast: 'smooth'}, climate: {warmth: .58, moisture: .6, ice_caps: .3}, sky: {atmosphere: .6, clouds: .35, axial_tilt_deg: 18}}
 const make = (seed, change = {}) => ({

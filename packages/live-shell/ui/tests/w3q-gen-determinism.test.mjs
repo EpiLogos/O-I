@@ -7,13 +7,13 @@
 // class that runs the real globe/bodyWorker.ts handler, so "worker equals main" compares the real code on both sides.
 //
 // Kinds of test here:
-//   A. purity and statelessness (always enforced where the function exists today; `pending` for the functions this ticket adds);
+//   A. purity and statelessness (every test is enforced: generator version 2 has landed);
 //   B. the generator's source holds nothing random, no clock, no DOM and no three.js (always enforced);
-//   C. the worker and the main thread give the same bytes, and a worker that cannot run falls back (always enforced; look and tiles pending);
-//   D. version dispatch: version 1 draws exactly as it did (always enforced), version 2 is another body (pending);
-//   E. version policy: what parses, what is refused in words, what `firstBody` and `changedBody` write (pending);
-//   F. golden images: four 256-wide bodies, compared with PNGs under tests/golden/planet/ (pending until generator v2 writes them:
-//      UPDATE_GOLDEN=1 node --experimental-strip-types --test tests/w3q-gen-determinism.test.mjs).
+//   C. the worker and the main thread give the same bytes, and a worker that cannot run falls back (enforced);
+//   D. version dispatch: version 1 draws exactly as it did (always enforced), version 2 is another body (enforced);
+//   E. version policy: what parses, what is refused in words, what `firstBody` and `changedBody` write (enforced);
+//   F. golden images: four 256-wide bodies, compared with PNGs under tests/golden/planet/ (written 20 Oct 2026 from the generator after the lane's own screen pass,
+//      for the lead's eye to confirm; a change that is meant rewrites them: UPDATE_GOLDEN=1 node --experimental-strip-types --test tests/w3q-gen-determinism.test.mjs).
 //
 // Run the red state: W3Q_GATE=enforce node --experimental-strip-types --test tests/w3q-gen-determinism.test.mjs
 import test from 'node:test'
@@ -64,9 +64,6 @@ async function optional(name, query = '') {
   }
 }
 
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-/** Tests that are red until generator version 2 lands carry this (the lead's gate does the same); W3Q_GATE=enforce makes them real. */
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until generator v2 lands (W3Q_GATE=enforce runs it as a test)'}
 
 const sha = data => createHash('sha256').update(Buffer.from(data.buffer, data.byteOffset, data.byteLength)).digest('hex')
 const DIALS = {
@@ -476,7 +473,7 @@ function difference(a, b) {
   return {mean: total / (width * height), worstBlock: Math.max(...[...blocks.values()].map(sum => sum / (block * block)))}
 }
 
-test('F1 the four bodies of the gate, drawn 256 wide, are the goldens: a body that changes is seen and chosen, never silent', pending, () => {
+test('F1 the four bodies of the gate, drawn 256 wide, are the goldens: a body that changes is seen and chosen, never silent', () => {
   const update = process.env.UPDATE_GOLDEN === '1'
   if (update) mkdirSync(GOLDEN, {recursive: true})
   const stale = []

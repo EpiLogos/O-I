@@ -51,8 +51,6 @@ async function optional(name) {
   }
 }
 
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until generator v2 lands (W3Q_GATE=enforce runs it as a test)'}
 
 const DIALS = {landmass: {sea_level: .5, continents: 1.7, relief: .55, coast: 'smooth'}, climate: {warmth: .58, moisture: .6, ice_caps: .3}, sky: {atmosphere: .6, clouds: .35, axial_tilt_deg: 18}}
 const base = (seed, change = {}, version = 2) => ({
@@ -157,7 +155,7 @@ function coastalTile(record, z) {
 }
 
 for (const z of [5, 8]) {
-  test(`P5 a z${z} tile agrees with the Place tool’s land test at 97 % of its pixels: the tile and the land test are one function`, pending, async () => {
+  test(`P5 a z${z} tile agrees with the Place tool’s land test at 97 % of its pixels: the tile and the land test are one function`, async () => {
     const tiles = await optional('bodyTiles.ts')
     assert.equal(typeof tiles.bodyTile, 'function', 'bodyTiles.ts exports bodyTile(record, z, x, y, look?)')
     const record = BODIES.default, {x, y} = coastalTile(record, z), tile = tiles.bodyTile(record, z, x, y), water = waterMask(tile), ice = iceMask(tile)
@@ -199,7 +197,7 @@ test('P6 the disc is the same body: its land and sea are the Place tool’s, at 
 
 // ── the Body page's preview ─────────────────────────────────────────────────────────────────────────────────────────────
 
-test('P7 the World design’s BodyArt draws the generator’s body, not a second noise of its own: the Body page and the globe draw one body', pending, () => {
+test('P7 the World design’s BodyArt draws the generator’s body, not a second noise of its own: the Body page and the globe draw one body', () => {
   // Today the preview (inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx) carries its own hash3, noise3, fbm, heightAt and
   // isLand: a copy of version 1 that version 2 leaves behind, so the page would show one planet and the globe another. The preview's
   // drawing is to come from globe/body.ts. (A GPU-less, DOM-less read of the source: the panel is React.)

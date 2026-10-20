@@ -40,9 +40,6 @@ export async function load(u, c, n) {
 
 const body = await import(new URL('../src/projections/atlas/src/globe/body.ts', import.meta.url).href)
 
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-/** Tests that are red until generator version 2 lands carry this (the lead's gate does the same); W3Q_GATE=enforce makes them real. */
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until generator v2 lands (W3Q_GATE=enforce runs it as a test)'}
 
 // ── fixtures and measures ───────────────────────────────────────────────────────────────────────────────────────────────
 
