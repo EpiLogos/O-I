@@ -7,7 +7,7 @@
 // knowledge_wiki_facts.rs and knowledge_facets.rs, tested there). Not covered here: anything drawn on screen (UNVERIFIED: the lead's pass).
 // [T-PROCEDURAL-BODY, 20 Oct] What rides a body's rings changed: only the agents at work (inner) and what they have just made (outer). The
 // test that held the old rule ("what you hold circles the body it belongs to": pages and agents inside, files and works outside) is rewritten
-// below and carries the gate until the system lane lands; what it held that still stands (a satellite's place is its subject's own, plain
+// below; what it held that still stands (a satellite's place is its subject's own, plain
 // satellites) is kept as a test of its own. tests/w3q-sys-orbits.test.mjs holds the rules in full.
 import test, {beforeEach} from 'node:test'
 import assert from 'node:assert/strict'
@@ -39,8 +39,6 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText;
   return {format: 'module', shortCircuit: true, source: out.split('import.meta.env').join('({BASE_URL: "/"})')};
 }`)}`, import.meta.url)
-
-const pending = process.env.W3Q_GATE === 'enforce' ? {} : {todo: 'T-PROCEDURAL-BODY: red until the system lane lands'}
 
 globalThis.__CRADLE_WALK__ = false
 const model = await import('../src/projections/atlas/system/systemModel.ts')
@@ -130,9 +128,9 @@ test('a world lands on your planet through its own record\'s landing; one on ano
   assert.match(seeded.unlanded, /no body yet, so no landing/)
 })
 
-test('what circles a body is the agents at work (inner) and what they have just made (outer): not a page that plays, the file open, the works to hand', pending, () => {
-  // [rewritten 20 Oct: this test held the old rule: "pages and agents inside, files and works outside" — pages [page, session, work] on your
-  // world and [page, file] on O-I. It fails against the code as it stands; that is the proof the old rule is what it encoded.]
+test('what circles a body is the agents at work (inner) and what they have just made (outer): not a page that plays, the file open, the works to hand', () => {
+  // [rewritten 20 Oct: this test held the old rule: "pages and agents inside, files and works outside" — [page, session, work] on your
+  // world and [page, file] on O-I. It failed against the code as it stood; that was the proof the old rule is what it encoded.]
   const playing = [
     {pageRef: 'ref:Control/user/flows/morning.html', nowRef: 'now:a', project: null, sinceMs: 1},
     {pageRef: 'ref:Work/O-I/ProjectCentral/user/being.html', nowRef: 'now:b', project: 'O-I', sinceMs: 2},

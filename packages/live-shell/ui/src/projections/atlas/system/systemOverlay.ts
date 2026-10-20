@@ -1,6 +1,5 @@
-// Your system on the globe's sky (T-WORLDS §5 W3 phase B; manual §17.2 "Your system", the System scale: "Your planet under its star.
-// The agents at work, the open moments of today and your recent scenes circle it. The files and context you hold drift in orbit"). Bound
-// by the atlas's attach (AtlasProjectionPanel.tsx) for as long as the Earth stands, released with it. It draws only in the System scale
+// Your system on the globe's sky (T-WORLDS §5 W3 phase B; manual §17.2 "Your system", the System scale: "Your planet under its star. The
+// agents at work circle it, and what they have just made rides a wider ring. Nothing else is in orbit"). Bound by the atlas's attach (AtlasProjectionPanel.tsx) for as long as the Earth stands, released with it. It draws only in the System scale
 // (the sky drawn, the camera at the system and no lens holding a planet), and only what system/systemStore.ts holds:
 //   - your planet is the body the globe draws while you choose your world (the Earth's own mesh, drawing your world's body; while the
 //     Earth is chosen the planet is the Earth, and your system stands down): its rings ride the sky layer's own disc of it
@@ -9,13 +8,13 @@
 //     own body (globe/body.ts bodyDisc: the owner's record, or the body seeded from its ref; hollow while it is not read), in its colour,
 //     its axis leaned by its tilt, its name beneath;
 //   - what each world holds rides its own two rings on PlanetOrbits (sky/orbits.ts), keyed in the orbits' world key space (never a
-//     widened BodyKey): the pages that play and the agents at work inside, the files and context to hand outside, each at the place its
-//     subject keys. A press opens it through the act the readings bound.
+//     widened BodyKey): the agents at work inside, what they have just made outside, each at the place its subject keys, an artefact
+//     drifting outward and fading as it ages. A press opens it through the act the readings bound.
 // And at the Body and Region scales, while the globe draws your own body: the locations on it (system/bodyLocations.ts — the places
 // declared on your body and the worlds that land on it), each at its point, or hollow on the nearest shore where its spot is sea
 // (globe/body.ts shoreOf: drawing only, its coordinate never changes), named.
 // Screen-space and DOM, as PlanetOrbits is: it reads the sky layer's drawn disc each frame, so it follows the planet exactly.
-import {PlanetOrbits, type OrbitAt, type OrbitDisc, type Satellite} from '../src/sky/orbits'
+import {PlanetOrbits, type OrbitAt, type OrbitDisc, type OrbitKey, type Satellite} from '../src/sky/orbits'
 import {bodyDisc, shoreOf, type WorldBodyRecord} from '../src/globe/body'
 import {el} from '../src/ui/dom'
 import {hostSize} from '../src/ui/hostSize'
@@ -86,11 +85,33 @@ export function worldPlace(phase: number, radius: number): {x: number; y: number
   return {x: ox * Math.cos(ROT) - oy * Math.sin(ROT), y: ox * Math.sin(ROT) + oy * Math.cos(ROT), behind: Math.sin(phase) < 0}
 }
 
-const satellitesOf = (body: SystemBody, open: (body: SystemBody, index: number) => void): Satellite[] =>
-  body.satellites.map((satellite, index) => ({
-    id: satellite.id, name: satellite.name, inner: satellite.ring === 'inner', phase: satellite.phase, title: satellite.hint, kind: satellite.kind,
-    open: () => open(body, index),
+/** A body's satellites as the orbits take them. A press reads the satellite from the latest reading by its key, so a ring that stands across
+ * readings (below) never opens a stale one. */
+const satellitesOf = (body: SystemBody, open: (key: string, id: string) => void): Satellite[] =>
+  body.satellites.map(satellite => ({
+    id: satellite.id, name: satellite.name, inner: satellite.ring === 'inner', phase: satellite.phase, title: satellite.hint, kind: satellite.kind, age: satellite.age,
+    open: () => open(body.key, satellite.id),
   }))
+
+/** One body's rings as last handed to its orbits: what rides them, and the satellites themselves. */
+interface HeldRings {
+  structure: string
+  sats: Satellite[]
+}
+
+/** Hand a body's satellites to its orbits. The orbits rebuild their controls on a set, so a reading that moved only the ages (each minute, as
+ * artefacts drift) leaves the rings standing and ages the satellites in place; one that moved what rides them sets them again. */
+function setRings(orbits: PlanetOrbits, held: HeldRings, key: OrbitKey | null, body: SystemBody | undefined, open: (key: string, id: string) => void): void {
+  const sats = body ? satellitesOf(body, open) : []
+  const structure = JSON.stringify([key, sats.map(({id, name, inner, phase, title, kind}) => [id, name, inner, phase, title, kind])])
+  if (structure === held.structure) {
+    sats.forEach((sat, index) => { held.sats[index]!.age = sat.age })
+    return
+  }
+  held.structure = structure
+  held.sats = sats
+  orbits.set(key, sats)
+}
 
 interface WorldMark {
   key: string
@@ -99,6 +120,7 @@ interface WorldMark {
   name: HTMLElement
   axis: SVGLineElement
   orbits: PlanetOrbits
+  rings: HeldRings
   drawn: string
 }
 
@@ -114,6 +136,7 @@ interface OverlayDom {
   readonly ring: SVGEllipseElement
   readonly yourAxis: SVGLineElement
   readonly yours: PlanetOrbits
+  readonly yourRings: HeldRings
   readonly places: HTMLElement
 }
 
@@ -137,7 +160,7 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     // the locations on your body (Body and Region scales), in a layer of their own
     const places = el('div', {class: 'sys-places', hidden: true, role: 'group', 'aria-label': 'Locations on your body'})
     parent.append(places)
-    dom = {root, svg, ring, yourAxis, yours: new PlanetOrbits(parent, () => {}, {home: false, className: 'po-sys'}), places}
+    dom = {root, svg, ring, yourAxis, yours: new PlanetOrbits(parent, () => {}, {home: false, className: 'po-sys'}), yourRings: {structure: '', sats: []}, places}
     return dom
   }
   let placeMarks: {drawn: DrawnLocation; node: HTMLElement; dir: [number, number, number]}[] = []
@@ -169,10 +192,11 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
   let bodies: readonly SystemBody[] = []
   let live = true
 
-  const open = (body: SystemBody, index: number) => {
-    const satellite = body.satellites[index]
+  const open = (key: string, id: string) => {
+    const body = bodies.find(entry => entry.key === key)
+    const satellite = body?.satellites.find(entry => entry.id === id)
     const acts = systemActs()
-    if (!satellite) return
+    if (!body || !satellite) return
     if (!acts) { said?.('Your system’s owners are not bound in this pane, so nothing in orbit opens from here.'); return }
     void acts.open(satellite, body).catch(error => said?.(error instanceof Error ? error.message : String(error)))
   }
@@ -190,9 +214,9 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     const reading = systemReading()
     bodies = reading.state === 'read' ? reading.bodies : []
     if (!bodies.length && !dom) return
-    const {root, svg, yours} = ensureDom()
+    const {root, svg, yours, yourRings} = ensureDom()
     const own = bodies.find(body => body.yours)
-    yours.set(own ? own.key : null, own ? satellitesOf(own, open) : [])
+    setRings(yours, yourRings, own ? own.key : null, own, open)
     if (own) yours.root.style.setProperty('--core-rgb', rgbOf(own.colour.core))
     const others = bodies.filter(body => !body.yours)
     for (const mark of marks) if (!others.some(body => body.key === mark.key)) { mark.root.remove(); mark.axis.remove(); mark.orbits.destroy() }
@@ -206,7 +230,7 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
         const axis = document.createElementNS(SVG, 'line')
         axis.setAttribute('class', 'sys-axis')
         svg.append(axis)
-        return {key: body.key, root: markRoot, canvas, name, axis, orbits: new PlanetOrbits(parent, () => {}, {home: false, className: 'po-sys'}), drawn: ''}
+        return {key: body.key, root: markRoot, canvas, name, axis, orbits: new PlanetOrbits(parent, () => {}, {home: false, className: 'po-sys'}), rings: {structure: '', sats: []}, drawn: ''}
       })()
       const picture = body.record ? JSON.stringify(body.record) : ''
       if (picture !== mark.drawn) { draw(mark.canvas, body.record); mark.drawn = picture }
@@ -215,7 +239,7 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
       mark.root.style.setProperty('--core-rgb', rgbOf(body.colour.core))
       mark.root.setAttribute('aria-label', `${body.world.name}: ${body.standing}${body.landing ? `; it lands on your planet at ${body.landing.lat.toFixed(1)}, ${body.landing.lon.toFixed(1)}` : body.unlanded ? `; ${body.unlanded}` : ''}`)
       mark.root.title = mark.root.getAttribute('aria-label') ?? ''
-      mark.orbits.set(body.key, satellitesOf(body, open))
+      setRings(mark.orbits, mark.rings, body.key, body, open)
       mark.orbits.root.style.setProperty('--core-rgb', rgbOf(body.colour.core))
       return mark
     })

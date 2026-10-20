@@ -1,15 +1,19 @@
-// Your system (manual §17.2 "Your system"; §2 "every world is drawn as a body in space"; T-WORLDS §5 W3 phase B): each world in today's
-// set is a body of its own, built from its register's own world body, landing at its place on your planet, and what you hold circles the
-// body it belongs to. A pure model: the owners' readings in, the bodies and their satellites out. No DOM, no React, no transport.
+// Your system (manual §17.2 "Your system"; §2 "every world is drawn as a body in space"; T-WORLDS §5 W3 phase B; T-PROCEDURAL-BODY §6): each
+// world in today's set is a body of its own, built from its register's own world body, landing at its place on your planet, and only
+// what agents do circles the body it belongs to. A pure model: the owners' readings in, the bodies and their satellites out. No DOM, no
+// React, no transport, and no clock (the instant it is drawn for is an input).
 //
 // It reads, and never re-derives:
 //   - the worlds Central discloses and today's set (central/centralWorlds.ts worldsOf; central/daySet.ts daySetOf through
 //     frame/tracks/useCentralTracks.ts setReadingOf): your world first, then the Day's set in its own order;
 //   - each world's body, `aikit.world-body/v1` on its register's root space, as the kernel's `world_body_read` answers it (project
 //     worlds by their project; kernel construction.rs read_body);
-//   - the pages that play now (useCentralTracks.ts playingOf: each a NOW clearing whose task is `oi:page:<ref>`), by the register
-//     whose NOW holds them, and the agent sessions at work (agent/AgentSessionsProvider.tsx), on the inner ring;
-//   - the files and context to hand (the workspace's open source and its works to hand, shell/workspaceTypes.ts), on the outer ring.
+//   - the agent sessions at work (agent/AgentSessionsProvider.tsx), each in the world its SessionSpace belongs to (system/sessionWorld.ts),
+//     on the inner ring;
+//   - what agents have just made: the changes of each register's change horizon that an agent made (system/artifacts.ts, Central's
+//     `projectcentral.change.horizon`), on the outer ring, for a Day and the newest six at most.
+// A page that plays, the file you have open and the works to hand are on the ground, not in orbit (manual §17.2: "Only agents at work and
+// what they make circle a body").
 //
 // Laws kept: a world with no body yet is drawn from a body seeded from its ref (body/worldBody.ts firstBody, the very body its first
 // change would build on) and says so; nothing is written until the person acts. A world whose body is not read is drawn hollow, with the
@@ -18,7 +22,6 @@
 // a satellite is drawn as the plain satellite it is (the owner places the faces of agent types; T-WORLDS §1, withdrawn).
 import type {WorldBodyReading} from '../../../../../../../desktop/cradle/src/kernel/types'
 import type {CentralWorld} from '../../../central/centralWorlds'
-import type {CentralPlaying} from '../../../timeline/centralTrackAdapter'
 import type {Palette} from '../src/types/field'
 import type {WorldBodyRecord} from '../src/globe/body'
 import {fnv1a, paletteOfRef} from '../provider/suiteReading'
@@ -31,17 +34,21 @@ export type SystemBodyReading =
   | {readonly state: 'read'; readonly reading: WorldBodyReading; readonly record: WorldBodyRecord | null}
   | {readonly state: 'refused'; readonly reason: string}
 
-/** What a satellite is: a page that plays, an agent session at work, a file open now, a work to hand. */
-export type SatelliteKind = 'page' | 'session' | 'file' | 'work'
+/** What a satellite is: an agent session at work, or a file an agent has just made. Nothing else circles a body. */
+export type SatelliteKind = 'session' | 'artifact'
 
 export interface SystemSatellite {
-  /** the subject's own ref (a page's file ref, a session's ref, a file's ref, a work's expression ref): its key and its place */
+  /** the subject's own ref (a session's ref, an artefact's source ref): its key and its place */
   readonly id: string
   readonly name: string
   readonly ring: 'inner' | 'outer'
   readonly kind: SatelliteKind
   /** its place on its ring, radians, from its ref alone */
   readonly phase: number
+  /** how far along its window it is: 0 just made, approaching 1 at the edge it drifts off at; 0 for a session, which is at work now */
+  readonly age: number
+  /** the file an artefact is, Central-relative: what a press opens (absent for a session) */
+  readonly path?: string
   /** what it is, in a line */
   readonly hint: string
 }
@@ -70,18 +77,30 @@ export interface SystemBody {
   readonly satellites: readonly SystemSatellite[]
 }
 
-/** The files and context to hand: the source the workspace holds open, and the works it has to hand. */
-export interface ToHand {
-  readonly file: {readonly ref: string; readonly path: string; readonly name?: string} | null
-  readonly works: readonly {readonly expression_ref: string; readonly title: string}[]
-}
-
-/** An agent session at work, as the sessions provider builds its tracks (agent/agentRunModel.ts AgentSessionTrack). */
+/** An agent session at work, as the sessions provider builds its tracks (agent/agentRunModel.ts AgentSessionTrack), and the project its
+ * SessionSpace belongs to (system/sessionWorld.ts sessionsOf). */
 export interface SessionLike {
   readonly sessionRef: string
   readonly agentName: string | null
   readonly purpose: string | null
   readonly group: boolean
+  /** the project of the world it is at work in; null or absent is your world */
+  readonly project?: string | null
+}
+
+/** A file an agent made, from its register's change horizon (system/artifacts.ts artifactsOf). */
+export interface SystemArtifact {
+  /** the file's source ref: its key and its place on the ring */
+  readonly ref: string
+  readonly name: string
+  /** Central-relative, what opens it */
+  readonly path: string
+  /** the instant its newest change was observed, ms */
+  readonly atMs: number
+  /** the project of the world it is in; null is your world */
+  readonly project: string | null
+  readonly sessionRef: string | null
+  readonly actor: string | null
 }
 
 export interface SystemInput {
@@ -89,12 +108,23 @@ export interface SystemInput {
   readonly worlds: readonly CentralWorld[]
   /** each world's body, by the world's ref; your world's is the root register's (body/worldBody.ts) */
   readonly bodies: ReadonlyMap<string, SystemBodyReading>
-  readonly playing: readonly CentralPlaying[]
-  /** the pages' titles, by page ref (the page owner's listing of each world's folder); a page with none is named by its file */
-  readonly titles?: ReadonlyMap<string, string>
   readonly sessions: readonly SessionLike[]
-  readonly hand: ToHand
+  /** what agents have made, in every world of the set */
+  readonly artifacts?: readonly SystemArtifact[]
+  /** the instant the System is drawn for, ms (the artefacts' ages are read against it) */
+  readonly nowMs?: number
 }
+
+/** How long an artefact stays in orbit: one Day, rolling, from the moment it was made. Reasoning, from the owner's ground
+ * (Control/agents/governance/field-and-now/day-close.md): NOW is a moving horizon that ends — "what was live is carried, what finished is
+ * removed, and what the day held stays readable in a dated record" — and a close is a closure at a civil date, the field opening clean the
+ * next morning. That law gives the size of the horizon (one Day) and nothing finer: it names no recency of its own. So an artefact rides for
+ * a Day's length from its making and then belongs to the day's record, not to the sky. It is a rolling Day and not the civil boundary
+ * because the boundary is the owner's policy (Control/user/civil-time-policy.json: a timezone, a boundary minute, a rollover that may be
+ * automatic) and would empty every ring at once at midnight instead of letting each artefact drift off as it ages. */
+export const ARTIFACT_WINDOW_MS = 24 * 60 * 60 * 1000
+/** The most artefacts a world's outer ring carries: the newest six (owner, 20 Oct: orbits to a minimum). */
+export const ARTIFACTS_PER_WORLD = 6
 
 const TAU = Math.PI * 2
 
@@ -109,7 +139,6 @@ const tail = (ref: string): string => {
   const cut = Math.max(trimmed.lastIndexOf(':'), trimmed.lastIndexOf('/'))
   return cut >= 0 ? trimmed.slice(cut + 1) : trimmed
 }
-const fileName = (path: string): string => tail(path).replace(/\.[a-z0-9]+$/i, '')
 
 /** The worlds of today's set: your world first, then each world the Day's set holds, in the set's order (useCentralTracks.ts inSet
  * keeps the disclosure's order; the System keeps the set's, which is the order the person brought them in). A world the set names
@@ -120,40 +149,28 @@ export function systemWorlds(disclosed: readonly CentralWorld[], setWorlds: read
   return [...(yours ? [yours] : []), ...held.filter((world, index) => held.findIndex(other => other.ref === world.ref) === index)]
 }
 
-/** The world a register's NOW belongs to: a project's world by its project, your world for the root's (null). */
+/** The world a project's agents work in: that project's world, your world for none (the root register's). */
 const worldOfProject = (worlds: readonly CentralWorld[], project: string | null): CentralWorld | undefined =>
   project ? worlds.find(world => world.project === project) : worlds.find(world => world.kind === 'yours')
 
-/** The world a file belongs to: the project world whose project folder (Work/<Name>/) holds it, else your world. */
-export function worldOfPath(worlds: readonly CentralWorld[], path: string): CentralWorld | undefined {
-  const project = worlds.find(world => world.project && (path.startsWith(`Work/${world.project}/`) || path.startsWith(`${world.folder}/`)))
-  return project ?? worlds.find(world => world.kind === 'yours')
-}
-
+/** What circles one world: its agents at work on the inner ring, in the order given, then the newest artefacts agents made there on the
+ * outer, newest first (ties by ref, so the same six ride however the list is ordered). A satellite's place is its own ref's; an artefact
+ * rides while it is no older than the window and not later than the instant shown (a past occasion shows what had been made by then). */
 function satellitesOf(world: CentralWorld, input: SystemInput): SystemSatellite[] {
-  const inner: SystemSatellite[] = input.playing
-    .filter(item => worldOfProject(input.worlds, item.project)?.ref === world.ref)
-    .map(item => {
-      const name = input.titles?.get(item.pageRef) ?? fileName(item.pageRef)
-      return {id: item.pageRef, name, ring: 'inner', kind: 'page', phase: ringPhase(item.pageRef),
-        hint: `${name} — a page open now, in its moment ${item.nowRef}. Select to open it.`}
-    })
-  const sessions: SystemSatellite[] = world.kind === 'yours'
-    ? input.sessions.filter(session => !session.group).map(session => {
-      const name = session.agentName ?? session.purpose ?? tail(session.sessionRef)
-      return {id: session.sessionRef, name, ring: 'inner', kind: 'session', phase: ringPhase(session.sessionRef),
-        hint: `${name} — an agent at work (${session.sessionRef})${session.purpose && session.agentName ? `: ${session.purpose}` : ''}. Select to choose its session.`}
-    })
-    : []
-  const file = input.hand.file
-  const files: SystemSatellite[] = file && worldOfPath(input.worlds, file.path)?.ref === world.ref
-    ? [{id: file.ref, name: file.name ?? fileName(file.path), ring: 'outer', kind: 'file', phase: ringPhase(file.ref), hint: `${file.path} — the file you have open now.`}]
-    : []
-  const works: SystemSatellite[] = world.kind === 'yours'
-    ? input.hand.works.map(work => ({id: work.expression_ref, name: work.title, ring: 'outer', kind: 'work', phase: ringPhase(work.expression_ref),
-      hint: `${work.title} — a work you have to hand (${work.expression_ref}). Select to open it in its instrument.`}))
-    : []
-  return [...inner, ...sessions, ...files, ...works]
+  const here = (project: string | null | undefined) => worldOfProject(input.worlds, project ?? null)?.ref === world.ref
+  const sessions: SystemSatellite[] = input.sessions.filter(session => !session.group && here(session.project)).map(session => {
+    const name = session.agentName ?? session.purpose ?? tail(session.sessionRef)
+    return {id: session.sessionRef, name, ring: 'inner', kind: 'session', phase: ringPhase(session.sessionRef), age: 0,
+      hint: `${name} — an agent at work (${session.sessionRef})${session.purpose && session.agentName ? `: ${session.purpose}` : ''}. Select to choose its session.`}
+  })
+  const now = input.nowMs ?? 0
+  const artifacts: SystemSatellite[] = (input.artifacts ?? [])
+    .filter(item => here(item.project) && item.atMs <= now && now - item.atMs < ARTIFACT_WINDOW_MS)
+    .sort((a, b) => b.atMs - a.atMs || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0))
+    .slice(0, ARTIFACTS_PER_WORLD)
+    .map(item => ({id: item.ref, name: item.name, ring: 'outer', kind: 'artifact', phase: ringPhase(item.ref), age: (now - item.atMs) / ARTIFACT_WINDOW_MS, path: item.path,
+      hint: `${item.path} — made by ${item.actor ?? 'an agent'}. Select to open it.`}))
+  return [...sessions, ...artifacts]
 }
 
 const NO_BODY_YET = 'no body yet: drawn from a body seeded from its ref, and nothing is written until you build it'
