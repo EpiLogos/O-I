@@ -282,6 +282,21 @@ float weatherTurns(float latDeg, float days, vec3 rate) {
 }
 `;
 
+/** Value noise for the sky's finest detail (a cheap hash on the lattice, smoothly blended): the cloud mask is a picture of 1024 texels, and this breaks its soft edge up as
+ * finely as the camera can see. Nothing here is random: the same point gives the same value. */
+const CLOUD_GLSL = /* glsl */ `
+float cloudHash(vec2 p) {
+  p = fract(p * vec2(0.1031, 0.1030));
+  p += dot(p, p.yx + 33.33);
+  return fract((p.x + p.y) * p.x);
+}
+float cloudNoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(cloudHash(i), cloudHash(i + vec2(1.0, 0.0)), f.x), mix(cloudHash(i + vec2(0.0, 1.0)), cloudHash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+`;
+
 /** The body's own sky stood over the graded ground (a statement block for `main`, given the coordinate `uv` the equirect is read at, and `N`, `col`): its cloud layer, carried east
  * by the wind of its latitude at the occasion's time, lit as the ground is. The sphere and every tile take this one block, so a tile is the sphere's own picture made finer and
  * not a clear rectangle in a clouded base. */
@@ -293,7 +308,17 @@ const skyOver = (uv: string) => /* glsl */ `
   if (uCloudMix > 0.0) {
     float turns = weatherTurns(degrees(asin(clamp(N.y, -1.0, 1.0))), uWeatherT, uWeatherRate);
     vec2 cuv = vec2(${uv}.x - turns, ${uv}.y);
-    float cover = texture2D(uCloud, cuv).r * uCloudMix;
+    float cover = texture2D(uCloud, cuv).r;
+    // the mask is 1024 texels round: close in, its soft edge is a blur. It is broken up by noise, octave on octave, each as fine as a pixel can show (the cell of an octave
+    // against the pixel's span uPxRad: the finer ones fade out, so nothing shimmers from afar), only where the mask has cloud at all (a clear sky stays clear)
+    float cl = max(sqrt(max(1.0 - N.y * N.y, 0.0)), 0.1);
+    vec2 np = vec2(cuv.x * 6.2831853 * cl, (cuv.y - 0.5) * 3.14159265);
+    float foot = uPxRad / max(dot(N, normalize(vView)), 0.15) * 60.0;
+    float a1 = 1.0 - smoothstep(0.35, 0.95, foot), a2 = 1.0 - smoothstep(0.35, 0.95, foot * 2.3), a3 = 1.0 - smoothstep(0.35, 0.95, foot * 5.3);
+    float dn = (cloudNoise(np * 60.0) - 0.5) * 0.42 * a1 + (cloudNoise(np * 138.0 + 7.1) - 0.5) * 0.3 * a2 + (cloudNoise(np * 318.0 + 3.7) - 0.5) * 0.22 * a3;
+    // a soft edge and a thinner, thicker cover inside it: the cloud is feathered, never cut
+    float live = smoothstep(0.0, 0.12, cover);
+    cover = mix(cover, smoothstep(0.02, 0.98, cover + dn * live) * (1.0 - 0.18 * live * (1.0 - cloudNoise(np * 25.0 + 11.0))), a1) * uCloudMix;
     float lit = mix(0.46, 1.0, smoothstep(0.1, 1.0, 0.5 + 0.5 * dot(N, normalize(uLightDir))));
     if (uSunMix > 0.0) lit = mix(lit, mix(0.1, 1.0, smoothstep(-0.07, 0.16, dot(N, normalize(uSunDir)))), uSunMix);
     col = mix(col, mix(uCore, vec3(1.0), 0.55) * lit, cover * 0.82);
@@ -327,10 +352,12 @@ uniform float uAir;
 // [T-PROCEDURAL-BODY] how barren the body is (its look, body.ts BodyLook.barren): 0 the lived grade, 1 a grey airless moon. The grade is the site's world, a navy palette; a barren world is graded
 // toward its own picture's neutral rock instead, and dust is not sea.
 uniform float uBarren;
+// [T-PROCEDURAL-BODY] the radians of the body one screen pixel spans (at the point under the camera), so the sky's finest detail is drawn only where a pixel is smaller than it
+uniform float uPxRad;
 uniform float uWeatherT;
 uniform vec3 uWeatherRate;
 ${WEATHER_GLSL}
-
+${CLOUD_GLSL}
 float lumaOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 
 // 0 land · 1 water, from the Blue Marble colour: seas are strongly blue against red (even the

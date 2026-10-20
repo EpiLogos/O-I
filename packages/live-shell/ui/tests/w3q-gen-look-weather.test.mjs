@@ -428,6 +428,21 @@ test('B1 the grade does not tint a barren world toward the palette: the shader t
   assert.ok(reached.has('col'), 'and what is drawn is (the colour that leaves shadeEarth is graded by it)')
 })
 
+test('S6 a cloud’s edge is broken up as finely as the camera can see it and no finer: the detail is faded by the pixel’s size (`uPxRad`), so it is crisp close in and cannot shimmer from afar', () => {
+  // A cloud mask of 1024 texels is a blur at a region view (a texel is thirty pixels across). The shader adds noise to the mask's soft edge, octave on octave; an octave finer than
+  // the screen's pixel is aliasing, so each is faded out by the pixel's size in radians (the uniform the globe hands it), without screen derivatives (which band in 2 x 2 blocks and
+  // break at the texture's seam). The GLSL is read as text.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    assert.ok(/uniform\s+float\s+uPxRad\s*;/.test(frag), `${name}’s shader declares uPxRad`)
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('uCloudMix'))
+    assert.ok(/\buPxRad\b/.test(sky), `${name}’s sky block reads uPxRad`)
+    assert.ok(!/\b(fwidth|dFdx|dFdy)\s*\(/.test(frag), `${name}’s shader takes no screen derivatives`)
+    const reached = new Set(['uPxRad'])
+    for (let pass = 0; pass < 4; pass++) for (const m of sky.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) if ([...reached].some(n => new RegExp(`\\b${n}\\b`).test(m[2]))) reached.add(m[1])
+    assert.ok(reached.has('cover'), `the cloud cover is reached by uPxRad (it reaches: ${[...reached].join(', ')}): the detail is faded by the pixel`)
+  }
+})
+
 // ── the engine's occasion and its reduced motion ───────────────────────────────────────────────────────────────────────
 
 /** The globe on a stand-in renderer, with the clock the page has (Date.now and performance.now) under the test's hand. */

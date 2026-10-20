@@ -446,6 +446,8 @@ export class GlobeEngine {
     this.rig.update(dt);
     // the clip planes follow the altitude so depth stays precise from orbit to the ground
     const camDist = this.camera.position.length();
+    // the radians of the body one pixel spans, under the camera (the sky's finest detail is drawn only where a pixel is smaller than it)
+    this.earth.pxRad.value = (2 * Math.tan((FOV * Math.PI) / 360) * Math.max(camDist - 1, 0.02)) / Math.max(this.height, 1);
     // the far plane follows the Earth's distance (the sky is drawn about the Sun); the near plane may follow the focus
     const planes = depthPlanes(camDist, !!this.sky, this.rig.dist, this.sky?.approach ?? 0);
     this.camera.near = planes.near;

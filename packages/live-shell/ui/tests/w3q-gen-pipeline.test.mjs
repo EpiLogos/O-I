@@ -612,6 +612,27 @@ test('B2 the globe hands the grade the look: `setBody(record, {barren})` sets `u
   } finally { g.close() }
 })
 
+test('E8 the sky knows how close the camera is: `uPxRad`, the radians of the body one screen pixel spans, is handed to the sphere and its tiles, and shrinks as the camera comes in', async () => {
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    g.engine.setBody(make(5, {sky: {clouds: .9}})); await answerWorker()
+    const read = () => g.uniforms().uPxRad?.value
+    assert.ok(g.uniforms().uPxRad, 'the earth material carries uPxRad')
+    g.engine.rig.dist = g.engine.rig.targetDist = 3.2; frames(g, .3)
+    const far = read()
+    g.engine.rig.dist = g.engine.rig.targetDist = 1.35; frames(g, .3)
+    const mid = read()
+    g.engine.rig.dist = g.engine.rig.targetDist = 1.05; frames(g, .3)
+    const near = read()
+    assert.ok(far > 0 && mid > 0 && near > 0, `a pixel spans some of the body (far ${far}, mid ${mid}, near ${near} radians)`)
+    assert.ok(far > 2 * mid && mid > 2 * near, `and less the nearer the camera is: ${far}, ${mid}, ${near} radians a pixel`)
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1 && made.every(mesh => mesh.material.uniforms.uPxRad === g.uniforms().uPxRad), 'the tiles take the sphere’s own uniform')
+  } finally { g.close() }
+})
+
 // ── the time a body takes ───────────────────────────────────────────────────────────────────────────────────────────────
 
 test('T1 a 2048-wide body is made in the time a CPU thread can spend on it (the ticket aims at 5 s; the gate allows 20)', () => {
