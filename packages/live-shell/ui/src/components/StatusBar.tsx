@@ -10,6 +10,7 @@ import {parseDataI, type DataIStatusInfo} from '../agent/statusInfo'
 import {useFoundationPending} from '../native/foundationDoor'
 import {apertureWords, useWorkbenchAperture} from '../native/workbenchDoor'
 import {useShownSides, type DetailSide} from '../frame/detail/detailSides'
+import {useShownTracks} from '../frame/tracks/tracksDoor'
 
 /** The Info line's words with nothing read yet (Live's Info view; the mockup's `#info`). */
 export const INFO_IDLE = 'Hover anything to read what it does.'
@@ -53,12 +54,16 @@ export interface StatusSwitches {
   mixer?: boolean
   toggleMixer?: () => void
   clipName?: string
+  /** The selected track's name where the frame knows it (Live's set; a selected track's own title). */
   trackName?: string
+  /** The selected track, or the selected clip, by ref: its name is read from the tracks the set's views draw. */
+  trackRef?: string
+  clipRef?: string
   bringSide?: (side: DetailSide, both: boolean) => void
   hideDetail?: () => void
 }
 
-export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, changeDetailMode, toggleDetailSide, agentInfo, detailShown = true, mixer, toggleMixer, clipName, trackName, bringSide, hideDetail }: StatusSwitches & { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; /** Show or hide one side of the detail area (manual §16.4: "Hide either one … or the switches in the status bar"); absent, a switch brings its side to the front. */ toggleDetailSide?: (side: DetailSide) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands (kept for the callers; the title line now names the work). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject (kept for the callers; THE selection now stands in the title line). */ subjectLabel?: string }) {
+export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, changeDetailMode, toggleDetailSide, agentInfo, detailShown = true, mixer, toggleMixer, clipName, trackName, trackRef, clipRef, bringSide, hideDetail }: StatusSwitches & { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; /** Show or hide one side of the detail area (manual §16.4: "Hide either one … or the switches in the status bar"); absent, a switch brings its side to the front. */ toggleDetailSide?: (side: DetailSide) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands (kept for the callers; the title line now names the work). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject (kept for the callers; THE selection now stands in the title line). */ subjectLabel?: string }) {
   const { set, path, error, loading } = state
   const aperture = useWorkbenchAperture()
   // The detail area's two switches read Clip | Device in every mode (FOUNDATION F4; manual §16.4); what each side holds in this mode
@@ -66,6 +71,10 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   // Clip | Instruments), said on the Info line. Each switch shows or hides its side; both stand pressed while both stand.
   const pair = detailPairOf(mode) ?? detailPairOf('audio')!
   const shownSides = useShownSides()
+  // The Device switch names the selected track (manual §10.1), read from the tracks the set's views publish (frame/tracks/tracksDoor.ts).
+  const shownTracks = useShownTracks()
+  const deviceTrackRef = trackRef ?? (clipRef ? shownTracks?.clips.find(clip => clip.id === clipRef)?.trackId : undefined)
+  const deviceName = shownTracks?.tracks.find(track => track.id === deviceTrackRef)?.name ?? trackName
   const other = (side: DetailSide): DetailSide => side === 'clip' ? 'device' : 'clip'
   const shown = (side: DetailSide) => detailShown && shownSides[side]
   // A switch brings its view forward (⌥-click shows both); ▲ beside it shows or hides that view, and hiding the last one standing
@@ -115,7 +124,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
         data-i={`Device view|Shows or hides Device view (⌥⌘4). ⌥⌘L hides Clip view and Device view together.`} onClick={() => triangle('device')}>▲</button>
       <button type="button" className="status-switch" aria-label="Device view" data-detail-side="device" aria-pressed={shown('device')}
         data-i={`Device view|${pair.device.label}: ${pair.device.meaning}. Brings Device view forward; ⌥-click shows Clip view and Device view together; ⇧Tab switches when only one shows.`}
-        onClick={event => bring('device', event.altKey)}><Icon name="device" size={12} /><span>{trackName ?? 'Device'}</span></button>
+        onClick={event => bring('device', event.altKey)}><Icon name="device" size={12} /><span>{deviceName ?? 'Device'}</span></button>
       {toggleMixer && <button type="button" className="status-switch status-mixer" aria-label="Mixer" aria-pressed={!!mixer}
         data-i="Mixer|Shows or hides every track's mixer row (⌥⌘M); ⌥⌘I its In/Out section." onClick={toggleMixer}><span aria-hidden="true">⫼</span><span>Mixer</span></button>}
     </nav>
