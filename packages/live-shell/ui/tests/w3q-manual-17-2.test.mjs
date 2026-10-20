@@ -51,7 +51,7 @@ test('M3 the manual says how a world is finished: a grey moon to a planet with w
 
 test('M4 the code’s satellite kinds are the manual’s: a session and an artefact, nothing else', pending, () => {
   const model = read('system/systemModel.ts')
-  assert.match(model, /export type SatelliteKind = 'session' \| 'artifact'\b/, 'SatelliteKind is exactly session | artifact')
+  assert.match(model, /export type SatelliteKind = 'session' \| 'artifact'(?![\w|])/, 'SatelliteKind is exactly session | artifact')
   assert.doesNotMatch(model, /kind: 'page'|kind: 'file'|kind: 'work'/, 'no satellite of a page, a file or a work is built')
 })
 
