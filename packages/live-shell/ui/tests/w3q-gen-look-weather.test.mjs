@@ -348,11 +348,29 @@ test('S2 the mask can be slid without a tear at the seam: the cloud texture repe
   assert.equal(texture.wrapS, THREE.RepeatWrapping, 'a texture the cloud mask is put in wraps in longitude')
 })
 
-test('S3 what feeds the uniform is the same function the tests hold: the earth material carries uWeatherT and the globe computes it with `weatherShift`', pending, () => {
-  const earth = readFileSync(new URL('earth.ts', globe), 'utf8'), engine = readFileSync(new URL('engine.ts', globe), 'utf8'), all = earth + engine
+test('S3 what feeds the uniform is the one table the tests hold: the earth material carries uWeatherT and the globe takes the wind from bodyWeather.ts', pending, () => {
+  // The shader needs the wind at each fragment's own latitude, which one call of weatherShift (one latitude) cannot give: so the globe hands it the occasion's time and the body's
+  // rate, and the shader sums the same bands (WEATHER_BANDS, shared with weatherShift) at the fragment's latitude. The first form of this test asked the globe's source to name
+  // weatherShift; the table is what must be shared, and S4 below holds the two formulas to the same numbers.
+  const earth = readFileSync(new URL('earth.ts', globe), 'utf8'), engine = readFileSync(new URL('engine.ts', globe), 'utf8'), shader = readFileSync(new URL('shaders.ts', globe), 'utf8')
   assert.ok(/\buWeatherT\b/.test(earth), 'earth.ts hands the shader a uniform uWeatherT')
-  assert.ok(/\bweatherShift\b/.test(all), 'the globe takes the cloud shift from weatherShift, not from a second formula')
+  assert.ok(/\bWEATHER_BANDS\b/.test(engine + shader) && /\bweatherScale\b/.test(engine), 'the globe and the shader take the wind from bodyWeather.ts (WEATHER_BANDS, weatherScale), not from a second table')
   assert.ok(/\bsetBodyTime\s*\(/.test(engine), 'the engine has setBodyTime(ms | null)')
+})
+
+test('S4 the shader’s wind is weatherShift’s: the bands the fragment shader sums, evaluated at the body’s rate, give weatherShift’s own shift at every latitude and time', pending, async () => {
+  const {WEATHER_BANDS, weatherScale} = await import(new URL('bodyWeather.ts', globe).href)
+  const frag = shaders.EARTH_FRAG, m = /float r = ([^;]*);/.exec(frag.slice(frag.indexOf('float weatherTurns')))
+  assert.ok(m, 'EARTH_FRAG has weatherTurns, with the sum of the bands')
+  const sum = new Function('a', 'rate', `const exp = Math.exp; return ${m[1]}`)
+  for (const seed of SEEDS) {
+    const record = make(seed), rate = WEATHER_BANDS.map(band => band.weight * weatherScale(seed)) // what the globe hands the shader (engine.ts applyWeather)
+    for (const lat of [-80, -47, -10, 0, 12, 30, 52, 77, 90]) for (const days of [0, 1.5, 20, 20741.37]) {
+      const turns = (((sum(Math.abs(lat), rate) * days / 360) % 1) + 1) % 1, shader = turns * 360, cpu = ((body.weatherShift(record, lat, days * 86400000) % 360) + 360) % 360
+      const gap = Math.abs(shader - cpu)
+      assert.ok(Math.min(gap, 360 - gap) < 1e-5, `seed ${seed}, ${lat}° after ${days} days: the shader’s bands give ${f(shader, 5)}°, weatherShift ${f(cpu, 5)}°`)
+    }
+  }
 })
 
 // ── the engine's occasion and its reduced motion ───────────────────────────────────────────────────────────────────────
