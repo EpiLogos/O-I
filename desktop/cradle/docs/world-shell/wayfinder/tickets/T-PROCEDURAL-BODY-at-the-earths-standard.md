@@ -219,3 +219,11 @@ The lead converges the lanes, runs the whole suite, removes `pending` from the g
   route (Lane B checks; no ai-kit change here).
 - **Lanes may correct their own tests.** Where evidence shows a threshold does not discriminate (Lane A's mountain-elongation row), the lane
   corrects its own test in its own commit with the evidence in the message. The lead's boundary (§3) is not theirs to touch.
+- **Route is not expressible; portal needs the visiting owner (Lane B's evidence, 20 Oct).** AIKit's `PlaceFacet`
+  (`knowledge_facets.rs:214-243`) carries place_ref, identity, geometry, precision, hierarchy, valid_from, valid_to, observer_frame,
+  uncertainty, source_ref and body_ref: no relation, no sequence. `TechnePlaceFacet.relation` (`techne/contract.ts:256`) reads a subject's
+  TRAVELLED_TO; `routeModel` (`world.ts:106-150`) orders by validity dates; `MapPlaceDraft` (`WikiFactsEditor.tsx:21`) has no relation. Both
+  clicks are refused in words that name the owner they wait for, and the refusals are tested. Carried in HANDOFF-BUILD item 8.
+- **Sessions and artefacts.** A session's world comes from its space's `definition.projects` (kernel `agency.rs:759-762`); the provider
+  reads only O-I's agency. Artefacts are Central change-horizon rows that name an agent. The 16 Oct reading found none attributed, so the
+  outer ring is empty until agents write under their session.
