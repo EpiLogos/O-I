@@ -218,41 +218,32 @@ test('R1 relief: plains at 0, ranges at 1: the land’s spread of height grows w
   assert.ok(high >= 4 * flat, `and at relief 1 it is at least four times that (${f(high)} against ${f(flat)})`)
 })
 
-/** How long and narrow the mountains are: the top tenth of the land by height, in connected pieces; each piece's elongation is the square root of the ratio of the
- * long to the short principal axis of its pixels; the mean elongation weighted by piece size. A round peak is 1; a range is long. */
-function elongation(record, n = 256) {
+/** How thin the high ground is: the highest tenth of the land, and what share of it is gone when the mask is opened by a 5×5 square (eroded by two cells and grown back).
+ * A round mass of high ground is many cells across and survives the opening; a crest, a ridge or a range is a few cells wide and does not. 0 is all mass, 1 all crest. */
+function thinness(record, n = 256) {
   const r = relief(record, n), {cols, rows} = r, heights = []
   for (let at = 0; at < cols * rows; at++) if (r.land[at]) heights.push(r.high[at])
-  const cut = quantile(heights, .9), top = new Uint8Array(cols * rows), seen = new Uint8Array(cols * rows)
-  for (let at = 0; at < cols * rows; at++) if (r.land[at] && r.high[at] >= cut) top[at] = 1
-  let weighted = 0, total = 0
-  for (let start = 0; start < cols * rows; start++) {
-    if (!top[start] || seen[start]) continue
-    const members = [], stack = [start]; seen[start] = 1
-    while (stack.length) {
-      const at = stack.pop(); members.push(at)
-      const j = (at / cols) | 0, i = at - j * cols
-      for (const next of [j > 0 ? at - cols : -1, j < rows - 1 ? at + cols : -1, j * cols + ((i + 1) % cols), j * cols + ((i + cols - 1) % cols)]) if (next >= 0 && top[next] && !seen[next]) { seen[next] = 1; stack.push(next) }
-    }
-    if (members.length < 12) continue
-    // principal axes of the piece in the plane of the grid (a piece is small beside the sphere, so the plane is near enough; the longitude is wrapped about its first cell)
-    const i0 = members[0] % cols
-    let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0
-    for (const at of members) { const j = (at / cols) | 0; let i = at - j * cols - i0; if (i > cols / 2) i -= cols; if (i < -cols / 2) i += cols; const x = i * Math.cos(latOf(j, rows) * Math.PI / 180), y = j; sx += x; sy += y; sxx += x * x; syy += y * y; sxy += x * y }
-    const m = members.length, cxx = sxx / m - (sx / m) ** 2, cyy = syy / m - (sy / m) ** 2, cxy = sxy / m - (sx / m) * (sy / m)
-    const tr = cxx + cyy, det = cxx * cyy - cxy * cxy, l1 = tr / 2 + Math.sqrt(Math.max(0, tr * tr / 4 - det)), l2 = Math.max(1e-6, tr / 2 - Math.sqrt(Math.max(0, tr * tr / 4 - det)))
-    weighted += m * Math.sqrt(l1 / l2); total += m
+  const cut = quantile(heights, .9), top = new Uint8Array(cols * rows)
+  let area = 0
+  for (let at = 0; at < cols * rows; at++) if (r.land[at] && r.high[at] >= cut) { top[at] = 1; area++ }
+  const R = 2, eroded = new Uint8Array(cols * rows), opened = new Uint8Array(cols * rows)
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    let whole = 1
+    for (let dj = -R; dj <= R && whole; dj++) for (let di = -R; di <= R; di++) { const jj = j + dj; if (jj < 0 || jj >= rows || !top[jj * cols + ((i + di + cols) % cols)]) { whole = 0; break } }
+    eroded[j * cols + i] = whole
   }
-  return total ? weighted / total : 1
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) if (eroded[j * cols + i]) for (let dj = -R; dj <= R; dj++) for (let di = -R; di <= R; di++) { const jj = j + dj; if (jj >= 0 && jj < rows) opened[jj * cols + ((i + di + cols) % cols)] = 1 }
+  let kept = 0
+  for (let at = 0; at < cols * rows; at++) if (top[at] && opened[at]) kept++
+  return 1 - kept / area
 }
 
-test('R2 relief: the mountains are ranges, not peaks: the high ground at relief 1 is long and narrow', pending, () => {
-  // "ranges of ridged mountains". The highest tenth of the land, in connected pieces: a blob of value noise has pieces near round (elongation 1 to 2);
-  // a range is several times as long as it is wide. The Earth’s cordilleras (Andes, Himalaya, Rockies) are 5 to 20 times as long as wide.
-  // Measured on a ridged-multifractal field and on plain value noise of the same octaves (20 Oct, scratch): ridged 2.4 to 3.4 (4.3 with three octaves), plain noise
-  // 1.6 to 2.5, mean 1.9. The bound is 2.3, over four seeds: above what noise gives on average, below what ridges give.
-  const e = mean([...SEEDS, 99].map(seed => elongation(make(seed, {landmass: {relief: 1}}))))
-  assert.ok(e >= 2.3, `the high ground at relief 1 has mean elongation ${f(e, 2)} (at least 2.3: ranges, not round peaks)`)
+test('R2 relief: the mountains are ranges, not peaks: the high ground at relief 1 is thin, crests and ridges and not masses', pending, () => {
+  // "ranges of ridged mountains". Measured on the field (20 Oct, scratch): the highest tenth of the land of version 1, whose noise is smooth value noise, is gone by .09 to .26 when
+  // opened by a 5×5 square (its high ground is masses); ridged noise's is gone by .88 to .97 (its high ground is crests). The bound is .6, over four seeds. (The first form of this
+  // test took the elongation of the pieces of high ground: version 1 gave 1.9 and ridged noise 2.2 to 3.4, too close to hold; this one separates them by .6.)
+  const t = mean([...SEEDS, 99].map(seed => thinness(make(seed, {landmass: {relief: 1}}))))
+  assert.ok(t >= .6, `${f(100 * t, 0)}% of the highest tenth of the land at relief 1 is crest and ridge (gone when opened by a 5×5 square): at least 60%`)
 })
 
 test('R3 relief: the mountains stand in a continent’s interior and the coast is lowland', () => {
