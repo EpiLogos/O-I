@@ -78,11 +78,14 @@ export const BODY_WIDTHS = { first: 256, lo: 2048, hi: 4096 } as const        //
 export interface BodyLook { readonly barren?: number }                       // 0 lived-in … 1 a barely shaped moon; default 0
 export function bodyImage(record, width, look?: BodyLook): BodyImage         // dispatches on record.generator.version (1: legacy, 2: this ticket)
 export function cloudImage(record, width, look?: BodyLook): BodyImage
-export function bodyDisc(record, size, look?: BodyLook): BodyImage
+export function bodyDisc(record, size, look?: BodyLook, timeMs?: number): BodyImage   // timeMs: the occasion, so a disc carries its weather too
 export function airOf(record, look?: BodyLook): number
 export function weatherShift(record, latDeg, timeMs): number                // degrees of longitude the cloud mask is carried at that latitude at that time
 // globe/bodyTiles.ts (Lane A)
 export function bodyTile(record, z, x, y, look?: BodyLook): BodyImage        // 256×256 RGBA, web-mercator slippy (tilemath.ts), same field as bodyImage
+export function tileLevelFor(baseWidth: number): number                      // log2(base/256)+1: 6 at 8192, 5 at 4096, 4 at 2048 (GIBS's own rule)
+// globe/tiles.ts (Lane A): TileLayer.setSource(source: TileSource); TileSource = {load(z, x, y, signal): Promise<ImageBitmap | HTMLImageElement | BodyImage>}; GIBS stays the default
+// globe/bodyRender.ts (Lane A): renderBody(record, width, cloudWidth, look?) and renderTile(record, z, x, y, look?) — in a worker where the page can start one, else on the main thread
 // globe/engine.ts (Lane A)
 setBody(record: WorldBodyRecord | null, look?: BodyLook): void
 setBodyTime(ms: number | null): void                                          // the occasion; null is Now
@@ -104,14 +107,14 @@ seed alone:
 
 | Dial | What it does in version 2 (each row a lane test) |
 |---|---|
-| Sea level | The share of the surface under water falls steadily as it rises to the value, with the default near the Earth's 30 % of land (`landShare` in .22–.40); 0 gives a world of land, 1 a world of sea |
+| Sea level | The share of the surface that is land falls steadily as the dial rises (more sea), with the default near the Earth's 30 % of land (`landShare` in .22–.40); 0 gives a world of land, 1 a world of sea |
 | Continents | A large-scale plate-like mask places that many separate lands: one supercontinent near .6, six or more near 3.6 |
 | Relief | Flat plains at 0; ranges of ridged mountains at 1, strongest in a continent's interior; rock and snow share rises with it |
 | Coast | Smooth, fjord and archipelago differ in shoreline per land pixel and in separate lands (archipelago at least twice smooth's), each at every scale (fractal) |
 | Warmth, moisture | Temperature from latitude, height and warmth; moisture from latitude bands (wet equator, dry subtropics, wet mid-latitudes), distance from the sea and moisture; a biome from the two (desert, savanna, forest, jungle, grass, tundra), snow above a snow line |
 | Ice caps | A ragged margin (noise on the latitude), sea ice and land ice, in step with warmth; none at 0 |
 | Atmosphere, clouds | Air at the limb, in step with `airOf`; a cloud mask whose cover rises with the dial and whose bands follow latitude |
-| Axial tilt | Seasons from the Sun's declination (`bodySunDir` stays), snow line and ice margin leaning with the season |
+| Axial tilt | Seasons from the Sun's declination (`bodySunDir` stays): the light and the day and night swing with the year. The ice and snow are the annual picture and do not lean with it: nothing carries a season into the image, and none is faked |
 
 Also in version 2: bathymetry (shelf, slope, abyssal plain, ridges and trenches, lit as the shader's `waterOf` and shelf expect); lakes in
 basins and rivers in valleys that reach the sea; relief shading from the height gradient; the colour cues `EARTH_FRAG` reads kept as the
@@ -203,3 +206,16 @@ The lead converges the lanes, runs the whole suite, removes `pending` from the g
 4. A new empty world draws as a grey moon; a world with a year of pages draws as a planet with weather; weather moves with the occasion.
 5. The System scale shows only agents at work and their recent artefacts on the rings.
 6. Every location sentence of §17.2 has a test, and the manual says what the code does.
+
+## 9. Rulings made during the run
+
+- **Seasons narrowed (20 Oct).** The ice and snow are the annual picture; only the light swings with the tilt. The manual no longer says the snow
+  line and the ice margin lean with the season (nothing carries a season into the image).
+- **Lane B's calls (20 Oct).** Artefacts ride after their maker has finished, inside a 24 h rolling window, six at most per world.
+  Maturity reads `ageMs` (now minus the earliest change in the register's horizon; it under-reads when the horizon began late), `held`
+  (the page listing's length) and `shaped` (the register's revision, which counts body and place writes). An unlanded world is drawn at a
+  spot derived from its ref and says so; nothing is written until the person lands it. **Carried, not in this ticket:** a *portal* (it needs
+  the visiting owner: WORLD-INHABITATION-V1 is contracted, not built); a *route* only if the place facet can already express an ordered
+  route (Lane B checks; no ai-kit change here).
+- **Lanes may correct their own tests.** Where evidence shows a threshold does not discriminate (Lane A's mountain-elongation row), the lane
+  corrects its own test in its own commit with the evidence in the message. The lead's boundary (§3) is not theirs to touch.

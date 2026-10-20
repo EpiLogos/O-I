@@ -2087,7 +2087,7 @@ Every body is made from its seed and its settings alone: the same seed and setti
 - **Climate and ground.** Warmth follows latitude and height. Moisture follows the wet equator, the dry subtropics, the wet temperate belts, the distance from the sea and your setting. Together they make desert, savanna, grassland, forest, jungle and tundra, with snow above a snow line.
 - **Ice.** Caps with ragged margins, ice over polar sea as well as land, drawing back as the climate warms.
 - **Air and weather.** An atmosphere you can see at the limb. Clouds that lie in bands by latitude, move at different speeds in different bands, and follow the occasion: choose a past moment and the weather is what it was.
-- **Seasons.** The Sun stands higher or lower with the tilt of the axis, and the snow line and the ice margin lean with it.
+- **Seasons.** The Sun stands higher or lower in the sky with the tilt of the axis, so the light, and the length of day and night, swing with the year.
 
 The land does not change as you come closer. The World only shows more of it: from the whole planet to a coast to one valley, the same land stays where it is, and it keeps its detail down to the closest view, as Earth's does.
 - Reroll the seed to get a new body from the same settings. Every location keeps its name and the position you gave it. Where that spot is now sea, the World draws the location on the nearest shore and says so; nothing moves until you move it.
