@@ -555,12 +555,14 @@ function placeCore(){ const s=S(); $$('.core',cube).forEach((c,i)=>{ c.style.tra
 
 /* ---------- state machine: space / in, turning, folding ---------- */
 const TARGET=[Q.id,Q.axis(0,1,0,-90),Q.axis(1,0,0,-90),Q.axis(1,0,0,90),Q.axis(0,1,0,90),Q.axis(0,1,0,180)];
-/* At rest the die stands square on its open face; a drag turns it to look around, and it settles square again. */
-let TILT=Q.id;
+/* A die reads as a die: at rest it stands in three-quarter view, three faces showing, and it sways a little. A drag turns it to look
+   around, and it settles back into that view. `shut` holds the view while an open die is folded shut to turn. */
+const REST=Q.mul(Q.axis(1,0,0,-16),Q.axis(0,1,0,26));
+let TILT=REST, shut=false;
 let targetFace=D.meta.face, queued=null, queuedAct=null, cur=TARGET[D.meta.face], anim=null, foldAnim=null, foldTh=0, idlePhase=0, last=performance.now(), currentScale=1, busy=false, settleTimer=null;
 const SCALE_OUT=.48;
 function setCube(q,lift){ const s=S(); cube.style.transform='translateZ('+(-s/2)+'px) translateY('+(-(lift||0)*s).toFixed(2)+'px) '+Q.matrix(q); }
-function goal(){ return D.meta.zoomed? TARGET[D.meta.face] : Q.mul(TILT,TARGET[D.meta.face]); }
+function goal(){ return D.meta.zoomed&&!shut? TARGET[D.meta.face] : Q.mul(TILT,TARGET[D.meta.face]); }
 /* The open face stands in the band between the header and the foot (the stage centres the die; the band is lower by half its difference). */
 const inDY=()=>{ const cs=getComputedStyle(document.documentElement); return (parseFloat(cs.getPropertyValue('--top'))-parseFloat(cs.getPropertyValue('--foot')))/2||0; };
 function setZoomScale(k,dur){ currentScale=k; zoom.style.transition=dur?'transform '+dur+'ms cubic-bezier(.25,.8,.25,1)':'none'; zoom.style.transform=k===1?'translateY('+inDY()+'px) scale(1)':k===SCALE_OUT?'translateY(-1vh) scale('+k+')':'translateY(0) scale('+k+')'; }
@@ -582,10 +584,12 @@ async function turnOn(dur){
 async function turn(n){
   targetFace=n; syncChrome(); if(busy){ queued=n; return; } if(n===D.meta.face) return; busy=true; clearTimeout(settleTimer);
   faceEls[D.meta.face].classList.remove('live');
-  if(D.meta.zoomed){ setZoomScale(.5,460); await foldTo(0,460); await turnOn(640);
+  if(D.meta.zoomed){
+    /* An open die shuts to turn: it folds while it tilts into three-quarter view, turns as a die, and opens again square on the new face. */
+    shut=true; setZoomScale(.5,460); const tilt=rotateTo(460); await foldTo(0,460); await tilt; await turnOn(640);
     /* Esc pressed on the way: the die is already shut, so it goes out from here rather than opening first. */
-    if(queuedAct==='out'){ queuedAct=null; await goOut(); }
-    else { const o=foldTo(90,540); setZoomScale(1,600); await Promise.all([o,wait(600)]); } }
+    if(queuedAct==='out'){ queuedAct=null; shut=false; await goOut(); }
+    else { shut=false; const o=foldTo(90,540), r=rotateTo(540); setZoomScale(1,600); await Promise.all([o,r,wait(600)]); } }
   else { masksDown(); await turnOn(700); }
   faceEls[D.meta.face].classList.add('live'); busy=false; maskState(); syncChrome(); drain();
 }
@@ -610,7 +614,7 @@ async function goOut(){
 function frame(now){
   const dt=Math.min(64,now-last); last=now;
   if(anim){ const t=anim.dur?Math.min(1,(now-anim.t0)/anim.dur):1; const e=1-Math.pow(1-t,2.6); const wob=Math.sin(t*Math.PI); cur=Q.slerp(anim.a,anim.b,e); setCube(cur,D.meta.zoomed?0:0.06*wob); if(t>=1){ cur=goal(); setCube(cur,0); const r=anim.res; anim=null; r(); } }
-  else if(!D.meta.zoomed&&!busy){ idlePhase+=dt*0.0004; const w=Q.mul(Q.axis(0,1,0,Math.sin(idlePhase)*1.2),Q.axis(1,0,0,Math.cos(idlePhase*.7)*.8)); setCube(Q.mul(w,cur),0.012*Math.sin(idlePhase*1.3)); }
+  else if(!D.meta.zoomed&&!busy){ idlePhase+=dt*0.0004; const w=Q.mul(Q.axis(0,1,0,Math.sin(idlePhase)*6),Q.axis(1,0,0,Math.cos(idlePhase*.7)*3.5)); setCube(Q.mul(w,cur),0.012*Math.sin(idlePhase*1.3)); }
   if(foldAnim){ const t=foldAnim.dur?Math.min(1,(now-foldAnim.t0)/foldAnim.dur):1; const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; foldTh=foldAnim.a+(foldAnim.b-foldAnim.a)*e; setFold(D.meta.face,foldTh); if(t>=1){ const r=foldAnim.res; foldAnim=null; r(); } }
   requestAnimationFrame(frame);
 }
@@ -629,7 +633,7 @@ function faceAt(px,py){
     if(inside&&(!best||n[2]>best.z)) best={i,z:n[2]}; }
   return best?best.i:null;
 }
-stage.addEventListener('pointerup',e=>{ if(!drag) return; const d=drag; drag=null; stage.classList.remove('drag'); if(d.moved&&!busy){ TILT=Q.id; rotateTo(700); return; } if(d.moved||busy) return; const n=faceAt(e.clientX,e.clientY); if(n==null) return; if(n===D.meta.face) zoomIn(); else turn(n); });
+stage.addEventListener('pointerup',e=>{ if(!drag) return; const d=drag; drag=null; stage.classList.remove('drag'); if(d.moved&&!busy){ TILT=REST; rotateTo(700); return; } if(d.moved||busy) return; const n=faceAt(e.clientX,e.clientY); if(n==null) return; if(n===D.meta.face) zoomIn(); else turn(n); });
 stage.addEventListener('dblclick',e=>{ if(!D.meta.zoomed) zoomIn(); });
 function next(d){ turn((targetFace+d+6)%6); }
 document.addEventListener('keydown',e=>{

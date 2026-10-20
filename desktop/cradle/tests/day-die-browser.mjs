@@ -26,7 +26,21 @@ const reading=frame=>frame.evaluate(()=>({
  live:[...document.querySelectorAll(".face")].findIndex(f=>f.classList.contains("live")),
  away:[...document.querySelectorAll(".face")].map(f=>f.classList.contains("away")),
  open:document.getElementById("chrome").classList.contains("in"),
+ // The faces the die draws: those turned toward you (their normal, through the cube's turn and the face's own, points out of the
+ // screen) and not put away. A shut die drawn with one face is no die (the owner, 19 Oct: "a single square face").
+ drawn:(()=>{const cube=new DOMMatrix(document.getElementById("cube").style.transform||"none");
+   return [...document.querySelectorAll(".face")].filter(f=>!f.classList.contains("away")&&cube.multiply(new DOMMatrix(f.style.transform||"none")).m33>0.08).length;})(),
+ folding:[...document.querySelectorAll(".face")].some(f=>f.classList.contains("dim")),
 }));
+/** A die reads as a die: resting shut it shows three faces; while it turns a side passes edge-on for an instant (a cube turning from
+ * one three-quarter view to the next must cross that plane), so in motion it never shows fewer than two — and one face alone only
+ * when a face lies open, flat, as a page. */
+const asDie=(frames,what)=>{
+ const shut=frames.filter(s=>!s.open&&!s.folding), openShut=frames.filter(s=>s.open&&!s.folding&&s.away.every(a=>!a));
+ const single=frames.filter(s=>s.drawn<2&&!(s.open&&s.away.some(Boolean)));
+ ok(!single.length,`${what}: never a single face but a page laid open (${single.map(s=>`${s.t} ms: ${s.drawn}`).join(', ')})`);
+ ok(shut.every(s=>s.drawn>=2)&&openShut.every(s=>s.drawn>=2),`${what}: the shut die draws at least two faces at every moment (${[...shut,...openShut].map(s=>s.drawn).join('')})`);
+};
 const key=(frame,name)=>frame.evaluate(k=>document.dispatchEvent(new KeyboardEvent("keydown",{key:k,bubbles:true})),name);
 /** Sample the die every 40 ms for `ms`, after pressing `keys` at their offsets. */
 async function film(frame,keys,ms){
@@ -44,17 +58,22 @@ try{
  await page.setContent(form);await page.waitForTimeout(900);
  let r=await reading(page);
  eq(r.masks,["on","on","on","on","on","on"],"in space every face wears its pips, the one it rests on too");
- // Seen 19 Oct in the Day pane: the die rested turned, the open face's page printed on the face and cut at its foot; an instruction
- // sat under it. It rests square on its face, the face is its pips, and no explanatory line stands in the form.
- const rest=await page.evaluate(()=>{const f=document.querySelector('.face[data-face="0"]').getBoundingClientRect();
-   const shown=[...document.querySelectorAll('.face .sheet')].map(s=>getComputedStyle(s).opacity);
-   return {w:f.width,h:f.height,cx:f.left+f.width/2-innerWidth/2,sheets:shown,hint:document.querySelectorAll(".foot .hint").length,foot:document.querySelector(".foot").innerText};});
- ok(Math.abs(rest.w-rest.h)<=rest.w*0.02&&Math.abs(rest.cx)<=2,`the die rests square and centred on its face (${Math.round(rest.w)}×${Math.round(rest.h)}, ${rest.cx.toFixed(1)} off centre)`);
+ // Seen 19 Oct in the Day pane: the open face's page printed on the face and cut at its foot, an instruction under the die; and,
+ // after a first fix, a die resting as one flat square. It rests in three-quarter view, three faces showing their pips, no page
+ // on a face, no explanatory line in the form.
+ let shots=await film(page,[],900);
+ ok(shots.every(s=>s.drawn===3),`resting shut, the die draws three faces (${shots.map(s=>s.drawn).join('')})`);
+ const rest=await page.evaluate(()=>({sheets:[...document.querySelectorAll('.face .sheet')].map(s=>getComputedStyle(s).opacity),hint:document.querySelectorAll(".foot .hint").length,foot:document.querySelector(".foot").innerText}));
  eq(rest.sheets,["0","0","0","0","0","0"],"no page shows on a face while the die stands in space");
  eq([rest.hint,/Click a face/.test(rest.foot)],[0,false],"no instruction line stands under the die");
+ asDie(await film(page,[[0,"ArrowRight"],[150,"ArrowRight"]],2200),"a turn in space, and a key pressed during it");
+ asDie(await film(page,[[0,"ArrowDown"]],1300),"a flip to the mirror face");
+ asDie(await film(page,[[0,"ArrowUp"],[0,"ArrowLeft"],[0,"ArrowLeft"]],3000),"back to the first face, three turns chained");
+ eq((await reading(page)).current,0,"the die is back on face 0");
+ shots=await film(page,[],900);ok(shots.every(s=>s.drawn===3),`resting again, three faces (${shots.map(s=>s.drawn).join('')})`);
 
  // Seen 19 Oct: an opened face covered the header (the date sat on the card), and the faces around it showed their pips at the edges.
- await key(page,"Enter");await page.waitForTimeout(SETTLE);r=await reading(page);
+ asDie(await film(page,[[0,"Enter"]],SETTLE),"opening");r=await reading(page);
  ok(r.open&&r.live===0,"Enter opens the front face");
  eq(r.masks,["off","off","off","off","off","off"],"an open die shows pages, never pips: every mask is off");
  eq(r.away,[false,true,true,true,true,true],"the faces around the open one are away once the net lies flat");
@@ -63,7 +82,9 @@ try{
  ok(box.faceBottom<=box.dotsTop||box.faceRight<=box.iconsLeft,"the open face leaves the dots their place");
 
  // Seen 19 Oct: a key pressed while it turned left it oversized under the old face's label until it settled.
- let shots=await film(page,[[0,"ArrowRight"],[150,"ArrowRight"]],SETTLE+700);
+ shots=await film(page,[[0,"ArrowRight"],[150,"ArrowRight"]],SETTLE+700);
+ asDie(shots,"an open die turned, and a key pressed during it");
+ ok(shots.some(s=>s.open&&!s.folding&&s.away.every(a=>!a)&&s.drawn===3),"shut to turn, the open die stands in three-quarter view, not one square face");
  eq(shots.find(s=>s.t>=150+40)?.current,2,"the label names the face the die is going to as soon as the key is pressed");
  ok(shots.every(s=>s.masks.every(m=>m==="off")),"no pip stands on the page at any moment of an open turn");
  ok(!shots.slice(0,-12).some((s,i)=>i>0&&s.away.some(Boolean)&&shots[i-1].away.every(a=>!a)&&s.t<1200),"the die runs on to the second face without opening between");
@@ -71,6 +92,7 @@ try{
 
  // Esc pressed while an open die turns: it goes out from the shut die, without opening first.
  shots=await film(page,[[0,"ArrowLeft"],[120,"Escape"]],SETTLE+600);
+ asDie(shots,"Esc during an open turn");
  r=await reading(page);eq([r.open,r.current],[false,1],"Esc pressed during the turn is kept: the die rests in space on the face it turned to");
  ok(!shots.some(s=>s.t>120&&s.away.some(Boolean)),"it never lay open between the Esc and going out");
  eq(r.masks[1],"on","back in space, the face it rests on wears its pips");
@@ -78,6 +100,15 @@ try{
  // Enter pressed while the die turns in space: kept, and done once it rests.
  await film(page,[[0,"ArrowRight"],[100,"Enter"]],SETTLE+900);
  r=await reading(page);eq([r.open,r.live],[true,2],"Enter pressed during a turn in space opens the face the die rests on");
+ asDie(await film(page,[[0,"Escape"]],SETTLE),"closing");
+ // A drag looks around and the die settles back into three-quarter view.
+ const stageBox=await page.locator("#stage").boundingBox();
+ await page.mouse.move(stageBox.width/2,stageBox.height/2);await page.mouse.down();
+ for(let i=1;i<=12;i++){await page.mouse.move(stageBox.width/2+i*14,stageBox.height/2+i*5);await page.waitForTimeout(16);}
+ const dragged=await film(page,[],200);await page.mouse.up();
+ shots=await film(page,[],1400);
+ asDie([...dragged,...shots],"a drag and its release");
+ ok(shots.slice(-8).every(s=>s.drawn===3),`released, it rests in three-quarter view again (${shots.map(s=>s.drawn).join('')})`);
  eq(errors,[],"the form raised no error");
  await page.close();
 
