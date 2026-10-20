@@ -28,12 +28,14 @@ import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/ses
 import {sunStanding} from '../../inhabitants/qlSkyEarthAdapter'
 import {bindSharedTimeClock, windowYear} from './sharedClock'
 import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
-import {bindPlaces, type PlacesBinding} from './places/placesHost'
+import {bindPlaces, selectLocation, type PlacesBinding} from './places/placesHost'
 import {notePlaceTool} from './places/placeTool'
 import type {DreamJournalBinding} from './practice/dreamsHost'
 import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
-import {bindWorldBody, kernelWorldBodyOwner} from './body/worldBody'
+import {bindWorldBody, chooseBody, kernelWorldBodyOwner} from './body/worldBody'
 import {bindBodyDraw} from './system/bodyDraw'
+import {followAnchor, pressLocation} from './system/bodyLocations'
+import {enterWorld} from './system/enteredWorld'
 import type {SystemOverlayBinding} from './system/systemOverlay'
 import {bindSystemClock} from './system/systemClock'
 import './atlasHost.css'
@@ -516,7 +518,15 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // the M4 plate. The instant it is drawn for moves once a minute, under this atlas's lifetime, so what an agent made drifts off as it ages.
   systemClock = bindSystemClock()
   // (loaded with the atlas's own modules, as the mount is: the shell's import of the panel stays light)
-  void import('./system/systemOverlay').then(overlay => { if (!retired) system = overlay.bindSystemOverlay({handle: mounted, said: notePlaceTool}) })
+  // A press on a location's mark selects the place or enters the landed world it stands for; one on an anchor line follows it to its place on Earth.
+  void import('./system/systemOverlay').then(overlay => {
+    if (retired) return
+    system = overlay.bindSystemOverlay({
+      handle: mounted, said: notePlaceTool,
+      press: location => { const refusal = pressLocation(location, {select: place => selectLocation(disclosureSession, place), enter: enterWorld}); if (refusal) notePlaceTool(refusal) },
+      follow: anchor => followAnchor(anchor, {chooseBody, flyTo: (lat, lon, dist) => mounted.engine.rig.flyTo(lat, lon, dist)}),
+    })
+  })
 
   // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
   // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the

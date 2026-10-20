@@ -47,17 +47,20 @@ export const OCCASION_STEP_MS = 6 * 60 * 60 * 1000
 /** The step an instant falls in, as its start; Now stays null. */
 export const occasionStep = (ms: number | null): number | null => (ms === null ? null : Math.floor(ms / OCCASION_STEP_MS) * OCCASION_STEP_MS)
 
-let occasion: number | null = null
-const occasionListeners = new Set<() => void>()
+let shown: SharedWindow | null = null
+const windowListeners = new Set<() => void>()
 
-/** The instant the drawer last read from the shared window, ms; null, Now, while none stands or none is bound. The one reading of the window the
- * System has: the discs beside your planet draw the weather of the same occasion (system/systemOverlay.ts), so the window is subscribed once. */
-export const shownOccasion = (): number | null => occasion
+/** The shared window as the drawer last read it; null, all time, while none stands or none is bound. The one reading of the window the System
+ * has: the discs beside your planet draw the weather of its occasion and the locations on your body are those valid in it (system/
+ * systemOverlay.ts), so the window is subscribed once. */
+export const shownWindow = (): SharedWindow | null => shown
 
-export function subscribeOccasion(listener: () => void): () => void {
-  occasionListeners.add(listener)
-  return () => { occasionListeners.delete(listener) }
+export function subscribeWindow(listener: () => void): () => void {
+  windowListeners.add(listener)
+  return () => { windowListeners.delete(listener) }
 }
+
+const sameWindow = (a: SharedWindow | null, b: SharedWindow | null): boolean => (a === null || b === null ? a === b : a.from === b.from && a.to === b.to)
 
 /** What the globe is to draw now: the record and its look, or none (the Earth). */
 function drawn(): {readonly record: WorldBodyRecord | null; readonly look: BodyLook | undefined} {
@@ -86,15 +89,18 @@ export function bindBodyDraw({engine, store}: {readonly engine: BodyEngine; read
   let time: number | null | undefined
   const drawTime = () => {
     if (!live) return
-    const next = occasionMs(store.get()?.time_window)
+    const window = store.get()?.time_window ?? null
+    if (!sameWindow(window, shown)) {
+      shown = window
+      for (const listener of [...windowListeners]) listener()
+    }
+    const next = occasionMs(window)
     if (next === time) return
     time = next
-    occasion = next
     engine.setBodyTime?.(next)
-    for (const listener of [...occasionListeners]) listener()
   }
   const offs = [subscribeWorldBody(drawBody), subscribeSystem(drawBody), subscribeEnteredWorld(drawBody), store.subscribe(drawTime)]
   drawBody()
   drawTime()
-  return {dispose() { live = false; occasion = null; for (const off of offs) off() }}
+  return {dispose() { live = false; shown = null; for (const off of offs) off() }}
 }

@@ -1,6 +1,7 @@
 // Your system on the globe's sky (T-WORLDS §5 W3 phase B; manual §17.2 "Your system", the System scale: "Your planet under its star. The
-// agents at work circle it, and what they have just made rides a wider ring. Nothing else is in orbit"). Bound by the atlas's attach (AtlasProjectionPanel.tsx) for as long as the Earth stands, released with it. It draws only in the System scale
-// (the sky drawn, the camera at the system and no lens holding a planet), and only what system/systemStore.ts holds:
+// agents at work circle it, and what they have just made rides a wider ring. Nothing else is in orbit"). Bound by the atlas's attach
+// (AtlasProjectionPanel.tsx) for as long as the Earth stands, released with it. It draws only in the System scale (the sky drawn, the camera at
+// the system and no lens holding a planet), and only what system/systemStore.ts holds:
 //   - your planet is the body the globe draws while you choose your world (the Earth's own mesh, drawing your world's body; while the
 //     Earth is chosen the planet is the Earth, and your system stands down): its rings ride the sky layer's own disc of it
 //     (sky/layer.ts screenDisc('terra'));
@@ -10,9 +11,12 @@
 //   - what each world holds rides its own two rings on PlanetOrbits (sky/orbits.ts), keyed in the orbits' world key space (never a
 //     widened BodyKey): the agents at work inside, what they have just made outside, each at the place its subject keys, an artefact
 //     drifting outward and fading as it ages. A press opens it through the act the readings bound.
-// And at the Body and Region scales, while the globe draws your own body: the locations on it (system/bodyLocations.ts — the places
-// declared on your body and the worlds that land on it), each at its point, or hollow on the nearest shore where its spot is sea
-// (globe/body.ts shoreOf: drawing only, its coordinate never changes), named.
+// And at the Body and Region scales, while the globe draws your own body: the locations on it that were valid in the shared window
+// (system/bodyLocations.ts — the places declared on your body and the worlds that land on it), each at its point, or hollow on the nearest shore
+// where its spot is sea (globe/body.ts shoreOf: drawing only, its coordinate never changes), named, in the look its precision and its standing
+// give it (the atlas's own presence style, globe/presences.ts and shaders.ts PRESENCE_FRAG: a core, a ring of uncertainty for an approximate
+// place, a dotted ring for a mythic one), pressed to select it or, for a landed world, to enter it; and, where a location is anchored to a real
+// place on Earth, its anchor line, pressed to follow it there.
 // Screen-space and DOM, as PlanetOrbits is: it reads the sky layer's drawn disc each frame, so it follows the planet exactly.
 import {PlanetOrbits, type OrbitAt, type OrbitDisc, type OrbitKey, type Satellite} from '../src/sky/orbits'
 import {bodyDisc, shoreOf, type BodyLook, type WorldBodyRecord} from '../src/globe/body'
@@ -24,9 +28,10 @@ import type {AtlasHandle} from '../mount'
 import {subscribeWorldBody, worldBodyState} from '../body/worldBody'
 import {subscribeSuiteStanding, suiteStanding} from '../provider/suiteStanding'
 import {systemActs, systemReading, subscribeSystem} from './systemStore'
-import {occasionStep, shownOccasion, subscribeOccasion} from './bodyDraw'
+import {occasionMs, occasionStep, shownWindow, subscribeWindow} from './bodyDraw'
 import type {SystemBody} from './systemModel'
-import {yourLocations, type BodyLocation} from './bodyLocations'
+import {anchorsOf, yourLocations, type Anchor, type BodyLocation} from './bodyLocations'
+import {precisionMarker} from '../../../../../../../desktop/cradle/src/techne/m0m5/place/project'
 import './systemOverlay.css'
 
 /** A location drawn on the body the globe shows: where it is drawn (its own point, or the nearest shore) and whether that is a shore. */
@@ -35,6 +40,18 @@ export interface DrawnLocation {
   readonly lat: number
   readonly lon: number
   readonly shore: boolean
+}
+
+/** What a location's mark says of itself, in its words and its label: where it is drawn on a shore, and a world that is not landed yet says it
+ * stands where its ref puts it until its person lands it. Pure. */
+export function markWords(drawn: DrawnLocation): {readonly text: string; readonly label: string} {
+  const {location, shore} = drawn
+  const unwritten = location.written === false
+  return {
+    text: `${location.name}${shore ? ' · shore' : ''}${unwritten ? ' · not landed yet' : ''}`,
+    label: [location.name, shore ? 'its spot is sea on this body, so it is drawn on the nearest shore' : '', unwritten ? 'not landed yet: it stands where its ref puts it until you land it' : '']
+      .filter(Boolean).join(': '),
+  }
 }
 
 /** Where each location of your body is drawn on that body: at its own point where that is land, else on the nearest shore, said so.
@@ -142,8 +159,9 @@ interface OverlayDom {
 }
 
 /** Bind your system to the mounted atlas: the overlay over its canvas, redrawn on each reading and placed on each frame. Each world's disc carries
- * the weather of the shared occasion the body drawer reads (system/bodyDraw.ts shownOccasion; none bound, Now). */
-export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (text: string) => void}): SystemOverlayBinding {
+ * the weather of the shared occasion, and the locations on your body are those valid in the shared window, as the body drawer reads it (system/
+ * bodyDraw.ts shownWindow; none bound, all time). `press` is the person's press on a location's mark, `follow` a press on an anchor line. */
+export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasHandle; said?: (text: string) => void; press?: (location: BodyLocation) => void; follow?: (anchor: Anchor) => void}): SystemOverlayBinding {
   const parent = handle.engine.renderer.domElement.parentElement ?? document.body
   let dom: OverlayDom | null = null
   const ensureDom = (): OverlayDom => {
@@ -170,9 +188,10 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
   const syncPlaces = () => {
     const record = handle.engine.body
     const standing = suiteStanding(), system = systemReading()
-    const read = record ? yourLocations(worldBodyState(), standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null) : null
+    const read = record ? yourLocations(worldBodyState(), standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null, shownWindow()) : null
     const rows = read && 'rows' in read ? read.rows : []
-    const key = record && rows.length ? JSON.stringify([record, rows]) : ''
+    const anchors = record && rows.length ? anchorsOf(standing.places, record.body_ref).filter(anchor => rows.some(row => row.id === anchor.location)) : []
+    const key = record && rows.length ? JSON.stringify([record, rows, anchors]) : ''
     if (key === placesKey) return
     placesKey = key
     for (const mark of placeMarks) mark.node.remove()
@@ -180,9 +199,22 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     if (!record || !rows.length) return
     const {places} = ensureDom()
     placeMarks = drawnLocations(record, rows).map(drawn => {
-      const node = el('div', {class: `sys-place${drawn.shore ? ' is-shore' : ''}`, role: 'img',
-        'aria-label': `${drawn.location.name}${drawn.shore ? ': its spot is sea on this body, so it is drawn on the nearest shore' : ''}`},
-      [el('span', {class: 'sys-place-dot'}), el('span', {class: 'sys-place-name', text: `${drawn.location.name}${drawn.shore ? ' · shore' : ''}`})])
+      const {location} = drawn
+      const words = markWords(drawn)
+      const anchor = anchors.find(entry => entry.location === location.id)
+      const pressIt = () => press?.(location)
+      const node = el('div', {
+        class: `sys-place${drawn.shore ? ' is-shore' : ''}${location.locus === 'myth-episode' ? ' is-mythic' : ''}${location.written === false ? ' is-unwritten' : ''}`,
+        role: 'button', tabindex: 0, 'aria-label': words.label, 'data-marker': location.precision ? precisionMarker(location.precision).kind : undefined,
+        onclick: pressIt,
+        onkeydown: event => { if ((event as KeyboardEvent).key === 'Enter' || (event as KeyboardEvent).key === ' ') { event.preventDefault(); pressIt() } },
+      }, [
+        el('span', {class: 'sys-place-dot'}),
+        el('span', {class: 'sys-place-name', text: words.text}),
+        // the anchor line: a dashed stub to the real place on Earth, named; a press follows it there without selecting the location
+        anchor && el('button', {type: 'button', class: 'sys-anchor', title: `${location.name} is anchored to ${anchor.to.name} on Earth: follow the line there`,
+          onclick: event => { event.stopPropagation(); follow?.(anchor) }}, [el('span', {class: 'sys-anchor-line'}), el('span', {text: `Earth · ${anchor.to.name}`})]),
+      ])
       places.append(node)
       return {drawn, node, dir: dirFromLatLon(drawn.lat, drawn.lon) as [number, number, number]}
     })
@@ -218,7 +250,7 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     if (!bodies.length && !dom) return
     const {root, svg, yours, yourRings} = ensureDom()
     // the weather the discs are drawn at: the shared occasion, in steps (bodyDraw.ts OCCASION_STEP_MS), Now being none
-    const occasion = occasionStep(shownOccasion())
+    const occasion = occasionStep(occasionMs(shownWindow()))
     const own = bodies.find(body => body.yours)
     setRings(yours, yourRings, own ? own.key : null, own, open)
     if (own) yours.root.style.setProperty('--core-rgb', rgbOf(own.colour.core))
@@ -249,7 +281,7 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
     })
   }
   const offSystem = subscribeSystem(() => { sync(); syncPlaces() })
-  const offOccasion = subscribeOccasion(sync)
+  const offWindow = subscribeWindow(() => { sync(); syncPlaces() })
   sync()
   syncPlaces()
 
@@ -310,7 +342,7 @@ export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (
       if (!live) return
       live = false
       offSystem()
-      offOccasion()
+      offWindow()
       offBody()
       offStanding()
       for (const mark of marks) mark.orbits.destroy()
