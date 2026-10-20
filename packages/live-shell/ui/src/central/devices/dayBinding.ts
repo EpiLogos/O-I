@@ -18,9 +18,12 @@
 //     `ensure-day` with the time policy's revision (centralDeviceWrites.ts openToday) — a press the person makes, never a timer;
 //   - `closeNow` (proposed to the catalogue: day.tsx draws Close now disabled) closes the Day Central names: the `central` op
 //     `close-day` on its content and relations revisions (centralDeviceWrites.ts closeDay), the person's press as Open today is.
+// The moves (manual §18.2): the design's five pads. The Close pad is Close now. The other four — Tasks, Patterns, Context,
+// Synthesis — and every move's Runs at and Prompt have no owner yet; DAY_STANDING closes them with the owners they wait on, and
+// their readings (when a move ran, what it gave) stay absent with the same words (DAY_ABSENT).
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
-import type {DesignBinding, Value, ValueChange} from '../../frame/devices/designed'
+import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import {DAY_INITIALISE_OP, DAY_OWNER, DAY_INITIALISE_REMEDY, type DayDocumentStanding} from '../centralVertical'
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
@@ -30,6 +33,20 @@ export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 
 /** Keys the owner takes a change of. Every other key of the design is a reading or has no owner (manual §16.13). */
 export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday', 'closeNow'])
 
+/** The Day's moves (manual §18.2 Moves): the pads of the design, each with its press, its Runs at and its Prompt, and its run record.
+ * Close is the close routine, whose press is Close now (`closeNow`), the one move an owner already takes. */
+export const DAY_MOVES = ['tasks', 'patterns', 'context', 'synthesis', 'close'] as const
+
+// What the moves still wait on, by owner. Central's Day/NOW contract carries the move, its prompt, its schedule and its run record
+// (EpiLogos/Central #150 the human Day and the agent NOW, #153 NOW allocation); the agent that runs a move under Agent writes reads its
+// NOW through AIKit (EpiLogos/ai-kit #275, NOW made operational across harnesses); the machines' own NOWs are Workcell's (EpiLogos/
+// Workcell #72, portable NOW work). Until then a pad stands, closed, and says so.
+const NO_MOVES = 'No owner runs the Day\'s moves yet: Central\'s Day/NOW contract has no move to run (Central #150, #153), and the agent that would run it under Agent writes is AIKit\'s (ai-kit #275).'
+const NO_RUN_RECORD = 'No owner keeps a record of the Day\'s moves yet (Central #150, #153): when a move ran and what it gave are its run\'s.'
+const NO_SCHEDULE = 'No owner schedules the Day\'s moves yet: Runs at is the run record\'s schedule (Central #150, #153), and nothing here runs a move unseen.'
+const NO_PROMPT = 'No owner keeps a move\'s Prompt yet (Central #150, #153); the agent that reads it is AIKit\'s (ai-kit #275).'
+const NO_NOWS = 'every machine\'s NOW and its child NOWs, which no owner reports to the Day yet (Central #150, #153; the machines\' NOWs are Workcell #72\'s, their delivery ai-kit #275)'
+
 /** Why each design key this binding leaves absent has no reading (manual §16.12: "When a reading is missing, say which one"). The
  * return names these; the views draw "—" where the kit draws them. */
 export const DAY_ABSENT: Readonly<Record<string, string>> = {
@@ -37,7 +54,7 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   tomorrow: 'Central reports one current Day; tomorrow\'s Day stands only after a rollover opens it, and no reading reports one (the design draws its page only when it is reported).',
   tomorrowOpen: 'Central reports one current Day; no reading says whether tomorrow\'s Day is open.',
   closeRoutine: 'Close now closes the Day through Central, and what still plays carries into the next Day; the routine around the close (a summary, what you learned sent to your knowledge, face 5\'s proposal carried to tomorrow\'s face 0) has no owner yet, so whether it runs is no reading.',
-  agentWrites: 'No owner holds how agent entries arrive on a Day.',
+  agentWrites: 'No owner holds how agent entries arrive on a Day (Central #150); the Day\'s agent, which every move runs as, is AIKit\'s (ai-kit #275).',
   template: 'The Day keeps the template it opened with (meta.template), but the design\'s choices are not the owner\'s templates.',
   src_central: 'No owner holds which modes send entries to faces 2 and 4.',
   src_factory: 'No owner holds which modes send entries to faces 2 and 4.',
@@ -45,12 +62,24 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   src_techne: 'No owner holds which modes send entries to faces 2 and 4.',
   src_live: 'No owner holds which modes send entries to faces 2 and 4.',
   c1p: 'The Day document holds included contributions only; proposals that wait are no record of it.',
-  c2run: 'The sessions ledger records a session with no done, running or queued state.',
-  c2queue: 'The sessions ledger records a session with no done, running or queued state.',
+  c2run: `Face 2 lists the sessions of ${NO_NOWS}; the sessions ledger records a session with no done, running or queued state.`,
+  c2queue: `Face 2 lists the sessions of ${NO_NOWS}; the sessions ledger records a session with no done, running or queued state.`,
   c3: 'Patterns are free text on face 3 (p3_patterns_noticed): the owner counts none.',
   c3p: 'The Day document holds included contributions only; proposals that wait are no record of it.',
-  c4: 'Context is free text on face 4: the owner counts none.',
+  c4: `Face 4 gathers what the sessions of ${NO_NOWS} touched, each entry with its author; until then context is free text on face 4, and the owner counts none.`,
   c5: 'Synthesis is free text on face 5: the owner counts none.',
+  ...Object.fromEntries(DAY_MOVES.flatMap(move => [
+    [`at_${move}`, NO_SCHEDULE], [`prompt_${move}`, NO_PROMPT], [`last_${move}`, NO_RUN_RECORD], [`running_${move}`, NO_RUN_RECORD],
+    ...(move === 'close' ? [] : [[`gave_${move}`, NO_RUN_RECORD]]),
+  ])),
+}
+
+/** The design's controls that no owner takes yet, closed with the reason (the host's own words would call them readings): the four
+ * pads whose move no owner runs, every move's Runs at and Prompt, and Agent writes. The Close pad presses Close now, which stands. */
+export const DAY_STANDING: Readonly<Record<string, Standing>> = {
+  ...Object.fromEntries(DAY_MOVES.filter(move => move !== 'close').map(move => [`run_${move}`, {disabled: NO_MOVES}])),
+  ...Object.fromEntries(DAY_MOVES.flatMap(move => [[`at_${move}`, {disabled: NO_SCHEDULE}], [`prompt_${move}`, {disabled: NO_PROMPT}]])),
+  agentWrites: {disabled: DAY_ABSENT.agentWrites!},
 }
 
 export interface DayAperture {
@@ -232,6 +261,7 @@ export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<R
   return {
     id,
     values,
+    standing: DAY_STANDING,
     writes: key => DAY_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const change of changes) {
@@ -247,6 +277,8 @@ export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<R
           if (change.value !== true) throw new Error('Close now is a press: it closes the Day Central names, and nothing here reopens one.')
           if (!facts.canClose) throw new Error('No open Day stands for Close now: the Day shown is closed already, is one you selected, or Central gave no revision to close it on.')
           await writers.closeNow()
+        } else if (DAY_STANDING[change.key]?.disabled) {
+          throw new Error(DAY_STANDING[change.key]!.disabled!)
         } else {
           throw new Error(`${change.key}: a reading — the owner reports it, and nothing here changes it.`)
         }
