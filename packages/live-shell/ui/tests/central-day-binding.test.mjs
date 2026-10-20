@@ -537,3 +537,45 @@ test('the Day publishes its page as its own Full, and names it as data for its P
   assert.equal(none.fullRelay, undefined, 'no Day document stands: nothing to relay')
   assert.equal(chain.centralPublication(none, null).full.relay, undefined)
 })
+
+// The Day's moves (manual §18.2, O-I main 1fd6697c0): five pads move the day's work from face to face. Close is Close now; the other
+// four, every move's Runs at and Prompt, and Agent writes have no owner yet. The binding names what each waits on — Central's
+// Day/NOW contract (#150, #153), AIKit's NOW delivery (#275), the machines' NOWs (Workcell #72) — and never draws a move as run.
+test('the moves: every reading of a move is absent with the owner it waits on, never the design\'s sample', () => {
+  const facts = factsOf(READY)
+  const values = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD})
+  const moveKeys = DESIGN_KEYS.filter(key => /^(at|prompt|last|gave|running)_/.test(key))
+  assert.deepEqual([...new Set(moveKeys.map(key => key.split('_')[1]))], ['tasks', 'patterns', 'context', 'synthesis', 'close'], 'the design reads the five moves')
+  for (const key of moveKeys) {
+    assert.equal(key in values, false, `${key}: no owner reports it`)
+    assert.match(bind.DAY_ABSENT[key] ?? '', /Central #150, #153/, `${key} names the Day/NOW contract it waits on`)
+  }
+  assert.match(bind.DAY_ABSENT.c2run, /every machine's NOW and its child NOWs.*Workcell #72.*ai-kit #275/, 'face 2 waits on the machines\' NOWs')
+  assert.match(bind.DAY_ABSENT.c4, /each entry with its author/, 'face 4 gathers what the sessions touched, each with its author')
+})
+
+test('the moves: four pads, every Runs at and Prompt, and Agent writes stand closed with their owners named; a press sends nothing', async () => {
+  let wrote = 0
+  const facts = factsOf(READY)
+  const binding = bind.dayDesignBinding(ID, facts, bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD}),
+    {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }})
+  for (const move of ['tasks', 'patterns', 'context', 'synthesis']) {
+    assert.match(binding.standing[`run_${move}`]?.disabled ?? '', /Central #150, #153.*ai-kit #275/, `the ${move} pad says what it waits on`)
+    await assert.rejects(binding.write([{key: `run_${move}`, value: true}]), /No owner runs the Day's moves yet/, `pressing ${move} is refused in those words`)
+  }
+  for (const move of ['tasks', 'patterns', 'context', 'synthesis', 'close']) {
+    assert.ok(binding.standing[`at_${move}`]?.disabled && binding.standing[`prompt_${move}`]?.disabled, `${move}'s Runs at and Prompt stand closed`)
+  }
+  assert.match(binding.standing.agentWrites?.disabled ?? '', /ai-kit #275/, 'Agent writes names the Day\'s agent')
+  assert.equal(binding.standing.run_close, undefined, 'the Close pad is Close now, which an owner takes')
+  assert.equal(binding.standing.closeNow, undefined)
+  assert.equal(wrote, 0, 'nothing was sent to an owner')
+})
+
+test('the design: the Close pad presses Close now, the one move an owner takes; the other four press their own move', async () => {
+  const source = await readFile(new URL('../src/inhabitants/catalogue/panels/day.tsx', import.meta.url), 'utf8')
+  assert.match(source, /\{id: 'close', name: 'Close', faces: '5 → 0′', face: 0, press: 'closeNow'/)
+  for (const move of ['tasks', 'patterns', 'context', 'synthesis']) assert.match(source, new RegExp(`id: '${move}'[^}]*press: 'run_${move}'`))
+  assert.equal(catalogueDay.defaults.at_close, -30, 'Close runs at Day start by default')
+  for (const move of ['tasks', 'patterns', 'context', 'synthesis']) assert.equal(catalogueDay.defaults[`at_${move}`], -45, `${move} runs by itself only when you set it`)
+})
