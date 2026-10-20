@@ -69,7 +69,11 @@ export function weatherShift(record: WorldBodyRecord, latDeg: number, timeMs: nu
 
 // ── the cloud mask ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** The cover the clouds dial asks for, and the look takes away from: 0 at 0, .75 at 1. */
+/** The mask's opacity ramp over the field: a cloud is thin where the field is just above its edge and thick only well above it, so most of a cloud is translucent and the opaque cores are
+ * the dense bands'. `RAMP_LOW` of the field's range below the edge is already faintly cloud, `RAMP_HIGH` above it is full. */
+export const RAMP_LOW = .3, RAMP_HIGH = .5
+
+/** The mean opacity the clouds dial asks for, and the look takes away from: 0 at 0, .75 at 1. The cover is what the dial says, as an area-weighted mean of the opacity. */
 export const cloudTarget = (clouds: number, barren: number): number => .75 * Math.max(0, Math.min(1, clouds)) * (1 - barren)
 
 /** The bands of the sky: more cloud at the equator (the convergence zone) and in the storm tracks, less in the subtropics and at the poles. */
@@ -94,27 +98,70 @@ function fieldQuantiles(seed: number): Float64Array {
   return v
 }
 
-/** The cloud field at a point: noise stretched along the latitude circles (a cloud is longer than it is wide, east to west) with the bands of the sky laid on it. */
+/** Cellular noise at a point (the distance to the nearest and to the second nearest of jittered points, one per cell of a lattice `f` cells to the unit): the walls between cells are where
+ * they are nearly equal. Eight cells about the point, enough for the walls. Integer hashes of the cell and the seed: nothing is random. */
+function cells(seed: number, x: number, y: number, z: number, f: number): number {
+  const px = x * f, py = y * f, pz = z * f, bx = Math.floor(px - .5), by = Math.floor(py - .5), bz = Math.floor(pz - .5)
+  let d1 = 9, d2 = 9
+  for (let k = 0; k < 8; k++) {
+    const cx = bx + (k & 1), cy = by + ((k >> 1) & 1), cz = bz + ((k >> 2) & 1)
+    let h = Math.imul(cx, 374761393) ^ Math.imul(cy, 668265263) ^ Math.imul(cz, 2147483647) ^ seed
+    h = Math.imul(h ^ (h >>> 13), 1274126177)
+    const jx = ((h >>> 0) & 1023) / 1023
+    h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d)
+    const jy = ((h >>> 0) & 1023) / 1023
+    h = Math.imul(h ^ (h >>> 12), 0x297a2d39)
+    const jz = ((h >>> 0) & 1023) / 1023
+    const dx = cx + .15 + .7 * jx - px, dy = cy + .15 + .7 * jy - py, dz = cz + .15 + .7 * jz - pz, d = Math.sqrt(dx * dx + dy * dy + dz * dz)
+    if (d < d1) { d2 = d1; d1 = d } else if (d < d2) d2 = d
+  }
+  return d2 - d1
+}
+
+/** The cloud field at a point: noise stretched along the latitude circles (a cloud is longer than it is wide, east to west), curled by a slow vector noise (a front is a curve, not a
+ * line), laid on the bands of the sky, the bands waved in longitude (a storm track meanders) and, in the subtropics, cellular lanes (open-cell convection over the sea: rings of cloud
+ * round clear air). */
 export function cloudField(seed: number, x: number, y: number, z: number): number {
-  const t = tablesOf(seed ^ 0x51ed270b), ys = y * 2.4
-  const wy = ys + .35 * simplex3(t, x * 1.3 + 4.1, y * 1.3 - 2.2, z * 1.3 + 8.8)
-  let n = .46 * simplex3(t, x * 2.3 + 1.2, wy * 2.3 - 5.0, z * 2.3 + 3.3) + .28 * simplex3(t, x * 4.9 - 7.7, wy * 4.9 + 2.5, z * 4.9 - 1.1) + .18 * simplex3(t, x * 10.7 + 6.6, wy * 10.7 - 8.4, z * 10.7 + 9.2) + .1 * simplex3(t, x * 23 - 2.4, wy * 23 + 5.1, z * 23 - 7.3)
-  n += bandBias(Math.abs(Math.asin(y < -1 ? -1 : y > 1 ? 1 : y)) * R2D)
+  const t = tablesOf(seed ^ 0x51ed270b)
+  // curl: the point carried by a slow vector noise, so features bend and turn
+  const cx = x + .2 * simplex3(t, x * 1.25 + 7.3, y * 1.25 - 1.9, z * 1.25 + 4.4), cy = y + .2 * simplex3(t, x * 1.25 - 5.1, y * 1.25 + 8.2, z * 1.25 - 3.3), cz = z + .2 * simplex3(t, x * 1.25 + 2.6, y * 1.25 - 6.4, z * 1.25 + 9.1)
+  const ys = cy * 2.4
+  const wy = ys + .35 * simplex3(t, cx * 1.3 + 4.1, cy * 1.3 - 2.2, cz * 1.3 + 8.8)
+  let n = .42 * simplex3(t, cx * 2.3 + 1.2, wy * 2.3 - 5.0, cz * 2.3 + 3.3) + .27 * simplex3(t, cx * 4.9 - 7.7, wy * 4.9 + 2.5, cz * 4.9 - 1.1) + .19 * simplex3(t, cx * 10.7 + 6.6, wy * 10.7 - 8.4, cz * 10.7 + 9.2) +
+    .13 * simplex3(t, cx * 23 - 2.4, wy * 23 + 5.1, cz * 23 - 7.3) + .1 * simplex3(t, cx * 48 + 8.8, wy * 48 - 3.7, cz * 48 + 1.9)
+  const alat = Math.abs(Math.asin(y < -1 ? -1 : y > 1 ? 1 : y)) * R2D, lon = Math.atan2(z, x)
+  // the bands, waved: a storm track meanders in longitude (a few waves round the globe, the mid-latitudes' the larger), the convergence zone a little
+  const phase = ((seed ^ 0x3c6ef372) >>> 0) / 4294967296 * 6.2831853
+  const wave = 7 * Math.sin(4 * lon + phase + 1.6 * simplex3(t, x * 1.4 + 2, y * 1.4 - 3, z * 1.4 + 6)) * Math.exp(-(((alat - 52) / 17) ** 2)) + 3.5 * Math.sin(3 * lon + 2.1 * phase) * Math.exp(-((alat / 18) ** 2))
+  n += bandBias(Math.abs(alat + wave))
+  // open cells in the subtropics: clear centres ringed by cloud
+  const sub = Math.exp(-(((alat - 27) / 11) ** 2))
+  if (sub > .05) n += .36 * sub * (1 - smooth(0, .2, cells(seed >>> 0, cx, cy, cz, 11)) - .3)
   return n
 }
 
-/** The edge of the cloud field that leaves `target` of the sphere above it. */
-export function cloudEdge(seed: number, target: number): number {
-  const v = fieldQuantiles(seed)
-  return v[Math.min(v.length - 1, Math.max(0, Math.floor((1 - target) * v.length)))]!
+/** The mean opacity over the sphere of a field with its edge at `edge`: the ramp's value at every one of the sorted samples. */
+function meanOpacity(v: Float64Array, edge: number): number {
+  let sum = 0
+  for (let k = 0; k < v.length; k++) sum += smooth(edge - RAMP_LOW, edge + RAMP_HIGH, v[k]!)
+  return sum / v.length
 }
 
-/** The cloud cover at a point, 0–1, given the edge: a soft edge so the globe does not draw the field's cells. `timeShiftDeg` carries the mask east. */
+/** The edge of the cloud field that gives the cover `target`: found so that the mean opacity of the mask over the sphere is the target (the opacity is a ramp, not a threshold). */
+export function cloudEdge(seed: number, target: number): number {
+  const v = fieldQuantiles(seed)
+  let lo = v[0]! - RAMP_HIGH, hi = v[v.length - 1]! + RAMP_LOW
+  for (let k = 0; k < 28; k++) { const mid = .5 * (lo + hi); if (meanOpacity(v, mid) > target) lo = mid; else hi = mid }
+  return .5 * (lo + hi)
+}
+
+/** The cloud cover at a point, 0–1, given the edge: thin where the field just passes the edge, thick well above it, so the clouds are translucent and soft at their edges.
+ * `timeShiftDeg` carries the mask east. */
 export function cloudCover(seed: number, edge: number, x: number, y: number, z: number, shiftDeg = 0): number {
   if (shiftDeg !== 0) {
     // the mask carried east by `shift` is the mask as it was west of here by `shift`: rotate the point about the axis the other way
     const a = -shiftDeg / R2D, c = Math.cos(a), s = Math.sin(a), nx = x * c - z * s, nz = x * s + z * c
     x = nx; z = nz
   }
-  return smooth(edge - .13, edge + .13, cloudField(seed, x, y, z))
+  return smooth(edge - RAMP_LOW, edge + RAMP_HIGH, cloudField(seed, x, y, z))
 }

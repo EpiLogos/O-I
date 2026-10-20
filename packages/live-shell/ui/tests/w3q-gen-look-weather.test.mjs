@@ -440,6 +440,42 @@ test('S6 a cloud’s edge is broken up as finely as the camera can see it and no
   }
 })
 
+test('S7 the ground is sharper than its picture where the camera is closer than the picture can show: detail is drawn finer than the texel, faded by how much the texel is magnified', () => {
+  // Past the finest tile (zoom 8, a texel is 0.6 km) a close view magnifies the picture and it reads soft. The shader adds the grain and relief of ground that fine, octave on octave, each as
+  // fine as a pixel can show: the amount follows how many pixels a texel spans (uTexRad over uPxRad), is none for the Earth (uDetail 0: the Earth's imagery is as it was) and none where
+  // the texel is no larger than a pixel. The GLSL is read as text: the uniforms are declared and reach the colour.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    for (const uniform of ['uDetail', 'uTexRad', 'uPxRad']) assert.ok(new RegExp(`uniform\\s+float\\s+${uniform}\\s*;`).test(frag), `${name}’s shader declares ${uniform}`)
+    const main = frag.slice(frag.indexOf('void main'))
+    assert.ok(!/\b(fwidth|dFdx|dFdy)\s*\(/.test(frag), `${name}’s shader takes no screen derivatives`)
+    const reaches = start => { const reached = new Set([start]); for (let pass = 0; pass < 5; pass++) for (const m of main.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) if ([...reached].some(n => new RegExp(`\\b${n}\\b`).test(m[2]))) reached.add(m[1]); return reached }
+    for (const uniform of ['uDetail', 'uTexRad']) assert.ok(reaches(uniform).has('col'), `the colour is reached by ${uniform} (it reaches: ${[...reaches(uniform)].join(', ')})`)
+  }
+})
+
+test('S8 clouds are a thin layer with a shadow: the ground under a cloud is darkened, by a second look at the mask a little toward the sun’s far side, and a thick cloud is greyer than a thin one', () => {
+  // A cloud over the ground is not a white decal: it stands above it, so the ground beside and under it is shadowed (the mask read again at an offset, darkening the colour before the
+  // cloud is laid), and its own tone follows its thickness (thin: bright and light, thick: greyer at the base). The GLSL is read as text.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('if (uCloudMix'))
+    const lookups = [...sky.matchAll(/texture2D\(\s*uCloud\s*,/g)].length
+    assert.ok(lookups >= 2, `${name}’s sky block looks at the cloud mask at least twice (once for the cloud, once, offset, for its shadow): ${lookups}`)
+    // the second lookup's value reaches `col` before the cloud is mixed over it: the shadow is a line `col = ... shade ...` or `col *= ...` ahead of the cloud's own mix
+    const second = sky.indexOf('texture2D(uCloud', sky.indexOf('texture2D(uCloud') + 1), mixAt = sky.search(/col\s*=\s*mix\(\s*col\s*,/)
+    assert.ok(second > 0 && mixAt > second, `the shadow is worked out before the cloud is mixed over the ground`)
+    const shadowName = /(\w+)\s*=\s*texture2D\(\s*uCloud\s*,[^;]*\.r/.exec(sky.slice(second - 40, second + 160))
+    assert.ok(shadowName, 'the shadow lookup is read into a variable')
+    const darkens = new RegExp(`col\\s*\\*?=[^;]*\\b${shadowName[1]}\\b[^;]*;`).test(sky.slice(second, mixAt)) || new RegExp(`\\b${shadowName[1]}\\b`).test(sky.slice(second, mixAt).split(';').filter(x => /\bcol\b/.test(x)).join(';'))
+    assert.ok(darkens, `the ground colour is darkened by the shadow (${shadowName[1]})`)
+    assert.ok(/uSunMix|uLightDir/.test(sky), 'and the sky is lit by the light it already takes')
+    const own = /col\s*=\s*mix\(\s*col\s*,\s*([^;]*),\s*[^,;]*\)\s*;/.exec(sky)
+    const fromCover = new Set(['cover'])
+    for (let pass = 0; pass < 4; pass++) for (const m of sky.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) if ([...fromCover].some(n => new RegExp(`\\b${n}\\b`).test(m[2]))) fromCover.add(m[1])
+    fromCover.delete('col')
+    assert.ok(own && [...fromCover].some(n => new RegExp(`\\b${n}\\b`).test(own[1].replace(/\bcover\b/, ''))) , `a cloud’s own tone follows its thickness (the colour laid over the ground, ${own ? own[1].trim() : 'none found'}, is made from a name the cover reaches: ${[...fromCover].join(', ')})`)
+  }
+})
+
 // ── the engine's occasion and its reduced motion ───────────────────────────────────────────────────────────────────────
 
 /** The globe on a stand-in renderer, with the clock the page has (Date.now and performance.now) under the test's hand. */

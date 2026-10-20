@@ -30,8 +30,12 @@ export function shadeSlope(hs: Float32Array, w: number, h: number, i: number, j:
   const north = hs[(j > 0 ? j - 1 : j) * w + i]!, south = hs[(j < h - 1 ? j + 1 : j) * w + i]!
   const sy = (north - south) / (2 * dlat)
   void at
+  STEEP[0] = Math.hypot(sx, sy)
   return .7071 * (sx - sy)
 }
+
+/** How steep the ground is at the pixel `shadeSlope` last read (the size of its slope, per radian, whichever way it faces): what bare rock shows on. */
+export const STEEP = new Float64Array(1)
 
 /** The colour of a pixel from its surface, its slope and (at the coast) the share of it that is land. `col` is the surface colour on entry and the pixel's on exit. */
 export function shadePixel(hgt: number, slope: number, col: Float64Array): void {
@@ -54,20 +58,20 @@ const landC = new Float64Array(3), seaC = new Float64Array(3)
 
 /** A pixel's colour, given its position, its height and the slope under it: the surface, the shading, and at the coast the blend of both sides by how much of the pixel is land
  * (`spread` is the height a pixel spans there; 0 for none). Writes red, green, blue 0–1 to `out`. */
-export function pixelColour(S: Surface, x: number, y: number, z: number, hgt: number, cn: number, slope: number, spread: number, detail: number, out: Float64Array): void {
+export function pixelColour(S: Surface, x: number, y: number, z: number, hgt: number, cn: number, slope: number, spread: number, detail: number, steep: number, out: Float64Array): void {
   if (spread > 0 && Math.abs(hgt - SEA) < spread) {
     const land = smooth(.33, .73, .5 + (hgt - SEA) / (2 * spread))
     if (hgt > SEA) {
-      landSurface(S, x, y, z, (hgt - SEA) / LAND_RANGE, cn, detail, landC); shadePixel(SEA + 1e-6, slope, landC)
+      landSurface(S, x, y, z, (hgt - SEA) / LAND_RANGE, cn, detail, landC, steep); shadePixel(SEA + 1e-6, slope, landC)
       seaSurface(S, x, y, z, .02, detail, seaC); shadePixel(SEA - 1e-6, slope, seaC)
     } else {
       seaSurface(S, x, y, z, cn, detail, seaC); shadePixel(SEA - 1e-6, slope, seaC)
-      landSurface(S, x, y, z, .004, .01, detail, landC); shadePixel(SEA + 1e-6, slope, landC)
+      landSurface(S, x, y, z, .004, .01, detail, landC, steep); shadePixel(SEA + 1e-6, slope, landC)
     }
     out[0] = landC[0]! * land + seaC[0]! * (1 - land); out[1] = landC[1]! * land + seaC[1]! * (1 - land); out[2] = landC[2]! * land + seaC[2]! * (1 - land)
     return
   }
-  surfaceAt(S, x, y, z, hgt, cn, detail, out)
+  surfaceAt(S, x, y, z, hgt, cn, detail, out, steep)
   shadePixel(hgt, slope, out)
 }
 
@@ -93,7 +97,7 @@ export function bodyImage(record: WorldBodyRecord, width = 1024, look?: BodyLook
       const at = j * w + i, hgt = hs[at]!, east = i + 1 < w ? i + 1 : 0, west = i > 0 ? i - 1 : w - 1
       const slope = shadeSlope(hs, w, h, i, j, east, west, dlon, dlat, cl)
       const spread = .75 * (Math.abs(hs[j * w + east]! - hs[j * w + west]!) + Math.abs(hs[(j > 0 ? j - 1 : j) * w + i]! - hs[(j < h - 1 ? j + 1 : j) * w + i]!)) / 2
-      pixelColour(S, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, hgt, cs[at]! / 255, slope, spread, detail, col)
+      pixelColour(S, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, hgt, cs[at]! / 255, slope, spread, detail, STEEP[0]!, col)
       data[at * 4] = byte(col[0]!); data[at * 4 + 1] = byte(col[1]!); data[at * 4 + 2] = byte(col[2]!); data[at * 4 + 3] = 255
     }
   }

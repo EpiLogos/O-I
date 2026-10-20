@@ -40,7 +40,7 @@ export async function load(u, c, n) {
 
 const globe = new URL('../src/projections/atlas/src/globe/', import.meta.url)
 const body = await import(new URL('body.ts', globe).href)
-const {lonOfX, latOfY, TILE_PX} = await import(new URL('tilemath.ts', globe).href)
+const {lonOfX, latOfY, yOfLat, TILE_PX} = await import(new URL('tilemath.ts', globe).href)
 const shaders = await import(new URL('shaders.ts', globe).href)
 /** A module this ticket adds: `{}` until it exists, so the test that needs it fails on an assertion, not on an import. */
 async function optional(name) {
@@ -391,6 +391,43 @@ test('C2 ice is as crisp as a pixel: a close tile at the margin of the sea ice h
   const total = ice + water + other
   assert.ok(ice / total >= .1 && water / total >= .1, `the four tiles round the margin hold ice and water (${f(100 * ice / total, 0)}% ice, ${f(100 * water / total, 0)}% water)`)
   assert.ok(other / total <= .02, `and next to nothing that is neither: ${f(100 * other / total, 2)}% of the pixels (at most 2%)`)
+})
+
+// ── the ground at the finest tile ──────────────────────────────────────────────────────────────────────────────────────────
+
+/** The places are those of the lead's round 2: a mountain belt, a green lowland, a desert with a river, each in the zoom-8 tile that holds it, on the default body. */
+
+test('Z1 steep ground is bare rock: at the finest tile the ground on a steep face is greyer than the ground on a flat, whatever grows on it', async () => {
+  // Lighting darkens and lightens a slope but does not change how coloured it is; the rock under a thin cover shows on the faces too steep to hold it. In the zoom-8 tile of a mountain belt
+  // (the default body at 44.2 S, 77.6 W), the steepest quarter of the land is less saturated than the flattest quarter by at least a twentieth (saturation is (max - min) / max of the colour).
+  const tiles = await optional('bodyTiles.ts'), record = make(SEEDS[0]), at = {lat: -44.2, lon: -77.6}
+  const z = 8, n = 2 ** z, x = Math.floor((at.lon + 180) / 360 * n), y = Math.floor(yOfLat(z, at.lat)), tile = tiles.bodyTile(record, z, x, y), {width: w} = tile
+  const samples = []
+  for (let j = 2; j < TILE_PX - 2; j += 2) for (let i = 2; i < TILE_PX - 2; i += 2) {
+    const o = (j * w + i) * 4, r = tile.data[o], g = tile.data[o + 1], b = tile.data[o + 2]
+    if (b > 1.3 * r) continue // water
+    const lat = latOfY(z, y + (j + .5) / TILE_PX), lon = lonOfX(z, x + (i + .5) / TILE_PX), dl = 5e-5 * 180 / Math.PI, dlo = dl / Math.cos(lat * Math.PI / 180)
+    const slope = Math.hypot(heightAtLL(record, lat, lon + dlo) - heightAtLL(record, lat, lon - dlo), heightAtLL(record, lat + dl, lon) - heightAtLL(record, lat - dl, lon)) / (2 * 5e-5)
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b)
+    samples.push({slope, sat: mx ? (mx - mn) / mx : 0})
+  }
+  assert.ok(samples.length >= 8000, `there is land to measure (${samples.length} pixels)`)
+  samples.sort((a, b) => a.slope - b.slope)
+  const q = Math.floor(samples.length / 4), flat = mean(samples.slice(0, q).map(s => s.sat)), steep = mean(samples.slice(-q).map(s => s.sat))
+  assert.ok(flat - steep >= .05, `the steepest quarter of the land is ${f(steep, 3)} saturated, the flattest ${f(flat, 3)}: the steep faces are at least .05 greyer`)
+})
+
+test('Z2 the ground is patched at the scale of fields: in a lowland tile at zoom 8 the colour changes between ten pixels and two, patch on patch', async () => {
+  // Forest and clearing, crops and scrub: a tile a hundred and forty kilometres across holds cover that changes over a few kilometres. The measure is the root-mean-square of the greenness
+  // (g - r, in levels of 255) with its 12-pixel box blur taken from its 2-pixel one, over the tile. The lowland (the default body at 11 S, 92.4 W) was 1.9; a mountain face 2.9.
+  const tiles = await optional('bodyTiles.ts'), record = make(SEEDS[0]), z = 8, n = 2 ** z
+  const tile = tiles.bodyTile(record, z, Math.floor((-92.4 + 180) / 360 * n), Math.floor(yOfLat(z, -11))), w = tile.width, h = tile.height, green = new Float32Array(w * h)
+  for (let k = 0; k < w * h; k++) green[k] = tile.data[k * 4 + 1] - tile.data[k * 4]
+  const a = boxBlur(green, w, h, 2), b = boxBlur(green, w, h, 12)
+  let s2 = 0
+  for (let k = 0; k < w * h; k++) s2 += (a[k] - b[k]) ** 2
+  const rms = Math.sqrt(s2 / (w * h))
+  assert.ok(rms >= 3, `the greenness changes by ${f(rms, 2)} levels between 2 and 12 pixels (at least 3)`)
 })
 
 // ── relief shading ──────────────────────────────────────────────────────────────────────────────────────────────────────

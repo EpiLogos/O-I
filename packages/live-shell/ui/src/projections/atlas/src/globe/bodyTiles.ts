@@ -56,7 +56,7 @@ export function bodyTile(record: WorldBodyRecord, z: number, x: number, y: numbe
       const at = j * g + i, hgt = hs[at]!
       const sx = (hs[at + 1]! - hs[at - 1]!) / (2 * east), sy = (hs[at - g]! - hs[at + g]!) / (2 * Math.max(north, 1e-9))
       const spread = .75 * (Math.abs(hs[at + 1]! - hs[at - 1]!) + Math.abs(hs[at - g]! - hs[at + g]!)) / 2
-      pixelColour(S, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, hgt, cs[at]! / 255, .7071 * (sx - sy), spread, d, col)
+      pixelColour(S, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, hgt, cs[at]! / 255, .7071 * (sx - sy), spread, d, Math.hypot(sx, sy), col)
       const o = ((j - 1) * n + (i - 1)) * 4
       data[o] = byte(col[0]!); data[o + 1] = byte(col[1]!); data[o + 2] = byte(col[2]!); data[o + 3] = 255
     }

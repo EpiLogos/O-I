@@ -571,6 +571,8 @@ export class GlobeEngine {
       this.earth.setGenerated(null);
       this.earth.setSky(null, 0, 1);
       this.earth.barren.value = 0;
+      this.earth.detail.value = 0;
+      this.earth.texRad.value = (2 * Math.PI) / 8192;
       this.shell.air.value = 1;
       this.bodyPictureState = 'earth';
       // the Earth's own tiles again
@@ -617,6 +619,9 @@ export class GlobeEngine {
     const air = airOf(record, look);
     // at once, on the main thread: the first picture (BODY_WIDTHS.first wide, a few tens of milliseconds) and the body's air; its clouds come with the sharp base
     this.earth.setGenerated(bodyTexture(bodyImage(record, BODY_WIDTHS.first, look), this.renderer));
+    // its ground is drawn finer than its pictures where the camera is close (shaders.ts detailOver); the texel is the first picture's until a sharper one is in
+    this.earth.detail.value = 1;
+    this.earth.texRad.value = (2 * Math.PI) / BODY_WIDTHS.first;
     this.earth.setSky(null, 0, air);
     this.earth.barren.value = barrenOf(look);
     this.shell.air.value = air;
@@ -647,6 +652,7 @@ export class GlobeEngine {
       const hi = bodyTexture(pictures.image, this.renderer);
       this.renderer.initTexture(hi);
       this.earth.setGeneratedHi(hi);
+      this.earth.texRad.value = (2 * Math.PI) / width;
       this.earth.setSky(bodyTexture(pictures.clouds, this.renderer), cover, air);
       this.bodyPictureState = 'sharp';
     }

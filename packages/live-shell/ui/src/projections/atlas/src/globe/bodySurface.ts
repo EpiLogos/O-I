@@ -73,9 +73,11 @@ export function landColour(S: Surface, x: number, y: number, z: number, L: numbe
   // moisture: the sky's bands, drier in a continent's interior, and the dial
   let M = zonal(alat) * S.moistFactor * (1 - .35 * smooth(.15, .7, cn)) + .16 * simplex3(t, x * 3.1 - 5.3, y * 3.1 + 2.7, z * 3.1 + 8.1)
   // the ground's cover is patchy at every scale a picture resolves (forest and clearing, scrub and bare ground), in patches that grow finer with the zoom
-  if (fmax > 30) M += .03 * simplex3(t, x * 38 + 3.7, y * 38 - 11.2, z * 38 + 6.1)
-  if (fmax > 90) M += .03 * simplex3(t, x * 115 - 5.9, y * 115 + 2.3, z * 115 - 9.4)
-  if (fmax > 300) M += .03 * simplex3(t, x * 340 + 8.1, y * 340 - 3.6, z * 340 + 1.2)
+  if (fmax > 30) M += .09 * simplex3(t, x * 38 + 3.7, y * 38 - 11.2, z * 38 + 6.1)
+  if (fmax > 90) M += .07 * simplex3(t, x * 115 - 5.9, y * 115 + 2.3, z * 115 - 9.4)
+  if (fmax > 300) M += .08 * simplex3(t, x * 340 + 8.1, y * 340 - 3.6, z * 340 + 1.2)
+  if (fmax > 1100) M += .08 * simplex3(t, x * 1200 - 4.4, y * 1200 + 9.7, z * 1200 + 2.5)
+  if (fmax > 3200) M += .055 * simplex3(t, x * 3500 + 1.8, y * 3500 - 6.3, z * 3500 + 7.9)
   M = clamp01(M)
   const ti = clamp01(T) * 4, mi = M * 4
   const t0 = Math.min(3, Math.floor(ti)), m0 = Math.min(3, Math.floor(mi)), tf = ti - t0, mf = mi - m0
@@ -188,10 +190,25 @@ function waterOver(S: Surface, x: number, y: number, z: number, hgt: number, det
   if (river > 0) { col[0] += (RIVER[0] - col[0]) * river; col[1] += (RIVER[1] - col[1]) * river; col[2] += (RIVER[2] - col[2]) * river }
 }
 
+/** The slope (per radian) from which a face is too steep to hold its cover, and the slope by which it is all rock: a picture of 2048 wide sees slopes under about 8, a tile of zoom 8 the
+ * faces of a mountain belt at 15 and more, so only a close picture shows bare rock. */
+const ROCK_FROM = 6, ROCK_ALL = 16
+
+/** Bare rock showing through the cover on steep ground: the colour is taken toward the rock of the high ground (with a grain of its own, a little warmer or cooler from place to place),
+ * and what snow lay there is shed (the snow the shading keeps bright is lessened by the same share). */
+function rockOver(S: Surface, x: number, y: number, z: number, steep: number, col: Float64Array): void {
+  const k = .85 * smooth(ROCK_FROM, ROCK_ALL, steep)
+  if (k <= 0) return
+  const t = S.t, g = 1 + .16 * simplex3(t, x * 140 + 6.1, y * 140 - 2.7, z * 140 + 9.3) + .1 * simplex3(t, x * 530 - 1.4, y * 530 + 8.8, z * 530 - 5.2), warm = .05 * simplex3(t, x * 17 + 3.3, y * 17 + 1.7, z * 17 - 6.6)
+  col[0] += (ROCK[0] * g * (1 + warm) - col[0]) * k; col[1] += (ROCK[1] * g - col[1]) * k; col[2] += (ROCK[2] * g * (1 - warm) - col[2]) * k
+  WHITE[0] *= 1 - k
+}
+
 /** The land's surface at a point, with its ice: the colour (before the relief shading), the elevation `L` above the sea 0–1 and the continentality `cn`. */
-export function landSurface(S: Surface, x: number, y: number, z: number, L: number, cn: number, detail: number, col: Float64Array): void {
+export function landSurface(S: Surface, x: number, y: number, z: number, L: number, cn: number, detail: number, col: Float64Array, steep = 0): void {
   const alat = Math.abs(Math.asin(y < -1 ? -1 : y > 1 ? 1 : y)) * R2D
   landColour(S, x, y, z, L, cn, alat, .9 / detail, col)
+  if (steep > ROCK_FROM) rockOver(S, x, y, z, steep, col)
   barrenLand(S, col)
   if (S.net) waterOver(S, x, y, z, SEA + L * (1 - SEA), detail, col)
   iceOver(S, x, y, z, alat, false, detail, col)
@@ -213,8 +230,8 @@ export function seaSurface(S: Surface, x: number, y: number, z: number, depth: n
 
 /** The colour of the surface at a point where the field says the height is `h` (and, on land, the continentality `cn`): sets `col` to red, green, blue 0–1 before the relief
  * shading is laid over it (`cn`: on land the continentality, at sea the water's colour depth). `detail` is the wavelength the picture resolves, in radians. Returns 1 if the point is land, 0 if sea. */
-export function surfaceAt(S: Surface, x: number, y: number, z: number, h: number, cn: number, detail: number, col: Float64Array): number {
-  if (h > SEA) { landSurface(S, x, y, z, (h - SEA) / (1 - SEA), cn, detail, col); return 1 }
+export function surfaceAt(S: Surface, x: number, y: number, z: number, h: number, cn: number, detail: number, col: Float64Array, steep = 0): number {
+  if (h > SEA) { landSurface(S, x, y, z, (h - SEA) / (1 - SEA), cn, detail, col, steep); return 1 }
   seaSurface(S, x, y, z, cn, detail, col)
   return 0
 }

@@ -321,7 +321,33 @@ const skyOver = (uv: string) => /* glsl */ `
     cover = mix(cover, smoothstep(0.02, 0.98, cover + dn * live) * (1.0 - 0.18 * live * (1.0 - cloudNoise(np * 25.0 + 11.0))), a1) * uCloudMix;
     float lit = mix(0.46, 1.0, smoothstep(0.1, 1.0, 0.5 + 0.5 * dot(N, normalize(uLightDir))));
     if (uSunMix > 0.0) lit = mix(lit, mix(0.1, 1.0, smoothstep(-0.07, 0.16, dot(N, normalize(uSunDir)))), uSunMix);
-    col = mix(col, mix(uCore, vec3(1.0), 0.55) * lit, cover * 0.82);
+    // a cloud stands above the ground: the ground beside and under it is in its shadow (the mask looked at again a little toward the key light's far side, softly), and the cloud's own
+    // tone follows its thickness: thin cloud bright and light, thick cloud greyer at the base
+    float shade = texture2D(uCloud, cuv + vec2(0.0035, -0.0022)).r * uCloudMix;
+    col *= 1.0 - 0.3 * shade * smoothstep(0.0, 0.5, shade) * lit;
+    vec3 cloudTone = mix(mix(uCore, vec3(1.0), 0.6), vec3(0.74, 0.77, 0.82), smoothstep(0.55, 1.0, cover) * 0.7);
+    col = mix(col, cloudTone * lit, cover * 0.8);
+  }
+`;
+
+/** The ground drawn finer than its picture (a statement block for `main`, given the equirect coordinate `uv`, and `N`, `src`, `col`): where the camera is closer than the picture can
+ * show, a texel spans several pixels and the ground reads soft. Value noise is laid on it, octave on octave, each as fine as a pixel can show (a cell against the pixel's span,
+ * uPxRad: the finer ones fade out, so nothing shimmers from afar), strongly on land and a little on water; none where a texel is no larger than a pixel, and none for the Earth. */
+const detailOver = (uv: string) => /* glsl */ `
+  if (uDetail > 0.0) {
+    float dfoot = uPxRad / max(dot(N, normalize(vView)), 0.15);
+    float dmag = uTexRad / max(dfoot, 1e-9);
+    float damt = uDetail * smoothstep(1.3, 4.0, dmag);
+    if (damt > 0.0) {
+      float dcl = max(sqrt(max(1.0 - N.y * N.y, 0.0)), 0.1);
+      vec2 dp = vec2(${uv}.x * 6.2831853 * dcl, (${uv}.y - 0.5) * 3.14159265) / uTexRad;
+      float dpix = dfoot / uTexRad;
+      float dn = (cloudNoise(dp * 1.0 + 3.1) - 0.5) * 0.55 * (1.0 - smoothstep(0.35, 0.9, dpix * 1.0))
+        + (cloudNoise(dp * 2.1 + 9.7) - 0.5) * 0.4 * (1.0 - smoothstep(0.35, 0.9, dpix * 2.1))
+        + (cloudNoise(dp * 4.4 + 5.3) - 0.5) * 0.3 * (1.0 - smoothstep(0.35, 0.9, dpix * 4.4))
+        + (cloudNoise(dp * 9.3 + 1.9) - 0.5) * 0.22 * (1.0 - smoothstep(0.35, 0.9, dpix * 9.3));
+      col *= 1.0 + damt * dn * mix(0.2, 0.8, 1.0 - waterOf(src));
+    }
   }
 `;
 
@@ -354,6 +380,10 @@ uniform float uAir;
 uniform float uBarren;
 // [T-PROCEDURAL-BODY] the radians of the body one screen pixel spans (at the point under the camera), so the sky's finest detail is drawn only where a pixel is smaller than it
 uniform float uPxRad;
+// [T-PROCEDURAL-BODY] how fine the picture being drawn is (radians one texel spans: the base's, or a tile's), and whether the ground is given detail finer than it (1 for a generated
+// body, 0 for the Earth, whose imagery is as it was)
+uniform float uTexRad;
+uniform float uDetail;
 uniform float uWeatherT;
 uniform vec3 uWeatherRate;
 ${WEATHER_GLSL}
@@ -448,7 +478,7 @@ void main() {
   vec3 src = mix(texture2D(uBaseLo, vUv).rgb, texture2D(uBaseHi, vUv).rgb, uHiMix);
   vec3 N = normalize(vN);
   vec3 col = shadeEarth(src, N, normalize(vView), vUv, uAir);
-${skyOver('vUv')}
+${detailOver('vUv')}${skyOver('vUv')}
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -487,7 +517,7 @@ void main() {
   vec3 N = normalize(vN);
   // [T-PROCEDURAL-BODY] the body's own air and sky, as the sphere under it has them: the Earth's tiles (GIBS) are drawn with air 1.0 and no cloud layer, as before
   vec3 col = shadeEarth(src, N, normalize(vView), vDens, uAir);
-${skyOver('vDens')}
+${detailOver('vDens')}${skyOver('vDens')}
   gl_FragColor = vec4(col, uAlpha);
 }
 `;

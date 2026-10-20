@@ -362,7 +362,7 @@ export class TileLayer {
     const mat = new THREE.ShaderMaterial({
       vertexShader: TILE_VERT,
       fragmentShader: TILE_FRAG,
-      uniforms: { ...this.common, uMap: { value: tex }, uAlpha: { value: 0 }, uLon0: { value: lonOfX(t.z, t.x) * D2R } },
+      uniforms: { ...this.common, uMap: { value: tex }, uAlpha: { value: 0 }, uLon0: { value: lonOfX(t.z, t.x) * D2R }, uTexRad: { value: (2 * Math.PI) / 2 ** t.z / TILE_PX } },
       transparent: true,
       depthWrite: false,
       depthTest: true,

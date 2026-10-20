@@ -630,6 +630,30 @@ test('E8 the sky knows how close the camera is: `uPxRad`, the radians of the bod
   } finally { g.close() }
 })
 
+test('E9 the globe tells the shader how fine its pictures are: `uTexRad` for the sphere and for each tile, and `uDetail` 1 for a generated body and 0 for the Earth', async () => {
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    const u = () => g.uniforms()
+    assert.ok(u().uDetail && u().uTexRad, 'the earth material carries uDetail and uTexRad')
+    assert.equal(u().uDetail.value, 0, 'the Earth’s imagery is drawn as it was: no added detail')
+    g.engine.setBody(make(5)); await answerWorker(); frames(g, .2)
+    assert.equal(u().uDetail.value, 1, 'a generated body has the detail')
+    const hi = body.BODY_WIDTHS.hi
+    assert.ok(Math.abs(u().uTexRad.value - 2 * Math.PI / hi) < 1e-9, `the sphere’s texel is a ${hi}-wide picture’s: ${u().uTexRad.value} radians (${2 * Math.PI / hi})`)
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1, 'tiles are made')
+    for (const mesh of made) {
+      const z = Math.round(Math.log2(2 * Math.PI / (mesh.material.uniforms.uTexRad.value * 256)))
+      assert.ok(z >= 5 && z <= 8 && Math.abs(mesh.material.uniforms.uTexRad.value - 2 * Math.PI / 2 ** z / 256) < 1e-12, `a tile’s texel is its level’s: ${mesh.material.uniforms.uTexRad.value} radians (level ${z})`)
+      assert.ok(mesh.material.uniforms.uDetail === u().uDetail, 'and its detail is the sphere’s own uniform')
+    }
+    g.engine.setBody(null); frames(g, .2)
+    assert.equal(u().uDetail.value, 0, 'the Earth, given back, has none')
+  } finally { g.close() }
+})
+
 // ── the time a body takes ───────────────────────────────────────────────────────────────────────────────────────────────
 
 test('T1 a 2048-wide body is made in the time a CPU thread can spend on it (the ticket aims at 5 s; the gate allows 20)', () => {

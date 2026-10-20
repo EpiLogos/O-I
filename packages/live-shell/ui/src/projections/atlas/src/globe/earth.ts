@@ -22,6 +22,8 @@ export interface EarthUniforms {
   uAir: THREE.IUniform<number>;
   uBarren: THREE.IUniform<number>;
   uPxRad: THREE.IUniform<number>;
+  uTexRad: THREE.IUniform<number>;
+  uDetail: THREE.IUniform<number>;
   uWeatherT: THREE.IUniform<number>;
   uWeatherRate: THREE.IUniform<THREE.Vector3>;
 }
@@ -135,6 +137,9 @@ export class Earth {
   readonly barren = { value: 0 };
   /** [T-PROCEDURAL-BODY] the radians of the body one screen pixel spans under the camera (the engine sets it each frame): the sky's finest detail fades out where a pixel is larger than it */
   readonly pxRad = { value: 0.002 };
+  /** [T-PROCEDURAL-BODY] the radians one texel of the sphere's picture spans (the widest picture it has: 2π over its width), and whether the ground is given detail finer than the picture (a generated body) */
+  readonly texRad = { value: (2 * Math.PI) / 8192 };
+  readonly detail = { value: 0 };
   /** [T-PROCEDURAL-BODY] the occasion's weather: its time in days, and the wind of the body (bodyWeather.ts), which the shader carries the cloud mask by */
   readonly weatherT = { value: 0 };
   readonly weatherRate = { value: new THREE.Vector3() };
@@ -150,7 +155,7 @@ export class Earth {
       uSunDir: this.sunDir,
       uSunMix: this.sunMix,
       uFog: shared.fog, uGlow: shared.glow, uDeep: shared.deep, uCore: shared.core, uSpec: shared.spec,
-      uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air, uBarren: this.barren, uPxRad: this.pxRad, uWeatherT: this.weatherT, uWeatherRate: this.weatherRate,
+      uCloud: this.cloud, uCloudMix: this.cloudMix, uAir: this.air, uBarren: this.barren, uPxRad: this.pxRad, uTexRad: this.texRad, uDetail: this.detail, uWeatherT: this.weatherT, uWeatherRate: this.weatherRate,
     };
     const geo = new THREE.SphereGeometry(1, 192, 96);
     const mat = new THREE.ShaderMaterial({
