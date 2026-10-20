@@ -1906,8 +1906,8 @@ again from its own six positions, as deep as the map goes.
 | Instrument | Its frame: 0 and 5 | Its rack: 1 to 4 | Where it plays |
 |---|---|---|---|
 | M1′, of Paramaśiva | 0, Bimba: the implicate loop the torus rises from. 5, the torus itself: its measure (R 16/9, r 1), its return in 720°, the half-turn that turns one side into the other, and the bridge where its shape becomes vibration. | 1, Pratibimba, the first reflection. 2, Ananda's six matrices with their digital roots. 3, Spanda: the two pulses and the two helices they drive. 4, Quaternal Logic's frames: inversion, the twelve-fold loop, the 84 modes and the harmonic frames. | Live, as the Torus (§21.2). |
-| M2′, of Paraśakti | 0, the archetypal numerical ground. 5, the planets, their just intervals and the seven centres they reach: the Sky is its face (§22.1). | 1, the MEF: six lens systems, each in six conditions. 2, the 36 tattvas: the material the body is made of. 3, the decans. 4, the vibrational templateure: the divine names, the mantras, the spiritual and musical maqāmāt, and the Shem. | Live, as what shapes the Torus: Sky modulation, Scale mapping and Exact-ratio tuning (§22.2, §21.3, §21.4). It makes no sound of its own. |
-| M3′, of Mahāmāyā | 0, the reception of the sky into form. 5, the wheel of 360 degrees with its 24 anchors: the M3 clock is its face (§22.3). | 1, the I Ching: 8 trigrams, 64 hexagrams. 2, the four nucleotides, their pairs and the 64 codons. 3, the transcription engine: three matrices and their 192 generation cells. 4, the Tarot. | Live, as form: the clock, the Deck, the Resonator bank and Binding (§22.3, §22.4, §22.7, §22.8). |
+| M2′, of Paraśakti | 0, the archetypal numerical ground. 5, the planets, their just intervals and the seven centres they reach: the Sky is its face (§22.1). | 1, the MEF: six lens systems, each in six conditions. 2, the 36 tattvas: the material the body is made of. 3, the decans. 4, the vibrational templateure: the divine names, the mantras, the spiritual and musical maqāmāt, and the Shem. | Live, as the Sky (§22.1). It shapes the Torus through Sky modulation, Scale mapping and Exact-ratio tuning (§22.2, §21.3, §21.4), and makes no sound of its own. |
+| M3′, of Mahāmāyā | 0, the reception of the sky into form. 5, the wheel of 360 degrees with its 24 anchors: the M3 clock is its face (§22.3). | 1, the I Ching: 8 trigrams, 64 hexagrams. 2, the four nucleotides, their pairs and the 64 codons. 3, the transcription engine: three matrices and their 192 generation cells. 4, the Tarot. | Live, as the M3 clock (§22.3), with the Deck, the Resonator bank and Binding in its rack (§22.4, §22.7, §22.8). |
 | M4′, of Nara | 0, your identity matrix: birth date, chart, psychological type, Gene Keys and Human Design, and what they make together. 5, Epii's integration: what is answered, reviewed and kept. | 1, sympathetic medicine: the elements and the energy body with its seven centres. 2, the divinatory frameworks. 3, the containers of practice and dialogue. 4, context and lenses: journal, dreams and your own reflection. | Expressions and Nara's practice (§20, §24). The Chakra shows its energy body (§22.5). |
 
 An instrument shows itself whole in Full and Pop-out: the torus ringing, the
@@ -1924,6 +1924,32 @@ M4′'s divinatory frameworks.
 
 A part that nothing carries yet keeps its place in the rack, named and dark,
 so you can see what the instrument still lacks.
+
+#### One body
+
+Live's three instruments are one body seen three ways. M1′ gives it its shape:
+the torus. M2′ gives it its modes and its material: the planets bend the
+surface where they stand, and the tattvas set how it rings. M3′ gives it its
+form: the codon of the moment, folded and turned on the body. You hear the
+body ring and you see it move, and both come from the one state that every
+instrument reads. The Torus shows the body whole (§21.2), the Sky shows M2′
+(§22.1), and the M3 clock shows M3′ (§22.3).
+
+#### Two scales
+
+The torus's two pulses are two ways of reading six. The first divides it three
+and three: going out and coming back. The second divides it four and two: four
+working parts and the two that frame them.
+
+| Scale | Reading | Where you meet it |
+|---|---|---|
+| Three and three | 1, 2, 3: the torus, its modes and its form, the one body of Live. The three meet in 137 = 1 + 72 + 64: M1′'s one, M2′'s 72 and M3′'s 64. | Live (§21). |
+| Four and two | 1, 2, 3, 4: the same body received by you, in your occasion. The two are the ground it comes from and the return to what you know. Its numbers are the torus's own: 64 + 36 = 100, and 64/36 = (4/3)² = 16/9, the torus's measure. | Expressions and Nara's practice (§20, §24). |
+
+The same two readings run through every instrument. Four and two is its rack
+and its frame: positions 1 to 4 working, 0 and 5 framing. Three and three is
+its first three positions going out and its last three coming back. On the
+Torus, Pulse mix sets the balance of the two.
 
 ### 16.17 The entries that follow
 
@@ -6625,7 +6651,7 @@ You need to build a scene, step by step, until the figure says what you meant, a
 
 #### The track
 
-A track is an Expression. It has two sides, one state: the picture lane, which is the form in the field, and the sound lane, which is the plate and the voices sounding. Edit one and the other follows. The two lanes fold under the track's head.
+A track is an Expression. It has two sides, one state: the picture lane, which is the form in the field, and the sound lane, which is the torus sounding through the scene: its modes, and the symbols that carry its sound to where they stand. Edit one and the other follows. The two lanes fold under the track's head.
 
 The track head shows the Expression's title and colour. Its settings stand on the head:
 
@@ -6648,7 +6674,7 @@ The Expression's picture goes to the stage. Its sound goes to the Main track.
 
 #### The clip
 
-A clip is a scene. Its editor edits the scene's sequence: each symbol in its own lane, each step's hold and change set like a note's length and glide. Beneath the sequence lies the scene's sound: what the plate sounds, the pitch riding the plate, and the voices of the symbols.
+A clip is a scene. Its editor edits the scene's sequence: each symbol in its own lane, each step's hold and change set like a note's length and glide. Beneath the sequence lies the scene's sound: what the torus plays, the modes it rings in, and the voices the symbols carry.
 
 #### Clip view
 
@@ -6923,15 +6949,16 @@ The Field is the medium that you see and hear. Use it to give an idea a form tha
 
 #### What the field holds
 
-The field holds three things in one state. Sound and picture both come from this one state. When one changes, the other changes.
+The field holds the one body of Live (§16.16), set in your occasion. Sound and picture both come from its one state. When one changes, the other changes.
 
 | Part | What it is |
 |---|---|
-| Particles | Many small marks. They gather into the shapes you give them and move by the forces you set. |
-| Symbols | Letters, shapes and images that hold a place, drift, pull on each other or push apart. A symbol can have a voice. |
-| Plate | The surface under the field. In three dimensions it is a chamber. The pattern on the plate is the pattern you hear. |
+| Body | The torus, the same one Live plays (§21.2). It makes every sound in the field, and the particles stand on its surface. |
+| Modes | M2′ on the body. Each planet bends the surface where it stands, and the material sets how it rings. This is the cymatic field. The flat plate and the chamber are studies of the same modes (§20.14). |
+| Particles | The matter of the field. They gather into the forms of the symbols and the modes of the body, and move by the forces you set. |
+| Symbols | Objects in the scene that hold a place, drift, pull on each other or push apart. A symbol's form is a glyph: a letter, a shape, an image, or a form of M3′: a fold, a codon, a hexagram or a card (§22.3). Particles take its form. |
 
-The pitch rides the lines where the plate stands still. A symbol with a voice sounds at its own frequency, or follows the plate.
+A symbol can carry a voice: a name or a mode from M2′'s store of sound (§22.1). The voice carries part of the torus's sound to where the symbol stands. It does not sound on its own. A step that changes a symbol's M3′ form moves it to a neighbour, a line away, or turns it about a matrix axis, as Morph does (§20.9).
 
 #### Parameters
 
@@ -6939,12 +6966,12 @@ The pitch rides the lines where the plate stands still. A symbol with a voice so
 |---|---|---|---|
 | Sound | On · Off | On | Lets the field sound. The picture stays when sound is off. |
 | Level | −60 to 0 dB | −12 dB | Sets the loudness of the whole field. |
-| Medium | Plate · Chamber | Plate | Chooses a flat plate or a three-dimensional chamber. |
+| Medium | Plate · Chamber | Plate | Chooses how the study of the modes is drawn: a flat plate or a three-dimensional chamber. |
 | Tempo | 20 to 240 | 96 | Sets how fast the field forms and breathes. |
 | Hold to change | A ratio, such as 5:3 | 5:3 | Sets how long a scene holds a figure compared with how long it changes. |
-| Key source | Manual · Sky | Manual | Manual uses the resonance you set. Sky takes the resonance from the sky over your world. |
-| Resonance | 20 to 4000 Hz | 396 Hz | The frequency that the field is tuned to. |
-| Symbol voices | On · Off | On | Lets symbols that have a voice sound. |
+| Key source | Torus · Sky · Manual | Torus | Torus tunes the field to what the torus plays. Sky takes the key from the sky over your world. Manual uses the resonance you set, to study the modes. |
+| Resonance | 20 to 4000 Hz | 396 Hz | The frequency that the field is tuned to under Manual. |
+| Symbol voices | On · Off | On | Lets symbols carry the torus's sound to where they stand. |
 | Pulse | On · Off | Off | Pulses the field on the beat. |
 | Lights | Dim · Full | Full | Turns the lights down so that one symbol stands alone. |
 
@@ -6984,7 +7011,7 @@ The whole Field shows every parameter, in three groups.
 
 ##### Full
 
-The full Field is the living field stage. Particles gather into the shapes of the symbols. The plate shows the pattern that you hear. Press Play in the transport. Move the pointer through the field to stir the particles. Set Lights to Dim in Device view to let one symbol stand alone.
+The full Field is the living field stage. Particles gather into the shapes of the symbols and stand on the body, and its modes show the pattern that you hear. Press Play in the transport. Move the pointer through the field to stir the particles. Set Lights to Dim in Device view to let one symbol stand alone.
 
 ##### Widget
 
@@ -7009,10 +7036,10 @@ The widget shows a small copy of the field and a level meter. The meter shows th
 #### To use the Field
 
 1. Open an Expression. The Field fills the pane.
-2. Press Play. The particles gather and the plate sounds.
+2. Press Play. The particles gather and the torus sounds.
 3. Select a symbol in the scene's editor in Clip view (§20.1), or draw one with the Form tool.
-4. Sweep the Resonance parameter. Watch the pattern form on the plate.
-5. Give a symbol a voice on the Sound page of the scene's Expression tab (§20.1). Listen to it in the field.
+4. Play a note on the torus. Watch its modes form in the particles.
+5. Give a symbol a voice on the Sound page of the scene's Expression tab (§20.1): a name or a mode. Listen for the part of the sound it carries.
 6. Press Capture to keep the figure as a scene. Save the Expression.
 
 #### Rules
@@ -7024,7 +7051,7 @@ The widget shows a small copy of the field and a level meter. The meter shows th
 
 #### Tips
 
-- To hear a figure before you keep it, press Play and sweep Resonance slowly.
+- To study the modes alone, set Key source to Manual and sweep Resonance slowly.
 - To keep the field quiet while you build, set Sound to Off.
 - To study one symbol, set Lights to Dim and select the symbol.
 - To follow the planets, set Key source to Sky.
@@ -7067,13 +7094,13 @@ hold its value for every scene of the Expression.
 |---|---|---|
 | Material | Colour, Ink, Depth, Medium | What the field is made of: the palette, the marks, the depth, and the medium the particles move through. |
 | Motion | Pointer, Relational, Contacts, Morph, Focus | How the field moves: the pointer's stir, the pulls between symbols, what happens when they touch, the morph and the focus. |
-| Body | Physics, Resonance, Torus | The physics of the particles, the plate that sounds, and the torus. |
+| Body | Physics, Resonance, Torus | The physics of the particles, the study of the modes, and the torus that sounds. |
 | Nara | Nara | Your personal layer over the field. |
 
 Each device is a whole device with every parameter it needs (§20.4 to
 §20.14). Physics, Ink, Pointer and Focus have no on and off: they are always
-part of the field. The torus waits until its owner reaches Expressions, and
-its row says so.
+part of the field. The torus is the body itself, the same one Live plays, and
+its row opens the Torus (§21.2).
 
 #### Parameters
 
@@ -7601,6 +7628,8 @@ The widget shows the two pictures, the four macros and the light. Click the ligh
 
 The Morph device moves the field between two forms along a torus. Use it to make the field breathe, turn and change from one figure to another by a law that you choose.
 
+The torus Morph moves along is M3′'s torus (§22.3): one circle carries the forms, the other the lenses they are read through. Its tube keeps the proportion of M1′'s torus, nine to sixteen. The two forms are a form and one of its changes in M3′: a line that moves, a turn about a matrix axis, another pose, or the reciprocal cut.
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -7611,7 +7640,7 @@ The Morph device moves the field between two forms along a torus. Use it to make
 | Trajectory | Linear · Toroidal Hopf · Vortex spiral · Quantum interference | Toroidal Hopf | The path that the field follows between the forms. |
 | Drive shape | Sine · Triangle · Smooth · Pulse | Sine | The wave that drives the morph. |
 | Law | Theta · Product · Sum · Beat | Theta | How the two torus rates combine into one drive. |
-| Rates | Toroidal 0 to 10 Hz · Poloidal 0 to 10 Hz | 0.8 · 0.35 | The speed round the torus, and the speed round its tube. |
+| Rates | Toroidal 0 to 10 Hz · Poloidal 0 to 10 Hz | 0.8 · 0.35 | The speed through the forms, round the torus, and through the lenses, round its tube. |
 | Phases | Toroidal and Poloidal: −6.28 to 6.28 | 0 · 0 | The start angle of each rate. One handle moves both. |
 | Drive depth and dwell | Depth 0 to 2 · Dwell ratio 0 to 0.9 | 1 · 0 | How far the drive swings, and how long it rests at each form. |
 | Breathing | Amplitude 0 to 5 · Rate 0 to 10 Hz · Depth 0 to 2 | 1.2 · 0.35 · 0.35 | How the torus swells and shrinks with each breath. |
@@ -8075,13 +8104,15 @@ The widget shows the cross-section, the four macros and the light. Click the lig
 
 The Resonance device tunes the plate that the field sounds on. Use it to set the pitch, to sweep the plate through its modes and to watch the pattern form where the plate stands still.
 
+The plate is a study of M2′'s modes: the same modes that bend the torus, laid flat or closed in a chamber so that you can watch them form. Under Torus the torus drives it, through the eight audible roles and four nodes that M2′ reads from it. The other drivers let you study a mode by itself.
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | On | On · Off | On | Turns the plate on. The light shows this state. |
-| Drive frequency | 20 to 4000 Hz | 396 | The tone that drives the plate. |
-| Frequency driver | Manual · Focus · Automation | Manual | Manual uses Drive frequency. Focus uses the Focus device. Automation uses a lane or the sweep. |
+| Drive frequency | 20 to 4000 Hz | 396 | The tone that drives the plate under Manual. |
+| Frequency driver | Torus · Manual · Focus · Automation | Torus | Torus drives the plate with what the torus plays, as M2′ reads it. Manual uses Drive frequency. Focus uses the Focus device. Automation uses a lane or the sweep. |
 | Dominance | 0 to 1 | 1 | How far the plate takes over from the formation springs. 0 is springs only. 1 is plate only. |
 | Q factor | 0.1 to 40 | 4.5 | How sharply the plate rings. A high value rings longer and narrower. |
 | Drive strength and scale | Strength 0 to 6 · Scale 0 to 4 | 1 · 1 | How hard the drive shakes the plate, and the scale of its intensity. |
@@ -8446,6 +8477,22 @@ under it.
 | 3, Spanda | The two pulses, three and three and four and two, and the two helices they drive. Its fourth stage holds the context frames. | Pulse mix, Helix balance, Drive, and the context frame. |
 | 4, Quaternal Logic's frames | Inversion, which is the semitone across the rows; the twelve-fold loop; the 84 modes, each a lens in a context frame; the harmonic frames that lay out the keyboard. | Lens and context frame, Scale mapping (§21.3), Exact-ratio tuning (§21.4) and the keyboard. |
 | 5, the torus | Its measure (R 16/9, r 1), its return in 720°, the half-turn between its sides, and the bridge where its shape becomes vibration. | The surface, the View, and the Body group: Strike, Damping, Modes, Agitation and Body source. The material comes from M2′'s tattvas. |
+
+#### What strikes the Torus
+
+The torus is the only source of sound, so everything that sounds strikes it.
+
+| Strike | Where it lands |
+|---|---|
+| A key | Its point on its helix. |
+| A touch | The point of the surface you touch. |
+| A note in a clip | Its key's point, as the clip plays. |
+| A collision in the field | The point where it happens, when the collision is set to strike (§20.2). |
+| A singlet | When a generation cell is non-dual, its one codon strikes the torus at the codon's place on the ring (§22.8). The form comes back to the body as a new act. |
+
+The surface carries the other two instruments as well. The planets of M2′ bend
+it where they stand, and the form of M3′ sits on it. What you see on the
+torus is the whole body (§16.16).
 
 #### The keyboard
 
@@ -8947,6 +8994,21 @@ Each device here is a part of one of the instruments of the map (§16.16), and i
 
 The Sky shows where the planets stand over your world, now or on any day. Use it to see the sky that you worked under, and to use the planets as sources that move other devices.
 
+#### The Sky as M2′
+
+The Sky is M2′ whole (§16.16). The planets you see are its position 5. It makes
+no sound of its own: what you hear of M2′ is the torus shaped by it, and what
+you see of it on the torus is its modes, the cymatic field.
+
+| Position | What it is in M2′ | Where you work it |
+|---|---|---|
+| 0, the numerical ground | The proportion M2′ rises from: the golden ratio, and the 36 that doubles into 72 as the torus's turn doubles into 720°. | It frames the instrument and has no setting. |
+| 1, the MEF | Six lens systems, each in six conditions. They read the torus's vibration into eight audible roles and four still ones, the nodes. | Lens and context frame, Scale mapping (§21.3), and the eight-and-four reading. |
+| 2, the tattvas | The 36 principles, from awareness down to matter. Their elements are the material the body is made of. | Body source on the Torus and on Resonance (§20.14). |
+| 3, the decans | The 36 faces of the year, doubled to 72, by element, sign and planet. | The Sky's ring of decans. |
+| 4, the vibrational templateure | The store of named sound and mode: the divine names, the mantras, the spiritual and musical maqāmāt, and the Shem. | Scale mapping's source scales, and a symbol's voice (§20.2). |
+| 5, the planets | The planets with their just intervals and the seven centres they reach. Each planet sounds as a voice and bends the torus at its longitude. | The Sky, and Sky modulation (§22.2). |
+
 #### What the Sky holds
 
 The sky is ten bodies and the Earth. The bodies stand where the real planets stand. The Earth is the anchor. It is not an eleventh planet.
@@ -9161,6 +9223,40 @@ The widget shows the planets, with their degrees. Click a planet to open its ass
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a device in the chain of a reading and in the Body section of the Studio.
 
 The M3 clock shows a turning wheel of 360 degrees that lenses can cut in many ways. Use it to read where a moment stands on the wheel, and to open the wheel to see what it is made of.
+
+#### The M3 clock as M3′
+
+The M3 clock is M3′ whole (§16.16). The wheel is its position 5, and the
+reception of the sky into form is its position 0. Its four working parts stand
+in its rack under it. Each position hands its result to the next, and the
+wheel hands the whole back to the reception as new ground.
+
+| Position | What it is in M3′ | Where you work it |
+|---|---|---|
+| 0, the reception | Where vibration becomes form. M2′'s 72 positions fall into M3′'s 64 by nine to eight, element by element; eight of them land together, and nine do not close. The whole 137 = 64 + 72 + 1 is received here. | Binding's nonets (§22.8), and the reading the clock takes before it draws. |
+| 1, the I Ching | The grammar of change: 8 trigrams, 64 hexagrams, and the line that moves. Each hexagram has six neighbours, one line away. | The Deck's I Ching (§22.4), the Hexagram readout, and a line change on the form. |
+| 2, the genetic code | The matter of form. Each base is a polarity and a mobility: A is Water, T Fire, C Earth, G Air. Four bases make 16 pairs and 64 codons; three matrices pair them, each turning the form about its own axis; each codon carries four charges. | The Form matrix (§22.6), the Codon readout, and Binding's junctions and charges. |
+| 3, the transcription engine | The archive becoming expression. Each matrix gives 64 generation cells, 192 in all, dual or non-dual. Each codon takes one of its 7 or 8 poses. DNA becomes RNA, RNA becomes amino acids, and the chromosomes carry them. | Matrix, Seed, Pose map and the Generation readout; Binding's Pairing. |
+| 4, the Tarot | The forms as story. 56 Minor Arcana cover the 64 codons, four suits on four quarters of the wheel; the 22 Major Arcana govern them; 8 places stay open so the wheel never closes. | The Deck's Tarot, with the card of the current form and its orientation. |
+| 5, the wheel | Everything above on one wheel of 360 degrees that returns in 720. It has 24 anchors, the axis at its centre, 16 apertures and the Fibonacci ground. | Position, Turn, Aperture, Reciprocal and Open. The Resonator bank sounds the cut (§22.7). |
+
+#### The living form
+
+The current form stands at the eye of the wheel as a body, not a picture. It
+has three folds, one for each base of its codon, and each fold has a polarity
+and a mobility. Move a line and one fold turns. Change the matrix and the form
+turns about that matrix's axis. Change the pose and it takes another of its 7
+or 8 orientations. The form is the codon, the hexagram, the card, its charges
+and its place on the wheel at once, so any of them can be read from it. The
+same form sits on the torus of M1′ and gives a symbol its shape in an
+Expression (§20.2).
+
+#### Two tori
+
+The wheel has two circles: the inscription circle, which carries what is
+written, and the lensing circle, which carries how it is read. Together they
+make a torus of M3′'s own. The world clock is that torus with the torus of M1′.
+Morph moves an Expression's field along M3′'s torus (§20.9).
 
 #### What the wheel holds
 
@@ -9746,11 +9842,13 @@ The widget shows the small circle with its cut. Click it to open the bank in the
 
 You need to see which codons a matrix holds together, and how strongly. Binding draws the charge-bearing units of M3 as colour charges, bound by strings. It runs its own physics over the kernel's symbols. It claims no measured constant.
 
+Binding is M3′'s view of form as charge (§22.3). Its junctions are the codons of position 2, with their three folds as three sites and their four charges. Its pairing is a matrix of position 3. Its nonets are the reception of position 0.
+
 #### What Binding draws
 
 A codon is a three-way junction. Its three sites sit on three arms, 120° apart. The positive codon's sites are coloured red, green and blue; the negative codon's take the anticolours. The junction turns by its leading pair: the pair's place among the sixteen, times 22.5°.
 
-The matrix pairs the codons. At the form's hexagram, the matrix's generation cell gives a positive and a negative codon (§22.3). Binding ties the two by a string, as a meson. When the cell is non-dual, the two are one codon: a singlet, handed to the torus.
+The matrix pairs the codons. At the form's hexagram, the matrix's generation cell gives a positive and a negative codon (§22.3). Binding ties the two by a string, as a meson. When the cell is non-dual, the two are one codon: a singlet, handed to the torus. The singlet strikes the torus at its codon's place on the ring (§21.2).
 
 Nonets show nine M2 positions resolving into eight M3 positions. Two of the nine land on one place. Whether that collision is the singlet handed to the torus is for the instrument to test, so Binding draws the two and does not join them.
 
