@@ -137,7 +137,10 @@ test('a reroll is a BodySet with a new seed named from the record; the settings 
   const sent = owner.writes[0].body
   assert.equal(sent.seed, body.nextSeed(RECORD, 67))
   assert.notEqual(sent.seed, RECORD.seed)
-  for (const key of ['body_ref', 'generator', 'landmass', 'climate', 'sky']) assert.deepEqual(sent[key], RECORD[key], `${key} stays`)
+  for (const key of ['body_ref', 'landmass', 'climate', 'sky']) assert.deepEqual(sent[key], RECORD[key], `${key} stays`)
+  // [T-PROCEDURAL-BODY §2: "a body built by version 1 keeps drawing as version 1, byte for byte; its next change (any dial, a reroll) rebuilds it as
+  // version 2"] the fixture's body was built by generator 1: the change that writes it again names the current generator
+  assert.deepEqual(sent.generator, {id: 'fbm-sphere', version: body.WORLD_BODY_GENERATOR_VERSION}, 'the generator is the current one: the change rebuilds an older body')
 })
 
 test('values outside their ranges are refused by name and never sent; a stale reading is the owner\'s refusal, verbatim', async () => {
