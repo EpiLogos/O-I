@@ -1,12 +1,12 @@
 // T-PROCEDURAL-BODY §6 item 4 (Lane B, the system) — the places on a body, audited sentence by sentence against the manual (DLW.md §17.2:
 // "The five scales", "Build a planet", "Your system", the Rules, "To use the World"). One test for each sentence that concerns a location.
-// Each test says, in the comment above it, what the code does today (file:line) and carries one of two marks:
-//   MET     the code does what the sentence says; the test is green now and goes red if the code stops
-//   NOT MET the code does not; the test describes what the manual says, is red now, and carries the gate (`pending`) until the lane lands it
-// Where a not-met sentence cannot be implemented inside the system lane's zone, the test says which name outside it is needed (the lead rules).
+// Each test says, in the comment above it, what the code did when the audit was made (file:line) and carries one of two marks:
+//   MET     the code did what the sentence says; the test goes red if the code stops
+//   NOT MET the code did not; the test describes what the manual says and was red until the lane landed it
+// Two sentences no owner can take (a portal, a route) are carried out of the ticket: their tests hold the refusal in words that names the owner.
 //
 // The sentences, and where the code stands (the audit; the lead's return carries the same table):
-//    1 "Click the body to place a place, a palace, a portal or a route."        place, palace MET · portal, route NOT MET (placeTool.ts:120-148)
+//    1 "Click the body to place a place, a palace, a portal or a route."        place, palace MET · portal and route: no owner can take them (1b, 1c): refused in words, carried
 //    2 "The World suggests a name from the seed. Keep it or type your own."      MET (placeTool.ts:170, body.ts:278 suggestName)
 //    3 "Reroll … every location keeps its name and the position you gave it."    MET (worldBody.ts:155 changedBody; bodyLocations.ts rows come from the owners' places)
 //    4 "Where that spot is now sea, the World draws the location on the nearest  MET (systemOverlay.ts:42-47 drawnLocations; :158-160 the mark's words)
@@ -123,12 +123,8 @@ const {applyPlaceDraft} = await import('../../../../desktop/cradle/src/knowledge
 const {createDisclosureSessionStore} = await import('../../../../desktop/cradle/src/techne/session.ts')
 const {groundSelection} = await import('../../../../desktop/cradle/src/techne/m0m5/reading.ts')
 const {provingReading} = await import('../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts')
-const optional = path => import(path).catch(error => ({absent: error instanceof Error ? error.message : String(error)}))
-const entered = await optional('../src/projections/atlas/system/enteredWorld.ts')
-const drawMod = await optional('../src/projections/atlas/system/bodyDraw.ts')
-
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until the system lane lands'}
+const entered = await import('../src/projections/atlas/system/enteredWorld.ts')
+const drawMod = await import('../src/projections/atlas/system/bodyDraw.ts')
 
 // ── fixtures ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -150,6 +146,7 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 const place = (ref, extra = {}) => ({ref, name: ref.split(':').pop(), kind: 'declared', owner: 'wiki', source: 'wiki facts', located: true, precision: 'exact', lat: 37.9, lon: 23.7, reason: null, ...extra})
 /** A place a subject declares on YOUR body: never on the Earth (suiteReading.ts locateOnBody), its point on its own body. */
 const onYourBody = (ref, lat, lon, extra = {}) => place(ref, {located: false, precision: 'approximate', reason: 'the owner places it on another body', lat: undefined, lon: undefined, body_ref: RECORD.body_ref, on_body: {lat, lon}, ...extra})
+const setBodies = bodies => systemStore.publishSystem({state: 'read', bodies, set: null})
 const stateOf = (record = RECORD) => ({state: 'read', reading: readingOf(YOURS.ref, record, 67), record})
 
 let owner, calls, cleanup = []
@@ -186,28 +183,49 @@ test('1a · a click on your body places a place or a palace: a draft on your bod
   }
 })
 
-// NOT MET (placeTool.ts:126 PLACE_KIND_WAITS.portal: "A portal leads through to another world: no owner opens one yet").
-// NEEDS a name outside the zone: an owner that holds a portal (a place that leads to another world's body); the lead rules whether the
-// owner builds it or the manual sentence changes.
-test('1b · a click places a portal: the tool arms for the Portal kind and offers a draft that says it is a portal', pending, () => {
+// A portal: no owner. A portal leads through to another world, and visiting another world belongs to the owner of the shared field's
+// federation (the Aperture "Federated", manual §17.2), which does not exist yet (placeTool.ts:126). So choosing Portal refuses the click, says
+// why and names what it waits for. CARRIED out of T-PROCEDURAL-BODY: it needs the visiting owner.
+test('1b · a portal is not placed by a click: choosing Portal refuses it, says why and names the owner it waits for', () => {
   tool.bindPlaceOwner(owner)
   tool.choosePlaceKind('portal')
   tool.armPlaceTool(SUBJECT)
-  assert.equal(tool.placeToolState().phase, 'armed', `a portal is placed by a click (manual §17.2); the tool says instead: ${JSON.stringify(tool.placeToolState().notice)}`)
+  const state = tool.placeToolState()
+  assert.equal(state.phase, 'idle', 'the tool does not arm')
+  assert.equal(state.tone, 'refused')
+  assert.match(state.notice, /portal/i, 'it names what it refuses')
+  assert.match(state.notice, /another world/i, 'and what a portal is')
+  assert.match(state.notice, /visit/i, 'and the owner it waits for: the owner of visiting another world…')
+  assert.match(state.notice, /federation|shared field/i, '…the shared field\'s federation')
   tool.placeAt({lat: 22, lon: 10}, ON_YOURS)
-  assert.equal(calls[0]?.[2]?.kind, 'portal', 'the draft carries the kind of place it is')
+  assert.deepEqual(calls, [], 'a click offers nothing to anyone: no draft, no write')
 })
 
-// NOT MET (placeTool.ts:127 PLACE_KIND_WAITS.route: "A route is the walk of a subject's TRAVELLED_TO places, each declared as a place: place
-// its stops one by one"). A route stop is a place with the movement relation (techne/m0m5/place/world.ts:58 MOVEMENT_RELATION), and the
-// draft the editor takes (knowledge/WikiFactsEditor.tsx:21 MapPlaceDraft) has no relation field: NEEDS that name outside the zone.
-test('1c · a click places a stop of a route: the draft is marked with the movement relation, so the stops join in the order they are placed', pending, () => {
+// A route: the owner's place facet cannot express it. AIKit's PlaceFacet (ai-kit crates/aikit-core/src/knowledge_facets.rs:214-243) has place_ref,
+// identity, geometry, precision, hierarchy, valid_from, valid_to, observer_frame, uncertainty, source_ref and body_ref: no relation and no
+// sequence. TechnePlaceFacet.relation (techne/contract.ts:256) is the suite's reading of the subject's TRAVELLED_TO relation to the place, and
+// routeModel (techne/m0m5/place/world.ts:106-150) orders a route by the stops' own validity dates, "since the contract carries no sequence
+// field"; the editor's draft (knowledge/WikiFactsEditor.tsx:21 MapPlaceDraft) has no relation either. So a click can place a stop as a place and
+// cannot make it one of a route: the relation is the Wiki's to record. Choosing Route refuses the click, says why and names that owner. CARRIED
+// out of T-PROCEDURAL-BODY: a route needs a place facet or a route owner that carries order.
+test('1c · a route is not placed by a click: choosing Route refuses it, says the owner\'s place carries no relation or order, and names where the relation is made', () => {
   tool.bindPlaceOwner(owner)
   tool.choosePlaceKind('route')
   tool.armPlaceTool(SUBJECT)
-  assert.equal(tool.placeToolState().phase, 'armed', `a route is placed by a click (manual §17.2); the tool says instead: ${JSON.stringify(tool.placeToolState().notice)}`)
+  const state = tool.placeToolState()
+  assert.equal(state.phase, 'idle', 'the tool does not arm')
+  assert.equal(state.tone, 'refused')
+  assert.match(state.notice, /route/i)
+  assert.match(state.notice, /TRAVELLED_TO/, 'it names the relation a route is made of')
+  assert.match(state.notice, /no relation|carries no/i, 'and why a click cannot make it: the place carries none')
+  assert.match(state.notice, /Wiki/, 'and the owner that records the relation')
   tool.placeAt({lat: 22, lon: 10}, ON_YOURS)
-  assert.equal(calls[0]?.[2]?.relation, 'TRAVELLED_TO', 'a stop of a walk carries the movement relation')
+  assert.deepEqual(calls, [], 'a click offers nothing to anyone')
+  // the evidence, from what the shell holds: a click's draft has no field to carry the relation or an order
+  tool.choosePlaceKind('place')
+  const made = tool.draftAt(SUBJECT, 22, 10, ON_YOURS)
+  assert.equal(made.ok, true)
+  assert.ok(!('relation' in made.draft) && !('sequence' in made.draft) && !('order' in made.draft), `the draft carries no relation or order: ${Object.keys(made.draft)}`)
 })
 
 // ── 2 · The World suggests a name from the seed. Keep it or type your own. ──────────────────────────────────────────────────────
@@ -268,7 +286,7 @@ test('4a · where a location\'s spot is now sea it is drawn at the nearest shore
   assert.deepEqual([dry.shore, dry.lat, dry.lon], [false, lat, lon], 'on the body it was placed on, at its own point')
 })
 
-function overlayHarness({record, sky = false} = {}) {
+function overlayHarness({record, sky = false, press, follow} = {}) {
   const parent = new FakeEl('div')
   const frames = []
   const handle = {
@@ -276,7 +294,7 @@ function overlayHarness({record, sky = false} = {}) {
       project(_dir, screen) { screen.x = 100; screen.y = 100; screen.facing = 1 }, globeDisc(disc) { disc.x = 400; disc.y = 300; disc.r = 120 }},
     ctl: {state: {sky, graph: false}},
   }
-  const binding = overlay.bindSystemOverlay({handle, said() {}})
+  const binding = overlay.bindSystemOverlay({handle, said() {}, ...(press ? {press} : {}), ...(follow ? {follow} : {})})
   later(binding.dispose)
   return {handle, parent, frames, frame: () => frames.forEach(fn => fn(0.016))}
 }
@@ -307,7 +325,7 @@ test('4b · the mark of a location drawn on a shore says so, in its words and it
 
 // NOT MET (placesHost.ts:66-68 framingDistance: exact 2.25, every other precision 2.6, so an approximate place and a region end at the
 // same distance). The manual has three: a street, a city, the whole region.
-test('5 · the flight to a place ends nearer for a more exact one: exact (a street) < approximate (a city) < region (the whole region)', pending, () => {
+test('5 · the flight to a place ends nearer for a more exact one: exact (a street) < approximate (a city) < region (the whole region)', () => {
   const exact = host.framingDistance('exact'), approximate = host.framingDistance('approximate'), region = host.framingDistance('region')
   assert.ok(exact < approximate && approximate < region, `three precisions, three framings, nearest for the most exact (got ${exact}, ${approximate}, ${region})`)
   assert.ok(Math.max(exact, approximate, region) <= placesModel.REGION_DISTANCE, 'a flight to a place never ends further than the Region scale')
@@ -347,22 +365,38 @@ const atlasHandle = ({sky = false, graph = false} = {}) => {
 }
 
 // NOT MET from the sky or the Graph (placesHost.ts:93: `if (handle.ctl.state.sky || handle.ctl.state.graph) return false`, "where the camera
-// does not orbit the Earth"). From the ground view it flies.
-test('8a · a place is flown to from the ground, the sky lens and the Graph alike', pending, () => {
+// does not orbit the Earth"). From the ground view it flies. From the sky or the Graph the atlas returns to the Earth first (the controller's own
+// way: navigate to the plain world view, controller.ts descendFromSky; toggleMode out of the Graph), and the flight follows once it has landed:
+// the descent owns the camera while it runs (controller.ts:2165). The settle is a timer under the atlas lifetime, given here as a fake.
+// UNVERIFIED headless: the descent and the flight are the controller's, seen on screen.
+test('8a · a place is flown to from the ground, the sky lens and the Graph alike: from the sky or the Graph the atlas returns to the Earth first, and the flight follows its landing', () => {
   const spot = place('wiki:place:athens', {lat: 37.9, lon: 23.7})
+  const timers = []
+  const later = (run, ms) => { timers.push({run, ms}); return () => {} }
+  const flights = handle => handle.log.filter(entry => entry[0] === 'flyTo')
   const ground = atlasHandle()
-  assert.equal(host.turnAtlasTo(ground, spot), true)
-  assert.deepEqual(ground.log.find(entry => entry[0] === 'flyTo'), ['flyTo', 37.9, 23.7, host.framingDistance('exact')], 'from the ground it flies')
-  for (const view of [{sky: true}, {graph: true}]) {
-    const handle = atlasHandle(view)
-    assert.equal(host.turnAtlasTo(handle, spot), true, `from ${Object.keys(view)[0]}: "fly to a place from anywhere" — it said it could not`)
-    assert.ok(handle.log.some(entry => entry[0] === 'flyTo' && entry[1] === 37.9 && entry[2] === 23.7), `from ${Object.keys(view)[0]}: the flight goes to the point`)
-  }
+  assert.equal(host.turnAtlasTo(ground, spot, later), true)
+  assert.deepEqual(flights(ground), [['flyTo', 37.9, 23.7, host.framingDistance('exact')]], 'from the ground it flies at once')
+  assert.deepEqual(timers, [], 'with nothing to wait for')
+  const sky = atlasHandle({sky: true})
+  assert.equal(host.turnAtlasTo(sky, spot, later), true, 'from the sky: "fly to a place from anywhere" — it said it could not')
+  assert.deepEqual(sky.log.filter(entry => entry[0] === 'navigate').map(entry => entry[1]), [{view: {kind: 'world'}, deep: false}], 'the atlas returns to the Earth, the controller\'s plain world view')
+  assert.deepEqual(flights(sky), [], 'the descent owns the camera while it runs: no flight yet')
+  assert.equal(timers.length, 1)
+  assert.ok(timers[0].ms >= 1000, 'the flight waits for the landing')
+  timers[0].run()
+  assert.deepEqual(flights(sky), [['flyTo', 37.9, 23.7, host.framingDistance('exact')]], 'then it flies to the point')
+  const graph = atlasHandle({graph: true})
+  assert.equal(host.turnAtlasTo(graph, spot, later), true, 'from the Graph')
+  assert.ok(graph.log.some(entry => entry[0] === 'toggleMode'), 'the atlas returns to the Earth by the controller\'s own switch')
+  assert.deepEqual(flights(graph), [])
+  timers[1].run()
+  assert.deepEqual(flights(graph), [['flyTo', 37.9, 23.7, host.framingDistance('exact')]])
 })
 
 // NOT MET to a place on your own body: such a place is `located: false` on the Earth with its point in `on_body` (suiteReading.ts
 // locateOnBody), and turnToPlace reads only the Earth's point (placesHost.ts:72-75).
-test('8b · a place on your own body is flown to on your body, at the framing its precision gives; it is not on the Earth', pending, () => {
+test('8b · a place on your own body is flown to on your body, at the framing its precision gives; it is not on the Earth', () => {
   const study = onYourBody('wiki:place:study', 22, 10)
   assert.deepEqual(host.turnToPlace(study, [], ON_YOURS), {kind: 'fly', lat: 22, lon: 10, dist: host.framingDistance('approximate')}, 'with your body shown, its place is a position')
   assert.equal(host.turnToPlace(study, []), null, 'with the Earth shown it has no point to fly to: it stands on another body')
@@ -374,7 +408,7 @@ test('8b · a place on your own body is flown to on your body, at the framing it
 // NOT MET on your body. On the Earth a place is selected as the subject the Earth draws there (placesHost.ts:73-79 turnToPlace 'select'); the
 // marks of your own body are role=img with no press (systemOverlay.ts:158-162). Selecting is the shared spatial focus every instrument
 // follows (techne/session.ts:219 setSpatialFocus; Follow keeps other panes with the place you select).
-test('9 · selecting a location of your body makes it the shared focus; with no session standing it says so and throws nothing', pending, () => {
+test('9 · selecting a location of your body makes it the shared focus; with no session standing it says so and throws nothing', () => {
   assert.equal(typeof host.selectLocation, 'function', 'places/placesHost.ts exports selectLocation(session, location) — not written yet')
   const session = createDisclosureSessionStore()
   session.setSelection(groundSelection(provingReading(), 'timeline'))
@@ -386,19 +420,41 @@ test('9 · selecting a location of your body makes it the shared focus; with no 
   assert.match(refusal, /session|selected|open/i)
 })
 
+// NOT MET: the marks of your body are role=img with no press (systemOverlay.ts:158-162). A press on a location's mark is the person's act: the
+// overlay hands the location to what the atlas binds (selecting a declared place, entering a landed world).
+test('9b · pressing a location\'s mark on your body hands that location to the press, a landed world\'s mark too', async () => {
+  const landed = {...RECORD, body_ref: 'body:central:wiki:project:O-I', seed: 11, landing: {on_ref: RECORD.body_ref, lat: -20, lon: 100}}
+  setBodies(systemOf({bodies: new Map([[YOURS.ref, read(YOURS.ref, RECORD, 67)], [OI.ref, read(OI.ref, landed, 9)]])}))
+  const pressed = []
+  const {parent} = await bodyWithPlaces(RECORD, [onYourBody('wiki:place:study', 22, 10, {name: 'The study'})], {press: location => pressed.push(location.id)})
+  const [study, oi] = marks(parent)
+  assert.ok(study && oi, 'the place and the landed world both have a mark')
+  assert.equal(typeof study.listeners.click?.[0], 'function', 'a mark is pressed')
+  study.listeners.click[0]()
+  oi.listeners.click[0]()
+  assert.deepEqual(pressed, ['wiki:place:study', `world:${OI.ref}`])
+})
+
+test('9c · a press selects a declared place and enters a landed world, and says the refusal of either in its words', () => {
+  assert.equal(typeof locations.pressLocation, 'function', 'system/bodyLocations.ts exports pressLocation(location, ports)')
+  const log = []
+  const ports = {select: location => { log.push(['select', location.id]); return null }, enter: key => { log.push(['enter', key]); return null }}
+  assert.equal(locations.pressLocation({id: 'wiki:place:study', name: 'The study', lat: 22, lon: 10, kind: 'place', precision: 'approximate'}, ports), null)
+  assert.equal(locations.pressLocation({id: `world:${OI.ref}`, name: 'O-I', lat: 1, lon: 2, kind: 'place', written: true}, ports), null)
+  assert.deepEqual(log, [['select', 'wiki:place:study'], ['enter', `world:${OI.ref}`]])
+  assert.equal(locations.pressLocation({id: 'wiki:place:study', name: 'The study', lat: 22, lon: 10, kind: 'place'}, {...ports, select: () => 'No session is open.'}), 'No session is open.')
+  assert.equal(locations.pressLocation({id: `world:${OI.ref}`, name: 'O-I', lat: 1, lon: 2, kind: 'place', written: false}, {...ports, enter: () => 'O-I’s body is not read.'}), 'O-I’s body is not read.')
+})
+
 // ── 10 · Enter the place and you are on that world ────────────────────────────────────────────────────────────────────────────────
 
-const enteredLib = () => {
-  assert.ok(!('absent' in entered) && typeof entered.enterWorld === 'function' && typeof entered.leaveWorld === 'function' && typeof entered.enteredWorld === 'function',
-    `system/enteredWorld.ts exports enterWorld(key), leaveWorld(), enteredWorld() — not written yet (${'absent' in entered ? entered.absent : 'an export is missing'})`)
-  return entered
-}
+const enteredLib = () => entered
 
 // NOT MET: a landed world is a location on your planet (systemModel.ts:195 landingLocations) and a disc in the sky, and pressing either
 // opens nothing. "Enter the place and you are on that world": the body the World shows becomes that world's (the Body choice "another
 // world", worldBody.ts:21 BodyChoice 'other'), read-only (worldBody.ts:44 READ_ONLY). The view's own choice, held in system/enteredWorld.ts,
 // and drawn by the body drawer (system/bodyDraw.ts) from the system's reading of that world.
-test('10 · entering a landed world makes its body the one the World shows, read-only; a world not read or not in today\'s set is refused in words; leaving returns to yours', pending, async () => {
+test('10 · entering a landed world makes its body the one the World shows, read-only; a world not read or not in today\'s set is refused in words; leaving returns to yours', async () => {
   const {enterWorld, leaveWorld, enteredWorld} = enteredLib()
   assert.equal(typeof drawMod.bindBodyDraw, 'function', 'system/bodyDraw.ts exports bindBodyDraw (see w3q-sys-wiring)')
   const oiRecord = {...RECORD, body_ref: 'body:central:wiki:project:O-I', seed: 777, landing: {on_ref: RECORD.body_ref, lat: 12.5, lon: -40.25}}
@@ -441,7 +497,7 @@ test('11a · on the Earth a mythic place is drawn with its own ring (aLocus) and
 
 // NOT MET on your own body: yourLocations drops the relation (bodyLocations.ts:31-32 rows are {id, name, lat, lon, kind}), and the mark is
 // a plain dot like any other (systemOverlay.ts:158-160).
-test('11b · on your body a mythic place carries its locus and its mark looks mythic; a factual place does not take that look', pending, async () => {
+test('11b · on your body a mythic place carries its locus and its mark looks mythic; a factual place does not take that look', async () => {
   const places = [onYourBody('wiki:place:eleusis', 22, 10, {name: 'Eleusis', relation: 'MYTH_LOCATED_AT'}), onYourBody('wiki:place:athens', -20, 100, {name: 'Athens', relation: 'OCCURRED_AT'})]
   const {rows} = locations.yourLocations(stateOf(), places, true, null)
   assert.deepEqual(rows.map(row => [row.name, row.locus]), [['Eleusis', 'myth-episode'], ['Athens', 'historical-event']], 'each row carries the locus the atlas reads its relation as (provider/suiteReading.ts locusOfRelation)')
@@ -476,7 +532,7 @@ test('12 · your body\'s locations stand at their names on the ground views and 
 // NOT MET: no line, no model (PATH W3b "Open: Earth's places drawn over your body"). A location on your body is anchored to Earth where
 // the subject that declares it also declares a place on the Earth (the same subject_ref, a located place with no body_ref): the one pair
 // the owners' places already give. The anchor is read, never written; following it chooses the Earth and flies to its place.
-test('13a · a location on your body is anchored to the real place its subject also stands at on Earth: an anchor line from the one to the other', pending, () => {
+test('13a · a location on your body is anchored to the real place its subject also stands at on Earth: an anchor line from the one to the other', () => {
   assert.equal(typeof locations.anchorsOf, 'function', 'system/bodyLocations.ts exports anchorsOf(places, bodyRef) — not written yet')
   const places = [
     onYourBody('wiki:place:study-here', 22, 10, {name: 'The study', subject_ref: 'wiki:node:plato'}),
@@ -490,12 +546,30 @@ test('13a · a location on your body is anchored to the real place its subject a
   assert.deepEqual(locations.anchorsOf(places, 'body:someone-else'), [], 'a line is for the body it stands on')
 })
 
-test('13b · following an anchor line chooses the Earth and flies to its place, framed for that place\'s precision', pending, () => {
+test('13b · following an anchor line chooses the Earth and flies to its place, framed for that place\'s precision', () => {
   assert.equal(typeof locations.followAnchor, 'function', 'system/bodyLocations.ts exports followAnchor(anchor, ports) — not written yet')
   const done = []
   const anchor = {location: 'wiki:place:study-here', from: {lat: 22, lon: 10}, to: {ref: 'wiki:place:athens', name: 'Athens', lat: 37.9, lon: 23.7, precision: 'exact'}}
   locations.followAnchor(anchor, {chooseBody: choice => done.push(['choose', choice]), flyTo: (lat, lon, dist) => done.push(['fly', lat, lon, dist])})
   assert.deepEqual(done, [['choose', 'earth'], ['fly', 37.9, 23.7, host.framingDistance('exact')]], 'the Earth first, then the flight')
+})
+
+// The anchor line stands by its location: a short dashed stub to the Earth's place it is anchored to, named, and pressing it follows it.
+test('13c · a location anchored to Earth shows its anchor line, named by the real place, and pressing it follows the anchor', async () => {
+  const followed = []
+  const places = [
+    onYourBody('wiki:place:study-here', 22, 10, {name: 'The study', subject_ref: 'wiki:node:plato'}),
+    place('wiki:place:athens', {name: 'Athens', lat: 37.9, lon: 23.7, subject_ref: 'wiki:node:plato'}),
+    onYourBody('wiki:place:orphan', 5, 5, {name: 'Orphan', subject_ref: 'wiki:node:nobody'}),
+  ]
+  const {parent} = await bodyWithPlaces(RECORD, places, {follow: anchor => followed.push(anchor)})
+  const [study, orphan] = marks(parent)
+  const lineOf = mark => mark.all().find(node => /\bsys-anchor\b/.test(node.className))
+  assert.ok(lineOf(study), 'the anchored location has its line')
+  assert.match(lineOf(study).words(), /Athens/, 'named by the real place it runs to')
+  assert.equal(lineOf(orphan), undefined, 'a location with no real place has none')
+  lineOf(study).listeners.click[0]({stopPropagation() {}})
+  assert.deepEqual(followed.map(anchor => anchor.to.ref), ['wiki:place:athens'])
 })
 
 // ── 14 · A place keeps the precision that its source states; an approximate place does not look exact ───────────────────────────
@@ -507,7 +581,7 @@ test('14a · on the Earth each place keeps the precision its owner states and th
   assert.deepEqual(rows.map(row => [row.precision, row.marker]), [['exact', 'solid'], ['approximate', 'halo'], ['region', 'outline']])
 })
 
-test('14b · on your body a place keeps its stated precision and its mark is the grammar\'s: an approximate place is a halo, not a solid fix', pending, async () => {
+test('14b · on your body a place keeps its stated precision and its mark is the grammar\'s: an approximate place is a halo, not a solid fix', async () => {
   const places = [onYourBody('wiki:place:study', 22, 10, {name: 'The study', precision: 'approximate'}), onYourBody('wiki:place:gate', -35, 120, {name: 'The gate', precision: 'exact'})]
   const {rows} = locations.yourLocations(stateOf(), places, true, null)
   assert.deepEqual(rows.map(row => row.precision), ['approximate', 'exact'], 'each row carries the precision its owner states, verbatim')
@@ -539,7 +613,7 @@ test('15 · a click claims no more than approximate; a move keeps the precision 
 
 // NOT MET on your body (bodyLocations.ts:25 yourLocations takes no window; the plate's WindowLine and the Earth's presences follow it). A
 // place is valid in a window where its validity (valid_from … valid_to, either edge open) overlaps it; one that declares none is always valid.
-test('16 · your body shows only the places valid in the window of the occasion; a place with no validity is always valid; no window shows all', pending, () => {
+test('16 · your body shows only the places valid in the window of the occasion; a place with no validity is always valid; no window shows all', () => {
   const places = [
     onYourBody('wiki:place:old', 1, 1, {name: 'Old', valid_from: '1800-01-01T00:00:00Z', valid_to: '1850-01-01T00:00:00Z'}),
     onYourBody('wiki:place:then', 2, 2, {name: 'Then', valid_from: '1900-01-01T00:00:00Z', valid_to: '1950-01-01T00:00:00Z'}),
@@ -554,6 +628,20 @@ test('16 · your body shows only the places valid in the window of the occasion;
   assert.deepEqual(names({from: null, to: '1820-01-01T00:00:00Z'}), ['Old', 'Always'], 'and everything before its end')
 })
 
+test('16b · the marks on your body follow the shared window: a place not valid in it loses its mark, and returns with all time', async () => {
+  const store = createDisclosureSessionStore()
+  store.setSelection(groundSelection(provingReading(), 'timeline'))
+  later(drawMod.bindBodyDraw({engine: {}, store}).dispose)
+  const places = [onYourBody('wiki:place:old', 1, 1, {name: 'Old', valid_from: '1800-01-01T00:00:00Z', valid_to: '1850-01-01T00:00:00Z'}), onYourBody('wiki:place:always', 4, 4, {name: 'Always'})]
+  const {parent} = await bodyWithPlaces(RECORD, places)
+  const names = () => marks(parent).map(mark => mark.words().split(' · ')[0])
+  assert.deepEqual(names(), ['Old', 'Always'], 'all time: every place')
+  store.setTimeWindow({from: '1920-01-01T00:00:00Z', to: '1925-01-01T00:00:00Z'})
+  assert.deepEqual(names(), ['Always'], 'a window in 1920–25: only what was valid then')
+  store.setTimeWindow(null)
+  assert.deepEqual(names(), ['Old', 'Always'], 'Tap returns the occasion to now: all of them again')
+})
+
 // ── 17 · Every world you start lands as a place on your planet ────────────────────────────────────────────────────────────────────
 
 // NOT MET: a world lands only when the person presses Land and clicks (SystemReadings.tsx:61 landWorld one BodySet; places/PlacesPlate.tsx
@@ -561,7 +649,7 @@ test('16 · your body shows only the places valid in the window of the occasion;
 // notice. The reading that gives it is the model's own and the same shape as the body seeded from its ref (body/worldBody.ts firstBody):
 // a world whose body is read but carries no landing is drawn at a point its ref gives, said not to be written; a written landing is the
 // owner's and stands verbatim; a world whose body is not read claims no place (no reading, no claim).
-test('17 · every world of today\'s set lands as a place on your planet: at its owner\'s landing where one is written, else at a point its ref gives, said unwritten; a world not read claims none', pending, () => {
+test('17 · every world of today\'s set lands as a place on your planet: at its owner\'s landing where one is written, else at a point its ref gives, said unwritten; a world not read claims none', () => {
   const MARA = {ref: 'central:wiki:project:Mara', name: 'Mara', kind: 'project', folder: 'Work/Mara/ProjectCentral/user', project: 'Mara'}
   const landed = {...RECORD, body_ref: 'body:central:wiki:project:O-I', seed: 11, landing: {on_ref: RECORD.body_ref, lat: 12.5, lon: -40.25}}
   const ELSEWHERE = {ref: 'central:wiki:project:Elsewhere', name: 'Elsewhere', kind: 'project', folder: 'Work/Elsewhere/ProjectCentral/user', project: 'Elsewhere'}
@@ -578,6 +666,16 @@ test('17 · every world of today\'s set lands as a place on your planet: at its 
   assert.deepEqual(rows.map(row => row.kind), ['place', 'place'])
 })
 
+test('17b · a world that stands where its ref puts it says so on its mark: it is not landed until you land it', async () => {
+  setBodies(systemOf({bodies: new Map([[YOURS.ref, read(YOURS.ref, RECORD, 67)], [BOOK.ref, read(BOOK.ref, null, 2)]])}))
+  const {parent} = await bodyWithPlaces(RECORD, [])
+  const book = marks(parent).find(mark => /Book/.test(mark.words()))
+  assert.ok(book, 'the world has its mark on your planet')
+  assert.match(book.words(), /Book · not landed yet/, 'and says it is not landed yet')
+  assert.match(book.getAttribute('aria-label'), /until you land it/, 'its label says it stands where its ref puts it until the person lands it')
+  assert.match(book.className, /\bis-unwritten\b/)
+})
+
 // ── 18 · Every walk you take wears a path between places ──────────────────────────────────────────────────────────────────────────
 
 // MET on the Earth (placesModel.ts:159-166 routeRows: a subject's TRAVELLED_TO places the Earth can place, a walk needing two; globe/arcs.ts
@@ -587,7 +685,7 @@ test('18a · on the Earth a subject\'s walk is its TRAVELLED_TO places the Earth
   assert.deepEqual(placesModel.routeRows(stops), [{subject_ref: 'wiki:node:plato', stops: 2, walkable: true}, {subject_ref: 'wiki:node:solon', stops: 1, walkable: false}])
 })
 
-test('18b · on your body a subject\'s walk is its TRAVELLED_TO places on that body, and needs two, as on the Earth', pending, () => {
+test('18b · on your body a subject\'s walk is its TRAVELLED_TO places on that body, and needs two, as on the Earth', () => {
   const stops = [
     onYourBody('wiki:place:a', 1, 1, {relation: 'TRAVELLED_TO', subject_ref: 'wiki:node:plato'}), onYourBody('wiki:place:b', 2, 2, {relation: 'TRAVELLED_TO', subject_ref: 'wiki:node:plato'}),
     onYourBody('wiki:place:c', 3, 3, {relation: 'TRAVELLED_TO', subject_ref: 'wiki:node:solon'}),

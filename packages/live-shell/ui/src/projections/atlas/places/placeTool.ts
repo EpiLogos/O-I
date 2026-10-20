@@ -115,7 +115,8 @@ export function bindPlaceOwner(next: PlaceOwner | null): void {
 //
 // The view's own choice, as the body choice is (body/worldBody.ts chooseBody): it moves no owner state, and the M4 plate's Kind and the
 // World device's Locations read and set the same one. A place and a palace are placed by the tool (a palace stands where its rooms'
-// subjects are placed); a portal and a route have no owner that makes them from a click, and the tool says so when it is armed for one.
+// subjects are placed); a portal and a route have no owner that makes them from a click (a portal waits for the owner of visiting another
+// world; a route's relation and order are not in the place facet), and the tool says so, and what it waits for, when it is armed for one.
 
 export const PLACE_KINDS = ['place', 'palace', 'portal', 'route'] as const;
 export type PlaceKind = (typeof PLACE_KINDS)[number];
@@ -123,8 +124,8 @@ export type PlaceKind = (typeof PLACE_KINDS)[number];
 export const PLACE_KIND_WAITS: Readonly<Record<PlaceKind, string | null>> = {
   place: null,
   palace: null,
-  portal: 'A portal leads through to another world: no owner opens one yet.',
-  route: 'A route is the walk of a subject\'s TRAVELLED_TO places, each declared as a place: place its stops one by one.',
+  portal: 'A portal leads through to another world, and it waits for the owner of visiting another world (the shared field’s federation), which no owner opens yet: a click places none.',
+  route: 'A route is the walk of a subject’s TRAVELLED_TO places, ordered by their dates. A place carries no relation and no order in the owner’s record (AIKit’s place facet), so a click cannot make a stop of one: place each stop as a place, and relate it with TRAVELLED_TO in the subject’s relations in the Wiki, which is where the Earth reads the walk from.',
 };
 let kind: PlaceKind = 'place';
 export const placeKindChoice = (): PlaceKind => kind;

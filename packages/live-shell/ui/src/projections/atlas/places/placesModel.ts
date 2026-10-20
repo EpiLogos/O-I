@@ -148,18 +148,21 @@ export function withinRows(places: readonly SuitePlace[]): WithinRow[] {
   })));
 }
 
-/** A subject's movement (TRAVELLED_TO) as the atlas walks it: the subject and how many of its stops the Earth can draw. A walk
- * needs two stops; fewer draw nothing ("never a forced path", the frame map's routeModel law, world.ts:132). */
+/** A subject's movement (TRAVELLED_TO) as the atlas walks it: the subject and how many of its stops the globe can draw. A walk
+ * needs two stops; fewer draw nothing ("never a forced path", the frame map's routeModel law, world.ts:132). With no body named the stops
+ * are the Earth's (the places located on it); with one, its own (the places whose facet names it and gives a point on it: manual §17.2 "Every
+ * walk you take wears a path between places"). */
 export interface RouteRow {
   readonly subject_ref: string;
   readonly stops: number;
   readonly walkable: boolean;
 }
 
-export function routeRows(places: readonly SuitePlace[]): RouteRow[] {
+export function routeRows(places: readonly SuitePlace[], bodyRef?: string): RouteRow[] {
   const bySubject = new Map<string, number>();
   for (const place of places) {
-    if (place.relation !== MOVEMENT_RELATION || !place.subject_ref || !place.located) continue;
+    if (place.relation !== MOVEMENT_RELATION || !place.subject_ref) continue;
+    if (!(bodyRef === undefined ? place.located : place.body_ref === bodyRef && !!place.on_body)) continue;
     bySubject.set(place.subject_ref, (bySubject.get(place.subject_ref) ?? 0) + 1);
   }
   return [...bySubject].map(([subject_ref, stops]) => ({subject_ref, stops, walkable: stops >= 2}));

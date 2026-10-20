@@ -218,10 +218,34 @@ export function systemOf(input: SystemInput): SystemBody[] {
   })
 }
 
-/** Your planet's locations from today's worlds: each world that lands on your planet, at its landing, as the World design's Locations
- * read them (`{id, name, lat, lon, kind}`). Pure. */
-export function landingLocations(bodies: readonly SystemBody[]): {id: string; name: string; lat: number; lon: number; kind: 'place'}[] {
-  return bodies.flatMap(body => (body.landing ? [{id: body.key, name: body.world.name, lat: body.landing.lat, lon: body.landing.lon, kind: 'place' as const}] : []))
+/** Where a world with no landing stands on your planet until its person lands it: a spot named from its ref alone, short of the poles, so the
+ * same world is always at the same place (as a body with none yet is the body seeded from its ref, body/worldBody.ts firstBody). Pure. */
+function spotOf(key: string): {lat: number; lon: number} {
+  const h = fnv1a(key)
+  return {lat: (h % 1201) / 10 - 60, lon: ((h >>> 11) % 3600) / 10 - 180}
+}
+
+/** One world as a place on your planet: where it lands, and whether that is written (its own body record's landing) or only where its ref puts it. */
+export interface LandingLocation {
+  readonly id: string
+  readonly name: string
+  readonly lat: number
+  readonly lon: number
+  readonly kind: 'place'
+  /** false: the world is not landed yet and stands where its ref puts it; nothing is written until its person lands it (Land) */
+  readonly written: boolean
+}
+
+/** Your planet's locations from today's worlds (manual §17.2: "Every world you start lands as a place on your planet"): each world whose body is
+ * read, at its landing where its owner wrote one, else at the spot its ref names, said unwritten. A world that lands on another body is a place
+ * on that one, and a world whose body is not read claims none: no reading, no claim. Pure. */
+export function landingLocations(bodies: readonly SystemBody[]): LandingLocation[] {
+  return bodies.flatMap((body): LandingLocation[] => {
+    if (body.yours) return []
+    if (body.landing) return [{id: body.key, name: body.world.name, lat: body.landing.lat, lon: body.landing.lon, kind: 'place', written: true}]
+    if ((body.state !== 'built' && body.state !== 'seeded') || body.record?.landing) return []
+    return [{id: body.key, name: body.world.name, ...spotOf(body.key), kind: 'place', written: false}]
+  })
 }
 
 /** A world's colour wherever it shows (manual §17.2 "Your system": "on its track, its clips and its body"): the palette of its body's
