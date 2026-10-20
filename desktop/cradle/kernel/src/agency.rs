@@ -1577,6 +1577,37 @@ impl Client {
         Ok(data)
     }
 
+    /// The decision provider's standing through the suite route (`aikit
+    /// --json decide status`): the election, the selected model, where it
+    /// runs and whether it is loaded, its limits and tariff — AIKit's own
+    /// `aikit.decision-status/v1`, verbatim. A machine-level read that asks
+    /// no model (`--probe` is never passed here); the Decision helper
+    /// (manual §19.20) draws its Provider page from it.
+    pub fn decision_status(&self) -> Result<Value, String> {
+        let mut command = Command::new(&self.executable);
+        if self.suite_route {
+            command.arg("aikit");
+        }
+        if let Some(home) = &self.home {
+            command.env("AIKIT_HOME", home);
+        }
+        command.args(["--json", "decide", "status"]);
+        let output = output_bounded(&mut command, MACHINE_READ_LIMIT, "decide status", false)
+            .map_err(|error| format!("AIKit decide status is unavailable: {error}"))?;
+        if !output.status.success() {
+            return Err(owner_process_failure("decide status", &output));
+        }
+        let mut data: Value = serde_json::from_slice(&output.stdout)
+            .map_err(|error| format!("AIKit decide status returned unreadable JSON: {error}"))?;
+        if data.get("ok").and_then(Value::as_bool) == Some(true) {
+            data = data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        if data.get("schema").and_then(Value::as_str) != Some("aikit.decision-status/v1") {
+            return Err("AIKit decide status did not answer with aikit.decision-status/v1".into());
+        }
+        Ok(data)
+    }
+
     /// The resolved model catalogue through the suite route
     /// (`aikit model-catalogue show --json`): first-party seed, provider
     /// sources and owner entries as the owner resolved them. Machine-level
@@ -2405,5 +2436,34 @@ mod gateway_agent_tests {
             .as_str()
             .unwrap()
             .contains("does not exist"));
+    }
+
+    /// The Decision helper's Provider page (manual §19.20) reads AIKit's own
+    /// standing of its decision provider: `--json decide status`, never
+    /// `--probe` — a reading asks no model.
+    #[test]
+    fn decision_status_reads_the_providers_standing_and_asks_no_model() {
+        let dir = unique_dir("decision-status");
+        let canned = r#"{"ok":true,"data":{"schema":"aikit.decision-status/v1","mode":"managed-local","selected_model":"kev-latest","placement":"127.0.0.1:8019"},"schema":1}"#;
+        let client = Client::with(fake_aikit(&dir, canned), None);
+        let data = super::tests::retry_busy(|| client.decision_status()).expect("fake answers");
+        assert_eq!(data["selected_model"], "kev-latest");
+        assert_eq!(data["placement"], "127.0.0.1:8019");
+        let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
+        assert_eq!(
+            argv, "--json decide status",
+            "no --probe: the reading asks no model"
+        );
+    }
+
+    #[test]
+    fn decision_status_refuses_a_reading_of_another_schema() {
+        let dir = unique_dir("decision-status-schema");
+        let canned =
+            r#"{"ok":true,"data":{"schema":"aikit.client-status/v1","clients":[]},"schema":1}"#;
+        let client = Client::with(fake_aikit(&dir, canned), None);
+        let refused = super::tests::retry_busy(|| client.decision_status())
+            .expect_err("another schema is refused");
+        assert!(refused.contains("aikit.decision-status/v1"), "{refused}");
     }
 }
