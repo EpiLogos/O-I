@@ -159,7 +159,7 @@ const RIVER_WIDTH = 1024
 const rivers = SEEDS.map(seed => make(seed))
 const waterOf = record => { const image = imageOf(record, RIVER_WIDTH), parts = waterParts(image); return {image, parts, pieces: thinPieces(parts)} }
 
-test('H1 there are rivers and lakes: thin water inland, a few tenths of a percent to a few percent of the land', pending, () => {
+test('H1 there are rivers and lakes: thin water inland, a few tenths of a percent to a few percent of the land', () => {
   // The Earth (earth-2k.jpg reduced to 1024 wide, the definition above) has thin inland water on 1.8% of its land (its lakes are a further 2.2%).
   // The body must have some that a person can see, at least a sixth of that (.3%), and not so much that the land is marsh, at most four times it (8%).
   const shares = rivers.map(record => {
@@ -172,7 +172,7 @@ test('H1 there are rivers and lakes: thin water inland, a few tenths of a percen
   assert.ok(mean(shares) <= .08 && Math.max(...shares) <= .12, `and not a marsh: at most 8% (no seed over 12%)`)
 })
 
-test('H2 rivers reach the sea: the long thin waters of a body run to open water, or are lakes', pending, () => {
+test('H2 rivers reach the sea: the long thin waters of a body run to open water, or are lakes', () => {
   // river-like: a thin piece of at least 20 pixels that is long and narrow (fills at most a third of its bounding box) and runs at least 6 pixels from open water.
   // Earth, 1024 wide: 21 river-like pieces, every one touching the sea. A river that ends in a dry basin is real (the Okavango, the Tarim) but rare: at least 80%.
   const pieces = rivers.flatMap(record => waterOf(record).pieces).filter(p => p.area >= 20 && p.inland >= 1 && p.fill <= .35)
@@ -192,7 +192,7 @@ const ringHeights = (record, image, at, radius) => {
   return out
 }
 
-test('H3 rivers run in valleys and lakes lie in basins: inland water stands lower than the ground round it, and in the lower half of the land', pending, () => {
+test('H3 rivers run in valleys and lakes lie in basins: inland water stands lower than the ground round it, and in the lower half of the land', () => {
   const lower = [], low = []
   for (const record of rivers) {
     const {image, parts} = waterOf(record), {w, h} = parts
@@ -290,7 +290,7 @@ test('B2 the sea reads as sea and the land as land, by the cues the shader reads
 
 // ── biomes by latitude ──────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('L1 the biomes stand in their order by latitude: forest at the equator, desert in the subtropics, forest again in mid-latitudes, snow at the poles', pending, () => {
+test('L1 the biomes stand in their order by latitude: forest at the equator, desert in the subtropics, forest again in mid-latitudes, snow at the poles', () => {
   // The dominant kind of land (vegetated, arid or other, snow), by band, pooled over the seeds, at the default dials. The Earth, by the same classifiers (earth-2k.jpg):
   // 0–10°: vegetated .70; 18–32°: arid .58 (vegetated .16); 45–58°: vegetated .64; 72–90°: snow .88; snow .00 everywhere under 60°.
   const band = (lo, hi) => zonal(SEEDS.map(seed => imageOf(make(seed), 512)), lo, hi)
@@ -304,7 +304,7 @@ test('L1 the biomes stand in their order by latitude: forest at the equator, des
   assert.ok(snow[0] <= .02, `and there is next to none within 20° of the equator (${f(snow[0], 3)})`)
 })
 
-test('L2 there is snow above the snow line, in the tropics and the temperate zones, and none below it', pending, () => {
+test('L2 there is snow above the snow line, in the tropics and the temperate zones, and none below it', () => {
   // A cool world (warmth .4, no polar caps) of high relief, so snow is the mountains' and not the poles'. For each 10° band within 50°, the snow that stands
   // (at least 15 pixels, pooled over the seeds) is above the snow line: its low tenth is higher than the median height of the land in that band that is not snow.
   const bands = [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50]], tally = bands.map(() => ({snow: [], rest: []}))

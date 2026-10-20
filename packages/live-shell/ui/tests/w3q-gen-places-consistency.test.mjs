@@ -97,7 +97,7 @@ test('P1 the Place tool’s land test agrees with the base image at 97 % of samp
   }
 })
 
-test('P2 the field a person places on is the version of the record: a version 2 body is not asked its land by the version 1 field', pending, () => {
+test('P2 the field a person places on is the version of the record: a version 2 body is not asked its land by the version 1 field', () => {
   // `heightAt` and `isLand` take the record and so must read its generator version, as `bodyImage` does (ticket §5 "Version policy").
   const v1 = base(20261018, {}, 1), v2 = base(20261018, {}, 2), points = scatter(300, 5)
   const same = points.filter(({lat, lon}) => landAt(v1, lat, lon) === landAt(v2, lat, lon)).length
