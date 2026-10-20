@@ -32,6 +32,8 @@ use std::collections::BTreeMap;
 pub const MATERIAL_REGISTER: &str = "Work/O-I/desktop/cradle/material/expressive-material";
 pub const LIST_SCHEMA: &str = "oi.expression-material-list/v1";
 const MAX_LISTED: usize = 256;
+/// How many material files are read per owner call.
+const READ_AHEAD: usize = 64;
 /// Keys a placeholder keeps over grafted character material.
 const PLACEMENT_KEYS: [&str; 5] = ["id", "position", "rotation", "role", "overrides"];
 
@@ -140,15 +142,33 @@ pub fn list(
             }
         };
         folders.insert(folder.as_str().into(), json!(directory.location));
-        for entry in directory.entries {
-            if entry.kind != "file" || !entry.name.ends_with(".json") {
-                continue;
-            }
+        let candidates: Vec<files::Entry> = directory
+            .entries
+            .into_iter()
+            .filter(|entry| entry.kind == "file" && entry.name.ends_with(".json"))
+            .collect();
+        // The files are read READ_AHEAD at a time through one owner call each, in order, and
+        // only as far as the listing needs them (it stops at MAX_LISTED materials).
+        let mut ahead = std::collections::VecDeque::new();
+        let mut fetched = 0;
+        for entry in &candidates {
             if materials.len() >= MAX_LISTED {
                 truncated = true;
                 break 'kinds;
             }
-            let reading = match files::read(client, &entry.location) {
+            if ahead.is_empty() {
+                let upto = (fetched + READ_AHEAD).min(candidates.len());
+                let locations: Vec<files::Location> = candidates[fetched..upto]
+                    .iter()
+                    .map(|entry| entry.location.clone())
+                    .collect();
+                ahead.extend(files::read_many(client, &locations));
+                fetched = upto;
+            }
+            let reading = match ahead
+                .pop_front()
+                .expect("a read is ready for each candidate")
+            {
                 Ok(reading) => reading,
                 Err(error) => {
                     unreadable.push(json!({"file_ref": entry.location.ref_id, "error": error}));

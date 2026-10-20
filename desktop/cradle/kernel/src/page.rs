@@ -746,8 +746,10 @@ pub fn list_pages(
             entry.kind == "file" && entry.name.ends_with(".html") && entry.retrieval_allowed
         })
         .collect();
-    for entry in candidates.iter().take(bound) {
-        match files::read(client, &entry.location).and_then(|reading| read_island(&reading.content).map(|island| (reading, island))) {
+    let taken: Vec<_> = candidates.iter().take(bound).collect();
+    let locations: Vec<Location> = taken.iter().map(|entry| entry.location.clone()).collect();
+    for (entry, reading) in taken.into_iter().zip(files::read_many(client, &locations)) {
+        match reading.and_then(|reading| read_island(&reading.content).map(|island| (reading, island))) {
             Ok((reading, island)) if form_of(&island) != "unknown" => pages.push(json!({"location": entry.location, "name": entry.name,
                 "form": form_of(&island), "title": island["meta"]["title"], "revision": reading.revision,
                 "world": if island["profile"] == "oi.page/v1" { island["bindings"]["worldRef"].clone() } else { island["meta"]["world"].clone() }})),
