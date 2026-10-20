@@ -6,19 +6,14 @@
 // readings computed from owner readings, held nowhere and written nowhere, and Earth is always as it is (nothing here is asked of it).
 //
 // The readings a WorldFacts is made of are the owners' (system/worldFacts.ts): the oldest change the register's change horizon keeps, the
-// world's page listing, and the revision of the register's root space.
+// world's page listing, and the revision of the register's root space. The look is the generator's own (globe/body.ts BodyLook, ticket §4).
+import type {BodyLook} from '../src/globe/body'
 
 /** What is read of one world: how long its register has existed, how many pages and flows it holds, how many times it has been shaped. */
 export interface WorldFacts {
   readonly ageMs: number
   readonly held: number
   readonly shaped: number
-}
-
-/** How the generator draws a body toward a grey, airless, dry moon: 0 lived in, 1 a barely shaped moon (globe/body.ts BodyLook, ticket §4,
- * which this is structurally). A world whose readings are not in has none: the generator's default, no claim either way. */
-export interface WorldLook {
-  readonly barren?: number
 }
 
 // What each reading counts for, and where it counts in full. A reading saturates at its "full": beyond it more changes nothing, so a world
@@ -53,7 +48,7 @@ export function maturityOf(facts: WorldFacts): number {
 
 /** The look a maturity gives a body: a moon until LOOK_FROM, a planet from LOOK_TO, and a smooth turn between (barren = 1 − smoothstep, flat at
  * both ends so no step shows as a jump). A maturity that is not a number is a moon: no reading, no finish. */
-export function lookOf(maturity: number): {readonly barren: number} {
+export function lookOf(maturity: number): BodyLook {
   const m = maturity > 0 ? Math.min(maturity, 1) : 0
   const t = Math.min(1, Math.max(0, (m - LOOK_FROM) / (LOOK_TO - LOOK_FROM)))
   return {barren: 1 - t * t * (3 - 2 * t)}

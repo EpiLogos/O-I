@@ -9,16 +9,16 @@
 import type {DisclosureSession} from '../../../../../../../desktop/cradle/src/techne/contract'
 import type {DisclosureSessionStore} from '../../../../../../../desktop/cradle/src/techne/session'
 import {parseTimestamp} from '../../../../../../../desktop/cradle/src/techne/m0m5/timeline/scale'
-import type {WorldBodyRecord} from '../src/globe/body'
+import type {BodyLook, WorldBodyRecord} from '../src/globe/body'
 import {bodyChoice, shownBody, subscribeWorldBody} from '../body/worldBody'
 import {enteredWorld, subscribeEnteredWorld} from './enteredWorld'
-import type {WorldLook} from './maturity'
 import {subscribeSystem, systemBodies} from './systemStore'
 
-/** The globe as the drawer takes it (ticket §4): the body it shows with the look it is drawn with, and the occasion its weather stands at. */
+/** The globe as the drawer takes it (ticket §4): the body it shows with the look it is drawn with, and the occasion its weather stands at. A host
+ * whose globe draws no body (a stub in a test) leaves them out, as body/worldBody.ts bindWorldBody's engine does. */
 export interface BodyEngine {
-  setBody(record: WorldBodyRecord | null, look?: WorldLook): void
-  setBodyTime(ms: number | null): void
+  setBody?(record: WorldBodyRecord | null, look?: BodyLook): void
+  setBodyTime?(ms: number | null): void
 }
 
 type SharedWindow = NonNullable<DisclosureSession['time_window']>
@@ -47,8 +47,20 @@ export const OCCASION_STEP_MS = 6 * 60 * 60 * 1000
 /** The step an instant falls in, as its start; Now stays null. */
 export const occasionStep = (ms: number | null): number | null => (ms === null ? null : Math.floor(ms / OCCASION_STEP_MS) * OCCASION_STEP_MS)
 
+let occasion: number | null = null
+const occasionListeners = new Set<() => void>()
+
+/** The instant the drawer last read from the shared window, ms; null, Now, while none stands or none is bound. The one reading of the window the
+ * System has: the discs beside your planet draw the weather of the same occasion (system/systemOverlay.ts), so the window is subscribed once. */
+export const shownOccasion = (): number | null => occasion
+
+export function subscribeOccasion(listener: () => void): () => void {
+  occasionListeners.add(listener)
+  return () => { occasionListeners.delete(listener) }
+}
+
 /** What the globe is to draw now: the record and its look, or none (the Earth). */
-function drawn(): {readonly record: WorldBodyRecord | null; readonly look: WorldLook | undefined} {
+function drawn(): {readonly record: WorldBodyRecord | null; readonly look: BodyLook | undefined} {
   if (bodyChoice() === 'other') {
     const world = systemBodies().find(body => body.key === enteredWorld())
     return {record: world?.record ?? null, look: world?.look}
@@ -68,8 +80,8 @@ export function bindBodyDraw({engine, store}: {readonly engine: BodyEngine; read
     const key = JSON.stringify([record, look ?? null])
     if (key === bodyKey) return
     bodyKey = key
-    if (record) engine.setBody(record, look ?? {})
-    else engine.setBody(null)
+    if (record) engine.setBody?.(record, look ?? {})
+    else engine.setBody?.(null)
   }
   let time: number | null | undefined
   const drawTime = () => {
@@ -77,10 +89,12 @@ export function bindBodyDraw({engine, store}: {readonly engine: BodyEngine; read
     const next = occasionMs(store.get()?.time_window)
     if (next === time) return
     time = next
-    engine.setBodyTime(next)
+    occasion = next
+    engine.setBodyTime?.(next)
+    for (const listener of [...occasionListeners]) listener()
   }
   const offs = [subscribeWorldBody(drawBody), subscribeSystem(drawBody), subscribeEnteredWorld(drawBody), store.subscribe(drawTime)]
   drawBody()
   drawTime()
-  return {dispose() { live = false; for (const off of offs) off() }}
+  return {dispose() { live = false; occasion = null; for (const off of offs) off() }}
 }
