@@ -102,6 +102,20 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         note: 'A sitting (manual §24.3): the transport times it, the torus rings its bell through the one instrument\'s own strike, and Stop keeps the time actually sat. Its record is a page in your practice world, made through Central\'s own creation door (projectcentral.source.create; ql/devices/qlSitting.ts). Nothing scores it; today\'s centres are the scene\'s, which no owner carries to the shell yet, and the device says so.',
       },
       {
+        id: 'resonator-bank',
+        presentations: ['compact', 'expanded', 'full'],
+        // An effect lives in Live (lock §5.2: a Technē chain device is an instrument, never an effect): the QL home mode is Technē, so the face
+        // declares the mode it presents in.
+        modes: ['live'],
+        liveSemantic: 'device-audio-fx',
+        invariant: {transforms: 'the torus\'s sound after its level: one tuned body rings at each part of the M3 clock\'s cut'},
+        note: 'The Resonator bank (manual §22.7) gives the cut the M3 clock draws a sound: a tuned body at each part of the octave, ringing at the root of the mode in force, for Decay seconds. '
+          + 'The cut is the clock\'s: Aperture is its set-aperture and Swap its reciprocal-aperture through m3_reception (ql/devices/qlM3Clock.ts), and the shell tells the stage the clock\'s '
+          + 'division; the root is the mode in force\'s; On, Decay, Tilt, Span, Mix and Gain are the stage\'s own Resonator bank effect in the hosted frame (native-field/presentationEffects.ts), written '
+          + 'through the stage channel (ql/devices/qlResonatorBank.ts). It stands on Live\'s chain after the torus (live/designBindings/TorusEffectsOnChain.tsx). With the clock unread the cut is absent '
+          + 'and the device says so, the stage keeping the cut it last held. The Studio\'s body chain does not place it yet, and Technē\'s rack, whose devices are instruments, does not stand it.',
+      },
+      {
         id: 'm-prime-matrices',
         presentations: ['expanded', 'full'],
         liveSemantic: 'device-instrument',

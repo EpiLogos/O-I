@@ -102,21 +102,21 @@ test('the L9 extension composes additively: the base manifest stays verbatim, th
   door.resetFamilyManifestsForTest()
   const base = (await import('../src/inhabitants/quaternalLogicFamilyManifest.ts')).quaternalLogicFamilyManifest()
   const baseJson = JSON.stringify(door.familyManifest('quaternal-logic'))
-  assert.equal(base.faces.length, 7)
+  assert.equal(base.faces.length, 8)
   extension.declareQlMusicalExtension()
   extension.declareQlMusicalExtension() // idempotent
   assert.equal(JSON.stringify(door.familyManifest('quaternal-logic')), baseJson, 'the door\'s base is never rewritten')
   const composed = schema.inhabitantManifest('quaternal-logic')
-  assert.equal(composed.faces.length, 8)
+  assert.equal(composed.faces.length, 9)
   const face = composed.faces.find(face => face.id === 'ql-instrument')
   assert.ok(face)
   assert.equal(schema.faceKind(face), 'instrument')
   assert.equal(face.admission, 'admitted')
   assert.ok(face.note.length > 80)
   // The base's faces keep their standing untouched: the sky admitted on its transit read (lane BL), the M3 clock on m3_reception (R5),
-  // the Deck on nara_journey, the Chakra on nara_elemental and the Sitting on its owners (T-WORLDS W4), the other two waiting.
+  // the Deck on nara_journey, the Chakra on nara_elemental and the Sitting on its owners (T-WORLDS W4), the Resonator bank on the clock, the mode and the stage (MR), the other two waiting.
   for (const kept of composed.faces.filter(face => face.id !== 'ql-instrument')) {
-    if (['sky', 'm3-clock', 'deck', 'chakra', 'sitting'].includes(kept.id)) { assert.notEqual(kept.admission, 'waiting', `${kept.id} stays admitted`); continue }
+    if (['sky', 'm3-clock', 'deck', 'chakra', 'sitting', 'resonator-bank'].includes(kept.id)) { assert.notEqual(kept.admission, 'waiting', `${kept.id} stays admitted`); continue }
     assert.equal(kept.admission, 'waiting', `${kept.id} stays waiting`)
   }
   // The composed manifest validates through the generalised validators.

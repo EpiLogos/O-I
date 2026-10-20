@@ -493,10 +493,10 @@ export interface HostedInstrumentParameters {
   readonly scale: {readonly unitsPerMetre: number | null; readonly mode: "domain-follow" | "manual-presentation-override" | "manual"};
   readonly cadence: {readonly rate: number; readonly playing: boolean; readonly source: string} | null;
   readonly refusal: string | null;
-  /** The torus's four effects (manual §21.5): the chain (which stand after the torus, in order) and each effect's parameters as the
-   * owner keeps them (expressions-app native-field/effectsLaw.ts); absent from a frame that announces none. */
-  readonly effects?: Readonly<Record<"filter" | "dynamics" | "delay" | "reverb", Readonly<Record<string, number | boolean | string>>>>
-    & {readonly chain: readonly ("filter" | "dynamics" | "delay" | "reverb")[]};
+  /** The torus's effects (manual §21.5, and the Resonator bank §22.7): the chain (which stand after the torus, in order) and each effect's
+   * parameters as the owner keeps them (expressions-app native-field/effectsLaw.ts); absent from a frame that announces none. */
+  readonly effects?: Readonly<Record<"filter" | "dynamics" | "delay" | "reverb" | "resonator", Readonly<Record<string, number | boolean | string>>>>
+    & {readonly chain: readonly ("filter" | "dynamics" | "delay" | "reverb" | "resonator")[]};
 }
 
 /** The owner's instrument reading as the boundary validated it: the QL reading parser's value, or the fault it named. */

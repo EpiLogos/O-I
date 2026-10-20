@@ -86,7 +86,7 @@ test('the standing world passes the gate, and every admitted face occupies a Liv
       assert.ok(semantics.isLiveSemantic(face.liveSemantic), `${manifest.id}/${face.id} occupies "${face.liveSemantic}"`)
     }
   }
-  assert.equal(sdkValidate.semanticRegistry().length, 56, 'the world carries its 56 faces (38 + the L7 day-now + the knowledge graph’s 3, T-KNOWLEDGE-GRAPH-DEVICE + Central\'s page family\'s 7, lane BC2 + Software Factory\'s thread, tasks and agentset rack, lane BF3 + Central\'s packet and search, lane BC3 + Quaternal Logic\'s Sitting, T-WORLDS W4 + AIKit\'s Decision helper, T-AGENCY K5)')
+  assert.equal(sdkValidate.semanticRegistry().length, 57, 'the world carries its 57 faces (38 + the L7 day-now + the knowledge graph’s 3, T-KNOWLEDGE-GRAPH-DEVICE + Central\'s page family\'s 7, lane BC2 + Software Factory\'s thread, tasks and agentset rack, lane BF3 + Central\'s packet and search, lane BC3 + Quaternal Logic\'s Sitting, T-WORLDS W4 + AIKit\'s Decision helper, T-AGENCY K5 + Quaternal Logic\'s Resonator bank, MR)')
 })
 
 test('the semantic registry is locked to its reviewed snapshot (lock §5.6)', async () => {
