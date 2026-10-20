@@ -20,11 +20,11 @@ import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/typ
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
 import {contributionRegistrationFailure} from '../native/contributions'
 import {connectTechneInstrumentRequests} from '../native/techneInstrumentOpen'
-import {NATIVE_OPEN_STUDIO, NATIVE_PRESENT_EXPRESSIONS, parseNativeOpenStudio} from '../native/openStudio'
+import {NATIVE_OPEN_STUDIO, parseNativeOpenStudio} from '../native/openStudio'
+import {openStudioHome} from '../components/expressions/studio/studioHome'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
 import {stageEngine} from '../native/stageCommands'
 import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
-import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {enumerateWorks, needsListing, setExpressionOwner} from '../components/nativeExpressionCommands'
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
@@ -60,7 +60,6 @@ export function ExpressionsPanel() {
   const pendingOpen = useRef<string | null>(null)
   // A browser-local draft waiting for presentation (the other open kind; only one of the two slots holds a request at a time).
   const pendingDraft = useRef<string | null>(null)
-  const pendingStudio = useRef<StudioSection | null>(null)
   const workspace = useWorkspace()
   const book = useContinuity(), kernel = useKernel()
   const bookRef = useRef(book)
@@ -306,21 +305,14 @@ export function ExpressionsPanel() {
       // The boot deep link opens this work after the native channel arrives.
       // Posting it again would retain a second copy during initial recovery.
     })().catch(fail).finally(() => {starting.current = false})
-    // A device's open-studio request. Ignored unless native work is mounted.
-    // Otherwise the centre is revealed first; the section opens once this
-    // body is presented (visible() below flushes it).
-    const flushStudio = () => {
-      const section = pendingStudio.current
-      if (!section || !mounted || !presented()) return
-      pendingStudio.current = null
-      try {mounted.host.openStudio(section)} catch (cause) {fail(cause)}
-    }
+    // A device's open-studio request (the pool's "Open in studio", the glyph editor's): the section opens where it lives now — a field
+    // device's in the Studio's pane, a scene's or a symbol's in Clip view (studioHome.ts; manual §20.1). The frame's own Studio never opens
+    // in the field pane. Ignored unless native work is mounted.
     const openStudio = (event: Event) => {
       const section = parseNativeOpenStudio((event as CustomEvent<unknown>).detail)
       if (!live || !section || !mounted) return
-      pendingStudio.current = section
-      if (presented()) flushStudio()
-      else window.dispatchEvent(new Event(NATIVE_PRESENT_EXPRESSIONS))
+      const refusal = openStudioHome(section)
+      if (refusal) setFault(refusal)
     }
     window.addEventListener(NATIVE_OPEN_STUDIO, openStudio)
     // A physics device's runtime action, run by the mounted host as one engine stage command. Refusals show in this panel.
@@ -339,7 +331,6 @@ export function ExpressionsPanel() {
       if (deepPresented && navigator.current && !stopSelection.current) stopSelection.current = navigator.current.connectSelectionRequests()
       else if (!deepPresented && stopSelection.current) {stopSelection.current(); stopSelection.current = null}
       flushPendingOpen()
-      flushStudio()
     }
     const examine = () => {if (live) workspace.setMode('techne')}
     window.addEventListener('oi:epi-examine', examine)

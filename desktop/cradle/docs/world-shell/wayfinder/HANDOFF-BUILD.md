@@ -98,11 +98,11 @@ From MAP's build lane:
    - **The shell opens the app's Studio in the pane itself:** the pool's "Open in studio ↗" (`components/NativeDevicePoolView.tsx:57-59`),
      `components/GlyphSequenceEditor.tsx:286` and `host.openStudio` (`panels/expressions.tsx:318-325` → `app.ts:2338-2342`). Each
      opens instead the device, or the Clip view tab, that holds the setting.
-   - **Device view is the Studio rack alone:** its macros (the toolbelt, `Journey.shared.toolbelt`), its chain list, and the chosen
-     chain's devices in their compact views. The Stage plate (`components/expressions/studio/ExpressionsStudio.tsx:203-207`) goes:
-     its relays of the app's rail to the homes in the manual's table, View to the scene's Clip panel (View: Kept), Capture to the
-     transport, its own controls to the Studio's macros. "Your rack" behind Configure (`components/NativeWorldDetail.tsx:149`)
-     becomes the chain itself.
+   - **Device view is the Studio rack:** its macros (the toolbelt, `Journey.shared.toolbelt`) and its Chains page; a device added by
+     hand stands after it on "Your rack" (the 8 Oct ruling: never an always-on strip of every device). The Stage plate beside it
+     (`components/expressions/studio/ExpressionsStudio.tsx:203-207`) holds what has no home yet: its relays of the app's rail, View
+     (camera, guides, snap), still and film capture, Present and the Edition's export and import. It goes once those homes stand:
+     Present in the View menu, Export in the File menu, the scene's View in its Clip panel (View: Kept), the rail's tools in Clip view.
    - **Pane view's seed** is the field pane and the Studio's Full side by side (`shell/modeFrames.ts:59-60`).
    - **The Studio's Full** hosts `member` for a rack: each member's design in its Whole view on that device's own binding, as the
      band draws it (`frame/devices/designed.ts`), so the pane and the chain read the same values.

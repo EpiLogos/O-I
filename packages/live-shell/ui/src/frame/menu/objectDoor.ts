@@ -21,6 +21,13 @@ export const hostedClip = (): ClipBinding | null => held
 let bringClip: (() => void) | null = null
 export function publishClipViewDoor(door: (() => void) | null): void { bringClip = door }
 
+/** Bring Clip view forward through the frame's door: false where this window has no detail area. */
+export function showClipView(): boolean {
+  if (!bringClip) return false
+  bringClip()
+  return true
+}
+
 /** A clip's ref as its Clip view names it: the clip's own id, or that id with the owner's suffix (Factory's `#task/n`). Pure. */
 export const bindsClip = (binding: Pick<ClipBinding, 'ref'>, clipId: string): boolean =>
   binding.ref === clipId || binding.ref.startsWith(`${clipId}#`) || clipId.startsWith(`${binding.ref}#`)

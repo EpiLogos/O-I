@@ -29,7 +29,7 @@ import {Icon} from '../../inhabitants/sdk/Icon'
 import type {ControlWrap} from '../../inhabitants/sdk/panel'
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import {openInstrument} from '../instrumentDoor'
-import {DEVICE_PANE_KIND, flipDevice, flippedDeviceId, openDeviceWindow, publishedDevice, putOnRail, selectDevice, takeOffRail, useFlipHost, useFlippedDeviceId,
+import {DEVICE_PANE_KIND, flipDevice, publishedByDesign, useDoorWhere, flippedDeviceId, openDeviceWindow, publishedDevice, putOnRail, selectDevice, takeOffRail, useFlipHost, useFlippedDeviceId,
   useIsPublished, useSelectedDeviceId, type PublishedDevice} from './deviceDoor'
 import type {Frame, Room} from '../../inhabitants/catalogue/panels/design'
 // The wide frame and the window's body (popout.tsx's `dp-wide`, `dp-window-*`): the designs' own layout sheet, which designsLoad.ts
@@ -275,13 +275,28 @@ export function PlacedDevice({device, view, picture, actions, wrapRow, binding, 
   const zoom = view === 'whole' && scale !== 1 ? scale : undefined
   const place = frame ?? FRAME_OF_VIEW[view]
   const measured = useHolderRoom(root, place, zoom ?? 1)
+  // A rack's Full and its window are its devices (manual §16.3): each member it names draws here in its Whole view, from the door, on
+  // its own owner — the same device, with the same values, as on its chain. A member the door does not hold answers null.
+  const rack = hosting.designed.kind === 'rack' && (view === 'full' || view === 'popout')
+  useDoorWhere(rack)
+  const member = useMemo(() => (rack ? (id: string): ReactNode | null => {
+    const entry = publishedByDesign(id)
+    return entry ? <RackMember key={id} entry={entry} /> : null
+  } : undefined), [rack])
   return <div ref={root} className={`device-place device-place--${view}`} style={zoom ? {zoom} : undefined} data-plate-scale={view === 'whole' ? scale : undefined}
     data-device-frame={place}>
     <HostedDevice designed={hosting.designed} fallback={hosting.plain} binding={hosting.binding} view={view} keys={hosting.keys} title={device.face.title}
       wrap={hosting.wrap} frame={place} room={room ?? measured ?? undefined} nav={placedNav(view, nav, device.id, onClose)} acts={hosting.acts}
-      className={`device device--${view}`}
+      member={member} className={`device device--${view}`}
       data={{'data-device': device.id, 'data-device-size': view === 'widget' || view === 'popout' ? view : sizeOf(view), 'data-device-light': lightOf(device),
         'data-device-design': hosting.generic ? 'generic' : hosting.designed.id}} />
+  </div>
+}
+
+/** One member of a rack, in the rack's Full: the member's Whole at the pool's measures, from the door, on its own binding. */
+function RackMember({entry}: {entry: PublishedDevice}) {
+  return <div className="device-rack-member" data-rack-member={entry.device.id}>
+    <PlacedDevice device={entry.device} view="whole" picture={entry.picture} binding={entry.binding} marks={entry.marks} frame="pane" />
   </div>
 }
 

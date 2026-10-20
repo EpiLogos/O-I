@@ -55,7 +55,7 @@ export function NativeDevicePoolView({reading, request, requested, isPresented, 
       {device && <button type="button" className="native-device-pool-add" disabled={!reading || busy || onRack} onClick={() => onAdd(requested.family)}
         title={onRack ? `${title} is already on the rack` : `Add ${title} to the rack as one device`}>{onRack ? 'On rack ✓' : 'Add to rack'}</button>}
       {device?.studio && <button type="button" className="native-device-pool-studio" disabled={!reading}
-        title={reading ? `Show the full ${title} panel in the Expressions Studio (${device.studio})` : 'Open a native Expression to show this panel in the Expressions Studio'}
+        title={reading ? `Open ${title} where it lives: the Studio's pane holds every field device, and Clip view a scene's settings` : 'Open a native Expression to open its Studio'}
         onClick={() => window.dispatchEvent(new CustomEvent(OPEN_STUDIO_EVENT, {detail: {section: device.studio}}))}>Open in studio ↗</button>}
       <button type="button" className="native-device-pool-close" aria-label="Close device panel" title="Close (Esc)" onClick={onClose}><span aria-hidden="true">✕</span></button>
     </header>
