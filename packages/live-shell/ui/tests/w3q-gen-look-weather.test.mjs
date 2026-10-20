@@ -476,6 +476,19 @@ test('S8 clouds are a thin layer with a shadow: the ground under a cloud is dark
   }
 })
 
+test('S9 the sky thins out as the camera comes down to the ground: at a place view the clouds are not a haze over the ground, they are gone', () => {
+  // The mask is the sky at a thousand texels round: at a place view (a pixel is 0.4 km) its texel is thirty-eight kilometres and magnified a hundred times it is an out-of-focus smear laid over
+  // the ground the lead came to see (the camera is over the clouds, not in them, and the sky below it is sharp or absent). The cover and its shadow are multiplied by a smoothstep of the
+  // pixel's span (uPxRad) that is 0 below about thirty micro-radians and 1 above a hundred and forty: gone at a place view (and at the Moon's and Earth's own close approaches), whole from a region view out.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('if (uCloudMix'))
+    const near = /(\w+)\s*=\s*smoothstep\(\s*([\d.e-]+)\s*,\s*([\d.e-]+)\s*,\s*uPxRad\s*\)/.exec(sky)
+    assert.ok(near, `${name}’s sky block takes a smoothstep of uPxRad`)
+    assert.ok(+near[2] >= 1e-5 && +near[2] <= 6e-5 && +near[3] >= 1e-4 && +near[3] <= 2.5e-4, `between ${near[2]} and ${near[3]} radians (the place view's pixel is 7e-5, the region's 3e-4)`)
+    assert.ok(new RegExp(`cover\\s*\\*=\\s*${near[1]}\\b`).test(sky) && new RegExp(`shade\\s*\\*=\\s*${near[1]}\\b`).test(sky), `the cover and its shadow are both multiplied by it (${near[1]})`)
+  }
+})
+
 // ── the engine's occasion and its reduced motion ───────────────────────────────────────────────────────────────────────
 
 /** The globe on a stand-in renderer, with the clock the page has (Date.now and performance.now) under the test's hand. */

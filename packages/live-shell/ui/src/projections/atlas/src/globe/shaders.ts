@@ -323,7 +323,11 @@ const skyOver = (uv: string) => /* glsl */ `
     if (uSunMix > 0.0) lit = mix(lit, mix(0.1, 1.0, smoothstep(-0.07, 0.16, dot(N, normalize(uSunDir)))), uSunMix);
     // a cloud stands above the ground: the ground beside and under it is in its shadow (the mask looked at again a little toward the key light's far side, softly), and the cloud's own
     // tone follows its thickness: thin cloud bright and light, thick cloud greyer at the base
+    // the sky is below the camera and gone at a place view: its texel is far larger than a pixel there, and magnified it is a smear over the ground that was come to see
+    float nearSky = smoothstep(0.00003, 0.00014, uPxRad);
+    cover *= nearSky;
     float shade = texture2D(uCloud, cuv + vec2(0.0035, -0.0022)).r * uCloudMix;
+    shade *= nearSky;
     col *= 1.0 - 0.3 * shade * smoothstep(0.0, 0.5, shade) * lit;
     vec3 cloudTone = mix(mix(uCore, vec3(1.0), 0.6), vec3(0.74, 0.77, 0.82), smoothstep(0.55, 1.0, cover) * 0.7);
     col = mix(col, cloudTone * lit, cover * 0.8);
