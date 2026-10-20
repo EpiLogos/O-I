@@ -207,22 +207,95 @@ pub(crate) fn wait(child: Child, bound: Bound<'_>) -> Result<Output, Failure> {
     wait_observed(child, bound, None)
 }
 
+/// How long to wait before looking at a running owner again. The look used to be a fixed 10 ms, so every owner that answered in a
+/// few milliseconds was noticed up to 10 ms late — most of the time a read of 1–3 ms took once AIKit stopped building its whole
+/// Service for it. Short while the owner is young (most answer within tens of milliseconds), settling to 10 ms so an owner that
+/// runs for seconds costs the kernel nothing.
+pub(crate) fn pause_after(waited: Duration) -> Duration {
+    if waited < Duration::from_millis(20) {
+        Duration::from_micros(250)
+    } else if waited < Duration::from_millis(250) {
+        Duration::from_millis(1)
+    } else {
+        Duration::from_millis(10)
+    }
+}
+
 fn wait_observed(
     mut child: Child,
     bound: Bound<'_>,
     on_line: Option<LineObserver>,
 ) -> Result<Output, Failure> {
+    let begun = Instant::now();
+    let answered = wait_observed_untraced(&mut child, bound, on_line, begun);
+    trace_process(
+        bound.owner,
+        bound.operation,
+        begun.elapsed(),
+        answered.is_ok(),
+    );
+    answered
+}
+
+/// One owner process the kernel started: whose, which operation, how long it took and whether it answered. Written to the same opt-in
+/// trace the ops go to (`OI_KERNEL_TRACE_FILE`, dispatch.rs), so a slow op reads down to the command that held it. Nothing is written
+/// without the variable, and no argument or payload is ever written — only the owner and operation names the call was bounded by.
+/// This module stands alone (the composition test includes it by path), so it opens the trace for itself; both writers append whole
+/// lines, which the file keeps apart.
+fn trace_process(owner: &str, operation: &str, total: Duration, answered: bool) {
+    static TRACE: std::sync::OnceLock<Option<std::sync::Mutex<std::fs::File>>> =
+        std::sync::OnceLock::new();
+    let file = TRACE.get_or_init(|| {
+        let path = std::env::var_os("OI_KERNEL_TRACE_FILE").filter(|path| !path.is_empty())?;
+        std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .ok()
+            .map(std::sync::Mutex::new)
+    });
+    let Some(file) = file else { return };
+    let unix_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|since| since.as_millis())
+        .unwrap_or(0);
+    let line = process_trace_line(owner, operation, unix_ms, total, answered);
+    if let Ok(mut file) = file.lock() {
+        let _ = file.write_all(line.as_bytes());
+    }
+}
+
+fn process_trace_line(
+    owner: &str,
+    operation: &str,
+    unix_ms: u128,
+    total: Duration,
+    answered: bool,
+) -> String {
+    format!(
+        "[owner] {unix_ms} process {owner} {operation} {} total_ms={:.1}\n",
+        if answered { "ok" } else { "err" },
+        total.as_secs_f64() * 1000.0,
+    )
+}
+
+fn wait_observed_untraced(
+    child: &mut Child,
+    bound: Bound<'_>,
+    on_line: Option<LineObserver>,
+    begun: Instant,
+) -> Result<Output, Failure> {
     let stdout = drain(child.stdout.take().expect("stdout is piped"), on_line);
     let stderr = drain(child.stderr.take().expect("stderr is piped"), None);
-    let deadline = Instant::now() + bound.limit;
+    let deadline = begun + bound.limit;
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break status,
             Ok(None) if Instant::now() >= deadline => {
-                stop(&mut child);
+                stop(child);
                 return Err(failure(Failed::Stopped, bound.refusal()));
             }
-            Ok(None) => std::thread::sleep(Duration::from_millis(10)),
+            Ok(None) => std::thread::sleep(pause_after(begun.elapsed())),
             Err(error) => {
                 return Err(failure(
                     Failed::Process,
@@ -396,6 +469,60 @@ mod tests {
             "the first line is heard before the owner finishes: {:?}",
             heard[0].1
         );
+    }
+
+    /// The look at a running owner starts fine and settles: an owner that answers in a few milliseconds is noticed within one of
+    /// them, and one that runs for seconds is looked at every 10 ms.
+    #[test]
+    fn the_wait_looks_often_while_the_owner_is_young_and_settles() {
+        assert_eq!(pause_after(Duration::ZERO), Duration::from_micros(250));
+        assert!(
+            pause_after(Duration::from_millis(5)) <= Duration::from_millis(1),
+            "a young owner is noticed within a millisecond"
+        );
+        assert_eq!(
+            pause_after(Duration::from_millis(100)),
+            Duration::from_millis(1)
+        );
+        assert_eq!(
+            pause_after(Duration::from_millis(250)),
+            Duration::from_millis(10)
+        );
+        assert_eq!(
+            pause_after(Duration::from_secs(60)),
+            Duration::from_millis(10)
+        );
+        let mut last = Duration::ZERO;
+        for ms in 0..400 {
+            let pause = pause_after(Duration::from_millis(ms));
+            assert!(
+                pause >= last,
+                "never looks more often as the owner ages ({ms} ms)"
+            );
+            last = pause;
+        }
+    }
+
+    /// The trace names the owner, the operation, the outcome and the time — one whole line, nothing of the call's input or output.
+    #[test]
+    fn the_trace_line_names_the_owner_the_operation_the_outcome_and_the_time() {
+        assert_eq!(
+            process_trace_line(
+                "AIKit",
+                "session-space encounter-task-read",
+                1_760_000_000_123,
+                Duration::from_micros(1_250),
+                true,
+            ),
+            "[owner] 1760000000123 process AIKit session-space encounter-task-read ok total_ms=1.2\n"
+        );
+        let refused =
+            process_trace_line("Central", "action run", 5, Duration::from_secs(20), false);
+        assert_eq!(
+            refused,
+            "[owner] 5 process Central action run err total_ms=20000.0\n"
+        );
+        assert_eq!(refused.matches('\n').count(), 1, "one whole line");
     }
 
     /// An answering owner keeps its exact stdout, stderr, status and input.
