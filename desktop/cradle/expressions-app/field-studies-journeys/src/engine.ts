@@ -28,6 +28,8 @@ export interface FieldEngineAdapter {
  resize(width:number,height:number,pixelRatio:number):void;
  needsRender?():boolean;
  telemetry?():any;
+ /** The pitches the torus plays now, read from the native owner (DLW §20.14 Frequency driver = Torus). Absent: the engine has no torus drive. */
+ setTorusPlay?(reading:import('../../src/engine/torusDrive').TorusPlayReading|null):void;
  capture?(width:number,height:number):HTMLCanvasElement;
  withCleanFrame?<T>(copy:()=>T):T;
  inspect?(readParticles?:boolean):unknown;

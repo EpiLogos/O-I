@@ -10,6 +10,7 @@ import type {FieldEngineAdapter} from './engine';
 import type {InstrumentEdit} from './stageCommands';
 import {createLiveEntry} from './native-field/liveEntry.mjs';
 import {planJankoStrike} from './native-field/jankoStrike.mjs';
+import {torusPlayReading} from './native-field/torusPlay.mjs';
 /** scene_field.rs `PLANETS`, in scalar-degree order: the map's own names. */
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -288,6 +289,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const focusKey=(event:FocusEvent)=>{const button=(event.target as HTMLElement).closest('button.ni-jk');if(button instanceof HTMLElement)setText('key',describeKey(button));};
  const update=()=>{
   const reading=controller.reading as any,instrument=reading.instrument,open=!!reading.lease||reading.status==='opening';
+  // What the torus plays, for the plate that Frequency driver = Torus drives (DLW §20.14): the owner's pitches, handed to the engine as they stand.
+  engine.setTorusPlay?.(torusPlayReading(reading));
   panel.setAttribute('aria-busy',String(busy));
   setText('status',statusLine(reading));
   query('[data-ni-closed]').hidden=open;query('[data-ni-open]').hidden=!instrument&&!(composing&&reading.status==='opening');

@@ -106,6 +106,77 @@ fn malformed_material_unknown_carriers_and_wrong_occurrences_fail_atomically() {
     }
 }
 #[test]
+fn scene_material_admits_the_manuals_drivers_and_keys_and_refuses_unknown_ones() {
+    // DLW 20.14 Frequency driver (Torus, Manual, Focus, Automation) and 20.2 Key source (Torus, Sky, Manual): the kernel's validator
+    // takes the values the manual names and refuses any other, in the Scene's composition and in its resonance drive.
+    let mut app = setup();
+    let before = inspect(&mut app);
+    let mut base = material();
+    base["scene"]["name"] = before["scenes"][0]["title"].clone();
+    let with = |composition: Value, drive: Option<Value>| {
+        let mut body = base.clone();
+        for (key, value) in composition.as_object().unwrap() {
+            body["scene"]["composition"][key] = value.clone();
+        }
+        if let Some(drive) = drive {
+            body["scene"]["resonanceDrive"] = drive;
+        }
+        body
+    };
+    let set = |app: &mut Application, body: Value| {
+        let revision = inspect(app)["revision"].as_u64().unwrap();
+        edit(
+            app,
+            revision,
+            json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]),
+        )
+    };
+    for driver in ["torus", "manual", "focus", "automation"] {
+        set(&mut app, with(json!({"frequencyDriver": driver}), None))
+            .unwrap_or_else(|e| panic!("driver {driver} refused: {e}"));
+    }
+    for key in ["torus", "sky", "manual"] {
+        set(
+            &mut app,
+            with(
+                json!({"frequencyDriver":"torus","keySource": key}),
+                Some(json!({"kind":"torus","keySource": key})),
+            ),
+        )
+        .unwrap_or_else(|e| panic!("key {key} refused: {e}"));
+    }
+    for drive in [
+        json!({"kind":"frequency"}),
+        json!({"kind":"sweep"}),
+        json!({"kind":"semanticFocus","profileId":"chakra-seven-v1"}),
+        json!({"kind":"torus"}),
+    ] {
+        set(&mut app, with(json!({}), Some(drive.clone())))
+            .unwrap_or_else(|e| panic!("drive {drive} refused: {e}"));
+    }
+    let settled = inspect(&mut app);
+    for (composition, drive) in [
+        (json!({"frequencyDriver":"bogus"}), None),
+        (json!({"frequencyDriver":3}), None),
+        (json!({"keySource":"bogus"}), None),
+        (json!({"keySource":7}), None),
+        (json!({}), Some(json!({"kind":"bogus"}))),
+        (json!({}), Some(json!({"kind":"torus","keySource":"bogus"}))),
+        (json!({}), Some(json!("torus"))),
+    ] {
+        let body = with(composition.clone(), drive.clone());
+        assert!(
+            set(&mut app, body).is_err(),
+            "accepted {composition} {drive:?}"
+        );
+        assert_eq!(
+            inspect(&mut app),
+            settled,
+            "a refused drive or key leaves the document as it was"
+        );
+    }
+}
+#[test]
 fn removing_a_scene_is_not_deleting_native_members_or_the_last_scene() {
     let mut app = setup();
     assert!(edit(

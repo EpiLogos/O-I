@@ -33,7 +33,8 @@ const SOURCE_OPTIONS = {
   pointerClick: ['pulse', 'implode', 'vortex', 'shove', 'off'], // inspector.ts:125
   pointerScope: ['global', 'local'], // inspector.ts:125 (Scene.pointerScope)
   relationalMode: ['orbital', 'nbody', 'chaos'], // inspector.ts:134
-  frequencyDriver: ['manual', 'focus', 'automation'], // inspector.ts:127
+  frequencyDriver: ['torus', 'manual', 'focus', 'automation'], // inspector.ts:129; DLW §20.14 lists Torus first
+  keySource: ['torus', 'sky', 'manual'], // inspector.ts:130; DLW §20.2 Key source
   plane: ['XY', 'XZ', 'YZ'], // inspector.ts:144 (Scene.composition.plane, 'Layout plane')
   layout: ['line', 'column', 'ring', 'grid', 'spiral', 'align-x', 'align-y', 'distribute-x', 'distribute-y', 'laminate'], // inspector.ts:144 Arrangement buttons (Scene.composition.layout); nativeSceneFace.arrange.ts:5
   sweepDirection: ['ascent', 'descent', 'pingpong'], // inspector.ts:131

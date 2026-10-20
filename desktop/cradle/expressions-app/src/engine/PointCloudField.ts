@@ -38,6 +38,7 @@ import {LocalizedResonanceBank,type LocalizedResonanceFrame} from './LocalizedRe
 import type {LocalizedResonanceProjection} from './localizedResonanceProjection';
 import {DEFAULT_RESONATOR_PARAMS} from './cymaticResonator';
 import { semanticFocusTarget, type ResonanceDriveConfig, type ResolvedResonanceDrive } from './resonanceDrive';
+import { TorusDriveState, type TorusPlayReading } from './torusDrive';
 import type { SourceAnalysis } from './sourceSampling';
 import {
   Entity,
@@ -222,6 +223,11 @@ export class PointCloudField {
   private resonatorActive: boolean = false;
   private cymaticFreqCurrent: number = 396;
   private sweepAccum: number = 0;
+  // DLW §20.14 Frequency driver = Torus: what the torus plays (handed in by the host), the drive it last gave the plate, and the tones
+  // the plate has glided to. The engine reads the owner's pitches here; it never makes one up (torusDrive.ts).
+  private torusPlay: TorusPlayReading | null = null;
+  private torusDrive: TorusDriveState = new TorusDriveState();
+  private torusTonesCurrent: number[] = [];
 
   // 3D Orbit Camera State (Orb Camera Control)
   private cameraState: CameraOrbState = { pitch: 0, yaw: 0, zoom: 1.0, panX: 0, panY: 0 };
@@ -1881,6 +1887,11 @@ export class PointCloudField {
   }
 
   // ------------------------------------------------------------------ cymatic medium
+  /** The pitches the torus plays now, from the native owner's reading (null: the host reads no instrument). Read by the Torus drive only. */
+  public setTorusPlay(reading: TorusPlayReading | null) {
+    this.torusPlay = reading;
+  }
+
   private stopResonator() {
     if (!this.resonatorActive) return;
     this.resonatorActive = false;
@@ -1934,7 +1945,17 @@ export class PointCloudField {
     }
 
     let target = cym.frequencyHz ?? 396;
-    if (drive?.kind === 'sweep') {
+    let torusTones: number[] | null = null;
+    if (drive?.kind === 'torus') {
+      const resolved = this.torusDrive.resolve({ keySource: drive.keySource ?? 'torus', reading: this.torusPlay, manualHz: target });
+      this.lastResonanceDrive = {
+        kind: 'torus', targetHz: resolved.tonesHz[0] ?? this.cymaticFreqCurrent, bound: !resolved.silent, tonesHz: resolved.tonesHz,
+        silent: resolved.silent, reason: resolved.reason, keySource: resolved.source, roles: resolved.roles,
+      };
+      // A plate that has never had a drive is not driven: no tone is made up. Stopping the medium leaves the formation springs holding the figure.
+      if (resolved.tonesHz.length === 0) { this.stopResonator(); return; }
+      torusTones = [...resolved.tonesHz].sort((a, b) => a - b);
+    } else if (drive?.kind === 'sweep') {
       this.sweepAccum += delta;
       const opts = {
         glideS: Math.max(0.05, drive.glideS ?? cym.sweep?.glideS ?? cym.sweepSpeed ?? 3.5),
@@ -1959,8 +1980,18 @@ export class PointCloudField {
     }
 
     // Continuous glide toward the target so editing never resets the modal envelopes.
-    this.cymaticFreqCurrent += (target - this.cymaticFreqCurrent) * (1 - Math.exp(-delta * 8));
-    this.latestResonatorTelemetry = resonator.step(delta, this.cymaticFreqCurrent);
+    if (torusTones) {
+      // Each voice glides on its own, lowest to lowest; a different number of voices starts from where the new ones are.
+      const k = 1 - Math.exp(-delta * 8);
+      this.torusTonesCurrent = this.torusTonesCurrent.length === torusTones.length
+        ? this.torusTonesCurrent.map((current, i) => current + (torusTones![i] - current) * k)
+        : [...torusTones];
+      this.cymaticFreqCurrent = this.torusTonesCurrent[0];
+      this.latestResonatorTelemetry = resonator.step(delta, this.torusTonesCurrent);
+    } else {
+      this.cymaticFreqCurrent += (target - this.cymaticFreqCurrent) * (1 - Math.exp(-delta * 8));
+      this.latestResonatorTelemetry = resonator.step(delta, this.cymaticFreqCurrent);
+    }
     this.resonatorActive = true;
     this.simulator.setResonatorState(
       true,

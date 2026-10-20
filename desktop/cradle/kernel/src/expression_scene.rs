@@ -274,6 +274,39 @@ fn loop_exit(material: &serde_json::Map<String, Value>) -> Result<(), String> {
     }
 }
 
+/// The Frequency driver (Torus, Manual, Focus, Automation; DLW 20.14) and the Key source (Torus, Sky, Manual; DLW 20.2) a Scene may
+/// carry. A value outside the manual's list is refused, never stored; an absent one stays absent (a Scene saved before the Key source
+/// carries none, and the renderer's own importer requires the driver, so the kernel only closes the set).
+fn drive_and_key(scene: &Value) -> Result<(), String> {
+    const FREQUENCY_DRIVERS: &[&str] = &["torus", "manual", "focus", "automation"];
+    const KEY_SOURCES: &[&str] = &["torus", "sky", "manual"];
+    const DRIVE_KINDS: &[&str] = &["frequency", "sweep", "semanticFocus", "torus"];
+    let one_of = |value: &Value, allowed: &[&str], name: &str| match value.as_str() {
+        Some(v) if allowed.contains(&v) => Ok(()),
+        _ => Err(format!("Invalid {name}")),
+    };
+    if let Some(driver) = scene["composition"].get("frequencyDriver") {
+        one_of(driver, FREQUENCY_DRIVERS, "Scene frequency driver")?;
+    }
+    if let Some(key) = scene["composition"].get("keySource") {
+        one_of(key, KEY_SOURCES, "Scene key source")?;
+    }
+    if let Some(drive) = scene.get("resonanceDrive") {
+        let drive = object(drive, "Scene resonance drive")?;
+        one_of(
+            drive.get("kind").unwrap_or(&Value::Null),
+            DRIVE_KINDS,
+            "Scene resonance drive",
+        )?;
+        if drive.get("kind").and_then(Value::as_str) == Some("torus") {
+            if let Some(key) = drive.get("keySource") {
+                one_of(key, KEY_SOURCES, "Scene resonance drive key source")?;
+            }
+        }
+    }
+    Ok(())
+}
+
 pub fn validate(
     presentation: &Presentation,
     scene: &Scene,
@@ -351,6 +384,7 @@ pub fn validate(
     for key in ["view", "field", "composition", "morph", "engine"] {
         object(&presentation.scene[key], key)?;
     }
+    drive_and_key(&presentation.scene)?;
     let view = &presentation.scene["view"];
     if !matches!(view["mode"].as_str(), Some("2d" | "3d")) {
         return Err("Invalid Scene view mode".into());

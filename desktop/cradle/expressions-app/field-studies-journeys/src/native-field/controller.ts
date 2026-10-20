@@ -7,6 +7,7 @@ import {nativeActuatorStanding} from '../nativeActuatorStanding';
 import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
 import {editEffectChain,editEffects,initialEffects,type EffectValue,type EffectsState,type PresentationEffect} from './effectsLaw';
 import {PresentationEffects} from './presentationEffects';
+import {voiceModeRef} from './torusPlay.mjs';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -58,6 +59,9 @@ export class NativeFieldController {
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
  private played:{at:number;strikes:number;last_ms:number}|null=null;
+ /** The voices the instrument was last struck on, for the plate to follow (torusPlay.mjs): a played note names its own voices, a
+  * determinant event that strikes names every voice the owner tunes. The owner reports no per-voice amplitude, so the latest strike stands. */
+ private struck:{at:number;source:'note'|'event';refs:string[]}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
  /** The torus's four effects (manual §21.5): their state outlives an instrument's lifetime, as the level's does; their sound stands
   * only while an audio stage does. */
@@ -135,7 +139,7 @@ export class NativeFieldController {
   domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
   instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
-   opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,played:this.played,
+   opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,played:this.played,struck:this.struck,
    stage:this.stageReading,stage_stale:this.stageStale,
    presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
@@ -174,7 +178,7 @@ export class NativeFieldController {
  private async admit(sampleRate:number,open:()=>Promise<any>){
   if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension)throw new Error('release the current native owner and instrument suspension before opening another');
   if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw new Error('native binding must supply its actual sample rate');
-  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.played=null;this.changed();
+  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.played=null;this.struck=null;this.changed();
   let context:AudioContext|null=null;
   try{
    // This is invoked directly by the person's open action; no microphone and no
@@ -306,6 +310,15 @@ export class NativeFieldController {
    this.finishCommand(session,following,revision,'native operation applied while held; resume explicitly');return result;
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}
+ /** A determinant event the owner acknowledged strikes every voice it tunes when the event says so (`replace-event` with strike) or when the
+  * owner's own policy does (an M1 advance under `strike_on_event`). Anything else (a stage procedure, an event that does not strike) is not
+  * recorded as a strike. */
+ private noteEventStrike(command:any){
+  const strikes=command?.operation==='replace-event'?command.strike===true
+   :command?.operation==='m1-advance'?this.influenceReading?.material?.strike_on_event!==false:false;
+  const refs=(Array.isArray(this.influenceReading?.voices)?this.influenceReading.voices:[]).map((v:any)=>v?.planet_ref).filter((r:unknown):r is string=>typeof r==='string').map(voiceModeRef);
+  if(strikes&&refs.length)this.struck={at:Date.now(),source:'event',refs};
+ }
  /** A refused determinant leaves the owner and its standing unchanged. */
  private refused(operation:string,error:unknown,session:InstrumentSession){
   if(!this.current(session)||!session.reading.available)return false;
@@ -346,6 +359,7 @@ export class NativeFieldController {
      // second exchange (the audio pump must not wait on another read).
      const carried=session.lastInfluence;
      if(carried&&carried.generation===session.reading.acknowledged?.generation)this.admitInfluence(carried);
+     this.noteEventStrike(command);
      this.changed();
     }catch(error){if(!(cadence&&TRANSIENT.test(String(error))))this.refused(operation,error,session);throw error;}
     finally{this.operating--;}
@@ -359,9 +373,11 @@ export class NativeFieldController {
    try{
     await held.recover('native determinant admission');
     if(needsEvent&&this.sourcesStale)await this.readSources(held);
-    await held.operate(build());
+    const command=build();
+    await held.operate(command);
     this.refusal=null;this.stageStale=true;
     await this.readSources(held);await this.readInfluence(held);
+    this.noteEventStrike(command);
     await held.recover('native determinant readback admitted; rebase device only');
     this.reason=following?null:prior;
     this.finishCommand(held,following,revision,'determinant applied while held; resume explicitly');
@@ -405,7 +421,7 @@ export class NativeFieldController {
    const sent=performance.now();
    try{await session.strike(acts);}
    catch(error){this.refused('played strike',error,session);throw error;}
-   this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.changed();
+   this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'note',refs:[...modeRefs]};this.changed();
   });
  }
  /** The performance journal of the current native lifetime (acts and aggregate advances). */

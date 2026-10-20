@@ -5,6 +5,7 @@ import {TransportState} from '../../src/engine/transportState';
 import {stateSource} from './sourceState';
 import {PointCloudField} from '../../src/engine/PointCloudField';
 import type {PointCloudConfig} from '../../src/engine/types';
+import type {TorusPlayReading} from '../../src/engine/torusDrive';
 import {CymaticResonator} from '../../src/engine/cymaticResonator';
 import {readPath} from '../../src/engine/automation';
 import {Color} from 'three';
@@ -42,6 +43,13 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  readonly entitySound=new EntitySoundBank();
  private nativeConfigs=new WeakMap<PointCloudConfig,PointCloudConfig>();
  setNativeDomain(active:boolean){this.nativeDomain=active;this.applied=null;this.dirty=true;}
+ /** The torus's played reading (nativeField.ts): kept here so an engine built later, or rebuilt after a lost context, is handed it too. The
+  * plate reads it only when the scene's drive is Torus; a repeated reading is not a change. */
+ private torusPlay:TorusPlayReading|null=null;
+ setTorusPlay(reading:TorusPlayReading|null){
+  if(JSON.stringify(reading)===JSON.stringify(this.torusPlay))return;
+  this.torusPlay=reading;this.engine?.setTorusPlay(reading);
+ }
  private nativeConfig(config:PointCloudConfig):PointCloudConfig{
   if(!this.nativeDomain)return config;
   let result=this.nativeConfigs.get(config);
@@ -104,7 +112,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const config=this.nativeConfig(this.configuration(frame));
   // E11b: a wipe holds the outgoing frame, captured before the new configuration reaches the GPU.
   if(this.holdDue){this.holdDue=false;this.engine?.captureTransitionHold(transitionColourOf(this.from?.backgroundColor));}
-  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
+  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.engine.setTorusPlay(this.torusPlay);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
   this.engine.setTransitionOverlay(this.overlay);this.engine.setForceEmitterProjection(frame.forceEmitterProjection??null);this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
   if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;
