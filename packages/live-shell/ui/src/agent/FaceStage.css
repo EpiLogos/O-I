@@ -1,0 +1,13 @@
+/* The agent's face (FaceStage.tsx): the live face page in a frame, or the mask in the same pose, filling the box the host gives.
+   The mask stands at the inset the face page leaves round the face (public/face/face-embed.css: 2 % above, 5 % at the sides and 8 %
+   below, for the head's turns and the jaw's drop), so the two meet at one size. */
+.face-stage { position: relative; overflow: hidden; }
+.face-stage-mask { position: absolute; inset: 2% 5% 8%; }
+.face-stage-mask > svg { display: block; width: 100%; height: 100%; }
+/* The frame and its page are both dark in their colour scheme, so the browser lays no opaque ground behind the face. */
+.face-stage-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; color-scheme: dark; pointer-events: none; }
+.face-stage-frame[data-interactive="true"] { pointer-events: auto; }
+/* Until the live face stands, the frame loads unseen behind the mask. */
+.face-stage[data-face="mask"] > .face-stage-frame { opacity: 0; }
+/* No conversation bound: the face sleeps, and stands back. */
+.face-stage[data-dim="true"] { opacity: .6; }
