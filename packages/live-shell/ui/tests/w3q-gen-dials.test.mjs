@@ -146,14 +146,14 @@ test('S1 sea level: the land falls steadily as the sea rises, with no dead stret
   }
 })
 
-test('S2 sea level: at 0 the world is land and at 1 it is sea', pending, () => {
+test('S2 sea level: at 0 the world is land and at 1 it is sea', () => {
   // "a world of land": the sea is under a tenth of the surface, so its water is lakes and straits; "a world of sea": land is under a twentieth, islands
   const dry = SEEDS.map(seed => body.landShare(make(seed, {landmass: {sea_level: 0}}), 128)), wet = SEEDS.map(seed => body.landShare(make(seed, {landmass: {sea_level: 1}}), 128))
   assert.ok(mean(dry) >= .9 && Math.min(...dry) >= .85, `sea level 0 gives land ${dry.map(x => f(x, 2)).join(', ')}: a world of land is at least 90% land (no seed under 85%)`)
   assert.ok(mean(wet) <= .05 && Math.max(...wet) <= .1, `sea level 1 gives land ${wet.map(x => f(x, 2)).join(', ')}: a world of sea is at most 5% land (no seed over 10%)`)
 })
 
-test('S3 sea level: the default is Earth-like, near the Earth’s 29 % of land (22 to 40 %)', pending, () => {
+test('S3 sea level: the default is Earth-like, near the Earth’s 29 % of land (22 to 40 %)', () => {
   // the ticket's band (§5): the Earth's land is 29.2 % of its surface; the dial's default (50 %) must give a world like it
   const shares = SEEDS.map(seed => body.landShare(make(seed), 128))
   assert.ok(mean(shares) >= .22 && mean(shares) <= .4, `the default dials give ${shares.map(x => f(x, 2)).join(', ')} land (mean ${f(mean(shares), 2)}): between .22 and .40`)
@@ -162,7 +162,7 @@ test('S3 sea level: the default is Earth-like, near the Earth’s 29 % of land (
 
 // ── continents ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('C1 continents: one supercontinent near 0.6, six or more lands near 3.6, and more at every step between', pending, () => {
+test('C1 continents: one supercontinent near 0.6, six or more lands near 3.6, and more at every step between', () => {
   const lo = SEEDS.map(seed => majorLands(imageOf(make(seed, {...NO_ICE, landmass: {continents: .6}})))), mid = SEEDS.map(seed => majorLands(imageOf(make(seed, {...NO_ICE, landmass: {continents: 1.7}})))),
     hi = SEEDS.map(seed => majorLands(imageOf(make(seed, {...NO_ICE, landmass: {continents: 3.6}}))))
   const count = lands => mean(lands.map(l => l.length))
@@ -209,7 +209,7 @@ const quantile = (xs, q) => { const s = Float64Array.from(xs).sort(); return s[M
 /** The spread of the land's height, from the 5th to the 95th percentile of what stands above the sea. */
 const spread = r => { const h = []; for (let at = 0; at < r.high.length; at++) if (r.land[at]) h.push(r.high[at]); return quantile(h, .95) - quantile(h, .05) }
 
-test('R1 relief: plains at 0, ranges at 1: the land’s spread of height grows with the dial and at 0 the land is flat', pending, () => {
+test('R1 relief: plains at 0, ranges at 1: the land’s spread of height grows with the dial and at 0 the land is flat', () => {
   const spreadAt = value => mean(SEEDS.map(seed => spread(relief(make(seed, {landmass: {relief: value}})))))
   const flat = spreadAt(0), mid = spreadAt(.5), high = spreadAt(1)
   assert.ok(flat < mid && mid < high, `the spread of the land’s height rises with relief: ${f(flat)} at 0, ${f(mid)} at .5, ${f(high)} at 1`)
@@ -238,7 +238,7 @@ function thinness(record, n = 256) {
   return 1 - kept / area
 }
 
-test('R2 relief: the mountains are ranges, not peaks: the high ground at relief 1 is thin, crests and ridges and not masses', pending, () => {
+test('R2 relief: the mountains are ranges, not peaks: the high ground at relief 1 is thin, crests and ridges and not masses', () => {
   // "ranges of ridged mountains". Measured on the field (20 Oct, scratch): the highest tenth of the land of version 1, whose noise is smooth value noise, is gone by .09 to .26 when
   // opened by a 5×5 square (its high ground is masses); ridged noise's is gone by .88 to .97 (its high ground is crests). The bound is .6, over four seeds. (The first form of this
   // test took the elongation of the pieces of high ground: version 1 gave 1.9 and ridged noise 2.2 to 3.4, too close to hold; this one separates them by .6.)
@@ -254,7 +254,7 @@ test('R3 relief: the mountains stand in a continent’s interior and the coast i
   assert.ok(mean(ratios) >= 3, `interior peaks against coastal ground at relief 1: ${ratios.map(x => f(x, 1)).join(', ')} (mean at least 3)`)
 })
 
-test('R4 relief: the share of rock and snow rises with it, and a world without relief has no snow below the polar caps', pending, () => {
+test('R4 relief: the share of rock and snow rises with it, and a world without relief has no snow below the polar caps', () => {
   // a cool world with no ice caps, so snow is the mountains’ and not the poles’; the band is within 45° of the equator
   const at = value => { const images = SEEDS.map(seed => imageOf(make(seed, {...NO_ICE, climate: {ice_caps: 0, warmth: .4}, landmass: {relief: value}}))), z = zonal(images, 0, 45); return z }
   const flat = at(0), high = at(1)
@@ -283,7 +283,7 @@ test('K2 coast: an archipelago has at least twice as many separate lands as a sm
   assert.ok(archipelago.pieces >= 2 * smooth.pieces, `separate lands: ${f(archipelago.pieces, 1)} for an archipelago, ${f(smooth.pieces, 1)} for a smooth coast (at least twice)`)
 })
 
-test('K3 coast: each coast is fractal, with more shoreline to find the finer you look', pending, () => {
+test('K3 coast: each coast is fractal, with more shoreline to find the finer you look', () => {
   // The Earth's coast, measured here at 256, 512, 1024 and 2048 wide (the image box-reduced), has boundary length/width 4.41, 5.17, 6.27, 7.43:
   // 1.42 times as long at four times the resolution, a fractal dimension of 1.25 (Mandelbrot’s Britain is 1.25). A coast that is a smooth curve
   // gains nothing; a band-limited noise gains until its finest octave and then stops. The fjord and the archipelago must gain at least 1.3 times
@@ -298,7 +298,7 @@ test('K3 coast: each coast is fractal, with more shoreline to find the finer you
 
 // ── warmth and moisture ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('W1 climate: moisture follows the latitude bands: a wet equator, dry subtropics, wet mid-latitudes', pending, () => {
+test('W1 climate: moisture follows the latitude bands: a wet equator, dry subtropics, wet mid-latitudes', () => {
   // The Earth (earth-2k.jpg, the classifiers above, over these very bands): vegetated land is .70 of the land within 10° of the equator, .16 at 18 to 32°,
   // .64 at 45 to 58°; arid land is .08, .58, .13. The generated world is held to 40% of the Earth’s differences (.2 of the .5, .15 of the .45).
   const eq = zonalOf({}, 0, 10), sub = zonalOf({}, 18, 32), mid = zonalOf({}, 45, 58)
@@ -315,7 +315,7 @@ test('W2 climate: the moisture dial makes the land green: vegetated land rises w
   assert.ok(wet - dry >= .3, `from the driest to the wettest world the vegetated share moves by ${f(wet - dry, 2)} (at least .3)`)
 })
 
-test('W3 climate: the warmth dial pushes the cold back: the ice and snow retreat poleward as it rises, and a hot world has less snow than a cold one', pending, () => {
+test('W3 climate: the warmth dial pushes the cold back: the ice and snow retreat poleward as it rises, and a hot world has less snow than a cold one', () => {
   const margin = warmth => over({climate: {warmth, ice_caps: .5}}, iceMargin), snow = warmth => zonalOf({climate: {warmth, ice_caps: .5}}, 0, 90).snow
   const [cold, mid, hot] = [0, .5, 1].map(margin)
   assert.ok([cold, mid, hot].every(Number.isFinite), 'every world has an ice margin to measure')
@@ -324,7 +324,7 @@ test('W3 climate: the warmth dial pushes the cold back: the ice and snow retreat
   assert.ok(sCold > sMid && sMid > sHot, `and the share of land under snow falls: ${f(sCold, 3)}, ${f(sMid, 3)}, ${f(sHot, 3)}`)
 })
 
-test('W4 climate: the four corners of the climate look like themselves: hot and wet is green, hot and dry is tan, cold is white', pending, () => {
+test('W4 climate: the four corners of the climate look like themselves: hot and wet is green, hot and dry is tan, cold is white', () => {
   const hotWet = zonalOf({climate: {warmth: .85, moisture: .9, ice_caps: .3}}, 0, 60), hotDry = zonalOf({climate: {warmth: .85, moisture: .1, ice_caps: .3}}, 0, 60),
     cold = zonalOf({climate: {warmth: .15, moisture: .5, ice_caps: .3}}, 0, 60)
   assert.ok(hotWet.veg >= hotDry.veg + .15 && hotWet.veg >= cold.veg + .15, `hot and wet is the greenest: vegetated land ${f(hotWet.veg, 2)} against ${f(hotDry.veg, 2)} (hot, dry) and ${f(cold.veg, 2)} (cold)`)
@@ -347,7 +347,7 @@ test('I1 ice caps: none at 0, and the ice reaches further toward the equator as 
   assert.ok(margins[3] <= 50, `at 100% it stands at ${f(margins[3], 1)}° (at most 50°)`)
 })
 
-test('I2 ice caps: the margin is ragged, not a latitude ruler: its spread across longitudes is the Earth’s, 2 to 15°', pending, () => {
+test('I2 ice caps: the margin is ragged, not a latitude ruler: its spread across longitudes is the Earth’s, 2 to 15°', () => {
   // the lead's gate band for the ice edge at 2048 wide, the same number here at 512: .4 to 3 times the Earth's 5.1° (planetMetrics assessPlanet 'ice edge spread')
   const spreads = SEEDS.map(seed => iceEdge(imageOf(make(seed), 512)).spreadDeg)
   assert.ok(mean(spreads) >= 2.04 && mean(spreads) <= 15.3, `the ice edge wanders ${spreads.map(x => f(x, 2)).join('°, ')}° (mean ${f(mean(spreads), 2)}°) across the longitudes: between 2.04° and 15.3° (the Earth’s is 5.1°)`)
@@ -394,14 +394,14 @@ function cover(mask, lo = 0, hi = 90) {
 }
 const cloudsOf = (clouds, seed) => body.cloudImage(make(seed, {sky: {clouds}}), 256)
 
-test('A3 clouds: the cover is none at 0 and rises with the dial, and a cloudy world is at least half cloud', pending, () => {
+test('A3 clouds: the cover is none at 0 and rises with the dial, and a cloudy world is at least half cloud', () => {
   const dials = [0, .25, .5, .75, 1], covers = dials.map(c => mean(SEEDS.map(seed => cover(cloudsOf(c, seed)))))
   assert.ok(covers[0] <= .001, `no clouds at 0 (cover ${f(covers[0], 4)})`)
   for (let k = 1; k < covers.length; k++) assert.ok(covers[k] > covers[k - 1] + .02, `the cover rises with the dial: ${covers.map(x => f(x, 3)).join(', ')} (each step by at least .02)`)
   assert.ok(covers[4] >= .5, `at 100% the sky is ${f(covers[4], 2)} cloud: at least half (the Earth’s real cover is .67)`)
 })
 
-test('A4 clouds: the bands follow latitude: cloudier at the equator and in the storm tracks than in the subtropics', pending, () => {
+test('A4 clouds: the bands follow latitude: cloudier at the equator and in the storm tracks than in the subtropics', () => {
   // Earth, zonal-mean cloud fraction (ISCCP, about .65 to .70 at the equator, .50 to .55 at 25°, .75 to .85 at 60°): the equator is about .12 above the subtropics
   // and mid-latitudes about .25 above. The generated cover is held to .08 above, each, averaged over the seeds (at a dial of .5).
   const band = (lo, hi) => mean(SEEDS.map(seed => cover(cloudsOf(.5, seed), lo, hi)))

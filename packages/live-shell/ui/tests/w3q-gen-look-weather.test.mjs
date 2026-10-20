@@ -133,7 +133,7 @@ test('K1 the default look is a lived-in body: no look, an empty look and `barren
   }
 })
 
-test('K2 barren takes the colour from the land: its colourfulness falls as the look rises and at 1 the land is grey', pending, () => {
+test('K2 barren takes the colour from the land: its colourfulness falls as the look rises and at 1 the land is grey', () => {
   // A grey moon: the Moon’s own surface is a brown-grey whose largest channel is within about .03 of its smallest; the body is held to .08, with room for a tinge of rock.
   // At no barren the land has the colour of its climate (at least twice the barren land’s).
   const chroma = LEVELS.map(barren => mean(SEEDS.map(seed => { const record = make(seed, NO_ICE); return landColour(record, body.bodyImage(record, 256, {barren})).chroma })))
@@ -142,7 +142,7 @@ test('K2 barren takes the colour from the land: its colourfulness falls as the l
   assert.ok(chroma[0] >= 2 * chroma[4], `and a lived-in land is at least twice as colourful (${f(chroma[0])} against ${f(chroma[4])})`)
 })
 
-test('K3 barren draws the sea back to dust: the share of the sea that still reads as water falls as the look rises, to almost none at 1', pending, () => {
+test('K3 barren draws the sea back to dust: the share of the sea that still reads as water falls as the look rises, to almost none at 1', () => {
   // `waterOf` (shaders.ts EARTH_COMMON) reads a pixel as water when it is blue well above red; dust is not. The field says where the sea was (look does not move it).
   const share = LEVELS.map(barren => mean(SEEDS.map(seed => { const record = make(seed, NO_ICE); return seaStillWater(record, body.bodyImage(record, 256, {barren})) })))
   assert.ok(share[0] >= .95, `a lived-in sea reads as water (${f(share[0], 2)})`)
@@ -150,7 +150,7 @@ test('K3 barren draws the sea back to dust: the share of the sea that still read
   assert.ok(share[4] <= .05, `at barren 1 ${f(share[4], 3)} of the sea reads as water (at most .05)`)
 })
 
-test('K4 barren empties the clouds: the cover falls as the look rises and at 1 there is none', pending, () => {
+test('K4 barren empties the clouds: the cover falls as the look rises and at 1 there is none', () => {
   // at the cloud dial's top, where a lived-in body is at least half cloud (the dials test's A3), so that there is a cover for barren to take away
   const cover = LEVELS.map(barren => mean(SEEDS.map(seed => cloudCover(body.cloudImage(make(seed, {sky: {clouds: 1}}), 128, {barren})))))
   assert.ok(cover[0] >= .3, `a lived-in cloudy body has cloud (cover ${f(cover[0], 3)}; at least .3)`)
@@ -158,14 +158,14 @@ test('K4 barren empties the clouds: the cover falls as the look rises and at 1 t
   assert.ok(cover[4] <= .001, `at barren 1 the mask is empty (cover ${f(cover[4], 5)})`)
 })
 
-test('K5 barren thins the air: `airOf` falls with the look and at 1 there is none', pending, () => {
+test('K5 barren thins the air: `airOf` falls with the look and at 1 there is none', () => {
   const record = make(SEEDS[0]), air = LEVELS.map(barren => body.airOf(record, {barren}))
   assert.equal(air[0], body.airOf(record), 'barren 0 is the body’s own air')
   for (let k = 1; k < air.length; k++) assert.ok(air[k] < air[k - 1], `the air falls with barren ${LEVELS.join(', ')}: ${air.map(x => f(x, 3)).join(', ')}`)
   assert.equal(air[4], 0, 'a barely shaped moon has no air')
 })
 
-test('K6 the disc at the System scale is barren too: greyer, no air at its rim, no cloud over it', pending, () => {
+test('K6 the disc at the System scale is barren too: greyer, no air at its rim, no cloud over it', () => {
   const size = 96
   const read = barren => {
     const record = make(SEEDS[0], {sky: {clouds: 1}}), disc = body.bodyDisc(record, size, {barren})
@@ -200,7 +200,7 @@ test('K7 a barren tile is greyer than a lived-in one, the same ground: close-zoo
   assert.ok(levels[0] > levels[1] && levels[1] > levels[2], `the tile loses its colour with barren 0, .5, 1: ${levels.map(x => f(x)).join(', ')}`)
 })
 
-test('K8 a look outside its range is held to it: barren below 0 is 0 and above 1 is 1', pending, () => {
+test('K8 a look outside its range is held to it: barren below 0 is 0 and above 1 is 1', () => {
   const record = make(SEEDS[0])
   assert.ok(!same(body.bodyImage(record, 64, {barren: 1}), body.bodyImage(record, 64, {barren: 0})), 'the look changes the picture (else this test says nothing)')
   assert.ok(same(body.bodyImage(record, 64, {barren: 3}), body.bodyImage(record, 64, {barren: 1})), 'barren 3 is barren 1')
@@ -221,7 +221,7 @@ test('K9 a barren moon is still the same ground: the land keeps its shading, and
   assert.ok(sxy / Math.sqrt(sxx * syy || 1) >= .5, `the barren land’s luma follows the lived-in land’s (correlation ${f(sxy / Math.sqrt(sxx * syy || 1), 3)}; at least .5)`)
 })
 
-test('K10 the disc carries its weather: `bodyDisc(record, size, look, timeMs)` shows the clouds of that moment, and the same moment shows the same disc', pending, () => {
+test('K10 the disc carries its weather: `bodyDisc(record, size, look, timeMs)` shows the clouds of that moment, and the same moment shows the same disc', () => {
   // Lane B's contract addition (ticket §4): another world's small disc is drawn at the occasion, so it carries the weather the globe would show it with. A
   // generator holds no clock: a disc given no time (absent or null) is drawn at the weather's own zero, and the caller that means Now gives the clock's reading.
   const DAY_MS = 86400000, t0 = Date.UTC(2026, 9, 20), cloudy = make(SEEDS[0], {sky: {clouds: 1}}), clear = make(SEEDS[0], {sky: {clouds: 0}})
@@ -249,7 +249,7 @@ const wrap = d => ((d + 540) % 360 + 360) % 360 - 180
 /** Degrees of longitude gained per day at a latitude, from one day's difference, wrapped to ±180°. */
 const rateAt = (record, lat, t = T0) => wrap(body.weatherShift(record, lat, t + DAY) - body.weatherShift(record, lat, t))
 
-test('V1 `weatherShift` is a function of the seed, the latitude and the time, and of nothing else of the record', pending, () => {
+test('V1 `weatherShift` is a function of the seed, the latitude and the time, and of nothing else of the record', () => {
   assert.equal(typeof body.weatherShift, 'function', 'body.ts exports weatherShift(record, latDeg, timeMs)')
   const a = make(SEEDS[0]), moved = make(SEEDS[0], {landmass: {sea_level: .2, continents: 3, relief: .9, coast: 'fjord'}, climate: {warmth: .1, moisture: .9, ice_caps: .8}, sky: {atmosphere: .1, clouds: .9, axial_tilt_deg: 40}})
   for (const lat of [0, 22, -47, 80]) assert.equal(body.weatherShift(moved, lat, T0), body.weatherShift(a, lat, T0), `the other dials do not move the weather (latitude ${lat})`)
@@ -258,7 +258,7 @@ test('V1 `weatherShift` is a function of the seed, the latitude and the time, an
   assert.ok(samples.filter(([lat, t]) => body.weatherShift(a, lat, t) !== body.weatherShift(b, lat, t)).length >= 3, 'another seed has other weather')
 })
 
-test('V2 the weather differs by latitude band: the clouds are carried at different speeds in the tropics, the temperate zone and near the pole', pending, () => {
+test('V2 the weather differs by latitude band: the clouds are carried at different speeds in the tropics, the temperate zone and near the pole', () => {
   needShift()
   // Earth: trade winds in the tropics, westerlies in mid-latitudes, polar easterlies: three bands, not one speed. The rates (degrees of longitude per day) at 0°, 30°,
   // 50° and 70° must not be one number: the spread is at least a quarter of the largest, and at least three of the four band pairs differ by a twentieth of it.
@@ -270,7 +270,7 @@ test('V2 the weather differs by latitude band: the clouds are carried at differe
   assert.ok(differing >= 4, `and ${differing} of the six pairs of bands differ by at least a twentieth of the largest (at least four of six)`)
 })
 
-test('V3 the shear between bands is smooth: the speed changes gently with latitude, so the cloud mask is smeared across a band’s edge, not torn', pending, () => {
+test('V3 the shear between bands is smooth: the speed changes gently with latitude, so the cloud mask is smeared across a band’s edge, not torn', () => {
   needShift()
   // A speed that jumps between two latitudes opens a rift in the mask at that latitude. Across one degree the rate may not change by more than a quarter of the whole spread.
   const record = make(SEEDS[0]), rates = []
@@ -280,7 +280,7 @@ test('V3 the shear between bands is smooth: the speed changes gently with latitu
   for (let k = 1; k < rates.length; k++) assert.ok(Math.abs(rates[k] - rates[k - 1]) <= .25 * spread, `the rate jumps from ${f(rates[k - 1], 2)} to ${f(rates[k], 2)} °/day between ${k - 90}° and ${k - 89}° (spread ${f(spread, 2)})`)
 })
 
-test('V4 the shift is continuous in time: hourly samples over a month have no jumps, and a millisecond moves it by a thousandth of a degree at most', pending, () => {
+test('V4 the shift is continuous in time: hourly samples over a month have no jumps, and a millisecond moves it by a thousandth of a degree at most', () => {
   needShift()
   const record = make(SEEDS[0])
   for (const lat of [0, 25, -40, 60, 85]) {
@@ -293,7 +293,7 @@ test('V4 the shift is continuous in time: hourly samples over a month have no ju
   }
 })
 
-test('V5 the weather is bounded, and slow: the shift stays within a turn for any time, in the deep past and the far future, at the speeds of real weather', pending, () => {
+test('V5 the weather is bounded, and slow: the shift stays within a turn for any time, in the deep past and the far future, at the speeds of real weather', () => {
   needShift()
   const record = make(SEEDS[0]), lats = [-90, -63, -30, 0, 17, 45, 75, 90]
   const times = [-3.2e13, -1.5e12, -1, 0, 1, 1.7e12, T0, 3.2e13, 8.64e15]
@@ -307,7 +307,7 @@ test('V5 the weather is bounded, and slow: the shift stays within a turn for any
   assert.ok(fastest >= 3.6 && fastest <= 360, `the fastest band moves ${f(fastest, 2)} °/day (between 3.6 and 360)`)
 })
 
-test('V6 a past occasion has its weather and a different day has another: the shift at two dates a week apart differs by at least a degree at the fastest band', pending, () => {
+test('V6 a past occasion has its weather and a different day has another: the shift at two dates a week apart differs by at least a degree at the fastest band', () => {
   needShift()
   const record = make(SEEDS[0]), at = t => [0, 30, 50, 70].map(lat => body.weatherShift(record, lat, t))
   const a = at(T0), b = at(T0 + 7 * DAY), c = at(T0)
