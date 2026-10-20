@@ -108,19 +108,9 @@ for (const [name, {record, opts}] of Object.entries(BODIES)) {
   test(`B ${name}: the body, drawn 2048 wide, stands at the Earth’s standard`, () => {
     const {value: image, ms} = cpuMs(() => body.bodyImage(record, 2048))
     assert.equal(image.width, 2048)
-    const fails = assessPlanet(measurePlanet(image), reference.earth, {...opts, shelf: false})
+    const fails = assessPlanet(measurePlanet(image), reference.earth, opts)
     assert.deepEqual(fails, [], `${name} falls short of the Earth at ${Math.round(ms)} ms:\n  ${fails.join('\n  ')}`)
     assert.ok(ms < 20000, `a 2048-wide body is made in under 20 s on a CPU thread (took ${Math.round(ms)} ms); the worker takes it off the main thread, but not out of reason`)
-  })
-}
-
-// The sea's shelf and deep tone, held to the Earth's own: red until the generator's follow-up lands (W3Q_GATE=enforce runs it as a test).
-const pendingShelf = process.env.W3Q_GATE === 'enforce' ? {} : {todo: 'T-PROCEDURAL-BODY follow-up: the shelf is a narrow edge, not a halo, and the deep sea is calm'}
-for (const [name, {record, opts}] of Object.entries(BODIES)) {
-  test(`B shelf ${name}: the sea's shelf is as narrow and as dim as the Earth's, and its open sea as calm`, pendingShelf, () => {
-    const image = body.bodyImage(record, 2048), m = measurePlanet(image)
-    const fails = assessPlanet(m, reference.earth, opts).filter(c => /^(shelf|deep sea)/.test(c))
-    assert.deepEqual(fails, [], `${name}:\n  ${fails.join('\n  ')}`)
   })
 }
 
