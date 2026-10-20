@@ -14,17 +14,29 @@
  * played strike address all use it). */
 export const voiceModeRef = planetRef => `scene:planet/${planetRef}`;
 
-/** The torus and sky readings the engine's `setTorusPlay` takes, from the controller's reading (or null when no controller). */
+/** The owner's voice at the map's Sun, M2-5-(0/1): the 1:1 of M2-5's scale-degree table (M2-PARASHAKTI P2-F5-SUN). The scene owner names its
+ * voices by their map node (`planet_ref`); this is the one that is the torus's root. */
+export const ROOT_PLANET_REF = '#2-5-0/1';
+
+/** The torus and sky readings the engine's `setTorusPlay` takes, from the controller's reading (or null when no controller). `root` is the
+ * owner's 1:1 for the symbols' voices (symbolVoices.ts): the frequency of its voice at the Sun, absent with its reason when the owner names none. */
 export function torusPlayReading(reading) {
   const instrument = reading?.instrument ?? null;
   const acting = instrument?.acting ?? null;
   if (!instrument || !acting) {
     const closed = 'No instrument is open';
-    return {torus: {tonesHz: [], silentBecause: closed}, sky: {tonesHz: [], absentBecause: closed}};
+    return {torus: {tonesHz: [], silentBecause: closed}, sky: {tonesHz: [], absentBecause: closed}, root: {hz: null, absentBecause: closed}};
   }
   const voices = Array.isArray(acting.voices) ? acting.voices : [];
   const pitchOf = new Map(voices.map(voice => [voiceModeRef(voice.planet_ref), voice.frequency_hz]));
-  return {torus: torusReading(reading.status, instrument.struck, pitchOf), sky: skyReading(acting.sky, voices)};
+  return {torus: torusReading(reading.status, instrument.struck, pitchOf), sky: skyReading(acting.sky, voices), root: rootReading(voices)};
+}
+
+function rootReading(voices) {
+  const sun = voices.find(voice => voice.planet_ref === ROOT_PLANET_REF);
+  if (!sun) return {hz: null, absentBecause: voices.length ? `The owner names no voice at ${ROOT_PLANET_REF}, the Sun of M2-5 and the 1:1, so the torus's root is not given` : 'The owner names no voices, so the torus has no root'};
+  if (typeof sun.frequency_hz !== 'number' || !Number.isFinite(sun.frequency_hz) || sun.frequency_hz <= 0) return {hz: null, absentBecause: `The owner's voice at ${ROOT_PLANET_REF} has no frequency, so the torus's root is not given`};
+  return {hz: sun.frequency_hz, absentBecause: null};
 }
 
 function torusReading(status, struck, pitchOf) {

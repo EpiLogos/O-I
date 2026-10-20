@@ -28,6 +28,8 @@ export interface TorusPlayReading {
   torus: { tonesHz: readonly number[]; silentBecause: string | null };
   /** The sky's voices (a dated sky only); `absentBecause` says why the sky gives no key. */
   sky: { tonesHz: readonly number[]; absentBecause: string | null };
+  /** The owner's 1:1, the frequency of its voice at the map's Sun. The plate does not use it; the symbols' voices stand on it. */
+  root?: { hz: number | null; absentBecause: string | null };
 }
 
 /** The eight audible roles and four nodes M2′ reads from the torus are not yet a drive of the plate; this is said beside every drive. */

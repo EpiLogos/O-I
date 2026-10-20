@@ -92,6 +92,9 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
   field: [
     {key: 'keySource', kind: 'panel-setting', title: 'Key source', read: scene => text(composition(scene).keySource),
       choices: [choice('torus', 'Torus'), choice('sky', 'Sky'), choice('manual', 'Manual')]},
+    // Symbol voices (manual §20.2: On · Off, default On): whether symbols carry the torus's sound to where they stand. The scene carries it only
+    // once it is set; the manual's own meaning of a scene that carries none is On. Off silences every voice and changes no symbol's block.
+    {key: 'symbolVoices', kind: 'panel-setting', title: 'Symbol voices', read: scene => composition(scene).symbolVoices !== false},
   ],
   resonance: [
     // Torus · Manual · Focus · Automation, in the manual's order (§20.14). A scene that carries no driver is unknown, not a default.

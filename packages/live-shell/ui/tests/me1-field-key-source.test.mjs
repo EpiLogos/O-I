@@ -89,7 +89,7 @@ test('the Field\'s Key source is the owner\'s reading of the Scene, in the manua
   const choices = model.expressionsSettingChoices('field', 'keySource')
   assert.deepEqual(choices.map(choice => choice.value), MANUAL_KEYS)
   assert.deepEqual(choices.map(choice => choice.label), ['Torus', 'Sky', 'Manual'])
-  assert.deepEqual(model.expressionsSettingKeys('field'), ['keySource'])
+  assert.deepEqual(model.expressionsSettingKeys('field'), ['keySource', 'symbolVoices'], 'the Key source, then ME2\'s Symbol voices')
   assert.equal(model.expressionsSettingRead('field', 'keySource', reading({keySource: 'sky'}).scene), 'Sky')
   assert.equal(model.expressionsSettingRead('field', 'keySource', reading({}).scene), undefined, 'a scene saved before the key existed has none: no default is drawn as a reading')
 })

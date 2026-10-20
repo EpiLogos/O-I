@@ -276,13 +276,20 @@ pub fn role_entity<'a>(document: &Document, scene: &'a Value, role: &str) -> Opt
 /// entity (or `role`), else the Scene's only entity.
 pub fn body_material(document: &Document, scene_ref: &str, role: &str) -> Result<Value, String> {
     let scene = scene_material(document, scene_ref)?;
-    if let Some(entity) = role_entity(document, &scene, role) {
-        return Ok(entity.clone());
+    let mut body = if let Some(entity) = role_entity(document, &scene, role) {
+        entity.clone()
+    } else {
+        match scene["entities"].as_array().map(Vec::as_slice) {
+            Some([only]) => only.clone(),
+            _ => return Err(format!("Scene {scene_ref} has no {role:?} body entity")),
+        }
+    };
+    // A character written before the oscillator went carries a voice for one: the body it lends is the voice without those fields. The
+    // character's own file is not touched, and the lent voice carries nothing (no mode is made up from the old frequency).
+    if let Some(sound) = body.get_mut("sound") {
+        crate::expression_profile::migrate_sound(sound);
     }
-    match scene["entities"].as_array().map(Vec::as_slice) {
-        Some([only]) => Ok(only.clone()),
-        _ => Err(format!("Scene {scene_ref} has no {role:?} body entity")),
-    }
+    Ok(body)
 }
 
 /// What one role receives in a performance.

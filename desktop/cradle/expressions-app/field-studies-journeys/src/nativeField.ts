@@ -291,6 +291,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   const reading=controller.reading as any,instrument=reading.instrument,open=!!reading.lease||reading.status==='opening';
   // What the torus plays, for the plate that Frequency driver = Torus drives (DLW §20.14): the owner's pitches, handed to the engine as they stand.
   engine.setTorusPlay?.(torusPlayReading(reading));
+  // The torus's output, for the symbols' voices to carry part of to where their symbols stand (a node the controller owns, in its audio context).
+  engine.setTorusTap?.(controller.voiceTap());
   panel.setAttribute('aria-busy',String(busy));
   setText('status',statusLine(reading));
   query('[data-ni-closed]').hidden=open;query('[data-ni-open]').hidden=!instrument&&!(composing&&reading.status==='opening');

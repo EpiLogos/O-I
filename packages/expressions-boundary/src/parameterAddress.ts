@@ -58,7 +58,7 @@ const PANEL_FAMILY: Record<FieldPanelSettingKey, string> = {
   volumeEnabled: 'depth', volumeProfile: 'depth', depthPerspective: 'depth', depthOcclusion: 'depth', vortex3d: 'depth', dispersion3d: 'depth',
   pointerMode: 'pointer', pointerClick: 'pointer', pointerScope: 'pointer',
   relationalEnabled: 'relational', relationalMode: 'relational',
-  frequencyDriver: 'resonance', keySource: 'field', autoSweep: 'resonance', sweepDirection: 'resonance', templateDimension: 'resonance', resonatorMode: 'resonance',
+  frequencyDriver: 'resonance', keySource: 'field', symbolVoices: 'field', autoSweep: 'resonance', sweepDirection: 'resonance', templateDimension: 'resonance', resonatorMode: 'resonance',
   focus: 'focus', focusOrder: 'focus', carryTint: 'focus', carryStation: 'focus',
   plane: 'arrange', layout: 'arrange', autoFitSizes: 'glyph',
 };

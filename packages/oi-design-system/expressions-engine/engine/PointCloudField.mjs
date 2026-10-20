@@ -5,12 +5,14 @@ import { validateTransport } from "./transportState.mjs";
  */
 import * as THREE from "three";
 import { DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG, DEFAULT_MEDIUM_CONFIG, DEFAULT_COLLISION_CONFIG, DEFAULT_DEPTH_CONFIG, DEFAULT_CONFIG } from "./fieldDefaults.mjs";
-import { DEFAULT_COLOR_CONFIG as DEFAULT_COLOR_CONFIG2, DEFAULT_TOROIDAL_CONFIG as DEFAULT_TOROIDAL_CONFIG2, DEFAULT_MEDIUM_CONFIG as DEFAULT_MEDIUM_CONFIG2, DEFAULT_COLLISION_CONFIG as DEFAULT_COLLISION_CONFIG2, DEFAULT_PAIRWISE_CONFIG as DEFAULT_PAIRWISE_CONFIG2, DEFAULT_DEPTH_CONFIG as DEFAULT_DEPTH_CONFIG2, DEFAULT_CONFIG as DEFAULT_CONFIG2 } from "./fieldDefaults.mjs";
+import { DEFAULT_COLOR_CONFIG as DEFAULT_COLOR_CONFIG2, DEFAULT_TOROIDAL_CONFIG as DEFAULT_TOROIDAL_CONFIG2, DEFAULT_MEDIUM_CONFIG as DEFAULT_MEDIUM_CONFIG2, DEFAULT_COLLISION_CONFIG as DEFAULT_COLLISION_CONFIG2, DEFAULT_PAIRWISE_CONFIG, DEFAULT_DEPTH_CONFIG as DEFAULT_DEPTH_CONFIG2, DEFAULT_CONFIG as DEFAULT_CONFIG2 } from "./fieldDefaults.mjs";
 import { DEFAULT_GLYPH_VOLUME } from "./glyphVolume.mjs";
 import { applyAutomations, createAutomationRuntime } from "./automation.mjs";
 import { GPGPUSimulator } from "./GPGPUSimulator.mjs";
 import { GlyphSampler } from "./GlyphSampler.mjs";
+import { PsgFormSampler, glyphPreparation, coveragesFromAlpha } from "./psg-form-sampler.mjs";
 import { particleVertexShader, particleFragmentShader } from "./shaders/particleShaders.mjs";
+import { TransitionPass } from "./transitionPass.mjs";
 import { isLightHex } from "./colorPalettes.mjs";
 import { CymaticResonator } from "./cymaticResonator.mjs";
 import { PinMarkerLayer } from "./pinMarkers.mjs";
@@ -21,6 +23,7 @@ import { mapChakrasToAnchors } from "./semantics/chakraProfile.mjs";
 import { LocalizedResonanceBank } from "./LocalizedResonanceBank.mjs";
 import { DEFAULT_RESONATOR_PARAMS } from "./cymaticResonator.mjs";
 import { semanticFocusTarget } from "./resonanceDrive.mjs";
+import { TorusDriveState } from "./torusDrive.mjs";
 import {
   DEFAULT_COMPOSITION,
   DEFAULT_CYMATIC_MEDIUM,
@@ -51,7 +54,6 @@ function getColorModeIndex(mode) {
   }
 }
 const TAU = Math.PI * 2;
-const clamp01 = (v) => Math.max(0, Math.min(1, v));
 import { computeMorphDrive } from "./morphSignal.mjs";
 import { computeMorphDrive as computeMorphDrive2 } from "./morphSignal.mjs";
 class PointCloudField {
@@ -129,7 +131,15 @@ class PointCloudField {
   gridIsLight = null;
   pinLayer = null;
   simulator;
+  /** E11b: the painted transition's compositing layer. Idle (no targets) unless a dip or wipe is in flight. */
+  transitionPass = new TransitionPass();
+  /** E11c: true while the transition pass draws the authoring-clean view (furniture hidden), as withCleanFrame does. */
+  transitionClean = false;
   glyphSampler;
+  /** The PS-G forms sampler (QL-MEF #296 #299): the retained glyph body, its
+   * correspondence and the rasterisation/reseed instrument, consuming the
+   * landed native form law. */
+  psgForm = new PsgFormSampler();
   entities;
   particleGeometry;
   particleMaterial;
@@ -218,6 +228,11 @@ class PointCloudField {
   resonatorActive = false;
   cymaticFreqCurrent = 396;
   sweepAccum = 0;
+  // DLW §20.14 Frequency driver = Torus: what the torus plays (handed in by the host), the drive it last gave the plate, and the tones
+  // the plate has glided to. The engine reads the owner's pitches here; it never makes one up (torusDrive.ts).
+  torusPlay = null;
+  torusDrive = new TorusDriveState();
+  torusTonesCurrent = [];
   // 3D Orbit Camera State (Orb Camera Control)
   cameraState = { pitch: 0, yaw: 0, zoom: 1, panX: 0, panY: 0 };
   isOrbitDragging = false;
@@ -310,7 +325,7 @@ class PointCloudField {
     this.entities.setBaseContext(cfg.style, cfg.fontFamily, cfg.fontWeight, comp.plane, cfg.cymatics);
     this.entities.setVolume(cfg.glyphVolume);
     this.entities.layout(cfg.entities || []);
-    const resolved = this.entities.update(cfg.entities || [], comp, this.simTime, this.lastDrive?.theta ?? 0, this.morphProgress, cfg.toroidalMorph?.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
+    const resolved = this.entities.update(cfg.entities || [], comp, this.simTime + (cfg.sequenceOffsetS ?? 0), this.lastDrive?.theta ?? 0, this.morphProgress, cfg.toroidalMorph?.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
     this.lastPoses = resolved.poses;
     const depthForms = !!(cfg.glyphVolume?.enabled && (cfg.glyphVolume?.depth ?? 0) > 0);
     this.lastForceEmitters = this.projectForceEmitters(compileEntityForceEmitters(cfg.entities || [], resolved.poses, cfg.interaction.placedPoints || [], depthForms ? "world3d" : "compositionPlane"));
@@ -640,7 +655,6 @@ class PointCloudField {
     const u = this.particleMaterial.uniforms;
     const depth = this.config.depth ?? DEFAULT_DEPTH_CONFIG;
     const persp = this.cameraProjection === "perspective";
-    const fov = this.perspCamera.fov * Math.PI / 180;
     const viewH = persp ? this.viewHeight() : 0;
     u.uDepthEnabled.value = persp || depth.aerialFade > 1e-4 || depth.sizeDepthBias !== 0 || (depth.depthTintWeight ?? 0) > 0 ? 1 : 0;
     const occlude = depth.occlusion === true || depth.occlusion === "on";
@@ -1202,6 +1216,7 @@ class PointCloudField {
       connections: { ...this.entities.connections.inspect(), nodeFormations: this.entities.getPartitions().length, maxNodeFormations: MAX_FORMATIONS },
       drive: this.lastDrive,
       composition: this.getCompositionTelemetry(),
+      psgForm: this.psgForm.disclose(),
       localizedResonance: this.localizedFrames.map((f) => ({ entityId: f.entityId, frequencyHz: f.frequencyHz, position: f.position, params: f.params, re: Array.from(f.re), im: Array.from(f.im) })),
       positions: [],
       velocities: []
@@ -1225,6 +1240,50 @@ class PointCloudField {
       programs: this.renderer.info.programs?.length ?? 0,
       candidateCache: this.entities.getCandidateCacheStats()
     };
+  }
+  // -- PS-G forms (QL-MEF #296, ticket #299): the app's sampler half over the
+  // landed native form law. One text-glyph path, end to end.
+  /**
+   * Declares the retained sample body for one text glyph: the rasteriser's own
+   * alpha cited into the declared mask, the body retained through the form
+   * instrument. Re-declaring the same glyph is a cache hit (the rasteriser did
+   * not run — stable IDs survive re-resolution); a resolution change reseeds
+   * through the explicit old-to-new mapping; a coating change is refused a
+   * reseed by name. Bounded disclosure: identity line, receipt, reseed outcome.
+   */
+  psgFormDeclareGlyph(text, resolution = 32) {
+    const glyph = text.trim() || "O";
+    const { alpha, width, height, maskRef } = this.glyphSampler.rasterizeTextAlpha(glyph);
+    const coverages = coveragesFromAlpha(alpha, width, height, resolution, 4);
+    const outcome = this.psgForm.declare(glyphPreparation({
+      prepRef: `oi:psg:glyph:${glyph}`,
+      maskRef,
+      coverages,
+      resolution
+    }));
+    return {
+      prep_ref: outcome.body.preparation.prepRef,
+      preparation_sha256: outcome.body.preparationSha256,
+      sample_count: outcome.body.samples.length,
+      preparation: outcome.preparation,
+      reseed: outcome.reseed,
+      mask_ref: maskRef
+    };
+  }
+  /**
+   * Applies one fold-progress receipt (ql.psg-fold-progress/v1) to the retained
+   * body: the deformed per-sample positions in stage units plus the observation
+   * receipt (commanded creases and form beside the observed resident geometry).
+   * A progress read never re-rasterises and never reseeds — provable on the
+   * instrument counters, not by trust.
+   */
+  psgFormApplyFold(progress) {
+    return this.psgForm.applyFold(progress);
+  }
+  /** The instrument's proof surface: counters per cache key and the retained
+   * receipts, in the native disclosure's shapes. */
+  psgFormDisclose() {
+    return this.psgForm.disclose();
   }
   /** Editing decoration only. Neither GPU state nor the stored configuration is touched. */
   setNativeConnections(bindings, selected = []) {
@@ -1254,13 +1313,49 @@ class PointCloudField {
     try {
       u.uEditHasSelection.value = 0;
       for (const [o] of visibility) if (o !== this.particlePoints) o.visible = false;
-      this.renderer.render(this.scene, this.camera);
+      this.presentScene();
       return copy();
     } finally {
       u.uEditHasSelection.value = selected;
       for (const [o, v] of visibility) o.visible = v;
-      if (selected || visibility.some(([o, v]) => o !== this.particlePoints && v)) this.renderer.render(this.scene, this.camera);
+      if (selected || visibility.some(([o, v]) => o !== this.particlePoints && v)) this.presentScene();
     }
+  }
+  /** E11b: this frame's painted transition overlay (null draws the field directly, as before). */
+  setTransitionOverlay(overlay) {
+    this.transitionPass.setOverlay(overlay);
+  }
+  /** E11b: holds the outgoing frame, flattened over its own ground. Called at a transition's start, before the new configuration reaches the GPU.
+   * E11c: the hold is drawn clean, through the same furniture toggle the live side uses in withCleanFrame. */
+  captureTransitionHold(ground) {
+    const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+    this.withTransitionClean(() => this.transitionPass.captureHold(this.renderer, this.scene, this.camera, { width: Math.round(size.x), height: Math.round(size.y) }, ground));
+  }
+  /** E11c: runs fn with the authoring furniture hidden and the selection highlight off, restoring every visibility after it.
+   * Nested calls share the outer toggle. */
+  withTransitionClean(fn) {
+    if (this.transitionClean) return fn();
+    const u = this.particleMaterial.uniforms, selected = u.uEditHasSelection.value;
+    const visibility = this.scene.children.map((o) => [o, o.visible]);
+    this.transitionClean = true;
+    try {
+      u.uEditHasSelection.value = 0;
+      for (const [o] of visibility) if (o !== this.particlePoints) o.visible = false;
+      return fn();
+    } finally {
+      this.transitionClean = false;
+      u.uEditHasSelection.value = selected;
+      for (const [o, v] of visibility) o.visible = v;
+    }
+  }
+  /** Draws the scene to the canvas: through the transition pass while a painted overlay is in force, else directly.
+   * E11c: a painted frame is drawn clean, the same view its held side was captured in. */
+  presentScene() {
+    if (this.transitionPass.active && !this.transitionClean) {
+      this.withTransitionClean(() => this.presentScene());
+      return;
+    }
+    if (!this.transitionPass.present(this.renderer, this.scene, this.camera, null)) this.renderer.render(this.scene, this.camera);
   }
   /** Render current state at native output resolution without stepping. The
    * temporary render target is disposed; shader variants remain renderer-owned. */
@@ -1296,10 +1391,13 @@ class PointCloudField {
       sizeScale *= this.viewHeight() / h;
     }
     this.particleMaterial.uniforms.uPixelRatio.value = sizeScale;
+    const painted = this.transitionPass.active;
     try {
-      this.renderer.setRenderTarget(target);
-      this.renderer.clear();
-      this.renderer.render(this.scene, camera);
+      if (!this.transitionPass.present(this.renderer, this.scene, camera, target)) {
+        this.renderer.setRenderTarget(target);
+        this.renderer.clear();
+        this.renderer.render(this.scene, camera);
+      }
       const bytes = new Uint8Array(width * height * 4);
       this.renderer.readRenderTargetPixels(target, 0, 0, width, height, bytes);
       const out = document.createElement("canvas");
@@ -1317,6 +1415,7 @@ class PointCloudField {
         }
       }
       ctx.putImageData(image, 0, 0);
+      if (painted) out.dataset.transitionOpaque = "painted-frame-opaque";
       return out;
     } finally {
       this.renderer.setRenderTarget(previous);
@@ -1465,7 +1564,7 @@ class PointCloudField {
     this.syncLiveMaterialUniforms();
     const drive = this.advanceMorphOscillator(delta);
     const manual = tm.enabled && tm.autoOscillate !== false ? drive.progress : cfg.morphProgress ?? 0;
-    const res = this.entities.update(cfg.entities || [], comp, elapsedTime, drive.theta, manual, tm.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
+    const res = this.entities.update(cfg.entities || [], comp, elapsedTime + (cfg.sequenceOffsetS ?? 0), drive.theta, manual, tm.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
     this.lastFrames = res.frames;
     this.lastPoses = res.poses;
     if (delta > 0) for (const imp of res.impulses) this.triggerDisperse(imp);
@@ -1593,9 +1692,13 @@ class PointCloudField {
     } else if (this.particleMaterial.uniforms.uColorHueShift.value !== 0) {
       this.particleMaterial.uniforms.uColorHueShift.value = 0;
     }
-    if (draw) this.renderer.render(this.scene, this.camera);
+    if (draw) this.presentScene();
   }
   // ------------------------------------------------------------------ cymatic medium
+  /** The pitches the torus plays now, from the native owner's reading (null: the host reads no instrument). Read by the Torus drive only. */
+  setTorusPlay(reading) {
+    this.torusPlay = reading;
+  }
   stopResonator() {
     if (!this.resonatorActive) return;
     this.resonatorActive = false;
@@ -1643,7 +1746,25 @@ class PointCloudField {
       else drive = { kind: "frequency" };
     }
     let target = cym.frequencyHz ?? 396;
-    if (drive?.kind === "sweep") {
+    let torusTones = null;
+    if (drive?.kind === "torus") {
+      const resolved = this.torusDrive.resolve({ keySource: drive.keySource ?? "torus", reading: this.torusPlay, manualHz: target });
+      this.lastResonanceDrive = {
+        kind: "torus",
+        targetHz: resolved.tonesHz[0] ?? this.cymaticFreqCurrent,
+        bound: !resolved.silent,
+        tonesHz: resolved.tonesHz,
+        silent: resolved.silent,
+        reason: resolved.reason,
+        keySource: resolved.source,
+        roles: resolved.roles
+      };
+      if (resolved.tonesHz.length === 0) {
+        this.stopResonator();
+        return;
+      }
+      torusTones = [...resolved.tonesHz].sort((a, b) => a - b);
+    } else if (drive?.kind === "sweep") {
       this.sweepAccum += delta;
       const opts = {
         glideS: Math.max(0.05, drive.glideS ?? cym.sweep?.glideS ?? cym.sweepSpeed ?? 3.5),
@@ -1665,8 +1786,15 @@ class PointCloudField {
     } else {
       this.lastResonanceDrive = { kind: "frequency", targetHz: target, bound: true };
     }
-    this.cymaticFreqCurrent += (target - this.cymaticFreqCurrent) * (1 - Math.exp(-delta * 8));
-    this.latestResonatorTelemetry = resonator.step(delta, this.cymaticFreqCurrent);
+    if (torusTones) {
+      const k = 1 - Math.exp(-delta * 8);
+      this.torusTonesCurrent = this.torusTonesCurrent.length === torusTones.length ? this.torusTonesCurrent.map((current, i) => current + (torusTones[i] - current) * k) : [...torusTones];
+      this.cymaticFreqCurrent = this.torusTonesCurrent[0];
+      this.latestResonatorTelemetry = resonator.step(delta, this.torusTonesCurrent);
+    } else {
+      this.cymaticFreqCurrent += (target - this.cymaticFreqCurrent) * (1 - Math.exp(-delta * 8));
+      this.latestResonatorTelemetry = resonator.step(delta, this.cymaticFreqCurrent);
+    }
     this.resonatorActive = true;
     this.simulator.setResonatorState(
       true,
@@ -1741,6 +1869,7 @@ class PointCloudField {
   }
   disposeResources() {
     this.isDestroyed = true;
+    this.transitionPass.dispose();
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
@@ -1767,7 +1896,7 @@ export {
   DEFAULT_CONFIG2 as DEFAULT_CONFIG,
   DEFAULT_DEPTH_CONFIG2 as DEFAULT_DEPTH_CONFIG,
   DEFAULT_MEDIUM_CONFIG2 as DEFAULT_MEDIUM_CONFIG,
-  DEFAULT_PAIRWISE_CONFIG2 as DEFAULT_PAIRWISE_CONFIG,
+  DEFAULT_PAIRWISE_CONFIG,
   DEFAULT_TOROIDAL_CONFIG2 as DEFAULT_TOROIDAL_CONFIG,
   PointCloudField,
   computeMorphDrive,

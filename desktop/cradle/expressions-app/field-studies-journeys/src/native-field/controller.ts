@@ -63,6 +63,8 @@ export class NativeFieldController {
   * determinant event that strikes names every voice the owner tunes. The owner reports no per-voice amplitude, so the latest strike stands. */
  private struck:{at:number;source:'note'|'event';refs:string[]}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
+ /** A unity node the symbols' voices listen to (symbolVoices.ts): the torus's sound after the presentation level and before its effects. */
+ private tap:GainNode|null=null;
  /** The torus's four effects (manual §21.5): their state outlives an instrument's lifetime, as the level's does; their sound stands
   * only while an audio stage does. */
  private effects:EffectsState=initialEffects();private effectsGraph:PresentationEffects|null=null;
@@ -172,7 +174,10 @@ export class NativeFieldController {
   // Delay, Reverb; each passes its input unchanged while off). The receiver keeps its own gain and clip law; nothing is synthesised here.
   const level=context.createGain();level.gain.value=this.levelValue;
   const effects=new PresentationEffects(context,context.destination,this.effects);level.connect(effects.input);
-  this.level=level;this.effectsGraph?.dispose();this.effectsGraph=effects;
+  // The voice tap: the symbols' voices (DLW §20.2: "The voice carries part of the torus's sound to where the symbol stands") take their
+  // input from this node, in this context. It listens; nothing is synthesised and nothing flows back into the torus's path.
+  const tap=context.createGain();level.connect(tap);
+  this.level=level;this.tap=tap;this.effectsGraph?.dispose();this.effectsGraph=effects;
   return new Proxy(context,{get:(target,key)=>{if(key==='destination')return level;const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}}) as AudioContext;
  }
  private async admit(sampleRate:number,open:()=>Promise<any>){
@@ -544,6 +549,9 @@ export class NativeFieldController {
  setScale(scale:number){if(!this.projection)throw new Error('native presentation unavailable');this.projection.setScale(scale);this.changed();}
  followDomain(){this.setScale(this.opened?.presentation.units_per_metre);}
  setMuted(muted:boolean){if(!this.session)throw new Error('native audio unavailable');this.session.setMuted(muted);this.muted=muted;this.changed();}
+ /** The node the symbols' voices listen to, with the audio context it stands in; null while no instrument is open. Two audio contexts cannot
+  * share a node, so a voice built on this is built in this context. */
+ voiceTap():{context:AudioContext;input:GainNode}|null{return this.tap&&this.context?{context:this.context,input:this.tap}:null;}
  /** Presentation level only; the native PCM and its receiver gain are unchanged. */
  setLevel(value:number){
   if(!Number.isFinite(value)||value<PRESENTATION_LEVEL.min||value>PRESENTATION_LEVEL.max)throw new Error(`level must be within ${PRESENTATION_LEVEL.min}–${PRESENTATION_LEVEL.max}`);
@@ -578,7 +586,7 @@ export class NativeFieldController {
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
-  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;this.effectsGraph?.dispose();this.effectsGraph=null;
+  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   this.stageReading=null;this.stageStale=false;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}

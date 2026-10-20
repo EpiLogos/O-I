@@ -1,0 +1,302 @@
+{
+ "bases": [
+  {
+   "basis": "chromatic",
+   "conjugate_axis_semitones": 1,
+   "generator_ratio": {
+    "den": 8,
+    "num": 9
+   },
+   "generator_semitones": 2
+  },
+  {
+   "basis": "fifths",
+   "conjugate_axis_semitones": 6,
+   "generator_ratio": {
+    "den": 2,
+    "num": 3
+   },
+   "generator_semitones": 7
+  }
+ ],
+ "lens_cf": [
+  {
+   "anchor_basis": "chromatic",
+   "context_frame": "CF6",
+   "key": "chromatic/L0'/aeolian",
+   "kind": "lens-cf",
+   "label": "aeolian on L0', chromatic basis",
+   "lens": "L0'",
+   "mode": "aeolian",
+   "pitches": [
+    10,
+    0,
+    1,
+    3,
+    5,
+    6,
+    8
+   ],
+   "provenance": {
+    "operator": "mode_tonic_instance",
+    "owner": "ql-mef",
+    "revision": "1.0.0",
+    "source": {
+     "blob": "6414c56c6241c3da46e1ea6fdcd7a09b6b66c5aa",
+     "path": "docs/sources/ql-musical-derivation-v3.md",
+     "vendor_commit": "9429a9fb5173f32138799046e8e2a4d7a2d86968",
+     "version": "1.0.0"
+    },
+    "symbol": "mode_tonic_landscape"
+   },
+   "scale_beneath_tonic": 1,
+   "steps_semitones": [
+    2,
+    1,
+    2,
+    2,
+    1,
+    2,
+    2
+   ],
+   "tonic": 10,
+   "tuning": null
+  },
+  {
+   "anchor_basis": "fifths",
+   "context_frame": "CF6",
+   "key": "fifths/L0'/aeolian",
+   "kind": "lens-cf",
+   "label": "aeolian on L0', fifths basis",
+   "lens": "L0'",
+   "mode": "aeolian",
+   "pitches": [
+    3,
+    5,
+    6,
+    8,
+    10,
+    11,
+    1
+   ],
+   "provenance": {
+    "operator": "mode_tonic_instance",
+    "owner": "ql-mef",
+    "revision": "1.0.0",
+    "source": {
+     "blob": "6414c56c6241c3da46e1ea6fdcd7a09b6b66c5aa",
+     "path": "docs/sources/ql-musical-derivation-v3.md",
+     "vendor_commit": "9429a9fb5173f32138799046e8e2a4d7a2d86968",
+     "version": "1.0.0"
+    },
+    "symbol": "mode_tonic_landscape"
+   },
+   "scale_beneath_tonic": 6,
+   "steps_semitones": [
+    2,
+    1,
+    2,
+    2,
+    1,
+    2,
+    2
+   ],
+   "tonic": 3,
+   "tuning": null
+  },
+  {
+   "anchor_basis": "chromatic",
+   "context_frame": "CF2",
+   "key": "chromatic/L0'/dorian",
+   "kind": "lens-cf",
+   "label": "dorian on L0', chromatic basis",
+   "lens": "L0'",
+   "mode": "dorian",
+   "pitches": [
+    3,
+    5,
+    6,
+    8,
+    10,
+    0,
+    1
+   ],
+   "provenance": {
+    "operator": "mode_tonic_instance",
+    "owner": "ql-mef",
+    "revision": "1.0.0",
+    "source": {
+     "blob": "6414c56c6241c3da46e1ea6fdcd7a09b6b66c5aa",
+     "path": "docs/sources/ql-musical-derivation-v3.md",
+     "vendor_commit": "9429a9fb5173f32138799046e8e2a4d7a2d86968",
+     "version": "1.0.0"
+    },
+    "symbol": "mode_tonic_landscape"
+   },
+   "scale_beneath_tonic": 1,
+   "steps_semitones": [
+    2,
+    1,
+    2,
+    2,
+    2,
+    1,
+    2
+   ],
+   "tonic": 3,
+   "tuning": null
+  }
+ ],
+ "provenance": {
+  "m2_registry_revision": "83278b28683694cdfe0bb14d6e9c5bcbee96ded95aa63fe2bebf20e7068065f8",
+  "musical_derivation": {
+   "blob": "6414c56c6241c3da46e1ea6fdcd7a09b6b66c5aa",
+   "path": "docs/sources/ql-musical-derivation-v3.md",
+   "vendor_commit": "9429a9fb5173f32138799046e8e2a4d7a2d86968",
+   "version": "1.0.0"
+  },
+  "owner": "ql-mef"
+ },
+ "schema": "ql.music-modes/v1",
+ "source_scales": [
+  {
+   "cents_from_root": [
+    0,
+    200,
+    350,
+    500,
+    700,
+    850,
+    1000,
+    1200
+   ],
+   "family": "maqam",
+   "family_ratio": null,
+   "key": "maqam/00",
+   "kind": "source",
+   "label": "Maqam 0 (family 0, mode 0)",
+   "maqam_family": 0,
+   "mode_in_family": 0,
+   "pitches": null,
+   "planet_ruler": 0,
+   "provenance": {
+    "owner": "ql-mef",
+    "ratio_symbol": "M2_MAQAM_RATIOS",
+    "ratio_table": "ratio",
+    "registry_revision": "83278b28683694cdfe0bb14d6e9c5bcbee96ded95aa63fe2bebf20e7068065f8",
+    "revision": "83278b28683694cdfe0bb14d6e9c5bcbee96ded95aa63fe2bebf20e7068065f8",
+    "source_symbol": "M2_MAQAM_DESC",
+    "sources": [
+     {
+      "path": "vendor/epi-kernel/reference/include/m2.h",
+      "sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8"
+     },
+     {
+      "path": "vendor/epi-kernel/reference/src/m2.c",
+      "sha256": "9b89cefd560e5b3ad9259282b35abb5f0811077a9d4d03cc77675d7f29162002"
+     }
+    ],
+    "symbol": "maqam_pitches",
+    "table": "maqam"
+   },
+   "quarter_tone_steps": [
+    4,
+    3,
+    3,
+    4,
+    3,
+    3,
+    4
+   ],
+   "quarter_tones_from_root": [
+    0,
+    4,
+    7,
+    10,
+    14,
+    17,
+    20,
+    24
+   ],
+   "tuning": null,
+   "tuning_unit": "quarter-tone"
+  },
+  {
+   "cents_from_root": [
+    0,
+    150,
+    350,
+    500,
+    650,
+    850,
+    1000,
+    1200
+   ],
+   "family": "maqam",
+   "family_ratio": null,
+   "key": "maqam/01",
+   "kind": "source",
+   "label": "Maqam 1 (family 0, mode 1)",
+   "maqam_family": 0,
+   "mode_in_family": 1,
+   "pitches": null,
+   "planet_ruler": 0,
+   "provenance": {
+    "owner": "ql-mef",
+    "ratio_symbol": "M2_MAQAM_RATIOS",
+    "ratio_table": "ratio",
+    "registry_revision": "83278b28683694cdfe0bb14d6e9c5bcbee96ded95aa63fe2bebf20e7068065f8",
+    "revision": "83278b28683694cdfe0bb14d6e9c5bcbee96ded95aa63fe2bebf20e7068065f8",
+    "source_symbol": "M2_MAQAM_DESC",
+    "sources": [
+     {
+      "path": "vendor/epi-kernel/reference/include/m2.h",
+      "sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8"
+     },
+     {
+      "path": "vendor/epi-kernel/reference/src/m2.c",
+      "sha256": "9b89cefd560e5b3ad9259282b35abb5f0811077a9d4d03cc77675d7f29162002"
+     }
+    ],
+    "symbol": "maqam_pitches",
+    "table": "maqam"
+   },
+   "quarter_tone_steps": [
+    3,
+    4,
+    3,
+    3,
+    4,
+    3,
+    4
+   ],
+   "quarter_tones_from_root": [
+    0,
+    3,
+    7,
+    10,
+    13,
+    17,
+    20,
+    24
+   ],
+   "tuning": null,
+   "tuning_unit": "quarter-tone"
+  }
+ ],
+ "sources_absent": [
+  {
+   "reason": "Register72::Shem is a register of 72 names on an 8 by 9 choir grid. The retained Shem table holds choir, position, element, decan, planet and meaning, and no pitch set or interval pattern. Nothing is served for it.",
+   "register": "Register72::Shem",
+   "scale": "shem",
+   "status": "absent",
+   "table": "shem"
+  },
+  {
+   "reason": "QL-MEF holds no authored planetary scale with intervals. The corpus has prose only: Ficino's Dorian and Lydian associations in docs/kernel-rebuild/EPI-WORLD-COORDINATE-COVERAGE-2026-09-30.json and fixtures/kernel/bimba-content-v1.json. The planet table holds one frequency per planet, not a scale.",
+   "scale": "ficino-planetary",
+   "status": "needs owner authoring",
+   "table": null
+  }
+ ]
+}

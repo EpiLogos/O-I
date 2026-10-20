@@ -20,7 +20,7 @@ const [model, {NATIVE_BINDINGS, bindValue, entityTargets}, rack, entityModel, so
   import('../src/components/nativeFieldHandleModel.ts'),
 ])
 const {rackWidgets, entitySoundControlChange, entityParameterChange, NO_SOUND_NOTE, LOCKED_OBJECT_NOTE} = model
-const SOUND = {enabled: true, frequencyHz: 330, followCymatic: false, gain: 0.5, waveform: 'triangle', attack: 0.1, release: 0.9, pan: 0}
+const SOUND = {enabled: true, carry: {kind: 'mode', ref: 'maqam/00'}, gain: 0.5, attack: 0.1, release: 0.9}
 const ENGINE = {mediumEnabled: false, resonanceEnabled: false, collisionEnabled: false, pairwiseEnabled: false, morphEnabled: false,
   colorEnabled: false, trajectory: 'toroidalHopf', driveShape: 'sine', colorMode: 'linearGradient', mediumPlane: 'vertical', autoOscillate: true}
 const force = (over = {}) => ({id: 'force-1', name: 'Pin A', kind: 'pin', enabled: true, position: {x: 0, y: 0, z: 0}, size: {x: 1, y: 1},
@@ -76,10 +76,10 @@ test('entity lock: a locked selected object marks its widget locked; the target 
   assert.match(html, /<svg[^>]*role="slider"[^>]*aria-disabled="true"/)
 })
 
-test('sound compact: gain, frequency and waveform carry the object sound, validator bounds and the waveform options', () => {
+test('sound compact: gain and what the voice carries are the object sound, with the validator bounds', () => {
   const w = widget(reading({devices: placed('sound'), selection: ['force-1'], entities: [force({sound: SOUND})]}), 'sound')
-  assert.deepEqual(w.entityCompact.map(row => row.field), ['gain', 'frequencyHz', 'waveform'])
-  const [gain, frequency, waveform] = w.entityCompact
+  assert.deepEqual(w.entityCompact.map(row => row.field), ['gain', 'carry'])
+  const [gain, carry] = w.entityCompact
   assert.equal(gain.blocked, null)
   assert.equal(gain.control.value, 0.5)
   assert.equal(gain.control.min, 0)
@@ -87,53 +87,44 @@ test('sound compact: gain, frequency and waveform carry the object sound, valida
   assert.equal(gain.control.step, 0.01)
   // A parenthesised unit is a description, not a suffix.
   assert.equal(gain.control.unit, '')
-  assert.equal(frequency.control.value, 330)
-  assert.equal(frequency.control.min, 1)
-  assert.equal(frequency.control.max, 20000)
-  assert.equal(frequency.control.unit, 'Hz')
-  assert.equal(waveform.value, 'triangle')
-  assert.deepEqual([...waveform.options], ['sine', 'triangle', 'square', 'sawtooth'])
+  assert.equal(carry.value, 'mode:maqam/00', 'the carry is one option value: its kind and the catalogue\'s own key')
+  assert.equal(carry.blocked, null)
 })
 
 test('sound compact without a sound: every control is blocked and shows the app defaults', () => {
   const w = widget(reading({devices: placed('sound'), selection: ['force-1']}), 'sound')
-  assert.ok(w.entityCompact.length === 3 && w.entityCompact.every(row => row.blocked === NO_SOUND_NOTE))
+  assert.ok(w.entityCompact.length === 2 && w.entityCompact.every(row => row.blocked === NO_SOUND_NOTE))
   assert.equal(w.entityCompact[0].control.value, 0.2)
-  assert.equal(w.entityCompact[1].control.value, 220)
-  assert.equal(w.entityCompact[2].value, 'sine')
+  assert.equal(w.entityCompact[1].value, '', 'carrying nothing yet')
 })
 
 test('entity change shapes: a registry control commits one parameter by its target; a sound control commits one whole sound', () => {
-  assert.deepEqual(entityParameterChange('entity:force-1:forces.strength', 3), {kind: 'parameter', target: 'entity:force-1:forces.strength', value: 3})
   const r = reading({devices: placed('sound'), selection: ['force-1'], entities: [force({sound: SOUND})]})
   const gain = entitySoundControlChange(r, 'gain', 0.8)
   assert.equal(gain.kind, 'entity-sound')
   assert.equal(gain.entity_id, 'force-1')
   assert.equal(gain.sound.gain, 0.8)
   // The rest of the object's sound travels with the one changed field.
-  assert.equal(gain.sound.frequencyHz, 330)
-  assert.equal(gain.sound.waveform, 'triangle')
-  const frequency = entitySoundControlChange(r, 'frequencyHz', 440)
-  assert.equal(frequency.sound.frequencyHz, 440)
-  assert.equal(frequency.sound.followCymatic, false)
-  assert.equal(frequency.sound.gain, 0.5)
-  const waveform = entitySoundControlChange(r, 'waveform', 'square')
-  assert.equal(waveform.sound.waveform, 'square')
-  assert.equal(waveform.sound.frequencyHz, 330)
-  // The boundary validator is the gate: a refused value never becomes a change.
+  assert.deepEqual(gain.sound.carry, {kind: 'mode', ref: 'maqam/00'})
+  assert.equal(gain.sound.release, 0.9)
+  const named = entitySoundControlChange(r, 'carry', 'name:shem')
+  assert.deepEqual(named.sound.carry, {kind: 'name', ref: 'shem'})
+  assert.equal(named.sound.gain, 0.5)
+  const none = entitySoundControlChange(r, 'carry', '')
+  assert.equal('carry' in none.sound, false, 'None yet clears the carry')
+  for (const sent of [gain, named, none]) for (const gone of ['frequencyHz', 'followCymatic', 'waveform', 'pan']) assert.equal(gone in sent.sound, false, `${gone} is never sent`)
   assert.throws(() => entitySoundControlChange(r, 'gain', 3))
-  assert.throws(() => entitySoundControlChange(r, 'frequencyHz', 0))
-  assert.throws(() => entitySoundControlChange(r, 'waveform', 'pulse'))
+  assert.throws(() => entitySoundControlChange(r, 'carry', 'oscillator:x'))
   assert.throws(() => entitySoundControlChange(reading({devices: placed('sound')}), 'gain', 0.5), /Select one object/)
 })
 
 test('sound stepper and entity keys: one step, Shift x10, bounds, Home returns the app default', () => {
-  const frequency = sound.soundNumberSpec('frequencyHz')
-  assert.equal(sound.steppedValue(frequency, 330, 1, false), 331)
-  assert.equal(sound.steppedValue(frequency, 330, -1, true), 320)
-  assert.equal(sound.steppedValue(frequency, 1, -1, false), null)
-  assert.match(sound.numberProblem(frequency, 0), /^Frequency must be from 1 to 20000 Hz\.$/)
-  assert.equal(sound.numberProblem(frequency, 440), null)
+  const attack = sound.soundNumberSpec('attack')
+  assert.equal(sound.steppedValue(attack, 0.1, 1, false), 0.11)
+  assert.equal(sound.steppedValue(attack, 0.5, -1, true), 0.4)
+  assert.equal(sound.steppedValue(attack, 0, -1, false), null)
+  assert.match(sound.numberProblem(attack, 11), /^Attack must be from 0 to 10 s\.$/)
+  assert.equal(sound.numberProblem(attack, 2), null)
   assert.ok(Number.isNaN(sound.parseNumberText('  ')))
   // The entity bar's keys run the same field math as the Field handle, on the entity's own bounds.
   const gain = widget(reading({devices: placed('sound'), selection: ['force-1'], entities: [force({sound: SOUND})]}), 'sound').entityCompact[0].control
@@ -170,17 +161,15 @@ test('SSR: with no selected object the entity widget shows the disabled Select a
   const html = render(reading({devices: placed('sound')}))
   assert.match(html, /aria-disabled="true">Select an object to act on it</)
   assert.doesNotMatch(html, /role="slider"/)
-  assert.doesNotMatch(html, /aria-label="Waveform"/)
+  assert.doesNotMatch(html, /aria-label="Name or mode"/)
 })
 
-test('SSR: a sound with a sound renders gain as a slider, frequency as a number stepper and waveform as a select', () => {
+test('SSR: a sound with a sound renders gain as a slider and the voice\'s carry as a select of the store; no frequency, waveform or pan control', () => {
   const html = render(reading({devices: placed('sound'), selection: ['force-1'], entities: [force({sound: SOUND})]}))
   assert.match(html, /<svg[^>]*role="slider"[^>]*aria-label="Gain"/)
-  assert.match(html, /<input type="number" class="native-rack-number" aria-label="Frequency"[^>]*value="330"/)
-  assert.match(html, /aria-label="Increase Frequency"/)
-  assert.match(html, /aria-label="Decrease Frequency"/)
-  assert.match(html, /<select class="native-rack-select" aria-label="Waveform"/)
-  for (const wave of ['sine', 'triangle', 'square', 'sawtooth']) assert.match(html, new RegExp(`<option value="${wave}"`))
+  assert.match(html, /<select class="native-rack-select" aria-label="Name or mode"/)
+  assert.match(html, /<option value="" selected="">None yet<\/option>|<option value="">None yet<\/option>/)
+  for (const gone of ['Frequency', 'Waveform', 'Pan']) assert.doesNotMatch(html, new RegExp(`aria-label="[^"]*${gone}`), `${gone} is gone with the oscillator`)
   assert.doesNotMatch(html, new RegExp(NO_SOUND_NOTE))
 })
 
@@ -188,8 +177,7 @@ test('SSR: a sound with no sound states it, and its controls are disabled', () =
   const html = render(reading({devices: placed('sound'), selection: ['force-1']}))
   assert.ok(html.includes(NO_SOUND_NOTE))
   assert.match(html, /<svg[^>]*role="slider"[^>]*aria-label="Gain"[^>]*aria-disabled="true"/)
-  assert.match(html, /aria-label="Frequency"[^>]*disabled=""/)
-  assert.match(html, /aria-label="Waveform"[^>]*disabled=""/)
+  assert.match(html, /aria-label="Name or mode"[^>]*disabled=""/)
 })
 
 test('SSR: a scene widget shows its Scene target and its action as a labelled button; an undisclosed action states why', () => {

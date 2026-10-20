@@ -326,6 +326,17 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
       return;
     }
+    if (kind === "music-modes") {
+      // The symbols' voices read their modes from the owner's catalogue (`ql music modes --json`, ql.music-modes/v1), which only the kernel
+      // may run (ql_music.rs). The frame gets the owner's document verbatim and validates it itself (native-field/modeCatalogue.ts).
+      try {
+        const call = await kernelOp(transport, {op: "music_modes_read"});
+        if (call.error || !call.outcome) throw new Error(call.error ?? "the kernel did not serve the ql music catalogue");
+        if (call.outcome.result !== "music_modes_reading") throw new Error(`the kernel answered ${call.outcome.result}, not music_modes_reading`);
+        reply(`${kind}-result`, req, {ok: true, data: call.outcome.document});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
+      return;
+    }
     if (kind === "scene-blueprint") {
       try {
         const {readSceneBlueprint} = await import("../knowledge/constructionBlueprint");

@@ -177,6 +177,169 @@ fn scene_material_admits_the_manuals_drivers_and_keys_and_refuses_unknown_ones()
     }
 }
 #[test]
+fn a_symbols_voice_is_written_in_one_shape_and_the_oscillators_fields_are_refused_in_words() {
+    // DLW 20.2: "a name or a mode carrying the torus's sound, never its own oscillator". The voice is {enabled, carry?, gain?, attack?,
+    // release?}; the four fields of the old oscillator are refused in a new write, each in its own words, and the document is left as it was.
+    let mut app = setup();
+    let before = inspect(&mut app);
+    let mut base = material();
+    base["scene"]["name"] = before["scenes"][0]["title"].clone();
+    let with_voice = |sound: Value| {
+        let mut body = base.clone();
+        body["scene"]["entities"][0]["sound"] = sound;
+        body
+    };
+    let set = |app: &mut Application, body: Value| {
+        let revision = inspect(app)["revision"].as_u64().unwrap();
+        edit(
+            app,
+            revision,
+            json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]),
+        )
+    };
+    for sound in [
+        json!({"enabled":true}),
+        json!({"enabled":true,"carry":{"kind":"mode","ref":"chromatic/L0'/aeolian"},"gain":0.3,"attack":0.05,"release":1.5}),
+        json!({"enabled":false,"carry":{"kind":"name","ref":"shem"}}),
+    ] {
+        set(&mut app, with_voice(sound.clone()))
+            .unwrap_or_else(|e| panic!("voice {sound} refused: {e}"));
+        assert_eq!(
+            inspect(&mut app)["scenes"][0]["presentation"]["scene"]["entities"][0]["sound"],
+            sound
+        );
+    }
+    let settled = inspect(&mut app);
+    for (sound, words) in [
+        (
+            json!({"enabled":true,"frequencyHz":330}),
+            "frequencyHz was removed: a symbol's voice carries the torus's sound and has no pitch of its own",
+        ),
+        (
+            json!({"enabled":true,"followCymatic":true}),
+            "followCymatic was removed",
+        ),
+        (
+            json!({"enabled":true,"waveform":"triangle"}),
+            "waveform was removed: a symbol's voice has no oscillator",
+        ),
+        (
+            json!({"enabled":true,"pan":-0.2}),
+            "pan was removed: a symbol's voice stands where its symbol stands",
+        ),
+        (
+            json!({"enabled":true,"carry":{"kind":"oscillator","ref":"x"}}),
+            "Sound carry kind must be one of mode, name",
+        ),
+        (json!({"enabled":true,"gain":3}), "gain"),
+        (json!({"gain":0.2}), "enabled flag"),
+    ] {
+        let error = set(&mut app, with_voice(sound.clone())).unwrap_err();
+        assert!(error.contains(words), "{sound}: {error}");
+        assert_eq!(
+            inspect(&mut app),
+            settled,
+            "a refused voice leaves the document as it was"
+        );
+    }
+}
+#[test]
+fn a_document_written_for_an_oscillator_still_opens_and_its_voices_are_carried_but_never_written_new(
+) {
+    // A document written before 20 Oct stores `sound` blocks with frequencyHz, waveform and pan. It must still open, and the kernel's own
+    // rewrites of its material (a text passage, a page split) carry those voices byte for byte. What no write may do is introduce or change
+    // a voice in the old shape; the frame migrates a voice when it opens one, so what it writes back is in the new shape.
+    let mut app = setup();
+    let mut old = material();
+    old["scene"]["name"] = inspect(&mut app)["scenes"][0]["title"].clone();
+    let oscillator = json!({"enabled":true,"followCymatic":false,"frequencyHz":330,"gain":0.3,"waveform":"triangle","attack":0.12,"release":1.1,"pan":-0.2});
+    old["scene"]["entities"][0]["sound"] = oscillator.clone();
+    let mut document = inspect(&mut app);
+    document["scenes"][0]["presentation"] = old.clone();
+    let mut reopened = Application::default();
+    apply(
+        &mut reopened,
+        json!({"operation":"open","document":document,"actor":"human:reopen"}),
+    )
+    .expect("a stored oscillator voice does not make a document unopenable");
+    let stored = inspect(&mut reopened);
+    assert_eq!(
+        stored["scenes"][0]["presentation"]["scene"]["entities"][0]["sound"],
+        oscillator
+    );
+    let revision = stored["revision"].as_u64().unwrap();
+    let set = |app: &mut Application, revision: u64, body: Value| {
+        edit(
+            app,
+            revision,
+            json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]),
+        )
+    };
+    // The kernel's own rewrite of other material (here a text layer) leaves the stored voice as it found it.
+    let mut text_filled = old.clone();
+    text_filled["scene"]["text"][0]["body"] = json!("Another passage");
+    set(&mut reopened, revision, text_filled.clone())
+        .expect("rewriting the scene around an unchanged old voice is not a new voice");
+    assert_eq!(
+        inspect(&mut reopened)["scenes"][0]["presentation"]["scene"]["entities"][0]["sound"],
+        oscillator
+    );
+    // A scene copied with its members carries the voices the document already stores for those members: copying is not a new voice.
+    let mut copy = old.clone();
+    copy["scene"]["id"] = json!("expression:craft:scene:copy");
+    copy["scene"]["name"] = json!("Copy");
+    edit(
+        &mut reopened,
+        revision + 1,
+        json!([
+            {"change":"scene_create","scene_ref":"expression:craft:scene:copy","title":"Copy"},
+            {"change":"scene_compose","scene_ref":"expression:craft:scene:copy","entity_refs":["expression:craft:entity:one"]},
+            {"change":"scene_material_set","scene_ref":"expression:craft:scene:copy","presentation":copy}
+        ]),
+    )
+    .expect("a copy of material that already holds a voice carries it");
+    let revision = revision + 1;
+    // A changed voice in the old shape is a new write and is refused.
+    let settled = inspect(&mut reopened);
+    let mut louder = text_filled.clone();
+    louder["scene"]["entities"][0]["sound"]["gain"] = json!(0.5);
+    let error = set(&mut reopened, revision + 1, louder).unwrap_err();
+    assert!(error.contains("frequencyHz was removed"), "{error}");
+    assert_eq!(inspect(&mut reopened), settled);
+    // The migrated voice (what the frame writes) takes the old one's place.
+    let mut migrated = text_filled;
+    migrated["scene"]["entities"][0]["sound"] =
+        json!({"enabled":true,"gain":0.3,"attack":0.12,"release":1.1});
+    set(&mut reopened, revision + 1, migrated).expect("the migrated voice is written");
+}
+#[test]
+fn symbol_voices_is_an_on_or_off_that_the_scene_may_carry_and_absent_reads_as_on() {
+    // DLW 20.2 Field, "Symbol voices | On · Off | On": a boolean in the Scene's composition, beside the Key source. Anything else is refused.
+    let mut app = setup();
+    let mut base = material();
+    base["scene"]["name"] = inspect(&mut app)["scenes"][0]["title"].clone();
+    let set = |app: &mut Application, symbol_voices: Option<Value>| {
+        let mut body = base.clone();
+        if let Some(value) = symbol_voices {
+            body["scene"]["composition"]["symbolVoices"] = value;
+        }
+        let revision = inspect(app)["revision"].as_u64().unwrap();
+        edit(
+            app,
+            revision,
+            json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]),
+        )
+    };
+    for value in [None, Some(json!(true)), Some(json!(false))] {
+        set(&mut app, value.clone()).unwrap_or_else(|e| panic!("{value:?} refused: {e}"));
+    }
+    let settled = inspect(&mut app);
+    for bad in [json!("on"), json!(1), json!(null), json!({"on":true})] {
+        assert!(set(&mut app, Some(bad.clone())).is_err(), "accepted {bad}");
+        assert_eq!(inspect(&mut app), settled);
+    }
+}
+#[test]
 fn removing_a_scene_is_not_deleting_native_members_or_the_last_scene() {
     let mut app = setup();
     assert!(edit(
