@@ -276,6 +276,10 @@ test('what an agent removed is no artefact; a change that cannot be keyed or dat
   const twice = artifactsOf(horizon([row(5, {observed_at_unix_seconds: 1000, actor: 'agent:old'}), row(6, {observed_at_unix_seconds: 2000, actor: 'agent:new'})]), null)
   assert.equal(twice.length, 1, 'the same file changed twice is one artefact')
   assert.deepEqual([twice[0].atMs, twice[0].actor], [2000 * 1000, 'agent:new'], 'at its newest change')
+  const newestFirst = artifactsOf(horizon([row(6, {observed_at_unix_seconds: 2000, actor: 'agent:new'}), row(5, {observed_at_unix_seconds: 1000, actor: 'agent:old'})]), null)
+  assert.deepEqual(newestFirst.map(item => [item.atMs, item.actor]), [[2000 * 1000, 'agent:new']], 'whatever order the changes are listed in: the newest stands, not the last read')
+  const sameInstant = artifactsOf(horizon([row(8, {observed_at_unix_seconds: 3000, actor: 'agent:later'}), row(7, {observed_at_unix_seconds: 3000, actor: 'agent:earlier'})]), null)
+  assert.deepEqual(sameInstant.map(item => item.actor), ['agent:later'], 'two changes in one instant: the later cursor')
   const many = artifactsOf(horizon([1, 2, 3].map(i => row(10 + i, {source_ref: `central:source:control:root:f${i}.html`, source_path: `f${i}.html`, observed_at_unix_seconds: 1000 + i * 10}))), null)
   assert.deepEqual(many.map(item => item.path), ['f3.html', 'f2.html', 'f1.html'], 'newest first')
   for (const nothing of [null, undefined, 'x', 4, {}, {changes: 'no'}, horizon([null, 3, 'x', []])]) assert.deepEqual(artifactsOf(nothing, null), [], `a horizon that is not one gives none: ${JSON.stringify(nothing)}`)
@@ -291,6 +295,7 @@ test('a press on a session chooses it, on an artefact opens its file through the
   assert.deepEqual(calls, [['session', 'agent-session/kev'], ['artifact', sourceRef('a'), 'Control/user/flows/a.html']], 'a session is chosen in the sessions provider; an artefact opens as a file (the file route reads its path from the artefact itself)')
   await assert.rejects(openSatellite({id: 'x', name: 'x', ring: 'inner', kind: 'page', phase: 0, hint: '', age: 0}, own, ports), /page/, 'a kind that rides nothing now is refused in words (SystemReadings.tsx:172-183 used to do nothing for an unknown kind)')
   await assert.rejects(openSatellite(own.satellites[1], own, {selectSession() {}}), /open|file/i, 'a pane that cannot open a file says so rather than doing nothing')
+  await assert.rejects(openSatellite(own.satellites[0], own, {async openArtifact() {}}), /sessions are not read in this pane/, 'and one that cannot choose a session says so')
 })
 
 // ── which world an agent is at work in ────────────────────────────────────────────────────────────────────────────────────────
