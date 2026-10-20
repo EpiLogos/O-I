@@ -221,6 +221,26 @@ test('K9 a barren moon is still the same ground: the land keeps its shading, and
   assert.ok(sxy / Math.sqrt(sxx * syy || 1) >= .5, `the barren land’s luma follows the lived-in land’s (correlation ${f(sxy / Math.sqrt(sxx * syy || 1), 3)}; at least .5)`)
 })
 
+test('K10 the disc carries its weather: `bodyDisc(record, size, look, timeMs)` shows the clouds of that moment, and the same moment shows the same disc', pending, () => {
+  // Lane B's contract addition (ticket §4): another world's small disc is drawn at the occasion, so it carries the weather the globe would show it with. A
+  // generator holds no clock: a disc given no time (absent or null) is drawn at the weather's own zero, and the caller that means Now gives the clock's reading.
+  const DAY_MS = 86400000, t0 = Date.UTC(2026, 9, 20), cloudy = make(SEEDS[0], {sky: {clouds: 1}}), clear = make(SEEDS[0], {sky: {clouds: 0}})
+  const disc = (record, time, look) => body.bodyDisc(record, 96, look, time)
+  assert.ok(same(disc(cloudy, t0), disc(cloudy, t0)), 'the same moment shows the same disc')
+  assert.ok(same(disc(cloudy, undefined), body.bodyDisc(cloudy, 96)), 'no time is the disc as drawn with no fourth argument')
+  assert.ok(same(disc(cloudy, null), disc(cloudy, undefined)), 'null is no time')
+  assert.ok(!same(disc(cloudy, t0), disc(cloudy, t0 + 3 * DAY_MS)), 'three days later the clouds on the disc have moved')
+  assert.ok(!same(disc(cloudy, t0 - 40 * DAY_MS), disc(cloudy, t0)), 'and a past occasion shows the weather it had')
+  assert.ok(same(disc(clear, t0), disc(clear, t0 + 3 * DAY_MS)), 'a body with no cloud has no weather to move: the time changes nothing')
+  assert.ok(same(disc(cloudy, t0, {barren: 1}), disc(cloudy, t0 + 3 * DAY_MS, {barren: 1})), 'nor does a barren one: its clouds are gone')
+  // only the cloud moves: the ground under it, read where the cloud is thin, does not (the pixels that differ are few of the disc's and the same size, and none outside it)
+  const a = disc(cloudy, t0), b = disc(cloudy, t0 + 3 * DAY_MS)
+  for (let k = 0; k < 96 * 96; k++) {
+    const x = -1 + ((k % 96) + .5) * 2 / 96, y = 1 - (Math.floor(k / 96) + .5) * 2 / 96
+    if (Math.hypot(x, y) >= 1.0) assert.equal(a.data[k * 4 + 3], b.data[k * 4 + 3], 'the air round the disc is the same at any moment')
+  }
+})
+
 // ── weatherShift ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const DAY = 86400000, T0 = Date.UTC(2026, 9, 20)
