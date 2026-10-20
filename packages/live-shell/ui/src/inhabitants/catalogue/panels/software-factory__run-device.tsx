@@ -139,7 +139,8 @@ const needleWord = (r: Reading): string | undefined => (r.stalled === undefined 
 const countOf = (r: Reading, s: State) => (r.blocks ? r.blocks.filter(b => b.state === s).length : undefined)
 const doingOf = (r: Reading): Block | undefined => r.blocks?.find(b => b.state === 'running') ?? r.blocks?.find(b => b.state === 'stalled') ?? r.blocks?.find(b => b.state === 'queued')
 const light = (p: ViewProps): LightState => { const x = strOf(p.owner ?? p.v, 'light'); return x === 'lit' || x === 'dark' ? x : 'unknown' }
-const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
+const atWork = (p: ViewProps) => light(p) === 'lit' && !!takesOf(p.v)?.some(t => t.state === 'running')
+const head = (p: ViewProps) => ({light: light(p), busy: atWork(p), onFold: p.nav.fold, onFull: p.nav.full})
 
 // ---------------------------------------------------------------- the controls shared by the views
 
@@ -477,7 +478,7 @@ export const design: DesignedDevice = {
 
   whole: p => {
     const r = read(p.v), takes = r.takes ? [...r.takes].reverse() : []
-    const rows: RowItem[] = takes.map(t => ({id: t.id, name: `#${t.n}${t.agent ? ` · ${t.agent}` : ''}`, light: LIGHT[t.state], tone: TONE[t.state], note: t.current ? 'current' : t.at, does: `${WORD[t.state]}${t.at ? `, began ${t.at}` : ''}`}))
+    const rows: RowItem[] = takes.map(t => ({id: t.id, name: `#${t.n}${t.agent ? ` · ${t.agent}` : ''}`, light: LIGHT[t.state], tone: TONE[t.state], busy: t.state === 'running', note: t.current ? 'current' : t.at, does: `${WORD[t.state]}${t.at ? `, began ${t.at}` : ''}`}))
     const nw = needleWord(r)
     return <Panel title="Run" view="whole" {...head(p)}>
       <Band>
@@ -518,7 +519,7 @@ export const design: DesignedDevice = {
 
   widget: p => {
     const r = read(p.v), doing = doingOf(r), nw = needleWord(r)
-    return <Tile title={`Run · ${sessionLabel(sessionNow(p.v)) ?? NONE}`} light={light(p)} span={2} onFull={p.nav.full}>
+    return <Tile title={`Run · ${sessionLabel(sessionNow(p.v)) ?? NONE}`} light={light(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
       <div className="rn-tile-strip"><Strip p={p} r={r} /></div>
       <div className="rn-tile-side">
         <Readout label="state" does="Live, or stalled once the last check-in is older than 90 seconds." value={nw} tone={nw === 'stalled' ? 'stall' : nw === 'live' ? 'value' : undefined} />

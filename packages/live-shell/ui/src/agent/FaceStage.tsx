@@ -133,7 +133,7 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
   const frame = useRef<HTMLIFrameElement>(null)
   const face = useRef<FaceSurface | null>(null)
   // off: not mounted (the server, the first draw); loading; live; failed. The frame is drawn once mounted, behind the mask.
-  const [stand, setStand] = useState<'off' | 'loading' | 'live' | 'failed'>('off')
+  const [stand, setStand] = useState<'off' | 'loading' | 'shown' | 'failed'>('off')
   const calls = useMemo(() => faceCalls(pose), [pose.state, pose.expression, pose.affect?.[0], pose.affect?.[1], pose.speaking, pose.dim])
   const key = JSON.stringify(calls)
   const plan = useRef({calls, key})
@@ -149,7 +149,7 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
     return () => clearTimeout(late)
   }, [stand])
   // Each new pose goes to the standing face at once; the face's springs carry it there.
-  useEffect(() => { if (stand === 'live' && face.current) putInPose(face.current) }, [key, stand])
+  useEffect(() => { if (stand === 'shown' && face.current) putInPose(face.current) }, [key, stand])
 
   // The face takes its pose before it is shown, so it is never seen arriving from the rig's own rest.
   const onLoad = () => {
@@ -157,12 +157,12 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
     face.current = found
     applied.current = null
     if (found) putInPose(found)
-    setStand(found ? 'live' : 'failed')
+    setStand(found ? 'shown' : 'failed')
   }
 
   const {ink, ground} = useFaceColours()
   const mask = useMemo(() => maskStatic(maskOf(pose), ink, ink, 150, ground), [maskOf(pose), ink, ground])
-  const live = stand === 'live'
+  const live = stand === 'shown'
   return <div className={['face-stage', className].filter(Boolean).join(' ')} style={style} data-face={live ? 'live' : 'mask'} data-dim={pose.dim ? 'true' : undefined}
     role="img" aria-label={label}>
     {!live && <div className="face-stage-mask" aria-hidden="true" dangerouslySetInnerHTML={{__html: mask}} />}

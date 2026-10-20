@@ -141,7 +141,7 @@ export function qlChakraBinding(chakra: QlChakraState, sky?: QlSkyState): Design
   if (!chakra.result?.natal_counts) standing.natal = {disabled: chakra.result ? 'Your identity carries no natal distribution (its natal composition is absent).' : chakra.reason ?? NO_IDENTITY}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_CHAKRA_LOCAL) local[key] = value => setQlChakraView({[key]: value})
-  return {id: QL_CHAKRA_DEVICE_ID, values: qlChakraValues(chakra, sky), writes: () => false, standing, local}
+  return {id: QL_CHAKRA_DEVICE_ID, values: qlChakraValues(chakra, sky), writes: () => false, standing, local, waiting: chakra.busy && !chakra.result}
 }
 
 // ── the device, for the generic plate that stands in for a view ─────────────

@@ -184,7 +184,7 @@ function PushToggle({p}: {p: ViewProps}) {
 }
 function LandAction({p}: {p: ViewProps}) {
   const can = landState(p)
-  return <Action {...st(p, 'land')} label="Land" does={landDoes(landAsOf(p.v))} onPress={() => p.set('land', true)} disabled={can.ok ? undefined : can.why ?? 'Land has no operation here.'} />
+  return <Action {...st(p, 'land')} hold label="Land" does={landDoes(landAsOf(p.v))} onPress={() => p.set('land', true)} disabled={can.ok ? undefined : can.why ?? 'Land has no operation here.'} />
 }
 function Reading({label, does, value, tone}: {label: string; does: string; value: string | undefined; tone?: Tone}) {
   return <div className="gs-ro"><Readout label={label} does={does} value={value} tone={tone} /></div>

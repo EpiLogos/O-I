@@ -255,7 +255,7 @@ function JoinAction({p}: {p: ViewProps}) {
   return <Action {...gate(p, 'join', joinWhy(ground(p.v), p.v))} label="Join" does="Claim a free seat, or attach to the held lane, with the values set here." onPress={() => p.set('join', true)} />
 }
 function ReleaseAction({p}: {p: ViewProps}) {
-  return <Action {...gate(p, 'release', releaseWhy(ground(p.v)))} label="Release" does="Give the seat up after the work has landed. The seat returns to main and the claim clears." onPress={() => p.set('release', true)} />
+  return <Action {...gate(p, 'release', releaseWhy(ground(p.v)))} hold label="Release" does="Give the seat up after the work has landed. The seat returns to main and the claim clears." onPress={() => p.set('release', true)} />
 }
 function FloorDial({p}: {p: ViewProps}) {
   const g = ground(p.v)
@@ -467,7 +467,7 @@ export const design: DesignedDevice = {
       <div className="sd-tile-side">
         <Readout big label="claim" does="Who holds the seat." value={claimWord(g)} tone={g.row?.state === 'free' ? 'green' : g.row?.state === 'occupied-foreign-lane' ? 'stall' : 'accent'} />
         <Readout label="seat" does="The chosen seat and its product." value={g.seat && g.product ? `${g.seat} · ${g.product}` : undefined} />
-        <Readout label="lane" does={g.row?.branch ? `The lane: ${g.row.branch}.` : 'The lane that holds the seat.'} value={g.row ? g.row.branch ?? (g.row.state === 'free' ? 'none' : undefined) : undefined} />
+        <Readout label="lane" does={g.row?.branch ? `The lane: ${g.row.branch}.` : 'The lane that holds the seat.'} value={g.row ? g.row.branch ?? (g.row.state === 'free' ? 'none' : undefined) : undefined} copy={g.row?.branch ?? undefined} />
       </div>
     </Tile>
   },

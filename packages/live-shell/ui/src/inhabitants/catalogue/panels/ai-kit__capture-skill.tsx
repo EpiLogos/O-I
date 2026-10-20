@@ -187,7 +187,7 @@ function Primary({p, stack}: {p: ViewProps; stack?: boolean}) {
   }
   const refusal = state === undefined ? 'No proposal to accept yet.' : !(strOf(v, 'name') ?? '').trim() ? 'Name the proposal first.' : keeps(v)?.length === 0 ? 'No step is on.' : undefined
   if (v.acceptAsk === true && state === 'ready') return <div className={pair}>
-    <Action {...st(p, 'accept')} label="Accept" does="Write the proposal as a draft member. It stays unreviewed until you review it." onPress={() => { p.set('accept', true); p.set('acceptAsk', undefined) }} />
+    <Action {...st(p, 'accept')} hold label="Accept" does="Write the proposal as a draft member. It stays unreviewed until you review it." onPress={() => { p.set('accept', true); p.set('acceptAsk', undefined) }} />
     <Action label="Cancel" does="Keep the proposal as it is." onPress={() => p.set('acceptAsk', undefined)} />
   </div>
   return <Action {...st(p, 'accept')} label="Accept…" does="Write the proposal as a draft member. You confirm first." onPress={() => p.set('acceptAsk', true)} disabled={st(p, 'accept').disabled ?? refusal} />

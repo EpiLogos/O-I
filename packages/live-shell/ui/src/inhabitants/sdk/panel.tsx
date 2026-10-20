@@ -569,9 +569,24 @@ export function Meter({value, tone = 'value', label}: {readonly value: number | 
 // ---------------------------------------------------------------- the display well and its handles
 
 /** The well: the device's state drawn from its live values, at 1:1 in its own pixels. Handles inside it are controls. `raw`: the
- * device draws its own picture (a component, a canvas) and the well holds it as it is, not inside the well's svg. */
+ * device draws its own picture (a component, a canvas) and the well holds it as it is, not inside the well's svg. The corner is the
+ * one short reading at the top right (manual §16.12), and it never says what the plate already says: where every number in it stands
+ * as well under a dial, in a box, in a readout or on a pad in the same plate, the corner gives way (a number stands once in a view). */
 export function Display({w, h, label, does, corner, raw, children}: {readonly w: number; readonly h: number; readonly label?: string; readonly does?: string; readonly corner?: ReactNode; readonly raw?: boolean; readonly children: ReactNode}) {
-  return <div className="dp-display" data-raw={raw ? 'true' : undefined} style={{width: w, height: h}} data-i={said(label, does)}>
+  const well = useRef<HTMLDivElement>(null)
+  useLayoutIso(() => {
+    const el = well.current, mark = el?.querySelector<HTMLElement>(':scope > .dp-display-corner')
+    if (!el || !mark) return
+    mark.removeAttribute('data-echo')
+    const plate = el.closest('.dp, .dp-tile')
+    if (!plate) return
+    const words = (x: string | null) => (x ?? '').replace(/\s+/g, ' ').trim()
+    const said = new Set<string>()
+    plate.querySelectorAll('.dp-value, .dp-box > span, .dp-readout-value, .dp-pad text.dp-ink-dim').forEach(n => { if (!el.contains(n) || n.closest('.dp-pad')) said.add(words(n.textContent)) })
+    const parts = words(mark.textContent).split(/ (?:\/|·) /).filter(Boolean)
+    if (parts.length && parts.every(part => said.has(part))) mark.setAttribute('data-echo', 'true')
+  })
+  return <div ref={well} className="dp-display" data-raw={raw ? 'true' : undefined} style={{width: w, height: h}} data-i={said(label, does)}>
     {raw ? children : <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="group" aria-label={label}>{children}</svg>}
     {corner !== undefined && <span className="dp-display-corner">{(typeof corner === 'string' || typeof corner === 'number') && unread(corner) ? NO_READING : corner}</span>}
   </div>
@@ -601,6 +616,117 @@ export function Handle({x, y, n, label, does, onDrag, onReset, shape = 'dot', to
       : <circle cx={x} cy={y} r={shape === 'ring' ? 5.5 : 4.5} className="dp-handle-mark" />}
     {n !== undefined && <text x={x} y={y + 2.6} className="dp-handle-n">{n}</text>}
   </g>
+}
+
+// ---------------------------------------------------------------- the pad
+
+/** One axis of a pad: a parameter's name, its reading and how it is kept (the same terms as a dial's). */
+export interface PadAxis extends Standing {
+  readonly label: string
+  /** What the axis does, for the status bar. */
+  readonly does?: string
+  readonly value: number | undefined
+  readonly def?: number
+  readonly scale: Scale
+  readonly format: (v: number) => string
+  readonly onChange?: (v: number) => void
+}
+
+/** A pad: a square well whose two sides are two parameters, and one handle that moves both (manual §16.9: "A handle for two parameters
+ * moves in two directions"). The handle stands where the two values put it; press it and drag, or press anywhere in the well to bring it
+ * there. Each side keeps the detent on its own default, Shift moves a tenth as fast, the arrows move one per cent (Page keys ten), and
+ * Delete or a double-click returns both. A value another party moved glides there and rings once, as on a dial; a side the owner holds
+ * or refuses stands as a dial's does. With no reading on either side the well is empty and says so. */
+export function Pad({w, h, label, does, x, y}: {readonly w: number; readonly h: number; readonly label?: string; readonly does?: string; readonly x: PadAxis; readonly y: PadAxis}) {
+  const kx = !unread(x.value), ky = !unread(y.value), known = kx && ky
+  const canX = kx && !!x.onChange && !x.disabled, canY = ky && !!y.onChange && !y.disabled, live = known && (canX || canY)
+  const hand = useRef(0), drag = useRef<{cx: number; cy: number; rx: number; ry: number} | null>(null)
+  const flash = useFlash(known ? `${x.value}|${y.value}` : undefined, hand)
+  const ux = useGlide(kx ? toUnit(x.scale, x.value!) : 0, !handIs(hand.current ?? 0)), uy = useGlide(ky ? toUnit(y.scale, y.value!) : 0, !handIs(hand.current ?? 0))
+  const L = 8, R = w - 8, T = 17, B = h - 15, X = (u: number) => L + u * (R - L), Y = (u: number) => B - u * (B - T)
+  const dx = x.def !== undefined && !x.scale.step && kx ? toUnit(x.scale, x.def) : null, dy = y.def !== undefined && !y.scale.step && ky ? toUnit(y.scale, y.def) : null
+  const px = X(ux), py = Y(uy)
+  // Merged standing: the cell rings for either side; the status bar speaks for both.
+  const held = x.heldBy ?? y.heldBy, by = x.movedBy ?? y.movedBy
+  const standing: Standing = {
+    ...(x.automated || y.automated ? {automated: x.automated ?? y.automated} : {}), ...(held ? {heldBy: held, onHandBack: () => { x.onHandBack?.(); y.onHandBack?.() }} : {}),
+    ...(x.pending || y.pending ? {pending: true} : {}), ...(x.disabled && y.disabled ? {disabled: x.disabled} : {}), ...(x.refused || y.refused ? {refused: x.refused ?? y.refused} : {}),
+    ...(x.modulatedBy || y.modulatedBy ? {modulatedBy: x.modulatedBy ?? y.modulatedBy} : {}), ...(x.waiting || y.waiting ? {waiting: true} : {}), ...(by ? {movedBy: by} : {}),
+    ...(x.valueKey ?? y.valueKey ? {valueKey: x.valueKey ?? y.valueKey} : {}),
+  }
+  const sideWords = [x, y].map(a => (a.disabled && !(x.disabled && y.disabled) ? `${a.label}: ${a.disabled}` : '')).filter(Boolean).join(' ')
+  const said_ = [does, sideWords].filter(Boolean).join(' ') || undefined
+  const caught = (el: Element, on: boolean) => { const cell = el.closest('.dp-cell'); if (on) cell?.setAttribute('data-detent', 'true'); else cell?.removeAttribute('data-detent') }
+  const put = (rx: number, ry: number, fine: boolean, el: Element) => {
+    const a = detent(rx, dx, fine), b = detent(ry, dy, fine)
+    caught(el, a.caught || b.caught)
+    if (canX) { const next = fromUnit(x.scale, a.u); if (next !== x.value) x.onChange!(next) }
+    if (canY) { const next = fromUnit(y.scale, b.u); if (next !== y.value) y.onChange!(next) }
+  }
+  const release = (el: Element) => { drag.current = null; handUp(hand); caught(el, false) }
+  const where = (e: PointerEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget, box = svg.getBoundingClientRect(), view = svg.viewBox.baseVal
+    return {vx: (e.clientX - box.left) * view.width / box.width, vy: (e.clientY - box.top) * view.height / box.height, px: box.width / view.width, py: box.height / view.height}
+  }
+  const move = (e: KeyboardEvent<SVGSVGElement>, ax: number, ay: number) => {
+    e.preventDefault(); handUp(hand)
+    const rx = Math.min(1, Math.max(0, toUnit(x.scale, x.value!) + ax)), ry = Math.min(1, Math.max(0, toUnit(y.scale, y.value!) + ay))
+    if (canX && ax) x.onChange!(fromUnit(x.scale, rx))
+    if (canY && ay) y.onChange!(fromUnit(y.scale, ry))
+  }
+  return <Cell kind="pad" label={label} does={said_} standing={standing} unknown={!known} flash={flash}>
+    <div className="dp-display dp-pad" style={{width: w, height: h}}>
+      <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="slider" aria-label={label ?? `${x.label} and ${y.label}`} tabIndex={live ? 0 : -1} aria-disabled={!live || undefined}
+        aria-valuetext={known ? `${x.label} ${x.format(x.value!)}, ${y.label} ${y.format(y.value!)}` : 'no reading'}
+        onPointerDown={e => {
+          if (!live || e.button !== 0) return
+          e.currentTarget.setPointerCapture(e.pointerId); handDown(hand)
+          const at = where(e)
+          let rx = toUnit(x.scale, x.value!), ry = toUnit(y.scale, y.value!)
+          if (Math.hypot(at.vx - px, at.vy - py) > 12) { rx = Math.min(1, Math.max(0, (at.vx - L) / (R - L))); ry = Math.min(1, Math.max(0, (B - at.vy) / (B - T))); put(rx, ry, e.shiftKey, e.currentTarget) }
+          drag.current = {cx: e.clientX, cy: e.clientY, rx, ry}
+        }}
+        onPointerMove={e => {
+          const d = drag.current
+          if (!d) return
+          const at = where(e), k = e.shiftKey ? 0.1 : 1
+          const rx = Math.min(1, Math.max(0, d.rx + (e.clientX - d.cx) / (at.px * (R - L)) * k)), ry = Math.min(1, Math.max(0, d.ry + (d.cy - e.clientY) / (at.py * (B - T)) * k))
+          drag.current = {cx: e.clientX, cy: e.clientY, rx, ry}
+          put(rx, ry, e.shiftKey, e.currentTarget)
+        }}
+        onPointerUp={e => release(e.currentTarget)} onPointerCancel={e => release(e.currentTarget)}
+        onDoubleClick={() => { if (!live) return; handUp(hand); if (canX && x.def !== undefined) x.onChange!(x.def); if (canY && y.def !== undefined) y.onChange!(y.def) }}
+        onKeyDown={e => {
+          if (!live) return
+          const d = e.shiftKey ? 0.001 : 0.01
+          switch (e.key) {
+            case 'ArrowLeft': move(e, -d, 0); break
+            case 'ArrowRight': move(e, d, 0); break
+            case 'ArrowUp': move(e, 0, d); break
+            case 'ArrowDown': move(e, 0, -d); break
+            case 'PageUp': move(e, 0, 0.1); break
+            case 'PageDown': move(e, 0, -0.1); break
+            case 'Home': move(e, -1, 0); break
+            case 'End': move(e, 1, 0); break
+            case 'Delete': case 'Backspace': e.preventDefault(); handUp(hand); if (canX && x.def !== undefined) x.onChange!(x.def); if (canY && y.def !== undefined) y.onChange!(y.def); break
+          }
+        }}>
+        {[.25, .5, .75].map(f => <path key={f} d={`M${X(f).toFixed(1)} ${T}V${B}M${L} ${Y(f).toFixed(1)}H${R}`} className="dp-grid" />)}
+        <rect x={L} y={T} width={R - L} height={B - T} className="dp-faint" />
+        {dx !== null && <path d={`M${X(dx).toFixed(1)} ${T}V${B}`} className="dp-pad-def" />}
+        {dy !== null && <path d={`M${L} ${Y(dy).toFixed(1)}H${R}`} className="dp-pad-def" />}
+        <text x={L} y={T - 5} className="dp-axis">{y.label}</text>
+        <text x={R} y={T - 5} textAnchor="end" className="dp-ink-dim">{ky ? y.format(y.value!) : NO_READING}</text>
+        <text x={L} y={h - 4} className="dp-axis">{x.label}</text>
+        <text x={R} y={h - 4} textAnchor="end" className="dp-ink-dim">{kx ? x.format(x.value!) : NO_READING}</text>
+        {known ? <g className="dp-handle dp-pad-puck" data-shape="ring" data-tone="accent">
+          <path d={`M${L} ${py.toFixed(1)}H${px.toFixed(1)}M${px.toFixed(1)} ${py.toFixed(1)}V${B}`} className="dp-pad-guide" />
+          <circle cx={px} cy={py} r={11} className="dp-handle-hit" />
+          <circle cx={px} cy={py} r={5.5} className="dp-handle-mark" />
+        </g> : <text x={w / 2} y={h / 2 + 3} textAnchor="middle" className="dp-ink-dim">{NO_READING}</text>}
+      </svg>
+    </div>
+  </Cell>
 }
 
 // ---------------------------------------------------------------- the plate
@@ -806,12 +932,12 @@ export function Folded({title, light, readings = [], onUnfold}: {readonly title:
 }
 
 /** A widget tile on the rail: one square (1) or two side by side (2). `onClose` takes it off the rail. */
-export function Tile({title, light, span = 1, onFull, onClose: ownClose, onLight, lightWhy, badge, children}: {readonly title: string; readonly light: LightState; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly onLight?: () => void; readonly lightWhy?: string; readonly badge?: ReactNode; readonly children: ReactNode}) {
+export function Tile({title, light, busy, span = 1, onFull, onClose: ownClose, onLight, lightWhy, badge, children}: {readonly title: string; readonly light: LightState; /** The owner reports the device working: its light carries the ring. */ readonly busy?: boolean; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly onLight?: () => void; readonly lightWhy?: string; readonly badge?: ReactNode; readonly children: ReactNode}) {
   const place = useContext(PlaceContext), onClose = ownClose ?? place.onClose, onPopout = place.onPopout
   return <section className="dp-tile" data-span={span} aria-label={title}>
     <header className="dp-tile-head">
       {/* The tile's light reads the owner; where the owner can turn the device on or off, pressing it asks, as the plate's activator does. */}
-      {onLight || lightWhy ? <Activator title={title} light={lightIn(light)} onLight={onLight} why={lightWhy} /> : <Lamp state={light} />}
+      {onLight || lightWhy ? <Activator title={title} light={lightIn(light)} onLight={onLight} why={lightWhy} busy={busy} /> : <Lamp state={light} busy={busy} />}
       <span className="dp-tile-title">{title}</span>
       {badge !== undefined && badge !== null && <span className="dp-tile-badge">{badge}</span>}
       {onFull && <button type="button" className="dp-full" aria-label={`Open ${title} full in a pane`} data-i={said('Open in a pane', 'Open the device full size in the pane that has focus.')} onClick={onFull}><Icon name="pane" size={10} /></button>}

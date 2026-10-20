@@ -230,7 +230,8 @@ const inputRadio = (p: ViewProps, label?: string) => <Radio {...st(p, 'input')} 
 const interruptDial = (p: ViewProps) => <Dial {...st(p, 'quantize')} label="Interrupt" does={SAYS.interrupt} value={quantizeAt(p.v) ?? NaN} def={1} scale={{min: 0, max: 2, step: 1}}
   format={i => QUANTIZE_SHORT[Math.round(i)] ?? NONE} onChange={i => p.set('quantize', QUANTIZE[Math.round(i)]!)} />
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
-const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
+const atWork = (p: ViewProps) => stateWord(lampOf(p), p.v) === 'working'
+const head = (p: ViewProps) => ({light: lampOf(p), busy: atWork(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
 
 /** The widget's last line: the last row of the thread, as one short sentence. */
 function Last({v}: {v: V}) {
@@ -346,7 +347,7 @@ export const design: DesignedDevice = {
   widget: p => {
     const send = st(p, 'sent'), draft = strOf(p.v, 'draft') ?? '', who = strOf(p.v, 'agent')
     const says = 'Type a message and press Enter. It steers the turn that runs, or waits as the next task, as Input says.'
-    return <Tile title={`Agent · ${shown(p.v, 'agent')}`} light={lampOf(p)} span={2} onFull={p.nav.full}>
+    return <Tile title={`Agent · ${shown(p.v, 'agent')}`} light={lampOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
       <AgentWell v={p.v} standing={p.standing} lamp={lightOf(p)} w={104} h={100} size="mini" />
       <div className="hm-tile-side">
         <p className="hm-last" aria-live="polite"><Last v={p.v} /></p>

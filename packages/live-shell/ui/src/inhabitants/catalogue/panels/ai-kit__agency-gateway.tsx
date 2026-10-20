@@ -292,7 +292,7 @@ function Consent({p}: {p: ViewProps}) {
   const next = entryNext(p.v)
   if (next === undefined) return null
   return <div className="ag-pair">
-    <Action {...st(p, 'entry')} label="Confirm" does={`Change the entry to ${entryLabel(next) ?? NONE}. The gateway rebinds its listener.`} onPress={() => { p.set('entry', next); p.set('entryPending', undefined) }} />
+    <Action {...st(p, 'entry')} hold label="Confirm" does={`Change the entry to ${entryLabel(next) ?? NONE}. The gateway rebinds its listener.`} onPress={() => { p.set('entry', next); p.set('entryPending', undefined) }} />
     <Action label="Cancel" does="Keep the entry as it is." onPress={() => p.set('entryPending', undefined)} />
   </div>
 }

@@ -412,7 +412,6 @@ export const design: DesignedDevice = {
     </Section>
     <Section label="Reading" width={80}>
       {standingReadout(p.v)}
-      {rttReadout(p.v)}
     </Section>
   </Panel>,
 
@@ -429,7 +428,6 @@ export const design: DesignedDevice = {
         </Section>
         <Section label="Reading" grow>
           {standingReadout(p.v)}
-          {rttReadout(p.v)}
           {credReadout(p.v)}
         </Section>
       </Band>
