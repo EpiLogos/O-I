@@ -66,8 +66,9 @@ From MAP's build lane:
    - **The outer ring may be empty on real ground.** Recent artefacts come from Central's change horizon rows that name an agent
      (`actor_kind` agent or an `agent_session_ref`). The 16 Oct reading found none attributed (`agent/devices/receiptBindings.ts:9-13`):
      the ring fills when agents write under their session.
-   - **Unverified on the native app** (headless captures only): the flight from the sky and the Graph (waits an estimated `LANDING_MS`),
-     the anchor stub's look, the dotted and uncertainty rings drawn in CSS. The native candidate's screen pass is owed.
+   - **Unverified on the native app** (headless captures only): the sky lens end to end on a real sky layer (the harness has none; the
+     flight follows the controller's own `ctl.skyCam.busy`, bounded at 12 s, and from the Graph or the ground flies at once), the anchor
+     stub's look, the dotted and uncertainty rings drawn in CSS. The native candidate's screen pass is owed.
 
 These wait for the planning lane to write them into the manual; MAP's planning lane items 1–5 say what each is:
 - the three layers per mode (Session, Arrangement, Pane);
