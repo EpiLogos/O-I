@@ -54,7 +54,12 @@ test('App mounts one detail residence, the host with its sides, and the status b
   assert.equal((app.match(/className="detail-residence"/g) ?? []).length, 1)
   assert.match(app, /<DetailHost sides=\{\{front: detailMode, hidden: hiddenSides\}\} expanded=\{clipExpanded\} \/>/)
   const bar = await readFile(new URL('../src/components/StatusBar.tsx', import.meta.url), 'utf8')
+  // The frame never subscribes to the tracks the set's views publish: its own render republishes the reading they draw from, so a
+  // subscription there loops without end (React #185, seen as a blank window on the native candidate r30, 20 Oct). The status bar
+  // reads the selected track's name where it draws it.
+  assert.doesNotMatch(app, /useShownTracks/, 'the frame does not read the shown tracks')
+  assert.match(bar, /const shownTracks = useShownTracks\(\)/, 'the status bar reads them where it draws the name')
   // The two switches read Clip | Device in every mode; what each side holds is the mode's registration, said on the Info line
   // (rendered per mode in detail-host.test.mjs).
-  assert.match(bar, /data-detail-side="clip"[\s\S]{0,500}<span>\{clipName \?\? 'Clip'\}<\/span>/); assert.match(bar, /data-detail-side="device"[\s\S]{0,500}<span>\{trackName \?\? 'Device'\}<\/span>/)
+  assert.match(bar, /data-detail-side="clip"[\s\S]{0,500}<span>\{clipName \?\? 'Clip'\}<\/span>/); assert.match(bar, /data-detail-side="device"[\s\S]{0,500}<span>\{deviceName \?\? 'Device'\}<\/span>/)
 })

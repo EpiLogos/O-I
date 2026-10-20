@@ -34,7 +34,6 @@ import {RailDevices} from './widgets/railDevices'
 import {DEFAULT_WIDGETS} from './shell/widgetDefaults'
 import {BrowserReadingProvider, MODE_POOL_FACES, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
 import {TracksPane} from './frame/tracks/TracksPane'
-import {useShownTracks} from './frame/tracks/tracksDoor'
 import {showMainView, tabMainView, togglePaneView, useMainView, type MainView} from './shell/mainView'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
@@ -604,14 +603,14 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }
   // The bottom right (manual §10.1): Clip and Device bring their view forward, ▲ beside each shows or hides it, ⌥-click shows both;
   // Mixer shows or hides every track's mixer row. Each switch carries what its view holds: the selected clip, the selected track.
-  const shownTracks = useShownTracks()
-  const selectedTrackRef = worldSelection?.kind === 'track' ? worldSelection.ref : worldSelection?.track
-    ?? (worldSelection?.kind === 'clip' ? shownTracks?.clips.find(clip => clip.id === worldSelection.ref)?.trackId : undefined)
+  // The track's name is read where it is drawn (the status bar reads the tracks the set's views publish): the frame never subscribes
+  // to that publication, since the frame's own render republishes the reading those views draw from.
   const statusSwitches = {
     detailShown: detail, mixer, toggleMixer: () => setMixer(current => !current),
     clipName: worldSelection?.kind === 'clip' ? worldSelection.title : undefined,
-    trackName: frameMode === 'live' ? state.set?.tracks[selection.track]?.name
-      : shownTracks?.tracks.find(track => track.id === selectedTrackRef)?.name ?? (worldSelection?.kind === 'track' ? worldSelection.title : undefined),
+    trackName: frameMode === 'live' ? state.set?.tracks[selection.track]?.name : worldSelection?.kind === 'track' ? worldSelection.title : undefined,
+    trackRef: frameMode === 'live' ? undefined : worldSelection?.kind === 'track' ? worldSelection.ref : worldSelection?.track,
+    clipRef: frameMode !== 'live' && worldSelection?.kind === 'clip' ? worldSelection.ref : undefined,
     bringSide: (side: 'clip' | 'device', both: boolean) => {
       setDetail(true); changeDetailMode(side)
       setHiddenSides(hidden => both ? {clip: false, device: false} : {...hidden, [side]: false})
