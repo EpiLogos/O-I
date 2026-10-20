@@ -51,6 +51,23 @@ From MAP's build lane:
 5. The owner operations drag and drop needs, then those the planning lane's action table finds missing (item 7).
 6. The shell refinements (item 8).
 7. The readings the device lane's designs wait on (O-I #684).
+8. T-PROCEDURAL-BODY (20 Oct, built on the owner's second account in one run; `tickets/T-PROCEDURAL-BODY-at-the-earths-standard.md`): a
+   generated world held to the Earth's own numbers, procedural tiles at close zoom, weather from the occasion, the moon-to-planet look,
+   and the rings carrying only agents at work and what they made. What it carries to you:
+   - **Route.** A click cannot place a stop as one of a route: AIKit's `PlaceFacet` (`ai-kit crates/aikit-core/src/knowledge_facets.rs:214-243`)
+     has no relation and no sequence, `TechnePlaceFacet.relation` only reads a subject's TRAVELLED_TO, and `routeModel` orders by validity
+     dates because the contract carries no sequence field. The click is refused in words; a route needs a facet field first (an AIKit
+     change, then the editor's `MapPlaceDraft`).
+   - **Portal.** A portal is "a way through to someone else's world": it needs the visiting owner (WORLD-INHABITATION-V1 is contracted,
+     not built). The click is refused in words naming it.
+   - **Sessions of other projects.** The sessions provider reads only O-I's agency (`AgentSessionsProvider.tsx:21`), so a session of a
+     project the Day did not bring in rides your world, and no root-register session shows. A session's world comes from its space's
+     `definition.projects` (`system/sessionWorld.ts`).
+   - **The outer ring may be empty on real ground.** Recent artefacts come from Central's change horizon rows that name an agent
+     (`actor_kind` agent or an `agent_session_ref`). The 16 Oct reading found none attributed (`agent/devices/receiptBindings.ts:9-13`):
+     the ring fills when agents write under their session.
+   - **Unverified on the native app** (headless captures only): the flight from the sky and the Graph (waits an estimated `LANDING_MS`),
+     the anchor stub's look, the dotted and uncertainty rings drawn in CSS. The native candidate's screen pass is owed.
 
 These wait for the planning lane to write them into the manual; MAP's planning lane items 1–5 say what each is:
 - the three layers per mode (Session, Arrangement, Pane);
