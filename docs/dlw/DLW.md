@@ -2136,13 +2136,13 @@ Every body is made from its seed and its settings alone: the same seed and setti
 The land does not change as you come closer. The World only shows more of it: from the whole planet to a coast to one valley, the same land stays where it is, and it keeps its detail down to the closest view, as Earth's does.
 - Reroll the seed to get a new body from the same settings. Every location keeps its name and the position you gave it. Where that spot is now sea, the World draws the location on the nearest shore and says so; nothing moves until you move it.
 
-Most building happens without your notice. Every world you start lands as a place on your planet and turns as a body in your sky. Every walk you take wears a path between places.
+Most building happens without your notice. Every world you start lands as a place on your planet and turns as a body in your sky. Until you land it yourself, a world stands at a spot named from its ref, and says so; Land keeps the spot you choose. Every walk you take wears a path between places.
 
 #### Your system
 
 Each world you work in is a body of its own. Bring a world onto a Central track, or start one, and it takes a body in your system, built from its own seed, with a landing place on your planet's surface. Enter the place and you are on that world. Its colour is the world's colour everywhere it shows: on its track, its clips and its body.
 
-How lived in a world is sets how finished its body looks. A world you have barely begun is a small grey moon: dry, airless, with no cloud. As you work in it, it gains seas, air, colour and weather, until a project you have lived in for a year is a planet with weather. Three things count: how long the world has existed, how much it holds (its pages and flows), and how many times you have shaped its body. More of any makes it more finished; none of them ever makes it less. The look is read from those, never stored, and shaping a body by hand is itself a way of living in it. Earth is always as it is.
+How lived in a world is sets how finished its body looks. A world you have barely begun is a small grey moon: dry, airless, with no cloud. As you work in it, it gains seas, air, colour and weather, until a project you have lived in for a year is a planet with weather. Three things count: how long the world has existed, how much it holds (its pages and flows), and how many times you have shaped it, by its body or by its places. More of any makes it more finished; none of them ever makes it less. The look is read from those, never stored, and shaping a body by hand is itself a way of living in it. Earth is always as it is.
 
 Only agents at work and what they make circle a body. Agents at work ride the inner ring, each keeping its place on the ring however the list around it changes. What an agent has just made rides the outer ring, each thing keeping its own place, and drifts off as it ages. Your files, your open pages and the works you have to hand do not circle anything: they are on the ground, where the things you are making are.
 
