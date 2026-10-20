@@ -58,6 +58,8 @@ export interface LandParams {
   exitOK: boolean
   /** the slope of the mask's smooth outline (per radian) on a grid of the sphere, made once when a sea floor is first asked for: how steep a coast is, so how wide its shelf */
   slope: Float32Array | null
+  /** the regional slope of every coast cell of the grid, sorted gentlest first (made with the grid): where a coast stands among them is how gentle it is */
+  coastSlopes: Float32Array | null
 }
 
 const byRecord = new WeakMap<object, LandParams>()
@@ -94,7 +96,7 @@ function buildParams(seed: number, seaLevel: number, continents: number, relief:
     ax: ux / un, ay: uy / un, az: uz / un,
     df: style.f, da: style.a, dg: style.g,
     landFraction: landFractionOf(seaLevel),
-    Esea: 0, span: 1, seaSpan: 1, exitOK: false, slope: null,
+    Esea: 0, span: 1, seaSpan: 1, exitOK: false, slope: null, coastSlopes: null,
   }
   // the quantiles of Ec over the sphere (an even spread of points: a golden-angle spiral), once
   const N = 6144, samples = new Float64Array(N)
@@ -193,7 +195,7 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
     L += (.022 + .035 * relief) * (.5 + hills) * smooth(.01, .18, cn)
     if (relief > 0 && cn > .1) {
       // ranges: ridged noise, in belts (the lines where a slow noise is near zero), strongest in a continent's interior
-      const belt = .22 + .78 * Math.exp(-((simplex3(t, qx * 1.7 + 4.4, qy * 1.7 - 8.1, qz * 1.7 + 6.2) / .19) ** 2))
+      const belt = beltAt(t, qx, qy, qz)
       let m = 0, amp = 1, wgt = 1, norm = 0, mf = 4.2
       for (let o = 0; o < 12 && mf <= fmax; o++, mf *= 2.05, amp *= .52) {
         let n = 1 - Math.abs(simplex3(t, qx * mf + 51 + o * 7.7, qy * mf - 23, qz * mf + 14 - o * 2.9))
@@ -222,25 +224,32 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
   const dn = u * dnCoast + (1 - u) * dnSmooth
   // how far: a distance in radians, not a level of the mask. The mask is a coast's own measure but its slope differs from coast to coast (a gentle slope of it is a shelf of fifty pixels
   // and a steep one of three), so the distance is the mask's deficit over the slope of its smooth outline: the shelf is as wide as the coast is gentle, in the same units everywhere
-  let dist = 4
+  let dist = 4, gentle = 1
   if (dn < DEEP_DN) {
-    const g = smoothSlope(P, x, y, z)
-    dist = dn * P.seaSpan / (g > P.seaSpan / MAX_SHELF ? g : P.seaSpan / MAX_SHELF)
+    // under the polar ice the shelf is the common one (the ice's pressure ridges against a coast follow the shelf's width, and the ice is the same ice whatever the sea floor under it)
+    const g = smoothSlope(P, x, y, z), ice = smooth(.82, .94, qy < 0 ? -qy : qy), floor = P.seaSpan / (MAX_SHELF + (OLD_SHELF - MAX_SHELF) * ice), gg = g > floor ? g : floor
+    dist = dn * P.seaSpan / gg
+    // the distance above is a geometric one, the same off a gentle coast as off a steep one; and a gentle coast has a wide shelf (Sunda, Patagonia, the Yellow Sea): by where its slope
+    // stands among the coasts', the gentlest few have a shelf of ten times the common width and more, and the steeper half the common
+    gentle = 1 + (gentleOf(P, smoothSlope(P, x, y, z, 1)) - 1) * (1 - ice)
   }
   // a shelf is also as wide as the land behind it is low: narrow where a mountain belt meets the sea, wide off a plain, changing slowly along the coast (never in blobs)
-  const belt = .22 + .78 * Math.exp(-((simplex3(t, qx * 1.7 + 4.4, qy * 1.7 - 8.1, qz * 1.7 + 6.2) / .19) ** 2))
+  const belt = beltAt(t, qx, qy, qz)
   const wide = 1.55 - 1.15 * belt + .4 * simplex3(t, qx * 2.6 + 19, qy * 2.6 + 5, qz * 2.6 - 3)
-  const s = dist / (SHELF_WIDTH * (wide < .45 ? .45 : wide > 2.4 ? 2.4 : wide))
+  const s = dist / (SHELF_WIDTH * gentle * (wide < .45 ? .45 : wide > 2.4 ? 2.4 : wide))
   // the floor: a shelf, the slope below it, and the plain, falling slowly the rest of the way (the height). The colour is not the height's: the water darkens from a thin turquoise
   // rim to the open sea's one tone within a few widths of the shelf, whatever the shelf is, so it takes its own measure of the distance (T[1], 0 at the coast to 1 in the open sea)
   const shore = 1 - Math.exp(-s)
-  let depth = .08 * smooth(0, 2.5, s) + .72 * smooth(2, 9, s) + .15 * smooth(8, 45, s)
+  // the floor drops away from the coast at once, by the distance and not by the shelf's width (a wide shelf is as deep a step at the shore as a narrow one, a pixel off it: the pixels at a
+  // coast are blended with the land by how far under the sea level they are, and a shallow rim over a wide shelf would mix the land's colour into the sea)
+  let depth = RIM_STEP * (1 - Math.exp(-dist / RIM_RUN)) + .08 * smooth(0, 2.5, s) + .72 * smooth(2, 9, s) + .15 * smooth(8, 45, s)
   const plain = smooth(5, 14, s)
   if (plain > 0) {
     const fmax = .9 / detail
     // the plain's own shapes, quiet: broad basins and swells, and the long low lines of the mid-ocean ridges (shallow relief; the colour barely sees them)
     depth += plain * .045 * simplex3(t, qx * 1.35 + 8.2, qy * 1.35 - 5.1, qz * 1.35 + 2.7)
-    depth -= plain * .05 * Math.exp(-((simplex3(t, qx * 1.1 - 2.4, qy * 1.1 + 7.7, qz * 1.1 - 5.5) / .09) ** 2))
+    seaLines(t, qx, qy, qz, s, belt)
+    depth += plain * (.04 * LINES[2]! - .05 * LINES[0]!)
     let rf = 3.1, ra = .03
     for (let o = 0; o < 3 && rf <= fmax; o++, rf *= 2.3, ra *= .6) depth += plain * ra * simplex3(t, qx * rf - 3 + o * 4.1, qy * rf + 41, qz * rf + 19)
   }
@@ -250,19 +259,57 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
   return (T[0] = SEA * (1 - depth))
 }
 
+/** The mountain belts: 1 on the slow noise's zero lines, where a range stands inland and a shelf is narrow, .22 between (the same belts the ranges and the shelf's width follow). */
+export function beltAt(t: NoiseTables, x: number, y: number, z: number): number {
+  return .22 + .78 * Math.exp(-((simplex3(t, x * 1.7 + 4.4, y * 1.7 - 8.1, z * 1.7 + 6.2) / .19) ** 2))
+}
+
+/** The lines of the open sea floor at a point of the sphere, as weights 0-1 (set in `LINES`) for the floor's relief and the water's colour alike: [0] the mid-ocean ridge's axis, a long
+ * line where a slow noise is nearly zero; [1] the fracture zones, thin straight lines, long round the world, in the ridge's reach (a noise that changes fast from the equator to the pole and
+ * slowly round the globe, so that its zero lines are long, parallel and not loops); [2] the trench, a line along a steep margin (where
+ * the land behind is a mountain belt) a few shelf-widths out, at `s`, the shelf's own measure of the distance (0 at the coast). `belt` is `beltAt` there. Few and long, in the place of a
+ * mottle. [3] and [4] are the two noises the ridge and the fracture zones are the zero lines of, for a colour that draws them wider than the relief does, and [5] the latitude fade of the colour's
+ * lines (none under the polar ice, where a line along the parallels would be a ring round the cap). */
+export const LINES = new Float64Array(6)
+export function seaLines(t: NoiseTables, x: number, y: number, z: number, s: number, belt: number): void {
+  const a = simplex3(t, x * 1.1 - 2.4, y * 1.1 + 7.7, z * 1.1 - 5.5), c = simplex3(t, x * 1.3 + 5.1, y * 7.5 - 2.9, z * 1.3 + 8.3), fade = 1 - smooth(.82, .94, Math.abs(y))
+  LINES[0] = Math.exp(-((a / .09) ** 2))
+  LINES[1] = Math.exp(-((a / .55) ** 2)) * Math.exp(-((c / .12) ** 2))
+  LINES[2] = smooth(.5, .9, belt) * Math.exp(-(((s - TRENCH_AT) / TRENCH_WIDTH) ** 2))
+  LINES[3] = a; LINES[4] = c; LINES[5] = fade
+}
+/** Where the trench lies (shelf widths from the coast) and how wide it is. */
+const TRENCH_AT = 9, TRENCH_WIDTH = 1.4
+/** How much wider than the common the gentlest coast's shelf is (the shelf of a steep coast is a few pixels of a 2048 picture, the gentlest's is tens), and the share of coasts (the gentler end) that have a wider shelf at all. */
+const GENTLE_MAX = 6, GENTLE_SHARE = .5
+/** The factor a coast's shelf is wider by, from its regional slope: 1 for the steeper half of the coasts, and from there up to `GENTLE_MAX` for the gentlest, by the coast's rank among them. */
+function gentleOf(P: LandParams, regional: number): number {
+  const c = P.coastSlopes
+  if (c === null || c.length < 20) return 1
+  let lo = 0, hi = c.length
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (c[mid]! < regional) lo = mid + 1; else hi = mid }
+  const k = smooth(GENTLE_SHARE, 0, lo / c.length)
+  return 1 + (GENTLE_MAX - 1) * k
+}
+
 /** The distance (radians) at which the shelf's own scale is set: a shelf of one width is about six pixels of a 2048 base, as the Earth's average is. */
 const SHELF_WIDTH = .018
-/** The least slope of the mask's smooth outline taken (per radian): a shelf is never more than about a third of a radian wide. */
-const MAX_SHELF = .35
+/** The least slope of the mask's smooth outline taken, as the sea's span over it (radians): no distance asked of a flat outline is more than this (a third of a radian under the polar ice,
+ * where the shelf is the common one). */
+const MAX_SHELF = 1.2, OLD_SHELF = .35
+/** The step down at the shore (of the height's 0-1 of the sea floor) and the distance (radians, a pixel of a 2048 base) it is made over. */
+const RIM_STEP = .0012, RIM_RUN = .002
 /** The mask's deficit (over the sea's span) beyond which a point is in the deep and no distance is asked. */
 const DEEP_DN = 1.2
 /** The grid the slope is kept on: columns of longitude and rows of latitude, a degree and two thirds a cell. */
 const SLOPE_NX = 216, SLOPE_NY = 108
 
-/** The slope of the mask's smooth outline over the sphere, made once for a body: `SMOOTH` (the coarse mask alone) at the centre of every cell of a grid, and the size of its change per radian
- * from the cells round it. The outline has no feature smaller than a few cells, so the grid keeps all of it. */
+/** The slope of the mask's smooth outline over the sphere, made once for a body, in two layers of the grid (the second starts at `SLOPE_NX * SLOPE_NY`): the first is `SMOOTH` (the coarse
+ * mask alone) at the centre of every cell and the size of its change per radian from the cells round it, which the outline keeps whole (it has no feature smaller than a few cells);
+ * the second is that slope as it is along the coast over a few cells round (a coast's gentleness is a regional thing: a margin, not a point of it), averaged over the cells the coast
+ * runs through only, and what the shelf's width follows. Sets `P.coastSlopes`. */
 function slopeGrid(P: LandParams): Float32Array {
-  const n = SLOPE_NX * SLOPE_NY, v = new Float32Array(n), grid = new Float32Array(n)
+  const n = SLOPE_NX * SLOPE_NY, v = new Float32Array(n), grid = new Float32Array(2 * n)
   const dlon = 2 * Math.PI / SLOPE_NX, dlat = Math.PI / SLOPE_NY
   for (let j = 0; j < SLOPE_NY; j++) {
     const lat = Math.PI / 2 - (j + .5) * dlat, c = Math.cos(lat), sy = Math.sin(lat)
@@ -281,17 +328,47 @@ function slopeGrid(P: LandParams): Float32Array {
       grid[j * SLOPE_NX + i] = Math.sqrt(a * a + b * b)
     }
   }
+  // the coast's band: the cells the shelf is made in, with a weight that falls from 1 to 0 across the band's edge (the mask within a fifth of the sea's span of the sea level), so that
+  // what is averaged below changes smoothly from a cell to the next; and the slope of a coast with no neighbour (the typical coast's, the median) as the average's prior
+  const wring = new Float32Array(n), local: number[] = []
+  for (let at = 0; at < n; at++) { const dev = (v[at]! - P.Esea) / P.seaSpan; wring[at] = 1 - smooth(.6 * COAST_BAND, COAST_BAND, dev > 0 ? 3 * dev : -dev); if (wring[at]! > .5) local.push(Math.log(grid[at]! + 1e-3)) }
+  local.sort((a, b) => a - b)
+  const prior = local.length ? local[local.length >> 1]! : 0, coast: number[] = []
+  for (let j = 0; j < SLOPE_NY; j++) {
+    const cl = Math.max(.15, Math.cos(Math.PI / 2 - (j + .5) * dlat)), reachI = Math.min(SLOPE_NX / 2 - 1, Math.ceil(2 * REGION_CELLS / cl)), reachJ = Math.ceil(2 * REGION_CELLS)
+    for (let i = 0; i < SLOPE_NX; i++) {
+      let sum = 0, weight = 0
+      for (let dj = -reachJ; dj <= reachJ; dj++) {
+        const jj = j + dj
+        if (jj < 0 || jj >= SLOPE_NY) continue
+        for (let di = -reachI; di <= reachI; di++) {
+          const at = jj * SLOPE_NX + (i + di + SLOPE_NX) % SLOPE_NX, w = wring[at]!
+          if (w <= 0) continue
+          const k = w * Math.exp(-(dj * dj + di * di * cl * cl) / (2 * REGION_CELLS * REGION_CELLS))
+          sum += k * Math.log(grid[at]! + 1e-3); weight += k
+        }
+      }
+      const g = Math.exp((sum + PRIOR_WEIGHT * prior) / (weight + PRIOR_WEIGHT))
+      grid[n + j * SLOPE_NX + i] = g
+      if (wring[j * SLOPE_NX + i]! > .5 && weight >= 1) for (let k = Math.max(1, Math.round(6 * cl)); k > 0; k--) coast.push(g) // as often as the cell is wide: a coast is counted by its length, not by its cells (they crowd at the poles)
+    }
+  }
+  // the coasts' slopes, gentlest first: where a slope stands among them is how gentle a coast is, whatever the body's own spread of slopes
+  P.coastSlopes = Float32Array.from(coast).sort()
   return grid
 }
 
-/** The slope of the mask's smooth outline at a point of the sphere (per radian), by bilinear lookup in the body's slope grid. */
-function smoothSlope(P: LandParams, x: number, y: number, z: number): number {
-  const grid = P.slope ?? (P.slope = slopeGrid(P))
+/** The coast's band in the mask (the share of the sea's span from the sea level on the sea's side, a third of it on the land's: a margin is both its shelf and the land behind), and the cells round a cell (a margin's reach: a kernel of under two cells' width, three degrees) its gentleness is taken over. */
+const COAST_BAND = .6, REGION_CELLS = 1.8, PRIOR_WEIGHT = .4
+
+/** The slope of the mask's smooth outline at a point of the sphere (per radian), by bilinear lookup in the body's slope grid: `layer` 0 the slope there, 1 the coast's regional slope. */
+function smoothSlope(P: LandParams, x: number, y: number, z: number, layer = 0): number {
+  const grid = P.slope ?? (P.slope = slopeGrid(P)), o = layer * SLOPE_NX * SLOPE_NY
   const lat = Math.asin(y < -1 ? -1 : y > 1 ? 1 : y), lon = Math.atan2(z, x)
   const u = (lon + Math.PI) / (2 * Math.PI) * SLOPE_NX - .5, v = (Math.PI / 2 - lat) / Math.PI * SLOPE_NY - .5
   const i0 = Math.floor(u), j0 = Math.floor(v), fu = u - i0, fv = v - j0
   const ia = (i0 + SLOPE_NX) % SLOPE_NX, ib = (i0 + 1 + SLOPE_NX) % SLOPE_NX, ja = j0 < 0 ? 0 : j0 > SLOPE_NY - 1 ? SLOPE_NY - 1 : j0, jb = j0 + 1 < 0 ? 0 : j0 + 1 > SLOPE_NY - 1 ? SLOPE_NY - 1 : j0 + 1
-  return (grid[ja * SLOPE_NX + ia]! * (1 - fu) + grid[ja * SLOPE_NX + ib]! * fu) * (1 - fv) + (grid[jb * SLOPE_NX + ia]! * (1 - fu) + grid[jb * SLOPE_NX + ib]! * fu) * fv
+  return (grid[o + ja * SLOPE_NX + ia]! * (1 - fu) + grid[o + ja * SLOPE_NX + ib]! * fu) * (1 - fv) + (grid[o + jb * SLOPE_NX + ia]! * (1 - fu) + grid[o + jb * SLOPE_NX + ib]! * fu) * fv
 }
 
 /** Height at a point of the sphere, 0–1: the Place tool's land test is `heightAt > SEA`. */

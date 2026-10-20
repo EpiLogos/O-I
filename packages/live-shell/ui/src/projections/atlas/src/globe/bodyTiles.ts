@@ -40,12 +40,12 @@ export function bodyTile(record: WorldBodyRecord, z: number, x: number, y: numbe
   const pixel = (j: number): number => Math.max(dlon * cosLat[j]!, 1e-7)
   const barren = barrenOfLook(look), detail = pixel(Math.floor(g / 2))
   const S = surfaceOf(record, P, barren, detail <= WATER_DETAIL ? riverNetworkOf(record, P) : null)
-  const hs = new Float32Array(g * g), cs = new Uint8Array(g * g)
+  const hs = new Float32Array(g * g), cs = new Uint16Array(g * g)
   for (let j = 0; j < g; j++) {
     const d = pixel(j)
     for (let i = 0; i < g; i++) {
       hs[j * g + i] = terrain(P, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, d)
-      cs[j * g + i] = Math.round(T[1]! * 255)
+      cs[j * g + i] = Math.round(T[1]! * 65535)
     }
   }
   const data = new Uint8ClampedArray(n * n * 4), col = new Float64Array(3)
@@ -56,7 +56,7 @@ export function bodyTile(record: WorldBodyRecord, z: number, x: number, y: numbe
       const at = j * g + i, hgt = hs[at]!
       const sx = (hs[at + 1]! - hs[at - 1]!) / (2 * east), sy = (hs[at - g]! - hs[at + g]!) / (2 * Math.max(north, 1e-9))
       const spread = .75 * (Math.abs(hs[at + 1]! - hs[at - 1]!) + Math.abs(hs[at - g]! - hs[at + g]!)) / 2
-      pixelColour(S, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, hgt, cs[at]! / 255, .7071 * (sx - sy), spread, d, Math.hypot(sx, sy), col)
+      pixelColour(S, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, hgt, cs[at]! / 65535, .7071 * (sx - sy), spread, d, Math.hypot(sx, sy), col)
       const o = ((j - 1) * n + (i - 1)) * 4
       data[o] = byte(col[0]!); data[o + 1] = byte(col[1]!); data[o + 2] = byte(col[2]!); data[o + 3] = 255
     }

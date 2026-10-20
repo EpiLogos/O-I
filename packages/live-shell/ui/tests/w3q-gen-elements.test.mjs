@@ -319,6 +319,98 @@ test('B2 the sea reads as sea and the land as land, by the cues the shader reads
   }
 })
 
+/** Per coast cell (96 px squares of a 2048-wide picture between 50 degrees north and south with enough shore and shelf in them: 25 sea pixels within 3 of land and 200 at 12 to 48), how
+ * much lighter the sea 12 to 48 px from land is than the open sea beyond 60 px: a narrow shelf is a few pixels of turquoise and then the open sea (1 and under), a wide one (Sunda, Patagonia,
+ * the Yellow Sea) is light tens of pixels out. The mean luma of the sea in the band over the mean luma of the open sea of the whole picture. */
+function outerShelfRatios(image, cell = 96) {
+  const {width: w, height: h} = image, luma = lumaPlane(image), water = waterMask(image), ice = iceMask(image), land = new Uint8Array(w * h), sea = new Uint8Array(w * h)
+  for (let j = 0; j < h; j++) {
+    if (Math.abs(latOf(j, h)) > 50) continue
+    for (let i = 0; i < w; i++) { const at = j * w + i; if (water[at]) sea[at] = 1; else if (!ice[at]) land[at] = 1 }
+  }
+  const d = distanceTo(land, w, h)
+  let deepSum = 0, deepN = 0
+  for (let at = 0; at < w * h; at++) if (sea[at] && d[at] > 60) { deepSum += luma[at]; deepN++ }
+  const deep = deepSum / deepN, ratios = []
+  for (let cj = Math.ceil(h * 40 / 180); cj + cell <= h * 140 / 180; cj += cell) for (let ci = 0; ci < w; ci += cell) {
+    let sum = 0, band = 0, shore = 0
+    for (let j = cj; j < cj + cell; j++) for (let i = ci; i < ci + cell; i++) {
+      const at = j * w + i
+      if (!sea[at]) continue
+      if (d[at] <= 3) shore++
+      if (d[at] > 12 && d[at] <= 48) { sum += luma[at]; band++ }
+    }
+    if (shore >= 25 && band >= 200) ratios.push(sum / band / deep)
+  }
+  return ratios
+}
+
+test('B3 the shelf is not one width: a few gentle coasts have a shelf several times the common one (Sunda, Patagonia, the Yellow Sea), and most coasts do not', () => {
+  // The Earth (earth-2k.jpg, 2048 wide, 77 coast cells by this measure): the sea 12 to 48 px from land is lighter than the open sea by 1.3 times and more at 27% of coasts (1.6 and more at
+  // 16%), and its median coast is .84 (no outer shelf at all). The generator's was 1.10 at most, at every coast of all four bodies of the gate (default, second seed, fjord, archipelago):
+  // the width followed `wide` (the land behind: a slow noise) and the distance it was taken as, the mask's deficit over the mask's slope, was a geometric one, the same on a gentle coast as on
+  // a steep one, so the shelf was of one width to within a third. The lead's gate holds the pooled shelf (brightness 1.26 to 3.16, reach 2.3 to 9.1 px, deep tone .12 to .41) and is not weakened.
+  for (const seed of SEEDS.slice(0, 2)) {
+    const ratios = outerShelfRatios(imageOf(make(seed), 2048)), wide = ratios.filter(x => x >= 1.3).length / ratios.length, median = quantile(ratios, .5)
+    assert.ok(ratios.length >= 60, `seed ${seed}: enough coast to measure (${ratios.length} cells)`)
+    assert.ok(wide >= .06 && wide <= .4, `seed ${seed}: a few coasts, not most or none, have an outer shelf 1.3 times the open sea's tone: ${f(100 * wide, 1)}% of ${ratios.length} cells (the Earth's 27%; a share of 6 to 40%; the most any coast reached was ${f(Math.max(...ratios), 2)})`)
+    assert.ok(median <= 1.15, `seed ${seed}: and most coasts have none: the median coast's outer sea is ${f(median, 2)} times the open sea's tone (the Earth's .84; at most 1.15)`)
+  }
+})
+
+/** The coherence of the deep sea's structure between a 17-px and a 49-px box (the scales of ridges and trenches, 20 to 60 px): the structure tensor of the band's gradient over 41-px windows,
+ * |gxx − gyy, 2 gxy| / (gxx + gyy), weighted by energy: 0 for no direction, 1 for one. Over sea at least 61 px from land, within `lat` of the equator, or everywhere (`everywhere`). */
+function bandCoherence(image, {lat = 40, everywhere = false, near = 8, far = 24, win = 20} = {}) {
+  const {width: w, height: h} = image, water = waterMask(image), ice = iceMask(image), luma = lumaPlane(image), land = new Uint8Array(w * h)
+  for (let at = 0; at < w * h; at++) land[at] = water[at] || ice[at] ? 0 : 1
+  const d = everywhere ? null : distanceTo(land, w, h), tone = new Float32Array(w * h)
+  for (let at = 0; at < w * h; at++) tone[at] = Math.log(Math.max(luma[at], 1e-3))
+  const a = boxBlur(tone, w, h, near), b = boxBlur(tone, w, h, far), band = new Float32Array(w * h), gxx = new Float32Array(w * h), gyy = new Float32Array(w * h), gxy = new Float32Array(w * h), ok = new Uint8Array(w * h)
+  for (let at = 0; at < w * h; at++) band[at] = a[at] - b[at]
+  for (let j = 1; j < h - 1; j++) for (let i = 0; i < w; i++) {
+    const at = j * w + i, gx = (band[j * w + (i + 1) % w] - band[j * w + (i + w - 1) % w]) / 2, gy = (band[at + w] - band[at - w]) / 2
+    gxx[at] = gx * gx; gyy[at] = gy * gy; gxy[at] = gx * gy
+    ok[at] = Math.abs(latOf(j, h)) <= lat && (everywhere || (water[at] && !ice[at] && d[at] > 48 + win)) ? 1 : 0
+  }
+  const xx = boxBlur(gxx, w, h, win), yy = boxBlur(gyy, w, h, win), xy = boxBlur(gxy, w, h, win)
+  let weighted = 0, energy = 0, n = 0
+  for (let at = 0; at < w * h; at++) {
+    if (!ok[at]) continue
+    const tr = xx[at] + yy[at]
+    if (!(tr > 0)) continue
+    weighted += Math.hypot(xx[at] - yy[at], 2 * xy[at]) / tr * tr; energy += tr; n++
+  }
+  return {coherence: energy ? weighted / energy : NaN, n}
+}
+
+test('B4 the deep sea has a few long lines (a ridge, fracture zones) in place of part of the mottle: its 20 to 60 px structure has a direction an isotropic field has not', () => {
+  // Measured on the picture's luma (log), as the eye reads it. The isotropic yardstick is a field of simplex noise on the sphere at 9 and 22 cycles to the radian (the mottle's own scales,
+  // 36 and 15 px at 2048) through the same estimator over the same latitudes: .26 to .36 by its spectrum. The generator's mottle was that field (.25 to .31, the same as noise), and the Earth,
+  // a few lines and island chains in a flat navy, is .49 (earth-2k.jpg, 2048 wide, over sea 61 px from land within 40 degrees of the equator).
+  const t = noiseTables(), w = 2048, h = 1024, data = new Uint8ClampedArray(w * h * 4)
+  const references = [[9], [22], [9, 22], [5, 9, 22]].map(octaves => {
+    for (let j = 0; j < h; j++) {
+      const lat = latOf(j, h) * D2R, c = Math.cos(lat), y = Math.sin(lat)
+      for (let i = 0; i < w; i++) {
+        const lon = (-180 + (i + .5) * 360 / w) * D2R, x = c * Math.cos(lon), z = c * Math.sin(lon)
+        let v = 0
+        for (const o of octaves) v += simplexOf(t, x * o + 3.3, y * o - 1.1, z * o + 7.7)
+        const g = Math.max(0, Math.min(255, 20 + 6 * v)), at = (j * w + i) * 4
+        data[at] = 5; data[at + 1] = g * .8; data[at + 2] = g; data[at + 3] = 255
+      }
+    }
+    return bandCoherence({width: w, height: h, data}, {everywhere: true}).coherence
+  })
+  const isotropic = Math.max(...references)
+  assert.ok(isotropic > .2 && isotropic < .45, `the isotropic yardstick is a middling coherence (${references.map(x => f(x, 3)).join(', ')})`)
+  for (const seed of SEEDS.slice(0, 2)) {
+    const {coherence, n} = bandCoherence(imageOf(make(seed), 2048))
+    assert.ok(n >= 20000, `seed ${seed}: enough deep sea to measure (${n} pixels)`)
+    assert.ok(coherence >= 1.25 * isotropic, `seed ${seed}: the deep sea's 20 to 60 px structure is at least 1.25 times as directional as isotropic noise (${f(coherence, 3)} against ${f(isotropic, 3)} the most of four spectra: ${f(coherence / isotropic, 2)} times; the Earth's .49)`)
+    assert.ok(coherence <= .8, `seed ${seed}: and it is a few lines, not a grain of stripes (${f(coherence, 3)}, at most .8)`)
+  }
+})
+
 // ── biomes by latitude ──────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('L1 the biomes stand in their order by latitude: forest at the equator, desert in the subtropics, forest again in mid-latitudes, snow at the poles', () => {

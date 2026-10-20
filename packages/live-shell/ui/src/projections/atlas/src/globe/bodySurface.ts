@@ -6,7 +6,7 @@
 //
 // Everything is a pure function of a point and the record. Pure TypeScript with no DOM and no three.js: it runs in a worker.
 import {simplex3, type NoiseTables} from './bodyNoise'
-import {SEA, clamp01, smooth, type LandParams} from './bodyField'
+import {SEA, LINES, beltAt, clamp01, seaLines, smooth, type LandParams} from './bodyField'
 import {waterAt, WATER, type RiverNetwork} from './bodyRivers'
 import type {WorldBodyRecord} from './body'
 
@@ -107,6 +107,16 @@ export function landColour(S: Surface, x: number, y: number, z: number, L: numbe
   return snow
 }
 
+/** How much each of the floor's lines lightens (the ridge's swell) or darkens (the fracture zones, the trench) the water, and how wide, as the half-width of the noise band each is drawn
+ * from (bodyField.ts LINES [3] and [4]): the ridge a swell some fifty pixels across of a 2048 picture, a fracture zone a line a dozen. */
+const RIDGE_TONE = .6, FRACTURE_TONE = .55, TRENCH_TONE = .35, RIDGE_WIDTH = .22, FRACTURE_WIDTH = .35
+/** How much darker the water is, at its darkest, far from a coast than a few shelf-widths out (none under the polar ice, where the water between floes is read as water by its blue). */
+const FAR_DIM = .22
+/** The darkest the water goes (as a share of its tone), however many lines cross and however far from a coast: the shader and the tests read the sea by its blue above its red, which a very dark pixel has not. */
+const MOT_MIN = .45
+/** The mean of each line's weight over the open sea (measured on the noise): the lines take the water's tone about its own, lightening on a ridge and darkening between, and the sea's mean tone is the mottle's alone. */
+const RIDGE_MEAN = .31, FRACTURE_MEAN = .31
+
 /** The sea's colour at a depth 0 (the coast) to ~1 (the plain): a thin turquoise rim at the shore, which darkens within a few pixels to the blue of the open sea, which is nearly one tone
  * (teal navy) and changes slowly; the floor's own mottle on it, fine and weak at the broad scales. */
 export function seaColour(S: Surface, x: number, y: number, z: number, depth: number, fmax: number, col: Float64Array): void {
@@ -117,12 +127,22 @@ export function seaColour(S: Surface, x: number, y: number, z: number, depth: nu
   // the floor's texture, at the scales between a fracture zone and a pixel: no swirl (a broad, smooth, strong relief reads as one), a grain that is finer as the picture is, and
   // busy in some places and calm in others, as a sea floor is
   const act = .5 + 1.0 * smooth(-.35, .45, simplex3(t, x * 2.1 + 12.4, y * 2.1 - 4.2, z * 2.1 + 8.8))
-  let tex = .09 * simplex3(t, x * 3.7 - 1.9, y * 3.7 + 6.3, z * 3.7 + 2.4) + .2 * simplex3(t, x * 9 + 5.5, y * 9 + 1.1, z * 9 - 2.2) + .3 * simplex3(t, x * 22 - 3.3, y * 22 + 7.7, z * 22 + 4.1)
-  if (fmax > 52) tex += .13 * simplex3(t, x * 52 + 1.2, y * 52 - 6.4, z * 52 + 9.9)
-  if (fmax > 100) tex += .08 * simplex3(t, x * 100 - 8.8, y * 100 + 2.6, z * 100 - 5.7)
+  let tex = .018 * simplex3(t, x * 3.7 - 1.9, y * 3.7 + 6.3, z * 3.7 + 2.4) + .04 * simplex3(t, x * 9 + 5.5, y * 9 + 1.1, z * 9 - 2.2) + .12 * simplex3(t, x * 22 - 3.3, y * 22 + 7.7, z * 22 + 4.1)
+  if (fmax > 52) tex += .052 * simplex3(t, x * 52 + 1.2, y * 52 - 6.4, z * 52 + 9.9)
+  if (fmax > 100) tex += .032 * simplex3(t, x * 100 - 8.8, y * 100 + 2.6, z * 100 - 5.7)
   // however strong, never so dark that the water is no longer read as water (the shader and the tests read the sea by its blue above its red, which a very dark pixel has not)
   let mot = 1 + .6 * Math.tanh(1.3 * act * tex / .6)
   for (let f = 130, amp = .05; f <= fmax && amp > .004; f *= 2.1, amp *= .66) mot += amp * simplex3(t, x * f - 4.7, y * f + 9.3, z * f + 2.2)
+  // the floor's few long lines, in the place of the broad part of the mottle (bodyField.ts seaLines, the lines the relief has): the ridge a lighter swell, the fracture zones faint thin dark
+  // lines out from it, the trench a dark line along a steep margin; only on the open floor, and not under the polar ice. `s` is the shelf's own measure of the distance (the water's depth
+  // was made from it: depth = 1 - exp(-s)), which the picture keeps to about eleven widths. The deep darkens slowly with it, over the first tens of pixels beyond the shelf.
+  if (depth > .9) {
+    const s = -Math.log(1 - Math.min(depth, 1 - 1e-12)), plain = smooth(5, 14, s)
+    seaLines(t, x, y, z, s, beltAt(t, x, y, z))
+    const a = LINES[3]!, c = LINES[4]!, ridge = Math.exp(-((a / RIDGE_WIDTH) ** 2)), fracture = Math.exp(-((a / .55) ** 2)) * Math.exp(-((c / FRACTURE_WIDTH) ** 2))
+    mot *= (1 + LINES[5]! * (plain * (RIDGE_TONE * (ridge - RIDGE_MEAN) - FRACTURE_TONE * (fracture - FRACTURE_MEAN)) - TRENCH_TONE * LINES[2]!)) * (1 - FAR_DIM * LINES[5]! * smooth(3, 11, s))
+    if (mot < MOT_MIN) mot = MOT_MIN
+  }
   col[0] = r * mot; col[1] = g * mot; col[2] = b * mot
 }
 

@@ -84,11 +84,11 @@ export function bodyImage(record: WorldBodyRecord, width = 1024, look?: BodyLook
   const cosLon = new Float64Array(w), sinLon = new Float64Array(w), cosLat = new Float64Array(h), sinLat = new Float64Array(h)
   for (let i = 0; i < w; i++) { const lon = (-180 + (i + .5) * 360 / w) * D2R; cosLon[i] = Math.cos(lon); sinLon[i] = Math.sin(lon) }
   for (let j = 0; j < h; j++) { const lat = (90 - (j + .5) * 180 / h) * D2R; cosLat[j] = Math.cos(lat); sinLat[j] = Math.sin(lat) }
-  const hs = new Float32Array(w * h), cs = new Uint8Array(w * h)
+  const hs = new Float32Array(w * h), cs = new Uint16Array(w * h)
   for (let j = 0; j < h; j++) {
     for (let i = 0; i < w; i++) {
       hs[j * w + i] = terrain(P, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, detail)
-      cs[j * w + i] = Math.round(T[1]! * 255)
+      cs[j * w + i] = Math.round(T[1]! * 65535)
     }
   }
   const data = new Uint8ClampedArray(w * h * 4), col = new Float64Array(3)
@@ -98,7 +98,7 @@ export function bodyImage(record: WorldBodyRecord, width = 1024, look?: BodyLook
       const at = j * w + i, hgt = hs[at]!, east = i + 1 < w ? i + 1 : 0, west = i > 0 ? i - 1 : w - 1
       const slope = shadeSlope(hs, w, h, i, j, east, west, dlon, dlat, cl)
       const spread = .75 * (Math.abs(hs[j * w + east]! - hs[j * w + west]!) + Math.abs(hs[(j > 0 ? j - 1 : j) * w + i]! - hs[(j < h - 1 ? j + 1 : j) * w + i]!)) / 2
-      pixelColour(S, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, hgt, cs[at]! / 255, slope, spread, detail, STEEP[0]!, col)
+      pixelColour(S, cosLat[j]! * cosLon[i]!, sinLat[j]!, cosLat[j]! * sinLon[i]!, hgt, cs[at]! / 65535, slope, spread, detail, STEEP[0]!, col)
       data[at * 4] = byte(col[0]!); data[at * 4 + 1] = byte(col[1]!); data[at * 4 + 2] = byte(col[2]!); data[at * 4 + 3] = 255
     }
   }
