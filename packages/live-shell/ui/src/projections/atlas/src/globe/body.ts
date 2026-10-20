@@ -12,6 +12,7 @@
 // Pure TypeScript with no DOM and no three.js, so it runs in a worker.
 import * as legacy from './bodyLegacy'
 import * as current from './bodyV2'
+import {weatherShift as shiftOf} from './bodyWeather'
 
 export const WORLD_BODY_EXTENSION = 'aikit.world-body/v1'
 export const WORLD_BODY_GENERATOR = 'fbm-sphere'
@@ -124,6 +125,10 @@ export interface BodyImage {
   readonly height: number
   readonly data: Uint8ClampedArray
 }
+
+/** The degrees of longitude the body's cloud mask is carried at a latitude at a time (ms): the wind differs by latitude band, smoothly, and is a pure function of the
+ * record's seed, the latitude and the time. A body of generator version 1 has no weather. */
+export const weatherShift = (record: WorldBodyRecord, latDeg: number, timeMs: number): number => shiftOf(record, latDeg, timeMs)
 
 // ── the pictures ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 

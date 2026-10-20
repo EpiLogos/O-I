@@ -273,7 +273,7 @@ test('C4 the worker refuses a body it cannot read in the owner’s words, and a 
   } finally { uninstallWorker() }
 })
 
-test('C5 the look goes through the worker: a barren body made there is the barren body made here, and not the lived-in one', pending, async () => {
+test('C5 the look goes through the worker: a barren body made there is the barren body made here, and not the lived-in one', async () => {
   const {render} = await renderer('works')
   try {
     const record = BODIES.default, look = {barren: .6}
@@ -351,7 +351,7 @@ test('D2 the version that draws is the record’s, not the module’s: a version
   assert.equal(a, V1.default.image128)
 })
 
-test('D3 version 2 is another body from version 1 at every entry point: image, clouds, disc, height and land share', pending, () => {
+test('D3 version 2 is another body from version 1 at every entry point: image, clouds, disc, height and land share', () => {
   const v1 = base(20261018, {}, 1), v2 = base(20261018, {}, 2)
   assert.notEqual(sha(body.bodyImage(v2, 128).data), sha(body.bodyImage(v1, 128).data), 'bodyImage draws version 2 for a version 2 record: today both are the version 1 picture')
   assert.notEqual(sha(body.cloudImage(v2, 128).data), sha(body.cloudImage(v1, 128).data), 'cloudImage')
