@@ -1,0 +1,26 @@
+op                           n before_sum before_max |   n after_sum after_max
+central                      2       6962       3635 |   2      3026      1542
+now                          5       4801       1416 |   5      1636       600
+git_repository_read          2       3137       2013 |   2      2565      1438
+knowledge                    1       2436       2436 |   1      2592      2592
+seat_status_read             1       2330       2330 |   1      2369      2369
+encounter_task_read         12       1904        208 |  12       182        30
+encounter                    2       1691        882 |   2      1214       608
+temporal_events_read         1       1657       1657 |   1      2174      2174
+nara_identity                1       1361       1361 |   1      1023      1023
+agent_definition             2       1125        593 |   2      1172       608
+world_browse                 3        997        512 |   3      1054       543
+agency_read                  1        871        871 |   1       833       833
+git_diff_read                1        519        519 |   1       614       614
+agent_card                   1        321        321 |   1       509       509
+file_read                    1        155        155 |  13      1026       107
+workcell_status_read         1        100        100 |   1       236       236
+expression                   3         55         28 |   3        74        50
+ground                       2         44         28 |   2        75        48
+source_returns_read          1         41         41 |   1        35        35
+files_list                   1         30         30 |   1        59        59
+expression_recovery          3         28         22 |   3        41        28
+surface_open                 2          0          0 |   2        22        21
+native_expression            0          0          0 |   1      3536      3536
+page                         0          0          0 |   3      3604      1468
+TOTAL                       55      30567            |  72     29674
