@@ -1,0 +1,28 @@
+Reads that paid a process start each time — what it cost and what changed (20 Oct)
+
+Same sealed-candidate recipe (full-suite backing, run-native-at-head.sh, OI_KERNEL_TRACE_FILE), launched and left idle ~40 s:
+  before = run-20261020T-r28 bundle (ctrl 1289ad7, aikit ee67e27, kernel d9d402ed1), traced again on a quiet machine:
+           kernel-trace-r28-matched.log
+  after  = this run (ctrl 9557f07 = Central#284, aikit ad93e30 = ai-kit#535, kernel 72216b455 = O-I#683):
+           kernel-trace.log (adds one "[owner] … process <owner> <operation> ok|err total_ms=…" line per owner process)
+
+reads-first-4500ms.txt is the per-op table of each trace's first 4.5 s. Op time overlaps (ops run concurrently), so a total
+means "owner time in the window", not wall time; the two builds also differ in what else they ask in those seconds
+(native_expression, page, file_read), so compare op by op, not by total. Two traces of the same sealed r28 bundle taken
+minutes apart differ by ~15% in total (37.2 s vs 31.6 s under load), the noise floor of one pair.
+
+Per op, first 4.5 s (ms of owner time, sum over the calls; max single call in brackets):
+  encounter_task_read  x12   1904 [208] -> 182 [30]       aikit session-space encounter-task-read
+  central (Inspect)    x2    6962 [3635] -> 3026 [1542]   5 sequential ctrl actions each
+  now                  x5    4801 [1416] -> 1636 [600]    ctrl central.now.list
+  encounter            x2    1691 [882]  -> 1214 [608]    aikit session lifecycle history + actuation correlate
+
+Standalone, one process, alternating runs, installed (before) vs PR builds (after), median ms:
+  ctrl time.policy 168 -> 46 · work.policy 162 -> 50 · day.read 309 -> 93 · now.list 156 -> 57 · change.horizon 194 -> 89
+  aikit encounter-task-read (real session) 71 -> 6 · session lifecycle history 78 -> 23
+  unchanged (work, not setup): world.project 143 -> 142 · git.census 677 -> 582 · client status 297 -> 282 · model-catalogue show 141 -> 141
+
+Left, from the process lines of the new trace (ms; contention inflates each, ~10 concurrent processes on 10 cores):
+  central.files.read x52 (4432, median 78) — one ctrl process per file read at start-up: the biggest block now
+  central.now.list x8 (2941) · AIKit history x1 (2162) · central.git.census x2 (2035) · central.world x4 (1819)
+  SharedField client snapshot x1 (1706) · central.time.policy x3 (876) · projectcentral.change.horizon x3 (826)
