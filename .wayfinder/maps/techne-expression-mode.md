@@ -42,10 +42,10 @@ There is one Expressions environment with two operating readings:
               ┌───────────────┴───────────────┐
               │                               │
        EXPRESSIONS MODE                  TECHNĒ MODE
-        3:3 lived cut                     4:2 deep cut
+        3:3 lived cut                     deep working cut
         Nara / Anima                      Epii / Technē
         lived expressive work             constructive inquiry
-        material authoring HUD            M0′–M5′ working HUD
+        material authoring HUD            six-instrument working HUD
 ```
 
 The two modes are not the same distinction as connected source material versus authored constellation organisation. Technē is creative, operates through Expressions and can show ordinary source material; Expressions can disclose sources and authored constellations. Neither mode owns a separate semantic world.
@@ -84,20 +84,20 @@ Native responsibilities remain:
 
 A missing native operation is implementation work for that owner, coordinated by this integrator. It is not permission to hide the requirement behind a permanently disabled control.
 
-## 2. M0′–M5′ are differentiated instruments within the same work
+## 2. The six instruments are differentiated ways of working within the same work
 
-M remains Bimba/domain organisation; M′ are the corresponding developed instruments, not arbitrary six views of a document. Preserve the K-series Expression body and accepted AW/Ta-Onta field.
+They are developed instruments, not arbitrary six views of a document. They are named by their work and carry no M′ numbers: the reading that set them as M0′–M5′ is withdrawn (owner, 19 Oct 2026; `desktop/cradle/docs/world-shell/wayfinder/DEVICE-SEMANTICS-LOCK.md` §0.1 item 3). Preserve the K-series Expression body and accepted AW/Ta-Onta field.
 
 | Instrument | Required contribution |
 |---|---|
-| M0′ — Project / Wiki / Graph | Find, read, traverse and gather sources/passages; establish an inquiry and working whole |
-| M1′ — Canvas / Constellation | Construct/edit membership, contextual roles, bounds, arrangements and typed connections |
-| M2′ — Relation Field / Timeline | Investigate chronology, influence, opposition, recurrence, dependence, transformation and other actual relation families |
-| M3′ — Journey / Scenes | Author traversal, framing, text/media and pacing through real Expression Scenes |
-| M4′ — World / Places | Situate the same work in source-backed places, occasions and reference frames |
-| M5′ — Palace / Integral Whole | Compose real constellations, Expressions, Journeys and sources into an inhabitable whole and return useful differences |
+| Project / Wiki / Graph | Find, read, traverse and gather sources/passages; establish an inquiry and working whole |
+| Canvas / Constellation | Construct/edit membership, contextual roles, bounds, arrangements and typed connections |
+| Relation Field / Timeline | Investigate chronology, influence, opposition, recurrence, dependence, transformation and other actual relation families |
+| Journey / Scenes | Author traversal, framing, text/media and pacing through real Expression Scenes |
+| World / Places | Situate the same work in source-backed places, occasions and reference frames |
+| Palace / Integral Whole | Compose real constellations, Expressions, Journeys and sources into an inhabitable whole and return useful differences |
 
-These are directly available ways of working, not a compulsory six-step wizard. The `0→5→0` walk remains a proving path, not the only permitted user path.
+These are directly available ways of working, not a compulsory six-step wizard. The walk from the Project through the Palace and back remains a proving path, not the only permitted user path.
 
 ## 3. Current Expressions UI and engine are the material basis
 
@@ -235,18 +235,18 @@ The Technē field is full-screen with no compulsory instrument tabs, giant heade
 
 Use the current thin icon/menu vocabulary for navigation/select, Library, search, Home/Epii, face-verso/source depth, mode switch, current Web/constellation/scene position, Epii companion and active lens chooser. Small-node/thin-line knowledge views stay legible within the richer Expression medium.
 
-Suggested existing icon families: M0′ library/web; M1′ grid/formation; M2′ branch/wave; M3′ sequence; M4′ globe; M5′ layers/frame. Preserve canonical instrument IDs and names under any short human labels. Add only necessary icons in the same 24×24 thin-stroke language, with accessible labels and discoverable unavailable reasons.
+Suggested existing icon families: Project library/web; Canvas grid/formation; Relation Field branch/wave; Journey sequence; World globe; Palace layers/frame. Preserve canonical instrument IDs and names under any short human labels. Add only necessary icons in the same 24×24 thin-stroke language, with accessible labels and discoverable unavailable reasons.
 
 ### Lens Studio and contextual toolbelt
 
 The floating/resizable Studio must contain the active lens's REAL operating controls, not just reading/session statistics:
 
-- M0′: source/local-whole navigation, depth/filters, collect passages, start inquiry/constellation;
-- M1′: membership/roles, frame choice, lasso/group/frame, align/snap, attach source, create/reconnect/type relation, evidence/standing, view/variant;
-- M2′: relation/chronology/cause/echo/phase/activity projection, source/evidence and lane/time filters;
-- M3′: add/reorder scenes, source/text/media, beats, pacing, transitions, branch/jump, framing and preview;
-- M4′: source-backed place/reference frame, map/globe/world layers, validity/uncertainty and occasion;
-- M5′: compose regions/portals, include native Expressions/constellations/Journeys, traversal/bookmarks/recall, source and Return.
+- Project: source/local-whole navigation, depth/filters, collect passages, start inquiry/constellation;
+- Canvas: membership/roles, frame choice, lasso/group/frame, align/snap, attach source, create/reconnect/type relation, evidence/standing, view/variant;
+- Relation Field: relation/chronology/cause/echo/phase/activity projection, source/evidence and lane/time filters;
+- Journey: add/reorder scenes, source/text/media, beats, pacing, transitions, branch/jump, framing and preview;
+- World: source-backed place/reference frame, map/globe/world layers, validity/uncertainty and occasion;
+- Palace: compose regions/portals, include native Expressions/constellations/Journeys, traversal/bookmarks/recall, source and Return.
 
 Frequently used controls can be pinned to the lens-qualified toolbelt. Presentation settings remain presentation; native semantic operations use their real Action/authority paths. Read-only users retain inspection, local view changes and supported explicit personal variants, not misleading edit success.
 
@@ -256,15 +256,15 @@ Scene transport remains the existing Expression transport. Overview and constell
 
 # VI — The six instruments must work, not merely mount
 
-## 14. M0′ — Web / Project / Wiki
+## 14. Project — Web / Wiki
 
 Enter through the Epii home, Library, search or a restored working location. Resolve Central root → ProjectCentral → connected sources → selected local whole. Find/read/write/follow/preview linked material; gather exact passages; inspect existing constellation participation; begin new work in place.
 
 The default overview contains addressable source/constellation representations with intentional shape/glyph treatment. It does not require every document to carry QL metadata. The left source navigator and relational field answer different questions over the same refs.
 
-M0′ owns no duplicate graph. The Wiki foundation and returned constellation relations remain available through native readers/search/indexes.
+The Project instrument owns no duplicate graph. The Wiki foundation and returned constellation relations remain available through native readers/search/indexes.
 
-## 15. M1′ — Canvas / Constellation
+## 15. Canvas / Constellation
 
 Build both from selected material and from a chosen frame. Edit members, contextual roles, bounds, alternatives, nested wholes and authored typed connections. Preserve useful mature direct manipulation while completing missing native creation/save/Return and actual Expression bindings.
 
@@ -272,25 +272,25 @@ The primary construction must be embodied in the existing Expression medium, not
 
 Moving/colouring/grouping is presentation unless explicitly authored as a knowledge change. Deliberately connecting/type-labeling sources has a direct native relation-authoring path. A lawful proposed QL frame is allowed without claiming source-certified truth.
 
-## 16. M2′ — Relation Field / Timeline
+## 16. Relation Field / Timeline
 
 Operate chronology, cause/dependency, influence, opposition, recurrence/echo, phase/cycle, transformation and actual activity/Run/NOW readings as applicable. No invented timestamps or promotion of correlation into causation.
 
 Retain actual typed relation identities, direction, evidence, claim/inference standing and occurrence/receipt/validity distinctions. Undated material can still be examined relationally. Projection switches keep the same work; they are not application tabs or separate stores.
 
-## 17. M3′ — Journey / Scenes
+## 17. Journey / Scenes
 
 Journey authors real O:I Expression Scene refs and their ordered/branching traversal. Reuse the existing scene strip/editor and complete source intake, text/media/narration, beats/sections, timing, transitions, saved views, camera/framing, preview/direct entry and conflict handling.
 
 No-scenes-yet must not block authorised creation from current material. A sequence is not a hidden Agent command queue or a Factory Run. Preserve native C′/Vāk composition where actually operative, not decorative labels. Live Scene → source/deep work → exact Journey position must survive re-entry/restart.
 
-## 18. M4′ — World / Places
+## 18. World / Places
 
 Situate current work through actual geographic/world/temporal/reference-frame readings, preserving precision, uncertainty, historical validity and source standing. Retain map/globe/street/route interactions where providers support them. Do not manufacture places or coordinates.
 
 A specialised active map/globe body is valid inside the shared mode. It does not own another world or permanently run behind other lenses. Nara/Earth/occasion crossings retain authority and privacy; geographical or symbolic representation does not publish private personal state.
 
-## 19. M5′ — Palace / Integral Whole
+## 19. Palace / Integral Whole
 
 Compose independently addressable native constellations, saved Views, relation readings, Journeys/Scenes, Expressions, sources/media and places into useful regions, portals, guided paths and free exploration.
 
@@ -431,7 +431,7 @@ Prove the left Central/Project/graph tree, compact graph and field share refs ra
 
 ## 28. Lens continuity
 
-Take the same current work through M0′ → M1′ → M2′ → M3′ → M4′ → M5′ → M0′. Preserve source/construction basis, selection, session and return; allow explicit subject changes through navigation without confusing them with lens changes.
+Take the same current work through Project → Canvas → Relation Field → Journey → World → Palace → Project. Preserve source/construction basis, selection, session and return; allow explicit subject changes through navigation without confusing them with lens changes.
 
 Execute real operations in each eligible lens. No false waiting, new chat per tool or permanent hidden renderer. Real missing facets show actionable reasons; eligible creation remains available.
 

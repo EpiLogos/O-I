@@ -149,7 +149,7 @@ before the return to substantive UI work. Up to four Opus subagents.
    sources, so agents get the right context, decide, use capabilities and execute through the systems meant for it; the six
    products working through their intended relationships; performance and reliability against real bottlenecks (the Graph read at
    88 s cold, knowledge search at 4.7–6.2 s); operational reuse — saving and reusing scripts, commands, aliases — finished.
-   The agent side is built in its three positions (manual §25, `DEVICE-SEMANTICS-LOCK.md` §0.4; route
+   The agent side is built in its three positions (manual §25; route
    `tickets/T-AGENCY-the-agent-world-and-the-construction-chain.md`): **M0′**, one read path (O:I's wiki reads through AIKit's
    knowledge route, K1) and the whole kept whole where a scene is projected (K3); **M4′**, the Decision helper
    (`ai-kit:decision-helper`, manual §19.20) bound to `aikit decide` and the team space, with a `ql` that answers
@@ -170,7 +170,7 @@ before the return to substantive UI work. Up to four Opus subagents.
    binding → visible, selectable composition → native save and read-back, keeping subject, participation, relation and shape
    binding through each step. Route: T-AGENCY K4 (one Canvas model; roles and fold from `wiki-shape` and `ql techne reading`),
    then K2 (the Form page bound to `aikit.constellation.apply` and `wiki-shape`, the detached construction panel retired), walked
-   by K8 (`.wayfinder/maps/techne-expression-mode.md` C1–C12; its M′ table is superseded by lock §0.4). Open connections: source linking (what becomes a Wiki object, what stays a source
+   by K8 (`.wayfinder/maps/techne-expression-mode.md` C1–C12). Open connections: source linking (what becomes a Wiki object, what stays a source
    descriptor, how exact passages enter a construction); QL staging (`wiki stage`, construction and shape validation into the
    desktop); where the model proposes and where native ops validate and persist; the live `ShapeBinding` to the renderer (hit
    testing, multiple occurrences, saved arrangements).
@@ -186,7 +186,10 @@ before the return to substantive UI work. Up to four Opus subagents.
 ### The UI/UX planning lane — this documentation session
 
 The clip, Session view and Arrangement view mapping is in the manual (§16.5–§16.6, §17.1–§21.1). The owner's review of 19 Oct
-found the views, the interactions and the flipped-up devices short of Live's; items 1–4 answer it and come first. What is left:
+found the views, the interactions and the flipped-up devices short of Live's; items 1–4 answer it and come first. A capability
+enters the manual as a device's UI from the catalogue — a page of an existing device or a device of its own — with its entry
+beside the embed (the Canvas's Form page, §17.4; the Decision helper, §19.20), never as a section that restates the
+implementation (owner, 19 Oct). What is left:
 
 1. **Three layers per mode: Session, Arrangement, Pane.** Session and Arrangement are views of the mode's one set — the same
    tracks, Tab between them, the Clip and Device views under both — not panes. Today they are "two presentations of one pane"
@@ -229,7 +232,7 @@ found the views, the interactions and the flipped-up devices short of Live's; it
    `CodeIndexProvider`, `ProjectMap`, `KnowledgeRoute`, `KnowledgeApplication`) — lists, trees, graphs and search as ways through
    one addressable world, each provider keeping its authority; the construction's frame and roles, relations, alternatives and
    the move between staged construction and live composition made discoverable. The instruments keep their names and their work,
-   with no M′ numbers (lock §0.4); the agent side follows manual §25. Where an agent's Find passages, Quote, Propose relations
+   with no M′ numbers (lock §0.1 item 3); the agent side follows manual §25. Where an agent's Find passages, Quote, Propose relations
    and Explain stand (T-AGENCY K6) is this lane's device answer before the build takes them.
 8. **The objective-internality and worldhood material** where it changes design.
 9. **The design requests the build sends** (19 Oct: the World's scales and a Land control; clip:central's Subject, identity row
@@ -326,7 +329,7 @@ RE, the Palace prop-hunt scope (`.wayfinder/maps/palace-prop-hunt.md`), Central'
 - [Time locked at the top](../new-shell/WORLD-SHELL-DESIGN.md) — chronos/civil/cron/transport/occasion strata; the sample clock is the work-time stratum; families bind, never fork clocks (§15, §18).
 - [Archetypal-Earth adopted as projection infrastructure](../new-shell/WORLD-SHELL-DESIGN.md) — globe/graph/state/time modules are infra; the Jung corpus stays canonical and separate; seam is `src/types/field.ts` (§3.1).
 - [The musical system's owners and law](../new-shell/WORLD-SHELL-DESIGN.md) — verified foundations (field/PCM owner, torus, resonator); D13; common cause; role classification; what is #281's vs the shell's (§18).
-- [Mockup revisions are recorded decisions; their forms are guides](../new-shell/WORLD-SHELL-DESIGN.md) — Revision 2: three orthogonal axes (arrangement × projection × device), encounter spine bar Field›World›Subject›Occasion, aperture, view-as, the orbit cosmos layers (M1 torus · M2 sky · M3 clock), Timeline holds M2′/M3′, Constellation holds M0′/M1′. Revision 3: four arrangements with per-mode region defaults; planet building first-class; Earth as the Mūlādhāra anchor. Revision 4: icon mode selector; panes as a split tree; Clip | Device detail with per-arrangement meanings; the agent-shell right dock. Revision 5: one transport, five meanings; Live restored as the base mode.
+- [Mockup revisions are recorded decisions; their forms are guides](../new-shell/WORLD-SHELL-DESIGN.md) — Revision 2: three orthogonal axes (arrangement × projection × device), encounter spine bar Field›World›Subject›Occasion, aperture, view-as, the orbit cosmos layers (M1 torus · M2 sky · M3 clock), Timeline holds the Relation Field and the Journey, Constellation holds the Project graph and the Canvas. Revision 3: four arrangements with per-mode region defaults; planet building first-class; Earth as the Mūlādhāra anchor. Revision 4: icon mode selector; panes as a split tree; Clip | Device detail with per-arrangement meanings; the agent-shell right dock. Revision 5: one transport, five meanings; Live restored as the base mode.
 - [Multi-machine placement is contracted](../../Work/Workcell/docs/MULTI-WORKCELL-PLACEMENT.md) — Workcell #16 (placement seam, named failures), #21 (`workcell.control/v1`), #26 (Fabric/Tailscale), #13 (Arrakis MicroVM); machines are distinguishable cells; remaining is physical acceptance and the owner's remote-posture ruling.
 - [Federation and visiting are contracted](../../Work/O-I/docs/contracts/WORLD-INHABITATION-V1.md) — occupancy asked-not-copied, Communique relay with `held`, root-ground transfer (Central#224), SharedField publication (O-I#505), participant/contribution/encounter floors (`SHARED-FIELD.md`), A2A binding with pending returned difference (O-I#24/#43); the machine-visibility map O-I#530 is in flight.
 - [Buzz agency behaviours are specified and landed in the shell](../../Work/reverse-engineering/2026-10-07-buzz-grok-agent-messaging-re/buzz-messaging/CONTRACT.md) — queue/steer/interrupt/diff-review/Return as behaviours of record → `AGENTIC-CONVERGENCE.md` devices (Gateway submit policy, stall card Retry/Hard-stop/Steer, diff cards, Land control) → `AGENT-SHELL-ACCEPTANCE.md` (9 Oct, live-verified).

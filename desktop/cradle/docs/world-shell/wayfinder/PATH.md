@@ -242,13 +242,13 @@ stood on the stage, full-screen control unanswered three times). Seen working: t
 stays round when the browser or the detail area toggles (the pane narrows, widens and grows; no window resize); the status bar's
 Info line names what the pointer is over ("Toggle browser · ⌘⌥B", "Central — the day and its documents"); Central's Day draws its
 catalogue design on the chain — "Fri 16", "—" on the net, the owner's stale-pointer refusal in the well, the Today press (Central's
-ensure, left for the owner), the kit head's marks; Technē's M0′ and M4′ on the kit's head with live wells ("the Earth not mounted"
-until it mounts, then the disc with "no place located", "sky not loaded"), the folds as kit strips with their accent addresses, M4′'s
+ensure, left for the owner), the kit head's marks; Technē's Project and World on the kit's head with live wells ("the Earth not mounted"
+until it mounts, then the disc with "no place located", "sky not loaded"), the folds as kit strips with their accent addresses, the World's
 Locations a "0 placed · 15" readout with no sentence, the detail head "World open on the focused pane"; Expressions' Studio reads
 "saved" (lane D's false dirty gone), fits its band at a 1261×820 window with one Save (TOOLS whole, Pointer as kit dials, sections
 folded to their titles); Factory's chain draws the Gateway ("refused", "No readings", "—"; Connect disabled), the Agent ("turns not
 read", "check-in not read", Budget disabled) and the Skillset rack ("Members · no reading") from their designs. Small, open: the Day's
-refusal clips at the well's foot (the design); M4′'s Locations shows a fifth row cut at the plate's foot; the Pointer's value "0.23
+refusal clips at the well's foot (the design); the World's Locations shows a fifth row cut at the plate's foot; the Pointer's value "0.23
 stage un…" overflows its cell (values are short, manual §16.8).
 
 Then: lanes D, BC, BF, W1, W3, BT, BE and R2 converged (16 Oct). D (`533ac32f8`): an opened work reads saved until edited (the
@@ -265,7 +265,7 @@ W3 (`aba029db5`): every write B0 found ordered under the lock is prepared or fre
 lock-probe p95 60 s → 6.7 ms; receipts now_changed/day_changed/receiving_changed/factory_run_changed, the temporal field re-reads on
 them (its floor kept only for other processes' writes; agency's 30 s floor kept — AIKit has no session event, proposed); a temporal
 read 27 → 10 processes; the native host writes a timing line per op (OI_KERNEL_TRACE_FILE); src-tauri clippy clean and gated.
-BT (`1f6ff5d42`, `b8bb75051`): M0′–M5′ carry a live picture in their wells and stand on the kit's head, no sentence in a plate,
+BT (`1f6ff5d42`, `b8bb75051`): the six Technē instruments carry a live picture in their wells and stand on the kit's head, no sentence in a plate,
 ownerless controls disabled with their reason, Compacts follow the open plate's width, the detail head names the standing
 instrument. BE (`108634cf3`): the Studio fits its band with one Save at 1280/1372/1440, Your controls page as kit dials, Physics draws
 on the field engine, Acts/Nara/Find/the Library open as devices, not over the field. Not yet bound (designs still on module
@@ -310,10 +310,10 @@ refused); W4 `oi` (K2 lands with #677; `active_suite_executable_s0`, `world_head
 
 Then: Wave 0, the native pass of the m4 build (`2de90416e`, stamp 20261015T-m4; product equal to HEAD; 16 Oct 00:33–00:45,
 computer-use, full-screen control, the window brought out of Stage Manager's strip). Seen working: Locations › O-I expands its
-three Scenes within ~5 s of the double-click (the installed AIKit batch); M1′ Canvas draws the O-I card with no chrome in the pane
-(only the minimap, which M1′'s Minimap switch owns); the canvas frame re-lays itself out when the browser toggles; with the Earth in
-the pane the O-I palace floor draws (two rooms on a dashed path) with no atlas label or "≡"; M0′, M4′ (Body, Landmass, Climate, Sky
-drawn waiting; Locations paged; Relations) and M5′ (Rooms, Path, Board, Return, Bookmarks) stand; the Studio carries Save, Undo and
+three Scenes within ~5 s of the double-click (the installed AIKit batch); the Canvas draws the O-I card with no chrome in the pane
+(only the minimap, which the Canvas's Minimap switch owns); the canvas frame re-lays itself out when the browser toggles; with the Earth in
+the pane the O-I palace floor draws (two rooms on a dashed path) with no atlas label or "≡"; Project, World (Body, Landmass, Climate, Sky
+drawn waiting; Locations paged; Relations) and Palace (Rooms, Path, Board, Return, Bookmarks) stand; the Studio carries Save, Undo and
 Redo in its head, Your controls opens with + Parameter and a chosen control; ⌘⌥Enter brings the frame's own chrome into the pane
 and restores it; Factory and Live load (Live's M1 torus device draws its picture). Seen broken — lanes F and D: (1) the owner's
 report, "the resizing of the pane content per the changes to viewport size with sidebar toggle changes": the Earth draws as an
@@ -329,7 +329,7 @@ strips and ⊞ never reveal by pointing (Technē's frame pane, Expressions, Cent
 day tracks behind the Flow were not reached again; (9) the Studio overflows its band (TOOLS and the nested Glyph Sequence box with
 its own Save cut at the plate's foot); (10) Central's Day still reads the owner's refusal "The native today pointer is stale"
 (the Days stop at 13 Oct: no ensure has run since the scheduled rollover was disabled on 13 Oct), and the Day device offers no
-ensure. Not seen: a Compact device on Technē's row (M4′ and M5′ open left no room). (9) and the plates' density go to Wave A; (10)
+ensure. Not seen: a Compact device on Technē's row (World and Palace open left no room). (9) and the plates' density go to Wave A; (10)
 to B0's reading, then the Central device lane.
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -358,8 +358,8 @@ splitting a cold batch (35–58 s); Central's Day "today pointer stale"; ten lan
 Then: lane E landed (`1f40feefe`), drawn to docs/dlw/DLW.md §16 — the owner's device standard, which landed on main the same
 evening with its panel kit and five reference devices (`2fdfe6606`, `79d5b4c36`, committed in this seat by the owner's session): the
 plate grammar fits or folds, never scrolls, one hairline between sections, no box in a box, a head slot (the Studio's Save, Undo,
-Redo); M4′ Body/Landmass/Climate/Sky as dials and switches drawn waiting with Earth's reason, Locations and Relations as paged rows;
-M5′ Rooms, Path, Board, Return; M1′–M3′ on the kit's styling; M0′ one plate (View, Graph, Forces, Deep time) and the stage's
+Redo); the World's Body/Landmass/Climate/Sky as dials and switches drawn waiting with Earth's reason, Locations and Relations as paged rows;
+the Palace's Rooms, Path, Board, Return; Canvas, Relation Field and Journey on the kit's styling; the Project one plate (View, Graph, Forces, Deep time) and the stage's
 Expression controls while its project lens stands; Compact devices (a live well and four manual-named macros) where the row has room.
 Headless, GPU on: no overflow and no scrolling element in the device row in 20 shots. Beside Live's Operator the plates are closer,
 not there: fewer, larger controls and no live picture at their heart — the next pass, to manual §16. Lane R3 (`a113536f3`): the
@@ -368,8 +368,8 @@ register follows Y and E — every cited home resolves at HEAD (9 re-quoted, 8 m
 
 Then: lane Y landed (`14a713f89`): the hosted frame draws only its field in a pane. The frame learns its presentation from the host
 (devices | frame) and stands its own chrome down; presentedChrome.ts reads and presses its own controls for the plates (the atlas
-header door's move). The Studio carries the masthead's work, Nara and Your controls (the curated toolbar, + Parameter); new M1′
-Canvas, M2′ Timeline and M3′ Journey plates carry the research instruments' tools; the pane menu's Full size brings the frame's
+header door's move). The Studio carries the masthead's work, Nara and Your controls (the curated toolbar, + Parameter); new
+Canvas, Timeline and Journey plates carry the research instruments' tools; the pane menu's Full size brings the frame's
 own chrome back inside the pane. Headless: Technē canvas 40 → 0 controls in the pane, Expressions 0. Lane D landed (`90f16590d`):
 the door's ~40 s main-thread hold was a disposed Earth pane session mounting the globe anyway under React's development double
 invoke and losing its WebGL context on software GL — a session disposed before its module mounts no longer mounts it; register
@@ -480,13 +480,13 @@ lanes 1–3 and 5 cite evidence outside their home's file — re-prove at home l
 (FOUNDATION §6 step 4), not by a blanket return; T14/T15/T24/T10's proofs cover their behaviour in part.
 
 Then: the register follows the code again (`c1b203e4c`, lane T): 123 homed, 3 gaps (G4 Capture into a Scene, G5 Record a walk,
-G6 M3′'s beat), homes on a retiring home 40 → 9 (R2, palaces onto the atlas); the Wiki-Scene rows reach through N2's door beside
+G6 the Journey's beat), homes on a retiring home 40 → 9 (R2, palaces onto the atlas); the Wiki-Scene rows reach through N2's door beside
 Examine. Seen on screen: 0. Carried from lane T: the progress axis disagrees with the re-home columns (T20/T25/T26 are gaps but
 `implemented: yes`; D1 is homed but pending; 47 rows' `implemented` evidence cites files no longer in the tree) — `rehome`
 leaves progress alone by design, so the progress axis needs its own re-record. Fixed from its code-reading (`d6b5aa672`): pressing
-M4′ from another pane opened the Earth and then folded M4′ again. Decided (lock §0.1.3: M0′ is "the Earth and solar system ⇄
-Graph", M4′ the planet builder acting on it): the Earth pane stands M0′, and M4′ opens by its fold — the mockup's open M4 plate
-is the craft floor for M4′'s plate, not which instrument the pane is.
+the World from another pane opened the Earth and then folded the World again. Decided (lock §0.1.3: the Project instrument is
+"the Earth and solar system ⇄ Graph", the World the planet builder acting on it): the Earth pane stands the Project, and the
+World opens by its fold — the mockup's open M4 plate is the craft floor for the World's plate, not which instrument the pane is.
 
 Then: Places is the atlas, alone (`92a7d38d5`, lane O, R1). The 31 Places targets are listed with their atlas homes in
 `tickets/T-PLACES-ONTO-ATLAS.md`: the M4 World / Places plate (Body, Landmass, Climate, Sky with the QL Sun and the Frames
@@ -495,7 +495,7 @@ time on the atlas's one time button and the shared window (no second clock), the
 hover; the atlas's own chrome and onboarding stand down in the pane; the frame's Places map, overlays, lens panels and route are
 removed (−10.4k lines), each retired test naming its replacement, and the map's place consumer with them (`235b4771f`). Judged
 not kept (lane O, with reasons in the ticket): pitch and bearing, polygon regions, hierarchy edges, the basemap/terrain choice.
-Gaps: named map views (T20) wait on Technē's Capture writer; tour recording (T25) on the journey owner; T26 is M3′'s. Carried
+Gaps: named map views (T20) wait on Technē's Capture writer; tour recording (T25) on the journey owner; T26 is the Journey's. Carried
 from lane O: the draft contract (`psychogeographic/placeAuthoring.ts`) should move to its owner and the folder go; the frame's
 `app.ts` still wires a 'place' lens; dead Places CSS in the frame; the Earth pane could stand M4 open by default (the mockup's
 open plate) — the lead's call under lock §0.1.3; the atlas's focus label and a non-Field lens's own controls still draw in the

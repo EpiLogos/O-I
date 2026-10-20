@@ -745,7 +745,8 @@ never shipping a pixel of Ableton's.
 **Edit mark (grill fold):** the Rev 2 and Rev 4 tables quoted in this chapter
 render the revisions' M′ instrument names in owner ruling D-F's plain names
 throughout (project/graph, canvas, timeline, journey, places, palace); the
-revisions' own text still carries M0′–M5′.
+revisions' own text carried M0′–M5′, a reading the owner withdrew on 19 Oct
+2026 (lock §0.1 item 3).
 
 **The mode set — owner ruling, law** *(12 Oct; VIS §2.1, L1–L3)*. "Five
 modes stand: Live stays as the base mode" (`CONT:234`). The set for the
@@ -819,7 +820,7 @@ Session/Arrangement icons per mode (`WORLD-SHELL-DESIGN.md:43-51`):
 | Base | the day as clips: Day, Flows, Beings, Things and Goals as tracks | today on one ruler |
 | Factory | sessions and tasks | the run viewer |
 | Expressions | scene rows | the scenes over time |
-| Technē | M3′ Journey | M2′ Relation Field |
+| Technē | the Journey | the Relation Field |
 
 Clip | Device detail per arrangement (Rev 4, `WORLD-SHELL-DESIGN.md:84-89`):
 
@@ -1791,8 +1792,7 @@ clock, musical system — is §5.)
 **The mode, owner-ruled and kernel-bound** *(12 Oct; VIS §2.3, L-7, L-9)*.
 
 - **What it is.** "The form — the sounding, the physical, the scene. Where
-  things become sensible" (`CONT:181`): the conjugate 3:3 body, "rather than
-  the sixth 4:2 peer" (`TDR:35`).
+  things become sensible" (`CONT:181`): the 3:3 body (`TDR:35`).
 - **Nara, foreground.** The chain is M4 Nara ↔ S4 Workcell ↔ S4′ Anima → M4′
   (`LOCK:96`), with Nara foreground in the 3:3 reading (`LOCK:31`); M4′ is
   "the general Expressions application body, with the operative M1–M2–M3
@@ -2017,8 +2017,9 @@ origins" as the mark of decay (`DECAY:150-151`).
   deep-working mode" (`LOCK:399-401`); the six lenses are narrower
   projections, and "M5′ is not reducible to a Palace screen"
   (`LOCK:406-410`). The chain is M5 Epii ↔ S5 QL-MEF ↔ S5′ Aletheia → M5′
-  (`LOCK:97`). The dual reading, 4:2 Technē / 3:3 Expression, is
-  owner-ratified (`LOCK:3,14-51`); the contemplation's
+  (`LOCK:97`). The dual reading, 4:2 Technē / 3:3 Expression (`LOCK:3,14-51`),
+  lost its four-and-two half on 19 Oct 2026: Technē's instruments carry no M′
+  numbers (lock §0.1 item 3). The contemplation's
   "TECHNE-DUAL-READING.md" resolves to `docs/experience/TECHNE-DUAL-READING.md`
   (`TDR:12-35`), cited with the lock.
 - **Palace is the M5 pedagogy pole's form.** Palace is "teachable", "the
@@ -2027,11 +2028,11 @@ origins" as the mark of decay (`DECAY:150-151`).
   teaches by being met… The teaching is the encounter" (`CONT:106`). The
   Palace returns attributable proposals; it is not performed (`APPB:72-76`).
   A separate teaching surface is the owner's (VIS L8).
-- **Companion label, Tension** (ledger item 49): the dock names the Technē
-  companion "Epii" (`DOCK:67`), its M5 subsystem, while the lock's S5′
-  operator is "Technē_i := Aletheia_i" (`LOCK:510-517`); the Expressions
-  companion is named by its S4′ operator, Anima. Same chain, different end.
-  The label stays until the owner rules.
+- **Companion label** (ledger item 49): the dock names the Technē companion
+  "Epii" (`DOCK:67`), its M5 subsystem; the Expressions companion is named by
+  its S4′ operator, Anima. The lock's "Technē_i := Aletheia_i"
+  (`LOCK:510-517`) went with the four-and-two reading (owner, 19 Oct 2026), so
+  the label stands.
 
 **Transport meanings.** Technē column: field carrier · back to Now; walk pace
 · stop n/8; presence · arrival; aperture · view as; **walk · stop · record
@@ -2045,13 +2046,13 @@ Bodies, Locations, Earth places, Palaces, Journeys"
 **Centre.** "The current lens, [the six instruments] on the lens bar" (Rev 3);
 landed as the Technē lens bar (`DEVELOPMENT-TRACK-2026-10-09.md:100`). The
 four projections host the instruments (Rev 2): Timeline holds timeline
-(M2′ Relation Field) + journey (scene rows as walk stops); Constellation
+(the Relation Field) + journey (scene rows as walk stops); Constellation
 holds project/graph (bounded local whole: list · tree · graph · form) +
 canvas (artefact suite; drag is presentation; a drawn relation is a proposal
 until promoted through the relation owner's Action); Earth holds places at
 five scales (Field · Orbit · Surface · Place · Palace — M5-palace as a
-special location you enter); Expressions is the 3:3 reading with the
-conjugate layers; the rack's cut switch crosses 4:2 ↔ 3:3
+special location you enter); Expressions is the 3:3 reading with its
+layers; the rack's cut switch crosses between Technē and Expressions
 (`WORLD-SHELL-DESIGN.md:253-274`, Rev 2).
 
 **Clip | Device.** Clip = identity, place and time, disclosure, typed
@@ -2108,7 +2109,7 @@ UI-harmonisation note, verifiable acceptance shape — `PROGRAMME.md:181-186`):
   native); one scene identity no shadow store; transitions authored per-edge;
   overlap-to-blend authoring; live edge truth; playback walks with
   inspectable path; journey presence (reload re-enters where the author
-  stood); the formal crossing 4:2 ↔ 3:3; return restores the exact beat by
+  stood); the formal crossing between Technē and Expressions; return restores the exact beat by
   ref equality; source/verso leg with explicit return; honest absence;
   palace composes the reading's real facets; free spatial composition is
   pure presentation; objects independently addressable; guided integral walk
@@ -2796,7 +2797,7 @@ Central's wiki as a proposal (`CONT:167`).
   `BRIDGE.transition` writes subject and occasion as "Refs and titles only —
   never content" (`BRIDGE:74-96`); the one-field identity law preserves
   subject_ref, revision, constellation, ActionRefs and AgentSession
-  (`TDR:77-96`). The cut switch crosses 4:2 ↔ 3:3.
+  (`TDR:77-96`). The cut switch crosses between Technē and Expressions.
 - **The act's discipline:** "selection != disclosure; visible Action !=
   authorised invocation" (`TDR:324-329`). A crossing never sends, discloses
   or launches by itself (`EXP/FACTORY-AGENCY.md:42,102`).
@@ -2850,7 +2851,7 @@ Each arrangement also re-means the two presentation icons (Revision 5,
 second table in §4: what Session and Arrangement show per mode) and the
 Clip | Device detail pair (Revision 4: Base → Document | Devices; Factory →
 Task log | Agent chain; Expressions → Scene | Studio; Technē → Clip |
-Instruments "the six M0′–M5′").
+Instruments, the six Technē instruments).
 
 The **honesty law for waiting controls** is in the grammar:
 `waitingNote` per mode — e.g. Live: "The audio engine's transport is
@@ -3880,8 +3881,9 @@ names its VIS §4 row; the row carries the full evidence.
     (`UI/inhabitants/centralDayNowModel.ts:55-105`). *A ruling decides:* who
     fires the close, and whether a cron-fired close fits the civil-date law.
 46. **Hesse's two schools against the dual-reading pair** (L16). The pair
-    is ratified: Technē 4:2 / Expression 3:3 (`LOCK:3`); assigning Hesse's
-    schools to it is a reading (VIS L-5). *Build:* to the lock. *A ruling
+    stood as Technē 4:2 / Expression 3:3 (`LOCK:3`); its four-and-two half is
+    withdrawn (owner, 19 Oct 2026). Assigning Hesse's schools to the two modes
+    is a reading (VIS L-5). *Build:* to the two modes. *A ruling
     decides:* whether the schools reading is adopted at all.
 47. **Does the plate sound; entity voices and D13; is the physics sim the
     M1 instrument device** (L17). **Tension**, causal wording only, and
@@ -3893,14 +3895,13 @@ names its VIS §4 row; the row carries the full evidence.
     instruments go by their plain names, "project/graph, canvas, timeline,
     journey, places, palace" (D-F, `PROG:97-108`); the code rename is
     deferred (`PROG:104-105`), and `GRAM:415-416` still carries M′ labels.
-    *Build:* the UI shows plain names; the M′ address is provenance only
-    (T-LABELS).
-49. **Technē companion label: Epii or Aletheia** (L21). **Tension**, one
-    chain: the dock says "Epii" (`DOCK:67`, M5); the lock's S5′ operator is
-    "Technē_i := Aletheia_i" (`LOCK:510-517`); the Expressions companion is
-    named by its S4′ operator, Anima (`LOCK:507`; §4.5). *Build:* keep the
-    label; the tension is recorded in `WIDGET-GUIDE.md` §9. *The owner
-    rules.*
+    *Build:* the UI shows plain names (T-LABELS); since 19 Oct 2026 the
+    instruments carry no M′ address at all (lock §0.1 item 3).
+49. **Technē companion label: Epii or Aletheia** (L21). **SETTLED:** the
+    dock says "Epii" (`DOCK:67`, M5); the lock's "Technē_i := Aletheia_i"
+    (`LOCK:510-517`) went with the four-and-two reading (owner, 19 Oct 2026);
+    the Expressions companion is named by its S4′ operator, Anima (`LOCK:507`;
+    §4.5). *Build:* keep the label.
 50. **Review at M5-4, or M5-4 as the six agents** (L22). **SETTLED —
     both**, by the live Bimba map (queried 12 Oct 2026; the map wins,
     `LAW:19`): M5-4 holds the "S4/S5 review" role, the six agents as internal
