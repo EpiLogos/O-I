@@ -6,6 +6,7 @@
 import test, {beforeEach} from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {readFileSync} from 'node:fs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -32,6 +33,8 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText;
   return {format: 'module', shortCircuit: true, source: out.split('import.meta.env').join('({BASE_URL: "/"})')};
 }`)}`, import.meta.url)
+
+const pending = process.env.W3Q_GATE === 'enforce' ? {} : {todo: 'T-PROCEDURAL-BODY: red until the system lane lands'}
 
 globalThis.__CRADLE_WALK__ = false
 const door = await import('../src/inhabitants/familyManifest.ts')
@@ -235,4 +238,102 @@ test('every body setter the rows name is registered, and none is an atlas setter
   for (const path of bridge.WORLD_BODY_SHELL_SETTERS) assert.equal(typeof shellSetter(path), 'function', path)
   for (const row of atlasDevs.WORLD_BODY_ROWS) assert.ok(bridge.WORLD_BODY_SHELL_SETTERS.includes(row.writePath), row.key)
   assert.ok(bridge.WORLD_BODY_SHELL_SETTERS.every(path => !path.startsWith('shell.setAtlas')))
+})
+
+// ── [T-PROCEDURAL-BODY §6 item 5] the device ontology ──────────────────────────────────────────────────────────────────────────
+// "The World's Whole already has Body, Landmass, Climate, Sky and Locations (atlasDevices.ts). The lane checks each row's write lands through
+// the owner and reads back (not just compiles), that the rows say when a body is older than the current generator ('its next change rebuilds
+// it'), and that the device's Compact and Widget pictures are the globe's own body (the same bodyDisc), not a second drawing."
+
+const FIELD = {
+  seed: r => r.seed, seaLevel: r => r.landmass.sea_level, continents: r => r.landmass.continents, relief: r => r.landmass.relief, coast: r => r.landmass.coast,
+  warmth: r => r.climate.warmth, moisture: r => r.climate.moisture, iceCaps: r => r.climate.ice_caps, atmosphere: r => r.sky.atmosphere, clouds: r => r.sky.clouds, tilt: r => r.sky.axial_tilt_deg,
+}
+const CHANGE = {seed: 42, seaLevel: .3, continents: 2.4, relief: .2, coast: 'fjord', warmth: .7, moisture: .1, iceCaps: .9, atmosphere: .25, clouds: .8, tilt: 30}
+
+// MET: atlasDevices.ts:177-216 atlasGlobeBinding.write and :242 atlasDevice.submit both reach worldBody.ts writeWorldBody (one BodySet on the
+// revision read, read back); the setter route is agent/shellSetterBridge.ts registerWorldBodyShellSetters. Every row, by every route.
+test('every body row writes through the owner by every route — the design, the device, the setter — as one BodySet of that change alone, reads back equal, and shows on the device', async () => {
+  const rows = atlasDevs.WORLD_BODY_ROWS.filter(row => row.key !== 'body')
+  assert.deepEqual(rows.map(row => row.key).sort(), Object.keys(FIELD).sort(), 'the rows are the body\'s settings and the seed')
+  for (const row of rows) {
+    for (const route of ['design', 'device', 'setter']) {
+      const owner = fakeOwner()
+      await bind(owner)
+      store.chooseBody('own')
+      const reading = atlasDevs.atlasReading(handle(), 'earth')
+      const value = CHANGE[row.key]
+      if (route === 'design') await atlasDevs.atlasGlobeBinding(reading).write([{key: row.key, value}])
+      else if (route === 'device') await atlasDevs.atlasDevice(globeFace, reading).submit([{key: row.key, value}])
+      else assert.equal((await set(row.writePath, value)).kind, 'fired', `${row.key} by its setter ${row.writePath}`)
+      const where = `${row.key} by the ${route}`
+      assert.equal(owner.writes.length, 1, `${where}: one BodySet`)
+      assert.deepEqual(owner.writes[0].basis, {space_ref: 'central:wiki:root', revision: 67}, `${where}: on the revision it was read at`)
+      const sent = owner.writes[0].body
+      assert.equal(FIELD[row.key](sent), value, `${where}: the owner is sent the change`)
+      for (const other of Object.keys(FIELD)) if (other !== row.key) assert.equal(FIELD[other](sent), FIELD[other](RECORD), `${where}: ${other} stays`)
+      assert.deepEqual(store.worldBodyState().record, sent, `${where}: the record read again is the record written`)
+      const shown = atlasDevs.atlasDevice(globeFace, atlasDevs.atlasReading(handle(), 'earth')).values[row.key]
+      assert.equal(shown, value, `${where}: the device shows what the owner holds`)
+    }
+  }
+  const owner = fakeOwner()
+  await bind(owner)
+  store.chooseBody('own')
+  await atlasDevs.atlasGlobeBinding(atlasDevs.atlasReading(handle(), 'earth')).write([{key: 'reroll', value: 1760000000000}])
+  assert.equal(owner.writes.at(-1).body.seed, body.nextSeed(RECORD, 67), 'the reroll is a BodySet of the new seed')
+  assert.equal(store.worldBodyState().record.seed, body.nextSeed(RECORD, 67), 'and reads back')
+})
+
+// NOT MET: nothing in the rows or the binding says a body was built by an older generator (atlasDevices.ts bodyValues reads the record's
+// settings and its seed; its generator is never named). The manual (M7 of tests/w3q-manual-17-2.test.mjs): "A body built by an older
+// generator draws as it always did, until you next change it."
+test('the device says when a body was built by an older generator, and that its next change rebuilds it; a current, an unread and the Earth\'s say nothing', pending, () => {
+  const version = body.WORLD_BODY_GENERATOR_VERSION
+  const reading = (record, choice = 'own', state = 'read') => ({mounted: true, view: 'earth', graph: null, clock: null, globe: {scopeLabel: null, wholeField: false},
+    body: {state: state === 'read' ? {state: 'read', reading: readingOf(record, 67), record} : {state}, choice}, locations: {rows: []}, placeKind: 'place'})
+  const older = {...RECORD, generator: {...RECORD.generator, version: version - 1}}, current = {...RECORD, generator: {...RECORD.generator, version}}
+  const note = atlasDevs.atlasGlobeBinding(reading(older)).values.generationNote
+  assert.equal(typeof note, 'string', 'the binding hands the design a generationNote for a body built by an older generator')
+  assert.match(note, /generator/i, 'it speaks of the generator')
+  assert.match(note, new RegExp(`\\b${version - 1}\\b`), 'it names the version the body was built by')
+  assert.match(note, new RegExp(`\\b${version}\\b`), 'and the current one')
+  assert.match(note, /next change rebuilds it/, 'and what happens')
+  assert.equal(atlasDevs.atlasGlobeBinding(reading(current)).values.generationNote, undefined, 'a body of the current generator has nothing to say')
+  assert.equal(atlasDevs.atlasGlobeBinding(reading(older, 'earth')).values.generationNote, undefined, 'the Earth is given: no body, no note')
+  assert.equal(atlasDevs.atlasGlobeBinding(reading(older, 'own', 'reading')).values.generationNote, undefined, 'unread: no claim')
+  assert.equal(atlasDevs.atlasGlobeBinding(reading(null)).values.generationNote, undefined, 'no body yet: nothing built, nothing older')
+})
+
+// NOT MET: the Compact and the Widget draw `SpaceArt`, the Earth's picture, whatever body is chosen, and the Body page draws a preview with
+// the design's own value noise (inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx:480 SpaceDisplay, :512-542 hash3/noise3/fbm/
+// heightAt/isLand, :562 BodyArt). One body, one drawing: the binding hands the design the record the globe shows and the look it is drawn
+// with (values.bodyRecord, values.bodyLook), and the design draws them with the globe's bodyDisc.
+test('the device\'s pictures are the globe\'s own body: the binding hands the design the record shown and the look drawn; nothing is drawn from a second generator', pending, () => {
+  const record = {...RECORD, seed: 5}
+  const reading = (choice, look) => ({mounted: true, view: 'earth', graph: null, clock: null, globe: {scopeLabel: null, wholeField: false},
+    body: {state: {state: 'read', reading: readingOf(record, 67), record}, choice}, locations: {rows: []}, placeKind: 'place', ...(look ? {look} : {})})
+  const own = atlasDevs.atlasGlobeBinding(reading('own', {barren: .4}))
+  assert.deepEqual(JSON.parse(own.values.bodyRecord ?? 'null'), record, 'values.bodyRecord: the record the globe draws, the owner\'s own')
+  assert.deepEqual(JSON.parse(own.values.bodyLook ?? 'null'), {barren: .4}, 'values.bodyLook: the look the globe draws it with')
+  const earth = atlasDevs.atlasGlobeBinding(reading('earth', {barren: .4}))
+  assert.equal(earth.values.bodyRecord, undefined, 'the Earth is drawn as the Earth: no body record is handed')
+  assert.equal(earth.values.bodyLook, undefined)
+  const panel = readFileSync(new URL('../src/inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /from '[^']*projections\/atlas\/src\/globe\/body'/, 'the design imports the globe\'s body module')
+  assert.match(panel, /\bbodyDisc\(/, 'and draws the body with its bodyDisc')
+  assert.match(panel, /bodyRecord/, 'from the record the binding hands it')
+  assert.match(panel, /bodyLook/, 'with the look the binding hands it')
+  assert.doesNotMatch(panel, /function (hash3|noise3|fbm|heightAt|drawnAt)\b|const isLand\b/, 'the design carries no value noise or land test of its own: the preview was a second drawing of the body')
+})
+
+test('the device reading carries the look of your own world from your system\'s reading, so the device and the globe agree', pending, () => {
+  const bodies = [{key: 'world:central:wiki:root', yours: true, look: {barren: .25}, world: {ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: '', project: null}, state: 'built', record: RECORD,
+    bodyRef: RECORD.body_ref, colour: {}, standing: '', landing: null, unlanded: null, phase: 0, satellites: []}]
+  // the system reading the globe's drawer reads (system/systemStore.ts) is the one the device reads
+  return import('../src/projections/atlas/system/systemStore.ts').then(systemStore => {
+    systemStore.publishSystem({state: 'read', bodies, set: null})
+    try { assert.deepEqual(atlasDevs.atlasReading(null, 'earth').look, {barren: .25}, 'AtlasReading.look: your own world\'s look, as your system reads it') } finally { systemStore.publishSystem({state: 'unbound'}) }
+    assert.equal(atlasDevs.atlasReading(null, 'earth').look, undefined, 'no system reading: no look is claimed')
+  })
 })
