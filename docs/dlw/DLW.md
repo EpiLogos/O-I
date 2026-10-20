@@ -859,9 +859,19 @@ anything, and every place can be linked to and opened again.
 | Move focus to the transport, Session view, Arrangement view, Clip view, Device view, the browser, the pool, Pane view | ⌥0, ⌥1, ⌥2, ⌥3, ⌥4, ⌥5, ⌥6, ⌥9 |
 | Hide a device's expanded view | Esc |
 | Open Settings | ⌘, |
+| Open the selected object's menu | The menu key, or ⇧F10 |
+| Rename the selected object | ⌘R; Tab keeps the name and moves on to the next |
+| Duplicate it | ⌘D |
+| Delete it | ⌫ |
+| Switch it off or on | 0 |
+| Group the selected tracks | ⌘G |
+| Insert a clip in the selected slot | ⇧⌘M |
+| Insert a row | ⌘I |
+| Split, consolidate or crop clips in Arrangement view | ⌘E, ⌘J, ⇧⌘J |
+| Undo, redo | ⌘Z, ⇧⌘Z |
 | Play or stop | Space |
 | Launch the selected clip | Enter |
-| Launch a row | Its number key |
+| Launch a row | 1 to 9 |
 | Turn a macro | Its letter key |
 | Send what you typed | Enter |
 | Steer the running turn | ⌥Enter |
@@ -870,6 +880,54 @@ anything, and every place can be linked to and opened again.
 
 Keys never play notes, and single letters never act, while you are typing in a
 document.
+
+### 10.9 Acts and menus
+
+Everything you can select acts as its counterpart in Live: a clip, an empty
+slot, a track, a row. Right-click it, or select it and press the menu key or
+⇧F10, and its menu lists what you can do to it, each act with its key beside
+it. The same keys act on whatever is selected, and every act also has a home in
+the menu bar.
+
+| Object | Its acts |
+|---|---|
+| Clip | Launch (Enter) and Stop, in Session view. Cut (⌘X), Copy (⌘C), Duplicate (⌘D), Delete (⌫). Rename (⌘R), Switch off or on (0), Edit info text. In Arrangement view, Split (⌘E), Consolidate (⌘J) and Crop (⇧⌘J). A colour from Live's palette. |
+| Empty slot | Insert clip (⇧⌘M), Paste (⌘V), Record here on an armed track, Stop the track, Remove stop button (⌘E). |
+| Track | Rename (⌘R), Duplicate (⌘D), Delete (⌫). Switch off or on (0), Solo, Arm. Group (⌘G), Fold (U), Move left (⌘←) and right (⌘→). Retry, when its lane has stalled. A colour. |
+| Row | Launch (Enter), Stop all clips. Insert row (⌘I), Rename (⌘R), Duplicate (⌘D), Delete (⌫). |
+
+What you do most often stands on the object itself: a clip's launch triangle,
+a slot's stop square, a track's switches. Everything else is in its menu. The
+menu bar holds every command once: Edit has Undo, Redo, Cut, Copy, Paste,
+Duplicate, Delete and Rename; Create has Insert Clip and Insert Row; View holds
+the views and the parts of the window (§10.1). Settings… stands in the
+application's menu, on ⌘,.
+
+An act changes nothing itself. It asks the owner of what it changes: in Live,
+the set; in Central, the page and today's set in the Day; in Factory, the agent
+session and its tasks; in Expressions, the composition's scenes; in Technē, the
+reading. A clip's name, colour and switch go through its Clip view, which holds
+the revision the owner last gave; if Clip view is hidden, it comes forward
+first. The owner's answer, or its refusal in its own words, shows on the line
+under the grid or the ruler.
+
+An act that its owner cannot take stays in the menu, dimmed. Point at it and
+the status bar says why: the operation it waits for, and whose. Delete and
+every other act that takes something away is drawn in the record colour, so it
+never looks like an act that cannot run. On a track read from another reading,
+each act that would change it says so instead.
+
+Undo (⌘Z) takes back the last change an owner made through an act, and Redo
+(⇧⌘Z) makes it again. Each step is named as its act was, such as "Rename
+Bollingen", and undoes alone. Undo covers what owners keep: names, colours,
+switches. A fold, a view switched or a pane split is not a change to undo.
+While you type in a field, Undo and Redo are the field's own.
+
+Where Live's keys would take a key the instrument already uses, the
+instrument keeps it. C turns a macro, and S plays a note of the Jankó
+keyboard, so Solo and Arm wait in the track's menu. U folds the selected
+group. 0 switches off what is selected; with nothing selected that can be
+switched off, it launches the tenth row.
 
 ---
 
