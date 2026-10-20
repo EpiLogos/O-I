@@ -7,13 +7,13 @@ import type { BodyJob, BodyJobAnswer } from './bodyRender';
 const scope = self as unknown as { onmessage: ((event: MessageEvent<BodyJob>) => void) | null; postMessage(message: BodyJobAnswer, transfer: Transferable[]): void };
 
 scope.onmessage = (event) => {
-  const { id, record, width, cloudWidth } = event.data;
+  const { id, record, width, cloudWidth, look } = event.data;
   const parsed = parseWorldBody(record);
   if (!isWorldBody(parsed)) {
     scope.postMessage({ id, refused: parsed.refused }, []);
     return;
   }
-  const image = bodyImage(parsed, width);
-  const clouds = cloudImage(parsed, cloudWidth);
+  const image = bodyImage(parsed, width, look);
+  const clouds = cloudImage(parsed, cloudWidth, look);
   scope.postMessage({ id, image, clouds }, [image.data.buffer, clouds.data.buffer]);
 };

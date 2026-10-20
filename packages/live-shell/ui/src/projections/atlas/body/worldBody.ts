@@ -172,7 +172,10 @@ export function changedBody(record: WorldBodyRecord, revision: number, changes: 
       default: throw Error(`${key} is not a setting of the body`)
     }
   }
-  return {...record, seed, landmass, climate, sky}
+  // a body built by an older generator is rebuilt by the current one on its next change, whatever the change (T-PROCEDURAL-BODY: the record keeps its fields; its
+  // generator version is what says which generator draws it); no change, no rebuild
+  const generator = Object.keys(changes).length ? {...record.generator, version: WORLD_BODY_GENERATOR_VERSION} : record.generator
+  return {...record, generator, seed, landmass, climate, sky}
 }
 
 /** The settings a first body is built with when the register's root space carries none: the World device's own dial defaults
