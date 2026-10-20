@@ -617,8 +617,10 @@ test('B2 the globe hands the grade the look: `setBody(record, {barren})` sets `u
 test('T1 a 2048-wide body is made in the time a CPU thread can spend on it (the ticket aims at 5 s; the gate allows 20)', () => {
   // The ticket's aim is 5 s on a CPU thread, "by tables and typed arrays, not by lowering the standard". The suite runs four test files at once, so a machine is shared by
   // four: twice the aim. The lead's gate (w3q-planet-gate.test.mjs, B) allows 20 s for the same image on the four bodies; this holds the nearer number for one.
+  // The time the thread itself spends (process.cpuUsage: user and system), not the clock on the wall: a thread that waits its turn on a machine other sessions keep busy (a load of 16 to 22 on
+  // 20 Oct, 2026) is not slow. The wall clock read 10.4 s and 13.4 s for the same image whose thread spent 5.5 s; the same code unloaded takes 2.7 to 3.9 s.
   const AIM = 5000, SHARED = 2
-  const t0 = performance.now(), image = body.bodyImage(make(20261018), 2048), ms = performance.now() - t0
+  const c0 = process.cpuUsage(), image = body.bodyImage(make(20261018), 2048), used = process.cpuUsage(c0), ms = (used.user + used.system) / 1000
   assert.equal(image.width, 2048)
-  assert.ok(ms <= AIM * SHARED, `a 2048-wide body took ${Math.round(ms)} ms (the aim is ${AIM}; at most ${AIM * SHARED} on a shared machine)`)
+  assert.ok(ms <= AIM * SHARED, `a 2048-wide body took ${Math.round(ms)} ms of its thread (the aim is ${AIM}; at most ${AIM * SHARED} on a shared machine)`)
 })
