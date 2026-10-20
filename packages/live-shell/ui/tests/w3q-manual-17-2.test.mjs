@@ -43,9 +43,10 @@ test('M2 the manual says what a planet is made of: each element the generator dr
 
 test('M3 the manual says how a world is finished: a grey moon to a planet with weather, read and never stored', () => {
   assert.match(world, /barely begun is a small grey moon: dry, airless, with no cloud/)
-  assert.match(world, /Three things count: how long the world has existed, how much it holds[^.]*how many times you have shaped its body/)
+  assert.match(world, /Three things count: how long the world has existed, how much it holds[^.]*how many times you have shaped it, by its body or by its places/)
   assert.match(world, /read from those, never stored/)
   assert.match(world, /Earth is always as it is/)
+  assert.match(world, /Until you land it yourself, a world stands at a spot named from its ref, and says so; Land keeps the spot you choose/, 'an unlanded world is drawn where its ref puts it, said so, and never written until the person acts')
 })
 
 test('M4 the code’s satellite kinds are the manual’s: a session and an artefact, nothing else', pending, () => {
