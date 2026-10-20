@@ -15,18 +15,16 @@
 // (globe/body.ts shoreOf: drawing only, its coordinate never changes), named.
 // Screen-space and DOM, as PlanetOrbits is: it reads the sky layer's drawn disc each frame, so it follows the planet exactly.
 import {PlanetOrbits, type OrbitAt, type OrbitDisc, type OrbitKey, type Satellite} from '../src/sky/orbits'
-import {bodyDisc, shoreOf, type WorldBodyRecord} from '../src/globe/body'
+import {bodyDisc, shoreOf, type BodyLook, type WorldBodyRecord} from '../src/globe/body'
 import {el} from '../src/ui/dom'
 import {hostSize} from '../src/ui/hostSize'
 import {dirFromLatLon} from '../src/data/geo'
 import type {ScreenPoint} from '../src/globe/engine'
 import type {AtlasHandle} from '../mount'
-import type {DisclosureSessionStore} from '../../../../../../../desktop/cradle/src/techne/session'
 import {subscribeWorldBody, worldBodyState} from '../body/worldBody'
 import {subscribeSuiteStanding, suiteStanding} from '../provider/suiteStanding'
 import {systemActs, systemReading, subscribeSystem} from './systemStore'
-import {occasionMs, occasionStep} from './bodyDraw'
-import type {WorldLook} from './maturity'
+import {occasionStep, shownOccasion, subscribeOccasion} from './bodyDraw'
 import type {SystemBody} from './systemModel'
 import {yourLocations, type BodyLocation} from './bodyLocations'
 import './systemOverlay.css'
@@ -143,9 +141,9 @@ interface OverlayDom {
   readonly places: HTMLElement
 }
 
-/** Bind your system to the mounted atlas: the overlay over its canvas, redrawn on each reading and placed on each frame. `store` is the shared
- * time window: each world's disc carries the weather of its occasion (none given, Now). */
-export function bindSystemOverlay({handle, said, store}: {handle: AtlasHandle; said?: (text: string) => void; store?: DisclosureSessionStore}): SystemOverlayBinding {
+/** Bind your system to the mounted atlas: the overlay over its canvas, redrawn on each reading and placed on each frame. Each world's disc carries
+ * the weather of the shared occasion the body drawer reads (system/bodyDraw.ts shownOccasion; none bound, Now). */
+export function bindSystemOverlay({handle, said}: {handle: AtlasHandle; said?: (text: string) => void}): SystemOverlayBinding {
   const parent = handle.engine.renderer.domElement.parentElement ?? document.body
   let dom: OverlayDom | null = null
   const ensureDom = (): OverlayDom => {
@@ -205,7 +203,7 @@ export function bindSystemOverlay({handle, said, store}: {handle: AtlasHandle; s
     void acts.open(satellite, body).catch(error => said?.(error instanceof Error ? error.message : String(error)))
   }
 
-  const draw = (canvas: HTMLCanvasElement, record: WorldBodyRecord | null, look: WorldLook, occasion: number | null) => {
+  const draw = (canvas: HTMLCanvasElement, record: WorldBodyRecord | null, look: BodyLook, occasion: number | null) => {
     const context = canvas.getContext('2d')
     if (!context) return
     context.clearRect(0, 0, canvas.width, canvas.height)
@@ -220,7 +218,7 @@ export function bindSystemOverlay({handle, said, store}: {handle: AtlasHandle; s
     if (!bodies.length && !dom) return
     const {root, svg, yours, yourRings} = ensureDom()
     // the weather the discs are drawn at: the shared occasion, in steps (bodyDraw.ts OCCASION_STEP_MS), Now being none
-    const occasion = occasionStep(occasionMs(store?.get()?.time_window))
+    const occasion = occasionStep(shownOccasion())
     const own = bodies.find(body => body.yours)
     setRings(yours, yourRings, own ? own.key : null, own, open)
     if (own) yours.root.style.setProperty('--core-rgb', rgbOf(own.colour.core))
@@ -251,7 +249,7 @@ export function bindSystemOverlay({handle, said, store}: {handle: AtlasHandle; s
     })
   }
   const offSystem = subscribeSystem(() => { sync(); syncPlaces() })
-  const offOccasion = store?.subscribe(sync)
+  const offOccasion = subscribeOccasion(sync)
   sync()
   syncPlaces()
 
@@ -312,7 +310,7 @@ export function bindSystemOverlay({handle, said, store}: {handle: AtlasHandle; s
       if (!live) return
       live = false
       offSystem()
-      offOccasion?.()
+      offOccasion()
       offBody()
       offStanding()
       for (const mark of marks) mark.orbits.destroy()
