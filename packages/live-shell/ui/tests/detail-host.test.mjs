@@ -126,7 +126,10 @@ test('the status bar reads Clip | Device in every mode; what each side holds in 
   for (const [mode, [clip, device]] of Object.entries(expected)) {
     const out = renderToStaticMarkup(createElement(StatusBar, {state, documentError: null, viewport: [1440, 900], audio: mode === 'live', mode, reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
     const nav = out.match(/<nav class="status-detail-views"[^>]*>(.*?)<\/nav>/)[1]
-    assert.match(nav, new RegExp(`aria-label="Clip view" data-detail-side="clip" data-i="Clip view\\|${clip}: [^"]*"[^>]*>.*?<span>Clip</span>`), `${mode}: Clip, holding the ${clip}`)
-    assert.match(nav, new RegExp(`aria-label="Device view" data-detail-side="device" data-i="Device view\\|${device}: [^"]*"[^>]*>.*?<span>Device</span>`), `${mode}: Device, holding the ${device}`)
+    assert.match(nav, new RegExp(`aria-label="Clip view" data-detail-side="clip"[^>]*data-i="Clip view\\|${clip}: [^"]*"[^>]*>.*?<span>Clip</span>`), `${mode}: Clip, holding the ${clip}`)
+    assert.match(nav, new RegExp(`aria-label="Device view" data-detail-side="device"[^>]*data-i="Device view\\|${device}: [^"]*"[^>]*>.*?<span>Device</span>`), `${mode}: Device, holding the ${device}`)
+    // Live's triangles beside its selectors (manual §10.1): ▲ shows or hides each view.
+    assert.match(nav, /data-detail-toggle="clip"[^>]*>▲<\/button>/, `${mode}: ▲ beside Clip`)
+    assert.match(nav, /data-detail-toggle="device"[^>]*>▲<\/button>/, `${mode}: ▲ beside Device`)
   }
 })

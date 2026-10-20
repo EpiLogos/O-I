@@ -42,7 +42,7 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
 const rows = await import('../src/frame/encounter/encounterRows.ts')
-const {EncounterFace} = await import('../src/frame/encounter/EncounterBar.tsx')
+const {TransportTitle} = await import('../src/components/TransportBar.tsx')
 const pool = await import('../src/continuity/workspacePool.ts')
 const store = await import('../../../../desktop/cradle/src/workspace/store.ts')
 const areas = await import('../src/shell/workspaceAreas.ts')
@@ -185,12 +185,10 @@ test('Back and Forward walk the trail from the bar\'s place on it', () => {
   assert.deepEqual(rows.trailSteps(3, 1), {back: 0, forward: 2})
 })
 
-test('the bar draws field › world › subject › occasion, with Back and Forward standing or not', () => {
-  const list = rows.contextRows({pane: null, context: {world: 'central', selection: {mode: 'base', kind: 'day', ref: 'd', title: 'Today'}}, config: CONFIG, spine: null})
-  const html = renderToStaticMarkup(h(EncounterFace, {rows: list, back: {label: 'Earth', go: noop}, forward: null}))
-  for (const key of ['field', 'world', 'subject', 'occasion']) assert.match(html, new RegExp(`data-context="${key}"`))
-  assert.match(html, /<b>Today<\/b>/); assert.match(html, /aria-label="Back"[^>]*data-i="Back\|Return to Earth/)
-  assert.match(html, /aria-label="Forward" disabled=""/)
+test('the bar above the panes is gone (manual §10.1): Back and Forward stand at the head of the title line, waiting while the trail is empty', async () => {
+  await assert.rejects(source('frame/encounter/EncounterBar.tsx'), {code: 'ENOENT'}, 'the encounter bar is retired')
+  const html = renderToStaticMarkup(h(TransportTitle, {line: 'selection', workName: 'Today'}))
+  assert.match(html, /<span class="title-trail"><button type="button" aria-label="Back" disabled=""[^>]*>‹<\/button><button type="button" aria-label="Forward" disabled=""/)
 })
 
 // ── the frame ─────────────────────────────────────────────────────────────
@@ -219,7 +217,8 @@ test('the pool holds the workspaces and nothing else; Whole stands only as the b
   assert.match(design, /export type Frame = 'chain' \| 'flip' \| 'pane' \| 'window' \| 'rail'/)
   const app = await source('App.tsx')
   assert.doesNotMatch(app, /OPEN_DEVICE_EVENT|useSelectedDeviceId|poolDevice/, 'choosing a device never opens the browser or fills the pool')
-  assert.match(app, /<main className="center"><EncounterBar \/>/)
+  assert.match(app, /<main className="center" data-main-view=\{mainView\}><div className=/, 'the main area holds its view, with nothing above it')
+  assert.doesNotMatch(app, /EncounterBar/)
   for (const gone of ['frame/devices/DevicePool.tsx', 'agent/AgentDevicePool.tsx', 'frame/browser/apertureViews.tsx', 'shell/SetsSection.tsx'])
     await assert.rejects(source(gone), {code: 'ENOENT'}, `${gone} is retired`)
   for (const file of ['agent/AgentShellBrowser.tsx', 'components/WorldBrowser.tsx', 'shell/ModeBrowser.tsx', 'shell/modeBrowsers.tsx', 'components/BrowserPane.tsx'])

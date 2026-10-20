@@ -126,7 +126,7 @@ test('the one Session and one Arrangement are the tracks pane\'s: the Factory tr
   const centre = await read('agent/factoryCentre.ts')
   assert.match(centre, /FACTORY_TRACKS_KIND = 'projection\.timeline'/, 'the Session pane is the one tracks pane kind')
   const frames = await read('shell/modeFrames.ts')
-  assert.match(frames, /factory: seedFactoryCentre,/, 'the Factory seed is the mode table\'s')
+  assert.match(frames, /factory: seedWithoutTracksPane\(seedFactoryCentre\),/, 'the Factory seed is the mode table\'s; the tracks are Session view, never a pane')
   // Ticket K: the World cut modes' registrations are wrapped by `worldCut` (useWorldCut.ts), which adds the spine's readings.
   assert.match(await read('frame/tracks/modeTracks.ts'), /factory: worldCut\(useFactoryTracks\)/, 'Factory\'s tracks are its registration of the one pane')
   const tracksHook = await read('frame/tracks/useFactoryTracks.ts')

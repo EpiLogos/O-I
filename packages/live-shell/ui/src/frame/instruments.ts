@@ -3,6 +3,7 @@
 // Timeline, Journey and Palace — PORT-AUDIT M8 routes them). A table, never a branch: a new instrument docks by
 // registering its module and naming itself here. A pane kind that is not named is not an instrument and is not listed — the
 // full-size device pane (`projection.device`) holds a device the rack already shows, and opens from that device, not from here.
+// The set's tracks are not an instrument either: they are Session view and Arrangement view (manual §10.2), never a pane.
 import {admittedProjectionKinds} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import type {IconName} from '../inhabitants/sdk/icons'
 import type {HostedLens} from '../shell/paneInstrument'
@@ -22,7 +23,6 @@ export interface InstrumentEntry {
 }
 
 const NAMED: Readonly<Record<string, Omit<InstrumentEntry, 'kind'>>> = {
-  'projection.timeline': {label: 'Session · Arrangement', mark: 'session', note: 'The tracks of this work as a grid of clips, or along one ruler (Tab moves between them)'},
   'projection.expressions': {label: 'Expressions stage', mark: 'expr', note: 'The living field: the open Expression, its scenes and their sound'},
   'projection.earth': {label: 'Earth', mark: 'earth', note: 'Your world on the Earth, under its sky, in the field of worlds'},
   'projection.constellation': {label: 'Graph', mark: 'orbit', note: 'The same material laid out by connection, coloured by what each thing is',
