@@ -2,14 +2,15 @@
 // (globe/bodyWorker.ts), else on the main thread, with the same pure functions (globe/body.ts bodyImage, cloudImage), so the same record
 // gives the same bytes either way. A worker that cannot start, or fails, is not tried again this session: its jobs and every later one
 // run on the main thread, and nothing is dropped. Nothing here is random and nothing is kept but the one worker.
-import { bodyImage, cloudImage, type BodyImage, type WorldBodyRecord } from './body';
+import { bodyImage, cloudImage, type BodyImage, type BodyLook, type WorldBodyRecord } from './body';
 
-/** A job for the worker: the owner's record and the widths to draw it at. */
+/** A job for the worker: the owner's record, the widths to draw it at, and how it is drawn (the look). */
 export interface BodyJob {
   readonly id: number;
   readonly record: WorldBodyRecord;
   readonly width: number;
   readonly cloudWidth: number;
+  readonly look?: BodyLook;
 }
 export type BodyJobAnswer = { readonly id: number; readonly image: BodyImage; readonly clouds: BodyImage } | { readonly id: number; readonly refused: string };
 
@@ -27,8 +28,8 @@ let workerUsable = typeof Worker !== 'undefined';
 let nextId = 1;
 const pending = new Map<number, Pending>();
 
-const onMain = (job: Pick<BodyJob, 'record' | 'width' | 'cloudWidth'>): BodyPictures =>
-  ({ image: bodyImage(job.record, job.width), clouds: cloudImage(job.record, job.cloudWidth) });
+const onMain = (job: Pick<BodyJob, 'record' | 'width' | 'cloudWidth' | 'look'>): BodyPictures =>
+  ({ image: bodyImage(job.record, job.width, job.look), clouds: cloudImage(job.record, job.cloudWidth, job.look) });
 
 /** The worker failed: every job it holds is drawn on the main thread instead, and no worker is started again. */
 function fallBack(): void {
@@ -60,9 +61,9 @@ function startWorker(): Worker | null {
   return worker;
 }
 
-/** The body's pictures at `width` (its clouds at `cloudWidth`), made off the main thread where it can be. */
-export function renderBody(record: WorldBodyRecord, width: number, cloudWidth = Math.max(8, Math.floor(width / 2))): Promise<BodyPictures> {
-  const job: BodyJob = { id: nextId++, record, width, cloudWidth };
+/** The body's pictures at `width` (its clouds at `cloudWidth`), as `look` draws it, made off the main thread where it can be. */
+export function renderBody(record: WorldBodyRecord, width: number, cloudWidth = Math.max(8, Math.floor(width / 2)), look?: BodyLook): Promise<BodyPictures> {
+  const job: BodyJob = { id: nextId++, record, width, cloudWidth, look };
   const thread = startWorker();
   if (!thread) {
     try { return Promise.resolve(onMain(job)); } catch (error) { return Promise.reject(error); }
