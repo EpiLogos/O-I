@@ -1,0 +1,509 @@
+{
+ "agent-session/o-i-chat-1791392815-b898": {
+  "proj": "O-I",
+  "data": {
+   "actions": [
+    {
+     "enabled": false,
+     "reason": "A current resident/startup or unresolved native cleanup prevents another open",
+     "ref": "aikit.encounter.open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact retained generation, explicit native cleanup confirmation and evidence are required; attestation does not claim provider success",
+     "ref": "aikit.encounter.reconcile-native-open"
+    },
+    {
+     "enabled": true,
+     "reason": "Exact native session and connection generation, idle lane and no pending delivery are required; release is not a Return",
+     "ref": "aikit.encounter.release-native"
+    },
+    {
+     "enabled": false,
+     "reason": "Explicit owner-observed released predecessor and current model/Agency/Task admission are required",
+     "ref": "aikit.encounter.replace-model"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.draft"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.context"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.prompt"
+    },
+    {
+     "enabled": false,
+     "reason": "There is no active provider turn",
+     "ref": "aikit.encounter.cancel"
+    },
+    {
+     "enabled": false,
+     "reason": "Only an actual pending provider consent request can be answered; this does not confer Actuation authority",
+     "ref": "aikit.encounter.permission"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.model-read"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.mode-read"
+    }
+   ],
+   "agent_session": "agent-session/o-i-chat-1791392815-b898",
+   "blocks": [
+    {
+     "id": 939,
+     "kind": "user",
+     "text": "In two sentences: which passage am I reading and what is open beside it, according to the context you were given? End with DONE_FIELD_PI."
+    },
+    {
+     "id": 940,
+     "kind": "error",
+     "text": "{\"Failed\":{\"reason\":\"429: {\\\"code\\\":\\\"1310\\\",\\\"message\\\":\\\"Weekly/Monthly Limit Exhausted. Your limit will reset at 2026-10-12 16:34:14\\\"}\"}}"
+    }
+   ],
+   "connection": {
+    "connection_generation": "01M4BNAHQSPT3SZ6NDVH0RAFR8",
+    "error": null,
+    "native_session_id": "01a11755-5952-7085-94df-12a3ce242014",
+    "provider": {
+     "body_ref": null,
+     "body_revision": null,
+     "command": "pi",
+     "entry": null,
+     "id": "pi",
+     "label": "Pi",
+     "protocol": "pi-rpc",
+     "sandboxed": false
+    },
+    "resident": true,
+    "state": "Resident"
+   },
+   "draft": {
+    "revision": 2,
+    "text": ""
+   },
+   "more": false,
+   "permission_authority": "native-provider-consent",
+   "permissions": [],
+   "schema": "aikit.encounter-view/v1"
+  }
+ },
+ "agent-session/o-i-chat-1790087010-4a70": {
+  "proj": "O-I",
+  "data": {
+   "actions": [
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact retained generation, explicit native cleanup confirmation and evidence are required; attestation does not claim provider success",
+     "ref": "aikit.encounter.reconcile-native-open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact native session and connection generation, idle lane and no pending delivery are required; release is not a Return",
+     "ref": "aikit.encounter.release-native"
+    },
+    {
+     "enabled": false,
+     "reason": "Explicit owner-observed released predecessor and current model/Agency/Task admission are required",
+     "ref": "aikit.encounter.replace-model"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.draft"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.context"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.prompt"
+    },
+    {
+     "enabled": false,
+     "reason": "There is no active provider turn",
+     "ref": "aikit.encounter.cancel"
+    },
+    {
+     "enabled": false,
+     "reason": "Only an actual pending provider consent request can be answered; this does not confer Actuation authority",
+     "ref": "aikit.encounter.permission"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.model-read"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.mode-read"
+    }
+   ],
+   "agent_session": "agent-session/o-i-chat-1790087010-4a70",
+   "blocks": [
+    {
+     "id": 125,
+     "kind": "user",
+     "text": "yo"
+    },
+    {
+     "id": 126,
+     "kind": "assistant",
+     "text": "Yo. I'm here, standing in O-I.\n\nWhat's up \u2014 orientation, a task, or just checking I'm live?"
+    },
+    {
+     "id": 127,
+     "kind": "completed",
+     "text": ""
+    }
+   ],
+   "connection": {
+    "error": null,
+    "resident": false,
+    "state": "Disconnected"
+   },
+   "draft": {
+    "revision": 2,
+    "text": ""
+   },
+   "more": false,
+   "permission_authority": "native-provider-consent",
+   "permissions": [],
+   "schema": "aikit.encounter-view/v1"
+  }
+ },
+ "agent-session/fx-anima-20260926-201904": {
+  "proj": "O-I",
+  "data": {
+   "actions": [
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact retained generation, explicit native cleanup confirmation and evidence are required; attestation does not claim provider success",
+     "ref": "aikit.encounter.reconcile-native-open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact native session and connection generation, idle lane and no pending delivery are required; release is not a Return",
+     "ref": "aikit.encounter.release-native"
+    },
+    {
+     "enabled": false,
+     "reason": "Explicit owner-observed released predecessor and current model/Agency/Task admission are required",
+     "ref": "aikit.encounter.replace-model"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.draft"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.context"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.prompt"
+    },
+    {
+     "enabled": false,
+     "reason": "There is no active provider turn",
+     "ref": "aikit.encounter.cancel"
+    },
+    {
+     "enabled": false,
+     "reason": "Only an actual pending provider consent request can be answered; this does not confer Actuation authority",
+     "ref": "aikit.encounter.permission"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.model-read"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.mode-read"
+    }
+   ],
+   "agent_session": "agent-session/fx-anima-20260926-201904",
+   "blocks": [
+    {
+     "id": 691,
+     "kind": "tool",
+     "text": "{\"args\":{\"command\":\"oi desktop expression '{\\\"schema\\\":\\\"oi.expression-world/v1\\\",\\\"operation\\\":\\\"act_inspect\\\",\\\"act_ref\\\":\\\"act:explain-run-01M3FNY3\\\"}' | python3 -c \\\"import json,sys; d=json.load(sys.stdin); a=d['outcome']['data']['act']; print('revision',a['revision'],'phase',a['phase'],'position',a['position']); [print(p['index'],p['kind'],p['file_ref'].split(':')[-1],'@',p['revision'],'|',p["
+    },
+    {
+     "id": 692,
+     "kind": "tool",
+     "text": "{\"args\":{\"command\":\"oi desktop expression '{\\\"schema\\\":\\\"oi.expression-world/v1\\\",\\\"operation\\\":\\\"act_inspect\\\",\\\"act_ref\\\":\\\"act:explain-run-01M3FNY3\\\"}' | python3 -c \\\"import json,sys; d=json.load(sys.stdin); a=d['outcome']['data']['act']; print('revision',a['revision'],'phase',a['phase'],'position',a['position']); [print(p['index'],p['kind'],p['file_ref'].split(':')[-1],'@',p['revision'],'|',p["
+    },
+    {
+     "id": 693,
+     "kind": "tool",
+     "text": "{\"args\":{\"command\":\"oi desktop expression '{\\\"schema\\\":\\\"oi.expression-world/v1\\\",\\\"operation\\\":\\\"act_inspect\\\",\\\"act_ref\\\":\\\"act:explain-run-01M3FNY3\\\"}' | python3 -c \\\"import json,sys; d=json.load(sys.stdin); a=d['outcome']['data']['act']; print('revision',a['revision'],'phase',a['phase'],'position',a['position']); [print(p['index'],p['kind'],p['file_ref'].split(':')[-1],'@',p['revision'],'|',p["
+    },
+    {
+     "id": 694,
+     "kind": "assistant",
+     "text": "Passage 2 confirmed at act revision 4 \u2014 no material was created, forked, edited or saved this turn.\n\n```text\nEXPRESSIVE-COMPOSITION: act:explain-run-01M3FNY3 (expressions)\nTarget: expression:explain-run-01M3FNY3  Cast: lead=agent:anima, participant=agent:aletheia  Subject: run:01M3FNY3P0E4H7JGN0BARSRQ8R (instrument: same run)\nChosen: central:path:/Users/admin/Central:Work/O-I/desktop/cradle/materi"
+    },
+    {
+     "id": 695,
+     "kind": "completed",
+     "text": ""
+    }
+   ],
+   "connection": {
+    "error": null,
+    "resident": false,
+    "state": "Disconnected"
+   },
+   "draft": {
+    "revision": 6,
+    "text": ""
+   },
+   "more": true,
+   "permission_authority": "native-provider-consent",
+   "permissions": [],
+   "schema": "aikit.encounter-view/v1"
+  }
+ },
+ "agent-session/factory-acp-chat": {
+  "proj": "Factory",
+  "data": {
+   "actions": [
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact retained generation, explicit native cleanup confirmation and evidence are required; attestation does not claim provider success",
+     "ref": "aikit.encounter.reconcile-native-open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact native session and connection generation, idle lane and no pending delivery are required; release is not a Return",
+     "ref": "aikit.encounter.release-native"
+    },
+    {
+     "enabled": false,
+     "reason": "Explicit owner-observed released predecessor and current model/Agency/Task admission are required",
+     "ref": "aikit.encounter.replace-model"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.draft"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.context"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.prompt"
+    },
+    {
+     "enabled": false,
+     "reason": "There is no active provider turn",
+     "ref": "aikit.encounter.cancel"
+    },
+    {
+     "enabled": false,
+     "reason": "Only an actual pending provider consent request can be answered; this does not confer Actuation authority",
+     "ref": "aikit.encounter.permission"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.model-read"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.mode-read"
+    }
+   ],
+   "agent_session": "agent-session/factory-acp-chat",
+   "blocks": [
+    {
+     "id": 104,
+     "kind": "tool",
+     "text": "{\"args\":{\"command\":\"cd /Users/admin/Central/Work/Factory && git log --oneline -5 2>/dev/null; echo \\\"---branch---\\\"; git branch --show-current 2>/dev/null; git status --short 2>/dev/null | head -20\"},\"partialResult\":{\"content\":[{\"text\":\"fbabaaa feat(telemetry): watch, compare, analysis templates and effective settings \u2014 the remainders closed\\n\",\"type\":\"text\"}],\"details\":{}},\"toolCallId\":\"call_01_m"
+    },
+    {
+     "id": 105,
+     "kind": "tool",
+     "text": "{\"args\":{\"command\":\"ls -la /Users/admin/Central/Work/Factory/ 2>/dev/null; echo \\\"---\\\"; find /Users/admin/Central/Work/Factory -maxdepth 2 -iname \\\"*acp*\\\" -o -maxdepth 2 -iname \\\"*chat*\\\" 2>/dev/null | head -50\"},\"partialResult\":{\"content\":[{\"text\":\"total 128\\ndrwxr-xr-x@ 30 admin  staff    960 Sep 18 14:35 .\\ndrwxr-xr-x  17 admin  staff    544 Sep 18 02:04 ..\\n-rw-r--r--@  1 admin  staff   6148"
+    },
+    {
+     "id": 106,
+     "kind": "tool",
+     "text": "{\"args\":{\"command\":\"ls -la /Users/admin/Central/Work/Factory/ 2>/dev/null; echo \\\"---\\\"; find /Users/admin/Central/Work/Factory -maxdepth 2 -iname \\\"*acp*\\\" -o -maxdepth 2 -iname \\\"*chat*\\\" 2>/dev/null | head -50\"},\"partialResult\":{\"content\":[{\"text\":\"total 128\\ndrwxr-xr-x@ 30 admin  staff    960 Sep 18 14:35 .\\ndrwxr-xr-x  17 admin  staff    544 Sep 18 02:04 ..\\n-rw-r--r--@  1 admin  staff   6148"
+    },
+    {
+     "id": 107,
+     "kind": "tool",
+     "text": "{\"args\":{\"command\":\"cd /Users/admin/Central/Work/Factory && git log --oneline -5 2>/dev/null; echo \\\"---branch---\\\"; git branch --show-current 2>/dev/null; git status --short 2>/dev/null | head -20\"},\"partialResult\":{\"content\":[{\"text\":\"fbabaaa feat(telemetry): watch, compare, analysis templates and effective settings \u2014 the remainders closed\\n12ad886 factory telemetry command family over the real "
+    },
+    {
+     "id": 108,
+     "kind": "assistant",
+     "text": "Factory ACP chat is live."
+    },
+    {
+     "id": 109,
+     "kind": "completed",
+     "text": ""
+    }
+   ],
+   "connection": {
+    "error": null,
+    "resident": false,
+    "state": "Disconnected"
+   },
+   "draft": {
+    "revision": 2,
+    "text": ""
+   },
+   "more": true,
+   "permission_authority": "native-provider-consent",
+   "permissions": [],
+   "schema": "aikit.encounter-view/v1"
+  }
+ },
+ "agent-session/development-entry-factory-guardian-20261008": {
+  "proj": "O-I",
+  "data": {
+   "actions": [
+    {
+     "enabled": false,
+     "reason": "A current resident/startup or unresolved native cleanup prevents another open",
+     "ref": "aikit.encounter.open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact retained generation, explicit native cleanup confirmation and evidence are required; attestation does not claim provider success",
+     "ref": "aikit.encounter.reconcile-native-open"
+    },
+    {
+     "enabled": false,
+     "reason": "Exact native session and connection generation, idle lane and no pending delivery are required; release is not a Return",
+     "ref": "aikit.encounter.release-native"
+    },
+    {
+     "enabled": true,
+     "reason": "Explicit owner-observed released predecessor and current model/Agency/Task admission are required",
+     "ref": "aikit.encounter.replace-model"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.draft"
+    },
+    {
+     "enabled": true,
+     "reason": null,
+     "ref": "aikit.encounter.context"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.prompt"
+    },
+    {
+     "enabled": false,
+     "reason": "There is no active provider turn",
+     "ref": "aikit.encounter.cancel"
+    },
+    {
+     "enabled": false,
+     "reason": "Only an actual pending provider consent request can be answered; this does not confer Actuation authority",
+     "ref": "aikit.encounter.permission"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.model-read"
+    },
+    {
+     "enabled": false,
+     "reason": "A ready resident provider is required",
+     "ref": "aikit.encounter.mode-read"
+    }
+   ],
+   "agent_session": "agent-session/development-entry-factory-guardian-20261008",
+   "blocks": [],
+   "connection": {
+    "connection_generation": "01M4D7ZDN10A50Y6QY5YD9T38X",
+    "error": null,
+    "native_release": {
+     "receipt": {
+      "agent_session": "agent-session/development-entry-factory-guardian-20261008",
+      "cleanup_confirmed": true,
+      "cleanup_error": null,
+      "connection_generation": "01M4D7ZDN10A50Y6QY5YD9T38X",
+      "inference_observed": false,
+      "kind": "native-release-completed",
+      "native_resume": false,
+      "native_session_id": "01a11a7f-f389-776f-b354-9088b11d2c15",
+      "observed_at_ms": 1791452343509,
+      "process_status": "signal: 9 (SIGKILL)",
+      "request_cursor": 36297,
+      "turn_replayed": false
+     },
+     "request_cursor": 36297,
+     "state": "Released",
+     "terminal_cursor": 36298
+    },
+    "native_session_id": "01a11a7f-f389-776f-b354-9088b11d2c15",
+    "released_predecessor": {
+     "expected_generation": "01M4D7ZDN10A50Y6QY5YD9T38X",
+     "expected_native_session_id": "01a11a7f-f389-776f-b354-9088b11d2c15",
+     "release_cursor": 36298
+    },
+    "resident": false,
+    "state": "Released"
+   },
+   "draft": {
+    "revision": 0,
+    "text": ""
+   },
+   "more": false,
+   "permission_authority": "native-provider-consent",
+   "permissions": [],
+   "schema": "aikit.encounter-view/v1"
+  }
+ }
+}

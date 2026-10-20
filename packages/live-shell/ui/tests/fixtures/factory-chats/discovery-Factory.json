@@ -1,0 +1,162 @@
+[
+ {
+  "version": "aikit.session-space-application/v1",
+  "revision": 3,
+  "definition": {
+   "version": "aikit.session-space/v1",
+   "id": "session-space/development-entry-factory-guardian-20261008",
+   "projects": [
+    "Factory",
+    "O-I"
+   ],
+   "provenance": [
+    "AIKit SessionSpace definition"
+   ]
+  },
+  "label": "Factory280 ordinary protected producer Pi",
+  "project_contexts": {
+   "Factory": {
+    "reference": "context-resolution/7cdc98cc49208f6f",
+    "basis": {
+     "project_binding": {
+      "project": "Factory",
+      "constituent": "source:project:Factory:root",
+      "locator": {
+       "kind": "local-directory",
+       "path": "/Users/admin/Central/Work/Factory"
+      },
+      "provider": "provider/projectcentral/filesystem",
+      "source": "source:central:Factory:manifest",
+      "legacy_aikit_project_id": null,
+      "legacy_project_spec_id": null
+     },
+     "resolver_hash": "a758e48fd9e48796ea0737338e8bcbc5351a61a58dbb7cfd0b6e492ff266f2c6",
+     "catalog_revision": "9d1982ed404b867b7aac4239ffe0296b09a1d6924dcf777340dbe2ea5bcaa6cb",
+     "host": "host/localhost"
+    },
+    "provenance": [
+     "global:/Users/admin/.aikit/scopes/global/profile.toml",
+     "resolver:a758e48fd9e48796ea0737338e8bcbc5351a61a58dbb7cfd0b6e492ff266f2c6",
+     "catalog:9d1982ed404b867b7aac4239ffe0296b09a1d6924dcf777340dbe2ea5bcaa6cb"
+    ]
+   },
+   "O-I": {
+    "reference": "context-resolution/ea545e152a478135",
+    "basis": {
+     "project_binding": {
+      "project": "O-I",
+      "constituent": "source:project:O-I:root",
+      "locator": {
+       "kind": "local-directory",
+       "path": "/Users/admin/Central/Work/O-I"
+      },
+      "provider": "provider/projectcentral/filesystem",
+      "source": "source:central:O-I:manifest",
+      "legacy_aikit_project_id": null,
+      "legacy_project_spec_id": null
+     },
+     "resolver_hash": "2e8e0ba26ab40aba76bd1b46fdbf4a65f8b610fdf3c4bfb7e6d47643d2c65a26",
+     "catalog_revision": "9d1982ed404b867b7aac4239ffe0296b09a1d6924dcf777340dbe2ea5bcaa6cb",
+     "host": "host/localhost"
+    },
+    "provenance": [
+     "global:/Users/admin/.aikit/scopes/global/profile.toml",
+     "project:/Users/admin/Central/Work/O-I/.aikit/profile.toml",
+     "resolver:2e8e0ba26ab40aba76bd1b46fdbf4a65f8b610fdf3c4bfb7e6d47643d2c65a26",
+     "catalog:9d1982ed404b867b7aac4239ffe0296b09a1d6924dcf777340dbe2ea5bcaa6cb"
+    ]
+   }
+  },
+  "agent_sessions": {
+   "agent-session/development-entry-factory-guardian-20261008": {
+    "agent_session": "agent-session/development-entry-factory-guardian-20261008",
+    "purpose": "Commission-scoped Factory r3 producer; actual child Agency admission, Task/body/model not yet prepared",
+    "provenance": [
+     "central:source:control:root:Control/agents/now/flows/world-inhabitation-vertical-2026-09-24/agency-actualisation-request.json",
+     "central:source:control:root:Control/agents/agent-sets/agent-set-b76a9ca6e97e6022.json",
+     "https://github.com/EpiLogos/ai-kit/issues/497",
+     "https://github.com/EpiLogos/ai-kit/issues/498",
+     "https://github.com/EpiLogos/Factory/issues/280",
+     "https://github.com/EpiLogos/O-I/issues/220",
+     "central:source:control:root:Control/agents/now/flows/development-entry-2026-09-30/tmp/b-root-agency-request-20261007.json",
+     "central:source:control:root:Control/agents/profiles/profile-cf2d2255e74c3265.json",
+     "central:source:control:root:Control/agents/agent-sets/agent-set-1561df4e0ea22f08.json",
+     "workflow-source:01M4BVF2T3B8C36X61V45KTH6J@factory-280-20261007-r3",
+     "git-commit:7a0aa625c504afef96677688b1b4ec851a6faba5",
+     "git-tree:27714f2e0a67130c154c09b277eda4435aaa4da6",
+     "commission:factory-280-joined-20261007",
+     "run:01M4BWD5N64KJ72HZTCWG3P4VX",
+     "workflow-source:01M4BVF2T3B8C36X61V45KTH6J",
+     "central:now:control:root:06cca2f04e1a408f451f36263de0d3c1dda2aa8547a27d3ed163c222bc711dea",
+     "request:development-entry-root-team-20261007:receipt",
+     "agency:development-entry-root-team-20261007",
+     "agent-session/development-entry-root-pi-20261008",
+     "session-space/development-entry-root-pi-20261008",
+     "journey:01M4BJTFM8EXW7F2EHGARR5YRX",
+     "workflow-unit:0Y3BDGGHCRMYB7PAPX1X8K4KGQ",
+     "task:factory-280-implement-candidate-20261008",
+     "return:factory-280-joined",
+     "request:development-entry-factory-guardian-20261008:receipt",
+     "central:source:control:root:Control/agents/now/flows/development-entry-2026-09-30/tmp/b-factory-child-agency-request-20261008.json@blake3:83722b1ca983a40bc5210e9f20e8f89e6bb247c2ad68c4bfd46966c361a659f9"
+    ]
+   }
+  },
+  "surfaces": {},
+  "working_surfaces": {},
+  "native_references": {}
+ },
+ {
+  "version": "aikit.session-space-application/v1",
+  "revision": 2,
+  "definition": {
+   "version": "aikit.session-space/v1",
+   "id": "session-space/factory-acp-chat",
+   "projects": [
+    "Factory"
+   ],
+   "provenance": [
+    "AIKit SessionSpace definition"
+   ]
+  },
+  "label": "Factory ACP chat (owner-commissioned live proof)",
+  "project_contexts": {
+   "Factory": {
+    "reference": "context-resolution/1fe9a0cc5376275b",
+    "basis": {
+     "project_binding": {
+      "project": "Factory",
+      "constituent": "source:project:Factory:root",
+      "locator": {
+       "kind": "local-directory",
+       "path": "/Users/admin/Central/Work/Factory"
+      },
+      "provider": "provider/projectcentral/filesystem",
+      "source": "source:central:Factory:manifest",
+      "legacy_aikit_project_id": null,
+      "legacy_project_spec_id": null
+     },
+     "resolver_hash": "46849e29e30cea46ed1848876e79e5ada0f8c0d8257a6be2c4c4bd11d877d0d7",
+     "catalog_revision": "11fdc4146fc8a2f6faebbb50c4a87f9213bbe90ce71d6d9e1d8af33cf42e4aba",
+     "host": "host/localhost"
+    },
+    "provenance": [
+     "global:/Users/admin/.aikit/scopes/global/profile.toml",
+     "resolver:46849e29e30cea46ed1848876e79e5ada0f8c0d8257a6be2c4c4bd11d877d0d7",
+     "catalog:11fdc4146fc8a2f6faebbb50c4a87f9213bbe90ce71d6d9e1d8af33cf42e4aba"
+    ]
+   }
+  },
+  "agent_sessions": {
+   "agent-session/factory-acp-chat": {
+    "agent_session": "agent-session/factory-acp-chat",
+    "purpose": "Owner-commissioned live ACP chat proof",
+    "provenance": [
+     "owner-commissioned 2026-09-20"
+    ]
+   }
+  },
+  "surfaces": {},
+  "working_surfaces": {},
+  "native_references": {}
+ }
+]

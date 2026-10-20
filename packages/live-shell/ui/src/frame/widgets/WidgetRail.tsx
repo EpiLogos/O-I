@@ -6,14 +6,20 @@
 // `.launch`/`.lh`/`.lgrid`/`.lcell`/`.pv` 379–387): the open widgets as tiles under one head, each tile's head its mark, its
 // name, the count its owner disclosed and the pin and close marks; below, the launcher's two columns of cells, each a live
 // miniature of what the open widget read (its glance) or, with no reading standing, the widget's designed mark.
-import {useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent} from 'react'
+import {useCallback, useEffect, useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent} from 'react'
 import type {ReactNode} from 'react'
 import {Icon} from '../../inhabitants/sdk/Icon'
 import {publishRail} from '../devices/deviceDoor'
 import {claimedWidget, deviceWidgets} from './deviceWidgets'
 import {sameGlance, type WidgetDeclaration, type WidgetGlance, type WidgetRailBook} from './widgets'
 
-export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly WidgetDeclaration[]; book: WidgetRailBook; selectionRef: string | null}) {
+/** What a drop onto the rail needs, handed in by the shell (the rail knows no mode): the handlers, and the words the last drop answered with. */
+export interface RailDrop {
+  readonly dropProps: {onDragOver(event: DragEvent<HTMLElement>): void; onDrop(event: DragEvent<HTMLElement>): void}
+  readonly note: string | null
+}
+
+export function WidgetRail({widgets, book, selectionRef, drop}: {widgets: readonly WidgetDeclaration[]; book: WidgetRailBook; selectionRef: string | null; drop?: RailDrop}) {
   const [needle, setNeedle] = useState('')
   const [naming, setNaming] = useState<string | null>(null)
   const [glances, setGlances] = useState<Readonly<Record<string, WidgetGlance>>>({})
@@ -50,10 +56,11 @@ export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly Wid
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up)
   }
   const save = () => { if (naming?.trim()) book.savePreset(naming); setNaming(null) }
-  return <aside className="mode-dock widget-rail" aria-label="Widgets">
+  return <aside className="mode-dock widget-rail" aria-label="Widgets" {...drop?.dropProps}>
     <div className="mode-dock-wedge" onPointerDown={drag} role="separator" aria-orientation="vertical" aria-label="Widen the widget rail"
       title="Drag to widen the rail; widgets reflow." />
     <div className="mode-dock-tilesh"><span>Widgets</span><span className="mode-dock-count">{open.length} open</span></div>
+    {drop?.note && <p className="native-empty" role="status" data-rail-drop>{drop.note}</p>}
     <div className="mode-dock-tiles">
       {open.length === 0 && <div className="mode-dock-empty">Open a widget from the launcher below.</div>}
       {open.map(widget => {

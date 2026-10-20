@@ -28,6 +28,7 @@ import {registerDocumentLayoutWriter} from './central/documents/documentDoor'
 import {Browser} from './frame/browser/Browser'
 import {FrameKeys} from './frame/keys/FrameKeys'
 import {WidgetRail} from './frame/widgets/WidgetRail'
+import {useChatRailDrop} from './agent/factoryChatsRail'
 import type {WidgetRailBook} from './frame/widgets/widgets'
 import {worldWidgets, WidgetReadingProvider} from './shell/widgets'
 import {RailDevices} from './widgets/railDevices'
@@ -576,6 +577,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // The rail widens and narrows by its edge within its bounds and what the browser and the panes leave (shell/workspaceAreas.ts).
   const widgetBook: WidgetRailBook = {rail: continuity.current.widgets ?? {open: DEFAULT_WIDGETS}, toggle: id => continuity.toggleWidgetOpen(id, DEFAULT_WIDGETS),
     pin: continuity.pinWidgetAt, savePreset: name => continuity.saveWidgets(name, DEFAULT_WIDGETS), applyPreset: continuity.applyWidgets, widen: width => continuity.widenWidgets(clampRailWidth(width, viewport[0], browser ? shownBrowserWidth() : 0))}
+  // A chat dragged onto the rail reopens, and its agent's tile opens holding it (DLW §19.1; agent/factoryChatsRail.tsx).
+  const chatRailDrop = useChatRailDrop(widgetBook)
   // The one browser's row sources (shell/modeBrowsers.tsx) and what their bodies read.
   const browserSources = useMemo(() => browserSourcesOf(frameMode), [frameMode])
   const browserReading: BrowserReading = {mode: frameMode, ctx, defaultSet: config?.default_set ?? '', selectSubject: selectCentralSubject,
@@ -647,7 +650,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       modes; the agency surface keeps its own dock. */}
     {/* The one widget rail (F8): every widget of the world, one open set in the book, pins and presets. */}
     <div className="dock-residence" hidden={!dock}><WidgetReadingProvider value={{mode: frameMode, world: worldView, transport: workspace.transport, subject: centralSubject, panel: ctx}}>
-      <RailDevices /><WidgetRail widgets={worldWidgets()} book={widgetBook} selectionRef={worldSelection?.ref ?? null} /></WidgetReadingProvider></div>
+      <RailDevices /><WidgetRail widgets={worldWidgets()} book={widgetBook} selectionRef={worldSelection?.ref ?? null} drop={chatRailDrop} /></WidgetReadingProvider></div>
     {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(clampDetailHeight(shownDetailHeight() + (event.key === 'ArrowUp' ? RESIZE_STEP : -RESIZE_STEP), viewport[1]))} }} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); areaDrag.current = {at: event.clientY, size: shownDetailHeight()} }} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId) && areaDrag.current) resizeDetail(clampDetailHeight(draggedSize(areaDrag.current, event.clientY, -1), viewport[1])) }} onPointerUp={() => { areaDrag.current = null }} />}
     {/* The detail row (manual §3, §10.1; FOUNDATION F4): one host for every mode. The mode's clip editor and chain come from
       its registration (shell/modeDetails.tsx); a pane holding an instrument takes the Device side in every mode but Live. */}
