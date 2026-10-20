@@ -132,7 +132,7 @@ test('A3 the generator reads the record and writes nothing: a frozen record draw
   assert.equal(JSON.stringify(r), copy)
 })
 
-test('A4 `weatherShift` and `bodyTile` are pure too: the same inputs, the same output, whatever was asked in between', pending, async () => {
+test('A4 `weatherShift` and `bodyTile` are pure too: the same inputs, the same output, whatever was asked in between', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof body.weatherShift, 'function', 'body.ts exports weatherShift(record, latDeg, timeMs)')
   assert.equal(typeof tiles.bodyTile, 'function', 'bodyTiles.ts exports bodyTile(record, z, x, y, look?)')
@@ -192,7 +192,7 @@ test('B2 the generator is pure TypeScript: no DOM and no three.js, so it runs in
   }
 })
 
-test('B3 the generator is more than body.ts: the version 1 code and the tile field are modules it stands on, and the lot is scanned', pending, () => {
+test('B3 the generator is more than body.ts: the version 1 code and the tile field are modules it stands on, and the lot is scanned', () => {
   const names = [...generator().keys()].map(url => url.split('/globe/')[1])
   assert.ok(names.includes('bodyTiles.ts'), `bodyTiles.ts is part of the generator (found: ${names.join(', ')})`)
   assert.ok(names.length >= 3, `body.ts, the legacy version 1 module and bodyTiles.ts at least (found ${names.length}: ${names.join(', ')})`)
@@ -284,7 +284,7 @@ test('C5 the look goes through the worker: a barren body made there is the barre
   } finally { uninstallWorker() }
 })
 
-test('C6 a tile made in the worker is the tile made here (renderTile), and with no worker the main thread makes it', pending, async () => {
+test('C6 a tile made in the worker is the tile made here (renderTile), and with no worker the main thread makes it', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof tiles.bodyTile, 'function', 'bodyTiles.ts exports bodyTile')
   const record = BODIES.default, z = 5, x = 17, y = 11

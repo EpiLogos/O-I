@@ -374,7 +374,7 @@ test('R1 relief is shaded from the height: the picture’s fine shading follows 
   }
 })
 
-test('R2 a close tile is shaded by its own slope, not by its base’s: the same measure holds on a z7 tile of high relief', pending, async () => {
+test('R2 a close tile is shaded by its own slope, not by its base’s: the same measure holds on a z7 tile of high relief', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof tiles.bodyTile, 'function', 'bodyTiles.ts exports bodyTile(record, z, x, y, look?)')
   const record = make(SEEDS[0], {landmass: {relief: 1, continents: 1.2}}), z = 7, n = 2 ** z

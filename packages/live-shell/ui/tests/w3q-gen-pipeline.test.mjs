@@ -156,7 +156,7 @@ test('Q1 the globe is given the widths of the contract: first 256, then 2048 on 
   for (const [name, width] of Object.entries(body.BODY_WIDTHS)) assert.ok(Number.isInteger(Math.log2(width / TILE_PX)), `${name} (${width}) is ${TILE_PX} times a power of two`)
 })
 
-test('Q2 a tile is wanted only where it is denser than the base: level log2(base/256) + 1, the rule the Earth’s GIBS tiles follow', pending, async () => {
+test('Q2 a tile is wanted only where it is denser than the base: level log2(base/256) + 1, the rule the Earth’s GIBS tiles follow', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof tiles.tileLevelFor, 'function', 'bodyTiles.ts exports tileLevelFor(baseWidth)')
   // GIBS: the 8k base (8192 wide) asks tiles from level 6 and the 4k base from 5 (engine.ts upgradeBase: `which === '8k' ? 6 : 5`)
@@ -295,7 +295,7 @@ test('G1 the default tile source is GIBS and is unchanged: tiles are asked of th
   } finally { layer.release() }
 })
 
-test('G2 a tile source is the layer’s to set: a procedural source is asked for tiles and the network is not', pending, async () => {
+test('G2 a tile source is the layer’s to set: a procedural source is asked for tiles and the network is not', async () => {
   const layer = sourcedLayer()
   try {
     const source = fakeSource(2)
@@ -310,7 +310,7 @@ test('G2 a tile source is the layer’s to set: a procedural source is asked for
   } finally { layer.release() }
 })
 
-test('G3 tiles are asked only where denser than the base: nothing under `minEmit`, and at a distance whose tiles are no denser than the base, nothing at all', pending, async () => {
+test('G3 tiles are asked only where denser than the base: nothing under `minEmit`, and at a distance whose tiles are no denser than the base, nothing at all', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof tiles.tileLevelFor, 'function', 'bodyTiles.ts exports tileLevelFor(baseWidth)')
   const asked = async (dist, minEmit) => {
@@ -331,7 +331,7 @@ test('G3 tiles are asked only where denser than the base: nothing under `minEmit
   assert.deepEqual(await asked(3.3, tiles.tileLevelFor(4096)), [], 'from far away the base is as dense as the screen: no tile is asked')
 })
 
-test('G4 no flash: a tile fades in over its base and is never drawn whole at its first frame', pending, async () => {
+test('G4 no flash: a tile fades in over its base and is never drawn whole at its first frame', async () => {
   const layer = sourcedLayer(false) // motion not reduced: the fade is the layer's FADE_IN
   try {
     const source = fakeSource(2)
@@ -349,7 +349,7 @@ test('G4 no flash: a tile fades in over its base and is never drawn whole at its
   } finally { layer.release() }
 })
 
-test('G5 each tile is asked once while it is wanted: a tile that stands is not asked for again', pending, async () => {
+test('G5 each tile is asked once while it is wanted: a tile that stands is not asked for again', async () => {
   const layer = sourcedLayer(), source = fakeSource(2)
   try {
     layer.setSource(source); layer.minEmit = 4
@@ -360,7 +360,7 @@ test('G5 each tile is asked once while it is wanted: a tile that stands is not a
   } finally { layer.release() }
 })
 
-test('G6 a tile nobody wants any more is cancelled and its late answer is dropped: leaving a place leaves nothing of it', pending, async () => {
+test('G6 a tile nobody wants any more is cancelled and its late answer is dropped: leaving a place leaves nothing of it', async () => {
   const layer = sourcedLayer(), source = fakeSource(0, {hold: true, perCall: true})
   try {
     layer.setSource(source); layer.minEmit = 4
@@ -379,7 +379,7 @@ test('G6 a tile nobody wants any more is cancelled and its late answer is droppe
   } finally { layer.release() }
 })
 
-test('G7 the layer keeps a bounded number of tiles, the ones used last: a long sweep never holds more than the bound, and what is evicted is the oldest', pending, async () => {
+test('G7 the layer keeps a bounded number of tiles, the ones used last: a long sweep never holds more than the bound, and what is evicted is the oldest', async () => {
   const layer = sourcedLayer(), source = fakeSource(2)
   const bound = typeof layer.maxTiles === 'number' ? layer.maxTiles : +/const MAX_TILES = (\d+)/.exec(readFileSync(new URL('tiles.ts', globe), 'utf8'))?.[1]
   assert.ok(bound >= 64 && bound <= 512, `the layer names a bound on the tiles it keeps (MAX_TILES in tiles.ts, or layer.maxTiles): ${bound}; between 64 and 512 (a tile is 256 KB in memory and as much on the GPU)`)
@@ -405,7 +405,7 @@ test('G7 the layer keeps a bounded number of tiles, the ones used last: a long s
   } finally { layer.release() }
 })
 
-test('G8 a change of body drops the old body’s tiles: `setSource` frees every tile and aborts every ask of the source it replaces, and a late answer is not drawn', pending, async () => {
+test('G8 a change of body drops the old body’s tiles: `setSource` frees every tile and aborts every ask of the source it replaces, and a late answer is not drawn', async () => {
   const layer = sourcedLayer(), a = fakeSource(1), slow = fakeSource(3, {hold: true}), b = fakeSource(2)
   try {
     layer.setSource(a); layer.minEmit = 4
@@ -428,7 +428,7 @@ test('G8 a change of body drops the old body’s tiles: `setSource` frees every 
 
 // ── the globe's tiles ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('E1 a generated body keeps its tile layer: `earth.generated` no longer switches the close-zoom layer off', pending, async () => {
+test('E1 a generated body keeps its tile layer: `earth.generated` no longer switches the close-zoom layer off', async () => {
   const g = await openGlobe()
   try {
     g.engine.setBody(make(5))
@@ -438,7 +438,7 @@ test('E1 a generated body keeps its tile layer: `earth.generated` no longer swit
   } finally { g.close() }
 })
 
-test('E2 at the closest camera a generated body is given procedural tiles from the worker, and the network is never asked for one', pending, async () => {
+test('E2 at the closest camera a generated body is given procedural tiles from the worker, and the network is never asked for one', async () => {
   const g = await openGlobe({maxTextureSize: 4096})
   try {
     // a body with land under the camera, so tiles are wanted at once; the camera is put down at 1.02 radii over a point of it
@@ -455,7 +455,7 @@ test('E2 at the closest camera a generated body is given procedural tiles from t
   } finally { g.close() }
 })
 
-test('E3 the tile layer asks from the level the sharp base is less dense than: `minEmit` follows the base that stands', pending, async () => {
+test('E3 the tile layer asks from the level the sharp base is less dense than: `minEmit` follows the base that stands', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof tiles.tileLevelFor, 'function', 'bodyTiles.ts exports tileLevelFor(baseWidth)')
   assert.ok(body.BODY_WIDTHS, 'body.ts exports BODY_WIDTHS')

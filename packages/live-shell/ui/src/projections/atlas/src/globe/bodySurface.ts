@@ -34,7 +34,7 @@ export function surfaceOf(record: WorldBodyRecord, P: LandParams, barren = 0, ne
   const {warmth, moisture, ice_caps} = record.climate
   const capOn = smooth(0, .05, ice_caps)
   // the margin: 78° at a little ice, 38° at all of it, and 20° poleward for a world 1.0 warmer than the default, equatorward for a colder one
-  const capBase = 78 - 40 * ice_caps + 20 * (warmth - .58)
+  const capBase = 80 - 38 * ice_caps + 20 * (warmth - .58)
   return {t: P.t, warmShift: (warmth - .58) * 1.25, moistFactor: .3 + 1.5 * moisture, capBase, capOn, capFloor: capBase - 22, barren, net}
 }
 
@@ -80,7 +80,7 @@ export function landColour(S: Surface, x: number, y: number, z: number, L: numbe
   let bl = (a[2] * (1 - mf) + b[2] * mf) * (1 - tf) + (c[2] * (1 - mf) + d[2] * mf) * tf
   // the ground's own character varies from place to place (red earth here, pale there; a lighter, thinner green, a darker, denser one)
   const g1 = simplex3(t, x * 6.3 + 14.2, y * 6.3 - 3.9, z * 6.3 + 7.5), g2 = simplex3(t, x * 7.9 - 8.8, y * 7.9 + 12.1, z * 7.9 - 2.6), g3 = simplex3(t, x * 5.1 + 3.3, y * 5.1 + 9.9, z * 5.1 - 11.7)
-  r *= 1 + .2 * g1 + .1 * g2; g *= 1 + .14 * g2 - .04 * g1; bl *= 1 + .22 * g3 - .12 * g1
+  r *= 1 + .27 * g1 + .12 * g2; g *= 1 + .17 * g2 - .05 * g1; bl *= 1 + .28 * g3 - .14 * g1
   // bare rock on the high ground
   const rock = smooth(.38, .8, L) * .7
   r += (ROCK[0] - r) * rock; g += (ROCK[1] - g) * rock; bl += (ROCK[2] - bl) * rock
@@ -89,7 +89,7 @@ export function landColour(S: Surface, x: number, y: number, z: number, L: numbe
   for (let f = 290, amp = .04; f <= fmax && amp > .004; f *= 3.1, amp *= .7) mot += amp * simplex3(t, x * f + 1.3, y * f - 2.9, z * f + 5.1)
   r *= mot; g *= mot; bl *= mot
   // snow above the snow line
-  const snow = smooth(.14, .06, T) * (1 - S.barren)
+  const snow = smooth(.15, .04, T) * (1 - S.barren)
   WHITE[0] = snow
   if (snow > 0) { r += (SNOW[0] - r) * snow; g += (SNOW[1] - g) * snow; bl += (SNOW[2] - bl) * snow }
   col[0] = r; col[1] = g; col[2] = bl
@@ -102,8 +102,8 @@ export function seaColour(S: Surface, x: number, y: number, z: number, depth: nu
   const k1 = smooth(0, .24, depth), k2 = smooth(.16, .66, depth)
   let r = SHELF[0] + (MID[0] - SHELF[0]) * k1, g = SHELF[1] + (MID[1] - SHELF[1]) * k1, b = SHELF[2] + (MID[2] - SHELF[2]) * k1
   r += (DEEP[0] - r) * k2; g += (DEEP[1] - g) * k2; b += (DEEP[2] - b) * k2
-  let mot = 1 + .13 * simplex3(t, x * 13 + 5.5, y * 13 + 1.1, z * 13 - 2.2) 
-  for (let f = 130, amp = .035; f <= fmax && amp > .006; f *= 3.1, amp *= .7) mot += amp * simplex3(t, x * f - 4.7, y * f + 9.3, z * f + 2.2)
+  let mot = 1 + .15 * simplex3(t, x * 11 + 5.5, y * 11 + 1.1, z * 11 - 2.2) + .11 * simplex3(t, x * 3.7 - 1.9, y * 3.7 + 6.3, z * 3.7 + 2.4)
+  for (let f = 130, amp = .05; f <= fmax && amp > .004; f *= 2.1, amp *= .66) mot += amp * simplex3(t, x * f - 4.7, y * f + 9.3, z * f + 2.2)
   col[0] = r * mot; col[1] = g * mot; col[2] = b * mot
 }
 
@@ -113,14 +113,17 @@ export function iceOver(S: Surface, x: number, y: number, z: number, alat: numbe
   WHITE[1] = 0
   if (S.capOn <= 0 || alat < S.capFloor || S.barren >= 1) return 0
   const t = S.t
-  const edge = 95 - S.capOn * (95 - S.capBase) + 7.5 * simplex3(t, x * 2.1 - 12.4, y * 2.1 + 6.6, z * 2.1 + 3.7) + 3.2 * simplex3(t, x * 6.7 + 4.4, y * 6.7 - 9.1, z * 6.7 + 12.3)
+  const edge = 95 - S.capOn * (95 - S.capBase) + 7.5 * simplex3(t, x * 2.1 - 12.4, y * 2.1 + 6.6, z * 2.1 + 3.7) + 3.2 * simplex3(t, x * 6.7 + 4.4, y * 6.7 - 9.1, z * 6.7 + 12.3) + 1.1 * simplex3(t, x * 31 - 3.8, y * 31 + 7.4, z * 31 + 2.6)
   // sea ice breaks into floes toward its margin: a patchy edge on top of the ragged one
   const ragged = sea ? edge + 2.4 * simplex3(t, x * 19 + 7.2, y * 19 - 1.8, z * 19 + 9.4) : edge
   const k = smooth(ragged - .45, ragged + .45, alat) * (1 - S.barren)
   WHITE[1] = k
   if (k <= 0) return 0
   const ice = sea ? SEA_ICE : LAND_ICE
-  col[0] += (ice[0] - col[0]) * k; col[1] += (ice[1] - col[1]) * k; col[2] += (ice[2] - col[2]) * k
+  // ice is not one white: pressure ridges, crevasses and drifts, a little blue in the hollows
+  const tex = .5 * simplex3(t, x * 23 + 2.7, y * 23 - 8.1, z * 23 + 4.3) + .3 * simplex3(t, x * 71 - 6.6, y * 71 + 1.9, z * 71 - 3.2) + .2 * simplex3(t, x * 190 + 9.4, y * 190 - 5.5, z * 190 + 7.7)
+  const lift = 1 + .035 * tex
+  col[0] += (Math.min(1, ice[0] * lift * (1 + .02 * tex)) - col[0]) * k; col[1] += (Math.min(1, ice[1] * lift) - col[1]) * k; col[2] += (Math.min(1, ice[2] * lift * (1 - .015 * tex)) - col[2]) * k
   return k
 }
 

@@ -12,10 +12,11 @@ import { CameraRig } from './controls';
 import { Arcs, Marker } from './arcs';
 import { Aura, AtmosphereShell, Backdrop, Earth, bodyTexture, hiResChoice, loadBaseHi, loadBaseLo } from './earth';
 import { airOf, barrenOf, bodyImage, bodySunDir, BODY_WIDTHS, type BodyLook, type WorldBodyRecord } from './body';
-import { renderBody } from './bodyRender';
+import { bodyTileSource, renderBody } from './bodyRender';
+import { hasTiles, tileLevelFor } from './bodyTiles';
 import { Presences } from './presences';
 import { createShared, type Shared } from './shared';
-import { TileLayer } from './tiles';
+import { gibsSource, TileLayer } from './tiles';
 import { depthPlanes, stageDistance, sunWeight, surfaceWeight } from '../sky/stages';
 import type { SkyLayer } from '../sky/layer';
 import type { BodyKey } from '../types/sky';
@@ -102,6 +103,8 @@ export class GlobeEngine {
   /** cancels the frame the loop has scheduled next (ui/lifetime.ts: released with the atlas) */
   private cancelFrame: () => void = () => {};
   baseKind: '2k' | '4k' | '8k' = '2k';
+  /** the first tile level the Earth's own sharp base is less dense than (GIBS tiles start there); a generated body sets its own */
+  private earthMinEmit = 6;
   baseUploadMs = 0;
   private running = true;
   private paused = false;
@@ -164,7 +167,8 @@ export class GlobeEngine {
   /** After first paint: fetch the sharp base, upload it quietly, then blend it in. */
   private async upgradeBase() {
     const which = hiResChoice(this.renderer);
-    this.tiles.minEmit = which === '8k' ? 6 : 5;
+    this.earthMinEmit = which === '8k' ? 6 : 5;
+    if (!this.earth.generated) this.tiles.minEmit = this.earthMinEmit;
     if (!which) return;
     try {
       await new Promise<void>((r) => { later(() => r(), 700); });
@@ -500,8 +504,8 @@ export class GlobeEngine {
     this.presences.step(dt);
     if (render) this.presences.renderDensity();
     this.earth.step(dt, this.reduced);
-    // the close-zoom tiles are the Earth's imagery (NASA GIBS, tilemath.ts): none is fetched or drawn over a generated body
-    if (!this.earth.generated) this.tiles.update(this.camera, dt, this.width, this.height);
+    // the close-zoom tiles: the Earth's are NASA GIBS's (tilemath.ts); a generated body's are made by its own generator in a worker (bodyTiles.ts), never fetched
+    this.tiles.update(this.camera, dt, this.width, this.height);
     this.markers.sel.step(dt, this.camera, this.height);
     this.markers.hover.step(dt, this.camera, this.height);
     this.markers.head.step(dt, this.camera, this.height);
@@ -531,7 +535,7 @@ export class GlobeEngine {
     this.presences.mesh.visible = on;
     this.aura.points.visible = on;
     this.arcs.group.visible = on;
-    this.tiles.group.visible = on && !this.earth.generated;
+    this.tiles.group.visible = on;
     for (const m of [this.markers.sel, this.markers.hover, this.markers.head]) m.suppressed = !on;
   }
 
@@ -561,6 +565,10 @@ export class GlobeEngine {
       this.earth.setSky(null, 0, 1);
       this.shell.air.value = 1;
       this.bodyPictureState = 'earth';
+      // the Earth's own tiles again
+      this.tiles.setSource(gibsSource);
+      this.tiles.enabled = true;
+      this.tiles.minEmit = this.earthMinEmit;
       return;
     }
     this.drawBody(record, this.bodyLook, key);
@@ -592,9 +600,14 @@ export class GlobeEngine {
     this.earth.setSky(null, 0, air);
     this.shell.air.value = air;
     this.bodyPictureState = 'coarse';
+    // its close-zoom tiles: made by its generator (a body of generator version 1 has none), wanted where they are denser than the base that will stand, as GIBS's are
+    const widths = hiResChoice(this.renderer) ? [BODY_WIDTHS.lo, BODY_WIDTHS.hi] : [BODY_WIDTHS.lo];
+    this.tiles.setSource(bodyTileSource(record, look));
+    this.tiles.enabled = hasTiles(record);
+    this.tiles.minEmit = tileLevelFor(widths[widths.length - 1]!);
     // the larger pictures are made off the main thread (bodyRender.ts: a module worker, else the main thread), in order, and each blended in as the Earth's sharp
     // base is (the Earth's 2k and 4k/8k): BODY_WIDTHS.lo where the GPU takes no more, then BODY_WIDTHS.hi where it does
-    void this.drawBases(record, look, key, hiResChoice(this.renderer) ? [BODY_WIDTHS.lo, BODY_WIDTHS.hi] : [BODY_WIDTHS.lo]);
+    void this.drawBases(record, look, key, widths);
   }
 
   private async drawBases(record: WorldBodyRecord, look: BodyLook | undefined, key: string, widths: readonly number[]) {

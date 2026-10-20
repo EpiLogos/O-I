@@ -19,7 +19,7 @@ const D2R = Math.PI / 180
 /** The water a cell must gather (in cells' worth at the equator, scaled by the rain) to be a river at all, and to be a full one. */
 const ACC_MIN = 40, ACC_FULL = 120
 /** A depression is a lake if it had to be filled by at least this height (in the field's 0–1). */
-const LAKE_DEPTH = .016
+const LAKE_DEPTH = .022
 /** Rivers and lakes are drawn where a pixel is no wider than this (radians): a base of 1024 or more. */
 export const WATER_DETAIL = .0075
 const SKIP_LAT = 78
@@ -176,16 +176,17 @@ export function waterAt(net: RiverNetwork, x: number, y: number, z: number, hgt:
   const lon = Math.atan2(z, x) * R2D
   const cj = Math.min(NY - 1, Math.max(0, Math.floor((90 - lat) / CELL))), ci = Math.min(NX - 1, Math.floor((lon + 180) / CELL))
   const cell = cj * NX + ci
+  if (!net.near[cell] && !net.lakeNear[cell]) return
   const px = detail * R2D
+  // the meander: the query point bent by noise, the same at every scale and finer where the detail is
+  const t = net.t, cl = Math.max(.05, Math.cos(lat * D2R))
+  let wl = .24 * simplex3(t, x * 41 + 3.1, y * 41 - 5.7, z * 41 + 8.3), wa = .24 * simplex3(t, x * 41 - 9.4, y * 41 + 2.2, z * 41 - 1.6)
+  wl += .09 * simplex3(t, x * 123 + 7.7, y * 123 + 1.3, z * 123 - 6.2); wa += .09 * simplex3(t, x * 123 - 2.8, y * 123 - 8.1, z * 123 + 4.4)
+  const fmax = .9 / detail
+  for (let f = 370, a = .03; f <= fmax && a > .0006; f *= 2.9, a *= .42) {
+    wl += a * simplex3(t, x * f + 1.9, y * f - 4.3, z * f + 6.8); wa += a * simplex3(t, x * f - 6.1, y * f + 3.7, z * f - 2.4)
+  }
   if (net.near[cell]) {
-    // the meander: the query point bent by noise, the same at every scale and finer where the detail is
-    const t = net.t, cl = Math.max(.05, Math.cos(lat * D2R))
-    let wl = .24 * simplex3(t, x * 41 + 3.1, y * 41 - 5.7, z * 41 + 8.3), wa = .24 * simplex3(t, x * 41 - 9.4, y * 41 + 2.2, z * 41 - 1.6)
-    wl += .09 * simplex3(t, x * 123 + 7.7, y * 123 + 1.3, z * 123 - 6.2); wa += .09 * simplex3(t, x * 123 - 2.8, y * 123 - 8.1, z * 123 + 4.4)
-    const fmax = .9 / detail
-    for (let f = 370, a = .03; f <= fmax && a > .0006; f *= 2.9, a *= .42) {
-      wl += a * simplex3(t, x * f + 1.9, y * f - 4.3, z * f + 6.8); wa += a * simplex3(t, x * f - 6.1, y * f + 3.7, z * f - 2.4)
-    }
     const qlon = lon + wl / cl, qlat = lat + wa
     let best = 0
     for (let dj = -1; dj <= 1; dj++) {
@@ -211,8 +212,11 @@ export function waterAt(net: RiverNetwork, x: number, y: number, z: number, hgt:
     WATER[0] = best
   }
   if (net.lakeNear[cell]) {
-    // the lake: the level of the depression under the point, bent by the point's own bilinear weight so the shore is not the grid's
-    const u = (lon + 180) / CELL - .5, v = (90 - lat) / CELL - .5, i0 = Math.floor(u), j0 = Math.floor(v), fu = u - i0, fv = v - j0
+    // the lake: the level of the depression under the point, with the shore bent by the same noise (stronger) and weighted by a smooth bilinear, so it is not the grid's
+    const qlon = lon + 1.1 * wl / cl, qlat = lat + 1.1 * wa
+    const u = (qlon + 180) / CELL - .5, v = (90 - qlat) / CELL - .5, i0 = Math.floor(u), j0 = Math.floor(v)
+    let fu = u - i0, fv = v - j0
+    fu = fu * fu * (3 - 2 * fu); fv = fv * fv * (3 - 2 * fv)
     let weight = 0, level = -1
     for (let dj = 0; dj <= 1; dj++) for (let di = 0; di <= 1; di++) {
       const jj = j0 + dj

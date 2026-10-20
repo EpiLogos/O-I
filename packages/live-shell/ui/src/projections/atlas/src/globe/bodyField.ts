@@ -18,7 +18,7 @@ import type {WorldBodyRecord} from './body'
 export const SEA = .5
 export const LAND_RANGE = 1 - SEA
 /** The finest detail `heightAt` is asked for when no one says (radians; about 14 km on a body the size of the Earth): the Place tool's land test. */
-export const DEFAULT_DETAIL = .0022
+export const DEFAULT_DETAIL = .0004
 
 export const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x)
 export const smooth = (e0: number, e1: number, x: number): number => { const t = clamp01((x - e0) / (e1 - e0)); return t * t * (3 - 2 * t) }
@@ -78,7 +78,7 @@ export function landParamsOf(record: WorldBodyRecord): LandParams {
 }
 
 // the character of each coast: first frequency, first amplitude, gain per octave (the Hurst exponent H of the coast: gain = 2^−H, so the coast's dimension is 2 − H)
-const COAST = {smooth: {f: 5, a: .055, g: .54}, fjord: {f: 6, a: .15, g: .6}, archipelago: {f: 9, a: .19, g: .58}} as const
+const COAST = {smooth: {f: 5, a: .045, g: .54}, fjord: {f: 6, a: .14, g: .6}, archipelago: {f: 10, a: .17, g: .58}} as const
 
 function buildParams(seed: number, seaLevel: number, continents: number, relief: number, coast: 'smooth' | 'fjord' | 'archipelago'): LandParams {
   const t = tablesOf(seed)
@@ -115,6 +115,13 @@ function buildParams(seed: number, seaLevel: number, continents: number, relief:
 const Q = new Float64Array(3)
 let SMOOTH = 0
 
+/** How much of the fine coast detail (from the third octave on) a point still gets, 0–1: all of it near the coast, none far from it, and a smooth fade between, so no line is cut
+ * across the land where the detail stops. `dist` is the point's distance from the sea level in `Ec`, `bound` the most the fine octaves can add: beyond 1.5 times it they cannot
+ * change which side of the coast the point is on, and are not made. */
+function fineFade(dist: number, bound: number): number {
+  return 1 - smooth(.5 * bound, 1.5 * bound, dist)
+}
+
 /** `Ec`: the continent mask and the coast detail on the warped sphere. The sea stands where this is under `Esea`. `detail` is the finest wavelength asked for, in
  * radians: octaves finer than it are not made. */
 export function maskE(P: LandParams, x: number, y: number, z: number, detail: number): number {
@@ -125,8 +132,8 @@ export function maskE(P: LandParams, x: number, y: number, z: number, detail: nu
   const wz = z + .13 * simplex3(t, x * 1.05 + 2.2, y * 1.05 - 9.9, z * 1.05 + 5.5)
   Q[0] = x; Q[1] = y; Q[2] = z
   const f = P.cf
-  let C = .66 * simplex3(t, wx * f + 1.7, wy * f + 9.2, wz * f - 3.1) + .24 * simplex3(t, x * f * 2.13 - 7, y * f * 2.13 + 2, z * f * 2.13 + 5) +
-    .1 * simplex3(t, x * f * 4.4 + 3, y * f * 4.4 - 5, z * f * 4.4 + 8)
+  let C = .68 * simplex3(t, wx * f + 1.7, wy * f + 9.2, wz * f - 3.1) + .22 * simplex3(t, x * f * 2.13 - 7, y * f * 2.13 + 2, z * f * 2.13 + 5) +
+    .08 * simplex3(t, x * f * 4.4 + 3, y * f * 4.4 - 5, z * f * 4.4 + 8)
   C += P.dip * (wx * P.ax + wy * P.ay + wz * P.az)
   // the coast detail, an octave at a time, as fine as the detail asks
   const fmax = .9 / detail
@@ -136,7 +143,7 @@ export function maskE(P: LandParams, x: number, y: number, z: number, detail: nu
   if (P.coast === 'fjord') {
     // thin dips cut into the coast by ridged noise (a fjord is long and narrow), with the smooth fractal under them
     for (let o = 0; fr <= fmax && o < 15; o++, fr *= 2.03, amp *= P.dg) {
-      if (o === 2 && P.exitOK && Math.abs(C + Dsm - P.Esea) > reach * amp / (1 - P.dg)) break
+      if (o === 2 && P.exitOK) { const k = fineFade(Math.abs(C + Dsm - P.Esea), reach * amp / (1 - P.dg)); if (k <= 0) break; amp *= k }
       const n = simplex3(t, x * fr + 21 + o * 5.3, y * fr - 17, z * fr + 9 - o * 3.1)
       const r = 1 - Math.abs(n)
       const term = amp * (.55 * n - 1.25 * r * r * r * r)
@@ -145,7 +152,7 @@ export function maskE(P: LandParams, x: number, y: number, z: number, detail: nu
     }
   } else {
     for (let o = 0; fr <= fmax && o < 15; o++, fr *= 2.03, amp *= P.dg) {
-      if (o === 2 && P.exitOK && Math.abs(C + Dsm - P.Esea) > reach * amp / (1 - P.dg)) break
+      if (o === 2 && P.exitOK) { const k = fineFade(Math.abs(C + Dsm - P.Esea), reach * amp / (1 - P.dg)); if (k <= 0) break; amp *= k }
       const term = amp * simplex3(t, x * fr + 21 + o * 5.3, y * fr - 17, z * fr + 9 - o * 3.1)
       D += term
       if (o < 2) Dsm += term
@@ -186,7 +193,12 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
       }
       L += relief ** 1.15 * (m / norm) * belt * smooth(.1, .55, cn) * 1.2
     }
+    // micro-relief: the ground's roughness, octave on octave as fine as the detail asks (it is what a close tile shows of a plain)
+    let micro = 0, mf = 52, ma = .0055 * (.55 + .9 * relief)
+    for (let o = 0; o < 9 && mf <= fmax; o++, mf *= 2.1, ma *= .56) micro += ma * simplex3(t, qx * mf + 17 + o * 3.7, qy * mf - 29, qz * mf + 5 - o * 6.1)
+    L += micro * smooth(.005, .06, cn)
     if (L > 1) L = 1
+    else if (L < 1e-9) L = 1e-9
     T[1] = cn; T[2] = L; T[3] = 0
     return (T[0] = SEA + LAND_RANGE * L)
   }
@@ -194,13 +206,13 @@ export function terrain(P: LandParams, x: number, y: number, z: number, detail: 
   // how deep: by the coast's own line close to it, and by its smooth outline farther out (a shelf has a smooth edge, whatever the coast's detail)
   const dnCoast = -above / P.seaSpan, u = Math.exp(-((dnCoast / .1) ** 2)), dnSmooth = Math.max(0, (P.Esea - SMOOTH) / P.seaSpan)
   const dn = Math.min(1, u * dnCoast + (1 - u) * dnSmooth)
-  let depth = .1 * smooth(0, .22, dn) + .7 * smooth(.1, .46, dn) + .17 * smooth(.4, 1, dn)
+  let depth = .085 * smooth(0, .14, dn) + .7 * smooth(.07, .3, dn) + .17 * smooth(.28, 1, dn)
   const plain = smooth(.32, .7, dn)
   if (plain > 0) {
     const fmax = .9 / detail
-    let rf = 3.1, ra = .06
-    for (let o = 0; o < 4 && rf <= fmax; o++, rf *= 2.3, ra *= .55) depth -= plain * ra * (1 - Math.abs(simplex3(t, qx * rf - 3 + o * 4.1, qy * rf + 41, qz * rf + 19)))
-    depth += plain * .045
+    let rf = 3.1, ra = .085
+    for (let o = 0; o < 4 && rf <= fmax; o++, rf *= 2.3, ra *= .6) depth -= plain * ra * (1 - Math.abs(simplex3(t, qx * rf - 3 + o * 4.1, qy * rf + 41, qz * rf + 19)))
+    depth += plain * .06
   }
   depth += .05 * Math.exp(-(((dn - .36) / .07) ** 2)) // the trench along the foot of the slope
   if (depth < 0) depth = 0

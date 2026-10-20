@@ -40,10 +40,10 @@ export function shadePixel(hgt: number, slope: number, col: Float64Array): void 
     shade = 1 + .5 * Math.tanh(.22 * slope)
     // a little lighter with height, as thin air is clear
     shade *= .9 + .2 * smooth(0, .8, (hgt - SEA) / LAND_RANGE)
-  } else shade = 1 + .08 * Math.tanh(.45 * slope)
+  } else shade = 1 + .11 * Math.tanh(.45 * slope)
   // snow and ice keep their brightness: shaded a little, never into grey
   const white = WHITE[0]! > WHITE[1]! ? WHITE[0]! : WHITE[1]!
-  if (white > 0) shade = shade + (Math.min(1.04, Math.max(.96, shade)) - shade) * white
+  if (white > 0) shade = shade + (Math.min(1.04, Math.max(.87, shade)) - shade) * white
   col[0] *= shade; col[1] *= shade; col[2] *= shade
 }
 

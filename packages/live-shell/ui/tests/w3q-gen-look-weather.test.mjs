@@ -183,7 +183,7 @@ test('K6 the disc at the System scale is barren too: greyer, no air at its rim, 
   assert.ok(levels[2].white <= .002, `and no cloud stands over it at barren 1 (white pixels ${f(levels[2].white, 4)} of the disc)`)
 })
 
-test('K7 a barren tile is greyer than a lived-in one, the same ground: close-zoom tiles take the look', pending, async () => {
+test('K7 a barren tile is greyer than a lived-in one, the same ground: close-zoom tiles take the look', async () => {
   let tiles
   try { tiles = await import(new URL('bodyTiles.ts', globe).href) } catch (error) { if (error?.code !== 'ERR_MODULE_NOT_FOUND') throw error; tiles = {} }
   assert.equal(typeof tiles.bodyTile, 'function', 'bodyTiles.ts exports bodyTile(record, z, x, y, look?)')

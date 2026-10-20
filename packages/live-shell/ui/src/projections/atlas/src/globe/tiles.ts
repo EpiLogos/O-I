@@ -17,6 +17,7 @@
 import * as THREE from 'three';
 import { angleBetween, dirFromLatLon, type Vec3 } from '../data/geo';
 import type { EarthUniforms } from './earth';
+import type { BodyImage } from './body';
 import { TILE_FRAG, TILE_VERT } from './shaders';
 import { childrenOf, focalPx, latOfY, lonOfX, MAX_ZOOM, parentOf, tileKey, tileScreenSize, tileUrl, TILE_PX } from './tilemath';
 
@@ -33,6 +34,41 @@ const FADE_IN = 0.45;
 const FADE_OUT = 0.5;
 const UPLOADS_PER_FRAME = 1; // one GPU transfer: WebKit may block on a single upload
 
+/** What a tile source hands the layer: a decoded image, or the pixels of a generated tile (a body's own, from globe/bodyTiles.ts). */
+export type TileImage = ImageBitmap | HTMLImageElement | BodyImage;
+
+/** Where the layer's tiles come from: asked for by level, column and row, and given up on by aborting the signal. The Earth's are NASA GIBS's (`gibsSource`, the default);
+ * a generated body's are made by its own generator, in a worker (globe/bodyRender.ts bodyTileSource), and never asked of the network. */
+export interface TileSource {
+  load(z: number, x: number, y: number, signal: AbortSignal): Promise<TileImage>;
+}
+
+/** NASA GIBS Blue Marble tiles: fetched (CORS), decoded off the main thread where the page can. The Earth's source, and the layer's default. */
+export const gibsSource: TileSource = {
+  load(z, x, y, signal) {
+    const url = tileUrl(z, x, y);
+    if (typeof createImageBitmap === 'function') {
+      return fetch(url, { signal, mode: 'cors' })
+        .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+        .then(async (b) => {
+          try {
+            return await createImageBitmap(b, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+          } catch {
+            return await createImageBitmap(b);
+          }
+        });
+    }
+    return new Promise<TileImage>((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(`failed to load ${url}`));
+      signal.addEventListener('abort', () => { img.src = ''; });
+      img.src = url;
+    });
+  },
+};
+
 interface Tile {
   z: number;
   x: number;
@@ -40,7 +76,7 @@ interface Tile {
   key: string;
   state: 'idle' | 'loading' | 'decoded' | 'ready' | 'error';
   abort: AbortController | null;
-  bitmap: ImageBitmap | HTMLImageElement | null;
+  bitmap: TileImage | null;
   tex: THREE.Texture | null;
   mesh: THREE.Mesh | null;
   mat: THREE.ShaderMaterial | null;
@@ -76,6 +112,7 @@ export class TileLayer {
   private inflight = 0;
   private loadSeq = 0;
   private maxAniso: number;
+  private source: TileSource = gibsSource;
   private tmp = new THREE.Vector3();
   private cdir: Vec3 = [0, 0, 0];
   private clipMatrix = new THREE.Matrix4();
@@ -241,8 +278,7 @@ export class TileLayer {
     this.stats.requested++;
     this.stats.inflight = this.inflight;
     const ac = (t.abort = new AbortController());
-    const url = tileUrl(t.z, t.x, t.y);
-    const done = (img: ImageBitmap | HTMLImageElement | null) => {
+    const done = (img: TileImage | null) => {
       if (t.state !== 'loading' || t.loadId !== id) {
         if (img && 'close' in img) img.close();
         return;
@@ -258,29 +294,27 @@ export class TileLayer {
         this.stats.failed++;
       }
     };
-    if (typeof createImageBitmap === 'function') {
-      fetch(url, { signal: ac.signal, mode: 'cors' })
-        .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
-        .then(async (b) => {
-          try {
-            return await createImageBitmap(b, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
-          } catch {
-            return await createImageBitmap(b);
-          }
-        })
-        .then(done, (err) => {
-          if (ac.signal.aborted) return; // cancel() already settled the book-keeping
-          void err;
-          done(null);
-        });
-    } else {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => done(img);
-      img.onerror = () => done(null);
-      ac.signal.addEventListener('abort', () => { img.src = ''; });
-      img.src = url;
+    this.source.load(t.z, t.x, t.y, ac.signal).then(done, (err) => {
+      if (ac.signal.aborted) return; // cancel() already settled the book-keeping
+      void err;
+      done(null);
+    });
+  }
+
+  /** Where the tiles come from: the Earth's (NASA GIBS, the default) or a generated body's. A new source frees every tile of the old one and gives up every ask of it, so
+   * nothing of the old body is drawn under the new, and a late answer from the old source is dropped. */
+  setSource(source: TileSource): void {
+    if (source === this.source) return;
+    for (const t of this.tiles.values()) {
+      this.cancel(t);
+      this.dispose(t);
     }
+    this.tiles.clear();
+    this.inflight = 0;
+    this.stats.inflight = 0;
+    this.stats.ready = 0;
+    this.stats.drawn = 0;
+    this.source = source;
   }
 
   /** Release every tile: fetches in flight are cancelled (a late reply is dropped by its own check), and the tiles' textures,
@@ -312,9 +346,9 @@ export class TileLayer {
   private upload(t: Tile) {
     const img = t.bitmap;
     if (!img) return;
-    const tex = new THREE.Texture(img as ImageBitmap);
+    const tex: THREE.Texture = 'data' in img ? new THREE.DataTexture(img.data, img.width, img.height, THREE.RGBAFormat) : new THREE.Texture(img);
     tex.colorSpace = THREE.NoColorSpace;
-    tex.flipY = false; // image row 0 = tile v 0 = north
+    tex.flipY = false; // image row 0 = tile v 0 = north (a generated tile's data rows run north to south too)
     tex.generateMipmaps = true;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
@@ -413,6 +447,8 @@ export class TileLayer {
   }
 
   private dispose(t: Tile) {
+    if (t.bitmap && 'close' in t.bitmap) t.bitmap.close();
+    t.bitmap = null;
     if (t.mesh) this.group.remove(t.mesh);
     t.mat?.dispose();
     t.tex?.dispose();
