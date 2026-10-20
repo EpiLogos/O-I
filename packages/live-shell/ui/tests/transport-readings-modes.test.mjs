@@ -59,10 +59,12 @@ test('the title line reads THE selection — the world · the day, and the open 
   const config = {world_scope: {owner: 'central', world: 'control:root', personal_ground: '/g', workcell_ref: 'workcell:mac'}}
   const drawn = renderToStaticMarkup(h(ShellConfigContext.Provider, {value: config}, h(TransportTitle, {line: 'selection', timeSpine: spineAt()})))
   assert.match(drawn, /data-region="title-line"/)
-  assert.equal(text(drawn), 'Nothing selected — Central · 08 Oct')
+  // Back and Forward stand at the line's head (manual §10.7): ‹ ›, then the line.
+  assert.equal(text(drawn), '‹›Nothing selected — Central · 08 Oct')
+  assert.match(drawn, /<span class="title-trail"><button type="button" aria-label="Back" disabled=""/, 'Back waits while the trail is empty')
   assert.match(drawn, /<span class="set-title-absent">Nothing selected<\/span>/)
-  assert.equal(text(renderToStaticMarkup(h(TransportTitle, {line: 'selection', workName: 'A working inquiry'}))), 'A working inquiry', 'with no selection, the open work in front of you')
-  assert.equal(text(renderToStaticMarkup(h(TransportTitle, {line: 'set', setName: 'Mercurius sketch'}))), 'Mercurius sketch — Live set')
+  assert.equal(text(renderToStaticMarkup(h(TransportTitle, {line: 'selection', workName: 'A working inquiry'}))), '‹›A working inquiry', 'with no selection, the open work in front of you')
+  assert.equal(text(renderToStaticMarkup(h(TransportTitle, {line: 'set', setName: 'Mercurius sketch'}))), '‹›Mercurius sketch — Live set')
 })
 
 test('the bar names no mode in its title: the line is the registration\'s', async () => {
@@ -77,9 +79,10 @@ test('every mode wears the mockup\'s words on Link, Tap and the maps, and keeps 
     const face = id => markup.match(new RegExp(`<button[^>]*data-slot="${id}"[^>]*>([^<]*)<`))?.[1] ?? null
     return [mode, ['link', 'tap', 'key-map', 'midi-map'].map(face)]
   }))
-  assert.deepEqual(words.base, ['Ground', 'Stamp', 'Map', 'MIDI'])
-  assert.deepEqual(words.factory, ['Link', 'Tap', 'Map', 'MIDI'])
-  assert.deepEqual(words.expressions, ['Link', 'Tap', 'Map', 'MIDI'])
+  // Live's two map toggles read Key and MIDI (manual §10.1): one place each, never two that read the same.
+  assert.deepEqual(words.base, ['Ground', 'Stamp', 'Key', 'MIDI'])
+  assert.deepEqual(words.factory, ['Link', 'Tap', 'Key', 'MIDI'])
+  assert.deepEqual(words.expressions, ['Link', 'Tap', 'Key', 'MIDI'])
   assert.deepEqual(words.techne.slice(0, 1), ['Link'], 'Technē\'s Tap is Back to Now, drawn as its own control over the spine')
   assert.deepEqual(words.live.slice(0, 2), ['Link', 'Tap'], 'Live\'s map slot holds its own KEY and MIDI toggles')
 })

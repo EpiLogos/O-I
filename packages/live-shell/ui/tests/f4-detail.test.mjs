@@ -56,5 +56,5 @@ test('App mounts one detail residence, the host with its sides, and the status b
   const bar = await readFile(new URL('../src/components/StatusBar.tsx', import.meta.url), 'utf8')
   // The two switches read Clip | Device in every mode; what each side holds is the mode's registration, said on the Info line
   // (rendered per mode in detail-host.test.mjs).
-  assert.match(bar, /data-detail-side="clip"[\s\S]{0,500}<span>Clip<\/span>/); assert.match(bar, /data-detail-side="device"[\s\S]{0,500}<span>Device<\/span>/)
+  assert.match(bar, /data-detail-side="clip"[\s\S]{0,500}<span>\{clipName \?\? 'Clip'\}<\/span>/); assert.match(bar, /data-detail-side="device"[\s\S]{0,500}<span>\{trackName \?\? 'Device'\}<\/span>/)
 })

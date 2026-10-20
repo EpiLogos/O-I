@@ -410,3 +410,29 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
    controls row starts past them, the title line stays centred. Seen on screen 15 Oct: at the mockup's 46px bar the lights
    covered the globe, Link and Tap. */
 :root[data-window-chrome="overlay"] .transport-controls { padding-left: 72px }
+
+/* The main area's three views (manual §10.2): Session view and Arrangement view of the mode's set, drawn here, never in a pane;
+   Pane view is the pane tree (.inhabitant). One stands at a time. */
+.center-body { flex:1 1 auto; min-height:0 }
+.set-view-residence { position:absolute; inset:0 }
+.set-view-residence[hidden] { display:none }
+/* The part the focus keys moved to (Live 12's ⌥0–⌥6, ours ⌥9): a thin bright edge while it holds the keys from the keyboard. */
+[data-focus-region] { outline:none }
+[data-focus-region]:focus-visible, [data-focus-region]:has(:focus-visible) { box-shadow:inset 0 0 0 1px var(--accent-dim) }
+/* The transport's groups (manual §10.1): the modes, then the three views, then the rail's toggle at the right edge. */
+.transport-views { margin-left:0 }
+.transport-controls > .chrome-toggle:last-child { margin-left:4px }
+/* Back and Forward at the head of the title line (manual §10.7). */
+.title-trail { display:inline-flex; gap:1px; margin-right:8px; vertical-align:top }
+.title-trail button { width:16px; height:14px; padding:0; border:none; background:transparent; color:var(--text-dim); font-size:13px; line-height:12px }
+.title-trail button:hover:not(:disabled) { color:var(--text) }
+.title-trail button:disabled { color:var(--text-faint); opacity:.45 }
+/* The bottom right (manual §10.1): ▲ shows or hides each view; the switch brings it forward and carries what it holds. */
+.status-detail-views .status-triangle { width:15px; padding:0; justify-content:center; font-size:7px; border-color:transparent; background:transparent }
+.status-detail-views .status-switch > span:last-child { max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.status-detail-views .status-mixer { margin-left:6px }
+/* The mixer and its sections (manual §16.6: ⌥⌘M, ⌥⌘I). */
+.frame.mixer-hidden :is(.trk-mix, .tl-mix) { display:none }
+.frame.io-hidden .mx-io { display:none }
+/* Settings draw their own window over the frame (panels/settings.tsx); their residence takes no room in the main area. */
+.settings-residence { pointer-events:none }

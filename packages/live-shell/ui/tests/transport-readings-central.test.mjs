@@ -126,7 +126,7 @@ test('Central\'s bar draws the mockup\'s readings from the owners, steps the die
   const markup = renderToStaticMarkup(React.createElement(Transport, {bindings, words: id => slotWords('base', id)}))
   const face = id => markup.match(new RegExp(`<(?:button|output)[^>]*data-slot="${id}"[^>]*>([^<]*)<`))?.[1]
   assert.deepEqual(['link', 'tap', 'tempo', 'signature', 'key', 'scale', 'position', 'punch-in', 'punch-out', 'rate', 'key-map'].map(face),
-    ['Ground', 'Stamp', 'face 3', '4 + 2', 'Σ 500', 'session', '08 Oct · p3', '08:30', '00:00', 'mac · local', 'Map'])
+    ['Ground', 'Stamp', 'face 3', '4 + 2', 'Σ 500', 'session', '08 Oct · p3', '08:30', '00:00', 'mac · local', 'Key'])
   // The die's nudges are enabled by its write route and press it; nothing else here is pressable.
   const steppers = [...markup.matchAll(/<button[^>]*data-slot="tempo"[^>]*>/g)].map(m => m[0])
   assert.equal(steppers.length, 2); assert.ok(steppers.every(tag => !/disabled=""/.test(tag)))

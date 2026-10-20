@@ -8,10 +8,21 @@ import {followsSelection} from '../../../../../desktop/cradle/src/surface/projec
 import {isProjectionPaneKind, type LayoutState, type PaneEdge} from '../../../../../desktop/cradle/src/surface/types'
 import {parseInstrumentPayload} from './instruments'
 import {openInstrumentAt} from './openInstrument'
+import {showMainView} from '../shell/mainView'
+import {TRACKS_PANE_KIND} from '../shell/tracksOutOfPanes'
+import {timelinePanePresentation} from '../projections/timelinePaneHost'
 
 /** Where an instrument opens: in a named pane or on its edge; or 'in-view' — wherever it comes into view without hiding what the
  * focused pane holds (bringInstrumentIntoView, below). Absent: the focused pane. */
 export type InstrumentPlacement = {groupId: string; edge: PaneEdge | null} | 'in-view'
+
+/** The set's tracks are never a pane (manual §10.2): asked for, the main area shows Session view or Arrangement view instead, in
+ * the presentation the tracks stand in (a Technē lens sets it before it asks). True when the request was answered so. */
+function setViewInstead(kind: string): boolean {
+  if (kind !== TRACKS_PANE_KIND) return false
+  showMainView(timelinePanePresentation())
+  return true
+}
 
 export type InstrumentOpener = (kind: string, at?: InstrumentPlacement, subject?: {ref: string; title: string}) => void
 
@@ -25,9 +36,11 @@ export function publishInstrumentOpener(next: InstrumentOpener | null): void {
  * lens's payload (`kind#lens`, instruments.ts), in which case the stage is turned to the lens once it is open. Refuses when no
  * pane tree is mounted; a lens the owner refuses is said through the fault line (reportInstrumentFault). */
 export function openInstrument(payload: string, at?: {groupId: string; edge: PaneEdge | null}, subject?: {ref: string; title: string}): void {
-  if (!opener) throw Error('No pane tree is mounted to open the instrument in')
   const {kind, lens} = parseInstrumentPayload(payload)
+  if (setViewInstead(kind)) return
+  if (!opener) throw Error('No pane tree is mounted to open the instrument in')
   opener(kind, at, subject)
+  showMainView('pane')
   if (lens) driveStageLens(lens, reportInstrumentFault)
 }
 
@@ -37,9 +50,11 @@ export function openInstrument(payload: string, at?: {groupId: string; edge: Pan
  * when the focused pane holds what it opened (the hosted frame's Canvas, a document) or is pinned, it opens beside it. Refuses
  * when no pane tree is mounted. */
 export function bringInstrumentIntoView(payload: string, subject?: {ref: string; title: string}): void {
-  if (!opener) throw Error('No pane tree is mounted to open the instrument in')
   const {kind, lens} = parseInstrumentPayload(payload)
+  if (setViewInstead(kind)) return
+  if (!opener) throw Error('No pane tree is mounted to open the instrument in')
   opener(kind, 'in-view', subject)
+  showMainView('pane')
   if (lens) driveStageLens(lens, reportInstrumentFault)
 }
 

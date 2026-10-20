@@ -287,7 +287,8 @@ test('the centre frame keeps its mount and its container element; the placement 
 
 test('centre residence: the Expressions panel stays mounted (hidden, never unmounted), and the centre is the Workbench in every mode (F2; source reading)', async () => {
   const app = await source('../src/App.tsx')
-  assert.match(app, /\{panels\.map\(panel => \{ const Panel = panel\.component; const placed = expressionsPlaced && panel\.id === 'world\.expressions'; return <div/, 'every centre panel is rendered; only its wrapper\'s hidden attribute changes')
+  assert.match(app, /\{panels\.filter\(panel => panel\.id !== 'world\.settings'\)\.map\(panel => \{ const Panel = panel\.component; const placed = expressionsPlaced && panel\.id === 'world\.expressions'/, 'every centre panel is rendered; only its wrapper\'s hidden attribute changes')
+  assert.match(app, /<div className="set-view-residence" data-focus-region="set" tabIndex=\{-1\} hidden=\{!setStands\}><TracksPane \/><\/div>/, 'Session view and Arrangement view stand in the main area, concealed under Pane view, never unmounted')
   assert.match(app, /<Panel \{\.\.\.ctx\} \/>/)
   assert.match(app, /const workbenchCentre = \(_panel: string \| undefined\): string => 'native\.workbench'/, 'the panes are the centre in every mode (F2): the Expressions panel is concealed, not unmounted')
 })
@@ -295,7 +296,7 @@ test('centre residence: the Expressions panel stays mounted (hidden, never unmou
 test('the Expressions residence is placed while a pane holds the frame, and is otherwise exactly as it was', async () => {
   const app = await source('../src/App.tsx')
   assert.match(app, /const framePlacement = useFramePlacement\(\)\n[\s\S]{0,400}const expressionsPlaced = framePlacement !== null && centerPanel !== 'world\.expressions'/, 'a pane holds the frame in any mode (F2)')
-  assert.match(app, /style=\{placed \? PLACED_RESIDENCE_STYLE : undefined\} hidden=\{placed \? false : panel\.id === 'world\.settings'/)
+  assert.match(app, /style=\{placed \? PLACED_RESIDENCE_STYLE : undefined\}[\s\S]{0,200}hidden=\{placed \? !stageShown : centerPanel !== panel\.id/, 'a placed stage shows while Pane view stands, and keeps playing under the set\'s views')
   const style = await source('../src/projections/expressionsPaneHost.ts')
   assert.match(style, /export const PLACED_RESIDENCE_STYLE: CSSProperties = \{position: 'fixed', left: 0, top: 0, width: 0, height: 0, overflow: 'visible', pointerEvents: 'none', zIndex: 20\}/, 'the residence is zero-size and out of flow: the container, not the residence, is the one placed')
 })
