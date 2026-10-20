@@ -32,6 +32,34 @@ a run that resumes after a restart starts here. The lanes run at most three at o
   human grant adds the Day's four write actions. The owner runs the script the lead prepared, because the agent may
   not write grants or tokens.
 
+## After the open PRs land (each green, merging waits for the owner's permission)
+
+- O-I #689 (`dlw/build`), QL-MEF #340 then #342 (stacked), ai-kit #538, Factory #287. Then release their seats: env-1
+  `ql-mef` (`publish/m3-form-cell`), env-2 `ql-mef`, `ai-kit` and `factory`. Release env-1 `o-i` only when no
+  neighbour holds the lane.
+- When #342 has landed, O:I re-pins the QL session. Copy `adapters/retained-field/instrument-session.mjs`
+  byte-for-byte to `desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrument-session.mjs`,
+  then make three edits:
+  - set `files["instrument-session.mjs"]` in that directory's `PROVENANCE.json` to the new sha256 (e5546664… at
+    #342's head; recompute it from the landed file);
+  - set its `revision` to the landed QL-MEF commit;
+  - add `strikeAt(points)` to `instrument-session.d.mts`.
+  Install a QL build that carries the float-from-text fix, then run `oi update` (check that the installed cut is in
+  `main` first).
+- MT2 then makes a touch a point: the frame calls `strikeAt` with the touched (θ, φ).
+
+## The owner's open question (MT1)
+
+Each Jankó key's point on its helix. The sources fix which pitch classes lie on which arc (Musical V3 §II-1.1), but
+they leave three things open:
+- which torus circle the helices wind on: the graph's M1-5 says the meridian, the M1′ seed §10 the longitude;
+- the angle of each position inside its half-arc, and how twelve keys sit on a six-position circuit;
+- where the pratibimba arc lies on the 720° cover: half a turn on, at the negation point θ = π, or on the second
+  sheet (D17's Hopf fibre).
+
+Once ruled, it is one pure function in `janko.rs` and a `point` field per key in `ql.janko-surface/v1`. A
+second-sheet answer also widens `strike-at`'s domain to [0, 4π).
+
 ## Lanes to brief and run, in order
 
 | Lane | Seat | Make true | Waits on |
@@ -44,7 +72,7 @@ a run that resumes after a restart starts here. The lanes run at most three at o
 | MS1 | QL-MEF + O:I | Body source Declared · Tattva on the Torus and on Resonance (#684 "Body source"). The Torus's Pulses are announced through the stage channel. | MT1 |
 | MM2 | O:I kernel + shell | The M3 clock and the Deck drawn whole on MM1's reading (QL-MEF #340). | #340 merged and installed |
 | MB | O:I shell | Binding and the singlet. | MM2 |
-| MT2 | O:I hosted + shell | Every strike at its point, the collision strike included. | MT1 merged and installed, MB |
+| MT2 | O:I hosted + shell | Every strike at its point, the collision strike included: a touch at the surface point (`strikeAt`), a key at its helix point once the owner rules it, a note in a Live clip at its key's point, a singlet at its codon's place. | #342 merged and installed, MB |
 | ME3 | O:I hosted | Glyphs from M3′ forms, and Morph on M3′'s torus. | MM2 |
 | MS2 | QL-MEF + O:I | The Sky's place and rulers, and the planets bending the torus. | MS1 |
 | KM | QL-MEF + O:I kernel | The M′ matrices' kernel op (`ql kernel m1`), so the manifest's "waiting" M′ matrices bind (B4). | — |
