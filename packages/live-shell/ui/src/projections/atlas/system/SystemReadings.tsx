@@ -18,7 +18,7 @@ import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import {useWorkspace} from '../../../shell/workspaceContext'
 import {useAgentSessionsOptional} from '../../../agent/AgentSessionsProvider'
 import {GROUND_OP, useCentralGroundAnswer} from '../../../central/devices/useCentralReadings'
-import {readWorlds, type CentralWorld, type CentralWorldsReading} from '../../../central/centralWorlds'
+import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading} from '../../../central/centralWorlds'
 import {setReadingOf} from '../../../frame/tracks/useCentralTracks'
 import {useCentralDocumentOpener} from '../../../central/documents/useOpenCentralDocument'
 import {useSpineEpoch} from '../../../owners/spine'
@@ -31,6 +31,7 @@ import {systemOf, systemWorlds, type SystemBody, type SystemBodyReading, type Sy
 import {artifactsOf} from './artifacts'
 import {openSatellite} from './openSatellite'
 import {sessionsOf} from './sessionWorld'
+import {worldFactsOf} from './worldFacts'
 import {subscribeSystemNow, systemNow} from './systemClock'
 import {bindSystemActs, publishSystem} from './systemStore'
 
@@ -124,12 +125,18 @@ export function SystemReadings(): null {
     : [], [worlds, set])
   const inSetKey = inSet.map(world => `${world.ref}@${world.project ?? ''}@${world.folder}`).join('|')
   const [bodies, setBodies] = useState<ReadonlyMap<string, SystemBodyReading>>(new Map())
+  /** how many pages and flows each world holds, by the world's ref: the length of its folder's page listing */
+  const [held, setHeld] = useState<ReadonlyMap<string, number>>(new Map())
   useEffect(() => {
     if (transport.kind === 'unavailable') return
     let live = true
     for (const world of inSet) {
-      if (!world.project) continue
-      void readBodyOf(kernelWorldBodyOwner(transport, world.project)).then(next => { if (live) setBodies(known => new Map(known).set(world.ref, next)) })
+      if (world.project) {
+        void readBodyOf(kernelWorldBodyOwner(transport, world.project)).then(next => { if (live) setBodies(known => new Map(known).set(world.ref, next)) })
+      }
+      void readWorldPages(transport, world).then(next => {
+        if (live && next.state === 'read') setHeld(known => new Map(known).set(world.ref, next.listing.pages.length))
+      })
     }
     return () => { live = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the worlds of the set are named by their key
@@ -144,10 +151,16 @@ export function SystemReadings(): null {
     if (own) merged.set(own.ref, yourBodyReading(yours))
     return merged
   }, [bodies, inSet, yours])
-  // what each world's agents have made, from each register's change horizon
-  const artifacts = useMemo(() => inSet.flatMap(world =>
-    artifactsOf(horizonOf(world.project ? projectGrounds.get(world.project) : ground.reading), world.project)), [inSet, projectGrounds, ground.reading])
-  const system = useMemo(() => systemOf({worlds: inSet, bodies: allBodies, sessions: sessionRows, artifacts, nowMs}), [inSet, allBodies, sessionRows, artifacts, nowMs])
+  // each register's change horizon: what its agents have made, and the oldest change it keeps
+  const horizons = useMemo(() => new Map(inSet.map(world => [world.ref, horizonOf(world.project ? projectGrounds.get(world.project) : ground.reading)] as const)), [inSet, projectGrounds, ground.reading])
+  const artifacts = useMemo(() => inSet.flatMap(world => artifactsOf(horizons.get(world.ref), world.project)), [inSet, horizons])
+  // how lived in each world is: its age, what it holds and how often its space was written, each from its owner, and only where all three are read
+  const facts = useMemo(() => new Map(inSet.flatMap(world => {
+    const reading = allBodies.get(world.ref)
+    const found = worldFactsOf({nowMs, horizon: horizons.get(world.ref), pages: held.get(world.ref), revision: reading?.state === 'read' ? reading.reading.space.revision : null})
+    return found ? [[world.ref, found] as const] : []
+  })), [inSet, allBodies, horizons, held, nowMs])
+  const system = useMemo(() => systemOf({worlds: inSet, bodies: allBodies, sessions: sessionRows, artifacts, nowMs, facts}), [inSet, allBodies, sessionRows, artifacts, nowMs, facts])
 
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishSystem({state: 'unavailable', reason: transport.reason}); return }
