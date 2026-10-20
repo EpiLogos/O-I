@@ -318,7 +318,7 @@ test('a world\'s disc beside your planet is drawn from its record and its look: 
   assert.ok(canvas && canvas.painted.length === 2, 'and each drawing is what the canvas shows')
 })
 
-test('what the overlay hands the rings is your system\'s satellites only: agents inner, artefacts outer, each with its kind', pending, () => {
+test('what the overlay hands the rings is your system\'s satellites only: agents inner, artefacts outer, each with its kind', () => {
   const sessions = [{sessionRef: 'agent-session/kev', agentName: 'Kev', purpose: null, group: false}]
   const artifacts = [{ref: 'central:source:control:root:Control/user/flows/a.html', name: 'a', path: 'Control/user/flows/a.html', atMs: NOW - 60_000, project: null, sessionRef: 'agent-session/kev', actor: 'agent:kev'}]
   const playing = [{pageRef: 'ref:Control/user/flows/morning.html', nowRef: 'now:a', project: null, sinceMs: 1}]

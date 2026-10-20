@@ -34,6 +34,7 @@ import type {DreamJournalBinding} from './practice/dreamsHost'
 import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
 import {bindWorldBody, kernelWorldBodyOwner} from './body/worldBody'
 import type {SystemOverlayBinding} from './system/systemOverlay'
+import {bindSystemClock} from './system/systemClock'
 import './atlasHost.css'
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
@@ -447,6 +448,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let palaces: PalacesBinding | null = null
   let body: {dispose(): void} | null = null
   let system: SystemOverlayBinding | null = null
+  let systemClock: {dispose(): void} | null = null
   // The Sun's words stand in the Info view's hover and on the M4 plate's Sky section (T-PLACES-ONTO-ATLAS), the same words in both.
   const setSunLine = (text: string | null) => {
     words.sun(text)
@@ -471,6 +473,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     palaces?.dispose()
     body?.dispose()
     system?.dispose()
+    systemClock?.dispose()
     practiceDreams?.dispose()
     cancelReread()
     follower?.dispose()
@@ -503,8 +506,10 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // Your world's body (T-WORLDS §5 W3): read from its owner (the root register's space, AIKit's `aikit.world-body/v1`), drawn in the
   // Earth's place only while the World device chooses your own body; the Earth stays given (body/worldBody.ts).
   body = bindWorldBody({engine: mounted.engine, owner: kernelWorldBodyOwner(transport), changed: () => mounted.ctl.facesChanged?.()})
-  // Your system (T-WORLDS §5 W3 phase B): today's worlds as bodies in the System scale, each with what it holds on its rings, drawn over
-  // the sky from the readings the pane holds (system/SystemReadings.tsx); what an act there answers is said on the M4 plate.
+  // Your system (T-WORLDS §5 W3 phase B): today's worlds as bodies in the System scale, each with the agents at work and what they have just
+  // made on its rings, drawn over the sky from the readings the pane holds (system/SystemReadings.tsx); what an act there answers is said on
+  // the M4 plate. The instant it is drawn for moves once a minute, under this atlas's lifetime, so what an agent made drifts off as it ages.
+  systemClock = bindSystemClock()
   // (loaded with the atlas's own modules, as the mount is: the shell's import of the panel stays light)
   void import('./system/systemOverlay').then(overlay => { if (!retired) system = overlay.bindSystemOverlay({handle: mounted, said: notePlaceTool}) })
 
