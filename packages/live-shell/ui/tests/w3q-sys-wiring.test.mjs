@@ -10,7 +10,8 @@
 //                        your own world's body (or null for the Earth) and engine.setBodyTime(ms | null) for the occasion, and releases both;
 //                        occasionMs(window): the instant of a shared window, through the time authority (the midpoint of a bounded window, its
 //                        bounded edge when one is open, null for all time and for a window that does not parse)
-//   systemOverlay.ts     the disc of a world is bodyDisc(record, size, body.look), redrawn when the look moves though the record does not
+//   systemOverlay.ts     the disc of a world is bodyDisc(record, size, body.look, occasion): the look it is given, and the shared occasion in steps of
+//                        OCCASION_STEP_MS (null is Now); redrawn when the look or the occasion's step moves though the record does not
 //   AtlasProjectionPanel.tsx   binds bindBodyDraw to the mounted engine and the shared session, and gives bindWorldBody no engine to draw
 //                        with (it reads; one drawer draws)
 // The engine is a recording stub (the real one needs WebGL: UNVERIFIED headless, the lead's screen pass). The overlay runs in a minimal DOM
@@ -31,7 +32,7 @@ export const bodyDisc = (...args) => { (globalThis.__bodyDiscCalls ??= []).push(
 const orbitsShim = `data:text/javascript,${encodeURIComponent(`
 export class PlanetOrbits {
   constructor(parent, onEarth, options) { this.parent = parent; this.options = options; this.root = {style: {setProperty() {}}}; this.key = null; this.satellites = []; (globalThis.__orbits ??= []).push(this) }
-  set(key, satellites) { this.key = key; this.satellites = satellites }
+  set(key, satellites) { this.key = key; this.satellites = satellites; this.sets = (this.sets ?? 0) + 1 }
   update() {}
   destroy() { this.destroyed = true }
 }
@@ -104,17 +105,9 @@ const {groundSelection} = await import('../../../../desktop/cradle/src/techne/m0
 const {provingReading} = await import('../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts')
 const {parseTimestamp, calendarFields} = await import('../../../../desktop/cradle/src/techne/m0m5/timeline/scale.ts')
 const {instantOfYear, windowYear} = await import('../src/projections/atlas/sharedClock.ts')
-const optional = path => import(path).catch(error => ({absent: error instanceof Error ? error.message : String(error)}))
-const maturity = await optional('../src/projections/atlas/system/maturity.ts')
-const drawMod = await optional('../src/projections/atlas/system/bodyDraw.ts')
-const need = (name, where = 'system/bodyDraw.ts') => {
-  assert.ok(!('absent' in drawMod) && typeof drawMod[name] === 'function', `${where} exports ${name}() — not written yet (${'absent' in drawMod ? drawMod.absent : `${name} is missing`})`)
-  return drawMod[name]
-}
-const lookFor = facts => { assert.ok(!('absent' in maturity), 'system/maturity.ts exists (maturityOf, lookOf)'); return maturity.lookOf(maturity.maturityOf(facts)) }
-
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until the system lane lands'}
+const {lookOf, maturityOf} = await import('../src/projections/atlas/system/maturity.ts')
+const drawMod = await import('../src/projections/atlas/system/bodyDraw.ts')
+const lookFor = facts => lookOf(maturityOf(facts))
 
 // ── fixtures ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -158,8 +151,8 @@ const lastOf = (engine, name) => engine.calls.filter(call => call[0] === name).a
 
 // ── the globe's body takes the world's look ────────────────────────────────────────────────────────────────────────────────
 
-test('your own world\'s body is drawn with its own look: engine.setBody(record, look), the look read from how lived in the world is', pending, async () => {
-  const bindBodyDraw = need('bindBodyDraw')
+test('your own world\'s body is drawn with its own look: engine.setBody(record, look), the look read from how lived in the world is', async () => {
+  const {bindBodyDraw} = drawMod
   later((await chooseOwn()).dispose)
   setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, NEW]])))
   const engine = stubEngine()
@@ -176,8 +169,8 @@ test('your own world\'s body is drawn with its own look: engine.setBody(record, 
   assert.deepEqual(lastOf(engine, 'setBody')[1], RECORD, 'and the record has not moved: a look is read, never written into it')
 })
 
-test('choosing Earth draws no body and gives no look: engine.setBody(null); choosing your own again draws it with its look', pending, async () => {
-  const bindBodyDraw = need('bindBodyDraw')
+test('choosing Earth draws no body and gives no look: engine.setBody(null); choosing your own again draws it with its look', async () => {
+  const {bindBodyDraw} = drawMod
   later((await chooseOwn()).dispose)
   setBodies(systemOf(new Map([[YOURS.ref, LIVED]])))
   const engine = stubEngine()
@@ -191,8 +184,8 @@ test('choosing Earth draws no body and gives no look: engine.setBody(null); choo
   assert.deepEqual([own[1], own[2]], [RECORD, lookFor(LIVED)])
 })
 
-test('a body is redrawn only when its record or its look moved: a redraw is the generator\'s whole cost, so nothing else asks for one', pending, async () => {
-  const bindBodyDraw = need('bindBodyDraw')
+test('a body is redrawn only when its record or its look moved: a redraw is the generator\'s whole cost, so nothing else asks for one', async () => {
+  const {bindBodyDraw} = drawMod
   later((await chooseOwn()).dispose)
   const readings = new Map([[YOURS.ref, facts(100 * DAY, 10, 3)]])
   setBodies(systemOf(readings))
@@ -210,8 +203,8 @@ test('a body is redrawn only when its record or its look moved: a redraw is the 
   assert.notDeepEqual(lastOf(engine, 'setBody')[2], lookFor(facts(100 * DAY, 10, 3)))
 })
 
-test('with no system reading yet the body is drawn as the generator draws by default, no moon and no planet claimed; released, it stops', pending, async () => {
-  const bindBodyDraw = need('bindBodyDraw')
+test('with no system reading yet the body is drawn as the generator draws by default, no moon and no planet claimed; released, it stops', async () => {
+  const {bindBodyDraw} = drawMod
   later((await chooseOwn()).dispose)
   systemStore.publishSystem({state: 'unbound'})
   const engine = stubEngine()
@@ -228,8 +221,8 @@ test('with no system reading yet the body is drawn as the generator draws by def
 
 // ── the occasion drives the body's weather ─────────────────────────────────────────────────────────────────────────────────────
 
-test('the occasion is the shared window\'s instant, read through the time authority: the midpoint of a bounded window, its edge when one is open, Now otherwise', pending, () => {
-  const occasionMs = need('occasionMs')
+test('the occasion is the shared window\'s instant, read through the time authority: the midpoint of a bounded window, its edge when one is open, Now otherwise', () => {
+  const {occasionMs} = drawMod
   const A = '2020-03-01T00:00:00Z', B = '2020-03-05T00:00:00Z'
   assert.equal(occasionMs({from: A, to: B}), (parseTimestamp(A) + parseTimestamp(B)) / 2, 'a bounded window: its midpoint (the rule the Earth\'s day and night already follow, sharedClock.ts windowYear)')
   assert.equal(occasionMs({from: A, to: null}), parseTimestamp(A), 'only a start: the start')
@@ -243,8 +236,21 @@ test('the occasion is the shared window\'s instant, read through the time author
   assert.doesNotMatch(source, /Date\.parse|new Date\(|Date\.now|Math\.random/, 'instants are read only through the time authority, never the platform parser, and never from a clock')
 })
 
-test('engine.setBodyTime follows the shared window: null at Now, the occasion while a window stands, null again when it is cleared; the bind writes nothing', pending, async () => {
-  const bindBodyDraw = need('bindBodyDraw'), occasionMs = need('occasionMs')
+test('the occasion a disc is drawn at is told in steps, so a played occasion does not redraw a disc on every frame: occasionStep floors it, Now stays null', () => {
+  const {OCCASION_STEP_MS, occasionStep} = drawMod
+  assert.equal(typeof OCCASION_STEP_MS, 'number', 'systemOverlay\'s step is a named constant, bodyDraw.ts OCCASION_STEP_MS')
+  assert.ok(OCCASION_STEP_MS >= 60 * 60 * 1000 && OCCASION_STEP_MS <= 24 * 60 * 60 * 1000, 'weather is carried over days: a step between an hour and a day is below what a 52 px disc shows')
+  assert.equal(occasionStep(null), null, 'Now is null')
+  const at = 5 * OCCASION_STEP_MS
+  assert.equal(occasionStep(at), at)
+  assert.equal(occasionStep(at + OCCASION_STEP_MS - 1), at, 'the same step to its last millisecond')
+  assert.equal(occasionStep(at + OCCASION_STEP_MS), at + OCCASION_STEP_MS, 'the next step')
+  assert.equal(occasionStep(-1), -OCCASION_STEP_MS, 'before the epoch it floors downward, a deep year steps as any other')
+  assert.equal(occasionStep(-3 * OCCASION_STEP_MS), -3 * OCCASION_STEP_MS)
+})
+
+test('engine.setBodyTime follows the shared window: null at Now, the occasion while a window stands, null again when it is cleared; the bind writes nothing', async () => {
+  const {bindBodyDraw, occasionMs} = drawMod
   const store = sharedSession()
   const before = JSON.stringify(store.get())
   const engine = stubEngine()
@@ -269,8 +275,8 @@ test('engine.setBodyTime follows the shared window: null at Now, the occasion wh
   assert.equal(engine.calls.length, after, 'released with the atlas: the window no longer moves the engine')
 })
 
-test('a window already standing when the atlas binds is the occasion at once, and with no shared session standing the body is at Now', pending, () => {
-  const bindBodyDraw = need('bindBodyDraw'), occasionMs = need('occasionMs')
+test('a window already standing when the atlas binds is the occasion at once, and with no shared session standing the body is at Now', () => {
+  const {bindBodyDraw, occasionMs} = drawMod
   const past = {from: '1500-01-01T00:00:00Z', to: null}
   const standing = stubEngine()
   later(bindBodyDraw({engine: standing, store: sharedSession(past)}).dispose)
@@ -282,7 +288,7 @@ test('a window already standing when the atlas binds is the occasion at once, an
 
 // ── the system overlay's discs ──────────────────────────────────────────────────────────────────────────────────────────────────
 
-function overlayHarness({body = null, sky = true} = {}) {
+function overlayHarness({body = null, sky = true, store} = {}) {
   const parent = new FakeEl('div')
   const frames = []
   const handle = {
@@ -291,13 +297,13 @@ function overlayHarness({body = null, sky = true} = {}) {
     ctl: {state: {sky, graph: false}},
   }
   globalThis.__bodyDiscCalls = []; globalThis.__orbits = []
-  const binding = overlay.bindSystemOverlay({handle, said() {}})
+  const binding = overlay.bindSystemOverlay({handle, said() {}, ...(store ? {store} : {})})
   later(binding.dispose)
   return {handle, parent, frames, binding, frame: () => frames.forEach(fn => fn(0.016))}
 }
 const discsOf = () => (globalThis.__bodyDiscCalls ?? []).filter(([record]) => record.body_ref === OI_RECORD.body_ref)
 
-test('a world\'s disc beside your planet is drawn from its record and its look: bodyDisc(record, size, look), and redrawn when only the look moved', pending, () => {
+test('a world\'s disc beside your planet is drawn from its record and its look: bodyDisc(record, size, look, occasion), and redrawn when only the look moved', () => {
   setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, NEW]])))
   const {parent} = overlayHarness()
   const [oi] = systemStore.systemBodies().filter(body => !body.yours)
@@ -307,6 +313,7 @@ test('a world\'s disc beside your planet is drawn from its record and its look: 
   assert.deepEqual(first[0][0], OI_RECORD)
   assert.equal(first[0][1], 52, 'at its disc size')
   assert.deepEqual(first[0][2], lookFor(NEW), 'with the look its own readings give it: the overlay hands the generator the look, not the record alone')
+  assert.equal(first[0][3], null, 'and no occasion: Now')
   setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, NEW]])))
   assert.equal(discsOf().length, 1, 'the same record and look: not drawn again')
   setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, LIVED]])))
@@ -316,6 +323,51 @@ test('a world\'s disc beside your planet is drawn from its record and its look: 
   assert.equal(second[1][2].barren, 0)
   const canvas = parent.all().find(node => node.tagName === 'canvas')
   assert.ok(canvas && canvas.painted.length === 2, 'and each drawing is what the canvas shows')
+})
+
+test('a world\'s disc carries the weather of the shared occasion, drawn again only when the occasion moves to another step', () => {
+  const {OCCASION_STEP_MS, occasionStep, occasionMs} = drawMod
+  setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, LIVED]])))
+  const store = sharedSession()
+  overlayHarness({store})
+  assert.equal(discsOf().length, 1)
+  assert.equal(discsOf()[0][3], null, 'no window: Now')
+  const from = '2020-03-01T00:00:00Z', to = '2020-03-05T00:00:00Z'
+  store.setTimeWindow({from, to})
+  const past = discsOf()
+  assert.equal(past.length, 2, 'a past occasion: the disc is drawn again')
+  assert.equal(past[1][3], occasionStep(occasionMs({from, to})), 'at the occasion\'s step: the weather it had')
+  assert.deepEqual([past[1][0], past[1][1], past[1][2]], [past[0][0], past[0][1], past[0][2]], 'the record and the look are the same')
+  const step = occasionStep(occasionMs({from, to}))
+  const within = new Date(step + OCCASION_STEP_MS / 2).toISOString()
+  store.setTimeWindow({from: within, to: within})
+  assert.equal(discsOf().length, 2, 'the window moved within the step: not drawn again')
+  const next = new Date(step + OCCASION_STEP_MS + 1000).toISOString()
+  store.setTimeWindow({from: next, to: next})
+  assert.equal(discsOf().length, 3, 'to the next step: drawn again')
+  assert.equal(discsOf()[2][3], step + OCCASION_STEP_MS)
+  store.setTimeWindow(null)
+  assert.equal(discsOf().length, 4, 'Tap returns the occasion to Now')
+  assert.equal(discsOf()[3][3], null)
+})
+
+test('a reading that moved only the ages leaves the rings standing and ages their satellites in place; one that moved what rides them sets them again', () => {
+  const artifact = (name, agoMs) => ({ref: `central:source:control:root:Control/user/flows/${name}.html`, name, path: `Control/user/flows/${name}.html`, atMs: NOW - agoMs, project: null, sessionRef: null, actor: 'agent:kev'})
+  const read = (artifacts, nowMs = NOW) => setBodies(systemOf(new Map([[YOURS.ref, LIVED]]), {artifacts, nowMs}))
+  read([artifact('a', 60_000)])
+  overlayHarness()
+  const ringsOf = () => globalThis.__orbits.find(rings => rings.key === `world:${YOURS.ref}`)
+  const rings = ringsOf()
+  assert.equal(rings.sets, 1)
+  const [held] = rings.satellites
+  const before = held.age
+  read([artifact('a', 60_000)], NOW + 60_000)
+  assert.equal(ringsOf().sets, 1, 'a minute on: the rings were not set again (the orbits rebuild their controls on a set)')
+  assert.equal(held.age > before, true, 'but the satellite is older')
+  assert.ok(Math.abs(held.age - 120_000 / (24 * 60 * 60 * 1000)) < 1e-12, 'by the instant of the reading')
+  read([artifact('a', 60_000), artifact('b', 120_000)])
+  assert.equal(ringsOf().sets, 2, 'an artefact more: the rings are set again')
+  assert.deepEqual(ringsOf().satellites.map(s => s.name), ['a', 'b'])
 })
 
 test('what the overlay hands the rings is your system\'s satellites only: agents inner, artefacts outer, each with its kind', () => {
@@ -333,7 +385,7 @@ test('what the overlay hands the rings is your system\'s satellites only: agents
 
 // ── the attach binds one drawer ────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('the attach binds the body drawer to the mounted engine and the shared window, and gives bindWorldBody no engine to draw with', pending, () => {
+test('the attach binds the body drawer to the mounted engine and the shared window, and gives bindWorldBody no engine to draw with', () => {
   const source = readFileSync(new URL('../src/projections/atlas/AtlasProjectionPanel.tsx', import.meta.url), 'utf8').split('\n').filter(line => !/^\s*\/\//.test(line)).join('\n')
   assert.match(source, /bindBodyDraw\(\{[^}]*engine:\s*mounted\.engine[^}]*store:\s*disclosureSession/, 'bindBodyDraw({engine: mounted.engine, store: disclosureSession}) — the body\'s look and its occasion are drawn from one place')
   assert.match(source, /body = bindWorldBody\(\{engine:\s*\{\}/, 'bindWorldBody only reads (engine: {}): a second drawer without the look would overdraw the first')
