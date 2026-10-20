@@ -263,12 +263,28 @@ impl CentralClient {
     /// project query is the O-I ground the cradle opens over (`project:o-i`
     /// is Central's id; the owner Actions accept `o-i`).
     pub fn discover() -> Self {
-        let executable = env::var_os("OI_BIN")
+        Self::discover_in(|name| env::var_os(name))
+    }
+
+    /// [`discover`](Self::discover) over the given environment. A host that names its Central owner (`OI_CENTRAL_CTRL_BIN`, a
+    /// file) is asked directly: the suite's `oi central` only resolves that same executable and `exec`s into it with the same
+    /// arguments, so going through it costs a second process start (the `oi` binary, its composition read) on every read for the
+    /// same answer — the way the AIKit calls already go (`OI_AIKIT_BIN`). Without one, the suite route stands: resolution never
+    /// guesses a binary the host did not name.
+    fn discover_in(var: impl Fn(&str) -> Option<std::ffi::OsString>) -> Self {
+        let central_root = var("OI_CENTRAL_ROOT").map(PathBuf::from);
+        let project_query = var("OI_CENTRAL_PROJECT_QUERY")
+            .and_then(|query| query.into_string().ok())
+            .unwrap_or_else(|| "o-i".to_owned());
+        if let Some(owner) = var("OI_CENTRAL_CTRL_BIN")
+            .map(PathBuf::from)
+            .filter(|path| path.is_file())
+        {
+            return Self::with(owner, central_root, project_query);
+        }
+        let executable = var("OI_BIN")
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from("oi"));
-        let central_root = env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from);
-        let project_query =
-            env::var("OI_CENTRAL_PROJECT_QUERY").unwrap_or_else(|_| "o-i".to_owned());
         let mut client = Self::with(executable, central_root, project_query);
         client.suite_route = true;
         client
@@ -1220,6 +1236,61 @@ pub const CRADLE_ACTOR_KIND: &str = "human";
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The environment of a host, as `discover_in` reads it.
+    fn environment(
+        pairs: &[(&str, &std::path::Path)],
+    ) -> impl Fn(&str) -> Option<std::ffi::OsString> {
+        let pairs: Vec<(String, std::ffi::OsString)> = pairs
+            .iter()
+            .map(|(name, value)| ((*name).to_owned(), value.as_os_str().to_owned()))
+            .collect();
+        move |name| {
+            pairs
+                .iter()
+                .find(|(held, _)| held == name)
+                .map(|(_, value)| value.clone())
+        }
+    }
+
+    #[test]
+    fn a_host_that_names_its_central_owner_asks_it_directly_and_otherwise_the_suite_route_stands() {
+        let dir = std::env::temp_dir().join(format!("central-client-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let ctrl = dir.join("ctrl");
+        std::fs::write(&ctrl, "").unwrap();
+        let oi = std::path::Path::new("/suite/oi");
+        let ground = std::path::Path::new("/ground");
+
+        let direct = CentralClient::discover_in(environment(&[
+            ("OI_BIN", oi),
+            ("OI_CENTRAL_CTRL_BIN", &ctrl),
+            ("OI_CENTRAL_ROOT", ground),
+        ]));
+        assert_eq!(direct.executable, ctrl);
+        assert!(
+            !direct.suite_route,
+            "no `oi central` in front of a named owner"
+        );
+        assert_eq!(direct.central_root.as_deref(), Some(ground));
+        assert_eq!(direct.project_query, "o-i");
+
+        // Naming nothing, or something that is not a file, leaves the suite route.
+        for named in [
+            environment(&[("OI_BIN", oi)]),
+            environment(&[("OI_BIN", oi), ("OI_CENTRAL_CTRL_BIN", &dir.join("absent"))]),
+            environment(&[("OI_BIN", oi), ("OI_CENTRAL_CTRL_BIN", &dir)]),
+        ] {
+            let suite = CentralClient::discover_in(named);
+            assert_eq!(suite.executable, oi);
+            assert!(suite.suite_route);
+        }
+        // No suite named either: `oi` on the path, as before.
+        let bare = CentralClient::discover_in(environment(&[]));
+        assert_eq!(bare.executable, PathBuf::from("oi"));
+        assert!(bare.suite_route);
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 
     #[test]
     fn the_write_core_targets_the_owner_actions_and_writes_no_files_itself() {

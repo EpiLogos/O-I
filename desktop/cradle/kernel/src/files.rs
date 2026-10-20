@@ -1,8 +1,8 @@
 //! Read the Central-owned filesystem contract. No filesystem traversal, path
 //! identity construction, adoption or file mutation belongs in this consumer.
-use crate::flow::CentralClient;
+use crate::flow::{CentralClient, OwnerCallError};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Location {
@@ -118,6 +118,104 @@ pub fn read(client: &CentralClient, location: &Location) -> Result<Reading, Stri
         .run("central.files.read", json!({"location":location}))
         .map_err(|e| e.to_string())?;
     validate_reading(location, value)
+}
+/// How many locations one `central.files.read-batch` call asks for (Central's own bound).
+const BATCH: usize = 256;
+/// The code Central gives a location it left unread because the call had carried its fill.
+const BATCH_BUDGET_REACHED: &str = "batch_budget_reached";
+
+/// Read many locations with as few owner calls as Central allows. Each is answered exactly as
+/// [`read`] answers it — the same reading or the same refusal text — in the order asked, but a
+/// caller holding a list pays one owner process and one derivation of Central's source tables
+/// for all of it, not one each. Central leaves what a call cannot carry for another call, which
+/// is asked here; an owner that does not know the batch (an older Central) is asked one by one.
+pub fn read_many(client: &CentralClient, locations: &[Location]) -> Vec<Result<Reading, String>> {
+    if locations.len() < 2 {
+        return locations
+            .iter()
+            .map(|location| read(client, location))
+            .collect();
+    }
+    let mut answers: Vec<Option<Result<Reading, String>>> =
+        locations.iter().map(|_| None).collect();
+    for start in (0..locations.len()).step_by(BATCH) {
+        let mut asking: Vec<usize> = (start..(start + BATCH).min(locations.len())).collect();
+        while !asking.is_empty() {
+            let wanted: Vec<&Location> = asking.iter().map(|&index| &locations[index]).collect();
+            let Some(items) = read_batch(client, &wanted) else {
+                for &index in &asking {
+                    answers[index] = Some(read(client, &locations[index]));
+                }
+                break;
+            };
+            let mut left = Vec::new();
+            for (&index, item) in asking.iter().zip(items) {
+                match item {
+                    Some(answer) => answers[index] = Some(answer),
+                    None => left.push(index),
+                }
+            }
+            if left.len() == asking.len() {
+                // A call that answered nothing would be asked again for ever: ask one by one.
+                for &index in &left {
+                    answers[index] = Some(read(client, &locations[index]));
+                }
+                break;
+            }
+            asking = left;
+        }
+    }
+    answers
+        .into_iter()
+        .map(|answer| answer.expect("every location is answered"))
+        .collect()
+}
+/// One location's place in a batch answer: its reading or refusal, or `None` when Central did not read it in this
+/// call (the call had carried its fill) and it is to be asked for again.
+type Batched = Option<Result<Reading, String>>;
+/// One `central.files.read-batch` call. `None` when the owner cannot batch — it refused the
+/// action (an older Central), or answered something other than a batch reading of the locations
+/// asked — so the caller reads them one by one. An owner that cannot be started answers every
+/// location with that, as a single read would.
+fn read_batch(client: &CentralClient, wanted: &[&Location]) -> Option<Vec<Batched>> {
+    let value = match client.run("central.files.read-batch", json!({"locations": wanted})) {
+        Ok(value) => value,
+        Err(error @ OwnerCallError::Unavailable { .. }) => {
+            let message = error.to_string();
+            return Some(wanted.iter().map(|_| Some(Err(message.clone()))).collect());
+        }
+        Err(_) => return None,
+    };
+    let items = value.get("items")?.as_array()?;
+    if value["schema"] != "central.file-batch-reading/v1" || items.len() != wanted.len() {
+        return None;
+    }
+    let mut batched = Vec::with_capacity(items.len());
+    for (item, location) in items.iter().zip(wanted) {
+        if item["location"] != json!(location) {
+            return None;
+        }
+        let result = &item["result"];
+        batched.push(if result["ok"] == true {
+            Some(validate_reading(location, result["data"].clone()))
+        } else if result.pointer("/error/code").and_then(Value::as_str)
+            == Some(BATCH_BUDGET_REACHED)
+        {
+            None
+        } else {
+            // The text `run` gives a refused single read.
+            Some(Err(OwnerCallError::Refused {
+                message: result
+                    .pointer("/error/message")
+                    .and_then(Value::as_str)
+                    .or_else(|| result.get("message").and_then(Value::as_str))
+                    .unwrap_or("Central owner Action failed")
+                    .to_owned(),
+            }
+            .to_string()))
+        });
+    }
+    Some(batched)
 }
 pub(crate) fn validate_reading(
     location: &Location,
@@ -425,4 +523,239 @@ pub fn material_content_type(mime_hint: Option<&str>, path: &str) -> String {
         _ => "application/octet-stream",
     }
     .to_owned()
+}
+
+#[cfg(test)]
+mod read_many_tests {
+    use super::*;
+    use std::{fs, path::PathBuf};
+
+    /// A fake Central file owner over a temporary ground. It answers `central.files.read` and, unless told not to,
+    /// `central.files.read-batch` with Central's shapes; every call's action is appended to `calls.log`. `limit` makes a
+    /// batch leave everything after that many readings for another call (`batch_budget_reached`). It is not Central; it
+    /// proves the kernel's asking and its mapping of what comes back.
+    struct Owner(PathBuf);
+    impl Owner {
+        fn new(batch: bool, limit: Option<usize>) -> Self {
+            let base = std::env::temp_dir().join(format!(
+                "read-many-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            fs::create_dir_all(base.join("ground")).unwrap();
+            fs::write(base.join("batch"), if batch { "1" } else { "0" }).unwrap();
+            fs::write(
+                base.join("limit"),
+                limit.map_or("none".to_owned(), |limit| limit.to_string()),
+            )
+            .unwrap();
+            let owner = base.join("owner");
+            fs::write(
+                &owner,
+                r#"#!/usr/bin/env python3
+import hashlib, json, pathlib, sys
+args = sys.argv[1:]
+root = pathlib.Path(args[args.index('--root') + 1])
+base = root.parent
+name = args[-2]
+request = json.loads(sys.stdin.read() if args[-1] == '-' else args[-1])
+with open(base / 'calls.log', 'a') as log: log.write(name + '\n')
+def location(path): return {'schema': 'central.path-ref/v1', 'ref': f'central:path:{root}:{path}', 'root': str(root), 'path': path}
+def read(loc):
+    path = loc['path']
+    if not (root / path).is_file(): return {'ok': False, 'status': 'invalid_input', 'action': 'central.files.read', 'error': {'code': 'invalid_input', 'message': 'No such native file'}}
+    text = (root / path).read_text()
+    return {'ok': True, 'status': 'success', 'action': 'central.files.read', 'data': {
+        'schema': 'central.file-reading/v1', 'location': loc, 'revision': 'sha256:' + hashlib.sha256(text.encode()).hexdigest(),
+        'byte_len': len(text), 'content_encoding': 'utf-8', 'content': text, 'project': None, 'source': None,
+        'automatic_agent_or_model_invocation': False}}
+def refuse(message): print(json.dumps({'ok': False, 'error': {'message': message}})); sys.exit(2)
+if name == 'central.files.read':
+    envelope = read(request['location'])
+    print(json.dumps(envelope)); sys.exit(0 if envelope['ok'] else 2)
+elif name == 'central.files.read-batch' and (base / 'batch').read_text() == '1':
+    limit = (base / 'limit').read_text()
+    limit = None if limit == 'none' else int(limit)
+    items = []
+    for loc in request['locations']:
+        if limit is not None and len([i for i in items if i['result']['ok']]) >= limit:
+            result = {'ok': False, 'status': 'unavailable_capability', 'action': 'central.files.read', 'error': {'code': 'batch_budget_reached', 'message': 'ask again'}}
+        else:
+            result = read(loc)
+        items.append({'location': loc, 'result': result})
+    print(json.dumps({'ok': True, 'status': 'success', 'action': name, 'data': {'schema': 'central.file-batch-reading/v1',
+        'requested': len(items), 'answered': 0, 'refused': 0, 'items': items, 'automatic_agent_or_model_invocation': False}}))
+else:
+    refuse('Unexpected owner action ' + name)
+"#,
+            )
+            .unwrap();
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&owner, fs::Permissions::from_mode(0o700)).unwrap();
+            // A parallel test's fork may hold this process's write handle on the fresh stub (ETXTBSY):
+            // re-materialise it through a child.
+            assert!(std::process::Command::new("/bin/sh")
+                .args([
+                    "-c",
+                    r#"cp "$1" "$1.settle" && mv "$1.settle" "$1""#,
+                    "settle"
+                ])
+                .arg(&owner)
+                .status()
+                .unwrap()
+                .success());
+            Self(base)
+        }
+        fn client(&self) -> CentralClient {
+            CentralClient::with(
+                self.0.join("owner"),
+                Some(self.0.join("ground")),
+                "unrelated-project".into(),
+            )
+        }
+        /// `count` files `f0.md`…; the locations asked for are those, then one absent file.
+        fn files(&self, count: usize) -> Vec<Location> {
+            let root = self.0.join("ground");
+            let location = |name: &str| Location {
+                schema: "central.path-ref/v1".into(),
+                ref_id: format!("central:path:{}:{name}", root.display()),
+                root: root.display().to_string(),
+                path: name.into(),
+            };
+            (0..count)
+                .map(|index| {
+                    let name = format!("f{index}.md");
+                    fs::write(root.join(&name), format!("file {index}\n")).unwrap();
+                    location(&name)
+                })
+                .collect()
+        }
+        fn absent(&self) -> Location {
+            let root = self.0.join("ground");
+            Location {
+                schema: "central.path-ref/v1".into(),
+                ref_id: format!("central:path:{}:absent.md", root.display()),
+                root: root.display().to_string(),
+                path: "absent.md".into(),
+            }
+        }
+        fn calls(&self) -> Vec<String> {
+            fs::read_to_string(self.0.join("calls.log"))
+                .unwrap_or_default()
+                .lines()
+                .map(str::to_owned)
+                .collect()
+        }
+    }
+    impl Drop for Owner {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn many_locations_cost_one_owner_call_and_read_as_a_single_read_reads() {
+        let owner = Owner::new(true, None);
+        let client = owner.client();
+        let mut locations = owner.files(5);
+        locations.insert(2, owner.absent());
+        let batched = read_many(&client, &locations);
+        assert_eq!(owner.calls(), vec!["central.files.read-batch"]);
+        assert_eq!(batched.len(), locations.len());
+        for (location, batched) in locations.iter().zip(batched) {
+            assert_eq!(batched, read(&client, location), "{}", location.path);
+        }
+        // A refusal reads in a batch as it reads singly.
+        assert_eq!(
+            read(&client, &owner.absent()).unwrap_err(),
+            "Central owner Action refused: No such native file"
+        );
+    }
+
+    #[test]
+    fn an_owner_that_cannot_batch_is_asked_one_by_one() {
+        let owner = Owner::new(false, None);
+        let client = owner.client();
+        let locations = owner.files(4);
+        let readings = read_many(&client, &locations);
+        assert!(readings.iter().all(Result::is_ok));
+        let calls = owner.calls();
+        assert_eq!(
+            calls[0], "central.files.read-batch",
+            "the batch is tried once"
+        );
+        assert_eq!(
+            calls[1..],
+            vec!["central.files.read"; 4],
+            "then each location on its own"
+        );
+        for (location, reading) in locations.iter().zip(readings) {
+            assert_eq!(reading, read(&client, location));
+        }
+    }
+
+    #[test]
+    fn what_a_call_leaves_is_asked_for_again_and_a_call_that_answers_nothing_falls_back() {
+        let owner = Owner::new(true, Some(2));
+        let client = owner.client();
+        let locations = owner.files(5);
+        let readings = read_many(&client, &locations);
+        assert!(readings.iter().all(Result::is_ok), "{readings:?}");
+        // 5 locations, 2 per call: 5 → 3 → 1 left, so three batch calls.
+        assert_eq!(owner.calls(), vec!["central.files.read-batch"; 3]);
+        for (location, reading) in locations.iter().zip(readings) {
+            assert_eq!(reading, read(&client, location));
+        }
+        let stuck = Owner::new(true, Some(0));
+        let client = stuck.client();
+        let locations = stuck.files(3);
+        let readings = read_many(&client, &locations);
+        assert!(readings.iter().all(Result::is_ok), "{readings:?}");
+        assert_eq!(
+            stuck.calls(),
+            vec![
+                "central.files.read-batch",
+                "central.files.read",
+                "central.files.read",
+                "central.files.read"
+            ],
+            "one call that answered nothing, then one by one"
+        );
+    }
+
+    #[test]
+    fn more_than_one_batch_of_locations_is_asked_in_batches() {
+        let owner = Owner::new(true, None);
+        let client = owner.client();
+        let locations = owner.files(BATCH + 44);
+        let readings = read_many(&client, &locations);
+        assert_eq!(readings.len(), BATCH + 44);
+        assert!(readings.iter().all(Result::is_ok));
+        assert_eq!(owner.calls(), vec!["central.files.read-batch"; 2]);
+    }
+
+    #[test]
+    fn an_owner_that_cannot_be_started_answers_every_location_with_that() {
+        let owner = Owner::new(true, None);
+        let locations = owner.files(3);
+        let client = CentralClient::with(
+            owner.0.join("no-such-owner"),
+            Some(owner.0.join("ground")),
+            "unrelated-project".into(),
+        );
+        let readings = read_many(&client, &locations);
+        assert_eq!(readings.len(), 3);
+        for reading in readings {
+            assert!(reading.unwrap_err().contains("unavailable"));
+        }
+        assert!(owner.calls().is_empty());
+        // One location, or none, is not worth a batch.
+        assert!(read_many(&owner.client(), &[]).is_empty());
+        let one = owner.files(1);
+        assert!(read_many(&owner.client(), &one)[0].is_ok());
+        assert_eq!(owner.calls(), vec!["central.files.read"]);
+    }
 }

@@ -27,9 +27,6 @@ pub const WORKS_HOME: &str = "Control/user/flows";
 /// (the owner's Flow documents) are not Expressions and are not read.
 pub const WORK_FILE_SUFFIX: &str = ".expression.json";
 const MAX_LISTED: usize = 256;
-/// Concurrent owner reads while listing; each is its own owner process.
-const READERS: usize = 8;
-
 /// The home's part of one `list` reading.
 pub struct Listing {
     /// One row per Expression file whose work is not open, in the owner's
@@ -102,25 +99,14 @@ pub fn list(client: &CentralClient, open: &BTreeSet<&str>) -> Listing {
     }
 }
 
-/// Read each file through the owner, `READERS` at a time, in order.
+/// Read each file through the owner, in order, in as few owner calls as it allows.
 fn read_all(
     client: &CentralClient,
     entries: &[files::Entry],
 ) -> Vec<Result<files::Reading, String>> {
-    let mut readings = Vec::with_capacity(entries.len());
-    for chunk in entries.chunks(READERS) {
-        std::thread::scope(|scope| {
-            let reads: Vec<_> = chunk
-                .iter()
-                .map(|entry| scope.spawn(move || files::read(client, &entry.location)))
-                .collect();
-            readings.extend(reads.into_iter().map(|read| {
-                read.join()
-                    .unwrap_or_else(|_| Err("The owner read of this file did not return".into()))
-            }));
-        });
-    }
-    readings
+    let locations: Vec<files::Location> =
+        entries.iter().map(|entry| entry.location.clone()).collect();
+    files::read_many(client, &locations)
 }
 
 #[cfg(test)]
