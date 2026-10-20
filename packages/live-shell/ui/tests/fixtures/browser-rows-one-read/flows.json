@@ -1,0 +1,26 @@
+{
+  "_": "Control/user/flows as the page owner lists it (kernel page.rs list_pages), modelled on the owner's ground of 20 Oct: thirteen Flows, each with the `meta` its ql-doc island carries (title, revision, participants). Names are real minted names; the Run and journal titles are the ground's own.",
+  "root": "/Users/admin/Central",
+  "path": "Control/user/flows",
+  "flows": [
+    {"name": "flow-2026-10-12-0910.html", "byte_len": 61440, "meta": {"title": "Mercurius and the stone", "revision": 12, "participants": [
+      {"initial": "F", "kind": "person", "key": "p-3ca6f89f36ea6c94", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}},
+      {"initial": "Z", "kind": "agent", "key": "p-fizz", "name": "Fizz", "binding": {"basis": "declared", "owner": "document", "ref": "codex:fizz"}},
+      {"initial": "H", "kind": "agent", "key": "p-honey", "binding": {"basis": "declared", "owner": "document", "ref": "codex:honey"}}]}},
+    {"name": "flow-2026-10-07-1350.html", "byte_len": 77673, "meta": {"title": "", "revision": 0, "participants": [{"initial": "F", "kind": "person", "key": "p-4e8141574c8b1111", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}}]}},
+    {"name": "flow-2026-10-07-1349.html", "byte_len": 77673, "meta": {"title": "", "revision": 0, "participants": [{"initial": "F", "kind": "person", "key": "p-c7155487efaf8de4", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}}]}},
+    {"name": "flow-2026-10-07-1348.html", "byte_len": 77673, "meta": {"title": "", "revision": 0, "participants": [{"initial": "F", "kind": "person", "key": "p-b9e3574b850a1497", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}}]}},
+    {"name": "flow-2026-10-07-1347.html", "byte_len": 77673, "meta": {"title": "", "revision": 0, "participants": [{"initial": "F", "kind": "person", "key": "p-dee48366e93cec21", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}}]}},
+    {"name": "flow-2026-10-07-1346.html", "byte_len": 77673, "meta": {"title": "", "revision": 0, "participants": [{"initial": "F", "kind": "person", "key": "p-bbd1ff1c42e28e7c", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}}]}},
+    {"name": "flow-2026-10-07-1345.html", "byte_len": 77673, "meta": {"title": "", "revision": 0, "participants": [{"initial": "F", "kind": "person", "key": "p-4697ec13fe035d54", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}}]}},
+    {"name": "flow-2026-10-07-1344.html", "byte_len": 77673, "meta": {"title": "", "revision": 0, "participants": [{"initial": "F", "kind": "person", "key": "p-4e645549dab69d1d", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}}]}},
+    {"name": "flow-2026-10-07-1343.html", "byte_len": 77673, "meta": {"title": "", "revision": 0, "participants": [{"initial": "F", "kind": "person", "key": "p-3ca6f89f36ea6c94", "role": "contributor", "binding": {"owner": "document", "ref": "", "basis": "unknown"}}]}},
+    {"name": "flow-2026-10-03-1432.html", "byte_len": 93207, "meta": {"title": "Factory original development Run — execution and continuation", "revision": 8, "participants": [
+      {"binding": {"basis": "declared", "owner": "document", "ref": "codex:01a0f43b-0ba9-75a3-8b80-2e783a9fa473"}, "initial": "C", "key": "p-34e465b5ba1031cc", "kind": "agent", "name": "Factory coordinator"}]}},
+    {"name": "flow-2026-09-23-1832.html", "byte_len": 44156, "meta": {"title": "", "revision": 0}},
+    {"name": "flow-2026-09-14-2236.html", "byte_len": 45868, "meta": {"title": "Shared field — first curated artifact", "revision": 1}},
+    {"name": "oi203-multiagent-20260930.html", "byte_len": 2134, "meta": {"title": "OI203 joined two-Workcell episode: multiagent", "revision": 1, "participants": [
+      {"binding": {"basis": "declared", "owner": "central", "ref": "human:owner"}, "initial": "O", "key": "p-owner", "kind": "person", "name": "Owner", "role": "contributor"},
+      {"binding": {"basis": "declared", "owner": "central", "ref": "agent:mira"}, "initial": "M", "key": "p-mira", "kind": "agent", "name": "Mira"}]}}
+  ]
+}

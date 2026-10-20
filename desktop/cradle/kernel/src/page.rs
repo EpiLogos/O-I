@@ -750,9 +750,26 @@ pub fn list_pages(
     let locations: Vec<Location> = taken.iter().map(|entry| entry.location.clone()).collect();
     for (entry, reading) in taken.into_iter().zip(files::read_many(client, &locations)) {
         match reading.and_then(|reading| read_island(&reading.content).map(|island| (reading, island))) {
-            Ok((reading, island)) if form_of(&island) != "unknown" => pages.push(json!({"location": entry.location, "name": entry.name,
-                "form": form_of(&island), "title": island["meta"]["title"], "revision": reading.revision,
-                "world": if island["profile"] == "oi.page/v1" { island["bindings"]["worldRef"].clone() } else { island["meta"]["world"].clone() }})),
+            Ok((reading, island)) if form_of(&island) != "unknown" => {
+                let mut row = json!({"location": entry.location, "name": entry.name,
+                    "form": form_of(&island), "title": island["meta"]["title"], "revision": reading.revision,
+                    "world": if island["profile"] == "oi.page/v1" { island["bindings"]["worldRef"].clone() } else { island["meta"]["world"].clone() }});
+                // A Flow's browser row draws its title, its agents and its revision. They are in the island this reading already holds, so
+                // the listing carries them (the shell parses them with rowWords.ts `flowReadingOf`) and the browser reads each Flow once,
+                // to list it. A participant is cut to the three keys that parser reads.
+                if form_of(&island) == "flow" {
+                    let participants: Vec<Value> = island["meta"]["participants"]
+                        .as_array()
+                        .map(|list| {
+                            list.iter()
+                                .map(|participant| json!({"kind": participant["kind"], "name": participant["name"], "initial": participant["initial"]}))
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    row["flow"] = json!({"title": island["meta"]["title"], "revision": island["meta"]["revision"], "participants": participants});
+                }
+                pages.push(row);
+            }
             Ok(_) => not_pages.push(json!({"name": entry.name, "why": "its island is neither a reference page nor a Flow"})),
             Err(why) => not_pages.push(json!({"name": entry.name, "why": why})),
         }
@@ -1568,6 +1585,32 @@ else:
             .as_str()
             .unwrap()
             .contains("no ql-doc island"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_flow_is_listed_with_the_words_its_browser_row_draws() {
+        let stub = Stub::new("list-flow-words");
+        let mut island = flow();
+        island["meta"]["participants"] = json!([
+            {"kind": "agent", "name": "Fizz", "initial": "Z", "binding": {"ref": "codex:fizz"}},
+            {"kind": "person", "initial": "F", "key": "p-1"}
+        ]);
+        stub.put("Control/user/flows/beings-1.html", &page(being()));
+        stub.put("Control/user/flows/flow-1.html", &page(island));
+        let listing = list_pages(&stub.client, "Control/user/flows", None).unwrap();
+        let pages = listing["pages"].as_array().unwrap();
+        let flow_row = pages.iter().find(|page| page["form"] == "flow").unwrap();
+        assert_eq!(
+            flow_row["flow"],
+            json!({"title": "Untitled exchange", "revision": 3,
+                "participants": [{"kind": "agent", "name": "Fizz", "initial": "Z"}, {"kind": "person", "name": null, "initial": "F"}]})
+        );
+        let being_row = pages.iter().find(|page| page["form"] == "being").unwrap();
+        assert!(
+            being_row.get("flow").is_none(),
+            "only a Flow carries a Flow's words"
+        );
     }
 
     #[cfg(unix)]
