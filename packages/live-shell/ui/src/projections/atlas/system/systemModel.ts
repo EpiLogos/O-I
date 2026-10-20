@@ -26,6 +26,7 @@ import type {Palette} from '../src/types/field'
 import type {WorldBodyRecord} from '../src/globe/body'
 import {fnv1a, paletteOfRef} from '../provider/suiteReading'
 import {firstBody} from '../body/worldBody'
+import {lookOf, maturityOf, type WorldFacts, type WorldLook} from './maturity'
 
 /** A world's body as its owner last answered. */
 export type SystemBodyReading =
@@ -69,6 +70,8 @@ export interface SystemBody {
   /** what the body says, in one line: built, seeded and not yet written, being read, or the owner's refusal */
   readonly standing: string
   /** where it lands on your planet; null for your own world, and for a world that has not landed on it */
+  /** how finished its body looks, read from how lived in the world is (system/maturity.ts): none for a world whose readings are not in */
+  readonly look: WorldLook
   readonly landing: {readonly lat: number; readonly lon: number} | null
   /** why it has no landing on your planet (null for your own world and a landed one) */
   readonly unlanded: string | null
@@ -113,6 +116,8 @@ export interface SystemInput {
   readonly artifacts?: readonly SystemArtifact[]
   /** the instant the System is drawn for, ms (the artefacts' ages are read against it) */
   readonly nowMs?: number
+  /** how lived in each world is, by the world's ref (system/worldFacts.ts); a world not in it claims no look */
+  readonly facts?: ReadonlyMap<string, WorldFacts>
 }
 
 /** How long an artefact stays in orbit: one Day, rolling, from the moment it was made. Reasoning, from the owner's ground
@@ -173,6 +178,12 @@ function satellitesOf(world: CentralWorld, input: SystemInput): SystemSatellite[
   return [...sessions, ...artifacts]
 }
 
+/** A world's look: from its own readings, your own world is not exempt; none (the generator's default) while they are not in. */
+function lookOfWorld(world: CentralWorld, input: SystemInput): WorldLook {
+  const facts = input.facts?.get(world.ref)
+  return facts ? lookOf(maturityOf(facts)) : {}
+}
+
 const NO_BODY_YET = 'no body yet: drawn from a body seeded from its ref, and nothing is written until you build it'
 
 /** One world's body: the owner's record, or the body seeded from its ref, or hollow while it is not read. Pure. */
@@ -202,7 +213,7 @@ export function systemOf(input: SystemInput): SystemBody[] {
     return {
       key: worldKey(world.ref), world, yours: isYours, ...body, colour: paletteOfRef(body.bodyRef),
       landing: landsHere ? {lat: landing!.lat, lon: landing!.lon} : null, unlanded,
-      phase: isYours ? 0 : ringPhase(world.ref), satellites: satellitesOf(world, input),
+      phase: isYours ? 0 : ringPhase(world.ref), look: lookOfWorld(world, input), satellites: satellitesOf(world, input),
     }
   })
 }

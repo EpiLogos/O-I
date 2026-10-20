@@ -58,20 +58,11 @@ export async function load(u, c, n) {
 
 globalThis.__CRADLE_WALK__ = false
 const model = await import('../src/projections/atlas/system/systemModel.ts')
-const mod = await import('../src/projections/atlas/system/maturity.ts').catch(error => ({absent: error instanceof Error ? error.message : String(error)}))
-const maturitySource = (() => { try { return readFileSync(new URL('../src/projections/atlas/system/maturity.ts', import.meta.url), 'utf8') } catch { return null } })()
-
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until the system lane lands'}
-
-/** The module, or a failed assertion that says it is not written (never an import error that hides the other tests). */
-const lib = () => {
-  assert.ok(!('absent' in mod) && typeof mod.maturityOf === 'function' && typeof mod.lookOf === 'function',
-    `system/maturity.ts exports maturityOf() and lookOf() — not written yet (${'absent' in mod ? mod.absent : 'an export is missing'})`)
-  for (const name of ['AGE_FULL_MS', 'HELD_FULL', 'SHAPED_FULL', 'LOOK_FROM', 'LOOK_TO']) assert.equal(typeof mod[name], 'number', `maturity.ts exports ${name}, a named threshold with its reasoning beside it`)
-  assert.ok(mod.WEIGHTS && typeof mod.WEIGHTS.age === 'number' && typeof mod.WEIGHTS.held === 'number' && typeof mod.WEIGHTS.shaped === 'number', 'maturity.ts exports WEIGHTS {age, held, shaped}')
-  return mod
-}
+const mod = await import('../src/projections/atlas/system/maturity.ts')
+const {worldFactsOf} = await import('../src/projections/atlas/system/worldFacts.ts')
+const maturitySource = readFileSync(new URL('../src/projections/atlas/system/maturity.ts', import.meta.url), 'utf8')
+/** The module's own exports, named (maturityOf, lookOf and the thresholds each with its reasoning beside it in the source). */
+const lib = () => mod
 
 const MIN = 60_000, DAY = 24 * 60 * MIN, YEAR = 365 * DAY
 const facts = (ageMs = 0, held = 0, shaped = 0) => ({ageMs, held, shaped})
@@ -79,7 +70,7 @@ const near = (a, b, why) => assert.ok(Math.abs(a - b) < 1e-9, `${why}: ${a} vs $
 
 // ── what a new world and a lived-in one are ────────────────────────────────────────────────────────────────────────────────
 
-test('a new empty world is no finish at all, a moon; a world lived in for a year with many pages and shaping is complete, a planet with weather', pending, () => {
+test('a new empty world is no finish at all, a moon; a world lived in for a year with many pages and shaping is complete, a planet with weather', () => {
   const {maturityOf, lookOf, AGE_FULL_MS, HELD_FULL, SHAPED_FULL} = lib()
   assert.equal(maturityOf(facts(0, 0, 0)), 0, 'a world with no age, nothing held and no shaping: maturity 0')
   assert.equal(lookOf(0).barren, 1, 'maturity 0: a barely shaped grey moon (barren 1: dry, airless, no cloud)')
@@ -90,7 +81,7 @@ test('a new empty world is no finish at all, a moon; a world lived in for a year
   assert.ok(maturityOf(facts(DAY, 1, 1)) < .25, 'a day-old world with a page and a shaping is still near the moon')
 })
 
-test('each of the three readings counts: its own weight, none alone a whole planet, the three together exactly one', pending, () => {
+test('each of the three readings counts: its own weight, none alone a whole planet, the three together exactly one', () => {
   const {maturityOf, WEIGHTS, AGE_FULL_MS, HELD_FULL, SHAPED_FULL} = lib()
   near(WEIGHTS.age + WEIGHTS.held + WEIGHTS.shaped, 1, 'the weights sum to one, so all three at their full make exactly one')
   for (const key of ['age', 'held', 'shaped']) assert.ok(WEIGHTS[key] > 0 && WEIGHTS[key] < 1, `${key} counts, and does not count for everything`)
@@ -102,7 +93,7 @@ test('each of the three readings counts: its own weight, none alone a whole plan
 
 // ── monotone, bounded, deterministic ─────────────────────────────────────────────────────────────────────────────────────────
 
-test('more of any reading makes a world more finished, never less, and each reading has a named full beyond which more changes nothing', pending, () => {
+test('more of any reading makes a world more finished, never less, and each reading has a named full beyond which more changes nothing', () => {
   const {maturityOf, AGE_FULL_MS, HELD_FULL, SHAPED_FULL} = lib()
   const base = facts(AGE_FULL_MS / 3, HELD_FULL / 3, SHAPED_FULL / 3)
   const ladders = [['ageMs', AGE_FULL_MS], ['held', HELD_FULL], ['shaped', SHAPED_FULL]]
@@ -119,7 +110,7 @@ test('more of any reading makes a world more finished, never less, and each read
   }
 })
 
-test('no change of one reading ever lowers maturity, over many readings together (deterministic pseudo-random pairs, never Math.random)', pending, () => {
+test('no change of one reading ever lowers maturity, over many readings together (deterministic pseudo-random pairs, never Math.random)', () => {
   const {maturityOf, AGE_FULL_MS, HELD_FULL, SHAPED_FULL} = lib()
   let x = 20261020
   const next = () => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296 }
@@ -131,7 +122,7 @@ test('no change of one reading ever lowers maturity, over many readings together
   }
 })
 
-test('maturity is bounded 0 to 1 and finite for every reading, however odd: a skewed clock, a missing count, an unbounded one', pending, () => {
+test('maturity is bounded 0 to 1 and finite for every reading, however odd: a skewed clock, a missing count, an unbounded one', () => {
   const {maturityOf, lookOf, AGE_FULL_MS, HELD_FULL, SHAPED_FULL} = lib()
   const odd = [-DAY, -1, -0, 0, NaN, undefined, null, '7', Infinity, -Infinity, 1e300, Number.MAX_SAFE_INTEGER]
   for (const age of odd) for (const held of odd) for (const shaped of odd) {
@@ -147,7 +138,7 @@ test('maturity is bounded 0 to 1 and finite for every reading, however odd: a sk
   near(maturityOf(facts(AGE_FULL_MS, HELD_FULL, SHAPED_FULL)), 1, 'all three at their full')
 })
 
-test('the same readings give the same maturity and the same look, and nothing the caller holds is changed', pending, () => {
+test('the same readings give the same maturity and the same look, and nothing the caller holds is changed', () => {
   const {maturityOf, lookOf} = lib()
   const given = Object.freeze(facts(200 * DAY, 17, 5))
   assert.equal(maturityOf(given), maturityOf({...given}))
@@ -158,9 +149,7 @@ test('the same readings give the same maturity and the same look, and nothing th
   assert.deepEqual(given, facts(200 * DAY, 17, 5))
 })
 
-test('it only reads: no clock, no dice, no store, no owner, no write — the look is held nowhere (ticket §2)', pending, () => {
-  lib()
-  assert.ok(maturitySource, 'system/maturity.ts is a file')
+test('it only reads: no clock, no dice, no store, no owner, no write — the look is held nowhere (ticket §2)', () => {
   const code = maturitySource.split('\n').filter(line => !/^\s*(\/\/|\*|\/\*)/.test(line)).join('\n')
   assert.doesNotMatch(code, /Math\.random|\bDate\b|performance\.now|setTimeout|setInterval/, 'the age is an input (nowMs minus a dated reading), never read from a clock here')
   assert.doesNotMatch(code, /localStorage|sessionStorage|indexedDB|fetch\(|kernelOp|invoke\(|writeWorldBody|publish[A-Z]\w*\(|\bnotify\(/, 'it reaches no store and no owner')
@@ -174,7 +163,7 @@ test('it only reads: no clock, no dice, no store, no owner, no write — the loo
 // TO, m): a moon below FROM (a world with a page or two and a few days is still the grey moon), a finished planet above TO, and a smooth
 // turning between, with no step a person could see as a jump (smoothstep is flat at both ends). The numbers themselves are the lane's to
 // name with their reasoning; these tests hold their order, their edges and the shape between them.
-test('the look is a smooth turn from the moon to the planet between two named maturities, barren 1 − smoothstep, flat at both ends', pending, () => {
+test('the look is a smooth turn from the moon to the planet between two named maturities, barren 1 − smoothstep, flat at both ends', () => {
   const {lookOf, LOOK_FROM, LOOK_TO} = lib()
   assert.ok(LOOK_FROM > 0 && LOOK_FROM < LOOK_TO && LOOK_TO <= 1, `0 < LOOK_FROM (${LOOK_FROM}) < LOOK_TO (${LOOK_TO}) ≤ 1: a nearly empty world is still a moon, and a world that is complete is a planet`)
   assert.equal(lookOf(0).barren, 1)
@@ -196,7 +185,7 @@ test('the look is a smooth turn from the moon to the planet between two named ma
   assert.equal(lookOf(NaN).barren, 1, 'no reading, no finish: a moon')
 })
 
-test('a world\'s own readings give its look end to end: a new world is a moon, a year-old world with a hundred pages a planet, in between in between', pending, () => {
+test('a world\'s own readings give its look end to end: a new world is a moon, a year-old world with a hundred pages a planet, in between in between', () => {
   const {maturityOf, lookOf, AGE_FULL_MS, HELD_FULL, SHAPED_FULL} = lib()
   const barren = f => lookOf(maturityOf(f)).barren
   assert.equal(barren(facts(0, 0, 0)), 1)
@@ -221,7 +210,7 @@ const read = (ref, record, revision = 4) => ({state: 'read', record, reading: {s
 const systemOf = extra => model.systemOf({worlds: [YOURS, OI, BOOK], bodies: new Map([[YOURS.ref, read(YOURS.ref, RECORD, 67)], [OI.ref, read(OI.ref, null, 9)]]),
   playing: [], sessions: [], hand: {file: null, works: []}, artifacts: [], nowMs: Date.UTC(2026, 9, 20, 12), ...extra})
 
-test('each body of your system carries the look its own world\'s readings give it — your own world is not exempt — and a world not yet read claims none', pending, () => {
+test('each body of your system carries the look its own world\'s readings give it — your own world is not exempt — and a world not yet read claims none', () => {
   const {maturityOf, lookOf} = lib()
   const readings = new Map([[YOURS.ref, facts(400 * DAY, 120, 30)], [OI.ref, facts(2 * DAY, 1, 0)]])
   const [own, oi, book] = systemOf({facts: readings})
@@ -234,4 +223,35 @@ test('each body of your system carries the look its own world\'s readings give i
   const once = systemOf({facts: readings}), twice = systemOf({facts: new Map([...readings].reverse())})
   assert.deepEqual(once.map(body => body.look), twice.map(body => body.look), 'the order the readings arrive in changes nothing')
   assert.deepEqual(own.record, RECORD, 'the owner\'s record is untouched: the look rides beside it and is written nowhere')
+})
+
+// ── the readings WorldFacts are made of ─────────────────────────────────────────────────────────────────────────────────────
+
+const at = (iso) => Date.parse(iso) / 1000
+const NOW_MS = Date.UTC(2026, 9, 20, 12, 0, 0)
+const horizonOf = (...seconds) => ({schema: 'central.source-change-horizon/v1', world_ref: 'control:root', cursor: seconds.length, sources: [], changes: seconds.map((observed, i) => ({change_ref: `c${i}`, cursor: i, kind: 'modified', observed_at_unix_seconds: observed, actor_kind: 'human'}))})
+
+test('a world\'s facts are read from its owners: its age from the oldest change its register keeps, what it holds from its page listing, how often it was shaped from its space\'s revision', () => {
+  const horizon = horizonOf(at('2026-01-20T12:00:00Z'), at('2026-09-01T00:00:00Z'), at('2026-05-05T00:00:00Z'))
+  const got = worldFactsOf({nowMs: NOW_MS, horizon, pages: 17, revision: 42})
+  assert.deepEqual(got, {ageMs: 273 * DAY, held: 17, shaped: 42}, 'the register began at its oldest change (20 Jan, 273 days before 20 Oct), it holds 17 pages and flows, and its space stands at revision 42')
+  assert.equal(worldFactsOf({nowMs: NOW_MS, horizon: horizonOf(), pages: 0, revision: 3}).ageMs, 0, 'a register that has kept no change has no age to claim: new')
+  assert.equal(worldFactsOf({nowMs: NOW_MS, horizon: horizonOf(NOW_MS / 1000 + 3600), pages: 0, revision: 0}).ageMs, 0, 'a change dated after now (a skewed clock) is no age: never negative')
+  assert.equal(worldFactsOf({nowMs: NOW_MS, horizon: {changes: [null, 'x', {observed_at_unix_seconds: 'soon'}, {observed_at_unix_seconds: NaN}, {observed_at_unix_seconds: at('2026-10-10T00:00:00Z')}]}, pages: 1, revision: 1}).ageMs, 10 * DAY,
+    'a change with no instant says nothing of the age; the others do')
+})
+
+test('no reading, no claim: a world whose horizon, pages or revision is not read has no facts, and a body is never finished from a guess', () => {
+  const horizon = horizonOf(at('2026-01-20T12:00:00Z'))
+  for (const unread of [{horizon: null}, {horizon: undefined}, {horizon: 'refused'}, {pages: null}, {pages: undefined}, {revision: null}, {revision: undefined}, {revision: NaN}, {pages: -1}]) {
+    assert.equal(worldFactsOf({nowMs: NOW_MS, horizon, pages: 3, revision: 3, ...unread}), null, JSON.stringify(unread))
+  }
+})
+
+test('the age is told in whole days, so a minute of the clock never redraws a body: the facts of one day are one value', () => {
+  const horizon = horizonOf(at('2026-01-20T12:00:00Z'))
+  const one = worldFactsOf({nowMs: NOW_MS, horizon, pages: 3, revision: 3}), later = worldFactsOf({nowMs: NOW_MS + 59 * 60_000, horizon, pages: 3, revision: 3})
+  assert.deepEqual(one, later, 'an hour on, the same facts')
+  assert.equal(worldFactsOf({nowMs: NOW_MS + DAY, horizon, pages: 3, revision: 3}).ageMs, one.ageMs + DAY, 'a day on, a day older')
+  assert.equal(one.ageMs % DAY, 0)
 })
