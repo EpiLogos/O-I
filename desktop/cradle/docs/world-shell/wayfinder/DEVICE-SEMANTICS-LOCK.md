@@ -83,8 +83,10 @@ stated it.
    by their work and carry no M′ numbers: the four-and-two reading that set
    them as M0′–M5′ is withdrawn (owner, 19 Oct 2026), because it does not
    hold what the coordinate system says of those layers. The M′ layers are
-   read from the seeds — M1-2-3′ sounds and keeps time, M4/5/0′ knows and
-   acts (manual §25).
+   the app layers of the six M subsystems, held in O:I (M5-3): Live holds
+   M1′–M3′, Expressions is M4′, Technē is M5′, and M0′ is the graph systems
+   and the planetary continuity between local and collective (owner, 20 Oct
+   2026; manual §25).
 4. **Three forms, three times.** Worlds, expressions and graphs can each be
    live, moved into creative composition, and recorded and played back (and
    so shared).

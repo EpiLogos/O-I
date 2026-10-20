@@ -1,4 +1,4 @@
-# T-AGENCY — the agent world (M4/5/0′) and Technē's construction chain (19 Oct 2026)
+# T-AGENCY — the agent world and Technē's construction chain (19 Oct 2026; coordinates corrected 20 Oct)
 
 From the session the owner commissioned on 19 Oct to settle ground truth and design the agency side in the manual. The owner
 reviewed the manual the same evening; it landed as O-I `495c7f86c`. The ruling is written into the rows it changes, not over them
@@ -18,6 +18,14 @@ Timeline, Journey, World, Palace; QL-MEF `docs/L5-TECHNE-DUAL-READING-LOCK.md`, 
 it does not hold what the coordinate system says of those layers. Live is M1′ and M2′ as one instrument. Additions are device UI,
 in an existing device or as a device of their own, never prose that restates what the implementation already holds.
 
+Owner ruling, 20 Oct (the coordinate recon): "M4 as Kev, M5 as LLM" was imprecise. M0′–M5′ are the app layers of the six M
+subsystems, held by M5-3, which is O:I (the cradle and the DLW): Live holds M1′–M3′, Expressions is M4′ (of M4 Nara), Technē is
+M5′ (of M5 Epii), and M0′ is the graph systems and the planetary continuity between local and collective. S is the six products
+and S′ the six Ta-Onta organs, distinct from M/M′; M5-2 (the spine) and M5-4 (the agents' mediation) both link to them. The
+models, language models and Kev, are AIKit (S2) capabilities; the six Epi-Logos agents at M5-4.0–M5-4.5 use them, the Nara and
+Epii agents not exclusively. Factory reads the S coordinates in the (0/1/2/3) context frame. Applied to the Bimba map with
+QL-MEF `migration/bimba-map/2026-10-20-s-sprime-current.cypher` (PR #339) and written into manual §25.
+
 The 3:3 comes from the M′ seeds (Epi-Logos-C-Experiments `Idea/Bimba/Seeds/M/`):
 - `M'-SYSTEM-SPEC.md` "Shell vs Subsystem Architecture": Shell 0 is the integrated M1′–M3′ cymatic harmonic clock (M1′ movement,
   M2′ harmonic and correspondence matrix, M3′ clock and cosmos); Shell 1 is the M4′/M5′/M0′ return (Nara, Epii, and the Bimba
@@ -27,11 +35,12 @@ The 3:3 comes from the M′ seeds (Epi-Logos-C-Experiments `Idea/Bimba/Seeds/M/`
 - `INTEGRATED-4-5-0-RECOGNITION-ARCHITECTURE.md` §1–§2: M4 the lived field, M5 the review and return, M0 the canon graph that
   reviewed patterns write back into.
 - `M4'/mental-pole-mechanics.md` set the 4′/5′/0′ triplet as LLM (Nara), EBM (Epii) and Verifier (Anuttara). The owner's split
-  supersedes the first two: M4′ is Kev, M5′ the LLM. M0′ keeps the verifier's character: deterministic, it raises a question at a
-  gap instead of filling it.
+  superseded the first two (19 Oct) with Kev and the LLM; on 20 Oct both moved to AIKit as capabilities the agents use, and the
+  verifier's character stays with Quaternal Logic's rules: deterministic, raising a question at a gap instead of filling it.
 
 The kernel's triads are `ConstellationGrain::ThreeFold123` and `ThreeFold450` (`crates/ql-core/src/structural.rs:448-466`), and
-the team space has the same three participants at each cell: the engine (M0′), the decision instrument (M4′) and the face (M5′).
+the team space has the same three participants at each cell: the engine (Quaternal Logic), the decision instrument (Kev, through
+AIKit) and the face (the language model).
 
 ## 2. Ground truth (each row read on 19 Oct; channel in brackets)
 
@@ -73,8 +82,9 @@ the team space has the same three participants at each cell: the engine (M0′),
 - §19.20 Decision helper (new device): the questions it may be asked (the team space's instruments with their labels), the spread
   of an answer, Provider, When, Deadline, admission per instrument, the counts, and the seven rules. Catalogue:
   `ai-kit__decision-helper.tsx` (new), pages Ask, Instruments and Provider; fixtures A gate reading, Abstained, Nothing open.
-- §25 The agent world (new): the two faces (M1-2-3′ sounds and keeps time, Live = M1′ and M2′, Expressions all three;
-  M4/5/0′ knows and acts, M4′ Kev, M5′ the LLM, M0′ the graph, and the 5/0 return), one act in order, the six powers and what each
+- §25 The agent world (new; corrected 20 Oct): the two faces (M1-2-3′ sounds and keeps time and Live holds all three; M4′
+  Expressions, M5′ Technē, M0′ the ground of graphs and the planet, and the 5/0 return), the agents and the AIKit models they
+  use, one act in order, the six powers and what each
   meets in each mode, carried practice, and agents in Live and Expressions. Two figures.
 - The gallery takes `page` and `fixture` from an embed (`catalogue/main.tsx`, `docs/dlw/render.mjs`), so an entry opens its
   device on the page it describes.
@@ -140,9 +150,8 @@ installed; K6 on the planning lane's device answer; K8 on K1–K5.
   longer bound to its coordinate's instrument, `ANIMA-ALETHEIA-TEAMS.md` §6 item 2, the execution maps, the K-AW alignment, the
   Vāk execution lock and the `aletheia-m-prime-gate` skill. The reading kind keeps its wire names (`4:2-deep`, `3:3-conjugate`)
   because the cradle validates them. Issues #212–#220 still carry M′ numbers in their titles.
-- The L5 lock's §11a (owner amendment, 19 Sep) still stands: M4′ as the Expressions application body, M5′ as the same
-  application in deep-working mode. The 19 Oct split reads M4′ as Kev and M5′ as the language model on the agency side.
-  Whether §11a holds beside it is the owner's to say; the PR left it as written.
+- Answered 20 Oct: §11a holds. M4′ is Expressions and M5′ is Technē; Kev and the language models are AIKit (S2) capabilities the
+  M5-4 agents use (see §1).
 - The plain descriptions of the forms in §17.4 and of the six powers in §25.3 are readings of QL-MEF's law. QL governs; correct
   them where they miss.
 - Where Ta-Onta's Methodology and six Methods live: QL-MEF `skills/` (beside the 39 domain skills) or Central's skills. This ticket

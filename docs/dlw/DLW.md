@@ -10324,10 +10324,11 @@ whether an agent calls them, you press them, or a program sends them.
 ### 25.1 Two faces of one field
 
 Everything in the DLW stands in one field of six positions, and the field has
-two faces. Each face holds three of the six.
+two faces. Each face holds three of the six. The six are the app layers of the
+six M subsystems, and O:I holds all of them: four modes over six layers.
 
 <figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
-<svg viewBox="0 0 960 300" role="img" aria-label="Two faces of one field. M1-2-3′ sounds and keeps time: M1′ generates, M2′ shapes, M3′ forms; Live plays M1′ and M2′, Expressions holds all three. M4/5/0′ knows and acts: M4′ reads the situation, M5′ synthesises, M0′ is the ground; what you accept returns to the ground" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
+<svg viewBox="0 0 960 300" role="img" aria-label="Two faces of one field. M1-2-3′ sounds and keeps time: M1′ generates, M2′ shapes, M3′ forms, and Live holds all three. M4/5/0′ is the return: M4′ is Expressions, M5′ is Technē, M0′ is the ground of graphs and the planet; what you accept returns to the ground" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
 <defs><marker id="dlw-arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--dim)"/></marker><marker id="dlw-arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
 <text x="24" y="30" style="fill:var(--ink);font-size:17px;font-weight:600">M1-2-3′</text>
 <text x="104" y="30" style="fill:var(--dim);font-size:12.5px">sounds and keeps time</text>
@@ -10348,70 +10349,64 @@ two faces. Each face holds three of the six.
 <text x="332" y="122" style="fill:var(--dim);font-size:11px">the form it rings in</text>
 <line x1="160" y1="95" x2="171" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
 <line x1="308" y1="95" x2="319" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
-<path d="M24 160 V168 H308 V160" style="fill:none;stroke:var(--accent);stroke-width:1.4"/>
-<text x="166" y="186" text-anchor="middle" style="fill:var(--ink);font-size:12px">Live plays M1′ and M2′ as one instrument</text>
+<path d="M24 160 V168 H456 V160" style="fill:none;stroke:var(--accent);stroke-width:1.4"/>
+<text x="240" y="186" text-anchor="middle" style="fill:var(--ink);font-size:12px">Live holds all three, played as one instrument</text>
 <path d="M24 204 V212 H456 V204" style="fill:none;stroke:var(--line-strong);stroke-width:1.4"/>
-<text x="240" y="230" text-anchor="middle" style="fill:var(--ink);font-size:12px">Expressions holds all three in a scene</text>
+<text x="240" y="230" text-anchor="middle" style="fill:var(--ink);font-size:12px">An Expression (M4′) sets all three in a scene</text>
 <line x1="480" y1="16" x2="480" y2="250" style="stroke:var(--line);stroke-width:1"/>
 <text x="504" y="30" style="fill:var(--ink);font-size:17px;font-weight:600">M4/5/0′</text>
-<text x="584" y="30" style="fill:var(--dim);font-size:12.5px">knows and acts</text>
+<text x="584" y="30" style="fill:var(--dim);font-size:12.5px">Expressions, Technē, the ground</text>
 <rect x="504" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
-<text x="516" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ situation</text>
-<text x="516" y="92" style="fill:var(--dim);font-size:11px">Kev, on this machine:</text>
-<text x="516" y="107" style="fill:var(--dim);font-size:11px">picks among labels</text>
-<text x="516" y="122" style="fill:var(--dim);font-size:11px">the owner allows</text>
+<text x="516" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ Expressions</text>
+<text x="516" y="92" style="fill:var(--dim);font-size:11px">of M4 Nara: the</text>
+<text x="516" y="107" style="fill:var(--dim);font-size:11px">lived Expression,</text>
+<text x="516" y="122" style="fill:var(--dim);font-size:11px">your own occasion</text>
 <rect x="652" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
-<text x="664" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ synthesis</text>
-<text x="664" y="92" style="fill:var(--dim);font-size:11px">the language model:</text>
-<text x="664" y="107" style="fill:var(--dim);font-size:11px">reads, writes and</text>
-<text x="664" y="122" style="fill:var(--dim);font-size:11px">proposes</text>
+<text x="664" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ Technē</text>
+<text x="664" y="92" style="fill:var(--dim);font-size:11px">of M5 Epii: knowing</text>
+<text x="664" y="107" style="fill:var(--dim);font-size:11px">and making, built</text>
+<text x="664" y="122" style="fill:var(--dim);font-size:11px">and reviewed</text>
 <rect x="800" y="50" width="136" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
 <text x="812" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ ground</text>
-<text x="812" y="92" style="fill:var(--dim);font-size:11px">the graph: settles</text>
-<text x="812" y="107" style="fill:var(--dim);font-size:11px">by rule, checks, and</text>
-<text x="812" y="122" style="fill:var(--dim);font-size:11px">names the gaps</text>
+<text x="812" y="92" style="fill:var(--dim);font-size:11px">graph systems and</text>
+<text x="812" y="107" style="fill:var(--dim);font-size:11px">the planet, local</text>
+<text x="812" y="122" style="fill:var(--dim);font-size:11px">and collective</text>
 <line x1="640" y1="95" x2="651" y2="95" style="stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
 <line x1="788" y1="95" x2="799" y2="95" style="stroke:var(--accent);stroke-width:1.3" marker-end="url(#dlw-arrow-b)"/>
 <path d="M868 140 V164 H572 V144" style="fill:none;stroke:var(--dim);stroke-width:1.3" marker-end="url(#dlw-arrow-a)"/>
 <text x="720" y="182" text-anchor="middle" style="fill:var(--ink);font-size:12px">5/0: what you accept becomes ground,</text>
 <text x="720" y="198" text-anchor="middle" style="fill:var(--ink);font-size:12px">and the next act starts from it</text>
-<text x="720" y="230" text-anchor="middle" style="fill:var(--dim);font-size:12px">Ta-Onta reaches all three, in every mode</text>
+<text x="720" y="230" text-anchor="middle" style="fill:var(--dim);font-size:12px">the agents act through every layer (§25.2)</text>
 <text x="480" y="282" text-anchor="middle" style="fill:var(--dim);font-size:12px">One field: turning from one face to the other keeps the coordinate, the moment and the reading.</text>
 </svg>
-<figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">The two faces. The first sounds and keeps time; the second knows and acts, and its synthesis returns as ground.</figcaption>
+<figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">The two faces. The first sounds and keeps time; the second is the return, Expressions and Technē, and what you accept there becomes ground.</figcaption>
 </figure>
 
-**M1-2-3′** sounds and keeps time. M1′ generates: the torus and its two
-pulses are the only source of sound in the DLW (§21.2). M2′ shapes what M1′
-makes. It is the synth, moved by the planets of the live sky and tuned and
-filtered by the lenses, and it makes no sound of its own (§22.1, §22.2). Live
-plays M1′ and M2′ together as one instrument (§9). M3′ closes the pattern into
-form: the 64 codons, the clock of 360 degrees and its 24 fixed points, and the
-deck (§22.3, §22.4). Expressions holds all three in a scene, the torus at the
-centre, the shaped field round it, and the symbols that give it form (§7).
+**M1-2-3′** sounds and keeps time, and Live holds all three. M1′ generates:
+the torus and its two pulses are the only source of sound in the DLW (§21.2).
+M2′ shapes what M1′ makes. It is the synth, moved by the planets of the live
+sky and tuned and filtered by the lenses, and it makes no sound of its own
+(§22.1, §22.2). M3′ closes the pattern into form: the 64 codons, the clock of
+360 degrees and its 24 fixed points, and the deck (§22.3, §22.4). Live plays
+them as one instrument (§9).
 
-**M4/5/0′** knows and acts, and an agent works in it. Each of its three
-positions has its own kind of mind.
+**M4/5/0′** is the return: the layers where what sounds is lived, known and
+grounded.
 
-- **M4′ reads the situation.** Position 4 is context: the why and the where of
-  an act. Its frame holds a whole world inside it, your own (§24.9). On the
-  agent side, M4′ is Kev, a small decision model that runs on your machine. It
-  reads the situation an act stands in, not the item in front of it, and it
-  answers only typed questions over labels an owner allows (§19.20). What it
-  reads never leaves the machine.
-- **M5′ synthesises.** Position 5 is where things come together and go back.
-  On the agent side, M5′ is the language model each agent works with (§19.4).
-  It reads, writes, quotes, explains and argues. What it writes is a proposal
-  until it is reviewed.
-- **M0′ is the ground.** Position 0 is where everything comes from: the Bimba
-  map, your wikis and sources, and the rules of Quaternal Logic. On the agent
-  side, M0′ is the graph knowledge system. It settles by rule what can be
-  settled, checks every answer against the map, and where the map has a gap
-  it names the gap as a question instead of filling it.
+- **M4′ is Expressions,** the application of M4 Nara. Position 4 is context:
+  the why and the where of an act. An Expression sets the field of M1-2-3′ in
+  your own occasion, the torus at the centre, the shaped field round it and the
+  symbols that give it form (§7).
+- **M5′ is Technē,** the application of M5 Epii. Position 5 is where things
+  come together and go back: knowledge, construction and review, worked through
+  Technē's instruments (§17).
+- **M0′ is the ground:** the graph systems and the planet. Position 0 is where
+  everything comes from: the Bimba map and your knowledge graphs, and the
+  continuity between your own World and the shared field (§24).
 
-The two ends of M4/5/0′ meet. What M5′ writes and you accept goes back into
-M0′ as ground, and the next act starts from it. This is the 5/0 of the field:
-a synthesis settles into the ground of what comes next.
+The two ends meet. What Technē articulates and you accept goes back into M0′
+as ground, and the next act starts from it. This is the 5/0 of the field: a
+synthesis settles into the ground of what comes next.
 
 The two faces are one field seen from opposite sides. Turning from one to the
 other keeps the coordinate you stand on, the moment and the reading. It
@@ -10420,28 +10415,39 @@ it came from or who owns it.
 
 ### 25.2 One act, in order
 
-Every act an agent takes passes through M4/5/0′ in the same order.
+The agents are not layers of the field. The six Epi-Logos agents, one for
+each M domain (the Anuttara, Paramaśiva, Paraśakti, Mahāmāyā, Nara and Epii
+agents), act through the products and Ta-Onta's organs (§25.3). The models they
+use are AIKit's: the language model each agent works with (§19.4), and Kev, the
+small decision model on your machine that answers typed questions over labels
+an owner allows (§19.20). The Nara and Epii agents use them most; no model
+belongs to one agent or one position. Quaternal Logic sets the questions and
+settles what its rules can.
+
+Every act an agent takes runs in the same order.
 
 <figure style="margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 14px 8px">
-<svg viewBox="0 0 960 200" role="img" aria-label="One act in order: M0′ settles what the rules can; M4′ picks where a choice is open; M5′ writes where reading or writing is needed; M0′ checks; you decide; the owner keeps it and it becomes ground. When nothing is open, no model is asked" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
+<svg viewBox="0 0 960 200" role="img" aria-label="One act in order: the rules settle what they can; Kev picks where a choice is open; the language model writes where reading or writing is needed; the rules check; you decide; the owner keeps it and it becomes ground. When nothing is open, no model is asked" style="display:block;width:100%;height:auto;font-family:system-ui,-apple-system,sans-serif">
 <defs><marker id="dlw-arrow-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--dim)"/></marker><marker id="dlw-arrow-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/></marker></defs>
 <path d="M90 50 C90 22, 558 22, 558 48" style="fill:none;stroke:var(--accent);stroke-width:1.3;stroke-dasharray:5 4" marker-end="url(#dlw-arrow-d)"/>
 <text x="324" y="20" text-anchor="middle" style="fill:var(--ink);font-size:12px">when nothing is open, no model is asked</text>
 <rect x="20" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
-<text x="32" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ settles</text>
-<text x="32" y="92" style="fill:var(--dim);font-size:11px">what the rules can:</text>
-<text x="32" y="107" style="fill:var(--dim);font-size:11px">what was seen, and</text>
-<text x="32" y="122" style="fill:var(--dim);font-size:11px">what follows from it</text>
+<text x="32" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">The rules settle</text>
+<text x="32" y="92" style="fill:var(--dim);font-size:11px">Quaternal Logic over</text>
+<text x="32" y="107" style="fill:var(--dim);font-size:11px">the ground: what was</text>
+<text x="32" y="122" style="fill:var(--dim);font-size:11px">seen, what follows</text>
 <rect x="176" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
-<text x="188" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M4′ picks</text>
+<text x="188" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">Kev picks</text>
 <text x="188" y="92" style="fill:var(--dim);font-size:11px">where a choice is</text>
 <text x="188" y="107" style="fill:var(--dim);font-size:11px">open, or abstains</text>
+<text x="188" y="122" style="fill:var(--dim);font-size:11px">(AIKit, this machine)</text>
 <rect x="332" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--line-strong);stroke-width:1"/>
-<text x="344" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M5′ writes</text>
+<text x="344" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">The model writes</text>
 <text x="344" y="92" style="fill:var(--dim);font-size:11px">where reading or</text>
 <text x="344" y="107" style="fill:var(--dim);font-size:11px">writing is needed</text>
+<text x="344" y="122" style="fill:var(--dim);font-size:11px">(AIKit)</text>
 <rect x="488" y="50" width="140" height="90" rx="8" style="fill:var(--bg);stroke:var(--accent);stroke-width:1.4"/>
-<text x="500" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">M0′ checks</text>
+<text x="500" y="72" style="fill:var(--ink);font-size:13px;font-weight:600">The rules check</text>
 <text x="500" y="92" style="fill:var(--dim);font-size:11px">each pick and claim</text>
 <text x="500" y="107" style="fill:var(--dim);font-size:11px">against the rules, and</text>
 <text x="500" y="122" style="fill:var(--dim);font-size:11px">says why it refuses</text>
@@ -10465,20 +10471,20 @@ Every act an agent takes passes through M4/5/0′ in the same order.
 <figcaption style="font-size:12.5px;color:var(--dim);padding-top:6px">One act, in order. The ground goes first and last; a model is asked only where the rules leave something open.</figcaption>
 </figure>
 
-The ground goes first. M0′ sets out what was seen and what follows from it by
-rule, and what is still open. If nothing is open, no model is asked. A choice
-among labels an owner allows goes to M4′, which picks one or abstains, in the
-background unless the act must wait. Reading and writing go to M5′. M0′ then
-checks every pick and every claim against its rules and names its reason when
-it refuses one. You accept, change or refuse what is left. The product that
-owns the thing saves it, reads it back and makes it findable, and from then on
-it is ground for the next act.
+The ground goes first. Quaternal Logic sets out what was seen and what follows
+from it by rule, and what is still open. If nothing is open, no model is asked.
+A choice among labels an owner allows goes to Kev, which picks one or abstains,
+in the background unless the act must wait. Reading and writing go to the
+language model. Quaternal Logic then checks every pick and every claim against
+its rules and names its reason when it refuses one. You accept, change or
+refuse what is left. The product that owns the thing saves it, reads it back
+and makes it findable, and from then on it is ground for the next act.
 
-| Position | What works there | What it does | What it never does |
+| Step | What works there | What it does | What it never does |
 |---|---|---|---|
-| M0′ ground | The graph knowledge system: the Bimba map, your wikis and sources, the rules of Quaternal Logic | Settles by rule, checks every answer, names each gap as a question, keeps what you accept | Guess, or fill a gap with a likely answer |
-| M4′ situation | Kev, the Decision helper (§19.20), on your machine | Picks among the labels an owner allows, in the situation of the act, or abstains | Act, write, answer the collaboration gate, or send what it reads off the machine |
-| M5′ synthesis | The agent's language model (§19.4) | Reads, writes, quotes, explains and proposes | Make its own proposal true |
+| Settle and check | Quaternal Logic's rules over the ground: the Bimba map, your wikis and sources | Settles by rule, checks every answer, names each gap as a question, keeps what you accept | Guess, or fill a gap with a likely answer |
+| Pick | Kev, AIKit's decision model on your machine, through the Decision helper (§19.20) | Picks among the labels an owner allows, in the situation of the act, or abstains | Act, write, answer the collaboration gate, or send what it reads off the machine |
+| Write | The agent's language model, through AIKit (§19.4) | Reads, writes, quotes, explains and proposes | Make its own proposal true |
 
 Each result keeps the mark of how it was reached: seen in a source, settled by
 rule, picked by the helper, written by an agent, accepted by you. A later step
@@ -10532,9 +10538,9 @@ so, and nothing stands in for it.
 ### 25.5 Agents and M1-2-3′
 
 Agents reach the other face through the modes that play it, with the same six
-powers. In Live an agent writes clips and automation for the torus and the
-synth that shapes it, M1′ and M2′ together, and keeps the take you choose. In
+powers. In Live an agent writes clips and automation for the torus, the synth
+that shapes it and the clock that keeps it, and keeps the take you choose. In
 Expressions it composes a scene over all three: it finds premade characters,
 scenes and material before it makes anything new, steps the scene in time, and
-saves what it made as material others can reuse, tied to its sources. What M0′
-knows and M5′ writes can then be seen and heard, not only read.
+saves what it made as material others can reuse, tied to its sources. What the
+ground knows and an agent writes can then be seen and heard, not only read.
