@@ -705,7 +705,19 @@ where they are.
 Preview, open and add are three separate actions. To preview something,
 select it once: its preview shows at the foot of the list, where Live plays a
 sample you select. To open it, double-click it or drag it into a pane. To add a
-device, drag it onto a chain. To seat an agent, drag it onto an empty track.
+device, drag it onto a chain. To seat an agent, drag it onto an empty track. To
+pick up an earlier chat with an agent, drag it onto an empty track or onto the
+rail.
+
+Each mode's browser leads with what its work is made of. Instruments, devices
+and surfaces follow in every mode.
+
+| Mode | What leads the browser |
+|---|---|
+| Central | Your whole field: every world, each opening to its pages; Earth and the worlds you visit; the earlier Days. Central is where you work across your projects, so the list is not divided by project (§18.1). |
+| Factory | Your projects, each opening to its chats: the sessions you had there, newest first, each with its agent, its state and its last exchange (§19.1). |
+
+The other modes keep what their sections name (§17.1, §20.1, §21.1).
 
 Under the browser is the pool, where Live keeps its Groove Pool. A groove
 shapes how a clip plays without being part of the clip, and the pool holds
@@ -1135,7 +1147,7 @@ material passes through, from left to right.
 | Mode | Track | Chain, left to right |
 |---|---|---|
 | Central | A world. The set is the Day; its die is on the Main track. | The packet, the agent of the world, and its scope; on a world whose folder holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
-| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. On the Main track: the gateways rack, the experiments, Approvals, the ledger and Link. |
+| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. On the Main track: the gateways rack, the experiments, Approvals, the ledger, Link and the prompt pads. |
 | Expressions | An Expression. | The Studio: the field, then its field devices. |
 | Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
 | Live | A part. | The note devices, the torus, then its effects. |
@@ -3393,7 +3405,7 @@ The widget shows a small bench and the reading at each sensor. Click the bench t
 
 ## 18. Central
 
-Central keeps the day's work, your documents and your ground in one place. It works like a code editor: your files down the left, documents side by side, and the day as the set they all belong to. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
+Central keeps the day's work, your documents and your ground in one place. It is where you work across all your projects at once: each project is a world, and the Day gathers them. It works like a code editor: your files down the left, documents side by side, and the day as the set they all belong to. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
 
 ### 18.1 Central: the Day, its worlds and their pages
 
@@ -3446,6 +3458,18 @@ The track head shows the world's name and colour. Its settings stand on the head
 | Monitor | For a world you visit. In follows its changes as they happen. Off keeps it as you last saw it. Auto follows while one of its pages plays. Your own worlds have none. |
 
 The input of a world is its Folder. A file you add to the folder shows as a clip. A file you change in any editor shows the change on its clip.
+
+#### Workspaces
+
+You rarely work on one project alone. A morning's practice wants your journal, the practice world and the sky. An afternoon on a book wants the book's world, the world of its research and a subject open in Technē. A workspace keeps a way of working like that: which worlds stand on today's tracks, which of their pages open in which panes, which instruments and widgets are out, and how the window is laid out.
+
+Launch a workspace from the pool and its worlds come onto today's tracks, its pages open where they were, and the window takes its layout. Worlds already on today's tracks stay. To keep the way you are working now, drop it onto the pool. A world's Workspace setting names the workspace its pages open with.
+
+A row is not a workspace. A row opens pages together inside today. A workspace brings worlds into today and sets the window round them.
+
+#### The browser
+
+Central's browser lists your whole field: every world you have, each opening to its pages, Earth and the worlds you visit, and the earlier Days. It does not divide your work by project, because Central is where you work across them. Drag a world onto an empty track to bring it into today. Drag a page into a pane to open it. Open an earlier Day to read it. The pool below the browser holds your workspaces.
 
 #### The clip
 
@@ -3647,6 +3671,7 @@ When the day closes, what still plays carries into tomorrow's set, playing, with
 - To keep a side project out of the Day, turn off its world's activator.
 - To work on one project on two machines, turn Link on.
 - To start a new project in your usual way of working, set its world's Workspace to the workspace you use.
+- To begin the morning the way you always do, launch your morning workspace from the pool.
 - To keep a thinking journal, choose the Journal tab and set Speak as to you.
 - To follow a second idea without losing the first, select the entry and set Relation to Branch.
 - To correct an agent, write a Correct entry. The agent's text stays on the page.
@@ -3685,6 +3710,43 @@ the poles. Opposite faces add to five.
 | 3 | Pattern | The patterns that appear across the day's work, with the items that show each pattern. | The agent proposes patterns. You keep or discard them. |
 | 4 | Context | Where the day sat: the moments, people, places and files it touched. | You and the agent together. Each entry shows its author. |
 | 5 | Synthesis | What the day taught, what stays open, and a proposal for tomorrow's face 0. | You and the agent together. Each entry shows its author. |
+
+#### Where the faces come from
+
+Every machine you work on keeps its own NOW: what is open there, with a smaller
+NOW inside it for each task, journey or piece of work handed to an agent. The
+Day reads all of them. Face 2 lists their sessions as done, running and queued,
+each linked to where it runs. Face 4 gathers the moments, people, places and
+files those sessions touched, each entry with its author. A machine that goes
+offline keeps working, and what it did arrives when it is back, at the time it
+happened. A NOW still open at the close carries into tomorrow's Day.
+
+#### Moves
+
+The Day moves its work from face to face in the order the faces read: what you
+want becomes tasks, what ran shows its patterns, and what the day taught
+becomes tomorrow's ground. Each move is a pad on the device. Press a pad and
+its move runs now. Give it a time and it runs then. The Day's agent runs every
+move under Agent writes, so a proposal waits for you and a write arrives with
+its receipt.
+
+| Pad | Faces | What the move does |
+|---|---|---|
+| Tasks | 0 → 1 | Reads face 0 and proposes tasks in three tiers: must, should, could. |
+| Patterns | 2 → 3 | Reads what ran and proposes patterns, each with the items that show it. |
+| Context | 2 → 4 | Gathers what the day's sessions touched. |
+| Synthesis | 1–4 → 5 | Drafts what the day taught, what stays open and a proposal for tomorrow's face 0. |
+| Close | 5 → tomorrow's 0 | Runs the close routine. |
+
+Face 2 needs no pad: it fills by itself as sessions start, run and finish.
+
+| Pad setting | Values | Default | What it does |
+|---|---|---|---|
+| Prompt | Text | The move's own | What the move asks of the agent. Change it to make the move yours. |
+| Runs at | Off · a time · Rollover · Day start | Off; Close at Day start | When the move runs by itself. |
+
+Each pad shows when it last ran and what it gave. Click it to open what it
+proposed on its face.
 
 #### Two Days at a time
 
@@ -3735,13 +3797,14 @@ pane.
 
 ##### Whole
 
-The whole Day shows every parameter, in
-four groups.
+The whole Day shows the net of the die beside its five pads and every
+parameter, in five groups.
 
 | Group | Parameters |
 |---|---|
 | Time | Day start, Rollover |
 | Faces | Face, View, Template |
+| Moves | Tasks, Patterns, Context, Synthesis, Close: each pad's Prompt and Runs at |
 | Agent | Agent writes, Sources |
 | Close | Close routine |
 
@@ -3784,10 +3847,12 @@ in the pane that has focus.
 #### To use the Day
 
 1. Open face 0. Write what you want from the day.
-2. Turn to face 1. Accept, re-tier or remove the tasks that the agent proposes.
+2. Press Tasks. Turn to face 1, and accept, re-tier or remove the tasks that
+   the agent proposes.
 3. Work in any mode. Face 2 fills as sessions start, run and finish.
-4. At the end of the day, open face 5. Write what the day taught. Read the
-   agent's proposal for tomorrow.
+4. In the afternoon, press Patterns and keep the ones that hold.
+5. At the end of the day, press Synthesis and open face 5. Write what the day
+   taught. Read the agent's proposal for tomorrow.
 5. After rollover, open tomorrow's Day. Prepare its face 0.
 
 #### Rules
@@ -3799,6 +3864,10 @@ in the pane that has focus.
 - A closed Day is kept. You can open it, read it and walk through it again.
 - A Day keeps the template version it opened with. A new template version does
   not change an old Day.
+- A move writes only as Agent writes allows.
+- A move that runs by itself shows its time on its pad and keeps a record of
+  every run. Nothing runs where you cannot see it.
+- A late result keeps the time it happened. The Day does not rewrite it as new.
 
 #### Tips
 
@@ -4279,7 +4348,7 @@ Factory is where you work with AI agents. Each agent session is a track. Its cha
 
 ### 19.1 Factory: tracks and clips
 
-**Product:** Software Factory, with Actuation · **Track:** an agent session · **Clip:** a task · **Main track:** the gateways, the Experiment, Approvals, the Ledger and the Link
+**Product:** Software Factory, with Actuation · **Track:** an agent session · **Clip:** a task · **Main track:** the gateways, the Experiment, Approvals, the Ledger, the Link and the Prompt pads
 
 You need to set agents to work, watch how each task stands, and step in where you are needed. In Factory each agent session is a track, and its tasks are its clips. Select a task and Clip view shows how it launches, what follows it, the effort the agent gives it, and its log. Device view below shows the session's chain: the gateway, the agent, its skills, its scope and the landing.
 
@@ -4407,9 +4476,13 @@ The takes open full in a pane as the tree of each attempt: its tasks as nested r
 
 Press Record and what the sessions do lays out on the ruler as clips, with their takes under them.
 
+#### Projects and chats
+
+Factory's browser lists your projects, and under each project its chats: every session you had there, newest first. A chat shows its agent, its state and its last exchange, as any list of chats does. To pick one up again, drag it onto an empty track: the session reopens where it stopped, with its tasks as clips. Drag it onto the rail and its agent's tile opens with the chat, ready to talk. Double-click it to read its thread in a pane.
+
 #### The Main track
 
-Factory's Main track carries what serves every session: the Gateways rack with the Agency gateway, the Experiment, Approvals, the Ledger and the Link. When no session is selected, Device view shows the Main track's chain.
+Factory's Main track carries what serves every session: the Gateways rack with the Agency gateway, the Experiment, Approvals, the Ledger, the Link and the Prompt pads (§19.22). When no session is selected, Device view shows the Main track's chain.
 
 In Session view the Main track's row launchers stand at the end of the grid. In Factory a row is a batch: launch it and one task starts on each session in the row. Press a row's number key to launch it.
 
@@ -4467,6 +4540,7 @@ The tiles take these settings:
 - To find the sessions that need you, set Sessions' Filter to Stalled.
 - To find a lost session, set Sessions' Filter to Running and read the names.
 - To see who is stuck, look for the amber stations in Agents.
+- To carry on yesterday's work with an agent, find the chat under its project and drag it onto an empty track.
 
 ### 19.2 Gateway
 
@@ -6410,6 +6484,77 @@ The widget shows the last turn, the body, and the feeling of the last sentence. 
 - To keep everything on your machine, set Body to Local or Face, and Egress to Local only.
 - To see consonants on the lips, use a body that measures each sound and set Mouth to Aligned.
 - To talk over the agent, set Interrupt to Barge-in.
+
+### 19.22 Prompt pads
+
+**Product:** Software Factory, with Actuation · **Kind:** instrument · **Chain:** Factory's Main track
+
+You ask agents for the same things again and again: run the checks, review a
+branch, write up the week. Prompt pads keeps those asks as pads, the way a
+Drum Rack keeps sounds. Press a pad and its task starts on the session it
+names. Give a pad a time and it starts then, so a routine you once hid in cron
+stands here, where you can see when it runs and how it went.
+
+#### The pads
+
+Each project has its own bank of sixteen pads. Choose the bank with the
+project chooser on the device's head.
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Name | Text | The prompt's first words | The name on the pad. |
+| Prompt | Text | Empty | What the task asks. |
+| Session | A session of the project, or New | New | Where the task starts. New opens a session with the agent below. |
+| Agent | An agent from your roster | The project's agent | Who works the task when the pad opens a session. |
+| Scope | A scope | The session's | What the task may read and write (§19.12). |
+| Seat | A seat, or none | None | The machine and checkout the task runs on (§19.17). |
+| Runs at | Off, or a schedule: a time, days of the week, or every so many hours | Off | When the pad starts its task by itself. |
+| Choke | Off, or a group from 1 to 8 | Off | Pads in one group never run at once: a pad waits while another in its group runs. Use it for tasks that cannot share a seat. |
+
+Each pad shows when it last ran and how that run ended: done, stalled,
+stopped or refused. Click the result to select that task's clip.
+
+#### Views
+
+##### Folded
+
+The folded pads show the project and how many pads have a schedule.
+
+##### Compact
+
+The compact pads show the sixteen pads of the chosen project. A pad lights
+while its task runs, and its corner shows how its last run ended.
+
+##### Whole
+
+The whole pads show the sixteen pads beside the selected pad's settings.
+
+##### Full
+
+The full pads list every pad of the project with its prompt, its schedule, its
+next run, its last run and how it ended.
+
+##### Widget
+
+The widget lists the pads that have a schedule, in the order they next run.
+
+#### Rules
+
+- A pad starts a task as any launch does: through the gateway, under Scope and
+  Arm.
+- A pad that runs by itself shows its next time and keeps a record of every
+  run. Nothing runs where you cannot see it.
+- Pads in one choke group never run at once.
+- Editing a pad changes its next run. A run already made keeps the prompt it
+  ran with.
+
+#### Tips
+
+- To run the checks every morning, give a pad the prompt and set Runs at to
+  08:00.
+- To keep two builds off one seat, put their pads in one choke group.
+- To hand a pad's routine to another agent, change its Agent. The schedule
+  stays.
 
 ## 20. Expressions
 
