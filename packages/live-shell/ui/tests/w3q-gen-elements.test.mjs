@@ -214,7 +214,7 @@ test('H3 rivers run in valleys and lakes lie in basins: inland water stands lowe
 })
 
 test('H4 lakes lie in basins and are not the sea: bodies of water that the sea does not hold sit lower than their shores', () => {
-  // Every body of water that is not the sea's (the Caspian, the Great Lakes: 59 of them in the Earth at 1024 wide) is a basin: the land within five pixels of it is higher than it is.
+  // Every body of water on land that is not the sea's (the Caspian, the Great Lakes: 59 of them in the Earth at 1024 wide) is a basin: the land within five pixels of it is higher than it is.
   const verdicts = []
   for (const record of rivers) {
     const {image, parts} = waterOf(record), {w, h} = parts, members = new Map()
@@ -232,6 +232,8 @@ test('H4 lakes lie in basins and are not the sea: bodies of water that the sea d
         }
       }
       if (shore.size < 4) continue
+      // a body of water whose own height is under the sea level is the sea, cut off by ice at a pole or by a neck narrower than a pixel: not a lake
+      if (mean(inside) <= body.seaHeight(record)) continue
       const ground = [...shore].filter((_, n) => n % Math.max(1, Math.floor(shore.size / 40)) === 0).map(k => { const j = (k / w) | 0, i = k - j * w; return heightAtLL(record, latOf(j, h), -180 + (i + .5) * 360 / w) })
       verdicts.push(mean(inside) <= mean(ground) ? 1 : 0)
     }
