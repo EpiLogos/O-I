@@ -31,7 +31,8 @@ import {readFlowInstance, writeFlowInstance} from '../../../../../../desktop/cra
 import {circleHolder, containerOf, isCurrentFormat, type EntryKind, type PluralParticipant, type Relation} from '../../../../../../desktop/cradle/src/flow/plural'
 import {clipHostId, viewHoldsOf} from '../../frame/detail/clipBinding'
 import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
-import {acquireNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
+import {acquireNativeDialogue, currentTurnBasis, lookupNativeDialogue, type NativeDialogue, type NativeDialogueRequest} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
+import type {NaraDialogueContext} from '../../../../../../desktop/cradle/src/nara/dialogueContext'
 import {announceContext, nativeContext, type ContextMutation, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -249,6 +250,20 @@ export async function bindConversation(transport: KernelTransportStatus, convers
       : 'No expression is selected. A conversation binds to the encounter\'s subject: select one, and the binding resolves through its owner.')
   }
   return acquireNativeDialogue(transport, conversation.project ?? '', identity, conversation.expressionRef, 'nara')
+}
+
+/** The voice's open request for the bound conversation (the kernel op nara_voice `open`; the legacy panel's `prepare`,
+ * desktop/cradle/src/nara/NaraSurface.tsx:209): the dialogue binding as it stands — looked up, never created, so a voice opens only on
+ * a conversation already bound — and the turn's context, read now (the identity and the Expression again, as every turn reads them).
+ * The Answer's Hears and Speaks write through it (answerVoice.ts). */
+export async function voiceOpening(transport: KernelTransportStatus, conversation: ConversationWriteAperture): Promise<{binding: NativeDialogueRequest; context: NaraDialogueContext}> {
+  const identity = currentIdentity()
+  if (!identity) throw new Error('No Nara identity is current: the voice waits for its person. Select an identity through the identity owner.')
+  if (!conversation.expressionRef) throw new Error(conversation.conversation ? conversationGap(conversation.conversation) : 'No expression is selected: the voice opens on the encounter\'s subject once one is.')
+  const dialogue = await lookupNativeDialogue(transport, conversation.project ?? '', identity, conversation.expressionRef, 'nara')
+  if (!dialogue) throw new Error('The conversation is not bound: bind it (the light) before the voice can open on it.')
+  const basis = await currentTurnBasis(transport, dialogue, identity, conversation.expressionRef)
+  return {binding: {...dialogue.binding, operation: 'lookup'}, context: basis.context}
 }
 
 /** Take one item out of the packet, or empty it: AIKit's prepared context edited at the revision the reading gave (op encounter,

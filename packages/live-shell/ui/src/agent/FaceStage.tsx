@@ -3,7 +3,8 @@
  * in a same-origin iframe, driven only through the face's own bounded surface (face-speech.js `window.FACE_RIG_CHAT`: `apply`
  * with its named agent states, expressions, emotions and affect, and `setSpeechMode`). Nothing is drawn or redrawn here: the
  * polygon mesh, its muscles, its springs and its life are the rig's. A change of state glides by the face's own springs; nothing
- * here eases it.
+ * here eases it. While the agent answers aloud, the voice's loudness (faceVoice.ts) opens the jaw and parts the lips through two of
+ * the face's own pads (mouthCalls): a voice that measures no timing gives the mouth nothing else to follow.
  *
  * Until the live face stands — on the server, in the manual's static figures, while it loads, and wherever it cannot load — the
  * stage draws the static mask (maskFace.ts) in the same pose. A request for reduced motion keeps the face and stops its own life
@@ -14,6 +15,7 @@
  */
 import {memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties} from 'react'
 import {maskStatic, type FaceExpr} from './maskFace'
+import {subscribeVoiceLevel, voiceLevel, type VoiceLevel} from './faceVoice'
 import './FaceStage.css'
 
 /** What the agent does now, as the owner reports it. `listening`: you are speaking and it attends. */
@@ -34,6 +36,9 @@ export type FaceAction =
   | {readonly type: 'affect'; readonly valence: number; readonly arousal: number}
   | {readonly type: 'gesture'; readonly name: FaceGesture}
   | {readonly type: 'gaze'; readonly x: number; readonly y: number}
+  /** One of the face's own pads (face-core.js PADS): `jaw` (x press…sneer, y chin…open), `lowerFace` (x purse…drop lip, y raise
+   * chin…depress). The voice's loudness moves the mouth through these two (mouthCalls). */
+  | {readonly type: 'pad'; readonly name: 'jaw' | 'lowerFace'; readonly x: number; readonly y: number}
 
 /** One call on that surface: an action to apply, or the speech mode (true: the mouth waits for a voice's timeline; false: the
  * speaking state moves the mouth itself). */
@@ -83,6 +88,45 @@ export function faceCalls(pose: FacePose): FaceCall[] {
 
 /** The mask's pose: the held expression, else sleep when dim, else the phase's. */
 export const maskOf = (pose: FacePose): FaceExpr => pose.expression ?? (pose.dim ? 'sleep' : MASK_OF[pose.state ?? 'idle'])
+
+/** How far a voice's loudness opens the mouth (§19.21 Mouth: Loudness), at full loudness: the jaw pad's opening — the jaw .85 × .45
+ * ≈ .38, short of the widest the face's own speech opens it (/a/, face-speech.js AFF_CEIL.jaw .42) — and the lower lip's drop (the
+ * depressor at .3 × .45 ≈ .14, under the .55 where it peels the lip off the teeth, face-core.js MOUTH_PEEL). Measured on the face
+ * in the gallery against a syllabic signal: the opening between the lips 3 px shut, 22 px at a quarter, 42 px at a half, 75 px full. */
+export const MOUTH_JAW = 0.45
+export const MOUTH_LIP = 0.3
+
+/** The calls that open the mouth by a voice's loudness (0..1; null: no voice, the pads let go). Only the jaw and the lips' opening:
+ * a loudness carries no phone, so nothing here shapes a consonant or rounds a vowel. Pure; values kept to two places, so a level
+ * that does not move the mouth sends nothing new. */
+export function mouthCalls(level: number | null): FaceCall[] {
+  const l = level === null || !Number.isFinite(level) ? 0 : Math.max(0, Math.min(1, level))
+  const two = (x: number) => Math.round(x * 100) / 100
+  return [{apply: {type: 'pad', name: 'jaw', x: 0, y: two(l * MOUTH_JAW)}}, {apply: {type: 'pad', name: 'lowerFace', x: two(l * MOUTH_LIP), y: 0}}]
+}
+
+/** Whether the mouth follows the voice: while the agent answers aloud — answering, its mouth waiting for a voice (`speaking: false`). */
+export const mouthFollowsVoice = (pose: FacePose): boolean => !pose.dim && pose.state === 'answering' && pose.speaking === false
+
+/** While the mouth follows the voice, the voice's loudness (faceVoice.ts, the bus the player fills each frame) moves it; when the
+ * voice stops, or the face leaves that pose, the pads let go and the face's own springs close the mouth. */
+function useFaceMouth(face: {readonly current: FaceSurface | null}, follows: boolean): void {
+  useEffect(() => {
+    if (!follows) return
+    let sent = ''
+    const put = (level: VoiceLevel) => {
+      const surface = face.current
+      if (!surface) return
+      const calls = mouthCalls(level), key = JSON.stringify(calls)
+      if (key === sent) return
+      sent = key
+      run(surface, calls)
+    }
+    put(voiceLevel())
+    const off = subscribeVoiceLevel(put)
+    return () => { off(); if (face.current) run(face.current, mouthCalls(null)) }
+  }, [follows])
+}
 
 /** The face's bounded surface as the page gives it (face-speech.js). */
 interface FaceSurface {
@@ -173,6 +217,8 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
     if (gestured.current === null) { gestured.current = g.n; return }
     if (gestured.current !== g.n) { gestured.current = g.n; run(face.current, [{apply: {type: 'gesture', name: g.name}}]) }
   }, [pose.gesture?.n, pose.gesture?.name, stand, pose.dim])
+  // Answering aloud, the voice's loudness moves the mouth.
+  useFaceMouth(face, stand === 'shown' && mouthFollowsVoice(pose))
 
   // The face takes its pose before it is shown, so it is never seen arriving from the rig's own rest.
   const onLoad = () => {
