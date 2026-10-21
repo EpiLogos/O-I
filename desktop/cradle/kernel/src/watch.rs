@@ -986,10 +986,7 @@ fn noise(relative: &Path) -> bool {
         match *part {
             "target" | "node_modules" | "dist" | ".DS_Store" | ".gitnexus" => return true,
             ".git" => {
-                if matches!(
-                    parts.get(index + 1),
-                    Some(&"objects") | Some(&"lfs") | Some(&"logs")
-                ) {
+                if git_bookkeeping(&parts[index + 1..]) {
                     return true;
                 }
             }
@@ -1004,7 +1001,41 @@ fn noise(relative: &Path) -> bool {
             _ => {}
         }
     }
-    locked(&parts)
+    locked(&parts) || transient(&parts)
+}
+
+/// Git's own bookkeeping inside a `.git` directory (given as the parts after
+/// it; a linked checkout's `worktrees/<name>/` prefix is looked through):
+/// its object store, reflogs, and the files git rewrites on every fetch,
+/// status or gc. A branch moving (`HEAD`, `refs/**`, `packed-refs`) is a
+/// change and is kept.
+fn git_bookkeeping(inside: &[&str]) -> bool {
+    let inside = match inside {
+        ["worktrees", _, rest @ ..] => rest,
+        other => other,
+    };
+    match inside {
+        ["objects" | "lfs" | "logs", ..] => true,
+        [name] => matches!(
+            *name,
+            "FETCH_HEAD" | "ORIG_HEAD" | "index" | "COMMIT_EDITMSG" | "gc.log" | "gc.pid" | "locked"
+        ),
+        _ => false,
+    }
+}
+
+/// Files that exist while something is written and then replaced or removed:
+/// atomic-write and editor temporaries, logs, SQLite shared-memory files.
+fn transient(parts: &[&str]) -> bool {
+    parts.last().is_some_and(|name| {
+        name.ends_with(".tmp")
+            || name.contains(".tmp.")
+            || name.ends_with(".swp")
+            || name.ends_with('~')
+            || name.starts_with(".#")
+            || name.ends_with(".log")
+            || name.ends_with("-shm")
+    })
 }
 
 /// The same for the AIKit home: its caches, the services it keeps running
@@ -1024,11 +1055,23 @@ fn aikit_noise(relative: &Path) -> bool {
                 {
                     return true;
                 }
+                // The gateway and the routine dispatcher rewrite their
+                // heartbeats every few seconds.
+                if matches!(
+                    *name,
+                    "gateway.json"
+                        | "gateway-process.json"
+                        | "gateway.sock"
+                        | "routine-dispatcher.json"
+                        | "encounter-owner.log"
+                ) {
+                    return true;
+                }
             }
         }
         _ => {}
     }
-    locked(&parts)
+    locked(&parts) || transient(&parts)
 }
 
 fn names(relative: &Path) -> Vec<&str> {
@@ -1338,6 +1381,64 @@ mod tests {
             at("Work/O-I/.central/source-returns/r.json"),
             vec![Scope::Project("O-I".into())]
         );
+    }
+
+    #[test]
+    fn git_bookkeeping_temporaries_and_heartbeats_are_not_changes() {
+        let central = temp("churn-noise");
+        let aikit = temp("churn-noise-aikit");
+        let roots = roots(&central, &aikit);
+        let at = |p: &str| classify(&roots, &roots.central.join(p));
+        let in_aikit = |p: &str| classify(&roots, &roots.aikit.join(p));
+        for ignored in [
+            "Work/O-I/.git/FETCH_HEAD",
+            "Work/O-I/.git/ORIG_HEAD",
+            "Work/O-I/.git/index",
+            "Work/O-I/.git/COMMIT_EDITMSG",
+            "Work/O-I/.git/gc.log",
+            "Work/O-I/.git/gc.pid",
+            "Work/O-I/.git/logs/HEAD",
+            "Work/O-I/.git/locked",
+            "Work/O-I/.git/worktrees/o-i/FETCH_HEAD",
+            "Work/O-I/.git/worktrees/o-i/index",
+            "Work/O-I/.git/worktrees/o-i/logs/HEAD",
+            "Work/O-I/.git/worktrees/o-i/locked",
+            "Work/O-I/src/main.rs.tmp",
+            "Work/O-I/src/main.rs.tmp.4812",
+            "Work/O-I/src/.main.rs.swp",
+            "Work/O-I/src/main.rs~",
+            "Work/O-I/src/.#main.rs",
+            "Work/O-I/build.log",
+            "Work/O-I/db.sqlite-shm",
+            "Work/O-I/aikit.sqlite-open.lock",
+            "Control/agents/now/draft.md.tmp",
+        ] {
+            assert!(at(ignored).is_empty(), "{ignored}");
+        }
+        for ignored in [
+            "state/gateway.json",
+            "state/gateway.json.tmp",
+            "state/gateway-process.json",
+            "state/gateway.sock",
+            "state/routine-dispatcher.json",
+            "state/encounter-owner.log",
+        ] {
+            assert!(in_aikit(ignored).is_empty(), "{ignored}");
+        }
+        for moved in [
+            "Work/O-I/.git/HEAD",
+            "Work/O-I/.git/packed-refs",
+            "Work/O-I/.git/refs/heads/dlw/build",
+            "Work/O-I/.git/refs/remotes/origin/main",
+            "Work/O-I/.git/refs/heads/index",
+            "Work/O-I/.git/worktrees/o-i/HEAD",
+        ] {
+            assert!(
+                at(moved).contains(&Scope::Project("O-I".into())),
+                "{moved}"
+            );
+        }
+        assert_eq!(in_aikit("state/gateway-registry.json"), vec![Scope::Aikit]);
     }
 
     /// An owner that writes under a path the watch ignores (its cache) moves
