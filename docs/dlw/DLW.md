@@ -4927,7 +4927,7 @@ caption: The Agents tile: each agent a creature, standing at the zone its run ha
 
 ### 19.2 Gateway
 
-**Product:** Actuation · **Kind:** connection · **Chain:** first device on a workcell's chain
+**Product:** Actuation, through the harness's own control · **Kind:** connection · **Chain:** first device on a workcell's chain
 
 You need to decide how your agents reach the program that runs them, when they must ask you, and when a silent agent counts as stalled, and to decide it once rather than for every session. The Gateway is the way in to a workcell. Every agent that works in the workcell, on any track and in any mode, comes in through it.
 
@@ -4944,7 +4944,6 @@ A helper uses the connection of the session that spawned it, so it comes in thro
 | Transport | Local · Network · Remote | Local | How the shell reaches the harness. Local is a trusted child process. Network uses a token. Remote uses a short-lived ticket and goes through a connected machine. |
 | Approvals | Ask · Session · Always | Ask | The default answer to an approval request: ask you each time, allow for this session, or allow always. You always give Deny yourself. |
 | Stall after | 30 s · 90 s · 5 min · 30 min | 90 s | The time without progress, with work pending, after which the session counts as stalled and Retry lights. |
-| Submit | One at a time · Queue (up to 32) | One at a time | Whether the harness takes one message at a time or holds a queue. |
 | Auto-continue | On (up to 15 min) · Off | On | Lets the gateway continue a turn that stopped on its own, for up to 15 minutes. |
 | Fan-out | 0–8 observers | 2 | The number of observers allowed per session. A slow observer loses only its own feed. |
 | Readiness | Ready · Composed · Refused (reading) | Read from the harness | Shows the state of the harness: its database, its settings, its model and its disk. |
@@ -4979,7 +4978,7 @@ The whole Gateway shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
-| Link | Connect, Transport, Submit, Fan-out |
+| Link | Connect, Transport, Fan-out |
 | Approval | Approvals |
 | Liveness | Stall after, Auto-continue |
 | Readiness | Readiness |
@@ -5415,10 +5414,10 @@ An Experiment holds five statements. The question says what you want to learn. T
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Question | Text | Empty | The question the run answers. |
-| Variable | Model · Effort · Skillset · Budget · Autonomy | Effort | The setting that changes from one run to the next. |
-| Levels | 2–8 values | Two | The values the variable takes. Each value is one run. |
+| Variable | Condition · Model · Effort · Skillset · Budget · Autonomy | Condition | The setting that changes from one run to the next. Condition is how the agent's loop recurs: classic, or one of Quaternal Logic's conditions. |
+| Levels | 1–3 values | Three | The values the variable takes. Each value is one group of runs. |
 | Agents | One or more sessions | The selected session | The sessions that take part. |
-| Repeats | 1–20 | 3 | The number of runs for each level. |
+| Repeats | 1–32 | 3 | The number of runs for each level. |
 | Stop when | Turn cap · Time cap · Task done · Test pass | Task done | The condition that ends each run. |
 | Readings | Tokens · Time · Tool calls · Test results · Spend · Stalls | Tokens, Time | What the Experiment records on each beat. |
 | Beat | 5 s–5 min | 15 s | How often a reading is taken. |
@@ -5824,7 +5823,7 @@ You need to choose which knowledge an agent can look up, and how far it may foll
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Sources | Wiki · Project knowledge · Code · Web | Wiki, Project knowledge | The places the agent may search. |
+| Sources | Wiki · Project knowledge · Code | Wiki, Project knowledge | The places the agent may search: the wiki, the project's sources and map, and the code index. |
 | Reach | Object · Scene · Expression · Central | As Scope | The widest part of the world whose knowledge the agent may read. The Scope device holds the same value. |
 | Search first | On · Off | On | The agent searches before it reads a file. |
 | Link depth | 0–4 | 2 | The number of links the agent follows from a hit. |
@@ -5848,7 +5847,7 @@ The compact route shows a small graph of the sources in reach. It has four macro
 
 | Macro | What it does |
 |---|---|
-| Sources | Chooses Wiki, Project knowledge, Code or Web. |
+| Sources | Chooses Wiki, Project knowledge or Code. |
 | Reach | Sets the widest part of the world whose knowledge the agent may read. |
 | Link depth | Sets the number of links the agent follows from a hit. |
 | Read budget | Sets the most pages the agent reads in one task. |
@@ -5908,6 +5907,8 @@ You need messages to reach an agent from any surface you use, and from one agent
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Service | On · Off | On | Starts or stops the gateway. |
+| Entry | This machine only · A local service · Your private network · A served address · An SSH tunnel | This machine only | How the gateway can be reached. A change is planned first and lands when you confirm it. |
+| Coexist | On · Off | On | Whether the gateway runs beside other harness gateways on this machine, or alone. |
 | Surfaces | A list of surfaces | The ones you use | The places that may send a message to an agent: this window, a terminal, a chat. |
 | Agent to agent | Allow · Ask · Deny | Ask | Whether one agent may call another. Ask puts the call in Approvals. |
 | Harnesses | A list (reading) | Found on this machine | The harnesses that the gateway can reach. |
@@ -5933,7 +5934,7 @@ The whole gateway shows the surfaces on the left, the agents on the right, and t
 
 | Group | Parameters |
 |---|---|
-| Service | Service |
+| Service | Service, Entry, Coexist |
 | Rules | Surfaces, Agent to agent |
 | Readings | Harnesses, Inbox, State |
 
@@ -5969,17 +5970,23 @@ The count of messages that wait shows on the tile of Messages.
 
 **Product:** AIKit · **Kind:** instrument · **Chain:** on the armed Factory track
 
-You need an agent to learn something you did by hand. Capture skill turns a worked example into a skill. You do the task once. The device writes a skill from it and sends the skill to you as a proposal.
+You need an agent to learn something you did by hand. Capture skill turns a worked example into a skill. You do the task once. The device writes a Method or a Skill from it and sends it to you as a proposal.
 
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Source | The last minutes · A selected clip | The last 10 minutes | The part of your work that the skill learns from. |
-| Name | Text | A name from the example | The skill's name. |
-| Fit | Exact · Light · Broad | Light | How far the skill generalises. Exact repeats your steps. Broad adapts them to new cases. |
-| Scope | This project · All my work | This project | Where the skill may be used. |
+| Source | The last minutes · A selected clip | The last minutes | The part of your work that the skill learns from. |
+| Minutes | 1–60 | 10 | How far back the window reaches. |
+| Name | Text | A name from the example | The member's name and the id it is kept under. |
+| Form | Method · Skill | Method | A Method carries a whole practice; a Skill carries one step of it. |
+| Scope | This project · All my work | This project | Where the member may be used. |
 | Steps | A list (reading) | Read from the example | The steps the device found. You can remove a step. |
-| Lands as | Proposal | Proposal | Where the skill goes. It goes to Approvals. |
+| Proposal | Ready · Held · Removed · Accepted (reading) | Read from AIKit | How the proposal stands. A proposal that holds a secret is held, and is never accepted. |
+| Held for | A list (reading) | Read from AIKit | What holds the proposal: each finding, masked. |
+| Resembles | A list (reading) | Read from AIKit | The members it is close to, nearest first. |
+| Accept | A button | — | Keeps the proposal as a draft member of your practice. |
+| Release | A button | — | Scans the proposal again, and frees it when no secret remains. |
+| Remove | A button | — | Drops the proposal. |
 
 #### Views
 
@@ -5999,7 +6006,7 @@ The compact device shows the steps found so far, as a short list. It has four ma
 | Macro | What it does |
 |---|---|
 | Source | Chooses the last minutes or a selected clip. |
-| Fit | Sets Exact, Light or Broad. |
+| Form | Sets Method or Skill. |
 | Scope | Sets This project or All my work. |
 | Name | Sets the skill's name. |
 
@@ -6011,8 +6018,9 @@ The whole device shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
-| Example | Source, Steps |
-| Skill | Name, Fit, Scope, Lands as |
+| Example | Source, Minutes, Steps |
+| Skill | Name, Form, Scope |
+| Proposal | Proposal, Held for, Resembles, Accept, Release, Remove |
 
 ##### Full
 
@@ -6035,18 +6043,19 @@ The widget shows the proposal that waits, with Accept and Remove.
 1. Select the track whose agent should learn the task.
 2. Press Capture. Do the task by hand.
 3. Press Capture again. The device lists the steps it found.
-4. Remove any step that does not belong. Choose a Fit.
-5. Open Approvals. Read the proposal. Accept it or remove it.
-6. Drag the accepted skill onto a Skillset rack.
+4. Remove any step that does not belong. Choose its Form: a Method for a whole practice, a Skill for one step.
+5. Read the proposal: what it resembles, and anything that holds it. Press Accept, or Remove.
+6. Drag the accepted member onto a Skillset rack.
 
 #### Rules
-- The skill arrives as a proposal. It is not admitted until a person has reviewed it.
+- The member arrives as a proposal. It is kept as a draft only when you accept it.
+- A proposal that holds a secret is held. Release scans it again; it is never accepted while a secret remains.
 - The device records only what you do while Capture is on.
 - The example stays with the skill, so a reader can see where it came from.
 
 #### Tips
 - To teach a release routine, do one release by hand with Capture on.
-- To make a safe skill, choose Exact for the first revision. Widen it later.
+- To see whether you already have it, read Resembles before you accept.
 
 ### 19.12 Scope
 
@@ -6202,7 +6211,7 @@ You need one place to answer what the agents ask. Approvals holds every proposal
 | Queue | A count (reading) | Read from the agents | The number of proposals and requests that wait. |
 | Show | Proposals · Requests · Both | Both | Proposals hold changes. Requests ask for a decision, for example a deploy. |
 | Default answer | Ask · Session · Always | Ask | The default answer to a request. The Gateway holds the same setting for each session. |
-| Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
+| Wait | 1 min–24 h | 5 min | How long a request waits before it counts as unanswered. |
 | On no answer | Hold · Deny | Hold | What happens when nobody answers. |
 | Order | Oldest first · By agent · By risk | Oldest first | The order of the queue. |
 
@@ -7132,23 +7141,29 @@ enough of them agree on.
 
 #### Making an agent
 
-Press + Agent in the head. A card opens in the pane:
+Press + Agent in the head. A card opens in the pane, and the first line is
+yours: say what you want the agent for, as you would say it to a person.
 
 | Field | Values | Default | What it does |
 |---|---|---|---|
-| Name | Text | Empty | What you call the agent. |
-| For | Text | Empty | What the agent is for, in your words: its instructions. |
-| Type | A pattern from the six families (§25.6) | None until you choose | How the agent works: when it starts, when it stops, alone or in a crew, what it may change and whom it answers to. The type sets the agent's face. |
+| For | Text | Empty | What the agent is for, in your words. Central reads its role, its purpose and what it may read from them. |
 | Works in | A world | The world in front of you | Where the agent belongs. It works in that world's workcell. |
-| Harness and model | The harnesses and models your workcells reach | The workcell's | The program and the model that run the agent. |
+| Kept for | You · The project | You | Whether the agent is yours alone or belongs to the project. |
+| Type | A pattern from the six families (§25.6) | None until you choose | How the agent works: when it starts, when it stops, alone or in a crew, what it may change and whom it answers to. The type sets the agent's face. |
 | Carries | Skillsets from the browser | None | The practice the agent carries (§19.7). |
 
-Press Make and the agent joins your roster, kept by Central as the agent's
-Being page in its world (§18.1). Until you press Make, nothing is written. The
-new agent stands in Messages at once, and in the browser, ready to drag onto
-any track. + Group opens the same card for a group: its name, what it is for,
-its members, dragged in by their faces, and its type, which sets how the
-members answer together. A group works in Factory as an Agentset rack (§19.15).
+Press Make and Central writes the agent as a proposal: its role and purpose
+from your words, the world it stands in, the sources it may read. The card
+turns to that proposal. Accept keeps it in your roster; Change lets you edit a
+field first; Discard drops it. Until you accept, the agent stands proposed, in
+Messages and on its Identity page (§19.4), and works only where you seat it.
+Central keeps the card in your ground, and the agent's Being page reads it
+(§18.1).
+
++ Group opens the same card for a group: what it is for, its members, dragged
+in by their faces, and its type, which sets how the members answer together.
+Central proposes the group as a set of agents, and you accept it as you
+accept an agent. A group works in Factory as an Agentset rack (§19.15).
 
 #### Views
 
@@ -7181,13 +7196,13 @@ settings, + Agent, + Group and the Agency gateway's mark across its head
 1. Click the Messages square in the launcher at the foot of the rail.
 2. Click a face. Write, and press Enter.
 3. To read the whole conversation, press ▦ on the tile.
-4. To make an agent, press + Agent in the head, fill in the card and press Make.
+4. To make an agent, press + Agent, say what it is for, press Make, then Accept the proposal.
 5. To put the agent to work, drag its face onto a track.
 
 #### Rules
 - One agent has one conversation, the same in every mode and in its Agent device.
 - Messages travel through the Agency gateway. A call from one agent to another follows its Agent to agent rule.
-- Making an agent writes nothing until you press Make. The card it writes is Central's; Messages keeps no copy.
+- Making an agent writes only a proposal until you accept it. The card is Central's; Messages keeps no copy.
 - An agent's card gives it no right. What it may read and write comes from Scope (§19.12).
 - A message to an agent that is not running waits for it, and the agent reads it when it next runs. A message to an agent working on another machine is carried there through that machine's workcell.
 - A message asks; it is not a task. To turn one into work, drag it onto the agent's track, and the agent takes it as a task with a receipt.
@@ -10612,7 +10627,7 @@ height.
 
 ### 23.2 Files
 
-**Product:** Workcell · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
+**Product:** Central, with AIKit · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
 
 You need to see which files an agent read and which it changed. Files shows them as a tree, with the lines added and removed.
 

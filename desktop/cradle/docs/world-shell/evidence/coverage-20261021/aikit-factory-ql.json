@@ -1,0 +1,1865 @@
+{
+ "schema": "audit-b.coverage/v1",
+ "rows": [
+  {
+   "ref": "cap.aikit.discovery",
+   "need": "find tools and skills already present",
+   "operation": "inspect registered and foreign source roots",
+   "outcome": "provenance inventory before adoption",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none (§19.7 only says \"drag a set from the browser\")",
+   "bound": "no",
+   "owner_op": "`aikit source show|add-directory|add-git|sync`, `collate`: CLI exists; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: a Sources page in the Skillset rack Full (§19.7); the AIKit manifest already declares a browser Skillsets category, state waiting (inhabitants/aiKitFamilyManifest.ts:12).",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.adoption",
+   "need": "manage existing material deliberately",
+   "operation": "preview adoption, apply a reviewed change",
+   "outcome": "managed source, originals kept, conflicts explicit",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:skillset-rack: Package group, Export (packages a set; not adoption)"
+   ],
+   "manual": "§19.7 Parameters, Export row only",
+   "bound": "no: Export refused, agent/devices/designBindings.ts:93",
+   "owner_op": "`aikit adopt`, `source promote|rollback`, `procedure plan adopt`, `praxis skill export`: CLI exists; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: an Adopt page on the Skillset rack Full, reusing its Preview then Apply.",
+   "freshness": "live matrix adds praxis skill export, source add-capsule, praxis read",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.resource-index",
+   "need": "find a capability by identity or description",
+   "operation": "build and search typed provider descriptors",
+   "outcome": "addressable resources with owners and revisions",
+   "person_facing": "yes",
+   "designs": [
+    "central:search: the @ line and its results (kind, horizon, ref, owner)"
+   ],
+   "manual": "§18.4 Search (@): the language and kinds",
+   "bound": "yes: central/devices/searchBinding.ts:123",
+   "owner_op": "kernel op `knowledge` search|resolve (exists); `aikit search|tree|capabilities read` not called",
+   "verdict": "covered",
+   "note": "A capability record itself (`aikit capabilities read`) has no viewer.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.context-resolution",
+   "need": "know what applies to this project and act",
+   "operation": "resolve scoped declarations and eligibility; start Factory work as a Commission",
+   "outcome": "explainable capability and source view; Commission receipt",
+   "person_facing": "yes",
+   "designs": [
+    "central:context-world: reads, writes, reach",
+    "ai-kit:skillset-rack: members projected or withheld with reason"
+   ],
+   "manual": "§19.12 Scope; §19.7 Mark state",
+   "bound": "partly: central/devices/contextWorldBinding.ts:144 (Central effective sources); agent/devices/designBindings.ts:599 (set show projected/withheld); `aikit context|status|diff` never read",
+   "owner_op": "`aikit context current|list|env`, `status`, `diff`, `project bind|show`, `factory start-work`: CLI exists; no kernel op. Credentials: kernel credential_* used by Settings",
+   "verdict": "covered",
+   "note": "`factory start-work` (a Commission started from AIKit) has no control anywhere.",
+   "freshness": "live matrix changed operation/outcome; adds now-context prepare|publish|inspect|revoke|status",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.profiles",
+   "need": "reuse a baseline, express local needs",
+   "operation": "select and compose Profile contributions",
+   "outcome": "effective choices traceable to scope",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:skillset-rack: Set, Profile, Scope (Whole band one: Set, Compose)"
+   ],
+   "manual": "§19.7 Parameters: Set, Scope, Profile",
+   "bound": "partly: agent/devices/designBindings.ts:599 (Profile via config plane ai-kit:resolution:resolution.profiles); Set write refused :92",
+   "owner_op": "config_plan_reviewed / config_apply_reviewed (exist); `aikit profile fork|diff`, `set create|add|remove`, `skill overlay`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "Fork, diff and set-membership edits have no control. Settings \"Named settings profiles\" are O:I profiles, not AIKit's (settings/ProfilePreferences.tsx:1).",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.generation",
+   "need": "apply a predictable selection",
+   "operation": "build and publish generated state against its basis",
+   "outcome": "coherent replaceable target view",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:skillset-rack: Compose, Preview then Apply"
+   ],
+   "manual": "§19.7 Apply; Rules \"a change applies only after Preview and Apply\"",
+   "bound": "yes: agent/devices/designBindings.ts:599 (compose(): config_plan_reviewed then config_apply_reviewed)",
+   "owner_op": "reached through O:I config plane (exists); `aikit rollback|prune`: CLI; no control, no kernel op",
+   "verdict": "covered",
+   "note": "Rolling back a generation has no control; its place is beside Apply.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.projection",
+   "need": "use selected capabilities in a client",
+   "operation": "render adapter-specific projection",
+   "outcome": "native client config with lineage",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:skill-device: Reach (harnesses the skill is written into)",
+    "actuation:harness-model: Harness"
+   ],
+   "manual": "§19.8 Reach; §19.7 evidence step Projected; §19.4 Harness",
+   "bound": "partly: agent/devices/designBindings.ts:341 (harnesses from harness_status); Reach and the Projected rung never read (designBindings.ts:442 rungs null after Available)",
+   "owner_op": "kernel harness_status, client_install (exist); `mux`, `hook dispatch`: no kernel op",
+   "verdict": "covered",
+   "note": "Installing a client lives in the shell Settings window (settings/HarnessPreferences.tsx), which has no catalogue design or manual section.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.source-horizon",
+   "need": "ask a broad body of knowledge selectively",
+   "operation": "list eligible descriptors, then retrieve",
+   "outcome": "exact source with provenance and disclosure",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:knowledge-route: Sources (Wiki, Project, Code), Pages read",
+    "widgets:wiki: Page",
+    "central:search"
+   ],
+   "manual": "§19.9 Knowledge route; §23.7 Wiki; §18.4",
+   "bound": "partly: widgets/railDevices.tsx:190 (wiki via kernel knowledge read); central/devices/searchBinding.ts:123; knowledge-route design unbound (inhabitants/agentParamAddresses.ts:95 \"protocol_read is available but unwired\")",
+   "owner_op": "kernel `knowledge` search|read (exist); `knowledge sources` not in KnowledgeRequest",
+   "verdict": "covered",
+   "note": "Manual §19.9 offers a Web source; AIKit has no web lens (ai-kit__knowledge-route.tsx header).",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.knowledge-navigation",
+   "need": "move from a question to related source",
+   "operation": "search providers, expand a bounded neighbourhood",
+   "outcome": "inspectable routes across lenses",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:knowledge-route: Link depth, ring of links, Route",
+    "knowledge-graph:graph: Depth, Follow relations",
+    "widgets:wiki: links"
+   ],
+   "manual": "§19.9; §17.3; §23.7",
+   "bound": "partly: widgets/railDevices.tsx:190 bound; knowledge-route and knowledge-graph:graph designs unbound",
+   "owner_op": "kernel `knowledge` relations|explain|history|status (exist); `knowledge forget *`, `code *`, `frame`, `route`: no kernel op",
+   "verdict": "covered",
+   "note": "Forgetting a destination, route or project has no control; the code index appears only as a Source.",
+   "freshness": "live matrix changed operation/outcome; adds knowledge code changes|check|impact|search|context|status|index|trace",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.wiki-write",
+   "need": "record navigational understanding durably",
+   "operation": "explicit node, edge, space mutation; ingest; queries",
+   "outcome": "atomic valid wiki revision or refusal",
+   "person_facing": "yes",
+   "designs": [
+    "techne:canvas: Lines (a relation stays a suggestion until its owner agrees)",
+    "knowledge-graph:graph: proposed relations (Proposals group)"
+   ],
+   "manual": "§17.1 Tools; §17.3 relation families; §23.7 \"not edited here\"",
+   "bound": "no",
+   "owner_op": "`aikit wiki edge add|node create|update|space *|ingest|validate`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "Relations arrive as proposals per ground law; creating nodes or spaces and ingest have no control.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.authored-relations",
+   "need": "use links already in text",
+   "operation": "parse Markdown links and OKF properties with spans",
+   "outcome": "resolved and unresolved edges retained",
+   "person_facing": "no: a parser; its edges reach a person only as the graph's \"links a note holds in its text\" (§17.3)",
+   "designs": [],
+   "manual": "§17.3 (as edges)",
+   "bound": "n/a",
+   "owner_op": "no CLI",
+   "verdict": "backstage",
+   "note": "",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.projectcentral",
+   "need": "enter project material faithfully",
+   "operation": "discover descriptors, read permitted source",
+   "outcome": "source identity and standing retained",
+   "person_facing": "no: a provider adapter, met as the Knowledge route's Project source",
+   "designs": [],
+   "manual": "§19.9 Sources",
+   "bound": "n/a",
+   "owner_op": "no CLI",
+   "verdict": "backstage",
+   "note": "",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.living-knowledge",
+   "need": "know which readings depend on changed source",
+   "operation": "track dependencies, inspect affected readings",
+   "outcome": "visible basis for refresh and return",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "kernel `knowledge` status|history (exist); `knowledge forget *`: no kernel op",
+   "verdict": "design-gap",
+   "note": "central:packet marks an item stale when its source moved, nothing more. Home: an Affected page on the Knowledge route Full, with refresh and forget.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.wiki-shapes",
+   "need": "navigate whole and relation structure",
+   "operation": "derive bounded shape addresses from the pinned contract",
+   "outcome": "structural reading with source basis",
+   "person_facing": "yes",
+   "designs": [
+    "techne:canvas: Form page (Form, Centre, Layout, Role, Check, Fold, Declare)"
+   ],
+   "manual": "§17.4 Form page and steps 11",
+   "bound": "no",
+   "owner_op": "`aikit wiki-shape validate|declare|compress`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "Suggest asks the Decision helper; Declare needs a kernel op for wiki-shape declare.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.reflection",
+   "need": "see whether product meaning matches code",
+   "operation": "traverse semantic and code bindings",
+   "outcome": "discrepancy grounded in both",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "`aikit knowledge frame|route`, `world now-context field|contemplate|test-selection`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: a Meaning page on Impact (§18.6), beside References and Links.",
+   "freshness": "live matrix changed operation/outcome; adds now-context test-selection|field|contemplate",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.methods",
+   "need": "discover situated praxis, compose repertoires",
+   "operation": "classify Skills by METHOD:, inspect nested SkillSets",
+   "outcome": "participation explainable",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:skillset-rack: chain list by kind, child sets",
+    "ai-kit:skill-device: Skill, Method, Methodology faces"
+   ],
+   "manual": "§19.7 four kinds; §19.8 three faces",
+   "bound": "partly: agent/devices/designBindings.ts:599, :645 (agent_definition skillset|skillsets|skills, agent/devices/useRackReading.ts); Run and Prove refused",
+   "owner_op": "kernel agent_definition (exists); Method Run and Prove refused designBindings.ts:95-96 though `aikit praxis method run|prove` exist",
+   "verdict": "covered",
+   "note": "Run and Prove need kernel ops for praxis method run and prove.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.routines",
+   "need": "repeat proven work, expose authorised occurrences",
+   "operation": "validate Routine, proof, trigger, authority; admit invocations",
+   "outcome": "versioned invocation envelope",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "§19.22 Prompt pads (Runs at, Choke, run record) has no device embed",
+   "bound": "no (catalogue); settings/AutomationPreferences.tsx carries create, enable, run now, history outside the catalogue",
+   "owner_op": "kernel `routine` (exists); `aikit routine *` CLI; Factory owns the pad bank: `factory development pads|pads-write|pads-run|pads-record|pads-due` (Factory main 09c3354)",
+   "verdict": "design-gap",
+   "note": "No software-factory:prompt-pads design exists though the manual entry and both owners do. Needs a device of its own (an instrument on Factory's Main track, §19.22).",
+   "freshness": "live matrix changed operation/outcome",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.composition",
+   "need": "select components that fit the work",
+   "operation": "resolve requirements, contributions, provider bindings",
+   "outcome": "body reading with compatibility and limits",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:skillset-rack: Compose band (Scope, Preview, Apply, Profile)"
+   ],
+   "manual": "§19.7 Compose",
+   "bound": "partly: agent/devices/designBindings.ts:599 previews through the O:I config plane, not `aikit compose plan|repertoire`",
+   "owner_op": "`aikit compose plan|diff|repertoire`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "Compatibility and limits of the body reading are not drawn (unverified that the rack is compose's intended home).",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.sessions",
+   "need": "continue work through usable surfaces",
+   "operation": "inspect, declare, compare, reconcile session topology",
+   "outcome": "traceable session, bounded ownership",
+   "person_facing": "yes",
+   "designs": [
+    "software-factory:tasks",
+    "software-factory:run-device",
+    "dlw:session-grid (tracks = sessions, clips = tasks)"
+   ],
+   "manual": "§19.1 the track and the clip; §16.6",
+   "bound": "partly: agent/devices/taskBindings.ts:171, agent/devices/sessionChainBindings.ts:120 (agency_read)",
+   "owner_op": "kernel agency_read, encounter_provision, harness_agent_control (exist); `aikit session diff|reconcile`, `task spawn|close`: no kernel op",
+   "verdict": "covered",
+   "note": "Session diff and reconcile have no control.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.models",
+   "need": "one model field, every proven route kept",
+   "operation": "join catalogue with realisation evidence, rank, actualise",
+   "outcome": "one candidate per ModelRef with routes and three standings",
+   "person_facing": "yes",
+   "designs": [
+    "actuation:harness-model: Model",
+    "software-factory:agentset-rack: Subagent model"
+   ],
+   "manual": "§19.4 Model; §19.15 Subagent model",
+   "bound": "partly: agent/devices/designBindings.ts:341 (models from model_catalogue, agent/devices/useModelCatalogue.ts:26)",
+   "owner_op": "kernel model_catalogue, model_roster (exist); `jev`, `now-context contemplate`: no kernel op",
+   "verdict": "covered",
+   "note": "Route standings (unproven, observed, usable) appear in no design and no manual row; Settings lists routes only.",
+   "freshness": "live matrix changed operation/outcome; adds jev validate|invoke",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.activation",
+   "need": "know what a target made operative",
+   "operation": "carry activation receipts in ContextResolution",
+   "outcome": "selection and activation inspectable apart",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:skillset-rack: request squares, ten-step evidence",
+    "ai-kit:skill-device: Enabled"
+   ],
+   "manual": "§19.7 What a member has done; §19.8",
+   "bound": "partly: agent/devices/designBindings.ts:599 (req:<id> through ai-kit:skills:skills.capabilities); rungs Selected to Verified null (:442)",
+   "owner_op": "config plane (exists); evidence (`aikit explain`, `praxis observe status`): no kernel op",
+   "verdict": "covered",
+   "note": "Seven of ten evidence steps have no reading wired.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.procedures",
+   "need": "change an environment with a visible boundary",
+   "operation": "plan, execute and undo a Procedure",
+   "outcome": "attributable effects with a recovery route",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:capture-skill: capture, proposal, Accept = promote (part)",
+    "ai-kit:skill-device: Review = trust record (part)"
+   ],
+   "manual": "§19.11 Capture skill (stale, see summary); §19.8 Review",
+   "bound": "no: capture-skill unbound; Review refused agent/devices/designBindings.ts:94",
+   "owner_op": "`aikit procedure plan|diff|run|undo|list`, `bypass *`, `capture`, `inbox`, `promote`, `trust record`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Procedure plan, run and undo, and bypasses, have no control. Home: a Procedure page on the Skillset rack Whole, beside Preview and Apply.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.explain",
+   "need": "understand how the effective world arose",
+   "operation": "read causal explanation and recorded changes",
+   "outcome": "selection and change traces for diagnosis",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none (§19.7 \"point at a dim mark to read why\" is the set's withheld reason)",
+   "bound": "no",
+   "owner_op": "`aikit explain|history|log export|jobs|failures|doctor`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: a Why and History page on the skill-device Full.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.familiarity",
+   "need": "reach familiar resources fast",
+   "operation": "rank candidates from recorded use",
+   "outcome": "faster access, refs and authority kept",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no: central/devices/searchBinding.ts has no open act, so `knowledge open` (the use record) is never sent",
+   "owner_op": "`aikit recent|stats|unused`: CLI; kernel `knowledge` action use (exists)",
+   "verdict": "design-gap",
+   "note": "Low. Home: browser ordering and an Unused filter on the Skillset rack.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.gateway",
+   "need": "owner-only contact plane for agency",
+   "operation": "serve and query the Agency Gateway; probe presence",
+   "outcome": "verified presence, connector ingress, ecology reading",
+   "person_facing": "yes",
+   "designs": [
+    "ai-kit:agency-gateway: Service, Entry, Coexist, Surfaces, Calls, Agents, Messages that passed",
+    "actuation:gateways-rack: AIKit agency gateway line"
+   ],
+   "manual": "§19.10; §19.3",
+   "bound": "partly: agent/devices/mainTrackBindings.ts:192 (only harness_agent_read reaches; writes refused :174-178)",
+   "owner_op": "`aikit gateway serve|status|ecology|discover|snapshot`: CLI; no kernel op (only harness_agent_read/control)",
+   "verdict": "covered",
+   "note": "Manual §19.10 omits Entry and Coexist, which the design draws.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.continuity",
+   "need": "re-enter a project and meet standing knowledge",
+   "operation": "compose event-specific continuity; bound by pressure; verify close-outs",
+   "outcome": "durable facts enter context under explicit composition",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none (the transport's Load reading only)",
+   "bound": "no",
+   "owner_op": "`aikit work continuity pressure|commands|closeout verify`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: a Context page on the Agent Whole (what entered, what was bounded); close-out verify beside the Day close.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.encounters",
+   "need": "agency encounters that survive UI disconnects",
+   "operation": "host ACP encounters, one composer per session",
+   "outcome": "history outlives any client",
+   "person_facing": "yes",
+   "designs": [
+    "software-factory:thread",
+    "actuation:harness-model Full",
+    "ai-kit:messages conversation (conv.*)"
+   ],
+   "manual": "§19.4 The thread; §19.24 The conversation",
+   "bound": "yes: agent/devices/threadBinding.ts:281 (encounter view)",
+   "owner_op": "kernel `encounter` (exists)",
+   "verdict": "covered",
+   "note": "",
+   "freshness": "live matrix changed operation/outcome; adds encounter-configure",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.harness-admission",
+   "need": "dispatch through admitted harness CLIs",
+   "operation": "admit via Actuation detection",
+   "outcome": "admission from live detection",
+   "person_facing": "yes",
+   "designs": [
+    "actuation:harness-model: Harness",
+    "ai-kit:agency-gateway: Coexist, harnesses"
+   ],
+   "manual": "§19.4 Harness; §19.10 Harnesses",
+   "bound": "partly: agent/devices/designBindings.ts:341 (harness_status)",
+   "owner_op": "kernel harness_status (exists)",
+   "verdict": "covered",
+   "note": "",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.knowledge-resolution",
+   "need": "one resolution over sources, flows, skills",
+   "operation": "`knowledge resolve` rows; `knowledge open` records one use",
+   "outcome": "inert resolution; explicit open records use",
+   "person_facing": "yes",
+   "designs": [
+    "central:search: results by owner and kind"
+   ],
+   "manual": "§18.4",
+   "bound": "partly: central/devices/searchBinding.ts:123 (resolve); open never sent",
+   "owner_op": "kernel `knowledge` resolve and use (exist)",
+   "verdict": "covered",
+   "note": "Opening a result should go through `knowledge open` so use is recorded.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.session-lifecycle",
+   "need": "typed lifecycle read model incl. permissions",
+   "operation": "record and read lifecycle events",
+   "outcome": "history and reads agree",
+   "person_facing": "yes",
+   "designs": [
+    "software-factory:approvals: Requests, Allow once, Allow always, Deny",
+    "software-factory:thread: working line, stall card, Hard stop"
+   ],
+   "manual": "§19.14; §19.4 The thread",
+   "bound": "partly: agent/devices/receiptBindings.ts:274, agent/devices/threadBinding.ts:281 (the encounter's permissions and cancel, not the lifecycle store)",
+   "owner_op": "`aikit session lifecycle *`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "The thinking event has no reading.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.flow-cognition",
+   "need": "Contemplate(FlowRef) that never auto-invokes",
+   "operation": "preflight, then contemplate once",
+   "outcome": "one familiarity record; unavailable and refused first-class",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none (0 mentions of Contemplate)",
+   "bound": "no: the kernel already dispatches action:contemplate-flow (desktop/cradle/kernel/src/flow_cognition.rs:123); no shell caller",
+   "owner_op": "`aikit flow preflight|contemplate` (CLI); kernel invoke_action contemplate-flow (exists)",
+   "verdict": "design-gap",
+   "note": "Home: a Contemplate act on central:flow-document (§18.1) that shows the preflight first.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.aikit.flow-changed-since",
+   "need": "what changed since one thought",
+   "operation": "changed-since read anchored to a thought",
+   "outcome": "replayable answer",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no: kernel op flow_changed_since exists (desktop/cradle/src/kernel/types.ts:289), no shell caller",
+   "owner_op": "`aikit flow changed-since` (CLI); kernel flow_changed_since (exists)",
+   "verdict": "design-gap",
+   "note": "Home: a Changed since reading on central:flow-document beside its thought.",
+   "product": "ai-kit"
+  },
+  {
+   "ref": "cap.factory.native-cli",
+   "need": "stable way to inspect and operate Factory",
+   "operation": "capabilities inventory and native dispatch",
+   "outcome": "shell and machine clients address the same contracts",
+   "person_facing": "no: the CLI and inventory surface itself; its operations are the rows below",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "factory CLI",
+   "verdict": "backstage",
+   "note": "",
+   "freshness": "live matrix lists 80+ commands: attempt.*, workflow.*, telemetry.*, custody, field, config",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.build-reading",
+   "need": "the Project and Run's current state",
+   "operation": "validated Project/Journey/Run reads",
+   "outcome": "same owner revision, blockage, retained artifacts",
+   "person_facing": "yes",
+   "designs": [
+    "software-factory:attempt-review: Work, Attempt, task tree, Stands",
+    "software-factory:run-device: takes",
+    "software-factory:tasks"
+   ],
+   "manual": "§19.1 Takes and Arrangement lanes",
+   "bound": "partly: agent/devices/taskBindings.ts:228 (attempts absent: no reading names a run ref), agent/devices/sessionChainBindings.ts:120",
+   "owner_op": "kernel factory_attempt_read, factory_development_read, factory_build_snapshot, encounter_task_attempts_list (exist)",
+   "verdict": "covered",
+   "note": "Project, Journey and WorkflowUnit relations, blockage and custody facets are not drawn.",
+   "freshness": "live matrix changed operation/outcome",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.journey-continuity",
+   "need": "outcome outlives one Run or session",
+   "operation": "Journey keeps Commission; ContinueCommission adds successors",
+   "outcome": "predecessor and successor ancestry on restart",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none (0 mentions of Commission)",
+   "bound": "no",
+   "owner_op": "kernel factory_owner DevelopmentCommission (desktop/cradle/kernel/src/factory.rs:336), factory_development_read journey|commission-read (exist)",
+   "verdict": "design-gap",
+   "note": "Home: a Journey view in attempt-review Full beside Grove; or a device of its own, since a Journey outlives a track.",
+   "freshness": "live matrix changed operation/outcome",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.run-map",
+   "need": "transformation whose identity survives execution",
+   "operation": "compile units into a RunMap; coordinate dependencies, custody, retries, barriers, lifecycle",
+   "outcome": "missing or rejected work prevents completion",
+   "person_facing": "yes",
+   "designs": [
+    "software-factory:agentset-rack: Join All (the barrier), Retry (RetryGrant) only"
+   ],
+   "manual": "§6 promises \"a map of what waits on what\"; no entry",
+   "bound": "no: agentset Join and Retry refused agent/devices/sessionChainBindings.ts:197-198",
+   "owner_op": "kernel factory_development_read workflow-units|workflow-unit, factory_owner WorkflowInspect, RunClose, Recognise (factory.rs:209, :347, :323) exist",
+   "verdict": "design-gap",
+   "note": "Needs a device of its own: the unit graph with dependencies, barriers and lifecycle (finishing, finished, Recognition); the ruler orders by time, not dependency.",
+   "freshness": "live matrix changed operation/outcome; adds workflow.check|compile|commission, attempt.action",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.build-evidence",
+   "need": "reasons bearing on a proposed result",
+   "operation": "project Candidate, Claim, Evidence, HumanRequest",
+   "outcome": "reasons and affected work behind a request",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "factory_build_snapshot (exists)",
+   "verdict": "design-gap",
+   "note": "Home: a Review page behind Stands on attempt-review.",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.structural-ground",
+   "need": "development faithful to authored relational identity",
+   "operation": "validate source-owned identities and relations",
+   "outcome": "missing or stale structure disclosed",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "no CLI",
+   "verdict": "design-gap",
+   "note": "Low. Home: a standing line on the Run device head.",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.journey-commission",
+   "need": "a named collaborator carries a responsibility",
+   "operation": "custody assign/update; current-work",
+   "outcome": "current work and blockage inspectable",
+   "person_facing": "yes",
+   "designs": [
+    "software-factory:agent-custody: Autonomy, Gate, Escalate, Held, Hand back",
+    "actuation:harness-model Custody page"
+   ],
+   "manual": "§19.4 Parameters and Whole (Custody page)",
+   "bound": "partly: agent/devices/sessionChainBindings.ts:167 (autonomy from encounter_task_read; writes refused :139-142)",
+   "owner_op": "factory_owner CurrentWork (factory.rs:316, exists); `factory development custody assign|update|list`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "Held items need custody list; Hand back needs custody release through the kernel.",
+   "freshness": "live matrix adds development.custody.*, current-work",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.bounded-intent",
+   "need": "the exact intended difference",
+   "operation": "set_intent with criteria and context refs",
+   "outcome": "attributable basis",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none (§19.1 Clip panel: Name, Colour, State, Turns, Output style)",
+   "bound": "no",
+   "owner_op": "`factory development field read|set`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: an Intent panel in Factory's Clip view (§19.1).",
+   "freshness": "live matrix adds development.field.read|set",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.git-development",
+   "need": "exact source base, isolated material",
+   "operation": "pin a base, bind material worktrees, record differences",
+   "outcome": "lineage survives material changes",
+   "person_facing": "yes",
+   "designs": [
+    "workcell:git-seat: Branch, ahead of main",
+    "workcell:seat"
+   ],
+   "manual": "§19.16; §19.17",
+   "bound": "partly: agent/devices/workcellBindings.ts:92, :172 bind the seat's git facts (git_repository_read, seat_status_read); Factory's base and material relation is not read",
+   "owner_op": "`factory development field bind-material`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "The design shows the seat's git, not Factory's pinned base and material relation.",
+   "freshness": "live matrix adds development.field.bind-material",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.intent-return",
+   "need": "were the stated criteria met",
+   "operation": "derive satisfied, unsatisfied, indeterminate",
+   "outcome": "conclusive criteria require evidence",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "`factory development field return`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: a criterion verdict beside Stands on attempt-review.",
+   "freshness": "live matrix adds development.field.return",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.request-evidence",
+   "need": "more support for a decision",
+   "operation": "request-evidence Action; unit decisions via Central receiving",
+   "outcome": "only the affected unit blocks; exact answer resumes once",
+   "person_facing": "yes",
+   "designs": [
+    "software-factory:approvals: Requests, Approve, Deny",
+    "software-factory:thread: stall card"
+   ],
+   "manual": "§19.14 Show: Requests; §19.4 Stall card",
+   "bound": "partly: agent/devices/receiptBindings.ts:274 (queue = encounter permissions and Central source returns, not Factory unit decisions)",
+   "owner_op": "`factory attempt decision`: CLI; no kernel op (factory_owner has no decision variant)",
+   "verdict": "covered",
+   "note": "",
+   "freshness": "live matrix changed operation/outcome",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.cognitive-reading",
+   "need": "relevant retained thought without reading every session",
+   "operation": "filter by subject, producer, anchor, lifecycle",
+   "outcome": "source-backed reading tied to the Run",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "no CLI",
+   "verdict": "design-gap",
+   "note": "Home: a Thought filter on the Thread Full.",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.owner-return",
+   "need": "a finding pressures its proper owner",
+   "operation": "observations, owner-return proposals, attempt receiving",
+   "outcome": "returned evidence attributable to producer and owner",
+   "person_facing": "yes",
+   "designs": [
+    "software-factory:ledger: Outcome (Waiting, Approved, Refused)",
+    "software-factory:attempt-review: Stands"
+   ],
+   "manual": "§19.13; §19.1 \"choose the attempt that stands\"",
+   "bound": "partly: agent/devices/receiptBindings.ts:146 (Central change horizon); Stands refused at agent/devices/taskBindings.ts:211 although factory_owner AttemptReceiving exists (factory.rs:373; used by timeline/factoryTrackAdapter.ts:107)",
+   "owner_op": "factory_owner AttemptReceiving (exists); `development observe|observations`, `attempt learn|material`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "Wire Stands to factory_owner attempt-receiving, as the take lanes already do.",
+   "freshness": "live matrix changed operation/outcome",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.development-persistence",
+   "need": "a later process gets the actual Run context",
+   "operation": "save and reload the ledger",
+   "outcome": "state survives reopening",
+   "person_facing": "no: storage and reload; met through the reads above",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "internal",
+   "verdict": "backstage",
+   "note": "",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.praxis-condition",
+   "need": "how the agent actually worked",
+   "operation": "retain METHOD skill, body and context conditions",
+   "outcome": "evidence qualifies the operative condition",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "`factory development field operative`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Low. Home: a line on each Ledger receipt.",
+   "freshness": "live matrix adds development.field.operative",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.action-projection",
+   "need": "clients operate one subject under one authority",
+   "operation": "validate projection lineage, invoke handler",
+   "outcome": "receipt keeps subject, caller, authority",
+   "person_facing": "no: client parity; actions are reached through factory_owner ActionList/ActionInvoke",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "factory_owner ActionList, ActionInvoke (exist)",
+   "verdict": "backstage",
+   "note": "",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.run-thought",
+   "need": "reasoning attributable beyond one session",
+   "operation": "typed thought with producer and anchors per Run",
+   "outcome": "no cross-Run leakage",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "no CLI",
+   "verdict": "design-gap",
+   "note": "Same home as cognitive-reading.",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.factory.praxis-fitness",
+   "need": "evidence before a Method runs unattended",
+   "operation": "relate profile, Method proof, Routine observations",
+   "outcome": "revalidation pressure disclosed",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "no CLI",
+   "verdict": "design-gap",
+   "note": "Low. Home: the missing Prompt pads device (when a pad gets a schedule) and the member device Prove.",
+   "product": "software-factory"
+  },
+  {
+   "ref": "cap.ql.cli-discovery",
+   "need": "find a usable operation",
+   "operation": "ql capabilities and version",
+   "outcome": "versioned command inventory",
+   "person_facing": "no: inventory for clients",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "`ql capabilities`",
+   "verdict": "backstage",
+   "note": "",
+   "freshness": "live matrix lists 60+ commands (kernel m1|m3, scene, stage, nara, epi-agent, agent-event, music, vak compose)",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.kernel-operators",
+   "need": "a reproducible structural result",
+   "operation": "`ql kernel apply` conjugate-address, complement-address, classify-four-plus-two",
+   "outcome": "typed result with version",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "`ql kernel apply`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Low. Home: the M′ matrices Cell group beside Apply (which today moves only M3 partners).",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.pairing",
+   "need": "distinguish coincident constructions",
+   "operation": "A/B/C squares, D1-D3 completion",
+   "outcome": "pair family and derivation",
+   "person_facing": "no: formal construction contract with no CLI; reaches a person through shapes (unverified)",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "no CLI",
+   "verdict": "backstage",
+   "note": "",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.shape",
+   "need": "work with the available structure",
+   "operation": "QlShape contracts; `ql shape presentation`",
+   "outcome": "valid partials; 4x4, 6x6, sixfold fields",
+   "person_facing": "yes",
+   "designs": [
+    "techne:canvas: Form page (forms over the QL shape contract, Fields count, Fold)"
+   ],
+   "manual": "§17.4 Form",
+   "bound": "no",
+   "owner_op": "AIKit `wiki-shape *` and `ql shape presentation`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "",
+   "freshness": "live matrix adds 4x4x4, 10x10, seven-fold, 18-fold and shape presentation",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.lens-registry",
+   "need": "see lenses before reading",
+   "operation": "`ql mef lenses`",
+   "outcome": "twelve lenses with face and square",
+   "person_facing": "yes",
+   "designs": [
+    "quaternal-logic:torus: Lens",
+    "quaternal-logic:m-prime-matrices: Lens",
+    "live:scale-mapping: lens rows"
+   ],
+   "manual": "§21.2; §22.6; §21.3",
+   "bound": "partly: live/torusDevice.ts:164 (lens determinant), live/designBindings/scaleMappingBinding.ts:107 (mode.lens via music_modes_read); m-prime-matrices unbound",
+   "owner_op": "`ql mef lenses`: CLI; no kernel op (lenses reach the shell through music_modes_read)",
+   "verdict": "covered",
+   "note": "",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.context-frames",
+   "need": "select a defined cut of a relation",
+   "operation": "`ql context-frame list`; CF1-CF7",
+   "outcome": "named grammar and partitions",
+   "person_facing": "yes",
+   "designs": [
+    "quaternal-logic:torus: Context frame",
+    "quaternal-logic:m-prime-matrices: Context frame 1-7",
+    "actuation:harness-model: Team cell"
+   ],
+   "manual": "§21.2; §22.6; §19.4 In a team",
+   "bound": "partly: live/torusDevice.ts:164; agent/devices/decisionHelperBinding.ts:102 (team_space)",
+   "owner_op": "`ql context-frame list`: CLI; no kernel op; team-space via kernel team_space (exists)",
+   "verdict": "covered",
+   "note": "",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.external-frame",
+   "need": "compare a domain composition with formal context",
+   "operation": "External Context Frame reading",
+   "outcome": "exact, partial, ambiguous or none, with provenance",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "no CLI",
+   "verdict": "design-gap",
+   "note": "Home: a lens effect on a Technē reading's chain; §17.1 names \"lens and filter effects\" but specifies none.",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.vak-source",
+   "need": "keep research language attributable",
+   "operation": "`ql vak locate`",
+   "outcome": "source-locked entry with coordinate",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none (§19.20 names only the Vāk block instrument)",
+   "bound": "no",
+   "owner_op": "`ql vak locate`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: a vak: kind in Search (@) (§18.4 kinds).",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.vak-context",
+   "need": "recover formulation relationships",
+   "operation": "`ql vak context` depth 0-2",
+   "outcome": "bounded entries and relations",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "`ql vak context`: CLI; no kernel op",
+   "verdict": "design-gap",
+   "note": "Home: the same Search result opened to its depth 0-2 neighbourhood.",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.service-negotiation",
+   "need": "know what a provider can supply",
+   "operation": "`ql service capabilities|negotiate`",
+   "outcome": "support flag and provider state",
+   "person_facing": "no: provider negotiation between programs",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "`ql service *`",
+   "verdict": "backstage",
+   "note": "",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.service-readings",
+   "need": "locate, refract, relate or synthesise a subject",
+   "operation": "QlService request dispatch",
+   "outcome": "reading with provenance",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "no CLI for the readings",
+   "verdict": "design-gap",
+   "note": "Home: Technē reading lens effects (§17.1).",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.client-modes",
+   "need": "keep working when reading is optional",
+   "operation": "Disabled, Optional, Required modes",
+   "outcome": "availability explicit",
+   "person_facing": "no: adapter configuration between programs",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "no CLI",
+   "verdict": "backstage",
+   "note": "",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.wiki-structure",
+   "need": "ordinary nodes and disclosed partial wholes",
+   "operation": "wiki structural contracts and anchors",
+   "outcome": "representation without completeness gating",
+   "person_facing": "yes",
+   "designs": [
+    "techne:canvas: Form (gaps kept visible; conjugate only on a filled direct role)",
+    "knowledge-graph:graph: constellation members"
+   ],
+   "manual": "§17.4; §17.3",
+   "bound": "no",
+   "owner_op": "via AIKit `wiki-shape *`: CLI; no kernel op",
+   "verdict": "covered",
+   "note": "",
+   "freshness": "live matrix adds the partial-conjugate-7 grain",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.wiki-refraction",
+   "need": "inspect wiki relationships formally",
+   "operation": "WikiFrame refraction",
+   "outcome": "derived reading with revision and operator basis",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "no CLI; production consumer `ql techne reading` (CLI; no kernel op)",
+   "verdict": "design-gap",
+   "note": "Home: Technē reading lens effects (§17.1).",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.wiki-portals",
+   "need": "traverse explicit cross-wiki relationships",
+   "operation": "MetaBinding and portal traversal",
+   "outcome": "identities preserved",
+   "person_facing": "yes",
+   "designs": [
+    "techne:palace: Portal (a door to another place, palace or world)"
+   ],
+   "manual": "§17.7 Rooms, path, guide, portals",
+   "bound": "no",
+   "owner_op": "none: no CLI, no kernel op exposes QL portal traversal",
+   "verdict": "owner-gap",
+   "note": "Unverified that Palace portals (projections/atlas palaceSession) are meant to traverse QL MetaBindings.",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.living-wiki",
+   "need": "orient and expand in a bounded field",
+   "operation": "living-wiki methods and entry aperture",
+   "outcome": "attributable partial reading",
+   "person_facing": "yes",
+   "designs": [],
+   "manual": "none",
+   "bound": "no",
+   "owner_op": "no CLI",
+   "verdict": "design-gap",
+   "note": "Home: an Aperture page on knowledge-graph:graph (its Scope and Depth are the cradle's filter, not QL's).",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.cli-verification",
+   "need": "bounded local verification",
+   "operation": "`ql verify`",
+   "outcome": "named checks",
+   "person_facing": "no: developer check",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "`ql verify`",
+   "verdict": "backstage",
+   "note": "",
+   "product": "quaternal-logic"
+  },
+  {
+   "ref": "cap.ql.kernel-parity",
+   "need": "C and Rust aligned to one source",
+   "operation": "shared contract and parity fixtures",
+   "outcome": "common identities",
+   "person_facing": "no: a parity test",
+   "designs": [],
+   "manual": "",
+   "bound": "n/a",
+   "owner_op": "tests",
+   "verdict": "backstage",
+   "note": "",
+   "product": "quaternal-logic"
+  }
+ ],
+ "designs": [
+  {
+   "id": "ai-kit:agency-gateway",
+   "bound": "partly: agent/devices/mainTrackBindings.ts:192 (only harness_agent_read reaches)",
+   "waits_on": "kernel ops for `aikit gateway serve|shutdown`, `setup --mode`, `coexistence`, `connector add|remove`, `who`, `modes` (CLI exist); an ingress rule for sender kind agent (no AIKit write: GatewayIngressDecision)",
+   "unnamed_capability": "gateway setup/coexistence/connectors/who are in no record (cap.aikit.gateway lists serve, protocol, discover, status, ecology, snapshot)",
+   "manual": "§19.10 omits Entry and Coexist"
+  },
+  {
+   "id": "ai-kit:capture-skill",
+   "bound": "no",
+   "waits_on": "kernel ops for `aikit capture|inbox|promote` (CLI exist); the transport Capture window (Source, Minutes) and step drafting have no code",
+   "unnamed_capability": "",
+   "manual": "§19.11 is stale against the design: it specifies Fit and \"lands in Approvals\"; the design has Form (Skill or Method), Held for (secret quarantine), Resembles, Release, Accept = promote a draft"
+  },
+  {
+   "id": "ai-kit:decision-helper",
+   "bound": "partly: agent/devices/decisionHelperBinding.ts:102 (decision_status, team_space)",
+   "waits_on": "provider election write and `decide status --probe` through the kernel (AIKit, CLI exist); a team's When, Deadline and per-instrument request (Quaternal Logic: no operation); the question log and counts (no owner records them)",
+   "unnamed_capability": "`aikit decide` (no AIKit capability record); QL team space (only in the live QL matrix, cap.ql.team-space)"
+  },
+  {
+   "id": "ai-kit:knowledge-route",
+   "bound": "no: the world slot hosts software-factory:context-write-mode; inhabitants/agentParamAddresses.ts:95 \"protocol_read is available but unwired\"",
+   "waits_on": "kernel `knowledge` relations|history|status (exist, unwired); AgentProfile knowledge_source_refs write (Central agent-profile.save); Read budget and Search first (no owner operation)",
+   "unnamed_capability": "",
+   "manual": "§19.9 lists a Web source AIKit does not have"
+  },
+  {
+   "id": "ai-kit:messages",
+   "bound": "no",
+   "waits_on": "kernel ops for `aikit gateway who|send|conversation|delegate|team` (CLI exist); Make, a roster card write (Central: no owner operation)",
+   "unnamed_capability": "gateway who/send/conversation/delegate/team are in no record"
+  },
+  {
+   "id": "ai-kit:skillset-rack",
+   "bound": "partly: agent/devices/designBindings.ts:599 (agent_definition, config plane)",
+   "waits_on": "set write (missing op skillset, designBindings.ts:92); `aikit praxis set package export` through the kernel (:93); evidence steps Selected to Verified (no reading wired)",
+   "unnamed_capability": "set package plan/export/verify are in no record"
+  },
+  {
+   "id": "ai-kit:skill-device",
+   "bound": "partly: agent/devices/designBindings.ts:645",
+   "waits_on": "kernel ops for `aikit trust record`, `praxis method run|prove` (CLI exist; refused :94-96); Instantiate (`aikit praxis instantiate-check`) and Reach not read",
+   "unnamed_capability": "praxis method run/prove and instantiate-check are in no record (cap.aikit.methods lists method list only)"
+  },
+  {
+   "id": "software-factory:agent-custody",
+   "bound": "partly: agent/devices/sessionChainBindings.ts:167",
+   "waits_on": "custody write and release through the kernel (`factory development custody assign|update`, CLI exist; refused :139-142); Factory custody list for held items",
+   "unnamed_capability": "",
+   "manual": "no device embed; carried as the Agent's Custody page (§19.4)"
+  },
+  {
+   "id": "software-factory:agentset-rack",
+   "bound": "partly: agent/devices/sessionChainBindings.ts:248",
+   "waits_on": "Hermes delegation block (no config.set key); Central agent-set join record; Factory RetryGrant through the kernel (:190-198); First, Quorum, Weighted joins (no owner)",
+   "unnamed_capability": "Hermes subagent tree (not a suite product)"
+  },
+  {
+   "id": "software-factory:approvals",
+   "bound": "partly: agent/devices/receiptBindings.ts:274 (encounter permissions, Central source returns)",
+   "waits_on": "kernel source_return_accept (Central accept exists, authenticated); a comment on a return (no owner); Hermes approvals.timeout and no-answer outcome via harness_agent_control configure (:172-175)",
+   "unnamed_capability": "Factory unit decisions (`factory attempt decision`) are not read",
+   "manual": "§19.14 Wait 15 min-24 h, default 4 h; the design and Hermes use seconds, default 300"
+  },
+  {
+   "id": "software-factory:attempt-review",
+   "bound": "partly: agent/devices/taskBindings.ts:228 (attempts absent: no reading names a run ref)",
+   "waits_on": "a run ref per session (encounter_task_attempts_list exists, unwired here); Stands refused (:211) although factory_owner AttemptReceiving exists (desktop/cradle/kernel/src/factory.rs:373)",
+   "unnamed_capability": ""
+  },
+  {
+   "id": "software-factory:ledger",
+   "bound": "partly: agent/devices/receiptBindings.ts:146 (Central change horizon)",
+   "waits_on": "answering source returns; spend (no writer); Commented (no owner)",
+   "unnamed_capability": "Central change horizon is Central's, not a Factory record"
+  },
+  {
+   "id": "software-factory:run-device",
+   "bound": "partly: agent/devices/sessionChainBindings.ts:120",
+   "waits_on": "a run ref for takes; event lanes by kind (temporal stream names the session only); Telemetry and Solo (no owner op); Factory telemetry watch via factory_owner exists, unwired",
+   "unnamed_capability": "",
+   "manual": "no device embed and no entry of its own (§19.1 Takes and lanes)"
+  },
+  {
+   "id": "software-factory:tasks",
+   "bound": "partly: agent/devices/taskBindings.ts:171",
+   "waits_on": "per-task Launch, Retry, Stop after (Actuation addresses the whole harness; no owner op); the task log (no tool rows per task)",
+   "unnamed_capability": "AIKit encounter session settings (encounter-configure, live AIKit matrix only)",
+   "manual": "no device embed; §19.1 describes the clip and Clip view"
+  },
+  {
+   "id": "software-factory:thread",
+   "bound": "partly: agent/devices/threadBinding.ts:281",
+   "waits_on": "Retry of one task, Diff, Tell parent (no owner op, :197-199)",
+   "unnamed_capability": "",
+   "manual": "no device embed; §19.4 The thread"
+  },
+  {
+   "id": "software-factory:context-write-mode",
+   "bound": "partly: agent/devices/designBindings.ts:697; central/devices/contextWorldBinding.ts:183",
+   "waits_on": "Scope reach, places and write-arm enforcement (Software Factory WO-SF2: no owner op, designBindings.ts:97-104); draft write mode writer; knowledge bounds",
+   "unnamed_capability": "Central effective sources (`central.world.effective-sources`)"
+  },
+  {
+   "id": "quaternal-logic:binding",
+   "bound": "no: no Quaternal Logic face carries it (inhabitants/quaternalLogicFamilyManifest.ts)",
+   "waits_on": "kernel events (inscription, matrix, line) and the generation cell (ql_m3_generate): no kernel op; its string physics is the device's own",
+   "unnamed_capability": "cap.ql.m3-symbol-bridge, cap.ql.m3-coin-rotation (live QL matrix only)",
+   "m_prime_layer": "M3′"
+  },
+  {
+   "id": "quaternal-logic:chakra",
+   "bound": "partly: inhabitants/ql/devices/qlChakra.ts:138 (nara_elemental)",
+   "waits_on": "today's centres and routes (ql.scene/v1 via `ql scene compose|world`): no kernel op (qlChakra.ts:32)",
+   "unnamed_capability": "cap.ql.scene, cap.ql.nara-domain (live QL matrix only)",
+   "m_prime_layer": "M4′"
+  },
+  {
+   "id": "quaternal-logic:deck",
+   "bound": "partly: inhabitants/ql/devices/qlDeck.ts:334 (nara_journey, page)",
+   "waits_on": "Move and Turn acts (Quaternal Logic's journey has none: owner-gap, qlDeck.ts:33-34); generation cell under a matrix (not asked)",
+   "unnamed_capability": "cap.ql.nara-oracle-journey, cap.ql.epi-agent (live QL matrix only)",
+   "m_prime_layer": "M3′ and M4′"
+  },
+  {
+   "id": "quaternal-logic:m-prime-matrices",
+   "bound": "no: face admission waiting (quaternalLogicFamilyManifest.ts:119)",
+   "waits_on": "`ql kernel m1` (no kernel op); partners via ql_m3_apply_matrix (no kernel op); Situation matrix (QL-MEF #281 packets: no owner); Follow (no owner); music_modes_read and m3_reception exist",
+   "unnamed_capability": "cap.ql.m1-engine (live QL matrix only)",
+   "m_prime_layer": "M1′ to M4′"
+  },
+  {
+   "id": "quaternal-logic:m3-clock",
+   "bound": "partly: inhabitants/ql/devices/qlM3Clock.ts:207 (m3_reception)",
+   "waits_on": "generation law and cell (m3_reception does not ask ql_m3_generate, qlM3Clock.ts:158-159); Run and Rate (no spanda-advance op)",
+   "unnamed_capability": "cap.ql.m3-engine, m3-clock-aperture, m3-generation-law (live QL matrix only)",
+   "m_prime_layer": "M3′"
+  },
+  {
+   "id": "quaternal-logic:resonator-bank",
+   "bound": "yes: inhabitants/ql/devices/qlResonatorBank.ts:156",
+   "waits_on": "none beyond the clock being read",
+   "unnamed_capability": "cap.ql.m3-clock-aperture (live QL matrix only)",
+   "m_prime_layer": "M3′"
+  },
+  {
+   "id": "quaternal-logic:sitting",
+   "bound": "partly: inhabitants/ql/devices/qlSitting.ts:238",
+   "waits_on": "centres (scene, no kernel op)",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′",
+   "manual": "§24.3 has the entry; no device embed"
+  },
+  {
+   "id": "quaternal-logic:sky-modulation",
+   "bound": "yes: live/designBindings/skyModulation.ts:283 (a shell-held plan over the Sky)",
+   "waits_on": "per-note scope (no owner); a private observer place",
+   "unnamed_capability": "cap.ql.m2-engine sky intervals (live QL matrix only)",
+   "m_prime_layer": "M2′"
+  },
+  {
+   "id": "quaternal-logic:sky",
+   "bound": "partly: inhabitants/ql/devices/qlSky.ts:312 (nara_identity transit)",
+   "waits_on": "an observer place for the private sky and the day and hour rulers (qlSky.ts:238-247); a running sky clock",
+   "unnamed_capability": "cap.ql.nara-identity (live QL matrix only)",
+   "m_prime_layer": "M2′"
+  },
+  {
+   "id": "quaternal-logic:torus",
+   "bound": "partly: live/torusDevice.ts:164",
+   "waits_on": "pulse mix, helix balance, strike, damping, drive, modes, agitation, attack, release, voices, pan, tattva body source: the hosted field announces only lens, CF, basis, M3 transcription, sound, level, cadence, scale (torusDevice.ts:80-103)",
+   "unnamed_capability": "cap.ql.m1-engine, coupled-field, music (live QL matrix only)",
+   "m_prime_layer": "M1′"
+  },
+  {
+   "id": "live:delay",
+   "bound": "yes: live/designBindings/torusEffects.ts:94",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M1-2-3′ (Live); owner: native-field presentationEffects.ts"
+  },
+  {
+   "id": "live:dynamics",
+   "bound": "yes: live/designBindings/torusEffects.ts:94",
+   "waits_on": "stage effect state through the stage channel; Dynamics gain reduction is not announced",
+   "unnamed_capability": "",
+   "m_prime_layer": "M1-2-3′ (Live); owner: native-field presentationEffects.ts"
+  },
+  {
+   "id": "live:filter",
+   "bound": "yes: live/designBindings/torusEffects.ts:94",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M1-2-3′ (Live); owner: native-field presentationEffects.ts"
+  },
+  {
+   "id": "live:reverb",
+   "bound": "yes: live/designBindings/torusEffects.ts:94",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M1-2-3′ (Live); owner: native-field presentationEffects.ts"
+  },
+  {
+   "id": "live:exact-ratio",
+   "bound": "partly: live/designBindings/exactRatioBinding.ts:47 (generator ratios only)",
+   "waits_on": "an owner that takes a tuning (QL SceneTuning has none): owner-gap; a MIDI output",
+   "unnamed_capability": "cap.ql.music (live QL matrix only)",
+   "m_prime_layer": "M2′ (Live)"
+  },
+  {
+   "id": "live:scale-mapping",
+   "bound": "yes: live/designBindings/scaleMappingBinding.ts:107",
+   "waits_on": "a Live set write for the mode (none)",
+   "unnamed_capability": "cap.ql.music (live QL matrix only)",
+   "m_prime_layer": "M2′ (Live)"
+  },
+  {
+   "id": "expressions:colour",
+   "bound": "yes: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:contacts",
+   "bound": "yes: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:depth",
+   "bound": "yes: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:focus",
+   "bound": "partly: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "focus.at and route reorder (not reported or admitted) (fieldDesignBinding.ts:28-58)",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:ink",
+   "bound": "yes: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:medium",
+   "bound": "yes: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:morph",
+   "bound": "partly: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "phase.theta and phase.phi (engine reports neither) (fieldDesignBinding.ts:28-58)",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:pointer",
+   "bound": "yes: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:relational",
+   "bound": "yes: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:resonance",
+   "bound": "partly: components/devices/fieldDesignBinding.ts:151",
+   "waits_on": "stations and tattva body source (the M2 condition is not announced) (fieldDesignBinding.ts:28-58)",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ (Expressions field engine)"
+  },
+  {
+   "id": "expressions:field",
+   "bound": "no: \"not a device of this shell\" (components/devices/ExpressionsDeviceView.tsx:122)",
+   "waits_on": "a published Field device over the engine's object sound, medium, time scale and dwell",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′"
+  },
+  {
+   "id": "expressions:physics",
+   "bound": "yes: components/devices/physicsBinding.ts:97",
+   "waits_on": "none",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′"
+  },
+  {
+   "id": "expressions:studio",
+   "bound": "yes: components/expressions/studio/studioBinding.ts:153",
+   "waits_on": "the torus row's owner (QL face waiting)",
+   "unnamed_capability": "",
+   "m_prime_layer": "M4′ rack"
+  },
+  {
+   "id": "techne:canvas",
+   "bound": "no",
+   "waits_on": "a binding over the research frame's canvas state; kernel ops for `aikit wiki-shape validate|declare|compress`; Decision helper Suggest",
+   "unnamed_capability": "cap.ql.wiki-participation (live QL matrix only)",
+   "m_prime_layer": "M5′"
+  },
+  {
+   "id": "techne:journey",
+   "bound": "no",
+   "waits_on": "a binding over the research frame (journeyInstrument, journeyPath)",
+   "unnamed_capability": "",
+   "m_prime_layer": "M5′"
+  },
+  {
+   "id": "techne:light",
+   "bound": "no",
+   "waits_on": "a binding over LightBox (optics/raytracer.ts) and the Canvas board",
+   "unnamed_capability": "",
+   "m_prime_layer": "M5′"
+  },
+  {
+   "id": "techne:palace",
+   "bound": "no",
+   "waits_on": "a binding over palaceSession; Floor, Order, Lines, Audience have no owner operation (PalacePlate.tsx:139-180, per the design header)",
+   "unnamed_capability": "QL wiki portals (owner-gap, cap.ql.wiki-portals)",
+   "m_prime_layer": "M5′"
+  },
+  {
+   "id": "techne:timeline",
+   "bound": "no",
+   "waits_on": "a binding over the research frame timeline model",
+   "unnamed_capability": "",
+   "m_prime_layer": "M5′"
+  },
+  {
+   "id": "knowledge-graph:graph",
+   "bound": "no: the family publishes knowledge-scope, -filters, -display faces, not graph (inhabitants/ql/devices/TechneDevices.tsx:135-138)",
+   "waits_on": "a binding over the kernel `graph` op (exists)",
+   "unnamed_capability": "",
+   "m_prime_layer": "M0′"
+  },
+  {
+   "id": "atlas-earth:globe-engine",
+   "bound": "yes: inhabitants/ql/devices/atlasDevices.ts:182 (wired at TechneDevices.tsx:133)",
+   "waits_on": "Aperture and View as (no owner, PlacesPlate.tsx:153-156)",
+   "unnamed_capability": "Archetypal Earth atlas (not a product in scope)",
+   "m_prime_layer": "M0′"
+  },
+  {
+   "id": "dlw:arrangement-ruler",
+   "bound": "no: the shell draws its own Arrangement view (frame/tracks/ArrangementRuler.tsx)",
+   "waits_on": "nothing beyond the track adapters",
+   "unnamed_capability": "",
+   "manual": "no device embed; §16.6 describes the view"
+  },
+  {
+   "id": "dlw:session-grid",
+   "bound": "no: the shell draws its own Session view (frame/tracks/SessionGrid.tsx)",
+   "waits_on": "nothing beyond the track adapters",
+   "unnamed_capability": "",
+   "manual": "no device embed; §16.6 describes the view"
+  }
+ ],
+ "fresh_rows": [
+  {
+   "ref": "cap.ql.m3-generation-law",
+   "need": "the codons a hexagram yields under a matrix",
+   "designs": [
+    "quaternal-logic:m3-clock: Law (Matrix, Seed, Pose map), Readout Generation",
+    "quaternal-logic:deck: Matrix",
+    "quaternal-logic:binding: Pairing"
+   ],
+   "bound": "partly: qlM3Clock.ts:158-159 law and cell absent (m3_reception does not ask ql_m3_generate)",
+   "verdict": "covered",
+   "note": "Wiring owed in the kernel's m3_reception."
+  },
+  {
+   "ref": "cap.ql.team-space",
+   "need": "who answers inside Anima or Aletheia",
+   "designs": [
+    "actuation:harness-model: Team cell",
+    "ai-kit:decision-helper: Instruments"
+   ],
+   "bound": "yes: decisionHelperBinding.ts:102 (team_space)",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.m-registry-ledger",
+   "need": "which M coordinates exist, are bound, are proven",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "§16.16 says a part nothing carries stands \"named and dark\" in its instrument's rack; no rack design for the instruments of the map exists."
+  },
+  {
+   "ref": "cap.ql.m1-engine",
+   "need": "M1 ring, torus and harmonic state",
+   "designs": [
+    "quaternal-logic:m-prime-matrices: Oscillator (m1.*)",
+    "quaternal-logic:torus"
+   ],
+   "bound": "no for m1.* (no kernel op for `ql kernel m1`)",
+   "verdict": "covered",
+   "note": "Kernel op owed."
+  },
+  {
+   "ref": "cap.ql.m2-engine",
+   "need": "Paraśakti descriptors, music, colour, material",
+   "designs": [
+    "quaternal-logic:sky (intervals, routes)",
+    "quaternal-logic:torus, expressions:resonance: Body source Tattva"
+   ],
+   "bound": "partly: tattva keys absent (torusDevice.ts:83-104)",
+   "verdict": "covered",
+   "note": "No tattva reaches the shell."
+  },
+  {
+   "ref": "cap.ql.m3-engine",
+   "need": "replay and read M3 state",
+   "designs": [
+    "quaternal-logic:m3-clock"
+   ],
+   "bound": "yes: qlM3Clock.ts:207",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.scene",
+   "need": "one integrated M1-M2-M3 event, heard",
+   "designs": [
+    "quaternal-logic:chakra: centres",
+    "quaternal-logic:sitting: centres"
+   ],
+   "bound": "no: qlChakra.ts:32 NO_CENTRES (no kernel op for ql scene)",
+   "verdict": "covered",
+   "note": "Offline render to WAV has no control."
+  },
+  {
+   "ref": "cap.ql.stage",
+   "need": "drive the Ta-Onta procedural stage",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Needs a device or a Torus page: bind, evaluate, unbind, retire a procedure."
+  },
+  {
+   "ref": "cap.ql.nara-identity",
+   "need": "identity profile, natal chart, transit",
+   "designs": [
+    "quaternal-logic:sky: Natal ring",
+    "quaternal-logic:chakra: Natal distribution"
+   ],
+   "bound": "yes: qlSky.ts:312, qlChakra.ts:138",
+   "verdict": "covered",
+   "note": "The identity profile itself is a Being page (§24.6), not a catalogue device."
+  },
+  {
+   "ref": "cap.ql.nara-dialogue",
+   "need": "admit a Nara/Epii dialogue turn",
+   "designs": [
+    "central:nara-conversation"
+   ],
+   "bound": "yes: central/devices/answerBinding.ts:100 (nara_dialogue)",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.epi-agent",
+   "need": "call Prime-QL faculties #0-#5",
+   "designs": [
+    "quaternal-logic:deck (nara.journey.*)"
+   ],
+   "bound": "yes: qlDeck.ts:334",
+   "verdict": "covered",
+   "note": "Other faculty operations have no control."
+  },
+  {
+   "ref": "cap.ql.agent-event",
+   "need": "project an agent event, admit a decision",
+   "designs": [
+    "ai-kit:decision-helper: the engine's verdict"
+   ],
+   "bound": "no (no kernel op for ql agent-event)",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.configuration",
+   "need": "QL's configuration contribution",
+   "designs": [],
+   "bound": "n/a",
+   "verdict": "backstage",
+   "note": "Disclosure-only settings; Settings window."
+  },
+  {
+   "ref": "cap.ql.vak-composition",
+   "need": "compose a C-prime Context-Frame use",
+   "designs": [
+    "ai-kit:decision-helper: Vāk block instrument (labels only)"
+   ],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.techne-reading",
+   "need": "one wiki subject through the Technē adapter",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Technē reading lens effects (§17.1) are unspecified."
+  },
+  {
+   "ref": "cap.ql.m3-clock-aperture",
+   "need": "the M3 clock and its eighteen apertures",
+   "designs": [
+    "quaternal-logic:m3-clock: Aperture, Reciprocal",
+    "quaternal-logic:resonator-bank: Aperture, Swap"
+   ],
+   "bound": "yes: qlM3Clock.ts:207, qlResonatorBank.ts:156",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.m3-coin-rotation",
+   "need": "coin sums, polarity and poses",
+   "designs": [
+    "quaternal-logic:deck: lines 6-9",
+    "quaternal-logic:m3-clock: Seed, Pose map",
+    "quaternal-logic:binding: Charge"
+   ],
+   "bound": "partly",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.m3-symbol-bridge",
+   "need": "M2 vibration into M3 symbol and Tarot",
+   "designs": [
+    "quaternal-logic:binding: Nonets",
+    "quaternal-logic:deck: Tarot"
+   ],
+   "bound": "no (binding unbound)",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.matheme",
+   "need": "the matheme layer and its shadow",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Low."
+  },
+  {
+   "ref": "cap.ql.music",
+   "need": "hear and play the musical object",
+   "designs": [
+    "quaternal-logic:torus: Jankó keyboard (Full)",
+    "live:scale-mapping"
+   ],
+   "bound": "yes: music_modes_read, janko_window_read",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.bimba-world",
+   "need": "the rooted Bimba world and its content",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Home: knowledge-graph:graph over the Bimba map, or the M′ matrices cell readout."
+  },
+  {
+   "ref": "cap.ql.coordinate-expression",
+   "need": "a coordinate's expression profile",
+   "designs": [],
+   "bound": "no (kernel nara_coordinate exists)",
+   "verdict": "design-gap",
+   "note": "Low; unverified whether any person act needs it directly."
+  },
+  {
+   "ref": "cap.ql.focused-instrument",
+   "need": "focus one subject across field, Bimba and Vāk",
+   "designs": [],
+   "bound": "n/a",
+   "verdict": "backstage",
+   "note": "A host protocol for the focused pane."
+  },
+  {
+   "ref": "cap.ql.coupled-field",
+   "need": "run M1-M2-M3 as one continuous field",
+   "designs": [
+    "quaternal-logic:torus"
+   ],
+   "bound": "yes: torusDevice.ts:164",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.form-instrument",
+   "need": "prepare, sample and fold the form",
+   "designs": [
+    "quaternal-logic:torus (the codon folded on the body)"
+   ],
+   "bound": "no control for recipe or samples",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.tarot-score",
+   "need": "score an entity or event as a Tarot reading",
+   "designs": [],
+   "bound": "n/a",
+   "verdict": "excluded",
+   "note": "The manual rules scoring out (§22.4 Rules; §14)."
+  },
+  {
+   "ref": "cap.ql.physical-pole-state",
+   "need": "the physical pole as one object",
+   "designs": [],
+   "bound": "n/a",
+   "verdict": "backstage",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.vak-scope",
+   "need": "is a compiled C-prime still current",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Low."
+  },
+  {
+   "ref": "cap.ql.vak-performance",
+   "need": "a performed Vāk occasion as QL meaning",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Its evidence goes to Recognition, which the DLW never names."
+  },
+  {
+   "ref": "cap.ql.vak-oi",
+   "need": "relate Vāk primitives to O:I actions",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Low."
+  },
+  {
+   "ref": "cap.ql.nara-domain",
+   "need": "the M4 Nara domain",
+   "designs": [
+    "§24 Nara practice; quaternal-logic:chakra, deck, sitting"
+   ],
+   "bound": "partly",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.nara-oracle-journey",
+   "need": "one deck and one I Ching history per concern",
+   "designs": [
+    "quaternal-logic:deck"
+   ],
+   "bound": "yes: qlDeck.ts:334",
+   "verdict": "covered",
+   "note": "Move and Turn: no QL act (owner-gap)."
+  },
+  {
+   "ref": "cap.ql.nara-activity",
+   "need": "Day, NOW and M3 activity as Nara history",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Home: the practice world track (§24.1)."
+  },
+  {
+   "ref": "cap.ql.nara-occasions",
+   "need": "replay an occasion; share presence by consent",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "§24.6 says another person's sky opens only when shared; nothing draws consent."
+  },
+  {
+   "ref": "cap.ql.wiki-participation",
+   "need": "how a thing takes part in a wiki shape",
+   "designs": [
+    "techne:canvas: Form roles"
+   ],
+   "bound": "no",
+   "verdict": "covered",
+   "note": ""
+  },
+  {
+   "ref": "cap.ql.meta-recognition",
+   "need": "recognise or reject a meta-binding amendment",
+   "designs": [],
+   "bound": "no",
+   "verdict": "design-gap",
+   "note": "Recognition appears nowhere in the manual."
+  }
+ ],
+ "freshness": {
+  "sources": {
+   "ai-kit": "Work/ai-kit ProjectCentral/user/telos/capability-matrix.csv (origin/main af157635 = installed aikit; same as local main for this file)",
+   "software-factory": "Work/Factory ProjectCentral/user/capability-matrix.csv (origin/main 09c3354; same file on local main 6b1b7ff)",
+   "quaternal-logic": "Work/Quaternal-Logic ProjectCentral/user/capability-matrix.csv (origin/main fc8e28a)"
+  },
+  "ai-kit": "Same 32 ids. 6 records changed operation/outcome (context-resolution, knowledge-navigation, reflection, routines, models, encounters) and 6 gained CLI (now-context, knowledge code, jev, encounter-configure, praxis skill export).",
+  "software-factory": "Same 18 ids. 9 changed operation/outcome; 12 gained CLI; CLI grew to attempt.*, workflow.*, telemetry.*, development.custody.*, development.field.*, config.*.",
+  "quaternal-logic": "54 capability records against 18 in prodcaps: 36 new (rows in fresh_rows).",
+  "operations_no_record_names": [
+   "AIKit `decide status|invoke|service *` (the Decision helper's owner): no AIKit capability",
+   "AIKit `gateway who|send|conversation|delegate|team|setup|coexistence|connector *|remote *` (Messages, Agency gateway): outside cap.aikit.gateway's list",
+   "AIKit `praxis method run|prove`, `praxis set package plan|export|verify`, `praxis instantiate-check` (member device Run/Prove/Instantiate, rack Export)",
+   "AIKit `routine create|enable|disable|run-now|show|list|reprove` (Settings Automations): cap.aikit.routines lists only authorise-invocation and invocation(s)",
+   "AIKit `wiki-construct *`, `knowledge coverage *`, `act describe|discover|invoke`, `alias *`, `praxis observe run|status`, `work day-move *`",
+   "Software Factory Prompt pads `development pads|pads-write|pads-run|pads-record|pads-due` (Factory origin/main 09c3354, #287): no Factory record, and no catalogue design for manual §19.22"
+  ]
+ },
+ "summary": {
+  "basis": "O-I origin/main 7937e2a59 (docs/dlw/DLW.md, packages/live-shell/ui/src); prodcaps.json 68 capability records; product matrices and CLIs as of 2026-10-21",
+  "convention": "owner-gap only where the owning product has no operation; a product CLI with no O:I kernel op is wiring owed and is named in owner_op",
+  "covered": 28,
+  "design_gaps": 28,
+  "manual_gaps": 0,
+  "owner_gaps": 1,
+  "backstage": 11,
+  "by_product": {
+   "ai-kit": {
+    "design-gap": 11,
+    "covered": 19,
+    "backstage": 2
+   },
+   "software-factory": {
+    "backstage": 3,
+    "covered": 5,
+    "design-gap": 10
+   },
+   "quaternal-logic": {
+    "backstage": 6,
+    "design-gap": 7,
+    "covered": 4,
+    "owner-gap": 1
+   }
+  },
+  "bound_of_covered": {
+   "yes": 3,
+   "partly": 21,
+   "no": 4
+  },
+  "designs_checked": 54,
+  "designs_bound": {
+   "partly": 23,
+   "no": 14,
+   "yes": 17
+  },
+  "fresh_rows": {
+   "covered": 19,
+   "design-gap": 13,
+   "backstage": 3,
+   "excluded": 1
+  },
+  "manual_gaps_design_level": [
+   "ai-kit:agency-gateway: §19.10 omits Entry and Coexist",
+   "ai-kit:capture-skill: §19.11 is stale against the design: it specifies Fit and \"lands in Approvals\"; the design has Form (Skill or Method), Held for (secret quarantine), Resembles, Release, Accept = promote a draft",
+   "ai-kit:knowledge-route: §19.9 lists a Web source AIKit does not have",
+   "software-factory:agent-custody: no device embed; carried as the Agent's Custody page (§19.4)",
+   "software-factory:approvals: §19.14 Wait 15 min-24 h, default 4 h; the design and Hermes use seconds, default 300",
+   "software-factory:run-device: no device embed and no entry of its own (§19.1 Takes and lanes)",
+   "software-factory:tasks: no device embed; §19.1 describes the clip and Clip view",
+   "software-factory:thread: no device embed; §19.4 The thread",
+   "quaternal-logic:sitting: §24.3 has the entry; no device embed",
+   "dlw:arrangement-ruler: no device embed; §16.6 describes the view",
+   "dlw:session-grid: no device embed; §16.6 describes the view",
+   "§19.22 Prompt pads: a full entry with no device embed and no catalogue design",
+   "§17.1: a Technē reading's chain carries \"lens and filter effects\", but no entry specifies one",
+   "Settings (⌘,): routines, harness install, credentials, profiles and machines live in the shell's Settings window (src/settings/*), which neither the manual nor the catalogue describes",
+   "Recognition, Commission and Journey (Factory) appear nowhere in the manual"
+  ]
+ }
+}

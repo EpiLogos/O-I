@@ -12,11 +12,13 @@
 //   gateway   {state, waiting}: the Agency gateway's own reading (§19.10), for its mark in the head.
 //   conv.*    the open conversation, in the Thread's keys (thread, sessions, draft, input, sent…).
 // Writes: conv.sent sends a Communique to the open agent (`aikit gateway send`); a message dragged to a track becomes work
-// (`aikit gateway delegate`). Make writes the agent's roster card, kept by Central as its Being page: no owner writes one yet, so the
-// host stands the act disabled with its reason.
+// (`aikit gateway delegate`). Make is Central's agent-creation chain: `agent-profile.express` writes a proposed profile from your words
+// (scope, world_ref, intent_expression, ratified_world_refs → role, purpose, sources; recognition unrecognised), answered on `proposal`;
+// Accept is `agent-profile.accept` (scope, profile_ref, expected_revision, expected_content_digest), Change `agent-profile.save`, Discard
+// `agent-profile.remove`. A group is `central.agent-set.propose` (scope, ref, revision, members), then `central.agent-set.save`.
 // The shell holds: open (the agent or group shown), show, order, search, and the card's fields (new.*).
 import type {ReactNode} from 'react'
-import {Action, Chooser, Readout, TextField, Tile, type LightState, type Option} from '../../sdk/panel'
+import {Action, Chooser, Radio, Readout, TextField, Tile, type LightState, type Option} from '../../sdk/panel'
 import {NONE, has, json, prefixed, railAndPane, scoped, st, strOf, type ViewProps} from './design'
 import {design as thread} from './software-factory__thread'
 import {CreatureFace, type RunState} from '../faces'
@@ -96,24 +98,37 @@ function Card({p, group}: {p: ViewProps; group: boolean}) {
   const v = p.v, field = (key: string) => strOf(v, `new.${key}`) ?? ''
   const types = json<string[]>(v, 'types', []).map(t => ({value: t, label: t}))
   const worlds = json<string[]>(v, 'worlds', []).map(t => ({value: t, label: t}))
-  const harnesses = json<string[]>(v, 'harnesses', []).map(t => ({value: t, label: t}))
   const skillsets = json<string[]>(v, 'skillsets', []).map(t => ({value: t, label: t}))
+  // Central's answer to Make: the proposal it wrote from your words (agent-profile.express → role, purpose, world, sources).
+  const proposal = json<{role?: string; purpose?: string; world?: string; sources?: string[]; revision?: string} | null>(v, 'proposal', null)
+  if (proposal) return <div className="ms-card" aria-label={group ? 'The group Central proposes' : 'The agent Central proposes'}>
+    <h3>{group ? 'Central proposes this group' : 'Central proposes this agent'}</h3>
+    <Readout label="role" does="The role Central read from your words." value={proposal.role} />
+    <p className="ms-card-purpose" data-i="Purpose|What the agent is for, as Central wrote it from your words.">{proposal.purpose ?? NONE}</p>
+    <Readout label="world" does="The world the agent stands in." value={proposal.world} />
+    <Readout label="may read" does="The sources the agent may read." value={proposal.sources?.length ? proposal.sources.join(', ') : undefined} />
+    <div className="ms-card-do">
+      <Action {...st(p, 'accept')} label="Accept" does="Keep the proposal in your roster. Until you accept, the agent stands proposed." onPress={() => { p.set('accept', proposal.revision ?? true); p.setPage('') }} />
+      <Action label="Change" does="Edit a field before you accept." onPress={() => p.set('proposal', undefined)} />
+      <Action {...st(p, 'discard')} label="Discard" does="Drop the proposal. Nothing is kept." onPress={() => { p.set('discard', proposal.revision ?? true); p.setPage('') }} />
+    </div>
+  </div>
   return <div className="ms-card" aria-label={group ? 'A new group' : 'A new agent'}>
     <h3>{group ? 'A new group' : 'A new agent'}</h3>
-    <TextField label="Name" does={group ? 'What you call the group.' : 'What you call the agent.'} wide value={field('name')} onChange={x => p.set('new.name', x)} />
-    <TextField label="For" does="What it is for, in your words: its instructions." wide value={field('for')} onChange={x => p.set('new.for', x)} />
-    <Chooser label="Type" does="How it works: when it starts and stops, alone or in a crew, what it may change and whom it answers to. The type sets the face." wide
-      value={field('type')} options={[{value: '', label: 'None until you choose'}, ...types]} onChange={x => p.set('new.type', x)} />
+    <TextField label="For" does={group ? 'What the group is for, in your words.' : 'What the agent is for, in your words. Central reads its role, its purpose and what it may read from them.'} wide value={field('for')} onChange={x => p.set('new.for', x)} />
     {group
       ? <Readout label="members" does="Drag faces from the list onto the card to add them." value={field('members') || 'drag faces here'} />
       : <>
         <Chooser label="Works in" does="The world it belongs to. It works in that world's workcell." wide value={field('world')} options={worlds} onChange={x => p.set('new.world', x)} />
-        <Chooser label="Harness and model" does="The program and the model that run it, from those your workcells reach." wide value={field('harness')} options={harnesses} onChange={x => p.set('new.harness', x)} />
-        <Chooser label="Carries" does="The practice it carries: a skillset from the browser." wide value={field('carries')} options={[{value: '', label: 'None'}, ...skillsets]} onChange={x => p.set('new.carries', x)} />
+        <Radio label="Kept for" does="Whether the agent is yours alone or belongs to the project." value={field('scope') || 'root'}
+          options={[{value: 'root', label: 'You'}, {value: 'project', label: 'The project'}]} onChange={x => p.set('new.scope', x)} />
       </>}
+    <Chooser label="Type" does="How it works: when it starts and stops, alone or in a crew, what it may change and whom it answers to. The type sets the face." wide
+      value={field('type')} options={[{value: '', label: 'None until you choose'}, ...types]} onChange={x => p.set('new.type', x)} />
+    {!group && <Chooser label="Carries" does="The practice it carries: a skillset from the browser." wide value={field('carries')} options={[{value: '', label: 'None'}, ...skillsets]} onChange={x => p.set('new.carries', x)} />}
     <div className="ms-card-do">
-      <Action {...st(p, 'make')} label="Make" does={group ? 'Make the group. Until you press Make, nothing is written.' : "Make the agent: Central keeps its card as the agent's Being page. Until you press Make, nothing is written."}
-        onPress={field('name') ? () => { p.set('made', field('name')); p.setPage('') } : undefined} />
+      <Action {...st(p, 'make')} label="Make" does={group ? 'Central proposes the group. You accept it next.' : 'Central writes the agent as a proposal from your words. You accept it next.'}
+        onPress={field('for') ? () => p.set('make', field('for')) : undefined} />
       <Action label="Cancel" does="Close the card. Nothing is written." onPress={() => p.setPage('')} />
     </div>
   </div>
@@ -198,14 +213,15 @@ export const design = railAndPane({
     agents: JSON.stringify(AGENTS), groups: JSON.stringify(GROUPS), gateway: JSON.stringify({state: 'Ready', waiting: 3}),
     types: JSON.stringify(['Sense · Watch', 'Sense · Scout', 'Sense · Guard', 'Coordinate · Recruit', 'Coordinate · Quorum', 'Settle · Contest', 'Keep · Tend', 'Keep · Hold',
       'Carry · Relay', 'Carry · Home', 'Change · Metamorph']),
-    worlds: JSON.stringify(['Practice', 'O-I', 'Archetypal-Earth', 'Quaternal-Logic']), harnesses: JSON.stringify(['Claude Code · Opus', 'Claude Code · Sonnet', 'Codex · GPT', 'Pi']),
+    worlds: JSON.stringify(['Practice', 'O-I', 'Archetypal-Earth', 'Quaternal-Logic']),
     skillsets: JSON.stringify(['central:documentation', 'central:core-development', 'aikit:project-author']),
     ...prefixed('conv.', {light: 'lit', toolRows: 'lines', subagents: 'linked', messages: 'all', input: 'steer', voice: false, draft: '', age: 6, writes: 'proposals'}),
   },
   fixtures: {
     'Two need you': {},
     'Flint has stalled': {open: 'position:flint'},
-    'A new agent': {open: 'position:nara', 'new.name': 'Wren', 'new.for': 'Watches the build and tells me when it breaks', 'new.type': 'Sense · Watch', 'new.world': 'O-I'},
+    'A new agent': {open: 'position:nara', 'new.for': 'Watches the build and tells me when it breaks', 'new.type': 'Sense · Watch', 'new.world': 'O-I'},
+    'Central proposes': {open: 'position:nara', proposal: JSON.stringify({role: 'build-watcher', purpose: 'Watches the O-I build and tells you when a check breaks, with the failing step. It never changes the code.', world: 'O-I', sources: ['the O-I checks', 'the build log'], revision: 'r1'})},
     'No readings': {agents: undefined, groups: undefined, gateway: undefined, open: undefined},
   },
   firstPage: '',

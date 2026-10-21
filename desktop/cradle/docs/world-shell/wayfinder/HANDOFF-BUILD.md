@@ -14,6 +14,13 @@ planning, pages and creatures lanes and does no build work. Nothing here starts 
 
 ## Where it stands
 
+- **21 Oct:**
+  - `dlw/build` landed on `main` as #689.
+  - The lane goes on as #693, which conflicts with `main` only in PATH.md: both carry "T-PROCEDURAL-BODY: where it ended".
+  - #690 (the kit's motion), #692 (themes) and #695 (the Answer's voice) are open and mergeable.
+  - The catalogue on `main` (`7937e2a59`) has the six kinds, views by place, workcells, Messages and the faces kit.
+  - The coverage is item 11.
+
 - `dlw/build` in the seat `worktrees/env-1/o-i`, clean and equal to origin. #677 landed on `main` as #685 (20 Oct). PR #683
   carries everything since.
 - The last candidates are r28 (`Work/O-I/target/p0-r1/20261020T-r28`; evidence
@@ -115,7 +122,7 @@ From MAP's build lane:
    - **The port ledger** (`EXPRESSIONS-PORT-STATUS.json`): the eleven `studio-only-by-design` rows ("retained during port") end.
      Each takes its home from the manual's table, and no row stays retained.
 
-9. Kinds of device, workcells and Messages (manual §16.1, §16.3, §16.6, §19.2–§19.3, §19.10, §19.16–§19.19, §19.23, §19.24, §23;
+10. Kinds of device, workcells and Messages (manual §16.1, §16.3, §16.6, §19.2–§19.3, §19.10, §19.16–§19.19, §19.23, §19.24, §23;
    the designs `workcell:workcell`, `ai-kit:messages`, and every monitor made with `railAndPane` in `catalogue/panels/design.ts`):
    - **Views by place.** A design now declares `kind` (six kinds) and `views`. The host (`frame/devices/deviceHost.tsx`) offers only the
      views a design has: a monitor has its tile and its Full, never Fold, ▸ or a chain slot; Link and the Agency gateway have none on a
@@ -128,9 +135,18 @@ From MAP's build lane:
      (aikit.population-reading/v1), the conversation from `aikit gateway conversation`, a send through `aikit gateway send`, a message
      dragged onto a track through `aikit gateway delegate`, groups through `aikit gateway team`. The conversation is the Thread's own Full
      under the prefix `conv.`, so one binding serves both.
-   - **Owed by the owners.** Make has no owner yet: no operation declares a Position or writes an agent's roster card (Central's, kept as
-     the agent's Being page). Until one exists, Make stands disabled with that reason. Link moves into the transport (its ▾ expands it);
-     the Agency gateway's mark stands in the head of Messages.
+   - **Make** is Central's agent-creation chain: `agent-profile.express` (scope, world_ref, intent_expression, ratified_world_refs)
+     writes a proposal, and `agent-profile.accept` keeps it; groups go through `central.agent-set.propose` and `save`. They need the
+     kernel route that carries the person's authority (T-COVERAGE §1.1). Link moves into the transport (its ▾ expands it); the Agency
+     gateway's mark stands in the head of Messages.
+11. **Coverage** (`tickets/T-COVERAGE-the-deep-features-device-by-device.md`, 21 Oct). It holds every product capability against its
+    design, its binding and its owner:
+    - the kernel route that carries the person's authority (§1.1);
+    - the routes to commands that already exist (§1.2);
+    - the stale refusals (§1.3);
+    - the unbound designs (§1.4);
+    - the owner operations to build in their products (§1.5).
+    The design lane's packages D1–D10 (§2) land in the catalogue; until a package lands, its capability stands dark where its home will be.
 
 These wait for the planning lane to write them into the manual; MAP's planning lane items 1–5 say what each is:
 - the three layers per mode (Session, Arrangement, Pane);

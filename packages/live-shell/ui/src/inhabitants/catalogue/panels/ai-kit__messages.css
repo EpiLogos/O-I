@@ -45,3 +45,4 @@
 .ms-face[data-type="creature"] { background: var(--bg-0, #26292d); overflow: hidden; }
 .ms-face[data-type="creature"] > * { width: 100%; height: 100%; }
 .ms-faces { width: 38px; }
+.ms-card-purpose { margin: 2px 0 4px; font-size: 11.5px; line-height: 16px; color: var(--text, #d4d7da); max-width: 440px; }
