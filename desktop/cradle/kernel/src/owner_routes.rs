@@ -271,7 +271,7 @@ pub enum WorkcellRead {
     /// unsatisfiable plan is Workcell's reading too, carried as it answered.
     Plan {
         #[serde(default)]
-        demand: WorkcellDemand,
+        demand: Box<WorkcellDemand>,
     },
     /// Live harness instances (`workcell instances list`).
     InstancesList,
