@@ -5082,23 +5082,47 @@ each claim, and a receipt when it wrote.
 
 #### The answer's face
 
-You need to see who answers you and what it is doing. In Central, the answer
-shows the agent's face. Opened, it shows the whole face, live: at rest while
-the agent waits, intent on the packet while it reads, its mouth moving while
-it answers, and asleep while no conversation is bound. A change of state eases
-in as the face's own muscles move. While the agent reads or answers, a ring
-spreads from the light on the device's head. Under a request for reduced
-motion the face no longer sways, breathes or turns its head by itself; each
-state still shows.
+You need to talk to the agent that answers, and see that it hears you. In
+Central, the answer is a face. Opened, the Answer is mostly the face, whole and
+live: at rest while the agent waits, attending while you speak, intent on the
+packet while it reads, its mouth moving with its words while it answers, and
+asleep while no conversation is bound. A change of state eases in as the face's
+own muscles move. Under a request for reduced motion the face no longer sways,
+breathes or turns its head by itself; each state still shows.
+
+You speak and the face listens. When you stop, your words are written under the
+face and go to the agent. The answer is spoken, and its words stand under the
+face as they are said. Both start off. Hears and Speaks
+turn them on, in the rack or with the two marks at the face's lower corners;
+a third mark opens the conversation. Under Local only (§19.21), what you say
+stays on this machine.
+
+The conversation is small, at the right of the face, and optional: the
+exchange, the sources of each claim, a proposal's Accept and Decline, and a line
+to type in. Close it and the face has the whole pane.
+
+The pane carries no header. What the agent is, what it does now, the page it
+answers over, its effort and where its answers go are in the rack, with the
+face's dynamics, and the rack stands under the pane in the pop-out and above
+the chain when the device is expanded.
+
+| Page | Holds |
+|---|---|
+| Answer | The agent and its role; Effort; Answer as; Agent writes; Hears, Speaks and Chat; the turn against its budget, the packet, the sources, where the answer stands in the page, and the binding. |
+| Face | The Feeling pad (pleasant to unpleasant across, calm to stirred up); the Emotion menu of twelve; the Eyes pad (where it looks); the Gesture menu with Do. |
+
+The feeling and the emotion you set stay on the face while the agent is at
+rest. The agent's own states, attending, reading and speaking, move the face
+over them, and it returns to them after.
 
 | View | The face |
 |---|---|
 | Folded | None: the agent's name and how its answers reach the page. |
 | Compact | The small face beside the agent's name and what it does now. |
-| Whole | The whole face at the left of the picture. |
-| Full | The whole face beside the conversation. Each of the agent's lines carries the small face. |
-| Pop-out | The whole face once, at the left of the controls under the conversation. |
-| Widget | The small face. |
+| Whole | The whole face at the left of the picture; the pages Answer and Face. |
+| Full | The face fills the pane, with three marks and, under it, your words when you stop and the agent's as it speaks; the conversation at the right if you want it. |
+| Pop-out | Full, with the rack under it. |
+| Widget | The small face. The light carries a ring while the agent hears, speaks or works. |
 
 The small face is a still drawing of the same face, in the same state. It
 stands in for the whole face wherever the whole face cannot load, as in a
