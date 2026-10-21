@@ -119,6 +119,7 @@ pub mod ql_music;
 /// (see the module's own law). Private to the kernel's apply path.
 mod read_cache;
 pub mod refs;
+pub mod watch;
 pub mod retained_files;
 pub mod routine;
 pub mod setup;
