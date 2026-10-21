@@ -2155,6 +2155,7 @@ mod read_field_tests {
             THOUGHTS_REPLY,
         );
         std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
         std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
         let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
         let answer = read_field(
@@ -2206,6 +2207,7 @@ mod read_field_tests {
         let _env = owner_env();
         let owner = FakeOwner::new("factory-all", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
         std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
         std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
         let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
         let answer = read_field(
@@ -2248,21 +2250,17 @@ mod read_field_tests {
                 .any(|event| event.stream == "central-now"),
             "the other streams still join the field"
         );
-        assert_eq!(
-            owner.factory_calls(),
-            vec![format!(
-                "project locate {} --json",
-                owner.directory.display()
-            )],
-            "an absent source is located once and never read for days"
+        assert!(
+            owner.factory_calls().is_empty(),
+            "a root with no .factory is not asked: Factory locates only through it"
         );
-        // The silence is named, in the owner's own words.
+        // The silence is named.
         assert_eq!(
             answer.absences,
             vec![StreamAbsence {
                 stream: FACTORY_STREAM.into(),
                 reason: AbsenceReason::OwnerAbsent,
-                owner_words: "No such file or directory".into(),
+                owner_words: format!("no .factory under {}", owner.directory.display()),
                 source_ref: None,
             }]
         );
@@ -2297,9 +2295,9 @@ mod read_field_tests {
                 .count()
         };
         let first = read();
-        assert_eq!(located(&owner), 1);
+        assert_eq!(located(&owner), 0, "a root with no .factory is not asked");
         let second = read();
-        assert_eq!(located(&owner), 1, "the absent root is not asked again");
+        assert_eq!(located(&owner), 0, "nor asked again");
         assert_eq!(
             first.absences, second.absences,
             "the remembered answer is the owner's own"
@@ -2309,18 +2307,18 @@ mod read_field_tests {
         read();
         assert_eq!(
             located(&owner),
-            2,
+            1,
             "a root that gained a Factory state is asked"
         );
         read();
         assert_eq!(
             located(&owner),
-            2,
+            1,
             "its refusal is remembered while it stands"
         );
         forget_factory_locations();
         read();
-        assert_eq!(located(&owner), 3, "a ground bind forgets every location");
+        assert_eq!(located(&owner), 2, "a ground bind forgets every location");
     }
 
     #[test]
@@ -2355,6 +2353,7 @@ mod read_field_tests {
         let _env = owner_env();
         let owner = FakeOwner::new("factory-unreadable", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
         std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
         // A run-bearing signal that names no signal_ref is a reading the field
         // refuses whole.
         std::fs::write(
@@ -2388,6 +2387,7 @@ mod read_field_tests {
         // Located, and its day reading holds no signal: the owner is readable
         // and simply has no moment here.
         std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
         let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
         let answer = read_field(
             &owner.client(),
@@ -2446,6 +2446,8 @@ mod read_field_tests {
             ),
         )
         .unwrap();
+        // Factory locates a source only through its `.factory` directory.
+        std::fs::create_dir_all(owner.directory.join("Work/b/.factory")).unwrap();
     }
 
     /// A second located source: the same project, a second state file.
@@ -2473,6 +2475,7 @@ mod read_field_tests {
         let owner = FakeOwner::new("factory-two-roots", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
         with_a_second_root(&owner);
         std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
         std::fs::write(owner.directory.join("factory-locate-b.json"), LOCATED).unwrap();
         std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
         let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
@@ -2506,6 +2509,7 @@ mod read_field_tests {
         let owner = FakeOwner::new("factory-disagree", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
         with_a_second_root(&owner);
         std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
         std::fs::write(owner.directory.join("factory-locate-b.json"), LOCATED_B).unwrap();
         std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
         std::fs::write(
@@ -2553,6 +2557,7 @@ mod read_field_tests {
         let owner = FakeOwner::new("factory-partial", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
         with_a_second_root(&owner);
         std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
         std::fs::write(
             owner.directory.join("factory-locate-b.json"),
             LOCATED_OTHER_PROJECT,

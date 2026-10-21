@@ -1031,9 +1031,19 @@ pub(crate) fn locate_each(roots: Vec<(Option<String>, PathBuf)>) -> Vec<Value> {
 }
 
 /// `factory project locate <root>`, as one discovery row: `located` with the
-/// owner's location, `absent` (no `.factory` there, and the owner says so),
-/// or `refused` in the owner's words.
+/// owner's location, `absent` (no `.factory` there), or `refused` in the
+/// owner's words. A root with no `.factory` is not asked: Factory locates a
+/// source only through that directory and refuses every other root with
+/// "No such file or directory", which cost one process per Work project.
 fn locate_row(project: Option<String>, root: &Path) -> Value {
+    if !root.join(".factory").exists() {
+        return serde_json::json!({
+            "project": project,
+            "root": root.to_string_lossy(),
+            "state": "absent",
+            "error": format!("no .factory under {}", root.display()),
+        });
+    }
     let args: Vec<std::ffi::OsString> = vec![
         "project".into(),
         "locate".into(),
