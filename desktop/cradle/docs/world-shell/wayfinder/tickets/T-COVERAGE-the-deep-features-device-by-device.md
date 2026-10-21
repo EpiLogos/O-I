@@ -146,6 +146,7 @@ Each needs the owner's word before it is built; the build keeps the device's ref
 | Publishing SharedField's presence-consent kinds to maincloud. | Not needed after all: the kinds are client-side (`2f9a664cd`); the hosted server module is unchanged. |
 | A tie from an AIKit session space to the Central agent set it runs. | The Agentset rack's Join cannot say which set to save without it (owner-side, AIKit or Central). |
 | Planetary hours. | Scale mapping's hour ruler: no owner computes them. |
+| A WikiSubjectSource over the cradle's wiki register, composing the presented frame's WikiRefractionTarget; an owner for the Frame page's sixfold mapping (the material's six positions). | The Lens's reading and frame reading stay absent: QL reads a target and a mapping its caller supplies, and nothing supplies them. |
 | The QL map holds both spellings for M4's positions (#4-0…5 and #4.0…5) and for M4.5's children (#4.5-0…5 named, #4.5.0…5 unnamed). | The shell keeps the nesting threshold's spelling; the map's refresh is QL's, never the build's. |
 
 ## 2. For the design lane: what to design before the build reaches it
@@ -215,6 +216,8 @@ names the file and the change.
 | `actuation__torus` (Damping, Strike, Voices) | QL's scene holds a decay per second and a strike depth in metres (declared policy), not a Q factor and a percentage; no owner holds a polyphony. The design's `stage.procedures` ("the files you keep"): no owner lists the person's own procedures; the frame holds one example. |
 | Approvals, a unit decision | Show the question with its own options (Factory's "Resume bounded work" / "Cancel bounded work"); today the detail reads "<unit> asks to run" and puts the question in the Command block. |
 | The Ledger's receipts | Keyed by a ref: source returns carry no number. |
+| `widgets__diff.tsx` | A `repo` key naming which world's repository the Diff shows (it follows the selected seat or world since `9f8a5932a`; the design draws only branch and HEAD). |
+| The Sky's Share page (`quaternal-logic__sky.tsx`) | Withdraw is drawn disabled in the design's own words and has no key: a per-consent-row key lets it bind to nara_presence's withdraw. |
 | `quaternal-logic__chakra.tsx` | Colour by QL's `element_ref` or tattva name: QL names the tattva ("Prithvi Tattva"), and Ājñā and Sahasrāra carry none, while the design keys on 'Earth' and draws 'Beyond'. Draw QL's yantra text: QL holds no petal count. QL's mantra is a phrase ("LAM - earth element activation"), not the design's sample syllable. |
 | The map rack's chains | QL holds more than six children in places (M2-5 has nine bodies, M3-1 eight trigrams); the design's chains draw six and its fixtures cut at six. |
 
