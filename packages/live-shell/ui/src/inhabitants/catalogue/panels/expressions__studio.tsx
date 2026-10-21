@@ -14,6 +14,10 @@
 //     devices — or to the transport: Capture). Each row is one device with its owner's on/off, where the owner has one
 //     (nativeFieldFaceModel.ts StripToggle), and its owner's summary.
 // Save, Undo and Redo stand in the head: the work's own acts (manual §16.9).
+// Full is the suite: the whole rack worked in one pane, as the Expressions app's own Studio held every field setting in one place.
+// Your controls stand at its head, every one a dial; under them the Field and the four chains, each device in its Whole view with
+// every setting live, in chain order. The host draws each member through its door (`member`), on that device's own owner; the
+// Studio draws only the head, the order and the stand-in for a member the host does not hold (manual §16.3, §20.3).
 //
 // Everything the device draws is a value key.
 //   open       boolean   a native Expression is open (the light)
@@ -34,7 +38,7 @@
 // Acts, each on its own key: save, undo, redo; add (+ Parameter); earlier, later (▲ ▼ on the chosen row), remove, follow, bind (each
 // carries the control's id); show, pane (each carries the device's family: show it whole in the pool, open it full in a pane).
 // A key the owner does not report is absent. The picture then names the missing reading and every control draws "—".
-import {useState, type ReactNode} from 'react'
+import {useRef, useState, type ReactNode} from 'react'
 import {Action, Band, Dial, Display, Folded, Handle, PanelHead, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, fromUnit, toUnit,
   type LightState, type Option, type RowItem, type Scale, type Standing} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
@@ -375,66 +379,70 @@ function ChainsPage({p, members}: {p: ViewProps; members: Member[] | undefined})
   </>
 }
 
-// ------------------------------------------------------------------------------------------------ the pane's body
+// ------------------------------------------------------------------------------------------------ the full: the suite
 
-/** The Studio at pane size, to read: the macros as ranges on the left, the chains and their devices on the right. No control stands
- * in it: the controls are in Device view, below. */
-function Pane({p, list, members}: {p: ViewProps; list: Chosen[] | undefined; members: Member[] | undefined}) {
-  const W = 760, H = 420, x0 = 248, x1 = 400, first = 78, pitch = 25, rows = 13, cx = 500
+/** The design that draws a member, by its family: the field devices are Expressions' own; the torus is the one body Live plays
+ * (manual §21.2). Nara has none: it opens over the field. */
+const designOf = (family: string): string | undefined =>
+  family === 'nara' ? undefined : family === 'torus' ? 'quaternal-logic:torus' : `expressions:${family}`
+const FIELD: Member = {family: 'field', name: 'Field', chain: 'body', toggle: false, says: 'The sound, level, tempo and key of the whole field.', why: null}
+
+/** A member that no door draws here: its name, its light and its owner's words, at the pool's width. Nara's on/off stands on it. */
+function StandIn({p, m}: {p: ViewProps; m: Member}) {
+  const key = onKey(m), nara = m.family === 'nara'
+  return <section className="dp st-standin" aria-label={m.name}>
+    <div className="dp-head"><span className="dp-lamp" data-light={memberLight(p, m)} /><span className="st-standin-name">{m.name}</span></div>
+    <div className="st-standin-body">
+      <p>{m.why ?? m.says ?? (nara ? 'Your personal layer over the field.' : NONE)}</p>
+      {nara && <Toggle {...stand(p, key, has(p.v, key) ? closedWhy(p.v) : 'No reading of Nara.')} label="Open"
+        does="Open your Nara instrument over the field. Press again to close it." on={p.v[key] === true} unknown={!has(p.v, key)} onChange={x => p.set(key, x)} />}
+    </div>
+  </section>
+}
+
+/** The Studio at pane size: the whole rack to work in one place (manual §20.3). Your controls at the head, every one a dial, and +
+ * Parameter; the chains' index with their lights; then the Field and each chain, its devices side by side in their Whole views,
+ * every setting live. The suite scrolls in its pane; each device keeps its own size. */
+function Suite({p, list, members}: {p: ViewProps; list: Chosen[] | undefined; members: Member[] | undefined}) {
   const scene = strOf(p.v, 'scene'), state = standing(p.v)
-  let y = first - 22
-  const chainLines: ReactNode[] = []
-  if (members) for (const c of CHAINS) {
-    const held = members.filter(m => m.chain === c.id)
-    y += 22
-    chainLines.push(<text key={`chain:${c.id}`} x={cx} y={y} className="dp-axis" style={{fontSize: 10, letterSpacing: '.06em'}}>{`${c.label.toUpperCase()} · ${litOf(p, held)}/${held.length}`}</text>)
-    for (const m of held) {
-      y += 17
-      const light = memberLight(p, m)
-      chainLines.push(<g key={`device:${m.family}`}>
-        <circle cx={cx + 4} cy={y - 4} r={3.4} className="st-lamp" data-light={light} />
-        <text x={cx + 14} y={y} className="dp-ink" style={{fontSize: 12}}>{m.name}</text>
-        <text x={cx + 92} y={y} className="dp-ink-dim" style={{fontSize: 10.5}}>{clip(m.says ?? m.why ?? (m.toggle ? '' : 'always on'), 26)}</text>
-      </g>)
-    }
+  const at = useRef<Partial<Record<ChainId | 'field', HTMLElement | null>>>({})
+  const draw = (m: Member) => {
+    const id = designOf(m.family)
+    const drawn = id && p.member ? p.member(id) : null
+    return <div key={m.family} className="st-suite-member">{drawn ?? <StandIn p={p} m={m} />}</div>
   }
-  return <div className="st-pane">
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" aria-label="The Studio: macros and chains">
-      <g className="dp-display" style={{background: 'none'}}>
-        <text x={28} y={30} className="dp-ink" style={{fontSize: 15}}>Studio</text>
-        <text x={W - 28} y={30} textAnchor="end" className="dp-ink-dim" style={{fontSize: 12}}>{scene ? `${scene} · ` : ''}{state ?? 'no reading of the work'}</text>
-        <text x={44} y={56} className="dp-axis" style={{fontSize: 10}}>macros</text>
-        <text x={x0} y={56} className="dp-axis" style={{fontSize: 10}}>value in its range</text>
-        <text x={cx} y={56} className="dp-axis" style={{fontSize: 10}}>chains</text>
-        <path d={`M${cx - 24} 46V${H - 20}`} className="dp-faint" />
-        {!list ? <text x={44} y={first} className="dp-ink-dim" style={{fontSize: 13}}>No reading of your controls</text>
-          : !list.length ? <>
-            <text x={44} y={first} className="dp-ink-dim" style={{fontSize: 13}}>No controls chosen</text>
-            <text x={44} y={first + 20} className="dp-axis" style={{fontSize: 11}}>Press + Parameter in Device view to choose one.</text>
-          </> : <>
-            {list.slice(0, rows).map((c, i) => {
-              const y = first + i * pitch, value = valueOf(p.v, c), live = c.ranged && value !== undefined, scale = scaleOf(c), at = (x: number) => x0 + toUnit(scale, x) * (x1 - x0)
-              const moved = live && c.plays !== null && Math.abs(c.plays - value!) > 1e-9
-              return <g key={c.id} opacity={c.ranged ? 1 : .55}>
-                <ScopeGlyph x={32} y={y} scope={c.scope} shared={sharedOf(p.v, c) === true} />
-                <text x={44} y={y} dominantBaseline="central" className="dp-ink" style={{fontSize: 13}}>{clip(c.label, 15)}</text>
-                <text x={150} y={y} dominantBaseline="central" className="dp-ink-dim" style={{fontSize: 11}}>{clip(c.scope === 'field' ? (sharedOf(p.v, c) ? 'all scenes' : 'this scene') : `${SCOPE_WORD[c.scope]} · ${subjectOf(c)}`, 15)}</text>
-                {c.ranged ? <path d={`M${x0} ${y}H${x1}`} className="dp-faint" />
-                  : <text x={x0} y={y} dominantBaseline="central" className="dp-axis" style={{fontSize: 10}}>{clip(c.why ?? '', 30)}</text>}
-                {c.ranged && c.def !== null && <path d={`M${at(c.def)} ${y - 4}V${y + 4}`} className="dp-faint" />}
-                {live && <path d={`M${x0} ${y}H${at(value!)}`} className="dp-curve" style={{strokeWidth: 2}} />}
-                {live && <circle cx={at(value!)} cy={y} r={3.2} style={{fill: 'var(--dp-on)'}} />}
-                {moved && <path d={`M${at(clampTo(c.min, c.max, c.plays!))} ${y - 5}V${y + 5}`} className="dp-curve" />}
-                <text x={x1 + 10} y={y} dominantBaseline="central" className="dp-ink" style={{fontSize: 12}}>
-                  {live ? fmt(c, value!) : c.ranged ? NONE : '!'}{live && moved ? ` → ${fmt(c, c.plays!)}` : ''}
-                </text>
-              </g>
-            })}
-            {list.length > rows && <text x={44} y={H - 14} className="dp-ink-dim" style={{fontSize: 11}}>{`+ ${list.length - rows} more in Device view`}</text>}
-          </>}
-        {members ? chainLines : <text x={cx} y={first} className="dp-ink-dim" style={{fontSize: 13}}>No reading of the chains</text>}
-      </g>
-    </svg>
+  const chain = (id: ChainId | 'field', label: string, held: Member[], note?: string) =>
+    <section key={id} className="st-suite-chain" aria-label={label} ref={el => { at.current[id] = el }}>
+      <h3><span>{label}</span>{note && <span className="st-suite-note">{note}</span>}</h3>
+      <div className="st-suite-row">{held.length ? held.map(draw) : <p className="st-suite-none">{members ? `No device stands in ${label}.` : 'No reading of the chains.'}</p>}</div>
+    </section>
+  return <div className="st-suite" aria-label="Studio: your controls, the field and its chains">
+    <header className="st-suite-head">
+      <span className="dp-lamp" data-light={lightOf(p)} title={LIGHT_WHY} />
+      <b>Studio</b>
+      <span className="st-suite-state">{scene ? `${scene} · ` : ''}{state ?? 'no reading of the work'}</span>
+      <nav className="st-suite-index" aria-label="Chains">
+        {CHAINS.map(c => {
+          const held = (members ?? []).filter(m => m.chain === c.id)
+          return <button key={c.id} type="button" data-i={`${c.label}|${c.does}`} onClick={() => at.current[c.id]?.scrollIntoView({block: 'start', behavior: 'smooth'})}>
+            <span className="dp-lamp" data-light={members ? chainLight(p, held) : 'unknown'} />{c.label}
+          </button>
+        })}
+      </nav>
+      <span className="st-suite-acts"><Work p={p} /></span>
+    </header>
+    <section className="st-suite-belt" aria-label="Your controls">
+      <h3><span>Your controls</span><span className="st-suite-note">{list ? `${list.length} chosen · the same in every scene` : 'no reading'}</span></h3>
+      <div className="st-suite-dials">
+        {(list ?? []).map(c => <ChosenDial key={c.id} p={p} c={c} />)}
+        {addAction(p, list)}
+      </div>
+    </section>
+    {chain('field', 'Field', [FIELD])}
+    {CHAINS.map(c => {
+      const held = (members ?? []).filter(m => m.chain === c.id)
+      return chain(c.id, c.label, held, members ? `${litOf(p, held)} of ${held.length} on` : undefined)
+    })}
   </div>
 }
 
@@ -527,7 +535,10 @@ export const design: DesignedDevice = {
     </Plate>
   },
 
-  full: p => <Pane p={p} list={readControls(p.v)} members={readDevices(p.v)} />,
+  full: p => <Suite p={p} list={readControls(p.v)} members={readDevices(p.v)} />,
+
+  // In its own window the suite is the whole of it: its macros and every device already stand in it, so no Whole goes under it.
+  popout: p => <div className="st-window" style={{height: p.room?.h}}><Suite p={p} list={readControls(p.v)} members={readDevices(p.v)} /></div>,
 
   widget: p => {
     const list = readControls(p.v)

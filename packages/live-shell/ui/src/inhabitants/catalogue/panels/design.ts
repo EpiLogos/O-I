@@ -53,6 +53,11 @@ export interface ViewProps {
   readonly room?: Room
   /** Where this view stands, for a view that arranges itself differently in each (Whole in the pool or expanded: frame 'flip'). */
   readonly frame?: Frame
+  /** A rack's door to its members: the host draws the device `id` (`<family>:<face>`) in its Whole view at the pool's measures,
+   * on that device's own owner, with every setting live. A rack's Full is its devices (manual §16.3): it lays them out and draws
+   * only its own head and order. The door answers null for a device the host does not hold, and is absent where the host draws
+   * no members; the rack draws its own stand-in for that member then. */
+  readonly member?: (id: string) => ReactNode | null
 }
 
 export interface Room {readonly w: number; readonly h: number}

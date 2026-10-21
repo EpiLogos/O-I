@@ -115,6 +115,24 @@ function StatusLine() {
 
 /** A designed device in its six views, all on one set of values: move a macro on the chain and the expanded band, the pane,
  * the window and the rail move with it. */
+/** A rack's member, as the gallery draws it inside the rack's Full: the member's own design in its Whole view, at the pool's
+ * measures, on its own defaults (the shell draws it on its owner). A member with no design draws nothing here; the rack stands in. */
+function GalleryMember({id}: {id: string}) {
+  const [design, setDesign] = useState<DesignedDevice | null | undefined>(undefined)
+  useEffect(() => { let live = true; void loadDesign(id).then(found => { if (live) setDesign(found ?? null) }); return () => { live = false } }, [id])
+  const [values, setValues] = useState<Record<string, Value> | null>(null)
+  const [page, setPage] = useState('')
+  if (!design) return null
+  const v = values ?? Object.fromEntries(Object.entries(design.defaults).filter(([, x]) => x !== undefined)) as Record<string, Value>
+  const set = (key: string, value: Value | undefined) => setValues(() => {
+    const next = {...v}
+    if (value === undefined) delete next[key]; else next[key] = value
+    return next
+  })
+  return <>{design.whole({v, set, nav: {}, page: page || design.firstPage || '', setPage})}</>
+}
+const galleryMember = (id: string) => <GalleryMember key={id} id={id} />
+
 function DesignedViews({design, views, fixture: first}: {design: DesignedDevice; views: readonly View[]; fixture?: string | null}) {
   const names = Object.keys(design.fixtures ?? {})
   const [fixture, setFixture] = useState(first && names.includes(first) ? first : names[0] ?? '')
@@ -135,7 +153,7 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
     if (value === undefined) delete next[key]; else next[key] = value
     return next
   })
-  const props = {v: values, set, page, setPage,
+  const props = {v: values, set, page, setPage, ...(design.kind === 'rack' ? {member: galleryMember} : {}),
     nav: {fold: () => setFolded(true), unfold: () => setFolded(false), full: () => show(pane), expand: () => show(flip), popout: () => show(win)}}
   const place = {onExpand: () => { setExpanded(was => !was); show(flip) }, expanded, onPopout: () => show(win)}
   const one = (view: View): ReactNode => {
@@ -148,7 +166,10 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
         {flippedOf(design, {...props, room: undefined}, {w: wide, h: 192})}
         <div className="cat-flip-chain"><PlaceContext.Provider value={{...place, expanded: true}}>{design.compact(props)}</PlaceContext.Provider></div>
       </div>
-      case 'full': return <div className="cat-pane cat-pane--ref" ref={pane}>{design.full({...props, frame: 'pane', room: {w: 760, h: 420}})}</div>
+      // A rack's Full is its devices (manual §16.3): it takes a pane as wide as the page, and its members draw on their own designs.
+      case 'full': return design.kind === 'rack'
+        ? <div className="cat-pane cat-pane--ref cat-pane--suite" ref={pane} style={{width: wide}}>{design.full({...props, frame: 'pane', room: {w: wide, h: 620}})}</div>
+        : <div className="cat-pane cat-pane--ref" ref={pane}>{design.full({...props, frame: 'pane', room: {w: 760, h: 420}})}</div>
       // Live's plug-in window: the device's own window, the material over every control.
       case 'popout': return <div className="cat-window" ref={win}>
         <div className="cat-window-bar"><i /><i /><i /><span>{design.title}</span></div>

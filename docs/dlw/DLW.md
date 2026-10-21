@@ -381,7 +381,9 @@ chains: material, motion, body, and a personal layer that stays yours however
 the scene is shared. Each is a whole device with every setting it needs. Read
 one at a glance on its chain, open it as a band above the chain with every
 setting, let it fill a pane or a window of its own, or keep it as a tile on
-the rail. Its settings stay live whichever you look at.
+the rail. Open the studio's own pane beside the field and every device stands
+in it at once, with the controls you chose at its head. Its settings stay live
+whichever you look at.
 
 The transport turns in this case to the field. Tempo is the speed it forms and
 breathes at, and the time signature is the scene's ratio of hold to change. Key
@@ -1234,7 +1236,7 @@ the others at once.
 | Folded | The chain | The activator, the name and up to two short readings, read downward, in a strip 22 px wide. | A folded device. |
 | Compact | The chain | The display and up to four macros, at the chain's height. The width comes from the sections. | The device on its chain; a rack with only its macros showing. |
 | Whole | Expanded above the chain | Every parameter, grouped, and the display with all its handles, in a band as wide as the detail area: the bands stand side by side and the display grows into the room. | The expanded view of EQ Eight or Wavetable. |
-| Full | A pane, in Pane view | The material itself: the page, the field, the torus, the world. No controls. | Wavetable's large display, without its controls. |
+| Full | A pane, in Pane view | The material itself: the page, the field, the torus, the world. No controls. A rack's material is its devices: its Full holds every device of its chains in its Whole view, with every setting live. | Wavetable's large display, without its controls. For a rack, the rack with every chain and device shown. |
 | Pop-out | Its own window, which can fill the screen | The material with every control docked under it. | A plug-in's window. |
 | Widget | The rail | A small display and up to three readings or macros, in a tile of 136 × 136 px or 280 × 136 px. | Live has none. Push's display is the nearest. |
 
@@ -1244,7 +1246,9 @@ the others at once.
   and Whole below it. A device writes its own only where its controls
   belong beside the material rather than under it.
 - A pane holds no device controls. They stay in Device view under the pane,
-  or in the device's window.
+  or in the device's window. A rack's Full is the one pane with controls,
+  because its material is its devices: the same devices, with the same
+  values, as on its chain. Its macros stand at its head.
 
 ### 16.4 Opening, folding and hiding
 
@@ -6845,6 +6849,7 @@ height: 1120
 | Signature | A ratio of hold to change | 5:3 | The scene's ratio of hold to change. The transport's time signature shows it for the scene that plays. |
 | Start | 0 s or later | 0 | Where the scene starts inside its own evolution. Slip on the ruler sets it. |
 | Locked | On · Off | Off | A locked scene refuses edits. |
+| View | Kept · Not kept | Not kept | Keep holds the view of the field you have now with the scene, and the scene opens on it. Restore returns to it after you orbit away. |
 
 What the scene carries as its body also belongs to the clip, as a sample belongs to a Live audio clip:
 
@@ -7030,7 +7035,50 @@ In Arrangement view each Expression is a track, with its picture lane over its s
 
 The Main track holds the stops. In Session view its row launchers stand at the end of the grid, and each row is a moment across several Expressions: launch it and the scene in that row plays on every Expression in it. The Main track's mixer row sets the level of every Expression's sound together.
 
-Device view for an Expression holds the Studio: your macros, and the field devices in four chains, Material, Motion, Body and Nara. The pointer tools, the selected symbol's controls and Capture are not in the Studio: the tools and the symbol's controls are in Clip view, and Capture is the transport's.
+#### Pane view
+
+Pane view in Expressions opens with two panes side by side: the field and the Studio.
+
+- The field pane is the Field's Full (§20.2): the particles, the symbols and the body, and nothing over them. No panel, list or tool opens inside it. A control you reach from the field opens where it lives: in the Studio, in Clip view or in the browser. Present, in the View menu, gives the field the whole screen; Esc brings the window back.
+- The Studio pane is the Studio's Full (§20.3): every device of the field in one place, for when you shape the field rather than play it. Your controls stand at its head. It is the same in every scene of the Expression, and it changes with the chain: a device changed in one changes in the other at once.
+
+Double-click the field's tab to give the field the whole main area while you play.
+
+#### Device view
+
+Device view holds the Studio, the rack of the Expression. Its face is your toolbelt: the controls you chose to play, as its macros. Its Chains page holds its four chains, Material, Motion, Body and Nara, each with its light: choose a device and Show expands it above the chain, as Live's rack shows the devices of the chain you choose. A device you add yourself stands after the Studio on your rack. No device stands in Device view unless you put it there: every one is in the Studio's pane. The pointer's tools and the selected symbol's controls are in Clip view, and Capture is the transport's.
+
+#### Where everything is
+
+Everything Expressions does has one place.
+
+| To do this | Go here |
+|---|---|
+| Set the sound, level, tempo and key of the whole field | The Field (§20.2), in the Studio |
+| Set what the field is made of, how it moves, its body, and your Nara layer | The field devices (§20.4 to §20.14), in the Studio's chains. All of them stand together in the Studio's pane. |
+| Play the controls you play most | Your controls: the Studio's macros, in Device view, at the head of the Studio's pane, and on its tile on the rail |
+| Choose a control to play | + Parameter on the Studio. The browser opens on the parameters of the field and of the scene's symbols. |
+| Name and describe the Expression | Its track's head |
+| Set a scene's length, its change, how it launches, what follows it, its triggers, its body and its view of the field | Clip view's Clip and Launch panels |
+| Lay words over a scene | Clip view's Text tool |
+| Select, turn the view, draw a form or bind a symbol | Clip view's pointer tools: Select, Orbit, Form and Bind |
+| Tie six symbols into a figure, or arrange several by a rule | Clip view's Blueprint and Arrange tools |
+| Shape one symbol: its formation, force, voice and meaning | Clip view's Expression tab |
+| Set a scene's symbols step by step | Clip view's Sequence tab |
+| Move parameters over a scene by themselves | Clip view's Envelopes. A parameter's menu adds a lane for it. |
+| Hear the scene at full height | Clip view's Sound tab |
+| Launch, layer and stop scenes | Session view. A row of the Main track is a stop. |
+| Lay scenes in order, and keep takes | Arrangement view |
+| Play, record, arm the Studio, and keep your gestures as a scene | The transport: Play, Record, Arm and Capture |
+| Start an Expression, from nothing or from a composition | The browser's Expressions, and its starters |
+| Open an Expression | The browser |
+| Show the field alone | Present, in the View menu |
+| Save, undo and redo | The File and Edit menus, and the Studio's head |
+| Act on a symbol, a scene or an Expression | Its menu (§10.9) |
+| Find a control by its name | The line (§18.4). It opens the control in its device. |
+| Map a key, a gesture or MIDI to a control | Key map and MIDI map (§10.8) |
+| Export a picture or a film of the field | Export, in the File menu |
+| See the Expression as a canvas, a timeline or a journey | Technē's instruments (§17), in a pane |
 
 #### On the rail
 
@@ -7068,6 +7116,7 @@ Device view for an Expression holds the Studio: your macros, and the field devic
 - A value outside its range is refused, and the range is named.
 - Each change is one request. When the owner refuses it, the form stays and the reason shows.
 - The Studio's controls stay out of the field pane. The field pane shows only the field.
+- No panel, list or tool opens inside the field pane. The Studio's pane holds the field's devices; Clip view holds the scene and its symbols.
 
 #### Tips
 
@@ -7206,11 +7255,11 @@ The widget shows a small copy of the field and a level meter. The meter shows th
 
 ### 20.3 Studio
 
-**Product:** Expressions · **Kind:** rack · **Track:** An Expression. It fills Device view in Expressions.
+**Product:** Expressions · **Kind:** rack · **Track:** An Expression. It fills Device view in Expressions, and its Full stands beside the field in Pane view.
 
 You play a few controls far more than the rest, and you want them in reach in
-every scene. The Studio is the rack of an Expression. Its macros are the
-controls you choose to play, from anywhere in the field. Its chains hold the
+every scene. The Studio is the rack of an Expression, and its face is your toolbelt. Its
+macros are the controls you choose to play, from anywhere in the field. Its chains hold the
 devices that shape the field, so you can see at a glance which are on and
 open any of them. It stands in front of the field devices, as an Instrument
 Rack stands in front of its chains.
@@ -7272,8 +7321,8 @@ caption: Studio, on a fixture of readings.
 | Folded | Its name, the save state, and how many controls you chose. |
 | Compact | Your macros as lines in the display, the first four with handles, and the first four as dials. With fewer than four, + Parameter stands in the gap. |
 | Whole | Two pages. Macros: the display, your macros in order, and the chosen one's reach, All scenes and value. Chains: the four chains with their lights, the devices of the chosen chain, and the chosen device's On, Show and Pane. Expanded, the display grows into the band. |
-| Full | The Studio to read: every macro as a range with its value, and every chain with its devices' lights and what each owner reports. No controls. |
-| Pop-out | Full, with Whole below it. |
+| Full | The whole Studio to work in one pane. At its head: its light, the scene and the save state, the chains as an index with their lights, and Save, Undo and Redo. Under them, your controls, every one as a dial, and + Parameter. Then the Field, and each chain in turn with its devices side by side in their Whole views, every setting live. The pane scrolls; each device keeps its size. A device that has no Whole of its own, such as Nara, shows its name, its light and its owner's words. |
+| Pop-out | The suite in its own window. Your controls and every device already stand in it, so no Whole stands below it. |
 | Widget | A small display of your macros, and the first three as value boxes. |
 
 The head carries the work's own acts: Save, Undo and Redo. The display's
@@ -7294,12 +7343,14 @@ owner answers a change.
 3. Play them on the compact view's dials, or drag the handles in its display.
 4. To keep a field value the same in every scene, choose its macro and turn on All scenes.
 5. Open Chains to see which devices are on. Choose a device and press Show to expand it above the chain.
-6. To change one symbol, select it in the scene's editor in Clip view.
+6. To work every device at once, use the Studio's pane in Pane view, beside the field. Press a chain in its head to go to it.
+7. To change one symbol, select it in the scene's editor in Clip view.
 
 #### Rules
 
 - The Studio controls stay out of the field pane. The field pane shows only the field.
 - Your macros belong to the Expression. The same list stands in every scene.
+- The Studio's pane and its chain show the same devices with the same values. A change in one shows in the other at once.
 - A field value belongs to the scene you set it in. All scenes holds it for every scene, and the shared value overrides the scene's envelopes.
 - A field macro cannot follow or bind a symbol, and a symbol's macro cannot become a field macro.
 - When the owner cannot find a macro's parameter, as for a bound symbol that is not in the scene, the macro says why and keeps its place.
