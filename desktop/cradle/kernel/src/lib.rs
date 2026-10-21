@@ -835,6 +835,11 @@ pub enum KernelOp {
     ActuationRead {
         request: owner_routes::ActuationRead,
     },
+    /// Actuation's governing-authority issue and revocation on its own
+    /// authority store. Writes.
+    ActuationWrite {
+        request: owner_routes::ActuationWrite,
+    },
     /// Quaternal Logic's M1 engine and integrated scene over a supplied
     /// request. Reads.
     QlRead {
@@ -3298,6 +3303,7 @@ impl Kernel {
             | KernelOp::GatewayWrite { .. }
             | KernelOp::WorkcellWrite { .. }
             | KernelOp::SeatWrite { .. }
+            | KernelOp::ActuationWrite { .. }
             | KernelOp::AikitWrite { .. }) => self.apply_owner_write(op),
             // A Factory owner read or a SharedField read likewise; their
             // writes follow below (a host's dispatch prepares or frees them).

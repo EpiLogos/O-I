@@ -98,6 +98,25 @@ else:
         )
     }
     fn calls(&self) -> Vec<Value> {
+        self.logged()
+            .into_iter()
+            .filter(|args| !Self::catalogue(args))
+            .collect()
+    }
+    /// The kernel's own read of Central's Action catalogue (`action.list`),
+    /// which classifies a write by Central's mutation_class: kernel
+    /// infrastructure, not one of the bridge's calls.
+    fn catalogue_reads(&self) -> usize {
+        self.logged()
+            .iter()
+            .filter(|args| Self::catalogue(args))
+            .count()
+    }
+    fn catalogue(args: &Value) -> bool {
+        args.as_array()
+            .is_some_and(|args| args.iter().any(|arg| arg == "action.list"))
+    }
+    fn logged(&self) -> Vec<Value> {
         fs::read_to_string(self.root.join("calls"))
             .unwrap_or_default()
             .lines()
@@ -136,6 +155,10 @@ fn root_does_not_fallback_to_a_configured_child_and_no_acceptance_is_implied() {
     assert_eq!(value["operation"], "agent-profile.review");
     let calls = rig.calls();
     assert_eq!(calls.len(), 3);
+    assert!(
+        rig.catalogue_reads() <= 1,
+        "the catalogue is read once per owner"
+    );
     for call in &calls {
         let request: Value =
             serde_json::from_str(call.as_array().unwrap().last().unwrap().as_str().unwrap())

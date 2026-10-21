@@ -165,15 +165,62 @@ export type GatewayWriteRequest =
 /** `actuation <kind> - --json` over a supplied record, and `actuation-research` comparison.held|assess|mask|review over supplied fields. */
 export type ActuationReadRequest =
   | {kind:"agency"|"realised"|"stream"|"activity"|"usage";document:unknown}
+  /** `actuation authority list --json` (EpiLogos/Actuation#141): every governing authority in Actuation's store, revoked ones
+   * included — `actuation.local-authority-listing/v1` `{store, authorities:[{authority_source_ref, record, issued_at_unix_seconds,
+   * revoked?:{at_unix_seconds, reason}}], invalid:[{path, authority_source_ref?, error}]}`. */
+  | {kind:"authority-list"}
   | {kind:"comparison";operation:"held"|"assess"|"mask"|"review";input:Record<string,unknown>};
+/** Actuation's governing authority on its own store: `actuation authority issue - --json` (the `actuation.local-authority/v1`
+ * record on stdin; answers `{issued, authority_source_ref, holder, issued_at_unix_seconds}`) and `actuation authority revoke REF
+ * [--reason TEXT] --json` (answers `{revoked, authority_source_ref, revoked_at_unix_seconds}`). Actuation stamps the time. */
+export type ActuationWriteRequest =
+  | {kind:"authority-issue";record:Record<string,unknown>}
+  | {kind:"authority-revoke";authority_source_ref:string;reason?:string|null};
 /** `ql kernel m1` (answers ql.m1.engine/v1), `ql scene compose` (ql.scene/v1), `ql scene world` (ql.scene-world/v1). */
-export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";request:unknown};
-export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections-show";label:string} | {kind:"machine-list"};
+export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";request:unknown}
+  /** `ql kernel ledger [coordinate]`: one exact M coordinate's view (`ql.m-ledger-view/v1`: coordinate, rows, relations,
+   * source_records), or with none the whole compiled ledger (`ql.m-ledger/v1`, several MB). */
+  | {kind:"kernel-ledger";coordinate?:string|null}
+  /** `ql kernel coverage <M…> [--stratum] [--axis] [--require]` (`ql.m-coverage/v1`). */
+  | {kind:"kernel-coverage";coordinate:string;stratum?:string|null;axis?:string|null;require?:string|null}
+  /** `ql kernel apply <operator> <qladdr:…>`: conjugate-address | complement-address | classify-four-plus-two (`ql.cli/v1`). */
+  | {kind:"kernel-apply";operator:string;address:string}
+  /** `ql techne reading <target.json>` (`ql.techne/v1`): the target on the kernel's stdin. */
+  | {kind:"techne-reading";target:unknown}
+  /** `ql mef lenses` ({registryVersion, registryRevision, lenses}), `ql context-frame list` ({grammarVersion, frames}),
+   * `ql service capabilities` ({providerState, detail, operations}). */
+  | {kind:"mef-lenses"|"context-frame-list"|"service-capabilities"}
+  /** `ql context-frame read -` (QL-MEF#344): the External Context Frame reading of a supplied sixfold mapping and structural probe
+   * (`{target_ref, mapping_source_ref, external_position_refs:[6], probe:{local_position, unit_face?:"name"|"power",
+   * grain?:"inner-four"|"outer-two"}, provider_ref, origin:"derived"|"proposed"|"recognised", evidence_refs?}` on stdin), answered as
+   * `ql.mef.context-frame-reading/1.0.0`: status exact|partial|ambiguous|no-reading, mapping_digest, runtime_authority false. */
+  | {kind:"context-frame-read";request:unknown}
+  /** `ql vak locate <ref>` ({vakRef, name, symbol, primaryDesignation, standing, sourceLine}), `ql vak context <ref> [depth]`
+   * (`ql.vak-context/v1`: centre, depth, entries, relations). */
+  | {kind:"vak-locate";vak_ref:string}
+  | {kind:"vak-context";vak_ref:string;depth?:number};
+export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections-show";label:string} | {kind:"machine-list"}
+  /** `workcell doctor` (declared_services, instances, shell, state_root_writable, writable_workspace), `workcell discover`
+   * (offers, capacity, health), `workcell instances list`. */
+  | {kind:"doctor"|"discover"|"instances-list"}
+  /** `workcell plan <demand flags>`: an unsatisfiable plan is a reading too (`status`, `omissions`). */
+  | {kind:"plan";demand?:WorkcellDemand}
+  /** `workcell instances usage <ref> [--pid] [--interval-ms] [--correlation-ref]…` (`workcell.resource-usage/v1`). */
+  | {kind:"instances-usage";instance_ref:string;pid?:number;interval_ms?:number;correlation_refs?:string[]}
+  /** `workcell --receipt R collect`: the world's collected outputs (world_ref, outputs, degradations, omissions). */
+  | {kind:"collect";receipt:string};
+/** A material demand in `workcell plan`'s own flags, one field per flag. */
+export interface WorkcellDemand { demand_ref?:string; require?:string[]; prefer?:string[]; optional?:string[]; workspace?:"writable"|"read-only"; workspace_ref?:string; revision?:string; project_runtime?:string; connect?:string[]; prefer_connect?:string[]; optional_connect?:string[]; expose?:string[]; prefer_expose?:string[]; optional_expose?:string[]; output?:string[]; prefer_output?:string[]; optional_output?:string[]; resource?:string[]; subject?:string[]; persistence?:string; isolation?:string; retention?:string; extension?:string[] }
 /** `workcell connect --connection LABEL` (a declared machine: no endpoint or authorization travels), `workcell machine add|remove`. */
 export type WorkcellWriteRequest =
   | {kind:"connect";connection:string}
   | {kind:"machine-add";label:string;endpoint:string;credential_ref?:string|null;allow?:string[];note?:string|null}
-  | {kind:"machine-remove";label:string};
+  | {kind:"machine-remove";label:string}
+  /** `workcell connections disconnect <label>` (the record is kept), and a prepared world's `--receipt R recover|release|reconcile
+   * --desired logical-ref=state…`. Writes on the machine's Workcell state. */
+  | {kind:"disconnect";label:string}
+  | {kind:"recover"|"release";receipt:string}
+  | {kind:"reconcile";receipt:string;desired:string[]};
 /** `seat join|release WORKCELL PRODUCT --actor REF --json`: the actor is the desk's, claims are attributed; every region goes to one
  * `--region` flag. Answers central.workcell-seat-result/v1. */
 export type SeatWriteRequest =
@@ -189,7 +236,25 @@ export type AikitReadRequest =
   | {kind:"gateway-replay";stream:string;after?:number;limit?:number;at?:string|null}
   /** `aikit gateway ecology`: `{type:"ecology", ecology:{agencies:[{sessions:[{harness_ref?, streams:[{stream_ref, last_sequence,
    * event_count}], surfaces}]}]}}` — which sessions and Streams a replay can ask for. */
-  | {kind:"gateway-ecology";at?:string|null};
+  | {kind:"gateway-ecology";at?:string|null}
+  /** `aikit work continuity commands|pressure`: the session's armed packs, and the continuity pressure brackets. A named project runs
+   * in that project's ground, from Central's disclosure. */
+  | {kind:"continuity-commands"|"continuity-pressure";project?:string|null}
+  /** `aikit work continuity closeout verify [--project P] [--since UNIX_SECONDS] [--run RUN_REF]`: `{clauses, project, verified}`. An
+   * unverified close-out exits 1 with its verdict; it is still the reading. */
+  | {kind:"closeout-verify";project?:string|null;since?:number|null;run?:string|null}
+  /** `aikit source show ID`, `aikit collate [--all]`, `aikit adopt ROOT [--namespace N]` (the plan; nothing moves). */
+  | {kind:"source-show";id:string}
+  | {kind:"collate";all?:boolean}
+  | {kind:"adopt-plan";root:string;namespace?:string|null}
+  /** `aikit procedure list|diff PROCEDURE`, `aikit bypass list`, `aikit unused`, `aikit explain [RESOURCE]`. */
+  | {kind:"procedure-list"|"bypass-list"|"unused"}
+  | {kind:"procedure-diff";procedure:string}
+  | {kind:"explain";resource?:string|null}
+  /** `aikit history [RESOURCE]` answers aikit.explain-history/v1; a view (`history recent|stats|failures|bypasses`) answers that view. */
+  | {kind:"history";resource?:string|null;view?:"recent"|"stats"|"failures"|"bypasses"|null}
+  /** `aikit knowledge frame ADDRESS… [--query Q]`: at least one address. */
+  | {kind:"knowledge-frame";addresses:string[];query?:string|null};
 export type AikitWriteRequest =
   /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. */
   | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null}
@@ -199,7 +264,17 @@ export type AikitWriteRequest =
   | {kind:"method-prove";project?:string|null;method:string;proof:unknown}
   /** `out` is an absolute directory the desk names. */
   | {kind:"set-package-export";project?:string|null;set:string;target:"openai"|"codex"|"claude"|"pi";out:string;native?:boolean;allow_partial?:boolean;with_codex_overlay?:boolean}
-  | {kind:"wiki-shape-declare";file:string;frame_ref:string;frame:unknown};
+  | {kind:"wiki-shape-declare";file:string;frame_ref:string;frame:unknown}
+  /** `aikit adopt ROOT [--namespace N] --yes`: the person's adoption of a harness skill root; never into Control. */
+  | {kind:"adopt";root:string;namespace?:string|null}
+  /** `aikit procedure undo PROCEDURE`, `aikit bypass revoke ID`. */
+  | {kind:"procedure-undo";procedure:string}
+  | {kind:"bypass-revoke";id:string}
+  /** `aikit source sync|rollback ID`; `aikit source promote ID [--trust] [--trust-skill C]…`. */
+  | {kind:"source-sync"|"source-rollback";id:string}
+  | {kind:"source-promote";id:string;trust?:boolean;trust_skills?:string[]}
+  /** `aikit knowledge forget destination|route|project RESOURCE` or `forget all`: answers `{forgot, preserved}`. */
+  | {kind:"knowledge-forget";scope:"destination"|"route"|"project"|"all";resource?:string|null};
 
 /** W1.5 changed-since-thought compose (`flow_cognition.rs`): ONE typed
  * reading with both owner sides explicit — a side that could not be queried
@@ -464,6 +539,7 @@ export type KernelOp =
   | {op:"gateway_team";project?:string|null;request:{action:string;[field:string]:unknown}}
   /** Reads. */
   | {op:"actuation_read";request:ActuationReadRequest}
+  | {op:"actuation_write";request:ActuationWriteRequest}
   | {op:"ql_read";request:QlReadRequest}
   | {op:"workcell_read";request:WorkcellReadRequest}
   /** Writes. */

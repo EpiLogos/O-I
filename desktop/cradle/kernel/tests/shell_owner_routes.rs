@@ -435,6 +435,9 @@ fn actuation_reads_carry_actuations_reading_of_the_record_verbatim() {
     let dir = scratch("actuation");
     let actuation = Fake::new(&dir, "actuation");
     let _bin = Bound::set("OI_ACTUATION_BIN", &actuation.bin);
+    // The trace is the process's; Actuation's authority writes elsewhere in
+    // this suite land in it too, so only this test's lines are read.
+    let before = traced().len();
     // Actuation 0.2.1's own answer (fixtures/owner-routes, REAL).
     let usage = fixture("actuation-usage-2026-10-21.json");
     actuation.answer(&usage["answer"]);
@@ -457,7 +460,7 @@ fn actuation_reads_carry_actuations_reading_of_the_record_verbatim() {
         "the record goes on stdin, as handed"
     );
     assert!(
-        !traced().contains("written Actuation"),
+        !traced()[before..].contains("written Actuation"),
         "a read moves nothing"
     );
 
@@ -1144,5 +1147,980 @@ fn the_gateways_ecology_names_the_streams_a_replay_reads() {
         op(json!({"op": "aikit_read", "request": {"kind": "gateway-ecology"}})),
     );
     assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn ql_reads_its_compiled_m_ledger_and_its_coverage() {
+    let _held = hold();
+    let dir = scratch("ledger");
+    let ql = Fake::new(&dir, "ql");
+    let _bin = Bound::set("OI_QL_BIN", &ql.bin);
+    // The installed QL's own view of one generation cell (REAL).
+    let ledger = fixture("ql-kernel-ledger-2026-10-21.json");
+    ql.answer(&ledger["answer"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "kernel-ledger", "coordinate": "M3-3-2-0-1"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty());
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "ql kernel ledger");
+    assert_eq!(data, ledger["answer"], "QL's view, verbatim");
+    assert_eq!(ql.asked(), ["kernel ledger M3-3-2-0-1 --json"]);
+    assert_eq!(ql.stdin(), "", "a ledger read takes no input");
+    // The whole ledger is another schema: a view answered for it is named.
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "kernel-ledger"}})),
+    );
+    let error = outcome.unwrap_err();
+    assert!(
+        error.contains("ql.m-ledger-view/v1") && error.contains("ql.m-ledger/v1"),
+        "{error}"
+    );
+    // QL's refusal (REAL words).
+    ql.refuse(None, ledger["refusal_stderr"].as_str().unwrap(), 2);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "kernel-ledger", "coordinate": "NOPE"}})),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("ql: unknown exact M coordinate: NOPE"));
+    // Coverage: the owner's flags in its spelling (the reading's head as QL answered it, 21 Oct 2026).
+    ql.answer(
+        &json!({"schema": "ql.m-coverage/v1", "scope": "#3-3-2", "stratum": "rust",
+        "axis": "operational", "required_readiness": "verified", "structural_coordinates": 196,
+        "rows": [], "blocking_rows": [], "findings": []}),
+    );
+    ql.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "kernel-coverage", "coordinate": "M3-3-2",
+            "require": "verified"}}),
+        ),
+    );
+    assert_eq!(reading(&outcome.unwrap()).1["structural_coordinates"], 196);
+    assert_eq!(
+        ql.asked(),
+        ["kernel coverage M3-3-2 --require verified --json"]
+    );
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn ql_registry_vak_techne_and_operator_reads_carry_qls_answers() {
+    let _held = hold();
+    let dir = scratch("ql-registry");
+    let ql = Fake::new(&dir, "ql");
+    let _bin = Bound::set("OI_QL_BIN", &ql.bin);
+    // The installed QL's own answers (REAL).
+    let real = fixture("ql-registry-reads-2026-10-21.json");
+    for (request, key, argv) in [
+        (
+            json!({"kind": "mef-lenses"}),
+            "mef_lenses",
+            "mef lenses --json",
+        ),
+        (
+            json!({"kind": "context-frame-list"}),
+            "context_frame_list",
+            "context-frame list --json",
+        ),
+        (
+            json!({"kind": "service-capabilities"}),
+            "service_capabilities",
+            "service capabilities --json",
+        ),
+        (
+            json!({"kind": "kernel-apply", "operator": "conjugate-address",
+                   "address": "qladdr:sixfold@1/direct/P5/d0"}),
+            "kernel_apply",
+            "kernel apply conjugate-address qladdr:sixfold@1/direct/P5/d0 --json",
+        ),
+        (
+            json!({"kind": "vak-locate", "vak_ref": "M0"}),
+            "vak_locate",
+            "vak locate M0 --json",
+        ),
+        (
+            json!({"kind": "techne-reading", "target": real["techne_reading"]["input"]}),
+            "techne_reading",
+            "techne reading /dev/stdin --json",
+        ),
+    ] {
+        ql.answer(&real[key]["answer"]);
+        ql.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "ql_read", "request": request})),
+        );
+        let outcome = outcome.unwrap_or_else(|error| panic!("{key}: {error}"));
+        assert_eq!(form, "owner-read", "{key}");
+        assert_eq!(reading(&outcome).1, real[key]["answer"], "{key}: verbatim");
+        assert_eq!(ql.asked(), [argv], "{key}");
+    }
+    assert_eq!(
+        serde_json::from_str::<Value>(&ql.stdin()).unwrap(),
+        real["techne_reading"]["input"],
+        "the target goes on stdin"
+    );
+    // Another entry's answer is named: the asked ref is not echoed.
+    ql.answer(&real["vak_locate"]["answer"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "vak-locate", "vak_ref": "M1"}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    // An operator answer for another operator is named too.
+    ql.answer(&real["kernel_apply"]["answer"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "kernel-apply",
+            "operator": "complement-address", "address": "qladdr:sixfold@1/direct/P5/d0"}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    // QL's refusal (REAL words).
+    ql.refuse(
+        None,
+        real["vak_locate"]["refusal_stderr"].as_str().unwrap(),
+        2,
+    );
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "vak-context", "vak_ref": "NOPE", "depth": 1}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("ql: invalid Vāk ref `NOPE`"));
+    assert_eq!(ql.asked().last().unwrap(), "vak context NOPE 1 --json");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
+    let _held = hold();
+    let dir = scratch("pads");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    let state = dir.join("Work/Demo/.factory/development-state.json");
+    fs::create_dir_all(state.parent().unwrap()).unwrap();
+    // Factory's own readings of an empty bank (REAL).
+    let real = fixture("factory-pads-2026-10-21.json");
+    factory.answer(&real["pads"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "pads-read", "state_path": state,
+            "project_ref": "project:point-cloud-demo"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty());
+    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
+        panic!("{:?}", outcome.result)
+    };
+    assert_eq!(*data, real["pads"], "Factory's bank, verbatim");
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "development pads {} project:point-cloud-demo --json",
+            state.display()
+        )]
+    );
+    factory.answer(&real["due"]);
+    factory.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "pads-due", "state_path": state,
+            "project_ref": "project:point-cloud-demo", "now_unix_ms": 1792585987681_i64,
+            "since_unix_ms": 1792499587681_i64}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    outcome.unwrap();
+    assert_eq!(
+        factory.asked(),
+        [format!("development pads-due {} project:point-cloud-demo --now 1792585987681 --since 1792499587681 --json", state.display())]
+    );
+
+    // A write: the person's grant the host's token holds, from a stand-in
+    // contract above the state — never the machine's Control.
+    let token = "w3-test-token-0123456789abcdef0123456789abcdef";
+    let digest = {
+        use sha2::{Digest, Sha256};
+        Sha256::digest(token.as_bytes())
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    };
+    fs::create_dir_all(dir.join("Control/user")).unwrap();
+    fs::write(
+        dir.join("Control/user/native-action-authority.json"),
+        serde_json::to_vec(&json!({"schema": "central.native-action-authority/v1", "scope_ref": "control:root",
+            "grants": [{"principal_ref": "central:source:control:root:Control/user/identity", "actor_kind": "human",
+                "token_sha256": digest, "scope_refs": ["control:root"], "actions": [],
+                "expires_at_unix_seconds": 4102444800_u64}]}))
+        .unwrap(),
+    )
+    .unwrap();
+    let _root = Bound::clear("OI_CENTRAL_ROOT");
+    let _token = Bound::set("CENTRAL_NATIVE_TOKEN", token);
+    let write = op(
+        json!({"op": "factory_owner", "request": {"kind": "pads-write", "state_path": state,
+        "project_ref": "project:demo", "index": 3, "expected_revision": "absent",
+        "pad": {"prompt": "Tidy the seats"}}}),
+    );
+    factory.answer(&json!({"schema": "factory.prompt-pads-write/v1", "project_ref": "project:demo",
+        "index": 3, "previous_revision": "absent", "revision": "blake3:aa", "changed": true,
+        "written_by": "oi:desk-prompt-pads", "authority_ref": "central:native-action-authority#central:source:control:root:Control/user/identity",
+        "pad": {"prompt": "Tidy the seats"}, "automatic_agent_or_model_invocation": false}));
+    factory.forget();
+    let (outcome, form) = dispatched(no_central(&dir), write.clone());
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    let sent: Value = serde_json::from_str(&factory.stdin()).unwrap();
+    assert_eq!(
+        sent["authority"]["authorityRef"],
+        "central:native-action-authority#central:source:control:root:Control/user/identity",
+        "the grant the host's token holds"
+    );
+    assert_eq!(sent["caller"]["projectionKind"], "desktop-human");
+    assert_eq!(sent["pad"]["prompt"], "Tidy the seats");
+    assert!(
+        !factory.stdin().contains(token),
+        "the token never travels in the request"
+    );
+    let wire = receipts(&outcome);
+    assert_eq!(wire[0]["event"], "factory_run_changed");
+    assert_eq!(wire[0]["action"], "development pads-write");
+    assert_eq!(wire[0]["ref"], "project:demo#pads");
+    assert_eq!(wire[0]["revision"], "blake3:aa");
+    // Without the person's token the write is refused before Factory is asked.
+    let _gone = Bound::set(
+        "CENTRAL_NATIVE_TOKEN",
+        "another-token-0123456789abcdef0123456789",
+    );
+    factory.forget();
+    let (outcome, _) = dispatched(no_central(&dir), write);
+    assert!(outcome.unwrap_err().contains("no one human grant"));
+    assert!(factory.asked().is_empty(), "Factory was not asked");
+    // Factory's own refusal document (REAL words), and a begin recorded.
+    let _token = Bound::set("CENTRAL_NATIVE_TOKEN", token);
+    factory.refuse(Some(&real["write_refusal"]), "", 2);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "pads-write", "state_path": state,
+            "project_ref": "project:demo", "index": 3, "expected_revision": "absent", "pad": null}}),
+        ),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("A pad is written by a person at the desktop: the request names no caller Nothing was written."));
+    factory.answer(&json!({"schema": "factory.prompt-pads-run/v1", "project_ref": "project:demo", "index": 3,
+        "created": true, "run_ref": "factory:pad-run:demo:3:1", "run": {}, "revision": "blake3:bb"}));
+    factory.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "pads-run", "state_path": state,
+            "request": {"project_ref": "project:demo", "index": 3, "trigger": "press"}}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        factory.asked(),
+        [format!("development pads-run {} - --json", state.display())]
+    );
+    assert_eq!(receipts(&outcome)[0]["ref"], "factory:pad-run:demo:3:1");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn workcell_material_reads_and_world_writes_through_its_own_cli() {
+    let _held = hold();
+    let dir = scratch("workcell-material");
+    let workcell = Fake::new(&dir, "workcell");
+    let _bin = Bound::set("OI_WORKCELL_BIN", &workcell.bin);
+    // Workcell's own answers (REAL, read only).
+    let real = fixture("workcell-material-2026-10-21.json");
+    for (request, key, argv) in [
+        (
+            json!({"kind": "doctor"}),
+            "doctor",
+            "doctor --json".to_owned(),
+        ),
+        (
+            json!({"kind": "discover"}),
+            "discover",
+            "discover --json".to_owned(),
+        ),
+        (json!({"kind": "plan"}), "plan", "plan --json".to_owned()),
+        (
+            json!({"kind": "instances-usage", "instance_ref": "instance:claude-code:3d93", "pid": 68061,
+                   "interval_ms": 0}),
+            "usage",
+            "instances usage instance:claude-code:3d93 --pid 68061 --interval-ms 0 --json"
+                .to_owned(),
+        ),
+    ] {
+        workcell.answer(&real[key]);
+        workcell.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "workcell_read", "request": request})),
+        );
+        let outcome = outcome.unwrap_or_else(|error| panic!("{key}: {error}"));
+        assert_eq!(form, "owner-read", "{key}");
+        assert_eq!(reading(&outcome).1, real[key], "{key}: verbatim");
+        assert_eq!(workcell.asked(), [argv], "{key}");
+    }
+    // An unsatisfiable plan is Workcell's reading too (REAL: the plan on
+    // stdout, its error on stderr, exit 3); the demand in Workcell's flags.
+    workcell.refuse(
+        Some(&real["plan_unsatisfiable"]["stdout"]),
+        real["plan_unsatisfiable"]["stderr"].as_str().unwrap(),
+        3,
+    );
+    workcell.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "workcell_read", "request": {"kind": "plan",
+            "demand": {"require": ["workspace"], "resource": ["cpu=2"]}}})),
+    );
+    let (_, plan, _) = reading(&outcome.unwrap());
+    assert_eq!(plan["status"], "unsatisfiable");
+    assert_eq!(
+        workcell.asked(),
+        ["plan --require workspace --resource cpu=2 --json"]
+    );
+    // A collect is a read of the world's receipt; Workcell's refusal in its words.
+    workcell.refuse(
+        Some(&json!({"error": {"kind": "invalid-demand",
+            "message": "invalid demand: this command requires `--receipt <material-world.json>`"}, "ok": false})),
+        "",
+        2,
+    );
+    workcell.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_read", "request": {"kind": "collect", "receipt": "/w/world.json"}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    assert!(outcome.unwrap_err().contains("requires `--receipt"));
+    assert_eq!(workcell.asked(), ["--receipt /w/world.json collect --json"]);
+
+    // Writes on a world and a connection: Workcell's own answers' shapes
+    // (workcell-cli main.rs), FAKE — never the machine.
+    workcell.answer(
+        &json!({"ok": true, "world_ref": "world:w3", "disposition": "released", "changed": true}),
+    );
+    workcell.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_write", "request": {"kind": "release", "receipt": "/w/world.json"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(workcell.asked(), ["--receipt /w/world.json release --json"]);
+    assert_eq!(receipts(&outcome)[0]["ref"], "world:w3");
+    workcell.answer(&json!({"ok": true, "deltas": []}));
+    workcell.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_write", "request": {"kind": "reconcile", "receipt": "/w/world.json",
+            "desired": ["service:a=running", "service:b=stopped"]}}),
+        ),
+    );
+    assert!(outcome.unwrap().receipts.is_empty(), "no delta, no receipt");
+    assert_eq!(
+        workcell.asked(),
+        ["--receipt /w/world.json reconcile --desired service:a=running --desired service:b=stopped --json"]
+    );
+    workcell
+        .answer(&json!({"ok": true, "label": "omarchy", "state": "disconnected", "changed": true}));
+    workcell.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "workcell_write", "request": {"kind": "disconnect", "label": "omarchy"}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(workcell.asked(), ["connections disconnect omarchy --json"]);
+    assert_eq!(
+        receipts(&outcome)[0]["action"],
+        "workcell connections disconnect"
+    );
+    assert!(traced().contains("written Workcell workcell connections disconnect"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn aikit_continuity_history_skillset_and_knowledge_routes() {
+    let _held = hold();
+    let dir = scratch("aikit-d");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // AIKit's own answers (REAL).
+    let real = fixture("aikit-continuity-history-2026-10-21.json");
+    for (request, key, argv) in [
+        (
+            json!({"kind": "continuity-commands"}),
+            "commands",
+            "work continuity commands --json",
+        ),
+        (
+            json!({"kind": "continuity-pressure"}),
+            "pressure",
+            "work continuity pressure --json",
+        ),
+        (
+            json!({"kind": "bypass-list"}),
+            "bypass_list",
+            "bypass list --json",
+        ),
+        (
+            json!({"kind": "history", "view": "failures"}),
+            "history_failures",
+            "history failures --json",
+        ),
+    ] {
+        aikit.answer(&real[key]);
+        aikit.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "aikit_read", "request": request})),
+        );
+        let outcome = outcome.unwrap_or_else(|error| panic!("{key}: {error}"));
+        assert_eq!(form, "owner-read", "{key}");
+        assert_eq!(
+            reading(&outcome).1,
+            real[key]["data"],
+            "{key}: the envelope's reading"
+        );
+        assert_eq!(aikit.asked(), [argv], "{key}");
+    }
+    // A close-out that is not verified exits 1 with its verdict: a reading (REAL).
+    aikit.refuse(Some(&real["closeout"]), "", 1);
+    aikit.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "closeout-verify", "since": 1792540800_u64,
+            "run": "factory-run/r1"}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    let (_, verdict, _) = reading(&outcome.unwrap());
+    assert_eq!(verdict, real["closeout"]["data"]);
+    assert_eq!(
+        aikit.asked(),
+        ["work continuity closeout verify --since 1792540800 --run factory-run/r1 --json"]
+    );
+    // AIKit's refusal for a directory with no world, in its words (REAL).
+    aikit.refuse(
+        Some(&json!({"error": {"code": "cli.usage", "details": {},
+            "message": "no Central world for this working directory; close-out verification reads a project's NOW field"},
+            "ok": false, "schema": 1})),
+        "",
+        2,
+    );
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "closeout-verify"}})),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("no Central world for this working directory"));
+    // The whole History is its own schema; a view's answer for it is named.
+    aikit.answer(&real["history_failures"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "history", "resource": "skill/x"}})),
+    );
+    let error = outcome.unwrap_err();
+    assert!(error.contains("aikit.explain-history/v1"), "{error}");
+    // Writes, FAKE: a forget of one route, an undo, a promote with trust.
+    aikit.answer(&envelope(json!({"forgot": {"route": "knowledge-route/a"},
+        "preserved": ["canonical-resource-identity", "provider-truth", "knowledge-operation-history"]})));
+    aikit.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "knowledge-forget", "scope": "route",
+            "resource": "knowledge-route/a"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        aikit.asked(),
+        ["knowledge forget route knowledge-route/a --json"]
+    );
+    assert_eq!(receipts(&outcome)[0]["ref"], "knowledge-route/a");
+    aikit.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_write", "request": {"kind": "knowledge-forget", "scope": "route"}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    assert!(
+        aikit.asked().is_empty(),
+        "nothing asked without the resource"
+    );
+    aikit.answer(&envelope(
+        json!({"procedure": "procedure/adopt-1", "undone": true}),
+    ));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "procedure-undo", "procedure": "procedure/adopt-1"}}),
+        ),
+    );
+    assert_eq!(receipts(&outcome.unwrap())[0]["ref"], "procedure/adopt-1");
+    aikit.answer(&envelope(
+        json!({"source": "central-skills", "promoted": true}),
+    ));
+    aikit.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "source-promote", "id": "central-skills",
+            "trust_skills": ["skill/central/a", "skill/central/b"]}}),
+        ),
+    );
+    outcome.unwrap();
+    assert_eq!(
+        aikit.asked(),
+        ["source promote central-skills --trust-skill skill/central/a --trust-skill skill/central/b --json"]
+    );
+    // Adoption as a plan is a read; with `yes` it is the write, never into Control.
+    aikit.answer(&envelope(json!({"plan": {"moves": []}})));
+    aikit.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "adopt-plan", "root": "/h/.claude/skills",
+            "namespace": "claude"}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    outcome.unwrap();
+    assert_eq!(
+        aikit.asked(),
+        ["adopt /h/.claude/skills --namespace claude --json"]
+    );
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn actuation_authority_issue_and_revoke_write_actuations_own_store() {
+    let _held = hold();
+    let dir = scratch("actuation-authority");
+    let actuation = Fake::new(&dir, "actuation");
+    let _bin = Bound::set("OI_ACTUATION_BIN", &actuation.bin);
+    // Actuation 0.2.1's own answers against a scratch store (REAL), replayed
+    // by a fake: no write reaches the owner's authority store.
+    let real = fixture("actuation-authority-2026-10-21.json");
+    actuation.answer(&real["issue"]["stdout"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "authority-issue",
+            "record": real["record"]}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        actuation.asked(),
+        ["authority issue - --json"],
+        "no store, no clock from the desk"
+    );
+    assert_eq!(
+        serde_json::from_str::<Value>(&actuation.stdin()).unwrap(),
+        real["record"],
+        "the record goes on stdin, as handed"
+    );
+    assert_eq!(reading(&outcome).1, real["issue"]["stdout"]);
+    let wire = receipts(&outcome);
+    assert_eq!(wire[0]["owner"], "actuation");
+    assert_eq!(wire[0]["ref"], "authority-source:desk-probe");
+    assert!(traced().contains("written Actuation actuation authority issue"));
+    // A second issue of the same source: Actuation's refusal, in its words.
+    actuation.refuse(None, real["issue_again"]["stderr"].as_str().unwrap(), 2);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "authority-issue",
+            "record": real["record"]}}),
+        ),
+    );
+    let error = outcome.unwrap_err();
+    assert!(error.contains("already exists"), "{error}");
+    // A record naming no source asks nothing.
+    actuation.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "authority-issue",
+            "record": {"schema": "actuation.local-authority/v1"}}}),
+        ),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    assert!(actuation.asked().is_empty());
+    // Revocation with the person's reason.
+    actuation.answer(&real["revoke"]["stdout"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "authority-revoke",
+            "authority_source_ref": "authority-source:desk-probe", "reason": "probe withdrawn"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        actuation.asked(),
+        ["authority revoke authority-source:desk-probe --reason probe withdrawn --json"]
+    );
+    assert_eq!(receipts(&outcome)[0]["ref"], "authority-source:desk-probe");
+    // An answer for another source is not this revocation.
+    actuation.answer(&real["revoke"]["stdout"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "actuation_write", "request": {"kind": "authority-revoke",
+            "authority_source_ref": "authority-source:other"}}),
+        ),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("revoked true for authority-source:other"));
+    // Unknown and already-revoked sources: Actuation's words.
+    for key in ["revoke_unknown", "revoke_again"] {
+        actuation.refuse(None, real[key]["stderr"].as_str().unwrap(), 2);
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            op(
+                json!({"op": "actuation_write", "request": {"kind": "authority-revoke",
+                "authority_source_ref": "authority-source:none"}}),
+            ),
+        );
+        let error = outcome.unwrap_err();
+        let words = real[key]["stderr"].as_str().unwrap().trim();
+        let words = words.strip_prefix("actuation: ").unwrap_or(words);
+        assert!(error.contains(words), "{key}: {error}");
+    }
+    // The grants as Actuation lists them (Actuation#141's own answer, REAL):
+    // a read, nothing recorded, nothing written.
+    actuation.answer(&real["list"]["stdout"]);
+    actuation.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "actuation_read", "request": {"kind": "authority-list"}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty());
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "actuation authority list");
+    assert_eq!(
+        data, real["list"]["stdout"],
+        "Actuation's listing, verbatim"
+    );
+    assert_eq!(
+        data["authorities"][0]["revoked"]["reason"],
+        "probe withdrawn"
+    );
+    assert_eq!(actuation.asked(), ["authority list --json"]);
+    // An Actuation without the listing (0.2.1, REAL): its words, no fallback.
+    actuation.refuse(
+        None,
+        real["list_installed_0_2_1"]["stderr"].as_str().unwrap(),
+        2,
+    );
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "actuation_read", "request": {"kind": "authority-list"}})),
+    );
+    let error = outcome.unwrap_err();
+    assert!(error.contains("unknown command authority"), "{error}");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn ql_reads_an_external_structures_context_frame_through_its_own_cli() {
+    let _held = hold();
+    let dir = scratch("ql-cf-read");
+    let ql = Fake::new(&dir, "ql");
+    let _bin = Bound::set("OI_QL_BIN", &ql.bin);
+    // QL-MEF#344's own answers (REAL), replayed.
+    let real = fixture("ql-context-frame-read-2026-10-21.json");
+    ql.answer(&real["exact"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "context-frame-read",
+            "request": real["request"]}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty());
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "ql context-frame read");
+    assert_eq!(data, real["exact"], "QL's reading, verbatim");
+    assert_eq!(data["status"]["frame"]["code"], "CF5");
+    assert_eq!(data["runtime_authority"], false);
+    assert_eq!(ql.asked(), ["context-frame read - --json"]);
+    assert_eq!(
+        serde_json::from_str::<Value>(&ql.stdin()).unwrap(),
+        real["request"],
+        "the request goes on stdin, as handed"
+    );
+    // An ambiguous reading is QL's answer too, never narrowed here.
+    ql.answer(&real["ambiguous"]);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "context-frame-read",
+            "request": real["request"]}}),
+        ),
+    );
+    assert_eq!(reading(&outcome.unwrap()).1["status"]["kind"], "ambiguous");
+    // QL's refusal of a malformed request, and an installed QL without the
+    // command: each in QL's words.
+    for key in ["refusal_missing_field", "installed_refusal"] {
+        ql.refuse(None, real[key].as_str().unwrap(), 2);
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            op(
+                json!({"op": "ql_read", "request": {"kind": "context-frame-read",
+                "request": {"target_ref": "t"}}}),
+            ),
+        );
+        let error = outcome.unwrap_err();
+        let words = real[key].as_str().unwrap().trim();
+        let words = words.strip_prefix("ql: ").unwrap_or(words);
+        assert!(error.contains(words), "{key}: {error}");
+    }
+    // Another document is not this reading.
+    ql.answer(&json!({"grammarVersion": "1.0.0", "frames": []}));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "context-frame-read",
+            "request": real["request"]}}),
+        ),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("ql.mef.context-frame-reading/1.0.0"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn aikit_history_views_skillset_reads_and_source_writes_carry_aikits_words() {
+    let _held = hold();
+    let dir = scratch("aikit-d2");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // AIKit's own answers (REAL; collate and unused trimmed, as named in the fixture).
+    let real = fixture("aikit-continuity-history-2026-10-21.json");
+    for (request, key, argv) in [
+        (
+            json!({"kind": "history", "view": "recent"}),
+            "history_recent",
+            "history recent --json",
+        ),
+        (
+            json!({"kind": "history", "view": "stats"}),
+            "history_stats",
+            "history stats --json",
+        ),
+        (
+            json!({"kind": "history", "view": "bypasses"}),
+            "history_bypasses",
+            "history bypasses --json",
+        ),
+        (
+            json!({"kind": "procedure-list"}),
+            "procedure_list",
+            "procedure list --json",
+        ),
+        (
+            json!({"kind": "collate", "all": true}),
+            "collate_trimmed",
+            "collate --all --json",
+        ),
+        (json!({"kind": "unused"}), "unused_trimmed", "unused --json"),
+    ] {
+        aikit.answer(&real[key]);
+        aikit.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "aikit_read", "request": request})),
+        );
+        let outcome = outcome.unwrap_or_else(|error| panic!("{key}: {error}"));
+        assert_eq!(form, "owner-read", "{key}");
+        assert!(outcome.receipts.is_empty(), "{key}: a read records nothing");
+        assert_eq!(reading(&outcome).1, real[key]["data"], "{key}");
+        assert_eq!(aikit.asked(), [argv], "{key}");
+    }
+    // Readings AIKit shapes per resource (FAKE): carried as answered.
+    for (request, argv) in [
+        (
+            json!({"kind": "source-show", "id": "central-skills"}),
+            "source show central-skills --json",
+        ),
+        (
+            json!({"kind": "explain", "resource": "skill/central/orient"}),
+            "explain skill/central/orient --json",
+        ),
+        (
+            json!({"kind": "procedure-diff", "procedure": "procedure/adopt-1"}),
+            "procedure diff procedure/adopt-1 --json",
+        ),
+        (
+            json!({"kind": "knowledge-frame", "addresses": ["wiki:a", "wiki:b"], "query": "seat"}),
+            "knowledge frame wiki:a wiki:b --query seat --json",
+        ),
+        (
+            json!({"kind": "history", "resource": "skill/central/orient", "view": "recent"}),
+            "history skill/central/orient recent --json",
+        ),
+    ] {
+        let answered = json!({"asked": argv});
+        aikit.answer(&envelope(if argv.starts_with("history") {
+            json!({"count": 0, "events": []})
+        } else {
+            answered.clone()
+        }));
+        aikit.forget();
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "aikit_read", "request": request})),
+        );
+        outcome.unwrap_or_else(|error| panic!("{argv}: {error}"));
+        assert_eq!(aikit.asked(), [argv]);
+    }
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "knowledge-frame", "addresses": []}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    // Writes (FAKE): each moves AIKit's state and records a receipt, except
+    // where AIKit says nothing changed.
+    for (request, argv, reference) in [
+        (
+            json!({"kind": "bypass-revoke", "id": "bypass-7"}),
+            "bypass revoke bypass-7 --json",
+            Some("bypass-7"),
+        ),
+        (
+            json!({"kind": "source-sync", "id": "central-skills"}),
+            "source sync central-skills --json",
+            Some("central-skills"),
+        ),
+        (
+            json!({"kind": "source-rollback", "id": "central-skills"}),
+            "source rollback central-skills --json",
+            Some("central-skills"),
+        ),
+        (
+            json!({"kind": "adopt", "root": "/h/.claude/skills", "namespace": "claude"}),
+            "adopt /h/.claude/skills --namespace claude --yes --json",
+            None,
+        ),
+    ] {
+        aikit.answer(&envelope(json!({"done": true})));
+        aikit.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "aikit_write", "request": request})),
+        );
+        let outcome = outcome.unwrap_or_else(|error| panic!("{argv}: {error}"));
+        assert_eq!(form, "owner-write", "{argv}");
+        assert_eq!(aikit.asked(), [argv]);
+        let wire = receipts(&outcome);
+        assert_eq!(wire[0]["owner"], "ai-kit", "{argv}");
+        if let Some(reference) = reference {
+            assert_eq!(wire[0]["ref"], reference, "{argv}");
+        }
+    }
+    // AIKit saying nothing changed records no receipt.
+    aikit.answer(&envelope(
+        json!({"source": "central-skills", "changed": false}),
+    ));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "source-sync", "id": "central-skills"}}),
+        ),
+    );
+    assert!(outcome.unwrap().receipts.is_empty());
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn workcell_lists_its_instances_and_recovers_a_prepared_world() {
+    let _held = hold();
+    let dir = scratch("workcell-instances");
+    let workcell = Fake::new(&dir, "workcell");
+    let _bin = Bound::set("OI_WORKCELL_BIN", &workcell.bin);
+    let real = fixture("workcell-material-2026-10-21.json");
+    workcell.answer(&real["instances"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "workcell_read", "request": {"kind": "instances-list"}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert_eq!(
+        reading(&outcome).1,
+        real["instances"],
+        "Workcell's listing (REAL), verbatim"
+    );
+    assert_eq!(workcell.asked(), ["instances list --json"]);
+    // Recover on a prepared world (FAKE: never the machine's real world).
+    workcell.answer(&json!({"receipt": "/w/world.json",
+        "world": {"world_ref": "world:demo", "state": "recovered"}}));
+    workcell.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_write", "request": {"kind": "recover", "receipt": "/w/world.json"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(workcell.asked(), ["--receipt /w/world.json recover --json"]);
+    let wire = receipts(&outcome);
+    assert_eq!(wire[0]["owner"], "workcell");
+    assert_eq!(wire[0]["ref"], "world:demo");
+    // An answer without the recovered world is not this recovery.
+    workcell.answer(&json!({"receipt": "/w/world.json"}));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_write", "request": {"kind": "recover", "receipt": "/w/world.json"}}),
+        ),
+    );
+    assert!(outcome.is_err());
     let _ = fs::remove_dir_all(&dir);
 }

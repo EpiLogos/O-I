@@ -126,6 +126,10 @@ pub enum ActuationRead {
     Usage {
         document: Value,
     },
+    /// `actuation authority list --json`: every governing authority in
+    /// Actuation's own store, revoked ones included
+    /// (`actuation.local-authority-listing/v1`). Reads the store; writes none.
+    AuthorityList,
     /// `comparison.held|assess|mask|review` over the supplied records or
     /// manifest (`input`, an object: the kernel names the operation).
     /// `comparison.run` executes model bodies and is not a reading.
@@ -144,15 +148,107 @@ pub enum ComparisonRead {
     Review,
 }
 
+/// Actuation's governing-authority acts on its own authority store
+/// (`~/.actuation/authority`, or `$ACTUATION_AUTHORITY_STORE`): an explicit
+/// issue of one governing record, and its explicit revocation. Each appends
+/// to that store, so each is a write. The desk names no store and no clock:
+/// Actuation stamps its own time and keeps its own store.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum ActuationWrite {
+    /// `actuation authority issue - --json`, the record
+    /// (`actuation.local-authority/v1`) on stdin. Actuation refuses a source
+    /// ref that already has state, and a record scoped to no world.
+    AuthorityIssue { record: Value },
+    /// `actuation authority revoke REF [--reason TEXT] --json`. Revocation is
+    /// permanent; Actuation refuses an unknown or already revoked source.
+    AuthorityRevoke {
+        authority_source_ref: String,
+        #[serde(default)]
+        reason: Option<String>,
+    },
+}
+
 /// Quaternal Logic's derivations over a supplied request: the M1 engine
 /// (`ql kernel m1 <request.json>`, the request read from the kernel's stdin
 /// as its file) and the integrated scene (`ql scene compose|world -`).
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum QlRead {
-    KernelM1 { request: Value },
-    SceneCompose { request: Value },
-    SceneWorld { request: Value },
+    KernelM1 {
+        request: Value,
+    },
+    SceneCompose {
+        request: Value,
+    },
+    SceneWorld {
+        request: Value,
+    },
+    /// The M ledger QL compiles in (`ql kernel ledger [coordinate]`): the
+    /// whole ledger (`ql.m-ledger/v1`), or one exact coordinate's view —
+    /// its registry node, rows, relations and source records
+    /// (`ql.m-ledger-view/v1`).
+    KernelLedger {
+        #[serde(default)]
+        coordinate: Option<String>,
+    },
+    /// The ledger's coverage of one coordinate (`ql kernel coverage <M…>
+    /// [--stratum] [--axis] [--require]`, `ql.m-coverage/v1`): structural
+    /// coordinates, bindings, rows that block the required readiness.
+    KernelCoverage {
+        coordinate: String,
+        #[serde(default)]
+        stratum: Option<String>,
+        #[serde(default)]
+        axis: Option<String>,
+        #[serde(default)]
+        require: Option<String>,
+    },
+    /// One of QL's deterministic kernel operators on a canonical address
+    /// (`ql kernel apply <operator> <qladdr:…>`): conjugate-address,
+    /// complement-address, classify-four-plus-two.
+    KernelApply {
+        operator: String,
+        address: String,
+    },
+    /// The Technē reading of a supplied target (`ql techne reading
+    /// <target.json>`, `ql.techne/v1`), the target read from the kernel's
+    /// stdin as its file.
+    TechneReading {
+        target: Value,
+    },
+    /// The MEF lens registry (`ql mef lenses`).
+    MefLenses,
+    /// The Context-Frame grammar's frames (`ql context-frame list`).
+    ContextFrameList,
+    /// The External Context Frame reading of a supplied sixfold mapping and
+    /// structural probe (`ql context-frame read -`, QL-MEF#344;
+    /// `ql.mef.context-frame-reading/1.0.0`), the request on stdin.
+    /// Descriptive evidence only: QL answers `runtime_authority: false`.
+    ContextFrameRead {
+        request: Value,
+    },
+    /// The service provider's negotiated operations (`ql service
+    /// capabilities`).
+    ServiceCapabilities,
+    /// One Vāk entry (`ql vak locate <vak-ref>`).
+    VakLocate {
+        vak_ref: String,
+    },
+    /// One Vāk entry's source-locked neighbourhood (`ql vak context
+    /// <vak-ref> [depth]`, `ql.vak-context/v1`; QL bounds the depth).
+    VakContext {
+        vak_ref: String,
+        #[serde(default)]
+        depth: Option<u8>,
+    },
+}
+
+/// What a QL reading must carry to be the one asked for.
+enum QlCheck {
+    Contract(&'static str),
+    Fields(&'static [(&'static str, Kind)]),
+    Echo(&'static str, String),
 }
 
 /// Workcell's cross-cell connection records and declared machines, read
@@ -161,8 +257,111 @@ pub enum QlRead {
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum WorkcellRead {
     ConnectionsList,
-    ConnectionsShow { label: String },
+    ConnectionsShow {
+        label: String,
+    },
     MachineList,
+    /// The zero-setup baseline's findings (`workcell doctor`): declared
+    /// services, instances, the shell, a writable state root and workspace.
+    Doctor,
+    /// The material offers, capacity and health (`workcell discover`).
+    Discover,
+    /// A materialisation plan for a demand (`workcell plan <demand flags>`):
+    /// its bindings, constraints, exposures, omissions and status. An
+    /// unsatisfiable plan is Workcell's reading too, carried as it answered.
+    Plan {
+        #[serde(default)]
+        demand: WorkcellDemand,
+    },
+    /// Live harness instances (`workcell instances list`).
+    InstancesList,
+    /// One instance's bounded resource usage (`workcell instances usage
+    /// <instance_ref> [--pid N] [--interval-ms N] [--correlation-ref R]…`,
+    /// `workcell.resource-usage/v1`).
+    InstancesUsage {
+        instance_ref: String,
+        #[serde(default)]
+        pid: Option<u32>,
+        #[serde(default)]
+        interval_ms: Option<u32>,
+        #[serde(default)]
+        correlation_refs: Vec<String>,
+    },
+    /// A prepared world's collected output channels (`workcell --receipt R
+    /// collect`): what each logical output's material locator is. A read:
+    /// Workcell's collect changes no state.
+    Collect {
+        receipt: PathBuf,
+    },
+}
+
+/// A material demand in Workcell's own flag spelling (`workcell plan`): each
+/// field one flag, repeated per value. No other flag travels.
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct WorkcellDemand {
+    pub demand_ref: Option<String>,
+    pub require: Vec<String>,
+    pub prefer: Vec<String>,
+    pub optional: Vec<String>,
+    pub workspace: Option<String>,
+    pub workspace_ref: Option<String>,
+    pub revision: Option<String>,
+    pub project_runtime: Option<String>,
+    pub connect: Vec<String>,
+    pub prefer_connect: Vec<String>,
+    pub optional_connect: Vec<String>,
+    pub expose: Vec<String>,
+    pub prefer_expose: Vec<String>,
+    pub optional_expose: Vec<String>,
+    pub output: Vec<String>,
+    pub prefer_output: Vec<String>,
+    pub optional_output: Vec<String>,
+    pub resource: Vec<String>,
+    pub subject: Vec<String>,
+    pub persistence: Option<String>,
+    pub isolation: Option<String>,
+    pub retention: Option<String>,
+    pub extension: Vec<String>,
+}
+
+impl WorkcellDemand {
+    fn args(&self) -> Vec<OsString> {
+        let mut args = Vec::new();
+        let one = |args: &mut Vec<OsString>, flag: &str, value: &Option<String>| {
+            push_flag(args, flag, value.as_deref())
+        };
+        let many = |args: &mut Vec<OsString>, flag: &str, values: &[String]| {
+            for value in values {
+                args.push(flag.into());
+                args.push(value.into());
+            }
+        };
+        one(&mut args, "--demand-ref", &self.demand_ref);
+        many(&mut args, "--require", &self.require);
+        many(&mut args, "--prefer", &self.prefer);
+        many(&mut args, "--optional", &self.optional);
+        one(&mut args, "--workspace", &self.workspace);
+        one(&mut args, "--workspace-ref", &self.workspace_ref);
+        one(&mut args, "--revision", &self.revision);
+        one(&mut args, "--project-runtime", &self.project_runtime);
+        many(&mut args, "--connect", &self.connect);
+        many(&mut args, "--prefer-connect", &self.prefer_connect);
+        many(&mut args, "--optional-connect", &self.optional_connect);
+        many(&mut args, "--expose", &self.expose);
+        many(&mut args, "--prefer-expose", &self.prefer_expose);
+        many(&mut args, "--optional-expose", &self.optional_expose);
+        many(&mut args, "--output", &self.output);
+        many(&mut args, "--prefer-output", &self.prefer_output);
+        many(&mut args, "--optional-output", &self.optional_output);
+        many(&mut args, "--resource", &self.resource);
+        many(&mut args, "--subject", &self.subject);
+        one(&mut args, "--persistence", &self.persistence);
+        one(&mut args, "--isolation", &self.isolation);
+        one(&mut args, "--retention", &self.retention);
+        many(&mut args, "--extension", &self.extension);
+        args
+    }
 }
 
 /// Workcell's connection writes: connect to a DECLARED machine (`workcell
@@ -187,6 +386,27 @@ pub enum WorkcellWrite {
     },
     MachineRemove {
         label: String,
+    },
+    /// Mark a connection disconnected; its record is kept (`workcell
+    /// connections disconnect <label>`).
+    Disconnect {
+        label: String,
+    },
+    /// A prepared world recovered from its receipt, a new receipt written
+    /// (`workcell --receipt R recover`).
+    Recover {
+        receipt: PathBuf,
+    },
+    /// A prepared world released or preserved (`workcell --receipt R
+    /// release`).
+    Release {
+        receipt: PathBuf,
+    },
+    /// A world's desired material state reconciled (`workcell --receipt R
+    /// reconcile --desired logical-ref=state …`).
+    Reconcile {
+        receipt: PathBuf,
+        desired: Vec<String>,
     },
 }
 
@@ -249,6 +469,79 @@ pub enum AikitRead {
         #[serde(default)]
         at: Option<String>,
     },
+    /// The star prompt-commands the active composition arms (`aikit work
+    /// continuity commands`).
+    ContinuityCommands {
+        #[serde(default)]
+        project: Option<String>,
+    },
+    /// The context-pressure brackets in effect and this session's reading
+    /// (`aikit work continuity pressure`).
+    ContinuityPressure {
+        #[serde(default)]
+        project: Option<String>,
+    },
+    /// Whether a close-out left the objects it claims (`aikit work
+    /// continuity closeout verify [--project P] [--since N] [--run R]`): each
+    /// clause read back from its carrier. An unverified close-out is AIKit's
+    /// reading too.
+    CloseoutVerify {
+        #[serde(default)]
+        project: Option<String>,
+        #[serde(default)]
+        since: Option<u64>,
+        #[serde(default)]
+        run: Option<String>,
+    },
+    /// One skill source's source, candidate, active and rollback state
+    /// (`aikit source show <id>`).
+    SourceShow {
+        id: String,
+    },
+    /// The skill trees on this machine, which version runs where (`aikit
+    /// collate [--all]`).
+    Collate {
+        #[serde(default)]
+        all: bool,
+    },
+    /// Adopting a foreign skill root, as a plan only (`aikit adopt <root>
+    /// [--namespace N]`, without `--yes`): its diff.
+    AdoptPlan {
+        root: PathBuf,
+        #[serde(default)]
+        namespace: Option<String>,
+    },
+    /// The Procedures with an undo record (`aikit procedure list`), and one
+    /// planned Procedure's before/after diff (`aikit procedure diff <id>`).
+    ProcedureList,
+    ProcedureDiff {
+        procedure: String,
+    },
+    /// Open hook bypass tokens (`aikit bypass list`), never a token.
+    BypassList,
+    /// Catalogued capabilities never used (`aikit unused`).
+    Unused,
+    /// Why a capability or Resource has its effective evidence (`aikit
+    /// explain [resource]`).
+    Explain {
+        #[serde(default)]
+        resource: Option<String>,
+    },
+    /// Evidence-bearing History (`aikit history [resource]`, or one of its
+    /// views: `recent`, `stats`, `failures`, `bypasses`).
+    History {
+        #[serde(default)]
+        resource: Option<String>,
+        #[serde(default)]
+        view: Option<HistoryView>,
+    },
+    /// The knowledge frame over addresses (`aikit knowledge frame <address>…
+    /// [--query Q]`).
+    KnowledgeFrame {
+        addresses: Vec<String>,
+        #[serde(default)]
+        query: Option<String>,
+    },
     GatewayReplay {
         stream: String,
         #[serde(default)]
@@ -260,6 +553,16 @@ pub enum AikitRead {
         #[serde(default)]
         at: Option<String>,
     },
+}
+
+/// A grouped view of AIKit's History.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum HistoryView {
+    Recent,
+    Stats,
+    Failures,
+    Bypasses,
 }
 
 /// AIKit's writes: a capture into the inbox (its body on stdin), a captured
@@ -337,6 +640,56 @@ pub enum AikitWrite {
         frame_ref: String,
         frame: Value,
     },
+    /// Adopt a foreign skill root through a reversible Procedure (`aikit
+    /// adopt <root> [--namespace N] --yes`). Never into Control's ground: no
+    /// `--control-ground` or `--projection` travels.
+    Adopt {
+        root: PathBuf,
+        #[serde(default)]
+        namespace: Option<String>,
+    },
+    /// Undo a committed Procedure (`aikit procedure undo <id>`).
+    ProcedureUndo {
+        procedure: String,
+    },
+    /// Revoke an open hook bypass token (`aikit bypass revoke <id>`). Issuing
+    /// one is not routed: it mints a secret.
+    BypassRevoke {
+        id: String,
+    },
+    /// A skill source's candidate snapshot made (`aikit source sync <id>`),
+    /// promoted (`aikit source promote <id> [--trust | --trust-skill C…]`)
+    /// or rolled back (`aikit source rollback <id>`).
+    SourceSync {
+        id: String,
+    },
+    SourcePromote {
+        id: String,
+        #[serde(default)]
+        trust: bool,
+        #[serde(default)]
+        trust_skills: Vec<String>,
+    },
+    SourceRollback {
+        id: String,
+    },
+    /// Forget what the knowledge route learned for a destination, a route, a
+    /// project or everything (`aikit knowledge forget destination|route|
+    /// project <resource>` / `all`).
+    KnowledgeForget {
+        scope: ForgetScope,
+        #[serde(default)]
+        resource: Option<String>,
+    },
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ForgetScope {
+    Destination,
+    Route,
+    Project,
+    All,
 }
 
 impl GatewayWrite {
@@ -350,11 +703,24 @@ impl GatewayWrite {
 impl AikitRead {
     pub fn project(&self) -> Option<&str> {
         match self {
-            Self::Inbox { project, .. } => project.as_deref(),
+            Self::Inbox { project, .. }
+            | Self::ContinuityCommands { project }
+            | Self::ContinuityPressure { project }
+            | Self::CloseoutVerify { project, .. } => project.as_deref(),
             Self::WikiShapeValidate { .. }
             | Self::WikiShapeCompress { .. }
             | Self::GatewayEcology { .. }
-            | Self::GatewayReplay { .. } => None,
+            | Self::GatewayReplay { .. }
+            | Self::SourceShow { .. }
+            | Self::Collate { .. }
+            | Self::AdoptPlan { .. }
+            | Self::ProcedureList
+            | Self::ProcedureDiff { .. }
+            | Self::BypassList
+            | Self::Unused
+            | Self::Explain { .. }
+            | Self::History { .. }
+            | Self::KnowledgeFrame { .. } => None,
         }
     }
 }
@@ -368,7 +734,14 @@ impl AikitWrite {
             | Self::MethodRun { project, .. }
             | Self::MethodProve { project, .. }
             | Self::SetPackageExport { project, .. } => project.as_deref(),
-            Self::WikiShapeDeclare { .. } => None,
+            Self::WikiShapeDeclare { .. }
+            | Self::Adopt { .. }
+            | Self::ProcedureUndo { .. }
+            | Self::BypassRevoke { .. }
+            | Self::SourceSync { .. }
+            | Self::SourcePromote { .. }
+            | Self::SourceRollback { .. }
+            | Self::KnowledgeForget { .. } => None,
         }
     }
 }
@@ -581,6 +954,31 @@ fn incompatible(message: String) -> Error {
 /// says `ok: false` whatever the exit, is the owner's refusal in its own
 /// words.
 fn run(call: Call<'_>) -> Result<Value, Error> {
+    let route = call.route.clone();
+    let output = spawn(call)?;
+    if !output.status.success() {
+        return Err(refused(
+            crate::inhabitation::refusal_words(&output.stdout, &output.stderr),
+            false,
+        ));
+    }
+    let document: Value = serde_json::from_slice(&output.stdout).map_err(|error| {
+        incompatible(format!("{route} answered without a JSON document: {error}"))
+    })?;
+    if document.get("ok") == Some(&Value::Bool(false)) {
+        let stdout = serde_json::to_vec(&document).unwrap_or_default();
+        return Err(refused(
+            crate::inhabitation::refusal_words(&stdout, b""),
+            false,
+        ));
+    }
+    Ok(document)
+}
+
+/// The owner process itself, through the limiter within its bound: its exit,
+/// stdout and stderr, for the routes whose owner answers a reading together
+/// with a non-zero exit (Workcell's unsatisfiable plan).
+fn spawn(call: Call<'_>) -> Result<std::process::Output, Error> {
     let mut command = Command::new(&call.owner.executable);
     command
         .args(&call.owner.prefix)
@@ -591,7 +989,7 @@ fn run(call: Call<'_>) -> Result<Value, Error> {
         command.current_dir(cwd);
     }
     let writes = call.effect != Effect::Read;
-    let output = crate::owner_process::output(
+    crate::owner_process::output(
         &mut command,
         call.input,
         Bound {
@@ -612,27 +1010,7 @@ fn run(call: Call<'_>) -> Result<Value, Error> {
             message: failure.message,
             operation_may_have_run: ran,
         }
-    })?;
-    if !output.status.success() {
-        return Err(refused(
-            crate::inhabitation::refusal_words(&output.stdout, &output.stderr),
-            false,
-        ));
-    }
-    let document: Value = serde_json::from_slice(&output.stdout).map_err(|error| {
-        incompatible(format!(
-            "{} answered without a JSON document: {error}",
-            call.route
-        ))
-    })?;
-    if document.get("ok") == Some(&Value::Bool(false)) {
-        let stdout = serde_json::to_vec(&document).unwrap_or_default();
-        return Err(refused(
-            crate::inhabitation::refusal_words(&stdout, b""),
-            false,
-        ));
-    }
-    Ok(document)
+    })
 }
 
 /// An answer that is not the one asked for, named.
@@ -670,6 +1048,7 @@ fn fields(route: &str, data: Value, wanted: &[(&str, Kind)]) -> Result<Value, Er
             Kind::Text => value.as_str().is_some_and(|text| !text.is_empty()),
             Kind::Flag => value.is_boolean(),
             Kind::List => value.is_array(),
+            Kind::Record => value.is_object(),
         })
     });
     if carried {
@@ -685,6 +1064,7 @@ enum Kind {
     Text,
     Flag,
     List,
+    Record,
 }
 
 /// AIKit's `--json` envelope → its reading and warnings, the refusal named.
@@ -749,6 +1129,7 @@ fn actuation_schema(request: &ActuationRead) -> (&'static str, &'static str) {
         ActuationRead::Activity { .. } => ("activity", "actuation.activity/v1"),
         ActuationRead::Usage { .. } => ("usage", "actuation.model-usage/v1"),
         ActuationRead::Comparison { .. } => ("comparison", ""),
+        ActuationRead::AuthorityList => ("authority list", "actuation.local-authority-listing/v1"),
     }
 }
 
@@ -808,13 +1189,31 @@ fn actuation_answer(request: &ActuationRead) -> Result<Reading, Error> {
         return Ok(reading(route, data, Vec::new()));
     }
     let (verb, wanted) = actuation_schema(request);
+    if let ActuationRead::AuthorityList = request {
+        let route = "actuation authority list";
+        let call = Call::new(
+            actuation(),
+            route,
+            words(&["authority", "list", "--json"]),
+            READ_LIMIT,
+        );
+        let data = schema(route, run(call)?, wanted)?;
+        let data = fields(
+            route,
+            data,
+            &[("authorities", Kind::List), ("invalid", Kind::List)],
+        )?;
+        return Ok(reading(route.into(), data, Vec::new()));
+    }
     let document = match request {
         ActuationRead::Agency { document }
         | ActuationRead::Realised { document }
         | ActuationRead::Stream { document }
         | ActuationRead::Activity { document }
         | ActuationRead::Usage { document } => document,
-        ActuationRead::Comparison { .. } => unreachable!("answered above"),
+        ActuationRead::Comparison { .. } | ActuationRead::AuthorityList => {
+            unreachable!("answered above")
+        }
     };
     let route = format!("actuation {verb}");
     let mut call = Call::new(
@@ -828,6 +1227,69 @@ fn actuation_answer(request: &ActuationRead) -> Result<Reading, Error> {
     Ok(reading(route, data, Vec::new()))
 }
 
+pub fn actuation_write(request: &ActuationWrite) -> Result<Written, String> {
+    actuation_written(request).map_err(wire)
+}
+
+const LOCAL_AUTHORITY: &str = "actuation.local-authority/v1";
+
+fn actuation_written(request: &ActuationWrite) -> Result<Written, Error> {
+    let (route, args, input, wanted, flag) = match request {
+        ActuationWrite::AuthorityIssue { record } => {
+            let Some(source) = record.get("authority_source_ref").and_then(Value::as_str) else {
+                return Err(incompatible(
+                    "actuation authority issue takes one governing record naming its authority_source_ref".into(),
+                ));
+            };
+            (
+                "actuation authority issue",
+                words(&["authority", "issue", "-", "--json"]),
+                Some(object_bytes(record)?),
+                source.to_owned(),
+                "issued",
+            )
+        }
+        ActuationWrite::AuthorityRevoke {
+            authority_source_ref,
+            reason,
+        } => {
+            let mut args = words(&["authority", "revoke"]);
+            args.push(authority_source_ref.into());
+            push_flag(&mut args, "--reason", reason.as_deref());
+            args.push("--json".into());
+            (
+                "actuation authority revoke",
+                args,
+                None,
+                authority_source_ref.clone(),
+                "revoked",
+            )
+        }
+    };
+    let mut call = Call::new(actuation(), route, args, OWNER_WRITE_LIMIT);
+    call.effect = Effect::Write;
+    call.input = input;
+    let data = schema(route, run(call)?, LOCAL_AUTHORITY)?;
+    if data.get("authority_source_ref").and_then(Value::as_str) != Some(wanted.as_str())
+        || data.get(flag) != Some(&Value::Bool(true))
+    {
+        return Err(unexpected(
+            route,
+            &format!("{flag} true for {wanted}"),
+            &data,
+        ));
+    }
+    Ok(Written {
+        reading: reading(route.into(), data, Vec::new()),
+        moved: Some(Moved {
+            owner: "actuation",
+            action: route.into(),
+            reference: wanted,
+            revision: None,
+        }),
+    })
+}
+
 pub fn ql_read(request: &QlRead) -> Result<Reading, String> {
     ql_answer(request).map_err(wire)
 }
@@ -839,28 +1301,160 @@ fn ql_answer(request: &QlRead) -> Result<Reading, Error> {
         QlRead::KernelM1 { request } => (
             "ql kernel m1",
             words(&["kernel", "m1", "/dev/stdin", "--json"]),
-            request,
+            Some(request),
             "ql.m1.engine/v1",
             READ_LIMIT,
         ),
         QlRead::SceneCompose { request } => (
             "ql scene compose",
             words(&["scene", "compose", "-", "--json"]),
-            request,
+            Some(request),
             "ql.scene/v1",
             SCENE_LIMIT,
         ),
         QlRead::SceneWorld { request } => (
             "ql scene world",
             words(&["scene", "world", "-", "--json"]),
-            request,
+            Some(request),
             "ql.scene-world/v1",
             SCENE_LIMIT,
         ),
+        QlRead::KernelLedger { coordinate } => {
+            let mut args = words(&["kernel", "ledger"]);
+            if let Some(coordinate) = coordinate {
+                args.push(coordinate.into());
+            }
+            args.push("--json".into());
+            let wanted = if coordinate.is_some() {
+                "ql.m-ledger-view/v1"
+            } else {
+                "ql.m-ledger/v1"
+            };
+            ("ql kernel ledger", args, None, wanted, READ_LIMIT)
+        }
+        QlRead::KernelCoverage {
+            coordinate,
+            stratum,
+            axis,
+            require,
+        } => {
+            let mut args = words(&["kernel", "coverage"]);
+            args.push(coordinate.into());
+            push_flag(&mut args, "--stratum", stratum.as_deref());
+            push_flag(&mut args, "--axis", axis.as_deref());
+            push_flag(&mut args, "--require", require.as_deref());
+            args.push("--json".into());
+            (
+                "ql kernel coverage",
+                args,
+                None,
+                "ql.m-coverage/v1",
+                READ_LIMIT,
+            )
+        }
+        other => return ql_registry_answer(other),
     };
     let mut call = Call::new(ql(), route, args, limit);
-    call.input = Some(object_bytes(document)?);
+    call.input = document.map(object_bytes).transpose()?;
     let data = schema(route, run(call)?, wanted)?;
+    Ok(reading(route.into(), data, Vec::new()))
+}
+
+/// QL's registry, Vāk, Technē and operator reads: none carries a `schema`
+/// field, so each is checked by what QL's own reply names (its `contract`,
+/// the fields its view declares, or the ref it echoes).
+fn ql_registry_answer(request: &QlRead) -> Result<Reading, Error> {
+    const LENSES: &[(&str, Kind)] = &[("registryVersion", Kind::Text), ("lenses", Kind::List)];
+    const FRAMES: &[(&str, Kind)] = &[("grammarVersion", Kind::Text), ("frames", Kind::List)];
+    const SERVICE: &[(&str, Kind)] = &[("providerState", Kind::Text), ("operations", Kind::List)];
+    let (route, args, document, check) = match request {
+        QlRead::KernelApply { operator, address } => {
+            let mut args = words(&["kernel", "apply"]);
+            args.push(operator.into());
+            args.push(address.into());
+            args.push("--json".into());
+            (
+                "ql kernel apply",
+                args,
+                None,
+                QlCheck::Echo("operation", operator.clone()),
+            )
+        }
+        QlRead::TechneReading { target } => (
+            "ql techne reading",
+            words(&["techne", "reading", "/dev/stdin", "--json"]),
+            Some(target),
+            QlCheck::Contract("ql.techne/v1"),
+        ),
+        QlRead::MefLenses => (
+            "ql mef lenses",
+            words(&["mef", "lenses", "--json"]),
+            None,
+            QlCheck::Fields(LENSES),
+        ),
+        QlRead::ContextFrameList => (
+            "ql context-frame list",
+            words(&["context-frame", "list", "--json"]),
+            None,
+            QlCheck::Fields(FRAMES),
+        ),
+        QlRead::ContextFrameRead { request } => (
+            "ql context-frame read",
+            words(&["context-frame", "read", "-", "--json"]),
+            Some(request),
+            QlCheck::Contract("ql.mef.context-frame-reading/1.0.0"),
+        ),
+        QlRead::ServiceCapabilities => (
+            "ql service capabilities",
+            words(&["service", "capabilities", "--json"]),
+            None,
+            QlCheck::Fields(SERVICE),
+        ),
+        QlRead::VakLocate { vak_ref } => {
+            let mut args = words(&["vak", "locate"]);
+            args.push(vak_ref.into());
+            args.push("--json".into());
+            (
+                "ql vak locate",
+                args,
+                None,
+                QlCheck::Echo("vakRef", vak_ref.clone()),
+            )
+        }
+        QlRead::VakContext { vak_ref, depth } => {
+            let mut args = words(&["vak", "context"]);
+            args.push(vak_ref.into());
+            if let Some(depth) = depth {
+                args.push(depth.to_string().into());
+            }
+            args.push("--json".into());
+            (
+                "ql vak context",
+                args,
+                None,
+                QlCheck::Contract("ql.vak-context/v1"),
+            )
+        }
+        _ => unreachable!("the M-engine, scene and ledger reads are answered by ql_answer"),
+    };
+    let mut call = Call::new(ql(), route, args, READ_LIMIT);
+    call.input = document.map(object_bytes).transpose()?;
+    let data = run(call)?;
+    let data = match check {
+        QlCheck::Contract(wanted) => {
+            if data.get("contract").and_then(Value::as_str) != Some(wanted) {
+                return Err(unexpected(route, wanted, &data));
+            }
+            data
+        }
+        QlCheck::Fields(wanted) => fields(route, data, wanted)?,
+        QlCheck::Echo(field, asked) => {
+            if data.get(field).and_then(Value::as_str) != Some(asked.as_str()) {
+                return Err(unexpected(route, &format!("{field} {asked}"), &data));
+            }
+            data
+        }
+    };
     Ok(reading(route.into(), data, Vec::new()))
 }
 
@@ -884,6 +1478,62 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             "workcell machine list",
             words(&["machine", "list", "--json"]),
         ),
+        WorkcellRead::Doctor => {
+            return workcell_findings(
+                Call::new(
+                    workcell(),
+                    "workcell doctor",
+                    words(&["doctor", "--json"]),
+                    READ_LIMIT,
+                ),
+                &["state_root_writable", "instances"],
+            )
+        }
+        WorkcellRead::Discover => ("workcell discover", words(&["discover", "--json"])),
+        WorkcellRead::Plan { demand } => {
+            let mut args = words(&["plan"]);
+            args.extend(demand.args());
+            args.push("--json".into());
+            return workcell_findings(
+                Call::new(workcell(), "workcell plan", args, READ_LIMIT),
+                &["plan_ref", "status"],
+            );
+        }
+        WorkcellRead::InstancesList => (
+            "workcell instances list",
+            words(&["instances", "list", "--json"]),
+        ),
+        WorkcellRead::InstancesUsage {
+            instance_ref,
+            pid,
+            interval_ms,
+            correlation_refs,
+        } => {
+            let mut args = words(&["instances", "usage"]);
+            args.push(instance_ref.into());
+            push_flag(
+                &mut args,
+                "--pid",
+                pid.map(|pid| pid.to_string()).as_deref(),
+            );
+            push_flag(
+                &mut args,
+                "--interval-ms",
+                interval_ms.map(|ms| ms.to_string()).as_deref(),
+            );
+            for reference in correlation_refs {
+                args.push("--correlation-ref".into());
+                args.push(reference.into());
+            }
+            args.push("--json".into());
+            ("workcell instances usage", args)
+        }
+        WorkcellRead::Collect { receipt } => {
+            let mut args = words(&["--receipt"]);
+            args.push(receipt.into());
+            args.extend(words(&["collect", "--json"]));
+            ("workcell collect", args)
+        }
     };
     let data = run(Call::new(workcell(), route, args, READ_LIMIT))?;
     let data = match request {
@@ -897,8 +1547,48 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             data
         }
         WorkcellRead::MachineList => fields(route, data, &[("machines", Kind::List)])?,
+        WorkcellRead::Discover => fields(route, data, &[("offers", Kind::List)])?,
+        WorkcellRead::InstancesList => fields(route, data, &[("instances", Kind::List)])?,
+        WorkcellRead::InstancesUsage { .. } => schema(route, data, "workcell.resource-usage/v1")?,
+        WorkcellRead::Collect { .. } => fields(
+            route,
+            data,
+            &[("world_ref", Kind::Text), ("outputs", Kind::List)],
+        )?,
+        WorkcellRead::Plan { .. } | WorkcellRead::Doctor => {
+            unreachable!("answered by workcell_findings")
+        }
     };
     Ok(reading(route.into(), data, Vec::new()))
+}
+
+/// Workcell's plan and doctor: a satisfiable plan or a clean baseline exits
+/// 0; an unsatisfiable plan (its omissions named) or a failing baseline
+/// prints the same reading with `ok: false` and exits non-zero with its own
+/// error on stderr. Either is Workcell's reading; a document without the
+/// reading's fields is its refusal.
+fn workcell_findings(call: Call<'_>, required: &[&str]) -> Result<Reading, Error> {
+    let route = call.route.clone();
+    let output = spawn(call)?;
+    let found = serde_json::from_slice::<Value>(&output.stdout)
+        .ok()
+        .filter(|found| {
+            required
+                .iter()
+                .all(|field| found.get(*field).is_some_and(|v| !v.is_null()))
+        });
+    match found {
+        Some(found) => Ok(reading(route, found, Vec::new())),
+        None if !output.status.success() => Err(refused(
+            crate::inhabitation::refusal_words(&output.stdout, &output.stderr),
+            false,
+        )),
+        None => Err(unexpected(
+            &route,
+            &required.join(", "),
+            &serde_json::from_slice(&output.stdout).unwrap_or(Value::Null),
+        )),
+    }
 }
 
 /// The AIKit reading's words: the owner command and its argv.
@@ -924,6 +1614,97 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push(anchor_ref.into());
             args.push("--json".into());
             ("aikit wiki-shape compress", args)
+        }
+        AikitRead::ContinuityCommands { .. } => (
+            "aikit work continuity commands",
+            words(&["work", "continuity", "commands", "--json"]),
+        ),
+        AikitRead::ContinuityPressure { .. } => (
+            "aikit work continuity pressure",
+            words(&["work", "continuity", "pressure", "--json"]),
+        ),
+        AikitRead::CloseoutVerify {
+            project,
+            since,
+            run,
+        } => {
+            let mut args = words(&["work", "continuity", "closeout", "verify"]);
+            push_flag(&mut args, "--project", project.as_deref());
+            push_flag(
+                &mut args,
+                "--since",
+                since.map(|since| since.to_string()).as_deref(),
+            );
+            push_flag(&mut args, "--run", run.as_deref());
+            args.push("--json".into());
+            ("aikit work continuity closeout verify", args)
+        }
+        AikitRead::SourceShow { id } => {
+            let mut args = words(&["source", "show"]);
+            args.push(id.into());
+            args.push("--json".into());
+            ("aikit source show", args)
+        }
+        AikitRead::Collate { all } => {
+            let mut args = words(&["collate"]);
+            if *all {
+                args.push("--all".into());
+            }
+            args.push("--json".into());
+            ("aikit collate", args)
+        }
+        AikitRead::AdoptPlan { root, namespace } => {
+            let mut args = words(&["adopt"]);
+            args.push(root.into());
+            push_flag(&mut args, "--namespace", namespace.as_deref());
+            args.push("--json".into());
+            ("aikit adopt", args)
+        }
+        AikitRead::ProcedureList => (
+            "aikit procedure list",
+            words(&["procedure", "list", "--json"]),
+        ),
+        AikitRead::ProcedureDiff { procedure } => {
+            let mut args = words(&["procedure", "diff"]);
+            args.push(procedure.into());
+            args.push("--json".into());
+            ("aikit procedure diff", args)
+        }
+        AikitRead::BypassList => ("aikit bypass list", words(&["bypass", "list", "--json"])),
+        AikitRead::Unused => ("aikit unused", words(&["unused", "--json"])),
+        AikitRead::Explain { resource } => {
+            let mut args = words(&["explain"]);
+            if let Some(resource) = resource {
+                args.push(resource.into());
+            }
+            args.push("--json".into());
+            ("aikit explain", args)
+        }
+        AikitRead::History { resource, view } => {
+            let mut args = words(&["history"]);
+            if let Some(resource) = resource {
+                args.push(resource.into());
+            }
+            if let Some(view) = view {
+                args.push(
+                    match view {
+                        HistoryView::Recent => "recent",
+                        HistoryView::Stats => "stats",
+                        HistoryView::Failures => "failures",
+                        HistoryView::Bypasses => "bypasses",
+                    }
+                    .into(),
+                );
+            }
+            args.push("--json".into());
+            ("aikit history", args)
+        }
+        AikitRead::KnowledgeFrame { addresses, query } => {
+            let mut args = words(&["knowledge", "frame"]);
+            args.extend(addresses.iter().map(OsString::from));
+            push_flag(&mut args, "--query", query.as_deref());
+            args.push("--json".into());
+            ("aikit knowledge frame", args)
         }
         AikitRead::GatewayEcology { at } => {
             let mut args = words(&["gateway", "ecology"]);
@@ -961,11 +1742,42 @@ pub fn aikit_read(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading, St
 }
 
 fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading, Error> {
+    if let AikitRead::KnowledgeFrame { addresses, .. } = request {
+        if addresses.is_empty() {
+            return Err(incompatible(
+                "aikit knowledge frame takes at least one address".into(),
+            ));
+        }
+    }
     let (route, args) = aikit_read_args(request);
     let mut call = Call::new(aikit(), route, args, READ_LIMIT);
     call.cwd = cwd;
-    let (data, warnings) = envelope(route, run(call)?)?;
+    let (data, warnings) = envelope(route, aikit_document(call)?)?;
+    const COMMANDS: &[(&str, Kind)] = &[("packs", Kind::List), ("armed", Kind::List)];
+    const PRESSURE: &[(&str, Kind)] = &[("brackets", Kind::Record)];
+    const CLOSEOUT: &[(&str, Kind)] = &[("clauses", Kind::List), ("verified", Kind::Flag)];
     let data = match request {
+        AikitRead::ContinuityCommands { .. } => fields(route, data, COMMANDS)?,
+        AikitRead::ContinuityPressure { .. } => fields(route, data, PRESSURE)?,
+        AikitRead::CloseoutVerify { .. } => fields(route, data, CLOSEOUT)?,
+        AikitRead::Collate { .. } => fields(route, data, &[("clusters", Kind::List)])?,
+        AikitRead::ProcedureList => fields(route, data, &[("procedures", Kind::List)])?,
+        AikitRead::BypassList => fields(route, data, &[("bypasses", Kind::List)])?,
+        AikitRead::Unused => fields(route, data, &[("unused", Kind::List)])?,
+        AikitRead::History { view, .. } => match view {
+            None => schema(route, data, "aikit.explain-history/v1")?,
+            Some(HistoryView::Recent) => fields(route, data, &[("events", Kind::List)])?,
+            Some(HistoryView::Stats) => fields(route, data, &[("by_kind", Kind::List)])?,
+            Some(HistoryView::Failures) => fields(route, data, &[("failures", Kind::List)])?,
+            Some(HistoryView::Bypasses) => fields(route, data, &[("bypasses", Kind::List)])?,
+        },
+        // Each answered as AIKit's own record for what was asked; no field of
+        // theirs is fixed enough to name here.
+        AikitRead::SourceShow { .. }
+        | AikitRead::AdoptPlan { .. }
+        | AikitRead::ProcedureDiff { .. }
+        | AikitRead::Explain { .. }
+        | AikitRead::KnowledgeFrame { .. } => data,
         AikitRead::Inbox { .. } => fields(route, data, &[("items", Kind::List)])?,
         AikitRead::WikiShapeValidate { .. } => {
             if data.get("command").and_then(Value::as_str) != Some("wiki-shape.validate") {
@@ -1000,6 +1812,36 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         return Err(unexpected(route, "a reading", &data));
     }
     Ok(reading(route.into(), data, warnings))
+}
+
+/// AIKit's `--json` document, with its exit read as AIKit means it: an
+/// envelope that says `ok: true` is a reading whatever the exit (a close-out
+/// that is not verified exits 1 with its verdict), and anything else beside a
+/// non-zero exit is AIKit's refusal in its words.
+fn aikit_document(call: Call<'_>) -> Result<Value, Error> {
+    let route = call.route.clone();
+    let output = spawn(call)?;
+    let document = serde_json::from_slice::<Value>(&output.stdout).ok();
+    match document {
+        Some(document) if document.get("ok") == Some(&Value::Bool(true)) => Ok(document),
+        _ if !output.status.success() => Err(refused(
+            crate::inhabitation::refusal_words(&output.stdout, &output.stderr),
+            false,
+        )),
+        Some(document) => {
+            if document.get("ok") == Some(&Value::Bool(false)) {
+                let stdout = serde_json::to_vec(&document).unwrap_or_default();
+                return Err(refused(
+                    crate::inhabitation::refusal_words(&stdout, b""),
+                    false,
+                ));
+            }
+            Ok(document)
+        }
+        None => Err(incompatible(format!(
+            "{route} answered without a JSON document"
+        ))),
+    }
 }
 
 /// AIKit's team operation, read or written: the whole operation document as
@@ -1210,6 +2052,7 @@ fn workcell_written(request: &WorkcellWrite) -> Result<Written, Error> {
             args.push(label.into());
             ("workcell machine remove", args, label)
         }
+        other => return workcell_world_written(other),
     };
     args.push("--json".into());
     let limit = if matches!(request, WorkcellWrite::Connect { .. }) {
@@ -1237,6 +2080,97 @@ fn workcell_written(request: &WorkcellWrite) -> Result<Written, Error> {
     Ok(Written {
         reading: reading(route.into(), data, Vec::new()),
         moved,
+    })
+}
+
+/// Workcell's writes on a prepared world (recover, release, reconcile) and a
+/// connection's disconnect: each moves Workcell's own state, so each is a
+/// write; the receipt is recorded where Workcell's answer says something
+/// changed.
+fn workcell_world_written(request: &WorkcellWrite) -> Result<Written, Error> {
+    let with_receipt = |receipt: &PathBuf, verb: &[&str]| {
+        let mut args = words(&["--receipt"]);
+        args.push(receipt.into());
+        args.extend(words(verb));
+        args
+    };
+    let (route, mut args) = match request {
+        WorkcellWrite::Disconnect { label } => {
+            let mut args = words(&["connections", "disconnect"]);
+            args.push(label.into());
+            ("workcell connections disconnect", args)
+        }
+        WorkcellWrite::Recover { receipt } => {
+            ("workcell recover", with_receipt(receipt, &["recover"]))
+        }
+        WorkcellWrite::Release { receipt } => {
+            ("workcell release", with_receipt(receipt, &["release"]))
+        }
+        WorkcellWrite::Reconcile { receipt, desired } => {
+            if desired.is_empty() {
+                return Err(incompatible(
+                    "workcell reconcile needs at least one logical-ref=state".into(),
+                ));
+            }
+            let mut args = with_receipt(receipt, &["reconcile"]);
+            for state in desired {
+                args.push("--desired".into());
+                args.push(state.into());
+            }
+            ("workcell reconcile", args)
+        }
+        _ => unreachable!("answered by workcell_written"),
+    };
+    args.push("--json".into());
+    let mut call = Call::new(workcell(), route, args, OWNER_WRITE_LIMIT);
+    call.effect = Effect::Write;
+    let data = run(call)?;
+    let (data, reference) = match request {
+        WorkcellWrite::Disconnect { label } => {
+            let data = fields(
+                route,
+                data,
+                &[("label", Kind::Text), ("changed", Kind::Flag)],
+            )?;
+            let changed = data.get("changed") == Some(&Value::Bool(true));
+            (data, changed.then(|| label.clone()))
+        }
+        WorkcellWrite::Recover { .. } => {
+            let data = fields(
+                route,
+                data,
+                &[("receipt", Kind::Text), ("world", Kind::Record)],
+            )?;
+            let reference = named(&data, &["/world/world_ref", "/receipt"]);
+            (data, reference)
+        }
+        WorkcellWrite::Release { .. } => {
+            let data = fields(
+                route,
+                data,
+                &[("world_ref", Kind::Text), ("changed", Kind::Flag)],
+            )?;
+            let changed = data.get("changed") == Some(&Value::Bool(true));
+            let reference = changed.then(|| named(&data, &["/world_ref"])).flatten();
+            (data, reference)
+        }
+        WorkcellWrite::Reconcile { receipt, .. } => {
+            let data = fields(route, data, &[("deltas", Kind::List)])?;
+            let moved = data["deltas"]
+                .as_array()
+                .is_some_and(|deltas| !deltas.is_empty());
+            (data, moved.then(|| receipt.display().to_string()))
+        }
+        _ => unreachable!(),
+    };
+    Ok(Written {
+        moved: reference.map(|reference| Moved {
+            owner: "workcell",
+            action: route.into(),
+            reference,
+            revision: None,
+        }),
+        reading: reading(route.into(), data, Vec::new()),
     })
 }
 
@@ -1439,13 +2373,82 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             input = Some(object_bytes(frame)?);
             ("aikit wiki-shape declare", args)
         }
+        AikitWrite::Adopt { root, namespace } => {
+            let mut args = words(&["adopt"]);
+            args.push(root.into());
+            push_flag(&mut args, "--namespace", namespace.as_deref());
+            args.push("--yes".into());
+            ("aikit adopt", args)
+        }
+        AikitWrite::ProcedureUndo { procedure } => {
+            let mut args = words(&["procedure", "undo"]);
+            args.push(procedure.into());
+            ("aikit procedure undo", args)
+        }
+        AikitWrite::BypassRevoke { id } => {
+            let mut args = words(&["bypass", "revoke"]);
+            args.push(id.into());
+            ("aikit bypass revoke", args)
+        }
+        AikitWrite::SourceSync { id } => {
+            let mut args = words(&["source", "sync"]);
+            args.push(id.into());
+            limit = LONG_WRITE_LIMIT;
+            ("aikit source sync", args)
+        }
+        AikitWrite::SourcePromote {
+            id,
+            trust,
+            trust_skills,
+        } => {
+            let mut args = words(&["source", "promote"]);
+            args.push(id.into());
+            if *trust {
+                args.push("--trust".into());
+            }
+            for capsule in trust_skills {
+                args.push("--trust-skill".into());
+                args.push(capsule.into());
+            }
+            ("aikit source promote", args)
+        }
+        AikitWrite::SourceRollback { id } => {
+            let mut args = words(&["source", "rollback"]);
+            args.push(id.into());
+            ("aikit source rollback", args)
+        }
+        AikitWrite::KnowledgeForget { scope, resource } => {
+            let mut args = words(&["knowledge", "forget"]);
+            let (verb, needs) = match scope {
+                ForgetScope::Destination => ("destination", true),
+                ForgetScope::Route => ("route", true),
+                ForgetScope::Project => ("project", true),
+                ForgetScope::All => ("all", false),
+            };
+            args.push(verb.into());
+            match (needs, resource) {
+                (true, Some(resource)) => args.push(resource.into()),
+                (false, None) => {}
+                (true, None) => {
+                    return Err(incompatible(format!(
+                        "aikit knowledge forget {verb} names the resource it forgets"
+                    )))
+                }
+                (false, Some(_)) => {
+                    return Err(incompatible(
+                        "aikit knowledge forget all names no resource".into(),
+                    ))
+                }
+            }
+            ("aikit knowledge forget", args)
+        }
     };
     args.push("--json".into());
     let mut call = Call::new(aikit(), route, args, limit);
     call.input = input;
     call.cwd = cwd;
     call.effect = Effect::Write;
-    let (data, warnings) = envelope(route, run(call)?)?;
+    let (data, warnings) = envelope(route, aikit_document(call)?)?;
     let (data, moved) = match request {
         AikitWrite::Capture { .. } => {
             let data = fields(route, data, &[("candidate", Kind::Text)])?;
@@ -1491,6 +2494,30 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             }
             let unchanged = data.get("changed") == Some(&Value::Bool(false));
             (data, (!unchanged).then(|| frame_ref.clone()))
+        }
+        AikitWrite::KnowledgeForget { resource, .. } => {
+            let data = fields(
+                route,
+                data,
+                &[("forgot", Kind::Record), ("preserved", Kind::List)],
+            )?;
+            let reference = resource.clone().or_else(|| Some("all".into()));
+            (data, reference)
+        }
+        // AIKit's own record for each; it names nothing fixed enough to check
+        // beyond the envelope, and what moved is the thing asked of it.
+        AikitWrite::Adopt { root, .. } => {
+            let reference = named(&data, &["/procedure", "/procedure_ref", "/id"])
+                .or_else(|| Some(root.display().to_string()));
+            (data, reference)
+        }
+        AikitWrite::ProcedureUndo { procedure } => (data, Some(procedure.clone())),
+        AikitWrite::BypassRevoke { id }
+        | AikitWrite::SourceSync { id }
+        | AikitWrite::SourcePromote { id, .. }
+        | AikitWrite::SourceRollback { id } => {
+            let unchanged = data.get("changed") == Some(&Value::Bool(false));
+            (data, (!unchanged).then(|| id.clone()))
         }
     };
     Ok(Written {

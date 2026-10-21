@@ -1,0 +1,742 @@
+{
+  "captured": "aikit 0.1.0 (cc6405e66216), 21 Oct 2026, read only: `aikit work continuity commands --json`, `aikit work continuity pressure --json`, `aikit -C Work/O-I work continuity closeout verify --json` (exit 1, ok:true, its verdict), `aikit bypass list --json`, `aikit history failures --json`; history recent|stats|bypasses and procedure list verbatim; collate (lists cut to 2) and unused (cut to 3) trimmed from the real answers",
+  "commands": {
+    "context": {
+      "context_id": "ctx_01M5F7PJYM7Q0BCWGK0BMWTJZY",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "armed": [],
+      "composed": false,
+      "composition": null,
+      "factory_ledger_root": null,
+      "factory_run_ref": null,
+      "known_packs": [
+        "continuity-closeout"
+      ],
+      "packs": []
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "pressure": {
+    "context": {
+      "context_id": "ctx_01M5F7PK14VNG4Q0Y006PTPRJF",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "brackets": {
+        "critical_above": 0.7,
+        "depleted_max": 0.7,
+        "fresh_max": 0.2,
+        "moderate_max": 0.45,
+        "prompt_budget": 60
+      },
+      "composed": false,
+      "composition": null,
+      "reading": null,
+      "scope": null
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "closeout": {
+    "context": {
+      "context_id": "ctx_01M5F7Q6CTPTS901F7WG8E6D69",
+      "project_root": "/Users/admin/Central/Work/O-I",
+      "session_id": null
+    },
+    "data": {
+      "clauses": [
+        {
+          "clause": "continuation-registered",
+          "detail": "uiuxlanepadsholdssweepandtheanswersface20261021-2026-10-21 \u2014 uiux-lane-pads-holds-sweep-and-the-answers-face-2026-10-21",
+          "state": "pass"
+        },
+        {
+          "clause": "previous-handoff-superseded",
+          "detail": "63 handoff returns stand open (527-remit-pass-2-a3-method-2026-09-27-2, 527-remit-pass-2-a3-method-2026-09-27, 527-review-repairs-pushed-to-pr-2026-09-27, binary-programme-saturated-offline-50-of-2026-10-09, cradle-final-sidebar-agent-polish-2026-09-08, cradle-mode-context-corner-refinement-2026-09-08, cradle-sidebars-designed-once-across-every-2026-09-22, desktop-baseline-captured-idle-cpu-burn-2026-09-27, device-sdk-final-state-after-conduct-2026-10-10, device-sdk-landed-the-authoring-kit-2026-10-09, device-sdk-v11-the-mode-layer-2026-10-09, dlw-build-vision-of-record-landed-2026-10-12, dlw-manual-generation-law-and-team-2026-10-19, dlw-phase-1-noui-wave-landed-2026-10-13, editor-suite-and-crosspane-context-attachment-2026-09-08, expression-overlay-steps-onto-the-wayfinder-2026-09-08, expressions-family-port-is-in-the-2026-10-08, expressions-top-bar-live-parameter-channel-2026-10-08, factory-and-settings-designed-alongside-the-2026-09-22, factory-expressions-commission-implemented-2026-09-27, figure-baked-into-the-mprime-law-2026-10-11, fnd0006-foundation-execution-round-lead-2026-09-08, fnd02-d11-system-canvas-surface-renders-2026-09-08, foundation-ux-specification-completed-with-pane-2026-09-08, guardian-skillset-extended-centralsessionstrap-2026-09-06, handoff-1788870267456874000, handoff-1788871222533209000, handoff-1788874734956344000, handoff-1788896960839895000, handoff-1789213962, harness-settings-acceptance-research-landed-2026-09-22, landed-main-convergence-pr-637-the-2026-10-11, landed-the-newshell-lane-is-on-2026-10-10, native-browser-panes-and-refined-shell-2026-09-08, oi-full-convergence-landed-every-lane-2026-09-27, oi-multimatrix-product-capability-collation-2026-09-08, oi-where-vs-managed-update-managed-2026-10-14, ownerdomain-integration-checkpoint-f84bd61-2026-09-08, ownerled-editor-and-chrome-refinement-2026-09-08, p1-expression-native-foundation-integration-2026-09-08, pointcloud-elements-review-artifact-revision-3-2026-09-08, pointcloud-elements-revision-4-expression-2026-09-08, pointcloud-study-rev-6-honed-fnd07-2026-09-08, pr-199-acceptedmain-honesty-repair-pushed-2026-09-08, probes-round-2-landed-ee0ca0d95-c43c47edd-2026-10-09, probes-round-echo-laws-unison-followaction-2026-10-09, reads-round-2-file-reads-batched-2026-10-20, round-2-converged-four-parallel-lanes-2026-10-09, rounds-38-landed-20-commits-crate-2026-10-09, s-cli-and-mprime-desktop-capability-2026-09-06, sdk-complete-adoption-layer-landed-landingtomain-2026-10-10, selfother-ux-corrected-and-current-owners-2026-09-08, september-8-desktop-productfoundation-map-2026-09-08, shared-field-original-planning-recovered-2026-09-08, terminal-flow-editor-context-and-final-2026-09-08, theme-library-vscode-standard-research-2026-09-23, top-bar-session-final-verified-state-2026-10-08, ui-convergence-review-seven-lanes-surveyed-2026-09-22, ui-lead-locked-and-build-prompt-2026-09-23, uiux-lane-the-kits-motion-and-2026-10-20, uiuxlanepadsholdssweepandtheanswersface20261021-2026-10-21, warp-transposition-landed-wtup12wtdn12-2026-10-08, window-lights-contract-test-live-cut-restored-2026-09-22); the superseded ones were not closed",
+          "state": "fail"
+        },
+        {
+          "clause": "learned-material-recorded",
+          "detail": "3 learning return(s): actexplainrun01m3fny3-reusable-contrast-2026-09-26-2, reads-paid-for-rederived-state-not-2026-10-20, the-mprimedevelopment-domain-method-founded-and-2026-10-10",
+          "state": "pass"
+        },
+        {
+          "clause": "deferred-work-registered",
+          "detail": "no Factory Run ledger bound to this session; not checked",
+          "state": "skipped"
+        }
+      ],
+      "project": "O-I",
+      "verified": false
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "closeout_exit": 1,
+  "bypass_list": {
+    "context": {
+      "context_id": "ctx_01M5F7PN1CNS01HYAWZQEKW3K5",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "bypasses": []
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "history_failures": {
+    "context": {
+      "context_id": "ctx_01M5F7PNFK75DPX4Y2BGA5X2Q0",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "count": 0,
+      "failures": []
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "history_recent": {
+    "context": {
+      "context_id": "ctx_01M5F7PNATTPYG7TTW6SP2WBFE",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "count": 20,
+      "events": [
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T22:57:41.42Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S5C21CGWTN8Q3MZBTQNJ16",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T22:57:11.129Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S5B4ESHC0Y774YR3KFTXQF",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T22:57:11.007Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S5B4AZGZS27CYT9VM1QX6B",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:32:11.568Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S0FGDGM1KCCWB7ANZE6Q3Z",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:31:08.21Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S0DJHJW3VWBFX0SM9GVHVX",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:31:01.142Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S0DBMQK5D595341QBP1W3K",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:30:59.536Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S0DA2G3YG5QE1KXAVSPQTF",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:30:58.24Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S0D8T0E4FP4469ZJ9EGNR0",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:30:57.301Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S0D7WN6Q1S5BB0K1938438",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:30:56.116Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S0D6QMZ5MWG0X8Z703W880",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:30:54.792Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4S0D5E9QW1QHMTKYGMYCTG0",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:04:51.269Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4RYXEJ5TZRAYFGWG9WTATME",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T21:04:12.628Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4RYW8TM0RTDSFX8QYZN2S1J",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T19:06:44.704Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4RR5630SW4W2GWP98S8468T",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T19:06:44.628Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4RR560MQKDNT2GN7T9F64F5",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T14:11:32.161Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4R78MP1SJVRZ9J5AYDSYQ3Q",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T14:11:25.87Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4R78EHEC3J70KRVG8XXH564",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T14:11:19.42Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4R7887WAYXKMGVCP38GT0RJ",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T14:11:08.345Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4R77XDSBPPEG3DZJGR1A6FM",
+          "outcome": "success"
+        },
+        {
+          "action": "resource-use",
+          "at": "2026-10-12T14:10:54.837Z",
+          "bypass_reason": null,
+          "capability": null,
+          "detail": null,
+          "event_id": "evt_01M4R77G7NY1VBXV0CZ7K7W4XA",
+          "outcome": "success"
+        }
+      ]
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "history_stats": {
+    "context": {
+      "context_id": "ctx_01M5F7PND6H8320MWZZ8F83NJK",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "active": 103,
+      "by_kind": [
+        {
+          "count": 293,
+          "kind": "skill"
+        },
+        {
+          "count": 15,
+          "kind": "hook"
+        },
+        {
+          "count": 3,
+          "kind": "guidance"
+        }
+      ],
+      "by_source": [
+        {
+          "count": 2,
+          "source": "actuation"
+        },
+        {
+          "count": 40,
+          "source": "ai-kit"
+        },
+        {
+          "count": 25,
+          "source": "central"
+        },
+        {
+          "count": 13,
+          "source": "epi-logos-reader"
+        },
+        {
+          "count": 4,
+          "source": "factory"
+        },
+        {
+          "count": 16,
+          "source": "factory-sensing"
+        },
+        {
+          "count": 1,
+          "source": "local-apply-cmea"
+        },
+        {
+          "count": 1,
+          "source": "local-apply-tetralemma"
+        },
+        {
+          "count": 1,
+          "source": "local-choose-modality"
+        },
+        {
+          "count": 1,
+          "source": "local-choose-topological-mode"
+        },
+        {
+          "count": 1,
+          "source": "local-compress-thought-artifacts"
+        },
+        {
+          "count": 1,
+          "source": "local-converse-pedagogically"
+        },
+        {
+          "count": 1,
+          "source": "local-engage-encounter-axis"
+        },
+        {
+          "count": 1,
+          "source": "local-epi-logos-argument-cartography"
+        },
+        {
+          "count": 1,
+          "source": "local-epi-logos-vault-compiler"
+        },
+        {
+          "count": 1,
+          "source": "local-epi-logos-voice"
+        },
+        {
+          "count": 1,
+          "source": "local-etymological-archaeology"
+        },
+        {
+          "count": 1,
+          "source": "local-manage-thought-artifacts"
+        },
+        {
+          "count": 1,
+          "source": "local-run-l4-prime-loop"
+        },
+        {
+          "count": 1,
+          "source": "local-run-positional-coherence"
+        },
+        {
+          "count": 1,
+          "source": "local-using-epi-logos"
+        },
+        {
+          "count": 41,
+          "source": "mattpocock"
+        },
+        {
+          "count": 33,
+          "source": "nara-skills"
+        },
+        {
+          "count": 4,
+          "source": "oi"
+        },
+        {
+          "count": 74,
+          "source": "personal"
+        },
+        {
+          "count": 39,
+          "source": "ql"
+        },
+        {
+          "count": 1,
+          "source": "ql-native-owner"
+        },
+        {
+          "count": 1,
+          "source": "wayfinder-routing"
+        },
+        {
+          "count": 2,
+          "source": "workcell"
+        },
+        {
+          "count": 1,
+          "source": "writing-guidance-tools"
+        }
+      ],
+      "catalogued": 311,
+      "events": 148,
+      "ever_used": 0,
+      "successful_runs": 0,
+      "unavailable": 18
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "history_bypasses": {
+    "context": {
+      "context_id": "ctx_01M5F7PNHWDSWBRYZQAYF8HCVQ",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "bypasses": []
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "procedure_list": {
+    "context": {
+      "context_id": "ctx_01M5F7PMXR6NQ6QZE76YED483A",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "count": 90,
+      "procedures": [
+        "prc_01M4K7G303SF0VVPSCD0RZNPES",
+        "prc_01M4K7G2ZWH9EYDVBM320CVXYP",
+        "prc_01M4EXJM7AZNK5RDWGNR0HNQPF",
+        "prc_01M4CK31P40HNZWM5F4KKGJYQR",
+        "prc_01M4BMP80N0DM6TEB88V6Z375Z",
+        "prc_01M49R5SZV0GD1HXFRV2J76TVV",
+        "prc_01M49R5SV3DRH7X88V29PT0BYJ",
+        "prc_01M49DSM89RS2ZA0DRTWPNGEMC",
+        "prc_01M43N06F3B6TNE50FG50W0AEK",
+        "prc_01M41JBQFWESMP7PAZATJQ0VXV",
+        "prc_01M3W2W3T2T1FGE3D2X38E8E5E",
+        "prc_01M3T94PEJHTXEG6EK8VJ0E32T",
+        "prc_01M3SP8FDTC41TMX679V63CWDV",
+        "prc_01M3KTRAC0DRSCYDW1PHC9TFYP",
+        "prc_01M3JD3Z9CK2HEFRHSW36MKF7C",
+        "prc_01M3C67125WZ0NGKFF8X7D04DW",
+        "prc_01M3C19MDSKDSEEQ9XA2FM0EMS",
+        "prc_01M3C19D7640P0JXS3283H4R9R",
+        "prc_01M39QR1AJ4CGMBQNT88TPPY7B",
+        "prc_01M39FHMK8Q71ZSWM4CWRAXEC4",
+        "prc_01M39F234Q9GDYYF7WMR9ETWGM",
+        "prc_01M35FXBQJ42MAMWA90QX5930H",
+        "prc_01M35F5C2BQ8G3KBBPBR96JM47",
+        "prc_01M35F4A9AYBQ9Y9A2DPH3564W",
+        "prc_01M35F4A92RA0BGFKFVJDHVE58",
+        "prc_01M30TN4A1JH116M95B510DXA3",
+        "prc_01M30TKVBZ4KR2B1VSDYMFE5P7",
+        "prc_01M2ZKSX8HHADYW42N3NNRSGQ0",
+        "prc_01M2ZKBVPB8Z5Q5NM1YY8NR3PA",
+        "prc_01M2ZH7FE9SX1BZF83XNXWZKFB",
+        "prc_01M2ZH6HVM25TW00M6BFGKWS0D",
+        "prc_01M2ZH6D177QVXRQCK06Y4E0XT",
+        "prc_01M2ZH6CRFD150M0BCY5NA4X7E",
+        "prc_01M2ZDQSHV11FC63GNV7HK57NA",
+        "prc_01M2TZ9SVNRWS85J293M3B63E7",
+        "prc_01M2TWA3GJD64R1CHVEZ0SWGN9",
+        "prc_01M29MA279X5V519PSFXT0K3WV",
+        "prc_01M29M8YGJW2KHYDZBQDJ09P44",
+        "prc_01M29M8YFFR0ESK9YJWXK88HQ9",
+        "prc_01M29M8YE9S53879C2RXH3Y929",
+        "prc_01M20VN72T2XTSC5YV10Z6C8YQ",
+        "prc_01M1WM720TJZY1ARWZ5PMDNRP5",
+        "prc_01M1WM6RCY45JTZBB0RXWNW4KY",
+        "prc_01M1WM6DH761K5AYF3483PXZNJ",
+        "prc_01M1WM5TRTH9AE9D1Y3CQ0P21Q",
+        "prc_01M1WM5H9X27V56P7S961BG8BC",
+        "prc_01M1WM5H60NZ764XDHME1HK7CV",
+        "prc_01M1WFVW9SFMZ9Q7XWJ6DFST51",
+        "prc_01M1WFV4TK0802PY0ZA0BVZHZN",
+        "prc_01M1WBBGDHW9840HBDAR0V7A2A",
+        "prc_01M1WBAR7A4X1K0QKMC9GF8GMP",
+        "prc_01M1WBAEVTGNCK7S7FSGE4H61N",
+        "prc_01M1VR54NTVJ0M8AR2P9ZDB964",
+        "prc_01M1VHY6MV51NAHDYWYKHH3EPA",
+        "prc_01M1VHNVJHPMQ4HCPP72JCVRP5",
+        "prc_01M1VHNFR2NQ7HVF5Q5ET923RN",
+        "prc_01M1VHMK83HQKHAMDCB180SQ38",
+        "prc_01M1VHHNJZR7BH645DHCPHRE9N",
+        "prc_01M1VHB1GF90ASH2FJ18FRTR1R",
+        "prc_01M1VGZBVV61NC1FJREMCS1Y6W",
+        "prc_01M1VGZBJ4HX9G7RVNFK59VFD8",
+        "prc_01M1VGZBCMRY1P8QGPRK4VD75B",
+        "prc_01M1VGZB5N4MVBHQTR9TZ28NTF",
+        "prc_01M1VGZB0B1NVRYR4VA45GECNR",
+        "prc_01M1VGZATPKVCA38919PKRDMAA",
+        "prc_01M1VGZANJR5F4TT3KPD329SDF",
+        "prc_01M1VGZAGC0HDJF2A959T958MW",
+        "prc_01M1VGZABB2E1DGZZKZX7VKCGY",
+        "prc_01M1VGZA6C2RZ7BSE9QBR1Z2MZ",
+        "prc_01M1VGZA0W77MB5QZVX4GB025J",
+        "prc_01M1VGZ9TWYKQ92DNR0TFTTM9H",
+        "prc_01M1VGZ9N1YBWJH5WHEH92FQMT",
+        "prc_01M1VGZ9FR6WHJ9VYZCAHD1E78",
+        "prc_01M1VGZ9AXF63YRDY44SJZS9DH",
+        "prc_01M1VGZ967588RKVY7NEBAGYKM",
+        "prc_01M1VGZ91KR11GANTHQXKQAT8V",
+        "prc_01M1VGZ8VR3MQ0MS984G19KSPC",
+        "prc_01M1VGZ8N9AFAKF7FEPB3T0E60",
+        "prc_01M1VGZ8FXYD0X8NRSF83BQX4Y",
+        "prc_01M1VGZ8AGV8TCDF600ZGWPKKT",
+        "prc_01M1SZDS05EPQPDZSW3VY1DAZY",
+        "prc_01M1SVM18J1NWY1XNYJC6HTFCK",
+        "prc_01M1SV7QR6MA5RFE4ERB6PJ1NS",
+        "prc_01M1SS9656802RCZN2BEE3PXZ6",
+        "prc_01M1Q6EY88RZ5SKPZATF8KVZTN",
+        "prc_01M1Q38Z1420TK0YK99HMDV5MQ",
+        "prc_01M1Q38YZ7XR74BNXVM38TK03F",
+        "prc_01KZ7G0906FTPQ7C3SK8APJMC5",
+        "prc_01KZ3D53VPJ2HGE8JDZ0AMF47C",
+        "prc_01KYYAF798ESSY3Q3ED7X5BX8M"
+      ]
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "collate_trimmed": {
+    "context": {
+      "context_id": "ctx_01M5F7PK6JJ1XMEPWVYSCTZYKA",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "clusters": [
+        {
+          "conflict": false,
+          "copies": 2,
+          "distinct_contents": 1,
+          "duplicate": true,
+          "name": "agent-worktree-lifecycle",
+          "versions": [],
+          "where": [
+            {
+              "path": "/Users/admin/.agents/skills/agent-worktree-lifecycle",
+              "root": "@agents",
+              "version": null
+            },
+            {
+              "path": "/Users/admin/.claude/skills/agent-worktree-lifecycle",
+              "root": "@claude",
+              "version": null
+            }
+          ]
+        },
+        {
+          "conflict": false,
+          "copies": 3,
+          "distinct_contents": 1,
+          "duplicate": true,
+          "name": "apply-cmea",
+          "versions": [],
+          "where": [
+            {
+              "path": "/Users/admin/.agents/skills/apply-cmea",
+              "root": "@agents",
+              "version": null
+            },
+            {
+              "path": "/Users/admin/.claude/skills/apply-cmea",
+              "root": "@claude",
+              "version": null
+            },
+            {
+              "path": "/Users/admin/.codex/skills/apply-cmea",
+              "root": "@codex",
+              "version": null
+            }
+          ]
+        }
+      ],
+      "conflicts": 1,
+      "duplicates": 75,
+      "names": 257,
+      "plugin_conflicts": [
+        {
+          "installations": [
+            {
+              "path": "/Users/admin/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/github",
+              "skills": 0,
+              "version": null
+            },
+            {
+              "path": "/Users/admin/.codex/plugins/cache/openai-curated/github/1dc19589",
+              "skills": 0,
+              "version": "0.1.11"
+            },
+            {
+              "path": "/Users/admin/.codex/plugins/cache/openai-curated-remote/github/0.1.12-5f7cd798dc99",
+              "skills": 0,
+              "version": "0.1.12-5f7cd798dc99"
+            },
+            {
+              "path": "/Users/admin/.hermes/tmp/skills-research-2026-08-19/cursor-plugins/third_party/github",
+              "skills": 0,
+              "version": "1.0.0"
+            }
+          ],
+          "name": "github",
+          "versions": [
+            "0.1.11",
+            "0.1.12-5f7cd798dc99",
+            "1.0.0"
+          ]
+        },
+        {
+          "installations": [
+            {
+              "path": "/Users/admin/.codex/superpowers",
+              "skills": 15,
+              "version": "4.2.0"
+            },
+            {
+              "path": "/Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0",
+              "skills": 14,
+              "version": "6.3.0"
+            },
+            {
+              "path": "/Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/6.4.1",
+              "skills": 15,
+              "version": "6.4.1"
+            },
+            {
+              "path": "/Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/7.0.0",
+              "skills": 15,
+              "version": "7.0.0"
+            }
+          ],
+          "name": "superpowers",
+          "versions": [
+            "4.2.0",
+            "6.3.0",
+            "6.4.1",
+            "7.0.0"
+          ]
+        }
+      ],
+      "plugins": 115,
+      "roots": 4,
+      "skills": 386
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "unused_trimmed": {
+    "context": {
+      "context_id": "ctx_01M5F7PN3G1MY6J7SBVSDFC1RZ",
+      "project_root": null,
+      "session_id": null
+    },
+    "data": {
+      "count": 311,
+      "unused": [
+        {
+          "active": false,
+          "capability": "guidance/aikit/development-world",
+          "failed_runs": 0,
+          "kind": "guidance",
+          "name": "The shape of the development world"
+        },
+        {
+          "active": false,
+          "capability": "guidance/aikit/living-project-collaboration",
+          "failed_runs": 0,
+          "kind": "guidance",
+          "name": "Living project collaboration"
+        },
+        {
+          "active": false,
+          "capability": "guidance/aikit/world-situated-agency",
+          "failed_runs": 0,
+          "kind": "guidance",
+          "name": "World-situated agency"
+        }
+      ]
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  }
+}

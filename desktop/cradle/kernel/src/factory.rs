@@ -414,6 +414,46 @@ pub enum OwnerRequest {
         #[serde(default)]
         custody_ref: Option<String>,
     },
+    /// A project's bank of sixteen prompt pads (`factory development pads
+    /// <state> <project-ref>` → `factory.prompt-pads-reading/v1`, manual
+    /// §19.22): each pad's settings, next run, running run and last run.
+    PadsRead {
+        state_path: PathBuf,
+        project_ref: String,
+    },
+    /// The scheduled occurrences in `(since, now]` and whether each has begun
+    /// (`factory development pads-due <state> <project-ref> --now <ms> --since
+    /// <ms>` → `factory.prompt-pads-due/v1`). Factory asks Central for the
+    /// schedule's occurrences.
+    PadsDue {
+        state_path: PathBuf,
+        project_ref: String,
+        now_unix_ms: i64,
+        since_unix_ms: i64,
+    },
+    /// One slot written, or emptied (`pad: null`), on the bank revision read
+    /// (`factory development pads-write <state> -` →
+    /// `factory.prompt-pads-write/v1`). A pad is written by the person:
+    /// Factory requires a desktop-human caller and the granted
+    /// `capability/factory/operate-prompt-pads`, and the host presents the
+    /// human grant its own token holds in Central's native action authority
+    /// contract — never a grant the desk names. Without one the write is
+    /// refused before Factory is asked.
+    PadsWrite {
+        state_path: PathBuf,
+        project_ref: String,
+        index: u64,
+        expected_revision: String,
+        pad: Value,
+    },
+    /// A run's begin recorded (`factory development pads-run <state> -` →
+    /// `factory.prompt-pads-run/v1`), the request carried verbatim:
+    /// `{project_ref, index, trigger: press|schedule, occurrence_ref?,
+    /// at_unix_ms?}`. Factory never runs a pad; this records that one began.
+    PadsRun { state_path: PathBuf, request: Value },
+    /// A run's end recorded (`factory development pads-record <state> -` →
+    /// `factory.prompt-pads-record/v1`): done, stalled, stopped or refused.
+    PadsRecord { state_path: PathBuf, request: Value },
     /// `factory development custody update <state> --custody C --state S
     /// --reason R [...]` → `factory.work-custody-receipt/v1`.
     CustodyUpdate {
@@ -488,6 +528,8 @@ impl OwnerRequest {
                 | OwnerRequest::CurrentWork { .. }
                 | OwnerRequest::AttemptAdmission { .. }
                 | OwnerRequest::AttemptDecisionRead { .. }
+                | OwnerRequest::PadsRead { .. }
+                | OwnerRequest::PadsDue { .. }
         )
     }
 }
@@ -577,7 +619,17 @@ fn owner_call_env(
             .and_then(|value| value.get("error"))
             .and_then(|error| error.get("message"))
             .and_then(Value::as_str)
-            .map(str::to_owned);
+            .map(str::to_owned)
+            // A refusal document of its own (the prompt pads' `message` and
+            // `effect`), in the owner's words.
+            .or_else(|| {
+                let value = parsed.as_ref()?;
+                let message = value.get("message")?.as_str()?;
+                Some(match value.get("effect").and_then(Value::as_str) {
+                    Some(effect) => format!("{message} {effect}"),
+                    None => message.to_owned(),
+                })
+            });
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
         return Err(Error {
             kind: "owner-refused-or-failed".into(),
@@ -1524,6 +1576,73 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &[DECISION_READING],
             )
         }
+        OwnerRequest::PadsRead {
+            state_path,
+            project_ref,
+        } => expect_contract(
+            owner_call(
+                &[
+                    "development".into(),
+                    "pads".into(),
+                    path_arg(&state_path),
+                    project_ref.into(),
+                    "--json".into(),
+                ],
+                None,
+            )?,
+            &[PADS_READING],
+        ),
+        OwnerRequest::PadsDue {
+            state_path,
+            project_ref,
+            now_unix_ms,
+            since_unix_ms,
+        } => expect_contract(
+            owner_call(
+                &[
+                    "development".into(),
+                    "pads-due".into(),
+                    path_arg(&state_path),
+                    project_ref.into(),
+                    "--now".into(),
+                    now_unix_ms.to_string().into(),
+                    "--since".into(),
+                    since_unix_ms.to_string().into(),
+                    "--json".into(),
+                ],
+                None,
+            )?,
+            &[PADS_DUE],
+        ),
+        OwnerRequest::PadsWrite {
+            state_path,
+            project_ref,
+            index,
+            expected_revision,
+            pad,
+        } => {
+            let grant = pads_grant(&state_path)?;
+            let request = serde_json::json!({
+                "project_ref": project_ref,
+                "index": index,
+                "expected_revision": expected_revision,
+                "pad": pad,
+                "caller": {"callerRef": DESK_PADS_CALLER, "projectionKind": "desktop-human",
+                           "lineage": [DESK_PADS_CALLER]},
+                "authority": {"authorityRef": grant, "nativeOwner": "factory",
+                              "capabilityRef": PADS_CAPABILITY_REF,
+                              "capabilityGranted": true, "actionAuthorised": true},
+            });
+            pads_write_call("pads-write", &state_path, &request, PADS_WRITE_RECEIPT)
+        }
+        OwnerRequest::PadsRun {
+            state_path,
+            request,
+        } => pads_write_call("pads-run", &state_path, &request, PADS_RUN_BEGIN),
+        OwnerRequest::PadsRecord {
+            state_path,
+            request,
+        } => pads_write_call("pads-record", &state_path, &request, PADS_RUN_RECORD),
         OwnerRequest::CustodyAssign {
             state_path,
             position_ref,
@@ -1622,6 +1741,55 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             ))
         }
     }
+}
+
+/// Factory's prompt-pad documents (Factory `prompt_pads.rs`).
+pub const PADS_READING: &str = "factory.prompt-pads-reading/v1";
+pub const PADS_DUE: &str = "factory.prompt-pads-due/v1";
+pub const PADS_WRITE_RECEIPT: &str = "factory.prompt-pads-write/v1";
+pub const PADS_RUN_BEGIN: &str = "factory.prompt-pads-run/v1";
+pub const PADS_RUN_RECORD: &str = "factory.prompt-pads-record/v1";
+/// The capability a pad's writer presents (Factory `PADS_CAPABILITY_REF`).
+const PADS_CAPABILITY_REF: &str = "capability/factory/operate-prompt-pads";
+const DESK_PADS_CALLER: &str = "oi:desk-prompt-pads";
+
+/// The human grant the host's own token holds in Central's native action
+/// authority contract (the one found above the Factory state, or under
+/// `OI_CENTRAL_ROOT`): the authority a pad's write presents. The desk never
+/// names it; with no such grant the write is refused before Factory is asked.
+fn pads_grant(state_path: &Path) -> Result<String, Error> {
+    let refused = |message: String| Error {
+        kind: "owner-refused-or-failed".into(),
+        message,
+        operation_may_have_run: false,
+    };
+    let token = host_native_token().ok_or_else(|| {
+        refused("A pad is written by the person: the host holds no native action token (CENTRAL_NATIVE_TOKEN or ~/.central/native-token), so nothing was written.".into())
+    })?;
+    let contract =
+        read_authority_contract(authority_contract_for(state_path).as_deref()).map_err(refused)?;
+    grant_held_by(&contract, &token, "human").ok_or_else(|| {
+        refused("A pad is written by the person: no one human grant in the native action authority contract holds the host's token, so nothing was written.".into())
+    })
+}
+
+/// One pad verb that records (`pads-write`, `pads-run`, `pads-record`), its
+/// document on stdin, carried verbatim.
+fn pads_write_call(
+    verb: &str,
+    state_path: &Path,
+    request: &Value,
+    contract: &str,
+) -> Result<Value, Error> {
+    let body = serde_json::to_vec(request).map_err(|e| incompatible(e.to_string()))?;
+    let args: Vec<std::ffi::OsString> = vec![
+        "development".into(),
+        verb.into(),
+        path_arg(state_path),
+        "-".into(),
+        "--json".into(),
+    ];
+    expect_contract(owner_call(&args, Some(&body))?, &[contract])
 }
 
 /// Factory's unit-decision reading, for a submit and a read alike.

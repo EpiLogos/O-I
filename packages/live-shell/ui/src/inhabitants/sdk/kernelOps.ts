@@ -128,6 +128,7 @@ export const KERNEL_OPS = [
   'gateway_write',
   'gateway_team',
   'actuation_read',
+  'actuation_write',
   'ql_read',
   'workcell_read',
   'workcell_write',

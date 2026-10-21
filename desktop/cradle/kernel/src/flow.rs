@@ -400,7 +400,7 @@ impl CentralClient {
         let input = self.with_project(input);
         if self.person.is_some() {
             let answer = self.run_envelope_owner(action, input);
-            if !crate::read_cache::central_reads(action) {
+            if !self.reads(action) {
                 crate::read_cache::written();
             }
             return answer;
@@ -416,7 +416,7 @@ impl CentralClient {
             ),
             None => {
                 let answer = self.run_envelope_owner(action, input);
-                if !crate::read_cache::central_reads(action) {
+                if !self.reads(action) {
                     crate::read_cache::written();
                 }
                 answer
@@ -443,6 +443,16 @@ impl CentralClient {
             }
         }
         input
+    }
+
+    /// Central's own Action catalogue (`action.list`: every id with its `mutation_class`), asked without the person's
+    /// authority and outside the read model: action.rs `CentralClient::reads` keeps it.
+    pub(crate) fn action_list(&self) -> Result<Value, OwnerCallError> {
+        Self {
+            person: None,
+            ..self.clone()
+        }
+        .run_envelope_owner("action.list", serde_json::json!({}))
     }
 
     fn run_envelope_owner(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {

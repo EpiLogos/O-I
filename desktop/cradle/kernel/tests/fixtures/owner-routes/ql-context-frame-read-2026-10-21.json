@@ -1,0 +1,105 @@
+{
+  "_source": "EpiLogos/QL-MEF#344 (dlw/ql-context-frame-read 3294561) built locally, 21 Oct 2026; the installed ql answers \"unknown Context-Frame operation `read`\"",
+  "request": {
+    "target_ref": "target/external-sixfold",
+    "mapping_source_ref": "source/external-sixfold/v1",
+    "external_position_refs": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f"
+    ],
+    "probe": {
+      "local_position": 3,
+      "unit_face": "power",
+      "grain": "inner-four"
+    },
+    "provider_ref": "provider/ql-mef",
+    "origin": "derived",
+    "evidence_refs": [
+      "evidence/external-structure/1"
+    ]
+  },
+  "exact": {
+    "contract": "ql.mef.context-frame-reading/1.0.0",
+    "evidence_refs": [
+      "evidence/external-structure/1"
+    ],
+    "external_position_refs": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f"
+    ],
+    "mapping_digest": "fnv1a64:e3c14b0bf801bf8a",
+    "mapping_source_ref": "source/external-sixfold/v1",
+    "operator_version": "ql.mef.context-frame-reading/1.0.0+cf-grammar/1.0.0",
+    "origin": "derived",
+    "probe": {
+      "grain": "inner-four",
+      "local_position": 3,
+      "unit_face": "power"
+    },
+    "provider_ref": "provider/ql-mef",
+    "runtime_authority": false,
+    "status": {
+      "frame": {
+        "code": "CF5",
+        "expression": "(4.0/1-4.4/5)",
+        "name": "Fractal-Doubling Executive"
+      },
+      "kind": "exact"
+    },
+    "target_ref": "target/external-sixfold"
+  },
+  "ambiguous_request_probe": {
+    "local_position": 2
+  },
+  "ambiguous": {
+    "contract": "ql.mef.context-frame-reading/1.0.0",
+    "evidence_refs": [
+      "evidence/external-structure/1"
+    ],
+    "external_position_refs": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f"
+    ],
+    "mapping_digest": "fnv1a64:e3c14b0bf801bf8a",
+    "mapping_source_ref": "source/external-sixfold/v1",
+    "operator_version": "ql.mef.context-frame-reading/1.0.0+cf-grammar/1.0.0",
+    "origin": "derived",
+    "probe": {
+      "grain": null,
+      "local_position": 2,
+      "unit_face": null
+    },
+    "provider_ref": "provider/ql-mef",
+    "runtime_authority": false,
+    "status": {
+      "frames": [
+        {
+          "code": "CF3",
+          "expression": "(0/1/2)",
+          "name": "Dual-Non-Dual / triadic-circulation"
+        },
+        {
+          "code": "CF4",
+          "expression": "(0/1/2/3)",
+          "name": "Trinitarian / tetradic-prehensive-closure"
+        }
+      ],
+      "kind": "ambiguous"
+    },
+    "target_ref": "target/external-sixfold"
+  },
+  "refusal_missing_field": "ql: invalid Context-Frame reading request: missing field `mapping_source_ref` at line 1 column 18\n",
+  "installed_refusal": "ql: unknown Context-Frame operation `read`\n"
+}

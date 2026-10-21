@@ -1,0 +1,574 @@
+{
+  "captured": "workcell 0.1.0 (c7261e23bc93), 21 Oct 2026, read only: `workcell doctor --json`, `workcell discover --json`, `workcell plan --json` (empty demand, satisfiable), `workcell plan --require workspace --json` (unsatisfiable: the plan on stdout, exit 3, its error on stderr), `workcell instances usage <claude-code instance> --pid <its pid> --interval-ms 0 --json`; instances list (workcell instances list --json) trimmed to its first instance",
+  "doctor": {
+    "declared_services": [
+      {
+        "availability": "degraded",
+        "endpoint": "http://127.0.0.1:8020",
+        "health": "unavailable",
+        "lifetime": "target-owned",
+        "logical_ref": "service:gliner25-decision/personal-workcell",
+        "provider_ref": "provider:collapsed-local-target-services"
+      },
+      {
+        "availability": "degraded",
+        "endpoint": "http://127.0.0.1:50929",
+        "health": "unavailable",
+        "lifetime": "target-owned",
+        "logical_ref": "service:gliner25-ql-candidate/personal-workcell",
+        "provider_ref": "provider:collapsed-local-target-services"
+      },
+      {
+        "availability": "available",
+        "endpoint": "http://127.0.0.1:8019",
+        "health": "healthy",
+        "lifetime": "target-owned",
+        "logical_ref": "service:kev-decision/personal-workcell",
+        "provider_ref": "provider:collapsed-local-target-services"
+      },
+      {
+        "availability": "available",
+        "endpoint": "redis://127.0.0.1:6381",
+        "health": "healthy",
+        "lifetime": "target-owned",
+        "logical_ref": "service:redis-now/personal-workcell",
+        "provider_ref": "provider:collapsed-local-target-services"
+      }
+    ],
+    "filesystem_artifacts": true,
+    "instances": {
+      "live": 8,
+      "reason": null,
+      "stale": 11,
+      "status": "ok"
+    },
+    "ok": true,
+    "opensandbox_control_fence": null,
+    "optional_external_providers_required": false,
+    "shell": true,
+    "state_root_writable": true,
+    "writable_workspace": true
+  },
+  "discover": {
+    "capacity": {},
+    "health": "healthy",
+    "offers": [
+      {
+        "affordances": [
+          "workspace:git-worktree",
+          "persistence:ephemeral",
+          "persistence:task-or-run",
+          "persistence:candidate",
+          "persistence:project",
+          "persistence:workcell",
+          "retention:preserve"
+        ],
+        "availability": "available",
+        "connections": [],
+        "exposures": [],
+        "health": "healthy",
+        "isolation_trust": [],
+        "metadata": {
+          "implementation": "git-worktree",
+          "root": "/Users/admin/.workcell/workspaces"
+        },
+        "offer_ref": "offer:provider:collapsed-local-git-worktree:git-worktree",
+        "port": "workspace",
+        "provider_ref": "provider:collapsed-local-git-worktree"
+      },
+      {
+        "affordances": [
+          "workspace:read-only",
+          "workspace:writable",
+          "persistence:ephemeral",
+          "persistence:task-or-run",
+          "persistence:candidate",
+          "persistence:project",
+          "persistence:workcell",
+          "retention:preserve"
+        ],
+        "availability": "available",
+        "connections": [],
+        "exposures": [],
+        "health": "healthy",
+        "isolation_trust": [],
+        "metadata": {
+          "implementation": "directory",
+          "root": "/Users/admin/.workcell/workspaces"
+        },
+        "offer_ref": "offer:provider:collapsed-local-workspace:directory",
+        "port": "workspace",
+        "provider_ref": "provider:collapsed-local-workspace"
+      },
+      {
+        "affordances": [
+          "shell",
+          "process-execution",
+          "execution:host-process",
+          "persistence:ephemeral",
+          "retention:preserve"
+        ],
+        "availability": "available",
+        "connections": [],
+        "exposures": [],
+        "health": "healthy",
+        "isolation_trust": [
+          "host-process"
+        ],
+        "metadata": {
+          "implementation": "host-process",
+          "operation_authority": "required",
+          "untrusted_isolation": "unsupported-use-isolated-provider"
+        },
+        "offer_ref": "offer:provider:collapsed-local-host-process:host-process",
+        "port": "execution",
+        "provider_ref": "provider:collapsed-local-host-process"
+      },
+      {
+        "affordances": [],
+        "availability": "degraded",
+        "connections": [
+          "service:gliner25-decision/personal-workcell"
+        ],
+        "exposures": [],
+        "health": "unavailable",
+        "isolation_trust": [],
+        "metadata": {
+          "adapter_sha256": "7d44a3fb84e5d1331a0056dc56975aedbbe4c13d331833eb58a33953bd192be1",
+          "artifact": "fastino/GLiNER2.5-Decide",
+          "artifact_revision": "5a7adf72a23b4d311abae6ce050d7f0012bb3416",
+          "backend": "torch-cpu",
+          "binding": "loopback",
+          "configuration_owner": "target",
+          "cpu_threads": "2",
+          "endpoint": "http://127.0.0.1:8020",
+          "evaluation_role": "stock criteria comparison with explicit two-thread CPU runtime; no default election",
+          "implementation": "external-managed-service",
+          "label_rendering": "criteria",
+          "license": "Apache-2.0",
+          "lifetime": "target-owned",
+          "logical_ref": "service:gliner25-decision/personal-workcell",
+          "manifest": "/Users/admin/.workcell/decision-models/gliner2.5-decide/decision-model-manifest.json",
+          "sdk_revision": "55656fbfa01d3d4a77485e1a1eeeaf682990ccdf",
+          "semantic_state_owner": "aikit",
+          "status_command": "/usr/bin/curl",
+          "target": "decision-model"
+        },
+        "offer_ref": "offer:provider:collapsed-local-target-services:external-service:b4fedf1f0f797d6d",
+        "port": "service",
+        "provider_ref": "provider:collapsed-local-target-services"
+      },
+      {
+        "affordances": [],
+        "availability": "degraded",
+        "connections": [
+          "service:gliner25-ql-candidate/personal-workcell"
+        ],
+        "exposures": [],
+        "health": "unavailable",
+        "isolation_trust": [],
+        "metadata": {
+          "adapter_sha256": "7d44a3fb84e5d1331a0056dc56975aedbbe4c13d331833eb58a33953bd192be1",
+          "artifact": "fastino/GLiNER2.5-Decide",
+          "artifact_revision": "5a7adf72a23b4d311abae6ce050d7f0012bb3416",
+          "backend": "torch-cpu",
+          "binding": "loopback",
+          "candidate_adapter_sha256": "7176f589ac0d6e0342f0424e5c7179fba1b85d3f54f527b9fc8d30632f86f3ea",
+          "candidate_manifest": "/Users/admin/.workcell/decision-models/gliner2.5-decide/candidates/g5-attention-criteria-lora-v2/checkpoint-manifest.json",
+          "candidate_manifest_sha256": "14367a90c038bad30330e33f2b342ab042bb2b01d95472a67b4e701d08f4ee38",
+          "checkpoint_digest": "sha256:5f8000d168d9de2a2a38dc097b80471b5fdd6acccd68442f9707e87496884408",
+          "configuration_owner": "target",
+          "cpu_threads": "2",
+          "endpoint": "http://127.0.0.1:50929",
+          "evaluation_role": "G5 attention LoRA comparison with semantic-packed profile/two-thread CPU; no default election",
+          "implementation": "external-managed-service",
+          "label_rendering": "criteria",
+          "license": "Apache-2.0",
+          "lifetime": "target-owned",
+          "logical_ref": "service:gliner25-ql-candidate/personal-workcell",
+          "manifest": "/Users/admin/.workcell/decision-models/gliner2.5-decide/decision-model-manifest.json",
+          "sdk_revision": "55656fbfa01d3d4a77485e1a1eeeaf682990ccdf",
+          "semantic_state_owner": "aikit",
+          "status_command": "/usr/bin/curl",
+          "target": "decision-model"
+        },
+        "offer_ref": "offer:provider:collapsed-local-target-services:external-service:4260858b2d40b108",
+        "port": "service",
+        "provider_ref": "provider:collapsed-local-target-services"
+      },
+      {
+        "affordances": [],
+        "availability": "available",
+        "connections": [
+          "service:kev-decision/personal-workcell"
+        ],
+        "exposures": [],
+        "health": "healthy",
+        "isolation_trust": [],
+        "metadata": {
+          "artifact": "jaredpalmer/kev-0.8b",
+          "backend": "mlx",
+          "base": "Qwen/Qwen3.5-0.8B-Base",
+          "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+          "binding": "loopback",
+          "configuration_owner": "target",
+          "endpoint": "http://127.0.0.1:8019",
+          "implementation": "external-managed-service",
+          "launcher_sha256": "9d9c2f255f8b20ddb859c72c61c968c0536ff127604a8059330c3b6ac5d8a136",
+          "license": "Apache-2.0",
+          "lifetime": "target-owned",
+          "logical_ref": "service:kev-decision/personal-workcell",
+          "manifest": "/Users/admin/.workcell/decision-models/kev-0.8b/decision-model-manifest.json",
+          "precision": "bf16-as-stored",
+          "recipe": "kev-0.8b",
+          "semantic_state_owner": "aikit",
+          "startup": "installed-environment; target-owned launchd on macOS; separate readiness; no inference at start",
+          "status_command": "/usr/bin/curl",
+          "stopper_sha256": "5dceb5a365aaf17ad95770b49256db81f999812cc16c1899df9f9fad83f35c90",
+          "target": "decision-model"
+        },
+        "offer_ref": "offer:provider:collapsed-local-target-services:external-service:2f3d70b91c3d2e41",
+        "port": "service",
+        "provider_ref": "provider:collapsed-local-target-services"
+      },
+      {
+        "affordances": [],
+        "availability": "available",
+        "connections": [
+          "service:redis-now/personal-workcell"
+        ],
+        "exposures": [],
+        "health": "healthy",
+        "isolation_trust": [],
+        "metadata": {
+          "binding": "loopback",
+          "configuration_owner": "target",
+          "endpoint": "redis://127.0.0.1:6381",
+          "eviction_policy": "noeviction",
+          "implementation": "external-managed-service",
+          "lifetime": "target-owned",
+          "logical_ref": "service:redis-now/personal-workcell",
+          "persistence_policy": "aof+operator-rdb",
+          "semantic_state_owner": "central+aikit+factory",
+          "status_command": "/opt/homebrew/opt/redis/bin/redis-cli",
+          "target": "redis",
+          "target_minimum_series": "8.10"
+        },
+        "offer_ref": "offer:provider:collapsed-local-target-services:external-service:205e52a734167d2a",
+        "port": "service",
+        "provider_ref": "provider:collapsed-local-target-services"
+      },
+      {
+        "affordances": [
+          "artifact-channel:artifacts:run"
+        ],
+        "availability": "available",
+        "connections": [],
+        "exposures": [],
+        "health": "healthy",
+        "isolation_trust": [],
+        "metadata": {
+          "implementation": "directory-artifact-storage",
+          "logical_channel": "artifacts:run"
+        },
+        "offer_ref": "offer:provider:collapsed-local-artifacts:artifact:9ebe24a81785eb18",
+        "port": "artifact-storage",
+        "provider_ref": "provider:collapsed-local-artifacts"
+      },
+      {
+        "affordances": [
+          "artifact-channel:logs:run"
+        ],
+        "availability": "available",
+        "connections": [],
+        "exposures": [],
+        "health": "healthy",
+        "isolation_trust": [],
+        "metadata": {
+          "implementation": "directory-artifact-storage",
+          "logical_channel": "logs:run"
+        },
+        "offer_ref": "offer:provider:collapsed-local-artifacts:artifact:9289a082882ff8ea",
+        "port": "artifact-storage",
+        "provider_ref": "provider:collapsed-local-artifacts"
+      }
+    ],
+    "ok": true,
+    "workcell_ref": "workcell:mac"
+  },
+  "plan": {
+    "degradations": [],
+    "demand_ref": "demand:cli",
+    "explanation": [],
+    "ok": true,
+    "omissions": [],
+    "plan_ref": "plan:demand:cli:72e53c595f83dc7e",
+    "planned_bindings": [],
+    "planned_constraints": [],
+    "planned_exposures": [],
+    "status": "satisfiable"
+  },
+  "plan_unsatisfiable": {
+    "stdout": {
+      "degradations": [],
+      "demand_ref": "demand:cli",
+      "explanation": [],
+      "ok": false,
+      "omissions": [
+        {
+          "necessity": "required",
+          "reason": "no offer supports this material requirement",
+          "requirement": "affordance:workspace"
+        }
+      ],
+      "plan_ref": "plan:demand:cli:de6df1c0096b7c38",
+      "planned_bindings": [],
+      "planned_constraints": [],
+      "planned_exposures": [],
+      "status": "unsatisfiable"
+    },
+    "stderr": "{\"error\":{\"kind\":\"unsatisfied-demand\",\"message\":\"unsatisfied demand: materialisation plan is unsatisfiable\"},\"ok\":false}",
+    "exit": 3
+  },
+  "usage": {
+    "cgroup": {
+      "available": false,
+      "cpu_usage_usec": null,
+      "memory_current_bytes": null,
+      "memory_events_oom_kills": null,
+      "memory_max_bytes": null,
+      "memory_max_unlimited": null,
+      "path": null,
+      "reason": "no readable cgroup v2 membership for this process on this host",
+      "version": null
+    },
+    "external_correlation_refs": [],
+    "harness_instance_ref": "instance:claude-code:3d935042bdead41439e6005bc04f213cec0c0831fcfc0e64a01e775ff8647b73",
+    "harness_ref": "harness/claude-code",
+    "interval": {
+      "duration_ms": 4,
+      "ended_at": "unix-ms:1792586259632",
+      "requested_duration_ms": 0,
+      "started_at": "unix-ms:1792586259628"
+    },
+    "material_binding": {
+      "executable": {
+        "path": "/Users/admin/Library/Application Support/Claude/claude-code/2.1.304/6bbba6adc37f/claude.app/Contents/MacOS/claude",
+        "sha256": "21d484aa3737c3f2e665dbd849797caafb36675f8e26e11cb47e19220bdf6c15"
+      },
+      "instance_evidence_grade": "live-pid",
+      "instance_seams": [
+        {
+          "count": 111,
+          "exists": true,
+          "kind": "skills",
+          "path": "~/.claude/skills"
+        },
+        {
+          "count": 12,
+          "exists": true,
+          "kind": "plugins",
+          "path": "~/.claude/plugins"
+        },
+        {
+          "count": 8,
+          "exists": true,
+          "kind": "commands",
+          "path": "~/.claude/commands"
+        },
+        {
+          "count": 11,
+          "exists": true,
+          "kind": "hooks",
+          "path": "~/.claude/hooks"
+        },
+        {
+          "exists": true,
+          "kind": "settings",
+          "path": "~/.claude/settings.json"
+        },
+        {
+          "exists": true,
+          "inventory": [
+            {
+              "command": "/Users/admin/.pencil/mcp/visual_studio_code/out/mcp-server-darwin-arm64 --app visual_studio_code --agent claudeCodeCLI",
+              "id": "pencil"
+            }
+          ],
+          "inventory_receipt": {
+            "item_count": 1,
+            "kind": "mcp-servers",
+            "observed_at": "2026-10-21T12:35:55.43Z",
+            "source": "~/.claude.json"
+          },
+          "kind": "mcp-config",
+          "path": "~/.claude.json"
+        },
+        {
+          "exists": true,
+          "kind": "permissions",
+          "path": "~/.claude/settings.json"
+        },
+        {
+          "exists": true,
+          "kind": "trusts",
+          "path": "~/.claude.json"
+        }
+      ],
+      "kind": "process",
+      "pid": 68061,
+      "process_start_marker": "Wed Oct 21 10:02:55 2026"
+    },
+    "metrics": {
+      "cpu_time": {
+        "evidence": "ps time",
+        "standing": "observed",
+        "unit": "milliseconds",
+        "value": 46910
+      },
+      "cpu_utilisation": {
+        "derivation": "cpu_time delta / wall interval",
+        "standing": "derived",
+        "unit": "percent",
+        "value": 0.0
+      },
+      "gpu_utilisation": {
+        "reason": "the local ps provider does not expose GPU utilisation",
+        "standing": "unsupported"
+      },
+      "memory_peak_rss": {
+        "reason": "the local ps projection does not establish peak RSS",
+        "standing": "unsupported"
+      },
+      "memory_rss": {
+        "evidence": "ps rss",
+        "standing": "observed",
+        "unit": "bytes",
+        "value": 126926848
+      },
+      "network_bytes": {
+        "reason": "the local ps provider does not expose per-process network bytes",
+        "standing": "unsupported"
+      },
+      "storage_io_bytes": {
+        "reason": "the portable local ps projection does not establish storage I/O bytes",
+        "standing": "unsupported"
+      },
+      "vram": {
+        "reason": "the local ps provider does not expose VRAM allocation",
+        "standing": "unsupported"
+      }
+    },
+    "ok": true,
+    "provider": {
+      "collection": "bounded-on-demand",
+      "platform": "macos",
+      "privacy": {
+        "argv_collected": false,
+        "environment_collected": false
+      },
+      "provider_ref": "provider:local-os:ps",
+      "raw_native_refs": [
+        "local-os:ps:pid:68061:lstart,time,rss,comm"
+      ],
+      "source": "ps"
+    },
+    "schema": "workcell.resource-usage/v1",
+    "status": "ok",
+    "usage_ref": "usage:5e3ef0d9c672ac55a8a681c772b2553be40b8a051522ee7e28c81e7a752c8757",
+    "workcell_ref": "workcell:mac"
+  },
+  "instances": {
+    "instances": [
+      {
+        "consecutive_misses": 0,
+        "evidence_grade": "live-pid",
+        "executable": {
+          "path": "/Users/admin/Library/Application Support/Claude/claude-code/2.1.304/6bbba6adc37f/claude.app/Contents/MacOS/claude",
+          "sha256": "21d484aa3737c3f2e665dbd849797caafb36675f8e26e11cb47e19220bdf6c15"
+        },
+        "executions": [
+          {
+            "pid": 62918,
+            "process_start_marker": "Wed Oct 21 09:22:04 2026"
+          },
+          {
+            "pid": 68061,
+            "process_start_marker": "Wed Oct 21 10:02:55 2026"
+          }
+        ],
+        "harness_ref": "harness/claude-code",
+        "identity_material": "/Users/admin/Library/Application Support/Claude/claude-code/2.1.304/6bbba6adc37f/claude.app/Contents/MacOS/claude",
+        "instance_ref": "instance:claude-code:3d935042bdead41439e6005bc04f213cec0c0831fcfc0e64a01e775ff8647b73",
+        "liveness": "live",
+        "observed_at": "unix:1792586156",
+        "pids": [
+          62918,
+          68061
+        ],
+        "schema": "workcell.harness-instance/v1",
+        "seams": [
+          {
+            "count": 111,
+            "exists": true,
+            "kind": "skills",
+            "path": "~/.claude/skills"
+          },
+          {
+            "count": 12,
+            "exists": true,
+            "kind": "plugins",
+            "path": "~/.claude/plugins"
+          },
+          {
+            "count": 8,
+            "exists": true,
+            "kind": "commands",
+            "path": "~/.claude/commands"
+          },
+          {
+            "count": 11,
+            "exists": true,
+            "kind": "hooks",
+            "path": "~/.claude/hooks"
+          },
+          {
+            "exists": true,
+            "kind": "settings",
+            "path": "~/.claude/settings.json"
+          },
+          {
+            "exists": true,
+            "inventory": [
+              {
+                "command": "/Users/admin/.pencil/mcp/visual_studio_code/out/mcp-server-darwin-arm64 --app visual_studio_code --agent claudeCodeCLI",
+                "id": "pencil"
+              }
+            ],
+            "inventory_receipt": {
+              "item_count": 1,
+              "kind": "mcp-servers",
+              "observed_at": "2026-10-21T12:35:55.43Z",
+              "source": "~/.claude.json"
+            },
+            "kind": "mcp-config",
+            "path": "~/.claude.json"
+          },
+          {
+            "exists": true,
+            "kind": "permissions",
+            "path": "~/.claude/settings.json"
+          },
+          {
+            "exists": true,
+            "kind": "trusts",
+            "path": "~/.claude.json"
+          }
+        ],
+        "workcell_ref": "workcell:mac"
+      }
+    ],
+    "ok": true,
+    "workcell_ref": "workcell:mac"
+  }
+}
