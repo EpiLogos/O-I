@@ -218,7 +218,7 @@ names the file and the change.
 | The Ledger's receipts | Keyed by a ref: source returns carry no number. |
 | `widgets__diff.tsx` | A `repo` key naming which world's repository the Diff shows (it follows the selected seat or world since `9f8a5932a`; the design draws only branch and HEAD). |
 | The Sky's Share page (`quaternal-logic__sky.tsx`) | Withdraw is drawn disabled in the design's own words and has no key: a per-consent-row key lets it bind to nara_presence's withdraw. |
-| `workcell__workcell.tsx` (the World page) | A chooser among several worlds listed for a cell: the binding holds `worldReceipt`, and nothing in the design sets it. Open on an exposed surface waits for an opener handed to the rack (a frame act). |
+| `workcell__workcell.tsx` (the World page) and `workcell__remote-carrier.tsx` (the Plan) | A chooser among several runs a world names (the carrier's binding holds `planRun`, `533edd588`), and a chooser among several worlds listed for a cell: the binding holds `worldReceipt`, and nothing in the design sets it. Open on an exposed surface waits for an opener handed to the rack (a frame act). |
 | `quaternal-logic__chakra.tsx` | Colour by QL's `element_ref` or tattva name: QL names the tattva ("Prithvi Tattva"), and Ājñā and Sahasrāra carry none, while the design keys on 'Earth' and draws 'Beyond'. Draw QL's yantra text: QL holds no petal count. QL's mantra is a phrase ("LAM - earth element activation"), not the design's sample syllable. |
 | The map rack's chains | QL holds more than six children in places (M2-5 has nine bodies, M3-1 eight trigrams); the design's chains draw six and its fixtures cut at six. |
 
