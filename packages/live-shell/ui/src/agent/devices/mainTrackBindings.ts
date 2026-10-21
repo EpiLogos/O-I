@@ -106,10 +106,6 @@ export function registeredChains(): readonly string[] {
   return chains.filter((chain): chain is string => typeof chain === 'string')
 }
 
-export const RACK_REFUSE = {
-  fanOut: missing('Fan-out', 'kernel:harness_agent_control configure {fan_out}', 'Actuation'),
-} as const
-
 export interface RackInput {
   readonly reading: Pick<AgentChainReading, 'gatewayAdmitted' | 'gatewayDoc'>
   readonly holds: ChainHolds
@@ -154,16 +150,17 @@ export function rackValues(input: RackInput): Values {
   return values
 }
 
-/** The rack's binding: the chosen chain is the view's own (and shows that gateway whole in the pool); Fan-out has no carrier. */
+/** The rack's binding: the chosen chain is the view's own (and shows that gateway whole in the pool). The rack writes nothing: each
+ * gateway's Fan-out is set on its workcell's Gateway (actuation__gateway.tsx fanOut, refused there until an owner carries it) and the
+ * rack only reads it. */
 export function rackBinding(input: RackInput, ports: {readonly show: (chain: string) => void}): DesignBinding {
   return {
     id: GATEWAYS_RACK_ID,
     values: rackValues(input),
-    standing: disabled(RACK_REFUSE),
     local: {chain: value => { holdView(GATEWAYS_RACK_ID, 'chain', typeof value === 'string' ? value : undefined); if (typeof value === 'string') ports.show(value) }},
-    writes: key => key === 'fanOut',
+    writes: () => false,
     write: async changes => {
-      for (const {key} of changes) throw Error(key === 'fanOut' ? RACK_REFUSE.fanOut : `${key} is a reading: its owner reports it; nothing here changes it.`)
+      for (const {key} of changes) throw Error(`${key} is a reading: its owner reports it; nothing here changes it.`)
     },
   }
 }

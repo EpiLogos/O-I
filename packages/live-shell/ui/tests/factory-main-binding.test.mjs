@@ -109,14 +109,14 @@ test('the Gateways rack: the registered chains, each with the state its reading 
   assert.deepEqual(chains(main.rackValues({reading: BINDING_REFUSED, holds: bind.chainHolds()})).slice(0, 2),
     [{id: 'hermes', name: 'Hermes gateway', state: 'refused', why: 'no binding named cursor'}, {id: 'aikit-agency-gateway', name: 'AIKit agency gateway', state: 'ready'}])
   assert.equal(main.rackValues({reading: model.INITIAL_READING, holds: bind.chainHolds()}).light, undefined, 'nothing read: no light')
-  // Choosing a chain is the view's own, and shows that gateway whole; Fan-out has no carrier.
+  // Choosing a chain is the view's own, and shows that gateway whole. The rack writes nothing: Fan-out is set on each workcell's
+  // Gateway (actuation__gateway.tsx) and only read here.
   const shown = []
   const binding = main.rackBinding({reading: UNREACHABLE, holds: bind.chainHolds()}, {show: chain => shown.push(chain)})
   binding.local.chain('aikit-agency-gateway')
   assert.equal(main.rackValues({reading: UNREACHABLE, holds: bind.chainHolds()}).chain, 'aikit-agency-gateway')
   assert.deepEqual(shown, ['aikit-agency-gateway'])
-  assert.match(binding.standing.fanOut.disabled, /missing op: kernel:harness_agent_control configure \{fan_out\}/)
-  await assert.rejects(() => binding.write([{key: 'fanOut', value: 3}]), /configure \{fan_out\}/)
+  assert.equal(binding.writes('fanOut'), false, 'the rack does not set Fan-out')
   assert.equal(binding.writes('chains'), false, 'the chains are a reading')
   bind.resetHolds()
 })
@@ -171,7 +171,7 @@ test('the four designs draw on their bindings in all five views — no NaN, no u
   host.resetHost()
   const gateway = {reading: UNREACHABLE, harness: {binding: 'cursor', resolved: false}}
   const cases = [
-    [rackDesign, main.rackBinding({reading: UNREACHABLE, holds: bind.chainHolds()}, {show() {}}), /build-lane|Terminate TLS|actuation-frank\b.*composed|14:02:0/, [main.RACK_REFUSE.fanOut]],
+    [rackDesign, main.rackBinding({reading: UNREACHABLE, holds: bind.chainHolds()}, {show() {}}), /build-lane|Terminate TLS|actuation-frank\b.*composed|14:02:0/, []],
     [agencyDesign, main.agencyBinding(UNREACHABLE, bind.chainHolds()), /@nara|Telegram|launchd|100\.92\.62/, [main.AGENCY_REFUSE.service, main.AGENCY_REFUSE.agentPolicy]],
     [experimentDesign, main.experimentBinding(bind.chainHolds()), /deeper loop|S1-CODE-001|build-lane|exp-1014/, [main.EXPERIMENT_REFUSE]],
     [framesDesign, main.framesBinding(gateway, bind.chainHolds()), /build-lane|3f9a21c4|Type-check the three/, []],
