@@ -211,6 +211,11 @@ pub(crate) struct Keeping {
     roots: Roots,
     journal: Box<dyn Journal>,
     kernel: Identity,
+    /// Tests only: a write names the owners under this directory. The process's started programs are one set, so
+    /// without it a test running beside this one leaves its own fake owners in this header, and deletes them before
+    /// this one restores.
+    #[cfg(test)]
+    owners_under: Option<PathBuf>,
 }
 
 impl Keeping {
@@ -220,7 +225,22 @@ impl Keeping {
             roots,
             journal,
             kernel,
+            #[cfg(test)]
+            owners_under: None,
         }
+    }
+
+    /// The owners whose answers the readings are, as a write names them.
+    fn owners(&self) -> Vec<Identity> {
+        let owners = owner_identities();
+        #[cfg(test)]
+        if let Some(dir) = &self.owners_under {
+            return owners
+                .into_iter()
+                .filter(|owner| Path::new(&owner.path).starts_with(dir))
+                .collect();
+        }
+        owners
     }
 
     fn dir(&self) -> PathBuf {
@@ -406,7 +426,7 @@ impl Keeping {
             central: self.roots.central.to_string_lossy().into_owned(),
             aikit: self.roots.aikit.to_string_lossy().into_owned(),
             volume,
-            owners: owner_identities(),
+            owners: self.owners(),
             beacon: beacon.to_string_lossy().into_owned(),
             since,
             written_at_unix_ms: std::time::SystemTime::now()
@@ -628,12 +648,13 @@ mod tests {
     fn run(dir: &Path, journal: &Fake) -> Run {
         let watch = Watch::fed(roots(dir));
         let model: &'static ReadModel = Box::leak(Box::new(ReadModel::over(watch.clone())));
-        let keeping = Keeping::new(
+        let mut keeping = Keeping::new(
             dir.join("state").join(FILE_NAME),
             roots(dir),
             Box::new(journal.clone()),
             kernel(),
         );
+        keeping.owners_under = Some(dir.to_path_buf());
         Run {
             watch,
             model,
@@ -815,7 +836,14 @@ mod tests {
         let journal = Fake::default();
         let first = run(&dir, &journal);
         first.read("root", vec![Scope::Root], Clock::None);
+        // Another test's fake owner, started in this same process and gone before this run restores: it is not this
+        // run's owner, so it never decides this run's restore.
+        let elsewhere = temp("refused-elsewhere");
+        let foreign = elsewhere.join("foreign-owner");
+        std::fs::write(&foreign, "1").unwrap();
+        crate::owner_process::answered_by(&foreign);
         first.write();
+        let _ = std::fs::remove_dir_all(&elsewhere);
 
         // The journal forgot the beacon: it no longer reaches back.
         journal.inner.lock().unwrap().forgets_before = u64::MAX;
