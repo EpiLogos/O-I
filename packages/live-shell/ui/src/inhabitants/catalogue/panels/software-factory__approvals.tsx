@@ -4,8 +4,8 @@
 // `configure`; Hermes calls it approvals.mode) and the Thread's proposal cards (software-factory__thread.tsx: Approve, Changes, Diff).
 // Custody's Review gate decides that a change waits; this device decides how long and what then.
 //
-// The well draws the device's own law: time. One lane for each item, a bar from the start of the scale to how long the item has
-// waited (a log scale, 1 min to 24 h), a square for a proposal and a ring for a request. An amber line marks Wait; a bar that has
+// The well draws the queue as a lake: its level is the backlog (manual §19.14; face-rig CREATURE-SPEC.md 24, the lake). Each item floats on the
+// surface at how long it has waited (a log scale, 1 min to 24 h), a square for a proposal and a ring for a request. An amber line marks Wait; a bar that has
 // crossed it turns orange, because that request counts as unanswered. Handle 1 moves Wait along the scale. A denied item stays as a
 // dashed lane with a cross.
 //
@@ -145,45 +145,71 @@ function Mark({kind, color}: {kind?: Kind; color: string}) {
 
 // ---------------------------------------------------------------- the well
 
-/** The well: one lane for each item on a time scale, the Wait line across them. A reading the owner has not reported is left off the
+/** How many items fill the lake to its brim. The queue has no limit: a longer one overtops the scale and the lake stands full. */
+const BRIM = 8
+
+/** The well: the queue as a lake (face-rig CREATURE-SPEC.md 24: a lake fills from its inflows and drains, and its level is its backlog). The water
+ * rises with the number of items that wait; each item floats on the surface at the time it has waited, on a scale from 1 minute to 24 hours, a
+ * square for a proposal and a ring for a request. The amber line is Wait: a request that floats past it has crossed into unanswered and turns
+ * orange. Agents ask into the lake at the left bank, and your answers drain it at the right. A reading the owner has not reported is left off the
  * picture and named in words; the handle shows only where Wait can be written. */
 function QueueWell({v, set, standing, w, h, size}: {v: V; set?: ViewProps['set']; standing?: ViewProps['standing']; w: number; h: number; size: 'mini' | 'compact' | 'whole'}) {
   const mini = size === 'mini'
   const list = listOf(v), all = queueOf(v), wait = numOf(v, 'wait'), picked = pickedOf(v, list)
-  const x0 = mini ? 6 : 10, x1 = w - x0, laneTop = mini ? 8 : 22, axisY = h - (mini ? 8 : 18), pitch = mini ? 10 : 14
+  const x0 = mini ? 6 : 10, x1 = w - x0, top = mini ? 8 : 22, axisY = h - (mini ? 8 : 18)
   const span = Math.log(WAIT.max / WAIT.min)
   const xOf = (sec: number) => x0 + (Math.log(clampTo(WAIT.min, WAIT.max, sec) / WAIT.min) / span) * (x1 - x0)
   const secOf = (x: number) => WAIT.min * Math.exp(clampTo(0, 1, (x - x0) / (x1 - x0)) * span)
-  const room = Math.max(1, Math.floor((axisY - laneTop - 2) / pitch))
-  const over = list !== undefined && list.length > room, lanes = list === undefined ? [] : over ? list.slice(0, room - 1) : list
-  const laneY = (i: number) => laneTop + i * pitch + pitch / 2
+  const level = all === undefined ? undefined : Math.min(1, all.filter(i => !i.denied).length / BRIM)
+  const bed = axisY - 3, room = bed - top - 8, surface = level === undefined ? bed : bed - 6 - level * (room - 6)
   const handle = !!set && !mini && wait !== undefined && !standing?.wait?.disabled
   const noAnswer = strOf(v, 'noAnswer')
   const note = list === undefined ? (mini ? 'No reading' : 'No reading of the queue') : list.length === 0 ? (all && all.length > 0 ? 'None of this kind' : 'Nothing waits') : undefined
-  return <Display w={w} h={h} label="Waits" does={mini ? 'The items that wait for you, and how long each has waited.' : 'One lane for each item: how long it has waited, on a scale from 1 minute to 24 hours. The amber line is Wait. An orange request lane has crossed it.'}
+  // The basin: banks that slope to a bed, in the face rig's line, and the water in it, level with the surface.
+  const bank = (x: number, dir: 1 | -1) => `M${x} ${top + 4}C${x + dir * 3} ${bed - room * 0.3} ${x + dir * 6} ${bed - 3} ${x + dir * 18} ${bed}`
+  const rows = Math.max(0, Math.floor((bed - surface) / 6))
+  const ripple = (y: number, amp: number) => { const n = 12; let d = `M${x0 + 8} ${y}`; for (let i = 1; i <= n; i++) d += `L${(x0 + 8 + (x1 - x0 - 16) * i / n).toFixed(1)} ${(y + Math.sin(i * 1.7) * amp).toFixed(1)}`; return d }
+  // The items float on the surface; those that wait about as long stand one above the next.
+  const floats = (list ?? []).slice(0, 14).map(it => ({it, x: it.age === undefined ? x0 + 6 : Math.max(x0 + 8, xOf(it.age))}))
+  const placed: {it: Item; x: number; y: number}[] = []
+  for (const f of floats) { let n = 0; for (const q of placed) if (Math.abs(q.x - f.x) < 9) n++; placed.push({it: f.it, x: f.x, y: surface - 5 - n * 7}) }
+  return <Display w={w} h={h} label="Waits" does={mini ? 'The items that wait for you, on a lake whose level is how many.' : 'The queue as a lake: it rises with the number of items that wait. Each item floats at the time it has waited, from 1 minute to 24 hours. The amber line is Wait. An orange request has floated past it.'}
     corner={countText(v)}>
     {!mini && <text x={7} y={11} className="dp-axis">{wait === undefined ? `wait ${NONE}` : `wait ${spanText(wait)}${noAnswer ? ` → ${noAnswer}` : ''}`}</text>}
-    {lanes.map((it, i) => {
-      const y = laneY(i), c = ink(it, wait), xe = it.age === undefined ? x0 + 2 : Math.max(x0 + 4, xOf(it.age)), chosen = !mini && picked?.id === it.id
+    {/* the basin, the water and its lines */}
+    <path d={bank(x0, 1)} className="dp-faint" fill="none" />
+    <path d={bank(x1, -1)} className="dp-faint" fill="none" />
+    <path d={`M${x0 + 18} ${bed}H${x1 - 18}`} className="dp-faint" />
+    {level !== undefined && level > 0 && <>
+      <path d={`M${x0 + 4} ${surface}L${x1 - 4} ${surface}L${x1 - 18} ${bed}L${x0 + 18} ${bed}Z`} fill="var(--dp-value)" opacity={0.16} />
+      {Array.from({length: Math.min(rows, 12)}, (_, i) => <path key={i} d={ripple(surface + 6 * (i + 1), 0.5)} fill="none" stroke="var(--dp-value)" strokeWidth={0.6} opacity={0.38 - i * 0.025} />)}
+      <path d={ripple(surface, 1.1)} fill="none" stroke="var(--dp-value)" strokeWidth={1.4} />
+    </>}
+    {/* an inflow at the left bank (agents ask) and a drain at the right (you answer) */}
+    {!mini && <>
+      <path d={`M${x0 + 2} ${top + 4}l4 0l0 ${Math.max(2, surface - top - 4)}`} className="dp-faint" fill="none" strokeDasharray="1.5 2.5" />
+      <path d={`M${x1 - 6} ${bed - 2}l8 0`} stroke="var(--dp-on)" strokeWidth={1.2} fill="none" />
+      <path d={`M${x1 - 1} ${bed - 5}l3 3l-3 3`} stroke="var(--dp-on)" strokeWidth={1.2} fill="none" />
+    </>}
+    {placed.map(({it, x: xe, y}) => {
+      const c = ink(it, wait), chosen = !mini && picked?.id === it.id
       const click = set && !mini ? () => set('pick', it.id) : undefined
       return <g key={it.id} onClick={click} style={click ? {cursor: 'pointer'} : undefined}>
         <title>{[itemName(it), kindWord(it.kind), it.age === undefined ? undefined : `waited ${spanText(it.age)}`, it.denied ? 'declined' : isPast(it, wait) ? 'unanswered' : undefined].filter(Boolean).join(' · ')}</title>
-        {click && <rect x={x0 - 4} y={y - pitch / 2} width={x1 - x0 + 8} height={pitch} fill={chosen ? 'color-mix(in srgb, var(--sel, #7ec3e6) 20%, transparent)' : 'transparent'} />}
-        <path d={`M${x0} ${y}H${it.kind === 'request' ? xe - 3.2 : xe}`} stroke={c} strokeWidth={mini ? 1.5 : 2} strokeDasharray={it.denied ? '2 2' : undefined} fill="none" />
-        {it.kind === 'request' ? <circle cx={xe} cy={y} r={3.2} fill="none" stroke={c} strokeWidth={1.5} />
-          : it.kind === 'proposal' ? <rect x={xe - 3} y={y - 3} width={6} height={6} fill={c} />
+        {click && <circle cx={xe} cy={y} r={7} fill={chosen ? 'color-mix(in srgb, var(--sel, #7ec3e6) 28%, transparent)' : 'transparent'} />}
+        {it.kind === 'request' ? <circle cx={xe} cy={y} r={3.2} fill="none" stroke={c} strokeWidth={1.5} strokeDasharray={it.denied ? '2 2' : undefined} />
+          : it.kind === 'proposal' ? <rect x={xe - 3} y={y - 3} width={6} height={6} fill={it.denied ? 'none' : c} stroke={it.denied ? c : undefined} strokeWidth={it.denied ? 1.2 : undefined} />
           : <rect x={xe - 2.5} y={y - 2.5} width={5} height={5} fill="none" stroke={c} strokeWidth={1} />}
         {it.denied && <path d={`M${xe - 2.2} ${y - 2.2}l4.4 4.4m0-4.4l-4.4 4.4`} stroke="var(--text-dim)" strokeWidth={1.2} fill="none" />}
       </g>
     })}
-    {over && <text x={x0} y={laneY(room - 1) + 3} className="dp-axis">+{list!.length - room + 1} more</text>}
-    {note && <text x={x0} y={mini ? 40 : laneTop + 22} className="dp-ink-dim">{note}</text>}
+    {note && <text x={x0 + 20} y={mini ? 40 : top + 22} className="dp-ink-dim">{note}</text>}
     <path d={`M${x0} ${axisY}H${x1}`} className="dp-faint" />
     {TICKS.map(([sec, label], i) => <g key={sec}>
       <path d={`M${xOf(sec)} ${axisY - 3}V${axisY + 3}`} className="dp-faint" />
       {!mini && <text x={xOf(sec)} y={h - 5} className="dp-axis" textAnchor={i === 0 ? 'start' : i === TICKS.length - 1 ? 'end' : 'middle'}>{label}</text>}
     </g>)}
-    {wait !== undefined && <path d={`M${xOf(wait)} ${laneTop - (mini ? 4 : 6)}V${axisY}`} stroke="var(--dp-on)" strokeWidth={1.4} strokeDasharray="3 2" fill="none" />}
+    {wait !== undefined && <path d={`M${xOf(wait)} ${top - (mini ? 4 : 6)}V${axisY}`} stroke="var(--dp-on)" strokeWidth={1.4} strokeDasharray="3 2" fill="none" />}
     {wait !== undefined && !handle && <circle cx={xOf(wait)} cy={axisY} r={3} fill="var(--dp-on)" />}
     {handle && <Handle n={1} shape="ring" x={xOf(wait!)} y={axisY} label="Wait" does={SAYS.wait} onDrag={x => set!('wait', nice(secOf(x)))} onReset={() => set!('wait', WAIT_DEFAULT)} />}
   </Display>
@@ -270,6 +296,7 @@ function ApprovalsPane({p}: {p: ViewProps}) {
       <b>Approvals</b><span>{countText(v)}</span><span>wait {waitText(v)}</span><span>no answer {shown(v, 'noAnswer')}</span><span>default {shown(v, 'approvals')}</span>
       <span>show {shown(v, 'show')}</span><span>order {shown(v, 'order')}</span>
     </div>
+    <div className="ap-lake" aria-label="The queue as a lake"><QueueWell v={v} set={p.set} standing={p.standing} w={Math.max(420, (p.room?.w ?? 760) - 20)} h={104} size="whole" /></div>
     <div className="ap-body">
       <div className="ap-list" role="table" aria-label="Queue">
         <div className="ap-line ap-line--head" role="row"><span /><span>Agent</span><span>Item</span><span>Waited</span><span>Flag</span></div>

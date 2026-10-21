@@ -113,8 +113,6 @@ function StatusLine() {
   return <div className="cat-status" role="status">{said || 'Point at a control to read what it does.'}</div>
 }
 
-/** A designed device in its six views, all on one set of values: move a macro on the chain and the expanded band, the pane,
- * the window and the rail move with it. */
 /** A rack's member, as the gallery draws it inside the rack's Full: the member's own design in its Whole view, at the pool's
  * measures, on its own defaults (the shell draws it on its owner). A member with no design draws nothing here; the rack stands in. */
 function GalleryMember({id}: {id: string}) {
@@ -133,6 +131,8 @@ function GalleryMember({id}: {id: string}) {
 }
 const galleryMember = (id: string) => <GalleryMember key={id} id={id} />
 
+/** A designed device in its views, all on one set of values: move a macro on the chain and the expanded band, the pane, the
+ * window and the rail move with it. */
 function DesignedViews({design, views, fixture: first}: {design: DesignedDevice; views: readonly View[]; fixture?: string | null}) {
   const names = Object.keys(design.fixtures ?? {})
   const [fixture, setFixture] = useState(first && names.includes(first) ? first : names[0] ?? '')
@@ -235,7 +235,10 @@ function Gallery() {
   if (!id) return <Index />
   if (design === 'loading') return <main className="cat-missing"><p>Loading <b>{id}</b>…</p></main>
   if (design && query.get('generic') !== '1') {
-    const views = viewsOf(viewParam)
+    // A device has the views of the places it stands in (§16.3): a monitor draws its tile and its Full, and nothing else.
+    const has = (view: View) => !design.views || design.views.includes(view === 'flip' ? 'whole' : view)
+    const asked = viewsOf(viewParam).filter(has)
+    const views = asked.length ? asked : VIEWS.filter(has)
     return <main className="cat-device"><DesignedViews design={design} views={views} fixture={query.get('fixture')} /><StatusLine /></main>
   }
   if (loadError) return <main className="cat-missing"><p><b>{id}</b>: its designed views did not load.</p><pre>{loadError}</pre></main>

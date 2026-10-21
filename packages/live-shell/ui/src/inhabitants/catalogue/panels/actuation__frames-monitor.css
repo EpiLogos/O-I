@@ -1,17 +1,11 @@
-/* The Frames monitor's own layout: the frame list in the pane, the lines of the well, and the tape in the widget tile. Shell and panel tokens only. */
+/* The Frames monitor's own layout: the tape and the frame list in the pane, and the last frames in the widget tile. Shell and panel tokens only. */
 
-/* The last frames in the well: the direction takes its colour, the kind and the note stay in the text tones. */
-.dp-display .fm-ln { font: 8.5px var(--mono, ui-monospace, monospace); fill: var(--text-dim); }
-.dp-display .fm-ln-kind { fill: var(--text); }
-.dp-display .fm-ln-note { fill: var(--text-dim); }
-
-/* The pane: the list of frames, and the readings beside it. */
-.fm-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1); color: var(--text); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
-.fm-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0); border-bottom: 1px solid var(--line); color: var(--text-dim); font-size: 10.5px; white-space: nowrap; }
-.fm-head b { font-weight: 600; color: var(--text); font-size: 11px; }
-.fm-head span + span::before { content: "·"; margin-right: 10px; color: var(--text-faint); }
-.fm-head [data-state="held"] { color: var(--stall); }
-.fm-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 232px; }
+/* The pane (a monitor's Full, monitor.tsx): the tape and the list of frames, and the readings beside them. */
+.fm-body { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 232px; }
+/* The tape across the top of the list: its lanes and the Keep scale, on the well's ground, flush with the column. */
+.fm-strip { flex: none; height: 92px; background: var(--dp-well); border-bottom: 1px solid var(--line); overflow: hidden; }
+.fm-tape-svg { display: block; }
+.fm-tape-svg .dp-handle { cursor: ew-resize; }
 
 .fm-frames { min-width: 0; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
 .fm-listbox { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
@@ -33,22 +27,23 @@
 .fm-frame[data-kind="tools"] .fm-kind { color: var(--text); }
 .fm-session, .fm-note { color: var(--text-dim); }
 .fm-empty { margin: auto; color: var(--text-faint); }
-.fm-foot { flex: none; display: flex; gap: 14px; height: 22px; align-items: center; padding: 0 14px; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 10px; }
+.fm-foot { flex: none; display: flex; gap: 14px; height: 22px; align-items: center; padding: 0 14px; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 10px; white-space: nowrap; overflow: hidden; }
+.fm-foot b { font-weight: 400; color: var(--text); font-variant-numeric: tabular-nums; }
 .fm-foot [data-state="stalled"] { color: var(--stall); }
 
 .fm-reads { min-width: 0; display: flex; flex-direction: column; background: var(--bg-0); overflow: hidden; }
-.fm-read { padding: 7px 14px 6px; border-bottom: 1px solid var(--line); }
+.fm-read { padding: 5px 14px 5px; border-bottom: 1px solid var(--line); }
 .fm-read h4 { margin: 0 0 3px; font-size: 9px; font-weight: 400; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint); }
-.fm-read strong { display: block; font-size: 16px; font-weight: 300; line-height: 1.2; color: var(--dp-value); font-variant-numeric: tabular-nums; }
+.fm-read strong { display: block; font-size: 14px; font-weight: 300; line-height: 1.2; color: var(--dp-value); font-variant-numeric: tabular-nums; }
 .fm-read strong[data-state="stalled"], .fm-read strong[data-state="refused"] { color: var(--stall); }
 .fm-read strong[data-state="none"] { color: var(--text-faint); }
-.fm-read p { margin: 2px 0 0; font-size: 10.5px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-read p { margin: 1px 0 0; font-size: 10.5px; line-height: 1.35; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fm-read p b { font-weight: 400; color: var(--text); }
 
 /* The widget: the last eleven frames in a well, the readings and Pause beside it. The tile body is 103 px high; a line is 9. */
 .fm-tape { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; background: var(--dp-well); border: 1px solid var(--line); overflow: hidden; }
 .fm-tape ol { margin: 0; padding: 0; list-style: none; }
-.fm-tl { display: grid; grid-template-columns: 9px 78px minmax(0, 1fr); gap: 0 3px; align-items: baseline; height: 9px; padding: 0 3px; font: 8px/9px var(--mono, ui-monospace, monospace); }
+.fm-tl { cursor: pointer; display: grid; grid-template-columns: 9px 78px minmax(0, 1fr); gap: 0 3px; align-items: baseline; height: 9px; padding: 0 3px; font: 8px/9px var(--mono, ui-monospace, monospace); }
 .fm-tl > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fm-tl-dir { text-align: center; }
 .fm-tl[data-dir="out"] .fm-tl-dir { color: var(--dp-on); }
@@ -59,3 +54,5 @@
 .fm-tl-note { color: var(--text-dim); }
 .fm-tape .fm-empty { padding: 0 6px; font-size: 9px; text-align: center; }
 .fm-tile-side { flex: none; width: 56px; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+.fm-tl:hover { background: color-mix(in srgb, var(--sel) 14%, transparent); }
+.fm-tl:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }

@@ -9,9 +9,14 @@
 //             output). `used` would be the passages the agent used, as [line, from, to]; no owner reports them yet, so a page that
 //             carries none says so.
 //   page      the address shown; agent the agent followed.
-// Mark used text and Follow are the tile's own.
-import {Band, Chooser, Display, Folded, Handle, Panel, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+// Mark used text and Follow are the monitor's own.
+//
+// A monitor (manual §16.3): it stands on the rail and in a pane, and has two views. The tile is the page shown, with the pages as dots
+// down its right edge and handle 1 on the one shown; its address opens the page in Full. Full's head carries the agent, when the page
+// was read and the count of pages, with Page, Mark used and Follow; its body is every page read beside the page shown.
+import {Chooser, Display, Handle, Tile, Toggle} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, json, railAndPane, st, strOf, type ViewProps} from './design'
+import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
 
 type V = ViewProps['v']
 
@@ -33,7 +38,7 @@ function PageView({p, w, h, pager, size = 9, press}: {p: ViewProps; w: number; h
   const v = p.v, pages = pagesOf(v), pg = pageOf(v), mark = boolOf(v, 'mark') !== false, right = pager ? 16 : 4, lh = size + 4, cw = size * .6
   const room = Math.floor((w - 10 - right) / cw), fit = Math.floor((h - 26) / lh)
   if (!pg) return <text x={6} y={18} className="dp-ink-dim">{strOf(v, 'reason') ?? 'No page read'}</text>
-  const idx = pages!.indexOf(pg), dotY = (i: number) => 14 + i * Math.min(12, (h - 24) / Math.max(1, pages!.length - 1)), ps = st(p, 'page')
+  const idx = pages!.findIndex(x => x.url === pg.url), dotY = (i: number) => 14 + i * Math.min(12, (h - 24) / Math.max(1, pages!.length - 1)), ps = st(p, 'page')
   return <g>
     <text x={6} y={12} className="dp-ink" style={{fontSize: size, cursor: press ? 'pointer' : undefined}} onClick={press} role={press ? 'button' : undefined}
       data-i={press ? `${host(pg.url)}|Open the page in the pane that has focus.` : undefined}>{host(pg.url).slice(0, room)}</text>
@@ -51,24 +56,43 @@ function PageView({p, w, h, pager, size = 9, press}: {p: ViewProps; w: number; h
 }
 
 const LIGHT_WHY = 'Web has no on or off: it only reads. The light stays hollow.'
-const head = (p: ViewProps) => ({light: 'unknown' as LightState, lightWhy: LIGHT_WHY, onFold: p.nav.fold, onFull: p.nav.full})
-const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const DISPLAY_DOES = 'The page as the agent got it. The text the agent used is marked.'
 
-function controls(p: ViewProps) {
-  const v = p.v, pages = pagesOf(v) ?? []
-  return {
-    page: <Chooser {...st(p, 'page')} wide label="Page" does="The page to show." value={pageOf(v)?.url ?? ''} options={pages.map(x => ({value: x.url, label: x.title}))} onChange={x => p.set('page', x)}
-      disabled={st(p, 'page').disabled ?? (pages.length ? undefined : 'No page read.')} />,
-    mark: <Toggle {...st(p, 'mark')} label="Mark used" does="Mark the text the agent used." on={boolOf(v, 'mark') !== false} onChange={x => p.set('mark', x)} />,
-    follow: <Toggle {...st(p, 'follow')} label="Follow" does="Show the page the selected agent read last." on={boolOf(v, 'follow') === true} unknown={boolOf(v, 'follow') === undefined} onChange={x => p.set('follow', x)} />,
-  }
+/** Full's head: the agent, when the page was read, the pages; Page, Mark used and Follow. */
+function Head({p}: {p: ViewProps}) {
+  const v = p.v, pages = pagesOf(v), pg = pageOf(v)
+  return <MonitorHead title="Web" readings={[
+    {label: 'agent', value: strOf(v, 'agent'), does: 'The agent followed.'},
+    {label: 'read at', value: pg?.at, does: 'When the agent read the page.', tone: 'value'},
+    {label: 'pages', value: pages?.length, does: 'The pages the agent read.'},
+    {label: 'used', value: pg?.used?.length, does: 'Passages of the page the agent used.', tone: 'value'},
+  ]} controls={<>
+    <Chooser {...st(p, 'page')} label="Page" does="The page to show." value={pg?.url ?? ''} options={(pages ?? []).map(x => ({value: x.url, label: x.title}))} onChange={x => p.set('page', x)}
+      disabled={st(p, 'page').disabled ?? (pages?.length ? undefined : 'No page read.')} />
+    <Toggle {...st(p, 'mark')} label="Mark used" does="Mark the text the agent used." on={boolOf(v, 'mark') !== false} onChange={x => p.set('mark', x)} />
+    <Toggle {...st(p, 'follow')} label="Follow" does="Show the page the selected agent read last." on={boolOf(v, 'follow') === true} unknown={boolOf(v, 'follow') === undefined} onChange={x => p.set('follow', x)} />
+  </>} />
 }
 
-export const design: DesignedDevice = {
+/** Every page the agent read, newest at the top: its title, its address and when; the one shown marked. A press shows it. */
+function PageList({p, w, h}: {p: ViewProps; w: number; h: number}) {
+  const pages = pagesOf(p.v), pg = pageOf(p.v), lh = 40, room = Math.floor((w - 24) / 6)
+  if (!pages) return <text x={14} y={24} className="dp-ink-dim">{strOf(p.v, 'reason') ?? 'No page read'}</text>
+  return <g>{pages.slice(0, Math.floor((h - 8) / lh)).map((x, i) => { const y = 8 + i * lh, on = x.url === pg?.url
+    return <g key={x.url} role="button" tabIndex={0} aria-label={`Show ${x.title}`} onClick={() => p.set('page', x.url)} onKeyDown={e => { if (e.key === 'Enter') p.set('page', x.url) }}
+      data-i={`${x.title}|${host(x.url)}. Show the page.`}>
+      <rect x={0} y={y} width={w} height={lh - 2} fill={on ? 'var(--sel, #7ec3e6)' : 'transparent'} opacity={on ? .16 : 1} />
+      {on && <rect x={0} y={y} width={2} height={lh - 2} fill="var(--sel, #7ec3e6)" />}
+      <text x={14} y={y + 16} className="dp-ink" style={{fontSize: 11}}>{x.title.slice(0, room)}</text>
+      <text x={14} y={y + 30} className="dp-axis" style={{fontSize: 9}}>{host(x.url).slice(0, room + 4)}</text>
+      <text x={w - 10} y={y + 16} textAnchor="end" className="dp-axis">{x.at ?? NONE}</text>
+    </g> })}</g>
+}
+
+export const design = railAndPane({
   id: 'widgets:web',
   title: 'Web',
-  kind: 'instrument',
+  kind: 'monitor',
   defaults: {
     mark: true, follow: true, agent: 'Fizz · lead', page: 'https://www.ableton.com/en/manual/max-for-live-devices/',
     pages: JSON.stringify([
@@ -83,39 +107,17 @@ export const design: DesignedDevice = {
     'No reading': {pages: undefined, page: undefined, reason: 'No page read by the selected agent'},
   },
 
-  folded: p => <Folded title="Web" light="unknown" readings={[pageOf(p.v) ? host(pageOf(p.v)!.url).split('/')[0]! : NONE, `${pagesOf(p.v)?.length ?? NONE} pages`]} onUnfold={p.nav.unfold} />,
-
-  compact: p => { const c = controls(p)
-    return <Panel title="Web" view="compact" {...head(p)} onSelect={p.nav.select}>
-      <Section width={212}>
-        <Display w={200} h={146} label="Page" does={`${DISPLAY_DOES} Drag handle 1 for another page.`}><PageView p={p} w={200} h={146} pager size={8.5} /></Display>
-      </Section>
-      <Section label="Macros" width={96}>{c.page}{c.mark}{c.follow}</Section>
-    </Panel> },
-
-  whole: p => { const c = controls(p), pg = pageOf(p.v), w = wide(p) ? Math.round(clampTo(240, p.room!.w - 300, 600)) : 240
-    return <Panel title="Web" view="whole" {...head(p)}>
-      <Band>
-        <Section width={w + 12}>
-          <Display w={w} h={146} label="Page" does={`${DISPLAY_DOES} Drag handle 1 for another page. Click the address to open it.`}><PageView p={p} w={w} h={146} pager size={8.5} press={p.nav.full} /></Display>
-        </Section>
-        <Section label="Page" grow>{c.page}{c.follow}{c.mark}
-          <Readout label="read at" does="When the agent read the page." value={pg?.at} tone="value" />
-        </Section>
-      </Band>
-    </Panel> },
-
-  full: p => <div className="ref-pane-body ref-pane-body--dark">
-    <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMinYMin meet" className="ref-pane-svg" aria-label="The page">
-      <g className="dp-display" style={{background: 'none', border: 'none'}}>
-        <text x={16} y={22} className="dp-ink" style={{fontSize: 13}}>{pageOf(p.v)?.title ?? NONE}</text>
-        <text x={744} y={22} textAnchor="end" className="dp-axis">{pageOf(p.v) ? `read at ${pageOf(p.v)!.at ?? NONE} by ${strOf(p.v, 'agent') ?? NONE}` : ''}</text>
-        <g transform="translate(10 30)"><PageView p={{...p, set: () => {}}} w={740} h={380} pager={false} size={12} /></g>
+  full: p => <MonitorPane dark label="Web" head={<Head p={p} />}>{room => { const lw = Math.round(clampTo(200, 260, room.w * .3)), pg = pageOf(p.v)
+    return <MonitorPicture room={room} label="The pages and the page">
+      <PageList p={p} w={lw} h={room.h} />
+      <path d={`M${lw + .5} 0V${room.h}`} className="dp-faint" />
+      <g transform={`translate(${lw + 12} 0)`}>
+        <text x={4} y={22} className="dp-ink" style={{fontSize: 13}}>{pg?.title ?? NONE}</text>
+        <g transform="translate(0 30)"><PageView p={p} w={room.w - lw - 24} h={room.h - 34} pager={false} size={12} /></g>
       </g>
-    </svg>
-  </div>,
+    </MonitorPicture> }}</MonitorPane>,
 
-  widget: p => <Tile title="Web" light="unknown" span={2} onFull={p.nav.full}>
-    <Display w={266} h={104} label="Page" does={`${DISPLAY_DOES} Click the address to open the page in a pane.`}><PageView p={p} w={266} h={104} pager={false} size={8.5} press={p.nav.full} /></Display>
+  widget: p => <Tile title="Web" light="unknown" lightWhy={LIGHT_WHY} span={2} onFull={p.nav.full}>
+    <Display w={266} h={104} label="Page" does={`${DISPLAY_DOES} Drag handle 1 for another page. Click the address to open the page in Full.`}><PageView p={p} w={266} h={104} pager size={8.5} press={p.nav.full} /></Display>
   </Tile>,
-}
+})

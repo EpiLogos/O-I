@@ -1,5 +1,5 @@
-// The Remote carrier (manual §19.18, workcell:remote-carrier): the device that moves a session to another machine of yours, the fourth chain
-// of the Gateways rack. Live's nearest: Utility, a small effect whose meaning is plain at a glance. The picture is the route: this machine
+// The Remote carrier (manual §19.18, workcell:remote-carrier): the device that names the machine a workcell runs on, the second device on
+// a workcell's chain, after the Gateway. Live's nearest: Utility, a small effect whose meaning is plain at a glance. The picture is the route: this machine
 // on the left, each machine you connected on the right, one line to each. The line is drawn by the machine's standing (solid ready, dashed
 // composed, crossed when refused or incompatible, dotted when disconnected). Handle 1 stands where the session runs and moves it: to this
 // machine, or onto a machine. Under the route stand the round trip, on a log scale from 1 ms to the 3 s a probe waits, and the grant, one
@@ -391,7 +391,7 @@ const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, 
 export const design: DesignedDevice = {
   id: 'workcell:remote-carrier',
   title: 'Remote carrier',
-  kind: 'effect',
+  kind: 'connection',
   defaults: {light: 'dark', here: 'workcell:mac', where: 'this', machine: 'omarchy', machines: JSON.stringify(MACHINES)},
   fixtures: {
     'Reads only, one grant ended': {},

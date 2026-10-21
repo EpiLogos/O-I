@@ -7,8 +7,17 @@
 // outside would arrive through registerPanel, slot right-dock, with no badge field yet), so every reading here is the entry's and
 // `reason` names the absence. The value keys follow the entry: provider, calendars [{id, name}], calendar ('all' or an id), range
 // ('day' | 'week'), thisWork, events [{title, start, end, calendar, work}], now, and fullForm (whether the provider supplies a full view).
-import {Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+// open, the event opened (its start and title), is the monitor's own.
+//
+// A monitor (manual §16.3): it stands on the rail and in a pane, and has two views. The tile is the span, with Range as handle 1 at the
+// axis; it carries the badge of a widget from outside. Full exists only where the provider supplies a full form: then the tile offers
+// ▦, an event pressed there opens in Full, and Full's head carries the provider, the next event and the events shown, with Calendar,
+// Range and This work; its body is the span at pane size and the event opened. Where the provider supplies none, the tile offers no
+// ▦ and carries Calendar and This work in one small row under the span, and Full says in its head that there is none.
+import {useContext, type ReactNode} from 'react'
+import {Chooser, Display, Handle, PlaceContext, Radio, Tile, Toggle, type LightState} from '../../sdk/panel'
+import {boolOf, clampTo, json, railAndPane, st, strOf, type ViewProps} from './design'
+import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
 
 type V = ViewProps['v']
 
@@ -27,9 +36,11 @@ const calendarsOf = (v: V) => json<{id: string; name: string}[]>(v, 'calendars',
 const hm = (ms: number) => { const d = new Date(ms); return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` }
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+const eventId = (e: Event) => `${new Date(e.start).toISOString()} ${e.title}`
+
 /** The span: hours across for a day, days across for a week, the events as bars. `handle`: the range at the axis's right end — drag
- * right for the week, left for the day. */
-function Span({p, w, h, handle, size = 9}: {p: ViewProps; w: number; h: number; handle: boolean; size?: number}) {
+ * right for the week, left for the day. `press`: an event pressed opens it; the one opened is marked. */
+function Span({p, w, h, handle, size = 9, press}: {p: ViewProps; w: number; h: number; handle: boolean; size?: number; press?: (e: Event) => void}) {
   const v = p.v, events = eventsOf(v), now = Date.parse(strOf(v, 'now') ?? ''), week = strOf(v, 'range') === 'week', rs = st(p, 'range')
   if (!events || !Number.isFinite(now)) return <text x={6} y={18} className="dp-ink-dim">{strOf(v, 'reason') ?? 'No reading from the provider'}</text>
   const d0 = new Date(now); d0.setUTCHours(0, 0, 0, 0); if (week) d0.setUTCDate(d0.getUTCDate() - ((d0.getUTCDay() + 6) % 7))
@@ -40,7 +51,9 @@ function Span({p, w, h, handle, size = 9}: {p: ViewProps; w: number; h: number; 
       {i < (week ? 7 : 4) && <text x={X(t) + 2} y={h - 3} className="dp-axis">{week ? DAYS[new Date(t).getUTCDay()] : `${String(i * 6).padStart(2, '0')}:00`}</text>}</g> })}
     <path d={`M${X(now).toFixed(1)} 10V${h - 12}`} className="dp-curve-on" />
     {inSpan.map((e, i) => { const y = 18 + i * lh, x = X(e.start), x2 = Math.max(X(e.end), x + 3)
-      return <g key={i}>
+      return <g key={i} {...(press ? {role: 'button', tabIndex: 0, 'aria-label': `Open ${e.title}`, style: {cursor: 'pointer'}, onClick: () => press(e),
+        onKeyDown: (k: {key: string}) => { if (k.key === 'Enter') press(e) }, 'data-i': `${e.title}|${hm(e.start)} to ${hm(e.end)}. Open the event.`} : {})}>
+        {eventId(e) === strOf(v, 'open') && <rect x={l} y={y - 1} width={r - l} height={lh - 1} fill="var(--sel, #7ec3e6)" opacity={.14} />}
         <rect x={x} y={y} width={x2 - x} height={lh - 3} fill={e.work ? 'var(--dp-on)' : 'var(--dp-value)'} opacity={e.end < now ? .3 : .7} />
         {(() => { const label = `${hm(e.start)} ${e.title}`, lw = label.length * size * .55, right = x2 + 3 + lw <= r || x - 3 - lw < l
           const room = Math.max(4, Math.floor(((right ? r - x2 - 3 : x - 3 - l)) / (size * .55)))
@@ -56,26 +69,59 @@ function Span({p, w, h, handle, size = 9}: {p: ViewProps; w: number; h: number; 
 const Outside = ({v}: {v: V}) => <span data-i={`From outside|Supplied by ${strOf(v, 'provider') ?? 'a provider that is not installed'}. It shows only what its provider supplies.`}
   style={{fontSize: 8, lineHeight: '11px', padding: '0 3px', border: '1px solid var(--text-faint)', color: 'var(--text-dim)'}}>outside</span>
 const lightOf = (v: V): LightState => (strOf(v, 'provider') ? 'lit' : 'unknown')
-const head = (p: ViewProps) => ({light: lightOf(p.owner ?? p.v), lightWhy: strOf(p.v, 'provider') ? 'The light reads whether the provider answers. It has no switch here.' : 'No provider is installed.',
-  onFold: p.nav.fold, onFull: strOf(p.v, 'fullForm') === 'yes' || boolOf(p.v, 'fullForm') === true ? p.nav.full : undefined, mark: <Outside v={p.v} />})
-const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
+const lightWhy = (v: V) => (strOf(v, 'provider') ? 'The light reads whether the provider answers. It has no switch here.' : 'No provider is installed.')
+const fullForm = (v: V) => strOf(v, 'fullForm') === 'yes' || boolOf(v, 'fullForm') === true
 const next = (v: V) => { const now = Date.parse(strOf(v, 'now') ?? ''), e = eventsOf(v)?.find(x => x.start >= now); return e ? `${hm(e.start)} ${e.title}` : undefined }
 const DISPLAY_DOES = 'What is due: each event a bar from its start to its end, amber where it is tied to this work. The amber line is now.'
+/** Where the provider supplies no full form there is no Full, so no window either: the tile offers neither ▦ nor ↗. */
+function WithoutFull({children}: {children: ReactNode}) {
+  const place = useContext(PlaceContext)
+  return <PlaceContext.Provider value={{...place, onPopout: undefined}}>{children}</PlaceContext.Provider>
+}
+const openEvent = (p: ViewProps) => (e: Event) => { p.set('open', eventId(e)); p.nav.full?.() }
 
 function controls(p: ViewProps) {
   const v = p.v, cals = calendarsOf(v), none = cals.length ? undefined : 'No provider is installed.'
   return {
-    calendar: <Chooser {...st(p, 'calendar')} wide label="Calendar" does="Which calendars show." value={strOf(v, 'calendar') ?? 'all'} options={[{value: 'all', label: 'All'}, ...cals.map(c => ({value: c.id, label: c.name}))]}
+    calendar: <Chooser {...st(p, 'calendar')} label="Calendar" does="Which calendars show." value={strOf(v, 'calendar') ?? 'all'} options={[{value: 'all', label: 'All'}, ...cals.map(c => ({value: c.id, label: c.name}))]}
       onChange={x => p.set('calendar', x)} disabled={st(p, 'calendar').disabled ?? none} />,
-    range: <Radio {...st(p, 'range')} label="Range" does="The span the tile shows." value={strOf(v, 'range') ?? ''} options={RANGES} stack onChange={x => p.set('range', x)} disabled={st(p, 'range').disabled ?? none} />,
+    range: <Radio {...st(p, 'range')} label="Range" does="The span the tile shows." value={strOf(v, 'range') ?? ''} options={RANGES} onChange={x => p.set('range', x)} disabled={st(p, 'range').disabled ?? none} />,
     mine: <Toggle {...st(p, 'thisWork')} label="This work" does="Show only events tied to the work in front of you." on={boolOf(v, 'thisWork') === true} onChange={x => p.set('thisWork', x)} disabled={st(p, 'thisWork').disabled ?? none} />,
   }
 }
 
-export const design: DesignedDevice = {
+/** Full's head: the provider, the next event and the events shown; Calendar, Range and This work. Where the provider supplies no full
+ * form, the head says so and holds nothing else: the tile carries the settings. */
+function Head({p}: {p: ViewProps}) {
+  const v = p.v, c = controls(p), events = eventsOf(v)
+  if (!fullForm(v)) return <MonitorHead title="Calendar" mark={<Outside v={v} />} readings={[
+    {label: 'provider', value: strOf(v, 'provider'), does: 'The provider the widget comes from.'},
+    {value: 'no full view', does: strOf(v, 'provider') ? 'The provider supplies no full form, so Calendar has no Full view.' : 'No calendar provider is installed, so Calendar has no Full view.', tone: 'stall'},
+  ]} />
+  return <MonitorHead title="Calendar" mark={<Outside v={v} />} readings={[
+    {label: 'provider', value: strOf(v, 'provider'), does: 'The provider the widget comes from.'},
+    {label: 'next', value: next(v), does: 'The next event.', tone: 'value'},
+    {label: 'events', value: events?.length, does: 'The events the calendars shown hold.'},
+  ]} controls={<>{c.calendar}{c.range}{c.mine}</>} />
+}
+
+/** The event opened, at the foot of the pane: its time, its calendar and whether it is tied to this work. */
+function Opened({p, w, y}: {p: ViewProps; w: number; y: number}) {
+  const e = eventsOf(p.v)?.find(x => eventId(x) === strOf(p.v, 'open')), cal = calendarsOf(p.v).find(c => c.id === e?.calendar)?.name ?? e?.calendar
+  return <g>
+    <path d={`M0 ${y}H${w}`} className="dp-faint" />
+    {e ? <g>
+      <rect x={16} y={y + 13} width={8} height={8} fill={e.work ? 'var(--dp-on)' : 'var(--dp-value)'} />
+      <text x={32} y={y + 21} className="dp-ink" style={{fontSize: 11}}>{e.title}</text>
+      <text x={w - 16} y={y + 21} textAnchor="end" className="dp-axis" style={{fontSize: 9.5}}>{hm(e.start)}–{hm(e.end)}{cal ? ` · ${cal}` : ''}{e.work ? ' · this work' : ''}</text>
+    </g> : <text x={16} y={y + 21} className="dp-ink-dim">{eventsOf(p.v) ? 'Click an event to open it' : ''}</text>}
+  </g>
+}
+
+export const design = railAndPane({
   id: 'widgets:calendar',
   title: 'Calendar',
-  kind: 'instrument',
+  kind: 'monitor',
   defaults: {
     provider: 'a calendar provider', calendar: 'all', range: 'day', thisWork: false, now: '2026-10-16T14:22:00Z', fullForm: true,
     calendars: JSON.stringify([{id: 'work', name: 'Work'}, {id: 'home', name: 'Home'}]),
@@ -91,40 +137,25 @@ export const design: DesignedDevice = {
     'No provider installed': {provider: undefined, calendars: undefined, events: undefined, now: undefined, fullForm: false, reason: 'No calendar provider is installed'},
   },
 
-  folded: p => <Folded title="Calendar" light={lightOf(p.v)} readings={[next(p.v) ?? NONE, strOf(p.v, 'range') ?? NONE]} onUnfold={p.nav.unfold} />,
+  full: p => <MonitorPane dark label="Calendar" head={<Head p={p} />}>{room => fullForm(p.v)
+    ? <MonitorPicture room={room} label="The calendar">
+        <Span p={p} w={room.w} h={room.h - 40} handle={false} size={12} press={e => p.set('open', eventId(e))} />
+        <Opened p={p} w={room.w} y={room.h - 36} />
+      </MonitorPicture>
+    : <MonitorPicture room={room} label="No full view">
+        <text x={room.w / 2} y={room.h / 2} textAnchor="middle" className="dp-ink-dim">{strOf(p.v, 'provider') ? 'The provider supplies no full view' : 'No calendar provider is installed'}</text>
+      </MonitorPicture>}</MonitorPane>,
 
-  compact: p => { const c = controls(p)
-    return <Panel title="Calendar" view="compact" {...head(p)} onSelect={p.nav.select}>
-      <Section width={232}>
-        <Display w={220} h={146} label="Due" does={`${DISPLAY_DOES} Drag handle 1 for the day or the week.`}><Span p={p} w={220} h={146} handle /></Display>
-      </Section>
-      <Section label="Macros" width={96}>{c.calendar}{c.range}{c.mine}</Section>
-    </Panel> },
-
-  whole: p => { const c = controls(p), w = wide(p) ? Math.round(clampTo(240, p.room!.w - 260, 640)) : 240
-    return <Panel title="Calendar" view="whole" {...head(p)}>
-      <Band>
-        <Section width={w + 12}>
-          <Display w={w} h={146} label="Due" does={`${DISPLAY_DOES} Drag handle 1 for the day or the week.`}><Span p={p} w={w} h={146} handle /></Display>
-        </Section>
-        <Section label="Source" width={64}>{c.calendar}<Readout label="next" does="The next event." value={next(p.v)?.slice(0, 5)} tone="value" /></Section>
-        <Section label="View" grow>{c.range}{c.mine}</Section>
-      </Band>
-    </Panel> },
-
-  full: p => (strOf(p.v, 'fullForm') === 'yes' || boolOf(p.v, 'fullForm') === true)
-    ? <div className="ref-pane-body ref-pane-body--dark">
-        <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The calendar">
-          <g className="dp-display" style={{background: 'none', border: 'none'}}><Span p={{...p, set: () => {}}} w={760} h={410} handle={false} size={12} /></g>
-        </svg>
-      </div>
-    : <div className="ref-pane-body ref-pane-body--dark">
-        <svg viewBox="0 0 760 420" width="100%" height="100%" className="ref-pane-svg" aria-label="No full view"><g className="dp-display" style={{background: 'none', border: 'none'}}>
-          <text x={380} y={210} textAnchor="middle" className="dp-ink-dim">{strOf(p.v, 'provider') ? 'The provider supplies no full view' : 'No calendar provider is installed'}</text>
-        </g></svg>
-      </div>,
-
-  widget: p => <Tile title="Calendar" light={lightOf(p.v)} span={2} badge={<Outside v={p.v} />} onFull={strOf(p.v, 'fullForm') === 'yes' || boolOf(p.v, 'fullForm') === true ? p.nav.full : undefined}>
-    <Display w={266} h={104} label="Due" does={`${DISPLAY_DOES} Supplied from outside.`}><Span p={p} w={266} h={104} handle={false} size={8.5} /></Display>
-  </Tile>,
-}
+  widget: p => { const full = fullForm(p.v), c = controls(p)
+    const tile = <Tile title="Calendar" light={lightOf(p.v)} lightWhy={lightWhy(p.v)} span={2} badge={<Outside v={p.v} />} onFull={full ? p.nav.full : undefined}>
+      {full
+        ? <Display w={266} h={104} label="Due" does={`${DISPLAY_DOES} Drag handle 1 for the day or the week. Click an event to open it in Full. Supplied from outside.`}>
+            <Span p={p} w={266} h={104} handle size={8.5} press={openEvent(p)} />
+          </Display>
+        : <div className="mon-tile">
+            <Display w={266} h={82} label="Due" does={`${DISPLAY_DOES} Drag handle 1 for the day or the week. Supplied from outside.`}><Span p={p} w={266} h={82} handle size={8.5} /></Display>
+            <div className="mon-tile-row">{c.calendar}{c.mine}</div>
+          </div>}
+    </Tile>
+    return full ? tile : <WithoutFull>{tile}</WithoutFull> },
+})

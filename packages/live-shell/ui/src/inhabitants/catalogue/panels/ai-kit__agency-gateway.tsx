@@ -410,7 +410,9 @@ const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, 
 export const design: DesignedDevice = {
   id: 'ai-kit:agency-gateway',
   title: 'Agency gateway',
-  kind: 'effect',
+  kind: 'connection',
+  // It stands in the head of Messages (manual §19.10, §19.24): folded as its mark there, Whole expanded from the mark, Full in a pane.
+  views: ['folded', 'whole', 'full'],
   defaults: {
     light: 'lit',
     // What the owner writes, at the owner's defaults (the rule for a call between agents is the manual's Ask).
