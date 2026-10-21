@@ -136,8 +136,10 @@ test('(b) every key the design reads is an owner reading, absent with its missin
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(),
     ['approvals', 'chain', 'light', 'machine', 'name', 'seats', 'stallAfter', 'transport', 'workcells'])
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'local').map(([key]) => key).sort(), ['needed', 'openIn'])
+  // REPLACED (lane W10): Services and the harness processes have their routes (doctor, instances list|usage); unread here they say where
+  // they are read (w10-workcell-material.test.mjs reads them).
   for (const [key, kind] of Object.entries(classes)) {
-    if (kind === 'absent') assert.match(binding.standing[key].disabled, /missing op:/, `${key}: absent names the operation it waits for`)
+    if (kind === 'absent') assert.match(binding.standing[key].disabled, key === 'services' || key === 'instances' ? /is not read here/ : /missing op:/, `${key}: absent names the operation it waits for`)
     if (kind === 'refused-write') assert.match(key, /^want:/, `${key}: a fate, refused while no world is read`)
   }
   assert.equal(classes.landAs, 'absent')
@@ -166,7 +168,8 @@ test('(c) the macros write through the Gateway\'s rows to kernel:harness_agent_c
     'the same rows gatewayBinding writes through')
   assert.equal(binding.standing.landAs.disabled, cell.GIT_REFUSE.landAs, 'Git / landing\'s own refusal')
   await assert.rejects(() => binding.write([{key: 'landAs', value: 'mr'}]), new RegExp(cell.GIT_REFUSE.landAs.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
-  for (const [key, op] of [['reread', /material_read/], ['recover', /workcell recover/], ['checkpoint', /checkpoint command/], ['readServices', /workcell doctor/], ['open', /endpoint/],
+  // REPLACED (lane W10): Recover, Apply and Release world name the receipt they lack (NO_RUN); Read services the carrier it lacks.
+  for (const [key, op] of [['reread', /material_read/], ['recover', /workcell --receipt R recover/], ['checkpoint', /checkpoint command/], ['readServices', /workcell doctor/], ['open', /endpoint/],
     ['apply', /reconcile --desired/], ['releaseWorld', /workcell --receipt R release/]]) {
     assert.match(binding.standing[key].disabled, op, key)
     await assert.rejects(() => binding.write([{key, value: true}]), op)

@@ -12,19 +12,27 @@
 //     Remote carrier reads it (workcellBindings.ts carrierValues `here`);
 //   the chain devices' own bindings (designBindings.ts gatewayBinding, workcellBindings.ts carrierBinding, gitBinding): each one's light
 //     and one reading for the chain list, and the Gateway's Transport, Approvals and Stall after for the macros.
-// What nothing reads yet, each absent with the operation it waits for: who works here with their track and mode (the claims name actors,
-// not tracks or modes), the harness processes and their cost (`workcell instances list|usage`), the gateway's frames (a frame-ring read),
-// the run's world, its lease and checkpoints, its exposure and the last reconcile (the kernel's material_read takes a run's receipt, and a
-// workcell's return track carries no run), the services (`workcell doctor`).
+//   `workcell doctor` (lane W10, workcell_read {doctor}): the Services page, each declared service with its endpoint, health,
+//     availability and lifetime (workcellMaterial.ts servicesOf); Read now asks doctor again. Workcell has no `services` command: what doctor
+//     declares is what Services draws;
+//   `workcell instances list` and each live instance's `instances usage` (workcell_read {instances-list, instances-usage}): the harness
+//     processes and their cost (workcellMaterial.ts instancesOf).
+// What nothing reads, each absent with the operation it waits for: who works here with their track and mode (the claims name actors, not
+// tracks or modes), the gateway's frames (a frame-ring read), and the run's world with its lease, checkpoints, exposure and last reconcile:
+// each needs a world's receipt, and no reading here names one (NO_RUN).
 // The writes: the macros Transport, Approvals and Stall after go the Gateway's own way (its rows to kernel:harness_agent_control, the same
-// rows gatewayBinding writes through); Land as is Git / landing's and stands refused in its words (GIT_REFUSE.landAs); Read now, Recover,
-// Checkpoint, Read services, Open, Apply and Release world stand disabled with the Workcell command no kernel route reaches yet
-// (T-COVERAGE §1.2). Needed only and Open in are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView).
+// rows gatewayBinding writes through); Land as is Git / landing's and stands refused in its words (GIT_REFUSE.landAs). Recover, Apply
+// (reconcile) and Release world are Workcell's writes on the machine's worlds (workcell_write {recover, release, reconcile}): each goes only
+// on the person's press, on the receipt the world's reading handed in, and is refused in Workcell's words; with no world read they stand
+// disabled naming the receipt they lack. Checkpoint has no Workcell command. Needed only and Open in are the shell's own holds. Pure, apart
+// from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
-import {holdView, viewHolds, type ChainHolds} from './designBindings'
+import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {FRAME_RING, familyFaceDevice} from './mainTrackBindings'
-import {GIT_REFUSE, SEAT_UNREAD, seatReading} from './workcellBindings'
+import {GIT_REFUSE, SEAT_UNREAD, seatReading, type WorkcellAnswer} from './workcellBindings'
+import {NO_RUN, instancesOf, servicesOf} from './workcellMaterial'
+import type {WorkcellWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -48,35 +56,35 @@ const put = (values: Record<string, Value>, key: string, value: Value | null | u
   if (value !== null && value !== undefined && !(typeof value === 'number' && !Number.isFinite(value))) values[key] = value
 }
 
-/** The run a workcell's pages would show, and why there is none on its own chain. */
-const NO_RUN = 'material_read takes the run\'s receipt (`workcell --receipt R material`), and a workcell\'s return track carries no run: select a session\'s running task'
+/** Why the run's world is not read (workcellMaterial.ts NO_RUN). */
+export {NO_RUN}
 
 /** The keys no owner reports here, each with the reading it waits for. */
 export const WORKCELL_ABSENT = {
   working: unread('Working here', 'a reading of the track and the mode each agent here works on (the seat claims name their actors only — see Seats; `aikit gateway who` places Positions by machine, not by workcell or track)', 'AIKit'),
-  instances: unread('The harness processes and their cost', '`workcell instances list|usage` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
+  instances: 'The harness processes and their cost: Workcell\'s `workcell instances list` is not read here (the rail reads it while the rack stands).',
   frames: `The gateway's latest frames: ${FRAME_RING}`,
   run: unread('The run', `the selected track's running task — ${NO_RUN}`, 'Workcell'),
   world: unread('The run\'s world', NO_RUN, 'Workcell'),
   lease: unread('The world\'s lease', 'a lease reading (Workcell observes leases, MaterialLeaseProvider::observe_lease, but no command reports them)', 'Workcell'),
   checkpoints: unread('The world\'s checkpoints', 'a checkpoint list (no Workcell command takes or lists them)', 'Workcell'),
   readAt: unread('When the world was read', NO_RUN, 'Workcell'),
-  services: unread('The services', '`workcell doctor` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
+  services: 'The services: Workcell\'s `workcell doctor` is not read here (the rail reads it while the rack stands; Workcell has no `services` command, doctor declares them).',
   surfaces: unread('What the run exposes', NO_RUN, 'Workcell'),
   omitted: unread('What the run could not expose', NO_RUN, 'Workcell'),
-  reconciled: unread('The last reconcile', '`workcell reconcile --desired` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
+  reconciled: unread('The last reconcile', NO_RUN, 'Workcell'),
 } as const
 
 /** The acts no owner carries here, each refused with its command. Land as is Git / landing's own refusal. */
 export const WORKCELL_REFUSE = {
   landAs: GIT_REFUSE.landAs,
   reread: missing('Read now', `the kernel's material_read for a run — ${NO_RUN}`, 'Workcell'),
-  recover: missing('Recover', '`workcell recover` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
+  recover: missing('Recover', `\`workcell --receipt R recover\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
   checkpoint: missing('Checkpoint', 'a checkpoint command (Workcell has none)', 'Workcell'),
-  readServices: missing('Read services', '`workcell doctor` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
+  readServices: 'Read services: the kernel carrier is unavailable here, so Workcell\'s `workcell doctor` cannot be asked.',
   open: missing('Open', `an endpoint the run exposes — ${NO_RUN}`, 'Workcell'),
-  apply: missing('Apply', '`workcell --receipt R reconcile --desired` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
-  releaseWorld: missing('Release world', '`workcell --receipt R release` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
+  apply: missing('Apply', `\`workcell --receipt R reconcile --desired <ref>=<state>\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
+  releaseWorld: missing('Release world', `\`workcell --receipt R release\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
 } as const
 /** A binding's fate (`want:<binding ref>`) is set on a world's bindings, and no world is read here. */
 export const FATE_REFUSE = missing('A binding\'s fate', `the run's world, whose bindings the fates are set on — ${NO_RUN}`, 'Workcell')
@@ -135,6 +143,12 @@ export interface WorkcellRackInput {
    * landing's (null while its design waits). */
   readonly chain: {readonly gateway: Values | null; readonly carrier: Values; readonly git: Values | null}
   readonly holds: ChainHolds
+  /** `workcell doctor` (the Services page); absent: not read here. */
+  readonly doctor?: WorkcellAnswer
+  /** `workcell instances list`, and each live instance's `instances usage` by instance ref; absent: not read here. */
+  readonly instances?: {readonly list: WorkcellAnswer; readonly usages: Readonly<Record<string, {readonly value?: unknown; readonly error?: string}>>}
+  /** The run's world as a material reading handed it: its receipt, its ref and its bindings' logical refs. Absent: none is read (NO_RUN). */
+  readonly world?: {readonly receipt: string; readonly ref: string; readonly bindings: readonly string[]} | null
 }
 
 /** The chain list (workcell__workcell.tsx:14): the three devices in the road's order, each with the light its own binding reads and one
@@ -166,6 +180,11 @@ export function workcellRackValues(input: WorkcellRackInput): Values {
   }
   const gateway = input.chain.gateway ?? {}
   for (const key of GATEWAY_MACROS) put(values, key, gateway[key])
+  // The machine's services and harness processes are this machine's Workcell's, whichever workcell is chosen.
+  const services = input.doctor?.status === 'answered' ? servicesOf(input.doctor.value) : null
+  if (services) values.services = JSON.stringify(services)
+  const instances = input.instances?.list.status === 'answered' ? instancesOf(input.instances.list.value, input.instances.usages) : null
+  if (instances) values.instances = JSON.stringify(instances)
   if (input.name == null) return values
   values.name = input.name
   put(values, 'machine', str(input.chain.carrier.here))
@@ -182,10 +201,17 @@ export function workcellRackValues(input: WorkcellRackInput): Values {
   return values
 }
 
-/** The workcell's ports: the Gateway's binding, whose rows the macros write through. */
+/** The workcell's ports: the Gateway's binding, whose rows the macros write through; doctor read again; Workcell's world writes. */
 export interface WorkcellRackPorts {
   readonly gateway: Pick<DesignBinding, 'write'> | null
+  /** Ask `workcell doctor` again (Read services). Absent: no carrier stands. */
+  readonly rereadServices?: () => void
+  /** Workcell's writes on a prepared world (workcell_write {recover, release, reconcile}). Absent: no carrier stands. */
+  readonly workcell?: (request: WorkcellWriteRequest) => Promise<unknown>
 }
+
+/** The fates a binding may be set to before Apply (workcell__workcell.tsx `want:<binding ref>`), in Workcell's reconcile words. */
+export const BINDING_FATES: readonly string[] = ['present', 'suspended', 'snapshotted', 'released']
 
 export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRackPorts): DesignBinding {
   const values = workcellRackValues(input)
@@ -193,6 +219,34 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
   for (const [key, why] of Object.entries(WORKCELL_ABSENT)) standing[key] = {disabled: why}
   for (const [key, why] of Object.entries(WORKCELL_REFUSE)) standing[key] = {disabled: why}
   if (!ports.gateway) for (const key of GATEWAY_MACROS) standing[key] = {disabled: NO_GATEWAY}
+  // Services and the harness processes: Workcell's answers, or its refusal in its words while they do not stand.
+  const answerWhy = (answer: WorkcellAnswer | undefined, fallback: string, command: string) => (answer?.status === 'refused' ? answer.error ?? fallback
+    : answer?.status === 'reading' ? `Workcell has not answered \`${command}\` yet.` : answer ? `\`${command}\` answered something other than its reading.` : fallback)
+  if (!('services' in values)) standing.services = {disabled: answerWhy(input.doctor, WORKCELL_ABSENT.services, 'workcell doctor')}
+  else delete standing.services
+  if (!('instances' in values)) standing.instances = {disabled: answerWhy(input.instances?.list, WORKCELL_ABSENT.instances, 'workcell instances list')}
+  else delete standing.instances
+  if (ports.rereadServices) delete standing.readServices
+  // The world's writes: only with a world read (its receipt) and a carrier; each the person's press.
+  const world = input.world ?? null
+  if (world && ports.workcell) for (const key of ['recover', 'apply', 'releaseWorld']) delete standing[key]
+  else if (world) for (const key of ['recover', 'apply', 'releaseWorld']) standing[key] = {disabled: 'The kernel carrier is unavailable here, so Workcell cannot be asked.'}
+  /** Apply: each binding of the world whose fate you set, as `<logical ref>=<state>`; none set, nothing to ask. */
+  const desired = (): string[] => {
+    const view = viewHolds(chainHolds(), WORKCELL_RACK_ID)
+    return (world?.bindings ?? []).flatMap(ref => (typeof view[`want:${ref}`] === 'string' && BINDING_FATES.includes(String(view[`want:${ref}`])) ? [`${ref}=${String(view[`want:${ref}`])}`] : []))
+  }
+  const worldWrite = async (key: 'recover' | 'apply' | 'releaseWorld', value: Value | undefined) => {
+    if (standing[key]?.disabled || !world || !ports.workcell) throw Error(standing[key]?.disabled ?? WORKCELL_REFUSE[key])
+    if (key !== 'apply' && value !== world.ref) throw Error(`${key === 'recover' ? 'Recover' : 'Release world'}: that is not the world read here (${world.ref}).`)
+    if (key === 'apply') {
+      const asked = desired()
+      if (!asked.length) throw Error('Apply: no binding\'s fate is set.')
+      await ports.workcell({kind: 'reconcile', receipt: world.receipt, desired: asked})
+      return
+    }
+    await ports.workcell({kind: key === 'recover' ? 'recover' : 'release', receipt: world.receipt})
+  }
   if (input.name == null) for (const key of ['name', 'machine', 'chain', 'seats', 'light']) standing[key] = {disabled: NO_NAME}
   else {
     const seatsWhy = input.seatsUnread ?? SEAT_UNREAD
@@ -213,7 +267,20 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
           await ports.gateway.write([{key, value}])
           continue
         }
-        if (key.startsWith('want:')) throw Error(FATE_REFUSE)
+        if (key === 'readServices') {
+          if (!ports.rereadServices) throw Error(WORKCELL_REFUSE.readServices)
+          ports.rereadServices()
+          continue
+        }
+        if (key === 'recover' || key === 'apply' || key === 'releaseWorld') { await worldWrite(key, value); continue }
+        if (key.startsWith('want:')) {
+          if (!world) throw Error(FATE_REFUSE)
+          const ref = key.slice('want:'.length)
+          if (!world.bindings.includes(ref)) throw Error(`${ref} is not a binding of the world read here.`)
+          if (value !== undefined && !BINDING_FATES.includes(String(value))) throw Error(`A binding's fate is one of ${BINDING_FATES.join(', ')}.`)
+          holdView(WORKCELL_RACK_ID, key, value)
+          continue
+        }
         throw Error(WORKCELL_REFUSE[key as keyof typeof WORKCELL_REFUSE] ?? `${key} is a reading: its owner reports it; nothing here changes it.`)
       }
     },

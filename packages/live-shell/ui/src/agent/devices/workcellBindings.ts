@@ -41,6 +41,7 @@ import {parseSeatStatusJson} from '../../inhabitants/centralHygieneModel'
 import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
 import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {familyFaceDevice} from './mainTrackBindings'
+import {offersOf, probeFields, probesByLabel} from './workcellMaterial'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -261,14 +262,21 @@ export function seatBinding(input: SeatInput, ports: SeatPorts = {}): DesignBind
 
 // ---------------------------------------------------------------------------------------------------------------- the Remote carrier
 
+// The Standing page (lane W10, D1): the offers are `workcell discover`'s (workcell_read {discover}, workcellMaterial.ts offersOf). The
+// plan lays the run's needs on them (`workcell plan` with the run's demand), and no reading names a run's demand — the plan of no demand
+// plans nothing — so the plan and Plan again stand disabled saying so. Each connected machine's standing and round trip come from
+// `workcell connections probe` (workcell_read {connections-probe}, a read that never writes the record; workcellMaterial.ts probeFields):
+// reached and authorised is Ready, a refusal keeps Workcell's words, an unreachable machine keeps its recorded standing and says why.
+/** Why the run's plan is not read: `workcell plan` takes the run's demand, and no reading names one. */
+const NO_DEMAND = 'the run\'s demand for `workcell plan` (require, prefer, connect, expose, output…): no reading here names one — a Factory Run names model and tool requirements, not Workcell\'s material demand, and the plan of no demand plans nothing'
 export const CARRIER_REFUSE = {
   where: missing('Where', 'a session carried to another machine over workcell.control/v1 through the kernel', 'Workcell'),
-  replan: missing('Plan again', '`workcell plan` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
+  replan: missing('Plan again', NO_DEMAND, 'Workcell'),
 } as const
-/** The Standing page's readings no kernel route reaches. */
+/** The Standing page's readings while they do not stand. */
 export const CARRIER_ABSENT = {
-  offers: 'What the place can provide: no reading reaches it yet — missing op: `workcell discover` through the kernel (T-COVERAGE §1.2) (Workcell).',
-  plan: 'The run\'s plan on those offers: no reading reaches it yet — missing op: `workcell plan` through the kernel (T-COVERAGE §1.2) (Workcell).',
+  offers: 'What the place can provide: Workcell\'s `workcell discover` is not read here.',
+  plan: `The run's plan on those offers: no reading reaches it yet — missing op: ${NO_DEMAND} (Workcell).`,
 } as const
 
 /** One connection's record as Workcell shows it (`workcell connections show <label> --json`, workcell.connection/v1 under `connection`),
@@ -288,13 +296,14 @@ export function connectionFields(shown: unknown): Record<string, Value | readonl
 }
 
 /** A Workcell connection's state in the carrier's words: connected is Composed (the machines are connected; no kernel op has carried
- * a session through it, and nothing probes its gateway, so it is not Ready); Workcell's other states keep their own words. */
+ * a session through it), and Ready only where `workcell connections probe` reached it and it admits this machine (probeFields);
+ * Workcell's other states keep their own words. */
 const CARRIED: Readonly<Record<string, string>> = {connected: 'composed', disconnected: 'disconnected', refused: 'refused', incompatible: 'incompatible'}
 
 /** The connections of `workcell status --json` as the carrier's machines (workcell__remote-carrier.tsx:10-16): {id (the label), name
  * (the remote Workcell ref), endpoint, protocol, state, expiresAt}. The grant's operations, the credential's standing, the round trip
  * and the sessions are other reads (`workcell connections show`, a gateway probe) no kernel op runs. */
-export function carrierMachines(status: unknown, shows?: ConnectionShows): Record<string, Value | null | readonly string[]>[] | null {
+export function carrierMachines(status: unknown, shows?: ConnectionShows, probes: Readonly<Record<string, unknown>> = {}): Record<string, Value | null | readonly string[]>[] | null {
   if (!isObj(status) || !Array.isArray(status.connections)) return null
   return status.connections.flatMap(row => {
     if (!isObj(row) || !str(row.label)) return []
@@ -302,7 +311,7 @@ export function carrierMachines(status: unknown, shows?: ConnectionShows): Recor
     return [{id: String(row.label), name: str(row.remote_workcell_ref) ?? String(row.label),
       ...(str(row.endpoint) ? {endpoint: String(row.endpoint)} : {}), ...(str(row.protocol) ? {protocol: String(row.protocol)} : {}),
       ...(state ? {state} : {}), ...(row.expires_at_unix_ms === null ? {expiresAt: null} : num(row.expires_at_unix_ms) !== undefined ? {expiresAt: num(row.expires_at_unix_ms)!} : {}),
-      ...connectionFields(shows?.get(String(row.label))?.value)}]
+      ...connectionFields(shows?.get(String(row.label))?.value), ...(probeFields(probes[String(row.label)]) as Record<string, Value>)}]
   })
 }
 
@@ -312,12 +321,20 @@ export function connectionLabels(answer: WorkcellAnswer): string[] {
     ? answer.value.connections.flatMap(row => (isObj(row) && str(row.label) ? [String(row.label)] : [])) : []
 }
 
-export function carrierValues(answer: WorkcellAnswer, holds: ChainHolds, shows?: ConnectionShows): Values {
+/** Workcell's material readings for the Standing page: `workcell discover` and `workcell connections probe`; absent: not read here. */
+export interface CarrierMaterial {
+  readonly discover?: WorkcellAnswer
+  readonly probe?: WorkcellAnswer
+}
+
+export function carrierValues(answer: WorkcellAnswer, holds: ChainHolds, shows?: ConnectionShows, material: CarrierMaterial = {}): Values {
   const values: Record<string, Value> = {}
   put(values, 'machine', viewHolds(holds, CARRIER_ID).machine)
+  const offers = material.discover?.status === 'answered' ? offersOf(material.discover.value) : null
+  if (offers) values.offers = JSON.stringify(offers)
   if (answer.status !== 'answered') return values
   put(values, 'here', isObj(answer.value) ? str(answer.value.workcell_ref) : undefined)
-  const machines = carrierMachines(answer.value, shows)
+  const machines = carrierMachines(answer.value, shows, material.probe?.status === 'answered' ? probesByLabel(material.probe.value) : {})
   if (machines) {
     values.machines = JSON.stringify(machines)
     values.light = machines.some(machine => machine.state === 'ready') ? 'lit' : 'dark'
@@ -336,9 +353,12 @@ export function carrierChainState(answer: WorkcellAnswer): {state?: 'ready' | 'c
   return machines.length ? {state: 'refused', why: 'No connected machine: every connection is down, refused or incompatible.'} : {}
 }
 
-export function carrierBinding(answer: WorkcellAnswer, holds: ChainHolds, shows?: ConnectionShows): DesignBinding {
-  const values = carrierValues(answer, holds, shows)
+export function carrierBinding(answer: WorkcellAnswer, holds: ChainHolds, shows?: ConnectionShows, material: CarrierMaterial = {}): DesignBinding {
+  const values = carrierValues(answer, holds, shows, material)
   const standing: Record<string, Standing> = {...disabled(CARRIER_ABSENT), ...disabled(CARRIER_REFUSE)}
+  if ('offers' in values) delete standing.offers
+  else if (material.discover?.status === 'refused') standing.offers = {disabled: material.discover.error ?? CARRIER_ABSENT.offers}
+  else if (material.discover?.status === 'reading') standing.offers = {disabled: 'What the place can provide: Workcell has not answered `workcell discover` yet.'}
   const why = answer.status === 'refused' && answer.error ? answer.error : 'Workcell\'s status (`workcell status --json`) has not answered.'
   for (const key of ['light', 'here', 'machines']) if (!(key in values)) standing[key] = {disabled: why}
   // A connection Workcell refused to show keeps only what its status gave (the record's grant, credential reference, software and since

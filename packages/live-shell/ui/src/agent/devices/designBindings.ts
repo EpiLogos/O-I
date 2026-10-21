@@ -236,12 +236,27 @@ export interface GatewayRows {
 
 const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {transport: 'transport', approvals: 'approvals', connect: 'connect', stallAfter: 'stallAfter'}
 
+// The Gateway's link readings (lane W10, from builder A's environ work; actuation__gateway.tsx `beatAge`, `running`, `inflight`, `frames`):
+// the reading gatewayValues takes is the kernel's harness_agent_read, which runs `aikit --json gateway agent --binding B sessions`, and
+// AIKit answers {agent_session_ref, harness, sessions [{agent_session_ref, state}]} (aikit-adapters gateway_conversation_engine.rs
+// sessions). It names no check-in instant, no turn count, no frames in flight and no frames, so none of the four is carried: each stands
+// absent with that reason, and stands as a reading the day the document names it.
+const GATEWAY_DOCUMENT = 'the gateway\'s document (the kernel\'s harness_agent_read: `aikit gateway agent --binding B sessions`, which answers the binding\'s agent session, its harness and its native sessions with their state)'
+export const GATEWAY_ABSENT: Readonly<Record<string, string>> = {
+  beatAge: `The time since the last check-in: no reading reaches it yet — missing op: a check-in instant in ${GATEWAY_DOCUMENT} (AIKit).`,
+  running: `The turns running: no reading reaches them yet — missing op: a count of running turns in ${GATEWAY_DOCUMENT}; a native session's state is not a turn (AIKit).`,
+  inflight: `The frames in flight: no reading reaches them yet — missing op: a count of frames in flight in ${GATEWAY_DOCUMENT} (AIKit).`,
+  frames: `The gateway's frames: no reading reaches them yet — missing op: the binding's latest frames in ${GATEWAY_DOCUMENT}; the Agency gateway's own journal (\`aikit gateway replay\`) is the Frames monitor's reading (AIKit).`,
+}
+
 /** The Gateway's binding: each setting through its row's own write path (the harness control's value carrier); the two the carrier
- * does not carry are refused by name. */
+ * does not carry are refused by name; the link readings its document does not name stand absent with why. */
 export function gatewayBinding(id: string, input: GatewayInput, rows: GatewayRows, write: RowWrite): DesignBinding {
+  const values = gatewayValues(input)
   return {
     id,
-    values: gatewayValues(input),
+    values,
+    standing: Object.fromEntries(Object.entries(GATEWAY_ABSENT).filter(([key]) => !(key in values)).map(([key, why]) => [key, {disabled: why}])),
     writes: key => key in GATEWAY_KEYS || key === 'autoContinue' || key === 'fanOut',
     write: async changes => {
       for (const {key, value} of changes) {

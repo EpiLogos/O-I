@@ -105,7 +105,7 @@ import {CAPTURE_SKILL_DESIGN, CAPTURE_SKILL_ID, captureSkillBinding, captureSkil
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
-import {useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
+import {useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -482,9 +482,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const seatDesignBinding = useMemo(() => seatBinding({status: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {unread: seatsUnread} : {}),
     project: RACK_PROJECT, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), actor: deskActor, holds}, seatPorts),
   [seats, seatsUnread, reading.gitRepo.branch, cellName, machineRef, deskActor, holds, seatPorts])
-  // The Remote carrier: Workcell's status, and each listed connection's record (`workcell connections show`, lane W3).
-  const shows = useConnectionShows(transport, connectionLabels(workcellAnswer))
-  const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows), [workcellAnswer, holds, shows])
+  // The Remote carrier: Workcell's status, and each listed connection's record (`workcell connections show`, lane W3); its Standing page's
+  // offers (`workcell discover`) and each connection's probe (`workcell connections probe`, a read that never writes the record; lane W10).
+  const carrierLabels = connectionLabels(workcellAnswer)
+  const shows = useConnectionShows(transport, carrierLabels)
+  const discover = useWorkcellRead(transport, {kind: 'discover'}).answer
+  const probe = useWorkcellRead(transport, carrierLabels.length ? {kind: 'connections-probe'} : null).answer
+  const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows, {discover, ...(carrierLabels.length ? {probe} : {})}),
+    [workcellAnswer, holds, shows, discover, probe, carrierLabels.length])
   // The rack as the rail's publisher holds it, watched alone (another device's publish does not redraw the chain).
   const rackEntry = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(WORKCELL_RACK_ID), () => publishedDevice(WORKCELL_RACK_ID))
 

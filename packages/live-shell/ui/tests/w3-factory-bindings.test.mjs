@@ -243,9 +243,11 @@ test('6 · the Remote carrier: each connection\'s record from `workcell connecti
     grant: ['status', 'discover', 'observe', 'inspect'], credRef: 'keychain://workcell-connection/omarchy', software: 'workcell 0.1.0 (174fa1c3133a)', since: 1790237685095})
   assert.equal(machines[1].grant, undefined, 'a record Workcell refused to show adds nothing')
   assert.equal(machines[0].why, undefined, 'the record\'s detail reports software revisions, not why it stands so')
-  assert.match(binding.standing.offers.disabled, /`workcell discover` through the kernel/)
-  assert.match(binding.standing.plan.disabled, /`workcell plan` through the kernel/)
-  assert.match(binding.standing.replan.disabled, /`workcell plan` through the kernel/)
+  // REPLACED (lane W10): discover has its route; not handed in here, it says it is not read (w10-workcell-material.test.mjs reads it).
+  assert.match(binding.standing.offers.disabled, /`workcell discover` is not read here/)
+  // REPLACED (lane W10): the plan has its route; what it lacks is the run's demand, which no reading names.
+  assert.match(binding.standing.plan.disabled, /the run's demand for `workcell plan`/)
+  assert.match(binding.standing.replan.disabled, /the run's demand for `workcell plan`/)
   assert.deepEqual(cell.connectionFields({connection: {version: 'something else'}}), {})
   bind.resetHolds()
 })
@@ -383,7 +385,8 @@ test('(d) the chain and the rail carry the owner routes where the manual puts th
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(chain, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null[\s\S]*?actor: deskActor, holds\}, seatPorts\)/, 'Join and Release on the desk\'s actor')
   assert.match(chain, /seat: request => ownerRouteWrite\(transport, seatWriteOp\(request\)/)
-  assert.match(chain, /carrierBinding\(workcellAnswer, holds, shows\)/, 'the carrier with each connection\'s record')
+  // REPLACED (lane W10): the carrier takes discover's offers and the probe too.
+  assert.match(chain, /carrierBinding\(workcellAnswer, holds, shows, \{discover/, 'the carrier with each connection\'s record')
   assert.match(chain, /trust: capability => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'trust-record', project: RACK_PROJECT, capability\}\)/)
   assert.match(chain, /slot\.id === 'git' && placed\(SEAT_ID, cells\.seat, seatDesignBinding/, 'the Seat stands inside Git / landing (§19.17)')
   const rail = read('agent/devices/AgentRailDevices.tsx')
