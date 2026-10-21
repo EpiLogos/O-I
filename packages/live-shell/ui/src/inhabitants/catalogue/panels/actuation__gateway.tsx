@@ -1,4 +1,5 @@
-// The Gateway device (manual §19.2, actuation:gateway): the way in to a Factory session, the first device on its chain. Live's nearest:
+// The Gateway device (manual §19.2, actuation:gateway): the way in to a workcell, the first device on its chain; every session that
+// works in the workcell, in any mode, comes in through it. Live's nearest:
 // Utility — a small effect of few controls whose meaning is plain at a glance. The well is the link: the shell on the left, the
 // harness on the right, the line between them drawn by the transport, the frames in flight as dots, the replay ring as an arc
 // round the harness, the heartbeat as the outer ring, and the time since the last check-in on a scale that ends at 30 min.
@@ -322,7 +323,7 @@ const NOTHING = Object.fromEntries(KEYS.map(k => [k, undefined])) as unknown as 
 export const design: DesignedDevice = {
   id: 'actuation:gateway',
   title: 'Gateway',
-  kind: 'effect',
+  kind: 'connection',
   defaults: {
     light: 'lit', harness: 'hermes',
     // What the owner writes, at the owner's defaults.

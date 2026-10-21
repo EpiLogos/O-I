@@ -81,8 +81,22 @@ function bindValue(scene, path, value) {
   for (const k of keys.slice(0, -1)) o = o[k] ?? (o[k] = {});
   o[keys.at(-1)] = value;
 }
+const FORMATION_TARGET_DEFS = [
+  { suffix: "size.x", label: "Width", unit: "stage units", min: 1e-3, max: 100, hardMin: 1e-3, hardMax: 100, step: 0.01 },
+  { suffix: "size.y", label: "Height", unit: "stage units", min: 1e-3, max: 100, hardMin: 1e-3, hardMax: 100, step: 0.01 },
+  { suffix: "rotation", label: "Rotation", unit: "degrees", min: -180, max: 180, hardMin: -36e3, hardMax: 36e3, step: 1 },
+  { suffix: "share", label: "Particle share", unit: "relative weight", min: 0, max: 10, hardMin: 0, hardMax: 1e3, step: 0.1 }
+];
+function formationTargets(e, index) {
+  if (e.kind !== "formation") return [];
+  const label = e.name && e.name.trim() ? e.name.trim() : `Entity ${index + 1}`;
+  return FORMATION_TARGET_DEFS.map((d) => {
+    const value = Number(readPath(e, d.suffix));
+    return { path: `entities.${index}.${d.suffix}`, key: d.suffix, bind: "entity." + d.suffix, factor: 1, label: `${label} \xB7 ${d.label}`, group: "entity", unit: d.unit, target: "entity:" + encodeURIComponent(e.id) + ":" + d.suffix, entityId: e.id, min: d.min, max: d.max, hardMin: d.hardMin, hardMax: d.hardMax, step: d.step, defaultValue: value, value };
+  });
+}
 function entityTargets(scene) {
-  return scene.entities.flatMap((e, index) => entityParamDefs(index, e).filter((p) => e.kind === "formation" || !p.path.endsWith(".scale") && !p.path.includes(".sequence.") && !p.path.endsWith(".tintWeight")).map((p) => {
+  return scene.entities.flatMap((e, index) => [...entityParamDefs(index, e).filter((p) => e.kind === "formation" || !p.path.endsWith(".scale") && !p.path.includes(".sequence.") && !p.path.endsWith(".tintWeight")).map((p) => {
     const suffix = p.path.replace(/^entities\.\d+\./, ""), factor = ["x", "y", "z", "forces.radius"].includes(suffix) ? WORLD_SCALE : 1;
     const local = ["x", "y", "z"].includes(suffix) ? "position." + suffix : suffix.replace(/^forces\./, "force.");
     let value = readPath(e, local);
@@ -91,8 +105,8 @@ function entityTargets(scene) {
       if (typeof value === "number") value /= factor;
     }
     if (typeof value !== "number") value = suffix === "scale" || suffix === "sequence.rateMul" ? 1 : suffix === "sequence.hold" ? e.sequence.steps[0]?.hold ?? 3 : suffix === "sequence.transition" ? e.sequence.steps[0]?.transition ?? 1 : 0;
-    return { ...p, key: suffix, bind: "entity." + local, factor, group: "entity", target: "entity:" + encodeURIComponent(e.id) + ":" + suffix, entityId: e.id, min: p.min / factor, max: p.max / factor, hardMin: p.hardMin / factor, hardMax: p.hardMax / factor, step: p.step / factor, defaultValue: Number(value), value: Number(value) };
-  }));
+    return { ...p, key: suffix, bind: "entity." + local, factor, unit: factor === WORLD_SCALE ? "stage units" : p.unit, group: "entity", target: "entity:" + encodeURIComponent(e.id) + ":" + suffix, entityId: e.id, min: p.min / factor, max: p.max / factor, hardMin: p.hardMin / factor, hardMax: p.hardMax / factor, step: p.step / factor, defaultValue: Number(value), value: Number(value) };
+  }), ...formationTargets(e, index)]);
 }
 function automationTarget(scene, target) {
   if (target.startsWith("field.")) {

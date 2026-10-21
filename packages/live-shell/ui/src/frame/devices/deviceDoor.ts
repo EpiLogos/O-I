@@ -57,6 +57,18 @@ export function publishedDevice(id: string): PublishedDevice | undefined {
   return devices.get(id)
 }
 
+/** The published device a design draws (`<family>:<face>`, designs.ts designKey), or undefined: a rack's member, found by its design
+ * (manual §16.3, a rack's Full holds its devices). */
+export function publishedByDesign(design: string): PublishedDevice | undefined {
+  for (const entry of devices.values()) if (`${entry.device.family}:${entry.device.face.id}` === design) return entry
+  return undefined
+}
+
+/** Re-render when the door changes, only where `on`: a rack's Full, which draws its members from the door. */
+export function useDoorWhere(on: boolean): void {
+  useSyncExternalStore(subscribe, () => (on ? version : 0), () => (on ? version : 0))
+}
+
 /** Every device published now, in the order they were first published. */
 export function publishedDevices(): readonly PublishedDevice[] {
   return [...devices.values()]

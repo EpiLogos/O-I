@@ -24,6 +24,7 @@ html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
 /* The reference devices' frames: the pool is the browser's width, the pane a pane, the rail the rail with its tiles. */
 .cat-views--ref { align-items: flex-start; }
 .cat-pane--ref { width: 760px; height: 420px; padding: 0; }
+.cat-pane--suite { height: 620px; }
 .cat-rail--ref { height: auto; min-height: 180px; }
 .cat-rail-tiles { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; }
 .cat-status { position: sticky; bottom: 0; margin-top: 14px; padding: 5px 10px; font-size: 11px; color: var(--text-dim, #a2a7ad); background: var(--bg-1, #33363b); border-top: 1px solid var(--line, #24262a); }

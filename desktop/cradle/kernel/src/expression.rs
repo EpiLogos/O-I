@@ -1396,6 +1396,12 @@ impl Document {
                 scene_ref,
                 presentation,
             } => {
+                let stored: Vec<&crate::expression_scene::Presentation> = self
+                    .scenes
+                    .iter()
+                    .filter_map(|scene| scene.presentation.as_ref())
+                    .collect();
+                crate::expression_scene::admit_voices(&stored, &presentation)?;
                 crate::expression_blueprint::preserve(
                     self.scene(&scene_ref)?.presentation.as_ref(),
                     Some(&presentation),

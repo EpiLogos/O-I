@@ -45,7 +45,7 @@ function characterDocument() {
       scene('expression:nous:scene:idle', body({})),
       scene('expression:nous:scene:working', body({text: '◆', tint: '#ff0066', tintWeight: 1, source: {kind: 'ascii', ascii: {text: '/\\\n\\/'}},
         layers: [{id: 'halo', text: '○', z: -1, scale: 1.6}, {id: 'mark', text: '', z: 1, scale: .5, source: {kind: 'image', image: {dataUrl: PNG, mode: 'silhouette', threshold: .5, scale: 1}}}],
-        force: {kind: 'vortex', strength: 2, radius: .5, spin: 1}, sound: {enabled: true, frequencyHz: 432},
+        force: {kind: 'vortex', strength: 2, radius: .5, spin: 1}, sound: {enabled: true, carry: {kind: 'mode', ref: 'maqam/00'}},
         sequence: {enabled: true, clock: 'seconds', steps: [{id: 'a', name: 'gather', text: '◆', shape: 'text', hold: 1, transition: .5, position: null}, {id: 'b', name: 'release', text: '◇', shape: 'text', hold: 1, transition: .5, position: null}]}})),
       scene('expression:nous:scene:speaking', body({text: '◈'})),
       scene('expression:nous:scene:invoke', body({text: '✦', source: {kind: 'image', image: {dataUrl: 'https://example.com/x.png', mode: 'luminance', threshold: .5, scale: 1}}})),

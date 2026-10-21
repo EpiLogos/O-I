@@ -77,7 +77,7 @@ const all = ['filter', 'dynamics', 'delay', 'reverb']
 
 test('the chain opens empty; each effect stands on at first, every parameter at its initial value inside its law', () => {
   const state = law.initialEffects();
-  assert.deepEqual(Object.keys(state), ['chain', 'filter', 'dynamics', 'delay', 'reverb']);
+  assert.deepEqual(Object.keys(state), ['chain', 'filter', 'dynamics', 'delay', 'reverb', 'resonator'], 'the four of §21.5 and the Resonator bank of §22.7 (tests/mr-resonator-bank.test.mjs)');
   assert.deepEqual(state.chain, [], 'nothing stands after the torus until you put it there');
   for (const effect of law.PRESENTATION_EFFECTS) {
     assert.equal(state[effect].on, true, `${effect}: On, as the manual's defaults say`);

@@ -369,11 +369,19 @@ export class CymaticResonator {
    * Integrates every active mode's envelope one frame forward under a continuous drive at
    * `frequencyHz`, and returns fresh telemetry. Nothing here resets particle-independent
    * state; re/im simply relax toward the new steady state at each mode's own time constant.
+   *
+   * A list of tones drives the plate with a chord (DLW §20.14, Frequency driver = Torus): the plate is linear, so each mode's steady
+   * response is the mean of its responses to the tones, which keeps the drive strength the user set whatever the number of voices.
+   * One tone in a list is the same drive as the tone alone. An empty list is no drive: every mode relaxes toward rest. The telemetry
+   * names the lowest tone as the frequency (0 when there is none).
    */
-  public step(dt: number, frequencyHz: number): ResonatorTelemetry {
+  public step(dt: number, frequencyHz: number | readonly number[]): ResonatorTelemetry {
     const { dampingQ, driveStrength } = this.params;
     const zeta = 1 / (2 * Math.max(0.05, dampingQ));
     const clampedDt = Math.max(0, Math.min(0.1, dt));
+    const tones: readonly number[] = typeof frequencyHz === 'number' ? [frequencyHz] : frequencyHz;
+    const share = tones.length > 0 ? 1 / tones.length : 0;
+    const primary = tones.length > 0 ? Math.min(...tones) : 0;
 
     let totalEnergy = 0;
     let domEnergy = -1;
@@ -389,15 +397,17 @@ export class CymaticResonator {
       }
       const fm = this.modeFreq[i];
       const c = this.modeCoupling[i];
-      const r = frequencyHz / Math.max(1e-3, fm);
-
-      const denomRe = 1 - r * r;
-      const denomIm = 2 * zeta * r;
-      const denomMagSq = Math.max(1e-6, denomRe * denomRe + denomIm * denomIm);
-
       const drive = driveStrength * c;
-      const Hre = (drive * denomRe) / denomMagSq;
-      const Him = (-drive * denomIm) / denomMagSq;
+      let Hre = 0;
+      let Him = 0;
+      for (let t = 0; t < tones.length; t++) {
+        const r = tones[t] / Math.max(1e-3, fm);
+        const denomRe = 1 - r * r;
+        const denomIm = 2 * zeta * r;
+        const denomMagSq = Math.max(1e-6, denomRe * denomRe + denomIm * denomIm);
+        Hre += (drive * share * denomRe) / denomMagSq;
+        Him += (-drive * share * denomIm) / denomMagSq;
+      }
 
       const tau = Math.max(0.05, dampingQ / (Math.PI * Math.max(1e-3, fm)));
       const alpha = 1 - Math.exp(-clampedDt / tau);
@@ -418,8 +428,8 @@ export class CymaticResonator {
     // Nearest station by relative detuning.
     let nearestIdx = 0;
     let nearestRel = Infinity;
-    for (let s = 0; s < this.stations.length; s++) {
-      const rel = Math.abs(frequencyHz - this.stations[s].frequencyHz) / this.stations[s].frequencyHz;
+    for (let s = 0; s < this.stations.length && tones.length > 0; s++) {
+      const rel = Math.abs(primary - this.stations[s].frequencyHz) / this.stations[s].frequencyHz;
       if (rel < nearestRel) {
         nearestRel = rel;
         nearestIdx = s;
@@ -429,7 +439,7 @@ export class CymaticResonator {
     const proximity = Math.max(0, Math.min(1, 1 - nearestRel / lockBand));
 
     this.lastTelemetry = {
-      frequencyHz,
+      frequencyHz: primary,
       coherence,
       totalEnergy,
       dominantM: this.modeM[domIndex],

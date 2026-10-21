@@ -95,12 +95,12 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   assert.equal(JSON.stringify(schema.inhabitantManifest('central')), JSON.stringify(central))
 })
 
-test('quaternal-logic: every face but the sky, the M3 clock, the Deck, the Chakra and the Sitting is declared waiting with a named owner; telemetry is an honest null; the family is the chronos contributor', () => {
+test('quaternal-logic: every face but the sky, the M3 clock, the Deck, the Chakra, the Sitting and the Resonator bank is declared waiting with a named owner; telemetry is an honest null; the family is the chronos contributor', () => {
   door.resetFamilyManifestsForTest()
   qlogic.quaternalLogicFamilyManifest()
   const manifest = schema.inhabitantManifest('quaternal-logic')
   assert.ok(manifest)
-  assert.equal(manifest.faces.length, 7)
+  assert.equal(manifest.faces.length, 8)
   for (const face of manifest.faces) {
     // The sky draws on its owner (lane BL, aba3ddaea): the kernel's nara_identity transit, with its honest absence of a write.
     if (face.id === 'sky') { assert.notEqual(face.admission, 'waiting', 'sky: admitted on the transit read'); continue }
@@ -111,6 +111,8 @@ test('quaternal-logic: every face but the sky, the M3 clock, the Deck, the Chakr
     if (face.id === 'chakra') { assert.notEqual(face.admission, 'waiting', 'chakra: admitted on nara_elemental'); assert.ok(face.invariant.generatesAbsent, 'chakra: a reading, never written'); continue }
     // T-WORLDS W4: the Sitting is timed by the transport and keeps its record as a page through Central's creation door.
     if (face.id === 'sitting') { assert.notEqual(face.admission, 'waiting', 'sitting: admitted on its owners'); assert.equal(face.invariant.generates, 'kernel:invoke_action'); continue }
+    // MR: the Resonator bank is an effect on Live's chain after the torus, on the clock's cut, the mode's root and the stage's own bank.
+    if (face.id === 'resonator-bank') { assert.notEqual(face.admission, 'waiting', 'resonator-bank: admitted on its owners'); assert.equal(face.liveSemantic, 'device-audio-fx'); assert.ok(face.invariant.transforms); continue }
     assert.equal(face.admission, 'waiting', `${face.id}: declared, waiting`)
     assert.ok(face.note && face.note.length > 40, `${face.id}: the note names what it waits for`)
     assert.equal(schema.faceKind(face), 'parameter', `${face.id}: declared faces carry no body until an owner lands`)

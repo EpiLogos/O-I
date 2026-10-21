@@ -196,8 +196,7 @@ function sourceVolume(shaped, w, h, threshold, volume) {
   for (let i = 0; i < w * h; i++) if (shaped[i] >= threshold) mask[i] = 1;
   return { law: volume, fields: buildDepthFieldsFromMask(mask, w, h) };
 }
-function coverageOf(ink, w, h, crop, threshold) {
-  const cw = crop.x1 - crop.x0 + 1, ch = crop.y1 - crop.y0 + 1;
+function coverageOf(ink, w, _h, crop, threshold) {
   let inked = 0, total = 0;
   for (let y = crop.y0; y <= crop.y1; y += 1) {
     for (let x = crop.x0; x <= crop.x1; x += 1) {

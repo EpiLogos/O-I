@@ -12,15 +12,25 @@
 //   for Factory's LegStatus and Hermes' status; tail is subagent.tail; files are Factory's custody rows by member),
 //   fanOut (delegation.max_concurrent_children), depth (delegation.max_spawn_depth), handBack (summary · digest · raw), returnCap
 //   (delegation.max_summary_chars, 0 = no cap), model ('inherit', or the id of delegation.model), models (a JSON list of {id, label?}),
-//   join (all · relay · weighted · count: how the members' returns combine).
+//   join (none · all · first · quorum · weighted: how the members' returns combine), pattern (the crew's pattern id, the Type of its lead).
 // The owner is asked to write:  fanOut, depth, handBack, returnCap, model and join (the Hermes delegation block of the harness config;
 //   no config.set key carries it yet), and the action retry (Factory's RetryGrant, factory/src/orchestration.rs).
+// The crew's face (manual §19.15, §25.6): a pattern whose Count is Pair, Crew or Swarm is several whole creatures in one pane, each member
+// in the posture of its own state (faces/CrewFace.tsx). `pattern` is the pattern the crew works as: the Type of its lead, read; `type` on a member
+// names the pattern of that member when it differs from the crew's (a lead that sets a goal and members that decide the detail).
+// Join. The owners combine returns in one way: Software Factory's barrier waits until every leg it names has returned, and then an
+// independent reviewer synthesises (orchestration.rs `barrier_reading`, `synthesize`); Hermes' delegate_task returns every child's result to
+// the parent. So All has an owner operation, None needs none, and First, Quorum and Weighted have no owner operation: they stand named and dark.
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
 import {memo, useLayoutEffect, useMemo, useState, type CSSProperties} from 'react'
 import {KindMark} from '../../sdk/marks'
 import {maskStatic} from '../../../agent/maskFace'
 import {Action, Band, Chooser, Folded, Lamp, Panel, Radio, Readout, Rows, Section, Tile, ValueBox, type LightState, type Option, type RowItem, type Scale, type Tone} from '../../sdk/panel'
 import {NONE, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {CreatureFace, FigureThumb} from '../faces/CreatureFace'
+import {CrewFace} from '../faces/CrewFace'
+import {PATTERNS, countOf as patternCount, isCrew, type RunState} from '../faces/agency'
+import {faceOf} from '../faces/figures'
 import './software-factory__agentset-rack.css'
 
 type V = ViewProps['v']
@@ -49,18 +59,20 @@ const HANDBACKS: readonly Option<string>[] = [
   {value: 'digest', label: 'Digest', does: 'The helper returns its closing note, its tool calls and the files it touched.'},
   {value: 'raw', label: 'Raw', does: 'The helper returns its whole thread.'},
 ]
+const NO_JOIN = 'No owner combines returns this way: Software Factory\'s barrier waits for all of them.'
 const JOINS: readonly Option<string>[] = [
-  {value: 'all', label: 'All', does: 'Every return is kept.'},
-  {value: 'relay', label: 'Relay', does: 'Each member gets only what the last left open.'},
-  {value: 'weighted', label: 'Weighted', does: 'The returns are weighed together into one reading.'},
-  {value: 'count', label: 'Count', does: 'The set commits when enough members agree.'},
+  {value: 'none', label: 'None', does: 'One return: the last member\'s, or a single member\'s. Members that hand on in turn (Then: Hand off) combine nothing.'},
+  {value: 'all', label: 'All', does: 'The crew waits until every member has returned, then an independent reviewer integrates the returns. Concatenating them is not integrating.'},
+  {value: 'first', label: 'First', does: 'The first good return wins.', why: NO_JOIN},
+  {value: 'quorum', label: 'Quorum', does: 'The crew commits when enough members agree.', why: NO_JOIN},
+  {value: 'weighted', label: 'Weighted', does: 'Each return counts by its strength.', why: NO_JOIN},
 ]
 const SAYS = {
   list: 'One chain for each member, nested as they were spawned. The light is the member\'s state and the chip its model. Where a number shows, it counts tool calls. Press a name to choose it.',
   fanOut: 'The most helpers that run at once. The group has no upper limit; you set one.',
   depth: 'How many levels of helpers may sit below the lead. At 1, helpers do not spawn helpers.',
   handBack: 'What a helper returns to its parent: its closing note, a digest or its whole thread.',
-  join: 'How the members\' returns combine.',
+  join: 'How the members\' returns combine. None keeps one return. All waits for every member. First, Quorum and Weighted have no owner yet.',
   cap: 'The most characters of a Summary that reach the parent. A longer one keeps its head and tail. 0 is no cap.',
   model: 'The model for everything the group spawns. A member can set its own.',
   retry: 'Run the chosen member\'s task again, when it is stalled or failed.',
@@ -71,6 +83,7 @@ const SAYS = {
 
 interface Member {
   readonly id: string
+  readonly type?: string
   readonly name: string
   readonly parent?: string
   readonly state?: State
@@ -99,7 +112,7 @@ const membersOf = (v: V): Node[] => {
     const id = text(r.id), name = text(r.name)
     if (!id || !name || seenId.has(id)) return []
     seenId.add(id)
-    return [{id, name, parent: text(r.parent), state: isState(r.state) ? r.state : undefined, model: text(r.model), goal: text(r.goal),
+    return [{id, name, type: typeof r.type === 'string' && r.type in PATTERNS ? r.type : undefined, parent: text(r.parent), state: isState(r.state) ? r.state : undefined, model: text(r.model), goal: text(r.goal),
       tools: typeof r.tools === 'number' && Number.isFinite(r.tools) ? r.tools : undefined, last: text(r.last), why: text(r.why), tail: text(r.tail),
       files: Array.isArray(r.files) ? r.files.filter((f): f is string => typeof f === 'string') : undefined}]
   })
@@ -153,13 +166,14 @@ const countLine = (v: V, state: State) => (has(v, 'members') ? `${countOf(member
 // ---------------------------------------------------------------- the parts
 
 /** The chain list: the rack's picture. The name chooses the member; the light is its state; the chip is its model. */
-function rowItems(list: readonly Node[], chip: boolean, note: boolean): RowItem[] {
+function rowItems(list: readonly Node[], chip: boolean, note: boolean, pattern: string | undefined): RowItem[] {
   return list.map(m => {
     const {light, tone} = lampOf(m.state)
     const why = (m.state === 'stalled' || m.state === 'failed') ? `${STATE_WORD[m.state]}: ${m.why ?? 'The owner gave no reason.'}` : undefined
     return {
       id: m.id, name: m.name, light, tone, busy: m.state === 'working', why,
       mark: <span className="as-mark" data-state={m.state ?? 'none'} data-nested={m.depth > 0 ? 'true' : undefined} style={{'--d': m.depth} as CSSProperties}>
+        {(m.type ?? pattern) && <FigureThumb figure={faceOf((m.type ?? pattern)!)} size={16} dim={dimmed(m.state)} />}
         <Lamp state={light} tone={tone} busy={m.state === 'working'} label={m.state ? `${m.name}: ${STATE_WORD[m.state]}` : `${m.name}: no reading`} /></span>,
       meter: chip && m.model ? <span className="as-chip" data-i={`Model|${m.name} runs on ${m.model}.`}>{m.model}</span> : undefined,
       note: note && m.tools !== undefined ? `${m.tools}` : undefined,
@@ -173,7 +187,7 @@ function MemberList({p, size, chip = true, note = true, label = true}: {p: ViewP
   const list = membersOf(p.v), chosen = chosenOf(p.v, list)
   const known = has(p.v, 'members')
   return <>
-    <Rows label={label ? (known ? `Members · ${list.length}` : 'Members · no reading') : undefined} does={SAYS.list} items={rowItems(list, chip, note)} size={size} page={page} onPage={setPage}
+    <Rows label={label ? (known ? `Members · ${list.length}` : 'Members · no reading') : undefined} does={SAYS.list} items={rowItems(list, chip, note, patternOf(p.v))} size={size} page={page} onPage={setPage}
       selected={chosen?.id} onSelect={st(p, 'member').disabled ? undefined : id => p.set('member', id)} />
     {list.length === 0 && <p className="as-none">{known ? 'The set holds no members.' : 'No reading of the members.'}</p>}
   </>
@@ -186,7 +200,7 @@ const depthBox = (p: ViewProps) => <ValueBox label="Depth" does={SAYS.depth} val
 const handBack = (p: ViewProps) => <Radio label="Hand-back" does={SAYS.handBack} value={strOf(p.v, 'handBack') ?? ''} options={HANDBACKS} stack
   onChange={x => p.set('handBack', x)} {...st(p, 'handBack')} />
 
-const joinRadio = (p: ViewProps) => <Radio label="Join" does={SAYS.join} value={strOf(p.v, 'join') ?? ''} options={JOINS} stack
+const joinChooser = (p: ViewProps) => <Chooser label="Join" does={SAYS.join} value={strOf(p.v, 'join') ?? ''} options={JOINS}
   onChange={x => p.set('join', x)} {...st(p, 'join')} />
 
 /** The model options the owner reports, with "the lead's model" first; a pinned model the list lacks still stands in it. */
@@ -240,14 +254,30 @@ const Face = memo(function Face({size, dim}: {size: number; dim?: boolean}) {
   return <span className="as-face" style={dim ? {opacity: 0.5} : undefined} aria-hidden="true" dangerouslySetInnerHTML={{__html: html}} />
 })
 const dimmed = (s: State | undefined) => s !== 'working' && s !== 'stalled'
+/** The run state of a member (spec 25.1): working is acting, idle is queued, and the others are themselves. */
+const runOf = (s: State | undefined): RunState => (s === 'working' ? 'acting' : s === 'stalled' ? 'stalled' : s === 'done' ? 'done' : s === 'failed' ? 'failed' : 'queued')
+/** The crew's state: stalled when any member is, else working when any is, else done when all are, else queued. */
+const crewState = (list: readonly Node[]): RunState => (list.some(m => m.state === 'stalled') ? 'stalled' : list.some(m => m.state === 'working') ? 'acting' : list.length && list.every(m => m.state === 'done') ? 'done' : list.some(m => m.state === 'failed') ? 'failed' : 'queued')
+/** The zone of its habitat an agent stands in (face-rig CREATURE-SPEC.md 20): the roots while it reads its sources, the trunk while it makes, the crown
+ * once it has delivered. Read from the member's last tool and its state. */
+type Zone = 'roots' | 'trunk' | 'crown'
+const ZONE_OF: Readonly<Record<Zone, string>> = {roots: 'gathers its sources', trunk: 'makes', crown: 'delivers'}
+const zoneOf = (m: Member): Zone => (m.state === 'done' ? 'crown' : m.state === 'idle' || m.state === undefined || /^(Read|Grep|Glob|LS|Web)/i.test(m.last ?? '') ? 'roots' : 'trunk')
+const patternOf = (v: V): string | undefined => { const x = strOf(v, 'pattern'); return x !== undefined && x in PATTERNS ? x : undefined }
+/** A member's face: the creature of its pattern (its own, else the crew's) in the posture of its state; the shell's face where no pattern is read. */
+function MemberFace({m, pattern, size, dim}: {m: Member; pattern: string | undefined; size: number; dim?: boolean}) {
+  const type = m.type ?? pattern
+  if (!type) return <Face size={size} dim={dim} />
+  return <span className="as-face as-face--creature" aria-hidden="true"><CreatureFace figure={faceOf(type).id} state={runOf(m.state)} size={size >= 26 ? 44 : 40} /></span>
+}
 
 // ---------------------------------------------------------------- the chosen member (Whole)
 
-function Who({chosen, known}: {chosen: Node | undefined; known: boolean}) {
+function Who({chosen, known, pattern}: {chosen: Node | undefined; known: boolean; pattern: string | undefined}) {
   if (!chosen) return <p className="as-goal" data-none="true">{known ? 'The set holds no members.' : 'No reading of the members.'}</p>
   return <>
     <div className="as-who" data-i={`${chosen.name}|${chosen.state ? STATE_SAYS[chosen.state] : 'No reading of the state.'}`}>
-      <Face size={22} dim={dimmed(chosen.state)} />
+      <MemberFace m={chosen} pattern={pattern} size={22} dim={dimmed(chosen.state)} />
       <span className="as-who-text">
         <b>{chosen.name}</b>
         <span><span data-state={chosen.state}>{chosen.state ? STATE_WORD[chosen.state] : NONE}</span> · {chosen.model ?? NONE}</span>
@@ -262,6 +292,7 @@ function Who({chosen, known}: {chosen: Node | undefined; known: boolean}) {
 function CrewPane({p}: {p: ViewProps}) {
   const list = membersOf(p.v), chosen = chosenOf(p.v, list), known = has(p.v, 'members')
   const tone = (s: State) => lampOf(s)
+  const pattern = patternOf(p.v), pat = pattern ? PATTERNS[pattern] : undefined
   return <div className="as-pane">
     <div className="as-strip" aria-label="Crew">
       <b>{crewOf(p.v) ?? 'Agentset'}</b>
@@ -281,15 +312,19 @@ function CrewPane({p}: {p: ViewProps}) {
               return <li key={m.id} style={{'--d': m.depth} as CSSProperties}>
                 <button type="button" className="as-node" aria-pressed={m.id === chosen?.id} data-state={m.state ?? 'none'} data-nested={m.depth > 0 ? 'true' : undefined}
                   data-i={`${m.name}|${m.state ? STATE_SAYS[m.state] : 'No reading of the state.'}`} onClick={() => p.set('member', m.id)}>
-                  <Face size={26} />
+                  <MemberFace m={m} pattern={pattern} size={26} />
                   <span className="as-node-main"><b>{m.name}</b><span>{m.goal ?? m.last ?? NONE}</span></span>
                   {m.model ? <span className="as-chip">{m.model}</span> : <span />}
-                  <Lamp state={light} tone={t} label={m.state ? STATE_WORD[m.state] : 'No reading'} />
+                  <Lamp state={light} tone={t} busy={m.state === 'working'} label={m.state ? STATE_WORD[m.state] : 'No reading'} />
                 </button>
               </li>
             })}
           </ol>
           <aside className="as-thread" aria-label="Thread">
+            {pat && <div className="as-crew" aria-label={`The crew: ${pat.name}`}>
+              <CrewFace pattern={pat.id} width={332} state={crewState(list)} members={isCrew(pat) ? list.slice(0, 5).map(m => ({id: m.id, name: m.name, state: runOf(m.state), lead: m.depth === 0 && list.length > 1})) : list.slice(0, 1).map(m => ({id: m.id, name: m.name, state: runOf(m.state)}))} />
+              <p><b>{pat.name}</b> {patternCount(pat).toLowerCase()} · it {pat.does}</p>
+            </div>}
             {chosen && <>
               <div className="as-thread-head"><b>{chosen.name}</b><span data-state={chosen.state}>{chosen.state ? STATE_WORD[chosen.state] : NONE}</span>
                 <span>{chosen.model ?? NONE}</span><span>{chosen.tools === undefined ? NONE : `${chosen.tools} tool calls`}</span></div>
@@ -342,7 +377,7 @@ const HELPERS = [
 const MODELS = [{id: 'glm-5.3-flash'}, {id: 'glm-5.2'}, {id: 'glm-5'}, {id: 'glm-4-9b'}]
 
 /** Every key the owners report: the "No readings" fixture drops all of them. */
-const KEYS = ['light', 'crew', 'member', 'members', 'fanOut', 'depth', 'handBack', 'returnCap', 'model', 'models', 'join']
+const KEYS = ['light', 'crew', 'member', 'members', 'fanOut', 'depth', 'handBack', 'returnCap', 'model', 'models', 'join', 'pattern']
 const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, undefined]))
 
 export const design: DesignedDevice = {
@@ -350,13 +385,14 @@ export const design: DesignedDevice = {
   title: 'Agentset rack',
   kind: 'rack',
   defaults: {
-    light: 'lit', crew: 'oi-guardians', member: LEAD, fanOut: FAN_DEFAULT, depth: DEPTH_DEFAULT, handBack: 'summary', returnCap: CAP_DEFAULT, model: INHERIT, join: 'all',
+    light: 'lit', crew: 'oi-guardians', member: LEAD, fanOut: FAN_DEFAULT, depth: DEPTH_DEFAULT, handBack: 'summary', returnCap: CAP_DEFAULT, model: INHERIT, join: 'all', pattern: 'scout',
     models: JSON.stringify(MODELS), members: JSON.stringify(CREW),
   },
   fixtures: {
     'The oi-guardians crew': {},
     'Nested helpers': {depth: 2, fanOut: 6, model: 'glm-5.3-flash', member: 'agent/factory-guardian', members: JSON.stringify([...CREW, ...HELPERS])},
-    'Weighted returns': {join: 'weighted', handBack: 'digest'},
+    'One return': {join: 'none', handBack: 'digest'},
+    'A trail of ants': {crew: 'trail', pattern: 'trail', join: 'none', fanOut: 32, handBack: 'digest'},
     'No readings': NOTHING,
   },
 
@@ -403,15 +439,15 @@ export const design: DesignedDevice = {
       </Band>
       <Band>
         <Section label="Member" cols={4} grow>
-          <Who chosen={chosen} known={has(p.v, 'members')} />
+          <Who chosen={chosen} known={has(p.v, 'members')} pattern={patternOf(p.v)} />
           <Readout label="tool calls" does="Tool calls the chosen member has made." value={chosen?.tools} />
           <Readout label="files" does="Files the chosen member touched." value={chosen?.files?.length} />
           {retryAction(p, chosen)}
           {openAction(p, chosen)}
         </Section>
-        <Section label="Return" cols={2} width={176}>
+        <Section label="Return" cols={2} width={196}>
           {handBack(p)}
-          {joinRadio(p)}
+          {joinChooser(p)}
           <div className="as-span">{capBox(p)}</div>
           <div className="as-span">{modelChooser(p)}</div>
         </Section>
@@ -422,9 +458,16 @@ export const design: DesignedDevice = {
   full: p => <CrewPane p={p} />,
 
   widget: p => {
-    const known = has(p.v, 'members'), list = membersOf(p.v)
+    const known = has(p.v, 'members'), list = membersOf(p.v), pattern = patternOf(p.v)
+    const zones: Zone[] = ['crown', 'trunk', 'roots']
     return <Tile title={crewOf(p.v) ?? 'Agentset'} light={lightOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
-      <div className="as-tile-list"><MemberList p={p} size={5} chip={false} label={false} /></div>
+      <div className="as-habitat" data-i={`Agents|Each agent stands as its creature in the posture of its state, at the zone its run has reached: ${zones.map(z => `${z} ${ZONE_OF[z]}`).join('; ')}.`}>
+        {known ? zones.map(z => <div key={z} className="as-zone" data-zone={z}><span>{z}</span>
+          {list.filter(m => zoneOf(m) === z).slice(0, 6).map(m => <span key={m.id} className="as-zone-agent" data-state={m.state ?? 'none'} title={`${m.name}: ${m.state ?? 'no reading'}`}>
+            {(m.type ?? pattern) ? <CreatureFace figure={faceOf((m.type ?? pattern)!).id} state={runOf(m.state)} size={32} /> : <Lamp state={lampOf(m.state).light} tone={lampOf(m.state).tone} label={m.name} />}
+          </span>)}
+        </div>) : <p className="as-none">No reading of the members.</p>}
+      </div>
       <div className="as-tile-side">
         <Readout big label="working" does="Members at work, of all the members." value={known ? `${countOf(list, 'working')}/${list.length}` : undefined} tone="value" />
         <Readout label="stalled" does="Members that stopped producing output." value={countLine(p.v, 'stalled')} tone={countOf(list, 'stalled') > 0 ? 'stall' : undefined} />

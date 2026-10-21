@@ -635,6 +635,26 @@ body.oi-chrome-devices .canvas-find-overlay{visibility:hidden!important;pointer-
    through the chrome door — and stands on a device in the shell's pool (Acts, Nara, Find); the Library opens full in a pane of its own.
    A modal Find never dims the field behind it. */
 body.oi-chrome-devices .canvas-find-overlay::backdrop{display:none}
+/* The field pane draws only the field (manual §20.1, owner 20 Oct): the frame's own Studio and its working panels stand down as well. The
+   Studio (#inspector) and its sections are the Studio device's, every one in its pane; the toolbelt and its picker are the Studio's
+   macros and + Parameter; the formation sequence, the local controls, the shape picker and the automation lanes are Clip view's; the
+   starting compositions and the entry gate are the browser's; the image suite is the transport's Capture and the File menu's Export.
+   Concealed, never removed, as the chrome above. The frame's dialogs are left alone: a modal one hidden would leave the field inert
+   unseen, and a confirmation the frame asks for must show, so an act never waits unseen. */
+body.oi-chrome-devices #inspector,
+body.oi-chrome-devices #live-workspace,
+body.oi-chrome-devices #toolbelt-panel,
+body.oi-chrome-devices #belt-picker,
+body.oi-chrome-devices #context-panel,
+body.oi-chrome-devices #shape-picker,
+body.oi-chrome-devices #automation-assignment,
+body.oi-chrome-devices #automation-monitor,
+body.oi-chrome-devices #modes-panel,
+body.oi-chrome-devices #entry-gate,
+body.oi-chrome-devices #capture-panel{visibility:hidden!important;pointer-events:none!important}
+/* The scenes strip shows itself while the frame's Studio is open (body.studio-open #timeline-panel, above); outside the journey lens, whose
+   walk it is, it stands down with the scene bar that holds it. */
+body.oi-chrome-devices:not([data-active-instrument="journey"]) #timeline-panel{visibility:hidden!important;pointer-events:none!important}
 body.oi-chrome-devices #app>.masthead .header-menu{display:flex!important;position:static!important;animation:none!important}
 body.oi-chrome-devices #research-workspace{inset:0}
 /* The journey's rows: in the journey lens the scenes panel is the walk (manual §17.5 Full), so it stands in the pane while the scene

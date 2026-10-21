@@ -1,0 +1,268 @@
+[
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/development-entry-factory-guardian-20261008",
+  "civil_instant": "2026-10-08T02:59:44.933000Z",
+  "instant_unix_ms": 1791428384933,
+  "stream_position": "session-space:session-space/development-entry-factory-guardian-20261008:3",
+  "evidence_refs": [
+   "Factory",
+   "O-I",
+   "agent-session/development-entry-factory-guardian-20261008",
+   "central:source:control:root:Control/agents/governance/attention/consult-authored-ground.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/own-the-gaps.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/propose-not-write.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recognition.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recover-before-asking.md"
+  ],
+  "summary": "SessionSpace session-space/development-entry-factory-guardian-20261008 receipt 3 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/development-entry-factory-guardian-20261008",
+  "civil_instant": "2026-10-08T02:20:17.809000Z",
+  "instant_unix_ms": 1791426017809,
+  "stream_position": "session-space:session-space/development-entry-factory-guardian-20261008:2",
+  "evidence_refs": [
+   "Factory",
+   "agent-session/development-entry-factory-guardian-20261008",
+   "central:source:control:root:Control/agents/governance/attention/consult-authored-ground.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/own-the-gaps.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/propose-not-write.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recognition.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recover-before-asking.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/responsibility.md"
+  ],
+  "summary": "SessionSpace session-space/development-entry-factory-guardian-20261008 receipt 2 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/development-entry-factory-guardian-20261008",
+  "civil_instant": "2026-10-08T02:00:22.486000Z",
+  "instant_unix_ms": 1791424822486,
+  "stream_position": "session-space:session-space/development-entry-factory-guardian-20261008:1",
+  "evidence_refs": [
+   "agent-session/development-entry-factory-guardian-20261008",
+   "session-space/development-entry-factory-guardian-20261008"
+  ],
+  "summary": "SessionSpace session-space/development-entry-factory-guardian-20261008 receipt 1 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/development-entry-factory-guardian-20261008",
+  "civil_instant": "2026-10-08T02:00:16.297000Z",
+  "instant_unix_ms": 1791424816297,
+  "stream_position": "session-space:session-space/development-entry-factory-guardian-20261008:0",
+  "evidence_refs": [
+   "session-space/development-entry-factory-guardian-20261008"
+  ],
+  "summary": "SessionSpace session-space/development-entry-factory-guardian-20261008 receipt 0 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/o-i-chat-1791392815-b898",
+  "civil_instant": "2026-10-07T17:07:02.542000Z",
+  "instant_unix_ms": 1791392822542,
+  "stream_position": "session-space:session-space/o-i-chat-1791392815-b898:2",
+  "evidence_refs": [
+   "O-I",
+   "agent-session/o-i-chat-1791392815-b898",
+   "central:source:control:root:Control/agents/governance/attention/consult-authored-ground.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/own-the-gaps.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/propose-not-write.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recognition.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recover-before-asking.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/responsibility.md"
+  ],
+  "summary": "SessionSpace session-space/o-i-chat-1791392815-b898 receipt 2 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/o-i-chat-1791392815-b898",
+  "civil_instant": "2026-10-07T17:07:00.053000Z",
+  "instant_unix_ms": 1791392820053,
+  "stream_position": "session-space:session-space/o-i-chat-1791392815-b898:1",
+  "evidence_refs": [
+   "O-I",
+   "central:source:control:root:Control/agents/governance/attention/consult-authored-ground.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/own-the-gaps.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/propose-not-write.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recognition.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recover-before-asking.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/responsibility.md",
+   "central:source:control:root:Control/agents/governance/being-there/relational-logos.md"
+  ],
+  "summary": "SessionSpace session-space/o-i-chat-1791392815-b898 receipt 1 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/o-i-chat-1791392815-b898",
+  "civil_instant": "2026-10-07T17:06:57.628000Z",
+  "instant_unix_ms": 1791392817628,
+  "stream_position": "session-space:session-space/o-i-chat-1791392815-b898:0",
+  "evidence_refs": [
+   "session-space/o-i-chat-1791392815-b898"
+  ],
+  "summary": "SessionSpace session-space/o-i-chat-1791392815-b898 receipt 0 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/factory-expressions-20260926-201904",
+  "civil_instant": "2026-09-26T20:19:04.889000Z",
+  "instant_unix_ms": 1790453944889,
+  "stream_position": "session-space:session-space/factory-expressions-20260926-201904:3",
+  "evidence_refs": [
+   "O-I",
+   "agent-session/fx-aletheia-20260926-201904",
+   "agent-session/fx-anima-20260926-201904",
+   "central:source:control:root:Control/agents/governance/attention/consult-authored-ground.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/own-the-gaps.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/propose-not-write.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recognition.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recover-before-asking.md"
+  ],
+  "summary": "SessionSpace session-space/factory-expressions-20260926-201904 receipt 3 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/factory-expressions-20260926-201904",
+  "civil_instant": "2026-09-26T20:19:04.764000Z",
+  "instant_unix_ms": 1790453944764,
+  "stream_position": "session-space:session-space/factory-expressions-20260926-201904:2",
+  "evidence_refs": [
+   "O-I",
+   "agent-session/fx-anima-20260926-201904",
+   "central:source:control:root:Control/agents/governance/attention/consult-authored-ground.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/own-the-gaps.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/propose-not-write.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recognition.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recover-before-asking.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/responsibility.md"
+  ],
+  "summary": "SessionSpace session-space/factory-expressions-20260926-201904 receipt 2 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/factory-expressions-20260926-201904",
+  "civil_instant": "2026-09-26T20:19:04.636000Z",
+  "instant_unix_ms": 1790453944636,
+  "stream_position": "session-space:session-space/factory-expressions-20260926-201904:1",
+  "evidence_refs": [
+   "O-I",
+   "central:source:control:root:Control/agents/governance/attention/consult-authored-ground.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/own-the-gaps.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/propose-not-write.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recognition.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/recover-before-asking.md",
+   "central:source:control:root:Control/agents/governance/authorship-and-return/responsibility.md",
+   "central:source:control:root:Control/agents/governance/being-there/relational-logos.md"
+  ],
+  "summary": "SessionSpace session-space/factory-expressions-20260926-201904 receipt 1 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/factory-expressions-20260926-201904",
+  "civil_instant": "2026-09-26T20:19:04.411000Z",
+  "instant_unix_ms": 1790453944411,
+  "stream_position": "session-space:session-space/factory-expressions-20260926-201904:0",
+  "evidence_refs": [
+   "session-space/factory-expressions-20260926-201904"
+  ],
+  "summary": "SessionSpace session-space/factory-expressions-20260926-201904 receipt 0 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/o-i-chat-1790087010-4a70",
+  "civil_instant": "2026-09-22T14:23:31.127000Z",
+  "instant_unix_ms": 1790087011127,
+  "stream_position": "session-space:session-space/o-i-chat-1790087010-4a70:2",
+  "evidence_refs": [
+   "O-I",
+   "agent-session/o-i-chat-1790087010-4a70",
+   "context-resolution/702c507a57f3bb77",
+   "host/localhost",
+   "session-space/o-i-chat-1790087010-4a70"
+  ],
+  "summary": "SessionSpace session-space/o-i-chat-1790087010-4a70 receipt 2 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/o-i-chat-1790087010-4a70",
+  "civil_instant": "2026-09-22T14:23:31.023000Z",
+  "instant_unix_ms": 1790087011023,
+  "stream_position": "session-space:session-space/o-i-chat-1790087010-4a70:1",
+  "evidence_refs": [
+   "O-I",
+   "context-resolution/702c507a57f3bb77",
+   "host/localhost",
+   "session-space/o-i-chat-1790087010-4a70"
+  ],
+  "summary": "SessionSpace session-space/o-i-chat-1790087010-4a70 receipt 1 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/o-i-chat-1790087010-4a70",
+  "civil_instant": "2026-09-22T14:23:30.902000Z",
+  "instant_unix_ms": 1790087010902,
+  "stream_position": "session-space:session-space/o-i-chat-1790087010-4a70:0",
+  "evidence_refs": [
+   "session-space/o-i-chat-1790087010-4a70"
+  ],
+  "summary": "SessionSpace session-space/o-i-chat-1790087010-4a70 receipt 0 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/factory-acp-chat",
+  "civil_instant": "2026-09-20T17:26:28.417000Z",
+  "instant_unix_ms": 1789925188417,
+  "stream_position": "session-space:session-space/factory-acp-chat:2",
+  "evidence_refs": [
+   "Factory",
+   "agent-session/factory-acp-chat",
+   "context-resolution/1fe9a0cc5376275b",
+   "host/localhost",
+   "session-space/factory-acp-chat"
+  ],
+  "summary": "SessionSpace session-space/factory-acp-chat receipt 2 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/factory-acp-chat",
+  "civil_instant": "2026-09-20T17:26:18.808000Z",
+  "instant_unix_ms": 1789925178808,
+  "stream_position": "session-space:session-space/factory-acp-chat:1",
+  "evidence_refs": [
+   "agent-session/factory-acp-chat",
+   "session-space/factory-acp-chat"
+  ],
+  "summary": "SessionSpace session-space/factory-acp-chat receipt 1 \u00b7 1 semantic change"
+ },
+ {
+  "stream": "aikit-history",
+  "kind": "now",
+  "subject_ref": "session-space/factory-acp-chat",
+  "civil_instant": "2026-09-20T17:26:11.880000Z",
+  "instant_unix_ms": 1789925171880,
+  "stream_position": "session-space:session-space/factory-acp-chat:0",
+  "evidence_refs": [
+   "session-space/factory-acp-chat"
+  ],
+  "summary": "SessionSpace session-space/factory-acp-chat receipt 0 \u00b7 1 semantic change"
+ }
+]

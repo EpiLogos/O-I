@@ -27,7 +27,7 @@ const {kernelDocumentToJourney}=await load('bridge');
 const {prepareCompositionEdit,rebaseCompositionView}=await load('composition');
 const {documentToChanges}=await load('expressions');
 const {initialiseSceneSaves,saveScene}=await load('sceneWorkflow');
-const {validateEntitySound,entitySoundVoices,EntitySoundBank,activeFromFocus,setObjectSoundMuted}=await load('sound');
+const {validateEntitySound,entitySoundVoices,entitySoundPlan,activeFromFocus,setObjectSoundMuted,objectSoundIsMuted}=await load('sound');
 const {soundControlsHTML,applySoundControl}=await load('controls');
 test.after(()=>fs.rmSync(out,{recursive:true,force:true}));
 
@@ -55,7 +55,7 @@ function ownerEdit(document,request){
  return reorderKeys(d);
 }
 
-const SOUND={enabled:true,followCymatic:false,frequencyHz:432,gain:.3,waveform:'triangle',attack:.05,release:1.5,pan:-.25};
+const SOUND={enabled:true,carry:{kind:'mode',ref:'maqam/00'},gain:.3,attack:.05,release:1.5};
 function richCharacter(){
  const e=entity('Nous','◇',{x:.2,y:-.1,z:.4});
  e.source={kind:'ascii',ascii:{text:' /\\\n<  >\n \\/',fontSize:18}};
@@ -119,7 +119,7 @@ test('a later material edit (sound, tint, force) returns as one scene_material_s
 });
 
 test('malformed per-object sound is refused before any change is built',()=>{
- for(const sound of [{enabled:'yes'},{enabled:true,gain:3},{enabled:true,waveform:'noise'},{enabled:true,script:'x'}]){
+ for(const sound of [{enabled:'yes'},{enabled:true,gain:3},{enabled:true,waveform:'noise'},{enabled:true,script:'x'},{enabled:true,frequencyHz:432},{enabled:true,carry:{kind:'oscillator',ref:'x'}}]){
   const j=richJourney();j.scenes[0].entities[0].sound=sound;
   assert.throws(()=>prepareCompositionEdit(seed(j),j),/Invalid entity sound/);
  }
@@ -144,38 +144,21 @@ test('the Library save diff carries rich Scene material and the full parameter v
  assert.match(documentToChanges(current,edited).error,/mood/);
 });
 
-test('sound voices follow presence, activity and the cymatic frequency',()=>{
+test('sound voices follow presence, activity and what they carry',()=>{
+ const carry={kind:'mode',ref:'maqam/00'};
  const scene={field:{params:{frequency:396}},entities:[
-  {id:'a',sound:{enabled:true,followCymatic:true},templateFrequency:528},
-  {id:'b',sound:{enabled:true,frequencyHz:220,gain:.5,waveform:'square',pan:.5}},
-  {id:'c',sound:{enabled:true},enabled:false},
-  {id:'d',sound:{enabled:false,frequencyHz:100}},
-  {id:'e',sound:{enabled:true,followCymatic:true}},
+  {id:'a',sound:{enabled:true,carry},templateFrequency:528},
+  {id:'b',sound:{enabled:true,carry,gain:.5}},
+  {id:'c',sound:{enabled:true,carry},enabled:false},
+  {id:'d',sound:{enabled:false,carry}},
+  {id:'e',sound:{enabled:true}},
  ]};
  const voices=entitySoundVoices(scene);
- assert.deepEqual(voices.map(v=>[v.entityId,v.frequencyHz]),[['a',528],['b',220],['e',396]]);
- assert.equal(voices[1].waveform,'square');assert.equal(voices[1].pan,.5);assert.equal(voices[1].gain,.5);
+ assert.deepEqual(voices.map(v=>v.entityId),['a','b'],'a voice that carries something, present and on');
+ assert.equal(voices[1].gain,.5);assert.deepEqual(voices[0].carry,carry);
+ assert.deepEqual(Object.keys(voices[0]).sort(),['attack','carry','entityId','gain','release'],'no frequency, waveform or pan');
  assert.deepEqual(entitySoundVoices(scene,new Set(['b'])).map(v=>v.entityId),['b']);
-});
-
-test('the sound bank opens voices with attack and releases departing ones',()=>{
- const log=[];
- const param=name=>({value:0,setValueAtTime:(v,t)=>log.push([name,'set',v,t]),linearRampToValueAtTime:(v,t)=>log.push([name,'ramp',v,t]),setTargetAtTime:(v)=>log.push([name,'target',v]),cancelScheduledValues:()=>{}});
- const context={currentTime:10,state:'running',destination:{},
-  createOscillator:()=>({type:'sine',frequency:param('frequency'),connect(){},start:t=>log.push(['osc','start',t]),stop:t=>log.push(['osc','stop',t])}),
-  createGain:()=>({gain:param('gain'),connect(){}}),
-  createStereoPanner:()=>({pan:param('pan'),connect(){}}),close:async()=>{}};
- const bank=new EntitySoundBank(()=>context);
- bank.sync({entities:[{id:'a',sound:{enabled:true,frequencyHz:300,gain:.4,attack:.5,release:2}}]});
- assert.ok(log.some(e=>e[0]==='gain'&&e[1]==='ramp'&&e[2]===.4&&e[3]===10.5),'attack ramps to gain');
- assert.ok(log.some(e=>e[0]==='frequency'&&e[2]===300));
- assert.equal(bank.inspect().voices.length,1);
- log.length=0;
- bank.sync({entities:[]});
- assert.ok(log.some(e=>e[0]==='gain'&&e[1]==='ramp'&&e[2]===0&&e[3]===12),'release ramps to silence');
- assert.ok(log.some(e=>e[0]==='osc'&&e[1]==='stop'));
- assert.equal(bank.inspect().voices.length,0);
- bank.dispose();
+ assert.deepEqual(entitySoundPlan(scene).silent.map(v=>v.entityId),['e'],'one that carries nothing is silent and says why');
 });
 
 test('validateJourney keeps the sound block (model carries it as authored material)',()=>{
@@ -183,17 +166,10 @@ test('validateJourney keeps the sound block (model carries it as authored materi
  assert.deepEqual(validateJourney(j).scenes[0].entities[0].sound,SOUND);
 });
 
-test('a bank without an audio device keeps the plan pending until one exists',()=>{
- let context=null;
- const bank=new EntitySoundBank(()=>context);
- const scene={entities:[{id:'a',sound:{enabled:true,frequencyHz:300}}]};
- bank.sync(scene);assert.equal(bank.inspect().voices.length,0);
- const param=()=>({value:0,setValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){},cancelScheduledValues(){}});
- context={currentTime:0,state:'running',destination:{},createOscillator:()=>({type:'sine',frequency:param(),connect(){},start(){},stop(){}}),createGain:()=>({gain:param(),connect(){}}),close:async()=>{}};
- bank.sync(scene);assert.equal(bank.inspect().voices.length,1,'the same plan applies once a device exists');
- // The shared object-sound mute reaches every bank.
- setObjectSoundMuted(true);assert.equal(bank.inspect().muted,true);setObjectSoundMuted(false);assert.equal(bank.inspect().muted,false);
- bank.dispose();
+test('the shared object-sound mute is one switch every voice and the Sound control read',()=>{
+ const seen=[];
+ setObjectSoundMuted(true);seen.push(objectSoundIsMuted());setObjectSoundMuted(false);seen.push(objectSoundIsMuted());
+ assert.deepEqual(seen,[true,false]);
 });
 
 test('travelling focus sounds only the focused entity; parallel sounds all present',()=>{
@@ -203,16 +179,18 @@ test('travelling focus sounds only the focused entity; parallel sounds all prese
 });
 
 test('the Sound control edits exactly the validated sound block',()=>{
+ const store={catalogue:null,why:'The mode catalogue has not been read yet'};
  let sound=applySoundControl(undefined,'enabled',true);
  assert.deepEqual(sound,{enabled:true});
- sound=applySoundControl(sound,'frequencyHz','528');assert.equal(sound.frequencyHz,528);assert.equal(sound.followCymatic,false);
- sound=applySoundControl(sound,'waveform','square');sound=applySoundControl(sound,'gain','0.4');sound=applySoundControl(sound,'pan','-0.5');
- assert.deepEqual(sound,{enabled:true,frequencyHz:528,followCymatic:false,waveform:'square',gain:.4,pan:-.5});
+ sound=applySoundControl(sound,'carry','mode:maqam/00');assert.deepEqual(sound.carry,{kind:'mode',ref:'maqam/00'});
+ sound=applySoundControl(sound,'gain','0.4');sound=applySoundControl(sound,'attack','0.5');
+ assert.deepEqual(sound,{enabled:true,carry:{kind:'mode',ref:'maqam/00'},gain:.4,attack:.5});
  assert.throws(()=>applySoundControl(sound,'gain','3'),/gain/);
- const html=soundControlsHTML(sound);
+ const html=soundControlsHTML(sound,false,store);
  assert.ok(html.includes('data-sound="enabled" checked'));
- assert.ok(/data-sound="frequencyHz" value="528"/.test(html));
- assert.ok(html.includes('<option value="square" selected>'));
+ assert.ok(/data-sound="gain"[^>]*value="0.4"/.test(html));
+ assert.ok(/<option value="mode:maqam\/00" selected>maqam\/00 · not in the store<\/option>/.test(html),'a carry the store does not list stays visible as what it is');
+ assert.ok(!/frequencyHz|waveform|data-sound="pan"|followCymatic/.test(html),'no oscillator control');
  assert.ok(!/data-action|data-bind/.test(html),'its own event vocabulary, never the app\'s');
- assert.ok(/data-sound="gain"[^>]*disabled/.test(soundControlsHTML(undefined)),'off until enabled');
+ assert.ok(/data-sound="gain"[^>]*disabled/.test(soundControlsHTML(undefined,false,store)),'off until enabled');
 });

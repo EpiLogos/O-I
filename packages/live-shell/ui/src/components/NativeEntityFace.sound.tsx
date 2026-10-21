@@ -1,17 +1,18 @@
-import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
+import {Fragment, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import type {Entity} from '../../../../expressions-boundary/src/editor'
 import type {EntityFaceContext, EntityFaceView} from './nativeEntityFaceViews.tsx'
 import {
-  ENVELOPE, LOCKED_NOTE, SOUND_GROUPS, SOUND_NUMBERS, SOUND_WAVEFORMS, addedSound, envelopeGeometry, envelopeValueAt, numberProblem, panX,
-  parseNumberText, replyRefusal, resolvedSound, soundChange, soundNumberSpec, soundSummaryText, steppedValue, timeToX, waveformPath,
-  soundWithField, type EnvelopeField, type SoundField, type SoundNumberSpec,
+  ENVELOPE, LOCKED_NOTE, SOUND_GROUPS, SOUND_NUMBERS, addedSound, carryFromValue, carryValue, envelopeGeometry, envelopeValueAt, numberProblem,
+  parseNumberText, replyRefusal, resolvedSound, soundChange, soundNumberSpec, soundSummaryText, steppedValue, timeToX,
+  soundWithField, voiceChoiceNote, voiceChoices, type EnvelopeField, type SoundField, type SoundNumberSpec,
 } from './nativeEntityFace.sound.ts'
+import {useLiveModeCatalogue} from '../native/liveModeCatalogue.ts'
 import './NativeEntityFace.sound.css'
 
 type EntitySound = NonNullable<Entity['sound']>
 /** The retained whole sound a gesture composed (null = remove). Shown in place of the object's sound until the owner acknowledges it. */
 type Draft = {sound: EntitySound | null} | null
-const VIEW = {width: 360, height: 262}
+const VIEW = {width: 360, height: 130}
 const messageOf = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 const arrowDirection = (key: string): 1 | -1 | null => key === 'ArrowRight' || key === 'ArrowUp' ? 1 : key === 'ArrowLeft' || key === 'ArrowDown' ? -1 : null
 
@@ -44,11 +45,12 @@ function SoundNumber({spec, value, disabled, onCommit}: {spec: SoundNumberSpec; 
   </label>
 }
 
-/** The Sound device on one selected object: envelope handles, a waveform sketch, pan, and the exact-value controls. */
+/** The Sound device on one selected object: the voice's switch, what it carries (a name or a mode of the store), and its envelope handles and exact-value controls. */
 function SoundPanel({reading, entity, disabled, apply}: EntityFaceContext) {
   const [draft, setDraft] = useState<Draft>(null)
   const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
+  const modes = useLiveModeCatalogue().reading
   const svg = useRef<SVGSVGElement>(null)
   const drag = useRef<{field: EnvelopeField; pointerId: number; base: EntitySound; latest: EntitySound | null} | null>(null)
   const shownSound: EntitySound | undefined = draft ? draft.sound ?? undefined : entity.sound
@@ -119,16 +121,19 @@ function SoundPanel({reading, entity, disabled, apply}: EntityFaceContext) {
     if (!base) return null
     const s = resolvedSound(base)
     if (field === 'enabled') return <label key={field} className="native-entity-sound-toggle"><input type="checkbox" checked={s.enabled} disabled={off}
-      onChange={event => void edit(() => soundWithField(base, 'enabled', event.target.checked))} /><span>This object sounds while present</span></label>
-    if (field === 'followCymatic') return <label key={field} className="native-entity-sound-toggle"><input type="checkbox" checked={s.followCymatic} disabled={off}
-      onChange={event => void edit(() => soundWithField(base, 'followCymatic', event.target.checked))} /><span>Follow its cymatic frequency</span></label>
-    if (field === 'waveform') return <label key={field} className="native-entity-sound-field"><span>Waveform</span>
-      <select value={s.waveform} disabled={off} onChange={event => void edit(() => soundWithField(base, 'waveform', event.target.value))}>
-        {SOUND_WAVEFORMS.map(waveform => <option key={waveform} value={waveform}>{waveform[0].toUpperCase() + waveform.slice(1)}</option>)}</select></label>
+      onChange={event => void edit(() => soundWithField(base, 'enabled', event.target.checked))} /><span>This object carries the torus's sound while present</span></label>
+    if (field === 'carry') return <Fragment key={field}>
+      <label className="native-entity-sound-field"><span>Name or mode</span>
+        <select value={carryValue(s.carry)} disabled={off}
+          onChange={event => void edit(() => soundWithField(base, 'carry', carryFromValue(event.target.value)))}>
+          {voiceChoices(modes.state === 'ready' ? modes.catalogue : null, s.carry).map(group =>
+            <optgroup key={group.label} label={group.label}>{group.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</optgroup>)}
+        </select></label>
+      <p className="native-entity-sound-note" aria-live="polite">{voiceChoiceNote(base, modes)}</p>
+    </Fragment>
     const spec = numberSpec(field)
     if (!spec) return null
-    // While Follow cymatic is on, the pitch is the object's cymatic frequency: the Frequency control is disabled (soundControls.ts).
-    return <SoundNumber key={field} spec={spec} value={s[spec.field]} disabled={off || (field === 'frequencyHz' && s.followCymatic)}
+    return <SoundNumber key={field} spec={spec} value={s[spec.field]} disabled={off}
       onCommit={(name, value) => edit(() => soundWithField(base, name, value))} />
   }
 
@@ -157,7 +162,7 @@ function SoundPanel({reading, entity, disabled, apply}: EntityFaceContext) {
     {shownSound && s && env ? <>
       <p className="native-entity-sound-summary">{soundSummaryText(shownSound)}</p>
       <figure className="native-entity-sound-figure">
-        <svg ref={svg} viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} role="group" aria-label={`Sound envelope, waveform and pan for ${entity.name}`}
+        <svg ref={svg} viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} role="group" aria-label={`Sound envelope for ${entity.name}`}
           className="native-entity-sound-svg" onPointerMove={moveDrag} onPointerUp={event => endDrag(event, false)} onPointerCancel={event => endDrag(event, true)}>
           <text x={ENVELOPE.x0} y={12} className="native-entity-sound-label">Envelope · attack {s.attack} s · release {s.release} s · gain {s.gain}</text>
           <rect x={ENVELOPE.x0} y={ENVELOPE.topY} width={ENVELOPE.span} height={ENVELOPE.baseY - ENVELOPE.topY} className="native-entity-sound-plot" />
@@ -171,18 +176,8 @@ function SoundPanel({reading, entity, disabled, apply}: EntityFaceContext) {
           {handle('release', env.handles.release.x, env.handles.release.y, 'Release handle', s.release, `${s.release} seconds after the sustain`, 0, 30)}
           {handle('gain', env.handles.gain.x, env.handles.gain.y, 'Gain handle', s.gain, `gain ${s.gain}`, 0, 1, true)}
 
-          <text x={ENVELOPE.x0} y={150} className="native-entity-sound-label">Waveform · {s.waveform} · two periods, scaled to gain</text>
-          <path d={`M${ENVELOPE.x0} 178H${ENVELOPE.x0 + ENVELOPE.span}`} className="native-grid-line" />
-          <rect x={ENVELOPE.x0} y={156} width={ENVELOPE.span} height={44} className="native-entity-sound-plot" />
-          <path d={waveformPath(s.waveform, s.gain, {x0: ENVELOPE.x0, width: ENVELOPE.span, centreY: 178, halfHeight: 20})} className="native-entity-sound-wave" />
-
-          <text x={ENVELOPE.x0} y={216} className="native-entity-sound-label">Pan · {s.pan}</text>
-          <path d={`M${ENVELOPE.x0} 236H${ENVELOPE.x0 + ENVELOPE.span}M180 230V242`} className="native-grid-line" />
-          <circle cx={panX(s.pan, ENVELOPE.x0, ENVELOPE.span)} cy={236} r={5} className="native-entity-sound-knob" />
-          <text x={ENVELOPE.x0} y={255} className="native-entity-sound-label">L</text>
-          <text x={ENVELOPE.x0 + ENVELOPE.span} y={255} textAnchor="end" className="native-entity-sound-label">R</text>
         </svg>
-        <figcaption>Configuration diagram, drawn only from this object's sound. The envelope shares one time axis (0 to 40 s); the sustain is a break, not to scale. The waveform shows two periods of its shape at the chosen gain; pitch is not drawn. It is not a sound preview.</figcaption>
+        <figcaption>Configuration diagram, drawn only from this object's sound. The envelope shares one time axis (0 to 40 s); the sustain is a break, not to scale. It is not a sound preview.</figcaption>
       </figure>
       <div className="native-entity-sound-groups">
         {SOUND_GROUPS.map(group => <section key={group.title} className="native-entity-sound-group" aria-label={group.title}>
@@ -197,7 +192,7 @@ function SoundPanel({reading, entity, disabled, apply}: EntityFaceContext) {
     </div>}
 
     <footer className="native-entity-sound-footer">
-      <p>Audio: this voice is rendered by browser WebAudio in the Expressions body only, and only after the native engine and hosting acceptance. This panel shows the configuration and does not play it.</p>
+      <p>Audio: this voice carries part of the torus's sound, in the Expressions body only. It makes no sound of its own: while the torus is silent it is silent. This panel shows the configuration and does not play it.</p>
       <p>Presentation mute is local to the page and is not saved in the document; it is not offered here.</p>
     </footer>
   </section>

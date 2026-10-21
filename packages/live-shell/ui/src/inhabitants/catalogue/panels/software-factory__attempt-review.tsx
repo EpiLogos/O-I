@@ -14,6 +14,7 @@
 import {Fragment, type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
 import {NONE, clampTo, has, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {TakesGrove, type Take} from '../faces/TakesGrove'
 import './software-factory__attempt-review.css'
 
 type V = ViewProps['v']
@@ -81,6 +82,10 @@ const workName = (v: V): string | undefined => {
 // ---------------------------------------------------------------- the reading the views share
 
 const groupKey = (a: Attempt, group: string | undefined): string | undefined => (group === 'agent' ? a.agent ?? NONE : group === 'day' ? a.day ?? NONE : undefined)
+
+/** The attempts as takes, oldest first: a retry is a new take and the earlier one stays. The attempt that stands is marked. */
+const takesOf = (attempts: readonly Attempt[], standsId: string | undefined): Take[] => attempts.map(a => ({id: a.id, label: `#${a.n}`,
+  state: a.state === 'done' ? 'done' : a.state === 'failed' ? 'failed' : a.state === 'queued' || a.state === 'unknown' ? 'queued' : 'running', stands: a.id === standsId}))
 
 /** The attempts newest first, as a list of runs reads. Group by agent or by day gathers each group, in the order it first appears. */
 function ordered(list: readonly Attempt[], group: string | undefined): Attempt[] {
@@ -153,6 +158,7 @@ const GROUP: readonly Option<string>[] = [
 const VIEW: readonly Option<string>[] = [
   {value: 'tree', label: 'Tree', does: 'Tasks as nested rows.'},
   {value: 'ruler', label: 'Ruler', does: 'Attempts along one ruler of elapsed time.'},
+  {value: 'grove', label: 'Grove', does: 'One tree for each attempt: it grows while it runs, bears fruit when it finishes, and comes down when it fails.'},
 ]
 
 const SAYS = {
@@ -160,7 +166,7 @@ const SAYS = {
   attempt: 'The attempt you read. The latest is the default.',
   show: 'Which tasks show: all, or only those running, queued, stalled, failed or done.',
   group: 'How the attempts group: by attempt, by agent or by day.',
-  view: 'Tree: tasks as nested rows. Ruler: attempts along one ruler of elapsed time.',
+  view: 'Tree: tasks as nested rows. Ruler: attempts along one ruler of elapsed time. Grove: one tree for each attempt.',
   compare: 'Draws a second attempt beside the one you read. None draws one.',
   stands: 'The attempt you accept. Choose one to read its Return, then confirm.',
   confirm: 'Accept this attempt as the one that stands. The device does not choose for you.',
@@ -310,7 +316,7 @@ const minutes = (m: number | undefined) => (m === undefined ? NONE : `${Math.rou
 /** The pane: the attempts and the task tree of each, as nested rows or along one ruler. Selecting a task selects it for Clip view, which
  * shows the log of the session that ran it. The Return of the attempt you read (or the one waiting to stand) stands at the right. */
 function RunsPane({p}: {p: ViewProps}) {
-  const r = read(p), v = p.v, ruler = strOf(v, 'view') === 'ruler', group = strOf(v, 'group'), show = strOf(v, 'show'), picked = strOf(v, 'task')
+  const r = read(p), v = p.v, ruler = strOf(v, 'view') === 'ruler', grove = strOf(v, 'view') === 'grove', group = strOf(v, 'group'), show = strOf(v, 'show'), picked = strOf(v, 'task')
   const list = r.attempts ? ordered(r.attempts, group) : undefined
   const reach = Math.max(1, ...(list ?? []).flatMap(a => [a.seen ?? 0, ...a.tasks.map(t => t.seen ?? 0)]))
   const step = niceStep(reach), ticks = Array.from({length: Math.floor(reach / step) + 1}, (_, i) => i * step)
@@ -327,7 +333,11 @@ function RunsPane({p}: {p: ViewProps}) {
       {r.cmp && <span>against {shorts(r.cmp)}</span>}<span>stands {standsAt ? shorts(standsAt) : r.standsId === 'none' ? 'nothing' : NONE}</span>
     </div>
     <div className="ar-main">
-      <div className="ar-list" data-view={ruler ? 'ruler' : 'tree'} role="tree" aria-label="Attempts">
+      {grove ? <div className="ar-list ar-grove" data-view="grove" aria-label="Attempts, one tree for each">
+        {list === undefined && <p className="ar-none">No reading of the attempts.</p>}
+        {list !== undefined && list.length === 0 && <p className="ar-none">This work has no attempt yet.</p>}
+        {list && list.length > 0 && <TakesGrove takes={takesOf(r.attempts ?? [], r.standsId)} width={list.length > 4 ? 112 : 140} />}
+      </div> : <div className="ar-list" data-view={ruler ? 'ruler' : 'tree'} role="tree" aria-label="Attempts">
         {list === undefined && <p className="ar-none">No reading of the attempts.</p>}
         {list !== undefined && list.length === 0 && <p className="ar-none">This work has no attempt yet.</p>}
         {list && list.length > 0 && (ruler
@@ -359,7 +369,7 @@ function RunsPane({p}: {p: ViewProps}) {
             })}
           </Fragment>
         })}
-      </div>
+      </div>}
       <aside className="ar-side" aria-label="Return">
         <h4>Return · {shorts(review) ?? NONE}</h4>
         {review === undefined ? <p>No attempt to review.</p>
@@ -425,6 +435,7 @@ export const design: DesignedDevice = {
   fixtures: {
     'Review waiting': {compare: '2', standsPending: '2'},
     'Ruler, one stands': {compare: '2', stands: '2', view: 'ruler', group: 'agent', show: 'stalled'},
+    'Grove, one stands': {stands: '2', view: 'grove'},
     'No readings': Object.fromEntries(['light', 'work', 'attempt', 'show', 'group', 'view', 'compare', 'stands', 'standsPending', 'task', 'works', 'attempts'].map(k => [k, undefined])),
   },
 

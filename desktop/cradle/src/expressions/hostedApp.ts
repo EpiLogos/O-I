@@ -326,6 +326,17 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
       return;
     }
+    if (kind === "music-modes") {
+      // The symbols' voices read their modes from the owner's catalogue (`ql music modes --json`, ql.music-modes/v1), which only the kernel
+      // may run (ql_music.rs). The frame gets the owner's document verbatim and validates it itself (native-field/modeCatalogue.ts).
+      try {
+        const call = await kernelOp(transport, {op: "music_modes_read"});
+        if (call.error || !call.outcome) throw new Error(call.error ?? "the kernel did not serve the ql music catalogue");
+        if (call.outcome.result !== "music_modes_reading") throw new Error(`the kernel answered ${call.outcome.result}, not music_modes_reading`);
+        reply(`${kind}-result`, req, {ok: true, data: call.outcome.document});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
+      return;
+    }
     if (kind === "scene-blueprint") {
       try {
         const {readSceneBlueprint} = await import("../knowledge/constructionBlueprint");
@@ -493,10 +504,10 @@ export interface HostedInstrumentParameters {
   readonly scale: {readonly unitsPerMetre: number | null; readonly mode: "domain-follow" | "manual-presentation-override" | "manual"};
   readonly cadence: {readonly rate: number; readonly playing: boolean; readonly source: string} | null;
   readonly refusal: string | null;
-  /** The torus's four effects (manual §21.5): the chain (which stand after the torus, in order) and each effect's parameters as the
-   * owner keeps them (expressions-app native-field/effectsLaw.ts); absent from a frame that announces none. */
-  readonly effects?: Readonly<Record<"filter" | "dynamics" | "delay" | "reverb", Readonly<Record<string, number | boolean | string>>>>
-    & {readonly chain: readonly ("filter" | "dynamics" | "delay" | "reverb")[]};
+  /** The torus's effects (manual §21.5, and the Resonator bank §22.7): the chain (which stand after the torus, in order) and each effect's
+   * parameters as the owner keeps them (expressions-app native-field/effectsLaw.ts); absent from a frame that announces none. */
+  readonly effects?: Readonly<Record<"filter" | "dynamics" | "delay" | "reverb" | "resonator", Readonly<Record<string, number | boolean | string>>>>
+    & {readonly chain: readonly ("filter" | "dynamics" | "delay" | "reverb" | "resonator")[]};
 }
 
 /** The owner's instrument reading as the boundary validated it: the QL reading parser's value, or the fault it named. */

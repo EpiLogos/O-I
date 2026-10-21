@@ -135,9 +135,9 @@ test('each design draws every view on its binding: the owner\'s values, or its w
 test('on the chain stand the effects the owner\'s chain names, in its order, then the place to put the others on', () => {
   const drawn = renderToStaticMarkup(h(onChain.TorusEffectsOnChain, {state: state(parameters({effects: effects(['reverb', 'filter'])}))}))
   assert.deepEqual([...drawn.matchAll(/data-chain-effect="([^"]+)"/g)].map(m => m[1]), ['live:torus-reverb', 'live:torus-filter'])
-  const pressed = [...drawn.matchAll(/aria-pressed="(true|false)"[^>]*>([A-Za-z]+)</g)].map(m => [m[2], m[1]])
-  assert.deepEqual(pressed, [['Filter', 'true'], ['Dynamics', 'false'], ['Delay', 'false'], ['Reverb', 'true'], ['Sky', 'false']],
-    'the four, pressed while on the chain, and the Sky modulator, off it until put there')
+  const pressed = [...drawn.matchAll(/aria-pressed="(true|false)"[^>]*>([A-Za-z ]+)</g)].map(m => [m[2], m[1]])
+  assert.deepEqual(pressed, [['Filter', 'true'], ['Dynamics', 'false'], ['Delay', 'false'], ['Reverb', 'true'], ['Resonator bank', 'false'], ['Sky', 'false']],
+    'the four and the Resonator bank, pressed while on the chain, and the Sky modulator, off it until put there')
   assert.equal(renderToStaticMarkup(h(onChain.TorusEffectsOnChain, {state: null})), '', 'no owner reading: nothing stands')
 })
 

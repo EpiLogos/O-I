@@ -307,6 +307,8 @@ export interface HostedDeviceProps {
   readonly room?: Room
   /** The head's context-menu acts the device's chain owner carries (deviceDoor.ts PublishedDevice.acts); Fold is the host's own. */
   readonly acts?: PublishedDevice['acts']
+  /** A rack's door to its members, for its Full and its window (design.ts ViewProps.member; DeviceView.tsx PlacedDevice). */
+  readonly member?: (id: string) => ReactNode | null
 }
 
 /** Where a right-click opens the device's menu: its head, its folded strip, its tile's head (manual §16.4 "Right-click the head"). */
@@ -314,7 +316,7 @@ const HEAD_SELECTOR = '.dp-head, .dp-folded, .dp-tile-head'
 
 /** One view of one device on its binding. The element it draws listens for the hand's release (a pointer let go anywhere, a key, a
  * click, a menu's change) and sends what the hand set. */
-export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain, wrap, frame, room, acts}: HostedDeviceProps) {
+export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain, wrap, frame, room, acts, member}: HostedDeviceProps) {
   const id = binding.id
   const state = useHostState(id)
   const view: DeviceViewName = chain && asked === 'compact' && state.folded ? 'folded' : asked
@@ -352,7 +354,8 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     owner: binding.values,
     ...(frame ? {frame} : {}),
     ...(room ? {room} : {}),
-  }), [state, binding, set, nav, designed.firstPage, id, keys, wraps, frame, room])
+    ...(member ? {member} : {}),
+  }), [state, binding, set, nav, designed.firstPage, id, keys, wraps, frame, room, member])
   const release = () => { if (!dragging.current) return; dragging.current = false; send() }
   // The place's boundary: the device's own view, else the generic plate's with the reason, else the reason alone.
   const plain = fallback && fallback !== designed ? fallback : null

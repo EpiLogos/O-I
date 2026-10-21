@@ -51,7 +51,8 @@ export function createEvidenceField(input:EvidencePresentation,view:KernelConver
   projectNaraEvidenceForces([],projection); // Admission before any field effect.
   const transform:ForceEmitterProjection=emitters=>projectNaraEvidenceForces(emitters,projection);
   const frequencies=new Map<number,number>();
-  if(input.sound||input.waves)for(const b of bindings){
+  // Only the standing-wave field needs a centre's native planetary frequency: a symbol's voice has no oscillator of its own to tune to it.
+  if(input.waves)for(const b of bindings){
     const rows=natal!.planetary_contributions.filter(row=>row.receiving_centre_ordinal===b.ordinal);
     if(rows.length!==1||!Number.isFinite(rows[0].native_cousto_frequency_hz)||rows[0].native_cousto_frequency_hz<=0)throw Error('This centre has no unique native planetary frequency.');
     frequencies.set(b.ordinal,rows[0].native_cousto_frequency_hz);
@@ -84,8 +85,9 @@ export function createEvidenceField(input:EvidencePresentation,view:KernelConver
       return {...scene,entities:scene.entities.map(entity=>{
         const b=bindings.find(b=>b.entityId===entity.id);if(!b)return entity;
         const share=partition.centres.find(c=>c.ordinal===b.ordinal)!.mass_share_l1!;
-        return {...entity,sound:{...DEFAULT_ENTITY_SOUND,...entity.sound,enabled:share>0,followCymatic:false,
-          frequencyHz:frequencies.get(b.ordinal)!,gain:(entity.sound?.gain??DEFAULT_ENTITY_SOUND.gain)*share}};
+        // The evidence weighs each centre's voice by the centre's share of the partition. It makes no tone of the planet's frequency: a symbol's
+        // voice carries the torus's sound, and a centre whose voice carries nothing yet stays silent and says so (entitySound.ts `entitySoundPlan`).
+        return {...entity,sound:{...DEFAULT_ENTITY_SOUND,...entity.sound,enabled:share>0,gain:(entity.sound?.gain??DEFAULT_ENTITY_SOUND.gain)*share}};
       })};
     },
     project(current,currentSceneId){

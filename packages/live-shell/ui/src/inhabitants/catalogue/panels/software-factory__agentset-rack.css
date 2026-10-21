@@ -38,7 +38,7 @@
 
 .as-tree { min-width: 0; min-height: 0; margin: 0; padding: 8px 0; list-style: none; border-right: 1px solid var(--line, #24262a); overflow: hidden; }
 .as-tree li { position: relative; }
-.as-node { position: relative; width: 100%; height: 40px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 14px; gap: 10px; align-items: center; padding: 0 14px 0 calc(14px + var(--d, 0) * 24px); background: none; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.as-node { position: relative; width: 100%; height: 40px; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 14px; gap: 8px; align-items: center; padding: 0 14px 0 calc(14px + var(--d, 0) * 24px); background: none; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .as-node:hover { background: color-mix(in srgb, var(--text, #d4d7da) 5%, transparent); }
 .as-node[aria-pressed="true"] { background: color-mix(in srgb, var(--sel, #7ec3e6) 16%, transparent); box-shadow: inset 2px 0 0 var(--sel, #7ec3e6); }
 .as-node[data-state="stalled"] { outline: 1px solid color-mix(in srgb, var(--stall, #ff9b4a) 75%, transparent); outline-offset: -1px; }
@@ -64,3 +64,19 @@
 .as-files li { height: 16px; font: 10.5px/16px var(--mono, ui-monospace, monospace); color: var(--text, #d4d7da); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .as-files p, .as-thread-empty { margin: 0; padding: 0 14px; font-size: 10.5px; color: var(--text-faint, #71767c); }
 .as-empty { margin: auto; color: var(--text-faint, #71767c); }
+
+/* The crew's face (faces/CrewFace.tsx) and the member faces. */
+.as-face--creature { display: block; line-height: 0; width: 44px; }
+.as-who .as-face--creature { width: 40px; }
+.as-crew { flex: none; padding: 8px 14px 4px; border-bottom: 1px solid var(--line, #24262a); }
+.as-crew p { margin: 4px 0 0; font-size: 10px; line-height: 1.35; color: var(--text-dim, #a2a7ad); }
+.as-crew p b { font-weight: 600; color: var(--text, #d4d7da); margin-right: 4px; }
+.as-mark { display: inline-flex; align-items: center; gap: 3px; }
+
+/* The widget: the agents as creatures, each at the zone of its habitat its run has reached. */
+.as-habitat { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.as-zone { flex: 1 1 0; min-height: 0; display: flex; align-items: center; gap: 3px; padding: 0 3px; border-top: 1px solid var(--line, #24262a); position: relative; overflow: hidden; }
+.as-zone > span:first-child { position: absolute; right: 3px; top: 1px; font-size: 7.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.as-zone-agent { flex: none; display: block; line-height: 0; }
+.as-zone-agent .fx-face { width: 32px; }
+.as-zone-agent .fx-bar { display: none; }

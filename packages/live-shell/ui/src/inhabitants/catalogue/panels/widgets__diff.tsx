@@ -9,9 +9,15 @@
 //             `adds`, `dels`, `patch`; kernel op git_diff_read, from HEAD to the working tree). `author` would mark a proposed change; no
 //             owner reports proposed changes yet (a consent request carries a tool call, not a patch), so a fixture of the seat has none.
 //   branch, head  the seat's branch and HEAD (git_repository_read); open the file shown full.
-// Show, Session and Layout are the tile's own (the renderer holds a layout only for its session: git/diffModel.ts DiffLayout).
-import {Band, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, type LightState} from '../../sdk/panel'
-import {NONE, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+// Show, Session and Layout are the monitor's own (the renderer holds a layout only for its session: git/diffModel.ts DiffLayout).
+//
+// A monitor (manual §16.3): it stands on the rail and in a pane, and has two views. The tile is the list of changed files, with Show in
+// one small row under it (its list has no handle); a file pressed there opens its diff in Full. Full's head carries the branch, HEAD,
+// the files, the lines and the proposed changes, with Show, Session and Layout; its body is the files beside the diff of the one
+// opened, with Layout as handle 1 on the diff.
+import {Display, Handle, Radio, Tile} from '../../sdk/panel'
+import {clampTo, json, railAndPane, st, strOf, type ViewProps} from './design'
+import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
 
 type V = ViewProps['v']
 
@@ -62,13 +68,14 @@ function Patch({p, w, h, size = 8.5, divider}: {p: ViewProps; w: number; h: numb
 }
 const f1 = (x: number) => x.toFixed(1)
 
-/** The changed files, each with its bar of lines added and removed. `press` opens a file's diff in the pane. */
-function FileList({p, w, h, press}: {p: ViewProps; w: number; h: number; press?: (path: string) => void}) {
-  const fs = filesOf(p.v), lh = 13, top = 22, fit = Math.floor((h - top + 6) / lh), max = Math.max(1, ...(fs ?? []).map(f => (f.adds ?? 0) + (f.dels ?? 0))), barW = Math.min(70, w * .3)
+/** The changed files, each with its bar of lines added and removed. `press` opens a file's diff; `mark` is the file opened. */
+function FileList({p, w, h, press, mark, top = 22}: {p: ViewProps; w: number; h: number; press?: (path: string) => void; mark?: string; top?: number}) {
+  const fs = filesOf(p.v), lh = 13, fit = Math.floor((h - top + 6) / lh), max = Math.max(1, ...(fs ?? []).map(f => (f.adds ?? 0) + (f.dels ?? 0))), barW = Math.min(70, w * .3)
   if (!fs) return <text x={6} y={18} className="dp-ink-dim">{strOf(p.v, 'reason') ?? 'No reading of the diff'}</text>
   if (!fs.length) return <text x={6} y={18} className="dp-ink-dim">No change to show</text>
   return <g>{fs.slice(0, fit).map((f, i) => { const y = top + i * lh, a = f.adds ?? 0, d = f.dels ?? 0, x1 = w - 6 - barW
     return <g key={f.path}>
+      {mark === f.path && <rect x={0} y={y - 10} width={w} height={lh} fill="var(--sel, #7ec3e6)" opacity={.16} />}
       <text x={6} y={y} className="dp-ink" style={{fontSize: 9}}><tspan className="dp-axis">{f.status}</tspan> {base(f.path).slice(0, Math.floor((x1 - 60) / 5))}{f.author ? <tspan className="dp-axis"> · {f.author}</tspan> : null}</text>
       <text x={x1 - 4} y={y} textAnchor="end" style={{fontSize: 8.5}}><tspan fill="var(--green)">+{a}</tspan> <tspan fill="var(--rec)">−{d}</tspan></text>
       <rect x={x1} y={y - 6} width={barW * a / max} height={5} fill="var(--green)" opacity={.7} />
@@ -81,25 +88,34 @@ function FileList({p, w, h, press}: {p: ViewProps; w: number; h: number; press?:
 }
 
 const LIGHT_WHY = 'Diff has no on or off: it only reads. The light stays hollow.'
-const head = (p: ViewProps) => ({light: 'unknown' as LightState, lightWhy: LIGHT_WHY, onFold: p.nav.fold, onFull: p.nav.full})
-const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const totals = (v: V) => { const fs = filesOf(v); return fs ? {files: fs.length, adds: fs.reduce((n, f) => n + (f.adds ?? 0), 0), dels: fs.reduce((n, f) => n + (f.dels ?? 0), 0)} : undefined }
 const openDiff = (p: ViewProps) => (path: string) => { p.set('open', path); p.nav.full?.() }
 
 function controls(p: ViewProps) {
   const v = p.v
   return {
-    show: <Radio {...st(p, 'show')} label="Show" does="Which changes the tile lists." value={strOf(v, 'show') ?? ''} options={SHOWS} stack onChange={x => p.set('show', x)} />,
-    session: <Radio {...st(p, 'session')} label="Session" does="Whose changes to show." value={strOf(v, 'session') ?? ''} options={SESSIONS} stack onChange={x => p.set('session', x)} />,
-    layout: <Radio {...st(p, 'layout')} label="Layout" does="How the lines are set out." value={strOf(v, 'layout') ?? ''} options={LAYOUTS} stack onChange={x => p.set('layout', x)} />,
+    show: <Radio {...st(p, 'show')} label="Show" does="Which changes the tile lists." value={strOf(v, 'show') ?? ''} options={SHOWS} onChange={x => p.set('show', x)} />,
+    session: <Radio {...st(p, 'session')} label="Session" does="Whose changes to show." value={strOf(v, 'session') ?? ''} options={SESSIONS} onChange={x => p.set('session', x)} />,
+    layout: <Radio {...st(p, 'layout')} label="Layout" does="How the lines are set out." value={strOf(v, 'layout') ?? ''} options={LAYOUTS} onChange={x => p.set('layout', x)} />,
   }
 }
 
+/** Full's head: the seat's branch and HEAD, the files, the lines and the proposed changes; Show, Session and Layout. */
+function Head({p}: {p: ViewProps}) {
+  const v = p.v, t = totals(v), c = controls(p)
+  return <MonitorHead title="Diff" readings={[
+    {label: 'branch', value: strOf(v, 'branch'), does: 'The seat\'s branch.', copy: strOf(v, 'branch')},
+    {label: 'HEAD', value: strOf(v, 'head'), does: 'The commit the changes stand on.'},
+    {label: 'files', value: t?.files, does: 'The files shown.'},
+    {label: 'lines', value: t ? <><span style={{color: 'var(--green)'}}>+{t.adds}</span> <span style={{color: 'var(--rec)'}}>−{t.dels}</span></> : undefined, does: 'Lines added and removed in all the files shown.'},
+    {label: 'proposed', value: filesOf(v)?.filter(f => f.author).length, does: 'Changes an agent proposes. Accept them in Approvals.', tone: 'accent'},
+  ]} controls={<>{c.show}{c.session}{c.layout}</>} />
+}
 
-export const design: DesignedDevice = {
+export const design = railAndPane({
   id: 'widgets:diff',
   title: 'Diff',
-  kind: 'effect',
+  kind: 'monitor',
   defaults: {
     show: 'both', session: 'selected', layout: 'unified', branch: 'dlw/build', head: '345d74e', open: 'packages/live-shell/ui/src/shell/widgets.tsx',
     files: JSON.stringify([
@@ -115,49 +131,22 @@ export const design: DesignedDevice = {
     'No reading': {files: undefined, reason: 'No seat is selected'},
   },
 
-  folded: p => { const t = totals(p.v); return <Folded title="Diff" light="unknown" readings={[t ? `${t.files} files` : NONE, t ? `+${t.adds} −${t.dels}` : NONE]} onUnfold={p.nav.unfold} /> },
-
-  compact: p => { const c = controls(p)
-    return <Panel title="Diff" view="compact" {...head(p)} onSelect={p.nav.select}>
-      <Section width={232}>
-        <Display w={220} h={146} label="Diff" does="The first lines of the diff: added on green, removed on red. Drag handle 1 for the layout." corner={strOf(p.v, 'branch') ?? NONE}><Patch p={p} w={220} h={146} divider /></Display>
-      </Section>
-      <Section label="Macros" cols={2} width={172}>{c.show}<div>{c.session}{c.layout}</div></Section>
-    </Panel> },
-
-  whole: p => { const c = controls(p), t = totals(p.v), w = wide(p) ? Math.round(clampTo(220, (p.room!.w - 400) / 2, 440)) : 220
-    return <Panel title="Diff" view="whole" {...head(p)}>
-      <Band>
-        <Section width={w + 12}>
-          <Display w={w} h={146} label="Changed files" does="Each changed file with its lines added and removed. Click one to open its diff." corner={strOf(p.v, 'head') ?? NONE}><FileList p={p} w={w} h={146} press={openDiff(p)} /></Display>
-        </Section>
-        <Section label="Changes" width={96}>{c.show}{c.session}</Section>
-        <Section label="Layout" width={wide(p) ? 80 : undefined} grow={!wide(p)}>{c.layout}
-          <Readout label="lines" does="Lines added and removed in all the files shown." value={t ? `+${t.adds} −${t.dels}` : undefined} tone="value" />
-        </Section>
-      </Band>
-      <Band>
-        <Section width={w + 12}>
-          <Display w={w} h={146} label="Diff" does="The diff of the file chosen. Drag handle 1 for the layout."><Patch p={p} w={w} h={146} divider /></Display>
-        </Section>
-        <Section label="Seat" width={wide(p) ? 96 : undefined} grow={!wide(p)}>
-          <Readout label="branch" does="The seat's branch." value={strOf(p.v, 'branch')} copy={strOf(p.v, 'branch')} />
-          <Readout label="HEAD" does="The commit the changes stand on." value={strOf(p.v, 'head')} />
-          <Readout label="proposed" does="Changes an agent proposes. Accept them in Approvals." value={filesOf(p.v)?.filter(f => f.author).length} tone="accent" />
-        </Section>
-      </Band>
-    </Panel> },
-
-  full: p => <div className="ref-pane-body ref-pane-body--dark">
-    <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMinYMin meet" className="ref-pane-svg" aria-label="The diff of one file">
-      <g className="dp-display" style={{background: 'none', border: 'none'}}>
-        <text x={744} y={14} textAnchor="end" className="dp-axis">{openOf(p.v)?.path ?? ''}</text>
-        <g transform="translate(8 8)"><Patch p={{...p, set: () => {}}} w={744} h={404} size={12} divider={false} /></g>
+  full: p => <MonitorPane dark label="Diff" head={<Head p={p} />}>{room => { const lw = Math.round(clampTo(220, 300, room.w * .34)), path = openOf(p.v)?.path
+    return <MonitorPicture room={room} label="The files and the diff of one">
+      <FileList p={p} w={lw} h={room.h} top={20} mark={path} press={x => p.set('open', x)} />
+      <path d={`M${lw + .5} 0V${room.h}`} className="dp-faint" />
+      <g transform={`translate(${lw + 8} 8)`}>
+        <text x={room.w - lw - 24} y={10} textAnchor="end" className="dp-axis">{path ?? ''}</text>
+        <Patch p={p} w={room.w - lw - 20} h={room.h - 16} size={11} divider />
       </g>
-    </svg>
-  </div>,
+    </MonitorPicture> }}</MonitorPane>,
 
-  widget: p => <Tile title="Diff" light="unknown" span={2} onFull={p.nav.full}>
-    <Display w={266} h={104} label="Changed files" does="The files that changed in the selected session. Click one to open its diff in a pane." corner={undefined}><FileList p={p} w={266} h={104} press={openDiff(p)} /></Display>
+  widget: p => <Tile title="Diff" light="unknown" lightWhy={LIGHT_WHY} span={2} onFull={p.nav.full}>
+    <div className="mon-tile">
+      <Display w={266} h={82} label="Changed files" does="The files that changed in the selected session. Click one to open its diff in Full.">
+        <FileList p={p} w={266} h={82} top={13} press={openDiff(p)} />
+      </Display>
+      <div className="mon-tile-row">{controls(p).show}</div>
+    </div>
   </Tile>,
-}
+})

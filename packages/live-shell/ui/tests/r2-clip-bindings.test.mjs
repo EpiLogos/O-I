@@ -301,7 +301,7 @@ test('Central: a page\'s own colour, launch, kind of being and highlights read b
 const entity = (id, name, x, extra = {}) => ({id, name, kind: 'formation', position: {x, y: 0.5, z: 0}, size: {x: 0.65, y: 0.86}, rotation: 0, shape: 'ring', text: '', share: 1,
   tint: '#ffffff', tintWeight: 0, locked: false, force: {kind: 'attract', strength: 2, radius: 200, spin: 0}, station: null,
   sequence: {enabled: true, clock: 'seconds', steps: [{id: 's1', text: 'seed', shape: 'ring', hold: 2, transition: 1, position: null}]}, ...extra})
-const moonSound = {enabled: true, followCymatic: true, frequencyHz: 220, gain: 0.2, waveform: 'sine', attack: 0.1, release: 0.8, pan: 0}
+const moonSound = {enabled: true, carry: {kind: 'mode', ref: 'maqam/00'}, gain: 0.2, attack: 0.1, release: 0.8}
 const nativeReading = {
   basis: {expression_ref: 'expr:1', scene_ref: 'scene:a', revision: 'r1'},
   scene: {id: 'a', name: 'Dawn', duration: 8, transition: 2, entities: [entity('sun', 'Sun', 0), entity('moon', 'Moon', -1, {sound: moonSound})],
@@ -324,7 +324,8 @@ test('Expressions: the presented scene maps onto clip:expressions — its pacing
   assert.deepEqual(parse(v, 'symbols').map(s => s.name), ['Sun', 'Moon']); assert.equal(v.symbol, 'sun')
   const objects = parse(v, 'objects')
   assert.equal(objects.sun.formation.x, 0); assert.equal(objects.sun.force.kind, 'attract'); assert.equal(objects.sun.sound.voice, false)
-  assert.equal(objects.moon.sound.voice, true); assert.equal(objects.moon.sound.frequency, 220)
+  assert.equal(objects.moon.sound.voice, true); assert.equal(objects.moon.sound.carry, 'mode:maqam/00')
+  assert.deepEqual(Object.keys(objects.moon.sound).sort(), ['attack', 'carry', 'gain', 'release', 'voice'], 'a symbol\'s voice reports no frequency, follow, waveform or pan: it has none')
   assert.deepEqual(parse(v, 'lanes')[0], {id: 'l1', device: 'Field', target: 'field.viscosity', type: 'oscillator', wave: 'sine', rate: 0.25, phase: 0, min: 0.2, max: 0.8,
     blend: 'replace', duration: 4, delay: 0, loop: 'loop', enabled: true})
   assert.equal(parse(v, 'layers')[0].heading, 'A moment')
@@ -342,6 +343,13 @@ test('Expressions: an edit of a symbol\'s own controls is the owner\'s own chang
   const voice = structuredClone(objects); voice.sun.sound.voice = true
   const [added] = expressions.objectChanges(nativeReading, voice)
   assert.equal(added.kind, 'entity-sound'); assert.equal(added.entity_id, 'sun'); assert.equal(added.sound.enabled, true)
+  const carries = structuredClone(objects); carries.moon.sound.carry = 'name:shem'; carries.moon.sound.gain = 0.4
+  const [carried, regained] = expressions.objectChanges(nativeReading, carries)
+  assert.deepEqual(carried.sound.carry, {kind: 'name', ref: 'shem'}); assert.equal(carried.sound.gain, 0.2, 'each field is its own whole-sound change')
+  assert.equal(regained.sound.gain, 0.4); assert.deepEqual(regained.sound.carry, {kind: 'mode', ref: 'maqam/00'})
+  const none = structuredClone(objects); none.moon.sound.carry = ''
+  assert.equal('carry' in expressions.objectChanges(nativeReading, none)[0].sound, false, 'None yet clears the carry')
+  assert.throws(() => expressions.objectChanges(nativeReading, (() => { const x = structuredClone(objects); x.sun.sound.carry = 'mode:maqam/00'; return x })()), /no voice: turn Voice on first/)
   const meaning = structuredClone(objects); meaning.sun.meaning = {centre: 'heart'}
   assert.throws(() => expressions.objectChanges(nativeReading, meaning), /Meaning: the owner takes it as one entity-semantic change .*; Clip view does not compose it yet\./)
   const lanes = parse(expressions.expressionsClipValues(nativeReading), 'lanes'); lanes[0].rate = 0.5

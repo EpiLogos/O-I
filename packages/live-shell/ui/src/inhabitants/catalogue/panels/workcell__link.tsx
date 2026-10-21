@@ -460,7 +460,9 @@ const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, 
 export const design: DesignedDevice = {
   id: 'workcell:link',
   title: 'Link',
-  kind: 'effect',
+  kind: 'connection',
+  // Link stands in the transport (manual §19.19): its Whole expands from ▾ beside the button; Full in a pane; its tile on the rail.
+  views: ['whole', 'full', 'widget'],
   defaults: {
     light: 'lit', here: 'workcell:mac', link: true, share: SHARE_DEFAULT, sel: 'workcell:omarchy', session: 'cradle-steward',
     machines: JSON.stringify([MAC, OMARCHY]), threads: JSON.stringify(THREADS),

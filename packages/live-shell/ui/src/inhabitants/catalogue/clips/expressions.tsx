@@ -208,23 +208,19 @@ function Sequence(p: ClipProps) {
     under={<SoundUnder p={p} from={0} to={end} h={underH} />} underH={underH} />
 }
 
-/** The sound beneath the sequence: the plate's pitch over the scene, and each voice's level. */
+/** The sound beneath the sequence: the plate's pitch over the scene. A symbol's voice carries part of the torus's sound and has no pitch of its own
+ * (manual §20.2), so no voice draws a line here. */
 function SoundUnder({p, from, to, h}: {p: ClipProps; from: number; to: number; h: number}) {
   const plate = read<[number, number][]>(p.v, 'plate', [])
-  const objects = objectsOf(p.v), syms = symbolsOf(p.v)
   const keyW = 72, w = p.room.w, inner = w - keyW, x = (t: number) => keyW + (t - from) / (to - from) * inner
   const lo = Math.log(55), hi = Math.log(1760), y = (hz: number) => h - 6 - (Math.log(hz) - lo) / (hi - lo) * (h - 14)
   const d = plate.map(([t, hz], i) => `${i ? 'L' : 'M'}${x(t).toFixed(1)} ${y(hz).toFixed(1)}`).join(' ')
-  const voices = syms.filter(s => objects[s.id]?.sound?.voice === true)
-  return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="clv-stems" data-i="Sound|What the scene sounds like: the plate's pitch over the scene, and the pitch of each voice that does not follow it.">
+  return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="clv-stems" data-i="Sound|What the scene sounds like: the plate's pitch over the scene.">
     <rect x={0} y={0} width={keyW} height={h} className="clv-key" data-key="gutter" />
     <text x={4} y={11} className="clv-axis">Sound</text>
     <text x={keyW - 4} y={y(880) + 3} className="clv-axis" textAnchor="end">880</text>
     <text x={keyW - 4} y={y(110) + 3} className="clv-axis" textAnchor="end">110</text>
     {d && <path d={d} className="clv-env-line" data-tone="value" />}
-    {voices.map(s => { const snd = objects[s.id]!.sound!, hz = Number(snd.frequency), follows = snd.follow === true
-      return follows ? null : <g key={s.id}><line x1={keyW} x2={w} y1={y(hz)} y2={y(hz)} className="clv-env-line" data-tone="rec" strokeDasharray="4 3" />
-        <text x={keyW + 4} y={y(hz) - 3} className="clv-axis">{s.name} · {hz} Hz</text></g> })}
   </svg>
 }
 
@@ -370,16 +366,13 @@ function ExpressionTab(p: ClipProps) {
         </Section>
       </>}
       {page === 'sound' && <>
-        <Section label="Voice" width={110}>
-          <Toggle label="Voice" does="Lets the symbol sound." on={objBool(p.v, 'sound', 'voice')} onChange={x => setObj(p, 'sound', 'voice', x)} disabled={why} />
-          <Toggle label="Follow plate" does="On, the voice follows the pitch of the plate. Off, it keeps the pitch you set." on={objBool(p.v, 'sound', 'follow')} onChange={x => setObj(p, 'sound', 'follow', x)} disabled={why} />
-          {radio('sound', 'wave', 'Waveform', 'The tone of the voice.', ['Sine', 'Triangle', 'Square', 'Sawtooth'].map(w => ({value: w.toLowerCase(), label: w})), true)}
+        <Section label="Voice" width={170}>
+          <Toggle label="Voice" does="Lets the symbol carry part of the torus's sound to where it stands." on={objBool(p.v, 'sound', 'voice')} onChange={x => setObj(p, 'sound', 'voice', x)} disabled={why} />
+          <Chooser label="Name or mode" does="What the voice carries of the torus's sound: a mode, or a name of the store of sound. It does not sound on its own." value={objStr(p.v, 'sound', 'carry')}
+            options={read<Option<string>[]>(p.v, 'carryOptions', [{value: '', label: 'None yet'}])} onChange={x => setObj(p, 'sound', 'carry', x)} disabled={why} />
         </Section>
-        <Section label="Pitch and level" cols={3} grow>
-          <Dial label="Frequency" does="The pitch of the voice. When you set it, Follow plate turns off." value={objNum(p.v, 'sound', 'frequency')} def={220} scale={{min: 1, max: 20000, log: true}} format={x => `${Math.round(x)} Hz`}
-            onChange={x => { setObj(p, 'sound', 'frequency', x) }} disabled={why} />
+        <Section label="Level" width={90}>
           {dial('sound', 'gain', 'Gain', 'The loudness of the voice. 0 is silent.', 0, 1, 0.2, f2)}
-          {dial('sound', 'pan', 'Pan', 'The place of the voice. −1 is left, 1 is right.', -1, 1, 0, f2, {bipolar: true})}
         </Section>
         <Section label="Envelope" cols={2} grow>
           {dial('sound', 'attack', 'Attack', 'How long the voice takes to rise.', 0, 10, 0.08, secs)}

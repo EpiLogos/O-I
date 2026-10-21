@@ -30,7 +30,11 @@ function edgeMs(edge: string | null | undefined): number {
 }
 
 /** The instant a shared window stands at: the midpoint of a bounded window (the rule the Earth's day and night already follow, sharedClock.ts
- * windowYear), its bounded edge when one is open, and null, Now, for all time and for a window that does not parse. */
+ * windowYear), its bounded edge when one is open, and null, Now, for all time and for a window that does not parse.
+ *
+ * Why the midpoint: a window is a stretch of time, and a body is drawn at one instant. The midpoint is a point OF the window, so the weather a
+ * disc shows is weather the window held; it is not the window's width, which only says how much time is looked at. Widening a window around the
+ * same centre therefore changes what is listed, never the sky drawn, and the Earth and the bodies keep the same hour for the same window. */
 export function occasionMs(window: SharedWindow | null | undefined): number | null {
   if (!window) return null
   const from = edgeMs(window.from), to = edgeMs(window.to)

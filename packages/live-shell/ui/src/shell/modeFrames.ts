@@ -8,6 +8,7 @@ import {healLiveTree} from '../live/liveTreeHeal'
 import {seedFactoryCentre} from '../agent/factoryCentre'
 import {seedCentralDocuments} from '../central/documents/centralDocuments'
 import {seedWithoutTracksPane} from './tracksOutOfPanes'
+import {studioBesideField} from './studioBesideField'
 
 export interface ModeFrame {
   centerPanel: string
@@ -56,8 +57,9 @@ export const MODE_TREE_SEEDS: Readonly<Record<string, (layout: LayoutState) => L
   base: seedWithoutTracksPane(layout => seedCentralDocuments(layout)),
   // Factory: the agent tab, pinned (agent/factoryCentre.ts), instruments open beside it.
   factory: seedWithoutTracksPane(seedFactoryCentre),
-  // Expressions: the Expression, one pane (the mockup's modes.expressions); its scenes are its tracks, a Tab away.
-  expressions: seedWithoutTracksPane(seedInstruments(['projection.expressions'])),
+  // Expressions: the field, and the Studio's Full beside it (manual §20.1, shell/studioBesideField.ts: laid once, also in a tree saved
+  // before); its scenes are its tracks, a Tab away.
+  expressions: seedWithoutTracksPane(layout => studioBesideField(seedInstruments(['projection.expressions'])(layout))),
   // Technē: the world — the Earth and its system (the mockup's modes.techne: the M4 lens at system scale).
   techne: seedWithoutTracksPane(seedInstruments(['projection.earth'])),
 }

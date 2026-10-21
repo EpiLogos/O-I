@@ -58,11 +58,12 @@ export function prepareCompositionEdit(
   raw:Journey,
   options:{sceneId?:string;entityId?:string|null;actor?:string}={},
 ):CompositionEdit {
+  // Per-object sound is authored material; the same shape the kernel admits (expression_profile::sound) is refused here before any change
+  // is built. A WRITE that still carries the oscillator's fields is refused in words, not migrated: opening a document migrates them
+  // (validateJourney), so an edit never has them unless a caller wrote them again.
+  for(const scene of [...(Array.isArray(raw?.scenes)?raw.scenes:[]),...Object.values(raw?.savedScenes??{})])for(const entity of Array.isArray(scene?.entities)?scene.entities:[])validateEntitySound(entity?.sound);
   const edited=validateJourney(raw);
   if (edited.id!==view.journey.id) throw new Error('This work no longer addresses the captured native Expression');
-  // Per-object sound is authored material; the same shape the kernel admits
-  // (expression_profile::sound) is refused here before any change is built.
-  for(const scene of [...edited.scenes,...Object.values(edited.savedScenes??{})])for(const entity of scene.entities)validateEntitySound(entity.sound);
   const doc=view.document;
   const changes:CompositionChange[]=[];
   const entityRefs=new Map<string,string>(Object.entries(view.entity_ids).map(([ref,id])=>[id,ref]));

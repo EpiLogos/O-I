@@ -2,7 +2,7 @@
   "schema": "oi.planet-reference/v1",
   "note": "Measured by scripts/measure-planet-reference.mjs with tests/lib/planetMetrics.mjs. The Earth is the standard; the gate (tests/w3q-planet-gate.test.mjs) holds a generated body to bands of these numbers. The lead owns this file.",
   "calibration": {
-    "note": "the Earth made worse on purpose: the gate must reject both (tests/w3q-planet-gate.test.mjs)",
+    "note": "the Earth made worse on purpose: the gate must reject each (tests/w3q-planet-gate.test.mjs)",
     "blurred": {
       "width": 2048,
       "landDetail": {
@@ -35,6 +35,11 @@
         "coverage": 0.679931640625
       },
       "seaTexture": 0.02706725679120129,
+      "shelf": {
+        "nearOverDeep": 3.4155227625494065,
+        "reach": 12.183148438596064,
+        "deepBroad": 0.4295444701595168
+      },
       "seamRatio": 1.0161580167221669
     },
     "noisy": {
@@ -69,7 +74,51 @@
         "coverage": 0.706787109375
       },
       "seaTexture": 0.03195931693111298,
+      "shelf": {
+        "nearOverDeep": 0.5346705085396422,
+        "reach": 140,
+        "deepBroad": 0.18996655519274583
+      },
       "seamRatio": 1.2211493996159466
+    },
+    "haloed": {
+      "width": 2048,
+      "landDetail": {
+        "1": 0.01322863119040422,
+        "2": 0.020405869546989575,
+        "4": 0.02747475871443098,
+        "8": 0.035273998569803636
+      },
+      "seaDetail": {
+        "1": 0.003930663266451771,
+        "2": 0.006165268389893743,
+        "4": 0.009068152276705276,
+        "8": 0.01356843080876015
+      },
+      "landTilt": 0.37502499650631077,
+      "seaTilt": 0.28969180901258146,
+      "coast": {
+        "coastDensity": 0.007251262664794922,
+        "landShare": 0.18059349060058594,
+        "pieces": 21,
+        "largestShare": 0.6019903256128344,
+        "perLand": 0.04015240328253224
+      },
+      "palette": {
+        "bins": 20,
+        "entropy": 3.8032628098978662
+      },
+      "ice": {
+        "spreadDeg": 5.106172129536175,
+        "coverage": 0.705810546875
+      },
+      "seaTexture": 0.03326679959977815,
+      "shelf": {
+        "nearOverDeep": 3.2848841664835993,
+        "reach": 9.652458335600022,
+        "deepBroad": 0.28566654960801446
+      },
+      "seamRatio": 1.4402208528365532
     }
   },
   "earth": {
@@ -106,6 +155,11 @@
       "coverage": 0.705810546875
     },
     "seaTexture": 0.030657511073290393,
+    "shelf": {
+      "nearOverDeep": 2.103400103454062,
+      "reach": 5.6692466436982585,
+      "deepBroad": 0.3023515225135383
+    },
     "seamRatio": 1.531888277698031
   },
   "v1Baseline": {

@@ -9,10 +9,17 @@
 //                         policy.timezone); dayState the day's own lifecycle (`central.day.read` temporal.lifecycle).
 //   nows                  the clearings (`central.now.list`, records: now_ref, purpose, lifecycle, workcell_ref, participant_refs,
 //                         created_at_unix_seconds); an archived clearing is closed and does not show.
-//   close                 a now_ref to close: the ground's `central.now.lifecycle` action (kernel op invoke_action), asked from the tile.
-// Machines is the tile's own. The ground opens and closes the day by itself; the tile shows nothing the ground does not report.
-import {Action, Band, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, type LightState} from '../../sdk/panel'
-import {NONE, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+//   close                 a now_ref to close: the ground's `central.now.lifecycle` action (kernel op invoke_action), asked from Full.
+//   open                  the moment opened (the monitor's own).
+// Machines is the monitor's own. The ground opens and closes the day by itself; NOWs shows nothing the ground does not report.
+//
+// A monitor (manual §16.3): it stands on the rail and in a pane, and has two views. The tile is the day, the time and the open moments,
+// with Machines as handle 1 across its top; a moment pressed there opens in Full. Full's head carries the day, the time, its zone, the
+// day's state and the count of open moments, with Machines and Close; its body is the day's hours, one lane for each machine, and the
+// moment opened.
+import {Action, Display, Handle, Radio, Tile} from '../../sdk/panel'
+import {NONE, clampTo, json, railAndPane, st, strOf, type ViewProps} from './design'
+import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
 
 type V = ViewProps['v']
 
@@ -35,7 +42,7 @@ const dayOf = (v: V) => { const d = strOf(v, 'day'); if (!d) return undefined; c
 /** The day and its open moments. `handle`: Machines as a scale at the top (all, then each machine). `press`: a row opens its moment. */
 function Moments({p, w, h, handle, press, size = 9}: {p: ViewProps; w: number; h: number; handle: boolean; press?: (n: Now) => void; size?: number}) {
   const v = p.v, nows = nowsOf(v), open = openOf(v), machines = ['all', ...machinesOf(v)], m = strOf(v, 'machine') ?? 'all', k = Math.max(0, machines.indexOf(m))
-  const left = Math.min(70, w * .3), x0 = left + 10, x1 = w - 8, stop = (j: number) => x0 + (machines.length > 1 ? j * (x1 - x0) / (machines.length - 1) : 0)
+  const left = Math.min(78, w * .3), x0 = left + 10, x1 = w - 8, stop = (j: number) => x0 + (machines.length > 1 ? j * (x1 - x0) / (machines.length - 1) : 0)
   const top = handle ? 26 : 8, lh = size * 2.4, fit = Math.floor((h - top) / lh), ms = st(p, 'machine')
   return <g>
     <text x={6} y={22} className="dp-ink" style={{fontSize: 20, fontWeight: 300}}>{clockOf(v) ?? NONE}</text>
@@ -65,25 +72,63 @@ function Moments({p, w, h, handle, press, size = 9}: {p: ViewProps; w: number; h
 }
 
 const LIGHT_WHY = 'NOWs has no on or off: the day opens and closes by itself. The light stays hollow.'
-const head = (p: ViewProps) => ({light: 'unknown' as LightState, lightWhy: LIGHT_WHY, onFold: p.nav.fold, onFull: p.nav.full})
-const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const openMoment = (p: ViewProps) => (n: Now) => { p.set('open', n.ref); p.nav.full?.() }
 const DISPLAY_DOES = 'The day and the time, and each open moment: lit while active, dark while quiet, with its machine and who works on it.'
+const since = (s: number | undefined, v: V) => { if (s === undefined) return undefined; const m = /([+-])(\d\d):(\d\d)$/.exec(strOf(v, 'time') ?? ''), off = m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 0
+  const d = new Date((s + off * 60) * 1000); return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` }
 
-function controls(p: ViewProps) {
+/** Full's head: the day, the time, its zone, the day's state and the open moments; Machines and Close. */
+function Head({p}: {p: ViewProps}) {
   const v = p.v, machines = machinesOf(v), chosen = openOf(v).find(n => n.ref === strOf(v, 'open'))
-  return {
-    machines: <Radio {...st(p, 'machine')} label="Machines" does="The open moments of every machine, or of one." value={strOf(v, 'machine') ?? 'all'} stack
-      options={[{value: 'all', label: 'All'}, ...machines.map(m => ({value: m, label: m}))]} onChange={x => p.set('machine', x)} />,
-    close: <Action {...st(p, 'close')} hold label="Close" does={chosen ? `Close “${chosen.purpose}”: the moment is done.` : 'Open a moment, then close it when it is done.'}
-      onPress={chosen ? () => p.set('close', chosen.ref) : undefined} />,
-  }
+  return <MonitorHead title="NOWs" readings={[
+    {label: 'day', value: dayOf(v), does: 'The day in force, as the ground reports it.'},
+    {label: 'now', value: clockOf(v), does: 'The present moment, as the ground reports it.', tone: 'value'},
+    {label: 'zone', value: strOf(v, 'timezone'), does: 'The ground\'s time zone.'},
+    {label: 'day is', value: strOf(v, 'dayState'), does: 'The day\'s own state: the ground opens and closes it.', tone: 'value'},
+    {label: 'open', value: nowsOf(v) ? openOf(v).length : undefined, does: 'The moments of the day still open, on the machines shown.', tone: 'accent'},
+  ]} controls={<>
+    <Radio {...st(p, 'machine')} label="Machines" does="The open moments of every machine, or of one." value={strOf(v, 'machine') ?? 'all'}
+      options={[{value: 'all', label: 'All'}, ...machines.map(m => ({value: m, label: m}))]} onChange={x => p.set('machine', x)} />
+    <Action {...st(p, 'close')} hold label="Close" does={chosen ? `Close “${chosen.purpose}”: the moment is done.` : 'Open a moment, then close it when it is done.'}
+      onPress={chosen ? () => p.set('close', chosen.ref) : undefined} />
+  </>} />
 }
 
-export const design: DesignedDevice = {
+/** The day's hours across the room, one lane for each machine; each open moment where it began, the one opened ringed and read out at
+ * the foot. */
+function Day({p, w, h}: {p: ViewProps; w: number; h: number}) {
+  const v = p.v, open = openOf(v), machines = [...new Set(open.map(n => machineName(n.machine)))], opened = open.find(n => n.ref === strOf(v, 'open'))
+  // The hours are the ground's local hours: the offset of its local time applies to every moment.
+  const off = (() => { const m = /([+-])(\d\d):(\d\d)$/.exec(strOf(v, 'time') ?? ''); return m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 0 })()
+  const l = 110, r = w - 30, foot = 46, X = (s: number) => { const d = new Date((s + off * 60) * 1000); return l + (d.getUTCHours() + d.getUTCMinutes() / 60) / 24 * (r - l) }
+  const pitch = Math.min(80, (h - foot - 50) / Math.max(1, machines.length)), lane = (m: string) => 40 + machines.indexOf(m) * pitch
+  const nowX = (() => { const t = Date.parse(strOf(v, 'time') ?? ''); return Number.isFinite(t) ? X(t / 1000) : undefined })(), base = h - foot
+  return <g>
+    {[0, 6, 12, 18, 24].map(hh => <g key={hh}><path d={`M${l + hh / 24 * (r - l)} 18V${base - 8}`} className="dp-grid" /><text x={l + hh / 24 * (r - l)} y={base + 4} textAnchor="middle" className="dp-axis">{String(hh).padStart(2, '0')}:00</text></g>)}
+    {nowX !== undefined && <path d={`M${nowX} 14V${base - 8}`} className="dp-curve-on" />}
+    {machines.map(m => <g key={m}><path d={`M${l} ${lane(m)}H${r}`} className="dp-faint" /><text x={l - 10} y={lane(m) + 4} textAnchor="end" className="dp-ink" style={{fill: 'var(--dp-value)'}}>{m}</text></g>)}
+    {open.map((n, i) => { const x = n.created === undefined ? l : X(n.created), y = lane(machineName(n.machine)) + (i % 2) * 22 + 6, on = n.ref === opened?.ref
+      return <g key={n.ref} role="button" tabIndex={0} aria-label={`Open ${n.purpose}`} onClick={() => p.set('open', n.ref)} onKeyDown={e => { if (e.key === 'Enter') p.set('open', n.ref) }} data-i={`${n.purpose}|Open the moment.`}>
+        {on && <circle cx={x} cy={lane(machineName(n.machine))} r={10} fill="var(--sel, #7ec3e6)" opacity={.22} />}
+        <circle cx={x} cy={lane(machineName(n.machine))} r={5} fill={n.lifecycle === 'active' ? 'var(--dp-on)' : 'var(--dp-well)'} stroke="var(--dp-on)" />
+        <text x={x + 9} y={y + 8} className="dp-ink" style={{fontSize: 10.5}}>{n.purpose}</text>
+        <text x={x + 9} y={y + 20} className="dp-axis">{who(n)} · {n.lifecycle}</text>
+      </g> })}
+    {!nowsOf(v) && <text x={l} y={60} className="dp-ink-dim">{strOf(v, 'reason') ?? 'No reading of the moments'}</text>}
+    {nowsOf(v) && !open.length && <text x={l} y={60} className="dp-ink-dim">No open moment</text>}
+    <path d={`M0 ${base + 14}H${w}`} className="dp-faint" />
+    {opened ? <g>
+      <circle cx={18} cy={base + 30} r={4} fill={opened.lifecycle === 'active' ? 'var(--dp-on)' : 'var(--dp-well)'} stroke="var(--dp-on)" />
+      <text x={30} y={base + 34} className="dp-ink" style={{fontSize: 11}}>{opened.purpose}</text>
+      <text x={w - 16} y={base + 34} textAnchor="end" className="dp-axis" style={{fontSize: 9.5}}>{machineName(opened.machine)} · {who(opened)} · {opened.lifecycle}{since(opened.created, v) ? ` · since ${since(opened.created, v)}` : ''} · {opened.ref}</text>
+    </g> : <text x={18} y={base + 34} className="dp-ink-dim">{nowsOf(v) ? 'Click a moment to open it' : ''}</text>}
+  </g>
+}
+
+export const design = railAndPane({
   id: 'widgets:nows',
   title: 'NOWs',
-  kind: 'instrument',
+  kind: 'monitor',
   defaults: {
     day: '2026-10-16', time: '2026-10-16T14:22:08+01:00', timezone: 'Europe/London', dayState: 'open', machine: 'all', open: 'central:now:control:root:01',
     nows: JSON.stringify([
@@ -98,55 +143,9 @@ export const design: DesignedDevice = {
     'The ground reports nothing': {day: undefined, time: undefined, timezone: undefined, dayState: undefined, nows: undefined, open: undefined, reason: 'The ground did not answer'},
   },
 
-  folded: p => <Folded title="NOWs" light="unknown" readings={[clockOf(p.v) ?? NONE, `${nowsOf(p.v) ? openOf(p.v).length : NONE} open`]} onUnfold={p.nav.unfold} />,
+  full: p => <MonitorPane dark label="NOWs" head={<Head p={p} />}>{room => <MonitorPicture room={room} label="The moments of the day"><Day p={p} w={room.w} h={room.h} /></MonitorPicture>}</MonitorPane>,
 
-  compact: p => { const c = controls(p)
-    return <Panel title="NOWs" view="compact" {...head(p)} onSelect={p.nav.select}>
-      <Section width={262}>
-        <Display w={250} h={146} label="Now" does={`${DISPLAY_DOES} Drag handle 1 for one machine.`}><Moments p={p} w={250} h={146} handle /></Display>
-      </Section>
-      <Section label="Macros" width={76}>{c.machines}</Section>
-    </Panel> },
-
-  whole: p => { const c = controls(p), w = wide(p) ? Math.round(clampTo(220, p.room!.w - 260, 640)) : 220
-    return <Panel title="NOWs" view="whole" {...head(p)}>
-      <Band>
-        <Section width={w + 12}>
-          <Display w={w} h={146} label="Now" does={`${DISPLAY_DOES} Drag handle 1 for one machine. Click a moment to open it.`}><Moments p={p} w={w} h={146} handle press={openMoment(p)} /></Display>
-        </Section>
-        <Section label="Machines" width={76}>{c.machines}</Section>
-        <Section label="Day" grow>
-          <Readout label="day" does="The day in force, as the ground reports it." value={dayOf(p.v)} />
-          {c.close}
-        </Section>
-      </Band>
-    </Panel> },
-
-  full: p => { const v = p.v, open = openOf(v), machines = machinesOf(v)
-    // The hours are the ground's local hours: the offset of its local time applies to every moment.
-    const off = (() => { const m = /([+-])(\d\d):(\d\d)$/.exec(strOf(v, 'time') ?? ''); return m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 0 })()
-    const X = (s: number) => { const d = new Date((s + off * 60) * 1000); return 120 + (d.getUTCHours() + d.getUTCMinutes() / 60) / 24 * 610 }
-    const lane = (m: string) => 70 + machines.indexOf(m) * 70, nowX = (() => { const t = Date.parse(strOf(v, 'time') ?? ''); return Number.isFinite(t) ? X(t / 1000) : undefined })()
-    return <div className="ref-pane-body ref-pane-body--dark">
-      <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The moments of the day">
-        <g className="dp-display" style={{background: 'none', border: 'none'}}>
-          <text x={20} y={30} className="dp-ink" style={{fontSize: 16}}>{dayOf(v) ?? 'No day'}</text>
-          <text x={740} y={30} textAnchor="end" className="dp-ink" style={{fontSize: 16}}>{clockOf(v) ?? NONE}</text>
-          {[0, 6, 12, 18, 24].map(hh => <g key={hh}><path d={`M${120 + hh / 24 * 610} 48V400`} className="dp-grid" /><text x={120 + hh / 24 * 610} y={412} textAnchor="middle" className="dp-axis">{String(hh).padStart(2, '0')}:00</text></g>)}
-          {nowX !== undefined && <path d={`M${nowX} 44V400`} className="dp-curve-on" />}
-          {machines.map(m => <g key={m}><path d={`M120 ${lane(m)}H730`} className="dp-faint" /><text x={110} y={lane(m) + 4} textAnchor="end" className="dp-ink" style={{fill: 'var(--dp-value)'}}>{m}</text></g>)}
-          {open.map((n, i) => { const x = n.created === undefined ? 120 : X(n.created), y = lane(machineName(n.machine)) + (i % 2) * 22 + 6
-            return <g key={n.ref} style={{cursor: 'pointer'}} onClick={() => p.set('open', n.ref)} data-i={`${n.purpose}|Open the moment.`}>
-              <circle cx={x} cy={lane(machineName(n.machine))} r={5} fill={n.lifecycle === 'active' ? 'var(--dp-on)' : 'var(--dp-well)'} stroke="var(--dp-on)" />
-              <text x={x + 9} y={y + 8} className="dp-ink" style={{fontSize: 10.5}}>{n.purpose}</text>
-              <text x={x + 9} y={y + 20} className="dp-axis">{who(n)} · {n.lifecycle}</text>
-            </g> })}
-          {!nowsOf(v) && <text x={120} y={80} className="dp-ink-dim">{strOf(v, 'reason') ?? 'No reading of the moments'}</text>}
-        </g>
-      </svg>
-    </div> },
-
-  widget: p => <Tile title="NOWs" light="unknown" span={2} onFull={p.nav.full}>
-    <Display w={266} h={104} label="Now" does={`${DISPLAY_DOES} Click a moment to open it.`}><Moments p={p} w={266} h={104} handle={false} press={openMoment(p)} size={8.5} /></Display>
+  widget: p => <Tile title="NOWs" light="unknown" lightWhy={LIGHT_WHY} span={2} onFull={p.nav.full}>
+    <Display w={266} h={104} label="Now" does={`${DISPLAY_DOES} Drag handle 1 for one machine. Click a moment to open it in Full.`}><Moments p={p} w={266} h={104} handle press={openMoment(p)} size={8.5} /></Display>
   </Tile>,
-}
+})

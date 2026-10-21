@@ -53,18 +53,33 @@ export interface ViewProps {
   readonly room?: Room
   /** Where this view stands, for a view that arranges itself differently in each (Whole in the pool or expanded: frame 'flip'). */
   readonly frame?: Frame
+  /** A rack's door to its members: the host draws the device `id` (`<family>:<face>`) in its Whole view at the pool's measures,
+   * on that device's own owner, with every setting live. A rack's Full is its devices (manual §16.3): it lays them out and draws
+   * only its own head and order. The door answers null for a device the host does not hold, and is absent where the host draws
+   * no members; the rack draws its own stand-in for that member then. */
+  readonly member?: (id: string) => ReactNode | null
 }
 
 export interface Room {readonly w: number; readonly h: number}
 export type Frame = 'chain' | 'flip' | 'pane' | 'window' | 'rail'
-/** The six views (manual §16.3). */
+/** The six views (manual §16.3). A device has the views of the places it stands in. */
 export type ViewName = 'folded' | 'compact' | 'whole' | 'full' | 'popout' | 'widget'
+
+/** The six kinds of device (manual §16.1): what it does, which says where it stands and whose time it keeps. */
+export type DeviceKind = 'instrument' | 'effect' | 'rack' | 'modulator' | 'monitor' | 'connection'
+
+/** The views of a device that stands on the rail and in a pane only: a monitor, or an instrument born there (manual §16.3).
+ * Its window holds its Full. */
+export const RAIL_AND_PANE: readonly ViewName[] = ['widget', 'full']
 
 export interface DesignedDevice {
   /** `<family>:<face>`, as the manual's catalogue embeds it. */
   readonly id: string
   readonly title: string
-  readonly kind: 'instrument' | 'effect' | 'rack'
+  readonly kind: DeviceKind
+  /** The views this device has, from the places it stands in (manual §16.3). Absent: all six. The gallery draws only these; a
+   * view a device does not have is never navigated to. */
+  readonly views?: readonly ViewName[]
   readonly defaults: Values
   /** Named readings to try the device on, each laid over the defaults (the gallery's fixture switch). A key set to undefined
    * drops that reading, as an owner that reports nothing for it would. */
@@ -80,6 +95,13 @@ export interface DesignedDevice {
   readonly popout?: (p: ViewProps) => ReactNode
   readonly widget: (p: ViewProps) => ReactNode
 }
+
+/** A device that stands on the rail and in a pane only (manual §16.3): it writes its Widget and its Full, and nothing else. It never
+ * stands on a chain, so the host never asks it for Folded, Compact or Whole; were it asked, it would draw its tile. Its window is
+ * its Full. */
+export type RailAndPaneDesign = Omit<DesignedDevice, 'folded' | 'compact' | 'whole' | 'popout' | 'views'>
+export const railAndPane = (d: RailAndPaneDesign): DesignedDevice =>
+  ({...d, views: RAIL_AND_PANE, folded: d.widget, compact: d.widget, whole: d.widget, popout: d.full})
 
 export const num = (v: Values, key: string) => Number(v[key])
 export const str = (v: Values, key: string) => String(v[key])
