@@ -14,7 +14,8 @@
 //            is its size when `text` shows only the start of it (else the size of `text`).
 //   sources  JSON [{n, name, tag, at, lines: [{n, t, hit?}]}]   what the answer cites, each with the lines around its line.
 //   document, entry, state (idle · reading · answering), context (bytes of identity and Expression the turn carries), resume.
-//   hears, speaks (on · off), voice (quiet · listening · speaking), heard (your words as transcribed so far): the voice the owner holds.
+//   hears, speaks (on · off), voice (quiet · listening · speaking), heard (your words, once the owner has transcribed them, until they
+//   are sent): the voice the owner holds.
 //   The views ask for `hears` and `speaks`; the owner answers with them, and with `voice` and `heard`.
 // The view's own keys, held by the host for the session and never sent to an owner: `chat` (on · off: the conversation beside the
 // face), the face's dynamics `emotion`, `feeling.v` and `feeling.a` (valence and arousal, −1..1), `gaze.x` and `gaze.y` (−1..1),
@@ -599,7 +600,8 @@ export const design: DesignedDevice = {
   fixtures: {
     'Answered, waiting': {},
     Answering: {state: 'answering', thread: partialThread(), sources: undefined},
-    'Hearing you, face alone': {chat: 'off', hears: 'on', voice: 'listening', heard: 'What does this entry ask of me'},
+    'Hearing you, face alone': {chat: 'off', hears: 'on', voice: 'listening', heard: ''},
+    'Words written, sending': {chat: 'off', hears: 'on', voice: 'listening', heard: 'What does this entry ask of me'},
     'Speaking, face alone': {chat: 'off', hears: 'on', speaks: 'on', state: 'answering', voice: 'speaking', thread: partialThread(), sources: undefined},
     'Wry, looking aside': {emotion: 'curious', 'feeling.v': 0.4, 'feeling.a': 0.3, 'gaze.x': -0.5, 'gaze.y': 0.2},
     'Replace and write': {answerAs: 'replace', writes: 'write', thread: sampleThread('written', true)},

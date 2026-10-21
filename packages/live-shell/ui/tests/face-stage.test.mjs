@@ -142,8 +142,9 @@ test('opened, the Answer shows its whole face: Whole beside the well; Full is th
 })
 
 test('your words and the agent\'s stand under the face when the conversation is closed, and in it when it is open', () => {
-  const alone = html(h(() => answer.full({...props('Hearing you, face alone', {frame: 'pane'})})))
-  assert.match(alone, /<p class="an-subtitle" aria-live="polite"><span data-who="you">What does this entry ask of me<\/span><\/p>/, 'heard, under the face')
+  const alone = html(h(() => answer.full({...props('Words written, sending', {frame: 'pane'})})))
+  assert.match(alone, /<p class="an-subtitle" aria-live="polite"><span data-who="you">What does this entry ask of me<\/span><\/p>/, 'heard, under the face once it is written')
+  assert.doesNotMatch(html(h(() => answer.full(props('Hearing you, face alone', {frame: 'pane'})))), /an-subtitle/, 'while you speak nothing is written yet: the owner returns your words when you stop')
   assert.doesNotMatch(alone, /an-chat/)
   const speaking = html(h(() => answer.full({...props('Speaking, face alone', {frame: 'pane'})})))
   assert.match(speaking, /<span data-who="agent">/, 'said, under the face while it speaks')
