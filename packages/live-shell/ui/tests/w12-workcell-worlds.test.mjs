@@ -198,7 +198,8 @@ test('5 · Runs\' Outputs: the attempt\'s world is the listed receipt whose worl
 test('6 · the carrier\'s Plan stays refused, naming the demand body it waits for (Workcell\'s kept demand, `workcell run show`)', () => {
   bind.resetHolds()
   const binding = cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds())
-  assert.match(binding.standing.plan.disabled, /Workcell's kept demand body for a run, read with `workcell run show`, which no kernel route reaches/)
+  // REPLACED (lane W13): `workcell run show` is routed; with no run handed in, the plan says it waits for the chosen world's run.
+  assert.match(binding.standing.plan.disabled, /the run the chosen world's receipt names, read with `workcell run show`/)
   assert.equal(binding.standing.replan.disabled, cell.CARRIER_REFUSE.replan)
 })
 

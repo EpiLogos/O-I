@@ -171,7 +171,7 @@ test('4 · the carrier\'s Offers from `workcell discover` (REAL); the Plan absen
   assert.deepEqual(JSON.parse(binding.values.offers), offers)
   assert.equal(binding.standing.offers, undefined)
   // REPLACED (lane W12): the plan names the demand body it waits for (Workcell's kept demand, `workcell run show`).
-  assert.match(binding.standing.plan.disabled, /Workcell's kept demand body for a run, read with `workcell run show`/)
+  assert.match(binding.standing.plan.disabled, /the run the chosen world's receipt names, read with `workcell run show`/)
   assert.equal(binding.standing.replan.disabled, cell.CARRIER_REFUSE.replan)
   const workcellSays = 'workcell: discover failed: the provider inventory is unreadable'
   assert.equal(cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: refused(workcellSays)}).standing.offers.disabled, workcellSays)
