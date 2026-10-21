@@ -22,6 +22,12 @@ function sameState(a, b) {
 }
 
 const EVENT_OPERATIONS = ['m1-advance', 'replace-event'];
+// A struck point: the torus's sampled sheet is [0, 2*pi) in both angles, an act
+// holds at most 64 points, and each impulse is within the scene body's declared
+// 1.0 metre material policy (mirrors the native owner's own refusals).
+const TAU = 2 * Math.PI;
+const STRIKE_AT_MAX_POINTS = 64;
+const STRIKE_AT_MAX_METRES = 1.0;
 // stage-state is the Ta-Onta procedural stage's scoped disclosure: a read on
 // the one owner — the field does not advance and the receipt is unchanged.
 const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state'];
@@ -146,13 +152,13 @@ export class InstrumentSession {
         return { refused: true, error: reply.error ?? 'native command refused' };
       }
       const changing = command.operation === 'set-axis' || command.operation === 'replace' ||
-        command.operation === 'set-damping' || command.operation === 'strike';
+        command.operation === 'set-damping' || command.operation === 'strike' || command.operation === 'strike-at';
       // replace-event commits modes and, when required, shape. m1-advance
       // additionally commits inscription-axis alignment. replace-event's own
       // strike flag is a policy within the modes commit, not another generation.
       const event = EVENT_OPERATIONS.includes(command.operation);
       // A stage evaluation is the host's own compiled plan: 1..N admitted
-      // applications (replace / set-damping / set-axis / strike / m1-advance,
+      // applications (replace / set-damping / set-axis / strike / strike-at / m1-advance,
       // plus the generated passage's m1-advance ticks), so the generation
       // advances by the plan's own steps. Samples and PCM do not move: each
       // step's receipt is audio-empty and the plan never schedules data-plane
@@ -276,7 +282,7 @@ export class InstrumentSession {
    * with the applied field, the new influence and the stage claim. */
   async operate(command) {
     need(!this.#busy && !this.#held && !this.#disposed &&
-      ['set-axis', 'replace', 'set-damping', 'strike', ...EVENT_OPERATIONS, 'stage-evaluate'].includes(command?.operation), 'domain operation requires idle admitted owner');
+      ['set-axis', 'replace', 'set-damping', 'strike', 'strike-at', ...EVENT_OPERATIONS, 'stage-evaluate'].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
     need(this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');
@@ -326,6 +332,32 @@ export class InstrumentSession {
       return { mode_ref: act.mode_ref, amplitude: [act.amplitude[0], act.amplitude[1]] };
     });
     return this.operate({ operation: 'strike', strikes: acts });
+  }
+
+  /** A played excitation of the torus surface: strike the standing body at the
+   * points of the surface touched or keyed, now. A point is the torus's own
+   * angles on the sampled sheet - theta the poloidal (small) circle and phi the
+   * toroidal (large) circle, each in [0, 2*pi) - with an impulse in modal
+   * metres; the native owner's scene body excites every standing voice by that
+   * impulse times the voice's own shape at the point (QL-MEF `strike-at`, the
+   * receipt `ql.strike-at/v1` names the points and each voice's coupling). A
+   * chord is several points in one act: one generation. Serialized with data
+   * delivery like every other owner operation; the reply's end-of-block targets
+   * present the struck body, so sound and visible displacement share the
+   * native state. An angle outside the sampled sheet is refused, never reduced:
+   * the mode shapes change sign across its seam. */
+  async strikeAt(points) {
+    need(Array.isArray(points) && points.length > 0 && points.length <= STRIKE_AT_MAX_POINTS,
+      `a strike-at act names 1..${STRIKE_AT_MAX_POINTS} points`);
+    const acts = points.map(point => {
+      need(point && [point.theta, point.phi].every(angle => typeof angle === 'number' && Number.isFinite(angle) &&
+        angle >= 0 && angle < TAU), 'a struck point names theta and phi as finite angles in [0, 2*pi): the sampled sheet of the torus');
+      need(Array.isArray(point.amplitude) && point.amplitude.length === 2 &&
+        point.amplitude.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= STRIKE_AT_MAX_METRES),
+        `a struck point's amplitude must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
+      return { theta: point.theta, phi: point.phi, amplitude: [point.amplitude[0], point.amplitude[1]] };
+    });
+    return this.operate({ operation: 'strike-at', points: acts });
   }
 
   /** A Nara-constituted scene owner's reception: `input` (seven supplied centre
