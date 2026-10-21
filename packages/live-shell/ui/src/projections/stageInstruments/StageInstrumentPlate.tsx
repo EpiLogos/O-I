@@ -12,18 +12,21 @@
 // techneWells.tsx: the board, the ruler, the walk), and no sentence stands in it (docs/dlw/DLW.md §16.9): a frame reading that is a
 // save state is a light, one that is a line of words is a light whose words are the status bar's, a group the frame places nothing in
 // says one word with its reason on the status bar, and a parameter no owner carries draws disabled with its reason (§6 Disabled).
+//
+// Lane W4-Technē: each instrument's catalogue design (techne:canvas, techne:timeline, techne:journey) heads its chain on the frame's own
+// research reading and acts (techne/devices/frameBindings.ts), so this plate keeps only what the design does not carry yet
+// (stageInstrumentModel.ts CARRIED_BY_DESIGN): no well (the design's display is the picture), no waiting rows (the design draws those
+// parameters with their reasons), no group or control the design reads and writes itself.
 import type {ReactNode} from 'react'
 import type {FrameChromeControl} from '@epilogos/expressions-boundary'
 import {InstrumentPlate, SectionNote, type PlateSection} from '../../frame/devices/InstrumentPlate'
-import {WaitingDial} from '../../frame/devices/plateControls'
 import {Lamp} from '../../inhabitants/sdk/panel'
 import type {FacePresentation} from '../../inhabitants/sdk/define'
 import type {IconName} from '../../inhabitants/sdk/icons'
-import {FrameControl, WaitingRow, controlsAt, useFrameChrome, type FrameChromeView} from '../../components/expressions/studio/frameChrome'
+import {FrameControl, controlsAt, useFrameChrome, type FrameChromeView} from '../../components/expressions/studio/frameChrome'
 import {usePlateFit} from '../../frame/devices/plateFit'
-import {wellSection} from '../../inhabitants/ql/devices/techneWells'
 import type {OwnPlateProps} from '../../inhabitants/ql/devices/TechneDevices'
-import {EXPRESSION_SECTION, STAGE_PLATES, type StageInstrumentId, type StageSection, type WaitingParameter} from './stageInstrumentModel'
+import {CARRIED_BY_DESIGN, EXPRESSION_SECTION, STAGE_PLATES, carriedByDesign, type StageInstrumentId, type StageSection} from './stageInstrumentModel'
 import './stageInstrumentPlate.css'
 
 const TITLES: Readonly<Record<StageInstrumentId, {title: string; provenance: string; icon: IconName; lens: string}>> = {
@@ -66,18 +69,16 @@ export function PlateFrameControls({controls, view, label}: {controls: readonly 
   </div>
 }
 
-/** A parameter the manual names that no owner carries: a dial with no reading where it is a quantity, else its switch with nothing lit —
- * disabled, its reason on the status bar (manual §16.11 "Disabled — The control at 40 % strength. The status bar says why"). */
-function Waiting({parameter}: {parameter: WaitingParameter}) {
-  return parameter.dial ? <WaitingDial label={parameter.name} why={parameter.why} unit={parameter.dial.unit} /> : <WaitingRow name={parameter.name} values={parameter.values} why={parameter.why} />
-}
+/** The frame's controls of a section the instrument's design does not carry (CARRIED_BY_DESIGN): the design draws the rest itself. */
+const uncarried = (id: StageInstrumentId, controls: readonly FrameChromeControl[]) => controls.filter(control => !carriedByDesign(id, control.label))
 
-function SectionBody({section, view}: {section: StageSection; view: FrameChromeView}) {
-  const controls = controlsAt(view.reading, section.homes)
+/** A section's body: the frame's controls the design does not carry. The parameters no owner carried (the plate's waiting rows) are the
+ * design's own now, drawn on it with their reasons. */
+function SectionBody({id, section, view}: {id: StageInstrumentId; section: StageSection; view: FrameChromeView}) {
+  const controls = uncarried(id, controlsAt(view.reading, section.homes))
   return <>
     <PlateFrameControls controls={controls} view={view} label={section.title} />
     {!controls.length && section.empty && <SectionNote word="none">{section.empty}</SectionNote>}
-    {(!section.waitingWhenEmpty || !controls.length) && section.waiting?.map(parameter => <Waiting key={parameter.name} parameter={parameter} />)}
   </>
 }
 
@@ -90,7 +91,8 @@ export function StageInstrumentPlate({id, focused, families = [], onFold, onFull
   // title. Click the title to open it again"; owner, 15 Oct: "no scrollers" — a column that cannot fit is a fold, not a scroller): the
   // Expression and a group the frame places nothing in stand folded until pressed; when the row is still too narrow the held families
   // fold from the end, then the lens's later groups. A press holds. The well never folds.
-  const groups = STAGE_PLATES[id]
+  // The groups the design carries whole stand on the design, not here (CARRIED_BY_DESIGN).
+  const groups = STAGE_PLATES[id].filter(section => !CARRIED_BY_DESIGN[id].sections.includes(section.id))
   const fit = usePlateFit([...groups.map(section => section.id), EXPRESSION_SECTION.id, ...families.map(section => section.id)].join('|'),
     [...families.map(section => section.id).reverse(), EXPRESSION_SECTION.id, ...groups.slice(1).map(section => section.id).reverse()], false, [EXPRESSION_SECTION.id])
   const fold = (section: PlateSection, empty = false): PlateSection => {
@@ -103,13 +105,12 @@ export function StageInstrumentPlate({id, focused, families = [], onFold, onFull
   const presentation: FacePresentation = {family: 'techne', faceId: id, title: meta.title, icon: meta.icon,
     owner: [meta.provenance, 'Technē', 'the Expressions stage', focused ? 'open on the focused pane' : 'opened here',
       view.presentation === 'frame' ? 'its controls in the pane at full size' : null].filter(Boolean).join(' · ')}
-  const well = wellSection(id)
+  // The picture is the design's display, at the head of the chain: the plate draws no second well.
   const sections: PlateSection[] = [
-    ...(well ? [well] : []),
     ...groups.map(section => fold({id: section.id, title: section.title, width: section.width,
       children: elsewhere ? <SectionNote word={`${standing} lens`}>{`The stage stands in its ${standing} lens: open ${meta.title} on the focused pane to draw its ${section.title.toLowerCase()} here.`}</SectionNote>
-        : view.reason && !view.reading ? <SectionNote word="waiting">{view.reason}</SectionNote> : <SectionBody section={section} view={view} />},
-      !elsewhere && !!view.reading && !controlsAt(view.reading, section.homes).length && !section.waiting?.length)),
+        : view.reason && !view.reading ? <SectionNote word="waiting">{view.reason}</SectionNote> : <SectionBody id={id} section={section} view={view} />},
+      !elsewhere && !!view.reading && !uncarried(id, controlsAt(view.reading, section.homes)).length)),
     fold({id: EXPRESSION_SECTION.id, title: EXPRESSION_SECTION.title, width: EXPRESSION_SECTION.width,
       children: view.reading ? <PlateFrameControls controls={controlsAt(view.reading, EXPRESSION_SECTION.homes)} view={view} label={EXPRESSION_SECTION.title} />
         : <SectionNote word="waiting">{view.reason ?? 'The stage has not reported its controls yet.'}</SectionNote>}),

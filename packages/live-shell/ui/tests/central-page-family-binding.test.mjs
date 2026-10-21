@@ -368,11 +368,11 @@ test('the Workspace reads the book: its name, project, open mode, each mode\'s p
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── the place on the chain
 
-test('REPLACED placement (DLW §16.2, R4): no page face stands on a chain — the family\'s chain faces are the Day, the Packet, Ground hygiene and Impact, reached document or not', () => {
+test('REPLACED placement (DLW §16.2, R4): no page face stands on a chain — the family\'s chain faces are the Day, the Packet, Ground hygiene, Machine and Impact, reached document or not', () => {
   // Was: the Flow first on a reached Flow's chain, then the Document, Text, Highlight and Notes, the Packet, then the agent's devices. The
   // page family is a page's Clip panel, editor tabs and tools now (§16.1, lock §0.3.4); its designs and bindings stand for Clip view.
   const ids = chain.placedFaces(central.faces).map(face => face.id)
-  assert.deepEqual(ids, ['day-die', 'packet', 'ground-hygiene', 'impact'])
+  assert.deepEqual(ids, ['day-die', 'packet', 'ground-hygiene', 'machine', 'impact'])
   for (const page of ['workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes']) assert.ok(!ids.includes(page), `${page} stands on no chain`)
 })
 

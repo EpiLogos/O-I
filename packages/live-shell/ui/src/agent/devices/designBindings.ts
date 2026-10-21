@@ -97,7 +97,7 @@ const REFUSE = {
   run: missing('Run', 'aikit run <method> with its preflight through the kernel', 'AIKit'),
   prove: missing('Prove', 'a Method run receipt verify through the kernel', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
-  knowledge: missing('Knowledge', 'the Knowledge route\'s source bounds (protocol_read is available but unwired)', 'AIKit'),
+  knowledge: 'Knowledge: set on the Knowledge route inside this Scope (§19.9), whose lenses wait on a lens-level request on the AgentProfile (knowledgeRouteBinding.ts).',
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),
   scope: 'Choose where the composition applies — Home, Project or Session — then Preview.',
   noPlan: 'Nothing is previewed: press Preview, read the change, then Apply.',

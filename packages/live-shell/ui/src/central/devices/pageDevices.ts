@@ -22,7 +22,7 @@ import {useRosterAgents} from '../../owners/readers'
 import {revealDocumentPane, subjectOf} from '../documents/centralDocuments'
 import {useReachedDocument, type DocumentInPane} from '../documents/documentDoor'
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
-import {appendFlowEntry, setFlowMeta} from './centralDeviceWrites'
+import {appendFlowEntry, centralWrite, setFlowMeta} from './centralDeviceWrites'
 import {civilDayName, type DayAperture} from './dayBinding'
 import {documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
   type PageMaterial, type ReachedPage} from './pageBindings'
@@ -30,7 +30,8 @@ import {readDayPage, readFlowPage, wordsOfHtml, type FlowPage} from './pageReadi
 import {dateOfDayPath} from '../daySurface'
 import {actionAnswerOf, centralActionOp, useCentralAction, useDayDieReading, type ActionAnswer} from './useCentralReadings'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {CONTEMPLATE_FLOW_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_SELF_INSPECT_ACTION, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
+import {CONTEMPLATE_FLOW_ACTION, PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_SELF_ENSURE_ACTION, PC_SELF_INSPECT_ACTION, PC_TIER_RELATE_ACTION, acceptInput, relateInput,
+  type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
 
 /** The Day device's document, as useDayDevice reads it (CentralDevices.tsx). */
 export interface DayDocumentReading {
@@ -171,7 +172,9 @@ export function useFlowThought(transport: KernelTransportStatus, flowRef: string
 }
 
 /** The Workspace's Ground and Self pages (pageGround.ts): Central's inspection and self reading of the workspace's project world, held for
- * the window; the preview asked by a press. No project (a workspace of your root): nothing is asked. */
+ * the window; the preview asked by a press; and the person's Accept, Ensure and Relate, written through invoke_action as the person's own
+ * presses (action.rs PERSON_ACTS) — each write retires the held readings, so the inspection and the self are read again behind it. No
+ * project (a workspace of your root): nothing is asked, and nothing written. */
 export function useWorkspaceGround(transport: KernelTransportStatus, project: string | null): WorkspaceGround {
   const input = useMemo(() => (project ? {project} : null), [project])
   const pc = useCentralAction(transport, PC_INSPECT_ACTION, input)
@@ -182,8 +185,16 @@ export function useWorkspaceGround(transport: KernelTransportStatus, project: st
     const call = await kernelRead(transport, centralActionOp(PC_PREVIEW_ACTION[treatment], {project, source}), {fresh: true})
     setPlan({project, treatment, answer: answerOfCall(call, PC_PREVIEW_ACTION[treatment])})
   }, [transport, project])
-  return useMemo(() => ({project, ...(project ? {pc, self, preview} : {}), ...(plan && plan.project === project ? {plan: {treatment: plan.treatment, answer: plan.answer}} : {})}),
-    [project, pc, self, preview, plan])
+  const writes = useMemo(() => (project && transport.kind !== 'unavailable' ? {
+    accept: async (treatment: 'create' | 'adopt' | 'migrate', source: string | null) => {
+      await centralWrite(transport, PC_ACCEPT_ACTION[treatment], acceptInput(project, treatment, source))
+      setPlan(null)
+    },
+    ensure: async () => { await centralWrite(transport, PC_SELF_ENSURE_ACTION, {project}) },
+    relate: async (tier: number, sourceRef: string) => { await centralWrite(transport, PC_TIER_RELATE_ACTION, relateInput(project, tier, sourceRef)) },
+  } : {}), [project, transport])
+  return useMemo(() => ({project, ...(project ? {pc, self, preview, ...writes} : {}), ...(plan && plan.project === project ? {plan: {treatment: plan.treatment, answer: plan.answer}} : {})}),
+    [project, pc, self, preview, writes, plan])
 }
 
 /** The page family's readings and bindings over the reached document, the Day device's document, the roster and the workspace book. */

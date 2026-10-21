@@ -1,16 +1,18 @@
 // The Journey (§17.6, techne:journey), the Timeline (§17.5, techne:timeline) and the Canvas (§17.4, techne:canvas) on their owner: the
-// research frame (expressions-app field-studies-journeys: journeyInstrument.tsx, journeyPath.ts; researchInstruments.tsx m2Projection and
-// the shared time window; the canvas state). The frame stands inside the hosted Expressions pane; the shell reaches it only through what
-// it announces and the one runner it answers (projections/expressionsPaneHost.ts useHostedChrome):
-//   - its state (desktop/cradle/src/expressions/hostedApp.ts HostedAppState: lens, document, sceneIndex, sceneCount, sceneName,
-//     journeyPlaying, selection), which the instruments' wells already read (inhabitants/ql/devices/techneWells.tsx);
-//   - its chrome (stageCommands.ts FrameChromeReading, presentedChrome.ts): its own controls by home, each with the frame's own words
-//     and pressed state, and the `chrome` command that presses one (frameChrome.tsx useFrameChromeOver) — the frame's own act;
+// research frame (expressions-app field-studies-journeys: the Journey document and journeyInstrument.tsx; researchInstruments.tsx's Canvas
+// and Timeline). The frame stands inside the hosted Expressions pane; the shell reaches it only through what it announces and the one
+// runner it answers (projections/expressionsPaneHost.ts useHostedChrome):
+//   - its research reading (researchReading.ts, announced with its state as HostedAppState.research): the walk as its Journey document
+//     holds it and where it stands; the board the Canvas presents (cards, lines with their connector records, frames, camera, selection,
+//     pointer flags); the ruler the Timeline presents (its dated events, their relations, the years they span, projection, camera, views);
+//   - its own acts as stage commands (stageCommands.ts): journey stand · play · stop · enter · return, canvas camera — each the frame's
+//     own act (app.ts runStageCommand);
+//   - its chrome (stageCommands.ts FrameChromeReading, presentedChrome.ts): its own controls by home, pressed by the `chrome` command
+//     (the Timeline's projection tabs and Refresh, the Canvas's pointer toggles and overview), and its save glyph;
 //   - the shared time window, which the session owns and the frame reads (desktop/cradle/src/techne/session.ts time_window), written
 //     through the session's compare-and-set writer (projections/atlas/sharedClock.ts writeSharedWindow).
-// The walk's stops, holds and seams, the ruler's events and relations, and the board's items, lines and frames stay inside the frame:
-// it publishes none of them, so each stays absent and every control that would change them stands disabled naming the missing
-// operation (PROPOSE: the frame's state announcement carries them). Nothing here is the design's sample.
+// What the frame does not hold, or no command carries, stays absent or disabled naming the missing operation. Nothing here is the
+// design's sample.
 import type {FrameChromeControl, FrameChromeReading, HostedAppState} from '@epilogos/expressions-boundary'
 import type {StageRun} from '../../components/expressions/studio/StudioStage'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
@@ -56,32 +58,44 @@ const indexed = (keys: readonly string[], count: number, why: string): Record<st
 // ---------------------------------------------------------------------------------------------------------------- the Journey
 
 export const JOURNEY_ID = JOURNEY_DESIGN
-const NO_WALK = missing('The walk\'s stops, holds and seams', 'a journey reading in the frame\'s state announcement (HostedAppState carries the stop it stands on, the count, that stop\'s name and whether it walks; journeyPath.ts walkJourney · edgeRows and model.ts Scene.duration · transition stay inside the frame)', 'the research frame')
+/** The frame announces no research reading at all: a frame that predates it. */
+const NO_RESEARCH = missing('The research reading', 'the research announcement (an older frame announces only its scene index, count and name)', 'the research frame')
+const NO_EDIT = missing('The walk\'s edits', 'stage commands for the walk\'s pace and seams (the frame\'s own Pace and Transitions controls stand in the Journey plate)', 'the research frame')
 export const JOURNEY_REFUSE = {
-  at: missing('Stop', 'a stage command that stands the walk on a stop (stageCommands.ts STAGE_COMMANDS carries none)', 'the research frame'),
-  playing: missing('Play', 'a stage command that walks or stops the stops (stageCommands.ts carries none; the frame\'s own Play stands in the Journey plate\'s Pace group)', 'the research frame'),
-  entered: missing('Enter', 'a stage command that enters a stop\'s scene and returns (stageCommands.ts carries none)', 'the research frame'),
-  local: NO_WALK, snap: NO_WALK, stopAtEnd: NO_WALK, take: NO_WALK,
+  snap: missing('Snap', 'a snap setting the frame holds for the walk\'s drags (journeyPath.ts lands a drag on its own law)', 'the research frame'),
+  take: 'The frame keeps no takes of a walk: recording a walk keeps none to choose among.',
+  stopAtEnd: NO_EDIT,
 } as const
 const JOURNEY_EDGES = ['hold', 'tr', 'kind', 'curve', 'sw', 'dir', 'atc', 'words'] as const
+const JOURNEY_ACTS = ['at', 'local', 'playing', 'entered'] as const
 
-/** The Journey's values: the stop the frame stands on, the count of its stops, that stop's name, whether it walks, and the walk's name
- * (the Expression's own). The count stands as the list of stops, each unnamed but the one it stands on. */
+/** The Journey's values: the walk as the frame's Journey document holds it (researchReading.ts journeyReadingOf: each Scene's name, character,
+ * duration and the transition it is entered by, the loop and its exit), and where the walk stands (the stop, the seconds into it, whether
+ * the saved scenes play, whether a crossing stands). */
 export function journeyValues(frame: FrameReadings): Values {
   const values: Record<string, Value> = {}
   const state = frame.state
   put(values, 'light', lightOf(state, 'journey'))
-  if (!state) return values
-  put(values, 'walk', state.document?.name)
-  const count = state.sceneCount
-  if (typeof count === 'number' && Number.isInteger(count) && count >= 0) {
-    values.stops = JSON.stringify(Array.from({length: count}, () => null))
-    if (typeof state.sceneIndex === 'number' && state.sceneIndex >= 0 && state.sceneIndex < count) {
-      values.at = state.sceneIndex
-      put(values, `name:${state.sceneIndex}`, state.sceneName?.trim() || undefined)
-    }
-  }
-  if (typeof state.journeyPlaying === 'boolean') values.playing = state.journeyPlaying
+  const walk = state?.research?.journey
+  if (!walk) return values
+  values.walk = walk.name
+  values.docLoops = walk.loops
+  values.stopAtEnd = walk.stopAtEnd
+  values.stops = JSON.stringify(walk.stops.map(stop => [stop.name, stop.words]))
+  walk.stops.forEach((stop, i) => {
+    values[`words:${i}`] = stop.words
+    values[`hold:${i}`] = stop.hold
+    values[`tr:${i}`] = stop.seconds
+    values[`kind:${i}`] = stop.kind
+    values[`curve:${i}`] = stop.curve
+    values[`sw:${i}`] = stop.switch
+    put(values, `dir:${i}`, stop.direction)
+    put(values, `atc:${i}`, stop.at)
+  })
+  if (walk.stops.length) values.at = walk.at
+  values.local = walk.local
+  values.playing = walk.playing
+  values.entered = walk.entered
   return values
 }
 
@@ -90,41 +104,82 @@ function frameAbsent(frame: FrameReadings, lens: string, reasons: Readonly<Recor
   if (key in reasons) return reasons[key]!
   const why = unmounted(frame)
   if (why) return why
+  if (!frame.state?.research) return NO_RESEARCH
   if (frame.state?.lens && frame.state.lens !== lens) return `The frame stands in its ${frame.state.lens} lens: open this instrument on the focused pane to read it.`
   return fallback
 }
-export const journeyAbsent = (frame: FrameReadings, key: string): string =>
-  frameAbsent(frame, 'journey', JOURNEY_REFUSE, key, ['light', 'walk', 'stops', 'at', 'playing'].includes(key) || key.startsWith('name:') ? 'The frame has not reported this part of its walk.' : NO_WALK)
+export const journeyAbsent = (frame: FrameReadings, key: string): string => {
+  if (key === 'takes') return JOURNEY_REFUSE.take
+  if (/^dir:\d+$/.test(key) && frame.state?.research?.journey) return 'Only a wipe has a direction, and this stop is not entered by one.'
+  if (/^atc:\d+$/.test(key) && frame.state?.research?.journey) return 'Only a dip to colour has a colour point, and this stop is not entered by one.'
+  if (/^name:\d+$/.test(key) && frame.state?.research?.journey) return 'A stop\'s name is the Scene\'s own, in the list of stops.'
+  if (frame.state && !frame.state.research?.journey) return unmounted(frame) ?? NO_RESEARCH
+  return frameAbsent(frame, 'journey', JOURNEY_REFUSE, key, 'The frame has not reported this part of its walk.')
+}
+
+/** Run one of the frame's own acts; its refusal comes back in its words. */
+async function run(frame: FrameReadings, command: Parameters<StageRun>[0]): Promise<void> {
+  const why = unmounted(frame)
+  if (why) throw Error(why)
+  const result = await frame.run!(command)
+  if (!result.ok) throw Error(result.error)
+}
+
+export async function journeyWrite(frame: FrameReadings, changes: readonly ValueChange[]): Promise<void> {
+  const walk = frame.state?.research?.journey
+  for (const {key, value} of changes) {
+    if (key === 'at' || key === 'local') {
+      if (!walk) throw Error(unmounted(frame) ?? NO_RESEARCH)
+      const index = key === 'at' ? Number(value) : walk.at
+      if (!Number.isSafeInteger(index) || index < 0 || index >= walk.stops.length) throw Error(`The walk has ${walk.stops.length} stops: there is no stop ${index + 1}.`)
+      const seconds = key === 'local' ? Number(value) : 0
+      if (!Number.isFinite(seconds) || seconds < 0) throw Error('A stop is stood on at a time within it.')
+      await run(frame, {command: 'journey', action: 'stand', index, ...(seconds ? {seconds} : {})})
+      continue
+    }
+    if (key === 'playing') { await run(frame, {command: 'journey', action: value === true ? 'play' : 'stop'}); continue }
+    if (key === 'entered') { await run(frame, {command: 'journey', action: value === true ? 'enter' : 'return'}); continue }
+    throw Error((JOURNEY_REFUSE as Readonly<Record<string, string>>)[key] ?? (JOURNEY_EDGES.some(edge => key.startsWith(`${edge}:`)) ? NO_EDIT : refusal(JOURNEY_REFUSE, key).message))
+  }
+}
+
 const JOURNEY_READINGS = ['light', 'walk', 'stops', 'docLoops', 'takes'] as const
 
 export function journeyBinding(frame: FrameReadings): DesignBinding {
-  const count = frame.state?.sceneCount ?? 0
-  const refuse: Record<string, string> = {...JOURNEY_REFUSE, ...indexed(JOURNEY_EDGES, count, NO_WALK)}
+  const count = Math.max(frame.state?.research?.journey?.stops.length ?? 0, frame.state?.sceneCount ?? 0)
+  const refuse: Record<string, string> = {...JOURNEY_REFUSE, ...indexed(JOURNEY_EDGES, count, NO_EDIT)}
   const values = journeyValues(frame)
   const standing = disabled(refuse)
+  const why = unmounted(frame) ?? (frame.state?.research?.journey ? null : NO_RESEARCH)
+  if (why) for (const key of JOURNEY_ACTS) standing[key] = {disabled: why}
   for (const key of [...JOURNEY_READINGS, ...Array.from({length: Math.max(1, count)}, (_, i) => `name:${i}`)]) if (!(key in values) && !(key in standing)) standing[key] = {disabled: journeyAbsent(frame, key)}
   return {
     id: JOURNEY_ID,
     values,
     standing,
     ...(frame.run && !frame.state ? {waiting: true} : {}),
-    writes: key => key in refuse || JOURNEY_EDGES.some(edge => key.startsWith(`${edge}:`)),
-    write: async (changes: readonly ValueChange[]) => { for (const {key} of changes) throw Error(refuse[key] ?? (JOURNEY_EDGES.some(edge => key.startsWith(`${edge}:`)) ? NO_WALK : refusal(refuse, key).message)) },
+    writes: key => key in refuse || (JOURNEY_ACTS as readonly string[]).includes(key) || JOURNEY_EDGES.some(edge => key.startsWith(`${edge}:`)),
+    write: changes => journeyWrite(frame, changes),
   }
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Timeline
 
 export const TIMELINE_ID = TIMELINE_DESIGN
-/** The frame's three projections on its Timeline (researchInstruments.tsx :1355-1357 `m2Projection`: chronology, field, relative), as
+/** The frame's three projections on its Timeline (researchInstruments.tsx :1359-1361 `m2Projection`: chronology, field, relative), as
  * its own tab words and the design's lens values. */
-const LENS_TABS: readonly {lens: string; label: string}[] = [{lens: 'chronology', label: 'Chronology'}, {lens: 'relations', label: 'Relations'}, {lens: 'relative', label: 'Relative'}]
-const NO_RULER = missing('The ruler\'s events, relations, epochs and saved views', 'a timeline reading in the frame\'s state announcement (researchInstruments.tsx m2Projection and its TimelineLens stay inside the frame)', 'the research frame')
+const LENS_TABS: readonly {lens: string; projection: string; label: string}[] = [{lens: 'chronology', projection: 'chronology', label: 'Chronology'},
+  {lens: 'relations', projection: 'field', label: 'Relations'}, {lens: 'relative', projection: 'relative', label: 'Relative'}]
+/** The relation field's standing classes the design draws (techne/m0m5/timeline/standing.ts), as the frame names a relation's standing. */
+const STANDINGS: ReadonlySet<string> = new Set(['sourced', 'derived', 'authored', 'disputed', 'mythic', 'unavailable'])
+const NO_RULER_EDIT = missing('The ruler\'s filters and saved views', 'stage commands for the Timeline\'s filters, standing and named views (the frame\'s own controls stand in the Timeline plate)', 'the research frame')
+const NO_CAMERA = missing('The ruler\'s camera', 'a stage command that moves the chronology\'s centre and zoom (TimelineViewState centerYear, pixelsPerYear)', 'the research frame')
+const NOT_PRESENTED = 'The frame presents no Timeline now: open the Timeline on the focused pane to read its ruler.'
 export const TIMELINE_REFUSE = {
-  mode: NO_RULER, links: NO_RULER, archetypes: NO_RULER, walk: NO_RULER, centre: NO_RULER, zoom: NO_RULER, view: NO_RULER, saveView: NO_RULER,
-  showAll: NO_RULER, subTimeline: NO_RULER, earth: NO_RULER, selected: NO_RULER,
-  st_sourced: NO_RULER, st_derived: NO_RULER, st_authored: NO_RULER, st_disputed: NO_RULER, st_mythic: NO_RULER, st_unavailable: NO_RULER,
-  cat_source: NO_RULER, cat_myth: NO_RULER, cat_claim: NO_RULER,
+  mode: NO_RULER_EDIT, links: NO_RULER_EDIT, archetypes: NO_RULER_EDIT, walk: NO_RULER_EDIT, centre: NO_CAMERA, zoom: NO_CAMERA, view: NO_RULER_EDIT, saveView: NO_RULER_EDIT,
+  showAll: NO_RULER_EDIT, subTimeline: NO_RULER_EDIT, earth: NO_RULER_EDIT, selected: NO_RULER_EDIT,
+  st_sourced: NO_RULER_EDIT, st_derived: NO_RULER_EDIT, st_authored: NO_RULER_EDIT, st_disputed: NO_RULER_EDIT, st_mythic: NO_RULER_EDIT, st_unavailable: NO_RULER_EDIT,
+  cat_source: NO_RULER_EDIT, cat_myth: NO_RULER_EDIT, cat_claim: NO_RULER_EDIT,
 } as const
 const NO_SESSION = 'No shared session stands (no work is open in Technē), so there is no window to read over.'
 export const TIMELINE_LOCAL = ['winFrom', 'winTo'] as const
@@ -138,14 +193,24 @@ export interface WindowLaw {
   readonly write: (window: {from: string | null; to: string | null} | null) => string | null
 }
 
-/** The Timeline's values: the lens the frame's tabs stand pressed on, the shared window (on, and its two edges) and the hand's window
+/** The Timeline's values: the ruler the frame presents (researchReading.ts timelineReadingOf: its dated events, the relations between them,
+ * the years they span, its projection, its camera and its named views), the shared window (on, and its two edges) and the hand's window
  * before Read over, starting where the shared window stands. */
 export function timelineValues(frame: FrameReadings, law: Pick<WindowLaw, 'yearOf'>, held: Readonly<Record<string, Value>> = {}): Values {
   const values: Record<string, Value> = {}
   put(values, 'light', lightOf(frame.state, 'timeline'))
-  const chrome = frame.state?.lens === 'timeline' ? frame.state.chrome : undefined
-  const tab = LENS_TABS.find(candidate => control(chrome, 'timeline:lens', candidate.label)?.pressed === true)
-  put(values, 'lens', tab?.lens)
+  const ruler = frame.state?.research?.timeline
+  if (ruler) {
+    put(values, 'lens', LENS_TABS.find(tab => tab.projection === ruler.projection)?.lens)
+    values.events = JSON.stringify(ruler.events.map(event => ({id: event.id, name: event.name, from: event.from, to: event.to, ...(event.family ? {family: event.family} : {})})))
+    values.edges = JSON.stringify(ruler.edges.map(edge => ({id: edge.id, from: edge.from, to: edge.to, kind: edge.kind, ...(edge.standing && STANDINGS.has(edge.standing) ? {st: edge.standing} : {})})))
+    values.dated = ruler.events.length > 0
+    put(values, 'domFrom', ruler.domain?.from)
+    put(values, 'domTo', ruler.domain?.to)
+    put(values, 'centre', ruler.centre)
+    put(values, 'zoom', ruler.zoom)
+    values.views = JSON.stringify(ruler.views.map(view => ({id: view.id, label: view.label})))
+  }
   if (frame.window !== undefined) {
     values.readOn = frame.window !== null
     put(values, 'readFrom', frame.window ? law.yearOf(frame.window.from) : undefined)
@@ -174,9 +239,9 @@ export async function timelineWrite(frame: FrameReadings, changes: readonly Valu
       case 'lens': {
         const tab = LENS_TABS.find(candidate => candidate.lens === value)
         if (!tab) throw Error(`The Timeline's lenses are Chronology, Relations and Relative, never ${String(value)}.`)
-        const target = control(chrome, 'timeline:lens', tab.label)
-        if (target?.pressed) break
-        await press(frame, target, `Lens ${tab.label}`)
+        if (frame.state?.research?.timeline?.projection === tab.projection) break
+        // The frame's own projection tab, pressed (researchInstruments.tsx :1359-1361).
+        await press(frame, control(chrome, 'timeline:lens', tab.label), `Lens ${tab.label}`)
         break
       }
       case 'refresh': await press(frame, control(chrome, 'timeline:lens', 'Refresh timeline'), 'Refresh'); break
@@ -188,21 +253,31 @@ export async function timelineWrite(frame: FrameReadings, changes: readonly Valu
   }
 }
 
-/** The ruler's readings the frame does not publish. */
-const RULER_READINGS = ['events', 'edges', 'views', 'domFrom', 'domTo', 'paneW', 'dated', 'relZero', 'frame', 'workDay', 'workNow', 'workSession', 'workRun'] as const
+/** The ruler's readings the frame does not hold (the relative zero's words, your own work's strata, the pane's own width). */
+const UNHELD_READINGS = {relZero: missing('The relative zero', 'the session\'s disclosed zero in the frame\'s research announcement', 'the research frame'),
+  frame: 'The ruler names no frame of its own: it reads the work open in the pane.',
+  paneW: 'The pane\'s width is the shell\'s own room, not a reading of the ruler.',
+  workDay: missing('Your work', 'a read of your days, runs and receipts on the ruler (the relation field draws them together)', 'the research frame'),
+  workNow: missing('Your work', 'a read of your days, runs and receipts on the ruler', 'the research frame'),
+  workSession: missing('Your work', 'a read of your days, runs and receipts on the ruler', 'the research frame'),
+  workRun: missing('Your work', 'a read of your days, runs and receipts on the ruler', 'the research frame')} as const
+const RULER_READINGS = ['events', 'edges', 'views', 'domFrom', 'domTo', 'dated', 'centre', 'zoom'] as const
 export function timelineAbsent(frame: FrameReadings, key: string): string {
+  if (key in UNHELD_READINGS) return UNHELD_READINGS[key as keyof typeof UNHELD_READINGS]
   if (['readOn', 'readFrom', 'readTo'].includes(key)) return frame.window === undefined ? NO_SESSION : 'The shared window is open at that edge.'
-  return frameAbsent(frame, 'timeline', TIMELINE_REFUSE, key, ['light', 'lens'].includes(key) ? 'The frame has not reported its Timeline\'s lens.' : NO_RULER)
+  if ((RULER_READINGS as readonly string[]).includes(key) && frame.state?.research && !frame.state.research.timeline) return unmounted(frame) ?? NOT_PRESENTED
+  if (key === 'domFrom' || key === 'domTo') return 'No event of the ruler is dated, so it spans no years.'
+  return frameAbsent(frame, 'timeline', TIMELINE_REFUSE, key, ['light', 'lens'].includes(key) ? 'The frame has not reported its Timeline\'s lens.' : NOT_PRESENTED)
 }
 
 export function timelineBinding(frame: FrameReadings, law: WindowLaw, held: Readonly<Record<string, Value>> = {}): DesignBinding {
   const standing: Record<string, Standing> = disabled(TIMELINE_REFUSE)
-  for (const key of RULER_READINGS) standing[key] = {disabled: NO_RULER}
+  for (const [key, why] of Object.entries(UNHELD_READINGS)) standing[key] = {disabled: why}
   const why = unmounted(frame) ?? (frame.state?.lens !== 'timeline' ? `The frame stands in its ${frame.state?.lens ?? 'own'} lens: open the Timeline on the focused pane to choose its lens.` : null)
   if (why) for (const key of ['lens', 'refresh'] as const) standing[key] = {disabled: why}
   if (frame.window === undefined) for (const key of ['readOn', 'readOver', 'clearWindow'] as const) standing[key] = {disabled: NO_SESSION}
   const values = timelineValues(frame, law, held)
-  for (const key of ['light', 'readFrom', 'readTo'] as const) if (!(key in values) && !(key in standing)) standing[key] = {disabled: timelineAbsent(frame, key)}
+  for (const key of ['light', 'readFrom', 'readTo', ...RULER_READINGS] as const) if (!(key in values) && !(key in standing)) standing[key] = {disabled: timelineAbsent(frame, key)}
   return {
     id: TIMELINE_ID,
     values,
@@ -217,41 +292,59 @@ export function timelineBinding(frame: FrameReadings, law: WindowLaw, held: Read
 // ---------------------------------------------------------------------------------------------------------------- the Canvas
 
 export const CANVAS_ID = CANVAS_DESIGN
-/** The frame's pointer flags (researchInstruments.tsx :882-889 Draw, Erase, Lasso), each the design's mode of the same name. */
+/** The frame's pointer flags (researchInstruments.tsx :885-892 Draw, Erase, Lasso), each the design's mode of the same name. */
 const MODE_TOGGLES: readonly {mode: string; label: string}[] = [{mode: 'draw', label: 'Draw'}, {mode: 'erase', label: 'Erase'}, {mode: 'lasso', label: 'Lasso'}]
 /** The frame's save glyph (researchInstruments.tsx `.research-save-glyph`, read through presentedChrome.ts as its words). */
 const SAVE_STATE = /^(saved|saving|held)\b/i
-const NO_BOARD = missing('The board\'s items, lines and frames', 'a canvas reading in the frame\'s state announcement (researchInstruments.tsx keeps the board inside the frame; HostedAppState carries its selection only)', 'the research frame')
+const NO_BOARD_EDIT = missing('The board\'s edits', 'stage commands for the board\'s cards, frames, lines and named views (the frame\'s own tools stand in the Canvas plate)', 'the research frame')
 const NO_FORM = missing('The form', 'kernel ops for aikit wiki-shape validate · declare · compress', 'AIKit')
+const NOT_PRESENTED_BOARD = 'The frame presents no Canvas now: open the Canvas on the focused pane to read its board.'
 export const CANVAS_REFUSE = {
-  zoom: missing('Zoom', 'a stage command that sets the board\'s zoom (the frame\'s own Zoom in, Zoom out and Fit keys step it)', 'the research frame'),
-  cx: NO_BOARD, cy: NO_BOARD, view: NO_BOARD, mine: NO_BOARD, mineX: NO_BOARD, mineY: NO_BOARD, mineZ: NO_BOARD, sel: NO_BOARD,
-  add: NO_BOARD, addX: NO_BOARD, addY: NO_BOARD, added: NO_BOARD, colourAdded: NO_BOARD, shapeFill: NO_BOARD, frame2: NO_BOARD,
-  lineKind: NO_BOARD, fromSide: NO_BOARD, toSide: NO_BOARD, direction: NO_BOARD, standing: NO_BOARD, find: NO_BOARD, present: NO_BOARD,
-  promote: missing('Promote', 'a stage command for the frame\'s constellation relate act (researchInstruments.tsx RelateKnowledgeAction :161)', 'the research frame'),
+  view: NO_BOARD_EDIT, mine: NO_BOARD_EDIT, mineX: NO_BOARD_EDIT, mineY: NO_BOARD_EDIT, mineZ: NO_BOARD_EDIT, sel: NO_BOARD_EDIT,
+  add: NO_BOARD_EDIT, addX: NO_BOARD_EDIT, addY: NO_BOARD_EDIT, added: NO_BOARD_EDIT, colourAdded: NO_BOARD_EDIT, shapeFill: NO_BOARD_EDIT, frame2: NO_BOARD_EDIT,
+  lineKind: NO_BOARD_EDIT, fromSide: NO_BOARD_EDIT, toSide: NO_BOARD_EDIT, direction: NO_BOARD_EDIT, standing: NO_BOARD_EDIT, find: NO_BOARD_EDIT, present: NO_BOARD_EDIT,
+  promote: missing('Promote', 'a stage command for the frame\'s constellation relate act (researchInstruments.tsx RelateKnowledgeAction :162)', 'the research frame'),
   form: NO_FORM, whole: NO_FORM, roles: NO_FORM, layout: NO_FORM, role: NO_FORM, checkAsk: NO_FORM, declare: NO_FORM, fold: NO_FORM,
   suggest: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
   suggested: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
 } as const
-const CANVAS_ACTS = ['mode', 'grid', 'minimap'] as const
+const CANVAS_ACTS = ['mode', 'grid', 'minimap', 'cx', 'cy', 'zoom'] as const
+/** The frame's own overview toggle (canvasNavigationOverview.tsx :21 `.research-minimap-toggle`, its words "Hide overview" while shown and
+ * "Show overview" while hidden; presentedChrome.ts :93 publishes it in canvas:look). */
+const overviewOf = (chrome: FrameChromeReading | null | undefined) => at(chrome, 'canvas:look').find(candidate => candidate.label === 'Hide overview' || candidate.label === 'Show overview')
 
-/** The Canvas's values: the frame's pointer mode and grid snap (its own toggles), its zoom and save state (its own readings), and its
- * selection's ids (HostedAppState.selection). The board is not published. */
+/** The Canvas's values: the board the frame presents (researchReading.ts canvasReadingOf: its cards, its lines with their connector records —
+ * the selected line first, as the design reads it — its frames, its camera, its selection and its pointer flags), and its overview toggle
+ * and save state (its own chrome). */
 export function canvasValues(frame: FrameReadings): Values {
   const values: Record<string, Value> = {}
   const state = frame.state
   put(values, 'light', lightOf(state, 'canvas'))
   if (!state) return values
+  const board = state.research?.canvas
+  if (board) {
+    values.items = JSON.stringify(board.items.map(item => ({id: item.id, kind: item.kind, x: item.x, y: item.y, w: item.w, h: item.h, name: item.name})))
+    const chosen = board.lines.find(line => line.id === board.selectedLine)
+    const ordered = chosen ? [chosen, ...board.lines.filter(line => line !== chosen)] : board.lines
+    values.lines = JSON.stringify(ordered.map(line => [line.from, line.to]))
+    values.frames = JSON.stringify(board.frames)
+    if (board.camera) { values.cx = board.camera.cx; values.cy = board.camera.cy; values.zoom = board.camera.zoom }
+    values.sel = board.selected.join(',')
+    values.mode = board.drawing ? 'draw' : board.erasing ? 'erase' : board.lasso ? 'lasso' : 'select'
+    values.grid = board.snap
+    // The line the selection holds, as the frame draws it: its connector record, absent = the frame's own curved, auto-sided routing.
+    const line = chosen ?? ordered[0]
+    if (line) {
+      values.lineKind = line.kind ?? 'curved'
+      values.fromSide = line.fromSide ?? 'auto'
+      values.toSide = line.toSide ?? 'auto'
+      put(values, 'label', line.label)
+      put(values, 'direction', line.direction)
+    }
+  }
   const chrome = state.lens === 'canvas' ? state.chrome : undefined
-  const flags = MODE_TOGGLES.map(flag => ({...flag, control: control(chrome, 'canvas:tools', flag.label)}))
-  if (flags.every(flag => flag.control)) values.mode = flags.find(flag => flag.control!.pressed)?.mode ?? 'select'
-  const snap = control(chrome, 'canvas:tools', 'Snap')
-  if (snap?.pressed !== undefined) values.grid = snap.pressed
   const overview = overviewOf(chrome)
   if (overview) values.minimap = overview.pressed ?? overview.label === 'Hide overview'
-  const zoom = at(chrome, 'canvas:look').find(candidate => candidate.kind === 'reading' && /%$/.test(candidate.label.trim()))
-  const percent = zoom ? Number.parseFloat(zoom.label) : NaN
-  put(values, 'zoom', Number.isFinite(percent) && percent > 0 ? percent : undefined)
   const save = (chrome?.controls ?? []).find(candidate => candidate.home.startsWith('canvas:') && candidate.kind === 'reading' && SAVE_STATE.test((candidate.value || candidate.label).trim()))
   put(values, 'save', save ? SAVE_STATE.exec((save.value || save.label).trim())![1]!.toLowerCase() : undefined)
   return values
@@ -259,10 +352,19 @@ export function canvasValues(frame: FrameReadings): Values {
 
 export async function canvasWrite(frame: FrameReadings, changes: readonly ValueChange[]): Promise<void> {
   const chrome = frame.state?.lens === 'canvas' ? frame.state.chrome : undefined
+  const board = frame.state?.research?.canvas
+  let camera: {cx: number; cy: number; zoom: number} | undefined
   for (const {key, value} of changes) {
+    if (key === 'cx' || key === 'cy' || key === 'zoom') {
+      const base = camera ?? board?.camera
+      if (!base) throw Error(board ? 'The Canvas has not reported its camera yet.' : unmounted(frame) ?? NOT_PRESENTED_BOARD)
+      if (typeof value !== 'number' || !Number.isFinite(value)) throw Error('The camera moves by numbers.')
+      camera = {...base, [key]: value}
+      continue
+    }
     if (key === 'grid') {
-      const snap = control(chrome, 'canvas:tools', 'Snap')
-      if (snap?.pressed !== (value === true)) await press(frame, snap, 'Grid')
+      if (board?.snap === (value === true)) continue
+      await press(frame, control(chrome, 'canvas:tools', 'Snap'), 'Grid')
       continue
     }
     if (key === 'minimap') {
@@ -273,42 +375,52 @@ export async function canvasWrite(frame: FrameReadings, changes: readonly ValueC
     }
     if (key === 'mode') {
       if (value !== 'select' && !MODE_TOGGLES.some(flag => flag.mode === value)) throw Error(`The Canvas's modes are select, lasso, draw and erase, never ${String(value)}.`)
-      // The frame's own law (researchInstruments.tsx :882-889): Draw and Erase each clear the other when pressed on; Lasso stands apart.
+      // The frame's own law (researchInstruments.tsx :885-892): Draw and Erase each clear the other when pressed on; Lasso stands apart.
       // So the asked flag is pressed on, and every other flag still on is pressed off, Erase only where Draw is not being pressed on.
       const flag = (label: string) => control(chrome, 'canvas:tools', label)
       const draw = flag('Draw'), erase = flag('Erase'), lasso = flag('Lasso')
-      if (value === 'draw' && !draw?.pressed) await press(frame, draw, 'Mode Draw')
-      if (value === 'erase' && !erase?.pressed) await press(frame, erase, 'Mode Erase')
-      if (value === 'lasso' && !lasso?.pressed) await press(frame, lasso, 'Mode Lasso')
-      if (value !== 'draw' && value !== 'erase' && draw?.pressed) await press(frame, draw, 'Mode Draw')
-      if (value !== 'draw' && value !== 'erase' && erase?.pressed) await press(frame, erase, 'Mode Erase')
-      if (value !== 'lasso' && lasso?.pressed) await press(frame, lasso, 'Mode Lasso')
+      const on = {draw: board?.drawing ?? draw?.pressed === true, erase: board?.erasing ?? erase?.pressed === true, lasso: board?.lasso ?? lasso?.pressed === true}
+      if (value === 'draw' && !on.draw) await press(frame, draw, 'Mode Draw')
+      if (value === 'erase' && !on.erase) await press(frame, erase, 'Mode Erase')
+      if (value === 'lasso' && !on.lasso) await press(frame, lasso, 'Mode Lasso')
+      if (value !== 'draw' && value !== 'erase' && on.draw) await press(frame, draw, 'Mode Draw')
+      if (value !== 'draw' && value !== 'erase' && on.erase) await press(frame, erase, 'Mode Erase')
+      if (value !== 'lasso' && on.lasso) await press(frame, lasso, 'Mode Lasso')
       continue
     }
     throw refusal(CANVAS_REFUSE, key)
   }
+  if (camera) {
+    if (camera.zoom < 5 || camera.zoom > 200) throw Error('The Canvas zooms from 5 % to 200 %.')
+    await run(frame, {command: 'canvas', action: 'camera', cx: camera.cx, cy: camera.cy, zoom: camera.zoom})
+  }
 }
 
-/** The board's readings the frame does not publish, and the form's readings no route reads. */
-const BOARD_READINGS = ['items', 'lines', 'frames', 'colour', 'label', 'waiting', 'refusal'] as const
-/** The frame's own overview toggle (canvasNavigationOverview.tsx :21 `.research-minimap-toggle`, its words "Hide overview" while shown and
- * "Show overview" while hidden; presentedChrome.ts :93 publishes it in canvas:look). */
-const overviewOf = (chrome: FrameChromeReading | null | undefined) => at(chrome, 'canvas:look').find(candidate => candidate.label === 'Hide overview' || candidate.label === 'Show overview')
+/** The board's readings the frame does not hold, and the form's readings no route reads. */
+const UNHELD_BOARD = {colour: missing('Sticky colour', 'the next sticky\'s colour in the frame\'s research announcement (the frame\'s own picker holds it)', 'the research frame'),
+  waiting: missing('Waiting', 'a count of the lines that wait for their owner in the frame\'s research announcement', 'the research frame'),
+  refusal: 'No line has been promoted and refused here.'} as const
 const FORM_READINGS = ['check', 'checkWhy', 'declared'] as const
+const BOARD_READINGS = ['items', 'lines', 'frames', 'cx', 'cy', 'zoom', 'sel', 'mode', 'grid', 'lineKind', 'fromSide', 'toSide', 'label', 'direction'] as const
 export function canvasAbsent(frame: FrameReadings, key: string): string {
-  if ((BOARD_READINGS as readonly string[]).includes(key)) return NO_BOARD
+  if (key in UNHELD_BOARD) return UNHELD_BOARD[key as keyof typeof UNHELD_BOARD]
   if ((FORM_READINGS as readonly string[]).includes(key)) return NO_FORM
+  const board = frame.state?.research?.canvas
+  if (board && ['lineKind', 'fromSide', 'toSide', 'label', 'direction'].includes(key)) return board.lines.length ? 'The selected line names none.' : 'The board holds no line.'
+  if (board && ['cx', 'cy', 'zoom'].includes(key)) return 'The Canvas has not reported its camera yet.'
+  if ((BOARD_READINGS as readonly string[]).includes(key) && frame.state?.research && !board) return unmounted(frame) ?? NOT_PRESENTED_BOARD
   return frameAbsent(frame, 'canvas', CANVAS_REFUSE, key, 'The frame has not reported this reading of its board.')
 }
 
 export function canvasBinding(frame: FrameReadings): DesignBinding {
   const standing: Record<string, Standing> = disabled(CANVAS_REFUSE)
-  for (const key of BOARD_READINGS) standing[key] = {disabled: NO_BOARD}
+  for (const [key, why] of Object.entries(UNHELD_BOARD)) standing[key] = {disabled: why}
   for (const key of FORM_READINGS) standing[key] = {disabled: NO_FORM}
   const why = unmounted(frame) ?? (frame.state?.lens !== 'canvas' ? `The frame stands in its ${frame.state?.lens ?? 'own'} lens: open the Canvas on the focused pane to play it.` : null)
+    ?? (frame.state?.research?.canvas ? null : NOT_PRESENTED_BOARD)
   if (why) for (const key of CANVAS_ACTS) standing[key] = {disabled: why}
   const values = canvasValues(frame)
-  for (const key of ['light', 'save'] as const) if (!(key in values) && !(key in standing)) standing[key] = {disabled: canvasAbsent(frame, key)}
+  for (const key of ['light', 'save', 'items', 'lines', 'frames', 'label', 'direction'] as const) if (!(key in values) && !(key in standing)) standing[key] = {disabled: canvasAbsent(frame, key)}
   return {
     id: CANVAS_ID,
     values,

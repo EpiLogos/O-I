@@ -377,6 +377,57 @@ pub enum OwnerRequest {
         #[serde(default)]
         authority_grant: Option<String>,
     },
+    /// `factory attempt decision submit <state> -` with the retained
+    /// `RequestUnitDecision` Action document, carried verbatim (lane W3,
+    /// T-COVERAGE §1.2): Factory submits the unit's question to Central's
+    /// receiving field. Submitting answers no question. Factory reaches
+    /// Central through the host's own binding (`FACTORY_NATIVE_CENTRAL_BINARY`
+    /// from `OI_CENTRAL_CTRL_BIN`, `FACTORY_NATIVE_CENTRAL_ROOT` from
+    /// Central's disclosed root); without it Factory refuses in its words.
+    AttemptDecisionSubmit { state_path: PathBuf, request: Value },
+    /// `factory attempt decision read <state> <run-ref> <human-request-ref>
+    /// <receiving-ref>` → `factory.attempt-unit-decision-reading/v1`: the
+    /// response payload for the existing ResolveUnitDecision Action. A read.
+    AttemptDecisionRead {
+        state_path: PathBuf,
+        run_ref: String,
+        human_request_ref: String,
+        receiving_ref: String,
+    },
+    /// `factory development custody assign <state> --position P --work W
+    /// --reason R [...]` → `factory.work-custody-receipt/v1`.
+    CustodyAssign {
+        state_path: PathBuf,
+        position_ref: String,
+        work_ref: String,
+        reason: String,
+        #[serde(default)]
+        run_ref: Option<String>,
+        #[serde(default)]
+        workflow_unit_ref: Option<String>,
+        #[serde(default)]
+        journey_ref: Option<String>,
+        #[serde(default)]
+        origin_communique: Option<String>,
+        #[serde(default)]
+        state: Option<String>,
+        #[serde(default)]
+        custody_ref: Option<String>,
+    },
+    /// `factory development custody update <state> --custody C --state S
+    /// --reason R [...]` → `factory.work-custody-receipt/v1`.
+    CustodyUpdate {
+        state_path: PathBuf,
+        custody_ref: String,
+        state: String,
+        reason: String,
+        #[serde(default)]
+        reopen: bool,
+        #[serde(default)]
+        to_position: Option<String>,
+        #[serde(default)]
+        expected_revision: Option<u64>,
+    },
 }
 
 /// The host's native action token. It never crosses the webview: the native
@@ -405,7 +456,12 @@ impl std::fmt::Debug for AuthorityToken {
 impl OwnerRequest {
     /// Whether the arm must hand over Central's world reading (the roots).
     pub fn needs_world(&self) -> bool {
-        matches!(self, OwnerRequest::Locate { .. })
+        matches!(
+            self,
+            OwnerRequest::Locate { .. }
+                | OwnerRequest::AttemptDecisionSubmit { .. }
+                | OwnerRequest::AttemptDecisionRead { .. }
+        )
     }
     /// A reading of the owner's state, which may run outside the kernel lock
     /// (owner_read.rs `PreparedRead`). Named one by one: a request not named
@@ -431,6 +487,7 @@ impl OwnerRequest {
                 | OwnerRequest::Inhabitation { .. }
                 | OwnerRequest::CurrentWork { .. }
                 | OwnerRequest::AttemptAdmission { .. }
+                | OwnerRequest::AttemptDecisionRead { .. }
         )
     }
 }
@@ -1428,6 +1485,117 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 },
             ))
         }
+        OwnerRequest::AttemptDecisionSubmit {
+            state_path,
+            request,
+        } => {
+            let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
+            let args: Vec<std::ffi::OsString> = vec![
+                "attempt".into(),
+                "decision".into(),
+                "submit".into(),
+                path_arg(&state_path),
+                "-".into(),
+                "--json".into(),
+            ];
+            expect_contract(
+                owner_call_env(&args, Some(&body), &decision_endpoint(world))?,
+                &[DECISION_READING],
+            )
+        }
+        OwnerRequest::AttemptDecisionRead {
+            state_path,
+            run_ref,
+            human_request_ref,
+            receiving_ref,
+        } => {
+            let args: Vec<std::ffi::OsString> = vec![
+                "attempt".into(),
+                "decision".into(),
+                "read".into(),
+                path_arg(&state_path),
+                run_ref.into(),
+                human_request_ref.into(),
+                receiving_ref.into(),
+                "--json".into(),
+            ];
+            expect_contract(
+                owner_call_env(&args, None, &decision_endpoint(world))?,
+                &[DECISION_READING],
+            )
+        }
+        OwnerRequest::CustodyAssign {
+            state_path,
+            position_ref,
+            work_ref,
+            reason,
+            run_ref,
+            workflow_unit_ref,
+            journey_ref,
+            origin_communique,
+            state,
+            custody_ref,
+        } => {
+            let mut args: Vec<std::ffi::OsString> = vec![
+                "development".into(),
+                "custody".into(),
+                "assign".into(),
+                path_arg(&state_path),
+                "--position".into(),
+                position_ref.into(),
+                "--work".into(),
+                work_ref.into(),
+                "--reason".into(),
+                reason.into(),
+            ];
+            for (flag, value) in [
+                ("--run", run_ref),
+                ("--workflow-unit", workflow_unit_ref),
+                ("--journey", journey_ref),
+                ("--origin-communique", origin_communique),
+                ("--state", state),
+                ("--custody", custody_ref),
+            ] {
+                if let Some(value) = value {
+                    args.extend([flag.into(), value.into()]);
+                }
+            }
+            args.push("--json".into());
+            expect_contract(owner_call(&args, None)?, &[CUSTODY_RECEIPT])
+        }
+        OwnerRequest::CustodyUpdate {
+            state_path,
+            custody_ref,
+            state,
+            reason,
+            reopen,
+            to_position,
+            expected_revision,
+        } => {
+            let mut args: Vec<std::ffi::OsString> = vec![
+                "development".into(),
+                "custody".into(),
+                "update".into(),
+                path_arg(&state_path),
+                "--custody".into(),
+                custody_ref.into(),
+                "--state".into(),
+                state.into(),
+                "--reason".into(),
+                reason.into(),
+            ];
+            if reopen {
+                args.push("--reopen".into());
+            }
+            if let Some(position) = to_position {
+                args.extend(["--to-position".into(), position.into()]);
+            }
+            if let Some(revision) = expected_revision {
+                args.extend(["--expected-revision".into(), revision.to_string().into()]);
+            }
+            args.push("--json".into());
+            expect_contract(owner_call(&args, None)?, &[CUSTODY_RECEIPT])
+        }
         OwnerRequest::RunClose {
             state_path,
             run_ref,
@@ -1454,6 +1622,36 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             ))
         }
     }
+}
+
+/// Factory's unit-decision reading, for a submit and a read alike.
+pub const DECISION_READING: &str = "factory.attempt-unit-decision-reading/v1";
+/// Factory's custody receipt, for an assignment and an update alike.
+pub const CUSTODY_RECEIPT: &str = "factory.work-custody-receipt/v1";
+
+/// The Central endpoint Factory's native receiving is given by its host
+/// (lane W3): the host's own Central executable (`OI_CENTRAL_CTRL_BIN`, an
+/// absolute path — the binding attempt receiving uses) and the root Central
+/// discloses. A part the host does not hold is not given, and Factory names
+/// what it lacks in its own words; nothing is guessed.
+fn decision_endpoint(world: Option<&Value>) -> Vec<(&'static str, String)> {
+    let mut endpoint = Vec::new();
+    if let Some(binary) = std::env::var_os("OI_CENTRAL_CTRL_BIN")
+        .map(PathBuf::from)
+        .filter(|binary| binary.is_absolute())
+    {
+        endpoint.push((
+            "FACTORY_NATIVE_CENTRAL_BINARY",
+            binary.display().to_string(),
+        ));
+    }
+    if let Some(root) = world
+        .and_then(|world| world["root"].as_str())
+        .filter(|root| Path::new(root).is_absolute())
+    {
+        endpoint.push(("FACTORY_NATIVE_CENTRAL_ROOT", root.to_owned()));
+    }
+    endpoint
 }
 
 // ---------------------------------------------------------------------------

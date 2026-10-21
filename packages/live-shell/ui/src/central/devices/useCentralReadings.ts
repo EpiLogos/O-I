@@ -128,6 +128,20 @@ export function useCentralAction(transport: KernelTransportStatus, action: strin
     [reading, action, input === null])
 }
 
+/** A Central reading the person may ask again (Machine's Plan and Verify, DLW §18.7): the held answer, and `again`, which reads it once
+ * more whatever stands — a refusal included (ownerReading.ts retry). A reading asked again is still a reading: it never travels as a
+ * write. `input` null reads nothing. */
+export function useCentralActionAsked(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>> | null, project?: string): {
+  answer: ActionAnswer
+  again: () => void
+} {
+  const {reading, retry} = useOwnerOp(transport, input ? centralActionOp(action, input, project) : null, 'action_dispatched', `${action} did not answer.`)
+  const answer = useMemo(() => input ? actionAnswerOf(reading, action) : {status: 'reading'} as const,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the reading names the answer
+    [reading, action, input === null])
+  return useMemo(() => ({answer, again: retry}), [answer, retry])
+}
+
 /** The Day's own settings (central.day.settings.read) and the moves of the Day shown (central.day.moves.read {day_ref}, only when
  * its document stands), with the policy's timezone: the readings dayBinding.ts dayOwnValuesOf reads. */
 export function useDayOwnReadings(transport: KernelTransportStatus, dayRef: string | null, timezone: string | null): DayOwnReadings {

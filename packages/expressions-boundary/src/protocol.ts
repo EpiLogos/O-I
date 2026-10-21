@@ -5,8 +5,10 @@
  * vendored app's kernelExpressions.ts/app.ts. */
 import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
 import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
-import type {HostedAppState as CradleHostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp'; import type {FramePresentation, FrameChromeReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
-export type {HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress}; /** The cradle's reading and (T-FRAME-CHROME-ONTO-PLATES) the presentation the shell declared and the frame's chrome as data. */ export type HostedAppState = CradleHostedAppState & {presentation?: FramePresentation; chrome?: FrameChromeReading};
+import type {HostedAppState as CradleHostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp'; import type {FramePresentation, FrameChromeReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts'; import {readFrameResearch, type FrameResearchReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts'; import {readFrameStage, type FrameStageReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
+export type {HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress}; /** The cradle's reading and (T-FRAME-CHROME-ONTO-PLATES) the presentation the shell declared and the frame's chrome as data. */ export type HostedAppState = CradleHostedAppState & {presentation?: FramePresentation; chrome?: FrameChromeReading; /** lane W4-Technē: the research instruments' state as the frame holds it (researchReading.ts). */ research?: FrameResearchReading; /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts). */ instrumentStage?: FrameStageReading};
+export type {FrameStageReading, FrameStageSlot, FrameStageBinding} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
+export type {FrameResearchReading, FrameJourneyReading, FrameJourneyStop, FrameCanvasReading, FrameCanvasItem, FrameCanvasLine, FrameTimelineReading, FrameTimelineEvent} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts';
 /** lane-3 E22: the frame's own deep-link grammar (`?expression=&scene=&t=&marker=`), one parse and one format for frame, boundary
  * and shell: the announced address is read with it, the shell opens the frame with it and copies the address in it. */
 import {formatDeepLink, parseDeepLink} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/deepLinks.ts';
@@ -209,6 +211,18 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     const chrome = readFrameChrome(raw.chrome);
     if (!chrome) return null;
     state.chrome = chrome;
+  }
+  // lane W4-Technē: the walk, the board and the ruler as the frame holds them. A malformed one refuses the reading like every field here;
+  // absent is valid (a frame that predates it).
+  if (raw.research !== undefined) {
+    const research = readFrameResearch(raw.research);
+    if (!research) return null;
+    state.research = research;
+  }
+  if (raw.instrumentStage !== undefined) {
+    const stage = readFrameStage(raw.instrumentStage);
+    if (!stage) return null;
+    state.instrumentStage = stage;
   }
   // The property take's append/replace mode, as the frame's own take-mode reading.
   if (raw.takeMode !== undefined) {

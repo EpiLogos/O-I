@@ -265,10 +265,10 @@ test('a switch leaves as the editor\'s own setting kind with the owner\'s value;
 
 test('the switches of each whole panel that are plain on/off and choice settings are rows; the bespoke pickers stay in the Studio and are named', () => {
   assert.deepEqual(Object.fromEntries(FIELD.map(family => [family, model.expressionsSettingKeys(family)])), {
-    colour: ['colorMode'],
+    colour: ['backgroundMode', 'colorMode'],
     contacts: ['collisionMode', 'pairwiseEnabled'],
     depth: ['volumeProfile', 'depthPerspective', 'depthOcclusion'],
-    focus: ['focus', 'focusOrder', 'carryTint', 'frequencyDriver'],
+    focus: ['focus', 'focusOrder', 'carryTint', 'carryStation', 'frequencyDriver'],
     ink: ['grainProfile', 'dotShape'],
     medium: ['mediumDimension'],
     morph: ['autoOscillate', 'trajectory', 'driveShape', 'law'],

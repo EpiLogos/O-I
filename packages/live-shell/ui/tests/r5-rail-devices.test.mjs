@@ -73,9 +73,14 @@ test('Web lists the pages the agent fetched, newest first, with the text it got 
   assert.deepEqual(rail.outputLines({unknown: true}), [], 'an output with no text says nothing, never a dump')
 })
 
-test('the Wiki hands each node\'s ref, title and type in the wiki\'s order; the Calendar and the NOWs\' Close name their absent owners', () => {
+test('the Wiki hands each node\'s ref, title and type in the wiki\'s order; the Calendar names its absent owner; the NOWs\' Close writes', async () => {
   assert.deepEqual(rail.wikiPagesOf([{object: 'node', ref: 'wiki:node:a', title: 'A', type: 'intent'}, {object: 'node', ref: 'wiki:node:b'}]),
     [{ref: 'wiki:node:a', title: 'A', type: 'intent'}, {ref: 'wiki:node:b'}])
   assert.match(rail.CALENDAR_ABSENT, /No calendar provider is installed/)
-  assert.match(rail.NOW_CLOSE_ABSENT, /missing op: central\.now\.lifecycle/)
+  // REPLACED (W2): Close is Central's central.now.lifecycle (railBindings.ts nowsCloseWrites; the chain through the kernel is
+  // tests/w2-hookups-binding.test.mjs). Here, the close it hands is given the listing's rows and the policy's reading as the ground read them.
+  const calls = []
+  const ground = {now: {state: 'ready', data: {records: [{now_ref: 'n1'}]}}, placement: {state: 'ready', data: {revision: 'p1'}}}
+  await rail.nowsCloseWrites({kind: 'bridge', url: 'x'}, ground, async (...args) => { calls.push(args) }).write([{key: 'close', value: 'n1'}])
+  assert.deepEqual(calls, [[{kind: 'bridge', url: 'x'}, 'n1', [{now_ref: 'n1'}], {revision: 'p1'}]])
 })

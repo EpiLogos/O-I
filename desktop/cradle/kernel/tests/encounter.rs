@@ -1,11 +1,16 @@
 //! Typed encounter join through the exact candidate O:I executable, pinned
-//! Central executable, pinned W3-A AIKit executable (real session-lifecycle
-//! operations against an isolated AIKIT_HOME) and pinned W3-B Actuation CLI
-//! (real `actuation correlate` over an isolated ACTUATION_STREAM_STORE).
-//! Isolated fixtures only — the live ground and user stores never move.
+//! Central executable and pinned W3-A AIKit executable (real session-lifecycle
+//! operations against an isolated AIKIT_HOME). Isolated fixtures only — the
+//! live ground and user stores never move.
+//!
+//! The join is AIKit's side alone: Actuation 0.2.1 has no request-correlation
+//! operation (`actuation correlate` was removed with its JavaScript layer), so
+//! the Actuation side is named unavailable with that reason on every reading,
+//! never queried and never faked; the grant-record seam stays undetermined;
+//! and every disposition rests on the side that was queried.
 use oi_cradle_kernel::encounter::{
     EncounterDisposition, EncounterInput, GrantRecord, LifecyclePermission, ReplyAnswer,
-    ENCOUNTER_SCHEMA,
+    ACTUATION_CORRELATE_ABSENT, ACTUATION_CORRELATE_OPERATION, ENCOUNTER_SCHEMA,
 };
 use oi_cradle_kernel::{CentralClient, Kernel, KernelOp, KernelOpResult};
 use serde_json::{json, Value};
@@ -24,7 +29,6 @@ fn candidate(name: &str) -> PathBuf {
         "oi" => "OI_BIN",
         "ctrl" => "OI_CENTRAL_CTRL_BIN",
         "aikit" => "OI_AIKIT_BIN",
-        "actuation" => "OI_ACTUATION_BIN",
         _ => unreachable!(),
     };
     let path = PathBuf::from(
@@ -83,27 +87,22 @@ struct Fixture {
     _env: MutexGuard<'static, ()>,
     root: PathBuf,
     aikit_home: PathBuf,
-    stream_store: PathBuf,
 }
 
 impl Fixture {
-    /// One isolated Central ground + AIKIT_HOME + ACTUATION_STREAM_STORE,
-    /// exact bindings exported for every owner child process.
+    /// One isolated Central ground + AIKIT_HOME, exact bindings exported for
+    /// every owner child process.
     fn new(tag: &str) -> Self {
         let env = ENV_LOCK
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
         let root = temporary_root(tag);
         let aikit_home = root.join("aikit-home");
-        let stream_store = root.join("actuation-streams");
         fs::create_dir_all(&aikit_home).unwrap();
-        fs::create_dir_all(&stream_store).unwrap();
         std::env::set_var("OI_BIN", candidate("oi"));
         std::env::set_var("OI_CENTRAL_CTRL_BIN", candidate("ctrl"));
         std::env::set_var("OI_AIKIT_BIN", candidate("aikit"));
-        std::env::set_var("OI_ACTUATION_BIN", candidate("actuation"));
         std::env::set_var("AIKIT_HOME", &aikit_home);
-        std::env::set_var("ACTUATION_STREAM_STORE", &stream_store);
 
         let client = CentralClient::with_suite_owner(
             candidate("oi"),
@@ -123,7 +122,6 @@ impl Fixture {
             _env: env,
             root,
             aikit_home,
-            stream_store,
         }
     }
 
@@ -200,31 +198,6 @@ impl Fixture {
         (session, request_ref, activity, grant_event_id)
     }
 
-    /// Write one durable ActuationStream journal (the owner's fold law:
-    /// header line, one committed event per following line) into the
-    /// isolated stream store. The owner correlate contract validates it.
-    fn write_stream(&self, name: &str, events: Vec<Value>) {
-        let header = json!({
-            "schema": "actuation.stream/v1",
-            "stream_ref": format!("str_{name}"),
-            "actuation_ref": format!("actn_{name}"),
-            "agency_ref": format!("agc_{name}"),
-            "agent_session_ref": format!("ases_{name}"),
-            "lifecycle": { "state": "open", "started_at": "2026-09-08T10:00:00Z" },
-            "cursor": { "last_sequence": 0, "next_sequence": 1 },
-            "events": []
-        });
-        let mut lines = vec![header.to_string()];
-        for event in events {
-            lines.push(event.to_string());
-        }
-        fs::write(
-            self.stream_store.join(format!("str_{name}.jsonl")),
-            format!("{}\n", lines.join("\n")),
-        )
-        .unwrap();
-    }
-
     fn join(
         &self,
         session: &str,
@@ -250,44 +223,43 @@ impl Fixture {
     }
 }
 
-/// One stream `permission` event referencing the request identity verbatim.
-fn stream_permission_event(event_ref: &str, request_ref: &str, outcome: &str) -> Value {
-    json!({
-        "event_ref": event_ref,
-        "sequence": 1,
-        "kind": "permission",
-        "actor": { "agency_ref": "agc_w3d_fixture" },
-        "observed_at": "2026-09-08T10:00:01Z",
-        "resource_refs": [request_ref],
-        "metadata": { "permission_outcome": outcome }
-    })
+/// The Actuation side as every reading names it: not read, with the reason,
+/// and nothing of Actuation's carried.
+fn assert_actuation_side_unread(reading: &oi_cradle_kernel::encounter::EncounterReading) {
+    match &reading.inputs.actuation_correlation {
+        EncounterInput::Unavailable {
+            owner_operation,
+            detail,
+        } => {
+            assert_eq!(owner_operation, ACTUATION_CORRELATE_OPERATION);
+            assert_eq!(detail, ACTUATION_CORRELATE_ABSENT);
+        }
+        other => panic!("the Actuation side must be named unread, got {other:?}"),
+    }
+    assert!(reading.actuation.state.is_none() && reading.actuation.read_model.is_none());
 }
 
 #[test]
 #[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
-fn joined_read_carries_request_and_activity_identities_verbatim_across_all_sides() {
+fn joined_read_carries_request_and_activity_identities_verbatim() {
     let fixture = Fixture::new("ident");
-    let (session, request_ref, activity, grant_event_id) =
+    let (session, request_ref, activity, _grant_event_id) =
         fixture.seed_permission_lifecycle("ident", true);
-    fixture.write_stream(
-        "ident",
-        vec![stream_permission_event(
-            "aev_w3d_ident_1",
-            &request_ref,
-            "granted",
-        )],
-    );
 
     let reading = fixture.join(&session, &request_ref, None);
 
-    // The join column, verbatim, and the owner schemas stamped.
+    // The join column, verbatim, and the owner schema stamped.
     assert_eq!(reading.schema, ENCOUNTER_SCHEMA);
     assert_eq!(reading.session, session);
     assert_eq!(reading.request_ref, request_ref);
     assert_eq!(reading.activity_ref.as_deref(), Some(activity.as_str()));
 
-    // Side 1: the W3-A lifecycle view — every event carries the verbatim
-    // identity, and the permission triple sits on one stable activity id.
+    // The W3-A lifecycle view: every event carries the verbatim identity,
+    // and the permission triple sits on one stable activity id.
+    assert!(matches!(
+        reading.inputs.aikit_lifecycle,
+        EncounterInput::Available { .. }
+    ));
     assert!(matches!(
         reading.lifecycle.permission,
         LifecyclePermission::Granted { .. }
@@ -300,42 +272,8 @@ fn joined_read_carries_request_and_activity_identities_verbatim_across_all_sides
         );
         assert_eq!(event["activity"].as_str(), Some(activity.as_str()));
     }
-
-    // Side 2: the W3-B correlation read model, owner-verbatim. The streams
-    // side references the identity but the activity corpus side was never
-    // supplied (the kernel holds no owner source for it) — the owner
-    // reports that honestly instead of faking an empty join.
-    let model = reading
-        .actuation
-        .read_model
-        .as_ref()
-        .expect("owner read model carried verbatim");
-    assert_eq!(model["schema"], "actuation.request-correlation/v1");
-    assert_eq!(model["request_ref"], request_ref);
-    assert_eq!(model["permission"]["outcome"], "granted");
-    assert_eq!(
-        model["permission"]["event_refs"],
-        json!(["aev_w3d_ident_1"])
-    );
-    assert_eq!(
-        model["activities"]["available"], false,
-        "the unqueried activity side is explicit, never faked empty"
-    );
-
-    // The grant-record seam: both owner views agree, by the verbatim
-    // identity, and the evidence names both sides.
-    match &reading.grant_record {
-        GrantRecord::Agreed {
-            disposition,
-            aikit_evidence,
-            actuation_evidence,
-        } => {
-            assert_eq!(disposition, "granted");
-            assert_eq!(aikit_evidence, &vec![grant_event_id.unwrap()]);
-            assert_eq!(actuation_evidence, &vec!["aev_w3d_ident_1".to_owned()]);
-        }
-        other => panic!("grant seam must be agreed, got {other:?}"),
-    }
+    assert_actuation_side_unread(&reading);
+    // The queried side references the identity: the join is correlated.
     assert_eq!(reading.disposition, EncounterDisposition::Correlated);
 
     let _ = fs::remove_dir_all(&fixture.root);
@@ -343,92 +281,24 @@ fn joined_read_carries_request_and_activity_identities_verbatim_across_all_sides
 
 #[test]
 #[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
-fn grant_record_disagreement_is_an_explicit_state_naming_both_owner_views() {
-    let fixture = Fixture::new("disagree");
-    let (session, request_ref, _activity, grant_event_id) =
-        fixture.seed_permission_lifecycle("disagree", true);
-    // W3-B's stream records the opposite disposition for the same identity.
-    fixture.write_stream(
-        "disagree",
-        vec![stream_permission_event(
-            "aev_w3d_disagree_1",
-            &request_ref,
-            "refused",
-        )],
-    );
-
-    let reading = fixture.join(&session, &request_ref, None);
-
-    match &reading.grant_record {
-        GrantRecord::Disagreement { aikit, actuation } => {
-            // Both owner views are named in full; no canonical winner.
-            let aikit = serde_json::to_value(aikit).unwrap();
-            let actuation = serde_json::to_value(actuation).unwrap();
-            assert_eq!(aikit["state"], "granted");
-            assert_eq!(aikit["evidence"], json!([grant_event_id.unwrap()]));
-            assert_eq!(actuation["state"], "refused");
-            assert_eq!(actuation["evidence"], json!(["aev_w3d_disagree_1"]));
+fn the_grant_record_stays_undetermined_while_one_owner_view_is_unread() {
+    let fixture = Fixture::new("seam");
+    // A grant AIKit recorded, and a request still pending: neither is
+    // adjudicated against an Actuation view that was never read, and no
+    // agreement, disagreement or absence is claimed for it.
+    for (tag, grant) in [("seamgrant", true), ("seampending", false)] {
+        let (session, request_ref, _activity, _grant) =
+            fixture.seed_permission_lifecycle(tag, grant);
+        let reading = fixture.join(&session, &request_ref, None);
+        match &reading.grant_record {
+            GrantRecord::Undetermined { detail } => {
+                assert_eq!(detail, "actuation correlation input unavailable")
+            }
+            other => panic!("the seam must stay undetermined, got {other:?}"),
         }
-        other => panic!("disagreement must be explicit, got {other:?}"),
+        assert_actuation_side_unread(&reading);
+        assert_eq!(reading.disposition, EncounterDisposition::Correlated);
     }
-    // The kernel does not adjudicate: the join itself is still correlated
-    // on the verbatim identity; the seam names the disagreement.
-    assert_eq!(reading.disposition, EncounterDisposition::Correlated);
-
-    let _ = fs::remove_dir_all(&fixture.root);
-}
-
-#[test]
-#[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
-fn grant_record_absence_names_the_owner_view_that_lacks_the_record() {
-    let fixture = Fixture::new("absent");
-
-    // (a) The lifecycle records a grant; Actuation's queried streams hold
-    // nothing for the identity.
-    let (session_a, request_a, _activity, _grant) =
-        fixture.seed_permission_lifecycle("absenta", true);
-    fixture.write_stream(
-        "unrelated_a",
-        vec![stream_permission_event(
-            "aev_w3d_unrel_1",
-            "prq_w3d_never",
-            "granted",
-        )],
-    );
-    let reading = fixture.join(&session_a, &request_a, None);
-    match &reading.grant_record {
-        GrantRecord::AbsentInActuation { aikit } => {
-            let aikit = serde_json::to_value(aikit).unwrap();
-            assert_eq!(aikit["state"], "granted");
-        }
-        other => panic!("absence in Actuation must be explicit, got {other:?}"),
-    }
-
-    // (b) Actuation's streams record a disposition the queried lifecycle
-    // history holds no event for (another surface recorded it).
-    let (session_b, _request_b, _activity, _grant) =
-        fixture.seed_permission_lifecycle("absentb", false);
-    let foreign = "prq_w3d_foreign".to_owned();
-    fixture.write_stream(
-        "foreign",
-        vec![stream_permission_event(
-            "aev_w3d_foreign_1",
-            &foreign,
-            "granted",
-        )],
-    );
-    let reading = fixture.join(&session_b, &foreign, None);
-    match &reading.grant_record {
-        GrantRecord::AbsentInAikit { actuation } => {
-            let actuation = serde_json::to_value(actuation).unwrap();
-            assert_eq!(actuation["state"], "granted");
-            assert_eq!(actuation["evidence"], json!(["aev_w3d_foreign_1"]));
-        }
-        other => panic!("absence in AIKit must be explicit, got {other:?}"),
-    }
-    // The identity IS referenced (the stream side holds it) — absence is a
-    // seam state, not an unknown identity.
-    assert_eq!(reading.disposition, EncounterDisposition::Correlated);
 
     let _ = fs::remove_dir_all(&fixture.root);
 }
@@ -438,49 +308,39 @@ fn grant_record_absence_names_the_owner_view_that_lacks_the_record() {
 fn provider_loss_is_an_explicit_unavailable_state_with_owner_detail() {
     let fixture = Fixture::new("loss");
     let (session, request_ref, _activity, _grant) = fixture.seed_permission_lifecycle("loss", true);
+    let bogus = fixture.root.join("no-such-owner");
 
-    // Actuation owner loss: the binding names an executable that does not
-    // exist. Spawn absence is Unavailable, never a fabricated empty side.
-    let bogus = fixture.root.join("no-such-actuation");
+    // An Actuation binding changes nothing: no Actuation process is asked.
     {
         let _guard = EnvGuard::set("OI_ACTUATION_BIN", &bogus);
         let reading = fixture.join(&session, &request_ref, None);
-        match &reading.inputs.actuation_correlation {
+        assert_actuation_side_unread(&reading);
+        assert_eq!(reading.disposition, EncounterDisposition::Correlated);
+    }
+
+    // AIKit owner loss: absence cannot be claimed for the unqueried
+    // lifecycle side, and the loss names its owner.
+    {
+        let _guard = EnvGuard::set("OI_AIKIT_BIN", &bogus);
+        let reading = fixture.join(&session, &request_ref, None);
+        match &reading.inputs.aikit_lifecycle {
             EncounterInput::Unavailable {
                 owner_operation,
                 detail,
             } => {
-                assert_eq!(owner_operation, "actuation correlate");
+                assert_eq!(owner_operation, "aikit session lifecycle history");
                 assert!(!detail.is_empty(), "owner detail carried verbatim");
             }
-            other => panic!("actuation loss must be an explicit unavailable input, got {other:?}"),
+            other => panic!("aikit loss must be an explicit unavailable input, got {other:?}"),
         }
         match &reading.disposition {
-            EncounterDisposition::Unavailable {
-                owner,
-                owner_operation,
-                ..
-            } => {
-                assert_eq!(owner, "actuation");
-                assert_eq!(owner_operation, "actuation correlate");
-            }
-            other => panic!("provider loss must be explicit, got {other:?}"),
+            EncounterDisposition::Unavailable { owner, .. } => assert_eq!(owner, "ai-kit"),
+            other => panic!("aikit loss must be explicit, got {other:?}"),
         }
         assert!(matches!(
             reading.grant_record,
             GrantRecord::Undetermined { .. }
         ));
-    }
-
-    // AIKit owner loss: the healthy Actuation side still answers, but
-    // absence cannot be claimed for the unqueried lifecycle side.
-    {
-        let _guard = EnvGuard::set("OI_AIKIT_BIN", &bogus);
-        let reading = fixture.join(&session, &request_ref, None);
-        match &reading.disposition {
-            EncounterDisposition::Unavailable { owner, .. } => assert_eq!(owner, "ai-kit"),
-            other => panic!("aikit loss must be explicit, got {other:?}"),
-        }
     }
 
     let _ = fs::remove_dir_all(&fixture.root);
@@ -500,17 +360,7 @@ fn cancellation_is_terminal_and_supersedes_every_later_answer() {
         "--reason",
         "operator withdrew",
     ]);
-    fixture.write_stream(
-        "cancel",
-        vec![stream_permission_event(
-            "aev_w3d_cancel_1",
-            &request_ref,
-            "granted",
-        )],
-    );
 
-    // Even a stream-recorded grant cannot revive a cancelled session: W3-A's
-    // law says cancellation is terminal, and the kernel honours it.
     let reading = fixture.join(&session, &request_ref, None);
     assert_eq!(reading.lifecycle.session_state, "cancelled");
     match &reading.disposition {
@@ -537,7 +387,7 @@ fn cancellation_is_terminal_and_supersedes_every_later_answer() {
 
 #[test]
 #[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
-fn stale_reply_is_explicit_when_a_later_disposition_already_exists() {
+fn stale_reply_is_explicit_when_the_lifecycle_already_recorded_a_disposition() {
     let fixture = Fixture::new("stale");
 
     // (a) The lifecycle already recorded the grant: a grant reply is stale,
@@ -560,19 +410,11 @@ fn stale_reply_is_explicit_when_a_later_disposition_already_exists() {
         other => panic!("stale reply must be explicit, got {other:?}"),
     }
 
-    // (b) The lifecycle shows the request pending, but the Actuation stream
-    // already carries a recorded disposition: the reply is stale with the
-    // actuation owner view named.
+    // (b) The lifecycle shows the request pending: no owner view that was
+    // read records a disposition, so a reply is not stale — the unread
+    // Actuation side is never taken to hold one.
     let (session_b, request_b, _activity, _grant) =
         fixture.seed_permission_lifecycle("staleb", false);
-    fixture.write_stream(
-        "staleb",
-        vec![stream_permission_event(
-            "aev_w3d_staleb_1",
-            &request_b,
-            "granted",
-        )],
-    );
     let reading = fixture.join(
         &session_b,
         &request_b,
@@ -580,41 +422,21 @@ fn stale_reply_is_explicit_when_a_later_disposition_already_exists() {
             reason: "no longer needed".into(),
         }),
     );
-    match &reading.disposition {
-        EncounterDisposition::StaleReply {
-            answer,
-            recorded_disposition,
-            recorded_by,
-            ..
-        } => {
-            assert_eq!(answer, "refuse");
-            assert_eq!(recorded_disposition, "granted");
-            assert_eq!(recorded_by, "actuation");
-        }
-        other => panic!("cross-owner stale reply must be explicit, got {other:?}"),
-    }
+    assert_eq!(reading.disposition, EncounterDisposition::Correlated);
 
     let _ = fs::remove_dir_all(&fixture.root);
 }
 
 #[test]
 #[ignore = "requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates"]
-fn unknown_identity_is_explicit_when_no_queried_side_references_it() {
+fn unknown_identity_is_explicit_when_the_queried_side_does_not_reference_it() {
     let fixture = Fixture::new("unknown");
     let (session, _request, _activity, _grant) =
         fixture.seed_permission_lifecycle("unknown", false);
-    fixture.write_stream(
-        "unknown",
-        vec![stream_permission_event(
-            "aev_w3d_unknown_1",
-            "prq_w3d_something_else",
-            "granted",
-        )],
-    );
 
     let reading = fixture.join(&session, "prq_w3d_never_recorded", None);
     assert_eq!(reading.lifecycle.permission, LifecyclePermission::NoRecord);
-    assert_eq!(reading.actuation.state.as_deref(), Some("unknown-identity"));
+    assert_actuation_side_unread(&reading);
     assert_eq!(reading.disposition, EncounterDisposition::UnknownIdentity);
 
     let _ = fs::remove_dir_all(&fixture.root);
@@ -637,8 +459,8 @@ fn malformed_identity_refuses_before_any_owner_call() {
         }
         other => panic!("malformed identity must be explicit, got {other:?}"),
     }
-    // No owner side was queried — absence is never claimed for an unqueried
-    // side, and none is here.
+    // No owner side was queried — and none is named unavailable either: the
+    // refusal comes before either side is considered.
     assert!(matches!(
         reading.inputs.aikit_lifecycle,
         EncounterInput::NotQueried { .. }
@@ -725,6 +547,10 @@ fn reading_wire_shape_is_stable_and_carries_no_persistence_surface() {
             "input `{name}` is named on the wire"
         );
     }
+    assert_eq!(
+        serialized["inputs"]["actuation_correlation"]["state"],
+        "unavailable"
+    );
     // No persistence/cache surface exists on the reading.
     for forbidden in ["cache", "index", "rank", "persisted", "revision_log"] {
         assert!(

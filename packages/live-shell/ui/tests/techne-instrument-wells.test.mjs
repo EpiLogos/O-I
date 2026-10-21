@@ -45,7 +45,8 @@ const {publishHostedChrome} = await import('../src/projections/expressionsPaneHo
 const {PanelHead} = await import('../src/inhabitants/sdk/panel.tsx')
 const Plate = await import('../src/frame/devices/InstrumentPlate.tsx')
 const Standing = await import('../src/inhabitants/ql/devices/standingInstrument.ts')
-const {STAGE_PLATES} = await import('../src/projections/stageInstruments/stageInstrumentModel.ts')
+const {STAGE_PLATES, CARRIED_BY_DESIGN} = await import('../src/projections/stageInstruments/stageInstrumentModel.ts')
+const wells = await import('../src/inhabitants/ql/devices/techneWells.tsx')
 const {readFile} = await import('node:fs/promises')
 
 door.resetFamilyManifestsForTest()
@@ -56,6 +57,8 @@ const html = element => renderToStaticMarkup(element)
 const source = path => readFile(new URL(path, import.meta.url), 'utf8')
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 const plate = instrument => html(createElement(InstrumentDeviceDetail, {transport, instrument}))
+/** One instrument's well as the rack's Compact draws it (techneCompacts.tsx): the well itself, at the plate's measures. */
+const wellOf = use => html(createElement(function Well() { return createElement(wells.WellDisplay, {well: use(wells.PLATE_WELL), ...wells.PLATE_WELL}) }))
 const control = (id, home, label, extra = {}) => ({id, home, kind: 'button', label, ...extra})
 const section = (out, id) => out.slice(out.indexOf(`data-section="${id}"`), out.indexOf('</section>', out.indexOf(`data-section="${id}"`)))
 /** Text nodes drawn in markup (outside attributes), longer than four words: the sentences a person would read in the plate. */
@@ -87,8 +90,17 @@ test('an instrument plate stands on the kit\'s head; its display section is firs
 })
 
 test('every Technē instrument\'s open plate has its well first, drawn from its owner, a missing reading said in the well', () => {
-  const words = {'techne:m0': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m4': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m1': /no stage<\/text><text[^>]*>reported yet/,
-    'techne:m2': /all time/, 'techne:m3': /no walk<\/text><text[^>]*>reported yet/}
+  const words = {'techne:m0': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m4': /the Earth<\/text><text[^>]*>not mounted/}
+  // W4-Technē: M1′–M3′'s pictures are their designs' displays (techne:canvas, techne:timeline, techne:journey) at the head of their chains on
+  // the frame's research reading; their stage plates draw no second well. The wells still draw each instrument's Compact on the rack.
+  for (const [id, design] of [['techne:m1', 'techne:canvas'], ['techne:m2', 'techne:timeline'], ['techne:m3', 'techne:journey']]) {
+    const out = plate(id)
+    assert.ok(out.indexOf(`data-device-id="${design}" data-chain-place="head"`) >= 0 && out.indexOf(`data-device-id="${design}"`) < out.indexOf(`data-instrument="${id}" data-expanded="true"`), `${design} heads ${id}`)
+    assert.doesNotMatch(out.slice(out.indexOf(`data-instrument="${id}" data-expanded="true"`)), /data-section="display"/, `${id}: no second well`)
+  }
+  assert.match(wellOf(wells.useCanvasWell), /no stage<\/text><text[^>]*>reported yet/, 'the Canvas well says which reading is missing')
+  assert.match(wellOf(wells.useTimelineWell), /all time/)
+  assert.match(wellOf(wells.useJourneyWell), /no walk<\/text><text[^>]*>reported yet/)
   // W4-Technē: M5′'s picture is the Palace design's own well (its floor), at the head of M5′'s chain on the palace session; the plate after
   // it keeps what the design does not carry, and draws no second well (techne-designs-binding.test.mjs draws the design's well).
   const m5 = plate('techne:m5')
@@ -117,16 +129,16 @@ const CANVAS = {lens: 'canvas', controls: [
 const state = (chrome, extra = {}) => ({hostMode: 'techne', lens: chrome.lens, sceneIndex: 0, sceneCount: 1, presentation: 'devices', chrome, ...extra})
 const run = async () => ({ok: true})
 
-test('M1′: the save state and the status line are lights, never text; its well draws the pane at the frame\'s zoom and the selection', () => {
+test('M1′: the status line is a light, never text (the save state is the design\'s); its well draws the pane at the frame\'s zoom and the selection', () => {
   publishHostedChrome({state: state(CANVAS, {selection: [{id: 'card:1', name: 'The Stone'}]}), run, faults: []})
   try {
     const out = plate('techne:m1')
     const tools = section(out, 'tools')
-    assert.match(tools, /class="dp-cell plate-light" data-chrome="tools\/l:Saved" data-save-state="saved" data-i="Save\|Saved: [^"]+"><span class="dp-lamp" data-light="lit" data-tone="green"/, 'saved: a green light')
+    assert.doesNotMatch(tools, /data-chrome="tools\/l:Saved"/, 'the save state is the Canvas design\'s (CARRIED_BY_DESIGN)')
     assert.match(tools, /data-chrome="tools\/l:O-I — wiki overview" data-i="Status\|O-I — wiki overview" aria-label="O-I — wiki overview"><span class="dp-lamp"[^>]*><\/span><span class="dp-label">status<\/span>/, 'the status line is a light; its words the status bar\'s')
     assert.doesNotMatch(tools, />O-I — wiki overview<|>Saved</, 'neither is drawn as text')
-    assert.match(section(out, 'look'), /data-chrome="readout\/l:80%"/, 'a short value stays the frame\'s own reading')
-    const well = section(out, 'display')
+    assert.doesNotMatch(out, /data-chrome="readout\/l:80%"/, 'the zoom is the Canvas design\'s camera')
+    const well = wellOf(wells.useCanvasWell)
     assert.match(well, /class="dp-display-corner">80%</, 'the zoom at the well\'s top right')
     assert.match(well, /class="dp-curve-on"/, 'the part of the board the pane shows')
     assert.match(well, /1 selected · The Stone/, 'what is selected')
@@ -137,7 +149,7 @@ test('M1′: the save state and the status line are lights, never text; its well
   }
 })
 
-test('a mockup control no owner carries draws disabled, its reason on the status bar: M1′ Tool, Relation type, Standing; M2′ Deep time, Strata; M3′ Take', () => {
+test('a parameter no owner carried is its design\'s now: the stage plates draw no waiting row (M1′ Tool, Relation type, Standing; M2′ Deep time, Strata; M3′ Take)', () => {
   const cases = [
     ['techne:m1', {lens: 'canvas', controls: []}, ['Tool', 'Relation type', 'Standing']],
     ['techne:m2', {lens: 'timeline', controls: []}, ['Deep time', 'Strata']],
@@ -147,22 +159,20 @@ test('a mockup control no owner carries draws disabled, its reason on the status
     publishHostedChrome({state: state(chrome), run, faults: []})
     try {
       const out = plate(id)
-      for (const name of names) {
-        const cell = new RegExp(`data-disabled="true"( data-waiting="true")? data-i="${name}\\|[^"]{12,}"|data-waiting="true" title="${name} — [^"]+" data-disabled="true" data-i="${name}\\|[^"]{12,}"`)
-        assert.match(out, cell, `${id} ${name}: disabled, with its reason`)
-      }
+      const own = out.slice(out.indexOf(`data-instrument="${id}" data-expanded="true"`))
+      for (const name of names) assert.doesNotMatch(own, new RegExp(`data-waiting="true" title="${name} — `), `${id} ${name}: drawn by the design, with its reason, never by the plate`)
     } finally {
       publishHostedChrome(null)
     }
   }
-  const deep = STAGE_PLATES['techne:m2'].flatMap(group => group.waiting ?? []).find(parameter => parameter.name === 'Deep time')
-  assert.deepEqual(deep?.dial, {unit: '%'}, 'Deep time is the mockup\'s dial (world-shell-mockup.html:1405), drawn with no reading')
+  assert.deepEqual(CARRIED_BY_DESIGN['techne:m2'].sections, ['window'], 'the Timeline design carries the shared window whole')
+  assert.deepEqual(CARRIED_BY_DESIGN['techne:m1'].sections, ['look'], 'the Canvas design carries Look whole')
 })
 
 test('M3′: the walk\'s stops as cells, the one it stands on lit, its place at the top right', () => {
   publishHostedChrome({state: state({lens: 'journey', controls: []}, {sceneCount: 3, sceneIndex: 1, sceneName: 'Gather', journeyPlaying: true}), run, faults: []})
   try {
-    const well = section(plate('techne:m3'), 'display')
+    const well = wellOf(wells.useJourneyWell)
     assert.equal((well.match(/<rect /g) ?? []).length, 3, 'one cell a stop')
     assert.equal((well.match(/class="dp-curve-on"/g) ?? []).length, 1, 'the stop it stands on lit')
     assert.match(well, /class="dp-display-corner">2\/3</)

@@ -1,0 +1,50 @@
+{
+  "captured": "actuation 0.2.1, 21 Oct 2026: `actuation agency - --json` over the governing binding of `actuation agency actualise --schema`",
+  "command": [
+    "actuation",
+    "agency",
+    "-",
+    "--json"
+  ],
+  "input": {
+    "binding": {
+      "schema": "actuation.agency/v1",
+      "binding_ref": "binding:governing",
+      "agent_ref": "agent:governor",
+      "agency_ref": "agency:governing",
+      "world_ref": "world:personal",
+      "scope_ref": "scope:personal",
+      "bounds_refs": [
+        "bound:observation"
+      ],
+      "authority_refs": [
+        "authority:owner"
+      ],
+      "return_relation_ref": "return-relation:owner"
+    }
+  },
+  "answer": {
+    "schema": "actuation.agency/v1",
+    "agency_ref": "agency:governing",
+    "agent_ref": "agent:governor",
+    "world_binding_ref": "binding:governing",
+    "world_ref": "world:personal",
+    "scope_ref": "scope:personal",
+    "root_for_scope": false,
+    "metagency": {
+      "available": false,
+      "operations": [],
+      "grant_refs": []
+    },
+    "governing_determination_refs": [],
+    "governed_by_determination_refs": [],
+    "returns": {
+      "pending": [],
+      "received": [],
+      "recognised": [],
+      "world_mutated": [],
+      "records": []
+    },
+    "constraints": {}
+  }
+}

@@ -25,6 +25,8 @@ import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
 import {MidiMapTarget} from './midiMap/midiMapControls'
 import {skyHeldTorusKeys, useSkyModulationPlan} from './designBindings/skyModulation'
+import {useHostedChrome} from '../projections/expressionsPaneHost'
+import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 
 // Colour is the tokens' alone: the near side takes the instrument's accent when it is at work, the far side is fainter.
 const STROKE = {lit: 'var(--accent)', rising: 'var(--text-dim)', unlit: 'var(--text-faint)'} as const
@@ -69,10 +71,18 @@ const mapId = (key: string) => (key === 'scale' ? 'scale-units' : key)
  * and the design's kit controls are wrapped with it by their value keys. */
 export const torusMapWrap = (row: SdkParamRow, control: ReactNode): ReactNode => <MidiMapTarget id={mapId(row.key)}>{control}</MidiMapTarget>
 
+/** The binding the chain draws the Torus on: the owner's readings, the Sky's held keys, and the stage the frame announced. The stage is
+ * read from the hosted chrome as a dependency of the binding, so a stage disclosure redraws the Stage page when it comes, not with the
+ * torus's next change (torusDevice.ts torusStageValues). */
+export function useTorusChainBinding(state: LiveTorusState | null, device: DeviceInstance) {
+  const plan = useSkyModulationPlan()
+  const stage = useHostedChrome()?.state?.instrumentStage ?? null
+  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan), stage), [state, device, plan, stage])
+}
+
 export function TorusOnChain({state}: {state: LiveTorusState}) {
   const device = useMemo(() => torusDevice(state), [state])
-  const plan = useSkyModulationPlan()
-  const binding = useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan)), [state, device, plan])
+  const binding = useTorusChainBinding(state, device)
   useEffect(() => {
     publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} />, full: {draw: () => <TorusFull />}})
   }, [device, binding, state])

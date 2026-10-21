@@ -63,15 +63,20 @@ const CENTRAL: &str = "central";
 const FACTORY: &str = "factory";
 
 /// Whether an action carried by `invoke_action` only reads Central: its
-/// answer moves nothing, so it retires no reading.
+/// answer moves nothing, so it retires no reading. The write path asks
+/// action.rs `reads_only`, which also knows a Contemplate preflight; the
+/// reading test holds Central's side here.
+#[cfg(test)]
 fn central_reading(action: &str) -> bool {
     crate::read_cache::central_reads(action)
 }
 
 /// Whether a prepared write is a reading carried as an action, which moves
-/// nothing (every other prepared write may have changed its owner).
+/// nothing (every other prepared write may have changed its owner): a
+/// Central reading or Preview, or a Contemplate Flow preflight
+/// (action.rs `reads_only`).
 fn reads_only(op: &KernelOp) -> bool {
-    matches!(op, KernelOp::InvokeAction { invocation, .. } if central_reading(&invocation.action))
+    matches!(op, KernelOp::InvokeAction { invocation, .. } if action::reads_only(invocation))
 }
 
 impl PreparedWrite {
@@ -111,6 +116,13 @@ impl PreparedWrite {
             | KernelOp::HarnessAgentControl { .. }
             | KernelOp::FileOperation { .. }
             | KernelOp::Routine { .. } => true,
+            // Lane W3 (T-COVERAGE §1.2): the owner routes that write
+            // (owner_routes.rs). A team `read` is a prepared read.
+            KernelOp::GatewayTeam { request } => !request.is_read(),
+            KernelOp::GatewayWrite { .. }
+            | KernelOp::WorkcellWrite { .. }
+            | KernelOp::SeatWrite { .. }
+            | KernelOp::AikitWrite { .. } => true,
             _ => false,
         }
     }
@@ -120,8 +132,15 @@ impl PreparedWrite {
     fn needs_world(op: &KernelOp) -> bool {
         match op {
             KernelOp::Receiving { project, .. } => project.is_some(),
+            // Factory's unit decisions name Central's root (lane W3).
+            KernelOp::FactoryOwner { request } => request.needs_world(),
+            // Lane W3: an AIKit route runs from Central's disclosed ground;
+            // Workcell and the seat instrument need none.
+            KernelOp::GatewayWrite { request } => request.project().is_some(),
+            KernelOp::GatewayTeam { request } => request.project.is_some(),
+            KernelOp::AikitWrite { request } => request.project().is_some(),
+            KernelOp::WorkcellWrite { .. } | KernelOp::SeatWrite { .. } => false,
             KernelOp::Central { .. }
-            | KernelOp::FactoryOwner { .. }
             | KernelOp::HarnessAgentControl { .. }
             | KernelOp::FileOperation { .. }
             | KernelOp::Page { .. }
@@ -219,7 +238,12 @@ impl PreparedWrite {
                 KernelOpResult::CentralReading { data }
             }
             KernelOp::FactoryOwner { request } => {
-                let data = factory::owner(request.clone(), None).map_err(|e| {
+                let world = if request.needs_world() {
+                    Some(self.world.read()?)
+                } else {
+                    None
+                };
+                let data = factory::owner(request.clone(), world.as_ref()).map_err(|e| {
                     serde_json::to_string(&e)
                         .unwrap_or_else(|_| "factory owner request failed".into())
                 })?;
@@ -270,7 +294,7 @@ impl PreparedWrite {
                 let dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
                 // Whatever the owner answered, the derived readings retire —
                 // unless the action only read.
-                if !central_reading(&invocation.action) {
+                if !action::reads_only(invocation) {
                     records.push(Record::RetireDerived);
                 }
                 if let action::ActionDispatch::Invoked { data, .. } = &dispatch {
@@ -512,9 +536,70 @@ impl PreparedWrite {
                 }
                 KernelOpResult::Routine { data }
             }
+            // Lane W3: the owner routes that write (owner_routes.rs). Each
+            // moves the read model (`execute`); its receipt is recorded only
+            // where the owner's answer says something moved.
+            KernelOp::GatewayWrite { request } => {
+                let (cwd, project_world) =
+                    owner_read::route_ground(&self.client, &self.world, request.project())?;
+                route_written(
+                    records,
+                    crate::owner_routes::gateway_write(
+                        request,
+                        crate::owner_routes::Ground {
+                            cwd: cwd.as_deref(),
+                            project_world: project_world.as_deref(),
+                        },
+                    )?,
+                )
+            }
+            KernelOp::GatewayTeam { request } => {
+                let (cwd, _) = owner_read::route_ground(
+                    &self.client,
+                    &self.world,
+                    request.project.as_deref(),
+                )?;
+                route_written(
+                    records,
+                    crate::owner_routes::gateway_team_write(request, cwd.as_deref())?,
+                )
+            }
+            KernelOp::WorkcellWrite { request } => {
+                route_written(records, crate::owner_routes::workcell_write(request)?)
+            }
+            KernelOp::SeatWrite { request } => {
+                route_written(records, crate::owner_routes::seat_write(request)?)
+            }
+            KernelOp::AikitWrite { request } => {
+                let (cwd, _) =
+                    owner_read::route_ground(&self.client, &self.world, request.project())?;
+                route_written(
+                    records,
+                    crate::owner_routes::aikit_write(request, cwd.as_deref())?,
+                )
+            }
             op => return configuration_write(&self.root_or_cwd()?, op, records),
         })
     }
+}
+
+/// An owner route's write (lane W3): its receipt when the owner said
+/// something moved, and the temporal field's retained answers retired with
+/// it; its reading as the op's result.
+fn route_written(
+    records: &mut Vec<Record>,
+    written: crate::owner_routes::Written,
+) -> KernelOpResult {
+    if let Some(moved) = written.moved {
+        records.push(Record::Event(Box::new(KernelEvent::OwnerChanged {
+            owner: moved.owner.into(),
+            action: moved.action,
+            reference: moved.reference,
+            revision: moved.revision,
+        })));
+        records.push(Record::RetireTemporal);
+    }
+    written.reading.into()
 }
 
 /// The configuration plane's writes, each through the engine's own verb with
@@ -763,7 +848,7 @@ fn moved(data: &Value) -> bool {
     let unchanged = (data["created"] == false && data["today_advanced"] != true)
         || data["changed"] == false
         || data["mutated"] == false
-        || ["outcome", "status", "state"].iter().any(|key| {
+        || ["outcome", "status", "state", "result"].iter().any(|key| {
             matches!(
                 data[*key].as_str(),
                 Some("already-applied" | "already_applied" | "unchanged")
@@ -822,6 +907,9 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::DevelopmentCommission { .. } => "development commission",
         factory::OwnerRequest::RunClose { .. } => "run close",
         factory::OwnerRequest::AttemptReceiving { .. } => "attempt receiving",
+        factory::OwnerRequest::AttemptDecisionSubmit { .. } => "attempt decision submit",
+        factory::OwnerRequest::CustodyAssign { .. } => "development custody assign",
+        factory::OwnerRequest::CustodyUpdate { .. } => "development custody update",
         _ => "factory",
     }
 }
@@ -844,6 +932,13 @@ fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
             answer_ref(data, &["run_ref", "runRef", "journey_ref", "journeyRef"])
                 .unwrap_or_else(|| state_path.display().to_string())
         }
+        // A custody record moved: the custody the owner's receipt names.
+        OwnerRequest::CustodyAssign { state_path, .. }
+        | OwnerRequest::CustodyUpdate { state_path, .. } => data["custody"]["custody_ref"]
+            .as_str()
+            .filter(|reference| !reference.trim().is_empty())
+            .map(str::to_owned)
+            .unwrap_or_else(|| state_path.display().to_string()),
         _ => answer_ref(data, &["run_ref", "runRef"]).unwrap_or_else(|| FACTORY.into()),
     }
 }
@@ -1248,14 +1343,35 @@ else:
             "control.search",
             "central.temporal.source-history",
             "central.world.effective-sources",
+            "projectcentral.adopt.preview",
+            "projectcentral.migrate.preview",
         ] {
             assert!(central_reading(action), "{action} only reads");
         }
+        // A Contemplate Flow press without its preflight record is the
+        // preflight, a reading; with the record it executes.
+        let contemplate = |input: Option<serde_json::Value>| action::ActionInvocation {
+            action: action::AIKIT_ACTION_CONTEMPLATE_FLOW.into(),
+            target_ref: "flow:w3".into(),
+            input,
+        };
+        assert!(action::reads_only(&contemplate(None)));
+        assert!(action::reads_only(&contemplate(Some(
+            serde_json::json!({"horizon": {}})
+        ))));
+        assert!(action::reads_only(&contemplate(Some(
+            serde_json::json!({"execute": null})
+        ))));
+        assert!(!action::reads_only(&contemplate(Some(
+            serde_json::json!({"execute": {"preflight_ref": "p"}})
+        ))));
         for action in [
             "central.world-relations.save",
             "central.day.settings.write",
             "projectcentral.now.return",
             "central.files.write",
+            "projectcentral.adopt",
+            "projectcentral.migrate",
         ] {
             assert!(!central_reading(action), "{action} may write");
         }

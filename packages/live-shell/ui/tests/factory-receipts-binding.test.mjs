@@ -152,10 +152,14 @@ test('Approvals: the Default answer is the Gateway\'s approvals key — the same
     ['permission', 'req-7', {outcome: 'selected', option_id: 'o3'}],
   ], 'each answer is the harness\'s own choice, through the session\'s encounter (recorded here, never sent)')
   await assert.rejects(() => binding.write([{key: 'allowOnce', value: 'req-gone'}]), /no longer waits/)
-  for (const key of ['wait', 'noAnswer', 'approve', 'changes']) {
+  for (const key of ['wait', 'noAnswer', 'changes']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 'x'}]), /missing op/)
   }
+  // REPLACED (W2): Approve writes through Central's acceptance where the chain hands its port (tests/w2-hookups-binding.test.mjs); with
+  // none passed it stands disabled in those words.
+  assert.equal(binding.standing.approve.disabled, rec.APPROVE_UNWIRED)
+  await assert.rejects(() => binding.write([{key: 'approve', value: 'x'}]), /no acceptance port is passed here/)
   assert.equal(calls.length, 4, 'no refusal dispatched anything')
   binding.local.show('requests')
   binding.local.pick('req-7')

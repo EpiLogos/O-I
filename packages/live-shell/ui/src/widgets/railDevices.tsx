@@ -24,13 +24,16 @@ import {publishDevice, publishedDevice, subscribeDeviceDoor} from '../frame/devi
 import {SEAT_ID} from '../agent/devices/workcellBindings'
 import {useSeatStatusAnswer} from '../agent/devices/workcellReads'
 import {actionAnswerOf, centralActionOp} from '../central/devices/useCentralReadings'
+import type {closeNowClearing} from '../central/devices/nowsClose'
+import {subscribeTerminals, terminalsNow} from '../../../../../desktop/cradle/src/terminal/terminalReadings'
+import {TERMINAL_ID, terminalBinding, terminalDevice} from './terminalBinding'
 import {claimRailWidget} from '../frame/widgets/deviceWidgets'
 import type {DesignBinding, Value} from '../frame/devices/designed'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import type {IconName} from '../inhabitants/sdk/Icon'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
-import {CALENDAR_ABSENT, diffFilesOf, filesOf, NOW_CLOSE_ABSENT, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
+import {CALENDAR_ABSENT, diffFilesOf, filesOf, nowsCloseWrites, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
 import {loadWhenDrawn} from '../shell/loadWhenDrawn'
 
 /** The family the rail-born devices stand in: their designs are `widgets:<id>` in the catalogue. */
@@ -309,13 +312,18 @@ function useGround(transport: KernelTransportStatus | undefined): GroundReading 
   }, [transport, ground])
 }
 
+/** NOWs' Close through Central (central/devices/nowsClose.ts), its module loaded at the press: Central's writes stay out of the rail's
+ * first load. */
+const closeNow: typeof closeNowClearing = (...args) => import('../central/devices/nowsClose').then(module => module.closeNowClearing(...args))
+
 function useNowsBinding(transport: KernelTransportStatus | undefined): DesignBinding {
   const reading = useGround(transport)
   const {holds, local} = useHolds(['machine', 'open'])
   return useMemo(() => {
     const values = reading.status === 'read' ? nowsValues(reading.ground) : reading.status === 'refused' ? {reason: reading.words} : {}
-    return {id: railDeviceId('nows'), values: withHolds(values, holds), local, writes: key => key !== 'close', standing: {close: {disabled: NOW_CLOSE_ABSENT}}}
-  }, [reading, holds, local])
+    // Close writes through Central's central.now.lifecycle on the listing and the policy this reading gave (railBindings.ts).
+    return {id: railDeviceId('nows'), values: withHolds(values, holds), local, ...nowsCloseWrites(transport, reading.status === 'read' ? reading.ground : null, closeNow)}
+  }, [reading, holds, local, transport])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Calendar
@@ -340,6 +348,13 @@ export function RailDevices() {
   const trail = useTrailBinding(), diff = useDiffBinding(diffReading), nows = useNowsBinding(transport), calendar = useCalendarBinding()
   const files = useFilesBinding(tape, diffReading), web = useWebBinding(tape), wiki = useWikiBinding(transport)
   const devices = useMemo(() => Object.fromEntries(RAIL_DEVICES.map(spec => [spec.id, railDevice(spec.id)])) as Record<RailDeviceId, DeviceInstance>, [])
+  // The Terminal (§17.9): the newest terminal the Workbench's surfaces hold, while one runs (terminalBinding.ts); its rail tile is
+  // widgets/TerminalRailWidget.tsx, its Full a pane. It stands on no chain.
+  const terminals = useSyncExternalStore(subscribeTerminals, terminalsNow, terminalsNow)
+  const newestTerminal = terminals[0] ?? null
+  const terminal = useMemo(() => terminalBinding(newestTerminal), [newestTerminal])
+  const terminalInstance = useMemo(() => terminalDevice(), [])
+  useEffect(() => { publishDevice(TERMINAL_ID, terminal ? {device: terminalInstance, binding: terminal} : null) }, [terminalInstance, terminal])
   // Each device is published again only when its own binding changes (a binding is the same object while its readings stand).
   useEffect(() => { publishDevice(devices.trail.id, {device: devices.trail, binding: trail}) }, [devices, trail])
   useEffect(() => { publishDevice(devices.diff.id, {device: devices.diff, binding: diff}) }, [devices, diff])
@@ -348,6 +363,6 @@ export function RailDevices() {
   useEffect(() => { publishDevice(devices.wiki.id, {device: devices.wiki, binding: wiki}) }, [devices, wiki])
   useEffect(() => { publishDevice(devices.nows.id, {device: devices.nows, binding: nows}) }, [devices, nows])
   useEffect(() => { publishDevice(devices.calendar.id, {device: devices.calendar, binding: calendar}) }, [devices, calendar])
-  useEffect(() => () => { for (const spec of RAIL_DEVICES) publishDevice(railDeviceId(spec.id), null) }, [])
+  useEffect(() => () => { for (const spec of RAIL_DEVICES) publishDevice(railDeviceId(spec.id), null); publishDevice(TERMINAL_ID, null) }, [])
   return <AgentRailDevices />
 }

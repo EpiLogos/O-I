@@ -28,6 +28,7 @@ const TrailWidget = loadWhenDrawn('Trail', () => import('./TrailWidget').then(mo
 const AgentDockTileBody = loadWhenDrawn('The agent dock\'s tiles', () => import('../agent/AgentDockTileBody').then(module => module.AgentDockTileBody))
 const AgentWidget = loadWhenDrawn('Agent', () => import('../widgets/AgentWidget').then(module => module.AgentWidget))
 const PacketWidget = loadWhenDrawn('Packet', () => import('../widgets/PacketWidget').then(module => module.PacketWidget))
+const TerminalRailWidget = loadWhenDrawn('Terminal', () => import('../widgets/TerminalRailWidget').then(module => module.TerminalRailWidget))
 
 /** A mode-dock tile as a widget body: the tile's own body over the reading. */
 const modeTile = (id: string) => function ModeTileWidget() {
@@ -53,7 +54,7 @@ const OWN_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {pac
 const HINTS: Record<string, string> = {
   packet: 'exactly what the agent will receive', trail: 'every place you went, to return to', field: 'who is present; what waits for admission',
   nows: 'the day and its Now', results: 'run results and diffs', sky: 'the dated sky', sessions: 'the agency\'s sessions',
-  agents: 'agents at work', terminal: 'the sessions\' shells', files: 'the seat\'s repository', web: 'web surfaces',
+  agents: 'agents at work', terminal: 'the Workbench terminal\'s shell', files: 'the seat\'s repository', web: 'web surfaces',
   graph: 'the knowledge graph', diff: 'the seat\'s working diff', frames: 'the harness gateway', ledger: 'the task record',
   approvals: 'the task\'s approval hooks',
 }
@@ -74,7 +75,9 @@ export const WIDGETS: readonly WidgetDeclaration[] = [
   ...DEVICE_BORN.filter(widget => widget.id === 'messages'),
   {id: 'agent', name: 'Agent', Name: AgentWidgetName, mark: TILES.agent.mark, hint: 'the agent you are talking to', Body: AgentWidget},
   ...MODE_TILES.map((id): WidgetDeclaration => ({id, name: TILES[id].name, mark: TILES[id].mark, hint: HINTS[id], Body: OWN_BODIES[id] ?? modeTile(id)})),
-  ...AGENT_TILES.map((id): WidgetDeclaration => ({id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),
+  // The Terminal is its device's own tile (DLW §17.9, widgets/TerminalRailWidget.tsx): bare, as a device's widget is.
+  ...AGENT_TILES.map((id): WidgetDeclaration => (id === 'terminal' ? {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], bare: true, Body: TerminalRailWidget}
+    : {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),
   ...RAIL_BORN,
   // Gateways and the Workcells tile after the old tiles.
   ...DEVICE_BORN.filter(widget => widget.id !== 'messages'),

@@ -34,6 +34,11 @@ pub enum Operation {
     ApplyMatrix {
         family: u8,
     },
+    /// Chooses the matrix the reading's generation cell is made under without
+    /// turning the form (QL's `set-matrix`, `M3Operation::SetMatrix`).
+    SetMatrix {
+        family: u8,
+    },
     SetPose {
         pose: u8,
     },
@@ -356,5 +361,36 @@ impl Prepared {
             agent_session_ref: session,
             data,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Operation;
+
+    /// Each operation travels in QL's own spelling (`ql.m3-command/v1`
+    /// `operations`, `M3Operation`): the kernel carries it, never renames it.
+    #[test]
+    fn operations_travel_in_qls_own_spelling() {
+        for (wire, operation) in [
+            (
+                serde_json::json!({"operation": "set-matrix", "family": 1}),
+                Operation::SetMatrix { family: 1 },
+            ),
+            (
+                serde_json::json!({"operation": "apply-matrix", "family": 2}),
+                Operation::ApplyMatrix { family: 2 },
+            ),
+        ] {
+            assert_eq!(
+                serde_json::from_value::<Operation>(wire.clone()).unwrap(),
+                operation
+            );
+            assert_eq!(serde_json::to_value(&operation).unwrap(), wire);
+        }
+        assert!(serde_json::from_value::<Operation>(
+            serde_json::json!({"operation": "set-matrix", "family": 1, "turn": true})
+        )
+        .is_err());
     }
 }

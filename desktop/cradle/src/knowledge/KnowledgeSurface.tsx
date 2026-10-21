@@ -239,13 +239,26 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   const knowledgeToken=useRef<object>({});
   const domains=useMemo(()=>visibleModel?{kinds:[...new Set(visibleModel.nodes.map(node=>node.kind))].sort(),relations:[...new Set(visibleModel.edges.map(edge=>edge.relation))].sort()}:null,[visibleModel]);
   const fitRef=useRef<()=>void>(()=>{});fitRef.current=fitView;
+  // The canvas's overview toggle, held here so the handle publishes it (GraphCanvas.tsx draws it, controlled).
+  const [minimap,setMinimap]=useState(true);
+  // The canvas's own press on a subject, by ref (the handle's select): the subject the reading holds, else refused in words.
+  const pressRef=useRef<(ref:string)=>void>(()=>{});
+  pressRef.current=(ref:string)=>{
+    const node=nodes.find(candidate=>candidate.ref===ref);
+    if(!node)throw new Error(`${ref} is not in this graph's reading`);
+    if(isUnresolvedGraphNode(node))throw new Error(`${node.label} is a link with no target: there is no subject to select`);
+    select(node);
+  };
+  const selectRef=useCallback((ref:string)=>pressRef.current(ref),[]);
   const patchFilters=useCallback((patch:Partial<GraphFilterState>)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,filters:restoreGraphFilters({...restoreGraphFilters(v.filters),...patch})}:v)})),[]);
   const setZoom=useCallback((zoom:number)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,camera:{...v.camera,zoom}}:v)})),[]);
   useEffect(()=>{
     if(!isGraph){publishKnowledgeGraphHandle(knowledgeToken.current,null);return;}
-    const surface:KnowledgeGraphSurface={filters,zoom:camera.zoom,domains,counts:filtered?.counts??null,selected:visit.selected??null,patchFilters,setZoom,fit:()=>fitRef.current()};
+    const surface:KnowledgeGraphSurface={filters,zoom:camera.zoom,domains,counts:filtered?.counts??null,selected:visit.selected??null,
+      reading:model??null,loading:busy,project:binding.project,query:visit.query,minimap,
+      patchFilters,setZoom,fit:()=>fitRef.current(),select:selectRef,setMinimap};
     publishKnowledgeGraphHandle(knowledgeToken.current,surface);
-  },[isGraph,filters,camera.zoom,domains,filtered,visit.selected,patchFilters,setZoom]);
+  },[isGraph,filters,camera.zoom,domains,filtered,visit.selected,patchFilters,setZoom,model,busy,binding.project,visit.query,minimap,selectRef]);
   useEffect(()=>()=>publishKnowledgeGraphHandle(knowledgeToken.current,null),[]);
   return <section className="knowledge-surface" aria-label="Knowledge surface" aria-busy={busy}>
     <WikiFactsProvider transport={transport} project={binding.project} checkpoints={travel.facts??{}} onCheckpoint={saveFactsCheckpoint} onSaved={()=>setGeneration(n=>n+1)}>
@@ -253,7 +266,7 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
     {travel.constructionRecovery&&<details className="knowledge-raw"><summary>Recover retained constellation draft</summary><p role="alert">{travel.constructionRecovery.message}</p><pre>{JSON.stringify(travel.constructionRecovery.raw,null,2)}</pre></details>}
     {busy&&<Loading label="Reading graph inputs…" scope="inline"/>}{error&&<p role="alert">{error}</p>}{nativeFocusError&&<p role="alert">{nativeFocusError}</p>}{layout.error&&<p role="alert">{layout.error}</p>}
     {isGraph&&<div className="knowledge-graph" ref={graph} data-focused={Boolean(visit.selected)} data-detail-open={Boolean(detailNode)} data-dense={nodes.length>80}>
-      <GraphCanvas unresolvedAssociations={unresolvedAssociations} emphasis={emphasis} nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={GRAPH_ZOOM_LIMITS.minZoom} maxZoom={GRAPH_ZOOM_LIMITS.maxZoom} onCamera={commitCamera} onDragNode={(ref,world)=>{if(ref&&world)layout.dragNode(ref,world.x,world.y);else if(!ref)layout.releaseNode();}} onSelect={select} onOpen={open} onTechne={openTechne} onClear={release}/>
+      <GraphCanvas minimap={minimap} onMinimap={setMinimap} unresolvedAssociations={unresolvedAssociations} emphasis={emphasis} nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={GRAPH_ZOOM_LIMITS.minZoom} maxZoom={GRAPH_ZOOM_LIMITS.maxZoom} onCamera={commitCamera} onDragNode={(ref,world)=>{if(ref&&world)layout.dragNode(ref,world.x,world.y);else if(!ref)layout.releaseNode();}} onSelect={select} onOpen={open} onTechne={openTechne} onClear={release}/>
       {visibleModel&&filtered&&<GraphFilters reading={visibleModel} result={filtered} filters={filters} camera={presentation} selected={visit.selected} onChange={changeFilters} saved={travel.saved??[]} onSave={saveViews} onApply={applyView}/>}
       {filtered?.nodes.length===0&&<p className="knowledge-graph-empty" role="status">{filtered.localFocusMissing?"Select a subject before using the local view.":"No subjects match these filters."}</p>}
       <div className="knowledge-zoom" role="group" aria-label="Graph view"><button className="oi-tool" aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(GRAPH_ZOOM_LIMITS.minZoom,c.zoom/1.2)}))}><Glyph name="minus" size={13}/></button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button className="oi-tool" aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(GRAPH_ZOOM_LIMITS.maxZoom,c.zoom*1.2)}))}><Glyph name="plus" size={13}/></button><button className="oi-tool" aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}><Glyph name="expand" size={13}/></button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>

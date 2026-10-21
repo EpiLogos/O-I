@@ -1,0 +1,84 @@
+{
+  "captured": "workcell 0.1.0 (c7261e23bc93), 21 Oct 2026, read only: `workcell connections list --json`, `workcell connections show omarchy --json`, `workcell machine list --json`, and `workcell connections show nosuch --json` (exit 5)",
+  "list": {
+    "connections": [
+      {
+        "endpoint": "100.92.62.101:7777",
+        "expires_at_unix_ms": null,
+        "label": "omarchy",
+        "protocol": "workcell.control/v1",
+        "remote_workcell_ref": "workcell:omarchy",
+        "state": "connected"
+      },
+      {
+        "endpoint": "100.92.62.101:7777",
+        "expires_at_unix_ms": 1791419267453,
+        "label": "omarchy-improvement-lanes",
+        "protocol": "workcell.control/v1",
+        "remote_workcell_ref": "workcell:omarchy",
+        "state": "connected"
+      }
+    ],
+    "ok": true
+  },
+  "show": {
+    "connection": {
+      "connected_at_unix_ms": 1790237685095,
+      "connection_ref": "connection:omarchy",
+      "credential_ref": "keychain://workcell-connection/omarchy",
+      "detail": "software revisions differ (local `workcell 0.1.0 (c7261e23bc93)`, remote `workcell 0.1.0 (174fa1c3133a)`); protocol workcell.control/v1 is the compatibility contract and nothing was updated; remote software changed since the last connection: `workcell 0.1.0 (9164736039f9)` -> `workcell 0.1.0 (174fa1c3133a)`; reported only, nothing was updated",
+      "endpoint": "100.92.62.101:7777",
+      "expires_at_unix_ms": null,
+      "granted_operations": [
+        "status",
+        "discover",
+        "observe",
+        "inspect"
+      ],
+      "label": "omarchy",
+      "last_reconciled_at_unix_ms": 1791415783342,
+      "local_software": "workcell 0.1.0 (c7261e23bc93)",
+      "protocol": "workcell.control/v1",
+      "provenance": {
+        "created_by": "workcell connect"
+      },
+      "remote_software": "workcell 0.1.0 (174fa1c3133a)",
+      "remote_workcell_ref": "workcell:omarchy",
+      "state": "connected",
+      "version": "workcell.connection/v1"
+    },
+    "ok": true
+  },
+  "machines": {
+    "machines": [
+      {
+        "credential_ref": "keychain://workcell-connection/omarchy",
+        "endpoint": "100.92.62.101:7777",
+        "label": "omarchy",
+        "note": "Omarchy (tailnet host frank), cell workcell:omarchy; AIKit gateway advertised on 7788, SharedField SpaceTimeDB on 3000",
+        "operations": [
+          "status",
+          "discover",
+          "observe",
+          "inspect"
+        ]
+      },
+      {
+        "credential_ref": "keychain://workcell-connection/omarchy-improvement-lanes",
+        "endpoint": "100.92.62.101:7777",
+        "label": "omarchy-improvement-lanes",
+        "note": "commission:factory-280-joined-20261007; finite30m owned material route",
+        "operations": []
+      }
+    ],
+    "ok": true
+  },
+  "show_refusal": {
+    "error": {
+      "kind": "not-found",
+      "message": "not found: no connection record named `nosuch`"
+    },
+    "ok": false
+  },
+  "show_refusal_exit": 5
+}

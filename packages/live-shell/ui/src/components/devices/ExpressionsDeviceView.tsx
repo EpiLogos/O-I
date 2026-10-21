@@ -119,8 +119,8 @@ const enginePress: PhysicsPress = action => {
 }
 
 /** The binding of a field family's catalogue design, where the design draws on the engine's own readings: Physics (lane BE), and every
- * other field family on its engine paths (fieldDesignBinding.ts, R5). The Field (`expressions:field`) is not a device of this shell, and its
- * picture draws the module's own symbols: it publishes nothing yet. */
+ * other field family on its engine paths (fieldDesignBinding.ts, R5). The Field (`expressions:field`) is no family of the rack: it is the front
+ * of these devices and the frame's object sound, published at the Studio's head by useFieldInstrument.ts (fieldInstrument.ts). */
 export function fieldDesignBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null = null): DesignBinding | undefined {
   if (family === 'physics') return physicsDesignBinding(device, reading, enginePress)
   return isFieldDesignFamily(family) ? familyDesignBinding(family, device, reading, send) : undefined

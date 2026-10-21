@@ -17,8 +17,9 @@
 // harness's own choice (allow once, allow always, reject) through the encounter's `permission` verb. Wait and On no answer have no
 // owner write (Hermes' approvals.timeout is not a harness_agent_control configure field, harnessAgentControl.ts:14-25); the proposals are
 // Central's source returns, which the kernel reads since lane K1 (`source_returns_read`, central.source-returns/v1: workcellReads.ts) —
-// the pending and applying ones stand in the queue — while answering one (Approve, Changes) has no kernel op yet. Pure, apart from the
-// view holds (designBindings.ts holdView).
+// the pending and applying ones stand in the queue. Approve accepts one through Central's projectcentral.source.return_accept, the person's
+// press the kernel carries (central/devices/sourceReturnAccept.ts, handed in as a port); Changes has no owner operation yet. Pure, apart
+// from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
@@ -185,9 +186,12 @@ export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBin
 export const APPROVALS_REFUSE = {
   wait: missing('Wait', 'Hermes\' approvals.timeout through harness_agent_control configure (it carries approvals, transport, connect and stall-after only)', 'Actuation'),
   noAnswer: missing('On no answer', 'a timed-out request\'s outcome through harness_agent_control configure', 'Actuation'),
-  approve: missing('Approve', 'kernel:source_return_accept {project, return_ref, accepted_by_ref} — Central\'s projectcentral.source.return.accept, authenticated', 'Central'),
   changes: missing('Changes', 'a comment on a source return', 'Central'),
 } as const
+
+/** Approve where the chain hands no acceptance port (ApprovalsPorts.approve): Central's action exists and the kernel carries it as the
+ * person's press (central/devices/sourceReturnAccept.ts), but this chain does not pass it. */
+export const APPROVE_UNWIRED = 'Approve: this chain does not carry Central\'s projectcentral.source.return_accept to the return (no acceptance port is passed here).'
 
 /** The view's settings and the manual's starting value of each (§19.16: Both, Oldest first). */
 export const APPROVALS_VIEW: Readonly<Record<string, Value>> = {show: 'both', order: 'oldest'}
@@ -268,6 +272,9 @@ export function approvalsValues(input: ApprovalsInput): Values {
 export interface ApprovalsPorts {
   /** The shown session's encounter `permission` verb (absent: not observed). */
   readonly permission?: (requestId: string, decision: PermissionDecision) => Promise<void>
+  /** Accept one returned proposal through Central (projectcentral.source.return_accept, the person's press: sourceReturnAccept.ts
+   * acceptSourceReturn), with the row as Central lists it. Rejects with the refusal, or Central's words. Absent: Approve stands disabled. */
+  readonly approve?: (row: SourceReturnEntry) => Promise<unknown>
 }
 
 /** The harness's own choice for an answer: allow once, allow always, or reject (PermissionCard.tsx reads the same kinds). */
@@ -283,8 +290,8 @@ function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways
 }
 
 /** Approvals' binding: the Default answer through the Gateway's own write (one key, one row); each answer to a request through the
- * shown session's encounter, with the harness's own choice; the view's settings held by the shell; Wait, On no answer and the proposal
- * answers stand disabled with what they lack. */
+ * shown session's encounter, with the harness's own choice; Approve through Central's acceptance (the `approve` port); the view's
+ * settings held by the shell; Wait, On no answer and Changes stand disabled with what they lack. */
 export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBinding, 'write' | 'standing'> | null, ports: ApprovalsPorts, id: string = APPROVALS_ID): DesignBinding {
   const requests = input.encounter ? pendingPermissions(input.encounter) : []
   const standing: Record<string, Standing> = disabled(APPROVALS_REFUSE)
@@ -292,13 +299,14 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
     : verbStanding(input.encounter, 'permission')
   if (verb) for (const key of ['allowOnce', 'allowAlways', 'deny']) standing[key] = {disabled: verb}
   if (gateway?.standing?.approvals) standing.approvals = gateway.standing.approvals
+  if (!ports.approve) standing.approve = {disabled: APPROVE_UNWIRED}
   return {
     // `id` is the chain's own (Factory's Main track, or Central's: CentralDevices.tsx); the view's settings are the one Approvals'.
     id,
     values: approvalsValues(input),
     standing,
     local: Object.fromEntries(APPROVALS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(APPROVALS_ID, key, value)])),
-    writes: key => key === 'approvals' || key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key in APPROVALS_REFUSE,
+    writes: key => key === 'approvals' || key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key === 'approve' || key in APPROVALS_REFUSE,
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'approvals') {
@@ -313,6 +321,15 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
           const decision = choiceFor(request, key)
           if (!decision) throw Error(`The request offers no ${key === 'allowOnce' ? 'once' : 'always'} choice; answer it in the thread pane.`)
           await ports.permission(request.native_request_id, decision)
+          continue
+        }
+        if (key === 'approve') {
+          // The proposal as Central lists it, read again at the press: its basis and status are what the acceptance is checked on.
+          if (!ports.approve) throw Error(APPROVE_UNWIRED)
+          if (!input.returns) throw Error('Approve: Central\'s source returns have not answered, so no proposal stands to accept.')
+          const row = input.returns.entries.find(entry => entry.return_ref === value)
+          if (!row) throw Error('Approve: that proposal is not among the returns Central lists now.')
+          await ports.approve(row)
           continue
         }
         throw Error(APPROVALS_REFUSE[key as keyof typeof APPROVALS_REFUSE] ?? reading(key))

@@ -528,7 +528,14 @@ impl PreparedRead {
             // AIKit's declared remotes — each needs no World.
             | KernelOp::SeatStatusRead
             | KernelOp::SourceReturnsRead { .. }
-            | KernelOp::GatewayRemotesRead => true,
+            | KernelOp::GatewayRemotesRead
+            // Lane W3 (T-COVERAGE §1.2): the owner routes that only read
+            // (owner_routes.rs); a team action other than `read` is a write.
+            | KernelOp::ActuationRead { .. }
+            | KernelOp::QlRead { .. }
+            | KernelOp::WorkcellRead { .. }
+            | KernelOp::AikitRead { .. } => true,
+            KernelOp::GatewayTeam { request } => request.is_read(),
             KernelOp::FactoryOwner { request } => request.is_read(),
             KernelOp::SharedField { request } => crate::shared_field::is_read(request),
             // Nara's practice reads (T-WORLDS W4): QL over what Central's owners read; none needs the World. A journey's
@@ -1183,8 +1190,32 @@ impl PreparedRead {
                     gateway_remotes().map_err(failed("gateway remote list failed"))?;
                 KernelOpResult::GatewayRemotesReading { data, warnings }
             }
+            // Lane W3: the owner routes that only read (owner_routes.rs).
+            KernelOp::ActuationRead { request } => {
+                crate::owner_routes::actuation_read(request)?.into()
+            }
+            KernelOp::QlRead { request } => crate::owner_routes::ql_read(request)?.into(),
+            KernelOp::WorkcellRead { request } => {
+                crate::owner_routes::workcell_read(request)?.into()
+            }
+            KernelOp::AikitRead { request } => {
+                let cwd = self.route_ground(request.project())?.0;
+                crate::owner_routes::aikit_read(request, cwd.as_deref())?.into()
+            }
+            KernelOp::GatewayTeam { request } => {
+                let cwd = self.route_ground(request.project.as_deref())?.0;
+                crate::owner_routes::gateway_team_read(request, cwd.as_deref())?.into()
+            }
             _ => return Err("This operation cannot execute as an independent owner read".into()),
         })
+    }
+
+    /// Where an owner route runs (lane W3): a named project's working
+    /// directory and canonical Project World, from Central's own disclosure
+    /// (never the caller's); else the Central root, best effort (the owner
+    /// resolves its own when Central's world is unreadable).
+    fn route_ground(&self, project: Option<&str>) -> Result<RouteGround, String> {
+        route_ground(&self.client, &self.world, project)
     }
 
     /// The Central root the World discloses, else this process's directory.
@@ -1233,6 +1264,30 @@ pub(crate) fn project_ground(
         .ok_or("Central has not bound a canonical ProjectRef")?
         .to_owned();
     Ok((cwd, project_ref))
+}
+
+/// An owner route's working directory and canonical Project World (lane W3).
+pub(crate) type RouteGround = (Option<PathBuf>, Option<String>);
+
+/// See `PreparedRead::route_ground`; the prepared writes share it.
+pub(crate) fn route_ground(
+    client: &CentralClient,
+    world: &PreparedWorld,
+    project: Option<&str>,
+) -> Result<RouteGround, String> {
+    match project {
+        Some(project) => {
+            let (cwd, project_id) = project_ground(client, &world.read()?, project)?;
+            Ok((Some(cwd), Some(format!("project:{project_id}"))))
+        }
+        None => Ok((
+            world
+                .read()
+                .ok()
+                .and_then(|world| world["root"].as_str().map(PathBuf::from)),
+            None,
+        )),
+    }
 }
 
 /// AIKit's own executable for the wiki projection reads (`OI_AIKIT_BIN`,
@@ -1300,7 +1355,7 @@ const SEAT_STATUS_LIMIT: std::time::Duration = std::time::Duration::from_secs(60
 
 /// The seat instrument (`OI_SEAT_BIN`, else `seat` on PATH, else
 /// `~/.local/bin/seat` — a Finder launch's PATH never holds it).
-fn seat_executable() -> PathBuf {
+pub(crate) fn seat_executable() -> PathBuf {
     if let Some(bin) = std::env::var_os("OI_SEAT_BIN").filter(|bin| !bin.is_empty()) {
         return PathBuf::from(bin);
     }

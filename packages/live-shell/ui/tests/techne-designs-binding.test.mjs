@@ -7,8 +7,10 @@
 // - REAL (tests/fixtures/knowledge-graph-reading-2026-10-21.json): the kernel graph op's answer for the root register's wiki, read
 //   read-only on workcell:mac through the seat's walk bridge (POST /op {op: graph, …}).
 // - FIXTURE, owner-shaped: the palace session over owners standing in for the live ones (the documents of atlas-palaces-session.test.mjs,
-//   the shapes the kernel's expression op and the owner's reading return); the frame's announced state and chrome (HostedAppState,
-//   FrameChromeReading in the frame's own control words, researchInstruments.tsx :882-889, :1355-1357); the open graph's handle.
+//   the shapes the kernel's expression op and the owner's reading return); the frame's announced state, chrome and research reading
+//   (HostedAppState; FrameChromeReading in the frame's own control words, researchInstruments.tsx :885-892, :1359-1361; the research
+//   reading built by the frame's own builders, researchReading.ts journeyReadingOf · canvasReadingOf · timelineReadingOf, and read back by
+//   the boundary's reader readFrameResearch); the open graph's handle.
 // - SCRIPTED: each catalogue design rendered through the runtime's host (deviceHost.HostedDevice) to static markup, on its binding.
 // No owner state is written: every write here goes to a stand-in act, a stand-in runner or a stand-in setter, or is refused.
 import test from 'node:test'
@@ -65,6 +67,7 @@ const {resetPalaceCompositions} = await import('../../../../desktop/cradle/src/t
 const {regionSceneRef} = await import('../../../../desktop/cradle/src/techne/m0m5/palace/composition.ts')
 const cradleFilters = await import('../../../../desktop/cradle/src/knowledge/filters.ts')
 const {instantOfYear, windowEdgeYear} = await import('../src/projections/atlas/sharedClock.ts')
+const research = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts')
 const DESIGNS = {
   palace: (await import('../src/inhabitants/catalogue/panels/techne__palace.tsx')).design,
   journey: (await import('../src/inhabitants/catalogue/panels/techne__journey.tsx')).design,
@@ -182,25 +185,50 @@ const chromeFor = (lens, controls) => ({lens, controls})
 const CANVAS_CHROME = chromeFor('canvas', [
   control('t-draw', 'canvas:tools', 'toggle', 'Draw', {pressed: false}), control('t-erase', 'canvas:tools', 'toggle', 'Erase', {pressed: false}),
   control('t-snap', 'canvas:tools', 'toggle', 'Snap', {pressed: true}), control('t-lasso', 'canvas:tools', 'toggle', 'Lasso', {pressed: false}),
+  control('t-sticky', 'canvas:tools', 'button', 'Add sticky'),
   control('l-zoom', 'canvas:look', 'reading', '84%'), control('v-save', 'canvas:views', 'reading', 'saved'),
   control('l-overview', 'canvas:look', 'toggle', 'Hide overview', {pressed: true}),
 ])
 const TIMELINE_CHROME = chromeFor('timeline', [
   control('m-chron', 'timeline:lens', 'toggle', 'Chronology', {pressed: false}), control('m-field', 'timeline:lens', 'toggle', 'Relations', {pressed: true}),
-  control('m-refresh', 'timeline:lens', 'button', 'Refresh timeline'),
+  control('m-refresh', 'timeline:lens', 'button', 'Refresh timeline'), control('m-mode', 'timeline:lens', 'select', 'Relation field mode'),
 ])
-function frameOf(lens, {chrome = null, journey = {}, window, runs = []} = {}) {
-  const state = {lens, document: {name: 'Field studies of the frame'}, ...journey, ...(chrome ? {chrome} : {})}
+// The research reading, as the frame's own builders make it from its own state (researchReading.ts) and as the boundary reads it back.
+const WALK = research.journeyReadingOf({name: 'Field studies of the frame', loop: true, scenes: [
+  {name: 'Ink', character: 'Fine, irregular stippling.', duration: 14, transition: 1.5},
+  {name: 'Print', character: 'An imperfect lattice.', duration: 6, transition: 0, transitionSpec: {kind: 'cut'}},
+  {name: 'Gather', character: 'Rounded grains find a shared current.', duration: 30, transition: 4, transitionSpec: {kind: 'dip-to-colour', at: 0.35, curve: {type: 'hold'}, switchMode: 'sync'}},
+  {name: 'Weather', character: 'No centre, no logo.', duration: 20, transition: 2.5, transitionSpec: {kind: 'wipe', direction: 'right'}, breakAtEnd: true},
+]}, {index: 2, local: 1.1, playing: true, entered: false})
+const BOARD = research.canvasReadingOf({nodes: [
+  {id: 'e:root', title: 'Root of the board', position: {x: 60, y: 240}, size: {width: 94, height: 94}},
+  {id: 'e:q', title: 'A question of the frame', position: {x: -250, y: 20}, size: {width: 220, height: 180}},
+  {id: 'e:sacral', title: 'Second card', position: {x: 230, y: 160}, size: {width: 94, height: 94}},
+], edges: [{id: 'b:1', sourceNodeId: 'e:root', targetNodeId: 'e:sacral', directionality: 'forward'}, {id: 'b:2', sourceNodeId: 'e:q', targetNodeId: 'e:root'}]},
+{frames: {f: {label: 'f', title: 'A frame of the board', memberRefs: ['e:root', 'e:sacral'], z: 0}}, connectors: {'b:2': {kind: 'elbow', label: 'asks', fromSide: 'right', toSide: 'left'}}},
+{viewport: {x: 380, y: 210, zoom: 0.84}, pane: {width: 760, height: 420}, selected: ['e:q'], selectedLine: 'b:2', drawing: false, erasing: false, lasso: false, snap: true}, id => (id === 'e:q' ? 'sticky' : undefined))
+const RULER = research.timelineReadingOf({nodes: [
+  {graphNodeId: 't:1', title: 'An event of the frame', isTemporal: true, validFrom: '1595-01-01T00:00:00Z', validTo: '1625-01-01T00:00:00Z', entityType: 'event'},
+  {graphNodeId: 't:2', title: 'A later event', isTemporal: true, validFrom: '1677'},
+], relationships: [{id: 'r:1', sourceGraphNodeId: 't:1', targetGraphNodeId: 't:2', relType: 'echo', properties: {standing: 'derived'}}]},
+{projection: 'field', camera: {centerYear: 1640, pixelsPerYear: 3}, views: ['A view of the frame']})
+const RESEARCH = research.readFrameResearch({journey: WALK, canvas: BOARD, timeline: RULER})
+function frameOf(lens, {chrome = null, journey = {}, window, runs = [], research: held = RESEARCH} = {}) {
+  const state = {lens, document: {name: 'Field studies of the frame'}, ...journey, ...(chrome ? {chrome} : {}),
+    ...(held ? {research: {...(held.journey ? {journey: held.journey} : {}), ...(lens === 'canvas' && held.canvas ? {canvas: held.canvas} : {}), ...(lens === 'timeline' && held.timeline ? {timeline: held.timeline} : {})}} : {})}
   return {state, run: async command => { runs.push(command); return {ok: true} }, window}
 }
 const LAW = written => ({yearOf: windowEdgeYear, instantOf: instantOfYear, write: window => { written.push(window); return null }})
 
 // ---------------------------------------------------------------------------------------------------------------- the open graph
 
-function fakeSurface(filters = {}) {
+function fakeSurface(filters = {}, over = {}) {
+  const calls = []
   return {filters: cradleFilters.restoreGraphFilters({scope: 'local', depth: 2, emphasis: [{id: 'g1', label: 'Sources', color: '#88aa66', text: '', kinds: ['file'], tags: [], enabled: true}], ...filters}),
     zoom: 1.5, domains: {kinds: ['wiki-node'], relations: ['node-source']}, counts: null, selected: 'wiki:node:identity',
-    patchFilters() {}, setZoom() {}, fit() {}}
+    reading: REAL.outcome.reading, loading: false, project: 'O-I', query: '', minimap: true, calls,
+    patchFilters() {}, setZoom() {}, fit() {}, select(ref) { calls.push(['select', ref]); if (!REAL.outcome.reading.nodes.some(node => node.ref === ref)) throw Error(`${ref} is not in this graph's reading`) },
+    setMinimap(on) { calls.push(['minimap', on]) }, ...over}
 }
 const answered = {status: 'answered', reading: REAL.outcome.reading, error: null, pending: [], nodes: 4096}
 
@@ -282,38 +310,47 @@ test('the Palace writes through the session\'s acts: path, guide, snap, the walk
   session.resetPalaceSession()
 })
 
-test('the Knowledge graph on the open graph and the kernel\'s reading (REAL): view state from the handle, the reading whole; writes through the armed setters', async () => {
+test('the Knowledge graph on the open graph (its handle: view state, its own reading — REAL — its selection and overview) and, with none open, the root register\'s reading', async () => {
   const surface = fakeSurface()
   const sent = []
   const writes = {setter: async (path, value) => { sent.push([path, value]) }, patch: (_surface, patch) => { sent.push(['patch', patch]) }}
-  const binding = graphB.graphBinding(surface, answered, writes)
+  const binding = graphB.graphBinding(surface, graphB.surfaceRead(surface), writes)
   const v = binding.values
-  assert.deepEqual([v.light, v.selected, v.scope, v.depth, v.direction, v.ghosts, v.orphans, v.mode, v.labels, v.zoom], ['lit', 'wiki:node:identity', 'local', 2, 'both', true, true, 'structure', 'automatic', 1.5])
-  assert.deepEqual(JSON.parse(v.reading).nodes.map(node => node.ref), REAL.outcome.reading.nodes.map(node => node.ref), 'the kernel\'s reading, whole')
-  assert.equal(v.budget, 4096, 'the read\'s own bound')
+  assert.deepEqual([v.light, v.selected, v.scope, v.depth, v.direction, v.ghosts, v.orphans, v.mode, v.labels, v.zoom, v.minimap], ['lit', 'wiki:node:identity', 'local', 2, 'both', true, true, 'structure', 'automatic', 1.5, true])
+  assert.deepEqual(JSON.parse(v.reading).nodes.map(node => node.ref), REAL.outcome.reading.nodes.map(node => node.ref), 'the open surface\'s own reading, whole')
+  assert.equal(v.budget, 4096, 'the surface reads at graphProgress\'s own bound')
+  assert.match(binding.standing.budget.disabled, /missing op: a node bound on the open graph/)
   assert.deepEqual(JSON.parse(v.groups)[0], {id: 'g1', label: 'Sources', color: '#88aa66', text: '', kinds: ['file'], tags: [], enabled: true})
-  for (const key of ['minimap', 'aperture.mode', 'aperture.admitted', 'aperture.depth']) assert.equal(v[key], undefined, `${key}: no reading`)
+  for (const key of ['aperture.mode', 'aperture.admitted', 'aperture.depth']) assert.equal(v[key], undefined, `${key}: no reading`)
   await binding.write([{key: 'scope', value: 'field'}, {key: 'depth', value: 3}, {key: 'kinds', value: 'wiki-node|file'}, {key: 'orphans', value: false}, {key: 'mode', value: 'matches'}, {key: 'zoom', value: 2}])
   await binding.write([{key: 'g:g1', value: false}])
   assert.deepEqual(sent.slice(0, 6), [['shell.setKnowledgeScope', 'field'], ['shell.setKnowledgeDepth', 3], ['shell.setKnowledgeKinds', ['wiki-node', 'file']],
     ['shell.setKnowledgeIsolated', false], ['shell.setKnowledgeContext', 'matches'], ['shell.setKnowledgeZoom', 2]])
   assert.equal(sent[6][1].emphasis[0].enabled, false, 'a coloured group\'s switch is the panel\'s own filter change')
-  for (const key of ['selected', 'minimap', 'aperture.mode', 'aperture.positions', 'aperture.budget']) {
+  // B: a press on a node selects through the handle's own act; the overview toggle is the canvas's own
+  await binding.write([{key: 'selected', value: 'wiki:node:delivered-lane-loses-install'}, {key: 'minimap', value: false}])
+  assert.deepEqual(surface.calls, [['select', 'wiki:node:delivered-lane-loses-install'], ['minimap', false]])
+  await assert.rejects(() => binding.write([{key: 'selected', value: 'wiki:node:nowhere'}]), /not in this graph's reading/, 'the handle\'s refusal, in its words')
+  for (const key of ['aperture.mode', 'aperture.positions', 'aperture.budget']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 'x'}]), /missing op/)
   }
   assert.match(binding.standing['aperture.mode'].disabled, /plan_living_wiki_refraction/)
+  const loading = graphB.graphBinding(fakeSurface({}, {reading: null, loading: true}), graphB.surfaceRead(fakeSurface({}, {reading: null, loading: true})), writes)
+  assert.equal(loading.values.reading, undefined)
+  assert.deepEqual(loading.waiting, ['reading'], 'the surface\'s first part has not come: the reading waits')
   const field = graphB.graphBinding(fakeSurface({scope: 'field'}), answered, writes)
   assert.equal(field.standing.depth.disabled, graphB.NOT_LOCAL)
   await assert.rejects(() => field.write([{key: 'depth', value: 2}]), /local view/)
   const closed = graphB.graphBinding(null, answered, writes)
-  assert.deepEqual(Object.keys(closed.values).sort(), ['budget', 'light', 'reading'], 'with no graph open: the reading and the light alone')
+  assert.deepEqual(Object.keys(closed.values).sort(), ['budget', 'light', 'reading'], 'with no graph open: the root register\'s reading and the light alone')
   assert.equal(closed.values.light, 'dark')
-  for (const key of ['scope', 'depth', 'text', 'labels', 'zoom', 'clear']) assert.equal(closed.standing[key].disabled, graphB.NOT_OPEN, key)
+  for (const key of ['scope', 'depth', 'text', 'labels', 'zoom', 'clear', 'selected', 'minimap']) assert.equal(closed.standing[key].disabled, graphB.NOT_OPEN, key)
   await assert.rejects(() => closed.write([{key: 'scope', value: 'local'}]), /not open/)
   const refused = graphB.graphBinding(null, {status: 'refused', reading: null, error: 'central.wiki.read: the ground is locked', pending: [], nodes: 4096}, writes)
   assert.match(refused.standing.reading.disabled, /the ground is locked/, 'a refused read keeps the owner\'s words')
   assert.deepEqual(graphB.graphBinding(null, null, writes).waiting, ['reading'], 'unread: the reading waits')
+  assert.match(read('techne/devices/techneDesigns.ts'), /useGraphRead\(graph && !surface,/, 'the root register is read only while no graph is open')
 })
 
 test('the kernel graph op is read only while the Knowledge graph stands, once per bound, and progressively', async () => {
@@ -339,62 +376,88 @@ test('the kernel graph op is read only while the Knowledge graph stands, once pe
   assert.match(read('techne/devices/graphRead.ts'), /loadGraph\(detectTransport\(\), undefined, '', publish, options\)/, 'the read the open surface itself makes (graphProgress.ts)')
 })
 
-test('the Journey on the frame\'s announcement: the stop it stands on, the count, that stop\'s name, whether it walks; everything else refused naming the missing op', async () => {
-  const frame = frameOf('journey', {journey: {sceneIndex: 2, sceneCount: 5, sceneName: 'Gather', journeyPlaying: true}})
-  const binding = frameB.journeyBinding(frame)
-  assert.deepEqual(binding.values, {light: 'lit', walk: 'Field studies of the frame', stops: JSON.stringify([null, null, null, null, null]), at: 2, 'name:2': 'Gather', playing: true})
-  for (const key of ['at', 'playing', 'entered', 'take', 'snap', 'hold:2', 'tr:4', 'kind:0', 'words:2']) assert.match(binding.standing[key].disabled, /missing op/, key)
-  await assert.rejects(() => binding.write([{key: 'hold:9', value: 3}]), /missing op: a journey reading/)
-  await assert.rejects(() => binding.write([{key: 'playing', value: false}]), /missing op: a stage command that walks/)
-  assert.deepEqual(frameB.journeyBinding(frameOf('canvas', {journey: {sceneIndex: 0, sceneCount: 1}})).values.light, 'dark', 'another lens: dark')
+test('the Journey on the frame\'s research reading: the walk as its Journey document holds it, where it stands; stand, play, stop, enter and return as the frame\'s own acts', async () => {
+  const runs = []
+  const binding = frameB.journeyBinding(frameOf('journey', {runs}))
+  const v = binding.values
+  assert.deepEqual(JSON.parse(v.stops), [['Ink', 'Fine, irregular stippling.'], ['Print', 'An imperfect lattice.'], ['Gather', 'Rounded grains find a shared current.'], ['Weather', 'No centre, no logo.']])
+  assert.deepEqual([v.light, v.walk, v.docLoops, v.stopAtEnd, v.at, v.local, v.playing, v.entered], ['lit', 'Field studies of the frame', true, true, 2, 1.1, true, false])
+  assert.deepEqual([v['hold:2'], v['tr:2'], v['kind:2'], v['curve:2'], v['sw:2'], v['atc:2'], v['dir:2']], [30, 4, 'dip-to-colour', 'hold', 'sync', 0.35, undefined])
+  assert.deepEqual([v['kind:0'], v['curve:0'], v['sw:0']], ['crossfade', 'linear', 'immediate'], 'an absent spec is the frame\'s own default seam')
+  assert.equal(v['dir:3'], 'right')
+  for (const key of ['takes', 'take', 'snap']) assert.equal(v[key], undefined, `${key}: the frame holds none`)
+  await binding.write([{key: 'at', value: 3}])
+  await binding.write([{key: 'local', value: 5.5}])
+  await binding.write([{key: 'playing', value: false}, {key: 'entered', value: true}, {key: 'entered', value: false}])
+  assert.deepEqual(runs, [{command: 'journey', action: 'stand', index: 3}, {command: 'journey', action: 'stand', index: 2, seconds: 5.5},
+    {command: 'journey', action: 'stop'}, {command: 'journey', action: 'enter'}, {command: 'journey', action: 'return'}])
+  await assert.rejects(() => binding.write([{key: 'at', value: 9}]), /there is no stop 10/)
+  for (const key of ['hold:2', 'tr:1', 'kind:0', 'words:2', 'stopAtEnd']) {
+    assert.match(binding.standing[key].disabled, /missing op: stage commands for the walk's pace and seams/, key)
+    await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
+  }
+  const refusing = {...frameOf('journey'), run: async () => ({ok: false, error: 'Save your first scene before playing the scene strip.'})}
+  await assert.rejects(() => frameB.journeyBinding(refusing).write([{key: 'playing', value: true}]), /Save your first scene/, 'the frame\'s refusal, in its words')
+  const older = frameB.journeyBinding(frameOf('journey', {research: null}))
+  assert.deepEqual(older.values, {light: 'lit'}, 'a frame that announces no research reading: nothing of the walk')
+  assert.match(older.standing.at.disabled, /missing op: the research announcement/)
   assert.deepEqual(frameB.journeyBinding({state: null, run: null, window: undefined}).values, {}, 'no frame: nothing')
 })
 
-test('the Timeline: its lens from the frame\'s own tabs, written by pressing them; the shared window read and written through the session', async () => {
+test('the Timeline on the frame\'s research reading: its dated events, relations, span, projection, camera and views; its lens pressed on the frame\'s own tabs; the shared window through the session', async () => {
   const runs = [], written = []
   const frame = frameOf('timeline', {chrome: TIMELINE_CHROME, window: {from: instantOfYear(800), to: instantOfYear(1700)}, runs})
   const binding = frameB.timelineBinding(frame, LAW(written))
-  assert.deepEqual([binding.values.light, binding.values.lens, binding.values.readOn, binding.values.readFrom, binding.values.readTo], ['lit', 'relations', true, 800, 1700])
-  assert.deepEqual([binding.values.winFrom, binding.values.winTo], [800, 1700], 'the hand\'s window starts where the shared window stands')
-  for (const key of ['events', 'edges', 'views', 'domFrom']) assert.equal(binding.values[key], undefined, `${key}: not published`)
+  const v = binding.values
+  assert.deepEqual([v.light, v.lens, v.dated, v.domFrom, v.domTo, v.centre, v.zoom], ['lit', 'relations', true, 1595, 1677, 1640, 3])
+  assert.deepEqual(JSON.parse(v.events), [{id: 't:1', name: 'An event of the frame', from: 1595, to: 1625, family: 'event'}, {id: 't:2', name: 'A later event', from: 1677, to: 1677}])
+  assert.deepEqual(JSON.parse(v.edges), [{id: 'r:1', from: 't:1', to: 't:2', kind: 'echo', st: 'derived'}])
+  assert.deepEqual(JSON.parse(v.views), [{id: 'A view of the frame', label: 'A view of the frame'}])
+  assert.deepEqual([v.readOn, v.readFrom, v.readTo, v.winFrom, v.winTo], [true, 800, 1700, 800, 1700])
   await binding.write([{key: 'lens', value: 'chronology'}, {key: 'refresh', value: true}])
   assert.deepEqual(runs, [{command: 'chrome', id: 'm-chron'}, {command: 'chrome', id: 'm-refresh'}], 'the frame\'s own tabs, pressed')
   await binding.write([{key: 'lens', value: 'relations'}])
-  assert.equal(runs.length, 2, 'a lens already pressed is not pressed again')
+  assert.equal(runs.length, 2, 'the projection already standing is not pressed again')
   await assert.rejects(() => binding.write([{key: 'lens', value: 'relative'}]), /does not show this control/, 'Relative stands only where the reading has a zero')
   const held = frameB.timelineBinding(frame, LAW(written), {winFrom: 1200, winTo: 1400})
   await held.write([{key: 'readOver', value: true}])
   await held.write([{key: 'clearWindow', value: true}])
   assert.deepEqual(written, [{from: instantOfYear(1200), to: instantOfYear(1400)}, null], 'Read over and Clear write the session\'s one window')
+  for (const key of ['centre', 'zoom']) assert.match(binding.standing[key].disabled, /missing op: a stage command that moves the chronology/, key)
+  for (const key of ['mode', 'saveView', 'st_sourced', 'cat_myth']) assert.match(binding.standing[key].disabled, /missing op/, key)
+  const elsewhere = frameB.timelineBinding(frameOf('canvas', {chrome: CANVAS_CHROME}), LAW(written))
+  assert.equal(elsewhere.values.events, undefined, 'the frame presents no Timeline: no ruler')
+  assert.match(frameB.timelineAbsent(frameOf('canvas', {chrome: CANVAS_CHROME}), 'events'), /presents no Timeline now/)
   const none = frameB.timelineBinding(frameOf('timeline', {chrome: TIMELINE_CHROME, window: undefined}), LAW(written))
   assert.equal(none.values.readOn, undefined)
   assert.match(none.standing.readOver.disabled, /No shared session/)
-  for (const key of ['mode', 'zoom', 'saveView', 'st_sourced', 'cat_myth']) assert.match(binding.standing[key].disabled, /missing op/, key)
 })
 
-test('the Canvas: its pointer mode, grid, zoom, save and selection from the frame\'s own controls; mode and grid written by pressing them; the board refused', async () => {
+test('the Canvas on the frame\'s research reading: its cards, lines (the selected one first, with its connector), frames, camera, selection and pointer flags; the camera through the frame\'s own fly; mode, grid and overview pressed', async () => {
   const runs = []
-  const frame = frameOf('canvas', {chrome: CANVAS_CHROME, runs})
-  const binding = frameB.canvasBinding(frame)
-  assert.deepEqual([binding.values.light, binding.values.mode, binding.values.grid, binding.values.zoom, binding.values.save, binding.values.minimap], ['lit', 'select', true, 84, 'saved', true])
-  for (const key of ['items', 'lines', 'frames', 'sel', 'form', 'roles']) assert.equal(binding.values[key], undefined, `${key}: not published`)
-  await binding.write([{key: 'grid', value: false}, {key: 'mode', value: 'draw'}])
-  assert.deepEqual(runs, [{command: 'chrome', id: 't-snap'}, {command: 'chrome', id: 't-draw'}])
-  await binding.write([{key: 'grid', value: true}])
-  assert.equal(runs.length, 2, 'Snap already on is not pressed')
-  await binding.write([{key: 'minimap', value: true}])
-  assert.equal(runs.length, 2, 'the overview already shown is not pressed')
-  await binding.write([{key: 'minimap', value: false}])
-  assert.deepEqual(runs.at(-1), {command: 'chrome', id: 'l-overview'}, 'the frame\'s own overview toggle, pressed')
-  runs.length = 2
-  const drawing = frameB.canvasBinding(frameOf('canvas', {chrome: chromeFor('canvas', CANVAS_CHROME.controls.map(c => c.label === 'Draw' ? {...c, pressed: true} : c)), runs}))
-  assert.equal(drawing.values.mode, 'draw')
-  await drawing.write([{key: 'mode', value: 'select'}])
-  assert.deepEqual(runs.at(-1), {command: 'chrome', id: 't-draw'}, 'back to select: Draw pressed off')
-  for (const key of ['zoom', 'promote', 'declare', 'suggest', 'checkAsk']) assert.match(binding.standing[key].disabled, /missing op/, key)
+  const binding = frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME, runs}))
+  const v = binding.values
+  assert.deepEqual(JSON.parse(v.items).map(item => [item.id, item.kind, item.name]), [['e:root', 'card', 'Root of the board'], ['e:q', 'sticky', 'A question of the frame'], ['e:sacral', 'card', 'Second card']])
+  assert.deepEqual(JSON.parse(v.lines), [['e:q', 'e:root'], ['e:root', 'e:sacral']], 'the selected line first, as the design reads it')
+  assert.deepEqual(JSON.parse(v.frames), [{title: 'A frame of the board', members: ['e:root', 'e:sacral']}])
+  assert.deepEqual([v.cx, v.cy, v.zoom], [0, 0, 84], 'the board point at the pane\'s centre and the zoom in percent')
+  assert.deepEqual([v.sel, v.mode, v.grid, v.minimap, v.save, v.light], ['e:q', 'select', true, true, 'saved', 'lit'])
+  assert.deepEqual([v.lineKind, v.fromSide, v.toSide, v.label, v.direction], ['elbow', 'right', 'left', 'asks', undefined])
+  await binding.write([{key: 'cx', value: 120}, {key: 'cy', value: -40}, {key: 'zoom', value: 50}])
+  assert.deepEqual(runs, [{command: 'canvas', action: 'camera', cx: 120, cy: -40, zoom: 50}], 'one camera command for the three, through the frame\'s own fly')
+  await binding.write([{key: 'zoom', value: 120}])
+  assert.deepEqual(runs.at(-1), {command: 'canvas', action: 'camera', cx: 0, cy: 0, zoom: 120}, 'a zoom alone keeps the centre the frame reports')
+  await assert.rejects(() => binding.write([{key: 'zoom', value: 400}]), /5 % to 200 %/)
+  runs.length = 0
+  await binding.write([{key: 'grid', value: false}, {key: 'mode', value: 'draw'}, {key: 'minimap', value: false}])
+  assert.deepEqual(runs, [{command: 'chrome', id: 't-snap'}, {command: 'chrome', id: 't-draw'}, {command: 'chrome', id: 'l-overview'}], 'the frame\'s own toggles, pressed')
+  await binding.write([{key: 'grid', value: true}, {key: 'minimap', value: true}])
+  assert.equal(runs.length, 3, 'a toggle already standing is not pressed')
+  for (const key of ['add', 'lineKind', 'promote', 'declare', 'suggest', 'view']) assert.match(binding.standing[key].disabled, /missing op/, key)
   assert.match(binding.standing.declare.disabled, /wiki-shape validate · declare · compress/)
-  assert.match(binding.standing.suggest.disabled, /Decision helper/)
-  assert.match(frameB.canvasBinding(frameOf('timeline', {chrome: TIMELINE_CHROME})).standing.mode.disabled, /timeline lens/, 'another lens: its controls say why')
+  const elsewhere = frameB.canvasBinding(frameOf('timeline', {chrome: TIMELINE_CHROME}))
+  assert.equal(elsewhere.values.items, undefined, 'the frame presents no Canvas: no board')
+  assert.match(elsewhere.standing.mode.disabled, /timeline lens/, 'another lens: its controls say why')
 })
 
 test('Light and the Lens: no reachable owner, so no reading and every control refused naming the operation', async () => {
@@ -416,7 +479,7 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
   const cases = [
     ['palace', 'techne__palace.tsx', palaceB.palaceBinding(state), key => palaceB.palaceAbsent(state, key)],
     ['palace (outside)', 'techne__palace.tsx', palaceB.palaceBinding({phase: 'outside'}), key => palaceB.palaceAbsent({phase: 'outside'}, key)],
-    ['graph', 'knowledge-graph__graph.tsx', graphB.graphBinding(surface, answered, writes), key => graphB.graphAbsent(surface, answered, key)],
+    ['graph', 'knowledge-graph__graph.tsx', graphB.graphBinding(surface, graphB.surfaceRead(surface), writes), key => graphB.graphAbsent(surface, graphB.surfaceRead(surface), key)],
     ['graph (closed)', 'knowledge-graph__graph.tsx', graphB.graphBinding(null, null, writes), key => graphB.graphAbsent(null, null, key)],
     ['journey', 'techne__journey.tsx', frameB.journeyBinding(frame('journey')), key => frameB.journeyAbsent(frame('journey'), key)],
     ['timeline', 'techne__timeline.tsx', frameB.timelineBinding(frame('timeline'), LAW([])), key => frameB.timelineAbsent(frame('timeline'), key)],
@@ -439,7 +502,7 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
     }
   }
   // The classification as it stands (the RECEIPT's summary): nothing of a design's sample is a reading.
-  assert.ok(summary.palace.reading >= 20 && summary.graph.reading >= 16 && summary.timeline.reading >= 5 && summary.canvas.reading >= 5, JSON.stringify(summary))
+  assert.ok(summary.palace.reading >= 20 && summary.graph.reading >= 17 && summary.timeline.reading >= 13 && summary.canvas.reading >= 16 && summary.journey.reading >= 30, JSON.stringify(summary))
   assert.equal(summary.light.reading + summary.lens.reading, 0)
   console.log('key classification', JSON.stringify(summary))
   session.resetPalaceSession()
@@ -453,11 +516,12 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
   const cases = [
     [DESIGNS.palace, palaceB.palaceBinding(state), /Archetypal-Earth — wiki local whole|Start of the argument|ai-kit/, ['The Stone', 'Mercurius'], [palaceB.PALACE_REFUSE.audience]],
     [DESIGNS.palace, palaceB.palaceBinding({phase: 'outside'}), /Archetypal-Earth|Start of the argument|Actuation/, [], [palaceB.NOT_INSIDE]],
-    [DESIGNS.graph, graphB.graphBinding(fakeSurface(), answered, writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.GRAPH_REFUSE['aperture.mode']]],
+    [DESIGNS.graph, graphB.graphBinding(fakeSurface(), graphB.surfaceRead(fakeSurface()), writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.GRAPH_REFUSE['aperture.mode']]],
     [DESIGNS.graph, graphB.graphBinding(null, null, writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.NOT_OPEN]],
-    [DESIGNS.journey, frameB.journeyBinding(frameOf('journey', {journey: {sceneIndex: 1, sceneCount: 3, sceneName: 'Print', journeyPlaying: false}})), /Nocturne|Weather|Fine, irregular stippling/, ['Print'], [frameB.JOURNEY_REFUSE.playing]],
-    [DESIGNS.timeline, frameB.timelineBinding(timelineFrame, LAW([])), /Naassene|Kabbala|Late antiquity/, ['1700'], [frameB.TIMELINE_REFUSE.mode]],
-    [DESIGNS.canvas, frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), /Which centre speaks first|Sacral|Lower three/, ['84'], [frameB.CANVAS_REFUSE.promote]],
+    [DESIGNS.journey, frameB.journeyBinding(frameOf('journey')), /Nocturne|Fine, irregular stippling\. Form|Language/, ['Gather', 'Rounded grains find a shared current.'], [frameB.JOURNEY_REFUSE.snap]],
+    [DESIGNS.journey, frameB.journeyBinding(frameOf('journey', {research: null})), /Nocturne|Fine, irregular stippling|Language/, [], []],
+    [DESIGNS.timeline, frameB.timelineBinding(timelineFrame, LAW([])), /Naassene|Kabbala|Late antiquity/, ['An event of the frame', '1700'], [frameB.TIMELINE_REFUSE.mode]],
+    [DESIGNS.canvas, frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), /Which centre speaks first|Sacral|Lower three/, ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.promote]],
     [DESIGNS.light, effects.lightBinding(), /The river dream|Grief, unsaid|Change jobs/, [], [effects.LIGHT_REFUSE['light.bounces']]],
     [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.lens']]],
   ]
@@ -526,6 +590,59 @@ test('the bindings name their owners and copy no design: no default, no fixture,
     assert.deepEqual(source.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)
   }
   assert.match(read('techne/devices/palaceBinding.ts'), /palaceSession\.ts/)
-  assert.match(read('techne/devices/graphBinding.ts'), /kernel\/src\/graph\.rs/)
-  assert.match(read('techne/devices/frameBindings.ts'), /HostedAppState/)
+  assert.match(read('techne/devices/graphBinding.ts'), /the kernel `graph` op/)
+  assert.match(read('techne/devices/graphBinding.ts'), /knowledgeGraphHandle\.ts reading, project, query/)
+  assert.match(read('techne/devices/frameBindings.ts'), /HostedAppState\.research/)
+})
+
+test('B: the open graph publishes its own reading, register, query, selection act and overview toggle on its handle (source reading)', () => {
+  const surface = readFileSync(new URL('../../../../desktop/cradle/src/knowledge/KnowledgeSurface.tsx', import.meta.url), 'utf8')
+  const handle = readFileSync(new URL('../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle.ts', import.meta.url), 'utf8')
+  const canvas = readFileSync(new URL('../../../../desktop/cradle/src/knowledge/GraphCanvas.tsx', import.meta.url), 'utf8')
+  for (const member of ['readonly reading: GraphReading | null', 'readonly loading: boolean', 'readonly project: string | undefined', 'readonly query: string', 'readonly minimap: boolean', 'select(ref: string): void', 'setMinimap(on: boolean): void'])
+    assert.ok(handle.includes(member), `the handle declares ${member}`)
+  assert.match(surface, /reading:model\?\?null,loading:busy,project:binding\.project,query:visit\.query,minimap,/, 'the surface publishes the reading it draws, with its register and query')
+  assert.match(surface, /select:selectRef,setMinimap/, 'its own acts: the canvas press and the overview toggle')
+  assert.match(surface, /pressRef\.current=\(ref:string\)=>\{[\s\S]*?select\(node\);/, 'a select by ref is the canvas\'s own press (select)')
+  assert.match(surface, /<GraphCanvas minimap=\{minimap\} onMinimap=\{setMinimap\}/, 'the canvas draws the overview the surface holds')
+  assert.match(canvas, /const minimap=props\.minimap\?\?ownMinimap;/, 'a canvas no surface holds keeps its own overview')
+})
+
+test('A: the frame announces its research reading and runs the walk\'s and the camera\'s acts as its own (source reading)', () => {
+  const app = readFileSync(new URL('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/app.ts', import.meta.url), 'utf8')
+  const instruments = readFileSync(new URL('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx', import.meta.url), 'utf8')
+  const boundary = readFileSync(new URL('../../../expressions-boundary/src/protocol.ts', import.meta.url), 'utf8')
+  assert.match(app, /journeyReadingOf\(store\.document,\{index:sceneIndex,local:sceneElapsed,playing:journeyPlaying,entered:crossingStands\}\),\.\.\.\(researchInstruments\?\.reading\(\)\?\?\{\}\)/, 'the walk from the Journey document, the board and ruler from the instruments')
+  assert.match(app, /\.\.\.researchState\(\),\.\.\.chromeState\(\)\};/, 'announced with the state')
+  assert.match(app, /jumpToJourneyTime\(expressionTiming\(store\.document,command\.index,command\.seconds\?\?0\)\.time\)/, 'stand: the transport\'s own jump')
+  assert.match(app, /setSavedScenePlay\(true\)/, 'play: the scene strip\'s own Play')
+  assert.match(app, /journeyInstrument\.enter\(\)/, 'enter: the presented beat\'s own Enter')
+  assert.match(app, /returnToJourney\(\);break;/, 'return: the crossing\'s own return')
+  assert.match(app, /researchInstruments\.setCamera\(command\)/, 'the camera: the canvas\'s own fly')
+  assert.match(instruments, /flyToNode\('',viewportOf\(camera,pane\)\)/, 'the overview\'s own path')
+  assert.match(boundary, /const research = readFrameResearch\(raw\.research\);/, 'the boundary reads it exactly or refuses the reading')
+})
+
+test('the Torus\'s Stage page on the stage the frame announced: its slots and bindings; Evaluate, Bind, Unbind and Retire named with what no route carries', async () => {
+  const torusDevice = await import('../src/live/torusDevice.ts')
+  const {torus} = await import('../src/inhabitants/catalogue/panels/torus.tsx')
+  const {readFrameStage} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
+  const stage = readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false,
+    slots: [{slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1}, {slot: 'material.damping'}, {slot: 'clock.inscription'}, {slot: 'clock.lensing'}],
+    bindings: [{procedure: 'ta-onta:stage:cli-bound', revision: 2, trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}]})
+  const binding = torusDevice.torusDesignBinding(null, undefined, {}, stage)
+  assert.deepEqual(JSON.parse(binding.values['stage.slots'])[0], {slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1})
+  assert.deepEqual(JSON.parse(binding.values['stage.bindings']), [{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}])
+  for (const key of ['stage.procedures', 'stage.procedure', 'stage.last', 'stage.why']) assert.equal(binding.values[key], undefined, `${key}: no route carries it`)
+  assert.match(binding.standing['stage.evaluate'].disabled, /a list of the ql\.stage-procedure\/v1 procedures you keep/)
+  for (const key of ['stage.bind', 'stage.unbind', 'stage.retire']) assert.match(binding.standing[key].disabled, /missing op: stage-bind, stage-unbind and stage-retire through the frame's instrument session/, key)
+  const none = torusDevice.torusDesignBinding(null, undefined, {}, null)
+  assert.equal(none.values['stage.slots'], undefined)
+  assert.match(none.standing['stage.slots'].disabled, /has disclosed no stage yet/)
+  // the design draws the stage on that binding, on its Stage page, with nothing absent drawn as text
+  host.setHostPage(binding.id, 'stage')
+  const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+  host.resetHost(binding.id)
+  assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
+  assert.ok(markup.includes(escaped(torusDevice.TORUS_ABSENT['stage.bind'])), 'Bind says why it cannot act')
 })

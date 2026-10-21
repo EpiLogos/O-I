@@ -248,6 +248,18 @@ export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   sunrise: 'No observer place reaches the shell, so no sunrise is read.',
   sunset: 'No observer place reaches the shell, so no sunset is read.',
   place: 'No observer place reaches the shell.',
+  // The Share page (manual §22.1): consent is Nara's presence. The kernel's nara_presence prepares and publishes one presence publication
+  // (desktop/cradle/src/nara/nativePresence.ts: field, world, projection and participant refs the Sky does not hold); nothing reads the
+  // world's participants or the consents you hold to the shell.
+  'presence.participants': 'The world\'s participants: no owner operation carries them here — missing op: a read of the world\'s participants for the Sky (Nara\'s presence, through the kernel).',
+  'presence.target': 'No participants are read here, so there is no one to choose — missing op: a read of the world\'s participants (Nara\'s presence, through the kernel).',
+  'presence.consents': 'The consents you hold: no owner operation carries them here — missing op: `ql nara presence-consent` read through the kernel (nara_presence only prepares and publishes).',
+  'presence.shared': 'Who has shared their sky with you: no owner operation carries it here — missing op: `ql nara presence-consent` read through the kernel.',
+  'presence.share': 'Share: no owner operation carries it here — missing op: nara_presence publish from the Sky, which holds none of the world, projection and participant refs a publication needs.',
+  'natal.of': 'Whose birth sky rings: the ring opens on the identity Launch gave the Sky; opening another\'s needs their consent read — missing op: `ql nara presence-consent` through the kernel.',
+  // The Rack page (manual §16.16): M2′'s rack is the M registry read coordinate by coordinate.
+  rack: 'No rack reading: no owner reports the parts of M2′\'s rack or which of them stand verified — missing op: `ql kernel ledger <coordinate>` through the kernel (Quaternal Logic).',
+  'rack.part': 'No rack reading, so no part of it is chosen — missing op: `ql kernel ledger <coordinate>` through the kernel (Quaternal Logic).',
 }
 
 /** The keys the view holds (DesignBinding.local): the date it asks for, and its own drawing choices. */

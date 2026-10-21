@@ -17,7 +17,10 @@ import type {InhabitantManifest} from './manifest.ts'
  *   still waits, with its owner named.
  * - The torus lives in the retained M4 body's stage (the QL instrument
  *   presentation); the M3 clock/inscription is #281's packet — law today,
- *   not landed. The M1–M3 matrices have no shell-side owner and wait.
+ *   not landed. The M′ matrices stand on the owners that answer (the mode
+ *   catalogue, the mode in force, the M3 form) and name the M1 engine,
+ *   the partners and the kernel's operators absent with their routes;
+ *   Binding stands on the form's hexagram and its own physics.
  * - The Deck reads the open journey (`ql.nara-oracle-journey/v1`, the kernel's
  *   nara_journey) and the Chakra your elements (`ql.nara-elemental-reading/v1`,
  *   the kernel's nara_elemental): both cut (T-WORLDS W4), each held by the
@@ -119,8 +122,24 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         id: 'm-prime-matrices',
         presentations: ['expanded', 'full'],
         liveSemantic: 'device-instrument',
-        admission: 'waiting',
-        note: 'The physical music instrument matrices (M1–M2–M3–M4, QL-MEF #281, owner D13: M1 is the oscillator source; M2 never a second generator). Waits for #281\'s nine commissioned packets and their integrator.',
+        // The four layers are the insides of the instruments' racks (manual §22.6, §16.16): open a layer from the rack of its instrument —
+        // M1′ to M4′ — or all four here; it opens on a chain and as a pane.
+        heldBy: ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4'],
+        invariant: {generates: 'kernel:m3_reception'},
+        note: 'What the torus is made of, in four layers (manual §22.6; ql/devices/qlMatrices.ts). The Reading is QL\'s mode catalogue (ql.music-modes/v1 through the kernel\'s music_modes_read), '
+          + 'its cell the Live transport\'s mode in force; the Form\'s cell is the person\'s M3 form, moved by m3_reception\'s select-form. The Oscillator waits on `ql kernel m1`, the codons and '
+          + 'the partners on `ql kernel m3` and ql_m3_apply_matrix, the Kernel page\'s answers on `ql kernel apply` — none has a kernel op yet — and the Situation on the M′ packets (QL-MEF #281). '
+          + 'M1 is the oscillator source; M2 is never a second generator (owner D13).',
+      },
+      {
+        id: 'binding',
+        presentations: ['compact', 'expanded', 'full'],
+        liveSemantic: 'device-instrument',
+        // M3′'s rack holds it beside the Deck and the Resonator bank (manual §16.16), and it sits in the Studio's body chain (§22.8).
+        heldBy: ['techne:m3', 'studio:body'],
+        invariant: {generatesAbsent: 'Binding writes to no owner: it takes the kernel\'s symbols — the form\'s hexagram through m3_reception — and runs its own physics over them; the matrix\'s generation cell waits on ql_m3_generate (lock §7).'},
+        note: 'M3′\'s view of form as charge (manual §22.8; ql/devices/qlBinding.ts): the codons a matrix holds together, drawn as colour charges bound by strings. Its tension, coupling, '
+          + 'pairing and charge are its own; the cell, its codons\' charges, the nonet and the kernel events that move it wait on their kernel ops, and the device says which.',
       },
     ],
     params: {grammar: 'quaternal-logic/parameter-address/v1'},

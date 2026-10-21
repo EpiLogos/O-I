@@ -20,11 +20,12 @@
 // `full`), which the pane draws over the design's; its chain picture — the net and the face list it drew before — is the design's.
 // A device's pop-out (or redock) is a mark of its place: it stands in the device's head, the generic plate's and the design's alike.
 //
-// The chains are exactly §16.2's (R4; lock §0.3.4): a workspace's chain is the Packet, the Agent that answers and its Scope — then, on a
-// workspace that holds code, Ground hygiene and Impact; the Main track's chain is the Day, then Approvals. Which one Device view shows
-// follows THE selection, as Live's follows the selected track (centralChainOf): the Main track (the grid's Main head, or the Day's
-// stream and its clips) shows the Day's; any other Central track or clip shows the workspace's; with no Central selection both stand,
-// the Main track's first, until the tracks are Central's workspaces (R3). The page family — Workspace, Document, Flow, Beings, Things,
+// The chains are exactly §16.2's (R4; lock §0.3.4; centralChainSlots): a world's chain is the Packet, the agent of the world and its Scope —
+// then, on a world whose folder holds code, Ground hygiene, Machine and Impact; the Main track's chain is the Day, then Approvals. A world
+// holds code when it is a project's and Central's git reading finds the project's repository (kernel git_repository_read); your own world
+// keeps its pages in Control/user/flows and holds none. Which chain Device view shows follows THE selection, as Live's follows the
+// selected track (centralChainOf): the Main track (the grid's Main head, or the Day's stream and its clips) shows the Day's; a world's
+// track or page shows that world's; with no Central selection both stand, the Main track's first, the world's naming no world. The page family — Workspace, Document, Flow, Beings, Things,
 // Text, Highlight and Notes — is no chain's (§16.1: a page's Clip panel, editor tabs and tools in Clip view; the workspace its track
 // head): their designs and bindings stay (pageBindings.ts, pageDevices.ts) for Clip view, and only the document the hand reached is still
 // read here, for the Agent's and Scope's page. Search is no chain device (§18.4: a pane, and the line where you type @: searchPane.tsx).
@@ -57,7 +58,7 @@ import {dayStandingKey} from '../../owners/day'
 import {useSpineEpoch} from '../../owners/spine'
 import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
-import {CENTRAL_FAMILY, CENTRAL_MAIN_FACES, CENTRAL_WORKSPACE_FACES, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
+import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
 import {beginDayMove, centralWrite, centralWriters, closeCarry, openToday, openTomorrow, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane} from '../documents/documentDoor'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
@@ -78,6 +79,14 @@ import {RACK_PROJECT as APPROVALS_PROJECT} from '../../agent/devices/useRackRead
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
 import {MAIN_TRACK_REF} from '../../frame/tracks/SessionGrid'
 import {CENTRAL_DAY_TRACK_ID} from '../../timeline/centralTrackAdapter'
+import {centralWorldTrackId} from '../../timeline/centralTrackAdapter'
+import {useHeldRead, useOwnerOp} from '../../owners/ownerCall'
+import {readWorlds, type CentralWorld, type CentralWorldsReading} from '../centralWorlds'
+import {MACHINE_DEVICE_ID} from './machineBinding'
+import {VOICE_ID, voiceBinding, voiceDevice} from '../../agent/devices/voiceBinding'
+import {voiceBodyReadings, type AnswerVoiceState, type VoiceKey} from './answerVoice'
+import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from './sourceReturnAccept'
+import {useMachineDevice} from './machineDevice'
 import {useRosterAgents} from '../../owners/readers'
 import {bindConversation} from './centralDeviceWrites'
 import {useAgencySessions} from '../../agent/useAgencySessions'
@@ -92,6 +101,8 @@ import './centralDevices.css'
 
 /** The root register's world, whose effective sources Scope reads (central.world.effective-sources {scope, world_ref}). */
 const ROOT_WORLD_SOURCES: Readonly<Record<string, unknown>> = {scope: 'root', world_ref: 'control:root'}
+/** An action asked with no input (Central's personal anchor). */
+const NO_INPUT: Readonly<Record<string, unknown>> = {}
 
 export interface CentralConversationAperture {
   readonly project: string | null
@@ -160,7 +171,8 @@ export function centralPublication(entry: CentralDeviceEntry, binding: DesignBin
 }
 
 /** The family's faces that stand on a chain (DLW §16.2; centralDeviceModel.ts CENTRAL_DEVICE_FACES): the Day on the Main track; the
- * Packet, Ground hygiene and Impact on a workspace. Every other face the family declares stands on no chain (R4). */
+ * Packet on a world's track, and Ground hygiene, Machine and Impact on a world whose folder holds code. Every other face the family
+ * declares stands on no chain (R4). */
 export function placedFaces(faces: readonly InhabitantFaceDeclaration[]): InhabitantFaceDeclaration[] {
   return chainFaces(faces)
 }
@@ -179,6 +191,44 @@ export function centralChainOf(selection: {readonly kind: string; readonly ref: 
  * (timeline/centralTrackAdapter.ts CENTRAL_DAY_TRACK_ID: "the Day is the Main track"). */
 const MAIN_TRACKS: ReadonlySet<string> = new Set([MAIN_TRACK_REF, CENTRAL_DAY_TRACK_ID])
 
+/** The world a chain stands for (DLW §16.2 "Track: a world"): none while no world's track is selected; your own world; or a project's, with
+ * whether its folder holds code — Central's git reading of the project (kernel git_repository_read) found its repository (`holds`), said it
+ * has none (`none`), has not answered (`reading`), or refused in its own words. */
+export type ChainWorld =
+  | {readonly kind: 'none'}
+  | {readonly kind: 'yours'; readonly name: string}
+  | {readonly kind: 'project'; readonly name: string; readonly project: string; readonly code: 'holds' | 'none' | 'reading' | {readonly refused: string}}
+
+/** The world THE selection's track holds: a world's track (`central:world:<ref>`, timeline/centralTrackAdapter.ts centralWorldTrackId) or a
+ * page on it, found among the worlds Central discloses. Null for any other selection, or a world not (yet) disclosed. Pure. */
+export function centralWorldOf(selection: {readonly kind: string; readonly ref: string; readonly track?: string} | null | undefined, worlds: CentralWorldsReading | null): CentralWorld | null {
+  const at = selection?.kind === 'track' ? selection.ref : selection?.kind === 'clip' ? selection.track : undefined
+  if (!at || worlds?.state !== 'read') return null
+  return worlds.worlds.find(world => centralWorldTrackId(world.ref) === at) ?? null
+}
+
+/** The chain's world from the selected world and the git reading of its project. Pure. */
+export function chainWorldOf(world: CentralWorld | null, git: {readonly status: string; readonly error?: string | null} | null): ChainWorld {
+  if (!world) return {kind: 'none'}
+  if (world.kind === 'yours' || !world.project) return {kind: 'yours', name: world.name}
+  const code = !git || git.status === 'reading' ? 'reading' as const : git.status === 'answered' ? 'holds' as const
+    : /no git repository/i.test(git.error ?? '') ? 'none' as const : {refused: git.error ?? 'Central\'s git reading did not answer.'}
+  return {kind: 'project', name: world.name, project: world.project, code}
+}
+
+/** Whether the world's folder holds code (DLW §16.2): a project's world whose repository Central's git reading found. */
+export const worldHoldsCode = (world: ChainWorld): boolean => world.kind === 'project' && world.code === 'holds'
+
+/** The devices of a Central chain, left to right (DLW §16.2): the Main track's — the Day, then Approvals; a world's — the Packet, the agent
+ * of the world (with its Voice right after it: §19.21 "after the Agent, on any track an agent speaks on" — the Answer's voice speaks on
+ * Central's) and its Scope, then, on a world whose folder holds code, Ground hygiene, Machine and Impact. Every slot is an effect or an
+ * instrument of its family; no monitor and no connection stands on a Central chain. Pure. */
+export function centralChainSlots(track: 'main' | 'world', world: ChainWorld): string[] {
+  if (track === 'main') return [DAY_DEVICE_ID, CENTRAL_APPROVALS_ID]
+  return [centralDeviceId('packet'), CENTRAL_AGENT_ID, VOICE_ID, CENTRAL_SCOPE_ID,
+    ...(worldHoldsCode(world) ? [centralDeviceId('ground-hygiene'), MACHINE_DEVICE_ID, centralDeviceId('impact')] : [])]
+}
+
 /** The devices of other families on Central's chains: the Agent and Scope on a workspace (§19.4, §19.12), Approvals on the Main track
  * (§18.1 "its chain holds the Day, then Approvals"; §19.14) — each its family's admitted face, drawn by that face's design. */
 export const CENTRAL_SCOPE_DEVICE_ID = CENTRAL_SCOPE_ID
@@ -188,6 +238,17 @@ export const centralAgentDevices = () => ({
   scope: familyFaceDevice(CENTRAL_SCOPE_ID, 'software-factory', 'context-write-mode', 'Scope', 'orbit'),
   approvals: familyFaceDevice(CENTRAL_APPROVALS_ID, 'software-factory', 'approvals', 'Approvals', 'arm'),
 })
+
+/** Voice on Central's chain (agent/devices/voiceBinding.ts) with what the open voice's own answers carry read over its absences
+ * (answerVoice.ts voiceBodyReadings): a reading that answers stands as a reading, and Voice's chooser (voice.voice) stays a control no owner
+ * operation carries (VOICE_REFUSE). Pure. */
+export function centralVoiceBinding(state: AnswerVoiceState, why: string | null, write: (key: VoiceKey, value: unknown) => Promise<void>): DesignBinding {
+  const binding = voiceBinding({state, why}, write)
+  const readings = voiceBodyReadings(state)
+  const standing = {...binding.standing}
+  for (const key of Object.keys(readings)) if (key !== 'voice.voice') delete standing[key]
+  return {...binding, values: {...binding.values, ...readings}, standing}
+}
 
 /** The Answer's id on the door (its design is `central:nara-conversation`, catalogue/panels/central__nara-conversation.tsx). */
 export const ANSWER_DEVICE_ID = centralDeviceId('nara-conversation')
@@ -333,9 +394,9 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   return {facts, document, binding}
 }
 
-/** Central's chains (DLW §16.2): the Main track's — the Day, then Approvals — and a workspace's — the Packet, the Agent, Scope, then Ground
- * hygiene and Impact —, compact, each published so the pool, a pane and the rail draw the same device on the same binding. Which stands
- * follows THE selection (centralChainOf). */
+/** Central's chains (DLW §16.2): the Main track's — the Day, then Approvals — and a world's — the Packet, the Agent, Scope, then, on a world
+ * whose folder holds code, Ground hygiene, Machine and Impact —, compact, each published so the pool, a pane and the rail draw the same
+ * device on the same binding. Which stands follows THE selection (centralChainOf, centralWorldOf). */
 export function CentralDevicesChain({transport, dayStanding, day = null, conversation = null, flow = null, impact = null, projects, deviceWindows = null}: CentralDevicesProps) {
   const manifest = inhabitantManifest(CENTRAL_FAMILY)
   const dayDevice = useDayDevice(transport, dayStanding ? {standing: dayStanding, aperture: day} : null)
@@ -353,6 +414,18 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // the companion's own: the read the Packet widget and the transport's Key slot make, useCentralTransport.tsx usePacketReading).
   const selection = useOptionalContinuity()?.current.context?.selection ?? null
   const selectionRef = selection?.ref ?? null
+  // The world the selected track holds (§16.2 "Track: a world"), from the worlds Central discloses — the one held reading the tracks read
+  // (frame/tracks/useCentralTracks.ts) — and, for a project's world, whether its folder holds code: Central's git reading of the project.
+  const worldsAnswer = useHeldRead(['worlds', transport], () => readWorlds(transport))
+  const worlds = worldsAnswer.status === 'answered' ? worldsAnswer.value ?? null : null
+  const selectedWorld = centralWorldOf(selection, worlds)
+  const codeProject = selectedWorld?.kind === 'project' ? selectedWorld.project : null
+  const git = useOwnerOp(transport, codeProject ? {op: 'git_repository_read', project: codeProject} : null, 'git_repository_reading').reading
+  const chainWorld = useMemo(() => chainWorldOf(selectedWorld, codeProject ? {status: git.status, error: git.error} : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the world is its ref
+    [selectedWorld?.ref, codeProject, git.status, git.error])
+  // Machine (§18.7) reads while it stands: on a world whose folder holds code.
+  const machine = useMachineDevice(transport, worldHoldsCode(chainWorld))
   const packetReading = usePacketReading(transport, selectionRef)
   const agency = useAgencySessions(transport)
   const nowUnixMs = useAgentSessionsOptional()?.nowUnixMs ?? 0
@@ -406,6 +479,11 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // nara_voice, the face's mouth following the spoken sound). It stands on no chain (R4): the door holds it, so a pane, its own window
   // and the rail open it — mostly the face, the conversation small and optional beside it.
   const voice = useAnswerVoice({transport, conversation, bound: nara.state === 'bound', session: nara.session, send: answerSend, reading: answerObserved?.reading})
+  // Voice (actuation:voice, §19.21 "after the Agent, on any track an agent speaks on"): the Answer's voice is the one voice owner, so Voice
+  // stands after Central's Agent (agent/devices/voiceBinding.ts). What the open voice's own answers carry — its constitution's declared
+  // voice, duplex, barge-in and stop, and the last speak's receipt (answerVoice.ts voiceBodyReadings) — is read over the binding's absences.
+  const voiceDev = useMemo(() => voiceDevice(), [])
+  const voiceDesign = useMemo(() => centralVoiceBinding(voice.state, voice.why, voice.write), [voice.state, voice.why, voice.write])
   const answerPage = pages.reads.page?.title ?? null
   const answerPacket = typeof packet.values.packet === 'string' ? packet.values.packet : null
   const answer = useMemo(() => answerBinding(ANSWER_DEVICE_ID, {...answerInput, page: answerPage !== null ? {title: answerPage} : null,
@@ -461,15 +539,21 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // Factory's Approvals shares (Central refuses the root register: "project is required").
   const returns = useSourceReturnsAnswer(transport, APPROVALS_PROJECT).reading
   const returned = returns.status === 'answered' ? returns.value : null
+  // Approve (W2, as Factory's Main track): the person who accepts is the principal Central's personal anchor names, asked only while a
+  // proposal waits; the press is Central's projectcentral.source.return_accept (sourceReturnAccept.ts, action.rs PERSON_ACTS).
+  const waiting = !!returned?.entries.some(entry => entry.status === 'pending')
+  const anchor = useCentralAction(transport, PERSONAL_ANCHOR_ACTION, waiting ? NO_INPUT : null)
+  const person = anchor.status === 'answered' ? personRefOf(anchor.value) : null
   const approvals = useMemo(() => {
     const actions = answerHandle && 'actions' in answerHandle ? answerHandle.actions : undefined
     const binding = approvalsBinding({gateway: {}, session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()}, null,
-      actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}, CENTRAL_APPROVALS_ID)
+      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, APPROVALS_PROJECT, row, person)},
+      CENTRAL_APPROVALS_ID)
     return {...binding, standing: {...binding.standing, approvals: {disabled: CENTRAL_DEFAULT_ANSWER}}}
-  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs])
+  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person])
   const others = useMemo(() => centralAgentDevices(), [])
   const bindingOf = (id: string): DesignBinding | null => (id === DAY_DEVICE_ID ? dayBinding : id === HYGIENE_DEVICE_ID ? hygiene : id === IMPACT_DEVICE_ID ? impactDesign
-    : id === PACKET_DEVICE_ID ? packet : null)
+    : id === MACHINE_DEVICE_ID ? machine : id === PACKET_DEVICE_ID ? packet : null)
   // What stands on the door now; a device that left the chain leaves the door too. The family's faces that stand on no chain (the page
   // family, Agent identity, Context & world, Search) are cleared once, so nothing stale of them stays on the door; the Answer stands
   // there on its own binding (above), on no chain.
@@ -480,18 +564,19 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     for (const entry of entries) publishDevice(entry.id, centralPublication(entry, bindingOf(entry.id)))
     published.current = now
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bindingOf reads the bindings named here
-  }, [entries, dayBinding, hygiene, impactDesign, packet])
+  }, [entries, dayBinding, hygiene, impactDesign, machine, packet])
   useEffect(() => { if (answerDevice) publishDevice(ANSWER_DEVICE_ID, {device: answerDevice, binding: answer}) }, [answerDevice, answer])
   useEffect(() => {
     if (others.agent) publishDevice(CENTRAL_AGENT_ID, {device: others.agent, binding: agent})
     if (others.scope) publishDevice(CENTRAL_SCOPE_ID, {device: others.scope, binding: scope})
     if (others.approvals) publishDevice(CENTRAL_APPROVALS_ID, {device: others.approvals, binding: approvals})
   }, [others, agent, scope, approvals])
+  useEffect(() => { if (voiceDev) publishDevice(VOICE_ID, {device: voiceDev, binding: voiceDesign}) }, [voiceDev, voiceDesign])
   useEffect(() => {
     for (const id of [IDENTITY_DEVICE_ID, CONTEXT_WORLD_DEVICE_ID, SEARCH_DEVICE_ID]) publishDevice(id, null)
     return () => {
       for (const face of manifest?.faces ?? []) publishDevice(centralDeviceId(face.id), null)
-      for (const id of [CENTRAL_AGENT_ID, CENTRAL_SCOPE_ID, CENTRAL_APPROVALS_ID]) publishDevice(id, null)
+      for (const id of [CENTRAL_AGENT_ID, VOICE_ID, CENTRAL_SCOPE_ID, CENTRAL_APPROVALS_ID]) publishDevice(id, null)
     }
   }, [manifest])
   const place = centralChainOf(selection)
@@ -506,21 +591,36 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       {icon: 'detail', label: `Select ${title}: the keys and the status bar speak to it; its expanded view stands whole above the chain`, onPress: () => selectDevice(id)},
       {icon: 'pane', label: full, onPress: () => openFull(id, title)},
     ]} /></div>
-  const of = (faces: readonly string[]) => faces.flatMap(face => entries.filter(entry => entry.id === centralDeviceId(face)))
-  const [packetEntry, ...codeEntries] = of(CENTRAL_WORKSPACE_FACES)
+  // Each slot of §16.2's chains, by its device's id: the family's own faces, and the Agent, Scope and Approvals of the families that own them.
+  const otherSlots: Readonly<Record<string, ReactNode>> = {
+    [CENTRAL_AGENT_ID]: otherSlot(CENTRAL_AGENT_ID, others.agent, agent, 'the Agent', 'Open the Agent full in a pane: its thread'),
+    [VOICE_ID]: otherSlot(VOICE_ID, voiceDev, voiceDesign, 'Voice', 'Open Voice full size in a pane'),
+    [CENTRAL_SCOPE_ID]: otherSlot(CENTRAL_SCOPE_ID, others.scope, scope, 'Scope', 'Open Scope full size in a pane'),
+    [CENTRAL_APPROVALS_ID]: otherSlot(CENTRAL_APPROVALS_ID, others.approvals, approvals, 'Approvals', 'Open Approvals full size in a pane'),
+  }
+  const slot = (id: string): ReactNode => {
+    if (id in otherSlots) return otherSlots[id]
+    const entry = entries.find(candidate => candidate.id === id)
+    return entry ? familySlot(entry) : null
+  }
+  const code = chainWorld.kind === 'project' ? chainWorld.code : null
+  const codeWords = chainWorld.kind === 'none' ? 'No world\'s track is selected.'
+    : chainWorld.kind === 'yours' ? 'Your world keeps its pages in Control/user/flows; its folder holds no code.'
+      : code === 'holds' ? `${chainWorld.name}'s folder holds code: Central's git reading found its repository.`
+        : code === 'none' ? `${chainWorld.name}'s folder holds no code: Central's git reading finds no repository.`
+          : code === 'reading' ? `Reading whether ${chainWorld.name}'s folder holds code…`
+            : `Whether ${chainWorld.name}'s folder holds code is unknown: ${code && typeof code === 'object' ? code.refused : ''}`
   return <div className="central-devices-chain" data-central-devices={entries.length} data-central-track={place}>
     {encounters.observers}
     {place !== 'workspace' && <div className="central-track-chain" data-track="main" aria-label="Main track"
-      data-i="Main track|The Day's chain: the Day, then Approvals — the proposals the agents wait on, from every workspace.">
-      {of(CENTRAL_MAIN_FACES).map(familySlot)}
-      {otherSlot(CENTRAL_APPROVALS_ID, others.approvals, approvals, 'Approvals', 'Open Approvals full size in a pane')}
+      data-i="Main track|The Day's chain: the Day, then Approvals — the proposals the agents wait on, from every world.">
+      {centralChainSlots('main', chainWorld).map(slot)}
     </div>}
-    {place !== 'main' && <div className="central-track-chain" data-track="workspace" aria-label="Workspace"
-      data-i="Workspace|A workspace's chain: the Packet, the Agent that answers and its Scope; on a workspace that holds code, Ground hygiene and Impact.">
-      {packetEntry && familySlot(packetEntry)}
-      {otherSlot(CENTRAL_AGENT_ID, others.agent, agent, 'the Agent', 'Open the Agent full in a pane: its thread')}
-      {otherSlot(CENTRAL_SCOPE_ID, others.scope, scope, 'Scope', 'Open Scope full size in a pane')}
-      {codeEntries.map(familySlot)}
+    {place !== 'main' && <div className="central-track-chain" data-track="workspace" aria-label="World" data-world={chainWorld.kind}
+      data-code={code === null ? undefined : typeof code === 'object' ? 'refused' : code}
+      data-i={`World|A world's chain: the Packet, the agent of the world and its Scope; on a world whose folder holds code, Ground hygiene, Machine and Impact. ${codeWords}`}>
+      {centralChainSlots('world', chainWorld).map(slot)}
+      {code !== null && typeof code === 'object' && <p className="central-chain-note" role="status">{codeWords}</p>}
     </div>}
   </div>
 }

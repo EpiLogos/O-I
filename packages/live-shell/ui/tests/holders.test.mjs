@@ -59,7 +59,10 @@ test('the standing world passes the holder rules: every door face names known ho
   assert.deepEqual(find('atlas-earth', 'time-control').heldBy, ['techne:m2', 'techne:m0'], 'the Earth pane\'s clock is the 0 instrument\'s too')
   assert.deepEqual(find('quaternal-logic', 'torus').heldBy, ['studio:body'])
   assert.deepEqual(find('quaternal-logic', 'sky').heldBy, ['techne:m4', 'techne:m2'])
-  assert.deepEqual(find('quaternal-logic', 'm-prime-matrices').heldBy, [], 'a waiting face with no named holder carries none')
+  // Lane W4: the M′ matrices are admitted on the racks of the instruments whose layers they show (manual §22.6, §16.16), Binding on M3′'s
+  // rack and the Studio's body (§16.16, §22.8).
+  assert.deepEqual(find('quaternal-logic', 'm-prime-matrices').heldBy, ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4'])
+  assert.deepEqual(find('quaternal-logic', 'binding').heldBy, ['techne:m3', 'studio:body'])
   // T-WORLDS W4: the Deck and the Chakra read their owners — your personal layer (the Studio's Nara chain) and a Technē instrument.
   assert.deepEqual(find('quaternal-logic', 'deck').heldBy, ['studio:nara', 'techne:m3'])
   assert.deepEqual(find('quaternal-logic', 'chakra').heldBy, ['studio:nara', 'techne:m2'])

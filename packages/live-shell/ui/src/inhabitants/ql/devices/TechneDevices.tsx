@@ -56,6 +56,11 @@ import {qlM3Binding, qlM3Device, useQlM3, QL_M3_FACE, type QlM3State} from './ql
 import {qlDeckBinding, qlDeckDevice, useQlDeck, QL_DECK_FACE, type QlDeckState} from './qlDeck'
 import {qlChakraBinding, qlChakraDevice, useQlChakra, QL_CHAKRA_FACE, type QlChakraState} from './qlChakra'
 import {qlSittingBinding, qlSittingDevice, useQlSitting, QL_SITTING_FACE, type QlSittingState} from './qlSitting'
+import {qlBindingBinding, qlBindingDevice, QL_BINDING_DEVICE_ID, QL_BINDING_FACE} from './qlBinding'
+import {qlMatricesBinding, qlMatricesDevice, QL_MATRICES_DEVICE_ID, QL_MATRICES_FACE} from './qlMatrices'
+import {heldFor, useHolds} from '../../../techne/devices/designDevices'
+import {useLiveModeCatalogue, useLiveModeHold, type LiveModeCatalogueState, type LiveModeHold} from '../../../native/liveModeCatalogue'
+import type {Value} from '../../../frame/devices/designed'
 import './practiceLaunch'
 import type {DesignBinding} from '../../../frame/devices/designed'
 import {startsExpanded, TECHNE_FACE_ICONS} from './faces'
@@ -82,7 +87,14 @@ export interface TechneReadings {
   readonly chakra?: QlChakraState
   /** The sitting, timed by the transport (qlSitting.ts), with what you set. */
   readonly sitting?: QlSittingState
+  /** The QL mode catalogue and the transport's mode in force (native/liveModeCatalogue.ts): the M′ matrices' Reading. */
+  readonly modes?: QlModes
+  /** The view's own holds of the designs that keep their own settings (techne/devices/designDevices.ts): Binding's, the matrices'. */
+  readonly held?: Readonly<Record<string, Readonly<Record<string, Value>>>>
 }
+
+/** The mode catalogue as the kernel served it and the transport's mode as held. */
+export interface QlModes {readonly reading: LiveModeCatalogueState; readonly hold: LiveModeHold}
 
 /** The knowledge graph family's faces the Knowledge graph's design carries now (knowledge-graph__graph.tsx Reach, Filters, Display): they
  * stand on no chain. Their rows stay declared (knowledgeDevices.ts) for the setters the design writes through. */
@@ -138,7 +150,8 @@ export function techneEntries(manifests: readonly InhabitantManifest[], readings
   return manifests.flatMap(manifest => manifest.faces.filter(face => face.liveSemantic !== 'device-audio-fx')
     .filter(face => !(manifest.id === KNOWLEDGE_FAMILY && KNOWLEDGE_FACES_CARRIED.includes(face.id))).map((face): TechneEntry => {
     const waiting = face.admission === 'waiting'
-    if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3, readings.deck, readings.chakra, readings.sitting)
+    if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3, readings.deck, readings.chakra, readings.sitting,
+      {modes: readings.modes, held: readings.held})
     if (!waiting && manifest.id === ATLAS_FAMILY && isAtlasFaceId(face.id)) {
       const faceId = face.id
       return {family: manifest.id, face, device: atlasDevice(face, readings.atlas), picture: size => <Picture size={size} face={faceId}><AtlasFaceBody faceId={faceId} /></Picture>,
@@ -173,16 +186,23 @@ export function chainOf(holder: string, designs: readonly TechneEntry[]): {head:
 /** One Quaternal Logic face as a device: the field/PCM owner over its reading, any other face as the waiting device it is declared.
  * The Expressions Studio's Body · 3:3 holds two of them (sdk/semantics.ts STUDIO_SECTIONS) and draws them from here. */
 export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusState | null, instrumentReading: unknown, sky?: QlSkyState, m3?: QlM3State,
-  deck?: QlDeckState, chakra?: QlChakraState, sitting?: QlSittingState): TechneEntry {
+  deck?: QlDeckState, chakra?: QlChakraState, sitting?: QlSittingState, more: {modes?: QlModes; held?: TechneReadings['held']} = {}): TechneEntry {
   // The Sky draws its catalogue design on the dated sky the kernel reads (qlSky.ts); its picture is the design's own ring.
   if (face.id === QL_SKY_FACE && sky) return {family: QL_FAMILY, face, device: qlSkyDevice(face, sky), binding: qlSkyBinding(sky), picture: () => null}
   // The M3 clock draws its catalogue design on the person's M3 form (qlM3Clock.ts).
   if (face.id === QL_M3_FACE && m3) return {family: QL_FAMILY, face, device: qlM3Device(face, m3), binding: qlM3Binding(m3), picture: () => null}
   // The Deck draws its catalogue design on the open journey (qlDeck.ts); the Chakra on your elements (qlChakra.ts).
-  if (face.id === QL_DECK_FACE && deck) return {family: QL_FAMILY, face, device: qlDeckDevice(face, deck), binding: qlDeckBinding(deck), picture: () => null}
+  if (face.id === QL_DECK_FACE && deck) return {family: QL_FAMILY, face, device: qlDeckDevice(face, deck), binding: qlDeckBinding(deck, m3), picture: () => null}
   if (face.id === QL_CHAKRA_FACE && chakra) return {family: QL_FAMILY, face, device: qlChakraDevice(face, chakra), binding: qlChakraBinding(chakra, sky), picture: () => null}
   // The Sitting draws its catalogue design on the sitting the transport times (qlSitting.ts).
   if (face.id === QL_SITTING_FACE && sitting) return {family: QL_FAMILY, face, device: qlSittingDevice(face, sitting), binding: qlSittingBinding(sitting), picture: () => null}
+  // Binding draws its catalogue design on the form's hexagram and its own physics (qlBinding.ts); the M′ matrices on the mode catalogue,
+  // the mode in force and the M3 form (qlMatrices.ts). Each keeps its own settings in the view's holds.
+  const held = (id: string) => more.held?.[id] ?? heldFor(id)
+  if (face.id === QL_BINDING_FACE && m3) return {family: QL_FAMILY, face, device: qlBindingDevice(face), binding: qlBindingBinding({m3, held: held(QL_BINDING_DEVICE_ID)}), picture: () => null}
+  if (face.id === QL_MATRICES_FACE && m3 && more.modes) {
+    return {family: QL_FAMILY, face, device: qlMatricesDevice(face), binding: qlMatricesBinding({m3, modes: more.modes, held: held(QL_MATRICES_DEVICE_ID)}), picture: () => null}
+  }
   if (face.admission !== 'waiting' && face.id === QL_INSTRUMENT_FACE) {
     return {family: QL_FAMILY, face, device: qlInstrumentDevice(face, torus), status: <StandingChip reading={instrumentReading} />,
       picture: size => <QlPicture size={size} face={face.id} reading={instrumentReading} torus={torus} />}
@@ -458,6 +478,11 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const deck = useQlDeck()
   const chakra = useQlChakra()
   const sitting = useQlSitting()
+  // The M′ matrices' Reading: the kernel's mode catalogue (read once per session) and the transport's mode as held.
+  const modeReading = useLiveModeCatalogue().reading
+  const modeHold = useLiveModeHold()
+  const modes = useMemo(() => ({reading: modeReading, hold: modeHold}), [modeReading, modeHold])
+  const held = useHolds()
   const instruments = rackInstruments(focusInstrument)
   const holderKey = instruments.map(holder => holder.id).join('|')
   // The catalogue designs on their owners; the kernel's graph is read only while the Knowledge graph stands on this rack.
@@ -467,7 +492,8 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   // The manifests are the door's, named by their ids; the QL reading the caller hands in is the one reader's own, derived from the same
   // `torus` state in the same render, so it changes exactly when `torus` does (its absent form is a new object each call, and would
   // otherwise re-publish every device on every render).
-  const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading, sky, m3, deck, chakra, sitting}), [manifestKey, atlas, surface, torus, sky, m3, deck, chakra, sitting])
+  const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading, sky, m3, deck, chakra, sitting, modes, held}),
+    [manifestKey, atlas, surface, torus, sky, m3, deck, chakra, sitting, modes, held])
   const published = useMemo(() => [...entries, ...designs], [entries, designs])
   usePublished(published)
   // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open. While a palace

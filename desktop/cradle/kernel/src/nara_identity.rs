@@ -264,6 +264,9 @@ pub(crate) fn inspect_with(owner: Option<&Path>, profile: &Value) -> Result<Valu
 
 fn run_ql_command(mut command: Command, input: &Value) -> Result<Value, String> {
     let bytes = profile_bytes(input)?;
+    // A place in the owner-process limiter while this one-shot owner runs
+    // (owner_process.rs `Limiter`); released when the call returns.
+    let _place = crate::owner_process::Limiter::global().place();
     let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

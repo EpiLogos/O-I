@@ -1,0 +1,636 @@
+{
+  "captured": "Quaternal Logic 0.1.0 (installed), 21 Oct 2026: `ql kernel m1 /dev/stdin --json` over QL's fixtures/kernel/m1-engine-v1.request.json; refused: `{}`",
+  "command": [
+    "ql",
+    "kernel",
+    "m1",
+    "/dev/stdin",
+    "--json"
+  ],
+  "input": {
+    "schema": "ql.m1.engine/v1",
+    "config": {
+      "event_ref": "example:cosmic-event",
+      "subject_coordinate": "#1",
+      "selected_coordinate": "#1-2-5",
+      "revision": "0",
+      "cycle": "1",
+      "tick12": 7,
+      "family": 5,
+      "row12": 3,
+      "col12": 4,
+      "flowering_substage": 3,
+      "lens12": 11,
+      "context_frame": 7,
+      "basis": "fifths"
+    },
+    "action": null
+  },
+  "answer": {
+    "ananda_role_stage": 5,
+    "carrier": {
+      "clock": {
+        "conjugate_phase": 0,
+        "conjugate_tick12": 1,
+        "cycle": "1",
+        "degree360": 210,
+        "degree720": 570,
+        "hopf_fiber": 1,
+        "phase": 1,
+        "position6": 1,
+        "spanda_stage": 1,
+        "tick12": 7
+      },
+      "coordinates": [
+        "e06a1b000f191c02",
+        "4952c838b0335469",
+        "71b9d3893a156175",
+        "338ebd3cc7a87fa4",
+        "d7ed89c6ca319245",
+        "03c3f935e9e98639"
+      ],
+      "explicate_edges": 4,
+      "genus": 1,
+      "identification_slots": 2,
+      "m2_carrier_count": 72,
+      "opposite_quadrature": [
+        0.8660254037844392,
+        0.49999999999999917
+      ],
+      "quadrature": [
+        -0.8660254037844392,
+        -0.49999999999999917
+      ],
+      "spinor": [
+        0.25881904,
+        -0.9659258,
+        0.0,
+        0.0
+      ]
+    },
+    "cell": {
+      "clock": {
+        "conjugate_phase": 0,
+        "conjugate_tick12": 1,
+        "cycle": "1",
+        "degree360": 210,
+        "degree720": 570,
+        "hopf_fiber": 1,
+        "phase": 1,
+        "position6": 1,
+        "spanda_stage": 1,
+        "tick12": 7
+      },
+      "col12": 4,
+      "coordinate": "3f8a0a0732c03e11",
+      "decimal10": null,
+      "decimal10_valid": true,
+      "decimal_terms": [
+        2,
+        3,
+        5,
+        9,
+        1
+      ],
+      "digit_root": null,
+      "dr_coordinate": "a8e909cbccdbe5d5",
+      "dr_terms": [
+        3,
+        4,
+        7,
+        9,
+        1
+      ],
+      "family": 5,
+      "raw": null,
+      "raw_terms": [
+        12,
+        13,
+        25,
+        -1,
+        1
+      ],
+      "row12": 3,
+      "scalar_valid": false
+    },
+    "clock": {
+      "conjugate_phase": 0,
+      "conjugate_tick12": 1,
+      "cycle": "1",
+      "degree360": 210,
+      "degree720": 570,
+      "hopf_fiber": 1,
+      "phase": 1,
+      "position6": 1,
+      "spanda_stage": 1,
+      "tick12": 7
+    },
+    "config": {
+      "basis": "fifths",
+      "col12": 4,
+      "context_frame": 7,
+      "cycle": "1",
+      "event_ref": "example:cosmic-event",
+      "family": 5,
+      "flowering_substage": 3,
+      "lens12": 11,
+      "revision": "0",
+      "row12": 3,
+      "selected_coordinate": "#1-2-5",
+      "subject_coordinate": "#1",
+      "tick12": 7
+    },
+    "coordinate": "3f8a0a0732c03e11",
+    "engine_version": "1.0.0",
+    "grammar": {
+      "binary_states": 64,
+      "coordinates": [
+        "50561170fcaf3aa0",
+        "5f1b778369c9e0a6",
+        "3879083e0af67a46",
+        "9854ea69f2b31390",
+        "44d6b1313372eb21",
+        "b6efd7e06e4794f1"
+      ],
+      "cosmic_degrees": 360,
+      "decimal_frame": 10,
+      "euler_characteristic": 0,
+      "explicate": 4,
+      "genus": 1,
+      "inversion": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ],
+      "nesting": [
+        7,
+        8,
+        9,
+        10
+      ],
+      "processual": 6,
+      "ratio_den": 9,
+      "ratio_num": 16,
+      "relation_states": 36,
+      "resonance_states": 72,
+      "retained_one_total": 137,
+      "ring_positions": 12
+    },
+    "k4_revision": "5b24b95d17234ab5d23d84e658c0cc06434b41a3",
+    "legacy_topology": {
+      "coordinate": "2e6b6203bf795f3a",
+      "element_count": 10,
+      "legacy_return_stage": 4,
+      "legacy_ring_quaternion": [
+        0.5,
+        -0.8660254,
+        0.0,
+        0.0
+      ],
+      "tick12": 7
+    },
+    "music": {
+      "completion_version": "1.0.0",
+      "context_expression": "(5/0)",
+      "context_frame": "CF7",
+      "forms": [
+        "name",
+        "power",
+        "power",
+        "name",
+        "power",
+        "name",
+        "name"
+      ],
+      "lens": "L5'",
+      "mode": "Locrian",
+      "pitch_class": 6,
+      "pitches": [
+        4,
+        5,
+        7,
+        9,
+        10,
+        0,
+        2
+      ],
+      "scale_beneath_tonic": 5,
+      "tonic": 4,
+      "version": "1.0.0"
+    },
+    "operation": "ananda-cell-and-source",
+    "ratio_basis": [
+      {
+        "derivation": {
+          "coordinate": "b4925fd299466a8b",
+          "family": 1,
+          "kind": "source-row",
+          "row12": 0,
+          "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+        },
+        "ratio": [
+          1,
+          1
+        ]
+      },
+      {
+        "derivation": {
+          "coordinate": "b4925fd299466a8b",
+          "family": 1,
+          "kind": "source-row",
+          "row12": 3,
+          "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+        },
+        "ratio": [
+          4,
+          3
+        ]
+      },
+      {
+        "derivation": {
+          "input": {
+            "derivation": {
+              "coordinate": "b4925fd299466a8b",
+              "family": 1,
+              "kind": "source-row",
+              "row12": 3,
+              "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+            },
+            "ratio": [
+              4,
+              3
+            ]
+          },
+          "kind": "reciprocal"
+        },
+        "ratio": [
+          3,
+          4
+        ]
+      },
+      {
+        "derivation": {
+          "input": {
+            "derivation": {
+              "coordinate": "5b4cad5aa95822ce",
+              "family": 0,
+              "kind": "source-row",
+              "row12": 6,
+              "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+            },
+            "ratio": [
+              2,
+              3
+            ]
+          },
+          "kind": "reciprocal"
+        },
+        "ratio": [
+          3,
+          2
+        ]
+      },
+      {
+        "derivation": {
+          "coordinate": "5b4cad5aa95822ce",
+          "family": 0,
+          "kind": "source-row",
+          "row12": 6,
+          "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+        },
+        "ratio": [
+          2,
+          3
+        ]
+      },
+      {
+        "derivation": {
+          "coordinate": "b4925fd299466a8b",
+          "family": 1,
+          "kind": "source-row",
+          "row12": 7,
+          "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+        },
+        "ratio": [
+          16,
+          9
+        ]
+      },
+      {
+        "derivation": {
+          "input": {
+            "derivation": {
+              "coordinate": "5b4cad5aa95822ce",
+              "family": 0,
+              "kind": "source-row",
+              "row12": 8,
+              "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+            },
+            "ratio": [
+              8,
+              9
+            ]
+          },
+          "kind": "reciprocal"
+        },
+        "ratio": [
+          9,
+          8
+        ]
+      },
+      {
+        "derivation": {
+          "kind": "composition",
+          "left": {
+            "derivation": {
+              "coordinate": "b4925fd299466a8b",
+              "family": 1,
+              "kind": "source-row",
+              "row12": 7,
+              "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+            },
+            "ratio": [
+              16,
+              9
+            ]
+          },
+          "right": {
+            "derivation": {
+              "input": {
+                "derivation": {
+                  "coordinate": "5b4cad5aa95822ce",
+                  "family": 0,
+                  "kind": "source-row",
+                  "row12": 8,
+                  "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+                },
+                "ratio": [
+                  8,
+                  9
+                ]
+              },
+              "kind": "reciprocal"
+            },
+            "ratio": [
+              9,
+              8
+            ]
+          }
+        },
+        "ratio": [
+          2,
+          1
+        ]
+      }
+    ],
+    "reflection": {
+      "conjugate_phase": 0,
+      "coordinate": "591122d43eb3505c",
+      "phase": 1,
+      "reflection_ground": "591122d43eb3505c",
+      "source_ground": "cabc32a688ab2b77",
+      "subject": "51ebdd18d663f7db"
+    },
+    "registry_revision": "c211a781094dae3138c691a1f10dd9637399b5c7243ec0646c71a82428e24c86",
+    "relations": [
+      {
+        "class": "bimba-source",
+        "cross_m": true,
+        "from_id": "c2424584fbe5268e",
+        "from_ref": "#0-5",
+        "id": "8e410ed48c2f50b8",
+        "orientation": "directed",
+        "record": 2873,
+        "relation_ref": "bimba:relation:1347c8ff2fd75ecf9ff3fec3",
+        "source_kind": "PROVIDES_IMPLICATE_FOUNDATION",
+        "to_id": "3f8a0a0732c03e11",
+        "to_ref": "#1-2-5"
+      },
+      {
+        "class": "bimba-source",
+        "cross_m": false,
+        "from_id": "3f8a0a0732c03e11",
+        "from_ref": "#1-2-5",
+        "id": "8914a45831745f26",
+        "orientation": "directed",
+        "record": 3162,
+        "relation_ref": "bimba:relation:1863a84e4f0c03f76748bd2d",
+        "source_kind": "RESONATES_WITH_SPANDA_STAGE",
+        "to_id": "24ec4b767eb47f13",
+        "to_ref": "#1-3-4"
+      },
+      {
+        "class": "bimba-source",
+        "cross_m": false,
+        "from_id": "17b2d4e993cc3b30",
+        "from_ref": "#1-2",
+        "id": "f256e38359110143",
+        "orientation": "directed",
+        "record": 3137,
+        "relation_ref": "bimba:relation:5efbfda1564e800d1a669bf9",
+        "source_kind": "CONTAINS_ANANDA_COMPONENT",
+        "to_id": "3f8a0a0732c03e11",
+        "to_ref": "#1-2-5"
+      },
+      {
+        "class": "bimba-source",
+        "cross_m": false,
+        "from_id": "3f8a0a0732c03e11",
+        "from_ref": "#1-2-5",
+        "id": "6376229d9c4cecd7",
+        "orientation": "directed",
+        "record": 3161,
+        "relation_ref": "bimba:relation:67349784b87de146634afb37",
+        "source_kind": "HAS_DIGITAL_ROOT_REFLECTION",
+        "to_id": "a8e909cbccdbe5d5",
+        "to_ref": "#1-2-5-0"
+      },
+      {
+        "class": "bimba-source",
+        "cross_m": true,
+        "from_id": "c2424584fbe5268e",
+        "from_ref": "#0-5",
+        "id": "fa8f72880526320e",
+        "orientation": "directed",
+        "record": 2863,
+        "relation_ref": "bimba:relation:74ed8ca6a0c2c865d9b81abf",
+        "source_kind": "ARCHETYPAL_RESONANCE_NONDUAL_PARADOX",
+        "to_id": "3f8a0a0732c03e11",
+        "to_ref": "#1-2-5"
+      },
+      {
+        "class": "bimba-source",
+        "cross_m": false,
+        "from_id": "9184171fa5ec290b",
+        "from_ref": "#1-3-3",
+        "id": "26a5fcfe67901a1d",
+        "orientation": "directed",
+        "record": 3210,
+        "relation_ref": "bimba:relation:ed54978e364ff095be4d45dd",
+        "source_kind": "CORRESPONDS_TO_MATRIX",
+        "to_id": "3f8a0a0732c03e11",
+        "to_ref": "#1-2-5"
+      },
+      {
+        "class": "bimba-source",
+        "cross_m": true,
+        "from_id": "1db7dc629cc9589c",
+        "from_ref": "#0-3-4",
+        "id": "20b4b5563cfd800c",
+        "orientation": "directed",
+        "record": 2393,
+        "relation_ref": "bimba:relation:f804d230ffc457a967b58d8b",
+        "source_kind": "PROVIDES_IMPLICATE_FOUNDATION",
+        "to_id": "3f8a0a0732c03e11",
+        "to_ref": "#1-2-5"
+      }
+    ],
+    "schema": "ql.m1.engine/v1",
+    "selected_reading": {
+      "children": [
+        "a8e909cbccdbe5d5"
+      ],
+      "content": {
+        "projection": {
+          "clock": {
+            "conjugate_phase": 0,
+            "conjugate_tick12": 1,
+            "cycle": "1",
+            "degree360": 210,
+            "degree720": 570,
+            "hopf_fiber": 1,
+            "phase": 1,
+            "position6": 1,
+            "spanda_stage": 1,
+            "tick12": 7
+          },
+          "col12": 4,
+          "coordinate": "3f8a0a0732c03e11",
+          "decimal10": null,
+          "decimal10_valid": true,
+          "decimal_terms": [
+            2,
+            3,
+            5,
+            9,
+            1
+          ],
+          "digit_root": null,
+          "dr_coordinate": "a8e909cbccdbe5d5",
+          "dr_terms": [
+            3,
+            4,
+            7,
+            9,
+            1
+          ],
+          "family": 5,
+          "raw": null,
+          "raw_terms": [
+            12,
+            13,
+            25,
+            -1,
+            1
+          ],
+          "row12": 3,
+          "scalar_valid": false
+        },
+        "register": "source-arithmetic",
+        "source": {
+          "col12": 4,
+          "csv_column": 113,
+          "csv_dr_row": 42,
+          "csv_raw_row": 8,
+          "digit_root_literal": "1/7",
+          "family": 5,
+          "raw_literal": "-1/1/25",
+          "row12": 3
+        }
+      },
+      "coordinate": "3f8a0a0732c03e11",
+      "operation": "ananda-cell-and-source",
+      "parent_id": "17b2d4e993cc3b30",
+      "source_records": [
+        122
+      ],
+      "source_ref": "#1-2-5"
+    },
+    "source": {
+      "git_blob": "75672026871483739e9e3ef3d42b96a39040c6e5",
+      "revision": "bb47ab9730f0ddadd4891666fb6f3e0a6d457330",
+      "sha256": "3e3d068452aa67de145f9e94d5c35446933080a5e82d5aa3e21978de20ec8c90"
+    },
+    "source_cell": {
+      "col12": 4,
+      "csv_column": 113,
+      "csv_dr_row": 42,
+      "csv_raw_row": 8,
+      "digit_root_literal": "1/7",
+      "family": 5,
+      "raw_literal": "-1/1/25",
+      "row12": 3
+    },
+    "source_traits": {
+      "binary_mask": 2,
+      "branch_categories": [
+        0,
+        1,
+        2,
+        5,
+        4,
+        6
+      ],
+      "coordinates": [
+        "cabc32a688ab2b77",
+        "591122d43eb3505c",
+        "17b2d4e993cc3b30",
+        "e78f97ad076f8214",
+        "4f84797658129b59",
+        "2e6b6203bf795f3a"
+      ],
+      "mahamaya_ring": [
+        1,
+        2,
+        4,
+        8,
+        7,
+        5
+      ],
+      "parashakti_ring": [
+        3,
+        6,
+        9,
+        3,
+        6,
+        9
+      ],
+      "relational_mask": 4,
+      "unary_mask": 1
+    },
+    "spanda": {
+      "coordinate": "1558dc5377715d9d",
+      "dual_track": false,
+      "fold_count": 0,
+      "inversion_state": 0,
+      "stage": 1,
+      "substage": 0,
+      "substage_coordinate": null,
+      "weave_state": 1.0
+    },
+    "standing": {
+      "cpp_embodiment": "K8",
+      "experiential": "unassessed",
+      "instrument": "K9",
+      "literal_source": "verbatim",
+      "live_relations": "K2-serialized; K4 live capture establishes coordinate presence",
+      "numeric_computation": "verified",
+      "topological_necessity": "source-proposition-not-empirical-proof"
+    }
+  },
+  "refusal_stderr": "ql: missing field `schema` at line 1 column 2",
+  "refusal_exit": 2
+}

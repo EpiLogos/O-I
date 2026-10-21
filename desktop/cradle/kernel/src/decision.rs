@@ -867,6 +867,9 @@ impl InvocationFiles {
                 .map_err(|e| e.to_string())
         };
         let executable = std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into());
+        // A place in the owner-process limiter while this one-shot owner runs
+        // (owner_process.rs `Limiter`); released when the call returns.
+        let _place = crate::owner_process::Limiter::global().place();
         let mut child = Command::new(executable)
             .args(["aikit", "--json", "-C"])
             .arg(cwd)

@@ -81,6 +81,9 @@ fn refs(values: &[Value]) -> Result<Vec<String>, String> {
         .collect()
 }
 fn owner(controller: &Controller, request: Value) -> Result<Value, String> {
+    // A place in the owner-process limiter while this one-shot owner runs
+    // (owner_process.rs `Limiter`); released when the call returns.
+    let _place = crate::owner_process::Limiter::global().place();
     let mut child = Command::new(executable())
         .arg("session-space")
         .args(["-C"])

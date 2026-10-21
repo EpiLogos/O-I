@@ -1,0 +1,424 @@
+{
+ "_provenance": "REAL: Central's answers on workcell:mac, 21 Oct 2026, read with `ctrl --json action run <id> <input>` (each read-only in `ctrl action describe`): machine.account {}, machine.declaration/plan/verify {role: current}, central.recovery.plan {role: current}; declarationRefusal is machine.declaration {role: nope}. The `data` of each envelope, unchanged.",
+ "account": {
+  "authored": [
+   {
+    "capabilities": [],
+    "path": "Control/machines/current.json",
+    "requirement_count": 0,
+    "role": "current"
+   }
+  ],
+  "current": {
+   "hostname": "unknown-host",
+   "machine_id": "central-18d546bb2f3b3048-135df"
+  },
+  "drift": [],
+  "last_observation": {
+   "connector_id": "read-models.harness-capability",
+   "connector_version": "0.1.0",
+   "hostname": "unknown-host",
+   "machine_id": "central-18d546bb2f3b3048-135df",
+   "observation": {
+    "architecture": "aarch64",
+    "capabilities": [
+     "MachineInspector",
+     "claude-code@source:actuation-harness-capability",
+     "claude-code@source:workcell-harness-instance",
+     "codex@source:actuation-harness-capability",
+     "cursor-cli@source:actuation-harness-detection",
+     "deepseek-harness@source:actuation-harness-detection",
+     "gemini-antigravity@source:actuation-harness-detection",
+     "gemini@source:actuation-harness-capability",
+     "hermes-acp@source:actuation-harness-detection",
+     "hermes@source:actuation-harness-detection",
+     "kimi@source:actuation-harness-detection",
+     "ollama@source:actuation-harness-detection",
+     "ollama@source:workcell-harness-instance",
+     "openclaw@source:actuation-harness-capability",
+     "opencode@source:actuation-harness-detection",
+     "opencode@source:workcell-harness-instance",
+     "pi@source:actuation-harness-capability",
+     "pi@source:workcell-harness-instance",
+     "prime@source:actuation-harness-capability",
+     "prime@source:workcell-harness-instance",
+     "zcode@source:actuation-harness-capability"
+    ],
+    "configurations": [],
+    "packages": [],
+    "platform": "macos",
+    "services": []
+   },
+   "observed_at": "1792581329"
+  },
+  "observation_stale": false,
+  "provenance": "observed",
+  "reconciliation_available": false
+ },
+ "declaration": {
+  "declaration": {
+   "bindings": [
+    {
+     "kind": "workcell",
+     "reference": "workcell:mac"
+    }
+   ],
+   "capabilities": [],
+   "requirements": {
+    "configurations": [],
+    "packages": [],
+    "services": []
+   },
+   "role": "current",
+   "schema": "central.machine",
+   "version": 1
+  },
+  "source": {
+   "path": "Control/machines/current.json",
+   "source_class": "authored"
+  }
+ },
+ "plan": {
+  "authored": {
+   "declaration": {
+    "bindings": [
+     {
+      "kind": "workcell",
+      "reference": "workcell:mac"
+     }
+    ],
+    "capabilities": [],
+    "requirements": {
+     "configurations": [],
+     "packages": [],
+     "services": []
+    },
+    "role": "current",
+    "schema": "central.machine",
+    "version": 1
+   },
+   "source": {
+    "path": "Control/machines/current.json",
+    "source_class": "authored"
+   }
+  },
+  "entries": [],
+  "observed": {
+   "diagnostics": {
+    "eligible": [
+     {
+      "id": "read-models.harness-capability",
+      "version": "0.1.0"
+     },
+     {
+      "id": "reference.machine-host",
+      "version": "0.1.0"
+     }
+    ],
+    "ineligible": [
+     {
+      "connector": {
+       "id": "personal.git-sync",
+       "version": "0.3.0"
+      },
+      "reason": "does not declare compatible MachineInspector 1.0.0"
+     },
+     {
+      "connector": {
+       "id": "reference.work-filesystem",
+       "version": "0.1.0"
+      },
+      "reason": "does not declare compatible MachineInspector 1.0.0"
+     },
+     {
+      "connector": {
+       "id": "reference.work-static",
+       "version": "0.1.0"
+      },
+      "reason": "does not declare compatible MachineInspector 1.0.0"
+     }
+    ],
+    "selected_connector": {
+     "id": "read-models.harness-capability",
+     "version": "0.1.0"
+    }
+   },
+   "observation": {
+    "architecture": "aarch64",
+    "capabilities": [
+     "MachineInspector",
+     "claude-code@source:actuation-harness-capability",
+     "claude-code@source:workcell-harness-instance",
+     "codex@source:actuation-harness-capability",
+     "cursor-cli@source:actuation-harness-detection",
+     "deepseek-harness@source:actuation-harness-detection",
+     "gemini-antigravity@source:actuation-harness-detection",
+     "gemini@source:actuation-harness-capability",
+     "hermes-acp@source:actuation-harness-detection",
+     "hermes@source:actuation-harness-detection",
+     "kimi@source:actuation-harness-detection",
+     "ollama@source:actuation-harness-detection",
+     "ollama@source:workcell-harness-instance",
+     "openclaw@source:actuation-harness-capability",
+     "opencode@source:actuation-harness-detection",
+     "opencode@source:workcell-harness-instance",
+     "pi@source:actuation-harness-capability",
+     "pi@source:workcell-harness-instance",
+     "prime@source:actuation-harness-capability",
+     "prime@source:workcell-harness-instance",
+     "zcode@source:actuation-harness-capability"
+    ],
+    "configurations": [],
+    "packages": [],
+    "platform": "macos",
+    "services": []
+   },
+   "source": {
+    "connector": {
+     "id": "read-models.harness-capability",
+     "version": "0.1.0"
+    },
+    "source_class": "observed"
+   }
+  },
+  "role": "current",
+  "summary": {
+   "changeable": 0,
+   "missing": 0,
+   "satisfied": 0,
+   "unsupported": 0
+  }
+ },
+ "verify": {
+  "plan": {
+   "authored": {
+    "declaration": {
+     "bindings": [
+      {
+       "kind": "workcell",
+       "reference": "workcell:mac"
+      }
+     ],
+     "capabilities": [],
+     "requirements": {
+      "configurations": [],
+      "packages": [],
+      "services": []
+     },
+     "role": "current",
+     "schema": "central.machine",
+     "version": 1
+    },
+    "source": {
+     "path": "Control/machines/current.json",
+     "source_class": "authored"
+    }
+   },
+   "entries": [],
+   "observed": {
+    "diagnostics": {
+     "eligible": [
+      {
+       "id": "read-models.harness-capability",
+       "version": "0.1.0"
+      },
+      {
+       "id": "reference.machine-host",
+       "version": "0.1.0"
+      }
+     ],
+     "ineligible": [
+      {
+       "connector": {
+        "id": "personal.git-sync",
+        "version": "0.3.0"
+       },
+       "reason": "does not declare compatible MachineInspector 1.0.0"
+      },
+      {
+       "connector": {
+        "id": "reference.work-filesystem",
+        "version": "0.1.0"
+       },
+       "reason": "does not declare compatible MachineInspector 1.0.0"
+      },
+      {
+       "connector": {
+        "id": "reference.work-static",
+        "version": "0.1.0"
+       },
+       "reason": "does not declare compatible MachineInspector 1.0.0"
+      }
+     ],
+     "selected_connector": {
+      "id": "read-models.harness-capability",
+      "version": "0.1.0"
+     }
+    },
+    "observation": {
+     "architecture": "aarch64",
+     "capabilities": [
+      "MachineInspector",
+      "claude-code@source:actuation-harness-capability",
+      "claude-code@source:workcell-harness-instance",
+      "codex@source:actuation-harness-capability",
+      "cursor-cli@source:actuation-harness-detection",
+      "deepseek-harness@source:actuation-harness-detection",
+      "gemini-antigravity@source:actuation-harness-detection",
+      "gemini@source:actuation-harness-capability",
+      "hermes-acp@source:actuation-harness-detection",
+      "hermes@source:actuation-harness-detection",
+      "kimi@source:actuation-harness-detection",
+      "ollama@source:actuation-harness-detection",
+      "ollama@source:workcell-harness-instance",
+      "openclaw@source:actuation-harness-capability",
+      "opencode@source:actuation-harness-detection",
+      "opencode@source:workcell-harness-instance",
+      "pi@source:actuation-harness-capability",
+      "pi@source:workcell-harness-instance",
+      "prime@source:actuation-harness-capability",
+      "prime@source:workcell-harness-instance",
+      "zcode@source:actuation-harness-capability"
+     ],
+     "configurations": [],
+     "packages": [],
+     "platform": "macos",
+     "services": []
+    },
+    "source": {
+     "connector": {
+      "id": "read-models.harness-capability",
+      "version": "0.1.0"
+     },
+     "source_class": "observed"
+    }
+   },
+   "role": "current",
+   "summary": {
+    "changeable": 0,
+    "missing": 0,
+    "satisfied": 0,
+    "unsupported": 0
+   }
+  },
+  "satisfied": true
+ },
+ "recovery": {
+  "machine": {
+   "authored": {
+    "declaration": {
+     "bindings": [
+      {
+       "kind": "workcell",
+       "reference": "workcell:mac"
+      }
+     ],
+     "capabilities": [],
+     "requirements": {
+      "configurations": [],
+      "packages": [],
+      "services": []
+     },
+     "role": "current",
+     "schema": "central.machine",
+     "version": 1
+    },
+    "source": {
+     "path": "Control/machines/current.json",
+     "source_class": "authored"
+    }
+   },
+   "entries": [],
+   "observed": {
+    "diagnostics": {
+     "eligible": [
+      {
+       "id": "read-models.harness-capability",
+       "version": "0.1.0"
+      },
+      {
+       "id": "reference.machine-host",
+       "version": "0.1.0"
+      }
+     ],
+     "ineligible": [
+      {
+       "connector": {
+        "id": "personal.git-sync",
+        "version": "0.3.0"
+       },
+       "reason": "does not declare compatible MachineInspector 1.0.0"
+      },
+      {
+       "connector": {
+        "id": "reference.work-filesystem",
+        "version": "0.1.0"
+       },
+       "reason": "does not declare compatible MachineInspector 1.0.0"
+      },
+      {
+       "connector": {
+        "id": "reference.work-static",
+        "version": "0.1.0"
+       },
+       "reason": "does not declare compatible MachineInspector 1.0.0"
+      }
+     ],
+     "selected_connector": {
+      "id": "read-models.harness-capability",
+      "version": "0.1.0"
+     }
+    },
+    "observation": {
+     "architecture": "aarch64",
+     "capabilities": [
+      "MachineInspector",
+      "claude-code@source:actuation-harness-capability",
+      "claude-code@source:workcell-harness-instance",
+      "codex@source:actuation-harness-capability",
+      "cursor-cli@source:actuation-harness-detection",
+      "deepseek-harness@source:actuation-harness-detection",
+      "gemini-antigravity@source:actuation-harness-detection",
+      "gemini@source:actuation-harness-capability",
+      "hermes-acp@source:actuation-harness-detection",
+      "hermes@source:actuation-harness-detection",
+      "kimi@source:actuation-harness-detection",
+      "ollama@source:actuation-harness-detection",
+      "ollama@source:workcell-harness-instance",
+      "openclaw@source:actuation-harness-capability",
+      "opencode@source:actuation-harness-detection",
+      "opencode@source:workcell-harness-instance",
+      "pi@source:actuation-harness-capability",
+      "pi@source:workcell-harness-instance",
+      "prime@source:actuation-harness-capability",
+      "prime@source:workcell-harness-instance",
+      "zcode@source:actuation-harness-capability"
+     ],
+     "configurations": [],
+     "packages": [],
+     "platform": "macos",
+     "services": []
+    },
+    "source": {
+     "connector": {
+      "id": "read-models.harness-capability",
+      "version": "0.1.0"
+     },
+     "source_class": "observed"
+    }
+   },
+   "role": "current",
+   "summary": {
+    "changeable": 0,
+    "missing": 0,
+    "satisfied": 0,
+    "unsupported": 0
+   }
+  },
+  "role": "current",
+  "synchronization": {
+   "status": "not_configured"
+  }
+ },
+ "declarationRefusal": "Cannot read machine declaration for nope: No such file or directory (os error 2)"
+}

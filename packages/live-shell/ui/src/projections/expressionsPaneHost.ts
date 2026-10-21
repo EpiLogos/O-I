@@ -85,6 +85,11 @@ export function publishHostedChrome(next: HostedExpressionsChrome | null): void 
 }
 
 /** The published chrome as a hook. */
+/** The published chrome as a plain read (a pure binding's default; lane W4-Technē: the Torus's Stage page reads the stage the frame announced). */
+export function hostedChrome(): HostedExpressionsChrome | null {
+  return chrome
+}
+
 export function useHostedChrome(): HostedExpressionsChrome | null {
   return useSyncExternalStore(
     listener => {

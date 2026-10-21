@@ -25,7 +25,7 @@ import {setFilters} from '../../inhabitants/knowledgeGraphFaceActions'
 import {CANVAS_DESIGN, GRAPH_DESIGN, JOURNEY_DESIGN, LENS_DESIGN, LIGHT_DESIGN, PALACE_DESIGN, TIMELINE_DESIGN, designDevice, heldFor, useHolds} from './designDevices'
 import {palaceBinding} from './palaceBinding'
 import {canvasBinding, journeyBinding, timelineBinding, type FrameReadings, type WindowLaw} from './frameBindings'
-import {graphBinding, GRAPH_READ_NODES, type GraphWrites} from './graphBinding'
+import {graphBinding, surfaceRead, GRAPH_READ_NODES, type GraphWrites} from './graphBinding'
 import {useGraphRead} from './graphRead'
 import {lensBinding, lightBinding} from './effectBindings'
 
@@ -53,7 +53,7 @@ export const TECHNE_DESIGNS: readonly DesignSpec[] = [
   {design: JOURNEY_DESIGN, title: 'Journey', icon: 'journey', note: 'The research frame\'s walk, as the frame announces it: the stop it stands on, how many stops, that stop\'s name, and whether it walks.'},
   {design: LIGHT_DESIGN, title: 'Light', icon: 'expr', effect: true, note: 'An optical bench over the Canvas. Its engine (LightBox) is not in this candidate: it stands with no reading.'},
   {design: LENS_DESIGN, title: 'Lens', icon: 'techne', effect: true, note: 'A reading through one of Quaternal Logic\'s lenses and a context frame. The kernel routes no `ql techne reading` or `ql mef lenses`: it stands with no reading.'},
-  {design: GRAPH_DESIGN, title: 'Knowledge graph', icon: 'search', note: 'The open graph\'s view state (its handle) over the kernel graph op\'s reading of the root register\'s wiki.'},
+  {design: GRAPH_DESIGN, title: 'Knowledge graph', icon: 'search', note: 'The open graph\'s view state and its own reading (its handle); with no graph open, the kernel graph op\'s reading of the root register\'s wiki.'},
 ]
 
 /** A design's face declaration, for the rack's placement (its holders) and the plate's words. */
@@ -97,7 +97,9 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
   const hosted = useHostedChrome()
   const session = useSyncExternalStore(disclosureSession.subscribe, () => disclosureSession.get(), () => null)
   const budget = Number(holds[GRAPH_DESIGN]?.budget ?? GRAPH_READ_NODES)
-  const read = useGraphRead(graph, Number.isSafeInteger(budget) && budget > 0 ? budget : GRAPH_READ_NODES, surface?.filters.shared ?? false)
+  // While a graph is open its own reading is the material (its handle publishes it); the root register is read here only while none is.
+  const rootRead = useGraphRead(graph && !surface, Number.isSafeInteger(budget) && budget > 0 ? budget : GRAPH_READ_NODES, false)
+  const read = useMemo(() => (surface ? surfaceRead(surface) : rootRead), [surface, rootRead])
   return useMemo(() => {
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}

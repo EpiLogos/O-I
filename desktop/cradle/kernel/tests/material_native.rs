@@ -1,5 +1,9 @@
 #[path = "../src/material.rs"]
 mod material;
+// material.rs takes a place in the kernel's owner-process limiter.
+#[path = "../src/owner_process.rs"]
+#[allow(dead_code)]
+mod owner_process;
 use std::{
     fs,
     process::Command,

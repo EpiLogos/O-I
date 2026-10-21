@@ -29,10 +29,10 @@ import {DIE_POSITIONS, dieFaceLabel} from './dayDie'
 export const CENTRAL_FAMILY = 'central'
 
 /** The family's faces that stand on a chain, in the order the chains draw them (DLW §16.2, lock §0.3.4; R4): on the Main track the Day;
- * on a workspace the Packet — then the Agent and Scope, devices of Actuation and Software Factory that CentralDevices.tsx places — then,
- * on a workspace that holds code, Ground hygiene and Impact. */
+ * on a world's track the Packet — then the Agent and Scope, devices of Actuation and Software Factory that CentralDevices.tsx places — then,
+ * on a world whose folder holds code, Ground hygiene, Machine and Impact (CentralDevices.tsx centralChainSlots). */
 export const CENTRAL_MAIN_FACES = ['day-die'] as const
-export const CENTRAL_WORKSPACE_FACES = ['packet', 'ground-hygiene', 'impact'] as const
+export const CENTRAL_WORKSPACE_FACES = ['packet', 'ground-hygiene', 'machine', 'impact'] as const
 export const CENTRAL_DEVICE_FACES: readonly string[] = [...CENTRAL_MAIN_FACES, ...CENTRAL_WORKSPACE_FACES]
 
 /** The faces the family still declares that stand on no chain (R4; DLW §16.1): the page family — the Workspace (the track head and its
@@ -54,6 +54,7 @@ const FACES: Readonly<Record<string, {title: string; icon: IconName}>> = {
   'agent-identity': {title: 'Agent identity', icon: 'contact'},
   'ground-hygiene': {title: 'Ground hygiene', icon: 'placed'},
   'impact': {title: 'Impact', icon: 'map'},
+  'machine': {title: 'Machine', icon: 'cmd'},
   'document': {title: 'Document', icon: 'form'},
   'workspace': {title: 'Workspace', icon: 'session'},
   'beings': {title: 'Beings', icon: 'contact'},

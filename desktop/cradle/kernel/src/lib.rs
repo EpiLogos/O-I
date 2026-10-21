@@ -112,6 +112,7 @@ pub mod native_owner_transport;
 mod native_wire;
 mod owner_process;
 pub mod owner_read;
+pub mod owner_routes;
 pub mod owner_write;
 pub mod page;
 pub mod presentation;
@@ -815,6 +816,53 @@ pub enum KernelOp {
     /// each remote's Workcell ref, websocket bind and path, and where its
     /// token is kept (never the token). Read only.
     GatewayRemotesRead,
+    /// Kernel routes to owner commands that already exist (T-COVERAGE §1.2,
+    /// lane W3; owner_routes.rs). Each runs the owner's own command, carries
+    /// its answer verbatim after a check, and names a refusal in the owner's
+    /// words. AIKit's gateway writes: a Communique sent to a Position, or one
+    /// crossed into Factory custody — prepared owner writes with a receipt.
+    GatewayWrite {
+        request: owner_routes::GatewayWrite,
+    },
+    /// AIKit's team operation, its document verbatim: `action: read` is a
+    /// prepared read, every other action a prepared write.
+    GatewayTeam {
+        #[serde(flatten)]
+        request: owner_routes::GatewayTeam,
+    },
+    /// Actuation's readings of a supplied record (agency, realised, stream,
+    /// activity, usage) and its research comparison's assessments. Reads.
+    ActuationRead {
+        request: owner_routes::ActuationRead,
+    },
+    /// Quaternal Logic's M1 engine and integrated scene over a supplied
+    /// request. Reads.
+    QlRead {
+        request: owner_routes::QlRead,
+    },
+    /// Workcell's connection records and declared machines. Reads.
+    WorkcellRead {
+        request: owner_routes::WorkcellRead,
+    },
+    /// Workcell's connect to a declared machine, and a machine's
+    /// declaration or removal. Writes.
+    WorkcellWrite {
+        request: owner_routes::WorkcellWrite,
+    },
+    /// The seat instrument's join and release on the machine's workcell
+    /// register, attributed to the actor the desk names. Writes.
+    SeatWrite {
+        request: owner_routes::SeatWrite,
+    },
+    /// AIKit's capture inbox and a Wiki file's shapes. Reads.
+    AikitRead {
+        request: owner_routes::AikitRead,
+    },
+    /// AIKit's capture, promotion, trust decision, Method run and proof,
+    /// set package export and Wiki shape declaration. Writes.
+    AikitWrite {
+        request: owner_routes::AikitWrite,
+    },
     /// The read-only temporal-events field (`oi.temporal-events/v1`) over
     /// the streams the adapters already wire — no second store.
     TemporalEventsRead {
@@ -1490,6 +1538,15 @@ pub enum KernelOpResult {
     /// AIKit's declared remotes (the envelope's `data`, verbatim after its
     /// schema check) and the envelope's warnings.
     GatewayRemotesReading {
+        data: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        warnings: Vec<serde_json::Value>,
+    },
+    /// An owner route's answer (lane W3, owner_routes.rs): the owner command
+    /// in plain words, its reading verbatim after its check, and an AIKit
+    /// envelope's warnings. A write's receipt travels beside it.
+    OwnerRouteReading {
+        route: String,
         data: serde_json::Value,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         warnings: Vec<serde_json::Value>,
@@ -3223,10 +3280,25 @@ impl Kernel {
             | KernelOp::FlowChangedSince { .. }
             | KernelOp::SeatStatusRead
             | KernelOp::SourceReturnsRead { .. }
-            | KernelOp::GatewayRemotesRead) => self
+            | KernelOp::GatewayRemotesRead
+            | KernelOp::ActuationRead { .. }
+            | KernelOp::QlRead { .. }
+            | KernelOp::WorkcellRead { .. }
+            | KernelOp::AikitRead { .. }) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the owner read")?
                 .execute(),
+            // Lane W3: a team read is a prepared read; every other team
+            // action, and the routes that write, are prepared writes.
+            op @ KernelOp::GatewayTeam { .. } if owner_read::PreparedRead::reads_owner(&op) => self
+                .prepare_owner_read(&op)
+                .ok_or("Cannot prepare the owner read")?
+                .execute(),
+            op @ (KernelOp::GatewayTeam { .. }
+            | KernelOp::GatewayWrite { .. }
+            | KernelOp::WorkcellWrite { .. }
+            | KernelOp::SeatWrite { .. }
+            | KernelOp::AikitWrite { .. }) => self.apply_owner_write(op),
             // A Factory owner read or a SharedField read likewise; their
             // writes follow below (a host's dispatch prepares or frees them).
             op @ (KernelOp::FactoryOwner { .. } | KernelOp::SharedField { .. })

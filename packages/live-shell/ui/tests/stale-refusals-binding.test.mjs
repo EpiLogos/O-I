@@ -322,8 +322,9 @@ test('(b)(c)(e) Ground hygiene draws the census and the pages in every view: eve
   assert.equal(binding.values.sandboxes, undefined)
   assert.deepEqual([binding.values['as:provenance'], binding.values['as:standing'], binding.values['look:authored']], ['human-authored', 'design-commitment', true], 'the manual\'s defaults for the holds')
   for (const key of ['init', 'reproject', 'recognise']) {
-    assert.match(binding.standing[key].disabled, /person's authority \(T-COVERAGE §1\.1\)/, key)
-    await assert.rejects(binding.write([{key, value: 'x'}]), /T-COVERAGE §1\.1/)
+    // W4: invoke_action carries the person for the presses action.rs PERSON_ACTS names; these are not among them.
+    assert.match(binding.standing[key].disabled, /person's authority: .*PERSON_ACTS names, which do not include it/, key)
+    await assert.rejects(binding.write([{key, value: 'x'}]), /PERSON_ACTS/)
   }
   for (const key of ['reconcile', 'orphans']) assert.match(binding.standing[key].disabled, /kernel route to Workcell/, key)
   const findings = JSON.parse(binding.values.findings)

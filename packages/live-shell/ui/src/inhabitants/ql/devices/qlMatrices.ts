@@ -1,0 +1,189 @@
+// The M′ matrices on their owners (manual §22.6, with its Kernel page; the catalogue's design
+// inhabitants/catalogue/panels/quaternal-logic__m-prime-matrices.tsx, `quaternal-logic:m-prime-matrices`). The matrices show values the
+// instrument already uses and add no second oscillator (§22.6 Rules). Owners write, faces read (lock §0.4):
+//   m2.tonics         the 84 lens modes of the basis shown: the tonic of each lens's seven modes, from QL's mode catalogue
+//                     (ql.music-modes/v1 lens_cf, through the kernel's music_modes_read: native/liveModeCatalogue.ts readQlMusicModes);
+//   m1.lens12, m1.context_frame   the lens and the mode in force: the Live transport's key and scale (native/liveModeCatalogue.ts
+//                     setModeInForce; §22.6 Transport "Key, root and scale | Sets the lens and the mode. The Reading matrix follows
+//                     them"); a new cell is that mode set on the transport (setLiveModeHold), the same hand Scale mapping uses
+//                     (live/designBindings/scaleMappingBinding.ts);
+//   form.address      the person's M3 form through the kernel's m3_reception (qlM3Clock.ts); a new address, and Apply, is its select-form;
+//   matrix, valueForm, m1.basis, kernel.position, kernel.face   the view's own choices (DesignBinding.local): which matrix and value form
+//                     show, which order of the twelve notes the served catalogue is read in (until held, the mode in force's), and the
+//                     address of the kernel's sixfold form the operators read ("No owner names a kernel address for a matrix cell, so
+//                     the address is yours", the design's own words);
+// and named absent, each with the route it waits on: the M1 engine (`ql kernel m1`: m1.cells, row12, col12, tick12, family) has no
+// kernel op; the 64 codons in address order (m3.codons) and the matrix partners (form.partners, and with them Partner and Scale) need
+// `ql kernel m3` and ql_m3_apply_matrix as kernel ops; the kernel's operators (`ql kernel apply`: conjugate, complement, class, version,
+// and the address's depth and form as the kernel keeps them) have no kernel op; the Situation matrix has no owner (the M′ packets, QL-MEF
+// #281); Follow has no owner operation and the design does not offer it. Pure apart from the owners' hands the caller may replace.
+import type {InhabitantFaceDeclaration} from '../../manifest'
+import type {DesignBinding, Standing, Value, ValueChange} from '../../../frame/devices/designed'
+import type {DeviceInstance} from '../../../frame/devices/deviceRuntime'
+import type {M3Operation} from '../../../../../../../desktop/cradle/src/nara/nativeM3'
+import {setLiveModeHold, setModeInForce, type LiveModeCatalogueState, type LiveModeHold} from '../../../native/liveModeCatalogue'
+import type {KernelLensMode, QlMusicModes} from '../../../live/modes'
+import {disabled, handsFor, missing} from '../../../techne/devices/designDevices'
+import {techneDeviceId, techneFaceDeclaration} from './faces'
+import {NO_FORM, applyQlM3, type QlM3State} from './qlM3Clock'
+
+export const QL_MATRICES_FAMILY = 'quaternal-logic'
+export const QL_MATRICES_FACE = 'm-prime-matrices'
+/** The device's id on the door and its design's key: designKey('quaternal-logic', 'm-prime-matrices'). */
+export const QL_MATRICES_DEVICE_ID = techneDeviceId(QL_MATRICES_FAMILY, QL_MATRICES_FACE)
+
+/** The view's own keys: what shows, and the kernel address the operators read. */
+export const QL_MATRICES_LOCAL = ['matrix', 'valueForm', 'm1.basis', 'kernel.position', 'kernel.face'] as const
+/** The keys an owner takes a change of: the mode in force's lens and frame, the form's address. */
+export const QL_MATRICES_WRITES = ['m1.lens12', 'm1.context_frame', 'form.address'] as const
+
+const NO_M1 = missing('The M1 engine', 'the kernel op for `ql kernel m1` (crates/ql-mef/src/m1_engine.rs, ql.m1.engine/v1: its cells and its select of '
+  + 'family, row, position and tick)', 'Quaternal Logic, through the kernel')
+const NO_CODONS = missing('The 64 codons in address order', 'the kernel op for `ql kernel m3` (the transcription of every form address); m3_reception '
+  + 'reads only the form in force', 'Quaternal Logic, through the kernel')
+const NO_PARTNERS = missing('The matrix partners', 'the kernel ops ql_m3_apply_matrix and ql_m3_apply_matrix_hexagram (each address\'s partner under '
+  + 'the matrix, base by base or trigram by trigram)', 'Quaternal Logic, through the kernel')
+const NO_KERNEL = missing('The kernel\'s operators', 'the kernel op for `ql kernel apply <operator> <address>` (crates/ql-core/src/apply.rs: conjugate, '
+  + 'complement and classify on the sixfold form)', 'Quaternal Logic, through the kernel')
+/** The Situation matrix's words, which the design draws where its grid stands. */
+export const QL_SITUATION_ABSENT = 'The Situation matrix has no owner yet: the M′ packets (QL-MEF #281) are commissioned, not landed.'
+
+/** Why each key the matrices draw and no owner reports here is absent, or why its control is off (manual §16.12: "say which one"). */
+export const QL_MATRICES_ABSENT: Readonly<Record<string, string>> = {
+  'm1.cells': NO_M1, 'm1.row12': NO_M1, 'm1.col12': NO_M1, 'm1.tick12': NO_M1, 'm1.family': NO_M1,
+  'm3.codons': NO_CODONS, 'form.partners': NO_PARTNERS, 'form.partner': NO_PARTNERS, 'form.scale': NO_PARTNERS,
+  'kernel.conjugate': NO_KERNEL, 'kernel.complement': NO_KERNEL, 'kernel.class': NO_KERNEL, 'kernel.version': NO_KERNEL,
+  'kernel.depth': NO_KERNEL, 'kernel.form': NO_KERNEL,
+}
+
+/** The lens names in the design's row order: L0, L0′, L1 … L5′ (the catalogue writes the prime as an apostrophe). */
+export const LENS_NAMES: readonly string[] = Array.from({length: 12}, (_, i) => `L${i >> 1}${i & 1 ? '\'' : ''}`)
+const frameOf = (contextFrame: string | undefined) => { const m = /^CF([1-7])$/.exec(contextFrame ?? ''); return m ? Number(m[1]) : undefined }
+
+/** The owners' hands, so a test can stand in for them. */
+export interface QlMatricesWriters {
+  readonly setHold: (patch: Partial<LiveModeHold>) => void
+  readonly applyM3: (operations: readonly M3Operation[]) => Promise<void>
+}
+const OWNERS: QlMatricesWriters = {setHold: setLiveModeHold, applyM3: applyQlM3}
+
+/** The matrices' whole state: the person's M3 form, the mode catalogue and the transport's mode, and the view's holds. */
+export interface QlMatricesState {
+  readonly m3: QlM3State
+  readonly modes: {readonly reading: LiveModeCatalogueState; readonly hold: LiveModeHold}
+  /** The view's own choices as held (heldFor(QL_MATRICES_DEVICE_ID)). */
+  readonly held: Readonly<Record<string, Value>>
+}
+
+const catalogueOf = (state: QlMatricesState): QlMusicModes | null => (state.modes.reading.state === 'ready' ? state.modes.reading.catalogue : null)
+const catalogueWhy = (reading: LiveModeCatalogueState): string =>
+  reading.state === 'refused' ? `The mode catalogue is refused: ${reading.reason}` : 'The mode catalogue is still being read from the owner.'
+const lensRows = (catalogue: QlMusicModes): KernelLensMode[] => catalogue.scales.filter((scale): scale is KernelLensMode => scale.kind === 'lens-cf')
+
+/** The lens mode in force on the transport, when the mode in force is one of the catalogue's lens modes. */
+export function lensModeInForce(state: QlMatricesState): KernelLensMode | null {
+  const mode = setModeInForce(state.modes.reading, state.modes.hold).mode
+  return mode.state === 'in-force' && mode.selection.scale.kind === 'lens-cf' ? mode.selection.scale as KernelLensMode : null
+}
+
+/** The order of the twelve notes the matrices show: the view's hold, else the lens mode in force's basis; only a basis the owner serves. */
+export function shownBasis(state: QlMatricesState): string | undefined {
+  const catalogue = catalogueOf(state)
+  if (!catalogue) return undefined
+  const held = state.held['m1.basis']
+  const basis = typeof held === 'string' ? held : lensModeInForce(state)?.anchorBasis
+  return basis && catalogue.bases.some(item => item.basis === basis) ? basis : undefined
+}
+
+/** The tonic of each lens's seven modes in a basis, in the design's order (12 lenses × 7 frames); undefined when a row is missing. */
+export function tonicsOf(catalogue: QlMusicModes, basis: string): number[][] | undefined {
+  const rows = lensRows(catalogue).filter(row => row.anchorBasis === basis)
+  const grid = LENS_NAMES.map(lens => Array.from({length: 7}, (_, j) => rows.find(row => row.lens === lens && frameOf(row.contextFrame) === j + 1)?.pitches[0]))
+  return grid.every(row => row.every(tonic => tonic !== undefined)) ? grid as number[][] : undefined
+}
+
+const int = (x: unknown): x is number => Number.isSafeInteger(x)
+
+/** The design's values: each key from the owner that reports it, the view's own as held. Only what the owners report. */
+export function qlMatricesValues(state: QlMatricesState): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  for (const key of QL_MATRICES_LOCAL) if (state.held[key] !== undefined) values[key] = state.held[key]!
+  values.reason = QL_SITUATION_ABSENT
+  const catalogue = catalogueOf(state), basis = shownBasis(state)
+  if (catalogue && basis) {
+    values['m1.basis'] = basis
+    const tonics = tonicsOf(catalogue, basis)
+    if (tonics) values['m2.tonics'] = JSON.stringify(tonics)
+  }
+  const inForce = catalogue ? lensModeInForce(state) : null
+  const lens = inForce ? LENS_NAMES.indexOf(inForce.lens) : -1, frame = frameOf(inForce?.contextFrame)
+  if (lens >= 0) values['m1.lens12'] = lens
+  if (frame !== undefined) values['m1.context_frame'] = frame
+  const form = state.m3.reading?.status === 'available' ? state.m3.reading.state : null
+  if (form && int(form.form?.address)) values['form.address'] = form.form.address
+  return values
+}
+
+/** Why the owners do not take a change of this key now, or null when they do. */
+export function qlMatricesStanding(state: QlMatricesState, key: string): string | null {
+  if (QL_MATRICES_ABSENT[key]) return QL_MATRICES_ABSENT[key]!
+  if (key === 'm1.lens12' || key === 'm1.context_frame') {
+    if (!catalogueOf(state)) return catalogueWhy(state.modes.reading)
+    return shownBasis(state) ? null : 'Choose a basis first: the Reading reads the owner\'s modes in one of its two orders.'
+  }
+  if (key === 'form.address') return state.m3.reading?.status === 'available' && state.m3.reading.state ? null : state.m3.reason ?? NO_FORM
+  if (key === 'm2.tonics') return catalogueOf(state) ? (shownBasis(state) ? 'A reading: the owner\'s mode catalogue.' : 'Choose a basis: the owner serves its modes in two orders.') : catalogueWhy(state.modes.reading)
+  return `${key}: no setting of the matrices.`
+}
+
+/** Apply the design's changes through the owners: the cell of the Reading as the transport's mode, the form's address as its select-form.
+ * Throws in words for one the owners do not take, before any is applied. */
+export async function applyQlMatricesChanges(state: QlMatricesState, changes: readonly ValueChange[], writers: QlMatricesWriters = OWNERS): Promise<void> {
+  let lens: number | undefined, frame: number | undefined, address: number | undefined
+  for (const {key, value} of changes) {
+    const why = qlMatricesStanding(state, key)
+    if (why) throw new Error(why)
+    if (key === 'm1.lens12') { if (!int(value) || value < 0 || value > 11) throw new Error('The lens is one of twelve, 0 to 11.'); lens = value }
+    else if (key === 'm1.context_frame') { if (!int(value) || value < 1 || value > 7) throw new Error('The context frame is 1 to 7.'); frame = value }
+    else if (key === 'form.address') { if (!int(value) || value < 0 || value > 63) throw new Error('The form is one of 64 addresses, 0 to 63.'); address = value }
+  }
+  const acts: (() => void | Promise<void>)[] = []
+  if (lens !== undefined || frame !== undefined) {
+    const inForce = lensModeInForce(state)
+    const atLens = lens ?? (inForce ? LENS_NAMES.indexOf(inForce.lens) : -1), atFrame = frame ?? frameOf(inForce?.contextFrame)
+    if (atLens < 0 || atFrame === undefined) throw new Error('No lens mode is in force: choose the lens and the context frame together, as the cell does.')
+    const basis = shownBasis(state)!
+    const row = lensRows(catalogueOf(state)!).find(item => item.anchorBasis === basis && item.lens === LENS_NAMES[atLens] && frameOf(item.contextFrame) === atFrame)
+    if (!row) throw new Error(`The catalogue serves no mode on ${LENS_NAMES[atLens]} at CF${atFrame} in the ${basis} basis.`)
+    acts.push(() => writers.setHold({root: row.pitches[0]!, key: row.key}))
+  }
+  if (address !== undefined) acts.push(() => writers.applyM3([{operation: 'select-form', address: address!}]))
+  for (const act of acts) await act()
+}
+
+/** The binding the runtime hosts the matrices' design on: the owners' readings and hands, the view's own keys in its own hand, and every
+ * key no owner carries named with the route it waits on. */
+export function qlMatricesBinding(state: QlMatricesState, writers: QlMatricesWriters = OWNERS): DesignBinding {
+  const standing: Record<string, Standing> = {...disabled(QL_MATRICES_ABSENT)}
+  for (const key of [...QL_MATRICES_WRITES, 'm2.tonics']) {
+    const why = qlMatricesStanding(state, key)
+    if (why) standing[key] = {disabled: why}
+  }
+  const live = state.m3.reading?.status === 'available' && !!state.m3.reading.state
+  return {
+    id: QL_MATRICES_DEVICE_ID,
+    values: qlMatricesValues(state),
+    standing,
+    local: handsFor(QL_MATRICES_DEVICE_ID, QL_MATRICES_LOCAL),
+    writes: key => qlMatricesStanding(state, key) === null,
+    write: changes => applyQlMatricesChanges(state, changes, writers),
+    // A first read in flight: the catalogue's tonics, or the form, wait rather than drawing as none.
+    ...(state.modes.reading.state === 'loading' || (state.m3.busy && !live)
+      ? {waiting: [...(state.modes.reading.state === 'loading' ? ['m2.tonics', 'm1.basis', 'm1.lens12', 'm1.context_frame'] : []), ...(state.m3.busy && !live ? ['form.address'] : [])]} : {}),
+  }
+}
+
+/** The matrices as a device of the runtime: its design draws its values (no rows of its own). */
+export function qlMatricesDevice(face: InhabitantFaceDeclaration): DeviceInstance {
+  return {id: QL_MATRICES_DEVICE_ID, family: QL_MATRICES_FAMILY, face: techneFaceDeclaration(face), rows: [], values: {}}
+}

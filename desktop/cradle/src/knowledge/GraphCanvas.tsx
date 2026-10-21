@@ -8,7 +8,7 @@ import {graphScreenEdges,hitGraphScreenEdge,emphasizedGraphRelations,admitGraphL
 import {NavigationMinimap,type NavigationMinimapController} from '../shared/NavigationMinimap.tsx';
 import {captureGraphContext,resolveGraphContext,type GraphContextSource} from './graphContext';
 import './graphContext.css';
-interface Props {unresolvedAssociations?:ReturnType<typeof unresolvedGraphAssociations>;emphasis?:ReadonlyMap<string,{label:string;color:string}>;nodes:GraphNode[];positions:Point[];model?:GraphReading;camera:Camera;selected?:string;focused:Set<string>;contextual?:Set<string>;labels?:'automatic'|'all'|'focus';arrows?:boolean;minZoom:number;maxZoom:number;onCamera:(camera:Camera)=>void;onDragNode?:(ref:string|null,world?:{x:number;y:number})=>void;onSelect?:(node:GraphNode)=>void;onOpen:(node:GraphNode)=>void;onTechne?:(node:GraphNode)=>void;onClear:()=>void}
+interface Props {unresolvedAssociations?:ReturnType<typeof unresolvedGraphAssociations>;emphasis?:ReadonlyMap<string,{label:string;color:string}>;nodes:GraphNode[];positions:Point[];model?:GraphReading;camera:Camera;selected?:string;focused:Set<string>;contextual?:Set<string>;labels?:'automatic'|'all'|'focus';arrows?:boolean;minZoom:number;maxZoom:number;onCamera:(camera:Camera)=>void;onDragNode?:(ref:string|null,world?:{x:number;y:number})=>void;onSelect?:(node:GraphNode)=>void;onOpen:(node:GraphNode)=>void;onTechne?:(node:GraphNode)=>void;onClear:()=>void;/** The overview toggle, held by the surface (its handle publishes it); absent, the canvas holds its own. */minimap?:boolean;onMinimap?:(on:boolean)=>void}
 /** One demand-driven drawing loop. Pointer/wheel updates never render React
  * or persist state per frame; dragging a subject asks the live layout world
  * to move it (the neighbourhood answers), dragging the ground pans. A press
@@ -17,7 +17,9 @@ interface Props {unresolvedAssociations?:ReturnType<typeof unresolvedGraphAssoci
  * accessibility subjects keep exact refs. */
 export const GraphCanvas=memo(function GraphCanvas(props:Props) {
   const [accessPage,setAccessPage]=useState(0);
-  const [minimap,setMinimap]=useState(true),[extent,setExtent]=useState({width:800,height:520});
+  const [ownMinimap,setOwnMinimap]=useState(true),[extent,setExtent]=useState({width:800,height:520});
+  const minimap=props.minimap??ownMinimap;
+  const setMinimap=(next:(value:boolean)=>boolean)=>{const value=next(minimap);if(props.onMinimap)props.onMinimap(value);else setOwnMinimap(value);};
   const [context,setContext]=useState<{basis:GraphContextSource;x:number;y:number}>();
   const mini=useRef<NavigationMinimapController|null>(null),contextMenu=useRef<HTMLDivElement>(null);
   const miniPoints=useMemo(()=>props.nodes.flatMap((node,index)=>{const point=props.positions[index];return point?[{id:node.ref,x:point.x,y:point.y,hollow:isUnresolvedGraphNode(node)}]:[];}),[props.nodes,props.positions]);

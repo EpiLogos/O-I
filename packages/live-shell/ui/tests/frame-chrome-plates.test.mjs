@@ -75,22 +75,27 @@ const CANVAS = {lens: 'canvas', controls: [
 const state = (chrome, extra = {}) => ({hostMode: 'techne', lens: 'canvas', sceneIndex: 0, sceneCount: 1, presentation: 'devices', chrome, ...extra})
 const run = async () => ({ok: true})
 
-test('M1′ Canvas stands as one plate in the manual\'s five groups and the Expression, each frame control in its home', () => {
+test('M1′ Canvas stands as one plate of the groups its design does not carry and the Expression, each frame control in its home', () => {
   publishHostedChrome({state: state(CANVAS), run, faults: []})
   try {
     const out = plate('techne:m1')
     assert.match(out, /data-instrument="techne:m1"[^>]*data-stage-plate="canvas"/, 'the stage plate stands open for M1′')
-    const order = ['tools', 'lines', 'relation', 'look', 'views', 'expression'].map(id => out.indexOf(`data-section="${id}"`))
-    assert.ok(order.every(at => at > 0), 'every group stands')
+    // W4-Technē: the Canvas design (techne:canvas) heads M1′'s chain and carries Look whole — zoom, Fit, the overview — with Mode, Grid and
+    // the save state, on the frame's research reading and acts (stageInstrumentModel.ts CARRIED_BY_DESIGN): the plate draws none of them.
+    const order = ['tools', 'lines', 'relation', 'views', 'expression'].map(id => out.indexOf(`data-section="${id}"`))
+    assert.ok(order.every(at => at > 0), 'every group the design does not carry stands')
+    assert.equal(out.indexOf('data-section="look"'), -1, 'Look is the design\'s')
+    assert.equal(out.indexOf('data-section="display"'), -1, 'the picture is the design\'s display')
     assert.deepEqual([...order].sort((a, b) => a - b), order, 'in the manual\'s order, the Expression last')
     const section = id => out.slice(out.indexOf(`data-section="${id}"`), out.indexOf('</section>', out.indexOf(`data-section="${id}"`)))
     assert.match(section('tools'), /data-chrome="tools\/l:Note"/)
-    assert.match(section('tools'), /aria-pressed="true"[^>]*>Snap</, 'Snap lit by the frame\'s own reading')
-    assert.match(section('tools'), /data-chrome="tools\/\.research-save-glyph"/, 'the save glyph stands as a reading')
-    assert.match(section('look'), /data-chrome="zoom\/l:Fit all cards"[^>]*title="Fit all cards — Fit all \(Shift\+1\)"/, 'the frame\'s words, its shortcut in them')
+    assert.doesNotMatch(section('tools'), />Snap</, 'Grid is the design\'s')
+    assert.doesNotMatch(section('tools'), /data-chrome="tools\/\.research-save-glyph"/, 'the save state is the design\'s')
+    assert.doesNotMatch(out, /data-chrome="zoom\/l:Fit all cards"/, 'Fit all is the design\'s camera')
     assert.match(section('views'), /<optgroup label="one"><option value="apply\u0000one">Apply<\/option><\/optgroup>/, 'the frame\'s own choices')
-    assert.match(section('lines'), /Select a line to set its kind/, 'Lines says what it waits for')
-    assert.match(section('relation'), /data-waiting="true" title="Standing — No owner gives a drawn line a standing yet/, 'a manual parameter with no owner waits, with why')
+    // With no line selected the frame places nothing in Lines, and its waiting rows are the design's now: an empty group folds to its title.
+    assert.match(out, /data-section="lines" data-folded="true"/, 'Lines, empty, folds to its title')
+    assert.doesNotMatch(section('relation'), /data-waiting="true"/, 'a parameter no owner carried is the design\'s now, drawn there with its reason')
     // The Expression stands as the runtime's fold strip until pressed (no scroller: a column that cannot fit is a fold); what it opens to
     // is the stage-wide chrome — Save, Acts — never the lens chooser.
     assert.match(out, /data-section="expression" data-folded="true"/, 'the Expression folds to its title')

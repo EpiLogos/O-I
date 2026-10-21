@@ -86,7 +86,7 @@ test('the standing world passes the gate, and every admitted face occupies a Liv
       assert.ok(semantics.isLiveSemantic(face.liveSemantic), `${manifest.id}/${face.id} occupies "${face.liveSemantic}"`)
     }
   }
-  assert.equal(sdkValidate.semanticRegistry().length, 59, 'the world carries its 59 faces (38 + the L7 day-now + the knowledge graph’s 3, T-KNOWLEDGE-GRAPH-DEVICE + Central\'s page family\'s 7, lane BC2 + Software Factory\'s thread, tasks and agentset rack, lane BF3 + Central\'s packet and search, lane BC3 + Quaternal Logic\'s Sitting, T-WORLDS W4 + AIKit\'s Decision helper, T-AGENCY K5 + Quaternal Logic\'s Resonator bank, MR + AIKit\'s Messages and Workcell\'s workcell rack, lane W1-Factory)')
+  assert.equal(sdkValidate.semanticRegistry().length, 62, 'the world carries its 62 faces (38 + the L7 day-now + the knowledge graph’s 3, T-KNOWLEDGE-GRAPH-DEVICE + Central\'s page family\'s 7, lane BC2 + Software Factory\'s thread, tasks and agentset rack, lane BF3 + Central\'s packet and search, lane BC3 + Quaternal Logic\'s Sitting, T-WORLDS W4 + AIKit\'s Decision helper, T-AGENCY K5 + Quaternal Logic\'s Resonator bank, MR + AIKit\'s Messages and Workcell\'s workcell rack, lane W1-Factory + Actuation\'s Voice, lane W4 + Central\'s Machine, lane W4 for Central + Quaternal Logic\'s Binding, lane W4 for Expressions, Live and Quaternal Logic)')
 })
 
 test('the semantic registry is locked to its reviewed snapshot (lock §5.6)', async () => {

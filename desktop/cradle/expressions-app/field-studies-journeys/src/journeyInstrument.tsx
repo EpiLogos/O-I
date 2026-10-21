@@ -251,6 +251,8 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
  let restoring:Promise<boolean>|undefined;
  /** T10: the crossing this instrument made and has not yet returned from: the owner's acknowledged reply is the compare-and-set of its return. */
  let crossed:NativeTimeWindowReply|undefined;
+ /** lane W4-Technē: enter the presented beat (its Enter in Expression button's own act), while a load stands; null otherwise. */
+ let enterPresented:(()=>void)|null=null;
  // T8/T5: the path's edge controls send through submitEdge, on the native owner's journey only.
  const playback=host.playback&&host.seek?{read:host.playback,seek:host.seek,edit:()=>host.nativeView()?submitEdge:undefined}:undefined;
  const current=(basis:JourneyInstrumentBasis,generation:number)=>!destroyed&&open&&epoch===generation&&sameJourneyInstrumentBasis(basis,host.nativeView(),host.sceneId());
@@ -326,6 +328,14 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
      crossed=reply;busy=false;
      host.entered?.();
     }).catch(error=>{if(!destroyed&&open&&generation===epoch){busy=false;draw();message(failure(error));}});
+   };
+   // lane W4-Technē: the host's Enter is the presented beat's own button (data-journey-enter): the one beat on this basis.
+   enterPresented=()=>{
+    if(!host.crossing)throw new Error('This host offers no crossing into the Expression.');
+    if(busy)throw new Error('The Journey is answering its last act.');
+    const card=beatView.cards.find(candidate=>candidate.onBasis&&candidate.scene_ref===basis.scene_ref);
+    if(!card||!current(basis,generation))throw new Error('No beat of this Journey stands on the presented Scene, so there is nothing to enter.');
+    enter(card);
    };
    // T3: the pace draft is local. Every change is saved to the presence entry (T9) with its basis; only `save` reaches the Expression,
    // as one labelled step through the host's Save path. A draft the browser would not keep is refused by name, never held twice.
@@ -476,7 +486,10 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
    }).catch(()=>{});
   },
   async open(){if(destroyed)throw Error('Journey instrument is closed');open=true;mount.hidden=false;status.hidden=false;await load();},
-  close(){epoch++;open=false;inFlight=undefined;mount.hidden=true;status.hidden=true;root?.unmount();root=null;},
+  /** lane W4-Technē: enter the presented beat's Scene in its Expression (the beat's own Enter in Expression act). Throws, in words, when
+   * the Journey is not open or no beat stands on the presented Scene. */
+  enter(){if(!open||!enterPresented)throw new Error('Open the Journey to enter a stop.');enterPresented();},
+  close(){epoch++;open=false;inFlight=undefined;enterPresented=null;mount.hidden=true;status.hidden=true;root?.unmount();root=null;},
   /** T11: the journey re-opened after a crossing. The crossed beat is restored by ref through the owner; a beat no longer in the Journey
   * is named in one status line, and no neighbour is restored in its place. */
   async returnFromCrossing(){

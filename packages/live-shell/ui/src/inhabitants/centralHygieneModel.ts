@@ -320,9 +320,9 @@ export interface HygieneTender {
   readonly receiptShape: string
 }
 
-/** The route a tender that writes the person's own ground waits on: the kernel's invoke_action reaches Central's actions but carries no
- * person's authority (T-COVERAGE §1.1). */
-const PERSON_ROUTE = 'the kernel route that carries the person\'s authority (T-COVERAGE §1.1): the owner\'s write needs the person, and invoke_action carries no one'
+/** The route a tender that writes the person's own ground waits on: the kernel's invoke_action reaches Central's actions, and carries the
+ * person's authority only for the person's own presses (desktop/cradle/kernel/src/action.rs PERSON_ACTS), which name none of these. */
+const PERSON_ROUTE = 'the kernel route that carries the person\'s authority: the owner\'s write needs the person, and invoke_action carries the person only for the presses desktop/cradle/kernel/src/action.rs PERSON_ACTS names, which do not include it'
 
 export const HYGIENE_TENDERS: readonly HygieneTender[] = [
   {

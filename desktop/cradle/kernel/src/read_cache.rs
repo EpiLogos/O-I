@@ -1445,7 +1445,7 @@ const CENTRAL_READINGS: [&str; 2] = [
 /// Whether a Central action only reads (so running it moves nothing). Any
 /// other action may write, and a write moves every retained reading.
 pub fn central_reads(action: &str) -> bool {
-    const READING: [&str; 16] = [
+    const READING: [&str; 17] = [
         ".roster",
         ".read",
         ".list",
@@ -1462,6 +1462,9 @@ pub fn central_reads(action: &str) -> bool {
         ".return_read",
         ".recovery_preview",
         ".search",
+        // A Preview or Preflight press: `projectcentral.adopt.preview`,
+        // `projectcentral.migrate.preview` (lane W3).
+        ".preview",
     ];
     action == "central.world"
         || CENTRAL_READINGS.contains(&action)
@@ -1940,6 +1943,12 @@ mod tests {
         assert!(
             !central_reads("central.files.write") && !central_reads("projectcentral.now.return")
         );
+        // A preview is a reading; the act it previews is not.
+        assert!(
+            central_reads("projectcentral.adopt.preview")
+                && central_reads("projectcentral.migrate.preview")
+        );
+        assert!(!central_reads("projectcentral.adopt") && !central_reads("projectcentral.migrate"));
     }
 
     #[test]

@@ -1,0 +1,115 @@
+{
+  "captured": "actuation 0.2.1, 21 Oct 2026: `actuation usage - --json` over Actuation's own fixture observation (crates/actuation-stream/tests/fixtures/usage-actions.json .observation); refused: the same with only its schema",
+  "command": [
+    "actuation",
+    "usage",
+    "-",
+    "--json"
+  ],
+  "input": {
+    "schema": "actuation.model-usage/v1",
+    "usage_ref": "model-usage:claude-code:message-real-shape",
+    "actuation_ref": "actuation:oracle",
+    "invocation_ref": "invocation:claude-code:request-real-shape",
+    "correlation": {
+      "harness_ref": "harness:claude-code",
+      "native_session_ref": "claude-code:session:session-real-shape",
+      "agent_session_ref": "session:oracle",
+      "agency_ref": "agency:oracle"
+    },
+    "provider": {
+      "standing": "not-reported"
+    },
+    "model": {
+      "standing": "normalized-from-native",
+      "name": "claude-fable-5"
+    },
+    "tokens": {
+      "standing": "normalized-from-native",
+      "input": 11,
+      "output": 8
+    },
+    "cache": {
+      "standing": "normalized-from-native",
+      "read_input": 5
+    },
+    "timing": {
+      "completed_at": "2026-09-08T20:00:00Z",
+      "latency": {
+        "standing": "not-reported"
+      }
+    },
+    "cost": {
+      "standing": "not-reported"
+    },
+    "outcome": {
+      "state": "completed",
+      "standing": "normalized-from-native",
+      "reason": "end_turn"
+    },
+    "provenance": {
+      "reporter_ref": "harness:claude-code",
+      "native_event_ref": "claude-code:message:message-real-shape",
+      "native_request_ref": "claude-code:request:request-real-shape",
+      "native_schema": "claude-code.transcript/assistant-message",
+      "observed_at": "2026-09-08T20:00:00Z",
+      "raw_evidence_refs": [
+        "trace:claude-code:line-42"
+      ]
+    }
+  },
+  "answer": {
+    "schema": "actuation.model-usage/v1",
+    "usage_ref": "model-usage:claude-code:message-real-shape",
+    "actuation_ref": "actuation:oracle",
+    "invocation_ref": "invocation:claude-code:request-real-shape",
+    "correlation": {
+      "agency_ref": "agency:oracle",
+      "agent_session_ref": "session:oracle",
+      "harness_ref": "harness:claude-code",
+      "native_session_ref": "claude-code:session:session-real-shape"
+    },
+    "provider": {
+      "standing": "not-reported"
+    },
+    "model": {
+      "standing": "normalized-from-native",
+      "name": "claude-fable-5"
+    },
+    "tokens": {
+      "standing": "normalized-from-native",
+      "input": 11,
+      "output": 8
+    },
+    "cache": {
+      "standing": "normalized-from-native",
+      "read_input": 5
+    },
+    "timing": {
+      "completed_at": "2026-09-08T20:00:00Z",
+      "latency": {
+        "standing": "not-reported"
+      }
+    },
+    "cost": {
+      "standing": "not-reported"
+    },
+    "outcome": {
+      "state": "completed",
+      "standing": "normalized-from-native",
+      "reason": "end_turn"
+    },
+    "provenance": {
+      "reporter_ref": "harness:claude-code",
+      "native_event_ref": "claude-code:message:message-real-shape",
+      "native_schema": "claude-code.transcript/assistant-message",
+      "native_request_ref": "claude-code:request:request-real-shape",
+      "observed_at": "2026-09-08T20:00:00Z",
+      "raw_evidence_refs": [
+        "trace:claude-code:line-42"
+      ]
+    }
+  },
+  "refusal_stderr": "actuation: missing field `usage_ref`",
+  "refusal_exit": 2
+}

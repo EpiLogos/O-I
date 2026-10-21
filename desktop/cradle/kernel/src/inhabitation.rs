@@ -275,9 +275,17 @@ fn drain(mut reader: impl Read) -> (Vec<u8>, bool) {
 
 /// The owner's refusal in its own words: the three-part `{fact, consequence,
 /// action}` refusal (WORLD-INHABITATION-V1, OpenRig's convention) when the
-/// owner wrote one on stdout, else its `error.message`, else stderr.
-fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
+/// owner wrote one on stdout, else its `error.message` (or an `error` that is
+/// its words, as Actuation's research harness answers), else stderr.
+pub(crate) fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
     if let Ok(value) = serde_json::from_slice::<Value>(stdout) {
+        if let Some(words) = value
+            .get("error")
+            .and_then(Value::as_str)
+            .filter(|words| !words.trim().is_empty())
+        {
+            return words.to_owned();
+        }
         let refusal = value
             .get("error")
             .filter(|e| e.is_object())
@@ -369,6 +377,10 @@ pub(crate) fn run_bounded_raw(
     if let Some(cwd) = cwd {
         command.current_dir(cwd);
     }
+    // One place in the owner-process limiter for as long as the child runs
+    // (owner_process.rs `Limiter`): these reads were the one family of
+    // one-shot owner processes that started outside it.
+    let _place = crate::owner_process::Limiter::global().place();
     let mut child = command.spawn().map_err(|e| {
         fail(
             "unavailable",

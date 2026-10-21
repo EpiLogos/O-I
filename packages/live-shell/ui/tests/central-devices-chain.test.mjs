@@ -66,11 +66,12 @@ const html = (element) => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 const central = inhabitantManifest('central')
 assert.ok(central, 'the central family is admitted by the shell\'s own door')
-// R4 (DLW §16.2; lock §0.3.4): the family's faces on the chains are the Day (the Main track's) and the Packet, Ground hygiene and Impact
-// (a workspace's); the Agent and Scope stand between the Packet and Ground hygiene as devices of their own families (r4-chains.test.mjs).
+// R4 (DLW §16.2; lock §0.3.4): the family's faces on the chains are the Day (the Main track's) and the Packet, then — on a world whose folder
+// holds code — Ground hygiene, Machine (W4, §18.7) and Impact (a world's); the Agent and Scope stand between the Packet and Ground hygiene as
+// devices of their own families (r4-chains.test.mjs; w4-central-machine-chain.test.mjs places them per world kind).
 // REPLACED: lane BC3's seven (the Day, Agent identity, the Answer, Context & world, Search, Ground hygiene, Impact) — Agent identity and
 // the Answer are the one Agent's, Context & world is Scope's, Search is a pane.
-const FACES = ['day-die', 'packet', 'ground-hygiene', 'impact']
+const FACES = ['day-die', 'packet', 'ground-hygiene', 'machine', 'impact']
 const DAY_REF = 'central:day:control:root:2026-10-06'
 const ready = vertical.interpretDayOpen(DAY_REF, {data: {schema: 'oi.central-day-open/v1', project: null, day: {
   document_state: 'ready', source: {ref: 'central:source:control:root:Control/user/day/2026-10-06/day.md'},
@@ -93,7 +94,7 @@ const deviceMarkup = (markup, faceId) => {
 }
 function DeviceViewOf({entry, size}) { return createElement(DeviceView, {device: entry.device, size, picture: entry.picture(size), marks: entry.marks}) }
 
-test('the family\'s faces on the chains are four devices, in chain order, each its own family\'s declaration; no page face and no moved face stands', () => {
+test('the family\'s faces on the chains are five devices, in chain order, each its own family\'s declaration; no page face and no moved face stands', () => {
   const set = entries()
   assert.deepEqual(set.map(entry => entry.id), FACES.map(id => `central:${id}`))
   for (const entry of set) {
@@ -126,7 +127,11 @@ test('REPLACED — a face the family declares that no chain names stands on no c
 
 test('every device is compact on the chain: a picture, at most four readings, no text-only card, and the doors to whole and full', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport}))
-  for (const id of FACES) {
+  // W4 (§16.2): with no world's track selected the world's chain names no world, so only the Day and the Packet of the family stand; Ground
+  // hygiene, Machine and Impact stand on a world whose folder holds code (w4-central-machine-chain.test.mjs), and stay on the door.
+  const CODE_FACES = ['ground-hygiene', 'machine', 'impact']
+  for (const id of CODE_FACES) assert.ok(!markup.includes(`data-device="central:${id}"`), `${id}: on no chain while no world holding code is selected`)
+  for (const id of FACES.filter(face => !CODE_FACES.includes(face))) {
     const device = deviceMarkup(markup, id)
     assert.match(device, /data-device-size="compact"/, id)
     // The Day's picture is its design's net (lane BC, central-day-binding.test.mjs); with no ground read here its generic plate stands,
@@ -168,7 +173,7 @@ test('the rows are the family\'s declared rows; a row is a reading unless the fa
   const writing = Object.fromEntries(set.map(entry => [entry.id.slice('central:'.length), entry.device.rows.filter(row => row.writePath).map(row => [row.key, row.writePath])]))
   // REPLACED: the Answer's ['bound', 'kernel:nara_dialogue'] row and the readings of Agent identity, Context & world and Search are no chain
   // entries now; the dialogue's binding is the one Agent's light (r4-one-agent.test.mjs).
-  assert.deepEqual(writing, {'day-die': [['face', 'kernel:receiving']], 'packet': [], 'ground-hygiene': [], 'impact': []})
+  assert.deepEqual(writing, {'day-die': [['face', 'kernel:receiving']], 'packet': [], 'ground-hygiene': [], 'machine': [], 'impact': []})
   for (const entry of set) {
     const declaredPath = entry.device.face.invariant?.generates
     assert.equal(typeof entry.device.submit, declaredPath ? 'function' : 'undefined', `${entry.id}: a write door exactly where the declaration names a generating path`)

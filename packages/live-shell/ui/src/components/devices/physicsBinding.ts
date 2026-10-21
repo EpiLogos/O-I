@@ -10,7 +10,7 @@
 // in the engine's own pixels (factor 400: Vortex Radius, Speed Limit): the design's px is the stage value × the factor, and back.
 import type {NativeEditorReading} from '@epilogos/expressions-boundary/editor'
 import {NATIVE_BINDINGS} from '@epilogos/expressions-boundary/parameters'
-import type {DesignBinding, Value, ValueChange} from '../../frame/devices/designed'
+import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import {SETTING_PREFIX, expressionsSettingChoices} from './expressionsDevice'
 
@@ -101,9 +101,12 @@ export function physicsDesignBinding(device: DeviceInstance, reading: Pick<Nativ
     if (by) modulatedBy[key] = by
   }
   const submit = device.submit
+  // Physics's light and its held-field reading say why they take no change (manual §16.12: "say which one").
+  const standing: Record<string, Standing> = Object.fromEntries(Object.entries(PHYSICS_ABSENT).map(([key, why]) => [key, {disabled: why}]))
   return {
     id: device.id,
     values: physicsValuesOf(device, reading),
+    standing,
     writes: key => PHYSICS_WRITES.has(key),
     ...(submit ? {write: async (changes: readonly ValueChange[]) => {
       const {rows, presses} = physicsRowChanges(changes)
