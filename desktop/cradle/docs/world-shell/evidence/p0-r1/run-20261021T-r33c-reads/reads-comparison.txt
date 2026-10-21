@@ -1,0 +1,28 @@
+Reads that remember — the sealed candidate at 8c906eb21 against r29 (20 Oct), same recipe (21 Oct)
+
+Same recipe as run-20261020T-r29-reads: full-suite backing, run-native-at-head.sh all, OI_KERNEL_TRACE_FILE, launched and left
+idle; the window restored into Expressions with no work open. Owners are the installed set (ctrl 11e7e69cb = Central#287,
+aikit cc6405e66 = ai-kit#539). Trace: kernel-trace.log (the start-up, then the Live switch below).
+
+Start-up, owner processes ([owner] … process lines):
+  r29  (72216b455)  137 processes in the first 31 s, 20.5 s of process time; still reading at 31 s (the 30 s agency floor),
+                    the graph op alone 11.1 s, 52 central.files.read, 18 identical Factory locates
+  r33c (8c906eb21)   51 processes, 3.1 s of process time, every read done by 2.5 s; nothing after it (idle at ~1% CPU)
+                    read model: 81 hit, 2 joined, 44 miss; no write withdrew the readings; the watch live with no change seen
+  where they went: 12 encounter-task-read (one per agent session: 51 asks, 12 processes), 8 central.files.list,
+                    3 central.files.read-batch, 4 Factory locates (roots with a .factory only), git census 622 ms,
+                    git diff 432 ms, AIKit history 379 ms; no graph op (the Wiki is not drawn until it is shown)
+
+Live switch (AXPress on the mode's Live checkbox, then 30 s): 3 owner processes (AIKit history, time.policy, work.policy);
+native_expression composed the torus (1.34 s); git_repository_read, agency_read and files_list answered from the read model
+in 0 ms.
+
+What this rests on: the kernel's change watch and read model (watch.rs, read_cache.rs; scopes, epochs, floors, read_scopes),
+the shell's one held store re-asked only on readings_changed for the scopes it touches, mount-when-first-shown, and the owner
+fixes above. Private-stack A/B of the same work (wayfinder/tools/lead-kit/measure-reads): before 70 / 50 owner processes on
+load / reload, after 61 / 13.
+
+Seen on screen (7-window-run-context.txt, no interaction): Expressions draws its browser, Studio, Stage and the widget rail;
+"The torus waits for its owner in Expressions" is the Studio's own note for a torus face not admitted there. Live draws its set
+(21 tracks, the clip editor) and fronts the book's Library tab with "This candidate has no built Expressions asset at the
+requested path" — owed since r30c (screen-pass.txt), not this change.

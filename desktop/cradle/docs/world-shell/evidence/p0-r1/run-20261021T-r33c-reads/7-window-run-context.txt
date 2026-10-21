@@ -1,0 +1,21 @@
+# channel: scripted (accessibility tree), no interaction; pid 81573; 2026-10-21T04:08:42Z; settled=yes at 638 elements
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXStaticText | value: Native host · revision 8c906eb21572 | title:  | description:  | help: 
+# windows: 1
+# web areas: 2
+# elements visited: 638
+# owner readback (status region) searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXGroup | value:  | title: Owners named by the host: 6 admitted of 6. | description: Owners named by the host: 6 admitted of 6. | help: Owners named by the host: 6 admitted of 6.
+AXStaticText | value: 6 of 6 owners admitted | title:  | description:  | help: 
+# windows: 1
+# web areas: 2
+# elements visited: 638
+# owner-discovery words searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+# windows: 1
+# web areas: 2
+# elements visited: 638
