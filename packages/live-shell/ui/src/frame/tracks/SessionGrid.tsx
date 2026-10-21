@@ -14,12 +14,13 @@
 // · Off, input and output — with what each means in the mode (trackLanes.ts mixerCells); a track flagged `main` is the Main
 // track's own material and stands in the Main column at the end, which carries each row's launcher, Stop All and Back to
 // Arrangement (lit when what plays differs from the ruler); an armed track's empty slots are record buttons (Live cap 35).
-import {useRef, useState, type CSSProperties, type ReactNode} from 'react'
+import {useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
 import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
 import {mixerCells, type MixerCell} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
+import {useTracksMenu} from '../menu/TracksMenu'
 import './tracks.css'
 
 export interface TracksSelection {
@@ -190,6 +191,8 @@ export interface SessionGridViewProps {
   onDismiss(): void
   /** Why there are no tracks yet, said where they will stand. */
   empty?: string
+  /** The object menu's handlers on the view (frame/menu/TracksMenu.tsx): its root, the right button and the menu key. */
+  menu?: {rootRef: (element: HTMLDivElement | null) => void; onContextMenu: (event: ReactMouseEvent<HTMLElement>) => void; onKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void}
 }
 
 /** A section's rails: one per section it sits under and its own, each in that section's atmosphere, else the strong line. */
@@ -199,7 +202,8 @@ const sectionRails = (chain: readonly WorldTrackSection[]) => chain.length > 0 &
 /** The stops an empty Session shows, as a new Live set does. */
 const EMPTY_STOPS: readonly WorldTrackColumn[] = Array.from({length: 8}, (_, i) => ({id: `empty:${i}`, name: String(i + 1)}))
 
-export function SessionGridView({set, selection, folded, onFold, receipt, onPress, onDismiss, empty}: SessionGridViewProps) {
+export function SessionGridView({set, selection, folded, onFold, receipt, onPress, onDismiss, empty, menu}: SessionGridViewProps) {
+  const hands = menu ? {ref: menu.rootRef, onContextMenu: menu.onContextMenu, onKeyDown: menu.onKeyDown} : {}
   const rows = set.columns
   const inRow = new Map<string, WorldTrackClip>()
   for (const clip of set.clips) if (clip.columnId) inRow.set(`${clip.trackId}\u0000${clip.columnId}`, clip)
@@ -229,7 +233,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const grain = set.actions?.grain ? ` (${set.actions.grain})` : ''
   // An empty work draws Live's empty Session: the stops down the right and the drop area where tracks will stand, with the
   // reason in it — never a blank box (world-shell-mockup.html .sg; Live's "Drop Files and Devices Here").
-  if (!lanes.length && !mainTrack) return <div className="sg-pane" data-tracks-view="session" data-empty="true">
+  if (!lanes.length && !mainTrack) return <div className="sg-pane" data-tracks-view="session" data-empty="true" {...hands}>
     <div className="sg" role="grid" aria-label="Session">
       <div className="sg-drop" role="status">{empty ?? 'No tracks in this work yet.'}</div>
       <div className="trk trk-main" role="row" aria-label="Stops">
@@ -242,7 +246,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
       </div>
     </div>
   </div>
-  return <div className="sg-pane" data-tracks-view="session">
+  return <div className="sg-pane" data-tracks-view="session" {...hands}>
     <div className="sg" role="grid" aria-label="Session">
       {tracks.map((track, column) => {
         const style = {'--tc': trackColour(track)} as CSSProperties
@@ -316,14 +320,16 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             // An armed track's empty slots are record buttons, as Live draws them (cap 35); every other empty slot is a stop square.
             if (track.mix?.arm === true && owned) {
               const recordKey = `rec:${track.id}:${row.id}`
-              return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, recordKey)} title="Empty slot · the track is armed: its button records here">
+              return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, recordKey)} title="Empty slot · the track is armed: its button records here"
+                data-slot-track={track.id} data-slot-row={row.id}>
                 <button type="button" className="sg-rec" aria-label={`Record on ${track.name}${grain}`} disabled={!recordSlot}
                   title={recordSlot ? `Record into this slot (${recordSlot.op})` : 'No record: the owner gives no op that records into a slot'}
                   onClick={() => { if (recordSlot) onPress(recordKey, `Record on ${track.name}`, () => recordSlot.run(track.id, row.id)) }}><CutIcon name="rec" size={9} /></button>
               </div>
             }
             const key = `stop:${track.id}:${row.id}`
-            return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)} title={trackStop ? 'Empty slot · its square stops the track' : 'Empty slot'}>
+            return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)} title={trackStop ? 'Empty slot · its square stops the track' : 'Empty slot'}
+              data-slot-track={track.id} data-slot-row={row.id}>
               <button type="button" className="sg2" aria-label={`Stop ${track.name}${trackStop && trackStop.grain !== undefined ? (trackStop.grain ? ` (${trackStop.grain})` : '') : grain}`} disabled={!trackStop} title={trackStop ? `Stop ${track.name} (${trackStop.op})` : owned ? 'No stop: the owner discloses no stop for this track' : 'No stop: this track is read, not stopped'}
                 onClick={() => { if (trackStop) onPress(key, `Stop ${track.name}`, () => trackStop.run(track.id)) }} />
             </div>
@@ -362,7 +368,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
           const rowLaunch = readOnlyRow(row.id) ? undefined : launchStop
           // The Main track's own clip in this row (Central: the day's face) stands beside the row's launcher, as its name.
           const own = mainTrack ? inRow.get(`${mainTrack.id}\u0000${row.id}`) : undefined
-          return <div key={row.id} className={`cs${own ? ' main-clip' : ''}${own && selection.ref === own.id ? ' sel' : ''}`} role="gridcell" data-receipt={receiptMark(receipt, key)}
+          return <div key={row.id} className={`cs${own ? ' main-clip' : ''}${own && selection.ref === own.id ? ' sel' : ''}`} role="gridcell" data-row={row.id} data-receipt={receiptMark(receipt, key)}
             style={item.chain.length ? {'--rails': item.chain.length} as CSSProperties : undefined} data-section-rails={item.chain.length || undefined} data-clip={own?.id}>
             {sectionRails(item.chain)}
             <button type="button" className="stop-launch" disabled={!rowLaunch} title={rowLaunch ? `Launch the row: every clip in it (${rowLaunch.op})` : launchStop ? 'No row launch: every clip in this row is read, not launched' : 'No row launch: the owner discloses none'}
@@ -394,6 +400,10 @@ export function SessionGrid({set, selection, empty}: {set: WorldTrackSet; select
     setReceipt(null)
     void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
   }
-  return <SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press} empty={empty}
-    onFold={id => setFolded(current => ({...current, [id]: !current[id]}))} onDismiss={() => { latest.current += 1; setReceipt(null) }} />
+  const fold = (id: string) => setFolded(current => ({...current, [id]: !current[id]}))
+  // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx).
+  const menu = useTracksMenu({set, selection, view: 'session', press, folded: id => folded[id], fold})
+  return <><SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press} empty={empty}
+    menu={{rootRef: element => { menu.rootRef.current = element }, onContextMenu: menu.onContextMenu, onKeyDown: menu.onKeyDown}}
+    onFold={fold} onDismiss={() => { latest.current += 1; setReceipt(null) }} />{menu.layer}</>
 }

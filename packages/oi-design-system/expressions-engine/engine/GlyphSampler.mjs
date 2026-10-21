@@ -175,6 +175,22 @@ class GlyphSampler {
     };
   }
   /**
+   * The application rasteriser's own text-glyph mask, cited for the PS-G form
+   * sampler (QL-MEF #296 #299): the alpha raster of the rendered glyph plus the
+   * stable rasteriser identity the declaration cites as `mask_ref`. The
+   * rasterisation stays this app's PS-G half — the sampler carries the mask,
+   * never invents it.
+   */
+  rasterizeTextAlpha(glyphText, fontFamily = FALLBACK_FONT_STACK, fontWeight = 900) {
+    const { imageData } = this.rasterizeGlyph(glyphText, fontFamily, fontWeight);
+    return {
+      alpha: imageData.data,
+      width: this.canvas.width,
+      height: this.canvas.height,
+      maskRef: "app:rasteriser:text-glyph@1"
+    };
+  }
+  /**
    * Generates target particle positions for a given glyph.
    * Supports both Stochastic Stipple (with perimeter falloff scatter) and Ordered Halftone Matrix.
    */
@@ -617,7 +633,7 @@ class GlyphSampler {
   /**
    * Renders a specific node enforcing the sacred yantra geometric form
    */
-  rasterizeSpatialNode(node, glyphType = "yantra", fontFamily = FALLBACK_FONT_STACK, fontWeight = 900, variant = "yantraA", seed) {
+  rasterizeSpatialNode(node, _glyphType = "yantra", fontFamily = FALLBACK_FONT_STACK, fontWeight = 900, variant = "yantraA", seed) {
     const w = this.canvas.width;
     const h = this.canvas.height;
     const ctx = this.ctx;
@@ -800,7 +816,7 @@ class GlyphSampler {
   /**
    * Bakes target textures for sequential Kundalini spatial morphing (Node A in space -> Node B in space)
    */
-  bakeChakraSequentialTargets(nodeA, nodeB, particleCount, texWidth, texHeight, style = "stipple", glyphType = "yantra", fontFamily = FALLBACK_FONT_STACK, fontWeight = 900, plane = "horizontal", geometryMode = "yantra", cymatics) {
+  bakeChakraSequentialTargets(nodeA, nodeB, particleCount, texWidth, texHeight, _style = "stipple", glyphType = "yantra", fontFamily = FALLBACK_FONT_STACK, fontWeight = 900, plane = "horizontal", geometryMode = "yantra", cymatics) {
     const isCymatics = geometryMode === "cymatics";
     const nodeIsCymatic = (n) => n.shape === "cymatic" || isCymatics && n.shape !== "glyph" && n.shape !== "yantra";
     const resA = nodeIsCymatic(nodeA) ? this.sampleCymaticNode(nodeA, cymatics?.plateGeometry, cymatics?.dimension, 1, 0) : { ...this.rasterizeSpatialNode(nodeA, glyphType, fontFamily, fontWeight, "yantraA"), is3D: false };
@@ -887,7 +903,7 @@ class GlyphSampler {
    * Particles are partitioned across all active spatial nodes.
    * Target A = Seed syllable representation; Target B = Sacred Yantra representation.
    */
-  bakeChakraSimultaneousTargets(nodes, particleCount, texWidth, texHeight, style = "stipple", glyphType = "both", fontFamily = FALLBACK_FONT_STACK, fontWeight = 900, plane = "horizontal", geometryMode = "yantra", cymatics) {
+  bakeChakraSimultaneousTargets(nodes, particleCount, texWidth, texHeight, _style = "stipple", glyphType = "both", fontFamily = FALLBACK_FONT_STACK, fontWeight = 900, plane = "horizontal", geometryMode = "yantra", cymatics) {
     const isCymatics = geometryMode === "cymatics";
     const activeNodes = nodes.filter((n) => n.active);
     const validNodes = activeNodes.length > 0 ? activeNodes : nodes;

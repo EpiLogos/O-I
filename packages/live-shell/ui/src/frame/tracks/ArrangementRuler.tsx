@@ -37,6 +37,7 @@ import {
   clampRange, fitRange, isFit, markStep, nextSnap, panBy, percentOf, rangeBounds, snapAt, snapOfPress, wheelZoomFactor, windowMarks,
   windowOfKey, zoomAround, type SnapMode, type TimeRange,
 } from './rulerWindow'
+import {useTracksMenu} from '../menu/TracksMenu'
 import './tracks.css'
 
 interface Placed {clip: WorldTrackClip; start: number; end: number}
@@ -533,8 +534,14 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
     setReceipt(null)
     void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
   }
-  return <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press}
-    lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, opened, onOpened: setOpened}}
-    onDismiss={() => { latest.current += 1; setReceipt(null) }}
-    view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, width, marksRef, rootRef, gesture}} />
+  // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx). The host
+  // takes no room of its own: it holds the ruler's events, and the ruler keeps its own root.
+  const menu = useTracksMenu({set, selection, view: 'arrangement', press})
+  return <div className="tracks-menu-host" ref={menu.rootRef} onContextMenu={menu.onContextMenu} onKeyDown={menu.onKeyDown}>
+    <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press}
+      lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, opened, onOpened: setOpened}}
+      onDismiss={() => { latest.current += 1; setReceipt(null) }}
+      view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, width, marksRef, rootRef, gesture}} />
+    {menu.layer}
+  </div>
 }

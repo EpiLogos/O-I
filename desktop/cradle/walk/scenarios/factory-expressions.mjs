@@ -522,7 +522,7 @@ export default async function run({page, baseUrl, bridgeUrl, check, shot, channe
     self.tint = "#3f8fd2"; self.tintWeight = 0.95;                                    // colour
     material.morph = {...material.morph, law: "product", depth: 1.6, thetaRate: 0.31}; // morph
     material.field.params.frequency = 639; material.field.params.excitation = 0.9;    // resonance/cymatics
-    self.sound = {enabled: true, followCymatic: false, frequencyHz: 330, gain: 0.3, waveform: "triangle", attack: 0.12, release: 1.1, pan: -0.2}; // sound
+    self.sound = {enabled: true, carry: {kind: "mode", ref: "maqam/00"}, gain: 0.3, attack: 0.12, release: 1.1};  // sound (a symbol's voice carries a mode of the torus's sound; it has no oscillator)
     self.sequence.steps[0].hold = 2.25; self.sequence.steps[0].transition = 1.35;       // temporal (sequence)
     material.duration = 17; material.transition = 2.5;                                  // temporal (scene)
     doc = (await expression({operation: "edit", expression_ref: copyRef, expected_revision: doc.revision, actor: "human:fx-walk", changes: [{change: "scene_material_set", scene_ref: working.scene_ref, presentation: {...working.presentation, scene: material}}]})).document;
@@ -542,7 +542,7 @@ export default async function run({page, baseUrl, bridgeUrl, check, shot, channe
       colour: backSelf.tint === "#3f8fd2" && backSelf.tintWeight === 0.95,
       morph: back.morph.law === "product" && back.morph.depth === 1.6 && back.morph.thetaRate === 0.31,
       resonance: back.field.params.frequency === 639 && back.field.params.excitation === 0.9,
-      sound: backSelf.sound?.enabled === true && backSelf.sound.frequencyHz === 330 && backSelf.sound.waveform === "triangle" && backSelf.sound.pan === -0.2,
+      sound: backSelf.sound?.enabled === true && backSelf.sound.carry?.kind === "mode" && backSelf.sound.carry.ref === "maqam/00" && backSelf.sound.gain === 0.3 && backSelf.sound.frequencyHz === undefined,
       temporal: backSelf.sequence.steps[0].hold === 2.25 && backSelf.sequence.steps[0].transition === 1.35 && back.duration === 17 && back.transition === 2.5,
       reuse: reopened.reuse?.title === "Anima (walk variation)" && reopened.reuse?.variation_of?.file_ref === anima.file_ref,
     };

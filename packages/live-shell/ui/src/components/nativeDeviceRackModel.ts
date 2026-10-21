@@ -3,7 +3,7 @@ import {NATIVE_BINDINGS, baseValue, entityTargets} from '@epilogos/expressions-b
 import type {StripToggle} from './nativeFieldFaceModel'
 import {deviceCatalogue, selectedEntityOf, type RackDevice} from './nativeDeviceCatalogue.ts'
 import {entityFaceModel, type EntityCompactControl} from './nativeEntityFaceModel.ts'
-import {resolvedSound, soundChange, soundDefault, soundNumberSpec, soundWithField, SOUND_WAVEFORMS} from './nativeEntityFace.sound.ts'
+import {carryFromValue, carryValue, resolvedSound, soundChange, soundDefault, soundNumberSpec, soundWithField} from './nativeEntityFace.sound.ts'
 import type {SceneCompactAction} from './nativeSceneFaceModel.ts'
 import {stripToggleChanges} from './nativeDeviceStripModel'
 import {modulationOf, type Modulation} from './nativeModulation'
@@ -22,10 +22,11 @@ export interface RackControl {
   /** What moves this control's value, from the reading (nativeModulation.ts). Absent on a control that is not an automatable target (a whole-sound field). */
   modulation?: Modulation
 }
-/** One non-registry compact control of an entity device: a whole-sound numeric field (a RackControl row) or the waveform choice. `blocked` names why it cannot be written. */
+/** One non-registry compact control of an entity device: the voice's gain (a RackControl row) or what it carries (a name or mode of the store; `value` is the
+ * carry's option value, '' for none yet, and the options are the owner's catalogue, which the rack reads). `blocked` names why it cannot be written. */
 export type RackEntityCompact =
-  | {kind: 'entity-sound'; field: 'gain' | 'frequencyHz'; control: RackControl; blocked: string | null}
-  | {kind: 'entity-sound'; field: 'waveform'; value: string; options: readonly string[]; blocked: string | null}
+  | {kind: 'entity-sound'; field: 'gain'; control: RackControl; blocked: string | null}
+  | {kind: 'entity-sound'; field: 'carry'; value: string; blocked: string | null}
 export const NO_SOUND_NOTE = 'No sound on this object'
 export const LOCKED_OBJECT_NOTE = 'This object is locked. Unlock it to change this device.'
 export interface RackDeviceWidget {
@@ -92,10 +93,10 @@ export function rackWidgets(reading: NativeEditorReading): RackWidget[] {
   })
 }
 
-/** One declared whole-sound control for the selected object. Gain and frequency carry bounds from the sound validator; waveform carries its options. */
+/** One declared whole-sound control for the selected object. Gain carries bounds from the sound validator; the carry is the voice's name or mode. */
 function entityCompactRow(entity: Entity, row: EntityCompactControl): RackEntityCompact {
   const blocked = entity.sound ? null : NO_SOUND_NOTE, sound = resolvedSound(entity.sound)
-  if (row.field === 'waveform') return {kind: 'entity-sound', field: 'waveform', value: sound.waveform, options: SOUND_WAVEFORMS, blocked}
+  if (row.field === 'carry') return {kind: 'entity-sound', field: 'carry', value: carryValue(sound.carry), blocked}
   const spec = soundNumberSpec(row.field)
   return {kind: 'entity-sound', field: row.field, blocked, control: {
     path: `entity-sound:${row.field}`, label: spec.label, unit: spec.unit.startsWith('(') ? '' : spec.unit, value: sound[row.field],
@@ -108,10 +109,10 @@ export const entityParameterChange = (target: string, value: number): NativeEdit
 
 /** The one whole-sound change for a sound control on the selected object: the object's sound with one field set, built from the reading's own sound.
  * Throws when no object is selected or the boundary validator refuses the value. */
-export function entitySoundControlChange(reading: NativeEditorReading, field: 'gain' | 'frequencyHz' | 'waveform', value: number | string): NativeEditorChange {
+export function entitySoundControlChange(reading: NativeEditorReading, field: 'gain' | 'carry', value: number | string): NativeEditorChange {
   const entity = selectedEntityOf(reading)
   if (!entity) throw Error('Select one object to change its sound.')
-  return soundChange(entity.id, soundWithField(entity.sound, field, value))
+  return soundChange(entity.id, field === 'carry' ? soundWithField(entity.sound, 'carry', carryFromValue(String(value))) : soundWithField(entity.sound, 'gain', Number(value)))
 }
 
 /** Catalogue minus the Field families already on the rack: Field families are one instance each. Entity devices repeat, one per placed device. */

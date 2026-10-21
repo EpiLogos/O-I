@@ -65,6 +65,13 @@ export interface DesignBinding {
   readonly enabledKey?: string
   /** What moves a value, by key (the status bar names it). */
   readonly modulatedBy?: Readonly<Record<string, string>>
+  /** Who moved a value just now, by key, where the owner knows it was not the hand (an agent's write, the sky): the name stands on the
+   * control with the ring for a moment. Absent, the host names the holder or the modulator, if the value has one. */
+  readonly movedBy?: Readonly<Record<string, string>>
+  /** The owner has been asked for its first reading and has not answered (manual §16.10, "A reading that has not come yet"): `true` for
+   * every value that has no reading, or the keys that wait. A value that has a reading never waits: it shows at once and is asked again
+   * behind it. */
+  readonly waiting?: boolean | readonly string[]
   /** Standing the owner reports beyond the shell's own (automation, a reason a value cannot act now), by key. */
   readonly standing?: Readonly<Record<string, Standing>>
   /** Keys the view holds, not the owner (a raised reach before Confirm, an ask before Trust), each with the binding's own hand. Every

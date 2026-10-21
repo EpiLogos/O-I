@@ -14,8 +14,8 @@ export {formatDeepLink, parseDeepLink, DEEP_LINK_KEYS, type DeepLinkAddress} fro
 // The QL instrument reading parser (the owner shape, ql.instrument-reading/v1), owned by this package: the boundary validates the instrument with it.
 import {parseQlInstrumentReading} from './qlInstrumentReading.ts';
 import {readEffectsState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts';
-/** The torus's four effects' law (manual §21.5), the owner's: the shell's effect devices draw and refuse by it. */
-export {PRESENTATION_EFFECTS, EFFECT_LAW, EFFECT_TITLES, DELAY_DIVISIONS, effectRefusal, effectChainRefusal, isPresentationEffect, type PresentationEffect, type EffectValue, type EffectParameterLaw, type EffectsState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts';
+/** The torus's effects' law (manual §21.5, and the Resonator bank §22.7), the owner's: the shell's effect devices draw and refuse by it. */
+export {PRESENTATION_EFFECTS, EFFECT_LAW, EFFECT_TITLES, DELAY_DIVISIONS, effectRefusal, effectChainRefusal, isPresentationEffect, resonatorRootHz, resonatorBodies, type PresentationEffect, type EffectValue, type EffectParameterLaw, type EffectsState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts';
 export type {TechneReading, TechneActionRoute, TechneActionReceipt, NativeActionRef} from '../../../desktop/cradle/src/techne/contract.ts';
 export {assertReading, resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
 

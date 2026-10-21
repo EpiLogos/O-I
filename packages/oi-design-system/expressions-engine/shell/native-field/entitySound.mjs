@@ -1,29 +1,61 @@
-const SOUND_FIELDS = ["enabled", "frequencyHz", "followCymatic", "gain", "waveform", "attack", "release", "pan"];
-const SOUND_WAVEFORMS = ["sine", "triangle", "square", "sawtooth"];
+const SOUND_FIELDS = ["enabled", "carry", "gain", "attack", "release"];
+const CARRY_KINDS = ["mode", "name"];
+const REMOVED_SOUND_FIELDS = ["frequencyHz", "followCymatic", "waveform", "pan"];
+const REMOVED_SOUND_WORDS = Object.freeze({
+  frequencyHz: "a symbol's voice carries the torus's sound and has no pitch of its own: its pitches are the degrees of its mode over the torus's root",
+  followCymatic: "a symbol's voice carries the torus's sound and does not follow a plate's frequency: its pitches are the degrees of its mode",
+  waveform: "a symbol's voice has no oscillator, so it has no waveform: it is the torus's own sound",
+  pan: "a symbol's voice stands where its symbol stands, so its stereo place is the symbol's place on the stage"
+});
 const DEFAULT_ENTITY_SOUND = Object.freeze({
   enabled: false,
-  frequencyHz: 220,
-  followCymatic: true,
   gain: 0.2,
-  waveform: "sine",
   attack: 0.08,
-  release: 0.8,
-  pan: 0
+  release: 0.8
 });
+const NO_CARRY = "This voice has no name or mode yet: choose one on the Sound page";
+const VOICES_OFF = "Symbol voices are off for this scene: no symbol carries the torus's sound";
 const finite = (value, low, high) => typeof value === "number" && Number.isFinite(value) && value >= low && value <= high;
+const plain = (value) => !!value && typeof value === "object" && !Array.isArray(value);
+function validateVoiceCarry(value) {
+  if (!plain(value)) throw new Error("Invalid entity sound: carry must be {kind, ref}");
+  const unknown = Object.keys(value).find((key) => key !== "kind" && key !== "ref");
+  if (unknown) throw new Error(`Invalid entity sound: unsupported carry field ${unknown}`);
+  if (!CARRY_KINDS.includes(value.kind)) throw new Error("Invalid entity sound: carry kind must be mode or name");
+  if (typeof value.ref !== "string" || !value.ref || value.ref.length > 200) throw new Error("Invalid entity sound: carry ref must be a name or a catalogue key of 1 to 200 characters");
+  return { kind: value.kind, ref: value.ref };
+}
 function validateEntitySound(value) {
   if (value === void 0) return void 0;
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid entity sound: expected an object");
+  if (!plain(value)) throw new Error("Invalid entity sound: expected an object");
   const sound = value;
+  const removed = REMOVED_SOUND_FIELDS.find((key) => key in sound);
+  if (removed) throw new Error(`Invalid entity sound: ${removed} was removed: ${REMOVED_SOUND_WORDS[removed]}`);
   const unknown = Object.keys(sound).find((key) => !SOUND_FIELDS.includes(key));
   if (unknown) throw new Error(`Invalid entity sound: unsupported field ${unknown}`);
   if (typeof sound.enabled !== "boolean") throw new Error("Invalid entity sound: enabled must be a boolean");
-  if (sound.followCymatic !== void 0 && typeof sound.followCymatic !== "boolean") throw new Error("Invalid entity sound: followCymatic must be a boolean");
-  for (const [key, low, high] of [["frequencyHz", 1, 2e4], ["gain", 0, 1], ["attack", 0, 10], ["release", 0, 30], ["pan", -1, 1]]) {
+  for (const [key, low, high] of [["gain", 0, 1], ["attack", 0, 10], ["release", 0, 30]]) {
     if (sound[key] !== void 0 && !finite(sound[key], low, high)) throw new Error(`Invalid entity sound: ${key} must sit inside [${low}, ${high}]`);
   }
-  if (sound.waveform !== void 0 && !SOUND_WAVEFORMS.includes(sound.waveform)) throw new Error("Invalid entity sound: unsupported waveform");
-  return value;
+  const out = { enabled: sound.enabled };
+  if (sound.carry !== void 0) out.carry = validateVoiceCarry(sound.carry);
+  for (const key of ["gain", "attack", "release"]) if (sound[key] !== void 0) out[key] = sound[key];
+  return out;
+}
+function migrateEntitySound(value) {
+  if (value === void 0) return { sound: void 0, migration: null };
+  if (!plain(value)) throw new Error("Invalid entity sound: expected an object");
+  const dropped = REMOVED_SOUND_FIELDS.filter((field) => field in value).map((field) => ({ field, was: value[field] }));
+  const kept = Object.fromEntries(Object.entries(value).filter(([key]) => !REMOVED_SOUND_FIELDS.includes(key)));
+  const sound = validateEntitySound(kept);
+  if (!dropped.length) return { sound, migration: null };
+  const silenced = sound.enabled && !sound.carry;
+  const names = dropped.map((item) => item.field).join(", ");
+  return { sound, migration: {
+    dropped,
+    silenced,
+    words: `This voice was written for an oscillator. Dropped ${names}: a symbol's voice now carries a name or mode of the torus's sound. ${silenced ? `It was sounding and is silent now. ${NO_CARRY}.` : "It gained no name or mode."}`
+  } };
 }
 function activeFromFocus(focus) {
   if (!focus) return void 0;
@@ -46,140 +78,41 @@ function onObjectSoundMuted(listener) {
     muteListeners.delete(listener);
   };
 }
-function entitySoundVoices(scene, active) {
-  const fieldHz = scene.field?.params?.frequency;
-  const voices = [];
+function entitySoundPlan(scene, active) {
+  const voices = [], silent = [];
+  const on = scene.composition?.symbolVoices !== false;
   for (const entity of scene.entities) {
     const sound = entity.sound;
     if (!sound?.enabled || entity.enabled === false || active && !active.has(entity.id)) continue;
+    if (!on) {
+      silent.push({ entityId: entity.id, because: VOICES_OFF });
+      continue;
+    }
+    if (!sound.carry) {
+      silent.push({ entityId: entity.id, because: NO_CARRY });
+      continue;
+    }
     const d = DEFAULT_ENTITY_SOUND;
-    const follow = sound.followCymatic ?? sound.frequencyHz === void 0;
-    const hz = follow ? entity.templateFrequency ?? fieldHz ?? sound.frequencyHz ?? d.frequencyHz : sound.frequencyHz ?? d.frequencyHz;
-    voices.push({
-      entityId: entity.id,
-      frequencyHz: Math.min(2e4, Math.max(1, hz)),
-      gain: sound.gain ?? d.gain,
-      waveform: sound.waveform ?? d.waveform,
-      attack: sound.attack ?? d.attack,
-      release: sound.release ?? d.release,
-      pan: sound.pan ?? d.pan
-    });
+    voices.push({ entityId: entity.id, carry: { ...sound.carry }, gain: sound.gain ?? d.gain, attack: sound.attack ?? d.attack, release: sound.release ?? d.release });
   }
-  return voices;
+  return { voices, silent };
 }
-class EntitySoundBank {
-  constructor(createContext = () => typeof AudioContext === "function" ? new AudioContext() : null) {
-    this.createContext = createContext;
-    this.release = onObjectSoundMuted((muted) => this.setMuted(muted));
-  }
-  context = null;
-  voices = /* @__PURE__ */ new Map();
-  muted = objectSoundIsMuted();
-  signature = "";
-  gestureArmed = false;
-  release;
-  /** Follow the current Scene (and optional active set). Cheap when unchanged. */
-  sync(scene, active) {
-    const plan = entitySoundVoices(scene, active);
-    const signature = JSON.stringify(plan);
-    if (signature === this.signature) return plan;
-    if (!plan.length && !this.voices.size) {
-      this.signature = signature;
-      return plan;
-    }
-    const context = this.ensureContext();
-    if (!context) return plan;
-    this.signature = signature;
-    const now = context.currentTime;
-    const wanted = new Map(plan.map((voice) => [voice.entityId, voice]));
-    for (const [id, held] of this.voices) if (!wanted.has(id)) {
-      held.amp.gain.cancelScheduledValues(now);
-      held.amp.gain.setValueAtTime(held.amp.gain.value, now);
-      held.amp.gain.linearRampToValueAtTime(0, now + held.voice.release);
-      held.oscillator.stop(now + held.voice.release + 0.05);
-      this.voices.delete(id);
-    }
-    for (const voice of plan) {
-      let held = this.voices.get(voice.entityId);
-      if (!held) {
-        const oscillator = context.createOscillator(), amp = context.createGain();
-        const panner = typeof context.createStereoPanner === "function" ? context.createStereoPanner() : null;
-        amp.gain.setValueAtTime(0, now);
-        oscillator.connect(amp);
-        if (panner) {
-          amp.connect(panner);
-          panner.connect(context.destination);
-        } else amp.connect(context.destination);
-        oscillator.start(now);
-        held = { voice, oscillator, amp, panner };
-        this.voices.set(voice.entityId, held);
-      }
-      held.oscillator.type = voice.waveform;
-      held.oscillator.frequency.setTargetAtTime(voice.frequencyHz, now, 0.02);
-      held.panner?.pan.setTargetAtTime(voice.pan, now, 0.02);
-      held.amp.gain.cancelScheduledValues(now);
-      held.amp.gain.setValueAtTime(held.amp.gain.value, now);
-      held.amp.gain.linearRampToValueAtTime(this.muted ? 0 : voice.gain, now + Math.max(5e-3, voice.attack));
-      held.voice = voice;
-    }
-    return plan;
-  }
-  setMuted(muted) {
-    this.muted = muted;
-    const context = this.context;
-    if (!context) return;
-    const now = context.currentTime;
-    for (const held of this.voices.values()) {
-      held.amp.gain.cancelScheduledValues(now);
-      held.amp.gain.setValueAtTime(held.amp.gain.value, now);
-      held.amp.gain.linearRampToValueAtTime(muted ? 0 : held.voice.gain, now + (muted ? held.voice.release : held.voice.attack) + 5e-3);
-    }
-  }
-  inspect() {
-    return { muted: this.muted, state: this.context?.state ?? "unopened", voices: [...this.voices.values()].map((held) => ({ ...held.voice })) };
-  }
-  dispose() {
-    this.release();
-    for (const held of this.voices.values()) {
-      try {
-        held.oscillator.stop();
-      } catch {
-      }
-    }
-    this.voices.clear();
-    this.signature = "";
-    const context = this.context;
-    this.context = null;
-    if (context && context.state !== "closed") void context.close().catch(() => {
-    });
-  }
-  ensureContext() {
-    if (!this.context) this.context = this.createContext();
-    const context = this.context;
-    if (context && context.state === "suspended" && !this.gestureArmed && typeof window !== "undefined") {
-      this.gestureArmed = true;
-      const resume = () => {
-        window.removeEventListener("pointerdown", resume, true);
-        window.removeEventListener("keydown", resume, true);
-        this.gestureArmed = false;
-        void context.resume().catch(() => {
-        });
-      };
-      window.addEventListener("pointerdown", resume, true);
-      window.addEventListener("keydown", resume, true);
-    }
-    return context;
-  }
-}
+const entitySoundVoices = (scene, active) => entitySoundPlan(scene, active).voices;
 export {
+  CARRY_KINDS,
   DEFAULT_ENTITY_SOUND,
-  EntitySoundBank,
+  NO_CARRY,
+  REMOVED_SOUND_FIELDS,
+  REMOVED_SOUND_WORDS,
   SOUND_FIELDS,
-  SOUND_WAVEFORMS,
+  VOICES_OFF,
   activeFromFocus,
+  entitySoundPlan,
   entitySoundVoices,
+  migrateEntitySound,
   objectSoundIsMuted,
   onObjectSoundMuted,
   setObjectSoundMuted,
-  validateEntitySound
+  validateEntitySound,
+  validateVoiceCarry
 };

@@ -52,8 +52,12 @@ const LOG_KEYS = new Set(['cutoff', 'tone', 'time', 'attack', 'release', 'decay'
 const LABELS: Readonly<Record<string, string>> = {predelay: 'Pre-delay', mix: 'Mix', cutoff: 'Cutoff'}
 const label = (key: string) => LABELS[key] ?? key[0]!.toUpperCase() + key.slice(1)
 
-/** The parameters the owner reports and takes: the torus's level and scale, and every number of each effect on its chain (the Delay's
- * tempo follows the set's, so no planet takes it). */
+/** What the shell sets from another owner, so that no planet may hold it: the Delay's tempo follows the set's, and the Resonator bank's cut
+ * and root follow the M3 clock's and the mode in force's (inhabitants/ql/devices/qlResonatorBank.ts qlBankFollow). */
+const FOLLOWED = new Set(['delay/tempo', 'resonator/division', 'resonator/root'])
+
+/** The parameters the owner reports and takes: the torus's level and scale, and every number of each effect on its chain (but those the
+ * shell sets from another owner: FOLLOWED). */
 export function skyTargets(state: LiveTorusState | null): SkyTarget[] {
   if (state === null || !state.ok) return []
   const targets: SkyTarget[] = [], p = state.parameters
@@ -68,7 +72,7 @@ export function skyTargets(state: LiveTorusState | null): SkyTarget[] {
   for (const effect of (effects?.chain ?? []) as readonly PresentationEffect[]) {
     for (const [key, law] of Object.entries(EFFECT_LAW[effect])) {
       const value = effects?.[effect]?.[key]
-      if (law.kind !== 'number' || key === 'tempo' || typeof value !== 'number') continue
+      if (law.kind !== 'number' || FOLLOWED.has(`${effect}/${key}`) || typeof value !== 'number') continue
       targets.push({id: `live:${effect}/${key}`, device: EFFECT_TITLES[effect], label: label(key), min: law.min, max: law.max, unit: law.unit,
         log: LOG_KEYS.has(key) && law.min > 0, value, edit: v => ({kind: 'effect', effect, key, value: v})})
     }

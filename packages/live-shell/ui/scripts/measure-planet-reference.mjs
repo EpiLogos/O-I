@@ -14,9 +14,10 @@ import {inflateSync} from 'node:zlib'
 import {createHash} from 'node:crypto'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {measurePlanet} from '../tests/lib/planetMetrics.mjs'
+import {measurePlanet, waterMask, distanceTo} from '../tests/lib/planetMetrics.mjs'
 
-// the calibration images: the Earth blurred by a box of radius 1 (two passes), and the Earth with ±5 of white noise per channel
+// the calibration images: the Earth blurred by a box of radius 1 (two passes), the Earth with ±5 of white noise per channel, and the Earth with a
+// soft bright halo laid round its coasts (the v2 generator's first shelf: a bright band wider than the Earth's, fading over about 20 px)
 function blurred(img, r) {
   const {width: w, height: h, data} = img
   let cur = Float32Array.from(data)
@@ -37,6 +38,18 @@ function noisy(img, amp) {
   const out = {width: img.width, height: img.height, data: new Uint8ClampedArray(img.data)}
   for (let i = 0; i < out.data.length; i++) if (i % 4 < 3) out.data[i] += (rnd() - .5) * amp
   return out
+}
+
+function haloed(img) {
+  const {width: w, height: h, data} = img, water = waterMask(img), land = new Uint8Array(w * h)
+  for (let at = 0; at < w * h; at++) land[at] = water[at] ? 0 : 1
+  const d = distanceTo(land, w, h), out = new Uint8ClampedArray(data)
+  for (let at = 0; at < w * h; at++) {
+    if (!water[at] || d[at] > 120) continue
+    const k = Math.exp(-d[at] / 22)
+    out[at * 4] += 12 * k; out[at * 4 + 1] += 36 * k; out[at * 4 + 2] += 42 * k
+  }
+  return {width: w, height: h, data: out}
 }
 
 const ui = new URL('..', import.meta.url).pathname
@@ -75,12 +88,13 @@ const earth = decodePng(readFileSync(png))
 const out = {
   schema: 'oi.planet-reference/v1',
   note: 'Measured by scripts/measure-planet-reference.mjs with tests/lib/planetMetrics.mjs. The Earth is the standard; the gate (tests/w3q-planet-gate.test.mjs) holds a generated body to bands of these numbers. The lead owns this file.',
-  calibration: {note: 'the Earth made worse on purpose: the gate must reject both (tests/w3q-planet-gate.test.mjs)', blurred: null, noisy: null},
+  calibration: {note: 'the Earth made worse on purpose: the gate must reject each (tests/w3q-planet-gate.test.mjs)', blurred: null, noisy: null, haloed: null},
   earth: {source: 'public/textures/earth-2k.jpg', sha256: createHash('sha256').update(readFileSync(jpg)).digest('hex'), ...measurePlanet(earth)},
 }
 
 out.calibration.blurred = measurePlanet(blurred(earth, 1))
 out.calibration.noisy = measurePlanet(noisy(earth, 10))
+out.calibration.haloed = measurePlanet(haloed(earth))
 
 if (args.includes('--v1')) {
   const body = await import('../src/projections/atlas/src/globe/body.ts')

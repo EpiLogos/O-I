@@ -1,39 +1,21 @@
-// How the shell presents the hosted frame, declared to it over the one channel (T-FRAME-CHROME-ONTO-PLATES; owner, 15 Oct: "UI inside in
-// fullscreen, UI outside in devices/instruments panel when normal pane view"; manual §16.1 "A pane is a device at full size. Its
-// controls stay out of the pane and appear in Device view below it").
-//   • In a pane — and wherever the frame stands that is not a pane at full size — the presentation is 'devices': the frame draws only
-//     its field and its controls stand on the devices (frameChrome.tsx).
-//   • The pane at full size is the pane grammar's own maximise (desktop/cradle/src/surface/registry.ts :200 `surface.maximize`, the
-//     group's `data-maximized`), reached from the pane's ⊞ menu, Full size (Workbench.tsx GroupPane): there the presentation is 'frame'
-//     and the frame's own controls stand inside it, as the standalone application has them.
+// How the shell presents the hosted frame, declared to it over the one channel (T-FRAME-CHROME-ONTO-PLATES; manual §16.1 "A pane is a device
+// at full size. Its controls stay out of the pane and appear in Device view below it"; §20.1 "No panel, list or tool opens inside the
+// field pane").
+//   • Wherever the frame stands — a pane, a pane at full size, the stage in Live — the presentation is 'devices': the frame draws only its
+//     field, and its controls stand on the devices (frameChrome.tsx), the Studio's pane and Clip view.
+//   • The owner's ruling of 15 Oct kept the frame's own controls inside a pane at full size ('frame'). The owner's of 20 Oct puts that UI in
+//     the Studio device instead (its Full holds every device of the field), so no size of pane brings the frame's own controls back.
 // The declaration is the shell's; the presentation the frame stands in is the frame's reading (its state's `presentation`), so a
 // declaration is sent only when the reading differs from what the placement asks — never kept as a copy here. The frame's pane is read
-// from the published placement (projections/expressionsPaneHost.ts useFramePlacement), and its maximise from the pane group's own
-// attribute in the shell's document.
+// from the published placement (projections/expressionsPaneHost.ts useFramePlacement).
 import {useEffect, useRef, useState} from 'react'
 import type {FramePresentation} from '@epilogos/expressions-boundary'
 import {useFramePlacement, useHostedChrome} from '../../../projections/expressionsPaneHost'
 import {useSummonedEditors} from '../../devices/summonedEditors'
 
-/** The presentation a placement asks for: the frame's own controls only in a pane at full size. Pure. */
-export function wantedPresentation(maximised: boolean): FramePresentation {
-  return maximised ? 'frame' : 'devices'
-}
-
-/** Whether the pane that holds the frame stands at full size: its group's own maximise. */
-function useHolderMaximised(slot: HTMLElement | null): boolean {
-  const [maximised, setMaximised] = useState(false)
-  useEffect(() => {
-    const group = slot?.closest<HTMLElement>('.pane.group')
-    if (!group) {setMaximised(false); return}
-    const read = () => setMaximised(group.getAttribute('data-maximized') === 'true')
-    read()
-    if (typeof MutationObserver === 'undefined') return
-    const observer = new MutationObserver(read)
-    observer.observe(group, {attributes: true, attributeFilter: ['data-maximized']})
-    return () => observer.disconnect()
-  }, [slot])
-  return maximised
+/** The presentation a placement asks for: 'devices', at every size (manual §20.1). Pure. */
+export function wantedPresentation(): FramePresentation {
+  return 'devices'
 }
 
 /** Declare the presentation to the one hosted frame whenever its reading differs from what its placement asks. Mounted once with the
@@ -45,7 +27,7 @@ export function useFramePresentation(): void {
   useSummonedEditors()
   const chrome = useHostedChrome()
   const placement = useFramePlacement()
-  const want = wantedPresentation(useHolderMaximised(placement?.slot ?? null))
+  const want = wantedPresentation()
   const state = chrome?.state ?? null
   const have = state?.presentation
   const run = chrome?.run ?? null

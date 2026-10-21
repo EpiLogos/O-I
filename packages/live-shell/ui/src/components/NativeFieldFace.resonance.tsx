@@ -28,7 +28,7 @@ const track = (y: number, x = AXIS.x, length = AXIS.length) => <path d={`M${x} $
 function gateOf(reading: NativeEditorReading) {
   const {engine, composition} = reading.scene
   return resonanceGate({resonanceEnabled: engine.resonanceEnabled === true, resonatorMode: engine.resonatorMode,
-    frequencyDriver: composition.frequencyDriver ?? 'manual', autoSweep: engine.autoSweep === true})
+    frequencyDriver: composition.frequencyDriver ?? 'manual', keySource: composition.keySource, autoSweep: engine.autoSweep === true})
 }
 
 /** A parameter handle on a horizontal track. Handles stay editable in standby; only the drawing is dimmed. */
@@ -125,6 +125,7 @@ function switches({reading, disabled, apply}: FieldFaceSwitchContext) {
   if (!gate.modal) reasons.push(engine.resonanceEnabled === true
     ? 'Compatibility is the legacy template mode, so the modal numerics are inactive (inspector.ts:133; PointCloudField.ts:1811).'
     : 'The resonant medium is off, so the modal numerics do not act (PointCloudField.ts:1811).')
+  if (gate.drive === 'torus') reasons.push('The torus drives the plate with the pitches it plays, as the owner names them: frequencyHz is standby, and the plate holds its last drive while the torus is silent (torusDrive.ts).')
   if (gate.drive === 'focus') reasons.push('Travelling focus drives the medium: frequencyHz is standby and the drive follows the focus station (PointCloudField.ts:1838-1872).')
   if (gate.drive === 'sweep') reasons.push('The station sweep drives the medium: frequencyHz is standby, and glide and dwell are live (cymaticResonator.ts:492-528).')
   if (gate.modal && sweepOn && driver !== 'automation') reasons.push('Sweep linked stations is on, but it runs only while Automation owns the frequency, so the sweep schedule is standby (nativeBridge.ts:88).')
@@ -132,8 +133,8 @@ function switches({reading, disabled, apply}: FieldFaceSwitchContext) {
   return <>
     <div className="native-resonance-controls">
       <label><input type="checkbox" checked={engine.resonanceEnabled === true} disabled={disabled} onChange={event => void apply([{kind: 'field-setting', key: 'resonanceEnabled', value: event.target.checked}])} />Continuous resonance enabled</label>
-      <label><span>Frequency driver</span><select aria-label="Shared frequency is driven by" value={driver} disabled={disabled} onChange={event => void apply([{kind: 'panel-setting', key: 'frequencyDriver', value: event.target.value as 'manual' | 'focus' | 'automation'}])}>
-        <option value="manual">Manual tuning</option><option value="focus">Travelling focus</option><option value="automation">Automation / station sweep</option></select></label>
+      <label><span>Frequency driver</span><select aria-label="Shared frequency is driven by" value={driver} disabled={disabled} onChange={event => void apply([{kind: 'panel-setting', key: 'frequencyDriver', value: event.target.value as 'torus' | 'manual' | 'focus' | 'automation'}])}>
+        <option value="torus">Torus</option><option value="manual">Manual tuning</option><option value="focus">Travelling focus</option><option value="automation">Automation / station sweep</option></select></label>
       <label><input type="checkbox" checked={sweepOn} disabled={disabled} onChange={event => void apply([{kind: 'panel-setting', key: 'autoSweep', value: event.target.checked}])} />Sweep linked stations</label>
       <label><span>Sweep direction</span><select aria-label="Sweep direction" value={engine.sweepDirection ?? 'ascent'} disabled={disabled} onChange={event => void apply([{kind: 'panel-setting', key: 'sweepDirection', value: event.target.value as 'ascent' | 'descent' | 'pingpong'}])}>
         <option value="ascent">Ascending</option><option value="descent">Descending</option><option value="pingpong">There and back</option></select></label>

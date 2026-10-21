@@ -84,6 +84,8 @@ const colourOf = (v: V) => strOf(v, 'color') ?? 'var(--dp-value)'
 const turns = (v: V) => { const s = sessionNow(v); return s?.used !== undefined && s.cap !== undefined ? `${s.used}/${s.cap}` : undefined }
 // The light reads the owner alone; hollow while it has not said.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
+/** The owner reports a task running: the device's light carries the ring. */
+const working = (p: ViewProps) => light(p) === 'lit' && (countOf(p.v, 'running') ?? 0) > 0
 
 // ---------------------------------------------------------------- the values of each parameter, in the owner's words
 
@@ -318,7 +320,7 @@ function TaskLog({p}: {p: ViewProps}) {
 
 const lampOf = (s?: State): {light: LightState; tone: Tone} => (s === 'running' ? {light: 'lit', tone: 'value'} : s === 'stalled' ? {light: 'lit', tone: 'stall'} : s === 'done' ? {light: 'lit', tone: 'green'}
   : s === 'ready' ? {light: 'lit', tone: 'accent'} : s === 'queued' ? {light: 'dark', tone: 'accent'} : {light: 'unknown', tone: 'accent'})
-const taskRows = (v: V): RowItem[] => tasksOf(v).map(t => ({id: String(t.n), name: t.name, ...lampOf(t.state), note: t.state === 'stalled' && t.idle !== undefined ? age(t.idle) : undefined,
+const taskRows = (v: V): RowItem[] => tasksOf(v).map(t => ({id: String(t.n), name: t.name, ...lampOf(t.state), busy: t.state === 'running', note: t.state === 'stalled' && t.idle !== undefined ? age(t.idle) : undefined,
   why: t.state === 'stalled' ? 'Stalled. The output stopped.' : undefined, does: `${t.state ? STATE_WORD[t.state] : 'The owner does not disclose the state'}. Press to select the task.`}))
 
 // ---------------------------------------------------------------- the readings of the mockup's Factory (agent-shell-mockup.html:462-480, 684-696)
@@ -363,7 +365,7 @@ export const design: DesignedDevice = {
 
   folded: p => <Folded title="Tasks" light={light(p)} readings={[taskOf(p.v) ? clip(taskOf(p.v)!.name, 16) : NONE, stateOf(p.v) ? STATE_WORD[stateOf(p.v)!] : NONE]} onUnfold={p.nav.unfold} />,
 
-  compact: p => <Panel title="Tasks" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+  compact: p => <Panel title="Tasks" view="compact" light={light(p)} busy={working(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}>
       <Display w={140} h={146} label="Tasks" corner={stateOf(p.v) ? STATE_WORD[stateOf(p.v)!] : NONE}
         does="The tasks of the session, down the well. Press a task to select it. Drag handle 1 to set what follows it.">
@@ -382,7 +384,7 @@ export const design: DesignedDevice = {
     const state = stateOf(p.v)
     const launchWhy = !state ? 'No task is selected.' : state === 'running' ? 'The task is already running.' : state === 'done' ? 'The task has run.' : state === 'stalled' ? 'Use Retry for a stalled task.' : undefined
     const retryWhy = state === 'stalled' ? undefined : 'Only a stalled task retries.'
-    return <Panel title="Tasks" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}>
+    return <Panel title="Tasks" view="whole" light={light(p)} busy={working(p)} onFold={p.nav.fold} onFull={p.nav.full}>
       <Band>
         <Section width={206}>
           <Display w={194} h={146} label="Tasks" corner={state ? STATE_WORD[state] : NONE}
@@ -423,7 +425,7 @@ export const design: DesignedDevice = {
 
   full: p => <TaskLog p={p} />,
 
-  widget: p => <Tile title="Tasks" light={light(p)} span={2} onFull={p.nav.full}>
+  widget: p => <Tile title="Tasks" light={light(p)} busy={working(p)} span={2} onFull={p.nav.full}>
     <div className="sft-tile-list">
       {has(p.v, 'tasks')
         ? <Rows items={taskRows(p.v)} onSelect={id => p.set('task', Number(id))} selected={selOf(p.v) === undefined ? undefined : String(selOf(p.v))} size={5} />

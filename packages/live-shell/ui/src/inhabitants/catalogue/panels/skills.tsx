@@ -114,7 +114,7 @@ export const skills: DesignedDevice = {
           onChange={x => { p.set('set', x); p.set('compose', 'changed') }} />
         <KindCounts v={p.v} size={18} />
         <div className="ref-pair">
-          <Readout label="revision" does="A digest over the revisions of every member." value={strOf(p.v, 'revision')} />
+          <Readout label="revision" does="A digest over the revisions of every member." value={strOf(p.v, 'revision')} copy={strOf(p.v, 'revision')} />
           <Readout label="author" does="The set's author, from its package metadata." value={strOf(p.v, 'author')} />
         </div>
       </Section>

@@ -20,6 +20,15 @@ function validateWorkspace(value) {
   }
   return structuredClone(v);
 }
+function validateDeviceWidgets(value) {
+  if (!Array.isArray(value) || value.length > 64) throw new Error("Device widgets require a bounded list of 64 entries");
+  const ids = /* @__PURE__ */ new Set();
+  for (const d of value) {
+    if (!d || typeof d !== "object" || Object.keys(d).length !== 2 || typeof d.id !== "string" || [...d.id].length < 1 || [...d.id].length > 128 || typeof d.family !== "string" || !/^[a-z0-9-]{1,64}$/.test(d.family) || ids.has(d.id)) throw new Error("Invalid device widget");
+    ids.add(d.id);
+  }
+  return structuredClone(value);
+}
 function moveBeltEntry(entries, id, offset) {
   const i = entries.findIndex((e) => e.id === id), j = i + offset;
   if (i < 0 || j < 0 || j >= entries.length) return false;
@@ -55,5 +64,6 @@ export {
   formationSummary,
   moveBeltEntry,
   syncHeldState,
+  validateDeviceWidgets,
   validateWorkspace
 };

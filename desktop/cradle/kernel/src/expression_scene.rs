@@ -274,6 +274,93 @@ fn loop_exit(material: &serde_json::Map<String, Value>) -> Result<(), String> {
     }
 }
 
+/// A symbol's voice in a Scene's material (DLW 20.2: "a name or a mode carrying the torus's sound, never its own oscillator"), admitted as a
+/// WRITE. Every `sound` block of an entity in `after` (the working scene and its saved version) is validated in the one shape
+/// (`expression_profile::sound`), and a block that still carries the oscillator's fields is refused in words, except a block the document
+/// already stores for that same entity, byte for byte, in any of its scenes (`stored`: the working and saved material of each). Material the
+/// kernel itself writes back or copies (a text passage filled, a page split, a scene copied with its members) carries the voices it found, and
+/// a document written before the oscillator went is not made unwritable by that. What no write may do is introduce or change a voice in the
+/// old shape. Opening such a document in the frame migrates its voices (native-field/entitySound.ts `migrateEntitySound`), so what the frame
+/// writes back is in the new shape.
+pub fn admit_voices(stored: &[&Presentation], after: &Presentation) -> Result<(), String> {
+    let materials = |p: &Presentation| -> Vec<Value> {
+        std::iter::once(p.scene.clone())
+            .chain(p.saved.clone())
+            .collect()
+    };
+    let key = |entity: &Value, sound: &Value| format!("{}\u{0}{}", entity["id"], sound);
+    let carried: BTreeSet<String> = stored
+        .iter()
+        .flat_map(|p| materials(p))
+        .flat_map(|material| {
+            material
+                .get("entities")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default()
+        })
+        .filter_map(|entity| entity.get("sound").map(|sound| key(&entity, sound)))
+        .collect();
+    for material in materials(after) {
+        let Some(entities) = material.get("entities").and_then(Value::as_array) else {
+            continue;
+        };
+        for entity in entities {
+            let Some(sound) = entity.get("sound") else {
+                continue;
+            };
+            if !carried.contains(&key(entity, sound)) {
+                crate::expression_profile::sound(sound).map_err(|why| {
+                    format!(
+                        "Scene entity {} voice refused: {why}",
+                        entity.get("id").and_then(Value::as_str).unwrap_or("?")
+                    )
+                })?;
+            }
+        }
+    }
+    Ok(())
+}
+
+/// The Frequency driver (Torus, Manual, Focus, Automation; DLW 20.14) and the Key source (Torus, Sky, Manual; DLW 20.2) a Scene may
+/// carry, and the Symbol voices switch (On or Off; DLW 20.2). A value outside the manual's list is refused, never stored; an absent one stays
+/// absent (a Scene saved before the Key source or the switch carries none, and the renderer's own importer requires the driver, so the
+/// kernel only closes the set; an absent Symbol voices reads as On).
+fn drive_and_key(scene: &Value) -> Result<(), String> {
+    const FREQUENCY_DRIVERS: &[&str] = &["torus", "manual", "focus", "automation"];
+    const KEY_SOURCES: &[&str] = &["torus", "sky", "manual"];
+    const DRIVE_KINDS: &[&str] = &["frequency", "sweep", "semanticFocus", "torus"];
+    let one_of = |value: &Value, allowed: &[&str], name: &str| match value.as_str() {
+        Some(v) if allowed.contains(&v) => Ok(()),
+        _ => Err(format!("Invalid {name}")),
+    };
+    if let Some(driver) = scene["composition"].get("frequencyDriver") {
+        one_of(driver, FREQUENCY_DRIVERS, "Scene frequency driver")?;
+    }
+    if let Some(key) = scene["composition"].get("keySource") {
+        one_of(key, KEY_SOURCES, "Scene key source")?;
+    }
+    if let Some(voices) = scene["composition"].get("symbolVoices") {
+        if !voices.is_boolean() {
+            return Err("Invalid Scene symbol voices".into());
+        }
+    }
+    if let Some(drive) = scene.get("resonanceDrive") {
+        let drive = object(drive, "Scene resonance drive")?;
+        one_of(
+            drive.get("kind").unwrap_or(&Value::Null),
+            DRIVE_KINDS,
+            "Scene resonance drive",
+        )?;
+        if drive.get("kind").and_then(Value::as_str) == Some("torus") {
+            if let Some(key) = drive.get("keySource") {
+                one_of(key, KEY_SOURCES, "Scene resonance drive key source")?;
+            }
+        }
+    }
+    Ok(())
+}
+
 pub fn validate(
     presentation: &Presentation,
     scene: &Scene,
@@ -351,6 +438,7 @@ pub fn validate(
     for key in ["view", "field", "composition", "morph", "engine"] {
         object(&presentation.scene[key], key)?;
     }
+    drive_and_key(&presentation.scene)?;
     let view = &presentation.scene["view"];
     if !matches!(view["mode"].as_str(), Some("2d" | "3d")) {
         return Err("Invalid Scene view mode".into());

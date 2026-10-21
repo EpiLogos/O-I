@@ -15,6 +15,7 @@ import {DEVICE_PANE_KIND, holdInBand, publishedDevice, useIsPublished} from '../
 import {openInstrument} from '../frame/instrumentDoor'
 import {RUNS_ID} from './devices/taskBindings'
 import {RUN_ID} from './devices/sessionChainBindings'
+import {FactoryChatsRows} from './FactoryChatsRows'
 import './agentShell.css'
 
 const CATEGORIES = [
@@ -24,6 +25,7 @@ const CATEGORIES = [
   {id: 'skillsets', label: 'Skillsets'},
   {id: 'git', label: 'Git'},
   {id: 'runs', label: 'Runs'},
+  {id: 'projects', label: 'Projects'},
 ] as const
 
 /** The Runs category (softwareFactoryFamilyManifest.ts factory-runs, lane BF3): the selected session's Run (DLW §19.1) and its Runs
@@ -48,12 +50,15 @@ const CONTEXT_TILES = [
 ]
 
 /** Each Factory category's kind in the one browser (F6): sessions and agents are running things (an agent dragged onto an
- * empty track is seated); the context tiles open in a pane; skillsets go on the agent chain; the git seat is material. */
-const AGENT_KINDS: Record<(typeof CATEGORIES)[number]['id'], BrowserKind> = {sess: 'running', agents: 'running', context: 'instruments', skillsets: 'devices', git: 'material', runs: 'devices'}
+ * empty track is seated); the context tiles open in a pane; skillsets go on the agent chain; the git seat is material; the
+ * projects' chats (agent/FactoryChatsRows.tsx, DLW §19.1) are material to pick up again — dragged onto an empty track or the rail,
+ * double-clicked for the thread — not things already running. */
+const AGENT_KINDS: Record<(typeof CATEGORIES)[number]['id'], BrowserKind> = {sess: 'running', agents: 'running', context: 'instruments', skillsets: 'devices', git: 'material', runs: 'devices', projects: 'material'}
 /** Each category's mark from the icon cut (the agents wear the cut's agent kind). */
 const AGENT_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
   sess: <CutIcon name="session" size={12} />, context: <CutIcon name="pane" size={12} />, agents: <KindMark kind="agent" size={12} />,
   skillsets: <CutIcon name="chain" size={12} />, git: <CutIcon name="lib" size={12} />, runs: <CutIcon name="arrangement" size={12} />,
+  projects: <KindMark kind="world" size={12} />,
 }
 export const AGENT_BROWSER_CATEGORIES: readonly BrowserCategory[] = CATEGORIES.map(category => ({id: category.id, label: category.label, kind: AGENT_KINDS[category.id], mark: AGENT_MARKS[category.id]}))
 
@@ -61,6 +66,7 @@ export const AGENT_BROWSER_CATEGORIES: readonly BrowserCategory[] = CATEGORIES.m
 const ROW_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
   sess: <KindMark kind="agent" size={12} />, agents: <KindMark kind="agent" size={12} />, context: <CutIcon name="pane" size={12} />,
   skillsets: <WoodMark kind="skillset" size={12} />, git: <CutIcon name="lib" size={12} />, runs: <CutIcon name="arrangement" size={12} />,
+  projects: <KindMark kind="world" size={12} />,
 }
 
 /** A skillset or git row's standing, by the row its reading gave (skillsetRowsFromRoster, gitRowsFromWorkcell): what was admitted
@@ -78,6 +84,7 @@ const RESULT_HEADER: Record<(typeof CATEGORIES)[number]['id'], string> = {
   skillsets: 'Admitted',
   git: 'Seat',
   runs: 'Chain',
+  projects: 'State',
 }
 
 export interface BrowserRow {
@@ -324,7 +331,9 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
           ))}
           <p id={`chain-drag-hint-${category}`} hidden>Drag onto the device chain: through → who → how → where → lands.</p>
   </>
-  if (controlled) return <div className="agent-browser-body">{results}</div>
+  // The Projects category draws its own rows (agent/FactoryChatsRows.tsx): the owner's projects, each opened to read its chats.
+  const body = category === 'projects' ? <FactoryChatsRows needle={needle} /> : results
+  if (controlled) return <div className="agent-browser-body">{body}</div>
   return (
     <aside className="agent-shell-browser" data-region="browser">
       <div className="browser-search"><input readOnly placeholder="Search (⌘F)" aria-label="Search browser" /></div>
@@ -338,7 +347,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
           ))}
         </nav>
         <div className="browser-results">
-          {results}
+          {body}
         </div>
       </div>
       <InstrumentsSection />

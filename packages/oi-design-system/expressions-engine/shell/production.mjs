@@ -6,11 +6,14 @@ import { PointCloudField } from "../engine/PointCloudField.mjs";
 import { CymaticResonator } from "../engine/cymaticResonator.mjs";
 import { readPath } from "../engine/automation.mjs";
 import { Color } from "three";
-import { toNativeConfig, MATERIAL_KEYS } from "./nativeBridge.mjs";
+import { toRenderConfig, MATERIAL_KEYS } from "./nativeBridge.mjs";
 import { summarizeAnalysis } from "../engine/sourceSampling.mjs";
 import { NATIVE_BINDINGS, WORLD_SCALE } from "./nativeParameters.mjs";
-import { basis, stageCentre, stageScale } from "./camera.mjs";
-import { EntitySoundBank, activeFromFocus } from "./native-field/entitySound.mjs";
+import { basis, project, stageCentre, stageScale } from "./camera.mjs";
+import { entitySoundPlan, activeFromFocus, objectSoundIsMuted, onObjectSoundMuted } from "./native-field/entitySound.mjs";
+import { SymbolVoices, placeOf } from "./native-field/symbolVoices.mjs";
+import { modeCatalogueReading, onModeCatalogue } from "./native-field/modeStore.mjs";
+import { DIP_AT_DEFAULT, transitionKindOf, paintedOverlayActive, transitionColourOf, edgeBlend } from "./transitions.mjs";
 const mix = (a, b, t) => a + (b - a) * t;
 function color(a, b, t) {
   return "#" + new Color(a).lerp(new Color(b), t).getHexString();
@@ -19,6 +22,17 @@ class EmbeddedProductionAdapter {
   constructor(canvas) {
     this.canvas = canvas;
     canvas.addEventListener("webglcontextlost", this.lost);
+    const stopMute = onObjectSoundMuted(() => {
+      this.soundAt = -1;
+      this.dirty = true;
+    }), stopCatalogue = onModeCatalogue(() => {
+      this.soundAt = -1;
+      this.dirty = true;
+    });
+    this.releaseVoiceWatch = () => {
+      stopMute();
+      stopCatalogue();
+    };
   }
   capabilities = {
     name: "Native particle field",
@@ -44,18 +58,43 @@ class EmbeddedProductionAdapter {
   from = null;
   transitionStart = 0;
   duration = 0;
+  /** E11: the seam's transition into the current scene. Absent = crossfade (the config blend), byte-identical. */
+  seam;
+  /** E11b: the painted overlay this frame draws through the transition pass, and whether a wipe must hold the outgoing frame
+   * before the new scene reaches the GPU. */
+  overlay = null;
+  holdDue = false;
   evaluated = null;
   applied = null;
   sources = /* @__PURE__ */ new Map();
   sourceStatus = {};
   nativeDomain = false;
-  /** Per-object sound voices for the present entities (authored `sound`). */
-  entitySound = new EntitySoundBank();
+  /** The symbols' voices (authored `sound`): they carry the torus's sound to where their symbols stand, and have no oscillator of their own. */
+  symbolVoices = new SymbolVoices();
+  releaseVoiceWatch = () => {
+  };
   nativeConfigs = /* @__PURE__ */ new WeakMap();
   setNativeDomain(active) {
     this.nativeDomain = active;
     this.applied = null;
     this.dirty = true;
+  }
+  /** The torus's played reading (nativeField.ts): kept here so an engine built later, or rebuilt after a lost context, is handed it too. The
+   * plate reads it only when the scene's drive is Torus; a repeated reading is not a change. */
+  torusPlay = null;
+  setTorusPlay(reading) {
+    if (JSON.stringify(reading) === JSON.stringify(this.torusPlay)) return;
+    this.torusPlay = reading;
+    this.engine?.setTorusPlay(reading);
+    this.soundAt = -1;
+    this.dirty = true;
+  }
+  /** The node the controller offers for the symbols' voices to listen to (native-field/controller.ts `voiceTap`), or none while no instrument is open. */
+  setTorusTap(tap) {
+    if (this.symbolVoices.attach(tap)) {
+      this.soundAt = -1;
+      this.dirty = true;
+    }
   }
   nativeConfig(config) {
     if (!this.nativeDomain) return config;
@@ -86,12 +125,14 @@ class EmbeddedProductionAdapter {
   }
   configuration(frame) {
     const { toolbelt, propertyTracks, ...renderScene } = frame.scene;
-    const sig = frame.authoringRevision === void 0 ? JSON.stringify(renderScene) : frame.scene.id + ":" + frame.authoringRevision;
+    const sig = frame.authoringRevision === void 0 ? JSON.stringify(renderScene) : frame.scene.id + ":" + frame.authoringRevision + ":" + (frame.liveRevision ?? 0);
     if (sig !== this.signature) {
-      const config = toNativeConfig(frame.scene);
+      const config = toRenderConfig(frame.scene);
       if (this.engine && this.sceneId !== frame.scene.id) {
-        this.duration = frame.delta > 0 ? frame.scene.transition : 0;
+        this.seam = frame.scene.transitionSpec;
+        this.duration = frame.delta > 0 && transitionKindOf(this.seam) !== "cut" ? frame.scene.transition : 0;
         this.from = this.duration > 0 ? this.evaluated : null;
+        this.holdDue = this.from !== null && transitionKindOf(this.seam) === "wipe";
         this.transitionStart = this.engine.inspectState().simTime;
       }
       this.target = config;
@@ -99,14 +140,25 @@ class EmbeddedProductionAdapter {
       this.sceneId = frame.scene.id;
     }
     const target = this.target;
-    if (!this.from || this.duration <= 0) return target;
+    if (!this.from || this.duration <= 0) {
+      this.overlay = null;
+      return target;
+    }
     const time = this.engine?.inspectState().simTime ?? 0;
     const fraction = Math.max(0, Math.min(1, (time - this.transitionStart) / this.duration));
     if (fraction >= 1) {
       this.from = null;
+      this.overlay = null;
       return target;
     }
-    const t = fraction * fraction * (3 - 2 * fraction), a = this.from;
+    const spec = this.seam, painted = !!spec && paintedOverlayActive(spec, fraction);
+    const { progress, blend: t } = edgeBlend(spec, fraction);
+    const paint = (ground) => painted ? { spec, fraction: progress, colour: transitionColourOf(target.backgroundColor), ground: transitionColourOf(ground) } : null;
+    if (transitionKindOf(spec) === "wipe") {
+      this.overlay = paint(target.backgroundColor);
+      return target;
+    }
+    const a = this.from;
     const cfg = { ...target, fluid: { ...target.fluid }, material: target.material ? { ...target.material } : void 0, color: { ...target.color }, entities: target.entities?.map((e) => {
       const old = a.entities?.find((x) => x.id === e.id);
       if (!old) return e;
@@ -124,9 +176,10 @@ class EmbeddedProductionAdapter {
     }) };
     for (const key of Object.keys(cfg.fluid)) if (typeof cfg.fluid[key] === "number" && typeof a.fluid[key] === "number") cfg.fluid[key] = mix(a.fluid[key], cfg.fluid[key], t);
     for (const key of MATERIAL_KEYS) if (cfg.material && typeof a.material?.[key] === "number") cfg.material[key] = mix(a.material[key], target.material?.[key] ?? a.material[key], t);
-    cfg.backgroundColor = color(a.backgroundColor ?? "#f4f2eb", target.backgroundColor ?? "#f4f2eb", t);
+    cfg.backgroundColor = color(a.backgroundColor ?? "#f4f2eb", target.backgroundColor ?? "#f4f2eb", transitionKindOf(this.seam) === "dip-to-colour" ? Math.min(1, progress / (this.seam?.at ?? DIP_AT_DEFAULT)) : t);
     const oldPalette = a.color?.customPaletteColors ?? [a.color.primaryColor], palette = target.color?.customPaletteColors ?? [target.color.primaryColor];
     cfg.color.customPaletteColors = palette.map((c, i) => color(oldPalette[Math.min(i, oldPalette.length - 1)], c, t));
+    this.overlay = paint(cfg.backgroundColor);
     return cfg;
   }
   needsRender() {
@@ -136,14 +189,20 @@ class EmbeddedProductionAdapter {
     this.dirty = false;
     if (this.contextLost) throw new Error("GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.");
     const config = this.nativeConfig(this.configuration(frame));
+    if (this.holdDue) {
+      this.holdDue = false;
+      this.engine?.captureTransitionHold(transitionColourOf(this.from?.backgroundColor));
+    }
     if (!this.engine) {
       this.engine = new PointCloudField(this.canvas, config, true);
+      this.engine.setTorusPlay(this.torusPlay);
       this.contextOwner = this.engine;
       this.connections = new ExpressionConnectionLayer(this.engine);
       this.connectionRows = void 0;
       this.selectedConnection = void 0;
       this.seedRecoveredSources = true;
     } else if (config !== this.applied) this.engine.replaceConfig(config);
+    this.engine.setTransitionOverlay(this.overlay);
     this.engine.setForceEmitterProjection(frame.forceEmitterProjection ?? null);
     this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection ?? null);
     this.engine.setFormationGeometryProjection(frame.formationGeometryProjection ?? null);
@@ -178,9 +237,11 @@ class EmbeddedProductionAdapter {
    * (travelling compositions sound the focused entity only). ~10 Hz. */
   followSound(frame) {
     const scene = frame.entitySoundProjection ? frame.entitySoundProjection(frame.scene) : this.soundScene;
+    const reading = this.torusPlay, closed = "No instrument is open: the torus is not sounding";
+    const none = { plan: { voices: [], silent: [] }, catalogue: null, catalogueWhy: null, root: reading?.root ?? { hz: null, absentBecause: closed }, torusSilentBecause: reading?.torus.silentBecause ?? closed, places: /* @__PURE__ */ new Map(), muted: objectSoundIsMuted() };
     if (!scene) {
       if (this.soundAt !== -2) {
-        this.entitySound.sync({ entities: [] });
+        this.symbolVoices.sync(none);
         this.soundAt = -2;
       }
       return;
@@ -189,7 +250,14 @@ class EmbeddedProductionAdapter {
     if (this.soundAt >= 0 && now - this.soundAt < 100) return;
     this.soundAt = now;
     const focus = scene.composition.focus === "travelling" ? this.engine?.getCompositionTelemetry().focus : null;
-    this.entitySound.sync({ entities: scene.entities, field: frame.scene.field }, activeFromFocus(focus));
+    const plan = entitySoundPlan({ entities: scene.entities, composition: scene.composition }, activeFromFocus(focus));
+    const places = /* @__PURE__ */ new Map();
+    for (const voice of plan.voices) {
+      const entity = scene.entities.find((e) => e.id === voice.entityId);
+      if (entity) places.set(voice.entityId, placeOf(project(entity.position, frame.camera, this.width, this.height).x, this.width));
+    }
+    const store = modeCatalogueReading();
+    this.symbolVoices.sync({ ...none, plan, catalogue: store.catalogue, catalogueWhy: store.why, places });
   }
   hitEntity(x, y) {
     return this.connections?.pickEntity(x, y) ?? null;
@@ -334,7 +402,8 @@ class EmbeddedProductionAdapter {
     this.dirty = true;
   }
   dispose() {
-    this.entitySound.dispose();
+    this.symbolVoices.dispose();
+    this.releaseVoiceWatch();
     this.canvas.removeEventListener("webglcontextlost", this.lost);
     this.connections?.dispose();
     this.connections = null;

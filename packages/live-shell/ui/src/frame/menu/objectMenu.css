@@ -1,0 +1,26 @@
+/* The object menu (manual §10.9; frame/menu/ObjectMenu.tsx): the device menu's look, shared by every object. */
+.object-menu { position: fixed; z-index: 95; overflow-y: auto; overscroll-behavior: contain; padding: 4px 0; background: var(--bg-2);
+  border: 1px solid var(--line-strong); box-shadow: 0 8px 24px color-mix(in srgb, var(--bg-0) 70%, transparent); font-size: 11px; color: var(--text) }
+.object-menu:focus-visible { outline: none }
+.object-menu-subject { display: block; padding: 2px 10px 4px; font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.object-menu hr { border: 0; border-top: 1px solid var(--line); margin: 3px 0 }
+.object-menu-item { display: flex; align-items: center; gap: 12px; width: 100%; height: 24px; padding: 0 10px; border: 0; background: transparent;
+  text-align: left; color: var(--text); font: inherit; cursor: default }
+.object-menu-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.object-menu-item kbd { flex: none; font: 10px var(--mono); color: var(--text-dim); background: none; border: 0; padding: 0 }
+.object-menu-item[data-active], .object-menu-item:not([disabled]):focus-visible { background: var(--sel); color: var(--bg-0); outline: none }
+.object-menu-item[data-active] kbd { color: var(--bg-0) }
+/* Unavailable: faint, no pointer (its row's reason reaches the Info line through the parent's hover). Destructive: the record colour. */
+.object-menu-item[disabled] { color: var(--text-faint); pointer-events: none }
+.object-menu-item[data-tone=destructive]:not([disabled]) { color: var(--rec) }
+.object-menu-item[data-tone=destructive][data-active] { background: var(--rec); color: var(--bg-0) }
+.object-menu-swatches { display: grid; grid-template-columns: repeat(14, 1fr); gap: 1px; padding: 4px 10px 5px }
+.object-menu-swatches button { aspect-ratio: 1; min-height: 6px; padding: 0; border: 1px solid transparent; cursor: default }
+.object-menu-swatches button:hover, .object-menu-swatches button[aria-pressed=true] { border-color: var(--text) }
+.object-menu-swatches[aria-disabled=true] button { opacity: .35; pointer-events: none }
+/* Rename in place (⌘R): the object's name as a field, where it stands. */
+.object-rename { position: fixed; z-index: 96; height: 22px; padding: 0 6px; font: 11px var(--font-ui); color: var(--text); background: var(--bg-0);
+  border: 1px solid var(--accent); outline: none }
+/* The ruler's menu host holds events only: it takes no room (frame/tracks/ArrangementRuler.tsx). */
+.tracks-menu-host { display: contents }

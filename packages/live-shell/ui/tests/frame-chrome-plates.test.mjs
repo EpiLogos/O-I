@@ -1,7 +1,7 @@
 // T-FRAME-CHROME-ONTO-PLATES: the hosted frame draws only its field in a pane; every control its chrome drew there stands on a device —
 // the research canvas's, timeline's and journey's on the M1′, M2′ and M3′ plates in the manual's groups (DLW.md §17.4–§17.6), the
 // Expressions stage's on the Studio — read from the frame's published chrome and pressed through its one runner. The shell declares the
-// presentation (a pane: 'devices'; the pane at full size, the pane grammar's maximise: 'frame') from the transport, which stands in
+// presentation ('devices', in a pane of any size: manual §20.1, owner 20 Oct) from the transport, which stands in
 // every mode. Rendered server-side with production modules in memory (the loader of atlas-places-plate.test.mjs).
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -145,16 +145,15 @@ test('the Studio stands only what no Expressions device carries; each carried co
   assert.match(studio2, /controlsAt\(frame\.reading, 'nara'\)/, 'the frame\'s own Nara control')
 })
 
-test('the presentation: the frame\'s own controls only in a pane at full size; declared from the transport in every mode', async () => {
-  assert.equal(wantedPresentation(false), 'devices')
-  assert.equal(wantedPresentation(true), 'frame')
+// REPLACED (UI/UX lane phase 3, owner 20 Oct; manual §20.1): the frame's own controls no longer return in a pane at full size — that UI
+// is the Studio device's, its Full holding every device of the field (tests/p3-expressions-in-full.test.mjs).
+test('the presentation: the frame stands on the devices at every size; declared from the transport in every mode', async () => {
+  assert.equal(wantedPresentation(), 'devices')
   const transports = await source('../src/shell/modeTransports.tsx')
   const body = transports.slice(transports.indexOf('export function ModeTransport('))
   assert.match(body, /useFramePresentation\(\)/, 'the transport declares it')
   assert.doesNotMatch(body.slice(0, body.indexOf('return <Transport')), /mode ===|mode===/, 'no mode branch')
   const hook = await source('../src/components/expressions/studio/framePresentation.ts')
-  assert.match(hook, /closest<HTMLElement>\('\.pane\.group'\)/, 'the pane grammar\'s own group')
-  assert.match(hook, /attributeFilter: \['data-maximized'\]/, 'its own maximise')
   assert.match(hook, /command: 'presentation', chrome: want/, 'one command over the one runner')
 })
 

@@ -16,6 +16,7 @@ import {ClipView} from '../../inhabitants/catalogue/clips/clipKit'
 import {loadClip} from '../../inhabitants/catalogue/clips/index'
 import type {ClipMode, ClipProps, ClipSize, DesignedClip} from '../../inhabitants/catalogue/clips/design'
 import {clipShape, type ClipBinding} from './clipBinding'
+import {publishHostedClip} from '../menu/objectDoor'
 
 /** Where the clip stands: its size and the room the place measured. */
 export interface ClipPlace {
@@ -56,6 +57,8 @@ const NAV = {}
 /** One clip, hosted: its mode's design on its binding, at its place. */
 export function HostedClip({binding, place}: {binding: ClipBinding; place: ClipPlace}) {
   const {design, fault} = useClipDesign(binding.mode)
+  // The object menu writes the clip's own facts through this binding while Clip view holds it (frame/menu/objectDoor.ts).
+  useEffect(() => { publishHostedClip(binding); return () => publishHostedClip(null) }, [binding])
   const shaped = useMemo(() => (design ? clipShape(design, binding) : null), [design, binding.placed, binding.lacks])
   const device = useMemo(() => (shaped ? clipAsDevice(shaped, place.size, place.room) : null), [shaped, place.size, place.room])
   if (fault) return <p className="clip-empty" role="alert" data-i={`Clip view|The ${binding.mode} clip's design did not load: ${fault}.`}>The {binding.mode} clip's design did not load: {fault}.</p>

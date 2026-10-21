@@ -332,7 +332,7 @@ function Whole({p}: {p: ViewProps}) {
         <BringIn p={p} />
       </Section>
       <Section label="Document" cols={4} grow>
-        <Readout label="revision" does="The revision that the owner holds. A save checks it." value={revision === undefined ? undefined : `r${revision}`} />
+        <Readout label="revision" does="The revision that the owner holds. A save checks it." value={revision === undefined ? undefined : `r${revision}`} copy={revision === undefined ? undefined : `r${revision}`} />
         <Readout label="state" does="Saved: the owner holds this revision. Edited: the page holds edits that the owner does not." value={state} tone={held || state === 'edited' ? 'accent' : 'green'} />
         <Readout label="template" does="The template version that this Flow opened with. It keeps it until you upgrade." value={template} tone={plural === false ? 'stall' : undefined} />
         <Readout label="save" does="What the last save did: saved, unchanged, stale, conflict or refused." value={last === undefined ? undefined : last || 'none'} />

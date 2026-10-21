@@ -70,7 +70,8 @@ const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
-import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
+import {setModeCatalogueReader} from './native-field/modeStore.js';
+import {installKernelExpressions,kernelExpressionsAvailable,readMusicModes,readTechneReading,techneConstellationRelate,listKernelExpressions,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
@@ -151,7 +152,7 @@ let transitionCurveNow:TransitionCurve|null=null;let pendingAtEnd:string|null=nu
 // E14: the nested frame and seam last driven, so an overlay starts once per nested boundary crossing.
 let nestedFrameKey:string|null=null,nestedSeamKey:string|null=null;
 const channelViews=new Map<string,ChannelView>();
-mountShell();installPanelResize();installKernelExpressions();
+mountShell();installPanelResize();installKernelExpressions();setModeCatalogueReader(readMusicModes);
 const recovery=document.createElement('section');recovery.id='engine-recovery';recovery.hidden=true;recovery.className='engine-recovery';recovery.setAttribute('role','alert');recovery.innerHTML='<h3>GPU context interrupted</h3><p>The expression is intact. Recovering recreates lost particle state, not a runtime checkpoint.</p><button class="secondary" data-action="native-recover">Recover field</button>';document.body.append(recovery);
 
 let recentIds:string[]=[];try{const raw=JSON.parse(localStorage.getItem('oi.recent-work.v1')??'[]');if(Array.isArray(raw))recentIds=raw.filter((v):v is string=>typeof v==='string');}catch{}

@@ -10,7 +10,7 @@
 //
 // The Place tool's land test does not see the water: a place beside a river is on land. Pure TypeScript with no DOM and no three.js: it runs in a worker. Nothing here is random.
 import {simplex3, type NoiseTables} from './bodyNoise'
-import {SEA, landParamsOf, terrain, type LandParams} from './bodyField'
+import {SEA, WATER_DETAIL, landParamsOf, setValleyHook, terrain, type LandParams} from './bodyField'
 import type {WorldBodyRecord} from './body'
 
 const NX = 720, NY = 360, CELL = 360 / NX
@@ -19,9 +19,8 @@ const D2R = Math.PI / 180
 /** The water a cell must gather (in cells' worth at the equator, scaled by the rain) to be a river at all, and to be a full one. */
 const ACC_MIN = 40, ACC_FULL = 120
 /** A depression is a lake if it had to be filled by at least this height (in the field's 0–1). */
-const LAKE_DEPTH = .016
-/** Rivers and lakes are drawn where a pixel is no wider than this (radians): a base of 1024 or more. */
-export const WATER_DETAIL = .0075
+const LAKE_DEPTH = .022
+export {WATER_DETAIL}
 const SKIP_LAT = 78
 
 export interface RiverNetwork {
@@ -176,16 +175,17 @@ export function waterAt(net: RiverNetwork, x: number, y: number, z: number, hgt:
   const lon = Math.atan2(z, x) * R2D
   const cj = Math.min(NY - 1, Math.max(0, Math.floor((90 - lat) / CELL))), ci = Math.min(NX - 1, Math.floor((lon + 180) / CELL))
   const cell = cj * NX + ci
+  if (!net.near[cell] && !net.lakeNear[cell]) return
   const px = detail * R2D
+  // the meander: the query point bent by noise, the same at every scale and finer where the detail is
+  const t = net.t, cl = Math.max(.05, Math.cos(lat * D2R))
+  let wl = .24 * simplex3(t, x * 41 + 3.1, y * 41 - 5.7, z * 41 + 8.3), wa = .24 * simplex3(t, x * 41 - 9.4, y * 41 + 2.2, z * 41 - 1.6)
+  wl += .09 * simplex3(t, x * 123 + 7.7, y * 123 + 1.3, z * 123 - 6.2); wa += .09 * simplex3(t, x * 123 - 2.8, y * 123 - 8.1, z * 123 + 4.4)
+  const fmax = .9 / detail
+  for (let f = 370, a = .03; f <= fmax && a > .0006; f *= 2.9, a *= .42) {
+    wl += a * simplex3(t, x * f + 1.9, y * f - 4.3, z * f + 6.8); wa += a * simplex3(t, x * f - 6.1, y * f + 3.7, z * f - 2.4)
+  }
   if (net.near[cell]) {
-    // the meander: the query point bent by noise, the same at every scale and finer where the detail is
-    const t = net.t, cl = Math.max(.05, Math.cos(lat * D2R))
-    let wl = .24 * simplex3(t, x * 41 + 3.1, y * 41 - 5.7, z * 41 + 8.3), wa = .24 * simplex3(t, x * 41 - 9.4, y * 41 + 2.2, z * 41 - 1.6)
-    wl += .09 * simplex3(t, x * 123 + 7.7, y * 123 + 1.3, z * 123 - 6.2); wa += .09 * simplex3(t, x * 123 - 2.8, y * 123 - 8.1, z * 123 + 4.4)
-    const fmax = .9 / detail
-    for (let f = 370, a = .03; f <= fmax && a > .0006; f *= 2.9, a *= .42) {
-      wl += a * simplex3(t, x * f + 1.9, y * f - 4.3, z * f + 6.8); wa += a * simplex3(t, x * f - 6.1, y * f + 3.7, z * f - 2.4)
-    }
     const qlon = lon + wl / cl, qlat = lat + wa
     let best = 0
     for (let dj = -1; dj <= 1; dj++) {
@@ -211,8 +211,11 @@ export function waterAt(net: RiverNetwork, x: number, y: number, z: number, hgt:
     WATER[0] = best
   }
   if (net.lakeNear[cell]) {
-    // the lake: the level of the depression under the point, bent by the point's own bilinear weight so the shore is not the grid's
-    const u = (lon + 180) / CELL - .5, v = (90 - lat) / CELL - .5, i0 = Math.floor(u), j0 = Math.floor(v), fu = u - i0, fv = v - j0
+    // the lake: the level of the depression under the point, with the shore bent by the same noise (stronger) and weighted by a smooth bilinear, so it is not the grid's
+    const qlon = lon + 1.1 * wl / cl, qlat = lat + 1.1 * wa
+    const u = (qlon + 180) / CELL - .5, v = (90 - qlat) / CELL - .5, i0 = Math.floor(u), j0 = Math.floor(v)
+    let fu = u - i0, fv = v - j0
+    fu = fu * fu * (3 - 2 * fu); fv = fv * fv * (3 - 2 * fv)
     let weight = 0, level = -1
     for (let dj = 0; dj <= 1; dj++) for (let di = 0; di <= 1; di++) {
       const jj = j0 + dj
@@ -226,3 +229,67 @@ export function waterAt(net: RiverNetwork, x: number, y: number, z: number, hgt:
     }
   }
 }
+
+// ── the valleys the rivers cut ────────────────────────────────────────────────────────────────────────────────────────────
+
+/** The networks the valleys follow: one for a body's landmass (its seed and dials) at the wettest rain, so every river any moisture draws runs in a valley (a dry world has the beds
+ * of rivers it has not the water for). Built from the field at a pixel wider than the water is drawn at, where no valley is cut, so building needs no valley. */
+interface Valleys { readonly net: RiverNetwork; readonly near: Uint8Array }
+const valleyNets = new WeakMap<LandParams, Valleys>()
+/** The cells within VALLEY_REACH cells of a river cell: beyond them (a degree) a valley's weight is under 2 % and nothing is asked. */
+const VALLEY_REACH = 2
+const valleyOf = (P: LandParams): Valleys => {
+  let v = valleyNets.get(P)
+  if (!v) {
+    const net = buildNetwork(P, 1), near = new Uint8Array(NX * NY)
+    for (let j = 0; j < NY; j++) {
+      if (Math.abs(90 - (j + .5) * CELL) >= SKIP_LAT) continue
+      for (let i = 0; i < NX; i++) {
+        if (net.acc[j * NX + i]! < ACC_MIN || net.down[j * NX + i]! < 0) continue
+        for (let dj = -VALLEY_REACH; dj <= VALLEY_REACH; dj++) { const jj = j + dj; if (jj < 0 || jj >= NY) continue; for (let di = -VALLEY_REACH; di <= VALLEY_REACH; di++) near[jj * NX + ((i + di + NX) % NX)] = 1 }
+      }
+    }
+    v = {net, near}
+    valleyNets.set(P, v)
+  }
+  return v
+}
+
+/** How far a point is into a river's valley, 0 (outside) to 1 (on its line): the distance (degrees) to the nearest river, bent by the meander the river is drawn with, over the valley's
+ * half-width, which grows with what the river carries (at most half a degree). */
+function valleyWeight(P: LandParams, x: number, y: number, z: number, detail: number): number {
+  const lat = Math.asin(y < -1 ? -1 : y > 1 ? 1 : y) * R2D
+  if (Math.abs(lat) > SKIP_LAT + 2) return 0
+  const {net, near} = valleyOf(P), lon = Math.atan2(z, x) * R2D
+  const cj = Math.min(NY - 1, Math.max(0, Math.floor((90 - lat) / CELL))), ci = Math.min(NX - 1, Math.floor((lon + 180) / CELL))
+  if (!near[cj * NX + ci]) return 0
+  const t = net.t, cl = Math.max(.05, Math.cos(lat * D2R))
+  let wl = .24 * simplex3(t, x * 41 + 3.1, y * 41 - 5.7, z * 41 + 8.3), wa = .24 * simplex3(t, x * 41 - 9.4, y * 41 + 2.2, z * 41 - 1.6)
+  wl += .09 * simplex3(t, x * 123 + 7.7, y * 123 + 1.3, z * 123 - 6.2); wa += .09 * simplex3(t, x * 123 - 2.8, y * 123 - 8.1, z * 123 + 4.4)
+  const fmax = .9 / detail
+  for (let f = 370, a = .03; f <= fmax && a > .0006; f *= 2.9, a *= .42) {
+    wl += a * simplex3(t, x * f + 1.9, y * f - 4.3, z * f + 6.8); wa += a * simplex3(t, x * f - 6.1, y * f + 3.7, z * f - 2.4)
+  }
+  const qlon = lon + wl / cl, qlat = lat + wa
+  let best = 0
+  for (let dj = -VALLEY_REACH; dj <= VALLEY_REACH; dj++) {
+    const jj = cj + dj
+    if (jj < 0 || jj >= NY) continue
+    for (let di = -VALLEY_REACH; di <= VALLEY_REACH; di++) {
+      const ii = (ci + di + NX) % NX, r = jj * NX + ii, Q = net.acc[r]!
+      if (Q < ACC_MIN) continue
+      const d = net.down[r]!
+      if (d < 0) continue
+      const rl = -180 + (ii + .5) * CELL, ra = 90 - (jj + .5) * CELL
+      const di2 = d % NX, dj2 = (d / NX) | 0, dl = -180 + (di2 + .5) * CELL, da = 90 - (dj2 + .5) * CELL
+      const dist = segmentDistance(wrapLon(rl - qlon) * cl, ra - qlat, wrapLon(dl - qlon) * cl, da - qlat)
+      const half = Math.min(.5, .28 + .035 * Math.pow(Q, .45)), g = dist / half
+      if (g > 2.2) continue
+      const w = Math.exp(-g * g) * (Q >= ACC_FULL ? 1 : (Q - ACC_MIN) / (ACC_FULL - ACC_MIN) * .8 + .2)
+      if (w > best) best = w
+    }
+  }
+  return best
+}
+
+setValleyHook(valleyWeight)

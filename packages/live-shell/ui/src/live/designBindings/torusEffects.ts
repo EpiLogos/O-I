@@ -19,6 +19,9 @@ import {QL_WRITE_PATH} from '../../inhabitants/ql/devices/qlDevices'
 /** The four, in the order they stand after the torus and sound (presentationEffects.ts). */
 export const TORUS_EFFECTS = ['filter', 'dynamics', 'delay', 'reverb'] as const satisfies readonly PresentationEffect[]
 export type TorusEffect = (typeof TORUS_EFFECTS)[number]
+/** What the owner's chain can name: the four, and the Resonator bank (manual §22.7), whose design is Quaternal Logic's
+ * (inhabitants/ql/devices/qlResonatorBank.ts) and which the chain places and orders as it does the others. */
+export type ChainEffect = TorusEffect | 'resonator'
 
 /** The device's id on the chain. */
 export const torusEffectId = (effect: TorusEffect): string => `live:torus-${effect}`
@@ -38,7 +41,7 @@ export function torusEffectFace(effect: TorusEffect): DeviceDeclaration {
 }
 
 /** What the effects' owner reports, or why it reports nothing. */
-function ownerOf(state: LiveTorusState | null): {effects: NonNullable<Extract<LiveTorusState, {ok: true}>['parameters']['effects']>} | {reason: string} {
+export function ownerOf(state: LiveTorusState | null): {effects: NonNullable<Extract<LiveTorusState, {ok: true}>['parameters']['effects']>} | {reason: string} {
   if (state === null) return {reason: LIVE_TORUS_ABSENT_REASON}
   if (!state.ok) return {reason: `Refused reading: ${state.fault}`}
   const effects = state.parameters?.effects
@@ -126,38 +129,38 @@ export function torusEffectDevice(effect: TorusEffect, state: LiveTorusState | n
 // ── the chain ────────────────────────────────────────────────────────────────
 
 /** The effects standing after the torus, in the order they sound; null while the owner reports none. */
-export function torusEffectsChain(state: LiveTorusState | null): readonly TorusEffect[] | null {
+export function torusEffectsChain(state: LiveTorusState | null): readonly ChainEffect[] | null {
   const owner = ownerOf(state)
-  return 'reason' in owner ? null : owner.effects.chain as readonly TorusEffect[]
+  return 'reason' in owner ? null : owner.effects.chain as readonly ChainEffect[]
 }
 
-async function sendChain(chain: readonly TorusEffect[]): Promise<void> {
+async function sendChain(chain: readonly ChainEffect[]): Promise<void> {
   const refusal = effectChainRefusal(chain)
   if (refusal) throw new Error(refusal)
   const result = await commitLiveInstrumentEdit({kind: 'effect-chain', chain: [...chain]})
   if (!result.ok) throw new Error(result.error)
 }
 
-const chainOrRefuse = (state: LiveTorusState | null): readonly TorusEffect[] => {
+const chainOrRefuse = (state: LiveTorusState | null): readonly ChainEffect[] => {
   const chain = torusEffectsChain(state), owner = ownerOf(state)
   if (chain === null) throw new Error('reason' in owner ? owner.reason : 'No owner reading.')
   return chain
 }
 
 /** Put an effect on the chain at a place (the end when none is given); one already on it moves there. */
-export async function placeTorusEffect(state: LiveTorusState | null, effect: TorusEffect, at?: number): Promise<void> {
+export async function placeTorusEffect(state: LiveTorusState | null, effect: ChainEffect, at?: number): Promise<void> {
   const rest = chainOrRefuse(state).filter(item => item !== effect)
   const place = at === undefined ? rest.length : Math.max(0, Math.min(rest.length, at))
   return sendChain([...rest.slice(0, place), effect, ...rest.slice(place)])
 }
 
 /** Take an effect off the chain; it keeps its settings for when it returns. */
-export async function removeTorusEffect(state: LiveTorusState | null, effect: TorusEffect): Promise<void> {
+export async function removeTorusEffect(state: LiveTorusState | null, effect: ChainEffect): Promise<void> {
   return sendChain(chainOrRefuse(state).filter(item => item !== effect))
 }
 
 /** Move an effect one place earlier (-1) or later (1) in the chain. */
-export async function moveTorusEffect(state: LiveTorusState | null, effect: TorusEffect, by: -1 | 1): Promise<void> {
+export async function moveTorusEffect(state: LiveTorusState | null, effect: ChainEffect, by: -1 | 1): Promise<void> {
   const chain = chainOrRefuse(state), from = chain.indexOf(effect)
   if (from < 0) throw new Error(`${EFFECT_TITLES[effect]} is not on the chain.`)
   return placeTorusEffect(state, effect, from + by)

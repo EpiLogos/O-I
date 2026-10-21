@@ -78,17 +78,33 @@ pub const MATERIAL_FIELDS: &[&str] = &[
     "native",
 ];
 
-/// Fields of the per-object `sound` block.
-pub const SOUND_FIELDS: &[&str] = &[
-    "enabled",
-    "frequencyHz",
-    "followCymatic",
-    "gain",
-    "waveform",
-    "attack",
-    "release",
-    "pan",
+/// Fields of the per-object `sound` block: a symbol's voice, which carries a name or a mode of the torus's sound and has no oscillator
+/// (DLW 20.2; expressions-app native-field/entitySound.ts is the other holder of this table).
+pub const SOUND_FIELDS: &[&str] = &["enabled", "carry", "gain", "attack", "release"];
+
+/// The oscillator's fields, which are no longer a voice's, each with why. A new write that carries one is refused in these words; opening a
+/// document written before 20 Oct drops them and names each (`migrate_sound`).
+pub const REMOVED_SOUND_FIELDS: &[(&str, &str)] = &[
+    (
+        "frequencyHz",
+        "a symbol's voice carries the torus's sound and has no pitch of its own: its pitches are the degrees of its mode over the torus's root",
+    ),
+    (
+        "followCymatic",
+        "a symbol's voice carries the torus's sound and does not follow a plate's frequency: its pitches are the degrees of its mode",
+    ),
+    (
+        "waveform",
+        "a symbol's voice has no oscillator, so it has no waveform: it is the torus's own sound",
+    ),
+    (
+        "pan",
+        "a symbol's voice stands where its symbol stands, so its stereo place is the symbol's place on the stage",
+    ),
 ];
+
+/// What a voice may carry: a row of the mode catalogue by its key, or a name of M2's store.
+pub const CARRY_KINDS: &[&str] = &["mode", "name"];
 
 const MAX_MATERIAL_BYTES: usize = 768 * 1024;
 const MAX_PROFILE_BYTES: usize = 2 * 1024 * 1024;
@@ -417,32 +433,39 @@ pub fn material(value: &Value) -> Result<(), String> {
 }
 
 /// Validate the per-object `sound` block:
-/// `{enabled, frequencyHz?, followCymatic?, gain, waveform, attack, release, pan}`.
+/// `{enabled, carry?: {kind: mode | name, ref}, gain?, attack?, release?}`. The oscillator's fields are refused in words, never ignored.
 pub fn sound(value: &Value) -> Result<(), String> {
     let sound = value.as_object().ok_or("Sound must be an object")?;
+    if let Some((field, why)) = REMOVED_SOUND_FIELDS
+        .iter()
+        .find(|(field, _)| sound.contains_key(*field))
+    {
+        return Err(format!("Sound {field} was removed: {why}"));
+    }
     if let Some(key) = sound.keys().find(|k| !SOUND_FIELDS.contains(&k.as_str())) {
         return Err(format!("Unsupported sound field {key}"));
     }
     if !sound.get("enabled").is_some_and(Value::is_boolean) {
         return Err("Sound requires an explicit enabled flag".into());
     }
-    if let Some(v) = sound.get("followCymatic") {
-        if !v.is_boolean() {
-            return Err("followCymatic must be a boolean".into());
+    if let Some(v) = sound.get("carry") {
+        let carry = v.as_object().ok_or("Sound carry must be {kind, ref}")?;
+        if let Some(key) = carry.keys().find(|k| *k != "kind" && *k != "ref") {
+            return Err(format!("Unsupported sound carry field {key}"));
         }
-    }
-    if let Some(v) = sound.get("frequencyHz") {
-        finite(v, 1., 20_000., "frequencyHz")?;
+        one_of(
+            carry.get("kind").unwrap_or(&Value::Null),
+            CARRY_KINDS,
+            "Sound carry kind",
+        )?;
+        carry
+            .get("ref")
+            .and_then(Value::as_str)
+            .filter(|r| !r.is_empty() && r.chars().count() <= 200)
+            .ok_or("Sound carry ref is a name or catalogue key of 1 to 200 characters")?;
     }
     if let Some(v) = sound.get("gain") {
         finite(v, 0., 1., "gain")?;
-    }
-    if let Some(v) = sound.get("waveform") {
-        one_of(
-            v,
-            &["sine", "triangle", "square", "sawtooth"],
-            "Sound waveform",
-        )?;
     }
     if let Some(v) = sound.get("attack") {
         finite(v, 0., 10., "attack")?;
@@ -450,10 +473,21 @@ pub fn sound(value: &Value) -> Result<(), String> {
     if let Some(v) = sound.get("release") {
         finite(v, 0., 30., "release")?;
     }
-    if let Some(v) = sound.get("pan") {
-        finite(v, -1., 1., "pan")?;
-    }
     Ok(())
+}
+
+/// Bring a voice written for an oscillator to the new shape: drop the removed fields and return the name of each one dropped (the receipt),
+/// in the table's order. A voice already in the new shape comes back unchanged with an empty receipt. The voice is given no `carry`: no mode
+/// is made up from an old frequency.
+pub fn migrate_sound(value: &mut Value) -> Vec<String> {
+    let Some(sound) = value.as_object_mut() else {
+        return Vec::new();
+    };
+    REMOVED_SOUND_FIELDS
+        .iter()
+        .filter(|(field, _)| sound.remove(*field).is_some())
+        .map(|(field, _)| (*field).to_owned())
+        .collect()
 }
 
 impl ExpressionProfile {
@@ -747,5 +781,57 @@ impl ExpressionEdition {
         readings(&self.provenance)?;
         text(&self.digest)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod voice_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn a_voice_written_for_an_oscillator_is_migrated_with_its_receipt_and_given_no_carry() {
+        // The character material's voice of 20 Oct and before (anima-walk-variation-*): an enabled triangle at 330 Hz, panned left.
+        let mut voice = json!({"enabled":true,"followCymatic":false,"frequencyHz":330,"gain":0.3,"waveform":"triangle","attack":0.12,"release":1.1,"pan":-0.2});
+        assert!(sound(&voice).is_err(), "the old shape is not a voice");
+        let receipt = migrate_sound(&mut voice);
+        assert_eq!(
+            receipt,
+            ["frequencyHz", "followCymatic", "waveform", "pan"],
+            "each dropped field is named, in the table's order"
+        );
+        assert_eq!(
+            voice,
+            json!({"enabled":true,"gain":0.3,"attack":0.12,"release":1.1}),
+            "enabled, gain, attack and release stay; no carry is made up from the frequency"
+        );
+        sound(&voice).expect("the migrated voice is in the new shape");
+        assert!(
+            migrate_sound(&mut voice).is_empty(),
+            "a voice in the new shape migrates to itself with an empty receipt"
+        );
+        let mut named = json!({"enabled":false,"carry":{"kind":"name","ref":"shem"},"pan":0.5});
+        assert_eq!(migrate_sound(&mut named), ["pan"]);
+        assert_eq!(
+            named,
+            json!({"enabled":false,"carry":{"kind":"name","ref":"shem"}}),
+            "a carry that is already there is kept"
+        );
+    }
+
+    #[test]
+    fn the_removed_fields_and_the_voices_fields_are_disjoint_and_each_removed_field_has_its_words()
+    {
+        for (field, why) in REMOVED_SOUND_FIELDS {
+            assert!(
+                !SOUND_FIELDS.contains(field),
+                "{field} cannot be both removed and kept"
+            );
+            assert!(why.starts_with("a symbol's voice"), "{field}: {why}");
+        }
+        assert_eq!(
+            SOUND_FIELDS,
+            ["enabled", "carry", "gain", "attack", "release"]
+        );
     }
 }

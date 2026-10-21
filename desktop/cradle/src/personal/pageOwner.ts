@@ -8,7 +8,9 @@ export type PageForm = "being" | "thing" | "page" | "flow";
 export interface PageReading {schema: "oi.page-reading/v1"; location: CentralLocation; revision: string; form: PageForm; title: string | null; island: Record<string, unknown>}
 export interface PageListing {
   schema: "oi.page-list/v1"; path: string; more: boolean
-  pages: {location: CentralLocation; name: string; form: PageForm; title: string | null; revision: string; world: string | null}[]
+  pages: {location: CentralLocation; name: string; form: PageForm; title: string | null; revision: string; world: string | null
+    /** A Flow's browser-row words, from the island the listing read (kernel page.rs list_pages): the keys rowWords.ts `flowReadingOf` reads. */
+    flow?: {title: unknown; revision: unknown; participants: {kind: unknown; name: unknown; initial: unknown}[]}}[]
   not_pages: {name: string; why: string}[]
 }
 export interface PageMutation {

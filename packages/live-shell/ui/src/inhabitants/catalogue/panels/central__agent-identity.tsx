@@ -445,7 +445,7 @@ export function IdentityBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section label="Card" cols={4}>
-        <Readout label="revision" does="The revision of the agent's profile." value={m.agent?.rev} />
+        <Readout label="revision" does="The revision of the agent's profile." value={m.agent?.rev} copy={m.agent?.rev} />
         <Readout label="skills" does="Skills the profile names." value={c?.carries.skill?.length} tone="value" />
         <Readout label="methods" does="Methods the profile names." value={c?.carries.method?.length} tone="value" />
         <Readout label="sets" does="SkillSets the profile names." value={c?.carries.skillset?.length} tone="value" />

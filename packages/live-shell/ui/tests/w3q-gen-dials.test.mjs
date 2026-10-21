@@ -16,7 +16,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
-import {waterMask, iceMask, coastMeasure, iceEdge} from './lib/planetMetrics.mjs'
+import {waterMask, iceMask, coastMeasure, iceEdge, boxBlur} from './lib/planetMetrics.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -40,9 +40,6 @@ export async function load(u, c, n) {
 
 const body = await import(new URL('../src/projections/atlas/src/globe/body.ts', import.meta.url).href)
 
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-/** Tests that are red until generator version 2 lands carry this (the lead's gate does the same); W3Q_GATE=enforce makes them real. */
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until generator v2 lands (W3Q_GATE=enforce runs it as a test)'}
 
 // ── fixtures and measures ───────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -399,6 +396,91 @@ test('A3 clouds: the cover is none at 0 and rises with the dial, and a cloudy wo
   assert.ok(covers[0] <= .001, `no clouds at 0 (cover ${f(covers[0], 4)})`)
   for (let k = 1; k < covers.length; k++) assert.ok(covers[k] > covers[k - 1] + .02, `the cover rises with the dial: ${covers.map(x => f(x, 3)).join(', ')} (each step by at least .02)`)
   assert.ok(covers[4] >= .5, `at 100% the sky is ${f(covers[4], 2)} cloud: at least half (the Earth’s real cover is .67)`)
+})
+
+// ── the sky's own structure (round 2: the clouds read as flat white daubs) ───────────────────────────────────────────────────────
+
+/** The mask's connected pieces of cloud above `cut` (4 neighbours, wrapping in longitude): their sizes in pixels, and the pixels of each. */
+function cloudPieces(mask, cut) {
+  const {width: w, height: h, data} = mask, seen = new Uint8Array(w * h), pieces = []
+  for (let s = 0; s < w * h; s++) {
+    if (seen[s] || data[s * 4] / 255 <= cut) continue
+    const members = [], stack = [s]; seen[s] = 1
+    while (stack.length) {
+      const at = stack.pop(); members.push(at)
+      const j = (at / w) | 0, i = at - j * w
+      for (const next of [j > 0 ? at - w : -1, j < h - 1 ? at + w : -1, j * w + (i + 1) % w, j * w + (i + w - 1) % w]) if (next >= 0 && !seen[next] && data[next * 4] / 255 > cut) { seen[next] = 1; stack.push(next) }
+    }
+    pieces.push(members)
+  }
+  return pieces
+}
+const opacityAt = (mask, at) => mask.data[at * 4] / 255
+const skyOf = (clouds, seed, width = 1024) => body.cloudImage(make(seed, {sky: {clouds}}), width)
+
+test('CL1 clouds are translucent: most of the cloud is thin, and only the cores of the dense bands are opaque', () => {
+  // A cloud deck seen from space is mostly thin and wispy; opacity that is nearly all or nothing reads as a white cut-out. Of the pixels with any cloud (over .03), at least 60 % are
+  // partial (between .15 and .85) at the default dial (the first mask drew 38 %: its S-curve was a quarter of the field's range wide).
+  const shares = SEEDS.map(seed => {
+    const mask = skyOf(.35, seed); let cloud = 0, partial = 0
+    for (let k = 0; k < mask.width * mask.height; k++) { const a = opacityAt(mask, k); if (a > .03) { cloud++; if (a > .15 && a < .85) partial++ } }
+    return partial / Math.max(1, cloud)
+  })
+  assert.ok(mean(shares) >= .6, `${f(100 * mean(shares), 0)}% of the cloud is partial (per seed ${shares.map(x => f(100 * x, 0)).join('%, ')}%): at least 60%`)
+})
+
+test('CL2 even a large cloud is not flat: inside the large clouds the opacity varies, and no more than a quarter of them is opaque', () => {
+  // The first mask was one flat white inside every large cloud (half of it opaque, 51 %, with a standard deviation of .30 about a mean of .77, saturated against the top). A dense band has
+  // a thick core and thin edges and gaps, so inside the clouds of at least 1500 pixels: at most 25 % of the pixels over .95 opacity, and the mean below .7.
+  const out = SEEDS.map(seed => {
+    const mask = skyOf(.35, seed); let opaque = 0, total = 0, sum = 0
+    for (const piece of cloudPieces(mask, .1)) { if (piece.length < 1500) continue; for (const at of piece) { total++; sum += opacityAt(mask, at); if (opacityAt(mask, at) >= .95) opaque++ } }
+    return {opaque: opaque / Math.max(1, total), mean: sum / Math.max(1, total), total}
+  })
+  assert.ok(out.every(o => o.total >= 3000), `there are large clouds to measure (${out.map(o => o.total).join(', ')} pixels)`)
+  assert.ok(mean(out.map(o => o.opaque)) <= .25, `${f(100 * mean(out.map(o => o.opaque)), 0)}% of the large clouds is opaque (at most 25%)`)
+  assert.ok(mean(out.map(o => o.mean)) <= .7, `and the opacity inside them averages ${f(mean(out.map(o => o.mean)), 2)} (at most .7)`)
+})
+
+test('CL3 the mask has wisps: structure down to a few pixels, not only blobs and a blur at their edges', () => {
+  // The detail at one pixel over the detail at eight (the planet gate's tilt, for the sea): the first mask's was .19. A cloud field with fine structure keeps its energy down to the pixel.
+  const tilt = SEEDS.map(seed => { const mask = skyOf(.35, seed), {width: w, height: h} = mask, v = new Float32Array(w * h); for (let k = 0; k < w * h; k++) v[k] = opacityAt(mask, k)
+    const energy = r => { const B = boxBlur(v, w, h, r); let e = 0; for (let k = 0; k < w * h; k++) e += Math.abs(v[k] - B[k]); return e / (w * h) }
+    return energy(1) / Math.max(energy(8), 1e-9) })
+  assert.ok(mean(tilt) >= .3, `the one-pixel detail is ${f(mean(tilt), 2)} of the eight-pixel detail (per seed ${tilt.map(x => f(x, 2)).join(', ')}): at least .3`)
+})
+
+test('CL4 a dense sky has gaps: at the top of the dial the clear air is in many patches, none of them a belt or an ocean of it', () => {
+  // Real weather is broken into systems with clear air between. (A first form of this asked that the largest connected piece of cloud above half opacity be under 85% of the cloud:
+  // at a cover of 60% any field's thick parts join, since the sky percolates, and a structurally broken one measured 96% as the flat one measured 97%. The gaps themselves are
+  // what is asked.) At a dial of .8, counting the clear patches (opacity under .2, at least 40 pixels, not touching the polar rows): the first mask had 110 to 123 of them, the
+  // largest 9 600 to 31 000 pixels; at least 150 of them and none over 8 000 pixels.
+  for (const seed of SEEDS) {
+    const mask = skyOf(.8, seed), {width: w, height: h} = mask, seen = new Uint8Array(w * h), patches = []
+    for (let s0 = 0; s0 < w * h; s0++) {
+      if (seen[s0] || opacityAt(mask, s0) >= .2) continue
+      let n = 0, polar = false; const stack = [s0]; seen[s0] = 1
+      while (stack.length) {
+        const at = stack.pop(); n++
+        const j = (at / w) | 0, i = at - j * w
+        if (j < 40 || j > h - 40) polar = true
+        for (const next of [j > 0 ? at - w : -1, j < h - 1 ? at + w : -1, j * w + (i + 1) % w, j * w + (i + w - 1) % w]) if (next >= 0 && !seen[next] && opacityAt(mask, next) < .2) { seen[next] = 1; stack.push(next) }
+      }
+      if (!polar && n >= 40) patches.push(n)
+    }
+    patches.sort((a, b) => b - a)
+    assert.ok(patches.length >= 150, `seed ${seed}: ${patches.length} clear patches at a dial of .8 (at least 150)`)
+    assert.ok(patches[0] <= 8000, `seed ${seed}: the largest clear patch is ${patches[0]} pixels (at most 8000)`)
+  }
+})
+
+test('CL5 the cloud dial is the cover: the mean opacity over the sphere is three quarters of the dial, however the opacity is spread', () => {
+  // The cover is what the dial says (.75 of it, so that a full dial is a sky of three quarters cloud), as an area-weighted mean of opacity, not of a threshold: translucency must not
+  // change how much sky is clouded.
+  for (const dial of [.35, .8]) {
+    const covers = SEEDS.map(seed => cover(skyOf(dial, seed, 512)))
+    assert.ok(Math.abs(mean(covers) / (.75 * dial) - 1) <= .12, `at a dial of ${dial} the mean opacity is ${f(mean(covers), 3)}: within 12% of ${f(.75 * dial, 3)}`)
+  }
 })
 
 test('A4 clouds: the bands follow latitude: cloudier at the equator and in the storm tracks than in the subtropics', () => {

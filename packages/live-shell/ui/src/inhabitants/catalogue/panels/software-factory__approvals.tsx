@@ -205,7 +205,7 @@ function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNo
   const why = item === undefined ? 'Choose an item in the queue.' : item.denied ? 'The harness declined it already.' : item.kind === undefined ? 'The kind of this item is not read.' : undefined
   const act = (key: string, label: string, does: string) => {
     const s = st(p, key)
-    return <Action key={key} {...s} disabled={s.disabled ?? why} label={label} does={does} onPress={item ? () => p.set(key, item.id) : undefined} />
+    return <Action key={key} {...s} hold disabled={s.disabled ?? why} label={label} does={does} onPress={item ? () => p.set(key, item.id) : undefined} />
   }
   const open = <Action key="open" label="Open" does="Read the item in a pane, with its diff or its command." disabled={why}
     onPress={item ? () => { p.set('pick', item.id); p.nav.full?.() } : undefined} />

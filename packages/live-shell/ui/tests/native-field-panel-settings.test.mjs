@@ -33,7 +33,8 @@ const SOURCE_OPTIONS = {
   pointerClick: ['pulse', 'implode', 'vortex', 'shove', 'off'], // inspector.ts:125
   pointerScope: ['global', 'local'], // inspector.ts:125 (Scene.pointerScope)
   relationalMode: ['orbital', 'nbody', 'chaos'], // inspector.ts:134
-  frequencyDriver: ['manual', 'focus', 'automation'], // inspector.ts:127
+  frequencyDriver: ['torus', 'manual', 'focus', 'automation'], // inspector.ts:129; DLW §20.14 lists Torus first
+  keySource: ['torus', 'sky', 'manual'], // inspector.ts:130; DLW §20.2 Key source
   plane: ['XY', 'XZ', 'YZ'], // inspector.ts:144 (Scene.composition.plane, 'Layout plane')
   layout: ['line', 'column', 'ring', 'grid', 'spiral', 'align-x', 'align-y', 'distribute-x', 'distribute-y', 'laminate'], // inspector.ts:144 Arrangement buttons (Scene.composition.layout); nativeSceneFace.arrange.ts:5
   sweepDirection: ['ascent', 'descent', 'pingpong'], // inspector.ts:131
@@ -44,7 +45,8 @@ const SOURCE_OPTIONS = {
 }
 // Toggles: inspector.ts:122 grainProfile; :123 volumeEnabled, depthPerspective, depthOcclusion
 // (select written as 'off'/'on', admitted as boolean); :134 relationalEnabled; :130 autoSweep; :231 carryTint, carryStation.
-const SOURCE_BOOLEAN = ['grainProfile', 'volumeEnabled', 'depthPerspective', 'depthOcclusion', 'relationalEnabled', 'autoSweep', 'carryTint', 'carryStation', 'autoFitSizes']
+// symbolVoices: inspector.ts:131 toggle('Symbol voices', 'composition.symbolVoices', …); DLW §20.2 "Symbol voices | On · Off | On".
+const SOURCE_BOOLEAN = ['grainProfile', 'volumeEnabled', 'depthPerspective', 'depthOcclusion', 'relationalEnabled', 'autoSweep', 'carryTint', 'carryStation', 'autoFitSizes', 'symbolVoices']
 // Number shares: inspector.ts:123 range('Depth in the swirl' | 'Depth in the bridge', 'engine.vortex3d' | 'engine.dispersion3d', …, 0, 1, .01).
 const SOURCE_NUMBER = {vortex3d: {label: 'Depth in the swirl', min: 0, max: 1, step: 0.01}, dispersion3d: {label: 'Depth in the bridge', min: 0, max: 1, step: 0.01}}
 // Already admitted by other kinds in nativeDeviceEdits.ts; the panel table must not repeat them.

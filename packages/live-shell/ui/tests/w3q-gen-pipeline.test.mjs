@@ -118,9 +118,6 @@ async function optional(name) {
   }
 }
 
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-/** Tests that are red until generator version 2 lands carry this (the lead's gate does the same); W3Q_GATE=enforce makes them real. */
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until generator v2 lands (W3Q_GATE=enforce runs it as a test)'}
 
 const DIALS = {landmass: {sea_level: .5, continents: 1.7, relief: .55, coast: 'smooth'}, climate: {warmth: .58, moisture: .6, ice_caps: .3}, sky: {atmosphere: .6, clouds: .35, axial_tilt_deg: 18}}
 const make = (seed, change = {}) => ({
@@ -156,7 +153,7 @@ test('Q1 the globe is given the widths of the contract: first 256, then 2048 on 
   for (const [name, width] of Object.entries(body.BODY_WIDTHS)) assert.ok(Number.isInteger(Math.log2(width / TILE_PX)), `${name} (${width}) is ${TILE_PX} times a power of two`)
 })
 
-test('Q2 a tile is wanted only where it is denser than the base: level log2(base/256) + 1, the rule the Earth’s GIBS tiles follow', pending, async () => {
+test('Q2 a tile is wanted only where it is denser than the base: level log2(base/256) + 1, the rule the Earth’s GIBS tiles follow', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof tiles.tileLevelFor, 'function', 'bodyTiles.ts exports tileLevelFor(baseWidth)')
   // GIBS: the 8k base (8192 wide) asks tiles from level 6 and the 4k base from 5 (engine.ts upgradeBase: `which === '8k' ? 6 : 5`)
@@ -295,7 +292,7 @@ test('G1 the default tile source is GIBS and is unchanged: tiles are asked of th
   } finally { layer.release() }
 })
 
-test('G2 a tile source is the layer’s to set: a procedural source is asked for tiles and the network is not', pending, async () => {
+test('G2 a tile source is the layer’s to set: a procedural source is asked for tiles and the network is not', async () => {
   const layer = sourcedLayer()
   try {
     const source = fakeSource(2)
@@ -310,7 +307,7 @@ test('G2 a tile source is the layer’s to set: a procedural source is asked for
   } finally { layer.release() }
 })
 
-test('G3 tiles are asked only where denser than the base: nothing under `minEmit`, and at a distance whose tiles are no denser than the base, nothing at all', pending, async () => {
+test('G3 tiles are asked only where denser than the base: nothing under `minEmit`, and at a distance whose tiles are no denser than the base, nothing at all', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof tiles.tileLevelFor, 'function', 'bodyTiles.ts exports tileLevelFor(baseWidth)')
   const asked = async (dist, minEmit) => {
@@ -331,7 +328,7 @@ test('G3 tiles are asked only where denser than the base: nothing under `minEmit
   assert.deepEqual(await asked(3.3, tiles.tileLevelFor(4096)), [], 'from far away the base is as dense as the screen: no tile is asked')
 })
 
-test('G4 no flash: a tile fades in over its base and is never drawn whole at its first frame', pending, async () => {
+test('G4 no flash: a tile fades in over its base and is never drawn whole at its first frame', async () => {
   const layer = sourcedLayer(false) // motion not reduced: the fade is the layer's FADE_IN
   try {
     const source = fakeSource(2)
@@ -349,7 +346,7 @@ test('G4 no flash: a tile fades in over its base and is never drawn whole at its
   } finally { layer.release() }
 })
 
-test('G5 each tile is asked once while it is wanted: a tile that stands is not asked for again', pending, async () => {
+test('G5 each tile is asked once while it is wanted: a tile that stands is not asked for again', async () => {
   const layer = sourcedLayer(), source = fakeSource(2)
   try {
     layer.setSource(source); layer.minEmit = 4
@@ -360,7 +357,7 @@ test('G5 each tile is asked once while it is wanted: a tile that stands is not a
   } finally { layer.release() }
 })
 
-test('G6 a tile nobody wants any more is cancelled and its late answer is dropped: leaving a place leaves nothing of it', pending, async () => {
+test('G6 a tile nobody wants any more is cancelled and its late answer is dropped: leaving a place leaves nothing of it', async () => {
   const layer = sourcedLayer(), source = fakeSource(0, {hold: true, perCall: true})
   try {
     layer.setSource(source); layer.minEmit = 4
@@ -379,7 +376,7 @@ test('G6 a tile nobody wants any more is cancelled and its late answer is droppe
   } finally { layer.release() }
 })
 
-test('G7 the layer keeps a bounded number of tiles, the ones used last: a long sweep never holds more than the bound, and what is evicted is the oldest', pending, async () => {
+test('G7 the layer keeps a bounded number of tiles, the ones used last: a long sweep never holds more than the bound, and what is evicted is the oldest', async () => {
   const layer = sourcedLayer(), source = fakeSource(2)
   const bound = typeof layer.maxTiles === 'number' ? layer.maxTiles : +/const MAX_TILES = (\d+)/.exec(readFileSync(new URL('tiles.ts', globe), 'utf8'))?.[1]
   assert.ok(bound >= 64 && bound <= 512, `the layer names a bound on the tiles it keeps (MAX_TILES in tiles.ts, or layer.maxTiles): ${bound}; between 64 and 512 (a tile is 256 KB in memory and as much on the GPU)`)
@@ -405,7 +402,7 @@ test('G7 the layer keeps a bounded number of tiles, the ones used last: a long s
   } finally { layer.release() }
 })
 
-test('G8 a change of body drops the old body’s tiles: `setSource` frees every tile and aborts every ask of the source it replaces, and a late answer is not drawn', pending, async () => {
+test('G8 a change of body drops the old body’s tiles: `setSource` frees every tile and aborts every ask of the source it replaces, and a late answer is not drawn', async () => {
   const layer = sourcedLayer(), a = fakeSource(1), slow = fakeSource(3, {hold: true}), b = fakeSource(2)
   try {
     layer.setSource(a); layer.minEmit = 4
@@ -428,7 +425,7 @@ test('G8 a change of body drops the old body’s tiles: `setSource` frees every 
 
 // ── the globe's tiles ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('E1 a generated body keeps its tile layer: `earth.generated` no longer switches the close-zoom layer off', pending, async () => {
+test('E1 a generated body keeps its tile layer: `earth.generated` no longer switches the close-zoom layer off', async () => {
   const g = await openGlobe()
   try {
     g.engine.setBody(make(5))
@@ -438,7 +435,7 @@ test('E1 a generated body keeps its tile layer: `earth.generated` no longer swit
   } finally { g.close() }
 })
 
-test('E2 at the closest camera a generated body is given procedural tiles from the worker, and the network is never asked for one', pending, async () => {
+test('E2 at the closest camera a generated body is given procedural tiles from the worker, and the network is never asked for one', async () => {
   const g = await openGlobe({maxTextureSize: 4096})
   try {
     // a body with land under the camera, so tiles are wanted at once; the camera is put down at 1.02 radii over a point of it
@@ -455,7 +452,7 @@ test('E2 at the closest camera a generated body is given procedural tiles from t
   } finally { g.close() }
 })
 
-test('E3 the tile layer asks from the level the sharp base is less dense than: `minEmit` follows the base that stands', pending, async () => {
+test('E3 the tile layer asks from the level the sharp base is less dense than: `minEmit` follows the base that stands', async () => {
   const tiles = await optional('bodyTiles.ts')
   assert.equal(typeof tiles.tileLevelFor, 'function', 'bodyTiles.ts exports tileLevelFor(baseWidth)')
   assert.ok(body.BODY_WIDTHS, 'body.ts exports BODY_WIDTHS')
@@ -482,13 +479,262 @@ test('E4 and the Earth is given back its own layer: with no body the tiles are t
   } finally { g.close() }
 })
 
+// ── what the globe draws over a generated body ─────────────────────────────────────────────────────────────────────────
+// The owner's globe screen pass found: the Earth's presences (the white dots, arcs and markers of the Earth's occurrences, and the glow they tint the ground with) drawn over
+// a generated body; a rectangle of tile, clear and dark, in the middle of a base that has its clouds; a new empty world as a dark navy ball. None of these was a failure of
+// the pictures (the gate held every one of them) but of what the globe does with them, so these tests run the engine, not the generator.
+
+test('E5 a generated body is not the Earth: none of the Earth’s presences is drawn, tinted under or picked on it, and they all come back with the Earth', async () => {
+  const g = await openGlobe()
+  try {
+    const e = g.engine, state = () => ({
+      presences: e.presences.mesh.visible, arcs: e.arcs.group.visible,
+      markers: [e.markers.sel, e.markers.hover, e.markers.head].map(m => !m.suppressed),
+      glow: e.earth.u.uDensity.value === e.presences.densityTarget.texture, picked: e.surfaceOn,
+    })
+    const shown = {presences: true, arcs: true, markers: [true, true, true], glow: true, picked: true}, gone = {presences: false, arcs: false, markers: [false, false, false], glow: false, picked: false}
+    frames(g, .2)
+    assert.deepEqual(state(), shown, 'the Earth shows its presences, their arcs and markers, the glow under them, and picks them')
+    let rendered = 0
+    const renderDensity = e.presences.renderDensity.bind(e.presences)
+    e.presences.renderDensity = () => { rendered++; renderDensity() }
+    e.setBody(make(5)); frames(g, .2)
+    assert.deepEqual(state(), gone, 'a generated body shows none of them: the presences, the arcs, the markers, and the glow the presences tint the ground with, and nothing is picked')
+    const counted = rendered
+    frames(g, .3)
+    assert.equal(rendered, counted, 'and the glow is not even drawn for it')
+    await answerWorker(); frames(g, .2)
+    assert.deepEqual(state(), gone, 'nor when its sharp pictures have come')
+    g.engine.setBody(make(6)); frames(g, .2)
+    assert.deepEqual(state(), gone, 'nor for another body')
+    e.setBody(null); frames(g, .2)
+    assert.deepEqual(state(), shown, 'the Earth, given back, has them again')
+    assert.ok(rendered > counted, 'and draws the glow again')
+  } finally { g.close() }
+})
+
+/** The block of statements in a fragment shader's `main` that stands the body's clouds over the ground: from the cloud test to its closing brace, with the coordinate
+ * the lookup goes by (`UV`) written in place of the varying the shader has it in. */
+function skyBlock(frag, uv) {
+  const main = frag.slice(frag.indexOf('void main'))
+  const open = main.indexOf('if (uCloudMix'), from = main.indexOf('{', open)
+  if (open < 0) return ''
+  let depth = 0, end = from
+  for (; end < main.length; end++) { if (main[end] === '{') depth++; else if (main[end] === '}' && --depth === 0) break }
+  return main.slice(open, end + 1).replace(new RegExp(`\\b${uv}\\b`, 'g'), 'UV').replace(/\s+/g, ' ').trim()
+}
+
+test('E6 a tile has the sky its sphere has: the same clouds, from the same layer, carried by the same wind, over its ground, so a tile is not a clear rectangle in a clouded base', async () => {
+  const shaders = await import(new URL('shaders.ts', globe).href)
+  const sphere = skyBlock(shaders.EARTH_FRAG, 'vUv'), tile = skyBlock(shaders.TILE_FRAG, 'vDens')
+  assert.ok(sphere.includes('texture2D(uCloud'), 'the sphere’s shader stands the cloud layer over the ground')
+  assert.ok(tile.includes('texture2D(uCloud'), 'and the tile’s shader stands it over the ground as well (a tile without it is a clear, dark patch where its base is washed with cloud)')
+  assert.equal(tile, sphere, 'the same statements: the same mask, lit by the same light, the same cover, at the same place (a tile’s own coordinate, in the sphere’s equirect)')
+  assert.ok(/uCloudMix/.test(tile) && /uWeatherT/.test(tile), 'carried by the wind of the occasion')
+  // and the layer is the sphere's own, by reference, so that a sky that comes after a tile (the sharp base's clouds come seconds after the first tiles) reaches it
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    g.engine.setBody(make(5, {sky: {clouds: .9}}))
+    await answerWorker()
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1, 'tiles are made')
+    const own = g.uniforms()
+    assert.ok(own.uCloudMix.value === 1, 'the sphere draws the clouds')
+    for (const mesh of made) {
+      const u = mesh.material.uniforms
+      for (const name of ['uCloud', 'uCloudMix', 'uAir', 'uWeatherT', 'uWeatherRate']) assert.ok(u[name] && u[name] === own[name], `the tile’s ${name} is the sphere’s own uniform, not a copy of its value`)
+    }
+  } finally { g.close() }
+})
+
+test('E7 a new empty world is a grey dust moon on the globe, at every width and in every tile: no navy sea, no cloud, no air, the look carried to the tiles', async () => {
+  const record = make(5, {sky: {clouds: .9, atmosphere: .9}}), saturation = ({data}) => {
+    let s = 0, n = 0, blue = 0
+    for (let k = 0; k < data.length; k += 4) { const r = data[k], gr = data[k + 1], b = data[k + 2]; s += Math.max(r, gr, b) - Math.min(r, gr, b); blue += b - r; n++ }
+    return {chroma: s / n, blue: blue / n}
+  }
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    g.engine.setBody(record, {barren: 1})
+    const small = g.uniforms().uBaseLo.value.image, first = saturation(small)
+    assert.ok(first.chroma < 22 && first.blue < 10, `its first picture is grey, with a sea of dust and no blue (mean chroma ${first.chroma.toFixed(1)}, mean blue over red ${first.blue.toFixed(1)}); the lived world beside it is far from grey`)
+    const lived = (() => { g.engine.setBody(record); return saturation(g.uniforms().uBaseLo.value.image) })()
+    assert.ok(lived.chroma > 2 * first.chroma || lived.blue > 3 * Math.max(first.blue, 1), `and the unchanged look of the same record is not (chroma ${lived.chroma.toFixed(1)}, blue ${lived.blue.toFixed(1)})`)
+    g.engine.setBody(record, {barren: 1})
+    worker.held.length = 0
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    const before = worker.jobs.length
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const sent = worker.jobs.slice(before), bases = worker.jobs.filter(job => typeof job.width === 'number'), tilesAsked = sent.filter(job => typeof job.z === 'number')
+    assert.ok(bases.length >= 1 && tilesAsked.length >= 1, 'the sharp bases and the tiles are made')
+    assert.ok(tilesAsked.every(job => job.look && job.look.barren === 1), 'every tile asked of the worker is asked with the look barren 1: the look reaches the tiles, not only the base')
+    const u = g.uniforms()
+    assert.equal(u.uCloudMix.value, 0, 'no cloud layer is drawn over a barren world, whatever its clouds dial (the base’s cloud mask is empty and the mix is 0)')
+    assert.equal(u.uAir.value, 0, 'and its air is 0 (the rim of the sphere is its own, not an atmosphere)')
+    assert.equal(g.engine.shell.air.value, 0, 'nor is the shell round it lit')
+    // a tile the real handler made, for the same look, is the base's own grey
+    const grey = tilesAsked.find(job => job.look?.barren === 1)
+    worker.scope.postMessage = answer => { grey.answer = answer }
+    worker.scope.onmessage({data: {...grey, id: -1}})
+    const tile = saturation(grey.answer.tile)
+    assert.ok(tile.chroma < 22 && tile.blue < 10, `and so is a tile of it (mean chroma ${tile.chroma.toFixed(1)}, blue ${tile.blue.toFixed(1)})`)
+  } finally { g.close() }
+})
+
+test('B2 the globe hands the grade the look: `setBody(record, {barren})` sets `uBarren` (the sphere’s and the tiles’, the same uniform), a lived world and the Earth have 0', async () => {
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    const own = () => g.uniforms().uBarren
+    assert.ok(own(), 'the earth material carries uBarren')
+    assert.equal(own().value, 0, 'the Earth is not barren')
+    g.engine.setBody(make(5), {barren: 1}); frames(g, .1)
+    assert.equal(own().value, 1, 'a barren world is graded as one')
+    g.engine.setBody(make(5), {barren: .4}); frames(g, .1)
+    assert.equal(own().value, .4, 'a half barren one by half')
+    g.engine.setBody(make(5), {barren: 7}); frames(g, .1)
+    assert.equal(own().value, 1, 'a look out of range is held to its range (body.ts barrenOf)')
+    g.engine.setBody(make(5)); frames(g, .1)
+    assert.equal(own().value, 0, 'a lived world is not')
+    g.engine.setBody(make(5), {barren: 1}); await answerWorker()
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1, 'tiles are made')
+    for (const mesh of made) assert.ok(mesh.material.uniforms.uBarren === own(), 'a tile of it is graded by the sphere’s own uniform, so its grey is the sphere’s')
+    g.engine.setBody(null); frames(g, .1)
+    assert.equal(own().value, 0, 'the Earth, given back, is not barren')
+    assert.equal(g.uniforms().uAir.value, 1, 'and has its own air (a tile of the Earth is drawn with the air of its sphere: 1)')
+  } finally { g.close() }
+})
+
+test('E8 the sky knows how close the camera is: `uPxRad`, the radians of the body one screen pixel spans, is handed to the sphere and its tiles, and shrinks as the camera comes in', async () => {
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    g.engine.setBody(make(5, {sky: {clouds: .9}})); await answerWorker()
+    const read = () => g.uniforms().uPxRad?.value
+    assert.ok(g.uniforms().uPxRad, 'the earth material carries uPxRad')
+    g.engine.rig.dist = g.engine.rig.targetDist = 3.2; frames(g, .3)
+    const far = read()
+    g.engine.rig.dist = g.engine.rig.targetDist = 1.35; frames(g, .3)
+    const mid = read()
+    g.engine.rig.dist = g.engine.rig.targetDist = 1.05; frames(g, .3)
+    const near = read()
+    assert.ok(far > 0 && mid > 0 && near > 0, `a pixel spans some of the body (far ${far}, mid ${mid}, near ${near} radians)`)
+    assert.ok(far > 2 * mid && mid > 2 * near, `and less the nearer the camera is: ${far}, ${mid}, ${near} radians a pixel`)
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1 && made.every(mesh => mesh.material.uniforms.uPxRad === g.uniforms().uPxRad), 'the tiles take the sphere’s own uniform')
+  } finally { g.close() }
+})
+
+test('E9 the globe tells the shader how fine its pictures are: `uTexRad` for the sphere and for each tile, and `uDetail` 1 for a generated body and 0 for the Earth', async () => {
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    const u = () => g.uniforms()
+    assert.ok(u().uDetail && u().uTexRad, 'the earth material carries uDetail and uTexRad')
+    assert.equal(u().uDetail.value, 0, 'the Earth’s imagery is drawn as it was: no added detail')
+    g.engine.setBody(make(5)); await answerWorker(); frames(g, .2)
+    assert.equal(u().uDetail.value, 1, 'a generated body has the detail')
+    const hi = body.BODY_WIDTHS.hi
+    assert.ok(Math.abs(u().uTexRad.value - 2 * Math.PI / hi) < 1e-9, `the sphere’s texel is a ${hi}-wide picture’s: ${u().uTexRad.value} radians (${2 * Math.PI / hi})`)
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1, 'tiles are made')
+    for (const mesh of made) {
+      const z = Math.round(Math.log2(2 * Math.PI / (mesh.material.uniforms.uTexRad.value * 256)))
+      assert.ok(z >= 5 && z <= 8 && Math.abs(mesh.material.uniforms.uTexRad.value - 2 * Math.PI / 2 ** z / 256) < 1e-12, `a tile’s texel is its level’s: ${mesh.material.uniforms.uTexRad.value} radians (level ${z})`)
+      assert.ok(mesh.material.uniforms.uDetail === u().uDetail, 'and its detail is the sphere’s own uniform')
+    }
+    g.engine.setBody(null); frames(g, .2)
+    assert.equal(u().uDetail.value, 0, 'the Earth, given back, has none')
+  } finally { g.close() }
+})
+
+test('E10 the sky has a window about the camera where it is close, made from the analytic field in chunks, shown when whole, carried by the wind, and given back with the body', async () => {
+  const cloudJobs = () => worker.jobs.filter(job => job.region !== undefined)
+  /** Let the worker answer what is held and the globe ask for more, until nothing is held (the lane takes two chunks at a time). */
+  const settle = async (g, rounds = 60) => { for (let k = 0; k < rounds; k++) { frames(g, .1); await answerWorker(); if (!worker.held.length && k > 2) break } }
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    const u = () => g.uniforms()
+    assert.ok(u().uCloudWin && u().uWinRect && u().uWinOn && u().uWinT, 'the earth material carries the sky window’s uniforms')
+    assert.equal(u().uWinOn.value, 0, 'no window for the Earth')
+    g.engine.setBody(make(5, {sky: {clouds: .9}})); await answerWorker(); frames(g, .2)
+    // far: the mask is the sky (the world is held still: at rest it turns two degrees a second, and a window is not begun on a view that sweeps)
+    g.engine.rig.autoRotate = false
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 3.2
+    await settle(g, 8)
+    assert.equal(cloudJobs().length, 0, 'at a world view no window is made')
+    // near: a window of 1024 x 1024 texels in chunks of 256, each asked once
+    g.engine.rig.dist = g.engine.rig.targetDist = 1.4; frames(g, .5)
+    const started = cloudJobs()
+    assert.ok(started.length >= 1 && started.length <= 2, `at a region view the window is begun (the lane takes two chunks at a time: ${started.length})`)
+    assert.ok(started.every(job => job.n === 1024 && job.part && job.part.w === 256 && job.part.h === 256 && typeof job.time === 'number' && job.record?.seed === 5), 'each chunk names the window’s size, its place in it, an occasion and the record')
+    const r = started[0].region
+    assert.ok(Math.abs(r.lat0 - 30) <= 1 && Math.abs(r.lon0 - 20) <= 1, `centred on the camera (${r.lat0}, ${r.lon0})`)
+    assert.ok(r.halfLat > 3 && r.halfLat < 30, `a half-height of ${r.halfLat} degrees: about what a region view sees`)
+    assert.equal(u().uWinOn.value, 0, 'it is not shown until it is whole')
+    await settle(g)
+    const all = cloudJobs()
+    assert.equal(all.length, 16, `the window was asked for in 16 chunks, each once (${all.length})`)
+    assert.equal(new Set(all.map(job => `${job.part.i0},${job.part.j0}`)).size, 16, 'at 16 places')
+    frames(g, 1)
+    assert.ok(u().uWinOn.value > .9, `and then fades in (${u().uWinOn.value})`)
+    const rect = u().uWinRect.value, window = u().uCloudWin.value
+    assert.equal(window.image.width, 1024, 'the window is a 1024-wide texture')
+    assert.ok(Math.abs(rect.x - 20 * Math.PI / 180) < 2e-2 && Math.abs(rect.y - 30 * Math.PI / 180) < 2e-2, 'its rectangle is the camera’s place (radians)')
+    assert.ok(Math.abs(rect.z * 2 * r.halfLon * Math.PI / 180 - 1) < 1e-6 && Math.abs(rect.w * 2 * r.halfLat * Math.PI / 180 - 1) < 1e-6, 'and its scales are the reciprocals of its spans')
+    // the camera standing, a degree of pan: the window stands
+    await settle(g, 6)
+    assert.equal(cloudJobs().length, 16, 'the camera standing, the window stands')
+    g.engine.rig.lat = 31; await settle(g, 6)
+    assert.equal(cloudJobs().length, 16, 'a degree of pan is inside the margin: no new window')
+    // the wind: an occasion far from the window's carries the sky further than its margin: a new one, the old one shown meanwhile
+    g.engine.setBodyTime(Date.UTC(2031, 0, 1)); frames(g, .5)
+    assert.ok(cloudJobs().length > 16, 'an occasion whose weather is far from the window’s asks for a new window')
+    assert.ok(u().uWinOn.value > .9, 'and the old one is shown meanwhile')
+    await settle(g)
+    assert.equal(cloudJobs().length, 32, 'the new window, whole, 16 more chunks and no more')
+    // a long pan: a new window
+    g.engine.rig.lat = 50; g.engine.rig.lon = 80; await settle(g)
+    assert.equal(cloudJobs().length, 48, 'a pan beyond the window asks for another')
+    // the Earth is given back
+    g.engine.setBody(null); frames(g, .3)
+    assert.equal(u().uWinOn.value, 0, 'the Earth has no window')
+    const after = cloudJobs().length; await settle(g, 6)
+    assert.equal(cloudJobs().length, after, 'and none is made for it')
+  } finally { g.close() }
+})
+
+test('E11 a barren world has no sky window, and the tiles of a generated body share the sphere’s', async () => {
+  const g = await openGlobe({maxTextureSize: 4096})
+  try {
+    g.engine.setBody(make(5, {sky: {clouds: .9}}), {barren: 1}); await answerWorker()
+    g.engine.rig.lat = 30; g.engine.rig.lon = 20; g.engine.rig.dist = g.engine.rig.targetDist = 1.4
+    frames(g, .5)
+    assert.equal(worker.jobs.filter(job => job.region !== undefined).length, 0, 'no clouds, no window')
+    g.engine.setBody(make(5, {sky: {clouds: .9}})); await answerWorker()
+    g.engine.rig.dist = g.engine.rig.targetDist = 1.02
+    for (let k = 0; k < 40; k++) { frames(g, .15, .05); await answerWorker() }
+    const made = g.engine.tiles.group.children
+    assert.ok(made.length >= 1, 'tiles are made')
+    for (const mesh of made) for (const name of ['uCloudWin', 'uWinRect', 'uWinOn', 'uWinT']) assert.ok(g.uniforms()[name] && mesh.material.uniforms[name] === g.uniforms()[name], `a tile’s ${name} is the sphere’s own uniform`)
+  } finally { g.close() }
+})
+
 // ── the time a body takes ───────────────────────────────────────────────────────────────────────────────────────────────
 
 test('T1 a 2048-wide body is made in the time a CPU thread can spend on it (the ticket aims at 5 s; the gate allows 20)', () => {
   // The ticket's aim is 5 s on a CPU thread, "by tables and typed arrays, not by lowering the standard". The suite runs four test files at once, so a machine is shared by
   // four: twice the aim. The lead's gate (w3q-planet-gate.test.mjs, B) allows 20 s for the same image on the four bodies; this holds the nearer number for one.
+  // The time the thread itself spends (process.cpuUsage: user and system), not the clock on the wall: a thread that waits its turn on a machine other sessions keep busy (a load of 16 to 22 on
+  // 20 Oct, 2026) is not slow. The wall clock read 10.4 s and 13.4 s for the same image whose thread spent 5.5 s; the same code unloaded takes 2.7 to 3.9 s.
   const AIM = 5000, SHARED = 2
-  const t0 = performance.now(), image = body.bodyImage(make(20261018), 2048), ms = performance.now() - t0
+  const c0 = process.cpuUsage(), image = body.bodyImage(make(20261018), 2048), used = process.cpuUsage(c0), ms = (used.user + used.system) / 1000
   assert.equal(image.width, 2048)
-  assert.ok(ms <= AIM * SHARED, `a 2048-wide body took ${Math.round(ms)} ms (the aim is ${AIM}; at most ${AIM * SHARED} on a shared machine)`)
+  assert.ok(ms <= AIM * SHARED, `a 2048-wide body took ${Math.round(ms)} ms of its thread (the aim is ${AIM}; at most ${AIM * SHARED} on a shared machine)`)
 })

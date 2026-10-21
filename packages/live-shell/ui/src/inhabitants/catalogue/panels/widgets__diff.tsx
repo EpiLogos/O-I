@@ -141,7 +141,7 @@ export const design: DesignedDevice = {
           <Display w={w} h={146} label="Diff" does="The diff of the file chosen. Drag handle 1 for the layout."><Patch p={p} w={w} h={146} divider /></Display>
         </Section>
         <Section label="Seat" width={wide(p) ? 96 : undefined} grow={!wide(p)}>
-          <Readout label="branch" does="The seat's branch." value={strOf(p.v, 'branch')} />
+          <Readout label="branch" does="The seat's branch." value={strOf(p.v, 'branch')} copy={strOf(p.v, 'branch')} />
           <Readout label="HEAD" does="The commit the changes stand on." value={strOf(p.v, 'head')} />
           <Readout label="proposed" does="Changes an agent proposes. Accept them in Approvals." value={filesOf(p.v)?.filter(f => f.author).length} tone="accent" />
         </Section>

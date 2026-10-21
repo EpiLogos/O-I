@@ -1,11 +1,14 @@
 import type { ResonanceAnchor } from './cymaticResonator';
 import type { SemanticFieldConfig } from './semantics/semanticTypes';
 import { mapChakrasToAnchors } from './semantics/chakraProfile';
+import type { KeySource } from './torusDrive';
 
 export type ResonanceDriveConfig =
   | {kind:'frequency'}
   | {kind:'sweep'; glideS?:number; dwellS?:number; direction?:'ascent'|'descent'|'pingpong'}
-  | {kind:'semanticFocus'; profileId:string};
+  | {kind:'semanticFocus'; profileId:string}
+  /** DLW §20.14: the plate is driven by what the torus plays; the Key source (§20.2) picks which pitches (torusDrive.ts). */
+  | {kind:'torus'; keySource?:KeySource};
 
 export interface ResolvedResonanceDrive {
   kind: ResonanceDriveConfig['kind'];
@@ -13,6 +16,12 @@ export interface ResolvedResonanceDrive {
   bound:boolean;
   semanticNodeId?:string;
   anchorId?:string;
+  /** Torus drive only: every tone driving the plate, whether the source is silent, and why in words. `bound` is false while silent. */
+  tonesHz?:number[];
+  silent?:boolean;
+  reason?:string|null;
+  keySource?:KeySource;
+  roles?:{standing:'absent';reason:string};
 }
 
 /** Resolves semantic focus without teaching the resonator what a chakra is. */

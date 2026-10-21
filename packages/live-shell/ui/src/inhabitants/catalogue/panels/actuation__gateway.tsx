@@ -239,7 +239,8 @@ const autoToggle = (p: ViewProps) => <Toggle label="Auto-continue" does={SAYS.au
 const fanDial = (p: ViewProps) => <Dial label="Fan-out" does={SAYS.fanOut} value={numOf(p.v, 'fanOut') ?? NaN} def={FAN_DEFAULT} scale={{min: 0, max: FAN_MAX, step: 1}}
   format={x => `${Math.round(x)}`} onChange={x => p.set('fanOut', Math.round(x))} {...st(p, 'fanOut')} />
 
-const head = (p: ViewProps) => ({light: lightOf(p), onFold: p.nav.fold, onFull: p.nav.full})
+const atWork = (p: ViewProps) => lightOf(p) === 'lit' && (numOf(p.v, 'running') ?? 0) > 0
+const head = (p: ViewProps) => ({light: lightOf(p), busy: atWork(p), onFold: p.nav.fold, onFull: p.nav.full})
 const liveWord = (v: V) => liveOf(v) ?? NONE
 
 // ---------------------------------------------------------------- the frame monitor, in the pane
@@ -385,7 +386,7 @@ export const design: DesignedDevice = {
 
   full: p => <FramesPane v={p.v} />,
 
-  widget: p => <Tile title={has(p.v, 'harness') ? `Gateway · ${strOf(p.v, 'harness')}` : 'Gateway'} light={lightOf(p)} span={2} onFull={p.nav.full}>
+  widget: p => <Tile title={has(p.v, 'harness') ? `Gateway · ${strOf(p.v, 'harness')}` : 'Gateway'} light={lightOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
     <LinkWell v={p.v} size="mini" />
     <div className="gw-tile-side">
       <Readout label="state" does="The harness's own word for its state." value={readyWord(p.v)} tone={readyTone(p.v)} />

@@ -30,8 +30,6 @@ class EntityRuntime {
   sampler;
   bakeGeneration = 0;
   currentPlane = "vertical";
-  texW = 0;
-  texH = 0;
   particleCount = 0;
   dataA = new Float32Array(0);
   dataB = new Float32Array(0);
@@ -81,8 +79,6 @@ class EntityRuntime {
   // ------------------------------------------------------------------ allocation
   allocate(particleCount, texW, texH) {
     this.disposeTextures();
-    this.texW = texW;
-    this.texH = texH;
     this.particleCount = particleCount;
     this.connections.resize(particleCount);
     this.dataA = new Float32Array(texW * texH * 4);
@@ -341,7 +337,7 @@ class EntityRuntime {
     return this.customCandidates.get(e.id + ":" + link.id) ?? (custom && linkIndex === 0 ? custom : this.candidatesFor(link.shape, fontFamily, fontWeight));
   }
   /** A layer's candidate pool: its loaded image/ASCII source, else its shape. */
-  layerCandidates(e, layer, custom, fontFamily, fontWeight) {
+  layerCandidates(e, layer, fontFamily, fontWeight) {
     return this.customCandidates.get(e.id + ":" + layer.id) ?? this.candidatesFor(layer.shape, fontFamily, fontWeight);
   }
   bakePartition(p, e, linkIndex, nextIndex, plane, fontFamily, fontWeight) {
@@ -378,7 +374,7 @@ class EntityRuntime {
         const per = Math.floor((p.end - p.start) / layers.length);
         const reach = Math.max(...layers.map((l) => Math.abs(l.z)), 0);
         layers.forEach((layer, k) => {
-          const pool = this.presetPool(body, this.layerCandidates(e, layer, custom, fontFamily, fontWeight), this.customCandidates.has(e.id + ":" + layer.id)).map((c) => {
+          const pool = this.presetPool(body, this.layerCandidates(e, layer, fontFamily, fontWeight), this.customCandidates.has(e.id + ":" + layer.id)).map((c) => {
             const ls = Math.max(1e-3, layer.scale ?? 1);
             return { ...c, x: c.x * ls, y: c.y * ls, ...c.hz === void 0 ? {} : { hz: c.hz * ls } };
           });

@@ -65,14 +65,21 @@ function validIn(place: Pick<SuitePlace, 'valid_from' | 'valid_to'>, window: Pla
   return true
 }
 
+/** The ref of your own body: the one its record keeps, else the body seeded from its world's ref (body/worldBody.ts firstBody) that the globe draws
+ * until a first write. Null while your world's body is not read. A globe drawing another world's body has a different ref. */
+export function yourBodyRef(state: WorldBodyState): string | null {
+  if (state.state !== 'read') return null
+  return state.record ? state.record.body_ref : firstBody(state.reading.space.ref, state.reading.space.revision).body_ref
+}
+
 /** The locations on your own body: every place an owner declares on it that was valid in the window, at its own point, then every world of
  * today's set at its place on your planet. While neither owner has answered, the reason, never a list. Pure. */
 export function yourLocations(state: WorldBodyState, places: readonly SuitePlace[], placesRead: boolean, system: readonly SystemBody[] | null, window: PlaceWindow | null = null): BodyLocations {
   if (state.state !== 'read') return {unread: state.state === 'refused' ? state.reason : LOCATIONS_READING}
   if (!placesRead && !system) return {unread: LOCATIONS_READING}
-  // a body not built yet is the body seeded from its ref (body/worldBody.ts firstBody), the one the globe draws: what stands on it stands
-  // on that ref, which is the ref its first write keeps
-  const bodyRef = state.record ? state.record.body_ref : firstBody(state.reading.space.ref, state.reading.space.revision).body_ref
+  // a body not built yet is the body seeded from its ref, the one the globe draws: what stands on it stands on that ref, which is the ref its
+  // first write keeps
+  const bodyRef = yourBodyRef(state)
   const own = places.flatMap((place): BodyLocation[] => place.body_ref === bodyRef && place.on_body && validIn(place, window)
     ? [{id: place.ref, name: place.name, lat: place.on_body.lat, lon: place.on_body.lon, kind: 'place', locus: locusOfRelation(place.relation), precision: place.precision}] : [])
   const landed = system ? landingLocations(system) : []

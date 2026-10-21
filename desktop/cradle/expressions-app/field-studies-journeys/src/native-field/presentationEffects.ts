@@ -1,4 +1,4 @@
-/** The torus's four effects as sound (manual §21.5): Filter, Dynamics, Delay and Reverb, each a module of the browser's audio graph,
+/** The torus's effects as sound (manual §21.5: Filter, Dynamics, Delay and Reverb; §22.7: the Resonator bank), each a module of the browser's audio graph,
  * standing after the controller's level and before the device in the order the owner's chain names (effectsLaw.ts `chain`): "the
  * sound passes through them from left to right". An empty chain joins the level to the device, so the torus sounds as the receiver
  * gives it. The parameters and their law are effectsLaw.ts; this module only sounds the state it is given. An effect on the chain but
@@ -9,6 +9,7 @@
  *   Dynamics: compressor → makeup, or the dry when off
  *   Delay: the dry at full, plus a line whose repeats are darkened by Tone and fed back by Feedback, heard at Mix
  *   Reverb: pre-delay → convolver over a generated room, blended with the dry by Dry/wet
+ *   Resonator bank: a convolver over the summed responses of its bodies, blended with the dry by Mix and lifted by Gain (see below)
  *
  * Two of the browser's nodes need their own correction to sound the law (measured in Chromium and WebKit alike,
  * tests/native-expression-effects-browser.mjs):
@@ -21,14 +22,31 @@
  * The room is generated, not sampled: noise falling 60 dB in Decay, its bright part falling faster with Damping (to a fifth of the
  * Decay at 100 %), after six early reflections spaced by Size — the law the design draws (catalogue/panels/live__reverb.tsx Tail).
  * A seeded noise makes the same settings the same room. A change of Size, Decay or Damping regenerates the room once the changes
- * pause (a dial's drag is many edits), never in an audio callback. */
-import {delaySeconds, filterQ, type EffectValue, type EffectsState, type PresentationEffect} from './effectsLaw.js';
+ * pause (a dial's drag is many edits), never in an audio callback.
+ *
+ * The Resonator bank (manual §22.7) rings one tuned body at each part of the M3 clock's cut. A body is a damped resonance, r^n·sin(w·n), with
+ * r set so that it falls 60 dB in Decay and its gain at its pitch one; the bank is the sum of its bodies, so its response to any sound is
+ * the sound convolved with the sum of their impulse responses. It is built that way, one convolver over one response, because that is
+ * what the machine sustains. Measured in OfflineAudioContext renders of 10 s of noise at Decay 1 s, in headless Chromium and WebKit, on this
+ * machine under a load average of about 50 (render time for 10 s of audio, the best of three; the biquad bank by a throwaway probe, the
+ * convolver by the probe and again by every run of tests/mr-resonator-bank.test.mjs):
+ *   a bank of band-pass biquads, one per body:  24 bodies 0.17 s (Chromium) 0.23 s (WebKit); 90: 0.78 s, 0.96 s; 180: 1.5 s, 3.8 s;
+ *                                               360: 3.3 s, 7.6 s — the cost grows with the bodies, so 1440 (1° x 360 over 4 octaves) could not play;
+ *   one convolver over the summed response:     0.15 s (Chromium) 0.08 s (WebKit) for 24 bodies, and 0.13 to 0.4 s for 360 or 1440.
+ * So every one of the sixteen cuts rings over every span, and no body is dropped. The price is in the making of the response, not in the
+ * playing: a change of cut, root, Span, Decay or Tilt makes the response again once the changes pause, in slices the page can breathe
+ * between, and the old response rings until the new one is in (as the reverb's room does). Mix, Gain and On act at once. */
+import {PRESENTATION_EFFECTS, delaySeconds, filterQ, resonatorBodies, type EffectValue, type EffectsState, type PresentationEffect} from './effectsLaw.js';
 
 /** Run later and give back the cancel. Tests pass their own. */
 export type Defer = (run: () => void, ms: number) => () => void;
 const later: Defer = (run, ms) => { const timer = setTimeout(run, ms); return () => clearTimeout(timer); };
 
 const SMOOTH = 0.015, ROOM_PAUSE_MS = 60, MAX_DELAY = 6, MAX_PREDELAY = 0.3, MAX_ROOM = 22, QUANTUM = 128;
+/** The bank's response lasts this many Decays: at 1.25 it is cut 75 dB down, far under what can be heard of a 60 dB fall. */
+export const RESONATOR_TAIL = 1.25;
+/** The most body-samples one slice of the response's making adds (about 10 to 20 ms on this machine). */
+const RESONATOR_SLICE_WORK = 4e6;
 const dbToGain = (db: number) => 10 ** (db / 20);
 /** Connect each node to the next. */
 const wire = (...nodes: AudioNode[]) => { for (let i = 0; i + 1 < nodes.length; i++) nodes[i]!.connect(nodes[i + 1]!); };
@@ -67,6 +85,57 @@ export function reverbImpulse(sampleRate: number, size: number, decay: number, d
   });
 }
 
+/** What the bank's response is made of: the root (a pitch class), the cut (tenths of a degree), the span (octaves), Decay (s) and Tilt. */
+export interface ResonatorParams {readonly root: number; readonly division: number; readonly span: number; readonly decay: number; readonly tilt: number}
+
+/** The bank's impulse response, made body by body so that it can be made in slices. A body at hz with weight w is
+ *   g · r^n · sin(w0 · n),  w0 = 2π·hz/rate,  r = e^(−σ/rate),  σ = 3·ln 10 / Decay,
+ * which falls 60 dB in Decay; g is chosen so that the body's gain at its own pitch is exactly w (the transform of r^n·sin(w0 n) at w0 is
+ * r·sin(w0) / |D|, D = 1 − 2r·cos(w0)·e^(−j·w0) + r²·e^(−2j·w0), and |D| = (1 − r)·√(1 − 2r·cos(2·w0) + r²)): a sine at a body's pitch
+ * passes at the body's weight, a sound between two bodies passes far less. */
+export class ResonatorImpulse {
+  /** The response, one channel; every body added so far is in it. */
+  readonly data: Float32Array;
+  /** How many bodies the response is made of when it is whole: parts to the octave, over the span. */
+  readonly bodies: number;
+  readonly #rate: number;
+  readonly #sigma: number;
+  readonly #list: ReturnType<typeof resonatorBodies>;
+  #next = 0;
+
+  constructor(sampleRate: number, params: ResonatorParams) {
+    this.#rate = sampleRate;
+    this.#sigma = 3 * Math.LN10 / params.decay;
+    this.#list = resonatorBodies(params);
+    this.bodies = this.#list.length;
+    this.data = new Float32Array(Math.ceil(params.decay * RESONATOR_TAIL * sampleRate) + 1);
+  }
+
+  /** Add bodies until `work` body-samples are spent; true when every body is in. */
+  step(work: number): boolean {
+    const per = Math.max(1, Math.floor(work / this.data.length));
+    for (let done = 0; this.#next < this.#list.length && done < per; done++) this.#add(this.#list[this.#next++]!);
+    return this.#next >= this.#list.length;
+  }
+
+  #add(body: {readonly hz: number; readonly weight: number}) {
+    const data = this.data, rate = this.#rate, r = Math.exp(-this.#sigma / rate);
+    const w0 = 2 * Math.PI * body.hz / rate, cos = Math.cos(w0), sin = Math.sin(w0);
+    const g = body.weight * (1 - r) * Math.sqrt(1 - 2 * r * Math.cos(2 * w0) + r * r) / (r * sin);
+    const a1 = 2 * r * cos, a2 = r * r;
+    let y1 = r * sin, y2 = 0;
+    data[1] = data[1]! + g * y1;
+    for (let i = 2; i < data.length; i++) { const y = a1 * y1 - a2 * y2; data[i] = data[i]! + g * y; y2 = y1; y1 = y; }
+  }
+}
+
+/** The whole response in one piece (the slices added up). */
+export function resonatorImpulse(sampleRate: number, params: ResonatorParams): Float32Array {
+  const build = new ResonatorImpulse(sampleRate, params);
+  build.step(Infinity);
+  return build.data;
+}
+
 export class PresentationEffects {
   /** Where the level connects. */
   readonly input: GainNode;
@@ -79,11 +148,15 @@ export class PresentationEffects {
   #room: string | null = null;
   #cancelRoom: (() => void) | null = null;
   #reverbConnected = false;
+  #ring: string | null = null;
+  #cancelRing: (() => void) | null = null;
   #closed = false;
   readonly #filter: {in: GainNode; dry: GainNode; drive: GainNode; biquad: BiquadFilterNode; wet: GainNode; out: GainNode};
   readonly #dynamics: {in: GainNode; dry: GainNode; compressor: DynamicsCompressorNode; makeup: GainNode; wet: GainNode; out: GainNode};
   readonly #delay: {in: GainNode; send: GainNode; line: DelayNode; loop: DelayNode; tone: BiquadFilterNode; feedback: GainNode; wet: GainNode; out: GainNode};
   readonly #reverb: {in: GainNode; dry: GainNode; pre: DelayNode; convolver: ConvolverNode; wet: GainNode; out: GainNode};
+  /** The bank's ringing is made only when it first sounds: a bank that is never put on the chain costs one gain node. */
+  readonly #resonator: {in: GainNode; dry: GainNode; wet: GainNode; out: GainNode; convolver: ConvolverNode | null};
 
   constructor(context: BaseAudioContext, output: AudioNode, state: EffectsState, defer: Defer = later) {
     this.#context = context; this.#output = output; this.#defer = defer; this.#state = state;
@@ -111,14 +184,18 @@ export class PresentationEffects {
     reverb.convolver.normalize = true;
     filter.biquad.Q.value = 0; delay.tone.type = 'lowpass'; delay.tone.Q.value = 20 * Math.log10(Math.SQRT1_2);
     dynamics.compressor.knee.value = 0;
-    this.#filter = filter; this.#dynamics = dynamics; this.#delay = delay; this.#reverb = reverb;
+    // Resonator bank: the dry and, while it sounds, the ringing (in → convolver → wet), blended by Mix.
+    const resonator = {in: gain(), dry: gain(), wet: gain(), out: gain(), convolver: null as ConvolverNode | null};
+    wire(resonator.in, resonator.dry, resonator.out);
+    wire(resonator.wet, resonator.out);
+    this.#filter = filter; this.#dynamics = dynamics; this.#delay = delay; this.#reverb = reverb; this.#resonator = resonator;
     this.#apply(state, true);
   }
 
   #keep<T extends AudioNode>(node: T): T { this.#nodes.push(node); return node; }
 
   #module(effect: PresentationEffect): {in: AudioNode; out: AudioNode} {
-    return effect === 'filter' ? this.#filter : effect === 'dynamics' ? this.#dynamics : effect === 'delay' ? this.#delay : this.#reverb;
+    return effect === 'filter' ? this.#filter : effect === 'dynamics' ? this.#dynamics : effect === 'delay' ? this.#delay : effect === 'reverb' ? this.#reverb : this.#resonator;
   }
 
   /** Join the modules in the chain's order, the level first and the device last; an empty chain joins the level to the device. */
@@ -127,7 +204,7 @@ export class PresentationEffects {
     if (key === this.#chain) return;
     this.#chain = key;
     this.input.disconnect();
-    for (const effect of ['filter', 'dynamics', 'delay', 'reverb'] as const) this.#module(effect).out.disconnect();
+    for (const effect of PRESENTATION_EFFECTS) this.#module(effect).out.disconnect();
     // The level into the first module, each module's way out into the next one's way in, the last into the device.
     let from: AudioNode = this.input;
     for (const effect of chain) { from.connect(this.#module(effect).in); from = this.#module(effect).out; }
@@ -184,6 +261,50 @@ export class PresentationEffects {
       this.#reverbConnected = sounds;
     }
     if (sounds) this.#roomFor(num(r.size), num(r.decay), num(r.damping), now);
+    // Resonator bank: Mix and Gain act at once; the ringing joins the path only while the bank is on and on the chain.
+    const z = state.resonator, zOn = z.on === true, zMix = num(z.mix) / 100, zSounds = zOn && state.chain.includes('resonator');
+    set(this.#resonator.dry.gain, zOn ? 1 - zMix : 1);
+    set(this.#resonator.wet.gain, zOn ? zMix * dbToGain(num(z.gain)) : 0);
+    this.#ringing(zSounds, {root: num(z.root), division: num(z.division), span: num(z.span), decay: num(z.decay), tilt: num(z.tilt)});
+  }
+
+  /** The bank's ringing: its convolver is made when the bank first sounds and joins the path while it does; its response is made for
+   * these settings (once the edits pause), the old one ringing until the new one is in. Off, nothing is convolved and nothing waits. */
+  #ringing(sounds: boolean, params: ResonatorParams) {
+    const z = this.#resonator;
+    if (!sounds) {
+      this.#cancelRing?.(); this.#cancelRing = null; this.#ring = null;
+      if (z.convolver) z.in.disconnect(z.convolver);
+      return;
+    }
+    if (!z.convolver) {
+      const convolver = this.#keep(this.#context.createConvolver());
+      // Not renormalised: Tilt and Gain are the bank's own, the response's size is the bodies' weights.
+      convolver.normalize = false;
+      wire(convolver, z.wet);
+      z.convolver = convolver;
+    }
+    z.in.connect(z.convolver);
+    const key = `${params.root}/${params.division}/${params.span}/${params.decay}/${params.tilt}`;
+    if (key === this.#ring) return;
+    this.#ring = key;
+    this.#cancelRing?.(); this.#cancelRing = null;
+    const convolver = z.convolver, rate = this.#context.sampleRate, first = convolver.buffer === null;
+    const start = () => {
+      this.#cancelRing = null;
+      if (this.#closed) return;
+      const build = new ResonatorImpulse(rate, params);
+      const slice = () => {
+        this.#cancelRing = null;
+        if (this.#closed) return;
+        if (!build.step(RESONATOR_SLICE_WORK)) { this.#cancelRing = this.#defer(slice, 0); return; }
+        const buffer = this.#context.createBuffer(1, build.data.length, rate);
+        buffer.copyToChannel(build.data, 0);
+        convolver.buffer = buffer;
+      };
+      slice();
+    };
+    this.#cancelRing = this.#defer(start, first ? 0 : ROOM_PAUSE_MS);
   }
 
   /** Generate the room for these settings, once the edits pause; the first room is made at once. */
@@ -209,7 +330,7 @@ export class PresentationEffects {
 
   dispose(): void {
     if (this.#closed) return;
-    this.#closed = true; this.#cancelRoom?.(); this.#cancelRoom = null;
+    this.#closed = true; this.#cancelRoom?.(); this.#cancelRoom = null; this.#cancelRing?.(); this.#cancelRing = null;
     for (const node of this.#nodes) { try { node.disconnect(); } catch { /* already apart */ } }
   }
 }

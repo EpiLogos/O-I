@@ -74,9 +74,6 @@ const THREE = await import(threeUrl)
 const lifetime = await import(new URL('../ui/lifetime.ts', globe).href)
 const {GlobeEngine} = await import(new URL('engine.ts', globe).href)
 
-const ENFORCE = process.env.W3Q_GATE === 'enforce'
-/** Tests that are red until generator version 2 lands carry this (the lead's gate does the same); W3Q_GATE=enforce makes them real. */
-const pending = ENFORCE ? {} : {todo: 'T-PROCEDURAL-BODY: red until generator v2 lands (W3Q_GATE=enforce runs it as a test)'}
 
 // ── fixtures and measures ───────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -183,7 +180,7 @@ test('K6 the disc at the System scale is barren too: greyer, no air at its rim, 
   assert.ok(levels[2].white <= .002, `and no cloud stands over it at barren 1 (white pixels ${f(levels[2].white, 4)} of the disc)`)
 })
 
-test('K7 a barren tile is greyer than a lived-in one, the same ground: close-zoom tiles take the look', pending, async () => {
+test('K7 a barren tile is greyer than a lived-in one, the same ground: close-zoom tiles take the look', async () => {
   let tiles
   try { tiles = await import(new URL('bodyTiles.ts', globe).href) } catch (error) { if (error?.code !== 'ERR_MODULE_NOT_FOUND') throw error; tiles = {} }
   assert.equal(typeof tiles.bodyTile, 'function', 'bodyTiles.ts exports bodyTile(record, z, x, y, look?)')
@@ -327,7 +324,7 @@ function callArguments(text, open) {
   return ''
 }
 
-test('S1 the shader slides the cloud mask by `uWeatherT`: the uniform is declared and the cloud lookup depends on it (read as source: the GPU is not run)', pending, () => {
+test('S1 the shader slides the cloud mask by `uWeatherT`: the uniform is declared and the cloud lookup depends on it (read as source: the GPU is not run)', () => {
   const frag = shaders.EARTH_FRAG
   assert.ok(/uniform\s+(float|vec2|vec3|vec4|sampler2D)\s+uWeatherT\s*;/.test(frag), 'EARTH_FRAG declares the uniform uWeatherT')
   const main = frag.slice(frag.indexOf('void main'))
@@ -348,11 +345,167 @@ test('S2 the mask can be slid without a tear at the seam: the cloud texture repe
   assert.equal(texture.wrapS, THREE.RepeatWrapping, 'a texture the cloud mask is put in wraps in longitude')
 })
 
-test('S3 what feeds the uniform is the same function the tests hold: the earth material carries uWeatherT and the globe computes it with `weatherShift`', pending, () => {
-  const earth = readFileSync(new URL('earth.ts', globe), 'utf8'), engine = readFileSync(new URL('engine.ts', globe), 'utf8'), all = earth + engine
+test('S3 what feeds the uniform is the one table the tests hold: the earth material carries uWeatherT and the globe takes the wind from bodyWeather.ts', () => {
+  // The shader needs the wind at each fragment's own latitude, which one call of weatherShift (one latitude) cannot give: so the globe hands it the occasion's time and the body's
+  // rate, and the shader sums the same bands (WEATHER_BANDS, shared with weatherShift) at the fragment's latitude. The first form of this test asked the globe's source to name
+  // weatherShift; the table is what must be shared, and S4 below holds the two formulas to the same numbers.
+  const earth = readFileSync(new URL('earth.ts', globe), 'utf8'), engine = readFileSync(new URL('engine.ts', globe), 'utf8'), shader = readFileSync(new URL('shaders.ts', globe), 'utf8')
   assert.ok(/\buWeatherT\b/.test(earth), 'earth.ts hands the shader a uniform uWeatherT')
-  assert.ok(/\bweatherShift\b/.test(all), 'the globe takes the cloud shift from weatherShift, not from a second formula')
+  assert.ok(/\bWEATHER_BANDS\b/.test(engine + shader) && /\bweatherScale\b/.test(engine), 'the globe and the shader take the wind from bodyWeather.ts (WEATHER_BANDS, weatherScale), not from a second table')
   assert.ok(/\bsetBodyTime\s*\(/.test(engine), 'the engine has setBodyTime(ms | null)')
+})
+
+test('S4 the shader’s wind is weatherShift’s: the bands the fragment shader sums, evaluated at the body’s rate, give weatherShift’s own shift at every latitude and time', async () => {
+  const {WEATHER_BANDS, weatherScale, weatherClock} = await import(new URL('bodyWeather.ts', globe).href)
+  const frag = shaders.EARTH_FRAG, m = /float r = ([^;]*);/.exec(frag.slice(frag.indexOf('float weatherTurns')))
+  assert.ok(m, 'EARTH_FRAG has weatherTurns, with the sum of the bands')
+  const sum = new Function('a', 'rate', `const exp = Math.exp; return ${m[1]}`)
+  for (const seed of SEEDS) {
+    const record = make(seed), rate = WEATHER_BANDS.map(band => band.weight * weatherScale(seed)) // what the globe hands the shader (engine.ts applyWeather)
+    for (const lat of [-80, -47, -10, 0, 12, 30, 52, 77, 90]) for (const days of [0, 1.5, 20, 20741.37]) {
+      const turns = (((sum(Math.abs(lat), rate) * weatherClock(seed, days * 86400000) / 360) % 1) + 1) % 1, shader = turns * 360, cpu = ((body.weatherShift(record, lat, days * 86400000) % 360) + 360) % 360
+      const gap = Math.abs(shader - cpu)
+      assert.ok(Math.min(gap, 360 - gap) < 1e-5, `seed ${seed}, ${lat}° after ${days} days: the shader’s bands give ${f(shader, 5)}°, weatherShift ${f(cpu, 5)}°`)
+    }
+  }
+})
+
+test('S5 the shear is bounded at every time: from one degree of latitude to the next the shift changes by at most three degrees of longitude, on any date in the past or the future (streaks, never a smear)', async () => {
+  // The wind differs by latitude, so the mask is sheared by the difference of the rates times the time: a clock that ran on for ever (the days since 1970, twenty thousand of
+  // them) sheared it by ten thousand degrees to the degree, and the globe was drawn in hairline rings from pole to pole (the owner's moiré). The weather's own clock is bounded
+  // so the shear is: a band of real cloud is sheared a degree or two to the degree.
+  const {weatherRate, weatherClock} = await import(new URL('bodyWeather.ts', globe).href)
+  const dates = [T0, 0, -1, 1e12, -1e12, 3.2e13, -3.2e13, 8.64e15, ...Array.from({length: 480}, (_, k) => T0 + (k - 240) * 17.3 * DAY)]
+  let worst = 0
+  for (const seed of SEEDS) {
+    const record = make(seed)
+    for (const t of dates) for (let lat = 0; lat < 90; lat++) {
+      const jump = Math.abs(wrap(body.weatherShift(record, lat + 1, t) - body.weatherShift(record, lat, t)))
+      worst = Math.max(worst, jump)
+      assert.ok(jump <= 3, `seed ${seed}, ${lat}° to ${lat + 1}° at ${t}: the shift changes by ${f(jump, 2)}° of longitude (at most 3)`)
+    }
+  }
+  assert.ok(worst > 0 && Number.isFinite(worst) && typeof weatherRate === 'function' && typeof weatherClock === 'function')
+  // and the clock the shader is given is the same bounded one: a day's reading of it, far in the future, is no larger than one a century back
+  const clock = t => Math.abs(weatherClock(SEEDS[0], t))
+  assert.ok(Math.max(...dates.map(clock)) < 2, `the weather's own clock stays within two days of its start (largest ${f(Math.max(...dates.map(clock)), 3)})`)
+})
+
+test('M1 the cloud lookup is continuous: the shader does not wrap the shift to a turn, which leaves a hairline ring at every latitude where it passes a whole turn', () => {
+  // The texture unit chooses its detail from how fast the lookup coordinate changes across the screen. Wrapped with `fract` (or `mod`), the coordinate jumps by a whole turn at
+  // the latitudes where the shift passes one, the change there is a turn, not a pixel, and the unit takes its coarsest picture: a hairline ring of smeared cloud, at each such
+  // latitude. The texture repeats in longitude (S2), so there is nothing to wrap.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    const at = frag.indexOf('float weatherTurns')
+    assert.ok(at >= 0, `${name}’s shader has weatherTurns`)
+    const fn = frag.slice(at, frag.indexOf('\n}', at) + 2)
+    assert.ok(fn.includes('return') && !/\b(fract|mod)\s*\(/.test(fn), `${name}’s weatherTurns does not wrap its result (fract or mod): ${fn.replace(/\s+/g, ' ').slice(0, 160)}`)
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('uCloudMix'))
+    assert.ok(!/\b(fract|mod)\s*\(/.test(sky), `nor does ${name}’s cloud lookup wrap its coordinate`)
+  }
+})
+
+test('B1 the grade does not tint a barren world toward the palette: the shader takes `uBarren`, the ramp and the sea test are driven by it, and dust is not sea', () => {
+  // The globe grades every picture into the site's world (shadeEarth): land and sea are ramps of the palette (uDeep, uFog, uGlow), a deep navy. A grey airless moon passed through
+  // it comes out blue (the owner's entered fresh world: red falls from 55 to 36 and blue rises from 47 to 79 between the picture and the screen). A barren body is graded toward
+  // neutral by a uniform, and the sea test, which reads a dark low-chroma pixel's blue against its red, never calls dust sea. The GLSL is read as text (the GPU is not run).
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    assert.ok(/uniform\s+float\s+uBarren\s*;/.test(frag), `${name}’s shader declares the uniform uBarren`)
+  }
+  const frag = shaders.EARTH_FRAG, start = frag.indexOf('vec3 shadeEarth'), end = frag.indexOf('\n}', start)
+  assert.ok(start >= 0 && end > start, 'the shader has shadeEarth')
+  const fn = frag.slice(start, end)
+  // the names uBarren reaches in shadeEarth, through the locals assigned from an expression that holds it (followed three steps)
+  const reached = new Set(['uBarren'])
+  for (let pass = 0; pass < 4; pass++) for (const m of fn.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) {
+    if ([...reached].some(name => new RegExp(`\\b${name}\\b`).test(m[2]))) reached.add(m[1])
+  }
+  assert.ok(reached.has('water'), `the sea test is driven by uBarren (it reaches: ${[...reached].join(', ')}): dust is not sea, whatever its blue`)
+  assert.ok(reached.has('land'), 'and the land ramp is: the palette’s navy is mixed away from a barren world’s rock')
+  assert.ok(reached.has('col'), 'and what is drawn is (the colour that leaves shadeEarth is graded by it)')
+})
+
+test('S7 the ground is sharper than its picture where the camera is closer than the picture can show: detail is drawn finer than the texel, faded by how much the texel is magnified', () => {
+  // Past the finest tile (zoom 8, a texel is 0.6 km) a close view magnifies the picture and it reads soft. The shader adds the grain and relief of ground that fine, octave on octave, each as
+  // fine as a pixel can show: the amount follows how many pixels a texel spans (uTexRad over uPxRad), is none for the Earth (uDetail 0: the Earth's imagery is as it was) and none where
+  // the texel is no larger than a pixel. The GLSL is read as text: the uniforms are declared and reach the colour.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    for (const uniform of ['uDetail', 'uTexRad', 'uPxRad']) assert.ok(new RegExp(`uniform\\s+float\\s+${uniform}\\s*;`).test(frag), `${name}’s shader declares ${uniform}`)
+    const main = frag.slice(frag.indexOf('void main'))
+    assert.ok(!/\b(fwidth|dFdx|dFdy)\s*\(/.test(frag), `${name}’s shader takes no screen derivatives`)
+    const reaches = start => { const reached = new Set([start]); for (let pass = 0; pass < 5; pass++) for (const m of main.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) if ([...reached].some(n => new RegExp(`\\b${n}\\b`).test(m[2]))) reached.add(m[1]); return reached }
+    for (const uniform of ['uDetail', 'uTexRad']) assert.ok(reaches(uniform).has('col'), `the colour is reached by ${uniform} (it reaches: ${[...reaches(uniform)].join(', ')})`)
+  }
+})
+
+test('S8 clouds are a thin layer with a shadow: the ground under a cloud is darkened, by a second look at the mask a little toward the sun’s far side, and a thick cloud is greyer than a thin one', () => {
+  // A cloud over the ground is not a white decal: it stands above it, so the ground beside and under it is shadowed (the mask read again at an offset, darkening the colour before the
+  // cloud is laid), and its own tone follows its thickness (thin: bright and light, thick: greyer at the base). The GLSL is read as text.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('if (uCloudMix'))
+    const lookups = [...sky.matchAll(/texture2D\(\s*uCloud\s*,/g)].length
+    assert.ok(lookups >= 2, `${name}’s sky block looks at the cloud mask at least twice (once for the cloud, once, offset, for its shadow): ${lookups}`)
+    // the second lookup's value reaches `col` before the cloud is mixed over it: the shadow is a line `col = ... shade ...` or `col *= ...` ahead of the cloud's own mix
+    const second = sky.indexOf('texture2D(uCloud', sky.indexOf('texture2D(uCloud') + 1), mixAt = sky.search(/col\s*=\s*mix\(\s*col\s*,/)
+    assert.ok(second > 0 && mixAt > second, `the shadow is worked out before the cloud is mixed over the ground`)
+    const shadowName = /(\w+)\s*=\s*texture2D\(\s*uCloud\s*,[^;]*\.r/.exec(sky.slice(second - 40, second + 160))
+    assert.ok(shadowName, 'the shadow lookup is read into a variable')
+    const darkens = new RegExp(`col\\s*\\*?=[^;]*\\b${shadowName[1]}\\b[^;]*;`).test(sky.slice(second, mixAt)) || new RegExp(`\\b${shadowName[1]}\\b`).test(sky.slice(second, mixAt).split(';').filter(x => /\bcol\b/.test(x)).join(';'))
+    assert.ok(darkens, `the ground colour is darkened by the shadow (${shadowName[1]})`)
+    assert.ok(/uSunMix|uLightDir/.test(sky), 'and the sky is lit by the light it already takes')
+    const own = /col\s*=\s*mix\(\s*col\s*,\s*([^;]*),\s*[^,;]*\)\s*;/.exec(sky)
+    const fromCover = new Set(['cover'])
+    for (let pass = 0; pass < 4; pass++) for (const m of sky.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) if ([...fromCover].some(n => new RegExp(`\\b${n}\\b`).test(m[2]))) fromCover.add(m[1])
+    fromCover.delete('col')
+    assert.ok(own && [...fromCover].some(n => new RegExp(`\\b${n}\\b`).test(own[1].replace(/\bcover\b/, ''))) , `a cloud’s own tone follows its thickness (the colour laid over the ground, ${own ? own[1].trim() : 'none found'}, is made from a name the cover reaches: ${[...fromCover].join(', ')})`)
+  }
+})
+
+test('S9 the sky thins out as the camera comes down to the ground: at a place view the clouds are not a haze over the ground, they are gone', () => {
+  // The mask is the sky at a thousand texels round: at a place view (a pixel is 0.4 km) its texel is thirty-eight kilometres and magnified a hundred times it is an out-of-focus smear laid over
+  // the ground the lead came to see (the camera is over the clouds, not in them, and the sky below it is sharp or absent). The cover and its shadow are multiplied by a smoothstep of the
+  // pixel's span (uPxRad) that is 0 below about thirty micro-radians and 1 above a hundred and forty: gone at a place view (and at the Moon's and Earth's own close approaches), whole from a region view out.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('if (uCloudMix'))
+    const near = /(\w+)\s*=\s*smoothstep\(\s*([\d.e-]+)\s*,\s*([\d.e-]+)\s*,\s*uPxRad\s*\)/.exec(sky)
+    assert.ok(near, `${name}’s sky block takes a smoothstep of uPxRad`)
+    assert.ok(+near[2] >= 1e-5 && +near[2] <= 6e-5 && +near[3] >= 1e-4 && +near[3] <= 2.5e-4, `between ${near[2]} and ${near[3]} radians (the place view's pixel is 7e-5, the region's 3e-4)`)
+    assert.ok(new RegExp(`cover\\s*\\*=\\s*${near[1]}\\b`).test(sky) && new RegExp(`shade\\s*\\*=\\s*${near[1]}\\b`).test(sky), `the cover and its shadow are both multiplied by it (${near[1]})`)
+  }
+})
+
+test('S10 no noise is laid on the sphere in (longitude, latitude): every noise lookup takes a direction of the sphere, so nothing is pinched toward the poles', () => {
+  // The cloud edge and the ground grain were value noise on (longitude x cos(latitude), latitude): the sinusoidal projection, whose cells at a high latitude are slivers wound round the pole
+  // (the lead's system view: streaks fanning from the pole, concentric stripes on the cap). Noise on the unit direction of the sphere (the fragment's N, turned by the wind where the noise
+  // belongs to the clouds) has no pole. The GLSL is read as text: the noise functions are `sphereNoise(vec3)`; none of the old two-dimensional `cloudNoise` stays; and what each lookup is
+  // given is made from N, never from the texture coordinate (vUv, vDens, cuv).
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    assert.ok(!/\bcloudNoise\s*\(/.test(frag), `${name}’s shader keeps no two-dimensional noise`)
+    assert.ok(/\bvec3\s+sphereNoiseArg\b|\bfloat\s+sphereNoise\s*\(\s*vec3\b/.test(frag), `${name}’s shader defines sphereNoise(vec3)`)
+    const main = frag.slice(frag.indexOf('void main')), uv = ['vUv', 'vDens', 'cuv']
+    const derived = new Set(uv)
+    for (let pass = 0; pass < 5; pass++) for (const m of main.matchAll(/(?:\b(?:float|vec2|vec3|vec4)\s+)?\b(\w+)\s*[-+*]?=\s*([^;]*);/g)) if ([...derived].some(n => new RegExp(`\\b${n}\\b`).test(m[2]))) derived.add(m[1])
+    for (const call of main.matchAll(/\bsphereNoise\s*\(([^;]*?)\)\s*[-+*;)]/g)) {
+      const arg = call[1]
+      assert.ok(![...derived].some(n => new RegExp(`\\b${n}\\b`).test(arg)), `a noise lookup (${arg.trim().slice(0, 60)}) is made from the texture coordinate`)
+    }
+  }
+})
+
+test('S11 the sky has a window of the field over the sphere: a texture of the analytic cloud field about the camera, carried by the same wind, read in place of the mask where it stands', () => {
+  // The mask is 1024 texels round the world; at a region view a texel is sixteen pixels. A window of the field itself, made for the view and read at about a texel to the pixel, replaces the
+  // mask where the fragment is inside it (fading at its edge). It was made at one occasion and the wind has carried the sky since: the lookup is turned by the wind's shift since then
+  // (`uWeatherT - uWinT`), so a window outlives a minute of weather and the shift is the one the mask takes. The GLSL is read as text.
+  for (const [name, frag] of [['the sphere', shaders.EARTH_FRAG], ['the tile', shaders.TILE_FRAG]]) {
+    assert.ok(/uniform\s+sampler2D\s+uCloudWin\s*;/.test(frag), `${name}’s shader declares uCloudWin`)
+    for (const uniform of ['uWinOn', 'uWinT']) assert.ok(new RegExp(`uniform\\s+float\\s+${uniform}\\s*;`).test(frag), `${name}’s shader declares ${uniform}`)
+    assert.ok(/uniform\s+vec4\s+uWinRect\s*;/.test(frag), `${name}’s shader declares uWinRect`)
+    const main = frag.slice(frag.indexOf('void main')), sky = main.slice(main.indexOf('if (uCloudMix'))
+    assert.ok(/texture2D\(\s*uCloudWin\s*,/.test(sky), `${name}’s sky block looks at the window`)
+    assert.ok(/uWeatherT\s*-\s*uWinT/.test(sky), `and turns the lookup by the wind since the window was made (uWeatherT - uWinT)`)
+    const fromWindow = /(\w+)\s*=\s*texture2D\(\s*uCloudWin\s*,[^;]*\.r/.exec(sky)
+    assert.ok(fromWindow && new RegExp(`cover\\s*=\\s*mix\\([^;]*\\b${fromWindow[1]}\\b`).test(sky), `and the cover is made from what the window holds (${fromWindow ? fromWindow[1] : 'none'})`)
+  }
 })
 
 // ── the engine's occasion and its reduced motion ───────────────────────────────────────────────────────────────────────
@@ -379,7 +532,7 @@ async function openGlobe({reduced = false} = {}) {
   }
 }
 
-test('W1 the globe has an occasion: `setBodyTime(ms)` sets it, null is Now, and the shader is handed the weather of it through uWeatherT', pending, async () => {
+test('W1 the globe has an occasion: `setBodyTime(ms)` sets it, null is Now, and the shader is handed the weather of it through uWeatherT', async () => {
   const globeUnderTest = await openGlobe()
   try {
     const {engine} = globeUnderTest
@@ -394,7 +547,7 @@ test('W1 the globe has an occasion: `setBodyTime(ms)` sets it, null is Now, and 
   } finally { globeUnderTest.close() }
 })
 
-test('W2 a past occasion holds its weather: the clouds do not move while the occasion is a day gone, and Now moves slowly', pending, async () => {
+test('W2 a past occasion holds its weather: the clouds do not move while the occasion is a day gone, and Now moves slowly', async () => {
   const globeUnderTest = await openGlobe()
   try {
     const {engine} = globeUnderTest
@@ -408,7 +561,7 @@ test('W2 a past occasion holds its weather: the clouds do not move while the occ
   } finally { globeUnderTest.close() }
 })
 
-test('W3 reduced motion holds the weather still: at Now nothing moves, and an occasion shows the weather it had, as with motion', pending, async () => {
+test('W3 reduced motion holds the weather still: at Now nothing moves, and an occasion shows the weather it had, as with motion', async () => {
   const still = await openGlobe({reduced: true})
   let stillAtOccasion, stillNow, stillLater
   try {
@@ -427,7 +580,7 @@ test('W3 reduced motion holds the weather still: at Now nothing moves, and an oc
   } finally { moving.close() }
 })
 
-test('W4 the occasion is the globe’s, whatever order it is told in: an occasion set before the body is drawn is the weather the body shows when it is', pending, async () => {
+test('W4 the occasion is the globe’s, whatever order it is told in: an occasion set before the body is drawn is the weather the body shows when it is', async () => {
   const first = await openGlobe()
   let before
   try {

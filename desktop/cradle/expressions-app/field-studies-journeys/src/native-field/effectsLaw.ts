@@ -1,4 +1,4 @@
-/** The torus's four effects (manual §21.5: Filter, Dynamics, Delay, Reverb), the owner's law of their chain and parameters. The
+/** The torus's effects (manual §21.5: Filter, Dynamics, Delay, Reverb; §22.7: the Resonator bank), the owner's law of their chain and parameters. The
  * controller's presentation stage keeps their state and sounds them after the level, between the native receiver and the device
  * (presentationEffects.ts); the stage channel takes their edits (stageCommands.ts InstrumentEdit `effect`, `effect-chain`), and the
  * hosted reading carries their state to the shell (instrumentAnnouncement.mjs `parameters.effects`). The chain names which effects
@@ -8,17 +8,22 @@
  * clock or its clip law.
  * Pure: no DOM, no audio. */
 
-export const PRESENTATION_EFFECTS = ['filter', 'dynamics', 'delay', 'reverb'] as const;
+export const PRESENTATION_EFFECTS = ['filter', 'dynamics', 'delay', 'reverb', 'resonator'] as const;
 export type PresentationEffect = (typeof PRESENTATION_EFFECTS)[number];
 export type EffectValue = number | boolean | string;
 
-type NumberLaw = {readonly kind: 'number'; readonly min: number; readonly max: number; readonly initial: number; readonly unit: string; readonly why?: string};
+type NumberLaw = {readonly kind: 'number'; readonly min: number; readonly max: number; readonly initial: number; readonly unit: string; readonly why?: string;
+  /** Only whole numbers are admitted. */
+  readonly whole?: true;
+  /** Only values that divide this number evenly are admitted (a cut makes equal parts of a circle). */
+  readonly divides?: number};
 type ChoiceLaw = {readonly kind: 'choice'; readonly choices: readonly string[]; readonly initial: string};
 type SwitchLaw = {readonly kind: 'switch'; readonly initial: boolean};
 export type EffectParameterLaw = NumberLaw | ChoiceLaw | SwitchLaw;
 
 const on: SwitchLaw = {kind: 'switch', initial: true};
-const number = (min: number, max: number, initial: number, unit: string, why?: string): NumberLaw => ({kind: 'number', min, max, initial, unit, ...(why ? {why} : {})});
+const number = (min: number, max: number, initial: number, unit: string, why?: string, rest: {whole?: true; divides?: number} = {}): NumberLaw =>
+  ({kind: 'number', min, max, initial, unit, ...(why ? {why} : {}), ...rest});
 const choice = (choices: readonly string[], initial: string): ChoiceLaw => ({kind: 'choice', choices, initial});
 const percent = (initial: number, max = 100): NumberLaw => number(0, max, initial, '%');
 
@@ -63,9 +68,19 @@ export const EFFECT_LAW: Readonly<Record<PresentationEffect, Readonly<Record<str
     predelay: number(0, 250, 20, 'ms'),
     mix: percent(22),
   }),
+  resonator: Object.freeze({
+    on,
+    division: number(10, 3600, 300, 'tenths of a degree', 'the cut is d° in tenths, 300 for 30° x 12, and it makes equal parts of the circle', {whole: true, divides: 3600}),
+    root: number(0, 11, 0, 'pitch class', 'the root of the mode in force, C is 0', {whole: true}),
+    decay: number(0.05, 10, 1, 's'),
+    tilt: number(-1, 1, 0, 'dark to bright'),
+    span: number(1, 4, 2, 'octaves', undefined, {whole: true}),
+    mix: percent(50),
+    gain: number(-24, 12, 0, 'dB'),
+  }),
 });
 
-export const EFFECT_TITLES: Readonly<Record<PresentationEffect, string>> = Object.freeze({filter: 'Filter', dynamics: 'Dynamics', delay: 'Delay', reverb: 'Reverb'});
+export const EFFECT_TITLES: Readonly<Record<PresentationEffect, string>> = Object.freeze({filter: 'Filter', dynamics: 'Dynamics', delay: 'Delay', reverb: 'Reverb', resonator: 'Resonator bank'});
 
 export type EffectsParameters = Readonly<Record<PresentationEffect, Readonly<Record<string, EffectValue>>>>;
 /** The chain, and every effect's parameters (on the chain or not). */
@@ -107,7 +122,10 @@ export function effectRefusal(effect: unknown, key: unknown, value: unknown): st
   if (!law) return `${title} has no parameter ${String(key)}; it has ${Object.keys(EFFECT_LAW[effect]).join(', ')}.`;
   if (!valueOfKind(law, value)) return `${title} ${key as string} takes ${law.kind === 'number' ? 'a number' : law.kind === 'switch' ? 'on or off' : 'one of its choices'}.`;
   if (law.kind === 'number' && ((value as number) < law.min || (value as number) > law.max))
-    return `${title} ${key as string} goes from ${law.min} to ${law.max} ${law.unit}${law.why ? `: ${law.why}` : ''}.`;
+    return `${title} ${key as string} goes from ${law.min} to ${law.max}${law.unit ? ` ${law.unit}` : ''}${law.why ? `: ${law.why}` : ''}.`;
+  if (law.kind === 'number' && law.whole && !Number.isInteger(value)) return `${title} ${key as string} is a whole number.`;
+  if (law.kind === 'number' && law.divides !== undefined && law.divides % (value as number) !== 0)
+    return `${title} ${key as string} must divide ${law.divides} evenly: a cut makes equal parts of the circle.`;
   if (law.kind === 'choice' && !law.choices.includes(value as string)) return `${title} ${key as string} is one of ${law.choices.join(', ')}.`;
   return null;
 }
@@ -161,4 +179,34 @@ export function delaySeconds(delay: Readonly<Record<string, EffectValue>>): numb
 export function filterQ(type: string, resonance: number): number {
   const q = Math.SQRT1_2 * 10 ** (1.2 * resonance / 100);
   return type === 'lowpass' || type === 'highpass' ? 20 * Math.log10(q) : q;
+}
+
+// ── the Resonator bank (manual §22.7) ───────────────────────────────────────
+
+/** QL's C3, the root the torus's voices multiply (Quaternal-Logic crates/ql-mef/src/continuous/coupled.rs `SKY_ROOT_HZ` = 130.812_79; the
+ * design's C is 130.81 Hz, catalogue/panels/quaternal-logic__resonator-bank.tsx `root.hz`): the bank's lowest octave stands on it. */
+export const RESONATOR_C3_HZ = 130.81279;
+
+/** The root of the mode in force (a pitch class, C = 0) in the lowest octave of the bank's span: C3 placed up by `root` equal semitones.
+ * Where the torus's own voices stand on the mode's tuning is QL's (the hosted reading announces no tuning), so the bank takes the mode's
+ * pitch class at this one reference, as the design draws it. */
+export const resonatorRootHz = (root: number): number => RESONATOR_C3_HZ * 2 ** (root / 12);
+
+/** One body of the bank: a resonator at `hz`, the `part`th of the cut in its `octave` of the span, at `weight` (the loudest is 1). */
+export interface ResonatorBody {readonly hz: number; readonly octave: number; readonly part: number; readonly weight: number}
+
+/** The bank's bodies (§22.7): the cut of `division` tenths of a degree divides the octave into 3600/division equal parts, a body rings at each,
+ * root · 2^(octave + part/parts), repeated over `span` octaves. Tilt makes each body's weight 2^(2·tilt·(place − 1/2)), the place its position
+ * 0..1 in the span, taken to the loudest body (the design's weight, catalogue/panels/quaternal-logic__resonator-bank.tsx `weightOf`). No body is
+ * rounded to a semitone or dropped. */
+export function resonatorBodies(p: {readonly root: number; readonly division: number; readonly span: number; readonly tilt: number}): ResonatorBody[] {
+  const parts = 3600 / p.division;
+  if (!Number.isInteger(parts) || parts < 1) throw new Error(`A cut of ${p.division} tenths of a degree does not divide the circle into equal parts.`);
+  const root = resonatorRootHz(p.root), raw: Array<Omit<ResonatorBody, 'weight'> & {weight: number}> = [];
+  for (let octave = 0; octave < p.span; octave++) for (let part = 0; part < parts; part++) {
+    const step = octave + part / parts;
+    raw.push({hz: root * 2 ** step, octave, part, weight: 2 ** (2 * p.tilt * (step / p.span - 0.5))});
+  }
+  const top = Math.max(...raw.map(body => body.weight));
+  return raw.map(body => ({...body, weight: body.weight / top}));
 }

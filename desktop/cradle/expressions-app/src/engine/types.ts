@@ -511,7 +511,9 @@ export interface CompositionTelemetry {
     nearestStation: number;
     stationProximity: number; // 0..1
     stations: Array<{ id:string; index:number; name:string; frequencyHz:number; m:number; n:number; color:string; energy?:number; semanticNodeId?:string; affinity?:number }>;
-    driver?: {kind:'frequency'|'sweep'|'semanticFocus'; bound:boolean; semanticNodeId?:string; anchorId?:string};
+    driver?: {kind:'frequency'|'sweep'|'semanticFocus'|'torus'; bound:boolean; semanticNodeId?:string; anchorId?:string;
+      /** Torus drive (DLW §20.14): every tone driving the plate, whether the torus is silent, and why in words; the eight audible roles and four nodes are absent with their reason. */
+      tonesHz?:number[]; silent?:boolean; reason?:string|null; keySource?:'torus'|'sky'|'manual'; roles?:{standing:'absent'; reason:string}};
   } | null;
 }
 

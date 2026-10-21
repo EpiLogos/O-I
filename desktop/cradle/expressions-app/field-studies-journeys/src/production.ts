@@ -5,15 +5,18 @@ import {TransportState} from '../../src/engine/transportState';
 import {stateSource} from './sourceState';
 import {PointCloudField} from '../../src/engine/PointCloudField';
 import type {PointCloudConfig} from '../../src/engine/types';
+import type {TorusPlayReading} from '../../src/engine/torusDrive';
 import {CymaticResonator} from '../../src/engine/cymaticResonator';
 import {readPath} from '../../src/engine/automation';
 import {Color} from 'three';
 import {toRenderConfig,MATERIAL_KEYS} from './nativeBridge';
 import {summarizeAnalysis} from '../../src/engine/sourceSampling';
 import {NATIVE_BINDINGS,WORLD_SCALE} from './nativeParameters';
-import {basis,stageCentre,stageScale} from './camera';
+import {basis,project,stageCentre,stageScale} from './camera';
 import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
-import {EntitySoundBank,activeFromFocus} from './native-field/entitySound';
+import {entitySoundPlan,activeFromFocus,objectSoundIsMuted,onObjectSoundMuted} from './native-field/entitySound';
+import {SymbolVoices,placeOf,type TorusTap} from './native-field/symbolVoices';
+import {modeCatalogueReading,onModeCatalogue} from './native-field/modeStore';
 import {DIP_AT_DEFAULT,transitionKindOf,paintedOverlayActive,transitionColourOf,edgeBlend,type TransitionSpec} from './transitions';
 import type {TransitionOverlay} from '../../src/engine/transitionPass';
 
@@ -38,10 +41,20 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  private overlay:TransitionOverlay|null=null;private holdDue=false;
  private evaluated:PointCloudConfig|null=null;private applied:PointCloudConfig|null=null;private sources=new Map<string,string>();private sourceStatus:Record<string,string>={};
  private nativeDomain=false;
- /** Per-object sound voices for the present entities (authored `sound`). */
- readonly entitySound=new EntitySoundBank();
+ /** The symbols' voices (authored `sound`): they carry the torus's sound to where their symbols stand, and have no oscillator of their own. */
+ readonly symbolVoices=new SymbolVoices();
+ private releaseVoiceWatch:()=>void=()=>{};
  private nativeConfigs=new WeakMap<PointCloudConfig,PointCloudConfig>();
  setNativeDomain(active:boolean){this.nativeDomain=active;this.applied=null;this.dirty=true;}
+ /** The torus's played reading (nativeField.ts): kept here so an engine built later, or rebuilt after a lost context, is handed it too. The
+  * plate reads it only when the scene's drive is Torus; a repeated reading is not a change. */
+ private torusPlay:TorusPlayReading|null=null;
+ setTorusPlay(reading:TorusPlayReading|null){
+  if(JSON.stringify(reading)===JSON.stringify(this.torusPlay))return;
+  this.torusPlay=reading;this.engine?.setTorusPlay(reading);this.soundAt=-1;this.dirty=true;
+ }
+ /** The node the controller offers for the symbols' voices to listen to (native-field/controller.ts `voiceTap`), or none while no instrument is open. */
+ setTorusTap(tap:TorusTap|null){if(this.symbolVoices.attach(tap)){this.soundAt=-1;this.dirty=true;}}
  private nativeConfig(config:PointCloudConfig):PointCloudConfig{
   if(!this.nativeDomain)return config;
   let result=this.nativeConfigs.get(config);
@@ -53,7 +66,12 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  }
  private contextLost=false;private seedRecoveredSources=false;private restoredClock=false;
  private lost=(event:Event)=>{event.preventDefault();this.contextLost=true;this.dirty=true;};
- constructor(readonly canvas:HTMLCanvasElement){canvas.addEventListener('webglcontextlost',this.lost);}
+ constructor(readonly canvas:HTMLCanvasElement){
+  canvas.addEventListener('webglcontextlost',this.lost);
+  // The Expression's own mute, and the mode catalogue arriving, are changes the voices must follow without waiting for an edit.
+  const stopMute=onObjectSoundMuted(()=>{this.soundAt=-1;this.dirty=true;}),stopCatalogue=onModeCatalogue(()=>{this.soundAt=-1;this.dirty=true;});
+  this.releaseVoiceWatch=()=>{stopMute();stopCatalogue();};
+ }
 
  resize(width:number,height:number,pixelRatio:number){this.width=width;this.height=height;this.dpr=pixelRatio;}
  private configuration(frame:EngineFrame):PointCloudConfig{
@@ -104,7 +122,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const config=this.nativeConfig(this.configuration(frame));
   // E11b: a wipe holds the outgoing frame, captured before the new configuration reaches the GPU.
   if(this.holdDue){this.holdDue=false;this.engine?.captureTransitionHold(transitionColourOf(this.from?.backgroundColor));}
-  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
+  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.engine.setTorusPlay(this.torusPlay);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
   this.engine.setTransitionOverlay(this.overlay);this.engine.setForceEmitterProjection(frame.forceEmitterProjection??null);this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
   if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;
@@ -125,10 +143,17 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   * (travelling compositions sound the focused entity only). ~10 Hz. */
  private followSound(frame:EngineFrame){
   const scene=frame.entitySoundProjection?frame.entitySoundProjection(frame.scene):this.soundScene;
-  if(!scene){if(this.soundAt!==-2){this.entitySound.sync({entities:[]});this.soundAt=-2;}return;}
+  const reading=this.torusPlay,closed='No instrument is open: the torus is not sounding';
+  const none={plan:{voices:[],silent:[]},catalogue:null,catalogueWhy:null,root:reading?.root??{hz:null,absentBecause:closed},torusSilentBecause:reading?.torus.silentBecause??closed,places:new Map<string,number>(),muted:objectSoundIsMuted()};
+  if(!scene){if(this.soundAt!==-2){this.symbolVoices.sync(none);this.soundAt=-2;}return;}
   const now=performance.now();if(this.soundAt>=0&&now-this.soundAt<100)return;this.soundAt=now;
   const focus=scene.composition.focus==='travelling'?this.engine?.getCompositionTelemetry().focus:null;
-  this.entitySound.sync({entities:scene.entities,field:frame.scene.field},activeFromFocus(focus));
+  const plan=entitySoundPlan({entities:scene.entities,composition:scene.composition},activeFromFocus(focus));
+  // A voice stands where its symbol stands: the stage's own projection (camera.ts) gives the symbol's x, and the place is that x in half the stage's width.
+  const places=new Map<string,number>();
+  for(const voice of plan.voices){const entity=scene.entities.find(e=>e.id===voice.entityId);if(entity)places.set(voice.entityId,placeOf(project(entity.position,frame.camera,this.width,this.height).x,this.width));}
+  const store=modeCatalogueReading();
+  this.symbolVoices.sync({...none,plan,catalogue:store.catalogue,catalogueWhy:store.why,places});
  }
  hitEntity(x:number,y:number){return this.connections?.pickEntity(x,y)??null;}
  hitConnection(x:number,y:number){return this.connections?.hitTest(x,y)??null;}
@@ -187,7 +212,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   }else this.engine.fireAutomation(command.id,command.delay??0);
   this.dirty=true;
  }
- dispose(){this.entitySound.dispose();this.canvas.removeEventListener('webglcontextlost',this.lost);this.connections?.dispose();this.connections=null;this.contextOwner?.destroy({releaseContext:true});this.engine=null;this.contextOwner=null;}
+ dispose(){this.symbolVoices.dispose();this.releaseVoiceWatch();this.canvas.removeEventListener('webglcontextlost',this.lost);this.connections?.dispose();this.connections=null;this.contextOwner?.destroy({releaseContext:true});this.engine=null;this.contextOwner=null;}
 }
 
 export const ProductionAdapter = withRetainedField(EmbeddedProductionAdapter, WORLD_SCALE);

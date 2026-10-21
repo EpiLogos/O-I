@@ -111,8 +111,8 @@ export function FocusSwitches({reading, disabled, apply}: {reading: NativeEditor
     <section aria-label="Visible contributions">
       <h4>Visible contributions</h4>
       <label>Shared tuning driver
-        <select value={scene.composition.frequencyDriver} disabled={disabled} onChange={event => apply([{kind: 'panel-setting', key: 'frequencyDriver', value: event.target.value as 'manual' | 'focus' | 'automation'}])}>
-          <option value="manual">Manual</option><option value="focus">Travelling focus</option><option value="automation">Automation</option>
+        <select value={scene.composition.frequencyDriver} disabled={disabled} onChange={event => apply([{kind: 'panel-setting', key: 'frequencyDriver', value: event.target.value as 'torus' | 'manual' | 'focus' | 'automation'}])}>
+          <option value="torus">Torus</option><option value="manual">Manual</option><option value="focus">Travelling focus</option><option value="automation">Automation</option>
         </select>
       </label>
       <small className="native-focus-note">Also in Resonance: the same setting as “Shared frequency is driven by”.</small>

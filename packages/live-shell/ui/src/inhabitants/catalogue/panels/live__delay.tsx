@@ -13,6 +13,7 @@
 // the torus's sound.
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {feedbackForSecond} from './handleLaws'
 
 type V = ViewProps['v']
 
@@ -34,9 +35,10 @@ function timeOf(v: V): number | undefined {
 }
 const timeWord = (v: V) => { const t = timeOf(v); return boolOf(v, 'sync') ? DIVISIONS.find(d => d.value === strOf(v, 'division'))?.label : t === undefined ? undefined : ms(t) }
 
-/** The repeats: the dry sound and each repeat as a bar, its bright part inside it. Handle 1 the time (across, on the first repeat), 2 the
- * feedback (up, on the second), 3 the mix (up, on the first). */
-function Repeats({p, w, h, handles}: {p: ViewProps; w: number; h: number; handles: 0 | 1 | 3}) {
+/** The repeats: the dry sound and each repeat as a bar, its bright part inside it. Handle 1 stands on top of the first repeat: across it
+ * moves the time, up or down the mix. Handle 2 stands on top of the second, at twice the time: across it moves the time, up or down the
+ * feedback. Where Sync is on, the note length holds the time and only the heights move. */
+function Repeats({p, w, h, handles}: {p: ViewProps; w: number; h: number; handles: 0 | 1 | 2}) {
   const v = p.v, t = timeOf(v), fb = numOf(v, 'feedback'), tone = numOf(v, 'tone'), mix = numOf(v, 'mix'), l = 8, r = w - 6, top = 16, bot = h - 14
   const X = (ms: number) => l + Math.sqrt(clampTo(0, SPAN, ms) / SPAN) * (r - l), msOf = (x: number) => SPAN * clampTo(0, 1, (x - l) / (r - l)) ** 2
   const Y = (a: number) => bot - clampTo(0, 1, a) * (bot - top), aOf = (y: number) => clampTo(0, 1, (bot - y) / (bot - top))
@@ -55,12 +57,14 @@ function Repeats({p, w, h, handles}: {p: ViewProps; w: number; h: number; handle
     {reps.map(n => { const a = m * f ** (n - 1), b = a * bright ** n, x = X(n * t)
       return <g key={n}><rect x={x - bw / 2} y={Y(a)} width={bw} height={bot - Y(a)} className="dp-fill" stroke="var(--dp-value)" strokeWidth={.8} />
         <rect x={x - bw / 4} y={Y(b)} width={bw / 2} height={bot - Y(b)} fill="var(--dp-value)" /></g> })}
-    {handles >= 1 && <Handle n={1} x={X(t)} y={bot} shape="ring" label="Time" does={synced ? `The note length sets the time while Sync is on.${ts.disabled ? ` ${ts.disabled}` : ''}` : `Drag across: the time between repeats.${ts.disabled ? ` ${ts.disabled}` : ''}`}
-      onDrag={synced || ts.disabled ? undefined : x => p.set('time', Math.round(clampTo(TIME.min, TIME.max, msOf(x))))} onReset={synced || ts.disabled ? undefined : () => p.set('time', 250)} />}
-    {handles >= 3 && reps.includes(2) && <Handle n={2} shape="square" x={X(2 * t)} y={Y(m * f)} label="Feedback" does={`Drag up or down: how much of each repeat returns.${fs.disabled ? ` ${fs.disabled}` : ''}`}
-      onDrag={fs.disabled || m <= 0 ? undefined : (_, y) => p.set('feedback', Math.round(clampTo(0, 95, aOf(y) / m * 100)))} onReset={fs.disabled ? undefined : () => p.set('feedback', 35)} />}
-    {handles >= 3 && <Handle n={3} shape="square" x={X(t)} y={Y(m)} label="Mix" does={`Drag up or down: how loud the repeats are.${xs.disabled ? ` ${xs.disabled}` : ''}`}
-      onDrag={xs.disabled ? undefined : (_, y) => p.set('mix', Math.round(aOf(y) * 100))} onReset={xs.disabled ? undefined : () => p.set('mix', 25)} />}
+    {handles >= 1 && <Handle n={1} x={X(t)} y={Y(m)} shape="ring" label="Time and mix"
+      does={`Drag across for the time between repeats, up or down for how loud the repeats are.${synced ? ' The note length sets the time while Sync is on.' : ts.disabled ? ` ${ts.disabled}` : ''}${xs.disabled ? ` ${xs.disabled}` : ''}`}
+      onDrag={(synced || ts.disabled) && xs.disabled ? undefined : (x, y) => { if (!synced && !ts.disabled) p.set('time', Math.round(clampTo(TIME.min, TIME.max, msOf(x)))); if (!xs.disabled) p.set('mix', Math.round(aOf(y) * 100)) }}
+      onReset={(synced || ts.disabled) && xs.disabled ? undefined : () => { if (!synced && !ts.disabled) p.set('time', 250); if (!xs.disabled) p.set('mix', 25) }} />}
+    {handles >= 2 && reps.includes(2) && <Handle n={2} shape="square" x={X(2 * t)} y={Y(m * f)} label="Time and feedback"
+      does={`Drag across for the time between repeats, up or down for how much of each repeat returns.${synced ? ' The note length sets the time while Sync is on.' : ts.disabled ? ` ${ts.disabled}` : ''}${fs.disabled ? ` ${fs.disabled}` : ''}`}
+      onDrag={(synced || ts.disabled) && (fs.disabled || m <= 0) ? undefined : (x, y) => { if (!synced && !ts.disabled) p.set('time', Math.round(clampTo(TIME.min, TIME.max, msOf(x) / 2))); if (!fs.disabled && m > 0) p.set('feedback', feedbackForSecond(aOf(y), mix)) }}
+      onReset={(synced || ts.disabled) && fs.disabled ? undefined : () => { if (!synced && !ts.disabled) p.set('time', 250); if (!fs.disabled) p.set('feedback', 35) }} />}
   </g>
 }
 
@@ -103,7 +107,7 @@ export const design: DesignedDevice = {
   compact: p => { const c = controls(p)
     return <Panel title="Delay" view="compact" {...head(p)} onSelect={p.nav.select}>
       <Section width={152}>
-        <Display w={140} h={146} label="Repeats" does={`${DISPLAY_DOES} Drag handle 1 for the time.`} corner={timeOf(p.v) === undefined ? NONE : ms(timeOf(p.v)!)}>
+        <Display w={140} h={146} label="Repeats" does={`${DISPLAY_DOES} Drag handle 1 across for the time and up or down for the mix.`} corner={timeOf(p.v) === undefined ? NONE : ms(timeOf(p.v)!)}>
           <Repeats p={p} w={140} h={146} handles={1} />
         </Display>
       </Section>
@@ -114,8 +118,8 @@ export const design: DesignedDevice = {
     return <Panel title="Delay" view="whole" {...head(p)}>
       <Band>
         <Section width={w + 12}>
-          <Display w={w} h={146} label="Repeats" does={`${DISPLAY_DOES} Drag handle 1 for the time, 2 for the feedback, 3 for the mix.`} corner={t === undefined ? NONE : ms(t)}>
-            <Repeats p={p} w={w} h={146} handles={3} />
+          <Display w={w} h={146} label="Repeats" does={`${DISPLAY_DOES} Drag handle 1 across for the time and up or down for the mix, handle 2 across for the time and up or down for the feedback.`} corner={t === undefined ? NONE : ms(t)}>
+            <Repeats p={p} w={w} h={146} handles={2} />
           </Display>
         </Section>
         <Section label="Time" width={66}>{c.sync}{c.division}{boolOf(p.v, 'sync') === true
