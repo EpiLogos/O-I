@@ -1,0 +1,338 @@
+{
+ "_note": "Read only on workcell:mac, 21 Oct 2026: `ql vak context M0-3 1 --json` (QL installed at ~/.local/bin/ql). Each entry is trimmed to vakRef, source, name, symbol and primaryDesignation (the description, formulations, r-factors and raw source row are dropped: no reader takes them); the relations are verbatim.",
+ "command": [
+  "ql",
+  "vak",
+  "context",
+  "M0-3",
+  "1",
+  "--json"
+ ],
+ "answer": {
+  "contract": "ql.vak-context/v1",
+  "sourceRevision": "daa660cbc1b8c5da83828698665a753852cb0287",
+  "centre": {
+   "vakRef": "M0-3",
+   "source": {
+    "repository": "EpiLogos/Epi-Logos-C-Experiments",
+    "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+    "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+    "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+    "coordinate": "M0-3",
+    "sourceLine": 39,
+    "standing": "SOURCE"
+   },
+   "name": "Archetypal Number Language",
+   "symbol": "12+4+2",
+   "primaryDesignation": "Anuttara Position #3: The Complete Proto-Mathematical-Linguistic System - Para V\u0101k"
+  },
+  "depth": 1,
+  "entries": [
+   {
+    "vakRef": "M0",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0",
+     "sourceLine": 21,
+     "standing": "SOURCE"
+    },
+    "name": "Anuttara",
+    "symbol": null,
+    "primaryDesignation": "Subsystem #0 - The Foundational Void - Proto-Logy - The Ever-Present Origin"
+   },
+   {
+    "vakRef": "M0-3",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3",
+     "sourceLine": 39,
+     "standing": "SOURCE"
+    },
+    "name": "Archetypal Number Language",
+    "symbol": "12+4+2",
+    "primaryDesignation": "Anuttara Position #3: The Complete Proto-Mathematical-Linguistic System - Para V\u0101k"
+   },
+   {
+    "vakRef": "M0-3-(0/1)",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-(0/1)",
+     "sourceLine": 40,
+     "standing": "SOURCE"
+    },
+    "name": "The Mirror",
+    "symbol": "(-)",
+    "primaryDesignation": "Contained Transcendence - Pre-Numerical Foundation - Vimar\u015ba Apparatus"
+   },
+   {
+    "vakRef": "M0-3-10",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-10",
+     "sourceLine": 70,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 7 - Divine Action",
+    "symbol": "7",
+    "primaryDesignation": "Ananda-Tandava - The 5 Acts + 2 Principles - Cosmic Verbs"
+   },
+   {
+    "vakRef": "M0-3-11",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-11",
+     "sourceLine": 78,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 8 - Structural Reflection",
+    "symbol": "8",
+    "primaryDesignation": "Purnata-Sunyata - The Empty Throne - Sat?"
+   },
+   {
+    "vakRef": "M0-3-2",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-2",
+     "sourceLine": 43,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 0",
+    "symbol": "0",
+    "primaryDesignation": "The Self as Potential - Sat - The Unmanifest Witness"
+   },
+   {
+    "vakRef": "M0-3-3",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-3",
+     "sourceLine": 44,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 1",
+    "symbol": "1",
+    "primaryDesignation": "The Self as Agency - The Magician - First Manifestation"
+   },
+   {
+    "vakRef": "M0-3-4",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-4",
+     "sourceLine": 45,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 0/1",
+    "symbol": "0/1",
+    "primaryDesignation": "The Non-Dual Self - The Rosetta Stone of the Logos"
+   },
+   {
+    "vakRef": "M0-3-5",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-5",
+     "sourceLine": 46,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 2",
+    "symbol": "2",
+    "primaryDesignation": "The Empty Stage - Sunyata - The Relational Field"
+   },
+   {
+    "vakRef": "M0-3-6",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-6",
+     "sourceLine": 47,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 3",
+    "symbol": "3",
+    "primaryDesignation": "The First Word - Vak - Sacred Speech Engine"
+   },
+   {
+    "vakRef": "M0-3-7",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-7",
+     "sourceLine": 60,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 4",
+    "symbol": "4",
+    "primaryDesignation": "The First Form - Purnata - The Quaternion"
+   },
+   {
+    "vakRef": "M0-3-8",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-8",
+     "sourceLine": 61,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 5 - Dynamic Harmony",
+    "symbol": "5",
+    "primaryDesignation": "Siva-Sakti - Mono-Poly - The Mercurial Crossroads"
+   },
+   {
+    "vakRef": "M0-3-9",
+    "source": {
+     "repository": "EpiLogos/Epi-Logos-C-Experiments",
+     "revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+     "path": "Idea/Bimba/Map/datasets/anuttara-deep/anuttara-language-map.md",
+     "gitBlob": "22835042d4d2c4ba821c252bd4fbfe52f39712ef",
+     "coordinate": "M0-3-9",
+     "sourceLine": 69,
+     "standing": "SOURCE"
+    },
+    "name": "Archetype 6 - Synthetic Emptiness",
+    "symbol": "6",
+    "primaryDesignation": "Sunyata-Purnata - The Cosmic Exhalation - The Solve Process"
+   }
+  ],
+  "relations": [
+   {
+    "fromRef": "M0-3",
+    "relation": "parent",
+    "intoRef": "M0",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 parent M0"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-(0/1)",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-(0/1)"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-10",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-10"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-11",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-11"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-2",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-2"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-3",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-3"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-4",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-4"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-5",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-5"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-6",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-6"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-7",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-7"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-8",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-8"
+    ]
+   },
+   {
+    "fromRef": "M0-3",
+    "relation": "child",
+    "intoRef": "M0-3-9",
+    "standing": "DERIVED",
+    "evidence": [
+     "exact source coordinate nesting: M0-3 child M0-3-9"
+    ]
+   }
+  ]
+ }
+}

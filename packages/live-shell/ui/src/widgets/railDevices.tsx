@@ -47,7 +47,7 @@ export const RAIL_DEVICES = [
   {id: 'files', title: 'Files', icon: 'lib', note: 'The files the followed agent read and changed, from its encounter tape (aikit encounter read, desktop/cradle/src/agent/tape), with the seat\'s diff counts.'},
   {id: 'web', title: 'Web', icon: 'browser', note: 'The pages the followed agent fetched, from its encounter tape: each address and the text it got.'},
   {id: 'wiki', title: 'Wiki', icon: 'orbit', note: 'The root wiki\'s pages (Control/agents/wiki/wiki.json through the files seam), each read as its source through the knowledge owner (kernel knowledge read), its links the relations Central\'s wiki reading gives it (central.wiki.read).'},
-  {id: 'diff', title: 'Diff', icon: 'select', note: 'The selected seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1), the seat as the seat instrument reads it; with no seat selected, the shell\'s project (git_repository_read).'},
+  {id: 'diff', title: 'Diff', icon: 'select', note: 'The selected seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1), the seat as the seat instrument reads it; with no seat selected, the selected project world\'s repository, else the workspace\'s project, else the shell\'s (git_repository_read).'},
   {id: 'nows', title: 'NOWs', icon: 'die', note: 'The ground\'s civil time, its Day and its open NOW clearings (kernel central inspect → central.civil-time-reading/v1, central.day-reading/v1, central.now-listing/v1).'},
   {id: 'calendar', title: 'Calendar', icon: 'metro', note: 'A third party\'s calendar, through the provider it comes from. No calendar provider is installed.'},
   {id: 'notifications', title: 'Notifications', icon: 'arm', note: 'What asks for your attention (§23.9): the agents that wait for you (Messages), what waits in Approvals, and the requests an owner raised through Central\'s personal.notify, as Central keeps them with their deliveries (personal.notifications.list).'},
@@ -107,9 +107,24 @@ function useTrailBinding(): DesignBinding {
 
 // ---------------------------------------------------------------------------------------------------------------- the Diff
 
-/** The shell's project: the repository the Diff reads when no seat is selected (the rail's old Diff tile read the same,
- * agent/AgentDockTileBody.tsx:114). */
+/** The shell's project: the repository the Diff reads when no seat and no project world is selected (the rail's old Diff tile read the
+ * same, agent/AgentDockTileBody.tsx:114). */
 const DIFF_PROJECT = 'O-I'
+/** The Workspace device on the door (central/devices/pageBindings.ts WORKSPACE_DEVICE_ID): its `folder` is the selected world's project,
+ * or the book's workspace's, or `central` for your world. Named here, not imported, so the rail's boot does not load Central's bindings. */
+export const DIFF_WORKSPACE_ID = 'central:workspace'
+/** The Workspace's folder word for your world (pageBindings.ts workspaceValues: `world.project ?? 'central'`): the root, no project. */
+const ROOT_FOLDER = 'central'
+
+/** The repository the Diff reads when no seat is selected: the project world the Workspace stands on (a world's head opened it, or the
+ * book's workspace names it), else the book's workspace's project, else the shell's project. Your world (`central`) has no repository of
+ * its own, so it reads the shell's. Pure. */
+export function diffProjectOf(workspaceFolder: Value | undefined, bookProject: string | undefined): {project: string; from: 'world' | 'workspace' | 'shell'} {
+  const named = (word: unknown): word is string => typeof word === 'string' && word.trim() !== '' && word !== ROOT_FOLDER
+  if (named(workspaceFolder)) return {project: workspaceFolder, from: 'world'}
+  if (named(bookProject)) return {project: bookProject, from: 'workspace'}
+  return {project: DIFF_PROJECT, from: 'shell'}
+}
 type DiffReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; root: string; files: Record<string, Value>[]; head: string | null; branch: string | null; omitted: number}
 
 /** The checkout of the seat selected on the Seat device (workcellBindings.ts SEAT_ID: its `seat`, a workcell, and its `product`), as the
@@ -138,11 +153,15 @@ function useDiffReading(transport: KernelTransportStatus | undefined): DiffReadi
   const seatProduct = useSyncExternalStore(subscribeDeviceDoor, () => seatWord('product'), () => null)
   const seatValues = useMemo(() => (seatName && seatProduct ? {seat: seatName, product: seatProduct} : undefined), [seatName, seatProduct])
   const chosen = !!seatValues
+  // With no seat chosen: the project world the Workspace stands on, else the book's workspace's project, else the shell's.
+  const folder = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(DIFF_WORKSPACE_ID)?.binding?.values.folder, () => undefined)
+  const bookProject = useOptionalContinuity()?.current.project
+  const project = diffProjectOf(folder, bookProject).project
   const seats = useSeatStatusAnswer(transport ?? {kind: 'unavailable', reason: 'No kernel carrier stands.'}, chosen && !!transport && transport.kind !== 'unavailable').reading
   const seat = chosen && seats.status === 'answered' ? selectedSeatOf(seatValues, seats.value) : null
   // Two held reads, each shared with every other view that asks the same (the agent dock's Diff, the chain's Git): the repository —
   // only with no seat selected — then the working diff of the seat's checkout, or of the repository once it has named its root.
-  const repo = useOwnerOp(transport, chosen ? null : {op: 'git_repository_read', project: DIFF_PROJECT}, 'git_repository_reading', 'The repository owner did not answer.').reading
+  const repo = useOwnerOp(transport, chosen ? null : {op: 'git_repository_read', project}, 'git_repository_reading', 'The repository owner did not answer.').reading
   const doc = !chosen && repo.status === 'answered' ? repo.value?.document as {repo_root?: unknown; branch?: unknown; head?: unknown} | undefined : undefined
   const root = seat ? seat.root : typeof doc?.repo_root === 'string' ? doc.repo_root : null
   const patch = useOwnerOp(transport, root ? {op: 'git_diff_read', request: {repo_root: root, from: 'HEAD', to: 'working-tree', max_bytes: 65536, max_files: 200}} : null,
