@@ -467,6 +467,9 @@ fn run_bounded(
         use std::os::unix::process::CommandExt;
         command.process_group(0);
     }
+    // A place in the owner-process limiter while this one-shot owner runs
+    // (owner_process.rs `Limiter`); released when the call returns.
+    let _place = crate::owner_process::Limiter::global().place();
     let mut child = command.spawn().map_err(RunError::Start)?;
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();

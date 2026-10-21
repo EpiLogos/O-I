@@ -223,8 +223,12 @@ pub enum SeatWrite {
     },
 }
 
-/// AIKit's reads: the capture inbox (`aikit inbox [--all]`) and a Wiki
-/// file's shapes (`aikit wiki-shape validate|compress --file F`).
+/// AIKit's reads: the capture inbox (`aikit inbox [--all]`), a Wiki file's
+/// shapes (`aikit wiki-shape validate|compress --file F`), and one Stream's
+/// frames from the running gateway's journal (`aikit gateway replay --stream
+/// S`): what passed between a surface and its harness, in sequence — the
+/// Frames monitor's reading — beside the gateway's ecology (`aikit gateway
+/// ecology`), which names each session's harness and Streams.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum AikitRead {
@@ -240,6 +244,21 @@ pub enum AikitRead {
     WikiShapeCompress {
         file: PathBuf,
         anchor_ref: String,
+    },
+    GatewayEcology {
+        #[serde(default)]
+        at: Option<String>,
+    },
+    GatewayReplay {
+        stream: String,
+        #[serde(default)]
+        after: u64,
+        /// AIKit's own bound, 1 to 4096 (its default 256 when absent).
+        #[serde(default)]
+        limit: Option<u32>,
+        /// Another Workcell's declared gateway (`aikit gateway remote list`).
+        #[serde(default)]
+        at: Option<String>,
     },
 }
 
@@ -332,7 +351,10 @@ impl AikitRead {
     pub fn project(&self) -> Option<&str> {
         match self {
             Self::Inbox { project, .. } => project.as_deref(),
-            Self::WikiShapeValidate { .. } | Self::WikiShapeCompress { .. } => None,
+            Self::WikiShapeValidate { .. }
+            | Self::WikiShapeCompress { .. }
+            | Self::GatewayEcology { .. }
+            | Self::GatewayReplay { .. } => None,
         }
     }
 }
@@ -903,6 +925,32 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit wiki-shape compress", args)
         }
+        AikitRead::GatewayEcology { at } => {
+            let mut args = words(&["gateway", "ecology"]);
+            push_flag(&mut args, "--at", at.as_deref());
+            args.push("--json".into());
+            ("aikit gateway ecology", args)
+        }
+        AikitRead::GatewayReplay {
+            stream,
+            after,
+            limit,
+            at,
+        } => {
+            let mut args = words(&["gateway", "replay", "--stream"]);
+            args.push(stream.into());
+            if *after > 0 {
+                args.push("--after".into());
+                args.push(after.to_string().into());
+            }
+            if let Some(limit) = limit {
+                args.push("--limit".into());
+                args.push(limit.to_string().into());
+            }
+            push_flag(&mut args, "--at", at.as_deref());
+            args.push("--json".into());
+            ("aikit gateway replay", args)
+        }
     }
 }
 
@@ -927,6 +975,26 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         }
         // The 6+6′ compression's own record (AIKit's `compress_six_plus_six_prime`).
         AikitRead::WikiShapeCompress { .. } => data,
+        AikitRead::GatewayEcology { .. } => {
+            if data.get("type").and_then(Value::as_str) != Some("ecology")
+                || !data
+                    .pointer("/ecology/agencies")
+                    .is_some_and(Value::is_array)
+            {
+                return Err(unexpected(route, "the gateway's ecology", &data));
+            }
+            data
+        }
+        // The gateway's replay of the Stream asked for (`GatewayReplay`).
+        AikitRead::GatewayReplay { stream, .. } => {
+            if data.get("type").and_then(Value::as_str) != Some("replay")
+                || data.pointer("/replay/stream_ref").and_then(Value::as_str) != Some(stream)
+                || !data.pointer("/replay/events").is_some_and(Value::is_array)
+            {
+                return Err(unexpected(route, &format!("the replay of {stream}"), &data));
+            }
+            data
+        }
     };
     if !data.is_object() {
         return Err(unexpected(route, "a reading", &data));

@@ -63,7 +63,10 @@ const CENTRAL: &str = "central";
 const FACTORY: &str = "factory";
 
 /// Whether an action carried by `invoke_action` only reads Central: its
-/// answer moves nothing, so it retires no reading.
+/// answer moves nothing, so it retires no reading. The write path asks
+/// action.rs `reads_only`, which also knows a Contemplate preflight; the
+/// reading test holds Central's side here.
+#[cfg(test)]
 fn central_reading(action: &str) -> bool {
     crate::read_cache::central_reads(action)
 }

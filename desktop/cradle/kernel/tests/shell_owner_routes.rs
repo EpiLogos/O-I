@@ -1047,3 +1047,102 @@ fn the_encounter_join_no_longer_asks_actuation_for_a_correlation_it_does_not_hav
     assert_ne!(wire["disposition"]["state"], "unavailable", "{wire}");
     let _ = fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn the_frames_monitor_reads_a_streams_frames_from_aikits_gateway_journal() {
+    let _held = hold();
+    let dir = scratch("replay");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // `aikit gateway replay --json`'s answer: the gateway's GatewayResponse::Replay.
+    let replay = json!({"type": "replay", "replay": {
+        "stream_ref": "actuation-stream/replay", "after_sequence": 1, "returned_through": 2,
+        "stream_last_sequence": 3, "has_more": true,
+        "events": [{"sequence": 2, "event": {"kind": "human-message", "content": "frame 2"}}]}});
+    aikit.answer(&envelope(replay.clone()));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "gateway-replay",
+            "stream": "actuation-stream/replay", "after": 1, "limit": 1}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty());
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit gateway replay");
+    assert_eq!(data, replay, "the gateway's replay, verbatim");
+    assert_eq!(
+        aikit.asked(),
+        ["gateway replay --stream actuation-stream/replay --after 1 --limit 1 --json"]
+    );
+    // Another Stream's replay is named, never carried.
+    let mut other = replay.clone();
+    other["replay"]["stream_ref"] = json!("actuation-stream/other");
+    aikit.answer(&envelope(other));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "gateway-replay",
+            "stream": "actuation-stream/replay"}}),
+        ),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    // The gateway's refusal, in its words; no gateway, honestly.
+    aikit.refuse(
+        Some(
+            &json!({"ok": false, "schema": 1, "error": {"code": "agency_gateway.unknown_stream",
+            "message": "gateway has no journal for Stream actuation-stream/none"}}),
+        ),
+        "",
+        1,
+    );
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "gateway-replay",
+            "stream": "actuation-stream/none"}}),
+        ),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("gateway has no journal for Stream actuation-stream/none"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn the_gateways_ecology_names_the_streams_a_replay_reads() {
+    let _held = hold();
+    let dir = scratch("ecology");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // `aikit gateway ecology --json` (gateway_runtime.rs GatewayEcology).
+    let ecology = json!({"type": "ecology", "ecology": {"version": "aikit.agency-gateway-ecology/v1",
+        "gateway_ref": "agency-gateway/local", "authority": "presence-does-not-imply-authority",
+        "agencies": [{"agency_ref": "agency/replay", "sessions": [{"agent_session_ref": "agent-session/replay",
+            "agency_ref": "agency/replay", "actuation_refs": [], "harness_ref": "harness/hermes",
+            "streams": [{"stream_ref": "actuation-stream/replay", "last_sequence": 3, "event_count": 3}],
+            "surfaces": [], "invocation_modes": []}]}]}});
+    aikit.answer(&envelope(ecology.clone()));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "gateway-ecology", "at": "workcell:omarchy"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert_eq!(reading(&outcome).1, ecology);
+    assert_eq!(
+        aikit.asked(),
+        ["gateway ecology --at workcell:omarchy --json"]
+    );
+    aikit.answer(&envelope(json!({"type": "snapshot", "snapshot": {}})));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "gateway-ecology"}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    let _ = fs::remove_dir_all(&dir);
+}

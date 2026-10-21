@@ -182,7 +182,14 @@ export type SeatWriteRequest =
 export type AikitReadRequest =
   | {kind:"inbox";project?:string|null;all?:boolean}
   | {kind:"wiki-shape-validate";file:string}
-  | {kind:"wiki-shape-compress";file:string;anchor_ref:string};
+  | {kind:"wiki-shape-compress";file:string;anchor_ref:string}
+  /** One Stream's frames from the running gateway's journal (`aikit gateway replay --stream S [--after N] [--limit 1..4096] [--at W]`):
+   * the answer is `{type:"replay", replay:{stream_ref, after_sequence, returned_through, stream_last_sequence, has_more, events:[{sequence,
+   * event}]}}`. The Frames monitor's reading. */
+  | {kind:"gateway-replay";stream:string;after?:number;limit?:number;at?:string|null}
+  /** `aikit gateway ecology`: `{type:"ecology", ecology:{agencies:[{sessions:[{harness_ref?, streams:[{stream_ref, last_sequence,
+   * event_count}], surfaces}]}]}}` — which sessions and Streams a replay can ask for. */
+  | {kind:"gateway-ecology";at?:string|null};
 export type AikitWriteRequest =
   /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. */
   | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null}

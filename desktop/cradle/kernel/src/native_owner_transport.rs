@@ -296,6 +296,9 @@ fn gateway(
         );
     }
     let start = Instant::now();
+    // A place in the owner-process limiter while this one-shot owner runs
+    // (owner_process.rs `Limiter`); released when the call returns.
+    let _place = crate::owner_process::Limiter::global().place();
     let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

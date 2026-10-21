@@ -91,6 +91,9 @@ fn read_reading(
     schema: &str,
 ) -> Result<Value, String> {
     let shown = format!("ql {}", subcommand.join(" "));
+    // A place in the owner-process limiter while this one-shot owner runs
+    // (owner_process.rs `Limiter`); released when the call returns.
+    let _place = crate::owner_process::Limiter::global().place();
     let mut child = Command::new(program)
         .args(leading)
         .args(subcommand)
