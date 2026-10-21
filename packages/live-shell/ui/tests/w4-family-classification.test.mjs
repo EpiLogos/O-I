@@ -125,12 +125,10 @@ const skyState = {...sky.qlSkyState(), reading: skyReading, ask: at, answered: a
 
 const identity = {selection_ref: 'nara-identity-selection:1', source: {source_ref: 'central:nara/identity/p1', revision: 'r9'},
   reading: {person_ref: 'person:p1', nara_ref: 'nara:p1', profile: {person_ref: 'person:p1', nara_ref: 'nara:p1'}}}
+// The person's M3 form as the installed QL answers it (REAL, tests/fixtures/ql-m3-state-2026-10-21.json), in the reception's envelope.
+const REAL_M3 = JSON.parse(readFileSync(new URL('./fixtures/ql-m3-state-2026-10-21.json', import.meta.url), 'utf8')).answer.state
 const m3State = {key: 'k', basis: {identity, expression: {expression_ref: 'expression:kept', revision: 3}}, busy: false, reason: null, view: {},
-  reading: {schema: 'oi.m3-reception-context/v1', status: 'available', person_ref: 'person:p1', expression_ref: 'expression:kept', expression_revision: 3,
-    state: {schema: 'ql.m3-state/v1', identity: {event_ref: 'event:e', profile_generation: 7},
-      clock: {steps: 419, degree720: 419, degree360: 59, completed_double_covers: 0, backbone: {id: 'b', ref: '#3-5-1-3'}, tick12: 1},
-      aperture: {index: 8, total_lenses: 16, division_deg10: 240, reciprocal_index: 7, fibonacci_phase60: 0},
-      form: {address: 17}, transcription: {rna: false, sequence: 'TAT'}}}}
+  reading: {schema: 'oi.m3-reception-context/v1', status: 'available', person_ref: 'person:p1', expression_ref: 'expression:kept', expression_revision: 3, state: REAL_M3}}
 
 const location = {schema: 'central.path-ref/v1', ref: 'ref:Control/user/flows/journey.html', root: 'R', path: 'Control/user/flows/journey.html'}
 const journey = {location, actor_ref: 'person:frank', day_ref: 'central:day:control:root:2026-10-18', title: 'What the move asks'}
@@ -176,7 +174,7 @@ async function bindingsByDesign() {
   out['quaternal-logic:sky'] = sky.qlSkyBinding(skyState)
   out['quaternal-logic:sky-modulation'] = skyMod.skyModulationBinding(torusState, skyState)
   out['quaternal-logic:m3-clock'] = m3.qlM3Binding(m3State)
-  out['quaternal-logic:deck'] = deck.qlDeckBinding(deck.qlDeckState(), {...m3State, reading: {...m3State.reading, state: {...m3State.reading.state, tarot: {card_id: 4, suit: 'Cups', rank: 'Five'}}}})
+  out['quaternal-logic:deck'] = deck.qlDeckBinding(deck.qlDeckState(), m3State)
   out['quaternal-logic:chakra'] = chakra.qlChakraBinding(chakra.qlChakraState(), skyState)
   out['quaternal-logic:sitting'] = sitting.qlSittingBinding(sitting.qlSittingState())
   out['quaternal-logic:resonator-bank'] = bank.qlBankBinding(bank.QL_RESONATOR_CHAIN_ID, torusState, m3State, {root: 9, reason: null})
@@ -265,7 +263,7 @@ test('(b) and (c) for every design of Expressions, Live and Quaternal Logic: eac
   if (process.env.W4_TABLE) writeFileSync(process.env.W4_TABLE, JSON.stringify(table, null, 1))
   assert.deepEqual(GAPS, [], 'every key unread by its binding names why')
   // Closed where an owner already answers: the Deck's card of the codon now is the M3 form's tarot, in the kernel's register.
-  assert.equal(bound['quaternal-logic:deck'].values['m3.card'], 'Five of Cups')
+  assert.equal(bound['quaternal-logic:deck'].values['m3.card'], 'Ten of Wands')
   assert.match(deck.qlDeckBinding(deck.qlDeckState(), {...m3State, reading: null, reason: 'No Nara identity is chosen.'}).standing['m3.card'].disabled, /No Nara identity/)
   for (const id of Object.keys(bound)) assert.ok(table.some(row => row.design === id), `${id}: a design of the catalogue`)
   // The two designs this lane binds, and the Field it publishes, take nothing back to an owner they do not name.

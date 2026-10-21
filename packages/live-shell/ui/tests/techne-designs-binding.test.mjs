@@ -392,10 +392,18 @@ test('the Journey on the frame\'s research reading: the walk as its Journey docu
   assert.deepEqual(runs, [{command: 'journey', action: 'stand', index: 3}, {command: 'journey', action: 'stand', index: 2, seconds: 5.5},
     {command: 'journey', action: 'stop'}, {command: 'journey', action: 'enter'}, {command: 'journey', action: 'return'}])
   await assert.rejects(() => binding.write([{key: 'at', value: 9}]), /there is no stop 10/)
-  for (const key of ['hold:2', 'tr:1', 'kind:0', 'words:2', 'stopAtEnd']) {
-    assert.match(binding.standing[key].disabled, /missing op: stage commands for the walk's pace and seams/, key)
-    await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
-  }
+  // The walk's pace and seams, each the frame's own edit (stageCommands.ts journey pace · seam · switch · curve · loop).
+  runs.length = 0
+  await binding.write([{key: 'hold:2', value: 24}, {key: 'tr:1', value: 2.5}, {key: 'kind:0', value: 'wipe'}, {key: 'sw:2', value: 'at-end'},
+    {key: 'curve:2', value: 'smooth'}, {key: 'atc:2', value: 0.5}, {key: 'dir:3', value: 'up'}, {key: 'stopAtEnd', value: false}])
+  assert.deepEqual(runs, [{command: 'journey', action: 'pace', index: 2, seconds: 24}, {command: 'journey', action: 'seam', index: 1, seconds: 2.5},
+    {command: 'journey', action: 'seam', index: 0, transition: 'wipe'}, {command: 'journey', action: 'switch', index: 2, mode: 'at-end'},
+    {command: 'journey', action: 'curve', index: 2, type: 'smooth'}, {command: 'journey', action: 'seam', index: 2, at: 0.5},
+    {command: 'journey', action: 'seam', index: 3, direction: 'up'}, {command: 'journey', action: 'loop', on: false}])
+  await assert.rejects(() => binding.write([{key: 'dir:2', value: 'up'}]), /Only a wipe has a direction/, 'a dip takes no direction: refused before anything is sent')
+  await assert.rejects(() => binding.write([{key: 'hold:9', value: 3}]), /there is no stop 10/)
+  assert.match(binding.standing['words:2'].disabled, /missing op: a stage command for a Scene's character/)
+  await assert.rejects(() => binding.write([{key: 'words:2', value: 'x'}]), /missing op/)
   const refusing = {...frameOf('journey'), run: async () => ({ok: false, error: 'Save your first scene before playing the scene strip.'})}
   await assert.rejects(() => frameB.journeyBinding(refusing).write([{key: 'playing', value: true}]), /Save your first scene/, 'the frame\'s refusal, in its words')
   const older = frameB.journeyBinding(frameOf('journey', {research: null}))
@@ -423,8 +431,16 @@ test('the Timeline on the frame\'s research reading: its dated events, relations
   await held.write([{key: 'readOver', value: true}])
   await held.write([{key: 'clearWindow', value: true}])
   assert.deepEqual(written, [{from: instantOfYear(1200), to: instantOfYear(1400)}, null], 'Read over and Clear write the session\'s one window')
-  for (const key of ['centre', 'zoom']) assert.match(binding.standing[key].disabled, /missing op: a stage command that moves the chronology/, key)
-  for (const key of ['mode', 'saveView', 'st_sourced', 'cat_myth']) assert.match(binding.standing[key].disabled, /missing op/, key)
+  // The camera, a saved view and the relation links are the Timeline's own acts (stageCommands.ts timeline camera · view · links).
+  runs.length = 0
+  await binding.write([{key: 'centre', value: 1650}, {key: 'zoom', value: 6}])
+  await binding.write([{key: 'view', value: 'A view of the frame'}, {key: 'view', value: 'none'}, {key: 'links', value: false}])
+  assert.deepEqual(runs, [{command: 'timeline', action: 'camera', centre: 1650, zoom: 6}, {command: 'timeline', action: 'view', name: 'A view of the frame'},
+    {command: 'timeline', action: 'links', on: false}], 'one camera for the two keys; None goes nowhere')
+  await assert.rejects(() => binding.write([{key: 'view', value: 'Another'}]), /keeps no view named "Another"/)
+  await assert.rejects(() => binding.write([{key: 'cat_myth', value: false}]), /card categories are read only while it is drawn/, 'a category is set on what the chronology announces it hides')
+  for (const key of ['mode', 'st_sourced']) assert.match(binding.standing[key].disabled, /missing op: stage commands for the Timeline's relation mode/, key)
+  assert.match(binding.standing.saveView.disabled, /a name for the view/)
   const elsewhere = frameB.timelineBinding(frameOf('canvas', {chrome: CANVAS_CHROME}), LAW(written))
   assert.equal(elsewhere.values.events, undefined, 'the frame presents no Timeline: no ruler')
   assert.match(frameB.timelineAbsent(frameOf('canvas', {chrome: CANVAS_CHROME}), 'events'), /presents no Timeline now/)
@@ -453,7 +469,15 @@ test('the Canvas on the frame\'s research reading: its cards, lines (the selecte
   assert.deepEqual(runs, [{command: 'chrome', id: 't-snap'}, {command: 'chrome', id: 't-draw'}, {command: 'chrome', id: 'l-overview'}], 'the frame\'s own toggles, pressed')
   await binding.write([{key: 'grid', value: true}, {key: 'minimap', value: true}])
   assert.equal(runs.length, 3, 'a toggle already standing is not pressed')
-  for (const key of ['add', 'lineKind', 'promote', 'declare', 'suggest', 'view']) assert.match(binding.standing[key].disabled, /missing op/, key)
+  for (const key of ['add', 'promote', 'declare', 'suggest', 'direction']) assert.match(binding.standing[key].disabled, /missing op/, key)
+  // The selected line's connector, as the frame's connector controls write it (stageCommands.ts canvas connector).
+  runs.length = 0
+  await binding.write([{key: 'lineKind', value: 'straight'}, {key: 'toSide', value: 'auto'}])
+  assert.deepEqual(runs, [{command: 'canvas', action: 'connector', line: 'b:2', lineKind: 'straight', toSide: 'auto'}], 'one connector write, on the selected line')
+  await assert.rejects(() => binding.write([{key: 'fromSide', value: 'middle'}]), /auto, top, right, bottom or left/)
+  binding.local.view('everything')
+  assert.equal(frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME}), devices.heldFor(frameB.CANVAS_ID)).values.view, 'everything', 'the View chooser is the view\'s own; its camera moves through cx, cy and zoom')
+  devices.resetHolds()
   assert.match(binding.standing.declare.disabled, /wiki-shape validate · declare · compress/)
   const elsewhere = frameB.canvasBinding(frameOf('timeline', {chrome: TIMELINE_CHROME}))
   assert.equal(elsewhere.values.items, undefined, 'the frame presents no Canvas: no board')

@@ -2256,6 +2256,49 @@ function stageCaptureSettings(settings?:StageCaptureSettings){
  if(text&&settings.includeText!==undefined)text.checked=settings.includeText;
  if(transparent&&settings.transparent!==undefined)transparent.checked=settings.transparent;
 }
+/** W4 (DLW §17.6 Pace and Transitions): one of the walk's pace and seam edits on one stop's Scene, each the edit the frame's own control
+ * makes — `pace` the Pace save and the timeline trim (retimeScene in one labelled change), `seam` the seam chooser's transition write
+ * (setSeamTransition: its kind keeps only the parameters it takes, setSeamKind), `switch`, `curve` and `loop` the seam chooser's edge facts
+ * (editSeamEdge: the path panel's own edit on the native owner's journey, else one planned, labelled edge write). Each refusal is thrown in
+ * the words the control would toast, so the host hears it. */
+function journeyEdit(command:Extract<StageCommand,{command:'journey';action:'pace'|'seam'|'switch'|'curve'|'loop'}>){
+ const scenes=store.document.scenes;
+ if(command.action==='loop'){
+  const exit=scenes.at(-1);if(!exit)throw new Error('The walk has no stop to end on.');
+  return journeyEdge({kind:'loop',exitSceneId:exit.id,on:command.on});
+ }
+ const target=scenes[command.index];
+ if(!target)throw new Error(`The walk has ${scenes.length} stop${scenes.length===1?'':'s'}: there is no stop ${command.index+1}.`);
+ if(command.action==='pace'){
+  if(target.duration===command.seconds)return;
+  if(target===scene()&&sceneElapsed>command.seconds)sceneElapsed=command.seconds;
+  changed(()=>{retimeScene(store.document,target.id,{duration:command.seconds});},true,`Trim scene ${target.name}`);
+  return;
+ }
+ if(command.action==='switch')return journeyEdge({kind:'switch',enterSceneId:target.id,mode:command.mode});
+ if(command.action==='curve')return journeyEdge({kind:'curve',enterSceneId:target.id,type:command.type});
+ const prior=target.transitionSpec,kind=command.transition??transitionKindOf(prior);
+ const seconds=command.seconds??target.transition;
+ if(!(seconds>=SCENE_TRANSITION_MIN&&seconds<=SCENE_TRANSITION_MAX))throw new Error(`A transition lasts ${SCENE_TRANSITION_MIN}–${SCENE_TRANSITION_MAX} seconds.`);
+ const params:TransitionParams=kind==='wipe'?{direction:command.direction??prior?.direction}:kind==='dip-to-colour'?{at:command.at??prior?.at}:{};
+ const spec=transitionSpecFor(kind,params);
+ if(JSON.stringify(spec)===JSON.stringify(prior)&&seconds===target.transition)return;
+ changed(()=>{applyTimelineMove(store.document,list=>writeSeamTransition(list,target.id,spec,seconds));},true,transitionLabel(kind));
+}
+/** The seam chooser's edge write (editSeamEdge), with its refusals thrown: on the native owner's journey the path panel's own edit takes it
+ * and the owner's reply stands on the frame's status line. */
+function journeyEdge(edit:EdgeEdit){
+ const refusal=edit.kind!=='loop'?edgeEditRefusal(store.document.scenes.find(v=>v.id===edit.enterSceneId)?.transitionSpec,edit):undefined;
+ if(refusal)throw new Error(refusal);
+ if(journeyInstrument?.editEdge(edit,text=>toast(text)))return;
+ const plan=planEdgeEdit(store.document,edit);
+ if(!plan.ok)throw new Error(plan.reason);
+ const write=plan.write,label=plan.label;
+ const probe=JSON.parse(JSON.stringify(store.document.scenes)) as Scene[];
+ applyEdgeWrite(probe,write);
+ if(JSON.stringify(probe.find(v=>v.id===write.sceneId))===JSON.stringify(store.document.scenes.find(v=>v.id===write.sceneId)))return;
+ changed(()=>applyTimelineMove(store.document,list=>applyEdgeWrite(list,write)),true,label);
+}
 async function runStageCommand(command:StageCommand){
  const body=document.body;
  switch(command.command){
@@ -2275,9 +2318,9 @@ async function runStageCommand(command:StageCommand){
    if(!nativeField)throw new Error('This application has no native instrument.');
    await nativeField.command(command.edit);
    break;
-  // lane W4-Technē: the walk's own acts (stageCommands.ts STAGE_JOURNEY_ACTIONS), each the frame's own: the playhead moves as the
-  // transport's jump moves it, the saved scenes play as the scene strip's Play does, Enter is the presented beat's own button.
   case 'journey':{
+   // lane W4-Technē: the walk's own acts (stageCommands.ts STAGE_JOURNEY_ACTIONS), each the frame's own: the playhead moves as the
+   // transport's jump moves it, the saved scenes play as the scene strip's Play does, Enter is the presented beat's own button.
    if(command.action==='stand'){
     const count=store.document.scenes.length;
     if(command.index>=count)throw new Error(`The walk has ${count} stop${count===1?'':'s'}: there is no stop ${command.index+1}.`);
@@ -2286,11 +2329,18 @@ async function runStageCommand(command:StageCommand){
    if(command.action==='play'){if(journeyPlaying)break;if(!savedSceneIndices(store.document).length)throw new Error('Save your first scene before playing the scene strip.');setSavedScenePlay(true);break;}
    if(command.action==='stop'){if(journeyPlaying)setSavedScenePlay(false);break;}
    if(command.action==='enter'){if(!journeyInstrument)throw new Error('This application has no Journey instrument.');journeyInstrument.enter();break;}
-   if(!crossingStands)throw new Error('No crossing stands: the walk is not inside a stop\'s Scene.');
-   returnToJourney();break;
+   if(command.action==='return'){if(!crossingStands)throw new Error('No crossing stands: the walk is not inside a stop\'s Scene.');returnToJourney();break;}
+   // What is left is an edit: the walk's own acts are each answered above.
+   journeyEdit(command as Parameters<typeof journeyEdit>[0]);break;
   }
-  // lane W4-Technē: the Canvas camera through the canvas's own fly (researchInstruments.tsx setCamera).
-  case 'canvas':if(!researchInstruments)throw new Error('This application has no Canvas.');researchInstruments.setCamera(command);break;
+  // lane W4-Technē: the Canvas camera through the canvas's own fly (researchInstruments.tsx setCamera); W4: the selected line's connector,
+  // as its connector controls write it (researchInstruments.tsx setCanvasConnector).
+  case 'canvas':
+   if(!researchInstruments)throw new Error('This application has no Canvas.');
+   if(command.action==='camera'){researchInstruments.setCamera(command);break;}
+   await researchInstruments.setCanvasConnector(command.line,{...(command.lineKind?{kind:command.lineKind}:{}),...(command.fromSide?{fromSide:command.fromSide}:{}),...(command.toSide?{toSide:command.toSide}:{})});break;
+  // W4: the Timeline's camera, saved views, relation links and card categories, each its own act (researchInstruments.tsx timelineAct).
+  case 'timeline':if(!researchInstruments)throw new Error('This application has no Timeline.');await researchInstruments.timelineAct(command);break;
   case 'live':
    // The streamed set returns before the announce below: it writes no document and must not trigger a shell read at 20 Hz.
    if(command.action==='set'){liveOverrides.setDrag(command.target,command.value);needsFrame=true;return;}

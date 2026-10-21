@@ -6,7 +6,7 @@ export interface M3Selections {
 }
 export type M3Operation=
  |{operation:'select-form';address:number}|{operation:'change-line';line:number}
- |{operation:'apply-matrix';family:number}|{operation:'set-pose';pose:number}
+ |{operation:'apply-matrix';family:number}|{operation:'set-matrix';family:number}|{operation:'set-pose';pose:number}
  |{operation:'set-aperture';aperture:number}|{operation:'reciprocal-aperture'}
  |{operation:'advance-clock';steps:number}|{operation:'transcribe';rna:boolean}
  |{operation:'cast-creases';angles_deg10:[number,number,number];velocities_deg10:[number,number,number]};

@@ -8,12 +8,17 @@
 //                     them"); a new cell is that mode set on the transport (setLiveModeHold), the same hand Scale mapping uses
 //                     (live/designBindings/scaleMappingBinding.ts);
 //   form.address      the person's M3 form through the kernel's m3_reception (qlM3Clock.ts); a new address, and Apply, is its select-form;
+//   m1.cells          the family's 144 cells, each QL's own `ql kernel m1` answer through the kernel's ql_read (qlM1.ts);
 //   matrix, valueForm, m1.basis, kernel.position, kernel.face   the view's own choices (DesignBinding.local): which matrix and value form
 //                     show, which order of the twelve notes the served catalogue is read in (until held, the mode in force's), and the
 //                     address of the kernel's sixfold form the operators read ("No owner names a kernel address for a matrix cell, so
 //                     the address is yours", the design's own words);
-// and named absent, each with the route it waits on: the M1 engine (`ql kernel m1`: m1.cells, row12, col12, tick12, family) has no
-// kernel op; the 64 codons in address order (m3.codons) and the matrix partners (form.partners, and with them Partner and Scale) need
+//   m1.family, m1.row12, m1.col12   the M1 engine's config, which is its consumer's (crates/ql-mef/src/m1_engine.rs M1Engine: "Storage,
+//                     authorization and realtime interpolation belong to its consumers"): the family whose matrix is read and the cell
+//                     inspected, held by the view. The shell's engine opens where QL's own example request does (family 5, row 3,
+//                     position 4: fixtures/kernel/m1-engine-v1.request.json); the Quintessence has no scalar (m1.rs `cell`:
+//                     scalar_valid is family < 5), so its matrix is read only once you choose a family;
+// and named absent, each with the route it waits on: the M1 clock's tick (m1.tick12) — no M1 clock runs in the shell; the 64 codons in address order (m3.codons) and the matrix partners (form.partners, and with them Partner and Scale) need
 // `ql kernel m3` and ql_m3_apply_matrix as kernel ops; the kernel's operators (`ql kernel apply`: conjugate, complement, class, version,
 // and the address's depth and form as the kernel keeps them) have no kernel op; the Situation matrix has no owner (the M′ packets, QL-MEF
 // #281); Follow has no owner operation and the design does not offer it. Pure apart from the owners' hands the caller may replace.
@@ -26,6 +31,7 @@ import type {KernelLensMode, QlMusicModes} from '../../../live/modes'
 import {disabled, handsFor, missing} from '../../../techne/devices/designDevices'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {NO_FORM, applyQlM3, type QlM3State} from './qlM3Clock'
+import type {QlM1State} from './qlM1'
 
 export const QL_MATRICES_FAMILY = 'quaternal-logic'
 export const QL_MATRICES_FACE = 'm-prime-matrices'
@@ -33,12 +39,16 @@ export const QL_MATRICES_FACE = 'm-prime-matrices'
 export const QL_MATRICES_DEVICE_ID = techneDeviceId(QL_MATRICES_FAMILY, QL_MATRICES_FACE)
 
 /** The view's own keys: what shows, and the kernel address the operators read. */
-export const QL_MATRICES_LOCAL = ['matrix', 'valueForm', 'm1.basis', 'kernel.position', 'kernel.face'] as const
+export const QL_MATRICES_LOCAL = ['matrix', 'valueForm', 'm1.basis', 'kernel.position', 'kernel.face', 'm1.family', 'm1.row12', 'm1.col12'] as const
 /** The keys an owner takes a change of: the mode in force's lens and frame, the form's address. */
 export const QL_MATRICES_WRITES = ['m1.lens12', 'm1.context_frame', 'form.address'] as const
 
-const NO_M1 = missing('The M1 engine', 'the kernel op for `ql kernel m1` (crates/ql-mef/src/m1_engine.rs, ql.m1.engine/v1: its cells and its select of '
-  + 'family, row, position and tick)', 'Quaternal Logic, through the kernel')
+const NO_TICK = missing('The M1 clock\'s tick', 'a running M1 clock announced to the shell (QL\'s M1 engine answers the tick its request carries; '
+  + 'nothing in the shell keeps an M1 clock)', 'Quaternal Logic')
+/** Why the Oscillator's cells are not drawn: no family chosen, the cells being read, or QL's refusal. */
+export const NO_FAMILY = 'The engine opens on the Quintessence (family 5), which has no scalar values: choose a family to read its 144 cells from QL\'s M1 engine (`ql kernel m1`).'
+/** Where QL's own example request opens the engine (fixtures/kernel/m1-engine-v1.request.json config). */
+export const M1_EXAMPLE_CELL = {family: 5, row12: 3, col12: 4} as const
 const NO_CODONS = missing('The 64 codons in address order', 'the kernel op for `ql kernel m3` (the transcription of every form address); m3_reception '
   + 'reads only the form in force', 'Quaternal Logic, through the kernel')
 const NO_PARTNERS = missing('The matrix partners', 'the kernel ops ql_m3_apply_matrix and ql_m3_apply_matrix_hexagram (each address\'s partner under '
@@ -50,7 +60,7 @@ export const QL_SITUATION_ABSENT = 'The Situation matrix has no owner yet: the M
 
 /** Why each key the matrices draw and no owner reports here is absent, or why its control is off (manual §16.12: "say which one"). */
 export const QL_MATRICES_ABSENT: Readonly<Record<string, string>> = {
-  'm1.cells': NO_M1, 'm1.row12': NO_M1, 'm1.col12': NO_M1, 'm1.tick12': NO_M1, 'm1.family': NO_M1,
+  'm1.tick12': NO_TICK,
   'm3.codons': NO_CODONS, 'form.partners': NO_PARTNERS, 'form.partner': NO_PARTNERS, 'form.scale': NO_PARTNERS,
   'kernel.conjugate': NO_KERNEL, 'kernel.complement': NO_KERNEL, 'kernel.class': NO_KERNEL, 'kernel.version': NO_KERNEL,
   'kernel.depth': NO_KERNEL, 'kernel.form': NO_KERNEL,
@@ -73,6 +83,23 @@ export interface QlMatricesState {
   readonly modes: {readonly reading: LiveModeCatalogueState; readonly hold: LiveModeHold}
   /** The view's own choices as held (heldFor(QL_MATRICES_DEVICE_ID)). */
   readonly held: Readonly<Record<string, Value>>
+  /** The M1 engine's cells for the family held (qlM1.ts); absent where no reader stands. */
+  readonly m1?: QlM1State
+}
+
+/** The M1 engine's config as the view holds it, else as QL's example request opens it (M1_EXAMPLE_CELL). */
+export function m1Config(held: Readonly<Record<string, Value>>): {family: number; row12: number; col12: number} {
+  const at = (key: string, fallback: number, top: number) => { const x = held[key]; return Number.isInteger(x) && (x as number) >= 0 && (x as number) <= top ? x as number : fallback }
+  return {family: at('m1.family', M1_EXAMPLE_CELL.family, 5), row12: at('m1.row12', M1_EXAMPLE_CELL.row12, 11), col12: at('m1.col12', M1_EXAMPLE_CELL.col12, 11)}
+}
+/** The family's cells, when the M1 reading answers for the family the view chose. */
+const m1CellsOf = (state: QlMatricesState) => (state.m1?.cells && state.held['m1.family'] !== undefined && state.m1.family === m1Config(state.held).family ? state.m1.cells : null)
+/** Why the Oscillator's cells are not drawn now. */
+function m1Why(state: QlMatricesState): string {
+  const family = state.held['m1.family']
+  if (typeof family !== 'number') return NO_FAMILY
+  if (state.m1?.family === family && state.m1.reason) return `QL's M1 engine refused: ${state.m1.reason}`
+  return 'Reading the family\'s 144 cells from QL\'s M1 engine (`ql kernel m1`).'
 }
 
 const catalogueOf = (state: QlMatricesState): QlMusicModes | null => (state.modes.reading.state === 'ready' ? state.modes.reading.catalogue : null)
@@ -121,6 +148,10 @@ export function qlMatricesValues(state: QlMatricesState): Record<string, Value> 
   if (frame !== undefined) values['m1.context_frame'] = frame
   const form = state.m3.reading?.status === 'available' ? state.m3.reading.state : null
   if (form && int(form.form?.address)) values['form.address'] = form.form.address
+  const config = m1Config(state.held)
+  values['m1.family'] = config.family; values['m1.row12'] = config.row12; values['m1.col12'] = config.col12
+  const cells = m1CellsOf(state)
+  if (cells) values['m1.cells'] = JSON.stringify(cells)
   return values
 }
 
@@ -169,7 +200,9 @@ export function qlMatricesBinding(state: QlMatricesState, writers: QlMatricesWri
     const why = qlMatricesStanding(state, key)
     if (why) standing[key] = {disabled: why}
   }
+  standing['m1.cells'] = {disabled: m1CellsOf(state) ? 'A reading: each cell is QL\'s M1 engine\'s answer for it.' : m1Why(state)}
   const live = state.m3.reading?.status === 'available' && !!state.m3.reading.state
+  const m1Busy = !!state.m1?.busy && state.held['m1.family'] !== undefined && state.m1.family === m1Config(state.held).family
   return {
     id: QL_MATRICES_DEVICE_ID,
     values: qlMatricesValues(state),
@@ -178,8 +211,9 @@ export function qlMatricesBinding(state: QlMatricesState, writers: QlMatricesWri
     writes: key => qlMatricesStanding(state, key) === null,
     write: changes => applyQlMatricesChanges(state, changes, writers),
     // A first read in flight: the catalogue's tonics, or the form, wait rather than drawing as none.
-    ...(state.modes.reading.state === 'loading' || (state.m3.busy && !live)
-      ? {waiting: [...(state.modes.reading.state === 'loading' ? ['m2.tonics', 'm1.basis', 'm1.lens12', 'm1.context_frame'] : []), ...(state.m3.busy && !live ? ['form.address'] : [])]} : {}),
+    ...(state.modes.reading.state === 'loading' || (state.m3.busy && !live) || m1Busy
+      ? {waiting: [...(state.modes.reading.state === 'loading' ? ['m2.tonics', 'm1.basis', 'm1.lens12', 'm1.context_frame'] : []), ...(state.m3.busy && !live ? ['form.address'] : []),
+        ...(m1Busy ? ['m1.cells'] : [])]} : {}),
   }
 }
 

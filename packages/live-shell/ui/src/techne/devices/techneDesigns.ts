@@ -105,7 +105,7 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
     return {
       [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN)),
-      [CANVAS_DESIGN]: canvasBinding(frame),
+      [CANVAS_DESIGN]: canvasBinding(frame, heldFor(CANVAS_DESIGN)),
       [TIMELINE_DESIGN]: timelineBinding(frame, WINDOW_LAW, heldFor(TIMELINE_DESIGN)),
       [JOURNEY_DESIGN]: journeyBinding(frame),
       [LIGHT_DESIGN]: LIGHT,

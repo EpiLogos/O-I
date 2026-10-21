@@ -8,8 +8,8 @@
 //   the record     a page in the practice world (desktop/cradle/src/nara/practiceWorld.ts makePracticePage): a Flow marked as a sitting
 //                  whose `meta.sitting` is the record — the time actually sat, never the length set — made through Central's own
 //                  creation door when the sitting ends. With After on Write a line, it opens in a pane for the line;
-//   the centres    today's centres are the scene's (`ql.scene/v1`), which no owner carries to the shell yet (qlChakra.ts NO_CENTRES):
-//                  absent, the spine draws plain and says so;
+//   the centres    today's centres are the scene's (`ql.scene/v1`); its answers name no centre (qlChakra.ts NO_CENTRES): absent, the
+//                  spine draws plain and says so;
 //   today          today's sittings from the practice world's records, for the widget.
 // Length, Bell, Intervals, Focus, Centre, Inquiry and After are what you set (DesignBinding.local); the bell starts on the torus's root
 // (the mode in force, native/liveModeCatalogue.ts). Nothing scores a sitting or derives how you are.
