@@ -1,0 +1,117 @@
+{
+ "captured": "Quaternal Logic at afcd208 (QL-MEF #346 as merged, 241fd82de), built in the shared target pool, 21 Oct 2026: `ql wiki living-plan - --json`. Not the installed ql (9af17b0), which has no `wiki` command yet.",
+ "command": [
+  "ql",
+  "wiki",
+  "living-plan",
+  "-",
+  "--json"
+ ],
+ "cases": [
+  {
+   "input": {
+    "mode": "explain",
+    "relevance": {
+     "relevant_positions": [
+      2
+     ],
+     "requires_context": false,
+     "full_context_frame": false,
+     "position_budget": 6
+    }
+   },
+   "exit": 0,
+   "answer": {
+    "profile": "ql-mef/living-wiki-refraction/v1",
+    "mode": "explain",
+    "entry": {
+     "positions": [
+      5,
+      0,
+      1
+     ],
+     "meaning": "5->0->1 entry aperture into the changed knowledge field",
+     "is_return": false
+    },
+    "canonical_return": {
+     "from_position": 5,
+     "through_anchor": true,
+     "to_position": 0,
+     "anchor_relations": [
+      "#0 <-> anchor",
+      "#5 <-> anchor"
+     ]
+    },
+    "positions": [
+     5,
+     0,
+     1,
+     2
+    ],
+    "depth": "partial",
+    "omitted_relevant_positions": [],
+    "ordinary_wiki_correctness_requires_ql": false,
+    "owns_source_freshness": false,
+    "owns_agent_orchestration": false
+   }
+  },
+  {
+   "input": {
+    "mode": "explain",
+    "relevance": {
+     "relevant_positions": [
+      2,
+      3
+     ],
+     "requires_context": true,
+     "full_context_frame": false,
+     "position_budget": 4
+    }
+   },
+   "exit": 0,
+   "answer": {
+    "profile": "ql-mef/living-wiki-refraction/v1",
+    "mode": "explain",
+    "entry": {
+     "positions": [
+      5,
+      0,
+      1
+     ],
+     "meaning": "5->0->1 entry aperture into the changed knowledge field",
+     "is_return": false
+    },
+    "canonical_return": {
+     "from_position": 5,
+     "through_anchor": true,
+     "to_position": 0,
+     "anchor_relations": [
+      "#0 <-> anchor",
+      "#5 <-> anchor"
+     ]
+    },
+    "positions": [
+     5,
+     0,
+     1,
+     2
+    ],
+    "depth": "partial",
+    "omitted_relevant_positions": [
+     3,
+     4
+    ],
+    "ordinary_wiki_correctness_requires_ql": false,
+    "owns_source_freshness": false,
+    "owns_agent_orchestration": false
+   }
+  },
+  {
+   "input": {
+    "mode": "formal"
+   },
+   "exit": 2,
+   "stderr": "ql: formal Living Wiki depth requires an existing WikiRefractionRequest"
+  }
+ ]
+}

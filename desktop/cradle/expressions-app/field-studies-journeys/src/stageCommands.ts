@@ -7,7 +7,13 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
+/** The Ta-Onta procedural stage's own operations on the native field (DLW §21.2, the Torus's Stage page; QL-MEF continuous/host.rs
+ * stage_operation): read its state, evaluate a procedure, bind one to the live flow within a budget, unbind it, retire its slots. Each
+ * runs the native field's own controller operation (nativeField.ts stage), through the kernel's native_expression exchange. */
+export const STAGE_PROCEDURAL_ACTIONS = ['state', 'evaluate', 'bind', 'unbind', 'retire'] as const;
+/** A binding's evaluation budget: QL's own bounds (continuous/stage.rs DEFAULT_BINDING_BUDGET 16, MAX_BINDING_BUDGET 1024). */
+export const STAGE_BINDING_BUDGET = {min: 1, max: 1024} as const;
 /** The walk's own acts (lane W4-Technē; DLW §17.6 Journey): stand on a stop (at seconds into it), play or stop the saved scenes
  * (app.ts setSavedScenePlay, the scene strip's own Play), enter the presented stop's Scene in its Expression and return from it (the
  * journey instrument's crossing and app.ts returnToJourney). Each runs the frame's own act; nothing here walks. */
@@ -258,7 +264,10 @@ export type StageCommand =
   | {command: 'timeline'; action: 'camera'; centre: number; zoom: number}
   | {command: 'timeline'; action: 'view' | 'save-view'; name: string}
   | {command: 'timeline'; action: 'links'; on: boolean}
-  | {command: 'timeline'; action: 'categories'; hidden: string[]};
+  | {command: 'timeline'; action: 'categories'; hidden: string[]}
+  | {command: 'procedural-stage'; action: 'state'}
+  | {command: 'procedural-stage'; action: 'evaluate' | 'unbind' | 'retire'; procedure_ref: string}
+  | {command: 'procedural-stage'; action: 'bind'; procedure_ref: string; max_evaluations?: number};
 /** A Jankó note: one to twelve distinct pitch classes (0–11) struck together as one act, at an amplitude in (0, 1] (modal metres; the owner's strike bound). */
 export const STAGE_JANKO_AMPLITUDE_MAX = 1;
 export type StageResult = {ok: true} | {ok: false; error: string};
@@ -373,6 +382,18 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       return {req, command: {command: 'journey', action: 'stand', index: raw.index, ...(raw.seconds !== undefined ? {seconds: raw.seconds as number} : {})}};
     case 'timeline':
       return readTimelineCommand(raw, req);
+    case 'procedural-stage': {
+      if (raw.action === 'state') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'procedural-stage', action: 'state'}} : null;
+      if (raw.action === 'bind') {
+        if (!closed(raw, [...BASE_KEYS, 'action', 'procedure_ref', 'max_evaluations']) || !bounded(raw.procedure_ref)) return null;
+        const max = raw.max_evaluations;
+        if (max !== undefined && (!Number.isSafeInteger(max) || (max as number) < STAGE_BINDING_BUDGET.min || (max as number) > STAGE_BINDING_BUDGET.max)) return null;
+        return {req, command: {command: 'procedural-stage', action: 'bind', procedure_ref: raw.procedure_ref, ...(max !== undefined ? {max_evaluations: max as number} : {})}};
+      }
+      if (raw.action !== 'evaluate' && raw.action !== 'unbind' && raw.action !== 'retire') return null;
+      if (!closed(raw, [...BASE_KEYS, 'action', 'procedure_ref']) || !bounded(raw.procedure_ref)) return null;
+      return {req, command: {command: 'procedural-stage', action: raw.action, procedure_ref: raw.procedure_ref}};
+    }
     case 'canvas':
       if (raw.action === 'connector') {
         if (!closed(raw, [...BASE_KEYS, 'action', 'line', 'lineKind', 'fromSide', 'toSide']) || !bounded(raw.line)) return null;

@@ -19,6 +19,8 @@ export class InstrumentSession {
  /** Frozen copy of every admitted owner act and the aggregate advance data plane. */
  journal(): any;
  readonly lastInfluence: any;
+ /** The last stage act's own receipt (ql.stage-receipt/v1), or null before any. */
+ readonly lastStageReceipt: any;
  personal(input?: any): Promise<any>;
  setMuted(muted: boolean): any;
  dispose(): void;

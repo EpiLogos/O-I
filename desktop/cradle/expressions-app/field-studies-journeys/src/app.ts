@@ -2150,7 +2150,7 @@ function announceHostState(){
 }/** T-FRAME-CHROME-ONTO-PLATES: the presentation and the chrome reading for the announcement; absent before the door stands, never a throw out of it. */function chromeState(){try{return presentedChrome?{presentation:presentedChrome.presentation(),chrome:presentedChrome.reading()}:{};}catch{return {};}}
 /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts; controller.ts instrument.stage), for the Torus's Stage
  * page. Nothing is read for the announcement; absent while the field has disclosed none. */
-function instrumentStageState(){try{const instrument=(nativeField?.controller.reading as {instrument?:{stage?:unknown;stage_stale?:unknown}|null}|undefined)?.instrument;const stage=stageReadingOf(instrument?.stage,instrument?.stage_stale);return stage?{instrumentStage:stage}:{};}catch{return {};}}
+function instrumentStageState(){try{const instrument=(nativeField?.controller.reading as {instrument?:{stage?:unknown;stage_stale?:unknown;stage_last?:unknown}|null}|undefined)?.instrument;const stage=stageReadingOf(instrument?.stage,instrument?.stage_stale,instrument?.stage_last);return stage?{instrumentStage:stage}:{};}catch{return {};}}
 /** lane W4-Technē: the research instruments' state for the announcement (researchReading.ts): the walk from the open Journey document and
  * where it stands, and the presented Canvas or Timeline as the research instruments hold it. Absent rather than a throw out of it. */
 function researchState(){try{return {research:{journey:journeyReadingOf(store.document,{index:sceneIndex,local:sceneElapsed,playing:journeyPlaying,entered:crossingStands}),...(researchInstruments?.reading()??{})}};}catch{return {};}}
@@ -2317,6 +2317,12 @@ async function runStageCommand(command:StageCommand){
    // The Live instrument's edits run the native field's own controller operations (nativeField.ts command): the same path as the Studio's controls.
    if(!nativeField)throw new Error('This application has no native instrument.');
    await nativeField.command(command.edit);
+   break;
+  case 'procedural-stage':
+   // The procedural stage's own operations (stageCommands.ts STAGE_PROCEDURAL_ACTIONS) through the native field's controller, as the
+   // Studio's Procedural stage block runs them (nativeField.ts stage), each followed by the stage read back.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   await nativeField.stage(command);
    break;
   case 'journey':{
    // lane W4-Technē: the walk's own acts (stageCommands.ts STAGE_JOURNEY_ACTIONS), each the frame's own: the playhead moves as the

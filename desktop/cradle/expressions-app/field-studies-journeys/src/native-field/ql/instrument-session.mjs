@@ -31,13 +31,18 @@ const STRIKE_AT_MAX_METRES = 1.0;
 // stage-state is the Ta-Onta procedural stage's scoped disclosure: a read on
 // the one owner — the field does not advance and the receipt is unchanged.
 const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state'];
+// The stage's other acts on the one owner (ql-mef continuous/host.rs stage_operation): retire releases a procedure's own slots, bind
+// and unbind change the live flow's bindings. None advances the field: each answers with its ql.stage-receipt/v1 and the last
+// acknowledged field, unchanged, as the host's envelope always carries it. The kernel admits all five (native_expression.rs
+// EXCHANGE_OPERATIONS); each payload is validated again by the owner host.
+const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbind'];
 
 export class InstrumentSession {
   #context; #owner; #port; #field; #audio; #native; #instance; #sequence;
   #block; #lookahead; #maxBlocks; #maxBytes; #timeout; #queue = []; #bytes = 0;
   #views = new Set(); #maxViews; #busy = false; #held = false; #uncertain = false;
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
-  #generation = 0; #coalesced = 0; #influence = null;
+  #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null;
   #acts = []; #advances = { blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null };
 
   constructor({ context, owner, transport, initialReceipt, fieldBinding,
@@ -73,6 +78,8 @@ export class InstrumentSession {
 
   /** The influence reading the last scene determinant acknowledgement carried. */
   get lastInfluence() { return this.#influence === null ? null : structuredClone(this.#influence); }
+  /** The last stage act's own receipt (ql.stage-receipt/v1) as the owner returned it, or null before any. */
+  get lastStageReceipt() { return this.#stageReceipt === null ? null : structuredClone(this.#stageReceipt); }
 
   get reading() {
     return { schema: 'ql.instrument-reading/v1', instance_ref: this.#instance,
@@ -282,7 +289,7 @@ export class InstrumentSession {
    * with the applied field, the new influence and the stage claim. */
   async operate(command) {
     need(!this.#busy && !this.#held && !this.#disposed &&
-      ['set-axis', 'replace', 'set-damping', 'strike', 'strike-at', ...EVENT_OPERATIONS, 'stage-evaluate'].includes(command?.operation), 'domain operation requires idle admitted owner');
+      ['set-axis', 'replace', 'set-damping', 'strike', 'strike-at', ...EVENT_OPERATIONS, ...STAGE_ACTS].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
     need(this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');
@@ -290,6 +297,7 @@ export class InstrumentSession {
     try {
       const reply = await this.#exchange(command);
       need(!reply.refused, String(reply.error));
+      if (STAGE_ACTS.includes(command.operation) && reply.stage !== undefined) this.#stageReceipt = structuredClone(reply.stage);
       if (generation !== this.#generation || this.#held || this.#disposed) return this.reading;
       try { this.#enqueue(reply.frame); } catch (error) { this.hold(`presentation-admission-failed: ${String(error)}`); throw error; }
       this.present(); return this.reading;

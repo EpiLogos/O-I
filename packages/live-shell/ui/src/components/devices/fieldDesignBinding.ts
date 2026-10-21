@@ -39,8 +39,8 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   },
   contacts: {},
   morph: {
-    'phase.theta': 'The engine keeps the toroidal phase in its own accumulator and reports it to no reader outside the field.',
-    'phase.phi': 'The engine keeps the poloidal phase in its own accumulator and reports it to no reader outside the field.',
+    'phase.theta': 'The engine keeps the toroidal phase in its own accumulator (its telemetry drive.theta, which the Studio\'s phase instrument draws) — missing: its announcement to the shell (the editor reading carries no phase).',
+    'phase.phi': 'The engine keeps the poloidal phase in its own accumulator (its telemetry drive.phi, which the Studio\'s phase instrument draws) — missing: its announcement to the shell (the editor reading carries no phase).',
   },
   focus: {
     'focus.at': 'The engine does not report which formation holds the focus now.',
@@ -50,11 +50,11 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   ink: {},
   depth: {},
   resonance: {
-    stations: 'The plate\'s stations are computed inside the Expression from its modes and reach no reader outside it.',
-    'body.source': 'No body source: the engine takes its Q factor, agitation and edge as rows of its own; no tattva sets them here.',
-    'tattva.name': 'No tattva reaches the shell: the M2 condition the plate rings under is not announced to it.',
-    'tattva.fibre': 'No tattva reaches the shell, so no element fibre does.',
-    'tattva.standing': 'No tattva reaches the shell, so no table of body constants stands here.',
+    stations: 'The plate\'s stations are computed in the Expression from its modes (the Studio\'s station ticks) — missing: their announcement to the shell (the editor reading carries none).',
+    'body.source': 'No body source: the plate takes its Q factor, agitation and edge as rows of its own, and no owner holds body constants by tattva (QL\'s scene material is a declared policy too).',
+    'tattva.name': 'The plate rings under no M2 condition of its own (the field engine is not QL\'s scene); the live scene\'s tattva, QL\'s condition source_path, is not announced to the shell either.',
+    'tattva.fibre': 'No tattva sets the plate, so no element fibre does: the live scene\'s fibre (QL\'s condition material_fibre) is not announced to the shell.',
+    'tattva.standing': 'No table of body constants by tattva stands: the plate\'s constants are its own rows.',
   },
 }
 

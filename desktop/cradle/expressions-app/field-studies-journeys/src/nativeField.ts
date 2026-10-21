@@ -7,7 +7,10 @@ import {NativeChannel} from './native-field/channel';
 import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,INSTRUMENT_PRESENTATION,PRESENTATION_LEVEL,type NativeSky} from './native-field/controller';
 import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
 import type {FieldEngineAdapter} from './engine';
-import type {InstrumentEdit} from './stageCommands';
+import type {InstrumentEdit,StageCommand} from './stageCommands';
+import {STUDIO_PROCEDURE} from './stageReading';
+
+type StageProceduralCommand=Extract<StageCommand,{command:'procedural-stage'}>;
 import {createLiveEntry} from './native-field/liveEntry.mjs';
 import {planJankoStrike} from './native-field/jankoStrike.mjs';
 import {torusPlayReading} from './native-field/torusPlay.mjs';
@@ -206,8 +209,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const exampleProcedure=()=>{
   const stage=(controller.reading as any).instrument?.stage;
   if(!stage?.subject_ref)throw new Error('Read the stage state once first: the procedure addresses the live subject');
-  return {schema:'ql.stage-procedure/v1',procedure_ref:'ta-onta:studio:first-vertical',revision:1,
-   subject_ref:stage.subject_ref,trigger:{trigger:'invocation'},selector:['material.damping'],
+  return {schema:'ql.stage-procedure/v1',procedure_ref:STUDIO_PROCEDURE.ref,revision:STUDIO_PROCEDURE.revision,
+   subject_ref:stage.subject_ref,trigger:{trigger:STUDIO_PROCEDURE.trigger},selector:[...STUDIO_PROCEDURE.selector],
    changes:[{change:'damping',per_second:0.25}]};
  };
  const STAGE_SLOTS=['form','material.damping','clock.inscription','clock.lensing'];
@@ -440,6 +443,25 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const timer=window.setInterval(()=>{void controller.refreshSources();update();liveEntry.check();},250);
  /** Run one instrument edit the shell sent through the host channel. It calls the same controller operation the panel's own control calls, so
   * the owner refuses or accepts it exactly as it does a Studio click: a refused determinant is named by the owner and the rejection carries it. */
+ /** The procedural stage's own acts the shell sent through the host channel (stageCommands.ts 'procedural-stage'): each runs the
+  * controller operation the Studio's Procedural stage block runs, and reads the stage back after, as its Evaluate button does
+  * (stage-evaluate above). The procedures this frame holds are its Studio's one example (exampleProcedure, STUDIO_PROCEDURES):
+  * Evaluate and Bind name it by ref; Unbind and Retire take any ref, and the owner refuses one it does not hold. */
+ const stage=async(command:StageProceduralCommand):Promise<void>=>{
+  if(!(controller.reading as any).instrument)throw new Error('No scene is open. Open the live instrument first; the procedural stage belongs to its scene.');
+  const held=(ref:string)=>{
+   if(ref!==STUDIO_PROCEDURE.ref)throw new Error(`This frame holds no procedure ${ref}: it holds ${STUDIO_PROCEDURE.ref}, its Studio's example.`);
+   return exampleProcedure();
+  };
+  try{
+   if(command.action==='state')await controller.stageState();
+   else if(command.action==='evaluate')await controller.stageEvaluate(held(command.procedure_ref));
+   else if(command.action==='bind')await controller.stageBind(held(command.procedure_ref),command.max_evaluations);
+   else if(command.action==='unbind')await controller.stageUnbind(command.procedure_ref);
+   else await controller.stageRetire(command.procedure_ref);
+   if(command.action!=='state')await controller.stageState();
+  }finally{update();}
+ };
  const command=async(edit:InstrumentEdit):Promise<void>=>{
   const reading=controller.reading as any;
   if(edit.kind==='lens'||edit.kind==='context-frame'||edit.kind==='harmonic'||edit.kind==='transcription'){
@@ -476,5 +498,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const openLive=()=>{liveEntry.enter();requestAnimationFrame(()=>liveEntry.check());};
  const leaveLive=()=>liveEntry.leave();
  update();
- return {controller,panel,command,playJanko,openLive,leaveLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,playJanko,openLive,leaveLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

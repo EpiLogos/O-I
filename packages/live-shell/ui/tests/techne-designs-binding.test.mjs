@@ -331,11 +331,9 @@ test('the Knowledge graph on the open graph (its handle: view state, its own rea
   await binding.write([{key: 'selected', value: 'wiki:node:delivered-lane-loses-install'}, {key: 'minimap', value: false}])
   assert.deepEqual(surface.calls, [['select', 'wiki:node:delivered-lane-loses-install'], ['minimap', false]])
   await assert.rejects(() => binding.write([{key: 'selected', value: 'wiki:node:nowhere'}]), /not in this graph's reading/, 'the handle\'s refusal, in its words')
-  for (const key of ['aperture.mode', 'aperture.positions', 'aperture.budget']) {
-    assert.match(binding.standing[key].disabled, /missing op/, key)
-    await assert.rejects(() => binding.write([{key, value: 'x'}]), /missing op/)
-  }
-  assert.match(binding.standing['aperture.mode'].disabled, /plan_living_wiki_refraction/)
+  // The Aperture page: the request is the view's own; QL's plan is asked for it (livingPlan.ts), and with no mode chosen says so.
+  for (const key of ['aperture.mode', 'aperture.positions', 'aperture.context', 'aperture.full', 'aperture.budget']) assert.equal(typeof binding.local[key], 'function', key)
+  assert.match(binding.standing['aperture.admitted'].disabled, /Choose a mode/)
   const loading = graphB.graphBinding(fakeSurface({}, {reading: null, loading: true}), graphB.surfaceRead(fakeSurface({}, {reading: null, loading: true})), writes)
   assert.equal(loading.values.reading, undefined)
   assert.deepEqual(loading.waiting, ['reading'], 'the surface\'s first part has not come: the reading waits')
@@ -540,7 +538,7 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
   const cases = [
     [DESIGNS.palace, palaceB.palaceBinding(state), /Archetypal-Earth — wiki local whole|Start of the argument|ai-kit/, ['The Stone', 'Mercurius'], [palaceB.PALACE_REFUSE.audience]],
     [DESIGNS.palace, palaceB.palaceBinding({phase: 'outside'}), /Archetypal-Earth|Start of the argument|Actuation/, [], [palaceB.NOT_INSIDE]],
-    [DESIGNS.graph, graphB.graphBinding(fakeSurface(), graphB.surfaceRead(fakeSurface()), writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.GRAPH_REFUSE['aperture.mode']]],
+    [DESIGNS.graph, graphB.graphBinding(fakeSurface(), graphB.surfaceRead(fakeSurface()), writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], []],
     [DESIGNS.graph, graphB.graphBinding(null, null, writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.NOT_OPEN]],
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey')), /Nocturne|Fine, irregular stippling\. Form|Language/, ['Gather', 'Rounded grains find a shared current.'], [frameB.JOURNEY_REFUSE.snap]],
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey', {research: null})), /Nocturne|Fine, irregular stippling|Language/, [], []],
@@ -647,26 +645,81 @@ test('A: the frame announces its research reading and runs the walk\'s and the c
   assert.match(boundary, /const research = readFrameResearch\(raw\.research\);/, 'the boundary reads it exactly or refuses the reading')
 })
 
-test('the Torus\'s Stage page on the stage the frame announced: its slots and bindings; Evaluate, Bind, Unbind and Retire named with what no route carries', async () => {
+test('the Torus\'s Stage page on the stage the frame announced: its slots, bindings, the procedures the frame holds and the last act; Evaluate, Bind, Unbind and Retire as the stage\'s own operations', async () => {
   const torusDevice = await import('../src/live/torusDevice.ts')
   const {torus} = await import('../src/inhabitants/catalogue/panels/torus.tsx')
-  const {readFrameStage} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
-  const stage = readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false,
-    slots: [{slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1}, {slot: 'material.damping'}, {slot: 'clock.inscription'}, {slot: 'clock.lensing'}],
-    bindings: [{procedure: 'ta-onta:stage:cli-bound', revision: 2, trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}]})
-  const binding = torusDevice.torusDesignBinding(null, undefined, {}, stage)
+  const {readFrameStage, stageReadingOf, STUDIO_PROCEDURE} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
+  // The frame's announcement from a disclosure it read, the procedure it holds and its last act (stageReading.ts stageReadingOf).
+  const disclosure = {schema: 'ql.stage-state/v1', subject_ref: 'ql:subject:live', generation: 7,
+    slots: {form: {owner: 'ta-onta:stage:cli-fold', revision: 1}, 'material.damping': {}, 'clock.inscription': {}, 'clock.lensing': {}},
+    bindings: [{procedure_ref: 'ta-onta:stage:cli-bound', revision: 2, determinant: 'm1-advance', evaluations: 5, max_evaluations: 16, standing: 'active'}]}
+  const announced = stageReadingOf(disclosure, false, {standing: 'refused', why: 'no binding names ta-onta:stage:other'})
+  const stage = readFrameStage(JSON.parse(JSON.stringify(announced)))
+  assert.ok(stage, 'the boundary admits the announcement exactly')
+  const runs = []
+  const run = async command => { runs.push(command); return {ok: true} }
+  const binding = torusDevice.torusDesignBinding(null, undefined, {}, stage, undefined, run, {'stage.budget': 32})
   assert.deepEqual(JSON.parse(binding.values['stage.slots'])[0], {slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1})
   assert.deepEqual(JSON.parse(binding.values['stage.bindings']), [{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}])
-  for (const key of ['stage.procedures', 'stage.procedure', 'stage.last', 'stage.why']) assert.equal(binding.values[key], undefined, `${key}: no route carries it`)
-  assert.match(binding.standing['stage.evaluate'].disabled, /a list of the ql\.stage-procedure\/v1 procedures you keep/)
-  for (const key of ['stage.bind', 'stage.unbind', 'stage.retire']) assert.match(binding.standing[key].disabled, /missing op: stage-bind, stage-unbind and stage-retire through the frame's instrument session/, key)
-  const none = torusDevice.torusDesignBinding(null, undefined, {}, null)
+  assert.deepEqual(JSON.parse(binding.values['stage.procedures']), [{ref: STUDIO_PROCEDURE.ref, revision: 1, trigger: 'invocation', selector: ['material.damping']}], 'the procedure the frame holds')
+  assert.deepEqual([binding.values['stage.last'], binding.values['stage.why']], ['refused', 'no binding names ta-onta:stage:other'], 'the last act\'s standing, the owner\'s words')
+  assert.equal(binding.values['stage.budget'], 32, 'the budget is the view\'s own')
+  for (const key of ['stage.procedure', 'stage.budget']) assert.equal(typeof binding.local[key], 'function', `${key}: the view\'s own`)
+  for (const key of ['stage.evaluate', 'stage.bind', 'stage.unbind', 'stage.retire']) { assert.equal(binding.writes(key), true, key); assert.equal(binding.standing[key], undefined, key) }
+  await binding.write([{key: 'stage.evaluate', value: STUDIO_PROCEDURE.ref}, {key: 'stage.bind', value: 'ta-onta:stage:cli-bound'}, {key: 'stage.unbind', value: 'ta-onta:stage:cli-bound'}, {key: 'stage.retire', value: 'ta-onta:stage:cli-fold'}])
+  assert.deepEqual(runs, [
+    {command: 'procedural-stage', action: 'evaluate', procedure_ref: STUDIO_PROCEDURE.ref},
+    {command: 'procedural-stage', action: 'bind', procedure_ref: 'ta-onta:stage:cli-bound', max_evaluations: 32},
+    {command: 'procedural-stage', action: 'unbind', procedure_ref: 'ta-onta:stage:cli-bound'},
+    {command: 'procedural-stage', action: 'retire', procedure_ref: 'ta-onta:stage:cli-fold'}], 'each act the stage\'s own operation, the bind with the budget held')
+  const refusing = torusDevice.torusDesignBinding(null, undefined, {}, stage, undefined, async () => ({ok: false, error: 'the owner refused'}))
+  await assert.rejects(refusing.write([{key: 'stage.retire', value: 'x'}]), /the owner refused/)
+  // No frame: the acts are named; no stage disclosed: every stage reading and act is named.
+  const unmounted = torusDevice.torusDesignBinding(null, undefined, {}, stage, undefined, null)
+  assert.match(unmounted.standing['stage.bind'].disabled, /No Expressions application is mounted/)
+  const none = torusDevice.torusDesignBinding(null, undefined, {}, null, undefined, run)
   assert.equal(none.values['stage.slots'], undefined)
-  assert.match(none.standing['stage.slots'].disabled, /has disclosed no stage yet/)
+  for (const key of ['stage.slots', 'stage.procedures', 'stage.evaluate']) assert.match(none.standing[key].disabled, /has disclosed no stage yet/, key)
   // the design draws the stage on that binding, on its Stage page, with nothing absent drawn as text
   host.setHostPage(binding.id, 'stage')
   const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
   host.resetHost(binding.id)
   assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
-  assert.ok(markup.includes(escaped(torusDevice.TORUS_ABSENT['stage.bind'])), 'Bind says why it cannot act')
+  assert.ok(markup.includes('refused'), 'the last act\'s standing is drawn')
+})
+
+test('the graph\'s Aperture page asks QL\'s living-wiki plan for the request it holds: admitted and omitted positions, the depth, and QL\'s own refusal of Formal', async () => {
+  const plan = await import('../src/techne/devices/livingPlan.ts')
+  const graphB = await import('../src/techne/devices/graphBinding.ts')
+  // REAL: `ql wiki living-plan` at QL-MEF #346 (tests/fixtures/ql-wiki-living-plan-2026-10-21.json); the kernel's envelope around each.
+  const real = JSON.parse(readFileSync(new URL('./fixtures/ql-wiki-living-plan-2026-10-21.json', import.meta.url), 'utf8')).cases
+  const answers = new Map(real.map(c => [JSON.stringify(c.input), c.exit === 0 ? {outcome: {result: 'owner_route_reading', data: c.answer}} : {outcome: null, error: c.stderr.replace(/^ql: /, '')}]))
+  const asked = []
+  plan.resetLivingPlan({call: async op => { asked.push(op); return answers.get(JSON.stringify(op.request.request)) ?? {outcome: null, error: 'no capture'} }})
+  assert.deepEqual(plan.livingPlanRequest({}), {ok: false, reason: plan.NO_MODE}, 'no mode: nothing is asked')
+  await plan.syncLivingPlan({'aperture.mode': 'explain', 'aperture.positions': JSON.stringify([2])})
+  assert.deepEqual(asked.at(-1), {op: 'ql_read', request: {kind: 'wiki-living-plan', request: real[0].input}}, 'the request in QL\'s own fields; the library\'s budget of six')
+  const writes = {setter: async () => {}, patch: () => {}}
+  const held = {'aperture.mode': 'explain', 'aperture.positions': JSON.stringify([2])}
+  const binding = graphB.graphBinding(null, null, writes, held, plan.livingPlanState())
+  assert.deepEqual([binding.values['aperture.admitted'], binding.values['aperture.omitted'], binding.values['aperture.depth'], binding.values['aperture.refraction']],
+    [JSON.stringify([5, 0, 1, 2]), JSON.stringify([]), 'partial', false], 'QL\'s plan: the entry, then 2')
+  assert.equal(binding.values['aperture.mode'], 'explain', 'the request is the view\'s own')
+  await plan.syncLivingPlan({'aperture.mode': 'explain', 'aperture.positions': JSON.stringify([2, 3]), 'aperture.context': true, 'aperture.budget': 4})
+  assert.deepEqual(JSON.parse(plan.livingPlanValues(plan.livingPlanState())['aperture.omitted']), [3, 4], 'the budget left 3 and 4 out')
+  await plan.syncLivingPlan({'aperture.mode': 'formal'})
+  assert.equal(plan.livingPlanState().reading.reason, 'formal Living Wiki depth requires an existing WikiRefractionRequest', 'QL\'s refusal, in its words')
+  const formal = graphB.graphBinding(null, null, writes, {'aperture.mode': 'formal'}, plan.livingPlanState())
+  assert.equal(formal.standing['aperture.depth'].disabled, 'formal Living Wiki depth requires an existing WikiRefractionRequest')
+  const calls = asked.length
+  await plan.syncLivingPlan({'aperture.mode': 'formal'})
+  assert.equal(asked.length, calls, 'one ask per request')
+  // the design draws the plan on its Aperture page, its fixture never standing in
+  const {design} = await import('../src/inhabitants/catalogue/panels/knowledge-graph__graph.tsx')
+  await plan.syncLivingPlan(held)
+  host.setHostPage(binding.id, 'aperture')
+  const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: design, binding: graphB.graphBinding(null, null, writes, held, plan.livingPlanState()), view: 'whole', nav: {}}))
+  host.resetHost(binding.id)
+  assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
+  plan.resetLivingPlan()
 })

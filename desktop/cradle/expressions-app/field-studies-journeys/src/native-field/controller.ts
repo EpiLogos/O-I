@@ -55,6 +55,8 @@ export class NativeFieldController {
  private restoring:{epoch:number;revision:number}|null=null;
  private scene=false;private influenceReading:any=null;private acting:SceneActing|null=null;
  private stageReading:any=null;private stageStale=false;
+ /** The last stage act's standing: the owner's own receipt (applied) or its refusal in its words; null before any act. */
+ private stageLast:{standing:'applied'|'refused';procedure_ref?:string;why?:string}|null=null;
  private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
@@ -142,7 +144,7 @@ export class NativeFieldController {
   presented_clock:clock,
   instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
    opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,played:this.played,struck:this.struck,
-   stage:this.stageReading,stage_stale:this.stageStale,
+   stage:this.stageReading,stage_stale:this.stageStale,stage_last:this.stageLast,
    presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
   exact_seek:false,restart:'explicit new native process; no implicit rewind',
@@ -472,7 +474,28 @@ export class NativeFieldController {
   * applied field and new influence; the ownership claims are read back from
   * stage state, never asserted locally. */
  stageEvaluate(procedure:unknown){
-  return this.determinant('stage evaluate',()=>({operation:'stage-evaluate',procedure:structuredClone(procedure)}),false);
+  return this.stageAct('stage evaluate',()=>({operation:'stage-evaluate',procedure:structuredClone(procedure)}));
+ }
+ /** Bind a determinant-triggered procedure to the live flow, within its evaluation budget (the host's own stage-bind). */
+ stageBind(procedure:unknown,maxEvaluations?:number){
+  return this.stageAct('stage bind',()=>({operation:'stage-bind',procedure:structuredClone(procedure),...(maxEvaluations!==undefined?{max_evaluations:maxEvaluations}:{})}));
+ }
+ /** Remove a binding; the receipt names its final standing (the host's own stage-unbind). */
+ stageUnbind(procedureRef:string){
+  return this.stageAct('stage unbind',()=>({operation:'stage-unbind',procedure_ref:procedureRef}));
+ }
+ /** Release one procedure's own slots; what it left stays as authored material (the host's own stage-retire). */
+ stageRetire(procedureRef:string){
+  return this.stageAct('stage retire',()=>({operation:'stage-retire',procedure_ref:procedureRef}));
+ }
+ /** One stage act through the one serial owner, as every determinant goes: the receipt it returns, or its refusal in the owner's words,
+  * is kept as the stage's last standing. Ownership and bindings are read back from stage state, never asserted here. */
+ private async stageAct(operation:string,build:()=>any):Promise<void>{
+  try{await this.determinant(operation,build,false);}
+  catch(error){this.stageLast={standing:'refused',why:String(error instanceof Error?error.message:error)};this.changed();throw error;}
+  const receipt=this.session?.lastStageReceipt;
+  this.stageLast={standing:receipt?.applied===false?'refused':'applied',...(typeof receipt?.procedure_ref==='string'?{procedure_ref:receipt.procedure_ref}:{})};
+  this.changed();
  }
  /** Human-cadence source refresh after determinant events; never while an event
   * is in flight, never while held. */
@@ -587,7 +610,7 @@ export class NativeFieldController {
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
   this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
-  this.stageReading=null;this.stageStale=false;
+  this.stageReading=null;this.stageStale=false;this.stageLast=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{

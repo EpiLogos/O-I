@@ -71,7 +71,7 @@ test('every key of the design is the owner\'s reading or is absent with its reas
   const values = model.torusDesignValues(state())
   // The Rack page's keys are the rack's (qlRack.ts): the rack named absent until it is read, the part in the view's own hand.
   const bound = model.torusDesignBinding(state())
-  for (const key of Object.keys(torus.defaults)) assert.ok(key in values || model.TORUS_ABSENT[key] || (key === 'rack' && bound.standing.rack.disabled) || (key === 'rack.part' && bound.local['rack.part']),
+  for (const key of Object.keys(torus.defaults)) assert.ok(key in values || model.TORUS_ABSENT[key] || (key === 'rack' && bound.standing.rack.disabled) || bound.local[key],
     `${key}: read from the owner, named absent, or the view's own`)
   assert.deepEqual(Object.keys(torus.defaults).filter(key => key in values),
     ['light', 'level', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing'],

@@ -28,6 +28,7 @@ import {canvasBinding, journeyBinding, timelineBinding, type FrameReadings, type
 import {graphBinding, surfaceRead, GRAPH_READ_NODES, type GraphWrites} from './graphBinding'
 import {useGraphRead} from './graphRead'
 import {lensBinding, lightBinding} from './effectBindings'
+import {useLivingPlan} from './livingPlan'
 
 /** Each instrument's chain on the rack: the design that is the instrument (where the instrument is not the holder's own plate, the
  * World of M0′ and M4′), then its effects, left to right. */
@@ -100,6 +101,8 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
   // While a graph is open its own reading is the material (its handle publishes it); the root register is read here only while none is.
   const rootRead = useGraphRead(graph && !surface, Number.isSafeInteger(budget) && budget > 0 ? budget : GRAPH_READ_NODES, false)
   const read = useMemo(() => (surface ? surfaceRead(surface) : rootRead), [surface, rootRead])
+  // The Aperture page: QL's living-wiki plan for the request the graph's design holds (livingPlan.ts).
+  const plan = useLivingPlan(holds[GRAPH_DESIGN])
   return useMemo(() => {
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
@@ -110,7 +113,7 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
       [JOURNEY_DESIGN]: journeyBinding(frame),
       [LIGHT_DESIGN]: LIGHT,
       [LENS_DESIGN]: LENS,
-      [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN)),
+      [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan),
     }
-  }, [palace, holds, hosted, session, read, surface])
+  }, [palace, holds, hosted, session, read, surface, plan])
 }

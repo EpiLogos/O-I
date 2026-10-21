@@ -14,6 +14,8 @@ import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LI
 import type {FrameStageReading} from '@epilogos/expressions-boundary'
 import {hostedChrome} from '../projections/expressionsPaneHost'
 import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
+import {handsFor, heldFor} from '../techne/devices/designDevices'
+import type {StageRun} from '../components/expressions/studio/StudioStage'
 
 export const TORUS_DEVICE_ID = 'live:m1-torus'
 
@@ -82,45 +84,66 @@ export const TORUS_DETERMINANT_KEYS: Readonly<Record<string, string>> = {'lens':
 
 const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, sound, level, cadence and scale, and takes only those through the stage channel (stageCommands.ts InstrumentEdit)'
 
-/** The Stage page (manual §21.2; lane W4-Technē): the hosted frame's native field holds the stage (expressions-app native-field:
- * stageState, stageEvaluate) and now announces the disclosure it last read (stageReading.ts, HostedAppState.instrumentStage):
- * each owned slot's owner and revision, and each procedure bound to the flow. What no route carries stays named: the procedures you keep
- * (no owner lists the ql.stage-procedure/v1 files to the shell), so Evaluate has no procedure to send; and Bind, Unbind and Retire, which
- * the kernel admits (native_expression.rs stage-state … stage-unbind) but the frame's instrument session does not relay (instrument-
- * session.mjs carries stage-state and stage-evaluate only). */
+/** The Stage page (manual §21.2): the hosted frame's native field holds the procedural stage and announces the disclosure it last read
+ * (stageReading.ts, HostedAppState.instrumentStage): each owned slot's owner and revision, each procedure bound to the flow, the
+ * procedures the frame holds (its Studio's example, stageReading.ts STUDIO_PROCEDURE: no owner lists the person's own) and the last
+ * act's standing. The four acts are the stage's own operations, sent through the frame's stage channel (stageCommands.ts
+ * 'procedural-stage') to the native field's own stage operations and on through the kernel's native_expression exchange (native_expression.rs
+ * EXCHANGE_OPERATIONS admits all five): Evaluate, Bind (with the budget you hold), Unbind and Retire, each with the procedure's ref, and
+ * the stage read back after. The procedure you choose and the budget are the view's own. */
 const NO_STAGE_READ = 'The native field has disclosed no stage yet: it reads its stage when asked (the Studio\'s Procedural stage · Read stage state), and announces what it last read'
-const NO_PROCEDURES = 'No procedure reaches the shell — missing op: a list of the ql.stage-procedure/v1 procedures you keep (no owner lists them to the Torus)'
-const NO_STAGE_RELAY = 'missing op: stage-bind, stage-unbind and stage-retire through the frame\'s instrument session (instrument-session.mjs relays stage-state and stage-evaluate only; the kernel admits all five)'
-const NO_RECEIPT = 'No stage receipt reaches the shell: the disclosure carries the slots and bindings, not the last receipt or its refusal'
-/** The stage keys and why each has no reading or write here. */
+const NO_STAGE_FRAME = 'No Expressions application is mounted, so no stage act reaches the native field: open the Expressions pane.'
+const NO_LAST = 'No stage act has run since the stage was read: the last receipt is the next act\'s.'
+/** The stage keys and why each has no reading or write here, before the field discloses its stage. */
 const STAGE_ABSENT: Readonly<Record<string, string>> = {
-  // Readings: drawn from what the field last disclosed (torusStageValues); absent, with this reason, until it discloses one.
-  'stage.slots': `${NO_STAGE_READ}.`, 'stage.bindings': `${NO_STAGE_READ}.`,
-  'stage.procedures': `${NO_PROCEDURES}.`, 'stage.procedure': `${NO_PROCEDURES}, so there is none to choose.`, 'stage.budget': `${NO_PROCEDURES}, and nothing binds: ${NO_STAGE_RELAY}.`,
-  'stage.last': `${NO_RECEIPT}.`, 'stage.why': `${NO_RECEIPT}.`,
-  'stage.evaluate': `${NO_PROCEDURES}: the field's stage-evaluate takes a procedure document, and none reaches the shell.`,
-  'stage.bind': `Bind: ${NO_STAGE_RELAY}.`, 'stage.unbind': `Unbind: ${NO_STAGE_RELAY}.`, 'stage.retire': `Retire: ${NO_STAGE_RELAY}.`,
+  'stage.slots': `${NO_STAGE_READ}.`, 'stage.bindings': `${NO_STAGE_READ}.`, 'stage.procedures': `${NO_STAGE_READ}.`,
+  'stage.last': `${NO_STAGE_READ}.`, 'stage.why': `${NO_STAGE_READ}.`,
+  'stage.evaluate': `Evaluate: ${NO_STAGE_READ}.`, 'stage.bind': `Bind: ${NO_STAGE_READ}.`, 'stage.unbind': `Unbind: ${NO_STAGE_READ}.`, 'stage.retire': `Retire: ${NO_STAGE_READ}.`,
 }
-/** The stage the frame announced, as the Torus design reads it (torus.tsx `stage.slots`, `stage.bindings`). */
-export function torusStageValues(stage: FrameStageReading | null | undefined): Record<string, Value> {
-  if (!stage) return {}
-  return {'stage.slots': JSON.stringify(stage.slots.map(slot => ({slot: slot.slot, ...(slot.owner ? {owner: slot.owner} : {}), ...(slot.revision !== undefined ? {revision: slot.revision} : {})}))),
-    'stage.bindings': JSON.stringify(stage.bindings.map(binding => ({procedure: binding.procedure, trigger: binding.trigger, evaluations: binding.evaluations, max: binding.max, standing: binding.standing})))}
+/** The stage's four acts, each the stage's own operation (stageCommands.ts STAGE_PROCEDURAL_ACTIONS). */
+export const TORUS_STAGE_ACTS: Readonly<Record<string, 'evaluate' | 'bind' | 'unbind' | 'retire'>> = {'stage.evaluate': 'evaluate', 'stage.bind': 'bind', 'stage.unbind': 'unbind', 'stage.retire': 'retire'}
+/** The view's own: the procedure you choose and a binding's budget (DesignBinding.local, held in the shell). */
+export const TORUS_STAGE_LOCAL = ['stage.procedure', 'stage.budget'] as const
+/** The stage the frame announced, as the Torus design reads it (torus.tsx `stage.slots`, `stage.bindings`, `stage.procedures`,
+ * `stage.last`, `stage.why`), with the procedure and budget the view holds. */
+export function torusStageValues(stage: FrameStageReading | null | undefined, held: Readonly<Record<string, Value>> = {}): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  for (const key of TORUS_STAGE_LOCAL) if (held[key] !== undefined) values[key] = held[key]!
+  if (!stage) return values
+  values['stage.slots'] = JSON.stringify(stage.slots.map(slot => ({slot: slot.slot, ...(slot.owner ? {owner: slot.owner} : {}), ...(slot.revision !== undefined ? {revision: slot.revision} : {})})))
+  values['stage.bindings'] = JSON.stringify(stage.bindings.map(binding => ({procedure: binding.procedure, trigger: binding.trigger, evaluations: binding.evaluations, max: binding.max, standing: binding.standing})))
+  if (stage.procedures) values['stage.procedures'] = JSON.stringify(stage.procedures.map(procedure => ({ref: procedure.ref, revision: procedure.revision, trigger: procedure.trigger, selector: procedure.selector})))
+  if (stage.last) {
+    values['stage.last'] = stage.last.standing
+    if (stage.last.why) values['stage.why'] = stage.last.why
+  }
+  return values
+}
+
+/** The stage command a Torus act sends: the act's own operation on the procedure it names, a bind with the budget you hold. */
+export function torusStageCommand(change: ValueChange, held: Readonly<Record<string, Value>> = {}) {
+  const action = TORUS_STAGE_ACTS[change.key]
+  if (!action) throw new Error(`${change.key}: no act of the stage.`)
+  if (typeof change.value !== 'string' || !change.value) throw new Error('A stage act names the procedure it acts on.')
+  const budget = held['stage.budget']
+  return action === 'bind'
+    ? {command: 'procedural-stage' as const, action, procedure_ref: change.value, ...(typeof budget === 'number' ? {max_evaluations: Math.round(budget)} : {})}
+    : {command: 'procedural-stage' as const, action, procedure_ref: change.value}
 }
 // The Rack page (manual §16.16, §22.9) reads M1′'s rack from the map's ledger, and holds the part you choose (qlRack.ts).
 
 /** Why each design key the binding leaves absent has no reading (manual §16.12: "When a reading is missing, say which one"). */
 export const TORUS_ABSENT: Readonly<Record<string, string>> = {
-  pulseMix: `No pulse mix: ${NO_FIELD_PARAMETER}.`,
-  helixBalance: `No helix balance: ${NO_FIELD_PARAMETER}.`,
-  strike: `No strike: ${NO_FIELD_PARAMETER}. The field's strike depth is its material policy, which the hosted instrument does not announce.`,
-  damping: `No damping: ${NO_FIELD_PARAMETER}. Damping is per M2 mode in the field's own panel (nativeField.ts editBasis), not announced to the shell.`,
+  pulseMix: `No pulse mix: no QL owner holds a balance of the two pulses (none in its scene field, M1 engine or spanda field); ${NO_FIELD_PARAMETER}.`,
+  helixBalance: 'No helix balance: in QL a helix is one half of the ring in the 72-space address (spanda_field.rs resonance_index: lens·12 + helix·6 + position), never a balance between the two.',
+  strike: 'No strike: the scene\'s strike is its declared material policy, a depth in metres (stage state material.strike_metres; QL\'s MATERIAL_STANDING: no source table fixes it), not the share of velocity the design draws.',
+  damping: 'No damping: the scene holds a decay rate per second (stage state material.damping_per_second, a declared policy), not the Q factor the design draws.',
   drive: `No drive: ${NO_FIELD_PARAMETER}. No sky route moves it either: a planet takes only what the owner reports (designBindings/skyModulation.ts).`,
-  modes: `No mode count: ${NO_FIELD_PARAMETER}.`,
+  modes: `No mode count: the scene's modes are its planet voices (scene_field.rs VOICES), and no owner takes a count of them; ${NO_FIELD_PARAMETER}.`,
   agitation: `No agitation: ${NO_FIELD_PARAMETER}.`,
   attack: `No attack: ${NO_FIELD_PARAMETER}.`,
   release: `No release: ${NO_FIELD_PARAMETER}.`,
-  voices: `No voice count: ${NO_FIELD_PARAMETER}.`,
+  voices: 'No voice count: the scene sounds all its planet voices together (scene_field.rs VOICES); no owner holds a polyphony that makes the oldest note give way.',
   pan: `No pan: ${NO_FIELD_PARAMETER}.`,
   view: 'Surface, wire or both is a way of drawing the pane: no owner keeps it.',
   receiver: 'No owner takes the camera as the place where the torus is heard.',
@@ -128,10 +151,10 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
   sounding: 'The owner reports no sounding keys: a struck key is one act through the stage channel, answered yes or no, never reported back as sounding.',
   driveMod: 'Nothing moves the drive: the owner announces no drive, so no planet can take it and no range is drawn round it.',
-  'body.source': `No body source: ${NO_FIELD_PARAMETER}. The body's constants are the field's own; no tattva sets them here.`,
-  'tattva.name': 'No tattva reaches the shell: the M2 condition the field rings under is not announced to it.',
-  'tattva.fibre': 'No tattva reaches the shell, so no element fibre does.',
-  'tattva.standing': 'No tattva reaches the shell, so no table of body constants stands here.',
+  'body.source': 'No body source: QL\'s scene material is a declared policy (scene_field.rs MATERIAL_STANDING), never taken from the tattva; no owner holds body constants by tattva.',
+  'tattva.name': 'The tattva of the M2 condition is QL\'s (the live event\'s condition source_path: tattva_coordinate), but neither the field\'s influence reading nor the instrument the frame announces carries it — missing: its announcement to the shell.',
+  'tattva.fibre': 'The element fibre is QL\'s (the condition source_path: material_fibre), but nothing announces it to the shell — missing: its announcement.',
+  'tattva.standing': 'No table of body constants by tattva stands: QL\'s scene material is a declared policy (scene_field.rs MATERIAL_STANDING).',
   ...STAGE_ABSENT,
 }
 
@@ -193,7 +216,8 @@ const TORUS_KEYS = ['light', 'standing', 'level', ...QL_PRESENTATION_KEYS.filter
 /** The binding the runtime hosts the Torus design on: the owner's readings, the device's one submit (the stage channel), and every
  * key the owner does not take disabled with the reason. */
 export function torusDesignBinding(state: LiveTorusState | null, device: DeviceInstance = torusDevice(state), skyHeld: Readonly<Record<string, string>> = {},
-  stage: FrameStageReading | null | undefined = hostedChrome()?.state?.instrumentStage ?? null, rack: QlRackState = qlRackState(1)): DesignBinding {
+  stage: FrameStageReading | null | undefined = hostedChrome()?.state?.instrumentStage ?? null, rack: QlRackState = qlRackState(1),
+  run: StageRun | null = hostedChrome()?.run ?? null, held: Readonly<Record<string, Value>> = heldFor(TORUS_DESIGN_ID)): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of TORUS_KEYS) {
     const why = writeStanding(state, key)
@@ -202,15 +226,33 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   // The Rack page: M1′'s rack from the map's ledger, and the part you choose in your own hand (qlRack.ts).
   const page = rackPage(1, rack)
   Object.assign(standing, page.standing)
+  // The Stage page: what the field disclosed, and its four acts through the frame's stage channel once there is a stage and a frame.
+  const acting = !!stage && !!run
+  if (stage) {
+    for (const key of ['stage.slots', 'stage.bindings', 'stage.procedures']) standing[key] = {disabled: 'A reading of the stage the native field disclosed: its acts change it.'}
+    standing['stage.last'] = {disabled: stage.last ? 'The last stage act\'s standing, as the owner returned it.' : NO_LAST}
+    standing['stage.why'] = {disabled: stage.last?.why ? 'The owner\'s refusal of the last stage act, in its words.' : stage.last ? 'The last stage act was not refused.' : NO_LAST}
+    for (const key of Object.keys(TORUS_STAGE_ACTS)) if (acting) delete standing[key]; else standing[key] = {disabled: NO_STAGE_FRAME}
+  }
+  const local: Record<string, (value: Value | undefined) => void> = {...page.local, ...handsFor(TORUS_DESIGN_ID, TORUS_STAGE_LOCAL)}
   const submit = device.submit
+  const stageAct = async (change: ValueChange) => {
+    if (!run) throw new Error(NO_STAGE_FRAME)
+    const result = await run(torusStageCommand(change, held))
+    if (!result.ok) throw new Error(result.error)
+  }
   return {
     id: device.id,
-    values: {...torusDesignValues(state), ...torusStageValues(stage), ...page.values},
-    writes: key => key !== 'rack' && writeStanding(state, key) === null,
+    values: {...torusDesignValues(state), ...torusStageValues(stage, held), ...page.values},
+    writes: key => (key in TORUS_STAGE_ACTS ? acting : key !== 'rack' && writeStanding(state, key) === null),
     standing,
-    local: page.local,
+    local,
     ...(page.waiting ? {waiting: ['rack']} : {}),
-    ...(submit ? {write: async (changes: readonly ValueChange[]) => { await submit(torusRowChanges(changes)) }} : {}),
+    ...(submit || acting ? {write: async (changes: readonly ValueChange[]) => {
+      for (const change of changes.filter(c => c.key in TORUS_STAGE_ACTS)) await stageAct(change)
+      const rows = changes.filter(c => !(c.key in TORUS_STAGE_ACTS))
+      if (rows.length) { if (!submit) throw new Error(NOT_WRITABLE); await submit(torusRowChanges(rows)) }
+    }} : {}),
     // The level or scale a planet moves (designBindings/skyModulation.ts): the status bar names the planet.
     ...(Object.keys(skyHeld).length ? {modulatedBy: skyHeld} : {}),
   }
