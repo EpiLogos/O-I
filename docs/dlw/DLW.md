@@ -1685,6 +1685,7 @@ A panel uses these controls and no others.
 | Action | Something done once | The name in an outlined box. An act that you cannot undo is held, not clicked. | A momentary button. |
 | Light | A state that the owner reports | A small round light. A light that is working carries a ring. | A chain's activator. |
 | Handle | A parameter that you move on the picture | An amber ring, numbered in order of importance. | EQ Eight's band dots. |
+| Pad | Two numbers that belong together | A square well with one handle. The name and the value of each side stand along its edges: across is one number, up is the other. A faint line at each side's default. | A synth's X/Y pad. |
 
 The same moves work on every control that holds a number.
 
@@ -1702,6 +1703,18 @@ The same moves work on every control that holds a number.
 A handle moves in the directions that its picture shows. A handle for two
 parameters, such as gravity across and up, moves in two directions. The arrow
 keys move a focused handle 2 px, or 0.5 px with Shift.
+
+Where a picture shows two numbers at one point, one handle moves both. The
+filter's handle sits at its cutoff across and its resonance up. The dynamics
+curve's knee sits at its threshold across and its makeup up, and the dip in its
+time display is as deep as its ratio. The delay's first repeat stands at its
+time across and its mix up; the second, at twice the time across and its
+feedback up. Where the picture does not show both, a pad does: the reverb's
+Room pad has the decay across and the size up. Press the handle and drag, or
+press anywhere in the pad and the handle comes there. Hold Shift for a tenth of
+the speed. The arrow keys move the handle 1 % of a side, and Page Up and Page
+Down 10 % of the vertical. Home and End go to the left and right edges. Delete
+or a double-click returns both numbers to their defaults.
 
 #### A change and its answer
 
@@ -1727,7 +1740,7 @@ changed. The times are the same everywhere.
 | What changes | How it moves |
 |---|---|
 | A value you set | At once. It never eases under your hand. |
-| A value that something else sets | The arc or the fill glides to it in 0.12 s, and a thin ring stands round the control for a second. Where the host says who moved it, the name stands on the control for two seconds. |
+| A value that something else sets | The arc, the fill or a pad's handle glides to it in 0.12 s, and a thin ring stands round the control for a second. Where the host says who moved it, the name stands on the control for two seconds. |
 | A choice: a radio, a head's pages | The amber, or the page's face, slides to the new choice in 0.2 s. |
 | A light | It fills or empties in 0.16 s. |
 | A light that is working | A ring spreads from it and fades, again and again, for as long as the owner reports the device, or the row, working. When the owner stops, the ring stops. |
@@ -1740,7 +1753,9 @@ changed. The times are the same everywhere.
 **A default is a detent.** A value box shows its default as a tick, and a dial
 as a notch on its ring. A drag that passes close to the default lands on it and
 the tick brightens; go on dragging and the hand leaves it. Hold Shift to drag
-past it. A stepped value has no detent: each step is its own stop.
+past it. A stepped value has no detent: each step is its own stop. A pad keeps
+the detent on each side: its default is a faint line, and the handle catches on
+the line as it crosses.
 
 **An act that you cannot undo is held.** Raising a scope's reach, answering an
 approval, and taking a device off its chain wait for you, and each is a hold.
@@ -1788,6 +1803,12 @@ Besides its value, a control shows who moves it.
 - Number the handles 1, 2 and on, in order of importance.
 - Put axis labels inside the well, small and faint. Put one short reading at
   the top right.
+- Say a number once in a view. The corner gives way to any number that a dial,
+  a box, a readout or a pad in the same plate already shows: it is the reading
+  for a display that has nothing beside it, as in the widget and the pane. A
+  readout does not repeat what the picture writes beside its own mark.
+- Give a pair of numbers that belong together one pad, or one handle where the
+  picture shows both, rather than two dials side by side.
 - Expanded and in a window, let the display take the room and keep the
   controls at their size, as an expanded EQ Eight does.
 - Move the picture only when its readings move. Respect a request for reduced
@@ -5054,6 +5075,30 @@ In Central, the agent's answer joins the page as a new entry with its
 sources, or replaces the passage you selected: Overdub decides which. An
 answer carries its author, the packet it read and its size, the source of
 each claim, and a receipt when it wrote.
+
+#### The answer's face
+
+You need to see who answers you and what it is doing. In Central, the answer
+shows the agent's face. Opened, it shows the whole face, live: at rest while
+the agent waits, intent on the packet while it reads, its mouth moving while
+it answers, and asleep while no conversation is bound. A change of state eases
+in as the face's own muscles move. While the agent reads or answers, a ring
+spreads from the light on the device's head. Under a request for reduced
+motion the face no longer sways, breathes or turns its head by itself; each
+state still shows.
+
+| View | The face |
+|---|---|
+| Folded | None: the agent's name and how its answers reach the page. |
+| Compact | The small face beside the agent's name and what it does now. |
+| Whole | The whole face at the left of the picture. |
+| Full | The whole face beside the conversation. Each of the agent's lines carries the small face. |
+| Pop-out | The whole face once, at the left of the controls under the conversation. |
+| Widget | The small face. |
+
+The small face is a still drawing of the same face, in the same state. It
+stands in for the whole face wherever the whole face cannot load, as in a
+copy of this manual.
 
 #### Views
 
@@ -9040,7 +9085,7 @@ caption: Dynamics, on a fixture of readings.
 
 - Folded: the threshold and the ratio.
 - Compact: the curve, with the threshold handle. Macros: Threshold, Ratio, Attack, Makeup.
-- Whole: the curve with handles for threshold, ratio and makeup; Threshold and Ratio; Makeup and the gain reduction now. A second band: the time display with handles for attack and release; Attack and Release; the depth at full level.
+- Whole: the curve, whose handle 1 is the knee (threshold across, makeup up) and handle 2 the ratio; the Level pad (threshold across, ratio up); Makeup and the gain reduction now. A second band: the time display, whose handle 1 is the attack and handle 2 the release (across), each with the ratio up and down, because the dip is as deep as the ratio; the Time pad (attack across, release up); the depth at full level.
 - Full: both displays at pane size.
 - Widget: the curve, the threshold, the ratio and the gain reduction. Click the light to turn the effect on or off.
 
@@ -9067,7 +9112,7 @@ caption: Delay, on a fixture of readings.
 
 - Folded: the time and the feedback.
 - Compact: the repeats, with the time handle. Macros: Time, Feedback, Tone, Mix.
-- Whole: the repeats with handles for time, feedback and mix; Sync, Note length and the time in milliseconds; Feedback and Tone; Mix and the tempo.
+- Whole: the repeats, whose handle 1 stands on the first repeat (time across, mix up) and handle 2 on the second (time across, feedback up); Sync, Note length and the time in milliseconds; Feedback and Tone; Mix and the tempo. With Sync on, the note length holds the time and the handles move only up and down.
 - Full: the repeats at pane size.
 - Widget: the repeats, the time, the feedback and the mix. Click the light to turn the delay on or off.
 
@@ -9084,7 +9129,7 @@ Use the Reverb to give the torus a room to sound in.
 | Pre-delay | 0 to 250 ms | 20 ms | The gap before the tail starts. |
 | Dry/wet | 0 to 100% | 22% | How much of the tail you hear. |
 
-The display draws the room in time: the gap, the first reflections, then the tail falling away. A thin line shows the bright part of the tail. The reading at the top right is the dry/wet and the decay.
+The display draws the room in time: the gap, the first reflections, then the tail falling away. A thin line shows the bright part of the tail. In the pane, the reading at the top right is the dry/wet and the decay; where a dial or a pad shows them, the display does not.
 
 ```ui
 device: live:reverb
@@ -9093,7 +9138,7 @@ caption: Reverb, on a fixture of readings.
 
 - Folded: the decay and the dry/wet.
 - Compact: the tail, with the decay handle. Macros: Decay, Size, Damping, Dry/wet.
-- Whole: the tail with handles for decay, pre-delay and damping; Size and Decay; Damping and Pre-delay; Dry/wet and the length of the bright tail.
+- Whole: the tail with handles for decay, pre-delay and damping; Dry/wet and the length of the bright tail. A second band: the Room pad (decay across, size up) and the Tone pad (damping across, pre-delay up).
 - Full: the tail at pane size.
 - Widget: the tail, the decay, the size and the dry/wet. Click the light to turn the reverb on or off.
 
