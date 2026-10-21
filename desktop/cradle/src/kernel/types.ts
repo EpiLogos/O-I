@@ -657,6 +657,8 @@ export type KernelOpResult =
  * (receipts are omitted on the wire when empty — an operation that
  * changed nothing). */
 export type KernelOutcome = KernelOpResult & {
+  /** The scopes of every reading this answer was made from (same strings as `readings_changed`); absent = unscoped, `[]` = kernel memory only. */
+  read_scopes?: string[];
   native_owner?: {world_ref:string;owner_generation:string;receipts:KernelReceipt[]};
   receipts?: KernelReceipt[];
 };

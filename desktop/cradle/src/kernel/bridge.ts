@@ -69,7 +69,8 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
     const native = outcome.outcome;
     // Native cursor belongs to (World, owner generation). Keep it inspectable
     // without feeding it into this body's independent kernel event stream.
-    return {...native,receipts:[],native_owner:{world_ref:outcome.source_world_ref,
+    const read_scopes = outcome.read_scopes ?? native.read_scopes;
+    return {...native,receipts:[],...(read_scopes ? {read_scopes} : {}),native_owner:{world_ref:outcome.source_world_ref,
       owner_generation:outcome.owner_generation,receipts:native.receipts??[]}};
   }
   return { ...outcome, receipts: outcome.receipts ?? [] };
@@ -158,7 +159,7 @@ export function installKernelReadHolder(holder: KernelReadHolder | null): void {
 /** The kernel's notice that owner readings may have moved (its `readings_changed` event, or a write this window completed), as engine
  * code hears it. A host that carries the notice installs a source (the shell: packages/live-shell/ui/src/owners/ownerCall.ts) and
  * fires `announceReadingsMoved`; a host that does not (the legacy frame) installs none, and `refreshOnReadingsMoved` keeps its period. */
-const movedListeners = new Set<() => void>();
+const movedListeners = new Set<(scopes?: readonly string[]) => void>();
 let noticeSources = 0;
 /** Declare that this window receives the kernel's notice. Returns the withdrawal. */
 export function installReadingsNoticeSource(): () => void {
@@ -168,13 +169,14 @@ export function installReadingsNoticeSource(): () => void {
 }
 export function hasReadingsNoticeSource(): boolean { return noticeSources > 0; }
 /** Hear that owner readings may have moved. */
-export function onReadingsMoved(listener: () => void): () => void { movedListeners.add(listener); return () => { movedListeners.delete(listener); }; }
+/** `scopes` are the notice's (absent: a write this window completed, which names none); a listener that cannot use them re-reads on any notice. */
+export function onReadingsMoved(listener: (scopes?: readonly string[]) => void): () => void { movedListeners.add(listener); return () => { movedListeners.delete(listener); }; }
 /** Tell the listeners that owner readings may have moved (the notice source calls it once per debounced notice). */
-export function announceReadingsMoved(): void { for (const listener of [...movedListeners]) listener(); }
+export function announceReadingsMoved(scopes?: readonly string[]): void { for (const listener of [...movedListeners]) listener(scopes); }
 
 /** Keep a view's owner reading current: `read` runs once per notice where a source is installed, else every `periodMs`. Returns the stop. */
 export function refreshOnReadingsMoved(read: () => void, periodMs: number): () => void {
-  if (hasReadingsNoticeSource()) return onReadingsMoved(read);
+  if (hasReadingsNoticeSource()) return onReadingsMoved(() => read());
   const timer = setInterval(read, periodMs);
   return () => clearInterval(timer);
 }

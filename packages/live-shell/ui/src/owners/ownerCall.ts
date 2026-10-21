@@ -18,7 +18,7 @@
 import {useRef} from 'react'
 import {installKernelReadHolder, installReadingsNoticeSource, kernelReadSend, onKernelWrite, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelOutcome, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadings} from './ownerReading'
+import {ownerReadings, ScopedValue, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadings} from './ownerReading'
 import {currentSpineEpoch, useSpineEpoch} from './spine'
 import {windowReadingsChanged} from './readingsChanged'
 
@@ -30,11 +30,15 @@ export const HELD_OP_MAX_AGE_MS = 5 * 60_000
 
 export const opKey = (transport: KernelTransportStatus, op: KernelOp): string => JSON.stringify(['op', transport, op])
 
+/** The scopes the kernel gave an outcome, as an answer carries them (none given = unscoped, so the key is left out). */
+export const scopesOf = (outcome: KernelOutcome | null | undefined): {read_scopes?: string[]} =>
+  outcome?.read_scopes ? {read_scopes: outcome.read_scopes} : {}
+
 /** The read of one op as the kernel answered it: the call is the answer, a refusal is the kernel's words. */
 function readCall(transport: KernelTransportStatus, op: KernelOp): OwnerRead<KernelOpCall> {
   return async () => {
     const call = await kernelReadSend(transport, op)
-    return call.error ? {error: call.error} : {value: call}
+    return call.error ? {error: call.error} : {value: call, ...scopesOf(call.outcome)}
   }
 }
 
@@ -69,7 +73,7 @@ export function readOp<R extends KernelOutcome['result']>(transport: KernelTrans
     if (transport.kind === 'unavailable') return {error: transport.reason ?? 'Transport unavailable'}
     const result = await kernelReadSend(transport, op)
     if (result.error || result.outcome?.result !== expected) return {error: result.error ?? unavailable ?? `${expected} unavailable`}
-    return {value: result.outcome as OpOutcome<R>}
+    return {value: result.outcome as OpOutcome<R>, ...scopesOf(result.outcome)}
   }
 }
 
@@ -86,10 +90,14 @@ export function useOwnerOp<R extends KernelOutcome['result']>(transport: KernelT
 
 /** A held answer for a read that is not one op (a composite, a read through a module's own helper): `read` resolves to the value or
  * throws the owner's refusal. The key names it; a new closure for the same key is the same read. */
-export function useHeldRead<T>(key: readonly unknown[] | null, read: () => Promise<T>): OwnerReading<T> {
+export function useHeldRead<T>(key: readonly unknown[] | null, read: () => Promise<T | ScopedValue<T>>): OwnerReading<T> {
   const epoch = useSpineEpoch()
-  const wrapped = async (): Promise<{value: T} | {error: string}> => {
-    try { return {value: await read()} } catch (cause) { return {error: cause instanceof Error ? cause.message : String(cause)} }
+  const wrapped = async (): Promise<{value: T; read_scopes?: readonly string[]} | {error: string}> => {
+    try {
+      const made = await read()
+      // A read made of several ops returns `scoped(value, unionScopes(...))`; any other is unscoped.
+      return made instanceof ScopedValue ? {value: made.value, ...(made.read_scopes ? {read_scopes: made.read_scopes} : {})} : {value: made}
+    } catch (cause) { return {error: cause instanceof Error ? cause.message : String(cause)} }
   }
   return useOwnerReading<T>(key ? JSON.stringify(['held', ...key]) : null, wrapped, epoch).reading
 }

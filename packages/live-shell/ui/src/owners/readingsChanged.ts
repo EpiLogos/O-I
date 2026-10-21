@@ -1,7 +1,7 @@
 // The kernel's notice that what its owner readings were read from has moved (kernel/src/events.rs `ReadingsChanged`, serialised
 // as `{"event":"readings_changed","scopes":["root","project:O-I"],"epoch":42}`): a filesystem change under the Central root or the
 // AIKit home, debounced and coalesced by the kernel. It is the one notice that replaces the owner-polling timers: every held
-// owner answer is marked unread, and those with live readers are asked again. The kernel answers from its read model unless the
+// owner answer its scopes touch (owners/ownerReading.ts `scopesTouch`) is marked unread, and those with live readers are asked again. The kernel answers from its read model unless the
 // scope moved, so the re-ask of an unmoved answer is cheap.
 //
 // Pure TypeScript: no view.
@@ -46,18 +46,30 @@ export interface ReadingsChangedDriver {
 export function createReadingsChangedDriver(registry: OwnerReadings = ownerReadings, delayMs = 250,
   timers: {set: (run: () => void, ms: number) => unknown; clear: (handle: unknown) => void} = {set: (run, ms) => setTimeout(run, ms), clear: handle => clearTimeout(handle as ReturnType<typeof setTimeout>)}): ReadingsChangedDriver {
   let pending: unknown = null
+  /** The scopes of the notices waiting out the debounce. */
+  let waiting = new Set<string>()
   return {
     receive(receipts) {
-      if (!receipts.some(receipt => readingsChangedOf(receipt))) return
+      const notices = receipts.map(readingsChangedOf).filter((notice): notice is ReadingsChanged => notice !== null)
+      if (notices.length === 0) return
+      for (const notice of notices) for (const scope of notice.scopes) waiting.add(scope)
       if (pending !== null) timers.clear(pending)
-      pending = timers.set(() => { pending = null; void registry.moved(); announceReadingsMoved() }, delayMs)
+      pending = timers.set(() => {
+        pending = null
+        const scopes = waiting.has('all') ? ['all'] : [...waiting]
+        waiting = new Set()
+        void registry.moved(scopes)
+        announceReadingsMoved(scopes)
+      }, delayMs)
     },
+    // A write's own retire names no scopes: everything is retired, as the owner's state moved by an act the window cannot place.
     now() {
       if (pending !== null) { timers.clear(pending); pending = null }
+      waiting = new Set()
       void registry.moved()
       announceReadingsMoved()
     },
-    dispose() { if (pending !== null) { timers.clear(pending); pending = null } },
+    dispose() { if (pending !== null) { timers.clear(pending); pending = null }; waiting = new Set() },
   }
 }
 

@@ -46,8 +46,34 @@ export interface OwnerReading<T> {
   readonly carried: boolean
 }
 
-/** One owner read. An answer is `{value}`; a refusal is `{error}` in the owner's words. A thrown error counts as a refusal. */
-export type OwnerRead<T> = () => Promise<{value: T} | {error: string}>
+/** One owner read. An answer is `{value}` with the kernel's `read_scopes` when it gave them (the scopes of every reading the
+ * answer was made from; absent = unscoped); a refusal is `{error}` in the owner's words. A thrown error counts as a refusal. */
+export type OwnerRead<T> = () => Promise<{value: T; read_scopes?: readonly string[]} | {error: string}>
+
+/** The scopes of a read made of several: their union, or undefined (unscoped) when any of them was unscoped. `all` absorbs the rest. */
+export function unionScopes(...parts: (readonly string[] | undefined)[]): string[] | undefined {
+  const joined = new Set<string>()
+  for (const part of parts) {
+    if (part === undefined) return undefined
+    for (const scope of part) joined.add(scope)
+  }
+  return joined.has('all') ? ['all'] : [...joined]
+}
+
+/** Whether an answer made from `held` is touched by a notice of `notice`: `all` on either side touches everything, an empty list
+ * (memory only) nothing, an unscoped answer (undefined) any notice. */
+export function scopesTouch(held: readonly string[] | undefined, notice: readonly string[] | undefined): boolean {
+  if (held === undefined || notice === undefined) return true
+  if (held.length === 0 || notice.length === 0) return false
+  if (held.includes('all') || notice.includes('all')) return true
+  return held.some(scope => notice.includes(scope))
+}
+
+/** A value with the scopes of the readings it was made from, for a read of several ops (`useHeldRead`'s `read` may return one). */
+export class ScopedValue<T> {
+  constructor(readonly value: T, readonly read_scopes: readonly string[] | undefined) {}
+}
+export const scoped = <T>(value: T, read_scopes: readonly string[] | undefined): ScopedValue<T> => new ScopedValue(value, read_scopes)
 
 const READING: OwnerReading<never> = Object.freeze({status: 'reading', value: null, error: null, readAtUnixMs: null, epoch: null, refreshing: false, carried: false})
 
@@ -66,6 +92,8 @@ export class OwnerReadingEntry<T> {
   /** The one read promised to follow the read in flight, for those who asked while it ran. */
   private following: {epoch: string; promise: Promise<void>} | null = null
   private ticket = 0
+  /** The scopes the standing answer was read from; undefined = unscoped (also an answer kept from an earlier window). */
+  private scopes: readonly string[] | undefined = undefined
   /** Its readers all left: whoever reads it next draws it at once and has the owner asked again. */
   private unread = false
   /** How many times the owner was actually asked — the census a reader-count test reads. */
@@ -83,6 +111,11 @@ export class OwnerReadingEntry<T> {
   snapshot = (): OwnerReading<T> => this.state
 
   get readers(): number { return this.listeners.size }
+
+  get readScopes(): readonly string[] | undefined { return this.scopes }
+
+  /** Whether a notice of `scopes` (undefined = every scope) may have moved the standing answer. */
+  touchedBy(scopes: readonly string[] | undefined): boolean { return scopesTouch(this.scopes, scopes) }
 
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener)
@@ -134,8 +167,9 @@ export class OwnerReadingEntry<T> {
 
   /** An answer the owner gave this key in a wider read (one list read for many keys): it stands for `epoch` as if read here.
    * A read of this key in flight for the same epoch answers after it and wins. */
-  accept(value: T, epoch: string): void {
+  accept(value: T, epoch: string, readScopes?: readonly string[]): void {
     if (this.inFlight?.epoch === epoch) return
+    this.scopes = readScopes
     const readAtUnixMs = this.now()
     this.publish({status: 'answered', value, error: null, readAtUnixMs, epoch, refreshing: false, carried: false})
     this.keep({value, readAtUnixMs, epoch})
@@ -143,10 +177,12 @@ export class OwnerReadingEntry<T> {
 
   /** The kernel said the owner's sources moved: the answer may no longer be the owner's. With readers it is asked again behind the
    * standing answer (one read in flight, one following, however many notices arrive); with none it is marked unread, so the next
-   * reader draws it carried and has the owner asked. A key never read has nothing to retire. */
-  moved(): Promise<void> {
+   * reader draws it carried and has the owner asked. A key never read has nothing to retire. `scopes` are the notice's: an answer
+   * they do not touch stands as it is; without them every answer is touched. */
+  moved(scopes?: readonly string[]): Promise<void> {
     const epoch = this.state.epoch
     if (epoch === null || this.state.status === 'reading') return Promise.resolve()
+    if (!this.touchedBy(scopes)) return Promise.resolve()
     this.unread = true
     if (this.listeners.size === 0) return Promise.resolve()
     // A driver reads this answer on the notice itself (owners/agency.ts), with a hook after it: not asked twice.
@@ -187,7 +223,7 @@ export class OwnerReadingEntry<T> {
     else this.publish({...standing, refreshing: true})
     this.asks++
     const promise = (async () => {
-      let outcome: {value: T} | {error: string}
+      let outcome: {value: T; read_scopes?: readonly string[]} | {error: string}
       try {
         outcome = await this.read()
       } catch (cause) {
@@ -195,6 +231,7 @@ export class OwnerReadingEntry<T> {
       }
       if (ticket !== this.ticket) return
       this.inFlight = null
+      this.scopes = 'error' in outcome ? undefined : outcome.read_scopes
       const readAtUnixMs = this.now()
       this.publish('error' in outcome
         ? {status: 'refused', value: null, error: outcome.error, readAtUnixMs, epoch, refreshing: false, carried: false}
@@ -215,8 +252,9 @@ export interface OwnerReadings {
   park(entry: OwnerReadingEntry<unknown>): void
   /** Every held entry (a test's census; a notice that refreshes all of one family). */
   entries(): OwnerReadingEntry<unknown>[]
-  /** The kernel's notice that owner sources moved: every held answer is marked unread, and those with live readers are asked again. */
-  moved(): Promise<void>
+  /** The kernel's notice that owner sources moved: every held answer the notice's `scopes` touch (all, without scopes) is marked
+   * unread, and those with live readers are asked again. */
+  moved(scopes?: readonly string[]): Promise<void>
 }
 
 /** A registry of entries. The window has one (`ownerReadings`); a test makes its own. `kept` holds the last answers across a
@@ -256,10 +294,10 @@ export function createOwnerReadings(now: () => number = Date.now, kept?: KeptRea
       return entry
     },
     entries: () => [...held.values()],
-    moved: async () => {
-      const all = [...held.values()]
-      for (const entry of all) entry.retire()
-      await Promise.all(all.map(entry => entry.moved()))
+    moved: async (scopes?: readonly string[]) => {
+      const touched = [...held.values()].filter(entry => entry.touchedBy(scopes))
+      for (const entry of touched) entry.retire()
+      await Promise.all(touched.map(entry => entry.moved(scopes)))
     },
   }
 }
