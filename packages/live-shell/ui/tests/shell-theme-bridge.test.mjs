@@ -34,7 +34,7 @@ const inhabitant = declarations(/^:root \{([\s\S]*?)\}/m.exec(strip(read(new URL
  * raw-colour conversion added. Identity hues (the cut's palette) and the paper page are deliberately not here. */
 const CHROME = ['--bg-0', '--bg-1', '--bg-2', '--bg-3', '--surface', '--line', '--line-strong', '--text', '--text-dim', '--text-faint',
   '--accent', '--accent-dim', '--accent-soft', '--sel', '--rec', '--green', '--stall',
-  '--edge', '--on-accent', '--accent-wash', '--fault', '--disputed', '--gutter']
+  '--edge', '--on-accent', '--accent-wash', '--fault', '--disputed', '--gutter', '--fizz']
 const INHABITANT = ['--inh-bg-0', '--inh-bg-1', '--inh-bg-2', '--inh-bg-3', '--inh-line', '--inh-line-strong', '--inh-text', '--inh-dim',
   '--inh-faint', '--inh-accent', '--inh-accent-soft', '--inh-sel', '--inh-rec', '--inh-green', '--inh-stall']
 

@@ -65,6 +65,42 @@ export const THEMES = [
     }
   },
   {
+    "id": "epi-logos",
+    "name": "Epi-Logos",
+    "appearance": "dark",
+    "preview": {
+      "ground": "#18213b",
+      "ink": "#e4e6ec",
+      "accent": "#e2b23c",
+      "strip": [
+        "#e2b23c"
+      ]
+    },
+    "source": {
+      "name": "Epi-Logos",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
+    }
+  },
+  {
+    "id": "epi-logos-a",
+    "name": "Epi-Logos · A",
+    "appearance": "dark",
+    "preview": {
+      "ground": "#030e30",
+      "ink": "#e4e6ec",
+      "accent": "#e2b23c",
+      "strip": [
+        "#e2b23c"
+      ]
+    },
+    "source": {
+      "name": "Epi-Logos · A",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
+    }
+  },
+  {
     "id": "night-owl-dark",
     "name": "Night Owl",
     "appearance": "dark",
@@ -102,6 +138,42 @@ export const THEMES = [
       "name": "Nord",
       "repo": "arcticicestudio/nord-visual-studio-code",
       "license": "MIT"
+    }
+  },
+  {
+    "id": "oi-dark",
+    "name": "O:I Dark",
+    "appearance": "dark",
+    "preview": {
+      "ground": "#1c1c1a",
+      "ink": "#e9e9e4",
+      "accent": "#dcdcd6",
+      "strip": [
+        "#dcdcd6"
+      ]
+    },
+    "source": {
+      "name": "O:I Dark",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
+    }
+  },
+  {
+    "id": "oi-dark-a",
+    "name": "O:I Dark · A",
+    "appearance": "dark",
+    "preview": {
+      "ground": "#21222c",
+      "ink": "#f0f0f5",
+      "accent": "#f8ddfd",
+      "strip": [
+        "#f8ddfd"
+      ]
+    },
+    "source": {
+      "name": "O:I Dark · A",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
     }
   },
   {
@@ -145,6 +217,42 @@ export const THEMES = [
     }
   },
   {
+    "id": "epi-logos-day",
+    "name": "Epi-Logos Day",
+    "appearance": "light",
+    "preview": {
+      "ground": "#fafafd",
+      "ink": "#0e1834",
+      "accent": "#977216",
+      "strip": [
+        "#977216"
+      ]
+    },
+    "source": {
+      "name": "Epi-Logos Day",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
+    }
+  },
+  {
+    "id": "epi-logos-day-a",
+    "name": "Epi-Logos Day · A",
+    "appearance": "light",
+    "preview": {
+      "ground": "#e6e6e6",
+      "ink": "#0e1834",
+      "accent": "#977216",
+      "strip": [
+        "#977216"
+      ]
+    },
+    "source": {
+      "name": "Epi-Logos Day · A",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
+    }
+  },
+  {
     "id": "light-plus",
     "name": "Light Plus",
     "appearance": "light",
@@ -162,6 +270,42 @@ export const THEMES = [
       "name": "Light Plus",
       "repo": "microsoft/vscode",
       "license": "MIT"
+    }
+  },
+  {
+    "id": "oi-light",
+    "name": "O:I Light",
+    "appearance": "light",
+    "preview": {
+      "ground": "#fbfbf9",
+      "ink": "#161614",
+      "accent": "#2a2a27",
+      "strip": [
+        "#2a2a27"
+      ]
+    },
+    "source": {
+      "name": "O:I Light",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
+    }
+  },
+  {
+    "id": "oi-light-a",
+    "name": "O:I Light · A",
+    "appearance": "light",
+    "preview": {
+      "ground": "#fbfbf9",
+      "ink": "#161614",
+      "accent": "#17202c",
+      "strip": [
+        "#17202c"
+      ]
+    },
+    "source": {
+      "name": "O:I Light · A",
+      "repo": "EpiLogos/O-I",
+      "license": "house"
     }
   },
   {
