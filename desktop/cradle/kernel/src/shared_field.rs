@@ -144,6 +144,7 @@ pub fn is_read(request: &Value) -> bool {
                 | "stage"
                 | "field-now"
                 | "field-day"
+                | "nara-presences"
         )
     )
 }
@@ -531,10 +532,10 @@ fn decode_reply(stdout: &[u8], stderr: &[u8]) -> Result<Value, CallError> {
 pub fn reading(request: &Value) -> Result<Value, String> {
     if matches!(
         request["kind"].as_str(),
-        Some("preview_nara" | "publish_nara")
+        Some("preview_nara" | "publish_nara" | "withdraw_nara")
     ) {
         return Err(
-            "Native Nara presence requires the saved identity and Expression admission route"
+            "Native Nara presence goes through the kernel's nara_presence: the saved identity and Expression admission route, and the person's withdrawal"
                 .into(),
         );
     }

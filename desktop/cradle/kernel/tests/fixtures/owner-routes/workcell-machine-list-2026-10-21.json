@@ -1,0 +1,43 @@
+{
+  "_source": "EpiLogos/Workcell#118 (dlw/workcell-control-operations) built locally, 21 Oct 2026, reading this machine's declarations (~/.workcell/machines.json: references only, no secret values)",
+  "list": {
+    "control_operations": [
+      "status",
+      "discover",
+      "plan",
+      "prepare",
+      "inspect",
+      "recover",
+      "observe",
+      "expose",
+      "collect",
+      "release",
+      "reconcile",
+      "system",
+      "execute",
+      "operation-read"
+    ],
+    "machines": [
+      {
+        "credential_ref": "keychain://workcell-connection/omarchy",
+        "endpoint": "100.92.62.101:7777",
+        "label": "omarchy",
+        "note": "Omarchy (tailnet host frank), cell workcell:omarchy; AIKit gateway advertised on 7788, SharedField SpaceTimeDB on 3000",
+        "operations": [
+          "status",
+          "discover",
+          "observe",
+          "inspect"
+        ]
+      },
+      {
+        "credential_ref": "keychain://workcell-connection/omarchy-improvement-lanes",
+        "endpoint": "100.92.62.101:7777",
+        "label": "omarchy-improvement-lanes",
+        "note": "commission:factory-280-joined-20261007; finite30m owned material route",
+        "operations": []
+      }
+    ],
+    "ok": true
+  }
+}

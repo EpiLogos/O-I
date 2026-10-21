@@ -148,7 +148,7 @@ export interface SeatRow { product: string; state: string; registered_branch: st
 /** Central's returned-work proposals for one project (`projectcentral.source.returns`, kernel `source_returns_read`, flow.rs `SourceReturns`). */
 export interface SourceReturnsReading { schema: "central.source-returns/v1"; entries: SourceReturnEntry[]; more: boolean; next_before: string | null; authored_source_mutated: boolean }
 /** One return: `status` is Central's own word — pending, applying, accepted or rejected. */
-export interface SourceReturnEntry { return_ref: string; source_ref: string; basis_revision: string; status: string; agent_session_ref: string; current_revision: string }
+export interface SourceReturnEntry { return_ref: string; source_ref: string; basis_revision: string; status: string; agent_session_ref: string; current_revision: string; /** The reviewers' comments on this Return (Central#290); absent from an older Central. */ comments?: number | null }
 /** AIKit's declared gateway endpoints of other Workcells (`aikit gateway remote list --json`, kernel `gateway_remotes_read`): the envelope's data, verbatim. */
 export interface GatewayRemotesReading { schema: "aikit.gateway-remotes/v1"; remotes: GatewayRemote[] }
 /** One declared remote: its token's location, never the token. */
@@ -210,6 +210,8 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
    * (`ql.vak-context/v1`: centre, depth, entries, relations). */
   | {kind:"vak-locate";vak_ref:string}
   | {kind:"vak-context";vak_ref:string;depth?:number};
+/** `workcell machine list` answers `{machines:[{label, endpoint, credential_ref?, operations, note?}], control_operations:[…]}`: the
+ * declarations and, since Workcell#118, the fourteen operations the control plane serves (what a declaration may allow). */
 export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections-show";label:string} | {kind:"machine-list"}
   /** `workcell connections probe [label] [--timeout-ms N]` (EpiLogos/Workcell#117): the handshake to each recorded endpoint, timed
    * (`workcell.connection-probe/v1` `{probed_at_unix_ms, timeout_ms, probes:[{label, endpoint, recorded_state, state:
@@ -221,6 +223,11 @@ export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections
   | {kind:"doctor"|"discover"|"instances-list"}
   /** `workcell plan <demand flags>`: an unsatisfiable plan is a reading too (`status`, `omissions`). */
   | {kind:"plan";demand?:WorkcellDemand}
+  /** `workcell placement <demand flags> [--connection L]… [--max-locality-cost N] [--prefer-locality] [--require-declared-capacity]
+   * [--previous REF]` (Workcell#119): `workcell.placement-evaluation/v1` `{demand_ref, selected, eligible:[{workcell_ref, plan,
+   * provenance:{source_ref, locality_cost, transport, …}}], diagnostics:[{source_ref, kind, detail}], skipped:[{connection, reason}]}`. */
+  | {kind:"placement";demand?:WorkcellDemand;connections?:string[];max_locality_cost?:number|null;prefer_locality?:boolean;
+     require_declared_capacity?:boolean;previous?:string|null}
   /** `workcell instances usage <ref> [--pid] [--interval-ms] [--correlation-ref]…` (`workcell.resource-usage/v1`). */
   | {kind:"instances-usage";instance_ref:string;pid?:number;interval_ms?:number;correlation_refs?:string[]}
   /** `workcell --receipt R collect`: the world's collected outputs (world_ref, outputs, degradations, omissions). */
@@ -256,6 +263,12 @@ export type AikitReadRequest =
   /** `aikit work continuity commands|pressure`: the session's armed packs, and the continuity pressure brackets. A named project runs
    * in that project's ground, from Central's disclosure. */
   | {kind:"continuity-commands"|"continuity-pressure";project?:string|null}
+  /** `aikit work continuity turn [--session S]` (ai-kit#543): `{scope, turn (aikit.turn-bound/v1 or null), blocks:[{event, title,
+   * standing, kept, withheld, suppressed}], withheld_lines, withheld_blocks, notices}`: the Agent's Context page. */
+  | {kind:"continuity-turn";project?:string|null;session?:string|null}
+  /** `aikit flow thoughts FLOW_REF [--limit N]` (ai-kit#544): `aikit.flow-thoughts/v1` `{flow, thoughts:[{recorded_at_unix_ms,
+   * thought}], unreadable}`, newest first; each `thought` is what `flow_changed_since` takes. */
+  | {kind:"flow-thoughts";flow_ref:string;limit?:number|null}
   /** `aikit work continuity closeout verify [--project P] [--since UNIX_SECONDS] [--run RUN_REF]`: `{clauses, project, verified}`. An
    * unverified close-out exits 1 with its verdict; it is still the reading. */
   | {kind:"closeout-verify";project?:string|null;since?:number|null;run?:string|null}
@@ -313,6 +326,33 @@ export interface ChangedSinceReading {
     | { state: "invoked"; owner_operation: string; receipt: Record<string, unknown> }
     | { state: "owner_refused"; owner_operation: string; message: string }
     | { state: "owner_unavailable"; owner_operation: string; detail: string };
+}
+/** AIKit's Routine authoring verbs (writes; each answers `{routine, state, note}`): `aikit routine create --name --method --proof-json
+ * --trigger-json --authority-json [--description] [--agent-profile] [--context-scope]…` stores a Routine in Draft (nothing fires); `aikit
+ * routine enable --authority-json A REF` arms it (AIKit requires unattended authority for schedule and event triggers); `aikit routine
+ * reprove --proof-json P REF` returns it to Disabled. The documents are AIKit's own (ProvenMethodBasis, trigger, RoutineAuthority). */
+export type RoutineAuthoringRequest =
+  | {action:"create";name:string;method:string;proof:Record<string,unknown>;trigger:Record<string,unknown>;authority:Record<string,unknown>;
+     description?:string|null;agent_profile?:string|null;context_scopes?:string[]}
+  | {action:"enable";routine_ref:string;authority:Record<string,unknown>}
+  | {action:"reprove";routine_ref:string;proof:Record<string,unknown>};
+/** The person's presence consents through the kernel's nara_presence, each SharedField's own transport kind: `list` (`nara-presences
+ * {participant_ref?, field_ref?}`) and `withdraw` (`withdraw_nara {projection_ref, consent_ref, withdrawal_ref, withdrawn_at?}`, the
+ * person's own consent act, published on the desktop's SharedField identity). Neither admits anything of the Expression. */
+export type NaraPresenceConsentRequest =
+  | {operation:"list";participant_ref?:string|null;field_ref?:string|null}
+  | {operation:"withdraw";projection_ref:string;consent_ref:string;withdrawal_ref:string;withdrawn_at?:string|null};
+/** `oi.nara-presences/v1`: each consented presence the caller sees, newest grant first, with its consent and whether it was withdrawn. */
+export interface NaraPresencesReading {
+  schema:"oi.nara-presences/v1";
+  presences:{projection_ref:string;projection_revision:number;field_ref:string;state:"published"|"withdrawn";published_at:string;
+    consent:{consent_ref:string;participant_ref:string;expression_ref:string;target_ref:string;target_identity_ref?:string;granted_at:string;
+      state:"granted"|"withdrawn";withdrawn_at?:string}}[];
+}
+/** `oi.nara-presence-withdrawal/v1`: the withdrawn consent, the projection's withdrawn revision and SharedField's publication. */
+export interface NaraPresenceWithdrawal {
+  schema:"oi.nara-presence-withdrawal/v1";consent:Record<string,unknown>;projection_ref:string;projection_revision:number;publication:unknown;
+  private_state_exported:false;
 }
 /** Living Knowledge's impact for a set of readings (`flow_cognition.rs` knowledge_impact; the Knowledge route's Affected): Central's
  * change horizon, adapted as for changed-since, then AIKit's `knowledge impact` (ai-kit#541). The receipt is
@@ -428,7 +468,7 @@ export type KernelOp =
   | {op:"nara_expressive_act";project:string;request:import("../nara/nativeExpressiveAct").NativeExpressiveActRequest}
   | {op:"nara_current";project:string;request:import("../nara/nativeCurrent").NativeCurrentRequest}
   | {op:"m3_reception";project:string;request:import("../nara/nativeM3").NativeM3Request}
-  | {op:"nara_presence";project:string;request:import("../nara/nativePresence").NativePresenceRequest}
+  | {op:"nara_presence";project:string;request:import("../nara/nativePresence").NativePresenceRequest|NaraPresenceConsentRequest}
   | {op:"nara_coordinate";request:import("../nara/coordinateExpression").CoordinateRequest}
   | {op:"nara_identity";request:import("../nara/identity/types").NaraIdentityRequest}
   | {op:"nara_voice";project:string;request:import("../nara/nativeVoice").NativeVoiceRequest}
@@ -640,7 +680,7 @@ export type KernelOp =
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
-  | { op: "routine"; project?: string; request: import("../contributions/automations/client").RoutineRequest }
+  | { op: "routine"; project?: string; request: import("../contributions/automations/client").RoutineRequest | RoutineAuthoringRequest }
   | { op: "state" }
   | { op: "world_read" }
   | { op: "world_browse"; fresh?: boolean }
@@ -694,6 +734,7 @@ export type KernelOpResult =
   | {result:"nara_current";data:import("../nara/nativeCurrent").NativeCurrentReading}
   | {result:"m3_reception";data:import("../nara/nativeM3").NativeM3Reading}
   | {result:"nara_presence";data:import("../nara/nativePresence").NativePresenceReading}
+  | {result:"nara_presence_consent";data:NaraPresencesReading|NaraPresenceWithdrawal|{state:"unavailable";owner_operation:string;detail:string}}
   | {result:"nara_coordinate";data:import("../nara/coordinateExpression").CoordinateExpressionResult}
   | {result: "nara_identity"; data: import("../nara/identity/types").NaraIdentityResult}
   | {result:"nara_voice";data:import("../nara/nativeVoice").NativeVoiceResult}

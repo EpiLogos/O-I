@@ -63,7 +63,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture inbox, a Wiki file's shapes (wiki-shape validate|compress), the gateway's ecology and Stream replay, work continuity commands|pressure|closeout verify, bypass list, history and its views, procedure list|diff, collate, unused, explain, source show, knowledge frame, knowledge reflection verify (ai-kit#541), source list (ai-kit#542), and adopt as a plan; with real AIKit answers as fixtures); no directly attributable executed native walk is recorded here for aikit_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture inbox, a Wiki file's shapes (wiki-shape validate|compress), the gateway's ecology and Stream replay, work continuity commands|pressure|turn (turn: ai-kit#543)|closeout verify, flow thoughts (ai-kit#544), bypass list, history and its views, procedure list|diff, collate, unused, explain, source show, knowledge frame, knowledge reflection verify (ai-kit#541), source list (ai-kit#542), and adopt as a plan; with real AIKit answers as fixtures); no directly attributable executed native walk is recorded here for aikit_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "aikit_write",
@@ -1068,7 +1068,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); list and withdraw of presence consents through SharedField's own kinds (nara-presences, withdraw_nara) are kernel-direct only: tests/nara_presence_consent.rs against a fixture client with SharedField's own answers (the hosted field's listing read-only); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
     },
     {
       "op": "nara_voice",
@@ -1241,7 +1241,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "GPT/routines",
-      "reason": "Native list/show/history and run/disable handler implemented; executed native app walk not yet recorded."
+      "reason": "Native list/show/history and run/disable handler implemented; create, enable and reprove (aikit routine create|enable|reprove) kernel-direct only against a fake AIKit in tests/shell_owner_routes.rs, never a real Routine; executed native app walk not yet recorded."
     },
     {
       "op": "seat_status_read",
@@ -1473,7 +1473,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Workcell's connections list|show|probe (probe: Workcell#117), machine list, doctor, discover, plan, instances list|usage and collect; with real Workcell answers as fixtures); no directly attributable executed native walk is recorded here for workcell_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Workcell's connections list|show|probe (probe: Workcell#117), machine list (with control_operations, Workcell#118), doctor, discover, plan, placement (Workcell#119), instances list|usage and collect; with real Workcell answers as fixtures); no directly attributable executed native walk is recorded here for workcell_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "workcell_status_read",

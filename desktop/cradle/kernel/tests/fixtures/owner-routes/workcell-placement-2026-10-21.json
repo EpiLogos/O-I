@@ -1,0 +1,165 @@
+{
+  "_source": "EpiLogos/Workcell#119 (dlw/workcell-placement) built locally, 21 Oct 2026, over two scratch cells on loopback (workcell:laptop with a connection to workcell:home-server granting status and discover); with and without the credential; the installed workcell's refusal",
+  "placement": {
+    "demand_ref": "demand:placement",
+    "diagnostics": [],
+    "eligible": [
+      {
+        "plan": {
+          "degradations": [],
+          "demand_ref": "demand:placement",
+          "explanation": [
+            "affordance:shell matched offer offer:provider:collapsed-local-host-process:host-process from provider provider:collapsed-local-host-process"
+          ],
+          "ok": true,
+          "omissions": [],
+          "plan_ref": "plan:demand:placement:3248960a134c1741",
+          "planned_bindings": [
+            {
+              "logical_ref": "affordance:shell",
+              "necessity": "required",
+              "offer_ref": "offer:provider:collapsed-local-host-process:host-process",
+              "provider_ref": "provider:collapsed-local-host-process",
+              "requirement": "shell"
+            }
+          ],
+          "planned_constraints": [],
+          "planned_exposures": [],
+          "status": "satisfiable"
+        },
+        "provenance": {
+          "capacity_headroom": {},
+          "locality_cost": 0,
+          "offer_refs": [
+            "offer:provider:collapsed-local-host-process:host-process"
+          ],
+          "placement_changed": false,
+          "previous_workcell_ref": null,
+          "provider_refs": [
+            "provider:collapsed-local-host-process"
+          ],
+          "source_ref": "local",
+          "transport": {
+            "transport": "in-process"
+          },
+          "workcell_ref": "workcell:laptop"
+        },
+        "workcell_ref": "workcell:laptop"
+      },
+      {
+        "plan": {
+          "degradations": [],
+          "demand_ref": "demand:placement",
+          "explanation": [
+            "affordance:shell matched offer offer:provider:collapsed-local-host-process:host-process from provider provider:collapsed-local-host-process"
+          ],
+          "ok": true,
+          "omissions": [],
+          "plan_ref": "plan:demand:placement:3248960a134c1741",
+          "planned_bindings": [
+            {
+              "logical_ref": "affordance:shell",
+              "necessity": "required",
+              "offer_ref": "offer:provider:collapsed-local-host-process:host-process",
+              "provider_ref": "provider:collapsed-local-host-process",
+              "requirement": "shell"
+            }
+          ],
+          "planned_constraints": [],
+          "planned_exposures": [],
+          "status": "satisfiable"
+        },
+        "provenance": {
+          "capacity_headroom": {},
+          "locality_cost": 1,
+          "offer_refs": [
+            "offer:provider:collapsed-local-host-process:host-process"
+          ],
+          "placement_changed": false,
+          "previous_workcell_ref": null,
+          "provider_refs": [
+            "provider:collapsed-local-host-process"
+          ],
+          "source_ref": "connection:laptop",
+          "transport": {
+            "connection": "laptop",
+            "endpoint": "127.0.0.1:52589",
+            "transport": "workcell.control/v1"
+          },
+          "workcell_ref": "workcell:home-server"
+        },
+        "workcell_ref": "workcell:home-server"
+      }
+    ],
+    "ok": true,
+    "schema": "workcell.placement-evaluation/v1",
+    "selected": "workcell:laptop",
+    "skipped": []
+  },
+  "unauthorised": {
+    "demand_ref": "demand:placement",
+    "diagnostics": [
+      {
+        "detail": "operation failed: connection `laptop` refused discover: authentication failed: this Workcell requires a connection credential and none was presented",
+        "kind": "transport-unavailable",
+        "source_ref": "connection:laptop",
+        "workcell_ref": "workcell:home-server"
+      }
+    ],
+    "eligible": [
+      {
+        "plan": {
+          "degradations": [],
+          "demand_ref": "demand:placement",
+          "explanation": [
+            "affordance:shell matched offer offer:provider:collapsed-local-host-process:host-process from provider provider:collapsed-local-host-process"
+          ],
+          "ok": true,
+          "omissions": [],
+          "plan_ref": "plan:demand:placement:3248960a134c1741",
+          "planned_bindings": [
+            {
+              "logical_ref": "affordance:shell",
+              "necessity": "required",
+              "offer_ref": "offer:provider:collapsed-local-host-process:host-process",
+              "provider_ref": "provider:collapsed-local-host-process",
+              "requirement": "shell"
+            }
+          ],
+          "planned_constraints": [],
+          "planned_exposures": [],
+          "status": "satisfiable"
+        },
+        "provenance": {
+          "capacity_headroom": {},
+          "locality_cost": 0,
+          "offer_refs": [
+            "offer:provider:collapsed-local-host-process:host-process"
+          ],
+          "placement_changed": false,
+          "previous_workcell_ref": null,
+          "provider_refs": [
+            "provider:collapsed-local-host-process"
+          ],
+          "source_ref": "local",
+          "transport": {
+            "transport": "in-process"
+          },
+          "workcell_ref": "workcell:laptop"
+        },
+        "workcell_ref": "workcell:laptop"
+      }
+    ],
+    "ok": true,
+    "schema": "workcell.placement-evaluation/v1",
+    "selected": "workcell:laptop",
+    "skipped": []
+  },
+  "installed_refusal": {
+    "error": {
+      "kind": "invalid-demand",
+      "message": "invalid demand: unknown command `placement`; run `workcell help`"
+    },
+    "ok": false
+  }
+}

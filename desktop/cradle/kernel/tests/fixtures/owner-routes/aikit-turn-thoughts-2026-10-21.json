@@ -1,0 +1,39 @@
+{
+  "_source": "ai-kit#543 and #544 built locally, 21 Oct 2026, reading this machine's AIKit home in Work/O-I (nothing kept yet: the installed AIKit keeps neither); the installed aikit's refusals of the unknown leaves",
+  "turn": {
+    "context": {
+      "context_id": "ctx_01M5FJXHVG5BB5HQK8ZJP4JR8A",
+      "project_root": "/Users/admin/Central/Work/O-I",
+      "session_id": null
+    },
+    "data": {
+      "blocks": [],
+      "notices": [],
+      "scope": "/Users/admin/Central/Work/O-I",
+      "turn": null,
+      "withheld_blocks": 0,
+      "withheld_lines": 0
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "thoughts": {
+    "context": {
+      "context_id": "ctx_01M5FKBBANTBX8ST521RS3YJBT",
+      "project_root": "/Users/admin/Central/Work/O-I",
+      "session_id": null
+    },
+    "data": {
+      "flow": "wiki:node:staged/test-flow",
+      "thoughts": [],
+      "unreadable": [],
+      "version": "aikit.flow-thoughts/v1"
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "turn_installed_refusal": "error: unrecognized subcommand 'turn'\n\nUsage: aikit work continuity [OPTIONS] <COMMAND>\n\nFor more information, try '--help'.\n",
+  "thoughts_installed_refusal": "error: unrecognized subcommand 'thoughts'\n\nUsage: aikit flow [OPTIONS] <COMMAND>\n\nFor more information, try '--help'.\n"
+}

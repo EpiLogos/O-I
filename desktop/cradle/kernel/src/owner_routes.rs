@@ -308,6 +308,25 @@ pub enum WorkcellRead {
         #[serde(default)]
         demand: Box<WorkcellDemand>,
     },
+    /// The demand planned on this cell and each connected cell whose grant
+    /// allows discover, ranked by the placement law (`workcell placement
+    /// <demand flags> [--connection L]… [--max-locality-cost N]
+    /// [--prefer-locality] [--require-declared-capacity] [--previous REF]`,
+    /// Workcell#119; `workcell.placement-evaluation/v1`). Reads only.
+    Placement {
+        #[serde(default)]
+        demand: Box<WorkcellDemand>,
+        #[serde(default)]
+        connections: Vec<String>,
+        #[serde(default)]
+        max_locality_cost: Option<u32>,
+        #[serde(default)]
+        prefer_locality: bool,
+        #[serde(default)]
+        require_declared_capacity: bool,
+        #[serde(default)]
+        previous: Option<String>,
+    },
     /// Live harness instances (`workcell instances list`).
     InstancesList,
     /// One instance's bounded resource usage (`workcell instances usage
@@ -515,6 +534,24 @@ pub enum AikitRead {
     ContinuityPressure {
         #[serde(default)]
         project: Option<String>,
+    },
+    /// The last turn's blocks as the scope received them (`aikit work
+    /// continuity turn [--session S]`, ai-kit#543): per hook event, each
+    /// block's standing, kept and withheld lines and whether it was
+    /// suppressed.
+    ContinuityTurn {
+        #[serde(default)]
+        project: Option<String>,
+        #[serde(default)]
+        session: Option<String>,
+    },
+    /// A Flow's kept thoughts, newest first (`aikit flow thoughts FLOW_REF
+    /// [--limit N]`, ai-kit#544; `aikit.flow-thoughts/v1`): each the
+    /// FlowThoughtRecord `flow changed-since --thought` takes.
+    FlowThoughts {
+        flow_ref: String,
+        #[serde(default)]
+        limit: Option<u32>,
     },
     /// Whether a close-out left the objects it claims (`aikit work
     /// continuity closeout verify [--project P] [--since N] [--run R]`): each
@@ -761,6 +798,7 @@ impl AikitRead {
             Self::Inbox { project, .. }
             | Self::ContinuityCommands { project }
             | Self::ContinuityPressure { project }
+            | Self::ContinuityTurn { project, .. }
             | Self::CloseoutVerify { project, .. } => project.as_deref(),
             Self::WikiShapeValidate { .. }
             | Self::WikiShapeCompress { .. }
@@ -768,6 +806,7 @@ impl AikitRead {
             | Self::GatewayReplay { .. }
             | Self::SourceShow { .. }
             | Self::SourceList
+            | Self::FlowThoughts { .. }
             | Self::Collate { .. }
             | Self::AdoptPlan { .. }
             | Self::ProcedureList
@@ -1630,6 +1669,35 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
                 &["plan_ref", "status"],
             );
         }
+        WorkcellRead::Placement {
+            demand,
+            connections,
+            max_locality_cost,
+            prefer_locality,
+            require_declared_capacity,
+            previous,
+        } => {
+            let mut args = words(&["placement"]);
+            args.extend(demand.args());
+            for connection in connections {
+                args.push("--connection".into());
+                args.push(connection.into());
+            }
+            push_flag(
+                &mut args,
+                "--max-locality-cost",
+                max_locality_cost.map(|n| n.to_string()).as_deref(),
+            );
+            if *prefer_locality {
+                args.push("--prefer-locality".into());
+            }
+            if *require_declared_capacity {
+                args.push("--require-declared-capacity".into());
+            }
+            push_flag(&mut args, "--previous", previous.as_deref());
+            args.push("--json".into());
+            ("workcell placement", args)
+        }
         WorkcellRead::InstancesList => (
             "workcell instances list",
             words(&["instances", "list", "--json"]),
@@ -1669,6 +1737,14 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
     let data = run(Call::new(workcell(), route, args, READ_LIMIT))?;
     let data = match request {
         WorkcellRead::ConnectionsList => fields(route, data, &[("connections", Kind::List)])?,
+        WorkcellRead::Placement { .. } => {
+            let data = schema(route, data, "workcell.placement-evaluation/v1")?;
+            fields(
+                route,
+                data,
+                &[("eligible", Kind::List), ("diagnostics", Kind::List)],
+            )?
+        }
         WorkcellRead::ConnectionsProbe { .. } => {
             let data = schema(route, data, "workcell.connection-probe/v1")?;
             fields(route, data, &[("probes", Kind::List)])?
@@ -1775,6 +1851,23 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             ("aikit work continuity closeout verify", args)
         }
         AikitRead::SourceList => ("aikit source list", words(&["source", "list", "--json"])),
+        AikitRead::ContinuityTurn { session, .. } => {
+            let mut args = words(&["work", "continuity", "turn"]);
+            push_flag(&mut args, "--session", session.as_deref());
+            args.push("--json".into());
+            ("aikit work continuity turn", args)
+        }
+        AikitRead::FlowThoughts { flow_ref, limit } => {
+            let mut args = words(&["flow", "thoughts"]);
+            args.push(flow_ref.into());
+            push_flag(
+                &mut args,
+                "--limit",
+                limit.map(|n| n.to_string()).as_deref(),
+            );
+            args.push("--json".into());
+            ("aikit flow thoughts", args)
+        }
         AikitRead::SourceShow { id } => {
             let mut args = words(&["source", "show"]);
             args.push(id.into());
@@ -1916,6 +2009,28 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
             data,
             &[("sources", Kind::List), ("unreadable", Kind::List)],
         )?,
+        AikitRead::ContinuityTurn { .. } => {
+            if data.get("turn").is_none() {
+                return Err(unexpected(route, "the kept turn (or turn null)", &data));
+            }
+            fields(
+                route,
+                data,
+                &[("blocks", Kind::List), ("notices", Kind::List)],
+            )?
+        }
+        AikitRead::FlowThoughts { flow_ref, .. } => {
+            if data.get("version").and_then(Value::as_str) != Some("aikit.flow-thoughts/v1")
+                || data.get("flow").and_then(Value::as_str) != Some(flow_ref.as_str())
+            {
+                return Err(unexpected(
+                    route,
+                    &format!("aikit.flow-thoughts/v1 for {flow_ref}"),
+                    &data,
+                ));
+            }
+            fields(route, data, &[("thoughts", Kind::List)])?
+        }
         AikitRead::Unused => fields(route, data, &[("unused", Kind::List)])?,
         AikitRead::History { view, .. } => match view {
             None => schema(route, data, "aikit.explain-history/v1")?,

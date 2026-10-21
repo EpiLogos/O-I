@@ -1,0 +1,21 @@
+{
+  "_source": "the installed factory reading the Point-Cloud-Demo project's development state, read-only, 21 Oct 2026 (no custody retained); the refusal of an unknown state, in Factory's words",
+  "list": {
+    "schema": "factory.work-custody-listing/v1",
+    "project_ref": "project:0000000000B976RJGZMVJ8V9AS",
+    "filter": {
+      "position_ref": null,
+      "run_ref": null,
+      "state": null
+    },
+    "count": 0,
+    "custody": []
+  },
+  "refused": {
+    "schema": "factory.refusal/v1",
+    "code": "factory.custody.usage",
+    "fact": "--state nonsense is not a custody state; use in-progress, blocked, released, completed or handed-off",
+    "consequence": "The command did not run; nothing was read or persisted.",
+    "action": "run: factory development custody list [<state>] [--position <central:position:…>] [--run <run-ref>] [--state <custody-state>] [--json]"
+  }
+}

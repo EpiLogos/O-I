@@ -1413,6 +1413,11 @@ pub enum KernelOpResult {
     NaraPresence {
         data: serde_json::Value,
     },
+    /// SharedField's consented presences (`oi.nara-presences/v1`) or one
+    /// presence's withdrawal (`oi.nara-presence-withdrawal/v1`), verbatim.
+    NaraPresenceConsent {
+        data: serde_json::Value,
+    },
     M3Reception {
         data: serde_json::Value,
     },
@@ -1978,7 +1983,11 @@ impl Kernel {
         let KernelOp::NaraPresence { project, request } = op else {
             return Ok(None);
         };
-        let binding = &request.binding;
+        // List and Withdraw admit nothing of the Expression (dispatch.rs `free`).
+        let Some((operation, admission)) = request.admission() else {
+            return Ok(None);
+        };
+        let binding = &admission.binding;
         let document = self
             .expressions
             .apply(
@@ -1997,7 +2006,8 @@ impl Kernel {
             self.agency.clone(),
             cwd,
             project_ref,
-            request.clone(),
+            operation,
+            admission.clone(),
             document,
             profile,
         )))
@@ -3072,6 +3082,15 @@ impl Kernel {
                     .ok_or("Native act preparation unavailable")?
                     .execute()?;
                 self.finish_nara_expressive_act(result)
+            }
+            KernelOp::NaraPresence { request, .. } if request.admission().is_none() => {
+                Ok(KernelOpOutcome {
+                    read_scopes: None,
+                    receipts: vec![],
+                    result: KernelOpResult::NaraPresenceConsent {
+                        data: nara_presence::consent(&request)?,
+                    },
+                })
             }
             op @ KernelOp::NaraPresence { .. } => {
                 let completed = self

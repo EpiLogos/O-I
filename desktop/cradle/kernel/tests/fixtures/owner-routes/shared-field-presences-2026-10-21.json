@@ -1,0 +1,78 @@
+{
+  "_source": "hosted: the hosted SharedField (OI_SHARED_FIELD_TARGET=hosted) answered nara-presences read-only on 21 Oct 2026 (no presences). list, withdrawal, listed_after and the refusals: SharedField's own pure owner functions (shared-field/nara-expression-projection.mjs naraPresencesFromRows, naraWithdrawal) over its own test inputs; the withdrawal's publication is null here because nothing was published (field.ts publishes the args); a refusal reaches the kernel as field.ts's refused envelope",
+  "hosted_list": {
+    "schema": "oi.nara-presences/v1",
+    "presences": []
+  },
+  "list": {
+    "schema": "oi.nara-presences/v1",
+    "presences": [
+      {
+        "projection_ref": "projection:sf5:nara",
+        "projection_revision": 1,
+        "field_ref": "oi:field:expression-sf5-nara",
+        "state": "published",
+        "published_at": "2026-09-15T12:00:01Z",
+        "consent": {
+          "consent_ref": "consent:sf5:1",
+          "participant_ref": "participant:oi-field-expression-sf5-nara:human-owner",
+          "expression_ref": "expression:sf5:nara",
+          "target_ref": "participant:world-b",
+          "target_identity_ref": "human:world-b",
+          "granted_at": "2026-09-15T12:00:01Z",
+          "state": "granted"
+        }
+      }
+    ]
+  },
+  "withdrawal_request": {
+    "projection_ref": "projection:sf5:nara",
+    "consent_ref": "consent:sf5:1",
+    "withdrawal_ref": "withdrawal:sf5:1",
+    "withdrawn_at": "2026-09-15T12:02:00Z"
+  },
+  "withdrawal": {
+    "schema": "oi.nara-presence-withdrawal/v1",
+    "consent": {
+      "schema": "oi.nara-presence-consent/v1",
+      "consent_ref": "consent:sf5:1",
+      "participant_ref": "participant:oi-field-expression-sf5-nara:human-owner",
+      "expression_ref": "expression:sf5:nara",
+      "target_ref": "participant:world-b",
+      "target_identity_ref": "human:world-b",
+      "state": "withdrawn",
+      "granted_at": "2026-09-15T12:00:01Z",
+      "source_refs": [],
+      "withdrawn_at": "2026-09-15T12:02:00Z",
+      "withdrawal_ref": "withdrawal:sf5:1"
+    },
+    "projection_ref": "projection:sf5:nara",
+    "projection_revision": 2,
+    "publication": null,
+    "private_state_exported": false
+  },
+  "listed_after": {
+    "schema": "oi.nara-presences/v1",
+    "presences": [
+      {
+        "projection_ref": "projection:sf5:nara",
+        "projection_revision": 2,
+        "field_ref": "oi:field:expression-sf5-nara",
+        "state": "withdrawn",
+        "published_at": "2026-09-15T12:00:01Z",
+        "consent": {
+          "consent_ref": "consent:sf5:1",
+          "participant_ref": "participant:oi-field-expression-sf5-nara:human-owner",
+          "expression_ref": "expression:sf5:nara",
+          "target_ref": "participant:world-b",
+          "target_identity_ref": "human:world-b",
+          "granted_at": "2026-09-15T12:00:01Z",
+          "state": "withdrawn",
+          "withdrawn_at": "2026-09-15T12:02:00Z"
+        }
+      }
+    ]
+  },
+  "refusal_withdrawn_already": "The Nara presence at projection:sf5:nara is withdrawn already",
+  "refusal_other_consent": "The hosted presence stands on consent consent:sf5:1, not consent:sf5:9"
+}

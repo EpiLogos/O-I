@@ -527,11 +527,14 @@ impl PreparedWrite {
                 let data = crate::routine::call(&cwd, request)?;
                 // A routine's run or disable is an actual native action
                 // response, preserved verbatim (events.rs).
-                if let Some((action, routine_ref)) = request.mutation() {
+                if let Some(action) = request.mutation() {
+                    // The Routine AIKit answered for (`routine::call` checked
+                    // it against the one asked, where one was named).
+                    let routine_ref = data["routine"].as_str().unwrap_or_default().to_owned();
                     records.push(Record::Event(Box::new(
                         KernelEvent::RoutineActionReturned {
                             action: action.into(),
-                            routine_ref: routine_ref.into(),
+                            routine_ref,
                             data: data.clone(),
                         },
                     )));

@@ -1208,6 +1208,10 @@ pub struct SourceReturnEntry {
     pub status: String,
     pub agent_session_ref: String,
     pub current_revision: String,
+    /// The reviewers' comments on this Return (Central#290); absent from an
+    /// older Central, and then carried absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comments: Option<u64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
