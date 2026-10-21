@@ -251,7 +251,9 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
         setHits(snapshot.hits);
         setRows(snapshot.rows);
         setSelected(index);
-        selectedKey.current = searchKeys(snapshot.hits, snapshot.rows)[index];
+        // Only a row the person chose (selectResult) follows its row across later answers. The first row is a default, not
+        // a choice: kept as one, it rode down when a later answer's rows landed above it, and ArrowDown wrapped to the top.
+        if (searchKeys(snapshot.hits, snapshot.rows)[index] !== selectedKey.current) selectedKey.current = undefined;
         setAbsences(snapshot.absences);
         setResolutionAbsences(snapshot.resolutionAbsences);
         setError(snapshot.error);
