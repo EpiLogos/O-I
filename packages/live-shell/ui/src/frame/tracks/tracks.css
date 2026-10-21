@@ -39,8 +39,11 @@
 .cs.clip.running::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0; pointer-events: none; background: linear-gradient(90deg, color-mix(in srgb, var(--bg-0) 18%, transparent), transparent); animation: tracks-fill 4s linear infinite }
 @keyframes tracks-fill { from { width: 0 } to { width: 92% } }
 .cs .cs-label { overflow: hidden; text-overflow: ellipsis }
+/* A clip's two lines (catalogue dlw__session-grid.tsx .sgd-cell): its name, and under it what follows it and its takes. They stand in the
+   mockup's 28px cell (world-shell-mockup.html .cs, pinned by agent-shell-craft); the design's 52px cell waits for the design lane. */
+.cs .cs-text { min-width: 0; display: flex; flex-direction: column; justify-content: center; overflow: hidden; line-height: 12px }
+.cs .cs-sub { font-size: 8.5px; line-height: 10px; opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .cs .cs-note { flex: none; font-size: 9px; opacity: .8 }
-.cs .cs-takes { margin-left: auto; font-size: 9px; padding: 0 3px; border: 1px solid currentColor; opacity: .7 }
 .cs .tri { width: 0; height: 0; padding: 0; background: none; border: 0; border-left: 7px solid var(--bg-0); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; flex: none; opacity: .75 }
 .cs .tri:disabled { opacity: .3 }
 .cs.clip.running .tri { animation: tracks-blink 1s steps(2) infinite }
@@ -282,3 +285,13 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-legend { position: sticky; bottom: 0; z-index: 3; margin-top: auto }
 .tl:has(.tl-legend) .tl-foot { bottom: 24px }
 .tl-foot + .tl-legend { margin-top: 0 }
+/* The overview strip (catalogue dlw__arrangement-ruler.tsx .arp-over): above the legend, the receipt above it. */
+.tl-over { position: sticky; bottom: 24px; z-index: 3; margin-top: auto; height: 24px; border-top: 1px solid var(--line-strong); background: var(--bg-1) }
+.tl-foot + .tl-over, .tl-over + .tl-legend { margin-top: 0 }
+.tl:has(.tl-over) .tl-foot { bottom: 48px }
+.tl-over .tl-over-head { border-left: 0; gap: 5px }
+.tl-over .tl-scale { color: var(--text-dim); font-size: 9px; overflow: hidden; text-overflow: ellipsis }
+.tl-over-body { position: relative; margin: 4px 8px; background: var(--bg-0); cursor: pointer }
+.tl-over-body i { position: absolute; height: 2px; background: var(--tc, var(--text-faint)); pointer-events: none }
+.tl-over-body .tl-over-win { top: -2px; bottom: -2px; height: auto; box-sizing: border-box; border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent) }
+.tl-over-body .tl-over-win[data-fit] { opacity: .5 }

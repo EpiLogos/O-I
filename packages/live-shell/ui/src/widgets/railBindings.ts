@@ -138,19 +138,72 @@ export const CALENDAR_ABSENT = 'No calendar provider is installed: a calendar co
 // ---------------------------------------------------------------------------------------------------------------- Notifications
 
 /** Notifications (design package D10, §23.9; widgets:notifications): a monitor. Its requests and the host's notification capabilities are
- * Central's `personal.notify` (ctrl/src/personal.rs; connector-sdk notification.rs), which is not in Central's installed action list, and
- * no owner keeps the requests (T-COVERAGE §1.5): both arrive absent naming it. What already reaches the shell as an owner's reading of what
- * needs you is read from its own device, never derived again here: the agents that wait for you or have stalled are Messages' (its
- * `agents`, each in the state its occupant's run reports: agent/devices/messagesBinding.ts), and what waits in Approvals is the Approvals
- * device's own queue (its source returns and the shown session's consent requests: agent/devices/receiptBindings.ts approvalsValues). */
+ * Central's: `personal.notify` keeps every request it is asked for with the provider's delivery or refusal, and
+ * `personal.notifications.list` reads them back with the selected provider's capabilities (ctrl/src/notification.rs,
+ * central.notification-ledger/v1; connector-sdk notification.rs). What already reaches the shell as an owner's reading of what needs you
+ * is read from its own device, never derived again here: the agents that wait for you or have stalled are Messages' (its `agents`, each
+ * in the state its occupant's run reports: agent/devices/messagesBinding.ts), and what waits in Approvals is the Approvals device's own
+ * queue (its source returns and the shown session's consent requests: agent/devices/receiptBindings.ts approvalsValues). */
+export const NOTIFY_LIST_ACTION = 'personal.notifications.list'
 export const NOTIFICATIONS_ABSENT = {
-  requests: 'The requests are Central\'s personal.notify, which is not installed (ctrl --json action list: no personal.notify), and no owner keeps the requests it posts — missing op: personal.notify, and a reading of the requests it keeps (T-COVERAGE §1.5).',
-  provider: 'Whether this computer shows notifications is personal.notify\'s UserNotification connector\'s (authorization, callback, urgency, category) — missing op: personal.notify (T-COVERAGE §1.5).',
+  requests: 'Central has not answered personal.notifications.list yet: no reading of the requests personal.notify keeps.',
+  provider: 'Central names no notification provider: personal.notifications.list has not answered, or no Connector implements UserNotification here.',
   waiting: 'Messages has not read its agents and their runs yet (aikit gateway who --json): no count of the agents that wait for you.',
   proposals: 'No Approvals device is on the door, or it has read nothing yet: no count of what waits for you.',
 } as const
-/** Open: a request names what to open; with no requests read there is none. */
+/** Open, before any request is read: a request names what to open; with none read there is none. */
 export const NOTIFY_OPEN_REFUSED = `Open: ${NOTIFICATIONS_ABSENT.requests}`
+
+const textOf = (x: unknown): string | undefined => (typeof x === 'string' && x !== '' ? x : undefined)
+const two = (n: number) => String(n).padStart(2, '0')
+
+/** The start of the local day `at` stands in, in Unix ms: the strip runs midnight to midnight, and the list holds today's requests. */
+export function dayStartMs(at: number): number {
+  const day = new Date(at)
+  day.setHours(0, 0, 0, 0)
+  return day.getTime()
+}
+
+/** One kept record (central.notification-record/v1) as the design's request: its ref, the local clock time it was asked (`at` HH:MM,
+ * `time` minutes after midnight, for the strip), the request's own words, its caller as `from`, its callback as `open`, and the
+ * provider's delivery (posted, its provider, what it could not show) or its refusal (rejected). Null where it is no record. Pure. */
+export function notificationRequestOf(record: unknown): Record<string, Value> | null {
+  const r = record as {schema?: unknown; request_ref?: unknown; requested_at_unix_ms?: unknown; request?: Record<string, unknown>; delivery?: Record<string, unknown> | null; refusal?: unknown} | null
+  if (!r || r.schema !== 'central.notification-record/v1' || typeof r.request_ref !== 'string' || !r.request || typeof r.request.caller_ref !== 'string') return null
+  const row: Record<string, Value> = {id: r.request_ref, from: r.request.caller_ref}
+  if (typeof r.requested_at_unix_ms === 'number' && Number.isFinite(r.requested_at_unix_ms)) {
+    const at = new Date(r.requested_at_unix_ms)
+    row.at = `${two(at.getHours())}:${two(at.getMinutes())}`
+    row.time = at.getHours() * 60 + at.getMinutes()
+  }
+  put(row, 'title', textOf(r.request.title))
+  put(row, 'body', textOf(r.request.body))
+  put(row, 'subject', textOf(r.request.subject_ref))
+  put(row, 'urgency', textOf(r.request.urgency))
+  put(row, 'category', textOf(r.request.category))
+  put(row, 'open', textOf(r.request.callback))
+  const delivery = r.delivery
+  if (delivery && (delivery.state === 'posted' || delivery.state === 'rejected')) {
+    const unsupported = Array.isArray(delivery.unsupported_requested_features) ? delivery.unsupported_requested_features.filter((x): x is string => typeof x === 'string') : []
+    row.delivery = JSON.stringify({state: delivery.state, ...(textOf(delivery.provider) ? {provider: delivery.provider} : {}), ...(unsupported.length ? {unsupported} : {})})
+  } else if (r.refusal) row.delivery = JSON.stringify({state: 'rejected'})
+  return row
+}
+
+/** Central's notification ledger reading (central.notification-ledger/v1) as the design's `requests` and `provider`: the kept requests as
+ * Central lists them, and the selected provider's capabilities by the design's names — or none, with Central's words, where no provider is
+ * selected. Null where the document is no ledger. Pure. */
+export function notificationLedgerOf(document: unknown): {requests: Record<string, Value>[]; provider: Record<string, Value> | null; providerError: string | null} | null {
+  const d = document as {schema?: unknown; requests?: unknown; provider?: Record<string, unknown> | null; provider_error?: unknown} | null
+  if (!d || d.schema !== 'central.notification-ledger/v1' || !Array.isArray(d.requests)) return null
+  const requests = d.requests.flatMap(record => { const row = notificationRequestOf(record); return row ? [row] : [] })
+  const p = d.provider
+  const provider = p && typeof p === 'object' && typeof p.provider === 'string'
+    ? {provider: p.provider, available: p.available === true, ...(typeof p.authorization === 'string' ? {authorization: p.authorization} : {}),
+      callback: p.supports_callback === true, urgency: p.supports_urgency === true, category: p.supports_category === true}
+    : null
+  return {requests, provider, providerError: textOf(d.provider_error) ?? null}
+}
 
 /** The agents that wait for you or have stalled, by Messages' own `agents` (each agent's state as its occupant's run reports it). Absent
  * where Messages listed no agents. Pure. */
@@ -169,25 +222,63 @@ export function waitingInApprovalsOf(queue: Value | undefined): number | undefin
   try { const rows = JSON.parse(queue) as unknown; return Array.isArray(rows) ? rows.length : undefined } catch { return undefined }
 }
 
-/** Notifications' values: Messages' and Approvals' counts where their devices read them, and now on the strip (minutes after midnight, the
- * view's own clock). The requests and the provider stay absent (NOTIFICATIONS_ABSENT). Pure. */
-export function notificationsValues(input: {readonly messagesAgents: Value | undefined; readonly approvalsQueue: Value | undefined; readonly nowMinutes: number}): Record<string, Value> {
+/** Central's answer to personal.notifications.list, as a device holds it (central/devices/centralActions.ts ActionAnswer). */
+export type NotifyLedgerAnswer = {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}
+
+/** Notifications' values: the requests Central keeps and its provider where Central answered, Messages' and Approvals' counts where their
+ * devices read them, and now on the strip (minutes after midnight, the view's own clock). Pure. */
+export function notificationsValues(input: {readonly messagesAgents: Value | undefined; readonly approvalsQueue: Value | undefined; readonly nowMinutes: number; readonly ledger?: NotifyLedgerAnswer}): Record<string, Value> {
   const values: Record<string, Value> = {}
+  const ledger = input.ledger?.status === 'answered' ? notificationLedgerOf(input.ledger.value) : null
+  if (ledger) {
+    put(values, 'requests', JSON.stringify(ledger.requests))
+    if (ledger.provider) put(values, 'provider', JSON.stringify(ledger.provider))
+  }
   put(values, 'waiting', waitingAgentsOf(input.messagesAgents))
   put(values, 'proposals', waitingInApprovalsOf(input.approvalsQueue))
   put(values, 'now', input.nowMinutes)
   return values
 }
 
+/** Why Open cannot act: Central's own words where it refused the reading, or that it has not answered. */
+export function notifyOpenRefusal(ledger: NotifyLedgerAnswer | undefined): string {
+  if (ledger?.status === 'refused') return `Open: no reading of the requests — ${ledger.error}`
+  if (ledger?.status === 'answered' && !notificationLedgerOf(ledger.value)) return 'Open: Central\'s answer to personal.notifications.list is no central.notification-ledger/v1 reading.'
+  return NOTIFY_OPEN_REFUSED
+}
+
 /** Notifications' binding: its values (notificationsValues) with the view's own holds laid over the manual's defaults (Show All, Follow On:
- * §23.9 Parameters), Messages ▸ and Approvals ▸ as the shell's own moves (opening writes nothing to any owner), and a request's Open refused
- * naming personal.notify until a request stands. Pure. */
+ * §23.9 Parameters), Messages ▸ and Approvals ▸ as the shell's own moves, and a request's Open: the shell opens the request's `open`
+ * target, or its subject, where it belongs (`hands.open`, which refuses in its own words where the shell has no route for it), and only
+ * then holds it as opened here. Opening writes nothing to any owner. Pure. */
 export function notificationsBinding(id: string, input: Parameters<typeof notificationsValues>[0], holds: Readonly<Record<string, Value | undefined>>,
-  hands: {readonly local: Readonly<Record<string, (value: Value | undefined) => void>>; readonly messages: () => void; readonly approvals: () => void}): DesignBinding {
+  hands: {readonly local: Readonly<Record<string, (value: Value | undefined) => void>>; readonly messages: () => void; readonly approvals: () => void;
+    readonly open?: (target: string) => Promise<void>}): DesignBinding {
   const values: Record<string, Value> = {...notificationsValues(input), show: 'all', follow: true, opened: '[]'}
   for (const [key, value] of Object.entries(holds)) put(values, key, value)
-  return {id, values, standing: {open: {disabled: NOTIFY_OPEN_REFUSED}},
+  const read = values.requests !== undefined
+  const refusal = notifyOpenRefusal(input.ledger)
+  return {id, values, ...(read ? {} : {standing: {open: {disabled: refusal}}}),
+    ...(input.ledger?.status === 'reading' ? {waiting: ['requests', 'provider']} : {}),
     local: {...hands.local, messages: () => hands.messages(), approvals: () => hands.approvals()},
     writes: key => key === 'open',
-    write: async () => { throw new Error(NOTIFY_OPEN_REFUSED) }}
+    write: async changes => {
+      for (const change of changes) {
+        if (change.key !== 'open') continue
+        if (!read) throw new Error(refusal)
+        let rows: unknown
+        try { rows = JSON.parse(values.requests as string) } catch { rows = [] }
+        const request = (Array.isArray(rows) ? rows : []).find(row => (row as {id?: unknown}).id === change.value) as Record<string, unknown> | undefined
+        if (!request) throw new Error(`Open: Central keeps no request ${String(change.value)} today.`)
+        const target = textOf(request.open) ?? textOf(request.subject)
+        if (!target) throw new Error('Open: the request names nothing to open (no callback, no subject).')
+        if (!hands.open) throw new Error(`Open: the shell has no hand that opens ${target}.`)
+        await hands.open(target)
+        let opened: unknown
+        try { opened = JSON.parse(typeof values.opened === 'string' ? values.opened : '[]') } catch { opened = [] }
+        const ids = Array.isArray(opened) ? opened.filter((x): x is string => typeof x === 'string') : []
+        hands.local.opened?.(JSON.stringify(ids.includes(request.id as string) ? ids : [...ids, request.id as string]))
+        hands.local.selected?.(request.id as string)
+      }
+    }}
 }

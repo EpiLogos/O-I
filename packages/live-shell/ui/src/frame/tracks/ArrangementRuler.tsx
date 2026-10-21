@@ -228,6 +228,32 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
     occasion · {occasion.label.length > 28 ? `${occasion.label.slice(0, 28)}…` : occasion.label}
     <i className="tl-light" data-admission={light.state} aria-label={light.title} />
   </span>
+  // The overview strip (catalogue dlw__arrangement-ruler.tsx FullRuler's `arp-over`): the whole ruler, thin, each placed clip a tick in its
+  // track's colour at its track's height, and the window marked on it; a press centres the window on that moment. Its head carries the
+  // ruler's scale: the set's unit, or, where the set has no ruler, that the rows are laid one after another (placeClips).
+  const extent = Math.max(bounds.end - bounds.start, Number.EPSILON)
+  const overAt = (at: number) => `${(held(at) - bounds.start) / extent * 100}%`
+  const trackRow = new Map(set.tracks.map((track, index) => [track.id, index]))
+  const scaleWord = set.ruler ? set.ruler.unit : 'rows in order'
+  const overviewStrip = <div className="tl-lane tl-over" role="group" aria-label={`The whole ruler, in ${scaleWord}`}>
+    <span className="tl-head tl-over-head" title={set.ruler ? `The ruler's scale: ${set.ruler.unit}` : 'No ruler: the Arrangement lays the rows one after another'}>
+      <span className="tl-scale">{scaleWord}</span><small>whole ruler</small>
+    </span>
+    <div className="tl-over-body" title="The whole ruler · press to centre the window on that moment"
+      onClick={event => {
+        const box = event.currentTarget.getBoundingClientRect()
+        if (box.width <= 0) return
+        const at = bounds.start + (event.clientX - box.left) / box.width * extent
+        view.onWindow(clampRange({start: at - span / 2, end: at + span / 2}, bounds))
+      }}>
+      {placed.map(({clip, start, end: to}) => {
+        const track = trackOf.get(clip.trackId)
+        return <i key={clip.id} data-over-clip={clip.id} style={{left: overAt(start), width: `max(2px, ${(held(to) - held(start)) / extent * 100}%)`,
+          top: 2 + (trackRow.get(clip.trackId) ?? 0) * 2.6, ...(track ? {'--tc': trackColour(track)} : {})} as CSSProperties} />
+      })}
+      <i className="tl-over-win" data-fit={isFit(range, bounds) || undefined} style={{left: overAt(range.start), width: `${span / extent * 100}%`}} />
+    </div>
+  </div>
   const markerMark = marker !== undefined && <span className="tl-marker-mark" style={{left: lineAt(marker)}} title={`Insert marker at ${label(marker)} · the pane's own, snapped ${view.snap}; it writes no time to any owner`}>{label(marker)}</span>
 
   // A rail stands under its track in that track's colour; one with no placed stop stands after the tracks, uncoloured.
@@ -452,6 +478,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       </p>}
       {left > 0 && <p className="tl-note" role="status">{left} {left === 1 ? 'clip has' : 'clips have'} no place on this ruler: its owner gives none. The Session grid holds {left === 1 ? 'it' : 'them'}.</p>}
     </div>}
+    {overviewStrip}
     <RulerLegend set={set} stalled={stalled} now={now} />
   </div>
 }
