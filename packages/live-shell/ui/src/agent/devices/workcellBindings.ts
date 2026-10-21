@@ -1,6 +1,9 @@
-// Workcell's devices on Factory's chains, on their owners (lane BF3): Git / landing (DLW §19.16, workcell:git-seat — "last device on
-// a Factory session's chain"), the Seat (§19.20, workcell:seat — "inside the Git / landing device"), the Remote carrier (§19.21,
-// workcell:remote-carrier — "the fourth chain of the Gateways rack") and the Link (§19.22, workcell:link — "Factory's Main track").
+// Workcell's devices on their owners (lane BF3): Git / landing (DLW §19.16, workcell:git-seat — "last device on a workcell's chain, with
+// the Seat inside it"), the Seat (§19.17, workcell:seat — "inside Git / landing, on a workcell's chain"), the Remote carrier (§19.18,
+// workcell:remote-carrier — "second device on a workcell's chain, after the Gateway") and the Link (§19.19, workcell:link — "in the
+// transport, in every mode"). Since lane W1-Factory they stand where the manual puts them: the first three on a workcell's chain
+// (FactoryDeviceChain.tsx with a workcell, workcellRackBinding.ts), never on a session's or the Main track's; the Link in the transport,
+// which publishes it (the frame's own) on linkBinding below.
 //
 // What the owners report, read 16 Oct 2026 (scratch lane-bf3/shapes/):
 //   `workcell status --json` — the kernel's workcell_status_read (owner_read.rs:1133, owners/readers.ts useWorkcellAnswer):
@@ -143,12 +146,15 @@ export interface SeatInput {
   readonly project: string
   /** The chain's checkout branch (its git reading), to find the seat the session stands in. */
   readonly branch: string | null
+  /** The workcell whose chain the Seat stands on (the register's name its return track carries, frame/tracks/returnTracks.ts): its seat
+   * of the product is where the Seat starts (§19.23 "a workcell holds one seat for each project"). Absent: the seat on the branch. */
+  readonly workcell?: string | null
   readonly holds: ChainHolds
 }
 
 /** The Seat's values: the seats and the disk as the instrument reads them; the product, the seat and the join's settings the hand
- * holds, each starting where the reading puts it (the session's project, the seat on its branch or the first free one, Attach, the
- * register's floor). Without the reading only the hand's own settings stand. */
+ * holds, each starting where the reading puts it (the session's project; the seat of the workcell whose chain it stands on, else the
+ * seat on its branch or the first free one; Attach; the register's floor). Without the reading only the hand's own settings stand. */
 export function seatValues(input: SeatInput): Values {
   const values: Record<string, Value> = {}
   const view = viewHolds(input.holds, SEAT_ID)
@@ -163,7 +169,8 @@ export function seatValues(input: SeatInput): Values {
   put(values, 'product', product)
   const mine = read.seats.filter(seat => seat.product === product)
   const seat = typeof view.seat === 'string' ? view.seat
-    : (mine.find(row => input.branch && row.branch === input.branch) ?? mine.find(row => row.state === 'free'))?.workcell
+    : input.workcell ? mine.find(row => row.workcell === input.workcell)?.workcell
+      : (mine.find(row => input.branch && row.branch === input.branch) ?? mine.find(row => row.state === 'free'))?.workcell
   put(values, 'seat', seat as string | undefined)
   if (view.floor === undefined) put(values, 'floor', read.disk.find(row => row.workcell === seat)?.softGb as number | undefined)
   return values

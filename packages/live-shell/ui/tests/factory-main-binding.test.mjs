@@ -214,18 +214,25 @@ test('the rail\'s Frames is the Frames monitor\'s own widget (§23.8): bare, on 
   assert.match(read('frame/widgets/WidgetRail.tsx'), /widgets\.map\(claimedWidget\)/)
 })
 
-test('with no session selected the chain draws the Main track, the Agency gateway inside the rack, and publishes each with its binding', () => {
+test('with no session selected the chain draws the Main track — the Experiment, then Approvals — and publishes Gateways, the Agency gateway and Frames for the rail and a pane', () => {
   const view = read('agent/devices/FactoryDeviceChain.tsx')
+  // REPLACED (lane W1-Factory; DLW §16.1, §16.2, §19.1, §19.3, §19.10): Gateways is a monitor, on the rail and full in a pane, never on a chain;
+  // the Agency gateway stands in the head of Messages and on no chain. The Main track's chain is the Experiment, then Approvals.
   assert.match(view, /<div className="factory-main" data-track="main"/)
-  assert.match(view, /\{sessionRef == null && <div className="factory-main"/, 'with no session selected the Device side is the Main track')
-  assert.match(view, /\{sessionRef != null && chain\.map\(/, 'a selected session shows its own chain')
-  assert.match(view, /<DeviceView device=\{main\.rack\} size="compact" binding=\{mainBindings\.rack\}/)
-  assert.match(view, /<DeviceView device=\{main\.agency\} size="compact" binding=\{mainBindings\.agency\}/)
+  assert.match(view, /\{place\.kind === 'main' && <div className="factory-main"/, 'with no session selected the Device side is the Main track')
+  assert.match(view, /\{place\.kind === 'session' && <>\{plates\}/, 'a selected session shows its own chain')
+  assert.doesNotMatch(view, /<DeviceView device=\{main\.rack\}/, 'Gateways stands on no chain')
+  assert.doesNotMatch(view, /<DeviceView device=\{main\.agency\}/, 'nor does the Agency gateway')
   assert.match(view, /<DeviceView device=\{main\.experiment\} size="compact" binding=\{mainBindings\.experiment\}/)
-  for (const [id, key] of [['GATEWAYS_RACK_ID', 'rack'], ['AGENCY_GATEWAY_ID', 'agency'], ['EXPERIMENT_ID', 'experiment'], ['FRAMES_ID', 'frames']]) {
-    assert.match(view, new RegExp(`publishDevice\\(${id}, \\{device: main\\.${key}, binding: mainBindings\\.${key}\\}\\)`), `${key} is published with its binding`)
+  // REPLACED (lane W1-Factory, the rail's one publisher): Gateways, the Agency gateway and Frames stand on the rail in every mode, so the
+  // rail's publisher (AgentRailDevices.tsx) publishes them with their bindings; the chain publishes the Experiment.
+  assert.match(view, /publishDevice\(EXPERIMENT_ID, \{device: main\.experiment, binding: mainBindings\.experiment\}\)/, 'the Experiment is published with its binding')
+  const rail = read('agent/devices/AgentRailDevices.tsx')
+  for (const [id, binding] of [['GATEWAYS_RACK_ID', 'gateways'], ['AGENCY_GATEWAY_ID', 'agency'], ['FRAMES_ID', 'frames']]) {
+    assert.match(rail, new RegExp(`publish\\(${id}, ${binding}\\)`), `${id} is published with its binding, in every mode`)
   }
-  assert.match(view, /\.\.\.MAIN_DEVICE_IDS, \.\.\.SESSION_DEVICE_IDS, \.\.\.RECEIPT_DEVICE_IDS,\s+\.\.\.WORKCELL_DEVICE_IDS\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain')
+  assert.match(view, /EXPERIMENT_ID, \.\.\.SESSION_DEVICE_IDS, APPROVALS_ID,\s+SEAT_ID, CARRIER_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
+  assert.match(read('agent/agentDockTiles.ts'), /claimRailWidget\('gateways', GATEWAYS_RACK_ID\)/, 'the rail claims the Gateways tile for the monitor')
   assert.doesNotMatch(read('agent/devices/mainTrackBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
   for (const file of ['agent/devices/mainTrackBindings.ts', 'agent/devices/factoryDevices.css', 'frame/widgets/deviceWidgets.tsx']) {
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)

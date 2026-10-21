@@ -1,0 +1,2040 @@
+{
+ "_read": "21 Oct 2026, read-only, on workcell:mac (lane W1-Factory): `seat status --json` (whole; each zone's regions cut to the first), `workcell status --json` (whole) and `aikit gateway who --project-world project:O-I --json` (its data: the remotes whole; each Position cut to position_ref, handle, label, role_ref, definition, communiques, current_work and its occupancy's state, observed_via, agent_ref, workcell_ref, since_unix_ms, attention, presence; each agent cut to agent_ref, handle, label, purpose, positions, communiques, registry and its occupancy's state, position_ref, workcell_ref; the absences dropped). And `aikit gateway conversation --position central:position:project:O-I:central-guardian --with central:position:project:O-I:oi-root-agency --project-world project:O-I --json` (its data; each record cut to schema, communique_ref, from_position_ref, to_position_ref, sent_at_unix_ms, sequence, state and the first 300 characters of its body).",
+ "seatStatus": {
+  "schema": "central.workcell-status/v1",
+  "recorded_at_unix_seconds": 1792573464,
+  "workcells": [
+   {
+    "name": "env-1",
+    "path": "/Users/admin/Central/worktrees/env-1",
+    "disk_free_gb": 16.4,
+    "min_free_gb": 20,
+    "hard_free_gb": null,
+    "last_tend": {
+     "at_unix_seconds": 1792559561,
+     "freed_mb": 0,
+     "removed": []
+    },
+    "seats": [
+     {
+      "product": "actuation",
+      "state": "claimed",
+      "registered_branch": "fold/day-close-20261012",
+      "registered_head": "7b4af99",
+      "claimed_by": "claude-code:dlw-conductor",
+      "now_ref": "workcellenv1actuation-seat-claimed-branch-2026-10-13",
+      "zones": [
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral"
+        ],
+        "since_unix_seconds": 1791846105
+       }
+      ],
+      "admission": null,
+      "live_branch": "fold/day-close-20261012",
+      "live_head": "933731e",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 3
+     },
+     {
+      "product": "ai-kit",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "0680595c",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 18.9,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "0680595c",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 3,
+      "ahead_main": 0
+     },
+     {
+      "product": "central",
+      "state": "claimed",
+      "registered_branch": "fold/day-close-20261012",
+      "registered_head": "cf58c54",
+      "claimed_by": "claude-code:dlw-conductor",
+      "now_ref": "workcellenv1central-seat-claimed-branch-2026-10-13",
+      "zones": [
+       {
+        "actor": "agent:claude-code:ctrl-t-payload-law",
+        "regions": [
+         "ctrl/tests/continuous_work_admission.rs"
+        ],
+        "since_unix_seconds": 1791412597
+       },
+       {
+        "actor": "zcode:mac-peer-credential-push",
+        "regions": [
+         "ctrl"
+        ],
+        "since_unix_seconds": 1791428601
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral"
+        ],
+        "since_unix_seconds": 1791846067
+       }
+      ],
+      "admission": null,
+      "live_branch": "fix/day-close-no-t-payloads",
+      "live_head": "8aa1065",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 21,
+      "ahead_main": 1
+     },
+     {
+      "product": "factory",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "4e22ffa",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "4e22ffa",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     },
+     {
+      "product": "o-i",
+      "state": "claimed",
+      "registered_branch": "dlw/phase1-semantics-20261013",
+      "registered_head": "cc69e19fa",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv1oi-seat-claimed-branch-2026-10-13-2",
+      "zones": [
+       {
+        "actor": "zcode:enrich-arguments-l1",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/arguments"
+        ],
+        "since_unix_seconds": 1791282969
+       },
+       {
+        "actor": "zcode:enrich-matheme-l1",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/matheme"
+        ],
+        "since_unix_seconds": 1791282969
+       },
+       {
+        "actor": "zcode:enrich-symbolon-l1",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/symbolon"
+        ],
+        "since_unix_seconds": 1791282971
+       },
+       {
+        "actor": "zcode:enrich-critic-w1",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791287828
+       },
+       {
+        "actor": "zcode:enrich-critic-w1b",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791288099
+       },
+       {
+        "actor": "zcode:enrich-critic-w1c",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791289615
+       },
+       {
+        "actor": "zcode:enrich-mytheme-l2",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/mytheme"
+        ],
+        "since_unix_seconds": 1791289656
+       },
+       {
+        "actor": "zcode:enrich-essay-l2",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/essay"
+        ],
+        "since_unix_seconds": 1791289659
+       },
+       {
+        "actor": "zcode:enrich-episteme-l2",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/episteme"
+        ],
+        "since_unix_seconds": 1791289659
+       },
+       {
+        "actor": "zcode:enrich-critic-w2a",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791294348
+       },
+       {
+        "actor": "zcode:enrich-critic-w2b",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791295059
+       },
+       {
+        "actor": "zcode:enrich-mytheme-l3",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/mytheme"
+        ],
+        "since_unix_seconds": 1791295314
+       },
+       {
+        "actor": "zcode:enrich-mytheme-l4",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/mytheme"
+        ],
+        "since_unix_seconds": 1791295317
+       },
+       {
+        "actor": "zcode:enrich-critic-w3",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791298723
+       },
+       {
+        "actor": "zcode:tarot-score-312",
+        "regions": [
+         "desktop/cradle/kernel/src/native_expression.rs"
+        ],
+        "since_unix_seconds": 1791300861
+       },
+       {
+        "actor": "zcode:enrich-critic-m1",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791304999
+       },
+       {
+        "actor": "zcode:enrich-critic-m2",
+        "regions": [
+         "campaign-evidence/2026-10-06-expression-enrichment"
+        ],
+        "since_unix_seconds": 1791304999
+       },
+       {
+        "actor": "zcode:enrich-covers",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/essay"
+        ],
+        "since_unix_seconds": 1791305137
+       },
+       {
+        "actor": "zcode:enrich-covers-mytheme",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/mytheme"
+        ],
+        "since_unix_seconds": 1791308731
+       },
+       {
+        "actor": "zcode:expression-enrichment-20261006",
+        "regions": [
+         "campaign-evidence"
+        ],
+        "since_unix_seconds": 1791311912
+       },
+       {
+        "actor": "claude-sonnet-5.5:281-replan",
+        "regions": [
+         "desktop/cradle/kernel/src/native_expression.rs"
+        ],
+        "since_unix_seconds": 1791311950
+       },
+       {
+        "actor": "zcode:essay-field-corrections-20261006",
+        "regions": [
+         "site/essay-field.test.mjs"
+        ],
+        "since_unix_seconds": 1791312510
+       },
+       {
+        "actor": "zcode:obsidian-re-campaign-20261007",
+        "regions": [
+         "desktop/cradle/src/kernel/bridge.ts"
+        ],
+        "since_unix_seconds": 1791336303
+       },
+       {
+        "actor": "zcode:agent-self-acquaintance",
+        "regions": [
+         "desktop/cradle/src/agency"
+        ],
+        "since_unix_seconds": 1791365014
+       },
+       {
+        "actor": "zcode:expressions-craft-20261007",
+        "regions": [
+         "campaign-evidence/2026-10-07-expression-rework"
+        ],
+        "since_unix_seconds": 1791369170
+       },
+       {
+        "actor": "codex:sol-new-shell",
+        "regions": [
+         "packages/live-shell/ui"
+        ],
+        "since_unix_seconds": 1791387552
+       },
+       {
+        "actor": "zcode:expressions-deepen-20261007",
+        "regions": [
+         "campaign-evidence/2026-10-07-expression-rework"
+        ],
+        "since_unix_seconds": 1791388835
+       },
+       {
+        "actor": "codex:sol-saved-work",
+        "regions": [
+         "desktop/cradle/kernel/src/expression_recovery.rs"
+        ],
+        "since_unix_seconds": 1791388873
+       },
+       {
+        "actor": "codex:improvement-parent",
+        "regions": [
+         "scripts/development-field-conformance.py"
+        ],
+        "since_unix_seconds": 1791392079
+       },
+       {
+        "actor": "codex:sol-instrumentation",
+        "regions": [
+         "packages/expressions-boundary/src/editor.ts"
+        ],
+        "since_unix_seconds": 1791399324
+       },
+       {
+        "actor": "codex:native-composition",
+        "regions": [
+         "desktop/cradle/src/workspace/checkpoints.ts"
+        ],
+        "since_unix_seconds": 1791399392
+       },
+       {
+        "actor": "codex:sol-settings",
+        "regions": [
+         "packages/live-shell/ui/src/settings"
+        ],
+        "since_unix_seconds": 1791399503
+       },
+       {
+        "actor": "codex:sol-instrument-editors",
+        "regions": [
+         "packages/instrument-editors"
+        ],
+        "since_unix_seconds": 1791407572
+       },
+       {
+        "actor": "agent:distribution-finish",
+        "regions": [
+         "packages/live-shell/freeze-product-bindings.py"
+        ],
+        "since_unix_seconds": 1791420542
+       },
+       {
+        "actor": "codex:sol-shared-time",
+        "regions": [
+         "packages/expressions-boundary/src/timeWindow.ts"
+        ],
+        "since_unix_seconds": 1791439769
+       },
+       {
+        "actor": "zcode:agent-shell-repair",
+        "regions": [
+         "packages/live-shell/ui"
+        ],
+        "since_unix_seconds": 1791493218
+       },
+       {
+        "actor": "agent:zcode-device-sdk",
+        "regions": [
+         "packages/live-shell/ui/src/inhabitants"
+        ],
+        "since_unix_seconds": 1791540643
+       },
+       {
+        "actor": "agent:zcode-mprime-founding",
+        "regions": [
+         "skills/m-prime-development"
+        ],
+        "since_unix_seconds": 1791670260
+       },
+       {
+        "actor": "agent:zcode-convergence",
+        "regions": [
+         "desktop/cradle/kernel/src"
+        ],
+        "since_unix_seconds": 1791728322
+       },
+       {
+        "actor": "agent:cursor-624-rust",
+        "regions": [
+         "skills/device-sdk"
+        ],
+        "since_unix_seconds": 1791749995
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral"
+        ],
+        "since_unix_seconds": 1791846057
+       },
+       {
+        "actor": "claude-code:dlw-lead",
+        "regions": [
+         "desktop/cradle/docs/world-shell"
+        ],
+        "since_unix_seconds": 1791851470
+       },
+       {
+        "actor": "claude-code:dlw-manual",
+        "regions": [
+         "packages/live-shell/ui/src/inhabitants/catalogue"
+        ],
+        "since_unix_seconds": 1792078733
+       },
+       {
+        "actor": "claude-code:dlw-uiux-lead",
+        "regions": [
+         "packages/live-shell/ui/src/App.tsx"
+        ],
+        "since_unix_seconds": 1792497781
+       },
+       {
+        "actor": "claude-code:procedural-body-lead",
+        "regions": [
+         "packages/live-shell/ui/scripts/measure-planet-reference.mjs"
+        ],
+        "since_unix_seconds": 1792501413
+       },
+       {
+        "actor": "claude-code:procedural-body-generator",
+        "regions": [
+         "packages/live-shell/ui/tests/golden/planet"
+        ],
+        "since_unix_seconds": 1792501427
+       },
+       {
+        "actor": "claude-code:procedural-body-system",
+        "regions": [
+         "packages/live-shell/ui/tests/w3-world-body-device.test.mjs"
+        ],
+        "since_unix_seconds": 1792501427
+       },
+       {
+        "actor": "claude-code:uiux-lane-kit",
+        "regions": [
+         "packages/live-shell/ui/src/inhabitants/sdk"
+        ],
+        "since_unix_seconds": 1792521646
+       },
+       {
+        "actor": "claude-code:reads-lead",
+        "regions": [
+         "desktop/cradle/kernel/src"
+        ],
+        "since_unix_seconds": 1792541322
+       }
+      ],
+      "admission": null,
+      "live_branch": "dlw/build",
+      "live_head": "58ec32e65",
+      "tracked_changes": 31,
+      "untracked": 7,
+      "behind_main": 0,
+      "ahead_main": 35
+     },
+     {
+      "product": "ql-mef",
+      "state": "claimed",
+      "registered_branch": "fix/host-tagged-floats",
+      "registered_head": "fc8e28a",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv1qlmef-seat-claimed-branch-2026-10-21",
+      "zones": [
+       {
+        "actor": "claude-code:dlw-lead",
+        "regions": [
+         "crates/ql-mef"
+        ],
+        "since_unix_seconds": 1792571682
+       }
+      ],
+      "admission": {
+       "free_gb": 14.9,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": "fix/host-tagged-floats",
+      "live_head": "c1ebe4f",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 2
+     },
+     {
+      "product": "workcell",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "59f94a3",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "codex:improvement-parent",
+        "regions": [
+         "crates/workcell-cli"
+        ],
+        "since_unix_seconds": 1791435376
+       },
+       {
+        "actor": "codex:collaboration-b",
+        "regions": [
+         "crates"
+        ],
+        "since_unix_seconds": 1791435480
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral"
+        ],
+        "since_unix_seconds": 1791846079
+       }
+      ],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "59f94a3",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     },
+     {
+      "product": "point-cloud-demo",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": null,
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "e9c7ccb",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     }
+    ],
+    "drift": [
+     "actuation: register pose ('fold/day-close-20261012', '7b4af99') != live ('fold/day-close-20261012', '933731e')",
+     "central: register pose ('fold/day-close-20261012', 'cf58c54') != live ('fix/day-close-no-t-payloads', '8aa1065')",
+     "o-i: register pose ('dlw/phase1-semantics-20261013', 'cc69e19fa') != live ('dlw/build', '58ec32e65')",
+     "ql-mef: register pose ('fix/host-tagged-floats', 'fc8e28a') != live ('fix/host-tagged-floats', 'c1ebe4f')"
+    ]
+   },
+   {
+    "name": "env-2",
+    "path": "/Users/admin/Central/worktrees/env-2",
+    "disk_free_gb": 16.4,
+    "min_free_gb": 20,
+    "hard_free_gb": null,
+    "last_tend": {
+     "at_unix_seconds": 1792559561,
+     "freed_mb": 0,
+     "removed": []
+    },
+    "seats": [
+     {
+      "product": "actuation",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "7fd6f54",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "7fd6f54",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "ai-kit",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "af157635",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 13.4,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "af157635",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     },
+     {
+      "product": "central",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "cf59602",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 18.9,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "cf59602",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     },
+     {
+      "product": "factory",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "09c3354",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 14.1,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "09c3354",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "o-i",
+      "state": "claimed",
+      "registered_branch": "dlw/native-build",
+      "registered_head": "2491a11b6",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv2oi-seat-claimed-branch-2026-10-14-2",
+      "zones": [
+       {
+        "actor": "codex:ci-repair-296",
+        "regions": [
+         "desktop/cradle/tests/search-overlay.mjs,desktop/cradle/kernel/src/bin/walk-bridge.rs"
+        ],
+        "since_unix_seconds": 1791288823
+       },
+       {
+        "actor": "agent:claude-central-field-lead",
+        "regions": [
+         "desktop/cradle/src"
+        ],
+        "since_unix_seconds": 1791305114
+       },
+       {
+        "actor": "zcode:harness-wiring-20261006",
+        "regions": [
+         "desktop/cradle/tests/settings-model.test.mjs"
+        ],
+        "since_unix_seconds": 1791319874
+       },
+       {
+        "actor": "codex:walkbridge-296",
+        "regions": [
+         "desktop/cradle/kernel/src/bin"
+        ],
+        "since_unix_seconds": 1791362609
+       },
+       {
+        "actor": "codex:psc-581",
+        "regions": [
+         "desktop/cradle/kernel/tests"
+        ],
+        "since_unix_seconds": 1791384688
+       },
+       {
+        "actor": "agent:claude-code:opus-5.5",
+        "regions": [
+         ".github/workflows/site.yml"
+        ],
+        "since_unix_seconds": 1791396690
+       },
+       {
+        "actor": "agent/oh-i",
+        "regions": [
+         "desktop/cradle/kernel/tests"
+        ],
+        "since_unix_seconds": 1791409247
+       },
+       {
+        "actor": "zcode:glue-circuit-integration",
+        "regions": [
+         "docs/research/ableton-live-12.0.25/devices/glue-perblock-derivation.md"
+        ],
+        "since_unix_seconds": 1791480227
+       },
+       {
+        "actor": "zcode:glass-bead-game-study",
+        "regions": [
+         "skills/m-prime-development"
+        ],
+        "since_unix_seconds": 1791684675
+       },
+       {
+        "actor": "agent:zcode-convergence",
+        "regions": [
+         "desktop/cradle/kernel/src/agent_definition.rs"
+        ],
+        "since_unix_seconds": 1791724803
+       },
+       {
+        "actor": "claude-code:dlw-manual",
+        "regions": [
+         "docs/dlw"
+        ],
+        "since_unix_seconds": 1791897450
+       },
+       {
+        "actor": "claude-code:cradle-instrument-summon",
+        "regions": [
+         "desktop/cradle/src"
+        ],
+        "since_unix_seconds": 1791950692
+       },
+       {
+        "actor": "claude-code:dlw-ft-attempts",
+        "regions": [
+         "desktop/cradle/docs/world-shell/evidence/p0-r1"
+        ],
+        "since_unix_seconds": 1792427628
+       },
+       {
+        "actor": "claude-code:dlw-uiux-lead",
+        "regions": [
+         "target"
+        ],
+        "since_unix_seconds": 1792500228
+       }
+      ],
+      "admission": null,
+      "live_branch": "dlw/native-build",
+      "live_head": "a8b4376cc",
+      "tracked_changes": 0,
+      "untracked": 1,
+      "behind_main": 16,
+      "ahead_main": 0
+     },
+     {
+      "product": "ql-mef",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "fc8e28a",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": {
+       "free_gb": 13.8,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "fc8e28a",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "workcell",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "1023071",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "claude-code:dlw-lead",
+        "regions": [
+         "src"
+        ],
+        "since_unix_seconds": 1792079109
+       }
+      ],
+      "admission": {
+       "free_gb": 18.2,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "1023071",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "point-cloud-demo",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "e9c7ccb",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "zcode:enrich-sproducts-l3",
+        "regions": [
+         "production/s-products"
+        ],
+        "since_unix_seconds": 1791294344
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral"
+        ],
+        "since_unix_seconds": 1791841122
+       }
+      ],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "e9c7ccb",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     }
+    ],
+    "drift": [
+     "o-i: register pose ('dlw/native-build', '2491a11b6') != live ('dlw/native-build', 'a8b4376cc')"
+    ]
+   },
+   {
+    "name": "env-3",
+    "path": "/Users/admin/Central/worktrees/env-3",
+    "disk_free_gb": 16.4,
+    "min_free_gb": 20,
+    "hard_free_gb": null,
+    "last_tend": {
+     "at_unix_seconds": 1792559561,
+     "freed_mb": 0,
+     "removed": []
+    },
+    "seats": [
+     {
+      "product": "actuation",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "e3ab00d",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "zcode:harness-wiring-20261006",
+        "regions": [
+         "crates"
+        ],
+        "since_unix_seconds": 1791321142
+       }
+      ],
+      "admission": {
+       "free_gb": 15.3,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "cd1f4ce",
+      "tracked_changes": 0,
+      "untracked": 1,
+      "behind_main": 3,
+      "ahead_main": 0
+     },
+     {
+      "product": "ai-kit",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "cc6405e6",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "cc6405e6",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "central",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "11e7e69",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "11e7e69",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     },
+     {
+      "product": "factory",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "1d88a83",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "agent:zcode-praxis-validation",
+        "regions": [
+         "factory/src"
+        ],
+        "since_unix_seconds": 1791631683
+       },
+       {
+        "actor": "agent:zcode-praxis-attach",
+        "regions": [
+         "factory/src"
+        ],
+        "since_unix_seconds": 1791635240
+       }
+      ],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "96a7fef",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 4,
+      "ahead_main": 0
+     },
+     {
+      "product": "o-i",
+      "state": "claimed",
+      "registered_branch": "dlw/t1-theme",
+      "registered_head": "1c70fefa3",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv3oi-seat-claimed-branch-dlwt1theme-2026-10-17",
+      "zones": [
+       {
+        "actor": "codex:psu-580",
+        "regions": [
+         "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrument-session.mjs"
+        ],
+        "since_unix_seconds": 1791363347
+       },
+       {
+        "actor": "codex:psu-580-s2",
+        "regions": [
+         "desktop/cradle/expressions-app/field-studies-journeys"
+        ],
+        "since_unix_seconds": 1791372334
+       },
+       {
+        "actor": "codex:walkbridge-v2",
+        "regions": [
+         "desktop/cradle/kernel/src/bin"
+        ],
+        "since_unix_seconds": 1791374402
+       },
+       {
+        "actor": "codex:psg-sampler",
+        "regions": [
+         "desktop/cradle/expressions-app/src/engine"
+        ],
+        "since_unix_seconds": 1791384676
+       },
+       {
+        "actor": "zcode:agent-self-acquaintance",
+        "regions": [
+         "desktop/cradle/tests"
+        ],
+        "since_unix_seconds": 1791385883
+       },
+       {
+        "actor": "claude-code:dlw-lead",
+        "regions": [
+         "packages/live-shell/ui"
+        ],
+        "since_unix_seconds": 1792229801
+       }
+      ],
+      "admission": null,
+      "live_branch": "dlw/t1-theme",
+      "live_head": "b2978431f",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 716,
+      "ahead_main": 0
+     },
+     {
+      "product": "ql-mef",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "61c0e16",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "61c0e16",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 18,
+      "ahead_main": 0
+     },
+     {
+      "product": "workcell",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "c7261e2",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "a716cd3",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 2,
+      "ahead_main": 0
+     },
+     {
+      "product": "point-cloud-demo",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": null,
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "e9c7ccb",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 0,
+      "ahead_main": 0
+     }
+    ],
+    "drift": [
+     "o-i: register pose ('dlw/t1-theme', '1c70fefa3') != live ('dlw/t1-theme', 'b2978431f')"
+    ]
+   }
+  ]
+ },
+ "workcellStatus": {
+  "admission": {
+   "accounting": "unavailable: demands are not refused for capacity, and none are invented",
+   "available": false,
+   "reason": "unavailable: host observation: /proc/meminfo MemTotal unreadable"
+  },
+  "connection_grants": {
+   "active": 1,
+   "expired": 0,
+   "revoked": 0
+  },
+  "connections": [
+   {
+    "endpoint": "100.92.62.101:7777",
+    "expires_at_unix_ms": null,
+    "label": "omarchy",
+    "protocol": "workcell.control/v1",
+    "remote_workcell_ref": "workcell:omarchy",
+    "state": "connected"
+   },
+   {
+    "endpoint": "100.92.62.101:7777",
+    "expires_at_unix_ms": 1791419267453,
+    "label": "omarchy-improvement-lanes",
+    "protocol": "workcell.control/v1",
+    "remote_workcell_ref": "workcell:omarchy",
+    "state": "connected"
+   }
+  ],
+  "health": "healthy",
+  "offers": 9,
+  "ok": true,
+  "persisted_world_receipts": 0,
+  "providers": 5,
+  "state_root": "/Users/admin/.workcell",
+  "workcell_ref": "workcell:mac",
+  "workcell_ref_source": "declared"
+ },
+ "population": {
+  "schema": "aikit.population-reading/v1",
+  "project_world_ref": "project:O-I",
+  "local_world_ref": "control:root",
+  "local_workcell_ref": "workcell:mac",
+  "remotes": [
+   {
+    "detail": "answered from its Workcell's Actuation at 100.92.62.101:7788",
+    "gateway_ref": "agency-gateway/omarchy",
+    "status": "reachable",
+    "workcell_ref": "workcell:omarchy"
+   }
+  ],
+  "positions": [
+   {
+    "position_ref": "central:position:control:root:anuttara",
+    "handle": "@anuttara",
+    "label": "Anuttara (M0 domain agent)",
+    "role_ref": "role:epi-domain-agent",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:control:root:epii",
+    "handle": "@epii",
+    "label": "Epii (M5 domain agent)",
+    "role_ref": "role:epi-domain-agent",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 1
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:control:root:mahamaya",
+    "handle": "@mahamaya",
+    "label": "Mahāmāyā (M3 domain agent)",
+    "role_ref": "role:epi-domain-agent",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:control:root:nara",
+    "handle": "@nara",
+    "label": "Nara (M4 domain agent)",
+    "role_ref": "role:epi-domain-agent",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 4
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/nara",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790613762399,
+     "attention": null,
+     "presence": null
+    }
+   },
+   {
+    "position_ref": "central:position:control:root:paramasiva",
+    "handle": "@paramasiva",
+    "label": "Paramaśiva (M1 domain agent)",
+    "role_ref": "role:epi-domain-agent",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:control:root:parashakti",
+    "handle": "@parashakti",
+    "label": "Paraśakti (M2 domain agent)",
+    "role_ref": "role:epi-domain-agent",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:actuation-guardian",
+    "handle": "@actuation-guardian",
+    "label": "Actuation Product Guardian",
+    "role_ref": "role:product-guardian",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:aikit-guardian",
+    "handle": "@aikit-guardian",
+    "label": "AIKit Product Guardian",
+    "role_ref": "role:product-guardian",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 8
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:aletheia-5",
+    "handle": "@aletheia-5",
+    "label": "Aletheia 5 (M5 Epii × S5′ Aletheia)",
+    "role_ref": "role:aletheia",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 7
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/aletheia",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790283314240,
+     "attention": null,
+     "presence": null
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:anima-4",
+    "handle": "@anima-4",
+    "label": "Anima 4 (M4 Nara × S4′ Anima)",
+    "role_ref": "role:anima",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "gateway:agency-gateway/omarchy",
+     "agent_ref": "agent/anima",
+     "workcell_ref": "workcell:omarchy",
+     "since_unix_ms": 1790283314675,
+     "attention": null,
+     "presence": null
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:central-guardian",
+    "handle": "@central-guardian",
+    "label": "Central Product Guardian",
+    "role_ref": "role:product-guardian",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 10
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/central-guardian",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790767788422,
+     "attention": null,
+     "presence": null
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:factory-guardian",
+    "handle": "@factory-guardian",
+    "label": "Software Factory Guardian",
+    "role_ref": "role:product-guardian",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 4
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/factory-guardian",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790767657980,
+     "attention": null,
+     "presence": null
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:oi-root-agency",
+    "handle": "@oi",
+    "label": "O:I Root Agency",
+    "role_ref": "role:root-agency",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 4
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:ql-guardian",
+    "handle": "@ql-guardian",
+    "label": "Quaternal Logic Guardian",
+    "role_ref": "role:product-guardian",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:workcell-guardian",
+    "handle": "@workcell-guardian",
+    "label": "Workcell Product Guardian",
+    "role_ref": "role:product-guardian",
+    "definition": "present",
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "outcome": "unavailable"
+    },
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/workcell-guardian",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790767770933,
+     "attention": null,
+     "presence": null
+    }
+   }
+  ],
+  "agents": [
+   {
+    "agent_ref": "agent:expressed-0e60f096b906445fa9d013cda3391e39",
+    "handle": "@expressed-0e60f096b906445fa9d013cda3391e39",
+    "label": "independent-reviewer",
+    "purpose": "Independent reviewer for the Antikythera essay draft. Permitted sources: corpus-beta only (review requirements, style notes). Checks drafts against separately-held requirements and returns corrections; never edits the draft directly.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent:expressed-17fa37c2f31e45bc924f1dac21ccf515",
+    "handle": "@expressed-17fa37c2f31e45bc924f1dac21ccf515",
+    "label": "temporary-reviewer",
+    "purpose": "Temporary bounded reviewer for one artifact check (AG65 campaign). Permitted sources: corpus-beta only. Access to be withdrawn after the single review.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent:expressed-185e73c8015f4a1896746e980d3821c8",
+    "handle": "@expressed-185e73c8015f4a1896746e980d3821c8",
+    "label": "research-assistant",
+    "purpose": "Research assistant for the Antikythera essay (rev 3). Permissions narrowed: essay-outline access REVOKED; facts + checking practice retained. Boundary unchanged: no manuscript edits without asking.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent:expressed-2ed0bb32c7e44efcae917a27fe23bf25",
+    "handle": "@expressed-2ed0bb32c7e44efcae917a27fe23bf25",
+    "label": null,
+    "purpose": "Prove the native Direct-session lane end to end: one accepted definition, one prepared session, one source-dependent turn returned through the same native session, one denied permission, one preserved draft and one reopen of the same native identity. This Agent exists as evidence of the acceptance path, holds no standing beyond this proof, and grants no execution authority by existing.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent:expressed-50ed58c0d0b74f159f0736d25c485852",
+    "handle": "@expressed-50ed58c0d0b74f159f0736d25c485852",
+    "label": null,
+    "purpose": "Prove the native Direct-session lane end to end: one accepted definition, one prepared session, one source-dependent turn returned through the same native session, one denied permission, one preserved draft and one reopen of the same native identity. This Agent exists as evidence of the acceptance path, holds no standing beyond this proof, and grants no execution authority by existing.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent:expressed-5b7b38f5796349759b5b8e35d736a5e6",
+    "handle": "@expressed-5b7b38f5796349759b5b8e35d736a5e6",
+    "label": null,
+    "purpose": "Become acquainted with the other participants through an open conversation.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent:expressed-66c7aff81fbc4509a5404d93e99c0390",
+    "handle": "@expressed-66c7aff81fbc4509a5404d93e99c0390",
+    "label": null,
+    "purpose": "Become acquainted with the other participants through an open conversation.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent:expressed-802ced6ba4034e5b98bc3f728195c6c2",
+    "handle": "@expressed-802ced6ba4034e5b98bc3f728195c6c2",
+    "label": null,
+    "purpose": "Become acquainted with the other participants through an open conversation.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent:expressed-ba635b5ae01b4ca98c591fe342079449",
+    "handle": "@expressed-ba635b5ae01b4ca98c591fe342079449",
+    "label": null,
+    "purpose": "Become acquainted with the other participants through an open conversation.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/actuation-guardian",
+    "handle": "@actuation-guardian",
+    "label": "product-guardian",
+    "purpose": "Actuation — living articulation",
+    "positions": [
+     "central:position:project:O-I:actuation-guardian"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/aikit-guardian",
+    "handle": "@aikit-guardian",
+    "label": "product-guardian",
+    "purpose": "AIKit — potency",
+    "positions": [
+     "central:position:project:O-I:aikit-guardian"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/aletheia",
+    "handle": "@aletheia",
+    "label": "team-lead",
+    "purpose": "Aletheia, the team lead and unconcealment organ — when the work turns toward disclosure it leads the Night′ pass, metabolises traces into knowledge, keeps the six gates before anything changes ground, and dispatches its six specialists as mode-functions.",
+    "positions": [
+     "central:position:project:O-I:aletheia-5"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "embodied-here",
+     "position_ref": "central:position:project:O-I:aletheia-5",
+     "workcell_ref": "workcell:mac"
+    }
+   },
+   {
+    "agent_ref": "agent/aletheia-agora",
+    "handle": "@aletheia-agora",
+    "label": "team-member",
+    "purpose": "Agora, the public square — gathers outputs from parallel agents, retrieval channels and sessions into one legible common ground without erasing the distinction of voices; fuses CFP3 readings, and is the square where plugin candidates and multi-session evidence are compared.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/aletheia-anansi",
+    "handle": "@aletheia-anansi",
+    "label": "team-member",
+    "purpose": "Anansi, the spider at the centre of the coordinate web — orients and places before judging: holds blueprint and manifestation together, names the gap between them, and places each learning in the right register with strict provenance.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/aletheia-janus",
+    "handle": "@aletheia-janus",
+    "label": "team-member",
+    "purpose": "Janus, the double-faced guardian of thresholds — builds the temporal context envelope that binds what came before to the sessions of now, reads session and day seams, and sets the sense of reading (prospective or retrospective) without splitting before and after into unrelated worlds.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/aletheia-mercurius",
+    "handle": "@aletheia-mercurius",
+    "label": "team-member",
+    "purpose": "Mercurius, herald and solvent — carries a temporal, symbolic or cross-domain signal into another register without flattening it, keeping the charge of its origin, so that Logos, Psyche, Sophia and the gates can actually use it.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/aletheia-moirai",
+    "handle": "@aletheia-moirai",
+    "label": "team-member",
+    "purpose": "Moirai, the distillation specialist — one actor in three modes that activate by position during the returning pass: Klotho asserts and validates traces, Lachesis retrieves and triangulates sources, Atropos cuts to essential insight and seeds it forward.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/aletheia-zeithoven",
+    "handle": "@aletheia-zeithoven",
+    "label": "team-member",
+    "purpose": "Zeithoven, the composer who writes with time — turns a Night′ insight into schedulable, writable, extensible next form (a Routine, a skill, a template, a map proposal) without severing it from its source, and hands the next score to the next composition.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/anima",
+    "handle": "@anima",
+    "label": "team-lead",
+    "purpose": "Anima, the team lead and constitutional orchestrator — reads an act's Vāk coordinates and composes it across Nous, Logos, Eros, Mythos, Psyche and Sophia through native routes, holding execution, boundaries and Return.",
+    "positions": [
+     "central:position:project:O-I:anima-4"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "embodied-elsewhere"
+    }
+   },
+   {
+    "agent_ref": "agent/anima-eros",
+    "handle": "@anima-eros",
+    "label": "team-member",
+    "purpose": "Eros, the relational operator — scours sources for connection, resonance, opposition and dissonance, and makes the defined actual through operation, tests and verification; joyful circulation, never execution without relation.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/anima-logos",
+    "handle": "@anima-logos",
+    "label": "team-member",
+    "purpose": "Logos, the architect-scoper — sets the boundary that makes exchange possible: defines scope, writes specifications and plans that link every term they name, and traces afterwards whether the law of the work held.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/anima-mythos",
+    "handle": "@anima-mythos",
+    "label": "team-member",
+    "purpose": "Mythos, the pattern recogniser — sees the repeating shape the other voices enact but do not name; owns debugging, archetypal reading and the provenance-bound symbolic-protein reading, holding the pattern without mistaking it for the territory.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/anima-nous",
+    "handle": "@anima-nous",
+    "label": "team-member",
+    "purpose": "Nous, the epistemic clearing — invoked fresh before a task to surface what was assumed, what evidence actually exists and what is not known, and to curate the sources the act should stand on; never the task executor.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/anima-psyche",
+    "handle": "@anima-psyche",
+    "label": "team-member",
+    "purpose": "Psyche, the session subject and household steward — holds the NOW, keeps continuity across actors and occasions, plans the coordination of the other voices (CFP1/2/3, sustained and nested threads) and calls on Aletheia when disclosure is due.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/anima-sophia",
+    "handle": "@anima-sophia",
+    "label": "team-member",
+    "purpose": "Sophia, the post-execution synthesiser — reviews what was produced, classifies its thoughts, leads the Night′ return and emits the Möbius return (P5′ insight opening P0′ questions); finishes and lands development branches through review.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/anima-techne-helper",
+    "handle": "@anima-techne-helper",
+    "label": "team-member",
+    "purpose": "Techne helper, Anima's bounded workshop hand — creates, checks and cleans git worktrees and terminal workspaces on explicit instruction and returns structured results; no routing, no Vāk evaluation, no decisions of its own.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/anuttara",
+    "handle": "@anuttara",
+    "label": "epi-logos-domain-agent",
+    "purpose": "M0 Anuttara: Bimba/source ground and the full source-defined language",
+    "positions": [
+     "central:position:control:root:anuttara"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/central-guardian",
+    "handle": "@central-guardian",
+    "label": "product-guardian",
+    "purpose": "Central — meaningful continuity",
+    "positions": [
+     "central:position:project:O-I:central-guardian"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "embodied-here",
+     "position_ref": "central:position:project:O-I:central-guardian",
+     "workcell_ref": "workcell:mac"
+    }
+   },
+   {
+    "agent_ref": "agent/epii",
+    "handle": "@epii",
+    "label": "epi-logos-domain-agent",
+    "purpose": "M5 Epii: The whole system in its M5 holographic readings",
+    "positions": [
+     "central:position:control:root:epii"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/factory-bounded-acceptance",
+    "handle": "@factory-bounded-acceptance",
+    "label": "bounded-acceptance-commission",
+    "purpose": "Temporary user-authorised acceptance commission. Propose a repair to pricing.py: inclusive_total must apply tax to the sum of prices. Preserve its two-argument API. One model proposal; no model tools, delegation, external posts or autonomous retries. The native Workcell proof may validate and apply this candidate once in this disposable fixture. Return evidence; neither a model statement nor this temporary seed is adopted human law.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/factory-guardian",
+    "handle": "@factory-guardian",
+    "label": "product-guardian",
+    "purpose": "Factory — transformation; carries the reverse-engineering capability set for developmental investigation work",
+    "positions": [
+     "central:position:project:O-I:factory-guardian"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "embodied-here",
+     "position_ref": "central:position:project:O-I:factory-guardian",
+     "workcell_ref": "workcell:mac"
+    }
+   },
+   {
+    "agent_ref": "agent/mahamaya",
+    "handle": "@mahamaya",
+    "label": "epi-logos-domain-agent",
+    "purpose": "M3 Mahāmāyā: Symbolic form, patterns, transcription and computation on the actual admitted personal identity/composed-state/bioquaternion basis",
+    "positions": [
+     "central:position:control:root:mahamaya"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/nara",
+    "handle": "@nara",
+    "label": "epi-logos-domain-agent",
+    "purpose": "M4 Nara: The complete personal and phenomenological world, including identity, embodied condition, oracle, transformation, context, history and integration. Nara knows the person through their continuing Day/Flow world and keeps one Tarot/I-Ching journey across it",
+    "positions": [
+     "central:position:control:root:nara"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "embodied-here",
+     "position_ref": "central:position:control:root:nara",
+     "workcell_ref": "workcell:mac"
+    }
+   },
+   {
+    "agent_ref": "agent/oh-i",
+    "handle": "@oh-i",
+    "label": "central-default-agency",
+    "purpose": "Oh, I! — the native Central default agency for anyone's Central.",
+    "positions": [],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/oi-field-guardian",
+    "handle": "@oi-field-guardian",
+    "label": "field-guardian",
+    "purpose": "{O:I} field — World and Life, sixfold reading, suite harmonisation",
+    "positions": [
+     "central:position:project:O-I:oi-root-agency"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/paramasiva",
+    "handle": "@paramasiva",
+    "label": "epi-logos-domain-agent",
+    "purpose": "M1 Paramaśiva: QL structure, harmonics, topology, toroidal and related formal interpretations",
+    "positions": [
+     "central:position:control:root:paramasiva"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/parashakti",
+    "handle": "@parashakti",
+    "label": "epi-logos-domain-agent",
+    "purpose": "M2 Paraśakti: The relational field, MEF refraction and the source-defined resonance/material/sky/correspondence domain",
+    "positions": [
+     "central:position:control:root:parashakti"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/ql-guardian",
+    "handle": "@ql-guardian",
+    "label": "product-guardian",
+    "purpose": "Quaternal Logic — transcendent relation",
+    "positions": [
+     "central:position:project:O-I:ql-guardian"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "not-currently-embodied"
+    }
+   },
+   {
+    "agent_ref": "agent/workcell-guardian",
+    "handle": "@workcell-guardian",
+    "label": "product-guardian",
+    "purpose": "Workcell — situation",
+    "positions": [
+     "central:position:project:O-I:workcell-guardian"
+    ],
+    "communiques": {
+     "undelivered": 0
+    },
+    "registry": "agent-profile.list",
+    "occupancy": {
+     "state": "embodied-here",
+     "position_ref": "central:position:project:O-I:workcell-guardian",
+     "workcell_ref": "workcell:mac"
+    }
+   }
+  ]
+ },
+ "conversation": {
+  "position_ref": "central:position:project:O-I:central-guardian",
+  "with_position_ref": "central:position:project:O-I:oi-root-agency",
+  "communiques": [
+   {
+    "schema": "aikit.communique/v1",
+    "communique_ref": "aikit:communique:01m3csbdf5q56fhh0hx6wsq5qv",
+    "from_position_ref": "central:position:project:O-I:central-guardian",
+    "to_position_ref": "central:position:project:O-I:oi-root-agency",
+    "sent_at_unix_ms": 1790356862321,
+    "sequence": 18,
+    "state": "held",
+    "body": "Packet V verifier finding, urgent for the landing: the ProjectWorld isolation repairs were verified green on installed f9c1a161 (bc201898 product, installed 16:39-17:16) — full evidence at Control/agents/now/flows/projectworld-isolation-event-2026-09-25/packet-v-evidence/. BUT at 17:16/17:50 the int"
+   },
+   {
+    "schema": "aikit.communique/v1",
+    "communique_ref": "aikit:communique:01m3d29sdm0wamhkw7scy38ahj",
+    "from_position_ref": "central:position:project:O-I:central-guardian",
+    "to_position_ref": "central:position:project:O-I:oi-root-agency",
+    "sent_at_unix_ms": 1790366246190,
+    "sequence": 25,
+    "state": "held",
+    "body": "Packet V (central-guardian) 21:05 BST: the 20:50 integration-lead install (540c615b, from Work/ai-kit 2157dbc6-lineage, repairs not landed) has reinstated the ProjectWorld isolation leak your packet B probes the consumer path for — the O-I graph reply carries Factory matrix carriers, the Factory wik"
+   }
+  ]
+ }
+}

@@ -189,11 +189,13 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   // REPLACED (R4): Custody stood in the Agent's slot as its own device; it is the one Agent's Custody page (custody.*) now.
   assert.doesNotMatch(view, /placed\(CUSTODY_ID/, 'no Custody device beside the Agent')
   assert.match(view, /composeAgentBinding\(agentDesignBinding, \{custody: custodyDesignBinding/, 'Custody composed onto the Agent')
-  // REPLACED (R4): the Run stood after the landing; the chain is §16.2's (Gateway, Agent, skills rack, Scope, landing) — the Run is
+  // REPLACED (R4): the Run stood after the landing; the chain is §16.2's (Agent, skills rack, scope — lane W1-Factory) — the Run is
   // published for the browser's Runs only.
   assert.doesNotMatch(view, /placed\(RUN_ID/, 'the Run stands on no chain')
   assert.match(view, /\[RUN_ID, ownDevices\.run, runDesignBinding\]/, 'the Run stays published')
-  assert.match(view, /groupTrack && placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/, 'the Agentset rack on a group\'s chain (§19.18)')
+  // REPLACED (lane W1-Factory): the chain draws its place's plan (factoryPlaces.ts chainSlots — a group's leads with the Agentset rack).
+  assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/, 'the Agentset rack on a group\'s chain (§19.15)')
+  assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
   assert.match(view, /custodyBinding\(\{sessionRef, autonomy: reading\.autonomy, agent: agentDesignBinding\?\.values \?\? \{\}\}, scopeDesignBinding\)/, 'Custody and Scope, one row')
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
 })

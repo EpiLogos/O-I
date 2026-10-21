@@ -1,7 +1,8 @@
-// Factory's Main track devices and the Frames monitor on their owners (lane BF2): the Gateways rack (DLW §19.3, actuation:
-// gateways-rack — "Factory's Main track", first device), the Agency gateway (§19.9, ai-kit:agency-gateway — "one chain in the
-// Gateways rack"), the Experiment (§19.4, actuation:experiment — "any Factory track"; it compares sessions, so it stands on the Main
-// track) and the Frames monitor (§19.5 and its widget §23.8, actuation:frames-monitor — the Gateway's Full, and the rail's Frames).
+// Factory's Main track devices and the monitors beside it, on their owners (lane BF2): Gateways (DLW §19.3, actuation:gateways-rack — "Kind:
+// monitor · Rail: the widget rail, and a pane, in every mode"), the Agency gateway (§19.10, ai-kit:agency-gateway — "Stands: in the head of
+// Messages, and as a line of Gateways"), the Experiment (actuation:experiment; it compares sessions, so it stands on the Main track, §16.2)
+// and the Frames monitor (§19.6, actuation:frames-monitor — the Gateway's Full, and the rail's Frames). Since lane W1-Factory only the
+// Experiment stands on a chain; the monitors stand on the rail and in panes (agent/agentDockTiles.ts), and the Agency gateway on none.
 //
 // What the owners report, read 16 Oct 2026 through the installed owners (scratch lane-bf2/shapes/):
 //   harness_agent_read {binding} — `aikit --json gateway agent --binding <b> sessions`: the AIKit agency gateway's answer about the
@@ -147,17 +148,27 @@ export function rackValues(input: RackInput): Values {
   if (rows.some(row => row.state === 'ready')) values.light = 'lit'
   else if (rows.some(row => row.state === 'refused' || row.state === 'composed')) values.light = 'dark'
   put(values, 'chain', viewHolds(input.holds, GATEWAYS_RACK_ID).chain)
+  put(values, 'show', viewHolds(input.holds, GATEWAYS_RACK_ID).show)
   return values
 }
 
-/** The rack's binding: the chosen chain is the view's own (and shows that gateway whole in the pool). The rack writes nothing: each
- * gateway's Fan-out is set on its workcell's Gateway (actuation__gateway.tsx fanOut, refused there until an owner carries it) and the
- * rack only reads it. */
+/** What the Gateways monitor reads that no kernel op reaches: the observers attached to the selected gateway and its latest frames. */
+export const RACK_ABSENT: Readonly<Record<string, Standing>> = disabled({
+  peers: 'The observers attached: no reading reaches them yet — missing op: the gateway\'s sessions and observers (`aikit gateway status|ecology` through the kernel) (AIKit).',
+  frames: 'The selected gateway\'s latest frames: no reading reaches them yet — missing op: a frame-ring read through the kernel (T-COVERAGE §1.2: Hermes) (Actuation).',
+})
+
+/** The Gateways monitor's binding (§19.3: a monitor, on the rail and full in a pane, never on a chain — lane W1-Factory): the chosen chain
+ * and Show are the view's own (the chosen one shows that gateway whole in the pool). It writes nothing: each gateway's Fan-out is set on its
+ * workcell's Gateway (actuation__gateway.tsx fanOut, refused there until an owner carries it) and the monitor only reads it. */
 export function rackBinding(input: RackInput, ports: {readonly show: (chain: string) => void}): DesignBinding {
+  const values = rackValues(input)
   return {
     id: GATEWAYS_RACK_ID,
-    values: rackValues(input),
-    local: {chain: value => { holdView(GATEWAYS_RACK_ID, 'chain', typeof value === 'string' ? value : undefined); if (typeof value === 'string') ports.show(value) }},
+    values,
+    local: {chain: value => { holdView(GATEWAYS_RACK_ID, 'chain', typeof value === 'string' ? value : undefined); if (typeof value === 'string') ports.show(value) },
+      show: value => holdView(GATEWAYS_RACK_ID, 'show', typeof value === 'string' ? value : undefined)},
+    standing: 'light' in values ? RACK_ABSENT : {...RACK_ABSENT, light: {disabled: 'The light is a reading: no gateway has answered yet, so it is not known.'}},
     writes: () => false,
     write: async changes => {
       for (const {key} of changes) throw Error(`${key} is a reading: its owner reports it; nothing here changes it.`)
@@ -248,12 +259,21 @@ export function framesValues(gateway: GatewayInput, holds: ChainHolds): Values {
   return values
 }
 
-/** The monitor only reads (§19.5 "It sends nothing and changes no frame"): no write; its settings are the view's own. */
+/** What the Frames monitor draws that no document the shell reads carries: the frames and the gateway's session counters (designBindings.ts
+ * gatewayValues names them) — each absent, with the read it waits for. */
+const FRAME_RING = 'no reading reaches it yet — missing op: a frame-ring read through the kernel (T-COVERAGE §1.2: Hermes) (Actuation).'
+export const FRAMES_ABSENT: Readonly<Record<string, Standing>> = disabled(Object.fromEntries(
+  ['frames', 'lead', 'epoch', 'seq', 'peers', 'fanOut', 'beatAge', 'running', 'inflight', 'ring', 'ringCap', 'viaLead'].map(key => [key, `${key}: ${FRAME_RING}`])))
+
+/** The monitor only reads (§19.6 "The monitor only reads. It sends nothing and changes no frame"): no write; its settings are the view's
+ * own; what no owner reports stands absent with the read it waits for. */
 export function framesBinding(gateway: GatewayInput, holds: ChainHolds): DesignBinding {
   const hold = (key: string) => (value: Value | undefined) => holdView(FRAMES_ID, key, value)
+  const values = framesValues(gateway, holds)
   return {
     id: FRAMES_ID,
-    values: framesValues(gateway, holds),
+    values,
+    standing: Object.fromEntries(Object.entries(FRAMES_ABSENT).filter(([key]) => !(key in values))),
     local: Object.fromEntries(Object.keys(FRAMES_VIEW).map(key => [key, hold(key)])),
   }
 }

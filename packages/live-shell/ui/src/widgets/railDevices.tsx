@@ -8,7 +8,7 @@
 //
 // Owners write, faces read: a key no owner reports reaches the design absent, with the owner's own words as `reason` where it refused;
 // the keys a design marks as the tile's own (Limit, Show, Layout, Follow …) are view holds, kept here and never sent to an owner.
-import {useEffect, useMemo, useRef, useState} from 'react'
+import {useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import {useHeldRead, useOwnerOp} from '../owners/ownerCall'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {readGround, type CentralGroundReading} from '../../../../../desktop/cradle/src/central/client'
@@ -20,7 +20,10 @@ import {useAgencySessions} from '../agent/useAgencySessions'
 import {COMPANIONS} from '../shell/modeDockTiles'
 import {CONVERSATION_PROJECT, conversationOf} from './agentConversation'
 import {useOptionalContinuity} from '../continuity/workspace'
-import {publishDevice} from '../frame/devices/deviceDoor'
+import {publishDevice, publishedDevice, subscribeDeviceDoor} from '../frame/devices/deviceDoor'
+import {SEAT_ID} from '../agent/devices/workcellBindings'
+import {useSeatStatusAnswer} from '../agent/devices/workcellReads'
+import {actionAnswerOf, centralActionOp} from '../central/devices/useCentralReadings'
 import {claimRailWidget} from '../frame/widgets/deviceWidgets'
 import type {DesignBinding, Value} from '../frame/devices/designed'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
@@ -28,6 +31,7 @@ import type {IconName} from '../inhabitants/sdk/Icon'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
 import {CALENDAR_ABSENT, diffFilesOf, filesOf, NOW_CLOSE_ABSENT, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
+import {loadWhenDrawn} from '../shell/loadWhenDrawn'
 
 /** The family the rail-born devices stand in: their designs are `widgets:<id>` in the catalogue. */
 export const RAIL_FAMILY = 'widgets'
@@ -37,8 +41,8 @@ export const RAIL_DEVICES = [
   {id: 'trail', title: 'Trail', icon: 'trav', note: 'The workspace book\'s trail (desktop/cradle/src/workspace/store.ts TrailStop); a press returns to a stop.'},
   {id: 'files', title: 'Files', icon: 'lib', note: 'The files the followed agent read and changed, from its encounter tape (aikit encounter read, desktop/cradle/src/agent/tape), with the seat\'s diff counts.'},
   {id: 'web', title: 'Web', icon: 'browser', note: 'The pages the followed agent fetched, from its encounter tape: each address and the text it got.'},
-  {id: 'wiki', title: 'Wiki', icon: 'orbit', note: 'The root wiki\'s pages (Control/agents/wiki/wiki.json through the files seam), each read as its source through the knowledge owner (kernel knowledge read).'},
-  {id: 'diff', title: 'Diff', icon: 'select', note: 'The seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1) and its repository (git_repository_read).'},
+  {id: 'wiki', title: 'Wiki', icon: 'orbit', note: 'The root wiki\'s pages (Control/agents/wiki/wiki.json through the files seam), each read as its source through the knowledge owner (kernel knowledge read), its links the relations Central\'s wiki reading gives it (central.wiki.read).'},
+  {id: 'diff', title: 'Diff', icon: 'select', note: 'The selected seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1), the seat as the seat instrument reads it; with no seat selected, the shell\'s project (git_repository_read).'},
   {id: 'nows', title: 'NOWs', icon: 'die', note: 'The ground\'s civil time, its Day and its open NOW clearings (kernel central inspect → central.civil-time-reading/v1, central.day-reading/v1, central.now-listing/v1).'},
   {id: 'calendar', title: 'Calendar', icon: 'metro', note: 'A third party\'s calendar, through the provider it comes from. No calendar provider is installed.'},
 ] as const satisfies readonly {id: string; title: string; icon: IconName; note: string}[]
@@ -97,29 +101,64 @@ function useTrailBinding(): DesignBinding {
 
 // ---------------------------------------------------------------------------------------------------------------- the Diff
 
-/** The shell's project: the repository the Diff reads (the rail's old Diff tile read the same, agent/AgentDockTileBody.tsx:114). */
+/** The shell's project: the repository the Diff reads when no seat is selected (the rail's old Diff tile read the same,
+ * agent/AgentDockTileBody.tsx:114). */
 const DIFF_PROJECT = 'O-I'
 type DiffReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; root: string; files: Record<string, Value>[]; head: string | null; branch: string | null; omitted: number}
 
+/** The checkout of the seat selected on the Seat device (workcellBindings.ts SEAT_ID: its `seat`, a workcell, and its `product`), as the
+ * seat instrument reads it (`seat status --json`): the workcell's path with the product's directory under it — the seat path the census
+ * already uses (centralHygieneModel.ts registeredSeatPaths) — and the seat's live branch and head. Null with no seat selected, or one the
+ * reading does not hold. Pure. */
+export function selectedSeatOf(seatValues: Readonly<Record<string, Value>> | undefined, status: unknown): {root: string; branch: string | null; head: string | null} | null {
+  const seat = seatValues?.seat, product = seatValues?.product
+  if (typeof seat !== 'string' || !seat || typeof product !== 'string' || !product) return null
+  const cells = (status as {workcells?: unknown} | null)?.workcells
+  const cell = Array.isArray(cells) ? (cells as {name?: unknown; path?: unknown; seats?: unknown}[]).find(row => row?.name === seat) : undefined
+  if (!cell || typeof cell.path !== 'string' || !cell.path) return null
+  const row = Array.isArray(cell.seats) ? (cell.seats as {product?: unknown; live_branch?: unknown; live_head?: unknown}[]).find(entry => entry?.product === product) : undefined
+  if (!row) return null
+  return {root: `${cell.path.replace(/\/$/, '')}/${product}`, branch: typeof row.live_branch === 'string' ? row.live_branch : null,
+    head: typeof row.live_head === 'string' ? row.live_head : null}
+}
+
+/** One word of the Seat device's published values (its `seat` or `product`), or null. */
+const seatWord = (key: 'seat' | 'product'): string | null => { const value = publishedDevice(SEAT_ID)?.binding?.values[key]; return typeof value === 'string' && value ? value : null }
+
 function useDiffReading(transport: KernelTransportStatus | undefined): DiffReading {
-  // Two held reads, each shared with every other view that asks the same (the agent dock's Diff, the chain's Git): the repository,
-  // then its working diff once the repository has named its root.
-  const repo = useOwnerOp(transport, {op: 'git_repository_read', project: DIFF_PROJECT}, 'git_repository_reading', 'The repository owner did not answer.').reading
-  const doc = repo.status === 'answered' ? repo.value?.document as {repo_root?: unknown; branch?: unknown; head?: unknown} | undefined : undefined
-  const root = typeof doc?.repo_root === 'string' ? doc.repo_root : null
+  // The seat selected on the Seat device, where the chain publishes it (watched as its two words, so no other publish redraws the rail),
+  // and the seat instrument's one shared reading (asked only then).
+  const seatName = useSyncExternalStore(subscribeDeviceDoor, () => seatWord('seat'), () => null)
+  const seatProduct = useSyncExternalStore(subscribeDeviceDoor, () => seatWord('product'), () => null)
+  const seatValues = useMemo(() => (seatName && seatProduct ? {seat: seatName, product: seatProduct} : undefined), [seatName, seatProduct])
+  const chosen = !!seatValues
+  const seats = useSeatStatusAnswer(transport ?? {kind: 'unavailable', reason: 'No kernel carrier stands.'}, chosen && !!transport && transport.kind !== 'unavailable').reading
+  const seat = chosen && seats.status === 'answered' ? selectedSeatOf(seatValues, seats.value) : null
+  // Two held reads, each shared with every other view that asks the same (the agent dock's Diff, the chain's Git): the repository —
+  // only with no seat selected — then the working diff of the seat's checkout, or of the repository once it has named its root.
+  const repo = useOwnerOp(transport, chosen ? null : {op: 'git_repository_read', project: DIFF_PROJECT}, 'git_repository_reading', 'The repository owner did not answer.').reading
+  const doc = !chosen && repo.status === 'answered' ? repo.value?.document as {repo_root?: unknown; branch?: unknown; head?: unknown} | undefined : undefined
+  const root = seat ? seat.root : typeof doc?.repo_root === 'string' ? doc.repo_root : null
   const patch = useOwnerOp(transport, root ? {op: 'git_diff_read', request: {repo_root: root, from: 'HEAD', to: 'working-tree', max_bytes: 65536, max_files: 200}} : null,
     'git_diff_reading', 'Central did not answer the diff.').reading
   return useMemo((): DiffReading => {
     if (!transport || transport.kind === 'unavailable') return {status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}
-    if (repo.status === 'refused') return {status: 'refused', words: repo.error ?? 'The repository owner did not answer.'}
-    if (repo.status !== 'answered') return {status: 'reading'}
-    if (!root) return {status: 'refused', words: 'Central did not disclose the repository root.'}
+    if (chosen) {
+      if (seats.status === 'refused') return {status: 'refused', words: seats.error ?? 'The seat instrument did not answer.'}
+      if (seats.status !== 'answered') return {status: 'reading'}
+      if (!seat) return {status: 'refused', words: `The seat instrument holds no ${String(seatValues?.product)} seat in ${String(seatValues?.seat)}.`}
+    } else {
+      if (repo.status === 'refused') return {status: 'refused', words: repo.error ?? 'The repository owner did not answer.'}
+      if (repo.status !== 'answered') return {status: 'reading'}
+      if (!root) return {status: 'refused', words: 'Central did not disclose the repository root.'}
+    }
     if (patch.status === 'refused') return {status: 'refused', words: patch.error ?? 'Central did not answer the diff.'}
     if (patch.status !== 'answered' || !patch.value) return {status: 'reading'}
     const read = diffFilesOf(patch.value.document)
     if (!read) return {status: 'refused', words: 'Central returned an unsupported Git diff.'}
-    return {status: 'read', root, files: read.files, head: read.head, branch: typeof doc?.branch === 'string' ? doc.branch : null, omitted: read.omitted}
-  }, [transport, repo, patch, root, doc])
+    const branch = seat ? seat.branch : typeof doc?.branch === 'string' ? doc.branch : null
+    return {status: 'read', root: root!, files: read.files, head: read.head ?? seat?.head ?? null, branch, omitted: read.omitted}
+  }, [transport, chosen, seats, seat, seatValues, repo, patch, root, doc])
 }
 
 function useDiffBinding(reading: DiffReading): DesignBinding {
@@ -178,10 +217,40 @@ function useWebBinding(tape: ReturnType<typeof useFollowedTape>): DesignBinding 
 // ---------------------------------------------------------------------------------------------------------------- the Wiki
 // The root register's wiki, read verbatim through the files seam as the Technē registers read theirs (desktop/cradle/src/techne/
 // wikiExpression.ts readWikiRegister: list the folder, read wiki.json, parseWiki). A page's text is its first source as the knowledge
-// owner reads it (kernel knowledge `read` of {kind: 'source'}): AIKit returns the source's text and no link occurrences, so the
-// page's links stay empty — never found by a pattern here.
+// owner reads it (kernel knowledge `read` of {kind: 'source'}): AIKit returns the source's text and, here, no link occurrences.
+// The page's links are the relations Central's own reading of the same wiki gives its node (`central.wiki.read`, central-wiki-reading:
+// node-source and node-space rows derived at read time; T-COVERAGE §1.3): each drawn where its page's text names its target word for
+// word — never found by a pattern — resolved when the target is another page of the wiki, external otherwise. A relation whose target
+// the text does not name has no place in a line, so it is not drawn.
 
 const ROOT_WIKI_FOLDER = 'Control/agents/wiki'
+export const WIKI_READ_ACTION = 'central.wiki.read'
+
+/** One link of the page as the design draws it (widgets__wiki.tsx Link: its line, its span, its target and whether it resolves). */
+export interface WikiLink {readonly line: number; readonly from: number; readonly to: number; readonly target: string; readonly state: 'resolved' | 'external'}
+
+/** The page's links from Central's wiki reading: each relation of the node (`relations[]` from_ref the node) placed at the first line
+ * that names its target word for word — the target's ref, else the source path a `central:source:<world>:` ref names. A target that is a
+ * node of the wiki resolves (pressing it shows that page); a source or a space is external. Pure. */
+export function wikiLinksOf(reading: unknown, nodeRef: string, lines: readonly string[]): WikiLink[] {
+  const doc = reading as {nodes?: unknown; relations?: unknown} | null
+  if (!doc || !Array.isArray(doc.relations)) return []
+  const nodes = new Set(Array.isArray(doc.nodes) ? (doc.nodes as {ref?: unknown}[]).flatMap(node => typeof node?.ref === 'string' ? [node.ref] : []) : [])
+  const links: WikiLink[] = []
+  for (const relation of doc.relations as {from_ref?: unknown; to_ref?: unknown}[]) {
+    if (relation?.from_ref !== nodeRef || typeof relation.to_ref !== 'string' || !relation.to_ref) continue
+    const target = relation.to_ref
+    const path = target.match(/^central:source:(?:control:root|project:[^:]+):(.+)$/)?.[1]
+    for (const word of path ? [target, path] : [target]) {
+      const line = lines.findIndex(text => text.includes(word))
+      if (line < 0) continue
+      const from = lines[line]!.indexOf(word)
+      links.push({line, from, to: from + word.length, target, state: nodes.has(target) ? 'resolved' : 'external'})
+      break
+    }
+  }
+  return links
+}
 
 type WikiPagesReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; nodes: readonly WikiNode[]}
 type WikiBody = {ref: string; lines: readonly string[]} | {ref: string; words: string}
@@ -207,17 +276,23 @@ function useWikiBinding(transport: KernelTransportStatus | undefined): DesignBin
   const body = useMemo((): WikiBody | null => !node ? null : !source ? {ref: node.ref, words: 'This page cites no source to read.'}
     : text.status === 'answered' && typeof (text.value?.data as {content?: unknown} | undefined)?.content === 'string' ? {ref: node.ref, lines: ((text.value!.data as {content: string}).content).split('\n')}
     : text.status === 'reading' ? null : {ref: node.ref, words: text.error ?? 'The knowledge owner returned no text for this page.'}, [node, source, text])
+  // Central's reading of the same wiki, for the page's links (held for the window; a reading, so it retires nothing in the kernel).
+  const relations = useOwnerOp(transport, node ? centralActionOp(WIKI_READ_ACTION, {}) : null, 'action_dispatched', `${WIKI_READ_ACTION} did not answer.`).reading
+  const typed = useMemo(() => actionAnswerOf(relations, WIKI_READ_ACTION), [relations])
   return useMemo(() => {
     const values: Record<string, Value> = {}
     if (pages.status === 'read') put(values, 'pages', JSON.stringify(wikiPagesOf(pages.nodes)))
     else if (pages.status === 'refused') put(values, 'reason', pages.words)
     put(values, 'page', shown)
     if (body && body.ref === shown) {
-      if ('lines' in body) put(values, 'body', JSON.stringify({lines: body.lines, links: []}))
-      else put(values, 'reason', body.words)
+      if ('lines' in body) {
+        // The links stand once Central's wiki reading answered; until then, or where it refused, the page draws without them.
+        put(values, 'body', JSON.stringify({lines: body.lines, ...(typed.status === 'answered' ? {links: wikiLinksOf(typed.value, body.ref, body.lines)} : {})}))
+        if (typed.status === 'refused') put(values, 'reason', `The page's links: Central's wiki reading refused — ${typed.error}`)
+      } else put(values, 'reason', body.words)
     }
     return {id: railDeviceId('wiki'), values: withHolds(values, holds), local}
-  }, [pages, body, shown, holds, local])
+  }, [pages, body, shown, typed, holds, local])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the NOWs
@@ -252,7 +327,12 @@ function useCalendarBinding(): DesignBinding {
 
 // ---------------------------------------------------------------------------------------------------------------- the publisher
 
-/** Publish each rail-born device on the door while the rail stands, and claim the rail's widget of the same id for it. */
+/** The rail's agent devices — Messages, Gateways, the Agency gateway, Frames, the Ledger and the workcell rack (agent/devices/
+ * AgentRailDevices.tsx) — published beside the rail-born devices, in every mode; their code loads when the rail first draws. */
+const AgentRailDevices = loadWhenDrawn('The rail\'s agent devices', () => import('../agent/devices/AgentRailDevices').then(module => module.AgentRailDevices))
+
+/** Publish each rail-born device on the door while the rail stands, and claim the rail's widget of the same id for it; and the rail's
+ * agent devices with it. */
 export function RailDevices() {
   const reading = useWidgetReading()
   const transport = reading?.transport
@@ -269,5 +349,5 @@ export function RailDevices() {
   useEffect(() => { publishDevice(devices.nows.id, {device: devices.nows, binding: nows}) }, [devices, nows])
   useEffect(() => { publishDevice(devices.calendar.id, {device: devices.calendar, binding: calendar}) }, [devices, calendar])
   useEffect(() => () => { for (const spec of RAIL_DEVICES) publishDevice(railDeviceId(spec.id), null) }, [])
-  return null
+  return <AgentRailDevices />
 }

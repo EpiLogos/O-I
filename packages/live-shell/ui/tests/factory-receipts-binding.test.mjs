@@ -202,7 +202,7 @@ test('the two designs draw on their bindings in all five views — no NaN, no un
   host.resetHost()
 })
 
-test('the rail\'s Ledger and Approvals are their devices\' own widgets (§23.9, §23.10), the rail\'s own way; the chain stands them on the Main track', () => {
+test('the rail\'s Ledger and Approvals are their devices\' own widgets (§23.9, §23.10), the rail\'s own way; the chain stands Approvals on the Main track, the Ledger on none', () => {
   for (const [widgetId, deviceId, design] of [['ledger', rec.LEDGER_ID, ledgerDesign], ['approvals', rec.APPROVALS_ID, approvalsDesign]]) {
     const registered = {id: widgetId, name: widgetId, mark: 'chain', Body: () => null}
     widgets.claimRailWidget(widgetId, deviceId)
@@ -224,9 +224,12 @@ test('the rail\'s Ledger and Approvals are their devices\' own widgets (§23.9, 
   assert.match(tiles, /claimRailWidget\('approvals', APPROVALS_ID\)/)
   assert.doesNotMatch(tiles, /Encounter task \(ledger basis\)|approval hooks/, 'the raw task-record receipts are gone (MOVED)')
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /placed\(LEDGER_ID, receipts\.ledger, ledgerDesignBinding, [^\n]*'data-main-slot': 'ledger'/, 'the Ledger on the Main track (§19.15)')
-  assert.match(view, /placed\(APPROVALS_ID, receipts\.approvals, approvalsDesignBinding, [^\n]*'data-main-slot': 'approvals'/, 'Approvals on the Main track (§19.16)')
+  // REPLACED (lane W1-Factory; DLW §16.1, §19.13): the Ledger is a monitor — its tile on the rail and its Full in a pane, never on a chain;
+  // it stays published for both. Approvals is an effect on the Main track (§19.14).
+  assert.doesNotMatch(view, /placed\(LEDGER_ID/, 'the Ledger stands on no chain (§19.13 "Kind: monitor")')
+  assert.match(read('agent/devices/AgentRailDevices.tsx'), /publish\(LEDGER_ID, ledger\)/, 'and stays published, for the rail and a pane, by the rail\'s publisher in every mode')
+  assert.match(view, /case 'approvals': return placed\(APPROVALS_ID, receipts\.approvals, approvalsDesignBinding, [^\n]*'data-main-slot': 'approvals'/, 'Approvals on the Main track (§19.14)')
   assert.match(view, /approvalsBinding\(\{gateway: gatewayDesignBinding\?\.values \?\? \{\}, session: shownTrack/, 'the Gateway\'s values and the shown session')
-  assert.match(view, /useCentralGroundAnswer\(transport\)/, 'the window\'s one ground answer')
+  assert.match(read('agent/devices/AgentRailDevices.tsx'), /useCentralGroundAnswer\(transport\)/, 'the window\'s one ground answer')
   assert.doesNotMatch(read('agent/devices/receiptBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
 })

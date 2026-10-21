@@ -1,6 +1,7 @@
-// Lane BF3: Workcell's devices on Factory's chains (src/agent/devices/workcellBindings.ts, FactoryDeviceChain.tsx) — Git / landing
-// (workcell:git-seat, DLW §19.16), the Seat (workcell:seat, §19.20, inside Git / landing), the Remote carrier (workcell:remote-carrier,
-// §19.21, the Gateways rack's fourth chain) and the Link (workcell:link, §19.22, the Main track).
+// Lane BF3: Workcell's devices (src/agent/devices/workcellBindings.ts, FactoryDeviceChain.tsx) — Git / landing (workcell:git-seat, DLW
+// §19.16), the Seat (workcell:seat, §19.17, inside Git / landing), the Remote carrier (workcell:remote-carrier, §19.18) — since lane
+// W1-Factory on a workcell's chain (workcell-rack-binding.test.mjs, factory-placement.test.mjs) — and the Link (workcell:link, §19.19, the
+// transport's).
 //
 // Channels:
 // - REAL (tests/fixtures/workcell-readings-2026-10-16.json): `seat status --json`, `workcell status --json` and `aikit gateway who
@@ -242,16 +243,21 @@ test('the four designs draw on their bindings in all five views — no NaN, no u
   host.resetHost()
 })
 
-test('the chain places them where the manual does: the Seat inside Git / landing, the carrier inside the Gateways rack, the Link on the Main track', () => {
+test('the chain places them where the manual does: a workcell\'s chain — the Remote carrier after the Gateway, the Seat inside Git / landing; the Link in the transport (lane W1-Factory)', () => {
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /slot\.id === 'git' && placed\(SEAT_ID, cells\.seat, seatDesignBinding/, 'the Seat stands inside Git / landing (§19.20)')
-  assert.match(view, /placed\(CARRIER_ID, cells\.carrier, carrierDesignBinding, [^)]*\{member: true\}\)/, 'the Remote carrier is a member of the rack\'s slot (§19.21)')
-  assert.match(view, /placed\(LINK_ID, cells\.link, linkDesignBinding, [^\n]*'data-main-slot': 'link'/, 'the Link on the Main track (§19.22)')
-  assert.match(view, /gatewaysRackBinding\(\{reading, holds, carrier\}/, 'the rack\'s fourth chain reads the carrier')
-  assert.match(view, /chain === 'remote-carrier' \? CARRIER_ID/, 'choosing that chain shows the carrier whole')
-  // REPLACED (R4, lane K1): the Seat reads the seat instrument through the kernel (seat_status_read), the Link the declared remotes too.
+  // REPLACED (lane W1-Factory; DLW §16.2, §19.16–§19.19, §19.23): the Seat, the carrier and Git / landing left the session's chain and the
+  // Main track for a workcell's chain; the Link left the Main track for the transport, which publishes it (the frame's own).
+  assert.match(view, /slot\.id === 'git' && placed\(SEAT_ID, cells\.seat, seatDesignBinding/, 'the Seat stands inside Git / landing (§19.17)')
+  assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierDesignBinding, [^\n]*\n[^\n]*'data-workcell-slot': 'remote-carrier'/,
+    'the Remote carrier is the second device of a workcell\'s chain (§19.18)')
+  assert.doesNotMatch(view, /LINK_ID|linkBinding/, 'the Link stands in the transport (§19.19), on no chain of this file')
+  // The Gateways monitor stands on the rail in every mode: the rail's publisher holds it (AgentRailDevices.tsx).
+  const rail = read('agent/devices/AgentRailDevices.tsx')
+  assert.match(rail, /rackBinding\(\{reading, holds, carrier\}/, 'the Gateways monitor\'s carrier line reads the carrier')
+  assert.match(rail, /chain === 'remote-carrier' \? CARRIER_ID/, 'choosing that line shows the carrier whole')
+  // REPLACED (R4, lane K1): the Seat reads the seat instrument through the kernel (seat_status_read); on a workcell's chain it starts at
+  // that workcell's seat.
   assert.match(view, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null/, 'the seat instrument through the kernel')
-  assert.match(view, /linkBinding\(workcell, holds, population, remotes\)/, 'the Link reads Workcell\'s status, AIKit\'s population and its declared remotes')
   assert.match(read('agent/devices/usePopulationAnswer.ts'), /readPopulation\(transport, project\)/, 'through the cradle\'s own population read (inhabitation_read)')
   for (const file of ['agent/devices/workcellBindings.ts', 'agent/devices/usePopulationAnswer.ts']) {
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture`)

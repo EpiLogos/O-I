@@ -1,7 +1,7 @@
 import {admitFamilyManifest, type FamilyManifest} from './familyManifest.ts'
 import type {InhabitantManifest} from './manifest.ts'
 
-/** AIKit — what agents can do (skills, skillsets, knowledge route, agency gateway). */
+/** AIKit — what agents can do (skills, skillsets, knowledge route, agency gateway, Messages). */
 export function aiKitFamilyManifest(): FamilyManifest {
   const manifest: InhabitantManifest = {
     id: 'ai-kit',
@@ -21,6 +21,10 @@ export function aiKitFamilyManifest(): FamilyManifest {
       {id: 'decision-helper', presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx',
         invariant: {transforms: 'a member\'s open question: one label the owner allows, or none (DLW §19.20)'},
         note: 'Decision helper: AIKit\'s decision provider (kernel decision_status) and QL\'s team space (kernel team_space); after the team\'s members on its chain.'},
+      // Messages (DLW §19.24): an instrument born on the rail — its tile and its Full only, in every mode (agent/devices/messagesBinding.ts).
+      {id: 'messages', presentations: ['full'], liveSemantic: 'device-instrument',
+        invariant: {generatesAbsent: 'Born on the rail: it reads AIKit\'s population and the open agent\'s conversation (kernel inhabitation_read); a send waits for `aikit gateway send` through the kernel.'},
+        note: 'Messages: your agents and groups, each with its conversation, through the Agency gateway; the gateway\'s mark in its head.'},
     ],
     params: {grammar: 'aikit/parameter-address/v1'},
     projections: ['aikit-session-track-adapter'],
