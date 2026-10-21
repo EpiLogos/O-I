@@ -104,6 +104,17 @@ pub fn trace_replay(host: &str, lock_wait: Duration) {
     });
 }
 
+/// One owner reading's fate in the read model: `hit` (served from what was
+/// retained), `miss` (the owner was asked) or `joined` (shared the read of
+/// an identical ask in flight). The key is cut to its first 160 characters.
+pub fn trace_read(key: &str, how: &str) {
+    trace_line(|| {
+        let mut shown: String = key.chars().take(160).collect();
+        shown = shown.replace(char::is_whitespace, "_");
+        format!("[read] {} {shown} {how}\n", unix_ms())
+    });
+}
+
 /// Where one host's trace goes: the file `OI_KERNEL_TRACE_FILE` named when
 /// the first line was written, opened once for appending.
 fn trace_line(line: impl FnOnce() -> String) {

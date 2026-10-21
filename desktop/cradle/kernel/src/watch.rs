@@ -104,6 +104,17 @@ pub struct Stamp {
     tick: u64,
 }
 
+impl Stamp {
+    /// This stamp as it would be one tick of its clock earlier.
+    #[cfg(test)]
+    pub(crate) fn with_tick_before(&self) -> Self {
+        Self {
+            tick: self.tick.wrapping_sub(1),
+            ..self.clone()
+        }
+    }
+}
+
 /// What the watch is given to watch.
 #[derive(Clone, Debug)]
 pub struct Roots {
@@ -220,6 +231,17 @@ impl Watch {
             }),
             watcher: Arc::new(Mutex::new(None)),
         }
+    }
+
+    /// A watch that classifies with `roots` and counts what it is fed
+    /// (`ingest`), without a filesystem watcher: for tests of what is built
+    /// on epochs.
+    #[cfg(test)]
+    pub(crate) fn fed(roots: Roots) -> Self {
+        let watch = Self::new();
+        *watch.inner.roots.lock().unwrap() = Some(roots);
+        watch.inner.live.store(true, Ordering::SeqCst);
+        watch
     }
 
     /// The process's watch, shared by the kernel's read model and the host.
