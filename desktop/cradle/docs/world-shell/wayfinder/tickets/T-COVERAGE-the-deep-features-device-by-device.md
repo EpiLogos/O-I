@@ -129,7 +129,7 @@ About forty more are partly bound; each row in the evidence names what is missin
 | Actuation | a store read that hands a session's records to the routed reads (`agency`, `realised`, `stream`, `activity` and `usage` each project one record they are handed, and nothing the shell holds is one: the Ledger's tokens and spend and the Agent's run pages wait on it); a list of grants (`AuthorityStore::read` reads one ref); continuity (`continuityDelta` is library-only); the heartbeat cadence; per-task Launch, Retry and Stop; session Telemetry and Solo; a writer for spend. |
 | Software Factory | Scope's reach and write enforcement (WO-SF2); the custody record's autonomy, gate and escalate fields; the First, Quorum and Weighted joins; an owner for a task's success criterion; a pad's link to the AIKit Routine that carries its schedule; unit decisions in Approvals (`factory attempt decision`); composing a new Commission (`factory.commission-request/v1`). |
 | AIKit | the agent-to-agent ingress rule; the Knowledge route's Read budget and Search first; an owner read of Living Knowledge's impact for a set of readings (the Affected page); a read of the last turn's bounded blocks (Context); a read of a Flow's last thought (`flow changed-since` needs `--thought <file>`); a CLI leaf for the reflection law's verdict (Meaning). |
-| Quaternal Logic | a CLI for the External Context Frame reading (`read_external_context_frame` is library-only); a CLI for `plan_living_wiki_refraction` (the graph's Aperture); WikiFrame refraction candidate counts (the Lens's proposals); a rule naming when a rack part is "verified"; a kernel address for a matrix cell; portal traversal; the Deck's Move and Turn; a tuning owner for Exact-ratio; the Decision helper's When and Deadline; the M′ Situation matrix; the M3 clock's Run and Rate. |
+| Quaternal Logic | **Built 21 Oct:** the External Context Frame CLI (EpiLogos/QL-MEF#344), the scene centres' names, mantras, yantras, tattvas and decans (#345), `ql wiki living-plan` (#346), the ledger's children by reference (#347). **The library holds none of these, so nothing is built:** the M3 clock's Run and Rate (M3State advances only by an explicit AdvanceClock or SpandaAdvance; the display clock's rate is fixed when the field is built), the Deck's Move and Turn (QL shuffles once and draws in sequence), the WikiFrame refraction candidate counts (the engine never fills them), a centre's petal count. Earlier list: a CLI for the External Context Frame reading (`read_external_context_frame` is library-only); a CLI for `plan_living_wiki_refraction` (the graph's Aperture); WikiFrame refraction candidate counts (the Lens's proposals); a rule naming when a rack part is "verified"; a kernel address for a matrix cell; portal traversal; the Deck's Move and Turn; a tuning owner for Exact-ratio; the Decision helper's When and Deadline; the M′ Situation matrix; the M3 clock's Run and Rate. |
 
 ### 1.6 What the build waits on the owner for (21 Oct)
 
@@ -144,6 +144,7 @@ Each needs the owner's word before it is built; the build keeps the device's ref
 | Git / landing's commit, push and land from the desk; moving a session to another machine. | Not routed: they act on repositories and machines. |
 | A mutation class for Central actions that reconcile derived state only. | See §1.5's Central row: since `a4c97faa9` each such read retires the read model. |
 | Publishing SharedField's presence-consent kinds to maincloud. | Built as code and tests only; the hosted module is the owner's to publish. |
+| The QL map holds both spellings for M4's positions (#4-0…5 and #4.0…5) and for M4.5's children (#4.5-0…5 named, #4.5.0…5 unnamed). | The shell keeps the nesting threshold's spelling; the map's refresh is QL's, never the build's. |
 
 ## 2. For the design lane: what to design before the build reaches it
 
@@ -208,6 +209,8 @@ names the file and the change.
 | `dlw__session-grid.tsx` | Whether the design or the shell's established behaviour wins for the group roll-up (the shell always rolls up; the design only when folded) and the rails (the shell draws them full height). Still to bring the shell to: the clip cell's second line (mode, follow, takes) at 52px, the running clip's progress (no reading), the ruler's loop region, overview strip and scale label. |
 | Timeline's Save view (`techne__timeline.tsx`) | A name for the saved view: the frame's save-view takes one. |
 | `quaternal-logic:map-rack` | A face: a `rack` liveSemantic requires routesTo, and M4′'s rack routes nothing. |
+| `quaternal-logic__chakra.tsx` | Colour by QL's `element_ref` or tattva name: QL names the tattva ("Prithvi Tattva"), and Ājñā and Sahasrāra carry none, while the design keys on 'Earth' and draws 'Beyond'. Draw QL's yantra text: QL holds no petal count. QL's mantra is a phrase ("LAM - earth element activation"), not the design's sample syllable. |
+| The map rack's chains | QL holds more than six children in places (M2-5 has nine bodies, M3-1 eight trigrams); the design's chains draw six and its fixtures cut at six. |
 
 ## 3. Manual corrections made with this ticket
 
