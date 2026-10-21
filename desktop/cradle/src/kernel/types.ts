@@ -226,8 +226,11 @@ export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections
   | {kind:"doctor"|"discover"|"instances-list"}
   /** `workcell worlds` (EpiLogos/Workcell#120): the material-world receipts the cell keeps under its state root,
    * `workcell.world-receipts/v1` `{receipt_root, worlds:[{receipt, world_ref, workcell_ref, demand_ref, subjects, state, retention,
-   * persistence, bindings, planned_exposures}], unreadable:[{receipt, error}], note}`. A receipt written elsewhere with `--receipt`
-   * is not known to the cell (the note says so). */
+   * persistence, bindings, planned_exposures, runs}], unreadable:[{receipt, error}], run_ledger:{read, runs?, error?}, note}`. A
+   * receipt written elsewhere with `--receipt` is not known to the cell (the note says so). `runs` (Workcell#122) holds the
+   * run-ledger slugs whose record names that world's world_ref, the slugs `run-show` takes. It is joined when read, `[]` when no run
+   * names the world, and null when the ledger cannot be read (`run_ledger.error` says why). `subjects.run` is an opaque subject, not
+   * a slug. */
   | {kind:"worlds"}
   /** `workcell plan <demand flags>`: an unsatisfiable plan is a reading too (`status`, `omissions`). */
   | {kind:"plan";demand?:WorkcellDemand}

@@ -2802,6 +2802,11 @@ fn workcell_lists_the_world_receipts_it_keeps_with_their_refs_and_subjects() {
         "opaque:factory-run-capture"
     );
     assert_eq!(data["unreadable"].as_array().unwrap().len(), 1);
+    // Workcell#122's join, carried as it answered: the run-ledger slugs
+    // whose record names the world (the slug `run-show` takes), not its
+    // opaque subject.
+    assert_eq!(data["worlds"][0]["runs"], json!(["dlw-capture"]));
+    assert_eq!(data["run_ledger"], json!({"read": true, "runs": 1}));
     assert_eq!(receipts(&outcome), json!([]), "a read earns no receipt");
     assert_eq!(workcell.asked(), ["worlds --json"]);
 
