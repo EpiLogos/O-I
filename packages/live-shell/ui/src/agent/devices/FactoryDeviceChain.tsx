@@ -94,7 +94,8 @@ import {
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, connectionLabels, gitBinding, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp, workcellReadOp} from './ownerRoutes'
+import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, workcellGitReading} from './workcellRackBinding'
 import {AGENT_SLOTS, chainSlots, factoryPlace, type FactorySlot} from './factoryPlaces'
@@ -287,9 +288,34 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const shownRun = shownTakes ? runsOfTakes(shownTakes, typeof heldWork === 'string' ? heldWork : undefined).work ?? null : null
   const shownState = shownRun ? shownTakes?.find(take => take.runRef === shownRun)?.statePath ?? null : null
   const runJourney = useRunJourney(transport, shownState, shownRun)
+  // Runs' Outputs (W12): each attempt's world is the receipt `workcell worlds` lists whose world_ref is the attempt's materialWorldRef;
+  // Collect reads `workcell collect` on it (a read: Workcell's collect changes no state), held for this window.
+  const takeWorlds = useMemo(() => [...new Set((shownTakes ?? []).flatMap(take => (take.materialWorldRef ? [take.materialWorldRef] : [])))], [shownTakes])
+  const runWorlds = useWorkcellRead(transport, takeWorlds.length ? {kind: 'worlds'} : null).answer
+  const [collected, setCollected] = useState<Record<string, {value?: unknown; error?: string}>>({})
+  const outputs = useMemo(() => {
+    const listed = runWorlds.status === 'answered' ? worldsOf(runWorlds.value) : null
+    const receipts = Object.fromEntries((shownTakes ?? []).flatMap(take => {
+      const world = take.materialWorldRef ? listed?.worlds.find(row => row.worldRef === take.materialWorldRef) : undefined
+      return world ? [[take.attemptRef, world.receipt]] : []
+    }))
+    const why = !takeWorlds.length ? 'no attempt of this session names the Workcell world it ran in (its execution body\'s materialWorldRef).'
+      : runWorlds.status === 'refused' ? runWorlds.error ?? 'Workcell refused its world receipts.'
+        : runWorlds.status === 'reading' ? 'Workcell has not answered its world receipts yet (`workcell worlds`).'
+          : !listed ? '`workcell worlds` answered something other than its world receipts.'
+            : 'no receipt `workcell worlds` lists is the world an attempt names (a receipt written elsewhere with `--receipt` is not listed).'
+    return {receipts, why}
+  }, [shownTakes, takeWorlds.length, runWorlds])
+  const collectPort = useMemo(() => (transport.kind !== 'unavailable' ? async (attempt: string, receipt: string) => {
+    try {
+      const answer = await ownerRouteWrite(transport, workcellReadOp({kind: 'collect', receipt}), '`workcell collect`')
+      setCollected(was => ({...was, [attempt]: {value: answer.data}}))
+    } catch (cause) { setCollected(was => ({...was, [attempt]: {error: cause instanceof Error ? cause.message : String(cause)}})); throw cause }
+  } : undefined), [transport])
   const runsDesignBinding = useMemo(() => runsBinding(sessionTrack?.sessionRef ?? null, holds,
-    runTakes && sessionTrack ? {takes: shownTakes, choose: runTakes.choose, ...(shownRun ? {journey: runJourney} : {})} : undefined),
-  [sessionTrack, holds, runTakes, shownTakes, shownRun, runJourney])
+    runTakes && sessionTrack ? {takes: shownTakes, choose: runTakes.choose, ...(shownRun ? {journey: runJourney} : {}),
+      receipts: outputs.receipts, collected, ...(collectPort ? {collect: collectPort} : {}), outputsWhy: outputs.why} : undefined),
+  [sessionTrack, holds, runTakes, shownTakes, shownRun, runJourney, outputs, collected, collectPort])
 
   // Factory's Main track devices: the Experiment on its chain. The monitors — Gateways, the Frames monitor the Gateway opens full, the Ledger —
   // Messages, the Agency gateway and the workcell rack stand on the rail in every mode: AgentRailDevices.tsx publishes them, not this chain.

@@ -15,7 +15,8 @@
 // agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — the rack's macros write through the Gateway's
 // rows, the same rows and write path the chain's Gateway writes through (designBindings.ts gatewayBinding; agentNativeDispatch.ts
 // fireWritePath).
-import {useCallback, useEffect, useMemo} from 'react'
+import {useCallback, useEffect, useMemo, useState} from 'react'
+import {useOwnerOp} from '../../owners/ownerCall'
 import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -39,11 +40,11 @@ import type {GatewayWriteRequest, KernelTransportStatus} from '../../../../../..
 import {LEDGER_ID, ledgerBinding, receiptDevices} from './receiptBindings'
 import {useAgentChainReading} from './useAgentChainReading'
 import {useConversationAnswer} from './useConversationAnswer'
-import {ROUTE_WORDS, gatewayWriteOp, ownerRouteWrite, workcellWriteOp} from './ownerRoutes'
+import {ROUTE_WORDS, gatewayWriteOp, ownerRouteWrite, refusalWords, workcellWriteOp} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {RACK_PROJECT} from './useRackReading'
 import {CARRIER_ID, carrierChainState, carrierValues, gitValues} from './workcellBindings'
-import {WORKCELL_RACK_ID, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
+import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
 import {useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 
 /** The rail's agent devices this publisher holds, by id: withdrawn with it. Approvals is not among them — it is Factory's Main track
@@ -162,16 +163,40 @@ export function AgentRailDevices() {
   const doctor = useWorkcellRead(transport, asked ? {kind: 'doctor'} : null)
   const instanceList = useWorkcellRead(transport, asked ? {kind: 'instances-list'} : null)
   const usages = useInstanceUsages(transport, instanceList.answer)
+  // The world (W12): the receipt `workcell worlds` lists for this machine's cell, read with material_read; the last reconcile's answer is
+  // the one Apply got in this window.
+  const worlds = useWorkcellRead(transport, asked ? {kind: 'worlds'} : null)
+  const cellStatus = workcellAnswer.status === 'answered' && workcellAnswer.value && typeof workcellAnswer.value === 'object' ? workcellAnswer.value as {workcell_ref?: unknown; state_root?: unknown} : null
+  const machineRef = typeof cellStatus?.workcell_ref === 'string' ? cellStatus.workcell_ref : null
+  const stateRoot = typeof cellStatus?.state_root === 'string' ? cellStatus.state_root : null
+  const picked = useMemo(() => chosenWorld(worlds.answer, machineRef, viewHolds(holds, WORKCELL_RACK_ID).worldReceipt), [worlds.answer, machineRef, holds])
+  const materialOp = useMemo(() => (picked.chosen && stateRoot ? {op: 'material_read' as const, target: {receipt: picked.chosen.receipt, state_root: stateRoot, expected_world_ref: picked.chosen.worldRef}} : null),
+    [picked.chosen?.receipt, picked.chosen?.worldRef, stateRoot]) // eslint-disable-line react-hooks/exhaustive-deps
+  const materialRead = useOwnerOp(transport, materialOp, 'native_owner_reading')
+  const material = useMemo(() => {
+    const reading = materialRead.reading
+    if (reading.status !== 'answered') return {status: reading.status, value: null, error: reading.error ? refusalWords(reading.error) : null}
+    const failure = reading.value?.failure as {message?: unknown} | null | undefined
+    return reading.value?.data ? {status: 'answered' as const, value: reading.value.data, error: null}
+      : {status: 'refused' as const, value: null, error: typeof failure?.message === 'string' ? failure.message : 'Workcell answered the material read with neither a reading nor its failure.'}
+  }, [materialRead.reading])
+  const [lastReconcile, setLastReconcile] = useState<{receipt: string; answer: unknown} | null>(null)
   const workcellWrite = useMemo(() => (transport.kind !== 'unavailable'
-    ? (request: Parameters<typeof workcellWriteOp>[0]) => ownerRouteWrite(transport, workcellWriteOp(request), `\`workcell ${request.kind}\``) : undefined), [transport])
+    ? async (request: Parameters<typeof workcellWriteOp>[0]) => {
+      const answer = await ownerRouteWrite(transport, workcellWriteOp(request), `\`workcell ${request.kind}\``)
+      if (request.kind === 'reconcile') setLastReconcile({receipt: request.receipt, answer: answer.data})
+      return answer
+    } : undefined), [transport])
   const workcell = useMemo(() => {
     const git = gitValues(cellName ? workcellGitReading(seats, cellName, RACK_PROJECT) : reading, holds)
     const seatsUnread = !asked ? SEATS_NOT_ASKED : seats.status === 'refused' && seats.error ? seats.error : undefined
     return workcellRackBinding({name: cellName, project: RACK_PROJECT, seats: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {seatsUnread} : {}),
       chain: {gateway: gatewayPort.values, carrier: carrierValues(workcellAnswer, holds), git}, holds,
-      ...(asked ? {doctor: doctor.answer, instances: {list: instanceList.answer, usages}} : {})},
-    {gateway: gatewayPort, ...(asked && transport.kind !== 'unavailable' ? {rereadServices: doctor.refresh} : {}), ...(workcellWrite ? {workcell: workcellWrite} : {})})
-  }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite])
+      ...(asked ? {doctor: doctor.answer, instances: {list: instanceList.answer, usages}, worlds: worlds.answer, ...(materialOp ? {material} : {}),
+        ...(lastReconcile && lastReconcile.receipt === picked.chosen?.receipt ? {reconciled: lastReconcile.answer} : {})} : {})},
+    {gateway: gatewayPort, ...(asked && transport.kind !== 'unavailable' ? {rereadServices: doctor.refresh, ...(materialOp ? {rereadWorld: materialRead.refresh} : {})} : {}),
+      ...(workcellWrite ? {workcell: workcellWrite} : {})})
+  }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite, worlds.answer, materialOp, material, materialRead.refresh, lastReconcile, picked.chosen?.receipt])
 
   // Publish each one again only when its own binding moves; withdraw them all with this publisher.
   const devices = useMemo((): Readonly<Record<string, DeviceInstance | null>> => ({

@@ -119,7 +119,8 @@ test('2 · the world\'s writes: none without a world\'s receipt (no reading name
   bind.resetHolds()
   const none = rack.workcellRackBinding(rackInput(), {gateway: null, workcell: recorder().port})
   for (const key of ['recover', 'apply', 'releaseWorld', 'world', 'surfaces', 'omitted', 'reconciled']) assert.ok(none.standing[key].disabled.includes(rack.NO_RUN), key)
-  assert.match(rack.NO_RUN, /`workcell status` counts the persisted world receipts \(persisted_world_receipts\) and lists none/)
+  // REPLACED (lane W12): `workcell worlds` lists the receipts now; not handed in, the rack says it is not read (w12-workcell-worlds.test.mjs).
+  assert.match(rack.NO_RUN, /Workcell's world receipts \(`workcell worlds`\) are not read here/)
   assert.equal(REAL.workcellStatus.persisted_world_receipts, 0, 'none is prepared on this machine')
   await assert.rejects(none.write([{key: 'releaseWorld', value: 'world:x'}]), {message: rack.WORKCELL_REFUSE.releaseWorld})
   await assert.rejects(none.write([{key: 'want:workspace:primary', value: 'released'}]), {message: rack.FATE_REFUSE})
@@ -169,7 +170,8 @@ test('4 · the carrier\'s Offers from `workcell discover` (REAL); the Plan absen
   const binding = cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: answered(MATERIAL.discover)})
   assert.deepEqual(JSON.parse(binding.values.offers), offers)
   assert.equal(binding.standing.offers, undefined)
-  assert.match(binding.standing.plan.disabled, /no reading here names one — a Factory Run names model and tool requirements, not Workcell's material demand/)
+  // REPLACED (lane W12): the plan names the demand body it waits for (Workcell's kept demand, `workcell run show`).
+  assert.match(binding.standing.plan.disabled, /Workcell's kept demand body for a run, read with `workcell run show`/)
   assert.equal(binding.standing.replan.disabled, cell.CARRIER_REFUSE.replan)
   const workcellSays = 'workcell: discover failed: the provider inventory is unreadable'
   assert.equal(cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds(), undefined, {discover: refused(workcellSays)}).standing.offers.disabled, workcellSays)

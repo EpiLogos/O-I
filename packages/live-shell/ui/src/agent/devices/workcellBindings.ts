@@ -268,7 +268,7 @@ export function seatBinding(input: SeatInput, ports: SeatPorts = {}): DesignBind
 // `workcell connections probe` (workcell_read {connections-probe}, a read that never writes the record; workcellMaterial.ts probeFields):
 // reached and authorised is Ready, a refusal keeps Workcell's words, an unreachable machine keeps its recorded standing and says why.
 /** Why the run's plan is not read: `workcell plan` takes the run's demand, and no reading names one. */
-const NO_DEMAND = 'the run\'s demand for `workcell plan` (require, prefer, connect, expose, output…): no reading here names one — a Factory Run names model and tool requirements, not Workcell\'s material demand, and the plan of no demand plans nothing'
+const NO_DEMAND = 'the run\'s demand for `workcell plan` (require, prefer, connect, expose, output…): Workcell\'s kept demand body for a run, read with `workcell run show`, which no kernel route reaches — a world receipt names only its demand_ref, a Factory Run names model and tool requirements, not Workcell\'s material demand, and the plan of no demand plans nothing'
 export const CARRIER_REFUSE = {
   where: missing('Where', 'a session carried to another machine over workcell.control/v1 through the kernel', 'Workcell'),
   replan: missing('Plan again', NO_DEMAND, 'Workcell'),

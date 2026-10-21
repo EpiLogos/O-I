@@ -251,11 +251,13 @@ export interface RunsTakes {
   readonly collected?: Readonly<Record<string, {readonly value?: unknown; readonly error?: string}>>
   /** Collect one attempt's world (workcell_read {collect} on its receipt). Absent: no carrier stands. */
   readonly collect?: (attemptRef: string, receipt: string) => Promise<unknown>
+  /** Why no attempt's world receipt is named, in words (Workcell's refusal, nothing listed, no attempt naming a world), where the chain knows. */
+  readonly outputsWhy?: string
 }
 
-/** Outputs (lane W10, D1; software-factory__attempt-review.tsx `collected`, `collect`): `workcell --receipt R collect` on the receipt of the
- * world the attempt's run stood in (workcellMaterial.ts collectedOf). No reading here names that receipt (workcellRackBinding.ts NO_RUN), so
- * where none is handed in, the outputs stand absent and Collect disabled, naming it. */
+/** Outputs (lanes W10, W12; software-factory__attempt-review.tsx `collected`, `collect`): `workcell --receipt R collect` on the receipt of
+ * the world the attempt ran in — the receipt `workcell worlds` lists whose world_ref is the attempt's materialWorldRef (workcellMaterial.ts
+ * collectedOf). Where none is named, the outputs stand absent and Collect disabled, saying why. */
 export const RUNS_OUTPUTS = {
   collected: `What Workcell collected from each attempt's world: no reading reaches it yet — missing op: ${NO_RUN} (Workcell).`,
   collect: `Collect: no owner operation carries it yet — missing op: ${NO_RUN} (Workcell).`,
@@ -325,7 +327,8 @@ function runsStanding(session: string | null, takes?: RunsTakes): Record<string,
   const journey: Record<string, Standing> = drawn ? {} : {journey: {disabled: !session || !takes?.takes || !held ? RUNS_JOURNEY_UNREAD
     : held.status === 'refused' ? held.error ?? RUNS_JOURNEY_READING : held.status === 'reading' ? RUNS_JOURNEY_READING : RUNS_JOURNEY_NONE}}
   const receipts = takes?.receipts && Object.keys(takes.receipts).length ? takes.receipts : null
-  const outputs: Record<string, Standing> = !receipts ? {collected: {disabled: RUNS_OUTPUTS.collected}, collect: {disabled: RUNS_OUTPUTS.collect}}
+  const outputs: Record<string, Standing> = !receipts ? {collected: {disabled: takes?.outputsWhy ? `What Workcell collected from each attempt's world: ${takes.outputsWhy}` : RUNS_OUTPUTS.collected},
+    collect: {disabled: takes?.outputsWhy ? `Collect: ${takes.outputsWhy}` : RUNS_OUTPUTS.collect}}
     : !takes?.collect ? {collect: {disabled: RUNS_OUTPUTS.noCarrier}} : {}
   if (!takes) return {...journey, ...outputs, stands: {disabled: RUNS_REFUSE.stands}}
   if (!session) return {...journey, ...outputs, stands: {disabled: 'Stands: no session is selected; an attempt stands on its session\'s Run.'}}
