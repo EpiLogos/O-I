@@ -31,10 +31,11 @@ const STRIKE_AT_MAX_METRES = 1.0;
 // stage-state is the Ta-Onta procedural stage's scoped disclosure: a read on
 // the one owner — the field does not advance and the receipt is unchanged.
 const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state'];
-// The stage's other acts on the one owner (ql-mef continuous/host.rs stage_operation): retire releases a procedure's own slots, bind
-// and unbind change the live flow's bindings. None advances the field: each answers with its ql.stage-receipt/v1 and the last
-// acknowledged field, unchanged, as the host's envelope always carries it. The kernel admits all five (native_expression.rs
-// EXCHANGE_OPERATIONS); each payload is validated again by the owner host.
+// The stage's acts on the one owner (ql-mef continuous/host.rs stage_operation).
+// stage-evaluate runs an invoked procedure's plan. retire releases a procedure's
+// own slots; bind and unbind change the live flow's bindings. These three do not
+// advance the field: the host answers with its ql.stage-receipt/v1 and the field
+// unchanged, so the ordinary cursor law (no generation, no samples) holds.
 const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbind'];
 
 export class InstrumentSession {
@@ -286,7 +287,9 @@ export class InstrumentSession {
    * It changes the existing native owner; no UI-local clock or second composer.
    * The Ta-Onta procedural stage's invoked procedure rides the same envelope:
    * the host compiles it into its own admitted applications and acknowledges
-   * with the applied field, the new influence and the stage claim. */
+   * with the applied field, the new influence and the stage claim. Its retire,
+   * bind and unbind ride it too, each acknowledged with its receipt and the
+   * field unchanged. Every stage act's receipt is kept as lastStageReceipt. */
   async operate(command) {
     need(!this.#busy && !this.#held && !this.#disposed &&
       ['set-axis', 'replace', 'set-damping', 'strike', 'strike-at', ...EVENT_OPERATIONS, ...STAGE_ACTS].includes(command?.operation), 'domain operation requires idle admitted owner');
