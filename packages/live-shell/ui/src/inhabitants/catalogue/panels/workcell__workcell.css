@@ -1,0 +1,24 @@
+/* A workcell (manual §19.23): its seats in a pane, the Workcells tile's chips. */
+.wc-seats { width: 100%; border-collapse: collapse; font-size: 11px; margin: 4px 0 14px; }
+.wc-seats th { text-align: left; font-weight: 600; color: var(--text-dim, #a3a8ad); padding: 4px 8px; border-bottom: 1px solid var(--line, #3a3d41); }
+.wc-seats td { padding: 5px 8px; border-bottom: 1px solid var(--line, #3a3d41); color: var(--text, #d4d7da); }
+.wc-seats tr[data-free] td { color: var(--text-faint, #71767c); }
+.wc-pane-side { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.wc-pane-side h4 { margin: 0 0 6px; font-size: 11px; font-weight: 600; color: var(--text-dim, #a3a8ad); }
+.wc-list { list-style: none; margin: 0; padding: 0; font-size: 11px; }
+.wc-list li { padding: 3px 0; border-bottom: 1px solid var(--line, #3a3d41); display: flex; gap: 8px; }
+.wc-list li span { color: var(--text-dim, #a3a8ad); }
+.wc-frames li b[data-dir="in"] { color: var(--dp-value, #5cc6b4); font-weight: 500; }
+.wc-frames li b[data-dir="out"] { color: var(--accent, #ffbe00); font-weight: 500; }
+.wc-chips { display: flex; flex-wrap: nowrap; gap: 3px; padding: 5px 6px 0; overflow: hidden; }
+.wc-chip { flex: none; white-space: nowrap; font: inherit; font-size: 10px; line-height: 16px; padding: 0 6px; border-radius: 3px; border: 1px solid var(--line, #3a3d41); background: var(--bg-1, #2e3135); color: var(--text, #d4d7da); cursor: pointer; }
+.wc-chip[data-light="dark"] { color: var(--text-faint, #71767c); }
+.wc-chip[data-light="lit"]::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--green, #7bd389); margin-right: 4px; vertical-align: 1px; }
+.wc-chip[aria-checked="true"] { border-color: var(--accent, #ffbe00); }
+.wc-tile-body { padding: 6px 7px 0; font-size: 10.5px; line-height: 15px; }
+.wc-tile-body p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wc-tile-lane b { font-weight: 600; color: var(--text, #d4d7da); }
+.wc-tile-lane { color: var(--text-dim, #a3a8ad); margin-bottom: 2px !important; }
+.wc-tile-who i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--accent, #ffbe00); margin-right: 5px; vertical-align: 1px; }
+.wc-tile-who span { color: var(--text-dim, #a3a8ad); }
+.wc-tile { display: flex; flex-direction: column; width: 100%; min-width: 0; }

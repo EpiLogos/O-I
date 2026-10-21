@@ -1,0 +1,81 @@
+/* The faces: creatures and environs as the faces of agent and process types (faces/*.tsx). Every colour resolves a shell token, except the
+   creatures' own inks, which are the roster's (faces/figures.ts INK) and arrive as --fx-ink and --fx-element. */
+
+/* A creature as a face: a clipped square, the figure live in it, a bar in the element's ink under it. */
+.fx-face { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 3px; flex: none; color: var(--text-faint, #71767c); }
+.fx-clip { position: relative; overflow: hidden; width: 100%; aspect-ratio: 1000 / 780; flex: none; transition: opacity .6s ease; }
+.fx-clip .fx-glyph { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fx-figure { position: absolute; pointer-events: none; }
+.fx-figure svg { display: block; overflow: visible; }
+.fx-face[data-state="failed"] .fx-clip { filter: drop-shadow(0 0 5px #C4453699); }
+.fx-bar { flex: none; width: 70%; height: 2px; background: var(--fx-element, currentColor); opacity: .25; transition: opacity .4s ease; }
+.fx-bar[data-on="true"] { opacity: .95; }
+.fx-face[data-built="false"] .fx-bar { opacity: 0; }
+.fx-name { font: 600 9px/1.2 var(--mono, ui-monospace, monospace); letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); text-align: center; }
+.fx-err { position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--stall, #e8833a); color: #1c1d1f; font: 700 9px/12px var(--mono, monospace); text-align: center; }
+.fx-thumb { display: inline-grid; place-items: center; flex: none; overflow: hidden; color: var(--text-faint, #71767c); }
+.fx-thumb img { display: block; }
+.fx-thumb[data-built="false"] .fx-glyph { opacity: .7; }
+
+/* The type's well (TypeBand): the face, the pattern's name, what its thread does. */
+.fx-well { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 6px 4px; gap: 2px; }
+.fx-well--none { justify-content: center; text-align: center; font-size: 10px; color: var(--text-faint); padding: 10px; }
+.fx-well-face { flex: none; }
+.fx-well-name { display: flex; gap: 6px; align-items: baseline; justify-content: center; font-size: 11px; color: var(--text); }
+.fx-well-name b { font-weight: 650; }
+.fx-well-name span { font-size: 9.5px; color: var(--text-dim); }
+.fx-well-does { font-size: 9.5px; line-height: 1.3; color: var(--text-dim); text-align: center; max-width: 100%; }
+
+/* The stage: a run as a creature on a tree (EnvironStage). The stage draws itself; the agent that is not the serpent stands at the zone the run has reached. */
+.fx-stage { position: relative; display: flex; flex-direction: column; overflow: hidden; background: color-mix(in srgb, var(--bg-0, #26292d) 55%, var(--line, #24262a)); border: 1px solid var(--line, #24262a); }
+.fx-stage-view { position: relative; margin: 0 auto; flex: none; }
+.fx-stage-agent { position: absolute; left: 2%; transition: top 1.4s ease; pointer-events: none; }
+.fx-stage-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 6px; background: color-mix(in srgb, var(--bg-0, #26292d) 80%, transparent); border-top: 1px solid var(--line, #24262a); }
+.fx-states { display: flex; align-items: center; gap: 6px; }
+.fx-ticks { display: flex; gap: 2px; }
+.fx-ticks i { width: 7px; height: 9px; border: 1px solid var(--line-strong, #3d4147); box-sizing: border-box; }
+.fx-ticks i[data-breath="false"] { border-style: dashed; }
+.fx-ticks i[data-on="true"] { background: var(--accent, #ffbe00); border-color: var(--accent, #ffbe00); }
+.fx-state { font: 600 10px/1 var(--mono, ui-monospace, monospace); color: var(--text, #d4d7da); letter-spacing: .04em; }
+.fx-sig { font: 9px/1.2 var(--mono, ui-monospace, monospace); color: var(--text-faint, #71767c); white-space: nowrap; }
+
+/* The family's patterns (TypeBand): a creature at rest and a name each. */
+.fx-patterns { width: 100%; align-items: stretch; }
+.fx-patterns ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.fx-pat { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 5px; width: 100%; height: 27px; padding: 0 3px; border: 0; border-left: 2px solid transparent; background: transparent; color: var(--text, #d4d7da); font: 11px var(--font-ui, sans-serif); text-align: left; cursor: pointer; }
+.fx-pat b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-pat span:last-child { font-size: 9.5px; color: var(--text-faint, #71767c); }
+.fx-pat:hover:not(:disabled) { background: color-mix(in srgb, var(--sel, #7ec3e6) 12%, transparent); }
+.fx-pat[aria-pressed="true"] { border-left-color: var(--accent, #ffbe00); background: color-mix(in srgb, var(--sel, #7ec3e6) 20%, transparent); }
+.fx-pat[data-dark="true"] { color: var(--text-faint, #71767c); }
+.fx-pat:disabled { cursor: default; }
+
+/* A crew: several whole creatures in one pane (CrewFace). */
+.fx-crew { position: relative; overflow: hidden; flex: none; color: var(--text-faint, #71767c); background: color-mix(in srgb, var(--bg-0, #26292d) 55%, var(--line, #24262a)); border: 1px solid var(--line, #24262a); }
+.fx-crew-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 46%; background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--line, #24262a) 70%, transparent)); border-top: 1px solid color-mix(in srgb, var(--line-strong, #3d4147) 60%, transparent); }
+.fx-crew-member { position: absolute; }
+.fx-crew-member[data-lead="true"]::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 2px; margin-left: -4px; background: var(--accent, #ffbe00); }
+.fx-crew-member .fx-face { width: 100%; }
+.fx-crew-member .fx-bar { display: none; }
+
+.fx-crew--scene { background: transparent; border: 0; }
+.fx-scene { position: absolute; inset: 0; }
+/* a crew of independent bodies stands on the pane's ground, not on each body's own world (the comb, the sand) */
+.fx-crew:not(.fx-crew--scene) .hv-world, .fx-crew:not(.fx-crew--scene) .cg-under { display: none; }
+
+/* The takes of a run, one tree for each (TakesGrove). */
+.fx-grove { display: flex; gap: 6px; align-items: flex-end; }
+.fx-take { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.fx-take-tree { position: relative; overflow: hidden; background: color-mix(in srgb, var(--bg-0, #26292d) 55%, var(--line, #24262a)); border: 1px solid var(--line, #24262a); }
+.fx-tree { position: absolute; inset: 0; }
+.fx-take figcaption { display: flex; gap: 6px; align-items: baseline; font-size: 10px; color: var(--text-dim, #a2a7ad); border-bottom: 2px solid transparent; padding-bottom: 1px; }
+.fx-take figcaption b { font-weight: 600; color: var(--text, #d4d7da); }
+.fx-take[data-stands="true"] figcaption { border-bottom-color: var(--accent, #ffbe00); }
+.fx-take[data-state="failed"] figcaption span { color: var(--stall, #ff9b4a); }
+.fx-take[data-state="queued"] { opacity: .7; }
+
+.fx-well--scene { padding: 0; align-items: center; justify-content: center; }
+.fx-well--scene .fx-crew { margin: 0 auto; }
+.fx-well--scene .fx-well-name { position: absolute; left: 4px; bottom: 3px; padding: 1px 5px; background: color-mix(in srgb, var(--dp-well, #121519) 78%, transparent); }
+.fx-take[data-state="archived"] { opacity: .45; }
+.fx-take[data-state="dormant"] figcaption span { color: var(--text-faint, #71767c); }

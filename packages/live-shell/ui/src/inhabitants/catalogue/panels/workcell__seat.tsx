@@ -390,7 +390,7 @@ const DEFAULTS: Values = {
 export const design: DesignedDevice = {
   id: 'workcell:seat',
   title: 'Seat',
-  kind: 'effect',
+  kind: 'connection',
   defaults: DEFAULTS,
   fixtures: {
     'A held seat': {},

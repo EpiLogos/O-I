@@ -1,18 +1,12 @@
-/* The Ledger's own layout: the list's press targets in the well, the pane (the list, and the receipt open beside it) and the widget's
-   side readings. Shell and panel tokens only. */
-.dp-display .sfl-hit { cursor: pointer; }
-.dp-display .sfl-hit:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: -1px; }
+/* The Ledger's own layout: the pane's body (the list, and the receipt open beside it; its head is the monitors' own, monitor.tsx) and
+   the widget's side readings. Shell and panel tokens only. */
 
 .sfl-none { margin: 0; font-size: 10px; color: var(--text-faint, #71767c); }
 .sfl-tile-list { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .sfl-tile-side { flex: 0 0 auto; width: 56px; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
 
-/* The pane. */
-.sfl-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
-.sfl-bar { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
-.sfl-bar b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
-.sfl-bar span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
-.sfl-main { flex: 1 1 auto; min-height: 0; display: flex; }
+/* The pane's body, under the head. */
+.sfl-main { height: 100%; display: flex; }
 
 .sfl-list { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; padding: 12px 0 8px; overflow: hidden; }
 .sfl-list > .sfl-none { padding: 10px 18px; }

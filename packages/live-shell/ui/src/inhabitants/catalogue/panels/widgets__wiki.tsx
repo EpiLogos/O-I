@@ -8,9 +8,14 @@
 //   body      the page as the knowledge owner reads it (kernel op knowledge, `aikit.markdown-reading/v1`): its lines, and its links as
 //             [{line, from, to, target, state}] from the reading's occurrences (state resolved, unresolved, ambiguous or external).
 //   page      the page shown; readLast the page the selected agent read last (its encounter's prepared_context_receipts).
-// Follow is the tile's own. The entry's Reads only has no owner: nothing reports the scope's reads, so it is not offered.
-import {Band, Chooser, Display, Folded, Handle, Panel, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+// Follow is the monitor's own. The entry's Reads only has no owner: nothing reports the scope's reads, so it is not offered.
+//
+// A monitor (manual §16.3): it stands on the rail and in a pane, and has two views. The tile is the page shown, its links followable,
+// with the pages as dots down its right edge and handle 1 on the one shown; its title opens the page in Full. Full's head carries the
+// page's kind, its links and the page the agent read last, with Page and Follow; its body is every page beside the page shown.
+import {Chooser, Display, Handle, Tile, Toggle} from '../../sdk/panel'
+import {boolOf, clampTo, json, railAndPane, st, strOf, type ViewProps} from './design'
+import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
 
 type V = ViewProps['v']
 
@@ -24,15 +29,16 @@ const bodyOf = (v: V) => { const raw = json<unknown>(v, 'body', undefined); if (
     ? [{line: e.line as number, from: e.from as number, to: e.to as number, target: String(e.target ?? ''), state: String(e.state ?? 'unresolved')}] : []) : []} }
 const pageOf = (v: V) => { const ps = pagesOf(v), r = strOf(v, 'page'); return ps?.find(x => x.ref === r) ?? ps?.[0] }
 
-/** The page and its links. `pager`: the pages as dots down the right edge, handle 1 on the page shown. `follow`: a press on a link that
- * resolves shows its page. */
-function WikiPage({p, w, h, pager, size = 9}: {p: ViewProps; w: number; h: number; pager: boolean; size?: number}) {
+/** The page and its links: a press on a link that resolves shows its page. `pager`: the pages as dots down the right edge, handle 1 on the
+ * page shown. `press`: a press on the title opens the page in Full. */
+function WikiPage({p, w, h, pager, size = 9, press}: {p: ViewProps; w: number; h: number; pager: boolean; size?: number; press?: () => void}) {
   const v = p.v, pages = pagesOf(v), pg = pageOf(v), body = bodyOf(v), right = pager ? 16 : 4, lh = size + 4.5, cw = size * .6, room = Math.floor((w - 10 - right) / cw), ps = st(p, 'page')
   if (!pg) return <text x={6} y={18} className="dp-ink-dim">{strOf(v, 'reason') ?? 'No reading of the wiki'}</text>
-  const idx = pages!.indexOf(pg), dotY = (i: number) => 12 + i * Math.min(12, (h - 22) / Math.max(1, pages!.length - 1)), readLast = strOf(v, 'readLast')
+  const idx = pages!.findIndex(x => x.ref === pg.ref), dotY = (i: number) => 12 + i * Math.min(12, (h - 22) / Math.max(1, pages!.length - 1)), readLast = strOf(v, 'readLast')
   const fit = Math.floor((h - 30) / lh)
   return <g>
-    <text x={6} y={13} className="dp-ink" style={{fontSize: size + 1.5}}>{pg.title.slice(0, room - 8)}</text>
+    <text x={6} y={13} className="dp-ink" style={{fontSize: size + 1.5, cursor: press ? 'pointer' : undefined}} onClick={press} role={press ? 'button' : undefined}
+      data-i={press ? `${pg.title}|Open the page in Full.` : undefined}>{pg.title.slice(0, room - 8)}</text>
     <text x={w - right - 2} y={13} textAnchor="end" className="dp-axis">{pg.type}</text>
     <path d={`M4 18H${w - right}`} className="dp-faint" />
     {!body && <text x={6} y={32} className="dp-ink-dim">No reading of the page</text>}
@@ -55,25 +61,44 @@ function WikiPage({p, w, h, pager, size = 9}: {p: ViewProps; w: number; h: numbe
 }
 
 const LIGHT_WHY = 'Wiki has no on or off: it only reads. The light stays hollow.'
-const head = (p: ViewProps) => ({light: 'unknown' as LightState, lightWhy: LIGHT_WHY, onFold: p.nav.fold, onFull: p.nav.full})
-const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const linkCounts = (v: V) => { const b = bodyOf(v); return b ? {resolved: b.links.filter(l => l.state === 'resolved').length, open: b.links.filter(l => l.state !== 'resolved').length} : undefined }
 const DISPLAY_DOES = 'The page as the wiki reads it. A link in teal resolves; a link that does not resolve shows as it is. The amber ring marks the page the agent read last.'
 
-function controls(p: ViewProps) {
-  const v = p.v, pages = pagesOf(v) ?? []
-  return {
-    page: <Chooser {...st(p, 'page')} wide label="Page" does="The page to show." value={pageOf(v)?.ref ?? ''} options={pages.map(x => ({value: x.ref, label: x.title}))} onChange={x => p.set('page', x)}
-      disabled={st(p, 'page').disabled ?? (pages.length ? undefined : 'No wiki page is read.')} />,
-    follow: <Toggle {...st(p, 'follow')} label="Follow" does="Show the page the selected agent read last." on={boolOf(v, 'follow') === true} unknown={boolOf(v, 'follow') === undefined}
-      onChange={x => { p.set('follow', x); if (x && strOf(v, 'readLast')) p.set('page', strOf(v, 'readLast')) }} />,
-  }
+/** Full's head: the page's kind, its links, the page the agent read last; Page and Follow. */
+function Head({p}: {p: ViewProps}) {
+  const v = p.v, pages = pagesOf(v), pg = pageOf(v), n = linkCounts(v), last = pages?.find(x => x.ref === strOf(v, 'readLast'))
+  return <MonitorHead title="Wiki" readings={[
+    {label: 'kind', value: pg?.type || undefined, does: 'The kind of the page shown.'},
+    {label: 'links', value: n?.resolved, does: 'Links on the page that resolve.', tone: 'value'},
+    {label: 'open', value: n?.open, does: 'Links on the page that do not resolve.'},
+    {label: 'read last', value: last?.title, does: 'The page the selected agent read last.', tone: 'accent'},
+  ]} controls={<>
+    <Chooser {...st(p, 'page')} label="Page" does="The page to show." value={pg?.ref ?? ''} options={(pages ?? []).map(x => ({value: x.ref, label: x.title}))} onChange={x => p.set('page', x)}
+      disabled={st(p, 'page').disabled ?? (pages?.length ? undefined : 'No wiki page is read.')} />
+    <Toggle {...st(p, 'follow')} label="Follow" does="Show the page the selected agent read last." on={boolOf(v, 'follow') === true} unknown={boolOf(v, 'follow') === undefined}
+      onChange={x => { p.set('follow', x); if (x && strOf(v, 'readLast')) p.set('page', strOf(v, 'readLast')) }} />
+  </>} />
 }
 
-export const design: DesignedDevice = {
+/** Every page of the wiki the agent may use: its title and kind, the one shown marked, the one the agent read last ringed in amber. */
+function PageList({p, w, h}: {p: ViewProps; w: number; h: number}) {
+  const pages = pagesOf(p.v), pg = pageOf(p.v), last = strOf(p.v, 'readLast'), lh = 40, room = Math.floor((w - 34) / 6)
+  if (!pages) return <text x={14} y={24} className="dp-ink-dim">{strOf(p.v, 'reason') ?? 'No reading of the wiki'}</text>
+  return <g>{pages.slice(0, Math.floor((h - 8) / lh)).map((x, i) => { const y = 8 + i * lh, on = x.ref === pg?.ref
+    return <g key={x.ref} role="button" tabIndex={0} aria-label={`Show ${x.title}`} onClick={() => p.set('page', x.ref)} onKeyDown={e => { if (e.key === 'Enter') p.set('page', x.ref) }}
+      data-i={`${x.title}|${x.ref === last ? 'The page the agent read last. ' : ''}Show the page.`}>
+      <rect x={0} y={y} width={w} height={lh - 2} fill={on ? 'var(--sel, #7ec3e6)' : 'transparent'} opacity={on ? .16 : 1} />
+      {on && <rect x={0} y={y} width={2} height={lh - 2} fill="var(--sel, #7ec3e6)" />}
+      {x.ref === last && <circle cx={w - 14} cy={y + 12} r={4.5} fill="none" stroke="var(--dp-on)" strokeWidth={1} />}
+      <text x={14} y={y + 16} className="dp-ink" style={{fontSize: 11}}>{x.title.slice(0, room)}</text>
+      <text x={14} y={y + 30} className="dp-axis" style={{fontSize: 9}}>{x.type}</text>
+    </g> })}</g>
+}
+
+export const design = railAndPane({
   id: 'widgets:wiki',
   title: 'Wiki',
-  kind: 'instrument',
+  kind: 'monitor',
   defaults: {
     follow: true, page: 'wiki:node:seat-guard', readLast: 'wiki:node:seat-guard',
     pages: JSON.stringify([
@@ -90,41 +115,15 @@ export const design: DesignedDevice = {
     'No reading': {pages: undefined, body: undefined, page: undefined, readLast: undefined, reason: 'The wiki did not answer'},
   },
 
-  folded: p => <Folded title="Wiki" light="unknown" readings={[pageOf(p.v)?.title ?? NONE, pageOf(p.v)?.type ?? NONE]} onUnfold={p.nav.unfold} />,
+  full: p => <MonitorPane dark label="Wiki" head={<Head p={p} />}>{room => { const lw = Math.round(clampTo(200, 260, room.w * .3))
+    return <MonitorPicture room={room} label="The pages and the page">
+      <PageList p={p} w={lw} h={room.h} />
+      <path d={`M${lw + .5} 0V${room.h}`} className="dp-faint" />
+      <g transform={`translate(${lw + 10} 10)`}><WikiPage p={p} w={room.w - lw - 20} h={room.h - 24} pager={false} size={13} /></g>
+      <text x={room.w - 12} y={room.h - 8} textAnchor="end" className="dp-axis">read here, edited only by a return</text>
+    </MonitorPicture> }}</MonitorPane>,
 
-  compact: p => { const c = controls(p)
-    return <Panel title="Wiki" view="compact" {...head(p)} onSelect={p.nav.select}>
-      <Section width={232}>
-        <Display w={220} h={146} label="Page" does={`${DISPLAY_DOES} Drag handle 1 for another page.`}><WikiPage p={p} w={220} h={146} pager size={8.5} /></Display>
-      </Section>
-      <Section label="Macros" width={104}>{c.page}{c.follow}</Section>
-    </Panel> },
-
-  whole: p => { const c = controls(p), n = linkCounts(p.v), w = wide(p) ? Math.round(clampTo(240, p.room!.w - 260, 600)) : 240
-    return <Panel title="Wiki" view="whole" {...head(p)}>
-      <Band>
-        <Section width={w + 12}>
-          <Display w={w} h={146} label="Page" does={`${DISPLAY_DOES} Drag handle 1 for another page.`}><WikiPage p={p} w={w} h={146} pager size={8.5} /></Display>
-        </Section>
-        <Section label="Page" grow>{c.page}{c.follow}
-          <div className="ref-pair">
-            <Readout label="links" does="Links on the page that resolve." value={n?.resolved} tone="value" />
-            <Readout label="open" does="Links on the page that do not resolve." value={n?.open} />
-          </div>
-        </Section>
-      </Band>
-    </Panel> },
-
-  full: p => <div className="ref-pane-body ref-pane-body--dark">
-    <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMinYMin meet" className="ref-pane-svg" aria-label="The wiki page">
-      <g className="dp-display" style={{background: 'none', border: 'none'}}>
-        <g transform="translate(10 10)"><WikiPage p={p} w={740} h={400} pager={false} size={13} /></g>
-        <text x={750} y={410} textAnchor="end" className="dp-axis">read here, edited only by a return</text>
-      </g>
-    </svg>
-  </div>,
-
-  widget: p => <Tile title="Wiki" light="unknown" span={2} onFull={p.nav.full}>
-    <Display w={266} h={104} label="Page" does={`${DISPLAY_DOES} Press ▦ to read it in a pane.`}><WikiPage p={p} w={266} h={104} pager={false} size={8.5} /></Display>
+  widget: p => <Tile title="Wiki" light="unknown" lightWhy={LIGHT_WHY} span={2} onFull={p.nav.full}>
+    <Display w={266} h={104} label="Page" does={`${DISPLAY_DOES} Drag handle 1 for another page. Click the title to read it in Full.`}><WikiPage p={p} w={266} h={104} pager size={8.5} press={p.nav.full} /></Display>
   </Tile>,
-}
+})

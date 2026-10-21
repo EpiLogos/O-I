@@ -10,9 +10,14 @@
 //             (`central.directory-reading/v1` NativeFileEntry `retrieval_allowed`). The tape carries no counts of its own.
 //   agent     the agent the tree follows (the shell's selected agent session); open the file shown full; content its lines
 //             (`central.file-reading/v1` `content`, kernel op file_read).
-// Show, Blocked and Follow are the tile's own; no owner keeps them.
-import {Band, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+// Show, Blocked and Follow are the monitor's own; no owner keeps them.
+//
+// A monitor (manual §16.3): it stands on the rail and in a pane, and has two views. The tile is the tree, with Show as handle 1 on
+// it; a file pressed there opens in Full. Full's head carries the counts and every setting (Show, Blocked, Follow); its body is the
+// tree beside the file opened.
+import {Display, Handle, Radio, Tile, Toggle} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, json, railAndPane, st, strOf, type ViewProps} from './design'
+import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
 
 type V = ViewProps['v']
 
@@ -49,7 +54,7 @@ const counts = (v: V) => { const f = filesOf(v); return f ? {read: f.filter(x =>
 
 /** The tree. `handle`: the Show filter as a three-stop scale at the top (drag across: read and changed, changed only, all). `press`: a row
  * opens its file in the pane. */
-function Tree({p, w, h, handle, press, size = 10}: {p: ViewProps; w: number; h: number; handle: boolean; press?: (path: string) => void; size?: number}) {
+function Tree({p, w, h, handle, press, size = 10, mark}: {p: ViewProps; w: number; h: number; handle: boolean; press?: (path: string) => void; size?: number; mark?: string}) {
   const v = p.v, rows = rowsOf(v), top = handle ? 22 : 12, lh = size + 3, fit = Math.floor((h - top - 2) / lh), shown = rows?.slice(0, fit) ?? []
   const show = strOf(v, 'show') ?? 'touched', k = Math.max(0, SHOWS.findIndex(s => s.value === show)), x0 = 8, x1 = Math.min(w - 8, 120), stop = (j: number) => x0 + j * (x1 - x0) / 2
   const sst = st(p, 'show')
@@ -68,6 +73,7 @@ function Tree({p, w, h, handle, press, size = 10}: {p: ViewProps; w: number; h: 
         return <text key={i} x={x} y={y} className="dp-axis" style={{fontSize: size * .9}}>{name}/</text> }
       const f = r.file, nums = f.verb === 'edit' && (f.adds !== undefined || f.dels !== undefined)
       return <g key={i}>
+        {mark === f.path && <rect x={0} y={y - size} width={w} height={lh} fill="var(--sel, #7ec3e6)" opacity={.16} />}
         <text x={x} y={y} className={f.blocked ? 'dp-axis' : 'dp-ink'} style={{fontSize: size}}>{f.verb === 'edit' ? 'M ' : f.verb === 'read' ? '→ ' : '  '}{r.name}</text>
         {f.blocked && <path d={`M${x} ${y - size * .35}H${Math.min(w - 4, x + 14 + r.name.length * size * .55)}`} stroke="var(--rec)" strokeWidth={1} />}
         {nums && <text x={w - 6} y={y} textAnchor="end" style={{fontSize: size * .9}}>
@@ -80,24 +86,44 @@ function Tree({p, w, h, handle, press, size = 10}: {p: ViewProps; w: number; h: 
 }
 
 const LIGHT_WHY = 'Files has no on or off: it only reads. The light stays hollow.'
-const head = (p: ViewProps) => ({light: 'unknown' as LightState, lightWhy: LIGHT_WHY, onFold: p.nav.fold, onFull: p.nav.full})
-const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const openFile = (p: ViewProps) => (path: string) => { p.set('open', path); p.nav.full?.() }
 const DISPLAY_DOES = 'The files the agent touched. M: changed, with lines added and removed. An arrow: read. Struck through in red: a place the agent may not reach.'
 
-function controls(p: ViewProps) {
-  const v = p.v
-  return {
-    show: <Radio {...st(p, 'show')} label="Show" does="Which files the tree lists." value={strOf(v, 'show') ?? ''} options={SHOWS} stack onChange={x => p.set('show', x)} />,
-    blocked: <Toggle {...st(p, 'blocked')} label="Blocked" does="Show the places the agent may not reach, with the reason." on={boolOf(v, 'blocked') !== false} onChange={x => p.set('blocked', x)} />,
-    follow: <Toggle {...st(p, 'follow')} label="Follow" does="Keep the tree on the selected agent." on={boolOf(v, 'follow') === true} unknown={boolOf(v, 'follow') === undefined} onChange={x => p.set('follow', x)} />,
-  }
+/** Full's head: the agent, the counts, and every setting. */
+function Head({p}: {p: ViewProps}) {
+  const v = p.v, n = counts(v)
+  return <MonitorHead title="Files" readings={[
+    {label: 'agent', value: strOf(v, 'agent'), does: 'The agent the tree follows.'},
+    {label: 'changed', value: n?.changed, does: 'Files the agent changed.', tone: 'accent'},
+    {label: 'read', value: n?.read, does: 'Files the agent read.', tone: 'value'},
+    {label: 'lines', value: n ? <><span style={{color: 'var(--green)'}}>+{n.adds}</span> <span style={{color: 'var(--rec)'}}>−{n.dels}</span></> : undefined, does: 'Lines added and removed in the files the agent changed.'},
+  ]} controls={<>
+    <Radio {...st(p, 'show')} label="Show" does="Which files the tree lists." value={strOf(v, 'show') ?? ''} options={SHOWS} onChange={x => p.set('show', x)} />
+    <Toggle {...st(p, 'blocked')} label="Blocked" does="Show the places the agent may not reach, with the reason." on={boolOf(v, 'blocked') !== false} onChange={x => p.set('blocked', x)} />
+    <Toggle {...st(p, 'follow')} label="Follow" does="Keep the tree on the selected agent." on={boolOf(v, 'follow') === true} unknown={boolOf(v, 'follow') === undefined} onChange={x => p.set('follow', x)} />
+  </>} />
 }
 
-export const design: DesignedDevice = {
+/** The file opened, beside the tree: its path, its lines added and removed, its lines numbered. */
+function OpenFile({p, x0, w, h}: {p: ViewProps; x0: number; w: number; h: number}) {
+  const lines = json<string[]>(p.v, 'content', []), path = strOf(p.v, 'open'), f = filesOf(p.v)?.find(x => x.path === path), lh = 13.5, fit = Math.max(0, Math.floor((h - 46) / lh))
+  const room = Math.max(8, Math.floor((w - 50) / 6.3))
+  return <g transform={`translate(${x0} 0)`}>
+    <text x={14} y={22} className="dp-ink dp-mono" style={{fontSize: 11}}>{path ? (path.length > room ? `…${path.slice(-room + 1)}` : path) : 'No file open'}</text>
+    {f?.verb === 'edit' && <text x={w - 14} y={22} textAnchor="end" style={{fontSize: 11}}><tspan fill="var(--green)">+{f.adds ?? 0}</tspan>  <tspan fill="var(--rec)">−{f.dels ?? 0}</tspan></text>}
+    <path d={`M0 32H${w}`} className="dp-faint" />
+    {lines.length ? lines.slice(0, fit).map((l, i) => <g key={i}>
+      <text x={38} y={52 + i * lh} textAnchor="end" className="dp-axis">{i + 1}</text>
+      <text x={48} y={52 + i * lh} className="dp-ink dp-mono" style={{fontSize: 10.5, whiteSpace: 'pre'}}>{l.slice(0, room)}</text>
+    </g>) : <text x={14} y={60} className="dp-ink-dim">{path ? 'No reading of the file' : 'Click a file in the tree to read it here'}</text>}
+    {lines.length > fit && <text x={w - 14} y={h - 6} textAnchor="end" className="dp-axis">+{lines.length - fit} lines</text>}
+  </g>
+}
+
+export const design = railAndPane({
   id: 'widgets:files',
   title: 'Files',
-  kind: 'instrument',
+  kind: 'monitor',
   defaults: {
     show: 'touched', blocked: true, follow: true, agent: 'Fizz · lead', open: 'packages/live-shell/ui/src/shell/widgets.tsx',
     files: JSON.stringify([
@@ -118,50 +144,16 @@ export const design: DesignedDevice = {
     'No reading': {files: undefined, content: undefined, agent: undefined, reason: 'No agent is selected'},
   },
 
-  folded: p => { const c = counts(p.v); return <Folded title="Files" light="unknown" readings={[c ? `${c.changed} M` : NONE, c ? `${c.read} read` : NONE]} onUnfold={p.nav.unfold} /> },
+  full: p => <MonitorPane dark label="Files" head={<Head p={p} />}>{room => { const tw = Math.round(clampTo(220, 300, room.w * .34))
+    return <MonitorPicture room={room} label="The tree and the file">
+      <Tree p={p} w={tw} h={room.h} handle={false} size={10.5} mark={strOf(p.v, 'open')} press={path => p.set('open', path)} />
+      <path d={`M${tw + .5} 0V${room.h}`} className="dp-faint" />
+      <OpenFile p={p} x0={tw + 1} w={room.w - tw - 1} h={room.h} />
+    </MonitorPicture> }}</MonitorPane>,
 
-  compact: p => { const c = controls(p)
-    return <Panel title="Files" view="compact" {...head(p)} onSelect={p.nav.select}>
-      <Section width={192}>
-        <Display w={180} h={146} label="Files" does={`${DISPLAY_DOES} Drag handle 1 for what the tree lists.`} corner={strOf(p.v, 'agent') ?? NONE}><Tree p={p} w={180} h={146} handle size={9} /></Display>
-      </Section>
-      <Section label="Macros" width={96}>{c.show}{c.blocked}{c.follow}</Section>
-    </Panel> },
-
-  whole: p => { const c = controls(p), n = counts(p.v), w = wide(p) ? Math.round(clampTo(220, p.room!.w - 300, 520)) : 220
-    return <Panel title="Files" view="whole" {...head(p)}>
-      <Band>
-        <Section width={w + 12}>
-          <Display w={w} h={146} label="Files" does={`${DISPLAY_DOES} Drag handle 1 for what the tree lists. Click a file to open it.`} corner={strOf(p.v, 'agent') ?? NONE}>
-            <Tree p={p} w={w} h={146} handle size={9} press={openFile(p)} />
-          </Display>
-        </Section>
-        <Section label="Tree" width={96}>{c.show}{c.blocked}</Section>
-        <Section label="Agent" grow>{c.follow}
-          <Readout label="changed" does="Files the agent changed." value={n?.changed} tone="accent" />
-          <Readout label="read" does="Files the agent read." value={n?.read} tone="value" />
-        </Section>
-      </Band>
-    </Panel> },
-
-  full: p => { const lines = json<string[]>(p.v, 'content', []), path = strOf(p.v, 'open'), f = filesOf(p.v)?.find(x => x.path === path)
-    return <div className="ref-pane-body ref-pane-body--dark">
-      <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMinYMin meet" className="ref-pane-svg" aria-label="The file">
-        <g className="dp-display" style={{background: 'none', border: 'none'}}>
-          <text x={16} y={22} className="dp-ink" style={{fontSize: 12}}>{path ?? 'No file open'}</text>
-          {f?.verb === 'edit' && <text x={744} y={22} textAnchor="end" style={{fontSize: 11}}><tspan fill="var(--green)">+{f.adds ?? 0}</tspan>  <tspan fill="var(--rec)">−{f.dels ?? 0}</tspan></text>}
-          <path d="M0 32H760" className="dp-faint" />
-          {lines.length ? lines.slice(0, 28).map((l, i) => <g key={i}>
-            <text x={40} y={52 + i * 13} textAnchor="end" className="dp-axis">{i + 1}</text>
-            <text x={50} y={52 + i * 13} className="dp-ink dp-mono" style={{fontSize: 10.5, whiteSpace: 'pre'}}>{l}</text>
-          </g>) : <text x={16} y={60} className="dp-ink-dim">{path ? 'No reading of the file' : 'Click a file in the tree to read it here'}</text>}
-        </g>
-      </svg>
-    </div> },
-
-  widget: p => <Tile title="Files" light="unknown" span={2} onFull={p.nav.full}>
-    <Display w={266} h={104} label="Files" does={`${DISPLAY_DOES} Click a file to open it in a pane; click a blocked place to read why.`} corner={strOf(p.v, 'agent') ?? NONE}>
-      <Tree p={p} w={266} h={104} handle={false} press={openFile(p)} size={9} />
+  widget: p => <Tile title="Files" light="unknown" lightWhy={LIGHT_WHY} span={2} onFull={p.nav.full}>
+    <Display w={266} h={104} label="Files" does={`${DISPLAY_DOES} Drag handle 1 for what the tree lists. Click a file to open it in Full; point at a blocked place to read why.`} corner={strOf(p.v, 'agent') ?? NONE}>
+      <Tree p={p} w={266} h={104} handle press={openFile(p)} size={9} />
     </Display>
   </Tile>,
-}
+})

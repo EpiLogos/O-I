@@ -63,3 +63,6 @@ button.ar-name:focus-visible { outline: 1px solid var(--accent, #ffbe00); outlin
 .ar-tile-list { flex: 1 1 auto; min-width: 0; display: flex; }
 .ar-tile-list > .dp-cell { flex: 1 1 auto; }
 .ar-tile-side { flex: none; width: 74px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+
+/* The grove: one tree for each attempt (faces/TakesGrove.tsx). */
+.ar-grove { display: flex; align-items: flex-end; padding: 16px 18px 10px; overflow: hidden; }

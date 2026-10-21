@@ -69,3 +69,53 @@
 .dp-window-body { display: flex; flex-direction: column; width: 100%; height: 100%; background: var(--bg-1, #33363b); }
 .dp-window-material { position: relative; overflow: hidden; flex: none; }
 .dp-window-controls { flex: none; display: flex; justify-content: flex-start; overflow: hidden; border-top: 1px solid var(--line-strong, #3d4147); background: var(--bg-0, #26292d); }
+
+/* Monitors: the rail and the pane (manual §16.3) */
+/* A monitor's Full (monitor.tsx): one head across the top of its pane — the name, the readings, then the monitor's own settings as
+   compact kit controls, on a second line where they do not fit beside the readings — and the body under it, the material at its own
+   pixels. A monitor has no Device view, so its settings stand here; each keeps its words for the status bar. */
+.mon-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
+.dp-window-body > .mon-pane { position: relative; inset: auto; flex: 1 1 0; min-height: 0; }
+.mon-head { flex: none; display: flex; flex-wrap: wrap; align-items: center; column-gap: 18px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a);
+  color: var(--text-dim, #a2a7ad); font: 10.5px/1.2 var(--font-ui, -apple-system, sans-serif); white-space: nowrap; user-select: none; -webkit-user-select: none;
+  /* The head is the field's own ground, so a control's field stands one step lighter on it. */
+  --dp-field: var(--bg-2, #3f4348); }
+.mon-reads { flex: 1 0 auto; display: flex; align-items: center; gap: 10px; height: 30px; }
+.mon-title { font-weight: 600; font-size: 11px; color: var(--text, #d4d7da); }
+.mon-read { color: var(--text, #d4d7da); font-variant-numeric: tabular-nums; }
+.mon-read::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.mon-read small { margin-right: 4px; font-size: 10px; color: var(--text-faint, #71767c); }
+.mon-read[data-unread="true"] { color: var(--text-faint, #71767c); }
+.mon-read[data-tone="accent"] { color: var(--dp-on, #ffbe00); }
+.mon-read[data-tone="value"] { color: var(--dp-value, #5cc6b4); }
+.mon-read[data-tone="green"] { color: var(--green, #8fd0a8); }
+.mon-read[data-tone="stall"] { color: var(--stall, #ff9b4a); }
+.mon-read[data-tone="rec"] { color: var(--rec, #e0523f); }
+/* The settings: kit controls laid in a row, each named at its left. */
+.mon-ctls { flex: 0 1 auto; display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; min-height: 30px; }
+.mon-ctls > *, .mon-group { min-height: 30px; }
+.mon-head .dp-cell { flex-direction: row; align-items: center; gap: 5px; align-self: center; }
+.mon-head .dp-cell--radio, .mon-head .dp-cell--chooser, .mon-head .dp-cell--wide { align-self: center; align-items: center; }
+.mon-head .dp-label { font-size: 10px; color: var(--text-faint, #71767c); }
+.mon-head .dp-chooser { width: auto; min-width: 92px; max-width: 220px; }
+.mon-head .dp-box { min-width: 46px; }
+.mon-group { display: inline-flex; align-items: center; gap: 2px; }
+.mon-head .dp-toggle { padding: 0 5px; }
+.mon-group > .dp-label { margin-right: 2px; }
+.mon-head button:focus-visible, .mon-head [tabindex="0"]:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+.mon-head .dp-chooser:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--accent, #ffbe00); }
+/* The body: the material, on the pane's face or on a dark ground for a picture. */
+.mon-body { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; }
+.mon-body[data-dark="true"] { background: #121a20; }
+.mon-svg { position: absolute; left: 0; top: 0; display: block; }
+.mon-svg [role="button"] { cursor: pointer; outline: none; }
+.mon-svg [role="button"]:focus-visible { outline: 1px solid var(--accent, #ffbe00); }
+/* The one small row of controls a tile carries where its display has no handle: under the display, the kit's controls at their size. */
+.mon-tile { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.mon-tile-row { flex: none; display: flex; align-items: center; gap: 6px; height: 18px; }
+.mon-tile-row .dp-cell { flex-direction: row; align-items: center; gap: 4px; }
+.mon-tile-row .dp-cell--radio, .mon-tile-row .dp-cell--chooser { align-self: center; align-items: center; }
+.mon-tile-row .dp-chooser { width: auto; min-width: 80px; }
+.mon-tile-row .dp-label { font-size: 9.5px; color: var(--text-faint, #71767c); }
+.mon-copy { margin-left: 4px; padding: 0 3px; border: 0; background: none; color: var(--text-faint, #71767c); font: inherit; font-size: 10px; cursor: pointer; }
+.mon-copy:hover { color: var(--text, #d4d7da); }

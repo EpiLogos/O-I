@@ -5,15 +5,25 @@
 // it is doing, a short row of macros, and pages for the rest. The well draws the agent's own
 // readings: its face (the shell's agent face, agent/maskFace.ts), the turns used against the budget as a ruler, the effort as four
 // rungs, where an interrupt lands, and the heartbeat needle on the shell's 90 s horizon (agent/agentRunModel.ts HEARTBEAT_HORIZON_MS).
+// The agent's face is the creature of its type (manual §19.4 Type; faces/CreatureFace.tsx), in the posture of its run state (spec 25: queued,
+// thinking, acting, waiting, stalled, producing, done, failed), which the device reads from its needle and the last row of its thread; an agent
+// with no type keeps the shell's agent face. The Type page loads a pattern's preset: it writes Power and Heartbeat here and shows what the
+// other devices take. Full is the thread with the stage beside it: the run as a tree, the agent a creature at the zone the run has reached.
 // In Anima or Aletheia the agent stands in a team space (QL `ql context-frame team-space`, `ql.vak-team-space/v1`): Team cell reads
 // its row (a context frame), the question that row asks of it by day or by night, and its depth (one of the six M domains), on
 // team.space ('Anima' | 'Aletheia', or 'none' when the agent is in no team), team.row, team.question and team.depth.
 import {memo, useLayoutEffect, useMemo, useState} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
-import {NONE, boolOf, clampTo, json, numOf, prefixed, scoped, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, json, numOf, prefixed, scoped, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 import {CustodyBands, design as custody} from './software-factory__agent-custody'
-import {IdentityBands, design as identity} from './central__agent-identity'
+import {IdentityBands, agentType, withType, design as identity} from './central__agent-identity'
+import {CreatureFace} from '../faces/CreatureFace'
+import {EnvironStage} from '../faces/EnvironStage'
+import {TypeBand} from '../faces/TypeBand'
+import {PATTERNS, agentWrites, type RunState} from '../faces/agency'
+import {faceOf} from '../faces/figures'
+import {recordingFromThread, stateOfThread} from '../faces/runs'
 import {design as thread} from './software-factory__thread'
 import './actuation__harness-model.css'
 
@@ -21,9 +31,11 @@ import './actuation__harness-model.css'
 const CUSTODY_SHARED = ['light', 'autonomy'] as const
 const IDENTITY_SHARED = ['light'] as const
 const THREAD_SHARED = ['light', 'input', 'quantize', 'draft', 'sent', 'age'] as const
-const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'identity', label: 'Identity'}] as const
+const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'}] as const
 const custodyOf = (p: ViewProps) => scoped(p, 'custody.', CUSTODY_SHARED)
 const identityOf = (p: ViewProps) => scoped(p, 'id.', IDENTITY_SHARED)
+/** The pattern the agent was given: the identity page's `types` read for the agent it shows. */
+const typeOfAgent = (v: V) => agentType(v, 'id.')
 const threadOf = (p: ViewProps) => scoped(p, 'thread.', THREAD_SHARED)
 const NO_READINGS = (d: {fixtures?: DesignedDevice['fixtures']}) => d.fixtures?.['No readings'] ?? {}
 
@@ -126,6 +138,17 @@ function lines(v: V): Line[] {
   return rows
 }
 
+// ---------------------------------------------------------------- the run state
+
+/** The agent's run state (spec 25): the owner's reading `run` when it reports one (the Factory task's state, mapped as spec 25.1), else read from the
+ * light, the needle and the last row of the thread. The face takes its posture, and the stage its place. */
+const RUN_STATES = ['queued', 'thinking', 'acting', 'waiting', 'stalled', 'producing', 'done', 'failed'] as const
+function runStateOf(v: V, lamp: string | undefined): RunState {
+  const said = strOf(v, 'run')
+  if (said && (RUN_STATES as readonly string[]).includes(said)) return said as RunState
+  return stateOfThread(lines(v), {age: numOf(v, 'age'), lit: lamp === 'lit' ? true : lamp === 'dark' ? false : undefined, horizon: HORIZON})
+}
+
 // ---------------------------------------------------------------- the face
 
 /** The face colours resolved from the shell's tokens: the mask mixes hex values, so it needs the token's value, not its name. */
@@ -146,15 +169,24 @@ const Face = memo(function Face({x, y, size, dim}: {x: number; y: number; size: 
   return <g transform={`translate(${x} ${y})`} opacity={dim ? 0.4 : 1} dangerouslySetInnerHTML={{__html: html}} />
 })
 
+/** The agent's face: the creature of its type in the posture of its state, or the shell's agent face when it has no type. */
+function AgentFace({x, y, size, dim, type, state}: {x: number; y: number; size: number; dim: boolean; type: string | undefined; state: RunState}) {
+  if (!type) return <Face x={x} y={y} size={size} dim={dim} />
+  const w = Math.round(size * 1.7)
+  return <foreignObject x={x} y={y - 2} width={w} height={Math.round(w * 0.78) + 6} opacity={dim ? 0.5 : 1}>
+    <CreatureFace figure={faceOf(type).id} state={state} size={w} />
+  </foreignObject>
+}
+
 // ---------------------------------------------------------------- the well
 
 /** The well: face and name, the turn ruler (its end is the budget), the effort rungs, the interrupt scale, the needle. A reading the
  * owner has not reported is left off the picture and named in words; a handle shows only where its key can be written. */
 function AgentWell({v, set, standing, lamp, w, h, size}: {v: V; set?: ViewProps['set']; standing?: ViewProps['standing']; lamp: string | undefined; w: number; h: number; size: 'mini' | 'compact' | 'whole'}) {
-  const mini = size === 'mini', whole = size === 'whole'
+  const mini = size === 'mini', whole = size === 'whole', type = typeOfAgent(v), run = runStateOf(v, lamp)
   const cap = numOf(v, 'cap'), used = usedOf(v), effort = effortAt(v), q = quantizeAt(v), state = needle(v), beat = boolOf(v, 'heartbeat'), age = numOf(v, 'age')
   const handle = (key: string) => !!set && !mini && !standing?.[key]?.disabled
-  const fs = mini ? 24 : whole ? 36 : 34, nameX = 7 + fs + 8
+  const fs = mini ? 24 : whole ? 36 : 34, nameX = 7 + (type ? Math.round(fs * 1.7) : fs) + 8
   // the ruler: one tick per turn on a fixed 40-turn axis, so the budget reads as a length
   const pitch = (w - 14) / CAP.max, rulerY = mini ? 54 : 68, tickH = mini ? 8 : 10
   const ticks = Math.max(0, Math.min(CAP.max, Math.round(cap ?? used ?? 0)))
@@ -174,9 +206,9 @@ function AgentWell({v, set, standing, lamp, w, h, size}: {v: V; set?: ViewProps[
   return <Display w={w} h={h} label="The agent"
     does={mini ? 'The agent, its turns against the budget, and the needle.' : 'The agent, its turns against the budget, its effort and where an interrupt lands. Drag the handles to set them.'}
     corner={mini ? undefined : turns === undefined ? NONE : whole ? `${turns} turns` : turns}>
-    <Face x={7} y={mini ? 4 : 6} size={fs} dim={lamp !== 'lit'} />
+    <AgentFace x={7} y={mini ? 4 : 6} size={fs} dim={lamp !== 'lit'} type={type} state={run} />
     <text x={nameX} y={mini ? 17 : 29} className="dp-ink" style={{fontSize: mini ? 10.5 : 11.5, fontWeight: 600}}>{shown(v, 'agent')}</text>
-    <text x={nameX} y={mini ? 28 : 42} className="dp-ink-dim">{shown(v, 'harness')}</text>
+    {!(mini && type) && <text x={nameX} y={mini ? 28 : 42} className="dp-ink-dim">{shown(v, 'harness')}</text>}
     {whole && <text x={nameX} y={54} className="dp-axis">{modelName(v)}</text>}
 
     {/* turns: used ticks lit, the rest dark, the axis running on to 40 */}
@@ -251,6 +283,37 @@ function teamRows(v: V): RowItem[] {
   return [line('row', row === undefined ? undefined : `${space ?? NONE} · ${row}`, 'row'), line('question', question, 'asks'), line('depth', depth, 'depth')]
 }
 
+/** Load a type's preset (manual §19.4 Type): the shell holds the type with the agent, and the Agent writes the settings of its own that the
+ * pattern names. The settings of the other devices (Scope, the task's Launch, the Agentset rack, the Agency gateway) are written by their own owners. */
+function loadType(p: ViewProps, pattern: string) {
+  const idv = identityOf(p).v, ref = strOf(idv, 'agent')
+  if (ref !== undefined) p.set('id.types', withType(idv, ref, pattern))
+  for (const land of agentWrites(PATTERNS[pattern]!)) if (land.key !== undefined) p.set(land.key, land.to as Value)
+}
+/** Whether a setting of the Agent's own already stands as the preset has it. */
+const standsAs = (p: ViewProps) => (key: string, to: boolean | string | number): boolean | undefined =>
+  key === 'light' ? lightOf(p) === to : key === 'heartbeat' ? boolOf(p.v, 'heartbeat') === to : undefined
+
+/** The Type page: the preset the agent was given, the creature that is its face, and where each field of the pattern lands. */
+function TypeBands({p}: {p: ViewProps}) {
+  const lamp = lightOf(p), disabled = st(p, 'id.types').disabled
+  return <TypeBand pattern={typeOfAgent(p.v)} state={runStateOf(p.v, lamp)} onChoose={disabled ? undefined : id => loadType(p, id)} stands={standsAs(p)} />
+}
+
+/** Full: the thread, and beside it the stage: the run as a tree and the agent a creature at the zone it has reached (spec 24, 25). */
+function FullWithStage({p}: {p: ViewProps}) {
+  const lamp = lightOf(p), state = runStateOf(p.v, lamp), type = typeOfAgent(p.v)
+  const rows = lines(p.v), age = numOf(p.v, 'age'), said = strOf(p.v, 'run')
+  const rec = useMemo(() => recordingFromThread(rows, {age, end: said === 'done' || said === 'failed' || said === 'producing' ? said : undefined}),
+    [JSON.stringify(rows), age, said]) // eslint-disable-line react-hooks/exhaustive-deps
+  return <div className="hm-full">
+    <div className="hm-full-thread">{thread.full(threadOf(p))}</div>
+    <aside className="hm-full-stage" aria-label="The run as a tree">
+      <EnvironStage run={rec} state={state} figure={type ? faceOf(type).id : 'serpent'} width={270} />
+    </aside>
+  </div>
+}
+
 /** The Run page: how the agent runs — its well, effort and budget, input, what it runs on, and its heartbeat. */
 function AgentBands({p}: {p: ViewProps}) {
   return <>
@@ -306,13 +369,18 @@ export const design: DesignedDevice = {
   firstPage: 'agent',
   fixtures: {
     Working: {},
+    'Waiting for your answer': {thread: sampleThread({}), age: 8},
+    Delivering: {run: 'producing', age: 5, thread: sampleThread({})},
+    Done: {run: 'done', age: 20, used: 9},
+    Failed: {run: 'failed', age: 20, used: 12},
     Stalled: {age: 140, thread: sampleThread({bash: 'waits', stalled: true})},
     'Queued, no check-in': {input: 'queue', used: 0, age: -1, heartbeat: false, thread: sampleThread({queued: true})},
     'Agent moved Effort': {effort: 'max', effortHeld: 'Flint'},
     'You edited a held file': prefixed('custody.', custody.fixtures?.['You edited a file'] ?? {}, CUSTODY_SHARED),
-    'A proposed agent': prefixed('id.', identity.fixtures?.['A proposed team lead'] ?? {}, IDENTITY_SHARED),
+    'A proposed agent': {agent: 'Anima', ...prefixed('id.', identity.fixtures?.['A proposed team lead'] ?? {}, IDENTITY_SHARED)},
+    'No type': prefixed('id.', identity.fixtures?.['No type'] ?? {}, IDENTITY_SHARED),
     // `ql context-frame team-space` on main (61c0e16): Eros holds CF3 in Anima; by day the row asks 4.2.
-    'In a team': {agent: 'Eros', 'team.space': 'Anima', 'team.row': 'CF3', 'team.question': '4.2 What is being done?', 'team.depth': 'M3 Journey', thread: TEAM_THREAD, 'thread.thread': TEAM_THREAD,
+    'In a team': {agent: 'Eros', ...prefixed('id.', identity.fixtures?.['A team member'] ?? {}, IDENTITY_SHARED), 'team.space': 'Anima', 'team.row': 'CF3', 'team.question': '4.2 What is being done?', 'team.depth': 'M3 Journey', thread: TEAM_THREAD, 'thread.thread': TEAM_THREAD,
       'thread.session': 'journey', 'thread.selected': 'journey', 'thread.sessions': JSON.stringify([{id: 'journey', name: 'Where the October journey stands', short: 'journey', agent: 'Eros', model: 'claude-sonnet-4.6', used: 7, cap: 12, thread: JSON.parse(TEAM_THREAD)}])},
     Benched: {light: 'dark', age: -1, thread: sampleThread({})},
     'Not read': {light: 'unknown', used: -1, age: -1, thread: sampleThread({})},
@@ -338,11 +406,12 @@ export const design: DesignedDevice = {
 
   whole: p => <Panel title="Agent" view="whole" {...head(p)} pages={PAGES} page={p.page || 'agent'} onPage={p.setPage}>
     {p.page === 'custody' ? <CustodyBands p={custodyOf(p)} writes={false} />
-      : p.page === 'identity' ? <IdentityBands p={identityOf(p)} />
+      : p.page === 'identity' ? <IdentityBands p={identityOf(p)} state={runStateOf(p.v, lightOf(p))} />
+      : p.page === 'type' ? <TypeBands p={p} />
       : <AgentBands p={p} />}
   </Panel>,
 
-  full: p => thread.full(threadOf(p)),
+  full: p => <FullWithStage p={p} />,
 
   widget: p => {
     const send = st(p, 'sent'), draft = strOf(p.v, 'draft') ?? '', who = strOf(p.v, 'agent')

@@ -1,18 +1,22 @@
-// The Gateways rack (manual §19.3, actuation:gateways-rack): every gateway the work can reach, as chains on the Main track. Live's
-// nearest: an Audio Effect Rack and its chain list. A rack has no wave to draw, so the chain list is the picture: each gateway's
-// state light, its name and its transport. The square beside a chain chooses it (the shell holds that choice, as it does for the
-// Skillset rack's chain); Whole, Full and Open show the chosen gateway.
+// Gateways (manual §19.3, actuation:gateways-rack): every gateway your agents can come in through, and the state each is in. A monitor
+// (manual §16.3): it stands on the rail and in a pane, and has two views; it reads and opens, and changes no gateway's settings (each
+// workcell's Gateway holds its own). Live's nearest: a rack's chain list, one line for each chain with its light. The tile is one line
+// for each gateway with its state dot, beside the count of ready gateways and the observers attached; a line pressed there opens that
+// gateway in Full. Full's head carries the count of ready gateways and of those in use, with Selected and Show; its body is the list —
+// each gateway with its transport, its state and its reason when refused, its observers and the workcells it serves — beside the
+// selected gateway's readiness and its latest frames, drawn as the Frames monitor draws them (§19.6).
 //
-// Value keys. The shell holds:  chain (the id of the chosen chain).
-// The owners report:  light (lit · dark), chains (a JSON list of {id, name, transport?, state?, why?, reach?, signIn?, secrecy?};
-//   state is ready · composed · refused — Composed and Refused are AIKit's own standing words, gateway_modes.rs Standing; Ready is
-//   a gateway that answered its read, kernel HarnessAgentRead), peers (observers attached to the chosen gateway), frames (a JSON
-//   list of {seq?, dir, kind, session, at, note} for the chosen gateway).
-// The owner is asked to write:  fanOut (0 to 8 observers per session; no owner carries it yet).
+// Value keys. The shell holds:  chain (Selected: the id of the gateway Full shows), show (all · ready · inuse).
+// The owners report:  light (lit · dark), chains (a JSON list of {id, name, transport?, state?, why?, reach?, signIn?, secrecy?, observers?,
+//   workcells?}; state is ready · composed · refused — Composed and Refused are AIKit's own standing words, gateway_modes.rs Standing;
+//   Ready is a gateway that answered its read, kernel HarnessAgentRead; observers is the Fan-out each workcell's Gateway sets for its
+//   sessions (actuation__gateway.tsx fanOut), read here and never written; workcells the workcells whose chain the gateway heads),
+//   peers (observers attached to the selected gateway), frames (a JSON list of {seq?, dir, kind, session, at, note} for the selected
+//   gateway).
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
-import {useState} from 'react'
-import {Action, Band, Dial, Folded, Lamp, Panel, Readout, Rows, Section, Tile, type LightState, type RowItem, type Tone} from '../../sdk/panel'
-import {has, json, NONE, numOf, strOf, type DesignedDevice, type ViewProps} from './design'
+import {Chooser, Lamp, Radio, Readout, Rows, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
+import {has, json, NONE, numOf, railAndPane, strOf, type ViewProps} from './design'
+import {MonitorHead, MonitorPane} from './monitor'
 import './actuation__gateways-rack.css'
 
 type V = ViewProps['v']
@@ -20,7 +24,7 @@ type State = 'ready' | 'composed' | 'refused'
 
 // ---------------------------------------------------------------- fixed vocabulary (not the owner's data)
 
-const FAN_MAX = 8, FAN_DEFAULT = 2
+const FAN_MAX = 8
 /** What each state is called, and what it means (AIKit's standing words: Composed, Refused; a gateway that answered is Ready). */
 const STATE_WORD: Record<State, string> = {ready: 'Ready', composed: 'Composed', refused: 'Refused'}
 const STATE_SAYS: Record<State, string> = {
@@ -28,10 +32,15 @@ const STATE_SAYS: Record<State, string> = {
   composed: 'Composed: declared, and nobody has tried it from end to end.',
   refused: 'Refused: the owner refused it.',
 }
+const SHOWS: readonly Option<string>[] = [
+  {value: 'all', label: 'All', does: 'List every gateway.'},
+  {value: 'ready', label: 'Ready', does: 'List only the gateways that answered a read.'},
+  {value: 'inuse', label: 'In use', does: 'List only the gateways a workcell uses.'},
+]
 const SAYS = {
-  list: 'The square marks the chain you chose. The light is the owner\'s reading: green ready, amber composed, faint refused.',
-  fanOut: 'How many observers may watch each session on the chosen gateway, beside the shell. A slow observer loses only its own feed.',
-  open: 'Open the chosen gateway full in a pane.',
+  list: 'One line for each gateway. The light is the owner\'s reading: green ready, amber composed, faint refused. Press a line to open it in Full.',
+  selected: 'The gateway whose frames and readiness Full shows.',
+  show: 'Lists every gateway, only the ready ones, or only those a workcell uses.',
 }
 
 // ---------------------------------------------------------------- readings
@@ -45,10 +54,14 @@ interface Chain {
   readonly reach?: string
   readonly signIn?: string
   readonly secrecy?: string
+  /** The observers each session may have, as the workcell's Gateway sets it. */
+  readonly observers?: number
+  /** The workcells whose chain the gateway heads; undefined when the owner does not say. */
+  readonly workcells?: readonly string[]
 }
 const text = (x: unknown) => (typeof x === 'string' && x.length > 0 ? x : undefined)
 
-/** The chains the owner reports, kept only where they have a shape. Nothing in a bad list can throw. */
+/** The gateways the owner reports, kept only where they have a shape. Nothing in a bad list can throw. */
 const chainsOf = (v: V): Chain[] => {
   const raw = json<unknown>(v, 'chains', [])
   if (!Array.isArray(raw)) return []
@@ -58,23 +71,30 @@ const chainsOf = (v: V): Chain[] => {
     const id = text(r.id), name = text(r.name)
     if (!id || !name) return []
     const state = r.state === 'ready' || r.state === 'composed' || r.state === 'refused' ? r.state : undefined
-    return [{id, name, state, transport: text(r.transport), why: text(r.why), reach: text(r.reach), signIn: text(r.signIn), secrecy: text(r.secrecy)}]
+    const observers = typeof r.observers === 'number' && Number.isFinite(r.observers) ? Math.max(0, Math.min(FAN_MAX, Math.round(r.observers))) : undefined
+    const workcells = Array.isArray(r.workcells) ? r.workcells.filter((w): w is string => typeof w === 'string' && w.length > 0) : undefined
+    return [{id, name, state, transport: text(r.transport), why: text(r.why), reach: text(r.reach), signIn: text(r.signIn), secrecy: text(r.secrecy), observers, workcells}]
   })
 }
-/** A rack always has one chosen chain: the one held, else the first. */
-const chosenOf = (v: V, chains: readonly Chain[]): Chain | undefined => chains.find(c => c.id === strOf(v, 'chain')) ?? chains[0]
+const inUse = (c: Chain) => (c.workcells?.length ?? 0) > 0
+/** The gateways Show lets through. */
+const listedOf = (v: V, chains: readonly Chain[]): Chain[] => {
+  const show = strOf(v, 'show')
+  return chains.filter(c => (show === 'ready' ? c.state === 'ready' : show === 'inuse' ? inUse(c) : true))
+}
+/** The selected gateway: the one held, else the first that is ready, else the first. */
+const chosenOf = (v: V, chains: readonly Chain[]): Chain | undefined => chains.find(c => c.id === strOf(v, 'chain')) ?? chains.find(c => c.state === 'ready') ?? chains[0]
 const readyCount = (chains: readonly Chain[]) => chains.filter(c => c.state === 'ready').length
 const lightOf = (p: ViewProps): LightState => {
   const s = strOf(p.owner ?? p.v, 'light')
   return s === 'lit' || s === 'dark' ? s : 'unknown'
 }
-/** The light of a chain: green ready, amber composed, dark refused, hollow when the owner has not said. */
+/** The light of a gateway: green ready, amber composed, dark refused, hollow when the owner has not said. */
 const lampOf = (state: State | undefined): {light: LightState; tone: Tone} =>
   state === 'ready' ? {light: 'lit', tone: 'green'} : state === 'composed' ? {light: 'lit', tone: 'accent'} : state === 'refused' ? {light: 'dark', tone: 'accent'} : {light: 'unknown', tone: 'accent'}
-const stateTone = (state: State | undefined): Tone | undefined => (state === 'ready' ? 'green' : state === 'composed' ? 'accent' : undefined)
 const countLine = (chains: readonly Chain[]) => (chains.length === 0 ? NONE : `${readyCount(chains)}/${chains.length}`)
-const attached = (v: V) => {
-  const n = numOf(v, 'peers'), cap = numOf(v, 'fanOut')
+const attached = (v: V, chosen: Chain | undefined) => {
+  const n = numOf(v, 'peers'), cap = chosen?.observers
   return n === undefined ? undefined : cap === undefined ? `${n}` : `${n} of ${cap}`
 }
 
@@ -96,105 +116,91 @@ const kindClass = (kind: string) => (kind.startsWith('approval') ? 'approval' : 
 // ---------------------------------------------------------------- the parts
 
 const st = (p: ViewProps, key: string) => p.standing?.[key] ?? {}
+const select = (p: ViewProps) => (id: string) => { p.set('chain', id); p.nav.full?.() }
 
-/** The chain list: the rack's picture. The square chooses the chain; the light is the owner's reading; the note is the transport. */
-function ChainList({p, size = 4}: {p: ViewProps; size?: number}) {
-  const [page, setPage] = useState(0)
-  const chains = chainsOf(p.v), chosen = chosenOf(p.v, chains)
-  const items: RowItem[] = chains.map(c => ({
-    id: c.id, name: c.name, ...lampOf(c.state), request: c.id === chosen?.id, why: c.state === 'refused' ? c.why : undefined,
-    note: c.transport, does: c.state ? STATE_SAYS[c.state] : 'No reading of this chain yet.',
-  }))
-  return <Rows label={chains.length === 0 ? 'Chains' : `Chains · ${countLine(chains)} ready`} does={SAYS.list} items={items} size={size} page={page} onPage={setPage}
-    onRequest={id => p.set('chain', id)} />
+/** The tile's list: one line for each gateway Show lets through, its state dot, its name and its transport. A press opens it in Full. */
+function TileList({p}: {p: ViewProps}) {
+  const chains = chainsOf(p.v), listed = listedOf(p.v, chains), chosen = chosenOf(p.v, chains)
+  if (chains.length === 0) return <p className="gr-none">No reading of the gateways.</p>
+  const items: RowItem[] = listed.map(c => ({id: c.id, name: c.name, ...lampOf(c.state), why: c.state === 'refused' ? (c.why ?? 'The owner gave no reason.') : undefined,
+    note: c.transport, does: c.state ? STATE_SAYS[c.state] : 'No reading of this gateway yet.'}))
+  return listed.length === 0 ? <p className="gr-none">No gateway to show.</p>
+    : <Rows does={SAYS.list} items={items} size={5} selected={chosen?.id} onSelect={select(p)} />
 }
 
-/** The reason of each refused chain stays under the list. */
-function Reasons({v}: {v: V}) {
-  const chains = chainsOf(v)
-  if (chains.length === 0) return <p className="gr-none">No reading of the chains.</p>
-  const refused = chains.filter(c => c.state === 'refused')
-  return refused.length === 0 ? null : <div className="gr-reasons" aria-label="Reasons">
-    {refused.map(c => <p key={c.id}><b>{c.name}</b> {c.why ?? 'The owner gave no reason.'}</p>)}
-  </div>
-}
-
-/** Fan-out and the observers it allows: one light for each, lit for each one attached. */
-function Lights({v}: {v: V}) {
-  const cap = numOf(v, 'fanOut'), peers = numOf(v, 'peers')
+/** Observers: one light for each a session may have, lit for each one attached. */
+function Lights({v, chosen}: {v: V; chosen: Chain | undefined}) {
+  const cap = chosen?.observers, peers = numOf(v, 'peers')
   if (cap === undefined) return <span className="gr-lights-none">No reading</span>
-  const n = Math.max(0, Math.min(FAN_MAX, Math.round(cap)))
-  return <span className="gr-lights" role="img" aria-label={peers === undefined ? `${n} observers allowed` : `${peers} of ${n} observers attached`}
-    data-i={`Observers|One light for each observer allowed. A lit light is one attached${peers === undefined ? '; the owner reports none' : ''}.`}>
-    {Array.from({length: n}, (_, i) => <Lamp key={i} tone="value" state={peers === undefined ? 'unknown' : i < peers ? 'lit' : 'dark'} />)}
+  return <span className="gr-lights" role="img" aria-label={peers === undefined ? `${cap} observers allowed` : `${peers} of ${cap} observers attached`}
+    data-i={`Observers|One light for each observer a session may have, as the workcell's Gateway sets it. A lit light is one attached${peers === undefined ? '; the owner reports none' : ''}.`}>
+    {Array.from({length: cap}, (_, i) => <Lamp key={i} tone="value" state={peers === undefined ? 'unknown' : i < peers ? 'lit' : 'dark'} />)}
   </span>
 }
 
-const fanDial = (p: ViewProps) => <Dial label="Fan-out" does={SAYS.fanOut} value={numOf(p.v, 'fanOut') ?? NaN} def={FAN_DEFAULT}
-  scale={{min: 0, max: FAN_MAX, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('fanOut', Math.round(x))} {...st(p, 'fanOut')} />
-
-const attachedReadout = (v: V) => <Readout label="attached" does="Observers attached to the chosen gateway, of the observers allowed." value={attached(v)} tone="value" />
-
-const openAction = (p: ViewProps, chosen: Chain | undefined) => <Action label="Open" does={SAYS.open}
-  onPress={chosen && p.nav.full ? p.nav.full : undefined} disabled={!chosen ? 'No chain is chosen.' : !p.nav.full ? 'A pane cannot open here.' : undefined} {...st(p, 'open')} />
-
-/** The terms of one gateway: who can reach it, how it signs them in, what protects the link. A term the owner did not give is "—". */
-function Terms({chain}: {chain: Chain | undefined}) {
-  if (!chain) return <p className="gr-none">No reading of the chain.</p>
-  const rows: readonly [string, string | undefined, string][] = [
-    ['Reach', chain.reach, 'Who can reach the gateway.'],
-    ['Sign-in', chain.signIn, 'How the gateway knows who connects.'],
-    ['Secrecy', chain.secrecy, 'What protects the link.'],
-  ]
-  return <dl className="gr-terms">
-    {rows.map(([k, x, says]) => <div key={k} style={{display: 'contents'}} data-i={`${k}|${says}${x === undefined ? ' The owner gave none.' : ''}`}>
-      <dt>{k}</dt><dd data-none={x === undefined ? 'true' : undefined}>{x ?? NONE}</dd>
-    </div>)}
-  </dl>
+/** Full's head: the gateways ready and in use; Selected and Show. */
+function Head({p}: {p: ViewProps}) {
+  const chains = chainsOf(p.v), chosen = chosenOf(p.v, chains)
+  return <MonitorHead title="Gateways" readings={[
+    {label: 'ready', value: chains.length ? countLine(chains) : undefined, does: 'Gateways that answered a read, of all the gateways.', tone: 'green'},
+    {label: 'in use', value: chains.length && chains.some(c => c.workcells !== undefined) ? chains.filter(inUse).length : undefined, does: 'Gateways a workcell uses.'},
+  ]} controls={<>
+    <Chooser {...st(p, 'chain')} label="Selected" does={SAYS.selected} value={chosen?.id ?? ''} options={chains.map(c => ({value: c.id, label: c.name}))} onChange={x => p.set('chain', x)}
+      disabled={st(p, 'chain').disabled ?? (chains.length ? undefined : 'No reading of the gateways.')} />
+    <Radio {...st(p, 'show')} label="Show" does={SAYS.show} value={strOf(p.v, 'show') ?? ''} options={SHOWS} onChange={x => p.set('show', x)} />
+  </>} />
 }
 
-const head = (p: ViewProps) => ({light: lightOf(p), onFold: p.nav.fold, onFull: p.nav.full})
+/** Every gateway Show lets through: its state, its transport, the reason a refused one gives, its observers and its workcells. A
+ * press selects it. */
+function List({p}: {p: ViewProps}) {
+  const chains = chainsOf(p.v), listed = listedOf(p.v, chains), chosen = chosenOf(p.v, chains)
+  return <section className="gr-list" aria-label="Gateways">
+    {chains.length === 0 ? <p className="gr-empty">No reading of the gateways.</p> : listed.length === 0 ? <p className="gr-empty">No gateway to show.</p>
+      : listed.map(c => { const lamp = lampOf(c.state)
+        return <button key={c.id} type="button" className="gr-line" aria-pressed={c.id === chosen?.id} data-state={c.state} onClick={() => p.set('chain', c.id)}
+          data-i={`${c.name}|${c.state ? STATE_SAYS[c.state] : 'No reading of this gateway yet.'} Press to show its frames and readiness.`}>
+          <Lamp state={lamp.light} tone={lamp.tone} />
+          <b>{c.name}</b>
+          <span className="gr-line-state">{c.state ? STATE_WORD[c.state] : NONE}</span>
+          <span className="gr-line-reads">
+            <span><small>over</small> {c.transport ?? NONE}</span>
+            <span><small>observers</small> {c.observers ?? NONE}</span>
+            <span><small>workcells</small> {c.workcells === undefined ? NONE : c.workcells.length ? c.workcells.join(', ') : 'none'}</span>
+          </span>
+          {c.state === 'refused' && <span className="gr-line-why">{c.why ?? 'The owner gave no reason.'}</span>}
+        </button> })}
+  </section>
+}
 
-// ---------------------------------------------------------------- the pane: the chosen gateway at full size
-
-function GatewayPane({v}: {v: V}) {
+/** The selected gateway: its readiness, its terms and its observers, over its latest frames. */
+function Selected({v}: {v: V}) {
   const chains = chainsOf(v), chosen = chosenOf(v, chains)
-  if (!chosen) return <div className="gr-pane"><div className="gr-strip"><span className="gr-strip-none">Gateways</span></div>
-    <div className="gr-body" data-none="true"><p className="gr-empty">No reading of the chains.</p></div></div>
-  const frames = framesOf(v)
-  const state = chosen.state
-  return <div className="gr-pane">
-    <div className="gr-strip" aria-label="Chains">
-      {chains.map(c => <span key={c.id} className="gr-chip" aria-current={c.id === chosen.id ? 'true' : undefined}>
-        <Lamp state={lampOf(c.state).light} tone={lampOf(c.state).tone} label={c.state ? `${c.name}: ${STATE_WORD[c.state]}` : `${c.name}: no reading`} />{c.name}
-      </span>)}
+  if (!chosen) return <section className="gr-side"><p className="gr-empty">No gateway selected.</p></section>
+  const frames = framesOf(v), state = chosen.state
+  return <section className="gr-side" aria-label={chosen.name}>
+    <div className="gr-reads">
+      <section className="gr-read"><h4>Readiness</h4>
+        <strong data-state={state ?? 'none'}>{state ? STATE_WORD[state] : NONE}</strong>
+        <p>{state === 'refused' ? (chosen.why ?? 'The owner gave no reason.') : state ? STATE_SAYS[state].split(': ')[1] : 'No reading of the state.'}</p></section>
+      <section className="gr-read"><h4>Terms</h4>
+        <p>reach <b>{chosen.reach ?? NONE}</b></p>
+        <p>sign-in <b>{chosen.signIn ?? NONE}</b></p>
+        <p>secrecy <b>{chosen.secrecy ?? NONE}</b></p></section>
+      <section className="gr-read"><h4>Observers</h4>
+        <strong data-state={has(v, 'peers') ? undefined : 'none'}>{attached(v, chosen) ?? NONE}</strong>
+        <p>attached, of those allowed</p>
+        <Lights v={v} chosen={chosen} /></section>
     </div>
-    <div className="gr-body">
-      <div className="gr-frames">
-        <div className="gr-frames-head" aria-label="The gateway"><b>{chosen.name}</b><span>{chosen.transport ?? NONE}</span><span>{state ? STATE_WORD[state] : NONE}</span></div>
-        {frames.length === 0 ? <p className="gr-empty">No reading of the frames.</p> : <ol className="gr-list" aria-label="Frames">
-          {frames.map((f, i) => <li key={`${f.session}:${f.seq ?? 'out'}:${i}`} className="gr-frame" data-dir={f.dir} data-kind={kindClass(f.kind)}>
-            <span className="gr-seq">{f.seq ?? NONE}</span><span className="gr-at">{f.at}</span>
-            <span className="gr-dir" aria-label={f.dir === 'out' ? 'Sent' : 'Received'}>{f.dir === 'out' ? '→' : '←'}</span>
-            <span className="gr-kind">{f.kind}</span><span className="gr-session">{f.session}</span><span className="gr-note">{f.note}</span>
-          </li>)}
-        </ol>}
-      </div>
-      <aside className="gr-reads" aria-label="Readings">
-        <section className="gr-read"><h4>Readiness</h4>
-          <strong data-state={state ?? 'none'}>{state ? STATE_WORD[state] : NONE}</strong>
-          <p>{state === 'refused' ? (chosen.why ?? 'The owner gave no reason.') : state ? STATE_SAYS[state].split(': ')[1] : 'No reading of the state.'}</p></section>
-        <section className="gr-read"><h4>Terms</h4>
-          <p>reach <b>{chosen.reach ?? NONE}</b></p>
-          <p>sign-in <b>{chosen.signIn ?? NONE}</b></p>
-          <p>secrecy <b>{chosen.secrecy ?? NONE}</b></p></section>
-        <section className="gr-read"><h4>Observers</h4>
-          <strong data-state={has(v, 'peers') ? undefined : 'none'}>{attached(v) ?? NONE}</strong>
-          <p>attached, of the observers allowed</p>
-          <Lights v={v} /></section>
-      </aside>
-    </div>
-  </div>
+    <div className="gr-frames-head" aria-label="Its latest frames"><b>Frames</b><span>{chosen.transport ?? NONE}</span><span>{frames.length ? `${frames.length} latest` : NONE}</span></div>
+    {frames.length === 0 ? <p className="gr-empty">No reading of the frames.</p> : <ol className="gr-frames" aria-label="Frames">
+      {frames.map((f, i) => <li key={`${f.session}:${f.seq ?? 'out'}:${i}`} className="gr-frame" data-dir={f.dir} data-kind={kindClass(f.kind)}>
+        <span className="gr-seq">{f.seq ?? NONE}</span><span className="gr-at">{f.at}</span>
+        <span className="gr-dir" aria-label={f.dir === 'out' ? 'Sent' : 'Received'}>{f.dir === 'out' ? '→' : '←'}</span>
+        <span className="gr-kind">{f.kind}</span><span className="gr-session">{f.session}</span><span className="gr-note">{f.note}</span>
+      </li>)}
+    </ol>}
+  </section>
 }
 
 // ---------------------------------------------------------------- the device
@@ -210,25 +216,27 @@ const FRAMES = [
   {seq: 41, dir: 'in', kind: 'status.update', session: 'review-lane', at: '14:02:15', note: 'reading the diff'},
 ]
 
-/** The four chains the manifest declares (actuationFamilyManifest.ts gateways-rack), with their standing as AIKit words it. */
+/** The four gateways the manifest declares (actuationFamilyManifest.ts gateways-rack), with their standing as AIKit words it, the
+ * observers each workcell's Gateway allows, and the workcells whose chain each heads. */
 const CHAINS = [
-  {id: 'hermes', name: 'Hermes gateway', transport: 'ws', state: 'ready', reach: 'this machine', signIn: 'a token, or a 30 s ticket'},
-  {id: 'aikit-agency-gateway', name: 'AIKit agency gateway', transport: 'unix', state: 'ready', reach: 'local processes the file mode admits', signIn: 'file mode: owner scope', secrecy: 'none needed; stays in the kernel'},
-  {id: 'actuation-frank', name: 'Actuation gateway', transport: 'tailnet', state: 'composed', signIn: 'a grant for each attach'},
+  {id: 'hermes', name: 'Hermes gateway', transport: 'ws', state: 'ready', reach: 'this machine', signIn: 'a token, or a 30 s ticket', observers: 2, workcells: ['env-1', 'env-2']},
+  {id: 'aikit-agency-gateway', name: 'AIKit agency gateway', transport: 'unix', state: 'ready', reach: 'local processes the file mode admits', signIn: 'file mode: owner scope', secrecy: 'none needed; stays in the kernel',
+    observers: 4, workcells: ['env-3']},
+  {id: 'actuation-frank', name: 'Actuation gateway', transport: 'tailnet', state: 'composed', signIn: 'a grant for each attach', workcells: []},
   {id: 'remote-carrier', name: 'Remote carrier', transport: 'Workcell', state: 'refused', why: 'Refused by default. Terminate TLS in front, then widen the bind on purpose.',
-    reach: 'anyone who can route to it', signIn: 'bearer token only', secrecy: 'none unless TLS is terminated in front'},
+    reach: 'anyone who can route to it', signIn: 'bearer token only', secrecy: 'none unless TLS is terminated in front', workcells: []},
 ]
 
 /** Every key the owners report: the "No readings" fixture drops all of them. */
-const KEYS = ['light', 'chain', 'chains', 'fanOut', 'peers', 'frames']
+const KEYS = ['light', 'chain', 'show', 'chains', 'peers', 'frames']
 const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, undefined]))
 
-export const design: DesignedDevice = {
+export const design = railAndPane({
   id: 'actuation:gateways-rack',
   title: 'Gateways',
-  kind: 'rack',
+  kind: 'monitor',
   defaults: {
-    light: 'lit', chain: 'hermes', fanOut: FAN_DEFAULT, peers: 1,
+    light: 'lit', chain: 'hermes', show: 'all', peers: 1,
     chains: JSON.stringify(CHAINS), frames: JSON.stringify(FRAMES),
   },
   fixtures: {
@@ -237,61 +245,16 @@ export const design: DesignedDevice = {
     'No readings': NOTHING,
   },
 
-  folded: p => {
-    const chains = chainsOf(p.v)
-    return <Folded title="Gateways" light={lightOf(p)} readings={[chains.length === 0 ? NONE : `${readyCount(chains)}/${chains.length} ready`]} onUnfold={p.nav.unfold} />
-  },
-
-  compact: p => <Panel title="Gateways" view="compact" {...head(p)} onSelect={p.nav.select}>
-    <Section width={224}>
-      <ChainList p={p} />
-      <Reasons v={p.v} />
-    </Section>
-    <Section label="Observers" cols={2}>
-      {fanDial(p)}
-      {attachedReadout(p.v)}
-      <Lights v={p.v} />
-    </Section>
-  </Panel>,
-
-  whole: p => {
-    const chosen = chosenOf(p.v, chainsOf(p.v))
-    return <Panel title="Gateways" view="whole" {...head(p)}>
-      <Band>
-        <Section label="Chains" width={224}>
-          <ChainList p={p} />
-          <Reasons v={p.v} />
-        </Section>
-        <Section label="Gateway" cols={3} grow>
-          <p className="gr-chosen" data-none={chosen ? undefined : 'true'}>{chosen ? chosen.name : 'No chain chosen'}</p>
-          <Readout label="state" does="Whether the chosen gateway can carry a session now. A refusal gives its reason under the list." value={chosen?.state ? STATE_WORD[chosen.state] : undefined} tone={stateTone(chosen?.state)} />
-          <Readout label="transport" does="How a session reaches the chosen gateway." value={chosen?.transport} />
-          {openAction(p, chosen)}
-        </Section>
-      </Band>
-      <Band>
-        <Section label="Observers" cols={2}>
-          {fanDial(p)}
-          {attachedReadout(p.v)}
-          <Lights v={p.v} />
-        </Section>
-        <Section label="Terms" grow>
-          <Terms chain={chosen} />
-        </Section>
-      </Band>
-    </Panel>
-  },
-
-  full: p => <GatewayPane v={p.v} />,
+  full: p => <MonitorPane label="Gateways" head={<Head p={p} />}><div className="gr-body"><List p={p} /><Selected v={p.v} /></div></MonitorPane>,
 
   widget: p => {
     const chains = chainsOf(p.v)
     return <Tile title="Gateways" light={lightOf(p)} span={2} onFull={p.nav.full}>
-      <div className="gr-tile-list"><ChainList p={p} /></div>
+      <div className="gr-tile-list"><TileList p={p} /></div>
       <div className="gr-tile-side">
-        <Readout big label="ready" does="Chains whose gateway answered a read, of all the chains." value={chains.length === 0 ? undefined : countLine(chains)} tone="green" />
-        <Readout label="attached" does="Observers attached to the chosen gateway, of the observers allowed." value={attached(p.v)} tone="value" />
+        <Readout big label="ready" does="Gateways that answered a read, of all the gateways." value={chains.length === 0 ? undefined : countLine(chains)} tone="green" />
+        <Readout label="attached" does="Observers attached to the selected gateway, of those its sessions may have." value={attached(p.v, chosenOf(p.v, chains))} tone="value" />
       </div>
     </Tile>
   },
-}
+})

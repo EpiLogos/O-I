@@ -115,6 +115,23 @@ From MAP's build lane:
    - **The port ledger** (`EXPRESSIONS-PORT-STATUS.json`): the eleven `studio-only-by-design` rows ("retained during port") end.
      Each takes its home from the manual's table, and no row stays retained.
 
+9. Kinds of device, workcells and Messages (manual §16.1, §16.3, §16.6, §19.2–§19.3, §19.10, §19.16–§19.19, §19.23, §19.24, §23;
+   the designs `workcell:workcell`, `ai-kit:messages`, and every monitor made with `railAndPane` in `catalogue/panels/design.ts`):
+   - **Views by place.** A design now declares `kind` (six kinds) and `views`. The host (`frame/devices/deviceHost.tsx`) offers only the
+     views a design has: a monitor has its tile and its Full, never Fold, ▸ or a chain slot; Link and the Agency gateway have none on a
+     chain. Monitors leave the chains: the Ledger, the frames and Gateways stand on the rail.
+   - **Works in and the workcells.** Every track an agent works on gets Works in in its In/Out section, defaulting to the workcell that holds
+     its project's seat. In Factory the workcells stand as return tracks (⌥⌘R), each with its own chain: Gateway, Remote carrier, Git /
+     landing with its Seat. The Gateway and the landing leave the session chain. The workcell's readings come from `seat status --json`,
+     `workcell status --json` and the gateway's sessions; its macros write through the Gateway's and the landing's own owners.
+   - **Messages.** The rail's first device, bound to AIKit's gateway: the list from `aikit gateway who --json`
+     (aikit.population-reading/v1), the conversation from `aikit gateway conversation`, a send through `aikit gateway send`, a message
+     dragged onto a track through `aikit gateway delegate`, groups through `aikit gateway team`. The conversation is the Thread's own Full
+     under the prefix `conv.`, so one binding serves both.
+   - **Owed by the owners.** Make has no owner yet: no operation declares a Position or writes an agent's roster card (Central's, kept as
+     the agent's Being page). Until one exists, Make stands disabled with that reason. Link moves into the transport (its ▾ expands it);
+     the Agency gateway's mark stands in the head of Messages.
+
 These wait for the planning lane to write them into the manual; MAP's planning lane items 1–5 say what each is:
 - the three layers per mode (Session, Arrangement, Pane);
 - the actions on every object, with their context menus;

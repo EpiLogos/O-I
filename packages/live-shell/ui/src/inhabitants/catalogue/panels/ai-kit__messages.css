@@ -1,0 +1,47 @@
+/* Messages (manual §19.24): your agents and groups beside the conversation; the tile on the rail. */
+.ms-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #2e3135); color: var(--text, #d4d7da); }
+.ms-head { flex: none; display: flex; align-items: center; gap: 10px; min-height: 30px; padding: 2px 12px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #3a3d41); font-size: 11px; }
+.ms-head > b { font-weight: 600; margin-right: 4px; }
+.ms-gateway { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; color: var(--text-dim, #a3a8ad); white-space: nowrap; }
+.ms-gateway i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint, #71767c); }
+.ms-gateway[data-state="ready"] i { background: var(--green, #7bd389); }
+.ms-body { flex: 1; display: grid; grid-template-columns: 236px 1fr; min-height: 0; }
+.ms-list { overflow: auto; border-right: 1px solid var(--line, #3a3d41); padding: 4px 0; }
+.ms-row { display: flex; width: 100%; gap: 8px; align-items: flex-start; padding: 6px 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ms-row:hover { background: var(--bg-2, #34373b); }
+.ms-row[aria-pressed="true"] { background: var(--bg-2, #3a3d42); box-shadow: inset 2px 0 0 var(--accent, #ffbe00); }
+.ms-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; font-size: 11px; }
+.ms-row-text b { font-weight: 600; }
+.ms-row-for, .ms-row-last { color: var(--text-dim, #a3a8ad); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-row-last { color: var(--text-faint, #71767c); }
+.ms-row[data-state="waiting"] .ms-row-last { color: var(--accent, #ffbe00); }
+.ms-row[data-state="stalled"] .ms-row-last { color: var(--stall, #ff9b4a); }
+.ms-unread { flex: none; min-width: 16px; height: 16px; border-radius: 8px; background: var(--accent, #ffbe00); color: #1d1f21; font-size: 10px; font-weight: 600; text-align: center; line-height: 16px; padding: 0 4px; }
+.ms-face { flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-2, #34373b); color: var(--text, #d4d7da); font-weight: 600;
+  box-shadow: 0 0 0 1.5px var(--text-faint, #71767c); }
+.ms-face[data-state="working"] { box-shadow: 0 0 0 1.5px var(--dp-value, #5cc6b4); }
+.ms-face[data-state="waiting"] { box-shadow: 0 0 0 1.5px var(--accent, #ffbe00); }
+.ms-face[data-state="stalled"] { box-shadow: 0 0 0 1.5px var(--stall, #ff9b4a); }
+.ms-face[data-state="rest"] { color: var(--text-dim, #a3a8ad); }
+.ms-faces { flex: none; display: inline-flex; flex-wrap: wrap; width: 26px; gap: 1px; }
+.ms-conv { min-width: 0; display: flex; flex-direction: column; }
+.ms-conv-head { flex: none; display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line, #3a3d41); }
+.ms-conv-head span { display: flex; flex-direction: column; font-size: 11px; }
+.ms-conv-head small { color: var(--text-dim, #a3a8ad); font-size: 10.5px; }
+.ms-thread { position: relative; flex: 1; min-height: 0; }
+.ms-none { padding: 10px; color: var(--text-faint, #71767c); font-size: 11px; }
+.ms-card { padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; max-width: 460px; }
+.ms-card h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+.ms-card-do { display: flex; gap: 8px; margin-top: 6px; }
+.ms-tile { display: grid; grid-template-rows: auto 1fr auto; gap: 4px; height: 100%; padding: 4px 6px; }
+.ms-tile-faces { display: flex; gap: 5px; }
+.ms-tile-face { position: relative; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; }
+.ms-tile-face[aria-pressed="true"] { outline: 1px solid var(--accent, #ffbe00); outline-offset: 2px; }
+.ms-dot { position: absolute; top: -1px; right: -1px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent, #ffbe00); }
+.ms-tile-lines { font-size: 10.5px; line-height: 13px; overflow: hidden; color: var(--text, #d4d7da); }
+.ms-tile-lines p { margin: 0 0 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ms-tile-lines b { color: var(--text-dim, #a3a8ad); font-weight: 600; }
+.ms-tile-composer { font: inherit; font-size: 11px; height: 20px; padding: 0 6px; border-radius: 3px; border: 1px solid var(--line, #3a3d41); background: var(--bg-0, #26292d); color: var(--text, #d4d7da); }
+.ms-face[data-type="creature"] { background: var(--bg-0, #26292d); overflow: hidden; }
+.ms-face[data-type="creature"] > * { width: 100%; height: 100%; }
+.ms-faces { width: 38px; }

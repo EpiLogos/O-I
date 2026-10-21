@@ -19,6 +19,10 @@
 //     ({path, digest, epithet, opening}), null when it points at none. `character` is whether the profile names an expressive character.
 //   `worlds` is the list of World refs the card can be read in (a JSON list of strings); Home, the profile's own World, is always offered.
 //   `read` is the roster owner's answer ('refused' when it did not answer) and `fault` its own words.
+// Type (manual §19.4): the preset the agent was given, a pattern from the six families (faces/agency.ts), whose creature is the agent's face
+// (faces/CreatureFace.tsx). `types` is a JSON object {agent ref: pattern id}; Central's profile names no type yet, so the shell holds it with
+// the agent. This device only reads it, as it reads the rest of the card, and draws the creature as the agent's face; the Agent device
+// carries the Type page, where you load a preset (software-factory/actuation__harness-model.tsx).
 // A key the owner does not report is drawn "—", and the well names the reading that is missing. The sample is the roster of this ground,
 // read with `agent-profile.roster`: its 39 profiles, their names, roles, revisions, authored skill, method and SkillSet refs and ratified
 // Worlds; Cairn, Flint, Kite and Lilt carry the authored selves of Control/self/agents. It sits in the defaults and the fixtures.
@@ -28,6 +32,9 @@ import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
 import {maskStatic} from '../../../agent/maskFace'
 import {NONE, boolOf, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {CreatureFace} from '../faces/CreatureFace'
+import {PATTERNS, type RunState} from '../faces/agency'
+import {faceOf} from '../faces/figures'
 import {FORM_ASKS, FORM_NAME, ORDER, type Form} from './practice'
 import './central__agent-identity.css'
 
@@ -91,6 +98,9 @@ const SAMPLE_SELVES: Readonly<Record<string, {readonly epithet: string; readonly
 /** The agent seated on the track in the sample: Flint, whose tenure names the program that runs it. Every other agent has none. */
 const SAMPLE_SEATED = 'agent:expressed-ba635b5ae01b4ca98c591fe342079449'
 const SAMPLE_HOME = 'control:root'
+/** The types the shell holds in the sample, each by the mechanism of the agent's work: the seated agent waits queued and acts at full effort when its
+ * task is launched (Ambush, the serpent); Anima sets a goal and its members decide the detail (Arm); Eros goes out through sources and reports (Scout). */
+const SAMPLE_TYPES = {[SAMPLE_SEATED]: 'ambush', 'agent/anima': 'arm', 'agent/anima-eros': 'scout'}
 /** The Worlds the sample card can be read in. */
 const SAMPLE_WORLDS = [SAMPLE_HOME, 'project:O-I', 'project:quaternal-logic', 'project:Archetypal-Earth']
 
@@ -189,6 +199,19 @@ function model(v: V): Model {
     choices: [{value: 'home', label: 'Home'}, ...worlds.map(ref => ({value: ref, label: worldName(ref)}))],
     ratified: card?.ratified && world !== undefined ? card.ratified.includes(world) : undefined}
 }
+
+/** The types the shell holds, by agent ref; a ref with no entry, or a pattern the ontology does not know, has no type. */
+const typesOf = (v: V, key = 'types'): Record<string, string> => {
+  const raw = json<unknown>(v, key, {})
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  return Object.fromEntries(Object.entries(raw as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string' && e[1] in PATTERNS))
+}
+/** The chosen agent's type (a pattern id), or undefined when none is named. */
+const typeOf = (v: V, m: Model): string | undefined => (m.agent ? typesOf(v)[m.agent.ref] : undefined)
+/** The type of the agent the device shows, read from its values alone: the Agent reads it for its own face and its Type page. */
+export const agentType = (v: V, prefix = ''): string | undefined => { const ref = strOf(v, `${prefix}agent`); return ref === undefined ? undefined : typesOf(v, `${prefix}types`)[ref] }
+/** The `types` value with one agent's type set: what choosing a type writes. */
+export const withType = (v: V, ref: string, pattern: string): string => JSON.stringify({...typesOf(v), [ref]: pattern})
 
 const standing = (a: Agent) => (a.ok === undefined ? undefined : a.ok ? 'accepted' : 'proposed')
 const standingText = (a: Agent) => standing(a) ?? NONE
@@ -290,7 +313,16 @@ function Carried({x, y, w, card, set}: {x: number; y: number; w: number; card: C
   </foreignObject>
 }
 
-function IdentityWell({m, v, set, w, h, size}: {m: Model; v: V; set?: ViewProps['set']; w: number; h: number; size: 'mini' | 'compact' | 'whole'}) {
+/** The agent's face in a well: its type's creature when it has a type, else the shell's agent face. */
+function AgentMark({x, y, size, dim, type, state}: {x: number; y: number; size: number; dim: boolean; type: string | undefined; state: RunState}) {
+  if (!type) return <Face x={x} y={y} size={size} dim={dim} />
+  const w = Math.round(size * 1.5)
+  return <foreignObject x={x} y={y - 2} width={w} height={Math.round(w * 0.78) + 6} opacity={dim ? 0.55 : 1}>
+    <CreatureFace figure={faceOf(type).id} state={state} size={w} />
+  </foreignObject>
+}
+
+function IdentityWell({m, v, set, w, h, size, state = 'queued'}: {m: Model; v: V; set?: ViewProps['set']; w: number; h: number; size: 'mini' | 'compact' | 'whole'; state?: RunState}) {
   const mini = size === 'mini', whole = size === 'whole'
   const a = m.agent, list = m.list ?? [], card = m.card
   const says = mini ? 'The agent as the roster holds it.' : 'The agent as the roster holds it. Drag the handles to choose the agent and the World.'
@@ -302,15 +334,15 @@ function IdentityWell({m, v, set, w, h, size}: {m: Model; v: V; set?: ViewProps[
       {wrap(body, whole ? 36 : mini ? 19 : 25, mini ? 4 : 6).map((line, i) => <text key={i} x={7} y={bodyY + i * 11} className="dp-ink-dim">{line}</text>)}
     </Display>
   }
-  const fs = mini ? 20 : whole ? 30 : 26, nameX = 7 + fs + 7
-  const nameMax = mini ? 12 : whole ? 18 : 15
+  const type = typeOf(v, m), fs = mini ? 20 : whole ? 30 : 26, nameX = 7 + (type ? Math.round(fs * 1.5) : fs) + 5
+  const nameMax = type ? (mini ? 9 : whole ? 14 : 11) : mini ? 12 : whole ? 18 : 15
   const x0 = 10, x1 = w - 10, idx = m.index
   const wi = m.choices.findIndex(o => o.value === strOf(v, 'world'))
   const runs = card?.runsOn
   const lines = wrap(card ? characterOf(card) : 'No reading of the card.', mini ? 19 : whole ? 34 : 25, mini ? 3 : whole ? 2 : 3)
   const textY = mini ? 46 : whole ? 62 : 56
   return <Display w={w} h={h} label="The agent" does={says} corner={whole ? a.rev ?? NONE : undefined}>
-    <Face x={7} y={mini ? 5 : 6} size={fs} dim={a.ok !== true} />
+    <AgentMark x={7} y={mini ? 5 : 6} size={fs} dim={a.ok !== true} type={type} state={state} />
     <text x={nameX} y={mini ? 15 : whole ? 22 : 19} className="dp-ink" style={{fontSize: a.label.length > nameMax - 3 ? 9.5 : mini ? 10 : 11, fontWeight: 600}}>{short(a.label, nameMax)}</text>
     <text x={nameX} y={mini ? 26 : whole ? 35 : 31} className="dp-ink-dim">{mini || !whole ? `${standingText(a)} · ${a.rev ?? NONE}` : `${short(roleOf(a), 18)} · ${standingText(a)}`}</text>
     {whole && <text x={nameX} y={47} className="dp-axis">{`runs on ${runs ?? NONE}`}</text>}
@@ -370,10 +402,10 @@ function Profile({m, v}: {m: Model; v: V}) {
     const {title, body} = missing(m, v)
     return <div className="ai-pane"><div className="ai-empty"><b>{title}</b><p>{body}</p></div></div>
   }
-  const card = m.card, runs = card?.runsOn, self = card?.self
+  const card = m.card, runs = card?.runsOn, self = card?.self, type = typeOf(v, m)
   return <div className="ai-pane">
     <header className="ai-pane-head">
-      <FaceBox size={64} dim={a.ok !== true} />
+      {type ? <div className="ai-face ai-face--creature" style={{opacity: a.ok === true ? 1 : 0.55}}><CreatureFace figure={faceOf(type).id} state="queued" size={104} named /></div> : <FaceBox size={64} dim={a.ok !== true} />}
       <div className="ai-who">
         <h3>{a.label}</h3>
         <p>{roleOf(a)} <span aria-hidden>·</span> <b data-ok={a.ok === true ? 'true' : 'false'}>{standingText(a)}</b> <span aria-hidden>·</span> profile {a.rev ?? NONE}</p>
@@ -425,7 +457,7 @@ function Profile({m, v}: {m: Model; v: V}) {
 // ---------------------------------------------------------------- the whole view
 
 /** Identity's two bands: the Whole of Agent identity, and the Identity page of the Agent, which carries it. */
-export function IdentityBands({p}: {p: ViewProps}) {
+export function IdentityBands({p, state = 'queued'}: {p: ViewProps; state?: RunState}) {
   const [page, setPage] = useState(0)
   const m = model(p.v), c = m.card
   const accepted = m.roster?.filter(x => x.ok === true).length
@@ -436,7 +468,7 @@ export function IdentityBands({p}: {p: ViewProps}) {
       : m.list.map(x => ({id: x.ref, name: x.label, light: x.ok === undefined ? 'unknown' : x.ok ? 'lit' : 'dark', tone: 'green', note: x.rev ?? NONE, does: `${roleOf(x)} · ${standingText(x)}`}))
   return <>
     <Band>
-      <Section width={206}><IdentityWell m={m} v={p.v} set={p.set} w={194} h={146} size="whole" /></Section>
+      <Section width={206}><IdentityWell m={m} v={p.v} set={p.set} w={194} h={146} size="whole" state={state} /></Section>
       <Section label="Read" grow>
         {agentChooser(p, m)}
         {worldChooser(p, m)}
@@ -477,14 +509,16 @@ export const design: DesignedDevice = {
     // The parameters: whose card, whether the agents you have not accepted show, and the World the card is read in.
     agent: SAMPLE_SEATED, proposed: false, world: 'home',
     // Readings: what the owners report, never set from here.
-    read: 'read', marks: 'blade', roster: sampleRoster(), card: sampleCard(SAMPLE_SEATED)!, worlds: JSON.stringify(SAMPLE_WORLDS),
+    read: 'read', marks: 'blade', roster: sampleRoster(), card: sampleCard(SAMPLE_SEATED)!, worlds: JSON.stringify(SAMPLE_WORLDS), types: JSON.stringify(SAMPLE_TYPES),
   },
   fixtures: {
     Seated: {},
     'A proposed team lead': {agent: 'agent/anima', proposed: true, card: sampleCard('agent/anima')},
+    'A team member': {agent: 'agent/anima-eros', proposed: true, card: sampleCard('agent/anima-eros')},
+    'No type': {types: undefined},
     'Not ratified here': {world: 'project:Archetypal-Earth'},
     'Roster refused': {read: 'refused', fault: 'Central returned an agent roster this desktop cannot read.', light: undefined, roster: undefined, card: undefined},
-    'No readings': Object.fromEntries(['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds'].map(k => [k, undefined])),
+    'No readings': Object.fromEntries(['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds', 'types'].map(k => [k, undefined])),
   },
 
   folded: p => {
