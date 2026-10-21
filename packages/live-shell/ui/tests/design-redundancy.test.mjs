@@ -10,6 +10,8 @@ const STANDS = {
   'actuation:frames-monitor · whole': 'The picture marks the held window and the keep line on its own axes; the readout and the dial are the numbers to read and to set.',
   'actuation:gateway · whole': 'The picture marks the check-in age beside its needle; the readout is the number to read.',
   'actuation:harness-model · compact': 'The corner is turns used of the cap (3 / 12); the cap is the Budget box.',
+  'actuation:harness-model · whole': 'The corner is turns used of the cap; the Budget box is the cap and the readout the turns used: two parameters, the same number only when the agent spent its whole budget (12 / 12, the Failed fixture).',
+  'actuation:harness-model · widget': 'The turns readout is used of the cap, two parameters that read the same only when the agent spent its whole budget (12 / 12, the Failed fixture).',
   'central:nara-conversation · whole': 'The corner is the turn against the budget (43 KB / 256 KB); the readout is the turn on its own.',
   'expressions:colour · whole': 'Different parameters that stand at the same value by default.',
   'expressions:contacts · compact': 'The corner is the wall bounce and the pair bounce; the dial is the wall bounce.',
