@@ -15,6 +15,7 @@
 //
 // Reads only: a write never goes through here.
 
+import {useRef} from 'react'
 import {installKernelReadHolder, kernelReadSend, onKernelWrite, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelOutcome, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadings} from './ownerReading'
@@ -89,4 +90,17 @@ export function useHeldRead<T>(key: readonly unknown[] | null, read: () => Promi
     try { return {value: await read()} } catch (cause) { return {error: cause instanceof Error ? cause.message : String(cause)} }
   }
   return useOwnerReading<T>(key ? JSON.stringify(['held', ...key]) : null, wrapped, epoch).reading
+}
+
+/** The same map while every value in it is the one the last render drew: a reader of many rows builds its map each render, and
+ * what is built from it must change only when an answer did. */
+export function useStableMap<K, V>(next: ReadonlyMap<K, V>): ReadonlyMap<K, V> {
+  const held = useRef(next)
+  const last = held.current
+  if (last !== next) {
+    let same = last.size === next.size
+    if (same) for (const [key, value] of next) if (last.get(key) !== value) { same = false; break }
+    if (!same) held.current = next
+  }
+  return held.current
 }

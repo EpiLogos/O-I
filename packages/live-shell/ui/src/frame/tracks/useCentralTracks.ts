@@ -10,7 +10,7 @@
 // The acts: Launch and Stop are the page owner's (pageOwner.ts launchPage, stopPage); a world dropped on the empty track is written
 // into the Day's set (writeDaySet); every world's Arm is the shell's one write arm. After an act the readings it moved are read
 // again. Registered as `base: worldCut(useCentralTracks)` in modeTracks.ts.
-import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
+import {useCallback, useMemo, useRef, useSyncExternalStore} from 'react'
 import {useAgentShellOptional} from '../../agent/AgentShellContext'
 import {shellWriteArm} from './useFactoryTracks'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
@@ -18,7 +18,7 @@ import {nowReading, type NowListing} from '../../../../../../desktop/cradle/src/
 import {launchPage, stopPage} from '../../../../../../desktop/cradle/src/personal/pageOwner'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
-import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading, type WorldPagesReading} from '../../central/centralWorlds'
+import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading } from '../../central/centralWorlds'
 import {daySetOf, withWorld, withoutWorld, writeDaySet} from '../../central/daySet'
 import {currentDayOf} from '../../central/devices/dayBinding'
 import {openLaunched} from '../../central/launchOpening'
@@ -27,6 +27,9 @@ import {subscribeSystem, systemReading} from '../../projections/atlas/system/sys
 import {worldColourOf} from '../../projections/atlas/system/systemModel'
 import {practiceWorldOf} from '../../../../../../desktop/cradle/src/nara/practiceWorld'
 import {useOptionalContinuity} from '../../continuity/workspace'
+import {useHeldRead, useStableMap} from '../../owners/ownerCall'
+import {useOwnerReadingsOf} from '../../owners/ownerReading'
+import {useSpineEpoch} from '../../owners/spine'
 import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {
@@ -73,37 +76,29 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   const armOn = shell ? shell.writeArm : null
   const transport = reading.transport
   const source = reading.world?.source
-  const readAt = source?.readAtUnixMs ?? null
   const ground = useCentralGroundAnswer(transport ?? {kind: 'unavailable', reason: 'the shell published no kernel carrier to this pane'})
   const set = useMemo(() => setReadingOf(ground.reading, ground.error), [ground.reading, ground.error])
-  // An act moved what these read: the worlds' pages and what plays are read again.
-  const [moved, setMoved] = useState(0)
-  const [worlds, setWorlds] = useState<CentralWorldsReading>({state: 'reading'})
-  useEffect(() => {
-    let live = true
-    void readWorlds(transport).then(next => { if (live) setWorlds(next) })
-    return () => { live = false }
-  }, [transport])
+  // The worlds, each world's pages and what plays are held readings (owners/ownerCall.ts, owners/ownerReading.ts): read once for the
+  // window, shared with every other view that reads them, and read again when the kernel says the ground moved — an act of this
+  // window's (a launch, a stop, a Day write) is such a notice on its receipt, so no act has to ask for them again.
+  const epoch = useSpineEpoch()
+  const usable = transport && transport.kind !== 'unavailable' ? transport : null
+  const worldsReading = useHeldRead(['worlds', transport ?? null], () => readWorlds(transport))
+  const worlds = useMemo((): CentralWorldsReading => worldsReading.status === 'answered' && worldsReading.value ? worldsReading.value : {state: 'reading'}, [worldsReading])
   const inSet = useMemo((): CentralWorld[] => {
     if (worlds.state !== 'read') return []
     const held = set.state === 'read' ? set.set.tracks.map(track => track.world) : []
     return worlds.worlds.filter(world => world.kind === 'yours' || held.includes(world.ref))
   }, [worlds, set])
-  const inSetKey = inSet.map(world => `${world.ref}@${world.folder}`).join('|')
-  const [pages, setPages] = useState<ReadonlyMap<string, WorldPagesReading>>(new Map())
-  const [playing, setPlaying] = useState<readonly CentralPlaying[]>([])
-  useEffect(() => {
-    let live = true
-    for (const world of inSet) void readWorldPages(transport, world).then(next => { if (live) setPages(held => new Map(held).set(world.ref, next)) })
-    if (transport && transport.kind !== 'unavailable') {
-      const scopes = [null, ...inSet.flatMap(world => world.project ? [world.project] : [])]
-      void Promise.all(scopes.map(project => nowReading(transport, project, {kind: 'list'})
-        .then(listing => ({project, listing: listing as NowListing})).catch(() => null)))
-        .then(listings => { if (live) setPlaying(playingOf(listings.filter((item): item is {project: string | null; listing: NowListing} => item !== null))) })
-    }
-    return () => { live = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the worlds in the set are named by their key
-  }, [transport, inSetKey, readAt, moved])
+  const folders = useMemo(() => usable ? inSet.map(world => world.folder) : [], [usable, inSet])
+  const pageAnswers = useOwnerReadingsOf(folders, folder => JSON.stringify(['world-pages', usable, folder]),
+    folder => async () => ({value: await readWorldPages(usable ?? undefined, {folder})}), epoch)
+  const pages = useStableMap(new Map(inSet.flatMap(world => pageAnswers.has(world.folder) ? [[world.ref, pageAnswers.get(world.folder)!] as const] : [])))
+  const scopes = useMemo(() => usable ? ['', ...inSet.flatMap(world => world.project ? [world.project] : [])] : [], [usable, inSet])
+  const nowAnswers = useOwnerReadingsOf(scopes, scope => JSON.stringify(['world-now', usable, scope]),
+    scope => async () => ({value: {project: scope || null, listing: await nowReading(usable!, scope || null, {kind: 'list'}) as NowListing}}), epoch)
+  const nowListings = useStableMap(nowAnswers)
+  const playing = useMemo((): readonly CentralPlaying[] => playingOf([...nowListings.values()]), [nowListings])
   const aperture = ground.reading ? currentDayOf(ground.reading).aperture : null
   const refreshGround = ground.refresh
   // A launched page opens where its launch says (central/launchOpening.ts), in the pane tree the shell holds. The grid is drawn in a
@@ -113,7 +108,7 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   const heldBook = useRef(book)
   heldBook.current = book
   const after = useCallback(async <T,>(act: () => Promise<T>): Promise<T> => {
-    try { return await act() } finally { setMoved(n => n + 1) }
+    return act()
   }, [])
   const controls = useMemo(() => {
     if (!transport || transport.kind === 'unavailable') return {writeArm: shellWriteArm(armOn)}

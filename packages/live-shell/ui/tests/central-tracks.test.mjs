@@ -237,9 +237,15 @@ test('the day records are read through the owner\'s listing route, and a refusal
     assert.deepEqual(sent, [['http://bridge.fixture/op', {op: 'files_list', path: 'Control/user/day'}]], 'one files_list at the owner\'s day surface — the browser\'s own route')
     assert.equal(read.state, 'read')
     assert.deepEqual(read.records.map(record => record.name), records.map(record => record.name))
+    const {ownerReadings} = await import('../src/owners/ownerReading.ts')
+    assert.equal(sent.length, 1)
+    await readDayRecords({kind: 'bridge', url: 'http://bridge.fixture'})
+    assert.equal(sent.length, 1, 'the listing is held: a second reader asks the owner nothing')
+    await ownerReadings.moved()
     globalThis.fetch = async () => ({json: async () => ({ok: false, error: 'the owner refused the listing'})})
     assert.deepEqual(await readDayRecords({kind: 'bridge', url: 'http://bridge.fixture'}), {state: 'unavailable', reason: 'the owner refused the listing'})
     globalThis.fetch = async () => ({json: async () => ({ok: true, outcome: {result: 'something_else'}})})
+    await ownerReadings.moved()
     assert.equal((await readDayRecords({kind: 'bridge', url: 'http://bridge.fixture'})).state, 'unavailable', 'an answer that is not a directory reading is not a list of days')
   } finally {
     globalThis.fetch = realFetch

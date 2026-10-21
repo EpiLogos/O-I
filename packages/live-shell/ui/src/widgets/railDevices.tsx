@@ -9,7 +9,7 @@
 // Owners write, faces read: a key no owner reports reaches the design absent, with the owner's own words as `reason` where it refused;
 // the keys a design marks as the tile's own (Limit, Show, Layout, Follow …) are view holds, kept here and never sent to an owner.
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {useHeldRead, useOwnerOp} from '../owners/ownerCall'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {readGround, type CentralGroundReading} from '../../../../../desktop/cradle/src/central/client'
 import {useTape} from '../../../../../desktop/cradle/src/agent/tape/journal'
@@ -26,6 +26,7 @@ import type {DesignBinding, Value} from '../frame/devices/designed'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import type {IconName} from '../inhabitants/sdk/Icon'
 import {useWidgetReading} from './widgetReading'
+import type {OwnerReading} from '../owners/ownerReading'
 import {CALENDAR_ABSENT, diffFilesOf, filesOf, NOW_CLOSE_ABSENT, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
 
 /** The family the rail-born devices stand in: their designs are `widgets:<id>` in the catalogue. */
@@ -101,26 +102,24 @@ const DIFF_PROJECT = 'O-I'
 type DiffReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; root: string; files: Record<string, Value>[]; head: string | null; branch: string | null; omitted: number}
 
 function useDiffReading(transport: KernelTransportStatus | undefined): DiffReading {
-  const [reading, setReading] = useState<DiffReading>({status: 'reading'})
-  const asked = useRef(0)
-  useEffect(() => {
-    const ask = ++asked.current
-    if (!transport || transport.kind === 'unavailable') { setReading({status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}); return }
-    void (async () => {
-      const repo = await kernelOp(transport, {op: 'git_repository_read', project: DIFF_PROJECT})
-      if (ask !== asked.current) return
-      if (repo.error || repo.outcome?.result !== 'git_repository_reading') { setReading({status: 'refused', words: repo.error ?? 'The repository owner did not answer.'}); return }
-      const doc = repo.outcome.document as {repo_root?: unknown; branch?: unknown; head?: unknown} | undefined
-      if (typeof doc?.repo_root !== 'string') { setReading({status: 'refused', words: 'Central did not disclose the repository root.'}); return }
-      const patch = await kernelOp(transport, {op: 'git_diff_read', request: {repo_root: doc.repo_root, from: 'HEAD', to: 'working-tree', max_bytes: 65536, max_files: 200}})
-      if (ask !== asked.current) return
-      if (patch.error || patch.outcome?.result !== 'git_diff_reading') { setReading({status: 'refused', words: patch.error ?? 'Central did not answer the diff.'}); return }
-      const read = diffFilesOf(patch.outcome.document)
-      if (!read) { setReading({status: 'refused', words: 'Central returned an unsupported Git diff.'}); return }
-      setReading({status: 'read', root: doc.repo_root, files: read.files, head: read.head, branch: typeof doc.branch === 'string' ? doc.branch : null, omitted: read.omitted})
-    })()
-  }, [transport])
-  return reading
+  // Two held reads, each shared with every other view that asks the same (the agent dock's Diff, the chain's Git): the repository,
+  // then its working diff once the repository has named its root.
+  const repo = useOwnerOp(transport, {op: 'git_repository_read', project: DIFF_PROJECT}, 'git_repository_reading', 'The repository owner did not answer.').reading
+  const doc = repo.status === 'answered' ? repo.value?.document as {repo_root?: unknown; branch?: unknown; head?: unknown} | undefined : undefined
+  const root = typeof doc?.repo_root === 'string' ? doc.repo_root : null
+  const patch = useOwnerOp(transport, root ? {op: 'git_diff_read', request: {repo_root: root, from: 'HEAD', to: 'working-tree', max_bytes: 65536, max_files: 200}} : null,
+    'git_diff_reading', 'Central did not answer the diff.').reading
+  return useMemo((): DiffReading => {
+    if (!transport || transport.kind === 'unavailable') return {status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}
+    if (repo.status === 'refused') return {status: 'refused', words: repo.error ?? 'The repository owner did not answer.'}
+    if (repo.status !== 'answered') return {status: 'reading'}
+    if (!root) return {status: 'refused', words: 'Central did not disclose the repository root.'}
+    if (patch.status === 'refused') return {status: 'refused', words: patch.error ?? 'Central did not answer the diff.'}
+    if (patch.status !== 'answered' || !patch.value) return {status: 'reading'}
+    const read = diffFilesOf(patch.value.document)
+    if (!read) return {status: 'refused', words: 'Central returned an unsupported Git diff.'}
+    return {status: 'read', root, files: read.files, head: read.head, branch: typeof doc?.branch === 'string' ? doc.branch : null, omitted: read.omitted}
+  }, [transport, repo, patch, root, doc])
 }
 
 function useDiffBinding(reading: DiffReading): DesignBinding {
@@ -188,37 +187,26 @@ type WikiPagesReading = {status: 'reading'} | {status: 'refused'; words: string}
 type WikiBody = {ref: string; lines: readonly string[]} | {ref: string; words: string}
 
 function useWikiBinding(transport: KernelTransportStatus | undefined): DesignBinding {
-  const [pages, setPages] = useState<WikiPagesReading>({status: 'reading'})
-  const [body, setBody] = useState<WikiBody | null>(null)
   const {holds, local} = useHolds(['follow', 'page'])
-  useEffect(() => {
-    let live = true
-    if (!transport || transport.kind === 'unavailable') { setPages({status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}); return }
-    void (async () => {
-      try {
-        const folder = await listFiles(transport, ROOT_WIKI_FOLDER)
-        const entry = folder.entries.find(candidate => candidate.name === 'wiki.json')
-        if (!entry) { if (live) setPages({status: 'refused', words: 'The root register discloses no wiki.json.'}); return }
-        const wiki = parseWiki((await readFile(transport, entry.location)).content)
-        if (live) setPages(wiki.state === 'ready' ? {status: 'read', nodes: wiki.nodes} : {status: 'refused', words: wiki.state === 'failed' ? wiki.reason : 'The wiki reading did not resolve.'})
-      } catch (cause) { if (live) setPages({status: 'refused', words: cause instanceof Error ? cause.message : String(cause)}) }
-    })()
-    return () => { live = false }
-  }, [transport])
+  // The register's wiki.json through the files seam, held once for the window and read again when the ground moves.
+  const wiki = useHeldRead(transport && transport.kind !== 'unavailable' ? ['rail-wiki', transport, ROOT_WIKI_FOLDER] : null, async () => {
+    const folder = await listFiles(transport!, ROOT_WIKI_FOLDER)
+    const entry = folder.entries.find(candidate => candidate.name === 'wiki.json')
+    if (!entry) throw new Error('The root register discloses no wiki.json.')
+    const parsed = parseWiki((await readFile(transport!, entry.location)).content)
+    if (parsed.state !== 'ready') throw new Error(parsed.state === 'failed' ? parsed.reason : 'The wiki reading did not resolve.')
+    return parsed.nodes
+  })
+  const pages = useMemo((): WikiPagesReading => !transport || transport.kind === 'unavailable' ? {status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}
+    : wiki.status === 'answered' && wiki.value ? {status: 'read', nodes: wiki.value}
+    : wiki.status === 'refused' ? {status: 'refused', words: wiki.error ?? 'The wiki reading did not resolve.'} : {status: 'reading'}, [transport, wiki])
   const shown = typeof holds.page === 'string' ? holds.page : pages.status === 'read' ? pages.nodes[0]?.ref : undefined
-  useEffect(() => {
-    let live = true
-    const node = pages.status === 'read' ? pages.nodes.find(candidate => candidate.ref === shown) : undefined
-    if (!node || !transport || transport.kind === 'unavailable') { setBody(null); return }
-    const source = node.source_refs?.[0]
-    if (!source) { setBody({ref: node.ref, words: 'This page cites no source to read.'}); return }
-    void kernelOp(transport, {op: 'knowledge', request: {action: 'read', address: {kind: 'source', value: source}}}).then(reply => {
-      if (!live) return
-      const content = reply.outcome?.result === 'knowledge' ? (reply.outcome.data as {content?: unknown}).content : undefined
-      setBody(typeof content === 'string' ? {ref: node.ref, lines: content.split('\n')} : {ref: node.ref, words: reply.error ?? 'The knowledge owner returned no text for this page.'})
-    })
-    return () => { live = false }
-  }, [pages, shown, transport])
+  const node = pages.status === 'read' ? pages.nodes.find(candidate => candidate.ref === shown) : undefined
+  const source = node?.source_refs?.[0]
+  const text = useOwnerOp(transport, node && source ? {op: 'knowledge', request: {action: 'read', address: {kind: 'source', value: source}}} : null, 'knowledge').reading
+  const body = useMemo((): WikiBody | null => !node ? null : !source ? {ref: node.ref, words: 'This page cites no source to read.'}
+    : text.status === 'answered' && typeof (text.value?.data as {content?: unknown} | undefined)?.content === 'string' ? {ref: node.ref, lines: ((text.value!.data as {content: string}).content).split('\n')}
+    : text.status === 'reading' ? null : {ref: node.ref, words: text.error ?? 'The knowledge owner returned no text for this page.'}, [node, source, text])
   return useMemo(() => {
     const values: Record<string, Value> = {}
     if (pages.status === 'read') put(values, 'pages', JSON.stringify(wikiPagesOf(pages.nodes)))
@@ -234,23 +222,16 @@ function useWikiBinding(transport: KernelTransportStatus | undefined): DesignBin
 
 // ---------------------------------------------------------------------------------------------------------------- the NOWs
 
-/** How often the NOWs re-read the ground's civil time (a minute: the finest its clock draws). */
-const NOWS_REREAD_MS = 60_000
 type GroundReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; ground: CentralGroundReading}
+/** The ground's civil time, Day and NOWs: one held reading, read again on the kernel's notice (its `clock` scope moves the civil
+ * minute), never on this tile's own timer. */
 function useGround(transport: KernelTransportStatus | undefined): GroundReading {
-  const [reading, setReading] = useState<GroundReading>({status: 'reading'})
-  const asked = useRef(0)
-  useEffect(() => {
-    const ask = ++asked.current
-    if (!transport || transport.kind === 'unavailable') { setReading({status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}); return }
-    const read = () => readGround(transport, null).then(ground => { if (ask === asked.current) setReading({status: 'read', ground}) },
-      cause => { if (ask === asked.current) setReading({status: 'refused', words: cause instanceof Error ? cause.message : String(cause)}) })
-    void read()
-    // The tile shows the ground's civil time: read again each minute, so the clock it draws is never older than that.
-    const every = setInterval(() => { void read() }, NOWS_REREAD_MS)
-    return () => clearInterval(every)
-  }, [transport])
-  return reading
+  const ground: OwnerReading<CentralGroundReading> = useHeldRead(transport && transport.kind !== 'unavailable' ? ['rail-ground', transport] : null, () => readGround(transport!, null))
+  return useMemo((): GroundReading => {
+    if (!transport || transport.kind === 'unavailable') return {status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}
+    if (ground.status === 'answered' && ground.value) return {status: 'read', ground: ground.value}
+    return ground.status === 'refused' ? {status: 'refused', words: ground.error ?? 'Central did not answer.'} : {status: 'reading'}
+  }, [transport, ground])
 }
 
 function useNowsBinding(transport: KernelTransportStatus | undefined): DesignBinding {

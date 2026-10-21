@@ -9,7 +9,7 @@
 //     (which reads through these three since lane BC3: one implementation of each leg), and the NOW leg again when the kernel says
 //     a NOW write landed (owners/notices.ts receiptMovesNow, lane W3).
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
-import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {readGraph, type GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
 import type {KernelTransportStatus, NativeDirectory} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {DesignBinding} from '../../frame/devices/designed'
@@ -63,7 +63,7 @@ export async function readFilesLeg(transport: KernelTransportStatus, subject: Im
 export async function readNowLeg(transport: KernelTransportStatus): Promise<NowLeg> {
   const at = new Date().toISOString()
   try {
-    const now = await kernelOp(transport, {op: 'now', project: null, request: {kind: 'list'}})
+    const now = await kernelRead(transport, {op: 'now', project: null, request: {kind: 'list'}})
     if (now.error || now.outcome?.result !== 'now_reading') return {records: [], boundaryOp: 'op now (kind:list)', at, refusal: REFUSAL(now.error ?? 'the NOW listing did not answer')}
     const data = (now.outcome as {data?: {records?: NowListRow[]}}).data
     return {records: data?.records ?? [], boundaryOp: 'op now (kind:list)', at, refusal: null}

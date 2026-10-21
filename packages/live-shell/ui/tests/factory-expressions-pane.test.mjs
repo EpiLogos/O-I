@@ -285,11 +285,14 @@ test('the centre frame keeps its mount and its container element; the placement 
   assert.doesNotMatch(panel.slice(panel.indexOf('onStatus: (value, reason)'), panel.indexOf('onHostRequest:')), /publishHostedExpressions|publishHostedChrome/, 'the status callback stays exactly as the lifetime test reads it')
 })
 
-test('centre residence: the Expressions panel stays mounted (hidden, never unmounted), and the centre is the Workbench in every mode (F2; source reading)', async () => {
+test('centre residence: a panel mounts when first shown and stays mounted after (hidden, never unmounted), and the centre is the Workbench in every mode (F2; source reading)', async () => {
   const app = await source('../src/App.tsx')
   assert.match(app, /\{panels\.filter\(panel => panel\.id !== 'world\.settings'\)\.map\(panel => \{ const Panel = panel\.component; const placed = expressionsPlaced && panel\.id === 'world\.expressions'/, 'every centre panel is rendered; only its wrapper\'s hidden attribute changes')
-  assert.match(app, /<div className="set-view-residence" data-focus-region="set" tabIndex=\{-1\} hidden=\{!setStands\}><TracksPane \/><\/div>/, 'Session view and Arrangement view stand in the main area, concealed under Pane view, never unmounted')
-  assert.match(app, /<Panel \{\.\.\.ctx\} \/>/)
+  assert.match(app, /<div className="set-view-residence" data-focus-region="set" tabIndex=\{-1\} hidden=\{!setStands\}><WhenShown shown=\{setStands\}><TracksPane \/><\/WhenShown><\/div>/, 'Session view and Arrangement view stand in the main area, concealed under Pane view, mounted when first shown and never unmounted after')
+  assert.match(app, /<WhenShown shown=\{placed \|\| \(centerPanel === panel\.id && \(mainView === 'pane' \|\| editor\)\)\}><Panel \{\.\.\.ctx\} \/><\/WhenShown>/, 'a centre panel mounts when first shown (a placed stage always: it plays under the set\'s views) and is only hidden after')
+  assert.match(app, /<WhenShown shown=\{browser\}><BrowserReadingProvider/, 'the browser mounts when first shown')
+  assert.match(app, /<WhenShown shown=\{dock\}><RailDevices \/><\/WhenShown>/, 'the rail\'s device bindings mount when the rail is first shown')
+  assert.match(app, /<WhenShown shown=\{detail\}><DetailContext\.Provider/, 'the detail host mounts when first shown')
   assert.match(app, /const workbenchCentre = \(_panel: string \| undefined\): string => 'native\.workbench'/, 'the panes are the centre in every mode (F2): the Expressions panel is concealed, not unmounted')
 })
 

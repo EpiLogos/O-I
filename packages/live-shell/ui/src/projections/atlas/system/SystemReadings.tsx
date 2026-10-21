@@ -14,7 +14,7 @@
 // The acts it binds go to their owners: an agent is chosen in the sessions provider, a file an agent made opens as the browser opens a
 // file (central/documents/useOpenCentralDocument.ts), and a landing is one BodySet on the landed world's register, on the revision read,
 // with the owner's receipt.
-import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
+import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import {useWorkspace} from '../../../shell/workspaceContext'
 import {useAgentSessionsOptional} from '../../../agent/AgentSessionsProvider'
 import {GROUND_OP, useCentralGroundAnswer} from '../../../central/devices/useCentralReadings'
@@ -23,6 +23,7 @@ import {setReadingOf} from '../../../frame/tracks/useCentralTracks'
 import {useCentralDocumentOpener} from '../../../central/documents/useOpenCentralDocument'
 import {useSpineEpoch} from '../../../owners/spine'
 import {useOwnerReadingsOf, type OwnerRead} from '../../../owners/ownerReading'
+import {useHeldRead, useStableMap} from '../../../owners/ownerCall'
 import {readGround, sourceLocation, type CentralGroundReading} from '../../../../../../../desktop/cradle/src/central/client'
 import type {KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
 import {baseBody, kernelWorldBodyOwner, subscribeWorldBody, worldBodyState, type WorldBodyOwner, type WorldBodyState} from '../body/worldBody'
@@ -113,34 +114,27 @@ export function SystemReadings(): null {
   const opener = useCentralDocumentOpener()
   const yours = useSyncExternalStore(subscribeWorldBody, worldBodyState, worldBodyState)
   const nowMs = useSyncExternalStore(subscribeSystemNow, systemNow, systemNow)
-  const [worlds, setWorlds] = useState<CentralWorldsReading>({state: 'reading'})
-  const [moved, setMoved] = useState(0)
-  useEffect(() => {
-    let live = true
-    void readWorlds(transport).then(next => { if (live) setWorlds(next) })
-    return () => { live = false }
-  }, [transport, epoch])
+  // Worlds, their bodies and page counts are held readings: read once for the window, shared with the tracks that read the same, and
+  // read again when the kernel says the ground moved — landing a world is a write whose receipt is that notice, so the act asks for
+  // nothing itself.
+  const worldsReading = useHeldRead(['worlds', transport], () => readWorlds(transport))
+  const worlds = useMemo((): CentralWorldsReading => worldsReading.status === 'answered' && worldsReading.value ? worldsReading.value : {state: 'reading'}, [worldsReading])
   const inSet = useMemo((): CentralWorld[] => worlds.state === 'read'
     ? systemWorlds(worlds.worlds, set.state === 'read' ? set.set.tracks.map(track => track.world) : [])
     : [], [worlds, set])
   const inSetKey = inSet.map(world => `${world.ref}@${world.project ?? ''}@${world.folder}`).join('|')
-  const [bodies, setBodies] = useState<ReadonlyMap<string, SystemBodyReading>>(new Map())
+  const usable = transport.kind === 'unavailable' ? null : transport
+  const bodyProjects = useMemo(() => usable ? inSet.flatMap(world => world.project ? [world.project] : []) : [], [usable, inSetKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const bodyAnswers = useOwnerReadingsOf(bodyProjects, project => JSON.stringify(['world-body', usable, project]),
+    project => async () => ({value: await readBodyOf(kernelWorldBodyOwner(usable!, project))}), epoch)
+  const bodies = useStableMap(new Map(inSet.flatMap(world => world.project && bodyAnswers.has(world.project) ? [[world.ref, bodyAnswers.get(world.project)!] as const] : [])))
   /** how many pages and flows each world holds, by the world's ref: the length of its folder's page listing */
-  const [held, setHeld] = useState<ReadonlyMap<string, number>>(new Map())
-  useEffect(() => {
-    if (transport.kind === 'unavailable') return
-    let live = true
-    for (const world of inSet) {
-      if (world.project) {
-        void readBodyOf(kernelWorldBodyOwner(transport, world.project)).then(next => { if (live) setBodies(known => new Map(known).set(world.ref, next)) })
-      }
-      void readWorldPages(transport, world).then(next => {
-        if (live && next.state === 'read') setHeld(known => new Map(known).set(world.ref, next.listing.pages.length))
-      })
-    }
-    return () => { live = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the worlds of the set are named by their key
-  }, [transport, inSetKey, epoch, moved])
+  const folders = useMemo(() => usable ? inSet.map(world => world.folder) : [], [usable, inSetKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const pageAnswers = useOwnerReadingsOf(folders, folder => JSON.stringify(['world-pages', usable, folder]), folder => async () => ({value: await readWorldPages(usable ?? undefined, {folder})}), epoch)
+  const held = useStableMap(new Map(inSet.flatMap(world => {
+    const listed = pageAnswers.get(world.folder)
+    return listed?.state === 'read' ? [[world.ref, listed.listing.pages.length] as const] : []
+  })))
   // each project world's ground, one reader of many held once for the window; none while no carrier stands
   const projects = useMemo(() => (transport.kind === 'unavailable' ? [] : inSet.flatMap(world => (world.project ? [world.project] : []))), [transport, inSetKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const projectGrounds = useOwnerReadingsOf(projects, project => projectGroundKey(transport, project), project => readProjectGround(transport, project), epoch)
@@ -184,15 +178,13 @@ export function SystemReadings(): null {
       land: async (body, lat, lon) => {
         if (transport.kind === 'unavailable') throw Error(transport.reason)
         if (!body.world.project) throw Error(`${body.world.name} is not a project’s world, so no register of its own keeps its body.`)
-        // read again whatever the answer: a refusal after the owner wrote (a readback that needs reconciling) leaves its record moved (r21)
-        try { return await landWorld(kernelWorldBodyOwner(transport, body.world.project), body, system.find(entry => entry.yours), allBodies.get(body.world.ref), lat, lon) }
-        finally { setMoved(n => n + 1) }
+        // a refusal after the owner wrote (a readback that needs reconciling) leaves its record moved: the write's receipt retires the held body (r21)
+        return await landWorld(kernelWorldBodyOwner(transport, body.world.project), body, system.find(entry => entry.yours), allBodies.get(body.world.ref), lat, lon)
       },
       unland: async body => {
         if (transport.kind === 'unavailable') throw Error(transport.reason)
         if (!body.world.project) throw Error(`${body.world.name} is not a project’s world, so no register of its own keeps its body.`)
-        try { return await unlandWorld(kernelWorldBodyOwner(transport, body.world.project), body, allBodies.get(body.world.ref)) }
-        finally { setMoved(n => n + 1) }
+        return await unlandWorld(kernelWorldBodyOwner(transport, body.world.project), body, allBodies.get(body.world.ref))
       },
     })
   }, [transport, system, allBodies, opener, selectSession])

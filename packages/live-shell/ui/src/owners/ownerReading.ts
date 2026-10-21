@@ -147,10 +147,17 @@ export class OwnerReadingEntry<T> {
   moved(): Promise<void> {
     const epoch = this.state.epoch
     if (epoch === null || this.state.status === 'reading') return Promise.resolve()
-    if (this.listeners.size === 0) { this.unread = true; return Promise.resolve() }
+    this.unread = true
+    if (this.listeners.size === 0) return Promise.resolve()
     // A driver reads this answer on the notice itself (owners/agency.ts), with a hook after it: not asked twice.
     if (this.driven) return Promise.resolve()
     return this.askAfter(epoch)
+  }
+
+  /** The answer is no longer the owner's: whoever reads it next draws it carried and has the owner asked. The registry marks every
+   * entry before any is asked, so a read that is made of other held reads finds those retired too. */
+  retire(): void {
+    if (this.state.epoch !== null && this.state.status !== 'reading') this.unread = true
   }
 
   private driven = false
@@ -218,13 +225,16 @@ export function createOwnerReadings(now: () => number = Date.now, kept?: KeptRea
   const held = new Map<string, OwnerReadingEntry<unknown>>()
   /** The answers nobody reads, longest unread first. */
   const unread = new Map<string, OwnerReadingEntry<unknown>>()
-  const release = (entry: OwnerReadingEntry<unknown>) => {
+  /** `readerLeft`: its last reader went, so the next one draws it carried and has the owner asked. Parked, an entry that was only
+   * read once from code keeps its answer as it stands; either way it joins the bounded set of answers nobody reads. */
+  const retain = (entry: OwnerReadingEntry<unknown>, readerLeft: boolean) => {
     if (held.get(entry.key) !== entry) return
     const status = entry.snapshot().status
     // A refusal is remembered for its epoch even with nobody reading; a read that never answered has nothing to draw.
-    if (status === 'refused') return
+    if (status === 'refused') { if (!readerLeft && entry.readers === 0) held.delete(entry.key); return }
+    if (status === 'reading' && !readerLeft) return
     if (status !== 'answered') { held.delete(entry.key); return }
-    entry.leave()
+    if (readerLeft) entry.leave()
     unread.delete(entry.key)
     unread.set(entry.key, entry)
     for (const [key, kept] of unread) {
@@ -233,8 +243,9 @@ export function createOwnerReadings(now: () => number = Date.now, kept?: KeptRea
       if (held.get(key) === kept && kept.readers === 0) held.delete(key)
     }
   }
+  const release = (entry: OwnerReadingEntry<unknown>) => retain(entry, true)
   return {
-    park: entry => { if (entry.readers === 0) release(entry) },
+    park: entry => { if (entry.readers === 0) retain(entry, false) },
     entry<T>(key: string, read: OwnerRead<T>, volatile = false): OwnerReadingEntry<T> {
       let entry = held.get(key) as OwnerReadingEntry<T> | undefined
       unread.delete(key)
@@ -245,7 +256,11 @@ export function createOwnerReadings(now: () => number = Date.now, kept?: KeptRea
       return entry
     },
     entries: () => [...held.values()],
-    moved: async () => { await Promise.all([...held.values()].map(entry => entry.moved())) },
+    moved: async () => {
+      const all = [...held.values()]
+      for (const entry of all) entry.retire()
+      await Promise.all(all.map(entry => entry.moved()))
+    },
   }
 }
 

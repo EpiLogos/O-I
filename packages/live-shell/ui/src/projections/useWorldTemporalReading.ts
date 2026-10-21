@@ -33,17 +33,16 @@ import {projectDayTracks, dayClipEventIndex} from '../timeline/dayTrackAdapter';
 import {projectRunTracks, runClipEventIndex, type AdmittedRun} from '../timeline/runTrackAdapter';
 import {projectConversationTracks, conversationClipEventIndex} from '../timeline/conversationTrackAdapter';
 import {projectLaneWorldTracks, projectWorldTracks} from '../timeline/registerWorldTrackAdapters';
-import {TEMPORAL_FLOOR_MS, useTemporalReading} from '../timeline/temporalPoll';
+import {useTemporalReading} from '../timeline/temporalPoll';
 import {agencyEntry, useAgencyAnswer} from '../owners/agency';
 import {useSpineEpoch} from '../owners/spine';
 import type {WorldTrackSet} from '../timeline/worldTrackAdapter';
 import {useAtlasAionReading} from './atlas/AtlasProjectionPanel';
 
 // The read's real cost is the owner's (K1: the temporal read walks every
-// stream; the 2 s answer cache makes repeats identical) — so it is read when
-// told, and the declared cadence is the frame's one read's floor: the longest
-// a seen reading waits for the writers nothing tells the shell about.
-const READ_CADENCE_MS = TEMPORAL_FLOOR_MS;
+// stream) — so it is read when the kernel says the ground moved (`readings_changed`) or an act tells it, and its only timer is the
+// civil week's window moving at UTC midnight: that day is the declared cadence.
+const READ_CADENCE_MS = 24 * 60 * 60 * 1000;
 const READ_CADENCE_ID = 'central-temporal-read';
 
 export interface WorldTimelineSource {
@@ -123,7 +122,7 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       id: READ_CADENCE_ID,
       everyMs: READ_CADENCE_MS,
       label: 'civil-field read',
-      declaredBy: 'timeline projection (K1-measured owner cost: the temporal read walks every stream) — read when told, this is its floor',
+      declaredBy: 'timeline projection (K1-measured owner cost: the temporal read walks every stream) — read when the kernel reports the ground moved; the UTC midnight, when its window moves, is its only timer',
     });
     spine.armCadence(READ_CADENCE_ID, true);
     return spine.subscribe(() => bumpRevision((value) => value + 1));
