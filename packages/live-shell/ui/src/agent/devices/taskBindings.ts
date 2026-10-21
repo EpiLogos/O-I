@@ -12,9 +12,13 @@
 // written against the revision that stands. The task's log is not read: the temporal stream names the session, not the task's
 // tools along its time.
 //
-// Runs lists a piece of work's attempts (kernel factory_attempt_read, addressed by a Factory state path and a run ref). The agency
-// reading names neither for a session (shell/ModeDetail.tsx FactoryTaskLogDetail: "the sessions reading names none"), so its
-// attempts and works are absent and say so; its view settings are the shell's; Stands has no owner write. Pure, apart from the
+// Runs lists a piece of work's attempts. The agency reading names no Factory run for a session, but the take lanes do (T-COVERAGE §1.3):
+// AIKit's `encounter_task_attempts_list` says which Factory attempts the session's bound task serves, each with its Run and Factory state,
+// and Factory's `factory_attempt_read` says what each is (owners/attemptTakes.ts readAttemptTakes, agent/factoryTakes.ts FactoryTake).
+// Runs reads those takes: the session's Runs are its works, the selected Run's attempts its attempts, and the one whose Return Central
+// received the one that stands. Stands writes through the take lanes' own act: Factory's `factory_owner` AttemptReceiving (kernel
+// factory.rs:373; attemptTakes.ts chooseAttempt), which proposes the attempt's Return to Central's receiving field. Without the takes
+// handed in, the attempts are absent and Stands stands disabled, saying so. Its view settings are the shell's. Pure, apart from the
 // view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -23,6 +27,7 @@ import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {sessionRowsOf} from './threadBinding'
 import {familyFaceDevice} from './mainTrackBindings'
 import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {FactoryTake, TakeState} from '../factoryTakes'
 import {SETTINGS_WHY, TASKS_DEVICE_SETTINGS, settingsRefusal, taskSettingChange, tasksDeviceChange, tasksDeviceValues, writeSessionSettings,
   type TasksDeviceSetting} from '../sessionSettings'
 
@@ -208,34 +213,105 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
 // ---------------------------------------------------------------------------------------------------------------- Runs
 
 export const RUNS_REFUSE = {
-  stands: missing('Stands', 'an attempt\'s acceptance through the kernel (factory_attempt_read only reads)', 'Software Factory'),
+  /** No takes handed in: the chain has not given Runs the take lanes' reading of the session. */
+  stands: 'Stands: Runs is not handed the session\'s takes here (the take lanes\' reading, owners/attemptTakes.ts useAttemptTakes), so no attempt is chosen from it; Factory\'s factory_owner AttemptReceiving is the write.',
+} as const
+/** Why the session's attempts stand absent. */
+export const RUNS_UNREAD = {
+  noTakes: 'The session\'s attempts are the take lanes\' reading (AIKit encounter_task_attempts_list, each Run read by factory_attempt_read), which is not handed to Runs here.',
+  noneServed: 'AIKit names no Factory attempt that the session\'s bound task serves.',
+  none: 'Factory receives a whole attempt: no owner operation takes a Return back from Central\'s receiving field, so nothing un-stands an attempt.',
 } as const
 
 /** The view's own settings and the shell's starting value of each (§19.11: Show All, Group by Attempt, View Tree, Compare None). */
 export const RUNS_VIEW: Readonly<Record<string, Value>> = {show: 'all', group: 'attempt', view: 'tree', compare: 'none'}
 const RUNS_LOCAL = ['work', 'attempt', 'show', 'group', 'view', 'compare', 'task', 'standsPending'] as const
 
-/** Runs' values: the selected session (the Thread's own key), the view's settings; no attempts and no works: no reading names the
- * session's Factory run. */
-export function runsValues(session: string | null, holds: ChainHolds): Values {
+/** The take lanes' reading of the selected session (owners/attemptTakes.ts useAttemptTakes `of`: null while AIKit has not answered, or
+ * names nothing for it) and their act: choosing the attempt that stands (`choose`, Factory's AttemptReceiving), which answers {ok, note}
+ * or {ok: false, error} in the owner's words. `timezone` is the clock an attempt's day and time are read on (the window's, absent). */
+export interface RunsTakes {
+  readonly takes: readonly FactoryTake[] | null
+  readonly choose: (take: FactoryTake) => Promise<unknown>
+  readonly timezone?: string
+}
+
+/** An attempt's standing in the design's words (software-factory__attempt-review.tsx STATES), from Factory's (factoryTakes.ts TakeState). */
+const ATTEMPT_STATE: Readonly<Record<TakeState, string>> = {prepared: 'queued', running: 'running', returned: 'done', failed: 'failed'}
+
+/** A take's day and time on a clock (`14 Oct`, `09:40`); nothing where the owner disclosed no admission time. */
+function dayAndTime(atUnixMs: number | null, timezone: string | undefined): {day?: string; at?: string} {
+  if (atUnixMs === null || !Number.isFinite(atUnixMs)) return {}
+  try {
+    const at = new Date(atUnixMs)
+    return {day: new Intl.DateTimeFormat('en-GB', {timeZone: timezone, day: 'numeric', month: 'short'}).format(at),
+      at: new Intl.DateTimeFormat('en-GB', {timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(at)}
+  } catch { return {} }
+}
+
+/** The session's Runs as the design's works ({id: the Run's ref, name: the unit it works, when the owner's ref says one}), in the order
+ * the takes give them, and the attempts of the chosen Run as the design's attempts, oldest first by admission (the owner's order where
+ * it disclosed none): {id, n, state, session, day, at, seen (minutes from admission to its Return or failure), current (Central received
+ * its Return), ret {summary, receiving}, tasks: [] (no reading gives an attempt's tasks)}. Pure. */
+export function runsOfTakes(takes: readonly FactoryTake[], work: string | undefined, timezone?: string): {works: Record<string, Value>[]; work: string | undefined; attempts: Record<string, unknown>[]} {
+  const works: Record<string, Value>[] = []
+  for (const take of takes) if (!works.some(row => row.id === take.runRef)) works.push({id: take.runRef, ...(take.unit ? {name: take.unit} : {})})
+  const chosen = work !== undefined && works.some(row => row.id === work) ? work : (works[works.length - 1]?.id as string | undefined)
+  const mine = takes.filter(take => take.runRef === chosen)
+  const ordered = mine.every(take => take.startUnixMs !== null) ? [...mine].sort((a, b) => a.startUnixMs! - b.startUnixMs!) : mine
+  const attempts = ordered.map((take, at) => {
+    const seen = take.startUnixMs !== null && take.endUnixMs !== null ? Math.max(0, Math.round((take.endUnixMs - take.startUnixMs) / 60_000)) : undefined
+    return {id: take.attemptRef, n: at + 1, state: ATTEMPT_STATE[take.state], session: take.sessionRef, ...dayAndTime(take.startUnixMs, timezone), ...(seen !== undefined ? {seen} : {}),
+      current: !!take.receivingRef, ret: {...(take.summary ? {summary: take.summary} : {}), receiving: !!take.receivingRef}, tasks: []}
+  })
+  return {works, work: chosen, attempts}
+}
+
+/** Runs' values: the selected session (the Thread's own key), the view's settings; with the takes, the session's Runs, the chosen Run's
+ * attempts and the one that stands. */
+export function runsValues(session: string | null, holds: ChainHolds, takes?: RunsTakes): Values {
   const view = viewHolds(holds, RUNS_ID)
   const values: Record<string, Value> = {}
   for (const key of RUNS_LOCAL) put(values, key, view[key] ?? RUNS_VIEW[key])
   put(values, 'session', session)
+  if (session && takes?.takes) {
+    const read = runsOfTakes(takes.takes, typeof view.work === 'string' ? view.work : undefined, takes.timezone)
+    values.works = JSON.stringify(read.works)
+    values.attempts = JSON.stringify(read.attempts)
+    put(values, 'work', read.work)
+    const stands = read.attempts.find(attempt => attempt.current === true)
+    put(values, 'stands', stands ? String(stands.id) : undefined)
+  }
   return values
 }
 
-export function runsBinding(session: string | null, holds: ChainHolds): DesignBinding {
+/** Why Runs' attempts and Stands cannot stand now, by key; empty when the takes are read. */
+function runsStanding(session: string | null, takes?: RunsTakes): Record<string, Standing> {
+  if (!takes) return {stands: {disabled: RUNS_REFUSE.stands}}
+  if (!session) return {stands: {disabled: 'Stands: no session is selected; an attempt stands on its session\'s Run.'}}
+  if (!takes.takes) return {stands: {disabled: `Stands: ${RUNS_UNREAD.noneServed}`}}
+  return {}
+}
+
+export function runsBinding(session: string | null, holds: ChainHolds, takes?: RunsTakes): DesignBinding {
+  const standing = runsStanding(session, takes)
   return {
     id: RUNS_ID,
-    values: runsValues(session, holds),
-    standing: disabled(RUNS_REFUSE),
+    values: runsValues(session, holds, takes),
+    standing,
     local: Object.fromEntries(RUNS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(RUNS_ID, key, value)])),
     writes: key => key === 'stands',
     write: async changes => {
-      for (const {key} of changes) {
+      for (const {key, value} of changes) {
         holdView(RUNS_ID, 'standsPending', undefined)
-        throw Error(key === 'stands' ? RUNS_REFUSE.stands : `${key} is a reading: its owner reports it; nothing here changes it.`)
+        if (key !== 'stands') throw Error(`${key} is a reading: its owner reports it; nothing here changes it.`)
+        if (standing.stands?.disabled) throw Error(standing.stands.disabled)
+        if (value === 'none') throw Error(RUNS_UNREAD.none)
+        const take = takes!.takes!.find(row => row.attemptRef === value && row.sessionRef === session)
+        if (!take) throw Error(`Stands: ${String(value)} is no attempt of the session's takes.`)
+        // Factory's own act (AttemptReceiving): the attempt's Return proposed to Central's receiving field, answered in its words.
+        const answer = await takes!.choose(take) as {ok?: unknown; error?: unknown} | undefined
+        if (answer && answer.ok === false) throw Error(typeof answer.error === 'string' ? answer.error : 'Factory did not receive the attempt.')
       }
     },
   }

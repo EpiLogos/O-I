@@ -412,7 +412,8 @@ test('Context & world stands after the Answer and reads its session\'s world: th
     await assert.rejects(() => binding.write([{key, value: 1}]), /No owner/)
   }
   for (const key of ['r:packet', 'w:packet', 'r:world', 'w:world']) assert.match(binding.standing[key].disabled, /central\.world-relations\.save/, `${key}: disabled with its reason`)
-  await assert.rejects(() => binding.write([{key: 'r:world', value: true}]), /No owner takes a place request/)
+  // REPLACED (T-COVERAGE §1.3): central.world-relations.save exists; it waits on the route that carries the person's authority (§1.1).
+  await assert.rejects(() => binding.write([{key: 'r:world', value: true}]), /central\.world-relations\.save, which waits on the kernel route that carries the person's authority/)
   assert.equal(typeof binding.local.reachPending, 'function', 'a raised Reach waits in the view for Confirm')
 })
 

@@ -20,7 +20,7 @@
 // Pure TypeScript. No React, no transport.
 import {dayClipEventIndex, dayTrackLaneOf, projectDayTracks} from './dayTrackAdapter'
 import {eventDayKey, type TemporalEventRow, type TemporalStreamAbsence} from './timeSpine'
-import type {WorldMixer, WorldTrack, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldWalk} from './worldTrackAdapter'
+import type {WorldMixer, WorldTakeLane, WorldTrack, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldWalk} from './worldTrackAdapter'
 import type {WorldTimelineSource} from '../projections/useWorldTemporalReading'
 import {CENTRAL_DAYS_PATH, dateOfDayPath, dayEntriesOf} from '../central/daySurface'
 import type {DaySet} from '../central/daySet'
@@ -61,9 +61,11 @@ export const CENTRAL_MIXER: WorldMixer = {
   output: {meaning: 'Every world sends its work to the Day, the Main track', route: 'Day'},
 }
 
-/** Why the lanes Central's owners do not give are absent, in their terms. */
+/** Why the lanes Central's owners do not give are absent, in their terms. A page's revisions are its take lanes (manual §18.1 "A page's
+ * revisions are its takes"), read from Central's file-history owner (`central.temporal.source-history`, T-COVERAGE §1.3): the takes
+ * stand absent only while no page of today's worlds has its history read, or none was saved over today. */
 export const CENTRAL_LANES_ABSENT = {
-  takes: missing('Revisions as take lanes', 'central.document.revisions {source_ref, document_id} → [{revision, saved_at, state: "draft" | "saved" | "edited-since-save"}], and central.document.keep_revision {source_ref, document_id, revision, range?} for the comp that keeps a revision', 'Central'),
+  takes: 'Revisions as take lanes: no page of today\'s worlds has its history read yet (Central\'s central.temporal.source-history).',
   automation: 'No parameter of a page moves over the day: Central keeps no envelope (manual §18.1 "A page has no envelopes").',
   events: 'Event lanes are Factory\'s: a session\'s messages, files, terminal and pages read.',
 } as const
@@ -142,6 +144,50 @@ export interface CentralReading {
    * Activator off, its chain Packet · Nara · Scope (T-WORLDS §6 W4). */
   practice?: string | null
   controls?: CentralControls
+  /** Each page's history as Central's file-history owner reads it, by the page's path (its clip id): its revisions are its takes. */
+  histories?: ReadonlyMap<string, CentralPageHistory>
+  /** Now, for the revision that stands to end at (the ruler draws no future). Absent: it ends where it began. */
+  nowMs?: number
+}
+
+/** One page's history (`central.temporal.source-history`, central.source-history/v1: entries newest first, each {revision,
+ * previous_revision, recorded_at_unix_seconds, actor, actor_kind}, and the revision that stands now), or Central's refusal of it. */
+export type CentralPageHistory = {readonly state: 'read'; readonly history: unknown} | {readonly state: 'refused'; readonly reason: string}
+
+/** The SourceRef a page of a world is known by to Central's file-history owner: your world's pages under the root register
+ * (`central:source:control:root:<path>`), a project world's under its project (`central:source:project:<name>:<path in the project>`).
+ * Null where the page's path is in neither. Pure. */
+export function pageSourceRef(world: Pick<CentralWorld, 'project'>, path: string): {sourceRef: string; project?: string} | null {
+  if (!world.project) return path.startsWith('Work/') ? null : {sourceRef: `central:source:control:root:${path}`}
+  const base = `Work/${world.project}/`
+  return path.startsWith(base) ? {sourceRef: `central:source:project:${world.project}:${path.slice(base.length)}`, project: world.project} : null
+}
+
+const revisionTail = (revision: string): string => revision.split(':').pop()?.slice(0, 8) ?? revision
+
+/** A page's saved revisions over today as take lanes under its world's track, oldest first: each the stretch of the ruler it stood for,
+ * from its save (or today's start, for the revision that stood when the day began) to the next save — the one that stands now to `nowMs`.
+ * A revision saved and replaced before today, or after it, is no take of today. Pure. */
+export function pageTakesOf(page: {path: string; title: string; world: string}, history: unknown, minuteOf: (unixMs: number) => number | null,
+  todayStart: number | null, nowMs?: number): WorldTakeLane[] {
+  const doc = history as {schema?: unknown; entries?: unknown; revision?: {revision?: unknown}} | null
+  if (!doc || doc.schema !== 'central.source-history/v1' || !Array.isArray(doc.entries) || todayStart === null) return []
+  const saves = (doc.entries as {revision?: unknown; recorded_at_unix_seconds?: unknown; actor_kind?: unknown}[])
+    .flatMap(entry => typeof entry?.revision === 'string' && typeof entry.recorded_at_unix_seconds === 'number' && Number.isFinite(entry.recorded_at_unix_seconds)
+      ? [{revision: entry.revision, at: entry.recorded_at_unix_seconds * 1000, by: typeof entry.actor_kind === 'string' ? entry.actor_kind : null}] : [])
+    .sort((a, b) => a.at - b.at)
+  const current = typeof doc.revision?.revision === 'string' ? doc.revision.revision : null
+  const todayEnd = todayStart + 86_400_000
+  return saves.flatMap((save, i) => {
+    const next = saves[i + 1]
+    const until = next ? next.at : nowMs ?? save.at
+    if (until <= todayStart && next || save.at >= todayEnd) return []
+    const start = minuteOf(Math.max(save.at, todayStart)), end = minuteOf(Math.min(Math.max(until, save.at), todayEnd - 1))
+    if (start === null || end === null) return []
+    return [{id: `${page.path}@${save.revision}`, trackId: centralWorldTrackId(page.world), name: `${page.title} · ${clock(start)}`,
+      spans: [{start, end: Math.max(start, end), label: `revision ${revisionTail(save.revision)}${save.by ? ` · saved by a ${save.by}` : ''}`}],
+      ...(current === save.revision ? {standing: true} : {})}]
+  })
 }
 
 /** The owner's Flows folder (flow/instances.ts USER_FLOWS_DIR): your world's folder. */
@@ -350,9 +396,24 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     ...(walks.length ? {walks} : {}),
     mixer: CENTRAL_MIXER,
     main: {name: today ? `Day · ${today}` : 'Day', chain: ['Day', 'Approvals']},
-    lanes: {absent: CENTRAL_LANES_ABSENT},
+    lanes: centralLanes(reading, pages, minuteOf, todayStart),
     ...(actions ? {actions} : {}),
   }
+}
+
+/** The lanes under today's tracks: each page's revisions as its take lanes, where its history was read; absent with the reason
+ * otherwise (the first refusal in Central's words, or none saved over today). */
+function centralLanes(reading: CentralReading, pages: ReadonlyMap<string, readonly Page[]>, minuteOf: (unixMs: number) => number | null, todayStart: number | null) {
+  const takes = [...pages.values()].flat().flatMap(page => {
+    const history = reading.histories?.get(page.path)
+    return history?.state === 'read' ? pageTakesOf(page, history.history, minuteOf, todayStart, reading.nowMs) : []
+  })
+  if (takes.length) return {takes, absent: {automation: CENTRAL_LANES_ABSENT.automation, events: CENTRAL_LANES_ABSENT.events}}
+  const refused = [...(reading.histories?.values() ?? [])].find((history): history is Extract<CentralPageHistory, {state: 'refused'}> => history.state === 'refused')
+  const read = [...(reading.histories?.values() ?? [])].some(history => history.state === 'read')
+  return {absent: {...CENTRAL_LANES_ABSENT,
+    ...(refused ? {takes: `Revisions as take lanes: Central did not read a page's history — ${refused.reason}`}
+      : read ? {takes: 'Revisions as take lanes: no page of today\'s worlds was saved over today (Central\'s central.temporal.source-history).'} : {})}}
 }
 
 /** The owner's acts over this set's own clips, rows and tracks: an id that is none of them is refused before any owner is called. */

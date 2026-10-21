@@ -8,7 +8,8 @@
 //     first accepted agent is the identity, agent/AgentDeviceChain.tsx:38-46);
 //   - the workcell: `workcell_status_read` (the shared workcell answer, owners/readers.ts);
 //   - Central's ground: the `central` op `inspect` (readGround) — the civil-time policy and today's Day reading — held once for the
-//     window (owners/ownerReading.ts), as the Day's own answer is (owners/day.ts).
+//     window (owners/ownerReading.ts), as the Day's own answer is (owners/day.ts);
+//   - Central's readings carried by invoke_action (useCentralAction): the Day's own settings and moves (T-COVERAGE §1.3).
 // Lane W3's receipts (owners/notices.ts): a receiving act or a Day write the kernel carried (`receiving_changed`, `day_changed`)
 // reads the Day document again, and a Day write reads the ground again — no timer, and nothing the kernel did not carry.
 import {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react'
@@ -17,16 +18,21 @@ import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {readGround, type CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {onAttentionRegained} from '../../owners/attention'
-import {ownerReadings, useOwnerReading, type OwnerRead} from '../../owners/ownerReading'
+import {ownerReadings, useOwnerReading, useOwnerReadingsOf, type OwnerRead, type OwnerReading} from '../../owners/ownerReading'
+import {kernelReadSend} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {pageSourceRef, type CentralPageHistory} from '../../timeline/centralTrackAdapter'
+import type {CentralWorld, WorldPagesReading} from '../centralWorlds'
+import {useOwnerOp, type OpOutcome} from '../../owners/ownerCall'
 import {useSpineEpoch} from '../../owners/spine'
 import {useRosterAgents, useWorkcellAnswer} from '../../owners/readers'
 import {createReceiptCursor, receiptMovesDay, receiptMovesReceiving} from '../../owners/notices'
 import {Workspace} from '../../shell/workspaceContext'
 import {lookupNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
-import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {KernelOp, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {dieFaceOf} from './dayDie'
+import {DAY_MOVES_ACTION, DAY_SETTINGS_ACTION, type DayOwnReadings} from './dayBinding'
 import type {CentralReads, NaraState} from './centralDeviceModel'
 
 const NO_RECEIPTS: readonly KernelReceipt[] = []
@@ -108,6 +114,77 @@ function installGroundNotices() {
       if (standing.epoch && standing.status === 'answered' && (age === null || age >= GROUND_ATTENTION_MIN_AGE_MS)) void entry.refresh(standing.epoch)
     }
   })
+}
+
+/** One Central reading carried by the kernel's invoke_action, as a device reads it: the action's data, its refusal in the owner's
+ * words, or nothing yet. */
+export type ActionAnswer = {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}
+
+/** The kernel op that asks Central for one reading (action.rs invoke → Central's runner; owner_write.rs carries a Central reading as a
+ * reading: it retires nothing). */
+export const centralActionOp = (action: string, input: Readonly<Record<string, unknown>>, project?: string): KernelOp =>
+  ({op: 'invoke_action', ...(project ? {project} : {}), invocation: {action, target_ref: `central:action:${action}`, input: {...input}}})
+
+/** The dispatch as an answer: Central's data, or its words (a refusal, an owner the kernel cannot reach, an action it routes to no
+ * owner). Pure. */
+export function actionAnswerOf(reading: Pick<OwnerReading<OpOutcome<'action_dispatched'>>, 'status' | 'value' | 'error'>, action: string): ActionAnswer {
+  if (reading.status === 'refused') return {status: 'refused', error: reading.error ?? `${action} did not answer.`}
+  if (reading.status !== 'answered' || !reading.value) return {status: 'reading'}
+  const dispatch = reading.value.dispatch
+  switch (dispatch.state) {
+    case 'invoked': return {status: 'answered', value: dispatch.data}
+    case 'owner_refused': return {status: 'refused', error: dispatch.message}
+    case 'owner_unavailable': return {status: 'refused', error: dispatch.detail}
+    case 'unsupported_action': return {status: 'refused', error: dispatch.detail}
+    case 'malformed_ref': return {status: 'refused', error: dispatch.detail}
+    case 'unknown_owner': return {status: 'refused', error: `The kernel routes ${dispatch.action} to no owner (desktop/cradle/kernel/src/action.rs invoke).`}
+  }
+}
+
+/** One Central reading for a view, held for the window and read again on the kernel's notice. `input` null reads nothing. */
+export function useCentralAction(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>> | null, project?: string): ActionAnswer {
+  const {reading} = useOwnerOp(transport, input ? centralActionOp(action, input, project) : null, 'action_dispatched', `${action} did not answer.`)
+  return useMemo(() => input ? actionAnswerOf(reading, action) : {status: 'reading'},
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the reading names the answer
+    [reading, action, input === null])
+}
+
+/** The Day's own settings (central.day.settings.read) and the moves of the Day shown (central.day.moves.read {day_ref}, only when
+ * its document stands), with the policy's timezone: the readings dayBinding.ts dayOwnValuesOf reads. */
+export function useDayOwnReadings(transport: KernelTransportStatus, dayRef: string | null, timezone: string | null): DayOwnReadings {
+  const settings = useCentralAction(transport, DAY_SETTINGS_ACTION, {})
+  const moves = useCentralAction(transport, DAY_MOVES_ACTION, dayRef ? {day_ref: dayRef} : null)
+  return useMemo(() => ({
+    settings: settings.status === 'answered' ? settings.value : null,
+    settingsRefusal: settings.status === 'refused' ? settings.error : null,
+    moves: !dayRef ? null : moves.status === 'answered' ? moves.value : undefined,
+    movesRefusal: dayRef && moves.status === 'refused' ? moves.error : null,
+    timezone,
+  }), [settings, moves, dayRef, timezone])
+}
+
+/** Central's file-history reading, a page's revisions (its takes, manual §18.1). */
+export const SOURCE_HISTORY_ACTION = 'central.temporal.source-history'
+/** How many of a page's saves are read: a day's worth for a page saved often. */
+export const PAGE_HISTORY_LIMIT = 50
+
+/** Each page's history (central.temporal.source-history through invoke_action), by the page's path, for today's worlds' pages: held for
+ * the window per page, a refusal kept as the page's answer in Central's words (timeline/centralTrackAdapter.ts pageTakesOf reads it). */
+export function usePageHistories(transport: KernelTransportStatus | undefined, worlds: readonly Pick<CentralWorld, 'ref' | 'project'>[],
+  pages: ReadonlyMap<string, WorldPagesReading>, epoch: string): ReadonlyMap<string, CentralPageHistory> {
+  const usable = transport && transport.kind !== 'unavailable' ? transport : null
+  const rows = useMemo(() => !usable ? [] : worlds.flatMap(world => {
+    const read = pages.get(world.ref)
+    return read?.state === 'read' ? read.listing.pages.flatMap(page => { const ref = pageSourceRef(world, page.location.path); return ref ? [JSON.stringify([page.location.path, ref.sourceRef, ref.project ?? null])] : [] }) : []
+  }), [usable, worlds, pages])
+  const answers = useOwnerReadingsOf(rows, row => JSON.stringify(['page-history', usable, row]), row => async () => {
+    const [, sourceRef, project] = JSON.parse(row) as [string, string, string | null]
+    const call = await kernelReadSend(usable!, centralActionOp(SOURCE_HISTORY_ACTION, {source_ref: sourceRef, limit: PAGE_HISTORY_LIMIT, ...(project ? {project} : {})}))
+    const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null}, SOURCE_HISTORY_ACTION)
+    return {value: answer.status === 'answered' ? {state: 'read', history: answer.value} as CentralPageHistory
+      : {state: 'refused', reason: answer.status === 'refused' ? answer.error : `${SOURCE_HISTORY_ACTION} did not answer.`} as CentralPageHistory}
+  }, epoch)
+  return useMemo(() => new Map([...answers].map(([row, history]) => [(JSON.parse(row) as [string])[0], history])), [answers])
 }
 
 /** Central's ground for the root register, held once for the window: the reading, the refusal in the owner's words (or the

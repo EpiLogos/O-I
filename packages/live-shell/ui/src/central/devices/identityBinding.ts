@@ -17,7 +17,7 @@ export const IDENTITY_DESIGN = 'central:agent-identity'
 
 export const IDENTITY_WIRING: DesignWiring = {
   design: IDENTITY_DESIGN,
-  keys: ['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds', 'types'],
+  keys: ['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds', 'types', 'continuity'],
   reads: {
     light: 'the roster answered (lit) or refused (dark): op agent_definition roster, the window\'s shared roster answer',
     read: 'read when the roster answered, refused when it did not',
@@ -36,6 +36,8 @@ export const IDENTITY_WIRING: DesignWiring = {
   absent: {
     marks: 'The mark set is the person\'s choice for the whole shell (Settings); no reading of it reaches this chain, so the blade stands.',
     types: 'Central\'s profile names no type yet: an agent\'s type is set on the Agent device\'s Type page and held with the agent, and no reading of it reaches this chain.',
+    // D7, Changed since (§19.4): what moved in the agent's body and identity since a receipt is Actuation's continuityDelta.
+    continuity: 'Changed since: missing op — Actuation\'s continuityDelta is library-only; no Actuation command and no kernel route carry it (T-COVERAGE §1.5, Actuation: continuity).',
   },
 }
 

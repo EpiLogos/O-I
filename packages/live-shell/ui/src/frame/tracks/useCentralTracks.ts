@@ -33,7 +33,7 @@ import {useSpineEpoch} from '../../owners/spine'
 import {useSeatStatusAnswer} from '../../agent/devices/workcellReads'
 import {withWorksIn} from './returnTracks'
 import {centralWorldTrackId} from '../../timeline/centralTrackAdapter'
-import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
+import {useCentralGroundAnswer, usePageHistories} from '../../central/devices/useCentralReadings'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {
   CENTRAL_DAY_RECORDS_PATH,
@@ -148,6 +148,9 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
     const byTrack = new Map(inSet.map(world => [centralWorldTrackId(world.ref), world.project]))
     return (track: {id: string}) => byTrack.get(track.id) ?? null
   }, [inSet])
-  return useMemo(() => withWorksIn(projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice}), register, projectOf, seats.status === 'refused' ? seats.error : null),
-    [civil, worlds, set, pages, playing, controls, colours, practice, register, projectOf, seats])
+  // A page's revisions are its takes (manual §18.1): each page's source history, read once per page and again on the spine's epoch. The
+  // standing take runs to now as of the last time the set was drawn (now is read inside the memo, never a dependency of it).
+  const histories = usePageHistories(transport, inSet, pages, epoch)
+  return useMemo(() => withWorksIn(projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice, histories, nowMs: Date.now()}), register, projectOf,
+    seats.status === 'refused' ? seats.error : null), [civil, worlds, set, pages, playing, controls, colours, practice, histories, register, projectOf, seats])
 }

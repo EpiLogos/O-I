@@ -18,6 +18,7 @@
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {SaveRouterOutcome} from '../../inhabitants/manifest'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
+import type {PageField} from '../../../../../../desktop/cradle/src/kernel/types'
 import {civilDayName} from './dayBinding'
 import {civilDateOf, clockOf, headOf, wordsOfHtml, type DayPage, type FlowPage, type PageEntry} from './pageReadings'
 
@@ -55,7 +56,8 @@ const NO_SELECTION = 'The page\'s selection (ql-flow.html currentSel) does not c
 export const DOCUMENT_WIRING: DesignWiring = {
   design: DOCUMENT_DESIGN,
   keys: ['light', 'template', 'title', 'view', 'flowView', 'ground', 'layout', 'pinned', 'agentWrites', 'autosave', 'copied', 'dirty', 'outcome', 'face', 'date',
-    'tabTitle', 'highlights', 'notes', 'entries', 'packet', 'journal', 'island', 'save', 'reread', 'copy', 'clear'],
+    'tabTitle', 'highlights', 'notes', 'entries', 'packet', 'journal', 'island', 'save', 'reread', 'copy', 'clear',
+    'selection', 'selectionAct', 'packetScope', 'act.highlight', 'act.note', 'act.topacket', 'act.remember', 'act.answerthis'],
   reads: {
     light: 'the reached document stands: lit when its owner answered (the Flow file read, the Day document), dark when it refused',
     template: 'the reached document\'s form (documentDoor.ts DocumentInPane.form): Day or Flow',
@@ -81,6 +83,9 @@ export const DOCUMENT_WIRING: DesignWiring = {
     view: 'Page or Source changes how this device shows the page; the page itself is the same',
     copy: 'Copy puts the packet on the clipboard as JSON; nothing is written to the page',
     copied: 'whether this device copied the packet',
+    // D6, the Selection group (§17.8): what a plain selection does and what Answer this reads are the shell's, held for the person.
+    selectionAct: 'what a plain selection does (Highlight, Note, To packet, Remember or Answer this): the shell holds it, no owner keeps it',
+    packetScope: 'what Answer this reads (the selection, the page, or what the page links): the shell holds it, no owner keeps it',
   },
   refused: {
     template: 'A page keeps the template it opened with; no owner operation changes it from here.',
@@ -90,8 +95,17 @@ export const DOCUMENT_WIRING: DesignWiring = {
     agentWrites: 'No owner holds how agent entries arrive on a page.',
     autosave: 'The hosted form saves only when you press Save: no owner saves by itself.',
     clear: `Clear empties the page's own packet on the page — ${ON_THE_PAGE}.`,
+    // The five passage acts (§17.8): their owners exist — the page's island through the save router, the packet, central.remember /
+    // projectcentral.remember through invoke_action, the agent's Answer — but each acts on the selected passage, which never reaches
+    // this device.
+    'act.highlight': `Highlight marks the selected passage on the page: ${NO_SELECTION} Select it in the page's pane and press Highlight there (Clip view writes it through the page owner).`,
+    'act.note': `Note attaches a note to the selected passage: ${NO_SELECTION} Select it in the page's pane and press Note there.`,
+    'act.topacket': `To packet adds the selected passage to the page's packet: ${NO_SELECTION}`,
+    'act.remember': `Remember keeps the selected passage through central.remember (projectcentral.remember for a project's page), which the kernel reaches, but it needs the passage: ${NO_SELECTION}`,
+    'act.answerthis': `Answer this sends the selected passage to the agent on the world's chain (Clip view's Answer this, nara/answerThis.ts): ${NO_SELECTION}`,
   },
   absent: {
+    selection: NO_SELECTION,
     ground: 'The page\'s paper is its template\'s (a Day or a Flow sets none).',
     layout: 'The page\'s layout is its template\'s (a Day or a Flow sets none).',
     pinned: 'No owner reports whether the pane is pinned to its page.',
@@ -103,7 +117,7 @@ export const DOCUMENT_WIRING: DesignWiring = {
 export const FLOW_WIRING: DesignWiring = {
   design: FLOW_DESIGN,
   keys: ['light', 'title', 'template', 'plural', 'media', 'people', 'pages', 'entries', 'roster', 'extra', 'upgraded', 'view', 'entry', 'relation', 'speaker', 'page',
-    'bring', 'revision', 'state', 'lastSave', 'save', 'reread', 'in:<agent>', 'left:<initial>'],
+    'bring', 'revision', 'state', 'lastSave', 'save', 'reread', 'in:<agent>', 'left:<initial>', 'preflight', 'thought', 'since'],
   reads: {
     light: 'the Flow\'s file answered (lit) or refused (dark)',
     title: 'meta.title', template: 'meta.template (its version)', plural: 'the current form (format v4, flow/plural.ts isCurrentFormat)',
@@ -130,7 +144,13 @@ export const FLOW_WIRING: DesignWiring = {
     'in:<agent>': `A participant joins on the page itself (ql-flow.html participants) — ${ON_THE_PAGE}.`,
     'left:<initial>': `A participant leaves on the page itself (ql-flow.html participants) — ${ON_THE_PAGE}.`,
   },
-  absent: {},
+  // The Thought page (D-package; manual §18.1 Thought): its owners answer — AIKit's Flow cognition through the kernel's invoke_action
+  // `action:contemplate-flow` (asked bare: the preflight) and op flow_changed_since — but this binding does not ask them yet.
+  absent: {
+    preflight: 'Not read by this binding yet: the kernel answers it (invoke_action `action:contemplate-flow` asked bare → `aikit flow preflight`); the Thought page waits on its binding.',
+    thought: 'Not read by this binding yet: the last thought is AIKit\'s Flow cognition (aikit.flow-cognition/v1, through `action:contemplate-flow`); the Thought page waits on its binding.',
+    since: 'Not read by this binding yet: the kernel\'s op flow_changed_since (`aikit flow changed-since`) answers it; the Thought page waits on its binding.',
+  },
 }
 
 export const TEXT_WIRING: DesignWiring = {
@@ -206,36 +226,54 @@ export const NOTES_WIRING: DesignWiring = {
   },
 }
 
-const NO_PAGE_LISTS = 'No owner lists them for a page yet: the oi-beings and oi-things forms\' owner has landed no listing read (shell/modeGrammar.ts Beings, Things).'
-const NO_PAGE_WRITE = 'The oi.page/v1 page has no owner write the shell can reach (desktop/cradle/src/personal/page.mjs holds the page law; no kernel op carries a page save).'
+// A Being's or a Thing's ties are written through the page owner (kernel page op `mutate_field`, desktop/cradle/kernel/src/page.rs
+// apply_field: world, subject, kind, office, expression, place, anchor, sources, layout, tone), each on the revision the page was read at —
+// the op Clip view already writes a page's fields through (central/clipBinding.ts writePageField; T-COVERAGE §1.3). Where no page is read
+// with its revision, each tie stands disabled saying so.
+const NO_PAGE_LISTS = 'No owner lists them for a page yet: the page op lists a world\'s pages (`list`), not the subjects, expressions, places or anchors a page ties to.'
+const NO_PAGE_READ = 'The page owner writes this tie (kernel page op mutate_field) on the revision the page was read at; no page is read here with its revision.'
+const NO_ADD_SOURCE = 'Add takes the file selected in the browser at its present revision; the browser\'s selection is not handed to the page here.'
+const NO_ANCHORS = 'An anchor is a point on Earth (its latitude and longitude); no listing of anchors is handed to the page, so none can be chosen by name.'
+const TIE_KEYS = (kind: boolean): string[] => ['world', ...(kind ? ['kind'] : []), 'subject', 'o1', 'o2', 'o3', 'o4', 'expression', 'place', 'anchor', 'layout', 'ground', 'addSource', 'dropSource']
 
-const pageWiring = (design: string, kind: boolean): DesignWiring => ({
+const pageWiring = (design: string, kind: boolean, read = false): DesignWiring => ({
   design,
   keys: ['light', 'world', ...(kind ? ['kind'] : []), 'subject', 'o1', 'o2', 'o3', 'o4', 'expression', 'place', 'anchor', 'layout', 'ground', 'worlds', 'subjects',
     'expressions', 'places', 'anchors', 'title', 'sections', 'links', 'template', 'sources', 'addSource', 'dropSource'],
   reads: {
     light: 'the page\'s island parsed as oi.page/v1', world: 'bindings.worldRef', subject: 'bindings.subjectRef', o1: 'bindings.categories holds C1', o2: 'C2', o3: 'C3', o4: 'C4',
+    ...(kind ? {kind: 'bindings.kind (person or agent)'} : {}), place: 'bindings.placeRef',
     expression: 'bindings.expressionRef', layout: 'appearance.layout', ground: 'appearance.tone', title: 'meta.title', sections: 'page.sections', links: 'page.links',
-    template: 'meta.template at meta.templateVersion', sources: 'bindings.sources (each a ref at its revision)',
+    template: 'meta.template at meta.templateVersion', sources: 'bindings.sources (each a ref at its revision)', worlds: 'the worlds Central discloses (central/centralWorlds.ts readWorlds), where handed in',
   },
-  writes: {},
+  writes: read ? {
+    world: 'page op mutate_field `world`', subject: 'page op mutate_field `subject`', ...(kind ? {kind: 'page op mutate_field `kind`'} : {}),
+    o1: 'page op mutate_field `office` (the offices that stay on, C1–C4)', o2: 'the same', o3: 'the same', o4: 'the same',
+    expression: 'page op mutate_field `expression`', place: 'page op mutate_field `place`', layout: 'page op mutate_field `layout`', ground: 'page op mutate_field `tone`',
+    dropSource: 'page op mutate_field `sources` (the list without the source)',
+  } : {},
   local: {},
-  refused: Object.fromEntries(['world', ...(kind ? ['kind'] : []), 'subject', 'o1', 'o2', 'o3', 'o4', 'expression', 'place', 'anchor', 'layout', 'ground', 'addSource', 'dropSource'].map(key => [key, NO_PAGE_WRITE])),
+  refused: read ? {addSource: NO_ADD_SOURCE, anchor: NO_ANCHORS} : Object.fromEntries(TIE_KEYS(kind).map(key => [key, NO_PAGE_READ])),
   absent: {
-    ...(kind ? {kind: 'The page holds no kind of its own: a subject\'s kind is the roster\'s, which no page listing reports yet.'} : {}),
-    place: 'The page binds no place: the subject\'s place in the wiki carries it, and no reading of it reaches here.',
-    anchor: 'The page binds no anchor: the subject\'s place in the wiki carries it, and no reading of it reaches here.',
-    worlds: NO_PAGE_LISTS, subjects: NO_PAGE_LISTS, expressions: NO_PAGE_LISTS, places: NO_PAGE_LISTS, anchors: NO_PAGE_LISTS,
+    ...(kind ? {kind: 'The page names no kind (bindings.kind): a Being is a person or an agent once the page owner writes one.'} : {}),
+    place: 'The page binds no place (bindings.placeRef).',
+    anchor: NO_ANCHORS,
+    worlds: 'No list of worlds is handed to the page here (central/centralWorlds.ts readWorlds discloses them).', subjects: NO_PAGE_LISTS, expressions: NO_PAGE_LISTS,
+    places: NO_PAGE_LISTS, anchors: NO_PAGE_LISTS,
   },
 })
 export const BEINGS_WIRING: DesignWiring = pageWiring(BEINGS_DESIGN, true)
 export const THINGS_WIRING: DesignWiring = pageWiring(THINGS_DESIGN, false)
+/** The wirings where a page is read with its revision and its owner's write is handed in (PageHand). */
+export const BEINGS_READ_WIRING: DesignWiring = pageWiring(BEINGS_DESIGN, true, true)
+export const THINGS_READ_WIRING: DesignWiring = pageWiring(THINGS_DESIGN, false, true)
 
 const BOOK_KEEPS = 'The workspace book keeps every part of the context, for every mode, at every change (desktop/cradle/src/workspace/store.ts): it has no such setting.'
 export const WORKSPACE_WIRING: DesignWiring = {
   design: WORKSPACE_DESIGN,
   keys: ['light', 'name', 'kind', 'folder', 'place', 'keepPanes', 'keepInstruments', 'keepWidgets', 'keepSets', 'rememberIn', 'onLaunch', 'openIn', 'keepWhen', 'sendToDay',
-    'mode', 'mem', 'fresh', 'dirty', 'widgets', 'visited', 'clip', 'folders', 'trees', 'sets', 'clips', 'launch', 'keepNow'],
+    'mode', 'mem', 'fresh', 'dirty', 'widgets', 'visited', 'clip', 'folders', 'trees', 'sets', 'clips', 'launch', 'keepNow',
+    'pc', 'pcPlan', 'self', 'treatment', 'pcSource', 'bindAs', 'pcPreview', 'pcAccept', 'selfEnsure', 'selfRelate'],
   reads: {
     light: 'the book holds this workspace open (it is the current one)', name: 'the workspace\'s name', folder: 'its project, or Central',
     mode: 'the open mode (layout.mode)', mem: 'the modes whose pane tree the book keeps (layout, modeLayouts)', fresh: 'the book keeps no tree and no set for it yet',
@@ -246,14 +284,25 @@ export const WORKSPACE_WIRING: DesignWiring = {
     mode: 'the book\'s own mode switch (continuity/workspace.tsx setMode → store.ts switchMode): the open mode turns',
     name: 'the book\'s own rename of the current workspace (store.ts rename)',
   },
-  local: {clip: 'the clip this device holds selected'},
+  local: {clip: 'the clip this device holds selected',
+    // The Ground and Self pages' settings (D-package; manual §18.1 Ground): the person's choices, held until a preview or an accept asks.
+    treatment: 'how Central would make the folder\'s ground (create, adopt or migrate): the person\'s choice, held until a preview asks for it',
+    pcSource: 'the wiki a treatment keeps or copies: the person\'s choice, held until a preview asks for it',
+    bindAs: 'the tier, UX or EX a source is bound as: the person\'s choice, held until Relate asks for it'},
   refused: {
+    pcPreview: 'Preview: projectcentral.init, adopt and migrate preview through invoke_action, which this binding does not ask yet (the Ground page waits on its binding).',
+    pcAccept: 'Accept: projectcentral.init, adopt or migrate writes the world\'s ground, which waits on the kernel route that carries the person\'s authority (T-COVERAGE §1.1).',
+    selfEnsure: 'Ensure: projectcentral.self.ensure writes the world\'s self, which waits on the kernel route that carries the person\'s authority (T-COVERAGE §1.1).',
+    selfRelate: 'Relate: projectcentral.self.tier.relate (or retain-tier) writes a tier\'s binding, which waits on the kernel route that carries the person\'s authority (T-COVERAGE §1.1).',
     kind: BOOK_KEEPS, folder: 'A workspace\'s project is its world context; no owner operation moves it from here.',
     place: 'No owner places a workspace on the planet yet.', keepPanes: BOOK_KEEPS, keepInstruments: BOOK_KEEPS, keepWidgets: BOOK_KEEPS, keepSets: BOOK_KEEPS,
     rememberIn: BOOK_KEEPS, onLaunch: BOOK_KEEPS, openIn: BOOK_KEEPS, keepWhen: BOOK_KEEPS, sendToDay: 'No route sends a workspace\'s work to the Day yet.',
     launch: 'This workspace is the one open: its context stands. A launch is choosing it among the workspaces.', keepNow: BOOK_KEEPS,
   },
   absent: {
+    pc: 'Not read by this binding yet: Central\'s projectcentral.inspect (through invoke_action) answers what it would make of the folder; the Ground page waits on its binding.',
+    pcPlan: 'Not read by this binding yet: the preview is projectcentral.init, adopt or migrate asked to preview (through invoke_action); the Ground page waits on its binding.',
+    self: 'Not read by this binding yet: Central\'s projectcentral.self.inspect (central.development-field-reading/v1, through invoke_action) answers it; the Self page waits on its binding.',
     kind: BOOK_KEEPS, place: 'No owner places a workspace on the planet yet.', keepPanes: BOOK_KEEPS, keepInstruments: BOOK_KEEPS, keepWidgets: BOOK_KEEPS, keepSets: BOOK_KEEPS,
     rememberIn: BOOK_KEEPS, onLaunch: BOOK_KEEPS, openIn: BOOK_KEEPS, keepWhen: BOOK_KEEPS, sendToDay: 'No route sends a workspace\'s work to the Day yet.',
     dirty: 'No owner reports which of a workspace\'s documents hold edits the owner does not.',
@@ -400,7 +449,8 @@ export function documentValues(id: string, reached: ReachedPage, material: PageM
       values.island = JSON.stringify(material.page.island)
     }
   }
-  return withHeld(id, DOCUMENT_WIRING, values, {view: 'page', copied: false})
+  // The Selection group's holds start where the manual sets them (§17.8: Selection act Highlight, Packet scope Selection).
+  return withHeld(id, DOCUMENT_WIRING, values, {view: 'page', copied: false, selectionAct: 'highlight', packetScope: 'selection'})
 }
 
 /** A Flow's own metadata write (central/devices/centralDeviceWrites.ts setFlowMeta), handed in where the reached page is a Flow. */
@@ -612,10 +662,11 @@ export function pageValues(doc: unknown): Values {
   if (title !== null) values.title = title
   const template = textOf(meta.template), version = textOf(meta.templateVersion)
   if (template) values.template = `${template.replace(/^oi\.template\//, '').replace(/^./, c => c.toUpperCase())}${version ? ` v${version}` : ''}`
-  for (const [key, from] of [['world', bindings.worldRef], ['subject', bindings.subjectRef], ['expression', bindings.expressionRef]] as const) {
+  for (const [key, from] of [['world', bindings.worldRef], ['subject', bindings.subjectRef], ['expression', bindings.expressionRef], ['place', bindings.placeRef]] as const) {
     if (from === null) values[key] = ''
     else if (typeof from === 'string') values[key] = from
   }
+  if (bindings.kind === 'person' || bindings.kind === 'agent') values.kind = bindings.kind
   if (Array.isArray(bindings.categories)) for (const n of [1, 2, 3, 4]) values[`o${n}`] = bindings.categories.includes(`C${n}`)
   if (appearance.layout === 'portrait' || appearance.layout === 'editorial') values.layout = appearance.layout
   if (appearance.tone === 'paper' || appearance.tone === 'ink') values.ground = appearance.tone
@@ -630,8 +681,54 @@ export function pageValues(doc: unknown): Values {
   return values
 }
 
-export const beingsBinding = (id: string, doc: unknown): DesignBinding => pageBinding(id, BEINGS_WIRING, pageValues(doc), {})
-export const thingsBinding = (id: string, doc: unknown): DesignBinding => pageBinding(id, THINGS_WIRING, pageValues(doc), {})
+/** A Being or Thing page read with its revision, and its owner's write on that revision: the page op's `mutate_field` (personal/pageOwner.ts
+ * writePageField(transport, location, revision, field, value)), resolving once the owner answered, throwing its words. `worlds` are the
+ * worlds Central discloses (centralWorlds.ts readWorlds), as {value: the world ref, label}, where handed in. */
+export interface PageHand {
+  readonly write: (field: PageField, value: unknown) => Promise<void>
+  readonly worlds?: readonly {readonly value: string; readonly label: string}[]
+}
+
+const OFFICE_KEYS = ['o1', 'o2', 'o3', 'o4'] as const
+
+/** The ties' writes, each through the page owner: a ref (empty is none), a kind, the offices that stay on with one turned, a layout, a
+ * tone, the sources without one. */
+function tieActs(doc: unknown, kind: boolean, hand: PageHand): PageActs {
+  const page = recordOf(doc), bindings = recordOf(page?.bindings) ?? {}
+  const ref = (value: Value) => (typeof value === 'string' && value.trim() ? value.trim() : null)
+  const offices = (key: string, on: boolean) => {
+    const held = Array.isArray(bindings.categories) ? bindings.categories.filter((c): c is string => typeof c === 'string') : []
+    const next = OFFICE_KEYS.map((_, i) => `C${i + 1}`).filter((office, i) => (OFFICE_KEYS[i] === key ? on : held.includes(office)))
+    if (!next.length) throw new Error('A page takes up one or more of the offices C1 to C4: the last one stays.')
+    return hand.write('office', next)
+  }
+  return {
+    world: async value => hand.write('world', ref(value)),
+    subject: async value => hand.write('subject', ref(value)),
+    ...(kind ? {kind: async (value: Value) => hand.write('kind', value)} : {}),
+    ...Object.fromEntries(OFFICE_KEYS.map(key => [key, async (value: Value) => offices(key, value === true)])),
+    expression: async value => hand.write('expression', ref(value)),
+    place: async value => hand.write('place', ref(value)),
+    layout: async value => hand.write('layout', value),
+    ground: async value => hand.write('tone', value),
+    dropSource: async value => {
+      const sources = (Array.isArray(bindings.sources) ? bindings.sources : []).map(recordOf).filter((source): source is Record<string, unknown> => source !== null)
+      if (!sources.some(source => source.ref === value)) throw new Error(`${String(value)} is no source of this page.`)
+      return hand.write('sources', sources.filter(source => source.ref !== value).map(source => ({ref: source.ref, revision: source.revision})))
+    },
+  }
+}
+
+/** A Being's or Thing's binding: its readings; with a page hand, its ties written through the page owner on the revision read. */
+function tiesBinding(id: string, doc: unknown, kind: boolean, hand?: PageHand | null): DesignBinding {
+  const values: Record<string, Value> = {...pageValues(doc)}
+  const page = recordOf(doc)?.profile === 'oi.page/v1'
+  if (hand?.worlds) values.worlds = JSON.stringify(hand.worlds)
+  if (!hand || !page) return pageBinding(id, kind ? BEINGS_WIRING : THINGS_WIRING, values, {})
+  return pageBinding(id, kind ? BEINGS_READ_WIRING : THINGS_READ_WIRING, values, tieActs(doc, kind, hand))
+}
+export const beingsBinding = (id: string, doc: unknown, hand?: PageHand | null): DesignBinding => tiesBinding(id, doc, true, hand)
+export const thingsBinding = (id: string, doc: unknown, hand?: PageHand | null): DesignBinding => tiesBinding(id, doc, false, hand)
 
 // ---------------------------------------------------------------------------------------------------------------- the Workspace
 
