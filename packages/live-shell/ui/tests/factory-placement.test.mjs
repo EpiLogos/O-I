@@ -128,7 +128,7 @@ test('the monitors and Messages stand on the rail and in a pane only: a chain as
 test('the chain draws the plan and no other plate: no Gateways rack, Agency gateway, Ledger, Frames or Link on a chain; the workcell\'s chain routed', () => {
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
-  assert.match(view, /const slots = chainSlots\(place, \{helper: helperStands\}\)/)
+  assert.match(view, /const slots = chainSlots\(place, \{helper: helperStands, capture: captureOn, runMap: !!runMapDev, pads: !!padsDev\}\)/)
   assert.match(view, /\{place\.kind === 'main' && <div className="factory-main" data-track="main"/)
   assert.match(view, /\{place\.kind === 'workcell' && <div className="factory-main factory-workcell" data-track=\{workcellTrackId\(place\.name\)\}/)
   assert.match(view, /\{place\.kind === 'session' && <>\{plates\}\{trailingGap\}<\/>\}/)
@@ -144,7 +144,7 @@ test('the chain draws the plan and no other plate: no Gateways rack, Agency gate
   // (agent-rail-devices.test.mjs mounts it with no chain).
   const rail = read('agent/devices/AgentRailDevices.tsx')
   for (const id of ['MESSAGES_ID', 'GATEWAYS_RACK_ID', 'AGENCY_GATEWAY_ID', 'FRAMES_ID', 'LEDGER_ID', 'WORKCELL_RACK_ID']) assert.match(rail, new RegExp(`publish\\(${id}, `), `${id} is published`)
-  assert.match(view, /SEAT_ID, CARRIER_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
+  assert.match(view, /SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
   const detail = read('agent/AgentShellDeviceDetail.tsx')
   assert.match(detail, /import \{workcellOfTrack\} from '\.\.\/frame\/tracks\/returnTracks'/)
   assert.match(detail, /const workcell = workcellOfTrack\(shell\.selectedTrackId\)/)

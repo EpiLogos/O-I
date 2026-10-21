@@ -233,7 +233,8 @@ test('with no session selected the chain draws the Main track — the Experiment
   for (const [id, binding] of [['GATEWAYS_RACK_ID', 'gateways'], ['AGENCY_GATEWAY_ID', 'agency'], ['FRAMES_ID', 'frames']]) {
     assert.match(rail, new RegExp(`publish\\(${id}, ${binding}\\)`), `${id} is published with its binding, in every mode`)
   }
-  assert.match(view, /EXPERIMENT_ID, \.\.\.SESSION_DEVICE_IDS, APPROVALS_ID,\s+SEAT_ID, CARRIER_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
+  // REPLACED (lane W7): the Run map and the Prompt pads are withdrawn with the chain too.
+  assert.match(view, /EXPERIMENT_ID, \.\.\.SESSION_DEVICE_IDS, APPROVALS_ID,\s+SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
   assert.match(read('agent/agentDockTiles.ts'), /claimRailWidget\('gateways', GATEWAYS_RACK_ID\)/, 'the rail claims the Gateways tile for the monitor')
   assert.doesNotMatch(read('agent/devices/mainTrackBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
   for (const file of ['agent/devices/mainTrackBindings.ts', 'agent/devices/factoryDevices.css', 'frame/widgets/deviceWidgets.tsx']) {

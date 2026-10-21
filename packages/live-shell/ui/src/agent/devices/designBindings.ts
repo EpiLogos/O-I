@@ -115,6 +115,16 @@ const REFUSE = {
 const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>
   Object.fromEntries(Object.entries(reasons).map(([key, why]) => [key, {disabled: why}]))
 
+/** The Agent's Context page (lane W7; D5, actuation__harness-model.tsx `ctx.pressure`, `ctx.armed`, `ctx.turn`): AIKit's continuity, each
+ * absent with what it waits for. `aikit work continuity pressure|commands` exist and no kernel route reaches them yet (T-COVERAGE §1.2,
+ * AIKit: "work continuity pressure|commands"); the last turn's bounded blocks no command reports (T-COVERAGE §1.5, AIKit: "a read of the
+ * last turn's bounded blocks (Context)"). */
+export const AGENT_CONTEXT_ABSENT: Readonly<Record<string, string>> = {
+  'ctx.pressure': 'The context pressure: no reading reaches it yet — missing op: `aikit work continuity pressure --json` through the kernel (T-COVERAGE §1.2, AIKit: "work continuity pressure"; not routed yet) (AIKit).',
+  'ctx.armed': 'The star commands armed: no reading reaches them yet — missing op: `aikit work continuity commands --json` through the kernel (T-COVERAGE §1.2, AIKit: "work continuity commands"; not routed yet) (AIKit).',
+  'ctx.turn': 'The last turn\'s bounded blocks: no reading reaches them yet — missing op: a read of the last turn\'s bounded blocks (AIKit writes them only into the turn\'s own hook output; T-COVERAGE §1.5, AIKit) (AIKit).',
+}
+
 /** Each chain design's refused writes, by key (the refusals its binding's write gives, below). The Agent's light is among them since
  * the kit's activator says why it only reads (inhabitants/sdk/panel.tsx Panel `lightWhy`, c5afc4aa0): the design stands its activator
  * disabled on the light's standing (actuation__harness-model.tsx head: `st(p, 'light').disabled`), so nothing is pressed only to be
@@ -369,7 +379,7 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
   return {
     id,
     values,
-    standing: 'run' in values ? disabled(REFUSED_WRITES[AGENT_DESIGN]!) : {...disabled(REFUSED_WRITES[AGENT_DESIGN]!), run: {disabled: RUN_UNREAD}},
+    standing: {...disabled(AGENT_CONTEXT_ABSENT), ...disabled(REFUSED_WRITES[AGENT_DESIGN]!), ...('run' in values ? {} : {run: {disabled: RUN_UNREAD}})},
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
@@ -612,16 +622,48 @@ async function compose(change: ValueChange, ports: ComposePorts | null, place: {
 
 // `members` stands for the chain list's request squares (skills.tsx ChainList reads st(p, 'members')): each request is its own
 // `req:<id>` key, so `members` is no reading the host should draw disabled; a write of the list itself is refused as a reading.
-const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members'].includes(key)
+// The rack's upkeep pages (lane W7; D5, skills.tsx: Set's Unused filter, Sources, Adopt, Procedures): AIKit's `unused`, `source`, `collate`,
+// `adopt`, `procedure`, `bypass` and `history bypasses`, none of which a kernel route reaches yet (T-COVERAGE §1.2, AIKit: "source,
+// collate, adopt, procedure, bypass, unused…"; lane W3's builder routes them in turn). Each reading stands absent and each act disabled,
+// naming its command; the pages' settings are the hand's own holds.
+const aikitUnread = (what: string, op: string) => `${what}: no reading reaches it yet — missing op: ${op} through the kernel (T-COVERAGE §1.2, AIKit; not routed yet) (AIKit).`
+const aikitMissing = (what: string, op: string) => missing(what, `${op} through the kernel (T-COVERAGE §1.2, AIKit; not routed yet)`, 'AIKit')
+export const RACK_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
+  unused: aikitUnread('The members never seen used', '`aikit unused --json`'),
+  sources: aikitUnread('The sources the practice comes from', '`aikit source show <id> --json` for each registered source'),
+  roots: aikitUnread('The skill trees AIKit does not own', '`aikit collate --json`'),
+  adoption: aikitUnread('The adoption plan', '`aikit adopt <path> --namespace <ns> --json` (its preview, without --yes)'),
+  procedures: aikitUnread('The changes AIKit made to the machine', '`aikit procedure list --json` with `aikit procedure diff <id> --json`'),
+  bypasses: aikitUnread('The hook bypasses', '`aikit bypass list --json` with `aikit history bypasses --json`'),
+}
+export const RACK_UPKEEP_REFUSE: Readonly<Record<string, string>> = {
+  sync: aikitMissing('Sync', '`aikit source sync <id>`'),
+  promote: aikitMissing('Promote', '`aikit source promote <id>`'),
+  rollback: aikitMissing('Roll back', '`aikit source rollback <id>`'),
+  adoptPreview: aikitMissing('Preview', '`aikit adopt <path> --namespace <ns> --json`'),
+  adoptApply: aikitMissing('Apply', '`aikit adopt <path> --yes --expect-digest <digest>`'),
+  procRun: aikitMissing('Run', '`aikit procedure run <id> --expect-digest <digest>`'),
+  procUndo: aikitMissing('Undo', '`aikit procedure undo <id>`'),
+  issue: aikitMissing('Issue a bypass', '`aikit bypass issue`'),
+  revoke: aikitMissing('Revoke a bypass', '`aikit bypass revoke <id>`'),
+}
+/** The upkeep pages' settings: the hand's own holds (skills.tsx: unusedOnly, source, adoptRoot, namespace, procedure, bypassScope, bypassReason). */
+export const RACK_UPKEEP_SETTINGS: readonly string[] = ['unusedOnly', 'source', 'adoptRoot', 'namespace', 'procedure', 'bypassScope', 'bypassReason']
+
+const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members'].includes(key) || key in RACK_UPKEEP_REFUSE
 
 export interface RackPlace {readonly project: string; readonly sessionRef: string | null}
 
 /** The Skillset rack's binding: every control is an AIKit operation through the configuration plane, or refused by name. */
 export function rackBinding(id: string, input: RackInput, ports: ComposePorts | null, place: RackPlace): DesignBinding {
+  const values: Record<string, Value> = {...rackValues(input)}
+  const view = viewHolds(input.holds, id)
+  for (const key of RACK_UPKEEP_SETTINGS) put(values, key, view[key])
   return {
     id,
-    values: rackValues(input),
-    standing: disabled(REFUSED_WRITES[RACK_DESIGN]!),
+    values,
+    standing: {...disabled(RACK_UPKEEP_ABSENT), ...disabled(RACK_UPKEEP_REFUSE), ...disabled(REFUSED_WRITES[RACK_DESIGN]!)},
+    local: Object.fromEntries(RACK_UPKEEP_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(id, key, value)])),
     writes: RACK_WRITES,
     write: async changes => {
       for (const change of changes) {
@@ -631,7 +673,7 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
           case 'target': updateHolds(was => ({...was, compose: {...was.compose, target: String(change.value)}})); break
           case 'exported': throw Error(REFUSE.export)
           case 'set': throw Error(REFUSE.set)
-          default: throw Error(REFUSE.reading(change.key))
+          default: throw Error(RACK_UPKEEP_REFUSE[change.key] ?? REFUSE.reading(change.key))
         }
       }
     },
@@ -658,7 +700,24 @@ export function memberChains(rack: Values): {ref: string}[] | null {
   return typeof rack.members === 'string' ? (JSON.parse(rack.members) as Member[]).map(m => ({ref: m.id})) : null
 }
 
-const MEMBER_WRITES = new Set(['requested', 'reviewed', 'run', 'proved'])
+// The member's upkeep pages (lane W7; D5, member.tsx: Why and History, with Retire and Restore). `aikit explain` and `aikit history` have no
+// kernel route yet (T-COVERAGE §1.2, AIKit: "explain, history"). Central's control.skills.inspect reads its ground by skill name and path,
+// and no reading here ties an AIKit capability ref to a ground path, so `ground` stands absent too. control.skills.retire and
+// control.skills.restore write Central's ground, and the kernel's invoke_action carries the person's authority only for the acts
+// desktop/cradle/kernel/src/action.rs PERSON_ACTS names — which names neither — so both stand disabled with that reason.
+export const MEMBER_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
+  why: aikitUnread('Why it stands as it does', '`aikit explain <capability> --json`'),
+  history: aikitUnread('Its recorded changes', '`aikit history <capability> --json`'),
+  ground: 'Its standing in Central\'s ground: no reading reaches it yet — missing op: a tie from an AIKit capability ref to its ground path (control.skills.inspect lists skills by ground name and path; the capsule\'s projection is `aikit explain`\'s, not routed yet) (Central).',
+}
+export const MEMBER_UPKEEP_REFUSE: Readonly<Record<string, string>> = {
+  retire: missing('Retire', 'control.skills.retire carried with the person\'s authority (desktop/cradle/kernel/src/action.rs PERSON_ACTS names it not)', 'Central'),
+  restore: missing('Restore', 'control.skills.restore carried with the person\'s authority (desktop/cradle/kernel/src/action.rs PERSON_ACTS names it not)', 'Central'),
+}
+/** The member's upkeep holds: the reason Retire would record, its asks, and the history row chosen. */
+const MEMBER_UPKEEP_HOLDS: readonly string[] = ['retireReason', 'retireAsk', 'restoreAsk', 'event']
+
+const MEMBER_WRITES = new Set(['requested', 'reviewed', 'run', 'proved', ...Object.keys(MEMBER_UPKEEP_REFUSE)])
 
 /** The member's writes to AIKit through the kernel's routes (ownerRoutes.ts). Absent: no carrier stands. */
 export interface MemberPorts {
@@ -670,12 +729,16 @@ export interface MemberPorts {
  * the ask is the view's own key, held here until Trust or Cancel drops it; Trust records the review with AIKit (`aikit trust record`)
  * on the chosen capability; Run and Prove stand refused, each naming what the member does not carry. */
 export function memberBinding(id: string, rack: Values, chosen: string | null, held: ChainHolds, ports: MemberPorts = {}): DesignBinding {
-  const refused: Record<string, string> = {...REFUSED_WRITES[MEMBER_DESIGN]!}
+  const refused: Record<string, string> = {...MEMBER_UPKEEP_ABSENT, ...MEMBER_UPKEEP_REFUSE, ...REFUSED_WRITES[MEMBER_DESIGN]!}
   if (ports.trust) delete refused.reviewed
+  const values: Record<string, Value> = {...memberValues(rack, chosen, held)}
+  const view = viewHolds(held, id)
+  for (const key of MEMBER_UPKEEP_HOLDS) put(values, key, view[key])
   return {
     id,
-    values: memberValues(rack, chosen, held),
-    local: {reviewAsk: value => updateHolds(was => ({...was, member: {...was.member, reviewAsk: value === true ? true : undefined}}))},
+    values,
+    local: {reviewAsk: value => updateHolds(was => ({...was, member: {...was.member, reviewAsk: value === true ? true : undefined}})),
+      ...Object.fromEntries(MEMBER_UPKEEP_HOLDS.map(key => [key, (value: Value | undefined) => holdView(id, key, value)]))},
     standing: disabled(refused),
     writes: key => MEMBER_WRITES.has(key),
     write: async changes => {
@@ -697,7 +760,7 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
             if (value === 'ran') throw Error(REFUSE.run)
             break
           case 'proved': throw Error(REFUSE.prove)
-          default: throw Error(REFUSE.reading(key))
+          default: throw Error(MEMBER_UPKEEP_REFUSE[key] ?? REFUSE.reading(key))
         }
       }
     },

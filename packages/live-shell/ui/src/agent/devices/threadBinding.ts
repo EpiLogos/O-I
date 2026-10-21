@@ -204,6 +204,16 @@ export const THREAD_REFUSE = {
   noSession: 'No session is shown: select one in the Session pane.',
 } as const
 
+/** The Thought page's readings (lane W7; D3, software-factory__thread.tsx `thoughts` and `operative`), each absent with what it waits for:
+ * the Run's retained thought is Factory's cognitive view and the condition the agent worked under its project-development ledger's
+ * PraxisCondition — both named in T-COVERAGE §1.2's Software Factory row, and read by no kernel route. */
+export const THREAD_ABSENT = {
+  thoughts: 'The Run\'s retained thought: no reading reaches it yet — missing op: Factory\'s cognitive view (factory.build-cognitive-view/v1) through the kernel (T-COVERAGE §1.2, Software Factory: "the cognitive view (Run Thought)") (Software Factory).',
+  operative: 'The condition the agent worked under: no reading reaches it yet — missing op: a read of the project-development ledger through the kernel (T-COVERAGE §1.2, Software Factory: "a read of the project-development ledger (bounded intent, success criteria, PraxisCondition)") (Software Factory).',
+} as const
+/** The Thought page's filters: the shell's own holds (software-factory__thread.tsx: subject, producer, anchor, life). */
+const THOUGHT_FILTERS = ['subject', 'producer', 'anchor', 'life'] as const
+
 /** The keys whose refusal is fixed by name (the host draws each control disabled with its reason). */
 export const THREAD_REFUSED: Readonly<Record<string, string>> = {light: THREAD_REFUSE.light, retry: THREAD_REFUSE.retry, diff: THREAD_REFUSE.diff,
   tellParent: THREAD_REFUSE.tellParent, voice: THREAD_REFUSE.voice}
@@ -251,6 +261,7 @@ export function threadValues(input: ThreadInput, id: string = THREAD_DEVICE_ID):
   const shown = shownSession(input, id)
   const view = viewHolds(input.holds, id)
   for (const [key, value] of Object.entries(VIEW_DEFAULTS)) values[key] = view[key] ?? value
+  for (const key of THOUGHT_FILTERS) if (view[key] !== undefined) values[key] = view[key]!
   put(values, 'selected', input.selected)
   if (shown == null) return values
   values.session = shown
@@ -282,7 +293,7 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
   const shown = shownSession(input, id)
   const reading = input.encounter?.reading
   const consent = pendingPermissions(reading)[0]
-  const standing: Record<string, Standing> = Object.fromEntries(Object.entries(THREAD_REFUSED).map(([key, why]) => [key, {disabled: why}]))
+  const standing: Record<string, Standing> = Object.fromEntries([...Object.entries(THREAD_ABSENT), ...Object.entries(THREAD_REFUSED)].map(([key, why]) => [key, {disabled: why}]))
   const consentWhy = !consent ? THREAD_REFUSE.noConsent : verbStanding(reading, 'permission')
   if (consentWhy) standing.approve = {disabled: consentWhy}
   const stopWhy = shown == null ? THREAD_REFUSE.noSession : verbStanding(reading, 'cancel')
@@ -299,6 +310,7 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
       session: value => hold('session')(typeof value === 'string' ? value : undefined),
       selected: value => { if (typeof value === 'string' && value) ports.select(value) },
       toolRows: hold('toolRows'), subagents: hold('subagents'), messages: hold('messages'),
+      ...Object.fromEntries(THOUGHT_FILTERS.map(key => [key, hold(key)])),
     },
     writes: key => THREAD_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {

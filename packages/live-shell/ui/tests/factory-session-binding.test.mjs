@@ -196,6 +196,7 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   // REPLACED (lane W1-Factory): the chain draws its place's plan (factoryPlaces.ts chainSlots — a group's leads with the Agentset rack).
   assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/, 'the Agentset rack on a group\'s chain (§19.15)')
   assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
-  assert.match(view, /custodyBinding\(\{sessionRef, autonomy: reading\.autonomy, agent: agentDesignBinding\?\.values \?\? \{\}\}, scopeDesignBinding\)/, 'Custody and Scope, one row')
+  // REPLACED (lane W7): Custody takes the hand's holds too (the Grants page's next grant).
+  assert.match(view, /custodyBinding\(\{sessionRef, autonomy: reading\.autonomy, agent: agentDesignBinding\?\.values \?\? \{\}, holds\}, scopeDesignBinding\)/, 'Custody and Scope, one row')
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
 })

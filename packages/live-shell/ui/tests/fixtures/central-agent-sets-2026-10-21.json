@@ -1,0 +1,277 @@
+{
+ "_read": "ctrl --json action run central.agent-set.list {\"scope\":\"root\"} and {\"scope\":\"project\",\"project\":\"O-I\"}, workcell:mac, 21 Oct 2026, read-only (the data of each answer, verbatim)",
+ "root": {
+  "records": [
+   {
+    "kind": "agent-set",
+    "record": {
+     "members": [
+      {
+       "agent_ref": "agent/aletheia",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/aletheia-anansi",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/aletheia-janus",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/aletheia-moirai",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/aletheia-mercurius",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/aletheia-agora",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/aletheia-zeithoven",
+       "kind": "agent"
+      }
+     ],
+     "orchestrator_agent_ref": "agent/aletheia",
+     "proposal": {
+      "authorship": "generated-proposal",
+      "origin_action": "central.agent-set.propose",
+      "reason": "Owner instruction 2026-09-24: Aletheia made properly as an agent set (team) with all of its source-defined subagents. Roster and operating instructions: Control/agents/expressions/aletheia/TEAM.md and members/; skills and tool crosswalk: Work/Quaternal-Logic/docs/integrations/epi-logos/ANIMA-ALETHEIA-TEAMS.md.",
+      "recognition": "unrecognised",
+      "schema": "central.agent-set-proposal/v1"
+     },
+     "ref": "aletheia",
+     "revision": "r1",
+     "schema": "central.agent-set/v1"
+    },
+    "ref": "aletheia",
+    "revision": "r1",
+    "source_path": "Control/agents/agent-sets/agent-set-7d0ac0282c5612f8.json"
+   },
+   {
+    "kind": "agent-set",
+    "record": {
+     "members": [
+      {
+       "agent_ref": "agent/anima",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/anima-nous",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/anima-logos",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/anima-eros",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/anima-mythos",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/anima-psyche",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/anima-sophia",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/anima-techne-helper",
+       "kind": "agent"
+      }
+     ],
+     "orchestrator_agent_ref": "agent/anima",
+     "proposal": {
+      "authorship": "generated-proposal",
+      "origin_action": "central.agent-set.propose",
+      "reason": "Owner instruction 2026-09-24: Anima made properly as an agent set (team) with all of its source-defined subagents. Roster and operating instructions: Control/agents/expressions/anima/TEAM.md and members/; skills and tool crosswalk: Work/Quaternal-Logic/docs/integrations/epi-logos/ANIMA-ALETHEIA-TEAMS.md.",
+      "recognition": "unrecognised",
+      "schema": "central.agent-set-proposal/v1"
+     },
+     "ref": "anima",
+     "revision": "r1",
+     "schema": "central.agent-set/v1"
+    },
+    "ref": "anima",
+    "revision": "r1",
+    "source_path": "Control/agents/agent-sets/agent-set-babd02cd4bee09c3.json"
+   },
+   {
+    "kind": "agent-set",
+    "record": {
+     "members": [
+      {
+       "agent_ref": "agent/anuttara",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/paramasiva",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/parashakti",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/mahamaya",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/nara",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/epii",
+       "kind": "agent"
+      }
+     ],
+     "proposal": {
+      "authorship": "generated-proposal",
+      "origin_action": "central.agent-set.propose",
+      "reason": "Owner commission QL-MEF #258 (28 Sep 2026): the six primary Bimba/M subsystems are the complete Epi-Logos domain-agent team, conjugate to the six native-product Guardians (M0↔Central, M1↔Actuation, M2↔AIKit, M3↔Factory, M4↔Workcell, M5↔QL-MEF). No orchestrator: the containing #0/1 is the QL acting constitution, not a peer member. Source: QL-MEF docs/integrations/epi-logos/EPI-LOGOS-AGENT-DEVELOPMENT-PROGRAMME.md §1.1-1.2.",
+      "recognition": "unrecognised",
+      "schema": "central.agent-set-proposal/v1"
+     },
+     "ref": "epi-logos-domain-team",
+     "revision": "r1",
+     "schema": "central.agent-set/v1"
+    },
+    "ref": "epi-logos-domain-team",
+    "revision": "r1",
+    "source_path": "Control/agents/agent-sets/agent-set-a31914f72315d3dd.json"
+   },
+   {
+    "kind": "agent-set",
+    "record": {
+     "members": [
+      {
+       "agent_ref": "agent/factory-bounded-acceptance",
+       "kind": "agent"
+      }
+     ],
+     "ref": "factory-bounded-acceptance-commission",
+     "revision": "r1",
+     "schema": "central.agent-set/v1"
+    },
+    "ref": "factory-bounded-acceptance-commission",
+    "revision": "r1",
+    "source_path": "Control/agents/agent-sets/agent-set-7302e4196e3cc837.json"
+   },
+   {
+    "kind": "agent-set",
+    "record": {
+     "members": [
+      {
+       "agent_ref": "agent/oi-field-guardian",
+       "kind": "agent"
+      },
+      {
+       "agent_set_ref": "suite-guardians",
+       "kind": "agent-set"
+      }
+     ],
+     "orchestrator_agent_ref": "agent/oi-field-guardian",
+     "proposal": {
+      "authorship": "generated-proposal",
+      "origin_action": "central.agent-set.propose",
+      "reason": "Owner instruction 2026-09-29 (Code session, owner-address receiving): the O:I guardian and the full family under it is what a Run uses; it calls on the Factory guardian where needed. Profiles: Control/agents/profiles (agent/oi-field-guardian and the six product guardians); Positions: Work/O-I/ProjectCentral/relations/positions.",
+      "recognition": "unrecognised",
+      "schema": "central.agent-set-proposal/v1"
+     },
+     "ref": "oi-guardians",
+     "revision": "r1",
+     "schema": "central.agent-set/v1"
+    },
+    "ref": "oi-guardians",
+    "revision": "r1",
+    "source_path": "Control/agents/agent-sets/agent-set-1561df4e0ea22f08.json"
+   },
+   {
+    "kind": "agent-set",
+    "record": {
+     "members": [
+      {
+       "agent_ref": "agent/central-guardian",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/aikit-guardian",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/actuation-guardian",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/factory-guardian",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/workcell-guardian",
+       "kind": "agent"
+      },
+      {
+       "agent_ref": "agent/ql-guardian",
+       "kind": "agent"
+      }
+     ],
+     "proposal": {
+      "authorship": "generated-proposal",
+      "origin_action": "central.agent-set.propose",
+      "reason": "Owner instruction 2026-09-29 (Code session, owner-address receiving): the O:I guardian and the full family under it is what a Run uses; it calls on the Factory guardian where needed. Profiles: Control/agents/profiles (agent/oi-field-guardian and the six product guardians); Positions: Work/O-I/ProjectCentral/relations/positions.",
+      "recognition": "unrecognised",
+      "schema": "central.agent-set-proposal/v1"
+     },
+     "ref": "suite-guardians",
+     "revision": "r1",
+     "schema": "central.agent-set/v1"
+    },
+    "ref": "suite-guardians",
+    "revision": "r1",
+    "source_path": "Control/agents/agent-sets/agent-set-b76a9ca6e97e6022.json"
+   },
+   {
+    "kind": "agent-set",
+    "record": {
+     "correction": {
+      "added_members": [
+       "agent/oh-i"
+      ],
+      "authorship": "agent-correction",
+      "origin_action": "central.agent-set.save",
+      "reason": "Added `agent/oh-i` as the operator agency per the machine-role decision (EpiLogos/O-I#158 comment 5655658386): the primary Mac carries the controller session, Omarchy host frank is the default development workstation and persistent agent/service host. Existing agency reused — harnesses (hermes, pi) remain non-agency adapters registered in the machine agent-system record; the harness-session instances are evidence, not identity.",
+      "schema": "central.agent-set-correction/v1",
+      "supersedes_revision": "r2"
+     },
+     "members": [
+      {
+       "agent_ref": "agent/oh-i",
+       "kind": "agent"
+      },
+      {
+       "agent_set_ref": "factory-bounded-acceptance-commission",
+       "kind": "agent-set"
+      }
+     ],
+     "ref": "world-operators",
+     "revision": "r3",
+     "schema": "central.agent-set/v1"
+    },
+    "ref": "world-operators",
+    "revision": "r3",
+    "source_path": "Control/agents/agent-sets/agent-set-0234fea7817cebfb.json"
+   }
+  ]
+ },
+ "project": {
+  "records": []
+ }
+}

@@ -141,7 +141,8 @@ test('1 · Messages: Send writes `aikit gateway send` to the open agent\'s Posit
   assert.equal(sent.length, before, 'a drop that names less than AIKit takes is never sent')
   assert.equal(msg.delegationOf('not json'), null)
   // Team: no control of the design writes one; the groups say why they are not read.
-  assert.match(open.standing.groups.disabled, /`aikit gateway team` acts on one admitted member's delivery/)
+  // REPLACED (lane W7): the groups are Central's agent sets; unread, they name the listing they wait for (w7-factory-designs.test.mjs).
+  assert.match(open.standing.groups.disabled, /central\.agent-set\.list/)
   assert.match(open.standing['conv.input'].disabled, /steer or queue/)
   assert.ok(!('team' in open.values) && !open.writes('team'), 'no team key: nothing in the design writes a team operation')
   bind.resetHolds()

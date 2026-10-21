@@ -97,6 +97,9 @@ import {KNOWLEDGE_ROUTE_DESIGN, KNOWLEDGE_ROUTE_ID, knowledgeRouteBinding, knowl
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
+import {CAPTURE_SKILL_DESIGN, CAPTURE_SKILL_ID, captureSkillBinding, captureSkillDevice, type CaptureSkillPorts} from './captureSkillBinding'
+import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
+import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, promptPadsBinding, promptPadsDevice} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
 import {useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
@@ -131,6 +134,8 @@ const FACTORY_IDENTITY_ID = `${chainDeviceId('agent')}/identity`
 const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
 /** AIKit's knowledge status for the project the session works in (the kernel's knowledge op, Request::Status): each lens's answer. */
 const KNOWLEDGE_STATUS: KernelOp = Object.freeze({op: 'knowledge' as const, project: RACK_PROJECT, request: {action: 'status' as const}})
+/** AIKit's capture inbox (lane W3's aikit_read {inbox}), read while Capture skill stands on the armed track's chain (§19.11). */
+const CAPTURE_INBOX: KernelOp = Object.freeze({op: 'aikit_read' as const, request: {kind: 'inbox' as const, project: RACK_PROJECT}})
 
 /** The slots whose designs this chain binds, with the design each draws. */
 const SLOT_DESIGNS: Readonly<Record<string, string>> = {gateway: GATEWAY_DESIGN, agent: AGENT_DESIGN, skillset: RACK_DESIGN, world: SCOPE_DESIGN, git: LANDING_DESIGN}
@@ -267,7 +272,11 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const designsOf = {experiment: useDesign(EXPERIMENT_DESIGN, true)}
   // Workcell's status, the window's one answer (owners/readers.ts): the Remote carrier's machines.
   const workcellAnswer = useWorkcellAnswer(transport).reading
-  const mainBindings = useMemo(() => ({experiment: experimentBinding(holds)}), [holds])
+  const mainBindings = useMemo(() => ({experiment: experimentBinding(holds), runMap: runMapBinding(holds), pads: promptPadsBinding(holds)}), [holds])
+  // The Run map and the Prompt pads (§19.25, §19.22, lane W7): bound, standing where Software Factory's family admits their faces.
+  const runMapDev = useMemo(() => runMapDevice(), [])
+  const padsDev = useMemo(() => promptPadsDevice(), [])
+  const designsMain = {runMap: useDesign(RUN_MAP_DESIGN, true), pads: useDesign(PROMPT_PADS_DESIGN, true)}
 
   // The rack: the seated agent's carried practice (its accepted profile in the roster, the sets AIKit replies for), and the
   // composition through the configuration plane. Read only while its design can draw it.
@@ -302,6 +311,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const knowledgeStatus = useOwnerOp(transport, knowledgeOn ? KNOWLEDGE_STATUS : null, 'knowledge').reading
   const knowledgeDesignBinding = useMemo(() => knowledgeRouteBinding({status: knowledgeStatus.status === 'answered' ? knowledgeStatus.value?.data ?? null : null,
     statusError: knowledgeStatus.status === 'refused' ? knowledgeStatus.error ?? null : null, project: RACK_PROJECT, profile}), [knowledgeStatus, profile])
+  // Capture skill (§19.11, lane W7): on the armed track's chain — the selected session's, never a group's — after Scope. It reads the
+  // proposal that waits in AIKit's inbox and writes Accept through aikit_write promote.
+  const captureDevice = useMemo(() => captureSkillDevice(), [])
+  const captureDesign = useDesign(CAPTURE_SKILL_DESIGN, true)
+  const captureOn = knowledgeOn && !groupTrack && !!captureDevice
+  const captureInbox = useOwnerOp(transport, captureOn ? CAPTURE_INBOX : null, 'owner_route_reading').reading
+  const capturePorts = useMemo((): CaptureSkillPorts => (transport.kind !== 'unavailable'
+    ? {promote: (candidate, id) => ownerRouteWrite(transport, aikitWriteOp({kind: 'promote', project: RACK_PROJECT, candidate, ...(id ? {id} : {})}), '`aikit promote`')} : {}), [transport])
+  const captureDesignBinding = useMemo(() => captureSkillBinding({inbox: {status: captureInbox.status, value: captureInbox.value?.data ?? null, error: captureInbox.error},
+    holds}, capturePorts), [captureInbox, holds, capturePorts])
   // The seat instrument (lane K1's seat_status_read: slow, read once while a session's or a workcell's chain stands, and on demand): the
   // workcell's seats, the Seat, Git / landing on a workcell's chain, and the Workcells tile.
   const seats = useSeatStatusAnswer(transport, sessionRef != null || cellName != null).reading
@@ -311,8 +330,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const gitDesignBinding = useMemo(() => (waits.git ? null : gitBinding(gitReading, holds)), [waits.git, gitReading, holds])
   // The one Agent (R4): its Custody page on the session's custody (its write mode Scope's), its Identity page on the roster card of the
   // session's own agent (the hold keyed apart from Central's Agent), its Thread page the Thread's binding — each composed under its prefix.
-  const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, autonomy: reading.autonomy, agent: agentDesignBinding?.values ?? {}}, scopeDesignBinding),
-    [sessionRef, reading.autonomy, agentDesignBinding, scopeDesignBinding])
+  const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, autonomy: reading.autonomy, agent: agentDesignBinding?.values ?? {}, holds}, scopeDesignBinding),
+    [sessionRef, reading.autonomy, agentDesignBinding, scopeDesignBinding, holds])
   const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
   const oneAgent = useMemo(() => (agentDesignBinding ? composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}) : null),
     [agentDesignBinding, custodyDesignBinding, identityDesignBinding, threadDesignBinding])
@@ -398,6 +417,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   useEffect(() => { publishDevice(TASKS_ID, tasks ? {device: tasks, binding: tasksDesignBinding} : null) }, [tasks, tasksDesignBinding])
   useEffect(() => { publishDevice(RUNS_ID, runs ? {device: runs, binding: runsDesignBinding} : null) }, [runs, runsDesignBinding])
   useEffect(() => { if (main.experiment) publishDevice(EXPERIMENT_ID, {device: main.experiment, binding: mainBindings.experiment}) }, [main, mainBindings])
+  useEffect(() => { publishDevice(RUN_MAP_ID, runMapDev ? {device: runMapDev, binding: mainBindings.runMap} : null) }, [runMapDev, mainBindings])
+  useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads} : null) }, [padsDev, mainBindings])
   useEffect(() => {
     const own = [[RUN_ID, ownDevices.run, runDesignBinding], [AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding],
       [APPROVALS_ID, receipts.approvals, approvalsDesignBinding], [SEAT_ID, cells.seat, seatDesignBinding], [CARRIER_ID, cells.carrier, carrierDesignBinding]] as const
@@ -407,6 +428,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   useEffect(() => { publishDevice(KNOWLEDGE_ROUTE_ID, knowledgeOn && knowledgeDevice ? {device: knowledgeDevice, binding: knowledgeDesignBinding} : null) },
     [knowledgeOn, knowledgeDevice, knowledgeDesignBinding])
   useEffect(() => () => { publishDevice(KNOWLEDGE_ROUTE_ID, null) }, [])
+  useEffect(() => { publishDevice(CAPTURE_SKILL_ID, captureOn && captureDevice ? {device: captureDevice, binding: captureDesignBinding} : null) },
+    [captureOn, captureDevice, captureDesignBinding])
+  useEffect(() => () => { publishDevice(CAPTURE_SKILL_ID, null) }, [])
   useEffect(() => { publishDevice(DECISION_HELPER_ID, helperStands && helperDevice ? {device: helperDevice, binding: helperDesignBinding} : null) },
     [helperStands, helperDevice, helperDesignBinding])
   useEffect(() => () => { publishDevice(DECISION_HELPER_ID, null) }, [])
@@ -415,7 +439,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     // The Link is the transport's (§19.19), and the rail's agent devices — Messages, Gateways, the Agency gateway, Frames, the Ledger, the
     // workcell rack — are the rail's publisher's (AgentRailDevices.tsx RAIL_AGENT_DEVICE_IDS): none of them is withdrawn here.
     for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, THREAD_DEVICE_ID, CUSTODY_ID, TASKS_ID, RUNS_ID, EXPERIMENT_ID, ...SESSION_DEVICE_IDS, APPROVALS_ID,
-      SEAT_ID, CARRIER_ID]) publishDevice(id, null)
+      SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID]) publishDevice(id, null)
   }, [])
 
   const choose = (slotId: string) => { shell.setExpandedDevice(slotId as AgentDeviceId); selectDevice(chainDeviceId(slotId)) }
@@ -607,11 +631,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
         </div>
       )
       case 'approvals': return placed(APPROVALS_ID, receipts.approvals, approvalsDesignBinding, designsReceipts.approvals ? APPROVALS_DESIGN : undefined, 'Approvals', {attrs: {'data-main-slot': 'approvals'}})
+      case 'run-map': return placed(RUN_MAP_ID, runMapDev, mainBindings.runMap, designsMain.runMap ? RUN_MAP_DESIGN : undefined, 'the Run map', {attrs: {'data-main-slot': 'run-map'}})
+      case 'prompt-pads': return placed(PROMPT_PADS_ID, padsDev, mainBindings.pads, designsMain.pads ? PROMPT_PADS_DESIGN : undefined, 'the Prompt pads', {attrs: {'data-main-slot': 'prompt-pads'}})
       // A workcell's chain (§19.23): its rack leads, then the road — the Remote carrier names the machine it runs on (§19.18).
       case 'workcell': return rackEntry?.binding ? placed(WORKCELL_RACK_ID, rackEntry.device, rackEntry.binding, designsCells.rack ? WORKCELL_RACK_DESIGN : undefined,
         `the workcell ${cellName ?? ''}`.trim(), {attrs: {'data-workcell-slot': 'workcell'}}) : null
       case 'remote-carrier': return placed(CARRIER_ID, cells.carrier, carrierDesignBinding, designsCells.carrier ? CARRIER_DESIGN : undefined, 'the Remote carrier',
         {attrs: {'data-workcell-slot': 'remote-carrier'}})
+      // The armed track's Capture skill (§19.11), after Scope.
+      case 'capture': return captureOn ? placed(CAPTURE_SKILL_ID, captureDevice, captureDesignBinding, captureDesign ? CAPTURE_SKILL_DESIGN : undefined, 'Capture skill',
+        {attrs: {'data-session-slot': 'capture'}}) : null
       default: return null
     }
   }
@@ -619,7 +648,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // The place's chain, left to right, with the visible drop slot while a card slides (it opens under the pointer among the agent chain's
   // slots and closes on release). It never lies: a slot is not a landing, the owner operation (here: the refusal naming the missing order
   // op) is.
-  const slots = chainSlots(place, {helper: helperStands})
+  const slots = chainSlots(place, {helper: helperStands, capture: captureOn, runMap: !!runMapDev, pads: !!padsDev})
   let slotIndex = 0
   const plates = slots.map(slot => {
     const atGap = AGENT_SLOTS.has(slot) && held?.kind === 'reorder' && gap === slotIndex

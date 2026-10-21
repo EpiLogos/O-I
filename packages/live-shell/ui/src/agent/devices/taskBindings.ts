@@ -212,6 +212,12 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
 
 // ---------------------------------------------------------------------------------------------------------------- Runs
 
+/** The Journey the work belongs to (lane W7; D3's Journey view, software-factory__attempt-review.tsx `journey`): factory_development_read
+ * `journey` and `commission-read` read a Journey by its ref, and the run reading (`run`) names the Run's Journey — reads that exist. The
+ * take lanes read each Run's attempts (factory.attempt-reading/v1, which names its Run and no Journey) and ask neither, so the Journey stands
+ * absent with that reason until a reader chains the run reading to the Journey's. */
+export const RUNS_JOURNEY_UNREAD = 'The Journey the work belongs to: not read here yet — the take lanes read each Run\'s attempts (factory.attempt-reading/v1 names its Run, not its Journey), and nothing here asks the run reading (factory_development_read `run`) for its Journey or the Journey\'s own reads (`journey`, `commission-read`), which exist.'
+
 export const RUNS_REFUSE = {
   /** No takes handed in: the chain has not given Runs the take lanes' reading of the session. */
   stands: 'Stands: Runs is not handed the session\'s takes here (the take lanes\' reading, owners/attemptTakes.ts useAttemptTakes), so no attempt is chosen from it; Factory\'s factory_owner AttemptReceiving is the write.',
@@ -287,10 +293,11 @@ export function runsValues(session: string | null, holds: ChainHolds, takes?: Ru
 
 /** Why Runs' attempts and Stands cannot stand now, by key; empty when the takes are read. */
 function runsStanding(session: string | null, takes?: RunsTakes): Record<string, Standing> {
-  if (!takes) return {stands: {disabled: RUNS_REFUSE.stands}}
-  if (!session) return {stands: {disabled: 'Stands: no session is selected; an attempt stands on its session\'s Run.'}}
-  if (!takes.takes) return {stands: {disabled: `Stands: ${RUNS_UNREAD.noneServed}`}}
-  return {}
+  const journey = {journey: {disabled: RUNS_JOURNEY_UNREAD}}
+  if (!takes) return {...journey, stands: {disabled: RUNS_REFUSE.stands}}
+  if (!session) return {...journey, stands: {disabled: 'Stands: no session is selected; an attempt stands on its session\'s Run.'}}
+  if (!takes.takes) return {...journey, stands: {disabled: `Stands: ${RUNS_UNREAD.noneServed}`}}
+  return journey
 }
 
 export function runsBinding(session: string | null, holds: ChainHolds, takes?: RunsTakes): DesignBinding {

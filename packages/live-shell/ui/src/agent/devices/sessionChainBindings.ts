@@ -17,7 +17,7 @@
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AgentSessionTrack, TaskClip} from '../agentRunModel'
-import {holdView, viewHolds, type ChainHolds} from './designBindings'
+import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {rackStateOf, runStateOfSession} from './runFaces'
 import {familyFaceDevice} from './mainTrackBindings'
 import {sessionRowsOf} from './threadBinding'
@@ -54,6 +54,11 @@ export const RUN_REFUSE = {
   take: 'No takes are read: factory_attempt_read needs the run ref of the session\'s work, and the agency reading names none.',
   open: 'No events are read into lanes: the temporal stream names the session, not Messages, Files, Terminal, Web or Graph.',
 } as const
+
+/** Whether the Run still stands on the structure its sources declare (lane W7; D3, software-factory__run-device.tsx `structure`): Factory's
+ * StructuralFidelityEvidence (factory/src/structural_ground.rs:187), which T-COVERAGE §1.2's Software Factory row names and no kernel route
+ * reads. */
+export const RUN_STRUCTURE_UNREAD = 'The Run\'s structure: no reading reaches it yet — missing op: StructuralFidelityEvidence through the kernel (T-COVERAGE §1.2, Software Factory: "StructuralFidelityEvidence") (Software Factory).'
 
 /** The Run's own settings the shell holds, with the manual's starting value of each (§19.17: Watch Auto, Event lanes Messages,
  * Overview On). Watch routes the session into the shell's own widgets; the lanes and the overview are the view's. */
@@ -122,7 +127,7 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
   return {
     id: RUN_ID,
     values: runValues(input),
-    standing: disabled(RUN_REFUSE),
+    standing: {...disabled(RUN_REFUSE), structure: {disabled: RUN_STRUCTURE_UNREAD}},
     local: {
       ...Object.fromEntries(RUN_LOCAL.map(key => [key, (value: Value | undefined) => holdView(RUN_ID, key, value)])),
       session: value => { if (typeof value === 'string' && value) ports.select(value) },
@@ -157,6 +162,25 @@ export const CUSTODY_ABSENT = {
   handBackLit: unread('The hand-back light', 'a reading of what you edited among the agent\'s held items (Factory\'s custody states name no edit)', 'Software Factory'),
 } as const
 
+// The Grants page (lane W7; D7, software-factory__agent-custody.tsx `grants`, `holder`, `worlds`, `readAt`): Actuation's governing authority
+// records. Actuation has no command that lists them (AuthorityStore::read reads one source ref: T-COVERAGE §1.5, Actuation "a list of
+// grants"), and `actuation authority issue|revoke` has no kernel route yet (T-COVERAGE §1.2, Actuation "authority issue|revoke"): the grants
+// stand absent and Issue and Revoke disabled, each naming its operation. The next grant's settings are the hand's own holds.
+const unreadGrant = (what: string, op: string) => `${what}: no reading reaches it yet — missing op: ${op} (Actuation).`
+export const CUSTODY_GRANTS_ABSENT = {
+  grants: unreadGrant('The agent\'s grants', 'a list of Actuation\'s grants for a holder (AuthorityStore::read reads one source ref; T-COVERAGE §1.5, Actuation: "a list of grants")'),
+  holder: unreadGrant('Whom the grants are for', 'the Actuation holder ref of the session\'s agent (no reading here names it; it comes with the grant list)'),
+  worlds: unreadGrant('The worlds a grant may name', 'the World refs Actuation admits for the holder (it comes with the grant list)'),
+  readAt: unreadGrant('When the grants were read', 'a list of Actuation\'s grants (T-COVERAGE §1.5, Actuation: "a list of grants")'),
+} as const
+export const CUSTODY_GRANTS_REFUSE = {
+  issue: missing('Issue', '`actuation authority issue` through the kernel (T-COVERAGE §1.2, Actuation: "authority issue|revoke"; not routed yet)', 'Actuation'),
+  revoke: missing('Revoke', '`actuation authority revoke <authority_source_ref> --reason <text>` through the kernel (T-COVERAGE §1.2, Actuation: "authority issue|revoke"; not routed yet)', 'Actuation'),
+} as const
+/** The next grant's settings and the revocation's reason: the hand's own holds (software-factory__agent-custody.tsx:21-22). */
+export const CUSTODY_GRANT_SETTINGS: readonly string[] = ['grant:determine-agency', 'grant:configure-agency', 'grant:actualise-agency', 'grant:reintegrate-return',
+  'grant:world', 'grant:expires', 'revoke:reason']
+
 export interface CustodyInput {
   /** The chain's session, null when none is selected. */
   readonly sessionRef: string | null
@@ -164,6 +188,8 @@ export interface CustodyInput {
   readonly autonomy: string | null
   /** The Agent's values (its light: Custody stands on the Agent). */
   readonly agent: Values
+  /** The hand's holds (the next grant's settings); absent, the store as it stands. */
+  readonly holds?: ChainHolds
 }
 
 /** Custody's values: the Agent's light and the custody the session's task record names. Write mode is Scope's reading, and none is
@@ -171,6 +197,8 @@ export interface CustodyInput {
  * reading (the transport's Re-enable light is the shell's own flag, never set by an owner). */
 export function custodyValues(input: CustodyInput): Values {
   const values: Record<string, Value> = {}
+  const view = viewHolds(input.holds ?? chainHolds(), CUSTODY_ID)
+  for (const key of CUSTODY_GRANT_SETTINGS) put(values, key, view[key])
   if (input.sessionRef == null) return values
   put(values, 'light', input.agent.light)
   put(values, 'autonomy', input.autonomy)
@@ -180,13 +208,14 @@ export function custodyValues(input: CustodyInput): Values {
 /** Custody's binding: Write mode is Scope's own key and row (one binding feeds both: the same write, the same standing); every other
  * setting has no owner write and stands disabled with the operation it lacks. */
 export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, 'write' | 'standing'> | null): DesignBinding {
-  const standing: Record<string, Standing> = {...disabled(CUSTODY_ABSENT), ...disabled(CUSTODY_REFUSE)}
+  const standing: Record<string, Standing> = {...disabled(CUSTODY_ABSENT), ...disabled(CUSTODY_GRANTS_ABSENT), ...disabled(CUSTODY_GRANTS_REFUSE), ...disabled(CUSTODY_REFUSE)}
   standing.writeMode = scope?.standing?.writeMode ?? {disabled: 'Write mode is Scope\'s: the chain\'s Scope is not drawn on its owner here.'}
   return {
     id: CUSTODY_ID,
     values: custodyValues(input),
     standing,
-    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE,
+    local: Object.fromEntries(CUSTODY_GRANT_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(CUSTODY_ID, key, value)])),
+    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key in CUSTODY_GRANTS_REFUSE,
     write: async changes => {
       for (const {key, value} of changes) {
         if (key === 'writeMode') {
@@ -194,7 +223,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
           await scope.write([{key, value}])
           continue
         }
-        throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? reading(key))
+        throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? CUSTODY_GRANTS_REFUSE[key as keyof typeof CUSTODY_GRANTS_REFUSE] ?? reading(key))
       }
     },
   }
