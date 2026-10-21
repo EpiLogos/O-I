@@ -5,7 +5,14 @@
  * control. Camera pan/zoom/orbit stay pointer gestures on the stage itself. */
 import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome', 'sound'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome', 'sound', 'journey', 'canvas'] as const;
+/** The walk's own acts (lane W4-Technē; DLW §17.6 Journey): stand on a stop (at seconds into it), play or stop the saved scenes
+ * (app.ts setSavedScenePlay, the scene strip's own Play), enter the presented stop's Scene in its Expression and return from it (the
+ * journey instrument's crossing and app.ts returnToJourney). Each runs the frame's own act; nothing here walks. */
+export const STAGE_JOURNEY_ACTIONS = ['stand', 'play', 'stop', 'enter', 'return'] as const;
+export type StageJourneyAction = (typeof STAGE_JOURNEY_ACTIONS)[number];
+/** The Canvas camera's bounds as the canvas holds them (navigationGeometry.ts CANVAS_ZOOM_LIMITS: 0.05 to 2, as percent). */
+export const STAGE_CANVAS_ZOOM = {min: 5, max: 200} as const;
 export type StageCommandName = (typeof STAGE_COMMANDS)[number];
 /** How the shell presents the frame (T-FRAME-CHROME-ONTO-PLATES; manual §16.1: "A pane is a device at full size. Its controls stay out
  * of the pane and appear in Device view below it"). 'devices': a pane — the frame draws only its field, and every control its chrome
@@ -216,7 +223,11 @@ export type StageCommand =
   | {command: 'chrome'; id: string; value?: string}
   /** The Expression's own sound (DLW §20.1 the mixer row's Activator and Solo): every object sound of the open Expression silenced or
    * not, as the Sound panel's own "Mute all object sound here" does. The picture still plays. */
-  | {command: 'sound'; muted: boolean};
+  | {command: 'sound'; muted: boolean}
+  | {command: 'journey'; action: 'stand'; index: number; seconds?: number}
+  | {command: 'journey'; action: 'play' | 'stop' | 'enter' | 'return'}
+  /** The Canvas camera (DLW §17.4): the board point at the pane's centre and the zoom in percent, set through the canvas's own fly. */
+  | {command: 'canvas'; action: 'camera'; cx: number; cy: number; zoom: number};
 /** A Jankó note: one to twelve distinct pitch classes (0–11) struck together as one act, at an amplitude in (0, 1] (modal metres; the owner's strike bound). */
 export const STAGE_JANKO_AMPLITUDE_MAX = 1;
 export type StageResult = {ok: true} | {ok: false; error: string};
@@ -264,6 +275,17 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
     }
     case 'sound':
       return closed(raw, [...BASE_KEYS, 'muted']) && typeof raw.muted === 'boolean' ? {req, command: {command: 'sound', muted: raw.muted}} : null;
+    case 'journey':
+      if (!stageOneOf(STAGE_JOURNEY_ACTIONS, raw.action)) return null;
+      if (raw.action !== 'stand') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'journey', action: raw.action}} : null;
+      if (!closed(raw, [...BASE_KEYS, 'action', 'index', 'seconds']) || typeof raw.index !== 'number' || !Number.isSafeInteger(raw.index) || raw.index < 0) return null;
+      if (raw.seconds !== undefined && (typeof raw.seconds !== 'number' || !Number.isFinite(raw.seconds) || raw.seconds < 0)) return null;
+      return {req, command: {command: 'journey', action: 'stand', index: raw.index, ...(raw.seconds !== undefined ? {seconds: raw.seconds as number} : {})}};
+    case 'canvas':
+      if (!closed(raw, [...BASE_KEYS, 'action', 'cx', 'cy', 'zoom']) || raw.action !== 'camera') return null;
+      if (![raw.cx, raw.cy, raw.zoom].every(value => typeof value === 'number' && Number.isFinite(value))) return null;
+      if ((raw.zoom as number) < STAGE_CANVAS_ZOOM.min || (raw.zoom as number) > STAGE_CANVAS_ZOOM.max) return null;
+      return {req, command: {command: 'canvas', action: 'camera', cx: raw.cx as number, cy: raw.cy as number, zoom: raw.zoom as number}};
     case 'present':
       return closed(raw, [...BASE_KEYS, 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'present', on: raw.on}} : null;
     case 'export':

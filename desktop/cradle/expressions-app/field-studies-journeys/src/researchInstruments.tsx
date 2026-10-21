@@ -42,6 +42,7 @@ import {icon} from './icons.js';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
 import {CanvasNavigationOverview} from './canvasNavigationOverview';
+import {canvasReadingOf,timelineReadingOf,viewportOf,type FrameCanvasReading,type FrameTimelineReading} from './researchReading.js';
 import {CanvasFindOverlay} from './canvasFindOverlay';
 import {canvasFindTargets,resolveCanvasFindTarget,canvasFindCamera,type CanvasFindTarget} from './canvasFind';
 import {presentFrames,presentStep,presentViewport,PRESENT_GLYPH,type PresentFrame} from './canvasPresent';
@@ -401,6 +402,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  // T-FRAME-TIME-PUSH: the presented time instrument's follower of the host's shared-window nudges (one at a time).
  let offSharedTimeNudges:(()=>void)|null=null;
  let captureCanvas:(()=>{x:number;y:number;zoom:number})|null=null,currentKey:string|null=null;
+ // lane W4-Technē: the reading the presented Timeline draws (its bundle, its view state), kept so the frame can announce the ruler it draws.
+ let presentedTimeline:{bundle:{nodes:readonly {graphNodeId:string;title?:string;isTemporal?:boolean;validFrom?:unknown;validTo?:unknown;entityType?:unknown;historicity?:unknown}[];relationships:readonly {id:string;sourceGraphNodeId:string;targetGraphNodeId:string;relType:string;properties?:Readonly<Record<string,unknown>>}[]};state:ViewState;sceneId:string}|null=null;
  const views=new Map<string,ViewState>();
  let mutations:Promise<void>=Promise.resolve();
  // B4: the title each occurrence last carried on this session's Canvas, so a departed member can be named after it is removed.
@@ -1156,6 +1159,7 @@ host.tools.append(saveGlyph);
     message('Source relations · open a card to inspect');render(canvasNode(data.canvas,state,generation));return;
    }
    if(selected==='m2'){
+    presentedTimeline={bundle:data.bundle,state,sceneId};
     const temporal=data.bundle.nodes.filter(n=>n.isTemporal);
     // lane-2 T25: the chronology, the Relations tab and the status line read one availability voice.
     const voice=chronologyVoice(projectionAvailability(nativeReading,sharedTime?.axis));
@@ -1421,5 +1425,37 @@ host.tools.append(saveGlyph);
   },
   destroy(){++epoch;offSharedTimeNudges?.();offSharedTimeNudges=null;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);window.removeEventListener('pagehide',quitGestures);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
+  /** lane W4-Technē: the presented instrument's state as the frame holds it, for its announcement (researchReading.ts): the Canvas's board,
+   * camera, selection and pointer flags; the Timeline's dated reading, projection and camera. Absent while neither is presented. Never a
+   * throw out of the announcement. */
+  reading():{canvas?:FrameCanvasReading;timeline?:FrameTimelineReading}{
+   try{
+    if(lens==='m1'&&currentKey){
+     const view=host.nativeView(),sceneId=host.sceneId(),state=views.get(currentKey);
+     if(!view||!state||!view.bindings[sceneId])return {};
+     const canvas=nativeCanvas(view,sceneId);
+     if(canvas.key!==currentKey)return {};
+     const material=host.sceneMaterial(sceneId).research;
+     const selected=state.multiSelect?.size?[...state.multiSelect]:state.selectedNode?[state.selectedNode]:[];
+     return {canvas:canvasReadingOf(canvas,material,{viewport:state.canvas??captureCanvas?.(),pane:{width:body.clientWidth,height:body.clientHeight},selected,selectedLine:state.selectedEdge,
+      drawing:state.drawing,erasing:state.erasing,lasso:state.lassoOn,snap:state.snapToGrid},
+      nodeId=>{const viewId=canvas.occurrences.get(nodeId);return viewId?material?.cards[viewId]?.type:undefined;})};
+    }
+    if(lens==='m2'&&presentedTimeline&&presentedTimeline.sceneId===host.sceneId()){
+     const {bundle,state,sceneId}=presentedTimeline;
+     let views:string[]=[];try{views=Object.keys(host.sceneMaterial(sceneId).research?.timelineViews??{});}catch{views=[];}
+     return {timeline:timelineReadingOf(bundle,{projection:state.m2Projection,camera:state.timeline,views})};
+    }
+   }catch{/* nothing is announced rather than a wrong board */}
+   return {};
+  },
+  /** lane W4-Technē: the Canvas camera, set through the canvas's own fly (the overview's own path, CanvasNavigationOverview onCamera). */
+  setCamera(camera:{cx:number;cy:number;zoom:number}){
+   if(lens!=='m1'||!currentKey)throw new Error('Open the Canvas to move its camera.');
+   if(!flyToNode)throw new Error('The Canvas has not drawn its board yet.');
+   const pane={width:body.clientWidth,height:body.clientHeight};
+   if(!(pane.width>0&&pane.height>0))throw new Error('The Canvas stands in no pane of any size, so it has no centre to move.');
+   flyToNode('',viewportOf(camera,pane));
+  },
  };
 }

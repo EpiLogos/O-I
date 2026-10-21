@@ -8,6 +8,7 @@
 // a surface that is unmounting cannot clear another's handle.
 
 import type {GraphFilters} from './filters';
+import type {GraphReading} from './graph';
 
 /** The vocabularies the open reading holds, as the panel computes them (GraphFilters.tsx): null until the reading loads. */
 export interface KnowledgeGraphDomains {
@@ -35,12 +36,27 @@ export interface KnowledgeGraphSurface {
   readonly counts: KnowledgeGraphCounts | null;
   /** The selected subject the local scope centres on, or null. */
   readonly selected: string | null;
+  /** The reading the surface draws, as its graph read returned it (graphProgress.ts loadGraph → the kernel `graph` op), or null before its
+   * first part has come. The surface's own reading, never a second read: a device draws the material the pane draws. */
+  readonly reading: GraphReading | null;
+  /** Whether a part of the reading is still loading (graphProgress.ts GraphProgress.pending). */
+  readonly loading: boolean;
+  /** The register the reading is of — the open binding's project, undefined for the root register — and the query it was asked with. */
+  readonly project: string | undefined;
+  readonly query: string;
+  /** Whether the canvas draws its overview (the minimap; GraphCanvas.tsx's "Hide overview" / "Show overview" toggle). */
+  readonly minimap: boolean;
   /** The panel's own filter change (changeFilters): the patch is merged onto the current filter state. */
   patchFilters(patch: Partial<GraphFilters>): void;
   /** The zoom buttons' own change: the zoom is set on the view's camera. */
   setZoom(zoom: number): void;
   /** The Fit button's own act. */
   fit(): void;
+  /** The canvas's own press on a subject (KnowledgeSurface.tsx select): it becomes the selection the local scope centres on. Throws, in
+   * words, when the reading holds no such subject or it is an unresolved link. */
+  select(ref: string): void;
+  /** The overview toggle's own change. */
+  setMinimap(on: boolean): void;
 }
 
 interface Standing {

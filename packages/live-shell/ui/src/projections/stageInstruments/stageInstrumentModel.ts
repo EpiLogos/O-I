@@ -80,3 +80,20 @@ export const STAGE_PLATES: Readonly<Record<StageInstrumentId, readonly StageSect
 }
 
 export const isStageInstrument = (id: string): id is StageInstrumentId => id in STAGE_PLATES
+
+/** What each instrument's catalogue design now carries on its binding (lane W4-Technē; techne/devices/frameBindings.ts), so the plate never
+ * draws it twice (the design is the standard): whole groups whose every control the design writes, and the frame's own controls, by their
+ * words, the design reads and presses itself. The plate's waiting rows (a parameter no owner carried) are the design's own parameters now,
+ * drawn there with their reasons, and the well is the design's display. What the design does not carry yet stays on the plate. */
+export const CARRIED_BY_DESIGN: Readonly<Record<StageInstrumentId, {readonly sections: readonly string[]; readonly labels: readonly RegExp[]}>> = {
+  // Canvas: Mode (Draw, Erase, Lasso), Grid (Snap), Minimap (the overview toggle), the camera (Zoom, Fit all, Fit sel.: the canvas camera
+  // command) and the save state; the whole Look group.
+  'techne:m1': {sections: ['look'], labels: [/^(Draw|Erase|Lasso|Snap)$/, /^(Hide|Show) overview$/, /^(Zoom (in|out) canvas|Fit all cards|Fit selected cards|Canvas zoom)$/, /^\d+(\.\d+)?\s?%$/,
+    /^(Saved|Saving|Held, not saved)$/]},
+  // Timeline: the projection tabs and Refresh; the shared window (the design's Window writes the session's one window): the whole Window group.
+  'techne:m2': {sections: ['window'], labels: [/^(Chronology|Relations|Relative|Refresh timeline)$/]},
+  // Journey: Play and Stop of the saved scenes (the journey stage command) and the presented beat's Enter (its crossing).
+  'techne:m3': {sections: [], labels: [/^(Play|Stop) saved scenes$/, /^Enter in Expression$/]},
+}
+/** Whether the design carries one of the frame's controls. */
+export const carriedByDesign = (id: StageInstrumentId, label: string): boolean => CARRIED_BY_DESIGN[id].labels.some(word => word.test(label.trim()))

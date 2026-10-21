@@ -6,19 +6,21 @@
 //     the same path the family's three faces wrote (inhabitants/ql/devices/knowledgeDevices.ts KNOWLEDGE_DECLARED_ROWS → ownerWrite.ts
 //     writeThroughOwner → agent/shellSetterBridge.ts), which call the panel's own acts; a coloured group's switch is the panel's own
 //     filter change (knowledgeGraphFaceActions.ts setFilters);
-//   - the reading itself, the kernel `graph` op (desktop/cradle/kernel/src/graph.rs; desktop/cradle/src/knowledge/graphProgress.ts
-//     loadGraph — the read the open surface itself makes), of the root register's wiki: its local inputs first, the Shared Field's
-//     only while Shared stands. The handle publishes neither the surface's reading nor the register it reads, so this device reads
-//     the root register's wiki (named in PROPOSE: the handle should carry both).
+//   - the reading itself: while a graph is open, the open surface's own reading, which its handle publishes with its register and query
+//     (knowledgeGraphHandle.ts reading, project, query — the kernel `graph` op's answer the pane draws; desktop/cradle/kernel/src/
+//     graph.rs, graphProgress.ts loadGraph); with none open, the same op asked here of the root register's wiki (graphRead.ts): its
+//     local inputs first, the Shared Field's only while Shared stands.
 // The keys and their owners:
 //   light        lit while a graph is open, dark while none is
-//   selected     the open graph's selected subject ('' while none is selected); no act of the handle selects, so a press on a node
-//                stands refused naming that operation
+//   selected     the open graph's selected subject ('' while none is selected); a press on a node selects through the handle's own
+//                act (knowledgeGraphHandle.ts select: the canvas's press, KnowledgeSurface.tsx select)
+//   minimap      the canvas's overview toggle, through the handle (minimap, setMinimap)
 //   scope, depth, direction, shared, text, kinds, relations, ghosts (unresolved), orphans (isolated), mode (context), labels,
 //   arrows, zoom, groups (emphasis)   the open graph's view state (GraphFilters), kinds and relations as the design lists them
-//   reading      the kernel graph op's answer (oi.cradle.graph-reading/v1), whole
-//   budget       the max_nodes the read is asked with: the hand's, starting at the surface's own 4096 (graphProgress.ts)
-//   minimap, aperture.*   no operation reaches them: absent, and their controls stand disabled naming it
+//   reading      the kernel graph op's answer (oi.cradle.graph-reading/v1), whole: the open surface's, else the root register's
+//   budget       the max_nodes the read is asked with: the open surface reads at graphProgress.ts's own 4096 and its handle takes no
+//                bound; with none open, the hand's bound on the root read
+//   aperture.*   no operation reaches them: absent, and their controls stand disabled naming it
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {KnowledgeGraphSurface} from '../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
@@ -33,10 +35,14 @@ export const GRAPH_READ_NODES = 4096
 export const NOT_OPEN = 'The knowledge graph is not open in this session. Open a graph in the centre and its controls stand here; nothing is held.'
 export const NOT_LOCAL = 'Depth applies in a local view; the scope is the available field, so set the scope to the selected subject first.'
 
+/** The open surface's reading, as a read (its handle's reading and loading): the same material the pane draws. */
+export function surfaceRead(surface: KnowledgeGraphSurface): GraphRead {
+  return {status: surface.loading ? 'reading' : 'answered', reading: surface.reading ?? null, error: null, pending: surface.loading ? ['loading'] : [], nodes: GRAPH_READ_NODES}
+}
+const SURFACE_BOUND = missing('Budget', 'a node bound on the open graph\'s read (KnowledgeSurface.tsx reads at graphProgress.ts\'s own 4096; its handle takes none)', 'the knowledge graph')
+
 const APERTURE = missing('The aperture', 'plan_living_wiki_refraction (QL-MEF crates/ql-wiki/src/living.rs, ql-mef/living-wiki-refraction/v1): a library contract, no CLI and no kernel op reach it', 'Quaternal Logic')
 export const GRAPH_REFUSE = {
-  selected: missing('Select a note', 'a selection act on the open graph\'s handle (knowledgeGraphHandle.ts carries `selected` as a reading only)', 'the knowledge graph'),
-  minimap: missing('Minimap', 'a minimap switch on the open graph\'s handle (knowledgeGraphHandle.ts carries none)', 'the knowledge graph'),
   'aperture.mode': APERTURE, 'aperture.positions': APERTURE, 'aperture.context': APERTURE, 'aperture.full': APERTURE, 'aperture.budget': APERTURE,
 } as const
 
@@ -47,7 +53,9 @@ export const GRAPH_SETTERS: Readonly<Record<string, string>> = {
   orphans: 'shell.setKnowledgeIsolated', mode: 'shell.setKnowledgeContext', labels: 'shell.setKnowledgeLabels', arrows: 'shell.setKnowledgeArrows',
   zoom: 'shell.setKnowledgeZoom',
 }
-const VIEW_KEYS = [...Object.keys(GRAPH_SETTERS), 'clear'] as const
+/** The keys that write through the handle's own acts. */
+const HANDLE_KEYS = ['selected', 'minimap'] as const
+const VIEW_KEYS = [...Object.keys(GRAPH_SETTERS), ...HANDLE_KEYS, 'clear'] as const
 export const GRAPH_LOCAL = ['budget'] as const
 
 /** The kernel graph op's answer as the window holds it. */
@@ -69,7 +77,7 @@ const groupOf = (group: EmphasisGroup) => ({id: group.id, label: group.label, co
 export function graphValues(surface: KnowledgeGraphSurface | null, read: GraphRead | null, held: Readonly<Record<string, Value>> = {}): Values {
   const values: Record<string, Value> = {}
   values.light = surface ? 'lit' : 'dark'
-  put(values, 'budget', held.budget ?? read?.nodes)
+  put(values, 'budget', surface ? GRAPH_READ_NODES : held.budget ?? read?.nodes)
   if (read?.reading) values.reading = JSON.stringify(read.reading)
   if (!surface) return values
   const f = surface.filters
@@ -88,6 +96,7 @@ export function graphValues(surface: KnowledgeGraphSurface | null, read: GraphRe
   values.arrows = f.arrows
   put(values, 'zoom', surface.zoom)
   values.groups = JSON.stringify(f.emphasis.map(groupOf))
+  if (typeof surface.minimap === 'boolean') values.minimap = surface.minimap
   return values
 }
 
@@ -108,6 +117,18 @@ export async function graphWrite(surface: KnowledgeGraphSurface | null, changes:
   for (const {key, value} of changes) {
     if (key in GRAPH_REFUSE) throw refusal(GRAPH_REFUSE, key)
     if (!surface) throw Error(NOT_OPEN)
+    if (key === 'selected') {
+      if (typeof value !== 'string' || !value) throw Error('Select a note on the graph.')
+      if (!surface.select) throw Error(missing('Select a note', 'the select act on the open graph\'s handle', 'the knowledge graph'))
+      surface.select(value)
+      continue
+    }
+    if (key === 'minimap') {
+      if (!surface.setMinimap) throw Error(missing('Minimap', 'the overview toggle on the open graph\'s handle', 'the knowledge graph'))
+      surface.setMinimap(value === true)
+      continue
+    }
+    if (key === 'budget') throw Error(SURFACE_BOUND)
     const group = /^g:(.+)$/.exec(key)
     if (group) {
       const groups = surface.filters.emphasis
@@ -125,8 +146,9 @@ export async function graphWrite(surface: KnowledgeGraphSurface | null, changes:
 /** Why a key of the design has no reading now. */
 export function graphAbsent(surface: KnowledgeGraphSurface | null, read: GraphRead | null, key: string): string {
   if (key in GRAPH_REFUSE) return GRAPH_REFUSE[key as keyof typeof GRAPH_REFUSE]
-  if (key === 'reading') return read?.status === 'refused' ? `The kernel graph op refused: ${read.error ?? 'no reason given'}.` : 'The kernel graph op has not answered yet.'
+  if (key === 'reading') return read?.status === 'refused' ? `The kernel graph op refused: ${read.error ?? 'no reason given'}.` : surface ? 'The open graph has not read its first part yet.' : 'The kernel graph op has not answered yet.'
   if (!surface) return NOT_OPEN
+  if (key === 'minimap') return missing('Minimap', 'the overview toggle on the open graph\'s handle', 'the knowledge graph')
   return `${key}: the open graph's handle reports no such reading.`
 }
 const GRAPH_READINGS = ['reading', 'selected', 'groups'] as const
@@ -135,7 +157,10 @@ const GRAPH_READINGS = ['reading', 'selected', 'groups'] as const
 export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphRead | null, writes: GraphWrites, held: Readonly<Record<string, Value>> = {}): DesignBinding {
   const standing: Record<string, Standing> = disabled(GRAPH_REFUSE)
   if (!surface) for (const key of VIEW_KEYS) standing[key] = {disabled: NOT_OPEN}
-  else if (surface.filters.scope !== 'local') standing.depth = {disabled: NOT_LOCAL}
+  else {
+    if (surface.filters.scope !== 'local') standing.depth = {disabled: NOT_LOCAL}
+    standing.budget = {disabled: SURFACE_BOUND}
+  }
   const values = graphValues(surface, read, held)
   for (const key of GRAPH_READINGS) if (!(key in values) && !(key in standing)) standing[key] = {disabled: graphAbsent(surface, read, key)}
   return {
@@ -144,7 +169,7 @@ export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphR
     standing,
     ...(read === null || (read.status === 'reading' && !read.reading) ? {waiting: ['reading']} : {}),
     local: handsFor(GRAPH_ID, GRAPH_LOCAL),
-    writes: key => key in GRAPH_REFUSE || key in GRAPH_SETTERS || key.startsWith('g:'),
+    writes: key => key in GRAPH_REFUSE || key in GRAPH_SETTERS || (HANDLE_KEYS as readonly string[]).includes(key) || key.startsWith('g:'),
     write: changes => graphWrite(surface, changes, writes),
   }
 }

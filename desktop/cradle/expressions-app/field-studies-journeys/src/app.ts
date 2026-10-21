@@ -89,6 +89,8 @@ import {requestNativeMaterialEditor} from '../../../../../packages/expressions-b
 import {worldRequest} from './worldChannel';
 import {installLensStudio,PALACE_MOVED,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
+import {journeyReadingOf} from './researchReading.js';
+import {stageReadingOf} from './stageReading.js';
 import {installJourneyInstrument} from './journeyInstrument.js';
 import {writeJourneyCrossing,writeJourneyReturn} from './sharedTimeWindow.js';
 import {composeSceneRequest} from './journeyBeats.js';
@@ -2141,11 +2143,17 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...chromeState()};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
 }/** T-FRAME-CHROME-ONTO-PLATES: the presentation and the chrome reading for the announcement; absent before the door stands, never a throw out of it. */function chromeState(){try{return presentedChrome?{presentation:presentedChrome.presentation(),chrome:presentedChrome.reading()}:{};}catch{return {};}}
+/** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts; controller.ts instrument.stage), for the Torus's Stage
+ * page. Nothing is read for the announcement; absent while the field has disclosed none. */
+function instrumentStageState(){try{const instrument=(nativeField?.controller.reading as {instrument?:{stage?:unknown;stage_stale?:unknown}|null}|undefined)?.instrument;const stage=stageReadingOf(instrument?.stage,instrument?.stage_stale);return stage?{instrumentStage:stage}:{};}catch{return {};}}
+/** lane W4-Technē: the research instruments' state for the announcement (researchReading.ts): the walk from the open Journey document and
+ * where it stands, and the presented Canvas or Timeline as the research instruments hold it. Absent rather than a throw out of it. */
+function researchState(){try{return {research:{journey:journeyReadingOf(store.document,{index:sceneIndex,local:sceneElapsed,playing:journeyPlaying,entered:crossingStands}),...(researchInstruments?.reading()??{})}};}catch{return {};}}
 /** The native instrument as the frame announces it (ticket T-LIVE-TORUS-INSTRUMENT). Read here, never from a stale copy; absent while no session is open, and never a throw out of the announcement. */
 function announcedInstrument(){
  try{return nativeField?announceInstrument(nativeField.controller.reading):undefined;}catch{return undefined;}
@@ -2267,6 +2275,22 @@ async function runStageCommand(command:StageCommand){
    if(!nativeField)throw new Error('This application has no native instrument.');
    await nativeField.command(command.edit);
    break;
+  // lane W4-Technē: the walk's own acts (stageCommands.ts STAGE_JOURNEY_ACTIONS), each the frame's own: the playhead moves as the
+  // transport's jump moves it, the saved scenes play as the scene strip's Play does, Enter is the presented beat's own button.
+  case 'journey':{
+   if(command.action==='stand'){
+    const count=store.document.scenes.length;
+    if(command.index>=count)throw new Error(`The walk has ${count} stop${count===1?'':'s'}: there is no stop ${command.index+1}.`);
+    jumpToJourneyTime(expressionTiming(store.document,command.index,command.seconds??0).time);needsFrame=true;break;
+   }
+   if(command.action==='play'){if(journeyPlaying)break;if(!savedSceneIndices(store.document).length)throw new Error('Save your first scene before playing the scene strip.');setSavedScenePlay(true);break;}
+   if(command.action==='stop'){if(journeyPlaying)setSavedScenePlay(false);break;}
+   if(command.action==='enter'){if(!journeyInstrument)throw new Error('This application has no Journey instrument.');journeyInstrument.enter();break;}
+   if(!crossingStands)throw new Error('No crossing stands: the walk is not inside a stop\'s Scene.');
+   returnToJourney();break;
+  }
+  // lane W4-Technē: the Canvas camera through the canvas's own fly (researchInstruments.tsx setCamera).
+  case 'canvas':if(!researchInstruments)throw new Error('This application has no Canvas.');researchInstruments.setCamera(command);break;
   case 'live':
    // The streamed set returns before the announce below: it writes no document and must not trigger a shell read at 20 Hz.
    if(command.action==='set'){liveOverrides.setDrag(command.target,command.value);needsFrame=true;return;}
