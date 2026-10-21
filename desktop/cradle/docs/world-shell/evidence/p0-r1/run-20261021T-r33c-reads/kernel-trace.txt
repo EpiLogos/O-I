@@ -1,0 +1,406 @@
+[watch] 1792555497564 live /Users/admin/Central /Users/admin/.aikit
+[native] 1792555498898 op live_set_read err total_ms=0.2 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.1 form=owner-read
+[read] 1792555498916 central:central.files.list:{"path":"","project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Cand miss
+[read] 1792555498916 central:central.files.list:{"path":"Work/O-I/desktop/cradle/material/expressive-material/character","project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1 miss
+[owner] 1792555498930 process Central central.files.list ok total_ms=12.3
+[owner] 1792555498930 process Central central.files.list ok total_ms=12.9
+[read] 1792555498930 central:central.files.read-batch:{"locations":[{"path":"Work/O-I/desktop/cradle/material/expressive-material/character/aletheia.expression.json","ref":"central: miss
+[owner] 1792555498972 process Central central.files.read-batch ok total_ms=41.3
+[read] 1792555498996 central:central.files.list:{"path":"Work/O-I/desktop/cradle/material/expressive-material/scene","project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/202 miss
+[owner] 1792555499001 process Central central.files.list ok total_ms=4.6
+[read] 1792555499001 central:central.files.read-batch:{"locations":[{"path":"Work/O-I/desktop/cradle/material/expressive-material/scene/arrival.expression.json","ref":"central:path: miss
+[owner] 1792555499012 process Central central.files.read-batch ok total_ms=10.9
+[read] 1792555499014 central:central.files.list:{"path":"Work/O-I/desktop/cradle/material/expressive-material/expression","project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r miss
+[owner] 1792555499018 process Central central.files.list ok total_ms=4.2
+[read] 1792555499018 central:central.files.read-batch:{"locations":[{"path":"Work/O-I/desktop/cradle/material/expressive-material/expression/expression-development.expression.json", miss
+[owner] 1792555499026 process Central central.files.read-batch ok total_ms=7.2
+[read] 1792555499028 central:central.files.list:{"path":"Work/O-I/desktop/cradle/material/expressive-material/gesture","project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/2 miss
+[owner] 1792555499033 process Central central.files.list ok total_ms=4.2
+[read] 1792555499033 central:central.files.read:{"location":{"path":"Work/O-I/desktop/cradle/material/expressive-material/gesture/skill-invocation.expression.json","ref":"central:pa miss
+[owner] 1792555499038 process Central central.files.read ok total_ms=4.5
+[native] 1792555499038 op expression_world ok total_ms=122.7 lock_wait_ms=0.1 lock_held_ms=122.6 owner_ms=0.0 form=ordered
+[read] 1792555499038 central:central.world.project:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.a miss
+[read] 1792555499038 central:central.world:{"project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Conte miss
+[read] 1792555499038 central:central.files.list:{"path":"Control/agents/wiki","project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle miss
+[read] 1792555499038 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[native] 1792555499038 op state ok total_ms=122.4 lock_wait_ms=122.4 lock_held_ms=0.0 owner_ms=0.0 form=ordered
+[read] 1792555499038 central:central.files.list:{"path":"Control/user/flows","project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/ miss
+[read] 1792555499038 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource miss
+[read] 1792555499039 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I miss
+[owner] 1792555499049 process Central central.files.list ok total_ms=10.1
+[native] 1792555499049 op expression ok total_ms=132.8 lock_wait_ms=122.2 lock_held_ms=10.6 owner_ms=0.0 form=ordered
+[owner] 1792555499049 process Central central.files.list ok total_ms=10.6
+[native] 1792555499049 op files_list ok total_ms=133.7 lock_wait_ms=122.5 lock_held_ms=0.1 owner_ms=11.1 form=files
+[native] 1792555499049 op files_list ok total_ms=134.0 lock_wait_ms=119.1 lock_held_ms=0.2 owner_ms=14.7 form=files
+[owner] 1792555499053 process Central central.files.list ok total_ms=14.1
+[owner] 1792555499168 process Central central.now.list ok total_ms=129.0
+[read] 1792555499169 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 miss
+[owner] 1792555499197 process Central central.world.project ok total_ms=159.1
+[read] 1792555499197 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I miss
+[owner] 1792555499204 process Central central.time.policy ok total_ms=165.4
+[read] 1792555499204 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou joined
+[read] 1792555499204 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource miss
+[owner] 1792555499240 process Central central.world ok total_ms=201.7
+[read] 1792555499240 central:central.world:{"project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Conte joined
+[read] 1792555499241 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate. miss
+[read] 1792555499241 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app miss
+[read] 1792555499241 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_ miss
+[read] 1792555499241 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261 miss
+[owner] 1792555499241 process Central central.now.thoughts.read-batch ok total_ms=71.9
+[owner] 1792555499247 process Software Factory project locate ok total_ms=5.2
+[owner] 1792555499248 process Central agent-profile.roster ok total_ms=5.9
+[owner] 1792555499248 process Central projectcentral.inspect ok total_ms=7.4
+[native] 1792555499248 op agent_definition ok total_ms=332.4 lock_wait_ms=122.5 lock_held_ms=0.0 owner_ms=209.8 form=agent
+[owner] 1792555499252 process Software Factory project locate ok total_ms=3.6
+[owner] 1792555499252 process Software Factory project locate ok total_ms=4.3
+[owner] 1792555499255 process Software Factory project locate ok total_ms=12.8
+[owner] 1792555499256 process AIKit encounter-task-read ok total_ms=7.4
+[native] 1792555499256 op encounter_task_read ok total_ms=340.6 lock_wait_ms=122.5 lock_held_ms=0.0 owner_ms=218.1 form=agent
+[owner] 1792555499269 process Central agent-profile.roster ok total_ms=27.9
+[native] 1792555499271 op agent_definition ok total_ms=355.0 lock_wait_ms=122.5 lock_held_ms=0.0 owner_ms=232.4 form=agent
+[owner] 1792555499288 process AIKit discover ok total_ms=35.3
+[owner] 1792555499295 process Central central.day.read ok total_ms=90.8
+[read] 1792555499297 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555499297 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont miss
+[native] 1792555499325 op agency_read ok total_ms=409.6 lock_wait_ms=122.5 lock_held_ms=0.0 owner_ms=287.0 form=agent
+[owner] 1792555499394 process Central projectcentral.change.horizon ok total_ms=95.2
+[read] 1792555499401 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[owner] 1792555499419 process AIKit history ok total_ms=379.0
+[native] 1792555499426 op temporal_events_read ok total_ms=509.7 lock_wait_ms=122.4 lock_held_ms=0.1 owner_ms=387.2 form=owner-read
+[owner] 1792555499426 process Central central.work.policy ok total_ms=24.7
+[native] 1792555499426 op central ok total_ms=510.6 lock_wait_ms=122.5 lock_held_ms=0.0 owner_ms=388.1 form=owner-read
+[read] 1792555499436 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ miss
+[owner] 1792555499442 process O:I ground status ok total_ms=5.5
+[native] 1792555499442 op ground ok total_ms=6.3 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=6.1 form=ground
+[read] 1792555499448 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c miss
+[owner] 1792555499459 process AIKit encounter-task-read ok total_ms=10.4
+[native] 1792555499459 op encounter_task_read ok total_ms=11.6 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=11.5 form=agent
+[owner] 1792555499467 process Central central.files.read ok total_ms=30.2
+[native] 1792555499468 op expression_recovery ok total_ms=3.9 lock_wait_ms=0.0 lock_held_ms=0.0 owner_ms=3.9 form=free
+[native] 1792555499477 op file_read ok total_ms=41.2 lock_wait_ms=0.2 lock_held_ms=0.1 owner_ms=40.9 form=files
+[native] 1792555499487 op surface_open ok total_ms=0.3 lock_wait_ms=0.0 lock_held_ms=0.3 owner_ms=0.0 form=ordered
+[read] 1792555499490 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/Central miss
+[owner] 1792555499498 process AIKit encounter-task-read ok total_ms=6.9
+[native] 1792555499498 op encounter_task_read ok total_ms=7.8 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=7.7 form=agent
+[read] 1792555499499 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app hit
+[read] 1792555499499 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/Central miss
+[read] 1792555499499 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261 hit
+[read] 1792555499499 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c hit
+[read] 1792555499499 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/Central miss
+[read] 1792555499499 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_ hit
+[read] 1792555499500 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/Central miss
+[read] 1792555499500 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/ miss
+[read] 1792555499500 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run miss
+[read] 1792555499500 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run miss
+[read] 1792555499500 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run miss
+[read] 1792555499501 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run miss
+[read] 1792555499501 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run miss
+[read] 1792555499501 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[native] 1792555499501 op encounter_task_read ok total_ms=2.6 lock_wait_ms=2.2 lock_held_ms=0.2 owner_ms=0.3 form=agent
+[read] 1792555499501 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[native] 1792555499501 op agent_definition ok total_ms=3.0 lock_wait_ms=1.8 lock_held_ms=0.3 owner_ms=0.9 form=agent
+[read] 1792555499501 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[native] 1792555499501 op encounter_task_read ok total_ms=2.6 lock_wait_ms=2.1 lock_held_ms=0.3 owner_ms=0.2 form=agent
+[native] 1792555499502 op agent_definition ok total_ms=2.9 lock_wait_ms=2.6 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[owner] 1792555499503 process Central central.recognize ok total_ms=12.0
+[native] 1792555499503 op ground ok total_ms=12.8 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=12.7 form=ground
+[read] 1792555499504 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[read] 1792555499507 nara-identity:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resources/live-shell/n miss
+[owner] 1792555499508 process AIKit encounter-task-read ok total_ms=7.9
+[read] 1792555499509 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[native] 1792555499509 op encounter_task_read ok total_ms=10.8 lock_wait_ms=1.4 lock_held_ms=0.2 owner_ms=9.2 form=agent
+[owner] 1792555499510 process AIKit encounter-task-read ok total_ms=10.7
+[native] 1792555499511 op encounter_task_read ok total_ms=12.3 lock_wait_ms=0.7 lock_held_ms=0.2 owner_ms=11.4 form=agent
+[owner] 1792555499511 process AIKit encounter-task-read ok total_ms=10.6
+[owner] 1792555499511 process AIKit encounter-task-read ok total_ms=11.4
+[native] 1792555499511 op encounter_task_read ok total_ms=12.7 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=12.5 form=agent
+[native] 1792555499511 op encounter_task_read ok total_ms=12.6 lock_wait_ms=1.0 lock_held_ms=0.2 owner_ms=11.4 form=agent
+[read] 1792555499512 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[native] 1792555499512 op surface_open ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[owner] 1792555499512 process AIKit encounter-task-read ok total_ms=11.9
+[native] 1792555499512 op central ok total_ms=13.4 lock_wait_ms=1.9 lock_held_ms=0.1 owner_ms=11.5 form=owner-read
+[native] 1792555499512 op encounter_task_read ok total_ms=13.8 lock_wait_ms=1.3 lock_held_ms=0.1 owner_ms=12.4 form=agent
+[owner] 1792555499513 process AIKit encounter-task-read ok total_ms=9.8
+[owner] 1792555499513 process AIKit encounter-task-read ok total_ms=13.4
+[native] 1792555499515 op encounter_task_read ok total_ms=16.5 lock_wait_ms=1.5 lock_held_ms=0.3 owner_ms=14.7 form=agent
+[native] 1792555499515 op encounter_task_read ok total_ms=16.7 lock_wait_ms=1.2 lock_held_ms=0.2 owner_ms=15.4 form=agent
+[read] 1792555499515 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[native] 1792555499515 op encounter_task_read ok total_ms=3.0 lock_wait_ms=0.0 lock_held_ms=2.7 owner_ms=0.3 form=agent
+[read] 1792555499515 central:projectcentral.source.read:{"source_ref":"central:source:control:root:Control/self/nara/identities/2639def7630628d4a3d7bfe9f78e3a0f0e333eb9cf8f3fa79b3dc miss
+[owner] 1792555499520 process AIKit encounter-task-read ok total_ms=10.8
+[native] 1792555499520 op encounter_task_read ok total_ms=21.2 lock_wait_ms=1.8 lock_held_ms=0.1 owner_ms=19.3 form=agent
+[owner] 1792555499520 process AIKit encounter-task-read ok total_ms=9.2
+[native] 1792555499520 op encounter_task_read ok total_ms=21.8 lock_wait_ms=1.8 lock_held_ms=0.1 owner_ms=19.8 form=agent
+[native] 1792555499527 op expression_recovery ok total_ms=2.0 lock_wait_ms=0.0 lock_held_ms=0.0 owner_ms=2.0 form=free
+[native] 1792555499537 event-replay lock_wait_ms=0.0
+[native] 1792555499537 op presentation_read ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[read] 1792555499555 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app hit
+[read] 1792555499555 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_ hit
+[read] 1792555499555 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261 hit
+[native] 1792555499555 op encounter_task_read ok total_ms=0.7 lock_wait_ms=0.4 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[native] 1792555499555 op agent_definition ok total_ms=1.1 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=0.8 form=agent
+[read] 1792555499555 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555499556 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c hit
+[native] 1792555499556 op encounter_task_read ok total_ms=1.4 lock_wait_ms=0.9 lock_held_ms=0.3 owner_ms=0.2 form=agent
+[read] 1792555499558 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[read] 1792555499559 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[native] 1792555499559 op encounter_task_read ok total_ms=4.0 lock_wait_ms=3.5 lock_held_ms=0.3 owner_ms=0.2 form=agent
+[native] 1792555499559 op agent_definition ok total_ms=4.5 lock_wait_ms=3.8 lock_held_ms=0.3 owner_ms=0.4 form=agent
+[read] 1792555499559 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555499559 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[native] 1792555499559 op encounter_task_read ok total_ms=4.8 lock_wait_ms=4.3 lock_held_ms=0.3 owner_ms=0.2 form=agent
+[native] 1792555499559 op encounter_task_read ok total_ms=4.2 lock_wait_ms=3.7 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[read] 1792555499559 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[read] 1792555499560 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[native] 1792555499560 op files_list ok total_ms=4.1 lock_wait_ms=3.9 lock_held_ms=0.1 owner_ms=0.0 form=files
+[read] 1792555499560 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/ hit
+[native] 1792555499560 op encounter_task_read ok total_ms=5.5 lock_wait_ms=5.0 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[read] 1792555499560 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[native] 1792555499560 op encounter_task_read ok total_ms=2.2 lock_wait_ms=1.7 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[native] 1792555499560 op encounter_task_read ok total_ms=5.5 lock_wait_ms=5.0 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[read] 1792555499560 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[read] 1792555499560 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[read] 1792555499561 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[native] 1792555499561 op surface_focus ok total_ms=2.5 lock_wait_ms=2.3 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[native] 1792555499561 op encounter_task_read ok total_ms=6.1 lock_wait_ms=5.7 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[native] 1792555499561 op encounter_task_read ok total_ms=6.3 lock_wait_ms=6.0 lock_held_ms=0.2 owner_ms=0.1 form=agent
+[native] 1792555499561 op encounter_task_read ok total_ms=6.4 lock_wait_ms=5.9 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[native] 1792555499561 op encounter_task_read ok total_ms=5.4 lock_wait_ms=4.9 lock_held_ms=0.2 owner_ms=0.3 form=agent
+[read] 1792555499561 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555499564 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[native] 1792555499568 op expression_world ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[read] 1792555499570 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[native] 1792555499570 op central ok total_ms=14.1 lock_wait_ms=4.8 lock_held_ms=0.1 owner_ms=9.3 form=owner-read
+[read] 1792555499580 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[owner] 1792555499585 process Central projectcentral.source.read ok total_ms=69.1
+[native] 1792555499585 op file_read ok total_ms=5.0 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=4.9 form=files
+[read] 1792555499585 central:projectcentral.source.read:{"source_ref":"central:source:control:root:Control/self/nara/identities/b710716ebb150e06ab51c2445392db241d1ccd77393b7174fc6c3 miss
+[native] 1792555499586 event-replay lock_wait_ms=0.0
+[native] 1792555499634 op expression ok total_ms=0.4 lock_wait_ms=0.0 lock_held_ms=0.4 owner_ms=0.0 form=ordered
+[read] 1792555499644 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app hit
+[read] 1792555499644 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c hit
+[native] 1792555499644 op agent_definition ok total_ms=0.6 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=0.4 form=agent
+[read] 1792555499644 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/ hit
+[read] 1792555499644 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555499644 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[native] 1792555499644 op encounter_task_read ok total_ms=0.6 lock_wait_ms=0.3 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[read] 1792555499644 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[read] 1792555499645 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555499645 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_ hit
+[native] 1792555499645 op agent_definition ok total_ms=1.2 lock_wait_ms=1.1 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[native] 1792555499645 op encounter_task_read ok total_ms=1.4 lock_wait_ms=0.8 lock_held_ms=0.3 owner_ms=0.2 form=agent
+[native] 1792555499645 op encounter_task_read ok total_ms=0.9 lock_wait_ms=0.7 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[read] 1792555499645 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555499645 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[native] 1792555499645 op encounter_task_read ok total_ms=0.9 lock_wait_ms=0.7 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[read] 1792555499645 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555499646 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[native] 1792555499646 op files_list ok total_ms=1.5 lock_wait_ms=1.4 lock_held_ms=0.2 owner_ms=0.0 form=files
+[native] 1792555499646 op encounter_task_read ok total_ms=2.6 lock_wait_ms=2.3 lock_held_ms=0.1 owner_ms=0.3 form=agent
+[native] 1792555499646 op encounter_task_read ok total_ms=2.7 lock_wait_ms=1.9 lock_held_ms=0.1 owner_ms=0.6 form=agent
+[native] 1792555499646 op encounter_task_read ok total_ms=2.3 lock_wait_ms=2.0 lock_held_ms=0.3 owner_ms=0.1 form=agent
+[read] 1792555499648 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[read] 1792555499648 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[native] 1792555499648 op encounter_task_read ok total_ms=4.3 lock_wait_ms=1.9 lock_held_ms=0.2 owner_ms=2.2 form=agent
+[read] 1792555499648 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[read] 1792555499648 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[native] 1792555499648 op encounter_task_read ok total_ms=4.3 lock_wait_ms=1.9 lock_held_ms=0.1 owner_ms=2.2 form=agent
+[native] 1792555499648 op encounter_task_read ok total_ms=3.9 lock_wait_ms=1.9 lock_held_ms=0.2 owner_ms=1.8 form=agent
+[read] 1792555499648 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261 hit
+[native] 1792555499648 op encounter_task_read ok total_ms=4.7 lock_wait_ms=2.8 lock_held_ms=0.1 owner_ms=1.8 form=agent
+[read] 1792555499648 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[native] 1792555499648 op encounter_task_read ok total_ms=4.2 lock_wait_ms=2.3 lock_held_ms=0.1 owner_ms=1.7 form=agent
+[read] 1792555499656 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[native] 1792555499656 op central ok total_ms=11.4 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=11.4 form=owner-read
+[read] 1792555499677 central:central.files.list:{"path":"Control/user/flows","project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/ hit
+[native] 1792555499677 op expression ok total_ms=0.4 lock_wait_ms=0.0 lock_held_ms=0.3 owner_ms=0.0 form=ordered
+[read] 1792555499692 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[native] 1792555499697 op file_read ok total_ms=6.2 lock_wait_ms=0.0 lock_held_ms=0.3 owner_ms=5.9 form=files
+[native] 1792555499704 event-replay lock_wait_ms=0.0
+[owner] 1792555499725 process Central projectcentral.source.read ok total_ms=139.7
+[read] 1792555499725 central:projectcentral.source.read:{"source_ref":"central:source:control:root:Control/self/nara/identities/d2765a5207951ed70075968d3758d2b9174a334eb9856e37cd21f miss
+[owner] 1792555499793 process Central projectcentral.source.read ok total_ms=66.9
+[native] 1792555499793 op nara_identity ok total_ms=290.2 lock_wait_ms=0.0 lock_held_ms=0.0 owner_ms=290.1 form=nara-identity
+[owner] 1792555499820 process Central central.git.census ok total_ms=621.9
+[native] 1792555499820 op git_repository_read ok total_ms=904.6 lock_wait_ms=122.5 lock_held_ms=0.0 owner_ms=782.0 form=owner-read
+[read] 1792555499822 central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/admin/Central/Work/O-I","to":"working-tr miss
+[native] 1792555499913 op state ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[native] 1792555500036 op expression_recovery ok total_ms=22.4 lock_wait_ms=0.0 lock_held_ms=0.0 owner_ms=22.4 form=free
+[read] 1792555500043 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app hit
+[read] 1792555500043 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_ hit
+[read] 1792555500043 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261 hit
+[read] 1792555500043 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c hit
+[read] 1792555500044 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[read] 1792555500044 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[read] 1792555500044 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[read] 1792555500044 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/Central hit
+[read] 1792555500044 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/ hit
+[read] 1792555500044 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555500044 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555500044 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555500045 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555500045 central:central.world.project:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.a hit
+[read] 1792555500045 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555500045 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run hit
+[read] 1792555500045 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[native] 1792555500045 op encounter_task_read ok total_ms=2.3 lock_wait_ms=2.0 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[native] 1792555500045 op agent_definition ok total_ms=2.4 lock_wait_ms=1.9 lock_held_ms=0.3 owner_ms=0.3 form=agent
+[native] 1792555500045 op git_repository_read ok total_ms=1.8 lock_wait_ms=1.6 lock_held_ms=0.0 owner_ms=0.2 form=owner-read
+[native] 1792555500045 op files_list ok total_ms=1.8 lock_wait_ms=1.7 lock_held_ms=0.2 owner_ms=0.0 form=files
+[native] 1792555500045 op encounter_task_read ok total_ms=2.5 lock_wait_ms=2.1 lock_held_ms=0.2 owner_ms=0.2 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.5 lock_wait_ms=2.2 lock_held_ms=0.2 owner_ms=0.1 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.4 lock_wait_ms=2.2 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.4 lock_wait_ms=2.1 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.3 lock_wait_ms=2.0 lock_held_ms=0.1 owner_ms=0.2 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.3 lock_wait_ms=2.0 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.2 lock_wait_ms=2.0 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.1 lock_wait_ms=1.7 lock_held_ms=0.1 owner_ms=0.3 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.4 lock_wait_ms=2.2 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.2 lock_wait_ms=2.0 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[native] 1792555500045 op agent_definition ok total_ms=2.7 lock_wait_ms=1.7 lock_held_ms=0.2 owner_ms=0.7 form=agent
+[native] 1792555500045 op encounter_task_read ok total_ms=2.3 lock_wait_ms=2.0 lock_held_ms=0.1 owner_ms=0.1 form=agent
+[read] 1792555500061 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[native] 1792555500066 op file_read ok total_ms=5.1 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=4.9 form=files
+[owner] 1792555500072 process Central central.time.policy ok total_ms=26.4
+[read] 1792555500072 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555500072 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555500073 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[read] 1792555500077 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[owner] 1792555500097 process Central central.work.policy ok total_ms=19.8
+[native] 1792555500097 op central ok total_ms=54.1 lock_wait_ms=1.6 lock_held_ms=0.1 owner_ms=52.5 form=owner-read
+[owner] 1792555500254 process Central central.git.diff ok total_ms=432.2
+[native] 1792555500255 op git_diff_read ok total_ms=433.0 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=432.9 form=owner-read
+[native] 1792555500629 event-replay lock_wait_ms=0.0
+[native] 1792555500635 op temporal_events_read ok total_ms=0.3 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.2 form=owner-read
+[read] 1792555500647 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate. hit
+[native] 1792555500647 op agency_read ok total_ms=0.4 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.2 form=agent
+[native] 1792555500659 op knowledge err total_ms=1158.3 lock_wait_ms=1.2 lock_held_ms=0.3 owner_ms=1156.8 form=knowledge
+[native] 1792555500830 op state ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[read] 1792555500883 central:central.world.project:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.a hit
+[read] 1792555500883 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555500883 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[read] 1792555500883 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[native] 1792555500884 op files_list ok total_ms=0.5 lock_wait_ms=0.3 lock_held_ms=0.2 owner_ms=0.0 form=files
+[native] 1792555500884 op git_repository_read ok total_ms=0.8 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=0.6 form=owner-read
+[read] 1792555500884 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555500886 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[read] 1792555500892 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[native] 1792555500892 op central ok total_ms=8.9 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=8.8 form=owner-read
+[native] 1792555501452 op knowledge err total_ms=568.8 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=568.6 form=knowledge
+[native] 1792555560642 event-replay lock_wait_ms=0.0
+[read] 1792555560664 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[read] 1792555560664 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555560664 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555560664 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[owner] 1792555560691 process Central central.time.policy ok total_ms=26.2
+[read] 1792555560691 central:central.world:{"project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Conte hit
+[owner] 1792555560767 process AIKit history ok total_ms=102.5
+[native] 1792555560772 op temporal_events_read ok total_ms=108.4 lock_wait_ms=0.0 lock_held_ms=0.3 owner_ms=108.1 form=owner-read
+[read] 1792555560781 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate. hit
+[native] 1792555560781 op agency_read ok total_ms=0.3 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.2 form=agent
+[native] 1792555560846 op state ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[read] 1792555560898 central:central.world.project:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.a hit
+[read] 1792555560898 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555560898 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[read] 1792555560898 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[native] 1792555560898 op git_repository_read ok total_ms=0.5 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.4 form=owner-read
+[native] 1792555560898 op files_list ok total_ms=0.3 lock_wait_ms=0.1 lock_held_ms=0.2 owner_ms=0.0 form=files
+[read] 1792555560899 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555560900 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[read] 1792555560905 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[owner] 1792555560931 process Central central.work.policy ok total_ms=25.1
+[native] 1792555560931 op central ok total_ms=32.7 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=32.6 form=owner-read
+[native] 1792555561465 op knowledge err total_ms=566.3 lock_wait_ms=0.3 lock_held_ms=0.3 owner_ms=565.7 form=knowledge
+[watch] 1792555577290 seats /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261021T-r33c-reads
+[watch] 1792555577290 seats /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261021T-r33c-reads/7-window-capture.png
+[watch] 1792555577290 seats /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261021T-r33c-reads/7-window-capture.png
+[watch] 1792555577290 seats /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261021T-r33c-reads/7-window-capture.png
+[watch] 1792555577290 seats /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261021T-r33c-reads/7-window-capture.png
+[native] 1792555577342 event-replay lock_wait_ms=0.0
+[read] 1792555577348 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555577349 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[read] 1792555577349 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555577349 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792555577349 central:central.world:{"project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Conte miss
+[owner] 1792555577517 process AIKit history ok total_ms=167.1
+[owner] 1792555577524 process Central central.world ok total_ms=174.6
+[native] 1792555577544 op state ok total_ms=0.0 lock_wait_ms=0.0 lock_held_ms=0.0 owner_ms=0.0 form=ordered
+[native] 1792555577582 op temporal_events_read ok total_ms=234.0 lock_wait_ms=0.0 lock_held_ms=0.0 owner_ms=234.0 form=owner-read
+[read] 1792555577593 central:central.world:{"project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Conte hit
+[read] 1792555577593 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate. hit
+[native] 1792555577593 op agency_read ok total_ms=0.4 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.3 form=agent
+[read] 1792555577594 central:central.world.project:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.a miss
+[native] 1792555577594 op files_list ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=files
+[read] 1792555577594 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[read] 1792555577595 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555577595 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555577596 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[read] 1792555577600 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[native] 1792555577601 op central ok total_ms=6.5 lock_wait_ms=0.2 lock_held_ms=0.1 owner_ms=6.2 form=owner-read
+[owner] 1792555577645 process Central central.world.project ok total_ms=50.6
+[read] 1792555577646 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I miss
+[owner] 1792555577927 process Central central.git.census ok total_ms=280.8
+[native] 1792555577927 op git_repository_read ok total_ms=332.9 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=332.8 form=owner-read
+[native] 1792555578192 op knowledge err total_ms=597.2 lock_wait_ms=0.1 lock_held_ms=0.1 owner_ms=596.9 form=knowledge
+[native] 1792555620661 event-replay lock_wait_ms=0.0
+[read] 1792555620679 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555620679 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[read] 1792555620679 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555620680 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[owner] 1792555620712 process Central central.time.policy ok total_ms=32.2
+[read] 1792555620712 central:central.world:{"project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Conte hit
+[owner] 1792555620809 process AIKit history ok total_ms=129.4
+[native] 1792555620815 op temporal_events_read ok total_ms=135.8 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=135.7 form=owner-read
+[read] 1792555620836 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate. hit
+[native] 1792555620836 op agency_read ok total_ms=0.3 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.2 form=agent
+[native] 1792555620869 op state ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[read] 1792555620919 central:central.world.project:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.a hit
+[read] 1792555620920 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555620920 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[read] 1792555620920 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[native] 1792555620920 op files_list ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=files
+[native] 1792555620920 op git_repository_read ok total_ms=0.6 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.5 form=owner-read
+[read] 1792555620920 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555620921 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[read] 1792555620926 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[owner] 1792555620950 process Central central.work.policy ok total_ms=24.3
+[native] 1792555620950 op central ok total_ms=30.8 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=30.7 form=owner-read
+[native] 1792555621588 op knowledge err total_ms=667.6 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=667.4 form=knowledge
+[native] 1792555674406 op surface_open ok total_ms=0.3 lock_wait_ms=0.1 lock_held_ms=0.2 owner_ms=0.0 form=ordered
+[native] 1792555674540 op live_device_descriptors ok total_ms=0.8 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.7 form=owner-read
+[native] 1792555674540 event-replay lock_wait_ms=0.0
+[native] 1792555674670 op live_set_read ok total_ms=130.7 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=130.6 form=owner-read
+[native] 1792555674704 op presentation_observe ok total_ms=0.3 lock_wait_ms=0.0 lock_held_ms=0.3 owner_ms=0.0 form=ordered
+[native] 1792555674749 op live_clip_read ok total_ms=64.7 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=64.7 form=owner-read
+[native] 1792555674765 op state ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[native] 1792555674766 op live_device_params_read ok total_ms=65.6 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=65.5 form=owner-read
+[native] 1792555674846 op music_modes_read ok total_ms=440.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=440.0 form=owner-read
+[native] 1792555675889 op native_expression ok total_ms=1338.6 lock_wait_ms=0.0 lock_held_ms=224.8 owner_ms=1113.8 form=native-compose
+[native] 1792555676085 op native_expression ok total_ms=158.7 lock_wait_ms=0.0 lock_held_ms=158.7 owner_ms=0.0 form=ordered
+[native] 1792555676124 op native_expression ok total_ms=10.3 lock_wait_ms=0.0 lock_held_ms=10.3 owner_ms=0.0 form=ordered
+[native] 1792555676151 op native_expression ok total_ms=18.3 lock_wait_ms=0.0 lock_held_ms=18.3 owner_ms=0.0 form=ordered
+[native] 1792555676789 op nara_identity ok total_ms=590.7 lock_wait_ms=0.0 lock_held_ms=0.0 owner_ms=590.7 form=nara-identity
+[native] 1792555680652 event-replay lock_wait_ms=0.0
+[read] 1792555680678 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[read] 1792555680679 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555680679 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555680679 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[owner] 1792555680707 process Central central.time.policy ok total_ms=27.8
+[read] 1792555680707 central:central.world:{"project":"o-i"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Conte hit
+[owner] 1792555680786 process AIKit history ok total_ms=106.5
+[native] 1792555680791 op temporal_events_read ok total_ms=112.6 lock_wait_ms=0.0 lock_held_ms=0.2 owner_ms=112.3 form=owner-read
+[read] 1792555680805 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate. hit
+[native] 1792555680805 op agency_read ok total_ms=0.4 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.3 form=agent
+[native] 1792555680854 op state ok total_ms=0.1 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.0 form=ordered
+[read] 1792555680906 central:central.world.project:{"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.a hit
+[read] 1792555680906 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I hit
+[read] 1792555680906 central:central.time.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou hit
+[read] 1792555680906 central:central.day.read:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[native] 1792555680906 op files_list ok total_ms=0.2 lock_wait_ms=0.1 lock_held_ms=0.1 owner_ms=0.0 form=files
+[native] 1792555680906 op git_repository_read ok total_ms=0.5 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=0.4 form=owner-read
+[read] 1792555680906 central:central.now.list:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resource hit
+[read] 1792555680908 central:projectcentral.change.horizon:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Cont hit
+[read] 1792555680912 central:central.work.policy:{}:"/Users/admin/Central/Work/O-I/target/p0-r1/20261021T-r33c-reads/run/oi-desktop-bundle/app/O-I_Shell_Candidate.app/Contents/Resou miss
+[owner] 1792555680936 process Central central.work.policy ok total_ms=23.4
+[native] 1792555680936 op central ok total_ms=30.4 lock_wait_ms=0.0 lock_held_ms=0.1 owner_ms=30.3 form=owner-read
+[native] 1792555681481 op knowledge err total_ms=574.4 lock_wait_ms=0.1 lock_held_ms=0.2 owner_ms=574.1 form=knowledge

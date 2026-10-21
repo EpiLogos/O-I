@@ -10,7 +10,143 @@
 use std::io::{BufRead, Read, Write};
 use std::process::{Child, Command, Output, Stdio};
 use std::sync::mpsc;
+use std::sync::{Condvar, Mutex, OnceLock};
 use std::time::{Duration, Instant};
+
+/// How many one-shot owner processes run at once. Owners (`ctrl`, `aikit`,
+/// `oi`) re-derive their world from disk on every call, so a burst of asks
+/// that all start at once only makes every one of them slower: the rest wait
+/// here for a place. `OI_OWNER_PROCESSES` sets the bound; the default leaves
+/// two cores to the rest of the machine, between 4 and 8.
+pub(crate) fn owner_process_limit() -> usize {
+    if let Some(limit) = std::env::var("OI_OWNER_PROCESSES")
+        .ok()
+        .and_then(|value| value.trim().parse::<usize>().ok())
+        .filter(|limit| *limit > 0)
+    {
+        return limit;
+    }
+    std::thread::available_parallelism()
+        .map(|cores| cores.get())
+        .unwrap_or(4)
+        .saturating_sub(2)
+        .clamp(4, 8)
+}
+
+/// A counting limiter on one-shot owner processes. Only a call that waits
+/// for its child (`output`, `output_lines`, `wait`) takes a place, and only
+/// for as long as the child runs. A long-lived child - the native
+/// expression worker, a SharedField observation or presence, the AIKit
+/// encounter resident - is spawned by hand and never takes one: it would
+/// hold its place for its whole life and starve the reads.
+///
+/// A thread that holds a place never waits for another (the second call
+/// rides on the place it holds), so no call can wait on a place its own
+/// thread is holding.
+pub(crate) struct Limiter {
+    limit: usize,
+    running: Mutex<usize>,
+    freed: Condvar,
+}
+
+thread_local! {
+    static HOLDING: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// A place in the limiter, returned when dropped.
+pub(crate) struct Place<'a> {
+    held_from: Option<&'a Limiter>,
+}
+
+impl Limiter {
+    pub(crate) fn new(limit: usize) -> Self {
+        Self {
+            limit: limit.max(1),
+            running: Mutex::new(0),
+            freed: Condvar::new(),
+        }
+    }
+
+    /// The process's limiter.
+    pub(crate) fn global() -> &'static Limiter {
+        static GLOBAL: OnceLock<Limiter> = OnceLock::new();
+        GLOBAL.get_or_init(|| Limiter::new(owner_process_limit()))
+    }
+
+    /// A place, waiting for one if all are taken - unless this thread
+    /// already holds one.
+    pub(crate) fn place(&self) -> Place<'_> {
+        if HOLDING.with(std::cell::Cell::get) {
+            return Place { held_from: None };
+        }
+        let mut running = self.running.lock().unwrap_or_else(|e| e.into_inner());
+        while *running >= self.limit {
+            running = self.freed.wait(running).unwrap_or_else(|e| e.into_inner());
+        }
+        *running += 1;
+        HOLDING.with(|holding| holding.set(true));
+        Place {
+            held_from: Some(self),
+        }
+    }
+
+    /// How many places are taken.
+    #[cfg(test)]
+    pub(crate) fn taken(&self) -> usize {
+        *self.running.lock().unwrap_or_else(|e| e.into_inner())
+    }
+}
+
+impl Drop for Place<'_> {
+    fn drop(&mut self) {
+        if let Some(limiter) = self.held_from {
+            HOLDING.with(|holding| holding.set(false));
+            let mut running = limiter.running.lock().unwrap_or_else(|e| e.into_inner());
+            *running = running.saturating_sub(1);
+            limiter.freed.notify_one();
+        }
+    }
+}
+
+/// The programs this process started as owners, as they were named: the
+/// readings kept across a relaunch are written with their identities, so a
+/// rebuilt or reinstalled owner's answers are asked again (`kept.rs`).
+pub(crate) fn programs() -> Vec<std::path::PathBuf> {
+    started_programs()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .iter()
+        .cloned()
+        .collect()
+}
+
+fn started_programs() -> &'static Mutex<std::collections::BTreeSet<std::path::PathBuf>> {
+    static STARTED: OnceLock<Mutex<std::collections::BTreeSet<std::path::PathBuf>>> =
+        OnceLock::new();
+    STARTED.get_or_init(Mutex::default)
+}
+
+/// Count `program` among this process's owners without starting it: the
+/// owner of a reading kept from the last run and taken back (`kept.rs`).
+pub(crate) fn answered_by(program: &std::path::Path) {
+    started(program.as_os_str());
+}
+
+fn started(program: &std::ffi::OsStr) {
+    started_programs()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .insert(program.into());
+}
+
+static WRITE_HOOK: OnceLock<fn()> = OnceLock::new();
+
+/// Register what to do when an owner call that may have written has ended
+/// (once per process): readings kept from before it are no longer known to
+/// stand.
+pub(crate) fn on_write(hook: fn()) {
+    let _ = WRITE_HOOK.set(hook);
+}
 
 /// Why a bounded owner call has no answer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -154,7 +290,9 @@ fn observed(
     bound: Bound<'_>,
     on_line: Option<LineObserver>,
 ) -> Result<Output, Failure> {
+    let _place = Limiter::global().place();
     group(command);
+    started(command.get_program());
     command
         .stdin(if input.is_some() {
             Stdio::piped()
@@ -204,6 +342,7 @@ fn observed(
 /// `group`) to answer within `bound.limit`; stop it, and what it started,
 /// when it does not.
 pub(crate) fn wait(child: Child, bound: Bound<'_>) -> Result<Output, Failure> {
+    let _place = Limiter::global().place();
     wait_observed(child, bound, None)
 }
 
@@ -228,6 +367,13 @@ fn wait_observed(
 ) -> Result<Output, Failure> {
     let begun = Instant::now();
     let answered = wait_observed_untraced(&mut child, bound, on_line, begun);
+    if bound.effect == Effect::Write {
+        // Named in the trace: a read misfiled as a write moves every reading.
+        trace_written(bound.owner, bound.operation);
+        if let Some(hook) = WRITE_HOOK.get() {
+            hook();
+        }
+    }
     trace_process(
         bound.owner,
         bound.operation,
@@ -243,6 +389,16 @@ fn wait_observed(
 /// This module stands alone (the composition test includes it by path), so it opens the trace for itself; both writers append whole
 /// lines, which the file keeps apart.
 fn trace_process(owner: &str, operation: &str, total: Duration, answered: bool) {
+    trace_owner_line(|unix_ms| process_trace_line(owner, operation, unix_ms, total, answered));
+}
+
+/// `[owner] <unix ms> written <owner> <operation>`: an owner call that may
+/// have written ended, so every reading kept from before it moved.
+fn trace_written(owner: &str, operation: &str) {
+    trace_owner_line(|unix_ms| format!("[owner] {unix_ms} written {owner} {operation}\n"));
+}
+
+fn trace_owner_line(line: impl FnOnce(u128) -> String) {
     static TRACE: std::sync::OnceLock<Option<std::sync::Mutex<std::fs::File>>> =
         std::sync::OnceLock::new();
     let file = TRACE.get_or_init(|| {
@@ -259,7 +415,7 @@ fn trace_process(owner: &str, operation: &str, total: Duration, answered: bool) 
         .duration_since(std::time::UNIX_EPOCH)
         .map(|since| since.as_millis())
         .unwrap_or(0);
-    let line = process_trace_line(owner, operation, unix_ms, total, answered);
+    let line = line(unix_ms);
     if let Ok(mut file) = file.lock() {
         let _ = file.write_all(line.as_bytes());
     }
@@ -384,6 +540,99 @@ fn stop(child: &mut std::process::Child) {
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
+
+    /// No more than the limit run at once, and every asker is served.
+    #[test]
+    fn the_limiter_bounds_concurrent_owner_processes() {
+        let limiter = Arc::new(Limiter::new(2));
+        let running = Arc::new(AtomicUsize::new(0));
+        let peak = Arc::new(AtomicUsize::new(0));
+        let askers: Vec<_> = (0..8)
+            .map(|_| {
+                let (limiter, running, peak) = (
+                    Arc::clone(&limiter),
+                    Arc::clone(&running),
+                    Arc::clone(&peak),
+                );
+                std::thread::spawn(move || {
+                    let _place = limiter.place();
+                    let now = running.fetch_add(1, Ordering::SeqCst) + 1;
+                    peak.fetch_max(now, Ordering::SeqCst);
+                    std::thread::sleep(Duration::from_millis(40));
+                    running.fetch_sub(1, Ordering::SeqCst);
+                })
+            })
+            .collect();
+        askers.into_iter().for_each(|asker| asker.join().unwrap());
+        assert_eq!(peak.load(Ordering::SeqCst), 2);
+        assert_eq!(limiter.taken(), 0);
+    }
+
+    /// A call made while its thread holds a place does not wait for another:
+    /// with one place in all, it would otherwise wait on itself for ever.
+    #[test]
+    fn a_thread_holding_a_place_never_waits_for_a_second() {
+        let limiter = Arc::new(Limiter::new(1));
+        let (done, finished) = mpsc::channel();
+        let nested = Arc::clone(&limiter);
+        std::thread::spawn(move || {
+            let outer = nested.place();
+            let inner = nested.place();
+            assert_eq!(nested.taken(), 1, "the inner call rides on the outer place");
+            drop(inner);
+            assert_eq!(
+                nested.taken(),
+                1,
+                "ending the inner call keeps the outer place"
+            );
+            drop(outer);
+            assert_eq!(nested.taken(), 0);
+            let _ = done.send(());
+        });
+        finished
+            .recv_timeout(Duration::from_secs(5))
+            .expect("a nested ask must not wait for a place");
+        // The place a finished thread held is free for the next.
+        drop(limiter.place());
+    }
+
+    /// A long-lived child is spawned by hand and takes no place: with every
+    /// place taken, it starts and runs, while a one-shot call waits.
+    #[test]
+    fn a_long_lived_child_takes_no_place_and_a_one_shot_call_waits_for_one() {
+        let limiter = Limiter::new(1);
+        let place = limiter.place();
+        let mut resident = Command::new("/bin/sh")
+            .arg("-c")
+            .arg("sleep 5")
+            .spawn()
+            .expect("a resident child starts while every place is taken");
+        assert!(resident.try_wait().unwrap().is_none());
+        assert_eq!(limiter.taken(), 1, "the resident holds no place");
+        let waiting = std::thread::scope(|scope| {
+            let asker = scope.spawn(|| {
+                let started = Instant::now();
+                let _place = limiter.place();
+                started.elapsed()
+            });
+            std::thread::sleep(Duration::from_millis(150));
+            drop(place);
+            asker.join().unwrap()
+        });
+        assert!(waiting >= Duration::from_millis(100), "{waiting:?}");
+        let _ = resident.kill();
+        let _ = resident.wait();
+    }
+
+    /// The default bound is between four and eight places.
+    #[test]
+    fn the_limit_default_is_bounded_and_the_environment_sets_it() {
+        assert!(
+            (4..=8).contains(&owner_process_limit()) || std::env::var("OI_OWNER_PROCESSES").is_ok()
+        );
+    }
 
     /// A stuck owner is stopped at its limit — with whatever it started —
     /// and the refusal names the owner, the operation and the limit.

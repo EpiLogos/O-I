@@ -258,3 +258,6 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-event-open p { margin: 0 0 4px; overflow-wrap: anywhere }
 .tl-event-open .tl-event-detail { color: var(--text-dim) }
 .tl-event-open code { display: block; color: var(--text-faint); font-size: 9px; overflow-wrap: anywhere }
+
+/* Return tracks (Live's; manual §16.2): after the tracks, before Main; ⌥⌘R hides them with the frame's returns-hidden. */
+.returns-hidden .trk-return, .returns-hidden .tl-lane[data-return="true"] { display: none }

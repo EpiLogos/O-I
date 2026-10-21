@@ -19,7 +19,7 @@ import {useCallback, useState} from 'react'
  * them; the repair stays commissioned (the field-health law: detection is
  * always in scope, repair is a separate act). */
 
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {ownerReadings} from '../owners/ownerReading'
 import {readWorkcellOf, workcellReadingKey} from '../owners/readers'
 import {useSpineEpoch} from '../owners/spine'
@@ -102,7 +102,7 @@ export async function readHygieneCensus({transport, epoch, machineRead, seatPath
 
   // The kernel's git read — refused verbatim when the owner refuses.
   const gitAt = new Date().toISOString()
-  const git = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
+  const git = await kernelRead(transport, {op: 'git_repository_read', project: 'O-I'}, {fresh: true})
   if (git.error || git.outcome?.result !== 'git_repository_reading') {
     sources.push({
       boundaryOp: 'op git_repository_read (project O-I)',

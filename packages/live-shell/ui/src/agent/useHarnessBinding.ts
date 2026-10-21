@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 
 /** The harnesses the answer says are found on this machine (`aikit --json client status`, 16 Oct: clients[] {client, harness,
@@ -32,7 +32,7 @@ export function useHarnessBinding(transport: KernelTransportStatus) {
         }
         return
       }
-      const harness = await kernelOp(transport, {op: 'harness_status'})
+      const harness = await kernelRead(transport, {op: 'harness_status'})
       if (!live) return
       if (harness.error || harness.outcome?.result !== 'harness_status_reading') {
         setError(harness.error ?? 'Harness status unavailable')

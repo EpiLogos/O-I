@@ -358,6 +358,7 @@ impl Prepared {
     pub fn execute(self) -> Result<crate::KernelOpOutcome, String> {
         let result = self.run()?;
         Ok(crate::KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![],
             result: crate::KernelOpResult::NaraVoice { data: result },
         })

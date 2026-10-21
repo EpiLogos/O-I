@@ -1,7 +1,7 @@
 // R4 (T-REALIGN §3; DLW §16.1–§16.2; lock §0.3): each chain lists exactly §16.2's devices and none of the moved ones.
 //   Central — a workspace: the Packet, the Agent that answers, its Scope (Ground hygiene and Impact on a workspace that holds code); the
 //     Main track: the Day, then Approvals (src/central/devices/CentralDevices.tsx);
-//   Factory — Gateway, Agent, skills rack, Scope, landing; no Thread, Custody or Run beside them (agent/devices/FactoryDeviceChain.tsx);
+//   Factory — Agent, skills rack, scope (the Gateway and the landing are a workcell's); no Thread, Custody or Run beside them (agent/devices/FactoryDeviceChain.tsx);
 //   Live — the note devices, the torus, then its effects; the keyboard is the part's input, no plate (live/LiveDeviceChain.tsx);
 //   Search (@) — no chain device: a pane of its own kind, opened from the line where you type @ (central/searchPane.tsx).
 // Channels: SCRIPTED (SSR over the production components, no owner behind them: every reading absent) and SOURCE READING where a
@@ -106,8 +106,13 @@ test('Central\'s source: no mode branch, no native pop-out of its own, the Day\'
   assert.match(text, /import \{CENTRAL_DAY_TRACK_ID\} from '\.\.\/\.\.\/timeline\/centralTrackAdapter'/)
 })
 
-test('Factory: the session\'s chain is Gateway, Agent, skills rack, Scope, landing — no Thread, Custody or Run beside them', async () => {
+test('Factory: the session\'s chain is Agent, skills rack, scope — no Thread, Custody or Run beside them; the Gateway and the landing are the workcell\'s', async () => {
+  // The agent chain's devices are still the catalogue's five slots; since lane W1-Factory the session's chain draws three of them (§16.2) and a
+  // workcell's chain the Gateway and Git / landing (§19.23 "A track has no gateway and no landing of its own"; factoryPlaces.ts).
   assert.deepEqual(deriveAgentDeviceRows(allFamilyManifests()).map(slot => slot.id), ['gateway', 'agent', 'skillset', 'world', 'git'])
+  const places = await source('agent/devices/factoryPlaces.ts')
+  assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['agent', 'skillset', 'world'\]/)
+  assert.match(places, /export const WORKCELL_CHAIN: readonly FactorySlot\[\] = \['workcell', 'gateway', 'remote-carrier', 'git'\]/)
   const text = await source('agent/devices/FactoryDeviceChain.tsx')
   assert.doesNotMatch(text, /<DeviceView device=\{thread\}/, 'no Thread beside the Agent')
   assert.doesNotMatch(text, /placed\(CUSTODY_ID/, 'no Custody beside the Agent')
@@ -115,9 +120,9 @@ test('Factory: the session\'s chain is Gateway, Agent, skills rack, Scope, landi
   assert.match(text, /composeAgentBinding\(agentDesignBinding, \{custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding\}\)/,
     'the one Agent carries them')
   assert.match(text, /\{slot\.id === 'git' && placed\(SEAT_ID/, 'the Seat stays inside the landing (§19.17)')
-  assert.match(text, /groupTrack && placed\(AGENTSET_ID/, 'the Agentset rack leads a group\'s chain (§19.15)')
+  assert.match(text, /case 'agentset': return placed\(AGENTSET_ID/, 'the Agentset rack leads a group\'s chain (§19.15)')
   assert.match(text, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null/, 'the Seat on the seat instrument (K1 seat_status_read)')
-  assert.match(text, /linkBinding\(workcell, holds, population, remotes\)/, 'the Link\'s endpoints (K1 gateway_remotes_read)')
+  assert.doesNotMatch(text, /linkBinding/, 'the Link is the transport\'s (§19.19)')
 })
 
 test('Live: the chain mounts the part\'s input, the note devices, the torus; no keyboard device is built or placed', async () => {

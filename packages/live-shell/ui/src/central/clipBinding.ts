@@ -256,7 +256,6 @@ export const CENTRAL_WIRING: ClipWiring = {
     'act.answerthis': HIGHLIGHT_WIRING.refused.answer!,
     'notes.timing': NOTES_WIRING.refused.timing!, 'notes.anchor': NOTES_WIRING.refused.anchor!, 'notes.show': NOTES_WIRING.refused.show!,
     being: BEINGS_WIRING.refused.kind!, office: BEINGS_WIRING.refused.o1!, layout: BEINGS_WIRING.refused.layout!, tone: BEINGS_WIRING.refused.ground!,
-    world: BEINGS_WIRING.refused.world!, subject: BEINGS_WIRING.refused.subject!,
     addParticipant: FLOW_WIRING.refused['in:<agent>']!, media: 'Media joins an entry on the page itself: the hosted form is the page\'s one writer while it holds the page (DocumentFlowFace.tsx).',
     // Launch and the container (manual §18.1, §24.5; T-WORLDS W2): the page owner op keeps them once it exists.
     opensAs: 'No owner keeps how a page opens yet: the page owner op carries it (T-WORLDS W2).', opensIn: 'No owner keeps where a page opens yet (T-WORLDS W2).',
@@ -317,7 +316,7 @@ function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, 
   const page = kind === 'being' || kind === 'thing'
   // The keys the page owner takes for this kind of page (the design's keys; kernel/src/page.rs `apply_field` holds each rule).
   const writes = new Set<string>(flow ? ['name', 'colour', 'container', 'opensAs', 'opensIn', 'seats', 'act.highlight', 'act.note']
-    : ['name', 'colour', ...(kind === 'being' ? ['being'] : []), 'office', 'layout', 'tone', 'opensAs', 'opensIn', 'act.highlight', 'act.note'])
+    : ['name', 'colour', ...(kind === 'being' ? ['being'] : []), ...(page ? ['world', 'subject', 'expression'] : []), 'office', 'layout', 'tone', 'opensAs', 'opensIn', 'act.highlight', 'act.note'])
   const send = (field: PageField, value: unknown) => {
     if (held?.dirty) throw new Error(DIRTY)
     return write(field, value)
@@ -326,6 +325,10 @@ function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, 
     name: async value => send('title', String(value ?? '')),
     colour: async value => send('colour', value ?? null),
     being: async value => send('kind', value),
+    // A Being's or Thing's ties (kernel/src/page.rs apply_field takes world, subject and expression as refs; empty unties it).
+    world: async value => send('world', value || null),
+    subject: async value => send('subject', value || null),
+    expression: async value => send('expression', value || null),
     office: async value => send('office', String(value ?? '').split(',').filter(Boolean).map(n => `C${n}`)),
     layout: async value => send('layout', value),
     tone: async value => send('tone', value),

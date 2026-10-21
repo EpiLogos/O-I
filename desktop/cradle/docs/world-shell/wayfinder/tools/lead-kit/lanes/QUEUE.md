@@ -32,21 +32,18 @@ a run that resumes after a restart starts here. The lanes run at most three at o
   human grant adds the Day's four write actions. The owner runs the script the lead prepared, because the agent may
   not write grants or tokens.
 
-## After the open PRs land (each green, merging waits for the owner's permission)
+## After the PRs of 20 Oct (all landed 21 Oct)
 
-- O-I #689 (`dlw/build`), QL-MEF #340 then #342 (stacked), ai-kit #538, Factory #287. Then release their seats: env-1
-  `ql-mef` (`publish/m3-form-cell`), env-2 `ql-mef`, `ai-kit` and `factory`. Release env-1 `o-i` only when no
-  neighbour holds the lane.
-- When #342 has landed, O:I re-pins the QL session. Copy `adapters/retained-field/instrument-session.mjs`
-  byte-for-byte to `desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrument-session.mjs`,
-  then make three edits:
-  - set `files["instrument-session.mjs"]` in that directory's `PROVENANCE.json` to the new sha256 (e5546664… at
-    #342's head; recompute it from the landed file);
-  - set its `revision` to the landed QL-MEF commit;
-  - add `strikeAt(points)` to `instrument-session.d.mts`.
-  Install a QL build that carries the float-from-text fix, then run `oi update` (check that the installed cut is in
-  `main` first).
-- MT2 then makes a touch a point: the frame calls `strikeAt` with the touched (θ, φ).
+Done:
+- The landings: O-I #689, QL-MEF #341, #340 and #342, Central #286, ai-kit #538, Factory #287.
+- The seats are released: env-2 central, ai-kit, factory and ql-mef, and env-1 ql-mef.
+- The Day's grants are written. The Day agent's token is `~/.central/native-token-day-agent`.
+- O:I's QL session is re-pinned to #342 (`instrument-session.mjs`, `PROVENANCE.json`, `strikeAt` in the `.d.mts`).
+
+Left:
+- Install from merged main: `oi update --apply --channel mainline`. Every installed cut was checked to be in `main` on
+  21 Oct. The installed `ctrl` predates the Day's moves, so they work only after this.
+- MT2 makes a touch a point: the frame calls `strikeAt` with the touched (θ, φ).
 
 ## The owner's open question (MT1)
 

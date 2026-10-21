@@ -58,7 +58,8 @@ test('the Main head is a track\'s head: a button that selects the Main track, pr
 
 test('Factory routes the Main track: its Device side is the Main track\'s chain and its head reads Main', () => {
   assert.match(read('agent/AgentShellDeviceDetail.tsx'), /shell\.selectedTrackId === MAIN_TRACK_REF \? undefined : tracks\.find/, 'the Main track is no session')
-  assert.match(read('shell/modeDetails.tsx'), /if \(!track\) return \{name: 'Main', line: 'Factory\\'s Main track: the gateways, the Experiment, the Ledger, Approvals and the Link'\}/)
+  // REPLACED (lane W1-Factory): the Main track's chain is the Experiment, then Approvals (§16.2, §19.1).
+  assert.match(read('shell/modeDetails.tsx'), /if \(!track\) return \{name: 'Main', line: 'Factory\\'s Main track: the Experiment and Approvals'\}/)
 })
 
 test('the Clip side hosts the selected task\'s clip (R2): clip:factory on its binding — Launch beside the log — never the Tasks device', async () => {

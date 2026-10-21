@@ -5,7 +5,7 @@
 // declared_routes, book}]}. The chooser's choices are the entries' own ids; a model's availability is the owner's to say, and the
 // Model write stays a reading (designBindings.ts REFUSE.reading). Read once per carrier, and only while the Agent's design draws it.
 import {useEffect, useState} from 'react'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 
 /** The catalogue's model ids, in the owner's order; null when the answer carries no entries. */
@@ -23,7 +23,7 @@ export function useModelCatalogue(transport: KernelTransportStatus, enabled: boo
   useEffect(() => {
     if (!enabled || transport.kind === 'unavailable') { setModels(null); return }
     let live = true
-    void kernelOp(transport, {op: 'model_catalogue'}).then(answer => {
+    void kernelRead(transport, {op: 'model_catalogue'}).then(answer => {
       if (live) setModels(!answer.error && answer.outcome?.result === 'model_catalogue_reading' ? catalogueModels(answer.outcome.data) : null)
     })
     return () => { live = false }

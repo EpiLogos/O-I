@@ -126,7 +126,12 @@ test('AIKit admits the helper as a device of its family, so it can stand on a te
 
 test('code-reading: the helper stands on a group\'s chain right after its members, and is read only while it stands there', () => {
   const view = readFileSync(new URL('../src/agent/devices/FactoryDeviceChain.tsx', import.meta.url), 'utf8')
-  const rack = view.indexOf('groupTrack && placed(AGENTSET_ID'), stands = view.indexOf('helperStands && placed(DECISION_HELPER_ID, helperDevice, helperDesignBinding')
-  assert.ok(rack > 0 && stands > rack && stands < view.indexOf('chain.map(({slot, device}, index)'), 'after the Agentset rack, before the session\'s own devices (§19.20)')
+  // REPLACED (lane W1-Factory): the chain draws its place's plan (agent/devices/factoryPlaces.ts chainSlots), where the helper follows the
+  // Agentset rack and precedes the session's own devices; the plate stands only where the helper does.
+  const rack = view.indexOf("case 'agentset': return placed(AGENTSET_ID"), stands = view.indexOf("case 'decision-helper': return helperStands ? placed(DECISION_HELPER_ID, helperDevice, helperDesignBinding")
+  assert.ok(rack > 0 && stands > rack, 'the helper\'s plate after the Agentset rack\'s (§19.20)')
+  const places = readFileSync(new URL('../src/agent/devices/factoryPlaces.ts', import.meta.url), 'utf8')
+  assert.match(places, /export const GROUP_LEAD: readonly FactorySlot\[\] = \['agentset', 'decision-helper'\]/, 'a group\'s chain leads with its members, then the helper')
+  assert.match(view, /const slots = chainSlots\(place, \{helper: helperStands\}\)/)
   assert.match(view, /useDecisionHelperReadings\(transport, helperStands\)/, 'nothing is read unless the helper stands on a chain')
 })

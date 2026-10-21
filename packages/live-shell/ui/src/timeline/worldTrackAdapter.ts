@@ -38,7 +38,8 @@ export type ClipStatus = 'waiting' | 'running' | 'stopped' | 'recording' | 'stal
 
 /** Live's mixer controls, as every track's row carries them (manual §16.6 "The track": Activator, Solo, Arm, Monitor, Input and
  * output). What each means is the mode's (§17.1–§21.1). */
-export type MixerControlId = 'activator' | 'solo' | 'arm' | 'monitor' | 'input' | 'output';
+/** `works`: the workcell the track's agents work in (§16.6 In/Out, §19.23 Works in), on every track an agent works on. */
+export type MixerControlId = 'activator' | 'solo' | 'arm' | 'monitor' | 'input' | 'output' | 'works';
 /** Live's Monitor: In, Auto or Off. */
 export type MonitorSetting = 'in' | 'auto' | 'off';
 /** One mixer control as this mode has it: what it does here (the mode's own table), and — when no owner op writes it — why it
@@ -63,6 +64,8 @@ export interface WorldTrackMix {
   monitor?: MonitorSetting;
   input?: string;
   output?: string;
+  /** The workcell its agents work in, by the register's name (env-1). */
+  works?: string;
 }
 
 /** The Main track (manual §16.6: "The Main track sits at the end, where Live keeps it. It carries each row's launch button, Stop
@@ -232,6 +235,9 @@ export interface WorldTrack {
   mix?: WorldTrackMix;
   /** This track is the Main track's own material (the day the tracks send their work to). The views draw it at the end, as Live keeps Main. */
   main?: true;
+  /** A return track (Live's; manual §16.2): a chain every track that works in it shares (a workcell). The views draw it after the tracks
+   * and before Main, and ⌥⌘R shows and hides it. It holds no clips. */
+  returns?: true;
 }
 
 export interface WorldTrackClip {

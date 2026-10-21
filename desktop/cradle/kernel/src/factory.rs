@@ -1014,7 +1014,11 @@ pub(crate) fn locate_roots(
 pub(crate) fn locate_each(roots: Vec<(Option<String>, PathBuf)>) -> Vec<Value> {
     let handles: Vec<_> = roots
         .into_iter()
-        .map(|(project, root)| std::thread::spawn(move || locate_row(project, &root)))
+        .map(|(project, root)| {
+            std::thread::spawn(crate::read_cache::carried(move || {
+                locate_kept(project, &root)
+            }))
+        })
         .collect();
     handles
         .into_iter()
@@ -1026,10 +1030,45 @@ pub(crate) fn locate_each(roots: Vec<(Option<String>, PathBuf)>) -> Vec<Value> {
         .collect()
 }
 
+/// One root's discovery row through the read model: a located source is
+/// kept while nothing under the root's `.factory` changed (in the next run
+/// too, `kept.rs`); a refusal is asked again.
+fn locate_kept(project: Option<String>, root: &Path) -> Value {
+    if !root.join(".factory").exists() {
+        return locate_row(project, root);
+    }
+    let model = crate::read_cache::ReadModel::global();
+    let scopes = model.watch().scopes_of_path(&root.join(".factory"));
+    let (executable, _) = owner_executable();
+    let key = format!(
+        "factory:locate-row:{}:{project:?}:{}",
+        executable.display(),
+        root.display()
+    );
+    model
+        .read_if(
+            &key,
+            &crate::read_cache::Dep::new(scopes, std::time::Duration::from_secs(4)),
+            |row: &Value| row["state"] == "located",
+            || Ok::<_, String>(locate_row(project.clone(), root)),
+        )
+        .unwrap_or_else(|error| serde_json::json!({"state": "refused", "error": error}))
+}
+
 /// `factory project locate <root>`, as one discovery row: `located` with the
-/// owner's location, `absent` (no `.factory` there, and the owner says so),
-/// or `refused` in the owner's words.
+/// owner's location, `absent` (no `.factory` there), or `refused` in the
+/// owner's words. A root with no `.factory` is not asked: Factory locates a
+/// source only through that directory and refuses every other root with
+/// "No such file or directory", which cost one process per Work project.
 fn locate_row(project: Option<String>, root: &Path) -> Value {
+    if !root.join(".factory").exists() {
+        return serde_json::json!({
+            "project": project,
+            "root": root.to_string_lossy(),
+            "state": "absent",
+            "error": format!("no .factory under {}", root.display()),
+        });
+    }
     let args: Vec<std::ffi::OsString> = vec![
         "project".into(),
         "locate".into(),

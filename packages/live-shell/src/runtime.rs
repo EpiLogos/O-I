@@ -9,6 +9,8 @@ use std::path::{Component, Path, PathBuf};
 
 #[path = "native_contract.rs"]
 mod native_contract;
+#[allow(unused_imports)]
+pub use native_contract::bind_change_epoch;
 pub use native_contract::unique_json;
 
 pub const PAYLOAD_SCHEMA: &str = "oi.live-shell-payload/v1";
@@ -17,6 +19,16 @@ pub const HOST_SCHEMA: &str = "oi.live-shell-native-host/v1";
 /// Read the suite's existing CurrentWorld owner through an explicit executable.
 /// Qualification supplies this path; product discovery never falls back to PATH.
 pub fn current_world(suite_cli: &Path) -> Result<serde_json::Value, String> {
+    if let Some(reading) = native_contract::recalled_world(suite_cli) {
+        return Ok(reading);
+    }
+    let epoch = native_contract::epoch_now();
+    let reading = current_world_unremembered(suite_cli)?;
+    native_contract::remember_world(suite_cli, epoch, &reading);
+    Ok(reading)
+}
+
+fn current_world_unremembered(suite_cli: &Path) -> Result<serde_json::Value, String> {
     #[cfg(unix)]
     {
         let started = std::time::Instant::now();

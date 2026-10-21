@@ -21,7 +21,7 @@ import {useCallback, useEffect, useState} from 'react'
 
 import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {
   CIVIL_TEMPORAL_CONTROLS,
   casShort,
@@ -104,7 +104,7 @@ export function CentralDayNowDevice({transport, dayPath, groundRoot = '/Users/ad
           to_unix_ms: Date.UTC(bound.getUTCFullYear(), bound.getUTCMonth(), bound.getUTCDate() + 1)}
         }
       })()
-    const result = await kernelOp(transport, {op: 'temporal_events_read', query})
+    const result = await kernelRead(transport, {op: 'temporal_events_read', query})
     const outcome = result.outcome as {result?: string; document?: {field?: Record<string, unknown>; observed_civil_instant?: string; window?: {day_ref?: string}}} | undefined
     if (result.error || outcome?.result !== 'temporal_events_reading') {
       setCivil({

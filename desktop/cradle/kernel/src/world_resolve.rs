@@ -156,6 +156,7 @@ pub fn worlds_root() -> PathBuf {
 
 pub fn execute(request: Request) -> Result<crate::KernelOpOutcome, String> {
     Ok(crate::KernelOpOutcome {
+        read_scopes: None,
         receipts: Vec::new(),
         result: crate::KernelOpResult::WorldResolve {
             resolution: resolve_in(&worlds_root(), &request),
@@ -816,6 +817,7 @@ mod tests {
         ));
         let f = standard();
         let outcome = crate::KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result: crate::KernelOpResult::WorldResolve {
                 resolution: resolve_in(&f.root, &Request::default()),

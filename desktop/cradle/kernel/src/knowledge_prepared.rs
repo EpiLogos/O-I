@@ -257,7 +257,9 @@ impl Relations {
                 let lead = Arc::clone(&lead);
                 std::thread::Builder::new()
                     .name("oi-relations-batch".into())
-                    .spawn(move || held(&lead).take().map(|run| run()))
+                    .spawn(crate::read_cache::carried(move || {
+                        held(&lead).take().map(|run| run())
+                    }))
             };
             // A thread the machine refuses leaves the leader to run the batch
             // itself, as before: its own read then waits for the whole batch.
@@ -426,7 +428,14 @@ impl Kernel {
             serde_json::to_string(project).map_err(|e| e.to_string())?,
             serde_json::to_string(request).map_err(|e| e.to_string())?
         );
-        let ticket = self.reads.begin(ticket_key.clone());
+        let scopes = match &world {
+            Some(world) => {
+                let (cwd, _) = scope(world, project.clone(), request)?;
+                self.reads.aikit_scopes(&cwd)
+            }
+            None => vec![crate::watch::Scope::All],
+        };
+        let ticket = self.reads.begin_in(ticket_key.clone(), scopes);
         Ok(Some(Prepared {
             client: self.client.clone(),
             world,
@@ -463,9 +472,11 @@ impl Kernel {
             );
         }
         if done.cacheable && !done.retained {
+            self.reads.adopt_stamp(&done.ticket_key, &done.key);
             self.reads.put(done.key, done.data.clone());
         }
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![],
             result: KernelOpResult::Knowledge { data: done.data },
         })

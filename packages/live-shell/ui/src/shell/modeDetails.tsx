@@ -26,6 +26,7 @@ import {sceneOfClipRef} from '../components/expressions/clip/sceneClip'
 import {useWorkspace} from './workspaceContext'
 import {trackKey, type AgentSessionTrack} from '../agent/agentRunModel'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
+import {workcellOfTrack} from '../frame/tracks/returnTracks'
 import {STANDALONE_INSTRUMENTS, TECHNE_INSTRUMENTS} from '../inhabitants/sdk/semantics'
 import type {PaneInstrumentId} from './paneInstrument'
 import {loadWhenDrawn} from './loadWhenDrawn'
@@ -177,11 +178,15 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
         const trackId = selected.ref ? parseFactoryTaskRef(selected.ref)?.trackId ?? selected.ref : null
         const track = trackId ? detail.factory.tracks.find(item => trackKey(item) === trackId) : undefined
         const shown = selected.set?.tracks.find(item => item.id === trackId)?.name
+        // A workcell's return track (frame/tracks/returnTracks.ts, `workcell:<name>`; §19.23): the Device side is that workcell's chain.
+        const cell = workcellOfTrack(trackId)
+        if (cell) return {name: cell, line: 'the workcell\'s chain: Gateway → Remote carrier → Git / landing, with its Seat'}
         // With no session selected the Device side is Factory's Main track (§16.2; agent/devices/FactoryDeviceChain.tsx), as Live
-        // shows the Main track's chain when no other track is chosen.
-        if (!track) return {name: 'Main', line: 'Factory\'s Main track: the gateways, the Experiment, the Ledger, Approvals and the Link'}
+        // shows the Main track's chain when no other track is chosen. The gateways, the frames and the ledger are monitors on the rail, and
+        // the road in and out is the workcell's (§19.1, §19.23): a session's chain is the agent, its skills and its scope.
+        if (!track) return {name: 'Main', line: 'Factory\'s Main track: the Experiment and Approvals'}
         return {name: shown ?? factorySessionName(track, null, undefined),
-          line: track.group ? 'a group: the Agentset rack, then the path: gateway → agent → skills → world → git' : 'the agent\'s path: gateway → agent → skills → world → git'}
+          line: track.group ? 'a group: the Agentset rack and the Decision helper, then the chain: agent → skills → scope' : 'the agent\'s chain: agent → skills → scope'}
       },
     }},
   // The Studio receives a dragged field device itself (ExpressionsStudio.tsx, DEVICE_MIME), and the mockup's Expressions row

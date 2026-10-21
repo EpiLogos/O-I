@@ -8,7 +8,7 @@ import type {ComponentType} from 'react'
 import type {SurfMode} from './modeGrammar'
 import type {WidgetBodyProps, WidgetDeclaration} from '../frame/widgets/widgets'
 import {COMPANIONS, TILES} from './modeDockTiles'
-import {TILE_ICONS, tileTitle} from '../agent/agentDockTiles'
+import {DEVICE_TILES, TILE_ICONS, tileTitle} from '../agent/agentDockTiles'
 import {useAgentShell, type AgentTileId} from '../agent/AgentShellContext'
 import {useAgencySessions} from '../agent/useAgencySessions'
 import {useWidgetReading} from '../widgets/widgetReading'
@@ -65,11 +65,19 @@ const RAIL_BORN: readonly WidgetDeclaration[] = [
   {id: 'calendar', name: 'Calendar', mark: 'metro', hint: 'what is due around your work, from a calendar provider', Body: () => null},
 ]
 
+/** The devices' own tiles that no old tile held — Messages (DLW §19.24), Gateways (§19.3) and the Workcells tile (§19.23 Widget): registered
+ * so the rail lists them; agent/agentDockTiles.ts claims each for its device, so the body here never draws. */
+const DEVICE_BORN: readonly WidgetDeclaration[] = DEVICE_TILES.map((tile): WidgetDeclaration => ({...tile, Body: () => null}))
+
 export const WIDGETS: readonly WidgetDeclaration[] = [
+  // Messages is the rail's first device (§19.24 "born on the widget rail … in every mode").
+  ...DEVICE_BORN.filter(widget => widget.id === 'messages'),
   {id: 'agent', name: 'Agent', Name: AgentWidgetName, mark: TILES.agent.mark, hint: 'the agent you are talking to', Body: AgentWidget},
   ...MODE_TILES.map((id): WidgetDeclaration => ({id, name: TILES[id].name, mark: TILES[id].mark, hint: HINTS[id], Body: OWN_BODIES[id] ?? modeTile(id)})),
   ...AGENT_TILES.map((id): WidgetDeclaration => ({id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),
   ...RAIL_BORN,
+  // Gateways and the Workcells tile after the old tiles.
+  ...DEVICE_BORN.filter(widget => widget.id !== 'messages'),
 ]
 
 /** Every widget of the world: the rail's own, then each panel a family registers in the widget slot (frame/widgets/

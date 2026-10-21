@@ -117,6 +117,7 @@ fn retained(
     reads: &Mutex<read_cache::OwnerReadCache>,
     key: &str,
     ttl: std::time::Duration,
+    cwd: &Path,
     read: impl FnOnce() -> Result<Value, String>,
 ) -> Result<Value, String> {
     let ticket = {
@@ -124,7 +125,8 @@ fn retained(
         if let Some(value) = cache.get(key, ttl) {
             return Ok(value);
         }
-        cache.begin(key.to_owned())
+        let scopes = cache.aikit_scopes(cwd);
+        cache.begin_in(key.to_owned(), scopes)
     };
     let value = read()?;
     let mut cache = reads.lock().unwrap_or_else(|e| e.into_inner());
@@ -266,6 +268,7 @@ impl PreparedAgent {
     ) -> Result<KernelOpOutcome, String> {
         if let AgentRead::Harness { binding } = &self.read {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::HarnessAgentReading {
                     document: self.aikit.gateway_agent(None, binding, "sessions")?,
@@ -278,6 +281,7 @@ impl PreparedAgent {
         match &self.read {
             AgentRead::HarnessStatus => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::HarnessStatusReading {
                         data: self.aikit.harness_status()?,
@@ -286,6 +290,7 @@ impl PreparedAgent {
             }
             AgentRead::ModelCatalogue => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::ModelCatalogueReading {
                         data: self.aikit.model_catalogue()?,
@@ -294,6 +299,7 @@ impl PreparedAgent {
             }
             AgentRead::DecisionStatus => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::DecisionStatusReading {
                         data: self.aikit.decision_status()?,
@@ -302,6 +308,7 @@ impl PreparedAgent {
             }
             AgentRead::TeamSpace => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::TeamSpaceReading {
                         data: crate::team_space::read()?,
@@ -319,11 +326,12 @@ impl PreparedAgent {
                 // The harness disclosure needs only the directory: it is read
                 // beside the binding and the spaces, not after them.
                 let (project_ref, spaces, harness_disclosure) = std::thread::scope(|scope| {
-                    let disclosure = scope.spawn(|| {
+                    let disclosure = scope.spawn(crate::read_cache::carried(|| {
                         retained(
                             &self.reads,
                             &format!("harness-disclosure:{}", cwd.display()),
                             read_cache::HORIZON_TTL,
+                            &cwd,
                             || {
                                 Ok(match self.aikit.harness_disclosure(&cwd) {
                                     Ok(value) => value,
@@ -333,7 +341,7 @@ impl PreparedAgent {
                                 })
                             },
                         )
-                    });
+                    }));
                     let read = || -> Result<(String, Value), String> {
                         let project_ref =
                             project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
@@ -344,6 +352,7 @@ impl PreparedAgent {
                             &self.reads,
                             &format!("agency:{}:{project_ref}", cwd.display()),
                             read_cache::HORIZON_TTL,
+                            &cwd,
                             || self.aikit.read_project(&cwd, &project_ref),
                         )?;
                         Ok((project_ref, spaces))
@@ -369,7 +378,22 @@ impl PreparedAgent {
             AgentRead::Encounter(request) => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
-                let data = self.aikit.encounter(&cwd, &project_ref, request)?;
+                // Its context and providers are readings of the owner's
+                // registry; the rest of its verbs are a live session's own
+                // state (a transcript, a draft, a turn) or act on it.
+                let data = match request {
+                    agency::EncounterRequest::Context { .. }
+                    | agency::EncounterRequest::Providers => read_cache::aikit_read(
+                        &self.aikit.identity(),
+                        &format!(
+                            "encounter:{project_ref}:{}",
+                            serde_json::to_string(request).map_err(|e| e.to_string())?
+                        ),
+                        &cwd,
+                        || self.aikit.encounter(&cwd, &project_ref, request),
+                    )?,
+                    _ => self.aikit.encounter(&cwd, &project_ref, request)?,
+                };
                 if let agency::EncounterRequest::Read { agent_session, .. } = request {
                     if data["agent_session"].as_str() != Some(agent_session) {
                         return Err("AIKit encounter reading identity mismatch".into());
@@ -385,10 +409,12 @@ impl PreparedAgent {
                 KernelOpResult::EncounterReading { data }
             }
             AgentRead::Task { agent_session } => KernelOpResult::EncounterTaskReading {
-                data: self
-                    .aikit
-                    .task_read(&cwd, agent_session)
-                    .map_err(|e| e.to_string())?,
+                data: read_cache::aikit_read(
+                    &self.aikit.identity(),
+                    &format!("encounter-task:{agent_session}"),
+                    &cwd,
+                    || self.aikit.task_read(&cwd, agent_session),
+                )?,
             },
             AgentRead::Settings {
                 agent_session,
@@ -411,18 +437,36 @@ impl PreparedAgent {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
                 KernelOpResult::EncounterSessionSettingsListReading {
-                    data: self
-                        .aikit
-                        .session_settings_list(&cwd, &project_ref, agent_sessions)?,
+                    data: read_cache::aikit_read(
+                        &self.aikit.identity(),
+                        &format!(
+                            "session-settings-list:{project_ref}:{}",
+                            serde_json::to_string(agent_sessions).map_err(|e| e.to_string())?
+                        ),
+                        &cwd,
+                        || {
+                            self.aikit
+                                .session_settings_list(&cwd, &project_ref, agent_sessions)
+                        },
+                    )?,
                 }
             }
             AgentRead::AttemptsList { agent_sessions } => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
                 KernelOpResult::EncounterTaskAttemptsListReading {
-                    data: self
-                        .aikit
-                        .task_attempts_list(&cwd, &project_ref, agent_sessions)?,
+                    data: read_cache::aikit_read(
+                        &self.aikit.identity(),
+                        &format!(
+                            "task-attempts-list:{project_ref}:{}",
+                            serde_json::to_string(agent_sessions).map_err(|e| e.to_string())?
+                        ),
+                        &cwd,
+                        || {
+                            self.aikit
+                                .task_attempts_list(&cwd, &project_ref, agent_sessions)
+                        },
+                    )?,
                 }
             }
             AgentRead::ModelRoster => KernelOpResult::ModelRosterReading {
@@ -430,6 +474,7 @@ impl PreparedAgent {
                     &self.reads,
                     &format!("model-roster:{}", cwd.display()),
                     read_cache::HORIZON_TTL,
+                    &cwd,
                     || self.aikit.model_roster(&cwd),
                 )?,
             },
@@ -449,6 +494,7 @@ impl PreparedAgent {
             },
         };
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result,
         })

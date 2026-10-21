@@ -86,6 +86,15 @@ export interface KernelReceipt {
   [payload: string]: unknown;
 }
 
+/** The kernel's notice that what its owner readings were read from moved (`KernelEvent::ReadingsChanged`): `scopes` is non-empty,
+ * each `root` | `seats` | `aikit` | `work` | `clock` | `all` | `project:<Name>` (`work` comes with every project that moved); `epoch`
+ * is the watch's change counter after the change. */
+export interface ReadingsChangedReceipt extends KernelReceipt {
+  event: "readings_changed";
+  scopes: string[];
+  epoch: number;
+}
+
 /** Ephemeral disclosure only. A gap or changed process generation requires
  * current owner readings; it cannot be accepted as an empty event history. */
 export interface KernelEventReplay {
@@ -649,6 +658,8 @@ export type KernelOpResult =
  * (receipts are omitted on the wire when empty — an operation that
  * changed nothing). */
 export type KernelOutcome = KernelOpResult & {
+  /** The scopes of every reading this answer was made from (same strings as `readings_changed`); absent = unscoped, `[]` = kernel memory only. */
+  read_scopes?: string[];
   native_owner?: {world_ref:string;owner_generation:string;receipts:KernelReceipt[]};
   receipts?: KernelReceipt[];
 };

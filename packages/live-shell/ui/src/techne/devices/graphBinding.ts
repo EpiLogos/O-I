@@ -1,0 +1,150 @@
+// The Knowledge graph (manual §17.3, knowledge-graph:graph) on its owners. T-COVERAGE §1.4: "the family publishes knowledge-scope,
+// -filters, -display faces, not graph"; the coverage row: "a binding over the kernel `graph` op (exists)". Two owners, each read where
+// it stands:
+//   - the open graph's own view state, through the handle the open surface publishes (desktop/cradle/src/knowledge/
+//     knowledgeGraphHandle.ts KnowledgeGraphSurface: filters, zoom, selected), written through the knowledge graph's armed setters —
+//     the same path the family's three faces wrote (inhabitants/ql/devices/knowledgeDevices.ts KNOWLEDGE_DECLARED_ROWS → ownerWrite.ts
+//     writeThroughOwner → agent/shellSetterBridge.ts), which call the panel's own acts; a coloured group's switch is the panel's own
+//     filter change (knowledgeGraphFaceActions.ts setFilters);
+//   - the reading itself, the kernel `graph` op (desktop/cradle/kernel/src/graph.rs; desktop/cradle/src/knowledge/graphProgress.ts
+//     loadGraph — the read the open surface itself makes), of the root register's wiki: its local inputs first, the Shared Field's
+//     only while Shared stands. The handle publishes neither the surface's reading nor the register it reads, so this device reads
+//     the root register's wiki (named in PROPOSE: the handle should carry both).
+// The keys and their owners:
+//   light        lit while a graph is open, dark while none is
+//   selected     the open graph's selected subject ('' while none is selected); no act of the handle selects, so a press on a node
+//                stands refused naming that operation
+//   scope, depth, direction, shared, text, kinds, relations, ghosts (unresolved), orphans (isolated), mode (context), labels,
+//   arrows, zoom, groups (emphasis)   the open graph's view state (GraphFilters), kinds and relations as the design lists them
+//   reading      the kernel graph op's answer (oi.cradle.graph-reading/v1), whole
+//   budget       the max_nodes the read is asked with: the hand's, starting at the surface's own 4096 (graphProgress.ts)
+//   minimap, aperture.*   no operation reaches them: absent, and their controls stand disabled naming it
+import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
+import type {KnowledgeGraphSurface} from '../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
+import type {GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
+import type {EmphasisGroup} from '../../../../../../desktop/cradle/src/knowledge/graphEmphasis'
+import {GRAPH_DESIGN, disabled, handsFor, missing, put, refusal} from './designDevices'
+
+export const GRAPH_ID = GRAPH_DESIGN
+/** The read's own node bound when the hand has set none (graphProgress.ts progressiveGraph: `maxNodes ?? 4096`). */
+export const GRAPH_READ_NODES = 4096
+
+/** The open graph's state, as the face bodies say it (knowledgeDevices.ts NOT_OPEN, NOT_LOCAL: the bodies' own words). */
+export const NOT_OPEN = 'The knowledge graph is not open in this session. Open a graph in the centre and its controls stand here; nothing is held.'
+export const NOT_LOCAL = 'Depth applies in a local view; the scope is the available field, so set the scope to the selected subject first.'
+
+const APERTURE = missing('The aperture', 'plan_living_wiki_refraction (QL-MEF crates/ql-wiki/src/living.rs, ql-mef/living-wiki-refraction/v1): a library contract, no CLI and no kernel op reach it', 'Quaternal Logic')
+export const GRAPH_REFUSE = {
+  selected: missing('Select a note', 'a selection act on the open graph\'s handle (knowledgeGraphHandle.ts carries `selected` as a reading only)', 'the knowledge graph'),
+  minimap: missing('Minimap', 'a minimap switch on the open graph\'s handle (knowledgeGraphHandle.ts carries none)', 'the knowledge graph'),
+  'aperture.mode': APERTURE, 'aperture.positions': APERTURE, 'aperture.context': APERTURE, 'aperture.full': APERTURE, 'aperture.budget': APERTURE,
+} as const
+
+/** Each view key and the knowledge graph's armed setter that takes it (knowledgeDevices.ts KNOWLEDGE_DECLARED_ROWS write paths). */
+export const GRAPH_SETTERS: Readonly<Record<string, string>> = {
+  scope: 'shell.setKnowledgeScope', depth: 'shell.setKnowledgeDepth', direction: 'shell.setKnowledgeDirection', shared: 'shell.setKnowledgeShared',
+  ghosts: 'shell.setKnowledgeGhosts', text: 'shell.setKnowledgeText', kinds: 'shell.setKnowledgeKinds', relations: 'shell.setKnowledgeRelations',
+  orphans: 'shell.setKnowledgeIsolated', mode: 'shell.setKnowledgeContext', labels: 'shell.setKnowledgeLabels', arrows: 'shell.setKnowledgeArrows',
+  zoom: 'shell.setKnowledgeZoom',
+}
+const VIEW_KEYS = [...Object.keys(GRAPH_SETTERS), 'clear'] as const
+export const GRAPH_LOCAL = ['budget'] as const
+
+/** The kernel graph op's answer as the window holds it. */
+export interface GraphRead {
+  readonly status: 'reading' | 'answered' | 'refused'
+  readonly reading: GraphReading | null
+  /** The owner's refusal, in its words. */
+  readonly error: string | null
+  /** The inputs still loading (graphProgress.ts GraphProgress.pending). */
+  readonly pending: readonly string[]
+  /** The max_nodes this read was asked with. */
+  readonly nodes: number
+}
+
+/** A coloured group as the design reads it (knowledge-graph__graph.tsx groupsOf): the panel's emphasis group, verbatim. */
+const groupOf = (group: EmphasisGroup) => ({id: group.id, label: group.label, color: group.color, text: group.text, kinds: group.kinds, tags: group.tags, enabled: group.enabled})
+
+/** The Knowledge graph's values: the open graph's view state, the kernel's reading and the read's own bound. */
+export function graphValues(surface: KnowledgeGraphSurface | null, read: GraphRead | null, held: Readonly<Record<string, Value>> = {}): Values {
+  const values: Record<string, Value> = {}
+  values.light = surface ? 'lit' : 'dark'
+  put(values, 'budget', held.budget ?? read?.nodes)
+  if (read?.reading) values.reading = JSON.stringify(read.reading)
+  if (!surface) return values
+  const f = surface.filters
+  values.selected = surface.selected ?? ''
+  values.scope = f.scope
+  values.depth = f.depth
+  values.direction = f.direction
+  values.shared = f.shared
+  values.text = f.text
+  values.kinds = f.kinds.join('|')
+  values.relations = f.relations.join('|')
+  values.ghosts = f.unresolved
+  values.orphans = f.isolated
+  values.mode = f.context
+  values.labels = f.labels
+  values.arrows = f.arrows
+  put(values, 'zoom', surface.zoom)
+  values.groups = JSON.stringify(f.emphasis.map(groupOf))
+  return values
+}
+
+/** Where a write goes: an armed setter by path, or the panel's own filter change. Injectable for the tests. */
+export interface GraphWrites {
+  readonly setter: (path: string, value: unknown) => Promise<unknown>
+  readonly patch: (surface: KnowledgeGraphSurface, patch: Partial<KnowledgeGraphSurface['filters']>) => void
+}
+
+/** A design value as the setter takes it: the design's lists are `|`-joined, the setters take arrays. */
+function decoded(key: string, value: Value): unknown {
+  if (key === 'kinds' || key === 'relations') return String(value).split('|').filter(Boolean)
+  if (key === 'depth' || key === 'zoom') return Number(value)
+  return value
+}
+
+export async function graphWrite(surface: KnowledgeGraphSurface | null, changes: readonly ValueChange[], writes: GraphWrites): Promise<void> {
+  for (const {key, value} of changes) {
+    if (key in GRAPH_REFUSE) throw refusal(GRAPH_REFUSE, key)
+    if (!surface) throw Error(NOT_OPEN)
+    const group = /^g:(.+)$/.exec(key)
+    if (group) {
+      const groups = surface.filters.emphasis
+      if (!groups.some(candidate => candidate.id === group[1])) throw Error(`No coloured group ${group[1]} stands in the open graph.`)
+      writes.patch(surface, {emphasis: groups.map(candidate => candidate.id === group[1] ? {...candidate, enabled: value === true} : candidate)})
+      continue
+    }
+    const path = GRAPH_SETTERS[key]
+    if (!path) throw refusal(GRAPH_REFUSE, key)
+    if (key === 'depth' && surface.filters.scope !== 'local') throw Error(NOT_LOCAL)
+    await writes.setter(path, decoded(key, value))
+  }
+}
+
+/** Why a key of the design has no reading now. */
+export function graphAbsent(surface: KnowledgeGraphSurface | null, read: GraphRead | null, key: string): string {
+  if (key in GRAPH_REFUSE) return GRAPH_REFUSE[key as keyof typeof GRAPH_REFUSE]
+  if (key === 'reading') return read?.status === 'refused' ? `The kernel graph op refused: ${read.error ?? 'no reason given'}.` : 'The kernel graph op has not answered yet.'
+  if (!surface) return NOT_OPEN
+  return `${key}: the open graph's handle reports no such reading.`
+}
+const GRAPH_READINGS = ['reading', 'selected', 'groups'] as const
+
+/** The Knowledge graph's binding on the open graph and the kernel's reading. */
+export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphRead | null, writes: GraphWrites, held: Readonly<Record<string, Value>> = {}): DesignBinding {
+  const standing: Record<string, Standing> = disabled(GRAPH_REFUSE)
+  if (!surface) for (const key of VIEW_KEYS) standing[key] = {disabled: NOT_OPEN}
+  else if (surface.filters.scope !== 'local') standing.depth = {disabled: NOT_LOCAL}
+  const values = graphValues(surface, read, held)
+  for (const key of GRAPH_READINGS) if (!(key in values) && !(key in standing)) standing[key] = {disabled: graphAbsent(surface, read, key)}
+  return {
+    id: GRAPH_ID,
+    values,
+    standing,
+    ...(read === null || (read.status === 'reading' && !read.reading) ? {waiting: ['reading']} : {}),
+    local: handsFor(GRAPH_ID, GRAPH_LOCAL),
+    writes: key => key in GRAPH_REFUSE || key in GRAPH_SETTERS || key.startsWith('g:'),
+    write: changes => graphWrite(surface, changes, writes),
+  }
+}

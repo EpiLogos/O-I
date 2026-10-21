@@ -80,3 +80,8 @@
 .mode-transport.one-transport .position-field[data-slot=loop-length][data-unread] { min-width: 0 }
 /* the owner's stage tool rail lights the tool in force (its aria-pressed is the frame's reading) */
 .mode-transport.one-transport .bar-tool[aria-pressed=true] { color: var(--accent) }
+
+/* Link (manual §19.19): its button and ▾, and its Whole beneath the transport while ▾ is pressed. */
+.transport-link { position: relative }
+.transport-link-more { padding: 0 3px; font-size: 9px }
+.transport-link-band { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; background: var(--bg-1); border: 1px solid var(--line-strong) }

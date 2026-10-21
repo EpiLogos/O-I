@@ -1,4 +1,4 @@
-import {kernelOp,detectTransport} from "../../kernel/bridge";
+import {kernelRead,detectTransport} from "../../kernel/bridge";
 import {readModelRoster,modelRosterReason,type ModelRosterReading} from "./modelRoster";
 import {modelDisplayName} from "./modelPresentation";
 import type {EncounterStatus} from "../../encounter/client";
@@ -100,7 +100,7 @@ export function ModelChip({model,actions,disabled,project,route,onSetup}:{model:
  const {open,setOpen,host}=useMenu();
  useEffect(()=>{if(model.phase==="unread")void actions.refresh();},[actions,model.phase]);
  const [roster,setRoster]=useState<ModelRosterReading>();
- useEffect(()=>{setRoster(undefined);if(!open)return;let current=true;void kernelOp(detectTransport(),{op:"model_roster",project}).then(result=>{if(current&&result.outcome?.result==="model_roster_reading")setRoster(readModelRoster(result.outcome.reading));});return()=>{current=false;};},[open,project]);
+ useEffect(()=>{setRoster(undefined);if(!open)return;let current=true;void kernelRead(detectTransport(),{op:"model_roster",project}).then(result=>{if(current&&result.outcome?.result==="model_roster_reading")setRoster(readModelRoster(result.outcome.reading));});return()=>{current=false;};},[open,project]);
  const observation=model.reading?.model_observation;
  const options=modelChoices(observation?.available_models??[]);
  const current=options.find(option=>option.modelId===observation?.current_model_id);
@@ -150,7 +150,7 @@ export function FreshModelChip({intent,onChoose,onSetup,disabled,project}:{inten
  const [candidates,setCandidates]=useState<RosterCandidate[]>();
  const [error,setError]=useState<string>();
  useEffect(()=>{if(!open)return;let current=true;setQuery("");
-  void kernelOp(detectTransport(),{op:"model_roster",project}).then(result=>{
+  void kernelRead(detectTransport(),{op:"model_roster",project}).then(result=>{
    if(!current)return;
    if(result.outcome?.result!=="model_roster_reading"){setError("The model roster could not be read.");return;}
    const reading=readModelRoster(result.outcome.reading);

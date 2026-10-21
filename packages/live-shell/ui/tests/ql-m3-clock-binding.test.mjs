@@ -81,7 +81,7 @@ test('the form is read once per encounter; a new degree advances forward on the 
   for (const [key, why] of Object.entries(m3.QL_M3_ABSENT)) {
     assert.equal(key in values, false, `${key}: the reading carries none, so the binding gives none`)
     assert.ok(key in design.defaults, `${key} is a key of the design`)
-    assert.match(why, /^The M3 reading carries no generation (law|cell)/, `${key}: absent with its reason`)
+    assert.match(why, key.startsWith('rack') ? /^No rack reading: .* missing op: a rack reading and the rule naming a verified part/ : /^The M3 reading carries no generation (law|cell)/, `${key}: absent with its reason`)
   }
   const binding = m3.qlM3Binding(m3.qlM3State())
   assert.equal(designKey('quaternal-logic', m3.QL_M3_FACE), design.id)

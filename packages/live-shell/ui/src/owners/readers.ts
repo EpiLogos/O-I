@@ -25,6 +25,7 @@ import {useEffect, useMemo, useReducer} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {rosterFromReading, type RosterAgent} from '../../../../../desktop/cradle/src/agency/roster'
+import {scopesOf} from './ownerCall'
 import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadings, type OwnerReadingEntry} from './ownerReading'
 import {useSpineEpoch} from './spine'
 import {onAttentionRegained} from './attention'
@@ -46,7 +47,7 @@ export function readTaskOf(transport: KernelTransportStatus, project: string, ag
     if (unavailable) return {error: unavailable}
     const result = await kernelOp(transport, {op: 'encounter_task_read', project, agent_session: agentSession})
     if (result.error || result.outcome?.result !== 'encounter_task_reading') return {error: result.error ?? 'AIKit did not return a task reading'}
-    return {value: result.outcome.data ?? null}
+    return {value: result.outcome.data ?? null, ...scopesOf(result.outcome)}
   }
 }
 
@@ -67,7 +68,7 @@ export function readSettingsOf(transport: KernelTransportStatus, project: string
     if (unavailable) return {error: unavailable}
     const result = await kernelOp(transport, {op: 'encounter_session_settings', project, agent_session: agentSession})
     if (result.error || result.outcome?.result !== 'encounter_session_settings_reading') return {error: result.error ?? 'AIKit did not return the session\'s settings'}
-    return {value: result.outcome.data}
+    return {value: result.outcome.data, ...scopesOf(result.outcome)}
   }
 }
 
@@ -96,7 +97,7 @@ export function readRosterOf(transport: KernelTransportStatus, project: string |
     for (let attempt = 0; attempt < ROSTER_TRANSPORT_ATTEMPTS; attempt++) {
       if (attempt > 0) await new Promise(resolve => setTimeout(resolve, retryMs))
       const result = await kernelOp(transport, {op: 'agent_definition', project, request: {action: 'roster'}})
-      if (!result.error && result.outcome?.result === 'agent_definition_reading') return {value: result.outcome.data}
+      if (!result.error && result.outcome?.result === 'agent_definition_reading') return {value: result.outcome.data, ...scopesOf(result.outcome)}
       error = result.error ?? error
       if (!TRANSPORT_FAILURE.test(error)) break
     }
@@ -115,7 +116,7 @@ export function readWorkcellOf(transport: KernelTransportStatus): OwnerRead<unkn
     if (unavailable) return {error: unavailable}
     const result = await kernelOp(transport, {op: 'workcell_status_read'})
     if (result.error || result.outcome?.result !== 'workcell_status_reading') return {error: result.error ?? 'the workcell status reading did not answer'}
-    return {value: result.outcome.data ?? null}
+    return {value: result.outcome.data ?? null, ...scopesOf(result.outcome)}
   }
 }
 
@@ -202,7 +203,7 @@ export function useSettingsAnswers(transport: KernelTransportStatus, sessionRefs
         if (result.error || result.outcome?.result !== 'encounter_session_settings_list_reading') return
         for (const reading of result.outcome.data.readings) {
           const entry = unread.find(item => (JSON.parse(item.key) as unknown[])[3] === reading.agent_session)
-          if (entry && !('refused' in reading)) entry.accept(reading, epoch)
+          if (entry && !('refused' in reading)) entry.accept(reading, epoch, result.outcome.read_scopes)
         }
       })
     }

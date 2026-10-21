@@ -359,11 +359,18 @@ impl CentralClient {
     /// renderer transport URLs and presentation refs cannot choose this epoch.
     pub(crate) fn retained_resource_epoch(&self) -> String {
         use sha2::{Digest, Sha256};
-        let basis = format!(
+        format!(
+            "central-owner:{:x}",
+            Sha256::digest(self.owner_identity().as_bytes())
+        )
+    }
+
+    /// Which owner this client asks: the route, the executables and the root.
+    pub(crate) fn owner_identity(&self) -> String {
+        format!(
             "{:?}|{:?}|{:?}|{}",
             self.executable, self.central_executable, self.central_root, self.suite_route
-        );
-        format!("central-owner:{:x}", Sha256::digest(basis.as_bytes()))
+        )
     }
 
     pub fn configured_project(&self) -> &str {
@@ -383,7 +390,41 @@ impl CentralClient {
     /// `Unavailable`; `ok:false` is `Refused` with the owner's message.
     /// Preserve native failure status/code for Central-facing readers. Existing
     /// callers still use `run`, which returns the same refusal as before.
-    pub fn run_envelope(&self, action: &str, mut input: Value) -> Result<Value, OwnerCallError> {
+    ///
+    /// A reading goes through the read model (read_cache.rs): a retained
+    /// answer whose sources did not change is returned without a process,
+    /// and identical asks in flight share one. Any action that is not a
+    /// reading moves every retained reading once it has run. The person's
+    /// own press never reads from or into the model.
+    pub fn run_envelope(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
+        let input = self.with_project(input);
+        if self.person.is_some() {
+            let answer = self.run_envelope_owner(action, input);
+            if !crate::read_cache::central_reads(action) {
+                crate::read_cache::written();
+            }
+            return answer;
+        }
+        let model = crate::read_cache::ReadModel::global();
+        match crate::read_cache::central_dep(model.watch(), &self.owner_identity(), action, &input)
+        {
+            Some((key, dep)) => model.read_if(
+                &key,
+                &dep,
+                |envelope: &Value| envelope["ok"] == true,
+                || self.run_envelope_owner(action, input),
+            ),
+            None => {
+                let answer = self.run_envelope_owner(action, input);
+                if !crate::read_cache::central_reads(action) {
+                    crate::read_cache::written();
+                }
+                answer
+            }
+        }
+    }
+
+    fn with_project(&self, mut input: Value) -> Value {
         if let Some(object) = input.as_object_mut() {
             // An absent project takes the configured co-reference; an explicit
             // null names the Central root register and is carried as absence,
@@ -401,6 +442,10 @@ impl CentralClient {
                 Some(_) => {}
             }
         }
+        input
+    }
+
+    fn run_envelope_owner(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
         let mut command = Command::new(&self.executable);
         if self.suite_route {
             command.arg("central");
@@ -883,10 +928,16 @@ impl CentralClient {
         limit: Option<u64>,
         before: Option<&str>,
     ) -> Result<SourceReturns, OwnerCallError> {
-        let data = self.run(
-            "projectcentral.source.returns",
-            json!({ "project": project, "limit": limit, "before": before }),
-        )?;
+        // Central takes `limit` and `before` only when given: a null is
+        // refused ("limit must be an integer").
+        let mut input = json!({ "project": project });
+        if let Some(limit) = limit {
+            input["limit"] = json!(limit);
+        }
+        if let Some(before) = before {
+            input["before"] = json!(before);
+        }
+        let data = self.run("projectcentral.source.returns", input)?;
         let result: SourceReturns = decode_owner("projectcentral.source.returns", data)?;
         ensure_schema(
             "projectcentral.source.returns",
@@ -1251,6 +1302,39 @@ mod tests {
                 .find(|(held, _)| held == name)
                 .map(|(_, value)| value.clone())
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn source_returns_name_a_limit_and_a_cursor_only_when_given() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("central-returns-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let ctrl = dir.join("ctrl");
+        // Refuses a null limit or cursor, as Central does.
+        std::fs::write(
+            &ctrl,
+            r#"#!/bin/sh
+for last; do :; done
+case "$last" in
+  *'"limit":null'*|*'"before":null'*)
+    echo '{"ok":false,"status":"invalid_input","error":{"code":"invalid_input","message":"limit must be an integer"}}' ;;
+  *)
+    echo '{"ok":true,"data":{"schema":"central.source-returns/v1","entries":[],"more":false,"authored_source_mutated":false}}' ;;
+esac
+"#,
+        )
+        .unwrap();
+        std::fs::set_permissions(&ctrl, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&ctrl);
+        let client = CentralClient::with(ctrl, None, "test".into());
+        assert!(client
+            .source_returns("O-I", None, None)
+            .unwrap()
+            .entries
+            .is_empty());
+        assert!(client.source_returns("O-I", Some(10), Some("r-1")).is_ok());
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

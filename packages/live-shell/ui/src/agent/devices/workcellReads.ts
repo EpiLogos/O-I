@@ -9,7 +9,8 @@
 //   - `gateway_remotes_read` → aikit.gateway-remotes/v1, AIKit's declared gateway endpoints of the other Workcells. It feeds the Link's
 //     endpoints and whether the link is joined (workcellBindings.ts linkBinding).
 // A refusal is the owner's words, carried as the reading's error.
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {scopesOf} from '../../owners/ownerCall'
+import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {GatewayRemotesReading, KernelTransportStatus, SeatStatusReading, SourceReturnsReading} from '../../../../../../desktop/cradle/src/kernel/types'
 import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReadings, type OwnerReadingEntry} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
@@ -29,9 +30,9 @@ export function readSeatStatusOf(transport: KernelTransportStatus): OwnerRead<Se
   return async () => {
     const down = unavailable(transport)
     if (down) return {error: down}
-    const result = await kernelOp(transport, {op: 'seat_status_read'})
+    const result = await kernelRead(transport, {op: 'seat_status_read'})
     if (result.error || result.outcome?.result !== 'seat_status_reading') return {error: result.error ?? 'The seat instrument did not return its status reading.'}
-    return {value: result.outcome.data}
+    return {value: result.outcome.data, ...scopesOf(result.outcome)}
   }
 }
 
@@ -40,9 +41,9 @@ export function readSourceReturnsOf(transport: KernelTransportStatus, project: s
   return async () => {
     const down = unavailable(transport)
     if (down) return {error: down}
-    const result = await kernelOp(transport, {op: 'source_returns_read', project})
+    const result = await kernelRead(transport, {op: 'source_returns_read', project})
     if (result.error || result.outcome?.result !== 'source_returns_reading') return {error: result.error ?? 'Central did not return its source returns.'}
-    return {value: result.outcome.data}
+    return {value: result.outcome.data, ...scopesOf(result.outcome)}
   }
 }
 
@@ -51,9 +52,9 @@ export function readGatewayRemotesOf(transport: KernelTransportStatus): OwnerRea
   return async () => {
     const down = unavailable(transport)
     if (down) return {error: down}
-    const result = await kernelOp(transport, {op: 'gateway_remotes_read'})
+    const result = await kernelRead(transport, {op: 'gateway_remotes_read'})
     if (result.error || result.outcome?.result !== 'gateway_remotes_reading') return {error: result.error ?? 'AIKit did not return its gateway remotes.'}
-    return {value: result.outcome.data}
+    return {value: result.outcome.data, ...scopesOf(result.outcome)}
   }
 }
 

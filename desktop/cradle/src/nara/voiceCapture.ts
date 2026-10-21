@@ -10,10 +10,12 @@ export class VoiceCapture {
   private timer: ReturnType<typeof setTimeout> | undefined;
   private constructor(private stream: MediaStream, private context: AudioContext,
     private source: MediaStreamAudioSourceNode, private processor: ScriptProcessorNode,
-    private silent: GainNode, onLimit: (failure?: Error) => void) {
+    private silent: GainNode, onLimit: (failure?: Error) => void, onLevel?: (rms: number, ms: number) => void) {
     processor.onaudioprocess = event => {
       if (this.stopped) return;
       const input = event.inputBuffer.getChannelData(0);
+      // The block's loudness, for a caller that ends an utterance on its own silence (the Answer's voice, answerVoice.ts).
+      if (onLevel) {let sum = 0; for (let i = 0; i < input.length; i++) sum += input[i] * input[i]; onLevel(Math.sqrt(sum / Math.max(1, input.length)), (input.length / context.sampleRate) * 1000);}
       const remaining = context.sampleRate * 300 - this.samples;
       if (remaining > 0) {const chunk = input.slice(0, remaining); this.chunks.push(chunk); this.samples += chunk.length;}
       if (this.samples >= context.sampleRate * 300) {void this.stop().then(()=>onLimit(),failure=>onLimit(failure instanceof Error?failure:new Error(String(failure))));}
@@ -21,7 +23,7 @@ export class VoiceCapture {
     source.connect(processor); processor.connect(silent); silent.connect(context.destination);
     this.timer = setTimeout(() => {if (!this.stopped) {void this.stop().then(()=>onLimit(),failure=>onLimit(failure instanceof Error?failure:new Error(String(failure))));}}, 300_000);
   }
-  static async start(onLimit: (failure?: Error) => void): Promise<VoiceCapture> {
+  static async start(onLimit: (failure?: Error) => void, onLevel?: (rms: number, ms: number) => void): Promise<VoiceCapture> {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error('Microphone capture is unavailable in this application context.');
     const context = new AudioContext();
     let stream: MediaStream | undefined;
@@ -29,7 +31,7 @@ export class VoiceCapture {
       await context.resume();
       stream = await navigator.mediaDevices.getUserMedia({audio: {channelCount: 1, echoCancellation: true}, video: false});
       const silent = context.createGain(); silent.gain.value = 0;
-      return new VoiceCapture(stream, context, context.createMediaStreamSource(stream), context.createScriptProcessor(4096, 1, 1), silent, onLimit);
+      return new VoiceCapture(stream, context, context.createMediaStreamSource(stream), context.createScriptProcessor(4096, 1, 1), silent, onLimit, onLevel);
     } catch (error) {stream?.getTracks().forEach(track => track.stop()); await context.close(); throw error;}
   }
   stop(): Promise<void> {

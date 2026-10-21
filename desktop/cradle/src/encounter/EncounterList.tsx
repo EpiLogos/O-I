@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import {kernelOp} from "../kernel/bridge";
+import {kernelRead} from "../kernel/bridge";
 import {readableSessionTitle} from "./sessionTitle";
 import {formatRelativeTime} from "../shared/relativeTime";
 export interface EncounterRow {space:string;ref:string;title:string;project:string}
@@ -17,7 +17,7 @@ export function EncounterList({project,onOpen,activeRef,variant="navigator",onRo
  const [pending,setPending]=useState(false);
  const [opening,setOpening]=useState<string>();
  const report=useRef(onRows);report.current=onRows;
- useEffect(()=>{let live=true;setPending(true);void kernelOp(kernel.transport,{op:"agency_read",project}).then(result=>{
+ useEffect(()=>{let live=true;setPending(true);void kernelRead(kernel.transport,{op:"agency_read",project}).then(result=>{
   if(result.error||result.outcome?.result!=="agency_reading")throw new Error(result.error??"AIKit SessionSpace reading unavailable");
   const found:EncounterRow[]=[];
   for(const raw of result.outcome.spaces){const space=raw as {definition:{id:string};label?:string;agent_sessions:Record<string,{purpose?:string}>};for(const [ref,attachment] of Object.entries(space.agent_sessions))found.push({space:space.definition.id,ref,title:readableSessionTitle(attachment.purpose||space.label,project),project});}

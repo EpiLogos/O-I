@@ -36,6 +36,53 @@ use crate::knowledge;
 
 pub const ACTION_DISPATCH_SCHEMA: &str = "oi.cradle.action-dispatch/v1";
 
+/// Central's registered Action id grammar, by namespace (`ctrl action list`, 21 Oct 2026: `central.*`, `projectcentral.*`,
+/// `agent-profile.*`, `control.*`, `machine.*`, `work.*`): every id in one of them runs through Central's runner. Its agent
+/// profiles (Make and Accept), Control's search and skills, the Machine device and a page's Open and Reveal are Central's as much
+/// as its Day is (T-COVERAGE §1.2, §1.4).
+pub const CENTRAL_NAMESPACES: [&str; 6] = [
+    "central.",
+    "projectcentral.",
+    "agent-profile.",
+    "control.",
+    "machine.",
+    "work.",
+];
+
+/// Whether an Action id is Central's, by its namespace.
+pub fn central_action(action: &str) -> bool {
+    CENTRAL_NAMESPACES
+        .iter()
+        .any(|namespace| action.starts_with(namespace) && action.len() > namespace.len())
+}
+
+/// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
+/// records, its rollover and its close-out carry; accepting a returned source; making, keeping and removing an agent and a
+/// group; a world's relations; a document's own edit. Central admits these on the person's native authority, so the kernel carries the host's token
+/// for exactly these (flow.rs `for_person`: read in the native process, never supplied by the desk), as it does for Open today
+/// and a page's Launch. Every other invocation goes without it, and Central refuses an act it does not grant in its own words.
+pub const PERSON_ACTS: [&str; 14] = [
+    "central.now.lifecycle",
+    "central.day.settings.write",
+    "central.day.move.record",
+    "central.day.rollover",
+    "central.day.close-carry",
+    "projectcentral.source.return_accept",
+    "agent-profile.express",
+    "agent-profile.accept",
+    "agent-profile.save",
+    "agent-profile.remove",
+    "central.agent-set.propose",
+    "central.agent-set.save",
+    "central.world-relations.save",
+    "central.document.mutate",
+];
+
+/// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
+pub fn person_act(action: &str) -> bool {
+    PERSON_ACTS.contains(&action)
+}
+
 /// The native owners this adapter routes disclosed spellings to.
 pub const OWNER_CENTRAL: &str = "central";
 pub const OWNER_AIKIT: &str = "ai-kit";
@@ -142,7 +189,7 @@ pub fn invoke(
             detail: "target ref is empty".into(),
         };
     }
-    if action.starts_with("central.") || action.starts_with("projectcentral.") {
+    if central_action(action) {
         return invoke_central(client, action, default_project, invocation);
     }
     if matches!(
@@ -269,5 +316,53 @@ fn invoke_aikit_open(cwd: &Path, target_ref: &str) -> ActionDispatch {
             owner_operation,
             message: detail,
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn central_namespaces_route_to_central_and_no_other_spelling_does() {
+        for id in [
+            "central.day.read",
+            "projectcentral.now.inspect",
+            "agent-profile.express",
+            "control.search",
+            "machine.plan",
+            "work.open",
+        ] {
+            assert!(central_action(id), "{id} is Central's");
+        }
+        for id in [
+            "acme.everything",
+            "knowledge/open",
+            "agent-profile.",
+            "controls.search",
+            "central",
+            "workcell.status",
+        ] {
+            assert!(!central_action(id), "{id} is not Central's");
+        }
+    }
+
+    #[test]
+    fn only_the_persons_presses_carry_the_persons_authority() {
+        for id in PERSON_ACTS {
+            assert!(central_action(id), "{id} is Central's");
+            assert!(person_act(id), "{id} is the person's press");
+        }
+        for id in [
+            "central.now.list",
+            "central.day.read",
+            "central.day.settings.read",
+            "agent-profile.read",
+            "central.receiving.submit",
+            "control.search",
+            "knowledge/open",
+        ] {
+            assert!(!person_act(id), "{id} carries no person authority");
+        }
     }
 }

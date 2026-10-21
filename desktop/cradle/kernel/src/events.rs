@@ -246,6 +246,17 @@ pub enum KernelEvent {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         revision: Option<String>,
     },
+    /// Files the kernel's readings are made from changed (the change watch,
+    /// watch.rs): `scopes` names what moved - `root`, `seats`, `aikit`,
+    /// `clock`, `project:<Name>`, or `all` when events were dropped and
+    /// anything may have - and `epoch` is the watch's count of changes after
+    /// this one. It says "ask again", never what changed: the kernel answers
+    /// a re-ask from what it holds unless a scope the answer depends on
+    /// moved. At most one is recorded per quarter second.
+    ReadingsChanged {
+        scopes: Vec<String>,
+        epoch: u64,
+    },
 }
 
 impl KernelEvent {
@@ -266,7 +277,8 @@ impl KernelEvent {
             | Self::NowChanged { .. }
             | Self::DayChanged { .. }
             | Self::ReceivingChanged { .. }
-            | Self::FactoryRunChanged { .. } => None,
+            | Self::FactoryRunChanged { .. }
+            | Self::ReadingsChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -300,6 +312,7 @@ impl KernelEvent {
             Self::DayChanged { .. } => "day_changed",
             Self::ReceivingChanged { .. } => "receiving_changed",
             Self::FactoryRunChanged { .. } => "factory_run_changed",
+            Self::ReadingsChanged { .. } => "readings_changed",
         }
     }
 
@@ -495,6 +508,23 @@ impl KernelEvent {
                 reference,
                 revision.as_deref(),
             ),
+            Self::ReadingsChanged { scopes, .. } => {
+                if scopes.is_empty() {
+                    return Err("ReadingsChanged.scopes must not be empty".into());
+                }
+                for scope in scopes {
+                    let named = matches!(
+                        scope.as_str(),
+                        "root" | "seats" | "aikit" | "work" | "clock" | "all"
+                    ) || scope
+                        .strip_prefix("project:")
+                        .is_some_and(|name| !name.trim().is_empty());
+                    if !named {
+                        return Err(format!("ReadingsChanged names an unknown scope ({scope})"));
+                    }
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -938,6 +968,49 @@ mod tests {
         let observationless = r#"{"schema":"oi.kernel-event/v1","version":1,"event":"buffer_dirty","source":{"ref":"central:source:project:project:o-i:a.md","kind":"source","native_owner":"central","provenance":{"source":"test"}},"dirty":true,"summary":"  "}"#;
         let error = KernelEventEnvelope::parse(observationless).unwrap_err();
         assert!(error.contains("BufferDirty.summary"), "{error}");
+    }
+
+    /// The wire shape the UI mirrors: `{"event":"readings_changed","scopes":[..],"epoch":n}`
+    /// inside the envelope, with scopes drawn from a fixed vocabulary.
+    #[test]
+    fn readings_changed_has_its_fixed_wire_shape_and_refuses_unknown_scopes() {
+        let event = KernelEvent::ReadingsChanged {
+            scopes: vec!["root".into(), "project:O-I".into()],
+            epoch: 42,
+        };
+        assert_eq!(event.tag(), "readings_changed");
+        let encoded = serde_json::to_value(KernelEventEnvelope::new(event.clone())).unwrap();
+        assert_eq!(encoded["event"], "readings_changed");
+        assert_eq!(
+            encoded["scopes"],
+            serde_json::json!(["root", "project:O-I"])
+        );
+        assert_eq!(encoded["epoch"], 42);
+        let parsed = KernelEventEnvelope::parse(&encoded.to_string()).unwrap();
+        assert_eq!(parsed.event, event);
+        for scope in ["seats", "aikit", "work", "clock", "all"] {
+            let ok = serde_json::json!({"schema":"oi.kernel-event/v1","version":1,"event":"readings_changed","scopes":[scope],"epoch":1});
+            assert!(
+                KernelEventEnvelope::parse(&ok.to_string()).is_ok(),
+                "{scope}"
+            );
+        }
+        for bad in [
+            serde_json::json!([]),
+            serde_json::json!(["everything"]),
+            serde_json::json!(["project:"]),
+        ] {
+            let refused = serde_json::json!({"schema":"oi.kernel-event/v1","version":1,"event":"readings_changed","scopes":bad,"epoch":1});
+            assert!(
+                KernelEventEnvelope::parse(&refused.to_string()).is_err(),
+                "{bad}"
+            );
+        }
+        // It is recorded like any other receipt, and replayed by cursor.
+        let mut log = KernelEventLog::new();
+        let receipt = log.record(event);
+        assert_eq!(receipt.seq, 1);
+        assert_eq!(log.replay(Some(&log.generation), 1, 8).receipts.len(), 1);
     }
 
     #[test]

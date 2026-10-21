@@ -17,7 +17,7 @@ import {WorldModeStrip} from "../../surfaces/navigator/WorldNavigator";
 import type {WorkspaceMode} from "../mode";
 import type {Workspace} from "../store";
 import {useKernel} from "../../kernel/KernelProvider";
-import {kernelOp} from "../../kernel/bridge";
+import {kernelRead} from "../../kernel/bridge";
 import {knownPresent, useProductPresence, WORKCELL} from "../products";
 import {chooseScope, sameScope, scopeLabel, useFocusedProject, useScope, type Scope} from "../scope";
 import {setLens, useEpiLens} from "../lens";
@@ -112,7 +112,7 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
     // is dispatched only when the census says Workcell is present — an
     // installation without it never probes for it (#598).
     if (!workcellPresent) { setMachines(undefined); return () => { live = false; for (const release of releases) release(); }; }
-    void kernelOp(kernel.transport, {op: "workcell_status_read"}).then(result => {
+    void kernelRead(kernel.transport, {op: "workcell_status_read"}).then(result => {
       if (!live || result.outcome?.result !== "workcell_status_reading") return;
       const data = result.outcome.data as {connections?: {label?: string; connection?: string; state?: string; reachable?: boolean}[] | null};
       setMachines((data.connections ?? []).map(entry => ({label: entry.label ?? entry.connection ?? "Machine", state: entry.state, reachable: entry.reachable ?? (entry.state ? /connected|reachable|ready/i.test(entry.state) : undefined)})));

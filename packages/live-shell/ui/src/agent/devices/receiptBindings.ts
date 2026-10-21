@@ -141,16 +141,30 @@ export interface LedgerPorts {
   readonly openSession: (sessionRef: string) => string | null
 }
 
-/** The Ledger's binding: it only reads (§19.15 "The Ledger only reads"); its filters and the receipt you read are the view's own;
- * Open log selects the receipt's agent session, whose log Clip view shows. */
+/** What the Ledger draws that no change carries (the task, the run, turns, tokens and spend), each with the read it waits for. */
+export const LEDGER_ABSENT: Readonly<Record<string, string>> = {
+  run: 'The run: no reading reaches it yet — missing op: the run a change belongs to (a source change names no run) (Software Factory).',
+  used: 'The turns: no reading reaches them yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
+  cap: 'The turns allowed: no reading reaches them yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
+  tokensIn: 'The tokens read: no reading reaches them yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
+  tokensOut: 'The tokens written: no reading reaches them yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
+  spend: 'The spend: no reading reaches it yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
+}
+
+/** The Ledger's binding: it only reads (§19.13 "The Ledger only reads"); its filters and the receipt you read are the view's own;
+ * Open log selects the receipt's agent session, whose log Clip view shows. A key no owner reports stands absent with what it waits for. */
 export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBinding {
   const values = ledgerValues(input)
   const receipts = typeof values.receipts === 'string' ? JSON.parse(values.receipts) as {n: number; session?: string}[] : []
   const why = ledgerWaits(input)
+  const unread = why ?? 'Central\'s ground has not answered yet (the kernel\'s central inspect carries the change horizon and the civil date).'
+  const standing: Record<string, Standing> = Object.fromEntries(Object.entries(LEDGER_ABSENT).map(([key, reason]) => [key, {disabled: reason}]))
+  for (const key of ['light', 'receipts', 'today']) if (!(key in values)) standing[key] = {disabled: unread}
+  if (why) standing.openLog = {disabled: why}
   return {
     id: LEDGER_ID,
     values,
-    ...(why ? {standing: {openLog: {disabled: why}}} : {}),
+    standing,
     local: Object.fromEntries(LEDGER_LOCAL.map(key => [key, (value: Value | undefined) => holdView(LEDGER_ID, key, value)])),
     writes: key => key === 'openLog',
     write: async (changes: readonly ValueChange[]) => {

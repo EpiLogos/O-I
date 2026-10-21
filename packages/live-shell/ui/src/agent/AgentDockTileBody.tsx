@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {NativeContextPanel} from '../components/NativeContextPanel'
 import {useWorkspace} from '../shell/workspaceContext'
 import {scalarEntries, safeJson} from './RefusalCard'
@@ -76,7 +76,7 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
         }
         return
       }
-      const repo = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
+      const repo = await kernelRead(transport, {op: 'git_repository_read', project: 'O-I'})
       if (!live) return
       if (repo.error || repo.outcome?.result !== 'git_repository_reading') {
         setDiff(repo.error ?? 'git_repository_read unavailable')
@@ -90,7 +90,7 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
         setDiffLoading(false)
         return
       }
-      const patch = await kernelOp(transport, {
+      const patch = await kernelRead(transport, {
         op: 'git_diff_read',
         request: {repo_root: root, from: 'HEAD', to: 'working-tree', max_bytes: 48_000, max_files: 40},
       })
@@ -113,7 +113,7 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
         if (live) setGitNote(transport.reason ?? 'Unavailable')
         return
       }
-      const git = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
+      const git = await kernelRead(transport, {op: 'git_repository_read', project: 'O-I'})
       if (!live) return
       setGitNote(git.error ?? safeJson(git.outcome?.result === 'git_repository_reading' ? git.outcome.document : git.outcome))
     })()

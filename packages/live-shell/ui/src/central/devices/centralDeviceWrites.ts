@@ -31,7 +31,8 @@ import {readFlowInstance, writeFlowInstance} from '../../../../../../desktop/cra
 import {circleHolder, containerOf, isCurrentFormat, type EntryKind, type PluralParticipant, type Relation} from '../../../../../../desktop/cradle/src/flow/plural'
 import {clipHostId, viewHoldsOf} from '../../frame/detail/clipBinding'
 import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
-import {acquireNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
+import {acquireNativeDialogue, currentTurnBasis, lookupNativeDialogue, type NativeDialogue, type NativeDialogueRequest} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
+import type {NaraDialogueContext} from '../../../../../../desktop/cradle/src/nara/dialogueContext'
 import {announceContext, nativeContext, type ContextMutation, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -88,7 +89,7 @@ export async function turnDieFace(transport: KernelTransportStatus, day: DayDieW
  * document someone else made is not made twice (`initialised: false`). Resolves once the owner has answered; rejects with its
  * words. */
 export async function openToday(transport: KernelTransportStatus): Promise<{ensured: boolean; initialised: boolean; carried: CarriedInto | null}> {
-  let ground = await readGround(transport, null)
+  let ground = await readGround(transport, null, true)
   if (ground.time.state !== 'ready' || !ground.time.data) {
     throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; the current Day cannot be ensured`)
   }
@@ -101,7 +102,7 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
     }
     await central(transport, null, {kind: 'ensure-day', expected_time_policy_revision: ground.time.data.revision})
     ensured = true
-    ground = await readGround(transport, null)
+    ground = await readGround(transport, null, true)
   }
   const day = ground.day.data
   if (!day || ground.day.state !== 'ready') throw new Error(`Central's Day reading is ${ground.day.state} after the ensure; there is no Day to make a document for`)
@@ -115,7 +116,7 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
   const world = await kernelOp(transport, {op: 'world_browse'})
   const projects = world.outcome?.result === 'world_read' ? world.outcome.snapshot.navigator?.root?.work.projects : undefined
   const formLocation = await resolveDocumentForm(transport, form, projects)
-  const original = await readFile(transport, formLocation)
+  const original = await readFile(transport, formLocation, true)
   await central(transport, null, {kind: 'initialise-day', day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision,
     expected_policy_revision: ground.placement.data.revision, form: formLocation, expected_form_revision: original.revision})
   const carried = closed ? await carryInto(transport, closed) : null
@@ -145,10 +146,10 @@ export function closedEarlierDayOf(ground: CentralGroundReading): {readonly dayR
  * register and at each project world the closed set held; each page's world by the folder that holds it (centralWorlds.ts). Written
  * through the Day's own meta on the revision read, as today's set is written. */
 async function carryInto(transport: KernelTransportStatus, closed: {readonly dayRef: string; readonly set: DaySet}): Promise<CarriedInto> {
-  const ground = await readGround(transport, null)
+  const ground = await readGround(transport, null, true)
   const aperture = currentDayOf(ground).aperture
   if (!aperture) throw new Error('Today\'s Day was made, but Central names no document for it yet; nothing was carried into its set')
-  const worlds = await readWorlds(transport)
+  const worlds = await readWorlds(transport, undefined, true)
   if (worlds.state !== 'read') throw new Error(`Today's Day was made, but Central's worlds are ${worlds.state}${worlds.state === 'unavailable' ? `: ${worlds.reason}` : ''}; nothing was carried into its set`)
   const projects = worlds.worlds.filter(world => world.project && closed.set.tracks.some(track => track.world === world.ref)).map(world => world.project!)
   const listings = await Promise.all([null, ...projects].map(project => nowReading(transport, project, {kind: 'list'})
@@ -170,7 +171,7 @@ async function carryInto(transport: KernelTransportStatus, closed: {readonly day
  * relations revisions read here (the central-day-close method's root close, central.day.lifecycle `closed`). A Day already closed is
  * refused in words; Central keeps every authored byte, and what still plays carries into the next Day when Open today makes it. */
 export async function closeDay(transport: KernelTransportStatus): Promise<{closed: string; civilDate: string}> {
-  const ground = await readGround(transport, null)
+  const ground = await readGround(transport, null, true)
   const day = ground.day.data
   if (!day) throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; there is no Day to close`)
   if (day.temporal.lifecycle === 'closed') throw new Error(`The Day of ${day.temporal.civil_date} is closed already.`)
@@ -249,6 +250,20 @@ export async function bindConversation(transport: KernelTransportStatus, convers
       : 'No expression is selected. A conversation binds to the encounter\'s subject: select one, and the binding resolves through its owner.')
   }
   return acquireNativeDialogue(transport, conversation.project ?? '', identity, conversation.expressionRef, 'nara')
+}
+
+/** The voice's open request for the bound conversation (the kernel op nara_voice `open`; the legacy panel's `prepare`,
+ * desktop/cradle/src/nara/NaraSurface.tsx:209): the dialogue binding as it stands — looked up, never created, so a voice opens only on
+ * a conversation already bound — and the turn's context, read now (the identity and the Expression again, as every turn reads them).
+ * The Answer's Hears and Speaks write through it (answerVoice.ts). */
+export async function voiceOpening(transport: KernelTransportStatus, conversation: ConversationWriteAperture): Promise<{binding: NativeDialogueRequest; context: NaraDialogueContext}> {
+  const identity = currentIdentity()
+  if (!identity) throw new Error('No Nara identity is current: the voice waits for its person. Select an identity through the identity owner.')
+  if (!conversation.expressionRef) throw new Error(conversation.conversation ? conversationGap(conversation.conversation) : 'No expression is selected: the voice opens on the encounter\'s subject once one is.')
+  const dialogue = await lookupNativeDialogue(transport, conversation.project ?? '', identity, conversation.expressionRef, 'nara')
+  if (!dialogue) throw new Error('The conversation is not bound: bind it (the light) before the voice can open on it.')
+  const basis = await currentTurnBasis(transport, dialogue, identity, conversation.expressionRef)
+  return {binding: {...dialogue.binding, operation: 'lookup'}, context: basis.context}
 }
 
 /** Take one item out of the packet, or empty it: AIKit's prepared context edited at the revision the reading gave (op encounter,

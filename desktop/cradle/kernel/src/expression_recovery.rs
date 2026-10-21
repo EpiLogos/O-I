@@ -45,6 +45,7 @@ pub fn with_diagnostic_trace<T>(id: u64, run: impl FnOnce() -> T) -> T {
 pub fn execute(request: Request) -> Result<crate::KernelOpOutcome, String> {
     let data = Store::default().apply(request)?;
     Ok(crate::KernelOpOutcome {
+        read_scopes: None,
         receipts: Vec::new(),
         result: crate::KernelOpResult::ExpressionRecovery { data },
     })

@@ -20,7 +20,10 @@ export const CONTEXT_WORLD_DESIGN = 'central:context-world'
 
 const NO_REACH = 'No owner holds an agent\'s Reach: no operation enforces it yet (the Factory Scope\'s reach waits on the same write, agent/devices/designBindings.ts:93 — WO-SF2).'
 const NO_WRITES = 'No owner lists the places an agent may write, or how a write elsewhere arrives: Central records each write as a source change (its receipt), and no kernel operation sets the list or the mode.'
-const NO_REQUEST = 'No owner takes a place request: the person\'s include and exclude is Central\'s central.world-relations.save, which no kernel operation carries.'
+/** The route a place request waits on: the person's include and exclude is Central's `central.world-relations.save` (it exists; the kernel
+ * reaches it through invoke_action), which writes the person's authored relations and so needs the person's authority. */
+const PERSON_ROUTE = 'the kernel route that carries the person\'s authority (T-COVERAGE §1.1)'
+const NO_REQUEST = `A place request is the person's include or exclude: Central writes it through central.world-relations.save, which waits on ${PERSON_ROUTE}.`
 
 export const CONTEXT_WORLD_WIRING: DesignWiring = {
   design: CONTEXT_WORLD_DESIGN,
@@ -76,6 +79,27 @@ export interface ChangeHorizon {
   readonly error?: {readonly message?: string}
 }
 
+/** Central's resolution of a world's sources (`central.world.effective-sources`, central.effective-world-sources: ancestry propagation with
+ * per-hop provenance, overrides and declared exclusions), read through the kernel's invoke_action (T-COVERAGE §1.3). */
+export const EFFECTIVE_SOURCES_ACTION = 'central.world.effective-sources'
+
+/** The world's effective sources as places on the Central ring (scope.tsx Place {id, name, ring}; the path rides along): each source
+ * that stands available in the world, named by its path in the register, with its treatment and the world it comes from. A source the
+ * world excludes is no place an agent reads. Null when the answer is not that resolution. Pure. */
+export function effectivePlacesOf(data: unknown): Record<string, Value>[] | null {
+  const doc = data as {sources?: unknown; world_ref?: unknown} | null
+  if (!doc || !Array.isArray(doc.sources)) return null
+  return (doc.sources as {ref?: unknown; state?: unknown; effective_treatment?: unknown; effective_source_world?: unknown; propagation_path?: unknown}[]).flatMap(source => {
+    if (typeof source?.ref !== 'string' || !source.ref || source.state !== 'available') return []
+    const world = str(source.effective_source_world)
+    const at = world ? source.ref.indexOf(`${world}:`) : -1
+    const name = at >= 0 ? source.ref.slice(at + world!.length + 1) : source.ref.split(':').pop() ?? source.ref
+    const hops = Array.isArray(source.propagation_path) ? source.propagation_path.filter((hop): hop is string => typeof hop === 'string') : []
+    const treatment = str(source.effective_treatment)
+    return [{id: source.ref, name, ring: 3, path: `${source.ref}${treatment ? ` · ${treatment}` : ''}${hops.length > 1 ? ` · through ${hops.join(' → ')}` : world ? ` · from ${world}` : ''}`}]
+  })
+}
+
 export interface ContextWorldInput {
   /** The Answer's binding: whether a session holds the track, and which. */
   readonly answer: {readonly bound: boolean; readonly session: string | null}
@@ -86,6 +110,8 @@ export interface ContextWorldInput {
   readonly document: string | null
   /** The Packet's reading: its items and the session it is prepared for. */
   readonly packet: {readonly items: number; readonly session: string | null} | null
+  /** Central's effective sources of the world (EFFECTIVE_SOURCES_ACTION): its data, or its refusal; absent while unasked. */
+  readonly effective?: {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}
 }
 
 const str = (value: unknown): string | undefined => (typeof value === 'string' && value ? value : undefined)
@@ -130,10 +156,16 @@ export function contextWorldValues(id: string, input: ContextWorldInput): Values
   if (input.packet && input.packet.session === session) {
     places.push({id: 'packet', name: 'Packet', ring: 0, path: `The prepared context: ${input.packet.items} item${input.packet.items === 1 ? '' : 's'} that this session's turn carries.`})
   }
+  // The world's places: Central's effective sources when it resolved them (each source a place); else, as before, the change
+  // horizon's count of the sources an agent may retrieve, as one place.
+  const effective = input.effective?.status === 'answered' ? effectivePlacesOf(input.effective.value) : null
+  if (effective) places.push(...effective)
   if (input.horizon?.state === 'ready') {
-    const sources = (input.horizon.data?.sources ?? []).filter(row => row.binding?.agent_retrieval_allowed === true).length
-    const world = str(input.horizon.data?.world_ref) ?? 'control:root'
-    places.push({id: 'world', name: world === 'control:root' ? 'Your world' : world, ring: 3, path: `${sources} source${sources === 1 ? '' : 's'} an agent may retrieve (Central's change horizon).`})
+    if (!effective) {
+      const sources = (input.horizon.data?.sources ?? []).filter(row => row.binding?.agent_retrieval_allowed === true).length
+      const world = str(input.horizon.data?.world_ref) ?? 'control:root'
+      places.push({id: 'world', name: world === 'control:root' ? 'Your world' : world, ring: 3, path: `${sources} source${sources === 1 ? '' : 's'} an agent may retrieve (Central's change horizon).`})
+    }
     values.receipts = JSON.stringify(receiptsOf(input.horizon, session))
   }
   if (places.length) values.reads = JSON.stringify(places)
@@ -167,7 +199,7 @@ export const CENTRAL_SCOPE_REFUSED: Readonly<Record<string, string>> = {
   writeMode: SCOPE_MISSING('Write mode', 'write-arm enforcement on the session\'s writes (WO-SF2): propose · draft · direct', 'Software Factory'),
   knowledge: SCOPE_MISSING('Knowledge', 'the Knowledge route\'s source bounds for the session (protocol_read is available but unwired)', 'AIKit'),
 }
-const NO_PLACE_REQUEST = SCOPE_MISSING('A place in Writes', 'central.world-relations.save through the kernel', 'Central')
+const NO_PLACE_REQUEST = `A place in Writes: Central writes the person's include and exclude through central.world-relations.save, which waits on ${PERSON_ROUTE}.`
 
 /** Scope's readings on Central: Context & world's (contextWorldValues), in Scope's keys. `reads` keeps Scope's place shape ({id, name,
  * ring}; the place's path rides along); `receipts` is the session's source changes, newest first (the manual's Receipts list — the design

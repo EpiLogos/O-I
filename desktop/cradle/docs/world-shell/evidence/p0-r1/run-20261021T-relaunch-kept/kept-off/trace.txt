@@ -1,0 +1,1414 @@
+[watch] 1792576039329 live /Users/admin/Central /Users/admin/.aikit
+[kept] 1792576039330 off
+[watch] 1792576048212 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/agent/devices/FactoryDeviceChain.tsx
+[watch] 1792576048213 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/agent/devices/FactoryDeviceChain.tsx
+[watch] 1792576048489 project:face-rig /Users/admin/Central/Work/face-rig/creature-scorpion.js
+[watch] 1792576048489 project:face-rig /Users/admin/Central/Work/face-rig/creature-scorpion.js
+[watch] 1792576053400 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[watch] 1792576053401 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[owner] 1792576054795 process O:I ground status ok total_ms=7.5
+[read] 1792576061085 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576061086 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061245 process Central central.time.policy ok total_ms=157.9
+[read] 1792576061246 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061373 process Central central.day.read ok total_ms=126.1
+[read] 1792576061414 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061499 process Central central.now.list ok total_ms=84.2
+[read] 1792576061517 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576061622 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061655 process Central central.world ok total_ms=566.9
+[read] 1792576061660 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576061671 central:central.files.list:{"path":"Control/agents/wiki","project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061673 process Central projectcentral.inspect ok total_ms=13.3
+[read] 1792576061674 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576061674 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576061674 aikit:session-space-discover:O-I:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576061675 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non miss
+[owner] 1792576061686 process Central central.files.list ok total_ms=13.9
+[read] 1792576061697 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061714 process AIKit encounter context ok total_ms=37.9
+[owner] 1792576061715 process AIKit discover ok total_ms=40.2
+[read] 1792576061720 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061721 process Central central.day.settings.read ok total_ms=23.0
+[read] 1792576061726 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576061726 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[read] 1792576061732 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061762 process Central central.world.effective-sources ok total_ms=28.3
+[read] 1792576061767 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061770 process Central central.world.project ok total_ms=146.9
+[read] 1792576061771 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061780 process Central projectcentral.source.returns ok total_ms=12.0
+[owner] 1792576061787 process Central agent-profile.roster ok total_ms=62.1
+[read] 1792576061789 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576061789 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576061790 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576061793 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576061793 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 miss
+[read] 1792576061795 factory:locate-row:/Users/admin/.local/bin/factory:None:/Users/admin/Central miss
+[read] 1792576061795 factory:locate-row:/Users/admin/.local/bin/factory:Some("personal"):/Users/admin/Central/Work/personal miss
+[read] 1792576061796 factory:locate-row:/Users/admin/.local/bin/factory:Some("Point-Cloud-Demo"):/Users/admin/Central/Work/Point-Cloud-Demo miss
+[read] 1792576061797 factory:locate-row:/Users/admin/.local/bin/factory:Some("projects"):/Users/admin/Central/Work/projects miss
+[owner] 1792576061804 process Central central.files.list ok total_ms=11.6
+[read] 1792576061829 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576061841 process Software Factory project locate ok total_ms=41.4
+[owner] 1792576061841 process Software Factory project locate ok total_ms=35.7
+[owner] 1792576061841 process Software Factory project locate ok total_ms=42.4
+[owner] 1792576061854 process Central agent-profile.roster ok total_ms=12.2
+[read] 1792576061858 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576061858 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[read] 1792576061862 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576061862 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[owner] 1792576061862 process Central projectcentral.change.horizon ok total_ms=342.8
+[owner] 1792576061870 process Software Factory project locate ok total_ms=73.6
+[read] 1792576062030 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ miss
+[owner] 1792576062068 process Central central.now.thoughts.read-batch ok total_ms=273.5
+[owner] 1792576062109 process Central central.files.read ok total_ms=79.0
+[read] 1792576062170 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576062195 process AIKit encounter-task-read ok total_ms=9.1
+[read] 1792576062574 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576062594 process Central central.wiki.read ok total_ms=18.8
+[read] 1792576062604 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576062733 process AIKit history ok total_ms=942.5
+[read] 1792576062889 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576063009 process Central central.work.policy ok total_ms=118.9
+[read] 1792576063015 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576063029 process AIKit encounter-task-read ok total_ms=12.8
+[read] 1792576063057 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576063084 process AIKit encounter-task-read ok total_ms=22.9
+[read] 1792576063094 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576063108 process AIKit encounter-task-read ok total_ms=12.7
+[read] 1792576063111 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576063112 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576063129 process AIKit encounter-task-read ok total_ms=15.8
+[read] 1792576063136 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576063150 process AIKit encounter-task-read ok total_ms=12.1
+[read] 1792576063153 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576063177 process AIKit encounter-task-read ok total_ms=18.6
+[read] 1792576063181 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576063196 process AIKit encounter-task-read ok total_ms=13.9
+[read] 1792576063205 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576063225 process AIKit encounter-task-read ok total_ms=17.8
+[read] 1792576063228 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576063254 process AIKit encounter-task-read ok total_ms=22.7
+[read] 1792576063257 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[watch] 1792576063260 project:face-rig /Users/admin/Central/Work/face-rig/creature-scorpion.js
+[watch] 1792576063260 project:face-rig /Users/admin/Central/Work/face-rig/creature-scorpion.js
+[owner] 1792576063286 process AIKit encounter-task-read ok total_ms=28.1
+[read] 1792576063298 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576063324 process AIKit encounter-task-read ok total_ms=22.4
+[read] 1792576063346 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576063346 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576063346 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576063347 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576063349 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[owner] 1792576063405 process Central central.git.census ok total_ms=1633.4
+[read] 1792576063410 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576063415 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576063418 central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/admin/Central/Work/O-I","to":"working-tr miss
+[read] 1792576063431 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576063431 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576063948 seat:status miss
+[owner] 1792576064069 process AIKit history ok total_ms=723.0
+[read] 1792576064616 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576064817 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[owner] 1792576065013 process Central central.git.census ok total_ms=1576.0
+[read] 1792576065015 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576065026 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576065031 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576065371 process Central central.git.diff ok total_ms=1949.7
+[read] 1792576066494 central:central.git.census:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576067655 process Central central.git.census ok total_ms=1143.0
+[watch] 1792576071402 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/frame/tracks/useCentralTracks.ts
+[watch] 1792576071402 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/frame/tracks/useCentralTracks.ts
+[read] 1792576071681 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576071682 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576071686 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576071701 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576071703 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576071921 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576071939 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576071941 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576071964 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576071968 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576071968 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576071968 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576072194 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576073045 process AIKit history ok total_ms=1363.6
+[read] 1792576073195 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576073436 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576073440 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576073446 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576073477 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576073757 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576077063 central:central.files.list:{"path":"Control/user/flows","project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576077065 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576077077 process Central central.files.list ok total_ms=11.8
+[read] 1792576077087 central:central.files.read:{"location":{"path":"Control/user/flows/flow-2026-10-07-1350.html","ref":"central:path:/Users/admin/Central:Control/user/flows/flow-2 miss
+[owner] 1792576077281 process Central central.files.read ok total_ms=193.3
+[owner] 1792576077388 process Central central.day.read ok total_ms=322.0
+[read] 1792576077446 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576077801 process O:I profile list ok total_ms=775.8
+[read] 1792576080483 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576080485 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576080486 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576080490 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[owner] 1792576080592 process Central central.time.policy ok total_ms=104.8
+[read] 1792576080594 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576080710 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576080711 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576080711 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576080712 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576080730 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576080739 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576080739 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576080812 process AIKit history ok total_ms=321.8
+[read] 1792576080830 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576080919 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576082326 process Central central.work.policy ok total_ms=1490.7
+[read] 1792576082782 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576082782 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576082783 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576082789 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576082899 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576087803 project:O-I /Users/admin/Central/Work/O-I/.git/refs/heads/dlw/build
+[watch] 1792576087803 seats /Users/admin/Central/Work/O-I/.git/refs/heads/dlw/build
+[watch] 1792576087803 project:O-I /Users/admin/Central/Work/O-I/.git/refs/heads/dlw/build
+[watch] 1792576087803 seats /Users/admin/Central/Work/O-I/.git/refs/heads/dlw/build
+[read] 1792576087880 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576087881 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576087881 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576087881 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576087884 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576087886 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[owner] 1792576087916 process Central projectcentral.inspect ok total_ms=33.1
+[read] 1792576087916 aikit:session-space-discover:O-I:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576087960 process AIKit discover ok total_ms=40.7
+[read] 1792576088118 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576088118 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576088119 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576088120 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576088121 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576088143 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576088148 process Central agent-profile.roster ok total_ms=27.2
+[read] 1792576088202 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576088202 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576088209 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576088214 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576088265 process Central central.day.settings.read ok total_ms=54.0
+[read] 1792576088268 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576088279 process Central central.world.effective-sources ok total_ms=64.1
+[owner] 1792576088284 process Central projectcentral.source.returns ok total_ms=15.1
+[read] 1792576088287 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576088289 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576088303 process AIKit encounter-task-read ok total_ms=12.3
+[read] 1792576088306 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576088314 process AIKit encounter-task-read ok total_ms=16.9
+[read] 1792576088321 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576088336 process AIKit encounter-task-read ok total_ms=3.9
+[owner] 1792576088338 process AIKit encounter-task-read ok total_ms=23.0
+[read] 1792576088363 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[read] 1792576088375 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576088380 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576088381 process AIKit encounter-task-read ok total_ms=16.0
+[read] 1792576088384 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576088399 process AIKit encounter-task-read ok total_ms=21.1
+[owner] 1792576088402 process AIKit encounter-task-read ok total_ms=19.6
+[owner] 1792576088403 process AIKit encounter-task-read ok total_ms=17.2
+[read] 1792576088408 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576088409 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576088414 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576088423 process AIKit encounter-task-read ok total_ms=13.1
+[owner] 1792576088425 process AIKit encounter-task-read ok total_ms=14.1
+[read] 1792576088426 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576088429 process AIKit encounter-task-read ok total_ms=8.2
+[owner] 1792576088450 process AIKit encounter-task-read ok total_ms=23.0
+[read] 1792576088455 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576088470 process Central central.wiki.read ok total_ms=14.1
+[read] 1792576088475 central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/admin/Central/Work/O-I","to":"working-tr miss
+[read] 1792576088487 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576088487 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576088496 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576088500 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576088850 process AIKit history ok total_ms=968.9
+[read] 1792576088980 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576089167 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576089167 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576089168 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576089175 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576089281 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576089609 process Central central.git.diff ok total_ms=1131.9
+[read] 1792576091852 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576091852 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576091853 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576091853 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576091855 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576091856 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576091893 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576092083 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092084 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092085 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092085 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092085 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092088 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092118 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092133 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576092172 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576092206 process Central central.world ok total_ms=350.7
+[read] 1792576092221 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092225 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092241 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576092246 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576092250 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576092252 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[owner] 1792576092252 process AIKit history ok total_ms=399.1
+[read] 1792576092254 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576092255 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576092263 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576092265 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576092267 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576092269 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576092271 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576092273 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576092302 process Central central.world.project ok total_ms=167.8
+[read] 1792576092303 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576092309 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092312 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092313 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092316 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576092342 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576092573 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093116 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093117 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093122 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093134 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576093248 project:face-rig /Users/admin/Central/Work/face-rig/creature-seagoat.js
+[watch] 1792576093248 project:face-rig /Users/admin/Central/Work/face-rig/creature-seagoat.js
+[read] 1792576093368 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576093369 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093372 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093372 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093375 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093379 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576093380 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576093403 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093412 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093611 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093612 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093660 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576093661 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576093670 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093671 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093673 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093677 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093681 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093685 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576093689 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576093692 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576093697 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576093704 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093706 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093709 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093714 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093718 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093723 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576093728 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093732 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093732 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576093735 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576093900 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576093907 process AIKit history ok total_ms=530.6
+[read] 1792576094009 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094076 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094076 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094078 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094106 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094268 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094739 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094740 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094741 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094756 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576094922 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095365 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095423 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095586 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095591 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095598 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095652 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576095652 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576095669 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095673 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095675 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095677 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095683 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095687 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576095691 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576095697 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576095702 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576095705 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095715 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095721 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095723 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095729 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095734 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576095737 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095752 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095753 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095758 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576095873 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095873 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095880 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576095919 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576096278 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576097107 process Central central.git.census ok total_ms=1451.6
+[read] 1792576097163 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576097164 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576097186 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576097197 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576097300 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576109000 project:face-rig /Users/admin/Central/Work/face-rig/creature-seagoat.js
+[watch] 1792576109001 project:face-rig /Users/admin/Central/Work/face-rig/creature-seagoat.js
+[read] 1792576109274 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109275 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109276 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109277 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109279 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576109284 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576109320 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576109507 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109508 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109509 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109510 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109524 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576109524 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576109528 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109538 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109539 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576109693 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576109906 process AIKit history ok total_ms=631.5
+[read] 1792576110026 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576110464 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576110464 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576110467 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576110476 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576110744 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576114386 project:reverse-engineering /Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-actions-audit-l6-20261009/live-replay-no-chrome.png
+[watch] 1792576114386 project:reverse-engineering /Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-actions-audit-l6-20261009/live-replay-no-chrome.png
+[watch] 1792576114386 project:reverse-engineering /Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-actions-audit-l6-20261009/live-replay-receipt.json
+[watch] 1792576114386 project:reverse-engineering /Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-actions-audit-l6-20261009/live-replay-receipt.json
+[read] 1792576114428 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114429 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114431 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114431 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114433 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576114434 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576114474 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576114668 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114668 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114669 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114671 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114679 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114680 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576114680 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576114697 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114697 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576114754 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576115057 process AIKit history ok total_ms=624.6
+[read] 1792576115171 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576115406 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576115406 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576115407 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576115414 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576115541 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122584 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122584 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122584 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122585 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122585 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576122586 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576122628 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576122819 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122820 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122820 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122820 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122821 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122823 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122831 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122862 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576122864 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122871 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122875 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576122884 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576122936 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576122950 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576122957 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576122964 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576122972 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576122979 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576122985 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576122993 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123000 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123017 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123050 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576123087 process Central central.world.project ok total_ms=224.7
+[read] 1792576123094 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[owner] 1792576123109 process Central central.world ok total_ms=523.6
+[read] 1792576123111 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123119 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123119 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123123 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576123176 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576123562 process AIKit history ok total_ms=977.3
+[read] 1792576123648 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123649 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123707 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123887 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123890 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123914 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123914 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576123920 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123920 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123922 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123923 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123924 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123927 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576123929 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576123929 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576123931 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576123933 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123935 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123936 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123938 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123939 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123949 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576123953 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123954 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123954 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576123984 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576124065 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124065 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124066 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124071 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124168 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124224 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576124596 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[watch] 1792576124596 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[watch] 1792576124596 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/techne/devices/.!32670!designDevices.ts
+[watch] 1792576124596 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/techne/devices/.!32670!designDevices.ts
+[watch] 1792576124596 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/techne/devices/.!32670!designDevices.ts
+[read] 1792576124690 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124690 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124691 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124730 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124842 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124842 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124843 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124844 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576124845 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576124881 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125110 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125110 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576125117 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125117 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125163 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125233 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576125349 process AIKit history ok total_ms=504.4
+[read] 1792576125421 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125422 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125423 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125462 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125546 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125993 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125993 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576125995 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576126005 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576126121 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576126576 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576126576 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576126577 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576126583 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576126701 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127414 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127480 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127652 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127652 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127653 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127653 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127653 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127654 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127663 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127668 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127668 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576127685 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127697 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127710 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127714 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127728 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127730 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576127763 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576127766 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576127768 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576127770 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127773 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127777 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127779 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127781 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127783 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127786 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127786 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576127793 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576127795 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576127899 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576128756 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576128757 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576128758 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576128767 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576128952 process Central central.git.census ok total_ms=1282.4
+[read] 1792576129013 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576129598 project:O-I /Users/admin/Central/Work/O-I/.git/refs/heads/dlw/build
+[watch] 1792576129598 seats /Users/admin/Central/Work/O-I/.git/refs/heads/dlw/build
+[watch] 1792576129598 project:O-I /Users/admin/Central/Work/O-I/.git/refs/heads/dlw/build
+[watch] 1792576129598 seats /Users/admin/Central/Work/O-I/.git/refs/heads/dlw/build
+[read] 1792576129861 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576129866 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576129866 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576129866 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576129868 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576129869 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[owner] 1792576129875 process Central projectcentral.inspect ok total_ms=12.6
+[read] 1792576129876 aikit:session-space-discover:O-I:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576129916 process AIKit discover ok total_ms=39.1
+[read] 1792576130100 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130101 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130101 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576130102 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130111 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576130112 process Central agent-profile.roster ok total_ms=10.2
+[read] 1792576130114 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130217 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576130217 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576130221 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130223 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576130234 process Central central.day.settings.read ok total_ms=10.0
+[read] 1792576130237 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576130257 process Central central.world.effective-sources ok total_ms=17.9
+[read] 1792576130260 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576130267 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576130275 process Central projectcentral.source.returns ok total_ms=5.9
+[read] 1792576130284 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576130284 process AIKit encounter-task-read ok total_ms=15.7
+[read] 1792576130291 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576130305 process AIKit encounter-task-read ok total_ms=14.0
+[owner] 1792576130313 process AIKit encounter-task-read ok total_ms=27.3
+[read] 1792576130319 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576130342 process AIKit encounter-task-read ok total_ms=22.6
+[read] 1792576130344 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[read] 1792576130368 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576130374 process AIKit encounter-task-read ok total_ms=18.1
+[read] 1792576130378 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576130385 process AIKit encounter-task-read ok total_ms=16.2
+[read] 1792576130390 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576130396 process AIKit encounter-task-read ok total_ms=16.7
+[read] 1792576130399 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576130403 process AIKit encounter-task-read ok total_ms=5.0
+[read] 1792576130405 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576130416 process AIKit encounter-task-read ok total_ms=16.0
+[owner] 1792576130420 process AIKit encounter-task-read ok total_ms=14.6
+[read] 1792576130425 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576130436 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576130438 process AIKit encounter-task-read ok total_ms=11.3
+[read] 1792576130440 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576130446 process AIKit encounter-task-read ok total_ms=9.7
+[read] 1792576130449 central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/admin/Central/Work/O-I","to":"working-tr miss
+[owner] 1792576130449 process Central central.wiki.read ok total_ms=9.1
+[read] 1792576130453 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130453 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130456 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576130724 process AIKit history ok total_ms=856.1
+[read] 1792576130810 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130935 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130936 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130936 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576130941 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576131205 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576131525 process Central central.git.diff ok total_ms=1075.6
+[watch] 1792576135220 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/central/clipBinding.ts
+[watch] 1792576135220 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/central/clipBinding.ts
+[read] 1792576135314 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135315 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135315 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135316 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576135317 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576135551 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135551 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135552 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135552 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135561 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135578 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576135578 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576135583 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135583 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576135633 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576136093 process AIKit history ok total_ms=777.8
+[read] 1792576136200 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576136405 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576136405 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576136406 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576136459 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576136569 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576138176 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[watch] 1792576138176 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[read] 1792576138389 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138389 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138390 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138393 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576138394 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576138627 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138627 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138629 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138629 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138640 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138665 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576138666 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576138672 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138672 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576138731 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576139264 process AIKit history ok total_ms=871.2
+[read] 1792576139430 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576139536 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576139536 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576139537 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576139548 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576139623 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576142146 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576142146 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576142156 central:central.files.read:{"location":{"path":"Control/user/flows/flow-2026-10-07-1350.html","ref":"central:path:/Users/admin/Central:Control/user/flows/flow-2 hit
+[owner] 1792576142379 process Central central.time.policy ok total_ms=224.7
+[read] 1792576146454 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146456 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146457 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non miss
+[read] 1792576146457 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146458 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146459 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146463 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146482 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146531 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576146531 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576146539 central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/admin/Central/Work/O-I","to":"working-tr hit
+[owner] 1792576146563 process AIKit encounter context ok total_ms=101.9
+[read] 1792576146584 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146588 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146618 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146620 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146628 central:central.files.read:{"location":{"path":"Control/user/flows/flow-2026-10-07-1350.html","ref":"central:path:/Users/admin/Central:Control/user/flows/flow-2 hit
+[read] 1792576146654 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146654 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[read] 1792576146658 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146663 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146671 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146673 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146673 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146691 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576146692 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576146842 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576146876 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146876 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146880 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146881 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576146902 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576147031 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576147165 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576147173 process O:I ground status ok total_ms=5.2
+[read] 1792576147178 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576147189 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576147204 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576147220 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576147233 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147249 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147264 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147277 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147292 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147310 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147325 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576147327 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[owner] 1792576147331 process Central central.work.policy ok total_ms=279.0
+[read] 1792576147354 seat:status miss
+[read] 1792576147459 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576147519 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576147530 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147538 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147586 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576147611 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576147623 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576147629 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576147638 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147644 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147649 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147660 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147664 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576147695 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576147894 process AIKit history ok total_ms=1219.0
+[read] 1792576148047 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576148047 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576148052 central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/admin/Central/Work/O-I","to":"working-tr hit
+[read] 1792576148064 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576148068 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576148071 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576148073 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576148078 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576148079 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576148083 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576148146 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576148960 central:central.git.census:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576149524 process Central central.git.census ok total_ms=564.1
+[read] 1792576153434 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153435 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153435 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153435 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153436 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576153438 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576153483 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576153877 process Central central.world ok total_ms=438.7
+[read] 1792576153880 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576153881 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153881 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576153882 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576153882 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576153884 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153884 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576153885 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576153886 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576153887 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576153888 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576153890 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576153892 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576153896 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576153896 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153897 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153899 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153901 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576153902 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153920 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576153921 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576154028 process Central central.world.project ok total_ms=106.1
+[read] 1792576154029 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576154043 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154047 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154047 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154051 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154056 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154066 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154066 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154078 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576154092 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154133 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576154185 process AIKit history ok total_ms=749.4
+[read] 1792576154326 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154353 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154365 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576154372 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576154378 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576154391 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576154400 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576154401 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576154414 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576154415 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576154420 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576154421 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576154425 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576154425 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576154463 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154463 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576154472 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154475 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154486 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154490 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154495 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154495 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154503 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576154570 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154987 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154987 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576154988 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576155000 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576155151 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576155155 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576155697 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576155697 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576155698 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576155712 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576155805 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576156224 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576156224 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576156225 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576156230 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576156372 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576156886 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[watch] 1792576156886 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[read] 1792576157056 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157056 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157056 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157060 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157061 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576157286 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157286 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157287 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157287 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157297 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157321 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157322 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576157334 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157334 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576157423 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576157732 process AIKit history ok total_ms=672.6
+[read] 1792576157819 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576158198 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576158198 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576158199 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576158207 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576158433 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159166 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159225 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159404 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159404 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159404 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159405 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159405 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576159407 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576159408 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576159409 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576159409 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159410 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159411 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159412 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159413 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159413 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576159414 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159415 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159416 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159416 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159427 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159431 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159431 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576159474 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159480 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159484 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159488 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159493 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159493 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576159503 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576159686 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576160421 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576160421 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576160453 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576160455 process Central central.git.census ok total_ms=1021.7
+[read] 1792576160495 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576160754 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576173540 live /Users/admin/Central /Users/admin/.aikit
+[kept] 1792576173540 off
+[watch] 1792576179097 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[watch] 1792576179098 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-designs-binding.test.mjs
+[owner] 1792576187818 process O:I ground status ok total_ms=5.7
+[read] 1792576193279 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576193286 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576193563 process Central central.time.policy ok total_ms=265.3
+[read] 1792576193564 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576193956 process Central central.day.read ok total_ms=390.5
+[owner] 1792576194038 process Central central.world ok total_ms=740.5
+[read] 1792576194041 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576194053 process Central projectcentral.inspect ok total_ms=11.3
+[read] 1792576194054 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576194054 aikit:session-space-discover:O-I:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576194054 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576194054 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non miss
+[read] 1792576194059 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576194097 process AIKit encounter context ok total_ms=39.9
+[owner] 1792576194144 process AIKit discover ok total_ms=82.7
+[read] 1792576194196 central:central.files.list:{"path":"Control/agents/wiki","project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576194200 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576194232 process Central central.files.list ok total_ms=33.4
+[read] 1792576194242 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576194368 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576194449 process Central agent-profile.roster ok total_ms=68.2
+[owner] 1792576194455 process Central central.world.project ok total_ms=392.7
+[read] 1792576194456 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576194603 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576194603 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[read] 1792576194617 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576194619 process Central central.day.settings.read ok total_ms=373.7
+[read] 1792576194623 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576194637 process Central projectcentral.source.returns ok total_ms=9.9
+[read] 1792576194642 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576194642 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576194643 process Central central.world.effective-sources ok total_ms=20.6
+[read] 1792576194645 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576194649 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576194651 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[read] 1792576194655 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576194655 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[read] 1792576194667 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ miss
+[owner] 1792576194669 process Central central.now.list ok total_ms=451.4
+[owner] 1792576194670 process Central agent-profile.roster ok total_ms=22.6
+[owner] 1792576194672 process Central central.files.list ok total_ms=25.9
+[read] 1792576194684 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576194689 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576194689 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 miss
+[read] 1792576194690 factory:locate-row:/Users/admin/.local/bin/factory:None:/Users/admin/Central miss
+[read] 1792576194691 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576194691 factory:locate-row:/Users/admin/.local/bin/factory:Some("Point-Cloud-Demo"):/Users/admin/Central/Work/Point-Cloud-Demo miss
+[read] 1792576194691 factory:locate-row:/Users/admin/.local/bin/factory:Some("personal"):/Users/admin/Central/Work/personal miss
+[read] 1792576194692 factory:locate-row:/Users/admin/.local/bin/factory:Some("projects"):/Users/admin/Central/Work/projects miss
+[owner] 1792576194716 process Software Factory project locate ok total_ms=21.5
+[owner] 1792576194730 process Software Factory project locate ok total_ms=36.8
+[owner] 1792576194730 process Software Factory project locate ok total_ms=35.2
+[owner] 1792576194732 process Software Factory project locate ok total_ms=12.1
+[owner] 1792576194800 process Central central.files.read ok total_ms=132.4
+[owner] 1792576195025 process Central central.now.thoughts.read-batch ok total_ms=331.3
+[read] 1792576195074 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576195100 process AIKit encounter-task-read ok total_ms=23.7
+[owner] 1792576195116 process Central projectcentral.change.horizon ok total_ms=421.4
+[read] 1792576195291 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576195302 process Central central.wiki.read ok total_ms=10.0
+[read] 1792576195330 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576195854 process AIKit history ok total_ms=1210.9
+[read] 1792576195907 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576195920 process AIKit encounter-task-read ok total_ms=12.2
+[read] 1792576195925 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576195948 process AIKit encounter-task-read ok total_ms=22.6
+[read] 1792576195953 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576195973 process AIKit encounter-task-read ok total_ms=19.7
+[read] 1792576195998 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576196024 process AIKit encounter-task-read ok total_ms=25.3
+[read] 1792576196028 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ miss
+[owner] 1792576196051 process AIKit encounter-task-read ok total_ms=17.5
+[read] 1792576196055 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576196097 process AIKit encounter-task-read ok total_ms=41.4
+[read] 1792576196119 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576196134 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576196134 process AIKit encounter-task-read ok total_ms=14.2
+[read] 1792576196232 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576196261 process AIKit encounter-task-read ok total_ms=23.1
+[read] 1792576196268 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576196315 process AIKit encounter-task-read ok total_ms=37.9
+[read] 1792576196319 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[owner] 1792576196363 process Central central.git.census ok total_ms=1903.8
+[owner] 1792576196365 process AIKit encounter-task-read ok total_ms=41.3
+[read] 1792576196367 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[owner] 1792576196367 process Central central.work.policy ok total_ms=229.8
+[read] 1792576196371 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false miss
+[read] 1792576196381 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576196381 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576196384 seat:status miss
+[read] 1792576196389 central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/admin/Central/Work/O-I","to":"working-tr miss
+[owner] 1792576196399 process AIKit encounter-task-read ok total_ms=26.8
+[read] 1792576199133 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576199134 central:central.git.census:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576199225 process Central central.git.diff ok total_ms=2830.2
+[owner] 1792576200579 process Central central.git.census ok total_ms=1441.4
+[read] 1792576200726 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576200727 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576200730 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576200734 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576200948 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576201167 process Central central.time.policy ok total_ms=437.3
+[read] 1792576201169 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576201170 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576201175 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576201176 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576201198 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576201736 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576201969 process Central central.work.policy ok total_ms=221.0
+[owner] 1792576202377 process AIKit history ok total_ms=1650.5
+[watch] 1792576202425 project:face-rig /Users/admin/Central/Work/face-rig/creature-seagoat.js
+[watch] 1792576202425 project:face-rig /Users/admin/Central/Work/face-rig/creature-seagoat.js
+[read] 1792576202570 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576202641 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576202775 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576202776 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576202777 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576202781 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576202785 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576202903 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576202917 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576203202 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576203206 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576203210 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576203241 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576203842 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576204020 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576204664 process AIKit history ok total_ms=1882.4
+[read] 1792576205097 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576205264 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576205274 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576205275 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576205291 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576205824 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576206902 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576206905 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576206906 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576206921 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576207170 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576213823 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576213824 central:central.files.list:{"path":"Control/user/flows","project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576213836 process Central central.files.list ok total_ms=11.3
+[read] 1792576213843 central:central.files.read:{"location":{"path":"Control/user/flows/flow-2026-10-07-1350.html","ref":"central:path:/Users/admin/Central:Control/user/flows/flow-2 miss
+[owner] 1792576213945 process Central central.files.read ok total_ms=101.1
+[owner] 1792576214173 process Central central.day.read ok total_ms=348.7
+[read] 1792576214217 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576214272 process O:I profile list ok total_ms=489.8
+[watch] 1792576218794 project:face-rig /Users/admin/Central/Work/face-rig/creature-seagoat.js
+[watch] 1792576218794 project:face-rig /Users/admin/Central/Work/face-rig/creature-seagoat.js
+[read] 1792576219077 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219078 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219079 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219080 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219086 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576219089 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576219145 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576219311 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219312 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219317 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219318 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219330 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576219331 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576219364 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219373 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219373 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576219762 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576220067 process AIKit history ok total_ms=984.8
+[read] 1792576220264 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576220728 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576220728 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576220730 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576220744 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576220956 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224331 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224332 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224333 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224340 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224344 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576224345 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576224398 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576224583 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224593 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224596 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224604 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224664 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224670 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224672 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576224925 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576225079 process Central central.world ok total_ms=729.9
+[read] 1792576225107 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576225170 process Central central.world.project ok total_ms=243.9
+[read] 1792576225171 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576225204 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225207 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225208 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225209 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225214 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225216 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576225217 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576225219 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576225220 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576225222 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225224 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225225 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225227 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225232 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225235 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225245 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225252 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225255 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225260 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576225298 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225356 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225562 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225568 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225635 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225635 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576225647 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225650 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225651 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225653 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225663 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225670 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576225673 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576225682 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576225686 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576225693 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225699 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225778 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225821 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225874 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225955 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576225961 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225964 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225965 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576225982 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[owner] 1792576226111 process AIKit history ok total_ms=1776.1
+[read] 1792576226375 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576226614 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576226615 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576226616 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576226630 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576226767 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576226787 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576226831 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227005 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227028 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227081 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227101 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227102 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576227180 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227197 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227218 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227244 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227264 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227269 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576227278 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576227286 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576227295 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576227303 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227314 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227318 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227326 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227345 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227349 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576227351 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227361 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227362 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576227367 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576228056 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576228056 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576228057 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576228180 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576228521 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576228871 process Central central.git.census ok total_ms=1766.6
+[read] 1792576229018 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229470 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229473 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229475 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229479 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229480 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229481 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229484 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576229548 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576229707 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229765 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229914 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229915 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229931 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229933 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229936 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576229937 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576229941 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576229942 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576229944 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576229947 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576229949 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576229954 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576229974 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576229989 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576229992 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576229999 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576230015 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576230023 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576230040 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576230040 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576230052 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576230089 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576230093 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576230094 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576230111 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576230281 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576230799 process AIKit history ok total_ms=1322.6
+[read] 1792576230913 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576231336 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576231350 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576231352 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576231354 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576231369 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576231587 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576232357 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576232361 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576232363 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576232374 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576232665 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260674 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260675 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260675 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576260680 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[owner] 1792576260850 process Central central.time.policy ok total_ms=172.2
+[read] 1792576260851 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260863 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260867 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260870 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260872 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260892 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260899 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576260899 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576261139 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576261448 process Central central.work.policy ok total_ms=307.3
+[owner] 1792576261549 process AIKit history ok total_ms=875.1
+[read] 1792576261762 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576262046 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576262046 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576262047 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576262098 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576262299 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576273745 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576273745 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576273749 central:central.files.read:{"location":{"path":"Control/user/flows/flow-2026-10-07-1350.html","ref":"central:path:/Users/admin/Central:Control/user/flows/flow-2 hit
+[read] 1792576276229 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276230 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276230 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276230 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276231 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276235 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276235 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[read] 1792576276244 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276255 central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/admin/Central/Work/O-I","to":"working-tr hit
+[read] 1792576276261 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276262 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276278 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276285 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276308 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276310 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276315 central:central.files.read:{"location":{"path":"Control/user/flows/flow-2026-10-07-1350.html","ref":"central:path:/Users/admin/Central:Control/user/flows/flow-2 hit
+[read] 1792576276337 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276337 aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|Non hit
+[read] 1792576276342 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276371 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276388 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276388 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276388 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276389 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276390 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576276502 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576276517 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276518 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276523 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276524 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276562 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576276679 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576276804 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576276817 process O:I ground status ok total_ms=8.1
+[read] 1792576276821 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576276828 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576276843 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576276859 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576276879 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576276890 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576276914 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576276923 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576276937 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576276954 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277085 central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277112 central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277114 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277115 aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277117 aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576277119 aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576277121 aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576277122 aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/ hit
+[read] 1792576277124 aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277125 aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277126 aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277127 aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277128 aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277129 aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[read] 1792576277140 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277140 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277146 central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277147 central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277152 central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277152 central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277154 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277154 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277155 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277155 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576277180 central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:Control/agents/wiki/wiki.json","root":"/ hit
+[read] 1792576277197 seat:status hit
+[read] 1792576277214 central:central.git.census:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576277340 process AIKit history ok total_ms=950.0
+[read] 1792576277436 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576277902 process Central central.git.census ok total_ms=678.6
+[read] 1792576277968 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576283536 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-devices.test.mjs
+[watch] 1792576283536 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/techne-devices.test.mjs
+[read] 1792576283629 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283629 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283630 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283632 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283633 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576283857 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283859 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283859 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283867 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283917 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283920 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576283920 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576283955 process AIKit history ok total_ms=325.6
+[read] 1792576283988 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576284088 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576284089 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576284105 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576284932 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576284932 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576284933 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576284942 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576285130 process Central central.git.census ok total_ms=1207.8
+[read] 1792576285223 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576290676 project:face-rig /Users/admin/Central/Work/face-rig/creature-scorpion.js
+[watch] 1792576290676 project:face-rig /Users/admin/Central/Work/face-rig/creature-scorpion.js
+[read] 1792576290760 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[read] 1792576290760 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576290760 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576290761 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576290763 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576290989 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576290989 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576290991 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291005 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291076 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291221 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false miss
+[owner] 1792576291230 process Central central.world ok total_ms=468.4
+[read] 1792576291235 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291237 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false joined
+[read] 1792576291237 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291264 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291265 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291281 aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false hit
+[owner] 1792576291369 process Central central.world.project ok total_ms=147.4
+[read] 1792576291369 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[owner] 1792576291394 process AIKit history ok total_ms=632.5
+[read] 1792576291459 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291459 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291511 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291594 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291596 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576291690 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[watch] 1792576298026 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/design-redundancy.test.mjs
+[watch] 1792576298027 seats /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/tests/design-redundancy.test.mjs
+[read] 1792576298197 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298204 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298208 central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298210 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298219 central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179906b520721df793e96188199bc72906d7b201104 hit
+[read] 1792576298418 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298419 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298420 central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298421 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298422 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298438 central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298438 central:central.git.census:{"include_paths":true,"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false settled
+[read] 1792576298438 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298457 central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298457 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576298594 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[owner] 1792576298861 process AIKit history ok total_ms=641.9
+[read] 1792576298975 central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576299147 central:central.time.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576299147 central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576299148 central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576299183 central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit
+[read] 1792576299238 central:central.work.policy:{}:"/Users/admin/.local/bin/ctrl"|None|None|false hit

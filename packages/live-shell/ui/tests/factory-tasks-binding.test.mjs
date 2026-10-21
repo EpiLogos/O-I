@@ -114,7 +114,7 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
   await assert.rejects(() => none.write([{key: 'newTask', value: 'x'}]), /No session is selected/)
 })
 
-test('Runs reads no attempts — no reading names the session\'s run — and holds its view; Stands has no owner write', async () => {
+test('Runs without the take lanes\' reading handed in reads no attempts and holds its view; Stands stands disabled saying so', async () => {
   bind.resetHolds()
   assert.deepEqual(tasks.runsValues('agent-session/fx-aletheia', bind.chainHolds()), {show: 'all', group: 'attempt', view: 'tree', compare: 'none', session: 'agent-session/fx-aletheia'})
   const binding = tasks.runsBinding('agent-session/fx-aletheia', bind.chainHolds())
@@ -122,9 +122,10 @@ test('Runs reads no attempts — no reading names the session\'s run — and hol
   binding.local.standsPending('2')
   assert.equal(tasks.runsValues('s', bind.chainHolds()).view, 'ruler')
   assert.equal(tasks.runsValues('s', bind.chainHolds()).standsPending, '2', 'the attempt you chose waits for Confirm')
-  await assert.rejects(() => binding.write([{key: 'stands', value: '2'}]), /missing op: an attempt's acceptance/)
+  // REPLACED (T-COVERAGE §1.3): Stands writes through Factory's AttemptReceiving once the takes are handed in (stale-refusals-binding.test.mjs).
+  await assert.rejects(() => binding.write([{key: 'stands', value: '2'}]), /not handed the session's takes/)
   assert.equal(tasks.runsValues('s', bind.chainHolds()).standsPending, undefined, 'Confirm ends the wait, refused or not')
-  assert.match(binding.standing.stands.disabled, /factory_attempt_read only reads/)
+  assert.match(binding.standing.stands.disabled, /AttemptReceiving is the write/)
   bind.resetHolds()
 })
 

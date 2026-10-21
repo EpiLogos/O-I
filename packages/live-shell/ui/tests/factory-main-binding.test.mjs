@@ -109,14 +109,14 @@ test('the Gateways rack: the registered chains, each with the state its reading 
   assert.deepEqual(chains(main.rackValues({reading: BINDING_REFUSED, holds: bind.chainHolds()})).slice(0, 2),
     [{id: 'hermes', name: 'Hermes gateway', state: 'refused', why: 'no binding named cursor'}, {id: 'aikit-agency-gateway', name: 'AIKit agency gateway', state: 'ready'}])
   assert.equal(main.rackValues({reading: model.INITIAL_READING, holds: bind.chainHolds()}).light, undefined, 'nothing read: no light')
-  // Choosing a chain is the view's own, and shows that gateway whole; Fan-out has no carrier.
+  // Choosing a chain is the view's own, and shows that gateway whole. The rack writes nothing: Fan-out is set on each workcell's
+  // Gateway (actuation__gateway.tsx) and only read here.
   const shown = []
   const binding = main.rackBinding({reading: UNREACHABLE, holds: bind.chainHolds()}, {show: chain => shown.push(chain)})
   binding.local.chain('aikit-agency-gateway')
   assert.equal(main.rackValues({reading: UNREACHABLE, holds: bind.chainHolds()}).chain, 'aikit-agency-gateway')
   assert.deepEqual(shown, ['aikit-agency-gateway'])
-  assert.match(binding.standing.fanOut.disabled, /missing op: kernel:harness_agent_control configure \{fan_out\}/)
-  await assert.rejects(() => binding.write([{key: 'fanOut', value: 3}]), /configure \{fan_out\}/)
+  assert.equal(binding.writes('fanOut'), false, 'the rack does not set Fan-out')
   assert.equal(binding.writes('chains'), false, 'the chains are a reading')
   bind.resetHolds()
 })
@@ -171,7 +171,7 @@ test('the four designs draw on their bindings in all five views — no NaN, no u
   host.resetHost()
   const gateway = {reading: UNREACHABLE, harness: {binding: 'cursor', resolved: false}}
   const cases = [
-    [rackDesign, main.rackBinding({reading: UNREACHABLE, holds: bind.chainHolds()}, {show() {}}), /build-lane|Terminate TLS|actuation-frank\b.*composed|14:02:0/, [main.RACK_REFUSE.fanOut]],
+    [rackDesign, main.rackBinding({reading: UNREACHABLE, holds: bind.chainHolds()}, {show() {}}), /build-lane|Terminate TLS|actuation-frank\b.*composed|14:02:0/, []],
     [agencyDesign, main.agencyBinding(UNREACHABLE, bind.chainHolds()), /@nara|Telegram|launchd|100\.92\.62/, [main.AGENCY_REFUSE.service, main.AGENCY_REFUSE.agentPolicy]],
     [experimentDesign, main.experimentBinding(bind.chainHolds()), /deeper loop|S1-CODE-001|build-lane|exp-1014/, [main.EXPERIMENT_REFUSE]],
     [framesDesign, main.framesBinding(gateway, bind.chainHolds()), /build-lane|3f9a21c4|Type-check the three/, []],
@@ -214,18 +214,25 @@ test('the rail\'s Frames is the Frames monitor\'s own widget (§23.8): bare, on 
   assert.match(read('frame/widgets/WidgetRail.tsx'), /widgets\.map\(claimedWidget\)/)
 })
 
-test('with no session selected the chain draws the Main track, the Agency gateway inside the rack, and publishes each with its binding', () => {
+test('with no session selected the chain draws the Main track — the Experiment, then Approvals — and publishes Gateways, the Agency gateway and Frames for the rail and a pane', () => {
   const view = read('agent/devices/FactoryDeviceChain.tsx')
+  // REPLACED (lane W1-Factory; DLW §16.1, §16.2, §19.1, §19.3, §19.10): Gateways is a monitor, on the rail and full in a pane, never on a chain;
+  // the Agency gateway stands in the head of Messages and on no chain. The Main track's chain is the Experiment, then Approvals.
   assert.match(view, /<div className="factory-main" data-track="main"/)
-  assert.match(view, /\{sessionRef == null && <div className="factory-main"/, 'with no session selected the Device side is the Main track')
-  assert.match(view, /\{sessionRef != null && chain\.map\(/, 'a selected session shows its own chain')
-  assert.match(view, /<DeviceView device=\{main\.rack\} size="compact" binding=\{mainBindings\.rack\}/)
-  assert.match(view, /<DeviceView device=\{main\.agency\} size="compact" binding=\{mainBindings\.agency\}/)
+  assert.match(view, /\{place\.kind === 'main' && <div className="factory-main"/, 'with no session selected the Device side is the Main track')
+  assert.match(view, /\{place\.kind === 'session' && <>\{plates\}/, 'a selected session shows its own chain')
+  assert.doesNotMatch(view, /<DeviceView device=\{main\.rack\}/, 'Gateways stands on no chain')
+  assert.doesNotMatch(view, /<DeviceView device=\{main\.agency\}/, 'nor does the Agency gateway')
   assert.match(view, /<DeviceView device=\{main\.experiment\} size="compact" binding=\{mainBindings\.experiment\}/)
-  for (const [id, key] of [['GATEWAYS_RACK_ID', 'rack'], ['AGENCY_GATEWAY_ID', 'agency'], ['EXPERIMENT_ID', 'experiment'], ['FRAMES_ID', 'frames']]) {
-    assert.match(view, new RegExp(`publishDevice\\(${id}, \\{device: main\\.${key}, binding: mainBindings\\.${key}\\}\\)`), `${key} is published with its binding`)
+  // REPLACED (lane W1-Factory, the rail's one publisher): Gateways, the Agency gateway and Frames stand on the rail in every mode, so the
+  // rail's publisher (AgentRailDevices.tsx) publishes them with their bindings; the chain publishes the Experiment.
+  assert.match(view, /publishDevice\(EXPERIMENT_ID, \{device: main\.experiment, binding: mainBindings\.experiment\}\)/, 'the Experiment is published with its binding')
+  const rail = read('agent/devices/AgentRailDevices.tsx')
+  for (const [id, binding] of [['GATEWAYS_RACK_ID', 'gateways'], ['AGENCY_GATEWAY_ID', 'agency'], ['FRAMES_ID', 'frames']]) {
+    assert.match(rail, new RegExp(`publish\\(${id}, ${binding}\\)`), `${id} is published with its binding, in every mode`)
   }
-  assert.match(view, /\.\.\.MAIN_DEVICE_IDS, \.\.\.SESSION_DEVICE_IDS, \.\.\.RECEIPT_DEVICE_IDS,\s+\.\.\.WORKCELL_DEVICE_IDS\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain')
+  assert.match(view, /EXPERIMENT_ID, \.\.\.SESSION_DEVICE_IDS, APPROVALS_ID,\s+SEAT_ID, CARRIER_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
+  assert.match(read('agent/agentDockTiles.ts'), /claimRailWidget\('gateways', GATEWAYS_RACK_ID\)/, 'the rail claims the Gateways tile for the monitor')
   assert.doesNotMatch(read('agent/devices/mainTrackBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
   for (const file of ['agent/devices/mainTrackBindings.ts', 'agent/devices/factoryDevices.css', 'frame/widgets/deviceWidgets.tsx']) {
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)

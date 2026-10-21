@@ -16,3 +16,8 @@ brotli = "=8.0.4"
 jiff = "0.2"
 live-set = { path = "../../../packages/live-set" }
 live-dynamics = { path = "../../../packages/live-dynamics" }
+notify = { version = "8", default-features = false, features = ["macos_fsevent"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# The journal FSEvents keeps per volume (journal.rs); notify already builds it.
+fsevent-sys = "4.1"

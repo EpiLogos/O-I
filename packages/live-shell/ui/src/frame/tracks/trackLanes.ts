@@ -17,8 +17,8 @@ import type {
 } from '../../timeline/worldTrackAdapter'
 
 /** The row's order, as Live draws its mixer: activator, solo, arm, then the I/O column's monitor and routes. */
-export const MIXER_ORDER: readonly MixerControlId[] = ['activator', 'solo', 'arm', 'monitor', 'input', 'output']
-export const MIXER_LABEL: Readonly<Record<MixerControlId, string>> = {activator: 'Activator', solo: 'Solo', arm: 'Arm', monitor: 'Monitor', input: 'Input', output: 'Output'}
+export const MIXER_ORDER: readonly MixerControlId[] = ['activator', 'solo', 'arm', 'monitor', 'input', 'output', 'works']
+export const MIXER_LABEL: Readonly<Record<MixerControlId, string>> = {activator: 'Activator', solo: 'Solo', arm: 'Arm', monitor: 'Monitor', input: 'Input', output: 'Output', works: 'Works in'}
 /** The glyph each control shows, as Live's mixer does (the activator carries the track's number; solo "S"; arm the record dot). */
 const MIXER_GLYPH: Readonly<Record<'activator' | 'solo' | 'arm', string>> = {activator: '', solo: 'S', arm: '●'}
 const MONITOR_WORD: Readonly<Record<MonitorSetting, string>> = {in: 'In', auto: 'Auto', off: 'Off'}
@@ -50,8 +50,8 @@ export function mixerCells(set: WorldTrackSet, track: WorldTrack, position: numb
     if (!control) continue
     const label = MIXER_LABEL[id]
     const grain = control.grain ? ` · ${control.grain}` : ''
-    if (control.route !== undefined || id === 'input' || id === 'output') {
-      const value = id === 'input' || id === 'output' ? mix[id] : undefined
+    if (control.route !== undefined || id === 'input' || id === 'output' || id === 'works') {
+      const value = id === 'input' || id === 'output' || id === 'works' ? mix[id] : undefined
       const route = control.route ?? value
       cells.push({id, label, text: route ?? '—', state: route === undefined ? 'unread' : 'route',
         title: `${label} · ${control.meaning}${route === undefined ? ' · unread: the owner reports none' : control.route !== undefined ? ' · the mode\'s own route, not a setting' : ''}${control.disabled ? ` · ${control.disabled}` : ''}`})
@@ -79,9 +79,10 @@ export function mixerCells(set: WorldTrackSet, track: WorldTrack, position: numb
   return cells
 }
 
-/** The tracks in the views' order: the set's own, with the Main track's material at the end, where Live keeps Main. */
+/** The tracks in the views' order: the set's own, then its return tracks, with the Main track's material at the end, where Live keeps
+ * Main. */
 export function mainLast(tracks: readonly WorldTrack[]): WorldTrack[] {
-  return [...tracks.filter(track => !track.main), ...tracks.filter(track => track.main)]
+  return [...tracks.filter(track => !track.main && !track.returns), ...tracks.filter(track => track.returns && !track.main), ...tracks.filter(track => track.main)]
 }
 
 /** The Lanes setting (manual §16.6: Takes On, Automation On, Events Off by default). The pane's own presentation. */

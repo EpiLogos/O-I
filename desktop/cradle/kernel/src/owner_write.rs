@@ -62,6 +62,18 @@ pub struct WriteAnswered {
 const CENTRAL: &str = "central";
 const FACTORY: &str = "factory";
 
+/// Whether an action carried by `invoke_action` only reads Central: its
+/// answer moves nothing, so it retires no reading.
+fn central_reading(action: &str) -> bool {
+    crate::read_cache::central_reads(action)
+}
+
+/// Whether a prepared write is a reading carried as an action, which moves
+/// nothing (every other prepared write may have changed its owner).
+fn reads_only(op: &KernelOp) -> bool {
+    matches!(op, KernelOp::InvokeAction { invocation, .. } if central_reading(&invocation.action))
+}
+
 impl PreparedWrite {
     /// Whether `op` is an owner write with a prepared form.
     pub(crate) fn claims(op: &KernelOp) -> bool {
@@ -122,6 +134,14 @@ impl PreparedWrite {
     pub fn execute(self) -> WriteAnswered {
         let mut records = Vec::new();
         let result = self.write(&mut records);
+        // Whatever the owner changed, or may have changed before it failed,
+        // moves every reading kept from before: the watcher confirms it later.
+        // A Central reading carried as an action changed nothing, so it moves
+        // nothing: clearing the read model for it would throw every retained
+        // reading away each time a device reads.
+        if !reads_only(&self.op) {
+            crate::read_cache::written();
+        }
         WriteAnswered { result, records }
     }
 
@@ -239,9 +259,20 @@ impl PreparedWrite {
                 // reads: renderer-supplied paths never become invocation context.
                 let world = self.world.read()?;
                 let cwd = crate::agent_prepared::location(&world, project.as_deref())?;
-                let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), invocation);
-                // Whatever the owner answered, the derived readings retire.
-                records.push(Record::RetireDerived);
+                // The person's own presses carry the person's native authority (T-COVERAGE §1.1: closing a NOW, the Day's
+                // settings and moves, accepting a returned source, making and keeping an agent — action.rs PERSON_ACTS);
+                // every other invocation goes without it. Which acts those are is action.rs's (its test holds the list).
+                let client = if action::person_act(&invocation.action) {
+                    self.client.for_person()
+                } else {
+                    self.client.clone()
+                };
+                let dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
+                // Whatever the owner answered, the derived readings retire —
+                // unless the action only read.
+                if !central_reading(&invocation.action) {
+                    records.push(Record::RetireDerived);
+                }
                 if let action::ActionDispatch::Invoked { data, .. } = &dispatch {
                     if let Some(path) = construction_save(invocation, data) {
                         records.push(Record::RetireListing(files::parent_path(&path)));
@@ -865,7 +896,11 @@ impl Kernel {
                 Record::RetireListing(parent) => self.reads.invalidate(&format!("dir:{parent}")),
             }
         }
-        Ok(KernelOpOutcome { receipts, result })
+        Ok(KernelOpOutcome {
+            read_scopes: None,
+            receipts,
+            result,
+        })
     }
 }
 
@@ -1197,6 +1232,69 @@ else:
             written.receipts[0].envelope.event.tag(),
             "receiving_changed"
         );
+    }
+
+    /// A Central reading carried as an action (a device's Day moves, its git
+    /// census, a world's effective sources) retires nothing: the derived
+    /// readings it would throw away stay; a write through the same op still
+    /// retires them.
+    #[test]
+    fn a_reading_carried_as_an_action_retires_nothing_and_a_write_still_does() {
+        for action in [
+            "central.day.settings.read",
+            "central.day.moves.read",
+            "central.git.census",
+            "central.wiki.read",
+            "control.search",
+            "central.temporal.source-history",
+            "central.world.effective-sources",
+        ] {
+            assert!(central_reading(action), "{action} only reads");
+        }
+        for action in [
+            "central.world-relations.save",
+            "central.day.settings.write",
+            "projectcentral.now.return",
+            "central.files.write",
+        ] {
+            assert!(!central_reading(action), "{action} may write");
+        }
+        let central = FakeCentral::new("reading-action");
+        let kernel = Mutex::new(central.kernel());
+        let probe = || {
+            kernel
+                .lock()
+                .unwrap()
+                .reads
+                .get("knowledge:probe", Duration::from_secs(600))
+        };
+        kernel
+            .lock()
+            .unwrap()
+            .reads
+            .put("knowledge:probe".into(), serde_json::json!({"kept": true}));
+        for action in ["central.day.moves.read", "central.temporal.source-history"] {
+            let (read, timing) = dispatch(
+                &kernel,
+                op(serde_json::json!({"op": "invoke_action",
+                    "invocation": {"action": action, "target_ref": format!("central:action:{action}"),
+                                   "input": {}}})),
+            );
+            assert_eq!(timing.form, "owner-write");
+            assert!(read.unwrap().receipts.is_empty());
+            assert_eq!(
+                probe(),
+                Some(serde_json::json!({"kept": true})),
+                "{action}: a reading retires nothing"
+            );
+        }
+        let (written, _) = dispatch(
+            &kernel,
+            op(serde_json::json!({"op": "invoke_action",
+                "invocation": {"action": "central.files.write", "target_ref": "row:1", "input": {}}})),
+        );
+        written.unwrap();
+        assert_eq!(probe(), None, "a write retires the derived readings");
     }
 
     #[test]

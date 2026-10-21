@@ -5,22 +5,29 @@
 // (agent/devices/threadBinding.ts threadJson — lane BF2's read, reused, never read twice). The packet is the Packet's (lane BC3,
 // packetBinding.ts — AIKit's prepared context, the one read the Packet widget and the transport share), shown only when it is prepared
 // for this session: the encounter's Send carries its own session's prepared context (encounter/session.ts send → reviewedContext), so
-// "an answer shows the packet that it came from" (DLW §18.3 Rules) and never another's. Pure: no React, no transport.
+// "an answer shows the packet that it came from" (DLW §18.3 Rules) and never another's. Its voice — Hears, Speaks, what the voice does
+// and your words as they are written — is the native voice owner's (answerVoice.ts over the kernel op nara_voice); a transcript is sent
+// through the same Send as a typed question. The face's dynamics and the conversation beside it are the view's own (`local`).
+// Pure: no React, no transport.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
 import type {EncounterReading, EncounterStatus} from '../../../../../../desktop/cradle/src/encounter/client'
 import {threadJson} from '../../agent/devices/threadBinding'
 import type {NaraState} from './centralDeviceModel'
 import {heldOf, pageBinding, setHeld, type DesignWiring, type PageActs} from './pageBindings'
+import type {AnswerVoiceState, VoiceKey} from './answerVoice'
 
 export const ANSWER_DESIGN = 'central:nara-conversation'
 
 const NO_OWNER = (what: string) => `${what}: no owner holds it for the Nara dialogue (the binding carries its role, its expression and its session, nothing more).`
 
+/** The voice the native owner holds (answerVoice.ts over the kernel op nara_voice: whisper.cpp in, Kokoro-82M out, on this machine). */
+const VOICE = 'the Answer\'s voice (answerVoice.ts; kernel op nara_voice)'
+
 export const ANSWER_WIRING: DesignWiring = {
   design: ANSWER_DESIGN,
   keys: ['light', 'agent', 'answerAs', 'writes', 'effort', 'draft', 'sent', 'source', 'state', 'context', 'document', 'entry', 'resume', 'agents', 'packet', 'thread',
-    'sources', 'accept', 'decline'],
+    'sources', 'accept', 'decline', 'hears', 'speaks', 'voice', 'heard', 'chat', 'emotion', 'feeling.v', 'feeling.a', 'gaze.x', 'gaze.y', 'gesture', 'do'],
   reads: {
     light: 'the Nara dialogue binding: lit when bound, dark when unbound or refused (op nara_dialogue lookup)',
     agent: 'the accepted agent whose role is the binding\'s role (nara)', agents: 'Central\'s accepted agents (owners/readers.ts useRosterAgents; roster.ts shape)',
@@ -28,12 +35,24 @@ export const ANSWER_WIRING: DesignWiring = {
     document: 'the reached page\'s tab title', resume: 'whether the binding asks for its session to resume (provisioning.resume_required)',
     packet: 'the Packet\'s items (AIKit\'s prepared context, packetBinding.ts packetItemOf), when the packet is prepared for this session: the packet its Send carries',
     thread: 'the bound session\'s exchange, as the Agent and the Thread draw it (threadBinding.ts threadJson over the shared encounter observer)',
+    hears: `whether the microphone is open and what it hears is written and sent: ${VOICE}`,
+    speaks: `whether each answer that completes is spoken: ${VOICE}`,
+    voice: `what the voice does now: listening (the microphone open, or your words being written), speaking (the answer playing), quiet — ${VOICE}`,
+    heard: `your words as the owner wrote them (op nara_voice transcribe), until they are sent; it writes no partial words: ${VOICE}`,
   },
   writes: {
     light: 'lit binds the conversation (op nara_dialogue resolve; centralDeviceWrites.ts bindConversation)',
     sent: 'your question, as the session\'s next turn (the encounter session\'s own draft and send — the thread pane\'s Send)',
+    hears: 'on opens the voice and the microphone (op nara_voice open, listen); what you say is written (transcribe) and sent as `sent` is; on while the answer is spoken stops it first (barge-in); off closes the microphone and drops what it heard',
+    speaks: 'on speaks each answer that completes from now on (op nara_voice speak, complete), the face\'s mouth following the sound; off stops it',
   },
-  local: {draft: 'the composer\'s words, until you send them', source: 'the source this device shows'},
+  local: {
+    draft: 'the composer\'s words, until you send them', source: 'the source this device shows',
+    chat: 'whether the conversation stands beside the face',
+    emotion: 'the face\'s held emotion (one of its twelve)', 'feeling.v': 'the face\'s valence, −1..1', 'feeling.a': 'the face\'s arousal, −1..1',
+    'gaze.x': 'where the face looks, across, −1..1', 'gaze.y': 'where the face looks, up, −1..1',
+    gesture: 'the gesture the face makes when asked', do: 'a count the view raises to make the gesture once',
+  },
   refused: {
     agent: 'The dialogue binds the nara role; another agent answers through its own binding.',
     answerAs: NO_OWNER('How an answer joins the page'), writes: NO_OWNER('Whether the agent writes'), effort: NO_OWNER('Effort'),
@@ -58,6 +77,8 @@ export interface AnswerInput {
   readonly page: {readonly title: string} | null
   /** The Packet's items (packetBinding.ts packetValues `packet`) and the session its prepared context is for. */
   readonly packet?: {readonly items: string; readonly session: string | null} | null
+  /** The voice, as its owner holds it (answerVoice.ts AnswerVoice snapshot). */
+  readonly voice?: AnswerVoiceState | null
 }
 
 const ROLE = 'nara'
@@ -83,23 +104,36 @@ export function answerValues(id: string, input: AnswerInput): Values {
   if (input.page) values.document = input.page.title
   // The packet the Send carries: the Packet's, when it is prepared for this very session.
   if (state === 'bound' && input.nara?.session && input.packet && input.packet.session === input.nara.session) values.packet = input.packet.items
+  // The voice: on or off as its owner holds it, what it does now, and your words until they are sent.
+  if (input.voice) Object.assign(values, {hears: input.voice.hears, speaks: input.voice.speaks, voice: input.voice.voice, heard: input.voice.heard})
   const held = heldOf(id)
-  const defaults: Record<string, Value> = {draft: '', source: '1'}
-  for (const key of Object.keys(ANSWER_WIRING.local)) { const value = held[key] ?? defaults[key]; if (value !== undefined) values[key] = value }
+  for (const key of Object.keys(ANSWER_WIRING.local)) { const value = held[key] ?? ANSWER_VIEW_DEFAULTS[key]; if (value !== undefined) values[key] = value }
   return values
 }
 
-/** What the Answer writes through: the conversation's binding, and the bound session's turn. */
+/** The view's own keys at rest: the composer empty, the conversation beside the face, the face neutral, centred and nodding when
+ * asked. Held for the session in one store (pageBindings.ts holds), so the chain, the pool, the pane and the rail show one face. */
+export const ANSWER_VIEW_DEFAULTS: Readonly<Record<string, Value>> = {
+  draft: '', source: '1', chat: 'on', emotion: 'neutral', 'feeling.v': 0, 'feeling.a': 0, 'gaze.x': 0, 'gaze.y': 0, gesture: 'nod', do: 0,
+}
+
+/** What the Answer writes through: the conversation's binding, the bound session's turn, and the voice. */
 export interface AnswerPorts {
   readonly bind: (() => Promise<void>) | null
   /** Send a question as the session's next turn (the encounter session's draft, then its Send); null while no session is observed. */
   readonly send: ((text: string) => Promise<void>) | null
+  /** Hears and Speaks on or off (answerVoice.ts AnswerVoice write; it rejects with the owner's words), and why the voice cannot open
+   * here (no native owner, no bound conversation), or null when it can. Absent: no voice owner at all. */
+  readonly voice?: {readonly write: (key: VoiceKey, value: Value) => Promise<void>; readonly why: string | null} | null
 }
+
+const NO_VOICE = 'No voice owner stands here: the native speech (the kernel op nara_voice) is the desktop\'s.'
 
 /** The Answer's binding. */
 export function answerBinding(id: string, input: AnswerInput, ports: AnswerPorts): DesignBinding {
   const bound = input.nara?.state === 'bound'
   const NOT_BOUND = 'The conversation is not bound: no session receives the question. Bind it (the light), on an expression with its identity.'
+  const voice = ports.voice ?? null
   const acts: PageActs = {
     light: async value => {
       if (value !== 'lit') throw new Error('A face cannot unbind a conversation: AIKit holds the session, and the nara_dialogue op declares no release.')
@@ -112,11 +146,21 @@ export function answerBinding(id: string, input: AnswerInput, ports: AnswerPorts
       if (!bound || !ports.send) throw new Error(NOT_BOUND)
       await ports.send(text)
     },
+    hears: async value => { if (!voice) throw new Error(NO_VOICE); await voice.write('hears', value) },
+    speaks: async value => { if (!voice) throw new Error(NO_VOICE); await voice.write('speaks', value) },
   }
   const why: Record<string, string> = {}
   if (!bound || !ports.send) why.sent = NOT_BOUND
   if (!ports.bind) why.light = 'No conversation is selected. The binding resolves for the encounter\'s subject once one is.'
-  return pageBinding(id, ANSWER_WIRING, answerValues(id, input), acts, why)
+  // The voice cannot open here: both keys stand disabled with the reason. It could and its owner refused the last press: the key
+  // says so in the owner's words, and stays pressable.
+  const absent = !voice ? NO_VOICE : voice.why
+  const standing: Record<string, Standing> = {}
+  for (const key of ['hears', 'speaks'] as const) {
+    if (absent) why[key] = absent
+    else if (input.voice?.refused[key]) standing[key] = {refused: input.voice.refused[key]}
+  }
+  return pageBinding(id, ANSWER_WIRING, answerValues(id, input), acts, why, standing)
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the one Agent

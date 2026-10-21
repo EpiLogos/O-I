@@ -102,6 +102,7 @@ impl Prepared {
                 )?;
             }
             return Ok(crate::KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: crate::KernelOpResult::NaraDialogue { data },
             });
@@ -114,6 +115,7 @@ impl Prepared {
             self.request,
         )?;
         Ok(crate::KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result: crate::KernelOpResult::NaraDialogue { data },
         })

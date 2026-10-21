@@ -1770,7 +1770,7 @@ impl Kernel {
                 }
                 match (retained_expected,self.world.acts.get(&act_ref)) {
                     (Some(Some(expected)),Some(act)) if expected!=act.revision => {
-                        return Ok(KernelOpOutcome {receipts,result:KernelOpResult::ExpressionWorld {data:act_conflict(act,expected)}});
+                        return Ok(KernelOpOutcome { read_scopes: None,receipts,result:KernelOpResult::ExpressionWorld {data:act_conflict(act,expected)}});
                     }
                     (Some(None),Some(_)) | (Some(Some(_)),None) => return Err("retained operation must name the exact existing Act revision, or None for a new Act".into()),
                     (Some(_),Some(act)) if act.material_contract.as_deref()!=Some(crate::expression_performance_act::MATERIAL_SCHEMA) => return Err("enable retained material-v2 before performing this legacy Act".into()),
@@ -1792,6 +1792,7 @@ impl Kernel {
                 )?;
                 if let Some(refusal) = precheck {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld { data: refusal },
                     });
@@ -1799,6 +1800,7 @@ impl Kernel {
                 let before = self.act_snapshot(&expression_ref)?;
                 if before.document.revision != expected_revision {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld {
                             data: json!({
@@ -1928,6 +1930,7 @@ impl Kernel {
                     self.act_precheck_fields(&act_ref, passages, act_revision, 1, false, existing)?
                 {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld { data: refusal },
                     });
@@ -1945,6 +1948,7 @@ impl Kernel {
                 )?;
                 if data["state"] == "revision_conflict" {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld { data },
                     });
@@ -2016,6 +2020,7 @@ impl Kernel {
                 }
                 if let Err(conflict) = committed? {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld { data: conflict },
                     });
@@ -2137,6 +2142,7 @@ impl Kernel {
                 )?;
                 if data["state"] == "revision_conflict" {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld { data },
                     });
@@ -2215,6 +2221,7 @@ impl Kernel {
                 text(&actor)?;
                 let Some(whole) = self.world.wholes.get_mut(&whole_ref) else {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld {
                             data: json!({"state":"unknown_whole","whole_ref":whole_ref}),
@@ -2225,6 +2232,7 @@ impl Kernel {
                 // a structured conflict, and a same-revision rebase is refused.
                 if expected_basis_revision != whole.basis.revision {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld {
                             data: json!({
@@ -2239,6 +2247,7 @@ impl Kernel {
                 }
                 if basis.revision == whole.basis.revision {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::ExpressionWorld {
                             data: json!({
@@ -2328,6 +2337,7 @@ impl Kernel {
             }
         };
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts,
             result: KernelOpResult::ExpressionWorld { data },
         })

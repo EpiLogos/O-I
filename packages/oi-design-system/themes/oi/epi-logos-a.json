@@ -1,0 +1,47 @@
+{
+  "schema": "oi.theme/v1",
+  "id": "epi-logos-a",
+  "name": "Epi-Logos · A",
+  "appearance": "dark",
+  "source": {
+    "format": "oi-house-theme",
+    "repo": "EpiLogos/O-I",
+    "license": "house",
+    "url": "desktop/cradle/docs/theme-shell-mockup.html",
+    "name": "Epi-Logos · A"
+  },
+  "tokens": {
+    "--oi-shell-ground": "#0d1d4a",
+    "--oi-sidebar-ground": "#111f40",
+    "--oi-canvas-ground": "#030e30",
+    "--oi-wash": "#142248",
+    "--oi-surface": "#c2c2c2",
+    "--oi-hairline": "#1e3667",
+    "--oi-control-edge": "#1c3a8d",
+    "--oi-rule": "#11245a",
+    "--oi-foreground": "#e4e6ec",
+    "--oi-muted-2": "#a6abba",
+    "--oi-muted-3": "#72798d",
+    "--oi-accent": "#e2b23c",
+    "--oi-active-ground": "#87713c",
+    "--oi-active-ink": "#070c17",
+    "--oi-accent-soft": "rgba(226, 178, 60, 0.13)",
+    "--oi-terminal-ansi-blue": "#94aae6",
+    "--oi-terminal-ansi-cyan": "#7e98dd",
+    "--oi-terminal-ansi-red": "#e0523f",
+    "--oi-terminal-ansi-green": "#8fd0a8",
+    "--oi-terminal-ansi-yellow": "#ff9b4a",
+    "--oi-terminal-ansi-bright-red": "#f3b4a0",
+    "--oi-syntax-invalid": "#e3806f"
+  },
+  "syntax": {},
+  "terminal": {},
+  "preview": {
+    "ground": "#030e30",
+    "ink": "#e4e6ec",
+    "accent": "#e2b23c",
+    "strip": [
+      "#e2b23c"
+    ]
+  }
+}

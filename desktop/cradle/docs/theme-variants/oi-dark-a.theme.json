@@ -1,0 +1,42 @@
+{
+  "schema": "oi.theme/v1",
+  "id": "oi-dark-a",
+  "name": "O:I Dark \u00b7 A",
+  "appearance": "dark",
+  "source": {
+    "format": "oi-house-theme",
+    "name": "O:I Dark \u00b7 A",
+    "repo": "EpiLogos/O-I",
+    "license": "house",
+    "url": "desktop/cradle/docs/theme-shell-mockup.html"
+  },
+  "tokens": {
+    "--oi-shell-ground": "#161a22",
+    "--oi-sidebar-ground": "#1b1e22",
+    "--oi-canvas-ground": "#21222c",
+    "--oi-wash": "#282826",
+    "--oi-surface": "#202020",
+    "--oi-hairline": "#1a1721",
+    "--oi-control-edge": "#333331",
+    "--oi-rule": "#2b2b28",
+    "--oi-foreground": "#f0f0f5",
+    "--oi-muted-2": "#a6a6a6",
+    "--oi-muted-3": "#6f6f6a",
+    "--oi-accent": "#f8ddfd",
+    "--oi-active-ground": "#8f8f89",
+    "--oi-active-ink": "#0a0a09",
+    "--oi-accent-soft": "rgba(248, 221, 253, 0.13)",
+    "--oi-relation": "#e7d2f9"
+  },
+  "syntax": {},
+  "terminal": {},
+  "preview": {
+    "ground": "#21222c",
+    "ink": "#f0f0f5",
+    "accent": "#f8ddfd",
+    "strip": [
+      "#f8ddfd",
+      "#e7d2f9"
+    ]
+  }
+}

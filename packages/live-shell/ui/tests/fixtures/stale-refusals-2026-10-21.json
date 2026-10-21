@@ -1,0 +1,2253 @@
+{
+ "_note": "Captured read-only on workcell:mac, 21 Oct 2026, through `ctrl --json action run <id> <input>` (the same Central runner the kernel's invoke_action reaches). Each value is the envelope's `data` as the kernel hands it on (action.rs invoke_central); controlSearch is Central's refusal envelope verbatim.",
+ "daySettings": {
+  "action": "central.day.settings.read",
+  "input": {},
+  "data": {
+   "automatic_agent_or_model_invocation": false,
+   "effective_prompts": {
+    "close": "Run the close routine for the Day: summarise the day, send what the person learned to their knowledge, and carry face 5's proposal for tomorrow into tomorrow's face 0. Then the Day closes and is kept.",
+    "context": "Gather what the day's sessions touched, from every session on face 2: the moments, people, places and files. Add them to face 4, each entry showing its author, so the person can see where the day sat.",
+    "patterns": "Read what ran today, the sessions of every mode on face 2. Propose the patterns that appear across that work on face 3, and with each pattern the items that show it. The person keeps the patterns that hold and discards the rest.",
+    "synthesis": "Read faces 1 to 4 and draft face 5: what the day taught, what stays open, and a proposal for tomorrow's face 0. Write it as a draft the person can rewrite; each entry shows its author.",
+    "tasks": "Read face 0, the Ground of the Day: what the person wants from the day, what worries them and what arrived. Propose the tasks that follow from it on face 1, each in one of three tiers: must, should or could. Propose only; the person accepts, re-tiers or removes each task."
+   },
+   "nothing_runs_by_itself_on_defaults": true,
+   "own_prompts": {
+    "close": "Run the close routine for the Day: summarise the day, send what the person learned to their knowledge, and carry face 5's proposal for tomorrow into tomorrow's face 0. Then the Day closes and is kept.",
+    "context": "Gather what the day's sessions touched, from every session on face 2: the moments, people, places and files. Add them to face 4, each entry showing its author, so the person can see where the day sat.",
+    "patterns": "Read what ran today, the sessions of every mode on face 2. Propose the patterns that appear across that work on face 3, and with each pattern the items that show it. The person keeps the patterns that hold and discards the rest.",
+    "synthesis": "Read faces 1 to 4 and draft face 5: what the day taught, what stays open, and a proposal for tomorrow's face 0. Write it as a draft the person can rewrite; each entry shows its author.",
+    "tasks": "Read face 0, the Ground of the Day: what the person wants from the day, what worries them and what arrived. Propose the tasks that follow from it on face 1, each in one of three tiers: must, should or could. Propose only; the person accepts, re-tiers or removes each task."
+   },
+   "path": "Control/user/day/settings.json",
+   "revision": "absent",
+   "saved": false,
+   "schema": "central.day-settings-reading/v1",
+   "scope_ref": "control:root",
+   "settings": {
+    "agent_writes": "propose",
+    "close_routine": true,
+    "moves": {
+     "close": {
+      "prompt": null,
+      "runs_at": {
+       "kind": "day_start"
+      }
+     },
+     "context": {
+      "prompt": null,
+      "runs_at": {
+       "kind": "off"
+      }
+     },
+     "patterns": {
+      "prompt": null,
+      "runs_at": {
+       "kind": "off"
+      }
+     },
+     "synthesis": {
+      "prompt": null,
+      "runs_at": {
+       "kind": "off"
+      }
+     },
+     "tasks": {
+      "prompt": null,
+      "runs_at": {
+       "kind": "off"
+      }
+     }
+    },
+    "rollover": null,
+    "schema": "central.day-settings/v1",
+    "scope_ref": "control:root",
+    "sources": {
+     "central": true,
+     "expressions": true,
+     "factory": true,
+     "live": true,
+     "techne": true
+    }
+   },
+   "standing": {
+    "agent_writes": "default",
+    "close_routine": "default",
+    "moves": {
+     "close": {
+      "prompt": "default",
+      "runs_at": "default"
+     },
+     "context": {
+      "prompt": "default",
+      "runs_at": "default"
+     },
+     "patterns": {
+      "prompt": "default",
+      "runs_at": "default"
+     },
+     "synthesis": {
+      "prompt": "default",
+      "runs_at": "default"
+     },
+     "tasks": {
+      "prompt": "default",
+      "runs_at": "default"
+     }
+    },
+    "rollover": "default",
+    "sources": {
+     "central": "default",
+     "expressions": "default",
+     "factory": "default",
+     "live": "default",
+     "techne": "default"
+    }
+   }
+  }
+ },
+ "dayMoves": {
+  "action": "central.day.moves.read",
+  "input": {},
+  "data": {
+   "automatic_agent_or_model_invocation": false,
+   "civil_date": "2026-10-19",
+   "day_ref": "central:day:control:root:2026-10-19",
+   "lifecycle": "open",
+   "moves": {
+    "close": {
+     "armed": false,
+     "label": "Close",
+     "last": null,
+     "move": "close",
+     "next_at_unix_ms": null,
+     "own_prompt": "Run the close routine for the Day: summarise the day, send what the person learned to their knowledge, and carry face 5's proposal for tomorrow into tomorrow's face 0. Then the Day closes and is kept.",
+     "prompt": "Run the close routine for the Day: summarise the day, send what the person learned to their knowledge, and carry face 5's proposal for tomorrow into tomorrow's face 0. Then the Day closes and is kept.",
+     "prompt_standing": "default",
+     "running": null,
+     "runs": [],
+     "runs_at": {
+      "kind": "day_start"
+     },
+     "runs_at_standing": "default"
+    },
+    "context": {
+     "armed": false,
+     "label": "Context",
+     "last": null,
+     "move": "context",
+     "next_at_unix_ms": null,
+     "own_prompt": "Gather what the day's sessions touched, from every session on face 2: the moments, people, places and files. Add them to face 4, each entry showing its author, so the person can see where the day sat.",
+     "prompt": "Gather what the day's sessions touched, from every session on face 2: the moments, people, places and files. Add them to face 4, each entry showing its author, so the person can see where the day sat.",
+     "prompt_standing": "default",
+     "running": null,
+     "runs": [],
+     "runs_at": {
+      "kind": "off"
+     },
+     "runs_at_standing": "default"
+    },
+    "patterns": {
+     "armed": false,
+     "label": "Patterns",
+     "last": null,
+     "move": "patterns",
+     "next_at_unix_ms": null,
+     "own_prompt": "Read what ran today, the sessions of every mode on face 2. Propose the patterns that appear across that work on face 3, and with each pattern the items that show it. The person keeps the patterns that hold and discards the rest.",
+     "prompt": "Read what ran today, the sessions of every mode on face 2. Propose the patterns that appear across that work on face 3, and with each pattern the items that show it. The person keeps the patterns that hold and discards the rest.",
+     "prompt_standing": "default",
+     "running": null,
+     "runs": [],
+     "runs_at": {
+      "kind": "off"
+     },
+     "runs_at_standing": "default"
+    },
+    "synthesis": {
+     "armed": false,
+     "label": "Synthesis",
+     "last": null,
+     "move": "synthesis",
+     "next_at_unix_ms": null,
+     "own_prompt": "Read faces 1 to 4 and draft face 5: what the day taught, what stays open, and a proposal for tomorrow's face 0. Write it as a draft the person can rewrite; each entry shows its author.",
+     "prompt": "Read faces 1 to 4 and draft face 5: what the day taught, what stays open, and a proposal for tomorrow's face 0. Write it as a draft the person can rewrite; each entry shows its author.",
+     "prompt_standing": "default",
+     "running": null,
+     "runs": [],
+     "runs_at": {
+      "kind": "off"
+     },
+     "runs_at_standing": "default"
+    },
+    "tasks": {
+     "armed": false,
+     "label": "Tasks",
+     "last": null,
+     "move": "tasks",
+     "next_at_unix_ms": null,
+     "own_prompt": "Read face 0, the Ground of the Day: what the person wants from the day, what worries them and what arrived. Propose the tasks that follow from it on face 1, each in one of three tiers: must, should or could. Propose only; the person accepts, re-tiers or removes each task.",
+     "prompt": "Read face 0, the Ground of the Day: what the person wants from the day, what worries them and what arrived. Propose the tasks that follow from it on face 1, each in one of three tiers: must, should or could. Propose only; the person accepts, re-tiers or removes each task.",
+     "prompt_standing": "default",
+     "running": null,
+     "runs": [],
+     "runs_at": {
+      "kind": "off"
+     },
+     "runs_at_standing": "default"
+    }
+   },
+   "revision": "absent",
+   "schema": "central.day-moves-reading/v1",
+   "settings": {
+    "automatic_agent_or_model_invocation": false,
+    "effective_prompts": {
+     "close": "Run the close routine for the Day: summarise the day, send what the person learned to their knowledge, and carry face 5's proposal for tomorrow into tomorrow's face 0. Then the Day closes and is kept.",
+     "context": "Gather what the day's sessions touched, from every session on face 2: the moments, people, places and files. Add them to face 4, each entry showing its author, so the person can see where the day sat.",
+     "patterns": "Read what ran today, the sessions of every mode on face 2. Propose the patterns that appear across that work on face 3, and with each pattern the items that show it. The person keeps the patterns that hold and discards the rest.",
+     "synthesis": "Read faces 1 to 4 and draft face 5: what the day taught, what stays open, and a proposal for tomorrow's face 0. Write it as a draft the person can rewrite; each entry shows its author.",
+     "tasks": "Read face 0, the Ground of the Day: what the person wants from the day, what worries them and what arrived. Propose the tasks that follow from it on face 1, each in one of three tiers: must, should or could. Propose only; the person accepts, re-tiers or removes each task."
+    },
+    "nothing_runs_by_itself_on_defaults": true,
+    "own_prompts": {
+     "close": "Run the close routine for the Day: summarise the day, send what the person learned to their knowledge, and carry face 5's proposal for tomorrow into tomorrow's face 0. Then the Day closes and is kept.",
+     "context": "Gather what the day's sessions touched, from every session on face 2: the moments, people, places and files. Add them to face 4, each entry showing its author, so the person can see where the day sat.",
+     "patterns": "Read what ran today, the sessions of every mode on face 2. Propose the patterns that appear across that work on face 3, and with each pattern the items that show it. The person keeps the patterns that hold and discards the rest.",
+     "synthesis": "Read faces 1 to 4 and draft face 5: what the day taught, what stays open, and a proposal for tomorrow's face 0. Write it as a draft the person can rewrite; each entry shows its author.",
+     "tasks": "Read face 0, the Ground of the Day: what the person wants from the day, what worries them and what arrived. Propose the tasks that follow from it on face 1, each in one of three tiers: must, should or could. Propose only; the person accepts, re-tiers or removes each task."
+    },
+    "path": "Control/user/day/settings.json",
+    "revision": "absent",
+    "saved": false,
+    "schema": "central.day-settings-reading/v1",
+    "scope_ref": "control:root",
+    "settings": {
+     "agent_writes": "propose",
+     "close_routine": true,
+     "moves": {
+      "close": {
+       "prompt": null,
+       "runs_at": {
+        "kind": "day_start"
+       }
+      },
+      "context": {
+       "prompt": null,
+       "runs_at": {
+        "kind": "off"
+       }
+      },
+      "patterns": {
+       "prompt": null,
+       "runs_at": {
+        "kind": "off"
+       }
+      },
+      "synthesis": {
+       "prompt": null,
+       "runs_at": {
+        "kind": "off"
+       }
+      },
+      "tasks": {
+       "prompt": null,
+       "runs_at": {
+        "kind": "off"
+       }
+      }
+     },
+     "rollover": null,
+     "schema": "central.day-settings/v1",
+     "scope_ref": "control:root",
+     "sources": {
+      "central": true,
+      "expressions": true,
+      "factory": true,
+      "live": true,
+      "techne": true
+     }
+    },
+    "standing": {
+     "agent_writes": "default",
+     "close_routine": "default",
+     "moves": {
+      "close": {
+       "prompt": "default",
+       "runs_at": "default"
+      },
+      "context": {
+       "prompt": "default",
+       "runs_at": "default"
+      },
+      "patterns": {
+       "prompt": "default",
+       "runs_at": "default"
+      },
+      "synthesis": {
+       "prompt": "default",
+       "runs_at": "default"
+      },
+      "tasks": {
+       "prompt": "default",
+       "runs_at": "default"
+      }
+     },
+     "rollover": "default",
+     "sources": {
+      "central": "default",
+      "expressions": "default",
+      "factory": "default",
+      "live": "default",
+      "techne": "default"
+     }
+    }
+   }
+  }
+ },
+ "gitCensus": {
+  "action": "central.git.census",
+  "input": {
+   "project": "O-I"
+  },
+  "data": {
+   "attention": [
+    {
+     "branch": "dlw/build",
+     "kind": "unattributed_worktree",
+     "path": "/Users/admin/Central/worktrees/env-1/o-i",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "dlw/native-build",
+     "kind": "unattributed_worktree",
+     "path": "/Users/admin/Central/worktrees/env-2/o-i",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "dlw/t1-theme",
+     "kind": "unattributed_worktree",
+     "path": "/Users/admin/Central/worktrees/env-3/o-i",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "agent/o-i-20261007-0824",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "agent/o-i-20261007-0824",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "agent/o-i-20261007-1639",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "agent/o-i-20261008-1823",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "chore/untrack-ableton-corpus-20261012",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "craft/live-re-20261007",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "dlw/build",
+     "checked_out": true,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "dlw/build-20261012",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "dlw/native-build",
+     "checked_out": true,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "dlw/t1-theme",
+     "checked_out": true,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "dlw/t1-theme-wip",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "docs/dlw-manual-20261013",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "enrich/expressions-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "enrich/expressions-convergence",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "enrich/expressions-convergence",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "enrich/expressions-craft-20261007",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "enrich/tarot-score-312-landing",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/281-played-instrument-in-app",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/central-field-base",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-findings-complete-20261007",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-findings-reconciled-20261007",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-findings-reconciliation-20261007",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-stage4-presentation-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-stage4-presentation-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-stage4-replay-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-world-s1-20261005",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-world-s1-20261005",
+     "days_idle": 15,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-world-s2-20261005",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-world-s2-20261005",
+     "days_idle": 15,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-world-s3-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/epi-world-s3-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/live-re-lane-15min-workload",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/nara-identity-expression-20260927",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/nara-identity-expression-20260927",
+     "days_idle": 15,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/owner-requests-inbox-20260929",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/owner-requests-inbox-20260929",
+     "days_idle": 20,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/personal-history-user-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/personal-history-user-20261006",
+     "days_idle": 15,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/plural-flow-20260930",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/plural-flow-20260930",
+     "days_idle": 19,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/shared-expression-20260930",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/shared-expression-20260930",
+     "days_idle": 19,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/stage-op-relay-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "feat/stage-op-relay-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/collapsed-title-first-tab-overlap",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/collapsed-title-first-tab-overlap",
+     "days_idle": 21,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/exec-busy-parity-20261012",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/graph-inputs-wiki-links",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/harness-settings-owner-wiring",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/harness-settings-owner-wiring",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/narrow-title-tab-overlap",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/narrow-title-tab-overlap",
+     "days_idle": 21,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/shared-field-20261005",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/shared-field-20261005",
+     "days_idle": 15,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fix/untrack-target-symlink-20261012",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "fold/day-close-20261012",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "hermes-contract-fold",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "infra/vercel-wiring",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "infra/vercel-wiring",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "integrate/oi-scene-nara",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "integrate/oi-scene-nara",
+     "days_idle": 21,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "landing-currentness",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "landing-currentness",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "landing/device-ui-rounds-20261011",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "landing/live-re-15min-20261011",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "m-prime-methodology",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "main",
+     "checked_out": true,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "main-convergence-20261010",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "now-field-supply-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "now/field-settle-20261012",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "parked/env2-o-i-site-dirt-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "parked/env2-o-i-site-dirt-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "pr-573",
+     "days_idle": 15,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "pr-596",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "pr-599",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "pr-599",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "pr-605",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "psg-sampler-299",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/281-replan-dirt-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/281-replan-dirt-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/env-2-oi-dirt-20261006-pre-central-field",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/env-2-oi-dirt-20261006-pre-central-field",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/env-3-oi-ui-coherence-dirt-20261006-pre-central-field",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/env-3-oi-ui-coherence-dirt-20261006-pre-central-field",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/env2-o-i-epi-world-dirt-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/env2-o-i-epi-world-dirt-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/expression-enrichment-dirt-20261007",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/expression-enrichment-dirt-20261007",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/tarot-score-312-20261007",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recover/tarot-score-312-20261007b",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recovered/central-field-base-dirt-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "recovered/central-field-base-dirt-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "site/essay-live-library-retired-20261006",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "site/essay-live-library-retired-20261006",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "site/essay-significance-pin-20261007",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "site/home-redesign-20261005",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "site/home-redesign-20261005",
+     "days_idle": 15,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "ui-coherence-track-20261005",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "ui-coherence-track-20261005",
+     "days_idle": 14,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "web65/shared-world-participation",
+     "checked_out": false,
+     "kind": "local_only_branch",
+     "repo": "Work/O-I"
+    },
+    {
+     "branch": "web65/shared-world-participation",
+     "days_idle": 22,
+     "kind": "stale_branch",
+     "repo": "Work/O-I"
+    }
+   ],
+   "generated_at": "2026-10-21T08:47:15.952644+00:00",
+   "repos": [
+    {
+     "bare": false,
+     "branches": [
+      {
+       "ahead": null,
+       "behind": 1446,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T03:01:21+01:00",
+       "local_only": true,
+       "name": "agent/o-i-20261007-0824",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": 41,
+       "behind": 1420,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-10T23:05:17+01:00",
+       "local_only": true,
+       "name": "agent/o-i-20261007-1639",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": 12,
+       "behind": 1435,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-08T19:27:31+01:00",
+       "local_only": true,
+       "name": "agent/o-i-20261008-1823",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-12T21:55:38+01:00",
+       "local_only": true,
+       "name": "chore/untrack-ableton-corpus-20261012",
+       "upstream": "origin/chore/untrack-ableton-corpus-20261012"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T22:32:04+01:00",
+       "local_only": true,
+       "name": "craft/live-re-20261007",
+       "upstream": null
+      },
+      {
+       "ahead": 7,
+       "behind": null,
+       "checked_out_in": [
+        "/Users/admin/Central/worktrees/env-1/o-i"
+       ],
+       "last_commit_at": "2026-10-21T09:42:54+01:00",
+       "local_only": true,
+       "name": "dlw/build",
+       "upstream": "origin/dlw/build"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-12T22:25:16+01:00",
+       "local_only": true,
+       "name": "dlw/build-20261012",
+       "upstream": "origin/dlw/build-20261012"
+      },
+      {
+       "ahead": null,
+       "behind": 16,
+       "checked_out_in": [
+        "/Users/admin/Central/worktrees/env-2/o-i"
+       ],
+       "last_commit_at": "2026-10-21T00:42:49+01:00",
+       "local_only": true,
+       "name": "dlw/native-build",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": 716,
+       "checked_out_in": [
+        "/Users/admin/Central/worktrees/env-3/o-i"
+       ],
+       "last_commit_at": "2026-10-18T02:23:33+01:00",
+       "local_only": true,
+       "name": "dlw/t1-theme",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-17T10:19:37+01:00",
+       "local_only": true,
+       "name": "dlw/t1-theme-wip",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-14T11:30:34+01:00",
+       "local_only": true,
+       "name": "docs/dlw-manual-20261013",
+       "upstream": "origin/docs/dlw-manual-20261013"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T19:19:37+01:00",
+       "local_only": false,
+       "name": "enrich/expressions-20261006",
+       "upstream": "origin/enrich/expressions-20261006"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T23:09:17+01:00",
+       "local_only": true,
+       "name": "enrich/expressions-convergence",
+       "upstream": "origin/enrich/expressions-convergence"
+      },
+      {
+       "ahead": 6,
+       "behind": 1445,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T15:45:48+01:00",
+       "local_only": true,
+       "name": "enrich/expressions-craft-20261007",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": 14,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T11:34:21+01:00",
+       "local_only": true,
+       "name": "enrich/tarot-score-312-landing",
+       "upstream": "origin/enrich/tarot-score-312-landing"
+      },
+      {
+       "ahead": null,
+       "behind": 1454,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T18:30:07+01:00",
+       "local_only": false,
+       "name": "feat/281-played-instrument-in-app",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": 8,
+       "behind": 1388,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-12T13:19:27+01:00",
+       "local_only": true,
+       "name": "feat/central-field-base",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-08T12:34:58+01:00",
+       "local_only": true,
+       "name": "feat/epi-findings-complete-20261007",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-08T13:38:16+01:00",
+       "local_only": true,
+       "name": "feat/epi-findings-reconciled-20261007",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-08T10:42:50+01:00",
+       "local_only": true,
+       "name": "feat/epi-findings-reconciliation-20261007",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T20:42:47+01:00",
+       "local_only": true,
+       "name": "feat/epi-stage4-presentation-20261006",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-08T10:13:16+01:00",
+       "local_only": true,
+       "name": "feat/epi-stage4-replay-20261006",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-05T17:56:58+01:00",
+       "local_only": true,
+       "name": "feat/epi-world-s1-20261005",
+       "upstream": "origin/feat/epi-world-s1-20261005"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T00:21:56+01:00",
+       "local_only": true,
+       "name": "feat/epi-world-s2-20261005",
+       "upstream": "origin/feat/epi-world-s2-20261005"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T13:25:25+01:00",
+       "local_only": true,
+       "name": "feat/epi-world-s3-20261006",
+       "upstream": "origin/feat/epi-world-s3-20261006"
+      },
+      {
+       "ahead": 1,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-08T16:11:43+01:00",
+       "local_only": true,
+       "name": "feat/live-re-lane-15min-workload",
+       "upstream": "origin/feat/live-re-lane-15min-workload"
+      },
+      {
+       "ahead": 9,
+       "behind": 1515,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-05T09:50:46+01:00",
+       "local_only": true,
+       "name": "feat/nara-identity-expression-20260927",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-09-30T09:59:30+01:00",
+       "local_only": true,
+       "name": "feat/owner-requests-inbox-20260929",
+       "upstream": "origin/feat/owner-requests-inbox-20260929"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T03:18:49+01:00",
+       "local_only": true,
+       "name": "feat/personal-history-user-20261006",
+       "upstream": "origin/feat/personal-history-user-20261006"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-01T18:48:06+01:00",
+       "local_only": true,
+       "name": "feat/plural-flow-20260930",
+       "upstream": "origin/feat/plural-flow-ui-20260930"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-01T23:19:39+01:00",
+       "local_only": true,
+       "name": "feat/shared-expression-20260930",
+       "upstream": "origin/feat/shared-expression-20260930"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T11:08:36+01:00",
+       "local_only": true,
+       "name": "feat/stage-op-relay-20261006",
+       "upstream": "origin/feat/stage-op-relay-20261006"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-09-29T11:15:58+01:00",
+       "local_only": true,
+       "name": "fix/collapsed-title-first-tab-overlap",
+       "upstream": "origin/fix/collapsed-title-first-tab-overlap"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-12T20:33:38+01:00",
+       "local_only": true,
+       "name": "fix/exec-busy-parity-20261012",
+       "upstream": "origin/fix/exec-busy-parity-20261012"
+      },
+      {
+       "ahead": null,
+       "behind": 1445,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T09:47:35+01:00",
+       "local_only": true,
+       "name": "fix/graph-inputs-wiki-links",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T22:45:30+01:00",
+       "local_only": true,
+       "name": "fix/harness-settings-owner-wiring",
+       "upstream": "origin/fix/harness-settings-owner-wiring"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-09-29T10:38:40+01:00",
+       "local_only": true,
+       "name": "fix/narrow-title-tab-overlap",
+       "upstream": "origin/fix/narrow-title-tab-overlap"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-05T18:48:44+01:00",
+       "local_only": true,
+       "name": "fix/shared-field-20261005",
+       "upstream": "origin/fix/shared-field-20261005"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-12T21:01:00+01:00",
+       "local_only": true,
+       "name": "fix/untrack-target-symlink-20261012",
+       "upstream": "origin/fix/untrack-target-symlink-20261012"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-13T00:00:59+01:00",
+       "local_only": true,
+       "name": "fold/day-close-20261012",
+       "upstream": "origin/fold/day-close-20261012"
+      },
+      {
+       "ahead": 1,
+       "behind": 1418,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-11T00:58:43+01:00",
+       "local_only": true,
+       "name": "hermes-contract-fold",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T23:09:17+01:00",
+       "local_only": true,
+       "name": "infra/vercel-wiring",
+       "upstream": "origin/infra/vercel-wiring"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-09-30T00:03:08+01:00",
+       "local_only": true,
+       "name": "integrate/oi-scene-nara",
+       "upstream": "origin/integrate/oi-scene-nara"
+      },
+      {
+       "ahead": null,
+       "behind": 16,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T18:38:51+01:00",
+       "local_only": true,
+       "name": "landing-currentness",
+       "upstream": "origin/enrich/tarot-score-312-landing"
+      },
+      {
+       "ahead": 16,
+       "behind": 1404,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-11T21:42:43+01:00",
+       "local_only": true,
+       "name": "landing/device-ui-rounds-20261011",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": 1404,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-11T21:34:22+01:00",
+       "local_only": true,
+       "name": "landing/live-re-15min-20261011",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-11T12:51:31+01:00",
+       "local_only": true,
+       "name": "m-prime-methodology",
+       "upstream": "origin/m-prime-methodology"
+      },
+      {
+       "ahead": null,
+       "behind": 579,
+       "checked_out_in": [
+        "/Users/admin/Central/Work/O-I"
+       ],
+       "last_commit_at": "2026-10-20T14:06:26+01:00",
+       "local_only": true,
+       "name": "main",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-11T00:12:58+01:00",
+       "local_only": true,
+       "name": "main-convergence-20261010",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-11T21:20:48+01:00",
+       "local_only": true,
+       "name": "now-field-supply-20261006",
+       "upstream": "origin/now-field-supply-20261006"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-12T20:34:33+01:00",
+       "local_only": true,
+       "name": "now/field-settle-20261012",
+       "upstream": "origin/now/field-settle-20261012"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T11:21:37+01:00",
+       "local_only": true,
+       "name": "parked/env2-o-i-site-dirt-20261006",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-05T09:50:19+01:00",
+       "local_only": false,
+       "name": "pr-573",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-08T13:27:59+01:00",
+       "local_only": true,
+       "name": "pr-596",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T23:03:00+01:00",
+       "local_only": true,
+       "name": "pr-599",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T19:57:57+01:00",
+       "local_only": false,
+       "name": "pr-605",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-08T13:27:13+01:00",
+       "local_only": false,
+       "name": "pr-624",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T16:17:33+01:00",
+       "local_only": true,
+       "name": "psg-sampler-299",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T19:38:32+01:00",
+       "local_only": true,
+       "name": "recover/281-replan-dirt-20261006",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T17:45:14+01:00",
+       "local_only": true,
+       "name": "recover/env-2-oi-dirt-20261006-pre-central-field",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T21:56:16+01:00",
+       "local_only": true,
+       "name": "recover/env-3-oi-ui-coherence-dirt-20261006-pre-central-field",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T11:32:57+01:00",
+       "local_only": true,
+       "name": "recover/env2-o-i-epi-world-dirt-20261006",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T02:20:42+01:00",
+       "local_only": true,
+       "name": "recover/expression-enrichment-dirt-20261007",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T11:30:13+01:00",
+       "local_only": true,
+       "name": "recover/tarot-score-312-20261007",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T11:32:52+01:00",
+       "local_only": true,
+       "name": "recover/tarot-score-312-20261007b",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T21:51:15+01:00",
+       "local_only": true,
+       "name": "recovered/central-field-base-dirt-20261006",
+       "upstream": null
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T14:17:03+01:00",
+       "local_only": false,
+       "name": "relay/codex-ci-repair-296-walk-bridge-20261007",
+       "upstream": "origin/relay/codex-ci-repair-296-walk-bridge-20261007"
+      },
+      {
+       "ahead": 19,
+       "behind": 1459,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T15:19:31+01:00",
+       "local_only": true,
+       "name": "site/essay-live-library-retired-20261006",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T19:48:36+01:00",
+       "local_only": true,
+       "name": "site/essay-significance-pin-20261007",
+       "upstream": "origin/site/essay-significance-pin-20261007"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-05T20:14:15+01:00",
+       "local_only": true,
+       "name": "site/home-redesign-20261005",
+       "upstream": "origin/site/home-redesign-20261005"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-07T11:29:04+01:00",
+       "local_only": false,
+       "name": "study/zcode-desktop-3.14.3",
+       "upstream": null
+      },
+      {
+       "ahead": 21,
+       "behind": 1464,
+       "checked_out_in": [],
+       "last_commit_at": "2026-10-06T14:38:30+01:00",
+       "local_only": true,
+       "name": "ui-coherence-track-20261005",
+       "upstream": "origin/main"
+      },
+      {
+       "ahead": null,
+       "behind": null,
+       "checked_out_in": [],
+       "last_commit_at": "2026-09-28T22:05:16+01:00",
+       "local_only": true,
+       "name": "web65/shared-world-participation",
+       "upstream": "origin/web65/shared-world-participation"
+      }
+     ],
+     "default_branch": "main",
+     "dirty_paths": null,
+     "head_branch": "main",
+     "head_sha": "f78bc6aa40953df10881a92827cee2014d74b1df",
+     "remote": "https://github.com/EpiLogos/O-I.git",
+     "repo": "Work/O-I",
+     "repo_root": "/Users/admin/Central/Work/O-I",
+     "unborn": false,
+     "unmerged_tips": [
+      "agent/o-i-20261007-0824",
+      "agent/o-i-20261007-1639",
+      "agent/o-i-20261008-1823",
+      "chore/untrack-ableton-corpus-20261012",
+      "craft/live-re-20261007",
+      "dlw/build",
+      "dlw/build-20261012",
+      "dlw/native-build",
+      "dlw/t1-theme",
+      "dlw/t1-theme-wip",
+      "docs/dlw-manual-20261013",
+      "enrich/expressions-convergence",
+      "enrich/expressions-craft-20261007",
+      "enrich/tarot-score-312-landing",
+      "feat/central-field-base",
+      "feat/epi-findings-complete-20261007",
+      "feat/epi-findings-reconciled-20261007",
+      "feat/epi-findings-reconciliation-20261007",
+      "feat/epi-stage4-presentation-20261006",
+      "feat/epi-stage4-replay-20261006",
+      "feat/epi-world-s1-20261005",
+      "feat/epi-world-s2-20261005",
+      "feat/epi-world-s3-20261006",
+      "feat/live-re-lane-15min-workload",
+      "feat/nara-identity-expression-20260927",
+      "feat/owner-requests-inbox-20260929",
+      "feat/personal-history-user-20261006",
+      "feat/plural-flow-20260930",
+      "feat/shared-expression-20260930",
+      "feat/stage-op-relay-20261006",
+      "fix/collapsed-title-first-tab-overlap",
+      "fix/exec-busy-parity-20261012",
+      "fix/graph-inputs-wiki-links",
+      "fix/harness-settings-owner-wiring",
+      "fix/narrow-title-tab-overlap",
+      "fix/shared-field-20261005",
+      "fix/untrack-target-symlink-20261012",
+      "fold/day-close-20261012",
+      "hermes-contract-fold",
+      "infra/vercel-wiring",
+      "integrate/oi-scene-nara",
+      "landing-currentness",
+      "landing/device-ui-rounds-20261011",
+      "landing/live-re-15min-20261011",
+      "m-prime-methodology",
+      "main",
+      "main-convergence-20261010",
+      "now-field-supply-20261006",
+      "now/field-settle-20261012",
+      "parked/env2-o-i-site-dirt-20261006",
+      "pr-596",
+      "pr-599",
+      "psg-sampler-299",
+      "recover/281-replan-dirt-20261006",
+      "recover/env-2-oi-dirt-20261006-pre-central-field",
+      "recover/env-3-oi-ui-coherence-dirt-20261006-pre-central-field",
+      "recover/env2-o-i-epi-world-dirt-20261006",
+      "recover/expression-enrichment-dirt-20261007",
+      "recover/tarot-score-312-20261007",
+      "recover/tarot-score-312-20261007b",
+      "recovered/central-field-base-dirt-20261006",
+      "site/essay-live-library-retired-20261006",
+      "site/essay-significance-pin-20261007",
+      "site/home-redesign-20261005",
+      "ui-coherence-track-20261005",
+      "web65/shared-world-participation"
+     ],
+     "worktrees": [
+      {
+       "ahead": null,
+       "bare": false,
+       "behind": 579,
+       "branch": "main",
+       "detached": false,
+       "dirty_files": 17,
+       "lane": "unattributed",
+       "last_commit_at": "2026-10-20T14:06:26+01:00",
+       "locked": false,
+       "path": "/Users/admin/Central/Work/O-I",
+       "prunable": false
+      },
+      {
+       "ahead": 7,
+       "bare": false,
+       "behind": null,
+       "branch": "dlw/build",
+       "detached": false,
+       "dirty_files": 13,
+       "lane": "unattributed",
+       "last_commit_at": "2026-10-21T09:42:54+01:00",
+       "locked": false,
+       "path": "/Users/admin/Central/worktrees/env-1/o-i",
+       "prunable": false
+      },
+      {
+       "ahead": null,
+       "bare": false,
+       "behind": 16,
+       "branch": "dlw/native-build",
+       "detached": false,
+       "dirty_files": 1,
+       "lane": "unattributed",
+       "last_commit_at": "2026-10-21T00:42:49+01:00",
+       "locked": false,
+       "path": "/Users/admin/Central/worktrees/env-2/o-i",
+       "prunable": false
+      },
+      {
+       "ahead": null,
+       "bare": false,
+       "behind": 716,
+       "branch": "dlw/t1-theme",
+       "detached": false,
+       "dirty_files": null,
+       "lane": "unattributed",
+       "last_commit_at": "2026-10-18T02:23:33+01:00",
+       "locked": false,
+       "path": "/Users/admin/Central/worktrees/env-3/o-i",
+       "prunable": false
+      }
+     ]
+    }
+   ],
+   "schema": "central.git-census/v1",
+   "scope": [
+    "Work/O-I"
+   ],
+   "summary": {
+    "attention_items": 104,
+    "branches": 73,
+    "local_only_branches": 66,
+    "repos_censused": 1,
+    "repos_errored": 0,
+    "unattributed_worktrees": 3,
+    "worktrees": 4
+   }
+  }
+ },
+ "effectiveSources": {
+  "action": "central.world.effective-sources",
+  "input": {
+   "scope": "root",
+   "world_ref": "control:root"
+  },
+  "data": {
+   "inherited_root_lineage": false,
+   "sources": [
+    {
+     "authority": "agent-maintained",
+     "effective_revision": "1",
+     "effective_source_world": "control:root",
+     "effective_treatment": "agent-maintained",
+     "propagation_path": [
+      "control:root"
+     ],
+     "provenance": [
+      {
+       "authority": "agent-maintained",
+       "revision": "1",
+       "treatment": "agent-maintained",
+       "world": "control:root"
+      }
+     ],
+     "ref": "central:source:control:root:Control/agents",
+     "source_treatment": "agent-maintained",
+     "state": "available"
+    },
+    {
+     "authority": "agent-maintained",
+     "effective_revision": "1",
+     "effective_source_world": "control:root",
+     "effective_treatment": "agent-maintained",
+     "propagation_path": [
+      "control:root"
+     ],
+     "provenance": [
+      {
+       "authority": "agent-maintained",
+       "revision": "1",
+       "treatment": "agent-maintained",
+       "world": "control:root"
+      }
+     ],
+     "ref": "central:source:control:root:Control/relations",
+     "source_treatment": "agent-maintained",
+     "state": "available"
+    },
+    {
+     "authority": "human-authored",
+     "effective_revision": "1",
+     "effective_source_world": "control:root",
+     "effective_treatment": "canonical",
+     "propagation_path": [
+      "control:root"
+     ],
+     "provenance": [
+      {
+       "authority": "human-authored",
+       "revision": "1",
+       "treatment": "canonical",
+       "world": "control:root"
+      }
+     ],
+     "ref": "central:source:control:root:Control/user/identity",
+     "source_treatment": "canonical",
+     "state": "available"
+    }
+   ],
+   "world_ref": "control:root"
+  }
+ },
+ "wiki": {
+  "action": "central.wiki.read",
+  "input": {},
+  "data": {
+   "automatic_agent_or_model_invocation": false,
+   "counts": {
+    "edges": 34,
+    "knowledge_edges": 0,
+    "nodes": 5,
+    "objects": 6,
+    "other_objects": 0,
+    "spaces": 1
+   },
+   "knowledge_edges": [],
+   "nodes": [
+    {
+     "node_type": "intent",
+     "provenance_source_refs": [
+      "staging/propose-not-write"
+     ],
+     "ql": {
+      "face": "direct",
+      "position": 3,
+      "unit": "documentation"
+     },
+     "ref": "wiki:node:staged/propose-not-write",
+     "revision": 1,
+     "source_refs": [
+      "staging/propose-not-write"
+     ],
+     "space_refs": [
+      "central:wiki:root"
+     ],
+     "title": "You may propose"
+    },
+    {
+     "node_type": "identity",
+     "provenance_source_refs": [
+      "Control/user/identity.md"
+     ],
+     "ref": "wiki:node:identity",
+     "revision": 1,
+     "source_refs": [
+      "Control/user/identity.md"
+     ],
+     "space_refs": [
+      "central:wiki:root"
+     ],
+     "title": "User identity"
+    },
+    {
+     "node_type": "return",
+     "provenance_source_refs": [],
+     "ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+     "revision": 1,
+     "source_refs": [
+      "central:source:control:root:Control/agents/wiki/returns/ta-onta-and-the-thought-stream-2026-09-16.md"
+     ],
+     "space_refs": [
+      "central:wiki:root"
+     ],
+     "title": "The beings, the thought stream, and who owns what"
+    },
+    {
+     "node_type": "return",
+     "provenance_source_refs": [
+      "commission:herdr-omarchy-multisurface-158"
+     ],
+     "ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "revision": 1,
+     "source_refs": [
+      "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/IMPLEMENTATION-PACKET.md",
+      "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/omarchy-packet/findings.md"
+     ],
+     "space_refs": [
+      "central:wiki:root"
+     ],
+     "title": "A place provider reconciles like the floor"
+    },
+    {
+     "node_type": "learning",
+     "provenance_source_refs": [
+      "commission:oi527-command-work-journey-20260927"
+     ],
+     "ref": "wiki:node:delivered-lane-loses-install",
+     "revision": 1,
+     "source_refs": [
+      "central:source:control:root:Work/O-I/.wayfinder/maps/command-encounter-convergence.md",
+      "git:ai-kit@convergence/command-encounter-20260926",
+      "git:ai-kit@guidance/development-world-shape"
+     ],
+     "space_refs": [
+      "central:wiki:root"
+     ],
+     "title": "A delivered lane that leaves the installed cut is lost work"
+    }
+   ],
+   "profile": "okf-wiki/v1",
+   "register": "root",
+   "relations": [
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "kind": "node-source",
+     "to_ref": "central:source:control:root:Work/O-I/.wayfinder/maps/command-encounter-convergence.md"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "kind": "node-source",
+     "to_ref": "commission:oi527-command-work-journey-20260927"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "kind": "node-source",
+     "to_ref": "git:ai-kit@convergence/command-encounter-20260926"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "kind": "node-source",
+     "to_ref": "git:ai-kit@guidance/development-world-shape"
+    },
+    {
+     "from_ref": "wiki:node:identity",
+     "kind": "node-source",
+     "to_ref": "Control/user/identity.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "kind": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/IMPLEMENTATION-PACKET.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "kind": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/omarchy-packet/findings.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "kind": "node-source",
+     "to_ref": "commission:herdr-omarchy-multisurface-158"
+    },
+    {
+     "from_ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+     "kind": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/wiki/returns/ta-onta-and-the-thought-stream-2026-09-16.md"
+    },
+    {
+     "from_ref": "wiki:node:staged/propose-not-write",
+     "kind": "node-source",
+     "to_ref": "staging/propose-not-write"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "kind": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:identity",
+     "kind": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "kind": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+     "kind": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:staged/propose-not-write",
+     "kind": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Actuation"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Archetypal-Earth"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Central"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Epi-Prime"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Factory"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:O-I"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Point-Cloud-Demo"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Quaternal-I-Ching"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Quaternal-Tarot"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:Workcell"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:ai-kit"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:face-rig"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:personal"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-child-space",
+     "to_ref": "central:wiki:project:projects"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-node",
+     "to_ref": "wiki:node:delivered-lane-loses-install"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-node",
+     "to_ref": "wiki:node:identity"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-node",
+     "to_ref": "wiki:node:place-provider-reconciles-like-the-floor"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-node",
+     "to_ref": "wiki:node:root/ta-onta-and-the-thought-stream"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "kind": "space-node",
+     "to_ref": "wiki:node:staged/propose-not-write"
+    }
+   ],
+   "schema": "central.wiki-reading/v1",
+   "source": {
+    "path": "Control/agents/wiki/wiki.json",
+    "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+    "revision": "central.content-fnv1a64/v1:8976:b2c31a010b50ecc0"
+   },
+   "spaces": [
+    {
+     "anchor_ref": "wiki:node:identity",
+     "child_space_refs": [
+      "central:wiki:project:Actuation",
+      "central:wiki:project:Central",
+      "central:wiki:project:Epi-Prime",
+      "central:wiki:project:Factory",
+      "central:wiki:project:O-I",
+      "central:wiki:project:Point-Cloud-Demo",
+      "central:wiki:project:Workcell",
+      "central:wiki:project:ai-kit",
+      "central:wiki:project:personal",
+      "central:wiki:project:projects",
+      "central:wiki:project:Archetypal-Earth",
+      "central:wiki:project:Quaternal-I-Ching",
+      "central:wiki:project:Quaternal-Tarot",
+      "central:wiki:project:face-rig"
+     ],
+     "node_refs": [
+      "wiki:node:delivered-lane-loses-install",
+      "wiki:node:identity",
+      "wiki:node:place-provider-reconciles-like-the-floor",
+      "wiki:node:root/ta-onta-and-the-thought-stream",
+      "wiki:node:staged/propose-not-write"
+     ],
+     "parent_space_refs": [],
+     "ref": "central:wiki:root",
+     "revision": 67,
+     "title": "Central"
+    }
+   ],
+   "world_ref": "control:root"
+  }
+ },
+ "sourceHistory": {
+  "action": "central.temporal.source-history",
+  "input": {
+   "source_ref": "central:source:control:root:Control/user/day/2026-10-19/day.md",
+   "limit": 5
+  },
+  "data": {
+   "automatic_agent_or_model_invocation": false,
+   "entries": [
+    {
+     "actor": "central:source:control:root:Control/user/identity",
+     "actor_kind": "human",
+     "agent_session_ref": null,
+     "cursor": 8,
+     "previous_revision": "central.content-fnv1a64/v1:400167:3861bb8f0947f9f9",
+     "recorded_at_unix_seconds": 1792422986,
+     "restored_from": null,
+     "revision": "central.content-fnv1a64/v1:400715:e9d0292a1fc37b9f",
+     "source_path": "Control/user/day/2026-10-19/day.md"
+    },
+    {
+     "actor": "central:source:control:root:Control/user/identity",
+     "actor_kind": "human",
+     "agent_session_ref": null,
+     "cursor": 7,
+     "previous_revision": "central.content-fnv1a64/v1:399835:31f9791bc50f5c53",
+     "recorded_at_unix_seconds": 1792422930,
+     "restored_from": null,
+     "revision": "central.content-fnv1a64/v1:400167:3861bb8f0947f9f9",
+     "source_path": "Control/user/day/2026-10-19/day.md"
+    },
+    {
+     "actor": "central:source:control:root:Control/user/identity",
+     "actor_kind": "human",
+     "agent_session_ref": null,
+     "cursor": 6,
+     "previous_revision": "central.content-fnv1a64/v1:399287:bb73583f0e86b5b4",
+     "recorded_at_unix_seconds": 1792418843,
+     "restored_from": null,
+     "revision": "central.content-fnv1a64/v1:399835:31f9791bc50f5c53",
+     "source_path": "Control/user/day/2026-10-19/day.md"
+    },
+    {
+     "actor": "central:source:control:root:Control/user/identity",
+     "actor_kind": "human",
+     "agent_session_ref": null,
+     "cursor": 5,
+     "previous_revision": "central.content-fnv1a64/v1:398955:f8b0899adbc31de5",
+     "recorded_at_unix_seconds": 1792418678,
+     "restored_from": null,
+     "revision": "central.content-fnv1a64/v1:399287:bb73583f0e86b5b4",
+     "source_path": "Control/user/day/2026-10-19/day.md"
+    },
+    {
+     "actor": "central:source:control:root:Control/user/identity",
+     "actor_kind": "human",
+     "agent_session_ref": null,
+     "cursor": 4,
+     "previous_revision": "central.content-fnv1a64/v1:398407:9a1f0787b94dafa8",
+     "recorded_at_unix_seconds": 1792418652,
+     "restored_from": null,
+     "revision": "central.content-fnv1a64/v1:398955:f8b0899adbc31de5",
+     "source_path": "Control/user/day/2026-10-19/day.md"
+    }
+   ],
+   "more": true,
+   "next_before": 4,
+   "provider": "central.native-file-history",
+   "revision": {
+    "byte_len": 400715,
+    "revision": "central.content-fnv1a64/v1:400715:e9d0292a1fc37b9f"
+   },
+   "schema": "central.source-history/v1",
+   "source": {
+    "agent_retrieval_allowed": true,
+    "path": "Control/user/day/2026-10-19/day.md",
+    "provenance": "observed",
+    "ref": "central:source:control:root:Control/user/day/2026-10-19/day.md",
+    "roles": [
+     "human-day",
+     "personal-human-source-aperture",
+     "protected-contribution-document"
+    ],
+    "standing": "current-development-state",
+    "treatment": "projectcentral-user"
+   }
+  }
+ },
+ "controlSearch": {
+  "action": "control.search",
+  "input": {
+   "query": "day"
+  },
+  "envelope": {
+   "ok": false,
+   "status": "internal_failure",
+   "action": "control.search",
+   "error": {
+    "code": "internal_failure",
+    "message": "Native source exceeds the 4 MiB eager read capacity",
+    "details": {
+     "effects": "none",
+     "io_error": {
+      "kind": "InvalidData",
+      "message": "Native source exceeds the 4 MiB eager read capacity",
+      "raw_os_error": null
+     }
+    }
+   }
+  }
+ }
+}

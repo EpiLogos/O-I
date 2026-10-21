@@ -394,3 +394,42 @@ test('a key the view holds goes to the binding\'s own hand at once — its drop 
   assert.deepEqual(host.hostState('r:local').drafts, {reach: 3})
   host.resetHost('r:local')
 })
+
+// ── §16.3 a device has the views of the places it stands in ─────────────────────────────────────────────────────────────
+
+test('views by place: a monitor draws its tile and its Full, its window holds its Full, and no place draws a fold, a compact or a Whole of it', async () => {
+  const {design: nows} = await import('../src/inhabitants/catalogue/panels/widgets__nows.tsx')
+  assert.equal(nows.kind, 'monitor')
+  assert.deepEqual(host.viewsOf(nows), ['widget', 'full'])
+  for (const view of ['folded', 'compact', 'whole']) assert.equal(host.viewIn(nows, view), null, view)
+  assert.equal(host.viewIn(nows, 'widget'), 'widget')
+  assert.equal(host.viewIn(nows, 'full'), 'full')
+  assert.equal(host.viewIn(nows, 'popout'), 'popout', 'its window holds its Full')
+  const binding = {id: 'r:monitor', values: {}}
+  for (const view of ['folded', 'compact', 'whole']) {
+    const drawn = html(createElement(host.HostedDevice, {designed: nows, binding, view, nav: {}, chain: view === 'compact'}))
+    assert.match(drawn, new RegExp(`data-device-absent="${view}"`), view)
+    assert.match(drawn, /has no \w+ view: it stands on the rail and full in a pane, never on a chain/)
+    assert.doesNotMatch(drawn, /dp-folded|dp-compact/, `${view}: no plate`)
+  }
+  for (const view of ['widget', 'full', 'popout']) assert.doesNotMatch(html(createElement(host.HostedDevice, {designed: nows, binding, view, nav: {}})), /data-device-absent/, view)
+})
+
+test('views by place: the head offers only the marks of the places a device stands in', async () => {
+  const marks = {select: () => {}, expand: () => {}, expanded: false, full: () => {}, popout: () => {}, fold: () => {}, unfold: () => {}, rail: () => {}, close: () => {}}
+  const {design: nows} = await import('../src/inhabitants/catalogue/panels/widgets__nows.tsx')
+  assert.deepEqual(Object.keys(host.navWithin(nows, marks)).sort(), ['close', 'full', 'popout', 'rail'], 'a monitor: ⤢, ↗, the rail and its ✕')
+  const {design: link} = await import('../src/inhabitants/catalogue/panels/workcell__link.tsx')
+  assert.deepEqual(Object.keys(host.navWithin(link, marks)).sort(), ['close', 'expand', 'expanded', 'full', 'popout', 'rail', 'select'], 'Link: no fold')
+  const {design: settings} = await import('../src/inhabitants/catalogue/panels/settings__window.tsx')
+  assert.deepEqual(Object.keys(host.navWithin(settings, marks)).sort(), ['close', 'full', 'popout'], 'a Full alone')
+  const all = {id: 'x', views: undefined}
+  assert.equal(host.navWithin(all, marks), marks, 'a device of every place keeps every mark')
+})
+
+test('views by place: a device with no Whole opens its window on its Full alone; with one, Full over Whole', async () => {
+  const {design: settings} = await import('../src/inhabitants/catalogue/panels/settings__window.tsx')
+  const window = html(createElement(host.HostedDevice, {designed: settings, binding: {id: 'r:settings', values: {}}, view: 'popout', nav: {}, room: {w: 900, h: 600}}))
+  assert.match(window, /dp-window-body/)
+  assert.doesNotMatch(window, /dp-window-controls/, 'no Whole docked under it')
+})

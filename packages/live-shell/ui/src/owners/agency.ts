@@ -8,27 +8,26 @@
 //   - after the shell's own acts that change sessions, on their receipt (`tellOwnerChanged({topic: 'agency'})`: a harness
 //     control, a prepared session, a conversation turn sent or cancelled);
 //   - on a kernel receipt that can move it (`receiptMovesAgency`: a working surface attaching to or releasing a session, a
-//     routine's returned action);
-//   - and otherwise at a floor, AGENCY_FLOOR_MS after the last completed read, only while the window can be seen — never while
-//     it is hidden; coming back is a notice of its own.
+//     routine's returned action, and the kernel's `readings_changed` for the root, AIKit's home or a project — the sessions AIKit
+//     keeps are written by other processes, which is what that notice reports).
+// There is no timer: nothing asks the owner unless one of these says it may have moved. This driver reads on `readings_changed`
+// in the registry's place (the entry is marked driven, owners/ownerReading.ts `drive`), so the notice costs one read here, and
+// the hook below runs after it.
 // A notice that arrives while a read is in flight asks for one more read after it (the read may have started before the act).
 //
 // The driver is mounted once (AgentSessionsProvider); every other reader only subscribes.
 //
 // Ported from the provider's own cadence (agent/AgentSessionsProvider.tsx at 98385f92d, :97-140: `readAgency` behind the
-// `agencyInFlight` guard, every 3 s) and the read itself (desktop/cradle/src/agency/agencySources.ts:25 `readAgency`); the
-// floor's hidden rule follows the encounter loop's (desktop/cradle/src/encounter/session.ts `hidden()`).
+// `agencyInFlight` guard, every 3 s) and the read itself (desktop/cradle/src/agency/agencySources.ts:25 `readAgency`).
 
 import {readAgency} from '../../../../../desktop/cradle/src/agency/agencySources'
 import type {AgencyReading} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import type {KernelReceipt, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadingEntry, type OwnerReadings} from './ownerReading'
-import {onAttentionRegained, windowVisible} from './attention'
+import {onAttentionRegained} from './attention'
 import {onOwnerChanged, receiptMovesAgency} from './notices'
 import {useSpineEpoch} from './spine'
 
-/** The floor for session changes nothing tells the shell about, while the window is seen. */
-export const AGENCY_FLOOR_MS = 30_000
 /** Coming back to the window reads again unless a read completed this recently (focus and visibility arrive together). */
 export const AGENCY_ATTENTION_MIN_AGE_MS = 5_000
 
@@ -60,10 +59,8 @@ export function agencyFingerprint(reading: AgencyReading | null): string {
 
 export interface AgencyDriverOptions {
   epoch: string
-  floorMs?: number
   attentionMinAgeMs?: number
   now?: () => number
-  visible?: () => boolean
   onAttention?: (listener: () => void) => () => void
   onTold?: (listener: (cause: string) => void) => () => void
   /** Each completed read, with what asked for it — the provider re-reads the selected session's task record on it. */
@@ -81,34 +78,19 @@ export interface AgencyDriver {
 /** The one agency cadence over `entry` under one epoch (a new epoch is a new driver). */
 export function createAgencyDriver(entry: OwnerReadingEntry<AgencyReading>, options: AgencyDriverOptions): AgencyDriver {
   const {epoch} = options
-  const floorMs = options.floorMs ?? AGENCY_FLOOR_MS
   const attentionMinAgeMs = options.attentionMinAgeMs ?? AGENCY_ATTENTION_MIN_AGE_MS
   const now = options.now ?? Date.now
-  const visible = options.visible ?? windowVisible
   const onAttention = options.onAttention ?? onAttentionRegained
   const onTold = options.onTold ?? (listener => onOwnerChanged('agency', change => listener(change.cause)))
   let stopped = false
-  let floor: ReturnType<typeof setTimeout> | null = null
+  entry.drive(true)
   let again: string | null = null
   let lastSeq: number | null = null
 
-  const armFloor = () => {
-    if (floor !== null) clearTimeout(floor)
-    floor = null
-    if (stopped) return
-    const from = entry.snapshot().readAtUnixMs ?? now()
-    floor = setTimeout(() => {
-      floor = null
-      // Hidden: nothing is shown and nothing is read; the window's return reads.
-      if (visible()) read('floor')
-    }, Math.max(0, from + floorMs - now()))
-  }
-
-  /** After a completed read: the provider's hook, the floor counted from this read, and a notice that waited behind it. */
+  /** After a completed read: the provider's hook, and a notice that waited behind it. */
   const settled = (cause: string) => {
     if (stopped) return
     options.onRead?.(entry.snapshot(), cause)
-    armFloor()
     if (again !== null) { const next = again; again = null; read(next) }
   }
 
@@ -138,7 +120,7 @@ export function createAgencyDriver(entry: OwnerReadingEntry<AgencyReading>, opti
     }),
     onTold(cause => read(cause)),
   ]
-  // The mount's read: an answer standing for this epoch is used as it stands, and the floor counts from it.
+  // The mount's read: an answer standing for this epoch is used as it stands.
   void entry.ensure(epoch).then(() => settled('mount'))
 
   return {
@@ -154,8 +136,7 @@ export function createAgencyDriver(entry: OwnerReadingEntry<AgencyReading>, opti
     notice: read,
     stop() {
       stopped = true
-      if (floor !== null) clearTimeout(floor)
-      floor = null
+      entry.drive(false)
       for (const off of detach) off()
       if (waiting) { const off = waiting; waiting = null; off() }
     },

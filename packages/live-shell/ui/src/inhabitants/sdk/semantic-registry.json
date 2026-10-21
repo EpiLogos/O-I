@@ -151,6 +151,22 @@
   },
   {
     "family": "ai-kit",
+    "face": "messages",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "Born on the rail: it reads AIKit's population and the open agent's conversation (kernel inhabitation_read); a send waits for `aikit gateway send` through the kernel."
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "ai-kit",
     "face": "skill-device",
     "kind": "parameter",
     "liveSemantic": "device-audio-fx",
@@ -962,5 +978,26 @@
     ],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "workcell",
+    "face": "workcell",
+    "kind": "parameter",
+    "liveSemantic": "rack",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "chains": [
+        "gateway",
+        "remote-carrier",
+        "git-seat"
+      ],
+      "chainSelector": "the road in and out: the gateway, the machine, the seat and its landing"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
   }
 ]

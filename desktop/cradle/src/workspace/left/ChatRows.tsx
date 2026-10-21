@@ -10,7 +10,7 @@
  */
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
-import {kernelOp} from "../../kernel/bridge";
+import {kernelRead, refreshOnReadingsMoved} from "../../kernel/bridge";
 import type {KernelTransportStatus} from "../../kernel/types";
 import type {EncounterRow} from "../../encounter/EncounterList";
 import {ConversationRow} from "./rows";
@@ -37,7 +37,7 @@ export function conversationsFromReading(spaces:unknown[],project:string):Encoun
 }
 
 export async function readConversations(transport: KernelTransportStatus, project: string): Promise<EncounterRow[]> {
-  const result = await kernelOp(transport, {op: "agency_read", project});
+  const result = await kernelRead(transport, {op: "agency_read", project});
   if (result.error || result.outcome?.result !== "agency_reading") throw new Error(result.error ?? "AIKit SessionSpace reading unavailable");
   return conversationsFromReading(result.outcome.spaces,project);
 }
@@ -71,13 +71,14 @@ export function useConversations(project: string | undefined, refresh = 0): {sta
   }, [kernel.transport, project, refresh, attempt]);
   // The rows stay live: re-read when the window regains focus and on a
   // quiet cadence while visible (a new conversation may have been attached
-  // elsewhere). A failed re-read keeps the last-known rows (R11).
+  // elsewhere): on the kernel's notice that readings moved, and on the 90 s period where no notice is carried. A failed re-read
+  // keeps the last-known rows (R11).
   useEffect(() => {
     if (project === undefined) return;
     const again = () => { if (document.visibilityState === "visible") setAttempt(value => value + 1); };
-    const timer = setInterval(again, 90_000);
+    const stop = refreshOnReadingsMoved(again, 90_000);
     window.addEventListener("focus", again);
-    return () => { clearInterval(timer); window.removeEventListener("focus", again); };
+    return () => { stop(); window.removeEventListener("focus", again); };
   }, [project]);
   const retry = useCallback(() => setAttempt(value => value + 1), []);
   return {state, retry};

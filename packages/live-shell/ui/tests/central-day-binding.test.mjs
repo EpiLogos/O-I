@@ -71,6 +71,8 @@ const {spineEpochKey} = await import('../src/owners/spine.ts')
 loadWorldShellFamilies()
 
 const html = element => renderToStaticMarkup(element)
+/** Central's Day readings, not handed in (the settings and the moves unread). */
+const NO_OWN = {settings: null, settingsRefusal: null, moves: undefined, movesRefusal: null, timezone: null}
 const central = inhabitantManifest('central')
 const ID = 'central:day-die'
 const bridge = {kind: 'bridge', url: 'http://owner.fixture'}
@@ -194,7 +196,7 @@ test('REAL CAPTURE — the stale Day pointer: the date is Central\'s civil today
   for (const key of ['face', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5']) assert.equal(key in values, false, `${key}: the Day document's, and none stands`)
   for (const key of DESIGN_KEYS) {
     if (key in values) continue
-    assert.ok(bind.DAY_ABSENT[key] || ['face', 'c0', 'c1', 'c2done'].includes(key), `${key} is absent with a reason the return names`)
+    assert.ok(bind.DAY_ABSENT[key] || bind.dayOwnAbsent(NO_OWN)[key] || ['face', 'c0', 'c1', 'c2done'].includes(key), `${key} is absent with a reason the return names`)
   }
   for (const key of Object.keys(values)) assert.ok(bind.DAY_KEYS.includes(key), `${key} is a key this binding owns a reading for`)
   assert.deepEqual(Object.keys(values).filter(key => key in catalogueDay.defaults && values[key] === catalogueDay.defaults[key] && !['light'].includes(key)), [],
@@ -298,14 +300,20 @@ test('the die turns through the owner\'s mutate-field on the ready Day; with no 
   host.resetHost(ID)
 })
 
-test('every other key of the design is a reading or has no owner: the runtime refuses it as a reading and sends nothing', async () => {
+test('every other key of the design is a reading, or a setting whose write waits on the person\'s route: the runtime sends nothing', async () => {
   const owner = fakeOwner()
   const binding = bindingOf(STALE, owner)
-  for (const key of ['agentWrites', 'rollover', 'dayStart', 'closeRoutine', 'src_live', 'template', 'view', 'date']) assert.equal(binding.writes(key), false, key)
+  for (const key of ['dayStart', 'template', 'view', 'date']) assert.equal(binding.writes(key), false, key)
+  // REPLACED (T-COVERAGE §1.3): the Day's own settings are Central's (central.day.settings.read); their write is central.day.settings.write,
+  // which carries the person's authority, so each stands disabled naming that route and a write is refused in those words.
+  for (const key of ['agentWrites', 'rollover', 'closeRoutine', 'src_live']) {
+    assert.equal(binding.writes(key), true, key)
+    assert.match(binding.standing[key].disabled, /central\.day\.settings\.write, which waits on the kernel route that carries the person's authority \(T-COVERAGE §1\.1\)/, key)
+  }
   host.resetHost(ID)
   await withOwner(owner, async () => {
     host.setDraft(ID, 'agentWrites', 'write')
-    assert.match(await host.flushDrafts(binding, 0), /A reading/)
+    assert.match(await host.flushDrafts(binding, 0), /central\.day\.settings\.write|person's authority/)
   })
   assert.equal(owner.sent.length, 0)
   host.resetHost(ID)
@@ -401,7 +409,7 @@ test('with no Day selected the Day device stands on today as Central\'s ground r
   assert.equal(read.values.date, 'Fri 16 Oct')
   assert.equal(read.values.canOpenToday, true)
   assert.match(read.values.refusal, /earlier civil Day/)
-  assert.deepEqual(read.writes, [true, true, false])
+  assert.deepEqual(read.writes, [true, true, true], 'Rollover goes to the binding, which refuses it naming the person\'s route')
   // The chain's own plate: the binding stands as soon as the ground answers (no shell design to wait for), so the Day's design draws
   // on today's date, the light off.
   const markup = html(createElement(chain.CentralDevicesChain, {transport: bridge, dayStanding: null}))
@@ -538,35 +546,39 @@ test('the Day publishes its page as its own Full, and names it as data for its P
   assert.equal(chain.centralPublication(none, null).full.relay, undefined)
 })
 
-// The Day's moves (manual §18.2, O-I main 1fd6697c0): five pads move the day's work from face to face. Close is Close now; the other
-// four, every move's Runs at and Prompt, and Agent writes have no owner yet. The binding names what each waits on — Central's
-// Day/NOW contract (#150, #153), AIKit's NOW delivery (#275), the machines' NOWs (Workcell #72) — and never draws a move as run.
-test('the moves: every reading of a move is absent with the owner it waits on, never the design\'s sample', () => {
+// The Day's moves (manual §18.2, O-I main 1fd6697c0): five pads move the day's work from face to face. Close is Close now. REPLACED
+// (T-COVERAGE §1.3): the moves' settings and runs are Central's readings (central.day.settings.read, central.day.moves.read — the REAL
+// shapes are proved in stale-refusals-binding.test.mjs); with neither read, every reading of a move is absent with that reason, and the
+// pads, every Runs at and Prompt, and Agent writes stand closed naming the route they wait on. Faces 2 and 4 still wait on the
+// machines' NOWs (Workcell #72, ai-kit #275).
+test('the moves: with Central\'s Day readings not read, every reading of a move is absent with that reason, never the design\'s sample', () => {
   const facts = factsOf(READY)
   const values = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD})
   const moveKeys = DESIGN_KEYS.filter(key => /^(at|prompt|last|gave|running)_/.test(key))
   assert.deepEqual([...new Set(moveKeys.map(key => key.split('_')[1]))], ['tasks', 'patterns', 'context', 'synthesis', 'close'], 'the design reads the five moves')
+  const why = bind.dayOwnAbsent(NO_OWN, values)
   for (const key of moveKeys) {
-    assert.equal(key in values, false, `${key}: no owner reports it`)
-    assert.match(bind.DAY_ABSENT[key] ?? '', /Central #150, #153/, `${key} names the Day/NOW contract it waits on`)
+    assert.equal(key in values, false, `${key}: no owner reading was handed in`)
+    assert.match(why[key] ?? '', /central\.day\.(settings|moves)\.read/, `${key} names the reading it waits on`)
   }
   assert.match(bind.DAY_ABSENT.c2run, /every machine's NOW and its child NOWs.*Workcell #72.*ai-kit #275/, 'face 2 waits on the machines\' NOWs')
   assert.match(bind.DAY_ABSENT.c4, /each entry with its author/, 'face 4 gathers what the sessions touched, each with its author')
 })
 
-test('the moves: four pads, every Runs at and Prompt, and Agent writes stand closed with their owners named; a press sends nothing', async () => {
+test('the moves: four pads, every Runs at and Prompt, and Agent writes stand closed naming the person\'s route; a press sends nothing', async () => {
   let wrote = 0
   const facts = factsOf(READY)
   const binding = bind.dayDesignBinding(ID, facts, bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD}),
     {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }})
   for (const move of ['tasks', 'patterns', 'context', 'synthesis']) {
-    assert.match(binding.standing[`run_${move}`]?.disabled ?? '', /Central #150, #153.*ai-kit #275/, `the ${move} pad says what it waits on`)
-    await assert.rejects(binding.write([{key: `run_${move}`, value: true}]), /No owner runs the Day's moves yet/, `pressing ${move} is refused in those words`)
+    assert.match(binding.standing[`run_${move}`]?.disabled ?? '', /Day's agent \(AIKit, ai-kit #275\).*central\.day\.move\.record.*T-COVERAGE §1\.1/, `the ${move} pad says what it waits on`)
+    await assert.rejects(binding.write([{key: `run_${move}`, value: true}]), /central\.day\.move\.record/, `pressing ${move} is refused in those words`)
   }
   for (const move of ['tasks', 'patterns', 'context', 'synthesis', 'close']) {
-    assert.ok(binding.standing[`at_${move}`]?.disabled && binding.standing[`prompt_${move}`]?.disabled, `${move}'s Runs at and Prompt stand closed`)
+    assert.match(binding.standing[`at_${move}`]?.disabled ?? '', /central\.day\.settings\.write/, `${move}'s Runs at stands closed`)
+    assert.match(binding.standing[`prompt_${move}`]?.disabled ?? '', /central\.day\.settings\.write/, `${move}'s Prompt stands closed`)
   }
-  assert.match(binding.standing.agentWrites?.disabled ?? '', /ai-kit #275/, 'Agent writes names the Day\'s agent')
+  assert.match(binding.standing.agentWrites?.disabled ?? '', /T-COVERAGE §1\.1/, 'Agent writes names the route it waits on')
   assert.equal(binding.standing.run_close, undefined, 'the Close pad is Close now, which an owner takes')
   assert.equal(binding.standing.closeNow, undefined)
   assert.equal(wrote, 0, 'nothing was sent to an owner')

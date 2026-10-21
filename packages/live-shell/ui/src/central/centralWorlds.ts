@@ -5,7 +5,7 @@
 // and placed by its island through the page owner (kernel/src/page.rs `list`): your world's folder is Control/user/flows (Central's
 // one creation door in Control ground), a project's its human ground (ProjectCentral/user, whose door is projectcentral.source.create).
 // A file that is no page is named by the listing, never shown as a clip.
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus, RootWorld} from '../../../../../desktop/cradle/src/kernel/types'
 import {listWorldPages, type PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
 
@@ -47,11 +47,12 @@ export const ROOT_SETTLE = {tries: 6, apartMs: 400} as const
 /** Central's root disclosure through the kernel's world browse, as its worlds. A refusal is the reading, named. The kernel answers
  * before its first browse has finished (a snapshot with no navigator root and no error): that is asked again, a few times apart,
  * and only then read as the absence it is (r13: the browser's Worlds rows read the first answer and kept it). */
-export async function readWorlds(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE): Promise<CentralWorldsReading> {
+/** `fresh` asks the kernel again for the first browse too (a read that precedes a write). */
+export async function readWorlds(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE, fresh = false): Promise<CentralWorldsReading> {
   if (!transport) return {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'}
   if (transport.kind === 'unavailable') return {state: 'unavailable', reason: transport.reason}
   for (let attempt = 1; ; attempt++) {
-    const answer = await kernelOp(transport, {op: 'world_browse'})
+    const answer = await kernelRead(transport, {op: 'world_browse'}, {fresh: fresh || attempt > 1})
     if (answer.error || answer.outcome?.result !== 'world_read') return {state: 'unavailable', reason: answer.error ?? 'Central did not disclose its worlds'}
     const navigator = answer.outcome.snapshot.navigator
     if (navigator?.root) return {state: 'read', worlds: worldsOf(navigator.root)}

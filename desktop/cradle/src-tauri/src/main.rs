@@ -190,6 +190,29 @@ fn main() {
                 Err(error) => eprintln!("Desktop appearance could not be restored: {error}"),
             }
             app.manage(KernelHost(Mutex::new(kernel)));
+            // The shell's configuration keeps the World it read while the
+            // watch sees no change.
+            #[cfg(feature = "native_shell")]
+            native_shell::runtime::bind_change_epoch(|| oi_cradle_kernel::watch::Watch::global().change_epoch());
+            // The change watch: when files the kernel's readings are made from
+            // change, record it in the event log and tell the shell on the
+            // event topic, so it asks again (the kernel answers from what it
+            // holds unless a scope the answer depends on moved).
+            {
+                let handle = app.handle().clone();
+                if let Err(error) = oi_cradle_kernel::watch::start_global(None, move |scopes, epoch| {
+                    let host = handle.state::<KernelHost>();
+                    let receipt = match host.0.lock() {
+                        Ok(mut kernel) => kernel.record_readings_changed(scopes, epoch),
+                        Err(_) => return,
+                    };
+                    let _ = handle.emit(KERNEL_EVENT_TOPIC, &receipt);
+                }) {
+                    eprintln!("Change watch degraded ({error}); readings are kept for a short time and the shell is told to ask again every 30 s");
+                } else {
+                    eprintln!("Change watch live");
+                }
+            }
             #[cfg(unix)]
             if let Some((socket, owner)) =
                 oi_cradle_kernel::native_owner_transport::configured_offer()?

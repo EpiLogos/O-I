@@ -17,6 +17,13 @@
 // readings, read downward), the open plate's head carries ▾ (fold it to its title: every instrument then stands as its Compact or its
 // fold) and ⤢ (open it on the focused pane). The instrument standing open is published (standingInstrument.ts) so the Device side's head
 // names it, not the pane's.
+//
+// The open instrument is a chain (manual §16.2 Technē: "The instrument it plays through, then its lens and filter effects"; T-COVERAGE
+// §1.4, lane W4-Technē): the catalogue's design of the instrument stands at its head on its own owner — the Canvas, the Timeline, the
+// Journey, the Palace, the Knowledge graph — then the holder's own plate where it keeps controls no design carries yet (the frame's
+// chrome, the palace's composition), then its effects: Light after the Canvas, the Lens after every instrument a reading plays through
+// (techne/devices/techneDesigns.ts TECHNE_CHAINS). The knowledge graph's three faces (scope, filters, display) no longer stand on its
+// chain: the Knowledge graph's design carries their parameters on its Reach, Filters and Display pages, on the same owner.
 import {useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject} from 'react'
 import {DeviceView} from '../../../frame/devices/DeviceView'
 import {publishDevice, publishedDevice, selectDevice} from '../../../frame/devices/deviceDoor'
@@ -55,6 +62,7 @@ import {startsExpanded, TECHNE_FACE_ICONS} from './faces'
 import {ProjectPlate} from './ProjectPlate'
 import {InstrumentCompact, hasCompact} from './techneCompacts'
 import {publishStandingInstrument} from './standingInstrument'
+import {DESIGN_DEVICES, DESIGN_FACES, TECHNE_CHAINS, designsOn, useTechneDesignBindings} from '../../../techne/devices/techneDesigns'
 import './techneDevices.css'
 
 /** What the devices are read from: the one mounted atlas, the open graph, the QL owner's reading — each the same reader its body reads. */
@@ -75,6 +83,10 @@ export interface TechneReadings {
   /** The sitting, timed by the transport (qlSitting.ts), with what you set. */
   readonly sitting?: QlSittingState
 }
+
+/** The knowledge graph family's faces the Knowledge graph's design carries now (knowledge-graph__graph.tsx Reach, Filters, Display): they
+ * stand on no chain. Their rows stay declared (knowledgeDevices.ts) for the setters the design writes through. */
+export const KNOWLEDGE_FACES_CARRIED: readonly string[] = ['knowledge-scope', 'knowledge-filters', 'knowledge-display']
 
 /** One face on the chain: its declaration, the device the runtime draws, and the device's own picture at each size. */
 export interface TechneEntry {
@@ -123,7 +135,8 @@ function WaitingPicture({size, face}: {size: DeviceSize; face: InhabitantFaceDec
 /** The devices of the given manifests' faces, over the owners' readings. Pure: the chain, the tests and the door all read this. */
 export function techneEntries(manifests: readonly InhabitantManifest[], readings: TechneReadings): TechneEntry[] {
   // A Technē chain device is an instrument, never an effect (lock §5.2): a family's effects (the Resonator bank) stand on Live's chain.
-  return manifests.flatMap(manifest => manifest.faces.filter(face => face.liveSemantic !== 'device-audio-fx').map((face): TechneEntry => {
+  return manifests.flatMap(manifest => manifest.faces.filter(face => face.liveSemantic !== 'device-audio-fx')
+    .filter(face => !(manifest.id === KNOWLEDGE_FAMILY && KNOWLEDGE_FACES_CARRIED.includes(face.id))).map((face): TechneEntry => {
     const waiting = face.admission === 'waiting'
     if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3, readings.deck, readings.chakra, readings.sitting)
     if (!waiting && manifest.id === ATLAS_FAMILY && isAtlasFaceId(face.id)) {
@@ -138,6 +151,23 @@ export function techneEntries(manifests: readonly InhabitantManifest[], readings
     }
     return {family: manifest.id, face, device: waitingDevice(face, manifest.id), picture: size => <WaitingPicture size={size} face={face} />}
   }))
+}
+
+/** The catalogue designs that stand on these holders' chains, each on its binding (techne/devices/techneDesigns.ts), in the chains' order.
+ * A design whose binding is not handed stands nowhere. */
+export function designEntries(holders: readonly string[], bindings: Readonly<Record<string, DesignBinding>> | undefined): TechneEntry[] {
+  if (!bindings) return []
+  return designsOn(holders).flatMap(design => {
+    const device = DESIGN_DEVICES.get(design), face = DESIGN_FACES.get(design), binding = bindings[design]
+    return device && face && binding ? [{family: device.family, face, device, binding, picture: () => null}] : []
+  })
+}
+
+/** An instrument's chain on the rack: its design at the head, then its effects (TECHNE_CHAINS). */
+export function chainOf(holder: string, designs: readonly TechneEntry[]): {head: TechneEntry | null; effects: TechneEntry[]} {
+  const chain = TECHNE_CHAINS[holder]
+  const find = (design: string) => designs.find(entry => entry.device.id === design) ?? null
+  return {head: chain?.head ? find(chain.head) : null, effects: (chain?.effects ?? []).flatMap(design => find(design) ?? [])}
 }
 
 /** One Quaternal Logic face as a device: the field/PCM owner over its reading, any other face as the waiting device it is declared.
@@ -273,10 +303,10 @@ const holderTitle = (holder: HolderDeclaration) => holder.title
 const holds = (entry: TechneEntry, holder: string) => (entry.face.heldBy ?? []).includes(holder)
 
 /** One device standing open on the chain, compact through the runtime, with the marks its place gives it. */
-function OpenDevice({entry}: {entry: TechneEntry}) {
+function OpenDevice({entry, place}: {entry: TechneEntry; place?: 'head' | 'effect'}) {
   const {device, face} = entry
   const title = device.face.title
-  return <div className="techne-device" data-face-id={face.id} data-expanded="true" data-family={device.family} data-device-id={device.id}>
+  return <div className="techne-device" data-face-id={face.id} data-expanded="true" data-family={device.family} data-device-id={device.id} data-chain-place={place}>
     <DeviceView device={device} size="compact" binding={entry.binding} picture={entry.picture('compact')} actions={[
       {icon: 'detail', label: `Select ${title}: the keys and the status bar speak to it; its expanded view stands whole above the chain`, onPress: () => selectDevice(device.id)},
       {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: device.id, title})},
@@ -328,8 +358,17 @@ export interface OwnPlateProps {
   readonly onFull?: () => void
 }
 
-/** The open instrument: one plate, its columns the families whose devices it holds, each family's devices side by side. */
-function OpenInstrument({holder, entries, focused, onFold, onFull}: {holder: HolderDeclaration; entries: readonly TechneEntry[]; focused: boolean; onFold?: () => void; onFull?: () => void}) {
+/** The open instrument: its chain — its design at the head, its plate (the families whose devices it holds, or its own), its effects. */
+function OpenInstrument({holder, entries, chain, focused, onFold, onFull}: {holder: HolderDeclaration; entries: readonly TechneEntry[]; chain: ReturnType<typeof chainOf>; focused: boolean; onFold?: () => void; onFull?: () => void}) {
+  const head = chain.head ? <OpenDevice key={chain.head.device.id} entry={chain.head} place="head" /> : null
+  const effects = chain.effects.map(entry => <OpenDevice key={entry.device.id} entry={entry} place="effect" />)
+  const plate = <InstrumentBody holder={holder} entries={entries} headed={!!head} focused={focused} onFold={onFold} onFull={onFull} />
+  return <>{head}{plate}{effects}</>
+}
+
+/** The instrument's plate: its own where it has one, else one plate whose columns are the families whose devices it holds; nothing where a
+ * design heads the chain and no family holds a device here. */
+function InstrumentBody({holder, entries, headed, focused, onFold, onFull}: {holder: HolderDeclaration; entries: readonly TechneEntry[]; headed: boolean; focused: boolean; onFold?: () => void; onFull?: () => void}) {
   // Each family's devices stand side by side in its section, drawn flat there (techneDevices.css: the device's frame stands down, one
   // hairline between two devices) — never a boxed plate inside the plate.
   const families = [...new Set(entries.map(entry => entry.family))].map(family => ({id: family, title: FAMILY_NAMES[family] ?? family,
@@ -339,6 +378,7 @@ function OpenInstrument({holder, entries, focused, onFold, onFull}: {holder: Hol
   // frame's controls (T-FRAME-CHROME-ONTO-PLATES), as they stood when the family columns were the whole plate.
   const own = OWN_PLATES[holder.id]
   if (own) return <>{own({held: entries.map(sectionDeviceOf), focused, families, onFold, onFull})}</>
+  if (headed && !families.length) return null
   const owner = [holder.provenance, TECHNE_INSTRUMENTS.includes(holder) ? 'Technē' : null, focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')
   return <InstrumentPlate presentation={{family: 'techne', faceId: holder.id, title: holderTitle(holder), icon: INSTRUMENT_MARKS[holder.id] ?? 'techne', owner}}
     onFold={onFold} onFull={onFull} fullLabel={`Open ${holderTitle(holder)} on the focused pane`}
@@ -418,12 +458,18 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const deck = useQlDeck()
   const chakra = useQlChakra()
   const sitting = useQlSitting()
+  const instruments = rackInstruments(focusInstrument)
+  const holderKey = instruments.map(holder => holder.id).join('|')
+  // The catalogue designs on their owners; the kernel's graph is read only while the Knowledge graph stands on this rack.
+  const bindings = useTechneDesignBindings({graph: instruments.some(holder => holder.id === 'knowledge-graph'), surface})
+  const designs = useMemo(() => designEntries(holderKey.split('|'), bindings), [holderKey, bindings])
   const manifestKey = manifests.map(manifest => manifest.id).join('|')
   // The manifests are the door's, named by their ids; the QL reading the caller hands in is the one reader's own, derived from the same
   // `torus` state in the same render, so it changes exactly when `torus` does (its absent form is a new object each call, and would
   // otherwise re-publish every device on every render).
   const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading, sky, m3, deck, chakra, sitting}), [manifestKey, atlas, surface, torus, sky, m3, deck, chakra, sitting])
-  usePublished(entries)
+  const published = useMemo(() => [...entries, ...designs], [entries, designs])
+  usePublished(published)
   // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open. While a palace
   // is entered the atlas stands at its palace scale, so the Earth pane's instrument stands as M5′ (atlasInstrumentNow).
   const palace = useSyncExternalStore(subscribePalace, () => palaceState().phase, () => palaceState().phase)
@@ -448,7 +494,6 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   // With no instrument open, the faces no instrument holds stand as their own devices; the person's folds of them hold until focus moves.
   const [folds, setFolds] = useState<{focus: string | null; open: Readonly<Record<string, boolean>>}>({focus: focusInstrument, open: {}})
   const unfolded = folds.focus === focusInstrument ? folds.open : {}
-  const instruments = rackInstruments(focusInstrument)
   // (With an instrument focused and every one folded by its ▾, the row is the instruments' alone: their Compacts take the room.)
   const unheld = open || focusInstrument ? [] : entries.filter(entry => !instruments.some(holder => holds(entry, holder.id)))
   // The instruments not open stand Compact where the row has room (nearest the open plate first), folded to their titles elsewhere.
@@ -461,7 +506,7 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
       const held = entries.filter(entry => holds(entry, holder.id))
       const press = () => { setOpened({focus: focusAfterOpening(holder.id, focusInstrument), id: holder.id}); openOnFocusedPane(holder.id) }
       return holder.id === open
-        ? <OpenInstrument key={holder.id} holder={holder} entries={held} focused={holder.id === focusInstrument}
+        ? <OpenInstrument key={holder.id} holder={holder} entries={held} chain={chainOf(holder.id, designs)} focused={holder.id === focusInstrument}
             onFold={() => setOpened({focus: focusInstrument, id: null})} onFull={() => openOnFocusedPane(holder.id)} />
         : rack.shown.has(holder.id)
           ? <InstrumentCompact key={holder.id} holder={holder} mark={INSTRUMENT_MARKS[holder.id] ?? 'techne'} light="unknown" onOpen={press} />

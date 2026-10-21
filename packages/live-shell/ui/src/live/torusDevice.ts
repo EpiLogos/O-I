@@ -79,6 +79,13 @@ export const TORUS_DETERMINANT_KEYS: Readonly<Record<string, string>> = {'lens':
 
 const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, sound, level, cadence and scale, and takes only those through the stage channel (stageCommands.ts InstrumentEdit)'
 
+/** The Stage page (manual §21.2): the hosted frame's native field holds the stage (expressions-app native-field: stageState,
+ * stageEvaluate) and the kernel's exchange admits its five operations (kernel native_expression.rs stage-state … stage-unbind), but the
+ * shell's stage channel (native/stageCommands.ts) relays none of them to the Torus. */
+const NO_STAGE = 'No stage reading: the hosted frame holds the stage and the kernel admits its operations, but the shell\'s stage channel relays none of them to the Torus yet — missing op: stage-state, stage-evaluate, stage-bind, stage-unbind and stage-retire through native/stageCommands.ts (O:I shell)'
+/** The Rack page (manual §16.16, §22.9): the rack of the instrument of the map, its parts and which stand verified. */
+const NO_RACK = 'No rack reading: no owner reports the parts of M1′\'s rack or which of them stand verified — missing op: a rack reading and the rule naming a verified part (Quaternal Logic, T-COVERAGE §1.5)'
+
 /** Why each design key the binding leaves absent has no reading (manual §16.12: "When a reading is missing, say which one"). */
 export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   pulseMix: `No pulse mix: ${NO_FIELD_PARAMETER}.`,
@@ -102,6 +109,10 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   'tattva.name': 'No tattva reaches the shell: the M2 condition the field rings under is not announced to it.',
   'tattva.fibre': 'No tattva reaches the shell, so no element fibre does.',
   'tattva.standing': 'No tattva reaches the shell, so no table of body constants stands here.',
+  ...Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why',
+    'stage.evaluate', 'stage.bind', 'stage.unbind', 'stage.retire'].map(key => [key, `${NO_STAGE}.`])),
+  rack: `${NO_RACK}.`,
+  'rack.part': `${NO_RACK}, so no part of it is chosen.`,
 }
 
 const NOT_WRITABLE = 'The owner takes edits only while the instrument follows or is held.'

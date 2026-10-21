@@ -12,8 +12,9 @@
  * is the reading, never silently empty, never substituted.
  *
  * Aperture law: the tenders (release a seat, prune a worktree, sweep a
- * stray branch) are DECLARED controls naming the owner operation that would
- * execute them. No tender fires from a device: each renders as declared and
+ * stray branch; initialise the root, reproject a scaffold, recognise a source;
+ * reconcile a binding, release orphan sandboxes) are DECLARED controls naming
+ * the owner operation that would execute them. No tender fires from a device: each renders as declared and
  * waiting for its writer, exactly as the L2 manifest note promised.
  *
  * Pure TypeScript. No React, no transport, no store. */
@@ -107,6 +108,16 @@ export type HygieneFindingKind =
   | 'worktree-outside-register' // a checked-out worktree no register seat names
   | 'foreign-lane'          // an owner-held unmerged lane occupies a seat (owner's call)
   | 'occupied-by-landed'    // a seat stands on a branch already merged at origin/main
+  // The Ground page (Central, through the kernel's invoke_action):
+  | 'root-part-missing'     // a part every Central root has is not valid (central.doctor checks)
+  | 'root-mixed'            // the root is also a product checkout (central.doctor mixed_root; the owner's call)
+  | 'scaffold-missing'      // a part of the world's ProjectCentral would be stamped (central.world.reproject.plan would_stamp)
+  | 'source-unrecognised'   // a native candidate whose role hints name a vision, intent, experience, design or architecture
+  // The Material page (Workcell):
+  | 'binding-drift'         // a world's binding is stale or missing and its receipt can bring it back
+  | 'binding-lost'          // a binding that lasted only for its task is missing: nothing brings it back
+  | 'sandbox-orphan'        // a sandbox whose lease has ended (Workcell's lease `expired-orphan`)
+  | 'sandbox-unproven'      // a sandbox with no lease evidence (lease `unknown`): never released, not a fault
 
 export interface HygieneFinding {
   readonly kind: HygieneFindingKind
@@ -309,6 +320,10 @@ export interface HygieneTender {
   readonly receiptShape: string
 }
 
+/** The route a tender that writes the person's own ground waits on: the kernel's invoke_action reaches Central's actions but carries no
+ * person's authority (T-COVERAGE §1.1). */
+const PERSON_ROUTE = 'the kernel route that carries the person\'s authority (T-COVERAGE §1.1): the owner\'s write needs the person, and invoke_action carries no one'
+
 export const HYGIENE_TENDERS: readonly HygieneTender[] = [
   {
     id: 'release-seat',
@@ -331,7 +346,169 @@ export const HYGIENE_TENDERS: readonly HygieneTender[] = [
     waitsFor: 'a commissioned repair with the branch\'s lane named — retention wins where cleanup disagrees',
     receiptShape: 'branch name + head + deleted/kept standing with the reason',
   },
+  {
+    id: 'init-root',
+    label: 'Initialise root',
+    ownerOperation: 'central.init (Central: create the root\'s missing parts; what is already there is kept)',
+    waitsFor: PERSON_ROUTE,
+    receiptShape: 'central-initialization: the parts created and the parts kept',
+  },
+  {
+    id: 'reproject-scaffold',
+    label: 'Reproject',
+    ownerOperation: 'central.world.reproject.apply {project} (Central: stamp only the missing ProjectCentral scaffold; nothing moves)',
+    waitsFor: PERSON_ROUTE,
+    receiptShape: 'central-world-reproject-receipt: the parts stamped, and what reprojection never does',
+  },
+  {
+    id: 'recognise-source',
+    label: 'Recognise',
+    ownerOperation: 'projectcentral.ground.apply {project, source, provenance, standing, treatment retain-native-in-place, acceptance human-accepted} (Central)',
+    waitsFor: PERSON_ROUTE,
+    receiptShape: 'projectcentral-ground-apply: the recorded relation; the source\'s bytes and path stay',
+  },
+  {
+    id: 'reconcile-binding',
+    label: 'Reconcile',
+    ownerOperation: 'workcell --receipt <R> reconcile --desired <binding>=present (Workcell)',
+    waitsFor: 'a kernel route to Workcell\'s reconcile, which the owner has and the kernel does not reach yet (T-COVERAGE §1.2)',
+    receiptShape: 'the binding brought back from the world\'s receipt, or Workcell\'s refusal',
+  },
+  {
+    id: 'release-orphans',
+    label: 'Release orphans',
+    ownerOperation: 'workcell sandboxes reconcile --server <url> --release-orphans (Workcell)',
+    waitsFor: 'a kernel route to Workcell\'s sandboxes reconcile, which the owner has and the kernel does not reach yet (T-COVERAGE §1.2)',
+    receiptShape: 'the sandboxes released (lease expired-orphan); a sandbox with no lease evidence is never released',
+  },
 ]
+
+// ---------------------------------------------------------------------------
+// the Ground and Material pages — Central's root, a world's scaffold and authored ground; Workcell's worlds and sandboxes
+
+/** Central's root as `central.doctor` reads it (central-health): each required part, and whether the root is also a product checkout. */
+export interface RootReading {
+  readonly root: string
+  readonly valid: boolean
+  readonly checks: readonly {readonly path: string; readonly valid: boolean}[]
+  readonly mixed: {readonly detected: boolean; readonly signals: readonly string[]}
+}
+/** A world's scaffold as `central.world.reproject.plan {project}` reads it: what is already present, what would be stamped. */
+export interface ScaffoldReading {readonly project: string; readonly present: readonly string[]; readonly missing: readonly string[]}
+/** A world's authored ground as `projectcentral.ground.inspect {project}` reads it: the recognised sources, how many native candidates
+ * wait, and those the model lists as findings (WAITING_HINTS). */
+export interface AuthoredReading {
+  readonly status: string
+  readonly recognised: readonly {readonly path: string; readonly provenance: string}[]
+  readonly waiting: number
+  readonly listed: readonly {readonly path: string; readonly hints: readonly string[]}[]
+}
+/** One prepared world as Workcell reads it (its receipt), with each binding's presence (Workcell's BindingPresence: present, missing,
+ * released, suspended, snapshotted, stale) and health; `persistence` where the receipt says the binding lasts only for its task. */
+export interface MaterialWorld {
+  readonly ref: string
+  readonly state?: string
+  readonly bindings: readonly {readonly ref: string; readonly presence: string; readonly health?: string; readonly persistence?: string}[]
+}
+/** A sandbox server's sandboxes as `workcell sandboxes reconcile --server <url> --json` classifies them (lease live | expired-orphan | unknown). */
+export interface SandboxReading {
+  readonly server: string
+  readonly sandboxes: readonly {readonly id: string; readonly state?: string; readonly lease: string; readonly expiresAt?: string | null}[]
+}
+
+/** The role hints a native candidate must carry to be listed as waiting for recognition: the manual's "a vision, an intent, an
+ * experience or a design" (§18.5), with architecture (the design's own list). Central's words for them (projectcentral.ground.inspect
+ * role_hints). Central decides no authorship: a listed candidate is a reading, and only Recognise makes it ground. */
+export const WAITING_HINTS: readonly string[] = ['vision', 'intent', 'desired-experience', 'design', 'architecture']
+
+const rec = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
+const text = (value: unknown): string | null => (typeof value === 'string' && value ? value : null)
+const pathsOf = (value: unknown): string[] => (Array.isArray(value) ? value.flatMap(item => (rec(item) && text(item.path) ? [String(item.path)] : [])) : [])
+
+/** `central.doctor`'s data as the Ground page's root. Null when it is not that reading. */
+export function rootOfDoctor(data: unknown): RootReading | null {
+  if (!rec(data) || !Array.isArray(data.checks) || typeof data.valid !== 'boolean') return null
+  const mixed = rec(data.mixed_root) ? data.mixed_root : {}
+  return {root: text(data.root) ?? '', valid: data.valid,
+    checks: data.checks.flatMap(check => (rec(check) && text(check.path) && typeof check.valid === 'boolean' ? [{path: String(check.path), valid: check.valid}] : [])),
+    mixed: {detected: mixed.detected === true, signals: Array.isArray(mixed.signals) ? mixed.signals.map(String) : []}}
+}
+
+/** `central.world.reproject.plan`'s data (central.world-reproject-plan/v1) as the Ground page's scaffold. Null when it is not that plan. */
+export function scaffoldOfPlan(data: unknown): ScaffoldReading | null {
+  if (!rec(data) || data.schema !== 'central.world-reproject-plan/v1') return null
+  return {project: text(data.project) ?? '', present: pathsOf(data.already_present), missing: pathsOf(data.would_stamp)}
+}
+
+/** `projectcentral.ground.inspect`'s data as the Ground page's authored ground: the recognised sources (path, provenance), the count of
+ * native candidates, and those whose role hints name WAITING_HINTS. Null when it is not that inspection. */
+export function authoredOfInspection(data: unknown): AuthoredReading | null {
+  if (!rec(data) || !Array.isArray(data.native_candidates) || !Array.isArray(data.recognised_sources)) return null
+  const hinted = (row: Record<string, unknown>) => (Array.isArray(row.role_hints) ? row.role_hints.filter((hint): hint is string => typeof hint === 'string') : [])
+  return {
+    status: text(data.status) ?? 'unknown',
+    recognised: data.recognised_sources.flatMap(row => (rec(row) && text(row.path) ? [{path: String(row.path), provenance: text(row.provenance) ?? 'unresolved'}] : [])),
+    waiting: data.native_candidates.length,
+    listed: data.native_candidates.flatMap(row => {
+      if (!rec(row) || !text(row.path)) return []
+      const hints = hinted(row)
+      return hints.some(hint => WAITING_HINTS.includes(hint)) ? [{path: String(row.path), hints}] : []
+    }),
+  }
+}
+
+/** The Ground page's readings, each with the operation it was read by. */
+export interface GroundReadings {
+  readonly root?: RootReading | null
+  readonly scaffold?: ScaffoldReading | null
+  readonly authored?: AuthoredReading | null
+  readonly ops: {readonly root: string; readonly scaffold: string; readonly authored: string}
+}
+
+/** The Ground page's findings: a root part not valid (Initialise root), the root mixed with a product checkout (yours to decide), each
+ * part of the scaffold the plan would stamp (Reproject), each listed candidate (Recognise). */
+export function groundFindings(ground: GroundReadings): readonly HygieneFinding[] {
+  const findings: HygieneFinding[] = []
+  for (const check of ground.root?.checks ?? []) if (!check.valid) findings.push({kind: 'root-part-missing', subject: check.path,
+    standing: `The root has no valid ${check.path}. Initialise root creates what is missing and keeps what is there.`, boundaryOps: [ground.ops.root], tenderId: 'init-root'})
+  if (ground.root?.mixed.detected) findings.push({kind: 'root-mixed', subject: ground.root.root || 'the root',
+    standing: `The root is also a product checkout${ground.root.mixed.signals.length ? ` (${ground.root.mixed.signals.join(', ')})` : ''}. The decision is yours.`, boundaryOps: [ground.ops.root], tenderId: null})
+  for (const path of ground.scaffold?.missing ?? []) findings.push({kind: 'scaffold-missing', subject: path,
+    standing: `The world's ProjectCentral has no ${path.replace(/^.*?ProjectCentral\/?/, '') || 'ProjectCentral'}. Reproject stamps it and moves nothing.`, boundaryOps: [ground.ops.scaffold], tenderId: 'reproject-scaffold'})
+  for (const row of ground.authored?.listed ?? []) findings.push({kind: 'source-unrecognised', subject: row.path,
+    standing: `Its name suggests ${row.hints.filter(hint => WAITING_HINTS.includes(hint)).join(' and ').replace(/-/g, ' ')}. Central does not infer authorship: recognise it to make it ground, or leave it as project source.`,
+    boundaryOps: [ground.ops.authored], tenderId: 'recognise-source'})
+  return findings
+}
+
+/** The Material page's readings, each with the operation it was read by. */
+export interface MaterialReadings {
+  readonly worlds?: readonly MaterialWorld[] | null
+  readonly sandboxes?: SandboxReading | null
+  readonly ops: {readonly worlds: string; readonly sandboxes: string}
+}
+
+/** The Material page's findings: a binding stale or missing that its receipt can bring back (Reconcile); one that lasted only for its task
+ * and is missing (lost: nothing brings it back); a sandbox whose lease ended (Release orphans); a sandbox with no lease evidence (a
+ * reading, never released). */
+export function materialFindings(material: MaterialReadings): readonly HygieneFinding[] {
+  const findings: HygieneFinding[] = []
+  for (const world of material.worlds ?? []) for (const binding of world.bindings) {
+    const subject = `${world.ref}#${binding.ref}`
+    const ephemeral = binding.persistence === 'ephemeral' || binding.persistence === 'task'
+    if (binding.presence === 'missing' && ephemeral) findings.push({kind: 'binding-lost', subject,
+      standing: 'The binding lasted only for its task: its material is gone and nothing brings it back.', boundaryOps: [material.ops.worlds], tenderId: null})
+    else if (binding.presence === 'stale' || binding.presence === 'missing') findings.push({kind: 'binding-drift', subject,
+      standing: `The binding is ${binding.presence}: the receipt names it and the provider no longer holds it as it was. Reconcile brings it back.`, boundaryOps: [material.ops.worlds], tenderId: 'reconcile-binding'})
+  }
+  for (const box of material.sandboxes?.sandboxes ?? []) {
+    if (box.lease === 'expired-orphan') findings.push({kind: 'sandbox-orphan', subject: box.id,
+      standing: `Its lease ended${box.expiresAt ? ` at ${box.expiresAt}` : ''}. Nothing holds it.`, boundaryOps: [material.ops.sandboxes], tenderId: 'release-orphans'})
+    else if (box.lease === 'unknown') findings.push({kind: 'sandbox-unproven', subject: box.id,
+      standing: 'The server reports no lease for it, so it may be live. It is never released here.', boundaryOps: [material.ops.sandboxes], tenderId: null})
+  }
+  return findings
+}
 
 /** Assemble the census from host-supplied owner readings. Every source must
  * name its boundary operation; a source that cannot is refused here — that

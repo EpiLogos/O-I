@@ -15,6 +15,11 @@ export function workcellFamilyManifest(): FamilyManifest {
       {id: 'remote-carrier', presentations: ['compact'], liveSemantic: 'link', note: 'Reach/where; composed or refused — never live in mockup.'},
       {id: 'link', presentations: ['compact'], liveSemantic: 'link', note: 'Transport Link: shared field across Mac and Omarchy sessions.'},
       {id: 'seat', presentations: ['expanded'], liveSemantic: 'return', invariant: {routesTo: 'workcell-cli:seat land'}, note: 'Seat join/release/land over workcell-cli; no new worktrees.'},
+      // A workcell (DLW §19.23): a rack whose chain is the road in and out — a return track in Factory and the Works in of every track an
+      // agent works on, in every mode; its tile the Workcells widget (agent/devices/workcellRackBinding.ts).
+      {id: 'workcell', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'rack',
+        invariant: {chains: ['gateway', 'remote-carrier', 'git-seat'], chainSelector: 'the road in and out: the gateway, the machine, the seat and its landing'},
+        note: 'A workcell of the machine\'s register: its chain is the Gateway, the Remote carrier and Git / landing with the Seat; its macros reach the Gateway and the landing.'},
     ],
     params: {grammar: 'workcell/parameter-address/v1'},
     projections: ['workcell-seat-track-adapter'],

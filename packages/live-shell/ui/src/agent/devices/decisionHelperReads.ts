@@ -4,7 +4,8 @@
 //   - `team_space` → ql.vak-team-space/v1, Quaternal Logic's team space (`ql context-frame team-space`).
 // Both are machine-level. They are read when the helper stands on a chain (a group's), drawn last-first when it comes back, and
 // re-read on the spine's epoch. A refusal is the owner's words, carried as the reading's error.
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {scopesOf} from '../../owners/ownerCall'
+import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useOwnerReading, type OwnerRead} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
@@ -21,9 +22,9 @@ export function readDecisionStatusOf(transport: KernelTransportStatus): OwnerRea
   return async () => {
     const down = unavailable(transport)
     if (down) return {error: down}
-    const result = await kernelOp(transport, {op: 'decision_status'})
+    const result = await kernelRead(transport, {op: 'decision_status'})
     if (result.error || result.outcome?.result !== 'decision_status_reading') return {error: result.error ?? 'AIKit did not return its decision provider.'}
-    return {value: result.outcome.data}
+    return {value: result.outcome.data, ...scopesOf(result.outcome)}
   }
 }
 
@@ -32,9 +33,9 @@ export function readTeamSpaceOf(transport: KernelTransportStatus): OwnerRead<unk
   return async () => {
     const down = unavailable(transport)
     if (down) return {error: down}
-    const result = await kernelOp(transport, {op: 'team_space'})
+    const result = await kernelRead(transport, {op: 'team_space'})
     if (result.error || result.outcome?.result !== 'team_space_reading') return {error: result.error ?? 'Quaternal Logic did not return its team space.'}
-    return {value: result.outcome.data}
+    return {value: result.outcome.data, ...scopesOf(result.outcome)}
   }
 }
 

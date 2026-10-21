@@ -193,20 +193,27 @@ pub fn live_disclosure() -> Result<SuiteCompositionDisclosure, String> {
     })
 }
 
-/// SHA-256 of a file via the system tools, matching the artifact verification
-/// convention elsewhere in this crate. `None` when no tool or file.
+/// SHA-256 of a file, hashed in-process. `None` when the file cannot be read.
 fn live_sha256(path: &Path) -> Option<String> {
-    let tool = resolve_executable("shasum")
-        .map(|shasum| (shasum, vec!["-a".to_owned(), "256".to_owned()]))
-        .or_else(|| resolve_executable("sha256sum").map(|sum| (sum, Vec::new())))?;
-    let output = Command::new(tool.0).args(&tool.1).arg(path).output().ok()?;
-    if !output.status.success() {
-        return None;
+    use sha2::{Digest, Sha256};
+    use std::io::Read;
+    let mut file = fs::File::open(path).ok()?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0u8; 64 * 1024];
+    loop {
+        let read = file.read(&mut buffer).ok()?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
     }
-    String::from_utf8_lossy(&output.stdout)
-        .split_whitespace()
-        .next()
-        .map(str::to_owned)
+    Some(
+        hasher
+            .finalize()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect(),
+    )
 }
 
 /// What the live machine knows about a checkout that recorded state cannot:
@@ -268,6 +275,8 @@ fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
     PathProbe: Fn(&str) -> Option<String>,
     HashProbe: Fn(&Path) -> Option<String>,
 {
+    let mut checkouts: std::collections::HashMap<PathBuf, Option<LiveCheckout>> =
+        std::collections::HashMap::new();
     for surface in &mut disclosure.surfaces {
         let Some(resolved) = surface.resolved.clone() else {
             continue;
@@ -282,7 +291,12 @@ fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
         } else {
             resolved_path
         };
-        let checkout = git_probe(inside);
+        // Surfaces installed side by side share a checkout; git is asked once
+        // per directory.
+        let checkout = checkouts
+            .entry(inside.to_path_buf())
+            .or_insert_with(|| git_probe(inside))
+            .clone();
         if let Some(checkout) = &checkout {
             surface.live_revision = Some(checkout.head.clone());
         }
@@ -677,6 +691,47 @@ mod tests {
         );
         assert_eq!(recorded_revision("oi 0.1.0"), None);
         assert_eq!(recorded_revision("oi 0.1.0 (not-hex!)"), None);
+    }
+
+    #[test]
+    fn surfaces_in_one_directory_ask_git_once() {
+        let directory = std::env::temp_dir().join(format!("oi-git-once-{}", std::process::id()));
+        fs::create_dir_all(&directory).unwrap();
+        let mut disclosure = disclosure_with_resolved(&directory.display().to_string());
+        let second = disclosure.surfaces[0].clone();
+        disclosure.surfaces.push(second.clone());
+        disclosure.surfaces.push(second);
+        let asked = std::cell::Cell::new(0);
+        annotate_live_drift(
+            &mut disclosure,
+            |_inside| {
+                asked.set(asked.get() + 1);
+                Some(LiveCheckout {
+                    head: "aaaa1111bbbb2222cccc3333dddd4444eeee5555".into(),
+                    committed_at: None,
+                })
+            },
+            |_entry| None,
+            |_path| None,
+        );
+        assert_eq!(asked.get(), 1);
+        assert!(disclosure
+            .surfaces
+            .iter()
+            .all(|surface| surface.live_revision.is_some()));
+        fs::remove_dir_all(&directory).ok();
+    }
+
+    #[test]
+    fn live_sha256_hashes_in_process() {
+        let file = std::env::temp_dir().join(format!("oi-sha-test-{}", std::process::id()));
+        fs::write(&file, b"abc").unwrap();
+        assert_eq!(
+            live_sha256(&file).as_deref(),
+            Some("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+        );
+        fs::remove_file(&file).ok();
+        assert_eq!(live_sha256(&file), None);
     }
 
     #[test]

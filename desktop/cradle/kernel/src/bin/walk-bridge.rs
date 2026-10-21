@@ -216,6 +216,20 @@ fn main() {
         .attach_default_act_store()
         .expect("attach the native Act store");
     let kernel = Arc::new(Mutex::new(native_kernel));
+    // The change watch records "files changed" in the event log, so the app's
+    // /event-replay channel carries it like any other receipt.
+    {
+        let watched = Arc::clone(&kernel);
+        if let Err(error) = oi_cradle_kernel::watch::start_global(None, move |scopes, epoch| {
+            if let Ok(mut kernel) = watched.lock() {
+                kernel.record_readings_changed(scopes, epoch);
+            }
+        }) {
+            eprintln!("Change watch degraded ({error}); readings are kept for a short time and the shell is told to ask again every 30 s");
+        } else {
+            eprintln!("Change watch live");
+        }
+    }
     #[cfg(unix)]
     let _native_owner_server = oi_cradle_kernel::native_owner_transport::configured_offer()
         .expect("read native owner offer")

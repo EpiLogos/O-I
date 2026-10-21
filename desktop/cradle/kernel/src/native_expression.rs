@@ -2181,6 +2181,7 @@ impl crate::Kernel {
     ) -> Result<crate::KernelOpOutcome, String> {
         let data = self.native_expression.finish_compose(composed)?;
         Ok(crate::KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result: crate::KernelOpResult::NativeExpression { data },
         })

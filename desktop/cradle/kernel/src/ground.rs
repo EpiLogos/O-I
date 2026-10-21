@@ -160,6 +160,7 @@ impl crate::Kernel {
             self.ground_changed();
         }
         Ok(crate::KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result: crate::KernelOpResult::GroundReading {
                 reading: answered.reading?,

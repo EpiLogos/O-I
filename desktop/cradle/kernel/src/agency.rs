@@ -92,6 +92,11 @@ pub struct Client {
 }
 
 impl Client {
+    /// Which AIKit this client asks: the route, the executable and the home.
+    pub(crate) fn identity(&self) -> String {
+        format!("{:?}|{:?}|{}", self.executable, self.home, self.suite_route)
+    }
+
     pub(crate) fn local_speech_read(
         &self,
         cwd: &Path,
@@ -389,13 +394,22 @@ impl Client {
         Ok(value)
     }
 
+    /// The SessionSpaces AIKit applies to a project: a reading of its own
+    /// records, kept while its home, the root and the project stand.
     pub fn read_project(&self, cwd: &Path, project_ref: &str) -> Result<Value, String> {
-        read_project_with(
-            &self.executable,
-            self.home.as_deref(),
+        crate::read_cache::aikit_read(
+            &self.identity(),
+            &format!("session-space-discover:{project_ref}"),
             cwd,
-            project_ref,
-            self.suite_route,
+            || {
+                read_project_with(
+                    &self.executable,
+                    self.home.as_deref(),
+                    cwd,
+                    project_ref,
+                    self.suite_route,
+                )
+            },
         )
     }
 
@@ -937,19 +951,24 @@ impl EncounterRequest {
     /// The verbs that only read the owner's journal or standing; every other
     /// verb may open, drive or address a provider.
     pub fn reads(&self) -> bool {
-        matches!(
-            self,
-            Self::Providers
-                | Self::Health
-                | Self::ModelRead { .. }
-                | Self::ModeRead { .. }
-                | Self::Read { .. }
-                | Self::View { .. }
-                | Self::Status { .. }
-                | Self::Delivery { .. }
-                | Self::ConversationRead { .. }
-                | Self::ConversationList { .. }
-        )
+        match self {
+            // The prepared context is read (`{"operation":"read"}`) far more
+            // often than it is edited or adopted; only those two write.
+            Self::Context { request, .. } => request["operation"] == "read",
+            _ => matches!(
+                self,
+                Self::Providers
+                    | Self::Health
+                    | Self::ModelRead { .. }
+                    | Self::ModeRead { .. }
+                    | Self::Read { .. }
+                    | Self::View { .. }
+                    | Self::Status { .. }
+                    | Self::Delivery { .. }
+                    | Self::ConversationRead { .. }
+                    | Self::ConversationList { .. }
+            ),
+        }
     }
     fn sessions(&self) -> Vec<&str> {
         match self {
@@ -1933,6 +1952,21 @@ fn with_temp_json<T>(json: &str, run: impl FnOnce(&str) -> Result<T, String>) ->
 
 #[cfg(test)]
 mod tests {
+    /// A prepared-context read is a read: counted as a write, every one of
+    /// them (the shell reads it at start-up and on each agency refresh)
+    /// withdrew every reading the kernel held.
+    #[test]
+    fn a_prepared_context_read_is_a_read_and_its_edits_are_writes() {
+        use super::EncounterRequest;
+        let context = |request: serde_json::Value| EncounterRequest::Context {
+            agent_session: None,
+            request,
+        };
+        assert!(context(serde_json::json!({"operation": "read"})).reads());
+        assert!(!context(serde_json::json!({"operation": "edit", "basis": 1})).reads());
+        assert!(!context(serde_json::json!({"operation": "adopt", "basis": 1})).reads());
+    }
+
     #[cfg(unix)]
     #[test]
     fn killed_owner_process_keeps_a_nonempty_operation_and_signal_diagnostic() {

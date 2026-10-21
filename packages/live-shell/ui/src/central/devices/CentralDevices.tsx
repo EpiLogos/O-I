@@ -61,10 +61,11 @@ import {CENTRAL_FAMILY, CENTRAL_MAIN_FACES, CENTRAL_WORKSPACE_FACES, centralDevi
 import {centralWriters, closeDay, openToday, turnDieFace} from './centralDeviceWrites'
 import {turnDay, useDayInPane} from '../documents/documentDoor'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
-import {useCentralGroundAnswer, useDayDieReading, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
+import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
 import {usePageDevices} from './pageDevices'
 import {HYGIENE_DEVICE_ID, IMPACT_DEVICE_ID, useHygieneDevice, useImpactDevice} from './groundDevices'
-import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef} from './answerBinding'
+import {CENTRAL_AGENT_ID, answerBinding, centralAgentBinding, centralAgentRef} from './answerBinding'
+import {useAnswerVoice} from './useAnswerVoice'
 import {observedState, useEncounterSessions, type ObservedSession} from '../../agent/devices/EncounterObservers'
 import {composeAgentBinding} from '../../agent/devices/oneAgentBinding'
 import {custodyBinding} from '../../agent/devices/sessionChainBindings'
@@ -85,9 +86,12 @@ import {COMPANIONS} from '../../shell/modeDockTiles'
 import {usePacketReading} from '../../shell/transports/useCentralTransport'
 import {conversationOf} from '../../widgets/agentConversation'
 import {CENTRAL_SCOPE_ID, CONTEXT_WORLD_DEVICE_ID, IDENTITY_DEVICE_ID, PACKET_DEVICE_ID, SEARCH_DEVICE_ID, useIdentityDevice, usePacketDevice, useScopeDevice} from './agentChainDevices'
-import type {ChangeHorizon} from './contextWorldBinding'
+import {EFFECTIVE_SOURCES_ACTION, type ChangeHorizon} from './contextWorldBinding'
 import {useAtSearch} from '../searchPane'
 import './centralDevices.css'
+
+/** The root register's world, whose effective sources Scope reads (central.world.effective-sources {scope, world_ref}). */
+const ROOT_WORLD_SOURCES: Readonly<Record<string, unknown>> = {scope: 'root', world_ref: 'control:root'}
 
 export interface CentralConversationAperture {
   readonly project: string | null
@@ -184,6 +188,9 @@ export const centralAgentDevices = () => ({
   scope: familyFaceDevice(CENTRAL_SCOPE_ID, 'software-factory', 'context-write-mode', 'Scope', 'orbit'),
   approvals: familyFaceDevice(CENTRAL_APPROVALS_ID, 'software-factory', 'approvals', 'Approvals', 'arm'),
 })
+
+/** The Answer's id on the door (its design is `central:nara-conversation`, catalogue/panels/central__nara-conversation.tsx). */
+export const ANSWER_DEVICE_ID = centralDeviceId('nara-conversation')
 
 /** The thread page Central's Agent carries keeps its view (pin, the shown session, the filters) under its own hold. */
 const CENTRAL_THREAD_HOLD = `${CENTRAL_AGENT_ID}/thread`
@@ -289,13 +296,16 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ground.reading, ground.error, selectedKey])
   const document = useDayDieReading(transport, facts.aperture)
+  // The Day's own settings, and the moves of the Day shown when its document stands (T-COVERAGE §1.3).
+  const timezone = ground.reading?.time.state === 'ready' ? ground.reading.time.data?.policy.timezone ?? null : null
+  const own = useDayOwnReadings(transport, facts.standing?.state === 'ready' ? facts.standing.dayRef : null, timezone)
   // A Day held open in a pane shows its own face, which the owner holds at that Day's next Save: the device reads and turns that one.
   const inPane = useDayInPane(facts.aperture?.documentId ?? null)
   const shownFace = inPane?.face ?? document.face
   const refreshGround = ground.refresh, refreshDocument = document.refresh
   const binding = useMemo(() => {
     if (!facts.civilDate) return null
-    const values = dayValuesOf(facts, facts.aperture && shownFace !== null ? {face: shownFace, payload: document.payload} : null)
+    const values = dayValuesOf(facts, facts.aperture && shownFace !== null ? {face: shownFace, payload: document.payload} : null, own)
     return dayDesignBinding(DAY_DEVICE_ID, facts, values, {
       turn: async (aperture, face) => { if (await turnDay(aperture.documentId, face, () => turnDieFace(transport, aperture, face)) === 'owner') refreshDocument() },
       openToday: async () => {
@@ -313,7 +323,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
         }
       },
     })
-  }, [facts, shownFace, document.payload, transport, refreshDocument, refreshGround, epoch])
+  }, [facts, shownFace, document.payload, own, transport, refreshDocument, refreshGround, epoch])
   return {facts, document, binding}
 }
 
@@ -377,19 +387,40 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const refreshNara = nara.refresh
   const answerInput = useMemo(() => ({nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents, page: null}),
     [nara.state, nara.session, nara.resume, answerObserved, answerAgents])
+  // The session's next turn: its encounter's own draft, then its Send (the thread pane's). A typed question and a spoken one go this way.
+  const answerSend = useMemo(() => (answerHandle && 'actions' in answerHandle
+    ? async (text: string) => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null), [answerHandle])
   const own = useMemo(() => centralAgentBinding(CENTRAL_AGENT_ID, answerInput, {
     bind: conversation ? async () => { await bindConversation(transport, conversation); refreshNara() } : null,
-    send: answerHandle && 'actions' in answerHandle ? async text => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null,
+    send: answerSend,
   }),
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the conversation is its parts
-  [answerInput, answerHandle, transport, refreshNara, conversation?.project, conversation?.expressionRef, conversation?.conversation])
+  [answerInput, answerSend, transport, refreshNara, conversation?.project, conversation?.expressionRef, conversation?.conversation])
+  // The Answer (answerBinding.ts; DLW §19.4): the same owners, with the voice (useAnswerVoice.ts: Hears and Speaks through the kernel op
+  // nara_voice, the face's mouth following the spoken sound). It stands on no chain (R4): the door holds it, so a pane, its own window
+  // and the rail open it — mostly the face, the conversation small and optional beside it.
+  const voice = useAnswerVoice({transport, conversation, bound: nara.state === 'bound', session: nara.session, send: answerSend, reading: answerObserved?.reading})
+  const answerPage = pages.reads.page?.title ?? null
+  const answerPacket = typeof packet.values.packet === 'string' ? packet.values.packet : null
+  const answer = useMemo(() => answerBinding(ANSWER_DEVICE_ID, {...answerInput, page: answerPage !== null ? {title: answerPage} : null,
+    packet: answerPacket !== null ? {items: answerPacket, session: packetSession} : null, voice: voice.state}, {
+    bind: conversation ? async () => { await bindConversation(transport, conversation); refreshNara() } : null,
+    send: answerSend,
+    voice: {write: voice.write, why: voice.why},
+  }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the conversation is its parts
+  [answerInput, answerPage, answerPacket, packetSession, voice.state, voice.write, voice.why, answerSend, transport, refreshNara, conversation?.project, conversation?.expressionRef, conversation?.conversation])
+  const answerDevice = useMemo(() => familyFaceDevice(ANSWER_DEVICE_ID, CENTRAL_FAMILY, 'nara-conversation', 'Answer', 'form'), [])
   // Scope (one Scope): the Agent's session's scope over Central's ground (the one ground answer the Day reads) and the Packet.
   const ground = useCentralGroundAnswer(transport)
+  // The world's effective sources as Central resolves them (T-COVERAGE §1.3): the root register's, the ground's world.
+  const effective = useCentralAction(transport, EFFECTIVE_SOURCES_ACTION, ROOT_WORLD_SOURCES)
   const scope = useScopeDevice({
     answer: {bound: nara.state === 'bound', session: nara.session},
     horizon: (ground.reading?.sources ?? null) as ChangeHorizon | null, groundError: ground.error,
     document: pages.reads.page?.title ?? null,
     packet: packetReading?.context ? {items: packetReading.context.items.length, session: packetSession} : null,
+    effective,
   })
   // The Agent's pages (oneAgentBinding.ts): Identity reads the agent that answers until you choose another (the hold Agent identity kept);
   // Custody the dialogue's session, which reports no custody (each setting disabled with the op it lacks; its write mode Scope's); the
@@ -429,7 +460,8 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const bindingOf = (id: string): DesignBinding | null => (id === DAY_DEVICE_ID ? dayBinding : id === HYGIENE_DEVICE_ID ? hygiene : id === IMPACT_DEVICE_ID ? impactDesign
     : id === PACKET_DEVICE_ID ? packet : null)
   // What stands on the door now; a device that left the chain leaves the door too. The family's faces that stand on no chain (the page
-  // family, the Answer, Agent identity, Context & world, Search) are cleared once, so nothing stale of them stays on the door.
+  // family, Agent identity, Context & world, Search) are cleared once, so nothing stale of them stays on the door; the Answer stands
+  // there on its own binding (above), on no chain.
   const published = useRef(new Set<string>())
   useEffect(() => {
     const now = new Set(entries.map(entry => entry.id))
@@ -438,13 +470,14 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     published.current = now
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bindingOf reads the bindings named here
   }, [entries, dayBinding, hygiene, impactDesign, packet])
+  useEffect(() => { if (answerDevice) publishDevice(ANSWER_DEVICE_ID, {device: answerDevice, binding: answer}) }, [answerDevice, answer])
   useEffect(() => {
     if (others.agent) publishDevice(CENTRAL_AGENT_ID, {device: others.agent, binding: agent})
     if (others.scope) publishDevice(CENTRAL_SCOPE_ID, {device: others.scope, binding: scope})
     if (others.approvals) publishDevice(CENTRAL_APPROVALS_ID, {device: others.approvals, binding: approvals})
   }, [others, agent, scope, approvals])
   useEffect(() => {
-    for (const id of [IDENTITY_DEVICE_ID, CONTEXT_WORLD_DEVICE_ID, SEARCH_DEVICE_ID, centralDeviceId('nara-conversation')]) publishDevice(id, null)
+    for (const id of [IDENTITY_DEVICE_ID, CONTEXT_WORLD_DEVICE_ID, SEARCH_DEVICE_ID]) publishDevice(id, null)
     return () => {
       for (const face of manifest?.faces ?? []) publishDevice(centralDeviceId(face.id), null)
       for (const id of [CENTRAL_AGENT_ID, CENTRAL_SCOPE_ID, CENTRAL_APPROVALS_ID]) publishDevice(id, null)

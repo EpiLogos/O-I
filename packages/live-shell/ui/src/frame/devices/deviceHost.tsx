@@ -24,6 +24,7 @@ import {ControlWrapContext, Panel, PlaceContext, Tile, type ControlWrap, type Pa
 import type {PublishedDevice} from './deviceDoor'
 import {DeviceMenu, headMenu, type DeviceMenuState, type HeadMenuItem} from './DeviceMenu'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
+import {DEVICE_VIEWS} from './designed'
 import type {Frame, Room} from '../../inhabitants/catalogue/panels/design'
 import {popoutOf} from '../../inhabitants/catalogue/panels/popout'
 
@@ -263,6 +264,54 @@ export function withPlaceMarks(node: ReactNode, nav: HostNav): ReactNode {
 /** The room a window gives Pop-out when its host names none (the gallery's window, catalogue/main.tsx). */
 const POPOUT_ROOM: Room = {w: 1180, h: 620}
 
+// ---------------------------------------------------------------------------------------------------------------- views by place
+// Manual §16.3: "A device has one set of values and up to six views. It has the views of the places it stands in". A design declares
+// its kind and its views (design.ts `kind`, `views`; absent views: all six); the host draws no view of a place the device does not
+// stand in, and offers no mark that would take it there — a monitor has no fold, no ▸ and no chain plate, only its tile and its
+// Full, and its window holds its Full.
+
+/** The views a design has. Pure. */
+export function viewsOf(design: Pick<DesignedDevice, 'views'>): readonly DeviceViewName[] {
+  return design.views ?? DEVICE_VIEWS
+}
+
+/** The view a place draws of a design, or null where the device does not stand in that place. Its window stands wherever it has a
+ * Full: "Its window holds its Full" (§16.3). Pure. */
+export function viewIn(design: Pick<DesignedDevice, 'views'>, asked: DeviceViewName): DeviceViewName | null {
+  const has = viewsOf(design)
+  if (has.includes(asked)) return asked
+  return asked === 'popout' && has.includes('full') ? 'popout' : null
+}
+
+/** The navigation a design's views allow (§16.4): ▸ and the press to the pool only with Whole, the fold only with Folded, the rail mark
+ * only with Widget, ⤢ only with Full, ↗ only with a window. Pure. */
+export function navWithin(design: Pick<DesignedDevice, 'views'>, nav: HostNav): HostNav {
+  const has = new Set(viewsOf(design))
+  if (has.size === DEVICE_VIEWS.length) return nav
+  const {select, expand, expanded, full, popout, fold, unfold, rail, ...rest} = nav
+  return {
+    ...rest,
+    ...(has.has('whole') ? {select, expand, expanded} : {}),
+    ...(has.has('folded') ? {fold, unfold} : {}),
+    ...(has.has('widget') ? {rail} : {}),
+    ...(has.has('full') ? {full} : {}),
+    ...(has.has('popout') || has.has('full') ? {popout} : {}),
+  }
+}
+
+/** Where a device of each kind stands (manual §16.1's table), for the words of a place it does not stand in. */
+const STANDS: Readonly<Record<string, string>> = {
+  monitor: 'on the rail and full in a pane, never on a chain',
+  connection: 'on its workcell\'s chain',
+  instrument: 'at the head of a track\'s chain, or in a pane',
+}
+
+/** The words for a place a device does not stand in. Pure. */
+export function notHereWords(design: Pick<DesignedDevice, 'views' | 'kind' | 'title'>, view: DeviceViewName): string {
+  const where = STANDS[design.kind] ?? `in its places: ${viewsOf(design).join(', ')}`
+  return `${design.title} has no ${view} view: it stands ${where}.`
+}
+
 /** One view of a device, drawn as its own component: what it throws is caught by the boundary around it, never in the host's
  * render. */
 function DrawnView({device, view, props, wrap}: {device: DesignedDevice; view: DeviceViewName; props: HostedViewProps; wrap?: ControlWrap}) {
@@ -273,8 +322,12 @@ function DrawnView({device, view, props, wrap}: {device: DesignedDevice; view: D
   // The place's ▸ (the expanded view, Whole above the chain) and ↗ (the device's own window) reach the kit's head the same way (d18c911a3:
   // "The kit's Place carries onExpand, expanded and onPopout, so no design passes them").
   const {nav} = props
-  // Pop-out is composed by the host where the design writes none of its own: Full over Whole (catalogue/panels/popout.tsx).
-  const drawn = view === 'popout' ? popoutOf(device, props, props.room ?? POPOUT_ROOM) : device[view](props)
+  // Pop-out is composed by the host where the design writes none of its own: Full over Whole (catalogue/panels/popout.tsx); a device with
+  // no Whole has its Full alone in its window.
+  const room = props.room ?? POPOUT_ROOM
+  const drawn = view !== 'popout' ? device[view](props)
+    : device.popout || viewsOf(device).includes('whole') ? popoutOf(device, props, room)
+      : <div className="dp-window-body">{device.full({...props, frame: 'window', room})}</div>
   return <PlaceContext.Provider value={{marks: nav.marks ?? undefined, onRail: nav.rail, onClose: nav.close, onExpand: nav.expand, expanded: nav.expanded,
     onPopout: nav.popout}}>
     <ControlWrapContext.Provider value={wrap ?? null}>{withPlaceMarks(drawn, nav)}</ControlWrapContext.Provider>
@@ -319,8 +372,12 @@ const HEAD_SELECTOR = '.dp-head, .dp-folded, .dp-tile-head'
 export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain, wrap, frame, room, acts, member}: HostedDeviceProps) {
   const id = binding.id
   const state = useHostState(id)
-  const view: DeviceViewName = chain && asked === 'compact' && state.folded ? 'folded' : asked
-  const nav: HostNav = useMemo(() => (chain ? {...given, fold: () => setHostFolded(id, true), unfold: () => setHostFolded(id, false)} : given), [chain, given, id])
+  // The view the place asks for, where the device stands there (folded on its chain when the hand folded it), else none.
+  const folds = viewIn(designed, 'folded') !== null
+  const placed = viewIn(designed, chain && asked === 'compact' && state.folded && folds ? 'folded' : asked)
+  const view: DeviceViewName = placed ?? asked
+  const nav: HostNav = useMemo(() => navWithin(designed, chain && folds ? {...given, fold: () => setHostFolded(id, true), unfold: () => setHostFolded(id, false)} : given),
+    [chain, folds, given, id, designed])
   const root = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
   const wraps = !!wrap
@@ -373,7 +430,7 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     if (!head || !root.current?.contains(head)) return
     event.preventDefault()
     event.stopPropagation()
-    setMenu({x: event.clientX, y: event.clientY, subject: name, items: headMenu({onChain: !!chain, folded: state.folded, acts})})
+    setMenu({x: event.clientX, y: event.clientY, subject: name, items: headMenu({onChain: !!chain && folds, folded: state.folded, acts})})
   }
   const invoke = (id: HeadMenuItem['id']) => {
     if (id === 'fold') (state.folded ? nav.unfold : nav.fold)?.()
@@ -389,6 +446,7 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
       window.addEventListener('pointercancel', end)
     }}
     onClickCapture={() => queueMicrotask(send)} onChangeCapture={() => queueMicrotask(send)}>
+    {placed === null ? <p className="device-fault" data-device-absent={asked} data-i={`${name}|${notHereWords(designed, asked)}`}>{notHereWords(designed, asked)}</p> :
     <ViewBoundary key={at} id={designed.id} onFault={cause => setFault({at, words: faultWords(view, cause, !!plain)})}
       fallback={cause => plain
         ? <ViewBoundary id={plain.id} fallback={again => note(faultWords(view, again, false))}>
@@ -396,7 +454,7 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
         </ViewBoundary>
         : note(faultWords(view, cause, false))}>
       <DrawnView device={designed} view={view} props={props} wrap={wrap} />
-    </ViewBoundary>
+    </ViewBoundary>}
     {menu && typeof document !== 'undefined' && createPortal(<DeviceMenu menu={menu} onInvoke={invoke} onClose={closeMenu} />, document.body)}
   </div>
 }

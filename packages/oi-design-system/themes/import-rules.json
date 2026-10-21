@@ -104,11 +104,27 @@
       "appearance": "dark"
     },
     {
+      "id": "epi-logos",
+      "appearance": "dark"
+    },
+    {
+      "id": "epi-logos-a",
+      "appearance": "dark"
+    },
+    {
       "id": "night-owl-dark",
       "appearance": "dark"
     },
     {
       "id": "nord-dark",
+      "appearance": "dark"
+    },
+    {
+      "id": "oi-dark",
+      "appearance": "dark"
+    },
+    {
+      "id": "oi-dark-a",
       "appearance": "dark"
     },
     {
@@ -120,7 +136,23 @@
       "appearance": "dark"
     },
     {
+      "id": "epi-logos-day",
+      "appearance": "light"
+    },
+    {
+      "id": "epi-logos-day-a",
+      "appearance": "light"
+    },
+    {
       "id": "light-plus",
+      "appearance": "light"
+    },
+    {
+      "id": "oi-light",
+      "appearance": "light"
+    },
+    {
+      "id": "oi-light-a",
       "appearance": "light"
     },
     {

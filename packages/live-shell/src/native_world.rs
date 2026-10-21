@@ -33,7 +33,13 @@ pub async fn current_world_bounded(
     suite_cli: &Path,
     deadline: std::time::Duration,
 ) -> Result<serde_json::Value, String> {
-    wait_current_world(spawn_current_world(suite_cli)?, deadline).await
+    if let Some(reading) = native_contract::recalled_world(suite_cli) {
+        return Ok(reading);
+    }
+    let epoch = native_contract::epoch_now();
+    let reading = wait_current_world(spawn_current_world(suite_cli)?, deadline).await?;
+    native_contract::remember_world(suite_cli, epoch, &reading);
+    Ok(reading)
 }
 
 #[cfg(test)]

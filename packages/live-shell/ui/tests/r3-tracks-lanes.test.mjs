@@ -126,7 +126,8 @@ test('Central\'s mixer row says what each control means here; Arm is the shell\'
   assert.deepEqual(cells.map(cell => [cell.id, cell.state, !!cell.press]), [['activator', 'unread', false], ['solo', 'unread', false], ['arm', 'off', true], ['input', 'route', false], ['output', 'route', false]])
   assert.deepEqual(await answerOf(cells[2].press.run), {ok: false, text: 'refused: write-arm enforcement is Factory receiving (WO-SF2)'}, 'the owner\'s refusal is the receipt')
   assert.deepEqual(armed, [true])
-  assert.match(set.lanes.absent.takes, /missing op: central\.document\.revisions/, 'revisions as takes: the op they lack')
+  // REPLACED (T-COVERAGE §1.3): a page's revisions are read from central.temporal.source-history; none handed in here, the takes say so.
+  assert.match(set.lanes.absent.takes, /no page of today's worlds has its history read yet \(Central's central\.temporal\.source-history\)/, 'revisions as takes: the reading they wait on')
   // The view: the mixer row under each world's head, its controls disabled where no owner writes them.
   const grid = session(set)
   assert.equal((grid.match(/data-mixer="central:world:/g) ?? []).length, 2, 'a mixer row under every world')

@@ -22,21 +22,24 @@
 //     `export default function` (vite.config.mjs, `faceVendor`), so that it runs when this loader calls it, never at load.
 // The loader runs a file once, after the files it needs.
 type Module = {default?: () => void}
-const FILES = import.meta.glob<Module>(['./vendor/*.js', '!./vendor/creature-agency.js'])
+// Vite rewrites each import.meta.glob below in place. Under Node (the shell's test suites import the panels that import this file)
+// import.meta.glob does not exist: the globs answer nothing, no vendored file runs and the agency is whatever a page already set.
+const glob = <T>(read: () => Record<string, T>): Record<string, T> => { try { return read() } catch { return {} } }
+const FILES = () => glob(() => import.meta.glob<Module>(['./vendor/*.js', '!./vendor/creature-agency.js']))
 // The agency data (the contract's fields, the patterns, the run states) is small and the lists draw from it at once: it is loaded with
 // this file and runs when it is first read.
-const AGENCY = import.meta.glob<Module>('./vendor/creature-agency.js', {eager: true})
+const AGENCY = () => glob(() => import.meta.glob<Module>('./vendor/creature-agency.js', {eager: true}))
 let agencyRan = false
 /** The agency ontology (face-rig CREATURE-SPEC.md Part II as data): `window.CREATURE_AGENCY`. */
-export function agency(): Kit {
+export function agency(): Kit | undefined {
   if (!agencyRan) {
     agencyRan = true
-    const m = Object.values(AGENCY)[0]
+    const m = Object.values(AGENCY())[0]
     if (typeof m?.default === 'function') m.default()
   }
-  return window.CREATURE_AGENCY
+  return typeof window === 'undefined' ? undefined : window.CREATURE_AGENCY
 }
-const JSON_FILES = import.meta.glob<{default: unknown}>('./vendor/*.json')
+const JSON_FILES = () => glob(() => import.meta.glob<{default: unknown}>('./vendor/*.json'))
 
 // The files a file needs before it runs (the page order of face-rig's pages).
 const NEEDS: Readonly<Record<string, readonly string[]>> = {
@@ -70,7 +73,7 @@ export function use(name: string): Promise<void> {
   if (p) return p
   p = (async () => {
     for (const need of NEEDS[name] ?? []) await use(need)
-    const file = FILES[`./vendor/${name}.js`]
+    const file = FILES()[`./vendor/${name}.js`]
     if (!file) throw new Error(`faces: ${name}.js is not vendored`)
     const m = await file()
     // The gallery's build wraps the file, so it runs here; a file the shell imports plain has run already.
@@ -86,7 +89,7 @@ export async function useAll(names: readonly string[]): Promise<void> {
 }
 /** A vendored recorded run, as its JSON. */
 export async function recordedRun(name: string): Promise<unknown> {
-  const file = JSON_FILES[`./vendor/${name}.json`]
+  const file = JSON_FILES()[`./vendor/${name}.json`]
   if (!file) throw new Error(`faces: no recorded run ${name}`)
   return (await file()).default
 }

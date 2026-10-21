@@ -13,7 +13,8 @@
 //     Quantize and envelopes — from the session's settings on their owner (AIKit `encounter-session-settings`, agent/sessionSettings.ts),
 //     every default stated by the owner.
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
-// revision. Pure, apart from the hook at the end.
+// revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
+// refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {useViewHoldsVersion} from '../frame/detail/clipBinding'
@@ -110,6 +111,25 @@ const SETTING_OF: Readonly<Record<string, TaskSetting>> = {
   handoff: 'handoff', quantize: 'quantize', 'env.agent.effort': 'effort', 'env.agent.autonomy': 'autonomy', 'env.mode': 'envelopeMode', 'env.linked': 'envelopeLink',
 }
 
+/** The Intent panel's readings (manual §19.1 "The Intent panel"; clip:factory, D3): what the task is for, its source, its success conditions,
+ * its context and constraints. Factory keeps them — the required difference in the Development Field (`factory development field read`),
+ * the conditions, their evaluation, the context and the constraints in the bounded intent of its project-development ledger — and no kernel
+ * route reaches either: the kernel's factory_development_read carries project, journey, run, workflow-units, workflow-unit,
+ * execution-telemetry and commission-read only. Each key is absent, with the read it waits for. */
+const LEDGER_READ = 'a read of the project-development ledger (bounded intent, success criteria, PraxisCondition) through the kernel (T-COVERAGE §1.2)'
+export const INTENT_ABSENT: Readonly<Record<string, string>> = {
+  intent: 'The intent: no reading reaches it yet — missing op: `factory development field read` through the kernel (factory_development_read carries no Development Field) (Software Factory).',
+  'intent.source': `Where the intent is written: no reading reaches it yet — missing op: ${LEDGER_READ} (Software Factory).`,
+  criteria: `The success conditions and their return: no reading reaches them yet — missing op: ${LEDGER_READ} (Software Factory).`,
+  constraints: `The constraints the task keeps: no reading reaches them yet — missing op: ${LEDGER_READ} (Software Factory).`,
+  context: `The context the task resolves in: no reading reaches it yet — missing op: ${LEDGER_READ} (Software Factory).`,
+}
+/** The Intent panel's writes, each refused with the operation it lacks. */
+export const INTENT_REFUSED: Readonly<Record<string, string>> = {
+  intent: 'Intent: no owner operation carries it yet — missing op: `factory development field set` through the kernel (Software Factory).',
+  criterion: 'A success condition: no owner operation carries it yet — missing op: a success-condition write on the bounded intent of the project-development ledger (Software Factory has none) (Software Factory).',
+}
+
 /** clip:factory's wiring: every key the design draws or sets. */
 export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null): ClipWiring {
   const acts: Record<string, (value: Value) => Promise<void>> = {}
@@ -133,13 +153,14 @@ export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext
       sessions: 'the other sessions of the agency reading, for Hand off to', log: 'the session\'s temporal events inside the task\'s span',
       elapsed: 'the task\'s start to its last activity, in seconds',
     },
-    absent: {},
+    absent: INTENT_ABSENT,
     acts,
     view: {
       fold: 'Fold keeps only the lanes of the tools the agent used: how the log shows, not the log',
       event: 'the log row selected in Clip view', 'env.control': 'which of the Agent\'s controls the envelope editor shows',
+      'criteria.page': 'the page of success conditions Clip view shows',
     },
-    refused,
+    refused: {...refused, ...INTENT_REFUSED},
   }
 }
 

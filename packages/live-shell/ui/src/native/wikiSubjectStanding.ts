@@ -10,7 +10,7 @@
  * (`world_read`) published as the registers (`publishWikiNativeRegisters`), each register's reading ensured through the
  * projection store (`ensureWikiStanding`, which is `ensureWikiProjection`). Nothing here reads wiki.json or keeps a loader.
  */
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {boundedKnowledgeChain} from '../../../../../desktop/cradle/src/knowledge/client'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {publishWikiNativeRegisters, wikiNativeRegisters} from '../../../../../desktop/cradle/src/techne/wikiNativeExpression'
@@ -43,7 +43,7 @@ export interface WikiStandingSource {
 export async function loadWikiStandingRegisters(transport: KernelTransportStatus): Promise<void> {
   if (transport.kind === 'unavailable') throw new Error(transport.reason)
   if (getWikiProjectionState().registers.length === 0) {
-    const reply = await kernelOp(transport, {op: 'world_read'})
+    const reply = await kernelRead(transport, {op: 'world_read'})
     if (reply.error || reply.outcome?.result !== 'world_read') throw new Error(reply.error ?? 'The native World did not supply a snapshot')
     const projects = reply.outcome.snapshot.navigator?.root?.work.projects ?? []
     publishWikiNativeRegisters(projects.map(row => ({name: row.name, path: row.path})))

@@ -69,13 +69,14 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
     const native = outcome.outcome;
     // Native cursor belongs to (World, owner generation). Keep it inspectable
     // without feeding it into this body's independent kernel event stream.
-    return {...native,receipts:[],native_owner:{world_ref:outcome.source_world_ref,
+    const read_scopes = outcome.read_scopes ?? native.read_scopes;
+    return {...native,receipts:[],...(read_scopes ? {read_scopes} : {}),native_owner:{world_ref:outcome.source_world_ref,
       owner_generation:outcome.owner_generation,receipts:native.receipts??[]}};
   }
   return { ...outcome, receipts: outcome.receipts ?? [] };
 }
 
-export async function kernelOp(
+export async function kernelReadSend(
   transport: KernelTransportStatus,
   op: KernelOp,
   signal?: AbortSignal,
@@ -100,6 +101,91 @@ export async function kernelOp(
   } catch (error) {
     return { outcome: null, error: String(error) };
   }
+}
+
+/** Ops that only ever change what an owner holds. */
+const WRITING_OPS: ReadonlySet<string> = new Set(["invoke_action", "file_operation", "decide", "decision_episode_revoke", "decision_preflight", "theme_import", "theme_apply", "theme_revert", "theme_remove",
+  "nara_decision_record", "live_device_param_write", "live_clip_write", "live_track_mixer_write", "live_take_comp", "live_groove_pool_write", "harness_agent_control", "chat_default_hold",
+  "chat_default_discard", "credential_setup", "credential_rotate", "credential_revoke", "client_install", "product_action_run", "dictation_configure", "working_surface_attachment",
+  "encounter_provision", "flow_participant_provision", "config_apply_reviewed"]);
+/** Ops that read or write by their request's verb (`kind`, `operation` or `action`). */
+const MIXED_OPS: ReadonlySet<string> = new Set(["central", "now", "page", "expression", "expression_recovery", "encounter_session_settings", "knowledge", "agent_definition",
+  "encounter", "receiving", "factory_owner", "routine", "shared_field", "ground", "setup", "a2a_exchange"]);
+const READING_REQUESTS: ReadonlySet<string> = new Set(["index", "find_checkpoint", "source-location", "agent-set", "open-day", "roster", "context", "providers", "census",
+  "catalogue", "methods", "plan", "recheck", "document", "inhabitation", "locate", "recognise", "recognize"]);
+/** A verb reads when its first or last word does (`action-list`, `workflow-inspect`, `current-work`, `telemetry-digest`). */
+const READING_WORD = /^(?:read|list|inspect|search|relations|resolve|status|view|show|get|describe|discover|snapshot|history|current|telemetry)$/;
+const readingVerb = (verb: string): boolean => {
+  const words = verb.toLowerCase().split(/[-_]/);
+  return READING_REQUESTS.has(verb.toLowerCase()) || READING_WORD.test(words[0]) || READING_WORD.test(words[words.length - 1]);
+};
+/** Receipts that say an owner's ground moved, as opposed to the window's own presentation (focus, surfaces, buffers). */
+const GROUND_RECEIPTS: ReadonlySet<string> = new Set(["routine_action_returned", "decision_recorded", "nara_decision_recorded", "configuration_changed", "world_changed",
+  "expression_changed", "source_changed", "file_changed", "now_changed", "day_changed", "receiving_changed", "factory_run_changed"]);
+/** Whether a completed op may have changed what an owner holds: a write op, a mixed op whose verb is not a read, or any op whose
+ * outcome carries a ground receipt. It tells the window's held readings they may no longer be the owner's (`onKernelWrite`).
+ * Reads never tell — a read that did would retire every held answer and have every view ask again after it. */
+export function writesOwner(op: KernelOp, outcome?: KernelOutcome | null): boolean {
+  if (outcome?.receipts?.some(receipt => GROUND_RECEIPTS.has(receipt.event))) return true;
+  if (WRITING_OPS.has(op.op)) return true;
+  if (!MIXED_OPS.has(op.op)) return false;
+  const request = (op as { request?: { kind?: unknown; operation?: unknown; action?: unknown } }).request;
+  // A request is tagged by a verb field, or externally by its one key (Receiving's `{List: …}`, `{Submit: …}`).
+  const tag = request && typeof request === "object" && Object.keys(request).length === 1 ? Object.keys(request)[0] : undefined;
+  const verb = request?.kind ?? request?.operation ?? request?.action ?? tag;
+  return typeof verb === "string" && !readingVerb(verb);
+}
+const writeListeners = new Set<() => void>();
+/** Hear that an op which may change an owner's ground completed. */
+export function onKernelWrite(listener: () => void): () => void { writeListeners.add(listener); return () => { writeListeners.delete(listener); }; }
+
+export async function kernelOp(
+  transport: KernelTransportStatus,
+  op: KernelOp,
+  signal?: AbortSignal,
+): Promise<KernelOpCall> {
+  const call = await kernelReadSend(transport, op, signal);
+  if (!call.error && writesOwner(op, call.outcome)) for (const listener of [...writeListeners]) listener();
+  return call;
+}
+
+/** What holds a read of the kernel for the window: one answer per op and transport, asked once however many readers want it, kept
+ * until the kernel says its sources moved (the shell installs it, packages/live-shell/ui/src/owners/ownerCall.ts). Without one a
+ * read goes to the kernel each time (a host with no shared store, a test). */
+export type KernelReadHolder = (transport: KernelTransportStatus, op: KernelOp, fresh: boolean) => Promise<KernelOpCall>;
+let readHolder: KernelReadHolder | null = null;
+export function installKernelReadHolder(holder: KernelReadHolder | null): void { readHolder = holder; }
+
+/** The kernel's notice that owner readings may have moved (its `readings_changed` event, or a write this window completed), as engine
+ * code hears it. A host that carries the notice installs a source (the shell: packages/live-shell/ui/src/owners/ownerCall.ts) and
+ * fires `announceReadingsMoved`; a host that does not (the legacy frame) installs none, and `refreshOnReadingsMoved` keeps its period. */
+const movedListeners = new Set<(scopes?: readonly string[]) => void>();
+let noticeSources = 0;
+/** Declare that this window receives the kernel's notice. Returns the withdrawal. */
+export function installReadingsNoticeSource(): () => void {
+  noticeSources++;
+  let live = true;
+  return () => { if (live) { live = false; noticeSources--; } };
+}
+export function hasReadingsNoticeSource(): boolean { return noticeSources > 0; }
+/** Hear that owner readings may have moved. */
+/** `scopes` are the notice's (absent: a write this window completed, which names none); a listener that cannot use them re-reads on any notice. */
+export function onReadingsMoved(listener: (scopes?: readonly string[]) => void): () => void { movedListeners.add(listener); return () => { movedListeners.delete(listener); }; }
+/** Tell the listeners that owner readings may have moved (the notice source calls it once per debounced notice). */
+export function announceReadingsMoved(scopes?: readonly string[]): void { for (const listener of [...movedListeners]) listener(scopes); }
+
+/** Keep a view's owner reading current: `read` runs once per notice where a source is installed, else every `periodMs`. Returns the stop. */
+export function refreshOnReadingsMoved(read: () => void, periodMs: number): () => void {
+  if (hasReadingsNoticeSource()) return onReadingsMoved(() => read());
+  const timer = setInterval(read, periodMs);
+  return () => clearInterval(timer);
+}
+
+/** A kernel op that only reads. It is answered from the window's held answer when one stands for the same op; `fresh` asks the
+ * kernel again and replaces it. A write, or a read whose answer must be the owner's now, goes through `kernelOp`. */
+export function kernelRead(transport: KernelTransportStatus, op: KernelOp, options: { fresh?: boolean; signal?: AbortSignal } = {}): Promise<KernelOpCall> {
+  if (readHolder && !options.signal) return readHolder(transport, op, options.fresh === true);
+  return kernelReadSend(transport, op, options.signal);
 }
 
 const safeSequence = (value: unknown, minimum: number): value is number =>

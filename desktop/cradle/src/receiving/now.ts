@@ -1,4 +1,4 @@
-import {kernelOp} from "../kernel/bridge";
+import {kernelRead} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
 /** Central's native NOW contract (native #195/#197/#199 and their compatible successors); field names
  * and schemas are the owner's, carried verbatim. Read-only: the desktop
@@ -44,8 +44,8 @@ export function validateNow(value:unknown,request:NowRequest):NowReading|NowList
  }
  return value as unknown as NowReading;
 }
-export async function nowReading<T extends NowReading|NowListing>(transport:KernelTransportStatus,project:string|null,request:NowRequest):Promise<T> {
-  const result=await kernelOp(transport,{op:"now",project,request});
+export async function nowReading<T extends NowReading|NowListing>(transport:KernelTransportStatus,project:string|null,request:NowRequest,fresh=false):Promise<T> {
+  const result=await kernelRead(transport,{op:"now",project,request},{fresh});
   if(result.error || result.outcome?.result!=="now_reading")throw new Error(result.error??"Central NOW reading is unavailable");
   return validateNow(result.outcome.data,request) as T;
 }

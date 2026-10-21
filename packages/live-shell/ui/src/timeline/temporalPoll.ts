@@ -19,9 +19,11 @@
 //   - when the spine's epoch moves (a new native access or World: the standing reading belongs to the old one);
 //   - when the person comes back to the window and the standing reading is older than a minute (other agents write NOW
 //     thoughts and Factory runs this shell is never told about);
-//   - and a slow floor, for those same untold writers: TEMPORAL_FLOOR_MS after the last completed read — so a read any notice
-//     caused resets it — or at the next UTC midnight, when the window itself moves, whichever is first. The floor never reads
-//     while the window is hidden: nobody sees what it would refresh, and coming back is a notice of its own.
+//   - when the kernel reports that what its owners read from moved (`readings_changed`, owners/readingsChanged.ts: a write by any
+//     process under the Central root or AIKit's home — another session's NOW return or thought, a Day ensured from a terminal, a
+//     Factory run advancing in its runner);
+//   - and at the next UTC midnight, when the window itself moves (a clock, not an owner poll). It never reads while the window is
+//     hidden: nobody sees what it would refresh, and coming back is a notice of its own.
 // A notice that arrives while a read is in flight asks for one more read after it — the running read may have started before
 // the change — never a pile.
 //
@@ -36,11 +38,6 @@ import {onAttentionRegained, windowVisible} from '../owners/attention'
 import {onOwnerChanged, receiptMovesTemporal} from '../owners/notices'
 import {useSpineEpoch} from '../owners/spine'
 import {Workspace} from '../shell/workspaceContext'
-
-/** The floor for writes no kernel receipt reaches — another process's NOW return or thought, Day ensure or close, receiving act,
- * Factory run, AIKit history or wiki return (owners/notices.ts); a write the kernel carried reads at once on its receipt. Five
- * minutes after the last completed read, while visible. */
-export const TEMPORAL_FLOOR_MS = 300_000
 
 /** Coming back to the window reads again only when the standing reading is older than this. */
 export const TEMPORAL_ATTENTION_MIN_AGE_MS = 60_000
@@ -65,14 +62,14 @@ export interface TemporalReading {
   readAtUnixMs: number | null
   /** Moves once per completed execution (a refusal counts), never back: a reader processes each execution once. */
   revision: number
-  /** What asked for the standing reading: 'first reader', a receipt's event, a told act, 'window regained', 'floor'… */
+  /** What asked for the standing reading: 'first reader', a receipt's event, a told act, 'window regained'… */
   cause: string | null
 }
 
 export interface TemporalPoll {
   /** The standing reading; the same object until an execution completes. */
   snapshot: () => TemporalReading
-  /** The first subscriber starts the poll (one read now, its notices, its floor); the last one stops it. */
+  /** The first subscriber starts the poll (one read now, its notices, the next UTC midnight); the last one stops it. */
   subscribe: (listener: () => void) => () => void
   /** Read now. A read already in flight is awaited, never doubled. */
   refresh: () => Promise<void>
@@ -87,9 +84,8 @@ export interface TemporalPollOptions {
   /** The op executor; the kernel bridge by default. */
   kernelOp?: (transport: KernelTransportStatus, op: Parameters<typeof kernelOp>[1]) => Promise<KernelOpCall>
   now?: () => number
-  floorMs?: number
   attentionMinAgeMs?: number
-  /** Whether the person can see the window; the floor never reads while it cannot. */
+  /** Whether the person can see the window; the midnight read never runs while it cannot. */
   visible?: () => boolean
   /** The window's return and the shell's told acts; the window's own by default. A harness passes its own. */
   onAttention?: (listener: () => void) => () => void
@@ -133,7 +129,6 @@ const noReading = (): Omit<TemporalReading, 'status' | 'revision'> => ({
 export function createTemporalPoll(transport: KernelTransportStatus, options: TemporalPollOptions = {}): TemporalPoll {
   const read = options.kernelOp ?? kernelOp
   const now = options.now ?? Date.now
-  const floorMs = options.floorMs ?? TEMPORAL_FLOOR_MS
   const attentionMinAgeMs = options.attentionMinAgeMs ?? TEMPORAL_ATTENTION_MIN_AGE_MS
   const visible = options.visible ?? windowVisible
   const onAttention = options.onAttention ?? onAttentionRegained
@@ -194,18 +189,18 @@ export function createTemporalPoll(transport: KernelTransportStatus, options: Te
     })
   }
 
-  /** The floor: TEMPORAL_FLOOR_MS after the last completed read, or the next UTC midnight, whichever is first. */
+  /** The next UTC midnight, when the civil week's window moves under the standing reading. */
   const armFloor = () => {
     if (floor !== null) clearTimeout(floor)
     floor = null
     if (!running || transport.kind === 'unavailable') return
     const from = reading.readAtUnixMs ?? now()
-    const at = Math.min(from + floorMs, nextWindowBoundary(from))
+    const at = nextWindowBoundary(from)
     floor = setTimeout(() => {
       floor = null
       // Hidden: nothing is shown, so nothing is read; the window's return is the notice that reads.
       if (!visible()) return
-      void run(reading.readAtUnixMs !== null && nextWindowBoundary(reading.readAtUnixMs) <= now() ? 'the window moved (UTC midnight)' : 'floor')
+      void run('the window moved (UTC midnight)')
     }, Math.max(0, at - now()))
   }
 

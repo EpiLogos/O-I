@@ -127,8 +127,23 @@ test('Factory on Arrangement view\'s ruler: no Launch tab, as in Live', async ()
   const design = await loadClip('factory')
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, placed: true})
   assert.equal(binding.placed, true)
-  assert.deepEqual(tabsOf(clipShape(design, binding)).panel, ['clip'])
-  assert.deepEqual(tabsOf(clipShape(design, factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null}))).panel, ['clip', 'launch'])
+  // REPLACED (lane W1-Factory): the design gained the Intent panel (§19.1 "A third tab, Intent"); the ruler still drops only Launch.
+  assert.deepEqual(tabsOf(clipShape(design, binding)).panel, ['clip', 'intent'])
+  assert.deepEqual(tabsOf(clipShape(design, factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null}))).panel, ['clip', 'launch', 'intent'])
+})
+
+test('Factory\'s Intent panel: every key absent with the read it waits for, Intent and a new condition refused with the write they lack (§19.1)', async () => {
+  const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null})
+  for (const key of ['intent', 'intent.source', 'criteria', 'constraints', 'context']) {
+    assert.equal(binding.values[key], undefined, `${key}: no reading`)
+    assert.match(factory.INTENT_ABSENT[key], /missing op: /, key)
+  }
+  assert.match(factory.INTENT_ABSENT.criteria, /project-development ledger \(bounded intent, success criteria, PraxisCondition\)/)
+  assert.match(factory.INTENT_ABSENT.intent, /factory development field read/)
+  for (const [key, op] of [['intent', /factory development field set/], ['criterion', /success-condition write/]]) {
+    assert.match(binding.standing[key].disabled, op, `${key} stands disabled with its operation`)
+    await assert.rejects(() => binding.write([{key, value: 'x'}]), op)
+  }
 })
 
 // ---------------------------------------------------------------------------------------------------------------- Live

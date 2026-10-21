@@ -1,0 +1,26 @@
+Relaunch with kept readings, against the same stack without them (21 Oct)
+
+Method: relaunch.sh (wayfinder/tools/lead-kit/measure-reads) on two private stacks at once, from one tree and one bridge build
+(the kernel as committed in 8b5f9852d; f060b3074 came after and changes no count), the same installed owners, over the same ground in the same minutes;
+OI_KEPT_READINGS=off on the before arm. Each stack: start, load headless (90 s), reload (30 s), stop, start again over the same home,
+load and reload. Counted with burst.py: owner processes within 10 s of a launch's first ask. Running the arms side by side matters:
+which devices the shell opens follows shared workspace state other sessions change, so arms run minutes apart open different ones.
+
+                                  cold launch                 relaunch
+  keeping off (kept-off/)   40 owner processes, 5.9 s   39 owner processes, 7.6 s
+  keeping on (kept-on/)     36 owner processes, 7.8 s    5 owner processes, 3.0 s   (35 reads answered from kept readings)
+
+  [kept] restored 39 (0 moved) in 90 ms. What the relaunch still asked: O:I ground status (its file lies outside the watch),
+  Central time and work policy and AIKit history (they change with the minute, so they are never written), and the census,
+  which another session's edit in this seat had moved. A reload costs 3-6 owner processes on either arm.
+
+Earlier rounds of the same comparison, and what each found (traces not kept):
+  1  keeping on only: 42 -> 16. The World, the project's World and the census were never written: scoped `all`, they moved
+     every few seconds with other sessions' seat edits. Factory's per-root locate and AIKit's SessionSpace discovery ran
+     outside the read model. Central's source returns refused every ask (a null limit).
+  2  arms six minutes apart: on 46 -> 7, off 65/63 with 12 kernel "writes": a Context World panel's
+     central.world.effective-sources was classified as a write and cleared every retained reading each time.
+  3  side by side: on 49 -> 9 (36 of 37 taken back, 1 moved by a seat edit), off 49 -> 45. The Day's settings and discovery
+     were still asked.
+
+Traces: kept-on/trace.txt, kept-off/trace.txt with each launch's marks. kept-listing.txt names what the stack kept (keys, scopes, sizes; the values are the owners' content and are left out).

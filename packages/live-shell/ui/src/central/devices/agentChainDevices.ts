@@ -19,7 +19,8 @@ import {CENTRAL_SCOPE_ID, centralScopeBinding, type ContextWorldInput} from './c
 import {identityAgentOf, identityBinding, identityWorldOf, profileExtrasOf, type IdentityInput, type ProfileExtras} from './identityBinding'
 import {holdsVersion, subscribeHolds} from './pageBindings'
 import {packetBinding, type PacketConversation} from './packetBinding'
-import {searchBinding, searchProjectOf, searchQueryOf, type SearchAnswer} from './searchBinding'
+import {CONTROL_SEARCH_ACTION, searchBinding, searchProjectOf, searchQueryOf, type SearchAnswer} from './searchBinding'
+import {useCentralAction} from './useCentralReadings'
 
 export const PACKET_DEVICE_ID = centralDeviceId('packet')
 export const SEARCH_DEVICE_ID = centralDeviceId('search')
@@ -53,7 +54,8 @@ export function usePacketDevice(transport: KernelTransportStatus, reading: {cont
 }
 
 /** Search: the held query asked of AIKit's knowledge search (search and resolve, progressively, as the cradle's overlay asks them), in
- * the held reach; read again only when the query or the reach changes (the line commits on Enter). */
+ * the held reach; for Your world, Central's search of Control too (control.search, held for the window); read again only when the query
+ * or the reach changes (the line commits on Enter). */
 export function useSearchDevice(transport: KernelTransportStatus, projects: readonly string[] | null): DesignBinding {
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
@@ -71,8 +73,11 @@ export function useSearchDevice(transport: KernelTransportStatus, projects: read
     )
     return () => controller.abort()
   }, [transport, query, project])
+  const controlInput = useMemo(() => (query && !project ? {query} : null), [query, project])
+  const control = useCentralAction(transport, CONTROL_SEARCH_ACTION, controlInput)
+  const asked = answer && controlInput && answer.query === controlInput.query ? {...answer, control} : answer
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
-  return useMemo(() => searchBinding(SEARCH_DEVICE_ID, answer, projects), [answer, projects, version])
+  return useMemo(() => searchBinding(SEARCH_DEVICE_ID, asked, projects), [answer, control, controlInput, projects, version])
 }
 
 const NO_EXTRAS: ReadonlyMap<string, ProfileExtras> = new Map()
@@ -103,12 +108,13 @@ export function useIdentityDevice(transport: KernelTransportStatus, talkingTo: s
   return useMemo(() => identityBinding(id, {roster: list, extras, talkingTo, card}), [id, list, extras, talkingTo, card, version])
 }
 
-/** Scope on Central (one Scope, R4): Context & world's readings — the Agent's session's scope over Central's ground (its change horizon)
- * and the Packet's reading — in Scope's keys (contextWorldBinding.ts centralScopeBinding). */
+/** Scope on Central (one Scope, R4): Context & world's readings — the Agent's session's scope over Central's ground (its change horizon,
+ * and the world's effective sources as Central resolves them) and the Packet's reading — in Scope's keys (contextWorldBinding.ts
+ * centralScopeBinding). */
 export function useScopeDevice(input: ContextWorldInput): DesignBinding {
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
-  const {answer, horizon, groundError, document, packet} = input
+  const {answer, horizon, groundError, document, packet, effective} = input
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the parts are the input; the holds' version re-binds the view's own keys
-  return useMemo(() => centralScopeBinding(CENTRAL_SCOPE_ID, {answer, horizon, groundError, document, packet}), [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, version])
+  return useMemo(() => centralScopeBinding(CENTRAL_SCOPE_ID, {answer, horizon, groundError, document, packet, effective}), [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, effective, version])
 }

@@ -147,8 +147,9 @@ export function MixerRow({cells, shown, routes: withRoutes = true, trackId, rece
   if (!shown) return null
   // A column with no row of its own (the Main column, a track read from another reading) keeps the row's height, so the slots align.
   if (!cells.length) return <div className="trk-mix" aria-hidden="true" />
-  const switches = cells.filter(cell => cell.state !== 'route' && cell.id !== 'input' && cell.id !== 'output')
-  const routes = withRoutes ? cells.filter(cell => cell.id === 'input' || cell.id === 'output') : []
+  const io = (cell: MixerCell) => cell.id === 'input' || cell.id === 'output' || cell.id === 'works'
+  const switches = cells.filter(cell => cell.state !== 'route' && !io(cell))
+  const routes = withRoutes ? cells.filter(io) : []
   return <div className={withRoutes ? 'trk-mix' : 'tl-mix'} role="group" aria-label="Mixer" data-mixer={trackId}>
     {switches.length > 0 && <div className="mx-row">{switches.map(cell => {
       const key = `mix:${cell.id}:${trackId}`
@@ -159,7 +160,7 @@ export function MixerRow({cells, shown, routes: withRoutes = true, trackId, rece
         onClick={() => { if (press) onPress(key, press.what, press.run) }}>{cell.id === 'arm' ? <CutIcon name="rec" size={9} /> : cell.text}</button>
     })}</div>}
     {routes.length > 0 && <div className="mx-io">{routes.map(cell => <span key={cell.id} className={`mx-route mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} title={cell.title}>
-      <small>{cell.id === 'input' ? 'in' : 'out'}</small>{cell.text}</span>)}</div>}
+      <small>{cell.id === 'input' ? 'in' : cell.id === 'works' ? 'works in' : 'out'}</small>{cell.text}</span>)}</div>}
   </div>
 }
 
@@ -246,9 +247,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
       </div>
     </div>
   </div>
-  return <div className="sg-pane" data-tracks-view="session" {...hands}>
-    <div className="sg" role="grid" aria-label="Session">
-      {tracks.map((track, column) => {
+  // One track's column (a return track's too: it stands after the empty track, before Main, and holds no clip slots — Live's).
+  const renderTrack = (track: WorldTrack, column: number) => {
         const style = {'--tc': trackColour(track)} as CSSProperties
         const selectedTrack = selection.ref === track.id
         const ancestors = tree.ancestorsOf(track)
@@ -263,7 +263,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         // A track merged from another reading takes none of the set's actions.
         const owned = !track.readOnly
         const trackLaunch = owned ? launch : undefined, trackStop = owned ? stopTrack : undefined
-        return <div key={track.id} className={`trk${level ? ' sub' : ''}`} role="row" style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties}
+        return <div key={track.id} className={`trk${level ? ' sub' : ''}${track.returns ? ' trk-return' : ''}`} role="row" style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties}
           data-track={track.id} data-depth={level || undefined} data-group={foldable ? 'true' : undefined} data-stalled={lit ? 'true' : undefined}>
           {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
           {foldable && <button type="button" className="gf" aria-expanded={open} aria-label={`${open ? 'Fold' : 'Unfold'} ${track.name}`}
@@ -287,6 +287,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
               data-section-head={item.section.id} style={item.section.atmosphere ? {'--atm': item.section.atmosphere} as CSSProperties : undefined}>
               {column === 0 && <span className="cs-label">{item.section.name}</span>}</div>
             const row = item.column
+            // A return track holds no clips: its row is blank, as Live draws a return track's Session column.
+            if (track.returns) return <div key={row.id} className="cs" role="gridcell" data-slot-track={track.id} />
             const clip = inRow.get(`${track.id}\u0000${row.id}`) ?? (track.groupId ? set.clips.find(c => c.columnId === row.id && set.tracks.find(t => t.id === c.trackId)?.groupId === track.groupId) : undefined)
             if (clip) {
               const selected = selection.ref === clip.id
@@ -340,12 +342,17 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
               onClick={() => onPress(`retry:${track.id}`, `Retry ${track.name}`, () => retry.run(track.id))}>↻</button>
           </div>}
         </div>
-      })}
+  }
+  return <div className="sg-pane" data-tracks-view="session" {...hands}>
+    <div className="sg" role="grid" aria-label="Session">
+      {tracks.filter(track => !track.returns).map(renderTrack)}
       {/* The empty track: what the set can seat is dropped here (Live: drop onto the empty area to make a track). */}
       <div className="sg-fill" data-seat-drop={seat ? 'open' : undefined} data-receipt={receiptMark(receipt, 'seat')}
         title={seat ? `Drop here to seat it on a new track (${seat.op})` : undefined} aria-label={seat ? 'Empty track: drop to seat' : undefined}
         onDragOver={seat ? event => { if (event.dataTransfer.types.includes(seat.accepts)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } } : undefined}
         onDrop={seat ? event => { const payload = event.dataTransfer.getData(seat.accepts); if (!payload) return; event.preventDefault(); onPress('seat', 'Seat', () => seat.run(payload)) } : undefined} />
+      {/* The return tracks (⌥⌘R shows and hides them: the frame's returns-hidden): in Factory, the workcells (frame/tracks/returnTracks.ts). */}
+      {tracks.filter(track => track.returns).map((track, at) => renderTrack(track, tracks.length + at))}
       <div className="trk trk-main" role="row" aria-label="Stops">
         <MainHead selection={selection} title={[mainTitle, grain ? `every control here acts on the${grain.replace(/[()]/g, '')}: the owner takes nothing finer` : undefined].filter(Boolean).join(' · ') || undefined}>{mainName ?? 'Main'}{grain && <span className="sg-grain">{set.actions?.grain}</span>}</MainHead>
         <MixerRow cells={[]} shown={!!set.mixer} trackId="main" receipt={receipt} onPress={onPress} />

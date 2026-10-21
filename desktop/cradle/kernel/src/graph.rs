@@ -457,8 +457,8 @@ where
     C: Send,
 {
     std::thread::scope(|scope| {
-        let second = scope.spawn(second);
-        let third = scope.spawn(third);
+        let second = scope.spawn(crate::read_cache::carried(second));
+        let third = scope.spawn(crate::read_cache::carried(third));
         let own = own();
         (own, second.join().ok(), third.join().ok())
     })
@@ -706,11 +706,11 @@ fn read_documents(
             let reads: Vec<_> = chunk
                 .iter()
                 .map(|reference| {
-                    scope.spawn(move || {
+                    scope.spawn(crate::read_cache::carried(move || {
                         client
                             .source_read(project, reference)
                             .map_err(|error| error.to_string())
-                    })
+                    }))
                 })
                 .collect();
             readings.extend(reads.into_iter().map(|read| {
@@ -853,7 +853,8 @@ impl PreparedGraph {
                     return Ok(graph_outcome(reading));
                 }
             }
-            reads.begin(key.clone())
+            let scopes = reads.aikit_scopes(&cwd);
+            reads.begin_in(key.clone(), scopes)
         };
         let reading = assemble_selected(
             &self.client,
@@ -882,6 +883,7 @@ impl PreparedGraph {
 
 fn graph_outcome(reading: GraphReading) -> KernelOpOutcome {
     KernelOpOutcome {
+        read_scopes: None,
         receipts: Vec::new(),
         result: KernelOpResult::GraphReading { reading },
     }
@@ -1353,6 +1355,36 @@ mod owner_read_tests {
     use super::*;
     use std::fs;
     use std::time::{Duration, Instant};
+
+    /// The reads a graph makes beside its own - Central's wiki, AIKit's
+    /// resolution - run on threads of their own; the scopes they depend on
+    /// are the op's.
+    #[test]
+    fn reads_made_beside_the_callers_are_attributed_to_the_op() {
+        use crate::read_cache::{Dep, ReadModel};
+        use crate::watch::Scope;
+        let model = ReadModel::over(crate::watch::Watch::new());
+        let read = |key: &str, scope: Scope| {
+            model
+                .read(
+                    key,
+                    &Dep::new(vec![scope], Duration::from_secs(60)),
+                    || -> Result<_, String> { Ok(0) },
+                )
+                .unwrap()
+        };
+        let (_, scopes) = read_cache::attributed(|| {
+            beside(
+                || (),
+                || read("second", Scope::Seats),
+                || read("third", Scope::Project("P".into())),
+            )
+        });
+        assert_eq!(
+            scopes,
+            Some(vec!["project:P".to_owned(), "seats".to_owned()])
+        );
+    }
 
     /// A fake Central owner over a temporary ground: `central.world`,
     /// `central.wiki.read` (a root wiki whose `node-source` targets are the
@@ -2327,6 +2359,7 @@ mod real_ground {
                         &options,
                     );
                     let outcome = Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts: Vec::new(),
                         result: KernelOpResult::GraphReading { reading },
                     });
