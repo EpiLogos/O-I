@@ -58,7 +58,7 @@ import {useSpineEpoch} from '../../owners/spine'
 import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
 import {CENTRAL_FAMILY, CENTRAL_MAIN_FACES, CENTRAL_WORKSPACE_FACES, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
-import {centralWriters, closeDay, openToday, turnDieFace} from './centralDeviceWrites'
+import {beginDayMove, centralWrite, centralWriters, closeCarry, openToday, openTomorrow, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane} from '../documents/documentDoor'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
@@ -86,7 +86,7 @@ import {COMPANIONS} from '../../shell/modeDockTiles'
 import {usePacketReading} from '../../shell/transports/useCentralTransport'
 import {conversationOf} from '../../widgets/agentConversation'
 import {CENTRAL_SCOPE_ID, CONTEXT_WORLD_DEVICE_ID, IDENTITY_DEVICE_ID, PACKET_DEVICE_ID, SEARCH_DEVICE_ID, useIdentityDevice, usePacketDevice, useScopeDevice} from './agentChainDevices'
-import {EFFECTIVE_SOURCES_ACTION, type ChangeHorizon} from './contextWorldBinding'
+import {EFFECTIVE_SOURCES_ACTION, ROOT_WORLD_RELATIONS, WORLD_RELATIONS_READ, WORLD_RELATIONS_SAVE, type ChangeHorizon} from './contextWorldBinding'
 import {useAtSearch} from '../searchPane'
 import './centralDevices.css'
 
@@ -316,13 +316,19 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
           void ownerReadings.entries().find(entry => entry.key === dayStandingKey(transport, null))?.retry(epoch)
         }
       },
+      // Close now is the close routine (W2): central.day.close-carry, which carries face 5's proposal when Close routine is On.
       closeNow: async () => {
-        try { await closeDay(transport) } finally {
+        try { await closeCarry(transport) } finally {
           refreshGround()
           void ownerReadings.entries().find(entry => entry.key === dayStandingKey(transport, null))?.retry(epoch)
         }
       },
-    })
+      // The Day's own settings, a pad's press and tomorrow's opening, through Central's actions on the revisions read (W2). The readings are
+      // asked again behind each write (the kernel's write notice); the ground too, where a Day moved.
+      settings: async (patch, revision) => { await writeDaySettings(transport, patch, revision) },
+      begin: async (move, dayRef) => { await beginDayMove(transport, move, dayRef) },
+      openTomorrow: async () => { try { await openTomorrow(transport) } finally { refreshGround() } },
+    }, own)
   }, [facts, shownFace, document.payload, own, transport, refreshDocument, refreshGround, epoch])
   return {facts, document, binding}
 }
@@ -415,12 +421,17 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const ground = useCentralGroundAnswer(transport)
   // The world's effective sources as Central resolves them (T-COVERAGE §1.3): the root register's, the ground's world.
   const effective = useCentralAction(transport, EFFECTIVE_SOURCES_ACTION, ROOT_WORLD_SOURCES)
+  // The world's authored relations, which a read place's include or exclude is saved on (W2: central.world-relations.save).
+  const relations = useCentralAction(transport, WORLD_RELATIONS_READ, ROOT_WORLD_RELATIONS)
+  const saveRelations = useMemo(() => async (record: Record<string, unknown>, expectedRevision: string) => {
+    await centralWrite(transport, WORLD_RELATIONS_SAVE, {scope: 'root', record, expected_revision: expectedRevision})
+  }, [transport])
   const scope = useScopeDevice({
     answer: {bound: nara.state === 'bound', session: nara.session},
     horizon: (ground.reading?.sources ?? null) as ChangeHorizon | null, groundError: ground.error,
     document: pages.reads.page?.title ?? null,
     packet: packetReading?.context ? {items: packetReading.context.items.length, session: packetSession} : null,
-    effective,
+    effective, relations, saveRelations,
   })
   // The Agent's pages (oneAgentBinding.ts): Identity reads the agent that answers until you choose another (the hold Agent identity kept);
   // Custody the dialogue's session, which reports no custody (each setting disabled with the op it lacks; its write mode Scope's); the

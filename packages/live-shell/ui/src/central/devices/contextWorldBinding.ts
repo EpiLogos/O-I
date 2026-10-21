@@ -20,10 +20,8 @@ export const CONTEXT_WORLD_DESIGN = 'central:context-world'
 
 const NO_REACH = 'No owner holds an agent\'s Reach: no operation enforces it yet (the Factory Scope\'s reach waits on the same write, agent/devices/designBindings.ts:93 — WO-SF2).'
 const NO_WRITES = 'No owner lists the places an agent may write, or how a write elsewhere arrives: Central records each write as a source change (its receipt), and no kernel operation sets the list or the mode.'
-/** The route a place request waits on: the person's include and exclude is Central's `central.world-relations.save` (it exists; the kernel
- * reaches it through invoke_action), which writes the person's authored relations and so needs the person's authority. */
-const PERSON_ROUTE = 'the kernel route that carries the person\'s authority (T-COVERAGE §1.1)'
-const NO_REQUEST = `A place request is the person's include or exclude: Central writes it through central.world-relations.save, which waits on ${PERSON_ROUTE}.`
+// Context & world stands on no chain since R4: Scope carries it (centralScopeBinding), where a read place's include or exclude is saved.
+const NO_REQUEST = 'A place request is the person\'s include or exclude, which Scope saves through central.world-relations.save; Context & world stands on no chain since R4 (lock §0.3.5: Context & world is Scope).'
 
 export const CONTEXT_WORLD_WIRING: DesignWiring = {
   design: CONTEXT_WORLD_DESIGN,
@@ -112,6 +110,10 @@ export interface ContextWorldInput {
   readonly packet: {readonly items: number; readonly session: string | null} | null
   /** Central's effective sources of the world (EFFECTIVE_SOURCES_ACTION): its data, or its refusal; absent while unasked. */
   readonly effective?: {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}
+  /** Central's authored relations of the world (WORLD_RELATIONS_READ): the record the person's include and exclude is written on. */
+  readonly relations?: {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}
+  /** Save the world's relations record on its revision (WORLD_RELATIONS_SAVE); absent where nothing writes. */
+  readonly saveRelations?: (record: Record<string, unknown>, expectedRevision: string) => Promise<void>
 }
 
 const str = (value: unknown): string | undefined => (typeof value === 'string' && value ? value : undefined)
@@ -199,7 +201,47 @@ export const CENTRAL_SCOPE_REFUSED: Readonly<Record<string, string>> = {
   writeMode: SCOPE_MISSING('Write mode', 'write-arm enforcement on the session\'s writes (WO-SF2): propose · draft · direct', 'Software Factory'),
   knowledge: SCOPE_MISSING('Knowledge', 'the Knowledge route\'s source bounds for the session (protocol_read is available but unwired)', 'AIKit'),
 }
-const NO_PLACE_REQUEST = `A place in Writes: Central writes the person's include and exclude through central.world-relations.save, which waits on ${PERSON_ROUTE}.`
+const NO_PLACE_REQUEST = 'A place in Writes: Central\'s world relations keep the sources a world reads (sources, excluded_sources), not where an agent writes — missing op: the session\'s writable places (write-arm enforcement, WO-SF2, Software Factory).'
+
+// ---------------------------------------------------------------------------------------------------------------- the world's relations
+// W2 (manual §19.12 Reads; DLW lock §0.3.5): a read place's request is the person's include or exclude of that source in the world, kept by
+// Central's authored world relations (central.world-relations/v1: sources, excluded_sources), read by `central.world-relations.read` and
+// written by `central.world-relations.save` on the record's revision — one of the person's own presses the kernel carries (action.rs
+// PERSON_ACTS). Central's save asks the record to carry its next revision (RevisionNotAdvanced otherwise).
+export const WORLD_RELATIONS_READ = 'central.world-relations.read'
+export const WORLD_RELATIONS_SAVE = 'central.world-relations.save'
+/** The root register's world, the one Scope on Central's workspace chain reads. */
+export const ROOT_WORLD_RELATIONS: Readonly<Record<string, unknown>> = {scope: 'root', ref: 'control:root'}
+
+/** The world's relations record as Central's read gives it (data.record), or null when the answer is not that record. */
+export function relationsRecordOf(data: unknown): Record<string, unknown> | null {
+  const record = (data as {record?: unknown} | null)?.record
+  return record && typeof record === 'object' && !Array.isArray(record) && (record as {schema?: unknown}).schema === 'central.world-relations/v1'
+    && typeof (record as {revision?: unknown}).revision === 'string' ? record as Record<string, unknown> : null
+}
+
+/** The record's next revision: the counter in its revision advanced (`w1` → `w2`), else `.1` added. Central asks only that it advance. */
+export function nextRelationsRevision(revision: string): string {
+  const counted = revision.match(/^(.*?)(\d+)$/)
+  return counted ? `${counted[1]}${Number(counted[2]) + 1}` : `${revision}.1`
+}
+
+/** The record with one source included (removed from excluded_sources) or excluded (added), at its next revision; every other field as
+ * read. Pure. */
+export function relationsWith(record: Record<string, unknown>, sourceRef: string, include: boolean): Record<string, unknown> {
+  const excluded = new Set(Array.isArray(record.excluded_sources) ? record.excluded_sources.filter((ref): ref is string => typeof ref === 'string') : [])
+  if (include) excluded.delete(sourceRef); else excluded.add(sourceRef)
+  return {...record, revision: nextRelationsRevision(String(record.revision)), excluded_sources: [...excluded].sort()}
+}
+
+/** The include or exclude of each of the world's sources, as Central resolved them (effective sources: available is included, excluded is
+ * not), as `r:<source ref>` values. */
+export function readRequestsOf(effective: unknown): Record<string, boolean> {
+  const sources = (effective as {sources?: unknown} | null)?.sources
+  if (!Array.isArray(sources)) return {}
+  return Object.fromEntries(sources.flatMap(source => typeof source?.ref === 'string' && (source.state === 'available' || source.state === 'excluded')
+    ? [[`r:${source.ref}`, source.state === 'available']] : []))
+}
 
 /** Scope's readings on Central: Context & world's (contextWorldValues), in Scope's keys. `reads` keeps Scope's place shape ({id, name,
  * ring}; the place's path rides along); `receipts` is the session's source changes, newest first (the manual's Receipts list — the design
@@ -208,23 +250,48 @@ export function centralScopeValues(id: string, input: ContextWorldInput): Values
   const world = contextWorldValues(id, input)
   const values: Record<string, Value> = {}
   for (const key of ['light', 'reads', 'receipts', 'reachPending'] as const) if (world[key] !== undefined) values[key] = world[key]!
+  // Each source's include or exclude, as Central resolved the world (r:<source ref>).
+  if (input.answer.bound && input.effective?.status === 'answered') Object.assign(values, readRequestsOf(input.effective.value))
   return values
 }
 
-/** Scope's binding on Central: readings only; a raised reach held until Confirm; every write refused with the op it lacks. */
+/** Why a read place's request cannot be written now. */
+function readRequestWhy(input: ContextWorldInput, key: string): string | null {
+  const ref = key.slice(2)
+  if (!ref.startsWith('central:source:')) return `${ref}: no source of the world, so no include or exclude of it is kept (central.world-relations/v1 keeps sources).`
+  if (!input.saveRelations) return 'No writer of the world\'s relations is handed to Scope here (central.world-relations.save).'
+  if (input.relations?.status === 'refused') return `Central refused the world's relations: ${input.relations.error}`
+  if (input.relations?.status !== 'answered' || !relationsRecordOf(input.relations.value)) return 'Central\'s world relations have not answered yet (central.world-relations.read): a save is checked against their revision.'
+  return null
+}
+
+/** Scope's binding on Central: its readings; a raised reach held until Confirm; a read place's include or exclude saved on the world's
+ * relations record at its revision (central.world-relations.save); every other write refused with the op it lacks. */
 export function centralScopeBinding(id: string, input: ContextWorldInput): DesignBinding {
   const values = centralScopeValues(id, input)
   const places = typeof values.reads === 'string' ? (JSON.parse(values.reads) as {id: string}[]) : []
   const standing: Record<string, Standing> = Object.fromEntries(Object.entries(CENTRAL_SCOPE_REFUSED).map(([key, why]) => [key, {disabled: why}]))
-  for (const place of places) standing[`w:${place.id}`] = {disabled: NO_PLACE_REQUEST}
+  for (const place of places) {
+    standing[`w:${place.id}`] = {disabled: NO_PLACE_REQUEST}
+    const why = readRequestWhy(input, `r:${place.id}`)
+    if (why) standing[`r:${place.id}`] = {disabled: why}
+  }
   return {
     id,
     values,
     standing,
     local: {reachPending: value => setHeld(id, 'reachPending', value === undefined ? undefined : value)},
-    writes: key => key in CENTRAL_SCOPE_REFUSED || key.startsWith('w:'),
+    writes: key => key in CENTRAL_SCOPE_REFUSED || key.startsWith('w:') || key.startsWith('r:'),
     write: async (changes: readonly ValueChange[]) => {
-      for (const {key} of changes) {
+      for (const {key, value} of changes) {
+        if (key.startsWith('r:')) {
+          const why = readRequestWhy(input, key)
+          if (why) throw Error(why)
+          if (typeof value !== 'boolean') throw Error('A read place\'s request is on (included) or off (excluded).')
+          const record = relationsRecordOf((input.relations as {value: unknown}).value)!
+          await input.saveRelations!(relationsWith(record, key.slice(2), value), String(record.revision))
+          continue
+        }
         if (key === 'reach') setHeld(id, 'reachPending', undefined)
         throw Error(CENTRAL_SCOPE_REFUSED[key] ?? (key.startsWith('w:') ? NO_PLACE_REQUEST : `${key} is a reading: its owner reports it; nothing here changes it.`))
       }

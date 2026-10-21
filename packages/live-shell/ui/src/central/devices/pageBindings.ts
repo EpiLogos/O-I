@@ -19,6 +19,7 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import type {SaveRouterOutcome} from '../../inhabitants/manifest'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
 import type {PageField} from '../../../../../../desktop/cradle/src/kernel/types'
+import {groundValues, thoughtValues, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
 import {civilDayName} from './dayBinding'
 import {civilDateOf, clockOf, headOf, wordsOfHtml, type DayPage, type FlowPage, type PageEntry} from './pageReadings'
 
@@ -117,7 +118,7 @@ export const DOCUMENT_WIRING: DesignWiring = {
 export const FLOW_WIRING: DesignWiring = {
   design: FLOW_DESIGN,
   keys: ['light', 'title', 'template', 'plural', 'media', 'people', 'pages', 'entries', 'roster', 'extra', 'upgraded', 'view', 'entry', 'relation', 'speaker', 'page',
-    'bring', 'revision', 'state', 'lastSave', 'save', 'reread', 'in:<agent>', 'left:<initial>', 'preflight', 'thought', 'since'],
+    'bring', 'revision', 'state', 'lastSave', 'save', 'reread', 'in:<agent>', 'left:<initial>', 'preflight', 'thought', 'since', 'preflightRead', 'contemplate', 'sinceRead'],
   reads: {
     light: 'the Flow\'s file answered (lit) or refused (dark)',
     title: 'meta.title', template: 'meta.template (its version)', plural: 'the current form (format v4, flow/plural.ts isCurrentFormat)',
@@ -126,8 +127,14 @@ export const FLOW_WIRING: DesignWiring = {
     roster: 'Central\'s accepted agents (owners/readers.ts useRosterAgents) not yet in the Flow',
     view: 'meta.view', revision: 'meta.revision (the page\'s own counter)', state: 'saved, or edited since save (the hosted form\'s draft fact)',
     lastSave: 'the save router\'s last named outcome (DocumentInPane.outcome); none before a save',
+    preflight: 'Contemplate\'s preflight, as AIKit answered the press (invoke_action `action:contemplate-flow` asked bare; pageGround.ts preflightValue)',
+    thought: 'the thought of the one run this window asked (aikit.flow-cognition/v1; thoughtValue)',
+    since: 'what changed since that thought (op flow_changed_since; sinceValue)',
   },
   writes: {
+    preflightRead: 'Contemplate\'s preflight asked (invoke_action `action:contemplate-flow`, bare: it records nothing)',
+    contemplate: 'Contemplate run once on the preflight record (invoke_action `action:contemplate-flow` with the record)',
+    sinceRead: 'what changed since the thought asked (op flow_changed_since)',
     extra: 'the next entry, appended as the person\'s through the Flow\'s own write (flow/instance.ts appendEntry + central.files.write, op file_operation; FlowSurface.tsx save)',
     save: 'the hosted face\'s Save (DocumentInPane.save)',
     reread: 'the hosted face\'s Re-read (DocumentInPane.reread)',
@@ -147,9 +154,9 @@ export const FLOW_WIRING: DesignWiring = {
   // The Thought page (D-package; manual §18.1 Thought): its owners answer — AIKit's Flow cognition through the kernel's invoke_action
   // `action:contemplate-flow` (asked bare: the preflight) and op flow_changed_since — but this binding does not ask them yet.
   absent: {
-    preflight: 'Not read by this binding yet: the kernel answers it (invoke_action `action:contemplate-flow` asked bare → `aikit flow preflight`); the Thought page waits on its binding.',
-    thought: 'Not read by this binding yet: the last thought is AIKit\'s Flow cognition (aikit.flow-cognition/v1, through `action:contemplate-flow`); the Thought page waits on its binding.',
-    since: 'Not read by this binding yet: the kernel\'s op flow_changed_since (`aikit flow changed-since`) answers it; the Thought page waits on its binding.',
+    preflight: 'Not asked yet: press Preflight — Contemplate\'s preflight is asked only by a press (`action:contemplate-flow`), never by itself.',
+    thought: 'No thought in this window: AIKit keeps no read of a Flow\'s last thought (T-COVERAGE §1.5), so a thought stands only after Contemplate runs here.',
+    since: 'Not asked yet: press Changed since, once a thought stands (op flow_changed_since).',
   },
 }
 
@@ -268,6 +275,10 @@ export const THINGS_WIRING: DesignWiring = pageWiring(THINGS_DESIGN, false)
 export const BEINGS_READ_WIRING: DesignWiring = pageWiring(BEINGS_DESIGN, true, true)
 export const THINGS_READ_WIRING: DesignWiring = pageWiring(THINGS_DESIGN, false, true)
 
+/** Why a write of a world's ground stands: Central takes it, but it writes the person's ground and is not among the person's own presses the
+ * kernel carries through invoke_action (action.rs PERSON_ACTS), so nothing writes it from here. */
+const NOT_PERSON_ACT = 'it is not among the person\'s own presses the kernel carries (desktop/cradle/kernel/src/action.rs PERSON_ACTS), so it waits for the kernel to carry it.'
+const NO_THOUGHT_HAND = 'Contemplate: no Flow is reached with its AIKit Flow ref here, so neither the preflight nor a run can be asked (`action:contemplate-flow`).'
 const BOOK_KEEPS = 'The workspace book keeps every part of the context, for every mode, at every change (desktop/cradle/src/workspace/store.ts): it has no such setting.'
 export const WORKSPACE_WIRING: DesignWiring = {
   design: WORKSPACE_DESIGN,
@@ -279,8 +290,11 @@ export const WORKSPACE_WIRING: DesignWiring = {
     mode: 'the open mode (layout.mode)', mem: 'the modes whose pane tree the book keeps (layout, modeLayouts)', fresh: 'the book keeps no tree and no set for it yet',
     widgets: 'the widgets open on the rail', visited: 'when the book last stood in it (lastVisitedAt)',
     trees: 'each mode\'s pane tree (splits with weights, tab groups with their tabs and pins)', sets: 'the newest named set of each mode',
+    pc: 'what Central would make of the world\'s folder (projectcentral.inspect {project}; pageGround.ts pcValue)',
+    self: 'the world\'s self (projectcentral.self.inspect {project}; selfValue)', pcPlan: 'the preview asked last (projectcentral.adopt.preview | migrate.preview; planValue)',
   },
   writes: {
+    pcPreview: 'Central\'s preview of the treatment chosen (projectcentral.adopt.preview | migrate.preview {project, source}, through invoke_action): a reading, nothing changes',
     mode: 'the book\'s own mode switch (continuity/workspace.tsx setMode → store.ts switchMode): the open mode turns',
     name: 'the book\'s own rename of the current workspace (store.ts rename)',
   },
@@ -290,19 +304,19 @@ export const WORKSPACE_WIRING: DesignWiring = {
     pcSource: 'the wiki a treatment keeps or copies: the person\'s choice, held until a preview asks for it',
     bindAs: 'the tier, UX or EX a source is bound as: the person\'s choice, held until Relate asks for it'},
   refused: {
-    pcPreview: 'Preview: projectcentral.init, adopt and migrate preview through invoke_action, which this binding does not ask yet (the Ground page waits on its binding).',
-    pcAccept: 'Accept: projectcentral.init, adopt or migrate writes the world\'s ground, which waits on the kernel route that carries the person\'s authority (T-COVERAGE §1.1).',
-    selfEnsure: 'Ensure: projectcentral.self.ensure writes the world\'s self, which waits on the kernel route that carries the person\'s authority (T-COVERAGE §1.1).',
-    selfRelate: 'Relate: projectcentral.self.tier.relate (or retain-tier) writes a tier\'s binding, which waits on the kernel route that carries the person\'s authority (T-COVERAGE §1.1).',
+    pcPreview: 'Preview: no world\'s ground is read here (a workspace of your root has no ProjectCentral; Ground hygiene reads the root\'s).',
+    pcAccept: `Accept: projectcentral.init, adopt or migrate writes the world's ground — ${NOT_PERSON_ACT}`,
+    selfEnsure: `Ensure: projectcentral.self.ensure writes the world's self — ${NOT_PERSON_ACT}`,
+    selfRelate: `Relate: projectcentral.self.tier.relate (or retain-tier) writes a tier's binding — ${NOT_PERSON_ACT}`,
     kind: BOOK_KEEPS, folder: 'A workspace\'s project is its world context; no owner operation moves it from here.',
     place: 'No owner places a workspace on the planet yet.', keepPanes: BOOK_KEEPS, keepInstruments: BOOK_KEEPS, keepWidgets: BOOK_KEEPS, keepSets: BOOK_KEEPS,
     rememberIn: BOOK_KEEPS, onLaunch: BOOK_KEEPS, openIn: BOOK_KEEPS, keepWhen: BOOK_KEEPS, sendToDay: 'No route sends a workspace\'s work to the Day yet.',
     launch: 'This workspace is the one open: its context stands. A launch is choosing it among the workspaces.', keepNow: BOOK_KEEPS,
   },
   absent: {
-    pc: 'Not read by this binding yet: Central\'s projectcentral.inspect (through invoke_action) answers what it would make of the folder; the Ground page waits on its binding.',
-    pcPlan: 'Not read by this binding yet: the preview is projectcentral.init, adopt or migrate asked to preview (through invoke_action); the Ground page waits on its binding.',
-    self: 'Not read by this binding yet: Central\'s projectcentral.self.inspect (central.development-field-reading/v1, through invoke_action) answers it; the Self page waits on its binding.',
+    pc: 'Not read: the workspace names no project world (projectcentral.inspect reads one project), or Central has not answered.',
+    pcPlan: 'Not asked yet: press Preview (projectcentral.adopt.preview or migrate.preview); Central has no preview of projectcentral.init.',
+    self: 'Not read: the workspace names no project world (projectcentral.self.inspect reads one project), or Central has not answered.',
     kind: BOOK_KEEPS, place: 'No owner places a workspace on the planet yet.', keepPanes: BOOK_KEEPS, keepInstruments: BOOK_KEEPS, keepWidgets: BOOK_KEEPS, keepSets: BOOK_KEEPS,
     rememberIn: BOOK_KEEPS, onLaunch: BOOK_KEEPS, openIn: BOOK_KEEPS, keepWhen: BOOK_KEEPS, sendToDay: 'No route sends a workspace\'s work to the Day yet.',
     dirty: 'No owner reports which of a workspace\'s documents hold edits the owner does not.',
@@ -538,8 +552,9 @@ export interface FlowWriters {
 }
 
 /** The Flow's binding: its readings, the person's next entry through the Flow's own write, the hosted face's Save and Re-read. */
-export function flowBinding(id: string, reached: ReachedPage, material: PageMaterial | null, roster: Parameters<typeof flowValues>[3], writers: FlowWriters | null): DesignBinding {
-  const values = flowValues(id, reached, material, roster)
+export function flowBinding(id: string, reached: ReachedPage, material: PageMaterial | null, roster: Parameters<typeof flowValues>[3], writers: FlowWriters | null,
+  thought: {readonly state: FlowThought; readonly hand: ThoughtHand | null} | null = null): DesignBinding {
+  const values = {...flowValues(id, reached, material, roster), ...thoughtValues(thought?.state ?? null)}
   const page = material?.form === 'flow' ? material.page : null
   const acts: PageActs = {
     save: async () => { if (!reached.save) throw new Error(NO_ACT('Flow')); reached.save() },
@@ -567,8 +582,27 @@ export function flowBinding(id: string, reached: ReachedPage, material: PageMate
       if (reached.dirty) throw new Error(DIRTY)
       await writers.meta({view: String(value ?? '')})
     },
+    // The Thought page (pageGround.ts): each a press, never by itself.
+    preflightRead: async () => {
+      if (!thought?.hand) throw new Error(NO_THOUGHT_HAND)
+      await thought.hand.preflight()
+    },
+    contemplate: async () => {
+      const pre = thought?.state.preflight
+      if (!thought?.hand) throw new Error(NO_THOUGHT_HAND)
+      if (pre?.status !== 'answered' || !pre.value || typeof pre.value !== 'object') throw new Error(pre?.status === 'refused' ? pre.error : 'Read the preflight first: Contemplate runs only on the record it gives.')
+      await thought.hand.contemplate(pre.value as Record<string, unknown>)
+    },
+    sinceRead: async () => {
+      const run = thought?.state.thought
+      if (!thought?.hand) throw new Error(NO_THOUGHT_HAND)
+      const data = run?.status === 'answered' && run.value && typeof run.value === 'object' ? run.value as Record<string, unknown> : null
+      if (!data || data.state !== 'cognition') throw new Error('There is no thought to read from: Contemplate has not run here, or it did not think.')
+      await thought.hand.since(data)
+    },
   }
   const why: Record<string, string> = {}
+  if (!thought?.hand) for (const key of ['preflightRead', 'contemplate', 'sinceRead']) why[key] = NO_THOUGHT_HAND
   if (!writers?.meta) why.view = 'The Flow\'s file is not reached here: open it from the browser, and its view is written on its file.'
   if (!reached.save) why.save = NO_ACT('Flow')
   if (!reached.reread) why.reread = NO_ACT('Flow')
@@ -825,9 +859,9 @@ export interface BookActs {
 }
 
 /** The Workspace's binding: the open mode turns, and the name changes, through the book's own acts. */
-export function workspaceBinding(id: string, workspace: BookWorkspace | null, now: number, book: BookActs | null): DesignBinding {
+export function workspaceBinding(id: string, workspace: BookWorkspace | null, now: number, book: BookActs | null, ground: WorkspaceGround | null = null): DesignBinding {
   const NO_BOOK = 'No workspace book is mounted here.'
-  const acts: PageActs = {
+  const acts: Record<string, (value: Value) => Promise<void>> = {
     mode: async value => {
       if (!book) throw new Error(NO_BOOK)
       if (typeof value !== 'string' || !(WORKSPACE_MODES as readonly string[]).includes(value)) throw new Error(`${String(value)} is none of the five modes.`)
@@ -839,5 +873,22 @@ export function workspaceBinding(id: string, workspace: BookWorkspace | null, no
       book.rename(value.trim())
     },
   }
-  return pageBinding(id, WORKSPACE_WIRING, workspaceValues(id, workspace, now), acts, book ? {} : {mode: NO_BOOK, name: NO_BOOK})
+  // The Ground page's Preview (pageGround.ts): the treatment and the wiki the hand holds, else what the inspection points to.
+  const held = heldOf(id)
+  const pc = ground?.pc?.status === 'answered' ? ground.pc.value as {outcome?: unknown; wiki_candidates?: unknown} | null : null
+  const candidates = Array.isArray(pc?.wiki_candidates) ? pc!.wiki_candidates.flatMap(row => (row && typeof (row as {source?: unknown}).source === 'string' ? [(row as {source: string}).source] : [])) : []
+  acts.pcPreview = async value => {
+    const asked = typeof value === 'string' && value.startsWith('{') ? (() => { try { return JSON.parse(value) as {treatment?: unknown; source?: unknown} } catch { return {} } })() : {}
+    const treatment = asked.treatment ?? held.treatment ?? (pc?.outcome === 'create_project_central' ? 'create' : candidates.length ? 'adopt' : undefined)
+    const source = typeof asked.source === 'string' ? asked.source : typeof held.pcSource === 'string' ? held.pcSource : candidates.length === 1 ? candidates[0] : undefined
+    if (!ground?.preview || !ground.project) throw new Error(WORKSPACE_WIRING.refused.pcPreview!)
+    if (treatment === 'create') throw new Error('Preview: Central has no preview of projectcentral.init; the inspection\'s outcome is its plan.')
+    if (treatment !== 'adopt' && treatment !== 'migrate') throw new Error('Preview: choose how Central makes the ground (create, adopt or migrate) first.')
+    if (!source) throw new Error('Preview: choose the wiki to keep or copy first.')
+    await ground.preview(treatment, source)
+  }
+  const why: Record<string, string> = book ? {} : {mode: NO_BOOK, name: NO_BOOK}
+  if (!ground?.preview || !ground.project) why.pcPreview = WORKSPACE_WIRING.refused.pcPreview!
+  const wiring = {...WORKSPACE_WIRING, refused: Object.fromEntries(Object.entries(WORKSPACE_WIRING.refused).filter(([key]) => key !== 'pcPreview'))}
+  return pageBinding(id, wiring, {...workspaceValues(id, workspace, now), ...groundValues(ground)}, acts, why)
 }

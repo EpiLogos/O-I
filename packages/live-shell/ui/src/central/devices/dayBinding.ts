@@ -23,8 +23,15 @@
 //     effective Prompt and Runs at — the defaults where the person saved nothing, each the owner's own reading;
 //   - `central.day.moves.read` {day_ref} (central.day-moves-reading/v1), for the Day shown when its document stands: each move's open
 //     run (`running`) and its last ended run (`last`: when it ended, what it gave).
-// Every one of those settings is written through `central.day.settings.write`, a run through `central.day.move.record`: both carry the
-// person's authority, so each control stands disabled naming that route (DAY_STANDING). The Close pad is Close now.
+// The writes (W2: the kernel carries the person's own presses through invoke_action, action.rs PERSON_ACTS):
+//   - every setting of the Day's own — Rollover, Agent writes, Sources, Close routine, each move's Prompt and Runs at — through
+//     `central.day.settings.write` on the settings revision read (`absent` before the first save), only the setting changed (daySettingsPatch);
+//   - a pad's press records the move's begin through `central.day.move.record` {event begin, trigger press} on the Day shown;
+//   - Close now (the Close pad) is the close routine through `central.day.close-carry` on the Day's two revisions: it carries face 5's
+//     proposal into tomorrow's face 0 when Close routine is On, and closes the Day either way;
+//   - `openTomorrow` opens tomorrow's Day beside today's through `central.day.rollover` (proposed to the catalogue: day.tsx has no control).
+// Each is checked by Central against the revision read; a refusal comes back in Central's words, and the readings are asked again behind
+// every write (the kernel's write notice retires the held answers).
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
@@ -32,10 +39,14 @@ import {DAY_INITIALISE_OP, DAY_OWNER, DAY_INITIALISE_REMEDY, type DayDocumentSta
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
-export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday', 'canClose'] as const
+export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen'] as const
 
-/** Keys the owner takes a change of. Every other key of the design is a reading or has no owner (manual §16.13). */
-export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday', 'closeNow'])
+/** Keys the owner takes a change of (the settings', the pads' and the presses'). Every other key of the design is a reading or has no
+ * owner (manual §16.13). */
+export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday', 'closeNow', 'openTomorrow', 'rollover', 'agentWrites', 'closeRoutine',
+  'src_central', 'src_factory', 'src_expressions', 'src_techne', 'src_live',
+  ...['tasks', 'patterns', 'context', 'synthesis', 'close'].flatMap(move => [`at_${move}`, `prompt_${move}`]),
+  ...['tasks', 'patterns', 'context', 'synthesis'].map(move => `run_${move}`)])
 
 /** The Day's moves (manual §18.2 Moves): the pads of the design, each with its press, its Runs at and its Prompt, and its run record.
  * Close is the close routine, whose press is Close now (`closeNow`), the one move an owner already takes. */
@@ -49,11 +60,11 @@ const NO_NOWS = 'every machine\'s NOW and its child NOWs, which no owner reports
  * nothing). */
 export const DAY_SETTINGS_ACTION = 'central.day.settings.read'
 export const DAY_MOVES_ACTION = 'central.day.moves.read'
-/** The route every write of the Day's own settings and runs waits on. */
-export const PERSON_ROUTE = 'the kernel route that carries the person\'s authority (T-COVERAGE §1.1)'
-const SETTINGS_WRITE = (what: string) => `${what}: Central writes it through central.day.settings.write, which waits on ${PERSON_ROUTE}.`
 const MOVE_NAMES: Readonly<Record<string, string>> = {tasks: 'Tasks', patterns: 'Patterns', context: 'Context', synthesis: 'Synthesis', close: 'Close'}
-const RUN_MOVE = (move: string) => `${MOVE_NAMES[move]}: a move runs as the Day's agent (AIKit, ai-kit #275), and Central records its run through central.day.move.record, which waits on ${PERSON_ROUTE}.`
+/** Why a setting cannot be written now: Central's write is checked against the revision its reading gave. */
+const SETTINGS_UNREAD = (what: string, own: DayOwnReadings | null) => `${what}: Central's Day settings ${own?.settingsRefusal ? `refused — ${own.settingsRefusal}` : 'have not answered yet'}, and central.day.settings.write is checked against the revision they give.`
+/** Why a pad cannot record its press now: a move begins on a Day that stands (central.day.move.record names it). */
+const NO_DAY_FOR_MOVES = (move: string) => `${MOVE_NAMES[move]}: no Day document stands for the Day shown, so no move begins on it (central.day.move.record records a move on a Day that stands).`
 const SOURCE_KEYS = ['src_central', 'src_factory', 'src_expressions', 'src_techne', 'src_live'] as const
 /** The keys the Day's settings reading fills, and those its moves reading fills. */
 export const DAY_SETTINGS_KEYS: readonly string[] = ['rollover', 'agentWrites', 'closeRoutine', ...SOURCE_KEYS, ...DAY_MOVES.flatMap(move => [`at_${move}`, `prompt_${move}`])]
@@ -64,8 +75,8 @@ const NO_CLOSEOUT = 'Close-out is AIKit\'s reading of what the close left behind
  * the runs' keys have their reasons from their readings (dayOwnAbsent). The views draw "—" where the kit draws them. */
 export const DAY_ABSENT: Readonly<Record<string, string>> = {
   view: 'Die or flat is a way of looking: no owner keeps it.',
-  tomorrow: 'Central reports one current Day; tomorrow\'s Day stands only after a rollover opens it, and no reading reports one (the design draws its page only when it is reported).',
-  tomorrowOpen: 'Central reports one current Day; no reading says whether tomorrow\'s Day is open.',
+  tomorrow: 'Central names no tomorrow\'s Day yet: it opens beside today\'s by Open tomorrow (central.day.rollover), at the Rollover you saved, or with the close\'s carry.',
+  tomorrowOpen: 'Central names no tomorrow\'s Day yet, so none is open.',
   template: 'The Day keeps the template it opened with (meta.template), but the design\'s choices are not the owner\'s templates.',
   c1p: 'The Day document holds included contributions only; proposals that wait are no record of it.',
   c2run: `Face 2 lists the sessions of ${NO_NOWS}; the sessions ledger records a session with no done, running or queued state.`,
@@ -77,18 +88,58 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   closeout: NO_CLOSEOUT,
 }
 
-/** The design's controls no write reaches from here, closed with the route each waits on (the host's own words would call them
- * readings): the four pads whose move runs as the Day's agent, every setting of the Day's own (Rollover, Agent writes, Sources, Close
- * routine, each move's Prompt and Runs at), and Verify. The Close pad presses Close now, which stands. */
+/** The design's controls no write reaches from here, closed with their reason: Verify (AIKit's close-out read has no kernel route). */
 export const DAY_STANDING: Readonly<Record<string, Standing>> = {
-  ...Object.fromEntries(DAY_MOVES.filter(move => move !== 'close').map(move => [`run_${move}`, {disabled: RUN_MOVE(move)}])),
-  ...Object.fromEntries(DAY_MOVES.flatMap(move => [[`at_${move}`, {disabled: SETTINGS_WRITE(`${MOVE_NAMES[move]}'s Runs at`)}],
-    [`prompt_${move}`, {disabled: SETTINGS_WRITE(`${MOVE_NAMES[move]}'s Prompt`)}]])),
-  rollover: {disabled: SETTINGS_WRITE('Rollover')},
-  agentWrites: {disabled: SETTINGS_WRITE('Agent writes')},
-  closeRoutine: {disabled: SETTINGS_WRITE('Close routine')},
-  ...Object.fromEntries(SOURCE_KEYS.map(key => [key, {disabled: SETTINGS_WRITE('Sources')}])),
   verifyCloseout: {disabled: NO_CLOSEOUT},
+}
+
+/** What each setting key is called, for its refusal. */
+const SETTING_NAME = (key: string): string => key === 'rollover' ? 'Rollover' : key === 'agentWrites' ? 'Agent writes' : key === 'closeRoutine' ? 'Close routine'
+  : key.startsWith('src_') ? 'Sources' : key.startsWith('at_') ? `${MOVE_NAMES[key.slice(3)]}'s Runs at` : key.startsWith('prompt_') ? `${MOVE_NAMES[key.slice(7)]}'s Prompt` : key
+
+/** The Day's standing now: Verify closed; every setting closed while Central's settings have not answered (a write is checked against
+ * their revision); every pad closed while no Day document stands for the Day shown. */
+export function dayStanding(facts: DayFacts, own: DayOwnReadings | null): Record<string, Standing> {
+  const standing: Record<string, Standing> = {...DAY_STANDING}
+  if (!settingsRevisionOf(own)) for (const key of DAY_SETTINGS_KEYS) standing[key] = {disabled: SETTINGS_UNREAD(SETTING_NAME(key), own)}
+  if (facts.standing?.state !== 'ready') for (const move of DAY_MOVES) if (move !== 'close') standing[`run_${move}`] = {disabled: NO_DAY_FOR_MOVES(move)}
+  return standing
+}
+
+/** The revision of Central's Day settings as read (`absent` before the first save), or null while they have not answered. */
+export function settingsRevisionOf(own: DayOwnReadings | null): string | null {
+  const reading = own && isRecord(own.settings) && own.settings.schema === 'central.day-settings-reading/v1' ? own.settings : null
+  return reading && typeof reading.revision === 'string' && reading.revision ? reading.revision : null
+}
+
+/** A patch of Central's Day settings, as central.day.settings.write takes it: only the settings given are saved. */
+export interface DaySettingsPatch {
+  readonly rollover?: string | null
+  readonly agent_writes?: 'off' | 'propose' | 'write'
+  readonly close_routine?: boolean
+  readonly sources?: Readonly<Record<string, boolean>>
+  readonly moves?: Readonly<Record<string, {readonly prompt?: string | null; readonly runs_at?: Readonly<Record<string, string>>}>>
+}
+
+const clockOf = (minutes: number): string => `${String(Math.floor(minutes / 60) % 24).padStart(2, '0')}:${String(Math.round(minutes) % 60).padStart(2, '0')}`
+
+/** A design key's new value as the one setting central.day.settings.write saves, in Central's words: Rollover a time or null (Off, the
+ * step below midnight), Agent writes one of its three, Close routine on or off, a Source on or off, a move's Runs at (Off, Day start,
+ * Rollover, or a daily time: day.tsx RUNS_AT) and its Prompt (empty is the move's own, null). Refused in words for any other value. Pure. */
+export function daySettingsPatch(key: string, value: Value): DaySettingsPatch | {readonly refused: string} {
+  if (key === 'rollover') return typeof value === 'number' && Number.isFinite(value) ? {rollover: value < 0 ? null : clockOf(value)} : {refused: `Rollover is a time, or Off; ${String(value)} is neither.`}
+  if (key === 'agentWrites') return value === 'off' || value === 'propose' || value === 'write' ? {agent_writes: value} : {refused: `Agent writes is Off, Propose or Write; ${String(value)} is none of them.`}
+  if (key === 'closeRoutine') return typeof value === 'boolean' ? {close_routine: value} : {refused: 'Close routine is On or Off.'}
+  if ((SOURCE_KEYS as readonly string[]).includes(key)) return typeof value === 'boolean' ? {sources: {[key.slice(4)]: value}} : {refused: 'A Source is On or Off.'}
+  const at = key.match(/^at_(tasks|patterns|context|synthesis|close)$/)
+  if (at) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return {refused: `Runs at is Off, Day start, Rollover or a time; ${String(value)} is none of them.`}
+    const runsAt: Readonly<Record<string, string>> = value <= -45 ? {kind: 'off'} : value <= -30 ? {kind: 'day_start'} : value < 0 ? {kind: 'rollover'} : {kind: 'daily', time: clockOf(value)}
+    return {moves: {[at[1]!]: {runs_at: runsAt}}}
+  }
+  const prompt = key.match(/^prompt_(tasks|patterns|context|synthesis|close)$/)
+  if (prompt) return typeof value === 'string' ? {moves: {[prompt[1]!]: {prompt: value.trim() ? value : null}}} : {refused: 'A Prompt is text.'}
+  return {refused: `${key} is no setting of the Day's.`}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Day's own
@@ -298,6 +349,8 @@ export interface DayFacts {
   /** The civil-time policy: minutes after civil midnight the day turns at, and whether rollover is automatic. */
   readonly boundary: number | null
   readonly automaticRollover: boolean | null
+  /** Tomorrow's Day as Central names it beside today's (central.day-reading/v1 `tomorrow`, set by central.day.rollover): its civil date. */
+  readonly tomorrow?: string | null
 }
 
 export interface DayFactsInput {
@@ -322,8 +375,11 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
   if (!ground) return {civilDate: null, standing: null, refusal: groundError ? `Central's ground did not answer: ${groundError}` : null, canOpenToday: false, canClose: false, aperture: null, boundary, automaticRollover}
   const current = currentDayOf(ground)
   const civilDate = time?.civil_date ?? current.pointer
+  // Tomorrow's Day, where Central names one after the Day shown (a stale name, on or before today, is no tomorrow).
+  const named = (ground.day.data as {tomorrow?: {civil_date?: unknown} | null} | null | undefined)?.tomorrow?.civil_date
+  const tomorrow = typeof named === 'string' && civilDate && named > civilDate ? named : null
   return {civilDate, standing: current.standing, refusal: refusalOf(current.standing, current.pointer, time?.civil_date ?? null), canOpenToday,
-    canClose: canCloseDay(ground), aperture: current.aperture, boundary, automaticRollover}
+    canClose: canCloseDay(ground), aperture: current.aperture, boundary, automaticRollover, tomorrow}
 }
 
 function refusalOf(standing: DayDocumentStanding | null, pointer: string | null, today: string | null): string | null {
@@ -347,6 +403,9 @@ export function dayValuesOf(facts: DayFacts, document: {readonly face: number; r
     if (facts.automaticRollover !== null) values.rollover = facts.automaticRollover ? facts.boundary : -15
   }
   if (facts.refusal) values.refusal = facts.refusal
+  // Tomorrow's Day stands beside today's once Central opened it (central.day.rollover, or the close's carry).
+  const tomorrow = civilDayName(facts.tomorrow ?? null)
+  if (tomorrow) { values.tomorrow = tomorrow; values.tomorrowOpen = true }
   values.canOpenToday = facts.canOpenToday
   values.canClose = facts.canClose
   // The face and the counts belong to the Day document: none stands, none is drawn.
@@ -364,19 +423,26 @@ export interface DayWriters {
   readonly turn: (aperture: DayAperture, face: number) => Promise<void>
   /** Ensure the current Day through Central (the person's press). */
   readonly openToday: () => Promise<void>
-  /** Close the Day Central names (the person's press). */
+  /** Close the Day Central names (the person's press): the close routine, central.day.close-carry. */
   readonly closeNow: () => Promise<void>
+  /** Save one setting of the Day's own on the revision read (central.day.settings.write). */
+  readonly settings?: (patch: DaySettingsPatch, expectedRevision: string) => Promise<void>
+  /** Record a move's begin on the Day shown, pressed now (central.day.move.record). */
+  readonly begin?: (move: string, dayRef: string) => Promise<void>
+  /** Open tomorrow's Day beside today's (central.day.rollover). */
+  readonly openTomorrow?: () => Promise<void>
 }
 
-/** The binding the runtime hosts the Day design on: the readings, and the two writes an owner takes. A change of any other key is
- * refused as a reading by the runtime (deviceHost.tsx flushDrafts); a write the owner cannot take now is refused in words. */
-export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<Record<string, Value>>, writers: DayWriters): DesignBinding {
+/** The binding the runtime hosts the Day design on: the readings, and the writes its owners take. A change of any other key is refused
+ * as a reading by the runtime (deviceHost.tsx flushDrafts); a write the owner cannot take now is refused in words. */
+export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<Record<string, Value>>, writers: DayWriters, own: DayOwnReadings | null = null): DesignBinding {
+  const standing = dayStanding(facts, own)
   return {
     id,
     values,
-    standing: DAY_STANDING,
-    // A setting no write reaches from here still goes to `write`, so its refusal names the route it waits on.
-    writes: key => DAY_WRITES.has(key) || !!DAY_STANDING[key]?.disabled,
+    standing,
+    // A control closed for now still goes to `write`, so its refusal says why.
+    writes: key => DAY_WRITES.has(key) || !!standing[key]?.disabled,
     write: async (changes: readonly ValueChange[]) => {
       for (const change of changes) {
         if (change.key === 'face') {
@@ -391,8 +457,22 @@ export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<R
           if (change.value !== true) throw new Error('Close now is a press: it closes the Day Central names, and nothing here reopens one.')
           if (!facts.canClose) throw new Error('No open Day stands for Close now: the Day shown is closed already, is one you selected, or Central gave no revision to close it on.')
           await writers.closeNow()
-        } else if (DAY_STANDING[change.key]?.disabled) {
-          throw new Error(DAY_STANDING[change.key]!.disabled!)
+        } else if (standing[change.key]?.disabled) {
+          throw new Error(standing[change.key]!.disabled!)
+        } else if (change.key === 'openTomorrow') {
+          if (change.value !== true) throw new Error('Open tomorrow is a press: it opens tomorrow\'s Day beside today\'s.')
+          if (!writers.openTomorrow) throw new Error('Open tomorrow: no writer is handed to the Day here (central.day.rollover).')
+          await writers.openTomorrow()
+        } else if (change.key.startsWith('run_')) {
+          if (change.value !== true) throw new Error('A pad is a press: it begins its move now.')
+          if (!writers.begin || facts.standing?.state !== 'ready') throw new Error(NO_DAY_FOR_MOVES(change.key.slice(4)))
+          await writers.begin(change.key.slice(4), facts.standing.dayRef)
+        } else if (DAY_SETTINGS_KEYS.includes(change.key)) {
+          const revision = settingsRevisionOf(own)
+          if (!revision || !writers.settings) throw new Error(SETTINGS_UNREAD(SETTING_NAME(change.key), own))
+          const patch = daySettingsPatch(change.key, change.value)
+          if ('refused' in patch) throw new Error(patch.refused)
+          await writers.settings(patch, revision)
         } else {
           throw new Error(`${change.key}: a reading — the owner reports it, and nothing here changes it.`)
         }

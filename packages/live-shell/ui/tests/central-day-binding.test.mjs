@@ -300,20 +300,20 @@ test('the die turns through the owner\'s mutate-field on the ready Day; with no 
   host.resetHost(ID)
 })
 
-test('every other key of the design is a reading, or a setting whose write waits on the person\'s route: the runtime sends nothing', async () => {
+test('every other key of the design is a reading, or a setting of Central\'s that waits for its reading: the runtime sends nothing', async () => {
   const owner = fakeOwner()
   const binding = bindingOf(STALE, owner)
   for (const key of ['dayStart', 'template', 'view', 'date']) assert.equal(binding.writes(key), false, key)
-  // REPLACED (T-COVERAGE §1.3): the Day's own settings are Central's (central.day.settings.read); their write is central.day.settings.write,
-  // which carries the person's authority, so each stands disabled naming that route and a write is refused in those words.
+  // REPLACED (W2): the Day's own settings write central.day.settings.write on the revision their reading gives (central-person-writes.test.mjs);
+  // with no reading of them handed in, each stands closed saying so, and a write is refused in those words.
   for (const key of ['agentWrites', 'rollover', 'closeRoutine', 'src_live']) {
     assert.equal(binding.writes(key), true, key)
-    assert.match(binding.standing[key].disabled, /central\.day\.settings\.write, which waits on the kernel route that carries the person's authority \(T-COVERAGE §1\.1\)/, key)
+    assert.match(binding.standing[key].disabled, /Central's Day settings have not answered yet, and central\.day\.settings\.write is checked against the revision they give/, key)
   }
   host.resetHost(ID)
   await withOwner(owner, async () => {
     host.setDraft(ID, 'agentWrites', 'write')
-    assert.match(await host.flushDrafts(binding, 0), /central\.day\.settings\.write|person's authority/)
+    assert.match(await host.flushDrafts(binding, 0), /central\.day\.settings\.write/)
   })
   assert.equal(owner.sent.length, 0)
   host.resetHost(ID)
@@ -565,23 +565,24 @@ test('the moves: with Central\'s Day readings not read, every reading of a move 
   assert.match(bind.DAY_ABSENT.c4, /each entry with its author/, 'face 4 gathers what the sessions touched, each with its author')
 })
 
-test('the moves: four pads, every Runs at and Prompt, and Agent writes stand closed naming the person\'s route; a press sends nothing', async () => {
+test('the moves: with Central\'s readings not handed in, every Runs at, Prompt and Agent writes stand closed saying why; the pads press on the Day shown', async () => {
   let wrote = 0
   const facts = factsOf(READY)
+  const begun = []
   const binding = bind.dayDesignBinding(ID, facts, bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD}),
-    {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }})
-  for (const move of ['tasks', 'patterns', 'context', 'synthesis']) {
-    assert.match(binding.standing[`run_${move}`]?.disabled ?? '', /Day's agent \(AIKit, ai-kit #275\).*central\.day\.move\.record.*T-COVERAGE §1\.1/, `the ${move} pad says what it waits on`)
-    await assert.rejects(binding.write([{key: `run_${move}`, value: true}]), /central\.day\.move\.record/, `pressing ${move} is refused in those words`)
-  }
+    {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }, begin: async (move, ref) => { begun.push([move, ref]) }})
+  // REPLACED (W2): a pad records its move's begin through central.day.move.record on the Day shown (central-person-writes.test.mjs).
+  for (const move of ['tasks', 'patterns', 'context', 'synthesis']) assert.equal(binding.standing[`run_${move}`], undefined, `the ${move} pad presses`)
+  await binding.write([{key: 'run_tasks', value: true}])
+  assert.deepEqual(begun, [['tasks', 'central:day:control:root:2026-10-16']])
   for (const move of ['tasks', 'patterns', 'context', 'synthesis', 'close']) {
-    assert.match(binding.standing[`at_${move}`]?.disabled ?? '', /central\.day\.settings\.write/, `${move}'s Runs at stands closed`)
-    assert.match(binding.standing[`prompt_${move}`]?.disabled ?? '', /central\.day\.settings\.write/, `${move}'s Prompt stands closed`)
+    assert.match(binding.standing[`at_${move}`]?.disabled ?? '', /central\.day\.settings\.write is checked against/, `${move}'s Runs at stands closed until the settings answer`)
+    assert.match(binding.standing[`prompt_${move}`]?.disabled ?? '', /central\.day\.settings\.write is checked against/, `${move}'s Prompt stands closed until the settings answer`)
   }
-  assert.match(binding.standing.agentWrites?.disabled ?? '', /T-COVERAGE §1\.1/, 'Agent writes names the route it waits on')
+  assert.match(binding.standing.agentWrites?.disabled ?? '', /have not answered yet/)
   assert.equal(binding.standing.run_close, undefined, 'the Close pad is Close now, which an owner takes')
   assert.equal(binding.standing.closeNow, undefined)
-  assert.equal(wrote, 0, 'nothing was sent to an owner')
+  assert.equal(wrote, 0, 'nothing else was sent to an owner')
 })
 
 test('the design: the Close pad presses Close now, the one move an owner takes; the other four press their own move', async () => {

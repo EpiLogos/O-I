@@ -114,7 +114,8 @@ export function useIdentityDevice(transport: KernelTransportStatus, talkingTo: s
 export function useScopeDevice(input: ContextWorldInput): DesignBinding {
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
-  const {answer, horizon, groundError, document, packet, effective} = input
+  const {answer, horizon, groundError, document, packet, effective, relations, saveRelations} = input
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the parts are the input; the holds' version re-binds the view's own keys
-  return useMemo(() => centralScopeBinding(CENTRAL_SCOPE_ID, {answer, horizon, groundError, document, packet, effective}), [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, effective, version])
+  return useMemo(() => centralScopeBinding(CENTRAL_SCOPE_ID, {answer, horizon, groundError, document, packet, effective, relations, saveRelations}),
+    [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, effective, relations, saveRelations, version])
 }

@@ -413,7 +413,8 @@ test('Context & world stands after the Answer and reads its session\'s world: th
   }
   for (const key of ['r:packet', 'w:packet', 'r:world', 'w:world']) assert.match(binding.standing[key].disabled, /central\.world-relations\.save/, `${key}: disabled with its reason`)
   // REPLACED (T-COVERAGE §1.3): central.world-relations.save exists; it waits on the route that carries the person's authority (§1.1).
-  await assert.rejects(() => binding.write([{key: 'r:world', value: true}]), /central\.world-relations\.save, which waits on the kernel route that carries the person's authority/)
+  // REPLACED (W2): Context & world stands on no chain since R4; Scope saves the include or exclude (central-person-writes.test.mjs).
+  await assert.rejects(() => binding.write([{key: 'r:world', value: true}]), /Scope saves through central\.world-relations\.save/)
   assert.equal(typeof binding.local.reachPending, 'function', 'a raised Reach waits in the view for Confirm')
 })
 

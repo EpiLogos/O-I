@@ -154,7 +154,8 @@ test('readWorlds asks afresh on the first browse when told to, and not otherwise
 test('every read in the Central device writes that precedes a write is fresh', async () => {
   const text = await src('../src/central/devices/centralDeviceWrites.ts')
   assert.doesNotMatch(text, /readGround\(transport, null\)/, 'no ground read there is held')
-  assert.equal((text.match(/readGround\(transport, null, true\)/g) ?? []).length, 4)
+  // W2: Open tomorrow (central.day.rollover) and Close now's carry (central.day.close-carry) read the ground fresh before they write, too.
+  assert.equal((text.match(/readGround\(transport, null, true\)/g) ?? []).length, 6)
   assert.match(text, /readFile\(transport, formLocation, true\)/)
   assert.match(text, /readWorlds\(transport, undefined, true\)/)
 })

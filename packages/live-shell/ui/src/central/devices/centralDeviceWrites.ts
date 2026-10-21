@@ -20,9 +20,14 @@
 //     appended through the template's own contract (flow/instance.ts appendEntry, relations and the composing basis on the current
 //     form), and the Flow's revision-checked file write (flow/instances.ts writeFlowInstance — central.files.write, op
 //     file_operation), whose conflict keeps the words and says so (desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`).
+//   - the Day's own settings, a move's press, tomorrow's opening and the close with its carry are Central's actions through the kernel's
+//     invoke_action, which carries the person's own presses (action.rs PERSON_ACTS: central.day.settings.write, move.record, rollover,
+//     close-carry), each on the revision Central gave (centralWrite; W2);
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import type {DaySettingsPatch} from './dayBinding'
+import {actionAnswerOf, centralActionOp} from './centralActions'
 import {readFile} from '../../../../../../desktop/cradle/src/files/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
@@ -178,6 +183,45 @@ export async function closeDay(transport: KernelTransportStatus): Promise<{close
   if (!day.relations_revision) throw new Error('Central\'s Day reading carries no relations revision, so the close cannot be checked against it; nothing was closed')
   await central(transport, null, {kind: 'close-day', day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision})
   return {closed: day.day_ref, civilDate: day.temporal.civil_date}
+}
+
+/** One Central write through the kernel's invoke_action (the person's own presses carry the host's native token: action.rs PERSON_ACTS,
+ * owner_write.rs): Central's data, or its refusal in its own words. Through kernelOp, so the window's held readings retire behind it and
+ * are asked again. */
+export async function centralWrite(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>>, project?: string): Promise<unknown> {
+  const call = await kernelOp(transport, centralActionOp(action, input, project))
+  if (call.error) throw new Error(call.error)
+  const answer = actionAnswerOf({status: 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: null}, action)
+  if (answer.status === 'answered') return answer.value
+  throw new Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
+}
+
+/** Save settings of the Day's own on the revision read (central.day.settings.write: exact revision, `absent` before the first save). */
+export const writeDaySettings = (transport: KernelTransportStatus, patch: DaySettingsPatch, expectedRevision: string): Promise<unknown> =>
+  centralWrite(transport, 'central.day.settings.write', {expected_revision: expectedRevision, ...patch})
+
+/** A pad's press: the move's begin on the Day named, pressed at `atUnixMs` (central.day.move.record {event begin, trigger press}). Central
+ * refuses a move already running, in its words. */
+export const beginDayMove = (transport: KernelTransportStatus, move: string, dayRef: string, atUnixMs = Date.now()): Promise<unknown> =>
+  centralWrite(transport, 'central.day.move.record', {event: 'begin', move, at_unix_ms: atUnixMs, trigger: 'press', day_ref: dayRef})
+
+/** Open tomorrow's Day beside today's (central.day.rollover) on the civil-time policy's revision, read again first. */
+export async function openTomorrow(transport: KernelTransportStatus): Promise<unknown> {
+  const ground = await readGround(transport, null, true)
+  if (ground.time.state !== 'ready' || !ground.time.data) throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; tomorrow's Day cannot be opened`)
+  return centralWrite(transport, 'central.day.rollover', {expected_time_policy_revision: ground.time.data.revision})
+}
+
+/** Close now, the close routine: the Day Central names closed through central.day.close-carry on its content and relations revisions,
+ * read again first — face 5's proposal carried into tomorrow's face 0 when Close routine is On (Central opens tomorrow's Day if it must). */
+export async function closeCarry(transport: KernelTransportStatus): Promise<{closed: string; civilDate: string; carry: unknown}> {
+  const ground = await readGround(transport, null, true)
+  const day = ground.day.data
+  if (!day) throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; there is no Day to close`)
+  if (day.temporal.lifecycle === 'closed') throw new Error(`The Day of ${day.temporal.civil_date} is closed already.`)
+  if (!day.relations_revision) throw new Error('Central\'s Day reading carries no relations revision, so the close cannot be checked against it; nothing was closed')
+  const answer = await centralWrite(transport, 'central.day.close-carry', {day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision}) as {carry?: unknown} | null
+  return {closed: day.day_ref, civilDate: day.temporal.civil_date, carry: answer?.carry ?? null}
 }
 
 /** Append the person's entry to a Flow: read the file again (the revision the write is checked against), append the entry as the

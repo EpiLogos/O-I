@@ -18,21 +18,22 @@ import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {readGround, type CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {onAttentionRegained} from '../../owners/attention'
-import {ownerReadings, useOwnerReading, useOwnerReadingsOf, type OwnerRead, type OwnerReading} from '../../owners/ownerReading'
+import {ownerReadings, useOwnerReading, useOwnerReadingsOf, type OwnerRead} from '../../owners/ownerReading'
 import {kernelReadSend} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {pageSourceRef, type CentralPageHistory} from '../../timeline/centralTrackAdapter'
 import type {CentralWorld, WorldPagesReading} from '../centralWorlds'
-import {useOwnerOp, type OpOutcome} from '../../owners/ownerCall'
+import {useOwnerOp} from '../../owners/ownerCall'
 import {useSpineEpoch} from '../../owners/spine'
 import {useRosterAgents, useWorkcellAnswer} from '../../owners/readers'
 import {createReceiptCursor, receiptMovesDay, receiptMovesReceiving} from '../../owners/notices'
 import {Workspace} from '../../shell/workspaceContext'
 import {lookupNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
-import type {KernelOp, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {dieFaceOf} from './dayDie'
 import {DAY_MOVES_ACTION, DAY_SETTINGS_ACTION, type DayOwnReadings} from './dayBinding'
+import {actionAnswerOf, centralActionOp, type ActionAnswer} from './centralActions'
 import type {CentralReads, NaraState} from './centralDeviceModel'
 
 const NO_RECEIPTS: readonly KernelReceipt[] = []
@@ -116,30 +117,8 @@ function installGroundNotices() {
   })
 }
 
-/** One Central reading carried by the kernel's invoke_action, as a device reads it: the action's data, its refusal in the owner's
- * words, or nothing yet. */
-export type ActionAnswer = {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}
-
-/** The kernel op that asks Central for one reading (action.rs invoke → Central's runner; owner_write.rs carries a Central reading as a
- * reading: it retires nothing). */
-export const centralActionOp = (action: string, input: Readonly<Record<string, unknown>>, project?: string): KernelOp =>
-  ({op: 'invoke_action', ...(project ? {project} : {}), invocation: {action, target_ref: `central:action:${action}`, input: {...input}}})
-
-/** The dispatch as an answer: Central's data, or its words (a refusal, an owner the kernel cannot reach, an action it routes to no
- * owner). Pure. */
-export function actionAnswerOf(reading: Pick<OwnerReading<OpOutcome<'action_dispatched'>>, 'status' | 'value' | 'error'>, action: string): ActionAnswer {
-  if (reading.status === 'refused') return {status: 'refused', error: reading.error ?? `${action} did not answer.`}
-  if (reading.status !== 'answered' || !reading.value) return {status: 'reading'}
-  const dispatch = reading.value.dispatch
-  switch (dispatch.state) {
-    case 'invoked': return {status: 'answered', value: dispatch.data}
-    case 'owner_refused': return {status: 'refused', error: dispatch.message}
-    case 'owner_unavailable': return {status: 'refused', error: dispatch.detail}
-    case 'unsupported_action': return {status: 'refused', error: dispatch.detail}
-    case 'malformed_ref': return {status: 'refused', error: dispatch.detail}
-    case 'unknown_owner': return {status: 'refused', error: `The kernel routes ${dispatch.action} to no owner (desktop/cradle/kernel/src/action.rs invoke).`}
-  }
-}
+// The action helpers live in centralActions.ts (pure, free of the held readings), re-exported for the readers that import them here.
+export {actionAnswerOf, centralActionOp, type ActionAnswer} from './centralActions'
 
 /** One Central reading for a view, held for the window and read again on the kernel's notice. `input` null reads nothing. */
 export function useCentralAction(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>> | null, project?: string): ActionAnswer {
