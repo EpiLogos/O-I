@@ -1,0 +1,42 @@
+{
+  "schema": "oi.theme/v1",
+  "id": "epi-day-a",
+  "name": "Epi-Logos Day \u00b7 A",
+  "appearance": "light",
+  "source": {
+    "format": "oi-house-theme",
+    "name": "Epi-Logos Day \u00b7 A",
+    "repo": "EpiLogos/O-I",
+    "license": "house",
+    "url": "desktop/cradle/docs/theme-shell-mockup.html"
+  },
+  "tokens": {
+    "--oi-shell-ground": "#e3e6f0",
+    "--oi-sidebar-ground": "#eef2f6",
+    "--oi-canvas-ground": "#e6e6e6",
+    "--oi-wash": "#dadee9",
+    "--oi-surface": "#fefeff",
+    "--oi-hairline": "#edf0f8",
+    "--oi-control-edge": "#484533",
+    "--oi-rule": "#d4d8e3",
+    "--oi-foreground": "#0e1834",
+    "--oi-muted-2": "#3d4b70",
+    "--oi-muted-3": "#697596",
+    "--oi-accent": "#977216",
+    "--oi-active-ground": "#bfa872",
+    "--oi-active-ink": "#fcfcfd",
+    "--oi-accent-soft": "rgba(151, 114, 22, 0.13)",
+    "--oi-relation": "#233e8b"
+  },
+  "syntax": {},
+  "terminal": {},
+  "preview": {
+    "ground": "#e6e6e6",
+    "ink": "#0e1834",
+    "accent": "#977216",
+    "strip": [
+      "#977216",
+      "#233e8b"
+    ]
+  }
+}

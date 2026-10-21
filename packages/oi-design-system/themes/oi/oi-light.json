@@ -1,0 +1,47 @@
+{
+  "schema": "oi.theme/v1",
+  "id": "oi-light",
+  "name": "O:I Light",
+  "appearance": "light",
+  "source": {
+    "format": "oi-house-theme",
+    "repo": "EpiLogos/O-I",
+    "license": "house",
+    "url": "desktop/cradle/docs/theme-shell-mockup.html",
+    "name": "O:I Light"
+  },
+  "tokens": {
+    "--oi-shell-ground": "#e9e9e5",
+    "--oi-sidebar-ground": "#f3f3f0",
+    "--oi-canvas-ground": "#fbfbf9",
+    "--oi-wash": "#e2e2dd",
+    "--oi-surface": "#ffffff",
+    "--oi-hairline": "#e5e5e0",
+    "--oi-control-edge": "#d5d6ce",
+    "--oi-rule": "#dededa",
+    "--oi-foreground": "#161614",
+    "--oi-muted-2": "#66685f",
+    "--oi-muted-3": "#8d8f85",
+    "--oi-accent": "#2a2a27",
+    "--oi-active-ground": "#6a6a66",
+    "--oi-active-ink": "#ffffff",
+    "--oi-accent-soft": "rgba(42, 42, 39, 0.13)",
+    "--oi-terminal-ansi-blue": "#161614",
+    "--oi-terminal-ansi-cyan": "#3a3a37",
+    "--oi-terminal-ansi-red": "#b3382c",
+    "--oi-terminal-ansi-green": "#2f7a4f",
+    "--oi-terminal-ansi-yellow": "#a85d12",
+    "--oi-terminal-ansi-bright-red": "#ca3c0e",
+    "--oi-syntax-invalid": "#b7311a"
+  },
+  "syntax": {},
+  "terminal": {},
+  "preview": {
+    "ground": "#fbfbf9",
+    "ink": "#161614",
+    "accent": "#2a2a27",
+    "strip": [
+      "#2a2a27"
+    ]
+  }
+}
