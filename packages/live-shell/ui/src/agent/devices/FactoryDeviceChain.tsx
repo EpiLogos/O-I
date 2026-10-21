@@ -77,6 +77,8 @@ import {EXPERIMENT_DESIGN, EXPERIMENT_ID, FRAMES_ID, experimentBinding, mainDevi
 import {THREAD_DEVICE_ID, shownSession, threadBinding, threadJson} from './threadBinding'
 import {composeAgentBinding} from './oneAgentBinding'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
+import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from '../../central/devices/sourceReturnAccept'
+import {useCentralAction} from '../../central/devices/useCentralReadings'
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
 import {RUNS_ID, TASKS_ID, runsBinding, runsDevice, tasksBinding, tasksDevice} from './taskBindings'
@@ -89,6 +91,9 @@ import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from '
 import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, gitBinding, seatBinding, workcellDevices} from './workcellBindings'
 import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, workcellGitReading} from './workcellRackBinding'
 import {AGENT_SLOTS, chainSlots, factoryPlace, type FactorySlot} from './factoryPlaces'
+import {KNOWLEDGE_ROUTE_DESIGN, KNOWLEDGE_ROUTE_ID, knowledgeRouteBinding, knowledgeRouteDevice} from './knowledgeRouteBinding'
+import {useOwnerOp} from '../../owners/ownerCall'
+import type {KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
 import {useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
@@ -120,6 +125,10 @@ type ChainDropTarget = {kind: 'zone'; label: string} | {kind: 'card'; id: string
 
 /** The hold the Factory Agent's Identity page keeps its choices under (the agent, the World, Proposed), apart from Central's Agent's. */
 const FACTORY_IDENTITY_ID = `${chainDeviceId('agent')}/identity`
+/** Central's personal anchor takes no input: one held object, so the read is asked once. */
+const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
+/** AIKit's knowledge status for the project the session works in (the kernel's knowledge op, Request::Status): each lens's answer. */
+const KNOWLEDGE_STATUS: KernelOp = Object.freeze({op: 'knowledge' as const, project: RACK_PROJECT, request: {action: 'status' as const}})
 
 /** The slots whose designs this chain binds, with the design each draws. */
 const SLOT_DESIGNS: Readonly<Record<string, string>> = {gateway: GATEWAY_DESIGN, agent: AGENT_DESIGN, skillset: RACK_DESIGN, world: SCOPE_DESIGN, git: LANDING_DESIGN}
@@ -281,6 +290,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const groupTrack = track && track.group ? track : null
   const place = factoryPlace({sessionRef, group: !!groupTrack, workcell})
   const cellName = place.kind === 'workcell' ? place.name : null
+  // The Knowledge route (§19.9): inside Scope on a session's chain, for the seated agent; AIKit's status asked once while that chain stands.
+  const knowledgeOn = sessionRef != null && cellName == null
+  const knowledgeDesign = useDesign(KNOWLEDGE_ROUTE_DESIGN, true)
+  const knowledgeDevice = useMemo(() => knowledgeRouteDevice(), [])
+  const knowledgeStatus = useOwnerOp(transport, knowledgeOn ? KNOWLEDGE_STATUS : null, 'knowledge').reading
+  const knowledgeDesignBinding = useMemo(() => knowledgeRouteBinding({status: knowledgeStatus.status === 'answered' ? knowledgeStatus.value?.data ?? null : null,
+    statusError: knowledgeStatus.status === 'refused' ? knowledgeStatus.error ?? null : null, project: RACK_PROJECT, profile}), [knowledgeStatus, profile])
   // The seat instrument (lane K1's seat_status_read: slow, read once while a session's or a workcell's chain stands, and on demand): the
   // workcell's seats, the Seat, Git / landing on a workcell's chain, and the Workcells tile.
   const seats = useSeatStatusAnswer(transport, sessionRef != null || cellName != null).reading
@@ -328,13 +344,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const shownTrack = shown ? tracks?.find(item => item.sessionRef === shown && !item.group) ?? null : null
   const returns = useSourceReturnsAnswer(transport, RACK_PROJECT).reading
   const returned = returns.status === 'answered' ? returns.value : null
+  // Approve (W2): the person who accepts is the principal Central's personal anchor names; it is asked only while a proposal waits.
+  const waiting = !!returned?.entries.some(entry => entry.status === 'pending')
+  const anchor = useCentralAction(transport, PERSONAL_ANCHOR_ACTION, waiting ? NO_INPUT : null)
+  const person = anchor.status === 'answered' ? personRefOf(anchor.value) : null
   const approvalsDesignBinding = useMemo(() => {
     const state = observedState(shownHandle)
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
     return approvalsBinding({gateway: gatewayDesignBinding?.values ?? {}, session: shownTrack, encounter: state?.reading ?? null, holds,
       returns: returned, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now()}, gatewayDesignBinding,
-      actions ? {permission: (id, decision) => actions.permission(id, decision)} : {})
-  }, [shownHandle, gatewayDesignBinding, shownTrack, holds, returned, tracks, sessions?.nowUnixMs])
+      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
+        approve: row => acceptSourceReturn(transport, RACK_PROJECT, row, person)})
+  }, [shownHandle, gatewayDesignBinding, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person])
 
   // A workcell's devices (§19.23): the Seat inside Git / landing (the seat instrument), starting at the selected workcell's seat of the
   // project; the Remote carrier (Workcell's status); and the workcell rack, which stands on the rail too (the Workcells tile), so the rail's
@@ -367,6 +388,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       [APPROVALS_ID, receipts.approvals, approvalsDesignBinding], [SEAT_ID, cells.seat, seatDesignBinding], [CARRIER_ID, cells.carrier, carrierDesignBinding]] as const
     for (const [id, device, designBinding] of own) publishDevice(id, device ? {device, binding: designBinding} : null)
   }, [ownDevices, receipts, cells, runDesignBinding, agentsetDesignBinding, approvalsDesignBinding, seatDesignBinding, carrierDesignBinding])
+  // The Knowledge route stands on the door while a session's chain does (the pool and a pane draw it from there).
+  useEffect(() => { publishDevice(KNOWLEDGE_ROUTE_ID, knowledgeOn && knowledgeDevice ? {device: knowledgeDevice, binding: knowledgeDesignBinding} : null) },
+    [knowledgeOn, knowledgeDevice, knowledgeDesignBinding])
+  useEffect(() => () => { publishDevice(KNOWLEDGE_ROUTE_ID, null) }, [])
   useEffect(() => { publishDevice(DECISION_HELPER_ID, helperStands && helperDevice ? {device: helperDevice, binding: helperDesignBinding} : null) },
     [helperStands, helperDevice, helperDesignBinding])
   useEffect(() => () => { publishDevice(DECISION_HELPER_ID, null) }, [])
@@ -509,7 +534,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   )
 
   /** One of the agent chain's slots (agentChainDevices.ts) at its compact size: its grip, its drop target, the device inside it where one
-   * stands there (the rack's member, §19.7; the Seat inside Git / landing, §19.17). Its press shows it whole in the pool. */
+   * stands there (the rack's member, §19.7; the Knowledge route inside Scope, §19.9; the Seat inside Git / landing, §19.17). Its press
+   * shows it whole in the pool. */
   const slotPlate = (slotId: FactorySlot) => {
     const entry = chain.find(item => item.slot.id === slotId)
     if (!entry) return null
@@ -530,6 +556,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
         ]} />
         {/* The Seat stands inside Git / landing (§19.17). */}
         {slot.id === 'git' && placed(SEAT_ID, cells.seat, seatDesignBinding, designsCells.seat ? SEAT_DESIGN : undefined, 'the Seat', {member: true})}
+        {/* The Knowledge route stands inside Scope (§16.1, §19.9). */}
+        {slot.id === 'world' && knowledgeOn && placed(KNOWLEDGE_ROUTE_ID, knowledgeDevice, knowledgeDesignBinding, knowledgeDesign ? KNOWLEDGE_ROUTE_DESIGN : undefined, 'the Knowledge route', {member: true})}
         {/* The rack's chosen chain, inside the rack (§19.7): the member device. Its press shows it whole in the pool. */}
         {slot.id === 'skillset' && memberDevice && memberDesignBinding && (
           <div className="factory-slot__member" data-device={memberDevice.id} onClick={event => event.stopPropagation()}>

@@ -169,5 +169,7 @@ test('Approvals on both Main tracks: the project\'s returned work that waits (K1
   assert.equal(receipts.approvalsValues({gateway: {}, session: null, encounter: null, holds: designs.chainHolds()}).queue, undefined, 'unread: no queue, never an empty one')
   const binding = receipts.approvalsBinding({gateway: {}, session: null, encounter: null, holds: designs.chainHolds(), returns: {entries}}, null, {}, 'central:main:approvals')
   assert.equal(binding.id, 'central:main:approvals')
-  assert.match(binding.standing.approve.disabled, /missing op: kernel:source_return_accept/)
+  // REPLACED (W2): Approve is Central's projectcentral.source.return_accept, handed in as the chain's port; a chain that passes none
+  // (here, as Central's Main track does today) stands it disabled in those words (tests/w2-hookups-binding.test.mjs carries the write).
+  assert.equal(binding.standing.approve.disabled, receipts.APPROVE_UNWIRED)
 })

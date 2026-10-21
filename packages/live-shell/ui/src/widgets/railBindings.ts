@@ -1,9 +1,11 @@
 // The rail-born devices' readings mapped onto their designs' value keys (widgets/railDevices.tsx publishes the devices; the designs
 // are inhabitants/catalogue/panels/widgets__<id>.tsx). Pure: each takes the owner's own reading and returns the design's values, a
 // key the owner did not report left out, never filled in.
-import type {Value} from '../frame/devices/designed'
+import type {DesignBinding, Value, ValueChange} from '../frame/devices/designed'
 import type {TrailStop} from '../../../../../desktop/cradle/src/workspace/store'
 import type {CentralGroundReading} from '../../../../../desktop/cradle/src/central/client'
+import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {closeNowClearing} from '../central/devices/nowsClose'
 import type {TapeRow} from '../../../../../desktop/cradle/src/agent/tape/model'
 import type {WikiNode} from '../../../../../desktop/cradle/src/techne/wikiReading'
 
@@ -88,9 +90,26 @@ export function pagesOf(rows: readonly TapeRow[]): WebPage[] {
 export const wikiPagesOf = (nodes: readonly WikiNode[]): Record<string, Value>[] =>
   nodes.map(node => ({ref: node.ref, ...(node.title ? {title: node.title} : {}), ...(node.type ? {type: node.type} : {})}))
 
-/** Closing a clearing is the ground's `central.now.lifecycle` (an authenticated root mutation, read against central.work.policy's
- * revision); no shell path carries it yet, so the tile's Close stands disabled with that reason. */
-export const NOW_CLOSE_ABSENT = 'Close: no owner operation carries it in the shell yet — missing op: central.now.lifecycle through the kernel (Central).'
+/** NOWs' Close (§23.6; W2): the clearing open in Full — the design sets `close` to its now_ref — closed through Central's
+ * `central.now.lifecycle`, the person's press the kernel carries (central/devices/nowsClose.ts closeNowClearing), on the revision the
+ * ground's listing gives the clearing and on the placement policy's revision (the ground's `placement` leg is central.work.policy).
+ * Only `close` writes; `machine` and `open` are the hand's. With no kernel carrier, Close stands disabled in its words; every other
+ * refusal is Central's, or nowsClose's own words for what has not answered. Pure: the close is handed in (railDevices.tsx hands
+ * closeNowClearing), so this module stays type-only in its imports. */
+export function nowsCloseWrites(transport: KernelTransportStatus | undefined, ground: CentralGroundReading | null, close: typeof closeNowClearing): Pick<DesignBinding, 'write' | 'writes' | 'standing'> {
+  const carrier = !transport || transport.kind === 'unavailable' ? `Close: no kernel carrier stands, so Central's central.now.lifecycle cannot be asked${transport?.kind === 'unavailable' && transport.reason ? ` — ${transport.reason}` : ''}.` : null
+  return {
+    writes: key => key === 'close',
+    ...(carrier ? {standing: {close: {disabled: carrier}}} : {}),
+    write: async (changes: readonly ValueChange[]) => {
+      for (const {key, value} of changes) {
+        if (key !== 'close') throw Error(`${key} is a reading: its owner reports it; nothing here changes it.`)
+        if (carrier || !transport) throw Error(carrier ?? 'Close: no kernel carrier stands.')
+        await close(transport, value, ground?.now.data?.records ?? null, ground?.placement.state === 'ready' ? ground.placement.data : null)
+      }
+    },
+  }
+}
 
 /** The NOWs binding (widgets__nows.tsx) from the ground's one reading (desktop/cradle/src/central/client.ts readGround, Central's
  * `inspect`): the civil date and time and the policy's timezone; the Day's own lifecycle; the clearings as the listing states them —

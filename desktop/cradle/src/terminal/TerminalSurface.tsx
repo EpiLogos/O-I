@@ -6,6 +6,7 @@ import {invoke} from "@tauri-apps/api/core";
 import {registerDocumentCheckpoint} from "../document/frame";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
+import {nextAttachOrder,publishTerminal,retireTerminal,type TerminalHand} from "./terminalReadings";
 import "@xterm/xterm/css/xterm.css";
 import "./terminal.css";
 /* The xterm theme is read from the host body's computed `--oi-*` roles (tokens.css `.oi-desktop` /
@@ -38,6 +39,10 @@ export function TerminalSurface({binding}:{binding:SurfaceBinding}){
   const write=(content:string|Uint8Array)=>{writing=new Promise<void>(resolve=>term.write(content,resolve));return writing;};
   const schedule=(delay:number)=>{if(!disposed&&!paused)timer=window.setTimeout(()=>{pollFlight=poll();},delay);};
   const resize=()=>{if(disposed||!host.current?.getClientRects().length)return;fit.fit();if(lease)void invoke("terminal_resize",{id:binding.id,lease,dimensions:{cols:term.cols,rows:term.rows}}).catch(reason=>setError(String(reason)));};
+  // What this surface holds of its PTY, published for the device that reads a terminal (terminalReadings.ts), and the hand it offers back.
+  let watching=false,attachedNow=false,exitedNow=false,archivedNow=false,cwdNow="",cwdStandingNow:string|null=null,attachedAt=0,lastPublish=0,publishedLines=-1;
+  const publish=()=>{if(disposed||!attachedNow)return;lastPublish=Date.now();publishedLines=term.buffer.active.length;publishTerminal({id:binding.id,title:binding.title,cwd:cwdNow,cwdStanding:cwdStandingNow,command:binding.terminal?.command?.length?binding.terminal.command.join(" "):null,exited:exitedNow,archived:archivedNow,fontSize:term.options.fontSize??12,scrollback:term.options.scrollback??5000,lines:publishedLines,watch:watching,attachedAt},hand);};
+  const hand:TerminalHand={fontSize:px=>{term.options.fontSize=px;resize();publish();},scrollback:lines=>{term.options.scrollback=lines;publish();},watch:on=>{watching=on;if(!paused)term.options.disableStdin=on;publish();}};
   const observer=new ResizeObserver(resize);observer.observe(host.current!);
   const themeObserver=new MutationObserver(()=>{if(!disposed)term.options.theme=terminalTheme();});themeObserver.observe(document.body,{attributes:true,attributeFilter:["data-theme","data-oi-theme"]});
   let input=Promise.resolve();const data=term.onData(data=>{input=input.then(()=>invoke<void>("terminal_input",{id:binding.id,lease,data})).catch(reason=>setError(String(reason)));});
@@ -47,18 +52,18 @@ export function TerminalSurface({binding}:{binding:SurfaceBinding}){
     if(disposed)return;
     if(out.bytes.length){await write(new Uint8Array(out.bytes));seq=out.seq;}
     if(Date.now()-lastCheckpoint>250&&out.bytes.length){await checkpoint();lastCheckpoint=Date.now();}
-    setExited(out.eof);schedule(out.bytes.length?0:40);
+    setExited(out.eof);if(out.eof!==exitedNow||(term.buffer.active.length!==publishedLines&&Date.now()-lastPublish>250)){exitedNow=out.eof;publish();}schedule(out.bytes.length?0:40);
    }catch(reason){if(!disposed)setError(String(reason));}
   };
   const attachment=invoke<{lease:number;seq:number;snapshot:string;cwd:string;durable?:boolean;cwd_standing?:string;archived?:{screen:string;tails:Array<{bytes:number[]}>;cwd_standing:string}} >("terminal_attach",{id:binding.id,cwd:binding.terminal?.cwd??null,command:binding.terminal?.command??null,dimensions:{cols:term.cols,rows:term.rows}}).then(async attached=>{
-   lease=attached.lease;seq=attached.seq;durable=attached.durable===true;setCwd(attached.cwd);setCwdStanding(attached.cwd_standing);
+   lease=attached.lease;seq=attached.seq;durable=attached.durable===true;setCwd(attached.cwd);setCwdStanding(attached.cwd_standing);cwdNow=attached.cwd;cwdStandingNow=attached.cwd_standing??null;archivedNow=!!attached.archived;
    if(attached.archived){
     setArchived(true);if(attached.archived.screen)await write(attached.archived.screen);
     for(const tail of attached.archived.tails)if(tail.bytes.length)await write(new Uint8Array(tail.bytes));
     await write("\r\n[Archived terminal reading; a new native process starts below.]\r\n");
    }else{setArchived(false);}
    if(attached.snapshot)await write(attached.snapshot);
-   if(!disposed){term.options.disableStdin=false;resize();if(host.current?.closest(".pane.group.focused")||!host.current?.closest(".pane.group"))term.focus();schedule(0);window.dispatchEvent(new Event("oi:terminal-attached"));}
+   if(!disposed){term.options.disableStdin=watching;attachedNow=true;attachedAt=nextAttachOrder();publish();resize();if(host.current?.closest(".pane.group.focused")||!host.current?.closest(".pane.group"))term.focus();schedule(0);window.dispatchEvent(new Event("oi:terminal-attached"));}
   }).catch(reason=>{attachmentFailure=reason;if(!disposed)setError(String(reason));});
   const unregister=registerDocumentCheckpoint(binding.id,async()=>{
    if(disposed)throw Error("Terminal view retired before its screen was secured");
@@ -73,9 +78,9 @@ export function TerminalSurface({binding}:{binding:SurfaceBinding}){
     if(disposed)throw Error("Terminal view retired while securing its screen");
     await checkpoint(durable);
    }catch(reason){if(!disposed)setError(String(reason));throw reason;}
-   finally{paused=false;if(!disposed){term.options.disableStdin=false;schedule(0);}}
+   finally{paused=false;if(!disposed){term.options.disableStdin=watching;schedule(0);}}
   });
-  return()=>{unregister();disposed=true;clearTimeout(timer);observer.disconnect();themeObserver.disconnect();data.dispose();void attachment.then(()=>pollFlight).then(()=>input).then(()=>writing).then(()=>checkpoint(durable)).catch(()=>{}).finally(()=>term.dispose());emulator.current=undefined;};
+  return()=>{unregister();retireTerminal(binding.id);disposed=true;clearTimeout(timer);observer.disconnect();themeObserver.disconnect();data.dispose();void attachment.then(()=>pollFlight).then(()=>input).then(()=>writing).then(()=>checkpoint(durable)).catch(()=>{}).finally(()=>term.dispose());emulator.current=undefined;};
  },[binding.id,kernel.transport.kind,!!kernel.snapshot.surfaces[binding.id]]);
  return <section className="terminal-surface" aria-label="Terminal surface" data-terminal-command={binding.terminal?.command?.join(" ")||undefined}><header className="terminal-toolbar"><button onClick={()=>emulator.current?.clear()}>Clear screen</button><button onClick={()=>{const text=emulator.current?.getSelection();if(text)window.dispatchEvent(new CustomEvent("oi:context-candidate",{detail:{bindingId:binding.id,kind:"terminal",text,title:binding.title}}));}}>Attach selection @</button></header>{error&&<p role="alert">{error}</p>}{kernel.transport.kind!=="tauri"?<p>Open the desktop app to use its terminal.</p>:<div ref={host} className="terminal-viewport"/>}<footer className="pane-footer terminal-footer" tabIndex={0} aria-label="Terminal status"><span title={cwdStanding==="launch-directory"?"Launch directory; current process cwd has not been observed":cwdStanding==="last-observed-process-cwd"?"Last observed process directory":"Native terminal directory"}>{binding.terminal?.command?.length?binding.terminal.command.join(" "):cwd}</span>{archived&&<span>Archived reading · new process</span>}<span>{binding.terminal?.command?.length?(exited?"Login command exited":"Login command"):(exited?"Shell exited":"Local shell")}</span></footer></section>;
 }
