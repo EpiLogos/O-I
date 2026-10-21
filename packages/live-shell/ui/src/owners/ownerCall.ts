@@ -18,7 +18,7 @@
 import {useRef} from 'react'
 import {installKernelReadHolder, installReadingsNoticeSource, kernelReadSend, onKernelWrite, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelOutcome, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {ownerReadings, ScopedValue, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadings} from './ownerReading'
+import {askingThrough, ownerReadings, ScopedValue, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadings} from './ownerReading'
 import {currentSpineEpoch, useSpineEpoch} from './spine'
 import {windowReadingsChanged} from './readingsChanged'
 
@@ -60,7 +60,8 @@ export async function heldCall(transport: KernelTransportStatus, op: KernelOp, o
   }
 }
 
-installKernelReadHolder((transport, op, fresh) => heldCall(transport, op, {fresh}))
+// A held reading asked again behind its answer reads through to the kernel (ownerReading.ts askingThrough).
+installKernelReadHolder((transport, op, fresh) => heldCall(transport, op, {fresh: fresh || askingThrough()}))
 // A write this window's kernel op completed retires every held answer at once (the notice from the kernel's watch follows it).
 onKernelWrite(() => windowReadingsChanged.now())
 // Engine views that polled an owner on a period re-read on the driver's notice instead.

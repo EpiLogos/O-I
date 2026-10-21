@@ -85,6 +85,17 @@ const worldOf = (epoch: string): string => epoch.slice(epoch.indexOf('|') + 1)
 /** Whether an answer read under `read` may be drawn under `epoch`: the same world, whatever the access. */
 export const sameWorld = (read: string | null, epoch: string): boolean => read !== null && worldOf(read) === worldOf(epoch)
 
+let through = 0
+/** Whether a held reading is being asked again behind the answer it stands on (a reader come back, a notice, a retry). The kernel
+ * reads it makes while it starts go to the kernel, not to the window's other held answers: those stood on the same moment, so a
+ * reader coming back has the owner asked behind what it draws, as it always did. The kernel answers from its read model unless the
+ * sources moved, so asking through costs no owner process. */
+export const askingThrough = (): boolean => through > 0
+function readThrough<R>(read: () => R): R {
+  through++
+  try { return read() } finally { through-- }
+}
+
 export class OwnerReadingEntry<T> {
   private state: OwnerReading<T> = READING
   private readonly listeners = new Set<() => void>()
@@ -216,6 +227,7 @@ export class OwnerReadingEntry<T> {
     if (this.inFlight?.epoch === epoch) return this.inFlight.promise
     const ticket = ++this.ticket
     const standing = this.state
+    const again = standing.status === 'answered'
     // The last answer is carried while the owner is asked again — across a renewed access in its world, or to a reader come
     // back — and retired across worlds; a refusal is never carried into another epoch.
     if (standing.status === 'answered' && sameWorld(standing.epoch, epoch) && (standing.epoch !== epoch || unread)) this.publish({...standing, epoch, refreshing: true, carried: true})
@@ -225,7 +237,7 @@ export class OwnerReadingEntry<T> {
     const promise = (async () => {
       let outcome: {value: T; read_scopes?: readonly string[]} | {error: string}
       try {
-        outcome = await this.read()
+        outcome = await (again ? readThrough(() => this.read()) : this.read())
       } catch (cause) {
         outcome = {error: cause instanceof Error ? cause.message : String(cause)}
       }
