@@ -30,6 +30,9 @@ import {useOptionalContinuity} from '../../continuity/workspace'
 import {useHeldRead, useStableMap} from '../../owners/ownerCall'
 import {useOwnerReadingsOf} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
+import {useSeatStatusAnswer} from '../../agent/devices/workcellReads'
+import {withWorksIn} from './returnTracks'
+import {centralWorldTrackId} from '../../timeline/centralTrackAdapter'
 import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {
@@ -138,5 +141,13 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
     const found = worlds.state === 'read' ? practiceWorldOf(worlds.worlds) : null
     return found?.register === 'practice' ? found.world.ref : null
   }, [worlds])
-  return useMemo(() => projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice}), [civil, worlds, set, pages, playing, controls, colours, practice])
+  // Each world's agent works in the workcell holding its project's seat (§19.23 Works in, §16.6 In/Out); your own world holds no seat.
+  const seats = useSeatStatusAnswer(usable ?? {kind: 'unavailable', reason: 'no carrier'}, !!usable).reading
+  const register = seats.status === 'answered' ? seats.value : null
+  const projectOf = useMemo(() => {
+    const byTrack = new Map(inSet.map(world => [centralWorldTrackId(world.ref), world.project]))
+    return (track: {id: string}) => byTrack.get(track.id) ?? null
+  }, [inSet])
+  return useMemo(() => withWorksIn(projectCentralTracks({civil, worlds, set, pages, playing, controls, colours, practice}), register, projectOf, seats.status === 'refused' ? seats.error : null),
+    [civil, worlds, set, pages, playing, controls, colours, practice, register, projectOf, seats])
 }

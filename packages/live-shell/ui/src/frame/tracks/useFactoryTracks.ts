@@ -34,6 +34,9 @@ import {SETTINGS_PROJECT} from '../../agent/clipBinding'
 import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
 import {tellOwnerChanged} from '../../owners/notices'
 import type {UseModeTracks} from './modeTracks'
+import {useSeatStatusAnswer} from '../../agent/devices/workcellReads'
+import {withReturns, withWorksIn, workcellReturns} from './returnTracks'
+import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 
 const WRITE_ARM = 'shell.setWriteArm'
 
@@ -94,8 +97,18 @@ export const useFactoryTracks: UseModeTracks = reading => {
       return {ok: true as const, note: 'Stopped this session\'s running turn; the session stays, and the harness\'s other sessions run on.'}
     } catch (cause) { return {ok: false as const, error: cause instanceof Error ? cause.message : String(cause)} }
   }, [transport])
+  // The workcells of the machine's register as return tracks, and each session's Works in (§19.23): the seat register, read once.
+  const seats = useSeatStatusAnswer(transport, transport.kind !== 'unavailable').reading
+  const register = seats.status === 'answered' ? seats.value : null
   if (!agency.tracks.length && agency.error) return {waiting: `The agent sessions are unread: ${agency.error}`}
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
   // A chat dragged from Factory's Projects (DLW §19.1) reopens on the empty track; an agent still starts a new agent there.
-  return withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {})}), {transport})
+  const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {})}), {transport})
+  return withWorkcells(set, register, seats.status === 'refused' ? seats.error : null)
+}
+
+/** Factory's set with the register's workcells as its return tracks and each session's Works in (§19.23): every session works in the
+ * shell's project (SETTINGS_PROJECT), in the one workcell holding its seat, else unread with the reason. Pure. */
+export function withWorkcells(set: WorldTrackSet, register: unknown, refused: string | null = null): WorldTrackSet {
+  return withReturns(withWorksIn(set, register, () => SETTINGS_PROJECT, refused), workcellReturns(register))
 }

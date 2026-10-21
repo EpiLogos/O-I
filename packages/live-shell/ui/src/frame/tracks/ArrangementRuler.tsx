@@ -368,7 +368,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       const under = lanesUnder(set, track.id, lanesView.shown)
       const comps = (set.lanes?.comp ?? []).filter(stretch => stretch.trackId === track.id)
       const takeName = (takeId: string) => set.lanes?.takes?.find(take => take.id === takeId)?.name ?? takeId
-      return [<div key={track.id} className={`tl-lane${track.lane ? ` lane-${track.lane}` : ''}`} style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-track={track.id} data-main={track.main ? 'true' : undefined}>
+      return [<div key={track.id} className={`tl-lane${track.lane ? ` lane-${track.lane}` : ''}`} style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-track={track.id} data-main={track.main ? 'true' : undefined} data-return={track.returns ? 'true' : undefined}>
         {cells.length
           ? <div className={`tl-head tl-track-head${selection.ref === track.id ? ' sel' : ''}`}>
             <button type="button" className="tl-name" title={`${track.name} · ${track.kind}`} onClick={selectTrack}>{headName}</button>

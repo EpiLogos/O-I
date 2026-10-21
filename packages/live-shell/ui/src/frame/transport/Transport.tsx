@@ -9,6 +9,7 @@ import {useEffect, useLayoutEffect, useRef, useState, type ReactNode} from 'reac
 import {Icon as CutIcon, type IconName} from '../../inhabitants/sdk/Icon'
 import type {SlotBinding, SlotWords, TransportBindings, TransportSlotId} from './slots'
 import {nextFold, type FoldState} from './fold'
+import {LinkSlot} from './LinkSlot'
 import './transport.css'
 
 /** Each pressable slot's specimen mark (icon-cut.html); the slots without one are readouts or wear a word. */
@@ -75,8 +76,8 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
     ? {open: open === id, toggle: () => setOpen(current => current === id ? null : id)} : undefined
   const slot = (id: TransportSlotId): ReactNode => <Slot key={id} id={id} binding={bindings[id]} words={words(id)} fold={foldOf(id)} />
   return <div ref={bar} className="mode-transport one-transport" role="group" aria-label="Transport" data-fold={folded ? 'marks' : undefined}>
-    {/* Link and Tap lead the tempo cells as one group, as the mockup's first group does. */}
-    <div className="transport-group transport-lead">{slot('link')}{slot('tap')}
+    {/* Link and Tap lead the tempo cells as one group, as the mockup's first group does. Link is one device in every mode (§19.19). */}
+    <div className="transport-group transport-lead"><LinkSlot />{slot('tap')}
       <div className="transport-group transport-tempo">{slot('tempo')}{slot('signature')}{slot('metro')}{slot('quantize')}</div></div>
     <div className="transport-scale">{slot('key')}{slot('root')}{slot('scale')}</div>
     <div className="transport-spacer" />
