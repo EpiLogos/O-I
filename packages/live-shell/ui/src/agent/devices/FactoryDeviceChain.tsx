@@ -87,7 +87,8 @@ import {useModelCatalogue} from './useModelCatalogue'
 import {RUNS_ID, TASKS_ID, runsBinding, runsDevice, runsOfTakes, tasksBinding, tasksDevice} from './taskBindings'
 import {useRunJourney} from './runJourney'
 import {useAttemptTakes} from '../../owners/attemptTakes'
-import {useWorkcellAnswer} from '../../owners/readers'
+import {useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
+import {usePopulationAnswer} from './usePopulationAnswer'
 import {
   AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, RUN_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, runBinding, sessionDevices, type CustodyPorts,
 } from './sessionChainBindings'
@@ -226,7 +227,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const contextOn = !waits.agent && sessionRef != null
   const continuityPressure = useAikitRead(transport, contextOn ? {kind: 'continuity-pressure', project: RACK_PROJECT} : null)
   const continuityCommands = useAikitRead(transport, contextOn ? {kind: 'continuity-commands', project: RACK_PROJECT} : null)
-  const context = useMemo(() => (contextOn ? {pressure: continuityPressure, commands: continuityCommands} : undefined), [contextOn, continuityPressure, continuityCommands])
+  // The last turn's bounded blocks (W11): AIKit's kept turn for the session (`aikit work continuity turn --session S`).
+  const continuityTurn = useAikitRead(transport, contextOn ? {kind: 'continuity-turn', project: RACK_PROJECT, session: sessionRef} : null)
+  const context = useMemo(() => (contextOn ? {pressure: continuityPressure, commands: continuityCommands, turn: continuityTurn} : undefined),
+    [contextOn, continuityPressure, continuityCommands, continuityTurn])
   const agentDesignBinding = useMemo(() => (waits.agent ? null : agentBinding(chainDeviceId('agent'), {
     sessionRef, track, nowUnixMs: sessions?.nowUnixMs ?? 0, reading, accepted, harness: {binding, resolved}, holds, thread: agentThread, models, harnesses, events: sessions?.events ?? null,
     ...(context ? {context} : {}),
@@ -393,11 +397,27 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     readAtUnixMs: grantsRead.readAtUnixMs}), [grantsRead])
   const custodyPorts = useMemo((): CustodyPorts => (transport.kind !== 'unavailable'
     ? {revoke: (authority_source_ref, reason) => ownerRouteWrite(transport, {op: 'actuation_write', request: {kind: 'authority-revoke', authority_source_ref, ...(reason ? {reason} : {})}}, '`actuation authority revoke`'),
+      assign: request => factoryOwnerWrite(transport, request, '`factory development custody assign`'),
       personNow: () => currentIdentity()?.reading.person_ref ?? null}
     : {}), [transport])
   const currentPerson = currentIdentity()?.reading.person_ref ?? null
-  const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, autonomy: reading.autonomy, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson},
-    scopeDesignBinding, custodyPorts), [sessionRef, reading.autonomy, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyPorts])
+  // Factory's custody of the session's work (W11): the project's Factory state (located for the pads), its custody list, the Position the
+  // session's agent holds (AIKit's population: Custody sits on the Agent, §19.4), and the session's bound task as its work.
+  const custodyState = padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null
+  const custodyListing = useOwnerOp(transport, custodyState && sessionRef != null ? {op: 'factory_owner', request: {kind: 'custody-list', state_path: custodyState}} : null,
+    'factory_development_reading').reading
+  const custodyPopulation = usePopulationAnswer(transport, RACK_PROJECT)
+  const sessionTask = useTaskAnswer(transport, sessionRef).reading
+  const custodyRead = useMemo(() => {
+    const positions = custodyPopulation.status === 'answered' && custodyPopulation.value && typeof custodyPopulation.value === 'object'
+      && Array.isArray((custodyPopulation.value as {positions?: unknown}).positions) ? (custodyPopulation.value as {positions: {position_ref?: unknown; occupancy?: {agent_ref?: unknown}}[]}).positions : []
+    const heldBy = (ref: string | null | undefined) => (ref ? positions.find(row => row.occupancy?.agent_ref === ref && typeof row.position_ref === 'string')?.position_ref as string | undefined ?? null : null)
+    const central = (sessionTask.value as {request?: {central?: {task_ref?: unknown}}} | null | undefined)?.request?.central
+    return {statePath: custodyState, listing: custodyState ? {status: custodyListing.status, value: custodyListing.value?.data ?? null, error: custodyListing.error ? refusalWords(custodyListing.error) : null} : null,
+      agentPosition: heldBy(track?.agentRef), work: typeof central?.task_ref === 'string' && central.task_ref.trim() ? central.task_ref : null}
+  }, [custodyState, custodyListing, custodyPopulation, sessionTask, track?.agentRef])
+  const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, autonomy: reading.autonomy, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
+    custody: custodyRead}, scopeDesignBinding, custodyPorts), [sessionRef, reading.autonomy, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyPorts])
   const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
   const oneAgent = useMemo(() => (agentDesignBinding ? composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}) : null),
     [agentDesignBinding, custodyDesignBinding, identityDesignBinding, threadDesignBinding])

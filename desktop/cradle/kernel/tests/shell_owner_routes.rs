@@ -2780,6 +2780,56 @@ fn workcell_lists_its_machines_with_the_operations_a_machine_may_be_granted() {
 }
 
 #[test]
+fn workcell_lists_the_world_receipts_it_keeps_with_their_refs_and_subjects() {
+    let _held = hold();
+    let dir = scratch("workcell-worlds");
+    let workcell = Fake::new(&dir, "workcell");
+    let _bin = Bound::set("OI_WORKCELL_BIN", &workcell.bin);
+    // Workcell#120's own listing over a scratch cell (REAL): one prepared
+    // world and one torn receipt it could not decode.
+    let real = fixture("workcell-worlds-2026-10-21.json");
+    let request = json!({"op": "workcell_read", "request": {"kind": "worlds"}});
+    workcell.answer(&real["answer"]);
+    let (outcome, form) = dispatched(no_central(&dir), op(request.clone()));
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "workcell worlds");
+    assert_eq!(data, real["answer"], "Workcell's listing, verbatim");
+    assert_eq!(data["worlds"][0]["demand_ref"], "demand:dlw-capture");
+    assert_eq!(
+        data["worlds"][0]["subjects"]["run"],
+        "opaque:factory-run-capture"
+    );
+    assert_eq!(data["unreadable"].as_array().unwrap().len(), 1);
+    assert_eq!(receipts(&outcome), json!([]), "a read earns no receipt");
+    assert_eq!(workcell.asked(), ["worlds --json"]);
+
+    // An empty cell is a reading too: no worlds, nothing unreadable.
+    workcell.answer(&real["empty"]);
+    let (outcome, _) = dispatched(no_central(&dir), op(request.clone()));
+    let (_, data, _) = reading(&outcome.unwrap());
+    assert_eq!(data["worlds"], json!([]));
+
+    // A Workcell without the listing refuses in its own words (REAL, the
+    // installed binary before #120), exit 2.
+    let refusal = &real["installed_refusal"];
+    workcell.refuse(None, refusal["stderr"].as_str().unwrap(), 2);
+    let (outcome, _) = dispatched(no_central(&dir), op(request.clone()));
+    assert!(outcome
+        .unwrap_err()
+        .contains("unknown command `worlds`; run `workcell help`"));
+
+    // A document in another schema is not the listing.
+    let mut foreign = real["answer"].clone();
+    foreign["schema"] = json!("workcell.world-receipts/v0");
+    workcell.answer(&foreign);
+    let (outcome, _) = dispatched(no_central(&dir), op(request));
+    assert!(outcome.unwrap_err().contains("workcell.world-receipts/v1"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn factory_lists_the_custody_it_holds_before_an_assignment() {
     let _held = hold();
     let dir = scratch("custody-list");
@@ -2974,5 +3024,57 @@ fn workcell_places_a_demand_across_this_cell_and_its_connections() {
         op(json!({"op": "workcell_read", "request": {"kind": "placement"}})),
     );
     assert!(outcome.unwrap_err().contains("unknown command `placement`"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn ql_refracts_a_wiki_target_through_the_lenses_named() {
+    let _held = hold();
+    let dir = scratch("ql-wiki-refract");
+    let ql = Fake::new(&dir, "ql");
+    let _bin = Bound::set("OI_QL_BIN", &ql.bin);
+    // QL main's own refraction of its own fixture request (REAL), replayed.
+    let real = fixture("ql-wiki-refract-2026-10-21.json");
+    ql.answer(&real["response"]);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "wiki-refract", "request": real["request"]}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "ql wiki refract");
+    assert_eq!(data, real["response"], "QL's refraction, verbatim");
+    assert_eq!(ql.asked(), ["wiki refract - --json"]);
+    assert_eq!(
+        serde_json::from_str::<Value>(&ql.stdin()).unwrap(),
+        real["request"]
+    );
+    // QL's refusals, in its words (REAL), and another document refused.
+    for key in ["refused_foreign_contract", "installed_refusal"] {
+        ql.refuse(None, real[key].as_str().unwrap(), 2);
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            op(
+                json!({"op": "ql_read", "request": {"kind": "wiki-refract", "request": real["request"]}}),
+            ),
+        );
+        let error = outcome.unwrap_err();
+        let words = real[key].as_str().unwrap().trim();
+        assert!(
+            error.contains(words.strip_prefix("ql: ").unwrap_or(words)),
+            "{key}: {error}"
+        );
+    }
+    ql.answer(&json!({"contract": "ql-mef/living-wiki-refraction/v1"}));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "wiki-refract", "request": real["request"]}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("ql-mef/wiki-refraction/v1"));
     let _ = fs::remove_dir_all(&dir);
 }

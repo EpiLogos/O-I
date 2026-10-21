@@ -42,6 +42,21 @@ export function contextPressureOf(pressure: unknown): Record<string, unknown> | 
 /** `aikit work continuity commands`'s armed star commands. Null when the answer names no `armed` list. Pure. */
 export const armedOf = (commands: unknown): string[] | null => (isObj(commands) && Array.isArray(commands.armed) ? words(commands.armed) : null)
 
+/** `aikit work continuity turn [--session S]` (ai-kit#543; the kernel's aikit_read continuity-turn) as the Context page's last turn
+ * (actuation__harness-model.tsx ctx.turn {blocks [{event, title, standing, kept, withheld, suppressed}], withheldLines, withheldBlocks,
+ * notice}): each block as AIKit kept it, the withheld counts, its notices in its words. `{kept: false}` when AIKit kept no turn for the
+ * scope (`turn: null`); null when the answer is not the turn reading. Pure. */
+export function contextTurnOf(turn: unknown): {kept: true; turn: Record<string, unknown>} | {kept: false; scope?: string} | null {
+  if (!isObj(turn) || !('turn' in turn) || !Array.isArray(turn.blocks)) return null
+  if (turn.turn === null) return {kept: false, ...(str(turn.scope) ? {scope: String(turn.scope)} : {})}
+  const blocks = turn.blocks.flatMap(row => (isObj(row) && str(row.title) ? [{...(str(row.event) ? {event: row.event} : {}), title: row.title,
+    ...Object.fromEntries((['standing', 'kept', 'withheld'] as const).flatMap(key => (num(row[key]) !== undefined ? [[key, row[key]]] : []))),
+    ...(typeof row.suppressed === 'boolean' ? {suppressed: row.suppressed} : {})}] : []))
+  const notices = words(turn.notices)
+  return {kept: true, turn: {blocks, ...(num(turn.withheld_lines) !== undefined ? {withheldLines: turn.withheld_lines} : {}),
+    ...(num(turn.withheld_blocks) !== undefined ? {withheldBlocks: turn.withheld_blocks} : {}), ...(notices.length ? {notice: notices.join(' ')} : {})}}
+}
+
 /** `aikit unused`'s capabilities, never seen used. Null when the answer is not the list. Pure. */
 export const unusedOf = (unused: unknown): string[] | null => (isObj(unused) && Array.isArray(unused.unused)
   ? unused.unused.flatMap(row => (isObj(row) && str(row.capability) ? [String(row.capability)] : [])) : null)

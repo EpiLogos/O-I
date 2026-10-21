@@ -118,7 +118,8 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   assert.doesNotMatch(chain, /publishDevice\(FRAMES_ID/, 'the Frames monitor: not the chain\'s to publish (its Gateway\'s ⤢ still opens it)')
   assert.doesNotMatch(chain, /publishDevice\(WORKCELL_RACK_ID|\[WORKCELL_RACK_ID, /, 'the workcell rack is drawn from the door, not published by the chain')
   assert.match(chain, /useSyncExternalStore\(subscribeDeviceDoor, \(\) => publishedDevice\(WORKCELL_RACK_ID\)/)
-  for (const reader of ['usePopulationAnswer', 'useConversationAnswer', 'useCentralGroundAnswer', 'ledgerBinding', 'messagesBinding']) {
+  // REPLACED (lane W11): the chain reads the same held population answer for Custody's Positions (one keyed read for the window).
+  for (const reader of ['useConversationAnswer', 'useCentralGroundAnswer', 'ledgerBinding', 'messagesBinding']) {
     assert.doesNotMatch(chain, new RegExp(`\\b${reader}\\(`), `${reader}: read once, by the rail's publisher`)
   }
   // The reads are the window's shared ones: the chain's gateway read goes through the kernel's held-read holder, the rest are held answers.

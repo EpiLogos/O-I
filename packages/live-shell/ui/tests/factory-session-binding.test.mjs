@@ -129,9 +129,13 @@ test('Custody reads the custody the task record names, shares Scope\'s Write mod
   assert.equal(binding.standing.writeMode.disabled, 'Write mode: … (WO-SF2)', 'Scope\'s standing, one row')
   await binding.write([{key: 'writeMode', value: 'direct'}])
   assert.deepEqual(calls, [['writeMode', 'direct']], 'through Scope\'s own write')
-  for (const key of ['autonomy', 'gate', 'escalate', 'handBack']) {
-    assert.match(binding.standing[key].disabled, /missing op/, key)
-    await assert.rejects(() => binding.write([{key, value: 'auto'}]), /missing op/)
+  // REPLACED (lane W11): the settings have their routes (custody-list, CustodyAssign); with no custody read handed in they say so
+  // (w11-custody-turn-thought-settings.test.mjs writes them).
+  assert.match(binding.standing.handBack.disabled, /missing op/)
+  await assert.rejects(() => binding.write([{key: 'handBack', value: true}]), /missing op/)
+  for (const key of ['autonomy', 'gate', 'escalate']) {
+    assert.match(binding.standing[key].disabled, /custody list is not read here for this session/, key)
+    await assert.rejects(() => binding.write([{key, value: 'auto'}]), /custody list is not read here for this session/)
   }
   assert.equal(calls.length, 1)
   const alone = own.custodyBinding({sessionRef: LEAD.sessionRef, autonomy: null, agent: {}}, null)
@@ -198,7 +202,7 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
   // REPLACED (lane W8): Custody takes the hand's holds, Actuation's authority list and the current person (the Grants page), and its
   // Revoke port; Scope still stands in its row.
-  assert.match(view, /custodyBinding\(\{sessionRef, autonomy: reading\.autonomy, agent: agentDesignBinding\?\.values \?\? \{\}, holds, grants, person: currentPerson\},\s*scopeDesignBinding, custodyPorts\)/, 'Custody and Scope, one row')
+  assert.match(view, /custodyBinding\(\{sessionRef, autonomy: reading\.autonomy, agent: agentDesignBinding\?\.values \?\? \{\}, holds, grants, person: currentPerson,\s*custody: custodyRead\}, scopeDesignBinding, custodyPorts\)/, 'Custody and Scope, one row')
   assert.match(view, /const currentPerson = currentIdentity\(\)\?\.reading\.person_ref \?\? null/, 'the person is the current identity, never a value the desk composes')
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
 })

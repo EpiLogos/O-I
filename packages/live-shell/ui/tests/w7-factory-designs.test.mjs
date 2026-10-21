@@ -214,7 +214,8 @@ test('5 · what no route carries stays refused: Retire and Restore (PERSON_ACTS 
   // REPLACED (lane W9): Apply and Run write at the reviewed digest since the kernel's round of cdbde6fe7 (w9-approvals-ledger-sets.test.mjs).
   assert.deepEqual(Object.keys(bind.RACK_UPKEEP_REFUSE), ['issue'])
   assert.match(bind.RACK_UPKEEP_REFUSE.issue, /mints a secret/)
-  assert.match(bind.AGENT_CONTEXT_ABSENT['ctx.turn'], /T-COVERAGE §1\.5, AIKit/)
+  // REPLACED (lane W11): the last turn is read through aikit_read continuity-turn; not handed in, it says so.
+  assert.match(bind.AGENT_CONTEXT_ABSENT['ctx.turn'], /`aikit work continuity turn` through the kernel's aikit_read/)
 })
 
 test('the bound designs draw on their bindings in all their views — no NaN, no undefined, never their fixture text — each refusal drawn as why', () => {

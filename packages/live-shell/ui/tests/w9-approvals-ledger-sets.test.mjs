@@ -250,9 +250,10 @@ test('8 · the Agentset rack\'s Join: its group is an AIKit session space with n
   await assert.rejects(rack.write([{key: 'join', value: 'quorum'}]), {message: session.AGENTSET_REFUSE.join})
   const custody = session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}, holds: bind.chainHolds()}, null)
   for (const [key, flag] of [['autonomy', '--autonomy suggest|review|auto'], ['gate', '--review-gate diffs|approvals|both'], ['escalate', '--escalate-to']]) {
-    assert.ok(custody.standing[key].disabled.includes(`\`factory development custody assign ${flag}\`, which the kernel's factory_owner CustodyAssign carries`), key)
-    assert.match(custody.standing[key].disabled, /missing op: a reading of the session's custody \(`factory development custody list <state> --position <P>`/, key)
-    assert.ok(custody.standing[key].disabled.endsWith(session.CUSTODY_SETTINGS_RULING), `${key}: the ruling, exact`)
+    // REPLACED (lane W11): with no custody read handed in, the setting says so; the ruling stands on an assigned work
+    // (w11-custody-turn-thought-settings.test.mjs).
+    assert.ok(custody.standing[key].disabled.includes(`\`factory development custody assign ${flag}\``), key)
+    assert.match(custody.standing[key].disabled, /custody list is not read here for this session/, key)
     await assert.rejects(custody.write([{key, value: 'auto'}]), {message: session.CUSTODY_REFUSE[key]})
   }
   assert.equal(session.CUSTODY_SETTINGS_RULING, 'Changing it after assignment waits for the owner\'s ruling on who may: `custody update` admits only the holding occupant, and Factory names no person authority for custody.')

@@ -114,7 +114,9 @@ test('the Agent\'s composed binding carries custody.*, id.* and thread.* from th
   assert.equal(v.autonomy, 'review')
   assert.deepEqual(Object.keys(v).filter(key => key.startsWith('custody.')), [], 'no custody reading is invented')
   // REPLACED (lane W9): Review gate and Escalate to name what an assignment from here lacks (Factory's record and the kernel carry them).
-  for (const key of ['custody.gate', 'custody.escalate', 'custody.handBack']) assert.match(agent.standing[key].disabled, /missing op:/, key)
+  // REPLACED (lane W11): Review gate and Escalate to say Factory's custody list is not read here (no custody handed in).
+  for (const key of ['custody.gate', 'custody.escalate']) assert.match(agent.standing[key].disabled, /custody list is not read here/, key)
+  assert.match(agent.standing['custody.handBack'].disabled, /missing op:/)
   // REPLACED (lane W9): Custody's Autonomy names what an assignment from here lacks (sessionChainBindings.ts custodySetting).
   assert.match(agent.standing.autonomy.disabled, /^Autonomy: set when Factory assigns custody/, 'the shared autonomy carries Custody\'s standing')
   // Identity: the roster and whose card, under id.*; the light is the Agent's.

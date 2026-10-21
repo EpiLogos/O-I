@@ -19,7 +19,7 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import type {SaveRouterOutcome} from '../../inhabitants/manifest'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
 import type {PageField} from '../../../../../../desktop/cradle/src/kernel/types'
-import {groundValues, thoughtValues, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
+import {groundValues, lastKeptThought, thoughtValues, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
 import {civilDayName} from './dayBinding'
 import {civilDateOf, clockOf, headOf, wordsOfHtml, type DayPage, type FlowPage, type PageEntry} from './pageReadings'
 
@@ -130,8 +130,8 @@ export const FLOW_WIRING: DesignWiring = {
     view: 'meta.view', revision: 'meta.revision (the page\'s own counter)', state: 'saved, or edited since save (the hosted form\'s draft fact)',
     lastSave: 'the save router\'s last named outcome (DocumentInPane.outcome); none before a save',
     preflight: 'Contemplate\'s preflight, as AIKit answered the press (invoke_action `action:contemplate-flow` asked bare; pageGround.ts preflightValue)',
-    thought: 'the thought of the one run this window asked (aikit.flow-cognition/v1; thoughtValue)',
-    since: 'what changed since that thought (op flow_changed_since; sinceValue)',
+    thought: 'the thought of the one run this window asked (aikit.flow-cognition/v1; thoughtValue), else the Flow\'s last kept thought (aikit_read flow-thoughts, aikit.flow-thoughts/v1: thoughts[0]; JSON null when none is kept)',
+    since: 'what changed since that thought (op flow_changed_since; sinceValue), on the kept thought\'s record when no run stands here',
   },
   writes: {
     preflightRead: 'Contemplate\'s preflight asked (invoke_action `action:contemplate-flow`, bare: it records nothing)',
@@ -153,12 +153,13 @@ export const FLOW_WIRING: DesignWiring = {
     'in:<agent>': `A participant joins on the page itself (ql-flow.html participants) — ${ON_THE_PAGE}.`,
     'left:<initial>': `A participant leaves on the page itself (ql-flow.html participants) — ${ON_THE_PAGE}.`,
   },
-  // The Thought page (D-package; manual §18.1 Thought): its owners answer — AIKit's Flow cognition through the kernel's invoke_action
-  // `action:contemplate-flow` (asked bare: the preflight) and op flow_changed_since — but this binding does not ask them yet.
+  // The Thought page (D-package; manual §18.1 Thought): AIKit's Flow cognition through the kernel's invoke_action `action:contemplate-flow`
+  // (asked bare: the preflight; with the record: one run), the Flow's last kept thought (lane W11: aikit_read flow-thoughts) and op
+  // flow_changed_since on that thought.
   absent: {
     preflight: 'Not asked yet: press Preflight — Contemplate\'s preflight is asked only by a press (`action:contemplate-flow`), never by itself.',
-    thought: 'No thought in this window: AIKit keeps no read of a Flow\'s last thought (T-COVERAGE §1.5), so a thought stands only after Contemplate runs here.',
-    since: 'Not asked yet: press Changed since, once a thought stands (op flow_changed_since).',
+    thought: 'The last thought: AIKit has not answered its kept thoughts for this Flow yet (`aikit flow thoughts`).',
+    since: 'What changed since the thought: no thought stands yet — none is kept for this Flow, and none ran here (op flow_changed_since takes one).',
   },
 }
 
@@ -606,7 +607,11 @@ export function flowBinding(id: string, reached: ReachedPage, material: PageMate
       const run = thought?.state.thought
       if (!thought?.hand) throw new Error(NO_THOUGHT_HAND)
       const data = run?.status === 'answered' && run.value && typeof run.value === 'object' ? run.value as Record<string, unknown> : null
-      if (!data || data.state !== 'cognition') throw new Error('There is no thought to read from: Contemplate has not run here, or it did not think.')
+      // Without a run here, the Flow's last kept thought is the one changes are read since (its record, as AIKit kept it).
+      const kept = !run && thought.state.kept?.status === 'answered' ? lastKeptThought(thought.state.kept.value) : undefined
+      if (kept) { await thought.hand.since(kept.thought); return }
+      if (!data || data.state !== 'cognition') throw new Error(kept === null ? 'There is no thought to read from: AIKit keeps no thought for this Flow (it keeps one only when a host executor runs a contemplation), and none ran here.'
+        : 'There is no thought to read from: Contemplate has not run here, or it did not think.')
       await thought.hand.since(data)
     },
   }
@@ -617,6 +622,8 @@ export function flowBinding(id: string, reached: ReachedPage, material: PageMate
   if (!reached.reread) why.reread = NO_ACT('Flow')
   const standing: Record<string, Standing> = {}
   for (const key of Object.keys(values)) if (key.startsWith('left:')) standing[key] = {disabled: FLOW_WIRING.refused['left:<initial>']!}
+  // The kept thoughts refused (an AIKit that keeps none, or cannot read them): its words, until a run here stands.
+  if (!('thought' in values) && thought?.state.kept?.status === 'refused') standing.thought = {disabled: thought.state.kept.error}
   if (page && roster) for (const agent of roster) standing[`in:${agent.ref}`] = {disabled: FLOW_WIRING.refused['in:<agent>']!}
   return pageBinding(id, FLOW_WIRING, values, acts, why, standing)
 }

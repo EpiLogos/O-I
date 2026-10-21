@@ -128,8 +128,9 @@ export function receiptRows(horizon: unknown, timeZone: string | undefined): Rec
 /** A return's outcome in the Ledger's words: Waiting, or Commented once it keeps a comment; Approved; Refused. Undefined for a status Central
  * may add later. */
 function returnOutcome(entry: SourceReturnEntry): string | undefined {
-  const comments = (entry as {comments?: unknown}).comments
-  if (entry.status === 'pending' || entry.status === 'applying') return typeof comments === 'number' && comments > 0 ? 'commented' : 'waiting'
+  // `comments`: the count Central keeps on the return (Central PR 290), passed on by the kernel since lane W6 round 3; an older Central gives
+  // none, and the return reads as Waiting (true: it waits).
+  if (entry.status === 'pending' || entry.status === 'applying') return typeof entry.comments === 'number' && entry.comments > 0 ? 'commented' : 'waiting'
   return entry.status === 'accepted' ? 'approved' : entry.status === 'rejected' ? 'refused' : undefined
 }
 
