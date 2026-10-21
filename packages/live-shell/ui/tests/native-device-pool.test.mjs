@@ -172,7 +172,7 @@ test('without a native Expression the pool says so and its add control is disabl
   assert.ok(markup.includes('Open a native Expression to edit its devices.'))
   assert.match(markup, /class="native-device-pool-add"[^>]*disabled/)
   // The studio hand-off needs native work open: its event is only heard when the Expressions host is mounted.
-  assert.match(markup, /class="native-device-pool-studio"[^>]*disabled=""[^>]*title="Open a native Expression to show this panel in the Expressions Studio"/)
+  assert.match(markup, /class="native-device-pool-studio"[^>]*disabled=""[^>]*title="Open a native Expression to open its Studio"/)
   const open = renderToStaticMarkup(createElement(pool.NativeDevicePoolView, {reading: reading(), request: async () => ({ok: false, error: 'x'}),
     requested: {scope: 'field', family: 'pointer', nonce: 1}, isPresented: () => true, busy: false, error: null, onAdd() {}, onClose() {}}))
   assert.match(open, /class="native-device-pool-studio"(?![^>]*disabled)/, 'enabled while native work is open')
