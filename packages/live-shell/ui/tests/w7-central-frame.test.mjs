@@ -2,8 +2,7 @@
 //   1. the world's track head opens the track's Workspace device in a pane (§18.1), its Name, Folder and Ground the selected world's;
 //   2. the Day's close-out verify (design package D5, §18.2);
 //   3. widgets:notifications (design package D10, §23.9): a monitor, its rail tile and its Full;
-//   4. settings:window (design package D9) is parked on dlw/settings-window-port until its design has a place for every behaviour
-//      the window has today (T-COVERAGE §2.1);
+//   4. settings:window (design package D9, §10.10): the Settings window on the window's own readings and writes;
 //   5. the Session grid and the Arrangement ruler against their designs (T-COVERAGE §1.4).
 // Channels: SCRIPTED (the views and the catalogue designs rendered to static markup through the runtime's host; the pure bindings; a
 // recording hand for every press). No owner state is written. Not a screen pass: the on-screen legs are the lead's.
@@ -182,6 +181,126 @@ test('Notifications\' rail tile is registered right after Approvals, and the doo
   const central = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(central, /export const CENTRAL_APPROVALS_ID = 'central:main:approvals'/)
   assert.match(railDevices, /NOTIFY_APPROVALS_IDS = \['central:main:approvals', 'factory:main:approvals'\]/)
+})
+
+// ── 4. the Settings window on its design (design package D9) ────────────────────────────────────────────────────────────────────────
+
+const win = await import('../src/settings/windowValues.ts')
+const settingsPages = await import('../src/settings/windowPages.ts')
+const {createDevelopmentSettingsAdapter} = await import('../src/settings/development.ts')
+const {design: settingsDesign} = await import('../src/inhabitants/catalogue/panels/settings__window.tsx')
+const {initialScope, settingKey, createDraft, categoryOf} = await import('../src/settings/model.ts')
+/** The window's sample text, which never stands in for a reading. */
+const SETTINGS_FIXTURE = /claude-opus-5-5|keychain:\/\/aikit\/anthropic|Decision provider election|en_US-norman|Archetypal|service:kev-decision/
+
+/** The engine's readings, as SettingsWorkspace.tsx reads them, through the development adapter (the native descriptor capture, simulated values). */
+async function engineOver(adapter) {
+  const registry = await adapter.readRegistry()
+  const entries = registry.mounts.flatMap(mount => (mount.document?.sections.flatMap(section => section.settings) ?? []).map(spec => ({spec, owner: mount.owner_ref, available: mount.availability.state === 'available', reason: mount.availability.reason})))
+  const scopes = Object.fromEntries(entries.flatMap(entry => { const scope = initialScope(entry.spec, adapter.scopeChoices ?? []); return scope ? [[entry.spec.setting_ref, scope]] : [] }))
+  const resolutions = await adapter.readResolutions(Object.entries(scopes).map(([setting_ref, scope]) => ({setting_ref, scope})))
+  const readings = Object.fromEntries(resolutions.map(r => [settingKey(r.setting_ref, r.scope), r]))
+  return {entries, scopes, readings}
+}
+
+test('Settings: every key of the design and every press it makes is classified — a reading, a write through its owner, the window\'s own, or refused or absent naming the op', async () => {
+  const w = win.SETTINGS_WINDOW_WIRING
+  const placed = key => [w.reads, w.writes, w.local, w.refused, w.absent].some(table => key in table) || key.startsWith('draft:') || key.startsWith('new.') || key === 'heldDefault' || key === 'ran'
+  for (const key of designKeys(settingsDesign)) assert.ok(placed(key), `${key}: classified`)
+  const {readFile} = await import('node:fs/promises')
+  const designText = await readFile(new URL('../src/inhabitants/catalogue/panels/settings__window.tsx', import.meta.url), 'utf8')
+  const presses = [...new Set([...designText.matchAll(/p\.set\('([a-zA-Z.]+)'/g)].map(match => match[1]))]
+  for (const key of presses) assert.ok(placed(key) || key in w.writes, `press ${key}: classified`)
+  for (const key of win.SETTINGS_LOCAL_KEYS) assert.ok(key in w.local || key.startsWith('new.'), `${key} is the window's own`)
+  for (const key of ['enterKey', 'scan', 'revokeProjection']) assert.ok(w.refused[key], `${key}: refused naming its route`)
+  for (const key of ['secretRefs', 'projections', 'outside']) assert.match(w.absent[key], /no kernel route/)
+})
+
+test('SCRIPTED — the owners\' settings read through the window\'s engine become the design\'s rows; a draft, its conflict, the owners\' plans and their answer stand as the design reads them', async () => {
+  const adapter = createDevelopmentSettingsAdapter('ready')
+  const {entries, scopes, readings} = await engineOver(adapter)
+  assert.ok(entries.length >= 10, 'the native descriptor capture (settings/native-inventory.capture.json), through the development adapter')
+  const core = win.windowCoreValues({adapter, entries, readings, scopes, drafts: {}, review: null, result: null, loading: false, query: ''})
+  const rows = JSON.parse(core.settings)
+  const limit = rows.find(row => row.ref === 'software-factory:telemetry:search-limit-default')
+  assert.deepEqual([limit.kind, limit.category, limit.owner, limit.timing, limit.writable, limit.effective], ['number', 'telemetry', 'software-factory', 'value-change', true, 20])
+  assert.equal(rows.find(row => row.ref === 'ai-kit:models:models.credentials').kind, 'secret', 'a sensitive setting is a secret: its reference only')
+  assert.equal(rows.find(row => row.ref === 'ai-kit:models:models.default').kind, 'table')
+  assert.deepEqual(JSON.parse(core.source), {kind: 'development', label: adapter.label, simulated: true})
+  assert.deepEqual(JSON.parse(core.scope), win.commonScope(scopes) && {kind: win.commonScope(scopes).scope_kind, ref: win.commonScope(scopes).scope_ref, title: win.scopeWords(win.commonScope(scopes), adapter.scopeChoices)}, 'the scope most settings stand at')
+  assert.equal(win.windowCoreValues({adapter, entries, readings, scopes, drafts: {}, review: null, result: null, loading: true, query: ''}).settings, undefined, 'reading the registry: absent, never a sample')
+  // A local change, its conflict once the owner's basis moves, the owners' plan for it and their answer.
+  const entry = entries.find(e => e.spec.setting_ref === 'software-factory:telemetry:search-limit-default'), scope = scopes[entry.spec.setting_ref], key = settingKey(entry.spec.setting_ref, scope)
+  const draft = {...createDraft(entry.spec, '42', readings[key]), ownerEpoch: adapter.ownerEpoch}
+  const drafts = {[key]: draft}
+  assert.equal(win.windowCoreValues({adapter, entries, readings, scopes, drafts, review: null, result: null, loading: false, query: ''})[`draft:${entry.spec.setting_ref}`], '42')
+  assert.deepEqual(win.conflictRefs(entries, {[key]: {...draft, ownerEpoch: 'another-owner'}}, scopes, readings, adapter.ownerEpoch), [entry.spec.setting_ref], 'the owner connection changed: a conflict to keep or drop')
+  const bundle = await adapter.plan([{setting_ref: entry.spec.setting_ref, scope, value: 42}], [{setting_ref: entry.spec.setting_ref, scope, reading_digest: draft.basis}])
+  const answer = await adapter.apply(bundle.plans)
+  const reviewed = win.windowCoreValues({adapter, entries, readings, scopes, drafts, review: bundle, result: answer, loading: false, query: ''})
+  assert.equal(JSON.parse(reviewed.plans)[0].ref, entry.spec.setting_ref)
+  assert.equal(JSON.parse(reviewed.result).operations[0].ref, entry.spec.setting_ref)
+  // The design draws them on every page, and its review.
+  const binding = {id: win.SETTINGS_WINDOW_ID, values: reviewed, standing: {}, local: {}}
+  for (const page of ['harnesses', 'credentials', 'profiles', 'machines', 'automations', 'appearance', 'products', 'system', 'telemetry', 'review']) {
+    host.setHostPage(win.SETTINGS_WINDOW_ID, page)
+    drawsOn(settingsDesign, binding, SETTINGS_FIXTURE)
+  }
+  host.setHostPage(win.SETTINGS_WINDOW_ID, 'telemetry')
+  assert.match(hosted(settingsDesign, binding).map(([, m]) => m).join(''), new RegExp(entry.spec.title), 'the owner\'s own title, on its page')
+  host.resetHost(win.SETTINGS_WINDOW_ID)
+})
+
+test('REAL — the native connector binds only the configuration plane and its scopes: every page that reads through another capability stands absent naming it', async () => {
+  const {connectNativeSettings} = await import('../src/native/configuration.ts')
+  const adapter = await connectNativeSettings({kind: 'bridge', url: 'http://bridge.test/w7-settings'}, {ownerEpoch: 'w7', isCurrent: () => true, scopeChoices: []})
+  for (const capability of ['harnesses', 'invoke', 'profiles', 'readProducts', 'remoteMachines', 'routineAuthoring', 'visualPreferences', 'importTheme'])
+    assert.equal(adapter[capability], undefined, `${capability}: not carried by the native connector`)
+  assert.match(win.NO_HARNESS, /SettingsAdapter\.harnesses/)
+  assert.match(win.NO_INVOKE('Credentials'), /SettingsAdapter\.invoke/)
+  assert.match(win.NO_PRODUCTS, /SettingsAdapter\.readProducts/)
+})
+
+test('CODE-DERIVED — each page\'s owner reading becomes the design\'s keys: harnesses and routes, credentials by reference, profiles, machines, routines and timers, the theme, products and the four axes', () => {
+  // harnessSource.ts HarnessReading, its shaped rows.
+  const reading = {kind: 'live', label: 'live', observed_at_unix_ms: 1, heldDefault: {value: 'pi', set_at_unix_ms: 1}, defaultState: {state: 'ok'},
+    providers: {state: 'ok', rows: [{id: 'pi', label: 'Pi'}, {id: 'claude', label: 'Claude'}]},
+    harnesses: {state: 'ok', rows: [{harness: 'Claude Code', client: 'claude-code', detection: 'binary', detected: true, detection_reason: null, installed: true, config_dir: '/Users/x/.claude (settings)', dispatch: 'acp', capability: 'descriptor', effect: 'restart Claude', items: 3, adapter_gap: null}]},
+    catalogue: {state: 'ok', rows: {count: 1, entries: [{model: 'm1', name: 'Model one', source: 'aikit', routes: [{kind: 'api', provider: 'anthropic', credential_required: true}]}]}}}
+  const h = win.harnessValues(reading)
+  assert.deepEqual([h.heldDefault, JSON.parse(h.effectiveDefault).rule, JSON.parse(h.harnesses)[0].folder, JSON.parse(h.routes)[0].routes[0]], ['pi', 'owner-choice', '/Users/x/.claude', {provider: 'anthropic', key: true}])
+  const c = win.credentialValues([{credential: 'ai-kit:credential:anthropic', provider: 'anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: 1792500000}], {'ai-kit:credential:anthropic': 'working'}, 2)
+  assert.deepEqual([JSON.parse(c.credentials)[0].verdict, c.found], ['working', 2])
+  assert.doesNotMatch(c.credentials, /material|secret_value/, 'no material enters the values')
+  assert.throws(() => settingsPages.credentialMetadata({bindings: [{}]}), /no native identity/)
+  const list = {routines: [{routine: 'r1', name: 'Morning checks', method: 'verify', method_revision: 'abc', state: 'stale-proof', trigger: {kind: 'schedule'}, scheduler: {provider: 'launchd', observed_state: 'loaded'}}],
+    foreign_reconciliation: {providers: [{provider: 'claude-code', jobs: [{job_id: 'j1', name: 'nightly', active: true, reconciled: false}]}]}}
+  const a = win.automationValues({list, methods: [{id: 'm', name: 'verify', payload: '', active: true}], history: null, detail: null, project: 'O-I', options: null})
+  assert.deepEqual(JSON.parse(a.routines)[0], {ref: 'r1', name: 'Morning checks', state: 'stale-proof', when: 'schedule · launchd', method: 'verify', revision: 'abc', verified: false})
+  assert.deepEqual(JSON.parse(a.timers), [{name: 'nightly', provider: 'claude-code'}], 'the harness timers are AIKit\'s own reconciliation')
+  assert.deepEqual(JSON.parse(a.contexts), [{ref: '', title: 'This AIKit home'}, {ref: 'O-I', title: 'O-I'}])
+  const composition = {schema: 'oi.system-composition/v1', contract_revision: 'x', observed_at_unix_ms: 1, census: {schema: 'x', positions: []}, obligations: [], owners: [{product_id: 'central', availability: 'available', reason: null, reading_command: [], error: null,
+    provenance: {observed_at_unix_ms: 1792500000000, digest: 'abc123'}, descriptor: {schema: 'oi.product-settings-disclosure/v2', product_id: 'central', owner: {owner_id: 'central', owner_version: '0.9'}, sections: [{id: 's', title: 'Ground', settings: [
+      {key: 'root', title: 'Root', kind: 'path', axes: {declared: {value: '/Users/admin/Central'}, effective: {value: '/Users/admin/Central'}}, drift: {state: 'none'}},
+      {key: 'token', title: 'Token', kind: 'secret', axes: {declared: {value: 'never'}}}]}],
+      actions: [{action_ref: 'central.doctor', title: 'Doctor', availability: 'disclosed', native_path: 'ctrl doctor'}], availability: {state: 'available'}, degradations: [], obligations: ['backup']}}]}
+  const p = win.productValues(composition, settingsPages.runnableProductAction, null), s = win.systemValues(composition)
+  assert.deepEqual(JSON.parse(p.products)[0].actions, [{ref: 'central.doctor', title: 'Doctor', runnable: true}])
+  const axes = JSON.parse(s.system)[0].settings
+  assert.equal(axes[0].declared.value, '/Users/admin/Central')
+  assert.equal(axes[1].declared, undefined, 'a secret is presence only: its axes never enter the values')
+  const doc = {theme: {appearance: 'dark', id: null}, custom_themes: [{id: 'night', name: 'Night'}], revision: 'r', observations: {}}
+  assert.deepEqual(JSON.parse(win.appearanceValues(doc, [{id: 'oi-house', name: 'House'}]).theme), {saved: 'dark'})
+})
+
+test('SCRIPTED — the Settings window itself (SettingsWorkspace) draws the design\'s Full on first opening: reading, never a sample', async () => {
+  const {SettingsWorkspace} = await import('../src/settings/SettingsWorkspace.tsx')
+  const markup = renderToStaticMarkup(createElement(SettingsWorkspace, {adapter: createDevelopmentSettingsAdapter('ready'), active: true}))
+  assert.match(markup, /data-device-view="full"/)
+  assert.match(markup, /class="ref-pane-body st-window"/, 'the catalogue design draws the window')
+  assert.match(markup, /no reading of the owners&#x27; settings/, 'the registry not read yet: said, never a sample')
+  assert.doesNotMatch(markup, SETTINGS_FIXTURE)
+  assert.doesNotMatch(markup, /\bNaN\b|undefined/)
 })
 
 // ── 5. the Session grid and the Arrangement ruler against their designs (T-COVERAGE §1.4) ───────────────────────────────────────────

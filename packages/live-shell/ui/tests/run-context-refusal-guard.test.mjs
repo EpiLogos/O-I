@@ -28,7 +28,8 @@ async function walk(dir, base = '') {
 const read = rel => readFile(new URL(rel, src), 'utf8')
 
 // The owner-refusal surfaces the ticket names: no JSON dump may remain in them.
-const REFUSAL_SURFACES = ['components/NativeMaterialBrowser.tsx', 'settings/ProductPreferences.tsx']
+// W7: Settings' Products page is the catalogue design (settings:window); a refused operation is the host's refusal on its control, in the owner's words.
+const REFUSAL_SURFACES = ['components/NativeMaterialBrowser.tsx']
 
 // The one serialisation a refusal surface may keep: the native-outcome receipt,
 // folded beneath the owner's words as a developer view (PATH §10 item 18, the
@@ -40,7 +41,6 @@ const FOLDED_RECEIPTS = {
 // Developer disclosures that may still preformat JSON, with the reason each is
 // not an owner refusal (the rescope in the ticket's Resolution).
 const DEVELOPER_DISCLOSURES = {
-  'settings/SettingsWorkspace.tsx': 'developer plan blocks and the acknowledgement of a settings apply (rescope: plan blocks are not refusals; the acknowledgement dump is a carried follow-up)',
   'components/NativeInputRetention.tsx': 'the input gesture receipt of a retained copy (an input record, not an owner refusal)',
   'agent/RefusalCard.tsx': 'the verbatim receipt folded behind a summary, never the surface (the refusal line is the surface)',
   'components/NativeMaterialBrowser.tsx': 'the native-outcome receipt of a refused material operation, folded beneath the owner\'s words as a developer view (allowlisted by name, PATH §10 item 18)',

@@ -33,7 +33,8 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const React = await import('react')
 const {runContextOf, carrierOf, RunContextReading} = await import('../src/shell/runContext.tsx')
 const {OwnerRefusal} = await import('../src/components/OwnerRefusal.tsx')
-const {outputWords} = await import('../src/settings/ProductPreferences.tsx')
+// W7: the Products page is the catalogue design's now (settings:window); its operations' words are windowPages.ts's.
+const {outputWords} = await import('../src/settings/windowPages.ts')
 const {StatusBar} = await import('../src/components/StatusBar.tsx')
 
 const htmlOf = element => renderToStaticMarkup(element)
