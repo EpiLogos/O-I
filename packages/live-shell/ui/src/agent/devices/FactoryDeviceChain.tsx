@@ -78,6 +78,9 @@ import {THREAD_DEVICE_ID, shownSession, threadBinding, threadJson} from './threa
 import {composeAgentBinding} from './oneAgentBinding'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
 import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from '../../central/devices/sourceReturnAccept'
+import {commentSourceReturn, withReturnComments} from '../../central/devices/sourceReturnComment'
+import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
+import {useUnitDecisions, waitingDecisions} from './unitDecisions'
 import {useCentralAction} from '../../central/devices/useCentralReadings'
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
@@ -102,7 +105,7 @@ import {CAPTURE_SKILL_DESIGN, CAPTURE_SKILL_ID, captureSkillBinding, captureSkil
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
-import {useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
+import {useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -317,19 +320,24 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const rackOn = !waits.skillset
   const rackReading = useRackReading(transport, profile, holds.compose.scope, sessionRef, rackOn, planeEpoch)
   const ports = useMemo(() => composePorts(transport, () => setPlaneEpoch(epoch => epoch + 1)), [transport])
-  // The rack's upkeep pages (lane W8): AIKit's unused, collate, bypass and procedure lists, the plan for the root chosen, and its writes.
+  // The rack's upkeep pages (lanes W8, W9): AIKit's unused, source, collate, bypass and procedure lists, the plan for the root chosen, and
+  // its writes.
   const rackHeld = viewHolds(holds, chainDeviceId('skillset'))
   const upkeepUnused = useAikitRead(transport, rackOn ? {kind: 'unused'} : null)
+  const upkeepSources = useAikitRead(transport, rackOn ? {kind: 'source-list'} : null)
   const upkeepCollate = useAikitRead(transport, rackOn ? {kind: 'collate'} : null)
   const upkeepBypasses = useAikitRead(transport, rackOn ? {kind: 'bypass-list'} : null)
   const upkeepProcedures = useAikitRead(transport, rackOn ? {kind: 'procedure-list'} : null)
   const adoptRoot = typeof rackHeld.adoptRoot === 'string' && rackHeld.adoptRoot ? rackHeld.adoptRoot : null
   const adoptNamespace = typeof rackHeld.namespace === 'string' && rackHeld.namespace ? rackHeld.namespace : null
   const upkeepAdoption = useAikitRead(transport, rackOn && adoptRoot ? {kind: 'adopt-plan', root: adoptRoot, ...(adoptNamespace ? {namespace: adoptNamespace} : {})} : null)
-  const upkeep = useMemo((): RackUpkeep => ({unused: upkeepUnused, collate: upkeepCollate, bypasses: upkeepBypasses, procedures: upkeepProcedures,
-    ...(adoptRoot ? {adoption: upkeepAdoption} : {}),
+  // The procedure chosen (W9): its kind and digest from `aikit procedure diff` (Run applies it only at the digest read).
+  const chosenProcedure = typeof rackHeld.procedure === 'string' && rackHeld.procedure ? rackHeld.procedure : null
+  const upkeepProcedure = useAikitRead(transport, rackOn && chosenProcedure ? {kind: 'procedure-diff', procedure: chosenProcedure} : null)
+  const upkeep = useMemo((): RackUpkeep => ({unused: upkeepUnused, sources: upkeepSources, collate: upkeepCollate, bypasses: upkeepBypasses, procedures: upkeepProcedures,
+    ...(adoptRoot ? {adoption: upkeepAdoption} : {}), ...(chosenProcedure ? {procedure: upkeepProcedure} : {}),
     ...(transport.kind !== 'unavailable' ? {write: request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit ${request.kind.replace('-', ' ')}\``)} : {})}),
-  [upkeepUnused, upkeepCollate, upkeepBypasses, upkeepProcedures, upkeepAdoption, adoptRoot, transport])
+  [upkeepUnused, upkeepSources, upkeepCollate, upkeepBypasses, upkeepProcedures, upkeepAdoption, adoptRoot, upkeepProcedure, chosenProcedure, transport])
   const rackDesignBinding = useMemo(() => (rackOn ? rackBinding(chainDeviceId('skillset'), {profile, ...rackReading, holds}, ports, {project: RACK_PROJECT, sessionRef}, upkeep) : null),
     [rackOn, profile, rackReading, holds, ports, sessionRef, upkeep])
   // The member: the rack's chosen chain, one device inside the rack (§19.7).
@@ -426,18 +434,37 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const shownTrack = shown ? tracks?.find(item => item.sessionRef === shown && !item.group) ?? null : null
   const returns = useSourceReturnsAnswer(transport, RACK_PROJECT).reading
   const returned = returns.status === 'answered' ? returns.value : null
-  // Approve (W2): the person who accepts is the principal Central's personal anchor names; it is asked only while a proposal waits.
-  const waiting = !!returned?.entries.some(entry => entry.status === 'pending')
+  // Factory's unit decisions (W9): the questions the shown session's Runs wait on (unitDecisions.ts), read from the Runs its takes name.
+  const shownTakesAll = useAttemptTakes(transport, shownTrack ? [shownTrack.sessionRef] : [], SETTINGS_PROJECT)
+  const unitRuns = useMemo(() => {
+    const takes = shownTakesAll && shownTrack ? shownTakesAll.of(shownTrack.sessionRef) ?? [] : []
+    return takes.filter((take, at) => takes.findIndex(other => other.runRef === take.runRef && other.statePath === take.statePath) === at)
+      .map(take => ({statePath: take.statePath, runRef: take.runRef}))
+  }, [shownTakesAll, shownTrack])
+  const unitsRead = useUnitDecisions(transport, unitRuns)
+  const units = unitsRead.status === 'answered' ? unitsRead.value : null
+  // Approve (W2): the person who accepts is the principal Central's personal anchor names; it is asked only while a proposal or a unit
+  // decision waits (only the unit's resolver answers one).
+  const waiting = !!returned?.entries.some(entry => entry.status === 'pending') || waitingDecisions(units).length > 0
   const anchor = useCentralAction(transport, PERSONAL_ANCHOR_ACTION, waiting ? NO_INPUT : null)
   const person = anchor.status === 'answered' ? personRefOf(anchor.value) : null
+  // Changes (W9): a comment on the waiting return in the words written in the thread — the Agent's composer — through Central's
+  // projectcentral.source.return_comment (central/devices/sourceReturnComment.ts); once Central keeps it, the composer is cleared.
+  const agentDraft = typeof oneAgent?.values.draft === 'string' ? oneAgent.values.draft : null
+  const agentWrite = oneAgent?.write
   const approvalsDesignBinding = useMemo(() => {
     const state = observedState(shownHandle)
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
-    return approvalsBinding({gateway: gatewayDesignBinding?.values ?? {}, session: shownTrack, encounter: state?.reading ?? null, holds,
-      returns: returned, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now()}, gatewayDesignBinding,
+    const binding = approvalsBinding({gateway: gatewayDesignBinding?.values ?? {}, session: shownTrack, encounter: state?.reading ?? null, holds,
+      returns: returned, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person}, gatewayDesignBinding,
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
-        approve: row => acceptSourceReturn(transport, RACK_PROJECT, row, person)})
-  }, [shownHandle, gatewayDesignBinding, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person])
+        approve: row => acceptSourceReturn(transport, RACK_PROJECT, row, person),
+        ...(transport.kind !== 'unavailable' ? {answerUnit: (project, review) => receiving(transport, project, review).catch(cause => { throw new Error(refusalWords(cause instanceof Error ? cause.message : String(cause))) })} : {})})
+    return withReturnComments(binding, {returns: returned, comment: agentDraft}, {
+      send: (row, words) => commentSourceReturn(transport, RACK_PROJECT, row, words, person),
+      after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
+    })
+  }, [shownHandle, gatewayDesignBinding, shownTrack, holds, returned, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite])
 
   // A workcell's devices (§19.23): the Seat inside Git / landing (the seat instrument), starting at the selected workcell's seat of the
   // project; the Remote carrier (Workcell's status); and the workcell rack, which stands on the rail too (the Workcells tile), so the rail's
@@ -455,9 +482,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const seatDesignBinding = useMemo(() => seatBinding({status: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {unread: seatsUnread} : {}),
     project: RACK_PROJECT, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), actor: deskActor, holds}, seatPorts),
   [seats, seatsUnread, reading.gitRepo.branch, cellName, machineRef, deskActor, holds, seatPorts])
-  // The Remote carrier: Workcell's status, and each listed connection's record (`workcell connections show`, lane W3).
-  const shows = useConnectionShows(transport, connectionLabels(workcellAnswer))
-  const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows), [workcellAnswer, holds, shows])
+  // The Remote carrier: Workcell's status, and each listed connection's record (`workcell connections show`, lane W3); its Standing page's
+  // offers (`workcell discover`) and each connection's probe (`workcell connections probe`, a read that never writes the record; lane W10).
+  const carrierLabels = connectionLabels(workcellAnswer)
+  const shows = useConnectionShows(transport, carrierLabels)
+  const discover = useWorkcellRead(transport, {kind: 'discover'}).answer
+  const probe = useWorkcellRead(transport, carrierLabels.length ? {kind: 'connections-probe'} : null).answer
+  const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows, {discover, ...(carrierLabels.length ? {probe} : {})}),
+    [workcellAnswer, holds, shows, discover, probe, carrierLabels.length])
   // The rack as the rail's publisher holds it, watched alone (another device's publish does not redraw the chain).
   const rackEntry = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(WORKCELL_RACK_ID), () => publishedDevice(WORKCELL_RACK_ID))
 

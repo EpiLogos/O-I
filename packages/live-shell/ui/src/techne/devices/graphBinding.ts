@@ -20,12 +20,15 @@
 //   reading      the kernel graph op's answer (oi.cradle.graph-reading/v1), whole: the open surface's, else the root register's
 //   budget       the max_nodes the read is asked with: the open surface reads at graphProgress.ts's own 4096 and its handle takes no
 //                bound; with none open, the hand's bound on the root read
-//   aperture.*   QL's living-wiki plan (`ql wiki living-plan`, QL-MEF pull 346); no kernel op routes it yet: absent, the controls disabled naming it
+//   aperture.*   QL's living-wiki plan (livingPlan.ts: `ql wiki living-plan` through the kernel's ql_read wiki-living-plan): the request is
+//                the view's own (mode, positions, context, full, budget), the admitted and omitted positions, the depth and the refraction
+//                QL's answer, or its refusal in its words
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {KnowledgeGraphSurface} from '../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
 import type {EmphasisGroup} from '../../../../../../desktop/cradle/src/knowledge/graphEmphasis'
 import {GRAPH_DESIGN, disabled, handsFor, missing, put, refusal} from './designDevices'
+import {APERTURE_READINGS, APERTURE_REQUEST, livingPlanState, livingPlanValues, livingPlanWhy, type LivingPlanState} from './livingPlan'
 
 export const GRAPH_ID = GRAPH_DESIGN
 /** The read's own node bound when the hand has set none (graphProgress.ts progressiveGraph: `maxNodes ?? 4096`). */
@@ -41,10 +44,8 @@ export function surfaceRead(surface: KnowledgeGraphSurface): GraphRead {
 }
 const SURFACE_BOUND = missing('Budget', 'a node bound on the open graph\'s read (KnowledgeSurface.tsx reads at graphProgress.ts\'s own 4096; its handle takes none)', 'the knowledge graph')
 
-const APERTURE = missing('The aperture', 'a kernel route to `ql wiki living-plan` (QL-MEF pull 346 puts plan_living_wiki_refraction, crates/ql-wiki/src/living.rs, on the CLI; no kernel op reaches it yet)', 'the kernel, over Quaternal Logic')
-export const GRAPH_REFUSE = {
-  'aperture.mode': APERTURE, 'aperture.positions': APERTURE, 'aperture.context': APERTURE, 'aperture.full': APERTURE, 'aperture.budget': APERTURE,
-} as const
+/** No key of the graph is refused now: the Aperture page is QL's plan (livingPlan.ts). */
+export const GRAPH_REFUSE = {} as const
 
 /** Each view key and the knowledge graph's armed setter that takes it (knowledgeDevices.ts KNOWLEDGE_DECLARED_ROWS write paths). */
 export const GRAPH_SETTERS: Readonly<Record<string, string>> = {
@@ -56,7 +57,7 @@ export const GRAPH_SETTERS: Readonly<Record<string, string>> = {
 /** The keys that write through the handle's own acts. */
 const HANDLE_KEYS = ['selected', 'minimap'] as const
 const VIEW_KEYS = [...Object.keys(GRAPH_SETTERS), ...HANDLE_KEYS, 'clear'] as const
-export const GRAPH_LOCAL = ['budget'] as const
+export const GRAPH_LOCAL = ['budget', ...APERTURE_REQUEST] as const
 
 /** The kernel graph op's answer as the window holds it. */
 export interface GraphRead {
@@ -154,20 +155,24 @@ export function graphAbsent(surface: KnowledgeGraphSurface | null, read: GraphRe
 const GRAPH_READINGS = ['reading', 'selected', 'groups'] as const
 
 /** The Knowledge graph's binding on the open graph and the kernel's reading. */
-export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphRead | null, writes: GraphWrites, held: Readonly<Record<string, Value>> = {}): DesignBinding {
+export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphRead | null, writes: GraphWrites, held: Readonly<Record<string, Value>> = {},
+  plan: LivingPlanState = livingPlanState()): DesignBinding {
   const standing: Record<string, Standing> = disabled(GRAPH_REFUSE)
+  // The Aperture page: QL's plan for the request you hold (livingPlan.ts).
+  for (const key of APERTURE_READINGS) standing[key] = {disabled: livingPlanWhy(plan)}
   if (!surface) for (const key of VIEW_KEYS) standing[key] = {disabled: NOT_OPEN}
   else {
     if (surface.filters.scope !== 'local') standing.depth = {disabled: NOT_LOCAL}
     standing.budget = {disabled: SURFACE_BOUND}
   }
-  const values = graphValues(surface, read, held)
+  const values: Record<string, Value> = {...graphValues(surface, read, held), ...livingPlanValues(plan)}
+  for (const key of APERTURE_REQUEST) if (held[key] !== undefined) values[key] = held[key]!
   for (const key of GRAPH_READINGS) if (!(key in values) && !(key in standing)) standing[key] = {disabled: graphAbsent(surface, read, key)}
   return {
     id: GRAPH_ID,
     values,
     standing,
-    ...(read === null || (read.status === 'reading' && !read.reading) ? {waiting: ['reading']} : {}),
+    ...(read === null || (read.status === 'reading' && !read.reading) ? {waiting: ['reading', ...(plan.busy ? APERTURE_READINGS : [])]} : plan.busy && !plan.reading.ok ? {waiting: [...APERTURE_READINGS]} : {}),
     local: handsFor(GRAPH_ID, GRAPH_LOCAL),
     writes: key => key in GRAPH_REFUSE || key in GRAPH_SETTERS || (HANDLE_KEYS as readonly string[]).includes(key) || key.startsWith('g:'),
     write: changes => graphWrite(surface, changes, writes),

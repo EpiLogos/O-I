@@ -183,7 +183,8 @@ test('Approve refused in words before Central is asked: a moved source, no perso
   const unwired = rec.approvalsBinding(input({entries: [PENDING]}), null, {})
   assert.equal(unwired.standing.approve.disabled, rec.APPROVE_UNWIRED)
   await assert.rejects(unwired.write([{key: 'approve', value: PENDING.return_ref}]), /no acceptance port is passed here/)
-  await assert.rejects(binding.write([{key: 'changes', value: PENDING.return_ref}]), /missing op: a comment on a source return/)
+  // REPLACED (lane W9): Changes has its owner now; unwrapped by a chain's comment hand it says so (sourceReturnComment.ts withReturnComments).
+  await assert.rejects(binding.write([{key: 'changes', value: PENDING.return_ref}]), /passes no comment hand/)
   assert.deepEqual(owner.sent, [], 'no refusal dispatched anything')
   drawsOn(approvalsDesign, unwired, /setModel|Kite|recursive delete/, [rec.APPROVE_UNWIRED, rec.APPROVALS_REFUSE.changes])
   drawsOn(approvalsDesign, binding, /setModel|Kite|recursive delete/, [rec.APPROVALS_REFUSE.changes])

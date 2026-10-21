@@ -326,7 +326,10 @@ const PROCEDURE = AIKIT.procedure_list.data.procedures[0]
 const upkeep = (write) => ({unused: answered(AIKIT.unused_trimmed.data), collate: answered(AIKIT.collate_trimmed.data), bypasses: answered(AIKIT.bypass_list.data),
   procedures: answered(AIKIT.procedure_list.data), ...(write ? {write} : {})})
 
-test('10 · the rack\'s upkeep: Undo and Revoke only on what AIKit listed; Apply, Run and Issue stay refused; Sync, Promote and Rollback wait for a source listing', async () => {
+// REPLACED (lane W9): Sync, Promote and Rollback read AIKit's source list, Apply adopts at the reviewed digest and Run applies the chosen
+// procedure at its diff's digest since the kernel's round of cdbde6fe7 (w9-approvals-ledger-sets.test.mjs 11). What stays here: Undo and
+// Revoke only on what AIKit listed, Issue refused, AIKit's refusal in its words, Preview a reading.
+test('10 · the rack\'s upkeep: Undo and Revoke only on what AIKit listed; Issue stays refused; Preview reads a plan and writes nothing', async () => {
   bind.resetHolds()
   const {ports, calls} = recorder(['write'])
   const binding = bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE, upkeep(ports.write))
@@ -340,20 +343,15 @@ test('10 · the rack\'s upkeep: Undo and Revoke only on what AIKit listed; Apply
   calls.length = 0
   await assert.rejects(binding.write([{key: 'procUndo', value: 'prc_not_listed'}]), /not in AIKit's list/)
   await assert.rejects(binding.write([{key: 'revoke', value: 'byp_1'}]), /not in AIKit's list/)
-  for (const key of ['adoptApply', 'procRun', 'issue']) await assert.rejects(binding.write([{key, value: 'x'}]), {message: bind.RACK_UPKEEP_REFUSE[key]})
-  for (const key of ['sync', 'promote', 'rollback']) {
-    assert.equal(binding.standing[key].disabled, bind.RACK_UPKEEP_ABSENT.sources)
-    await assert.rejects(binding.write([{key, value: 'source:x'}]), {message: bind.RACK_UPKEEP_ABSENT.sources})
-  }
-  assert.deepEqual(calls, [], 'nothing unlisted, unrouted or unsafe reached AIKit')
+  await assert.rejects(binding.write([{key: 'issue', value: 'x'}]), {message: bind.RACK_UPKEEP_REFUSE.issue})
+  assert.deepEqual(calls, [], 'nothing unlisted or unrouted reached AIKit')
   const listed = bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE, {...upkeep(ports.write), bypasses: answered({bypasses: [{id: 'byp_1', scope: 'session', reason: 'probe', state: 'active'}]})})
   await listed.write([{key: 'revoke', value: 'byp_1'}])
   assert.deepEqual(calls, [['write', {kind: 'bypass-revoke', id: 'byp_1'}]])
   const carrierless = bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE, upkeep())
-  for (const key of ['procUndo', 'revoke', 'sync']) assert.match(carrierless.standing[key].disabled, /carrier is unavailable/)
+  for (const key of ['procUndo', 'revoke', 'sync', 'adoptApply', 'procRun']) assert.match(carrierless.standing[key].disabled, /carrier is unavailable/)
   const aikitSays = 'aikit: the procedure journal is locked'
   assert.equal(bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE, {...upkeep(ports.write), procedures: refused(aikitSays)}).standing.procedures.disabled, aikitSays)
-  // Preview holds the root chosen; the plan is then read, never applied.
   await binding.write([{key: 'adoptPreview', value: '@claude'}])
   assert.equal(bind.rackBinding('factory:skillset', RACK_INPUT(), null, PLACE).values.adoptRoot, '@claude')
   assert.deepEqual(calls.slice(1), [], 'Preview wrote nothing')

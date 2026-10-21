@@ -54,6 +54,7 @@ export const KERNEL_OPS = [
   'shared_field',
   'invoke_action',
   'flow_changed_since',
+  'knowledge_impact',
   'instance_commission',
   'ground',
   'composition_read',

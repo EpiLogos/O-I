@@ -148,7 +148,7 @@ export interface SeatRow { product: string; state: string; registered_branch: st
 /** Central's returned-work proposals for one project (`projectcentral.source.returns`, kernel `source_returns_read`, flow.rs `SourceReturns`). */
 export interface SourceReturnsReading { schema: "central.source-returns/v1"; entries: SourceReturnEntry[]; more: boolean; next_before: string | null; authored_source_mutated: boolean }
 /** One return: `status` is Central's own word — pending, applying, accepted or rejected. */
-export interface SourceReturnEntry { return_ref: string; source_ref: string; basis_revision: string; status: string; agent_session_ref: string; current_revision: string }
+export interface SourceReturnEntry { return_ref: string; source_ref: string; basis_revision: string; status: string; agent_session_ref: string; current_revision: string; /** The reviewers' comments on this Return (Central#290); absent from an older Central. */ comments?: number | null }
 /** AIKit's declared gateway endpoints of other Workcells (`aikit gateway remote list --json`, kernel `gateway_remotes_read`): the envelope's data, verbatim. */
 export interface GatewayRemotesReading { schema: "aikit.gateway-remotes/v1"; remotes: GatewayRemote[] }
 /** One declared remote: its token's location, never the token. */
@@ -169,6 +169,13 @@ export type ActuationReadRequest =
    * included — `actuation.local-authority-listing/v1` `{store, authorities:[{authority_source_ref, record, issued_at_unix_seconds,
    * revoked?:{at_unix_seconds, reason}}], invalid:[{path, authority_source_ref?, error}]}`. */
   | {kind:"authority-list"}
+  /** `actuation stream list [--session S] --json` (EpiLogos/Actuation#142): the durable streams in Actuation's store, or one Agent
+   * session's — `actuation.stream-listing/v1` `{store, agent_session_ref?, streams:[{stream_ref, actuation_ref, agency_ref,
+   * agent_session_ref, world_binding_ref?, lifecycle, event_count, model_usage_count}], invalid:[{path, error}]}`. Never events. */
+  | {kind:"stream-list";session?:string|null}
+  /** `actuation stream replay REF [--after N] [--limit N] --json`: one stream's page (`actuation.stream/v1`: identity, lifecycle,
+   * cursor, events); each `model-usage` event's `model_usage` is one record the `usage` reading projects. */
+  | {kind:"stream-replay";stream_ref:string;after?:number;limit?:number}
   | {kind:"comparison";operation:"held"|"assess"|"mask"|"review";input:Record<string,unknown>};
 /** Actuation's governing authority on its own store: `actuation authority issue - --json` (the `actuation.local-authority/v1`
  * record on stdin; answers `{issued, authority_source_ref, holder, issued_at_unix_seconds}`) and `actuation authority revoke REF
@@ -195,16 +202,32 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
    * grain?:"inner-four"|"outer-two"}, provider_ref, origin:"derived"|"proposed"|"recognised", evidence_refs?}` on stdin), answered as
    * `ql.mef.context-frame-reading/1.0.0`: status exact|partial|ambiguous|no-reading, mapping_digest, runtime_authority false. */
   | {kind:"context-frame-read";request:unknown}
+  /** `ql wiki living-plan -` (QL-MEF#346): the graph's Aperture, QL's LivingWikiRefractionPlan (`profile`
+   * "ql-mef/living-wiki-refraction/v1") for `{mode:"ordinary"|"explain"|"formal", relevance?:{relevant_positions:number[],
+   * requires_context:boolean, full_context_frame:boolean, position_budget:number}, refraction?: WikiRefractionRequest}` on stdin. */
+  | {kind:"wiki-living-plan";request:unknown}
   /** `ql vak locate <ref>` ({vakRef, name, symbol, primaryDesignation, standing, sourceLine}), `ql vak context <ref> [depth]`
    * (`ql.vak-context/v1`: centre, depth, entries, relations). */
   | {kind:"vak-locate";vak_ref:string}
   | {kind:"vak-context";vak_ref:string;depth?:number};
+/** `workcell machine list` answers `{machines:[{label, endpoint, credential_ref?, operations, note?}], control_operations:[…]}`: the
+ * declarations and, since Workcell#118, the fourteen operations the control plane serves (what a declaration may allow). */
 export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections-show";label:string} | {kind:"machine-list"}
+  /** `workcell connections probe [label] [--timeout-ms N]` (EpiLogos/Workcell#117): the handshake to each recorded endpoint, timed
+   * (`workcell.connection-probe/v1` `{probed_at_unix_ms, timeout_ms, probes:[{label, endpoint, recorded_state, state:
+   * reachable|incompatible|refused|unreachable, rtt_ms?, elapsed_ms, protocol?, remote_software?, remote_workcell_ref?, authorised?,
+   * reason?, detail?}]}`). The Remote carrier's reachability and round trip; the record is never written. */
+  | {kind:"connections-probe";label?:string|null;timeout_ms?:number|null}
   /** `workcell doctor` (declared_services, instances, shell, state_root_writable, writable_workspace), `workcell discover`
    * (offers, capacity, health), `workcell instances list`. */
   | {kind:"doctor"|"discover"|"instances-list"}
   /** `workcell plan <demand flags>`: an unsatisfiable plan is a reading too (`status`, `omissions`). */
   | {kind:"plan";demand?:WorkcellDemand}
+  /** `workcell placement <demand flags> [--connection L]… [--max-locality-cost N] [--prefer-locality] [--require-declared-capacity]
+   * [--previous REF]` (Workcell#119): `workcell.placement-evaluation/v1` `{demand_ref, selected, eligible:[{workcell_ref, plan,
+   * provenance:{source_ref, locality_cost, transport, …}}], diagnostics:[{source_ref, kind, detail}], skipped:[{connection, reason}]}`. */
+  | {kind:"placement";demand?:WorkcellDemand;connections?:string[];max_locality_cost?:number|null;prefer_locality?:boolean;
+     require_declared_capacity?:boolean;previous?:string|null}
   /** `workcell instances usage <ref> [--pid] [--interval-ms] [--correlation-ref]…` (`workcell.resource-usage/v1`). */
   | {kind:"instances-usage";instance_ref:string;pid?:number;interval_ms?:number;correlation_refs?:string[]}
   /** `workcell --receipt R collect`: the world's collected outputs (world_ref, outputs, degradations, omissions). */
@@ -240,11 +263,19 @@ export type AikitReadRequest =
   /** `aikit work continuity commands|pressure`: the session's armed packs, and the continuity pressure brackets. A named project runs
    * in that project's ground, from Central's disclosure. */
   | {kind:"continuity-commands"|"continuity-pressure";project?:string|null}
+  /** `aikit work continuity turn [--session S]` (ai-kit#543): `{scope, turn (aikit.turn-bound/v1 or null), blocks:[{event, title,
+   * standing, kept, withheld, suppressed}], withheld_lines, withheld_blocks, notices}`: the Agent's Context page. */
+  | {kind:"continuity-turn";project?:string|null;session?:string|null}
+  /** `aikit flow thoughts FLOW_REF [--limit N]` (ai-kit#544): `aikit.flow-thoughts/v1` `{flow, thoughts:[{recorded_at_unix_ms,
+   * thought}], unreadable}`, newest first; each `thought` is what `flow_changed_since` takes. */
+  | {kind:"flow-thoughts";flow_ref:string;limit?:number|null}
   /** `aikit work continuity closeout verify [--project P] [--since UNIX_SECONDS] [--run RUN_REF]`: `{clauses, project, verified}`. An
    * unverified close-out exits 1 with its verdict; it is still the reading. */
   | {kind:"closeout-verify";project?:string|null;since?:number|null;run?:string|null}
   /** `aikit source show ID`, `aikit collate [--all]`, `aikit adopt ROOT [--namespace N]` (the plan; nothing moves). */
   | {kind:"source-show";id:string}
+  /** `aikit source list` (ai-kit#542): `{sources:[each as source show reads it], unreadable:[{id, code, message}]}`. */
+  | {kind:"source-list"}
   | {kind:"collate";all?:boolean}
   | {kind:"adopt-plan";root:string;namespace?:string|null}
   /** `aikit procedure list|diff PROCEDURE`, `aikit bypass list`, `aikit unused`, `aikit explain [RESOURCE]`. */
@@ -254,7 +285,10 @@ export type AikitReadRequest =
   /** `aikit history [RESOURCE]` answers aikit.explain-history/v1; a view (`history recent|stats|failures|bypasses`) answers that view. */
   | {kind:"history";resource?:string|null;view?:"recent"|"stats"|"failures"|"bypasses"|null}
   /** `aikit knowledge frame ADDRESS… [--query Q]`: at least one address. */
-  | {kind:"knowledge-frame";addresses:string[];query?:string|null};
+  | {kind:"knowledge-frame";addresses:string[];query?:string|null}
+  /** `aikit knowledge reflection verify -` (ai-kit#541), the target-owned `ReflectionLaw` on stdin: `aikit.reflection-verdict/v1`
+   * `{law, map_bindings, verification:{law, source_revision, passed, issues:[{kind, relation_ref, detail}]}}` (Impact's Meaning). */
+  | {kind:"reflection-verify";law:Record<string,unknown>};
 export type AikitWriteRequest =
   /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. */
   | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null}
@@ -265,8 +299,10 @@ export type AikitWriteRequest =
   /** `out` is an absolute directory the desk names. */
   | {kind:"set-package-export";project?:string|null;set:string;target:"openai"|"codex"|"claude"|"pi";out:string;native?:boolean;allow_partial?:boolean;with_codex_overlay?:boolean}
   | {kind:"wiki-shape-declare";file:string;frame_ref:string;frame:unknown}
-  /** `aikit adopt ROOT [--namespace N] --yes`: the person's adoption of a harness skill root; never into Control. */
-  | {kind:"adopt";root:string;namespace?:string|null}
+  /** `aikit adopt ROOT [--namespace N] [--expect-digest D] --yes`: the person's adoption of a harness skill root; never into Control. */
+  | {kind:"adopt";root:string;namespace?:string|null;expect_digest?:string|null}
+  /** `aikit procedure run PROCEDURE --expect-digest D`: one exact persisted Procedure, applied only at the reviewed digest. */
+  | {kind:"procedure-run";procedure:string;expect_digest:string}
   /** `aikit procedure undo PROCEDURE`, `aikit bypass revoke ID`. */
   | {kind:"procedure-undo";procedure:string}
   | {kind:"bypass-revoke";id:string}
@@ -288,6 +324,46 @@ export interface ChangedSinceReading {
     | { state: "owner_unavailable"; owner_operation: string; detail: string };
   aikit:
     | { state: "invoked"; owner_operation: string; receipt: Record<string, unknown> }
+    | { state: "owner_refused"; owner_operation: string; message: string }
+    | { state: "owner_unavailable"; owner_operation: string; detail: string };
+}
+/** AIKit's Routine authoring verbs (writes; each answers `{routine, state, note}`): `aikit routine create --name --method --proof-json
+ * --trigger-json --authority-json [--description] [--agent-profile] [--context-scope]…` stores a Routine in Draft (nothing fires); `aikit
+ * routine enable --authority-json A REF` arms it (AIKit requires unattended authority for schedule and event triggers); `aikit routine
+ * reprove --proof-json P REF` returns it to Disabled. The documents are AIKit's own (ProvenMethodBasis, trigger, RoutineAuthority). */
+export type RoutineAuthoringRequest =
+  | {action:"create";name:string;method:string;proof:Record<string,unknown>;trigger:Record<string,unknown>;authority:Record<string,unknown>;
+     description?:string|null;agent_profile?:string|null;context_scopes?:string[]}
+  | {action:"enable";routine_ref:string;authority:Record<string,unknown>}
+  | {action:"reprove";routine_ref:string;proof:Record<string,unknown>};
+/** The person's presence consents through the kernel's nara_presence, each SharedField's own transport kind: `list` (`nara-presences
+ * {participant_ref?, field_ref?}`) and `withdraw` (`withdraw_nara {projection_ref, consent_ref, withdrawal_ref, withdrawn_at?}`, the
+ * person's own consent act, published on the desktop's SharedField identity). Neither admits anything of the Expression. */
+export type NaraPresenceConsentRequest =
+  | {operation:"list";participant_ref?:string|null;field_ref?:string|null}
+  | {operation:"withdraw";projection_ref:string;consent_ref:string;withdrawal_ref:string;withdrawn_at?:string|null};
+/** `oi.nara-presences/v1`: each consented presence the caller sees, newest grant first, with its consent and whether it was withdrawn. */
+export interface NaraPresencesReading {
+  schema:"oi.nara-presences/v1";
+  presences:{projection_ref:string;projection_revision:number;field_ref:string;state:"published"|"withdrawn";published_at:string;
+    consent:{consent_ref:string;participant_ref:string;expression_ref:string;target_ref:string;target_identity_ref?:string;granted_at:string;
+      state:"granted"|"withdrawn";withdrawn_at?:string}}[];
+}
+/** `oi.nara-presence-withdrawal/v1`: the withdrawn consent, the projection's withdrawn revision and SharedField's publication. */
+export interface NaraPresenceWithdrawal {
+  schema:"oi.nara-presence-withdrawal/v1";consent:Record<string,unknown>;projection_ref:string;projection_revision:number;publication:unknown;
+  private_state_exported:false;
+}
+/** Living Knowledge's impact for a set of readings (`flow_cognition.rs` knowledge_impact; the Knowledge route's Affected): Central's
+ * change horizon, adapted as for changed-since, then AIKit's `knowledge impact` (ai-kit#541). The receipt is
+ * `aikit.knowledge-impact-reading/v1` `{readings, wiki_objects, source_dependencies, resource_dependencies, impact:{horizon_cursor,
+ * direct:{changed_sources, affected:[{resource, source, relation, freshness, …}]}, transitive, paths, pending_integration, truncated}}`. */
+export interface KnowledgeImpactReading {
+  readings: string[];
+  horizon: ChangedSinceReading["horizon"];
+  aikit:
+    | { state: "invoked"; owner_operation: string; receipt: Record<string, unknown> }
+    | { state: "not_asked"; owner_operation: string; reason: string }
     | { state: "owner_refused"; owner_operation: string; message: string }
     | { state: "owner_unavailable"; owner_operation: string; detail: string };
 }
@@ -392,7 +468,7 @@ export type KernelOp =
   | {op:"nara_expressive_act";project:string;request:import("../nara/nativeExpressiveAct").NativeExpressiveActRequest}
   | {op:"nara_current";project:string;request:import("../nara/nativeCurrent").NativeCurrentRequest}
   | {op:"m3_reception";project:string;request:import("../nara/nativeM3").NativeM3Request}
-  | {op:"nara_presence";project:string;request:import("../nara/nativePresence").NativePresenceRequest}
+  | {op:"nara_presence";project:string;request:import("../nara/nativePresence").NativePresenceRequest|NaraPresenceConsentRequest}
   | {op:"nara_coordinate";request:import("../nara/coordinateExpression").CoordinateRequest}
   | {op:"nara_identity";request:import("../nara/identity/types").NaraIdentityRequest}
   | {op:"nara_voice";project:string;request:import("../nara/nativeVoice").NativeVoiceRequest}
@@ -418,6 +494,7 @@ export type KernelOp =
   | {op:"shared_field";request:Record<string,unknown>}
   | { op: "invoke_action"; project?: string; invocation: ActionInvocation }
   | { op: "flow_changed_since"; project?: string; thought: Record<string, unknown> }
+  | { op: "knowledge_impact"; project?: string; readings?: string[]; max_depth?: number; max_affected?: number }
   | {
       op: "instance_commission";
       location: CentralLocation;
@@ -603,7 +680,7 @@ export type KernelOp =
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
-  | { op: "routine"; project?: string; request: import("../contributions/automations/client").RoutineRequest }
+  | { op: "routine"; project?: string; request: import("../contributions/automations/client").RoutineRequest | RoutineAuthoringRequest }
   | { op: "state" }
   | { op: "world_read" }
   | { op: "world_browse"; fresh?: boolean }
@@ -657,6 +734,7 @@ export type KernelOpResult =
   | {result:"nara_current";data:import("../nara/nativeCurrent").NativeCurrentReading}
   | {result:"m3_reception";data:import("../nara/nativeM3").NativeM3Reading}
   | {result:"nara_presence";data:import("../nara/nativePresence").NativePresenceReading}
+  | {result:"nara_presence_consent";data:NaraPresencesReading|NaraPresenceWithdrawal|{state:"unavailable";owner_operation:string;detail:string}}
   | {result:"nara_coordinate";data:import("../nara/coordinateExpression").CoordinateExpressionResult}
   | {result: "nara_identity"; data: import("../nara/identity/types").NaraIdentityResult}
   | {result:"nara_voice";data:import("../nara/nativeVoice").NativeVoiceResult}
@@ -672,6 +750,7 @@ export type KernelOpResult =
   | {result:"shared_field_reading";data:unknown}
   | {result:"action_dispatched";dispatch:ActionDispatch}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }
+  | { result: "knowledge_impact"; reading: KnowledgeImpactReading }
   | { result: "instance_commissioned"; outcome: CommissionOutcome }
   | {result:"ground_reading";reading:Record<string,unknown>}
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}

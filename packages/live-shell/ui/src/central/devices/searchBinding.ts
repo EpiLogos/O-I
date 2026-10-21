@@ -27,7 +27,12 @@ const DEFINE = /^@([A-Za-z][\w-]*)\s+=\s+(\S.*)$/
 
 const NO_SELECTION = 'The page\'s selection does not cross the host bridge (desktop/cradle/src/document/frame.ts useDocumentHostRead reads the island only): no passage is selected for a tag.'
 const NO_TAG = 'A tag sends nothing yet: no owner takes a passage sent to a person, an agent, a place or a document (DLW §18.4 What a tag sends).'
-const NO_VAK = 'A vāk entry\'s neighbourhood is Quaternal Logic\'s `ql vak context <ref> <depth>` (ql.vak-context/v1), which no kernel route reaches yet (T-COVERAGE §1.2: vak locate | context).'
+/** No `vak:` term in the search: no entry is located and no neighbourhood read. */
+const NO_VAK_TERM = 'The search names no `vak:` term (a coordinate of the Vāk registry, `vak:M0-3`), so Quaternal Logic is asked for no entry and no neighbourhood.'
+/** A `vak:` term (central__search.tsx VAK_TERM): the coordinate it names. */
+const VAK_TERM = /(?:^|\s)vak:(M0\S*)/
+/** The neighbourhood's depth when the hand has not moved it, and QL's own bound (`ql vak context <ref> <depth>`: 0 to 2). */
+export const VAK_DEPTH = {start: 1, max: 2} as const
 
 export const SEARCH_WIRING: DesignWiring = {
   design: SEARCH_DESIGN,
@@ -38,12 +43,14 @@ export const SEARCH_WIRING: DesignWiring = {
     results: 'AIKit\'s hits for the query, in its order (op knowledge search, then resolve; searchProgress.ts progressiveSearch): ref the hit\'s resource, title its label, kind its kind, says its snippet; a resolution row\'s owner; for Your world, then Central\'s matches in Control (control.search: each a document, its path and line, the line\'s words)',
     limit: `${SEARCH_LIMIT}: the kernel asks AIKit for ${SEARCH_LIMIT} results (desktop/cradle/kernel/src/knowledge.rs request_args)`,
     projects: 'the projects the shell reaches (the browser\'s projects, when the chain is handed them)',
+    'vak.context': 'the located entry\'s neighbourhood: Quaternal Logic\'s `ql vak context <ref> <depth>` (ql.vak-context/v1) through the kernel\'s ql_read vak-context, as {centre, depth, revision, entries: [[ref, name, symbol, source line]], relations: [[from, relation, into]]}; the entry itself is `ql vak locate <ref>` (ql_read vak-locate), among the results as a vak-entry',
   },
   writes: {},
   local: {
     query: 'the search line: AIKit answers it as typed',
     reach: 'your world, or one project: the search is asked in that project (op knowledge `project`)',
     pick: 'the result the pane shows',
+    'vak.depth': 'how far round the located entry the neighbourhood is asked: 0 to 2, QL\'s own bound',
     ...Object.fromEntries(SEARCH_KINDS.map(kind => [`k:${kind}`, 'which kinds the list shows: the view cuts the owner\'s results'])),
   },
   refused: {
@@ -51,7 +58,6 @@ export const SEARCH_WIRING: DesignWiring = {
     limit: `The kernel asks AIKit for ${SEARCH_LIMIT} results: no owner takes another number.`,
     enter: NO_TAG,
     aliases: 'No owner keeps an alias: it would live only in this view, and an alias is yours to keep (DLW §18.4 Rules).',
-    'vak.depth': NO_VAK,
   },
   absent: {
     fields: 'No owner reports the fields a search looks in beside your world.',
@@ -60,8 +66,7 @@ export const SEARCH_WIRING: DesignWiring = {
     selection: NO_SELECTION,
     from: NO_SELECTION,
     projects: 'No project list is handed to this chain.',
-    'vak.depth': NO_VAK,
-    'vak.context': NO_VAK,
+    'vak.context': NO_VAK_TERM,
   },
 }
 
@@ -76,6 +81,58 @@ export interface SearchAnswer {
   readonly pending: readonly string[]
   /** Central's search of Control (control.search), asked for Your world only. */
   readonly control?: ActionAnswer
+  /** Quaternal Logic's answers for the `vak:` term in the query: the entry located and its neighbourhood (kernel ql_read). */
+  readonly vak?: VakAnswer
+}
+
+/** One `vak:` term asked of Quaternal Logic: the coordinate, the depth asked, and each read's answer or refusal in QL's words. */
+export interface VakAnswer {
+  readonly ref: string
+  readonly depth: number
+  readonly locate: ActionAnswer
+  readonly context: ActionAnswer
+}
+
+/** The coordinate the search's `vak:` term names, or null. Pure. */
+export function vakTermOf(query: string | null | undefined): string | null {
+  return query ? VAK_TERM.exec(query)?.[1] ?? null : null
+}
+
+/** The depth the hand asked, held to QL's bound. Pure. */
+export function vakDepthOf(held: unknown): number {
+  return typeof held === 'number' && Number.isInteger(held) ? Math.max(0, Math.min(VAK_DEPTH.max, held)) : VAK_DEPTH.start
+}
+
+/** `ql vak locate <ref>` ({vakRef, name, symbol, primaryDesignation, standing, sourceLine}) as the design's result: a vak-entry, its name its
+ * title, its designation what it says, Quaternal Logic its owner, and no horizon (QL states none). Null when the answer is not that. Pure. */
+export function vakEntryResultOf(data: unknown): Record<string, Value> | null {
+  const d = data as {vakRef?: unknown; name?: unknown; primaryDesignation?: unknown} | null
+  if (!d || typeof d.vakRef !== 'string' || !d.vakRef) return null
+  return {ref: d.vakRef, title: typeof d.name === 'string' && d.name ? d.name : d.vakRef, kind: 'vak-entry',
+    ...(typeof d.primaryDesignation === 'string' && d.primaryDesignation ? {says: d.primaryDesignation} : {}), owner: 'Quaternal Logic'}
+}
+
+/** `ql vak context <ref> <depth>` (ql.vak-context/v1: centre, depth, entries, relations, sourceRevision) as the design's `vak.context`:
+ * every entry [ref, name, symbol, source line], the centre among them, every relation [from, relation, into]. Null when it is not that. */
+export function vakContextValueOf(data: unknown): string | null {
+  const d = data as {contract?: unknown; centre?: unknown; depth?: unknown; sourceRevision?: unknown; entries?: unknown; relations?: unknown} | null
+  if (!d || d.contract !== 'ql.vak-context/v1' || !Array.isArray(d.entries) || !Array.isArray(d.relations)) return null
+  const entryOf = (raw: unknown): [string, string, string, number] | [string, string, string] | null => {
+    const e = raw as {vakRef?: unknown; name?: unknown; symbol?: unknown; source?: {sourceLine?: unknown}} | null
+    if (!e || typeof e.vakRef !== 'string' || !e.vakRef) return null
+    const line = typeof e.source?.sourceLine === 'number' ? e.source.sourceLine : null
+    const head: [string, string, string] = [e.vakRef, typeof e.name === 'string' && e.name ? e.name : e.vakRef, typeof e.symbol === 'string' ? e.symbol : '']
+    return line === null ? head : [...head, line]
+  }
+  const centre = entryOf(d.centre)
+  if (!centre) return null
+  const entries = d.entries.flatMap(raw => { const e = entryOf(raw); return e ? [e] : [] })
+  if (!entries.some(e => e[0] === centre[0])) entries.unshift(centre)
+  const relations = d.relations.flatMap(raw => {
+    const r = raw as {fromRef?: unknown; relation?: unknown; intoRef?: unknown} | null
+    return r && typeof r.fromRef === 'string' && typeof r.relation === 'string' && typeof r.intoRef === 'string' ? [[r.fromRef, r.relation, r.intoRef]] : []
+  })
+  return JSON.stringify({centre: centre[0], depth: typeof d.depth === 'number' ? d.depth : 0, ...(typeof d.sourceRevision === 'string' ? {revision: d.sourceRevision} : {}), entries, relations})
 }
 
 /** Central's matches in Control (control-source-search: matches [{target, source_path, line, text}]) as the design's results: each a
@@ -133,16 +190,23 @@ export function searchValues(id: string, answer: SearchAnswer | null, projects: 
   if (held.pick !== undefined) values.pick = held.pick
   values.limit = SEARCH_LIMIT
   if (projects) values.projects = JSON.stringify(projects)
+  values['vak.depth'] = vakDepthOf(held['vak.depth'])
   // The answer stands for the query it answered only: a newer query is unread until the owner answers it.
   if (answer && answer.query === query) {
     const control = answer.control?.status === 'answered' ? controlResultsOf(answer.control.value) ?? [] : null
     if (answer.error && !answer.hits.length && !answer.rows.length && !control?.length) values.light = 'dark'
     else if (!answer.pending.includes('search') || control?.length) values.light = 'lit'
     const owned = !answer.error || answer.hits.length || answer.rows.length ? (!answer.pending.includes('search') || answer.hits.length ? searchResultsOf(answer) : null) : null
-    if (owned || control) {
-      const seen = new Set((owned ?? []).map(row => row.ref))
-      values.results = JSON.stringify([...(owned ?? []), ...(control ?? []).filter(row => !seen.has(row.ref))])
+    // The `vak:` term's entry stands first among the results, as QL located it; its neighbourhood is `vak.context`.
+    const vak = answer.vak && answer.vak.ref === vakTermOf(query) ? answer.vak : undefined
+    const entry = vak?.locate.status === 'answered' ? vakEntryResultOf(vak.locate.value) : null
+    if (owned || control || entry) {
+      const rows = [...(entry ? [entry] : []), ...(owned ?? []), ...(control ?? [])]
+      const seen = new Set<Value>()
+      values.results = JSON.stringify(rows.filter(row => (seen.has(row.ref) ? false : (seen.add(row.ref), true))))
     }
+    const context = vak?.context.status === 'answered' ? vakContextValueOf(vak.context.value) : null
+    if (context) values['vak.context'] = context
   }
   return values
 }
@@ -156,5 +220,9 @@ export function searchBinding(id: string, answer: SearchAnswer | null, projects:
   if (shown && answer!.error) standing.query = {...standing.query, refused: answer!.error}
   // Central's refusal of its search of Control is said on Reach: Your world's Control documents are missing, in its words.
   if (shown && answer!.control?.status === 'refused') standing.reach = {...standing.reach, refused: `Your world's Control documents: Central did not search them — ${answer!.control.error}`}
+  // Quaternal Logic's refusal of the `vak:` term is said on the Vāk kind and on the depth, in its words.
+  const vak = shown ? answer!.vak : undefined
+  if (vak?.locate.status === 'refused') standing['k:vak'] = {...standing['k:vak'], refused: `vak:${vak.ref}: Quaternal Logic located no entry — ${vak.locate.error}`}
+  if (vak?.context.status === 'refused') standing['vak.depth'] = {...standing['vak.depth'], refused: `vak:${vak.ref}: Quaternal Logic read no neighbourhood — ${vak.context.error}`}
   return {...binding, standing}
 }

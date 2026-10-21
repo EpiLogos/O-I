@@ -39,12 +39,12 @@ import type {GatewayWriteRequest, KernelTransportStatus} from '../../../../../..
 import {LEDGER_ID, ledgerBinding, receiptDevices} from './receiptBindings'
 import {useAgentChainReading} from './useAgentChainReading'
 import {useConversationAnswer} from './useConversationAnswer'
-import {ROUTE_WORDS, gatewayWriteOp, ownerRouteWrite} from './ownerRoutes'
+import {ROUTE_WORDS, gatewayWriteOp, ownerRouteWrite, workcellWriteOp} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {RACK_PROJECT} from './useRackReading'
 import {CARRIER_ID, carrierChainState, carrierValues, gitValues} from './workcellBindings'
 import {WORKCELL_RACK_ID, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
-import {useGatewayEcology, useGatewayReplays, useSeatStatusAnswer} from './workcellReads'
+import {useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 
 /** The rail's agent devices this publisher holds, by id: withdrawn with it. Approvals is not among them — it is Factory's Main track
  * effect (§19.14), published by its chain. */
@@ -96,8 +96,11 @@ export function AgentRailDevices() {
   const frames = useMemo(() => framesBinding({reading, harness: {binding, resolved}}, holds, {ecology, ...(replays ? {replays} : {})}),
     [reading, binding, resolved, holds, ecology, replays])
 
-  // The Ledger: Central's change horizon; Open log selects the receipt's session's track.
+  // The Ledger: Central's change horizon and the project's source returns (W9: Waiting, Commented, Approved, Refused); Open log selects the
+  // receipt's session's track.
   const ground = useCentralGroundAnswer(transport)
+  const returnsRead = useSourceReturnsAnswer(transport, RACK_PROJECT).reading
+  const returned = returnsRead.status === 'answered' ? returnsRead.value : null
   const receipts = useMemo(() => receiptDevices(), [])
   const tracks = sessions?.tracks ?? null
   const openSession = useCallback((ref: string) => {
@@ -106,7 +109,8 @@ export function AgentRailDevices() {
     shell.setSelectedTrackId(trackKey(chosen))
     return null
   }, [tracks, shell])
-  const ledger = useMemo(() => ledgerBinding({ground: ground.reading, groundError: ground.error, holds}, {openSession}), [ground.reading, ground.error, holds, openSession])
+  const ledger = useMemo(() => ledgerBinding({ground: ground.reading, groundError: ground.error, holds, returns: returned, tracks}, {openSession}),
+    [ground.reading, ground.error, holds, openSession, returned, tracks])
 
   // Messages: AIKit's population, the Agency gateway's answer, and the open agent's conversation (read while an agent of the population is
   // open).
@@ -154,12 +158,20 @@ export function AgentRailDevices() {
       ...(stall ? {stallAfter: {...stall, title: 'Stall after'}} : {}),
     }, (row, value) => fireWritePath(row, value, {transport, binding}))
   }, [reading, binding, resolved, transport])
+  // The machine's services and harness processes (W10): Workcell's doctor, its instances and each live one's cost, read while the rack stands.
+  const doctor = useWorkcellRead(transport, asked ? {kind: 'doctor'} : null)
+  const instanceList = useWorkcellRead(transport, asked ? {kind: 'instances-list'} : null)
+  const usages = useInstanceUsages(transport, instanceList.answer)
+  const workcellWrite = useMemo(() => (transport.kind !== 'unavailable'
+    ? (request: Parameters<typeof workcellWriteOp>[0]) => ownerRouteWrite(transport, workcellWriteOp(request), `\`workcell ${request.kind}\``) : undefined), [transport])
   const workcell = useMemo(() => {
     const git = gitValues(cellName ? workcellGitReading(seats, cellName, RACK_PROJECT) : reading, holds)
     const seatsUnread = !asked ? SEATS_NOT_ASKED : seats.status === 'refused' && seats.error ? seats.error : undefined
     return workcellRackBinding({name: cellName, project: RACK_PROJECT, seats: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {seatsUnread} : {}),
-      chain: {gateway: gatewayPort.values, carrier: carrierValues(workcellAnswer, holds), git}, holds}, {gateway: gatewayPort})
-  }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer])
+      chain: {gateway: gatewayPort.values, carrier: carrierValues(workcellAnswer, holds), git}, holds,
+      ...(asked ? {doctor: doctor.answer, instances: {list: instanceList.answer, usages}} : {})},
+    {gateway: gatewayPort, ...(asked && transport.kind !== 'unavailable' ? {rereadServices: doctor.refresh} : {}), ...(workcellWrite ? {workcell: workcellWrite} : {})})
+  }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite])
 
   // Publish each one again only when its own binding moves; withdraw them all with this publisher.
   const devices = useMemo((): Readonly<Record<string, DeviceInstance | null>> => ({

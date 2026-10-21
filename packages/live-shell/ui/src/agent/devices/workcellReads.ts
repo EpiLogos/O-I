@@ -19,6 +19,7 @@ import {ROUTE_WORDS, aikitReadOp, refusalWords, routeAnswerOf, workcellReadOp} f
 import type {AikitAnswer} from './aikitPages'
 import type {ConnectionShows, WorkcellAnswer} from './workcellBindings'
 import type {JournalAsk} from './mainTrackBindings'
+import {PROCESS_RUNNING, usagePid} from './workcellMaterial'
 
 const unavailable = (transport: KernelTransportStatus): string | null => (transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null)
 
@@ -150,4 +151,34 @@ export function useAikitRead(transport: KernelTransportStatus, request: Extract<
   const op = useMemo(() => (request ? ({op: 'aikit_read', request} as KernelOp) : null), [JSON.stringify(request)]) // eslint-disable-line react-hooks/exhaustive-deps
   const {reading} = useOwnerOp(transport, op, 'owner_route_reading')
   return useMemo(() => ({status: reading.status, value: reading.value?.data ?? null, error: reading.error ? refusalWords(reading.error) : null}), [reading])
+}
+
+/** One Workcell reading through the kernel's workcell_read (lane W10: doctor, discover, plan, instances list, connections probe), as the
+ * bindings take it (workcellBindings.ts WorkcellAnswer, Workcell's refusal in its words), and the way to ask it again. Nothing is asked for
+ * no request. */
+export function useWorkcellRead(transport: KernelTransportStatus, request: Extract<KernelOp, {op: 'workcell_read'}>['request'] | null): {answer: WorkcellAnswer; refresh: () => void} {
+  const op = useMemo(() => (request ? workcellReadOp(request) : null), [JSON.stringify(request)]) // eslint-disable-line react-hooks/exhaustive-deps
+  const {reading, refresh} = useOwnerOp(transport, op, 'owner_route_reading')
+  const answer = useMemo((): WorkcellAnswer => ({status: reading.status, value: reading.value?.data ?? null, error: reading.error ? refusalWords(reading.error) : null}), [reading])
+  return {answer, refresh}
+}
+
+/** Each live harness instance's cost (`workcell instances usage <ref> --pid <its newest pid> --interval-ms 0`, workcell_read
+ * {instances-usage}), by instance ref: Workcell's answer or its refusal. A plain record, kept as JSON across a relaunch. Nothing is asked
+ * for no live instance. */
+export function useInstanceUsages(transport: KernelTransportStatus, list: WorkcellAnswer): Record<string, {value?: unknown; error?: string}> {
+  const live = useMemo(() => (list.status === 'answered' && list.value && typeof list.value === 'object' && Array.isArray((list.value as {instances?: unknown}).instances)
+    ? ((list.value as {instances: unknown[]}).instances).flatMap(row => {
+      const item = row as {instance_ref?: unknown; liveness?: unknown}
+      const pid = row && typeof row === 'object' ? usagePid(row as Record<string, unknown>) : undefined
+      return typeof item.instance_ref === 'string' && item.liveness === PROCESS_RUNNING ? [{ref: item.instance_ref, ...(pid !== undefined ? {pid} : {})}] : []
+    }) : []), [list])
+  const reading = useHeldRead<Record<string, {value?: unknown; error?: string}>>(live.length ? ['instances-usage', transport, live] : null, async () => {
+    const read = await Promise.all(live.map(async ({ref, pid}) => {
+      try { return [ref, {value: (await routeRead(transport, workcellReadOp({kind: 'instances-usage', instance_ref: ref, ...(pid !== undefined ? {pid} : {}), interval_ms: 0}), '`workcell instances usage`')).data}] as const }
+      catch (cause) { return [ref, {error: cause instanceof Error ? cause.message : String(cause)}] as const }
+    }))
+    return Object.fromEntries(read)
+  })
+  return useMemo(() => (reading.status === 'answered' && reading.value ? reading.value : {}), [reading])
 }

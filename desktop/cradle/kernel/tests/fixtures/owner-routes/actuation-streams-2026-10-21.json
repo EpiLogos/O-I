@@ -1,0 +1,109 @@
+{
+  "_source": "21 Oct 2026, this machine's Actuation stream store (~/.actuation/streams, one stream, harness events without content). list: EpiLogos/Actuation#142 (dlw/actuation-stream-list) built locally; replay and the refusals: the installed Actuation 0.2.1",
+  "list": {
+    "schema": "actuation.stream-listing/v1",
+    "store": "/Users/admin/.actuation/streams",
+    "streams": [
+      {
+        "stream_ref": "actuation:stream:zcode-zcode:sess_8a802b3e-6e7d-4574-b320-2ab5213a96d2",
+        "actuation_ref": "actuation:wiki-continuity-p1",
+        "agency_ref": "agency:wiki-continuity-programme",
+        "agent_session_ref": "zcode:sess_8a802b3e-6e7d-4574-b320-2ab5213a96d2",
+        "lifecycle": {
+          "state": "closed",
+          "ended_at": "2026-09-06T23:29:25.373Z"
+        },
+        "event_count": 5,
+        "model_usage_count": 0
+      }
+    ],
+    "invalid": []
+  },
+  "replay": {
+    "schema": "actuation.stream/v1",
+    "stream_ref": "actuation:stream:zcode-zcode:sess_8a802b3e-6e7d-4574-b320-2ab5213a96d2",
+    "actuation_ref": "actuation:wiki-continuity-p1",
+    "agency_ref": "agency:wiki-continuity-programme",
+    "agent_session_ref": "zcode:sess_8a802b3e-6e7d-4574-b320-2ab5213a96d2",
+    "world_binding_ref": null,
+    "participating_loci": [],
+    "surface_refs": [],
+    "lifecycle": {
+      "state": "closed",
+      "ended_at": "2026-09-06T23:29:25.373Z"
+    },
+    "cursor": {
+      "after_sequence": 0,
+      "returned_through": 5,
+      "stream_last_sequence": 5,
+      "has_more": false
+    },
+    "events": [
+      {
+        "event_ref": "actuation:event:af2ac9cf-fcbc-4e01-a7d5-d5553d085ceb",
+        "sequence": 1,
+        "kind": "harness-event",
+        "observed_at": "2026-09-06T23:29:13Z",
+        "metadata": {
+          "harness": "zcode",
+          "native_event": "SessionStart",
+          "boundary": "session-start",
+          "catalog_revision": 4
+        }
+      },
+      {
+        "event_ref": "actuation:event:4c0c868c-12fa-497a-8947-e25018bdb76f",
+        "sequence": 2,
+        "kind": "harness-event",
+        "observed_at": "2026-09-06T23:29:13Z",
+        "metadata": {
+          "harness": "zcode",
+          "native_event": "UserPromptSubmit",
+          "boundary": "user-prompt-submit",
+          "catalog_revision": 4
+        }
+      },
+      {
+        "event_ref": "actuation:event:d2f85a1a-e005-4594-9e11-fa652e44ebf4",
+        "sequence": 3,
+        "kind": "harness-event",
+        "observed_at": "2026-09-06T23:29:13Z",
+        "metadata": {
+          "harness": "zcode",
+          "native_event": "PreToolUse",
+          "boundary": "pre-tool-use",
+          "catalog_revision": 4
+        }
+      },
+      {
+        "event_ref": "actuation:event:0f18d121-508a-4149-bb02-cc17665427c0",
+        "sequence": 4,
+        "kind": "harness-event",
+        "observed_at": "2026-09-06T23:29:13Z",
+        "metadata": {
+          "harness": "zcode",
+          "native_event": "PostToolUse",
+          "boundary": "post-tool-use",
+          "catalog_revision": 4
+        }
+      },
+      {
+        "event_ref": "actuation:event:c43428e0-cb3c-4944-8c1e-783bd1eea60e",
+        "sequence": 5,
+        "kind": "harness-event",
+        "observed_at": "2026-09-06T23:29:13Z",
+        "metadata": {
+          "harness": "zcode",
+          "native_event": "Stop",
+          "boundary": "stop",
+          "catalog_revision": 4
+        }
+      }
+    ],
+    "provenance": [
+      "live capability proof: occurrence recording, 2026-09-06"
+    ]
+  },
+  "list_installed_0_2_1": "actuation: no JSON input supplied for list: No such file or directory (os error 2)\n",
+  "replay_missing": "actuation: no durable ActuationStream named actuation:stream:none under /Users/admin/.actuation/streams\n"
+}

@@ -19,7 +19,7 @@ import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
-import {TORUS_DEVICE, TORUS_DEVICE_ID, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
+import {TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
 import {LIVE_TORUS_ABSENT_REASON, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
@@ -28,6 +28,8 @@ import {skyHeldTorusKeys, useSkyModulationPlan} from './designBindings/skyModula
 import {useHostedChrome} from '../projections/expressionsPaneHost'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import {useQlRack} from '../inhabitants/ql/devices/qlRack'
+import {useHolds} from '../techne/devices/designDevices'
+import {useCoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
 
 // Colour is the tokens' alone: the near side takes the instrument's accent when it is at work, the far side is fainter.
 const STROKE = {lit: 'var(--accent)', rising: 'var(--text-dim)', unlit: 'var(--text-faint)'} as const
@@ -78,9 +80,17 @@ export const torusMapWrap = (row: SdkParamRow, control: ReactNode): ReactNode =>
  * torus's next change (torusDevice.ts torusStageValues). */
 export function useTorusChainBinding(state: LiveTorusState | null, device: DeviceInstance) {
   const plan = useSkyModulationPlan()
-  const stage = useHostedChrome()?.state?.instrumentStage ?? null
+  const chrome = useHostedChrome()
+  const stage = chrome?.state?.instrumentStage ?? null
+  const run = chrome?.run ?? null
   const rack = useQlRack(1)
-  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan), stage, rack), [state, device, plan, stage, rack])
+  // The procedure and budget the Stage page holds (techne/devices/designDevices.ts holds): a new choice redraws the binding.
+  const held = useHolds()[TORUS_DESIGN_ID]
+  // The live scene's M2 condition the frame announces, and the map's name for its tattva (qlCoordinateName.ts).
+  const condition = chrome?.state?.instrumentCondition ?? null
+  const tattvaName = useCoordinateName(condition?.tattva_ref ?? null)
+  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan), stage, rack, run, held ?? {}, condition, tattvaName),
+    [state, device, plan, stage, rack, run, held, condition, tattvaName])
 }
 
 export function TorusOnChain({state}: {state: LiveTorusState}) {

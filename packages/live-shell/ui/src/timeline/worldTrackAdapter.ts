@@ -153,6 +153,13 @@ export interface WorldTrackActions {
   /** `grain`, when given, is this stop's own (null: it acts on the one track pressed), said instead of the set's. */
   stopTrack?: {op: string; run(trackId: string): unknown; grain?: string | null};
   record?: {op: string; run(clipId: string): unknown};
+  /** Open and Reveal (manual §10.9: a clip's file, a track's folder): hand it to the application the computer opens it with, or show
+   * it in Finder. Neither changes the world, so a track read from another reading keeps them. A set whose owner carries none shows
+   * none: the menus list them only where they stand here. */
+  openFile?: {op: string; run(clipId: string): unknown};
+  revealFile?: {op: string; run(clipId: string): unknown};
+  openFolder?: {op: string; run(trackId: string): unknown};
+  revealFolder?: {op: string; run(trackId: string): unknown};
   /** Restart a stalled lane from its last good step (manual §6: "its track lights a retry"). The Session shows a retry on
    * each track only where the set carries this, and lights it while the lane has stalled. */
   retry?: {op: string; run(trackId: string): unknown};

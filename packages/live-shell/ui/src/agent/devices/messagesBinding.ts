@@ -216,9 +216,14 @@ export function positionOfAgent(agentRef: string, population: unknown): string |
 }
 
 /** Central's agent sets (central.agent-set.list's `records`, central.agent-set/v1 each) as Messages' groups (ai-kit__messages.tsx:9): each by
- * its ref, what it is for (the first line of the reason Central keeps with its proposal), and its members as the Positions their agents
- * stand at — a member no Position names stands as its agent ref, never a Position it does not hold. A set of the project's scope is told
- * apart from the root's by the project it was read in. Join, last line, time and unread have no reading and are left out. Pure. */
+ * its ref, what it is for (the first line of the reason Central keeps with its proposal), its join where Central's record carries one
+ * (central.agent-set/v1 `join`: none · all · first · quorum · weighted, Central PR 291; a set saved without one has none, and AIKit's team names
+ * none), and its members as the Positions their agents stand at — a member no Position names stands as its agent ref, never a Position it
+ * does not hold. A set of the project's scope is told apart from the root's by the project it was read in. Last line, time and unread have
+ * no reading and are left out. Pure. */
+/** The joins Central's agent-set record admits (ctrl/src/world.rs AgentSetJoin). */
+export const SET_JOINS: readonly string[] = ['none', 'all', 'first', 'quorum', 'weighted']
+
 export function groupsOf(listings: readonly {readonly scope: 'root' | 'project'; readonly project?: string; readonly value: unknown}[], population: unknown): Record<string, unknown>[] {
   return listings.flatMap(({scope, project, value}) => (isObj(value) && Array.isArray(value.records) ? value.records : []).flatMap(row => {
     const record = isObj(row) && isObj(row.record) ? row.record : null
@@ -229,7 +234,8 @@ export function groupsOf(listings: readonly {readonly scope: 'root' | 'project';
       return agentRef ? [positionOfAgent(agentRef, population) ?? agentRef] : []
     })
     const reason = isObj(record.proposal) ? str(record.proposal.reason) : undefined
-    return [{id: scope === 'project' && project ? `${project}/${ref}` : ref, name: ref, ...(reason ? {for: firstLine(reason)} : {}), members}]
+    const join = typeof record.join === 'string' && SET_JOINS.includes(record.join) ? record.join : undefined
+    return [{id: scope === 'project' && project ? `${project}/${ref}` : ref, name: ref, ...(reason ? {for: firstLine(reason)} : {}), ...(join ? {join} : {}), members}]
   }))
 }
 

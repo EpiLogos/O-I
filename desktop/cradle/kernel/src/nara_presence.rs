@@ -33,25 +33,71 @@ pub struct Publication {
     pub granted_at: String,
     pub granted_at_unix_ms: u64,
 }
+/// One admission of a consented presence: the saved identity, the
+/// Expression at its revision and the publication the person consented to.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
-pub struct Request {
-    pub operation: Operation,
+pub struct Admission {
     pub binding: nara_dialogue::Request,
     pub expected_expression_revision: u64,
     pub publication: Publication,
+}
+/// The consented presences as SharedField shows them to the caller
+/// (`nara-presences`, `oi.nara-presences/v1`), narrowed to one publishing
+/// Participant or one field.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct List {
+    #[serde(default)]
+    pub participant_ref: Option<String>,
+    #[serde(default)]
+    pub field_ref: Option<String>,
+}
+/// The person's withdrawal of one hosted presence and its consent
+/// (`withdraw_nara`, `oi.nara-presence-withdrawal/v1`). SharedField
+/// refuses in its words a presence it does not host, one withdrawn
+/// already, another consent, or a withdrawal before its grant.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct Withdraw {
+    pub projection_ref: String,
+    pub consent_ref: String,
+    pub withdrawal_ref: String,
+    #[serde(default)]
+    pub withdrawn_at: Option<String>,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(tag = "operation", rename_all = "snake_case")]
+pub enum Request {
+    Prepare(Admission),
+    Publish(Admission),
+    List(List),
+    Withdraw(Withdraw),
+}
+impl Request {
+    /// The admission a Prepare or Publish carries; List and Withdraw admit
+    /// nothing of the person's Expression and touch no kernel state.
+    pub fn admission(&self) -> Option<(Operation, &Admission)> {
+        match self {
+            Self::Prepare(admission) => Some((Operation::Prepare, admission)),
+            Self::Publish(admission) => Some((Operation::Publish, admission)),
+            Self::List(_) | Self::Withdraw(_) => None,
+        }
+    }
 }
 pub struct Prepared {
     client: CentralClient,
     agency: agency::Client,
     cwd: PathBuf,
     project: String,
-    request: Request,
+    operation: Operation,
+    request: Admission,
     document: Value,
     profile: nara_dialogue::ProfileBasis,
 }
 pub struct Completed {
-    pub request: Request,
+    pub operation: Operation,
+    pub request: Admission,
     pub document: Value,
     pub profile: nara_dialogue::ProfileBasis,
     pub safe_document: Value,
@@ -65,12 +111,14 @@ fn text(value: &str) -> Result<(), String> {
     }
 }
 impl Prepared {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         client: CentralClient,
         agency: agency::Client,
         cwd: PathBuf,
         project: String,
-        request: Request,
+        operation: Operation,
+        request: Admission,
         document: Value,
         profile: nara_dialogue::ProfileBasis,
     ) -> Self {
@@ -79,6 +127,7 @@ impl Prepared {
             agency,
             cwd,
             project,
+            operation,
             request,
             document,
             profile,
@@ -147,6 +196,7 @@ impl Prepared {
         }
         let safe_document = safe_document(&self.document)?;
         Ok(Completed {
+            operation: self.operation,
             request: self.request,
             document: self.document,
             profile: self.profile,
@@ -222,7 +272,7 @@ fn safe_document(document: &Value) -> Result<Value, String> {
 impl Completed {
     pub fn transport_request(&self) -> Value {
         let p = &self.request.publication;
-        json!({"kind":if self.request.operation==Operation::Publish{"publish_nara"}else{"preview_nara"},
+        json!({"kind":if self.operation==Operation::Publish{"publish_nara"}else{"preview_nara"},
             "consent_granted_at_unix_ms":p.granted_at_unix_ms,
             "input":{"document":self.safe_document,"selection":{"disclose_sources":"none"},
                 "field_ref":p.field_ref,"world_ref":p.world_ref,"projection_ref":p.projection_ref,
@@ -232,6 +282,78 @@ impl Completed {
                 "consent":{"consent_ref":p.consent_ref,"participant_ref":p.publisher_participant_ref,
                     "expression_ref":self.request.binding.expression_ref,"target_ref":p.target_ref,
                     "target_identity_ref":p.target_identity_ref,"granted_at":p.granted_at,"source_refs":[]}}})
+    }
+}
+
+pub const NARA_PRESENCES_SCHEMA: &str = "oi.nara-presences/v1";
+pub const NARA_PRESENCE_WITHDRAWAL_SCHEMA: &str = "oi.nara-presence-withdrawal/v1";
+
+/// List or Withdraw through SharedField's own transport kinds. The listing
+/// is a reading (an unbound or unreachable field is an `unavailable`
+/// reading); the withdrawal is the person's own consent act, published on
+/// the desktop's SharedField identity, and its refusal is SharedField's.
+pub fn consent(request: &Request) -> Result<Value, String> {
+    use crate::shared_field::{call, CallError, OWNER_OPERATION};
+    match request {
+        Request::List(list) => {
+            let mut transport = json!({"kind": "nara-presences"});
+            for (key, value) in [
+                ("participant_ref", &list.participant_ref),
+                ("field_ref", &list.field_ref),
+            ] {
+                if let Some(value) = value {
+                    text(value)?;
+                    transport[key] = json!(value);
+                }
+            }
+            match call(&transport) {
+                Ok(data) => {
+                    if data["schema"] != NARA_PRESENCES_SCHEMA || !data["presences"].is_array() {
+                        return Err(format!(
+                            "SharedField answered nara-presences without {NARA_PRESENCES_SCHEMA}"
+                        ));
+                    }
+                    Ok(data)
+                }
+                Err(CallError::Unbound { message }) => Ok(
+                    json!({"state": "unavailable", "owner_operation": OWNER_OPERATION, "detail": message}),
+                ),
+                Err(CallError::Unavailable { detail }) => Ok(
+                    json!({"state": "unavailable", "owner_operation": OWNER_OPERATION, "detail": detail}),
+                ),
+                Err(other) => Err(other.detail()),
+            }
+        }
+        Request::Withdraw(withdraw) => {
+            for value in [
+                &withdraw.projection_ref,
+                &withdraw.consent_ref,
+                &withdraw.withdrawal_ref,
+            ] {
+                text(value)?;
+            }
+            let mut transport = json!({"kind": "withdraw_nara",
+                "projection_ref": withdraw.projection_ref, "consent_ref": withdraw.consent_ref,
+                "withdrawal_ref": withdraw.withdrawal_ref});
+            if let Some(at) = &withdraw.withdrawn_at {
+                text(at)?;
+                transport["withdrawn_at"] = json!(at);
+            }
+            let data = call(&transport).map_err(|error| error.detail())?;
+            if data["schema"] != NARA_PRESENCE_WITHDRAWAL_SCHEMA
+                || data["projection_ref"] != withdraw.projection_ref.as_str()
+                || data["private_state_exported"] != false
+            {
+                return Err(format!(
+                    "SharedField answered withdraw_nara without {NARA_PRESENCE_WITHDRAWAL_SCHEMA} for {}",
+                    withdraw.projection_ref
+                ));
+            }
+            Ok(data)
+        }
+        Request::Prepare(_) | Request::Publish(_) => {
+            Err("Prepare and Publish go through the saved identity and Expression admission".into())
+        }
     }
 }
 

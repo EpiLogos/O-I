@@ -1,0 +1,9 @@
+{
+ "_read": "aikit procedure diff prc_01M4K7G303SF0VVPSCD0RZNPES --json, workcell:mac, aikit 0.1.0 (cc6405e66216), 21 Oct 2026, read-only: the envelope data, the diff text trimmed to its first two lines",
+ "data": {
+  "procedure": "prc_01M4K7G303SF0VVPSCD0RZNPES",
+  "kind": "tools-projection",
+  "digest": "c5a4c5305f3b8c9f92d040fc532e4bf2a57604a5cf81a01c8214ef068aabec65",
+  "diff": "procedure prc_01M4K7G303SF0VVPSCD0RZNPES (c5a4c5305f3b) \u2014 1 edit, staged staged\nnote: project zcode's managed tools layer into /Users/admin/.zcode/cli/config.json"
+ }
+}

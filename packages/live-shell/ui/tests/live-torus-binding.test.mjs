@@ -71,7 +71,7 @@ test('every key of the design is the owner\'s reading or is absent with its reas
   const values = model.torusDesignValues(state())
   // The Rack page's keys are the rack's (qlRack.ts): the rack named absent until it is read, the part in the view's own hand.
   const bound = model.torusDesignBinding(state())
-  for (const key of Object.keys(torus.defaults)) assert.ok(key in values || model.TORUS_ABSENT[key] || (key === 'rack' && bound.standing.rack.disabled) || (key === 'rack.part' && bound.local['rack.part']),
+  for (const key of Object.keys(torus.defaults)) assert.ok(key in values || model.TORUS_ABSENT[key] || (key === 'rack' && bound.standing.rack.disabled) || bound.local[key],
     `${key}: read from the owner, named absent, or the view's own`)
   assert.deepEqual(Object.keys(torus.defaults).filter(key => key in values),
     ['light', 'level', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing'],
@@ -329,3 +329,29 @@ test('⤢ on the chain\'s design opens the pane, and the pane draws the torus wi
   assert.ok(pane.indexOf('data-torus-size="full"') < pane.indexOf('data-janko-layout'), 'with the keyboard under it')
   assert.doesNotMatch(pane, /NaN|undefined/)
 }))
+
+// W6: the Body group's tattva is the live scene's M2 condition the frame announces (REAL: tests/fixtures/field-announcements-2026-10-21.json),
+// named as the map names its coordinate, read once through ql_read kernel-ledger.
+test('the Torus\'s tattva is the live scene\'s M2 condition, by the map\'s name for its coordinate; the body source keeps its reason', async () => {
+  const {readFileSync} = await import('node:fs')
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/field-announcements-2026-10-21.json', import.meta.url), 'utf8'))
+  const names = await import('../src/inhabitants/ql/devices/qlCoordinateName.ts')
+  const {conditionReadingOf} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/instrumentCondition.ts')
+  const condition = conditionReadingOf({current: {m2: {condition: {source_path: fixture.source_path}}}})
+  const asked = []
+  names.resetCoordinateNames({call: async op => { asked.push(op); return {outcome: {result: 'owner_route_reading', data: fixture.tattva_view}} }})
+  await names.ensureCoordinateName(condition.tattva_ref)
+  await names.ensureCoordinateName(condition.tattva_ref)
+  assert.deepEqual(asked, [{op: 'ql_read', request: {kind: 'kernel-ledger', coordinate: '#2-2-2-5-5'}}], 'one read of the map for one coordinate')
+  const binding = model.torusDesignBinding(state(), undefined, {}, null, undefined, null, {}, condition, names.coordinateNames().get('#2-2-2-5-5'))
+  assert.deepEqual([binding.values['tattva.name'], binding.values['tattva.fibre']], ['Prithvi Tattva', 'earth'])
+  assert.equal(binding.writes('tattva.name'), false, 'a reading')
+  assert.equal(binding.standing['tattva.fibre'].disabled, names.FIBRE_READ)
+  assert.match(binding.standing['body.source'].disabled, /declared policy/)
+  const none = model.torusDesignBinding(state(), undefined, {}, null, undefined, null, {}, null, null)
+  assert.equal(none.values['tattva.name'], undefined)
+  assert.equal(none.standing['tattva.name'].disabled, names.NO_CONDITION)
+  const refused = names.readCoordinateName({outcome: null, error: 'ql: unknown exact M coordinate: #9'}, '#9')
+  assert.deepEqual(refused, {ok: false, reason: 'ql: unknown exact M coordinate: #9'})
+  names.resetCoordinateNames()
+})

@@ -413,6 +413,29 @@ pub enum OwnerRequest {
         state: Option<String>,
         #[serde(default)]
         custody_ref: Option<String>,
+        /// How much the holder decides alone (Factory#288): `suggest`,
+        /// `review` or `auto`, carried as spelled; Factory refuses another.
+        #[serde(default)]
+        autonomy: Option<String>,
+        /// What it must show before acting: `diffs`, `approvals` or `both`.
+        #[serde(default)]
+        review_gate: Option<String>,
+        /// The person it escalates to (a person ref).
+        #[serde(default)]
+        escalate_to: Option<String>,
+    },
+    /// The retained custody records (`factory development custody list
+    /// <state> [--position P] [--run R] [--state S]` →
+    /// `factory.work-custody-listing/v1`): whether a work is held already,
+    /// before an assignment writes its settings.
+    CustodyList {
+        state_path: PathBuf,
+        #[serde(default)]
+        position_ref: Option<String>,
+        #[serde(default)]
+        run_ref: Option<String>,
+        #[serde(default)]
+        state: Option<String>,
     },
     /// A project's bank of sixteen prompt pads (`factory development pads
     /// <state> <project-ref>` → `factory.prompt-pads-reading/v1`, manual
@@ -530,6 +553,7 @@ impl OwnerRequest {
                 | OwnerRequest::AttemptDecisionRead { .. }
                 | OwnerRequest::PadsRead { .. }
                 | OwnerRequest::PadsDue { .. }
+                | OwnerRequest::CustodyList { .. }
         )
     }
 }
@@ -628,6 +652,19 @@ fn owner_call_env(
                 Some(match value.get("effect").and_then(Value::as_str) {
                     Some(effect) => format!("{message} {effect}"),
                     None => message.to_owned(),
+                })
+            })
+            // Factory's own refusal document (`factory.refusal/v1`: code,
+            // fact, consequence, action), in its words.
+            .or_else(|| {
+                let value = parsed.as_ref()?;
+                if value.get("schema").and_then(Value::as_str) != Some("factory.refusal/v1") {
+                    return None;
+                }
+                let fact = value.get("fact")?.as_str()?;
+                Some(match value.get("consequence").and_then(Value::as_str) {
+                    Some(consequence) => format!("{fact} {consequence}"),
+                    None => fact.to_owned(),
                 })
             });
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
@@ -1654,6 +1691,9 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             origin_communique,
             state,
             custody_ref,
+            autonomy,
+            review_gate,
+            escalate_to,
         } => {
             let mut args: Vec<std::ffi::OsString> = vec![
                 "development".into(),
@@ -1674,6 +1714,9 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 ("--origin-communique", origin_communique),
                 ("--state", state),
                 ("--custody", custody_ref),
+                ("--autonomy", autonomy),
+                ("--review-gate", review_gate),
+                ("--escalate-to", escalate_to),
             ] {
                 if let Some(value) = value {
                     args.extend([flag.into(), value.into()]);
@@ -1681,6 +1724,30 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             }
             args.push("--json".into());
             expect_contract(owner_call(&args, None)?, &[CUSTODY_RECEIPT])
+        }
+        OwnerRequest::CustodyList {
+            state_path,
+            position_ref,
+            run_ref,
+            state,
+        } => {
+            let mut args: Vec<std::ffi::OsString> = vec![
+                "development".into(),
+                "custody".into(),
+                "list".into(),
+                path_arg(&state_path),
+            ];
+            for (flag, value) in [
+                ("--position", position_ref),
+                ("--run", run_ref),
+                ("--state", state),
+            ] {
+                if let Some(value) = value {
+                    args.extend([flag.into(), value.into()]);
+                }
+            }
+            args.push("--json".into());
+            expect_contract(owner_call(&args, None)?, &[CUSTODY_LISTING])
         }
         OwnerRequest::CustodyUpdate {
             state_path,
@@ -1796,6 +1863,8 @@ fn pads_write_call(
 pub const DECISION_READING: &str = "factory.attempt-unit-decision-reading/v1";
 /// Factory's custody receipt, for an assignment and an update alike.
 pub const CUSTODY_RECEIPT: &str = "factory.work-custody-receipt/v1";
+/// Factory's custody listing.
+pub const CUSTODY_LISTING: &str = "factory.work-custody-listing/v1";
 
 /// The Central endpoint Factory's native receiving is given by its host
 /// (lane W3): the host's own Central executable (`OI_CENTRAL_CTRL_BIN`, an

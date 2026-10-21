@@ -17,9 +17,11 @@ import {centralDeviceId} from './centralDeviceModel'
 import {editPacket} from './centralDeviceWrites'
 import {CENTRAL_SCOPE_ID, centralScopeBinding, type ContextWorldInput} from './contextWorldBinding'
 import {identityAgentOf, identityBinding, identityWorldOf, profileExtrasOf, type IdentityInput, type ProfileExtras} from './identityBinding'
-import {holdsVersion, subscribeHolds} from './pageBindings'
+import {heldOf, holdsVersion, subscribeHolds} from './pageBindings'
 import {packetBinding, type PacketConversation} from './packetBinding'
-import {CONTROL_SEARCH_ACTION, searchBinding, searchProjectOf, searchQueryOf, type SearchAnswer} from './searchBinding'
+import {CONTROL_SEARCH_ACTION, searchBinding, searchProjectOf, searchQueryOf, vakDepthOf, vakTermOf, type SearchAnswer, type VakAnswer} from './searchBinding'
+import {useOwnerOp} from '../../owners/ownerCall'
+import type {ActionAnswer} from './centralActions'
 import {useCentralAction} from './useCentralReadings'
 
 export const PACKET_DEVICE_ID = centralDeviceId('packet')
@@ -75,9 +77,25 @@ export function useSearchDevice(transport: KernelTransportStatus, projects: read
   }, [transport, query, project])
   const controlInput = useMemo(() => (query && !project ? {query} : null), [query, project])
   const control = useCentralAction(transport, CONTROL_SEARCH_ACTION, controlInput)
-  const asked = answer && controlInput && answer.query === controlInput.query ? {...answer, control} : answer
+  // A `vak:` term is asked of Quaternal Logic's Vāk registry (kernel ql_read: `ql vak locate`, `ql vak context <ref> <depth>`).
+  const vak = useVakAnswer(transport, query ? vakTermOf(query) : null, vakDepthOf(heldOf(SEARCH_DEVICE_ID)['vak.depth']))
+  const withControl = answer && controlInput && answer.query === controlInput.query ? {...answer, control} : answer
+  const asked = withControl && vak ? {...withControl, vak} : withControl
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
-  return useMemo(() => searchBinding(SEARCH_DEVICE_ID, asked, projects), [answer, control, controlInput, projects, version])
+  return useMemo(() => searchBinding(SEARCH_DEVICE_ID, asked, projects), [answer, control, controlInput, vak, projects, version])
+}
+
+/** One route's answer as the binding reads it: QL's data, or its refusal in its words, or nothing yet. */
+function routeAnswer(reading: {status: string; value: {data?: unknown} | null; error: string | null}): ActionAnswer {
+  if (reading.status === 'refused') return {status: 'refused', error: reading.error ?? 'Quaternal Logic did not answer.'}
+  return reading.status === 'answered' && reading.value ? {status: 'answered', value: reading.value.data} : {status: 'reading'}
+}
+
+/** The `vak:` term's two reads, held as readings (they change nothing): the entry located and its neighbourhood at the depth asked. */
+function useVakAnswer(transport: KernelTransportStatus, ref: string | null, depth: number): VakAnswer | undefined {
+  const locate = useOwnerOp(transport, ref ? {op: 'ql_read', request: {kind: 'vak-locate', vak_ref: ref}} : null, 'owner_route_reading', 'Quaternal Logic did not locate the entry.').reading
+  const context = useOwnerOp(transport, ref ? {op: 'ql_read', request: {kind: 'vak-context', vak_ref: ref, depth}} : null, 'owner_route_reading', 'Quaternal Logic did not read the neighbourhood.').reading
+  return useMemo(() => (ref ? {ref, depth, locate: routeAnswer(locate), context: routeAnswer(context)} : undefined), [ref, depth, locate, context])
 }
 
 const NO_EXTRAS: ReadonlyMap<string, ProfileExtras> = new Map()

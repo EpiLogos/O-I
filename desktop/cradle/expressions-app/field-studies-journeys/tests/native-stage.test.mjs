@@ -2,7 +2,8 @@
 // operations (O-I #591 relay, PS-U first vertical): stage-state is a read (the
 // field must not move), stage-evaluate is the host's own compiled plan (the
 // generation must advance; samples and PCM must not) and its stage body is
-// disclosed to the caller. Retire/bind/unbind are not studio-driven yet.
+// disclosed to the caller. Retire, bind and unbind are owner acts that move nothing (ql-mef continuous/host.rs
+// stage_operation): the field stays as it was and the receipt is kept as the last stage receipt.
 // Compiles nothing: the session module is plain ESM, driven through a scripted
 // host transport with an inert audio context — no device, no PCM, no owner.
 import test from 'node:test';import assert from 'node:assert/strict';
@@ -77,11 +78,23 @@ test('a stage evaluation that did not advance the owner is a cursor disagreement
  assert.equal(session.reading.available,false,'an unexplained acknowledgement ends this lifetime');
 });
 
-test('stage retire/bind/unbind are not studio-driven yet: the admission list is exact',async()=>{
- const {session}=makeSession({});
- await assert.rejects(session.operate({operation:'stage-retire',procedure_ref:'x'}),/idle admitted owner/);
- await assert.rejects(session.operate({operation:'stage-bind',procedure:{}}),/idle admitted owner/);
- await assert.rejects(session.operate({operation:'stage-unbind',procedure_ref:'x'}),/idle admitted owner/);
+test('stage retire, bind and unbind are owner acts that move nothing: the receipt is kept, the field unchanged',async()=>{
+ const receipt=op=>({schema:'ql.stage-receipt/v1',procedure_ref:'p',applied:true,standing:op});
+ const {session,sent}=makeSession({'stage-retire':{stage:receipt('retired')},'stage-bind':{stage:receipt('bound')},'stage-unbind':{stage:receipt('unbound')}});
+ assert.equal(session.lastStageReceipt,null,'no act yet');
+ await session.operate({operation:'stage-bind',procedure:{schema:'ql.stage-procedure/v1',procedure_ref:'p'},max_evaluations:16});
+ assert.deepEqual(session.lastStageReceipt,receipt('bound'));
+ await session.operate({operation:'stage-unbind',procedure_ref:'p'});
+ await session.operate({operation:'stage-retire',procedure_ref:'p'});
+ assert.deepEqual(session.lastStageReceipt,receipt('retired'),'the last act\'s own receipt');
+ assert.deepEqual(sent.map(e=>e.command.operation),['stage-bind','stage-unbind','stage-retire']);
+ assert.equal(session.reading.acknowledged.generation,'1','the field did not move');
+ assert.deepEqual(session.journal().acts.map(a=>a.operation),['stage-bind','stage-unbind','stage-retire'],'each is an owner act');
+});
+
+test('a stage bind that moved the field is a cursor disagreement',async()=>{
+ const {session}=makeSession({'stage-bind':{field:{generation:'2'},stage:{schema:'ql.stage-receipt/v1'}}});
+ await assert.rejects(session.operate({operation:'stage-bind',procedure:{}}),/native cursor disagree/);
 });
 
 test('a held owner takes no stage reads',async()=>{

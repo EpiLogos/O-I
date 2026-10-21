@@ -120,7 +120,7 @@ test('the Physics design draws on the binding: the swirl from the engine\'s valu
 test('the Field\'s design is not bound: its picture is the module\'s own symbols, and the shell has no Field device to publish it on; every other field family is', async () => {
   const views = await readFile(new URL('../src/components/devices/ExpressionsDeviceView.tsx', import.meta.url), 'utf8')
   assert.match(views, /if \(family === 'physics'\) return physicsDesignBinding\(device, reading, enginePress\)/, 'Physics publishes its own binding')
-  assert.match(views, /isFieldDesignFamily\(family\) \? familyDesignBinding\(family, device, reading, send\) : undefined/, 'the other field families publish theirs (fieldDesignBinding.ts); the Field, none')
+  assert.match(views, /isFieldDesignFamily\(family\) \? familyDesignBinding\(family, device, reading, send, tattva\) : undefined/, 'the other field families publish theirs (fieldDesignBinding.ts); the Field, none')
   assert.match(views, /claims\.current\.get\(entry\.family\)\?\.publish\(\{device: entry\.device, picture: entry\.picture, \.\.\.\(entry\.binding \? \{binding: entry\.binding\} : \{\}\)\}\)/,
     'the binding is published with the device, so every place draws the design')
   const field = await readFile(new URL('../src/inhabitants/catalogue/panels/expressions__field.tsx', import.meta.url), 'utf8')

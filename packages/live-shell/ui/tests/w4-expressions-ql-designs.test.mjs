@@ -364,7 +364,7 @@ test('the M′ matrices read the real mode catalogue, the mode in force, the M3 
   assert.deepEqual(keys.reading.sort(), ['form.address', 'm1.basis', 'm1.col12', 'm1.context_frame', 'm1.family', 'm1.lens12', 'm1.row12', 'm2.tonics'])
   assert.match(binding.standing['m3.codons'].disabled, /`ql kernel m3`/)
   for (const key of ['form.partners', 'form.partner', 'form.scale']) assert.match(binding.standing[key].disabled, /ql_m3_apply_matrix/, key)
-  for (const key of ['kernel.conjugate', 'kernel.class', 'kernel.version', 'kernel.depth', 'kernel.form']) assert.match(binding.standing[key].disabled, /`ql kernel apply/, key)
+  for (const key of ['kernel.conjugate', 'kernel.class', 'kernel.version', 'kernel.depth', 'kernel.form']) assert.match(binding.standing[key].disabled, /Choose a position and a face/, key)
   const controls = controlStanding(binding, setKeysOf('quaternal-logic__m-prime-matrices.tsx'))
   assert.deepEqual(controls.written.sort(), ['form.address', 'm1.context_frame', 'm1.lens12'])
   assert.deepEqual(controls.local.sort(), ['kernel.face', 'kernel.position', 'm1.basis', 'm1.col12', 'm1.family', 'm1.row12', 'matrix', 'valueForm'])
@@ -601,8 +601,9 @@ test('(d) Binding and the M′ matrices are admitted where §22 and §16.16 put 
 
 test('the Torus on Live\'s chain reads the stage the frame announces as a dependency of its binding, so a disclosure redraws the Stage page when it comes', () => {
   const source = read('live/TorusOnChain.tsx')
-  assert.match(source, /const stage = useHostedChrome\(\)\?\.state\?\.instrumentStage \?\? null\n\s*const rack = useQlRack\(1\)\n\s*return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan\), stage, rack\), \[state, device, plan, stage, rack\]\)/,
-    'the stage and M1′\'s rack are dependencies of the binding')
+  assert.match(source, /const stage = chrome\?\.state\?\.instrumentStage \?\? null\n\s*const run = chrome\?\.run \?\? null\n\s*const rack = useQlRack\(1\)/)
+  assert.match(source, /return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan\), stage, rack, run, held \?\? \{\}, condition, tattvaName\),\n\s*\[state, device, plan, stage, rack, run, held, condition, tattvaName\]\)/,
+    'the stage, the frame\'s runner, M1′\'s rack, the Stage page\'s holds and the announced condition with its map name are dependencies of the binding')
   assert.match(source, /const binding = useTorusChainBinding\(state, device\)/)
   const stage = slots => readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false, slots, bindings: []})
   const device = torusDevice.torusDevice(null)
@@ -615,4 +616,36 @@ test('the Torus on Live\'s chain reads the stage the frame announces as a depend
   renderToStaticMarkup(h(Probe))
   assert.deepEqual(JSON.parse(seen.values['stage.slots']).map(slot => slot.slot), ['form', 'clock.lensing'], 'the new stage, with the same torus and device')
   pane.publishHostedChrome(null)
+})
+
+test('the M′ matrices\' Kernel page reads the kernel\'s three operators on the address you hold, through ql_read kernel-apply (REAL answers)', async () => {
+  const kernel = await import(src('inhabitants/ql/devices/qlKernelApply.ts'))
+  const real = JSON.parse(readFileSync(new URL('./fixtures/ql-kernel-apply-2026-10-21.json', import.meta.url), 'utf8'))
+  const answers = new Map(real.cases.map(c => [`${c.operator} ${c.address}`, {outcome: {result: 'owner_route_reading', data: c.answer}}]))
+  const asked = []
+  kernel.resetKernelApply({call: async op => { asked.push(op.request); return answers.get(`${op.request.operator} ${op.request.address}`) ?? {outcome: null, error: 'no capture'} }})
+  assert.equal(kernel.kernelAddressOf({}), null, 'no position or face: nothing is asked')
+  const held = {'kernel.position': 2, 'kernel.face': 'direct'}
+  await kernel.syncKernelApply(held)
+  await kernel.syncKernelApply(held)
+  assert.deepEqual(asked, kernel.KERNEL_OPERATORS.map(operator => ({kind: 'kernel-apply', operator, address: 'qladdr:sixfold@1/direct/P2/d0'})), 'three operators, once, on the sixfold address at the ground depth')
+  const binding = qlMx.qlMatricesBinding({m3: m3Of(), modes: MODES, held, kernel: kernel.kernelApplyState()})
+  assert.deepEqual(['kernel.conjugate', 'kernel.complement', 'kernel.class', 'kernel.version', 'kernel.form', 'kernel.depth'].map(key => binding.values[key]),
+    ['qladdr:sixfold@1/conjugate/P2/d0', 'qladdr:sixfold@1/direct/P3/d0', 'explicate', '0.1.0-q1', 'sixfold@1', 0], 'the kernel\'s own answers')
+  assert.match(binding.standing['kernel.class'].disabled, /A reading/)
+  for (const key of ['kernel.position', 'kernel.face']) assert.equal(typeof binding.local[key], 'function', `${key}: the address is yours`)
+  const markup = drawsClean(DESIGNS.matrices, binding, /Kernel, the ground conjugate/, ['kernel'])
+  assert.ok(markup.includes('explicate'), 'the class is drawn')
+  // Another address asks again; the frame position 0 on the conjugate face is implicate.
+  await kernel.syncKernelApply({'kernel.position': 0, 'kernel.face': 'conjugate'})
+  assert.equal(kernel.kernelValues(kernel.kernelApplyState())['kernel.class'], 'implicate')
+  // An answer for another address is refused; with no address held the page says so.
+  assert.equal(kernel.readKernelApply(answers.get('conjugate-address qladdr:sixfold@1/direct/P2/d0'), 'conjugate-address', 'qladdr:sixfold@1/direct/P3/d0').ok, false)
+  const none = qlMx.qlMatricesBinding({m3: m3Of(), modes: MODES, held: {}, kernel: kernel.kernelApplyState()})
+  assert.equal(none.values['kernel.conjugate'], undefined)
+  assert.equal(none.standing['kernel.conjugate'].disabled, kernel.NO_ADDRESS)
+  kernel.resetKernelApply({call: async () => ({outcome: null, error: real.refusal.stderr})})
+  await kernel.syncKernelApply(held)
+  assert.equal(kernel.kernelApplyState().reading.reason, 'ql: unsupported QL address frame: four-plus-two@1', 'a refusal stands in the kernel\'s words')
+  kernel.resetKernelApply()
 })

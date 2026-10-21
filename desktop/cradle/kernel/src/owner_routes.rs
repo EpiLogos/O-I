@@ -130,6 +130,24 @@ pub enum ActuationRead {
     /// Actuation's own store, revoked ones included
     /// (`actuation.local-authority-listing/v1`). Reads the store; writes none.
     AuthorityList,
+    /// `actuation stream list [--session S] --json` (EpiLogos/Actuation#142):
+    /// the durable streams in Actuation's own store, or one Agent session's,
+    /// with lifecycle and counts, never events
+    /// (`actuation.stream-listing/v1`).
+    StreamList {
+        #[serde(default)]
+        session: Option<String>,
+    },
+    /// `actuation stream replay REF [--after N] [--limit N] --json`: one
+    /// durable stream's page from Actuation's store (`actuation.stream/v1`);
+    /// each `model-usage` event carries one usage record.
+    StreamReplay {
+        stream_ref: String,
+        #[serde(default)]
+        after: Option<u64>,
+        #[serde(default)]
+        limit: Option<u64>,
+    },
     /// `comparison.held|assess|mask|review` over the supplied records or
     /// manifest (`input`, an object: the kernel names the operation).
     /// `comparison.run` executes model bodies and is not a reading.
@@ -228,6 +246,13 @@ pub enum QlRead {
     ContextFrameRead {
         request: Value,
     },
+    /// The graph's Aperture: QL's living-wiki refraction plan
+    /// (`ql wiki living-plan -`, QL-MEF#346), the request on stdin
+    /// (`{mode: ordinary|explain|formal, relevance?, refraction?}`); the
+    /// answer is QL's LivingWikiRefractionPlan, named by its `profile`.
+    WikiLivingPlan {
+        request: Value,
+    },
     /// The service provider's negotiated operations (`ql service
     /// capabilities`).
     ServiceCapabilities,
@@ -260,6 +285,16 @@ pub enum WorkcellRead {
     ConnectionsShow {
         label: String,
     },
+    /// Reachability and the round trip to each recorded connection, or one
+    /// (`workcell connections probe [label] [--timeout-ms N]`, Workcell#117;
+    /// `workcell.connection-probe/v1`): the handshake timed; the record is
+    /// never written.
+    ConnectionsProbe {
+        #[serde(default)]
+        label: Option<String>,
+        #[serde(default)]
+        timeout_ms: Option<u32>,
+    },
     MachineList,
     /// The zero-setup baseline's findings (`workcell doctor`): declared
     /// services, instances, the shell, a writable state root and workspace.
@@ -272,6 +307,25 @@ pub enum WorkcellRead {
     Plan {
         #[serde(default)]
         demand: Box<WorkcellDemand>,
+    },
+    /// The demand planned on this cell and each connected cell whose grant
+    /// allows discover, ranked by the placement law (`workcell placement
+    /// <demand flags> [--connection L]… [--max-locality-cost N]
+    /// [--prefer-locality] [--require-declared-capacity] [--previous REF]`,
+    /// Workcell#119; `workcell.placement-evaluation/v1`). Reads only.
+    Placement {
+        #[serde(default)]
+        demand: Box<WorkcellDemand>,
+        #[serde(default)]
+        connections: Vec<String>,
+        #[serde(default)]
+        max_locality_cost: Option<u32>,
+        #[serde(default)]
+        prefer_locality: bool,
+        #[serde(default)]
+        require_declared_capacity: bool,
+        #[serde(default)]
+        previous: Option<String>,
     },
     /// Live harness instances (`workcell instances list`).
     InstancesList,
@@ -481,6 +535,24 @@ pub enum AikitRead {
         #[serde(default)]
         project: Option<String>,
     },
+    /// The last turn's blocks as the scope received them (`aikit work
+    /// continuity turn [--session S]`, ai-kit#543): per hook event, each
+    /// block's standing, kept and withheld lines and whether it was
+    /// suppressed.
+    ContinuityTurn {
+        #[serde(default)]
+        project: Option<String>,
+        #[serde(default)]
+        session: Option<String>,
+    },
+    /// A Flow's kept thoughts, newest first (`aikit flow thoughts FLOW_REF
+    /// [--limit N]`, ai-kit#544; `aikit.flow-thoughts/v1`): each the
+    /// FlowThoughtRecord `flow changed-since --thought` takes.
+    FlowThoughts {
+        flow_ref: String,
+        #[serde(default)]
+        limit: Option<u32>,
+    },
     /// Whether a close-out left the objects it claims (`aikit work
     /// continuity closeout verify [--project P] [--since N] [--run R]`): each
     /// clause read back from its carrier. An unverified close-out is AIKit's
@@ -498,6 +570,10 @@ pub enum AikitRead {
     SourceShow {
         id: String,
     },
+    /// Every registered source, each as `source show` reads it
+    /// (`aikit source list`, ai-kit#542): the ids Sync, Promote and Rollback
+    /// name.
+    SourceList,
     /// The skill trees on this machine, which version runs where (`aikit
     /// collate [--all]`).
     Collate {
@@ -541,6 +617,12 @@ pub enum AikitRead {
         addresses: Vec<String>,
         #[serde(default)]
         query: Option<String>,
+    },
+    /// The verdict of one target-owned reflection law over the project's
+    /// ProjectMap (`aikit knowledge reflection verify -`, ai-kit#541;
+    /// `aikit.reflection-verdict/v1`), the law on stdin as handed.
+    ReflectionVerify {
+        law: Value,
     },
     GatewayReplay {
         stream: String,
@@ -647,6 +729,16 @@ pub enum AikitWrite {
         root: PathBuf,
         #[serde(default)]
         namespace: Option<String>,
+        /// The digest the reviewed plan printed (`--expect-digest`): AIKit
+        /// applies only the exact surveyed bytes, paths, links and modes.
+        #[serde(default)]
+        expect_digest: Option<String>,
+    },
+    /// `aikit procedure run PROCEDURE --expect-digest D`: one exact
+    /// persisted Procedure, applied only when its digest is the one reviewed.
+    ProcedureRun {
+        procedure: String,
+        expect_digest: String,
     },
     /// Undo a committed Procedure (`aikit procedure undo <id>`).
     ProcedureUndo {
@@ -706,12 +798,15 @@ impl AikitRead {
             Self::Inbox { project, .. }
             | Self::ContinuityCommands { project }
             | Self::ContinuityPressure { project }
+            | Self::ContinuityTurn { project, .. }
             | Self::CloseoutVerify { project, .. } => project.as_deref(),
             Self::WikiShapeValidate { .. }
             | Self::WikiShapeCompress { .. }
             | Self::GatewayEcology { .. }
             | Self::GatewayReplay { .. }
             | Self::SourceShow { .. }
+            | Self::SourceList
+            | Self::FlowThoughts { .. }
             | Self::Collate { .. }
             | Self::AdoptPlan { .. }
             | Self::ProcedureList
@@ -720,7 +815,8 @@ impl AikitRead {
             | Self::Unused
             | Self::Explain { .. }
             | Self::History { .. }
-            | Self::KnowledgeFrame { .. } => None,
+            | Self::KnowledgeFrame { .. }
+            | Self::ReflectionVerify { .. } => None,
         }
     }
 }
@@ -736,6 +832,7 @@ impl AikitWrite {
             | Self::SetPackageExport { project, .. } => project.as_deref(),
             Self::WikiShapeDeclare { .. }
             | Self::Adopt { .. }
+            | Self::ProcedureRun { .. }
             | Self::ProcedureUndo { .. }
             | Self::BypassRevoke { .. }
             | Self::SourceSync { .. }
@@ -1130,6 +1227,8 @@ fn actuation_schema(request: &ActuationRead) -> (&'static str, &'static str) {
         ActuationRead::Usage { .. } => ("usage", "actuation.model-usage/v1"),
         ActuationRead::Comparison { .. } => ("comparison", ""),
         ActuationRead::AuthorityList => ("authority list", "actuation.local-authority-listing/v1"),
+        ActuationRead::StreamList { .. } => ("stream list", "actuation.stream-listing/v1"),
+        ActuationRead::StreamReplay { .. } => ("stream replay", "actuation.stream/v1"),
     }
 }
 
@@ -1205,15 +1304,67 @@ fn actuation_answer(request: &ActuationRead) -> Result<Reading, Error> {
         )?;
         return Ok(reading(route.into(), data, Vec::new()));
     }
+    if let ActuationRead::StreamList { session } = request {
+        let route = "actuation stream list";
+        let mut args = words(&["stream", "list"]);
+        push_flag(&mut args, "--session", session.as_deref());
+        args.push("--json".into());
+        let data = schema(
+            route,
+            run(Call::new(actuation(), route, args, READ_LIMIT))?,
+            wanted,
+        )?;
+        let data = fields(
+            route,
+            data,
+            &[("streams", Kind::List), ("invalid", Kind::List)],
+        )?;
+        return Ok(reading(route.into(), data, Vec::new()));
+    }
+    if let ActuationRead::StreamReplay {
+        stream_ref,
+        after,
+        limit,
+    } = request
+    {
+        let route = "actuation stream replay";
+        let mut args = words(&["stream", "replay"]);
+        args.push(stream_ref.into());
+        push_flag(
+            &mut args,
+            "--after",
+            after.map(|n| n.to_string()).as_deref(),
+        );
+        push_flag(
+            &mut args,
+            "--limit",
+            limit.map(|n| n.to_string()).as_deref(),
+        );
+        args.push("--json".into());
+        let data = schema(
+            route,
+            run(Call::new(actuation(), route, args, READ_LIMIT))?,
+            wanted,
+        )?;
+        if data.get("stream_ref").and_then(Value::as_str) != Some(stream_ref.as_str()) {
+            return Err(unexpected(
+                route,
+                &format!("the page of {stream_ref}"),
+                &data,
+            ));
+        }
+        return Ok(reading(route.into(), data, Vec::new()));
+    }
     let document = match request {
         ActuationRead::Agency { document }
         | ActuationRead::Realised { document }
         | ActuationRead::Stream { document }
         | ActuationRead::Activity { document }
         | ActuationRead::Usage { document } => document,
-        ActuationRead::Comparison { .. } | ActuationRead::AuthorityList => {
-            unreachable!("answered above")
-        }
+        ActuationRead::Comparison { .. }
+        | ActuationRead::AuthorityList
+        | ActuationRead::StreamList { .. }
+        | ActuationRead::StreamReplay { .. } => unreachable!("answered above"),
     };
     let route = format!("actuation {verb}");
     let mut call = Call::new(
@@ -1398,6 +1549,12 @@ fn ql_registry_answer(request: &QlRead) -> Result<Reading, Error> {
             None,
             QlCheck::Fields(FRAMES),
         ),
+        QlRead::WikiLivingPlan { request } => (
+            "ql wiki living-plan",
+            words(&["wiki", "living-plan", "-", "--json"]),
+            Some(request),
+            QlCheck::Echo("profile", "ql-mef/living-wiki-refraction/v1".into()),
+        ),
         QlRead::ContextFrameRead { request } => (
             "ql context-frame read",
             words(&["context-frame", "read", "-", "--json"]),
@@ -1474,6 +1631,19 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             args.push("--json".into());
             ("workcell connections show", args)
         }
+        WorkcellRead::ConnectionsProbe { label, timeout_ms } => {
+            let mut args = words(&["connections", "probe"]);
+            if let Some(label) = label {
+                args.push(label.into());
+            }
+            push_flag(
+                &mut args,
+                "--timeout-ms",
+                timeout_ms.map(|ms| ms.to_string()).as_deref(),
+            );
+            args.push("--json".into());
+            ("workcell connections probe", args)
+        }
         WorkcellRead::MachineList => (
             "workcell machine list",
             words(&["machine", "list", "--json"]),
@@ -1498,6 +1668,35 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
                 Call::new(workcell(), "workcell plan", args, READ_LIMIT),
                 &["plan_ref", "status"],
             );
+        }
+        WorkcellRead::Placement {
+            demand,
+            connections,
+            max_locality_cost,
+            prefer_locality,
+            require_declared_capacity,
+            previous,
+        } => {
+            let mut args = words(&["placement"]);
+            args.extend(demand.args());
+            for connection in connections {
+                args.push("--connection".into());
+                args.push(connection.into());
+            }
+            push_flag(
+                &mut args,
+                "--max-locality-cost",
+                max_locality_cost.map(|n| n.to_string()).as_deref(),
+            );
+            if *prefer_locality {
+                args.push("--prefer-locality".into());
+            }
+            if *require_declared_capacity {
+                args.push("--require-declared-capacity".into());
+            }
+            push_flag(&mut args, "--previous", previous.as_deref());
+            args.push("--json".into());
+            ("workcell placement", args)
         }
         WorkcellRead::InstancesList => (
             "workcell instances list",
@@ -1538,6 +1737,18 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
     let data = run(Call::new(workcell(), route, args, READ_LIMIT))?;
     let data = match request {
         WorkcellRead::ConnectionsList => fields(route, data, &[("connections", Kind::List)])?,
+        WorkcellRead::Placement { .. } => {
+            let data = schema(route, data, "workcell.placement-evaluation/v1")?;
+            fields(
+                route,
+                data,
+                &[("eligible", Kind::List), ("diagnostics", Kind::List)],
+            )?
+        }
+        WorkcellRead::ConnectionsProbe { .. } => {
+            let data = schema(route, data, "workcell.connection-probe/v1")?;
+            fields(route, data, &[("probes", Kind::List)])?
+        }
         WorkcellRead::ConnectionsShow { .. } => {
             if data.pointer("/connection/version").and_then(Value::as_str)
                 != Some("workcell.connection/v1")
@@ -1639,6 +1850,24 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit work continuity closeout verify", args)
         }
+        AikitRead::SourceList => ("aikit source list", words(&["source", "list", "--json"])),
+        AikitRead::ContinuityTurn { session, .. } => {
+            let mut args = words(&["work", "continuity", "turn"]);
+            push_flag(&mut args, "--session", session.as_deref());
+            args.push("--json".into());
+            ("aikit work continuity turn", args)
+        }
+        AikitRead::FlowThoughts { flow_ref, limit } => {
+            let mut args = words(&["flow", "thoughts"]);
+            args.push(flow_ref.into());
+            push_flag(
+                &mut args,
+                "--limit",
+                limit.map(|n| n.to_string()).as_deref(),
+            );
+            args.push("--json".into());
+            ("aikit flow thoughts", args)
+        }
         AikitRead::SourceShow { id } => {
             let mut args = words(&["source", "show"]);
             args.push(id.into());
@@ -1699,6 +1928,10 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit history", args)
         }
+        AikitRead::ReflectionVerify { .. } => (
+            "aikit knowledge reflection verify",
+            words(&["knowledge", "reflection", "verify", "-", "--json"]),
+        ),
         AikitRead::KnowledgeFrame { addresses, query } => {
             let mut args = words(&["knowledge", "frame"]);
             args.extend(addresses.iter().map(OsString::from));
@@ -1752,6 +1985,14 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
     let (route, args) = aikit_read_args(request);
     let mut call = Call::new(aikit(), route, args, READ_LIMIT);
     call.cwd = cwd;
+    if let AikitRead::ReflectionVerify { law } = request {
+        if !law.is_object() {
+            return Err(incompatible(
+                "aikit knowledge reflection verify takes one ReflectionLaw object".into(),
+            ));
+        }
+        call.input = Some(object_bytes(law)?);
+    }
     let (data, warnings) = envelope(route, aikit_document(call)?)?;
     const COMMANDS: &[(&str, Kind)] = &[("packs", Kind::List), ("armed", Kind::List)];
     const PRESSURE: &[(&str, Kind)] = &[("brackets", Kind::Record)];
@@ -1763,6 +2004,33 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         AikitRead::Collate { .. } => fields(route, data, &[("clusters", Kind::List)])?,
         AikitRead::ProcedureList => fields(route, data, &[("procedures", Kind::List)])?,
         AikitRead::BypassList => fields(route, data, &[("bypasses", Kind::List)])?,
+        AikitRead::SourceList => fields(
+            route,
+            data,
+            &[("sources", Kind::List), ("unreadable", Kind::List)],
+        )?,
+        AikitRead::ContinuityTurn { .. } => {
+            if data.get("turn").is_none() {
+                return Err(unexpected(route, "the kept turn (or turn null)", &data));
+            }
+            fields(
+                route,
+                data,
+                &[("blocks", Kind::List), ("notices", Kind::List)],
+            )?
+        }
+        AikitRead::FlowThoughts { flow_ref, .. } => {
+            if data.get("version").and_then(Value::as_str) != Some("aikit.flow-thoughts/v1")
+                || data.get("flow").and_then(Value::as_str) != Some(flow_ref.as_str())
+            {
+                return Err(unexpected(
+                    route,
+                    &format!("aikit.flow-thoughts/v1 for {flow_ref}"),
+                    &data,
+                ));
+            }
+            fields(route, data, &[("thoughts", Kind::List)])?
+        }
         AikitRead::Unused => fields(route, data, &[("unused", Kind::List)])?,
         AikitRead::History { view, .. } => match view {
             None => schema(route, data, "aikit.explain-history/v1")?,
@@ -1778,6 +2046,17 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         | AikitRead::ProcedureDiff { .. }
         | AikitRead::Explain { .. }
         | AikitRead::KnowledgeFrame { .. } => data,
+        AikitRead::ReflectionVerify { .. } => {
+            const VERDICT: &str = "aikit.reflection-verdict/v1";
+            if data.get("version").and_then(Value::as_str) != Some(VERDICT) {
+                return Err(unexpected(route, VERDICT, &data));
+            }
+            fields(
+                route,
+                data,
+                &[("law", Kind::Text), ("verification", Kind::Record)],
+            )?
+        }
         AikitRead::Inbox { .. } => fields(route, data, &[("items", Kind::List)])?,
         AikitRead::WikiShapeValidate { .. } => {
             if data.get("command").and_then(Value::as_str) != Some("wiki-shape.validate") {
@@ -2373,12 +2652,27 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             input = Some(object_bytes(frame)?);
             ("aikit wiki-shape declare", args)
         }
-        AikitWrite::Adopt { root, namespace } => {
+        AikitWrite::Adopt {
+            root,
+            namespace,
+            expect_digest,
+        } => {
             let mut args = words(&["adopt"]);
             args.push(root.into());
             push_flag(&mut args, "--namespace", namespace.as_deref());
+            push_flag(&mut args, "--expect-digest", expect_digest.as_deref());
             args.push("--yes".into());
             ("aikit adopt", args)
+        }
+        AikitWrite::ProcedureRun {
+            procedure,
+            expect_digest,
+        } => {
+            let mut args = words(&["procedure", "run"]);
+            args.push(procedure.into());
+            args.push("--expect-digest".into());
+            args.push(expect_digest.into());
+            ("aikit procedure run", args)
         }
         AikitWrite::ProcedureUndo { procedure } => {
             let mut args = words(&["procedure", "undo"]);
@@ -2511,7 +2805,9 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
                 .or_else(|| Some(root.display().to_string()));
             (data, reference)
         }
-        AikitWrite::ProcedureUndo { procedure } => (data, Some(procedure.clone())),
+        AikitWrite::ProcedureUndo { procedure } | AikitWrite::ProcedureRun { procedure, .. } => {
+            (data, Some(procedure.clone()))
+        }
         AikitWrite::BypassRevoke { id }
         | AikitWrite::SourceSync { id }
         | AikitWrite::SourcePromote { id, .. }

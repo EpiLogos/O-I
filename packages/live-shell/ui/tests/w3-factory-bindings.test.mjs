@@ -178,10 +178,12 @@ test('4 · the Experiment: its comparison readings read the records a run made, 
 
 test('5 · Custody and the Decision helper: Factory\'s custody and unit-decision commands carry none of their settings, and each refusal says what they do carry', () => {
   const custody = session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}}, null)
-  for (const key of ['autonomy', 'gate', 'escalate', 'handBack']) {
-    assert.match(custody.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
-    assert.match(custody.standing[key].disabled, /Factory's custody assign and update \(factory_owner\) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to/, key)
-  }
+  assert.match(custody.standing.handBack.disabled, /no owner operation carries it yet — missing op:/)
+  for (const key of ['autonomy', 'gate', 'escalate']) assert.match(custody.standing[key].disabled, /missing op:/, key)
+  // REPLACED (lane W9): Factory's custody record carries Autonomy, Review gate and Escalate to since Factory PR 288; each names the kernel's
+  // CustodyAssign that carries none yet, and the owner's ruling on changing them after assignment (w9-approvals-ledger-sets.test.mjs).
+  assert.match(custody.standing.handBack.disabled, /Factory's custody assign and update \(factory_owner\) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to/)
+  for (const key of ['autonomy', 'gate', 'escalate']) assert.match(custody.standing[key].disabled, /`factory development custody assign --/, key)
   assert.match(custody.standing.handBack.disabled, /`factory development custody list` has no kernel route/)
   for (const key of ['held', 'people', 'handBackLit']) assert.match(custody.standing[key].disabled, /no reading reaches it yet — missing op:/, key)
   const decision = helper.decisionHelperBinding({status: null, teamSpace: null, holds: bind.chainHolds()})
@@ -241,9 +243,11 @@ test('6 · the Remote carrier: each connection\'s record from `workcell connecti
     grant: ['status', 'discover', 'observe', 'inspect'], credRef: 'keychain://workcell-connection/omarchy', software: 'workcell 0.1.0 (174fa1c3133a)', since: 1790237685095})
   assert.equal(machines[1].grant, undefined, 'a record Workcell refused to show adds nothing')
   assert.equal(machines[0].why, undefined, 'the record\'s detail reports software revisions, not why it stands so')
-  assert.match(binding.standing.offers.disabled, /`workcell discover` through the kernel/)
-  assert.match(binding.standing.plan.disabled, /`workcell plan` through the kernel/)
-  assert.match(binding.standing.replan.disabled, /`workcell plan` through the kernel/)
+  // REPLACED (lane W10): discover has its route; not handed in here, it says it is not read (w10-workcell-material.test.mjs reads it).
+  assert.match(binding.standing.offers.disabled, /`workcell discover` is not read here/)
+  // REPLACED (lane W10): the plan has its route; what it lacks is the run's demand, which no reading names.
+  assert.match(binding.standing.plan.disabled, /the run's demand for `workcell plan`/)
+  assert.match(binding.standing.replan.disabled, /the run's demand for `workcell plan`/)
   assert.deepEqual(cell.connectionFields({connection: {version: 'something else'}}), {})
   bind.resetHolds()
 })
@@ -381,7 +385,8 @@ test('(d) the chain and the rail carry the owner routes where the manual puts th
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(chain, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null[\s\S]*?actor: deskActor, holds\}, seatPorts\)/, 'Join and Release on the desk\'s actor')
   assert.match(chain, /seat: request => ownerRouteWrite\(transport, seatWriteOp\(request\)/)
-  assert.match(chain, /carrierBinding\(workcellAnswer, holds, shows\)/, 'the carrier with each connection\'s record')
+  // REPLACED (lane W10): the carrier takes discover's offers and the probe too.
+  assert.match(chain, /carrierBinding\(workcellAnswer, holds, shows, \{discover/, 'the carrier with each connection\'s record')
   assert.match(chain, /trust: capability => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'trust-record', project: RACK_PROJECT, capability\}\)/)
   assert.match(chain, /slot\.id === 'git' && placed\(SEAT_ID, cells\.seat, seatDesignBinding/, 'the Seat stands inside Git / landing (§19.17)')
   const rail = read('agent/devices/AgentRailDevices.tsx')

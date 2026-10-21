@@ -19,9 +19,10 @@
 //                     position 4: fixtures/kernel/m1-engine-v1.request.json); the Quintessence has no scalar (m1.rs `cell`:
 //                     scalar_valid is family < 5), so its matrix is read only once you choose a family;
 // and named absent, each with the route it waits on: the M1 clock's tick (m1.tick12) — no M1 clock runs in the shell; the 64 codons in address order (m3.codons) and the matrix partners (form.partners, and with them Partner and Scale) need
-// `ql kernel m3` and ql_m3_apply_matrix as kernel ops; the kernel's operators (`ql kernel apply`: conjugate, complement, class, version,
-// and the address's depth and form as the kernel keeps them) have no kernel op; the Situation matrix has no owner (the M′ packets, QL-MEF
-// #281); Follow has no owner operation and the design does not offer it. Pure apart from the owners' hands the caller may replace.
+// `ql kernel m3` and ql_m3_apply_matrix as kernel ops; the Situation matrix has no owner (the M′ packets, QL-MEF #281); Follow has no
+// owner operation and the design does not offer it. The Kernel page reads the kernel's operators on the address you hold (qlKernelApply.ts:
+// `ql kernel apply` through ql_read kernel-apply: conjugate, complement, class, version, and the form and depth it read). Pure apart from
+// the owners' hands the caller may replace.
 import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../../frame/devices/designed'
 import type {DeviceInstance} from '../../../frame/devices/deviceRuntime'
@@ -32,6 +33,7 @@ import {disabled, handsFor, missing} from '../../../techne/devices/designDevices
 import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {NO_FORM, applyQlM3, type QlM3State} from './qlM3Clock'
 import type {QlM1State} from './qlM1'
+import {KERNEL_READINGS, NO_ADDRESS, kernelAddressOf, kernelApplyState, kernelValues, kernelWhy, type KernelApplyState} from './qlKernelApply'
 
 export const QL_MATRICES_FAMILY = 'quaternal-logic'
 export const QL_MATRICES_FACE = 'm-prime-matrices'
@@ -53,8 +55,6 @@ const NO_CODONS = missing('The 64 codons in address order', 'the kernel op for `
   + 'reads only the form in force', 'Quaternal Logic, through the kernel')
 const NO_PARTNERS = missing('The matrix partners', 'the kernel ops ql_m3_apply_matrix and ql_m3_apply_matrix_hexagram (each address\'s partner under '
   + 'the matrix, base by base or trigram by trigram)', 'Quaternal Logic, through the kernel')
-const NO_KERNEL = missing('The kernel\'s operators', 'the kernel op for `ql kernel apply <operator> <address>` (crates/ql-core/src/apply.rs: conjugate, '
-  + 'complement and classify on the sixfold form)', 'Quaternal Logic, through the kernel')
 /** The Situation matrix's words, which the design draws where its grid stands. */
 export const QL_SITUATION_ABSENT = 'The Situation matrix has no owner yet: the M′ packets (QL-MEF #281) are commissioned, not landed.'
 
@@ -62,8 +62,6 @@ export const QL_SITUATION_ABSENT = 'The Situation matrix has no owner yet: the M
 export const QL_MATRICES_ABSENT: Readonly<Record<string, string>> = {
   'm1.tick12': NO_TICK,
   'm3.codons': NO_CODONS, 'form.partners': NO_PARTNERS, 'form.partner': NO_PARTNERS, 'form.scale': NO_PARTNERS,
-  'kernel.conjugate': NO_KERNEL, 'kernel.complement': NO_KERNEL, 'kernel.class': NO_KERNEL, 'kernel.version': NO_KERNEL,
-  'kernel.depth': NO_KERNEL, 'kernel.form': NO_KERNEL,
 }
 
 /** The lens names in the design's row order: L0, L0′, L1 … L5′ (the catalogue writes the prime as an apostrophe). */
@@ -85,6 +83,8 @@ export interface QlMatricesState {
   readonly held: Readonly<Record<string, Value>>
   /** The M1 engine's cells for the family held (qlM1.ts); absent where no reader stands. */
   readonly m1?: QlM1State
+  /** The kernel's operators' answers for the address held (qlKernelApply.ts); absent where no reader stands. */
+  readonly kernel?: KernelApplyState
 }
 
 /** The M1 engine's config as the view holds it, else as QL's example request opens it (M1_EXAMPLE_CELL). */
@@ -152,6 +152,8 @@ export function qlMatricesValues(state: QlMatricesState): Record<string, Value> 
   values['m1.family'] = config.family; values['m1.row12'] = config.row12; values['m1.col12'] = config.col12
   const cells = m1CellsOf(state)
   if (cells) values['m1.cells'] = JSON.stringify(cells)
+  // The Kernel page: the kernel's answers for the address you hold (qlKernelApply.ts).
+  if (state.kernel && kernelAddressOf(state.held) === state.kernel.address) Object.assign(values, kernelValues(state.kernel))
   return values
 }
 
@@ -201,6 +203,9 @@ export function qlMatricesBinding(state: QlMatricesState, writers: QlMatricesWri
     if (why) standing[key] = {disabled: why}
   }
   standing['m1.cells'] = {disabled: m1CellsOf(state) ? 'A reading: each cell is QL\'s M1 engine\'s answer for it.' : m1Why(state)}
+  const kernel = state.kernel ?? kernelApplyState()
+  const kernelHere = kernelAddressOf(state.held) === kernel.address ? kernel : {address: null, reading: {ok: false as const, reason: NO_ADDRESS}, busy: false}
+  for (const key of KERNEL_READINGS) standing[key] = {disabled: kernelAddressOf(state.held) ? kernelWhy(kernelHere) : NO_ADDRESS}
   const live = state.m3.reading?.status === 'available' && !!state.m3.reading.state
   const m1Busy = !!state.m1?.busy && state.held['m1.family'] !== undefined && state.m1.family === m1Config(state.held).family
   return {

@@ -29,6 +29,7 @@ import {familyFaceDevice} from './mainTrackBindings'
 import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {FactoryTake, TakeState} from '../factoryTakes'
 import {journeyOf, type RunJourneyRead} from './runJourney'
+import {NO_RUN, collectedOf} from './workcellMaterial'
 import {SETTINGS_WHY, TASKS_DEVICE_SETTINGS, settingsRefusal, taskSettingChange, tasksDeviceChange, tasksDeviceValues, writeSessionSettings,
   type TasksDeviceSetting} from '../sessionSettings'
 
@@ -244,7 +245,22 @@ export interface RunsTakes {
   readonly timezone?: string
   /** The Journey of the Run shown (runJourney.ts useRunJourney), as the window holds it; absent: not read. */
   readonly journey?: {readonly status: 'reading' | 'answered' | 'refused'; readonly value: RunJourneyRead | null; readonly error: string | null}
+  /** The world receipt each attempt's run stood in, by attempt ref, where a reading names one; absent or empty: none is named (NO_RUN). */
+  readonly receipts?: Readonly<Record<string, string>>
+  /** What Workcell collected from each attempt's world (`workcell --receipt R collect`), by attempt ref: its reading or its refusal. */
+  readonly collected?: Readonly<Record<string, {readonly value?: unknown; readonly error?: string}>>
+  /** Collect one attempt's world (workcell_read {collect} on its receipt). Absent: no carrier stands. */
+  readonly collect?: (attemptRef: string, receipt: string) => Promise<unknown>
 }
+
+/** Outputs (lane W10, D1; software-factory__attempt-review.tsx `collected`, `collect`): `workcell --receipt R collect` on the receipt of the
+ * world the attempt's run stood in (workcellMaterial.ts collectedOf). No reading here names that receipt (workcellRackBinding.ts NO_RUN), so
+ * where none is handed in, the outputs stand absent and Collect disabled, naming it. */
+export const RUNS_OUTPUTS = {
+  collected: `What Workcell collected from each attempt's world: no reading reaches it yet — missing op: ${NO_RUN} (Workcell).`,
+  collect: `Collect: no owner operation carries it yet — missing op: ${NO_RUN} (Workcell).`,
+  noCarrier: 'Collect: the kernel carrier is unavailable here, so Workcell cannot be asked (`workcell collect`).',
+} as const
 
 /** An attempt's standing in the design's words (software-factory__attempt-review.tsx STATES), from Factory's (factoryTakes.ts TakeState). */
 const ATTEMPT_STATE: Readonly<Record<TakeState, string>> = {prepared: 'queued', running: 'running', returned: 'done', failed: 'failed'}
@@ -293,6 +309,11 @@ export function runsValues(session: string | null, holds: ChainHolds, takes?: Ru
     put(values, 'stands', stands ? String(stands.id) : undefined)
     const journey = takes.journey?.status === 'answered' && takes.journey.value ? journeyOf(takes.journey.value) : null
     if (journey) values.journey = JSON.stringify(journey)
+    const collected = Object.entries(takes.collected ?? {}).flatMap(([attempt, read]) => {
+      const row = read.value !== undefined ? collectedOf(attempt, read.value) : null
+      return row ? [row] : []
+    })
+    if (takes.receipts && Object.keys(takes.receipts).length) values.collected = JSON.stringify(collected)
   }
   return values
 }
@@ -303,10 +324,13 @@ function runsStanding(session: string | null, takes?: RunsTakes): Record<string,
   const drawn = !!session && !!takes?.takes && held?.status === 'answered' && !!held.value && journeyOf(held.value) !== null
   const journey: Record<string, Standing> = drawn ? {} : {journey: {disabled: !session || !takes?.takes || !held ? RUNS_JOURNEY_UNREAD
     : held.status === 'refused' ? held.error ?? RUNS_JOURNEY_READING : held.status === 'reading' ? RUNS_JOURNEY_READING : RUNS_JOURNEY_NONE}}
-  if (!takes) return {...journey, stands: {disabled: RUNS_REFUSE.stands}}
-  if (!session) return {...journey, stands: {disabled: 'Stands: no session is selected; an attempt stands on its session\'s Run.'}}
-  if (!takes.takes) return {...journey, stands: {disabled: `Stands: ${RUNS_UNREAD.noneServed}`}}
-  return journey
+  const receipts = takes?.receipts && Object.keys(takes.receipts).length ? takes.receipts : null
+  const outputs: Record<string, Standing> = !receipts ? {collected: {disabled: RUNS_OUTPUTS.collected}, collect: {disabled: RUNS_OUTPUTS.collect}}
+    : !takes?.collect ? {collect: {disabled: RUNS_OUTPUTS.noCarrier}} : {}
+  if (!takes) return {...journey, ...outputs, stands: {disabled: RUNS_REFUSE.stands}}
+  if (!session) return {...journey, ...outputs, stands: {disabled: 'Stands: no session is selected; an attempt stands on its session\'s Run.'}}
+  if (!takes.takes) return {...journey, ...outputs, stands: {disabled: `Stands: ${RUNS_UNREAD.noneServed}`}}
+  return {...journey, ...outputs}
 }
 
 export function runsBinding(session: string | null, holds: ChainHolds, takes?: RunsTakes): DesignBinding {
@@ -316,9 +340,17 @@ export function runsBinding(session: string | null, holds: ChainHolds, takes?: R
     values: runsValues(session, holds, takes),
     standing,
     local: Object.fromEntries(RUNS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(RUNS_ID, key, value)])),
-    writes: key => key === 'stands',
+    writes: key => key === 'stands' || key === 'collect',
     write: async changes => {
       for (const {key, value} of changes) {
+        if (key === 'collect') {
+          // Collect: the attempt's world, on the receipt a reading named for it; Workcell's refusal is its own words.
+          if (standing.collect?.disabled) throw Error(standing.collect.disabled)
+          const receipt = typeof value === 'string' ? takes?.receipts?.[value] : undefined
+          if (!receipt) throw Error(`Collect: no world receipt is named for ${String(value)}.`)
+          await takes!.collect!(value as string, receipt)
+          continue
+        }
         holdView(RUNS_ID, 'standsPending', undefined)
         if (key !== 'stands') throw Error(`${key} is a reading: its owner reports it; nothing here changes it.`)
         if (standing.stands?.disabled) throw Error(standing.stands.disabled)

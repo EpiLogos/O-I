@@ -1,0 +1,107 @@
+{
+  "_source": "ai-kit#541 (dlw/aikit-impact-reflection) built locally, 21 Oct 2026, over its test layout (one Semantic Wiki node resting on source:file:impact-note at r1); the installed aikit's refusal of the unknown leaf",
+  "horizon": {
+    "provider": "owner-seam/test",
+    "cursor": 4,
+    "sources": [
+      {
+        "source": "source:file:impact-note",
+        "revision": "r2",
+        "available": true
+      }
+    ],
+    "changes": [
+      {
+        "cursor": 4,
+        "world_ref": "world/test",
+        "source": "source:file:impact-note",
+        "roles": [],
+        "provenance": "owner seam observation (test fixture)",
+        "standing": "observed",
+        "before_revision": "r1",
+        "after_revision": "r2",
+        "kind": "modified",
+        "agent_retrieval_allowed": true
+      }
+    ]
+  },
+  "impact": {
+    "automatic_agent_or_model_invocation": false,
+    "impact": {
+      "automatic_agent_or_model_invocation": false,
+      "direct": {
+        "affected": [
+          {
+            "basis_revision": "r1",
+            "freshness": "basis-changed",
+            "observed_revision": "r2",
+            "provenance_ref": "wiki:node:staged/impact-subject",
+            "relation": "wiki-provenance",
+            "resource": "wiki:node:staged/impact-subject",
+            "source": "source:file:impact-note"
+          }
+        ],
+        "automatic_agent_or_model_invocation": false,
+        "changed_sources": [
+          "source:file:impact-note"
+        ],
+        "horizon_cursor": 4,
+        "version": "aikit.living-knowledge/v1"
+      },
+      "horizon_cursor": 4,
+      "paths": [
+        {
+          "freshness": "basis-changed",
+          "resource": "wiki:node:staged/impact-subject",
+          "root_source": "source:file:impact-note",
+          "steps": [
+            {
+              "from": {
+                "kind": "source",
+                "ref": "source:file:impact-note"
+              },
+              "provenance_ref": "wiki:node:staged/impact-subject",
+              "relation": "wiki-provenance",
+              "to": "wiki:node:staged/impact-subject"
+            }
+          ]
+        }
+      ],
+      "pending_integration": [],
+      "transitive": [],
+      "truncated": false,
+      "version": "aikit.living-knowledge-relations/v1"
+    },
+    "readings": [
+      "wiki:node:staged/impact-subject"
+    ],
+    "resource_dependencies": 0,
+    "source_dependencies": 1,
+    "version": "aikit.knowledge-impact-reading/v1",
+    "wiki_objects": 1
+  },
+  "verdict": {
+    "automatic_agent_or_model_invocation": false,
+    "law": "law/impact-subject",
+    "map_bindings": 1,
+    "verification": {
+      "issues": [
+        {
+          "detail": "missing reflected binding wiki:node:staged/impact-subject -> code:symbol:impact::subject",
+          "kind": "missing",
+          "relation_ref": "subject"
+        },
+        {
+          "detail": "implementation endpoint code:symbol:impact::subject is absent",
+          "kind": "missing",
+          "relation_ref": "subject"
+        }
+      ],
+      "law": "law/impact-subject",
+      "passed": false,
+      "source_revision": null
+    },
+    "version": "aikit.reflection-verdict/v1"
+  },
+  "installed_refusal": "error: unrecognized subcommand 'impact'\n\nUsage: aikit knowledge [OPTIONS] <COMMAND>\n\nFor more information, try '--help'.\n"
+}

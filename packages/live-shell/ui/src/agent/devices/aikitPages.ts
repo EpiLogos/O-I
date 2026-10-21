@@ -78,6 +78,27 @@ export function bypassesOf(list: unknown): Record<string, unknown>[] | null {
 export const proceduresOf = (list: unknown): Record<string, unknown>[] | null => (isObj(list) && Array.isArray(list.procedures)
   ? words(list.procedures).map(id => ({id})) : null)
 
+/** `aikit source list`'s sources (each as `aikit source show` reads it) as the rack's sources (skills.tsx `sources` {id, kind, skills, retired,
+ * active, candidate, rollback, ground, rejected}): active_skills, active_retired_skills, active_snapshot, candidate_snapshot,
+ * rollback_points[0], control_ground and the count of candidate_rejected, each where AIKit names it. Null when the answer is not the list. Pure. */
+export function sourcesOf(list: unknown): Record<string, unknown>[] | null {
+  if (!isObj(list) || !Array.isArray(list.sources)) return null
+  return list.sources.flatMap(row => {
+    if (!isObj(row) || !str(row.id)) return []
+    const rollback = Array.isArray(row.rollback_points) ? str(row.rollback_points[0]) : undefined
+    return [{id: row.id, ...(str(row.kind) ? {kind: row.kind} : {}), ...(num(row.active_skills) !== undefined ? {skills: row.active_skills} : {}),
+      ...(num(row.active_retired_skills) !== undefined ? {retired: row.active_retired_skills} : {}), ...(str(row.active_snapshot) ? {active: row.active_snapshot} : {}),
+      ...(str(row.candidate_snapshot) ? {candidate: row.candidate_snapshot} : {}), ...(rollback ? {rollback} : {}), ...(typeof row.control_ground === 'boolean' ? {ground: row.control_ground} : {}),
+      ...(Array.isArray(row.candidate_rejected) ? {rejected: row.candidate_rejected.length} : {})}]
+  })
+}
+
+/** `aikit procedure diff <id>` as the chosen procedure's {id, kind, digest}. Null when the answer is not a diff. Pure. */
+export function procedureDiffOf(diff: unknown): Record<string, unknown> | null {
+  if (!isObj(diff) || !str(diff.procedure) || !str(diff.digest)) return null
+  return {id: diff.procedure, ...(str(diff.kind) ? {kind: diff.kind} : {}), digest: diff.digest}
+}
+
 /** One `Name: value` line of `aikit explain`'s render, as its first word. */
 const renderLine = (render: string, label: string): string | undefined => {
   const line = render.split('\n').find(text => text.startsWith(`${label}:`))

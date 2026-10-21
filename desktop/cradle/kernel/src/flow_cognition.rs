@@ -55,6 +55,8 @@ use crate::knowledge;
 pub const AIKIT_FLOW_PREFLIGHT_OPERATION: &str = "aikit flow preflight";
 pub const AIKIT_FLOW_CONTEMPLATE_OPERATION: &str = "aikit flow contemplate";
 pub const AIKIT_FLOW_CHANGED_SINCE_OPERATION: &str = "aikit flow changed-since";
+/// Living Knowledge's impact for a set of readings (ai-kit#541).
+pub const AIKIT_KNOWLEDGE_IMPACT_OPERATION: &str = "aikit knowledge impact";
 
 /// Central's source-change-horizon owner Action and schema.
 pub const CENTRAL_HORIZON_ACTION: &str = "projectcentral.change.horizon";
@@ -64,6 +66,7 @@ pub const CENTRAL_HORIZON_SCHEMA: &str = "central.source-change-horizon/v1";
 /// carrying a payload (the owner's own version strings).
 pub const FLOW_COGNITION_VERSION: &str = "aikit.flow-cognition/v1";
 pub const FLOW_CHANGED_SINCE_VERSION: &str = "aikit.flow-changed-since/v1";
+pub const KNOWLEDGE_IMPACT_READING_VERSION: &str = "aikit.knowledge-impact-reading/v1";
 /// The NOW-subject contemplation reading (Central #175 cell 2): the
 /// contemplate subject is a NOW clearing's raw T stream.
 pub const NOW_CONTEMPLATE_VERSION: &str = "aikit.now-contemplation/v1";
@@ -733,6 +736,150 @@ fn aikit_changed_since(cwd: &Path, thought: &Value, horizon: &HorizonSupply) -> 
             detail,
         },
         Err(knowledge::CallError::Malformed { detail }) => AikitChangedSince::OwnerRefused {
+            owner_operation,
+            message: detail,
+        },
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Living Knowledge impact for a set of readings (the Knowledge route's Affected)
+// ---------------------------------------------------------------------------
+
+/// The AIKit side of one impact compose.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(tag = "state", rename_all = "snake_case")]
+pub enum AikitKnowledgeImpact {
+    /// The owner reading (`aikit.knowledge-impact-reading/v1`) carried
+    /// verbatim: the transitive closure over the Wiki's own manifests.
+    Invoked {
+        owner_operation: String,
+        receipt: Value,
+    },
+    /// No horizon reached the kernel, so the owner was not asked: AIKit
+    /// requires one, because an impact without a horizon would be a guess.
+    NotAsked {
+        owner_operation: String,
+        reason: String,
+    },
+    OwnerRefused {
+        owner_operation: String,
+        message: String,
+    },
+    OwnerUnavailable {
+        owner_operation: String,
+        detail: String,
+    },
+}
+
+/// ONE typed impact reading for a set of readings: both owner sides explicit.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct KnowledgeImpactReading {
+    /// The readings asked for, verbatim; empty asks for every one reached.
+    pub readings: Vec<String>,
+    pub horizon: HorizonSupply,
+    pub aikit: AikitKnowledgeImpact,
+}
+
+/// Compose Living Knowledge's impact for a set of readings: Central's own
+/// change horizon, adapted as for changed-since, then AIKit's
+/// `knowledge impact`. Records nothing and emits nothing.
+pub fn knowledge_impact(
+    client: &CentralClient,
+    project: &str,
+    cwd: &Path,
+    readings: &[String],
+    max_depth: Option<u32>,
+    max_affected: Option<u32>,
+) -> KnowledgeImpactReading {
+    let horizon = central_horizon(client, project);
+    let aikit = aikit_knowledge_impact(cwd, readings, max_depth, max_affected, &horizon);
+    KnowledgeImpactReading {
+        readings: readings.to_vec(),
+        horizon,
+        aikit,
+    }
+}
+
+fn aikit_knowledge_impact(
+    cwd: &Path,
+    readings: &[String],
+    max_depth: Option<u32>,
+    max_affected: Option<u32>,
+    horizon: &HorizonSupply,
+) -> AikitKnowledgeImpact {
+    let owner_operation = AIKIT_KNOWLEDGE_IMPACT_OPERATION.to_owned();
+    let HorizonSupply::Available { adapted, .. } = horizon else {
+        return AikitKnowledgeImpact::NotAsked {
+            owner_operation,
+            reason: "Central supplied no change horizon; AIKit reads impact only against one"
+                .into(),
+        };
+    };
+    let seams = match SeamDir::new("knowledge-impact") {
+        Ok(seams) => seams,
+        Err(detail) => {
+            return AikitKnowledgeImpact::OwnerUnavailable {
+                owner_operation,
+                detail,
+            }
+        }
+    };
+    let horizon_path = match seams.write("horizon.json", adapted) {
+        Ok(path) => path,
+        Err(detail) => {
+            return AikitKnowledgeImpact::OwnerUnavailable {
+                owner_operation,
+                detail,
+            }
+        }
+    };
+    let mut args: Vec<String> = vec![
+        "knowledge".into(),
+        "impact".into(),
+        "--horizon".into(),
+        horizon_path.display().to_string(),
+    ];
+    if let Some(depth) = max_depth {
+        args.extend(["--max-depth".into(), depth.to_string()]);
+    }
+    if let Some(affected) = max_affected {
+        args.extend(["--max-affected".into(), affected.to_string()]);
+    }
+    // The readings go after `--`, so no ref is ever read as a flag.
+    args.push("--".into());
+    args.extend(readings.iter().cloned());
+    let borrowed: Vec<&str> = args.iter().map(String::as_str).collect();
+    match knowledge::run(cwd, &borrowed) {
+        Ok(receipt) => {
+            if receipt.get("version").and_then(Value::as_str)
+                != Some(KNOWLEDGE_IMPACT_READING_VERSION)
+                || !receipt.get("impact").is_some_and(Value::is_object)
+            {
+                return AikitKnowledgeImpact::OwnerRefused {
+                    owner_operation,
+                    message: format!(
+                        "AIKit returned an unsupported impact reading (version {:?})",
+                        receipt.get("version")
+                    ),
+                };
+            }
+            AikitKnowledgeImpact::Invoked {
+                owner_operation,
+                receipt,
+            }
+        }
+        Err(knowledge::CallError::Refused { message }) => AikitKnowledgeImpact::OwnerRefused {
+            owner_operation,
+            message,
+        },
+        Err(knowledge::CallError::Unavailable { detail }) => {
+            AikitKnowledgeImpact::OwnerUnavailable {
+                owner_operation,
+                detail,
+            }
+        }
+        Err(knowledge::CallError::Malformed { detail }) => AikitKnowledgeImpact::OwnerRefused {
             owner_operation,
             message: detail,
         },

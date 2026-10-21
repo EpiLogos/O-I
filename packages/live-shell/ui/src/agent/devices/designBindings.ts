@@ -25,7 +25,7 @@ import {gatewayDisclosed, type AgentChainReading} from './agentChainDevices'
 import type {OwnerAcceptedValues} from './ownerAccepted'
 import type {TaskClip, TemporalEventLike} from '../agentRunModel'
 import {runStateOfSession, stageRecordingOf, threadRowsFrom} from './runFaces'
-import {armedOf, bypassesOf, contextPressureOf, historyOf, proceduresOf, rootsOf, unusedOf, whyOf, type AikitAnswer} from './aikitPages'
+import {armedOf, bypassesOf, contextPressureOf, historyOf, procedureDiffOf, proceduresOf, rootsOf, sourcesOf, unusedOf, whyOf, type AikitAnswer} from './aikitPages'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -236,12 +236,27 @@ export interface GatewayRows {
 
 const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {transport: 'transport', approvals: 'approvals', connect: 'connect', stallAfter: 'stallAfter'}
 
+// The Gateway's link readings (lane W10, from builder A's environ work; actuation__gateway.tsx `beatAge`, `running`, `inflight`, `frames`):
+// the reading gatewayValues takes is the kernel's harness_agent_read, which runs `aikit --json gateway agent --binding B sessions`, and
+// AIKit answers {agent_session_ref, harness, sessions [{agent_session_ref, state}]} (aikit-adapters gateway_conversation_engine.rs
+// sessions). It names no check-in instant, no turn count, no frames in flight and no frames, so none of the four is carried: each stands
+// absent with that reason, and stands as a reading the day the document names it.
+const GATEWAY_DOCUMENT = 'the gateway\'s document (the kernel\'s harness_agent_read: `aikit gateway agent --binding B sessions`, which answers the binding\'s agent session, its harness and its native sessions with their state)'
+export const GATEWAY_ABSENT: Readonly<Record<string, string>> = {
+  beatAge: `The time since the last check-in: no reading reaches it yet — missing op: a check-in instant in ${GATEWAY_DOCUMENT} (AIKit).`,
+  running: `The turns running: no reading reaches them yet — missing op: a count of running turns in ${GATEWAY_DOCUMENT}; a native session's state is not a turn (AIKit).`,
+  inflight: `The frames in flight: no reading reaches them yet — missing op: a count of frames in flight in ${GATEWAY_DOCUMENT} (AIKit).`,
+  frames: `The gateway's frames: no reading reaches them yet — missing op: the binding's latest frames in ${GATEWAY_DOCUMENT}; the Agency gateway's own journal (\`aikit gateway replay\`) is the Frames monitor's reading (AIKit).`,
+}
+
 /** The Gateway's binding: each setting through its row's own write path (the harness control's value carrier); the two the carrier
- * does not carry are refused by name. */
+ * does not carry are refused by name; the link readings its document does not name stand absent with why. */
 export function gatewayBinding(id: string, input: GatewayInput, rows: GatewayRows, write: RowWrite): DesignBinding {
+  const values = gatewayValues(input)
   return {
     id,
-    values: gatewayValues(input),
+    values,
+    standing: Object.fromEntries(Object.entries(GATEWAY_ABSENT).filter(([key]) => !(key in values)).map(([key, why]) => [key, {disabled: why}])),
     writes: key => key in GATEWAY_KEYS || key === 'autoContinue' || key === 'fanOut',
     write: async changes => {
       for (const {key, value} of changes) {
@@ -644,39 +659,42 @@ async function compose(change: ValueChange, ports: ComposePorts | null, place: {
 // `req:<id>` key, so `members` is no reading the host should draw disabled; a write of the list itself is refused as a reading.
 // The rack's upkeep pages (lanes W7, W8; D5, skills.tsx: Set's Unused filter, Sources, Adopt, Procedures): AIKit's `unused`, `collate`,
 // `adopt` (its plan, without --yes), `procedure list` and `bypass list`, read through the kernel's aikit_read (lane W3 round 3) where the
-// chain stands (aikitPages.ts maps each answer; FactoryDeviceChain.tsx reads them); Sync, Promote, Rollback, Undo and Revoke write through
-// aikit_write on the thing the page chose. What no route carries stays disabled naming it: a listing of the sources' ids, an adoption
-// applied against the digest you reviewed, a procedure run, a bypass issue. The pages' settings are the hand's own holds.
-const aikitUnread = (what: string, op: string) => `${what}: no reading reaches it yet — missing op: ${op} through the kernel (AIKit).`
+// chain stands (aikitPages.ts maps each answer; FactoryDeviceChain.tsx reads them), with `aikit source list` and the chosen procedure's
+// `aikit procedure diff` (lane W9, the kernel's round of cdbde6fe7); Sync, Promote, Rollback, Undo and Revoke write through aikit_write on
+// the thing the page chose, Apply adopts only at the digest of the plan you reviewed (`aikit adopt <root> --yes --expect-digest`), and Run
+// applies the chosen procedure only at the digest its diff names (`aikit procedure run <id> --expect-digest`). A bypass issue stays
+// disabled: no route mints its secret. The pages' settings are the hand's own holds.
 const aikitMissing = (what: string, op: string) => missing(what, `${op} through the kernel`, 'AIKit')
 /** Why each upkeep reading is absent when nothing is handed in (lane W8 reads them through aikit_read where the chain stands). */
 export const RACK_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
   unused: 'The members never seen used: AIKit\'s `aikit unused` is not read here.',
-  sources: aikitUnread('The sources the practice comes from', 'a listing of AIKit\'s registered sources (`aikit source show` reads one source by its id, and no route lists their ids)'),
+  sources: 'The sources the practice comes from: AIKit\'s `aikit source list` is not read here.',
   roots: 'The skill trees AIKit does not own: AIKit\'s `aikit collate` is not read here.',
   adoption: 'The adoption plan: choose a root and press Preview (`aikit adopt <root> --namespace <ns>` without --yes, a plan; nothing moves).',
   procedures: 'The changes AIKit made to the machine: AIKit\'s `aikit procedure list` is not read here.',
   bypasses: 'The hook bypasses: AIKit\'s `aikit bypass list` is not read here.',
 }
-/** The acts that stay refused, each naming what it lacks (lane W3 round 3 routes source sync|promote|rollback, procedure undo and bypass
- * revoke; it routes no procedure run, no bypass issue, and an adoption with no digest to check). */
+/** The act that stays refused, naming what it lacks (the kernel routes no bypass issue). */
 export const RACK_UPKEEP_REFUSE: Readonly<Record<string, string>> = {
-  adoptApply: aikitMissing('Apply', '`aikit adopt <root> --yes --expect-digest <digest>` (the kernel\'s aikit_write adopt carries no digest, so it would apply whatever the plan is now, not the plan you reviewed)'),
-  procRun: aikitMissing('Run', '`aikit procedure run <id> --expect-digest <digest>` (not routed)'),
   issue: aikitMissing('Issue a bypass', '`aikit bypass issue` (not routed: it mints a secret)'),
 }
 /** The acts routed to AIKit's own commands (aikit_write), each a person's press on the thing the page chose. */
 export const RACK_UPKEEP_WRITES: Readonly<Record<string, string>> = {
   sync: 'source-sync', promote: 'source-promote', rollback: 'source-rollback', procUndo: 'procedure-undo', revoke: 'bypass-revoke',
+  adoptApply: 'adopt', procRun: 'procedure-run',
 }
 /** AIKit's upkeep readings as the rack's chain holds them (workcellReads.ts useAikitRead). */
 export interface RackUpkeep {
   readonly unused?: AikitAnswer
+  /** `aikit source list` (the kernel's aikit_read source-list). */
+  readonly sources?: AikitAnswer
   readonly collate?: AikitAnswer
   readonly bypasses?: AikitAnswer
   readonly procedures?: AikitAnswer
   /** The adoption plan for the root chosen (`aikit adopt <root>` without --yes); absent while no root is chosen. */
   readonly adoption?: AikitAnswer
+  /** The procedure chosen, as `aikit procedure diff <id>` reads it ({procedure, kind, digest, diff}); absent while none is chosen. */
+  readonly procedure?: AikitAnswer
   /** AIKit's writes through the kernel (aikit_write). Absent: no carrier stands. */
   readonly write?: (request: {kind: string; [field: string]: unknown}) => Promise<unknown>
 }
@@ -704,8 +722,13 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
   for (const key of RACK_UPKEEP_SETTINGS) put(values, key, view[key])
   const read = <T>(answer: AikitAnswer | undefined, map: (value: unknown) => T | null): T | null => (answer?.status === 'answered' ? map(answer.value) : null)
   const unused = read(upkeep.unused, unusedOf), roots = read(upkeep.collate, rootsOf), bypasses = read(upkeep.bypasses, bypassesOf)
-  const procedures = read(upkeep.procedures, proceduresOf), adoption = read(upkeep.adoption, adoptionOf)
+  const sources = read(upkeep.sources, sourcesOf)
+  const listed = read(upkeep.procedures, proceduresOf), adoption = read(upkeep.adoption, adoptionOf)
+  const diff = read(upkeep.procedure, procedureDiffOf)
+  // The procedure chosen carries its kind and digest where AIKit's diff of it answered; the others stand by their ids.
+  const procedures = listed && diff ? listed.map(row => (row.id === diff.id ? {...row, ...diff} : row)) : listed
   if (unused) values.unused = JSON.stringify(unused)
+  if (sources) values.sources = JSON.stringify(sources)
   if (roots) values.roots = JSON.stringify(roots)
   if (bypasses) values.bypasses = JSON.stringify(bypasses)
   if (procedures) values.procedures = JSON.stringify(procedures)
@@ -713,25 +736,55 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
   const standing: Record<string, Standing> = {...disabled(RACK_UPKEEP_REFUSE), ...disabled(REFUSED_WRITES[RACK_DESIGN]!)}
   const absentWhy = (key: string, answer: AikitAnswer | undefined) => (answer?.status === 'refused' ? answer.error ?? RACK_UPKEEP_ABSENT[key]!
     : answer?.status === 'reading' ? `AIKit has not answered yet (${RACK_UPKEEP_ABSENT[key]!.split(': ')[1] ?? key}).` : answer ? `AIKit answered something other than ${key}.` : RACK_UPKEEP_ABSENT[key]!)
-  for (const [key, answer] of [['unused', upkeep.unused], ['roots', upkeep.collate], ['bypasses', upkeep.bypasses], ['procedures', upkeep.procedures], ['adoption', upkeep.adoption]] as const) {
+  for (const [key, answer] of [['unused', upkeep.unused], ['sources', upkeep.sources], ['roots', upkeep.collate], ['bypasses', upkeep.bypasses], ['procedures', upkeep.procedures], ['adoption', upkeep.adoption]] as const) {
     if (!(key in values)) standing[key] = {disabled: absentWhy(key, answer)}
   }
-  standing.sources = {disabled: RACK_UPKEEP_ABSENT.sources!}
   const noCarrier = 'The kernel carrier is unavailable here, so AIKit cannot be asked (aikit_write).'
-  for (const key of ['sync', 'promote', 'rollback']) standing[key] = {disabled: !upkeep.write ? noCarrier : RACK_UPKEEP_ABSENT.sources!}
-  if (!upkeep.write) for (const key of ['procUndo', 'revoke']) standing[key] = {disabled: noCarrier}
+  if (!upkeep.write) for (const key of Object.keys(RACK_UPKEEP_WRITES)) standing[key] = {disabled: noCarrier}
   else {
+    if (!sources) for (const key of ['sync', 'promote', 'rollback']) standing[key] = {disabled: standing.sources?.disabled ?? 'No source is read.'}
     if (!procedures) standing.procUndo = {disabled: standing.procedures?.disabled ?? 'No procedure is read.'}
     if (!bypasses) standing.revoke = {disabled: standing.bypasses?.disabled ?? 'No bypass is read.'}
+    if (!adoption) standing.adoptApply = {disabled: standing.adoption?.disabled ?? 'No adoption plan is read.'}
+    if (!diff) standing.procRun = {disabled: 'Run: choose a procedure first; Run applies it only at the digest AIKit\'s diff of it names (`aikit procedure diff`).'}
   }
-  /** One of AIKit's upkeep writes on the thing the page chose; its refusal is AIKit's own words. */
+  /** The AIKit request for one upkeep act on the thing the page chose, or why it cannot be asked. Each is checked against what was read. */
+  const upkeepRequest = (key: string, value: string): {kind: string; [field: string]: unknown} => {
+    const kind = RACK_UPKEEP_WRITES[key]!
+    switch (key) {
+      case 'sync': case 'promote': case 'rollback': {
+        const source = sources?.find(row => row.id === value)
+        if (!source) throw Error(`${key}: that source is not in AIKit's list.`)
+        if (key === 'rollback' && !source.rollback) throw Error('Rollback: AIKit names no earlier promoted snapshot for this source.')
+        return {kind, id: value}
+      }
+      case 'procUndo':
+        if (!procedures?.some(row => row.id === value)) throw Error('Undo: that procedure is not in AIKit\'s list.')
+        return {kind, procedure: value}
+      case 'revoke':
+        if (!bypasses?.some(row => row.id === value)) throw Error('Revoke: that bypass is not in AIKit\'s list.')
+        return {kind, id: value}
+      case 'adoptApply': {
+        // Apply only the plan you reviewed: the digest pressed is the digest of the plan read.
+        if (!adoption || typeof adoption.digest !== 'string' || adoption.digest !== value) throw Error('Apply: the plan changed since you reviewed it, or names no digest; read it again with Preview.')
+        const root = typeof adoption.root === 'string' ? adoption.root : view.adoptRoot, namespace = typeof adoption.namespace === 'string' ? adoption.namespace : view.namespace
+        if (typeof root !== 'string' || !root) throw Error('Apply: choose a root and press Preview first.')
+        return {kind, root, ...(typeof namespace === 'string' && namespace ? {namespace} : {}), expect_digest: value}
+      }
+      case 'procRun': {
+        // `<id>@<digest>`: the procedure chosen, at the digest its diff names.
+        const at = value.lastIndexOf('@'), procedure = at > 0 ? value.slice(0, at) : value, digest = at > 0 ? value.slice(at + 1) : ''
+        if (!diff || diff.id !== procedure || diff.digest !== digest) throw Error('Run: the procedure or its digest is not the one AIKit\'s diff names now; choose it again.')
+        return {kind, procedure, expect_digest: digest}
+      }
+      default: throw Error(REFUSE.reading(key))
+    }
+  }
+  /** One of AIKit's upkeep writes; its refusal is AIKit's own words. */
   const upkeepWrite = async (key: string, value: Value | undefined) => {
     if (standing[key]?.disabled) throw Error(standing[key]!.disabled!)
     if (typeof value !== 'string' || !value) throw Error(`${key}: choose what it acts on first.`)
-    const kind = RACK_UPKEEP_WRITES[key]!
-    if (key === 'procUndo' && !procedures?.some(row => row.id === value)) throw Error('Undo: that procedure is not in AIKit\'s list.')
-    if (key === 'revoke' && !bypasses?.some(row => row.id === value)) throw Error('Revoke: that bypass is not in AIKit\'s list.')
-    await upkeep.write!(kind === 'procedure-undo' ? {kind, procedure: value} : {kind, id: value})
+    await upkeep.write!(upkeepRequest(key, value))
   }
   return {
     id,

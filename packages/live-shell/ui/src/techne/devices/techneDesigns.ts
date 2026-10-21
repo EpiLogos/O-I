@@ -28,6 +28,8 @@ import {canvasBinding, journeyBinding, timelineBinding, type FrameReadings, type
 import {graphBinding, surfaceRead, GRAPH_READ_NODES, type GraphWrites} from './graphBinding'
 import {useGraphRead} from './graphRead'
 import {lensBinding, lightBinding} from './effectBindings'
+import {useLivingPlan} from './livingPlan'
+import {useLensRegistry} from './lensRegistry'
 
 /** Each instrument's chain on the rack: the design that is the instrument (where the instrument is not the holder's own plate, the
  * World of M0′ and M4′), then its effects, left to right. */
@@ -52,7 +54,7 @@ export const TECHNE_DESIGNS: readonly DesignSpec[] = [
   {design: TIMELINE_DESIGN, title: 'Timeline', icon: 'arrangement', note: 'The research frame\'s ruler, as the frame announces it: its lens, and the shared window the session holds. Its events and relations are not published.'},
   {design: JOURNEY_DESIGN, title: 'Journey', icon: 'journey', note: 'The research frame\'s walk, as the frame announces it: the stop it stands on, how many stops, that stop\'s name, and whether it walks.'},
   {design: LIGHT_DESIGN, title: 'Light', icon: 'expr', effect: true, note: 'An optical bench over the Canvas. Its engine (LightBox) is not in this candidate: it stands with no reading.'},
-  {design: LENS_DESIGN, title: 'Lens', icon: 'techne', effect: true, note: 'A reading through one of Quaternal Logic\'s lenses and a context frame. The kernel routes no `ql techne reading` or `ql mef lenses`: it stands with no reading.'},
+  {design: LENS_DESIGN, title: 'Lens', icon: 'techne', effect: true, note: 'A reading through one of Quaternal Logic\'s lenses and a context frame. It draws QL\'s lenses with their sublenses, frames and provider operations, and holds the lens and sublens you choose; the reading and the frame reading wait for a target and a mapping that nothing in the shell supplies yet.'},
   {design: GRAPH_DESIGN, title: 'Knowledge graph', icon: 'search', note: 'The open graph\'s view state and its own reading (its handle); with no graph open, the kernel graph op\'s reading of the root register\'s wiki.'},
 ]
 
@@ -87,7 +89,6 @@ const WINDOW_LAW: WindowLaw = {yearOf: windowEdgeYear, instantOf: instantOfYear,
 const GRAPH_WRITES: GraphWrites = {setter: writeThroughOwner, patch: setFilters}
 
 const LIGHT = lightBinding()
-const LENS = lensBinding()
 
 /** The bindings of the designs, each on its owner, read where they stand. The kernel's graph is read only while the Knowledge graph
  * stands on the rack (`graph`). */
@@ -100,6 +101,10 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
   // While a graph is open its own reading is the material (its handle publishes it); the root register is read here only while none is.
   const rootRead = useGraphRead(graph && !surface, Number.isSafeInteger(budget) && budget > 0 ? budget : GRAPH_READ_NODES, false)
   const read = useMemo(() => (surface ? surfaceRead(surface) : rootRead), [surface, rootRead])
+  // The Aperture page: QL's living-wiki plan for the request the graph's design holds (livingPlan.ts).
+  const plan = useLivingPlan(holds[GRAPH_DESIGN])
+  // The Lens: QL's lens registry, frames and provider operations, read once (lensRegistry.ts).
+  const lensLists = useLensRegistry()
   return useMemo(() => {
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
@@ -109,8 +114,8 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
       [TIMELINE_DESIGN]: timelineBinding(frame, WINDOW_LAW, heldFor(TIMELINE_DESIGN)),
       [JOURNEY_DESIGN]: journeyBinding(frame),
       [LIGHT_DESIGN]: LIGHT,
-      [LENS_DESIGN]: LENS,
-      [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN)),
+      [LENS_DESIGN]: lensBinding(lensLists, heldFor(LENS_DESIGN)),
+      [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan),
     }
-  }, [palace, holds, hosted, session, read, surface])
+  }, [palace, holds, hosted, session, read, surface, plan, lensLists])
 }

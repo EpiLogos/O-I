@@ -21,6 +21,7 @@ import type {DesignBinding, Standing, Value} from '../../../frame/devices/design
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {qlRackState, rackPage, type QlRackState} from './qlRack'
+import {presenceKeys, skyPresences, type SkyPresences} from './skyPresences'
 
 export const QL_SKY_FAMILY = 'quaternal-logic'
 export const QL_SKY_FACE = 'sky'
@@ -253,11 +254,13 @@ export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   place: 'No observer place reaches the shell.',
   // The Share page (manual §22.1): consent is Nara's presence. The kernel's nara_presence prepares and publishes one presence publication
   // (desktop/cradle/src/nara/nativePresence.ts: field, world, projection and participant refs the Sky does not hold); nothing reads the
-  // world's participants or the consents you hold to the shell.
+  // world's participants to the shell. The consents both ways are SharedField's list (skyPresences.ts), drawn over these words once read.
+  // The design draws its Withdraw disabled in its own words, with no key, so the person's withdrawal (nara_presence `withdraw`, a fresh
+  // withdrawal_ref) has no control to bind until the design gives each row one.
   'presence.participants': 'The world\'s participants: no owner operation carries them here — missing op: a read of the world\'s participants for the Sky (Nara\'s presence, through the kernel).',
   'presence.target': 'No participants are read here, so there is no one to choose — missing op: a read of the world\'s participants (Nara\'s presence, through the kernel).',
-  'presence.consents': 'The consents you hold: no owner operation carries them here — missing op: `ql nara presence-consent` read through the kernel (nara_presence only prepares and publishes).',
-  'presence.shared': 'Who has shared their sky with you: no owner operation carries it here — missing op: `ql nara presence-consent` read through the kernel.',
+  'presence.consents': 'Reading the presence consents SharedField lists…',
+  'presence.shared': 'Reading the presence consents SharedField lists…',
   'presence.share': 'Share: no owner operation carries it here — missing op: nara_presence publish from the Sky, which holds none of the world, projection and participant refs a publication needs.',
   'natal.of': 'Whose birth sky rings: the ring opens on the identity Launch gave the Sky; opening another\'s needs their consent read — missing op: `ql nara presence-consent` through the kernel.',
   // The Rack page (manual §16.16) reads M2′'s rack from the map's ledger (qlRack.ts): no key of it is absent here.
@@ -322,9 +325,12 @@ export function qlSkyHand(key: string, value: Value | undefined, sky: QlSkyState
 
 /** The binding the runtime hosts the Sky design on: the owner's sky, the view's own keys in its own hand, and no write — the sky
  * takes no change. Every key no owner keeps stands disabled with the reason. */
-export function qlSkyBinding(sky: QlSkyState, rack: QlRackState = qlRackState(2)): DesignBinding {
+export function qlSkyBinding(sky: QlSkyState, rack: QlRackState = qlRackState(2), presences: SkyPresences = skyPresences()): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(QL_SKY_ABSENT)) standing[key] = {disabled: why}
+  // The Share page's consents both ways: SharedField's list, split by the person's Participants (skyPresences.ts).
+  const consents = presenceKeys(presences)
+  Object.assign(standing, consents.standing)
   // The birth sky is a reading of the person's saved identity, never written here; absent, why it is not drawn.
   standing.natalBodies = {disabled: sky.natal ? 'Your birth sky, read from your saved identity: correct the identity, never the sky.' : sky.natalWhy ?? QL_SKY_ABSENT.natalBodies!}
   const local: Record<string, (value: Value | undefined) => void> = {}
@@ -332,7 +338,8 @@ export function qlSkyBinding(sky: QlSkyState, rack: QlRackState = qlRackState(2)
   // The Rack page: M2′'s rack from the map's ledger, and the part you choose (qlRack.ts).
   const page = rackPage(2, rack)
   Object.assign(standing, page.standing); Object.assign(local, page.local)
-  return {id: QL_SKY_DEVICE_ID, values: {...qlSkyValues(sky), ...page.values}, writes: () => false, standing, local, ...(page.waiting ? {waiting: ['rack']} : {})}
+  const waiting = [...(page.waiting ? ['rack'] : []), ...(!presences.ok && presences.busy ? ['presence.consents', 'presence.shared'] : [])]
+  return {id: QL_SKY_DEVICE_ID, values: {...qlSkyValues(sky), ...page.values, ...consents.values}, writes: () => false, standing, local, ...(waiting.length ? {waiting} : {})}
 }
 
 // ── the device, for the generic plate that stands in for a view ─────────────

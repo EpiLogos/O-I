@@ -24,6 +24,9 @@ import {fieldDesignBinding as familyDesignBinding, isFieldDesignFamily} from './
 import type {DesignBinding} from '../../frame/devices/designed'
 import {dispatchNativeEngineCommand, engineCommandReason, readNativeEngineMounted} from '../../native/engineCommand'
 import './expressionsDevices.css'
+import type {FrameInstrumentCondition} from '@epilogos/expressions-boundary'
+import {useCoordinateName, type CoordinateName} from '../../inhabitants/ql/devices/qlCoordinateName'
+import {useHostedChrome} from '../../projections/expressionsPaneHost'
 
 /** What a place that holds a field device gives it: the reading, the editor's one apply, and whether the work is taking edits now. */
 export interface FieldHost {
@@ -95,11 +98,14 @@ export function useFieldDevices(families: readonly string[], host: Omit<FieldHos
   }])), [key])
   // No reading, no device: a field device is the owner's reading of the open work, never a default. A family whose catalogue design
   // draws on value keys the engine reports publishes its binding with it (fieldDesignBinding), and the design draws in every place.
+  // Resonance's tattva: the live scene's M2 condition the frame announces, and the map's name for its coordinate (qlCoordinateName.ts).
+  const condition = useHostedChrome()?.state?.instrumentCondition ?? null
+  const tattvaName = useCoordinateName(condition?.tattva_ref ?? null)
   const devices = useMemo(() => families.map(family => {
     const device = host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!) : null
-    const binding = device ? fieldDesignBinding(family, device, host.reading, sends.get(family) ?? null) : undefined
+    const binding = device ? fieldDesignBinding(family, device, host.reading, sends.get(family) ?? null, {condition, name: tattvaName}) : undefined
     return {family, id: expressionsDeviceId(family), device, picture: pictures.get(family)!, ...(binding ? {binding} : {})}
-  }), [host.reading, host.locked, sends, pictures])
+  }), [host.reading, host.locked, sends, pictures, condition, tattvaName])
   const claims = useRef(new Map<string, DeviceClaim>())
   useEffect(() => {
     const held = new Map(families.map(family => [family, claimDevice(expressionsDeviceId(family))]))
@@ -121,9 +127,10 @@ const enginePress: PhysicsPress = action => {
 /** The binding of a field family's catalogue design, where the design draws on the engine's own readings: Physics (lane BE), and every
  * other field family on its engine paths (fieldDesignBinding.ts, R5). The Field (`expressions:field`) is no family of the rack: it is the front
  * of these devices and the frame's object sound, published at the Studio's head by useFieldInstrument.ts (fieldInstrument.ts). */
-export function fieldDesignBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null = null): DesignBinding | undefined {
+export function fieldDesignBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null = null,
+  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null} = {}): DesignBinding | undefined {
   if (family === 'physics') return physicsDesignBinding(device, reading, enginePress)
-  return isFieldDesignFamily(family) ? familyDesignBinding(family, device, reading, send) : undefined
+  return isFieldDesignFamily(family) ? familyDesignBinding(family, device, reading, send, tattva) : undefined
 }
 
 /** The field device on the rack: compact, with its summary line above and the modulation lines under the controls it moves. The card's

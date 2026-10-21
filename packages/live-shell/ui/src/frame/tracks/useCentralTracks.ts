@@ -36,6 +36,7 @@ import {nameTrackHeadDevices, type TrackHeadDevice} from './trackHeads'
 import {openInstrument} from '../instrumentDoor'
 import {DEVICE_PANE_KIND} from '../devices/devicePane'
 import {centralDeviceId} from '../../central/devices/centralDeviceModel'
+import {openOrRevealInCentral} from '../../central/devices/centralOpenReveal'
 import {centralWorldTrackId} from '../../timeline/centralTrackAdapter'
 import {useCentralGroundAnswer, usePageHistories} from '../../central/devices/useCentralReadings'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
@@ -145,6 +146,7 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
         removeWorld: (world: CentralWorld) => after(() => writeDaySet(transport, aperture, held => withoutWorld(held, world.ref)).finally(refreshGround)),
       } : {}),
       writeArm: shellWriteArm(armOn),
+      openOrReveal: (act: 'open' | 'reveal', path: string) => openOrRevealInCentral(transport, act, path),
     }
   }, [transport, armOn, aperture?.sourceRef, aperture?.documentId, after, refreshGround]) // eslint-disable-line react-hooks/exhaustive-deps
   const civil = useMemo(() => civilReadingOf(source), [source])

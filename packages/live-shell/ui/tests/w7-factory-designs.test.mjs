@@ -211,8 +211,8 @@ test('5 · what no route carries stays refused: Retire and Restore (PERSON_ACTS 
   const action = readFileSync(new URL('../../../../desktop/cradle/kernel/src/action.rs', import.meta.url), 'utf8')
   const acts = action.slice(action.indexOf('pub const PERSON_ACTS'), action.indexOf('];', action.indexOf('pub const PERSON_ACTS')))
   assert.doesNotMatch(acts, /control\.skills/)
-  assert.match(bind.RACK_UPKEEP_REFUSE.adoptApply, /carries no digest/)
-  assert.match(bind.RACK_UPKEEP_REFUSE.procRun, /not routed/)
+  // REPLACED (lane W9): Apply and Run write at the reviewed digest since the kernel's round of cdbde6fe7 (w9-approvals-ledger-sets.test.mjs).
+  assert.deepEqual(Object.keys(bind.RACK_UPKEEP_REFUSE), ['issue'])
   assert.match(bind.RACK_UPKEEP_REFUSE.issue, /mints a secret/)
   assert.match(bind.AGENT_CONTEXT_ABSENT['ctx.turn'], /T-COVERAGE §1\.5, AIKit/)
 })

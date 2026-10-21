@@ -40,13 +40,15 @@ pub const ACTION_DISPATCH_SCHEMA: &str = "oi.cradle.action-dispatch/v1";
 /// `agent-profile.*`, `control.*`, `machine.*`, `work.*`): every id in one of them runs through Central's runner. Its agent
 /// profiles (Make and Accept), Control's search and skills, the Machine device and a page's Open and Reveal are Central's as much
 /// as its Day is (T-COVERAGE §1.2, §1.4).
-pub const CENTRAL_NAMESPACES: [&str; 6] = [
+pub const CENTRAL_NAMESPACES: [&str; 7] = [
     "central.",
     "projectcentral.",
     "agent-profile.",
     "control.",
     "machine.",
     "work.",
+    // The person's notifications (Central#288): `personal.notify`, `personal.notifications.list`.
+    "personal.",
 ];
 
 /// Whether an Action id is Central's, by its namespace.
@@ -442,6 +444,8 @@ mod tests {
             "control.search",
             "machine.plan",
             "work.open",
+            "personal.notifications.list",
+            "personal.notify",
         ] {
             assert!(central_action(id), "{id} is Central's");
         }
@@ -452,6 +456,8 @@ mod tests {
             "controls.search",
             "central",
             "workcell.status",
+            "personal.",
+            "personalnotify",
         ] {
             assert!(!central_action(id), "{id} is not Central's");
         }

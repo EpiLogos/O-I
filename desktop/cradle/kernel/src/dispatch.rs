@@ -383,6 +383,9 @@ pub(crate) fn is_free(op: &KernelOp) -> bool {
         | KernelOp::A2aExchange { .. }
         | KernelOp::Setup { .. } => true,
         KernelOp::SharedField { request } => !crate::shared_field::is_read(request),
+        // A presence's listing and withdrawal: SharedField's own transport,
+        // nothing of the kernel's Expression or identity.
+        KernelOp::NaraPresence { request, .. } => request.admission().is_none(),
         _ => false,
     }
 }
@@ -411,6 +414,13 @@ fn free(op: KernelOp) -> Result<KernelOpOutcome, String> {
             receipts: Vec::new(),
             result: KernelOpResult::SharedFieldReading {
                 data: crate::shared_field::reading(&request)?,
+            },
+        }),
+        KernelOp::NaraPresence { request, .. } => Ok(KernelOpOutcome {
+            read_scopes: None,
+            receipts: Vec::new(),
+            result: KernelOpResult::NaraPresenceConsent {
+                data: crate::nara_presence::consent(&request)?,
             },
         }),
         // An A2A exchange waits on the other agent's reply through Node's

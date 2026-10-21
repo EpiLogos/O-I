@@ -331,11 +331,9 @@ test('the Knowledge graph on the open graph (its handle: view state, its own rea
   await binding.write([{key: 'selected', value: 'wiki:node:delivered-lane-loses-install'}, {key: 'minimap', value: false}])
   assert.deepEqual(surface.calls, [['select', 'wiki:node:delivered-lane-loses-install'], ['minimap', false]])
   await assert.rejects(() => binding.write([{key: 'selected', value: 'wiki:node:nowhere'}]), /not in this graph's reading/, 'the handle\'s refusal, in its words')
-  for (const key of ['aperture.mode', 'aperture.positions', 'aperture.budget']) {
-    assert.match(binding.standing[key].disabled, /missing op/, key)
-    await assert.rejects(() => binding.write([{key, value: 'x'}]), /missing op/)
-  }
-  assert.match(binding.standing['aperture.mode'].disabled, /plan_living_wiki_refraction/)
+  // The Aperture page: the request is the view's own; QL's plan is asked for it (livingPlan.ts), and with no mode chosen says so.
+  for (const key of ['aperture.mode', 'aperture.positions', 'aperture.context', 'aperture.full', 'aperture.budget']) assert.equal(typeof binding.local[key], 'function', key)
+  assert.match(binding.standing['aperture.admitted'].disabled, /Choose a mode/)
   const loading = graphB.graphBinding(fakeSurface({}, {reading: null, loading: true}), graphB.surfaceRead(fakeSurface({}, {reading: null, loading: true})), writes)
   assert.equal(loading.values.reading, undefined)
   assert.deepEqual(loading.waiting, ['reading'], 'the surface\'s first part has not come: the reading waits')
@@ -484,14 +482,99 @@ test('the Canvas on the frame\'s research reading: its cards, lines (the selecte
   assert.match(elsewhere.standing.mode.disabled, /timeline lens/, 'another lens: its controls say why')
 })
 
-test('Light and the Lens: no reachable owner, so no reading and every control refused naming the operation', async () => {
-  for (const [binding, refuse, words] of [[effects.lightBinding(), effects.LIGHT_REFUSE, /LightBox \(optics\/raytracer\.ts traceRays\)/], [effects.lensBinding(), effects.LENS_REFUSE, /ql techne reading.*ql mef lenses/]]) {
-    assert.deepEqual(binding.values, {})
-    for (const key of Object.keys(refuse)) {
-      assert.match(binding.standing[key].disabled, words, key)
-      await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
-    }
+test('Light: no reachable owner, so no reading and every control refused naming the operation', async () => {
+  const binding = effects.lightBinding()
+  assert.deepEqual(binding.values, {})
+  for (const key of Object.keys(effects.LIGHT_REFUSE)) {
+    assert.match(binding.standing[key].disabled, /LightBox \(optics\/raytracer\.ts traceRays\)/, key)
+    await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
   }
+})
+
+// REAL (desktop/cradle/kernel/tests/fixtures/owner-routes/ql-registry-reads-2026-10-21.json): the installed ql's answers, 21 Oct.
+const QL_REGISTRY = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/ql-registry-reads-2026-10-21.json', import.meta.url), 'utf8'))
+const registryCall = (answers = {'mef-lenses': QL_REGISTRY.mef_lenses, 'context-frame-list': QL_REGISTRY.context_frame_list, 'service-capabilities': QL_REGISTRY.service_capabilities}, asked = []) => async op => {
+  asked.push(op)
+  const answer = answers[op.request.kind]
+  return answer?.answer ? {outcome: {result: 'owner_route_reading', route: answer.command.slice(0, 3).join(' '), data: answer.answer}} : {outcome: null, error: answer ?? 'no answer'}
+}
+
+test('the Lens reads QL\'s lens registry, frames and provider operations through ql_read, verbatim (REAL answers); its reading and frame reading name what they wait for; its mode, operation and probe say what is lacking', async () => {
+  const lenses = await import('../src/techne/devices/lensRegistry.ts')
+  const asked = []
+  lenses.resetLensRegistry({call: registryCall(undefined, asked)})
+  assert.equal(effects.lensBinding(lenses.lensRegistry()).standing.lenses.disabled, "Reading QL's `ql mef lenses`…", 'asking: said so')
+  await lenses.ensureLensRegistry()
+  assert.deepEqual(asked.map(op => op.request), [{kind: 'mef-lenses'}, {kind: 'context-frame-list'}, {kind: 'service-capabilities'}], 'one read each')
+  await lenses.ensureLensRegistry()
+  assert.equal(asked.length, 3, 'the registry does not move under a running shell: read once')
+  const binding = effects.lensBinding(lenses.lensRegistry())
+  assert.deepEqual(JSON.parse(binding.values.lenses), QL_REGISTRY.mef_lenses.answer.lenses, 'the lenses as QL gives them')
+  assert.deepEqual(JSON.parse(binding.values.frames), QL_REGISTRY.context_frame_list.answer.frames)
+  assert.deepEqual(JSON.parse(binding.values.service), QL_REGISTRY.service_capabilities.answer.operations)
+  assert.match(binding.standing.lenses.disabled, /registry 1\.0\.0-q2\), its 12 lenses .* QL names no sublenses/)
+  assert.match(binding.standing.frames.disabled, /grammar 1\.0\.0\), its 7 frames/)
+  assert.match(binding.standing.service.disabled, /`ql service capabilities`, available\)/)
+  const keys = classify(DESIGNS.lens, binding, effects.lensAbsent)
+  assert.deepEqual(keys.reading.sort(), ['frames', 'lenses', 'service'], 'what QL answers here, and nothing of the design\'s sample')
+  assert.deepEqual(keys.local.sort(), ['lens.lens', 'lens.sublens'], 'the aperture is the view\'s own hold')
+  for (const key of ['reading.subject', 'reading.members', 'reading.lens', 'reading.instruments', 'reading.degraded']) assert.match(binding.standing[key].disabled, /QL reads the target its caller supplies .*WikiSubjectSource/, key)
+  for (const key of ['frame.mapping', 'frame.status', 'frame.frames', 'frame.missing']) assert.match(binding.standing[key].disabled, /sixfold mapping its caller names .*QL-MEF pull 344/, key)
+  assert.match(binding.standing.proposals.disabled, /refraction\.rs:787-788/, 'the proposals keep QL\'s own gap')
+  assert.match(binding.standing['lens.mode'].disabled, /`ql wiki refract -`, QL-MEF pull 350.*no refraction runs here/)
+  for (const key of ['lens.lens', 'lens.sublens']) assert.equal(binding.standing[key], undefined, `${key}: a hold, not refused`)
+  assert.match(binding.standing['lens.operation'].disabled, /`ql service negotiate` only reports/)
+  for (const key of ['frame.position', 'frame.face', 'frame.grain']) assert.match(binding.standing[key].disabled, /sixfold mapping/, key)
+  for (const key of Object.keys(effects.LENS_REFUSE)) await assert.rejects(() => binding.write([{key, value: 1}]), new RegExp(effects.LENS_REFUSE[key].slice(0, 20).replace(/[.*+?^${}()|[\]\\`]/g, '\\$&')), key)
+  const drawn = hostedAll(DESIGNS.lens, binding)
+  for (const [view, markup] of drawn) {
+    assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${view}: no absent key drawn as text`)
+    assert.doesNotMatch(markup, /data-device-fault/, `${view}: its own view drew`)
+    assert.doesNotMatch(markup, /l5-techne-instrument-constellation|registry-disclosure|L0′/, `${view}: the design's sample never stands in`)
+  }
+  const all = drawn.map(([, markup]) => markup).join('\n')
+  assert.ok(all.includes('Archetypal-Numerical') && all.includes(escaped("L5' Divine Logos")), 'the lens chooser lists QL\'s own lenses, by QL\'s codes')
+  assert.ok(all.includes(escaped(effects.LENS_REFUSE['lens.mode'])), 'a refused control says why')
+  // A refusal is drawn in QL's words, and asked again when a view next opens.
+  lenses.resetLensRegistry({call: registryCall({'mef-lenses': 'ql: the registry is unavailable', 'context-frame-list': QL_REGISTRY.context_frame_list, 'service-capabilities': QL_REGISTRY.service_capabilities}, asked)})
+  await lenses.ensureLensRegistry()
+  const refused = effects.lensBinding(lenses.lensRegistry())
+  assert.equal(refused.values.lenses, undefined)
+  assert.equal(refused.standing.lenses.disabled, 'ql: the registry is unavailable')
+  assert.ok(refused.values.frames, 'each list stands on its own answer')
+  asked.length = 0
+  await lenses.ensureLensRegistry()
+  assert.deepEqual(asked.map(op => op.request.kind), ['mef-lenses'], 'only the refused list is asked again')
+  lenses.resetLensRegistry()
+})
+
+// REAL (tests/fixtures/ql-mef-lenses-sublenses-2026-10-21.json): `ql mef lenses` with each lens's six sublenses (QL-MEF pull 349).
+const QL_SUBLENSES = JSON.parse(readFileSync(new URL('./fixtures/ql-mef-lenses-sublenses-2026-10-21.json', import.meta.url), 'utf8'))
+
+test('the Lens draws each lens\'s six sublenses where QL carries them, and holds the lens and sublens you choose (REAL answer)', async () => {
+  const lenses = await import('../src/techne/devices/lensRegistry.ts')
+  lenses.resetLensRegistry({call: registryCall({'mef-lenses': QL_SUBLENSES, 'context-frame-list': QL_REGISTRY.context_frame_list, 'service-capabilities': QL_REGISTRY.service_capabilities})})
+  await lenses.ensureLensRegistry()
+  devices.resetHolds()
+  const empty = effects.lensBinding(lenses.lensRegistry(), devices.heldFor(effects.LENS_ID))
+  const drawn = JSON.parse(empty.values.lenses)
+  assert.deepEqual(drawn.map(l => l.code), QL_SUBLENSES.answer.lenses.map(l => l.code), 'QL\'s lenses, by QL\'s codes')
+  assert.deepEqual(drawn[10].sublenses, ['Anuttara/Asambhava', 'Para Vāk', 'Paśyantī', 'Madhyamā', 'Vaikharī', 'Mātṛkā'], 'L5\'s labels in position order, from QL')
+  assert.equal(drawn[10].lensRef, 'mef:lens:L5@1', 'the rest of the entry as QL gives it')
+  assert.match(empty.standing.lenses.disabled, /each with its six sublenses/)
+  assert.equal(empty.values['lens.lens'], undefined, 'no lens is held until you choose one: never the design\'s L5')
+  // The lens and sublens are the view's own: set through the binding's hands, never written to an owner.
+  empty.local['lens.lens']('L5'); empty.local['lens.sublens']('2')
+  const held = effects.lensBinding(lenses.lensRegistry(), devices.heldFor(effects.LENS_ID))
+  assert.deepEqual([held.values['lens.lens'], held.values['lens.sublens']], ['L5', '2'])
+  const all = hostedAll(DESIGNS.lens, held).map(([, markup]) => markup).join('\n')
+  assert.ok(all.includes('Paśyantī') && all.includes('Mātṛkā'), 'the ring and the chooser draw QL\'s sublenses of the lens you hold')
+  assert.doesNotMatch(all, /\bNaN\b|undefined|data-device-fault/)
+  // A lens entry whose sublenses are not QL's six is drawn without them.
+  assert.equal(lenses.sublensLabels({sublenses: [{position: 0, label: 'x'}]}), undefined)
+  assert.equal(lenses.sublensLabels({sublenses: Array.from({length: 6}, (_, i) => ({position: 5 - i, label: 'x'}))}), undefined)
+  devices.resetHolds()
+  lenses.resetLensRegistry()
 })
 
 test('(b) every key each design reads is an owner reading, absent with a reason, or the hand\'s own; (c) every control writes through an owner act or stands refused', async () => {
@@ -540,14 +623,14 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
   const cases = [
     [DESIGNS.palace, palaceB.palaceBinding(state), /Archetypal-Earth — wiki local whole|Start of the argument|ai-kit/, ['The Stone', 'Mercurius'], [palaceB.PALACE_REFUSE.audience]],
     [DESIGNS.palace, palaceB.palaceBinding({phase: 'outside'}), /Archetypal-Earth|Start of the argument|Actuation/, [], [palaceB.NOT_INSIDE]],
-    [DESIGNS.graph, graphB.graphBinding(fakeSurface(), graphB.surfaceRead(fakeSurface()), writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.GRAPH_REFUSE['aperture.mode']]],
+    [DESIGNS.graph, graphB.graphBinding(fakeSurface(), graphB.surfaceRead(fakeSurface()), writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], []],
     [DESIGNS.graph, graphB.graphBinding(null, null, writes), /Quaternal-Tarot|Point-Cloud-Demo|face-rig/, [], [graphB.NOT_OPEN]],
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey')), /Nocturne|Fine, irregular stippling\. Form|Language/, ['Gather', 'Rounded grains find a shared current.'], [frameB.JOURNEY_REFUSE.snap]],
     [DESIGNS.journey, frameB.journeyBinding(frameOf('journey', {research: null})), /Nocturne|Fine, irregular stippling|Language/, [], []],
     [DESIGNS.timeline, frameB.timelineBinding(timelineFrame, LAW([])), /Naassene|Kabbala|Late antiquity/, ['An event of the frame', '1700'], [frameB.TIMELINE_REFUSE.mode]],
     [DESIGNS.canvas, frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), /Which centre speaks first|Sacral|Lower three/, ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.promote]],
     [DESIGNS.light, effects.lightBinding(), /The river dream|Grief, unsaid|Change jobs/, [], [effects.LIGHT_REFUSE['light.bounces']]],
-    [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.lens']]],
+    [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.mode']]],
   ]
   for (const [design, binding, fixture, shows, reasons] of cases) {
     const drawn = hostedAll(design, binding)
@@ -608,7 +691,7 @@ test('(d) each design stands where the manual puts it: the instrument at the hea
 })
 
 test('the bindings name their owners and copy no design: no default, no fixture, no catalogue import, shell tokens only', () => {
-  for (const file of ['palaceBinding.ts', 'graphBinding.ts', 'graphRead.ts', 'frameBindings.ts', 'effectBindings.ts', 'techneDesigns.ts', 'designDevices.ts']) {
+  for (const file of ['palaceBinding.ts', 'graphBinding.ts', 'graphRead.ts', 'frameBindings.ts', 'effectBindings.ts', 'lensRegistry.ts', 'techneDesigns.ts', 'designDevices.ts']) {
     const source = read(`techne/devices/${file}`)
     assert.doesNotMatch(source, /\.defaults\b|\.fixtures\b|catalogue\/panels\//, `${file}: no design default or fixture`)
     assert.deepEqual(source.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)
@@ -647,26 +730,81 @@ test('A: the frame announces its research reading and runs the walk\'s and the c
   assert.match(boundary, /const research = readFrameResearch\(raw\.research\);/, 'the boundary reads it exactly or refuses the reading')
 })
 
-test('the Torus\'s Stage page on the stage the frame announced: its slots and bindings; Evaluate, Bind, Unbind and Retire named with what no route carries', async () => {
+test('the Torus\'s Stage page on the stage the frame announced: its slots, bindings, the procedures the frame holds and the last act; Evaluate, Bind, Unbind and Retire as the stage\'s own operations', async () => {
   const torusDevice = await import('../src/live/torusDevice.ts')
   const {torus} = await import('../src/inhabitants/catalogue/panels/torus.tsx')
-  const {readFrameStage} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
-  const stage = readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false,
-    slots: [{slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1}, {slot: 'material.damping'}, {slot: 'clock.inscription'}, {slot: 'clock.lensing'}],
-    bindings: [{procedure: 'ta-onta:stage:cli-bound', revision: 2, trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}]})
-  const binding = torusDevice.torusDesignBinding(null, undefined, {}, stage)
+  const {readFrameStage, stageReadingOf, STUDIO_PROCEDURE} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
+  // The frame's announcement from a disclosure it read, the procedure it holds and its last act (stageReading.ts stageReadingOf).
+  const disclosure = {schema: 'ql.stage-state/v1', subject_ref: 'ql:subject:live', generation: 7,
+    slots: {form: {owner: 'ta-onta:stage:cli-fold', revision: 1}, 'material.damping': {}, 'clock.inscription': {}, 'clock.lensing': {}},
+    bindings: [{procedure_ref: 'ta-onta:stage:cli-bound', revision: 2, determinant: 'm1-advance', evaluations: 5, max_evaluations: 16, standing: 'active'}]}
+  const announced = stageReadingOf(disclosure, false, {standing: 'refused', why: 'no binding names ta-onta:stage:other'})
+  const stage = readFrameStage(JSON.parse(JSON.stringify(announced)))
+  assert.ok(stage, 'the boundary admits the announcement exactly')
+  const runs = []
+  const run = async command => { runs.push(command); return {ok: true} }
+  const binding = torusDevice.torusDesignBinding(null, undefined, {}, stage, undefined, run, {'stage.budget': 32})
   assert.deepEqual(JSON.parse(binding.values['stage.slots'])[0], {slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1})
   assert.deepEqual(JSON.parse(binding.values['stage.bindings']), [{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}])
-  for (const key of ['stage.procedures', 'stage.procedure', 'stage.last', 'stage.why']) assert.equal(binding.values[key], undefined, `${key}: no route carries it`)
-  assert.match(binding.standing['stage.evaluate'].disabled, /a list of the ql\.stage-procedure\/v1 procedures you keep/)
-  for (const key of ['stage.bind', 'stage.unbind', 'stage.retire']) assert.match(binding.standing[key].disabled, /missing op: stage-bind, stage-unbind and stage-retire through the frame's instrument session/, key)
-  const none = torusDevice.torusDesignBinding(null, undefined, {}, null)
+  assert.deepEqual(JSON.parse(binding.values['stage.procedures']), [{ref: STUDIO_PROCEDURE.ref, revision: 1, trigger: 'invocation', selector: ['material.damping']}], 'the procedure the frame holds')
+  assert.deepEqual([binding.values['stage.last'], binding.values['stage.why']], ['refused', 'no binding names ta-onta:stage:other'], 'the last act\'s standing, the owner\'s words')
+  assert.equal(binding.values['stage.budget'], 32, 'the budget is the view\'s own')
+  for (const key of ['stage.procedure', 'stage.budget']) assert.equal(typeof binding.local[key], 'function', `${key}: the view\'s own`)
+  for (const key of ['stage.evaluate', 'stage.bind', 'stage.unbind', 'stage.retire']) { assert.equal(binding.writes(key), true, key); assert.equal(binding.standing[key], undefined, key) }
+  await binding.write([{key: 'stage.evaluate', value: STUDIO_PROCEDURE.ref}, {key: 'stage.bind', value: 'ta-onta:stage:cli-bound'}, {key: 'stage.unbind', value: 'ta-onta:stage:cli-bound'}, {key: 'stage.retire', value: 'ta-onta:stage:cli-fold'}])
+  assert.deepEqual(runs, [
+    {command: 'procedural-stage', action: 'evaluate', procedure_ref: STUDIO_PROCEDURE.ref},
+    {command: 'procedural-stage', action: 'bind', procedure_ref: 'ta-onta:stage:cli-bound', max_evaluations: 32},
+    {command: 'procedural-stage', action: 'unbind', procedure_ref: 'ta-onta:stage:cli-bound'},
+    {command: 'procedural-stage', action: 'retire', procedure_ref: 'ta-onta:stage:cli-fold'}], 'each act the stage\'s own operation, the bind with the budget held')
+  const refusing = torusDevice.torusDesignBinding(null, undefined, {}, stage, undefined, async () => ({ok: false, error: 'the owner refused'}))
+  await assert.rejects(refusing.write([{key: 'stage.retire', value: 'x'}]), /the owner refused/)
+  // No frame: the acts are named; no stage disclosed: every stage reading and act is named.
+  const unmounted = torusDevice.torusDesignBinding(null, undefined, {}, stage, undefined, null)
+  assert.match(unmounted.standing['stage.bind'].disabled, /No Expressions application is mounted/)
+  const none = torusDevice.torusDesignBinding(null, undefined, {}, null, undefined, run)
   assert.equal(none.values['stage.slots'], undefined)
-  assert.match(none.standing['stage.slots'].disabled, /has disclosed no stage yet/)
+  for (const key of ['stage.slots', 'stage.procedures', 'stage.evaluate']) assert.match(none.standing[key].disabled, /has disclosed no stage yet/, key)
   // the design draws the stage on that binding, on its Stage page, with nothing absent drawn as text
   host.setHostPage(binding.id, 'stage')
   const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
   host.resetHost(binding.id)
   assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
-  assert.ok(markup.includes(escaped(torusDevice.TORUS_ABSENT['stage.bind'])), 'Bind says why it cannot act')
+  assert.ok(markup.includes('refused'), 'the last act\'s standing is drawn')
+})
+
+test('the graph\'s Aperture page asks QL\'s living-wiki plan for the request it holds: admitted and omitted positions, the depth, and QL\'s own refusal of Formal', async () => {
+  const plan = await import('../src/techne/devices/livingPlan.ts')
+  const graphB = await import('../src/techne/devices/graphBinding.ts')
+  // REAL: `ql wiki living-plan` at QL-MEF #346 (tests/fixtures/ql-wiki-living-plan-2026-10-21.json); the kernel's envelope around each.
+  const real = JSON.parse(readFileSync(new URL('./fixtures/ql-wiki-living-plan-2026-10-21.json', import.meta.url), 'utf8')).cases
+  const answers = new Map(real.map(c => [JSON.stringify(c.input), c.exit === 0 ? {outcome: {result: 'owner_route_reading', data: c.answer}} : {outcome: null, error: c.stderr.replace(/^ql: /, '')}]))
+  const asked = []
+  plan.resetLivingPlan({call: async op => { asked.push(op); return answers.get(JSON.stringify(op.request.request)) ?? {outcome: null, error: 'no capture'} }})
+  assert.deepEqual(plan.livingPlanRequest({}), {ok: false, reason: plan.NO_MODE}, 'no mode: nothing is asked')
+  await plan.syncLivingPlan({'aperture.mode': 'explain', 'aperture.positions': JSON.stringify([2])})
+  assert.deepEqual(asked.at(-1), {op: 'ql_read', request: {kind: 'wiki-living-plan', request: real[0].input}}, 'the request in QL\'s own fields; the library\'s budget of six')
+  const writes = {setter: async () => {}, patch: () => {}}
+  const held = {'aperture.mode': 'explain', 'aperture.positions': JSON.stringify([2])}
+  const binding = graphB.graphBinding(null, null, writes, held, plan.livingPlanState())
+  assert.deepEqual([binding.values['aperture.admitted'], binding.values['aperture.omitted'], binding.values['aperture.depth'], binding.values['aperture.refraction']],
+    [JSON.stringify([5, 0, 1, 2]), JSON.stringify([]), 'partial', false], 'QL\'s plan: the entry, then 2')
+  assert.equal(binding.values['aperture.mode'], 'explain', 'the request is the view\'s own')
+  await plan.syncLivingPlan({'aperture.mode': 'explain', 'aperture.positions': JSON.stringify([2, 3]), 'aperture.context': true, 'aperture.budget': 4})
+  assert.deepEqual(JSON.parse(plan.livingPlanValues(plan.livingPlanState())['aperture.omitted']), [3, 4], 'the budget left 3 and 4 out')
+  await plan.syncLivingPlan({'aperture.mode': 'formal'})
+  assert.equal(plan.livingPlanState().reading.reason, 'formal Living Wiki depth requires an existing WikiRefractionRequest', 'QL\'s refusal, in its words')
+  const formal = graphB.graphBinding(null, null, writes, {'aperture.mode': 'formal'}, plan.livingPlanState())
+  assert.equal(formal.standing['aperture.depth'].disabled, 'formal Living Wiki depth requires an existing WikiRefractionRequest')
+  const calls = asked.length
+  await plan.syncLivingPlan({'aperture.mode': 'formal'})
+  assert.equal(asked.length, calls, 'one ask per request')
+  // the design draws the plan on its Aperture page, its fixture never standing in
+  const {design} = await import('../src/inhabitants/catalogue/panels/knowledge-graph__graph.tsx')
+  await plan.syncLivingPlan(held)
+  host.setHostPage(binding.id, 'aperture')
+  const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: design, binding: graphB.graphBinding(null, null, writes, held, plan.livingPlanState()), view: 'whole', nav: {}}))
+  host.resetHost(binding.id)
+  assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
+  plan.resetLivingPlan()
 })
