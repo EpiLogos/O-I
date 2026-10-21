@@ -87,6 +87,7 @@ import {MACHINE_DEVICE_ID} from './machineBinding'
 import {VOICE_ID, voiceBinding, voiceDevice} from '../../agent/devices/voiceBinding'
 import {voiceBodyReadings, type AnswerVoiceState, type VoiceKey} from './answerVoice'
 import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from './sourceReturnAccept'
+import {commentSourceReturn, withReturnComments} from './sourceReturnComment'
 import {useMachineDevice} from './machineDevice'
 import {useRosterAgents} from '../../owners/readers'
 import {bindConversation} from './centralDeviceWrites'
@@ -541,6 +542,8 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const agent = useMemo(() => composeAgentBinding(own, {custody, identity, thread}), [own, custody, identity, thread])
   // The line where you type @ (§18.4): an @ word in the Agent's composer opens Search in a pane on it (searchPane.tsx).
   useAtSearch(typeof agent.values.draft === 'string' ? agent.values.draft : undefined)
+  const agentDraft = typeof agent.values.draft === 'string' ? agent.values.draft : null
+  const agentWrite = agent.write
   // Approvals on the Main track (§18.1): the proposals the Agent's session waits on — its consent requests — answered through its own
   // encounter; the view's settings the one Approvals' (receiptBindings.ts).
   const naraTrack = nara.session ? agency.tracks.find(track => track.sessionRef === nara.session && !track.group) ?? null : null
@@ -558,8 +561,14 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     const binding = approvalsBinding({gateway: {}, session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()}, null,
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, APPROVALS_PROJECT, row, person)},
       CENTRAL_APPROVALS_ID)
-    return {...binding, standing: {...binding.standing, approvals: {disabled: CENTRAL_DEFAULT_ANSWER}}}
-  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person])
+    // Changes (W6): a comment on the return, in the words written in the thread — the Agent's composer here — through Central's
+    // projectcentral.source.return_comment (sourceReturnComment.ts); once Central keeps it, the composer is cleared.
+    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft}, {
+      send: (row, words) => commentSourceReturn(transport, APPROVALS_PROJECT, row, words, person),
+      after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
+    })
+    return {...commented, standing: {...commented.standing, approvals: {disabled: CENTRAL_DEFAULT_ANSWER}}}
+  }, [answerHandle, naraTrack, answerObserved, holds, returned, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite])
   const others = useMemo(() => centralAgentDevices(), [])
   const bindingOf = (id: string): DesignBinding | null => (id === DAY_DEVICE_ID ? dayBinding : id === HYGIENE_DEVICE_ID ? hygiene : id === IMPACT_DEVICE_ID ? impactDesign
     : id === MACHINE_DEVICE_ID ? machine : id === PACKET_DEVICE_ID ? packet : null)

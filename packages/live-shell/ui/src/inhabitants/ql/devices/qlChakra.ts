@@ -7,11 +7,12 @@
 //   elements        your four elements as QL maps them — each a contribution strength with no confidence claimed, and the quaternion
 //                   (w Earth, x Fire, y Water, z Air) — with their source (a key the design does not draw yet);
 //   epoch           the date of the sky the routes follow: the Sky's (qlSky.ts), read, never set here.
-// `centres` — today's centres with their routes — is the scene's (`ql.scene/v1` `centres[7]`). The kernel's ql_read carries `ql scene
-// compose` and `ql scene world`, but their centres name only each centre's reference, its anatomy and the planets it receives
-// ({centre_ref, anatomy, receiving}, crates/ql-mef/src/scene.rs compose; world answers compose's centres): not the name, element,
-// mantra, petals or decan route the design draws. It stands absent with that reason, and the display says so. View, Routes, Colour source, Natal distribution
-// and Detail are the view's own (DesignBinding.local). Nothing here writes: the identity is never changed by a reading of it.
+//   centres         today's centres with their routes: the scene's (`ql.scene/v1` `centres[7]`) for the sky the Sky shows, read through the
+//                   kernel's ql_read scene-compose (qlCentres.ts): each centre's name, tattva, mantra signature and yantra, the planets it
+//                   receives (own) and the bodies whose decan ruler reaches it (decan). A ql that names no centre (before QL-MEF #345)
+//                   leaves them absent with that reason; QL holds no petal count, so the yantra's petals stay undrawn.
+// View, Routes, Colour source, Natal distribution and Detail are the view's own (DesignBinding.local). Nothing here writes: the identity is
+// never changed by a reading of it, nor the sky by its centres.
 // Pure apart from the one kernel call, which takes the call it is given, and the small store the views share.
 import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
@@ -24,6 +25,7 @@ import type {DesignBinding, Standing, Value} from '../../../frame/devices/design
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {qlSkyState, type QlSkyState} from './qlSky'
+import {centresValue, qlCentresState, type QlCentresState} from './qlCentres'
 
 export const QL_CHAKRA_FAMILY = 'quaternal-logic'
 export const QL_CHAKRA_FACE = 'chakra'
@@ -31,7 +33,7 @@ export const QL_CHAKRA_FACE = 'chakra'
 export const QL_CHAKRA_DEVICE_ID = techneDeviceId(QL_CHAKRA_FAMILY, QL_CHAKRA_FACE)
 
 export const NO_IDENTITY = 'No Nara identity is chosen: your centres\' elements are your own. Choose one in the Nara instrument.'
-export const NO_CENTRES = 'Today\'s centres are the scene\'s (ql.scene/v1 centres): `ql scene compose` and `ql scene world` answer each centre\'s reference, anatomy and the planets it receives, not its name, element, mantra, petals or decan route — missing op: those in the scene\'s centres (Quaternal Logic).'
+export const CENTRES_READ = 'A reading of the scene: today\'s centres follow the Sky\'s date; change the date on the Sky.'
 
 /** The identity the map is read for: the chosen saved identity, at its revision. */
 export interface ChakraBasis {readonly source_ref: string; readonly revision: string}
@@ -112,15 +114,16 @@ export function useQlChakra(): QlChakraState {
 
 // ── the design's values and its binding ─────────────────────────────────────
 
-/** The design's values: your natal distribution and your elements from the owner, the Sky's date, the view's choices. Only what the
- * owners report. */
-export function qlChakraValues(chakra: QlChakraState, sky: QlSkyState = qlSkyState()): Record<string, Value> {
+/** The design's values: today's centres from the scene, your natal distribution and your elements from the owner, the Sky's date, the
+ * view's choices. Only what the owners report; `reason` says why the centres are not drawn. */
+export function qlChakraValues(chakra: QlChakraState, sky: QlSkyState = qlSkyState(), centres: QlCentresState = qlCentresState()): Record<string, Value> {
   const values: Record<string, Value> = {}
   for (const key of QL_CHAKRA_LOCAL) if (chakra.view[key] !== undefined) values[key] = chakra.view[key]!
   if (sky.reading?.ok) values.epoch = sky.reading.sky.epochUtc
-  values.reason = NO_CENTRES
+  if (centres.reading.ok) values.centres = centresValue(centres.reading.centres)
+  else values.reason = centres.busy ? 'Composing today\'s centres…' : centres.reading.reason
   const result = chakra.result
-  if (!result) { if (chakra.busy || chakra.reason) values.reason = chakra.busy ? 'Reading your elements…' : chakra.reason!; return values }
+  if (!result) return values
   if (Array.isArray(result.natal_counts) && result.natal_counts.length === 7) values['natal.counts'] = JSON.stringify(result.natal_counts)
   const map = result.elemental
   values.elements = JSON.stringify({contributions: map.contributions, unknown: map.unknown_elements, quaternion: map.normalized_quaternion,
@@ -129,7 +132,6 @@ export function qlChakraValues(chakra: QlChakraState, sky: QlSkyState = qlSkySta
 }
 
 const READINGS: Readonly<Record<string, string>> = {
-  centres: NO_CENTRES,
   epoch: 'The date follows the Sky: set it on the Sky.',
   'natal.counts': 'A reading of your saved identity: correct the identity, never the reading.',
   elements: 'A reading of your saved identity: correct the identity, never the reading.',
@@ -137,13 +139,15 @@ const READINGS: Readonly<Record<string, string>> = {
 
 /** The binding the runtime hosts the Chakra design on: your elements and natal distribution, the view's own keys in its own hand, and
  * no write — a reading of your identity changes nothing. */
-export function qlChakraBinding(chakra: QlChakraState, sky?: QlSkyState): DesignBinding {
+export function qlChakraBinding(chakra: QlChakraState, sky?: QlSkyState, centres: QlCentresState = qlCentresState()): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(READINGS)) standing[key] = {disabled: why}
+  standing.centres = {disabled: centres.reading.ok ? CENTRES_READ : centres.reading.reason}
   if (!chakra.result?.natal_counts) standing.natal = {disabled: chakra.result ? 'Your identity carries no natal distribution (its natal composition is absent).' : chakra.reason ?? NO_IDENTITY}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_CHAKRA_LOCAL) local[key] = value => setQlChakraView({[key]: value})
-  return {id: QL_CHAKRA_DEVICE_ID, values: qlChakraValues(chakra, sky), writes: () => false, standing, local, waiting: chakra.busy && !chakra.result}
+  return {id: QL_CHAKRA_DEVICE_ID, values: qlChakraValues(chakra, sky, centres), writes: () => false, standing, local,
+    waiting: (chakra.busy && !chakra.result) || (centres.busy && !centres.reading.ok)}
 }
 
 // ── the device, for the generic plate that stands in for a view ─────────────

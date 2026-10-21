@@ -75,8 +75,8 @@ fn central_reading(action: &str) -> bool {
 /// nothing (every other prepared write may have changed its owner): a
 /// Central reading or Preview, or a Contemplate Flow preflight
 /// (action.rs `reads_only`).
-fn reads_only(op: &KernelOp) -> bool {
-    matches!(op, KernelOp::InvokeAction { invocation, .. } if action::reads_only(invocation))
+fn reads_only(client: &CentralClient, op: &KernelOp) -> bool {
+    matches!(op, KernelOp::InvokeAction { invocation, .. } if action::reads_only(client, invocation))
 }
 
 impl PreparedWrite {
@@ -122,6 +122,7 @@ impl PreparedWrite {
             KernelOp::GatewayWrite { .. }
             | KernelOp::WorkcellWrite { .. }
             | KernelOp::SeatWrite { .. }
+            | KernelOp::ActuationWrite { .. }
             | KernelOp::AikitWrite { .. } => true,
             _ => false,
         }
@@ -139,7 +140,9 @@ impl PreparedWrite {
             KernelOp::GatewayWrite { request } => request.project().is_some(),
             KernelOp::GatewayTeam { request } => request.project.is_some(),
             KernelOp::AikitWrite { request } => request.project().is_some(),
-            KernelOp::WorkcellWrite { .. } | KernelOp::SeatWrite { .. } => false,
+            KernelOp::WorkcellWrite { .. }
+            | KernelOp::SeatWrite { .. }
+            | KernelOp::ActuationWrite { .. } => false,
             KernelOp::Central { .. }
             | KernelOp::HarnessAgentControl { .. }
             | KernelOp::FileOperation { .. }
@@ -158,7 +161,7 @@ impl PreparedWrite {
         // A Central reading carried as an action changed nothing, so it moves
         // nothing: clearing the read model for it would throw every retained
         // reading away each time a device reads.
-        if !reads_only(&self.op) {
+        if !reads_only(&self.client, &self.op) {
             crate::read_cache::written();
         }
         WriteAnswered { result, records }
@@ -294,7 +297,7 @@ impl PreparedWrite {
                 let dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
                 // Whatever the owner answered, the derived readings retire —
                 // unless the action only read.
-                if !action::reads_only(invocation) {
+                if !action::reads_only(&self.client, invocation) {
                     records.push(Record::RetireDerived);
                 }
                 if let action::ActionDispatch::Invoked { data, .. } = &dispatch {
@@ -569,6 +572,9 @@ impl PreparedWrite {
             }
             KernelOp::SeatWrite { request } => {
                 route_written(records, crate::owner_routes::seat_write(request)?)
+            }
+            KernelOp::ActuationWrite { request } => {
+                route_written(records, crate::owner_routes::actuation_write(request)?)
             }
             KernelOp::AikitWrite { request } => {
                 let (cwd, _) =
@@ -910,6 +916,9 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::AttemptDecisionSubmit { .. } => "attempt decision submit",
         factory::OwnerRequest::CustodyAssign { .. } => "development custody assign",
         factory::OwnerRequest::CustodyUpdate { .. } => "development custody update",
+        factory::OwnerRequest::PadsWrite { .. } => "development pads-write",
+        factory::OwnerRequest::PadsRun { .. } => "development pads-run",
+        factory::OwnerRequest::PadsRecord { .. } => "development pads-record",
         _ => "factory",
     }
 }
@@ -931,6 +940,15 @@ fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
         OwnerRequest::DevelopmentCommission { state_path, .. } => {
             answer_ref(data, &["run_ref", "runRef", "journey_ref", "journeyRef"])
                 .unwrap_or_else(|| state_path.display().to_string())
+        }
+        // A pad's bank or record moved: the run its answer names, else the
+        // project's bank.
+        OwnerRequest::PadsWrite { project_ref, .. } => format!("{project_ref}#pads"),
+        OwnerRequest::PadsRun { .. } | OwnerRequest::PadsRecord { .. } => {
+            answer_ref(data, &["run_ref"])
+                .or_else(|| data["run"]["run_ref"].as_str().map(str::to_owned))
+                .or_else(|| answer_ref(data, &["project_ref"]))
+                .unwrap_or_else(|| FACTORY.into())
         }
         // A custody record moved: the custody the owner's receipt names.
         OwnerRequest::CustodyAssign { state_path, .. }
@@ -1044,6 +1062,11 @@ def ok(data):
     print(json.dumps({"ok": True, "action": action, "data": data}))
 if action == "central.world":
     ok({"schema": "central.world-map/v1", "root": "/tmp", "work": {"projects": []}})
+    sys.exit(0)
+if action == "action.list":
+    # Central's catalogue (`ctrl --json action list`, 21 Oct 2026): two of its rows, as it classes them.
+    ok({"actions": [{"id": "machine.account", "mutation_class": "read-only"},
+                    {"id": "machine.apply", "mutation_class": "locally-mutating"}]})
     sys.exit(0)
 while os.path.exists(gate):
     time.sleep(0.02)
@@ -1355,16 +1378,20 @@ else:
             target_ref: "flow:w3".into(),
             input,
         };
-        assert!(action::reads_only(&contemplate(None)));
-        assert!(action::reads_only(&contemplate(Some(
-            serde_json::json!({"horizon": {}})
-        ))));
-        assert!(action::reads_only(&contemplate(Some(
-            serde_json::json!({"execute": null})
-        ))));
-        assert!(!action::reads_only(&contemplate(Some(
-            serde_json::json!({"execute": {"preflight_ref": "p"}})
-        ))));
+        let nobody = CentralClient::with("/nonexistent/ctrl".into(), None, "test".into());
+        assert!(action::reads_only(&nobody, &contemplate(None)));
+        assert!(action::reads_only(
+            &nobody,
+            &contemplate(Some(serde_json::json!({"horizon": {}})))
+        ));
+        assert!(action::reads_only(
+            &nobody,
+            &contemplate(Some(serde_json::json!({"execute": null})))
+        ));
+        assert!(!action::reads_only(
+            &nobody,
+            &contemplate(Some(serde_json::json!({"execute": {"preflight_ref": "p"}})))
+        ));
         for action in [
             "central.world-relations.save",
             "central.day.settings.write",
@@ -1411,6 +1438,50 @@ else:
         );
         written.unwrap();
         assert_eq!(probe(), None, "a write retires the derived readings");
+    }
+
+    /// Central's own `mutation_class` decides (action.rs `CentralClient::reads`): `machine.account`, which no suffix of the
+    /// kernel's names as a reading, keeps the derived readings; `machine.apply` still retires them. The catalogue is read
+    /// once for the owner.
+    #[test]
+    fn centrals_own_mutation_class_decides_whether_an_action_retires_the_readings() {
+        let central = FakeCentral::new("mutation-class");
+        assert!(
+            !crate::read_cache::central_reads("machine.account"),
+            "no suffix of the kernel's names it: only Central's word classes it"
+        );
+        let kernel = Mutex::new(central.kernel());
+        let probe = || {
+            kernel
+                .lock()
+                .unwrap()
+                .reads
+                .get("knowledge:probe", Duration::from_secs(600))
+        };
+        kernel
+            .lock()
+            .unwrap()
+            .reads
+            .put("knowledge:probe".into(), serde_json::json!({"kept": true}));
+        let invoke = |action: &str| {
+            op(serde_json::json!({"op": "invoke_action",
+                "invocation": {"action": action, "target_ref": format!("central:action:{action}"), "input": {}}}))
+        };
+        let (read, _) = dispatch(&kernel, invoke("machine.account"));
+        read.unwrap();
+        assert_eq!(
+            probe(),
+            Some(serde_json::json!({"kept": true})),
+            "a read-only action keeps the readings"
+        );
+        let (written, _) = dispatch(&kernel, invoke("machine.apply"));
+        written.unwrap();
+        assert_eq!(probe(), None, "a mutating action retires them");
+        assert_eq!(
+            central.calls("action.list"),
+            1,
+            "the catalogue is read once"
+        );
     }
 
     #[test]

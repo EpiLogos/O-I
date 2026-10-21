@@ -1,0 +1,128 @@
+{
+  "captured": "QL-MEF #345 (dlw/ql-scene-centres, 1848e38), 21 Oct 2026: scene::compose(fixtures/kernel/sky-snapshot-2026-09-28-v1.json, tick12 3, cycle 7) printed by a probe in the PR's unit test each_centre_carries_what_the_map_and_the_m2_tables_hold before its assertions were written (cargo test -p ql-mef --lib -- --nocapture); `centres` and `decan_held` verbatim. Not the installed ql's answer: #345 is not installed.",
+  "sky": {
+    "source": "QL-MEF fixtures/kernel/sky-snapshot-2026-09-28-v1.json",
+    "schema": "ql.sky-snapshot/v1",
+    "snapshot_ref": "sha256:0e62c2055bdab751f7140909414894244d585a3692d5f13927964dc91f7e315e",
+    "epoch_utc": "2026-09-28T12:00:00Z"
+  },
+  "centres": [
+    {
+      "anatomy": "Base of spine, perineum, pelvic floor",
+      "centre_ref": "#2-5-0/1-1",
+      "decan": [
+        "Mars"
+      ],
+      "element": "Prithvi Tattva",
+      "element_ref": "#2-2-2-5-5",
+      "mantra": "LAM - earth element activation",
+      "name": "Mūlādhāra",
+      "ordinal": 1,
+      "receiving": [
+        "Saturn"
+      ],
+      "yantra": "Four-petaled lotus with yellow square (earth symbol)"
+    },
+    {
+      "anatomy": "Lower abdomen, sacral region, reproductive organs",
+      "centre_ref": "#2-5-0/1-2",
+      "decan": [
+        "Mercury",
+        "Jupiter",
+        "Uranus"
+      ],
+      "element": "Jala Tattva",
+      "element_ref": "#2-2-2-5-4",
+      "mantra": "VAM - water element activation and creative flow",
+      "name": "Svādhiṣṭhāna",
+      "ordinal": 2,
+      "receiving": [
+        "Jupiter"
+      ],
+      "yantra": "Six-petaled lotus with silver crescent moon (water symbol)"
+    },
+    {
+      "anatomy": "Solar plexus, upper abdomen, digestive system",
+      "centre_ref": "#2-5-0/1-3",
+      "decan": [
+        "Venus",
+        "Neptune"
+      ],
+      "element": "Agni Tattva",
+      "element_ref": "#2-2-2-5-3",
+      "mantra": "RAM - fire element activation and power",
+      "name": "Maṇipūra",
+      "ordinal": 3,
+      "receiving": [
+        "Mars"
+      ],
+      "yantra": "Ten-petaled lotus with red triangle (fire symbol)"
+    },
+    {
+      "anatomy": "Heart region, chest center, cardiac plexus",
+      "centre_ref": "#2-5-0/1-4",
+      "decan": [
+        "Moon",
+        "Pluto"
+      ],
+      "element": "Vayu Tattva",
+      "element_ref": "#2-2-2-5-2",
+      "mantra": "YAM - air element activation and heart opening",
+      "name": "Anāhata",
+      "ordinal": 4,
+      "receiving": [
+        "Venus"
+      ],
+      "yantra": "Twelve-petaled lotus with hexagram (unity of opposites)"
+    },
+    {
+      "anatomy": "Throat region, thyroid, vocal apparatus",
+      "centre_ref": "#2-5-0/1-5",
+      "decan": [],
+      "element": "Akasha Tattva",
+      "element_ref": "#2-2-2-5-0/1",
+      "mantra": "HAM - space element activation and sonic power",
+      "name": "Viśuddha",
+      "ordinal": 5,
+      "receiving": [
+        "Mercury"
+      ],
+      "yantra": "Sixteen-petaled lotus with circle (space and completeness)"
+    },
+    {
+      "anatomy": "Between eyebrows, pineal gland, third eye region",
+      "centre_ref": "#2-5-0/1-6",
+      "decan": [
+        "Sun"
+      ],
+      "element": null,
+      "element_ref": null,
+      "mantra": "OM - primordial sound beyond elements",
+      "name": "Ājñā",
+      "ordinal": 6,
+      "receiving": [
+        "Moon",
+        "Neptune"
+      ],
+      "yantra": "Two-petaled lotus with perfect bindu (consciousness point)"
+    },
+    {
+      "anatomy": "Crown of head, fontanelle, cerebral cortex",
+      "centre_ref": "#2-5-0/1-7",
+      "decan": [
+        "Saturn"
+      ],
+      "element": null,
+      "element_ref": null,
+      "mantra": "Silence beyond sound - Anāhata Nāda (unstruck sound)",
+      "name": "Sahasrāra",
+      "ordinal": 7,
+      "receiving": [
+        "Sun",
+        "Pluto"
+      ],
+      "yantra": "Thousand-petaled lotus with pure light (infinite manifestation)"
+    }
+  ],
+  "decan_held": []
+}

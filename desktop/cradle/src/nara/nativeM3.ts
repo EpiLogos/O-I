@@ -10,9 +10,12 @@ export type M3Operation=
  |{operation:'set-aperture';aperture:number}|{operation:'reciprocal-aperture'}
  |{operation:'advance-clock';steps:number}|{operation:'transcribe';rna:boolean}
  |{operation:'cast-creases';angles_deg10:[number,number,number];velocities_deg10:[number,number,number]};
+/** One ask of QL's generation law at a hexagram that need not be the form's (`ql kernel m3` `generation_at`): the hexagram id
+ * (upper << 3 | lower, line patterns, bit 0 the bottom line) and a matrix family index (the state's own matrix when absent). */
+export interface M3GenerationAsk {hexagram:number;family?:number}
 export type M3Gesture=
  |{operation:'open';selections:M3Selections;activity_policy?:'historical-personal-frame-sprite-v1'}
- |{operation:'read'}
+ |{operation:'read';generation_at?:M3GenerationAsk[]}
  |{operation:'select_activity_policy';expected_generation:number;expected_revision:string;activity_policy:'historical-personal-frame-sprite-v1'}
  |{operation:'apply';expected_generation:number;operations:M3Operation[]};
 export type NativeM3Request=M3Gesture&{binding:NativeDialogueRequest};
@@ -42,4 +45,6 @@ export interface NativeM3Reading {
  private:true;public_export:false;activity_admitted:boolean;
  activity_policy?:'historical-personal-frame-sprite-v1'|null;
  activity?:{policy:string;status:string;[key:string]:unknown}|null;
+ /** QL's generation readings for a read's `generation_at` asks, in the order asked (m3_reception forwards them verbatim). */
+ generation_at?:unknown[];
 }

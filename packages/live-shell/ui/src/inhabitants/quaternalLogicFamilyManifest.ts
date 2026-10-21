@@ -82,7 +82,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         // codon names the card now.
         heldBy: ['studio:nara', 'techne:m3'],
         invariant: {generates: 'kernel:nara_journey'},
-        note: 'The open journey\'s reading (manual §22.4, §24.4): QL\'s continuing oracle journey (ql.nara-oracle-journey/v1), kept in its Flow page and read and acted on through the kernel\'s nara_journey (ql/devices/qlDeck.ts). A draw and a cast need your consent to chance, each time; the chance is the kernel\'s. With no journey open the device says so.',
+        note: 'The open journey\'s reading (manual §22.4, §24.4): QL\'s continuing oracle journey (ql.nara-oracle-journey/v1), kept in its Flow page and read and acted on through the kernel\'s nara_journey (ql/devices/qlDeck.ts). A draw and a cast need your consent to chance, each time; the chance is the kernel\'s. The cast hexagram\'s cell is QL\'s generation law, asked of your M3 state through m3_reception\'s read. With no journey open the device says so.',
       },
       {
         id: 'chakra',
@@ -92,7 +92,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         // follows.
         heldBy: ['studio:nara', 'techne:m2'],
         invariant: {generatesAbsent: 'Your elements are read, never written: the kernel\'s nara_elemental answers from your saved identity, and no owner operation takes a value back (lock §7).'},
-        note: 'Your centres\' elements (manual §22.5, M4.1): QL\'s elemental map of your saved identity (ql.nara-elemental-reading/v1) and its natal distribution, read through the kernel\'s nara_elemental (ql/devices/qlChakra.ts). Today\'s centres and routes are the scene\'s (ql.scene/v1), which no owner carries to the shell yet; the device says so.',
+        note: 'Your centres\' elements (manual §22.5, M4.1): QL\'s elemental map of your saved identity (ql.nara-elemental-reading/v1) and its natal distribution, read through the kernel\'s nara_elemental (ql/devices/qlChakra.ts). Today\'s centres and routes are the scene\'s (ql.scene/v1) for the Sky\'s sky, read through the kernel\'s ql_read scene-compose (ql/devices/qlCentres.ts); a ql that names no centre leaves them absent, and the device says so.',
       },
       {
         id: 'sitting',
@@ -102,7 +102,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         // centres, M4.1 (§24.9), and is a stretch of the day's time.
         heldBy: ['studio:nara', 'techne:m2'],
         invariant: {generates: 'kernel:invoke_action'},
-        note: 'A sitting (manual §24.3): the transport times it, the torus rings its bell through the one instrument\'s own strike, and Stop keeps the time actually sat. Its record is a page in your practice world, made through Central\'s own creation door (projectcentral.source.create; ql/devices/qlSitting.ts). Nothing scores it; today\'s centres are the scene\'s, which no owner carries to the shell yet, and the device says so.',
+        note: 'A sitting (manual §24.3): the transport times it, the torus rings its bell through the one instrument\'s own strike, and Stop keeps the time actually sat. Its record is a page in your practice world, made through Central\'s own creation door (projectcentral.source.create; ql/devices/qlSitting.ts). Nothing scores it; today\'s centres are the scene\'s, read as the Chakra reads them (ql/devices/qlCentres.ts), and absent with the reason when the scene names none.',
       },
       {
         id: 'resonator-bank',

@@ -59,10 +59,11 @@ pub fn central_action(action: &str) -> bool {
 /// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
 /// records, its rollover and its close-out carry; accepting a returned source; making, keeping and removing an agent and a
 /// group; a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Self's Ensure and Relate
-/// (manual §18.1 Ground, "accept it there"). Central admits these on the person's native authority, so the kernel carries the host's token
+/// (manual §18.1 Ground, "accept it there"), its UX and EX relations; the Machine's Apply, Adopt and Recover; Ground hygiene's
+/// tenders (init-root, reproject-scaffold, recognise-source). Central admits these on the person's native authority, so the kernel carries the host's token
 /// for exactly these (flow.rs `for_person`: read in the native process, never supplied by the desk), as it does for Open today
 /// and a page's Launch. Every other invocation goes without it, and Central refuses an act it does not grant in its own words.
-pub const PERSON_ACTS: [&str; 20] = [
+pub const PERSON_ACTS: [&str; 28] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -83,6 +84,14 @@ pub const PERSON_ACTS: [&str; 20] = [
     "projectcentral.self.ensure",
     "projectcentral.self.tier.relate",
     "projectcentral.self.retain-tier",
+    "projectcentral.self.ux.relate",
+    "projectcentral.self.ex.relate",
+    "machine.apply",
+    "machine.adopt-current",
+    "central.recover",
+    "central.init",
+    "central.world.reproject.apply",
+    "projectcentral.ground.apply",
 ];
 
 /// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
@@ -90,11 +99,11 @@ pub fn person_act(action: &str) -> bool {
     PERSON_ACTS.contains(&action)
 }
 
-/// Whether an invocation only reads, so running it moves nothing (owner_write.rs `reads_only`): a Central reading
-/// (read_cache.rs `central_reads`, a Preview included), or a Contemplate Flow press without its `execute` preflight record —
-/// the preflight, which `flow_cognition.rs` runs as `aikit flow preflight`; anything but a record refuses before any owner
-/// call. Every other invocation may write.
-pub fn reads_only(invocation: &ActionInvocation) -> bool {
+/// Whether an invocation only reads, so running it moves nothing (owner_write.rs `reads_only`): a Central action its own
+/// catalogue classes `read-only` (`CentralClient::reads`), or a Contemplate Flow press without its `execute` preflight
+/// record — the preflight, which `flow_cognition.rs` runs as `aikit flow preflight`; anything but a record refuses before
+/// any owner call. Every other invocation may write.
+pub fn reads_only(client: &CentralClient, invocation: &ActionInvocation) -> bool {
     if invocation.action == AIKIT_ACTION_CONTEMPLATE_FLOW {
         return !invocation
             .input
@@ -102,7 +111,86 @@ pub fn reads_only(invocation: &ActionInvocation) -> bool {
             .and_then(|input| input.get("execute"))
             .is_some_and(Value::is_object);
     }
-    crate::read_cache::central_reads(&invocation.action)
+    client.reads(&invocation.action)
+}
+
+/// Central's own word on what each Action does: the `mutation_class` of every id in its catalogue (`action.list`,
+/// `read-only` | `locally-mutating` | `externally-mutating`), read once per Central owner (`CentralClient::owner_identity`)
+/// and kept for the process. An id the kept catalogue does not hold (a newer Central) asks again, at most once a minute.
+struct Catalogue {
+    classes: std::collections::HashMap<String, String>,
+    read_at: std::time::Instant,
+}
+
+fn catalogues() -> &'static std::sync::Mutex<std::collections::HashMap<String, Catalogue>> {
+    static CATALOGUES: std::sync::OnceLock<
+        std::sync::Mutex<std::collections::HashMap<String, Catalogue>>,
+    > = std::sync::OnceLock::new();
+    CATALOGUES.get_or_init(Default::default)
+}
+
+/// How long a catalogue that lacks an id, or that could not be read, stands before Central is asked again.
+const CATALOGUE_RETRY: std::time::Duration = std::time::Duration::from_secs(60);
+
+impl CentralClient {
+    /// Whether a Central action only reads, by Central's own `mutation_class` (`read-only`). Where Central's catalogue
+    /// cannot be read, or does not name the id, the kernel's suffix classification stands in (read_cache.rs
+    /// `central_reads`), and an action it does not recognise is a write.
+    pub(crate) fn reads(&self, action: &str) -> bool {
+        match self.mutation_class(action) {
+            Some(class) => class == "read-only",
+            None => crate::read_cache::central_reads(action),
+        }
+    }
+
+    /// Central's `mutation_class` for an id, from the catalogue kept for this owner.
+    pub(crate) fn mutation_class(&self, action: &str) -> Option<String> {
+        let owner = self.owner_identity();
+        {
+            let kept = catalogues().lock().unwrap_or_else(|e| e.into_inner());
+            if let Some(catalogue) = kept.get(&owner) {
+                if let Some(class) = catalogue.classes.get(action) {
+                    return Some(class.clone());
+                }
+                if catalogue.read_at.elapsed() < CATALOGUE_RETRY {
+                    return None;
+                }
+            }
+        }
+        // Read outside the lock: two first asks may both read; the later answer stands.
+        let classes = self
+            .action_list()
+            .ok()
+            .filter(|envelope| envelope["ok"] == true)
+            .and_then(|envelope| {
+                envelope
+                    .pointer("/data/actions")
+                    .and_then(Value::as_array)
+                    .map(|rows| {
+                        rows.iter()
+                            .filter_map(|row| {
+                                Some((
+                                    row.get("id")?.as_str()?.to_owned(),
+                                    row.get("mutation_class")?.as_str()?.to_owned(),
+                                ))
+                            })
+                            .collect::<std::collections::HashMap<_, _>>()
+                    })
+            })
+            .unwrap_or_default();
+        let class = classes.get(action).cloned();
+        catalogues()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(
+                owner,
+                Catalogue {
+                    classes,
+                    read_at: std::time::Instant::now(),
+                },
+            );
+        class
+    }
 }
 
 /// The native owners this adapter routes disclosed spellings to.
@@ -397,10 +485,28 @@ mod tests {
         ] {
             assert!(person_act(id), "{id} is the person's press");
         }
-        // Their previews and readings carry nothing.
+        // The Self's UX and EX, the Machine's Apply, Adopt and Recover, and Ground hygiene's tenders.
+        for id in [
+            "projectcentral.self.ux.relate",
+            "projectcentral.self.ex.relate",
+            "machine.apply",
+            "machine.adopt-current",
+            "central.recover",
+            "central.init",
+            "central.world.reproject.apply",
+            "projectcentral.ground.apply",
+        ] {
+            assert!(person_act(id), "{id} is the person's press");
+        }
+        // Their previews, plans and readings carry nothing.
         for id in [
             "projectcentral.adopt.preview",
             "projectcentral.self.inspect",
+            "machine.plan",
+            "machine.verify",
+            "central.recovery.plan",
+            "central.world.reproject.plan",
+            "projectcentral.ground.plan",
         ] {
             assert!(!person_act(id), "{id} carries no person authority");
         }

@@ -1,0 +1,192 @@
+{
+  "_source": "Actuation 0.2.1 (~/.local/bin/actuation), captured 21 Oct 2026 against a scratch --store under the session scratchpad; never the owner's ~/.actuation/authority",
+  "record": {
+    "schema": "actuation.local-authority/v1",
+    "authority_source_ref": "authority-source:desk-probe",
+    "holder": "human:owner",
+    "issued_by": "human:owner",
+    "governing_binding": {
+      "schema": "actuation.agency/v1",
+      "binding_ref": "binding:governing",
+      "agent_ref": "agent:governor",
+      "agency_ref": "agency:governing",
+      "world_ref": "world:personal",
+      "scope_ref": "scope:personal",
+      "bounds_refs": [
+        "bound:personal",
+        "bound:project:delegation"
+      ],
+      "authority_refs": [
+        "authority:metagency"
+      ],
+      "return_relation_ref": "return-relation:governing"
+    },
+    "metagency_grant": {
+      "schema": "actuation.agency/v1",
+      "grant_ref": "grant:project-agency",
+      "agency_ref": "agency:governing",
+      "world_binding_ref": "binding:governing",
+      "authority_ref": "authority:metagency",
+      "bounds_refs": [
+        "bound:project:delegation"
+      ],
+      "operations": [
+        "determine-agency"
+      ]
+    },
+    "allowed_world_refs": [
+      "central:project:Example"
+    ],
+    "issued_at_unix_seconds": 1792600000
+  },
+  "issue": {
+    "argv": "actuation authority issue --store <scratch> - --json",
+    "exit": 0,
+    "stdout": {
+      "schema": "actuation.local-authority/v1",
+      "issued": true,
+      "authority_source_ref": "authority-source:desk-probe",
+      "holder": "human:owner",
+      "issued_at_unix_seconds": 1792587108
+    }
+  },
+  "issue_again": {
+    "argv": "actuation authority issue --store <scratch> - --json",
+    "exit": 2,
+    "stderr": "actuation: authority source authority-source:desk-probe already exists (issued at 1792587108, revoked: false); issue a new source ref instead\n"
+  },
+  "revoke": {
+    "argv": "actuation authority revoke authority-source:desk-probe --reason 'probe withdrawn' --store <scratch> --json",
+    "exit": 0,
+    "stdout": {
+      "schema": "actuation.local-authority/v1",
+      "revoked": true,
+      "authority_source_ref": "authority-source:desk-probe",
+      "revoked_at_unix_seconds": 1792587108
+    }
+  },
+  "revoke_again": {
+    "argv": "actuation authority revoke authority-source:desk-probe --store <scratch> --json",
+    "exit": 2,
+    "stderr": "actuation: authority source authority-source:desk-probe is already revoked\n"
+  },
+  "revoke_unknown": {
+    "argv": "actuation authority revoke authority-source:none --store <scratch> --now 1792600000 --json",
+    "exit": 2,
+    "stderr": "actuation: authority source authority-source:none is unknown; nothing to revoke\n"
+  },
+  "list": {
+    "argv": "actuation authority list --store <scratch> --json",
+    "source": "EpiLogos/Actuation#141 (dlw/actuation-authority-list 28def53), built locally; the installed 0.2.1 has no `authority list`",
+    "exit": 0,
+    "stdout": {
+      "schema": "actuation.local-authority-listing/v1",
+      "store": "<scratch store>",
+      "authorities": [
+        {
+          "authority_source_ref": "authority-source:desk-probe",
+          "record": {
+            "schema": "actuation.local-authority/v1",
+            "authority_source_ref": "authority-source:desk-probe",
+            "holder": "human:owner",
+            "issued_by": "human:owner",
+            "governing_binding": {
+              "schema": "actuation.agency/v1",
+              "binding_ref": "binding:governing",
+              "agent_ref": "agent:governor",
+              "agency_ref": "agency:governing",
+              "world_ref": "world:personal",
+              "scope_ref": "scope:personal",
+              "return_relation_ref": "return-relation:governing",
+              "bounds_refs": [
+                "bound:personal",
+                "bound:project:delegation"
+              ],
+              "authority_refs": [
+                "authority:metagency"
+              ]
+            },
+            "metagency_grant": {
+              "schema": "actuation.agency/v1",
+              "grant_ref": "grant:project-agency",
+              "agency_ref": "agency:governing",
+              "world_binding_ref": "binding:governing",
+              "authority_ref": "authority:metagency",
+              "operations": [
+                "determine-agency"
+              ],
+              "bounds_refs": [
+                "bound:project:delegation"
+              ]
+            },
+            "allowed_world_refs": [
+              "central:project:Example"
+            ],
+            "issued_at_unix_seconds": 1792600000,
+            "provenance": []
+          },
+          "issued_at_unix_seconds": 1792587108,
+          "revoked": {
+            "at_unix_seconds": 1792587108,
+            "reason": "probe withdrawn"
+          }
+        },
+        {
+          "authority_source_ref": "authority-source:desk-probe-standing",
+          "record": {
+            "schema": "actuation.local-authority/v1",
+            "authority_source_ref": "authority-source:desk-probe-standing",
+            "holder": "human:owner",
+            "issued_by": "human:owner",
+            "governing_binding": {
+              "schema": "actuation.agency/v1",
+              "binding_ref": "binding:governing",
+              "agent_ref": "agent:governor",
+              "agency_ref": "agency:governing",
+              "world_ref": "world:personal",
+              "scope_ref": "scope:personal",
+              "return_relation_ref": "return-relation:governing",
+              "bounds_refs": [
+                "bound:personal",
+                "bound:project:delegation"
+              ],
+              "authority_refs": [
+                "authority:metagency"
+              ]
+            },
+            "metagency_grant": {
+              "schema": "actuation.agency/v1",
+              "grant_ref": "grant:project-agency",
+              "agency_ref": "agency:governing",
+              "world_binding_ref": "binding:governing",
+              "authority_ref": "authority:metagency",
+              "operations": [
+                "determine-agency"
+              ],
+              "bounds_refs": [
+                "bound:project:delegation"
+              ]
+            },
+            "allowed_world_refs": [
+              "central:project:Example"
+            ],
+            "issued_at_unix_seconds": 1792600000,
+            "provenance": []
+          },
+          "issued_at_unix_seconds": 1792600200
+        }
+      ],
+      "invalid": []
+    }
+  },
+  "list_extra": {
+    "argv": "actuation authority list extra --store <scratch> --json",
+    "exit": 2,
+    "stderr": "actuation: authority list takes only --store; extra is not one of its arguments\n"
+  },
+  "list_installed_0_2_1": {
+    "argv": "actuation authority list --json (installed 0.2.1)",
+    "exit": 2,
+    "stderr": "actuation: unknown command authority; run actuation help\n"
+  }
+}

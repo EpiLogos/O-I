@@ -58,6 +58,16 @@ pub enum Operation {
     },
 }
 
+/// One ask of QL's generation law (`ql kernel m3` `GenerationAt`): a hexagram, and a matrix family index
+/// (0..3; the state's chosen matrix when absent). Carried verbatim; QL refuses what it does not admit.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct GenerationAt {
+    pub hexagram: u8,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub family: Option<u8>,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
@@ -68,6 +78,11 @@ pub enum Request {
     },
     Read {
         binding: nara_dialogue::Request,
+        /// Cells of the generation law at other hexagrams (the Deck's cast), asked of the current state
+        /// in QL's own spelling (`ql kernel m3` `generation_at: [{hexagram, family?}]`): a read that moves
+        /// no generation; the answer's `generation_at` carries QL's readings in the order asked.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        generation_at: Option<Vec<GenerationAt>>,
     },
     SelectActivityPolicy {
         binding: nara_dialogue::Request,
@@ -85,7 +100,7 @@ impl Request {
     pub fn binding(&self) -> &nara_dialogue::Request {
         match self {
             Self::Open { binding, .. }
-            | Self::Read { binding }
+            | Self::Read { binding, .. }
             | Self::Apply { binding, .. }
             | Self::SelectActivityPolicy { binding, .. } => binding,
         }
@@ -208,6 +223,33 @@ impl Prepared {
         let expected_revision = self.existing.as_ref().map(|r| r.revision.clone());
         let mut candidate = None;
         let mut current_candidate = None;
+        // The Deck's cast: cells at other hexagrams, read by replaying the current state's own
+        // input with QL's `generation_at`; nothing is kept from the replay but those readings.
+        let mut generation_at = None;
+        if let Request::Read {
+            generation_at: Some(asks),
+            ..
+        } = &self.request
+        {
+            let resident = active.ok_or(
+                "No current M3 state exists for this identity, Expression, profile and event",
+            )?;
+            let prior =
+                pin.ok_or("Pin the actual personal current event before asking a generation cell")?;
+            let mut input = resident.input.clone();
+            input["generation_at"] = serde_json::to_value(asks).map_err(|e| e.to_string())?;
+            let reading = prior.run_native_m3(&input)?;
+            let cells = reading["generation_at"]
+                .as_array()
+                .filter(|cells| {
+                    cells.len() == asks.len()
+                        && cells
+                            .iter()
+                            .all(|cell| cell["law_ref"] == "ql.pole.m3-generation-law/v1")
+                })
+                .ok_or("QL answered without the generation cells asked for")?;
+            generation_at = Some(Value::Array(cells.clone()));
+        }
         if !matches!(self.request, Request::Read { .. }) {
             let event = current["event_ref"]
                 .as_str()
@@ -340,7 +382,7 @@ impl Prepared {
             });
         }
         let visible = candidate.as_ref().or(active);
-        let data = json!({"schema":"oi.m3-reception-context/v1","status":if visible.is_some(){"available"}else{"absent"},
+        let mut data = json!({"schema":"oi.m3-reception-context/v1","status":if visible.is_some(){"available"}else{"absent"},
             "nara_ref":binding.nara_ref,"person_ref":binding.person_ref,"expression_ref":binding.expression_ref,
             "expression_revision":self.document["revision"],"identity_source_ref":binding.source_ref,"identity_revision":binding.expected_revision,
             "profile_ref":context["context"]["profile_ref"],"profile_revision":context["context"]["profile_revision"],
@@ -349,6 +391,9 @@ impl Prepared {
             "activity_policy":visible.map(|r|&r.input["activity_policy"]),"activity":visible.map(|r|&r.reading["activity"]),
             "personal_current":current_candidate.as_ref().or(pin).map(|p|json!({"context":p.context(),"reading":p.reading()})),
             "private":true,"public_export":false,"activity_admitted":visible.is_some_and(|r|r.reading["activity"]["status"]=="available")});
+        if let Some(cells) = generation_at {
+            data["generation_at"] = cells;
+        }
         Ok(Completed {
             project: self.project,
             binding,
@@ -366,7 +411,7 @@ impl Prepared {
 
 #[cfg(test)]
 mod tests {
-    use super::Operation;
+    use super::{GenerationAt, Operation};
 
     /// Each operation travels in QL's own spelling (`ql.m3-command/v1`
     /// `operations`, `M3Operation`): the kernel carries it, never renames it.
@@ -390,6 +435,32 @@ mod tests {
         }
         assert!(serde_json::from_value::<Operation>(
             serde_json::json!({"operation": "set-matrix", "family": 1, "turn": true})
+        )
+        .is_err());
+    }
+
+    /// The Deck's asks travel in QL's spelling (`ql kernel m3` `generation_at:
+    /// [{hexagram, family?}]`); a read that asks none carries no field.
+    #[test]
+    fn generation_asks_travel_in_qls_own_spelling() {
+        let asks = serde_json::json!([{"hexagram": 17, "family": 1}, {"hexagram": 63}]);
+        let parsed: Vec<GenerationAt> = serde_json::from_value(asks.clone()).unwrap();
+        assert_eq!(
+            parsed,
+            vec![
+                GenerationAt {
+                    hexagram: 17,
+                    family: Some(1)
+                },
+                GenerationAt {
+                    hexagram: 63,
+                    family: None
+                },
+            ]
+        );
+        assert_eq!(serde_json::to_value(&parsed).unwrap(), asks);
+        assert!(serde_json::from_value::<GenerationAt>(
+            serde_json::json!({"hexagram": 1, "matrix": 2})
         )
         .is_err());
     }

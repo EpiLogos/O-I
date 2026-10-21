@@ -1,0 +1,444 @@
+{
+ "captured": "Quaternal Logic 0.1.0 (installed 2c041e9e…), 21 Oct 2026, read only: each command with --json; `vak locate NOPE` refused (exit 2)",
+ "mef_lenses": {
+  "command": [
+   "ql",
+   "mef",
+   "lenses",
+   "--json"
+  ],
+  "answer": {
+   "registryVersion": "1.0.0-q2",
+   "registryRevision": 1,
+   "lenses": [
+    {
+     "lensRef": "mef:lens:L0@1",
+     "code": "L0",
+     "name": "Quaternal",
+     "face": "day",
+     "square": "articulation"
+    },
+    {
+     "lensRef": "mef:lens:L0'@1",
+     "code": "L0'",
+     "name": "Archetypal-Numerical",
+     "face": "night",
+     "square": "articulation"
+    },
+    {
+     "lensRef": "mef:lens:L1@1",
+     "code": "L1",
+     "name": "Causal",
+     "face": "day",
+     "square": "encounter"
+    },
+    {
+     "lensRef": "mef:lens:L1'@1",
+     "code": "L1'",
+     "name": "Phenomenal",
+     "face": "night",
+     "square": "encounter"
+    },
+    {
+     "lensRef": "mef:lens:L2@1",
+     "code": "L2",
+     "name": "Logical",
+     "face": "day",
+     "square": "becoming"
+    },
+    {
+     "lensRef": "mef:lens:L2'@1",
+     "code": "L2'",
+     "name": "Alchemical-Elemental",
+     "face": "night",
+     "square": "becoming"
+    },
+    {
+     "lensRef": "mef:lens:L3@1",
+     "code": "L3",
+     "name": "Processual",
+     "face": "day",
+     "square": "becoming"
+    },
+    {
+     "lensRef": "mef:lens:L3'@1",
+     "code": "L3'",
+     "name": "Chronological",
+     "face": "night",
+     "square": "becoming"
+    },
+    {
+     "lensRef": "mef:lens:L4@1",
+     "code": "L4",
+     "name": "Phenomenological",
+     "face": "day",
+     "square": "encounter"
+    },
+    {
+     "lensRef": "mef:lens:L4'@1",
+     "code": "L4'",
+     "name": "Scientific",
+     "face": "night",
+     "square": "encounter"
+    },
+    {
+     "lensRef": "mef:lens:L5@1",
+     "code": "L5",
+     "name": "Para Vāk",
+     "face": "day",
+     "square": "articulation"
+    },
+    {
+     "lensRef": "mef:lens:L5'@1",
+     "code": "L5'",
+     "name": "Divine Logos",
+     "face": "night",
+     "square": "articulation"
+    }
+   ]
+  }
+ },
+ "context_frame_list": {
+  "command": [
+   "ql",
+   "context-frame",
+   "list",
+   "--json"
+  ],
+  "answer": {
+   "grammarVersion": "1.0.0",
+   "frames": [
+    {
+     "code": "CF1",
+     "expression": "(00/00)",
+     "name": "Fourfold-Zero / undifferentiated-ground"
+    },
+    {
+     "code": "CF2",
+     "expression": "(0/1)",
+     "name": "Non-Dual Anchor / standing-identity"
+    },
+    {
+     "code": "CF3",
+     "expression": "(0/1/2)",
+     "name": "Dual-Non-Dual / triadic-circulation"
+    },
+    {
+     "code": "CF4",
+     "expression": "(0/1/2/3)",
+     "name": "Trinitarian / tetradic-prehensive-closure"
+    },
+    {
+     "code": "CF5",
+     "expression": "(4.0/1-4.4/5)",
+     "name": "Fractal-Doubling Executive"
+    },
+    {
+     "code": "CF6",
+     "expression": "(4.5/0)",
+     "name": ".5 Bridge"
+    },
+    {
+     "code": "CF7",
+     "expression": "(5/0)",
+     "name": "Total Synthesis / Mobius cyclic-closure-and-reopening"
+    }
+   ]
+  }
+ },
+ "service_capabilities": {
+  "command": [
+   "ql",
+   "service",
+   "capabilities",
+   "--json"
+  ],
+  "answer": {
+   "providerState": "available",
+   "detail": null,
+   "operations": [
+    {
+     "operation": "capabilities",
+     "supported": true,
+     "deterministic": true
+    },
+    {
+     "operation": "locate",
+     "supported": true,
+     "deterministic": true
+    },
+    {
+     "operation": "refract",
+     "supported": true,
+     "deterministic": true
+    },
+    {
+     "operation": "relate",
+     "supported": false,
+     "deterministic": false
+    },
+    {
+     "operation": "synthesise",
+     "supported": false,
+     "deterministic": false
+    }
+   ]
+  }
+ },
+ "kernel_apply": {
+  "command": [
+   "ql",
+   "kernel",
+   "apply",
+   "conjugate-address",
+   "qladdr:sixfold@1/direct/P5/d0",
+   "--json"
+  ],
+  "answer": {
+   "contract": "ql.cli/v1",
+   "operation": "conjugate-address",
+   "input": "qladdr:sixfold@1/direct/P5/d0",
+   "output": "qladdr:sixfold@1/conjugate/P5/d0",
+   "schemaVersion": "1.0.0",
+   "kernelVersion": "0.1.0-q1"
+  }
+ },
+ "vak_locate": {
+  "command": [
+   "ql",
+   "vak",
+   "locate",
+   "M0",
+   "--json"
+  ],
+  "answer": {
+   "vakRef": "M0",
+   "name": "Anuttara",
+   "symbol": null,
+   "primaryDesignation": "Subsystem #0 - The Foundational Void - Proto-Logy - The Ever-Present Origin",
+   "standing": "SOURCE",
+   "sourceLine": 21
+  },
+  "refusal_stderr": "ql: invalid Vāk ref `NOPE`",
+  "refusal_exit": 2
+ },
+ "techne_reading": {
+  "command": [
+   "ql",
+   "techne",
+   "reading",
+   "/dev/stdin",
+   "--json"
+  ],
+  "input": {
+   "kind": "frame",
+   "target_ref": "example:frame",
+   "target_snapshot_hash": "sha256:techne-reading-fixture",
+   "provenance": [
+    {
+     "source_ref": "example:source"
+    }
+   ],
+   "subjects": [],
+   "relations": [],
+   "material": {},
+   "extensions": {
+    "ql-mef/shape-binding/v1": {
+     "basis_refs": [
+      "example:a",
+      "example:b",
+      "example:c"
+     ],
+     "derivation_ref": "ql:shape:1.1.0:compression:3-to-1-recognition:from:ql:shape:1.0.0:constellation:threefold-123",
+     "members": [
+      {
+       "face": "direct",
+       "position": 1,
+       "subject_ref": "example:a"
+      },
+      {
+       "face": "direct",
+       "position": 2,
+       "subject_ref": "example:b"
+      },
+      {
+       "face": "direct",
+       "position": 3,
+       "subject_ref": "example:c"
+      }
+     ],
+     "operator_ref": "ql:shape:1.1.0:compression:3-to-1-recognition",
+     "provenance": {
+      "caller_ref": "ql-cli:techne-reading-fixture",
+      "source_ref": "example:source",
+      "standing_ref": "AUTHORED-ARCHITECTURE"
+     },
+     "return_refs": [
+      "example:return"
+     ],
+     "shape_ref": "ql:shape:1.0.0:constellation:anchor-only",
+     "subject_ref": "example:frame",
+     "whole_ref": "example:whole-anchor"
+    }
+   }
+  },
+  "answer": {
+   "contract": "ql.techne/v1",
+   "reading": {
+    "actions": [],
+    "agency": [],
+    "contract": "ql.techne/v1",
+    "disclosure": {
+     "application_cuts": [],
+     "degraded": [],
+     "instruments": [
+      {
+       "available": true,
+       "instrument": "project",
+       "reading": "4:2-deep",
+       "reason": null
+      },
+      {
+       "available": true,
+       "instrument": "canvas",
+       "reading": "4:2-deep",
+       "reason": null
+      },
+      {
+       "available": false,
+       "instrument": "timeline",
+       "reading": "4:2-deep",
+       "reason": "no live temporal producer is attached to this subject (native owner: Factory/AIKit T1)"
+      },
+      {
+       "available": false,
+       "instrument": "journey",
+       "reading": "4:2-deep",
+       "reason": "no source-backed Expression Scenes are composed for this subject"
+      },
+      {
+       "available": false,
+       "instrument": "place",
+       "reading": "4:2-deep",
+       "reason": "no place facets are disclosed for this subject"
+      },
+      {
+       "available": false,
+       "instrument": "palace",
+       "reading": "4:2-deep",
+       "reason": "Palace producer is not landed (native owner: O-I #218)"
+      },
+      {
+       "available": false,
+       "instrument": "expressions",
+       "reading": "3:3-conjugate",
+       "reason": "no Expression binding is disclosed for this subject"
+      }
+     ],
+     "suggestions": []
+    },
+    "expressions": [],
+    "provenance": [
+     {
+      "evidence_refs": [],
+      "native_owner": "ql-mef/wiki",
+      "selector": null,
+      "source_ref": "example:source",
+      "source_revision": null,
+      "standing": null
+     }
+    ],
+    "ql": {
+     "address": "example:frame",
+     "constellation_ref": null,
+     "context_frame_ref": null,
+     "derivation_refs": [
+      "ql:shape:1.1.0:compression:3-to-1-recognition",
+      "ql:shape:1.1.0:compression:3-to-1-recognition:from:ql:shape:1.0.0:constellation:threefold-123"
+     ],
+     "geometric_reading": null,
+     "harmonic_reading": null,
+     "lens_ref": "mef:lens:L1@1",
+     "m_coordinate_ref": null,
+     "refraction_summary": "Causal refractive reading of example:frame:complete",
+     "return_ref": null,
+     "shape_ref": "ql:shape:1.0.0:constellation:anchor-only",
+     "sublens_ref": null,
+     "vak_source_ref": null,
+     "warrant": {
+      "evidence_refs": [
+       "ql-mef:reading:registry:example-frame:L1",
+       "example:whole-anchor"
+      ],
+      "provenance_ref": "ql-mef:provider:registry-disclosure:1.0.0",
+      "result_class": "deterministic"
+     }
+    },
+    "reading_ref": "ql.techne/v1:ql-mef:reading:registry:example-frame:L1",
+    "snapshot": {
+     "basis_ref": "sha256:techne-reading-fixture",
+     "revision": null
+    },
+    "spatial": [],
+    "subject": {
+     "kind": "MEF-derived",
+     "native_owner": "ql-mef/wiki",
+     "native_revision": null,
+     "readings": [
+      {
+       "ref": "ql-mef:reading:registry:example-frame:L1",
+       "revision": null
+      }
+     ],
+     "standing": null,
+     "subject_ref": "example:frame"
+    },
+    "temporal": [],
+    "whole": {
+     "focus_refs": [],
+     "member_refs": [
+      "example:a",
+      "example:b",
+      "example:c"
+     ],
+     "relations": [],
+     "whole_ref": "example:whole-anchor"
+    }
+   },
+   "selections": [
+    {
+     "agent_session_ref": null,
+     "coordinate_ref": "example:frame",
+     "disclosure_ref": "ql.techne/v1:ql-mef:reading:registry:example-frame:L1",
+     "focus_refs": [],
+     "instrument": "project",
+     "reading_ref": "mef:lens:L1@1",
+     "selection_ref": "ql.techne/v1:ql-mef:reading:registry:example-frame:L1:ground",
+     "selection_standing": null,
+     "snapshot_revision": null,
+     "source_ref": "example:source",
+     "source_revision": null,
+     "subject_ref": "example:frame"
+    },
+    {
+     "agent_session_ref": null,
+     "coordinate_ref": "example:frame",
+     "disclosure_ref": "ql.techne/v1:ql-mef:reading:registry:example-frame:L1",
+     "focus_refs": [
+      "example:a",
+      "example:b",
+      "example:c"
+     ],
+     "instrument": "canvas",
+     "reading_ref": "mef:lens:L1@1",
+     "selection_ref": "ql.techne/v1:ql-mef:reading:registry:example-frame:L1:canvas:example:whole-anchor",
+     "selection_standing": null,
+     "snapshot_revision": null,
+     "source_ref": "example:source",
+     "source_revision": null,
+     "subject_ref": "example:frame"
+    }
+   ]
+  }
+ }
+}

@@ -89,7 +89,7 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   // agentset rack since lane BF3).
   const factory = schema.inhabitantManifest('software-factory')
   assert.deepEqual(factory.faces.map(face => face.id),
-    ['agent-custody', 'context-write-mode', 'ledger', 'approvals', 'run-device', 'thread', 'tasks', 'agentset-rack', 'attempt-review'])
+    ['agent-custody', 'context-write-mode', 'ledger', 'approvals', 'run-device', 'thread', 'tasks', 'agentset-rack', 'run-map', 'prompt-pads', 'attempt-review'])
   // Idempotent: a second load changes nothing.
   world.loadWorldShellFamilies()
   assert.equal(JSON.stringify(schema.inhabitantManifest('central')), JSON.stringify(central))

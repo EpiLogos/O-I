@@ -139,7 +139,7 @@ test('the Day\'s close-out stays absent naming its owner\'s missing route: Centr
 
 // ── 3. Notifications (design package D10) ───────────────────────────────────────────────────────────────────────────────────────────
 
-test('Notifications: a monitor on the rail and in a pane; Messages\' waiting agents and Approvals\' queue read off their own devices; requests and the provider absent naming personal.notify', async () => {
+test('Notifications: a monitor on the rail and in a pane; Messages\' waiting agents and Approvals\' queue read off their own devices; before Central answers, requests and the provider absent naming its reading', async () => {
   const rail = await import('../src/widgets/railBindings.ts')
   const {design} = await import('../src/inhabitants/catalogue/panels/widgets__notifications.tsx')
   assert.equal(design.kind, 'monitor')
@@ -157,10 +157,10 @@ test('Notifications: a monitor on the rail and in a pane; Messages\' waiting age
     {local: {show: v => { held.show = v }}, messages: () => opened.push('messages'), approvals: () => opened.push('approvals')})
   assert.deepEqual([binding.values.show, binding.values.follow], ['all', true], 'Show All and Follow On (§23.9)')
   for (const key of ['requests', 'provider']) assert.equal(binding.values[key], undefined, `${key}: absent`)
-  for (const key of ['requests', 'provider']) assert.match(rail.NOTIFICATIONS_ABSENT[key], /personal\.notify/)
+  for (const key of ['requests', 'provider']) assert.match(rail.NOTIFICATIONS_ABSENT[key], /personal\.notifications\.list/)
   binding.local.messages(true); binding.local.approvals(true)
   assert.deepEqual(opened, ['messages', 'approvals'], 'Messages ▸ and Approvals ▸ open the devices; nothing is written')
-  await assert.rejects(binding.write([{key: 'open', value: 'n1'}]), /personal\.notify/)
+  await assert.rejects(binding.write([{key: 'open', value: 'n1'}]), /personal\.notifications\.list/)
   const keys = designKeys(design)
   const local = ['show', 'follow', 'selected', 'opened', 'now'], read = ['waiting', 'proposals'], absent = ['requests', 'provider']
   assert.deepEqual([...keys].sort(), [...local, ...read, ...absent].sort(), 'every key: the view\'s own, a reading, or absent with its reason')

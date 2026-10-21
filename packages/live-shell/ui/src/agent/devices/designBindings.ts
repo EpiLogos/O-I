@@ -25,6 +25,7 @@ import {gatewayDisclosed, type AgentChainReading} from './agentChainDevices'
 import type {OwnerAcceptedValues} from './ownerAccepted'
 import type {TaskClip, TemporalEventLike} from '../agentRunModel'
 import {runStateOfSession, stageRecordingOf, threadRowsFrom} from './runFaces'
+import {armedOf, bypassesOf, contextPressureOf, historyOf, proceduresOf, rootsOf, unusedOf, whyOf, type AikitAnswer} from './aikitPages'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -114,6 +115,16 @@ const REFUSE = {
  * control disabled with its reason (DesignBinding.standing; DEVICE-UI §6 "disabled"), so nothing is pressed only to be refused. */
 const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>
   Object.fromEntries(Object.entries(reasons).map(([key, why]) => [key, {disabled: why}]))
+
+/** The Agent's Context page (lanes W7, W8; D5, actuation__harness-model.tsx `ctx.pressure`, `ctx.armed`, `ctx.turn`): AIKit's continuity,
+ * read through the kernel's aikit_read {continuity-pressure, continuity-commands} (aikitPages.ts) where the chain hands them in; the last
+ * turn's bounded blocks no command reports (T-COVERAGE §1.5, AIKit: "a read of the last turn's bounded blocks (Context)"). Why each is
+ * absent when it is. */
+export const AGENT_CONTEXT_ABSENT: Readonly<Record<string, string>> = {
+  'ctx.pressure': 'The context pressure: AIKit\'s continuity is not read here (`aikit work continuity pressure` through the kernel\'s aikit_read).',
+  'ctx.armed': 'The star commands armed: AIKit\'s continuity is not read here (`aikit work continuity commands` through the kernel\'s aikit_read).',
+  'ctx.turn': 'The last turn\'s bounded blocks: no reading reaches them yet — missing op: a read of the last turn\'s bounded blocks (AIKit writes them only into the turn\'s own hook output; T-COVERAGE §1.5, AIKit) (AIKit).',
+}
 
 /** Each chain design's refused writes, by key (the refusals its binding's write gives, below). The Agent's light is among them since
  * the kit's activator says why it only reads (inhabitants/sdk/panel.tsx Panel `lightWhy`, c5afc4aa0): the design stands its activator
@@ -285,10 +296,29 @@ export interface AgentInput {
   readonly harnesses?: readonly string[] | null
   /** The kernel's temporal events (the sessions provider's one read): the session's run as the stage plays it. */
   readonly events?: readonly TemporalEventLike[] | null
+  /** AIKit's continuity for the Context page (aikitPages.ts): `aikit work continuity pressure` and `commands`; absent: not read here. */
+  readonly context?: {readonly pressure: AikitAnswer; readonly commands: AikitAnswer}
 }
 
 /** The Agent's values: each key from the owner that reports it, or absent. */
+/** Why each Context key the values lack is absent: AIKit's refusal, its silence, or no reading handed in; the last turn always. */
+function contextStanding(context: AgentInput['context'], values: Values): Record<string, string> {
+  const why = (answer: AikitAnswer | undefined, key: string) => (answer?.status === 'refused' ? answer.error ?? AGENT_CONTEXT_ABSENT[key]!
+    : answer?.status === 'reading' ? 'AIKit has not answered its continuity yet (`aikit work continuity`).' : answer ? `\`aikit work continuity\` answered no ${key === 'ctx.armed' ? 'armed list' : 'brackets'}.` : AGENT_CONTEXT_ABSENT[key]!)
+  return {'ctx.turn': AGENT_CONTEXT_ABSENT['ctx.turn']!, ...('ctx.pressure' in values ? {} : {'ctx.pressure': why(context?.pressure, 'ctx.pressure')}),
+    ...('ctx.armed' in values ? {} : {'ctx.armed': why(context?.commands, 'ctx.armed')})}
+}
+
 export function agentValues(input: AgentInput): Values {
+  const values = agentOwnValues(input)
+  const pressure = input.context?.pressure.status === 'answered' ? contextPressureOf(input.context.pressure.value) : null
+  if (pressure) values['ctx.pressure'] = JSON.stringify(pressure)
+  const armed = input.context?.commands.status === 'answered' ? armedOf(input.context.commands.value) : null
+  if (armed) values['ctx.armed'] = JSON.stringify(armed)
+  return values
+}
+
+function agentOwnValues(input: AgentInput): Record<string, Value> {
   const {sessionRef, track, reading, accepted, harness, holds: held} = input
   const values: Record<string, Value> = {}
   // The light: the owner's task record for the selected session ("attached", agentChainDevices.ts LIGHT_KEY). Nothing reports a
@@ -369,7 +399,7 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
   return {
     id,
     values,
-    standing: 'run' in values ? disabled(REFUSED_WRITES[AGENT_DESIGN]!) : {...disabled(REFUSED_WRITES[AGENT_DESIGN]!), run: {disabled: RUN_UNREAD}},
+    standing: {...disabled(contextStanding(input.context, values)), ...disabled(REFUSED_WRITES[AGENT_DESIGN]!), ...('run' in values ? {} : {run: {disabled: RUN_UNREAD}})},
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
@@ -612,26 +642,115 @@ async function compose(change: ValueChange, ports: ComposePorts | null, place: {
 
 // `members` stands for the chain list's request squares (skills.tsx ChainList reads st(p, 'members')): each request is its own
 // `req:<id>` key, so `members` is no reading the host should draw disabled; a write of the list itself is refused as a reading.
-const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members'].includes(key)
+// The rack's upkeep pages (lanes W7, W8; D5, skills.tsx: Set's Unused filter, Sources, Adopt, Procedures): AIKit's `unused`, `collate`,
+// `adopt` (its plan, without --yes), `procedure list` and `bypass list`, read through the kernel's aikit_read (lane W3 round 3) where the
+// chain stands (aikitPages.ts maps each answer; FactoryDeviceChain.tsx reads them); Sync, Promote, Rollback, Undo and Revoke write through
+// aikit_write on the thing the page chose. What no route carries stays disabled naming it: a listing of the sources' ids, an adoption
+// applied against the digest you reviewed, a procedure run, a bypass issue. The pages' settings are the hand's own holds.
+const aikitUnread = (what: string, op: string) => `${what}: no reading reaches it yet — missing op: ${op} through the kernel (AIKit).`
+const aikitMissing = (what: string, op: string) => missing(what, `${op} through the kernel`, 'AIKit')
+/** Why each upkeep reading is absent when nothing is handed in (lane W8 reads them through aikit_read where the chain stands). */
+export const RACK_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
+  unused: 'The members never seen used: AIKit\'s `aikit unused` is not read here.',
+  sources: aikitUnread('The sources the practice comes from', 'a listing of AIKit\'s registered sources (`aikit source show` reads one source by its id, and no route lists their ids)'),
+  roots: 'The skill trees AIKit does not own: AIKit\'s `aikit collate` is not read here.',
+  adoption: 'The adoption plan: choose a root and press Preview (`aikit adopt <root> --namespace <ns>` without --yes, a plan; nothing moves).',
+  procedures: 'The changes AIKit made to the machine: AIKit\'s `aikit procedure list` is not read here.',
+  bypasses: 'The hook bypasses: AIKit\'s `aikit bypass list` is not read here.',
+}
+/** The acts that stay refused, each naming what it lacks (lane W3 round 3 routes source sync|promote|rollback, procedure undo and bypass
+ * revoke; it routes no procedure run, no bypass issue, and an adoption with no digest to check). */
+export const RACK_UPKEEP_REFUSE: Readonly<Record<string, string>> = {
+  adoptApply: aikitMissing('Apply', '`aikit adopt <root> --yes --expect-digest <digest>` (the kernel\'s aikit_write adopt carries no digest, so it would apply whatever the plan is now, not the plan you reviewed)'),
+  procRun: aikitMissing('Run', '`aikit procedure run <id> --expect-digest <digest>` (not routed)'),
+  issue: aikitMissing('Issue a bypass', '`aikit bypass issue` (not routed: it mints a secret)'),
+}
+/** The acts routed to AIKit's own commands (aikit_write), each a person's press on the thing the page chose. */
+export const RACK_UPKEEP_WRITES: Readonly<Record<string, string>> = {
+  sync: 'source-sync', promote: 'source-promote', rollback: 'source-rollback', procUndo: 'procedure-undo', revoke: 'bypass-revoke',
+}
+/** AIKit's upkeep readings as the rack's chain holds them (workcellReads.ts useAikitRead). */
+export interface RackUpkeep {
+  readonly unused?: AikitAnswer
+  readonly collate?: AikitAnswer
+  readonly bypasses?: AikitAnswer
+  readonly procedures?: AikitAnswer
+  /** The adoption plan for the root chosen (`aikit adopt <root>` without --yes); absent while no root is chosen. */
+  readonly adoption?: AikitAnswer
+  /** AIKit's writes through the kernel (aikit_write). Absent: no carrier stands. */
+  readonly write?: (request: {kind: string; [field: string]: unknown}) => Promise<unknown>
+}
+
+/** The adoption plan as the design reads it ({root, namespace, digest, isolation, items}), each field where AIKit names it. Pure. */
+export function adoptionOf(plan: unknown): Record<string, unknown> | null {
+  if (!isObj(plan)) return null
+  const items = Array.isArray(plan.items) ? plan.items.filter(isObj) : null
+  const kept = Object.fromEntries((['root', 'namespace', 'digest', 'isolation'] as const).flatMap(key => (typeof plan[key] === 'string' ? [[key, plan[key]]] : [])))
+  return Object.keys(kept).length || items ? {...kept, ...(items ? {items} : {})} : null
+}
+
+/** The upkeep pages' settings: the hand's own holds (skills.tsx: unusedOnly, source, adoptRoot, namespace, procedure, bypassScope, bypassReason). */
+export const RACK_UPKEEP_SETTINGS: readonly string[] = ['unusedOnly', 'source', 'adoptRoot', 'namespace', 'procedure', 'bypassScope', 'bypassReason']
+
+const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members', 'adoptPreview'].includes(key)
+  || key in RACK_UPKEEP_REFUSE || key in RACK_UPKEEP_WRITES
 
 export interface RackPlace {readonly project: string; readonly sessionRef: string | null}
 
 /** The Skillset rack's binding: every control is an AIKit operation through the configuration plane, or refused by name. */
-export function rackBinding(id: string, input: RackInput, ports: ComposePorts | null, place: RackPlace): DesignBinding {
+export function rackBinding(id: string, input: RackInput, ports: ComposePorts | null, place: RackPlace, upkeep: RackUpkeep = {}): DesignBinding {
+  const values: Record<string, Value> = {...rackValues(input)}
+  const view = viewHolds(input.holds, id)
+  for (const key of RACK_UPKEEP_SETTINGS) put(values, key, view[key])
+  const read = <T>(answer: AikitAnswer | undefined, map: (value: unknown) => T | null): T | null => (answer?.status === 'answered' ? map(answer.value) : null)
+  const unused = read(upkeep.unused, unusedOf), roots = read(upkeep.collate, rootsOf), bypasses = read(upkeep.bypasses, bypassesOf)
+  const procedures = read(upkeep.procedures, proceduresOf), adoption = read(upkeep.adoption, adoptionOf)
+  if (unused) values.unused = JSON.stringify(unused)
+  if (roots) values.roots = JSON.stringify(roots)
+  if (bypasses) values.bypasses = JSON.stringify(bypasses)
+  if (procedures) values.procedures = JSON.stringify(procedures)
+  if (adoption) values.adoption = JSON.stringify(adoption)
+  const standing: Record<string, Standing> = {...disabled(RACK_UPKEEP_REFUSE), ...disabled(REFUSED_WRITES[RACK_DESIGN]!)}
+  const absentWhy = (key: string, answer: AikitAnswer | undefined) => (answer?.status === 'refused' ? answer.error ?? RACK_UPKEEP_ABSENT[key]!
+    : answer?.status === 'reading' ? `AIKit has not answered yet (${RACK_UPKEEP_ABSENT[key]!.split(': ')[1] ?? key}).` : answer ? `AIKit answered something other than ${key}.` : RACK_UPKEEP_ABSENT[key]!)
+  for (const [key, answer] of [['unused', upkeep.unused], ['roots', upkeep.collate], ['bypasses', upkeep.bypasses], ['procedures', upkeep.procedures], ['adoption', upkeep.adoption]] as const) {
+    if (!(key in values)) standing[key] = {disabled: absentWhy(key, answer)}
+  }
+  standing.sources = {disabled: RACK_UPKEEP_ABSENT.sources!}
+  const noCarrier = 'The kernel carrier is unavailable here, so AIKit cannot be asked (aikit_write).'
+  for (const key of ['sync', 'promote', 'rollback']) standing[key] = {disabled: !upkeep.write ? noCarrier : RACK_UPKEEP_ABSENT.sources!}
+  if (!upkeep.write) for (const key of ['procUndo', 'revoke']) standing[key] = {disabled: noCarrier}
+  else {
+    if (!procedures) standing.procUndo = {disabled: standing.procedures?.disabled ?? 'No procedure is read.'}
+    if (!bypasses) standing.revoke = {disabled: standing.bypasses?.disabled ?? 'No bypass is read.'}
+  }
+  /** One of AIKit's upkeep writes on the thing the page chose; its refusal is AIKit's own words. */
+  const upkeepWrite = async (key: string, value: Value | undefined) => {
+    if (standing[key]?.disabled) throw Error(standing[key]!.disabled!)
+    if (typeof value !== 'string' || !value) throw Error(`${key}: choose what it acts on first.`)
+    const kind = RACK_UPKEEP_WRITES[key]!
+    if (key === 'procUndo' && !procedures?.some(row => row.id === value)) throw Error('Undo: that procedure is not in AIKit\'s list.')
+    if (key === 'revoke' && !bypasses?.some(row => row.id === value)) throw Error('Revoke: that bypass is not in AIKit\'s list.')
+    await upkeep.write!(kind === 'procedure-undo' ? {kind, procedure: value} : {kind, id: value})
+  }
   return {
     id,
-    values: rackValues(input),
-    standing: disabled(REFUSED_WRITES[RACK_DESIGN]!),
+    values,
+    standing,
+    local: Object.fromEntries(RACK_UPKEEP_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(id, key, value)])),
     writes: RACK_WRITES,
     write: async changes => {
       for (const change of changes) {
         if (await compose(change, ports, place)) continue
+        if (change.key in RACK_UPKEEP_WRITES) { await upkeepWrite(change.key, change.value); continue }
         switch (change.key) {
           // The package target is your choice for the next export, held here; Export itself has no carrier.
           case 'target': updateHolds(was => ({...was, compose: {...was.compose, target: String(change.value)}})); break
+          // Preview: the root chosen, whose plan the chain then reads (a reading, never a write).
+          case 'adoptPreview': holdView(id, 'adoptRoot', typeof change.value === 'string' && change.value ? change.value : undefined); break
           case 'exported': throw Error(REFUSE.export)
           case 'set': throw Error(REFUSE.set)
-          default: throw Error(REFUSE.reading(change.key))
+          default: throw Error(RACK_UPKEEP_REFUSE[change.key] ?? REFUSE.reading(change.key))
         }
       }
     },
@@ -658,24 +777,56 @@ export function memberChains(rack: Values): {ref: string}[] | null {
   return typeof rack.members === 'string' ? (JSON.parse(rack.members) as Member[]).map(m => ({ref: m.id})) : null
 }
 
-const MEMBER_WRITES = new Set(['requested', 'reviewed', 'run', 'proved'])
+// The member's upkeep pages (lanes W7, W8; D5, member.tsx: Why and History, with Retire and Restore). `aikit explain` and `aikit history` of
+// the chosen member are read through the kernel's aikit_read (lane W3 round 3) and handed in (MemberPorts why, history). Central's
+// control.skills.inspect reads its ground by skill name and path, and no reading here ties an AIKit capability ref to a ground path, so
+// `ground` stands absent. control.skills.retire and
+// control.skills.restore write Central's ground, and the kernel's invoke_action carries the person's authority only for the acts
+// desktop/cradle/kernel/src/action.rs PERSON_ACTS names — which names neither — so both stand disabled with that reason.
+export const MEMBER_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
+  why: 'Why it stands as it does: AIKit\'s `aikit explain <capability>` is not read here (choose a member in the rack).',
+  history: 'Its recorded changes: AIKit\'s `aikit history <capability>` is not read here (choose a member in the rack).',
+  ground: 'Its standing in Central\'s ground: no reading reaches it yet — missing op: a tie from an AIKit capability ref to its ground path (control.skills.inspect lists skills by ground name and path; `aikit explain` names what selects the capability and where it is projected, not its ground path) (Central).',
+}
+export const MEMBER_UPKEEP_REFUSE: Readonly<Record<string, string>> = {
+  retire: missing('Retire', 'control.skills.retire carried with the person\'s authority (desktop/cradle/kernel/src/action.rs PERSON_ACTS names it not)', 'Central'),
+  restore: missing('Restore', 'control.skills.restore carried with the person\'s authority (desktop/cradle/kernel/src/action.rs PERSON_ACTS names it not)', 'Central'),
+}
+/** The member's upkeep holds: the reason Retire would record, its asks, and the history row chosen. */
+const MEMBER_UPKEEP_HOLDS: readonly string[] = ['retireReason', 'retireAsk', 'restoreAsk', 'event']
+
+const MEMBER_WRITES = new Set(['requested', 'reviewed', 'run', 'proved', ...Object.keys(MEMBER_UPKEEP_REFUSE)])
 
 /** The member's writes to AIKit through the kernel's routes (ownerRoutes.ts). Absent: no carrier stands. */
 export interface MemberPorts {
   /** Record that you reviewed the capability's revision (`aikit trust record <capability>`, aikit_write trust-record). */
   readonly trust?: (capability: string) => Promise<unknown>
+  /** AIKit's readings of the chosen member (lane W8, aikit_read explain and history), and the clock History's instants are read on. */
+  readonly why?: AikitAnswer
+  readonly history?: AikitAnswer
+  readonly timezone?: string
 }
 
 /** The member's binding: Enabled is your request in the rack's composition (Preview and Apply carry it); Review is asked first —
  * the ask is the view's own key, held here until Trust or Cancel drops it; Trust records the review with AIKit (`aikit trust record`)
  * on the chosen capability; Run and Prove stand refused, each naming what the member does not carry. */
 export function memberBinding(id: string, rack: Values, chosen: string | null, held: ChainHolds, ports: MemberPorts = {}): DesignBinding {
-  const refused: Record<string, string> = {...REFUSED_WRITES[MEMBER_DESIGN]!}
+  const refused: Record<string, string> = {...MEMBER_UPKEEP_ABSENT, ...MEMBER_UPKEEP_REFUSE, ...REFUSED_WRITES[MEMBER_DESIGN]!}
   if (ports.trust) delete refused.reviewed
+  const values: Record<string, Value> = {...memberValues(rack, chosen, held)}
+  const view = viewHolds(held, id)
+  for (const key of MEMBER_UPKEEP_HOLDS) put(values, key, view[key])
+  const why = chosen && ports.why?.status === 'answered' ? whyOf(ports.why.value) : null
+  const history = chosen && ports.history?.status === 'answered' ? historyOf(ports.history.value, ports.timezone) : null
+  if (why) { values.why = JSON.stringify(why); delete refused.why }
+  else if (chosen && ports.why) refused.why = ports.why.status === 'refused' ? ports.why.error ?? MEMBER_UPKEEP_ABSENT.why! : ports.why.status === 'reading' ? 'AIKit has not answered yet (`aikit explain`).' : '`aikit explain` answered something other than an explanation.'
+  if (history) { values.history = JSON.stringify(history); delete refused.history }
+  else if (chosen && ports.history) refused.history = ports.history.status === 'refused' ? ports.history.error ?? MEMBER_UPKEEP_ABSENT.history! : ports.history.status === 'reading' ? 'AIKit has not answered yet (`aikit history`).' : '`aikit history` answered something other than a history.'
   return {
     id,
-    values: memberValues(rack, chosen, held),
-    local: {reviewAsk: value => updateHolds(was => ({...was, member: {...was.member, reviewAsk: value === true ? true : undefined}}))},
+    values,
+    local: {reviewAsk: value => updateHolds(was => ({...was, member: {...was.member, reviewAsk: value === true ? true : undefined}})),
+      ...Object.fromEntries(MEMBER_UPKEEP_HOLDS.map(key => [key, (value: Value | undefined) => holdView(id, key, value)]))},
     standing: disabled(refused),
     writes: key => MEMBER_WRITES.has(key),
     write: async changes => {
@@ -697,7 +848,7 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
             if (value === 'ran') throw Error(REFUSE.run)
             break
           case 'proved': throw Error(REFUSE.prove)
-          default: throw Error(REFUSE.reading(key))
+          default: throw Error(MEMBER_UPKEEP_REFUSE[key] ?? REFUSE.reading(key))
         }
       }
     },

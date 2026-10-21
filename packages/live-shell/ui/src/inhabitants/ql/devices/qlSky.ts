@@ -20,6 +20,7 @@ import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DesignBinding, Standing, Value} from '../../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
+import {qlRackState, rackPage, type QlRackState} from './qlRack'
 
 export const QL_SKY_FAMILY = 'quaternal-logic'
 export const QL_SKY_FACE = 'sky'
@@ -82,6 +83,8 @@ export interface SkySnapshotReading {
   readonly bodies: readonly SkyBodyReading[]
   /** The transit's own status ("available" when the owner calculated the sky). */
   readonly status: string
+  /** The owner's `ql.sky-snapshot/v1` verbatim: what QL's scene composes the centres of this same sky from (qlCentres.ts). */
+  readonly snapshot?: Readonly<Record<string, unknown>>
 }
 
 export type SkyReading = {readonly ok: true; readonly sky: SkySnapshotReading} | {readonly ok: false; readonly reason: string}
@@ -111,7 +114,7 @@ export function readSkyAnswer(answer: KernelOpCall): SkyReading {
   })
   if (!bodies.length) return {ok: false, reason: `The sky snapshot ${sky.snapshot_ref} states no body.`}
   return {ok: true, sky: {snapshotRef: sky.snapshot_ref, epochUtc: sky.epoch_utc as string, epochMs, bodies, status: typeof transit.status === 'string' ? transit.status : 'available',
-    scope: typeof sky.scope === 'string' ? sky.scope : undefined, standing: typeof sky.standing === 'string' ? sky.standing : undefined}}
+    scope: typeof sky.scope === 'string' ? sky.scope : undefined, standing: typeof sky.standing === 'string' ? sky.standing : undefined, snapshot: sky}}
 }
 
 export type KernelCall = (op: KernelOp) => Promise<KernelOpCall>
@@ -257,9 +260,7 @@ export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   'presence.shared': 'Who has shared their sky with you: no owner operation carries it here — missing op: `ql nara presence-consent` read through the kernel.',
   'presence.share': 'Share: no owner operation carries it here — missing op: nara_presence publish from the Sky, which holds none of the world, projection and participant refs a publication needs.',
   'natal.of': 'Whose birth sky rings: the ring opens on the identity Launch gave the Sky; opening another\'s needs their consent read — missing op: `ql nara presence-consent` through the kernel.',
-  // The Rack page (manual §16.16): M2′'s rack is the M registry read coordinate by coordinate.
-  rack: 'No rack reading: no owner reports the parts of M2′\'s rack or which of them stand verified — missing op: `ql kernel ledger <coordinate>` through the kernel (Quaternal Logic).',
-  'rack.part': 'No rack reading, so no part of it is chosen — missing op: `ql kernel ledger <coordinate>` through the kernel (Quaternal Logic).',
+  // The Rack page (manual §16.16) reads M2′'s rack from the map's ledger (qlRack.ts): no key of it is absent here.
 }
 
 /** The keys the view holds (DesignBinding.local): the date it asks for, and its own drawing choices. */
@@ -321,14 +322,17 @@ export function qlSkyHand(key: string, value: Value | undefined, sky: QlSkyState
 
 /** The binding the runtime hosts the Sky design on: the owner's sky, the view's own keys in its own hand, and no write — the sky
  * takes no change. Every key no owner keeps stands disabled with the reason. */
-export function qlSkyBinding(sky: QlSkyState): DesignBinding {
+export function qlSkyBinding(sky: QlSkyState, rack: QlRackState = qlRackState(2)): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(QL_SKY_ABSENT)) standing[key] = {disabled: why}
   // The birth sky is a reading of the person's saved identity, never written here; absent, why it is not drawn.
   standing.natalBodies = {disabled: sky.natal ? 'Your birth sky, read from your saved identity: correct the identity, never the sky.' : sky.natalWhy ?? QL_SKY_ABSENT.natalBodies!}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_SKY_LOCAL) local[key] = value => qlSkyHand(key, value)
-  return {id: QL_SKY_DEVICE_ID, values: qlSkyValues(sky), writes: () => false, standing, local}
+  // The Rack page: M2′'s rack from the map's ledger, and the part you choose (qlRack.ts).
+  const page = rackPage(2, rack)
+  Object.assign(standing, page.standing); Object.assign(local, page.local)
+  return {id: QL_SKY_DEVICE_ID, values: {...qlSkyValues(sky), ...page.values}, writes: () => false, standing, local, ...(page.waiting ? {waiting: ['rack']} : {})}
 }
 
 // ── the device, for the generic plate that stands in for a view ─────────────

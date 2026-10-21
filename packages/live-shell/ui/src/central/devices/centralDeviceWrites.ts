@@ -196,6 +196,17 @@ export async function centralWrite(transport: KernelTransportStatus, action: str
   throw new Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
 }
 
+/** Open and Reveal (manual §10.9): a page's file or a world's folder, named by its Central-relative path (a page's `location.path`, a
+ * world's `folder`), handed to Central's work.open or work.reveal (ctrl/src/action.rs select_path, EpiLogos/Central#289), which asks the
+ * computer to open it with its application or show it in Finder. Neither changes the world; a path outside the root's Control or Work,
+ * or one that names nothing, is refused in Central's words. */
+export const CENTRAL_OPEN_ACTS = {open: 'work.open', reveal: 'work.reveal'} as const
+export function openOrRevealInCentral(transport: KernelTransportStatus, act: keyof typeof CENTRAL_OPEN_ACTS, path: string): Promise<unknown> {
+  const named = path.trim()
+  if (!named.includes('/')) return Promise.reject(new Error(`${act === 'open' ? 'Open' : 'Reveal'}: "${path}" is no Central-relative path (a page's file or a world's folder names its home, Control/… or Work/…).`))
+  return centralWrite(transport, CENTRAL_OPEN_ACTS[act], {query: named})
+}
+
 /** Save settings of the Day's own on the revision read (central.day.settings.write: exact revision, `absent` before the first save). */
 export const writeDaySettings = (transport: KernelTransportStatus, patch: DaySettingsPatch, expectedRevision: string): Promise<unknown> =>
   centralWrite(transport, 'central.day.settings.write', {expected_revision: expectedRevision, ...patch})

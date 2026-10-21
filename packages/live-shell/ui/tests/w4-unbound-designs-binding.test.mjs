@@ -122,7 +122,9 @@ test('the Knowledge route: every key its design reads is a reading, absent with 
   for (const key of ['ready:wiki', 'why:wiki', 'ready:code']) assert.match(refusedStatus.standing[key].disabled, /knowledge status refused — AIKit is unavailable: oi not found/, key)
   assert.match(kr.knowledgeRouteBinding({status: null, project: 'O-I', profile: EMPTY_PROFILE}).standing.wiki.disabled, /names no knowledge source/)
   assert.match(kr.knowledgeRouteBinding({status: null, project: 'O-I', profile: null}).standing.wiki.disabled, /no agent's profile is read here/)
-  for (const key of ['depth', 'budget', 'searchFirst', 'forget']) assert.match(binding.standing[key].disabled, /missing op: /, key)
+  for (const key of ['depth', 'budget', 'searchFirst']) assert.match(binding.standing[key].disabled, /missing op: /, key)
+  // REPLACED (lane W8): `aikit knowledge forget` is routed; Forget waits on Affected, which no command reports.
+  assert.match(binding.standing.forget.disabled, /Affected is not reported, so no reading stands to forget/)
   for (const key of ['wiki', 'depth', 'budget', 'searchFirst', 'refresh', 'forget']) await assert.rejects(binding.write([{key, value: true}]), new RegExp(binding.standing[key].disabled.slice(0, 24).replace(/[()[\]?.*+]/g, '\\$&')))
   await assert.rejects(binding.write([{key: 'ready:wiki', value: 'ready'}]), /is a reading/)
   assert.deepEqual(kr.knowledgeRouteValues({status: null, project: 'O-I', profile: null}), {}, 'unread: nothing, never a default')

@@ -927,6 +927,22 @@
   },
   {
     "family": "software-factory",
+    "face": "prompt-pads",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "The pad bank is Factory's: factory development pads, pads-write, pads-run and pads-record have no kernel route yet (T-COVERAGE §1.2)."
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "software-factory",
     "face": "run-device",
     "kind": "parameter",
     "liveSemantic": "track",
@@ -940,6 +956,22 @@
     "writePaths": [],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "software-factory",
+    "face": "run-map",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "The Run map writes through Factory: Recognise and Close need a Run named on the Main track, and the attempt retry and development mutate for ContinueCommission have no kernel route yet (T-COVERAGE §1.2)."
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
     "family": "software-factory",

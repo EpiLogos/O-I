@@ -18,8 +18,12 @@
 //     (its own `thread`, which the design lays under `conv.`), and its last line;
 //   Central's agent-profile.review of the proposal Make wrote: its profile (role, purpose, world, sources, revision) and its content digest.
 // What nothing reads yet, each absent with the operation it waits for: an agent's model and type, the session's light and its last check-in
-// in the conversation, the groups (Central's agent sets; `aikit gateway team` acts on one admitted member's delivery and lists none), the
-// types and skillsets the card offers.
+// in the conversation, the types and skillsets the card offers.
+//   Central's agent sets (`central.agent-set.list {scope}`, root and the project's, read through invoke_action as a reading; lane W7):
+//     records [{record {ref, members [{kind agent, agent_ref}], orchestrator_agent_ref?, proposal {reason}}, source_path}] — your groups,
+//     each by its ref, what it is for (the reason Central keeps with it), and its members as the Positions their agents occupy or are
+//     placed at in the population; a member no Position names stands as its own agent ref. A group's join, its last line and its unread
+//     have no owner reading. `aikit gateway team` acts on one admitted member's delivery for an occupying parent and lists no groups.
 // The gateway's writes go through the kernel's routes to AIKit's own commands (lane W3, desktop/cradle/kernel/src/owner_routes.rs
 // GatewayWrite; ownerRoutes.ts), each answered in AIKit's words and earning an `owner_changed` receipt, after which the conversation is read
 // again:
@@ -78,7 +82,8 @@ export const MESSAGES_REFUSE = {
   send: 'Send: open an agent in the list first — a message goes to its Position (`aikit gateway send --to P`).',
   /** A drop that does not name everything `aikit gateway delegate` takes. */
   delegate: 'A message dragged onto a track: `aikit gateway delegate` takes the Communique, the work it becomes and why (--communique C --work W --reason R), and the drop did not name all three.',
-  team: unread('Your groups', 'a listing of your groups for Messages (Central\'s agent sets, `central.agent-set.list`, are not read here; `aikit gateway team` acts on one admitted member\'s delivery for the parent that occupies a Position, and lists none)', 'Central'),
+  /** The groups while Central has not answered its agent-set listing. */
+  team: 'Your groups: Central has not answered its agent-set listing yet (`central.agent-set.list`).',
   /** The conversation's Input: where the next words land in a session's turn. */
   input: missing('Where your words land (steer or queue)', 'a steer or queue for a Position\'s Communique (`aikit gateway send` hands the words to the Position, which holds them for its occupant in order)', 'AIKit'),
   /** The conversation's Voice: speech turned into the composer's words. */
@@ -103,7 +108,6 @@ export const PERSON_ACTS = {express: 'agent-profile.express', review: 'agent-pro
 
 /** What each key no owner reports waits for. */
 export const MESSAGES_ABSENT: Readonly<Record<string, string>> = {
-  groups: MESSAGES_REFUSE.team,
   types: MESSAGES_REFUSE.types, skillsets: MESSAGES_REFUSE.skillsets,
   'conv.light': MESSAGES_REFUSE.session, 'conv.age': MESSAGES_REFUSE.session, 'conv.writes': MESSAGES_REFUSE.session,
 }
@@ -200,6 +204,35 @@ export const madeOf = (held: unknown): Made | null => {
 }
 const scopeInput = (made: Pick<Made, 'scope' | 'project'>) => ({scope: made.scope, ...(made.scope === 'project' && made.project ? {project: made.project} : {})})
 
+/** The Position an agent stands at in the population: the one it occupies, else the first the reading places it at. Null when none. */
+export function positionOfAgent(agentRef: string, population: unknown): string | null {
+  if (!isObj(population)) return null
+  const positions = Array.isArray(population.positions) ? population.positions.filter(isObj) : []
+  const occupied = positions.find(row => isObj(row.occupancy) && row.occupancy.state === 'occupied' && row.occupancy.agent_ref === agentRef)
+  if (occupied && str(occupied.position_ref)) return String(occupied.position_ref)
+  const agent = (Array.isArray(population.agents) ? population.agents.filter(isObj) : []).find(row => row.agent_ref === agentRef)
+  const placed = agent && Array.isArray(agent.positions) ? agent.positions.find((ref): ref is string => typeof ref === 'string' && positions.some(row => row.position_ref === ref)) : undefined
+  return placed ?? null
+}
+
+/** Central's agent sets (central.agent-set.list's `records`, central.agent-set/v1 each) as Messages' groups (ai-kit__messages.tsx:9): each by
+ * its ref, what it is for (the first line of the reason Central keeps with its proposal), and its members as the Positions their agents
+ * stand at — a member no Position names stands as its agent ref, never a Position it does not hold. A set of the project's scope is told
+ * apart from the root's by the project it was read in. Join, last line, time and unread have no reading and are left out. Pure. */
+export function groupsOf(listings: readonly {readonly scope: 'root' | 'project'; readonly project?: string; readonly value: unknown}[], population: unknown): Record<string, unknown>[] {
+  return listings.flatMap(({scope, project, value}) => (isObj(value) && Array.isArray(value.records) ? value.records : []).flatMap(row => {
+    const record = isObj(row) && isObj(row.record) ? row.record : null
+    const ref = record ? str(record.ref) : undefined
+    if (!record || !ref) return []
+    const members = (Array.isArray(record.members) ? record.members : []).flatMap(member => {
+      const agentRef = isObj(member) ? str(member.agent_ref) : undefined
+      return agentRef ? [positionOfAgent(agentRef, population) ?? agentRef] : []
+    })
+    const reason = isObj(record.proposal) ? str(record.proposal.reason) : undefined
+    return [{id: scope === 'project' && project ? `${project}/${ref}` : ref, name: ref, ...(reason ? {for: firstLine(reason)} : {}), members}]
+  }))
+}
+
 /** The World refs AIKit's population names (canonical refs Central disclosed for the scope): the worlds an agent may work in. */
 export function worldsOf(population: unknown): string[] {
   if (!isObj(population)) return []
@@ -254,6 +287,8 @@ export interface MessagesInput {
   readonly runs?: ReadonlyMap<string, RunState>
   /** The project a project-scoped agent belongs to (the shell's project). */
   readonly project?: string
+  /** Central's agent-set listings (`central.agent-set.list {scope}`), root and the project's, as the window holds them. Absent: not read. */
+  readonly agentSets?: readonly {readonly scope: 'root' | 'project'; readonly answer: {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}}[]
   readonly holds: ChainHolds
 }
 
@@ -311,6 +346,9 @@ export function messagesValues(input: MessagesInput): Values {
   const state = answer.kind === 'answered' || answer.kind === 'refused' ? 'Ready' : answer.kind === 'unreachable' ? 'Refused' : undefined
   const waiting = known ? inboxOf(known) : undefined
   if (state !== undefined || waiting !== undefined) values.gateway = JSON.stringify({...(state ? {state} : {}), ...(waiting !== undefined ? {waiting} : {})})
+  // The groups: Central's agent sets read in each scope that answered, their members at the population's Positions.
+  const answeredSets = (input.agentSets ?? []).flatMap(set => (set.answer.status === 'answered' ? [{scope: set.scope, ...(input.project ? {project: input.project} : {}), value: set.answer.value}] : []))
+  if (answeredSets.length) values.groups = JSON.stringify(groupsOf(answeredSets, known))
   // The card: the worlds AIKit names (Works in starts on the project's world, where the hand has not chosen), and the proposal Central wrote.
   const worlds = known ? worldsOf(known) : []
   if (worlds.length) {
@@ -338,6 +376,10 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     : input.population.status === 'answered' ? unread('Your agents', 'the Positions in AIKit\'s population (the reading carries none)', 'AIKit') : 'AIKit\'s population has not answered yet (`aikit gateway who`).'}
   if (!('gateway' in values)) standing.gateway = {disabled: 'The Agency gateway has not answered yet (harness_agent_read through AIKit\'s gateway), and the population names no inbox.'}
   if (!('worlds' in values)) standing.worlds = {disabled: MESSAGES_REFUSE.worlds}
+  if (!('groups' in values)) {
+    const refused = (input.agentSets ?? []).flatMap(set => (set.answer.status === 'refused' ? [set.answer.error] : []))
+    standing.groups = {disabled: refused.length ? [...new Set(refused)].join(' ') : MESSAGES_REFUSE.team}
+  }
   // The open agent's conversation, when it is not read: why, in the owner's words.
   if (input.conversation?.status === 'refused' && input.conversation.error) standing.thread = {disabled: input.conversation.error}
   // The card's acts: Make while a carrier stands; Accept and Discard on the proposal Make wrote, once Central has reviewed it.

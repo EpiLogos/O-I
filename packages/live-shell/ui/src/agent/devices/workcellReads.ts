@@ -10,12 +10,13 @@
 //     endpoints and whether the link is joined (workcellBindings.ts linkBinding).
 // A refusal is the owner's words, carried as the reading's error.
 import {useMemo} from 'react'
-import {scopesOf, useHeldRead} from '../../owners/ownerCall'
+import {scopesOf, useHeldRead, useOwnerOp} from '../../owners/ownerCall'
 import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {GatewayRemotesReading, KernelOp, KernelTransportStatus, SeatStatusReading, SourceReturnsReading} from '../../../../../../desktop/cradle/src/kernel/types'
 import {ownerReadings, scoped, useOwnerReading, type OwnerRead, type OwnerReadings, type OwnerReadingEntry} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
-import {ROUTE_WORDS, aikitReadOp, routeAnswerOf, workcellReadOp} from './ownerRoutes'
+import {ROUTE_WORDS, aikitReadOp, refusalWords, routeAnswerOf, workcellReadOp} from './ownerRoutes'
+import type {AikitAnswer} from './aikitPages'
 import type {ConnectionShows, WorkcellAnswer} from './workcellBindings'
 import type {JournalAsk} from './mainTrackBindings'
 
@@ -141,4 +142,12 @@ export function useGatewayReplays(transport: KernelTransportStatus, asks: readon
     return Object.fromEntries(replayed)
   })
   return useMemo(() => (reading.status === 'answered' && reading.value ? new Map(Object.entries(reading.value)) : undefined), [reading])
+}
+
+/** One AIKit reading (aikit_read, lane W3 round 3) held for the window, as aikitPages.ts maps it: AIKit's envelope `data`, or its refusal in
+ * its words. `request` null reads nothing. */
+export function useAikitRead(transport: KernelTransportStatus, request: Extract<KernelOp, {op: 'aikit_read'}>['request'] | null): AikitAnswer {
+  const op = useMemo(() => (request ? ({op: 'aikit_read', request} as KernelOp) : null), [JSON.stringify(request)]) // eslint-disable-line react-hooks/exhaustive-deps
+  const {reading} = useOwnerOp(transport, op, 'owner_route_reading')
+  return useMemo(() => ({status: reading.status, value: reading.value?.data ?? null, error: reading.error ? refusalWords(reading.error) : null}), [reading])
 }

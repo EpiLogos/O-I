@@ -132,6 +132,6 @@ test('code-reading: the helper stands on a group\'s chain right after its member
   assert.ok(rack > 0 && stands > rack, 'the helper\'s plate after the Agentset rack\'s (§19.20)')
   const places = readFileSync(new URL('../src/agent/devices/factoryPlaces.ts', import.meta.url), 'utf8')
   assert.match(places, /export const GROUP_LEAD: readonly FactorySlot\[\] = \['agentset', 'decision-helper'\]/, 'a group\'s chain leads with its members, then the helper')
-  assert.match(view, /const slots = chainSlots\(place, \{helper: helperStands\}\)/)
+  assert.match(view, /const slots = chainSlots\(place, \{helper: helperStands, capture: captureOn, runMap: !!runMapDev, pads: !!padsDev\}\)/)
   assert.match(view, /useDecisionHelperReadings\(transport, helperStands\)/, 'nothing is read unless the helper stands on a chain')
 })

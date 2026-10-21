@@ -4,9 +4,11 @@
 // - A session's chain is "Agent, skills rack, scope" (§16.2), the member inside the rack (§19.7), the Knowledge route inside Scope (§16.1
 //   "one Scope … with the Knowledge route inside it"; §19.9 "Chain: inside the Scope device"). A group's chain leads with the Agentset
 //   rack (§19.15) and the Decision helper (§19.20), then the same. "A track has no gateway and no landing of its own" (§19.23 Rules).
-// - Factory's Main track carries "the Run map, the experiments, Approvals and the prompt pads" (§16.2). The Run map (§19.25) and the Prompt
-//   pads (§19.22) have catalogue designs and no binding yet, so they wait for their wave: the Main track's chain is the Experiment, then
-//   Approvals. "The gateways, the frames and the ledger are monitors, on the rail and in panes; Link is the transport's" (§19.1).
+// - Capture skill stands "on the armed Factory track" (§19.11): Factory's armed track is the selected session's (the transport's Voice
+//   records "into the armed track"), so it closes a session's chain, after Scope — never a group's, a workcell's or the Main track's.
+// - Factory's Main track carries "the Run map, the experiments, Approvals and the prompt pads" (§16.2), in that order. The Run map (§19.25)
+//   and the Prompt pads (§19.22) are bound (runMapBinding.ts, promptPadsBinding.ts) and stand where their devices do: Software Factory's
+//   family admits neither face yet, so until it does the Main track's chain is the Experiment, then Approvals. "The gateways, the frames and the ledger are monitors, on the rail and in panes; Link is the transport's" (§19.1).
 // - A workcell's chain is its rack (§19.23, kind rack) and the road it carries: "its Gateway, the Remote carrier that names the machine it
 //   runs on, and Git / landing with the Seat inside it" (§16.2).
 // - A monitor stands "On the rail, and full in a pane. Never on a chain"; a connection "On a workcell's chain; Link stands in the transport.
@@ -20,9 +22,13 @@ import {AGENTSET_DESIGN, AGENTSET_ID} from './sessionChainBindings'
 import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID} from './workcellBindings'
 import {KNOWLEDGE_ROUTE_DESIGN, KNOWLEDGE_ROUTE_ID} from './knowledgeRouteBinding'
 import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID} from './workcellRackBinding'
+import {CAPTURE_SKILL_DESIGN, CAPTURE_SKILL_ID} from './captureSkillBinding'
+import {RUN_MAP_DESIGN, RUN_MAP_ID} from './runMapBinding'
+import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID} from './promptPadsBinding'
 
 /** A plate on one of Factory's chains. `agent`, `skillset`, `world`, `gateway` and `git` are the agent chain's slots (agentChainDevices.ts). */
-export type FactorySlot = 'agentset' | 'decision-helper' | 'agent' | 'skillset' | 'world' | 'experiment' | 'approvals' | 'workcell' | 'gateway' | 'remote-carrier' | 'git'
+export type FactorySlot = 'agentset' | 'decision-helper' | 'agent' | 'skillset' | 'world' | 'capture' | 'run-map' | 'experiment' | 'approvals' | 'prompt-pads'
+  | 'workcell' | 'gateway' | 'remote-carrier' | 'git'
 /** A device that stands inside another's slot: the rack's member (§19.7), the Knowledge route inside Scope (§19.9), the Seat inside Git /
  * landing (§19.17). */
 export type FactoryMember = 'member' | 'knowledge' | 'seat'
@@ -47,9 +53,12 @@ export const SLOT_DEVICE: Readonly<Record<FactorySlot | FactoryMember, {readonly
   skillset: {id: chainDeviceId('skillset'), design: RACK_DESIGN},
   member: {id: MEMBER_DEVICE_ID, design: MEMBER_DESIGN},
   world: {id: chainDeviceId('world'), design: SCOPE_DESIGN},
+  capture: {id: CAPTURE_SKILL_ID, design: CAPTURE_SKILL_DESIGN},
   knowledge: {id: KNOWLEDGE_ROUTE_ID, design: KNOWLEDGE_ROUTE_DESIGN},
+  'run-map': {id: RUN_MAP_ID, design: RUN_MAP_DESIGN},
   experiment: {id: EXPERIMENT_ID, design: EXPERIMENT_DESIGN},
   approvals: {id: APPROVALS_ID, design: APPROVALS_DESIGN},
+  'prompt-pads': {id: PROMPT_PADS_ID, design: PROMPT_PADS_DESIGN},
   workcell: {id: WORKCELL_RACK_ID, design: WORKCELL_RACK_DESIGN},
   gateway: {id: chainDeviceId('gateway'), design: GATEWAY_DESIGN},
   'remote-carrier': {id: CARRIER_ID, design: CARRIER_DESIGN},
@@ -65,9 +74,13 @@ export function factoryPlace(input: {readonly sessionRef: string | null; readonl
   return {kind: 'main'}
 }
 
-/** The chain a place draws, left to right. The Decision helper stands on a group's chain only where its device does (`helper`). */
-export function chainSlots(place: FactoryPlace, stands: {readonly helper: boolean} = {helper: true}): readonly FactorySlot[] {
+/** The chain a place draws, left to right. The Decision helper stands on a group's chain only where its device does (`helper`); Capture
+ * skill closes a session's chain where its device stands (`capture`: the armed track's); the Run map leads the Main track and the Prompt
+ * pads close it where their devices stand (`runMap`, `pads`). */
+export function chainSlots(place: FactoryPlace, stands: {readonly helper: boolean; readonly capture?: boolean; readonly runMap?: boolean; readonly pads?: boolean} = {helper: true}): readonly FactorySlot[] {
   if (place.kind === 'workcell') return WORKCELL_CHAIN
-  if (place.kind === 'main') return MAIN_CHAIN
-  return place.group ? [...GROUP_LEAD.filter(slot => slot !== 'decision-helper' || stands.helper), ...SESSION_CHAIN] : SESSION_CHAIN
+  if (place.kind === 'main') return stands.runMap || stands.pads
+    ? [...(stands.runMap ? ['run-map' as const] : []), ...MAIN_CHAIN, ...(stands.pads ? ['prompt-pads' as const] : [])] : MAIN_CHAIN
+  return place.group ? [...GROUP_LEAD.filter(slot => slot !== 'decision-helper' || stands.helper), ...SESSION_CHAIN]
+    : stands.capture ? [...SESSION_CHAIN, 'capture'] : SESSION_CHAIN
 }

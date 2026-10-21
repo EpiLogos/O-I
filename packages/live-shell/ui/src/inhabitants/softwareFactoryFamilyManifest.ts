@@ -24,6 +24,10 @@ export function softwareFactoryFamilyManifest(): FamilyManifest {
       {id: 'thread', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'device-instrument', invariant: {generates: 'kernel:harness_agent_control'}, note: 'One session\'s conversation: the Agent\'s Full (DLW §19.4, §19.4). Its words go the Agent\'s way (the steer line or the next task).'},
       {id: 'tasks', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'track', invariant: {stream: 'one session\'s tasks (agency_read, encounter_task_read, temporal_events_read)'}, note: 'The clips on one session\'s track (DLW §19.1).'},
       {id: 'agentset-rack', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'rack', invariant: {chains: ['agent-session'], chainSelector: 'member (state light)'}, note: 'A group\'s sessions as one unit, one chain for each member (DLW §19.15).'},
+      // The Main track's two design-package devices (DLW §16.2 "On the Main track: the Run map, the experiments, Approvals and the
+      // prompt pads"), drawn on their bindings (agent/devices/runMapBinding.ts, promptPadsBinding.ts).
+      {id: 'run-map', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'device-instrument', invariant: {generatesAbsent: 'The Run map writes through Factory: Recognise and Close need a Run named on the Main track, and the attempt retry and development mutate for ContinueCommission have no kernel route yet (T-COVERAGE §1.2).'}, note: 'Run map (DLW §19.25).'},
+      {id: 'prompt-pads', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'device-instrument', invariant: {generatesAbsent: 'The pad bank is Factory\'s: factory development pads, pads-write, pads-run and pads-record have no kernel route yet (T-COVERAGE §1.2).'}, note: 'Prompt pads (DLW §19.22).'},
     ],
     params: {grammar: 'software-factory/parameter-address/v1'},
     projections: ['factory-run-track-adapter'],

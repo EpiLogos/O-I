@@ -62,6 +62,11 @@ export async function centralAct(transport: KernelTransportStatus, action: strin
   throw Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
 }
 
+/** Central's agent-set listing (ctrl agent_set_actions.rs): a reading, scope root or project. */
+export const AGENT_SET_LIST = 'central.agent-set.list'
+const ROOT_SETS = {scope: 'root'} as const
+const PROJECT_SETS = {scope: 'project', project: RACK_PROJECT} as const
+
 /** The rail's agent devices and their bindings, published on the door. */
 export function AgentRailDevices() {
   const shell = useAgentShellOptional()
@@ -128,8 +133,12 @@ export function AgentRailDevices() {
     const run = runStateOfSession(track, null, nowUnixMs)
     return run ? [[track.agentRef!, run] as const] : []
   })), [tracks, nowUnixMs])
-  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, project: RACK_PROJECT, holds}, ports),
-    [population, reading, conversation, review, runs, holds, ports])
+  // Your groups (lane W7): Central's agent sets of the root and of the project, read through invoke_action as readings.
+  const rootSets = useCentralAction(transport, AGENT_SET_LIST, ROOT_SETS)
+  const projectSets = useCentralAction(transport, AGENT_SET_LIST, PROJECT_SETS)
+  const agentSets = useMemo(() => [{scope: 'root' as const, answer: rootSets}, {scope: 'project' as const, answer: projectSets}], [rootSets, projectSets])
+  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, project: RACK_PROJECT, agentSets, holds}, ports),
+    [population, reading, conversation, review, runs, agentSets, holds, ports])
 
   // The workcell rack: the workcell whose return track is selected, its seats, the chain devices' own values, and the Gateway's rows for the
   // macros — the same rows and the same write path the chain's Gateway writes through.

@@ -66,7 +66,7 @@ import {chainPicture, type PictureContext} from './AgentDevicePictures'
 import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
-  memberChains, rackBinding, scopeBinding, seatedProfile, useChainHolds, type AgentRows, type MemberPorts,
+  memberChains, rackBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
@@ -81,24 +81,28 @@ import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf} from '../../cen
 import {useCentralAction} from '../../central/devices/useCentralReadings'
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
-import {RUNS_ID, TASKS_ID, runsBinding, runsDevice, tasksBinding, tasksDevice} from './taskBindings'
+import {RUNS_ID, TASKS_ID, runsBinding, runsDevice, runsOfTakes, tasksBinding, tasksDevice} from './taskBindings'
+import {useRunJourney} from './runJourney'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {useWorkcellAnswer} from '../../owners/readers'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, RUN_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, runBinding, sessionDevices,
+  AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, RUN_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, runBinding, sessionDevices, type CustodyPorts,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, connectionLabels, gitBinding, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, deskActorOf, ownerRouteWrite, seatWriteOp} from './ownerRoutes'
+import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, workcellGitReading} from './workcellRackBinding'
 import {AGENT_SLOTS, chainSlots, factoryPlace, type FactorySlot} from './factoryPlaces'
 import {KNOWLEDGE_ROUTE_DESIGN, KNOWLEDGE_ROUTE_ID, knowledgeRouteBinding, knowledgeRouteDevice} from './knowledgeRouteBinding'
 import {useOwnerOp} from '../../owners/ownerCall'
-import type {KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
+import {CAPTURE_SKILL_DESIGN, CAPTURE_SKILL_ID, captureSkillBinding, captureSkillDevice, type CaptureSkillPorts} from './captureSkillBinding'
+import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
+import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
-import {useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
+import {useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -131,6 +135,12 @@ const FACTORY_IDENTITY_ID = `${chainDeviceId('agent')}/identity`
 const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
 /** AIKit's knowledge status for the project the session works in (the kernel's knowledge op, Request::Status): each lens's answer. */
 const KNOWLEDGE_STATUS: KernelOp = Object.freeze({op: 'knowledge' as const, project: RACK_PROJECT, request: {action: 'status' as const}})
+/** AIKit's capture inbox (lane W3's aikit_read {inbox}), read while Capture skill stands on the armed track's chain (§19.11). */
+const CAPTURE_INBOX: KernelOp = Object.freeze({op: 'aikit_read' as const, request: {kind: 'inbox' as const, project: RACK_PROJECT}})
+/** Where Factory keeps the shell's project (factory_owner locate), for the Prompt pads' bank. */
+const PADS_LOCATE: KernelOp = Object.freeze({op: 'factory_owner' as const, request: {kind: 'locate', project: RACK_PROJECT}})
+/** Actuation's authority list (lane W3 round 3's actuation_read {authority-list}), read while a session's chain stands (Custody's Grants). */
+const AUTHORITY_LIST: KernelOp = Object.freeze({op: 'actuation_read' as const, request: {kind: 'authority-list' as const}})
 
 /** The slots whose designs this chain binds, with the design each draws. */
 const SLOT_DESIGNS: Readonly<Record<string, string>> = {gateway: GATEWAY_DESIGN, agent: AGENT_DESIGN, skillset: RACK_DESIGN, world: SCOPE_DESIGN, git: LANDING_DESIGN}
@@ -209,10 +219,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const {handles, observers} = useEncounterSessions(observed)
   const models = useModelCatalogue(transport, !waits.agent)
   const agentThread = useMemo(() => (sessionRef ? threadJson(observedState(handles[sessionRef]), track?.agentName ?? null) : undefined), [handles, sessionRef, track?.agentName])
+  // The Agent's Context page (lane W8): AIKit's continuity pressure and armed commands, read while a session's chain stands.
+  const contextOn = !waits.agent && sessionRef != null
+  const continuityPressure = useAikitRead(transport, contextOn ? {kind: 'continuity-pressure', project: RACK_PROJECT} : null)
+  const continuityCommands = useAikitRead(transport, contextOn ? {kind: 'continuity-commands', project: RACK_PROJECT} : null)
+  const context = useMemo(() => (contextOn ? {pressure: continuityPressure, commands: continuityCommands} : undefined), [contextOn, continuityPressure, continuityCommands])
   const agentDesignBinding = useMemo(() => (waits.agent ? null : agentBinding(chainDeviceId('agent'), {
     sessionRef, track, nowUnixMs: sessions?.nowUnixMs ?? 0, reading, accepted, harness: {binding, resolved}, holds, thread: agentThread, models, harnesses, events: sessions?.events ?? null,
+    ...(context ? {context} : {}),
   }, agentRows, write, () => steering.current)), [waits.agent, sessionRef, track, sessions?.nowUnixMs, reading, accepted, binding, resolved, holds, agentRows, write, agentThread, models, harnesses,
-    sessions?.events])
+    sessions?.events, context])
 
   // The Agent's Thread page (its Full): the shown session's conversation; its composer, Input and timing the Agent's; Approve and Hard
   // stop that session's own encounter verbs; choosing a session moves THE selection.
@@ -258,8 +274,15 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     }), [sessionTrack, tracks, sessions?.nowUnixMs, selectedTask, agentDesignBinding, continuity, write, settingsContext])
   // Runs reads the session's attempts as its take lanes do (owners/attemptTakes.ts), and Stands chooses one through Factory's own receiving.
   const runTakes = useAttemptTakes(transport, sessionTrack ? [sessionTrack.sessionRef] : [], SETTINGS_PROJECT)
+  // The Journey of the Run Runs shows (lane W8, runJourney.ts): its state and ref are the take's.
+  const shownTakes = useMemo(() => (runTakes && sessionTrack ? runTakes.of(sessionTrack.sessionRef) : null), [runTakes, sessionTrack])
+  const heldWork = viewHolds(holds, RUNS_ID).work
+  const shownRun = shownTakes ? runsOfTakes(shownTakes, typeof heldWork === 'string' ? heldWork : undefined).work ?? null : null
+  const shownState = shownRun ? shownTakes?.find(take => take.runRef === shownRun)?.statePath ?? null : null
+  const runJourney = useRunJourney(transport, shownState, shownRun)
   const runsDesignBinding = useMemo(() => runsBinding(sessionTrack?.sessionRef ?? null, holds,
-    runTakes && sessionTrack ? {takes: runTakes.of(sessionTrack.sessionRef), choose: runTakes.choose} : undefined), [sessionTrack, holds, runTakes])
+    runTakes && sessionTrack ? {takes: shownTakes, choose: runTakes.choose, ...(shownRun ? {journey: runJourney} : {})} : undefined),
+  [sessionTrack, holds, runTakes, shownTakes, shownRun, runJourney])
 
   // Factory's Main track devices: the Experiment on its chain. The monitors — Gateways, the Frames monitor the Gateway opens full, the Ledger —
   // Messages, the Agency gateway and the workcell rack stand on the rail in every mode: AgentRailDevices.tsx publishes them, not this chain.
@@ -267,7 +290,24 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const designsOf = {experiment: useDesign(EXPERIMENT_DESIGN, true)}
   // Workcell's status, the window's one answer (owners/readers.ts): the Remote carrier's machines.
   const workcellAnswer = useWorkcellAnswer(transport).reading
-  const mainBindings = useMemo(() => ({experiment: experimentBinding(holds)}), [holds])
+  // The Prompt pads (§19.22, lane W8): the shell's project located by Factory, its bank read, each setting written through pads-write.
+  const padsLocated = useOwnerOp(transport, PADS_LOCATE, 'factory_development_reading').reading
+  const padsWhere = padsLocated.status === 'answered' ? padsLocation(padsLocated.value?.data) : null
+  const padsBankOp = useMemo((): KernelOp | null => (padsWhere && 'projectRef' in padsWhere
+    ? {op: 'factory_owner', request: {kind: 'pads-read', state_path: padsWhere.statePath, project_ref: padsWhere.projectRef}} : null),
+  [padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null, padsWhere && 'projectRef' in padsWhere ? padsWhere.projectRef : null]) // eslint-disable-line react-hooks/exhaustive-deps
+  const padsBank = useOwnerOp(transport, padsBankOp, 'factory_development_reading').reading
+  const padsPorts = useMemo((): PromptPadsPorts => (transport.kind !== 'unavailable'
+    ? {write: request => factoryOwnerWrite(transport, {kind: 'pads-write', ...request}, '`factory development pads-write`')} : {}), [transport])
+  const padsInput = useMemo(() => ({
+    located: {status: padsLocated.status, value: padsLocated.value?.data ?? null, error: padsLocated.error},
+    ...(padsBankOp ? {bank: {status: padsBank.status, value: padsBank.value?.data ?? null, error: padsBank.error}} : {}), holds,
+  }), [padsLocated, padsBank, padsBankOp, holds])
+  const mainBindings = useMemo(() => ({experiment: experimentBinding(holds), runMap: runMapBinding(holds), pads: promptPadsBinding(padsInput, padsPorts)}), [holds, padsInput, padsPorts])
+  // The Run map and the Prompt pads (§19.25, §19.22, lane W7): bound, standing where Software Factory's family admits their faces.
+  const runMapDev = useMemo(() => runMapDevice(), [])
+  const padsDev = useMemo(() => promptPadsDevice(), [])
+  const designsMain = {runMap: useDesign(RUN_MAP_DESIGN, true), pads: useDesign(PROMPT_PADS_DESIGN, true)}
 
   // The rack: the seated agent's carried practice (its accepted profile in the roster, the sets AIKit replies for), and the
   // composition through the configuration plane. Read only while its design can draw it.
@@ -277,15 +317,32 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const rackOn = !waits.skillset
   const rackReading = useRackReading(transport, profile, holds.compose.scope, sessionRef, rackOn, planeEpoch)
   const ports = useMemo(() => composePorts(transport, () => setPlaneEpoch(epoch => epoch + 1)), [transport])
-  const rackDesignBinding = useMemo(() => (rackOn ? rackBinding(chainDeviceId('skillset'), {profile, ...rackReading, holds}, ports, {project: RACK_PROJECT, sessionRef}) : null),
-    [rackOn, profile, rackReading, holds, ports, sessionRef])
+  // The rack's upkeep pages (lane W8): AIKit's unused, collate, bypass and procedure lists, the plan for the root chosen, and its writes.
+  const rackHeld = viewHolds(holds, chainDeviceId('skillset'))
+  const upkeepUnused = useAikitRead(transport, rackOn ? {kind: 'unused'} : null)
+  const upkeepCollate = useAikitRead(transport, rackOn ? {kind: 'collate'} : null)
+  const upkeepBypasses = useAikitRead(transport, rackOn ? {kind: 'bypass-list'} : null)
+  const upkeepProcedures = useAikitRead(transport, rackOn ? {kind: 'procedure-list'} : null)
+  const adoptRoot = typeof rackHeld.adoptRoot === 'string' && rackHeld.adoptRoot ? rackHeld.adoptRoot : null
+  const adoptNamespace = typeof rackHeld.namespace === 'string' && rackHeld.namespace ? rackHeld.namespace : null
+  const upkeepAdoption = useAikitRead(transport, rackOn && adoptRoot ? {kind: 'adopt-plan', root: adoptRoot, ...(adoptNamespace ? {namespace: adoptNamespace} : {})} : null)
+  const upkeep = useMemo((): RackUpkeep => ({unused: upkeepUnused, collate: upkeepCollate, bypasses: upkeepBypasses, procedures: upkeepProcedures,
+    ...(adoptRoot ? {adoption: upkeepAdoption} : {}),
+    ...(transport.kind !== 'unavailable' ? {write: request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit ${request.kind.replace('-', ' ')}\``)} : {})}),
+  [upkeepUnused, upkeepCollate, upkeepBypasses, upkeepProcedures, upkeepAdoption, adoptRoot, transport])
+  const rackDesignBinding = useMemo(() => (rackOn ? rackBinding(chainDeviceId('skillset'), {profile, ...rackReading, holds}, ports, {project: RACK_PROJECT, sessionRef}, upkeep) : null),
+    [rackOn, profile, rackReading, holds, ports, sessionRef, upkeep])
   // The member: the rack's chosen chain, one device inside the rack (§19.7).
   const memberOn = rackOn && !waits.member
   const chosen = useSelectedSkillChain(rackDesignBinding ? memberChains(rackDesignBinding.values) : null)
   const memberDevice = useMemo(() => (memberOn ? rackMemberDevice(MEMBER_DEVICE_ID) : null), [memberOn])
   // Trust (lane W3): the review recorded with AIKit through the kernel's aikit_write trust-record, in the rack's project.
-  const memberPorts = useMemo((): MemberPorts => (transport.kind !== 'unavailable'
-    ? {trust: capability => ownerRouteWrite(transport, aikitWriteOp({kind: 'trust-record', project: RACK_PROJECT, capability}), ROUTE_WORDS.trust)} : {}), [transport])
+  // The member's Why and History (lane W8): AIKit's explain and history of the chosen capability.
+  const memberWhy = useAikitRead(transport, memberOn && chosen ? {kind: 'explain', resource: chosen} : null)
+  const memberHistory = useAikitRead(transport, memberOn && chosen ? {kind: 'history', resource: chosen} : null)
+  const memberPorts = useMemo((): MemberPorts => ({why: memberWhy, history: memberHistory,
+    ...(transport.kind !== 'unavailable' ? {trust: capability => ownerRouteWrite(transport, aikitWriteOp({kind: 'trust-record', project: RACK_PROJECT, capability}), ROUTE_WORDS.trust)} : {})}),
+  [transport, memberWhy, memberHistory])
   const memberDesignBinding = useMemo(() => (memberDevice && rackDesignBinding ? memberBinding(MEMBER_DEVICE_ID, rackDesignBinding.values, chosen, holds, memberPorts) : null),
     [memberDevice, rackDesignBinding, chosen, holds, memberPorts])
   // Scope: the world row's write path for the write mode; a raised reach held until Confirm.
@@ -302,6 +359,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const knowledgeStatus = useOwnerOp(transport, knowledgeOn ? KNOWLEDGE_STATUS : null, 'knowledge').reading
   const knowledgeDesignBinding = useMemo(() => knowledgeRouteBinding({status: knowledgeStatus.status === 'answered' ? knowledgeStatus.value?.data ?? null : null,
     statusError: knowledgeStatus.status === 'refused' ? knowledgeStatus.error ?? null : null, project: RACK_PROJECT, profile}), [knowledgeStatus, profile])
+  // Capture skill (§19.11, lane W7): on the armed track's chain — the selected session's, never a group's — after Scope. It reads the
+  // proposal that waits in AIKit's inbox and writes Accept through aikit_write promote.
+  const captureDevice = useMemo(() => captureSkillDevice(), [])
+  const captureDesign = useDesign(CAPTURE_SKILL_DESIGN, true)
+  const captureOn = knowledgeOn && !groupTrack && !!captureDevice
+  const captureInbox = useOwnerOp(transport, captureOn ? CAPTURE_INBOX : null, 'owner_route_reading').reading
+  const capturePorts = useMemo((): CaptureSkillPorts => (transport.kind !== 'unavailable'
+    ? {promote: (candidate, id) => ownerRouteWrite(transport, aikitWriteOp({kind: 'promote', project: RACK_PROJECT, candidate, ...(id ? {id} : {})}), '`aikit promote`')} : {}), [transport])
+  const captureDesignBinding = useMemo(() => captureSkillBinding({inbox: {status: captureInbox.status, value: captureInbox.value?.data ?? null, error: captureInbox.error},
+    holds}, capturePorts), [captureInbox, holds, capturePorts])
   // The seat instrument (lane K1's seat_status_read: slow, read once while a session's or a workcell's chain stands, and on demand): the
   // workcell's seats, the Seat, Git / landing on a workcell's chain, and the Workcells tile.
   const seats = useSeatStatusAnswer(transport, sessionRef != null || cellName != null).reading
@@ -311,8 +378,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const gitDesignBinding = useMemo(() => (waits.git ? null : gitBinding(gitReading, holds)), [waits.git, gitReading, holds])
   // The one Agent (R4): its Custody page on the session's custody (its write mode Scope's), its Identity page on the roster card of the
   // session's own agent (the hold keyed apart from Central's Agent), its Thread page the Thread's binding — each composed under its prefix.
-  const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, autonomy: reading.autonomy, agent: agentDesignBinding?.values ?? {}}, scopeDesignBinding),
-    [sessionRef, reading.autonomy, agentDesignBinding, scopeDesignBinding])
+  // Custody's Grants page (lane W8): Actuation's authority list, and Revoke as the current person's own press — Actuation authenticates no
+  // issuer, so the binding writes only as the person `currentIdentity()` names.
+  const grantsRead = useOwnerOp(transport, sessionRef != null ? AUTHORITY_LIST : null, 'owner_route_reading').reading
+  const grants = useMemo(() => ({status: grantsRead.status, value: grantsRead.value?.data ?? null, error: grantsRead.error ? refusalWords(grantsRead.error) : null,
+    readAtUnixMs: grantsRead.readAtUnixMs}), [grantsRead])
+  const custodyPorts = useMemo((): CustodyPorts => (transport.kind !== 'unavailable'
+    ? {revoke: (authority_source_ref, reason) => ownerRouteWrite(transport, {op: 'actuation_write', request: {kind: 'authority-revoke', authority_source_ref, ...(reason ? {reason} : {})}}, '`actuation authority revoke`'),
+      personNow: () => currentIdentity()?.reading.person_ref ?? null}
+    : {}), [transport])
+  const currentPerson = currentIdentity()?.reading.person_ref ?? null
+  const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, autonomy: reading.autonomy, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson},
+    scopeDesignBinding, custodyPorts), [sessionRef, reading.autonomy, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyPorts])
   const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
   const oneAgent = useMemo(() => (agentDesignBinding ? composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}) : null),
     [agentDesignBinding, custodyDesignBinding, identityDesignBinding, threadDesignBinding])
@@ -398,6 +475,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   useEffect(() => { publishDevice(TASKS_ID, tasks ? {device: tasks, binding: tasksDesignBinding} : null) }, [tasks, tasksDesignBinding])
   useEffect(() => { publishDevice(RUNS_ID, runs ? {device: runs, binding: runsDesignBinding} : null) }, [runs, runsDesignBinding])
   useEffect(() => { if (main.experiment) publishDevice(EXPERIMENT_ID, {device: main.experiment, binding: mainBindings.experiment}) }, [main, mainBindings])
+  useEffect(() => { publishDevice(RUN_MAP_ID, runMapDev ? {device: runMapDev, binding: mainBindings.runMap} : null) }, [runMapDev, mainBindings])
+  useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads} : null) }, [padsDev, mainBindings])
   useEffect(() => {
     const own = [[RUN_ID, ownDevices.run, runDesignBinding], [AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding],
       [APPROVALS_ID, receipts.approvals, approvalsDesignBinding], [SEAT_ID, cells.seat, seatDesignBinding], [CARRIER_ID, cells.carrier, carrierDesignBinding]] as const
@@ -407,6 +486,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   useEffect(() => { publishDevice(KNOWLEDGE_ROUTE_ID, knowledgeOn && knowledgeDevice ? {device: knowledgeDevice, binding: knowledgeDesignBinding} : null) },
     [knowledgeOn, knowledgeDevice, knowledgeDesignBinding])
   useEffect(() => () => { publishDevice(KNOWLEDGE_ROUTE_ID, null) }, [])
+  useEffect(() => { publishDevice(CAPTURE_SKILL_ID, captureOn && captureDevice ? {device: captureDevice, binding: captureDesignBinding} : null) },
+    [captureOn, captureDevice, captureDesignBinding])
+  useEffect(() => () => { publishDevice(CAPTURE_SKILL_ID, null) }, [])
   useEffect(() => { publishDevice(DECISION_HELPER_ID, helperStands && helperDevice ? {device: helperDevice, binding: helperDesignBinding} : null) },
     [helperStands, helperDevice, helperDesignBinding])
   useEffect(() => () => { publishDevice(DECISION_HELPER_ID, null) }, [])
@@ -415,7 +497,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     // The Link is the transport's (§19.19), and the rail's agent devices — Messages, Gateways, the Agency gateway, Frames, the Ledger, the
     // workcell rack — are the rail's publisher's (AgentRailDevices.tsx RAIL_AGENT_DEVICE_IDS): none of them is withdrawn here.
     for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, THREAD_DEVICE_ID, CUSTODY_ID, TASKS_ID, RUNS_ID, EXPERIMENT_ID, ...SESSION_DEVICE_IDS, APPROVALS_ID,
-      SEAT_ID, CARRIER_ID]) publishDevice(id, null)
+      SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID]) publishDevice(id, null)
   }, [])
 
   const choose = (slotId: string) => { shell.setExpandedDevice(slotId as AgentDeviceId); selectDevice(chainDeviceId(slotId)) }
@@ -607,11 +689,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
         </div>
       )
       case 'approvals': return placed(APPROVALS_ID, receipts.approvals, approvalsDesignBinding, designsReceipts.approvals ? APPROVALS_DESIGN : undefined, 'Approvals', {attrs: {'data-main-slot': 'approvals'}})
+      case 'run-map': return placed(RUN_MAP_ID, runMapDev, mainBindings.runMap, designsMain.runMap ? RUN_MAP_DESIGN : undefined, 'the Run map', {attrs: {'data-main-slot': 'run-map'}})
+      case 'prompt-pads': return placed(PROMPT_PADS_ID, padsDev, mainBindings.pads, designsMain.pads ? PROMPT_PADS_DESIGN : undefined, 'the Prompt pads', {attrs: {'data-main-slot': 'prompt-pads'}})
       // A workcell's chain (§19.23): its rack leads, then the road — the Remote carrier names the machine it runs on (§19.18).
       case 'workcell': return rackEntry?.binding ? placed(WORKCELL_RACK_ID, rackEntry.device, rackEntry.binding, designsCells.rack ? WORKCELL_RACK_DESIGN : undefined,
         `the workcell ${cellName ?? ''}`.trim(), {attrs: {'data-workcell-slot': 'workcell'}}) : null
       case 'remote-carrier': return placed(CARRIER_ID, cells.carrier, carrierDesignBinding, designsCells.carrier ? CARRIER_DESIGN : undefined, 'the Remote carrier',
         {attrs: {'data-workcell-slot': 'remote-carrier'}})
+      // The armed track's Capture skill (§19.11), after Scope.
+      case 'capture': return captureOn ? placed(CAPTURE_SKILL_ID, captureDevice, captureDesignBinding, captureDesign ? CAPTURE_SKILL_DESIGN : undefined, 'Capture skill',
+        {attrs: {'data-session-slot': 'capture'}}) : null
       default: return null
     }
   }
@@ -619,7 +706,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // The place's chain, left to right, with the visible drop slot while a card slides (it opens under the pointer among the agent chain's
   // slots and closes on release). It never lies: a slot is not a landing, the owner operation (here: the refusal naming the missing order
   // op) is.
-  const slots = chainSlots(place, {helper: helperStands})
+  const slots = chainSlots(place, {helper: helperStands, capture: captureOn, runMap: !!runMapDev, pads: !!padsDev})
   let slotIndex = 0
   const plates = slots.map(slot => {
     const atGap = AGENT_SLOTS.has(slot) && held?.kind === 'reorder' && gap === slotIndex

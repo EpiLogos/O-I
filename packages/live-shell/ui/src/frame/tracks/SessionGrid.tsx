@@ -314,10 +314,12 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
                 onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
                 <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${trackLaunch.op})` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
                   onClick={event => { event.stopPropagation(); if (trackLaunch) onPress(key, `Launch ${clip.label}`, () => trackLaunch.run(clip.id)) }} />
-                <span className="cs-label">{clip.label}{clipStandingTag(mark)}</span>
+                <span className="cs-text">
+                  <span className="cs-label">{clip.label}{clipStandingTag(mark)}</span>
+                  {clipSecondLine(clip)}
+                </span>
                 {clip.status === 'recording' && <i className="cs-rec" role="img" aria-label="Recording" />}
                 {clip.note && <span className="cs-note" role="img" aria-label={clip.note} title={clip.note}>⚑</span>}
-                {!!clip.takes?.length && <span className="cs-takes" aria-label={`${clip.takes.length} takes`}>{clip.takes.length}</span>}
               </div>
             }
             // A group with no clip of its own in this row rolls up its members': one cell per member's clip, by its status
@@ -411,6 +413,20 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
 
 /** The states a clip can stand in, in the order the legend names them (dlw:session-grid's foot). */
 const LEGEND_STATES = ['waiting', 'running', 'stopped', 'recording', 'stalled', 'done'] as const
+/** A clip's second line (catalogue dlw__session-grid.tsx FullGrid's cell, its `<small>`): what follows it, as the owner words it, and the
+ * takes stacked under it. The design's launch mode (once · hold · loop) stands there too where the owner discloses one; no set carries a
+ * launch mode yet (timeline/worldTrackAdapter.ts ClipLaunch holds quantize and follow), so it is left out, never guessed. Nothing to say,
+ * no line. */
+export function clipSecondLine(clip: Pick<WorldTrackClip, 'launch' | 'takes'>) {
+  const follow = clip.launch?.follow, takes = clip.takes?.length ?? 0
+  if (!follow && !takes) return null
+  return <small className="cs-sub">
+    {follow && <span className="cs-follow">→ {follow}</span>}
+    {follow && takes > 0 && ' · '}
+    {takes > 0 && <span className="cs-takes">{takes} {takes === 1 ? 'take' : 'takes'}</span>}
+  </small>
+}
+
 /** The grid's foot (catalogue dlw__session-grid.tsx FullGrid's bar): the legend of a clip's states, and what the selected clip launches
  * and does after, in its owner's words where the set gives them (its launch's quantize and follow). */
 export function GridLegend({set, selection}: {set: WorldTrackSet; selection: TracksSelection}) {

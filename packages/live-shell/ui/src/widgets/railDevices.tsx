@@ -33,7 +33,7 @@ import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import type {IconName} from '../inhabitants/sdk/Icon'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
-import {CALENDAR_ABSENT, diffFilesOf, filesOf, notificationsBinding, nowsCloseWrites, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
+import {CALENDAR_ABSENT, NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, notificationsBinding, nowsCloseWrites, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
 import {openInstrument} from '../frame/instrumentDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {loadWhenDrawn} from '../shell/loadWhenDrawn'
@@ -50,7 +50,7 @@ export const RAIL_DEVICES = [
   {id: 'diff', title: 'Diff', icon: 'select', note: 'The selected seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1), the seat as the seat instrument reads it; with no seat selected, the shell\'s project (git_repository_read).'},
   {id: 'nows', title: 'NOWs', icon: 'die', note: 'The ground\'s civil time, its Day and its open NOW clearings (kernel central inspect → central.civil-time-reading/v1, central.day-reading/v1, central.now-listing/v1).'},
   {id: 'calendar', title: 'Calendar', icon: 'metro', note: 'A third party\'s calendar, through the provider it comes from. No calendar provider is installed.'},
-  {id: 'notifications', title: 'Notifications', icon: 'arm', note: 'What asks for your attention (§23.9): the agents that wait for you (Messages), what waits in Approvals, and the requests an owner raised through Central\'s personal.notify, which is not installed yet.'},
+  {id: 'notifications', title: 'Notifications', icon: 'arm', note: 'What asks for your attention (§23.9): the agents that wait for you (Messages), what waits in Approvals, and the requests an owner raised through Central\'s personal.notify, as Central keeps them with their deliveries (personal.notifications.list).'},
 ] as const satisfies readonly {id: string; title: string; icon: IconName; note: string}[]
 export type RailDeviceId = typeof RAIL_DEVICES[number]['id']
 
@@ -348,19 +348,38 @@ const doorValue = (id: string, key: string): Value | undefined => publishedDevic
 const approvalsOnDoor = (): string | undefined => NOTIFY_APPROVALS_IDS.find(id => publishedDevice(id))
 const minutesNow = (): number => { const at = new Date(); return at.getHours() * 60 + at.getMinutes() }
 
-function useNotificationsBinding(): DesignBinding {
+/** Open a request's target where it belongs: a device on the door in its pane (a subject or callback that names one), an https://
+ * address through the host's opener (as Expressions opens a reference: panels/expressions.tsx). The shell has no router for an oi://
+ * address or any other ref yet, so those refuse in words naming what is missing. Opening writes nothing to any owner. */
+export async function openNotificationTarget(target: string): Promise<void> {
+  if (publishedDevice(target)) { openInstrument(DEVICE_PANE_KIND, undefined, {ref: target, title: publishedDevice(target)?.device.face.title ?? target}); return }
+  if (/^https:\/\//.test(target)) {
+    const {invoke} = await import('@tauri-apps/api/core')
+    await invoke('plugin:opener|open_url', {url: target})
+    return
+  }
+  throw new Error(`Open: no route in the shell opens ${target} yet — the shell has no router for oi:// addresses or refs that name no device on the door.`)
+}
+
+function useNotificationsBinding(transport: KernelTransportStatus | undefined): DesignBinding {
   const {holds, local} = useHolds(['show', 'follow', 'selected', 'opened'])
   // Each count is its own device's reading (railBindings.ts notificationsValues): read off the door, never derived here.
   const agents = useSyncExternalStore(subscribeDeviceDoor, () => doorValue(NOTIFY_MESSAGES_ID, 'agents'), () => undefined)
   const approvals = useSyncExternalStore(subscribeDeviceDoor, approvalsOnDoor, () => undefined)
   const queue = useSyncExternalStore(subscribeDeviceDoor, () => (approvals ? doorValue(approvals, 'queue') : undefined), () => undefined)
-  // Now on the strip: the view's own clock, turned each minute.
+  // Now on the strip: the view's own clock, turned each minute; today's requests are the ones asked since the local midnight.
   const [now, setNow] = useState(minutesNow)
   useEffect(() => { const timer = window.setInterval(() => setNow(minutesNow()), 60_000); return () => window.clearInterval(timer) }, [])
-  return useMemo(() => notificationsBinding(railDeviceId('notifications'), {messagesAgents: agents, approvalsQueue: queue, nowMinutes: now}, holds, {local,
+  const since = useMemo(() => dayStartMs(Date.now()), [now === 0]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The requests Central keeps for personal.notify, and its provider (ctrl/src/notification.rs): a reading, asked again on the kernel's notice.
+  const ledgerOp = useMemo(() => centralActionOp(NOTIFY_LIST_ACTION, {since_unix_ms: since}), [since])
+  const ledgerReading = useOwnerOp(transport, transport ? ledgerOp : null, 'action_dispatched', `${NOTIFY_LIST_ACTION} did not answer.`).reading
+  const ledger = useMemo(() => actionAnswerOf(ledgerReading, NOTIFY_LIST_ACTION), [ledgerReading])
+  return useMemo(() => notificationsBinding(railDeviceId('notifications'), {messagesAgents: agents, approvalsQueue: queue, nowMinutes: now, ledger}, holds, {local,
     messages: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: NOTIFY_MESSAGES_ID, title: 'Messages'}),
-    approvals: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: approvals ?? NOTIFY_APPROVALS_IDS[0], title: 'Approvals'})}),
-  [agents, queue, approvals, now, holds, local])
+    approvals: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: approvals ?? NOTIFY_APPROVALS_IDS[0], title: 'Approvals'}),
+    open: openNotificationTarget}),
+  [agents, queue, approvals, now, ledger, holds, local])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the publisher
@@ -375,7 +394,7 @@ export function RailDevices() {
   const reading = useWidgetReading()
   const transport = reading?.transport
   const diffReading = useDiffReading(transport), tape = useFollowedTape()
-  const trail = useTrailBinding(), diff = useDiffBinding(diffReading), nows = useNowsBinding(transport), calendar = useCalendarBinding(), notifications = useNotificationsBinding()
+  const trail = useTrailBinding(), diff = useDiffBinding(diffReading), nows = useNowsBinding(transport), calendar = useCalendarBinding(), notifications = useNotificationsBinding(transport)
   const files = useFilesBinding(tape, diffReading), web = useWebBinding(tape), wiki = useWikiBinding(transport)
   const devices = useMemo(() => Object.fromEntries(RAIL_DEVICES.map(spec => [spec.id, railDevice(spec.id)])) as Record<RailDeviceId, DeviceInstance>, [])
   // The Terminal (§17.9): the newest terminal the Workbench's surfaces hold, while one runs (terminalBinding.ts); its rail tile is

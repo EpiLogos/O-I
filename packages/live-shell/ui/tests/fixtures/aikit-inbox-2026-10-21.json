@@ -1,0 +1,166 @@
+{
+ "_read": "aikit inbox --json, workcell:mac, 21 Oct 2026, read-only: the envelope data, five of its 37 items kept verbatim (four capture candidates and one other message)",
+ "data": {
+  "count": 37,
+  "items": [
+   {
+    "body": "Captured as a **script** (as declared).\n\nObserved by agent.\nSource: observed 3x in 7d (session bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52).\n\nSaving it writes `script/personal/gh-pr-checks-693-2-1-awk-print-1-2-head-14`. `aikit inbox accept cnd_01M5F24GMBFVHVA0VAVWP58QGN` saves it; `aikit inbox reject cnd_01M5F24GMBFVHVA0VAVWP58QGN` turns it down.",
+    "created": "2026-10-21T11:04:26.000878Z",
+    "evidence": [
+     {
+      "evidence": "hash",
+      "label": "candidate",
+      "value": "cnd_01M5F24GMBFVHVA0VAVWP58QGN"
+     },
+     {
+      "evidence": "hash",
+      "label": "proposed-id",
+      "value": "script/personal/gh-pr-checks-693-2-1-awk-print-1-2-head-14"
+     },
+     {
+      "evidence": "file",
+      "path": "/Users/admin/.aikit/inbox/ready/cnd_01M5F24GMBFVHVA0VAVWP58QGN/body"
+     },
+     {
+      "evidence": "summary",
+      "text": "gh pr checks 693 2>&1 | awk '{print $1, $2}' | head -14"
+     }
+    ],
+    "id": "inb_01M5F24GMGP1BFR7RXH7G4NFS4",
+    "kind": "capture-candidate",
+    "project": null,
+    "proposal": "prc_01M5F24GME99KAWYSQD4JSNQGN",
+    "state": {
+     "state": "open"
+    },
+    "title": "Save “gh pr checks 693 2>&1 | awk '{print $1, $2}' | head -14” as a script?"
+   },
+   {
+    "body": "Captured as a **script** (as declared).\n\nObserved by agent.\nSource: observed 3x in 7d (session 2a7899c4-f2f7-4f38-84b6-ae22ba0d1d7f).\n\nSaving it writes `script/personal/private-tmp-claude-501-users-admin-central-2a789`. `aikit inbox accept cnd_01M5EV7T3MR50MFN8V061XH2EB` saves it; `aikit inbox reject cnd_01M5EV7T3MR50MFN8V061XH2EB` turns it down.",
+    "created": "2026-10-21T09:03:53.973792Z",
+    "evidence": [
+     {
+      "evidence": "hash",
+      "label": "candidate",
+      "value": "cnd_01M5EV7T3MR50MFN8V061XH2EB"
+     },
+     {
+      "evidence": "hash",
+      "label": "proposed-id",
+      "value": "script/personal/private-tmp-claude-501-users-admin-central-2a789"
+     },
+     {
+      "evidence": "file",
+      "path": "/Users/admin/.aikit/inbox/ready/cnd_01M5EV7T3MR50MFN8V061XH2EB/body"
+     },
+     {
+      "evidence": "summary",
+      "text": "/private/tmp/claude-501/-Users-admin-Central/2a7899c4-f2f7-4f38-84b6-ae22ba0d1d7f/scratchpad/rl-run.sh"
+     }
+    ],
+    "id": "inb_01M5EV7T3N4RHM9G7VR8W14Q8A",
+    "kind": "capture-candidate",
+    "project": null,
+    "proposal": "prc_01M5EV7T3N4RHM9G7VR8W14Q89",
+    "state": {
+     "state": "open"
+    },
+    "title": "Save “/private/tmp/claude-501/-Users-admin-Central/2a7899c4-f2f7-4f38-84b6-ae22ba0d1d7…” as a script?"
+   },
+   {
+    "body": "Captured as a **script** (as declared).\n\nObserved by agent.\nSource: observed 3x in 7d (session a1c9401c-a00e-43c2-8822-afdfd2edacc4).\n\nSaving it writes `script/personal/git-push-origin-dlw-build-2-1-tail-3`. `aikit inbox accept cnd_01M5DV4WVWW2QH51NKQ1FJ32PD` saves it; `aikit inbox reject cnd_01M5DV4WVWW2QH51NKQ1FJ32PD` turns it down.",
+    "created": "2026-10-20T23:43:04.064438Z",
+    "evidence": [
+     {
+      "evidence": "hash",
+      "label": "candidate",
+      "value": "cnd_01M5DV4WVWW2QH51NKQ1FJ32PD"
+     },
+     {
+      "evidence": "hash",
+      "label": "proposed-id",
+      "value": "script/personal/git-push-origin-dlw-build-2-1-tail-3"
+     },
+     {
+      "evidence": "file",
+      "path": "/Users/admin/.aikit/inbox/ready/cnd_01M5DV4WVWW2QH51NKQ1FJ32PD/body"
+     },
+     {
+      "evidence": "summary",
+      "text": "git push origin dlw/build 2>&1 | tail -3"
+     }
+    ],
+    "id": "inb_01M5DV4WW0WJDYRVQQAHE3Z66X",
+    "kind": "capture-candidate",
+    "project": null,
+    "proposal": "prc_01M5DV4WVYM002EADF3QJD4K9Q",
+    "state": {
+     "state": "open"
+    },
+    "title": "Save “git push origin dlw/build 2>&1 | tail -3” as a script?"
+   },
+   {
+    "body": "Captured as a **script** (as declared).\n\nObserved by agent.\nSource: observed 3x in 7d (session 7223211e-9d4e-4b12-8ecb-546486be5a48).\n\nSaving it writes `script/personal/until-grep-q-pending-private-tmp-claude-501-user`. `aikit inbox accept cnd_01M5CP62Z1A5TSFKEWEPD1GREE` saves it; `aikit inbox reject cnd_01M5CP62Z1A5TSFKEWEPD1GREE` turns it down.",
+    "created": "2026-10-20T12:57:05.771349Z",
+    "evidence": [
+     {
+      "evidence": "hash",
+      "label": "candidate",
+      "value": "cnd_01M5CP62Z1A5TSFKEWEPD1GREE"
+     },
+     {
+      "evidence": "hash",
+      "label": "proposed-id",
+      "value": "script/personal/until-grep-q-pending-private-tmp-claude-501-user"
+     },
+     {
+      "evidence": "file",
+      "path": "/Users/admin/.aikit/inbox/ready/cnd_01M5CP62Z1A5TSFKEWEPD1GREE/body"
+     },
+     {
+      "evidence": "summary",
+      "text": "until grep -q \"pending=\" /private/tmp/claude-501/-Users-admin-Central/7223211e-9d4e-4b12-8ecb-546486be5a48/tasks/b0908qvqn.output 2>/dev/null; do sleep 10; done; cat /private/tmp/claude-501/-Users-admin-Central/7223211e-9d4e-4b12-8ecb-54648"
+     }
+    ],
+    "id": "inb_01M5CP62ZBAHWWW6R85FX8PXXA",
+    "kind": "capture-candidate",
+    "project": null,
+    "proposal": "prc_01M5CP62Z76JBEH5SCHJHFH67H",
+    "state": {
+     "state": "open"
+    },
+    "title": "Save “until grep -q \"pending=\" /private/tmp/claude-501/-Users-admin-Central/7223211e-9…” as a script?"
+   },
+   {
+    "body": "The plugin `superpowers` is installed at 4 different versions (4.2.0, 6.3.0, 6.4.1, 7.0.0).\n\n- 4.2.0 — /Users/admin/.codex/superpowers (15 skills)\n- 6.3.0 — /Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0 (14 skills)\n- 6.4.1 — /Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/6.4.1 (15 skills)\n- 7.0.0 — /Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/7.0.0 (15 skills)\n\nWhich one an agent actually loads depends on which root its harness reads. Nothing has been changed: these locations are indexed, not owned.",
+    "created": "2026-10-21T05:32:21.283432Z",
+    "evidence": [
+     {
+      "evidence": "file",
+      "path": "/Users/admin/.codex/superpowers"
+     },
+     {
+      "evidence": "file",
+      "path": "/Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0"
+     },
+     {
+      "evidence": "file",
+      "path": "/Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/6.4.1"
+     },
+     {
+      "evidence": "file",
+      "path": "/Users/admin/.claude/plugins/cache/claude-plugins-official/superpowers/7.0.0"
+     }
+    ],
+    "id": "inb_01M5EF4EX3Y0PT7RC7VMVDZN07",
+    "kind": "version-conflict",
+    "project": null,
+    "proposal": null,
+    "state": {
+     "state": "open"
+    },
+    "title": "superpowers is installed at 4.2.0 and 6.3.0 and 6.4.1 and 7.0.0"
+   }
+  ]
+ }
+}

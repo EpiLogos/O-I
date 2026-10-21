@@ -1,0 +1,222 @@
+{
+ "_read": "factory development journey|run <Central/.factory/development-state.json> <ref> --json, workcell:mac, 21 Oct 2026, read-only (the answers verbatim)",
+ "statePath": "/Users/admin/Central/.factory/development-state.json",
+ "journey": {
+  "contract": "factory.journey-reading/v1",
+  "provenance": {
+   "owner": "factory",
+   "factoryStateRevision": 15,
+   "subjectRevision": 7,
+   "source": "canonical Factory Journey"
+  },
+  "journeyRef": "journey:01M4BK6JT06PM642N5113KXJBX",
+  "revision": 7,
+  "projectRef": "project:0000000000JTF08GBQ137C62BZ",
+  "relatedProjects": [],
+  "commission": {
+   "purpose": "Integrate the authored Agent self across native owners and run the four-agent acquaintance experiment (Actuation PR #135): Central self-definition binding (landed, env-3/central 93aa397), AIKit shared identity-source compositor for Direct and admitted Agency, O:I creator self authoring/preview/review with app mint, Actuation author-agent-self registration, then the bounded four-peer encounter with restart continuity, independent assessment and attributable Return.",
+   "commission_ref": "commission-request:agent-self-acquaintance-2026-10-07",
+   "why_refs": [
+    "act:agent-self-acquaintance-commission-2026-10-07",
+    "agent/expressed-5b7b38f5796349759b5b8e35d736a5e6",
+    "agent/expressed-66c7aff81fbc4509a5404d93e99c0390",
+    "agent/expressed-802ced6ba4034e5b98bc3f728195c6c2",
+    "agent/expressed-ba635b5ae01b4ca98c591fe342079449",
+    "agent/zcode:agent-self-acquaintance",
+    "commission-request:agent-self-acquaintance-2026-10-07"
+   ]
+  },
+  "status": "active",
+  "frontier": "Commissioned 2026-10-07. Landed: Central AgentProfile self_definition binding with exact-source review/acceptance (93aa397, tests green); four peers Kite/Cairn/Lilt/Flint expressed, pinned and accepted at r1 (agent:expressed-802ced6b/5b7b38f5/66c7aff8/ba635b5a) with sources under Control/self/agents; undertaking NOW d5ee92a1 with four participant child NOWs; author-agent-self skill registered with AIKit as candidate source actuation-authoring. Remaining: AIKit compositor and delivery (I2), O:I creator extension and app mint (I3), Actuation skill conformance closure (I4), joined E1-E10 proof (I5), the primary encounter (I6), assessment/Return/cleanup (I7), new-ctrl install cut.",
+  "participants": [
+   {
+    "participant_ref": "agent/zcode:agent-self-acquaintance",
+    "role": "bounded-root-act-commissioned-not-executed"
+   },
+   {
+    "participant_ref": "agent/expressed-802ced6ba4034e5b98bc3f728195c6c2",
+    "role": "commissioned-participant-requirement-non-authoritative"
+   },
+   {
+    "participant_ref": "agent/expressed-5b7b38f5796349759b5b8e35d736a5e6",
+    "role": "commissioned-participant-requirement-non-authoritative"
+   },
+   {
+    "participant_ref": "agent/expressed-66c7aff81fbc4509a5404d93e99c0390",
+    "role": "commissioned-participant-requirement-non-authoritative"
+   },
+   {
+    "participant_ref": "agent/expressed-ba635b5ae01b4ca98c591fe342079449",
+    "role": "commissioned-participant-requirement-non-authoritative"
+   }
+  ],
+  "flowRefs": [],
+  "runRefs": [
+   "run:01M4BK6JT0KQ1JKA3ZZS3W23XZ"
+  ],
+  "agentSessionRefs": [],
+  "activityRefs": [],
+  "returns": [],
+  "recognitions": [],
+  "materialContextRefs": [],
+  "routineInvocationRefs": [],
+  "startedAt": "2026-10-07T16:30:00Z",
+  "completedAt": null
+ },
+ "run": {
+  "contract": "factory.run-reading/v1",
+  "provenance": {
+   "owner": "factory",
+   "factoryStateRevision": 15,
+   "subjectRevision": 2,
+   "source": "canonical Factory Run/RunMap + Factory Build correlations"
+  },
+  "runRef": "run:01M4BK6JT0KQ1JKA3ZZS3W23XZ",
+  "revision": 2,
+  "projectRef": "project:0000000000JTF08GBQ137C62BZ",
+  "owningJourneyRefs": [
+   "journey:01M4BK6JT06PM642N5113KXJBX"
+  ],
+  "routineInvocationRefs": [],
+  "lifecycle": "seeded",
+  "destination": "agent-self/native-authored-self-acquaintance-2026-10-07",
+  "runMap": {
+   "runRef": "run:01M4BK6JT0KQ1JKA3ZZS3W23XZ",
+   "topologyRevision": 2,
+   "nodes": {
+    "destination": {
+     "id": "destination",
+     "kind": "destination",
+     "label": "agent-self/native-authored-self-acquaintance-2026-10-07",
+     "state": null,
+     "semanticRef": null
+    },
+    "work-i0-basis-and-commission": {
+     "id": "work-i0-basis-and-commission",
+     "kind": "work",
+     "label": "I0: inspect current work, basis, native contracts and existing related runs before implementation",
+     "state": "ready",
+     "semanticRef": "workflow-unit:3K74MFXQ7416ZHQCJBGYCB380S"
+    },
+    "work-i1-central-self-binding": {
+     "id": "work-i1-central-self-binding",
+     "kind": "work",
+     "label": "I1: source binding and exact review/acceptance at Central",
+     "state": "ready",
+     "semanticRef": "workflow-unit:25HA41J70YYYTFMCY7ZKJCMTQV"
+    },
+    "work-i2-aikit-identity-compositor": {
+     "id": "work-i2-aikit-identity-compositor",
+     "kind": "work",
+     "label": "I2: shared identity-source resolver/compositor and Direct/Agency delivery at AIKit",
+     "state": "planned",
+     "semanticRef": "workflow-unit:7NG1A1BS35V1JXNYK9S10XG68B"
+    },
+    "work-i3-oi-creator-self-authoring": {
+     "id": "work-i3-oi-creator-self-authoring",
+     "kind": "work",
+     "label": "I3: native mint editor, generation, preview and operative review at O:I",
+     "state": "planned",
+     "semanticRef": "workflow-unit:21JAXSQW3H2EVRTVMVN2SJJJWV"
+    },
+    "work-i4-authoring-skill-registration": {
+     "id": "work-i4-authoring-skill-registration",
+     "kind": "work",
+     "label": "I4: author-agent-self Skill and persona intake at Actuation + AIKit registration",
+     "state": "ready",
+     "semanticRef": "workflow-unit:5C0486HC1TC49ZXPB8J5MPW0PX"
+    },
+    "work-i5-joined-proof-and-admission": {
+     "id": "work-i5-joined-proof-and-admission",
+     "kind": "work",
+     "label": "I5: independent joined proof and four-peer native admission",
+     "state": "planned",
+     "semanticRef": "workflow-unit:0PC09TMF8DC6ATD32S4CVASN7P"
+    },
+    "work-i6-acquaintance-encounter": {
+     "id": "work-i6-acquaintance-encounter",
+     "kind": "work",
+     "label": "I6: free acquaintance and continuity encounter",
+     "state": "planned",
+     "semanticRef": "workflow-unit:5WZYEPSFH9835E33YRS4NKJ2R2"
+    },
+    "work-i7-assessment-and-return": {
+     "id": "work-i7-assessment-and-return",
+     "kind": "work",
+     "label": "I7: independent analysis, Return, release and human reading",
+     "state": "planned",
+     "semanticRef": "workflow-unit:67WT9FGCVD2ZZZNHAPEJ5EFZ5K"
+    }
+   },
+   "edges": [
+    {
+     "from": "destination",
+     "to": "work-i0-basis-and-commission",
+     "relation": "branches_to"
+    },
+    {
+     "from": "destination",
+     "to": "work-i7-assessment-and-return",
+     "relation": "branches_to"
+    },
+    {
+     "from": "work-i2-aikit-identity-compositor",
+     "to": "work-i1-central-self-binding",
+     "relation": "requires"
+    },
+    {
+     "from": "work-i3-oi-creator-self-authoring",
+     "to": "work-i1-central-self-binding",
+     "relation": "requires"
+    },
+    {
+     "from": "work-i5-joined-proof-and-admission",
+     "to": "work-i2-aikit-identity-compositor",
+     "relation": "requires"
+    },
+    {
+     "from": "work-i5-joined-proof-and-admission",
+     "to": "work-i3-oi-creator-self-authoring",
+     "relation": "requires"
+    },
+    {
+     "from": "work-i5-joined-proof-and-admission",
+     "to": "work-i4-authoring-skill-registration",
+     "relation": "requires"
+    },
+    {
+     "from": "work-i6-acquaintance-encounter",
+     "to": "work-i5-joined-proof-and-admission",
+     "relation": "requires"
+    },
+    {
+     "from": "work-i7-assessment-and-return",
+     "to": "work-i6-acquaintance-encounter",
+     "relation": "requires"
+    }
+   ]
+  },
+  "thoughtAvailable": false,
+  "thoughtRefs": [],
+  "agencies": [],
+  "executions": [],
+  "evidence": [],
+  "candidates": [],
+  "humanRequests": [],
+  "actions": [
+   {
+    "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+    "label": "Request more evidence",
+    "subjectKinds": [
+     "candidate"
+    ],
+    "inputContract": "factory.action-projection/v1",
+    "resultContract": "factory.action-projection/v1",
+    "authorityOwner": "factory",
+    "requiredCapabilityRef": "capability/factory/request-evidence",
+    "currentlyApplicable": false,
+    "applicableSubjectRefs": []
+   }
+  ]
+ }
+}

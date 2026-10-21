@@ -134,19 +134,23 @@ test('the open agent\'s conversation from the Gateway journal: its Communiques a
 
 test('(b) every key the design reads is an owner reading, absent with its missing operation named, or a hold of the hand', () => {
   bind.resetHolds()
-  const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}, {act: async () => ({})})
+  // REPLACED (lane W7): the groups are Central's agent sets (central-agent-sets-2026-10-21.json, REAL), read as a reading.
+  const SETS = JSON.parse(readFileSync(new URL('./fixtures/central-agent-sets-2026-10-21.json', import.meta.url), 'utf8'))
+  const agentSets = [{scope: 'root', answer: {status: 'answered', value: SETS.root}}, {scope: 'project', answer: {status: 'answered', value: SETS.project}}]
+  const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, project: 'O-I', agentSets, holds: bind.chainHolds()}, {act: async () => ({})})
   const classes = Object.fromEntries(designKeys.map(key => [key, classify(binding, key)]))
   for (const [key, kind] of Object.entries(classes)) assert.ok(kind, `${key}: classified`)
-  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'gateway', 'worlds'])
+  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'gateway', 'groups', 'worlds'])
   for (const [key, kind] of Object.entries(classes)) if (kind === 'absent') assert.match(binding.standing[key].disabled, /missing op:/, `${key}: names what it waits for`)
   // Absent: the readings no owner reports, and the conversation's Input and Voice — controls with no value, disabled with the send route.
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'absent').map(([key]) => key).sort(),
-    ['conv.age', 'conv.input', 'conv.light', 'conv.voice', 'conv.writes', 'groups', 'skillsets', 'types'])
+    ['conv.age', 'conv.input', 'conv.light', 'conv.voice', 'conv.writes', 'skillsets', 'types'])
   // The proposal is Central's reading once Make wrote one; Change is the hand's (it takes the card back to its fields).
   for (const key of ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages', 'new.for', 'new.type', 'new.world', 'proposal']) assert.equal(classes[key], 'local', key)
   assert.deepEqual(JSON.parse(binding.values.worlds), ['project:O-I', 'control:root'], 'the World refs AIKit\'s population names')
   assert.equal(binding.values['new.world'], 'project:O-I', 'Works in starts on the project\'s world')
-  assert.match(binding.standing.groups.disabled, /aikit gateway team/)
+  assert.match(msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, holds: bind.chainHolds()}).standing.groups.disabled, /central\.agent-set\.list/,
+    'unread, the groups say which listing they wait for')
 })
 
 test('(c) the conversation\'s Input, Voice and session acts refused with what they lack; with no carrier Send, a drop, Make, Accept and Discard say so', async () => {

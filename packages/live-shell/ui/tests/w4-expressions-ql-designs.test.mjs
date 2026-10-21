@@ -314,9 +314,9 @@ test('the M3 clock reads the generation law and the cell of the form\'s hexagram
   const binding = m3c.qlM3Binding(m3Of())
   assert.equal(binding.writes('law.matrix'), true)
   assert.equal(binding.writes('generation.positive'), false)
-  assert.deepEqual(Object.keys(m3c.QL_M3_ABSENT), ['rack', 'rack.part'], 'only the rack waits now')
+  assert.deepEqual(Object.keys(m3c.QL_M3_ABSENT), [], 'no key lacks its owner now')
   const keys = classify(DESIGNS.m3clock, binding)
-  assert.deepEqual(keys.absent.sort(), ['rack', 'rack.part'])
+  assert.deepEqual(keys.absent.sort(), ['rack'], 'the rack, until it is read (qlRack.ts); the part is the view\'s own')
   assert.match(m3c.qlM3Binding(NO_M3).standing['law.matrix'].disabled, /No Nara identity is chosen/)
 })
 
@@ -412,22 +412,150 @@ test('Binding and the M′ matrices draw on their bindings in every view and pag
   holds.resetHolds()
 })
 
-test('today\'s centres stay absent with exact words: the real `ql scene compose` answer names each centre\'s reference, anatomy and planets, not what the Chakra and the Sitting draw', async () => {
+test('today\'s centres: the installed ql\'s scene names no centre and is refused in words; the centres QL-MEF #345 composes draw on the Chakra and the Sitting', async () => {
   const chakra = await import(src('inhabitants/ql/devices/qlChakra.ts'))
+  const sittingMod = await import(src('inhabitants/ql/devices/qlSitting.ts'))
+  const centresMod = await import(src('inhabitants/ql/devices/qlCentres.ts'))
   const deck = await import(src('inhabitants/ql/devices/qlDeck.ts'))
-  const scene = JSON.parse(readFileSync(new URL('./fixtures/ql-scene-compose-2026-10-21.json', import.meta.url), 'utf8')).answer
-  assert.equal(scene.schema, 'ql.scene/v1')
-  assert.equal(scene.centres.length, 7)
-  for (const centre of scene.centres) assert.deepEqual(Object.keys(centre).sort(), ['anatomy', 'centre_ref', 'receiving'], 'the scene\'s centre, as QL answers it')
+  const envelope = data => ({outcome: {result: 'owner_route_reading', data}})
+  // REAL: the installed ql's `ql scene compose` names each centre only by its reference, anatomy and planets.
+  const installed = JSON.parse(readFileSync(new URL('./fixtures/ql-scene-compose-2026-10-21.json', import.meta.url), 'utf8')).answer
+  for (const centre of installed.centres) assert.deepEqual(Object.keys(centre).sort(), ['anatomy', 'centre_ref', 'receiving'], 'the scene\'s centre, as the installed ql answers it')
+  assert.deepEqual(centresMod.readCentresAnswer(envelope(installed), installed.snapshot_ref), {ok: false, reason: centresMod.NO_NAMED_CENTRES})
+  assert.match(centresMod.NO_NAMED_CENTRES, /QL-MEF #345/)
+  // The centres QL-MEF #345 composes for its dated sky (fixture: the PR's scene::compose output), in the kernel's envelope for a route reading.
+  const pr = JSON.parse(readFileSync(new URL('./fixtures/ql-scene-centres-pr345-2026-10-21.json', import.meta.url), 'utf8'))
+  const scene = {schema: 'ql.scene/v1', snapshot_ref: pr.sky.snapshot_ref, epoch_utc: pr.sky.epoch_utc, centres: pr.centres, decan_held: pr.decan_held}
+  assert.equal(centresMod.readCentresAnswer(envelope(scene), 'sha256:another-sky').ok, false, 'a scene of another sky is refused')
+  const calls = []
+  centresMod.resetQlCentres({call: async op => { calls.push(op); return envelope(scene) }})
+  const snapshot = {schema: 'ql.sky-snapshot/v1', snapshot_ref: pr.sky.snapshot_ref, epoch_utc: pr.sky.epoch_utc, bodies: []}
+  const sky = {snapshotRef: pr.sky.snapshot_ref, epochUtc: pr.sky.epoch_utc, epochMs: Date.parse(pr.sky.epoch_utc), bodies: [], status: 'available', snapshot}
+  await centresMod.syncQlCentres(sky)
+  await centresMod.syncQlCentres(sky)
+  assert.equal(calls.length, 1, 'one scene for one sky')
+  assert.deepEqual(calls[0], {op: 'ql_read', request: {kind: 'scene-compose', request: {schema: 'ql.scene-request/v1', tick12: 0, cycle: 0, sky_snapshot: snapshot}}},
+    'the Sky\'s own snapshot, verbatim, with the scene\'s opening tick and cycle')
+  const state = centresMod.qlCentresState()
+  assert.equal(state.reading.ok, true)
+  const drawn = JSON.parse(chakra.qlChakraValues(chakra.qlChakraState(), {reading: null}, state).centres)
+  assert.deepEqual(drawn.map(c => c.name), ['Mūlādhāra', 'Svādhiṣṭhāna', 'Maṇipūra', 'Anāhata', 'Viśuddha', 'Ājñā', 'Sahasrāra'])
+  assert.deepEqual(drawn.map(c => c.element), ['Prithvi Tattva', 'Jala Tattva', 'Agni Tattva', 'Vayu Tattva', 'Akasha Tattva', null, null], 'the tattva QL names, never a word the shell picks')
+  assert.equal(drawn[0].mantra, 'LAM - earth element activation', 'the map\'s words, verbatim')
+  assert.deepEqual([drawn[0].own, drawn[0].decan, drawn[6].decan], [['Saturn'], ['Mars'], ['Saturn']], 'receiving is the own route; decan the reception\'s')
+  assert.ok(drawn.every(c => !('petals' in c)), 'QL holds no petal count, so none is drawn')
+  const chakraBinding = chakra.qlChakraBinding(chakra.qlChakraState(), {reading: null}, state)
+  assert.equal(chakraBinding.values.reason, undefined, 'with the centres read, nothing says they are missing')
+  assert.equal(chakraBinding.standing.centres.disabled, chakra.CENTRES_READ)
   const chakraDesign = (await import(src('inhabitants/catalogue/panels/quaternal-logic__chakra.tsx'))).design
-  const drawn = JSON.parse(chakraDesign.defaults.centres)[0]
-  for (const key of ['name', 'element', 'mantra', 'petals', 'decan']) assert.ok(key in drawn && !(key in scene.centres[0]), `${key}: the design draws it; the scene does not answer it`)
-  assert.match(chakra.NO_CENTRES, /answer each centre's reference, anatomy and the planets it receives, not its name, element, mantra, petals or decan route/)
-  assert.equal(chakra.qlChakraBinding(chakra.qlChakraState()).standing.centres.disabled, chakra.NO_CENTRES)
-  // The Deck's cast hexagram is not the form's: its cell is QL's generation_at, which the shell does not ask yet; the card of the codon now is the form's.
+  const chakraAll = drawsClean(chakraDesign, chakraBinding, /Svādhiṣṭhāna.*VAM<|>VAM</)
+  assert.ok(chakraAll.includes('Mūlādhāra') && chakraAll.includes('Prithvi Tattva'), 'the Chakra draws QL\'s centre and tattva')
+  const sitting = sittingMod.qlSittingBinding(sittingMod.qlSittingState(), state)
+  assert.deepEqual(JSON.parse(sitting.values.centres).map(c => [c.ordinal, c.name]).slice(0, 2), [[1, 'Mūlādhāra'], [2, 'Svādhiṣṭhāna']])
+  const sittingDesign = (await import(src('inhabitants/catalogue/panels/quaternal-logic__sitting.tsx'))).design
+  drawsClean(sittingDesign, sitting, /06:40|21:15/)
+  // With no sky, or the installed ql's scene, the centres stand absent with the reason.
+  centresMod.resetQlCentres({call: async () => envelope(installed)})
+  await centresMod.syncQlCentres({...sky, snapshotRef: installed.snapshot_ref, snapshot: {...snapshot, snapshot_ref: installed.snapshot_ref}})
+  const none = chakra.qlChakraBinding(chakra.qlChakraState(), {reading: null}, centresMod.qlCentresState())
+  assert.equal(none.values.centres, undefined)
+  assert.equal(none.standing.centres.disabled, centresMod.NO_NAMED_CENTRES)
+  assert.equal(sittingMod.qlSittingBinding(sittingMod.qlSittingState(), centresMod.qlCentresState()).standing.centres.disabled, centresMod.NO_NAMED_CENTRES)
+  centresMod.resetQlCentres()
   const binding = deck.qlDeckBinding(deck.qlDeckState(), m3Of())
   assert.equal(binding.values['m3.card'], 'Ten of Wands', 'the real form\'s tarot, in the kernel\'s register')
-  for (const key of ['matrix', 'generation']) assert.match(binding.standing[key].disabled, /generation_at, read through m3_reception's read/, key)
+})
+
+test('the Deck reads the cast hexagram\'s cell from QL\'s generation law, asked of the M3 state as a read with generation_at; the Matrix chooses among its three cells', async () => {
+  const deck = await import(src('inhabitants/ql/devices/qlDeck.ts'))
+  const m3Mod = await import(src('inhabitants/ql/devices/qlM3Clock.ts'))
+  // REAL: `ql kernel m3` answered generation_at [{hexagram: 23}] beside the state (tests/fixtures/ql-m3-state-2026-10-21.json).
+  const real = JSON.parse(readFileSync(new URL('./fixtures/ql-m3-state-2026-10-21.json', import.meta.url), 'utf8'))
+  assert.deepEqual(real.input.generation_at, [{hexagram: 23}])
+  const basis = {identity: {selection_ref: 'sel:1', source: {source_ref: 'nara:identity:1', revision: 'r1'}, reading: {person_ref: 'person:1', nara_ref: 'nara:1'}},
+    expression: {expression_ref: 'expr:1', revision: 3}}
+  const reception = extra => ({outcome: {result: 'm3_reception', data: {schema: 'oi.m3-reception-context/v1', status: 'available', expression_ref: 'expr:1', expression_revision: 3,
+    person_ref: 'person:1', identity_revision: 'r1', state: real.answer.state, ...extra}}})
+  const m3 = {key: 'k1', basis, reading: reception().outcome.data, reason: null, busy: false, view: {}}
+  // A cast whose lines read hexagram 23 from the bottom (QL's journey: bit 0 the bottom line): 7 7 7 8 7 8.
+  const cast = {result: {reading: {status: 'open', concern: {title: 'q'}, spreads: [], symbolic_assignments: [], deck: {dealt: 0},
+    iching: [{reading_ref: 'i1', lines: [7, 7, 7, 8, 7, 8], primary: 23, changing_mask: 0, resulting: null, nuclear: 0, day_ref: 'd'}]}}, journey: null, reason: null, busy: false, view: {}}
+  assert.equal(deck.castHexagramOf(cast), 23)
+  const calls = []
+  deck.resetQlDeck({call: async op => { calls.push(op); return reception({generation_at: real.answer.generation_at}) }})
+  deck.resetDeckCast()
+  await deck.syncDeckCast(cast, m3)
+  await deck.syncDeckCast(cast, m3)
+  assert.equal(calls.length, 1, 'one ask for one cast under one state')
+  assert.deepEqual(calls[0].request, {operation: 'read', generation_at: [{hexagram: 23}], binding: m3Mod.m3Binding(basis)}, 'QL\'s own spelling, on the encounter\'s binding')
+  const state = deck.qlDeckCastState()
+  const binding = deck.qlDeckBinding(cast, m3, state)
+  assert.equal(binding.values.matrix, 'moving-resting', 'the M3 state\'s own matrix, until you choose one')
+  assert.deepEqual(JSON.parse(binding.values.generation), {hexagram: 23, lower: 'TT', upper: 'CC', positive: 'TCC', negative: 'TTC', nonDual: false}, 'QL\'s cell, its codons under .sequence')
+  assert.equal(typeof binding.local.matrix, 'function', 'the Matrix is the view\'s own choice among the three cells')
+  const chosen = deck.qlDeckBinding({...cast, view: {matrix: 'complementary'}}, m3, state)
+  const cell = real.answer.generation_at[0].cells.find(c => c.matrix.family === 'complementary')
+  assert.equal(JSON.parse(chosen.values.generation).lower, cell.lower_pair.sequence, 'another matrix is another of the reading\'s cells, not another ask')
+  assert.equal(calls.length, 1)
+  // Refusals: no cast, no M3 form, another hexagram answered.
+  deck.resetDeckCast()
+  await deck.syncDeckCast({...cast, result: {...cast.result, reading: {...cast.result.reading, iching: []}}}, m3)
+  assert.equal(deck.qlDeckBinding(cast, m3, deck.qlDeckCastState()).standing.generation.disabled, deck.NO_CAST)
+  await deck.syncDeckCast(cast, {...m3, reading: null, reason: 'No Nara identity is chosen.'})
+  assert.match(deck.qlDeckCastState().reason, /read from your M3 state: No Nara identity is chosen/)
+  assert.equal(deck.readCastCell(real.answer.generation_at, 24).ok, false, 'a cell of another hexagram is refused')
+  deck.resetDeckCast(); deck.resetQlDeck()
+})
+
+test('the Rack pages read their instrument\'s rack from the map\'s ledger: positions and parts by the registry\'s names, the three steps from each coordinate\'s own view, the device and control from the instrument\'s entry', async () => {
+  const rackMod = await import(src('inhabitants/ql/devices/qlRack.ts'))
+  const ledger = JSON.parse(readFileSync(new URL('./fixtures/ql-kernel-ledger-m3-rack-2026-10-21.json', import.meta.url), 'utf8'))
+  const asked = []
+  rackMod.resetQlRack({call: async op => {
+    asked.push(op.request.coordinate)
+    const view = ledger.views[op.request.coordinate]
+    return view && !view.refused ? {outcome: {result: 'owner_route_reading', data: view}} : {outcome: null, error: view?.refused ?? 'unknown'}
+  }})
+  await rackMod.readQlRack(3)
+  assert.deepEqual(asked.slice(0, 7), ['#3', '#3-0', '#3-1', '#3-2', '#3-3', '#3-4', '#3-5'], 'the instrument, then its positions, then their parts')
+  const state = rackMod.qlRackState(3)
+  assert.equal(state.reason, null)
+  const rack = JSON.parse(state.rack)
+  assert.deepEqual([rack.instrument, rack.coordinate, rack.name, rack.face], ['M3′', '#3', 'Mahamaya', 'quaternal-logic:m3-clock'])
+  assert.deepEqual(rack.positions.map(p => p.name), ['Quaternionic Reception & Parashakti Integration Matrix', 'I-Ching System', 'Genetic Code Architecture',
+    'Mahamaya Universal Transcription Engine', 'Minor Arcana', 'The 360° Mythic Synthesis Wheel'], 'the registry\'s names')
+  assert.equal(rack.positions[1].parts.length, 8, 'the I Ching\'s eight trigrams, as the registry holds them')
+  assert.deepEqual(rack.positions[4].parts.map(p => p.ref), ['#3-4-1', '#3-4-2', '#3-4-3', '#3-4-4', '#3-4-5/0', '#3-4.0'], 'the map\'s own segments, kept')
+  assert.deepEqual(rack.positions[3].ledger, [true, true, true], 'the transcription engine: in the map, bound, verified (a row on it verified in C or Rust)')
+  assert.deepEqual(rack.positions[1].ledger, [true, true, false], 'the I Ching: in the map, bound, not verified')
+  assert.deepEqual(rack.positions[1].parts[0].ledger, [true, true, true], 'Qian: verified in C or Rust')
+  assert.deepEqual(rack.positions.map(p => p.device), ['quaternal-logic:binding', 'quaternal-logic:deck', 'quaternal-logic:m-prime-matrices', 'quaternal-logic:m3-clock',
+    'quaternal-logic:deck', 'quaternal-logic:m3-clock'], 'the M3 clock\'s entry, "Where you work it"')
+  // The M3 clock's Rack page draws it; the part is the view's own, the manual's 1 until chosen.
+  const binding = m3c.qlM3Binding(m3Of(), state)
+  assert.equal(binding.values['rack.part'], '1')
+  assert.equal(binding.standing.rack.disabled, rackMod.RACK_READ)
+  // The design's own fixture words for where a part is worked (its RACK_M3); the binding's are the manual's.
+  const all = drawsClean(DESIGNS.m3clock, binding, /I Ching, Hexagram|Law and Generation|The wheel, Resonator bank/, ['wheel', 'rack'])
+  assert.ok(all.includes('Minor Arcana') && all.includes('I-Ching System'), 'the rack draws the registry\'s names')
+  binding.local['rack.part']('4')
+  assert.equal(m3c.qlM3Binding(m3Of(), rackMod.qlRackState(3)).values['rack.part'], '4')
+  // Where both spellings are held, the nesting threshold's is kept (after a 4 the separator is ".").
+  const kids = [{source_ref: '#4-0', local_segment: '0', separator: '-', name: 'a'}, {source_ref: '#4.0', local_segment: '0', separator: '.', name: 'a'},
+    {source_ref: '#4-6', local_segment: '6', separator: '-', name: 'b'}]
+  assert.deepEqual(rackMod.rackChildren('4', kids).map(c => c.source_ref), ['#4.0', '#4-6'])
+  assert.deepEqual(rackMod.rackChildren('5', kids).map(c => c.source_ref), ['#4-0', '#4-6'])
+  // REAL (the kernel's own capture, the installed ql): its view names children by id only, so the rack stands absent with the reason.
+  const installed = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/ql-kernel-ledger-2026-10-21.json', import.meta.url), 'utf8')).answer
+  assert.equal('child_coordinates' in installed, false)
+  rackMod.resetQlRack({call: async () => ({outcome: {result: 'owner_route_reading', data: {...installed, coordinate: {...installed.coordinate, source_ref: '#1'}}}})})
+  await rackMod.readQlRack(1)
+  assert.equal(rackMod.qlRackState(1).reason, rackMod.NO_CHILD_REFS)
+  const torusModel = await import(src('live/torusDevice.ts'))
+  const torusBinding = torusModel.torusDesignBinding(null, undefined, {}, null, rackMod.qlRackState(1))
+  assert.equal(torusBinding.standing.rack.disabled, rackMod.NO_CHILD_REFS)
+  assert.equal('rack' in torusBinding.values, false)
+  rackMod.resetQlRack()
 })
 
 test('the Timeline reads the chronology\'s relation links and card categories as the frame announces them, and sets them through its commands', async () => {
@@ -473,7 +601,8 @@ test('(d) Binding and the M′ matrices are admitted where §22 and §16.16 put 
 
 test('the Torus on Live\'s chain reads the stage the frame announces as a dependency of its binding, so a disclosure redraws the Stage page when it comes', () => {
   const source = read('live/TorusOnChain.tsx')
-  assert.match(source, /const stage = useHostedChrome\(\)\?\.state\?\.instrumentStage \?\? null\n\s*return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan\), stage\), \[state, device, plan, stage\]\)/)
+  assert.match(source, /const stage = useHostedChrome\(\)\?\.state\?\.instrumentStage \?\? null\n\s*const rack = useQlRack\(1\)\n\s*return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan\), stage, rack\), \[state, device, plan, stage, rack\]\)/,
+    'the stage and M1′\'s rack are dependencies of the binding')
   assert.match(source, /const binding = useTorusChainBinding\(state, device\)/)
   const stage = slots => readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false, slots, bindings: []})
   const device = torusDevice.torusDevice(null)
