@@ -36,6 +36,26 @@ use crate::knowledge;
 
 pub const ACTION_DISPATCH_SCHEMA: &str = "oi.cradle.action-dispatch/v1";
 
+/// Central's registered Action id grammar, by namespace (`ctrl action list`, 21 Oct 2026: `central.*`, `projectcentral.*`,
+/// `agent-profile.*`, `control.*`, `machine.*`, `work.*`): every id in one of them runs through Central's runner. Its agent
+/// profiles (Make and Accept), Control's search and skills, the Machine device and a page's Open and Reveal are Central's as much
+/// as its Day is (T-COVERAGE §1.2, §1.4).
+pub const CENTRAL_NAMESPACES: [&str; 6] = [
+    "central.",
+    "projectcentral.",
+    "agent-profile.",
+    "control.",
+    "machine.",
+    "work.",
+];
+
+/// Whether an Action id is Central's, by its namespace.
+pub fn central_action(action: &str) -> bool {
+    CENTRAL_NAMESPACES
+        .iter()
+        .any(|namespace| action.starts_with(namespace) && action.len() > namespace.len())
+}
+
 /// The native owners this adapter routes disclosed spellings to.
 pub const OWNER_CENTRAL: &str = "central";
 pub const OWNER_AIKIT: &str = "ai-kit";
@@ -142,7 +162,7 @@ pub fn invoke(
             detail: "target ref is empty".into(),
         };
     }
-    if action.starts_with("central.") || action.starts_with("projectcentral.") {
+    if central_action(action) {
         return invoke_central(client, action, default_project, invocation);
     }
     if matches!(
@@ -269,5 +289,34 @@ fn invoke_aikit_open(cwd: &Path, target_ref: &str) -> ActionDispatch {
             owner_operation,
             message: detail,
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn central_namespaces_route_to_central_and_no_other_spelling_does() {
+        for id in [
+            "central.day.read",
+            "projectcentral.now.inspect",
+            "agent-profile.express",
+            "control.search",
+            "machine.plan",
+            "work.open",
+        ] {
+            assert!(central_action(id), "{id} is Central's");
+        }
+        for id in [
+            "acme.everything",
+            "knowledge/open",
+            "agent-profile.",
+            "controls.search",
+            "central",
+            "workcell.status",
+        ] {
+            assert!(!central_action(id), "{id} is not Central's");
+        }
     }
 }
