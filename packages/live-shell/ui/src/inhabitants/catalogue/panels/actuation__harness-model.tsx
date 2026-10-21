@@ -16,7 +16,7 @@ import {memo, useLayoutEffect, useMemo, useState} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
 import {NONE, boolOf, clampTo, json, numOf, prefixed, scoped, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
-import {CustodyBands, design as custody} from './software-factory__agent-custody'
+import {CustodyBands, GrantsBands, design as custody} from './software-factory__agent-custody'
 import {IdentityBands, agentType, withType, design as identity} from './central__agent-identity'
 import {CreatureFace} from '../faces/CreatureFace'
 import {EnvironStage} from '../faces/EnvironStage'
@@ -31,7 +31,7 @@ import './actuation__harness-model.css'
 const CUSTODY_SHARED = ['light', 'autonomy'] as const
 const IDENTITY_SHARED = ['light'] as const
 const THREAD_SHARED = ['light', 'input', 'quantize', 'draft', 'sent', 'age'] as const
-const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'}] as const
+const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'grants', label: 'Grants'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'}] as const
 const custodyOf = (p: ViewProps) => scoped(p, 'custody.', CUSTODY_SHARED)
 const identityOf = (p: ViewProps) => scoped(p, 'id.', IDENTITY_SHARED)
 /** The pattern the agent was given: the identity page's `types` read for the agent it shows. */
@@ -406,6 +406,7 @@ export const design: DesignedDevice = {
 
   whole: p => <Panel title="Agent" view="whole" {...head(p)} pages={PAGES} page={p.page || 'agent'} onPage={p.setPage}>
     {p.page === 'custody' ? <CustodyBands p={custodyOf(p)} writes={false} />
+      : p.page === 'grants' ? <GrantsBands p={custodyOf(p)} />
       : p.page === 'identity' ? <IdentityBands p={identityOf(p)} state={runStateOf(p.v, lightOf(p))} />
       : p.page === 'type' ? <TypeBands p={p} />
       : <AgentBands p={p} />}

@@ -23,6 +23,10 @@
 // (faces/CreatureFace.tsx). `types` is a JSON object {agent ref: pattern id}; Central's profile names no type yet, so the shell holds it with
 // the agent. This device only reads it, as it reads the rest of the card, and draws the creature as the agent's face; the Agent device
 // carries the Type page, where you load a preset (software-factory/actuation__harness-model.tsx).
+// Changed since (manual §19.4): what changed in the agent between two of its realised receipts, split as Actuation splits it — its body
+// (the model, the harness, the effort it ran at) apart from its identity (who it is: its profile, its self, what it carries). `continuity`
+// is {since (the earlier receipt's label), body: [{field, from, to}], identity: [{field, from, to}]}, Actuation's continuityDelta. Actuation
+// has no command for it and the kernel no route, so the shell reports no `continuity`: the line stands dark and says why.
 // A key the owner does not report is drawn "—", and the well names the reading that is missing. The sample is the roster of this ground,
 // read with `agent-profile.roster`: its 39 profiles, their names, roles, revisions, authored skill, method and SkillSet refs and ratified
 // Worlds; Cairn, Flint, Kite and Lilt carry the authored selves of Control/self/agents. It sits in the defaults and the fixtures.
@@ -432,7 +436,7 @@ function Profile({m, v}: {m: Model; v: V}) {
             const names = card?.carries[kind]
             return <li key={kind} data-zero={names && names.length === 0 ? 'true' : undefined}>
               <WoodMark kind={kind} size={22} set={marks(v)} />
-              <span className="ai-carry-name"><b>{FORM_NAME[kind]}s</b><i>{FORM_ASKS[kind]}</i></span>
+              <span className="ai-carry-name"><b>{kind === 'methodology' ? 'Methodologies' : `${FORM_NAME[kind]}s`}</b><i>{FORM_ASKS[kind]}</i></span>
               <em>{names ? names.length : NONE}</em>
               <p>{carryWords(kind, card, names)}</p>
             </li>
@@ -449,12 +453,39 @@ function Profile({m, v}: {m: Model; v: V}) {
         </ul>
         <h4>Presence</h4>
         <p className="ai-purpose">{runs ? `Present, running on ${runs}.` : runs === null ? 'Not present in this World now.' : 'No reading of its presence.'}</p>
+        <h4>Changed since {continuityOf(v)?.since ?? ''}</h4>
+        {continuityOf(v) ? <ul className="ai-worlds">
+          {(['body', 'identity'] as const).flatMap(k => continuityOf(v)![k].map(c => <li key={`${k}:${c.field}`}><span>{k === 'body' ? 'Body' : 'Identity'} · {c.field}</span><em>{c.from ?? NONE} → {c.to ?? NONE}</em></li>))}
+          {continuityOf(v)!.body.length + continuityOf(v)!.identity.length === 0 && <li><span>Nothing changed.</span><em /></li>}
+        </ul> : <p className="ai-note">{CONTINUITY_DARK}</p>}
       </section>
     </div>
   </div>
 }
 
 // ---------------------------------------------------------------- the whole view
+
+interface Change {readonly field: string; readonly from?: string; readonly to?: string}
+/** What changed since the earlier receipt, body and identity apart; undefined when the owner reports nothing. */
+function continuityOf(v: V): {since: string | undefined; body: Change[]; identity: Change[]} | undefined {
+  const o = rec(json<unknown>(v, 'continuity', undefined))
+  if (!o) return undefined
+  const changes = (x: unknown): Change[] => (Array.isArray(x) ? x.flatMap(c => { const r = rec(c); return r && text(r.field) ? [{field: r.field as string, from: text(r.from), to: text(r.to)}] : [] }) : [])
+  return {since: text(o.since), body: changes(o.body), identity: changes(o.identity)}
+}
+const CONTINUITY_DARK = 'Actuation compares no two receipts of an agent yet, so nothing says what changed.'
+const changeWords = (cs: readonly Change[]) => (cs.length ? cs.map(c => c.field).join(', ') : 'nothing')
+/** Changed since: the body's changes and the identity's, each a row. Dark, with the reason, while the owner reports none. */
+function ChangedSince({v}: {v: V}) {
+  const c = continuityOf(v)
+  const row = (id: 'body' | 'identity', name: string, says: string): RowItem => {
+    const cs = c?.[id]
+    return {id, name, light: !c ? 'dark' : cs!.length ? 'lit' : 'dark', tone: id === 'identity' ? 'accent' : 'value', note: c ? changeWords(cs!) : NONE,
+      does: !c ? CONTINUITY_DARK : cs!.length ? `${says} ${cs!.map(x => `${x.field}: ${x.from ?? NONE} → ${x.to ?? NONE}`).join('; ')}.` : `${says} Nothing changed.`}
+  }
+  return <Rows label={c ? `Changed since ${c.since ?? NONE}` : 'Changed since · no reading'} does={c ? 'What changed between the earlier receipt and the latest: the body apart from who the agent is.' : CONTINUITY_DARK}
+    items={[row('body', 'Body', 'How it runs:'), row('identity', 'Identity', 'Who it is:')]} size={2} />
+}
 
 /** Identity's two bands: the Whole of Agent identity, and the Identity page of the Agent, which carries it. */
 export function IdentityBands({p, state = 'queued'}: {p: ViewProps; state?: RunState}) {
@@ -485,6 +516,7 @@ export function IdentityBands({p, state = 'queued'}: {p: ViewProps; state?: RunS
         <Readout label="self" does="Whether the profile points at an authored self." value={c?.self === undefined ? undefined : c.self ? 'authored' : 'none'} />
         <Readout label="character" does="Whether the profile names an expressive character." value={c?.character === undefined ? undefined : c.character ? 'named' : 'none'} />
         <Readout label="accepted" does="Agents you accepted, of all the profiles on the roster." value={m.roster ? `${accepted} of ${m.roster.length}` : undefined} />
+        <div className="ai-since"><ChangedSince v={p.v} /></div>
       </Section>
       <Section grow>
         <Rows label={`Roster · ${accepted ?? NONE} accepted`} does="The agents on your roster. A green light marks an agent you accepted. A dark light marks a proposed agent."
@@ -517,8 +549,9 @@ export const design: DesignedDevice = {
     'A team member': {agent: 'agent/anima-eros', proposed: true, card: sampleCard('agent/anima-eros')},
     'No type': {types: undefined},
     'Not ratified here': {world: 'project:Archetypal-Earth'},
+    'Changed since a receipt': {continuity: JSON.stringify({since: 'receipt 14 Oct', body: [{field: 'model', from: 'claude-opus-5', to: 'claude-opus-5.5'}, {field: 'effort', from: 'medium', to: 'high'}], identity: []})},
     'Roster refused': {read: 'refused', fault: 'Central returned an agent roster this desktop cannot read.', light: undefined, roster: undefined, card: undefined},
-    'No readings': Object.fromEntries(['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds', 'types'].map(k => [k, undefined])),
+    'No readings': Object.fromEntries(['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds', 'types', 'continuity'].map(k => [k, undefined])),
   },
 
   folded: p => {

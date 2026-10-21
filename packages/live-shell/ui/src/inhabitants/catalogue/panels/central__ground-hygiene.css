@@ -46,3 +46,9 @@
 
 /* A macro that takes two columns of the compact section. */
 .hy-span2 { grid-column: span 2; display: flex; flex-direction: column; align-self: stretch; }
+
+/* The pane's pages, and Recognise's two choices beside its tender. */
+.hy-pane > .ref-pane-tabs { flex: none; }
+.hy-as { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; width: 100%; }
+.hy-as .dp-cell { width: auto; }
+.hy-tend-acts { display: flex; align-items: center; gap: 8px; }

@@ -1288,7 +1288,7 @@ material passes through, from left to right.
 
 | Mode | Track | Chain, left to right |
 |---|---|---|
-| Central | A world. The set is the Day; its die is on the Main track. | The packet, the agent of the world, and its scope; on a world whose folder holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
+| Central | A world. The set is the Day; its die is on the Main track. | The packet, the agent of the world, and its scope; on a world whose folder holds code, Ground hygiene, Machine and Impact. On the Main track: the Day, then Approvals. |
 | Factory | An agent session. | Agent, skills rack, scope. On the Main track: the Run map, the experiments, Approvals and the prompt pads. |
 | Expressions | An Expression. | The Studio: the field, then its field devices. |
 | Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
@@ -4477,19 +4477,25 @@ The widget shows the search line, the last results and your aliases. Type @ in t
 
 ### 18.5 Ground hygiene
 
-**Product:** Central · **Kind:** effect · **Chain:** a world's track whose folder holds code
+**Product:** Central, with Workcell · **Kind:** effect · **Chain:** a world's track whose folder holds code
 
-Use Ground hygiene to find the branches, worktrees and seats that no longer belong to any work, and to clear them. It reads the ground, shows what each one is, and tends the ones you approve.
+You need the ground your work stands on to stay sound: no checkout left on finished work, no part of the root or of a world's scaffold missing, no document you wrote lying unrecognised, no material left running after its run. Ground hygiene reads that ground, shows what each thing is, and tends what you approve. It has three pages, one for each layer of the ground.
 
 #### What it reads
 
 A seat is a shared checkout where one lane of work stands.
 
-| Reading | What it shows |
-|---|---|
-| Seats | Each seat of each product: free, claimed or held by another lane. Its branch, the uncommitted files, and any drift between the register and the checkout. |
-| Worktrees | Every checkout of the project and the branch that it stands on. |
-| Branches | Every lane branch, and the checkout that holds it. |
+| Page | Reading | What it shows |
+|---|---|---|
+| Checkouts | Seats | Each seat of each product: free, claimed or held by another lane. Its branch, the uncommitted files, and any drift between the register and the checkout. |
+| Checkouts | Worktrees | Every checkout of the project and the branch that it stands on. |
+| Checkouts | Branches | Every lane branch, and the checkout that holds it. |
+| Ground | Root | The parts every Central root has: Control's user ground, governance, wiki and machines, the root's own state, and Work. |
+| Ground | Scaffold | The parts every world's ProjectCentral has, present or missing. |
+| Ground | Authored | The world's documents recognised as ground, and those whose names suggest a vision, an intent, an experience or a design, waiting for you to recognise them. |
+| Material | Worlds | Each world Workcell prepared for a run and keeps a receipt for. |
+| Material | Bindings | What each world holds: its checkout, its shell, its services, its outputs. |
+| Material | Sandboxes | The sandboxes on a sandbox server, and whether a lease still holds each one. |
 
 #### What it finds
 
@@ -4505,6 +4511,14 @@ A finding is a reading. It is not a verdict.
 | Stray branch | A lane branch that no seat holds and no claim accounts for. |
 | Worktree outside the register | A checkout that no seat names. |
 | Foreign lane | Unmerged work of another lane stands in a seat. The decision is yours. |
+| Root part missing | A part every root has is not there. |
+| Root is a product checkout | Your root is also the checkout of a product. The decision is yours. |
+| Scaffold missing | A part of the world's ProjectCentral is not there. |
+| Waiting for recognition | A document whose name suggests a vision, an intent, an experience or a design, that nobody has recognised as ground. |
+| Binding not present | A world's binding is missing or stale, and its receipt can bring it back. |
+| Binding lost | A binding of a world that lasted only for its task is gone, and nothing brings it back. |
+| Orphan sandbox | A sandbox whose lease has ended, which nothing holds. |
+| Sandbox without a lease | The server reports no lease for a sandbox, so it may still be in use. This is not a fault. |
 
 #### What it tends
 
@@ -4513,6 +4527,11 @@ A finding is a reading. It is not a verdict.
 | Release seat | Refreshes the seat to the main branch and clears its claim. |
 | Prune worktree | Removes a checkout that no seat names. |
 | Sweep branch | Removes a stray branch. |
+| Initialise root | Creates the root's missing parts and keeps what is there. |
+| Reproject | Stamps the world's missing scaffold. It moves, renames and deletes nothing. |
+| Recognise | Records a document as the world's ground, with the provenance and standing you choose. The document stays where it is, as it is. |
+| Reconcile | Brings a binding back from its world's receipt. |
+| Release orphans | Releases the sandboxes whose lease has ended. |
 
 Each tender returns a receipt.
 
@@ -4520,55 +4539,66 @@ Each tender returns a receipt.
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Look at | Seats · Worktrees · Branches: each On or Off | All On | Which readings the device takes. |
+| Look at | The page's three readings: each On or Off | All On | Which readings the device takes. |
 | Show | Everything · Faults only | Faults only | Hides the findings that are not faults. |
 | Machine | This machine · a linked machine | This machine | The machine whose ground the device reads. |
 | Refresh | Manual · On open · Every 5 minutes | On open | When the device reads again. |
 | Tending | Off · Propose · Write | Propose | Off: the device only reads. Propose: each tender waits for your approval. Write: an allowed tender runs when you press it, with a receipt. |
-| Allowed tenders | Release seat · Prune worktree · Sweep branch: each On or Off | All On | Which tenders the device may offer. |
+| Allowed tenders | The page's tenders: each On or Off | All On | Which tenders the device may offer. |
+| Provenance | Human-authored · Edited draft · Adopted | Human-authored | Who made a document you recognise. |
+| Standing | Your position · Design commitment · Architecture contract · Current state | Design commitment | What a document you recognise stands as. |
 
 #### Views
 
 ```ui
 device: central:ground-hygiene
-caption: Ground hygiene, on a fixture of readings.
+caption: Ground hygiene, on a fixture of readings. Turn to Ground and Material for the root, the scaffold, the authored ground and Workcell's material.
+```
+
+```ui
+device: central:ground-hygiene
+fixture: A world missing its scaffold
+page: ground
+caption: The Ground page on a world whose ProjectCentral has no relations folder, with six documents waiting for recognition.
 ```
 
 ##### Folded
 
-The folded Ground hygiene shows the number of findings.
+The folded Ground hygiene shows the number of findings on all three pages.
 
 ##### Compact
 
-The compact Ground hygiene shows three small rings, for seats, worktrees and branches. A dot on a ring marks each finding. It has four macros.
+The compact Ground hygiene shows three small rings, one for each reading of the page in front. A dot on a ring marks each finding. It has four macros.
 
 | Macro | What it does |
 |---|---|
-| Look at | Turns Seats, Worktrees and Branches On or Off. |
+| Look at | Turns the page's three readings On or Off. |
 | Show | Sets Everything or Faults only. |
 | Tending | Sets Off, Propose or Write. |
 | Refresh | Sets Manual, On open or Every 5 minutes. |
 
 ##### Whole
 
-The whole Ground hygiene shows every parameter, in four groups.
+The whole Ground hygiene has three pages: Checkouts, Ground and Material. A page's tab is dark while it holds a fault. Each page shows its rings, with the count of each reading, and every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
-| Look | Look at, Refresh |
+| Look | Look at, Machine, Refresh |
 | Show | Show |
 | Tend | Tending, Allowed tenders |
-| Machine | Machine |
+| Findings | The page's first findings |
+
+On the Ground page, the outer ring is the authored ground. A dotted arc closes it: the documents still waiting, too many to tick one by one.
 
 ##### Full
 
-The full Ground hygiene shows three lists: seats, worktrees and branches. Each row shows its finding, what the finding rests on and the tender that fits. Select a row to read it. Press a tender to run it.
+The full Ground hygiene carries the same three pages as tabs. Each page shows three lists, one for each reading. Each row shows its finding, what the finding rests on and the tender that fits. Select a row to read it. Press a tender to run it. Recognise asks for the provenance and the standing before it runs.
 
 In Clip view, Ground hygiene edits no clip. It reads the folder of the world's track.
 
 ##### Widget
 
-The widget shows the number of findings and the first three. Click a finding to open the list in a pane.
+The widget shows the number of findings on the page in front and the first three. Click a finding to open the list in a pane.
 
 #### Transport
 
@@ -4580,7 +4610,7 @@ The widget shows the number of findings and the first three. Click a finding to 
 #### To use Ground hygiene
 
 1. Select a world's track whose folder holds code.
-2. Read the findings. A claimed seat is not a fault.
+2. Read the findings on each page. A claimed seat is not a fault.
 3. Select a finding. Read what it rests on and which tender fits.
 4. Press the tender. In Propose, read what it will do and confirm.
 5. Read the receipt.
@@ -4592,6 +4622,9 @@ The widget shows the number of findings and the first three. Click a finding to 
 - The device does not tend the unmerged work of another lane. It lists it as a foreign lane for you to decide.
 - The device does not release a seat that holds uncommitted files.
 - The device does not create a worktree or a seat.
+- Reproject and Initialise root add what is missing. They move, rename and delete nothing.
+- Central does not decide who wrote a document. Only Recognise, with your provenance and standing, makes it ground.
+- A sandbox without lease evidence is never released.
 - Each tender carries a receipt that names what it did and when.
 - If a source cannot be read, the device shows the refusal word for word and leaves the row empty. It does not guess.
 
@@ -4601,6 +4634,9 @@ The widget shows the number of findings and the first three. Click a finding to 
 - To clear old lane branches, set Show to Faults only and sweep the stray branches.
 - To keep disk free, watch the disk reading on each seat.
 - To check two machines, turn Link on and set Machine to the other one.
+- To bring an old project up to date, open its world's Ground page and press Reproject.
+- To make your vision document count as ground, recognise it as Human-authored and Your position.
+- To find runs that left material behind, open the Material page and release the orphans.
 
 ### 18.6 Impact
 
@@ -4698,6 +4734,132 @@ The widget shows the subject, its three counts and the first session. Click the 
 - To find who works near a note, read Sessions.
 - To keep one view while you browse, turn Pin on.
 - To see only the notes that cite a subject, set Relation to that kind of link.
+
+### 18.7 Machine
+
+**Product:** Central · **Kind:** effect · **Chain:** a world's track whose folder holds code, after Ground hygiene
+
+You need the machine you work on to hold what your work relies on, and a way back to it when the machine changes or is lost. Machine sets what you declared beside what the machine holds, makes the difference good where it can, and recovers the machine from your declaration.
+
+#### What it compares
+
+A role is a declaration under `Control/machines`: what a machine of that kind must hold.
+
+| Kind | Declared | Observed |
+|---|---|---|
+| Capabilities | The agent programs and tools the role relies on. | Those found on the machine. |
+| Packages | Each package, present or absent. | The packages installed. |
+| Configuration | Each configuration file, and where it comes from. | The configuration found. |
+| Services | Each service, running and enabled or not. | The services running. |
+
+Each declared requirement takes one of four verdicts.
+
+| Verdict | What it means |
+|---|---|
+| Satisfied | The machine holds it as declared. |
+| Changeable | The machine does not hold it, and Apply can make it so through a connector. |
+| Missing | The machine does not hold it, and nothing here can make it so. |
+| Unsupported | No connector can read or change it. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Role | The roles declared under `Control/machines` | The role this machine is bound to | The declaration the machine is read against. |
+| Change | Off · Propose · Write | Propose | Off: the device only reads. Propose: Apply, Adopt and Recover wait for your confirm. Write: they run when you hold them, with a report. |
+| Refresh | Manual · On open | On open | When the device reads again. |
+| Host | Platform and architecture (reading) | Read from the machine | The machine as last observed. |
+| Verified | Satisfied · Differs (reading) | Read from the last verification | Whether the machine met its declaration when last checked. |
+
+#### Acts
+
+| Act | What it does |
+|---|---|
+| Plan | Compares the declaration with the machine again. It changes nothing. |
+| Apply | Makes the changeable requirements so, through the connectors the plan names, then verifies. |
+| Verify | Observes the machine and checks it against the declaration. |
+| Adopt | Writes what this machine holds into the role's declaration. |
+| Recover | Synchronises your source, applies the plan, and verifies, stage by stage. |
+
+#### Views
+
+```ui
+device: central:machine
+caption: Machine, on a workstation role with two requirements to change, one missing and one unsupported. Turn to Reconcile and Recover for the stages.
+```
+
+```ui
+device: central:machine
+fixture: Recovered in part
+page: recover
+caption: The Recover page after a recovery that synchronised your source and stopped while it applied the plan.
+```
+
+##### Folded
+
+The folded Machine shows the role and how many requirements differ.
+
+##### Compact
+
+The compact Machine shows the ledger: a lane for each kind, what you declared to the left of the spine, what the machine holds to the right. A declared tick is teal when satisfied, amber when changeable, orange when missing, and crossed when unsupported. Handle 1 on the line under it sets Change. It has three macros.
+
+| Macro | What it does |
+|---|---|
+| Role | Chooses the declaration. |
+| Change | Sets Off, Propose or Write. |
+| Apply | Makes the changeable requirements so. |
+
+##### Whole
+
+The whole Machine has three pages.
+
+| Page | Holds |
+|---|---|
+| Declared | The ledger with each lane named and counted; Role, Host, Verified and Refresh; every requirement with its verdict. |
+| Reconcile | Plan, apply and verify as three stages, each with its result; Change; Plan, Apply, Verify and Adopt; what the plan would change, and why the rest cannot be changed here. |
+| Recover | Plan, synchronise, apply and verify as four stages, each with its result; how your source synchronises; the last recovery's outcome; Plan and Recover; each stage's result, and where it stopped. |
+
+A stage is filled when it ran well, amber when it ran in part, crossed when it failed and hollow when it has not run. A stage with nothing configured is dashed.
+
+##### Full
+
+The full Machine shows the four kinds side by side. Each lists what you declared, with its verdict and the connector that would change it, and what else the machine holds. Under them stand the last apply, the last verification and the last recovery.
+
+In Clip view, Machine edits no clip.
+
+##### Widget
+
+The widget shows a small ledger, how many requirements differ and whether the machine verified.
+
+#### Transport
+
+| Control | Effect on Machine |
+|---|---|
+| Link | Lets Role name the roles of your other linked machines. |
+
+#### To use Machine
+
+1. Select a world's track whose folder holds code, and select Machine after Ground hygiene.
+2. Choose the Role this machine plays.
+3. Read the ledger. Amber can be changed here; orange and crossed cannot.
+4. On Reconcile, press Apply. In Propose, read what it will do and confirm.
+5. Press Verify and read the result.
+6. On a new or rebuilt machine, open Recover, press Plan, then Recover.
+
+#### Rules
+
+- Reading changes nothing. Only Apply, Adopt and Recover change the machine or its declaration.
+- Apply changes only what the plan calls changeable, and verifies after.
+- Adopt writes the declaration, never the machine.
+- Recover stops at the first stage that fails, and keeps the result of every stage before it.
+- A requirement no connector can change stays missing or unsupported. The device does not guess a way to make it so.
+- Each act returns a report that names what it changed.
+
+#### Tips
+
+- To start a declaration from the machine you have, press Adopt, then edit the role in `Control/machines`.
+- To see why a requirement cannot be changed, point at its ! in the list.
+- To check a machine after an update, press Verify.
 
 ## 19. Factory and the agent chain
 
@@ -5167,12 +5329,17 @@ belongs to Scope (§19.12), the next device on the chain.
 | On no answer | Hold · Deny | Hold | What the agent does when nobody answers. |
 | Held | A list (reading) | Read from the agent | What the agent holds now, such as a file or a setting. |
 | Hand back | Lit · Dark (reading) | Dark | Lit when you edited something the agent holds. |
+| Grants | The grants the agent holds (reading), with Issue and Revoke | Read from Actuation | What the agent may do to agency, and in which Worlds. See Grants, below. |
 | Team cell | Row, question and depth (reading) | Read from the team space | Where the agent stands in Anima or Aletheia. Empty when the agent is in no team. |
 
 Identity is a reading of your roster: the agent's name and colour, its
 character in one line, the program that runs it, the skills it carries, the
 world it stands in, whether you accepted it or it is only proposed, and the
-revision of the roster the card comes from. The device reads the roster and
+revision of the roster the card comes from. Changed since shows what changed
+in the agent between an earlier receipt of its work and the latest, with its
+body (the model, harness and effort it ran at) apart from its identity (the
+profile, self and practice that make it who it is). A new model is a change of
+body; a new profile revision is a change of identity. The device reads the roster and
 never adds, changes or invents an agent. Identity gives an agent no right:
 what it may read and write comes from Scope. An agent that has a type wears
 the creature of its type as its face (below).
@@ -5247,6 +5414,36 @@ device: actuation:harness-model
 page: type
 height: 560
 caption: The Type page, on the seated agent: Ambush, whose face is the serpent. Choose another pattern and its preset loads.
+```
+
+#### Grants
+
+You need to say plainly what an agent may do to other agents: bring a helper
+into being, change how one is set up, make one actual in a World, or take its
+return back into the work. A grant says it. Each grant names the agent that
+holds it, the operations it allows and the Worlds it reaches, and holds until
+it ends or you revoke it. Saving, preparing or starting an agent never grants
+anything by itself.
+
+The Grants page draws the grants as a grid: a column for each operation, a row
+for each grant, a filled cell where the grant allows the operation. A revoked
+grant is struck through and one that ended is dashed. The hollow row at the
+foot is the next grant: choose its operations, its World and when it ends, and
+press Issue. To end a grant, select it, give a reason and hold Revoke. A
+revoked grant cannot be given back; issue a new one.
+
+| Operation | What it allows |
+|---|---|
+| Determine | Bringing another agency into being within bounds: a helper, a member. |
+| Configure | Changing how an agency is set up. |
+| Actualise | Making a composed agency actual in its World, with a receipt. |
+| Reintegrate | Taking an agency's return back into the work. |
+
+```ui
+device: software-factory:agent-custody
+page: grants
+height: 560
+caption: The Grants page: Flint may actualise and configure agency in O-I; its grant for Quaternal Logic has ended and the one for your whole world was revoked.
 ```
 
 #### The stage
@@ -5369,7 +5566,7 @@ caption: Agent, on a fixture of readings.
 |---|---|
 | Folded | The agent's name and its power light. The light is lit only when the harness reports the agent is on. |
 | Compact | The agent's face, the creature of its type in the posture of its run state, with the turns used of the turns allowed and its state. A dot for each thing it holds. Macros: Autonomy, Effort, Budget, Input. A composer under the face: type a task or a question and press Enter. |
-| Whole | Pages Run, Custody, Identity and Type. Run: Power, Agent, Model, Harness; Effort, Budget; Heartbeat, On stall; Input. Custody: Autonomy and Review gate; Escalate to, Wait, On no answer; the held items and Hand back. Identity: the roster card. Type: the family, the pattern and where each of its fields lands. |
+| Whole | Pages Run, Custody, Grants, Identity and Type. Run: Power, Agent, Model, Harness; Effort, Budget; Heartbeat, On stall; Input. Custody: Autonomy and Review gate; Escalate to, Wait, On no answer; the held items and Hand back. Grants: the grants as a grid; the next grant with Issue; the grants by World; Revoke with its reason. Identity: the roster card, and Changed since, the body's changes and the identity's. Type: the family, the pattern and where each of its fields lands. |
 | Full | The thread, and beside it the stage: the run as a tree, the agent a creature on it. |
 | Pop-out | The thread with the agent's controls in one row under it: a window to watch and steer one agent from. |
 | Widget | The agent you are talking to: its face in the posture of its state, its state, the last lines of its thread and a composer. It stays when you change mode. |
@@ -6611,7 +6808,7 @@ The widget shows the seat name, the lane and the claim.
 
 **Product:** Workcell · **Kind:** connection · **Chain:** second device on a workcell's chain, after the Gateway
 
-You need to choose where your agents run. The Remote carrier names the machine a workcell runs on: this one, or another machine of yours. Every session that works in the workcell runs there. It shows whether that machine can carry the sessions now.
+You need to choose where your agents run, and to know before a run starts whether that machine can give it what it needs. The Remote carrier names the machine a workcell runs on: this one, or another machine of yours. Every session that works in the workcell runs there. It shows whether that machine can carry the sessions now, what the machine offers, and whether those offers meet the run's needs.
 
 #### Parameters
 | Parameter | Values | Default | What it does |
@@ -6622,6 +6819,8 @@ You need to choose where your agents run. The Remote carrier names the machine a
 | Grant | The operations allowed (reading) | Read from the machine | What this machine may do for you. |
 | Credential | Valid · Expired · Revoked (reading) | Read from the machine | Whether the machine accepts you. An expired credential is not the same as a revoked one. |
 | Round trip | Milliseconds (reading) | Read from the link | The time for a message to go and return. |
+| Offers | What the machine can provide (reading) | Read from the machine | Its workspaces, the processes it can run, its services and its stores, each healthy, degraded or down. |
+| Plan | Satisfiable · Degraded · Unsatisfiable (reading) | Read from the machine | The run's needs laid on those offers. Degraded: a need the run prefers is met poorly. Unsatisfiable: a need the run requires is not met, and the plan names it with the reason. |
 
 #### Views
 
@@ -6649,18 +6848,25 @@ Click the row to read its Standing.
 
 ##### Whole
 
-The whole carrier shows every parameter, in two groups.
+The whole carrier has two pages.
 
-| Group | Parameters |
+| Page | Holds |
 |---|---|
-| Place | Where, Machine |
-| Readings | Standing, Grant, Credential, Round trip |
+| Route | The route; Where and Machine; Standing and Credential; the grant, one row for each operation; the link's terms. |
+| Standing | The offers, a row for each port with a square for each offer, and the plan over them: a ring round each offer the plan chose, an orange cross for each need no offer meets. Plan, the healthy offers and Standing, with Plan again. The run's needs as the plan placed them, each with its reason when it is met poorly or not at all. |
 
-A refused carrier shows its reason. An expired credential and a revoked credential show as different states.
+A refused carrier shows its reason. An expired credential and a revoked credential show as different states. The Standing tab is dark while the plan cannot be met.
+
+```ui
+device: workcell:remote-carrier
+fixture: A plan that cannot be met
+page: standing
+caption: The Standing page on a connected machine that holds no NOW store: the run requires one, so the plan cannot be met.
+```
 
 ##### Full
 
-The full carrier shows one machine. The pane shows its readiness, its sessions and its grant.
+The full carrier shows one machine. The pane shows its readiness, its plan, its sessions and its grant.
 
 ##### Widget
 
@@ -6684,10 +6890,12 @@ The widget shows the machine name, its dot and the round trip.
 - The carrier does not create a machine. It uses a machine you connected.
 - A session on another machine keeps its own seat and its own receipts.
 - Secrets stay on the machine that holds them. The carrier sends a reference.
+- A plan reads the offers. It prepares nothing and claims nothing.
 
 #### Tips
 - To run a long job away from your laptop, give it a workcell whose carrier is a connected machine, with its Gateway's Transport set to Remote.
 - To find out why a carrier is refused, read its reason in the Standing row.
+- Before you move a long run to another machine, read its Standing page: a need it cannot meet shows as an orange cross.
 
 ### 19.19 Link
 
@@ -7113,6 +7321,12 @@ machines hold a few of them, each a standing set of checkouts with one seat
 for each project, and the DLW shows each one as a rack whose chain carries
 the road in and out.
 
+A run needs more than a seat. Workcell prepares a world for it: the checkout,
+the shell its agent runs in, the services it calls, the stores its outputs go
+to, and what it exposes for you to open. While the run works you need to see
+that world, whether the services it needs are up, and what each harness
+process costs the machine. When it ends you decide what to keep.
+
 #### The chain
 
 | Device | What it decides |
@@ -7131,7 +7345,15 @@ into the seat, out through the landing.
 | Name | The workcell's name (reading) | Read from the register | The name on its return track and in every Works in, such as env-1. |
 | Machine | A machine (reading) | Read from the Remote carrier | Where the workcell runs. |
 | Seats | One for each project (reading) | Read from the register | Each seat with its lane, its claim and its uncommitted work. |
-| Working here | A list (reading) | Read from the claims | The agents working in the workcell now, each with its track and its mode. |
+| Working here | A list (reading) | Read from the claims | The agents working in the workcell now, each with its track, its mode, its share of a processor and its memory. |
+| Run | A run (reading) | The selected track's running task | The run whose world the pages show. |
+| World | Bindings and their standing (reading) | Read from Workcell | What the run's world holds, by port: present, degraded, missing or stale, or let go. How long it is meant to last, and what releasing it keeps. |
+| Lifetime | Lease and checkpoints (reading) | Read from Workcell | When the world's lease ends, and the checkpoints it can be restored from. A world on this machine has no lease: it lives until it is released. |
+| Services | A list (reading) | Read from Workcell | Each service the workcell declares, whether it answers, and what the run needs of it. |
+| Needed only | On · Off | Off | Shows only the services the run uses. |
+| Exposure | Endpoints (reading) | Read from Workcell | What the run exposes, each with its endpoint, and what it could not expose, with the reason. |
+| Open in | Web · Pane | Web | Where Open puts an endpoint. |
+| Fate | Keep · Suspend · Snapshot · Release, for each binding | As it stands | What Apply asks for each binding. Suspend and Snapshot hold only where the binding's provider can. |
 
 Its four macros reach into its chain:
 
@@ -7150,11 +7372,29 @@ project's seat for the lane you are on; choose another to send the track's
 agents there. The change lands at the track's next task, never in the middle
 of one that runs. A helper works where its lead works.
 
+#### The run's world
+
+| Act | What it does |
+|---|---|
+| Read now | Reads the world again from its receipt. |
+| Recover | Brings missing and stale bindings back from the receipt. |
+| Checkpoint | Keeps a checkpoint of the world to restore from. |
+| Open | Opens the chosen endpoint in Web or in the pane that has focus. |
+| Apply | Asks Workcell for each binding's fate. It is held: a released binding cannot come back. |
+| Release world | Releases the whole world as its retention says. It is held. |
+
 #### Views
 
 ```ui
 device: workcell:workcell
-caption: A workcell, on a fixture of readings: its chain list and macros, its seats in a pane, and the Workcells tile.
+caption: A workcell, on a fixture of readings: its chain list and macros, its seats in a pane, and the Workcells tile. Turn the pages for the run's world.
+```
+
+```ui
+device: workcell:workcell
+fixture: A sandboxed run
+page: world
+caption: The World page of a run in a sandbox: its checkout stale, its logs released, two checkpoints ready, a third being taken, and fifty minutes of lease left.
 ```
 
 ##### Folded
@@ -7169,15 +7409,30 @@ four macros. A device whose owner reports a fault shows it in orange.
 
 ##### Whole
 
-The whole workcell shows its chain list with the selected device beside it,
-and every macro.
+The whole workcell has five pages.
+
+| Page | Holds |
+|---|---|
+| Chain | The chain list with the selected device beside it; every macro; the agents working here, each with a meter of its processor and its memory. |
+| World | The world: its bindings by port, a square each, and under them its lifetime, a diamond for each checkpoint. How long it lasts, what it keeps, its state; when it expires, its checkpoints and Checkpoint; its bindings with Read now and Recover. |
+| Services | The run on a line at the left and each service a branch: solid while it answers, dashed degraded, crossed down; a filled dot where the run needs it. Needed only, the services up, those the run uses that are down, Read now; the services with their endpoints. |
+| Exposure | The world and an arrow to each endpoint it exposes; what it could not expose, crossed. Open in, Open and the endpoint; what it exposes, and what it could not, with the reason. |
+| Release | A column for each binding and a row for each fate: a teal dot where it stands, its numbered handle where you want it. Drag a handle, or choose a binding and its Fate. Apply and Release world; what you changed, and after Apply what Workcell did. |
+
+The World tab is dark while a binding is missing or stale.
 
 ##### Full
 
-The full workcell is its seats, one row for each project: the lane, the claim,
-the co-workers, the uncommitted files and the branch against main. Beside the
-seats stand the agents working here, each with its track and its mode, and the
-gateway's latest frames.
+The full workcell carries the same pages as tabs. Seats is its seats, one row
+for each project: the lane, the claim, the co-workers, the uncommitted files
+and the branch against main. Beside the seats stand the agents working here,
+each with its track and its mode; the harness processes on the machine, each
+with its processes, a meter of its processor and its memory; and the gateway's
+latest frames. World lists each binding with its port, provider, need,
+presence and observed health, and the world's lease and checkpoints. Services
+lists each service with its endpoint and health. Exposure lists each endpoint
+with Open. Release lists each binding, where it stands, what you ask for it,
+and what the last Apply did.
 
 ##### Widget
 
@@ -7189,7 +7444,7 @@ Click an agent to select its track.
 
 | Control | Effect on the workcell |
 |---|---|
-| Play | Joins the seat when the first task of a track that works here starts. |
+| Play | Joins the seat when the first task of a track that works here starts, and prepares the run's world. |
 | Link | Adds the workcells of your other machines. |
 | Metronome | Sets the heartbeat its gateway listens for. |
 
@@ -7205,11 +7460,16 @@ Click an agent to select its track.
 - A seat holds one lane at a time. Several agents can work in one lane, as co-workers.
 - Moving a track to another workcell moves its next task. A running task finishes where it started.
 - A workcell left standing on a landed lane has not finished: release its seat.
+- A run's world is read from its receipt. The pages show it and never prepare it.
+- Releasing a binding cannot be undone. A binding that lasted only for its task, once lost, does not come back.
 
 #### Tips
 - To keep risky work apart, give it its own workcell and set that workcell's Approvals to Ask.
 - To run a long job on another machine, choose a workcell whose Remote carrier is that machine.
 - To see who is working where, open the Workcells tile.
+- To find which agent is costing the machine, read the meters in Working here.
+- To look at a run's preview, open its Exposure page and press Open.
+- To keep a run's outputs and let its shell go, set the shell's fate to Release and keep the rest.
 
 ### 19.24 Messages
 

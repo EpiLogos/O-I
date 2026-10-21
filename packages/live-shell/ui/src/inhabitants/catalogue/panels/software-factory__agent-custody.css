@@ -18,3 +18,10 @@
 
 /* The widget: a small well and its readings. */
 .cu-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+
+/* The Grants page: the next grant's four operations in two columns; the grants in the pane. */
+.cu-ops { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 4px; width: 100%; }
+.cu-ops .dp-cell { width: auto; }
+.cu-pane > .ref-pane-tabs { flex: none; }
+.cu-line--grant { grid-template-columns: 16px minmax(0, 1fr) minmax(0, 1.4fr) 140px 70px minmax(0, 1fr); }
+.cu-line--grant[data-state="revoked"] .cu-name, .cu-line--grant[data-state="expired"] .cu-name { color: var(--text-dim, #a2a7ad); }

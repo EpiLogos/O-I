@@ -12,8 +12,20 @@
 // person's id). Readings: `light`, `handBackLit` (the transport's Re-enable light), `held` (JSON rows of {id, name, kind work|file|value,
 // state in-progress|blocked|edited, by, receipts, why}) and `people` (JSON rows of {id, name}). The action: `handBack`, set true to give
 // the held items back. A key the owner does not report arrives absent, and the views draw "—" and name what is missing.
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, has, json, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
+//
+// The Grants page: the authority the agent holds to act on agency — to actualise an agency, configure it, determine another, or take its
+// return back in (Actuation's MetagencyOperation). Each grant is Actuation's governing authority record (actuation.local-authority/v1:
+// authority_source_ref, holder, issued_by, metagency_grant.operations, allowed_world_refs, issued_at_unix_seconds, expires_at_unix_seconds)
+// with its revocation (AuthorityStore: revoked {at_unix_seconds, reason}). Keys: `grants` (JSON rows of {ref, holder, issuedBy, operations,
+// worlds, issuedAt (s), expiresAt (s | null), revoked: {at, reason} | null}), `holder` (the agent the grants are for), `worlds` (the World
+// refs a grant may name), `readAt` (s, when the grants were read). Settings for the next grant: `grant:<operation>` (on or off for each of
+// the four), `grant:world`, `grant:expires` ('never' | '1h' | '1d' | '7d'), `revoke:reason`. Acts: `issue` (JSON {holder, operations,
+// worlds, expiresIn}: `actuation authority issue`), `revoke` (the grant's ref: `actuation authority revoke <ref> --reason <text>`; held, as
+// it cannot be undone). Actuation has no command that lists grants (AuthorityStore::read reads one source ref) and the kernel has no
+// route to `authority`: the host stands Issue and Revoke disabled with that reason, and reports no `grants` until the list exists.
+import {useState} from 'react'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type Option, type RowItem} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './software-factory__agent-custody.css'
 
 type V = ViewProps['v']
@@ -199,14 +211,18 @@ const radio = (p: ViewProps, key: 'autonomy' | 'gate' | 'writeMode', label: stri
 
 // ---------------------------------------------------------------- the pane: what the agent holds
 
-function HeldPane({v}: {v: V}) {
-  const items = heldItems(v), known = has(v, 'held'), lit = boolOf(v, 'handBackLit')
+function HeldPane({p}: {p: ViewProps}) {
+  const v = p.v, items = heldItems(v), known = has(v, 'held'), lit = boolOf(v, 'handBackLit'), grants = p.page === 'grants'
   return <div className="cu-pane">
+    <div className="ref-pane-tabs" role="tablist" aria-label="Pages">
+      <button type="button" role="tab" aria-selected={!grants} onClick={() => p.setPage('custody')}>Held</button>
+      <button type="button" role="tab" aria-selected={grants} onClick={() => p.setPage('grants')}>Grants{liveCount(v) === undefined ? '' : ` · ${liveCount(v)}`}</button>
+    </div>
     <div className="cu-pane-head" aria-label="Custody">
       <b>Custody</b><span>autonomy {shown(v, 'autonomy')}</span><span>gate {shown(v, 'gate')}</span><span>writes {shown(v, 'writeMode')}</span><span>{countText(v)}</span>
       <span data-lit={lit === true ? 'true' : undefined}>{lit === undefined ? `hand back ${NONE}` : lit ? 'hand back lit' : 'hand back dark'}</span>
     </div>
-    <div className="cu-list" role="table" aria-label="Held items">
+    {grants ? <GrantsPane v={v} /> : <div className="cu-list" role="table" aria-label="Held items">
       <div className="cu-line cu-line--head" role="row"><span /><span>Item</span><span>Kind</span><span>State</span><span>Last changed by</span><span>Receipts</span></div>
       {!known && <p className="cu-empty">No reading of what the agent holds.</p>}
       {known && items.length === 0 && <p className="cu-empty">The agent holds nothing.</p>}
@@ -218,13 +234,146 @@ function HeldPane({v}: {v: V}) {
         <span className="cu-by">{item.by ?? NONE}</span>
         <span className="cu-receipts">{item.receipts === undefined ? NONE : `${item.receipts} receipt${item.receipts === 1 ? '' : 's'}`}</span>
       </div>)}
-    </div>
+    </div>}
+  </div>
+}
+
+// ---------------------------------------------------------------- the grants: what the agent may do to agency
+
+/** Actuation's metagency operations, in the order an agency's life runs: determine another, configure it, actualise it, take its return in. */
+const OPS = [
+  {value: 'determine-agency', label: 'Determine', does: 'Bring another agency into being within bounds: a helper, a member.'},
+  {value: 'configure-agency', label: 'Configure', does: 'Change how an agency is set up.'},
+  {value: 'actualise-agency', label: 'Actualise', does: 'Make a composed agency actual in its World, with a receipt.'},
+  {value: 'reintegrate-return', label: 'Reintegrate', does: 'Take an agency\'s return back into the work.'},
+] as const
+const EXPIRES = [{value: 'never', label: 'Never', does: 'The grant holds until it is revoked.'}, {value: '1h', label: '1 hour'}, {value: '1d', label: '1 day'}, {value: '7d', label: '7 days'}] as const
+interface Grant {readonly ref: string; readonly holder?: string; readonly issuedBy?: string; readonly operations: readonly string[]; readonly worlds: readonly string[]
+  readonly issuedAt?: number; readonly expiresAt?: number | null; readonly revoked?: {readonly at?: number; readonly reason?: string} | null}
+const strs = (x: unknown) => (Array.isArray(x) ? x.filter((s): s is string => typeof s === 'string' && s !== '') : [])
+const grantsOf = (v: V): Grant[] | undefined => {
+  const raw = json<unknown>(v, 'grants', undefined)
+  if (!Array.isArray(raw)) return undefined
+  return raw.flatMap((g): Grant[] => {
+    const o = g && typeof g === 'object' ? g as Record<string, unknown> : {}
+    if (typeof o.ref !== 'string' || !o.ref) return []
+    const r = o.revoked && typeof o.revoked === 'object' ? o.revoked as Record<string, unknown> : o.revoked === null ? null : undefined
+    return [{ref: o.ref, holder: typeof o.holder === 'string' ? o.holder : undefined, issuedBy: typeof o.issuedBy === 'string' ? o.issuedBy : undefined, operations: strs(o.operations),
+      worlds: strs(o.worlds), issuedAt: typeof o.issuedAt === 'number' ? o.issuedAt : undefined, expiresAt: o.expiresAt === null ? null : typeof o.expiresAt === 'number' ? o.expiresAt : undefined,
+      revoked: r === null ? null : r ? {at: typeof r.at === 'number' ? r.at : undefined, reason: typeof r.reason === 'string' ? r.reason : undefined} : undefined}]
+  })
+}
+/** How a grant stands at the time it was read: in force, ended on its own terms, or revoked. */
+const grantState = (g: Grant, now: number | undefined): 'live' | 'expired' | 'revoked' =>
+  (g.revoked ? 'revoked' : g.expiresAt != null && now !== undefined && g.expiresAt <= now ? 'expired' : 'live')
+const DAY = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const day = (s: number) => { const d = new Date(s * 1000); return `${d.getUTCDate()} ${DAY[d.getUTCMonth()]}` }
+const worldWord = (ref: string) => (ref === 'control:root' ? 'your world' : ref.replace('project:', ''))
+const liveCount = (v: V) => { const gs = grantsOf(v), now = numOf(v, 'readAt'); return gs ? gs.filter(g => grantState(g, now) === 'live').length : undefined }
+
+/** The grants as a grid: a column for each operation, a row for each grant, a filled cell where it allows the operation. A revoked grant
+ * is struck through; one that ended on its own terms is dashed. The last row is the grant you are about to issue, drawn hollow. */
+function GrantsWell({v, w, h, chosen}: {v: V; w: number; h: number; chosen?: string}) {
+  const gs = grantsOf(v), now = numOf(v, 'readAt'), lx = 8, top = 30, cw = (w - lx - 50) / OPS.length, rh = 16, rows = 5
+  if (!gs) return <Display w={w} h={h} label="The grants" corner={NONE}><text x={8} y={22} className="dp-ink">No reading of the grants</text></Display>
+  const draft = OPS.map(o => boolOf(v, `grant:${o.value}`) === true)
+  const shownGs = gs.slice(0, rows)
+  return <Display w={w} h={h} label="The grants" does="A column for each operation on agency, a row for each grant: filled where it allows the operation. Struck: revoked. Dashed: ended. The hollow row at the foot is the next grant." corner={`${liveCount(v)} in force`}>
+    {OPS.map((o, i) => <text key={o.value} x={lx + i * cw + cw / 2} y={20} className="dp-axis" textAnchor="middle">{o.label[0]}</text>)}
+    {shownGs.map((g, k) => {
+      const y = top + k * rh, state = grantState(g, now), on = g.ref === chosen
+      return <g key={g.ref} opacity={state === 'live' ? 1 : .55}>
+        {OPS.map((o, i) => { const has_ = g.operations.includes(o.value), x = lx + i * cw + cw / 2 - 5
+          return <rect key={o.value} x={x} y={y - 5} width={10} height={10} rx={1.5} fill={has_ && state === 'live' ? 'var(--dp-value)' : 'none'}
+            stroke={has_ ? 'var(--dp-value)' : 'var(--text-faint)'} strokeDasharray={state === 'expired' && has_ ? '2 2' : undefined} strokeWidth={has_ ? 1.2 : .8} /> })}
+        {state === 'revoked' && <path d={`M${lx} ${y}H${lx + OPS.length * cw}`} stroke="var(--rec)" strokeWidth={1.2} />}
+        {on && <rect x={lx - 3} y={y - 8} width={OPS.length * cw + 6} height={16} rx={2} fill="none" stroke="var(--dp-on)" strokeWidth={1} />}
+        <text x={w - 6} y={y + 3} className={state === 'live' ? 'dp-ink-dim' : 'dp-axis'} textAnchor="end">{state === 'revoked' ? 'revoked' : g.expiresAt == null ? (g.expiresAt === null ? 'no end' : NONE) : state === 'expired' ? 'ended' : `to ${day(g.expiresAt)}`}</text>
+      </g>
+    })}
+    {gs.length > rows && <text x={lx} y={top + rows * rh - 2} className="dp-axis">{gs.length - rows} more</text>}
+    {gs.length === 0 && <text x={lx} y={top + 3} className="dp-ink-dim">The agent holds no grant.</text>}
+    <path d={`M${lx} ${h - 30}H${w - 6}`} className="dp-grid" />
+    {OPS.map((o, i) => <rect key={o.value} x={lx + i * cw + cw / 2 - 5} y={h - 22} width={10} height={10} rx={1.5} fill={draft[i] ? 'color-mix(in srgb, var(--dp-on) 35%, transparent)' : 'none'}
+      stroke={draft[i] ? 'var(--dp-on)' : 'var(--text-faint)'} strokeDasharray="2 1.5" />)}
+    <text x={w - 6} y={h - 14} className="dp-axis" textAnchor="end">next</text>
+  </Display>
+}
+
+/** The Grants page: the grants, the next grant's terms with Issue, and Revoke for the chosen one. */
+export function GrantsBands({p}: {p: ViewProps}) {
+  const v = p.v, gs = grantsOf(v), now = numOf(v, 'readAt')
+  const [chosen, setChosen] = useState<string | undefined>(undefined)
+  const sel = gs?.find(g => g.ref === chosen) ?? gs?.find(g => grantState(g, now) === 'live')
+  const draftOps = OPS.filter(o => boolOf(v, `grant:${o.value}`) === true).map(o => o.value), world = strOf(v, 'grant:world')
+  const worlds = strs(json<unknown>(v, 'worlds', []))
+  const items: RowItem[] = !gs ? [{id: 'none', name: 'No reading of the grants', light: 'unknown'}]
+    : gs.length === 0 ? [{id: 'none', name: 'No grant', light: 'dark'}]
+    : gs.map(g => { const state = grantState(g, now)
+      return {id: g.ref, name: g.worlds.map(worldWord).join(', ') || NONE, light: state === 'live' ? 'lit' : 'dark', tone: 'value',
+        note: `${g.operations.length} op${g.operations.length === 1 ? '' : 's'} · ${state === 'revoked' ? 'revoked' : state === 'expired' ? 'ended' : g.issuedAt === undefined ? 'live' : `since ${day(g.issuedAt)}`}`,
+        does: `${g.ref}: ${g.operations.join(', ') || 'no operation'}; issued by ${g.issuedBy ?? NONE}${g.revoked?.reason ? `; revoked: ${g.revoked.reason}` : ''}.`} })
+  const issueWhy = !draftOps.length ? 'Choose at least one operation.' : !world ? 'Choose the World the grant reaches.' : undefined
+  const selState = sel ? grantState(sel, now) : undefined
+  return <Band>
+    <Section width={206}><GrantsWell v={v} w={194} h={146} chosen={sel?.ref} /></Section>
+    <Section label="Next grant" width={124}>
+      <div className="cu-ops">{OPS.map(o => { const now_ = boolOf(v, `grant:${o.value}`)
+        return <Toggle {...st(p, `grant:${o.value}`)} key={o.value} label={o.label} does={o.does} on={now_ === true} unknown={now_ === undefined} onChange={x => p.set(`grant:${o.value}`, x)} /> })}</div>
+      <Chooser {...st(p, 'grant:world')} label="World" wide does="The World the grant lets the agent act in." value={world ?? ''} options={worlds.map(x => ({value: x, label: worldWord(x)}))} onChange={x => p.set('grant:world', x)} />
+      <Chooser {...st(p, 'grant:expires')} label="Ends" wide does="When the grant stops on its own. Revoke ends it sooner." value={strOf(v, 'grant:expires') ?? ''} options={EXPIRES} onChange={x => p.set('grant:expires', x)} />
+      <Action {...st(p, 'issue')} label="Issue" does="Give the agent this grant. It holds from now until it ends or you revoke it." disabled={st(p, 'issue').disabled ?? issueWhy}
+        onPress={() => p.set('issue', JSON.stringify({holder: strOf(v, 'holder'), operations: draftOps, worlds: world ? [world] : [], expiresIn: strOf(v, 'grant:expires')}))} />
+    </Section>
+    <Section label="Grants" grow>
+      <Rows does="Each grant the agent holds, by the Worlds it reaches. Select one to revoke it." items={items} size={7} selected={sel?.ref} onSelect={gs?.length ? setChosen : undefined} />
+    </Section>
+    <Section label="Revoke" width={112}>
+      <Readout label="chosen" does="The grant Revoke ends." value={sel ? sel.worlds.map(worldWord).join(', ') || NONE : undefined} />
+      <TextField {...st(p, 'revoke:reason')} label="Reason" does="Why you end the grant. It is kept with the revocation." value={strOf(v, 'revoke:reason') ?? ''} placeholder="owner withdrawal" onChange={x => p.set('revoke:reason', x)} />
+      <Action {...st(p, 'revoke')} hold label="Revoke" does="End the grant now. A revoked grant cannot be given back: issue a new one." onPress={sel ? () => p.set('revoke', sel.ref) : undefined}
+        disabled={st(p, 'revoke').disabled ?? (selState && selState !== 'live' ? `The grant has ${selState === 'revoked' ? 'been revoked' : 'ended'}.` : undefined)} />
+    </Section>
+  </Band>
+}
+
+function GrantsPane({v}: {v: V}) {
+  const gs = grantsOf(v), now = numOf(v, 'readAt')
+  return <div className="cu-list" role="table" aria-label="Grants">
+    <div className="cu-line cu-line--head cu-line--grant" role="row"><span /><span>Worlds</span><span>Operations</span><span>Issued</span><span>Ends</span><span>Standing</span></div>
+    {!gs && <p className="cu-empty">No reading of the grants.</p>}
+    {gs && gs.length === 0 && <p className="cu-empty">The agent holds no grant.</p>}
+    {gs?.map(g => { const state = grantState(g, now); return <div key={g.ref} className="cu-line cu-line--grant" role="row" data-i={`${g.ref}|Issued by ${g.issuedBy ?? NONE}.`} data-state={state}>
+      <span className="dp-lamp" data-light={state === 'live' ? 'lit' : 'dark'} data-tone="value" />
+      <span className="cu-name">{g.worlds.map(worldWord).join(', ') || NONE}</span>
+      <span className="cu-kind">{g.operations.map(o => OPS.find(x => x.value === o)?.label ?? o).join(' · ') || NONE}</span>
+      <span className="cu-by">{g.issuedAt === undefined ? NONE : day(g.issuedAt)}{g.issuedBy ? ` · ${g.issuedBy}` : ''}</span>
+      <span className="cu-by">{g.expiresAt === null ? 'no end' : g.expiresAt === undefined ? NONE : day(g.expiresAt)}</span>
+      <span className="cu-state" data-state={state === 'revoked' ? 'edited' : state === 'expired' ? 'blocked' : undefined}>{state === 'revoked' ? `revoked${g.revoked?.reason ? `: ${g.revoked.reason}` : ''}` : state === 'expired' ? 'ended' : 'in force'}</span>
+    </div> })}
   </div>
 }
 
 // ---------------------------------------------------------------- the device
 
 const SAMPLE_PEOPLE = [{id: 'you', name: 'You'}]
+const PAGES = [{id: 'custody', label: 'Custody'}, {id: 'grants', label: 'Grants'}]
+/** The grants of the gallery's fixtures, in the shape of Actuation's governing authority records: Flint may actualise and configure agency in
+ * O-I; a grant for the Quaternal Logic ended on its own terms; one for your whole world was revoked. Read at 21 Oct, 02:00 UTC. */
+const SAMPLE_GRANTS = {
+  holder: 'agent:expressed-ba635b5ae01b4ca98c591fe342079449', readAt: 1792547400,
+  worlds: JSON.stringify(['control:root', 'project:O-I', 'project:quaternal-logic', 'project:Archetypal-Earth']),
+  grants: JSON.stringify([
+    {ref: 'authority:local:flint-o-i-20261020', holder: 'agent:expressed-ba635b5ae01b4ca98c591fe342079449', issuedBy: 'human:owner',
+      operations: ['actualise-agency', 'configure-agency'], worlds: ['project:O-I'], issuedAt: 1792450000, expiresAt: null, revoked: null},
+    {ref: 'authority:local:flint-ql-20261014', holder: 'agent:expressed-ba635b5ae01b4ca98c591fe342079449', issuedBy: 'human:owner',
+      operations: ['actualise-agency'], worlds: ['project:quaternal-logic'], issuedAt: 1791900000, expiresAt: 1792000000, revoked: null},
+    {ref: 'authority:local:flint-root-20261002', holder: 'agent:expressed-ba635b5ae01b4ca98c591fe342079449', issuedBy: 'human:owner',
+      operations: ['determine-agency', 'configure-agency', 'actualise-agency', 'reintegrate-return'], worlds: ['control:root'], issuedAt: 1790900000, expiresAt: null,
+      revoked: {at: 1791600000, reason: 'owner withdrawal'}}]),
+  'grant:determine-agency': false, 'grant:configure-agency': false, 'grant:actualise-agency': true, 'grant:reintegrate-return': false,
+  'grant:world': 'project:Archetypal-Earth', 'grant:expires': '1d',
+}
 /** The sample material of the gallery's fixtures: the work, files and value the agent Flint holds on the Agent device's task. The views
  * never read these: the owner's list arrives on `held`. */
 const sampleHeld = (edited?: boolean) => JSON.stringify([
@@ -273,11 +422,14 @@ export const design: DesignedDevice = {
   id: 'software-factory:agent-custody',
   title: 'Custody',
   kind: 'effect',
-  defaults: {light: 'lit', autonomy: 'review', gate: 'both', writeMode: 'propose', escalate: 'you', people: JSON.stringify(SAMPLE_PEOPLE), held: sampleHeld(), handBackLit: false},
+  firstPage: 'custody',
+  defaults: {light: 'lit', autonomy: 'review', gate: 'both', writeMode: 'propose', escalate: 'you', people: JSON.stringify(SAMPLE_PEOPLE), held: sampleHeld(), handBackLit: false,
+    ...SAMPLE_GRANTS},
   fixtures: {
     'Review, five held': {},
     'You edited a file': {held: sampleHeld(true), handBackLit: true},
-    'No readings': Object.fromEntries(['light', 'autonomy', 'gate', 'writeMode', 'escalate', 'people', 'held', 'handBackLit'].map(k => [k, undefined])),
+    'No grant yet': {grants: '[]', 'grant:actualise-agency': true, 'grant:world': 'project:O-I'},
+    'No readings': Object.fromEntries(['light', 'autonomy', 'gate', 'writeMode', 'escalate', 'people', 'held', 'handBackLit', ...Object.keys(SAMPLE_GRANTS)].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="Custody" light={lightOf(p)} readings={[levelWord(p.v) ?? NONE, countText(p.v)]} onUnfold={p.nav.unfold} />,
@@ -294,9 +446,10 @@ export const design: DesignedDevice = {
     </Section>
   </Panel>,
 
-  whole: p => <Panel title="Custody" view="whole" light={lightOf(p)} onFold={p.nav.fold} onFull={p.nav.full}><CustodyBands p={p} /></Panel>,
+  whole: p => <Panel title="Custody" view="whole" light={lightOf(p)} onFold={p.nav.fold} onFull={p.nav.full} pages={PAGES} page={p.page === 'grants' ? 'grants' : 'custody'} onPage={p.setPage}>
+    {p.page === 'grants' ? <GrantsBands p={p} /> : <CustodyBands p={p} />}</Panel>,
 
-  full: p => <HeldPane v={p.v} />,
+  full: p => <HeldPane p={p} />,
 
   widget: p => <Tile title="Custody" light={lightOf(p)} span={2} onFull={p.nav.full}>
     <CustodyWell v={p.v} standing={p.standing} w={104} h={100} size="mini" />
