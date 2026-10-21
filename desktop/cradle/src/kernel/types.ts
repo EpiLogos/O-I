@@ -206,6 +206,9 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
    * "ql-mef/living-wiki-refraction/v1") for `{mode:"ordinary"|"explain"|"formal", relevance?:{relevant_positions:number[],
    * requires_context:boolean, full_context_frame:boolean, position_budget:number}, refraction?: WikiRefractionRequest}` on stdin. */
   | {kind:"wiki-living-plan";request:unknown}
+  /** `ql wiki refract -` (QL-MEF#350): one WikiRefractionRequest (`ql-mef/wiki-refraction/v1`: mode, target, lenses with optional
+   * sublenses) on stdin; QL's WikiRefractionResponse `{contract, status, target_ref, target_snapshot_hash, readings, notices}`. */
+  | {kind:"wiki-refract";request:unknown}
   /** `ql vak locate <ref>` ({vakRef, name, symbol, primaryDesignation, standing, sourceLine}), `ql vak context <ref> [depth]`
    * (`ql.vak-context/v1`: centre, depth, entries, relations). */
   | {kind:"vak-locate";vak_ref:string}
@@ -221,6 +224,11 @@ export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections
   /** `workcell doctor` (declared_services, instances, shell, state_root_writable, writable_workspace), `workcell discover`
    * (offers, capacity, health), `workcell instances list`. */
   | {kind:"doctor"|"discover"|"instances-list"}
+  /** `workcell worlds` (EpiLogos/Workcell#120): the material-world receipts the cell keeps under its state root,
+   * `workcell.world-receipts/v1` `{receipt_root, worlds:[{receipt, world_ref, workcell_ref, demand_ref, subjects, state, retention,
+   * persistence, bindings, planned_exposures}], unreadable:[{receipt, error}], note}`. A receipt written elsewhere with `--receipt`
+   * is not known to the cell (the note says so). */
+  | {kind:"worlds"}
   /** `workcell plan <demand flags>`: an unsatisfiable plan is a reading too (`status`, `omissions`). */
   | {kind:"plan";demand?:WorkcellDemand}
   /** `workcell placement <demand flags> [--connection L]… [--max-locality-cost N] [--prefer-locality] [--require-declared-capacity]

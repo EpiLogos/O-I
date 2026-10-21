@@ -1,0 +1,365 @@
+{
+  "_source": "ql built from QL-MEF main 2e5d5b3 (#350), 21 Oct 2026, over QL's own fixture fixtures/qw2/wiki-refraction-request.json; its refusal of a foreign contract; the installed ql's refusal of the unknown command",
+  "request": {
+    "contract": "ql-mef/wiki-refraction/v1",
+    "mode": "required",
+    "target": {
+      "kind": "d3",
+      "target_ref": "example:wiki:frame:decision-17",
+      "target_frame_ref": "example:wiki:frame:decision-17",
+      "target_revision": 7,
+      "target_snapshot_hash": "sha256:example-frame-snapshot",
+      "provenance": [
+        {
+          "source_ref": "example:source:decision-material",
+          "source_revision": "sha256:material-v7"
+        }
+      ],
+      "subjects": [
+        {
+          "subject_ref": "example:wiki:node:p2",
+          "revision": 4,
+          "position": 2,
+          "face": "direct"
+        },
+        {
+          "subject_ref": "example:wiki:node:p3",
+          "revision": 5,
+          "position": 3,
+          "face": "direct"
+        },
+        {
+          "subject_ref": "example:wiki:node:p2-prime",
+          "revision": 2,
+          "position": 2,
+          "face": "conjugate"
+        },
+        {
+          "subject_ref": "example:wiki:node:p3-prime",
+          "revision": 3,
+          "position": 3,
+          "face": "conjugate"
+        }
+      ],
+      "relations": [
+        {
+          "from_ref": "example:wiki:node:p2",
+          "to_ref": "example:wiki:node:p3",
+          "relation": "example:relation:formal-dependency",
+          "origin": "authored",
+          "origin_ref": "example:wiki:edge:p2-p3",
+          "provenance": []
+        }
+      ],
+      "structural_field": {
+        "operator_ref": "ql:structural:2.0.0:field:A:1:D3",
+        "family": "A",
+        "pair_index": 1,
+        "degree": "D3",
+        "coordinates": [
+          {
+            "position": 2,
+            "face": "direct"
+          },
+          {
+            "position": 3,
+            "face": "direct"
+          },
+          {
+            "position": 2,
+            "face": "conjugate"
+          },
+          {
+            "position": 3,
+            "face": "conjugate"
+          }
+        ],
+        "provenance": [
+          {
+            "source_ref": "ql-mef:contract:structural-v2",
+            "source_revision": "2.0.0"
+          }
+        ]
+      },
+      "material": {
+        "summary": "Client-owned decision material remains opaque project content.",
+        "evidence_refs": [
+          "example:source:decision-material"
+        ]
+      },
+      "extensions": {
+        "producer_extension": "preserve"
+      }
+    },
+    "lenses": [
+      {
+        "lens_ref": "mef:lens:L1@1"
+      },
+      {
+        "lens_ref": "mef:lens:L2'@1",
+        "sublens_ref": "mef:sublens:L2'.3@1"
+      },
+      {
+        "lens_ref": "mef:lens:L5'@1"
+      }
+    ],
+    "context": {
+      "purpose": "compare distinct refractive disclosures",
+      "scope_refs": [
+        "example:scope:review"
+      ]
+    }
+  },
+  "response": {
+    "contract": "ql-mef/wiki-refraction/v1",
+    "status": "complete",
+    "target_ref": "example:wiki:frame:decision-17",
+    "target_snapshot_hash": "sha256:example-frame-snapshot",
+    "readings": [
+      {
+        "contract": "ql-mef/wiki-refraction/v1",
+        "reading_ref": "ql-mef:reading:registry:example-wiki-frame-decision-17:L1",
+        "reading_type": "MEF-derived",
+        "target_ref": "example:wiki:frame:decision-17",
+        "target_frame_ref": "example:wiki:frame:decision-17",
+        "target_revision": 7,
+        "target_snapshot_hash": "sha256:example-frame-snapshot",
+        "provider": {
+          "provider_ref": "ql-mef:provider:registry-disclosure",
+          "provider_version": "1.0.0",
+          "health": "available"
+        },
+        "lens_ref": "mef:lens:L1@1",
+        "ql_form_refs": [],
+        "operator_refs": [
+          "ql:structural:2.0.0:field:A:1:D3"
+        ],
+        "harmonic_field_ref": "ql:structural:2.0.0:field:A:1:D3",
+        "disclosure": "Causal refractive reading of example:wiki:frame:decision-17",
+        "disclosure_status": "complete",
+        "confidence_per_mille": 1000,
+        "derived_subgraph": {
+          "vertices": [
+            {
+              "subject_ref": "example:wiki:node:p2",
+              "revision": 4
+            },
+            {
+              "subject_ref": "example:wiki:node:p3",
+              "revision": 5
+            },
+            {
+              "subject_ref": "example:wiki:node:p2-prime",
+              "revision": 2
+            },
+            {
+              "subject_ref": "example:wiki:node:p3-prime",
+              "revision": 3
+            }
+          ],
+          "relations": [
+            {
+              "from_ref": "example:wiki:node:p2",
+              "to_ref": "example:wiki:node:p3",
+              "relation": "example:relation:formal-dependency",
+              "origin": "authored",
+              "origin_ref": "example:wiki:edge:p2-p3",
+              "provenance": []
+            }
+          ]
+        },
+        "relation_candidates": [],
+        "traversal_candidates": [],
+        "tensions": [],
+        "absences": [],
+        "evidence_demands": [],
+        "explanation": "QL-MEF refracted stable target example:wiki:frame:decision-17 through mef:lens:L1@1 without mutating client identity",
+        "evidence_refs": [
+          "ql-mef:wiki:node:mef-L1"
+        ],
+        "provenance": [
+          {
+            "source_ref": "example:source:decision-material",
+            "source_revision": "sha256:material-v7"
+          },
+          {
+            "source_ref": "example:wiki:frame:decision-17",
+            "source_revision": "7"
+          }
+        ],
+        "result_class": "deterministic",
+        "warnings": [],
+        "extensions": {
+          "purpose": "compare distinct refractive disclosures",
+          "scope_refs": [
+            "example:scope:review"
+          ]
+        }
+      },
+      {
+        "contract": "ql-mef/wiki-refraction/v1",
+        "reading_ref": "ql-mef:reading:registry:example-wiki-frame-decision-17:L2'",
+        "reading_type": "MEF-derived",
+        "target_ref": "example:wiki:frame:decision-17",
+        "target_frame_ref": "example:wiki:frame:decision-17",
+        "target_revision": 7,
+        "target_snapshot_hash": "sha256:example-frame-snapshot",
+        "provider": {
+          "provider_ref": "ql-mef:provider:registry-disclosure",
+          "provider_version": "1.0.0",
+          "health": "available"
+        },
+        "lens_ref": "mef:lens:L2'@1",
+        "sublens_ref": "mef:sublens:L2'.3@1",
+        "ql_form_refs": [],
+        "operator_refs": [
+          "ql:structural:2.0.0:field:A:1:D3"
+        ],
+        "harmonic_field_ref": "ql:structural:2.0.0:field:A:1:D3",
+        "disclosure": "Alchemical-Elemental / Air refractive reading of example:wiki:frame:decision-17",
+        "disclosure_status": "complete",
+        "confidence_per_mille": 1000,
+        "derived_subgraph": {
+          "vertices": [
+            {
+              "subject_ref": "example:wiki:node:p2",
+              "revision": 4
+            },
+            {
+              "subject_ref": "example:wiki:node:p3",
+              "revision": 5
+            },
+            {
+              "subject_ref": "example:wiki:node:p2-prime",
+              "revision": 2
+            },
+            {
+              "subject_ref": "example:wiki:node:p3-prime",
+              "revision": 3
+            }
+          ],
+          "relations": [
+            {
+              "from_ref": "example:wiki:node:p2",
+              "to_ref": "example:wiki:node:p3",
+              "relation": "example:relation:formal-dependency",
+              "origin": "authored",
+              "origin_ref": "example:wiki:edge:p2-p3",
+              "provenance": []
+            }
+          ]
+        },
+        "relation_candidates": [],
+        "traversal_candidates": [],
+        "tensions": [],
+        "absences": [],
+        "evidence_demands": [],
+        "explanation": "QL-MEF refracted stable target example:wiki:frame:decision-17 through mef:lens:L2'@1 without mutating client identity",
+        "evidence_refs": [
+          "ql-mef:wiki:node:mef-L2'"
+        ],
+        "provenance": [
+          {
+            "source_ref": "example:source:decision-material",
+            "source_revision": "sha256:material-v7"
+          },
+          {
+            "source_ref": "example:wiki:frame:decision-17",
+            "source_revision": "7"
+          }
+        ],
+        "result_class": "deterministic",
+        "warnings": [],
+        "extensions": {
+          "purpose": "compare distinct refractive disclosures",
+          "scope_refs": [
+            "example:scope:review"
+          ]
+        }
+      },
+      {
+        "contract": "ql-mef/wiki-refraction/v1",
+        "reading_ref": "ql-mef:reading:registry:example-wiki-frame-decision-17:L5'",
+        "reading_type": "MEF-derived",
+        "target_ref": "example:wiki:frame:decision-17",
+        "target_frame_ref": "example:wiki:frame:decision-17",
+        "target_revision": 7,
+        "target_snapshot_hash": "sha256:example-frame-snapshot",
+        "provider": {
+          "provider_ref": "ql-mef:provider:registry-disclosure",
+          "provider_version": "1.0.0",
+          "health": "available"
+        },
+        "lens_ref": "mef:lens:L5'@1",
+        "ql_form_refs": [],
+        "operator_refs": [
+          "ql:structural:2.0.0:field:A:1:D3"
+        ],
+        "harmonic_field_ref": "ql:structural:2.0.0:field:A:1:D3",
+        "disclosure": "Divine Logos refractive reading of example:wiki:frame:decision-17",
+        "disclosure_status": "complete",
+        "confidence_per_mille": 1000,
+        "derived_subgraph": {
+          "vertices": [
+            {
+              "subject_ref": "example:wiki:node:p2",
+              "revision": 4
+            },
+            {
+              "subject_ref": "example:wiki:node:p3",
+              "revision": 5
+            },
+            {
+              "subject_ref": "example:wiki:node:p2-prime",
+              "revision": 2
+            },
+            {
+              "subject_ref": "example:wiki:node:p3-prime",
+              "revision": 3
+            }
+          ],
+          "relations": [
+            {
+              "from_ref": "example:wiki:node:p2",
+              "to_ref": "example:wiki:node:p3",
+              "relation": "example:relation:formal-dependency",
+              "origin": "authored",
+              "origin_ref": "example:wiki:edge:p2-p3",
+              "provenance": []
+            }
+          ]
+        },
+        "relation_candidates": [],
+        "traversal_candidates": [],
+        "tensions": [],
+        "absences": [],
+        "evidence_demands": [],
+        "explanation": "QL-MEF refracted stable target example:wiki:frame:decision-17 through mef:lens:L5'@1 without mutating client identity",
+        "evidence_refs": [
+          "ql-mef:wiki:node:mef-L5'"
+        ],
+        "provenance": [
+          {
+            "source_ref": "example:source:decision-material",
+            "source_revision": "sha256:material-v7"
+          },
+          {
+            "source_ref": "example:wiki:frame:decision-17",
+            "source_revision": "7"
+          }
+        ],
+        "result_class": "deterministic",
+        "warnings": [],
+        "extensions": {
+          "purpose": "compare distinct refractive disclosures",
+          "scope_refs": [
+            "example:scope:review"
+          ]
+        }
+      }
+    ],
+    "notices": []
+  },
+  "refused_foreign_contract": "ql: invalid Wiki refraction contract: ql-mef/wiki-refraction/v0\n",
+  "installed_refusal": "ql: unknown command `wiki`; run `ql help`\n"
+}

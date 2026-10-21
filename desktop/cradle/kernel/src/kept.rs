@@ -1004,12 +1004,13 @@ mod tests {
             let mark = watch.mark();
             watch.start(roots(&dir), Box::new(|_, _| {})).unwrap();
             let model: &'static ReadModel = Box::leak(Box::new(ReadModel::over(watch.clone())));
-            let keeping = Keeping::new(
+            let mut keeping = Keeping::new(
                 dir.join("state").join(FILE_NAME),
                 watch.roots().unwrap(),
                 Box::new(System),
                 kernel(),
             );
+            keeping.owners_under = Some(dir.clone());
             (watch, model, keeping, mark)
         };
         let asks = std::sync::atomic::AtomicUsize::new(0);
@@ -1029,7 +1030,15 @@ mod tests {
         let (watch, model, keeping, _) = launch();
         read(model, "A");
         read(model, "B");
+        // Another test's fake owner, started in this same process and gone
+        // before the relaunch: it is not this run's owner, so it never
+        // decides this run's restore.
+        let elsewhere = temp("relaunch-elsewhere");
+        let foreign = elsewhere.join("foreign-owner");
+        std::fs::write(&foreign, "1").unwrap();
+        crate::owner_process::answered_by(&foreign);
         assert_eq!(keeping.write(model, &watch), Ok(2));
+        let _ = std::fs::remove_dir_all(&elsewhere);
         watch.stop();
 
         // While the application is closed, A changes.

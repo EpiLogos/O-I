@@ -1,0 +1,45 @@
+{
+  "captured": "2026-10-21 from EpiLogos/Workcell#120 (branch dlw/workcell-worlds, 6b862b1) over a scratch state root; installed_refusal from the installed workcell (main before #120)",
+  "argv": "workcell --json worlds",
+  "answer": {
+    "note": "receipts kept under this cell's state root only; a receipt written elsewhere with --receipt is not listed",
+    "ok": true,
+    "receipt_root": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wc-capture/worlds",
+    "schema": "workcell.world-receipts/v1",
+    "unreadable": [
+      {
+        "error": "invalid demand: decode material world: EOF while parsing a value at line 1 column 13",
+        "receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wc-capture/worlds/torn.json"
+      }
+    ],
+    "worlds": [
+      {
+        "bindings": 1,
+        "demand_ref": "demand:dlw-capture",
+        "persistence": null,
+        "planned_exposures": 0,
+        "receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wc-capture/worlds/world_566bd9371b0f4376.json",
+        "retention": "release",
+        "state": "healthy",
+        "subjects": {
+          "run": "opaque:factory-run-capture"
+        },
+        "workcell_ref": "workcell:scratch-capture",
+        "world_ref": "world:566bd9371b0f4376"
+      }
+    ]
+  },
+  "empty": {
+    "note": "receipts kept under this cell's state root only; a receipt written elsewhere with --receipt is not listed",
+    "ok": true,
+    "receipt_root": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wc-empty/worlds",
+    "schema": "workcell.world-receipts/v1",
+    "unreadable": [],
+    "worlds": []
+  },
+  "installed_refusal": {
+    "stdout": "",
+    "stderr": "{\"error\":{\"kind\":\"invalid-demand\",\"message\":\"invalid demand: unknown command `worlds`; run `workcell help`\"},\"ok\":false}\n",
+    "exit": 2
+  }
+}

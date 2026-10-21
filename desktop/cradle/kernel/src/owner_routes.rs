@@ -253,6 +253,12 @@ pub enum QlRead {
     WikiLivingPlan {
         request: Value,
     },
+    /// One Wiki refraction through the lenses the caller names (`ql wiki
+    /// refract -`, QL-MEF#350): the request (`ql-mef/wiki-refraction/v1`) on
+    /// stdin, QL's WikiRefractionResponse under the same contract.
+    WikiRefract {
+        request: Value,
+    },
     /// The service provider's negotiated operations (`ql service
     /// capabilities`).
     ServiceCapabilities,
@@ -329,6 +335,13 @@ pub enum WorkcellRead {
     },
     /// Live harness instances (`workcell instances list`).
     InstancesList,
+    /// The material-world receipts the cell keeps under its state root
+    /// (`workcell worlds`, Workcell#120; `workcell.world-receipts/v1`): each
+    /// receipt's path, world_ref, workcell_ref, demand_ref, subjects, state,
+    /// retention and binding and exposure counts, receipts that do not decode
+    /// under `unreadable`. A receipt written elsewhere with `--receipt` is not
+    /// known to the cell, and its answer says so. Reads only.
+    Worlds,
     /// One instance's bounded resource usage (`workcell instances usage
     /// <instance_ref> [--pid N] [--interval-ms N] [--correlation-ref R]…`,
     /// `workcell.resource-usage/v1`).
@@ -1549,6 +1562,12 @@ fn ql_registry_answer(request: &QlRead) -> Result<Reading, Error> {
             None,
             QlCheck::Fields(FRAMES),
         ),
+        QlRead::WikiRefract { request } => (
+            "ql wiki refract",
+            words(&["wiki", "refract", "-", "--json"]),
+            Some(request),
+            QlCheck::Contract("ql-mef/wiki-refraction/v1"),
+        ),
         QlRead::WikiLivingPlan { request } => (
             "ql wiki living-plan",
             words(&["wiki", "living-plan", "-", "--json"]),
@@ -1702,6 +1721,7 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             "workcell instances list",
             words(&["instances", "list", "--json"]),
         ),
+        WorkcellRead::Worlds => ("workcell worlds", words(&["worlds", "--json"])),
         WorkcellRead::InstancesUsage {
             instance_ref,
             pid,
@@ -1760,6 +1780,14 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
         WorkcellRead::MachineList => fields(route, data, &[("machines", Kind::List)])?,
         WorkcellRead::Discover => fields(route, data, &[("offers", Kind::List)])?,
         WorkcellRead::InstancesList => fields(route, data, &[("instances", Kind::List)])?,
+        WorkcellRead::Worlds => {
+            let data = schema(route, data, "workcell.world-receipts/v1")?;
+            fields(
+                route,
+                data,
+                &[("worlds", Kind::List), ("unreadable", Kind::List)],
+            )?
+        }
         WorkcellRead::InstancesUsage { .. } => schema(route, data, "workcell.resource-usage/v1")?,
         WorkcellRead::Collect { .. } => fields(
             route,
