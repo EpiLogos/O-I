@@ -169,6 +169,13 @@ export type ActuationReadRequest =
    * included — `actuation.local-authority-listing/v1` `{store, authorities:[{authority_source_ref, record, issued_at_unix_seconds,
    * revoked?:{at_unix_seconds, reason}}], invalid:[{path, authority_source_ref?, error}]}`. */
   | {kind:"authority-list"}
+  /** `actuation stream list [--session S] --json` (EpiLogos/Actuation#142): the durable streams in Actuation's store, or one Agent
+   * session's — `actuation.stream-listing/v1` `{store, agent_session_ref?, streams:[{stream_ref, actuation_ref, agency_ref,
+   * agent_session_ref, world_binding_ref?, lifecycle, event_count, model_usage_count}], invalid:[{path, error}]}`. Never events. */
+  | {kind:"stream-list";session?:string|null}
+  /** `actuation stream replay REF [--after N] [--limit N] --json`: one stream's page (`actuation.stream/v1`: identity, lifecycle,
+   * cursor, events); each `model-usage` event's `model_usage` is one record the `usage` reading projects. */
+  | {kind:"stream-replay";stream_ref:string;after?:number;limit?:number}
   | {kind:"comparison";operation:"held"|"assess"|"mask"|"review";input:Record<string,unknown>};
 /** Actuation's governing authority on its own store: `actuation authority issue - --json` (the `actuation.local-authority/v1`
  * record on stdin; answers `{issued, authority_source_ref, holder, issued_at_unix_seconds}`) and `actuation authority revoke REF
@@ -195,11 +202,20 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
    * grain?:"inner-four"|"outer-two"}, provider_ref, origin:"derived"|"proposed"|"recognised", evidence_refs?}` on stdin), answered as
    * `ql.mef.context-frame-reading/1.0.0`: status exact|partial|ambiguous|no-reading, mapping_digest, runtime_authority false. */
   | {kind:"context-frame-read";request:unknown}
+  /** `ql wiki living-plan -` (QL-MEF#346): the graph's Aperture, QL's LivingWikiRefractionPlan (`profile`
+   * "ql-mef/living-wiki-refraction/v1") for `{mode:"ordinary"|"explain"|"formal", relevance?:{relevant_positions:number[],
+   * requires_context:boolean, full_context_frame:boolean, position_budget:number}, refraction?: WikiRefractionRequest}` on stdin. */
+  | {kind:"wiki-living-plan";request:unknown}
   /** `ql vak locate <ref>` ({vakRef, name, symbol, primaryDesignation, standing, sourceLine}), `ql vak context <ref> [depth]`
    * (`ql.vak-context/v1`: centre, depth, entries, relations). */
   | {kind:"vak-locate";vak_ref:string}
   | {kind:"vak-context";vak_ref:string;depth?:number};
 export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections-show";label:string} | {kind:"machine-list"}
+  /** `workcell connections probe [label] [--timeout-ms N]` (EpiLogos/Workcell#117): the handshake to each recorded endpoint, timed
+   * (`workcell.connection-probe/v1` `{probed_at_unix_ms, timeout_ms, probes:[{label, endpoint, recorded_state, state:
+   * reachable|incompatible|refused|unreachable, rtt_ms?, elapsed_ms, protocol?, remote_software?, remote_workcell_ref?, authorised?,
+   * reason?, detail?}]}`). The Remote carrier's reachability and round trip; the record is never written. */
+  | {kind:"connections-probe";label?:string|null;timeout_ms?:number|null}
   /** `workcell doctor` (declared_services, instances, shell, state_root_writable, writable_workspace), `workcell discover`
    * (offers, capacity, health), `workcell instances list`. */
   | {kind:"doctor"|"discover"|"instances-list"}
@@ -245,6 +261,8 @@ export type AikitReadRequest =
   | {kind:"closeout-verify";project?:string|null;since?:number|null;run?:string|null}
   /** `aikit source show ID`, `aikit collate [--all]`, `aikit adopt ROOT [--namespace N]` (the plan; nothing moves). */
   | {kind:"source-show";id:string}
+  /** `aikit source list` (ai-kit#542): `{sources:[each as source show reads it], unreadable:[{id, code, message}]}`. */
+  | {kind:"source-list"}
   | {kind:"collate";all?:boolean}
   | {kind:"adopt-plan";root:string;namespace?:string|null}
   /** `aikit procedure list|diff PROCEDURE`, `aikit bypass list`, `aikit unused`, `aikit explain [RESOURCE]`. */
@@ -254,7 +272,10 @@ export type AikitReadRequest =
   /** `aikit history [RESOURCE]` answers aikit.explain-history/v1; a view (`history recent|stats|failures|bypasses`) answers that view. */
   | {kind:"history";resource?:string|null;view?:"recent"|"stats"|"failures"|"bypasses"|null}
   /** `aikit knowledge frame ADDRESS… [--query Q]`: at least one address. */
-  | {kind:"knowledge-frame";addresses:string[];query?:string|null};
+  | {kind:"knowledge-frame";addresses:string[];query?:string|null}
+  /** `aikit knowledge reflection verify -` (ai-kit#541), the target-owned `ReflectionLaw` on stdin: `aikit.reflection-verdict/v1`
+   * `{law, map_bindings, verification:{law, source_revision, passed, issues:[{kind, relation_ref, detail}]}}` (Impact's Meaning). */
+  | {kind:"reflection-verify";law:Record<string,unknown>};
 export type AikitWriteRequest =
   /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. */
   | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null}
@@ -265,8 +286,10 @@ export type AikitWriteRequest =
   /** `out` is an absolute directory the desk names. */
   | {kind:"set-package-export";project?:string|null;set:string;target:"openai"|"codex"|"claude"|"pi";out:string;native?:boolean;allow_partial?:boolean;with_codex_overlay?:boolean}
   | {kind:"wiki-shape-declare";file:string;frame_ref:string;frame:unknown}
-  /** `aikit adopt ROOT [--namespace N] --yes`: the person's adoption of a harness skill root; never into Control. */
-  | {kind:"adopt";root:string;namespace?:string|null}
+  /** `aikit adopt ROOT [--namespace N] [--expect-digest D] --yes`: the person's adoption of a harness skill root; never into Control. */
+  | {kind:"adopt";root:string;namespace?:string|null;expect_digest?:string|null}
+  /** `aikit procedure run PROCEDURE --expect-digest D`: one exact persisted Procedure, applied only at the reviewed digest. */
+  | {kind:"procedure-run";procedure:string;expect_digest:string}
   /** `aikit procedure undo PROCEDURE`, `aikit bypass revoke ID`. */
   | {kind:"procedure-undo";procedure:string}
   | {kind:"bypass-revoke";id:string}
@@ -288,6 +311,19 @@ export interface ChangedSinceReading {
     | { state: "owner_unavailable"; owner_operation: string; detail: string };
   aikit:
     | { state: "invoked"; owner_operation: string; receipt: Record<string, unknown> }
+    | { state: "owner_refused"; owner_operation: string; message: string }
+    | { state: "owner_unavailable"; owner_operation: string; detail: string };
+}
+/** Living Knowledge's impact for a set of readings (`flow_cognition.rs` knowledge_impact; the Knowledge route's Affected): Central's
+ * change horizon, adapted as for changed-since, then AIKit's `knowledge impact` (ai-kit#541). The receipt is
+ * `aikit.knowledge-impact-reading/v1` `{readings, wiki_objects, source_dependencies, resource_dependencies, impact:{horizon_cursor,
+ * direct:{changed_sources, affected:[{resource, source, relation, freshness, …}]}, transitive, paths, pending_integration, truncated}}`. */
+export interface KnowledgeImpactReading {
+  readings: string[];
+  horizon: ChangedSinceReading["horizon"];
+  aikit:
+    | { state: "invoked"; owner_operation: string; receipt: Record<string, unknown> }
+    | { state: "not_asked"; owner_operation: string; reason: string }
     | { state: "owner_refused"; owner_operation: string; message: string }
     | { state: "owner_unavailable"; owner_operation: string; detail: string };
 }
@@ -418,6 +454,7 @@ export type KernelOp =
   | {op:"shared_field";request:Record<string,unknown>}
   | { op: "invoke_action"; project?: string; invocation: ActionInvocation }
   | { op: "flow_changed_since"; project?: string; thought: Record<string, unknown> }
+  | { op: "knowledge_impact"; project?: string; readings?: string[]; max_depth?: number; max_affected?: number }
   | {
       op: "instance_commission";
       location: CentralLocation;
@@ -672,6 +709,7 @@ export type KernelOpResult =
   | {result:"shared_field_reading";data:unknown}
   | {result:"action_dispatched";dispatch:ActionDispatch}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }
+  | { result: "knowledge_impact"; reading: KnowledgeImpactReading }
   | { result: "instance_commissioned"; outcome: CommissionOutcome }
   | {result:"ground_reading";reading:Record<string,unknown>}
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}

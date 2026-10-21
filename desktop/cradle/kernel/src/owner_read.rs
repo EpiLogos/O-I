@@ -524,6 +524,7 @@ impl PreparedRead {
             | KernelOp::AgentCard { .. }
             | KernelOp::EncounterJoin { .. }
             | KernelOp::FlowChangedSince { .. }
+            | KernelOp::KnowledgeImpact { .. }
             // Lane K1: the seat instrument, Central's source returns and
             // AIKit's declared remotes — each needs no World.
             | KernelOp::SeatStatusRead
@@ -565,6 +566,7 @@ impl PreparedRead {
                 | KernelOp::ConfigReceipts
                 | KernelOp::EncounterJoin { .. }
                 | KernelOp::FlowChangedSince { .. }
+                | KernelOp::KnowledgeImpact { .. }
         )
     }
 
@@ -1151,6 +1153,27 @@ impl PreparedRead {
                         thought,
                     )
                     .map_err(|e| e.to_string())?,
+                }
+            }
+            KernelOp::KnowledgeImpact {
+                project,
+                readings,
+                max_depth,
+                max_affected,
+            } => {
+                // As for FlowChangedSince: Central discloses the scope.
+                let cwd = crate::agent_prepared::location(&self.world.read()?, project.as_deref())?;
+                KernelOpResult::KnowledgeImpact {
+                    reading: crate::flow_cognition::knowledge_impact(
+                        &self.client,
+                        project
+                            .as_deref()
+                            .unwrap_or_else(|| self.client.configured_project()),
+                        &cwd,
+                        readings,
+                        *max_depth,
+                        *max_affected,
+                    ),
                 }
             }
             // The seat instrument reads every seat's git standing (22-30 s

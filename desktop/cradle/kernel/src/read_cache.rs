@@ -1420,6 +1420,9 @@ pub fn central_dep(
         | "agent-profile.read"
         | "central.world.effective-sources"
         | "central.day.settings.read" => (project_scopes(), Clock::None),
+        // The person's notification ledger (Central#288) is the root's own
+        // `.central/notifications/ledger.jsonl`: a root path, whatever the project.
+        "personal.notifications.list" => (vec![Scope::Root], Clock::None),
         "central.files.read"
         | "central.files.read-batch"
         | "central.files.list"
@@ -1927,6 +1930,20 @@ mod tests {
         );
         assert!(dep("central.files.write", json!({})).is_none());
         assert!(dep("projectcentral.now.return", json!({})).is_none());
+        // The person's notification ledger is the root's own, whatever the
+        // project (Central#288), and a change to it is a root change.
+        assert_eq!(
+            dep("personal.notifications.list", json!({"project": "O-I"}))
+                .unwrap()
+                .1
+                .scopes,
+            vec![Scope::Root]
+        );
+        assert!(dep("personal.notify", json!({})).is_none());
+        assert_eq!(
+            watch.scopes_of_path(Path::new("/central/.central/notifications/ledger.jsonl")),
+            vec![Scope::Root]
+        );
         assert!(central_reads("central.agent-set.read") && central_reads("central.world"));
         // Readings no suffix names are still readings: running one never
         // withdraws what the model holds.

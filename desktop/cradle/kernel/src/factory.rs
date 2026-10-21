@@ -413,6 +413,16 @@ pub enum OwnerRequest {
         state: Option<String>,
         #[serde(default)]
         custody_ref: Option<String>,
+        /// How much the holder decides alone (Factory#288): `suggest`,
+        /// `review` or `auto`, carried as spelled; Factory refuses another.
+        #[serde(default)]
+        autonomy: Option<String>,
+        /// What it must show before acting: `diffs`, `approvals` or `both`.
+        #[serde(default)]
+        review_gate: Option<String>,
+        /// The person it escalates to (a person ref).
+        #[serde(default)]
+        escalate_to: Option<String>,
     },
     /// A project's bank of sixteen prompt pads (`factory development pads
     /// <state> <project-ref>` → `factory.prompt-pads-reading/v1`, manual
@@ -1654,6 +1664,9 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             origin_communique,
             state,
             custody_ref,
+            autonomy,
+            review_gate,
+            escalate_to,
         } => {
             let mut args: Vec<std::ffi::OsString> = vec![
                 "development".into(),
@@ -1674,6 +1687,9 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 ("--origin-communique", origin_communique),
                 ("--state", state),
                 ("--custody", custody_ref),
+                ("--autonomy", autonomy),
+                ("--review-gate", review_gate),
+                ("--escalate-to", escalate_to),
             ] {
                 if let Some(value) = value {
                     args.extend([flag.into(), value.into()]);

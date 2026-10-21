@@ -565,6 +565,20 @@ pub enum KernelOp {
         project: Option<String>,
         thought: serde_json::Value,
     },
+    /// Living Knowledge's impact for a set of readings (the Knowledge
+    /// route's Affected): the kernel supplies the horizon from Central's own
+    /// `projectcentral.change.horizon`, as for FlowChangedSince, and calls
+    /// AIKit's `knowledge impact` (ai-kit#541). Both owner sides explicit.
+    KnowledgeImpact {
+        #[serde(default)]
+        project: Option<String>,
+        #[serde(default)]
+        readings: Vec<String>,
+        #[serde(default)]
+        max_depth: Option<u32>,
+        #[serde(default)]
+        max_affected: Option<u32>,
+    },
     /// Commission one selection inside a flow instance (U4.1/U4.2 loop
     /// mode, `commission.rs`): the desktop composes the next instance
     /// through the template's own append-entry contract and hands it
@@ -1464,6 +1478,10 @@ pub enum KernelOpResult {
     /// owner sides of the read, explicit.
     FlowChangedSince {
         reading: flow_cognition::ChangedSinceReading,
+    },
+    /// Living Knowledge's impact for a set of readings: both owner sides.
+    KnowledgeImpact {
+        reading: flow_cognition::KnowledgeImpactReading,
     },
     /// The typed selection commission outcome (`commission.rs`): owner
     /// revision, structured conflict, or the owner's own refusal.
@@ -3283,6 +3301,7 @@ impl Kernel {
             | KernelOp::AgentCard { .. }
             | KernelOp::EncounterJoin { .. }
             | KernelOp::FlowChangedSince { .. }
+            | KernelOp::KnowledgeImpact { .. }
             | KernelOp::SeatStatusRead
             | KernelOp::SourceReturnsRead { .. }
             | KernelOp::GatewayRemotesRead

@@ -1,0 +1,49 @@
+{
+  "_source": "EpiLogos/Workcell#117 (dlw/workcell-connections-probe) built locally, 21 Oct 2026, against two scratch cells on loopback (serve, authorise laptop for status, connect, probe; then the server stopped); the installed workcell's refusal of the unknown subcommand",
+  "reachable": {
+    "ok": true,
+    "probed_at_unix_ms": 1792593093028,
+    "probes": [
+      {
+        "authorised": false,
+        "credential_ref": null,
+        "elapsed_ms": 0.4,
+        "endpoint": "127.0.0.1:63320",
+        "label": "laptop",
+        "protocol": "workcell.control/v1",
+        "reason": "this Workcell requires a connection credential and none was presented",
+        "recorded_state": "connected",
+        "remote_software": "workcell 0.1.0 (unknown)",
+        "remote_workcell_ref": null,
+        "rtt_ms": 0.4,
+        "state": "reachable"
+      }
+    ],
+    "schema": "workcell.connection-probe/v1",
+    "timeout_ms": 3000
+  },
+  "unreachable": {
+    "ok": true,
+    "probed_at_unix_ms": 1792593093045,
+    "probes": [
+      {
+        "credential_ref": null,
+        "detail": "connect Workcell control endpoint `127.0.0.1:63320`: Connection refused (os error 61)",
+        "elapsed_ms": 2.8,
+        "endpoint": "127.0.0.1:63320",
+        "label": "laptop",
+        "recorded_state": "connected",
+        "state": "unreachable"
+      }
+    ],
+    "schema": "workcell.connection-probe/v1",
+    "timeout_ms": 500
+  },
+  "installed_refusal": {
+    "error": {
+      "kind": "invalid-demand",
+      "message": "invalid demand: unknown connections subcommand `probe`; expected list|show|disconnect"
+    },
+    "ok": false
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "_source": "EpiLogos/ai-kit#542 (dlw/aikit-source-list) built locally, 21 Oct 2026, against this machine's AIKit home (31 sources; the first three kept); the installed aikit's refusal of the unknown leaf",
+  "list": {
+    "context": {
+      "context_id": "ctx_01M5FEWZX308FB98JPYB2WY569",
+      "project_root": "/Users/admin/Central",
+      "session_id": null
+    },
+    "data": {
+      "sources": [
+        {
+          "active_registry": "/Users/admin/.aikit/sources/actuation/snapshots/b0550b22f3abfdf1949bfbd7e1039ccd52d5186b840e613a46836f70ac2e0e10/registry",
+          "active_rejected": [],
+          "active_retired_skills": 0,
+          "active_skills": 2,
+          "active_snapshot": "b0550b22f3abfdf1949bfbd7e1039ccd52d5186b840e613a46836f70ac2e0e10",
+          "candidate_rejected": [],
+          "candidate_retired_skills": 0,
+          "candidate_skills": 2,
+          "candidate_snapshot": "b0550b22f3abfdf1949bfbd7e1039ccd52d5186b840e613a46836f70ac2e0e10",
+          "capsule": null,
+          "control_ground": false,
+          "id": "actuation",
+          "kind": "directory",
+          "portable": false,
+          "rollback_points": [],
+          "upstream": null
+        },
+        {
+          "active_registry": null,
+          "active_rejected": null,
+          "active_retired_skills": 0,
+          "active_skills": null,
+          "active_snapshot": null,
+          "candidate_rejected": [],
+          "candidate_retired_skills": 0,
+          "candidate_skills": 7,
+          "candidate_snapshot": "f00b81c2e18996e529393acea685515ad44d4456e67278000bd8c3088b0982d5",
+          "capsule": null,
+          "control_ground": false,
+          "id": "actuation-authoring",
+          "kind": "git",
+          "portable": true,
+          "rollback_points": [],
+          "upstream": null
+        },
+        {
+          "active_registry": "/Users/admin/.aikit/sources/central/snapshots/fc3e18e4969ee49d7e910fc03fe74d083766599ed7c1096789d7592c29e2a1a7/registry",
+          "active_rejected": [],
+          "active_retired_skills": 0,
+          "active_skills": 25,
+          "active_snapshot": "fc3e18e4969ee49d7e910fc03fe74d083766599ed7c1096789d7592c29e2a1a7",
+          "candidate_rejected": [],
+          "candidate_retired_skills": 0,
+          "candidate_skills": 25,
+          "candidate_snapshot": "fc3e18e4969ee49d7e910fc03fe74d083766599ed7c1096789d7592c29e2a1a7",
+          "capsule": null,
+          "control_ground": false,
+          "id": "central",
+          "kind": "directory",
+          "portable": false,
+          "rollback_points": [
+            "b80df39f9416e2673139d5bf11e61a3ae6eb11508f04cc8966b5445ad3543b4c",
+            "cc0807e4097e67aa5f40b549cade3c46cbf9b4d11883f99efaedd1341d49311a",
+            "bbb50f320856da1c5e4f9d5e4e0adfb7e4a2d584aa21a31fc08aaf452b199d01",
+            "81f9263eda55ddc3232df5ee0fa64906a6d4de238cad8d95f47a774f6b2a53b8",
+            "8904e6e7a2a7b79b6cefa0f5ebf8257da5ef478be0bf2904149968aeeef2a062",
+            "20dcf732f67c3165adce3f49599489307eec8035259bbbc7fbf1811eb7f9384f"
+          ],
+          "upstream": null
+        }
+      ],
+      "unreadable": []
+    },
+    "ok": true,
+    "schema": 1,
+    "warnings": []
+  },
+  "installed_refusal": "error: unrecognized subcommand 'list'\n\nUsage: aikit source [OPTIONS] <COMMAND>\n\nFor more information, try '--help'.\n"
+}
