@@ -11,6 +11,7 @@ import {configureWikiProjectionAccess, retireWikiProjectionAccess} from '../../.
 import type {KernelEventReplay, KernelReceipt, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {readShellConfig, shellTransport, invalidateSet, type ShellConfig} from './application'
 import {connectNativeSettings} from './configuration'
+import {visuals} from '../../../../../desktop/cradle/src/visuals/store'
 import {configureSettingsHost} from '../settings/host'
 import {unavailableSettingsAdapter} from '../settings/adapter'
 import {useWorkspace} from '../shell/workspace'
@@ -79,7 +80,7 @@ export function NativeFoundation({children}: {children: ReactNode}) {
       currentWorkspace.current.attachNativeAccess({transport: access, scope: {
         owner: world.owner, world: world.world, workcell: world.workcell_ref, accessEpoch: ownerEpoch,
       }})
-      const adapter = await connectNativeSettings(access, {ownerEpoch, isCurrent,
+      const adapter = await connectNativeSettings(access, {ownerEpoch, isCurrent, visuals,
       scopeChoices: [
         {address: {scope_kind: 'world', scope_ref: null}, title: 'Current World'},
         {address: {scope_kind: 'ground', scope_ref: null}, title: 'Personal ground'},

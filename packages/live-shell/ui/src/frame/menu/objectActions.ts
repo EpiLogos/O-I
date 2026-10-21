@@ -107,6 +107,12 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
     items.push(act('consolidate', 'Consolidate', '⌘J', undefined, 'clip.consolidate', a, () => {}))
     items.push(act('crop', 'Crop', '⇧⌘J', undefined, 'clip.crop', a, () => {}))
   }
+  // In Central, Open and Reveal the page's file (§10.9): listed only where the set carries them; neither changes the clip.
+  if (a?.openFile || a?.revealFile) {
+    items.push(sep('s-open'))
+    if (a.openFile) items.push(act('open', 'Open', undefined, a.openFile, 'work.open', a, () => press(`open:${target.id}`, `Open ${named}`, () => a.openFile!.run(target.id))))
+    if (a.revealFile) items.push(act('reveal', 'Reveal', undefined, a.revealFile, 'work.reveal', a, () => press(`reveal:${target.id}`, `Reveal ${named}`, () => a.revealFile!.run(target.id))))
+  }
   const colour = fact('colour')
   items.push(sep('s4'))
   items.push({id: 'colour', type: 'swatches', label: 'Colour', colours: LIVE_CLIP_PALETTE, current: typeof held?.colour === 'string' ? held.colour : null, ...colour,
@@ -148,6 +154,12 @@ function trackMenu(target: Extract<ObjectTarget, {kind: 'track'}>, set: WorldTra
   items.push(act('move-left', 'Move left', '⌘←', undefined, 'track.move', a, () => {}))
   items.push(act('move-right', 'Move right', '⌘→', undefined, 'track.move', a, () => {}))
   if (a?.retry && !readOnly) items.push(sep('s3'), {id: 'retry', label: 'Retry', onSelect: () => press(`retry:${target.id}`, `Retry ${named}`, () => a.retry!.run(target.id))})
+  // In Central, Open and Reveal the world's folder (§10.9): listed only where the set carries them; neither changes the track.
+  if (a?.openFolder || a?.revealFolder) {
+    items.push(sep('s-open'))
+    if (a.openFolder) items.push(act('open', 'Open', undefined, a.openFolder, 'work.open', a, () => press(`open:${target.id}`, `Open ${named}'s folder`, () => a.openFolder!.run(target.id))))
+    if (a.revealFolder) items.push(act('reveal', 'Reveal', undefined, a.revealFolder, 'work.reveal', a, () => press(`reveal:${target.id}`, `Reveal ${named}'s folder`, () => a.revealFolder!.run(target.id))))
+  }
   items.push(sep('s4'))
   items.push({id: 'colour', type: 'swatches', label: 'Colour', colours: LIVE_CLIP_PALETTE, current: track?.color ?? null,
     ...(own(a?.colourTrack) ? {} : {disabled: true, why: missingAct('track.colour', a)}),
@@ -189,9 +201,12 @@ function rowMenu(target: Extract<ObjectTarget, {kind: 'row'}>, set: WorldTrackSe
   ]
 }
 
-/** An object on a track read from another reading: every act that would change it says so (folding is the view's, and stays). Pure. */
+/** An object on a track read from another reading: every act that would change it says so (folding is the view's, and stays, as do Open
+ * and Reveal, which change nothing). Pure. */
 const readOnlyItems = (items: ObjectMenuItem[]): ObjectMenuItem[] =>
-  items.map(item => item.type === 'separator' || item.id === 'fold' ? item : {...item, disabled: true, why: READ_ONLY} as ObjectMenuItem)
+  items.map(item => item.type === 'separator' || item.id === 'fold' || OPENS.has(item.id) ? item : {...item, disabled: true, why: READ_ONLY} as ObjectMenuItem)
+/** Open and Reveal change nothing (§10.9 "Neither changes the world"), so a track read from another reading keeps them. */
+const OPENS = new Set(['open', 'reveal'])
 
 /** The object's acts, as its menu lists them. Pure. */
 export function objectMenu(target: ObjectTarget, set: WorldTrackSet, context: ObjectContext): ObjectMenuItem[] {

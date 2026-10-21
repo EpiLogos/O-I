@@ -1,5 +1,6 @@
 import { projectExpression, hostedExpressionArgs } from './expression-projection.mjs';
 import { createProjection, withdrawProjection } from './index.mjs';
+import { projectionStorageKey } from './spacetimedb.mjs';
 
 export const NARA_PRESENCE_CONSENT_SCHEMA = 'oi.nara-presence-consent/v1';
 const text = (value, name) => {
@@ -134,4 +135,89 @@ export function withdrawNaraProjection(bundle, consent, input) {
   const {relation_hints:_expired,...withoutExpiredRelation}=withdrawn;
   const projection=createProjection(withoutExpiredRelation);
   return {consent:withdrawnConsent,projection};
+}
+
+// ---------------------------------------------------------------- the hosted presences: listed and withdrawn
+
+export const NARA_PRESENCES_SCHEMA = 'oi.nara-presences/v1';
+export const NARA_PRESENCE_WITHDRAWAL_SCHEMA = 'oi.nara-presence-withdrawal/v1';
+
+const consentedHint = (projection) => (projection?.relation_hints ?? []).find((hint) => hint?.kind === 'consented-presence');
+
+/** Each hosted projection's revisions, newest first, parsed from the caller-visible rows (projectionRef, projectionRevision, fieldRef,
+ * contractJson). A row whose contract does not parse is left out, never guessed. */
+function projectionHistories(projectionRows) {
+  const histories = new Map();
+  for (const row of projectionRows ?? []) {
+    let projection;
+    try { projection = JSON.parse(row.contractJson); } catch { continue; }
+    if (!projection || projection.projection_ref !== row.projectionRef) continue;
+    histories.set(row.projectionRef, [...(histories.get(row.projectionRef) ?? []), {row, projection}]);
+  }
+  for (const history of histories.values()) history.sort((a, b) => Number(b.projection.projection_revision) - Number(a.projection.projection_revision));
+  return histories;
+}
+
+/** The consented Nara presences the hosted field holds, as the caller may see them: each projection that ever carried a
+ * consented-presence relation, its consent as that relation and its target Participant name it (the grant's time is the
+ * publication's, publish_nara publishes at the grant), and whether a later revision withdrew it (its withdrawal's time is that
+ * revision's publication). `filter` narrows to one publishing Participant or one field. Newest grant first. Pure. */
+export function naraPresencesFromRows(rows, filter = {}) {
+  const participants = new Map((rows?.participants ?? []).map((row) => [row.participantRef, row]));
+  const presences = [];
+  for (const [projectionRef, history] of projectionHistories(rows?.projections)) {
+    const granted = history.find((entry) => consentedHint(entry.projection));
+    if (!granted) continue;
+    const hint = consentedHint(granted.projection), latest = history[0];
+    if (filter.participant_ref && hint.from !== filter.participant_ref) continue;
+    if (filter.field_ref && latest.row.fieldRef !== filter.field_ref) continue;
+    const withdrawn = latest !== granted && latest.projection.state === 'withdrawn';
+    const target = participants.get(hint.to);
+    presences.push({projection_ref: projectionRef, projection_revision: latest.projection.projection_revision, field_ref: latest.row.fieldRef,
+      state: withdrawn ? 'withdrawn' : 'published', published_at: granted.projection.published_at,
+      consent: {consent_ref: hint.consent_ref, participant_ref: hint.from, expression_ref: hint.expression_ref, target_ref: hint.to,
+        ...(target?.identityRef ? {target_identity_ref: target.identityRef} : {}), granted_at: granted.projection.published_at,
+        state: withdrawn ? 'withdrawn' : 'granted', ...(withdrawn ? {withdrawn_at: latest.projection.published_at} : {})}});
+  }
+  presences.sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
+  return {schema: NARA_PRESENCES_SCHEMA, presences};
+}
+
+/** Withdraw one hosted presence: its standing consent, rebuilt from the hosted relation and its target Participant, withdrawn
+ * (withdrawNaraPresenceConsent), and the projection's next revision withdrawn with the relation expired (withdrawNaraProjection), with
+ * the hosted reducer args publishArgs takes for that one revision — the field and the publisher as the module holds them, no entry or
+ * relation put again. Refused in words where the presence is not hosted, is withdrawn already, stands on another consent, or the
+ * withdrawal would precede its grant. Pure: publishing the args is the transport's. */
+export function naraWithdrawal(rows, request, now = new Date().toISOString()) {
+  const projectionRef = text(request?.projection_ref, 'withdraw_nara.projection_ref');
+  const consentRef = text(request?.consent_ref, 'withdraw_nara.consent_ref');
+  const withdrawalRef = text(request?.withdrawal_ref, 'withdraw_nara.withdrawal_ref');
+  const history = projectionHistories(rows?.projections).get(projectionRef);
+  if (!history) throw new TypeError(`No hosted Nara presence is visible at ${projectionRef}`);
+  const latest = history[0], hint = consentedHint(latest.projection);
+  if (latest.projection.state === 'withdrawn' || !hint) throw new TypeError(`The Nara presence at ${projectionRef} is withdrawn already`);
+  if (hint.consent_ref !== consentRef) throw new TypeError(`The hosted presence stands on consent ${hint.consent_ref}, not ${consentRef}`);
+  const participants = new Map((rows?.participants ?? []).map((row) => [row.participantRef, row]));
+  const target = participants.get(hint.to);
+  if (!target?.identityRef) throw new TypeError(`The presence's target Participant ${hint.to} is not visible to the caller`);
+  const consent = createNaraPresenceConsent({consent_ref: hint.consent_ref, participant_ref: hint.from, expression_ref: hint.expression_ref,
+    target_ref: hint.to, target_identity_ref: target.identityRef, granted_at: latest.projection.published_at});
+  const withdrawnAt = request.withdrawn_at ?? now;
+  if (!(Date.parse(withdrawnAt) > Date.parse(consent.granted_at))) throw new TypeError('A withdrawal comes after the grant it withdraws');
+  const {consent: withdrawnConsent, projection} = withdrawNaraProjection({projection: latest.projection}, consent, {withdrawn_at: withdrawnAt, withdrawal_ref: withdrawalRef});
+  const fieldRow = (rows?.sharedFields ?? []).find((row) => row.fieldRef === latest.row.fieldRef);
+  const publisherRow = participants.get(projection.publisher_participant_ref);
+  if (!fieldRow || !publisherRow) throw new TypeError(`The field ${latest.row.fieldRef} or its publisher ${projection.publisher_participant_ref} is not visible to the caller`);
+  const field = JSON.parse(fieldRow.contractJson), participant = JSON.parse(publisherRow.contractJson);
+  const args = {
+    putSharedField: {fieldRef: field.field_ref, kind: field.kind, visibility: field.visibility, contractJson: fieldRow.contractJson},
+    putParticipant: {participantRef: participant.participant_ref, fieldRef: participant.field_ref, identityKind: participant.identity.kind, identityRef: participant.identity.ref,
+      sourceSystem: participant.provenance.source_system, sourceRevision: participant.provenance.source_revision, contractJson: publisherRow.contractJson},
+    putProjection: {projectionKey: projectionStorageKey(projection.projection_ref, projection.projection_revision), fieldRef: field.field_ref,
+      projectionRef: projection.projection_ref, projectionRevision: projection.projection_revision, sourceRevision: projection.source.revision,
+      publisherParticipantRef: projection.publisher_participant_ref, state: projection.state, contractJson: JSON.stringify(projection)},
+    putExploreEntries: [],
+    putExploreRelations: [],
+  };
+  return {consent: withdrawnConsent, projection, args};
 }

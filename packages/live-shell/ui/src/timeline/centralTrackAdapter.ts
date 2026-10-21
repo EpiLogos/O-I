@@ -125,6 +125,8 @@ export interface CentralControls {
   /** Take a world out of today's set (the Day's write): its pages stay in its folder. */
   removeWorld?: (world: CentralWorld) => Promise<unknown>
   writeArm?: {on: boolean | null; set(on: boolean): Promise<unknown>}
+  /** Open or reveal a page's file or a world's folder by its Central-relative path (Central's work.open / work.reveal). */
+  openOrReveal?: (act: 'open' | 'reveal', path: string) => Promise<unknown>
 }
 
 export interface CentralReading {
@@ -467,6 +469,29 @@ function centralActions(reading: CentralReading, worlds: readonly CentralWorld[]
     await removeWorld(world)
     return {ok: true, note: `${world.name} is out of today's set; its pages stay in its folder.`}
   }}
+  // Open and Reveal (manual §10.9 "In Central"): a clip's page file and a track's world folder, by the Central-relative path the page's
+  // location and the world's folder name, through Central's work.open and work.reveal. Neither changes the world.
+  const openOrReveal = controls.openOrReveal
+  if (openOrReveal) {
+    const pageOf = (clipId: string) => byPath.get(clipId)
+    const worldOf = (trackId: string) => worlds.find(candidate => centralWorldTrackId(candidate.ref) === trackId)
+    const onPage = (act: 'open' | 'reveal') => async (clipId: string) => {
+      const page = pageOf(clipId)
+      if (!page) return {ok: false, error: `"${clipId}" is no page of today's worlds.`}
+      await openOrReveal(act, page.path)
+      return {ok: true, note: act === 'open' ? `${page.title} is open in the application your computer opens it with.` : `${page.title} is shown in Finder.`}
+    }
+    const onWorld = (act: 'open' | 'reveal') => async (trackId: string) => {
+      const world = worldOf(trackId)
+      if (!world) return {ok: false, error: `"${trackId}" is no world of today's set.`}
+      await openOrReveal(act, world.folder)
+      return {ok: true, note: act === 'open' ? `${world.name}'s folder is open in the application your computer opens it with.` : `${world.name}'s folder is shown in Finder.`}
+    }
+    actions.openFile = {op: 'Central\'s work.open: the page\'s file, to the application your computer opens it with', run: onPage('open')}
+    actions.revealFile = {op: 'Central\'s work.reveal: the page\'s file, shown in Finder', run: onPage('reveal')}
+    actions.openFolder = {op: 'Central\'s work.open: the world\'s folder, to the application your computer opens it with', run: onWorld('open')}
+    actions.revealFolder = {op: 'Central\'s work.reveal: the world\'s folder, shown in Finder', run: onWorld('reveal')}
+  }
   const arm = controls.writeArm
   if (arm) actions.mixer = {arm: {op: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it', run: (_trackId, on) => arm.set(on)}}
   return Object.keys(actions).length ? actions : undefined

@@ -45,13 +45,16 @@
  *   activity-liveness-clear {field_ref, activity_ref}   clear a liveness row (producer identity or field owner)
  *   grant-read    {field_ref, participant_ref}   owner: admit a persistently-authorised Participant to read a PRIVATE field
  *   revoke-read   {field_ref, participant_ref}   owner: withdraw that read admission
+ *   nara-presences {participant_ref?, field_ref?}   the consented Nara presences the caller sees, each with its consent and whether it was withdrawn
+ *   withdraw_nara  {projection_ref, consent_ref, withdrawal_ref, withdrawn_at?}   withdraw a hosted presence: its consent and the projection's next,
+ *                                        withdrawn revision (nara-expression-projection.mjs naraWithdrawal), published through publishArgs
  */
 import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createProjection } from '../index.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
-import {createNaraPresenceConsent,projectNaraExpression,hostedNaraExpressionArgs,validateCanonicalNaraCues} from '../nara-expression-projection.mjs';
+import {createNaraPresenceConsent,projectNaraExpression,hostedNaraExpressionArgs,validateCanonicalNaraCues,naraPresencesFromRows,naraWithdrawal,NARA_PRESENCE_WITHDRAWAL_SCHEMA} from '../nara-expression-projection.mjs';
 
 // stdout carries exactly one envelope; the SDK's own console chatter goes to stderr.
 for (const level of ['log', 'info', 'warn', 'debug', 'error'] as const) console[level] = (...parts: unknown[]) => { process.stderr.write(`${parts.map(String).join(' ')}\n`); };
@@ -148,6 +151,17 @@ try {
       }
       const publication=request.kind==='publish_nara'?await publishArgs(client!,hostedNaraExpressionArgs(bundle)):null;
       await emit({ok:true,data:{schema:'oi.nara-presence/v1',bundle,publication,private_state_exported:false}});
+    }
+    // The consented presences as the caller sees them, and their withdrawal (SharedField owns the consent lifecycle: kernel nara_presence.rs).
+    case 'nara-presences': {
+      await emit({ ok: true, data: naraPresencesFromRows({ projections: rows(db.projection), participants: rows(db.participant) },
+        { participant_ref: typeof request.participant_ref === 'string' ? request.participant_ref : undefined, field_ref: typeof request.field_ref === 'string' ? request.field_ref : undefined }) });
+    }
+    case 'withdraw_nara': {
+      const withdrawal = naraWithdrawal({ projections: rows(db.projection), participants: rows(db.participant), sharedFields: rows(db.sharedField) }, request);
+      const publication = await publishArgs(client!, withdrawal.args);
+      await emit({ ok: true, data: { schema: NARA_PRESENCE_WITHDRAWAL_SCHEMA, consent: withdrawal.consent, projection_ref: withdrawal.projection.projection_ref,
+        projection_revision: withdrawal.projection.projection_revision, publication, private_state_exported: false } });
     }
     case 'identity':
       await emit({ ok: true, data: { schema: 'oi.shared-field.identity/v1', transport_identity: client!.identityHex } });
