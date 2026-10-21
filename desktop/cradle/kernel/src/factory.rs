@@ -1014,7 +1014,11 @@ pub(crate) fn locate_roots(
 pub(crate) fn locate_each(roots: Vec<(Option<String>, PathBuf)>) -> Vec<Value> {
     let handles: Vec<_> = roots
         .into_iter()
-        .map(|(project, root)| std::thread::spawn(move || locate_row(project, &root)))
+        .map(|(project, root)| {
+            std::thread::spawn(crate::read_cache::carried(move || {
+                locate_row(project, &root)
+            }))
+        })
         .collect();
     handles
         .into_iter()

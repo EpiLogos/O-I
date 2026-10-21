@@ -1077,6 +1077,7 @@ impl crate::Kernel {
                 episode: serde_json::to_value(&episode).map_err(|e| e.to_string())?,
             });
         Ok(crate::KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![receipt],
             result: crate::KernelOpResult::DecisionEpisodeAuthorised { episode },
         })
@@ -1130,6 +1131,7 @@ impl crate::Kernel {
             crate::KernelOpResult::DecisionMade { receipt }
         };
         Ok(crate::KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![event],
             result,
         })

@@ -471,7 +471,7 @@ impl Client {
             let handles: Vec<_> = requests
                 .into_iter()
                 .map(|(product_id, args, composition, not_installed)| {
-                    scope.spawn(move || match args {
+                    scope.spawn(crate::read_cache::carried(move || match args {
                         _ if not_installed => not_installed_mount(&product_id, composition),
                         Ok(args) => {
                             let displayed = std::iter::once(self.executable.display().to_string())
@@ -490,7 +490,7 @@ impl Client {
                             InvokeOutcome::SpawnFailed(error),
                             composition,
                         ),
-                    })
+                    }))
                 })
                 .collect();
             handles

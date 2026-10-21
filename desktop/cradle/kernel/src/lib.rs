@@ -1231,6 +1231,13 @@ pub enum KernelOp {
 pub struct KernelOpOutcome {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub receipts: Vec<KernelEventReceipt>,
+    /// The scopes (`watch::Scope::wire`) of every read-model reading made
+    /// while serving the op, hits included, on whatever thread. `None`: the
+    /// op read something outside the model or could not be attributed, so a
+    /// holder of the answer must treat it as depending on everything.
+    /// `Some([])`: it read only the kernel's own memory.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub read_scopes: Option<Vec<String>>,
     #[serde(flatten)]
     pub result: KernelOpResult,
 }
@@ -1948,6 +1955,7 @@ impl Kernel {
             shared_field::call(&completed.transport_request()).map_err(|e| e.detail())?;
         data["consent_reading"] = completed.consent_reading;
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![],
             result: KernelOpResult::NaraPresence { data },
         })
@@ -2046,6 +2054,7 @@ impl Kernel {
             self.nara_contexts.entry(key).or_default().m3 = Some(candidate);
         }
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![],
             result: KernelOpResult::M3Reception {
                 data: completed.data,
@@ -2132,6 +2141,7 @@ impl Kernel {
             entry.personal_current = Some(pin);
         }
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![],
             result: KernelOpResult::NaraCurrent {
                 data: completed.data,
@@ -2332,6 +2342,7 @@ impl Kernel {
         let reviewed = match result {
             nara_epii::PreparedOutcome::Read(data) => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: vec![],
                     result: KernelOpResult::NaraEpii { data },
                 })
@@ -2415,6 +2426,7 @@ impl Kernel {
                 .record_expression_selection(&reviewed.expression_ref, &subject);
         }
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts,
             result: KernelOpResult::NaraEpii {
                 data: serde_json::json!({
@@ -2468,6 +2480,7 @@ impl Kernel {
         let (binding, captured, profile, session) = match &result {
             PreparedOutcome::Read(data) => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: vec![],
                     result: KernelOpResult::NaraExpressiveAct { data: data.clone() },
                 })
@@ -2601,6 +2614,7 @@ impl Kernel {
             }
         }
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts,
             result: KernelOpResult::NaraExpressiveAct {
                 data: serde_json::json!({
@@ -2671,6 +2685,7 @@ impl Kernel {
             vec![]
         };
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts,
             result: KernelOpResult::PresentationReading { document },
         })
@@ -2749,12 +2764,14 @@ impl Kernel {
         }
         match op {
             KernelOp::FileLastReading { location } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::FileLastReading {
                     recovery: self.retained_files.recovery(&self.client, &location)?,
                 },
             }),
             KernelOp::DictationRead => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::DictationReading {
                     stipulation: self.dictation.read()?,
@@ -2775,6 +2792,7 @@ impl Kernel {
                     vec![]
                 };
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts,
                     result: KernelOpResult::DictationReading { stipulation },
                 })
@@ -2784,12 +2802,14 @@ impl Kernel {
                 .ok_or("Cannot prepare dictation")?
                 .execute(),
             KernelOp::DecisionRead => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::DecisionReading {
                     reading: self.decisions.reading()?,
                 },
             }),
             KernelOp::DecisionPreflight { proposal } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::DecisionPreflightReading {
                     preflight: self.decision_preflight(proposal)?,
@@ -2811,6 +2831,7 @@ impl Kernel {
                     vec![]
                 };
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts,
                     result: KernelOpResult::DecisionEpisodeRevoked { episode },
                 })
@@ -2827,7 +2848,7 @@ impl Kernel {
                         if proposal.observer_id.as_deref()!=Some(invocation.target_ref.as_str()) {return Err("Decision Action target must name its exact renderer observation".into());}
                         if !proposal.sites.iter().all(|site|site=="agent.ui") {return Err("Agent UI Action uses only the declared agent.ui site".into());}
                         let preflight=self.decision_preflight(proposal)?;
-                        Ok(KernelOpOutcome{receipts:vec![],result:KernelOpResult::ActionDispatched{dispatch:action::ActionDispatch::Invoked{owner_operation:"oi kernel decision preflight".into(),data:serde_json::to_value(preflight).map_err(|e|e.to_string())?}}})
+                        Ok(KernelOpOutcome{ read_scopes: None,receipts:vec![],result:KernelOpResult::ActionDispatched{dispatch:action::ActionDispatch::Invoked{owner_operation:"oi kernel decision preflight".into(),data:serde_json::to_value(preflight).map_err(|e|e.to_string())?}}})
                     },
                     "action:decision.decide" => {
                         let op=KernelOp::InvokeAction{project,invocation};
@@ -2838,12 +2859,14 @@ impl Kernel {
                 }
             }
             KernelOp::GitRepositoryRead { project } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::GitRepositoryReading {
                     document: git::repository(&self.client, &project)?,
                 },
             }),
             KernelOp::GitDiffRead { request } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::GitDiffReading {
                     document: git::diff(&self.client, request)?,
@@ -2853,6 +2876,7 @@ impl Kernel {
                 // Central discloses the scope, as the construction write's Action does.
                 let cwd = self.agent_location(project.as_deref())?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: vec![],
                     result: KernelOpResult::WorldBodyReading {
                         document: construction::read_body(&self.client, &cwd, project.as_deref())?,
@@ -2884,6 +2908,7 @@ impl Kernel {
                 .ok_or("Cannot prepare owner disclosure")?
                 .execute(),
             KernelOp::PresentationRead => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::PresentationReading {
                     document: self.presentation.reading()?,
@@ -2894,6 +2919,7 @@ impl Kernel {
                 visuals,
                 arrangement,
             } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::PresentationReading {
                     document: self.presentation.observe(window_id, visuals, arrangement)?,
@@ -2929,6 +2955,7 @@ impl Kernel {
                     vec![]
                 };
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts,
                     result: KernelOpResult::NaraDecisionRecorded { decision },
                 })
@@ -2936,6 +2963,7 @@ impl Kernel {
             KernelOp::NativeExpression { request } => {
                 let data = self.native_expression.apply(&self.client, request)?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::NativeExpression { data },
                 })
@@ -2987,6 +3015,7 @@ impl Kernel {
             KernelOp::NaraIdentity { request } => {
                 let data = nara_identity::apply(&self.client, request)?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::NaraIdentity { data },
                 })
@@ -3034,6 +3063,7 @@ impl Kernel {
                         profiles.push(data);
                     }
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts,
                         result: KernelOpResult::Expression {
                             data: serde_json::json!({"state":"profiles","profiles":profiles}),
@@ -3162,6 +3192,7 @@ impl Kernel {
                     }
                 }
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts,
                     result: KernelOpResult::Expression { data },
                 })
@@ -3218,6 +3249,7 @@ impl Kernel {
                 )
                 .map_err(|error| error.to_string())?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::TemporalEventsReading {
                         document: serde_json::to_value(answer)
@@ -3228,6 +3260,7 @@ impl Kernel {
             KernelOp::ChatDefaultHold { provider } => {
                 let document = chat_defaults::hold(&provider)?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::ChatDefaultHeld { document },
                 })
@@ -3235,6 +3268,7 @@ impl Kernel {
             KernelOp::ChatDefaultDiscard => {
                 let document = chat_defaults::discard()?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::ChatDefaultDiscarded { document },
                 })
@@ -3263,6 +3297,7 @@ impl Kernel {
             | KernelOp::FlowParticipantProvision { .. }
             | KernelOp::HarnessAgentControl { .. }) => self.apply_owner_write(op),
             KernelOp::SettingsReveal { path } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::SettingsRevealed {
                     data: system_composition::reveal(&path)?,
@@ -3288,6 +3323,7 @@ impl Kernel {
                 let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
                 let data = setup::Client::discover().request(&cwd, &request)?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::SetupReading { data },
                 })
@@ -3298,12 +3334,14 @@ impl Kernel {
                 self.apply_owner_write(op)
             }
             KernelOp::FileResolve { reference } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::FileResolved {
                     location: files::resolve(&self.client, &reference)?,
                 },
             }),
             KernelOp::FilesList { path, fresh } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::DirectoryRead {
                     directory: self.directory_listing(&path, fresh.unwrap_or(false))?,
@@ -3344,6 +3382,7 @@ impl Kernel {
                 self.finish_agent_read(answered)
             }
             KernelOp::BeingEncounter { request } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::BeingEncounter {
                     data: being::apply(request),
@@ -3365,6 +3404,7 @@ impl Kernel {
                     false,
                 )?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: vec![],
                     result: KernelOpResult::WorkingSurfaceReading { document },
                 })
@@ -3385,17 +3425,20 @@ impl Kernel {
                     true,
                 )?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: vec![],
                     result: KernelOpResult::WorkingSurfaceReading { document },
                 })
             }
             KernelOp::ProtocolRead => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::Protocol {
                     document: protocol::KernelProtocol::for_event_log(self.log.generation()),
                 },
             }),
             KernelOp::RecordingCapabilityRead => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::RecordingCapability {
                     document: working_surface::recording_capability(),
@@ -3432,6 +3475,7 @@ impl Kernel {
                     .now(project.as_deref(), &request)
                     .map_err(|e| e.to_string())?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::NowReading { data },
                 })
@@ -3446,6 +3490,7 @@ impl Kernel {
                 // reading is returned verbatim, so the callers' shape is unchanged.
                 let data = central::day(&self.client, None, day_ref.as_deref())?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::DayReading { data },
                 })
@@ -3544,6 +3589,7 @@ impl Kernel {
                     ),
                 });
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: vec![receipt],
                     result: KernelOpResult::SourceOpened { buffer },
                 })
@@ -3659,6 +3705,7 @@ impl Kernel {
                     );
                 }
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::Knowledge { data },
                 })
@@ -3670,6 +3717,7 @@ impl Kernel {
             KernelOp::A2aExchange { request } => {
                 let data = shared_field::a2a_exchange(&request)?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::A2aExchangeDifference { data },
                 })
@@ -3681,6 +3729,7 @@ impl Kernel {
                 // environment. Nothing is recorded, nothing is emitted.
                 let data = shared_field::reading(&request)?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::SharedFieldReading { data },
                 })
@@ -3695,12 +3744,14 @@ impl Kernel {
                 self.navigate(Some(&project), true, fresh.unwrap_or(false))
             }
             KernelOp::State => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::State {
                     snapshot: self.snapshot(),
                 },
             }),
             KernelOp::SourcesList { project } => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::SourcesListed {
                     listing: self.participating_sources_cached(project.as_deref()),
@@ -3719,6 +3770,7 @@ impl Kernel {
                     .clone();
                 if current.dirty {
                     return Ok(KernelOpOutcome {
+                        read_scopes: None,
                         receipts: Vec::new(),
                         result: KernelOpResult::SourceOpened { buffer: current },
                     });
@@ -3753,6 +3805,7 @@ impl Kernel {
                 let history = history::read(&self.client, &buffer.project, &source_ref)
                     .map_err(|e| e.to_string())?;
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::SourceHistory { history },
                 })
@@ -3885,6 +3938,7 @@ impl Kernel {
             // from its exact native SourceRef just like a child source.
             if buffer.dirty {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::SourceOpened {
                         buffer: buffer.clone(),
@@ -3925,6 +3979,7 @@ impl Kernel {
             })
         });
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: receipt.into_iter().collect(),
             result: KernelOpResult::SourceOpened { buffer },
         })
@@ -4004,6 +4059,7 @@ impl Kernel {
             })
         });
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: receipt.into_iter().collect(),
             result: KernelOpResult::BufferEdited { buffer },
         })
@@ -4072,6 +4128,7 @@ impl Kernel {
                 }
                 let buffer = self.buffers.get(source_ref).cloned().expect("just saved");
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: event.into_iter().collect(),
                     result: KernelOpResult::SourceSaved {
                         buffer,
@@ -4151,6 +4208,7 @@ impl Kernel {
                     .cloned()
                     .expect("save path holds it");
                 Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: conflict_event.into_iter().collect(),
                     result: KernelOpResult::SourceSaveFailed { buffer, failure },
                 })
@@ -4214,6 +4272,7 @@ impl Kernel {
             })
         });
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: receipt.into_iter().collect(),
             result: KernelOpResult::SourceReread { buffer },
         })
@@ -4301,6 +4360,7 @@ impl Kernel {
             })
         });
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: receipt.into_iter().collect(),
             result: KernelOpResult::SourceReread { buffer },
         })
@@ -4370,6 +4430,7 @@ impl Kernel {
             summary: format!("Surface opened: {}.", surface.title),
         });
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![receipt],
             result: KernelOpResult::SurfaceOpened {
                 snapshot: self.snapshot(),
@@ -4419,6 +4480,7 @@ impl Kernel {
             }));
         }
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts,
             result: KernelOpResult::SurfaceClosed {
                 snapshot: self.snapshot(),
@@ -4440,6 +4502,7 @@ impl Kernel {
                     focus: self.focus.clone(),
                 });
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: vec![receipt],
                     result: KernelOpResult::SurfaceFocused {
                         snapshot: self.snapshot(),
@@ -4447,6 +4510,7 @@ impl Kernel {
                 });
             }
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::SurfaceFocused {
                     snapshot: self.snapshot(),
@@ -4511,6 +4575,7 @@ impl Kernel {
             .map_err(|error| error.to_string())?;
         if self.focus == old_focus {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::SurfaceFocused {
                     snapshot: self.snapshot(),
@@ -4521,6 +4586,7 @@ impl Kernel {
             focus: self.focus.clone(),
         });
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![receipt],
             result: KernelOpResult::SurfaceFocused {
                 snapshot: self.snapshot(),
@@ -4579,6 +4645,7 @@ fn native_owner_reading<T: Serialize>(
         ),
     };
     Ok(KernelOpOutcome {
+        read_scopes: None,
         receipts: Vec::new(),
         result: KernelOpResult::NativeOwnerReading {
             owner: owner.into(),

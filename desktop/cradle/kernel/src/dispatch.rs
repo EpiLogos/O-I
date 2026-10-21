@@ -344,8 +344,28 @@ pub fn dispatch(kernel: &Mutex<Kernel>, op: KernelOp) -> (Result<KernelOpOutcome
         kernel,
         timing: Timing::default(),
     };
-    let result = run(&mut seat, op);
+    let memory_only = reads_kernel_memory_only(&op);
+    let (result, scopes) = crate::read_cache::attributed(|| run(&mut seat, op));
+    let result = result.map(|mut outcome| {
+        // An op that read nothing through the model is attributed only when
+        // it is known to read the kernel's own memory; any other stays
+        // unscoped.
+        if outcome.read_scopes.is_none() {
+            outcome.read_scopes = scopes.or(memory_only.then(Vec::new));
+        }
+        outcome
+    });
     (result, seat.timing)
+}
+
+/// Ops that answer from the kernel's own memory and ask no owner. (The
+/// kernel's state snapshot is not one: it carries the retained World, and
+/// stays unscoped.)
+fn reads_kernel_memory_only(op: &KernelOp) -> bool {
+    matches!(
+        op,
+        KernelOp::ProtocolRead | KernelOp::RecordingCapabilityRead
+    )
 }
 
 /// Whether an op touches no kernel state at all: it runs entirely outside
@@ -382,6 +402,7 @@ fn free(op: KernelOp) -> Result<KernelOpOutcome, String> {
         // release, an observation's stop): the client's own registry and
         // credential, never kernel state, and nothing recorded (lane W3).
         KernelOp::SharedField { request } => Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result: KernelOpResult::SharedFieldReading {
                 data: crate::shared_field::reading(&request)?,
@@ -390,6 +411,7 @@ fn free(op: KernelOp) -> Result<KernelOpOutcome, String> {
         // An A2A exchange waits on the other agent's reply through Node's
         // owner floor; it reads and records nothing of the kernel's.
         KernelOp::A2aExchange { request } => Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result: KernelOpResult::A2aExchangeDifference {
                 data: crate::shared_field::a2a_exchange(&request)?,
@@ -400,6 +422,7 @@ fn free(op: KernelOp) -> Result<KernelOpOutcome, String> {
         KernelOp::Setup { request } => {
             let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
             Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::SetupReading {
                     data: crate::setup::Client::discover().request(&cwd, &request)?,
@@ -464,6 +487,7 @@ fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, St
             seat.hold(|kernel| kernel.finish_knowledge(done))?
         }
         Prepared::Working(p) => Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![],
             result: KernelOpResult::WorkingSurfaceReading {
                 document: seat.owner(|| p.execute())?,
@@ -578,12 +602,62 @@ mod tests {
         // lock, holding it only to prepare and finish.
         let kernel = Mutex::new(owner.kernel());
         let (outcome, timing) = dispatch(&kernel, KernelOp::WorldRead);
-        assert!(matches!(
-            outcome.unwrap().result,
-            KernelOpResult::WorldRead { .. }
-        ));
+        let outcome = outcome.unwrap();
+        assert!(matches!(outcome.result, KernelOpResult::WorldRead { .. }));
+        // The World counts across projects, and the outcome says so.
+        assert_eq!(outcome.read_scopes, Some(vec!["all".to_owned()]));
+        // A register reading depends on the root; a repeat answered from the
+        // model says the same.
+        let now = || {
+            dispatch(
+                &kernel,
+                KernelOp::Now {
+                    project: None,
+                    request: crate::flow::NowRequest::List {
+                        participant_refs: None,
+                    },
+                },
+            )
+            .0
+            .unwrap()
+            .read_scopes
+        };
+        assert_eq!(now(), Some(vec!["root".to_owned()]));
+        assert_eq!(now(), Some(vec!["root".to_owned()]));
+        // An op that reads only the kernel's own memory reads no scope.
+        let (protocol, _) = dispatch(&kernel, KernelOp::ProtocolRead);
+        assert_eq!(protocol.unwrap().read_scopes, Some(Vec::new()));
+        // The state snapshot carries the retained World: not attributable.
+        let (state, _) = dispatch(&kernel, KernelOp::State);
+        assert_eq!(state.unwrap().read_scopes, None);
         assert_eq!(timing.form, "navigation");
         assert!(timing.lock_held < timing.owner);
+    }
+
+    /// The scopes ride the wire beside the result when the kernel could
+    /// attribute the op, and are absent when it could not.
+    #[test]
+    fn an_outcomes_read_scopes_are_on_the_wire_only_when_attributed() {
+        let outcome = |read_scopes: Option<Vec<String>>| KernelOpOutcome {
+            read_scopes,
+            receipts: Vec::new(),
+            result: KernelOpResult::SetupReading {
+                data: serde_json::json!({}),
+            },
+        };
+        let scoped =
+            serde_json::to_value(outcome(Some(vec!["root".into(), "project:O-I".into()]))).unwrap();
+        assert_eq!(
+            scoped["read_scopes"],
+            serde_json::json!(["root", "project:O-I"])
+        );
+        assert_eq!(scoped["result"], "setup_reading");
+        let empty = serde_json::to_value(outcome(Some(Vec::new()))).unwrap();
+        assert_eq!(empty["read_scopes"], serde_json::json!([]));
+        let unscoped = serde_json::to_value(outcome(None)).unwrap();
+        assert!(unscoped.get("read_scopes").is_none());
+        let back: KernelOpOutcome = serde_json::from_value(scoped).unwrap();
+        assert_eq!(back.read_scopes.unwrap().len(), 2);
     }
 
     /// The trace names an op by its wire tag, exactly as serde spells it.

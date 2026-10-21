@@ -177,7 +177,7 @@ impl Client {
                     let not_installed = position.availability == composition::Availability::Missing;
                     (
                         product_id,
-                        scope.spawn(move || match namespace {
+                        scope.spawn(crate::read_cache::carried(move || match namespace {
                             _ if not_installed => not_installed_owner(product_id, observed),
                             Ok(namespace) => {
                                 let command: Vec<String> = std::iter::once(namespace)
@@ -196,7 +196,7 @@ impl Client {
                                 InvokeOutcome::SpawnFailed(error),
                                 observed,
                             ),
-                        }),
+                        })),
                     )
                 })
                 .collect();

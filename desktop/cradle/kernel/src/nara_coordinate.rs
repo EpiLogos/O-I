@@ -92,6 +92,7 @@ pub fn execute(request: Request) -> Result<crate::KernelOpOutcome, String> {
         project(binding)?
     };
     Ok(crate::KernelOpOutcome {
+        read_scopes: None,
         receipts: vec![],
         result: crate::KernelOpResult::NaraCoordinate { data },
     })

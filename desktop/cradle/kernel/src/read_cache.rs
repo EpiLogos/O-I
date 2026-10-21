@@ -27,10 +27,25 @@
 //! A reading whose answer depends on the clock names the granularity at
 //! which its content changes (`watch::Clock`), per owner action in
 //! `central_dep`.
+//!
+//! Churn the kernel did not cause (other sessions' git fetches and edits)
+//! moves scopes all the time. A retained reading whose scopes moved is
+//! still served while it is younger than its floor - how long it is
+//! tolerated to be behind, per class of reading (`floor_of_key`,
+//! `central_dep`) - and one trailing notice for its scopes is scheduled for
+//! the moment the floor ends, so the views that hold it ask again once the
+//! churn has settled. A kernel write, a new minute or day for a reading
+//! that depends on the clock, and an explicit fresh read ignore floors.
+//!
+//! Every reading served through this module is also recorded in the
+//! op-wide attribution (`attributed`), so an op's outcome can say which
+//! scopes its answer depends on.
 use crate::watch::{Clock, Scope, Stamp, Watch};
 use std::any::Any;
-use std::collections::HashMap;
+use std::cell::RefCell;
+use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
@@ -47,6 +62,210 @@ pub const GRAPH_TTL: Duration = Duration::from_millis(4000);
 const MAX_ENTRIES: usize = 512;
 const MAX_BYTES: usize = 32 * 1024 * 1024;
 
+/// How long a reading whose scopes moved is still served (see the module
+/// description), by class of reading. Each is the longest a view of that
+/// reading may reasonably show an answer older than a change:
+/// - default: a person who saves a file and looks again within two seconds
+///   should not see a stale answer for long; owners that are cheap read
+///   again soon.
+pub const DEFAULT_FLOOR: Duration = Duration::from_secs(2);
+/// - the World, its project, the census of repositories and the seat
+///   standing count across every project and cost many processes; they move
+///   with any session's work, and their content (project list, commit
+///   counts, branch standing) is not read to the second.
+pub const WORLD_FLOOR: Duration = Duration::from_secs(30);
+/// - knowledge, the graph and the temporal field (which carries AIKit's
+///   history) are large compositions of many owner reads; a quarter minute
+///   behind is a fair price for not re-composing them on every notice.
+pub const COMPOSED_FLOOR: Duration = Duration::from_secs(15);
+/// - AIKit's encounter reads (context, the task read) show a running
+///   session; they stay on the default.
+pub const ENCOUNTER_FLOOR: Duration = DEFAULT_FLOOR;
+
+/// Whether serving the keyed reading says something about the op being
+/// served. The World is also read to find where a project lives, which any
+/// op does: that scoping is not what the op's answer depends on, so it is
+/// recorded only by the ops whose answer it is (`world_prepared.rs`).
+fn is_attributed(key: &str) -> bool {
+    key != "world"
+}
+
+/// The floor of an `OwnerReadCache` reading by its key.
+fn floor_of_key(key: &str) -> Duration {
+    if key == "world" {
+        WORLD_FLOOR
+    } else if key.starts_with("knowledge:")
+        || key.starts_with("graph:")
+        || key.starts_with("temporal-events:")
+    {
+        COMPOSED_FLOOR
+    } else {
+        DEFAULT_FLOOR
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Which scopes an op's answer depends on.
+// ---------------------------------------------------------------------------
+
+#[derive(Default)]
+struct Attribution {
+    scopes: BTreeSet<String>,
+    read: bool,
+}
+
+type Collector = Arc<Mutex<Attribution>>;
+
+thread_local! {
+    static COLLECTOR: RefCell<Option<Collector>> = const { RefCell::new(None) };
+}
+
+/// Run `f` and say which scopes the readings it asked through the read
+/// model (and the keyed cache), on this thread or on threads started with
+/// `carried`, depend on: `None` when it asked none. The caller decides what
+/// no reading means.
+pub fn attributed<T>(f: impl FnOnce() -> T) -> (T, Option<Vec<String>>) {
+    let collector: Collector = Arc::default();
+    let before = COLLECTOR.with(|slot| slot.replace(Some(Arc::clone(&collector))));
+    struct Restore(Option<Collector>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            COLLECTOR.with(|slot| *slot.borrow_mut() = self.0.take());
+        }
+    }
+    let _restore = Restore(before);
+    let value = f();
+    let seen = collector.lock().unwrap_or_else(|e| e.into_inner());
+    let scopes = seen.read.then(|| seen.scopes.iter().cloned().collect());
+    (value, scopes)
+}
+
+/// Record that the op being served read something that depends on `scopes`
+/// (and on the clock when `clock` is not `Clock::None`).
+pub(crate) fn note_scopes(scopes: &[Scope], clock: Clock) {
+    COLLECTOR.with(|slot| {
+        if let Some(collector) = slot.borrow().as_ref() {
+            let mut seen = collector.lock().unwrap_or_else(|e| e.into_inner());
+            seen.read = true;
+            seen.scopes.extend(scopes.iter().map(Scope::wire));
+            if clock != Clock::None {
+                seen.scopes.insert("clock".to_owned());
+            }
+        }
+    });
+}
+
+/// `f` wrapped so that, run on another thread, its readings are recorded
+/// for the op that is being served on this one. Every thread a read can
+/// run on - `beside`, the readers' pools, `thread::scope` - starts its work
+/// through this.
+///
+/// An explicit refresh (`with_fresh`) is carried the same way: a read the
+/// refresh starts on another thread is still a refresh.
+pub(crate) fn carried<T>(f: impl FnOnce() -> T + Send) -> impl FnOnce() -> T + Send {
+    let collector = COLLECTOR.with(|slot| slot.borrow().clone());
+    let fresh = fresh_asked();
+    move || {
+        let before = COLLECTOR.with(|slot| slot.replace(collector));
+        struct Restore(Option<Collector>);
+        impl Drop for Restore {
+            fn drop(&mut self) {
+                COLLECTOR.with(|slot| *slot.borrow_mut() = self.0.take());
+            }
+        }
+        let _restore = Restore(before);
+        if fresh {
+            with_fresh(f)
+        } else {
+            f()
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The trailing notice at the end of a floor.
+// ---------------------------------------------------------------------------
+
+/// Set when the reading it belongs to is dropped or replaced: its trailing
+/// notice is then not sent.
+#[derive(Debug, Default)]
+struct Withdrawn(Arc<AtomicBool>);
+impl Drop for Withdrawn {
+    fn drop(&mut self) {
+        self.0.store(true, Ordering::SeqCst);
+    }
+}
+
+struct Due {
+    at: Instant,
+    watch: Watch,
+    scopes: BTreeSet<Scope>,
+    withdrawn: Arc<AtomicBool>,
+}
+
+#[derive(Default)]
+struct Trailing {
+    queue: Mutex<Vec<Due>>,
+    wake: Condvar,
+}
+
+impl Trailing {
+    fn global() -> &'static Trailing {
+        static GLOBAL: OnceLock<&'static Trailing> = OnceLock::new();
+        GLOBAL.get_or_init(|| {
+            let trailing: &'static Trailing = Box::leak(Box::default());
+            let _ = std::thread::Builder::new()
+                .name("oi-trailing-notices".into())
+                .spawn(move || trailing.run());
+            trailing
+        })
+    }
+
+    /// Say, at `at`, that readings over `scopes` should be asked again.
+    fn schedule(&self, due: Due) {
+        self.queue
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push(due);
+        self.wake.notify_all();
+    }
+
+    fn run(&self) {
+        let mut queue = self.queue.lock().unwrap_or_else(|e| e.into_inner());
+        loop {
+            let now = Instant::now();
+            let (due, waiting): (Vec<Due>, Vec<Due>) = std::mem::take(&mut *queue)
+                .into_iter()
+                .partition(|d| d.at <= now);
+            *queue = waiting;
+            for due in due {
+                if !due.withdrawn.load(Ordering::SeqCst) {
+                    due.watch.notify(due.scopes);
+                }
+            }
+            queue = match queue.iter().map(|d| d.at).min() {
+                Some(next) => {
+                    self.wake
+                        .wait_timeout(queue, next.saturating_duration_since(Instant::now()))
+                        .unwrap_or_else(|e| e.into_inner())
+                        .0
+                }
+                None => self.wake.wait(queue).unwrap_or_else(|e| e.into_inner()),
+            };
+        }
+    }
+}
+
+/// Schedule the one notice that a reading served inside its floor is due.
+fn trail(watch: &Watch, at: Instant, scopes: &[Scope], withdrawn: &Withdrawn) {
+    Trailing::global().schedule(Due {
+        at,
+        watch: watch.clone(),
+        scopes: scopes.iter().cloned().collect(),
+        withdrawn: Arc::clone(&withdrawn.0),
+    });
+}
+
 #[derive(Debug)]
 struct Entry {
     at: Instant,
@@ -61,6 +280,11 @@ struct Entry {
     bytes: usize,
     /// The owner's own revision of the retained reading, when it gave one.
     revision: Option<String>,
+    /// How long it is served after its scopes moved.
+    floor: Duration,
+    /// Whether the trailing notice at the end of its floor was scheduled.
+    trailing: AtomicBool,
+    withdrawn: Withdrawn,
 }
 /// One owner reading shared by the prepared reads that ask for it while it
 /// is in flight or just read (`OwnerReadCache::flight`): the first to
@@ -72,20 +296,59 @@ struct Entry {
 pub struct Flight {
     watch: Watch,
     scopes: Vec<Scope>,
-    held: Mutex<Option<(Stamp, serde_json::Value)>>,
+    floor: Duration,
+    /// Whether what it serves is recorded for the op (`is_attributed`).
+    attributed: bool,
+    held: Mutex<Option<FlightHeld>>,
+}
+#[derive(Debug)]
+struct FlightHeld {
+    stamp: Stamp,
+    value: serde_json::Value,
+    trailing: bool,
+    withdrawn: Withdrawn,
 }
 impl Default for Flight {
     fn default() -> Self {
-        Self::over(Watch::global().clone(), vec![Scope::All])
+        Self::over(
+            Watch::global().clone(),
+            vec![Scope::All],
+            DEFAULT_FLOOR,
+            true,
+        )
     }
 }
 impl Flight {
-    fn over(watch: Watch, scopes: Vec<Scope>) -> Self {
+    fn over(watch: Watch, scopes: Vec<Scope>, floor: Duration, attributed: bool) -> Self {
         Self {
             watch,
             scopes,
+            floor,
+            attributed,
             held: Mutex::new(None),
         }
+    }
+    /// The held reading if it stands, or moved only by churn and is younger
+    /// than the flight's floor (scheduling the one notice for its end).
+    fn serving(&self, held: &mut FlightHeld, ttl: Duration) -> Option<serde_json::Value> {
+        let standing = self.watch.still(&held.stamp, ttl);
+        let settled = !standing && self.watch.churned(&held.stamp) && held.stamp.age() < self.floor;
+        if !(standing || settled) {
+            return None;
+        }
+        if self.attributed {
+            note_scopes(&self.scopes, Clock::None);
+        }
+        if settled && !held.trailing {
+            held.trailing = true;
+            trail(
+                &self.watch,
+                Instant::now() + self.floor.saturating_sub(held.stamp.age()),
+                &self.scopes,
+                &held.withdrawn,
+            );
+        }
+        Some(held.value.clone())
     }
     /// The shared reading, read with `read` only when none is held that
     /// still stands (within `ttl` where the watch cannot say).
@@ -95,30 +358,38 @@ impl Flight {
         read: impl FnOnce() -> Result<serde_json::Value, String>,
     ) -> Result<serde_json::Value, String> {
         let mut held = self.held.lock().unwrap_or_else(|e| e.into_inner());
-        if let Some((stamp, value)) = held.as_ref() {
-            if self.watch.still(stamp, ttl) {
-                return Ok(value.clone());
+        if let Some(held) = held.as_mut() {
+            if let Some(value) = self.serving(held, ttl) {
+                return Ok(value);
             }
+        }
+        if self.attributed {
+            note_scopes(&self.scopes, Clock::None);
         }
         let stamp = self.watch.stamp(&self.scopes, Clock::None);
         let value = read()?;
-        *held = Some((stamp, value.clone()));
+        *held = Some(FlightHeld {
+            stamp,
+            value: value.clone(),
+            trailing: false,
+            withdrawn: Withdrawn::default(),
+        });
         Ok(value)
     }
     /// The reading already held that still stands; never waits for one in
     /// flight.
     pub fn held(&self, ttl: Duration) -> Option<serde_json::Value> {
-        let held = self.held.try_lock().ok()?;
-        held.as_ref()
-            .filter(|(stamp, _)| self.watch.still(stamp, ttl))
-            .map(|(_, value)| value.clone())
+        let mut held = self.held.try_lock().ok()?;
+        self.serving(held.as_mut()?, ttl)
     }
     /// Read once and since let go. A flight still reading (or whose read
     /// failed) has not lapsed: a later ask joins it.
     fn lapsed(&self, ttl: Duration) -> bool {
-        let lapsed = |held: &Option<(Stamp, serde_json::Value)>| {
-            held.as_ref()
-                .is_some_and(|(stamp, _)| !self.watch.still(stamp, ttl))
+        let lapsed = |held: &Option<FlightHeld>| {
+            held.as_ref().is_some_and(|held| {
+                !self.watch.still(&held.stamp, ttl)
+                    && !(self.watch.churned(&held.stamp) && held.stamp.age() < self.floor)
+            })
         };
         match self.held.try_lock() {
             Ok(held) => lapsed(&held),
@@ -130,6 +401,9 @@ impl Flight {
 #[derive(Debug)]
 pub struct OwnerReadCache {
     watch: Watch,
+    /// Whether a moved reading is served for its floor (tests that need the
+    /// plain validity of a stamp turn it off).
+    floors: bool,
     entries: HashMap<String, Entry>,
     bytes: usize,
     request_clock: u64,
@@ -166,6 +440,7 @@ impl OwnerReadCache {
     fn over(watch: Watch) -> Self {
         Self {
             watch,
+            floors: true,
             entries: HashMap::new(),
             bytes: 0,
             request_clock: 0,
@@ -188,7 +463,12 @@ impl OwnerReadCache {
         }
         let ticket = self.begin(key.to_owned());
         let scopes = scopes_for_key(&self.watch, key);
-        let flight = Arc::new(Flight::over(self.watch.clone(), scopes));
+        let flight = Arc::new(Flight::over(
+            self.watch.clone(),
+            scopes,
+            floor_of_key(key),
+            is_attributed(key),
+        ));
         self.flights
             .insert(key.to_owned(), (ticket, Arc::clone(&flight)));
         flight
@@ -210,6 +490,13 @@ impl OwnerReadCache {
     }
     /// `begin` for a read whose sources the caller knows.
     pub(crate) fn begin_in(&mut self, key: String, scopes: Vec<Scope>) -> u64 {
+        if is_attributed(&key) {
+            note_scopes(&scopes, Clock::None);
+            if key.starts_with("temporal-events:") {
+                // The temporal field is composed against the time of day.
+                note_scopes(&[], Clock::Minute);
+            }
+        }
         self.request_clock = self
             .request_clock
             .checked_add(1)
@@ -229,6 +516,11 @@ impl OwnerReadCache {
             .insert(key.clone(), self.watch.stamp(&scopes, Clock::None));
         self.requests.insert(key, self.request_clock);
         self.request_clock
+    }
+    #[cfg(test)]
+    fn without_floors(mut self) -> Self {
+        self.floors = false;
+        self
     }
     pub(crate) fn current(&self, key: &str, ticket: u64) -> bool {
         self.requests.get(key) == Some(&ticket)
@@ -262,8 +554,30 @@ impl OwnerReadCache {
 
     pub fn get(&self, key: &str, ttl: Duration) -> Option<serde_json::Value> {
         let entry = self.entries.get(key)?;
-        (self.watch.still(&entry.stamp, ttl) && (!entry.untracked || entry.at.elapsed() < ttl))
-            .then(|| entry.value.clone())
+        let standing =
+            self.watch.still(&entry.stamp, ttl) && (!entry.untracked || entry.at.elapsed() < ttl);
+        let settled = !standing
+            && !entry.untracked
+            && entry.at.elapsed() < entry.floor
+            && self.watch.churned(&entry.stamp);
+        if !(standing || settled) {
+            return None;
+        }
+        if is_attributed(key) {
+            note_scopes(entry.stamp.scopes(), entry.stamp.clock());
+            if key.starts_with("temporal-events:") {
+                note_scopes(&[], Clock::Minute);
+            }
+        }
+        if settled && !entry.trailing.swap(true, Ordering::SeqCst) {
+            trail(
+                &self.watch,
+                entry.at + entry.floor,
+                entry.stamp.scopes(),
+                &entry.withdrawn,
+            );
+        }
+        Some(entry.value.clone())
     }
     pub fn put(&mut self, key: String, value: serde_json::Value) {
         self.retain(key, None, value);
@@ -310,6 +624,7 @@ impl OwnerReadCache {
             }
         }
         self.bytes += bytes;
+        let key_for_floor = key.clone();
         self.entries.insert(
             key,
             Entry {
@@ -319,6 +634,13 @@ impl OwnerReadCache {
                 value,
                 bytes,
                 revision,
+                floor: if self.floors {
+                    floor_of_key(&key_for_floor)
+                } else {
+                    Duration::ZERO
+                },
+                trailing: AtomicBool::new(false),
+                withdrawn: Withdrawn::default(),
             },
         );
     }
@@ -366,6 +688,8 @@ pub struct Dep {
     pub scopes: Vec<Scope>,
     pub clock: Clock,
     pub ttl: Duration,
+    /// How long the reading is still served after its scopes moved.
+    pub floor: Duration,
 }
 
 impl Dep {
@@ -374,10 +698,15 @@ impl Dep {
             scopes,
             clock: Clock::None,
             ttl,
+            floor: DEFAULT_FLOOR,
         }
     }
     pub fn clock(mut self, clock: Clock) -> Self {
         self.clock = clock;
+        self
+    }
+    pub fn floor(mut self, floor: Duration) -> Self {
+        self.floor = floor;
         self
     }
 }
@@ -391,8 +720,11 @@ struct Held {
     value: Shared,
     stamp: Stamp,
     ttl: Duration,
+    floor: Duration,
     bytes: usize,
     at: Instant,
+    trailing: bool,
+    withdrawn: Withdrawn,
 }
 
 /// One read in flight: its stamp (taken before the owner was asked) and,
@@ -439,6 +771,8 @@ pub struct Counts {
     pub hits: u64,
     pub misses: u64,
     pub joined: u64,
+    /// Readings served inside their floor after their scopes moved.
+    pub settled: u64,
 }
 
 /// The read model over a change watch.
@@ -514,6 +848,7 @@ impl ReadModel {
             match how {
                 "hit" => counts.hits += 1,
                 "miss" => counts.misses += 1,
+                "settled" => counts.settled += 1,
                 _ => counts.joined += 1,
             }
         }
@@ -555,28 +890,45 @@ impl ReadModel {
         T: Clone + serde::Serialize + Send + Sync + 'static,
     {
         let fresh = fresh_asked();
+        note_scopes(&dep.scopes, dep.clock);
         let mut f = Some(f);
         loop {
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
             if !fresh {
-                let valid = state
-                    .entries
-                    .get(key)
-                    .map(|held| self.watch.still(&held.stamp, held.ttl));
-                match valid {
-                    Some(true) => {
-                        let value = state
-                            .entries
-                            .get(key)
-                            .and_then(|held| held.value.downcast_ref::<T>())
-                            .cloned();
-                        if let Some(value) = value {
+                // Standing: no scope moved. Settled: scopes moved by churn
+                // but the reading is younger than its floor.
+                let verdict = state.entries.get(key).map(|held| {
+                    if self.watch.still(&held.stamp, held.ttl) {
+                        Some(false)
+                    } else if held.at.elapsed() < held.floor && self.watch.churned(&held.stamp) {
+                        Some(true)
+                    } else {
+                        None
+                    }
+                });
+                match verdict {
+                    Some(Some(settled)) => {
+                        let held = state.entries.get_mut(key);
+                        let served = held.and_then(|held| {
+                            let value = held.value.downcast_ref::<T>().cloned()?;
+                            if settled && !held.trailing {
+                                held.trailing = true;
+                                trail(
+                                    &self.watch,
+                                    held.at + held.floor,
+                                    held.stamp.scopes(),
+                                    &held.withdrawn,
+                                );
+                            }
+                            Some(value)
+                        });
+                        if let Some(value) = served {
                             drop(state);
-                            self.note(key, "hit");
+                            self.note(key, if settled { "settled" } else { "hit" });
                             return Ok(value);
                         }
                     }
-                    Some(false) => self.drop_entry(&mut state, key),
+                    Some(None) => self.drop_entry(&mut state, key),
                     None => {}
                 }
                 if let Some(slot) = state.flights.get(key).cloned() {
@@ -640,7 +992,14 @@ impl ReadModel {
                     && keep(value);
                 if retainable {
                     let bytes = key.len() + encoded.as_ref().map_or(0, Vec::len);
-                    self.retain(&mut state, key, Arc::clone(shared), bytes, stamp, dep.ttl);
+                    self.retain(
+                        &mut state,
+                        key,
+                        Arc::clone(shared),
+                        bytes,
+                        stamp,
+                        (dep.ttl, dep.floor),
+                    );
                 }
             }
             drop(state);
@@ -682,7 +1041,7 @@ impl ReadModel {
         value: Shared,
         bytes: usize,
         stamp: Stamp,
-        ttl: Duration,
+        (ttl, floor): (Duration, Duration),
     ) {
         self.drop_entry(state, key);
         if bytes > MODEL_MAX_BYTES / 4 {
@@ -706,8 +1065,11 @@ impl ReadModel {
                 value,
                 stamp,
                 ttl,
+                floor,
                 bytes,
                 at: Instant::now(),
+                trailing: false,
+                withdrawn: Withdrawn::default(),
             },
         );
     }
@@ -773,7 +1135,12 @@ where
     T: Clone + serde::Serialize + Send + Sync + 'static,
 {
     let model = ReadModel::global();
-    let dep = Dep::new(aikit_scopes(model.watch(), cwd), CENTRAL_TTL);
+    let floor = if what.starts_with("encounter") {
+        ENCOUNTER_FLOOR
+    } else {
+        DEFAULT_FLOOR
+    };
+    let dep = Dep::new(aikit_scopes(model.watch(), cwd), CENTRAL_TTL).floor(floor);
     model.read(&format!("aikit:{what}:{cwd:?}:{identity}"), &dep, read)
 }
 
@@ -863,8 +1230,12 @@ pub fn central_dep(
         | "central.files.resolve" => (path_scopes(), Clock::None),
         _ => return None,
     };
+    let floor = match action {
+        "central.world" | "central.world.project" | "central.git.census" => WORLD_FLOOR,
+        _ => DEFAULT_FLOOR,
+    };
     let key = format!("central:{action}:{input}:{owner}");
-    Some((key, Dep::new(scopes, CENTRAL_TTL).clock(clock)))
+    Some((key, Dep::new(scopes, CENTRAL_TTL).clock(clock).floor(floor)))
 }
 
 /// Whether a Central action only reads (so running it moves nothing). Any
@@ -1103,7 +1474,8 @@ mod tests {
                 })
                 .unwrap()
         };
-        let project = Dep::new(vec![Scope::Project("A".into())], Duration::ZERO);
+        let project =
+            Dep::new(vec![Scope::Project("A".into())], Duration::ZERO).floor(Duration::ZERO);
         assert_eq!(ask("a", &project), 0);
         // The retention does not depend on its time-to-live while the watch runs.
         assert_eq!(ask("a", &project), 0);
@@ -1307,7 +1679,7 @@ mod tests {
     #[test]
     fn a_keyed_reading_is_valid_while_its_scopes_stand_not_for_its_age() {
         let watch = Watch::fed(fed_roots());
-        let mut cache = OwnerReadCache::over(watch.clone());
+        let mut cache = OwnerReadCache::over(watch.clone()).without_floors();
         let key = "dir:/central/Work/A";
         let ticket = cache.begin(key.into());
         assert!(cache.finish(key, ticket));
@@ -1328,5 +1700,262 @@ mod tests {
         cache.put("world".into(), json!(1));
         assert_eq!(cache.get("world", Duration::from_secs(60)), Some(json!(1)));
         assert_eq!(cache.get("world", Duration::ZERO), None);
+    }
+
+    /// A watch over the fed roots whose announcements go to the channel.
+    fn announcing(watch_roots: Roots) -> (Watch, std::sync::mpsc::Receiver<(Vec<Scope>, u64)>) {
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let sender = Mutex::new(sender);
+        let watch = Watch::fed_announcing(
+            watch_roots,
+            Box::new(move |scopes, epoch| {
+                let _ = sender.lock().unwrap().send((scopes, epoch));
+            }),
+        );
+        (watch, receiver)
+    }
+
+    fn drain(
+        receiver: &std::sync::mpsc::Receiver<(Vec<Scope>, u64)>,
+        within: Duration,
+    ) -> Vec<Vec<Scope>> {
+        let until = Instant::now() + within;
+        let mut seen = Vec::new();
+        while let Some(left) = until.checked_duration_since(Instant::now()) {
+            if let Ok((scopes, _)) = receiver.recv_timeout(left) {
+                seen.push(scopes);
+            }
+        }
+        seen
+    }
+
+    #[test]
+    fn a_moved_reading_inside_its_floor_is_served_and_one_notice_follows_its_end() {
+        let (watch, receiver) = announcing(fed_roots());
+        let model = ReadModel::over(watch.clone());
+        let owner = AtomicUsize::new(0);
+        let ask = || {
+            model
+                .read(
+                    "a",
+                    &Dep::new(vec![Scope::Project("A".into())], Duration::from_secs(60))
+                        .floor(Duration::from_millis(900)),
+                    || -> Result<_, String> { Ok(owner.fetch_add(1, Ordering::SeqCst)) },
+                )
+                .unwrap()
+        };
+        assert_eq!(ask(), 0);
+        changed(&watch, "Work/A/file");
+        // The scope moved, the reading is younger than its floor: served,
+        // however often it is asked, and counted as settled.
+        assert_eq!(ask(), 0);
+        assert_eq!(ask(), 0);
+        assert_eq!(model.counts().settled, 2);
+        assert_eq!(model.counts().misses, 1);
+        // The change's own notice, then exactly one trailing notice for the
+        // reading's scopes when its floor ends.
+        let notices = drain(&receiver, Duration::from_millis(2500));
+        assert_eq!(
+            notices,
+            vec![
+                vec![Scope::Project("A".into())],
+                vec![Scope::Project("A".into())]
+            ],
+            "the change, then one trailing notice"
+        );
+        // Past its floor the moved reading is a miss.
+        assert_eq!(ask(), 1);
+        assert_eq!(owner.load(Ordering::SeqCst), 2);
+        watch.stop();
+    }
+
+    #[test]
+    fn a_reading_replaced_inside_its_floor_sends_no_trailing_notice() {
+        let (watch, receiver) = announcing(fed_roots());
+        let model = ReadModel::over(watch.clone());
+        let dep = Dep::new(vec![Scope::Project("A".into())], Duration::from_secs(60))
+            .floor(Duration::from_millis(700));
+        let ask = |fresh: bool| {
+            let read = || {
+                model
+                    .read("a", &dep, || -> Result<_, String> { Ok(1) })
+                    .unwrap()
+            };
+            if fresh {
+                with_fresh(read)
+            } else {
+                read()
+            }
+        };
+        ask(false);
+        changed(&watch, "Work/A/file");
+        ask(false);
+        ask(true);
+        let notices = drain(&receiver, Duration::from_millis(1800));
+        assert_eq!(
+            notices.len(),
+            1,
+            "only the change's own notice: {notices:?}"
+        );
+        watch.stop();
+    }
+
+    #[test]
+    fn a_fresh_read_a_native_write_and_a_new_tick_ignore_the_floor() {
+        let (watch, _receiver) = announcing(fed_roots());
+        let model = ReadModel::over(watch.clone());
+        let owner = AtomicUsize::new(0);
+        let dep = Dep::new(vec![Scope::Project("A".into())], Duration::from_secs(60))
+            .floor(Duration::from_secs(60));
+        let ask = || {
+            model
+                .read("a", &dep, || -> Result<_, String> {
+                    Ok(owner.fetch_add(1, Ordering::SeqCst))
+                })
+                .unwrap()
+        };
+        assert_eq!(ask(), 0);
+        changed(&watch, "Work/A/file");
+        assert_eq!(ask(), 0, "inside the floor");
+        assert_eq!(with_fresh(ask), 1, "a fresh read goes to the owner");
+        assert_eq!(ask(), 1);
+        watch.changed_here();
+        assert_eq!(ask(), 2, "the kernel's own write ends the floor");
+        // A reading that depends on the minute is not served past the tick.
+        let minute = Dep::new(vec![Scope::Root], Duration::from_secs(60))
+            .clock(Clock::Minute)
+            .floor(Duration::from_secs(60));
+        let first = model
+            .read("m", &minute, || -> Result<_, String> { Ok(1) })
+            .unwrap();
+        assert_eq!(first, 1);
+        changed(&watch, "Control/x");
+        assert_eq!(
+            model.read("m", &minute, || -> Result<_, String> { Ok(2) }),
+            Ok(1),
+            "inside the floor, same minute"
+        );
+        watch.stop();
+    }
+
+    #[test]
+    fn a_keyed_reading_that_moved_is_served_inside_its_floor() {
+        let (watch, receiver) = announcing(fed_roots());
+        let mut cache = OwnerReadCache::over(watch.clone());
+        let key = "world";
+        let ticket = cache.begin(key.into());
+        assert!(cache.finish(key, ticket));
+        cache.put(key.into(), json!({"projects": 3}));
+        changed(&watch, "Work/A/x");
+        assert_eq!(
+            cache.get(key, Duration::from_secs(60)),
+            Some(json!({"projects": 3})),
+            "the World is tolerated behind for its floor"
+        );
+        // Other readings keep the default floor: a moved listing is served
+        // for it too, a kernel write ends it.
+        let dir = "dir:/central/Work/A";
+        let ticket = cache.begin(dir.into());
+        assert!(cache.finish(dir, ticket));
+        cache.put(dir.into(), json!({"entries": 1}));
+        watch.changed_here();
+        assert_eq!(cache.get(dir, Duration::from_secs(60)), None);
+        assert_eq!(cache.get(key, Duration::from_secs(60)), None);
+        let _ = receiver;
+        watch.stop();
+    }
+
+    #[test]
+    fn a_project_notice_does_not_move_a_reading_scoped_to_another_project() {
+        let watch = Watch::fed(fed_roots());
+        let model = ReadModel::over(watch.clone());
+        let owner = AtomicUsize::new(0);
+        let dep = Dep::new(
+            vec![Scope::Root, Scope::Project("O-I".into())],
+            Duration::from_secs(60),
+        )
+        .floor(Duration::ZERO);
+        let ask = || {
+            attributed(|| {
+                model
+                    .read("o-i", &dep, || -> Result<_, String> {
+                        Ok(owner.fetch_add(1, Ordering::SeqCst))
+                    })
+                    .unwrap()
+            })
+        };
+        let (_, scopes) = ask();
+        assert_eq!(
+            scopes,
+            Some(vec!["project:O-I".to_owned(), "root".to_owned()])
+        );
+        changed(&watch, "Work/face-rig/src/x.js");
+        let (value, scopes) = ask();
+        assert_eq!(value, 0, "another project's change leaves it held");
+        assert_eq!(
+            scopes,
+            Some(vec!["project:O-I".to_owned(), "root".to_owned()])
+        );
+        assert_eq!(model.counts().hits, 1, "the hit is attributed too");
+        changed(&watch, "Work/O-I/src/x.rs");
+        assert_eq!(ask().0, 1);
+    }
+
+    #[test]
+    fn attribution_follows_reads_onto_threads_started_with_carried() {
+        let watch = Watch::fed(fed_roots());
+        let model = ReadModel::over(watch);
+        let read = |key: &str, scope: Scope| {
+            model
+                .read(
+                    key,
+                    &Dep::new(vec![scope], Duration::from_secs(60)),
+                    || -> Result<_, String> { Ok(0) },
+                )
+                .unwrap()
+        };
+        // Nothing asked: nothing to say.
+        assert_eq!(attributed(|| 1).1, None);
+        let (_, scopes) = attributed(|| {
+            std::thread::scope(|scope| {
+                scope.spawn(carried(|| read("seats", Scope::Seats)));
+                scope.spawn(carried(|| read("project", Scope::Project("B".into()))));
+                // A thread started without it is not seen.
+                scope.spawn(|| read("lost", Scope::Aikit));
+            });
+        });
+        assert_eq!(
+            scopes,
+            Some(vec!["project:B".to_owned(), "seats".to_owned()])
+        );
+        // A reading that depends on the clock says so.
+        let (_, scopes) = attributed(|| {
+            model
+                .read(
+                    "clock",
+                    &Dep::new(vec![Scope::Root], Duration::from_secs(60)).clock(Clock::Day),
+                    || -> Result<_, String> { Ok(0) },
+                )
+                .unwrap()
+        });
+        assert_eq!(scopes, Some(vec!["clock".to_owned(), "root".to_owned()]));
+        // The refresh a caller asked for is carried to the thread too.
+        let owner = AtomicUsize::new(0);
+        let asked = || {
+            read_cache_ask(&model, &owner);
+        };
+        asked();
+        with_fresh(|| std::thread::scope(|scope| scope.spawn(carried(asked)).join().unwrap()));
+        assert_eq!(owner.load(Ordering::SeqCst), 2);
+    }
+
+    fn read_cache_ask(model: &ReadModel, owner: &AtomicUsize) {
+        model
+            .read(
+                "carried-fresh",
+                &Dep::new(vec![Scope::Root], Duration::from_secs(60)),
+                || -> Result<_, String> { Ok(owner.fetch_add(1, Ordering::SeqCst)) },
+            )
+            .unwrap();
     }
 }

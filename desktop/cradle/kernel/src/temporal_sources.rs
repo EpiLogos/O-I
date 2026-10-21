@@ -388,7 +388,11 @@ fn read_thoughts(
     std::thread::scope(|scope| {
         let readers: Vec<_> = now_refs
             .chunks(chunk)
-            .map(|part| scope.spawn(move || read_thoughts_chunk(client, part)))
+            .map(|part| {
+                scope.spawn(crate::read_cache::carried(move || {
+                    read_thoughts_chunk(client, part)
+                }))
+            })
             .collect();
         let mut events = Vec::new();
         for reader in readers {
@@ -1484,12 +1488,16 @@ pub fn read_field(
         |scope| -> Result<TemporalEventsAnswer, TemporalEventsError> {
             // Independent owners first: the civil field, the register listing,
             // the wiki placement and the aikit history read beside each other.
-            let policy = scope.spawn(|| load_civil_field(&owner));
-            let now_list = scope.spawn(|| {
+            let policy = scope.spawn(crate::read_cache::carried(|| load_civil_field(&owner)));
+            let now_list = scope.spawn(crate::read_cache::carried(|| {
                 owner.run_envelope("central.now.list", json!({ "project": Value::Null }))
-            });
-            let wiki = scope.spawn(|| WikiReturnsPlacementSource::new(owner.clone()).read());
-            let aikit = scope.spawn(|| AikitHistorySource::discover(cwd.clone()).read());
+            }));
+            let wiki = scope.spawn(crate::read_cache::carried(|| {
+                WikiReturnsPlacementSource::new(owner.clone()).read()
+            }));
+            let aikit = scope.spawn(crate::read_cache::carried(|| {
+                AikitHistorySource::discover(cwd.clone()).read()
+            }));
 
             // The register reading arrives first: the thought fan-out reads
             // from it. One reading serves the refs and the clearing events —
@@ -1526,7 +1534,9 @@ pub fn read_field(
                     })
                     .collect();
                 let client = owner.clone();
-                scope.spawn(move || read_thoughts(&client, &now_refs))
+                scope.spawn(crate::read_cache::carried(move || {
+                    read_thoughts(&client, &now_refs)
+                }))
             });
 
             // Sequential error precedence: civil field, register reading,
@@ -1541,9 +1551,9 @@ pub fn read_field(
                 let field = field.clone();
                 let client = owner.clone();
                 let (sender, receiver) = std::sync::mpsc::channel();
-                std::thread::spawn(move || {
+                std::thread::spawn(crate::read_cache::carried(move || {
                     let _ = sender.send(factory_runs_read(&client, &window, &field));
-                });
+                }));
                 receiver
             };
             let now_records = now_records?;

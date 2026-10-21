@@ -868,7 +868,11 @@ impl Kernel {
                 Record::RetireListing(parent) => self.reads.invalidate(&format!("dir:{parent}")),
             }
         }
-        Ok(KernelOpOutcome { receipts, result })
+        Ok(KernelOpOutcome {
+            read_scopes: None,
+            receipts,
+            result,
+        })
     }
 }
 

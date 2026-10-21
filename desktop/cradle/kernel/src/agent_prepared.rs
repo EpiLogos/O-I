@@ -268,6 +268,7 @@ impl PreparedAgent {
     ) -> Result<KernelOpOutcome, String> {
         if let AgentRead::Harness { binding } = &self.read {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::HarnessAgentReading {
                     document: self.aikit.gateway_agent(None, binding, "sessions")?,
@@ -280,6 +281,7 @@ impl PreparedAgent {
         match &self.read {
             AgentRead::HarnessStatus => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::HarnessStatusReading {
                         data: self.aikit.harness_status()?,
@@ -288,6 +290,7 @@ impl PreparedAgent {
             }
             AgentRead::ModelCatalogue => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::ModelCatalogueReading {
                         data: self.aikit.model_catalogue()?,
@@ -296,6 +299,7 @@ impl PreparedAgent {
             }
             AgentRead::DecisionStatus => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::DecisionStatusReading {
                         data: self.aikit.decision_status()?,
@@ -304,6 +308,7 @@ impl PreparedAgent {
             }
             AgentRead::TeamSpace => {
                 return Ok(KernelOpOutcome {
+                    read_scopes: None,
                     receipts: Vec::new(),
                     result: KernelOpResult::TeamSpaceReading {
                         data: crate::team_space::read()?,
@@ -321,7 +326,7 @@ impl PreparedAgent {
                 // The harness disclosure needs only the directory: it is read
                 // beside the binding and the spaces, not after them.
                 let (project_ref, spaces, harness_disclosure) = std::thread::scope(|scope| {
-                    let disclosure = scope.spawn(|| {
+                    let disclosure = scope.spawn(crate::read_cache::carried(|| {
                         retained(
                             &self.reads,
                             &format!("harness-disclosure:{}", cwd.display()),
@@ -336,7 +341,7 @@ impl PreparedAgent {
                                 })
                             },
                         )
-                    });
+                    }));
                     let read = || -> Result<(String, Value), String> {
                         let project_ref =
                             project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
@@ -489,6 +494,7 @@ impl PreparedAgent {
             },
         };
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result,
         })

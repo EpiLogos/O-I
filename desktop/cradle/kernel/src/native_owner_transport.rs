@@ -245,6 +245,7 @@ pub fn remote(world_ref: &str, request: &KernelOp) -> Result<KernelOpOutcome, St
         format!("Native owner returned an invalid outcome; reconcile effects before retrying: {e}")
     })?;
     Ok(KernelOpOutcome {
+        read_scopes: None,
         receipts: Vec::new(),
         result: KernelOpResult::HostedNative {
             source_world_ref: world_ref.to_owned(),

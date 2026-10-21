@@ -194,6 +194,7 @@ impl Kernel {
     pub fn finish_files_read(&mut self, done: FilesAnswered) -> Result<KernelOpOutcome, String> {
         match done.0 {
             FilesAnswer::Listed(answer) => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::DirectoryRead {
                     directory: self.finish_listing(answer)?,
@@ -205,18 +206,21 @@ impl Kernel {
             }
             FilesAnswer::Bytes { location, reading } => self.finish_file_bytes(&location, *reading),
             FilesAnswer::LastReading(recovering) => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::FileLastReading {
                     recovery: self.retained_files.recovered(*recovering)?,
                 },
             }),
             FilesAnswer::Sources(answer) => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::SourcesListed {
                     listing: self.finish_sources(answer),
                 },
             }),
             FilesAnswer::History(history) => Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::SourceHistory { history: history? },
             }),
@@ -335,6 +339,7 @@ impl Kernel {
             ),
         );
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result: KernelOpResult::FileRead { reading },
         })
@@ -377,6 +382,7 @@ impl Kernel {
             ),
         );
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result: KernelOpResult::FileBytes {
                 location: reading.location,
@@ -588,6 +594,7 @@ impl PreparedRead {
             )
             .map_err(|error| error.to_string())?;
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::TemporalEventsReading {
                     document: serde_json::to_value(answer).map_err(|error| error.to_string())?,
@@ -606,6 +613,7 @@ impl PreparedRead {
                 .receiving(project.as_deref(), request)
                 .map_err(|error| error.to_string())?;
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::ReceivingReading { data },
             });
@@ -633,6 +641,7 @@ impl PreparedRead {
                     .unwrap_or_else(|_| "factory telemetry watch failed".into())
             })?;
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::FactoryDevelopmentReading { data },
             });
@@ -657,12 +666,14 @@ impl PreparedRead {
                 }
             };
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::PageReading { data },
             });
         }
         if let KernelOp::Central { project, request } = &self.op {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::CentralReading {
                     data: crate::central::operate(&self.client, project.as_deref(), request)?,
@@ -671,6 +682,7 @@ impl PreparedRead {
         }
         if let KernelOp::DayRead { day_ref } = &self.op {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::DayReading {
                     data: crate::central::day(&self.client, None, day_ref.as_deref())?,
@@ -684,6 +696,7 @@ impl PreparedRead {
                 disclosed(&self.world.read()?, project)?;
             }
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::NowReading {
                     data: self
@@ -695,6 +708,7 @@ impl PreparedRead {
         }
         if matches!(&self.op, KernelOp::WorkcellStatusRead) {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::WorkcellStatusReading {
                     data: workcell_status()?,
@@ -705,6 +719,7 @@ impl PreparedRead {
         // needs the World, so none pays for its discovery.
         if let Some(result) = crate::live_set_owner::execute(&self.op) {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: result?,
             });
@@ -720,6 +735,7 @@ impl PreparedRead {
         };
         if let Some(result) = git_reading {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result,
             });
@@ -746,6 +762,7 @@ impl PreparedRead {
             };
             let document = crate::configuration::Client::discover().capabilities(&cwd)?;
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: vec![],
                 result: KernelOpResult::ConfigCapabilitiesReading { document },
             });
@@ -753,6 +770,7 @@ impl PreparedRead {
 
         if let Some(answer) = self.owner_reading() {
             return answer.map(|result| KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result,
             });
@@ -793,6 +811,7 @@ impl PreparedRead {
             _ => return Err("This operation cannot execute as an independent owner read".into()),
         };
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: Vec::new(),
             result,
         })
@@ -1135,7 +1154,8 @@ impl PreparedRead {
                 let dep = read_cache::Dep::new(
                     vec![crate::watch::Scope::Seats, crate::watch::Scope::Root],
                     std::time::Duration::from_secs(30),
-                );
+                )
+                .floor(read_cache::WORLD_FLOOR);
                 KernelOpResult::SeatStatusReading {
                     data: model.read("seat:status", &dep, || {
                         seat_status().map_err(failed("seat status read failed"))

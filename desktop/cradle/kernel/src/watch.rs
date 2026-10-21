@@ -102,11 +102,23 @@ pub struct Stamp {
     epochs: Option<(u64, Vec<(Scope, u64)>)>,
     clock: Clock,
     tick: u64,
+    /// The scopes the reading depends on (whether or not they were watched).
+    scopes: Vec<Scope>,
+    /// The count of writes this process made when the stamp was taken.
+    writes: u64,
 }
 
 impl Stamp {
     pub(crate) fn clock(&self) -> Clock {
         self.clock
+    }
+    /// The scopes the reading depends on, sorted.
+    pub(crate) fn scopes(&self) -> &[Scope] {
+        &self.scopes
+    }
+    /// How long ago the stamp was taken.
+    pub(crate) fn age(&self) -> Duration {
+        self.taken.elapsed()
     }
     /// This stamp as it would be one tick of its clock earlier.
     #[cfg(test)]
@@ -182,6 +194,8 @@ struct Inner {
     global: AtomicU64,
     /// Counts rescans; part of every stamp, so a rescan invalidates all.
     rescans: AtomicU64,
+    /// Counts the writes this process made (`changed_here`).
+    writes: AtomicU64,
     root: AtomicU64,
     seats: AtomicU64,
     aikit: AtomicU64,
@@ -240,6 +254,7 @@ impl Watch {
                 live: AtomicBool::new(false),
                 global: AtomicU64::new(0),
                 rescans: AtomicU64::new(0),
+                writes: AtomicU64::new(0),
                 root: AtomicU64::new(0),
                 seats: AtomicU64::new(0),
                 aikit: AtomicU64::new(0),
@@ -267,6 +282,16 @@ impl Watch {
         let watch = Self::new();
         *watch.inner.roots.lock().unwrap() = Some(roots);
         watch.inner.live.store(true, Ordering::SeqCst);
+        watch
+    }
+
+    /// `fed`, announcing what moved to `announce` through the debounced
+    /// announce loop.
+    #[cfg(test)]
+    pub(crate) fn fed_announcing(roots: Roots, announce: Callback) -> Self {
+        let watch = Self::fed(roots);
+        let inner = Arc::clone(&watch.inner);
+        std::thread::spawn(move || announce_loop(&inner, announce.as_ref()));
         watch
     }
 
@@ -329,13 +354,14 @@ impl Watch {
     /// The stamp of a reading about to start, over `scopes`. Capture it
     /// before the owner read begins.
     pub fn stamp(&self, scopes: &[Scope], clock: Clock) -> Stamp {
+        let mut named = scopes.to_vec();
+        named.sort();
+        named.dedup();
         let epochs = self.live().then(|| {
-            let mut captured: Vec<(Scope, u64)> = scopes
+            let captured: Vec<(Scope, u64)> = named
                 .iter()
                 .map(|scope| (scope.clone(), self.scope_epoch(scope)))
                 .collect();
-            captured.sort();
-            captured.dedup();
             (self.inner.rescans.load(Ordering::SeqCst), captured)
         });
         Stamp {
@@ -343,6 +369,8 @@ impl Watch {
             epochs,
             clock,
             tick: clock.tick(),
+            scopes: named,
+            writes: self.inner.writes.load(Ordering::SeqCst),
         }
     }
 
@@ -354,6 +382,8 @@ impl Watch {
             epochs: None,
             clock: Clock::None,
             tick: 0,
+            scopes: Vec::new(),
+            writes: self.inner.writes.load(Ordering::SeqCst),
         }
     }
 
@@ -382,6 +412,26 @@ impl Watch {
         }
     }
 
+    /// Whether a reading whose stamp no longer stands moved only because
+    /// other processes changed files (or events were dropped): the watch is
+    /// running and covers it, its clock tick stands and this process made no
+    /// write since. Only such a reading may be served for its floor; a
+    /// native write or a new minute/day always ends it.
+    pub fn churned(&self, stamp: &Stamp) -> bool {
+        self.live()
+            && self.by_epochs(stamp)
+            && stamp.writes == self.inner.writes.load(Ordering::SeqCst)
+            && (stamp.clock == Clock::None || stamp.clock.tick() == stamp.tick)
+    }
+
+    /// Say that the readings over `scopes` should be asked again, without a
+    /// change having been seen: the notice is debounced and carried like any
+    /// other.
+    pub fn notify(&self, scopes: BTreeSet<Scope>) {
+        let epoch = self.epoch();
+        self.announce(scopes, epoch);
+    }
+
     /// Whether `stamp` is validated by epochs rather than by its time.
     pub fn by_epochs(&self, stamp: &Stamp) -> bool {
         match &stamp.epochs {
@@ -394,6 +444,7 @@ impl Watch {
     /// moves at once, without waiting for the watcher to see it. Nothing is
     /// announced: the watcher sees the same change and announces what moved.
     pub fn changed_here(&self) {
+        self.inner.writes.fetch_add(1, Ordering::SeqCst);
         self.bump_all();
     }
 
@@ -1018,7 +1069,13 @@ fn git_bookkeeping(inside: &[&str]) -> bool {
         ["objects" | "lfs" | "logs", ..] => true,
         [name] => matches!(
             *name,
-            "FETCH_HEAD" | "ORIG_HEAD" | "index" | "COMMIT_EDITMSG" | "gc.log" | "gc.pid" | "locked"
+            "FETCH_HEAD"
+                | "ORIG_HEAD"
+                | "index"
+                | "COMMIT_EDITMSG"
+                | "gc.log"
+                | "gc.pid"
+                | "locked"
         ),
         _ => false,
     }
@@ -1433,10 +1490,7 @@ mod tests {
             "Work/O-I/.git/refs/heads/index",
             "Work/O-I/.git/worktrees/o-i/HEAD",
         ] {
-            assert!(
-                at(moved).contains(&Scope::Project("O-I".into())),
-                "{moved}"
-            );
+            assert!(at(moved).contains(&Scope::Project("O-I".into())), "{moved}");
         }
         assert_eq!(in_aikit("state/gateway-registry.json"), vec![Scope::Aikit]);
     }

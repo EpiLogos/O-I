@@ -257,7 +257,9 @@ impl Relations {
                 let lead = Arc::clone(&lead);
                 std::thread::Builder::new()
                     .name("oi-relations-batch".into())
-                    .spawn(move || held(&lead).take().map(|run| run()))
+                    .spawn(crate::read_cache::carried(move || {
+                        held(&lead).take().map(|run| run())
+                    }))
             };
             // A thread the machine refuses leaves the leader to run the batch
             // itself, as before: its own read then waits for the whole batch.
@@ -474,6 +476,7 @@ impl Kernel {
             self.reads.put(done.key, done.data.clone());
         }
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![],
             result: KernelOpResult::Knowledge { data: done.data },
         })

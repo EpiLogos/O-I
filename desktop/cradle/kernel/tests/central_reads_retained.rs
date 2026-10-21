@@ -18,6 +18,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+/// A little longer than the default floor of a moved reading.
+const FLOOR: Duration = Duration::from_millis(2300);
+
 fn scratch() -> PathBuf {
     let dir = std::env::temp_dir().join(format!("oi-reads-retained-{}", std::process::id()));
     let _ = fs::remove_dir_all(&dir);
@@ -122,6 +125,8 @@ fn central_readings_are_retained_until_their_sources_change() {
             .iter()
             .any(|(scopes, _)| scopes.iter().any(|scope| scope == "root"))
     });
+    // Once its floor has ended the moved reading is read again.
+    std::thread::sleep(FLOOR);
     assert!(now_root().is_ok());
     assert_eq!(starts(&dir, "central.now.list"), 2);
 
@@ -144,6 +149,7 @@ fn central_readings_are_retained_until_their_sources_change() {
             .iter()
             .any(|(scopes, _)| scopes.iter().any(|scope| scope == "project:X"))
     });
+    std::thread::sleep(FLOOR);
     assert!(now_x().is_ok());
     assert_eq!(starts(&dir, "central.now.list"), 4);
 

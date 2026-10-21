@@ -140,6 +140,7 @@ impl Prepared {
             }
         };
         Ok(crate::KernelOpOutcome {
+            read_scopes: None,
             receipts: vec![],
             result: crate::KernelOpResult::NaraIdentity { data },
         })

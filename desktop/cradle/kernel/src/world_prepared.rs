@@ -169,6 +169,8 @@ impl Kernel {
                 if fresh {
                     self.reads.invalidate("world");
                 }
+                // The World is this op's answer, not only its scoping.
+                read_cache::note_scopes(&[crate::watch::Scope::All], crate::watch::Clock::None);
                 Target::Root(self.prepare_world_reading())
             }
             Some(query) => {
@@ -226,6 +228,7 @@ impl Kernel {
     ) -> Result<KernelOpOutcome, String> {
         if !self.reads.finish(NAVIGATOR, answered.ticket) {
             return Ok(KernelOpOutcome {
+                read_scopes: None,
                 receipts: Vec::new(),
                 result: KernelOpResult::WorldRead {
                     snapshot: self.snapshot(),
@@ -256,6 +259,7 @@ impl Kernel {
             }));
         }
         Ok(KernelOpOutcome {
+            read_scopes: None,
             receipts,
             result: KernelOpResult::WorldRead {
                 snapshot: self.snapshot(),
