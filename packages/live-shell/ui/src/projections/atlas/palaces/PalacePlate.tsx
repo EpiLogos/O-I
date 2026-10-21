@@ -13,14 +13,19 @@
 // (palacesModel.ts) — and the doors the Earth's selection stands at; a press turns the Earth to a palace's door, Enter goes in.
 // Every act goes through palaceSession.ts to its owner; this plate writes nothing itself.
 //
-// The head is the panel kit's (InstrumentPlate.tsx; manual §16.9), and the display section is the palace's live well
-// (inhabitants/ql/devices/techneWells.tsx: the floor — the rooms where the board stands them, the path between their doors, the room the
-// walk stands in; outside a palace, the well says none is entered).
+// The head is the panel kit's (InstrumentPlate.tsx; manual §16.9).
+//
+// Brought to the catalogue's design (lane W4-Technē; T-COVERAGE §1.4): the Palace's design (techne:palace, catalogue/panels/
+// techne__palace.tsx) now heads M5′'s chain on the palace session (techne/devices/palaceBinding.ts), with the floor in its display and
+// every control it carries — Room, Start, Back, Next, Path, Order, Guide, Floor, Audience, Snap, Lines, the bookmarks' Name and Keep,
+// Propose, Accept, Refuse and Leave. This plate keeps only what the design does not carry yet: the world's palaces and Enter (outside),
+// the rooms' Open and the regions' order, empty and remove, the guide's warrant line, the walk locus by locus, the bookmarks' Rename and
+// Delete, the Return's attribution and receipt, the portals, the integral whole and the composition.
 
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import {InstrumentPlate, heldMarksOf, type PlateSection} from '../../../frame/devices/InstrumentPlate'
 import {usePlateFit} from '../../../frame/devices/plateFit'
-import {HeldMarks, PlateField, PlateLine, PlateRadio, PlateReading, PlateRows, said, type PlateRow} from '../../../frame/devices/plateControls'
+import {HeldMarks, PlateField, PlateLine, PlateReading, PlateRows, said, type PlateRow} from '../../../frame/devices/plateControls'
 import {Action} from '../../../inhabitants/sdk/panel'
 import {Icon} from '../../../inhabitants/sdk/Icon'
 import type {FacePresentation} from '../../../inhabitants/sdk/define'
@@ -34,12 +39,11 @@ import {turnAtlasTo} from '../places/placesHost'
 import {palaceLocationRows, palacesHolding, roomPlaces, type PalaceRoom, type PalaceRow} from './palacesModel'
 import {palacesWaiting, readPalaces, usePalaces} from './palacesWorld'
 import {
-  acceptReturn, addAsNewRegion, addRegion, addTo, bookmarkHere, deleteBookmark, enterPalace, focusedRoom, inside, jumpBookmark, leavePalace,
-  moveRegion, moveWalk, openEntry, openRoom, palaceState, proposeReturn, refuseReturn, removeMember, removeRegion, renameBookmark,
-  returnToGround, revert, roomsNow, save, selectRooms, setGuide, setPath, setSnap, stepWalk, subscribePalace, walkOf, walkToStart,
+  addAsNewRegion, addRegion, addTo, deleteBookmark, enterPalace, focusedRoom, inside, jumpBookmark, leavePalace,
+  moveRegion, moveWalk, openEntry, openRoom, palaceState, removeMember, removeRegion, renameBookmark,
+  returnToGround, revert, roomsNow, save, selectRooms, stepWalk, subscribePalace, walkOf,
   type PalaceInside,
 } from './palaceSession'
-import {wellSection} from '../../../inhabitants/ql/devices/techneWells'
 import type {OwnPlateProps} from '../../../inhabitants/ql/devices/TechneDevices'
 import '../places/placesPlate.css'
 import './palaces.css'
@@ -60,10 +64,6 @@ function useAtlasLive(): AtlasHandle | null {
 function usePalace() {
   return useSyncExternalStore(subscribePalace, palaceState, palaceState)
 }
-
-/** A choice the manual names that no owner of the palace takes yet: drawn, nothing lit, its reason on the status line. */
-const waiting = (label: string, options: readonly string[], why: string) =>
-  <PlateRadio inline label={label} value={null} options={options.map(option => ({value: option.toLowerCase(), label: option}))} disabled={why} />
 
 // ── outside: the world's palaces ──────────────────────────────────────────
 
@@ -129,22 +129,17 @@ function RoomsSection({here}: {here: PalaceInside}) {
       </> : undefined}
   })
   return <>
-    <PlateRadio inline label="Guide" does="The guide says why the focused room stands where it does, from the owner's own warrant (T18)." value={here.guide ? 'on' : 'off'}
-      options={[{value: 'on', label: 'on'}, {value: 'off', label: 'off'}]} onChange={id => setGuide(id === 'on')} />
     <PlateRows size={5} rows={rows} active={[...here.selected, ...(focus ? [focus] : [])]} onPress={press} onOpen={openRoom} empty="This palace holds no room yet." />
     {here.guide && guideLine && <PlateLine text={guideLine} tone="guide" />}
   </>
 }
 
-function PathSection({here}: {here: PalaceInside}) {
+/** The walk locus by locus (the Palace device walks it room by room: its Room, Start, Back and Next). */
+function WalkSection({here}: {here: PalaceInside}) {
   const {steps, index, focus} = walkOf(here)
   const empty = !steps.length
   return <>
-    <PlateRadio inline label="Path" does="Guided: the floor draws the path and the walk's focus. Free: the same palace entered directly — the walk stays an ordering, never a gate."
-      value={here.path} options={[{value: 'guided', label: 'guided'}, {value: 'free', label: 'free'}]} onChange={id => setPath(id)} />
-    {waiting('Order', ['Authored', 'Spatial'], 'The walk follows the palace\'s own path: no owner orders it by place yet.')}
     <div className="plate-keys" role="group" aria-label="The walk">
-      <Action label="Start" does="The named start: the walk's first step." onPress={walkToStart} disabled={here.busy || empty ? 'The walk has no step yet.' : undefined} />
       <Action label="←" does="The previous locus." onPress={() => stepWalk(-1)} disabled={here.busy || empty ? 'The walk has no step yet.' : undefined} />
       <Action label="→" does="The next locus." onPress={() => stepWalk(1)} disabled={here.busy || empty ? 'The walk has no step yet.' : undefined} />
     </div>
@@ -154,36 +149,19 @@ function PathSection({here}: {here: PalaceInside}) {
 }
 
 function BookmarksSection({here}: {here: PalaceInside}) {
-  const {steps, focus} = walkOf(here)
-  const [name, setName] = useState('')
+  const {steps} = walkOf(here)
   const [renaming, setRenaming] = useState<{ref: string; value: string} | null>(null)
   const office = (bookmark: {region: string; ref: string}) => steps.find(step => step.region === bookmark.region && step.ref === bookmark.ref)?.office ?? bookmark.region
-  const keep = () => { if (bookmarkHere(name)) setName('') }
   return <>
-    <div className="plate-tool-row">
-      <PlateField label="Bookmark name" does="Name the focused position to jump back to it." value={name} maxLength={PALACE_BOOKMARK_NAME_LIMIT} placeholder="Name this position…"
-        disabled={here.busy || !focus} onChange={setName} onEnter={() => { if (name.trim()) keep() }} />
-      <Action label="Bookmark" does="Keep the focused position under its name." onPress={keep} disabled={here.busy || !focus || !name.trim() ? 'Name a focused position first.' : undefined} />
-    </div>
     {renaming && <PlateField label={`Rename ${renaming.ref}`} value={renaming.value} maxLength={PALACE_BOOKMARK_NAME_LIMIT} onChange={value => setRenaming({ref: renaming.ref, value})}
       onEnter={() => { if (renaming.value.trim() && renameBookmark(renaming.ref, renaming.value)) setRenaming(null) }} onEscape={() => setRenaming(null)} />}
-    <PlateRows size={4} empty="No bookmarks yet. Name the focused position above." onPress={ref => { const bookmark = here.bookmarks.find(entry => entry.ref === ref); if (bookmark) jumpBookmark(bookmark) }}
+    <PlateRows size={4} empty="No bookmarks yet. Keep one on the Palace device: its Name, then Keep." onPress={ref => { const bookmark = here.bookmarks.find(entry => entry.ref === ref); if (bookmark) jumpBookmark(bookmark) }}
       rows={here.bookmarks.map(bookmark => ({id: bookmark.ref, name: palaceBookmarkLabel(bookmark), mark: <Icon name="follow" size={10} />, note: office(bookmark),
         does: `Jump to ${bookmark.ref}: the walk, its focus and the floor together.`,
         acts: <>
           <button type="button" aria-label={`Rename ${palaceBookmarkLabel(bookmark)}`} onClick={() => setRenaming({ref: bookmark.ref, value: palaceBookmarkLabel(bookmark)})}>✎</button>
           <button type="button" aria-label={`Delete ${palaceBookmarkLabel(bookmark)}`} onClick={() => deleteBookmark(bookmark)}>×</button>
         </>}))} />
-  </>
-}
-
-function BoardSection({here}: {here: PalaceInside}) {
-  return <>
-    {waiting('Board', ['Board', 'Loci'], 'The palace stands on its free board: no owner draws the fixed floor of six rooms (method of loci) yet.')}
-    <PlateRadio inline label="Snap" does="Snap: an authoring aid to the grid when you drag a room on the floor; positions stay free." value={here.snap ? 'grid' : 'off'}
-      options={[{value: 'off', label: 'off'}, {value: 'grid', label: 'grid'}]} onChange={id => setSnap(id === 'grid')} />
-    {waiting('Lines', ['Shown', 'Hidden'], 'The floor draws the path through the rooms; no owner draws the lines between related objects yet.')}
-    {waiting('Audience', ['Me', 'Field', 'Public'], 'Who sees the palace: no owner discloses how the field or the public sees it yet; you see it as yours.')}
   </>
 }
 
@@ -268,15 +246,9 @@ function PortalsSection({here, handle}: {here: PalaceInside; handle: AtlasHandle
 function ReturnSection({here}: {here: PalaceInside}) {
   const receipt = here.reading ? palaceComposition(here.reading).receipt : undefined
   const proposal = here.proposal
+  // The Palace device proposes, accepts and refuses; this section keeps the owner's words about it: who it is attributed to, where it is
+  // routed and under what authority, the receipt an accepted Return left.
   return <>
-    <PlateReading label="Route" value={proposal?.receipt?.routed ? proposal.receipt.action_ref : '—'}
-      does={proposal?.receipt?.routed ? `Routed to ${proposal.receipt.action_ref} under ${proposal.receipt.authority ?? 'the owner'}.` : 'The route the reading names receives the proposal; none is chosen until a Return is proposed.'} />
-    <div className="plate-keys">
-      <Action label="Propose Return" does="Shape the palace's Return as an attributable proposal: nothing is written." onPress={proposeReturn} disabled={here.busy || !here.reading ? 'The palace has no reading to return yet.' : undefined} />
-      {proposal && <Action label="Accept and return" does="Send the proposal to its route; the native owner decides." onPress={() => void acceptReturn()}
-        disabled={here.accepting || here.acceptance?.accepted === true || !proposal.receipt?.routed ? 'Not routed, or already accepted.' : undefined} />}
-      {proposal && <Action label="Refuse" does="Set the proposal aside: nothing is sent." onPress={refuseReturn} />}
-    </div>
     {!proposal && receipt && <PlateLine tone="saved" text={receipt} />}
     {proposal && <PlateLine text={proposal.receipt?.routed
       ? `${proposal.attribution} Routed to ${proposal.receipt.action_ref} under ${proposal.receipt.authority ?? 'the owner'}; the native owner decides.`
@@ -289,8 +261,8 @@ function ReturnSection({here}: {here: PalaceInside}) {
  * whole and the composition, the deeper work, until pressed; outside, the palace's own groups until a palace is entered. The row folds
  * the rest to fit from the end; every control stays one press away. */
 export const START_FOLDED_INSIDE: readonly string[] = ['whole', 'compose']
-const FOLD_ORDER_INSIDE = ['compose', 'whole', 'portals', 'bookmarks', 'board', 'return', 'path']
-const OUTSIDE = ['rooms', 'path', 'board', 'portals']
+const FOLD_ORDER_INSIDE = ['compose', 'whole', 'portals', 'bookmarks', 'return', 'walk']
+const OUTSIDE = ['portals']
 
 /** The M5′ Palace / Integral Whole plate. `held` are the devices the families declare this instrument holds: their marks stand on the
  * plate's first section. Entering or leaving a palace stands the plate anew, with that side's sections folded as they start. */
@@ -307,28 +279,24 @@ function PalacePlateAt({held, focused, startFolded, onFold, onFull}: PalacePlate
   const state = usePalace()
   const here = inside()
   useEffect(() => { readPalaces() }, [])
-  const well = wellSection('techne:m5')
-  const ids = [...(well ? [well.id] : []), ...(here ? ['rooms', 'path', 'board', 'return', 'bookmarks', 'portals', 'whole', 'compose'] : ['palaces', ...OUTSIDE])]
+  const spoken = here ? !!(here.proposal || here.acceptance || (here.reading && palaceComposition(here.reading).receipt)) : false
+  const ids = here ? ['rooms', 'walk', ...(spoken ? ['return'] : []), 'bookmarks', 'portals', 'whole', 'compose'] : ['palaces', ...OUTSIDE]
   const fit = usePlateFit(ids.join('|'), here ? FOLD_ORDER_INSIDE : [...OUTSIDE].reverse(), false, startFolded ?? (here ? START_FOLDED_INSIDE : OUTSIDE))
   const fold = (section: Omit<PlateSection, 'folded' | 'onFold'>): PlateSection => ({...section, folded: fit.folded.has(section.id), onFold: () => fit.press(section.id)})
   const outsideNote = (what: string) => <PlateLine text={`Enter a palace: ${what}`} word="enter" name="Palace" light="unknown" />
   const marks = <HeldMarks devices={heldMarksOf(held)} />
   const presentation: FacePresentation = {family: 'techne', faceId: 'techne:m5', title: 'Palace / Integral Whole', icon: 'palace',
     owner: ['M5′', 'Technē', here ? `${here.palace.title} r${here.doc.revision}` : 'the palaces of your world', focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')}
-  const sections: PlateSection[] = [...(well ? [well] : []), ...(here ? [
+  const sections: PlateSection[] = [...(here ? [
     fold({id: 'rooms', title: 'Rooms', width: 236, note: <>{`${roomsNow(here).length} along the path`}{marks}</>, children: <RoomsSection here={here} />}),
-    fold({id: 'path', title: 'Path', width: 200, note: here.walking ? 'walking' : undefined, children: <PathSection here={here} />}),
-    fold({id: 'board', title: 'Board', width: 196, children: <BoardSection here={here} />}),
-    fold({id: 'return', title: 'Return', width: 220, note: here.proposal ? 'proposed' : undefined, children: <ReturnSection here={here} />}),
+    fold({id: 'walk', title: 'Walk', width: 160, note: here.walking ? 'walking' : undefined, children: <WalkSection here={here} />}),
+    ...(spoken ? [fold({id: 'return', title: 'Return', width: 220, note: here.proposal ? 'proposed' : undefined, children: <ReturnSection here={here} />})] : []),
     fold({id: 'bookmarks', title: 'Bookmarks', width: 210, note: here.bookmarks.length ? `${here.bookmarks.length}` : undefined, children: <BookmarksSection here={here} />}),
     fold({id: 'portals', title: 'Portals', width: 200, children: <PortalsSection here={here} handle={handle} />}),
     fold({id: 'whole', title: 'Integral whole', width: 260, note: here.reading === undefined ? 'reading' : here.reading ? undefined : 'refused', children: <WholeSection here={here} />}),
     fold({id: 'compose', title: 'Compose', width: 250, note: here.busy ? 'saving' : here.regions.length || here.removed.length ? `${here.regions.length} regions` : undefined, children: <ComposeSection here={here} />}),
   ] : [
     fold({id: 'palaces', title: 'Palaces', width: 300, note: <>{state.phase === 'entering' ? 'entering' : `${rows.length}`}{marks}</>, children: <PalacesSection handle={handle} rows={rows} />}),
-    fold({id: 'rooms', title: 'Rooms', width: 170, children: outsideNote('its rooms stand here, along its path.')}),
-    fold({id: 'path', title: 'Path', width: 170, children: outsideNote('its walk and its guide stand here; the transport walks it.')}),
-    fold({id: 'board', title: 'Board', width: 170, children: outsideNote('its board, its snap and its audience stand here.')}),
     fold({id: 'portals', title: 'Portals', width: 170, children: outsideNote('its doors out — to other palaces and to places — stand here.')}),
   ])]
   // the palace's one status line (palaceInstrument.tsx:622 message) stands under the sections, in the owner's words

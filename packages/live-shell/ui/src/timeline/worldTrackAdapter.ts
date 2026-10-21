@@ -235,8 +235,8 @@ export interface WorldTrack {
   mix?: WorldTrackMix;
   /** This track is the Main track's own material (the day the tracks send their work to). The views draw it at the end, as Live keeps Main. */
   main?: true;
-  /** A return track (Live's; manual §16.2): in Factory a workcell, whose chain every track that works in it shares. The views draw it after
-   * the tracks and before Main, and ⌥⌘R shows and hides it. It holds no clips. */
+  /** A return track (Live's; manual §16.2): a chain every track that works in it shares (a workcell). The views draw it after the tracks
+   * and before Main, and ⌥⌘R shows and hides it. It holds no clips. */
   returns?: true;
 }
 

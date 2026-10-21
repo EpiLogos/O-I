@@ -156,11 +156,14 @@ export const QL_M3_READINGS: Readonly<Record<string, string>> = {
   'form.codon': 'A reading: the codon is the form\'s transcription.',
 }
 const NO_LAW = 'The M3 reading carries no generation law: it names the form\'s hexagram and its matrix axis, not the matrix that makes the hexagram a cell, the seed or the pose map (ql.m3-state/v1).'
+/** The Rack page (manual §16.16, §22.9): the rack of M3′, its parts and which stand verified. */
+const NO_RACK = 'No rack reading: no owner reports the parts of M3′\'s rack or which of them stand verified — missing op: a rack reading and the rule naming a verified part (Quaternal Logic, T-COVERAGE §1.5).'
 const NO_CELL = 'The M3 reading carries no generation cell: the kernel generates one (ql_m3_generate) and the reception does not ask it.'
 /** Why each key of the generation law has no reading here (manual §16.12: "say which one"). */
 export const QL_M3_ABSENT: Readonly<Record<string, string>> = {
   'law.matrix': NO_LAW, 'law.seed': NO_LAW, 'law.poseMap': NO_LAW,
   'generation.lower': NO_CELL, 'generation.upper': NO_CELL, 'generation.positive': NO_CELL, 'generation.negative': NO_CELL, 'generation.nonDual': NO_CELL,
+  rack: NO_RACK, 'rack.part': `${NO_RACK} So no part of it is chosen.`,
 }
 /** The keys the view holds: how the clock is drawn, not what it is. */
 export const QL_M3_LOCAL = ['turn', 'open', 'readout', 'reciprocal'] as const

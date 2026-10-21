@@ -1,0 +1,396 @@
+{
+ "captured": "2026-10-21, workcell:mac, read-only: the kernel graph op through the seat walk bridge (POST /op {op: graph, query: \"\", options: {input: central_wiki, max_nodes: 64, max_edges: 256}}); kernel/src/graph.rs input 1 (central.wiki.read)",
+ "outcome": {
+  "reading": {
+   "counts": {
+    "edges": 34,
+    "hosted_rows": 0,
+    "knowledge_rows": 0,
+    "link_rows": 0,
+    "nodes": 6,
+    "spaces": 1,
+    "wiki_nodes": 5
+   },
+   "edges": [
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "central:source:control:root:Work/O-I/.wayfinder/maps/command-encounter-convergence.md"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "commission:oi527-command-work-journey-20260927"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "git:ai-kit@convergence/command-encounter-20260926"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "git:ai-kit@guidance/development-world-shape"
+    },
+    {
+     "from_ref": "wiki:node:identity",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "Control/user/identity.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/IMPLEMENTATION-PACKET.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/omarchy-packet/findings.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "commission:herdr-omarchy-multisurface-158"
+    },
+    {
+     "from_ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/wiki/returns/ta-onta-and-the-thought-stream-2026-09-16.md"
+    },
+    {
+     "from_ref": "wiki:node:staged/propose-not-write",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "staging/propose-not-write"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:identity",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:staged/propose-not-write",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Actuation"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Archetypal-Earth"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Central"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Epi-Prime"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Factory"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:O-I"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Point-Cloud-Demo"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Quaternal-I-Ching"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Quaternal-Tarot"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Workcell"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:ai-kit"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:face-rig"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:personal"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:projects"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:delivered-lane-loses-install"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:identity"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:place-provider-reconciles-like-the-floor"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:root/ta-onta-and-the-thought-stream"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:staged/propose-not-write"
+    }
+   ],
+   "inputs": {
+    "aikit_resolution": {
+     "detail": "not requested yet",
+     "owner_operation": "aikit.knowledge.resolve",
+     "state": "deferred"
+    },
+    "central_wiki": {
+     "detail": "central:source:control:root:Control/agents/wiki/wiki.json",
+     "owner_operation": "central.wiki.read",
+     "state": "available"
+    },
+    "shared_field": {
+     "detail": "not requested yet",
+     "owner_operation": "shared-field.projection",
+     "state": "deferred"
+    },
+    "wiki_links": {
+     "detail": "not requested yet",
+     "owner_operation": "oi.cradle.wiki-links/v1",
+     "state": "deferred"
+    }
+   },
+   "nodes": [
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-space",
+     "label": "Central",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "67",
+      "source": "central.wiki.read"
+     },
+     "ref": "central:wiki:root"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "You may propose",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:staged/propose-not-write"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "User identity",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:identity"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "The beings, the thought stream, and who owns what",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:root/ta-onta-and-the-thought-stream"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "A place provider reconciles like the floor",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:place-provider-reconciles-like-the-floor"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "A delivered lane that leaves the installed cut is lost work",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:delivered-lane-loses-install"
+    }
+   ],
+   "schema": "oi.cradle.graph-reading/v1",
+   "shape_catalog": null,
+   "truncated": false
+  },
+  "result": "graph_reading"
+ }
+}

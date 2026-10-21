@@ -88,7 +88,12 @@ test('an instrument plate stands on the kit\'s head; its display section is firs
 
 test('every Technē instrument\'s open plate has its well first, drawn from its owner, a missing reading said in the well', () => {
   const words = {'techne:m0': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m4': /the Earth<\/text><text[^>]*>not mounted/, 'techne:m1': /no stage<\/text><text[^>]*>reported yet/,
-    'techne:m2': /all time/, 'techne:m3': /no walk<\/text><text[^>]*>reported yet/, 'techne:m5': /no palace<\/text><text[^>]*>(read yet|entered)/}
+    'techne:m2': /all time/, 'techne:m3': /no walk<\/text><text[^>]*>reported yet/}
+  // W4-Technē: M5′'s picture is the Palace design's own well (its floor), at the head of M5′'s chain on the palace session; the plate after
+  // it keeps what the design does not carry, and draws no second well (techne-designs-binding.test.mjs draws the design's well).
+  const m5 = plate('techne:m5')
+  assert.ok(m5.indexOf('data-device-id="techne:palace" data-chain-place="head"') >= 0 && m5.indexOf('data-device-id="techne:palace"') < m5.indexOf('data-instrument="techne:m5" data-expanded="true"'), 'the Palace design heads M5′')
+  assert.doesNotMatch(m5.slice(m5.indexOf('data-instrument="techne:m5" data-expanded="true"')), /data-section="display"/, 'no second well')
   for (const [id, said] of Object.entries(words)) {
     const out = plate(id)
     const at = out.indexOf(`data-instrument="${id}" data-expanded="true"`)

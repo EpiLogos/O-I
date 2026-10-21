@@ -16,22 +16,25 @@ import {LINK_ID, LINK_REFUSE, linkBinding, workcellDevices} from '../../agent/de
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {publishDevice} from '../devices/deviceDoor'
 import {PlacedDevice} from '../devices/DeviceView'
+import type {SlotWords} from './slots'
 
 const NO_CARRIER: KernelTransportStatus = {kind: 'unavailable', reason: 'The shell has published no kernel carrier here.'}
 
 /** The button's words (§19.19 Widget: "the peers and the link state"): Link, with the count of machines that answered, else the
  * link's state, from the binding's own readings. Pure. */
-export function linkButtonWords(values: Readonly<Record<string, unknown>>): {lit: boolean | undefined; title: string} {
+export function linkButtonWords(values: Readonly<Record<string, unknown>>, words?: Pick<SlotWords, 'label' | 'fn'>): {lit: boolean | undefined; title: string} {
   const machines = (() => { try { return typeof values.machines === 'string' ? JSON.parse(values.machines) as Record<string, unknown>[] : null } catch { return null } })()
   const others = machines?.filter(machine => !machine.self) ?? []
   const answered = others.filter(machine => machine.state === 'answered').length
   const lit = values.light === 'lit' ? true : values.light === 'dark' ? false : undefined
   const state = !machines ? 'unread: no owner has answered for the link yet' : others.length === 0 ? 'no other machine is declared'
     : `${answered} of ${others.length} ${others.length === 1 ? 'machine answers' : 'machines answer'}`
-  return {lit, title: `Link — joins this machine to your others: one ledger, one clock (§19.19). ${state}. ${LINK_REFUSE.link}`}
+  const meaning = words ? `${words.label} — ${words.fn}` : 'Link — joins this machine to your others: one ledger, one clock (§19.19)'
+  return {lit, title: `${meaning}. ${state}. ${LINK_REFUSE.link}`}
 }
 
-export function LinkSlot() {
+/** `words`: the mode's word and meaning for the slot (manual §10.5: Central's Ground, Factory's Link …); the device is the same Link. */
+export function LinkSlot({words}: {words?: SlotWords}) {
   const workspace = useContext(Workspace)
   const transport = workspace?.transport ?? NO_CARRIER
   const workcell = useWorkcellAnswer(transport).reading
@@ -53,10 +56,12 @@ export function LinkSlot() {
     document.addEventListener('keydown', escape)
     return () => { document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', escape) }
   }, [open])
-  const {lit, title} = linkButtonWords(binding.values)
-  return <span ref={root} className="transport-slot transport-link" data-slot="link" data-light={lit === undefined ? undefined : lit ? 'on' : 'off'}>
-    <button type="button" className="native-control transport-text transport-word" data-slot="link" aria-label="Link" aria-pressed={binding.values.link === true}
-      data-i={`Link|${title}`} title={title} disabled aria-disabled>Link</button>
+  const {lit, title} = linkButtonWords(binding.values, words)
+  const face = words?.face ?? words?.label ?? 'Link'
+  const light = lit === undefined ? undefined : lit ? 'on' : 'off'
+  return <span ref={root} className="transport-slot transport-link">
+    <button type="button" className="native-control transport-text transport-word" data-slot="link" data-light={light} aria-label={words?.label ?? 'Link'} aria-pressed={binding.values.link === true}
+      data-i={`${words?.label ?? 'Link'}|${title}`} title={title} disabled aria-disabled>{face}</button>
     <button type="button" className="native-control transport-link-more" aria-label="Link's settings" aria-expanded={open}
       data-i="Link ▾|Shows the Link's settings beneath the transport: its machines, Share, the peers and the lag." title="Show the Link's settings"
       onClick={() => setOpen(was => !was)}>▾</button>

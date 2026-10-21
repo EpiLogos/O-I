@@ -386,7 +386,9 @@ test('the focused 0 instrument stands open as one plate of the faces it holds, t
   for (const id of ['globe-engine', 'graph-tools', 'mode-switch', 'time-control']) {
     assert.match(out, new RegExp(`class="plate-held-mark" data-device="atlas-earth:${id}"`), `${id} stands as its mark: every setting above the chain, full size in a pane`)
   }
-  assert.doesNotMatch(out, /data-device-size="compact"/, 'no device plate is boxed inside the instrument')
+  // W4-Technē: the Lens stands after the plate as the chain's effect (manual §17.11 "A reading's chain, after its instrument"), never in it.
+  assert.doesNotMatch(out.slice(0, out.indexOf('data-device-id="techne:lens"')), /data-device-size="compact"/, 'no device plate is boxed inside the instrument')
+  assert.match(out, /data-device-id="techne:lens" data-chain-place="effect"/, 'the Lens follows the instrument on its chain')
   const order = ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5'].map(id => out.indexOf(`data-instrument="${id}"`))
   assert.ok(order.every((at, index) => at >= 0 && (index === 0 || at > order[index - 1])), 'the six stand in their order')
   for (const id of ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5']) {
@@ -445,14 +447,13 @@ test('a focused Timeline stands the sky and the M3 clock open beside the clock, 
   assert.doesNotMatch(out, /data-face-id="m3-clock"[^>]*data-waiting="true"/)
 })
 
-test('the knowledge graph\'s devices stand open on its own chain, each with its body, and Central\'s lead them', () => {
+test('the knowledge graph\'s chain is its design, then the Lens; its three faces are carried by the design; Central\'s lead them', () => {
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'knowledge-graph'}))
-  for (const [id, title] of [['knowledge-scope', 'Scope'], ['knowledge-filters', 'Filters'], ['knowledge-display', 'Display']]) {
-    assert.match(out, new RegExp(`data-face-id="${id}"[^>]*data-expanded="true"`))
-    assert.match(out, new RegExp(`data-device="knowledge-graph:${id}" data-device-size="compact"`))
-    assert.match(out, new RegExp(`data-knowledge-face="${id}"`))
-    assert.match(out, new RegExp(`<span class="dp-title">${title}</span>`))
-  }
+  // REPLACED (W4-Technē, T-COVERAGE §1.4: "the family publishes knowledge-scope, -filters, -display faces, not graph"): the Knowledge
+  // graph's design (knowledge-graph:graph) carries Scope, Filters and Display on its pages, on the same owner (techne-designs-binding.test.mjs).
+  assert.match(out, /data-face-id="graph"[^>]*data-device-id="knowledge-graph:graph" data-chain-place="head"/)
+  assert.match(out, /data-device="knowledge-graph:graph" data-device-size="compact"/)
+  for (const id of ['knowledge-scope', 'knowledge-filters', 'knowledge-display']) assert.doesNotMatch(out, new RegExp(`data-face-id="${id}"`), `${id}: on no chain`)
   assert.doesNotMatch(out, /graph-tools|data-mode-detail="techne-instruments"/)
   const led = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m2', centralDevices: true}))
   assert.match(led, /data-central-devices="true"/)
@@ -525,7 +526,8 @@ test('a chain withdraws only what it published: a newer chain of the same device
 test('the chain publishes through the door and opens a pane through the instrument door, in source', async () => {
   const {readFile} = await import('node:fs/promises')
   const source = await readFile(new URL('../src/inhabitants/ql/devices/TechneDevices.tsx', import.meta.url), 'utf8')
-  assert.match(source, /usePublished\(entries\)/, 'the chain publishes while it stands')
+  assert.match(source, /const published = useMemo\(\(\) => \[\.\.\.entries, \.\.\.designs\]/, 'the faces and the designs on their bindings, both')
+  assert.match(source, /usePublished\(published\)/, 'the chain publishes while it stands')
   assert.match(source, /selectDevice\(device\.id\)/, 'choosing a device selects it (its Whole stands in its band)')
   assert.match(source, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: device\.id, title\}\)/, 'opening a device puts it in a pane')
 })

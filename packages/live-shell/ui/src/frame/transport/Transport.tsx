@@ -77,7 +77,7 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
   const slot = (id: TransportSlotId): ReactNode => <Slot key={id} id={id} binding={bindings[id]} words={words(id)} fold={foldOf(id)} />
   return <div ref={bar} className="mode-transport one-transport" role="group" aria-label="Transport" data-fold={folded ? 'marks' : undefined}>
     {/* Link and Tap lead the tempo cells as one group, as the mockup's first group does. Link is one device in every mode (§19.19). */}
-    <div className="transport-group transport-lead"><LinkSlot />{slot('tap')}
+    <div className="transport-group transport-lead"><LinkSlot words={words('link')} />{slot('tap')}
       <div className="transport-group transport-tempo">{slot('tempo')}{slot('signature')}{slot('metro')}{slot('quantize')}</div></div>
     <div className="transport-scale">{slot('key')}{slot('root')}{slot('scale')}</div>
     <div className="transport-spacer" />

@@ -141,9 +141,10 @@ test('the knowledge graph Device side draws its own family rack, never the 0 rac
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'knowledge-graph'}))
   assert.doesNotMatch(out, /controls not yet declared/, 'the knowledge graph’s controls are declared (T-KNOWLEDGE-GRAPH-DEVICE)')
   assert.match(out, /data-family="knowledge-graph"/)
-  for (const face of ['knowledge-scope', 'knowledge-filters', 'knowledge-display']) {
-    assert.match(out, new RegExp(`data-face-id="${face}"`), `${face} docks on the knowledge graph's rack`)
-  }
+  // W4-Technē (T-COVERAGE §1.4): the Knowledge graph's design (knowledge-graph:graph) heads its own chain and carries the three faces'
+  // parameters on its Reach, Filters and Display pages, on the same owner (techne-designs-binding.test.mjs).
+  assert.match(out, /data-device-id="knowledge-graph:graph" data-chain-place="head"/, 'the Knowledge graph stands on its own rack')
+  for (const face of ['knowledge-scope', 'knowledge-filters', 'knowledge-display']) assert.doesNotMatch(out, new RegExp(`data-face-id="${face}"`), `${face}: carried by the design`)
   assert.doesNotMatch(out, /data-mode-detail="techne-instruments"/)
   assert.doesNotMatch(out, /graph-tools/)
 })
@@ -175,11 +176,11 @@ test('Central keeps its own devices: they lead the chain, then the focused instr
   assert.doesNotMatch(knowledge, /graph-tools/)
 })
 
-test('focused, the knowledge graph opens its own faces on the rack, named as the panel names them', () => {
+test('focused, the knowledge graph opens its design on the rack, named as the manual names it', () => {
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'knowledge-graph'}))
-  for (const face of ['knowledge-scope', 'knowledge-filters', 'knowledge-display']) assert.equal(expandedOf(out, face), 'true', `${face} docks expanded`)
-  for (const title of ['Scope', 'Filters', 'Display']) assert.match(out, new RegExp(`>${title}<`))
-  assert.doesNotMatch(out, />knowledge-scope</, 'no raw face id stands as a title')
+  assert.equal(expandedOf(out, 'graph'), 'true', 'the Knowledge graph stands open')
+  assert.match(out, />Knowledge graph</)
+  assert.doesNotMatch(out, />knowledge-graph:graph<|>graph</, 'no raw face id stands as a title')
 })
 
 const HOSTED = ['project', 'canvas', 'timeline', 'journey', 'place', 'palace']
