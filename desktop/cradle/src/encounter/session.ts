@@ -31,7 +31,7 @@ import {recordAdvertisedModes} from "./advertisedModes";
 import {harnessName} from "../agent/chat/harness";
 import {useEffect,useMemo,useSyncExternalStore} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import {kernelOp} from "../kernel/bridge";
+import {kernelOp,hasReadingsNoticeSource,onReadingsMoved} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
 import {encounter,mintDeliveryRef,taskRead,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterRequest,type EncounterStatus,type EncounterTaskReading,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
 import {createA2aBinding,createA2aPresence} from "../../../../shared-field/a2a.mjs";
@@ -135,6 +135,9 @@ class EncounterSession implements EncounterSessionActions {
  private timer?:ReturnType<typeof setTimeout>;
  /** Generation of the observing run (start…stop) and of the poll chain inside it. */
  private run=0;private chain=0;private observing=false;
+ /** At rest with a notice source installed: no timer stands, and the next notice reads (the rest floor applies only where no notice arrives). */
+ private restingOnNotice=false;private stopMoved?:()=>void;
+
  /** The draft CAS machine — the same five refs each surface used to hold. */
  private canonical:Draft={revision:0,text:""};private input="";private dirty=false;private saving=false;private sending=false;private failed=false;
  private operations=0;
@@ -187,6 +190,7 @@ class EncounterSession implements EncounterSessionActions {
   const run=++this.run;this.observing=true;this.quietReads=0;this.lastFingerprint="";
   document.addEventListener("visibilitychange",this.onVisible);
   window.addEventListener("focus",this.onVisible);
+  this.stopMoved?.();this.stopMoved=onReadingsMoved(()=>{if(this.observing&&this.restingOnNotice&&!hidden())this.restartChain();});
   // A named hosted session already belongs to its native owner. Enter by
   // reading that subject, never by bootstrapping the owner's general runtime.
   if(this.state.sourceWorldRef)this.restartChain();
@@ -204,13 +208,13 @@ class EncounterSession implements EncounterSessionActions {
   if(!this.state.sourceWorldRef)void this.probe();
  }
  private stop() {
-  this.run++;this.chain++;this.observing=false;clearTimeout(this.timer);
+  this.run++;this.chain++;this.observing=false;this.restingOnNotice=false;this.stopMoved?.();this.stopMoved=undefined;clearTimeout(this.timer);
   document.removeEventListener("visibilitychange",this.onVisible);
   window.removeEventListener("focus",this.onVisible);
  }
  /** Exactly one chain: a restart retires the previous one, whose in-flight
   * read is dropped when it lands instead of scheduling a second timer. */
- private restartChain(){const chain=++this.chain;clearTimeout(this.timer);void this.poll(chain);}
+ private restartChain(){const chain=++this.chain;this.restingOnNotice=false;clearTimeout(this.timer);void this.poll(chain);}
  private lastWake=0;
  private onVisible=()=>{if(this.observing&&!hidden()&&Date.now()-this.lastWake>=WAKE_COALESCE_MS){this.lastWake=Date.now();void this.refreshProviders();this.restartChain();}};
  /** A receipt of this window's own act: the session may have moved, so it is read now and at live pace again. */
@@ -258,7 +262,9 @@ class EncounterSession implements EncounterSessionActions {
   // wake it; the window regained wakes it) and otherwise at the rest floor.
   // A turn starting or any change resets the pace.
   const inFlight=this.state.status?.state==="TurnInFlight"||this.state.status?.state==="InterruptRequested";
-  if(chain===this.chain)this.timer=setTimeout(()=>void this.poll(chain),inFlight?300:this.quietReads===0?750:this.quietReads===1?1500:ENCOUNTER_REST_MS);
+  const resting=!inFlight&&this.quietReads>=2&&hasReadingsNoticeSource();
+  if(chain===this.chain)this.restingOnNotice=resting;
+  if(chain===this.chain&&!resting)this.timer=setTimeout(()=>void this.poll(chain),inFlight?300:this.quietReads===0?750:this.quietReads===1?1500:ENCOUNTER_REST_MS);
  };
 
  // --- the draft CAS machine (typing is never lost) -----------------------

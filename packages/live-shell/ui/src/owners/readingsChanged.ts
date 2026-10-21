@@ -7,6 +7,7 @@
 // Pure TypeScript: no view.
 
 import type {KernelReceipt} from '../../../../../desktop/cradle/src/kernel/types'
+import {announceReadingsMoved} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {ownerReadings, type OwnerReadings} from './ownerReading'
 
 export const READINGS_CHANGED_EVENT = 'readings_changed'
@@ -49,11 +50,12 @@ export function createReadingsChangedDriver(registry: OwnerReadings = ownerReadi
     receive(receipts) {
       if (!receipts.some(receipt => readingsChangedOf(receipt))) return
       if (pending !== null) timers.clear(pending)
-      pending = timers.set(() => { pending = null; void registry.moved() }, delayMs)
+      pending = timers.set(() => { pending = null; void registry.moved(); announceReadingsMoved() }, delayMs)
     },
     now() {
       if (pending !== null) { timers.clear(pending); pending = null }
       void registry.moved()
+      announceReadingsMoved()
     },
     dispose() { if (pending !== null) { timers.clear(pending); pending = null } },
   }

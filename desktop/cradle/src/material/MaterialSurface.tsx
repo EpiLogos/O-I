@@ -16,6 +16,7 @@ import {useMaterialContext} from "../context/PageContext";
 import {readDocumentIdentity,islandSpan,sameDocumentPayload,FAMILY_LABEL} from "../document/identity";
 import {saveDocumentPayload,type DocumentSaveOutcome} from "../document/hostSave";
 import {waitingReturnsForSource} from "../document/returns";
+import {refreshOnReadingsMoved} from "../kernel/bridge";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 // @ts-ignore -- Personal Web ql-doc parser is the canonical JS document contract.
 import {readPage} from "../personal/page.mjs";
@@ -239,8 +240,8 @@ export function MaterialSurface({ binding, format, onView }: { binding: SurfaceB
     read();
     const focus = () => { if (document.visibilityState === "visible") read(); };
     window.addEventListener("focus", focus);
-    const timer = setInterval(focus, 60_000);
-    return () => { live = false; window.removeEventListener("focus", focus); clearInterval(timer); };
+    const stop = refreshOnReadingsMoved(focus, 60_000);
+    return () => { live = false; window.removeEventListener("focus", focus); stop(); };
   }, [nativeSubject, binding.project, readingMeta?.sourceRef]);
   const saveDocument = () => {
     if (docSave?.busy || !identity || identity.payload !== "ql-doc" || !location || displayedRevision === undefined) return;

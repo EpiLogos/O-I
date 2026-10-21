@@ -47,11 +47,12 @@ export const ROOT_SETTLE = {tries: 6, apartMs: 400} as const
 /** Central's root disclosure through the kernel's world browse, as its worlds. A refusal is the reading, named. The kernel answers
  * before its first browse has finished (a snapshot with no navigator root and no error): that is asked again, a few times apart,
  * and only then read as the absence it is (r13: the browser's Worlds rows read the first answer and kept it). */
-export async function readWorlds(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE): Promise<CentralWorldsReading> {
+/** `fresh` asks the kernel again for the first browse too (a read that precedes a write). */
+export async function readWorlds(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE, fresh = false): Promise<CentralWorldsReading> {
   if (!transport) return {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'}
   if (transport.kind === 'unavailable') return {state: 'unavailable', reason: transport.reason}
   for (let attempt = 1; ; attempt++) {
-    const answer = await kernelRead(transport, {op: 'world_browse'}, {fresh: attempt > 1})
+    const answer = await kernelRead(transport, {op: 'world_browse'}, {fresh: fresh || attempt > 1})
     if (answer.error || answer.outcome?.result !== 'world_read') return {state: 'unavailable', reason: answer.error ?? 'Central did not disclose its worlds'}
     const navigator = answer.outcome.snapshot.navigator
     if (navigator?.root) return {state: 'read', worlds: worldsOf(navigator.root)}

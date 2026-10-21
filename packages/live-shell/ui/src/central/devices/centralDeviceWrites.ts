@@ -89,7 +89,7 @@ export async function turnDieFace(transport: KernelTransportStatus, day: DayDieW
  * document someone else made is not made twice (`initialised: false`). Resolves once the owner has answered; rejects with its
  * words. */
 export async function openToday(transport: KernelTransportStatus): Promise<{ensured: boolean; initialised: boolean; carried: CarriedInto | null}> {
-  let ground = await readGround(transport, null)
+  let ground = await readGround(transport, null, true)
   if (ground.time.state !== 'ready' || !ground.time.data) {
     throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; the current Day cannot be ensured`)
   }
@@ -102,7 +102,7 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
     }
     await central(transport, null, {kind: 'ensure-day', expected_time_policy_revision: ground.time.data.revision})
     ensured = true
-    ground = await readGround(transport, null)
+    ground = await readGround(transport, null, true)
   }
   const day = ground.day.data
   if (!day || ground.day.state !== 'ready') throw new Error(`Central's Day reading is ${ground.day.state} after the ensure; there is no Day to make a document for`)
@@ -116,7 +116,7 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
   const world = await kernelOp(transport, {op: 'world_browse'})
   const projects = world.outcome?.result === 'world_read' ? world.outcome.snapshot.navigator?.root?.work.projects : undefined
   const formLocation = await resolveDocumentForm(transport, form, projects)
-  const original = await readFile(transport, formLocation)
+  const original = await readFile(transport, formLocation, true)
   await central(transport, null, {kind: 'initialise-day', day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision,
     expected_policy_revision: ground.placement.data.revision, form: formLocation, expected_form_revision: original.revision})
   const carried = closed ? await carryInto(transport, closed) : null
@@ -146,10 +146,10 @@ export function closedEarlierDayOf(ground: CentralGroundReading): {readonly dayR
  * register and at each project world the closed set held; each page's world by the folder that holds it (centralWorlds.ts). Written
  * through the Day's own meta on the revision read, as today's set is written. */
 async function carryInto(transport: KernelTransportStatus, closed: {readonly dayRef: string; readonly set: DaySet}): Promise<CarriedInto> {
-  const ground = await readGround(transport, null)
+  const ground = await readGround(transport, null, true)
   const aperture = currentDayOf(ground).aperture
   if (!aperture) throw new Error('Today\'s Day was made, but Central names no document for it yet; nothing was carried into its set')
-  const worlds = await readWorlds(transport)
+  const worlds = await readWorlds(transport, undefined, true)
   if (worlds.state !== 'read') throw new Error(`Today's Day was made, but Central's worlds are ${worlds.state}${worlds.state === 'unavailable' ? `: ${worlds.reason}` : ''}; nothing was carried into its set`)
   const projects = worlds.worlds.filter(world => world.project && closed.set.tracks.some(track => track.world === world.ref)).map(world => world.project!)
   const listings = await Promise.all([null, ...projects].map(project => nowReading(transport, project, {kind: 'list'})
@@ -171,7 +171,7 @@ async function carryInto(transport: KernelTransportStatus, closed: {readonly day
  * relations revisions read here (the central-day-close method's root close, central.day.lifecycle `closed`). A Day already closed is
  * refused in words; Central keeps every authored byte, and what still plays carries into the next Day when Open today makes it. */
 export async function closeDay(transport: KernelTransportStatus): Promise<{closed: string; civilDate: string}> {
-  const ground = await readGround(transport, null)
+  const ground = await readGround(transport, null, true)
   const day = ground.day.data
   if (!day) throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; there is no Day to close`)
   if (day.temporal.lifecycle === 'closed') throw new Error(`The Day of ${day.temporal.civil_date} is closed already.`)

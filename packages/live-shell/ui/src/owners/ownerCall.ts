@@ -16,7 +16,7 @@
 // Reads only: a write never goes through here.
 
 import {useRef} from 'react'
-import {installKernelReadHolder, kernelReadSend, onKernelWrite, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {installKernelReadHolder, installReadingsNoticeSource, kernelReadSend, onKernelWrite, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelOutcome, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadings} from './ownerReading'
 import {currentSpineEpoch, useSpineEpoch} from './spine'
@@ -59,6 +59,8 @@ export async function heldCall(transport: KernelTransportStatus, op: KernelOp, o
 installKernelReadHolder((transport, op, fresh) => heldCall(transport, op, {fresh}))
 // A write this window's kernel op completed retires every held answer at once (the notice from the kernel's watch follows it).
 onKernelWrite(() => windowReadingsChanged.now())
+// Engine views that polled an owner on a period re-read on the driver's notice instead.
+installReadingsNoticeSource()
 
 /** The read of one op for a view: an answer is the outcome when it carries the expected `result`; anything else is the kernel's
  * refusal in its own words. */

@@ -155,6 +155,30 @@ export type KernelReadHolder = (transport: KernelTransportStatus, op: KernelOp, 
 let readHolder: KernelReadHolder | null = null;
 export function installKernelReadHolder(holder: KernelReadHolder | null): void { readHolder = holder; }
 
+/** The kernel's notice that owner readings may have moved (its `readings_changed` event, or a write this window completed), as engine
+ * code hears it. A host that carries the notice installs a source (the shell: packages/live-shell/ui/src/owners/ownerCall.ts) and
+ * fires `announceReadingsMoved`; a host that does not (the legacy frame) installs none, and `refreshOnReadingsMoved` keeps its period. */
+const movedListeners = new Set<() => void>();
+let noticeSources = 0;
+/** Declare that this window receives the kernel's notice. Returns the withdrawal. */
+export function installReadingsNoticeSource(): () => void {
+  noticeSources++;
+  let live = true;
+  return () => { if (live) { live = false; noticeSources--; } };
+}
+export function hasReadingsNoticeSource(): boolean { return noticeSources > 0; }
+/** Hear that owner readings may have moved. */
+export function onReadingsMoved(listener: () => void): () => void { movedListeners.add(listener); return () => { movedListeners.delete(listener); }; }
+/** Tell the listeners that owner readings may have moved (the notice source calls it once per debounced notice). */
+export function announceReadingsMoved(): void { for (const listener of [...movedListeners]) listener(); }
+
+/** Keep a view's owner reading current: `read` runs once per notice where a source is installed, else every `periodMs`. Returns the stop. */
+export function refreshOnReadingsMoved(read: () => void, periodMs: number): () => void {
+  if (hasReadingsNoticeSource()) return onReadingsMoved(read);
+  const timer = setInterval(read, periodMs);
+  return () => clearInterval(timer);
+}
+
 /** A kernel op that only reads. It is answered from the window's held answer when one stands for the same op; `fresh` asks the
  * kernel again and replaces it. A write, or a read whose answer must be the owner's now, goes through `kernelOp`. */
 export function kernelRead(transport: KernelTransportStatus, op: KernelOp, options: { fresh?: boolean; signal?: AbortSignal } = {}): Promise<KernelOpCall> {
