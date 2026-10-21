@@ -53,9 +53,18 @@ One route that carries it unblocks these, all of whose Central operations alread
 | AIKit | `trust record`, `praxis method run\|prove`, `set package export`, `wiki-shape *` | The Skillset rack's trust and package acts; the Canvas Form page. |
 | Software Factory | `attempt decision`, `custody assign\|update` | Takes that stand; the Agent's Custody writes. |
 | Quaternal Logic | `kernel m1` | M′ matrices. |
+| Quaternal Logic | `techne reading`, `mef lenses`, `context-frame list`, `service capabilities`, `vak locate\|context`, `kernel apply`, `kernel ledger`, `stage state\|evaluate\|bind\|unbind\|retire` | The Lens, Search's `vak:` kind, the M′ matrices' Kernel page, the instruments' racks and the Torus's Stage. |
 | Quaternal Logic | `scene compose\|world` | The Chakra's and Sitting's centres. |
 | Quaternal Logic | `ql_m3_generate`, asked from `m3_reception` | The M3 clock's Law and Generation. |
 | Hermes | a frame-ring read | The Frames monitor. |
+| Workcell | services (hosting), `collect`, `secret scan\|projections\|revoke-projection`, `machine add\|remove`, `connect`, `connections disconnect` | The Decision helper's hosting; Runs' outputs; Settings' Credentials and Machines. |
+| AIKit | `work continuity closeout verify`; a native binding for RoutineAuthoringSource; route standing in `model_catalogue` | The Day's close-out; Settings' Automations (enable, reprove, create) and model routes. |
+| AIKit | `source`, `collate`, `adopt`, `procedure`, `bypass`, `unused`, `explain`, `history`, `work continuity pressure\|commands\|closeout verify`, `knowledge frame`, `knowledge forget` | The Skillset rack's Sources, Adopt and Procedures; the member's Why and History; Impact's Meaning; the Agent's Context; the Knowledge route's Forget. |
+| Central | `control.skills.inspect\|retire\|restore`; `projectcentral.inspect`, `init`, `adopt`, `migrate` (preview and apply); `projectcentral.self.*`; `central.remember` | The member's Retire and Restore; the workspace's Ground and Self; Remember. Through `invoke_action`, and the writes need §1.1's route. |
+| Workcell | `doctor`, `discover`, `plan`, `instances list\|usage`, `recover`, `reconcile --desired`, `release`, `sandboxes reconcile` | The workcell's Services, Release and resources; the Remote carrier's Offers and Plan; Ground hygiene's Material page. |
+| Actuation | `authority issue\|revoke` | Grants on Custody. |
+| Software Factory | `factory development pads`, `pads-write`, `pads-run`, `pads-record`, `pads-due` | Prompt pads (§19.22): every pad write and Run now. |
+| Software Factory | a read of the project-development ledger (bounded intent, success criteria, PraxisCondition); the cognitive view (Run Thought); StructuralFidelityEvidence; `development mutate` for ContinueCommission; the attempt `retry` | The Intent panel, Review's criteria, the Thought page, the Ledger's Worked under line, the Run device's Structure reading, and the Run map's Continue and Retry. |
 
 ### 1.3 Refusals that are now stale (the owner answers; only the binding is behind)
 
@@ -70,6 +79,12 @@ One route that carries it unblocks these, all of whose Central operations alread
 | Search | "Your world" | `control.search` |
 | page takes | page history | `central.temporal.source-history` |
 | Diff widget | anything but O-I (it reads one fixed repository, `widgets/railDevices.tsx:100`) | — fix to follow the selected seat |
+
+### 1.3b Shell models the new designs need
+
+`centralHygieneModel.ts`: the finding kinds Ground hygiene now draws (root-part-missing, root-mixed, scaffold-missing,
+source-unrecognised, binding-drift, binding-lost, sandbox-orphan, sandbox-unproven) with classifiers, and the tenders init-root,
+reproject-scaffold, recognise-source, reconcile-binding, release-orphans. The design's sample writes these by hand today.
 
 ### 1.4 Designs with no binding yet
 
@@ -87,12 +102,12 @@ About forty more are partly bound; each row in the evidence names what is missin
 
 | Owner | What is missing |
 |---|---|
-| Workcell | placement; reachability and Lag; commit, push and land for Git / landing; moving a session to another machine; checkpoints. |
-| Central | applying Control proposals (library-only today; apply refuses without a human-authority route); an Agentset Join field; listings of worlds, subjects and places for Beings and Things; commenting on a source return; `personal.notify` and `personal.show`, which are not installed. |
-| Actuation | continuity; the heartbeat cadence; per-task Launch, Retry and Stop; session Telemetry and Solo; a writer for spend. |
-| Software Factory | Scope's reach and write enforcement (WO-SF2); the custody record's autonomy, gate and escalate fields; the First, Quorum and Weighted joins. |
-| AIKit | the agent-to-agent ingress rule; the Knowledge route's Read budget and Search first. |
-| Quaternal Logic | portal traversal; the Deck's Move and Turn; a tuning owner for Exact-ratio; the Decision helper's When and Deadline; the M′ Situation matrix; the M3 clock's Run and Rate. |
+| Workcell | placement; reachability and Lag; commit, push and land for Git / landing; moving a session to another machine; leases and checkpoints (`MaterialLeaseProvider`, `MaterialCheckpoint` are internal only). |
+| Central | `personal.notify` installed, keeping its requests and deliveries as a read the kernel can route (Notifications); listing and withdrawing presence consents (`nara_presence` publishes; nothing lists or withdraws); `personal.show` installed (only the library registers it); an open and reveal that resolve a page's file (`work.open` and `work.reveal` resolve a Work directory only); applying Control proposals (library-only today; apply refuses without a human-authority route); an Agentset Join field; listings of worlds, subjects and places for Beings and Things; commenting on a source return; `personal.notify` and `personal.show`, which are not installed. |
+| Actuation | a list of grants (`AuthorityStore::read` reads one ref); continuity (`continuityDelta` is library-only); the heartbeat cadence; per-task Launch, Retry and Stop; session Telemetry and Solo; a writer for spend. |
+| Software Factory | Scope's reach and write enforcement (WO-SF2); the custody record's autonomy, gate and escalate fields; the First, Quorum and Weighted joins; an owner for a task's success criterion; a pad's link to the AIKit Routine that carries its schedule; unit decisions in Approvals (`factory attempt decision`); composing a new Commission (`factory.commission-request/v1`). |
+| AIKit | the agent-to-agent ingress rule; the Knowledge route's Read budget and Search first; an owner read of Living Knowledge's impact for a set of readings (the Affected page); a read of the last turn's bounded blocks (Context); a read of a Flow's last thought (`flow changed-since` needs `--thought <file>`); a CLI leaf for the reflection law's verdict (Meaning). |
+| Quaternal Logic | a CLI for the External Context Frame reading (`read_external_context_frame` is library-only); a CLI for `plan_living_wiki_refraction` (the graph's Aperture); WikiFrame refraction candidate counts (the Lens's proposals); a rule naming when a rack part is "verified"; a kernel address for a matrix cell; portal traversal; the Deck's Move and Turn; a tuning owner for Exact-ratio; the Decision helper's When and Deadline; the M′ Situation matrix; the M3 clock's Run and Rate. |
 
 ## 2. For the design lane: what to design before the build reaches it
 
@@ -102,15 +117,25 @@ capability, it lands as a page, an act or a view of that device.
 | Package | Capabilities | Home |
 |---|---|---|
 | D1 The world a run stands in | Workcell's local-world, services, observation, release, exposure, checkpoints, instance-registry and collection; discovery and planning | Pages in `workcell:workcell`'s Full (World, Services, Exposure with Open, Release); offers and planning failures as the Remote carrier's Standing; collection in Factory's Results tile. |
+|  | **Landed 21 Oct:** World, Services, Exposure and Release pages on `workcell:workcell` (§19.23), with the resources in Working here; Offers and Plan on the Remote carrier's Standing page (§19.18). Collection landed 21 Oct as Outputs on Runs (`workcell collect`). | |
 | D2 Ground and machines | Central's root, machine declaration, reconciliation and recovery, authored-ground and reproject; Workcell's reconciliation and sandbox clean-up | A Machine device (declared beside observed; plan, apply, verify; a Recover page) beside Ground hygiene; findings with tenders on Ground hygiene. |
+|  | **Landed 21 Oct:** `central:machine` (§18.7; every operation reachable through `invoke_action`); Ground and Material pages of findings and tenders on Ground hygiene (§18.5). | |
 | D3 Factory's developmental work | run-map, journey-continuity, build-evidence, intent-return, bounded-intent, structural-ground, cognitive-reading, run-thought, praxis-condition; Recognition and Commission | A Run map device (units, dependencies, barriers, lifecycle, Recognition); a Journey view and a Review page behind Stands on `software-factory:attempt-review`; an Intent panel in Factory's Clip view; a Thought filter on the Thread. |
+|  | **Landed 21 Oct:** `software-factory:run-map` (§19.25), the Journey view and the Review page on Runs, the Intent panel, the Thought page, Worked under on the Ledger, and Structure on the Run device. | |
 | D4 Prompt pads | AIKit routines; Factory's pad bank; praxis-fitness | `software-factory:prompt-pads`: §19.22 is written, but no design exists. |
+|  | **Landed 21 Oct:** `software-factory:prompt-pads`, §19.22 rewritten to it. | |
 | D5 Practice upkeep | AIKit discovery, adoption, procedures, explain and familiarity; Central skills retire and restore; living-knowledge, reflection, continuity | Sources, Adopt and Procedure pages on the Skillset rack; Why and History on the member device, with Retire and Restore; an Affected page on the Knowledge route; a Meaning page on Impact; a Context page on the Agent. |
+|  | **Landed 21 Oct:** Sources, Adopt and Procedures pages and an Unused filter on the Skillset rack (§19.7); Why and History, with Retire and Restore, on the member (§19.8); Affected on the Knowledge route (§19.9); Meaning on Impact (§18.6); Context on the Agent (§19.4). Close-out verify landed 21 Oct in the Day's Close section (§18.2). | |
 | D6 Worlds and pages | work-entry (Open, Reveal), remembered-note, projectcentral-lifecycle, development-field-source, flow-cognition, flow-changed-since, personal-surface, guided ground authoring | Open and Reveal in the track and clip menus (§10.9); Remember as a fifth selection act; the adopt-or-migrate preview on a folder drop; a Self page in a world's track settings; Contemplate and Changed since on `central:flow-document`. |
+|  | **Landed 21 Oct:** Open and Reveal in §10.9; Remember as the fifth passage act (Central's Clip view); Ground (adopt or migrate on a folder drop) and Self (the world's self-description, which also carries guided ground authoring) pages on `central:workspace`; Thought (Preflight, Contemplate, Changed since) on `central:flow-document`; the browser's top level as the personal surface (§18.1). The Selection act and the five passage acts landed 21 Oct on `central:document` (§17.8). | |
 | D7 Authority and continuity | Actuation metagency (grants) and continuity | A Grants page on the Agent's Custody; a Changed since line on Identity. |
+|  | **Landed 21 Oct:** a Grants page on Custody, carried by the Agent; Changed since on Identity (§19.4). | |
 | D8 Quaternal Logic in Technē | external-frame, service-readings, wiki-refraction, techne-reading; vak-source and vak-context; living-wiki; kernel-operators; the M-registry ledger; stage; Nara's activity and occasions; meta-recognition | A Lens effect on a Technē reading's chain (§17.1 names lens effects but specifies none); a `vak:` kind in Search; an Aperture page on the graph; a Cell group on the M′ matrices; the racks of the instruments of the map with their dark parts (§16.16); a Stage page on the Torus; consent for a shared sky (§24.6). |
+|  | **Landed 21 Oct:** `techne:lens` (§17.11, Lens and Frame pages over one QL Technē reading); a `vak:` kind in Search with the neighbourhood at depth 0–2 (§18.4); an Aperture page on the graph (§17.3); a Kernel page on the M′ matrices (§22.6); `quaternal-logic:map-rack` (§22.9, §16.16), carried as a Rack page by the Torus, the Sky and the M3 clock, with dark parts named; a Stage page on the Torus (§21.2); a Share page on the Sky for presence consent (§22.1, §24.6). Still open: Nara's activity (its home, the practice world's track in §24.1, has no device) and the replay half of occasions; meta-recognition is QL-MEF's own wiki and stays backstage. | |
 | D9 Settings | Central's system (declared, effective, active, staged); harness install, credentials, profiles, routines, secret projections | The Settings window (`settings/*.tsx`) is outside the catalogue and the manual. Write its entry, and catalogue its pages. |
+|  | **Landed 21 Oct:** `settings:window` (§10.10), one device with the window's pages (Harnesses and models, the owner settings, Profiles, Credentials as references only, Machines and services, Automations, Appearance, Products and updates, System's four axes) and Review. It carries what the shell's Settings draws today; per-row scope overrides are folded into the page's Applies to. | |
 | D10 Attention and hosting | Notifications; Workcell model hosting | Needs-you in Messages and Approvals, plus a Notifications monitor; a hosted model's health beside the Decision helper's Provider. |
+|  | **Landed 21 Oct:** `widgets:notifications` (§23.9), a monitor of what owners raise for attention, beside Messages and Approvals; hosting and kept-by on the Decision helper's Provider page (§19.20). Before building an owner for notifications, read the models that exist: `shared-field/activity.mjs` (`notificationFromActivity`) and `packages/oi-pi/contrib/lib/attention.ts`. | |
 
 ## 3. Manual corrections made with this ticket
 

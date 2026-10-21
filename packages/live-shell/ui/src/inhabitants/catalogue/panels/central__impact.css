@@ -66,3 +66,6 @@
 .im-first:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
 .im-first span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .im-first[data-none="true"] { color: var(--text-faint); cursor: default; }
+
+/* The pane's pages: Neighbourhood and Meaning under the tabs. */
+.im-host { position: relative; flex: 1 1 auto; min-height: 0; }

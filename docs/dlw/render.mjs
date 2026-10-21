@@ -53,7 +53,9 @@ const marked = new Marked({
     //   src: path relative to this folder · device: <family>:<face> (fixture:, page:) · clip: <mode> · height: px · caption: text
     code({text, lang}) {
       if (lang !== 'ui') return false
-      const f = Object.fromEntries(text.split('\n').map(l => l.split(/:\s*/)).filter(([k, v]) => k && v).map(([k, ...v]) => [k.trim(), v.join(':').trim()]))
+      // Each line is `key: value`; only the first colon separates them, so a value keeps its own colons and spaces (a fixture named
+      // "A: b", a device's family:face, a caption).
+      const f = Object.fromEntries(text.split('\n').map(l => { const i = l.indexOf(':'); return i < 0 ? [] : [l.slice(0, i).trim(), l.slice(i + 1).trim()] }).filter(([k, v]) => k && v))
       // device: <family>:<face> embeds the device gallery (the shell's own runtime, every view) instead of a page.
       // fixture: and page: open the device on a named fixture and page.
       if (f.device) Object.assign(f, {query: `device=${f.device}&view=${f.view || 'all'}${['fixture', 'page'].map(k => (f[k] ? `&${k}=${encodeURIComponent(f[k])}` : '')).join('')}`, width: f.width || '1100', height: f.height || '760'})

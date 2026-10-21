@@ -1,0 +1,20 @@
+/* A rack of the map (manual §16.16): the ledger's ladder in the Part section, and the pane, where each part of the rack stands as a chain
+   with its device or its own positions. Shell and panel tokens only. */
+.mrk-ladder { display: flex; justify-content: center; width: 100%; }
+.mrk-where { display: flex; gap: 10px; justify-content: space-around; width: 100%; margin-top: 4px; }
+.mrk-full { color: var(--text, #d4d7da); font: 11px/1.4 var(--font-ui, sans-serif); }
+.mrk-full-head { flex: none; display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 12px; border-bottom: 1px solid var(--line, #24262a); background: var(--bg-0, #26292d); }
+.mrk-full-head span:last-child { color: var(--text-dim, #a2a7ad); font-size: 10.5px; }
+.mrk-full-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
+.mrk-chain { border: 1px solid var(--line, #24262a); background: var(--bg-1, #33363b); }
+.mrk-chain[data-frame="true"] { background: var(--bg-0, #26292d); }
+.mrk-chain[data-dark="true"] { border-style: dashed; opacity: .75; }
+.mrk-chain h3 { display: flex; align-items: baseline; gap: 8px; margin: 0; padding: 4px 8px; font-size: 11px; font-weight: 500; }
+.mrk-chain h3 small { color: var(--text-faint, #71767c); font-size: 10px; }
+.mrk-chain h3 em { margin-left: auto; font-style: normal; font-size: 10px; color: var(--text-dim, #a2a7ad); }
+.mrk-pos { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 3px; background: var(--dp-value, #5cc8bd); color: #121a20; font-size: 10px; }
+.mrk-chain[data-dark="true"] .mrk-pos { background: none; border: 1px dashed var(--dp-value-dim, #3f7a74); color: var(--text-dim, #a2a7ad); }
+.mrk-own { list-style: none; margin: 0; padding: 4px 8px 8px; display: grid; grid-template-columns: repeat(min(var(--n), 6), minmax(0, 1fr)); gap: 4px; }
+.mrk-own li { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; background: var(--bg-0, #26292d); min-width: 0; }
+.mrk-own li b { font-weight: 500; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mrk-own li small { color: var(--text-faint, #71767c); font-size: 9.5px; }

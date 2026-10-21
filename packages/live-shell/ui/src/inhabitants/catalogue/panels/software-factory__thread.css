@@ -87,3 +87,21 @@
 .th-tile-composer::placeholder { color: var(--text-faint, #71767c); }
 .th-tile-composer:disabled { opacity: .55; }
 .th-tile-composer:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+
+/* The run's retained thought, in the pane: the condition the agent worked under at the head, then one row for each thought. */
+.th-pane-head span[data-state="thought"] { color: var(--dp-on, #ffbe00); }
+.th-cond { flex: none; display: flex; align-items: baseline; gap: 10px; height: 22px; padding: 0 20px; border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+.th-cond small { font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.th-cond span + span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.th-thought { min-width: 0; display: grid; grid-template-columns: 8px auto auto minmax(0, 1fr) auto; align-items: baseline; column-gap: 8px; font-size: 10.5px; color: var(--text-dim, #a2a7ad); }
+.th-thought i { width: 6px; height: 6px; align-self: center; border: 1px solid var(--text-faint, #71767c); }
+.th-thought[data-life="active"] i { background: var(--dp-value, #5cc6b4); border-color: var(--dp-value, #5cc6b4); }
+.th-thought[data-life="resolved"] i { border-color: var(--green, #8fd0a8); }
+.th-thought[data-life="integrated"] i { background: var(--green, #8fd0a8); border-color: var(--green, #8fd0a8); }
+.th-thought[data-life="retained"] i { border-color: var(--dp-on, #ffbe00); }
+.th-thought[data-life="superseded"] { opacity: .5; }
+.th-thought[data-life="superseded"] span { text-decoration: line-through; text-decoration-color: var(--text-faint, #71767c); }
+.th-thought b { font: 500 10px var(--mono, ui-monospace, monospace); color: var(--text, #d4d7da); padding: 0 5px; border: 1px solid var(--line, #24262a); white-space: nowrap; }
+.th-thought em { font-style: normal; font-size: 9.5px; color: var(--text-faint, #71767c); white-space: nowrap; }
+.th-thought span { min-width: 0; color: var(--text, #d4d7da); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.th-thought small { font-size: 9.5px; color: var(--text-faint, #71767c); white-space: nowrap; }

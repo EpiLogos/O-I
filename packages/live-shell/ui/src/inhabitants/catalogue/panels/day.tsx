@@ -11,9 +11,13 @@
 // Each move's keys: `run_<move>` the press; `at_<move>` Runs at (Off, Day start, Rollover, or a time); `prompt_<move>` the Prompt;
 // readings `last_<move>` (minutes after midnight it last ran; -1 not yet today), `gave_<move>` (what its last run gave) and
 // `running_<move>`. A pad's waiting dot is its face's own count of proposals (`c1p` for Tasks, `c3p` for Patterns).
+// Close-out, beside Close: `closeout` is AIKit's reading of what the close left behind ({verified, clauses: [{clause, state, detail}]},
+// `aikit work continuity closeout verify --json`: each clause continuation-registered | previous-handoff-superseded |
+// learned-material-recorded | deferred-work-registered, pass | fail | skipped, with AIKit's own detail). Verify (`verifyCloseout`)
+// reads it again; the kernel has no route to it yet, so the host stands Verify disabled with that reason.
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Section, TextField, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
-import {NONE, boolOf, clock, cradleDocuments, grown, has, numOf, on, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clock, cradleDocuments, grown, has, json, numOf, on, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 const FACES = ['Ground', 'Definition', 'Operation', 'Pattern', 'Context', 'Synthesis'] as const
 const AT: Record<number, [number, number]> = {2: [1, 0], 4: [0, 1], 0: [1, 1], 1: [2, 1], 5: [3, 1], 3: [1, 2]}
@@ -185,6 +189,7 @@ function Whole({p}: {p: ViewProps}) {
         {closeNow(p)}
         {openToday(p)}
         <Readout label="closes" does="The time today closes." value={has(p.v, 'dayStart') ? (numOf(p.v, 'dayStart')! < 0 ? 'civil' : clock(numOf(p.v, 'dayStart')!)) : undefined} />
+        {closeoutPair(p)}
       </Section>
     </Band>
   </Panel>
@@ -209,6 +214,22 @@ const openToday = (p: ViewProps, label = 'Open today') => <Action label={label} 
 /** Close now (manual §18.2): Central closes the Day; what still plays carries into the next Day. The owner reports `canClose`. */
 const closeNow = (p: ViewProps) => <Action hold label="Close now" does="Closes the Day through Central; what still plays carries into the next Day."
   onPress={() => p.set('closeNow', true)} disabled={on(p.v, 'canClose') ? undefined : 'The Day shown is closed already, or is one you selected.'} />
+/** What the close left behind, as AIKit reads it back: verified, or how many of its clauses pass and which fail. */
+const CLAUSE: Readonly<Record<string, string>> = {'continuation-registered': 'a continuation', 'previous-handoff-superseded': 'earlier handoffs closed',
+  'learned-material-recorded': 'learning recorded', 'deferred-work-registered': 'deferred work registered'}
+function closeout(v: ViewProps['v']): {word?: string; ok?: boolean; fails: string[]} {
+  const c = json<{verified?: unknown; clauses?: unknown} | null>(v, 'closeout', null)
+  if (!c || !Array.isArray(c.clauses)) return {fails: []}
+  const rows = c.clauses.filter((x): x is {clause: string; state: string} => !!x && typeof x === 'object' && typeof (x as {clause?: unknown}).clause === 'string')
+  const checked = rows.filter(r => r.state !== 'skipped'), fails = rows.filter(r => r.state === 'fail').map(r => CLAUSE[r.clause] ?? r.clause)
+  return {word: c.verified === true ? 'verified' : `${checked.length - fails.length}/${checked.length}`, ok: c.verified === true, fails}
+}
+const closeoutPair = (p: ViewProps) => { const c = closeout(p.v)
+  return <div className="ref-pair">
+    <Readout label="close-out" does={`What the last close left behind, read back: ${c.fails.length ? `missing ${c.fails.join(', ')}` : c.word ? 'every clause it checks holds' : 'not read yet'}.`}
+      value={c.word} tone={c.ok ? 'green' : c.word ? 'stall' : undefined} />
+    <Action {...st(p, 'verifyCloseout')} label="Verify" does="Reads the close back: a continuation registered, earlier handoffs closed, learning recorded, deferred work registered." onPress={() => p.set('verifyCloseout', true)} />
+  </div> }
 const toggle = (p: ViewProps, key: string, label: string, does: string, tone?: 'value') => {
   const now = boolOf(p.v, key)
   return <Toggle key={key} label={label} does={does} tone={tone} on={now === true} unknown={now === undefined} onChange={x => p.set(key, x)} />
@@ -234,15 +255,19 @@ export const day: DesignedDevice = {
     // Readings: when each move last ran today (minutes after midnight; -1 not yet) and what it gave.
     last_tasks: 552, gave_tasks: 4, last_patterns: 870, gave_patterns: 2, last_context: 871, gave_context: 7, last_synthesis: -1, gave_synthesis: 0, last_close: -1,
     running_tasks: false, running_patterns: false, running_context: false, running_synthesis: false, running_close: false,
+    // Reading: what yesterday's close left behind, as AIKit read it back (O-I's NOW field, 21 Oct).
+    closeout: JSON.stringify({verified: false, clauses: [{clause: 'continuation-registered', state: 'pass'}, {clause: 'previous-handoff-superseded', state: 'fail', detail: '63 handoff returns stand open'},
+      {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'skipped', detail: 'No Factory Run ledger bound to this session.'}]}),
   },
   fixtures: {
-    'A working day': {canClose: true, running_context: true, at_patterns: 960},
+    'A working day': {canClose: true, running_context: true, at_patterns: 960, closeout: JSON.stringify({verified: true, clauses: [{clause: 'continuation-registered', state: 'pass'},
+      {clause: 'previous-handoff-superseded', state: 'pass'}, {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'pass'}]})},
     'Stale pointer': {light: 'dark', refusal: 'The native today pointer is stale: it names 13 Oct. Open today to move it.', canOpenToday: true, canClose: undefined, face: undefined,
       date: 'Fri 16 Oct', tomorrow: undefined, tomorrowOpen: undefined, c0: undefined, c1: undefined, c1p: undefined, c2done: undefined, c2run: undefined,
       c2queue: undefined, c3: undefined, c3p: undefined, c4: undefined, c5: undefined,
       ...Object.fromEntries(MOVE_KEYS.filter(k => !k.startsWith('at_') && !k.startsWith('prompt_')).map(k => [k, undefined]))},
     'No readings': Object.fromEntries(['light', 'face', 'view', 'dayStart', 'rollover', 'closeRoutine', 'agentWrites', 'template', 'src_central', 'src_factory',
-      'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose',
+      'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose', 'closeout',
       ...MOVE_KEYS].map(k => [k, undefined])),
   },
 

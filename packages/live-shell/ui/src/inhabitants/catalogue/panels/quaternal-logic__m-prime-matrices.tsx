@@ -18,6 +18,14 @@
 //                 them (ql_m3_apply_matrix, ql_m3_apply_matrix_hexagram). Apply moves the form to its partner through `select-form`.
 // The Situation matrix has no owner yet (the M′ packets, QL-MEF #281, are commissioned, not landed), so it is named absent. Follow
 // has no owner operation (nothing reports the notes played or moves the cell with the sky), so it is not offered.
+//
+// The Kernel page applies the kernel's three operators to an address of its sixfold form (`ql kernel apply <operator> <address>`,
+// crates/ql-core/src/apply.rs, kernel 0.1.0-q1; an address is `qladdr:<form>/<face>/P<position>/d<depth>`). Apply above moves only an
+// M3 partner; these move any address. No owner names a kernel address for a matrix cell, so the address is yours: kernel.position (0..5)
+// and kernel.face ('direct' | 'conjugate'), with kernel.depth and kernel.form read as the owner keeps them (depth 0 and sixfold@1, the
+// one form the operators serve: the kernel refuses its other forms with "unsupported QL address frame"). The answers are readings:
+// kernel.conjugate and kernel.complement (addresses), kernel.class ('implicate' | 'explicate'), kernel.version. Conjugate and Complement
+// move the address to the kernel's answer. The CLI has no kernel op behind it yet: the binding owes the route.
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, ValueBox, type LightState} from '../../sdk/panel'
 import {PITCH_CLASS_NAMES} from '../../../live/modes'
 import {NONE, clampTo, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -103,6 +111,60 @@ function Grid({p, w, h, handles, text}: {p: ViewProps; w: number; h: number; han
   </g>
 }
 
+// ---------------------------------------------------------------- the Kernel page: an address of the sixfold form and the operators' answers
+
+const ADDR = /^qladdr:([^/]+)\/(direct|conjugate)\/P([0-5])\/d(\d+)$/
+const addrOf = (v: V, key: string) => { const m = ADDR.exec(strOf(v, key) ?? ''); return m ? {form: m[1]!, face: m[2] as 'direct' | 'conjugate', position: Number(m[3]), depth: Number(m[4])} : undefined }
+const kernelAddress = (v: V) => { const pos = intIn(v, 'kernel.position', 0, 5), face = strOf(v, 'kernel.face'), depth = numOf(v, 'kernel.depth'), form = strOf(v, 'kernel.form')
+  return pos === undefined || (face !== 'direct' && face !== 'conjugate') || depth === undefined || form === undefined ? undefined : `qladdr:${form}/${face}/P${pos}/d${depth}` }
+const FACES = [{value: 'direct', label: 'Direct', does: 'The direct face of the position.'}, {value: 'conjugate', label: 'Conjugate', does: 'The conjugate face: the position seen from its other side.'}] as const
+const shortAddr = (a: ReturnType<typeof addrOf>) => (a ? `P${a.position} ${a.face === 'direct' ? 'dir.' : 'conj.'}` : undefined)
+
+/** The sixfold form: six positions round, the frame 0 and 5 at the top and shaded, the four working positions below, each position
+ * facing its complement across the middle (0 and 5, 1 and 4, 2 and 3); the direct face outside and the conjugate inside. Handle 1 is
+ * the address: drag it to another position or face. The kernel's conjugate is the arrow between the faces, its complement the dashed
+ * arrow across. */
+function SixfoldWell({p, w, h, handles, labels}: {p: ViewProps; w: number; h: number; handles: boolean; labels: boolean}) {
+  const v = p.v, cx = w / 2, cy = h / 2 + (labels ? 4 : 0), R = Math.min(w, h) / 2 - (labels ? 14 : 8), r = R * .56
+  const P = (i: number, face: string) => { const a = (330 - i * 60 - 90) * Math.PI / 180, k = face === 'conjugate' ? r : R; return [cx + k * Math.cos(a), cy + k * Math.sin(a)] as const }
+  const pos = intIn(v, 'kernel.position', 0, 5), face = strOf(v, 'kernel.face'), conj = addrOf(v, 'kernel.conjugate'), comp = addrOf(v, 'kernel.complement')
+  const at = pos !== undefined && (face === 'direct' || face === 'conjugate') ? P(pos, face) : undefined
+  const held = st(p, 'kernel.position').disabled ?? st(p, 'kernel.face').disabled
+  const arrow = (to: readonly [number, number], dash: boolean, key: string) => at && <path key={key} d={`M${at[0].toFixed(1)} ${at[1].toFixed(1)}L${to[0].toFixed(1)} ${to[1].toFixed(1)}`}
+    stroke="var(--dp-on)" strokeWidth={1} strokeDasharray={dash ? '3 2' : undefined} opacity={.8} markerEnd="none" />
+  return <g>
+    {[R, r].map((k, ring) => <circle key={ring} cx={cx} cy={cy} r={k} className="dp-faint" opacity={.6} />)}
+    {[0, 5].map(i => { const [x, y] = P(i, 'direct'), [u, z] = P(i, 'conjugate'); return <path key={i} d={`M${x} ${y}L${u} ${z}`} stroke="var(--dp-value)" strokeWidth={9} strokeLinecap="round" opacity={.12} /> })}
+    {[0, 1, 2, 3, 4, 5].map(i => (['direct', 'conjugate'] as const).map(f => { const [x, y] = P(i, f), here = pos === i && face === f
+      return <g key={`${i}${f}`}>
+        <circle cx={x} cy={y} r={f === 'direct' ? 6.5 : 5} fill={here ? 'var(--dp-value)' : 'var(--dp-well)'} stroke="var(--dp-value-dim)" strokeWidth={.8} />
+        {(labels || f === 'direct') && <text x={x} y={y + 2.8} textAnchor="middle" style={{fontSize: f === 'direct' ? 7.5 : 6.5, fill: here ? '#121a20' : 'var(--text-dim)'}} className="dp-ink">{i}</text>}
+      </g> }))}
+    {conj && arrow(P(conj.position, conj.face), false, 'conj')}
+    {comp && arrow(P(comp.position, comp.face), true, 'comp')}
+    {conj && <circle cx={P(conj.position, conj.face)[0]} cy={P(conj.position, conj.face)[1]} r={7.5} fill="none" stroke="var(--dp-on)" strokeWidth={1} />}
+    {comp && <circle cx={P(comp.position, comp.face)[0]} cy={P(comp.position, comp.face)[1]} r={7.5} fill="none" stroke="var(--dp-on)" strokeWidth={1} strokeDasharray="2 2" />}
+    {labels && <><text x={w - 4} y={11} textAnchor="end" className="dp-axis">frame</text><text x={w - 4} y={h - 4} textAnchor="end" className="dp-axis">work</text></>}
+    {!at && <text x={cx} y={cy + 3} textAnchor="middle" className="dp-ink-dim">{w > 100 ? 'No address' : NONE}</text>}
+    {handles && at && <Handle n={1} shape="ring" x={at[0]} y={at[1]} label="Address" does={`Drag to another position, or across to the other face.${held ? ` ${held}` : ''}`}
+      onDrag={held ? undefined : (x, y) => { const a = (Math.atan2(y - cy, x - cx) * 180 / Math.PI + 90 + 360) % 360, i = ((Math.round((330 - a) / 60) % 6) + 6) % 6, f = Math.hypot(x - cx, y - cy) < (R + r) / 2 ? 'conjugate' : 'direct'
+        if (i !== pos) p.set('kernel.position', i); if (f !== face) p.set('kernel.face', f) }} />}
+  </g>
+}
+
+function kernelControls(p: ViewProps) {
+  const v = p.v, conj = addrOf(v, 'kernel.conjugate'), comp = addrOf(v, 'kernel.complement'), none = 'No answer from the kernel for this address.'
+  return {
+    position: <ValueBox {...st(p, 'kernel.position')} label="Position" does="The position of the address, 0 to 5." value={intIn(v, 'kernel.position', 0, 5) ?? NaN} def={0} scale={{min: 0, max: 5, step: 1}}
+      format={x => String(x)} onChange={x => p.set('kernel.position', x)} />,
+    face: <Radio {...st(p, 'kernel.face')} label="Face" does="The face of the address." value={strOf(v, 'kernel.face') ?? ''} options={FACES} stack onChange={x => p.set('kernel.face', x)} />,
+    conjugate: <Action {...st(p, 'kernel.face')} label="Conjugate" does="Move the address to its conjugate, as the kernel answers: the same position on its other face."
+      onPress={() => { if (conj) { p.set('kernel.face', conj.face); p.set('kernel.position', conj.position) } }} disabled={st(p, 'kernel.face').disabled ?? (conj ? undefined : none)} />,
+    complement: <Action {...st(p, 'kernel.position')} label="Complement" does="Move the address to its complement, as the kernel answers: the position across from it, on the same face."
+      onPress={() => { if (comp) { p.set('kernel.position', comp.position); p.set('kernel.face', comp.face) } }} disabled={st(p, 'kernel.position').disabled ?? (comp ? undefined : none)} />,
+  }
+}
+
 const LIGHT_WHY = 'The M′ matrices have no on or off. The light stays hollow.'
 const headOf = (p: ViewProps) => ({light: 'unknown' as LightState, lightWhy: LIGHT_WHY, onFold: p.nav.fold, onFull: p.nav.full})
 const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
@@ -146,6 +208,7 @@ export const design: DesignedDevice = {
   id: 'quaternal-logic:m-prime-matrices',
   title: 'M′ matrices',
   kind: 'instrument',
+  firstPage: 'matrix',
   defaults: {
     matrix: 'oscillator', valueForm: 'raw', 'm1.basis': 'chromatic', 'm1.lens12': 0, 'm1.context_frame': 1, 'm1.family': 0, 'm1.row12': 3, 'm1.col12': 4, 'm1.tick12': 7, 'form.address': 17,
     // `ql kernel m1` on fixtures/kernel/m1-engine-v1.request.json, family 0, each of the 144 cells: [raw, digit root, decimal].
@@ -156,6 +219,9 @@ export const design: DesignedDevice = {
     // `ql kernel m3`, the codon of each form address 0..63.
     // ql_m3_apply_matrix(0, a) on main (61c0e16): each address's complementary partner, base by base.
     'form.partner': 'complementary', 'form.scale': 'codon', 'form.partners': '[21,20,23,22,17,16,19,18,29,28,31,30,25,24,27,26,5,4,7,6,1,0,3,2,13,12,15,14,9,8,11,10,53,52,55,54,49,48,51,50,61,60,63,62,57,56,59,58,37,36,39,38,33,32,35,34,45,44,47,46,41,40,43,42]',
+    // `ql kernel apply` on qladdr:sixfold@1/direct/P2/d0 (kernel 0.1.0-q1): conjugate, complement, class.
+    'kernel.position': 2, 'kernel.face': 'direct', 'kernel.depth': 0, 'kernel.form': 'sixfold@1', 'kernel.version': '0.1.0-q1',
+    'kernel.conjugate': 'qladdr:sixfold@1/conjugate/P2/d0', 'kernel.complement': 'qladdr:sixfold@1/direct/P3/d0', 'kernel.class': 'explicate',
     'm3.codons': JSON.stringify('AAA AAT AAC AAG ATA ATT ATC ATG ACA ACT ACC ACG AGA AGT AGC AGG TAA TAT TAC TAG TTA TTT TTC TTG TCA TCT TCC TCG TGA TGT TGC TGG CAA CAT CAC CAG CTA CTT CTC CTG CCA CCT CCC CCG CGA CGT CGC CGG GAA GAT GAC GAG GTA GTT GTC GTG GCA GCT GCC GCG GGA GGT GGC GGG'.split(' ')),
   },
   fixtures: {
@@ -168,7 +234,12 @@ export const design: DesignedDevice = {
     // ql_m3_apply_matrix_hexagram(1, a): each address read as a hexagram, its moving-and-resting partner trigram by trigram.
     'The form, partner by hexagram': {matrix: 'form', 'form.partner': 'moving-resting', 'form.scale': 'hexagram', 'form.partners': '[45,43,47,41,46,40,44,42,29,27,31,25,30,24,28,26,61,59,63,57,62,56,60,58,13,11,15,9,14,8,12,10,53,51,55,49,54,48,52,50,5,3,7,1,6,0,4,2,37,35,39,33,38,32,36,34,21,19,23,17,22,16,20,18]'},
     'The situation': {matrix: 'situation'},
-    'No readings': {'m1.cells': undefined, 'm2.tonics': undefined, 'm3.codons': undefined, 'm1.row12': undefined, 'm1.col12': undefined, 'm1.lens12': undefined, 'm1.context_frame': undefined, 'form.address': undefined, 'form.partner': undefined, 'form.scale': undefined, 'form.partners': undefined},
+    // `ql kernel apply` on qladdr:sixfold@1/conjugate/P0/d0: the ground, seen from its other face.
+    'Kernel, the ground conjugate': {'kernel.position': 0, 'kernel.face': 'conjugate', 'kernel.conjugate': 'qladdr:sixfold@1/direct/P0/d0',
+      'kernel.complement': 'qladdr:sixfold@1/conjugate/P5/d0', 'kernel.class': 'implicate'},
+    'Kernel, no answer': {'kernel.conjugate': undefined, 'kernel.complement': undefined, 'kernel.class': undefined, 'kernel.version': undefined},
+    'No readings': {'m1.cells': undefined, 'm2.tonics': undefined, 'm3.codons': undefined, 'm1.row12': undefined, 'm1.col12': undefined, 'm1.lens12': undefined, 'm1.context_frame': undefined, 'form.address': undefined, 'form.partner': undefined, 'form.scale': undefined, 'form.partners': undefined,
+      'kernel.position': undefined, 'kernel.face': undefined, 'kernel.depth': undefined, 'kernel.form': undefined, 'kernel.version': undefined, 'kernel.conjugate': undefined, 'kernel.complement': undefined, 'kernel.class': undefined},
   },
 
   folded: p => <Folded title="M′ matrices" light="unknown" readings={[matrixWord(p.v) ?? NONE, cellWord(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -181,8 +252,32 @@ export const design: DesignedDevice = {
       <Section label="Macros" cols={2} width={140}>{c.matrixRadio}{c.lens}{c.basis}{c.cf}</Section>
     </Panel> },
 
-  whole: p => { const c = controls(p), w = wide(p) ? 280 : 186
-    return <Panel title="M′ matrices" view="whole" {...headOf(p)}>
+  whole: p => { const c = controls(p), w = wide(p) ? 280 : 186, k = kernelControls(p)
+    return <Panel title="M′ matrices" view="whole" {...headOf(p)} pages={[{id: 'matrix', label: 'Matrices'}, {id: 'kernel', label: 'Kernel'}]} page={p.page === 'kernel' ? 'kernel' : 'matrix'} onPage={p.setPage}>
+      {p.page === 'kernel' ? <>
+      <Band>
+        <Section width={198}>
+          <Display w={186} h={146} label="The sixfold form" corner={strOf(p.v, 'kernel.class') ?? NONE}
+            does="The kernel's sixfold form: the frame 0 and 5 at the top, shaded, the working positions 1 to 4 below, each across from its complement; the direct face outside, the conjugate inside. Drag handle 1 for the address. The ringed points are the kernel's conjugate and, dashed, its complement.">
+            <SixfoldWell p={p} w={186} h={146} handles labels /></Display>
+        </Section>
+        <Section label="Address" width={72}>{k.position}{k.face}</Section>
+        <Section label="Operators" width={92}>{k.conjugate}{k.complement}</Section>
+        <Section label="Answers" grow>
+          <Readout big label="class" does="Whether the position frames, implicate (0 and 5), or works, explicate (1 to 4), as the kernel classifies it." value={strOf(p.v, 'kernel.class')} tone="value" />
+          <Readout label="conjugate" does="The kernel's conjugate of the address. Press to copy it." value={shortAddr(addrOf(p.v, 'kernel.conjugate'))} copy={strOf(p.v, 'kernel.conjugate')} />
+          <Readout label="complement" does="The kernel's complement of the address. Press to copy it." value={shortAddr(addrOf(p.v, 'kernel.complement'))} copy={strOf(p.v, 'kernel.complement')} tone="accent" />
+        </Section>
+      </Band>
+      <Band>
+        <Section label="Cell" grow>
+          <Readout label="address" does="The address the operators read, in the kernel's own notation. Press to copy it." value={kernelAddress(p.v)?.replace('qladdr:', '')} copy={kernelAddress(p.v)} />
+          <Readout label="depth" does="The depth of the address, as the owner keeps it." value={numOf(p.v, 'kernel.depth')} />
+          <Readout label="form" does="The form of the address. The operators serve the sixfold form; the kernel refuses its others." value={strOf(p.v, 'kernel.form')} />
+          <Readout label="kernel" does="The version of the kernel that answered." value={strOf(p.v, 'kernel.version')} />
+        </Section>
+      </Band>
+      </> : <>
       <Band>
         <Section width={w + 12}>
           <Display w={w} h={146} label="The matrix" does={`${DISPLAY_DOES} Drag handle 1 to another cell.`} corner={cellValue(p.v) ?? NONE}><Grid p={p} w={w} h={146} handles text={w > 200} /></Display>
@@ -202,6 +297,7 @@ export const design: DesignedDevice = {
           {(strOf(p.v, 'matrix') ?? 'oscillator') === 'form' && <Readout label="partner" does="The form in use and its partner under the matrix." value={partnerWord(p.v)} />}
         </Section>
       </Band>
+      </>}
     </Panel> },
 
   full: p => <div className="ref-pane-body ref-pane-body--dark">

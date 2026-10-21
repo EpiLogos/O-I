@@ -6,8 +6,20 @@
 // them from the tattva of the M2 condition through its element fibre (m2-correspondences `material_fibre`), by M2's table of body
 // constants, every value of which stands proposed and tunable. The owner reports the tattva (`tattva.name`), its fibre
 // (`tattva.fibre`, absent where the map gives the tattva none) and the values in force; under Tattva the three dials are held.
+//
+// The Stage page drives the live scene's procedural stage (`ql stage state|evaluate|bind|unbind|retire`, crates/ql-cli/src/stage_command.rs
+// over ql-mef continuous/stage.rs; one exchange with the native field host each). The stage has four slots — form, material.damping,
+// clock.inscription, clock.lensing — each driven by its authored state or owned by one procedure; a procedure writing a slot another owns is
+// refused. Keys: stage.slots [{slot, owner, revision}] (owner absent: authored) and stage.bindings [{procedure, trigger, evaluations, max,
+// standing: 'active' | 'exhausted'}], from `ql stage state`; stage.procedures [{ref, revision, trigger: 'invocation' | 'm1-advance' |
+// 'replace-event', selector, scenes?}], the `ql.stage-procedure/v1` files you keep; stage.last and stage.why, the last receipt's standing and
+// the owner's refusal. Writes: stage.procedure (the one you chose; the shell holds it), stage.budget (1..1024, 16: `--max-evaluations`), and
+// four acts, each on its own key with the procedure's ref: stage.evaluate, stage.bind, stage.unbind, stage.retire. No kernel op reaches
+// `ql stage` yet: the binding owes the route, and the host stands the acts disabled with that reason until it lands.
+// The Rack page carries the rack of M1′ (quaternal-logic__map-rack.tsx), on the keys rack and rack.part.
 import type {CSSProperties} from 'react'
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+import {RACK_M1, RackBands} from './quaternal-logic__map-rack'
 import {LIVE_CADENCE_OPTIONS, LIVE_CONTEXT_FRAME_OPTIONS, LIVE_HARMONIC_OPTIONS, LIVE_LENS_OPTIONS} from '../../../live/torusInstrument'
 import {NONE, boolOf, clampTo, db, fixed, has, json, num, numOf, on, pct, secs, shown, signed, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
@@ -178,6 +190,95 @@ const seeAndHear = (p: ViewProps) => <>
 </>
 
 
+// ---------------------------------------------------------------- the Stage page: the live scene's procedural stage
+
+const SLOTS = [{id: 'form', word: 'Form'}, {id: 'material.damping', word: 'Damping'}, {id: 'clock.inscription', word: 'Inscription'}, {id: 'clock.lensing', word: 'Lensing'}] as const
+interface Proc {readonly ref: string; readonly revision?: number; readonly trigger: string; readonly selector: readonly string[]; readonly scenes?: number}
+interface Bound {readonly procedure: string; readonly trigger?: string; readonly evaluations: number; readonly max: number; readonly standing: string}
+const isRec = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x)
+const procsOf = (v: V): Proc[] | undefined => { const raw = json<unknown>(v, 'stage.procedures', undefined)
+  return Array.isArray(raw) ? raw.flatMap((x): Proc[] => (isRec(x) && typeof x.ref === 'string' && typeof x.trigger === 'string' ? [{ref: x.ref, revision: typeof x.revision === 'number' ? x.revision : undefined,
+    trigger: x.trigger, selector: Array.isArray(x.selector) ? x.selector.filter((y): y is string => typeof y === 'string') : [], scenes: typeof x.scenes === 'number' ? x.scenes : undefined}] : [])) : undefined }
+const slotsOf = (v: V): Map<string, {owner?: string; revision?: number}> | undefined => { const raw = json<unknown>(v, 'stage.slots', undefined)
+  return Array.isArray(raw) ? new Map(raw.flatMap((x): [string, {owner?: string; revision?: number}][] => (isRec(x) && typeof x.slot === 'string'
+    ? [[x.slot, {owner: typeof x.owner === 'string' ? x.owner : undefined, revision: typeof x.revision === 'number' ? x.revision : undefined}]] : []))) : undefined }
+const boundOf = (v: V): Bound[] | undefined => { const raw = json<unknown>(v, 'stage.bindings', undefined)
+  return Array.isArray(raw) ? raw.flatMap((x): Bound[] => (isRec(x) && typeof x.procedure === 'string' && typeof x.evaluations === 'number' && typeof x.max === 'number'
+    ? [{procedure: x.procedure, trigger: typeof x.trigger === 'string' ? x.trigger : undefined, evaluations: x.evaluations, max: x.max, standing: typeof x.standing === 'string' ? x.standing : 'active'}] : [])) : undefined }
+/** 'ta-onta:stage:cli-fold' → 'cli-fold'. */
+const procWord = (ref: string | undefined) => (ref === undefined ? undefined : ref.slice(ref.lastIndexOf(':') + 1))
+const TRIGGER_WORD: Record<string, string> = {'invocation': 'on Evaluate', 'm1-advance': 'each step of the ring', 'replace-event': 'each new event'}
+const chosenProc = (v: V) => { const r = strOf(v, 'stage.procedure'); return procsOf(v)?.find(x => x.ref === r) }
+
+/** The stage: its four slots as lanes, each driven by its authored state (hollow) or owned by a procedure (filled, named). The procedure you
+ * chose outlines the slots it would claim; one another procedure owns is marked, because the owner refuses that write. */
+function StageWell({v, w, h, labels}: {v: V; w: number; h: number; labels: boolean}) {
+  const slots = slotsOf(v), proc = chosenProc(v), x0 = labels ? 62 : 8, x1 = w - 8, top = labels ? 14 : 4, lane = (h - top - 22) / 4, fs = labels ? 8.5 : 7
+  if (!slots) return <text x={w / 2} y={h / 2} textAnchor="middle" className="dp-ink-dim">{w > 100 ? 'No reading of the stage' : NONE}</text>
+  return <g>
+    {SLOTS.map((sl, i) => { const y = top + i * lane, held = slots.get(sl.id), owner = held?.owner, claims = proc?.selector.includes(sl.id), clash = claims && owner !== undefined && owner !== proc?.ref
+      return <g key={sl.id}>
+        {labels && <text x={x0 - 6} y={y + lane / 2 + 3} textAnchor="end" className="dp-axis" style={{fontSize: fs}}>{sl.word}</text>}
+        <rect x={x0} y={y + 3} width={x1 - x0} height={lane - 6} rx={3} fill={owner ? 'var(--dp-value)' : 'none'} opacity={owner ? .3 : 1}
+          stroke="var(--dp-value-dim)" strokeWidth={.8} strokeDasharray={owner ? undefined : '3 2'} />
+        <text x={x0 + 6} y={y + lane / 2 + 3} className={owner ? 'dp-ink' : 'dp-axis'} style={{fontSize: fs}}>{owner ? `${procWord(owner)}${held?.revision !== undefined ? ` r${held.revision}` : ''}` : labels ? 'authored' : ''}</text>
+        {claims && <rect x={x0 - 2} y={y + 1} width={x1 - x0 + 4} height={lane - 2} rx={4} fill="none" stroke={clash ? 'var(--stall)' : 'var(--dp-on)'} strokeWidth={1.2} />}
+        {clash && <text x={x1 - 6} y={y + lane / 2 + 3} textAnchor="end" style={{fontSize: fs + 1, fill: 'var(--stall)'}}>!</text>}
+      </g> })}
+    <path d={`M${x0} ${h - 18}H${x1}`} className="dp-faint" />
+    <text x={x0} y={h - 6} className="dp-axis" style={{fontSize: fs}}>{proc ? `${procWord(proc.ref)} · ${labels ? TRIGGER_WORD[proc.trigger] ?? proc.trigger : proc.trigger}` : 'No procedure chosen'}</text>
+  </g>
+}
+
+function stageActs(p: ViewProps) {
+  const v = p.v, proc = chosenProc(v), slots = slotsOf(v), bound = boundOf(v)?.find(b => b.procedure === proc?.ref)
+  const clash = proc?.selector.map(x => ({x, owner: slots?.get(x)?.owner})).find(c => c.owner !== undefined && c.owner !== proc.ref)
+  const owns = proc !== undefined && [...(slots?.values() ?? [])].some(x => x.owner === proc.ref)
+  const none = proc ? undefined : 'Choose a procedure first.'
+  return {
+    evaluate: <Action {...st(p, 'stage.evaluate')} label="Evaluate" does="Run the procedure once on the live stage. Its receipt comes back with the field as it stands."
+      onPress={() => proc && p.set('stage.evaluate', proc.ref)} disabled={st(p, 'stage.evaluate').disabled ?? none ?? (clash ? `${SLOTS.find(x => x.id === clash.x)?.word} is held by ${procWord(clash.owner)}: retire it first.` : undefined)} />,
+    bind: <Action {...st(p, 'stage.bind')} label="Bind" does="Bind the procedure to the live flow: it fires at each admitted step of its trigger, until its budget is spent."
+      onPress={() => proc && p.set('stage.bind', proc.ref)} disabled={st(p, 'stage.bind').disabled ?? none ?? (proc!.trigger === 'invocation' ? 'It runs when you evaluate it, so it binds to nothing.' : undefined)} />,
+    unbind: <Action {...st(p, 'stage.unbind')} label="Unbind" does="Remove the binding. The answer names its final standing."
+      onPress={() => proc && p.set('stage.unbind', proc.ref)} disabled={st(p, 'stage.unbind').disabled ?? none ?? (bound ? undefined : 'The procedure is not bound.')} />,
+    retire: <Action {...st(p, 'stage.retire')} label="Retire" does="Release the slots the procedure holds. They return to their authored state; what it left stays as authored material."
+      onPress={() => proc && p.set('stage.retire', proc.ref)} disabled={st(p, 'stage.retire').disabled ?? none ?? (owns ? undefined : 'The procedure holds no slot.')} />,
+  }
+}
+const boundRows = (v: V): RowItem[] => (boundOf(v) ?? []).map(b => ({id: b.procedure, name: procWord(b.procedure) ?? b.procedure, light: b.standing === 'active' ? 'lit' : 'dark', tone: 'value',
+  note: `${b.evaluations}/${b.max}`, meter: <Meter value={b.max ? b.evaluations / b.max : undefined} tone={b.standing === 'active' ? 'value' : 'accent'} label="Budget used" />,
+  why: b.standing === 'exhausted' ? 'Its budget is spent: it fires no more until you bind it again.' : undefined, does: `${b.procedure} · ${TRIGGER_WORD[b.trigger ?? ''] ?? b.trigger ?? NONE}`}))
+
+function StagePage({p}: {p: ViewProps}) {
+  const a = stageActs(p), procs = procsOf(p.v), proc = chosenProc(p.v), slots = slotsOf(p.v)
+  return <>
+    <Band>
+      <Section width={198}><Display w={186} h={146} label="The stage" corner={slots ? `${[...slots.values()].filter(x => x.owner).length}/4 owned` : NONE}
+        does="The stage's four slots: hollow, its authored state drives the slot; filled, a procedure owns it. The outline is what the chosen procedure would claim; ! where another holds it.">
+        <StageWell v={p.v} w={186} h={146} labels /></Display></Section>
+      <Section label="Procedure" width={124}>
+        <Chooser {...st(p, 'stage.procedure')} label="Procedure" does="The procedure to run, from the ones you keep." value={strOf(p.v, 'stage.procedure') ?? ''}
+          options={(procs ?? []).map(x => ({value: x.ref, label: procWord(x.ref) ?? x.ref, does: `${x.ref} r${x.revision ?? NONE}`}))} onChange={x => p.set('stage.procedure', x)}
+          disabled={st(p, 'stage.procedure').disabled ?? (procs === undefined ? 'No reading of the procedures you keep.' : procs.length ? undefined : 'No procedures kept.')} />
+        <ValueBox {...st(p, 'stage.budget')} label="Budget" does="How often a bound procedure may fire before it stops." value={numOf(p.v, 'stage.budget') ?? NaN} def={16}
+          scale={{min: 1, max: 1024, log: true, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('stage.budget', Math.round(x))} />
+      </Section>
+      <Section label="Acts" cols={2} grow>{a.evaluate}{a.bind}{a.unbind}{a.retire}</Section>
+    </Band>
+    <Band>
+      <Section label="Bound" width={198}><Rows does="The procedures bound to the live flow, with the budget each has used." items={boundOf(p.v)?.length ? boundRows(p.v) : [{id: 'none', name: boundOf(p.v) ? 'Nothing bound' : 'No reading of the bindings', light: boundOf(p.v) ? 'dark' : 'unknown'}]} size={4} /></Section>
+      <Section label="Receipt" cols={2} grow>
+        <Readout big label="last" does="The standing of the last receipt the host returned." value={strOf(p.v, 'stage.last')} tone={strOf(p.v, 'stage.last') === 'refused' ? 'stall' : 'value'} />
+        <Readout label="trigger" does="What fires the chosen procedure." value={proc ? (proc.trigger === 'invocation' ? 'you' : proc.trigger) : undefined} />
+        <Readout label="claims" does="The slots the chosen procedure addresses." value={proc ? (proc.selector.map(x => SLOTS.find(y => y.id === x)?.word ?? x).join(' · ') || 'none') : undefined} />
+        <Readout label="scenes" does="The scenes of its passage, 2 to 8: the one it stands and those that follow." value={proc ? proc.scenes ?? 'none' : undefined} />
+        {strOf(p.v, 'stage.why') !== undefined && <Readout label="refused" does={`The owner refused: ${strOf(p.v, 'stage.why')}`} value="why" tone="stall" />}
+      </Section>
+    </Band>
+  </>
+}
+
 export const torus: DesignedDevice = {
   id: 'quaternal-logic:torus',
   title: 'Torus',
@@ -191,6 +292,14 @@ export const torus: DesignedDevice = {
     sounding: JSON.stringify([0, 4, 8]), driveMod: JSON.stringify([.6, 2.2]),
     // The tattva of the M2 condition (the M2 request's tattva selection) and its fibre; Declared keeps the body's own constants.
     'body.source': 'declared', 'tattva.name': 'Prithvi', 'tattva.fibre': 'earth', 'tattva.standing': 'proposed',
+    // The stage, as `ql stage state` discloses it before any procedure: every slot authored, nothing bound. The procedures kept are QL's
+    // own (fixtures/kernel/stage-procedure-example-v1.json, and the determinant procedure of crates/ql-cli/tests/stage_native.rs).
+    'stage.slots': JSON.stringify(['form', 'material.damping', 'clock.inscription', 'clock.lensing'].map(slot => ({slot}))), 'stage.bindings': JSON.stringify([]),
+    'stage.procedures': JSON.stringify([{ref: 'ta-onta:stage:cli-fold', revision: 1, trigger: 'invocation', selector: ['form'], scenes: 3},
+      {ref: 'ta-onta:stage:cli-bound', revision: 1, trigger: 'm1-advance', selector: []}]),
+    'stage.procedure': 'ta-onta:stage:cli-fold', 'stage.budget': 16,
+    // M1′'s rack, read from the M registry at revision c211a781 with the ledger's rungs; the parts carried as §21.2 names them.
+    rack: RACK_M1, 'rack.part': '1',
   },
   firstPage: 'field',
   fixtures: {
@@ -198,7 +307,12 @@ export const torus: DesignedDevice = {
     // M2's proposed body constants for the earth fibre: Damping 12, Strike 45 %, Agitation 0.1.
     'Tattva: Prithvi, earth': {'body.source': 'tattva', damping: 12, strike: 45, agitation: .1},
     'Tattva without a fibre': {'body.source': 'tattva', 'tattva.name': 'Akasha', 'tattva.fibre': undefined},
-    'No readings': Object.fromEntries(['light', 'pulseMix', 'helixBalance', 'strike', 'damping', 'drive', 'modes', 'agitation', 'attack', 'release', 'voices', 'level', 'pan', 'view', 'receiver', 'notes', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'driveMod', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
+    'Stage, the fold evaluated': {'stage.slots': JSON.stringify([{slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1}, {slot: 'material.damping'}, {slot: 'clock.inscription'}, {slot: 'clock.lensing'}]), 'stage.last': 'applied'},
+    'Stage, a strike bound to the ring': {'stage.procedure': 'ta-onta:stage:cli-bound', 'stage.last': 'applied',
+      'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}])},
+    'Stage, the budget spent': {'stage.procedure': 'ta-onta:stage:cli-bound', 'stage.last': 'applied',
+      'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 16, max: 16, standing: 'exhausted'}])},
+    'No readings': Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why', 'rack', 'rack.part', 'light', 'pulseMix', 'helixBalance', 'strike', 'damping', 'drive', 'modes', 'agitation', 'attack', 'release', 'voices', 'level', 'pan', 'view', 'receiver', 'notes', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'driveMod', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
     'As the field reports it': {pulseMix: undefined, helixBalance: undefined, strike: undefined, damping: undefined, drive: undefined, modes: undefined, agitation: undefined, attack: undefined, release: undefined, voices: undefined, pan: undefined, view: undefined, receiver: undefined, notes: undefined, meter: undefined, driveMod: undefined},
   },
 
@@ -210,8 +324,8 @@ export const torus: DesignedDevice = {
   </Panel>,
 
   whole: p => <Panel title="Torus" view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'field', label: 'Field'}, {id: 'body', label: 'Body'}]} page={p.page} onPage={p.setPage}>
-    {p.page !== 'body' ? <>
+    pages={[{id: 'field', label: 'Field'}, {id: 'body', label: 'Body'}, {id: 'stage', label: 'Stage'}, {id: 'rack', label: 'Rack'}]} page={p.page} onPage={p.setPage}>
+    {p.page === 'stage' ? <StagePage p={p} /> : p.page === 'rack' ? <RackBands p={p} /> : p.page !== 'body' ? <>
     <Band>
       <Section width={198}><TorusDisplay v={p.v} set={p.set} w={186} h={146} /></Section>
       <Section label="Determinants" cols={2} grow>{determinants(p)}</Section>

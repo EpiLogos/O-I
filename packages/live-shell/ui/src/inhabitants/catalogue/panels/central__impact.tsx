@@ -12,8 +12,19 @@
 // the graph owner's own words when it refuses. A key the owner does not report is drawn "—", and the well names the reading that is
 // missing. The sample readings sit in the defaults and the fixtures: the wiki register's own relations around a wayfinder note,
 // the real directory of Work/Quaternal-Logic/schemas, and the real NOW register's work refs.
+//
+// Its second page, Meaning, asks whether the code still says what the product means. The owner is AIKit's project reflection
+// (crates/aikit-core/src/project_reflection.rs, aikit.project-reflection/v1), read by `aikit knowledge frame <subject>`: the subject's
+// meaning (Vision, Design, the wiki), its native descriptions, its code and its verification, each a relation of the project map, and the
+// target's own reflection law checked against them (ReflectionVerification: passed, and each issue missing | wrong-relation | duplicate |
+// stale | constitutive-flattening). Meaning and code keep their own owners; the law only relates them.
+//   meaning   {law, revision, passed, truncated, lenses: {meaning, descriptions, code, verification}, mappings: [{coordinate, semantic,
+//             implementation?, relation?, state: 'holds' | <issue kind>, detail?}]}  the law's mappings with the verification's issues laid on
+//             them; JSON with no mappings when no law binds the subject
+// Act: meaningRead (read the frame again). `aikit knowledge frame` has no kernel op yet (the kernel's knowledge requests are status,
+// search, resolve, read, relations, explain, history and use): the host leaves `meaning` absent and stands Read now disabled until one does.
 import {useState, type ReactNode} from 'react'
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__impact.css'
 
@@ -353,7 +364,9 @@ function itemRows(m: Model): RowItem[] {
 
 function ImpactWhole({p}: {p: ViewProps}) {
   const [page, setPage] = useState(0), m = model(p.v)
-  return <Panel title="Impact" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}>
+  return <Panel title="Impact" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
+    pages={PAGES.map(x => ({id: x.id, label: x.label, light: x.id === 'meaning' ? meaningLight(p.v) : undefined}))} page={pageOf(p)} onPage={p.setPage}>
+    {pageOf(p) === 'meaning' ? <MeaningWhole p={p} /> : <>
     <Band>
       <Section width={206}><Picture p={p} w={194} h={146} size="whole" /></Section>
       <Section label="Reach" width={100}>
@@ -378,6 +391,7 @@ function ImpactWhole({p}: {p: ViewProps}) {
           size={7} page={page} onPage={setPage} />
       </Section>
     </Band>
+    </>}
   </Panel>
 }
 
@@ -465,6 +479,158 @@ function ImpactFull({p}: {p: ViewProps}) {
   </div>
 }
 
+// ------------------------------------------------------------------------------------------------ Meaning: does the code still say what the product means?
+
+type Holds = 'holds' | 'missing' | 'wrong-relation' | 'duplicate' | 'stale' | 'constitutive-flattening'
+const HOLDS: readonly Holds[] = ['holds', 'missing', 'wrong-relation', 'duplicate', 'stale', 'constitutive-flattening']
+const HOLDS_WORD: Readonly<Record<Holds, string>> = {holds: 'holds', missing: 'missing', 'wrong-relation': 'wrong relation', duplicate: 'twice', stale: 'stale', 'constitutive-flattening': 'flattened'}
+const HOLDS_SAYS: Readonly<Record<Holds, string>> = {
+  holds: 'The code holds the meaning by the relation the law names.',
+  missing: 'The meaning names an implementation the project map does not hold.',
+  'wrong-relation': 'The code is bound, but by another relation than the law names.',
+  duplicate: 'More than one implementation claims the meaning where the law asks for one.',
+  stale: 'The implementation has moved past the revision the meaning was checked against.',
+  'constitutive-flattening': 'A relation the law keeps as two faces is bound as one.',
+}
+interface Mapping {readonly coordinate: string; readonly semantic: string; readonly implementation?: string; readonly relation?: string; readonly state: Holds; readonly detail?: string}
+interface Meaning {readonly law?: string; readonly revision?: string; readonly passed?: boolean; readonly truncated: boolean; readonly mappings: readonly Mapping[]
+  readonly lenses: {readonly meaning?: number; readonly descriptions?: number; readonly code?: number; readonly verification?: number}}
+
+/** The owner's reflection of the subject, or undefined when it reports none (or the reading cannot be read). */
+function meaningOf(v: V): Meaning | undefined {
+  const o = rec(json<unknown>(v, 'meaning', undefined))
+  if (!o) return undefined
+  const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
+  const mappings = (Array.isArray(o.mappings) ? o.mappings : []).flatMap((x): Mapping[] => {
+    const m = rec(x), c = text(m?.coordinate), s = text(m?.semantic)
+    return m && c && s && HOLDS.includes(m.state as Holds) ? [{coordinate: c, semantic: s, implementation: text(m.implementation), relation: text(m.relation), state: m.state as Holds, detail: text(m.detail)}] : []
+  })
+  const lenses = rec(o.lenses)
+  return {law: text(o.law), revision: text(o.revision), passed: typeof o.passed === 'boolean' ? o.passed : undefined, truncated: o.truncated === true, mappings,
+    lenses: {meaning: num(lenses?.meaning), descriptions: num(lenses?.descriptions), code: num(lenses?.code), verification: num(lenses?.verification)}}
+}
+const issuesOf = (m: Meaning) => m.mappings.filter(x => x.state !== 'holds')
+const meaningCorner = (m: Meaning | undefined) => (!m ? NONE : m.passed === true ? 'holds' : `${issuesOf(m).length} issue${issuesOf(m).length === 1 ? '' : 's'}`)
+
+/** A bridge: what the product means at the left, the code that holds it at the right, a span for each mapping of the law. Teal: it holds.
+ * Orange: it does not, marked by what went wrong — a span that stops short (missing), a cross (wrong relation), a dashed span (stale), a
+ * doubled end (twice), a square (flattened). */
+function Bridge({m, w, h, big, picked, onPick}: {m: Meaning; w: number; h: number; big?: boolean; picked?: number; onPick?: (i: number) => void}) {
+  const shown = m.mappings.slice(0, big ? 14 : 8), lx = big ? 150 : 62, rx = w - (big ? 150 : 22), top = big ? 46 : 28, bottom = h - (big ? 30 : 18)
+  const y = (i: number) => (shown.length <= 1 ? (top + bottom) / 2 : top + (i * (bottom - top)) / (shown.length - 1))
+  return <g>
+    <text x={lx} y={big ? 24 : h - 4} className="dp-axis" textAnchor="middle">meaning</text>
+    <text x={rx} y={big ? 24 : h - 4} className="dp-axis" textAnchor="middle">code</text>
+    {shown.map((x, i) => {
+      const yy = y(i), ok = x.state === 'holds', stroke = ok ? 'var(--dp-value)' : 'var(--stall)', mx = (lx + rx) / 2, end = x.state === 'missing' ? mx + (rx - lx) / 6 : rx
+      return <g key={`${x.coordinate}:${i}`} data-i={`${x.coordinate}|${HOLDS_SAYS[x.state]}${x.detail ? ` ${x.detail}` : ''}`} onClick={onPick ? () => onPick(i) : undefined} style={onPick ? {cursor: 'pointer'} : undefined}>
+        <text x={lx - (big ? 10 : 7)} y={yy + 3} className={ok ? 'dp-ink-dim' : 'dp-ink'} textAnchor="end">{big ? clip(`${x.coordinate} · ${labelOf(x.semantic)}`, 26) : clip(x.coordinate, 10)}</text>
+        <path d={`M${lx + 4} ${yy}H${end - (x.state === 'missing' ? 0 : 4)}`} stroke={stroke} strokeWidth={big ? 1.6 : 1.2} strokeDasharray={x.state === 'stale' ? '3 2' : undefined} />
+        <circle cx={lx} cy={yy} r={big ? 4 : 3} fill="var(--dp-value)" />
+        {x.state === 'missing' ? <path d={`M${end - 3} ${yy - 3}l6 6M${end + 3} ${yy - 3}l-6 6`} stroke={stroke} strokeWidth={1.3} />
+          : <circle cx={rx} cy={yy} r={big ? 4 : 3} fill={ok ? 'var(--dp-value)' : 'var(--dp-well)'} stroke={stroke} strokeWidth={1.2} />}
+        {x.state === 'duplicate' && <circle cx={rx + (big ? 9 : 6)} cy={yy} r={big ? 4 : 3} fill="var(--dp-well)" stroke={stroke} strokeWidth={1.2} />}
+        {x.state === 'wrong-relation' && <path d={`M${mx - 3} ${yy - 3}l6 6M${mx + 3} ${yy - 3}l-6 6`} stroke={stroke} strokeWidth={1.3} />}
+        {x.state === 'constitutive-flattening' && <rect x={mx - 3} y={yy - 3} width={6} height={6} fill="var(--dp-well)" stroke={stroke} strokeWidth={1.2} />}
+        {big && x.implementation && <text x={rx + (x.state === 'duplicate' ? 20 : 10)} y={yy + 3} className={ok ? 'dp-ink-dim' : 'dp-ink'}>{clip(tailOf(x.implementation), 22)}</text>}
+        {big && picked === i && <rect x={8} y={yy - 9} width={w - 16} height={18} fill="none" stroke="var(--dp-on)" strokeWidth={1} opacity={.7} />}
+      </g>
+    })}
+    {m.mappings.length > shown.length && <text x={w / 2} y={bottom + (big ? 22 : 12)} className="dp-axis" textAnchor="middle">+{m.mappings.length - shown.length} more</text>}
+  </g>
+}
+
+function MeaningPicture({p, w, h}: {p: ViewProps; w: number; h: number}) {
+  const m = meaningOf(p.v), s = subjectOf(p.v)
+  return <Display w={w} h={h} label="Meaning" corner={meaningCorner(m)}
+    does="What the product means at the left, the code that holds it at the right, a span for each mapping. Teal: it holds. Orange: it does not, and the mark says how.">
+    {!s ? <text x={w / 2} y={h / 2} className="im-say" textAnchor="middle">No reading of the subject</text>
+      : !m ? <text x={w / 2} y={h / 2} className="im-say" textAnchor="middle">No reading of its meaning</text>
+      : !m.mappings.length ? <text x={w / 2} y={h / 2} className="im-say" textAnchor="middle">No law binds this subject</text>
+      : <Bridge m={m} w={w} h={h} />}
+  </Display>
+}
+
+function meaningRows(v: V): RowItem[] {
+  const m = meaningOf(v)
+  if (!m) return [{id: 'none', name: 'No reading of its meaning', light: 'unknown'}]
+  if (!m.mappings.length) return [{id: 'none', name: 'No law binds this subject', light: 'dark'}]
+  return [...m.mappings].sort((a, b) => Number(a.state === 'holds') - Number(b.state === 'holds')).map((x, i) => ({id: `${x.coordinate}:${i}`, name: `${x.coordinate} · ${labelOf(x.semantic)}`,
+    light: 'lit', tone: x.state === 'holds' ? 'value' : 'stall', note: HOLDS_WORD[x.state],
+    why: x.state === 'holds' ? undefined : `${HOLDS_SAYS[x.state]}${x.detail ? ` ${x.detail}` : ''}`,
+    does: `${x.relation ?? NONE} → ${x.implementation ?? 'no implementation'}`}))
+}
+
+function MeaningWhole({p}: {p: ViewProps}) {
+  const [page, setPage] = useState(0), m = meaningOf(p.v)
+  return <>
+    <Band>
+      <Section width={206}><MeaningPicture p={p} w={194} h={146} /></Section>
+      <Section label="Law" width={104}>
+        <Readout label="law" does={`The reflection law that binds the subject's meaning to its code${m?.law ? `: ${m.law}` : ''}. Its owner writes it.`} value={m?.law === undefined ? undefined : clip(m.law.split(':').pop() ?? m.law, 14)} />
+        <Readout label="revision" does="The revision of the law that was checked." value={m?.revision} />
+        <Readout label="verdict" does="Holds when every mapping holds. Fails names how many do not." value={m ? (m.passed === true ? 'holds' : m.passed === false ? 'fails' : NONE) : undefined}
+          tone={m?.passed === true ? 'green' : m?.passed === false ? 'stall' : undefined} />
+      </Section>
+      <Section label="Read" cols={2} grow>
+        <Readout label="meaning" does="Sources of meaning bound to the subject: Vision, Design, the wiki." value={m?.lenses.meaning} tone="value" />
+        <Readout label="code" does="Code bound to the subject." value={m?.lenses.code} tone="value" />
+        <Readout label="described" does="Native descriptions bound to it: a README, a doc comment." value={m?.lenses.descriptions} />
+        <Readout label="verified" does="Verification bound to it: tests and checks." value={m?.lenses.verification} />
+        <div style={{gridColumn: 'span 2', width: '100%'}}><Action {...st(p, 'meaningRead')} label="Read now" does="Read the subject's meaning and its code again." onPress={() => p.set('meaningRead', true)} /></div>
+      </Section>
+    </Band>
+    <Band>
+      <Section grow><Rows label={m ? `Mappings · ${m.mappings.length}${m.truncated ? '+' : ''}, ${issuesOf(m).length} not holding` : 'Mappings'}
+        does="Each mapping of the law: the meaning, and whether its code holds it. Those that do not hold come first." items={meaningRows(p.v)} size={14} columns={2} page={page} onPage={setPage} /></Section>
+    </Band>
+  </>
+}
+
+/** The pane's Meaning tab: the bridge at pane size, each mapping named; the mappings that do not hold beside it; the chosen one under it. */
+function MeaningFull({p}: {p: ViewProps}) {
+  const m = meaningOf(p.v), [picked, setPicked] = useState<number | undefined>(undefined)
+  const x = m && picked !== undefined ? m.mappings[picked] : undefined
+  return <div className="im-pane">
+    <div className="im-graph">
+      <svg viewBox="0 0 460 364" preserveAspectRatio="xMidYMid meet" role="group" aria-label="The subject's meaning and its code" className="dp-display" style={{background: 'none', border: 0}}>
+        {m && m.mappings.length ? <Bridge m={m} w={460} h={364} big picked={picked} onPick={setPicked} />
+          : <text x={230} y={182} className="im-say" textAnchor="middle">{!m ? 'No reading of its meaning' : 'No law binds this subject'}</text>}
+      </svg>
+      <span className="im-corner">{meaningCorner(m)}</span>
+    </div>
+    <div className="im-lists">
+      <section className="im-list">
+        <h4>Not holding <b>{m ? issuesOf(m).length : NONE}</b><small>{m?.law ?? NONE}</small></h4>
+        <ul className="im-rows">
+          {!m && <li className="im-none">No reading of its meaning</li>}
+          {m && !issuesOf(m).length && <li className="im-none">Every mapping holds.</li>}
+          {m && issuesOf(m).slice(0, 9).map(y => { const i = m.mappings.indexOf(y); return <li key={i}>
+            <button type="button" className="im-row" aria-pressed={picked === i} data-i={`${y.coordinate}|${HOLDS_SAYS[y.state]} Click to read it.`} onClick={() => setPicked(i)}>
+              <span className="im-row-state" data-open="false" style={{borderColor: 'var(--stall)'}} /><span className="im-row-name">{y.coordinate} · {labelOf(y.semantic)}</span><span className="im-row-note">{HOLDS_WORD[y.state]}</span>
+            </button></li> })}
+        </ul>
+      </section>
+      <section className="im-list">
+        <h4>Read <small>the project map</small></h4>
+        <ul className="im-rows">
+          {([['meaning', m?.lenses.meaning], ['code', m?.lenses.code], ['descriptions', m?.lenses.descriptions], ['verification', m?.lenses.verification]] as const).map(([k, n]) =>
+            <li key={k} className="im-none" style={{color: 'var(--text-dim)'}}><span className="im-row-name">{k}</span><span className="im-row-note">{n ?? NONE}</span></li>)}
+        </ul>
+      </section>
+    </div>
+    <div className="im-detail">
+      {x ? <><b>{x.coordinate} · {HOLDS_WORD[x.state]}</b><span>{labelOf(x.semantic)} → {x.relation ?? NONE} → <code>{x.implementation ?? 'no implementation'}</code>{x.detail ? ` · ${x.detail}` : ''}</span></>
+        : <><b>{m?.law ?? NONE} {m?.revision ? `· ${m.revision}` : ''}</b><span>Pick a mapping to read it.</span></>}
+    </div>
+  </div>
+}
+
+type PageId = 'neighbourhood' | 'meaning'
+const PAGES: readonly {id: PageId; label: string}[] = [{id: 'neighbourhood', label: 'Reach'}, {id: 'meaning', label: 'Meaning'}]
+const pageOf = (p: ViewProps): PageId => (p.page === 'meaning' ? 'meaning' : 'neighbourhood')
+const meaningLight = (v: V): LightState | undefined => { const m = meaningOf(v); return m === undefined || m.passed === undefined ? undefined : m.passed ? 'lit' : 'dark' }
+
 // ------------------------------------------------------------------------------------------------ the sample readings (defaults and fixtures only)
 
 /** The wiki register's relations around a wayfinder note: the lane node cites it, and the register's space holds the other notes. */
@@ -533,22 +699,54 @@ function folderSample(): Record<string, string> {
   }
 }
 
+// The note's reflection: the wayfinder map names the command-encounter convergence, which AIKit's encounter host and the gateway carry.
+const MEANING_NOTE = {
+  law: 'ai-kit:command-encounter', revision: 'r4', passed: false, truncated: false, lenses: {meaning: 3, descriptions: 2, code: 5, verification: 2},
+  mappings: [
+    {coordinate: 'encounter', semantic: 'wiki:node:delivered-lane-loses-install', implementation: 'crates/aikit-core/src/encounter.rs', relation: 'implements', state: 'holds'},
+    {coordinate: 'one composer', semantic: 'git:ai-kit@guidance/development-world-shape', implementation: 'crates/aikit-core/src/encounter_conversation.rs', relation: 'implements', state: 'holds'},
+    {coordinate: 'history', semantic: 'wiki:node:place-provider-reconciles-like-the-floor', implementation: 'crates/aikit-core/src/encounter_delivery.rs', relation: 'implements', state: 'stale',
+      detail: 'Checked against 3f2a91c; the file is now at 8b04d7e.'},
+    {coordinate: 'disconnect', semantic: 'wiki:node:identity', implementation: 'crates/aikit-cli/src/gateway_contact.rs', relation: 'describes', state: 'wrong-relation',
+      detail: 'The law names implements; the map binds describes.'},
+    {coordinate: 'install', semantic: 'wiki:node:delivered-lane-loses-install', relation: 'implements', state: 'missing'},
+  ],
+}
+// The schemas folder's reflection: Quaternal Logic's meta-structure and the schemas that carry it (Work/Quaternal-Logic/schemas).
+const MEANING_SCHEMAS = {
+  law: 'ql:meta-schemas', revision: 'r11', passed: false, truncated: false, lenses: {meaning: 6, descriptions: 1, code: 6, verification: 4},
+  mappings: [
+    {coordinate: 'binding', semantic: 'wiki:node:ql-meta-binding', implementation: 'schemas/ql-mef-meta-binding-v1.schema.json', relation: 'implements', state: 'holds'},
+    {coordinate: 'portal', semantic: 'wiki:node:ql-meta-portal', implementation: 'schemas/ql-mef-meta-portal-v1.schema.json', relation: 'implements', state: 'holds'},
+    {coordinate: 'recognition', semantic: 'wiki:node:ql-meta-recognition', implementation: 'schemas/ql-mef-meta-recognition-v1.schema.json', relation: 'implements', state: 'duplicate',
+      detail: 'schemas/q3 carries a second recognition schema.'},
+    {coordinate: 'refraction', semantic: 'wiki:node:ql-wiki-refraction', implementation: 'schemas/ql-mef-wiki-refraction-v1.schema.json', relation: 'implements', state: 'holds'},
+    {coordinate: 'agents', semantic: 'wiki:node:ql-agent-contracts', implementation: 'schemas/ql-agent-contracts-v1.schema.json', relation: 'implements', state: 'stale',
+      detail: 'Checked against r3 of the contract; the schema is at r5.'},
+    {coordinate: 'vak', semantic: 'wiki:node:epi-vak-registry', implementation: 'schemas/epi-vak-registry-v1.schema.json', relation: 'implements', state: 'constitutive-flattening',
+      detail: 'The law keeps the source and the context of a vāk as two faces; the schema binds them as one.'},
+  ],
+}
+
 export const design: DesignedDevice = {
   id: 'central:impact',
   title: 'Impact',
   kind: 'effect',
+  firstPage: 'neighbourhood',
   defaults: {
     light: 'lit', pin: false, depth: 1, relation: 'all',
     'show:references': true, 'show:links': true, 'show:sessions': true, closed: false,
     // Readings: the subject, the graph around it, its references and the sessions that touch it.
     ...noteSample(),
+    meaning: JSON.stringify(MEANING_NOTE),
   },
   fixtures: {
     'A note': {},
-    'A folder, graph refused': {...folderSample(), 'refusal:graph': 'The graph reading is unavailable'},
+    'A folder, graph refused': {...folderSample(), 'refusal:graph': 'The graph reading is unavailable', meaning: JSON.stringify(MEANING_SCHEMAS)},
+    'Meaning holds': {meaning: JSON.stringify({...MEANING_NOTE, passed: true, mappings: MEANING_NOTE.mappings.map(x => ({...x, state: 'holds', detail: undefined}))})},
     'Three links out': {depth: 3},
     'No readings': Object.fromEntries(['light', 'pin', 'depth', 'relation', 'show:references', 'show:links', 'show:sessions', 'closed', 'subject', 'nodes', 'edges', 'references',
-      'sessions', 'refusal:graph'].map(k => [k, undefined])),
+      'sessions', 'refusal:graph', 'meaning'].map(k => [k, undefined])),
   },
 
   folded: p => {
@@ -569,7 +767,12 @@ export const design: DesignedDevice = {
 
   whole: p => <ImpactWhole p={p} />,
 
-  full: p => <ImpactFull p={p} />,
+  full: p => <div className="ref-pane-body">
+    <div className="ref-pane-tabs" role="tablist" aria-label="Pages">
+      {PAGES.map(x => <button key={x.id} type="button" role="tab" aria-selected={x.id === pageOf(p)} onClick={() => p.setPage(x.id)}>{x.id === 'neighbourhood' ? 'Neighbourhood' : x.label}</button>)}
+    </div>
+    <div className="im-host">{pageOf(p) === 'meaning' ? <MeaningFull p={p} /> : <ImpactFull p={p} />}</div>
+  </div>,
 
   widget: p => {
     const m = model(p.v), first = m.sessions.find(isOpen)

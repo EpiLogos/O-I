@@ -4,6 +4,12 @@
 //   Provider, model, place, state, price: AIKit's decision provider (`aikit decide status`, aikit.decision-status/v1: selected_model,
 //     placement, mode, install.state, limits.timeout_ms ≤ 120 s, tariff "none", independent_of_acting_models). Provider is the
 //     election: none, a managed local model, a self-hosted endpoint, or the hosted API (`aikit decide`). Probe is `status --probe`.
+//   Hosting: `hosted` {ref, endpoint, health, availability, lifetime} is the service that serves the model, as Workcell keeps it:
+//     its declared services (`workcell doctor --json` declared_services; `workcell system --json` services.declared: logical_ref,
+//     endpoint, health healthy | degraded | unavailable, availability, lifetime target-owned | managed), the one whose endpoint is
+//     the provider's `where`. AIKit says whether the model is loaded; Workcell says whether its service answers. No kernel route
+//     reaches Workcell's services yet (the kernel reads Workcell only through workcell_status_read and material_read); a provider
+//     Workcell does not host leaves `hosted` absent.
 //   The question: one unresolved head of a ql.agent-decision-frame/v1 (QL-MEF schemas/ql-agent-contracts-v1.schema.json): its field,
 //     its labels with their owner refs, its cardinality and its ambiguity policy (preserve-candidates, abstain, single-if-supported).
 //     What the rules settle stands in the frame's `determined` and is never asked; a frame with no unresolved head makes no call.
@@ -79,6 +85,14 @@ const logOf = (v: V): Entry[] | undefined => {
 }
 
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
+interface Hosted {readonly ref?: string; readonly endpoint?: string; readonly health?: string; readonly availability?: string; readonly lifetime?: string}
+/** The service that serves the model, as Workcell keeps it; undefined where Workcell reports none. */
+const hostedOf = (v: V): Hosted | undefined => {
+  const h = json<unknown>(v, 'hosted', null)
+  return isObj(h) ? Object.fromEntries(['ref', 'endpoint', 'health', 'availability', 'lifetime'].flatMap(k => (typeof h[k] === 'string' ? [[k, h[k]]] : []))) as Hosted : undefined
+}
+const LIFETIME: Record<string, string> = {'target-owned': 'its owner', managed: 'Workcell'}
+const serviceName = (ref: string | undefined) => ref?.replace(/^service:/, '').replace(/\/.*$/, '')
 const wanted = (v: V, i: Instrument) => v[`allow:${i.id}`] !== false && !i.person && i.built !== false
 const pickText = (a: Answer | undefined) => (a === undefined ? undefined : a.picked.length ? a.picked.join(', ') : 'none')
 const statusOf = (a: Answer | undefined) => (a ? STATUS[a.status] : undefined)
@@ -203,6 +217,8 @@ export const design: DesignedDevice = {
     light: 'lit', provider: 'local', when: 'background', deadline: 10,
     // Readings: the provider as AIKit reports it.
     model: 'kev-latest', base: 'Qwen3.5 0.8B', where: '127.0.0.1:8019', state: 'loaded', independent: true, price: 'none',
+    // Readings: the service that serves it, as Workcell reports it (`workcell system --json` services.declared, 21 Oct).
+    hosted: JSON.stringify({ref: 'service:kev-decision/personal-workcell', endpoint: 'http://127.0.0.1:8019', health: 'healthy', availability: 'available', lifetime: 'target-owned'}),
     // The question and the answer, as the team and the engine report them.
     ask: JSON.stringify(GATE_ASK),
     answer: JSON.stringify({status: 'determined', scores: {aligned: .41, annotated: .27, hold: .19, redirect: .13}, picked: ['aligned'], ms: 412, engine: 'validated', reason: 'The gate rules passed.'}),
@@ -215,8 +231,9 @@ export const design: DesignedDevice = {
       labels: THOUGHT.map(id => ({id, description: id}))}),
     answer: JSON.stringify({status: 'unresolved', scores: Object.fromEntries(THOUGHT.map((id, i) => [id, [.11, .09, .1, .08, .07, .09, .08, .06, .07, .09, .08, .08][i]!])), picked: [], ms: 538, engine: 'kept', reason: 'An empty selection is kept as given.'})},
     'Nothing open': {ask: 'null', answer: undefined, settled: 38},
+    'Its service is down': {state: 'loaded', hosted: JSON.stringify({ref: 'service:kev-decision/personal-workcell', endpoint: 'http://127.0.0.1:8019', health: 'unavailable', availability: 'degraded', lifetime: 'target-owned'})},
     'No readings': {light: undefined, provider: undefined, when: undefined, deadline: undefined, model: undefined, base: undefined, where: undefined, state: undefined,
-      independent: undefined, price: undefined, ask: undefined, answer: undefined, instruments: undefined, log: undefined, settled: undefined, asked: undefined, abstained: undefined, refused: undefined},
+      independent: undefined, price: undefined, hosted: undefined, ask: undefined, answer: undefined, instruments: undefined, log: undefined, settled: undefined, asked: undefined, abstained: undefined, refused: undefined},
   },
 
   folded: p => <Folded title="Decision helper" light={light(p)} readings={[count(p.v, 'asked') === undefined ? NONE : `${count(p.v, 'asked')} asked`, pickText(answerOf(p.v)) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -251,6 +268,9 @@ export const design: DesignedDevice = {
           <Readout label="state" does="Whether it is loaded and answering." value={strOf(p.v, 'state')} tone={strOf(p.v, 'state') === 'loaded' ? 'green' : 'stall'} />
           <Readout label="apart" does="The helper is never one of the agents acting, nor a member of the team." value={has(p.v, 'independent') ? (p.v.independent === true ? 'yes' : 'no') : undefined} />
           <Readout label="price" does="A model on your machine has no price. None is invented." value={strOf(p.v, 'price')} />
+          <Readout label="hosting" does="Whether the service that serves the model answers, as Workcell reads it: healthy, degraded or unavailable."
+            value={hostedOf(p.v)?.health} tone={hostedOf(p.v)?.health === 'healthy' ? 'green' : hostedOf(p.v) ? 'stall' : undefined} />
+          <Readout label="kept by" does="Who keeps the service running: its own owner (target-owned) or Workcell (managed)." value={hostedOf(p.v) ? LIFETIME[hostedOf(p.v)!.lifetime ?? ''] ?? hostedOf(p.v)!.lifetime : undefined} />
         </Section>
         <Section label="Timing" width={128}>{when(p)}{deadline(p)}{probe(p)}</Section>
       </Band> : <>
@@ -292,6 +312,9 @@ export const design: DesignedDevice = {
           <Spread v={p.v} w={300} h={150} />
         </Display>
         <Counts v={p.v} />
+        <p className="dh-hosted" data-i="Hosting|The service that serves the model, as Workcell reads it: whether it answers, where, and who keeps it running.">
+          <b>hosting</b>{hostedOf(p.v) ? <><span>{serviceName(hostedOf(p.v)!.ref) ?? NONE}</span><span data-tone={hostedOf(p.v)!.health === 'healthy' ? 'green' : 'stall'}>{hostedOf(p.v)!.health ?? NONE}</span>
+            <span>{hostedOf(p.v)!.endpoint ?? NONE}</span><span>kept by {LIFETIME[hostedOf(p.v)!.lifetime ?? ''] ?? hostedOf(p.v)!.lifetime ?? NONE}</span></> : <span>{NONE}</span>}</p>
       </section>
       <section className="dh-log">
         <h4>Today</h4>

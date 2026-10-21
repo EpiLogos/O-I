@@ -7,8 +7,22 @@
 // The owner's material: `log` (JSON rows {at, kind, tool?, text, dur?, state?, heard?}; at and dur in seconds from the task's start;
 // kind is tool | spawn | steer | say | stall), `elapsed` (seconds to the last output), `sessions` (JSON rows {id, name}: the
 // hand-off's choices), and each envelope's steps on `env.agent.<control>` (JSON [[second, step]…]).
-import {Chooser, Radio, TextField, type Option} from '../../sdk/panel'
-import {numOf, strOf} from '../panels/design'
+//
+// The Intent panel: what the task is for, bounded, and how you will know it was met. Factory keeps it for the task's Run and never
+// copies its source. The required difference is the Development Field's (factory/src/development_field.rs:250 DevelopmentField
+// requiredDifference; `factory development field read`, `field set`, which creates the Field with it). The success conditions and their
+// evaluation are the bounded intent in Factory's project ledger (factory/src/project_development.rs:37 BoundedIntentCondition
+// intent_source_ref, success_condition_refs, constraint_refs, context_resolution_ref; :61 IntentCriterionEvaluation criterion_ref, state
+// satisfied | unsatisfied | indeterminate, evidence_refs), which no CLI route reads or writes yet.
+// Keys: `intent` (the required difference, in words), `intent.source` (the source it is read from, named), `criteria` (JSON rows {id,
+// text, state?, evidence?}: state absent until the Run returns; evidence is the count of evidence refs), `constraints` (a count),
+// `context` (the context it resolves in, named). The return across the criteria is the owner's own law (project_development.rs:392-433):
+// one unsatisfied criterion makes it unsatisfied; else one indeterminate makes it indeterminate; else satisfied. A conclusive state
+// carries its evidence (ConclusiveCriterionWithoutEvidence refuses one without).
+// Writes: `intent` goes to `factory development field set`, which has no kernel op yet, so the binding stands it disabled with that
+// reason. `criterion` (a new success condition) has no owner operation at all: it stands disabled here with that reason.
+import {Chooser, Radio, Rows as List, TextField, type Option, type RowItem} from '../../sdk/panel'
+import {NONE, json, numOf, strOf} from '../panels/design'
 import {COLOURS, EnvelopeEditor, Fact, Fields, LaneGrid, Rows, Row, Rule, Said, Wide, choice, fit, read, write, type Block, type Lane, type Mark, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 
@@ -78,6 +92,52 @@ function Envelopes(p: ClipProps) {
     min={0} max={steps.length - 1} steps={mode === 'modulation' ? ['−2', '−1', '0', '+1', '+2'] : steps} format={x => steps[Math.round(x)] ?? String(x)}
     from={0} to={to} major={30} minor={5} label={clock} w={p.room.w} h={p.room.h}
     behind={(w, h, keyW) => log.filter(e => e.kind === 'tool').map((e, i) => <rect key={i} className="clv-env-behind" x={keyW + e.at / to * (w - keyW)} width={Math.max(2, (e.dur ?? 1.5) / to * (w - keyW))} y={h - 10} height={4} />)} />
+}
+
+// ---------------------------------------------------------------- the Intent panel
+
+type Verdict = 'satisfied' | 'unsatisfied' | 'indeterminate'
+const VERDICTS: readonly Verdict[] = ['satisfied', 'unsatisfied', 'indeterminate']
+const VERDICT_WORD: Readonly<Record<Verdict, string>> = {satisfied: 'Met', unsatisfied: 'Not met', indeterminate: 'Open'}
+const VERDICT_SAYS: Readonly<Record<Verdict, string>> = {
+  satisfied: 'Met, with the evidence that shows it.', unsatisfied: 'Not met, with the evidence that shows it.', indeterminate: 'The run cannot tell yet.',
+}
+interface Criterion {readonly id: string; readonly text: string; readonly state?: Verdict; readonly evidence?: number}
+function criteriaOf(v: ClipProps['v']): Criterion[] | undefined {
+  const raw = json<unknown>(v, 'criteria', undefined)
+  if (!Array.isArray(raw)) return undefined
+  return raw.flatMap((o, i): Criterion[] => {
+    if (!o || typeof o !== 'object') return []
+    const r = o as Record<string, unknown>, text = typeof r.text === 'string' && r.text ? r.text : undefined
+    return text ? [{id: typeof r.id === 'string' ? r.id : `c${i}`, text, state: VERDICTS.find(x => x === r.state), evidence: typeof r.evidence === 'number' && r.evidence >= 0 ? r.evidence : undefined}] : []
+  })
+}
+/** The return across the criteria, by the owner's law; undefined until every criterion has a state. */
+const verdictOf = (list: readonly Criterion[] | undefined): Verdict | undefined => {
+  if (!list?.length || list.some(c => !c.state)) return undefined
+  return list.some(c => c.state === 'unsatisfied') ? 'unsatisfied' : list.some(c => c.state === 'indeterminate') ? 'indeterminate' : 'satisfied'
+}
+const VERDICT_TONE = {satisfied: 'green', unsatisfied: 'stall', indeterminate: undefined} as const
+const NO_CRITERION_OWNER = 'No owner writes a success condition yet: Factory keeps the bounded intent in its project ledger, which no route reaches.'
+
+function IntentPanel(p: ClipProps) {
+  const list = criteriaOf(p.v), verdict = verdictOf(list)
+  const items: RowItem[] = (list ?? []).map(c => ({id: c.id, name: c.text, light: c.state === 'satisfied' ? 'lit' : c.state === 'unsatisfied' ? 'dark' : 'unknown',
+    tone: c.state === 'satisfied' ? 'green' : undefined, note: c.state ? `${VERDICT_WORD[c.state]}${c.state !== 'indeterminate' && c.evidence !== undefined ? ` ·${c.evidence}` : ''}` : undefined,
+    does: c.state ? `${VERDICT_SAYS[c.state]}${c.evidence !== undefined ? ` ${c.evidence} evidence.` : ''}` : 'No return yet.'}))
+  return <Rows>
+    <Row label="Intent"><TextField {...p.standing?.intent} label="Intent" does="The difference the task must make, in one line. Factory keeps it with the run; the words stay in their source." value={strOf(p.v, 'intent') ?? ''} placeholder={NONE} onChange={x => p.set('intent', x)} /></Row>
+    <Row label="From"><Fact label="From" does="The source the intent is read from. Factory never copies it." value={strOf(p.v, 'intent.source')} /></Row>
+    <Rule />
+    {list === undefined ? <Said>No reading of the success conditions.</Said>
+      : list.length === 0 ? <Said>No success condition set.</Said>
+        : <List label="Success" does="The conditions that show the task made its difference. The light is the run's return: green met, dark not met, hollow open or not returned."
+          items={items} size={3} page={numOf(p.v, 'criteria.page') ?? 0} onPage={n => p.set('criteria.page', n)} />}
+    <Row label="Add"><TextField {...p.standing?.criterion} disabled={p.standing?.criterion?.disabled ?? NO_CRITERION_OWNER} label="Add" does="A new success condition: how you will know the task made its difference. Press Enter to add it." value={strOf(p.v, 'criterion') ?? ''} placeholder="How you will know" onChange={x => p.set('criterion', x.trim() || undefined)} /></Row>
+    <Rule />
+    <Row label="Return"><Fact label="Return" does="Across the conditions: not met if one is not met, open if one is open, met when all are met." value={verdict ? VERDICT_WORD[verdict] : undefined} tone={verdict ? VERDICT_TONE[verdict] : undefined} /></Row>
+    <Row label="Context"><Fact label="Context" does="What the task may read for this intent, as AIKit resolved it, and the constraints it keeps." value={strOf(p.v, 'context') === undefined ? undefined : `${strOf(p.v, 'context')}${numOf(p.v, 'constraints') !== undefined ? ` · ${numOf(p.v, 'constraints')} limits` : ''}`} /></Row>
+  </Rows>
 }
 
 const SESSIONS = (v: ClipProps['v']): Option<string>[] => read<{id: string; name: string}[]>(v, 'sessions', []).map(s => ({value: s.id, label: s.name}))
@@ -165,6 +225,9 @@ export const clip: DesignedClip = {
     name: 'Write the hand-off fixtures', colour: 'var(--fizz)', active: true, state: 'running', 'turns.used': 5, 'turns.cap': 12,
     'style.register': 'plain', 'style.form': 'technical', launch: 'once', then: 'handoff', handoff: 'tests', quantize: 'global',
     log: JSON.stringify(LOG), elapsed: 68, sessions: JSON.stringify(SESS), fold: true, event: 'e29-7',
+    intent: 'Hand-off fixtures cover every bridge widget', 'intent.source': 'Plan · widget hand-off', context: '9 sources', constraints: 2,
+    criteria: JSON.stringify([
+      {id: 'c1', text: 'Every widget has a hand-off fixture'}, {id: 'c2', text: 'Old fixture ids are kept'}, {id: 'c3', text: 'pnpm test bridge passes'}]),
     'env.control': 'effort', 'env.mode': 'automation', 'env.linked': true,
     'env.agent.effort': JSON.stringify([[0, 2], [28, 3], [40, 1], [60, 3]]), 'env.agent.autonomy': JSON.stringify([[0, 2], [50, 3]]),
     'view.panel': 'launch', 'view.editor': 'log',
@@ -172,12 +235,17 @@ export const clip: DesignedClip = {
   fixtures: {
     'A running task': {},
     'A stalled task': {name: 'Generate the fixtures', colour: 'var(--stall)', state: 'stalled', 'turns.used': 2, log: JSON.stringify(STALLED), elapsed: 9, then: 'next', handoff: undefined, event: 'e5-2', 'view.panel': 'clip'},
+    'Its intent, returned': {'view.panel': 'intent', state: 'done', criteria: JSON.stringify([
+      {id: 'c1', text: 'Every widget has a hand-off fixture', state: 'satisfied', evidence: 2}, {id: 'c2', text: 'Old fixture ids are kept', state: 'satisfied', evidence: 1},
+      {id: 'c3', text: 'pnpm test bridge passes', state: 'indeterminate'}])},
     'Its envelopes': {'view.editor': 'envelopes', 'env.mode': 'modulation', 'env.agent.effort': JSON.stringify([[0, 2], [30, 3], [45, 1]])},
-    'No readings': {state: undefined, 'turns.used': undefined, 'turns.cap': undefined, log: undefined, elapsed: undefined, sessions: undefined, launch: undefined, then: undefined, quantize: undefined},
+    'No readings': {state: undefined, 'turns.used': undefined, 'turns.cap': undefined, log: undefined, elapsed: undefined, sessions: undefined, launch: undefined, then: undefined, quantize: undefined,
+      intent: undefined, 'intent.source': undefined, criteria: undefined, context: undefined, constraints: undefined},
   },
   panel: [
     {id: 'clip', label: 'Clip', does: 'The task\'s name, colour, state, turns and output style.', draw: ClipPanel},
     {id: 'launch', label: 'Launch', does: 'How the task launches, when the launch lands, and what follows it.', draw: LaunchPanel},
+    {id: 'intent', label: 'Intent', does: 'What the task is for: the difference it must make, and the conditions that show it did.', draw: IntentPanel},
   ],
   tools: [],
   editor: [

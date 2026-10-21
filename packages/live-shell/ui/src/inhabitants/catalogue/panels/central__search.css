@@ -39,3 +39,4 @@
 .srch-targets li { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px; padding: 3px 6px; color: var(--text-faint, #71767c); font-size: 10.5px; }
 .srch-targets li b { font-weight: 500; }
 .srch-targets li[data-on="true"] { color: var(--text, #d4d7da); background: var(--bg-1, #33363b); box-shadow: inset 2px 0 0 var(--accent, #ffbe00); }
+.srch-vak { display: block; flex: none; background: #121a20; border: 1px solid var(--line, #24262a); }

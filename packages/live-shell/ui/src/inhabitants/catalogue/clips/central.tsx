@@ -3,8 +3,10 @@
 // Panel one holds the page's Clip fields (title, colour, kind, template at its version, revision, save state), its Launch tab (a
 // page plays when launched: how it opens, where, and for a Flow whether its people and agents take their seats; what plays is open
 // now), and the form's own fields: a Being's or a Thing's ties, or a Flow's participants, its world and its container (manual §24.5).
-// Panel two holds the tools that shape and mark the page: Text, Highlight and Notes; the four passage acts stand over the selected
-// passage. The editor's tabs are the ways the page reads: Page and Source, or a Flow's Dialogue, Flow and Journal. A page has no
+// Panel two holds the tools that shape and mark the page: Text, Highlight and Notes; the five passage acts stand over the selected
+// passage. Remember keeps the passage word for word with its source ref as a proposal in your ground: Central's `central.remember`
+// (Control/agents/remembered) for a page of your own world, `projectcentral.remember` (the project's ProjectCentral/agents/remembered) for a
+// project's, stamped generated-proposal/unrecognised; recognising it is your separate act. The kernel's invoke_action reaches both. The editor's tabs are the ways the page reads: Page and Source, or a Flow's Dialogue, Flow and Journal. A page has no
 // envelopes.
 //
 // The owner's material: `page` (JSON paragraphs {id, kind: h1 | intro | h2 | p | quote, parts: [{text, mark?, note?}]}),
@@ -133,7 +135,7 @@ function HighlightTool(p: ClipProps) {
     <Wide><Radio label="Show" does="Fades everything except the highlights." value={choice(p.v, 'hl.show')} onChange={x => p.set('hl.show', x)}
       options={[{value: 'all', label: 'All'}, {value: 'highlights', label: 'Highlights only'}]} /></Wide>
     <Toggle label="Pen" does="Makes a drag over text a highlight. Draw in the transport turns it on." on={flag(p.v, 'hl.pen') ?? false} onChange={x => p.set('hl.pen', x)} />
-    <Toggle label="Selection tool" does="Shows the four acts when you select a passage." on={p.v['hl.tool'] !== false} onChange={x => p.set('hl.tool', x)} />
+    <Toggle label="Selection tool" does="Shows the five acts when you select a passage." on={p.v['hl.tool'] !== false} onChange={x => p.set('hl.tool', x)} />
   </Fields>
 }
 
@@ -156,13 +158,14 @@ interface Part {readonly text: string; readonly mark?: string; readonly note?: s
 interface Para {readonly id: string; readonly kind: 'h1' | 'intro' | 'h2' | 'p' | 'quote'; readonly parts: readonly Part[]}
 interface Note {readonly id: string; readonly anchor: string; readonly text: string; readonly timing?: 'during' | 'after'}
 
-/** The four acts over the selected passage (manual §18.1 "The selection tool"). */
+/** The five acts over the selected passage (manual §18.1 "The selection tool"). */
 function Acts({p}: {p: ClipProps}) {
   const act = (label: string, does: string) => <button type="button" data-i={`${label}|${does}`} onClick={() => p.set(`act.${label.toLowerCase().replace(' ', '')}`, Date.now())}>{label}</button>
   return <div className="clv-acts" role="toolbar" aria-label="Passage acts">
     {act('Highlight', 'Marks the passage in the chosen colour. Choose it again on a highlight to remove it.')}
     {act('Note', 'Opens a note anchored to the passage.')}
     {act('To packet', 'Adds the passage to the packet.')}
+    {act('Remember', 'Keeps the passage word for word, with where it came from, as a proposal in your ground. It stays unrecognised until you recognise it.')}
     {act('Answer this', 'Sends the packet and the passage to the agent on the world\'s chain. The answer arrives as a new entry, with its sources.')}
   </div>
 }

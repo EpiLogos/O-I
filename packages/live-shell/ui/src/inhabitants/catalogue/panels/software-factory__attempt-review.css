@@ -66,3 +66,44 @@ button.ar-name:focus-visible { outline: 1px solid var(--accent, #ffbe00); outlin
 
 /* The grove: one tree for each attempt (faces/TakesGrove.tsx). */
 .ar-grove { display: flex; align-items: flex-end; padding: 16px 18px 10px; overflow: hidden; }
+
+/* The review beside the list: the success conditions with their return, the claims with their evidence, what waits on you. */
+.ar-side h5 { margin: 2px 0 0; font-size: 9px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.ar-review { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 10.5px; }
+.ar-review li { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 7px; align-items: baseline; color: var(--text-dim, #a2a7ad); }
+.ar-review li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-review li small { font-size: 9.5px; color: var(--text-faint, #71767c); white-space: nowrap; }
+.ar-review li i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--text-faint, #71767c); }
+.ar-review li[data-state="satisfied"] i { background: var(--green, #8fd0a8); border-color: var(--green, #8fd0a8); }
+.ar-review li[data-state="unsatisfied"] i { border-color: var(--stall, #ff9b4a); background: var(--stall, #ff9b4a); }
+.ar-review li[data-state="unsatisfied"] small { color: var(--stall, #ff9b4a); }
+.ar-review li[data-state="evidenced"] i { border-radius: 0; background: var(--dp-value, #5cc6b4); border-color: var(--dp-value, #5cc6b4); }
+.ar-review li[data-state="bare"] i { border-radius: 0; border-style: dashed; }
+.ar-review li[data-state="request"] i { border-color: var(--dp-on, #ffbe00); }
+.ar-review li[data-state="request"] span { color: var(--dp-on, #ffbe00); }
+
+/* The Journey at pane size: its purpose, then its runs one after another. */
+.ar-journey { gap: 10px; }
+.ar-purpose { margin: 4px 0 6px; display: flex; align-items: baseline; gap: 10px; color: var(--text, #d4d7da); font-size: 12px; }
+.ar-purpose small { font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.ar-purpose em { font-style: normal; font-size: 10px; color: var(--dp-value, #5cc6b4); }
+.ar-journey ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ar-journey li { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr) 96px 80px 90px; gap: 10px; align-items: center; height: 34px; padding-left: 4px; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 60%, transparent); color: var(--text-dim, #a2a7ad); font-size: 10.5px; }
+.ar-journey li + li::before { content: ""; position: absolute; left: 9px; top: -12px; height: 24px; border-left: 1px solid var(--text-faint, #71767c); }
+.ar-journey li i { position: relative; z-index: 1; width: 10px; height: 10px; border: 1.2px solid var(--text-faint, #71767c); background: var(--bg-1, #33363b); }
+.ar-journey li[data-life="active"] i { border-color: var(--dp-value, #5cc6b4); }
+.ar-journey li[data-life="finishing"] i { border-color: var(--dp-on, #ffbe00); }
+.ar-journey li[data-life="finished"] i, .ar-journey li[data-life="archived"] i { border-color: var(--green, #8fd0a8); background: var(--green, #8fd0a8); }
+.ar-journey li[data-life="aborted"] { opacity: .5; }
+.ar-journey li b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; color: var(--text, #d4d7da); }
+.ar-journey li[data-me] { background: color-mix(in srgb, var(--sel, #7ec3e6) 14%, transparent); box-shadow: inset 2px 0 0 var(--sel, #7ec3e6); }
+.ar-journey li em { justify-self: start; font-style: normal; font-size: 9px; padding: 0 4px; border: 1px solid var(--dp-on, #ffbe00); color: var(--dp-on, #ffbe00); text-transform: uppercase; letter-spacing: .03em; }
+.ar-journey li small { font-size: 9.5px; color: var(--text-faint, #71767c); }
+.ar-side .ar-summary { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ar-side .ar-facts { font-size: 10px; color: var(--text-faint, #71767c); }
+.ar-review li[data-state="request"] { grid-template-columns: 8px minmax(0, 1fr); row-gap: 1px; }
+.ar-review li[data-state="request"] small { grid-column: 2; white-space: normal; }
+.ar-side { gap: 7px; }
+.ar-side > * { flex: none; }
+.ar-review li[data-state="output"] i { border-radius: 1px; background: var(--dp-value, #5cc6b4); border-color: var(--dp-value, #5cc6b4); }
+.ar-review li[data-state="output"] small { max-width: 130px; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono, ui-monospace, monospace); }

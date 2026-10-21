@@ -21,3 +21,7 @@ button.cws-row:hover, button.cws-row:focus-visible { background: color-mix(in sr
 
 /* The Name field's label stands left, as the choosers' labels do (the kit centres a text field's label). */
 .dp[aria-label="Workspace"] .dp-cell--text .dp-label { text-align: left; }
+
+/* The pane's pages under its tabs: the clips and modes, the world's ground, its self. */
+.cws-host { position: relative; flex: 1 1 auto; min-height: 0; }
+.cws-doc { position: absolute; inset: 0; }

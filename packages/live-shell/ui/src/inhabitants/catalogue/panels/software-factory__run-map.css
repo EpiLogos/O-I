@@ -1,0 +1,49 @@
+/* The Run map's own layout: the labels in its well, the pane (the map, the node you read beside it, the Journey along the foot) and the
+   widget's readings. Shell and panel tokens only. */
+.dp-display .rm-label { paint-order: stroke; stroke: var(--dp-well); stroke-width: 2.4px; stroke-linejoin: round; }
+
+.rm-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.4 var(--font-ui, sans-serif); overflow: hidden; }
+.rm-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+.rm-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
+.rm-head span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.rm-head b + span::before { content: "›"; }
+.rm-head [data-tone="value"] { color: var(--dp-value, #5cc6b4); }
+.rm-head [data-tone="accent"] { color: var(--dp-on, #ffbe00); }
+.rm-head [data-tone="stall"] { color: var(--stall, #ff9b4a); }
+.rm-head [data-tone="green"] { color: var(--green, #8fd0a8); }
+
+.rm-main { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 260px; }
+.rm-map { min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 10px 14px; overflow: hidden; }
+.rm-side { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; border-left: 1px solid var(--line, #24262a); background: var(--bg-0, #26292d); overflow: hidden; }
+.rm-side h4 { margin: 6px 0 0; font-size: 9px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.rm-side h4:first-child { margin-top: 0; }
+.rm-side p { margin: 0; color: var(--text-dim, #a2a7ad); }
+.rm-side .rm-name { color: var(--text, #d4d7da); font-weight: 600; }
+.rm-side dl { margin: 0; display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 3px 10px; font-size: 10.5px; }
+.rm-side dt { color: var(--text-faint, #71767c); }
+.rm-side dd { margin: 0; color: var(--text-dim, #a2a7ad); }
+.rm-side dd[data-state="active"], .rm-side dd[data-state="ready"] { color: var(--dp-value, #5cc6b4); }
+.rm-side dd[data-state="blocked"] { color: var(--stall, #ff9b4a); }
+.rm-side dd[data-state="waiting"] { color: var(--dp-on, #ffbe00); }
+.rm-side dd[data-state="returned"], .rm-side dd[data-state="satisfied"] { color: var(--green, #8fd0a8); }
+.rm-side .rm-rec { color: var(--text-faint, #71767c); }
+.rm-side .rm-rec[data-on="true"] { color: var(--dp-on, #ffbe00); }
+.rm-none { margin: 0; font-size: 10px; color: var(--text-faint, #71767c); }
+
+/* The Journey along the foot: its runs in the order Factory continued them, this one marked. */
+.rm-foot { flex: none; display: flex; align-items: center; gap: 14px; height: 34px; padding: 0 14px; border-top: 1px solid var(--line, #24262a); background: var(--bg-0, #26292d); overflow: hidden; }
+.rm-foot > small { flex: none; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.rm-journey { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 0; min-width: 0; white-space: nowrap; }
+.rm-journey li { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--text-dim, #a2a7ad); }
+.rm-journey li + li::before { content: ""; width: 22px; height: 1px; margin: 0 8px; background: var(--text-faint, #71767c); }
+.rm-journey i { width: 8px; height: 8px; border: 1px solid var(--text-faint, #71767c); }
+.rm-journey li[data-life="active"] i, .rm-journey li[data-life="finishing"] i { border-color: var(--dp-value, #5cc6b4); background: color-mix(in srgb, var(--dp-value, #5cc6b4) 40%, transparent); }
+.rm-journey li[data-life="finished"] i, .rm-journey li[data-life="archived"] i { border-color: var(--green, #8fd0a8); background: var(--green, #8fd0a8); }
+.rm-journey li[data-life="aborted"] { opacity: .5; }
+.rm-journey li[data-me] b { color: var(--text, #d4d7da); }
+.rm-journey li[data-me] i { outline: 1px solid var(--sel, #7ec3e6); outline-offset: 2px; }
+.rm-journey b { font-weight: 500; }
+.rm-journey small { font-size: 9.5px; color: var(--text-faint, #71767c); }
+.rm-journey em { font-style: normal; font-size: 9px; padding: 0 4px; border: 1px solid var(--dp-on, #ffbe00); color: var(--dp-on, #ffbe00); text-transform: uppercase; letter-spacing: .03em; }
+
+.rm-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }

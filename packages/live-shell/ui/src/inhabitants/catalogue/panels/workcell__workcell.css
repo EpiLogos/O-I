@@ -22,3 +22,18 @@
 .wc-tile-who i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--accent, #ffbe00); margin-right: 5px; vertical-align: 1px; }
 .wc-tile-who span { color: var(--text-dim, #a3a8ad); }
 .wc-tile { display: flex; flex-direction: column; width: 100%; min-width: 0; }
+
+/* The pane's pages under its tabs: the run's world, its services, its exposure and its release; the harness processes beside the seats. */
+.wc-doc { flex: 1 1 auto; min-height: 0; }
+.wc-pane-side--3 { grid-template-columns: 1fr 1.2fr 1.3fr; }
+.wc-seats td[data-fault="true"] { color: var(--stall, #ff9b4a); }
+.wc-procs li { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px 40px 52px; align-items: center; gap: 8px; }
+.wc-procs li[data-stale="true"] b, .wc-procs li[data-stale="true"] em { color: var(--text-faint, #71767c); }
+.wc-procs em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: var(--text, #d4d7da); }
+.wc-procs .dp-meter { width: 44px; }
+.wc-h4 { margin: 16px 0 6px; font-size: 11px; font-weight: 600; color: var(--text-dim, #a3a8ad); }
+.wc-surfaces { list-style: none; margin: 0; padding: 0; font-size: 11px; }
+.wc-surfaces li { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--line, #3a3d41); }
+.wc-surfaces code { font: 11px var(--mono, ui-monospace, monospace); color: var(--dp-value, #5cc6b4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wc-surfaces span { color: var(--text-dim, #a3a8ad); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wc-surfaces .dp-cell { width: auto; }

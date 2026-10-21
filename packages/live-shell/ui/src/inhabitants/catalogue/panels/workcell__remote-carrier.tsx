@@ -19,9 +19,17 @@
 //                               AIKit words a mode's standing shipped (here Ready) · composed · refused (gateway_modes.rs Standing).
 //                               credential is valid · expired · revoked · nomatch: the serving Workcell refuses a revoked grant, an
 //                               expired grant and a credential that matches no grant in three different words (service.rs).
+//   offers     Offer[]          what the place the session runs can provide: `workcell discover --json` there (offers: offer_ref, port,
+//                               provider_ref, health, availability; on a connected machine through the grant's `discover`); each is {ref,
+//                               port, name?, health?, availability?}. No kernel route reaches discover yet.
+//   plan       Plan             the run's needs laid on those offers: `workcell plan --json` with the run's demand (status satisfiable ·
+//                               degraded · unsatisfiable; planned_bindings: logical_ref, necessity, offer_ref; degradations and omissions:
+//                               requirement, necessity, reason); {status, bindings: [{ref, necessity, offer}], degradations, omissions}.
+//                               No kernel route reaches plan yet.
+// The Standing page draws the offers and the plan; the Route page the connections. Act: replan (asks `workcell plan` again).
 // The shell holds and the owner is asked to write:  where ('this' · 'connected'), machine (a connection label).
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
-import {Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
+import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
 import {clampTo, has, json, NONE, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './workcell__remote-carrier.css'
 
@@ -309,13 +317,100 @@ const placeName = (v: V): string | undefined => {
   return where === 'this' ? 'This machine' : where === 'connected' ? chosen?.id : undefined
 }
 
+// ---------------------------------------------------------------- the standing: the offers there, and the run's plan on them
+
+interface Offer {readonly ref: string; readonly port: string; readonly name?: string; readonly health?: string; readonly availability?: string}
+interface Need {readonly requirement: string; readonly necessity?: string; readonly reason?: string}
+interface Plan {readonly status?: string; readonly bindings: readonly {readonly ref: string; readonly necessity?: string; readonly offer: string}[]; readonly degradations: readonly Need[]; readonly omissions: readonly Need[]}
+const offersOf = (v: V): Offer[] | undefined => {
+  const raw = json<unknown>(v, 'offers', undefined)
+  if (!Array.isArray(raw)) return undefined
+  return raw.flatMap((o): Offer[] => { const r = o && typeof o === 'object' ? o as Record<string, unknown> : {}; const ref = text(r.ref), port = text(r.port)
+    return ref && port ? [{ref, port, name: text(r.name), health: text(r.health), availability: text(r.availability)}] : [] })
+}
+const needs = (x: unknown): Need[] => (Array.isArray(x) ? x.flatMap((n): Need[] => { const r = n && typeof n === 'object' ? n as Record<string, unknown> : {}; const q = text(r.requirement)
+  return q ? [{requirement: q, necessity: text(r.necessity), reason: text(r.reason)}] : [] }) : [])
+const planOf = (v: V): Plan | undefined => {
+  const raw = json<unknown>(v, 'plan', undefined)
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const r = raw as Record<string, unknown>
+  const bindings = Array.isArray(r.bindings) ? r.bindings.flatMap(b => { const q = b && typeof b === 'object' ? b as Record<string, unknown> : {}; const ref = text(q.ref), offer = text(q.offer)
+    return ref && offer ? [{ref, offer, necessity: text(q.necessity)}] : [] }) : []
+  return {status: text(r.status), bindings, degradations: needs(r.degradations), omissions: needs(r.omissions)}
+}
+const PLAN_WORD: Readonly<Record<string, string>> = {satisfiable: 'Satisfiable', degraded: 'Degraded', unsatisfiable: 'Unsatisfiable'}
+const planTone = (s: string | undefined): Tone | undefined => (s === 'satisfiable' ? 'green' : s === 'degraded' ? 'accent' : s ? 'stall' : undefined)
+/** The rows of the offers picture: Workcell's ports, and the exposures a plan asks for. */
+const LANES: readonly (readonly [string, string])[] = [['workspace', 'workspace'], ['execution', 'execution'], ['project-runtime', 'runtime'], ['service', 'service'],
+  ['storage', 'storage'], ['artifact-storage', 'artifacts'], ['exposure', 'exposure']]
+/** The lane a requirement the plan could not place belongs to, by its kind. */
+const laneOfNeed = (q: string) => (q.startsWith('exposure:') ? 'exposure' : q.startsWith('connectivity:') || q.startsWith('service:') ? 'service' : q.startsWith('workspace') ? 'workspace'
+  : q.startsWith('output') ? 'artifact-storage' : q.startsWith('storage') ? 'storage' : q.startsWith('runtime') ? 'project-runtime' : 'execution')
+const needName = (q: string) => q.replace(/^(connectivity:|affordance:|exposure:|service:)+/, '').replace(/\/.*$/, '')
+
+/** The offers, a row for each port: a square for each offer, green healthy, amber degraded, crossed down. The plan over them: a ring round
+ * each offer it chose (solid what the run requires, dashed what it prefers), orange where the choice is degraded, and an orange cross at
+ * the end of a row for what no offer can meet. */
+function OffersDisplay({v, w, h}: {v: V; w: number; h: number}) {
+  const offers = offersOf(v), plan = planOf(v)
+  const corner = plan?.status ? PLAN_WORD[plan.status] ?? plan.status : NONE
+  if (!offers) return <Display w={w} h={h} label="Offers and plan" corner={corner}><text x={8} y={22} className="dp-ink">No reading of the offers</text></Display>
+  const lx = 52, top = 18, step = 17, cell = 9, pitch = 13
+  const degraded = new Set((plan?.degradations ?? []).map(d => d.requirement))
+  return <Display w={w} h={h} label="Offers and plan" does="A row for each port: a square for each offer, green healthy, amber degraded, crossed down. A ring round each offer the run's plan chose; an orange cross for what no offer meets." corner={corner}>
+    {LANES.map(([lane, name], k) => {
+      const y = top + k * step, row = offers.filter(o => o.port === lane)
+      const missed = (plan?.omissions ?? []).filter(o => laneOfNeed(o.requirement) === lane)
+      return <g key={lane}>
+        <text x={6} y={y + 3} className="dp-axis">{name}</text>
+        <path d={`M${lx - 4} ${y}H${w - 6}`} className="dp-grid" />
+        {row.map((o, i) => {
+          const x = lx + i * pitch, down = o.health === 'unavailable', chose = plan?.bindings.filter(b => b.offer === o.ref) ?? []
+          const bad = chose.some(b => degraded.has(b.ref))
+          return <g key={o.ref}>
+            <rect x={x} y={y - cell / 2} width={cell} height={cell} rx={1} fill={o.health === 'healthy' ? 'var(--green)' : 'none'} stroke={o.health === 'healthy' ? 'none' : down ? 'var(--text-faint)' : 'var(--dp-on)'}><title>{`${o.name ?? o.ref} · ${o.health ?? NONE}`}</title></rect>
+            {down && <path d={`M${x + 1.5} ${y - 3}l6 6M${x + 7.5} ${y - 3}l-6 6`} stroke="var(--text-faint)" strokeWidth={1} />}
+            {chose.length > 0 && <rect x={x - 2.5} y={y - cell / 2 - 2.5} width={cell + 5} height={cell + 5} rx={2} fill="none" stroke={bad ? 'var(--stall)' : 'var(--dp-on)'} strokeWidth={1.3}
+              strokeDasharray={chose.every(b => b.necessity !== 'required') ? '2 2' : undefined} />}
+          </g>
+        })}
+        {missed.map((m, i) => { const x = w - 12 - i * 12; return <path key={m.requirement} d={`M${x - 3.5} ${y - 3.5}l7 7M${x + 3.5} ${y - 3.5}l-7 7`} stroke="var(--stall)" strokeWidth={1.5}><title>{`${m.requirement} · ${m.reason ?? NONE}`}</title></path> })}
+      </g>
+    })}
+    {!plan && <text x={w - 6} y={h - 5} className="dp-axis" textAnchor="end">no reading of the plan</text>}
+  </Display>
+}
+
+function StandingBands({p}: {p: ViewProps}) {
+  const v = p.v, offers = offersOf(v), plan = planOf(v)
+  const items: RowItem[] = !plan ? [{id: 'none', name: 'No reading of the plan', light: 'unknown'}] : [
+    ...plan.omissions.map((o): RowItem => ({id: `o:${o.requirement}`, name: needName(o.requirement), light: 'dark', note: `${o.necessity ?? NONE} · not met`, why: o.reason ?? 'Workcell gave no reason.'})),
+    ...plan.degradations.map((d): RowItem => ({id: `d:${d.requirement}`, name: needName(d.requirement), light: 'lit', tone: 'accent', note: `${d.necessity ?? NONE} · degraded`, why: d.reason ?? 'Workcell gave no reason.'})),
+    ...plan.bindings.filter(b => !plan.degradations.some(d => d.requirement === b.ref)).map((b): RowItem => ({id: `b:${b.ref}`, name: needName(b.ref), light: 'lit', tone: 'green', note: `${b.necessity ?? NONE} · ${b.offer.split(':').slice(1).join(':') || b.offer}`, does: `${b.ref} is met by ${b.offer}.`})),
+  ]
+  if (plan && items.length === 0) items.push({id: 'none', name: 'The run asks for nothing', light: 'dark'})
+  return <Band>
+    <Section width={206}><OffersDisplay v={v} w={194} h={146} /></Section>
+    <Section label="Plan" width={104}>
+      <Readout label="plan" does="Whether the machine's offers meet the run's needs: satisfiable, degraded (a preferred need is met poorly) or unsatisfiable (a required need is not met)."
+        value={plan?.status ? PLAN_WORD[plan.status] ?? plan.status : undefined} tone={planTone(plan?.status)} />
+      <Readout label="offers up" does="Offers that answer healthy, of all the machine offers." value={offers ? `${offers.filter(o => o.health === 'healthy').length}/${offers.length}` : undefined} tone="green" />
+      {standingReadout(v)}
+      <Action {...st(p, 'replan')} label="Plan again" does="Lay the run's needs on the machine's offers again." onPress={() => p.set('replan', true)} />
+    </Section>
+    <Section label="Needs" grow>
+      <Rows does="The run's needs as the plan placed them. Dark: no offer meets it. Amber: met poorly. Point at the ! for Workcell's reason." items={items} size={8} />
+    </Section>
+  </Band>
+}
+
 // ---------------------------------------------------------------- the pane: one machine at full size
 
 function Pane({v}: {v: V}) {
   const machines = machinesOf(v), chosen = chosenOf(v, machines), where = whereOf(v)
   if (!has(v, 'machines')) return <div className="rc-pane"><div className="rc-strip"><span className="rc-strip-none">Remote carrier</span></div>
     <div className="rc-body" data-none="true"><p className="rc-empty">No reading of the machines.</p></div></div>
-  const sessions = chosen?.sessions
+  const sessions = chosen?.sessions, plan = planOf(v)
   const grant = chosen?.grant, count = grantCount(chosen)
   return <div className="rc-pane">
     <div className="rc-strip" aria-label="Machines">
@@ -344,6 +439,9 @@ function Pane({v}: {v: V}) {
           <section className="rc-read"><h4>Standing</h4>
             <strong data-state={chosen.state ?? 'none'}>{stateWord(chosen) ?? NONE}</strong>
             <p>{chosen.state ? (refusedState(chosen.state) ? reasonOf(chosen) : STATE_SAYS[chosen.state].split(': ')[1]) : 'No reading of the standing.'}</p></section>
+          <section className="rc-read"><h4>Plan</h4>
+            <strong data-state={plan?.status === 'satisfiable' ? 'ready' : plan?.status === 'degraded' ? 'composed' : plan?.status ? 'refused' : 'none'}>{plan?.status ? PLAN_WORD[plan.status] ?? plan.status : NONE}</strong>
+            <p>{!plan ? 'No reading of the plan.' : plan.omissions.length ? `${plan.omissions.length} not met: ${plan.omissions.map(o => needName(o.requirement)).join(', ')}` : plan.degradations.length ? `${plan.degradations.length} met poorly` : 'every need met'}</p></section>
           <section className="rc-read"><h4>Round trip</h4>
             <strong data-state={chosen.rtt === undefined ? 'none' : undefined}>{msText(chosen.rtt) ?? NONE}</strong>
             <p>{chosen.rtt === undefined ? 'No reading of the round trip.' : 'one message, there and back'}</p></section>
@@ -384,17 +482,46 @@ const MACHINES = [
 const READY = [{...MACHINES[0]!, state: 'ready', expiresAt: 1793000000000, rtt: 14,
   grant: ['status', 'discover', 'plan', 'prepare', 'inspect', 'observe', 'recover', 'collect', 'release']}, MACHINES[1]!]
 
+/** What this Mac offers (`workcell discover --json`, 21 Oct): two workspaces, the host process, four declared services, two artifact stores. */
+const OFFERS = [
+  {ref: 'collapsed-local-git-worktree:git-worktree', port: 'workspace', name: 'git-worktree', health: 'healthy', availability: 'available'},
+  {ref: 'collapsed-local-workspace:directory', port: 'workspace', name: 'directory', health: 'healthy', availability: 'available'},
+  {ref: 'collapsed-local-host-process:host-process', port: 'execution', name: 'host-process', health: 'healthy', availability: 'available'},
+  {ref: 'collapsed-local-target-services:external-service:b4fedf1f', port: 'service', name: 'service:gliner25-decision/personal-workcell', health: 'unavailable', availability: 'degraded'},
+  {ref: 'collapsed-local-target-services:external-service:4260858b', port: 'service', name: 'service:gliner25-ql-candidate/personal-workcell', health: 'unavailable', availability: 'degraded'},
+  {ref: 'collapsed-local-target-services:external-service:2f3d70b9', port: 'service', name: 'service:kev-decision/personal-workcell', health: 'healthy', availability: 'available'},
+  {ref: 'collapsed-local-target-services:external-service:205e52a7', port: 'service', name: 'service:redis-now/personal-workcell', health: 'healthy', availability: 'available'},
+  {ref: 'collapsed-local-artifacts:artifact:9ebe24a8', port: 'artifact-storage', name: 'directory-artifact-storage', health: 'healthy', availability: 'available'},
+  {ref: 'collapsed-local-artifacts:artifact:9289a082', port: 'artifact-storage', name: 'directory-artifact-storage', health: 'healthy', availability: 'available'},
+]
+/** A run's needs planned on those offers (`workcell plan --json`, 21 Oct): the shell and the NOW store met, the decision model met poorly, a preview
+ * exposure not met. */
+const PLAN = {status: 'degraded',
+  bindings: [{ref: 'affordance:shell', necessity: 'required', offer: 'collapsed-local-host-process:host-process'},
+    {ref: 'connectivity:service:redis-now/personal-workcell', necessity: 'required', offer: 'collapsed-local-target-services:external-service:205e52a7'},
+    {ref: 'connectivity:service:gliner25-decision/personal-workcell', necessity: 'preferred', offer: 'collapsed-local-target-services:external-service:b4fedf1f'}],
+  degradations: [{requirement: 'connectivity:service:gliner25-decision/personal-workcell', necessity: 'preferred', reason: 'selected offer is degraded or health is not fully known'}],
+  omissions: [{requirement: 'exposure:preview', necessity: 'optional', reason: 'no offer supports this material requirement'}]}
+/** The same needs on a connected machine that holds no NOW store: the plan cannot be met. */
+const OFFERS_OMARCHY = OFFERS.filter(o => !o.ref.includes('external-service') && !o.ref.includes('workspace:directory'))
+const PLAN_UNMET = {status: 'unsatisfiable', bindings: [PLAN.bindings[0]!],
+  degradations: [], omissions: [{requirement: 'connectivity:service:redis-now/personal-workcell', necessity: 'required', reason: 'no offer supports this material requirement'},
+    {requirement: 'connectivity:service:gliner25-decision/personal-workcell', necessity: 'preferred', reason: 'no offer supports this material requirement'},
+    {requirement: 'exposure:preview', necessity: 'optional', reason: 'no offer supports this material requirement'}]}
+
 /** Every key the owners report or the shell holds: the "No readings" fixture drops all of them. */
-const KEYS = ['light', 'here', 'where', 'machine', 'machines']
+const KEYS = ['light', 'here', 'where', 'machine', 'machines', 'offers', 'plan']
 const NOTHING: Record<string, undefined> = Object.fromEntries(KEYS.map(k => [k, undefined]))
 
 export const design: DesignedDevice = {
   id: 'workcell:remote-carrier',
   title: 'Remote carrier',
   kind: 'connection',
-  defaults: {light: 'dark', here: 'workcell:mac', where: 'this', machine: 'omarchy', machines: JSON.stringify(MACHINES)},
+  firstPage: 'route',
+  defaults: {light: 'dark', here: 'workcell:mac', where: 'this', machine: 'omarchy', machines: JSON.stringify(MACHINES), offers: JSON.stringify(OFFERS), plan: JSON.stringify(PLAN)},
   fixtures: {
     'Reads only, one grant ended': {},
+    'A plan that cannot be met': {light: 'lit', where: 'connected', machine: 'omarchy', machines: JSON.stringify(READY), offers: JSON.stringify(OFFERS_OMARCHY), plan: JSON.stringify(PLAN_UNMET)},
     'Ready and carried': {light: 'lit', where: 'connected', machine: 'omarchy', machines: JSON.stringify(READY)},
     'No readings': NOTHING,
   },
@@ -417,8 +544,11 @@ export const design: DesignedDevice = {
 
   whole: p => {
     const chosen = chosenOf(p.v, machinesOf(p.v))
-    return <Panel title="Remote carrier" view="whole" {...head(p)}>
-      <Band>
+    const page = p.page === 'standing' ? 'standing' : 'route'
+    const plan = planOf(p.v)
+    const pages = [{id: 'route', label: 'Route'}, {id: 'standing', label: 'Standing', light: (plan?.status ? (plan.status === 'unsatisfiable' ? 'dark' : 'lit') : undefined) as LightState | undefined}]
+    return <Panel title="Remote carrier" view="whole" {...head(p)} pages={pages} page={page} onPage={p.setPage}>
+      {page === 'standing' ? <StandingBands p={p} /> : <><Band>
         <Section width={206}>
           <RouteDisplay p={p} g={WHOLE} />
         </Section>
@@ -438,7 +568,7 @@ export const design: DesignedDevice = {
         <Section label="Link" grow>
           <Terms m={chosen} />
         </Section>
-      </Band>
+      </Band></>}
     </Panel>
   },
 

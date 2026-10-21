@@ -45,3 +45,4 @@
 .sfl-files li[data-kind="modified"] i { color: var(--dp-on, #ffbe00); }
 .sfl-files code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 10.5px var(--mono, ui-monospace, monospace); color: var(--text, #d4d7da); }
 .sfl-files small { grid-column: 2; font: 9.5px var(--mono, ui-monospace, monospace); color: var(--text-faint, #71767c); }
+.sfl-receipt dd.sfl-cond { color: var(--text-dim, #a2a7ad); font-size: 10.5px; line-height: 1.35; }

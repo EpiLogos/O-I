@@ -5,9 +5,24 @@
 // The document arrives on the keys title, template, plural, people, entries, pages and media (people, entries and pages as JSON),
 // and the agents it can bring in on roster. The sample content in `defaults` and `fixtures` is the real Factory flow in
 // Control/user/flows (flow-2026-10-03-1432.html) with the person's entries added. A key the owner has not reported is drawn "—".
+//
+// Its second page, Thought, is Contemplate: one explicit reading of the Flow by an agent, which never runs by itself. The owner is AIKit's
+// Flow cognition (crates/aikit-core/src/flow_cognition.rs), reached by the kernel's `action:contemplate-flow` (kernel/src/flow_cognition.rs):
+// asked bare, it answers the deterministic preflight (`aikit flow preflight`: what would be read and touched, by which model, agent and
+// harness; it records nothing); asked with that preflight record, it runs `aikit flow contemplate` once, which re-checks the preflight and
+// refuses drift. Changed since is the kernel's flow_changed_since over Central's change horizon (`aikit flow changed-since`).
+//   preflight  {state: 'ready' | 'unavailable', reason?, invocation, model, harness, agent?, focus, changed: [{title, basis?, observed?}],
+//              affected: [{title, freshness}]}  the preflight (ContemplatePreflight: focus, impact, runtime_model, harness, agent)
+//   thought    {state: 'cognition' | 'unavailable' | 'refused', reason?, at, cursor, tensions, candidates, proposals, intents}  the last thought
+//              (aikit.flow-cognition/v1); JSON null when the Flow has not been contemplated
+//   since      {state: 'available' | 'empty' | 'unavailable', reason?, changed, affected, open: [{kind, reference, state?}]}
+//              aikit.flow-changed-since/v1: changed_sources, affected_knowledge, unresolved (tension | candidate | human-source-proposal |
+//              flow-mutation-intent)
+// Acts: preflightRead (ask again), contemplate (the preflight's invocation ref; held: one explicit run), sinceRead. Each goes through the
+// kernel's routes above. A thought's proposals and changes wait as owner requests: nothing here applies them.
 import {useState} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, clock, cradleDocuments, json, numOf, on, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, clock, cradleDocuments, has, json, numOf, on, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__flow-document.css'
 
 type V = ViewProps['v']
@@ -303,13 +318,177 @@ function BringIn({p}: {p: ViewProps}) {
   </>
 }
 
+// ---------------------------------------------------------------- Thought: Contemplate the Flow, and what changed since
+
+type Fresh = 'basis-changed' | 'integration-pending' | 'basis-unavailable'
+interface Moved {readonly title: string; readonly basis?: string; readonly observed?: string; readonly kind?: string}
+interface Touched {readonly title: string; readonly freshness: Fresh}
+interface Open {readonly kind: 'tension' | 'candidate' | 'human-source-proposal' | 'flow-mutation-intent'; readonly reference: string; readonly state?: string}
+interface Preflight {readonly state: 'ready' | 'unavailable'; readonly reason?: string; readonly invocation?: string; readonly model?: string; readonly harness?: string
+  readonly agent?: string; readonly focus: number; readonly changed: readonly Moved[]; readonly affected: readonly Touched[]}
+interface Thought {readonly state: 'cognition' | 'unavailable' | 'refused'; readonly reason?: string; readonly at?: string; readonly cursor?: number; readonly tensions: number; readonly candidates: number
+  readonly proposals: number; readonly intents: number}
+interface Since {readonly state: 'available' | 'empty' | 'unavailable'; readonly reason?: string; readonly changed: readonly Moved[]; readonly affected: readonly Touched[]; readonly open: readonly Open[]}
+const FRESH: readonly string[] = ['basis-changed', 'integration-pending', 'basis-unavailable']
+const OPEN_KINDS: readonly string[] = ['tension', 'candidate', 'human-source-proposal', 'flow-mutation-intent']
+const OPEN_WORD: Readonly<Record<Open['kind'], string>> = {tension: 'tension', candidate: 'candidate', 'human-source-proposal': 'proposal to your ground', 'flow-mutation-intent': 'change to the Flow'}
+const FRESH_WORD: Readonly<Record<Fresh, string>> = {'basis-changed': 'source moved', 'integration-pending': 'waits to integrate', 'basis-unavailable': 'source gone'}
+const movedOf = (x: unknown): Moved[] => (Array.isArray(x) ? x : []).flatMap(y => { const r = record(y); return text(r.title) ? [{title: text(r.title), basis: text(r.basis) || undefined, observed: text(r.observed) || undefined, kind: text(r.kind) || undefined}] : [] })
+const touchedOf = (x: unknown): Touched[] => (Array.isArray(x) ? x : []).flatMap(y => { const r = record(y); return text(r.title) && FRESH.includes(text(r.freshness)) ? [{title: text(r.title), freshness: r.freshness as Fresh}] : [] })
+
+/** The preflight `action:contemplate-flow` answers before anything runs: what Contemplate would read and touch. Undefined when not read. */
+function preflightOf(v: V): Preflight | undefined {
+  const raw = json<unknown>(v, 'preflight', undefined)
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = record(raw)
+  return {state: r.state === 'ready' ? 'ready' : 'unavailable', reason: text(r.reason) || undefined, invocation: text(r.invocation) || undefined, model: text(r.model) || undefined,
+    harness: text(r.harness) || undefined, agent: text(r.agent) || undefined, focus: count(r.focus) ?? 0, changed: movedOf(r.changed), affected: touchedOf(r.affected)}
+}
+/** The last thought: one explicit Contemplate and what it returned, or its unavailable or refused reading. */
+function thoughtOf(v: V): Thought | null | undefined {
+  if (!has(v, 'thought')) return undefined
+  const raw = json<unknown>(v, 'thought', undefined)
+  if (raw === null) return null
+  const r = record(raw)
+  if (r.state !== 'cognition' && r.state !== 'unavailable' && r.state !== 'refused') return undefined
+  return {state: r.state, reason: text(r.reason) || undefined, at: text(r.at) || undefined, cursor: count(r.cursor), tensions: count(r.tensions) ?? 0, candidates: count(r.candidates) ?? 0,
+    proposals: count(r.proposals) ?? 0, intents: count(r.intents) ?? 0}
+}
+/** What changed relative to the thought: changed sources, the knowledge they affect, and the thought's returns still open. */
+function sinceOf(v: V): Since | undefined {
+  const raw = json<unknown>(v, 'since', undefined)
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = record(raw)
+  const open = (Array.isArray(r.open) ? r.open : []).flatMap((y): Open[] => { const o = record(y); return OPEN_KINDS.includes(text(o.kind)) && text(o.reference) ? [{kind: o.kind as Open['kind'], reference: text(o.reference), state: text(o.state) || undefined}] : [] })
+  return {state: r.state === 'available' ? 'available' : r.state === 'empty' ? 'empty' : 'unavailable', reason: text(r.reason) || undefined, changed: movedOf(r.changed), affected: touchedOf(r.affected), open}
+}
+
+/** The horizon: the thought as a diamond at the left, now at the right. Between them, on three lanes, what moved since — the sources, the
+ * knowledge they affect, and the thought's returns still open. With no thought yet, the lanes hold what Contemplate's preflight would read. */
+function Horizon({v, w, h}: {v: V; w: number; h: number}) {
+  const pre = preflightOf(v), thought = thoughtOf(v), since = sinceOf(v)
+  const tx = 62, nx = w - 10, lanes = [38, 74, 110], label = ['sources', 'knowledge', 'open'] as const
+  const showSince = thought?.state === 'cognition' && since !== undefined
+  const changed = showSince ? since!.changed : pre?.changed ?? [], affected = showSince ? since!.affected : pre?.affected ?? []
+  const spread = (n: number, i: number) => tx + 10 + ((i + .5) * (nx - tx - 16)) / Math.max(1, n)
+  const corner = showSince ? (thought!.cursor === undefined ? since!.state : `cursor ${thought!.cursor}`) : pre ? `preflight ${pre.state}` : NONE
+  return <Display w={w} h={h} label="Thought" corner={corner}
+    does="The last thought at the left, now at the right. Between them: the sources that moved since, the knowledge they affect, and the thought's returns still open. Before a thought, what the preflight would read.">
+    {label.map((l, i) => <g key={l}><text x={6} y={lanes[i]! + 3} className="dp-axis">{l}</text><path d={`M${tx} ${lanes[i]}H${nx}`} className="dp-grid" /></g>)}
+    <path d={`M${tx} 20V${h - 14}`} stroke={thought?.state === 'cognition' ? 'var(--dp-on)' : 'var(--text-faint)'} strokeDasharray="2 2" />
+    <path d={`M${nx} 20V${h - 14}`} className="dp-faint" />
+    {thought?.state === 'cognition'
+      ? <path d={`M${tx} 13l5 5-5 5-5-5z`} fill="var(--dp-on)" />
+      : <path d={`M${tx} 13l5 5-5 5-5-5z`} fill="none" stroke={thought ? 'var(--stall)' : 'var(--text-faint)'} />}
+    <text x={tx} y={h - 4} className="dp-axis" textAnchor="middle">{thought?.state === 'cognition' ? 'thought' : thought ? thought.state : 'no thought'}</text>
+    <text x={nx} y={h - 4} className="dp-axis" textAnchor="end">now</text>
+    <g opacity={showSince ? 1 : .55}>
+      {changed.map((c, i) => <rect key={`c${i}`} x={spread(changed.length, i) - 3} y={lanes[0]! - 3} width={6} height={6} fill="var(--stall)" data-i={`${c.title}|Moved${c.basis && c.observed ? ` from ${c.basis} to ${c.observed}` : ''}.`} />)}
+      {affected.map((a, i) => <circle key={`a${i}`} cx={spread(affected.length, i)} cy={lanes[1]} r={3.2} data-i={`${a.title}|${FRESH_WORD[a.freshness]}.`}
+        fill={a.freshness === 'basis-changed' ? 'var(--dp-well)' : 'none'} stroke={a.freshness === 'basis-changed' ? 'var(--stall)' : a.freshness === 'integration-pending' ? 'var(--dp-value)' : 'var(--text-faint)'}
+        strokeWidth={1.2} strokeDasharray={a.freshness === 'basis-changed' ? undefined : '1.5 1.5'} />)}
+    </g>
+    {showSince && since!.open.map((o, i) => <rect key={`o${i}`} x={tx + 6 + (i % 12) * 9} y={lanes[2]! - 3.5 + Math.floor(i / 12) * 9} width={7} height={7} fill="none" data-i={`${o.reference}|${OPEN_WORD[o.kind]}, still open.`}
+      stroke={o.kind === 'tension' ? 'var(--stall)' : o.kind === 'human-source-proposal' ? 'var(--dp-on)' : 'var(--dp-value)'} strokeWidth={1.2} />)}
+    {!pre && !thought && <text x={(tx + nx) / 2} y={lanes[1]! + 3} className="dp-ink-dim" textAnchor="middle">No reading of the preflight</text>}
+    {showSince && since!.state !== 'available' && <text x={(tx + nx) / 2} y={lanes[1]! + 3} className="dp-ink-dim" textAnchor="middle">{since!.state === 'empty' ? 'Nothing changed since' : 'Changed since is unavailable'}</text>}
+  </Display>
+}
+
+function thoughtRows(v: V): RowItem[] {
+  const pre = preflightOf(v), thought = thoughtOf(v), since = sinceOf(v)
+  if (thought?.state === 'cognition' && since) {
+    if (since.state === 'unavailable') return [{id: 'u', name: 'Changed since is unavailable', light: 'dark', why: since.reason ?? 'The owner gave no reason.'}]
+    const rows: RowItem[] = [
+      ...since.changed.map((c, i) => ({id: `c${i}`, name: c.title, light: 'lit' as LightState, tone: 'stall' as const, note: c.basis && c.observed ? `${c.basis} → ${c.observed}` : c.kind ?? 'moved'})),
+      ...since.affected.map((a, i) => ({id: `a${i}`, name: a.title, light: (a.freshness === 'basis-unavailable' ? 'dark' : 'lit') as LightState, tone: 'value' as const, note: FRESH_WORD[a.freshness]})),
+      ...since.open.map((o, i) => ({id: `o${i}`, name: o.reference, light: 'lit' as LightState, tone: o.kind === 'tension' ? 'stall' as const : 'accent' as const, note: OPEN_WORD[o.kind], does: `Returned by the thought and still open${o.state ? `: ${o.state}` : ''}.`})),
+    ]
+    return rows.length ? rows : [{id: 'none', name: 'Nothing changed since the thought', light: 'lit', tone: 'green'}]
+  }
+  if (!pre) return [{id: 'none', name: 'No reading of the preflight', light: 'unknown'}]
+  if (pre.state === 'unavailable') return [{id: 'u', name: 'Contemplate is unavailable', light: 'dark', why: pre.reason ?? 'The owner gave no reason.'}]
+  return [
+    {id: 'who', name: `${pre.agent ?? 'An agent'} on ${pre.model ?? NONE} through ${pre.harness ?? NONE}`, light: 'lit', tone: 'value', note: 'runs it'},
+    {id: 'focus', name: `${pre.focus} entr${pre.focus === 1 ? 'y' : 'ies'} of the Flow`, light: 'lit', tone: 'value', note: 'reads'},
+    ...pre.changed.map((c, i) => ({id: `c${i}`, name: c.title, light: 'lit' as LightState, tone: 'stall' as const, note: 'moved'})),
+    ...pre.affected.map((a, i) => ({id: `a${i}`, name: a.title, light: 'lit' as LightState, tone: 'value' as const, note: FRESH_WORD[a.freshness]})),
+  ]
+}
+
+function ThoughtBands({p}: {p: ViewProps}) {
+  const [page, setPage] = useState(0)
+  const pre = preflightOf(p.v), thought = thoughtOf(p.v), since = sinceOf(p.v)
+  return <>
+    <Band>
+      <Section width={206}><Horizon v={p.v} w={194} h={146} /></Section>
+      <Section label="Contemplate" width={104}>
+        <Readout label="preflight" does="What the preflight answers: ready, or unavailable with the owner's reason. It records nothing." value={pre?.state} tone={pre?.state === 'ready' ? 'green' : pre ? 'stall' : undefined} />
+        <Readout label="runs on" does="The model Contemplate would run on, named by the preflight." value={pre?.model === undefined ? undefined : (m => (m.length > 14 ? `${m.slice(0, 13)}…` : m))(pre.model.replace('model:', '').replace('claude-', ''))} />
+        <Action {...st(p, 'preflightRead')} label="Preflight" does="Ask what Contemplate would read and touch. Nothing runs and nothing is recorded." onPress={() => p.set('preflightRead', true)} />
+        <Action {...st(p, 'contemplate')} hold label="Contemplate" does="Contemplate this Flow once, under the preflight you read. It never runs by itself."
+          onPress={pre?.state === 'ready' && pre.invocation ? () => p.set('contemplate', pre.invocation) : undefined}
+          disabled={st(p, 'contemplate').disabled ?? (!pre ? 'Read the preflight first.' : pre.state !== 'ready' ? pre.reason ?? 'The preflight is unavailable.' : undefined)} />
+      </Section>
+      <Section label="Since" cols={2} grow>
+        <Readout label="thought" does="The last thought: when it ran, or why it did not." value={thought === null ? 'none' : thought ? (thought.state === 'cognition' ? thought.at : thought.state) : undefined}
+          tone={thought && thought.state !== 'cognition' ? 'stall' : undefined} />
+        <Readout label="open" does="What the thought returned that is still open: tensions, candidates, proposals to your ground, changes to the Flow." value={thought?.state === 'cognition' ? since?.open.length ?? thought.tensions + thought.candidates + thought.proposals + thought.intents : undefined} tone="accent" />
+        <Readout label="moved" does="Sources that moved since the thought." value={since && thought?.state === 'cognition' ? since.changed.length : undefined} tone="stall" />
+        <Readout label="affected" does="Knowledge those sources affect." value={since && thought?.state === 'cognition' ? since.affected.length : undefined} />
+        <div style={{gridColumn: 'span 2', width: '100%'}}><Action {...st(p, 'sinceRead')} label="Changed since" does="Read what changed since the thought. Nothing runs and nothing is recorded."
+          onPress={thought?.state === 'cognition' ? () => p.set('sinceRead', true) : undefined} disabled={st(p, 'sinceRead').disabled ?? (thought?.state === 'cognition' ? undefined : 'There is no thought to read from.')} /></div>
+      </Section>
+    </Band>
+    <Band>
+      <Section grow><Rows label={thought?.state === 'cognition' && since ? `Since the thought · ${since.state}` : 'What the preflight would read'}
+        does="Before a thought: who would run it and what it would read. After one: what moved since, what it affects, and what the thought left open." items={thoughtRows(p.v)} size={14} columns={2} page={page} onPage={setPage} /></Section>
+    </Band>
+  </>
+}
+
+type PageId = 'entries' | 'thought'
+const PAGE_IDS: readonly {id: PageId; label: string}[] = [{id: 'entries', label: 'Entries'}, {id: 'thought', label: 'Thought'}]
+const pageOf = (p: ViewProps): PageId => (p.page === 'thought' ? 'thought' : 'entries')
+
+/** Full's Thought tab: the preflight in full, the last thought, and what changed since, each with where it comes from. */
+function ThoughtDoc({v}: {v: V}) {
+  const pre = preflightOf(v), thought = thoughtOf(v), since = sinceOf(v)
+  return <div className="ref-doc">
+    <h3>Thought <small>{strOf(v, 'title') || NONE}</small></h3>
+    <section className="ref-doc-kind"><h4>Preflight</h4>
+      {!pre ? <p className="ref-doc-lead">No reading of the preflight.</p> : pre.state === 'unavailable' ? <p className="ref-doc-lead">Contemplate is unavailable: {pre.reason ?? 'the owner gave no reason.'}</p>
+        : <ol className="ref-doc-list">
+          <li><span className="dp-lamp" data-light="lit" data-tone="green" /><b>Runs on</b><span className="ref-doc-rev">{pre.invocation?.slice(0, 22) ?? NONE}</span>
+            <p>{pre.agent ?? 'An agent'} on {pre.model ?? NONE}, through {pre.harness ?? NONE}. Nothing runs until you press Contemplate.</p></li>
+          <li><span className="dp-lamp" data-light="lit" data-tone="value" /><b>Reads</b><span className="ref-doc-rev">{pre.focus} entries</span>
+            <p>{[...pre.changed.map(c => `${c.title} (moved)`), ...pre.affected.map(a => `${a.title} (${FRESH_WORD[a.freshness]})`)].join(' · ') || 'The Flow alone.'}</p></li>
+        </ol>}
+    </section>
+    <section className="ref-doc-kind"><h4>The last thought</h4>
+      <p className="ref-doc-lead">{thought === undefined ? 'No reading of the thought.' : thought === null ? 'This Flow has not been contemplated.'
+        : thought.state === 'cognition' ? `Contemplated ${thought.at ?? NONE}: ${thought.tensions} tensions, ${thought.candidates} candidates, ${thought.proposals} proposals to your ground, ${thought.intents} changes to the Flow. Each waits for you; none is applied.`
+        : `${thought.state === 'refused' ? 'Refused' : 'Unavailable'}: ${thought.reason ?? 'the owner gave no reason.'}`}</p>
+    </section>
+    {thought?.state === 'cognition' && <section className="ref-doc-kind"><h4>Changed since</h4>
+      {!since ? <p className="ref-doc-lead">No reading of what changed.</p> : since.state !== 'available' ? <p className="ref-doc-lead">{since.state === 'empty' ? 'Nothing changed since the thought.' : `Unavailable: ${since.reason ?? 'the owner gave no reason.'}`}</p>
+        : <ol className="ref-doc-list">
+          {since.changed.map((c, i) => <li key={`c${i}`}><span className="dp-lamp" data-light="lit" data-tone="stall" /><b>{c.title}</b><span className="ref-doc-rev">{c.basis && c.observed ? `${c.basis} → ${c.observed}` : c.kind ?? 'moved'}</span></li>)}
+          {since.affected.map((a, i) => <li key={`a${i}`}><span className="dp-lamp" data-light="lit" data-tone="value" /><b>{a.title}</b><span className="ref-doc-rev">{FRESH_WORD[a.freshness]}</span></li>)}
+          {since.open.map((o, i) => <li key={`o${i}`}><span className="dp-lamp" data-light="lit" data-tone={o.kind === 'tension' ? 'stall' : 'accent'} /><b>{o.reference}</b><span className="ref-doc-rev">{OPEN_WORD[o.kind]}</span>{o.state && <p>{o.state}</p>}</li>)}
+        </ol>}
+    </section>}
+  </div>
+}
+
 // ---------------------------------------------------------------- the views
 
 function Whole({p}: {p: ViewProps}) {
   const [at, setAt] = useState(0)
   const v = p.v, n = entriesOf(v)?.length, plural = pluralOf(v), pages = pagesOf(v)?.length, held = edited(v)
   const revision = numOf(v, 'revision'), state = held ? 'edited' : strOf(v, 'state'), last = strOf(v, 'lastSave'), template = on(v, 'upgraded') ? CURRENT_FORM : strOf(v, 'template')
-  return <Panel title="Flow" view="whole" {...head(p)}>
+  return <Panel title="Flow" view="whole" {...head(p)} pages={PAGE_IDS.map(x => ({id: x.id, label: x.label}))} page={pageOf(p)} onPage={p.setPage}>
+    {pageOf(p) === 'thought' ? <ThoughtBands p={p} /> : <>
     <Band>
       <Section width={206}>
         <Display w={194} h={146} label="The entries" does={mapDoes(v)} corner={corner(v)}>
@@ -346,6 +525,7 @@ function Whole({p}: {p: ViewProps}) {
         <Action label="Re-read" does="Read the current document again. Edits that the owner does not hold are dropped." onPress={() => p.set('reread', true)} />
       </Section>
     </Band>
+    </>}
   </Panel>
 }
 
@@ -372,6 +552,18 @@ function Compose({p}: {p: ViewProps}) {
 }
 
 const entriesWord = (n: number) => `${n} ${n === 1 ? 'entry' : 'entries'}`
+
+// The Thought page's sample: the Factory flow's preflight, a thought taken on 15 Oct, and what changed since (the run's ledger and its
+// continuation note moved; the unit list it named is affected; two tensions and a proposal remain open).
+const PREFLIGHT = {state: 'ready', invocation: 'flow-contemplate/b3:5e1c09a2', agent: 'Factory coordinator', model: 'model:claude-sonnet-4.6', harness: 'claude-code', focus: 13,
+  changed: [{title: 'factory/runs/original-development.json', basis: 'r21', observed: 'r24'}],
+  affected: [{title: 'wiki:Factory · original development Run', freshness: 'basis-changed'}, {title: 'Run units (7 required)', freshness: 'integration-pending'}]}
+const THOUGHT = {state: 'cognition', at: '15 Oct 22:40', cursor: 3911, tensions: 2, candidates: 3, proposals: 1, intents: 1}
+const SINCE = {state: 'available',
+  changed: [{title: 'factory/runs/original-development.json', basis: 'r21', observed: 'r24'}, {title: 'Control/user/flows/flow-2026-10-03-1432.html', basis: 'r8', observed: 'r9'}],
+  affected: [{title: 'wiki:Factory · original development Run', freshness: 'basis-changed'}, {title: 'Run units (7 required)', freshness: 'integration-pending'}, {title: 'omarchy startup image', freshness: 'basis-unavailable'}],
+  open: [{kind: 'tension', reference: 'Two-machine Run vs. one-machine image', state: 'unresolved'}, {kind: 'tension', reference: 'Workers not started', state: 'unresolved'},
+    {kind: 'human-source-proposal', reference: 'Control/user/factory-intent.md', state: 'basis-superseded'}, {kind: 'candidate', reference: 'Start the first worker on Omarchy', state: 'unresolved'}]}
 
 export const design: DesignedDevice = {
   id: 'central:flow-document',
@@ -410,7 +602,10 @@ export const design: DesignedDevice = {
     view: 'dialogue', entry: 11, relation: 'reply', speaker: 'F', page: 3, bring: 'central-guardian',
     // Readings: what the owner reports for the document, never set from here.
     revision: 8, state: 'edited', lastSave: '',
+    // Thought: the preflight `action:contemplate-flow` answered, the last thought, and what changed since it (the kernel's flow_changed_since).
+    preflight: JSON.stringify(PREFLIGHT), thought: JSON.stringify(THOUGHT), since: JSON.stringify(SINCE),
   },
+  firstPage: 'entries',
   fixtures: {
     'Factory run': {},
     // flow-2026-09-14-2236.html: the earlier form (v0.1), three entries, one journal page, no relations.
@@ -435,8 +630,10 @@ export const design: DesignedDevice = {
       pages: JSON.stringify([]), entries: JSON.stringify([]),
       entry: 0, page: 1, revision: 0, state: 'saved',
     },
+    'Not contemplated yet': {thought: 'null', since: undefined},
+    'Contemplate unavailable': {thought: 'null', since: undefined, preflight: JSON.stringify({state: 'unavailable', reason: 'No host executor: this suite has no model seam for Contemplate yet.', focus: 0, changed: [], affected: []})},
     'No readings': Object.fromEntries(['light', 'title', 'template', 'plural', 'media', 'people', 'pages', 'entries', 'roster', 'extra', 'upgraded', 'view', 'entry',
-      'relation', 'speaker', 'page', 'bring', 'revision', 'state', 'lastSave'].map(k => [k, undefined])),
+      'relation', 'speaker', 'page', 'bring', 'revision', 'state', 'lastSave', 'preflight', 'thought', 'since'].map(k => [k, undefined])),
   },
 
   folded: p => {
@@ -461,10 +658,14 @@ export const design: DesignedDevice = {
 
   whole: p => <Whole p={p} />,
 
-  full: () => {
+  full: p => {
     const root = cradleDocuments()
     return <div className="ref-pane-body">
-      {root && <iframe className="ref-pane-frame" title="The Flow's page, as the template draws it" src={`${root}/ql-flow.html`} />}
+      <div className="ref-pane-tabs" role="tablist" aria-label="Pages">
+        {PAGE_IDS.map(x => <button key={x.id} type="button" role="tab" aria-selected={x.id === pageOf(p)} onClick={() => p.setPage(x.id)}>{x.id === 'entries' ? 'Page' : x.label}</button>)}
+      </div>
+      {pageOf(p) === 'thought' ? <ThoughtDoc v={p.v} />
+        : root && <iframe className="ref-pane-frame" title="The Flow's page, as the template draws it" src={`${root}/ql-flow.html`} />}
     </div>
   },
 

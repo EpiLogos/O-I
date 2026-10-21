@@ -580,7 +580,7 @@ title line names what you have selected, its world and its day, with Back and
 Forward at its head (§10.7). The moment you stand in shows in Position.
 Instruments are not in the transport: they come from the browser. Settings
 open in a window of their own with ⌘, as Live's do, and never take the main
-area.
+area (§10.10).
 
 #### The bottom right
 
@@ -914,10 +914,15 @@ the menu bar.
 
 | Object | Its acts |
 |---|---|
-| Clip | Launch (Enter) and Stop, in Session view. Cut (⌘X), Copy (⌘C), Duplicate (⌘D), Delete (⌫). Rename (⌘R), Switch off or on (0), Edit info text. In Arrangement view, Split (⌘E), Consolidate (⌘J) and Crop (⇧⌘J). A colour from Live's palette. |
+| Clip | Launch (Enter) and Stop, in Session view. Cut (⌘X), Copy (⌘C), Duplicate (⌘D), Delete (⌫). Rename (⌘R), Switch off or on (0), Edit info text. In Arrangement view, Split (⌘E), Consolidate (⌘J) and Crop (⇧⌘J). In Central, Open and Reveal the page's file. A colour from Live's palette. |
 | Empty slot | Insert clip (⇧⌘M), Paste (⌘V), Record here on an armed track, Stop the track, Remove stop button (⌘E). |
-| Track | Rename (⌘R), Duplicate (⌘D), Delete (⌫). Switch off or on (0), Solo, Arm. Group (⌘G), Fold (U), Move left (⌘←) and right (⌘→). Retry, when its lane has stalled. A colour. |
+| Track | Rename (⌘R), Duplicate (⌘D), Delete (⌫). Switch off or on (0), Solo, Arm. Group (⌘G), Fold (U), Move left (⌘←) and right (⌘→). Retry, when its lane has stalled. In Central, Open and Reveal the world's folder. A colour. |
 | Row | Launch (Enter), Stop all clips. Insert row (⌘I), Rename (⌘R), Duplicate (⌘D), Delete (⌫). |
+
+Open hands a world's folder, or a page's file, to the application your
+computer opens it with, such as your editor. Reveal shows it in Finder. Neither
+changes the world: Central finds the folder among your work and asks the
+computer to open or show it.
 
 What you do most often stands on the object itself: a clip's launch triangle,
 a slot's stop square, a track's switches. Everything else is in its menu. The
@@ -951,6 +956,134 @@ instrument keeps it. C turns a macro, and S plays a note of the Jankó
 keyboard, so Solo and Arm wait in the track's menu. U folds the selected
 group. 0 switches off what is selected; with nothing selected that can be
 switched off, it launches the tenth row.
+
+### 10.10 Settings
+
+**Product:** O:I, holding the settings of every owner · **Part of the window:** a window of its own, on ⌘,
+
+You need to change how your world works without hunting for each owner's
+files: which harness and model a new conversation starts with, which keys
+reach which providers, which machines a workcell can carry work to, which
+verified Methods run by themselves, and how the window looks. Settings holds
+them in one window, after Live's: the pages down the left, the page you chose
+beside them. Each setting stays with its owner. Settings reads it from the
+owner, keeps your change local until you review it, and the owner applies it.
+
+#### The pages
+
+| Page | What it holds | Owner |
+|---|---|---|
+| Harnesses & models | The provider a new chat starts with, and the defaults for new sessions, such as the model each harness requests. Each harness client: installed, detected or why not, and what a change needs; Install, Folder and Sign in. The model routes of the catalogue, each with its standing: unproven, observed or usable. | O:I's chat default, AIKit |
+| Skills & methods | The skill-sets offered by default, the capabilities composed into work, and each skill's standing. | AIKit, Central |
+| Profiles | Your named profiles. Use stages a profile's settings as local changes; New from changes keeps your changes under a name; Import reads a profile file. The AIKit profile that composes new work. | O:I, AIKit |
+| Permissions | The permission mode each harness starts in, and the owners' access policies, read only. | AIKit, Central |
+| Credentials | Each provider binding with its secret reference, its state and its last verdict, with Verify, Rotate and Revoke; Discover and Add binding. Workcell's secret references with what uses each, and its projections, with Scan and Revoke. | AIKit, Workcell |
+| Machines & services | The remote machines a workcell can carry work to, each with its connection and what it was granted, with Connect, Disconnect and Remove; Add machine. The services the workcell declares and the local services AIKit elects. | Workcell, AIKit |
+| Automations | Routines: verified Methods that run on a schedule or an event, each with its state, its next run and whether it runs unattended, with Enable, Run now, Disable and Reprove; Create routine. The Methods you can make a routine from, the harness timers not yet adopted, and the run history. | AIKit |
+| Search & telemetry | Factory's search limits and its watch interval. | Factory |
+| Sources & libraries | The Central project each register binds to. | Factory |
+| Appearance | Light, Dark or Follow system, or a library theme, with Apply and Revert; the themes you imported, with Import and Remove; the visual layer and the welcome scene. | O:I's presentation |
+| Products & updates | Each installed product with its version, its state and the operations it offers here. The one you choose shows what is degraded and why, and what it still owes. Under them, the installation's own details. | Each product |
+| System | Each owner's System reading on four axes, declared, effective, active and staged, with the drift between two of them; or the owners' read-only configuration. | Each product |
+
+Skills & methods, Permissions, Search & telemetry and Sources & libraries show
+only when an owner contributes a setting to them.
+
+#### A setting's row
+
+Every setting an owner contributes stands as one row: its name and owner, its
+value, where the value comes from, and when a change takes effect.
+
+| Column | What it shows |
+|---|---|
+| Value | The value in effect, as the control you change it with: a chooser, a switch or a field. A list or a table opens its entries under the row. A secret shows its reference, never the key. |
+| From | This scope, where the value is set here; inherited, where the owner resolves it from a wider scope or its default. |
+| Applies | When a change takes effect: at the next resolution, for new sessions, on reconnect or on restart. Read only, where the owner lets nothing change it. |
+| Reset | Removes this scope's value, and the owner resolves it again. It stands where this scope sets the value. |
+
+A change is local until you review it. Its row carries an amber mark, the
+page's name counts its changes, and the foot of the window counts them all.
+Review changes asks each owner to plan your changes. The Review page lists
+each plan with its scope, the change and when it applies, and Apply sends the
+plans the owners made. Each owner answers in the same table: applied, verified
+or refused, with its reason. When an owner's reading moves under a change you
+made, Keep holds your change on the new reading. Discard drops every change.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Search | Text | Empty | Finds pages, settings, and the settings that stand beside an instrument. Press a result to go to it. |
+| Applies to | This machine · World · a project · a workcell | This machine | The scope the owners' settings are read and changed at. |
+| Show | Routines · Methods · Timers · History | Routines | What the Automations page lists. |
+| Work context | This AIKit home · a project | This AIKit home | Where the Automations page reads routines and makes them. |
+| System | Four axes · Configuration, and an owner | Four axes | What the System page shows, and whose reading. |
+
+#### Views
+
+```ui
+device: settings:window
+page: harnesses
+height: 520
+caption: Settings on this Mac: the pages down the left, Harnesses & models beside them.
+```
+
+```ui
+device: settings:window
+page: system
+height: 520
+caption: The System page: Workcell's settings on four axes. Point at an axis it cannot read for the reason.
+```
+
+```ui
+device: settings:window
+fixture: Changes to review
+page: review
+height: 520
+caption: Three local changes reviewed: two applied, and one refused with its owner's reason.
+```
+
+Settings has one view: its window. A head holds Search and the owners'
+connection; the pages stand down the left and the page beside them; a foot
+holds your local changes, Discard and Review changes. Nothing in the window
+scrolls: a long list turns its pages with ‹ and ›.
+
+#### Transport
+
+The transport does not reach Settings. A setting changes what starts next: a
+running session keeps its harness, its model and its composition.
+
+#### To use Settings
+
+1. Press ⌘, or choose Settings… in the application's menu.
+2. Choose a page down the left, or type in Search and press a result.
+3. Set Applies to, then change a value. Its row takes an amber mark.
+4. Press Review changes… and read each owner's plan.
+5. Press Apply, and read each owner's answer in the table.
+6. Press Esc to go back to the work you came from.
+
+#### Rules
+
+- Settings shows no secret. A credential, a projection and a machine's
+  connection show their reference. A key you enter goes to the computer's own
+  secure field and on to the credential owner, never through the window.
+- A change stays yours until its owner applies it.
+- An act its owner cannot take stays in place, dimmed, and the status bar
+  says why.
+- A setting that belongs beside an instrument, such as a device's parameter,
+  opens there. Search finds it.
+- Discover and Scan report where a key lies, never what it holds. Neither
+  changes a setting.
+- Revoke, Remove, Disconnect, Run now and Disable are held: press and hold
+  them.
+
+#### Tips
+
+- To start a building day with the same defaults, keep them as a profile and
+  press Use.
+- To see why a workcell does not hold what it declares, open System and read
+  the drift column.
+- To find a setting fast, press ⌘, then ⌘F and type a word of its name.
 
 ---
 
@@ -1252,7 +1385,7 @@ which views it has (§16.3), and whose time it keeps.
 | Effect | Changes what passes through it and keeps the rest. | On a chain, after the instrument. | Its track's. | Scope, Packet, Physics, Exact-ratio tuning, Approvals |
 | Rack | Holds chains side by side, with macros that reach into them. | On a chain. | Its chains'. | Skillset rack, Agentset rack, Studio |
 | Modulator | Moves settings of other devices from a source of its own, and never touches the material. | On any chain. It moves settings on any track, in any mode, and each setting it moves names it. | Its own clock: the sky of now, or of a chosen day. It keeps moving while the transport stands. | Sky modulation; a clip's Modulation envelope (§16.5) |
-| Monitor | Shows what is happening and what has happened, and opens what it shows. It writes nothing. | On the rail, and full in a pane. Never on a chain. | The present. Follow keeps it there; scroll back and it reads the record. In Arrangement view the same events lie along a track's event lanes. | Files, Diff, Trail, NOWs, Web, Wiki, Calendar, Frames, Ledger, Gateways |
+| Monitor | Shows what is happening and what has happened, and opens what it shows. It writes nothing. | On the rail, and full in a pane. Never on a chain. | The present. Follow keeps it there; scroll back and it reads the record. In Arrangement view the same events lie along a track's event lanes. | Files, Diff, Trail, NOWs, Web, Wiki, Calendar, Notifications, Frames, Ledger, Gateways |
 | Connection | Brings agents to the work, and takes their work to where it lands. | On a workcell's chain; Link stands in the transport. Never on a track's chain. | Its own. It stays up whether or not the transport plays, and its heartbeat is the agents' check-in. | Gateway, Remote carrier, Git / landing with its Seat, Link |
 
 Between them the monitors keep what is live in front of you: your own trail,
@@ -1288,8 +1421,8 @@ material passes through, from left to right.
 
 | Mode | Track | Chain, left to right |
 |---|---|---|
-| Central | A world. The set is the Day; its die is on the Main track. | The packet, the agent of the world, and its scope; on a world whose folder holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
-| Factory | An agent session. | Agent, skills rack, scope. On the Main track: the experiments, Approvals and the prompt pads. |
+| Central | A world. The set is the Day; its die is on the Main track. | The packet, the agent of the world, and its scope; on a world whose folder holds code, Ground hygiene, Machine and Impact. On the Main track: the Day, then Approvals. |
+| Factory | An agent session. | Agent, skills rack, scope. On the Main track: the Run map, the experiments, Approvals and the prompt pads. |
 | Expressions | An Expression. | The Studio: the field, then its field devices. |
 | Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
 | Live | A part. | The note devices, the torus, then its effects. |
@@ -1489,8 +1622,8 @@ beside a track's Works in shows its workcell's chain in Device view.
 The Main track sits at the end, where Live keeps it. It carries each row's
 launch button, Stop All, and Back to Arrangement, which lights when what plays
 differs from the ruler. Its own chain holds what works on the whole: the Day
-and Approvals in Central; the experiments, Approvals and the prompt pads in
-Factory.
+and Approvals in Central; the Run map, the experiments, Approvals and the
+prompt pads in Factory.
 
 #### Session view
 
@@ -2166,6 +2299,22 @@ M4′'s divinatory frameworks.
 A part that nothing carries yet keeps its place in the rack, named and dark,
 so you can see what the instrument still lacks.
 
+The Torus, the Sky and the M3 clock each show their rack on a Rack page, and
+M4′'s rack opens as a device of its own (§22.9). The rack is drawn whole:
+position 0 is the bar above and position 5 the bar below, and positions 1 to 4
+stand between them as four chains, each showing its own six positions as
+cells. A part that a device carries is lit and names the device. A part that
+nothing carries is dashed: on M1′, Pratibimba keeps its place at position 1,
+named and dark. Choose a part and the rack reads it: its coordinate in the
+map, the device and the control that work it, and three steps from the map's
+ledger — in the map, bound, verified.
+
+```ui
+device: quaternal-logic:torus
+page: rack
+caption: The Torus's Rack page: M1′, with Pratibimba dark at position 1.
+```
+
 #### One body
 
 Live's three instruments are one body seen three ways. M1′ gives it its shape:
@@ -2215,7 +2364,7 @@ Arrangement view are not among them: they are two views of the mode's set
 
 **Product:** Technē · **Track:** a reading, a journey or the occurrences of a subject · **Clip:** an event, or a stop of a walk · **Main track:** the stops
 
-You need to set what you know at its time and place, keep how sure anyone is of it, and walk someone through it in an order that makes sense. In Technē a reading is a track, and its events are its clips. Select an event and Clip view shows its span, its place, its standing and what it gathered. Device view below shows the instrument the track plays through, then its lens and filter effects.
+You need to set what you know at its time and place, keep how sure anyone is of it, and walk someone through it in an order that makes sense. In Technē a reading is a track, and its events are its clips. Select an event and Clip view shows its span, its place, its standing and what it gathered. Device view below shows the instrument the track plays through, then its effects: the Lens, which reads the material through one of Quaternal Logic's lenses and cuts it by a context frame (§17.11), and Light, which follows a reading's force across the Canvas (§17.10).
 
 #### The track
 
@@ -2615,6 +2764,25 @@ The Knowledge graph separates three things: matches, context and display. A norm
 
 Every filter you apply stays on screen as a chip. Remove a chip to remove the filter. A hidden private note does not show in a label, a count or a line.
 
+#### Quaternal Logic's aperture
+
+Scope and Depth decide which notes the graph draws. The aperture decides how Quaternal Logic enters the field round the note you hold. It always comes in the same way: from the whole, position 5, through the ground, 0, to the first step, 1. Then it admits the positions you name, in their own order, and position 4 when the note's reading depends on its context. The budget caps how many positions one pass admits, and those it leaves out are named. The way back runs from 5 through the note to 0; the way in is orientation, not the return.
+
+Hold a note, ask for positions 2 and 3, say the reading needs its context, and set the budget to 4. The pass admits 5, 0, 1 and 2, and names 3 and 4 as left out. Raise the budget to 6 and all six come in: the full frame.
+
+| Mode | What the aperture does |
+|---|---|
+| Ordinary | Nothing. The wiki stands on its own, and the aperture is only offered. |
+| Explain | Reads the positions it admits and explains them. |
+| Formal | Carries the note's refraction, from a Lens on its reading (§17.11), through the positions it admits. |
+
+```ui
+device: knowledge-graph:graph
+fixture: Aperture, context and a budget of 4
+page: aperture
+caption: The Knowledge graph's Aperture page: positions 2 and 3 asked for, the context needed, a budget of 4.
+```
+
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -2630,6 +2798,11 @@ Every filter you apply stays on screen as a chip. Remove a chip to remove the fi
 | Labels | Automatic · All · Focus | Automatic | Shows labels as you zoom, all labels, or only the labels near the selection. |
 | Arrows | On · Off | Off | Shows the direction of each line. |
 | Minimap | On · Off | On | Shows the overview in the corner. |
+| Aperture | Ordinary · Explain · Formal | Explain | How Quaternal Logic enters the field round the note. Formal needs a refraction of the note. |
+| Positions | Any of 0 to 5 | None | The positions you ask the aperture for. 5, 0 and 1 always come first. |
+| Context | On · Off | Off | Admits position 4, for a reading that depends on its context. |
+| Whole frame | On · Off | Off | Asks for all six positions. |
+| Aperture budget | 3 to 6 positions | 6 | The most positions one pass admits. |
 
 #### Views
 
@@ -2663,6 +2836,9 @@ The whole Knowledge graph shows every parameter, in four groups.
 | Filters | Kinds, Relation types, Standing floor, Filter mode |
 | Display | View, Ghosts, Labels, Arrows, Minimap |
 | Groups | The highlighted groups that you coloured |
+| Aperture | Aperture, Positions, Context, Whole frame, Aperture budget |
+
+On the Aperture page the display draws the note at the centre and its six positions round it: the way in, 5 to 0 to 1, as a bright arc, each admitted position lit with its place in the order, and a position the budget left out dashed.
 
 ##### Full
 
@@ -2704,12 +2880,14 @@ The widget shows the neighbourhood of the selection. The centre is marked. A col
 - A hidden private note leaks nothing: not a label, not a count, not a line.
 - An empty result, an incomplete read and a failed provider show different messages.
 - The graph does not load a note into an agent's context. Add a node to the packet to do that.
+- The aperture is orientation. The wiki's own correctness never waits on it.
 
 #### Tips
 - To find broken links in a folder, set Scope to Whole wiki, filter by the folder and show Ghosts.
 - To prepare an answer for an agent, select the nodes and add them to the packet.
 - To see how two notes connect, select one and raise Depth until the other appears.
 - To follow a line of thought, turn Arrows on and read along the lines.
+- To read a note through its whole frame, turn Whole frame on and leave the budget at 6.
 
 ### 17.4 Canvas
 
@@ -3388,13 +3566,14 @@ The agent's entries show their author on the page. An accepted entry shows on it
 
 #### Work on a passage
 
-Select a passage. Four acts are close at hand.
+Select a passage. Five acts are close at hand.
 
 | Act | What it does |
 |---|---|
 | Highlight | Marks the passage and leaves it whole. |
 | Note | Attaches a note to the passage. A note is not a source. |
 | To packet | Adds the passage to the packet. |
+| Remember | Keeps the passage word for word, with where it came from, as a proposal in your ground. It stays unrecognised until you recognise it. |
 | Answer this | Sends the packet and the passage to the agent. The answer arrives as a new entry, with its sources. |
 
 The packet is exactly what the agent receives. You see it whole, and its size, before anything is sent. Follow a source in an answer and you land on the line it came from.
@@ -3413,7 +3592,7 @@ A save has one of five outcomes, and the Document names it: saved, unchanged, st
 | Template | A template at a version | The page's own template | Chooses the template that draws the page. The page keeps its version until you change it. |
 | View | Page · Source | Page | Shows the drawn page, or its source text. |
 | Flow view | Dialogue · Flow · Journal | Dialogue | Chooses how a Flow reads. It applies to a Flow only. |
-| Selection act | Highlight · Note · To packet · Answer this | Highlight | Sets what a plain selection does. |
+| Selection act | Highlight · Note · To packet · Remember · Answer this | Highlight | Sets what a plain selection does. |
 | Agent writes | Off · Propose · Write | Propose | Off: the agent does not write. Propose: each agent entry waits for you to accept it. Write: entries go in directly, each with a receipt. |
 | Overdub | New entry · Replace selection | New entry | Sets how an answer or a dictation joins the page. |
 | Packet scope | Selection · Page · Page and linked | Selection | Sets what Answer this reads. |
@@ -3441,7 +3620,7 @@ The compact Document shows a small preview of the page, the size of its packet a
 | Agent writes | Sets Off, Propose or Write. |
 | Overdub | Sets whether an answer joins as a new entry or replaces the selection. |
 | Packet scope | Sets Selection, Page, or Page and linked. |
-| Selection act | Sets what a plain selection does: Highlight, Note, To packet or Answer this. |
+| Selection act | Sets what a plain selection does: Highlight, Note, To packet, Remember or Answer this. |
 
 ##### Whole
 
@@ -3450,7 +3629,7 @@ The whole Document shows every parameter, in four groups.
 | Group | Parameters |
 |---|---|
 | Page | Template, View, Flow view, Paper, Pin |
-| Selection | Selection act, Packet scope |
+| Selection | Selection act, Packet scope, and the selected passage with Highlight, Note, To packet, Remember and Answer this |
 | Agent | Agent writes, Overdub |
 | Save | Autosave |
 
@@ -3460,7 +3639,7 @@ The full Document shows the page as its template draws it. Read and write here.
 
 The page may be a Day, a Flow, a Being or a Thing. A Day shows its six faces; the Day on the Main track turns the die. A Flow names its people and agents at the top. Choose Dialogue, Flow or Journal to change how it reads. A Being or a Thing shows the bindings that tie it to its world, its sources and its place.
 
-Select a passage. Highlight, Note, To packet and Answer this are close at hand. The answer arrives as a new entry, with its author and its sources. Follow a source and you land on the line it came from.
+Select a passage. Highlight, Note, To packet, Remember and Answer this are close at hand. The answer arrives as a new entry, with its author and its sources. Follow a source and you land on the line it came from.
 
 Type @ to search everything you can reach. Press Record and talk, and your words go into the page. The save state shows next to the page.
 
@@ -3493,7 +3672,7 @@ The widget shows the page you hold, small, with its save state and the size of i
 #### To use the Document
 1. Open a page from the browser, or drag it into a pane.
 2. Read it. Select a passage.
-3. Choose Highlight or Note to mark it. Choose To packet to collect it.
+3. Choose Highlight or Note to mark it. Choose To packet to collect it. Choose Remember to keep it in your ground.
 4. Check the packet and its size in Device view.
 5. Press Play. The agent answers into the page as a new entry with its sources.
 6. Accept or remove each entry that the agent proposes.
@@ -3507,6 +3686,7 @@ The widget shows the page you hold, small, with its save state and the size of i
 - Every write carries a receipt, and every agent entry shows its author.
 - When you change a passage the agent wrote, the hand-back light comes on. Press it to give the passage back.
 - A note is presentation. A highlight leaves the passage whole.
+- A remembered passage is a proposal. It keeps its words and its source exactly, and it waits in your ground until you recognise it.
 - Keys do not play notes while you type in a page.
 - A closed Day is kept. You can open it and read it again.
 
@@ -3514,6 +3694,7 @@ The widget shows the page you hold, small, with its save state and the size of i
 - To prepare a long question, add the passages to the packet and check the size before you press Play.
 - To brief a colleague, highlight a paragraph and tag them with @.
 - To keep a thought with its place, tag a place and let the passage file itself there.
+- To keep a line you may want in your own ground later, choose Remember. It waits there, unrecognised, until you decide.
 - To draft by voice, press Record, talk, and set Overdub to New entry.
 - To redesign your Things, change the template once. Every Thing then follows it.
 
@@ -3727,6 +3908,152 @@ The widget shows a small bench and the reading at each sensor. Click the bench t
 - To see what one weak link costs, lower its standing and watch the sensor after it.
 - To follow every way the source reads, put a prism on the source.
 
+### 17.11 Lens
+
+**Product:** Technē, with Quaternal Logic · **Kind:** effect · **Chain:** A reading's chain, after its instrument
+
+You need to read your material through one way of seeing at a time, and to know where that way of seeing reaches and where it stops. The Lens reads the subject of a reading through one of Quaternal Logic's twelve lenses, and cuts it by one of the seven context frames. The material stays as it was. What the Lens adds is a reading, with its lens and its frame named and the evidence behind it.
+
+#### The twelve lenses
+
+Each lens has a day face and a night face, and each belongs to one of three squares. The night face is the lens's prime: L0′ to L5′. Every lens holds six conditions, its sublenses. Read through the whole lens, or through one sublens.
+
+| Lens | Day face | Night face | Square |
+|---|---|---|---|
+| L0 | Quaternal | Archetypal-Numerical | Articulation |
+| L1 | Causal | Phenomenal | Encounter |
+| L2 | Logical | Alchemical-Elemental | Becoming |
+| L3 | Processual | Chronological | Becoming |
+| L4 | Phenomenological | Scientific | Encounter |
+| L5 | Para Vāk | Divine Logos | Articulation |
+
+#### What the Lens shows and refuses
+
+A reading through the Lens says where it can stand. Each of Technē's seven instruments takes the reading or refuses it, and a refusal comes with its owner's reason.
+
+Put the Lens on the Quaternal Logic wiki's constellation of Technē instruments and set it to L5, Para Vāk. Its six sublenses run from Anuttara to Mātṛkā round the ring, and the reading stands in all seven instruments, from Project to Expressions. Now put it on a Day, with the Lens off. The Day still stands in Project, the Canvas and the Timeline, and the Timeline takes it thin, because the Factory runs in it carry no clock time. Journey, Place, Palace and Expressions refuse it: no scene, no place and no Expression is bound to the Day.
+
+The Lens proposes and never decides. A relation or a walk that it finds stays a proposal until the wiki's own governance takes it up.
+
+| Read | What it asks |
+|---|---|
+| Locate | Where the subject stands. |
+| Refract | The subject through the lens. |
+| Relate | How two subjects relate through the lens. |
+| Synthesise | Several subjects read as one. |
+
+The provider of the readings says which it offers. One it does not offer stands closed, with its word.
+
+#### The frame
+
+Your material has six positions: the ground it comes from at 0, four working steps from 1 to 4, and the whole it returns to at 5. Each context frame stands at one position, on one face and in one grain. On the Name face the material names; on the Power face it acts. The inner four are the working positions; the outer two frame them.
+
+| Frame | Expression | Position | Face | Grain |
+|---|---|---|---|---|
+| CF1 | (00/00) | 0 | Name | Outer two |
+| CF2 | (0/1) | 1 | Name | Inner four |
+| CF3 | (0/1/2) | 2 | Name | Inner four |
+| CF4 | (0/1/2/3) | 2 | Power | Inner four |
+| CF5 | (4.0/1-4.4/5) | 3 | Power | Inner four |
+| CF6 | (4.5/0) | 4 | Power | Inner four |
+| CF7 | (5/0) | 5 | Power | Outer two |
+
+Set a position and narrow it by face and grain, and the owner answers: exact, partial, ambiguous or no frame. The constellation of Technē instruments maps its six members to the six positions. At position 2, the Place, with the Power face and the inner four, the answer is CF4, exact, the frame its reading names. Leave the grain open and the answer is CF4, partial. Leave the face open as well and it is ambiguous: CF3 and CF4 both stand at position 2. Ask for the Power face at the ground, position 0, and no frame stands there.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Mode | Off · Optional · Required | Optional | Off lets the material pass unread. Optional reads through the lens when the provider can, and its absence stops nothing. Required stops when the provider is absent. |
+| Lens | L0 to L5′ | The reading's own lens | The lens to read through. |
+| Sublens | The whole lens, or one of its six | The whole lens | One condition of the lens. |
+| Read | Locate · Refract · Relate · Synthesise | Refract | What the reading asks of the lens. |
+| Position | 0 to 5 | — | The position of the material to read the frame at. |
+| Face | Any · Name · Power | Any | Whether the material at the position names or acts. |
+| Grain | Any · Inner four · Outer two | Any | Whether the position works or frames. |
+
+#### Views
+
+```ui
+device: techne:lens
+caption: Lens, on a fixture of readings: L5 on the Quaternal Logic wiki's constellation of Technē instruments.
+```
+
+##### Folded
+
+The folded Lens shows the lens and how many instruments take the reading.
+
+##### Compact
+
+The compact Lens shows the lens with its rays, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Lens | Sets the lens to read through. |
+| Sublens | Sets one condition of the lens, or the whole lens. |
+| Position | Sets the position of the material to read the frame at. |
+| Mode | Sets Off, Optional or Required. |
+
+##### Whole
+
+The whole Lens has two pages.
+
+| Page | Group | Parameters |
+|---|---|---|
+| Lens | Lens | Lens, Sublens |
+| Lens | Read | Read, Mode |
+| Lens | Instruments | Each instrument, carried, thin or refused, with the owner's reason |
+| Frame | Probe | Position, and the frame the owner reads there |
+| Frame | Narrow | Face, Grain |
+| Frame | Positions | The material's six positions, and the answer |
+
+On the Lens page the display draws the subject and its members on the left, the lens as a ring of its six sublenses, and a ray to each instrument that takes the reading; a refused one is stopped with ✕. Drag the handle round the ring to choose a sublens. On the Frame page the display draws the six positions, the Name face above and the Power face below, and the seven frames at their places; drag the handle along the line to move the position.
+
+```ui
+device: techne:lens
+fixture: Frame, no face · ambiguous
+page: frame
+caption: The Lens's Frame page: position 2 with the face left open, ambiguous between CF3 and CF4.
+```
+
+##### Full
+
+The full Lens draws the reading through the lens at pane size, with the lens's six sublenses named round it, and the frame beneath.
+
+##### Widget
+
+The widget shows the lens with its rays, the lens's name, how many instruments take the reading and the frame.
+
+#### Transport
+
+| Control | Effect on the Lens |
+|---|---|
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use the Lens
+
+1. Drag the Lens onto the chain of a reading, after its instrument.
+2. Set Lens. The rays show where the reading can stand.
+3. Point at a refused instrument to read why it refuses.
+4. Drag the handle round the ring to read through one sublens.
+5. Open the Frame page. Set Position to the step of the material you want to place.
+6. Set Face and Grain until the answer is exact.
+
+#### Rules
+
+- The Lens reads the material. It never changes it.
+- A lens's reading is a proposal. It becomes knowledge only when the wiki's governance takes it up.
+- A refused instrument keeps its owner's reason.
+- A frame answer describes the material. It gives the material no standing and no authority.
+- Under Off the material passes unread. The owner still checks that it is well formed.
+
+#### Tips
+
+- To compare two ways of seeing, put two Lenses on the chain, each with its own lens, and solo the reading.
+- To find which frame a step of your material stands in, leave Face and Grain on Any and narrow them one at a time.
+- To read the material plain, set Mode to Off. The instruments it stands in still show.
+
 ## 18. Central
 
 Central keeps the day's work, your documents and your ground in one place. It is where you work across all your projects at once: each project is a world, and the Day gathers them. It works like a code editor: your files down the left, documents side by side, and the day as the set they all belong to. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
@@ -3758,7 +4085,7 @@ Earlier Days are earlier sets. Open one from the browser to read it and walk thr
 
 A track is a world: your own, Earth, the world of a project or a book you are writing, or a world someone has let you visit. Its clips are that world's pages, and it sends its work to the Day.
 
-To bring a world into today, drag it from the browser onto an empty track. To start a new world, drag a folder there: the folder's pages become its clips, it takes a place on your planet, and it joins the bodies of your sky (§2).
+To bring a world into today, drag it from the browser onto an empty track. To start a new world, drag a folder there. The track's Ground page shows what Central will make of the folder before anything is made; accept it there, and the folder's pages become its clips, it takes a place on your planet, and it joins the bodies of your sky (§2).
 
 The track head shows the world's name and colour. Its settings stand on the head:
 
@@ -3770,6 +4097,61 @@ The track head shows the world's name and colour. Its settings stand on the head
 | Folder | A folder of your ground, or none | None | The folder where the world's pages are kept. |
 | Place | A place on your planet, or none | Its own place | Where the world lands on your planet's surface. Its body turns in your sky. |
 | Workspace | A workspace from the pool, or none | None | The way of working that comes forward when you open this world's pages. |
+
+The settings stand on the Track page of the track's Workspace device. Its two other pages hold the world's own ground: Ground, which makes it, and Self, which holds its account of itself.
+
+##### Ground
+
+You need to know what a folder will become before it becomes a world, and to keep what is already in it. Central reads the folder and says what it found. Ground draws the folder with its own material at the left and ProjectCentral at the right, its parts dashed where they would be made.
+
+| Central finds | What you can do |
+|---|---|
+| No wiki | Create: ProjectCentral is made around the folder. Nothing in the folder moves. |
+| One wiki | Keep in place: the wiki stays where it is and joins the world's wiki as one of its sources. Copy in: the wiki is copied into ProjectCentral, and the original stays where it was. |
+| More than one wiki | Choose the wiki, then keep it in place or copy it in. Central does not choose for you. |
+| A ProjectCentral it cannot read | Nothing here. Mend its manifest by hand. |
+| The ground in place | Nothing to make. |
+
+| Control | What it does |
+|---|---|
+| Make | Create, Keep in place or Copy in. A choice the folder does not allow stays closed and says why. |
+| Wiki | The folder's wiki to keep or copy. |
+| Preview | Lists every step Central would take, in order. Nothing changes. |
+| Accept | Makes the world's ground as previewed. It is held. |
+
+```ui
+device: central:workspace
+fixture: A folder dropped
+page: ground
+caption: Ground for a folder that holds a wiki: kept in place, the preview lists the five steps Central takes, and the original stays.
+```
+
+##### Self
+
+A world has an account of itself: what it is for, what it means to give, how it is built. People who use it write back what it was like. Self holds both, so that an agent reads the world's own account before it guesses one.
+
+| Part | What it holds |
+|---|---|
+| Tiers 0 to 5 | Six places in the world's account, each bound to one source. A tier takes the name its source gives it. Central does not name the tiers. |
+| Intended experiences | The experiences the world means to give, each a source you wrote or adopted. |
+| Returns | What people wrote about an experience, each against the experience it answers. |
+| Unbound | The world's sources that no tier holds yet. |
+
+| Control | What it does |
+|---|---|
+| Ensure | Gives the world its ProjectCentral/self where it has none. Nothing that is already there moves. |
+| As | What the source becomes: a tier, an intended experience, or a return. |
+| Source | An unbound source of the world. |
+| Relate | Binds the source as chosen. Its bytes and its path stay, and its standing is recorded. It is held. |
+| Next | Points As at the next tier that has no source. |
+
+To gather a world's account when it lies scattered across its documents, start at tier 0 and press Next after each Relate. Each empty tier comes up in turn, with the unbound sources beside it.
+
+```ui
+device: central:workspace
+page: self
+caption: Self for Archetypal Earth: two tiers bound, two intended experiences, and one return written against the walks.
+```
 
 ##### The mixer row
 
@@ -3793,7 +4175,16 @@ A row is not a workspace. A row opens pages together inside today. A workspace b
 
 #### The browser
 
-Central's browser lists your whole field: every world you have, each opening to its pages, Earth and the worlds you visit, and the earlier Days. It does not divide your work by project, because Central is where you work across them. Drag a world onto an empty track to bring it into today. Drag a page into a pane to open it. Open an earlier Day to read it. The pool below the browser holds your workspaces.
+Central's browser lists your whole field. Its top level is yours, in four places:
+
+| Place | What it holds |
+|---|---|
+| You | Your own world, your Days and the identity you share. |
+| Agents | The agents of your roster, accepted and proposed. |
+| Machines | Your machines, and the workcells each one holds. |
+| Work | Your projects, each a world with its pages. |
+
+Under them stand every world you have, each opening to its pages, Earth and the worlds you visit, and the earlier Days. The browser does not keep you inside one project, because Central is where you work across them. Drag a world onto an empty track to bring it into today. Drag a page into a pane to open it. Open an earlier Day to read it. The pool below the browser holds your workspaces.
 
 #### The clip
 
@@ -3864,13 +4255,14 @@ A being or a thing with no place, no stop or no placement in the sky says so bes
 
 The tools shape and mark the page you are writing. Each leaves the words whole.
 
-Select a passage and four acts appear above it. They are the selection tool.
+Select a passage and five acts appear above it. They are the selection tool.
 
 | Act | What it does |
 |---|---|
 | Highlight | Marks the passage in the chosen colour. Choose it again on a highlight to remove it. |
 | Note | Opens a note anchored to the passage. |
 | To packet | Adds the passage to the packet. |
+| Remember | Keeps the passage word for word, with where it came from, as a proposal in your ground: Central's, for a page of your own world, or the project's, for a page of a project's world. It stays unrecognised until you recognise it. |
 | Answer this | Sends the packet and the passage to the agent on the world's chain. The answer arrives as a new entry, with its sources. Overdub in the transport decides whether it joins as a new entry or replaces the passage. |
 
 **Text** sets how the words are set: the paragraph style, the emphasis and the size you read at.
@@ -3936,6 +4328,31 @@ A relation says how a new entry connects:
 | Source | The entry names where a statement comes from. |
 | Artifact | The entry names something that the talk made. |
 
+##### Contemplate
+
+You need an agent to read a whole Flow and say what it finds there: the tensions, the next steps it sees, what your ground or the Flow itself should change. And you need that only when you ask. Contemplate is that reading, on the Flow device's Thought page. It never runs by itself.
+
+Press Preflight first. It shows what Contemplate would read and touch: the agent, the model and harness it would run on, the entries of the Flow, and the sources that moved since and the knowledge they affect. Nothing runs, and nothing is recorded. Hold Contemplate to run it once, under that preflight. If anything changed after the preflight, Contemplate refuses and says so.
+
+The thought that comes back is kept with the moment it was taken. Its tensions, candidates and proposals wait for you. None is applied. Later, press Changed since to read what moved after the thought: the sources, the knowledge they affect, and what the thought left open.
+
+| Control | What it does |
+|---|---|
+| Preflight | Shows what Contemplate would read and touch. Nothing runs. |
+| Contemplate | Runs the reading once, under the preflight. It is held. |
+| Changed since | Shows what moved after the thought, and what it left open. |
+| Thought | When the last thought was taken, or why it could not run (reading). |
+| Open | What the thought returned that waits for you (reading). |
+| Moved, Affected | The sources that moved since the thought, and the knowledge they affect (reading). |
+
+The picture is a line from the thought at the left to now at the right. Between them, on three lanes, stand the sources that moved, the knowledge they affect, and the thought's returns that wait for you. Before a first thought, the lanes hold what the preflight would read.
+
+```ui
+device: central:flow-document
+page: thought
+caption: The Thought page of the Factory flow: a thought taken on 15 October, two sources moved since, three readings affected and four returns waiting.
+```
+
 ##### Envelopes
 
 A page has no envelopes. Nothing in a page moves over the page's own time.
@@ -3985,6 +4402,10 @@ When the day closes, what still plays carries into tomorrow's set, playing, with
 - Text does not change a word. It changes only how the words are set. Style and emphasis are kept in the page; Size changes only your view.
 - A highlight marks a passage and leaves it whole. Highlights stay in the page, not only in an export.
 - A highlight or a note enters the packet only when you add it with To packet.
+- A remembered passage is a proposal. It keeps its words and its source exactly, and waits in your ground until you recognise it.
+- Contemplate never runs by itself. It runs once, when you hold it, under the preflight you read, and what it returns waits for you.
+- A world's ground is made only when you accept its preview. Nothing in the folder moves, and a wiki you keep in place stays where it was.
+- Only a person can bind a return to a world's Self.
 - A colour has only the meaning that you give it.
 - A note is yours. An agent does not read it unless you add it to the packet. A note stays with the place it is anchored to.
 - Keys do not act as controls while you type in a page.
@@ -3993,6 +4414,8 @@ When the day closes, what still plays carries into tomorrow's set, playing, with
 
 - To resume a book after a month, bring its world onto a track and launch the flow where you stopped.
 - To keep a side project out of the Day, turn off its world's activator.
+- To keep a line for your own ground without deciding yet, select it and choose Remember.
+- To see where a long conversation has gone, contemplate its Flow, and a week later press Changed since.
 - To work on one project on two machines, turn Link on.
 - To start a new project in your usual way of working, set its world's Workspace to the workspace you use.
 - To begin the morning the way you always do, launch your morning workspace from the pool.
@@ -4130,11 +4553,16 @@ parameter, in five groups.
 | Faces | Face, View, Template |
 | Moves | Tasks, Patterns, Context, Synthesis, Close: each pad's Prompt and Runs at |
 | Agent | Agent writes, Sources |
-| Close | Close routine |
+| Close | Close routine, Close now, Open today, and Close-out with Verify |
 
 Each face also shows a count: tasks on face 1, sessions on face 2, patterns on
 face 3. It does not add the Day
 to your rack.
+
+Close-out reads back what the last close left behind: a continuation
+registered, earlier handoffs closed, what was learned recorded, and deferred
+work registered. It shows verified, or how many of the clauses it checks hold;
+point at it to read which fail. Verify reads them again.
 
 ##### Full
 
@@ -4318,7 +4746,29 @@ make the search exact.
 | `( )` | `( + @0 knowledge + @4 world:current )` | Frames several parts as one expression. |
 
 A kind narrows a term: `source:`, `wiki:`, `reading:`, `world:`, `form:`,
-`agent:`, `person:`, `place:`, `doc:`.
+`agent:`, `person:`, `place:`, `doc:`, `vak:`.
+
+#### The language of the map
+
+The `vak:` kind reaches the language the map is written in: Quaternal Logic's
+Vāk registry, where every entry is a line of its source with a coordinate. A
+Vāk entry is found by its coordinate, as in `vak:M0-3`, never by a word in its
+name. The result opens where the entry stands among its neighbours: its parent
+above, the entries one relation away round it, and those two away beyond them.
+
+`vak:M0-3` is the archetypal number language, with the symbol 12+4+2. One
+relation round it stand Anuttara, its parent, and its eleven archetypes, from
+the Mirror to Archetype 8. Two relations round, the archetypes' own entries
+and Anuttara's other positions come in: fifty-one entries in all. Each entry
+keeps its line in the source, and every relation is read from the way the
+coordinates nest.
+
+```ui
+device: central:search
+fixture: Vāk M0-3, one relation round
+page: find
+caption: Search on a `vak:` term: the archetypal number language, one relation round.
+```
 
 #### What a tag sends
 
@@ -4331,6 +4781,7 @@ Select a passage, type @, choose a result and press Enter. The passage goes to t
 | Place | Files the passage on that spot of your world, with a link back to the page. |
 | Document | Adds the passage to the document with a link back. A Flow takes it as a new entry. Another document takes it as a quote at the end. |
 | Passage | Opens the passage. A tag does not send to a passage. |
+| Vāk entry | Opens the entry among its neighbours. A tag does not send to it. |
 
 With no selection, Enter opens the result. Press Shift and Enter to open a result without sending. Press Esc to close the line.
 
@@ -4391,7 +4842,8 @@ ranks by use.
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Reach | Your world · Projects and agents · Shared field · Joined fields | Projects and agents | How far a search looks. |
-| Kinds | People · Agents · Places · Documents · Passages: each On or Off | All On | Which kinds of result appear. |
+| Kinds | People · Agents · Places · Documents · Passages · Vāk: each On or Off | All On | Which kinds of result appear. |
+| Vāk depth | 0 to 2 relations | 1 | How far round a Vāk entry its result opens. |
 | Order | Best match · Newest · Name | Best match | The order of the results. |
 | Jump | On · Off | On | Whether plain words jump to what you open most. Off: plain words search for the best match. |
 | History | Remember · Off | Remember | Whether opening and sending are counted. |
@@ -4433,6 +4885,8 @@ The whole Search shows every parameter, in five groups.
 | History | History |
 | Aliases | Aliases |
 
+With a `vak:` term, Find shows the entry and its neighbours in place of the horizons, with Vāk depth beside the search line. Drag the handle out to the second ring or in to the entry.
+
 ##### Full
 
 The full Search is the search pane. The search line is at the top. The results are below it, in groups by kind. The selected passage is at the side, with the place where each tag would send it. Press ⌘F in a pane to open it.
@@ -4467,6 +4921,7 @@ The widget shows the search line, the last results and your aliases. Type @ in t
 - A tag to an agent writes as Scope and Arm allow.
 - A message from another world arrives under the name of its sender. It stays theirs until you make it your own.
 - An alias is yours. Another person's alias does not run in your Search.
+- A Vāk entry is found by its coordinate, and its result reaches two relations round it at most.
 
 #### Tips
 
@@ -4474,22 +4929,29 @@ The widget shows the search line, the last results and your aliases. Type @ in t
 - To start an agent on a passage, select it and tag the agent.
 - To file a quote on the place it is about, tag the place.
 - To ask what could serve a task, type `@# @5` and the task. Then include the tools you want with `+`.
+- To read what a coordinate of the map says, type `vak:` and the coordinate, then raise Vāk depth.
 
 ### 18.5 Ground hygiene
 
-**Product:** Central · **Kind:** effect · **Chain:** a world's track whose folder holds code
+**Product:** Central, with Workcell · **Kind:** effect · **Chain:** a world's track whose folder holds code
 
-Use Ground hygiene to find the branches, worktrees and seats that no longer belong to any work, and to clear them. It reads the ground, shows what each one is, and tends the ones you approve.
+You need the ground your work stands on to stay sound: no checkout left on finished work, no part of the root or of a world's scaffold missing, no document you wrote lying unrecognised, no material left running after its run. Ground hygiene reads that ground, shows what each thing is, and tends what you approve. It has three pages, one for each layer of the ground.
 
 #### What it reads
 
 A seat is a shared checkout where one lane of work stands.
 
-| Reading | What it shows |
-|---|---|
-| Seats | Each seat of each product: free, claimed or held by another lane. Its branch, the uncommitted files, and any drift between the register and the checkout. |
-| Worktrees | Every checkout of the project and the branch that it stands on. |
-| Branches | Every lane branch, and the checkout that holds it. |
+| Page | Reading | What it shows |
+|---|---|---|
+| Checkouts | Seats | Each seat of each product: free, claimed or held by another lane. Its branch, the uncommitted files, and any drift between the register and the checkout. |
+| Checkouts | Worktrees | Every checkout of the project and the branch that it stands on. |
+| Checkouts | Branches | Every lane branch, and the checkout that holds it. |
+| Ground | Root | The parts every Central root has: Control's user ground, governance, wiki and machines, the root's own state, and Work. |
+| Ground | Scaffold | The parts every world's ProjectCentral has, present or missing. |
+| Ground | Authored | The world's documents recognised as ground, and those whose names suggest a vision, an intent, an experience or a design, waiting for you to recognise them. |
+| Material | Worlds | Each world Workcell prepared for a run and keeps a receipt for. |
+| Material | Bindings | What each world holds: its checkout, its shell, its services, its outputs. |
+| Material | Sandboxes | The sandboxes on a sandbox server, and whether a lease still holds each one. |
 
 #### What it finds
 
@@ -4505,6 +4967,14 @@ A finding is a reading. It is not a verdict.
 | Stray branch | A lane branch that no seat holds and no claim accounts for. |
 | Worktree outside the register | A checkout that no seat names. |
 | Foreign lane | Unmerged work of another lane stands in a seat. The decision is yours. |
+| Root part missing | A part every root has is not there. |
+| Root is a product checkout | Your root is also the checkout of a product. The decision is yours. |
+| Scaffold missing | A part of the world's ProjectCentral is not there. |
+| Waiting for recognition | A document whose name suggests a vision, an intent, an experience or a design, that nobody has recognised as ground. |
+| Binding not present | A world's binding is missing or stale, and its receipt can bring it back. |
+| Binding lost | A binding of a world that lasted only for its task is gone, and nothing brings it back. |
+| Orphan sandbox | A sandbox whose lease has ended, which nothing holds. |
+| Sandbox without a lease | The server reports no lease for a sandbox, so it may still be in use. This is not a fault. |
 
 #### What it tends
 
@@ -4513,6 +4983,11 @@ A finding is a reading. It is not a verdict.
 | Release seat | Refreshes the seat to the main branch and clears its claim. |
 | Prune worktree | Removes a checkout that no seat names. |
 | Sweep branch | Removes a stray branch. |
+| Initialise root | Creates the root's missing parts and keeps what is there. |
+| Reproject | Stamps the world's missing scaffold. It moves, renames and deletes nothing. |
+| Recognise | Records a document as the world's ground, with the provenance and standing you choose. The document stays where it is, as it is. |
+| Reconcile | Brings a binding back from its world's receipt. |
+| Release orphans | Releases the sandboxes whose lease has ended. |
 
 Each tender returns a receipt.
 
@@ -4520,55 +4995,66 @@ Each tender returns a receipt.
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Look at | Seats · Worktrees · Branches: each On or Off | All On | Which readings the device takes. |
+| Look at | The page's three readings: each On or Off | All On | Which readings the device takes. |
 | Show | Everything · Faults only | Faults only | Hides the findings that are not faults. |
 | Machine | This machine · a linked machine | This machine | The machine whose ground the device reads. |
 | Refresh | Manual · On open · Every 5 minutes | On open | When the device reads again. |
 | Tending | Off · Propose · Write | Propose | Off: the device only reads. Propose: each tender waits for your approval. Write: an allowed tender runs when you press it, with a receipt. |
-| Allowed tenders | Release seat · Prune worktree · Sweep branch: each On or Off | All On | Which tenders the device may offer. |
+| Allowed tenders | The page's tenders: each On or Off | All On | Which tenders the device may offer. |
+| Provenance | Human-authored · Edited draft · Adopted | Human-authored | Who made a document you recognise. |
+| Standing | Your position · Design commitment · Architecture contract · Current state | Design commitment | What a document you recognise stands as. |
 
 #### Views
 
 ```ui
 device: central:ground-hygiene
-caption: Ground hygiene, on a fixture of readings.
+caption: Ground hygiene, on a fixture of readings. Turn to Ground and Material for the root, the scaffold, the authored ground and Workcell's material.
+```
+
+```ui
+device: central:ground-hygiene
+fixture: A world missing its scaffold
+page: ground
+caption: The Ground page on a world whose ProjectCentral has no relations folder, with six documents waiting for recognition.
 ```
 
 ##### Folded
 
-The folded Ground hygiene shows the number of findings.
+The folded Ground hygiene shows the number of findings on all three pages.
 
 ##### Compact
 
-The compact Ground hygiene shows three small rings, for seats, worktrees and branches. A dot on a ring marks each finding. It has four macros.
+The compact Ground hygiene shows three small rings, one for each reading of the page in front. A dot on a ring marks each finding. It has four macros.
 
 | Macro | What it does |
 |---|---|
-| Look at | Turns Seats, Worktrees and Branches On or Off. |
+| Look at | Turns the page's three readings On or Off. |
 | Show | Sets Everything or Faults only. |
 | Tending | Sets Off, Propose or Write. |
 | Refresh | Sets Manual, On open or Every 5 minutes. |
 
 ##### Whole
 
-The whole Ground hygiene shows every parameter, in four groups.
+The whole Ground hygiene has three pages: Checkouts, Ground and Material. A page's tab is dark while it holds a fault. Each page shows its rings, with the count of each reading, and every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
-| Look | Look at, Refresh |
+| Look | Look at, Machine, Refresh |
 | Show | Show |
 | Tend | Tending, Allowed tenders |
-| Machine | Machine |
+| Findings | The page's first findings |
+
+On the Ground page, the outer ring is the authored ground. A dotted arc closes it: the documents still waiting, too many to tick one by one.
 
 ##### Full
 
-The full Ground hygiene shows three lists: seats, worktrees and branches. Each row shows its finding, what the finding rests on and the tender that fits. Select a row to read it. Press a tender to run it.
+The full Ground hygiene carries the same three pages as tabs. Each page shows three lists, one for each reading. Each row shows its finding, what the finding rests on and the tender that fits. Select a row to read it. Press a tender to run it. Recognise asks for the provenance and the standing before it runs.
 
 In Clip view, Ground hygiene edits no clip. It reads the folder of the world's track.
 
 ##### Widget
 
-The widget shows the number of findings and the first three. Click a finding to open the list in a pane.
+The widget shows the number of findings on the page in front and the first three. Click a finding to open the list in a pane.
 
 #### Transport
 
@@ -4580,7 +5066,7 @@ The widget shows the number of findings and the first three. Click a finding to 
 #### To use Ground hygiene
 
 1. Select a world's track whose folder holds code.
-2. Read the findings. A claimed seat is not a fault.
+2. Read the findings on each page. A claimed seat is not a fault.
 3. Select a finding. Read what it rests on and which tender fits.
 4. Press the tender. In Propose, read what it will do and confirm.
 5. Read the receipt.
@@ -4592,6 +5078,9 @@ The widget shows the number of findings and the first three. Click a finding to 
 - The device does not tend the unmerged work of another lane. It lists it as a foreign lane for you to decide.
 - The device does not release a seat that holds uncommitted files.
 - The device does not create a worktree or a seat.
+- Reproject and Initialise root add what is missing. They move, rename and delete nothing.
+- Central does not decide who wrote a document. Only Recognise, with your provenance and standing, makes it ground.
+- A sandbox without lease evidence is never released.
 - Each tender carries a receipt that names what it did and when.
 - If a source cannot be read, the device shows the refusal word for word and leaves the row empty. It does not guess.
 
@@ -4601,12 +5090,15 @@ The widget shows the number of findings and the first three. Click a finding to 
 - To clear old lane branches, set Show to Faults only and sweep the stray branches.
 - To keep disk free, watch the disk reading on each seat.
 - To check two machines, turn Link on and set Machine to the other one.
+- To bring an old project up to date, open its world's Ground page and press Reproject.
+- To make your vision document count as ground, recognise it as Human-authored and Your position.
+- To find runs that left material behind, open the Material page and release the orphans.
 
 ### 18.6 Impact
 
 **Product:** Central · **Kind:** effect · **Chain:** a folder or a note on a world's track
 
-Use Impact to see what a change to a folder or a note will touch. It shows the neighbourhood of what you select: its references, its links and the sessions that touch it.
+Use Impact to see what a change to a folder or a note will touch, and whether the code still says what the subject means. It shows the neighbourhood of what you select: its references, its links and the sessions that touch it. Its Meaning page sets what the product means beside the code that holds it.
 
 #### What it shows
 
@@ -4615,6 +5107,7 @@ Use Impact to see what a change to a folder or a note will touch. It shows the n
 | References | The files and pages that mention the subject. |
 | Links | The notes that the subject connects to in your knowledge graph. Each link shows its relation and where it comes from. Direct links come first. |
 | Sessions | The sessions whose records name the subject. Each shows its purpose, its state and its branch. |
+| Meaning | The subject's meaning (its Vision, its Design, the wiki) set beside the code that holds it, by the law its project wrote for them. Each mapping holds, or says how it does not: missing, the wrong relation, held twice, stale, or two faces bound as one. |
 
 #### Parameters
 
@@ -4626,12 +5119,19 @@ Use Impact to see what a change to a folder or a note will touch. It shows the n
 | Show | References · Links · Sessions: each On or Off | All On | Which lists appear. |
 | Sessions | Open only · Open and closed | Open only | Which sessions the Sessions list holds. |
 | Relation | All · one kind of link | All | Limits the Links list to one kind of relation. |
+| Meaning | Each mapping, and whether it holds (reading) | Read from AIKit | The subject's meaning against its code. Read now reads both again. |
 
 #### Views
 
 ```ui
 device: central:impact
 caption: Impact, on a fixture of readings.
+```
+
+```ui
+device: central:impact
+page: meaning
+caption: The Meaning page of a wayfinder note: two mappings hold, one is stale, one has the wrong relation, and one names code that does not exist.
 ```
 
 ##### Folded
@@ -4651,7 +5151,7 @@ The compact Impact shows a small graph with the subject at the centre. Three cou
 
 ##### Whole
 
-The whole Impact shows every parameter, in three groups.
+The whole Impact has two pages. Reach shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -4659,9 +5159,11 @@ The whole Impact shows every parameter, in three groups.
 | Reach | Depth, Relation |
 | Lists | Show, Sessions |
 
+Meaning draws a bridge: the meaning at the left, the code at the right, a span for each mapping. A teal span holds. An orange span does not, and its mark says how: it stops short where the code is missing, it carries a cross for the wrong relation, it is dashed when stale, its end is doubled when two pieces of code claim it. Beside the bridge stand the law and its verdict, how much of each kind the project map holds, and Read now. Under it, every mapping, those that do not hold first. The Meaning tab is dark while a mapping does not hold.
+
 ##### Full
 
-The full Impact shows the neighbourhood of the subject as a graph. The three lists stand beside it: references, links and sessions. Click an item to open it beside the graph.
+The full Impact shows the neighbourhood of the subject as a graph. The three lists stand beside it: references, links and sessions. Click an item to open it beside the graph. Its Meaning tab shows the bridge at pane size, each mapping named at both ends, with the mappings that do not hold beside it. Click one to read where it fails.
 
 In Clip view, Impact reads the subject of the clip and changes nothing.
 
@@ -4683,10 +5185,12 @@ The widget shows the subject, its three counts and the first session. Click the 
 4. Raise Depth to see further.
 5. Open the Sessions list to see who works near the subject.
 6. Click any item to open it beside the subject.
+7. Open the Meaning page to see whether the code still holds what the subject means. Read the orange spans first.
 
 #### Rules
 
 - Impact reads. It changes nothing.
+- Meaning and code keep their own owners. The project's law relates them, and Impact reads that law; it never writes one or guesses a mapping.
 - Impact keeps no index of its own. It reads your knowledge graph, your wiki and your sessions when you select a subject.
 - A session touches the subject when its work records name the folder or the project that holds the subject.
 - Each list names the source it comes from. If a source cannot be read, the list shows the refusal and stays empty.
@@ -4698,6 +5202,133 @@ The widget shows the subject, its three counts and the first session. Click the 
 - To find who works near a note, read Sessions.
 - To keep one view while you browse, turn Pin on.
 - To see only the notes that cite a subject, set Relation to that kind of link.
+- Before you call a design done, open Meaning on its folder. A stale span means the code moved after its meaning was last checked.
+
+### 18.7 Machine
+
+**Product:** Central · **Kind:** effect · **Chain:** a world's track whose folder holds code, after Ground hygiene
+
+You need the machine you work on to hold what your work relies on, and a way back to it when the machine changes or is lost. Machine sets what you declared beside what the machine holds, makes the difference good where it can, and recovers the machine from your declaration.
+
+#### What it compares
+
+A role is a declaration under `Control/machines`: what a machine of that kind must hold.
+
+| Kind | Declared | Observed |
+|---|---|---|
+| Capabilities | The agent programs and tools the role relies on. | Those found on the machine. |
+| Packages | Each package, present or absent. | The packages installed. |
+| Configuration | Each configuration file, and where it comes from. | The configuration found. |
+| Services | Each service, running and enabled or not. | The services running. |
+
+Each declared requirement takes one of four verdicts.
+
+| Verdict | What it means |
+|---|---|
+| Satisfied | The machine holds it as declared. |
+| Changeable | The machine does not hold it, and Apply can make it so through a connector. |
+| Missing | The machine does not hold it, and nothing here can make it so. |
+| Unsupported | No connector can read or change it. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Role | The roles declared under `Control/machines` | The role this machine is bound to | The declaration the machine is read against. |
+| Change | Off · Propose · Write | Propose | Off: the device only reads. Propose: Apply, Adopt and Recover wait for your confirm. Write: they run when you hold them, with a report. |
+| Refresh | Manual · On open | On open | When the device reads again. |
+| Host | Platform and architecture (reading) | Read from the machine | The machine as last observed. |
+| Verified | Satisfied · Differs (reading) | Read from the last verification | Whether the machine met its declaration when last checked. |
+
+#### Acts
+
+| Act | What it does |
+|---|---|
+| Plan | Compares the declaration with the machine again. It changes nothing. |
+| Apply | Makes the changeable requirements so, through the connectors the plan names, then verifies. |
+| Verify | Observes the machine and checks it against the declaration. |
+| Adopt | Writes what this machine holds into the role's declaration. |
+| Recover | Synchronises your source, applies the plan, and verifies, stage by stage. |
+
+#### Views
+
+```ui
+device: central:machine
+caption: Machine, on a workstation role with two requirements to change, one missing and one unsupported. Turn to Reconcile and Recover for the stages.
+```
+
+```ui
+device: central:machine
+fixture: Recovered in part
+page: recover
+caption: The Recover page after a recovery that synchronised your source and stopped while it applied the plan.
+```
+
+##### Folded
+
+The folded Machine shows the role and how many requirements differ.
+
+##### Compact
+
+The compact Machine shows the ledger: a lane for each kind, what you declared to the left of the spine, what the machine holds to the right. A declared tick is teal when satisfied, amber when changeable, orange when missing, and crossed when unsupported. Handle 1 on the line under it sets Change. It has three macros.
+
+| Macro | What it does |
+|---|---|
+| Role | Chooses the declaration. |
+| Change | Sets Off, Propose or Write. |
+| Apply | Makes the changeable requirements so. |
+
+##### Whole
+
+The whole Machine has three pages.
+
+| Page | Holds |
+|---|---|
+| Declared | The ledger with each lane named and counted; Role, Host, Verified and Refresh; every requirement with its verdict. |
+| Reconcile | Plan, apply and verify as three stages, each with its result; Change; Plan, Apply, Verify and Adopt; what the plan would change, and why the rest cannot be changed here. |
+| Recover | Plan, synchronise, apply and verify as four stages, each with its result; how your source synchronises; the last recovery's outcome; Plan and Recover; each stage's result, and where it stopped. |
+
+A stage is filled when it ran well, amber when it ran in part, crossed when it failed and hollow when it has not run. A stage with nothing configured is dashed.
+
+##### Full
+
+The full Machine shows the four kinds side by side. Each lists what you declared, with its verdict and the connector that would change it, and what else the machine holds. Under them stand the last apply, the last verification and the last recovery.
+
+In Clip view, Machine edits no clip.
+
+##### Widget
+
+The widget shows a small ledger, how many requirements differ and whether the machine verified.
+
+#### Transport
+
+| Control | Effect on Machine |
+|---|---|
+| Link | Lets Role name the roles of your other linked machines. |
+
+#### To use Machine
+
+1. Select a world's track whose folder holds code, and select Machine after Ground hygiene.
+2. Choose the Role this machine plays.
+3. Read the ledger. Amber can be changed here; orange and crossed cannot.
+4. On Reconcile, press Apply. In Propose, read what it will do and confirm.
+5. Press Verify and read the result.
+6. On a new or rebuilt machine, open Recover, press Plan, then Recover.
+
+#### Rules
+
+- Reading changes nothing. Only Apply, Adopt and Recover change the machine or its declaration.
+- Apply changes only what the plan calls changeable, and verifies after.
+- Adopt writes the declaration, never the machine.
+- Recover stops at the first stage that fails, and keeps the result of every stage before it.
+- A requirement no connector can change stays missing or unsupported. The device does not guess a way to make it so.
+- Each act returns a report that names what it changed.
+
+#### Tips
+
+- To start a declaration from the machine you have, press Adopt, then edit the role in `Control/machines`.
+- To see why a requirement cannot be changed, point at its ! in the list.
+- To check a machine after an update, press Verify.
 
 ## 19. Factory and the agent chain
 
@@ -4705,7 +5336,7 @@ Factory is where you work with AI agents. Each agent session is a track. Its cha
 
 ### 19.1 Factory: tracks and clips
 
-**Product:** Software Factory, with Actuation and Workcell · **Track:** an agent session · **Clip:** a task · **Return tracks:** your workcells · **Main track:** the Experiment, Approvals and the Prompt pads
+**Product:** Software Factory, with Actuation and Workcell · **Track:** an agent session · **Clip:** a task · **Return tracks:** your workcells · **Main track:** Experiment, Approvals, Prompt pads and Run map
 
 You need to set agents to work, watch how each task stands, and step in where you are needed. In Factory each agent session is a track, and its tasks are its clips. Select a task and Clip view shows how it launches, what follows it, the effort the agent gives it, and its log. Device view below shows the session's chain: the agent, its skills and its scope. The workcells stand at the right, where Live keeps its return tracks, each with its gateway, its machine and its landing.
 
@@ -4745,7 +5376,7 @@ An empty square on a track names what a click does: it stops the session after t
 
 #### Clip view
 
-A running task is watched, so Clip view puts how it launches and what follows it beside the log.
+A running task is watched, so Clip view puts how it launches and what follows it beside the log. A third tab, Intent, holds what the task is for and how you will know it did that.
 
 ```ui
 clip: clip:factory
@@ -4773,6 +5404,21 @@ height: 1120
 | Quantize | Global · Now · Next tool · Next turn | Global | When a launch or a steer lands. Global follows the transport's Quantize. |
 
 Next task and Stop are Live's follow actions. Hand off has no counterpart in Live: a Live follow action stays on its own track, and Hand off moves the work to another session's track.
+
+##### The Intent panel
+
+You need to say, before a task starts, what difference it must make and what will show that it did. The Intent panel holds both. Factory keeps them with the task's run; the words stay in the source they come from.
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Intent | Text | Empty | The difference the task must make, in one line. |
+| From | A source (reading) | Read from Factory | Where the intent is written: a plan, a page, a vision. |
+| Success | A list of conditions, each Met · Not met · Open (reading) | None | What shows the task made its difference. After the run returns, each condition carries its answer: met or not met with the evidence that shows it, or open when the run cannot tell. |
+| Add | Text | Empty | A new success condition. Press Enter to add it. |
+| Return | Met · Not met · Open (reading) | Read from the conditions | Across the conditions: not met if one is not met, open if one is open, met when all are met. |
+| Context | What the task may read, and its limits (reading) | Read from AIKit | The sources the task's context draws on, and the constraints it keeps. |
+
+A condition answered met or not met always carries its evidence. Open is an honest answer: the run could not tell, and it says so.
 
 A task has no legato and no launch velocity.
 
@@ -4805,6 +5451,8 @@ In Arrangement view each session is a track along the clock of the run, with a n
 
 On the track, a done task is a solid block. A running task fades out at the right and has no end. A stalled task is striped, and the needle stops where the output stopped. A queued task is dashed and has no length.
 
+The track's head carries one more reading: Structure, whether the run still stands on what its sources declare, the things they name, how those relate and the code bound to them. It reads sound, or says what is stale (a source or a binding has moved), missing (one is gone) or open (a gap the sources name themselves).
+
 Under each track lie its lanes:
 
 | Lane | What it holds |
@@ -4822,15 +5470,17 @@ A retry is a new attempt. It lies as a new take lane under the same track, and t
 
 The takes open full in a pane as the tree of each attempt: its tasks as nested rows, or its attempts along one ruler, or as a grove, one tree for each attempt. A tree grows while its attempt runs, bears fruit when the attempt finishes and comes down grey when it fails. A retry is a new tree, and the earlier tree stays. A gold bar under a tree marks the attempt that stands.
 
+You need to see how the work came to the run in front of you: a first pass, a pass that was dropped, the pass you are on. Journey view sets the runs of that journey one under another, in the order each continued the last, with what the journey is for at the head. Each run shows how it stands, its attempts, and whether you recognised what it returned (§19.25).
+
 | Setting | Values | Default | What it does |
 |---|---|---|---|
 | Work | A piece of work | The selected session's work | The request whose attempts are shown. |
 | Attempt | A list of attempts | The latest | The attempt you read. |
 | Show | All · Running · Stalled · Done | All | Filters the tasks in the tree. |
 | Group by | Attempt · Agent · Day | Attempt | How the attempts are grouped. |
-| View | Tree · Ruler · Grove | Tree | Tree: tasks as nested rows. Ruler: attempts along one ruler. Grove: one tree for each attempt. |
+| View | Tree · Ruler · Grove · Journey | Tree | Tree: tasks as nested rows. Ruler: attempts along one ruler. Grove: one tree for each attempt. Journey: the runs of the journey this work belongs to. |
 | Compare | None, or a second attempt | None | Draws two attempts side by side. |
-| Stands | An attempt | None | The attempt you accept. When you choose it, you review it. |
+| Stands | An attempt | None | The attempt you accept. When you choose it, the Review page opens, and the attempt stands only when you hold Confirm. |
 
 ```ui
 device: software-factory:attempt-review
@@ -4838,6 +5488,26 @@ view: full
 fixture: Grove, one stands
 height: 480
 caption: The takes of one piece of work as a grove: the first attempt failed, the second stands, the third still runs.
+```
+
+You need to know what you accept before it stands. Review, the page behind Stands, sets the attempt's return against what it was for: each success condition with its answer, each claim the attempt makes with the evidence for it, the outputs the run left in its world, and the questions that wait on you. Collect gathers the outputs where the run kept them. In the pane the same review stands beside the list.
+
+| Reading | What it shows |
+|---|---|
+| Intent | Across the success conditions: met, not met or open. |
+| Conditions | The conditions met, of all of them. |
+| Claims | The claims that carry evidence, of all the claims. A claim with no evidence draws a dashed box. |
+| Requests | The questions the run waits on you to answer. |
+| Return | The artefacts and the evidence in the attempt's Return. |
+| Receipt | Whether Central has linked a receipt to the Return. A receipt is not your acceptance. |
+
+```ui
+device: software-factory:attempt-review
+view: whole
+page: review
+fixture: Review waiting
+height: 560
+caption: The Review page: attempt 2 waits to stand. Two conditions are met and one is open; one claim has no evidence, and one question waits on you.
 ```
 
 Press Record and what the sessions do lays out on the ruler as clips, with their takes under them.
@@ -4850,7 +5520,7 @@ The browser also holds a category of agent types: the six families, Sense, Coord
 
 #### The Main track
 
-Factory's Main track carries what serves every session: the Experiment, Approvals and the Prompt pads (§19.22). When no session is selected, Device view shows the Main track's chain. The gateways, the frames and the ledger are monitors, on the rail and in panes; Link is the transport's.
+Factory's Main track carries what serves every session: Experiment, Approvals, Prompt pads (§19.22) and Run map (§19.25). When no session is selected, Device view shows the Main track's chain. The gateways, the frames and the ledger are monitors, on the rail and in panes; Link is the transport's.
 
 #### The workcells
 
@@ -4864,7 +5534,7 @@ In Session view the Main track's row launchers stand at the end of the grid. In 
 |---|---|
 | Sessions | The tracks of the work as a tree: each session with its state, its helpers nested under it one step of indent for each level. Three counts show the sessions, the running ones and the stalled ones, with buttons for All, Running and Stalled. For the selected session, its needle time and the task it is on. Click a session to select its track. Double-click it to open its thread. |
 | Agents | The agents of the tracks as creatures in their habitat: each agent is the creature of its type, in the posture of its state, standing in the zone its run has reached. It stands at the roots while it reads its sources, on the trunk while it makes, and in the crown once it has delivered. Its helpers stand round it, joined by dashed lines, with a line saying what each does. A stuck agent stands frozen and its outline is amber. Each agent carries its track's Telemetry: a muted agent works in silence. Click an agent to select its session. Double-click it to open its thread. Tap in the transport asks every running agent for a status line, and the answers arrive here. |
-| Results | The takes of the selected run: each result with its author and its diff. Open a diff to read it. Press Accept to send a result to review. |
+| Results | The takes of the selected run: each result with its author and its diff. Open a diff to read it. Press Accept to send a result to review. Beside them, the outputs Workcell collected from the world the run stood in, each with where it lies, and what it left out; Collect gathers them again. |
 | Frames | What passed between the shell and the harness, frame by frame. |
 | Ledger | Every task with its receipt. |
 | Approvals | Every proposal and request that waits for you. |
@@ -4920,6 +5590,8 @@ caption: The Agents tile: each agent a creature, standing at the zone its run ha
 - To find the first failure of a long run, open the takes in a pane, set Show to Stalled and read the top row.
 - To keep a good attempt, set Stands before you launch another.
 - To compare two attempts, set Compare.
+- To see how the work came to this run, set View to Journey.
+- Before you confirm an attempt, read its Review page from the top: the conditions, then the claims without evidence.
 - To find the sessions that need you, set Sessions' Filter to Stalled.
 - To find a lost session, set Sessions' Filter to Running and read the names.
 - To see who is stuck, look for the amber stations in Agents.
@@ -5126,12 +5798,18 @@ belongs to Scope (§19.12), the next device on the chain.
 | On no answer | Hold · Deny | Hold | What the agent does when nobody answers. |
 | Held | A list (reading) | Read from the agent | What the agent holds now, such as a file or a setting. |
 | Hand back | Lit · Dark (reading) | Dark | Lit when you edited something the agent holds. |
+| Grants | The grants the agent holds (reading), with Issue and Revoke | Read from Actuation | What the agent may do to agency, and in which Worlds. See Grants, below. |
 | Team cell | Row, question and depth (reading) | Read from the team space | Where the agent stands in Anima or Aletheia. Empty when the agent is in no team. |
+| Context | Pressure and the last turn (reading) | Read from AIKit | How full the agent's context is, and what the last turn let in and kept out. See Context, below. |
 
 Identity is a reading of your roster: the agent's name and colour, its
 character in one line, the program that runs it, the skills it carries, the
 world it stands in, whether you accepted it or it is only proposed, and the
-revision of the roster the card comes from. The device reads the roster and
+revision of the roster the card comes from. Changed since shows what changed
+in the agent between an earlier receipt of its work and the latest, with its
+body (the model, harness and effort it ran at) apart from its identity (the
+profile, self and practice that make it who it is). A new model is a change of
+body; a new profile revision is a change of identity. The device reads the roster and
 never adds, changes or invents an agent. Identity gives an agent no right:
 what it may read and write comes from Scope. An agent that has a type wears
 the creature of its type as its face (below).
@@ -5208,6 +5886,56 @@ height: 560
 caption: The Type page, on the seated agent: Ambush, whose face is the serpent. Choose another pattern and its preset loads.
 ```
 
+#### Grants
+
+You need to say plainly what an agent may do to other agents: bring a helper
+into being, change how one is set up, make one actual in a World, or take its
+return back into the work. A grant says it. Each grant names the agent that
+holds it, the operations it allows and the Worlds it reaches, and holds until
+it ends or you revoke it. Saving, preparing or starting an agent never grants
+anything by itself.
+
+The Grants page draws the grants as a grid: a column for each operation, a row
+for each grant, a filled cell where the grant allows the operation. A revoked
+grant is struck through and one that ended is dashed. The hollow row at the
+foot is the next grant: choose its operations, its World and when it ends, and
+press Issue. To end a grant, select it, give a reason and hold Revoke. A
+revoked grant cannot be given back; issue a new one.
+
+| Operation | What it allows |
+|---|---|
+| Determine | Bringing another agency into being within bounds: a helper, a member. |
+| Configure | Changing how an agency is set up. |
+| Actualise | Making a composed agency actual in its World, with a receipt. |
+| Reintegrate | Taking an agency's return back into the work. |
+
+```ui
+device: software-factory:agent-custody
+page: grants
+height: 560
+caption: The Grants page: Flint may actualise and configure agency in O-I; its grant for Quaternal Logic has ended and the one for your whole world was revoked.
+```
+
+#### Context
+
+You need to know what the agent was told before it acted, and what it was not told because its context was filling. AIKit composes each turn's guidance from the profile in use: who the agent is and where it stands when a session starts, the domains a prompt touches, the guidance of a file before the agent opens it, the receipts after. As the session runs, the context fills, and AIKit bounds the ordinary guidance by four brackets. Standing guidance always enters whole. Every bound is told to the agent.
+
+| Bracket | Ordinary guidance that enters |
+|---|---|
+| Fresh | All of it. |
+| Moderate | Three blocks, eight lines each. |
+| Depleted | One block, three lines. |
+| Critical | None. Standing guidance only. |
+
+The Context page draws the session's prompts against its budget, the four brackets as zones and a needle where the session stands. Under it stand the last turn's blocks as columns: standing lines solid, ordinary lines that entered lighter, the lines withheld as an orange outline above them, and a block withheld whole as an empty outline. Beside them: the prompts, the allowance now, the star commands armed, the lines that entered and the lines and blocks withheld. The list names each block and what it let in.
+
+```ui
+device: actuation:harness-model
+page: context
+height: 560
+caption: The Context page fourteen prompts in, at moderate pressure: the last turn let 33 lines in and withheld 20, and one block of receipts entered not at all.
+```
+
 #### The stage
 
 You need to see where a run stands without reading its thread. Full draws the
@@ -5245,6 +5973,12 @@ thread of their own, nested under it.
 | Proposal card | A change the agent proposes, with Approve, Changes and Diff. |
 | Stall card | A card with an orange border. It names the prompt the agent waits for, with Retry, Hard stop, Steer and Tell parent. |
 | Working line | A pulsing dot with what the agent is doing now. |
+| Thought row | A thought the agent kept for the run: what carries it (a note, an artefact), its words there, who kept it, the units of the run it is about, and where it stands: active, resolved, superseded, integrated or retained. |
+
+Set Messages to Thought and the thread shows what the agent retained for this
+run, under one line naming how it worked: the Method at its revision, the model
+on its harness, the sources it read. The Thought page filters it by unit, by
+agent, by what carries it and by where it stands.
 
 The thread's head shows the chain of parent agents, the model and the turns
 used, and holds Stop and Retry. Retry lights only when the agent has stalled.
@@ -5322,7 +6056,7 @@ caption: Agent, on a fixture of readings.
 |---|---|
 | Folded | The agent's name and its power light. The light is lit only when the harness reports the agent is on. |
 | Compact | The agent's face, the creature of its type in the posture of its run state, with the turns used of the turns allowed and its state. A dot for each thing it holds. Macros: Autonomy, Effort, Budget, Input. A composer under the face: type a task or a question and press Enter. |
-| Whole | Pages Run, Custody, Identity and Type. Run: Power, Agent, Model, Harness; Effort, Budget; Heartbeat, On stall; Input. Custody: Autonomy and Review gate; Escalate to, Wait, On no answer; the held items and Hand back. Identity: the roster card. Type: the family, the pattern and where each of its fields lands. |
+| Whole | Pages Run, Custody, Grants, Identity, Type and Context. Run: Power, Agent, Model, Harness; Effort, Budget; Heartbeat, On stall; Input. Custody: Autonomy and Review gate; Escalate to, Wait, On no answer; the held items and Hand back. Grants: the grants as a grid; the next grant with Issue; the grants by World; Revoke with its reason. Identity: the roster card, and Changed since, the body's changes and the identity's. Type: the family, the pattern and where each of its fields lands. Context: the pressure and the last turn's blocks, what entered and what was withheld. |
 | Full | The thread, and beside it the stage: the run as a tree, the agent a creature on it. |
 | Pop-out | The thread with the agent's controls in one row under it: a window to watch and steer one agent from. |
 | Widget | The agent you are talking to: its face in the posture of its state, its state, the last lines of its thread and a composer. It stays when you change mode. |
@@ -5347,7 +6081,7 @@ value that an agent moved shows that agent's name.
 | Tap | Asks the agent where it has got to. |
 | Loop and punch | Sets the window in which the agent may write. |
 | Key | Counts tokens in and out. |
-| Load | Shows how full the agent's context is. |
+| Load | Shows how full the agent's context is. The Context page shows what entered it and what was withheld. |
 
 #### To use the Agent
 
@@ -5399,6 +6133,7 @@ value that an agent moved shows that agent's name.
 - To take over a file for an hour, edit it. Press Hand back when you finish.
 - To start a new agent in a known pattern, drag its type from the browser onto an empty track.
 - To read a stall at a glance, look at the face: a frozen creature on a grey zone is a stall.
+- When an agent seems to forget its guidance late in a long session, open Context. At depleted or critical pressure, ordinary guidance no longer enters; start a fresh session for the next task.
 
 ### 19.5 Experiment
 
@@ -5558,7 +6293,9 @@ Full's head carries the rate, the frames shown, whether the list follows and the
 An agent works from what it carries: what it can do, how it acts, and how it
 finds its bearings in a field. The Skillset rack holds that repertoire. Use it
 to see what the agent carries, what is really available to it now, and what it
-has used.
+has used. Use its other pages to keep the practice itself: where it comes from,
+the skill trees on your machine that AIKit does not own, and every change
+AIKit has made, each of which you can take back.
 
 #### Four kinds of carried practice
 
@@ -5616,6 +6353,19 @@ not make the agent use it.
 | Evidence | Ten steps for each member (reading) | Read from AIKit | What each member has done in this session. |
 | Revision | A digest (reading) | Read from AIKit | The revision of the whole set. |
 | Unsupported | A count (reading) | Read from the receipt | The relations that the package target cannot carry. The receipt names each one. |
+| Unused | On · Off | Off | Shows only the members AIKit has catalogued and never seen used. |
+| Source | A source AIKit owns | The first | The source that Sources reads and acts on: a Git repository at an exact revision, a folder on this machine, or one exported capsule. |
+| Sync | An action | — | Copies the source into a new candidate snapshot. Nothing becomes active. |
+| Promote | An action, held | — | Makes the candidate snapshot active. The one before stays to roll back to. |
+| Roll back | An action, held | — | Returns to the snapshot promoted before. |
+| Root | A skill tree AIKit does not own | The first | The tree to adopt, such as the skills folder of a harness. |
+| Namespace | Text | The harness's name | Where the adopted skills land in AIKit. |
+| Adopt | Preview, then Apply | — | Shows the plan, then adopts the tree: each skill copied into AIKit and a link left in its place. Apply is held. |
+| Procedure | A recorded procedure | The latest | The change that Procedures reads and acts on. |
+| Run | An action, held | — | Applies a planned procedure exactly as planned. A world changed since the plan refuses it. |
+| Undo | An action, held | — | Takes an applied procedure back from its journal, the last edit first. |
+| Bypass | Lasts: Next event · Session · 1 hour, a reason, Issue | Next event | Lets the agent through the hook chain for as long as it lasts. AIKit records the reason. |
+| Revoke | An action, held | — | Closes an open bypass. |
 
 #### Views
 
@@ -5624,6 +6374,25 @@ device: ai-kit:skillset-rack
 width: 1500
 height: 1000
 caption: The Skillset rack on Central's documentation set. Turn a member off and the Preview lights. Point at a mark or at the ticks to read them. Switch the fixture to see the pen marks.
+```
+
+```ui
+device: ai-kit:skillset-rack
+fixture: A candidate waits
+page: sources
+caption: Sources: five sources AIKit owns, one with a new candidate waiting to be promoted, and four skill trees it reads and does not own, three of them holding copies that differ.
+```
+
+```ui
+device: ai-kit:skillset-rack
+page: adopt
+caption: Adopt, previewed for the Claude skills folder: 29 skills to copy in, the ones AIKit already owns left as they are, and two refused because another tree holds a different copy.
+```
+
+```ui
+device: ai-kit:skillset-rack
+page: procedures
+caption: Procedures: the latest five changes AIKit made, the newest an adoption planned and not run, with one bypass open.
 ```
 
 ##### Folded
@@ -5649,21 +6418,25 @@ rack above the chain.
 
 ##### Whole
 
-The whole rack has two bands.
+The whole rack has four pages.
 
-| Band | Sections |
+| Page | Holds |
 |---|---|
-| One | Set: the set, its members by kind, the revision, the author. Compose: Scope, Preview and Apply, Profile. Package: the target, Export, the unsupported count. |
-| Two | Every member, in two columns, with its square, mark, evidence and revision. |
+| Set | Band one: Set (the set, its members by kind, the revision, the author), Compose (Scope, Preview and Apply, Profile), Package (the target, Export, the unsupported count). Band two: Unused, with how many members were never used, then every member in two columns, with its square, mark, evidence and revision. |
+| Sources | A lane for each source AIKit owns, with the snapshot to roll back to, the active one and the candidate; under a dashed rule, each skill tree on the machine that AIKit does not own, as a bar of its skills, an orange dot where copies differ. Source, kind, skills and the active snapshot; Sync, Promote, Roll back and the candidate. Then every source and every tree. |
+| Adopt | The tree's skills at the left, AIKit's namespace at the right, a line for each skill the plan copies across; a ring for one AIKit already owns, an orange cross for one the plan refuses. Root, Namespace and how the change is staged; Preview, then Apply and Cancel; how many to adopt, how many refused, and the digest. Then the plan, skill by skill. |
+| Procedures | The recorded procedures along a line, the latest at the right: filled when applied, a ring when planned, struck when undone; above the chosen one, its edits by kind. Handle 1 chooses one. The procedure, what it changes, how it is staged and its digest; its state, Run, Undo and when. Band two: the next bypass (Lasts, Reason, Issue), the bypasses, and Revoke. |
 
-Select a member to expand it above the rack (see §19.8).
+Sources is dark while a candidate waits or copies differ. Procedures is dark while a procedure is planned and not run. Select a member to expand it above the rack (see §19.8).
 
 ##### Full
 
-The full rack is the set as a page, grouped by kind:
-methodologies, methods, skills and sets. Each member shows its mark, its
-revision, its evidence, its state and what it is for. The controls stay in
-Device view, below the pane.
+The full rack carries the same pages as tabs. Set is the set as a page,
+grouped by kind: methodologies, methods, skills and sets. Each member shows its
+mark, its revision, its evidence, its state and what it is for. Sources lists
+each source with its snapshots, then the trees AIKit does not own. Adopt lists
+the plan. Procedures lists each change with its edits, then the bypasses. The
+controls stay in Device view, below the pane.
 
 ##### Widget
 
@@ -5689,10 +6462,19 @@ when you change mode.
 5. Read the evidence. A member that is carried but never loaded costs the
    agent nothing. A member that is loaded but never invoked costs it context.
 6. To give the set to another harness, choose the target and click Export.
+7. To bring a harness's own skills under AIKit, open Adopt, choose the tree and
+   click Preview. Read the plan, then hold Apply.
+8. To take a change back, open Procedures, choose it and hold Undo.
 
 #### Rules
 
 - Membership grants no trust, no authority and no loading.
+- A source changes only through its snapshots: Sync makes a candidate, Promote
+  makes it active, Roll back returns to the one before.
+- Adoption keeps the originals in its journal. Undo puts every file back as it
+  was.
+- A bypass is recorded with its reason. It lets the agent through the hooks; it
+  grants no authority.
 - The marks and the evidence are readings. The shell does not light them.
 - A set carries a child set by reference. A change to the child reaches every
   set that carries it.
@@ -5704,14 +6486,17 @@ when you change mode.
   invokes.
 - To share a set with a team on another harness, read the unsupported count
   before you export it.
+- To find what a set carries for nothing, turn on Unused.
+- When Sources shows copies that differ, adopt the tree that holds the copy you
+  keep. The other copies then read the same skill.
 
 ### 19.8 Skill, Method, Methodology
 
 **Product:** AIKit · **Kind:** effect · **Chain:** one chain inside a Skillset rack
 
 You need to see one member of a repertoire closely: what it is for, whether
-the agent can use it now, and what it did. One device shows all three forms,
-and its face changes with the form.
+the agent can use it now, what it did, and why it stands as it does. One device
+shows all three forms, and its face changes with the form.
 
 #### Three faces
 
@@ -5735,8 +6520,26 @@ and its face changes with the form.
 | Prove | An action, Method only | — | Checks the receipt of the last run. A run that did not verify is refused. |
 | Instantiate | Needed · Not needed (reading), Methodology only | Read for each act | Whether the act in hand needs the Methodology, or the invoked skill carries enough. |
 | Reach | Harnesses (reading), Skill only | Read from AIKit | The harnesses that the skill is written into in this context. |
+| Why | What selects it, where it is projected, what needs it, what it needs (reading) | Read from AIKit | How the member came to stand as it does: its state, its trust and its maturity. |
+| Ground | Active · Retired, with who, when and why (reading) | Read from Central | The member's standing in your ground, where your ground holds it. |
+| Retire | An action, with a reason | — | Retires the member in your ground. Its files stay; it is no longer projected. You confirm it first. |
+| Restore | An action | — | Returns a retired member to active standing. You confirm it first. |
+| History | Every recorded change (reading) | Read from AIKit | Each change to the member, with its kind, when it happened and whether it can be taken back. |
 
 #### Views
+
+```ui
+device: ai-kit:skill-device
+fixture: In your ground
+page: why
+caption: The Why page of a skill your ground holds: the global profile selects it, four harnesses carry it, two other skills need it. Give a reason to retire it.
+```
+
+```ui
+device: ai-kit:skill-device
+page: history
+caption: The History page of a Method: its review, its projections, its runs, the profile fork that changed its selection, and a refused preflight in orange.
+```
 
 ```ui
 device: ai-kit:skill-device
@@ -5764,17 +6567,22 @@ large, its form and the question the form answers, and its evidence.
 
 ##### Whole
 
-Band one holds the mark with the ten steps
-named, then Standing (Enabled, Trust, Revision), then the form's own section:
-Run for a Method, Orients for a Methodology, Reach for a Skill. Band two holds
-the form's body: the path that a Method composes, the table of which Method
-applies when for a Methodology, or what a Skill is for.
+The whole member has three pages.
+
+| Page | Holds |
+|---|---|
+| Member | Band one: the mark with the ten steps named, then Standing (Enabled, Trust, Revision), then the form's own section: Run for a Method, Orients for a Methodology, Reach for a Skill. Band two: the form's body: the path that a Method composes, the table of which Method applies when for a Methodology, or what a Skill is for. |
+| Why | What selects the member at the left, the harnesses it is projected into at the right, what needs it above and what it needs below. Its state, trust and maturity. Its standing in your ground, with Retire or Restore. Then each line of the reason. |
+| History | A lane for each kind of change, the oldest at the left, a failure in orange. The chosen change's kind, when, and whether it can be taken back. Then every change, newest first. |
+
+The Why tab is dark while the member is retired.
 
 ##### Full
 
 The full member is its text: its form, what it says, a Method's
-steps, a Methodology's table. Its evidence and state stand under the text. The
-controls stay in Device view, below the pane.
+steps, a Methodology's table. Its evidence and state stand under the text. Its
+Why and History tabs read the same as the pages, at pane size. The controls
+stay in Device view, below the pane.
 
 ##### Widget
 
@@ -5796,11 +6604,17 @@ for a Method.
    then confirm.
 4. For a Method, click Run. Read the preflight. Confirm to run it.
 5. After a run, click Prove to check the receipt.
+6. To learn why a member is on or off, open Why.
+7. To withdraw a member your ground holds, open Why, give a reason and click
+   Retire. Confirm it.
 
 #### Rules
 
 - The form comes from the member's own text. To change the form, change the
   text.
+- Retiring keeps the member's files and records who retired it, when and why.
+  Restore brings it back. A member from a product's or a package's skills is
+  retired where it is written.
 - A Method composes. It does not order its steps, and it skips a step that the
   work does not touch.
 - A Methodology points at its Methods. It does not hold their text.
@@ -5813,12 +6627,14 @@ for a Method.
   table of Methods.
 - To find a Method that nobody runs, read the evidence: carried, never
   selected.
+- To find when a member stopped working, open History and read the last
+  orange mark.
 
 ### 19.9 Knowledge route
 
 **Product:** AIKit · **Kind:** effect · **Chain:** inside the Scope device, in a Factory session's chain
 
-You need to choose which knowledge an agent can look up, and how far it may follow links. The Knowledge route sets the sources and the bounds. The agent then finds what it needs on demand.
+You need to choose which knowledge an agent can look up, and how far it may follow links. The Knowledge route sets the sources and the bounds. The agent then finds what it needs on demand. When a source changes, you need to know which of the agent's readings rest on it, so that you choose what to read again. Affected, its second page, shows them.
 
 #### Parameters
 | Parameter | Values | Default | What it does |
@@ -5829,12 +6645,21 @@ You need to choose which knowledge an agent can look up, and how far it may foll
 | Link depth | 0–4 | 2 | The number of links the agent follows from a hit. |
 | Read budget | 1–200 pages | 40 | The most pages the agent reads in one task. |
 | Route | Ready · Composed · Refused (reading) | Read from AIKit | Shows whether the route answers. |
+| Affected | Each reading a moved source affects, with its freshness (reading) | Read from AIKit | Source moved: its source has a new revision. Waits to integrate: a reading made of parts, one of which moved. Source gone: its source can no longer be read. |
+| Read again | An action | — | Reads the chosen reading at the new revision of its source. AIKit records the use. |
+| Forget | An action, held | — | AIKit forgets having used the reading, so the route no longer ranks it from memory. The source is untouched. |
 
 #### Views
 
 ```ui
 device: ai-kit:knowledge-route
 caption: Knowledge route, on a fixture of readings.
+```
+
+```ui
+device: ai-kit:knowledge-route
+page: affected
+caption: The Affected page: two sources moved, the verification architecture and the root wiki; six readings rest on them, one waits to integrate and one's source is gone.
 ```
 
 ##### Folded
@@ -5856,7 +6681,7 @@ Press ▸ on the Scope's head to expand its reads and writes above the chain.
 
 ##### Whole
 
-The whole route shows every parameter, in two groups.
+The whole route has two pages. Route shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -5865,9 +6690,11 @@ The whole route shows every parameter, in two groups.
 
 The route cannot reach farther than Scope allows.
 
+Affected draws the moved sources at the left, an orange square each, and at the right the readings that rest on them, one column for each link of the path, each in its source's shape: orange when its source moved, dashed when it waits to integrate, faint when its source is gone. Beside it: the chosen reading, its freshness, what it rests on and how many links away; Read again, Forget, how many sources moved and how many readings wait. Under it, every affected reading. The Affected tab is dark while any reading rests on a moved source.
+
 ##### Full
 
-The full route shows the knowledge in reach, as a list and as a graph. A page that the agent read shows with its source. Open the source from the page.
+The full route shows the knowledge in reach, as a list and as a graph. A page that the agent read shows with its source. Open the source from the page. Its Affected tab shows what moved and every reading that rests on it, each named, with Read and Forget beside it.
 
 ##### Widget
 
@@ -5886,16 +6713,20 @@ The widget shows the pages that the agent read in this task, with their sources.
 3. Choose the Sources.
 4. Set the Reach. Use a small Reach for a narrow task.
 5. Set Link depth. Use 0 when the agent must stay on the page you pointed at.
+6. When a source changes, open Affected. Read again what the agent still needs; forget what it should no longer reach from memory.
 
 #### Rules
 - Sources are not copied into the prompt. The agent finds them and reads them on demand.
 - The route cannot reach farther than Scope allows.
 - A page that the agent read is shown with its source. You can open the source.
 - A route that is Refused names the reason. The agent then works without that source.
+- Affected follows only the dependencies the knowledge declares. It does not guess that a reading depends on a source.
+- Forget drops AIKit's record of use and nothing else.
 
 #### Tips
 - To keep the agent on topic, lower Link depth.
 - To let an agent check the wiki first, keep Search first on.
+- Before a long task, open Affected. A reading whose source moved is the first place an agent goes wrong.
 
 ### 19.10 Agency gateway
 
@@ -6159,7 +6990,7 @@ You need a record of what the agents did and what came of it. The Ledger lists e
 
 #### What a receipt holds
 
-A receipt holds the number of the task, its name, the agent, the outcome, the revision it started from and who accepted it. It also lists the files that changed. A receipt is made when the task writes. The Ledger does not edit a receipt.
+A receipt holds the number of the task, its name, the agent, the outcome, the revision it started from and who accepted it. It also lists the files that changed, and one line for how the agent worked: the Method it worked under, at its revision; the model and seat it ran in; the sources it read. A receipt is made when the task writes. The Ledger does not edit a receipt.
 
 #### Views
 
@@ -6198,6 +7029,7 @@ Full's head carries the receipts shown, those made today, those waiting, the tur
 #### Tips
 - To prepare the Day's face 2, read today's Ledger first.
 - To audit one agent, set Agent to that agent and Period to All.
+- To find why two runs of one task came out differently, open both receipts and compare their Worked under lines.
 
 ### 19.14 Approvals
 
@@ -6563,7 +7395,7 @@ The widget shows the seat name, the lane and the claim.
 
 **Product:** Workcell · **Kind:** connection · **Chain:** second device on a workcell's chain, after the Gateway
 
-You need to choose where your agents run. The Remote carrier names the machine a workcell runs on: this one, or another machine of yours. Every session that works in the workcell runs there. It shows whether that machine can carry the sessions now.
+You need to choose where your agents run, and to know before a run starts whether that machine can give it what it needs. The Remote carrier names the machine a workcell runs on: this one, or another machine of yours. Every session that works in the workcell runs there. It shows whether that machine can carry the sessions now, what the machine offers, and whether those offers meet the run's needs.
 
 #### Parameters
 | Parameter | Values | Default | What it does |
@@ -6574,6 +7406,8 @@ You need to choose where your agents run. The Remote carrier names the machine a
 | Grant | The operations allowed (reading) | Read from the machine | What this machine may do for you. |
 | Credential | Valid · Expired · Revoked (reading) | Read from the machine | Whether the machine accepts you. An expired credential is not the same as a revoked one. |
 | Round trip | Milliseconds (reading) | Read from the link | The time for a message to go and return. |
+| Offers | What the machine can provide (reading) | Read from the machine | Its workspaces, the processes it can run, its services and its stores, each healthy, degraded or down. |
+| Plan | Satisfiable · Degraded · Unsatisfiable (reading) | Read from the machine | The run's needs laid on those offers. Degraded: a need the run prefers is met poorly. Unsatisfiable: a need the run requires is not met, and the plan names it with the reason. |
 
 #### Views
 
@@ -6601,18 +7435,25 @@ Click the row to read its Standing.
 
 ##### Whole
 
-The whole carrier shows every parameter, in two groups.
+The whole carrier has two pages.
 
-| Group | Parameters |
+| Page | Holds |
 |---|---|
-| Place | Where, Machine |
-| Readings | Standing, Grant, Credential, Round trip |
+| Route | The route; Where and Machine; Standing and Credential; the grant, one row for each operation; the link's terms. |
+| Standing | The offers, a row for each port with a square for each offer, and the plan over them: a ring round each offer the plan chose, an orange cross for each need no offer meets. Plan, the healthy offers and Standing, with Plan again. The run's needs as the plan placed them, each with its reason when it is met poorly or not at all. |
 
-A refused carrier shows its reason. An expired credential and a revoked credential show as different states.
+A refused carrier shows its reason. An expired credential and a revoked credential show as different states. The Standing tab is dark while the plan cannot be met.
+
+```ui
+device: workcell:remote-carrier
+fixture: A plan that cannot be met
+page: standing
+caption: The Standing page on a connected machine that holds no NOW store: the run requires one, so the plan cannot be met.
+```
 
 ##### Full
 
-The full carrier shows one machine. The pane shows its readiness, its sessions and its grant.
+The full carrier shows one machine. The pane shows its readiness, its plan, its sessions and its grant.
 
 ##### Widget
 
@@ -6636,10 +7477,12 @@ The widget shows the machine name, its dot and the round trip.
 - The carrier does not create a machine. It uses a machine you connected.
 - A session on another machine keeps its own seat and its own receipts.
 - Secrets stay on the machine that holds them. The carrier sends a reference.
+- A plan reads the offers. It prepares nothing and claims nothing.
 
 #### Tips
 - To run a long job away from your laptop, give it a workcell whose carrier is a connected machine, with its Gateway's Transport set to Remote.
 - To find out why a carrier is refused, read its reason in the Standing row.
+- Before you move a long run to another machine, read its Standing page: a need it cannot meet shows as an orange cross.
 
 ### 19.19 Link
 
@@ -6759,6 +7602,7 @@ overrides what an agent saw.
 | Deadline | 1–120 s | 10 s | How long an answer may take. A later one is dropped, and the question stays open. |
 | Instruments | On · Off, for each | On | Which of the team's questions the helper may answer. Its light shows whether the team has measured it and admits it. |
 | Model | Reading | Read from AIKit | The model that answers, where it runs, and whether it is loaded. |
+| Hosting | Reading | Read from Workcell | Whether the service that serves the model answers, where it listens, and who keeps it running: its own owner or Workcell. |
 | Counts | Reading | Read from the team | Acts settled by rule, questions asked, abstentions, and picks the engine refused. |
 
 #### Views
@@ -6772,8 +7616,8 @@ caption: Decision helper, on a fixture of readings.
 |---|---|
 | Folded | The helper's name and light, the questions asked today and the last pick. |
 | Compact | The spread of the last question. Macros: When, Deadline, Provider, Probe. |
-| Whole | Pages Ask, Instruments and Provider. Ask: the spread; the question, who asked it, its row and field, how many labels it may hold and what to do if none stands out; the pick, its status, its clarity and its time; the engine's verdict and the counts. Instruments: the team's questions with your request and the team's admission, and the labels of the one you select. Provider: Provider, the model and where it runs, When, Deadline and Probe. |
-| Full | The open question and its spread, and today's questions in order: who asked, which instrument, the pick and what the engine did. |
+| Whole | Pages Ask, Instruments and Provider. Ask: the spread; the question, who asked it, its row and field, how many labels it may hold and what to do if none stands out; the pick, its status, its clarity and its time; the engine's verdict and the counts. Instruments: the team's questions with your request and the team's admission, and the labels of the one you select. Provider: Provider, the model and where it runs, its hosting and who keeps it, When, Deadline and Probe. |
+| Full | The open question and its spread, the counts and the model's hosting, and today's questions in order: who asked, which instrument, the pick and what the engine did. |
 | Widget | The last spread, the counts, and the last pick. |
 
 #### Transport
@@ -6805,6 +7649,9 @@ caption: Decision helper, on a fixture of readings.
 - The collaboration gate is yours. A helper's answer to it is refused, even an
   abstention.
 - A model on your machine has no price, and the device shows none.
+- Loaded is AIKit's reading of the model; hosting is Workcell's reading of the
+  service that serves it. The two can disagree: a model can stand loaded while
+  its service does not answer.
 
 #### Tips
 
@@ -6919,74 +7766,139 @@ The widget shows the last turn, the body, and the feeling of the last sentence. 
 
 ### 19.22 Prompt pads
 
-**Product:** Software Factory, with Actuation · **Kind:** instrument · **Chain:** Factory's Main track
+**Product:** Software Factory, with AIKit and Actuation · **Kind:** instrument · **Chain:** Factory's Main track
 
 You ask agents for the same things again and again: run the checks, review a
 branch, write up the week. Prompt pads keeps those asks as pads, the way a
-Drum Rack keeps sounds. Press a pad and its task starts on the session it
-names. Give a pad a time and it starts then, so a routine you once hid in cron
-stands here, where you can see when it runs and how it went.
+Drum Rack keeps sounds. Press Run now and the pad's task starts on the session
+it names. Give a pad a time and it starts then, so a routine you once hid in
+cron stands here, where you can see when it runs and how it went.
 
 #### The pads
 
-Each project has its own bank of sixteen pads. Choose the bank with the
-project chooser on the device's head.
+Each project has its own bank of sixteen pads, pad 1 at the bottom left as in a
+Drum Rack. Choose the bank with the project chooser on the device's head. Press
+a pad to read it: its settings stand beside the pads, and Run now starts it.
 
 | Setting | Values | Default | What it does |
 |---|---|---|---|
 | Name | Text | The prompt's first words | The name on the pad. |
-| Prompt | Text | Empty | What the task asks. |
+| Prompt | Text | Empty | What the task asks. Writing a prompt on an empty pad makes the pad. |
 | Session | A session of the project, or New | New | Where the task starts. New opens a session with the agent below. |
 | Agent | An agent from your roster | The project's agent | Who works the task when the pad opens a session. |
 | Scope | A scope | The session's | What the task may read and write (§19.12). |
-| Works in | A workcell, or the session's | The session's | The workcell the task runs in: its machine, its seat and its landing (§19.23). |
-| Runs at | Off, or a schedule: a time, days of the week, or every so many hours | Off | When the pad starts its task by itself. |
+| Works in | A workcell's seat, or the session's | The session's | The workcell the task runs in: its machine, its seat and its landing (§19.23). |
+| Runs at | Off · Daily · Every | Off | When the pad starts its task by itself. Daily runs at a time on the days you choose; Every runs every so many hours. |
+| At | A time, in steps of 15 minutes | 08:00 | The time a daily pad runs. |
+| Days | Every day · Weekdays · Weekends | Every day | The days a daily pad runs. |
+| Every | 1–168 hours | 6 h | The hours between the runs of a pad set to Every. |
 | Choke | Off, or a group from 1 to 8 | Off | Pads in one group never run at once: a pad waits while another in its group runs. Use it for tasks that cannot share a seat. |
 
-Each pad shows when it last ran and how that run ended: done, stalled,
-stopped or refused. Click the result to select that task's clip.
+Central checks a schedule before Factory keeps it. A schedule Central refuses
+stays as it was, and the status bar gives Central's reason.
+
+Each pad shows how its last run ended in its corner: green for done, orange for
+stalled, grey for stopped, a hollow ring for refused. A pad lights while its
+task runs. A pad that runs by itself shows ↻ and its next time; a pad in a
+choke group shows c and its group.
+
+#### Running alone
+
+A pad with a schedule runs while nobody watches. Before it may, its Method is
+proved, and you grant the routine that carries it the right to run unattended.
+Alone, beside the pad's settings, reads both.
+
+| Reading | Values | What it shows |
+|---|---|---|
+| Routine | Draft · Enabled · Disabled · Proof stale | The routine that runs the pad by itself. Proof stale means the Method changed since it was proved, and the pad waits until it is proved again. |
+| Unattended | Granted · Not granted | Whether you let the routine run with nobody there. |
+| Next | A time | When the pad next runs by itself. |
 
 #### Views
 
+```ui
+device: software-factory:prompt-pads
+caption: Prompt pads, on a morning's bank: pad 1 runs the checks on weekdays at 08:00, pad 5 runs now, and pad 9's routine needs its Method proved again.
+```
+
 ##### Folded
 
-The folded pads show the project and how many pads have a schedule.
+The folded pads show the project and how many pads run by themselves.
 
 ##### Compact
 
-The compact pads show the sixteen pads of the chosen project. A pad lights
-while its task runs, and its corner shows how its last run ended.
+The compact pads show the sixteen pads of the chosen project, with the pad you
+read ringed in blue. It has four macros.
+
+| Macro | What it does |
+|---|---|
+| Run now | Starts the pad you read. |
+| Choke | Sets its choke group. |
+| Runs at | Sets Off, Daily or Every. |
+| At | Sets the time a daily pad runs. |
 
 ##### Whole
 
-The whole pads show the sixteen pads beside the selected pad's settings.
+The whole pads show the sixteen pads beside the pad you read, in five groups.
+
+| Group | Settings |
+|---|---|
+| Pad | Name, Prompt, Session |
+| Works | Agent, Scope, Works in |
+| Runs at | Runs at, At, Every, Days |
+| Alone | Routine, Unattended, Next |
+| Play | Run now, Choke, the last run, Clear |
 
 ##### Full
 
-The full pads list every pad of the project with its prompt, its schedule, its
-next run, its last run and how it ended.
+The full pads list every pad of the project with its prompt, the session it
+starts on, its schedule, its next run, and its last run and how it ended. Press
+a line to read that pad.
 
 ##### Widget
 
-The widget lists the pads that have a schedule, in the order they next run.
+The widget lists the pads that run by themselves, in the order they next run,
+beside the count of timed pads and of pads running now.
+
+#### Transport
+
+| Control | Effect on Prompt pads |
+|---|---|
+| Arm | A pad's task writes directly, with receipts, where Scope allows; with Arm off it proposes. |
+| Follow | Keeps the widget on the next pad to run. |
+
+#### To use Prompt pads
+
+1. Select Factory's Main track and open Device view.
+2. Choose the project on the device's head.
+3. Press an empty pad and write its prompt.
+4. Choose the session, the agent and where it works.
+5. Press Run now to try it.
+6. To run it by itself, set Runs at, then the time and the days.
 
 #### Rules
 
 - A pad starts a task as any launch does: through the gateway, under Scope and
   Arm.
+- Factory keeps the bank and the record of every run, and never runs a pad by
+  itself. A pad that runs by itself runs through its routine.
+- Only you write a pad. An agent cannot change one.
 - A pad that runs by itself shows its next time and keeps a record of every
   run. Nothing runs where you cannot see it.
 - Pads in one choke group never run at once.
 - Editing a pad changes its next run. A run already made keeps the prompt it
   ran with.
+- Clearing a pad keeps its record of runs.
 
 #### Tips
 
-- To run the checks every morning, give a pad the prompt and set Runs at to
-  08:00.
+- To run the checks every morning, give a pad the prompt, set Runs at to Daily
+  and At to 08:00.
 - To keep two builds off one seat, put their pads in one choke group.
 - To hand a pad's routine to another agent, change its Agent. The schedule
   stays.
+- When a pad's corner turns orange, press the pad and read its last run: the
+  stall names what it waits for.
 
 ### 19.23 Workcell
 
@@ -6999,6 +7911,12 @@ page, runs a Factory task or composes a scene. A workcell is that place. Your
 machines hold a few of them, each a standing set of checkouts with one seat
 for each project, and the DLW shows each one as a rack whose chain carries
 the road in and out.
+
+A run needs more than a seat. Workcell prepares a world for it: the checkout,
+the shell its agent runs in, the services it calls, the stores its outputs go
+to, and what it exposes for you to open. While the run works you need to see
+that world, whether the services it needs are up, and what each harness
+process costs the machine. When it ends you decide what to keep.
 
 #### The chain
 
@@ -7018,7 +7936,15 @@ into the seat, out through the landing.
 | Name | The workcell's name (reading) | Read from the register | The name on its return track and in every Works in, such as env-1. |
 | Machine | A machine (reading) | Read from the Remote carrier | Where the workcell runs. |
 | Seats | One for each project (reading) | Read from the register | Each seat with its lane, its claim and its uncommitted work. |
-| Working here | A list (reading) | Read from the claims | The agents working in the workcell now, each with its track and its mode. |
+| Working here | A list (reading) | Read from the claims | The agents working in the workcell now, each with its track, its mode, its share of a processor and its memory. |
+| Run | A run (reading) | The selected track's running task | The run whose world the pages show. |
+| World | Bindings and their standing (reading) | Read from Workcell | What the run's world holds, by port: present, degraded, missing or stale, or let go. How long it is meant to last, and what releasing it keeps. |
+| Lifetime | Lease and checkpoints (reading) | Read from Workcell | When the world's lease ends, and the checkpoints it can be restored from. A world on this machine has no lease: it lives until it is released. |
+| Services | A list (reading) | Read from Workcell | Each service the workcell declares, whether it answers, and what the run needs of it. |
+| Needed only | On · Off | Off | Shows only the services the run uses. |
+| Exposure | Endpoints (reading) | Read from Workcell | What the run exposes, each with its endpoint, and what it could not expose, with the reason. |
+| Open in | Web · Pane | Web | Where Open puts an endpoint. |
+| Fate | Keep · Suspend · Snapshot · Release, for each binding | As it stands | What Apply asks for each binding. Suspend and Snapshot hold only where the binding's provider can. |
 
 Its four macros reach into its chain:
 
@@ -7037,11 +7963,29 @@ project's seat for the lane you are on; choose another to send the track's
 agents there. The change lands at the track's next task, never in the middle
 of one that runs. A helper works where its lead works.
 
+#### The run's world
+
+| Act | What it does |
+|---|---|
+| Read now | Reads the world again from its receipt. |
+| Recover | Brings missing and stale bindings back from the receipt. |
+| Checkpoint | Keeps a checkpoint of the world to restore from. |
+| Open | Opens the chosen endpoint in Web or in the pane that has focus. |
+| Apply | Asks Workcell for each binding's fate. It is held: a released binding cannot come back. |
+| Release world | Releases the whole world as its retention says. It is held. |
+
 #### Views
 
 ```ui
 device: workcell:workcell
-caption: A workcell, on a fixture of readings: its chain list and macros, its seats in a pane, and the Workcells tile.
+caption: A workcell, on a fixture of readings: its chain list and macros, its seats in a pane, and the Workcells tile. Turn the pages for the run's world.
+```
+
+```ui
+device: workcell:workcell
+fixture: A sandboxed run
+page: world
+caption: The World page of a run in a sandbox: its checkout stale, its logs released, two checkpoints ready, a third being taken, and fifty minutes of lease left.
 ```
 
 ##### Folded
@@ -7056,15 +8000,30 @@ four macros. A device whose owner reports a fault shows it in orange.
 
 ##### Whole
 
-The whole workcell shows its chain list with the selected device beside it,
-and every macro.
+The whole workcell has five pages.
+
+| Page | Holds |
+|---|---|
+| Chain | The chain list with the selected device beside it; every macro; the agents working here, each with a meter of its processor and its memory. |
+| World | The world: its bindings by port, a square each, and under them its lifetime, a diamond for each checkpoint. How long it lasts, what it keeps, its state; when it expires, its checkpoints and Checkpoint; its bindings with Read now and Recover. |
+| Services | The run on a line at the left and each service a branch: solid while it answers, dashed degraded, crossed down; a filled dot where the run needs it. Needed only, the services up, those the run uses that are down, Read now; the services with their endpoints. |
+| Exposure | The world and an arrow to each endpoint it exposes; what it could not expose, crossed. Open in, Open and the endpoint; what it exposes, and what it could not, with the reason. |
+| Release | A column for each binding and a row for each fate: a teal dot where it stands, its numbered handle where you want it. Drag a handle, or choose a binding and its Fate. Apply and Release world; what you changed, and after Apply what Workcell did. |
+
+The World tab is dark while a binding is missing or stale.
 
 ##### Full
 
-The full workcell is its seats, one row for each project: the lane, the claim,
-the co-workers, the uncommitted files and the branch against main. Beside the
-seats stand the agents working here, each with its track and its mode, and the
-gateway's latest frames.
+The full workcell carries the same pages as tabs. Seats is its seats, one row
+for each project: the lane, the claim, the co-workers, the uncommitted files
+and the branch against main. Beside the seats stand the agents working here,
+each with its track and its mode; the harness processes on the machine, each
+with its processes, a meter of its processor and its memory; and the gateway's
+latest frames. World lists each binding with its port, provider, need,
+presence and observed health, and the world's lease and checkpoints. Services
+lists each service with its endpoint and health. Exposure lists each endpoint
+with Open. Release lists each binding, where it stands, what you ask for it,
+and what the last Apply did.
 
 ##### Widget
 
@@ -7076,7 +8035,7 @@ Click an agent to select its track.
 
 | Control | Effect on the workcell |
 |---|---|
-| Play | Joins the seat when the first task of a track that works here starts. |
+| Play | Joins the seat when the first task of a track that works here starts, and prepares the run's world. |
 | Link | Adds the workcells of your other machines. |
 | Metronome | Sets the heartbeat its gateway listens for. |
 
@@ -7092,11 +8051,16 @@ Click an agent to select its track.
 - A seat holds one lane at a time. Several agents can work in one lane, as co-workers.
 - Moving a track to another workcell moves its next task. A running task finishes where it started.
 - A workcell left standing on a landed lane has not finished: release its seat.
+- A run's world is read from its receipt. The pages show it and never prepare it.
+- Releasing a binding cannot be undone. A binding that lasted only for its task, once lost, does not come back.
 
 #### Tips
 - To keep risky work apart, give it its own workcell and set that workcell's Approvals to Ask.
 - To run a long job on another machine, choose a workcell whose Remote carrier is that machine.
 - To see who is working where, open the Workcells tile.
+- To find which agent is costing the machine, read the meters in Working here.
+- To look at a run's preview, open its Exposure page and press Open.
+- To keep a run's outputs and let its shell go, set the shell's fate to Release and keep the rest.
 
 ### 19.24 Messages
 
@@ -7201,6 +8165,7 @@ settings, + Agent, + Group and the Agency gateway's mark across its head
 
 #### Rules
 - One agent has one conversation, the same in every mode and in its Agent device.
+- What an owner raises for your attention, such as a routine that failed or a close that is due, is not a message: it stands in Notifications (§23.9).
 - Messages travel through the Agency gateway. A call from one agent to another follows its Agent to agent rule.
 - Making an agent writes only a proposal until you accept it. The card is Central's; Messages keeps no copy.
 - An agent's card gives it no right. What it may read and write comes from Scope (§19.12).
@@ -7211,6 +8176,141 @@ settings, + Agent, + Group and the Agency gateway's mark across its head
 - To find who needs you, leave Order on Needs you and read the top of the list.
 - To start a piece of work by talking, write to the agent, then drag its face onto an empty track.
 - To bring two agents into one conversation, make a group of them.
+
+### 19.25 Run map
+
+**Product:** Software Factory · **Kind:** instrument · **Chain:** Factory's Main track
+
+You need to see a piece of work whole: which parts are done, which wait on
+others, where it waits on you, and whether it has given you what you asked for.
+A run is that piece of work in Factory, and Run map draws it as a map. Each
+part of the run, a unit, stands as a block; a line runs from each unit to the
+units that wait on it. A barrier is a bar that gathers several units, and the
+work after it starts only when all of them have returned. A diamond is a
+decision that waits for you. At the right end stand what the run returns and
+what it is for.
+
+#### Commission, Journey and Recognition
+
+A run answers to a Commission, belongs to a Journey, and closes on your Recognition.
+
+| Word | What it is | What you do with it |
+|---|---|---|
+| Commission | The request that starts the work: what it is for, and who works on it. | You give it once. Factory keeps it, and every run of the work answers to it. |
+| Journey | The work as it goes on across runs. A run that needs another pass is continued by a new run in the same journey, and the earlier run stays on the record. | You read where the work has been. To try again from where a run left off, press Continue. |
+| Recognition | Your word that what a run returned is what the commission asked for. | You give it after you have read the return. A run closes only after it. |
+
+Recognition is yours. No agent gives it, and no setting gives it for you.
+
+#### The map
+
+| Mark | Means |
+|---|---|
+| Block | A unit. Dashed: planned. Outlined in teal: ready to start. Filled teal and ringed: at work. Striped orange: blocked. Filled green: returned or met. Dim: replaced or dropped. |
+| Bar | A barrier. The number beside it is the units it still waits for. |
+| Diamond | A decision. Amber while it waits for you. |
+| Ring | The candidate: what the run returns. |
+| Flag | Where the run is going: its destination. |
+| Bar at the right edge | The run's own state: grey at work, amber finishing, green finished. A gold diamond above it marks your Recognition. |
+
+A line between two units is green once the earlier one has returned.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Unit | A node of the map | None | The node you read: a unit, a barrier, a decision or the candidate. |
+| Show | All · Open · Done | All | Which nodes stand out: all of them, those still to do, or those done. |
+| Lifecycle | Seeded · At work · Waits for you · Suspended · Finishing · Finished · Aborted (reading) | Read from Factory | Where the run stands. |
+| Returned | Units returned, of all units (reading) | Read from Factory | How far the run has come. |
+| Waiting | A count (reading) | Read from Factory | Nodes blocked or waiting for your decision. |
+| Retries | Spent of allowed (reading) | Read from Factory | The attempts the unit you read has spent of those its retry grant allows. |
+| Recognised | A time, or Not yet (reading) | Read from Factory | When you recognised the run's return. |
+| Journey | Active · Paused · Completed · Abandoned (reading) | Read from Factory | How the journey stands, and which of its runs this one is. |
+
+#### Views
+
+```ui
+device: software-factory:run-map
+caption: Run map, on a run at work: three units returned or at work, the app's type-check blocked behind a decision that waits for you, and the report waiting on the barrier.
+```
+
+##### Folded
+
+The folded map shows where the run stands and how many units have returned.
+
+##### Compact
+
+The compact map shows the run as its map, with the node you read ringed and
+handle 1 on it. It has four macros.
+
+| Macro | What it does |
+|---|---|
+| Unit | Chooses the node you read. |
+| Show | Brings out all nodes, those still to do, or those done. |
+| Recognise | Gives your Recognition of the run's return. |
+| Close | Closes the run after your Recognition. Hold it. |
+
+##### Whole
+
+The whole map shows every parameter in five groups.
+
+| Group | Parameters |
+|---|---|
+| Unit | Unit, its state, Retries, Retry |
+| Run | Lifecycle, Returned, Waiting, Show |
+| Recognition | Recognise, the return, Recognised |
+| Close | Close, and what a close does now: finish the run, or start the next unit |
+| Journey | The run's place in the journey, the journey's state, Continue |
+
+##### Full
+
+The full map fills the pane with the map, each node named. Beside it stands
+the node you read: what it is for, how it stands, what it waits on, what it
+opens, its last attempt, its retries and who holds it. Under that stands the
+run's return and your Recognition. Along the foot runs the journey: its runs in
+the order each continued the last, this one marked, each recognised run with
+its mark. The head names the run, how it stands, what has returned, whether you
+recognised it, what the commission asked for, and the run's place in the
+journey.
+
+##### Widget
+
+The widget shows the small map, where the run stands, the units returned and
+the nodes that wait.
+
+#### Transport
+
+| Control | Effect on Run map |
+|---|---|
+| Stop | Stops the units at work at their next safe point. Press twice to cancel. |
+| Tap | Asks every unit at work for a status line. |
+
+#### To use Run map
+
+1. Select Factory's Main track and open Device view. Run map shows the run of the selected work.
+2. Read the map from left to right. A striped block is blocked; an amber diamond waits for you.
+3. Press a node to read it. In the pane, its waits and its holder stand beside the map.
+4. Answer a waiting decision in Approvals (§19.14). The blocked unit goes on.
+5. When the run has returned, read its return and press Recognise.
+6. Hold Close. Factory finishes the run, or starts the next unit if one remains.
+7. If the return falls short, press Continue for a new run in the same journey.
+
+#### Rules
+
+- The map draws what Factory reports. It never draws a unit, a line or a state of its own.
+- A unit stands right of everything it waits on.
+- A run closes only after your Recognition. Factory moves it to finished in its own order, and refuses in its own words when it cannot: while a unit is missing, failed or waiting on you.
+- Recognition is yours alone.
+- Continue starts a new run in the same journey. The earlier run stays on the record.
+- Retry starts a failed or quiet unit again only within its retry grant.
+
+#### Tips
+
+- To find what holds the run up, set Show to Open and look for stripes and amber diamonds.
+- To see why a run exists, open the pane and read the head: what the commission asked for.
+- To see how the work came this far, read the journey along the foot of the pane.
+- Before you recognise a run, open its attempt's Review page (§19.1).
 
 ## 20. Expressions
 
@@ -9114,6 +10214,40 @@ The surface carries the other two instruments as well. The planets of M2′ bend
 it where they stand, and the form of M3′ sits on it. What you see on the
 torus is the whole body (§16.16).
 
+#### The stage
+
+You need to change the live scene by a procedure, not by hand: to fold the
+form a set way, or to strike the torus at a planet's mode at every step of the
+ring. The stage holds four slots of the live scene: the form, the body's
+damping, the clock's inscription and its lensing. Each slot is driven by its
+authored state until a procedure owns it.
+
+| Act | What it does |
+|---|---|
+| Evaluate | Runs the procedure once. Its receipt comes back with the field as it stands. |
+| Bind | Binds the procedure to the live flow. It fires at each step of the ring, or at each new event, until its budget is spent. |
+| Unbind | Removes the binding, and names the standing it ends in. |
+| Retire | Releases the slots the procedure holds. They return to their authored state, and what the procedure left stays as authored material. |
+
+A fold that casts the form's creases and sets its pose owns the form slot once
+you evaluate it, and its passage runs three scenes: the one it stands and two
+that follow. A strike bound to the
+ring fires at each step, sixteen times by default, then stops and says that its
+budget is spent. A strike claims no slot: it is a moment, and it survives no
+new evaluation.
+
+One procedure owns a slot at a time. A second procedure that writes the same
+slot is refused until the first retires, because the order in which two writes
+arrive decides nothing. A procedure that runs when you evaluate it binds to
+nothing.
+
+```ui
+device: quaternal-logic:torus
+fixture: Stage, a strike bound to the ring
+page: stage
+caption: The Torus's Stage page: a strike bound to the ring, five firings of its budget of sixteen spent.
+```
+
 #### The keyboard
 
 The keyboard is part of the Torus, and it is the torus laid flat. Its six rows
@@ -9150,6 +10284,8 @@ reach it from where your hand is.
 | Voices | 1 to 32 | 16 | How many notes sound at once. The oldest note makes way for a new one. |
 | Level and pan | Level −60 to 6 dB · Pan −1 to 1 | −6 dB · 0 | The loudness and the place of the sound. |
 | View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws. Receiver On makes your camera the place where the torus is heard. |
+| Procedure | One of the procedures you keep | — | The procedure the stage acts on. |
+| Budget | 1 to 1024 firings | 16 | How often a bound procedure may fire before it stops. |
 
 #### The body source
 
@@ -9198,6 +10334,8 @@ The whole Torus shows every parameter, in four groups.
 | Body | Strike, Damping, Modes, Agitation, Body source |
 | Envelope | Attack, Release |
 | Voices and output | Voices, Level and pan, View |
+| Stage | Procedure, Budget, Evaluate, Bind, Unbind, Retire |
+| Rack | M1′'s parts, 0 to 5 (§16.16, §22.9) |
 
 ##### Full
 
@@ -9242,6 +10380,8 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - A saved state keeps every parameter. A preset in the browser opens with the same sound.
 - A held note keeps its own tail. A key release does not cut the ringing of the body.
 - Under Tattva, the body's constants are the tattva's. To set them by hand, set Body source to Declared.
+- A procedure owns a slot until it retires. Another procedure's write to that slot is refused.
+- A bound procedure stops when its budget is spent, and says so.
 
 #### Tips
 
@@ -9250,6 +10390,7 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - To play the surface by hand, touch it while a chord sounds.
 - To make the pulses beat, move Pulse mix away from the middle.
 - To share a sound, save the state as a preset and give the preset to a friend.
+- To let the form fold itself as the ring turns, bind a fold procedure and give it a budget.
 
 ### 21.3 Scale mapping
 
@@ -9607,6 +10748,7 @@ Each device here is a part of one of the instruments of the map (§16.16), and i
 | M′ matrices (§22.6) | M1′ to M4′ | The insides of the racks: Oscillator is M1′'s Ananda; Reading is M1′'s modes with M2′'s lenses; Form is M3′; Situation is M4′'s centres. |
 | Resonator bank (§22.7) | M3′ | Position 5: it sounds the cut the wheel draws. |
 | Binding (§22.8) | M3′ | Positions 0 and 2: the codons bound into a form, and the reception from M2′'s planets. |
+| Rack (§22.9) | M1′ to M4′ | Each instrument's parts, 1 to 4, framed by 0 and 5. |
 
 ### 22.1 Sky
 
@@ -9654,6 +10796,19 @@ Each day has a ruling planet, and so does each hour. The day's planet rules its 
 
 The hours are counted at a place: the world's place when Observer is Shared, yours when it is Private. With no place, the Sky reads no rulers. The ring marks the planet of the hour. Scale mapping can take its mode from it (§21.3).
 
+#### Sharing your sky
+
+The ring of your birth draws for you alone until you share it. On the Share page, choose a person of this world and press Share. They can then open your ring over the sky of the date, and meet your presence in the world. Nothing of your identity is copied or changed: sharing is a consent, kept with your identity, and Withdraw takes it back.
+
+The page lists everyone you share your sky with and the day you did, and everyone who shares theirs with you. Satya shares a sky with you: set Whose to Satya and that birth sky rings the sky of the date, as yours does. Orpheus shared in September and the consent no longer permits it, so the row is dark and the ring stays closed.
+
+```ui
+device: quaternal-logic:sky
+fixture: Shared with you by Satya
+page: share
+caption: The Sky's Share page: your sky shared with Ariadne, and Satya's ring open over the sky of the date.
+```
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -9664,7 +10819,9 @@ The hours are counted at a place: the world's place when Observer is Shared, you
 | Observer | Shared · Private | Shared | Shared is the sky as seen from Earth. Private is the sky for your place. |
 | Bodies | The ten bodies: each On · Off | All On | Which bodies show. |
 | Aspects | On · Off | Off | Draws the angles between bodies. |
-| Natal ring | Off · On | Off | Draws the sky of your birth round the sky of the date. Only you see it. |
+| Natal ring | Off · On | Off | Draws the sky of your birth round the sky of the date. Only you see it, until you share it. |
+| Whose | Yours · a person who shares their sky with you | Yours | Whose birth sky the natal ring draws. |
+| Share with | A person of this world | — | The person Share gives your consent to. Share and Withdraw give it and take it back. |
 | Moves | A list | Filled by use | The parameters that each body moves now. |
 
 #### Views
@@ -9698,6 +10855,8 @@ The whole Sky shows every parameter, in three groups.
 | Time | Date, Day clock, Run speed |
 | Bodies | Bodies, Observer |
 | Overlay | Aspects, Natal ring |
+| Share | Whose, Natal ring, Share with, and the consents both ways |
+| Rack | M2′'s parts, 0 to 5 (§16.16, §22.9) |
 
 The list of what each body moves shows below the groups. Beside the groups, the Sky reads the day's planet, the hour and its planet, and the place where the hours are counted.
 
@@ -9735,6 +10894,8 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - A shared view does not show a private observer's place.
 - The Sky gives sources. It does not decide what a reading means.
 - The rulers of the day and the hour are counted at a place. Without a place, the Sky shows none.
+- Sharing your sky gives consent to see it. It never copies or changes your identity.
+- Another person's ring opens only while their consent permits it.
 
 #### Tips
 
@@ -9743,6 +10904,7 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - To use the Sky as a clock for a walk, set Day clock to Run.
 - To tune the field to the sky, set Key source to Sky on the Field.
 - To know whose hour it is, read the marked planet on the ring.
+- To read your sky beside a friend's, ask them to share theirs, then set Whose to them.
 
 ### 22.2 Sky modulation
 
@@ -9963,6 +11125,9 @@ The whole M3 clock shows every parameter, in three groups.
 | Cut | Aperture, Reciprocal, Turn, Open |
 | Position | Position, Readout |
 | Law | Matrix, Seed, Pose map |
+| Rack | M3′'s parts, 0 to 5 (§16.16, §22.9) |
+
+The Wheel page holds the first three groups, and the Rack page the fourth.
 
 ##### Full
 
@@ -10260,6 +11425,25 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Form | The 64 codons, the shape of the body, its material, its edge, and the points where it is struck and heard. | Gives the sound a body to ring in. |
 | Situation | The world that receives the sound, and the seven centres of the body. | Sets who and where the sound reaches. The Situation matrix has no source yet. |
 
+#### The kernel's operators
+
+Apply moves a codon to its partner. The kernel's own operators move any address
+of its sixfold form: six positions, each with a direct face and a conjugate
+face. Conjugate turns an address to its other face at the same position.
+Complement takes it across to the position that completes it: 0 with 5, 1 with
+4, 2 with 3. Classify says whether the position frames the whole, as 0 and 5
+do, or works inside it, as 1 to 4 do: the four and two of §16.16.
+
+Position 2 on its direct face has its conjugate at 2 on the conjugate face and
+its complement at 3, and it works. Position 0 on its conjugate face has its
+conjugate at 0, direct, and its complement at 5, and it frames.
+
+```ui
+device: quaternal-logic:m-prime-matrices
+page: kernel
+caption: The M′ matrices' Kernel page: position 2, direct, with its conjugate and its complement.
+```
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -10275,6 +11459,8 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Partner | Complementary · Moving and resting · Same quality | Complementary | In the Form matrix, the matrix whose partner shows beside each codon. |
 | Scale | Codon · Hexagram | Codon | Codon takes the partner base by base. Hexagram takes it trigram by trigram, each trigram going to the trigram whose pair is the partner of its pair. |
 | Apply | An action | — | Moves the cell to its partner. |
+| Address | Position 0 to 5 · Face Direct or Conjugate | 0, Direct | The address of the kernel's sixfold form that the operators read. |
+| Conjugate and Complement | Actions | — | Move the address to the kernel's conjugate or complement of it. |
 
 #### Views
 
@@ -10306,8 +11492,9 @@ The whole M′ matrices show every parameter, in two groups.
 |---|---|
 | Matrix | Matrix, Basis, Lens, Context frame, Value form, Context |
 | Cell | Family, Cell, Partner, Scale, Apply |
+| Kernel | Address, Conjugate, Complement, and the kernel's class of the address |
 
-The grid shows with every value.
+The grid shows with every value. The Matrices page holds the first two groups, and the Kernel page the third: the sixfold form drawn round, the frame 0 and 5 at the top, each position across from its complement, the direct face outside and the conjugate inside. Drag the handle to another position or across to the other face.
 
 ##### Full
 
@@ -10345,6 +11532,8 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - A change in the Situation matrix keeps the shared source unchanged. A private context does not enter a shared preset.
 - Each matrix gives every codon a partner, at both scales. No matrix leaves a gap.
 - A matrix applied twice returns the cell. Complementary then Moving and resting is Same quality.
+- The kernel's operators serve its sixfold form. An address of another form is refused.
+- Conjugate twice returns the address, and so does Complement twice.
 
 #### Tips
 
@@ -10352,6 +11541,7 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - To compare two lenses, pin a cell and change the lens.
 - To see what the sky changes, set Follow to Sky.
 - To check a source value, set Value form to Raw, then to Digital root.
+- To see which positions frame and which work, step the address round with Complement and read its class.
 
 ### 22.7 Resonator bank
 
@@ -10557,6 +11747,89 @@ The widget shows the small junctions, the two codons and the event that last mov
 - To compare the three matrices, read one hexagram and change Pairing.
 - To see what a line change does, change a line on the Deck and watch the codons.
 - To hear the binding, turn Stretch → Q on and put the Resonance after the torus.
+
+### 22.9 Rack
+
+**Product:** Quaternal Logic · **Kind:** rack · **Chain:** Under an instrument of the map, as its Rack page; M4′'s opens in any pane
+
+You need to see what an instrument is made of and what it still lacks. The Rack holds an instrument's four working parts, positions 1 to 4, as chains side by side, framed by its position 0 above and its position 5 below (§16.16). Each part keeps its name in the map, and each chain shows the part's own six positions, as deep as the map goes.
+
+#### Carried and dark
+
+A part that a device carries is lit and names the device. A part nothing carries is dashed and dark: it keeps its place so you can see the gap.
+
+On M1′, Ananda at position 2 is carried by the Oscillator of the M′ matrices, and Spanda at position 3 by the Torus's pulses and its context frame. Pratibimba, at position 1, has no device: it stands in the rack, named, and dark. On M3′, the Minor Arcana at position 4 is carried by the Deck, and its own six run from Wands to the superposition of DNA and RNA.
+
+#### The ledger
+
+Choose a part and the Rack reads it from the map's ledger in three steps.
+
+| Step | What it says |
+|---|---|
+| In the map | The part has a coordinate in the map. |
+| Bound | Code is bound to the coordinate. |
+| Verified | A capability on the coordinate stands verified. |
+
+The steps are the ledger's. A step nobody has read stays hollow, and no step is inferred from the one below it.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Part | 0 to 5 | 1 | The part to read. |
+
+The parts, their names and their own positions come from the map. The device that carries each part, and the control that works it, come from the instrument's entry.
+
+#### Views
+
+```ui
+device: quaternal-logic:map-rack
+caption: The Rack of M4′, of Nara, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Rack shows the instrument and how many of its four parts a device carries.
+
+##### Compact
+
+The compact Rack shows the rack whole, and the part you chose with the device that carries it.
+
+##### Whole
+
+The whole Rack shows the rack whole, the list of its six parts, the part you chose with its coordinate, the device that carries it and its three steps, and that part's own positions. The Torus, the Sky and the M3 clock show the same on their Rack pages.
+
+##### Full
+
+The full Rack lays the parts out in order, from 0 to 5. Each part that a device carries shows that device whole, with every setting live. A part with no device shows its own positions and their steps.
+
+##### Widget
+
+The widget shows the rack small, with how many parts are carried and how many are dark.
+
+#### Transport
+
+The Rack has no transport of its own. Its devices keep their own.
+
+#### To use the Rack
+
+1. Open the Rack page of the Torus, the Sky or the M3 clock.
+2. Read the rack: a dashed chain is a part nothing carries.
+3. Drag the handle along the rack, or press a part in the list, to read it.
+4. Read its steps in the ledger, and its own positions below.
+5. Open the Rack in a pane to see each part's device.
+
+#### Rules
+
+- A part keeps its place in the rack whether or not a device carries it.
+- The Rack writes nothing to the map. The map's own refresh changes it.
+- Every name in the Rack is the map's name for the part.
+- The steps come from the ledger. The Rack does not raise them.
+
+#### Tips
+
+- To see what an instrument still lacks, read its dashed chains.
+- To find the device that works a part, choose the part and read "carried by", then open that device.
 
 ## 23. Widgets
 
@@ -10926,6 +12199,72 @@ Full's head carries the provider, the next event and the events shown, with Cale
 #### Tips
 - To plan a task around a deadline, set Range to Week.
 
+### 23.9 Notifications
+
+**Product:** Central, with AIKit and Factory · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
+
+You need to know when something waits for you, without watching every device.
+An owner raises a request when a routine fails, a service stops answering, a
+Day's close comes due, or an agent asks you to decide. Notifications lists
+today's requests along the day and opens each where it belongs. The agents that
+wait for you stay in Messages (§19.24) and the proposals in Approvals (§19.14);
+Notifications counts both and opens them.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Show | All · Unopened · Urgent | All | Chooses which requests the list holds. |
+| Follow | On · Off | On | Keeps the newest request at the top and the strip on now. |
+
+#### Views
+
+```ui
+device: widgets:notifications
+caption: Notifications, on a fixture of requests: the tile on the rail, and Full in a pane.
+```
+
+##### Widget
+
+The tile draws the day as a strip, midnight to midnight, with a mark for each
+request at the time it came: amber for an ordinary request, red for an urgent
+one, hollow once you opened it, crossed where your computer refused to show it.
+The latest three stand under the strip; press one to open it. The foot counts
+the agents that wait for you and the proposals.
+
+##### Full
+
+Full's head counts the unopened requests, the urgent ones, the agents that wait
+and the proposals, and says whether your computer shows notifications.
+Messages ▸ and Approvals ▸ open those devices. Under the strip each request
+stands as a row: when it came, what it asks, who asked, what it is about,
+whether your computer showed it, and Open. The request you pick stands whole at
+the foot.
+
+#### Transport
+| Control | Effect on Notifications |
+|---|---|
+| Follow | Keeps the strip on now. |
+
+#### To use Notifications
+1. Open Notifications from the launcher.
+2. Read the red marks first: those are urgent.
+3. Click Open on a request. It opens where it belongs: a run in Factory, a Day
+   in Central, an agent in Messages.
+4. Click Messages ▸ to answer the agents that wait for you.
+
+#### Rules
+- Notifications writes nothing. Opening a request marks it opened here and
+  tells its owner nothing.
+- Shown is not read: a request your computer showed counts as unopened until
+  you open it here.
+- Every request names who asked for it. An owner's request and an agent's
+  stand in one list.
+
+#### Tips
+- To clear the urgent requests first, set Show to Urgent.
+- If the light goes dark and every mark is crossed, your computer refuses to
+  show notifications. Allow them in its settings.
+
 ## 24. Nara: practice
 
 You need somewhere to keep a practice for years: the pages you write in the morning, the dreams you wake with, the time you sit, the questions you carry and read the cards on. It has to stay yours, remember what you wrote rather than a summary of it, and answer from your own words. Nara is that place. It comes to know you through your days and your flows, and it is the part of Epi-Logos that is about you.
@@ -11076,13 +12415,14 @@ In a container, an entry also says what kind of entry it is:
 
 You are a Being in your own world. Your Being page holds your identity by reference, never as a copy: your birth, your natal chart, your Jungian functions, your Gene Keys, your Human Design and what they make together. Each layer shows with its source, or as absent with the reason. Nothing fills a missing layer.
 
-Launch your page as Sky and your natal sky opens beside today's: the planets where they stood when you were born, and where they stand now. A Being page of another person opens their sky only when their identity is shared with you.
+Launch your page as Sky and your natal sky opens beside today's: the planets where they stood when you were born, and where they stand now. A Being page of another person opens their sky only while they share it with you. You share yours, and open theirs, on the Sky's Share page (§22.1).
 
 #### Rules
 
 - A corrected birth time is a new revision of the same identity, never a new person.
 - Your identity is kept in your ground. Practice, journeys and answers never write it.
 - Your natal sky comes from your identity. The shell does not compute a second chart.
+- Sharing your sky gives consent to see it. It never writes your identity.
 
 ### 24.7 Nara over the field
 

@@ -23,8 +23,18 @@
 //   sunrise, sunset       at that place, in UTC (HH:MM)
 //   place       the name of the place the hours were counted at
 // A key the owner does not report arrives absent, and the view draws "—" and names the missing reading in the well.
-import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+//
+// The Share page is consent: who may see your sky, and whose sky you may open. The owner is Nara's presence (kernel op `nara_presence`,
+// publish, over QL's SharedPresenceConsent law, read by `ql nara presence-consent`); Central keeps each consent with your identity, and the
+// identity itself is never written by sharing. Keys: presence.participants [{ref, name}] (the world's participants), presence.target (the
+// one you choose; the shell holds it), presence.consents [{target, name, consent, granted, permitted}] (what you have shared, each with the
+// owner's reading of it now), presence.shared [{subject, name, consent, granted, permitted}] (who has shared their sky with you), natal.of
+// ('self', or the subject whose ring you open; it opens only where their consent permits it). Acts: presence.share (the target's ref:
+// `nara_presence` publish with a new consent). Withdrawing a consent has no owner operation: it stands disabled with that reason.
+// The Rack page carries the rack of M2′ (quaternal-logic__map-rack.tsx), on the keys rack and rack.part.
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clock, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {RACK_M2, RackBands} from './quaternal-logic__map-rack'
 import './quaternal-logic__sky.css'
 
 type V = ViewProps['v']
@@ -374,10 +384,56 @@ function FullSky({v}: {v: V}) {
         <text x={446} y={366} className="dp-ink-dim">{read !== undefined ? `${dateLabel(read)} ${clock(parts(read).time)} UTC · ${observerWord(v) === NONE ? NONE : `${observerWord(v)} view`}` : strOf(v, 'reason') ?? 'No reading of the dated sky.'}</text>
         <text x={446} y={381} className="dp-axis">A calculated ephemeris, not an observed sky.</text>
         <text x={446} y={393} className="dp-axis">Tropical zodiac, ecliptic of date. Aries starts at the right;</text>
-        <text x={446} y={405} className="dp-axis">the degrees grow against the clock.{boolOf(v, 'natal') === true && natalOf(v) ? ' Outer ring: your birth sky.' : ''}</text>
+        <text x={446} y={405} className="dp-axis">the degrees grow against the clock.{boolOf(v, 'natal') === true && natalOf(v) ? ` Outer ring: ${(ringWord(v) ?? 'yours') === 'yours' ? 'your' : `${ringWord(v)}'s`} birth sky.` : ''}</text>
       </g>
     </svg>
   </div>
+}
+
+// ---------------------------------------------------------------- the Share page: consent, both ways
+
+interface Consent {readonly ref: string; readonly name: string; readonly granted?: string; readonly permitted?: boolean}
+const consentsOf = (v: V, key: string, who: 'target' | 'subject'): Consent[] | undefined => { const raw = json<unknown>(v, key, undefined)
+  return Array.isArray(raw) ? raw.flatMap((x): Consent[] => { const o = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
+    return typeof o[who] === 'string' ? [{ref: o[who] as string, name: typeof o.name === 'string' ? o.name : o[who] as string, granted: typeof o.granted === 'string' ? o.granted : undefined,
+      permitted: typeof o.permitted === 'boolean' ? o.permitted : undefined}] : [] }) : undefined }
+const participantsOf = (v: V) => { const raw = json<unknown>(v, 'presence.participants', undefined)
+  return Array.isArray(raw) ? raw.flatMap((x): {ref: string; name: string}[] => { const o = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
+    return typeof o.ref === 'string' ? [{ref: o.ref, name: typeof o.name === 'string' ? o.name : o.ref}] : [] }) : undefined }
+const consentRows = (list: Consent[] | undefined, none: string): RowItem[] => (list === undefined ? [{id: 'none', name: 'No reading', light: 'unknown'}]
+  : !list.length ? [{id: 'none', name: none, light: 'dark'}]
+  : list.map(c => ({id: c.ref, name: c.name, light: c.permitted === undefined ? 'unknown' : c.permitted ? 'lit' : 'dark', tone: 'value',
+    note: c.granted ? c.granted.slice(0, 10) : undefined, why: c.permitted === false ? 'The consent no longer permits it.' : undefined, does: c.ref})))
+const ringWord = (v: V) => { const of = strOf(v, 'natal.of'); if (of === undefined) return undefined; if (of === 'self') return 'yours'
+  return consentsOf(v, 'presence.shared', 'subject')?.find(c => c.ref === of)?.name ?? of }
+
+function SharePage({p}: {p: ViewProps}) {
+  const v = p.v, mine = consentsOf(v, 'presence.consents', 'target'), theirs = consentsOf(v, 'presence.shared', 'subject'), people = participantsOf(v), target = strOf(v, 'presence.target')
+  const already = mine?.some(c => c.ref === target && c.permitted)
+  return <>
+    <Band>
+      <Section width={198}><SkyDisplay p={p} w={186} h={146} R={62} size="small" /></Section>
+      <Section label="Ring" width={124}>
+        <Chooser {...st(p, 'natal.of')} label="Whose" does="Whose birth sky rings the sky of the date: yours, or that of someone who has shared it with you." value={strOf(v, 'natal.of') ?? ''}
+          options={[{value: 'self', label: 'Yours'}, ...(theirs ?? []).map(c => ({value: c.ref, label: c.name, why: c.permitted ? undefined : 'Their consent no longer permits it.'}))]}
+          onChange={x => { p.set('natal.of', x); p.set('natal', true) }} />
+        {natalToggle(p, 'Natal ring')}
+      </Section>
+      <Section label="Share your sky" cols={2} grow>
+        <Chooser {...st(p, 'presence.target')} label="With" does="The person in this world you share your sky with." value={target ?? ''} wide
+          options={(people ?? []).map(x => ({value: x.ref, label: x.name}))} onChange={x => p.set('presence.target', x)}
+          disabled={st(p, 'presence.target').disabled ?? (people?.length ? undefined : 'No reading of the world\'s participants.')} />
+        <Action {...st(p, 'presence.share')} label="Share" does="Give them your consent to see your sky and your presence in this world. They see it; nothing of your identity is copied or changed."
+          onPress={() => { if (target) p.set('presence.share', target) }} disabled={st(p, 'presence.share').disabled ?? (target === undefined ? 'Choose a person first.' : already ? 'You already share your sky with them.' : undefined)} />
+        <Action label="Withdraw" does="Take back a consent you gave." disabled="Central keeps each consent and has no operation to withdraw one yet." />
+        <Readout label="seen by" does="How many people your consent lets see your sky now." value={mine?.filter(c => c.permitted).length} tone="value" />
+      </Section>
+    </Band>
+    <Band>
+      <Section label="You share with" width={252}><Rows does="Each person you have shared your sky with, and the day you did. Lit: the consent permits it now." items={consentRows(mine, 'Only you see your sky')} size={5} /></Section>
+      <Section label="Shared with you" grow><Rows does="Each person who has shared their sky with you. Lit: you may open their ring now." items={consentRows(theirs, 'No one has shared a sky with you')} size={5} /></Section>
+    </Band>
+  </>
 }
 
 // ---------------------------------------------------------------- sample readings (the gallery's fixtures; the owner's values replace them)
@@ -428,6 +484,13 @@ export const design: DesignedDevice = {
     // Moon rules the day, and 12:00 falls in the seventh day hour, Mercury's.
     dayRuler: 'Moon', hourRuler: 'Mercury', hourOf: 7, hourHalf: 'day', sunrise: '05:55', sunset: '17:45', place: 'Greenwich',
     ...Object.fromEntries(BODIES.map(b => [`b:${b}`, true])),
+    // Consent in the shared field's world (participants of shared-field's tests): your sky shared with Ariadne; no one has shared theirs.
+    'presence.participants': JSON.stringify([{ref: 'participant:public:ariadne', name: 'Ariadne'}, {ref: 'participant:public:orpheus', name: 'Orpheus'}, {ref: 'participant:human:satya', name: 'Satya'}]),
+    'presence.target': 'participant:public:orpheus', 'natal.of': 'self',
+    'presence.consents': JSON.stringify([{target: 'participant:public:ariadne', name: 'Ariadne', consent: 'consent:sky:2026-10-12', granted: '2026-10-12T09:30:00Z', permitted: true}]),
+    'presence.shared': JSON.stringify([]),
+    // M2′'s rack, read from the M registry at revision c211a781 with the ledger's rungs; the parts carried as §22.1 names them.
+    rack: RACK_M2, 'rack.part': '3',
   },
   fixtures: {
     'Sky of 28 Sep 2026': {},
@@ -448,9 +511,14 @@ export const design: DesignedDevice = {
     'Aspects and natal': {aspects: true, natal: true},
     'No answer': {bodies: undefined, epoch: undefined, aspectList: undefined},
     'No birth data': {natalBodies: undefined, havePlace: false},
+    'Shared with you by Satya': {natal: true, 'natal.of': 'participant:human:satya',
+      'presence.shared': JSON.stringify([{subject: 'participant:human:satya', name: 'Satya', consent: 'consent:sky:2026-10-18', granted: '2026-10-18T17:05:00Z', permitted: true},
+        {subject: 'participant:public:orpheus', name: 'Orpheus', consent: 'consent:sky:2026-09-02', granted: '2026-09-02T08:00:00Z', permitted: false}])},
+    'Shared with no one': {'presence.consents': JSON.stringify([])},
     'No place for the hours': {dayRuler: undefined, hourRuler: undefined, hourOf: undefined, hourHalf: undefined, sunrise: undefined, sunset: undefined, place: undefined},
     'No readings': Object.fromEntries(['light', 'reason', 'epoch', 'bodies', 'aspectList', 'natalBodies', 'moves', 'now', 'year', 'day', 'time', 'run', 'speed', 'observer',
-      'aspects', 'natal', 'havePlace', 'backend', 'dayRuler', 'hourRuler', 'hourOf', 'hourHalf', 'sunrise', 'sunset', 'place', ...BODIES.map(b => `b:${b}`)].map(k => [k, undefined])),
+      'aspects', 'natal', 'havePlace', 'backend', 'dayRuler', 'hourRuler', 'hourOf', 'hourHalf', 'sunrise', 'sunset', 'place', ...BODIES.map(b => `b:${b}`),
+      'presence.participants', 'presence.target', 'presence.consents', 'presence.shared', 'natal.of', 'rack', 'rack.part'].map(k => [k, undefined])),
   },
 
   folded: p => { const read = epochMs(p.v)
@@ -469,10 +537,14 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => {
+    if (p.page === 'share' || p.page === 'rack') return <Panel title="Sky" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
+      pages={[{id: 'sky', label: 'Positions'}, {id: 'moves', label: 'Moves'}, {id: 'share', label: 'Share'}, {id: 'rack', label: 'Rack'}]} page={p.page} onPage={p.setPage}>
+      {p.page === 'share' ? <SharePage p={p} /> : <RackBands p={p} />}
+    </Panel>
     const wherePage = p.page === 'moves' ? 'moves' : 'sky'
     const t = shownParts(p.v), wait = waiting(p.v), moves = movesOf(p.v), observer = st(p, 'observer')
     return <Panel title="Sky" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-      pages={[{id: 'sky', label: 'Positions'}, {id: 'moves', label: 'Moves'}]} page={wherePage} onPage={p.setPage}>
+      pages={[{id: 'sky', label: 'Positions'}, {id: 'moves', label: 'Moves'}, {id: 'share', label: 'Share'}, {id: 'rack', label: 'Rack'}]} page={wherePage} onPage={p.setPage}>
       {wherePage === 'sky' ? <>
         <Band>
           <Section width={198}><SkyDisplay p={p} w={186} h={146} R={62} size="small" /></Section>

@@ -51,3 +51,6 @@
 .ai-empty { margin: auto; text-align: center; max-width: 44ch; }
 .ai-empty b { display: block; margin-bottom: 4px; font-weight: 600; }
 .ai-empty p { margin: 0; color: var(--text-dim, #a2a7ad); }
+
+/* Changed since: a line across the Card section, under its readings. */
+.ai-since { grid-column: 1 / -1; width: 100%; }
