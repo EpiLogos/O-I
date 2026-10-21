@@ -781,9 +781,10 @@ pub struct Counts {
 /// identical read already in flight is joined (`joined`), so concurrent
 /// askers share one owner call; otherwise `f` asks the owner (`miss`) and
 /// its reading is retained if its sources did not change while it was read.
-/// Readings are retained only while the watch can validate them by epochs;
-/// otherwise concurrent identical reads are still shared but each later read
-/// asks the owner again. An explicit fresh read (`with_fresh`) always asks
+/// Readings are retained while the watch can validate them: by epochs, and
+/// within their time-to-live where it covers their scopes only in part; with
+/// the watch down, concurrent identical reads are still shared but each later
+/// read asks the owner again. An explicit fresh read (`with_fresh`) always asks
 /// the owner and replaces what was retained.
 pub struct ReadModel {
     watch: Watch,
@@ -986,8 +987,13 @@ impl ReadModel {
                 if let Some(encoded) = encoded {
                     self.note_digest(&mut state, key, encoded);
                 }
+                // Retained where the watch can say the reading stands: by
+                // epochs where it covers every scope, and for the reading's
+                // time-to-live too where it covers them only in part (Linux:
+                // a project's ProjectCentral and refs, not its working tree).
+                // A watch that is down retains nothing.
                 let retainable = state.generation == generation
-                    && self.watch.by_epochs(&stamp)
+                    && (self.watch.by_epochs(&stamp) || self.watch.live())
                     && self.watch.still(&stamp, dep.ttl)
                     && keep(value);
                 if retainable {
@@ -1611,6 +1617,41 @@ mod tests {
         assert_eq!(owner.load(Ordering::SeqCst), 1);
         ask(&model, &owner);
         assert_eq!(owner.load(Ordering::SeqCst), 2, "nothing was retained");
+    }
+
+    /// Linux watches a project's ProjectCentral and refs but not its working
+    /// tree: a reading over that project is still retained, ends on what the
+    /// watch does see, and is bounded by its time-to-live for the rest.
+    #[test]
+    fn a_partly_covered_scope_is_retained_for_its_time_to_live() {
+        let watch = Watch::fed(fed_roots());
+        let project = Scope::Project("X".into());
+        watch.uncover(project.clone());
+        let model = ReadModel::over(watch);
+        let dep = Dep::new(vec![Scope::Root, project], Duration::from_millis(300));
+        let owner = AtomicUsize::new(0);
+        let ask = || {
+            model
+                .read("x", &dep, || -> Result<_, String> {
+                    Ok(owner.fetch_add(1, Ordering::SeqCst))
+                })
+                .unwrap()
+        };
+        assert_eq!(ask(), 0);
+        assert_eq!(
+            ask(),
+            0,
+            "retained: nothing seen moved, within its time-to-live"
+        );
+        changed(model.watch(), "Work/X/ProjectCentral/a.json");
+        std::thread::sleep(Duration::from_millis(50));
+        assert_eq!(ask(), 1, "a change the watch saw under it ends it");
+        std::thread::sleep(Duration::from_millis(350));
+        assert_eq!(
+            ask(),
+            2,
+            "and its time-to-live bounds what the watch cannot see"
+        );
     }
 
     #[test]

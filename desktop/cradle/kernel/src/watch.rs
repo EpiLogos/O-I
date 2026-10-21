@@ -311,6 +311,17 @@ impl Watch {
         self.inner.live.load(Ordering::SeqCst)
     }
 
+    /// Mark `scope` as covered only in part, as the Linux plan leaves a
+    /// project's working tree (tests).
+    #[cfg(test)]
+    pub(crate) fn uncover(&self, scope: Scope) {
+        self.inner
+            .uncovered
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(scope);
+    }
+
     /// Whether the watcher covers `scope` (a scope it does not cover
     /// validates by time-to-live).
     pub fn covers(&self, scope: &Scope) -> bool {
