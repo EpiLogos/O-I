@@ -40,12 +40,17 @@
 //! Every reading served through this module is also recorded in the
 //! op-wide attribution (`attributed`), so an op's outcome can say which
 //! scopes its answer depends on.
-use crate::watch::{Clock, Scope, Stamp, Watch};
+//!
+//! The read model's readings outlive the process where the filesystem's
+//! journal can vouch for them (`kept.rs`): they are written out as they are
+//! retained, and the next launch takes back the ones whose scopes the journal
+//! shows unchanged since.
+use crate::watch::{Clock, Mark, Scope, Stamp, Watch};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
@@ -422,8 +427,20 @@ impl Default for OwnerReadCache {
     }
 }
 /// The scopes a keyed reading depends on: a listing its directory, the
-/// sources' horizon its project and the root; any other reading, everything.
+/// sources' horizon its project and the root, the World Control and every
+/// project; any other reading, everything.
 fn scopes_for_key(watch: &Watch, key: &str) -> Vec<Scope> {
+    if key == "world" {
+        return vec![Scope::Root, Scope::Work];
+    }
+    // A project's place in the World, and its ProjectCentral inspection
+    // (`world_prepared.rs`), as `central_dep` scopes them.
+    if key.starts_with("project:") {
+        return vec![Scope::Root, Scope::Work];
+    }
+    if let Some(project) = key.strip_prefix("inspect:") {
+        return vec![Scope::Root, watch.project_scope(project)];
+    }
     if let Some(path) = key.strip_prefix("dir:") {
         return watch.scopes_of_path(Path::new(path));
     }
@@ -716,8 +733,48 @@ const MODEL_MAX_BYTES: usize = 96 * 1024 * 1024;
 
 type Shared = Arc<dyn Any + Send + Sync>;
 
+/// How a retained reading is written out (`kept.rs`): its JSON encoding.
+type Encoder = fn(&(dyn Any + Send + Sync)) -> Option<Vec<u8>>;
+
+fn encode_as<T: serde::Serialize + 'static>(value: &(dyn Any + Send + Sync)) -> Option<Vec<u8>> {
+    serde_json::to_vec(value.downcast_ref::<T>()?).ok()
+}
+
+/// A reading taken back from the last run, still in the encoding it was
+/// written in: the first reader to ask for it decodes it to the type it reads.
+struct Restored(Vec<u8>);
+
+fn encode_restored(value: &(dyn Any + Send + Sync)) -> Option<Vec<u8>> {
+    Some(value.downcast_ref::<Restored>()?.0.clone())
+}
+
+/// A retained reading as it is written out: what it depends on and how to
+/// encode it.
+pub(crate) struct Keepable {
+    pub key: String,
+    pub scopes: Vec<Scope>,
+    pub clock: Clock,
+    pub tick: u64,
+    pub ttl: Duration,
+    pub floor: Duration,
+    value: Shared,
+    encode: Encoder,
+}
+
+impl Keepable {
+    pub(crate) fn encode(&self) -> Option<Vec<u8>> {
+        (self.encode)(self.value.as_ref())
+    }
+    /// Which reading this is: a re-read is another, even when it reads the
+    /// same.
+    pub(crate) fn identity(&self) -> usize {
+        Arc::as_ptr(&self.value) as *const () as usize
+    }
+}
+
 struct Held {
     value: Shared,
+    encode: Encoder,
     stamp: Stamp,
     ttl: Duration,
     floor: Duration,
@@ -790,6 +847,12 @@ pub struct ReadModel {
     watch: Watch,
     state: Mutex<ModelState>,
     counts: Mutex<Counts>,
+    /// Counts each change of what would be written out (`kept.rs`).
+    kept: AtomicU64,
+    /// Until when a reader waits for the readings kept from the last run to
+    /// be taken back (`None`: no restore under way).
+    restoring: Mutex<Option<Instant>>,
+    restored: Condvar,
 }
 
 thread_local! {
@@ -815,6 +878,9 @@ impl ReadModel {
             watch,
             state: Mutex::new(ModelState::default()),
             counts: Mutex::new(Counts::default()),
+            kept: AtomicU64::new(0),
+            restoring: Mutex::new(None),
+            restored: Condvar::new(),
         }
     }
 
@@ -847,7 +913,7 @@ impl ReadModel {
         {
             let mut counts = self.counts.lock().unwrap_or_else(|e| e.into_inner());
             match how {
-                "hit" => counts.hits += 1,
+                "hit" | "kept" => counts.hits += 1,
                 "miss" => counts.misses += 1,
                 "settled" => counts.settled += 1,
                 _ => counts.joined += 1,
@@ -863,6 +929,103 @@ impl ReadModel {
         state.entries.clear();
         state.flights.clear();
         state.bytes = 0;
+        self.kept.fetch_add(1, Ordering::SeqCst);
+    }
+
+    /// Readers wait up to `deadline` for the readings kept from the last run
+    /// to be taken back, so the first asks after a launch are answered from
+    /// them rather than all asking the owners at once.
+    pub(crate) fn restoring_until(&self, deadline: Instant) {
+        *self.restoring.lock().unwrap_or_else(|e| e.into_inner()) = Some(deadline);
+    }
+
+    /// The readings kept from the last run are back (or none could be).
+    pub(crate) fn restore_done(&self) {
+        *self.restoring.lock().unwrap_or_else(|e| e.into_inner()) = None;
+        self.restored.notify_all();
+    }
+
+    fn await_restore(&self) {
+        let mut restoring = self.restoring.lock().unwrap_or_else(|e| e.into_inner());
+        while let Some(deadline) = *restoring {
+            let left = deadline.saturating_duration_since(Instant::now());
+            if left.is_zero() {
+                return;
+            }
+            restoring = self
+                .restored
+                .wait_timeout(restoring, left)
+                .unwrap_or_else(|e| e.into_inner())
+                .0;
+        }
+    }
+
+    /// Take back one reading kept from the last run, which stood at `mark`
+    /// (the journal shows its scopes unchanged since it was written out). A
+    /// reading already read in this run is newer and stays.
+    pub(crate) fn restore(
+        &self,
+        key: &str,
+        encoded: Vec<u8>,
+        stamp: Stamp,
+        (ttl, floor): (Duration, Duration),
+    ) -> bool {
+        let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+        if state.entries.contains_key(key) || state.flights.contains_key(key) {
+            return false;
+        }
+        let bytes = key.len() + encoded.len();
+        self.retain(
+            &mut state,
+            key,
+            (Arc::new(Restored(encoded)), encode_restored),
+            bytes,
+            stamp,
+            (ttl, floor),
+        );
+        true
+    }
+
+    /// What would be written out now: each retained reading that stands by
+    /// the watch's epochs (not by its time alone) and that no new minute
+    /// ends (a day's reading is checked against its tick when taken back).
+    pub(crate) fn keepable(&self) -> Vec<Keepable> {
+        let state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+        state
+            .entries
+            .iter()
+            .filter(|(_, held)| {
+                held.stamp.clock() != Clock::Minute
+                    && self.watch.by_epochs(&held.stamp)
+                    && self.watch.still(&held.stamp, held.ttl)
+            })
+            .map(|(key, held)| Keepable {
+                key: key.clone(),
+                scopes: held.stamp.scopes().to_vec(),
+                clock: held.stamp.clock(),
+                tick: held.stamp.tick(),
+                ttl: held.ttl,
+                floor: held.floor,
+                value: Arc::clone(&held.value),
+                encode: held.encode,
+            })
+            .collect()
+    }
+
+    /// The count of changes of what would be written out.
+    pub(crate) fn kept_generation(&self) -> u64 {
+        self.kept.load(Ordering::SeqCst)
+    }
+
+    /// The stamp of a reading kept from the last run (`kept.rs`).
+    pub(crate) fn stamp_kept(
+        &self,
+        mark: &Mark,
+        scopes: &[Scope],
+        clock: Clock,
+        tick: u64,
+    ) -> Stamp {
+        self.watch.stamp_as_of(mark, scopes, clock, tick)
     }
 
     /// The reading of `key`; see the type's description.
@@ -873,7 +1036,7 @@ impl ReadModel {
         f: impl FnOnce() -> Result<T, E>,
     ) -> Result<T, E>
     where
-        T: Clone + serde::Serialize + Send + Sync + 'static,
+        T: Clone + serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static,
     {
         self.read_if(key, dep, |_| true, f)
     }
@@ -888,8 +1051,9 @@ impl ReadModel {
         f: impl FnOnce() -> Result<T, E>,
     ) -> Result<T, E>
     where
-        T: Clone + serde::Serialize + Send + Sync + 'static,
+        T: Clone + serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static,
     {
+        self.await_restore();
         let fresh = fresh_asked();
         note_scopes(&dep.scopes, dep.clock);
         let mut f = Some(f);
@@ -910,7 +1074,16 @@ impl ReadModel {
                 match verdict {
                     Some(Some(settled)) => {
                         let held = state.entries.get_mut(key);
+                        let mut decoded = false;
                         let served = held.and_then(|held| {
+                            if let Some(restored) = held.value.downcast_ref::<Restored>() {
+                                // Kept from the last run: decoded once, to the
+                                // type it is read as.
+                                let value: T = serde_json::from_slice(&restored.0).ok()?;
+                                held.value = Arc::new(value);
+                                held.encode = encode_as::<T>;
+                                decoded = true;
+                            }
                             let value = held.value.downcast_ref::<T>().cloned()?;
                             if settled && !held.trailing {
                                 held.trailing = true;
@@ -925,9 +1098,17 @@ impl ReadModel {
                         });
                         if let Some(value) = served {
                             drop(state);
-                            self.note(key, if settled { "settled" } else { "hit" });
+                            let how = match (settled, decoded) {
+                                (true, _) => "settled",
+                                (false, true) => "kept",
+                                (false, false) => "hit",
+                            };
+                            self.note(key, how);
                             return Ok(value);
                         }
+                        // Held as another type, or kept in a form this type
+                        // does not read: asked again.
+                        self.drop_entry(&mut state, key);
                     }
                     Some(None) => self.drop_entry(&mut state, key),
                     None => {}
@@ -1001,7 +1182,7 @@ impl ReadModel {
                     self.retain(
                         &mut state,
                         key,
-                        Arc::clone(shared),
+                        (Arc::clone(shared), encode_as::<T>),
                         bytes,
                         stamp,
                         (dep.ttl, dep.floor),
@@ -1037,6 +1218,7 @@ impl ReadModel {
     fn drop_entry(&self, state: &mut ModelState, key: &str) {
         if let Some(held) = state.entries.remove(key) {
             state.bytes = state.bytes.saturating_sub(held.bytes);
+            self.kept.fetch_add(1, Ordering::SeqCst);
         }
     }
 
@@ -1044,7 +1226,7 @@ impl ReadModel {
         &self,
         state: &mut ModelState,
         key: &str,
-        value: Shared,
+        (value, encode): (Shared, Encoder),
         bytes: usize,
         stamp: Stamp,
         (ttl, floor): (Duration, Duration),
@@ -1065,10 +1247,12 @@ impl ReadModel {
             }
         }
         state.bytes += bytes;
+        self.kept.fetch_add(1, Ordering::SeqCst);
         state.entries.insert(
             key.to_owned(),
             Held {
                 value,
+                encode,
                 stamp,
                 ttl,
                 floor,
@@ -1141,7 +1325,7 @@ pub(crate) fn aikit_read<T>(
     read: impl FnOnce() -> Result<T, String>,
 ) -> Result<T, String>
 where
-    T: Clone + serde::Serialize + Send + Sync + 'static,
+    T: Clone + serde::Serialize + serde::de::DeserializeOwned + Send + Sync + 'static,
 {
     let model = ReadModel::global();
     let floor = if what.starts_with("encounter") {
@@ -1200,9 +1384,11 @@ pub fn central_dep(
         }
     };
     let (scopes, clock) = match action {
-        "central.world" | "central.world.project" | "central.git.census" => {
-            (vec![Scope::All], Clock::None)
-        }
+        // The World counts Control and every project's ground; it reads no
+        // seat and nothing of AIKit's.
+        "central.world" | "central.world.project" => (vec![Scope::Root, Scope::Work], Clock::None),
+        // The census also reads each seat's branch and changed paths.
+        "central.git.census" => (vec![Scope::Root, Scope::Work, Scope::Seats], Clock::None),
         "central.git.diff" => (
             watch.scopes_of_path(Path::new(
                 input
@@ -1231,7 +1417,9 @@ pub fn central_dep(
         | "central.receiving.list"
         | "central.receiving.read"
         | "agent-profile.roster"
-        | "agent-profile.read" => (project_scopes(), Clock::None),
+        | "agent-profile.read"
+        | "central.world.effective-sources"
+        | "central.day.settings.read" => (project_scopes(), Clock::None),
         "central.files.read"
         | "central.files.read-batch"
         | "central.files.list"
@@ -1246,6 +1434,13 @@ pub fn central_dep(
     let key = format!("central:{action}:{input}:{owner}");
     Some((key, Dep::new(scopes, CENTRAL_TTL).clock(clock).floor(floor)))
 }
+
+/// Central readings whose names none of the suffixes below marks as one
+/// (`-history` and `-sources` are not `.history`).
+const CENTRAL_READINGS: [&str; 2] = [
+    "central.temporal.source-history",
+    "central.world.effective-sources",
+];
 
 /// Whether a Central action only reads (so running it moves nothing). Any
 /// other action may write, and a write moves every retained reading.
@@ -1268,7 +1463,9 @@ pub fn central_reads(action: &str) -> bool {
         ".recovery_preview",
         ".search",
     ];
-    action == "central.world" || READING.iter().any(|suffix| action.ends_with(suffix))
+    action == "central.world"
+        || CENTRAL_READINGS.contains(&action)
+        || READING.iter().any(|suffix| action.ends_with(suffix))
 }
 
 #[cfg(test)]
@@ -1437,6 +1634,7 @@ mod tests {
             central: PathBuf::from("/central"),
             aikit: PathBuf::from("/aikit"),
             ignore: Vec::new(),
+            kept: None,
         }
     }
     fn changed(watch: &Watch, path: &str) {
@@ -1513,19 +1711,21 @@ mod tests {
         let first = model.read("a", &dep, || -> Result<_, String> {
             // The sources change after the owner was asked, before it answered.
             changed(&watch, "Work/A/file");
-            Ok("before the change")
+            Ok("before the change".to_owned())
         });
-        assert_eq!(first, Ok("before the change"));
+        assert_eq!(first, Ok("before the change".to_owned()));
         let again = model.read("a", &dep, || -> Result<_, String> {
-            Ok("after the change")
+            Ok("after the change".to_owned())
         });
         assert_eq!(
             again,
-            Ok("after the change"),
+            Ok("after the change".to_owned()),
             "the first reading was not kept"
         );
-        let kept = model.read("a", &dep, || -> Result<_, String> { Ok("never asked") });
-        assert_eq!(kept, Ok("after the change"));
+        let kept = model.read("a", &dep, || -> Result<_, String> {
+            Ok("never asked".to_owned())
+        });
+        assert_eq!(kept, Ok("after the change".to_owned()));
         // A read that began before a change is not joined by one after it.
         let model = Arc::new(ReadModel::over(watch.clone()));
         let (started, release) = std::sync::mpsc::channel::<()>();
@@ -1536,16 +1736,20 @@ mod tests {
                 model.read("b", &dep, || -> Result<_, String> {
                     started.send(()).unwrap();
                     wait.recv().unwrap();
-                    Ok("old")
+                    Ok("old".to_owned())
                 })
             })
         };
         release.recv().unwrap();
         changed(&watch, "Work/A/file");
-        let newer = model.read("b", &dep, || -> Result<_, String> { Ok("new") });
-        assert_eq!(newer, Ok("new"), "a read after the change asks the owner");
+        let newer = model.read("b", &dep, || -> Result<_, String> { Ok("new".to_owned()) });
+        assert_eq!(
+            newer,
+            Ok("new".to_owned()),
+            "a read after the change asks the owner"
+        );
         go.send(()).unwrap();
-        assert_eq!(slow.join().unwrap(), Ok("old"));
+        assert_eq!(slow.join().unwrap(), Ok("old".to_owned()));
     }
 
     #[test]
@@ -1708,13 +1912,31 @@ mod tests {
             .scopes,
             vec![Scope::Project("O-I".into())]
         );
+        // The World reads no seat and nothing of AIKit's; the census also
+        // reads the seats.
         assert_eq!(
             dep("central.world", json!({})).unwrap().1.scopes,
-            vec![Scope::All]
+            vec![Scope::Root, Scope::Work]
+        );
+        assert_eq!(
+            dep("central.git.census", json!({})).unwrap().1.scopes,
+            vec![Scope::Root, Scope::Work, Scope::Seats]
         );
         assert!(dep("central.files.write", json!({})).is_none());
         assert!(dep("projectcentral.now.return", json!({})).is_none());
         assert!(central_reads("central.agent-set.read") && central_reads("central.world"));
+        // Readings no suffix names are still readings: running one never
+        // withdraws what the model holds.
+        assert!(central_reads("central.world.effective-sources"));
+        assert!(central_reads("central.temporal.source-history"));
+        assert_eq!(
+            dep("central.world.effective-sources", json!({"project": "O-I"}))
+                .unwrap()
+                .1
+                .scopes
+                .len(),
+            2
+        );
         assert!(
             !central_reads("central.files.write") && !central_reads("projectcentral.now.return")
         );
@@ -1796,13 +2018,14 @@ mod tests {
         assert_eq!(ask(), 0);
         assert_eq!(model.counts().settled, 2);
         assert_eq!(model.counts().misses, 1);
-        // The change's own notice, then exactly one trailing notice for the
-        // reading's scopes when its floor ends.
+        // The change's own notice (a project's change names work too), then
+        // exactly one trailing notice for the reading's scopes when its
+        // floor ends.
         let notices = drain(&receiver, Duration::from_millis(2500));
         assert_eq!(
             notices,
             vec![
-                vec![Scope::Project("A".into())],
+                vec![Scope::Work, Scope::Project("A".into())],
                 vec![Scope::Project("A".into())]
             ],
             "the change, then one trailing notice"

@@ -87,7 +87,8 @@ export interface KernelReceipt {
 }
 
 /** The kernel's notice that what its owner readings were read from moved (`KernelEvent::ReadingsChanged`): `scopes` is non-empty,
- * each `root` | `seats` | `aikit` | `clock` | `all` | `project:<Name>`; `epoch` is the watch's change counter after the change. */
+ * each `root` | `seats` | `aikit` | `work` | `clock` | `all` | `project:<Name>` (`work` comes with every project that moved); `epoch`
+ * is the watch's change counter after the change. */
 export interface ReadingsChangedReceipt extends KernelReceipt {
   event: "readings_changed";
   scopes: string[];

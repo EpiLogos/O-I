@@ -12,15 +12,16 @@ import {ownerReadings, type OwnerReadings} from './ownerReading'
 
 export const READINGS_CHANGED_EVENT = 'readings_changed'
 
-/** A scope the kernel names: `root`, `seats`, `aikit`, `clock`, `all`, or `project:<Name>`. */
-export type ReadingsScope = 'root' | 'seats' | 'aikit' | 'clock' | 'all' | `project:${string}`
+/** A scope the kernel names: `root`, `seats`, `aikit`, `work` (any project: named with every project that moved), `clock`, `all`,
+ * or `project:<Name>`. */
+export type ReadingsScope = 'root' | 'seats' | 'aikit' | 'work' | 'clock' | 'all' | `project:${string}`
 
 export interface ReadingsChanged {
   scopes: ReadingsScope[]
   epoch: number
 }
 
-const SCOPE = /^(?:root|seats|aikit|clock|all|project:.+)$/
+const SCOPE = /^(?:root|seats|aikit|work|clock|all|project:.+)$/
 
 /** The notice a receipt carries, or null when the receipt is another kind or its fields are not the contract's (a non-empty
  * list of scopes, a non-negative integer epoch). */

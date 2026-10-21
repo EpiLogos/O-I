@@ -1016,7 +1016,7 @@ pub(crate) fn locate_each(roots: Vec<(Option<String>, PathBuf)>) -> Vec<Value> {
         .into_iter()
         .map(|(project, root)| {
             std::thread::spawn(crate::read_cache::carried(move || {
-                locate_row(project, &root)
+                locate_kept(project, &root)
             }))
         })
         .collect();
@@ -1028,6 +1028,31 @@ pub(crate) fn locate_each(roots: Vec<(Option<String>, PathBuf)>) -> Vec<Value> {
             )
         })
         .collect()
+}
+
+/// One root's discovery row through the read model: a located source is
+/// kept while nothing under the root's `.factory` changed (in the next run
+/// too, `kept.rs`); a refusal is asked again.
+fn locate_kept(project: Option<String>, root: &Path) -> Value {
+    if !root.join(".factory").exists() {
+        return locate_row(project, root);
+    }
+    let model = crate::read_cache::ReadModel::global();
+    let scopes = model.watch().scopes_of_path(&root.join(".factory"));
+    let (executable, _) = owner_executable();
+    let key = format!(
+        "factory:locate-row:{}:{project:?}:{}",
+        executable.display(),
+        root.display()
+    );
+    model
+        .read_if(
+            &key,
+            &crate::read_cache::Dep::new(scopes, std::time::Duration::from_secs(4)),
+            |row: &Value| row["state"] == "located",
+            || Ok::<_, String>(locate_row(project.clone(), root)),
+        )
+        .unwrap_or_else(|error| serde_json::json!({"state": "refused", "error": error}))
 }
 
 /// `factory project locate <root>`, as one discovery row: `located` with the

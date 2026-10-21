@@ -513,11 +513,12 @@ impl KernelEvent {
                     return Err("ReadingsChanged.scopes must not be empty".into());
                 }
                 for scope in scopes {
-                    let named =
-                        matches!(scope.as_str(), "root" | "seats" | "aikit" | "clock" | "all")
-                            || scope
-                                .strip_prefix("project:")
-                                .is_some_and(|name| !name.trim().is_empty());
+                    let named = matches!(
+                        scope.as_str(),
+                        "root" | "seats" | "aikit" | "work" | "clock" | "all"
+                    ) || scope
+                        .strip_prefix("project:")
+                        .is_some_and(|name| !name.trim().is_empty());
                     if !named {
                         return Err(format!("ReadingsChanged names an unknown scope ({scope})"));
                     }
@@ -987,7 +988,7 @@ mod tests {
         assert_eq!(encoded["epoch"], 42);
         let parsed = KernelEventEnvelope::parse(&encoded.to_string()).unwrap();
         assert_eq!(parsed.event, event);
-        for scope in ["seats", "aikit", "clock", "all"] {
+        for scope in ["seats", "aikit", "work", "clock", "all"] {
             let ok = serde_json::json!({"schema":"oi.kernel-event/v1","version":1,"event":"readings_changed","scopes":[scope],"epoch":1});
             assert!(
                 KernelEventEnvelope::parse(&ok.to_string()).is_ok(),

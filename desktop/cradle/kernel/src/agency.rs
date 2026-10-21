@@ -394,13 +394,22 @@ impl Client {
         Ok(value)
     }
 
+    /// The SessionSpaces AIKit applies to a project: a reading of its own
+    /// records, kept while its home, the root and the project stand.
     pub fn read_project(&self, cwd: &Path, project_ref: &str) -> Result<Value, String> {
-        read_project_with(
-            &self.executable,
-            self.home.as_deref(),
+        crate::read_cache::aikit_read(
+            &self.identity(),
+            &format!("session-space-discover:{project_ref}"),
             cwd,
-            project_ref,
-            self.suite_route,
+            || {
+                read_project_with(
+                    &self.executable,
+                    self.home.as_deref(),
+                    cwd,
+                    project_ref,
+                    self.suite_route,
+                )
+            },
         )
     }
 

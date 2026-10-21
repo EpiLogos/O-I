@@ -46,6 +46,8 @@ test('the receipt is read by its contract: non-empty known scopes and an integer
   assert.deepEqual(readingsChangedOf(receipt(3)), {scopes: ['root', 'project:O-I'], epoch: 3})
   assert.equal(readingsChangedOf(receipt(3, {scopes: []})), null)
   assert.equal(readingsChangedOf(receipt(3, {scopes: ['elsewhere']})), null)
+  // A project's change also names the readings across the projects.
+  assert.deepEqual(readingsChangedOf(receipt(4, {scopes: ['root', 'work', 'project:O-I']}))?.scopes, ['root', 'work', 'project:O-I'])
   assert.equal(readingsChangedOf(receipt(3, {epoch: 'x'})), null)
   assert.equal(readingsChangedOf({...receipt(3), event: 'file_changed'}), null)
 })

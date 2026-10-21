@@ -169,8 +169,12 @@ impl Kernel {
                 if fresh {
                     self.reads.invalidate("world");
                 }
-                // The World is this op's answer, not only its scoping.
-                read_cache::note_scopes(&[crate::watch::Scope::All], crate::watch::Clock::None);
+                // The World is this op's answer, not only its scoping: it
+                // counts Control and every project (`read_cache::central_dep`).
+                read_cache::note_scopes(
+                    &[crate::watch::Scope::Root, crate::watch::Scope::Work],
+                    crate::watch::Clock::None,
+                );
                 Target::Root(self.prepare_world_reading())
             }
             Some(query) => {
@@ -215,7 +219,8 @@ impl Kernel {
             client: self.client.clone(),
             target,
             browse_only,
-            ticket: self.reads.begin(NAVIGATOR.to_owned()),
+            // The navigator's ticket orders navigations; it reads nothing.
+            ticket: self.reads.begin_in(NAVIGATOR.to_owned(), Vec::new()),
         })
     }
 

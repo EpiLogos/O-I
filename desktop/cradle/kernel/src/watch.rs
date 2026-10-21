@@ -3,8 +3,9 @@
 //!
 //! A changed path maps to the scopes it can change the answer of:
 //! `root` (anything under `Control/`), `project:<Name>` (under
-//! `Work/<Name>/`), `seats` (under `worktrees/` and the Workcell register),
-//! `aikit` (the AIKit home). A rescan request or dropped events mean
+//! `Work/<Name>/`), `work` (any project: whatever moves a project moves it),
+//! `seats` (under `worktrees/` and the Workcell register), `aikit` (the AIKit
+//! home). A rescan request or dropped events mean
 //! anything may have changed: every scope moves. Each scope has an epoch
 //! that only grows; a `Stamp` is the epochs of a reading's scopes captured
 //! before its owner read started, and the reading is valid while
@@ -46,6 +47,9 @@ pub enum Scope {
     Seats,
     /// The AIKit home.
     Aikit,
+    /// Anything under `Work/`: a reading that counts across the projects but
+    /// reads no seat and nothing of AIKit's (the World).
+    Work,
     /// Anything under `Work/<Name>/`.
     Project(String),
     /// Every other scope: a reading that counts across projects.
@@ -59,8 +63,24 @@ impl Scope {
             Self::Root => "root".into(),
             Self::Seats => "seats".into(),
             Self::Aikit => "aikit".into(),
+            Self::Work => "work".into(),
             Self::Project(name) => format!("project:{name}"),
             Self::All => "all".into(),
+        }
+    }
+
+    /// The scope a wire name names.
+    pub fn from_wire(wire: &str) -> Option<Self> {
+        match wire {
+            "root" => Some(Self::Root),
+            "seats" => Some(Self::Seats),
+            "aikit" => Some(Self::Aikit),
+            "work" => Some(Self::Work),
+            "all" => Some(Self::All),
+            other => other
+                .strip_prefix("project:")
+                .filter(|name| !name.is_empty())
+                .map(|name| Self::Project(name.to_owned())),
         }
     }
 }
@@ -79,7 +99,27 @@ pub enum Clock {
 }
 
 impl Clock {
-    fn tick(self) -> u64 {
+    /// The wire name (`kept.rs`).
+    pub(crate) fn wire(self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Minute => "minute",
+            Self::Day => "day",
+        }
+    }
+
+    pub(crate) fn from_wire(wire: &str) -> Option<Self> {
+        match wire {
+            "none" => Some(Self::None),
+            "minute" => Some(Self::Minute),
+            "day" => Some(Self::Day),
+            _ => None,
+        }
+    }
+
+    /// The clock's tick now: a reading that depends on it stands while the
+    /// tick it was read in does.
+    pub(crate) fn tick(self) -> u64 {
         let seconds = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|elapsed| elapsed.as_secs())
@@ -120,6 +160,10 @@ impl Stamp {
     pub(crate) fn age(&self) -> Duration {
         self.taken.elapsed()
     }
+    /// The clock tick it was taken in.
+    pub(crate) fn tick(&self) -> u64 {
+        self.tick
+    }
     /// This stamp as it would be one tick of its clock earlier.
     #[cfg(test)]
     pub(crate) fn with_tick_before(&self) -> Self {
@@ -139,6 +183,9 @@ pub struct Roots {
     pub aikit: PathBuf,
     /// Files written by the kernel itself, never a change of any reading.
     pub ignore: Vec<PathBuf>,
+    /// Where readings kept across a relaunch are written (`kept.rs`): watched
+    /// for its beacon, never a change of any reading.
+    pub kept: Option<PathBuf>,
 }
 
 impl Roots {
@@ -162,12 +209,29 @@ impl Roots {
         if let Some(trace) = std::env::var_os("OI_KERNEL_TRACE_FILE").filter(|v| !v.is_empty()) {
             ignore.push(PathBuf::from(trace));
         }
+        let kept = crate::kept::location().and_then(|file| file.parent().map(Path::to_path_buf));
         Some(Self {
             central,
             aikit,
             ignore,
+            kept,
         })
     }
+}
+
+/// The epochs as they stood at one moment: a reading known to stand at that
+/// moment (one kept across a relaunch, shown unchanged by the journal up to
+/// it) is stamped with them (`Watch::stamp_as_of`).
+#[derive(Clone, Debug)]
+pub struct Mark {
+    rescans: u64,
+    writes: u64,
+    root: u64,
+    seats: u64,
+    aikit: u64,
+    work: u64,
+    global: u64,
+    projects: HashMap<String, u64>,
 }
 
 /// A debounced announcement: the scopes that moved and the watch's change
@@ -199,6 +263,8 @@ struct Inner {
     root: AtomicU64,
     seats: AtomicU64,
     aikit: AtomicU64,
+    /// Moves with every project.
+    work: AtomicU64,
     projects: Mutex<HashMap<String, u64>>,
     /// Scopes the watcher does not cover (validated by time-to-live).
     uncovered: Mutex<BTreeSet<Scope>>,
@@ -218,6 +284,10 @@ struct Inner {
     ticking: AtomicBool,
     period: Mutex<Duration>,
     announce: Mutex<Option<Shared>>,
+    /// The path a caller waits to hear the watcher report (`await_heard`),
+    /// and whether it has.
+    awaited: Mutex<Option<(PathBuf, bool)>>,
+    heard: Condvar,
 }
 
 type Shared = Arc<dyn Fn(Vec<Scope>, u64) + Send + Sync>;
@@ -258,6 +328,7 @@ impl Watch {
                 root: AtomicU64::new(0),
                 seats: AtomicU64::new(0),
                 aikit: AtomicU64::new(0),
+                work: AtomicU64::new(0),
                 projects: Mutex::new(HashMap::new()),
                 uncovered: Mutex::new(BTreeSet::new()),
                 pending: Mutex::new(Pending::default()),
@@ -269,6 +340,8 @@ impl Watch {
                 ticking: AtomicBool::new(false),
                 period: Mutex::new(DEGRADED_NOTICE_EVERY),
                 announce: Mutex::new(None),
+                awaited: Mutex::new(None),
+                heard: Condvar::new(),
             }),
             watcher: Arc::new(Mutex::new(None)),
         }
@@ -350,6 +423,7 @@ impl Watch {
             Scope::Root => self.inner.root.load(Ordering::SeqCst),
             Scope::Seats => self.inner.seats.load(Ordering::SeqCst),
             Scope::Aikit => self.inner.aikit.load(Ordering::SeqCst),
+            Scope::Work => self.inner.work.load(Ordering::SeqCst),
             Scope::All => self.inner.global.load(Ordering::SeqCst),
             Scope::Project(name) => self
                 .inner
@@ -395,6 +469,114 @@ impl Watch {
             tick: 0,
             scopes: Vec::new(),
             writes: self.inner.writes.load(Ordering::SeqCst),
+        }
+    }
+
+    /// The epochs as they stand now. Taken before the watcher starts, it is
+    /// what a reading known to stand at that moment is stamped with: any
+    /// change the watcher sees afterwards moves it.
+    pub fn mark(&self) -> Mark {
+        Mark {
+            rescans: self.inner.rescans.load(Ordering::SeqCst),
+            writes: self.inner.writes.load(Ordering::SeqCst),
+            root: self.inner.root.load(Ordering::SeqCst),
+            seats: self.inner.seats.load(Ordering::SeqCst),
+            aikit: self.inner.aikit.load(Ordering::SeqCst),
+            work: self.inner.work.load(Ordering::SeqCst),
+            global: self.inner.global.load(Ordering::SeqCst),
+            projects: self
+                .inner
+                .projects
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .clone(),
+        }
+    }
+
+    /// The stamp of a reading over `scopes` that stood at `mark`, read in
+    /// `clock`'s `tick`: it stands while nothing moved since the mark.
+    pub fn stamp_as_of(&self, mark: &Mark, scopes: &[Scope], clock: Clock, tick: u64) -> Stamp {
+        let mut named = scopes.to_vec();
+        named.sort();
+        named.dedup();
+        let epochs = named
+            .iter()
+            .map(|scope| {
+                let epoch = match scope {
+                    Scope::Root => mark.root,
+                    Scope::Seats => mark.seats,
+                    Scope::Aikit => mark.aikit,
+                    Scope::Work => mark.work,
+                    Scope::All => mark.global,
+                    Scope::Project(name) => mark.projects.get(name).copied().unwrap_or(0),
+                };
+                (scope.clone(), epoch)
+            })
+            .collect();
+        Stamp {
+            taken: Instant::now(),
+            epochs: Some((mark.rescans, epochs)),
+            clock,
+            tick,
+            scopes: named,
+            writes: mark.writes,
+        }
+    }
+
+    /// The roots the watcher was started over (canonical), once started.
+    pub(crate) fn roots(&self) -> Option<Roots> {
+        self.inner
+            .roots
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
+    }
+
+    /// Run `touch`, which changes `path`, and wait up to `limit` for the
+    /// watcher to report that change. The watcher reports changes in the
+    /// order the journal gave them, so once it has, every change made before
+    /// `touch` has been seen too (`kept.rs`).
+    pub(crate) fn await_heard(
+        &self,
+        path: &Path,
+        touch: impl FnOnce() -> std::io::Result<()>,
+        limit: Duration,
+    ) -> bool {
+        *self.inner.awaited.lock().unwrap_or_else(|e| e.into_inner()) =
+            Some((path.to_path_buf(), false));
+        if touch().is_err() {
+            *self.inner.awaited.lock().unwrap_or_else(|e| e.into_inner()) = None;
+            return false;
+        }
+        let deadline = Instant::now() + limit;
+        let mut awaited = self.inner.awaited.lock().unwrap_or_else(|e| e.into_inner());
+        loop {
+            if awaited.as_ref().is_some_and(|(_, heard)| *heard) {
+                *awaited = None;
+                return true;
+            }
+            let left = deadline.saturating_duration_since(Instant::now());
+            if left.is_zero() {
+                *awaited = None;
+                return false;
+            }
+            awaited = self
+                .inner
+                .heard
+                .wait_timeout(awaited, left)
+                .unwrap_or_else(|e| e.into_inner())
+                .0;
+        }
+    }
+
+    /// The watcher reported `paths`: wake whoever awaits one of them.
+    pub(crate) fn hear(&self, paths: &[PathBuf]) {
+        let mut awaited = self.inner.awaited.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some((path, heard)) = awaited.as_mut() {
+            if paths.iter().any(|reported| reported == path) {
+                *heard = true;
+                self.inner.heard.notify_all();
+            }
         }
     }
 
@@ -471,6 +653,7 @@ impl Watch {
         self.inner.root.fetch_add(1, Ordering::SeqCst);
         self.inner.seats.fetch_add(1, Ordering::SeqCst);
         self.inner.aikit.fetch_add(1, Ordering::SeqCst);
+        self.inner.work.fetch_add(1, Ordering::SeqCst);
         self.inner
             .projects
             .lock()
@@ -579,6 +762,9 @@ impl Watch {
         if moved.is_empty() {
             return;
         }
+        if moved.iter().any(|scope| matches!(scope, Scope::Project(_))) {
+            moved.insert(Scope::Work);
+        }
         self.learn_projects(&moved);
         for scope in &moved {
             match scope {
@@ -590,6 +776,9 @@ impl Watch {
                 }
                 Scope::Aikit => {
                     self.inner.aikit.fetch_add(1, Ordering::SeqCst);
+                }
+                Scope::Work => {
+                    self.inner.work.fetch_add(1, Ordering::SeqCst);
                 }
                 Scope::Project(name) => {
                     *self
@@ -691,6 +880,7 @@ impl Watch {
             central: canonical(&roots.central),
             aikit: canonical(&roots.aikit),
             ignore: roots.ignore,
+            kept: roots.kept.as_deref().map(canonical),
         };
         *self.inner.roots.lock().unwrap_or_else(|e| e.into_inner()) = Some(roots.clone());
         if let Ok(projects) = std::fs::read_dir(roots.central.join("Work")) {
@@ -705,6 +895,7 @@ impl Watch {
         let mut watcher = notify::recommended_watcher(move |event: notify::Result<Event>| {
             match event {
                 Ok(event) => {
+                    handler.hear(&event.paths);
                     if event.need_rescan() {
                         handler.rescan();
                     }
@@ -914,12 +1105,23 @@ pub fn start_global(
         watch.degrade(&reason);
         return Err(reason);
     };
-    Watch::global().start(
+    // Where readings are kept is watched for its beacon: it must exist
+    // before the watcher starts.
+    if let Some(kept) = &roots.kept {
+        let _ = std::fs::create_dir_all(kept);
+    }
+    // The epochs before the watcher starts: a reading kept from the last
+    // run that the journal shows unchanged up to now stands at this mark.
+    let watch = Watch::global();
+    let mark = watch.mark();
+    watch.start(
         roots,
         Box::new(move |scopes, epoch| {
             announce(scopes.iter().map(Scope::wire).collect(), epoch);
         }),
-    )
+    )?;
+    crate::kept::begin(watch, crate::read_cache::ReadModel::global(), mark);
+    Ok(())
 }
 
 /// Notices for readings that depend on the clock: at each minute boundary
@@ -960,6 +1162,13 @@ fn watch_plan(roots: &Roots, uncovered: &mut BTreeSet<Scope>) -> Vec<(PathBuf, b
     if roots.aikit.exists() {
         plan.push((roots.aikit.clone(), true));
     }
+    // Where kept readings are written: its beacon is awaited (`kept.rs`).
+    if let Some(kept) = &roots.kept {
+        let inside = kept.starts_with(&roots.central) || kept.starts_with(&roots.aikit);
+        if !inside && kept.exists() {
+            plan.push((kept.clone(), false));
+        }
+    }
     if !cfg!(target_os = "linux") {
         plan.push((roots.central.clone(), true));
         return plan;
@@ -967,6 +1176,7 @@ fn watch_plan(roots: &Roots, uncovered: &mut BTreeSet<Scope>) -> Vec<(PathBuf, b
     plan.push((roots.central.join("Control"), true));
     plan.push((roots.central.join("worktrees"), false));
     uncovered.insert(Scope::All);
+    uncovered.insert(Scope::Work);
     if let Ok(projects) = std::fs::read_dir(roots.central.join("Work")) {
         for project in projects.flatten() {
             let dir = project.path();
@@ -994,6 +1204,13 @@ pub fn classify(roots: &Roots, path: &Path) -> Vec<Scope> {
 
 fn classify_path(roots: &Roots, path: &Path) -> Vec<Scope> {
     if roots.ignore.iter().any(|ignored| path == ignored) {
+        return Vec::new();
+    }
+    if roots
+        .kept
+        .as_ref()
+        .is_some_and(|kept| path.parent() == Some(kept.as_path()) && crate::kept::owns(path))
+    {
         return Vec::new();
     }
     let relative_to = |base: &Path| path.strip_prefix(base).ok().map(Path::to_path_buf);
@@ -1031,7 +1248,7 @@ fn classify_path(roots: &Roots, path: &Path) -> Vec<Scope> {
             }
             Some(name) => vec![Scope::Project(name.to_owned())],
             // The Work directory itself: a project was added or removed.
-            None => vec![Scope::Root],
+            None => vec![Scope::Root, Scope::Work],
         },
         Some("worktrees") => vec![Scope::Seats],
         _ => vec![Scope::Root],
@@ -1171,6 +1388,7 @@ mod tests {
             central: canonical(central),
             aikit: canonical(aikit),
             ignore: vec![canonical(central).join("trace.log")],
+            kept: None,
         }
     }
 
@@ -1262,6 +1480,28 @@ mod tests {
         watch.ingest(&[roots.central.join("Work/O-I/target/x")]);
         assert_eq!(watch.epoch(), epoch);
         assert!(watch.still(&after, long));
+    }
+
+    #[test]
+    fn work_moves_with_any_project_and_never_with_a_seat_or_aikit() {
+        let central = temp("work");
+        let aikit = temp("work-aikit");
+        let roots = roots(&central, &aikit);
+        let watch = fed(&roots);
+        let long = Duration::from_secs(3600);
+        let work = || watch.stamp(&[Scope::Work], Clock::None);
+        let before = work();
+        watch.ingest(&[roots.central.join("worktrees/env-1/o-i/src/lib.rs")]);
+        watch.ingest(&[roots.aikit.join("profiles/p.toml")]);
+        assert!(watch.still(&before, long), "a seat and AIKit leave work");
+        watch.ingest(&[roots.central.join("Work/Factory/README.md")]);
+        assert!(!watch.still(&before, long), "a project moves work");
+        let before = work();
+        watch.ingest(&[roots.central.join("Work")]);
+        assert!(!watch.still(&before, long), "a project added or removed");
+        // Its notice names it, so a held answer over work is asked again.
+        assert_eq!(Scope::from_wire("work"), Some(Scope::Work));
+        assert_eq!(Scope::Work.wire(), "work");
     }
 
     #[test]
@@ -1359,7 +1599,11 @@ mod tests {
             watch.ingest(&[roots.central.join(format!("Control/f{n}"))]);
         }
         let (scopes, epoch) = receiver.recv_timeout(Duration::from_secs(3)).unwrap();
-        assert_eq!(scopes, vec![Scope::Root, Scope::Project("A".into())]);
+        // A project's change also moves the readings across the projects.
+        assert_eq!(
+            scopes,
+            vec![Scope::Root, Scope::Work, Scope::Project("A".into())]
+        );
         assert_eq!(epoch, watch.epoch());
         assert!(
             receiver.recv_timeout(Duration::from_millis(500)).is_err(),
@@ -1607,6 +1851,7 @@ mod tests {
                     central: missing.clone(),
                     aikit: missing,
                     ignore: Vec::new(),
+                    kept: None,
                 },
                 Box::new(move |scopes, epoch| {
                     let _ = sender.lock().unwrap().send((scopes, epoch));

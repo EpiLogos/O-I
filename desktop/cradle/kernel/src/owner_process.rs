@@ -108,6 +108,31 @@ impl Drop for Place<'_> {
     }
 }
 
+/// The programs this process started as owners, as they were named: the
+/// readings kept across a relaunch are written with their identities, so a
+/// rebuilt or reinstalled owner's answers are asked again (`kept.rs`).
+pub(crate) fn programs() -> Vec<std::path::PathBuf> {
+    started_programs()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .iter()
+        .cloned()
+        .collect()
+}
+
+fn started_programs() -> &'static Mutex<std::collections::BTreeSet<std::path::PathBuf>> {
+    static STARTED: OnceLock<Mutex<std::collections::BTreeSet<std::path::PathBuf>>> =
+        OnceLock::new();
+    STARTED.get_or_init(Mutex::default)
+}
+
+fn started(program: &std::ffi::OsStr) {
+    started_programs()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .insert(program.into());
+}
+
 static WRITE_HOOK: OnceLock<fn()> = OnceLock::new();
 
 /// Register what to do when an owner call that may have written has ended
@@ -261,6 +286,7 @@ fn observed(
 ) -> Result<Output, Failure> {
     let _place = Limiter::global().place();
     group(command);
+    started(command.get_program());
     command
         .stdin(if input.is_some() {
             Stdio::piped()

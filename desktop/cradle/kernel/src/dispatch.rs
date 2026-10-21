@@ -121,6 +121,11 @@ pub fn trace_watch(what: &str) {
     trace_line(|| format!("[watch] {} {what}\n", unix_ms()));
 }
 
+/// Readings kept across a relaunch (`kept.rs`): taken back, written, refused.
+pub fn trace_kept(what: &str) {
+    trace_line(|| format!("[kept] {} {what}\n", unix_ms()));
+}
+
 /// Where one host's trace goes: the file `OI_KERNEL_TRACE_FILE` named when
 /// the first line was written, opened once for appending.
 fn trace_line(line: impl FnOnce() -> String) {
@@ -604,8 +609,12 @@ mod tests {
         let (outcome, timing) = dispatch(&kernel, KernelOp::WorldRead);
         let outcome = outcome.unwrap();
         assert!(matches!(outcome.result, KernelOpResult::WorldRead { .. }));
-        // The World counts across projects, and the outcome says so.
-        assert_eq!(outcome.read_scopes, Some(vec!["all".to_owned()]));
+        // The World counts Control and every project (no seat, nothing of
+        // AIKit's), and the outcome says so.
+        assert_eq!(
+            outcome.read_scopes,
+            Some(vec!["root".to_owned(), "work".to_owned()])
+        );
         // A register reading depends on the root; a repeat answered from the
         // model says the same.
         let now = || {
