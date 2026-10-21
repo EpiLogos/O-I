@@ -33,6 +33,9 @@ try {
   for (const [label, viewport] of Object.entries(VIEWPORTS)) {
     const shell = await launchShell(viewport)
     try {
+      // The cradle's readers (Central's Day, Flows, Worlds…) reach the kernel only through the walk bridge the page is handed
+      // (desktop/cradle/src/kernel/bridge.ts detectTransport); without it every one draws "no kernel transport".
+      await shell.page.addInitScript(url => { window.__OI_KERNEL_BRIDGE__ = url }, BRIDGE)
       await shell.page.goto(host.url, {waitUntil: 'load'})
       await shell.page.waitForTimeout(2500)
       for (const mode of MODES) {
