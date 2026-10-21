@@ -56,6 +56,33 @@ pub fn central_action(action: &str) -> bool {
         .any(|namespace| action.starts_with(namespace) && action.len() > namespace.len())
 }
 
+/// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
+/// records, its rollover and its close-out carry; accepting a returned source; making, keeping and removing an agent and a
+/// group; a world's relations; a document's own edit. Central admits these on the person's native authority, so the kernel carries the host's token
+/// for exactly these (flow.rs `for_person`: read in the native process, never supplied by the desk), as it does for Open today
+/// and a page's Launch. Every other invocation goes without it, and Central refuses an act it does not grant in its own words.
+pub const PERSON_ACTS: [&str; 14] = [
+    "central.now.lifecycle",
+    "central.day.settings.write",
+    "central.day.move.record",
+    "central.day.rollover",
+    "central.day.close-carry",
+    "projectcentral.source.return_accept",
+    "agent-profile.express",
+    "agent-profile.accept",
+    "agent-profile.save",
+    "agent-profile.remove",
+    "central.agent-set.propose",
+    "central.agent-set.save",
+    "central.world-relations.save",
+    "central.document.mutate",
+];
+
+/// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
+pub fn person_act(action: &str) -> bool {
+    PERSON_ACTS.contains(&action)
+}
+
 /// The native owners this adapter routes disclosed spellings to.
 pub const OWNER_CENTRAL: &str = "central";
 pub const OWNER_AIKIT: &str = "ai-kit";
@@ -317,6 +344,25 @@ mod tests {
             "workcell.status",
         ] {
             assert!(!central_action(id), "{id} is not Central's");
+        }
+    }
+
+    #[test]
+    fn only_the_persons_presses_carry_the_persons_authority() {
+        for id in PERSON_ACTS {
+            assert!(central_action(id), "{id} is Central's");
+            assert!(person_act(id), "{id} is the person's press");
+        }
+        for id in [
+            "central.now.list",
+            "central.day.read",
+            "central.day.settings.read",
+            "agent-profile.read",
+            "central.receiving.submit",
+            "control.search",
+            "knowledge/open",
+        ] {
+            assert!(!person_act(id), "{id} carries no person authority");
         }
     }
 }
