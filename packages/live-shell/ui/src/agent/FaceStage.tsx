@@ -16,12 +16,15 @@ import {memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSPro
 import {maskStatic, type FaceExpr} from './maskFace'
 import './FaceStage.css'
 
-/** What the agent does now, as the owner reports it. */
-export type FaceState = 'idle' | 'reading' | 'answering'
+/** What the agent does now, as the owner reports it. `listening`: you are speaking and it attends. */
+export type FaceState = 'idle' | 'reading' | 'answering' | 'listening'
 
-/** The face's own agent states and emotions this stage uses (face-core.js AGENTS, EMOTIONS). */
-export type FaceAgent = 'idle' | 'working' | 'speaking'
-export type FaceEmotion = 'sleepy'
+/** The face's own agent states, emotions and gestures this stage uses (face-core.js AGENTS, EMOTIONS, GESTURES). */
+export type FaceAgent = 'idle' | 'working' | 'speaking' | 'listening'
+export const FACE_EMOTIONS = ['neutral', 'joy', 'excited', 'curious', 'content', 'calm', 'sleepy', 'bored', 'sad', 'angry', 'afraid', 'surprised'] as const
+export type FaceEmotion = (typeof FACE_EMOTIONS)[number]
+export const FACE_GESTURES = ['nod', 'shake', 'tilt', 'recoil', 'sigh', 'giggle', 'laugh', 'shrug', 'tremble', 'droop', 'bob', 'spin'] as const
+export type FaceGesture = (typeof FACE_GESTURES)[number]
 
 /** One action on the face's bounded surface (face-speech.js FACE_RIG_CHAT.apply). */
 export type FaceAction =
@@ -29,6 +32,8 @@ export type FaceAction =
   | {readonly type: 'expression'; readonly name: FaceExpr; readonly weight: number}
   | {readonly type: 'emotion'; readonly name: FaceEmotion}
   | {readonly type: 'affect'; readonly valence: number; readonly arousal: number}
+  | {readonly type: 'gesture'; readonly name: FaceGesture}
+  | {readonly type: 'gaze'; readonly x: number; readonly y: number}
 
 /** One call on that surface: an action to apply, or the speech mode (true: the mouth waits for a voice's timeline; false: the
  * speaking state moves the mouth itself). */
@@ -40,6 +45,12 @@ export interface FacePose {
   readonly expression?: FaceExpr
   /** The feeling, as valence and arousal, each −1..1 (the face's affect plane). */
   readonly affect?: readonly [number, number]
+  /** A named emotion held over the state's own (one of the face's twelve). */
+  readonly emotion?: FaceEmotion
+  /** Where the eyes look, each −1..1 (across, up). */
+  readonly gaze?: readonly [number, number]
+  /** A gesture to make: it is made once for each `n` (a counter the host raises), never again for the same one. */
+  readonly gesture?: {readonly name: FaceGesture; readonly n: number}
   /** Whether the mouth moves while the agent answers. Default: yes. Off, the mouth waits for a voice to move it (§19.21). */
   readonly speaking?: boolean
   /** No conversation is bound: the face sleeps. */
@@ -48,9 +59,9 @@ export interface FacePose {
 
 /** The agent state each phase puts the face in: at rest; reading the packet, focused, eyes down on it (the face's own
  * `working`: focus, gaze down); answering, speaking. */
-export const FACE_AGENT_OF: Readonly<Record<FaceState, FaceAgent>> = {idle: 'idle', reading: 'working', answering: 'speaking'}
+export const FACE_AGENT_OF: Readonly<Record<FaceState, FaceAgent>> = {idle: 'idle', reading: 'working', answering: 'speaking', listening: 'listening'}
 /** The mask's pose for each phase, where the live face is not standing (the shell's earlier mapping). */
-export const MASK_OF: Readonly<Record<FaceState, FaceExpr>> = {idle: 'neutral', reading: 'focus', answering: 'speak'}
+export const MASK_OF: Readonly<Record<FaceState, FaceExpr>> = {idle: 'neutral', reading: 'focus', answering: 'speak', listening: 'focus'}
 
 const unit = (x: number) => (Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0)
 
@@ -64,7 +75,9 @@ export function faceCalls(pose: FacePose): FaceCall[] {
   const calls: FaceCall[] = [{apply: {type: 'agent', name: FACE_AGENT_OF[state]}}]
   if (state === 'answering') calls.push({speechMode: pose.speaking === false})
   if (pose.expression) calls.push({apply: {type: 'expression', name: pose.expression, weight: 1}})
+  if (pose.emotion) calls.push({apply: {type: 'emotion', name: pose.emotion}})
   if (pose.affect) calls.push({apply: {type: 'affect', valence: unit(pose.affect[0]), arousal: unit(pose.affect[1])}})
+  if (pose.gaze) calls.push({apply: {type: 'gaze', x: unit(pose.gaze[0]), y: unit(pose.gaze[1])}})
   return calls
 }
 
@@ -134,7 +147,7 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
   const face = useRef<FaceSurface | null>(null)
   // off: not mounted (the server, the first draw); loading; live; failed. The frame is drawn once mounted, behind the mask.
   const [stand, setStand] = useState<'off' | 'loading' | 'shown' | 'failed'>('off')
-  const calls = useMemo(() => faceCalls(pose), [pose.state, pose.expression, pose.affect?.[0], pose.affect?.[1], pose.speaking, pose.dim])
+  const calls = useMemo(() => faceCalls(pose), [pose.state, pose.expression, pose.emotion, pose.affect?.[0], pose.affect?.[1], pose.gaze?.[0], pose.gaze?.[1], pose.speaking, pose.dim])
   const key = JSON.stringify(calls)
   const plan = useRef({calls, key})
   plan.current = {calls, key}
@@ -150,6 +163,14 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
   }, [stand])
   // Each new pose goes to the standing face at once; the face's springs carry it there.
   useEffect(() => { if (stand === 'shown' && face.current) putInPose(face.current) }, [key, stand])
+  // A gesture is made once for each count the host raises, and not at all for the count the face has already seen.
+  const gestured = useRef<number | null>(null)
+  useEffect(() => {
+    const g = pose.gesture
+    if (stand !== 'shown' || !face.current || !g || pose.dim) return
+    if (gestured.current === null) { gestured.current = g.n; return }
+    if (gestured.current !== g.n) { gestured.current = g.n; run(face.current, [{apply: {type: 'gesture', name: g.name}}]) }
+  }, [pose.gesture?.n, pose.gesture?.name, stand, pose.dim])
 
   // The face takes its pose before it is shown, so it is never seen arriving from the rig's own rest.
   const onLoad = () => {
