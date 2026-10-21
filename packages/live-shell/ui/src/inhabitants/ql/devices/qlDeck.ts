@@ -9,7 +9,10 @@
 //                                       (QL's reading: `spreads[].placements[]`; a Klein night with the day it completes);
 //   iching                              the latest hexagram's six lines from the bottom and its nuclear hexagram;
 //   act.draw · act.cast · act.assign · act.link · act.comment · act.close    the journey's acts, written through the kernel;
-//   act.move · act.turn                 refused with their reason: QL's journey has no act that moves or turns a placed card yet.
+//   act.move · act.turn                 refused with their reason: QL's journey has no act that moves or turns a placed card yet;
+//   m3.card                             the card of the codon now: the person's M3 form's tarot (ql.m3-state/v1 `tarot`, through the
+//                                       kernel's m3_reception, qlM3Clock.ts), named in the kernel's own register "<Rank> of <Suit>"
+//                                       (crates/ql-core/src/pole/tarot.rs MinorArcanaCard Display; m3.c:1006-1007).
 // Deck, Spread, Draw, Pairs, Lemniscate, Moving lines, Agent reads and Consent are the view's own (DesignBinding.local). Consent to
 // chance is spent by the act it allowed: the next draw asks again. With no journey open, every reading stands absent and says why.
 // Pure apart from the one kernel call, which takes the call it is given, and the small store the views share.
@@ -22,6 +25,7 @@ import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
+import type {QlM3State} from './qlM3Clock'
 
 export const QL_DECK_FAMILY = 'quaternal-logic'
 export const QL_DECK_FACE = 'deck'
@@ -33,7 +37,12 @@ export const NO_CONSENT = 'Chance needs your consent: turn Consent on for this a
 export const NO_MOVE = 'QL\'s journey has no act that moves a placed card yet (crates/ql-mef/src/nara/domain/oracle_journey.rs JourneyRequest).'
 export const NO_TURN = 'QL\'s journey has no act that turns a placed card yet: a card\'s orientation is the shuffle\'s (oracle_journey.rs DeckShuffle).'
 export const CONCERN_SET = 'A journey\'s concern is set when the journey opens; it does not change.'
-export const M3_CARD = 'The card of the codon now is the M3 clock\'s (its form\'s tarot): read it on the clock.'
+export const M3_CARD = 'The card of the codon now is the M3 clock\'s (its form\'s tarot): a reading, never set here.'
+/** The card of the codon now, from the M3 form's tarot, in the kernel's print register; undefined while no form is read. */
+export function m3CardOf(m3: QlM3State | undefined): string | undefined {
+  const tarot = m3?.reading?.status === 'available' ? m3.reading.state?.tarot : undefined
+  return tarot && typeof tarot.rank === 'string' && typeof tarot.suit === 'string' && tarot.rank && tarot.suit ? `${tarot.rank} of ${tarot.suit}` : undefined
+}
 
 /** The journey the Deck reads: its Flow page, the person who acts and the Day the acts happen on. */
 export interface DeckJourney {
@@ -331,10 +340,13 @@ const STANDING_WHY: Readonly<Record<string, string>> = {theme: CONCERN_SET, jour
 
 /** The binding the runtime hosts the Deck design on: the journey's readings, its acts through the kernel, the view's own keys in its
  * own hand, and every key no act takes disabled with the reason. */
-export function qlDeckBinding(deck: QlDeckState): DesignBinding {
+export function qlDeckBinding(deck: QlDeckState, m3?: QlM3State): DesignBinding {
   const live = !!deck.result && deck.result.reading.status !== 'closed'
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(STANDING_WHY)) standing[key] = {disabled: why}
+  // The codon now is the M3 form's: while no form is read, why (the clock's own words).
+  const card = m3CardOf(m3)
+  if (!card) standing['m3.card'] = {disabled: m3?.reason ?? 'The M3 clock is not read here, so no card of the codon now is drawn.'}
   if (!live) for (const key of ACT_KEYS) standing[key] = {disabled: deck.reason ?? (deck.result ? 'The journey is closed.' : NO_JOURNEY)}
   else if (deck.view.consent !== true) for (const key of ['act.draw', 'act.cast']) standing[key] = {disabled: NO_CONSENT}
   const local: Record<string, (value: Value | undefined) => void> = {}
@@ -348,7 +360,7 @@ export function qlDeckBinding(deck: QlDeckState): DesignBinding {
   }
   return {
     id: QL_DECK_DEVICE_ID,
-    values: qlDeckValues(deck),
+    values: {...qlDeckValues(deck), ...(card ? {'m3.card': card} : {})},
     waiting: deck.busy && !deck.result,
     writes: key => (live && ACT_KEYS.includes(key)) || (unopened && key === 'theme'),
     standing,

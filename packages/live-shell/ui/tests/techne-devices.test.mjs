@@ -359,7 +359,10 @@ test('a face declared waiting is a dark device with no control: its standing and
   // T-WORLDS W4: the Deck reads the open journey (nara_journey), the Chakra your elements (nara_elemental).
   assert.notEqual(faceOf('quaternal-logic', 'deck').admission, 'waiting', 'the Deck draws on its owner (nara_journey)')
   assert.notEqual(faceOf('quaternal-logic', 'chakra').admission, 'waiting', 'the Chakra draws on its owner (nara_elemental)')
-  for (const id of ['torus', 'm-prime-matrices']) {
+  // Lane W4: the M′ matrices and Binding draw on their owners (qlMatrices.ts, qlBinding.ts); the torus face still waits.
+  assert.notEqual(faceOf('quaternal-logic', 'm-prime-matrices').admission, 'waiting', 'the M′ matrices draw on the mode catalogue and the M3 form')
+  assert.notEqual(faceOf('quaternal-logic', 'binding').admission, 'waiting', 'Binding draws on the M3 form\'s hexagram')
+  for (const id of ['torus']) {
     const face = faceOf('quaternal-logic', id)
     assert.equal(face.admission, 'waiting')
     const device = chain.techneEntries(manifests('quaternal-logic'), readings()).find(entry => entry.face.id === id).device
@@ -407,8 +410,9 @@ test('with no focus the six fold and the faces no instrument holds stand after t
   assert.match(out, /data-face-id="ql-instrument"[^>]*data-expanded="true"/)
   assert.match(out, /data-device="quaternal-logic:ql-instrument" data-device-size="compact"/)
   assert.match(out, /data-ql-instrument/, 'the owner\'s body is its picture')
-  assert.match(out, /data-face-id="m-prime-matrices"[^>]*data-expanded="false"/)
-  assert.match(out, /class="dp-folded-title"[^>]*aria-label="Unfold M′ matrices"/, 'a folded device opens from its title, by the kit\'s fold')
+  assert.match(out, /data-face-id="torus"[^>]*data-expanded="false"/)
+  assert.match(out, /class="dp-folded-title"[^>]*aria-label="Unfold Torus \/ field"/, 'a folded device opens from its title, by the kit\'s fold')
+  assert.doesNotMatch(out, /data-face-id="m-prime-matrices"|data-face-id="binding"/, 'the M′ matrices and Binding are the M′ instruments\', inside their folds (lane W4)')
   assert.doesNotMatch(out, /data-face-id="deck"/, 'the Deck is the Journey\'s, inside its fold (T-WORLDS W4)')
   assert.doesNotMatch(out, /data-face-id="graph-tools"/)
   assert.doesNotMatch(out, /data-face-id="sky"/, 'the sky is the Timeline\'s and the World\'s, inside their folds')

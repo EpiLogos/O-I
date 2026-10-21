@@ -622,6 +622,25 @@
   },
   {
     "family": "quaternal-logic",
+    "face": "binding",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "Binding writes to no owner: it takes the kernel's symbols — the form's hexagram through m3_reception — and runs its own physics over them; the matrix's generation cell waits on ql_m3_generate (lock §7)."
+    },
+    "writePaths": [],
+    "heldBy": [
+      "techne:m3",
+      "studio:body"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
     "face": "chakra",
     "kind": "parameter",
     "liveSemantic": "device-instrument",
@@ -669,9 +688,18 @@
       "techne"
     ],
     "formats": {},
-    "invariant": null,
-    "writePaths": [],
-    "heldBy": [],
+    "invariant": {
+      "generates": "kernel:m3_reception"
+    },
+    "writePaths": [
+      "kernel:m3_reception"
+    ],
+    "heldBy": [
+      "techne:m1",
+      "techne:m2",
+      "techne:m3",
+      "techne:m4"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {

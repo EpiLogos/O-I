@@ -36,6 +36,7 @@ import {qlFaceEntry} from '../../../inhabitants/ql/devices/TechneDevices'
 import {useLiveTorusReading, useQlInstrumentFeed} from '../../../live/torusInstrument'
 import {expressionsDeviceId} from '../../devices/expressionsDevice'
 import {openFieldDeviceFull, useEditorApply, useFieldDevices} from '../../devices/ExpressionsDeviceView'
+import {useFieldInstrument} from '../../devices/useFieldInstrument'
 import {forceStripDevice, selectedEntity} from '../../nativeDeviceStripModel'
 import {DEVICE_MIME, PARAMETER_BROWSE_EVENT, activeDrag, afterIdFor, dispatchOpenDevice, parseDeviceDrag} from '../../nativeDrag'
 import {chosenAddChange, chosenDropReason} from '../../nativeBrowserModel'
@@ -102,8 +103,9 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
   const {reading, request, configure, onConfigure, settings, own, deep, refresh, fault} = props
   const editor = useEditorApply(reading, request)
   // The field devices stand published on the door (the same devices the rack, the pool and a pane show): the chains' Show and Pane reach
-  // them there.
-  useFieldDevices(FIELD_FAMILIES, {reading, apply: editor.apply, captureCurrent: editor.captureCurrent, locked: editor.locked})
+  // them there. The Field stands at their head over the same devices (§20.3: your controls, then the Field, then each chain).
+  const fieldDevices = useFieldDevices(FIELD_FAMILIES, {reading, apply: editor.apply, captureCurrent: editor.captureCurrent, locked: editor.locked})
+  useFieldInstrument(fieldDevices, {reading, apply: editor.apply, locked: editor.locked})
   const [paneFault, setPaneFault] = useState<string | null>(null)
   const torus = useLiveTorusReading()
   const instrumentReading = useQlInstrumentFeed()

@@ -86,9 +86,10 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
   medium: [
     {key: 'mediumDimension', kind: 'field-setting', title: 'Medium dimensions', read: scene => text(engine(scene).mediumDimension, '2D'), choices: same('2D', '3D')},
   ],
-  // The Field's Key source (manual §20.2): which pitches tune the plate under the Torus driver. The catalogue has no Field device yet
-  // (nativeDeviceCatalogue.ts lists the eleven field families), so no rack row carries this setting until one does; the choices, the
-  // reading and the write (the editor's `keySource` panel setting) are the owner's already. A scene saved before the key carries none: absent.
+  // The Field's Key source (manual §20.2): which pitches tune the plate under the Torus driver. The Field is no family of the rack's
+  // catalogue (nativeDeviceCatalogue.ts lists the eleven field families), so no rack row carries this setting: the Field device reads and
+  // writes it (fieldInstrument.ts, through expressionsSettingRead and expressionsSettingChange), with the owner's choices and the editor's
+  // `keySource` panel setting. A scene saved before the key carries none: absent.
   field: [
     {key: 'keySource', kind: 'panel-setting', title: 'Key source', read: scene => text(composition(scene).keySource),
       choices: [choice('torus', 'Torus'), choice('sky', 'Sky'), choice('manual', 'Manual')]},
@@ -144,6 +145,8 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
     {key: 'focusOrder', kind: 'panel-setting', title: 'Traversal', read: scene => text(engine(scene).focusOrder, 'listed'),
       choices: [choice('listed', 'Listed order'), choice('reverse', 'Reverse order'), choice('pingpong', 'There and back')]},
     {key: 'carryTint', kind: 'panel-setting', title: 'Carry local tint', read: scene => composition(scene).carryTint === true},
+    // The legacy linked-station switch (nativeFieldPanelSettings.ts carryStation; Scene.composition.carryStation): the Focus design's Carry station.
+    {key: 'carryStation', kind: 'panel-setting', title: 'Carry linked station', read: scene => typeof composition(scene).carryStation === 'boolean' ? composition(scene).carryStation as boolean : undefined},
     {key: 'frequencyDriver', kind: 'panel-setting', title: 'Shared tuning driver', read: scene => text(composition(scene).frequencyDriver),
       choices: [choice('torus', 'Torus'), choice('manual', 'Manual'), choice('focus', 'Travelling focus'), choice('automation', 'Automation')]},
   ],
@@ -154,6 +157,9 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
     {key: 'law', kind: 'morph-setting', title: 'Conjugate interference', read: scene => text(morphing(scene, 'law')), choices: same(...NATIVE_MORPH_SETTINGS.law)},
   ],
   colour: [
+    // The paper's glow (nativeFieldPanelSettings.ts backgroundMode; EngineSettings.backgroundMode, optional: a scene that sets none reads none).
+    {key: 'backgroundMode', kind: 'panel-setting', title: 'Paper', read: scene => text(engine(scene).backgroundMode),
+      choices: [choice('solid', 'Solid'), choice('vignette', 'Vignette'), choice('ambientGlow', 'Ambient glow'), choice('adaptive', 'Adaptive')]},
     {key: 'colorMode', kind: 'colour-setting', title: 'Colour distribution', read: scene => text(engine(scene).colorMode),
       choices: NATIVE_COLOUR_MODES.map(mode => choice(mode.id, mode.label))},
   ],
@@ -175,6 +181,15 @@ export function expressionsSettingChoices(family: string, key: string): readonly
 export function expressionsSettingRead(family: string, key: string, scene: Scene): ParamValue | undefined {
   const spec = (SETTINGS[family] ?? []).find(candidate => candidate.key === key)
   return spec ? settingValue(spec, scene) : undefined
+}
+
+/** One editor change for a family's setting from its value as a row shows it (the owner's label for a choice, the boolean for a switch),
+ * validated by the boundary exactly as the row's own change is. The Field's Key source and Symbol voices have no rack row, and leave
+ * through this (components/devices/fieldInstrument.ts). Throws in words for a setting the family does not have. */
+export function expressionsSettingChange(family: string, key: string, shown: ParamValue): NativeEditorChange {
+  const spec = (SETTINGS[family] ?? []).find(candidate => candidate.key === key)
+  if (!spec) throw Error(`${key}: not a setting of ${family}`)
+  return settingChange(spec, shown)
 }
 
 /** A setting's value as the row shows it: the owner's label for a choice, the boolean for a switch; unknown when the scene does not say. */

@@ -7,13 +7,17 @@
 //   - the device's `enabled` row is the design's switch under the family's toggle key (nativeFieldFace.<family>.ts `toggle`);
 //   - what the open scene keeps that is no row of the device (Colour's palette and paper, Focus's route) is read from the scene, and
 //     a change the editor admits for it (colour-palette, colour-background) leaves through the family's one send, on the reading's basis.
+//   - an optional setting the scene sets only once it is chosen (Colour's paper, Depth's swirl and bridge) is absent until set and still
+//     written (FIELD_UNSET); Depth's two numbers leave as the editor's panel settings; Focus's chosen formation is the view's own (FIELD_LOCAL).
 // A key the owner does not report stays absent, and a key with no owner operation stands disabled with its reason (manual §16.12).
 // Pure: no React, no transport.
 import type {NativeEditorChange, NativeEditorReading} from '@epilogos/expressions-boundary/editor'
 import {NATIVE_BINDINGS} from '@epilogos/expressions-boundary/parameters'
+import {validateNativeFieldPanelChange} from '../../../../../expressions-boundary/src/nativeDeviceEdits'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import {ENABLED_KEY, SETTING_PREFIX, expressionsFieldEntry, expressionsSettingChoices, type FieldDeviceSend} from './expressionsDevice'
+import {handsFor, heldFor} from '../../techne/devices/designDevices'
 
 /** The field families whose catalogue design this binding hosts (Physics has its own, physicsBinding.ts). */
 export const FIELD_DESIGN_FAMILIES = ['pointer', 'relational', 'medium', 'contacts', 'morph', 'focus', 'colour', 'ink', 'depth', 'resonance'] as const
@@ -26,9 +30,13 @@ const record = (value: unknown): Record<string, unknown> => (value && typeof val
 
 /** Why each key a family's design draws has no owner reading or no owner write here (manual §16.12: "say which one"). */
 export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<string, string>>>> = {
-  pointer: {},
+  pointer: {
+    light: 'Pointer has no on or off: the engine gates no pointer term by an enable (nativeDeviceCatalogue.ts: no toggle), so its light has no reading.',
+  },
   relational: {},
-  medium: {},
+  medium: {
+    mediumPlane: 'A reading here: the plane the medium flows in is set on Physics (its Physical medium plane).',
+  },
   contacts: {},
   morph: {
     'phase.theta': 'The engine keeps the toroidal phase in its own accumulator and reports it to no reader outside the field.',
@@ -50,6 +58,24 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   },
 }
 
+/** What the scene keeps for a family that no reading has yet, and that the owner still takes: an optional setting the scene sets only once
+ * it is chosen (manual §16.11: drawn unread, never a default). Not disabled: a choice writes it. */
+export const FIELD_UNSET: Readonly<Partial<Record<FieldDesignFamily, Readonly<Record<string, string>>>>> = {
+  colour: {backgroundMode: 'The scene sets no paper glow of its own yet (EngineSettings.backgroundMode is optional): choose one to set it.'},
+  depth: {
+    vortex3d: 'The scene sets no depth in the swirl of its own: the engine derives it from the body law (GPGPUSimulator.ts `?? depthGeometry`) until it is set.',
+    dispersion3d: 'The scene sets no depth in the bridge of its own: the engine derives it from the body law (GPGPUSimulator.ts `?? depthGeometry`) until it is set.',
+  },
+}
+/** Readings the engine reports only at times, each with why it is not drawn when it does not: a reading, never a control. */
+export const FIELD_UNREPORTED: Readonly<Partial<Record<FieldDesignFamily, Readonly<Record<string, string>>>>> = {
+  resonance: {'resonance.live': 'The engine has not reported the frequency the plate sounds now (observation.effectiveValues): a reading, when it does.'},
+}
+/** The view's own keys of a family's design (DesignBinding.local): Focus's chosen formation in its route. */
+export const FIELD_LOCAL: Readonly<Partial<Record<FieldDesignFamily, readonly string[]>>> = {focus: ['chosen']}
+/** The depth settings the scene keeps as numbers, written as the editor's panel settings (nativeFieldPanelSettings.ts vortex3d, dispersion3d). */
+const DEPTH_NUMBERS = ['vortex3d', 'dispersion3d'] as const
+
 /** The family's switch: the key its design reads for the device's light (nativeFieldFace.<family>.ts `toggle`), when it has one. */
 export function toggleKeyOf(family: string): string | undefined {
   const toggle = expressionsFieldEntry(family)?.toggle as {key?: string} | null | undefined
@@ -65,9 +91,10 @@ function sceneValues(family: FieldDesignFamily, reading: Pick<NativeEditorReadin
   if (family === 'colour') {
     if (Array.isArray(field.palette) && field.palette.every(c => typeof c === 'string')) values.palette = JSON.stringify(field.palette)
     if (typeof field.background === 'string') values.background = field.background
-    if (typeof engine.backgroundMode === 'string') values.backgroundMode = engine.backgroundMode
     if (typeof engine.colorEnabled === 'boolean') values.colorEnabled = engine.colorEnabled
   }
+  if (family === 'medium' && typeof engine.mediumPlane === 'string') values.mediumPlane = engine.mediumPlane
+  if (family === 'depth') for (const key of DEPTH_NUMBERS) if (finite(engine[key])) values[key] = engine[key] as number
   if (family === 'focus' && Array.isArray(scene.entities)) {
     const formations = (scene.entities as unknown[]).map(record).filter(e => e.kind === 'formation' && typeof e.id === 'string')
     values.route = JSON.stringify(formations.map(e => ({id: e.id, name: typeof e.name === 'string' ? e.name : e.id, tint: typeof e.tint === 'string' ? e.tint : null})))
@@ -131,6 +158,9 @@ export function fieldDesignChanges(family: FieldDesignFamily, device: DeviceInst
       edits.push({kind: 'colour-background', value} as NativeEditorChange)
     } else if (family === 'colour' && key === 'colorEnabled' && typeof value === 'boolean') {
       edits.push({kind: 'colour-setting', key: 'colorEnabled', value} as NativeEditorChange)
+    } else if (family === 'depth' && (DEPTH_NUMBERS as readonly string[]).includes(key)) {
+      if (!finite(value)) throw new Error(`${key} takes a number.`)
+      edits.push(validateNativeFieldPanelChange({kind: 'panel-setting', key, value}))
     } else {
       throw new Error(FIELD_ABSENT[family][key] ?? `${key}: no parameter of the engine's ${expressionsFieldEntry(family)?.name ?? family}.`)
     }
@@ -141,7 +171,7 @@ export function fieldDesignChanges(family: FieldDesignFamily, device: DeviceInst
 /** The keys a change goes to the owner for: the device's rows, its settings, its switch, and what the scene's editor admits. */
 export function fieldDesignWrites(family: FieldDesignFamily, device: DeviceInstance): (key: string) => boolean {
   const keys = new Set(device.rows.map(row => row.key)), toggle = toggleKeyOf(family)
-  const scene = family === 'colour' ? new Set(['palette', 'background', 'colorEnabled']) : new Set<string>()
+  const scene = family === 'colour' ? new Set(['palette', 'background', 'colorEnabled']) : family === 'depth' ? new Set<string>(DEPTH_NUMBERS) : new Set<string>()
   return key => keys.has(key) || keys.has(SETTING_PREFIX + key) || (!!toggle && key === toggle && keys.has(ENABLED_KEY)) || scene.has(key)
 }
 
@@ -154,9 +184,13 @@ export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInst
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(FIELD_ABSENT[family])) standing[key] = {disabled: why}
   const submit = device.submit, toggle = toggleKeyOf(family)
+  const local = FIELD_LOCAL[family]
+  const values = {...fieldDesignValues(family, device, reading), ...(local ? Object.fromEntries(Object.entries(heldFor(device.id)).filter(([key]) => local.includes(key))) : {})}
+  for (const [key, why] of Object.entries(FIELD_UNREPORTED[family] ?? {})) if (!(key in values)) standing[key] = {disabled: why}
   return {
     id: device.id,
-    values: fieldDesignValues(family, device, reading),
+    values,
+    ...(local ? {local: handsFor(device.id, local)} : {}),
     writes: fieldDesignWrites(family, device),
     ...(submit ? {write: async (changes: readonly ValueChange[]) => {
       const {rows, edits} = fieldDesignChanges(family, device, changes)

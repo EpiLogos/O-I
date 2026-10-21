@@ -1,0 +1,413 @@
+// Lane W4 for Expressions, Live and Quaternal Logic: the Field (manual §20.2) published on its owners at the Studio's head (§20.3);
+// Binding (§22.8) and the M′ matrices (§22.6, with its Kernel page) bound to what the owners answer and admitted where §22 and §16.16 put
+// them; the Torus's Stage page redrawn when the frame announces a stage (TorusOnChain.tsx useTorusChainBinding).
+//
+// Channels:
+// - REAL (tests/fixtures/ql-music-modes-2026-10-21.json): `ql music modes --json` from the installed quaternal-logic (ql 0.1.0,
+//   9af17b080bc8) on workcell:mac, 21 Oct — the document the kernel's music_modes_read passes through (native/liveModeCatalogue.ts).
+// - FIXTURE, owner-shaped: the retained editor's reading of an open Expression (NativeEditorReading, as field-design-bindings.test.mjs
+//   shapes it); the M3 reception's answer (oi.m3-reception-context/v1 with ql.m3-state/v1, as ql-m3-clock-binding.test.mjs shapes it);
+//   the frame's announced stage (stageReading.ts readFrameStage).
+// - SCRIPTED: each catalogue design rendered through the runtime's host (deviceHost.HostedDevice) to static markup, on its binding.
+// No owner state is written: every write goes to a stand-in send, a stand-in hand or is refused.
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {register} from 'node:module'
+import {readFileSync} from 'node:fs'
+
+const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
+register(`data:text/javascript,${encodeURIComponent(`
+import ts from ${JSON.stringify(compiler)};
+import {readFile} from 'node:fs/promises';
+export async function resolve(s, c, n) {
+  let r = null
+  try { r = await n(s, c) } catch (e) { if (!s.startsWith('.')) throw e }
+  if (r) {
+    if (r.url.endsWith('.html') || r.url.endsWith('.css')) return {...r, format: 'module'}
+    return r
+  }
+  if (s.endsWith('.js')) { try { return await n(s.slice(0, -3) + '.ts', c) } catch {} }
+  for (const x of ['.ts', '.tsx']) { try { return await n(s + x, c) } catch {} }
+  for (const x of ['/index.ts', '/index.tsx']) { try { return await n(s + x, c) } catch {} }
+  throw new Error('cannot resolve ' + s)
+}
+export async function load(u, c, n) {
+  if (u.endsWith('.css')) return {format: 'module', shortCircuit: true, source: 'export {}'};
+  if (u.includes('?raw') || u.includes('.html')) return {format: 'module', shortCircuit: true, source: 'export default ""'};
+  if (u.endsWith('.json')) return {format: 'module', shortCircuit: true, source: 'export default ' + await readFile(new URL(u), 'utf8')};
+  if (!u.endsWith('.ts') && !u.endsWith('.tsx')) return n(u, c);
+  return {format: 'module', shortCircuit: true, source: ts.transpileModule(await readFile(new URL(u), 'utf8'), {fileName: new URL(u).pathname,
+    compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText.split('import.meta.env').join('({BASE_URL: "/"})').split('import.meta.glob').join('(() => ({}))')};
+}`)}`, import.meta.url)
+
+const noop = () => {}
+globalThis.__CRADLE_WALK__ = false
+globalThis.document ??= {getElementById: () => null, createElement: () => ({style: {}, setAttribute: noop, appendChild: noop}), head: {appendChild: noop},
+  addEventListener: noop, removeEventListener: noop, querySelector: () => null, querySelectorAll: () => [], documentElement: {style: {}}}
+globalThis.window ??= globalThis
+globalThis.addEventListener ??= noop; globalThis.removeEventListener ??= noop
+const React = await import('react')
+const {renderToStaticMarkup} = await import('react-dom/server')
+const h = React.createElement
+const src = path => new URL(`../src/${path}`, import.meta.url).href
+const door = await import(src('inhabitants/familyManifest.ts'))
+const world = await import(src('inhabitants/worldShellFamilies.ts'))
+const host = await import(src('frame/devices/deviceHost.tsx'))
+const deviceDoor = await import(src('frame/devices/deviceDoor.ts'))
+const {designKey} = await import(src('frame/devices/designs.ts'))
+const model = await import(src('components/devices/expressionsDevice.ts'))
+const field = await import(src('components/devices/fieldInstrument.ts'))
+const {claimDevice} = await import(src('components/devices/devicePublication.ts'))
+const qlB = await import(src('inhabitants/ql/devices/qlBinding.ts'))
+const qlMx = await import(src('inhabitants/ql/devices/qlMatrices.ts'))
+const chain = await import(src('inhabitants/ql/devices/TechneDevices.tsx'))
+const holds = await import(src('techne/devices/designDevices.ts'))
+const {parseQlMusicModes} = await import(src('live/modes.ts'))
+const {inhabitantManifest} = await import(src('inhabitants/manifest.ts'))
+const onChain = await import(src('live/TorusOnChain.tsx'))
+const torusDevice = await import(src('live/torusDevice.ts'))
+const pane = await import(src('projections/expressionsPaneHost.ts'))
+const {readFrameStage} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
+const {NATIVE_BINDINGS} = await import('@epilogos/expressions-boundary/parameters')
+const DESIGNS = {
+  field: (await import(src('inhabitants/catalogue/panels/expressions__field.tsx'))).design,
+  studio: (await import(src('inhabitants/catalogue/panels/expressions__studio.tsx'))).design,
+  binding: (await import(src('inhabitants/catalogue/panels/quaternal-logic__binding.tsx'))).design,
+  matrices: (await import(src('inhabitants/catalogue/panels/quaternal-logic__m-prime-matrices.tsx'))).design,
+}
+
+door.resetFamilyManifestsForTest()
+world.loadWorldShellFamilies()
+
+const read = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')
+const REAL_MODES = parseQlMusicModes(JSON.parse(readFileSync(new URL('./fixtures/ql-music-modes-2026-10-21.json', import.meta.url), 'utf8')))
+assert.equal(REAL_MODES.ok, true, 'the real catalogue parses')
+const views = ['folded', 'compact', 'whole', 'full', 'widget']
+const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const keysOf = design => [...new Set([...Object.keys(design.defaults), ...Object.values(design.fixtures ?? {}).flatMap(fixture => Object.keys(fixture))])]
+/** The keys a design's controls set, read from its source: every `set('key'` (a control's, a handle's) and every dial a helper draws by key
+ * (the Field's `DIAL(p, 'key'`). */
+const setKeysOf = file => {
+  const source = read(`inhabitants/catalogue/panels/${file}`)
+  return [...new Set([...source.matchAll(/\bset\('([^']+)'/g), ...source.matchAll(/\bDIAL\(p, '([^']+)'/g)].map(m => m[1]))]
+}
+
+/** (b): each key is an owner reading, absent with a reason, or a local hold. */
+function classify(design, binding) {
+  const out = {reading: [], absent: [], local: []}
+  for (const key of keysOf(design)) {
+    if (key in binding.values) { out.reading.push(key); continue }
+    if (binding.local && key in binding.local) { out.local.push(key); continue }
+    const why = binding.standing?.[key]?.disabled
+    assert.ok(typeof why === 'string' && why.length > 8, `${design.id} ${key}: absent with no reason`)
+    assert.doesNotMatch(why, /undefined|NaN/, `${design.id} ${key}: the reason is words`)
+    out.absent.push(key)
+  }
+  return out
+}
+/** (c): each control's key writes through an owner, is the view's own, or stands disabled with the operation's name. */
+function controlStanding(binding, keys) {
+  const out = {written: [], local: [], disabled: []}
+  for (const key of keys) {
+    if (binding.local && key in binding.local) out.local.push(key)
+    else if (binding.write && (!binding.writes || binding.writes(key))) out.written.push(key)
+    else {
+      assert.ok(binding.standing?.[key]?.disabled, `${binding.id} ${key}: a control that neither writes nor stands disabled`)
+      out.disabled.push(key)
+    }
+  }
+  return out
+}
+function hostedAll(design, binding, pages = ['']) {
+  const out = views.filter(view => view !== 'whole').map(view => [view, renderToStaticMarkup(h(host.HostedDevice, {designed: design, binding, view, nav: {}}))])
+  for (const page of pages) {
+    host.setHostPage(binding.id, page)
+    out.push(['whole', renderToStaticMarkup(h(host.HostedDevice, {designed: design, binding, view: 'whole', nav: {}}))])
+  }
+  host.resetHost(binding.id)
+  return out
+}
+function drawsClean(design, binding, fixture, pages, known = null) {
+  const drawn = hostedAll(design, binding, pages).map(([view, markup]) => [view, known ? markup.replace(known, '') : markup])
+  for (const [view, markup] of drawn) {
+    assert.match(markup, new RegExp(`data-device-view="${view}"`), `${design.id} ${view} draws`)
+    assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${design.id} ${view}: no absent key drawn as text`)
+    assert.doesNotMatch(markup, /data-device-fault/, `${design.id} ${view}: its own view drew`)
+    assert.doesNotMatch(markup, fixture, `${design.id} ${view}: its fixture never stands in`)
+  }
+  return drawn.map(([, markup]) => markup).join('\n')
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the Field
+
+const nativeKey = path => NATIVE_BINDINGS.find(row => row.path === path).key
+const ENGINE = {mediumEnabled: false, resonanceEnabled: true, templateDimension: '3D', collisionEnabled: false, pairwiseEnabled: false, morphEnabled: true,
+  colorEnabled: false, trajectory: 'toroidalHopf', driveShape: 'sine', colorMode: 'linearGradient', mediumPlane: 'horizontal', autoOscillate: true,
+  pointerMode: 'attract', relationalEnabled: false, volumeEnabled: false}
+function editorReading() {
+  return {
+    basis: {expression_ref: 'expr:field', revision: 4, scene_ref: 'scene:field', authored_revision: 4},
+    scene: {name: 'Seven centres', engine: {...ENGINE}, composition: {focus: 'parallel', frequencyDriver: 'torus', keySource: 'sky', symbolVoices: false},
+      morph: {law: 'theta', thetaOffset: 0, dwell: 0.4}, automation: [],
+      entities: [{id: 'a', name: 'Root', kind: 'formation', sound: {enabled: true}}, {id: 'b', name: 'Heart', kind: 'formation', sound: {enabled: true, gain: 0.3}},
+        {id: 'c', name: 'Crown', kind: 'formation'}],
+      field: {background: '#ffffff', palette: ['#112233'], material: 'ink', params: {[nativeKey('cymatics.frequencyHz')]: 512, [nativeKey('cymatics.dominance')]: 0.75,
+        [nativeKey('cymatics.baseFrequency')]: 32, [nativeKey('fluid.timeScale')]: 1.5, [nativeKey('particleCount')]: 120000}}},
+    entityOccurrences: {}, chosenControls: {available: false, entries: [], controls: []}, devices: [],
+    selection: {entity_ids: [], step_id: null}, history: {canUndo: false, canRedo: false}, standing: {dirty: false, pending: false, notice: null},
+  }
+}
+function fieldInput({locked = false, muted = false, frame = true} = {}) {
+  const r = editorReading(), sent = {}, applied = [], mutes = []
+  const devices = Object.fromEntries(['resonance', 'physics', 'morph', 'ink'].map(family => [family, model.expressionsFieldDevice(r, family,
+    locked ? null : async edits => { (sent[family] ??= []).push(edits); return {ok: true} })]))
+  return {r, sent, applied, mutes, input: {reading: r, devices,
+    sound: frame ? {muted, mute: async next => { mutes.push(next); return {ok: true} }} : {muted: null, mute: null, why: field.fieldSoundWhy({run: null, state: null})},
+    apply: locked ? null : async changes => { applied.push(changes); return {ok: true} }}}
+}
+
+test('the Field reads its owners: the frame\'s object sound, Resonance\'s plate, medium and tone, Physics\'s time, Morph\'s dwell, Ink\'s count, the scene\'s key and voices', () => {
+  const {input} = fieldInput()
+  const binding = field.fieldBinding(input)
+  assert.equal(binding.id, designKey('expressions', 'field'))
+  assert.deepEqual(binding.values, {sound: true, plate: true, medium: 'chamber', resonance: 512, dominance: 0.75, baseFrequency: 32, tempo: 1.5, hold: 0.4,
+    particles: 120000, keySource: 'sky', symbolVoices: false, voices: 2})
+  const keys = classify(DESIGNS.field, binding)
+  assert.deepEqual(keys.absent, ['level'], 'only the level has no owner')
+  assert.match(binding.standing.level.disabled, /missing op: a field-wide level of the Expression's sound/)
+  assert.deepEqual(keys.local, [])
+  const controls = controlStanding(binding, setKeysOf('expressions__field.tsx'))
+  assert.deepEqual(controls.disabled, ['level'])
+  assert.deepEqual(controls.written.sort(), ['hold', 'keySource', 'medium', 'plate', 'resonance', 'sound', 'symbolVoices', 'tempo'])
+  // A scene saved before the key carries none: Key source is absent, never the manual's default.
+  const older = fieldInput()
+  delete older.r.scene.composition.keySource
+  assert.equal(field.fieldValues(older.input).keySource, undefined)
+  // While the work is busy every row is a reading; with no frame, the sound says why.
+  const busy = field.fieldBinding(fieldInput({locked: true, frame: false}).input)
+  assert.equal(busy.writes('tempo'), false)
+  assert.match(busy.standing.tempo.disabled, /Waiting for the native owner/)
+  assert.match(busy.standing.sound.disabled, /No Expressions application is mounted/)
+  assert.equal(busy.values.sound, undefined, 'the sound stays absent until the frame says')
+})
+
+test('a change on the Field goes through the device that carries it, the editor\'s panel setting, and the Activator', async () => {
+  const {input, sent, applied, mutes} = fieldInput()
+  const binding = field.fieldBinding(input)
+  await binding.write([{key: 'resonance', value: 440}, {key: 'plate', value: false}, {key: 'medium', value: 'plate'}, {key: 'tempo', value: 2},
+    {key: 'hold', value: 0.5}, {key: 'keySource', value: 'manual'}, {key: 'symbolVoices', value: true}, {key: 'sound', value: false}])
+  const resonance = sent.resonance.flat()
+  assert.ok(resonance.some(edit => edit.kind === 'parameter' && edit.target === `field.${nativeKey('cymatics.frequencyHz')}` && edit.value === 440), 'the tone, as Resonance\'s row')
+  assert.ok(resonance.some(edit => edit.key === 'resonanceEnabled' && edit.value === false), 'the plate, as Resonance\'s switch')
+  assert.ok(resonance.some(edit => edit.kind === 'panel-setting' && edit.key === 'templateDimension' && edit.value === '2D'), 'the medium, as Resonance\'s dimension')
+  assert.deepEqual(sent.physics.flat().map(edit => [edit.target, edit.value]), [[`field.${nativeKey('fluid.timeScale')}`, 2]])
+  assert.deepEqual(sent.morph.flat().map(edit => [edit.target, edit.value]), [[`field.${nativeKey('toroidalMorph.holdRatio')}`, 0.5]])
+  assert.deepEqual(applied, [[{kind: 'panel-setting', key: 'keySource', value: 'manual'}, {kind: 'panel-setting', key: 'symbolVoices', value: true}]])
+  assert.deepEqual(mutes, [true], 'Sound off is the Activator\'s mute')
+  await assert.rejects(binding.write([{key: 'level', value: 2}]), /missing op: a field-wide level/)
+  await assert.rejects(binding.write([{key: 'particles', value: 5}]), /set the count in Ink/)
+  await assert.rejects(binding.write([{key: 'keySource', value: 'moon'}]), /the Torus, the Sky or your hand/)
+})
+
+test('the Field draws on its binding in every view — no NaN, no undefined, never its fixtures — and its absent level is drawn unread', () => {
+  const binding = field.fieldBinding(fieldInput().input)
+  // A gap of the design, not of the binding (PROPOSE, design lane): the widget's meter multiplies the level, which no owner carries, so its
+  // style reads --level:NaN; the design does not draw an absent level as unread. Named here so it is seen, and nothing else is let through.
+  const widget = renderToStaticMarkup(h(host.HostedDevice, {designed: DESIGNS.field, binding, view: 'widget', nav: {}}))
+  assert.equal((widget.match(/NaN/g) ?? []).length, 1)
+  assert.match(widget, /class="ref-meter"[^>]*style="--level:NaN"/)
+  const all = drawsClean(DESIGNS.field, binding, /42k|5 : 3/, [''], /style="--level:NaN"/)
+  assert.ok(all.includes('120k'), 'Ink\'s count')
+  assert.ok(all.includes('512 Hz'), 'Resonance\'s tone')
+  // The level, absent, is drawn unread: the ring alone and "—", nothing to turn. Its reason is the binding's standing; the design's dials
+  // spread no standing (expressions__field.tsx DIAL), so the words are not drawn on the dial — PROPOSE, design lane.
+  assert.match(all, /role="slider" aria-label="Level"[^>]*aria-valuetext="no reading" aria-disabled="true"/)
+  assert.match(binding.standing.level.disabled, /missing op/)
+})
+
+test('(d) the Field stands at the Studio\'s head: published by the Studio over its field devices, drawn by the door at the Field\'s place in the Studio\'s Full', () => {
+  assert.equal(`${field.FIELD_DEVICE.family}:${field.FIELD_DEVICE.face.id}`, DESIGNS.field.id, 'its family and face are the design\'s key')
+  const binding = field.fieldBinding(fieldInput().input)
+  const claim = claimDevice(field.FIELD_DEVICE_ID)
+  claim.publish({device: field.FIELD_DEVICE, binding})
+  try {
+    assert.equal(deviceDoor.publishedByDesign('expressions:field')?.binding, binding, 'the door hands the Studio this Field')
+    const asked = []
+    const member = id => { asked.push(id); const entry = deviceDoor.publishedByDesign(id); return entry?.binding ? h(host.HostedDevice, {designed: DESIGNS.field, binding: entry.binding, view: 'whole', nav: {}}) : null }
+    const markup = renderToStaticMarkup(h(() => DESIGNS.studio.full({v: {}, set: () => {}, nav: {}, page: 'macros', setPage: () => {}, frame: 'pane', room: {w: 1180, h: 620}, member})))
+    assert.equal(asked[0], 'expressions:field', 'after your controls, the Field first, then each chain')
+    assert.match(markup, /aria-label="Field"[\s\S]*data-device-view="whole"/, 'the Field\'s own Whole stands in the Studio\'s Full')
+    assert.ok(markup.indexOf('Your controls') < markup.indexOf('data-device-view="whole"'), 'under your controls')
+  } finally { claim.release() }
+  assert.equal(deviceDoor.publishedByDesign('expressions:field'), undefined, 'withdrawn with its last claimant')
+  const studio = read('components/expressions/studio/ExpressionsStudio.tsx')
+  assert.match(studio, /const fieldDevices = useFieldDevices\(FIELD_FAMILIES, [^\n]*\n\s*useFieldInstrument\(fieldDevices, \{reading, apply: editor\.apply, locked: editor\.locked\}\)/,
+    'the Studio publishes the Field over the very devices its chains hold')
+  for (const family of ['resonance', 'physics', 'morph', 'ink']) assert.ok(read('inhabitants/sdk/semantics.ts').includes(`'expressions/${family}'`), `${family}: a device of the Studio's chains`)
+  assert.equal(DESIGNS.field.views, undefined, 'the Field declares every view: it is an instrument (§16.1)')
+})
+
+const fieldFamilies = await import(src('components/devices/fieldDesignBinding.ts'))
+test('the field devices close what their owners answer: Focus\'s Carry station, Colour\'s paper, Depth\'s swirl and bridge, Medium\'s plane; Focus\'s chosen row is the view\'s', async () => {
+  holds.resetHolds()
+  const r = editorReading()
+  r.scene.composition.carryStation = true
+  r.scene.engine.backgroundMode = 'vignette'
+  r.scene.engine.vortex3d = 0.6
+  const sent = []
+  const send = async (edits, numeric, basis) => { sent.push(edits); return {ok: true} }
+  const of = family => fieldFamilies.fieldDesignBinding(family, model.expressionsFieldDevice(r, family, send), r, send)
+  const focus = of('focus'), colour = of('colour'), depth = of('depth'), medium = of('medium'), pointer = of('pointer')
+  assert.equal(focus.values.carryStation, true, 'the scene\'s linked-station switch')
+  assert.equal(colour.values.backgroundMode, 'vignette', 'the paper\'s glow, by the owner\'s value')
+  assert.equal(depth.values.vortex3d, 0.6)
+  assert.equal(depth.values.dispersion3d, undefined, 'a depth the scene does not set stays unread')
+  assert.equal(depth.writes('dispersion3d'), true, 'and is still the owner\'s to set')
+  assert.equal(medium.values.mediumPlane, 'horizontal')
+  assert.match(medium.standing.mediumPlane.disabled, /set on Physics/)
+  assert.match(pointer.standing.light.disabled, /no on or off/)
+  await focus.write([{key: 'carryStation', value: false}])
+  await colour.write([{key: 'backgroundMode', value: 'adaptive'}])
+  await depth.write([{key: 'dispersion3d', value: 0.3}])
+  assert.deepEqual(sent.flat(), [{kind: 'panel-setting', key: 'carryStation', value: false}, {kind: 'panel-setting', key: 'backgroundMode', value: 'adaptive'},
+    {kind: 'panel-setting', key: 'dispersion3d', value: 0.3}])
+  focus.local.chosen('b')
+  assert.equal(of('focus').values.chosen, 'b', 'the chosen formation is held by the view, never sent')
+  holds.resetHolds()
+})
+
+// ---------------------------------------------------------------------------------------------------------------- Quaternal Logic
+
+const identity = {selection_ref: 'nara-identity-selection:1', source: {source_ref: 'central:nara/identity/p1', revision: 'r9'},
+  reading: {person_ref: 'person:p1', nara_ref: 'nara:p1'}}
+const formState = address => ({schema: 'ql.m3-state/v1', identity: {event_ref: 'event:e', profile_generation: 7},
+  clock: {steps: 419, degree720: 419, degree360: 59, completed_double_covers: 0, backbone: {id: 'b', ref: '#3-5-1-3'}, tick12: 1},
+  aperture: {index: 2, total_lenses: 18, division_deg10: 40, reciprocal_index: 14, fibonacci_phase60: 0},
+  form: {address, codon: {id: 'c', ref: 'r'}, hexagram: {id: 'h', ref: 'r'}, matrix_axis: 1}, transcription: {rna: false, sequence: 'TTC'}})
+const m3Of = (address = 23) => ({key: 'k', basis: {identity, expression: {expression_ref: 'expression:kept', revision: 3}}, busy: false, reason: null, view: {},
+  reading: {schema: 'oi.m3-reception-context/v1', status: 'available', person_ref: 'person:p1', expression_ref: 'expression:kept', expression_revision: 3, state: formState(address)}})
+const NO_M3 = {key: null, basis: null, reading: null, reason: 'No Nara identity is chosen: the M3 form is the person\'s own. Choose one in the Nara instrument.', busy: false, view: {}}
+const MODES = {reading: {state: 'ready', catalogue: REAL_MODES.catalogue}, hold: {key: 'chromatic/L0\'/aeolian', root: 10}}
+/** The chromatic basis's tonics, from the real catalogue (ql music modes --json, lens_cf: each lens's tonic for ionian … locrian). */
+const CHROMATIC = [[0, 2, 4, 5, 7, 9, 11], [1, 3, 5, 6, 8, 10, 0], [2, 4, 6, 7, 9, 11, 1], [3, 5, 7, 8, 10, 0, 2], [4, 6, 8, 9, 11, 1, 3], [5, 7, 9, 10, 0, 2, 4],
+  [6, 8, 10, 11, 1, 3, 5], [7, 9, 11, 0, 2, 4, 6], [8, 10, 0, 1, 3, 5, 7], [9, 11, 1, 2, 4, 6, 8], [10, 0, 2, 3, 5, 7, 9], [11, 1, 3, 4, 6, 8, 10]]
+
+test('Binding reads the form\'s hexagram from the M3 reception and holds its own physics; the cell, its charges, the nonet and the events wait on their kernel ops', () => {
+  holds.resetHolds()
+  const binding = qlB.qlBindingBinding({m3: m3Of(23), held: {}})
+  assert.equal(binding.id, designKey('quaternal-logic', 'binding'))
+  assert.deepEqual(binding.values, {'cell.hexagram': 23}, 'the hexagram is the form\'s address read as a hexagram; nothing else is a reading')
+  const keys = classify(DESIGNS.binding, binding)
+  assert.deepEqual(keys.local.sort(), [...qlB.QL_BINDING_LOCAL].sort(), 'its own physics and choices are the view\'s')
+  for (const key of ['cell.lower', 'cell.positive', 'cell.nonDual']) assert.match(binding.standing[key].disabled, /missing op: the kernel op ql_m3_generate/, key)
+  assert.match(binding.standing.nonet.disabled, /ql_m3_epogdoon/)
+  assert.match(binding.standing['event.kind'].disabled, /an inscription, a matrix change, a line change/)
+  assert.match(binding.standing['string.energy'].disabled, /Binding's string engine/)
+  const controls = controlStanding(binding, setKeysOf('quaternal-logic__binding.tsx'))
+  assert.deepEqual(controls.disabled.sort(), ['skin', 'sound.stretchQ'])
+  assert.deepEqual(controls.written, [], 'Binding writes to no owner')
+  // The view's hand holds a setting, never an owner; the next binding reads it back.
+  binding.local['string.tension']?.(0.4)
+  assert.equal(qlB.qlBindingBinding({m3: m3Of(23), held: holds.heldFor(qlB.QL_BINDING_DEVICE_ID)}).values['string.tension'], 0.4)
+  const none = qlB.qlBindingBinding({m3: NO_M3, held: {}})
+  assert.equal(none.values['cell.hexagram'], undefined)
+  assert.match(none.standing['cell.hexagram'].disabled, /No Nara identity is chosen/)
+  holds.resetHolds()
+})
+
+test('the M′ matrices read the real mode catalogue, the mode in force and the M3 form; the M1 engine, the partners and the kernel\'s operators name their routes', async () => {
+  holds.resetHolds()
+  const set = [], applied = []
+  const writers = {setHold: patch => set.push(patch), applyM3: async ops => { applied.push(ops) }}
+  const state = {m3: m3Of(17), modes: MODES, held: {}}
+  const binding = qlMx.qlMatricesBinding(state, writers)
+  assert.equal(binding.id, designKey('quaternal-logic', 'm-prime-matrices'))
+  assert.deepEqual(JSON.parse(binding.values['m2.tonics']), CHROMATIC, 'the tonics of the basis in force, lens by lens')
+  assert.equal(binding.values['m1.basis'], 'chromatic', 'until held, the basis is the mode in force\'s')
+  assert.equal(binding.values['m1.lens12'], 1, 'L0′, the lens in force')
+  assert.equal(binding.values['m1.context_frame'], 6, 'CF6, aeolian')
+  assert.equal(binding.values['form.address'], 17, 'the form in force')
+  const keys = classify(DESIGNS.matrices, binding)
+  assert.deepEqual(keys.reading.sort(), ['form.address', 'm1.basis', 'm1.context_frame', 'm1.lens12', 'm2.tonics'])
+  for (const key of ['m1.cells', 'm1.row12', 'm1.tick12', 'm1.family']) assert.match(binding.standing[key].disabled, /missing op: the kernel op for `ql kernel m1`/, key)
+  assert.match(binding.standing['m3.codons'].disabled, /`ql kernel m3`/)
+  for (const key of ['form.partners', 'form.partner', 'form.scale']) assert.match(binding.standing[key].disabled, /ql_m3_apply_matrix/, key)
+  for (const key of ['kernel.conjugate', 'kernel.class', 'kernel.version', 'kernel.depth', 'kernel.form']) assert.match(binding.standing[key].disabled, /`ql kernel apply/, key)
+  assert.match(binding.values.reason, /Situation matrix has no owner/)
+  const controls = controlStanding(binding, setKeysOf('quaternal-logic__m-prime-matrices.tsx'))
+  assert.deepEqual(controls.written.sort(), ['form.address', 'm1.context_frame', 'm1.lens12'])
+  assert.deepEqual(controls.local.sort(), ['kernel.face', 'kernel.position', 'm1.basis', 'matrix', 'valueForm'])
+  assert.deepEqual(controls.disabled.sort(), ['form.partner', 'form.scale', 'm1.col12', 'm1.family', 'm1.row12'])
+  // A cell of the Reading is that mode set on the transport; a form address is the reception's select-form.
+  await binding.write([{key: 'm1.lens12', value: 3}, {key: 'm1.context_frame', value: 2}, {key: 'form.address', value: 40}])
+  assert.deepEqual(set, [{root: 5, key: 'chromatic/L1\'/dorian'}])
+  assert.deepEqual(applied, [[{operation: 'select-form', address: 40}]])
+  await assert.rejects(binding.write([{key: 'm1.row12', value: 2}]), /`ql kernel m1`/)
+  // The basis is the view's: held, the Reading reads the other order the owner serves.
+  const fifths = qlMx.qlMatricesBinding({...state, held: {'m1.basis': 'fifths'}}, writers)
+  assert.deepEqual(JSON.parse(fifths.values['m2.tonics'])[1], [6, 8, 10, 11, 1, 3, 5], 'L0′ in the fifths basis')
+  // No mode in force and nothing held: the basis waits on your choice, and the cell cannot be set alone.
+  const bare = qlMx.qlMatricesBinding({m3: NO_M3, modes: {...MODES, hold: {key: null, root: 0}}, held: {}}, writers)
+  assert.equal(bare.values['m2.tonics'], undefined)
+  assert.match(bare.standing['m1.lens12'].disabled, /Choose a basis first/)
+  assert.match(bare.standing['form.address'].disabled, /No Nara identity is chosen/)
+  const refused = qlMx.qlMatricesBinding({m3: NO_M3, modes: {reading: {state: 'refused', reason: 'ql is not installed'}, hold: MODES.hold}, held: {}}, writers)
+  assert.match(refused.standing['m2.tonics'].disabled, /refused: ql is not installed/)
+  holds.resetHolds()
+})
+
+test('Binding and the M′ matrices draw on their bindings in every view and page — no NaN, no undefined, never their fixtures — and each refusal says why', () => {
+  holds.resetHolds()
+  const binding = qlB.qlBindingBinding({m3: m3Of(23), held: {}})
+  const boundAll = drawsClean(DESIGNS.binding, binding, /CCC|CTC|inscribed|Complementary to moving and resting|Line 5 of hexagram|0\.573/)
+  assert.ok(boundAll.includes('hex 23'), 'the form\'s hexagram')
+  assert.ok(boundAll.includes(escaped(qlB.QL_BINDING_ABSENT.skin)), 'Skin names its missing route')
+  assert.ok(boundAll.includes('No cell from the kernel'), 'the cell, absent, is said')
+  const matrices = qlMx.qlMatricesBinding({m3: m3Of(17), modes: MODES, held: {}})
+  const matrixAll = drawsClean(DESIGNS.matrices, matrices, /qladdr:sixfold@1|>explicate<|>implicate<|0\.1\.0-q1/, ['matrix', 'kernel'])
+  assert.ok(matrixAll.includes(escaped(qlMx.QL_MATRICES_ABSENT['m1.family'])), 'the M1 engine\'s family names its route')
+  assert.ok(matrixAll.includes('No address'), 'the kernel page with no address held says so')
+  holds.resetHolds()
+})
+
+test('(d) Binding and the M′ matrices are admitted where §22 and §16.16 put them: on M3′\'s rack and the Studio\'s body, on the M′ instruments\' racks', () => {
+  const faces = inhabitantManifest('quaternal-logic').faces
+  const binding = faces.find(face => face.id === 'binding'), matrices = faces.find(face => face.id === 'm-prime-matrices')
+  assert.ok(binding && matrices)
+  assert.equal(binding.admission, undefined, 'Binding is admitted')
+  assert.equal(matrices.admission, undefined, 'the matrices are admitted (quaternalLogicFamilyManifest.ts: no longer "waiting")')
+  assert.deepEqual(binding.heldBy, ['techne:m3', 'studio:body'])
+  assert.deepEqual(matrices.heldBy, ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4'])
+  for (const design of [DESIGNS.binding, DESIGNS.matrices]) {
+    assert.equal(design.views, undefined, `${design.id}: an instrument, every view`)
+    for (const view of views) assert.equal(host.viewIn(design, view), view, `${design.id} ${view}`)
+  }
+  const entries = chain.techneEntries([inhabitantManifest('quaternal-logic')], {atlas: null, surface: null, torus: null, instrumentReading: null,
+    m3: m3Of(17), modes: MODES, held: {}})
+  for (const id of ['quaternal-logic:binding', 'quaternal-logic:m-prime-matrices']) {
+    const entry = entries.find(item => item.device.id === id)
+    assert.ok(entry?.binding, `${id}: on the chain with its binding, not a waiting device`)
+    assert.equal(`${entry.device.family}:${entry.device.face.id}`, id, `${id}: the door draws its catalogue design`)
+  }
+  const m3Rack = entries.filter(entry => entry.face.heldBy?.includes('techne:m3')).map(entry => entry.face.id)
+  for (const face of ['m3-clock', 'deck', 'binding', 'm-prime-matrices']) assert.ok(m3Rack.includes(face), `M3′'s rack holds ${face}`)
+})
+
+// ---------------------------------------------------------------------------------------------------------------- the Torus's stage
+
+test('the Torus on Live\'s chain reads the stage the frame announces as a dependency of its binding, so a disclosure redraws the Stage page when it comes', () => {
+  const source = read('live/TorusOnChain.tsx')
+  assert.match(source, /const stage = useHostedChrome\(\)\?\.state\?\.instrumentStage \?\? null\n\s*return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan\), stage\), \[state, device, plan, stage\]\)/)
+  assert.match(source, /const binding = useTorusChainBinding\(state, device\)/)
+  const stage = slots => readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false, slots, bindings: []})
+  const device = torusDevice.torusDevice(null)
+  let seen = null
+  const Probe = () => { seen = onChain.useTorusChainBinding(null, device); return null }
+  pane.publishHostedChrome({state: {instrumentStage: stage([{slot: 'form'}])}, run: null, faults: []})
+  renderToStaticMarkup(h(Probe))
+  assert.deepEqual(JSON.parse(seen.values['stage.slots']), [{slot: 'form'}])
+  pane.publishHostedChrome({state: {instrumentStage: stage([{slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1}, {slot: 'clock.lensing'}])}, run: null, faults: []})
+  renderToStaticMarkup(h(Probe))
+  assert.deepEqual(JSON.parse(seen.values['stage.slots']).map(slot => slot.slot), ['form', 'clock.lensing'], 'the new stage, with the same torus and device')
+  pane.publishHostedChrome(null)
+})
