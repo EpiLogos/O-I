@@ -34,24 +34,15 @@
 //! - AIKit lifecycle history: `OI_AIKIT_BIN` (existing kernel precedent,
 //!   `agency.rs`). `AIKIT_HOME` is inherited by the owner child, the same
 //!   owner binding law the AIKit CLI itself honours.
-//! - Actuation correlation: `OI_ACTUATION_BIN`, an explicit named binding
-//!   for the Actuation CLI entry (`bin/actuation`, shebang-runnable —
-//!   equivalent to the documented `node bin/actuation correlate`
-//!   invocation). The suite exposes no `oi` owner route to the
-//!   `actuation correlate` operation (`oi` recognises Actuation only for
-//!   world-recognition contract listing / dev gating, and the factory arm
-//!   routes only `actuation.local-authority/v1` bindings), so an unbound
-//!   adapter reports the Actuation input unavailable and says why.
-//! - The Actuation stream corpus is read from the owner stream store at
-//!   `ACTUATION_STREAM_STORE` (owner env law, `streamStoreRoot` in
-//!   actuation-stream-store.mjs), folded exactly as the owner's
-//!   `foldStreamFile` law prescribes: line 1 is the header, every following
-//!   line is exactly one committed event, the cursor is recomputed from the
-//!   event lines, and the folded document is validated by the owner
-//!   correlate contract itself. A store root that does not exist means the
-//!   stream side was never queryable — it is omitted, never faked empty.
+//! - Actuation correlation: none. Actuation 0.2.1 has no request-correlation
+//!   operation (`actuation correlate` and its stream-store fold were removed
+//!   with the JavaScript layer), so the Actuation side of the join is never
+//!   read: `inputs.actuation_correlation` names it unavailable with that
+//!   reason, the grant-record seam stays undetermined, and the disposition is
+//!   classified from the AIKit side alone — absence is claimed only for the
+//!   side that was queried. Nothing stands in for the missing operation.
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -61,6 +52,8 @@ pub const OWNER_AIKIT: &str = "ai-kit";
 pub const OWNER_ACTUATION: &str = "actuation";
 pub const AIKIT_LIFECYCLE_OPERATION: &str = "aikit session lifecycle history";
 pub const ACTUATION_CORRELATE_OPERATION: &str = "actuation correlate";
+/// Why the Actuation side of the join is not read (see the module law).
+pub const ACTUATION_CORRELATE_ABSENT: &str = "Actuation 0.2.1 has no request-correlation operation (`actuation correlate` was removed); the Actuation side of the join is not read";
 
 // ---------------------------------------------------------------------------
 // Request
@@ -363,10 +356,6 @@ fn aikit_executable() -> PathBuf {
         .unwrap_or_else(|| "aikit".into())
 }
 
-fn actuation_executable() -> Option<PathBuf> {
-    std::env::var_os("OI_ACTUATION_BIN").map(PathBuf::from)
-}
-
 /// Decode the AIKit CLI envelope (`{ok, data, error}`): the same thin
 /// transport contract as `knowledge::run`.
 fn decode_aikit_envelope(output: &std::process::Output) -> Result<Value, OwnerCallError> {
@@ -406,9 +395,8 @@ fn decode_aikit_envelope(output: &std::process::Output) -> Result<Value, OwnerCa
         })
 }
 
-/// The encounter join's two owner readings (AIKit's lifecycle history,
-/// Actuation's correlation) are reads of their own records; the bound is for
-/// an owner that never answers.
+/// The encounter join's owner reading (AIKit's lifecycle history) is a read
+/// of its own records; the bound is for an owner that never answers.
 const JOIN_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
 
 /// Pull one session's durable lifecycle history through the pinned W3-A
@@ -428,131 +416,6 @@ fn aikit_lifecycle_history(cwd: &Path, session: &str) -> Result<Value, OwnerCall
         detail: format!("AIKit lifecycle owner unavailable: {error}"),
     })?;
     decode_aikit_envelope(&output)
-}
-
-/// Correlate the Actuation-side view of one verbatim request identity
-/// through the pinned W3-B owner operation (`actuation correlate - --json`,
-/// corpus on stdin, read model on stdout — the owner contract carries no
-/// envelope). Read-only: the module records nothing.
-fn actuation_correlate(cwd: &Path, corpus: &Value) -> Result<Value, OwnerCallError> {
-    let executable = actuation_executable().ok_or_else(|| OwnerCallError::Unavailable {
-        detail: "OI_ACTUATION_BIN is not bound and the suite exposes no oi owner route to the Actuation correlate operation".into(),
-    })?;
-    let corpus_text =
-        serde_json::to_string(corpus).map_err(|error| OwnerCallError::Unavailable {
-            detail: format!("actuation corpus is not serialisable: {error}"),
-        })?;
-    let output = crate::owner_process::output(
-        Command::new(&executable)
-            .arg("correlate")
-            .arg("-")
-            .arg("--json")
-            .current_dir(cwd),
-        Some(corpus_text.into_bytes()),
-        crate::owner_process::Bound::read("Actuation", "correlate", JOIN_READ_LIMIT),
-    )
-    .map_err(|error| OwnerCallError::Unavailable {
-        detail: format!("Actuation correlate owner unavailable: {error}"),
-    })?;
-    if !output.status.success() {
-        let message = String::from_utf8_lossy(&output.stderr).trim().to_owned();
-        return Err(OwnerCallError::Refused {
-            message: if message.is_empty() {
-                format!(
-                    "Actuation correlate refused this corpus ({})",
-                    output.status
-                )
-            } else {
-                message
-            },
-        });
-    }
-    serde_json::from_slice(&output.stdout).map_err(|error| OwnerCallError::Unavailable {
-        detail: format!(
-            "Actuation correlate returned an unreadable read model ({error}): {}",
-            String::from_utf8_lossy(&output.stderr)
-        ),
-    })
-}
-
-// ---------------------------------------------------------------------------
-// Actuation stream store — the owner's own fold law, nothing invented
-// ---------------------------------------------------------------------------
-
-/// Fold one durable stream journal exactly as the owner's `foldStreamFile`
-/// law prescribes: line 1 is the header, every following line is exactly one
-/// committed event, the cursor is derived state recomputed from the event
-/// lines, and a torn or invalid tail refuses the fold rather than being
-/// silently dropped. The owner correlate contract validates the result.
-fn fold_stream_file(raw: &str) -> Result<Value, String> {
-    let mut lines: Vec<&str> = raw.split('\n').collect();
-    if lines.last().is_some_and(|line| line.is_empty()) {
-        lines.pop();
-    }
-    let header_line = lines
-        .first()
-        .ok_or("durable ActuationStream file is empty; refusing to fold")?;
-    let mut stream: Value = serde_json::from_str(header_line)
-        .map_err(|error| format!("durable ActuationStream header is not valid JSON ({error})"))?;
-    let mut events = Vec::new();
-    for (index, line) in lines.iter().enumerate().skip(1) {
-        let event: Value = serde_json::from_str(line).map_err(|error| {
-            format!("durable ActuationStream has a torn or invalid event line at position {} ({error}); the tail is not silently dropped", index + 1)
-        })?;
-        events.push(event);
-    }
-    let last = events.len() as u64;
-    stream["events"] = Value::Array(events);
-    stream["cursor"] = json!({ "last_sequence": last, "next_sequence": last + 1 });
-    Ok(stream)
-}
-
-/// Load the Actuation stream corpus from the owner stream store
-/// (`ACTUATION_STREAM_STORE`, owner env law). A store root that does not
-/// exist means the stream side was never queryable: `None`, never an empty
-/// fabrication. Store files are read-only here; the owner correlate
-/// contract validates every folded document.
-fn load_actuation_streams() -> Option<Result<Vec<Value>, String>> {
-    let root = std::env::var_os("ACTUATION_STREAM_STORE")
-        .map(PathBuf::from)
-        .or_else(|| {
-            std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".actuation/streams"))
-        })?;
-    if !root.is_dir() {
-        return None;
-    }
-    let mut streams = Vec::new();
-    let entries = match std::fs::read_dir(&root) {
-        Ok(entries) => entries,
-        Err(error) => {
-            return Some(Err(format!(
-                "Actuation stream store is not readable: {error}"
-            )))
-        }
-    };
-    let mut files: Vec<PathBuf> = entries
-        .filter_map(|entry| entry.ok().map(|e| e.path()))
-        .collect();
-    files.sort();
-    for path in files {
-        if path.extension().and_then(|ext| ext.to_str()) != Some("jsonl") {
-            continue;
-        }
-        let raw = std::fs::read_to_string(&path).map_err(|error| {
-            format!(
-                "Actuation stream journal {} is not readable: {error}",
-                path.display()
-            )
-        });
-        match raw {
-            Err(detail) => return Some(Err(detail)),
-            Ok(raw) => match fold_stream_file(&raw) {
-                Err(detail) => return Some(Err(detail)),
-                Ok(stream) => streams.push(stream),
-            },
-        }
-    }
-    Some(Ok(streams))
 }
 
 // ---------------------------------------------------------------------------
@@ -830,73 +693,18 @@ pub fn assemble(
         .first()
         .and_then(|event| event["activity"].as_str().map(str::to_owned));
 
-    // Side 2: the W3-B correlation read model. The corpus carries only what
-    // the kernel truthfully holds: the streams folded from the owner store
-    // (or the streams side omitted when the store was never queryable).
-    // Authority/activity corpus sides the kernel holds no owner source for
-    // are omitted — the owner contract reports them `available: false`,
-    // never faked empty.
-    let mut corpus = json!({ "request_ref": request_ref });
-    let streams = load_actuation_streams();
-    if let Some(Ok(streams)) = &streams {
-        corpus["streams"] = Value::Array(streams.clone());
-    }
-    let actuation_read_model = match streams {
-        Some(Err(detail)) => {
-            reading.inputs.actuation_correlation = EncounterInput::Unavailable {
-                owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
-                detail: detail.clone(),
-            };
-            reading.disposition = EncounterDisposition::Unavailable {
-                owner: OWNER_ACTUATION.into(),
-                owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
-                detail,
-            };
-            None
-        }
-        _ => match actuation_correlate(cwd, &corpus) {
-            Ok(model) => {
-                reading.inputs.actuation_correlation = EncounterInput::Available {
-                    owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
-                };
-                reading.actuation.state = model["state"].as_str().map(str::to_owned);
-                reading.actuation.read_model = Some(model.clone());
-                Some(model)
-            }
-            Err(OwnerCallError::Unavailable { detail }) => {
-                reading.inputs.actuation_correlation = EncounterInput::Unavailable {
-                    owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
-                    detail: detail.clone(),
-                };
-                reading.disposition = EncounterDisposition::Unavailable {
-                    owner: OWNER_ACTUATION.into(),
-                    owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
-                    detail,
-                };
-                None
-            }
-            Err(OwnerCallError::Refused { message }) => {
-                reading.inputs.actuation_correlation = EncounterInput::Unavailable {
-                    owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
-                    detail: message.clone(),
-                };
-                reading.disposition = EncounterDisposition::Refused {
-                    owner: OWNER_ACTUATION.into(),
-                    owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
-                    message,
-                };
-                None
-            }
-        },
+    // Side 2: Actuation's correlation. Actuation 0.2.1 has no such
+    // operation, so the side is named unavailable with that reason — never
+    // queried, never faked — and the disposition below rests on the AIKit
+    // side alone.
+    reading.inputs.actuation_correlation = EncounterInput::Unavailable {
+        owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
+        detail: ACTUATION_CORRELATE_ABSENT.into(),
     };
 
     // The grant-record seam: both owner views, correlated by identity,
     // never adjudicated.
-    reading.grant_record = reconcile_grant_record(
-        &reading.lifecycle,
-        history.is_some(),
-        actuation_read_model.as_ref(),
-    );
+    reading.grant_record = reconcile_grant_record(&reading.lifecycle, history.is_some(), None);
 
     // Terminal classification. Order is law: owner loss outranks everything
     // (absence cannot be claimed for a side that never answered);
@@ -929,11 +737,7 @@ pub fn assemble(
                 OWNER_AIKIT.to_owned(),
                 reading.lifecycle.permission.recorded_at_unix_ms(),
             )),
-            _ => actuation_read_model.as_ref().and_then(|model| {
-                let outcome = model["permission"]["outcome"].as_str()?;
-                matches!(outcome, "granted" | "refused")
-                    .then(|| (outcome.to_owned(), OWNER_ACTUATION.to_owned(), None::<u64>))
-            }),
+            _ => None,
         };
         if let Some((recorded_disposition, recorded_by, recorded_at_unix_ms)) = recorded {
             reading.disposition = EncounterDisposition::StaleReply {
@@ -945,18 +749,10 @@ pub fn assemble(
             return reading;
         }
     }
-    // Referenced means some QUERIED owner side holds the identity: lifecycle
-    // events carrying it, or the Actuation permission side's verbatim
-    // referencing event refs. (`correlation-unavailable` from the owner can
-    // still be a referenced identity — the join target was simply not
-    // queryable; absence is never claimed for an unqueried side.)
-    let referenced = !reading.lifecycle.events.is_empty()
-        || actuation_read_model.as_ref().is_some_and(|model| {
-            model["permission"]["available"] == true
-                && model["permission"]["event_refs"]
-                    .as_array()
-                    .is_some_and(|refs| !refs.is_empty())
-        });
+    // Referenced means the QUERIED owner side holds the identity: lifecycle
+    // events carrying it. (The Actuation side is not queried; absence is
+    // never claimed for it.)
+    let referenced = !reading.lifecycle.events.is_empty();
     reading.disposition = if referenced {
         EncounterDisposition::Correlated
     } else {

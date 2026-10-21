@@ -90,9 +90,10 @@ function changedPath(receipt: KernelReceipt): string | null {
 }
 
 /** The kernel's owner-write receipts (kernel/src/events.rs `NowChanged`, `DayChanged`, `ReceivingChanged`,
- * `FactoryRunChanged`): each says an owner the temporal field reads — Central's NOW field, its Day, its receiving field (whose
- * answers go back to the producing NOW), Factory's runs — answered a write the kernel carried. */
-export const OWNER_WRITE_RECEIPTS: readonly string[] = ['now_changed', 'day_changed', 'receiving_changed', 'factory_run_changed']
+ * `FactoryRunChanged`, `OwnerChanged`): each says an owner the temporal field reads — Central's NOW field, its Day, its receiving
+ * field (whose answers go back to the producing NOW), Factory's runs, and the owners W3's routes write (AIKit's gateway and its
+ * store, Workcell, the seat register: kernel/src/owner_routes.rs) — answered a write the kernel carried. */
+export const OWNER_WRITE_RECEIPTS: readonly string[] = ['now_changed', 'day_changed', 'receiving_changed', 'factory_run_changed', 'owner_changed']
 
 /** A receipt that can move the temporal field's answer. `working_surface_driving` is the one kernel event that carries an
  * instant (`observed_at_unix_ms`), so it lands inside a window on the kernel-event-log stream; a routine's returned action can

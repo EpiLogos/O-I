@@ -107,10 +107,14 @@ export async function kernelReadSend(
 const WRITING_OPS: ReadonlySet<string> = new Set(["invoke_action", "file_operation", "decide", "decision_episode_revoke", "decision_preflight", "theme_import", "theme_apply", "theme_revert", "theme_remove",
   "nara_decision_record", "live_device_param_write", "live_clip_write", "live_track_mixer_write", "live_take_comp", "live_groove_pool_write", "harness_agent_control", "chat_default_hold",
   "chat_default_discard", "credential_setup", "credential_rotate", "credential_revoke", "client_install", "product_action_run", "dictation_configure", "working_surface_attachment",
-  "encounter_provision", "flow_participant_provision", "config_apply_reviewed"]);
+  "encounter_provision", "flow_participant_provision", "config_apply_reviewed",
+  // Lane W3's owner routes that write (kernel/src/owner_routes.rs).
+  "gateway_write", "workcell_write", "seat_write", "aikit_write"]);
 /** Ops that read or write by their request's verb (`kind`, `operation` or `action`). */
 const MIXED_OPS: ReadonlySet<string> = new Set(["central", "now", "page", "expression", "expression_recovery", "encounter_session_settings", "knowledge", "agent_definition",
-  "encounter", "receiving", "factory_owner", "routine", "shared_field", "ground", "setup", "a2a_exchange"]);
+  "encounter", "receiving", "factory_owner", "routine", "shared_field", "ground", "setup", "a2a_exchange",
+  // AIKit's team operation: its `action` reads (`read`) or writes.
+  "gateway_team"]);
 const READING_REQUESTS: ReadonlySet<string> = new Set(["index", "find_checkpoint", "source-location", "agent-set", "open-day", "roster", "context", "providers", "census",
   "catalogue", "methods", "plan", "recheck", "document", "inhabitation", "locate", "recognise", "recognize"]);
 /** A verb reads when its first or last word does (`action-list`, `workflow-inspect`, `current-work`, `telemetry-digest`). */
@@ -121,7 +125,8 @@ const readingVerb = (verb: string): boolean => {
 };
 /** Receipts that say an owner's ground moved, as opposed to the window's own presentation (focus, surfaces, buffers). */
 const GROUND_RECEIPTS: ReadonlySet<string> = new Set(["routine_action_returned", "decision_recorded", "nara_decision_recorded", "configuration_changed", "world_changed",
-  "expression_changed", "source_changed", "file_changed", "now_changed", "day_changed", "receiving_changed", "factory_run_changed"]);
+  "expression_changed", "source_changed", "file_changed", "now_changed", "day_changed", "receiving_changed", "factory_run_changed",
+  "owner_changed"]);
 /** Whether a completed op may have changed what an owner holds: a write op, a mixed op whose verb is not a read, or any op whose
  * outcome carries a ground receipt. It tells the window's held readings they may no longer be the owner's (`onKernelWrite`).
  * Reads never tell — a read that did would retire every held answer and have every view ask again after it. */

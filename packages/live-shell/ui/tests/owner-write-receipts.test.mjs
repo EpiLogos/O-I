@@ -41,7 +41,7 @@ const settle = async () => { for (let i = 0; i < 6; i++) await new Promise(resol
 
 test('the kernel\'s owner-write receipts move the temporal field; the Day moves only on its own; none moves agency', () => {
   assert.equal(nowChanged.event, 'now_changed')
-  assert.deepEqual([...OWNER_WRITE_RECEIPTS].sort(), ['day_changed', 'factory_run_changed', 'now_changed', 'receiving_changed'])
+  assert.deepEqual([...OWNER_WRITE_RECEIPTS].sort(), ['day_changed', 'factory_run_changed', 'now_changed', 'owner_changed', 'receiving_changed'])
   for (const event of OWNER_WRITE_RECEIPTS) {
     assert.equal(receiptMovesTemporal(receipt(1, event, {owner: 'central', action: 'a', ref: 'r'})), true, event)
     assert.equal(receiptMovesAgency(receipt(1, event)), false, `${event} says nothing about sessions`)

@@ -154,6 +154,46 @@ export interface GatewayRemotesReading { schema: "aikit.gateway-remotes/v1"; rem
 /** One declared remote: its token's location, never the token. */
 export interface GatewayRemote { workcell_ref: string; websocket_bind: string; websocket_path: string; token_location: string }
 
+/** Lane W3 (T-COVERAGE §1.2): kernel routes to owner commands that already exist (kernel/src/owner_routes.rs). Each runs the owner's
+ * own command, carries its answer verbatim after a check, and names a refusal in the owner's words. `project` is a Central project NAME:
+ * Central discloses its working directory and canonical Project World, never the caller. */
+export type GatewayWriteRequest =
+  /** `aikit gateway send --to P --body-file -` (the words on stdin). */
+  | {kind:"send";project?:string|null;to:string;body:string;reply_to?:string|null;from_position?:string|null;instance?:string|null;require_workcell?:string|null;at?:string|null}
+  /** `aikit gateway delegate --communique C --work W --reason R`: Factory assigns custody to the Communique's recipient. */
+  | {kind:"delegate";project?:string|null;communique:string;work:string;reason:string;run?:string|null;journey?:string|null;workflow_unit?:string|null;at?:string|null};
+/** `actuation <kind> - --json` over a supplied record, and `actuation-research` comparison.held|assess|mask|review over supplied fields. */
+export type ActuationReadRequest =
+  | {kind:"agency"|"realised"|"stream"|"activity"|"usage";document:unknown}
+  | {kind:"comparison";operation:"held"|"assess"|"mask"|"review";input:Record<string,unknown>};
+/** `ql kernel m1` (answers ql.m1.engine/v1), `ql scene compose` (ql.scene/v1), `ql scene world` (ql.scene-world/v1). */
+export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";request:unknown};
+export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections-show";label:string} | {kind:"machine-list"};
+/** `workcell connect --connection LABEL` (a declared machine: no endpoint or authorization travels), `workcell machine add|remove`. */
+export type WorkcellWriteRequest =
+  | {kind:"connect";connection:string}
+  | {kind:"machine-add";label:string;endpoint:string;credential_ref?:string|null;allow?:string[];note?:string|null}
+  | {kind:"machine-remove";label:string};
+/** `seat join|release WORKCELL PRODUCT --actor REF --json`: the actor is the desk's, claims are attributed; every region goes to one
+ * `--region` flag. Answers central.workcell-seat-result/v1. */
+export type SeatWriteRequest =
+  | {kind:"join";workcell:string;product:string;actor:string;branch?:string|null;now?:string|null;new_lane?:boolean;regions?:string[];recover_dirt_branch?:string|null}
+  | {kind:"release";workcell:string;product:string;actor:string;branch?:string|null};
+export type AikitReadRequest =
+  | {kind:"inbox";project?:string|null;all?:boolean}
+  | {kind:"wiki-shape-validate";file:string}
+  | {kind:"wiki-shape-compress";file:string;anchor_ref:string};
+export type AikitWriteRequest =
+  /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. */
+  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null}
+  | {kind:"promote";project?:string|null;candidate:string;id?:string|null}
+  | {kind:"trust-record";project?:string|null;capability:string;source?:string|null;note?:string|null}
+  | {kind:"method-run";project?:string|null;method:string;input?:unknown;confirm?:boolean}
+  | {kind:"method-prove";project?:string|null;method:string;proof:unknown}
+  /** `out` is an absolute directory the desk names. */
+  | {kind:"set-package-export";project?:string|null;set:string;target:"openai"|"codex"|"claude"|"pi";out:string;native?:boolean;allow_partial?:boolean;with_codex_overlay?:boolean}
+  | {kind:"wiki-shape-declare";file:string;frame_ref:string;frame:unknown};
+
 /** W1.5 changed-since-thought compose (`flow_cognition.rs`): ONE typed
  * reading with both owner sides explicit — a side that could not be queried
  * is named, never faked empty. */
@@ -409,6 +449,23 @@ export type KernelOp =
   | {op:"source_returns_read";project?:string|null;limit?:number;before?:string}
   /** AIKit's declared gateway remotes (`aikit gateway remote list --json`). */
   | {op:"gateway_remotes_read"}
+  /** Lane W3 (owner_routes.rs). Writes — each moves the kernel's read model and earns an `owner_changed` receipt when the owner says
+   * something moved: AIKit's gateway send and delegate. */
+  | {op:"gateway_write";request:GatewayWriteRequest}
+  /** AIKit's team operation (`aikit gateway team --request-json`), its document verbatim: `action:"read"` reads; prepare, delegate,
+   * cancel and release write. */
+  | {op:"gateway_team";project?:string|null;request:{action:string;[field:string]:unknown}}
+  /** Reads. */
+  | {op:"actuation_read";request:ActuationReadRequest}
+  | {op:"ql_read";request:QlReadRequest}
+  | {op:"workcell_read";request:WorkcellReadRequest}
+  /** Writes. */
+  | {op:"workcell_write";request:WorkcellWriteRequest}
+  | {op:"seat_write";request:SeatWriteRequest}
+  /** Reads. */
+  | {op:"aikit_read";request:AikitReadRequest}
+  /** Writes. */
+  | {op:"aikit_write";request:AikitWriteRequest}
   | {op:"temporal_events_read";query?:{window?:{window:"all"}|{window:"day";day_ref:string}|{window:"between";from_unix_ms:number;to_unix_ms:number};kind?:string;subject?:string;stream?:string}}
   /** World inhabitation (WORLD-INHABITATION-V1 §4): AIKit's population,
    * joined whoami and Refocus readings, schema-checked and bounded by a
@@ -588,6 +645,8 @@ export type KernelOpResult =
   | { result:"seat_status_reading";data:SeatStatusReading }
   | { result:"source_returns_reading";data:SourceReturnsReading }
   | { result:"gateway_remotes_reading";data:GatewayRemotesReading;warnings?:unknown[] }
+  /** An owner route's answer (lane W3): the owner command in plain words, its reading verbatim, an AIKit envelope's warnings. */
+  | { result:"owner_route_reading";route:string;data:unknown;warnings?:unknown[] }
   | { result:"temporal_events_reading";document:unknown }
   | { result:"inhabitation_reading";data:unknown;warnings?:unknown[] }
   | { result:"wiki_projection_reading";data:unknown }

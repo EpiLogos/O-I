@@ -12,6 +12,15 @@
       "reason": "No directly attributable executed native walk is recorded here for a2a_exchange; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "actuation_read",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Actuation's readings of a supplied record (agency, realised, stream, activity, usage) and actuation-research comparison.held|assess|mask|review); no directly attributable executed native walk is recorded here for actuation_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
       "op": "agency_read",
       "native_owner": "kernel/src/agency.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -37,6 +46,24 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for agent_definition; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "aikit_read",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture inbox and a Wiki file's shapes (wiki-shape validate|compress)); no directly attributable executed native walk is recorded here for aikit_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "aikit_write",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture, promote, trust record, praxis method run|prove, set package export and wiki-shape declare); no directly attributable executed native walk is recorded here for aikit_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "being_encounter",
@@ -608,6 +635,24 @@
       "reason": "Kernel-direct only: tests/shell_owner_reads.rs against fake owners and the private stack's /op against the real owner; no directly attributable executed native walk is recorded here for gateway_remotes_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "gateway_team",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's team operation (aikit gateway team --request-json): read, or prepare|delegate|cancel|release); no directly attributable executed native walk is recorded here for gateway_team; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "gateway_write",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's gateway send and delegate); no directly attributable executed native walk is recorded here for gateway_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
       "op": "git_diff_read",
       "native_owner": "kernel/src/git.rs",
       "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a73",
@@ -862,6 +907,24 @@
       "scenarios": [],
       "owner_lane": "DLW build lane (T-AGENCY K5)",
       "reason": "No executed native walk is recorded here for decision_status; the Decision helper's binding reads it, and its native screen pass is owed."
+    },
+    {
+      "op": "ql_read",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Quaternal Logic's kernel m1 and scene compose|world); no directly attributable executed native walk is recorded here for ql_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "seat_write",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (the seat instrument's join and release); no directly attributable executed native walk is recorded here for seat_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "team_space",
@@ -1386,6 +1449,15 @@
       "reason": "No directly attributable executed native walk is recorded here for wiki_projection_sources; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "workcell_read",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Workcell's connections list|show and machine list); no directly attributable executed native walk is recorded here for workcell_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
       "op": "workcell_status_read",
       "native_owner": "kernel/src/lib.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -1393,6 +1465,15 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for workcell_status_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "workcell_write",
+      "native_owner": "kernel/src/owner_routes.rs",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Workcell's connect --connection and machine add|remove); no directly attributable executed native walk is recorded here for workcell_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "working_surface_attachment",

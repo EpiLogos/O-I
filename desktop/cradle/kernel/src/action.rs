@@ -58,10 +58,11 @@ pub fn central_action(action: &str) -> bool {
 
 /// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
 /// records, its rollover and its close-out carry; accepting a returned source; making, keeping and removing an agent and a
-/// group; a world's relations; a document's own edit. Central admits these on the person's native authority, so the kernel carries the host's token
+/// group; a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Self's Ensure and Relate
+/// (manual §18.1 Ground, "accept it there"). Central admits these on the person's native authority, so the kernel carries the host's token
 /// for exactly these (flow.rs `for_person`: read in the native process, never supplied by the desk), as it does for Open today
 /// and a page's Launch. Every other invocation goes without it, and Central refuses an act it does not grant in its own words.
-pub const PERSON_ACTS: [&str; 14] = [
+pub const PERSON_ACTS: [&str; 20] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -76,11 +77,32 @@ pub const PERSON_ACTS: [&str; 14] = [
     "central.agent-set.save",
     "central.world-relations.save",
     "central.document.mutate",
+    "projectcentral.init",
+    "projectcentral.adopt",
+    "projectcentral.migrate",
+    "projectcentral.self.ensure",
+    "projectcentral.self.tier.relate",
+    "projectcentral.self.retain-tier",
 ];
 
 /// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
 pub fn person_act(action: &str) -> bool {
     PERSON_ACTS.contains(&action)
+}
+
+/// Whether an invocation only reads, so running it moves nothing (owner_write.rs `reads_only`): a Central reading
+/// (read_cache.rs `central_reads`, a Preview included), or a Contemplate Flow press without its `execute` preflight record —
+/// the preflight, which `flow_cognition.rs` runs as `aikit flow preflight`; anything but a record refuses before any owner
+/// call. Every other invocation may write.
+pub fn reads_only(invocation: &ActionInvocation) -> bool {
+    if invocation.action == AIKIT_ACTION_CONTEMPLATE_FLOW {
+        return !invocation
+            .input
+            .as_ref()
+            .and_then(|input| input.get("execute"))
+            .is_some_and(Value::is_object);
+    }
+    crate::read_cache::central_reads(&invocation.action)
 }
 
 /// The native owners this adapter routes disclosed spellings to.
@@ -361,6 +383,24 @@ mod tests {
             "central.receiving.submit",
             "control.search",
             "knowledge/open",
+        ] {
+            assert!(!person_act(id), "{id} carries no person authority");
+        }
+        // The workspace's Accept, Ensure and Relate (manual §18.1).
+        for id in [
+            "projectcentral.init",
+            "projectcentral.adopt",
+            "projectcentral.migrate",
+            "projectcentral.self.ensure",
+            "projectcentral.self.tier.relate",
+            "projectcentral.self.retain-tier",
+        ] {
+            assert!(person_act(id), "{id} is the person's press");
+        }
+        // Their previews and readings carry nothing.
+        for id in [
+            "projectcentral.adopt.preview",
+            "projectcentral.self.inspect",
         ] {
             assert!(!person_act(id), "{id} carries no person authority");
         }

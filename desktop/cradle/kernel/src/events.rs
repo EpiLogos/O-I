@@ -246,6 +246,20 @@ pub enum KernelEvent {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         revision: Option<String>,
     },
+    /// An owner route's write finished and its owner said something moved
+    /// (lane W3, owner_routes.rs): AIKit's gateway, capture inbox, trust,
+    /// Methods, packages or Wiki shapes; Workcell's connections and
+    /// machines; the seat instrument's register. The same shape as the other
+    /// owner-write receipts: owner, its command, the ref its answer names,
+    /// the revision it gave.
+    OwnerChanged {
+        owner: String,
+        action: String,
+        #[serde(rename = "ref")]
+        reference: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        revision: Option<String>,
+    },
     /// Files the kernel's readings are made from changed (the change watch,
     /// watch.rs): `scopes` names what moved - `root`, `seats`, `aikit`,
     /// `clock`, `project:<Name>`, or `all` when events were dropped and
@@ -278,6 +292,7 @@ impl KernelEvent {
             | Self::DayChanged { .. }
             | Self::ReceivingChanged { .. }
             | Self::FactoryRunChanged { .. }
+            | Self::OwnerChanged { .. }
             | Self::ReadingsChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
@@ -312,6 +327,7 @@ impl KernelEvent {
             Self::DayChanged { .. } => "day_changed",
             Self::ReceivingChanged { .. } => "receiving_changed",
             Self::FactoryRunChanged { .. } => "factory_run_changed",
+            Self::OwnerChanged { .. } => "owner_changed",
             Self::ReadingsChanged { .. } => "readings_changed",
         }
     }
@@ -503,6 +519,18 @@ impl KernelEvent {
                 revision,
             } => owner_write(
                 "factory_run_changed",
+                owner,
+                action,
+                reference,
+                revision.as_deref(),
+            ),
+            Self::OwnerChanged {
+                owner,
+                action,
+                reference,
+                revision,
+            } => owner_write(
+                "owner_changed",
                 owner,
                 action,
                 reference,
