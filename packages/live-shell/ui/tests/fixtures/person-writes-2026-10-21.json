@@ -1,0 +1,241 @@
+{
+ "_note": "Captured read-only on workcell:mac, 21 Oct 2026, through `ctrl --json action run` and `aikit --json flow preflight`. The NOW listing keeps two of its 114 records; the personal anchor keeps its `person`; everything else is verbatim.",
+ "worldRelationsRoot": {
+  "action": "central.world-relations.read",
+  "input": {
+   "scope": "root",
+   "ref": "control:root"
+  },
+  "data": {
+   "kind": "world",
+   "record": {
+    "ref": "control:root",
+    "revision": "w1",
+    "schema": "central.world-relations/v1",
+    "sources": [
+     {
+      "authority": "human-authored",
+      "ref": "central:source:control:root:Control/user/identity",
+      "revision": "1",
+      "treatment": "canonical"
+     },
+     {
+      "authority": "agent-maintained",
+      "ref": "central:source:control:root:Control/agents",
+      "revision": "1",
+      "treatment": "agent-maintained"
+     },
+     {
+      "authority": "agent-maintained",
+      "ref": "central:source:control:root:Control/relations",
+      "revision": "1",
+      "treatment": "agent-maintained"
+     }
+    ]
+   },
+   "ref": "control:root",
+   "revision": "w1",
+   "source_path": "Control/relations/worlds/world-b88f0166a29f523c.json"
+  }
+ },
+ "workPolicy": {
+  "action": "central.work.policy",
+  "input": {},
+  "revision": "central.content-fnv1a64/v1:3775:027b33b9971c5954"
+ },
+ "nowList": {
+  "action": "central.now.list",
+  "input": {},
+  "data": {
+   "schema": "central.now-listing/v1",
+   "records": [
+    {
+     "created_at_unix_seconds": 1791322833,
+     "lifecycle": "active",
+     "now_ref": "central:now:control:root:015179906b520721df793e96188199bc72906d7b2011048c7be07830f625a4f8",
+     "participant_refs": [],
+     "purpose": "Harness wiring: settings ENOENT fixed, adapters pulled through roster, catalog r20; chat gated on owner mint template (PRs O-I#609, ai-kit#493, Actuation#134)",
+     "revision": {
+      "byte_len": 941,
+      "revision": "central.content-fnv1a64/v1:941:496fc2ca4c0e8270"
+     },
+     "scope_ref": "control:root",
+     "source_ref": "central:source:control:root:Control/agents/now/clearings/015179906b520721df793e96188199bc72906d7b2011048c7be07830f625a4f8/now.json",
+     "source_refs": [
+      "central:source:control:root:Control/agents/governance/engineering/feature-completion.md"
+     ],
+     "task_ref": "central:task:control:root:harness-wiring-2026-10-06",
+     "work_refs": []
+    },
+    {
+     "created_at_unix_seconds": 1790244759,
+     "horizon": "workcell-root",
+     "lifecycle": "active",
+     "now_ref": "central:now:control:root:06cca2f04e1a408f451f36263de0d3c1dda2aa8547a27d3ed163c222bc711dea",
+     "participant_refs": [],
+     "purpose": "Workcell root NOW for workcell:mac: the live material horizon that child NOWs placed on this Workcell hang from.",
+     "revision": {
+      "byte_len": 863,
+      "revision": "central.content-fnv1a64/v1:863:cc1887a08302dcb5"
+     },
+     "scope_ref": "control:root",
+     "source_ref": "central:source:control:root:Control/agents/now/clearings/06cca2f04e1a408f451f36263de0d3c1dda2aa8547a27d3ed163c222bc711dea/now.json",
+     "source_refs": [],
+     "task_ref": "central:task:control:root:workcell-root:workcell:mac",
+     "work_refs": [],
+     "workcell_ref": "workcell:mac"
+    }
+   ]
+  }
+ },
+ "personalAnchor": {
+  "action": "central.personal.anchor.inspect",
+  "input": {},
+  "data": {
+   "schema": "central.personal-anchor/v1",
+   "person": {
+    "error": null,
+    "form": "nara",
+    "identity_source_path": "Control/user/identity",
+    "manifest_present": true,
+    "manifest_revision": "1",
+    "sourced_files": [
+     {
+      "content_revision": "bef7cd02e7d0808b",
+      "path": "Control/user/identity/formation.md",
+      "present": true
+     },
+     {
+      "content_revision": "ca9087bee8fb0f02",
+      "path": "Control/user/identity/present.md",
+      "present": true
+     },
+     {
+      "content_revision": "ef5a165a056dc2d9",
+      "path": "Control/user/identity/practice.md",
+      "present": true
+     },
+     {
+      "content_revision": "6bb6646fc5475d48",
+      "path": "Control/user/identity/relations.md",
+      "present": true
+     },
+     {
+      "content_revision": "4bf6d71bd39684e7",
+      "path": "Control/user/identity/place-and-time.md",
+      "present": true
+     },
+     {
+      "content_revision": "8ec6f775d8a8432f",
+      "path": "Control/user/identity/vocation.md",
+      "present": true
+     },
+     {
+      "content_revision": "a4c49644dca2a8ff",
+      "path": "Control/user/identity/sources/natal-chart.md",
+      "present": true
+     },
+     {
+      "content_revision": "b06d66796fb4f855",
+      "path": "Control/user/identity/sources/saturn-return.md",
+      "present": true
+     }
+    ],
+    "subject_ref": "central:pasu:nara:local"
+   }
+  }
+ },
+ "sourceReturnsOI": {
+  "action": "projectcentral.source.returns",
+  "input": {
+   "project": "O-I",
+   "limit": 5
+  },
+  "envelope": {
+   "ok": true,
+   "status": "success",
+   "action": "projectcentral.source.returns",
+   "data": {
+    "authored_source_mutated": false,
+    "entries": [],
+    "more": false,
+    "next_before": null,
+    "schema": "central.source-returns/v1"
+   }
+  }
+ },
+ "pcInspectOI": {
+  "action": "projectcentral.inspect",
+  "input": {
+   "project": "O-I"
+  },
+  "data": {
+   "manifest": {
+    "human_source": "ProjectCentral/user",
+    "project_id": "O-I",
+    "schema": "central.project/v1",
+    "wiki": {
+     "profile": "okf-wiki/v1",
+     "source": "ProjectCentral/agents/wiki/wiki.json"
+    }
+   },
+   "manifest_errors": [],
+   "outcome": "already_conformant",
+   "project_root": "/Users/admin/Central/Work/O-I",
+   "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+   "source_signals": [
+    {
+     "kind": "readme",
+     "path": "README.md"
+    },
+    {
+     "kind": "docs",
+     "path": "docs"
+    }
+   ],
+   "wiki_candidates": [
+    {
+     "source": "ProjectCentral/agents/wiki/wiki.json",
+     "space_ref": "central:wiki:project:O-I"
+    }
+   ]
+  }
+ },
+ "selfInspectOI": {
+  "action": "projectcentral.self.inspect",
+  "input": {
+   "project": "O-I"
+  },
+  "data": {
+   "automatic_agent_or_model_invocation": false,
+   "canonical_tier_labels_invented": false,
+   "ex": [],
+   "relation_source": "ProjectCentral/relations/development-field.json",
+   "schema": "central.development-field-reading/v1",
+   "scope_ref": "project:O-I",
+   "self_aperture": {
+    "exists": false,
+    "issues": [],
+    "linked_sources": [],
+    "path": "ProjectCentral/self",
+    "status": "legacy-migratable-absence",
+    "unbound_sources": []
+   },
+   "source_payloads_exposed": false,
+   "tier_bindings": [],
+   "ux": []
+  }
+ },
+ "flowPreflight": {
+  "command": "aikit --json -C /Users/admin/Central flow preflight 769005e3-9bf0-491b-afcd-db10706ab8da",
+  "envelope": {
+   "error": {
+    "code": "flow.not_found",
+    "details": {},
+    "message": "no Flow node resolves 769005e3-9bf0-491b-afcd-db10706ab8da"
+   },
+   "ok": false,
+   "schema": 1
+  }
+ }
+}

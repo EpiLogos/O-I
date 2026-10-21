@@ -23,6 +23,8 @@ import type {ConfigRequestWire} from '../../../../../../desktop/cradle/src/kerne
 import {MISSING_OPS, missingOpRemedy} from '../agentChainDrag'
 import {gatewayDisclosed, type AgentChainReading} from './agentChainDevices'
 import type {OwnerAcceptedValues} from './ownerAccepted'
+import type {TaskClip, TemporalEventLike} from '../agentRunModel'
+import {runStateOfSession, stageRecordingOf, threadRowsFrom} from './runFaces'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -250,8 +252,12 @@ export function gatewayBinding(id: string, input: GatewayInput, rows: GatewayRow
 export interface AgentTrackReading {
   readonly agentRef: string | null
   readonly agentName: string | null
-  readonly needle: {readonly atUnixMs: number | null} | null
+  readonly needle: {readonly atUnixMs: number | null; readonly state?: 'live' | 'stalled' | 'idle'} | null
   readonly budget: {readonly used: number | null; readonly max: number | null}
+  /** The session's task clips (agentRunModel.ts TaskClip), whose state stands the agent in its run state (runFaces.ts). */
+  readonly tasks?: readonly TaskClip[]
+  /** The SessionSpace the session stands in, whose events are its run where the session's own name none. */
+  readonly spaceRef?: string
 }
 
 export interface AgentInput {
@@ -273,6 +279,8 @@ export interface AgentInput {
   readonly models?: readonly string[] | null
   /** The harnesses found on this machine (`aikit --json client status` clients[] detected, kernel harness_status). */
   readonly harnesses?: readonly string[] | null
+  /** The kernel's temporal events (the sessions provider's one read): the session's run as the stage plays it. */
+  readonly events?: readonly TemporalEventLike[] | null
 }
 
 /** The Agent's values: each key from the owner that reports it, or absent. */
@@ -286,6 +294,11 @@ export function agentValues(input: AgentInput): Values {
     put(values, 'agent', track.agentName ?? track.agentRef)
     // The needle: seconds since the session's last check-in on the temporal reading; -1 when it was read and there is none.
     if (track.needle) put(values, 'age', track.needle.atUnixMs == null ? -1 : Math.max(0, Math.round((input.nowUnixMs - track.needle.atUnixMs) / 1000)))
+    // The run state its face stands in (lane W5, runFaces.ts): the task's state, the needle against the 90 s horizon, the thread's last row.
+    if (track.tasks) put(values, 'run', runStateOfSession({tasks: track.tasks, needle: track.needle}, threadRowsFrom(input.thread), input.nowUnixMs))
+    // The session's run as the stage plays it: the kernel's temporal events at their own instants (runFaces.ts stageRecordingOf).
+    const stage = input.events ? stageRecordingOf(input.events, [sessionRef, ...(track.spaceRef ? [track.spaceRef] : [])]) : null
+    if (stage) values.stage = JSON.stringify(stage)
   }
   if (harness.resolved) put(values, 'harness', harness.binding)
   const doc = reading.gatewayAdmitted === true && isObj(reading.gatewayDoc) ? reading.gatewayDoc : null
@@ -338,7 +351,11 @@ export const AGENT_P0_ROWS: Readonly<{quantize: SdkParamRow; steerLine: SdkParam
 const AGENT_WRITES = new Set(['effort', 'input', 'heartbeat', 'quantize', 'draft', 'sent', 'light', 'cap'])
 
 /** The Agent's binding: its values, and each change through its row's own write path (or held, for the composer's text). */
+/** Why the Agent stands in no run state: no session is selected, or its task, needle and thread say none (runFaces.ts runStateOfSession). */
+export const RUN_UNREAD = 'The run state is a reading: no session is selected, or its task, its needle and its thread (runFaces.ts) stand it in none yet.'
+
 export function agentBinding(id: string, input: AgentInput, rows: AgentRows, write: RowWrite, steering: () => boolean): DesignBinding {
+  const values = agentValues(input)
   const through = async (row: SdkParamRow | undefined, name: string, value: unknown) => {
     if (!row?.writePath) throw Error(`${name}: the row is not adopted on this chain, so nothing carries it.`)
     const receipt = await write(row, value)
@@ -347,8 +364,8 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
   }
   return {
     id,
-    values: agentValues(input),
-    standing: disabled(REFUSED_WRITES[AGENT_DESIGN]!),
+    values,
+    standing: 'run' in values ? disabled(REFUSED_WRITES[AGENT_DESIGN]!) : {...disabled(REFUSED_WRITES[AGENT_DESIGN]!), run: {disabled: RUN_UNREAD}},
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {

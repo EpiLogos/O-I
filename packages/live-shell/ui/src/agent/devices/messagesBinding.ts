@@ -1,32 +1,48 @@
-// Messages on its owners (lane W1-Factory; DLW §19.24, ai-kit:messages — "Kind: instrument · Rail: born on the widget rail, and opens full
-// in a pane, in every mode"). Its tile is the rail's first device (agent/agentDockTiles.ts); its Full holds your agents down the side and
-// the conversation of the one you pick, with the Agency gateway's mark across its head (§19.10 "Stands: in the head of Messages").
+// Messages on its owners (DLW §19.24, ai-kit:messages — "Kind: instrument · Rail: born on the widget rail, and opens full in a pane, in every
+// mode"). Its tile is the rail's first device (agent/agentDockTiles.ts); its Full holds your agents down the side and the conversation of the
+// one you pick, with the Agency gateway's mark across its head (§19.10 "Stands: in the head of Messages").
 //
-// What the owners report (real shape in tests/fixtures/workcell-readings-2026-10-21.json, read-only):
+// What the owners report (real shapes in tests/fixtures/workcell-readings-2026-10-21.json, read-only):
 //   `aikit gateway who --project-world <W> --json` (aikit.population-reading/v1), which the kernel runs as inhabitation_read {kind:
 //     population} (usePopulationAnswer.ts): positions [{position_ref, handle, label, occupancy {state occupied | vacant, agent_ref,
-//     workcell_ref}, communiques {undelivered}}] — the agents you address — and agents [{agent_ref, purpose, positions}] — what each is for.
-//     The list: each Position by its label, what its agent is for, at rest while no one occupies it (§19.24 "An agent with nothing running
-//     shows at rest"), the workcell its occupant runs in, the messages that wait for it. The Agency gateway's inbox is their sum;
+//     workcell_ref}, communiques {undelivered}}] — the agents you address — and agents [{agent_ref, purpose, positions}] — what each is for;
+//     local_world_ref and project_world_ref — the worlds a new agent may work in. The list: each Position by its label, what its agent is
+//     for, at rest while no one occupies it (§19.24 "An agent with nothing running shows at rest"), the workcell its occupant runs in, the
+//     messages that wait for it. The Agency gateway's inbox is their sum;
+//   the run state of the session an occupant works (runFaces.ts runStateOfSession over the agency reading's tracks: its task, its needle, its
+//     thread): working, waiting on you, stalled — its face's posture (lane W5);
 //   harness_agent_read through AIKit's gateway (useAgentChainReading.ts; mainTrackBindings.ts gatewayAnswer): whether the Agency gateway
 //     answered — its state in the mark;
 //   `aikit gateway conversation --position P --with W --json`, which the kernel runs as inhabitation_read {kind: conversation}
-//     (useConversationAnswer.ts): the Communiques to and from the open agent's Position, {communique_ref, from_position_ref,
-//     to_position_ref, body, sent_at_unix_ms, sequence} — the open agent's conversation, as the Thread's rows (its own `thread`, which the
-//     design lays under `conv.`), and its last line.
-// What nothing reads yet, each absent with the operation it waits for: an occupied agent's working, waiting or stalled state, its model and
-// its type, the session's light and its last check-in (a Position's conversation reports neither), the groups (`aikit gateway team`), the
-// card's choices. The writes: a send (`aikit gateway send`), a message dragged onto a track (`aikit gateway delegate`) and the
-// conversation's acts (Approve, Retry, Hard stop… answer a session, not a Position's journal) stand disabled with the AIKit command no
-// kernel route reaches (T-COVERAGE §1.2); Make, Accept and Discard (`agent-profile.express`, `accept`, `remove`) stand disabled naming the
-// kernel route that carries the person's authority (T-COVERAGE §1.1). The list's settings, the agent you open, the composer's draft, the
-// conversation's filters and the card's fields are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView).
+//     (useConversationAnswer.ts): the Communiques to and from the open agent's Position — the open agent's conversation, as the Thread's rows
+//     (its own `thread`, which the design lays under `conv.`), and its last line;
+//   Central's agent-profile.review of the proposal Make wrote: its profile (role, purpose, world, sources, revision) and its content digest.
+// What nothing reads yet, each absent with the operation it waits for: an agent's model and type, the session's light and its last check-in
+// in the conversation, the groups (`aikit gateway team`), the types and skillsets the card offers.
+// The writes: a send (`aikit gateway send`), a message dragged onto a track (`aikit gateway delegate`) and the conversation's session acts
+// stand disabled with the AIKit command no kernel route reaches (T-COVERAGE §1.2). Making an agent (§19.24 "Making an agent", lane W2) is
+// Central's, and the kernel's invoke_action carries the person's authority for it (desktop/cradle/kernel/src/action.rs PERSON_ACTS):
+//   Make     your words → agent-profile.express {scope, project?, world_ref, intent_expression (verbatim), ratified_world_refs, skill_set_refs?}:
+//            Central allocates the profile and writes it generated-proposal/unrecognised; the card turns to it, read back through
+//            agent-profile.review;
+//   Change   back to the card's fields; Make then saves the change (agent-profile.save at the reviewed revision) — your words stay as Central
+//            received them, so a changed For is refused in words;
+//   Accept   agent-profile.accept {profile_ref, expected_revision, expected_content_digest}: the exact revision and digest Central reviewed;
+//   Discard  agent-profile.remove {profile_ref, expected_revision};
+//   a group  central.agent-set.propose {ref, revision r1, members [{kind agent, agent_ref}], reason: your words}, accepted by
+//            central.agent-set.save of Central's own record at its revision; its Discard (central.agent-set.remove) carries no person's
+//            authority, so it stands disabled with that reason.
+// Every refusal is Central's own words. The list's settings, the agent you open, the composer's draft, the conversation's filters, the card's
+// fields and the proposal the card is on are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView); the acts
+// go through the port the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AgentChainReading} from './agentChainDevices'
-import {holdView, viewHolds, type ChainHolds} from './designBindings'
+import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {familyFaceDevice, gatewayAnswer} from './mainTrackBindings'
 import type {WorkcellAnswer} from './workcellBindings'
+import type {RunState} from '../../inhabitants/catalogue/faces/agency'
+import {messagesStateOf} from './runFaces'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -46,7 +62,6 @@ export function messagesDevice(): DeviceInstance | null {
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
-const AUTHORITY = 'the kernel route that carries the person\'s authority (T-COVERAGE §1.1)'
 
 export const MESSAGES_REFUSE = {
   send: missing('Send', '`aikit gateway send` through the kernel (T-COVERAGE §1.2)', 'AIKit'),
@@ -55,24 +70,32 @@ export const MESSAGES_REFUSE = {
   /** The conversation's session acts: a Position's journal names no session, so nothing here answers its proposals or stalls. */
   conversation: missing('The conversation\'s session acts (Approve, Diff, Retry, Hard stop, Tell parent, a spawn\'s thread)', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session\'s turns)', 'AIKit'),
   session: unread('The session\'s light and its last check-in', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session)', 'AIKit'),
-  make: missing('Make', `Central's agent-profile.express (scope, world_ref, intent_expression, ratified_world_refs) through ${AUTHORITY}`, 'Central'),
-  accept: missing('Accept', `Central's agent-profile.accept through ${AUTHORITY}`, 'Central'),
-  discard: missing('Discard', `Central's agent-profile.remove through ${AUTHORITY}`, 'Central'),
-  card: unread('The card\'s choices (types, worlds, skillsets)', `a reading for the card, which serves Make — and Make waits for ${AUTHORITY}`, 'Central'),
+  types: unread('The agent types to choose from', 'a type on Central\'s agent profile (agent-profile.express takes none; the six families are the face rig\'s ontology, held by no owner)', 'Central'),
+  skillsets: unread('The skillsets it may carry', 'AIKit\'s sets for the card through the kernel', 'AIKit'),
+  worlds: unread('The worlds it may work in', 'the World refs AIKit\'s population names (`aikit gateway who`: local_world_ref, project_world_ref) — not read yet', 'AIKit'),
+  groupDiscard: missing('Discard a group', 'central.agent-set.remove carried with the person\'s authority (desktop/cradle/kernel/src/action.rs PERSON_ACTS names only propose and save)', 'Central'),
+  noProposal: 'Nothing is proposed yet: say what it is for and press Make.',
+  noCarrier: 'The kernel carrier is unavailable here, so Central cannot be asked.',
+  noWorld: 'Choose where it works first: no World is read (AIKit\'s population names none).',
+  noMembers: 'Drag the members\' faces onto the card: a group needs at least one agent whose Position names it.',
+  sameWords: 'Change keeps your words as Central received them (the proposal\'s provenance is verbatim): Discard it and Make again to say it differently.',
 } as const
+
+/** The person's own Central acts Messages carries (desktop/cradle/kernel/src/action.rs PERSON_ACTS), and the review it reads. */
+export const PERSON_ACTS = {express: 'agent-profile.express', review: 'agent-profile.review', accept: 'agent-profile.accept', save: 'agent-profile.save',
+  remove: 'agent-profile.remove', propose: 'central.agent-set.propose', saveSet: 'central.agent-set.save'} as const
 
 /** What each key no owner reports waits for. */
 export const MESSAGES_ABSENT: Readonly<Record<string, string>> = {
   groups: MESSAGES_REFUSE.team,
-  types: MESSAGES_REFUSE.card, worlds: MESSAGES_REFUSE.card, skillsets: MESSAGES_REFUSE.card,
-  proposal: unread('Central\'s proposal', `agent-profile.express, which answers Make — Make waits for ${AUTHORITY}`, 'Central'),
+  types: MESSAGES_REFUSE.types, skillsets: MESSAGES_REFUSE.skillsets,
   'conv.light': MESSAGES_REFUSE.session, 'conv.age': MESSAGES_REFUSE.session, 'conv.writes': MESSAGES_REFUSE.session,
 }
 
 /** The writes no owner carries, by key: the card's acts, the composer, a drop onto a track, and the conversation's own controls (the
  * Thread's Full under `conv.`, software-factory__thread.tsx: Input, Voice, the proposal's and the stall's buttons, a spawn row's open). */
 export const MESSAGES_REFUSED: Readonly<Record<string, string>> = {
-  make: MESSAGES_REFUSE.make, accept: MESSAGES_REFUSE.accept, discard: MESSAGES_REFUSE.discard, delegate: MESSAGES_REFUSE.delegate,
+  delegate: MESSAGES_REFUSE.delegate,
   'conv.sent': MESSAGES_REFUSE.send, 'conv.input': MESSAGES_REFUSE.send, 'conv.voice': MESSAGES_REFUSE.send,
   'conv.approve': MESSAGES_REFUSE.conversation, 'conv.diff': MESSAGES_REFUSE.conversation, 'conv.retry': MESSAGES_REFUSE.conversation,
   'conv.hardStop': MESSAGES_REFUSE.conversation, 'conv.tellParent': MESSAGES_REFUSE.conversation, 'conv.session': MESSAGES_REFUSE.conversation,
@@ -92,7 +115,8 @@ const firstLine = (text: string): string => {
 
 /** The population as Messages' agents (ai-kit__messages.tsx:7-11): each Position by its label (else its handle), what it is for (the
  * purpose of the agent who occupies it, else of the agent the reading places there), at rest while it is vacant — an occupied Position's
- * working, waiting or stalled is not reported, so it stands absent — the workcell its occupant runs in, and the messages that wait for it.
+ * working, waiting or stalled is its occupant's run (messagesValues), not the population's — the workcell its occupant runs in, and the
+ * messages that wait for it.
  * Null when the reading carries no Positions. */
 export function messagesAgents(population: unknown): Record<string, unknown>[] | null {
   if (!isObj(population) || !Array.isArray(population.positions)) return null
@@ -140,6 +164,67 @@ export function inboxOf(population: unknown): number | undefined {
   return counts.length ? counts.reduce((sum, n) => sum + n, 0) : undefined
 }
 
+/** What Make wrote and the card is on (held by the hand, never an owner reading): an agent's profile, or a group's record, with the scope
+ * Central wrote it in and the revision it wrote. */
+export interface Made {
+  readonly kind: 'agent' | 'group'
+  readonly scope: 'root' | 'project'
+  readonly project?: string
+  readonly ref: string
+  readonly revision: string
+  /** A group's record as Central wrote it (central.agent-set.propose `record`): Accept saves it at its revision. */
+  readonly record?: unknown
+}
+export const madeOf = (held: unknown): Made | null => {
+  if (typeof held !== 'string') return null
+  try {
+    const made = JSON.parse(held) as Made
+    return made && (made.kind === 'agent' || made.kind === 'group') && typeof made.ref === 'string' && typeof made.revision === 'string' ? made : null
+  } catch { return null }
+}
+const scopeInput = (made: Pick<Made, 'scope' | 'project'>) => ({scope: made.scope, ...(made.scope === 'project' && made.project ? {project: made.project} : {})})
+
+/** The World refs AIKit's population names (canonical refs Central disclosed for the scope): the worlds an agent may work in. */
+export function worldsOf(population: unknown): string[] {
+  if (!isObj(population)) return []
+  return [...new Set([str(population.project_world_ref), str(population.local_world_ref)].filter((ref): ref is string => !!ref))]
+}
+
+/** Central's review of a profile (agent-profile.review, central.agent-profile-review/v1: profile, content_digest) as the card's proposal
+ * (ai-kit__messages.tsx `proposal`): its role and purpose, the world it stands in, the sources it may read, its revision — each only where
+ * Central's profile holds it. */
+export function proposalOfReview(review: unknown): Record<string, unknown> | null {
+  if (!isObj(review) || !isObj(review.profile)) return null
+  const profile = review.profile
+  const sources = Array.isArray(profile.knowledge_source_refs) ? profile.knowledge_source_refs.filter((ref): ref is string => typeof ref === 'string') : []
+  return {...(str(profile.role) ? {role: profile.role} : {}), ...(str(profile.purpose) ? {purpose: profile.purpose} : {}), ...(str(profile.world_ref) ? {world: profile.world_ref} : {}),
+    ...(sources.length ? {sources} : {}), ...(str(profile.revision) ? {revision: profile.revision} : {})}
+}
+
+/** A group's record (central.agent-set/v1) as the card's proposal: what it is for (the reason Central keeps with the proposal) and its
+ * revision. A group has no role, world or sources of its own. */
+export function proposalOfRecord(record: unknown): Record<string, unknown> | null {
+  if (!isObj(record)) return null
+  const proposal = isObj(record.proposal) ? record.proposal : {}
+  return {...(str(proposal.reason) ? {purpose: proposal.reason} : {}), ...(str(record.revision) ? {revision: record.revision} : {})}
+}
+
+/** The agent refs a group's members name: each token of the card's members (a Position of the population, or an agent ref), as the agent
+ * its Position names (its occupant, else the agent the reading places there). */
+export function membersOf(tokens: unknown, population: unknown): string[] {
+  if (typeof tokens !== 'string' || !isObj(population)) return []
+  const positions = Array.isArray(population.positions) ? population.positions.filter(isObj) : []
+  const agents = Array.isArray(population.agents) ? population.agents.filter(isObj) : []
+  return [...new Set(tokens.split(/[\s,]+/).filter(Boolean).flatMap(token => {
+    const position = positions.find(row => row.position_ref === token)
+    if (!position) return agents.some(agent => agent.agent_ref === token) ? [token] : []
+    const occupant = isObj(position.occupancy) ? str(position.occupancy.agent_ref) : undefined
+    const placed = agents.find(agent => Array.isArray(agent.positions) && agent.positions.includes(token))
+    const ref = occupant ?? (placed ? str(placed.agent_ref) : undefined)
+    return ref ? [ref] : []
+  }))]
+}
+
 export interface MessagesInput {
   /** AIKit's population (`aikit gateway who --json`) as the window holds it. */
   readonly population: WorkcellAnswer
@@ -147,16 +232,43 @@ export interface MessagesInput {
   readonly gateway: Pick<AgentChainReading, 'gatewayAdmitted' | 'gatewayDoc'>
   /** The open agent's conversation (useConversationAnswer.ts), read while an agent is open; absent, none is read. */
   readonly conversation?: WorkcellAnswer
+  /** Central's review of the agent profile Make wrote (agent-profile.review through invoke_action), read while one is held. */
+  readonly review?: {readonly status: 'reading' | 'answered' | 'refused'; readonly value?: unknown; readonly error?: string}
+  /** The run state of the session each agent works, by its agent ref (runFaces.ts runStateOfSession over the agency reading's tracks). */
+  readonly runs?: ReadonlyMap<string, RunState>
+  /** The project a project-scoped agent belongs to (the shell's project). */
+  readonly project?: string
   readonly holds: ChainHolds
 }
 
-/** Messages' values: the agents and the inbox from the population, the gateway's state from its own answer, the shell's holds. */
+/** The person's own Central acts, through the publisher's carrier (the kernel's invoke_action, which carries the person's authority for
+ * them). Each resolves to Central's data or rejects with Central's own words. Absent: no carrier stands. */
+export interface MessagesPorts {
+  readonly act?: (action: string, input: Readonly<Record<string, unknown>>) => Promise<unknown>
+  /** The card the pane stands on (the host's page: 'new-agent' or 'new-group'), read when Make is pressed. */
+  readonly page?: () => string | null
+  /** A fresh suffix for a group's ref (Central's propose takes the ref from its caller). */
+  readonly suffix?: () => string
+}
+
+/** Messages' values: the agents and the inbox from the population, the gateway's state from its own answer, the card's worlds and the
+ * proposal Central wrote, the shell's holds. */
 export function messagesValues(input: MessagesInput): Values {
   const values: Record<string, Value> = {}
   const view = viewHolds(input.holds, MESSAGES_ID)
   for (const key of MESSAGES_LOCAL) { const held = view[key] ?? MESSAGES_VIEW[key]; if (held !== undefined) values[key] = held }
   const known = input.population.status === 'answered' ? input.population.value : null
-  const agents = known ? messagesAgents(known) : null
+  const listed = known ? messagesAgents(known) : null
+  // An occupied agent stands in the state of the session its occupant works (runFaces.ts): working, waiting on you, stalled; none read, absent.
+  const occupants = new Map<string, string>()
+  if (isObj(known) && Array.isArray(known.positions)) for (const row of known.positions) {
+    if (isObj(row) && str(row.position_ref) && isObj(row.occupancy) && row.occupancy.state === 'occupied' && str(row.occupancy.agent_ref)) occupants.set(String(row.position_ref), String(row.occupancy.agent_ref))
+  }
+  const agents = listed?.map(agent => {
+    const occupant = occupants.get(String(agent.id))
+    const state = occupant && input.runs ? messagesStateOf(input.runs.get(occupant) ?? null) : undefined
+    return state ? {...agent, state} : agent
+  }) ?? null
   // The open agent carries its conversation, as the design reads it (`thread` on the agent, laid under `conv.`), and its last line.
   const open = typeof values.open === 'string' ? values.open : undefined
   const said = open && input.conversation?.status === 'answered' && isObj(input.conversation.value) && input.conversation.value.position_ref === open
@@ -168,27 +280,134 @@ export function messagesValues(input: MessagesInput): Values {
   const state = answer.kind === 'answered' || answer.kind === 'refused' ? 'Ready' : answer.kind === 'unreachable' ? 'Refused' : undefined
   const waiting = known ? inboxOf(known) : undefined
   if (state !== undefined || waiting !== undefined) values.gateway = JSON.stringify({...(state ? {state} : {}), ...(waiting !== undefined ? {waiting} : {})})
+  // The card: the worlds AIKit names (Works in starts on the project's world, where the hand has not chosen), and the proposal Central wrote.
+  const worlds = known ? worldsOf(known) : []
+  if (worlds.length) {
+    values.worlds = JSON.stringify(worlds)
+    if (values['new.world'] === undefined) values['new.world'] = worlds[0]!
+  }
+  const made = madeOf(view.made)
+  if (made && view.editing !== true) {
+    const proposal = made.kind === 'group' ? proposalOfRecord(made.record)
+      : input.review?.status === 'answered' ? proposalOfReview(input.review.value) : null
+    if (proposal) values.proposal = JSON.stringify(proposal)
+  }
   return values
 }
 
-export function messagesBinding(input: MessagesInput): DesignBinding {
+export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {}): DesignBinding {
   const values = messagesValues(input)
+  const view = viewHolds(input.holds, MESSAGES_ID)
+  const made = madeOf(view.made)
+  const known = input.population.status === 'answered' ? input.population.value : null
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(MESSAGES_ABSENT)) standing[key] = {disabled: why}
   for (const [key, why] of Object.entries(MESSAGES_REFUSED)) standing[key] = {disabled: why}
   if (!('agents' in values)) standing.agents = {disabled: input.population.status === 'refused' && input.population.error ? input.population.error
     : input.population.status === 'answered' ? unread('Your agents', 'the Positions in AIKit\'s population (the reading carries none)', 'AIKit') : 'AIKit\'s population has not answered yet (`aikit gateway who`).'}
   if (!('gateway' in values)) standing.gateway = {disabled: 'The Agency gateway has not answered yet (harness_agent_read through AIKit\'s gateway), and the population names no inbox.'}
+  if (!('worlds' in values)) standing.worlds = {disabled: MESSAGES_REFUSE.worlds}
   // The open agent's conversation, when it is not read: why, in the owner's words.
   if (input.conversation?.status === 'refused' && input.conversation.error) standing.thread = {disabled: input.conversation.error}
+  // The card's acts: Make while a carrier stands; Accept and Discard on the proposal Make wrote, once Central has reviewed it.
+  const review = made?.kind === 'agent' ? input.review : undefined
+  const reviewWhy = made?.kind === 'agent' && review?.status !== 'answered' ? review?.status === 'refused' && review.error ? review.error : 'Central has not answered the review of the proposal yet (agent-profile.review).' : null
+  if (!ports.act) for (const key of ['make', 'accept', 'discard']) standing[key] = {disabled: MESSAGES_REFUSE.noCarrier}
+  else {
+    if (!made) for (const key of ['accept', 'discard']) standing[key] = {disabled: MESSAGES_REFUSE.noProposal}
+    else if (reviewWhy) standing.accept = {disabled: reviewWhy}
+    if (made?.kind === 'group') standing.discard = {disabled: MESSAGES_REFUSE.groupDiscard}
+  }
+  if (!('proposal' in values) && made && !view.editing) standing.proposal = {disabled: reviewWhy ?? MESSAGES_REFUSE.noProposal}
+
+  const hold = (made: Made | null) => { holdView(MESSAGES_ID, 'made', made ? JSON.stringify(made) : undefined); holdView(MESSAGES_ID, 'editing', undefined) }
+  const act = async (action: string, body: Readonly<Record<string, unknown>>) => { if (!ports.act) throw Error(MESSAGES_REFUSE.noCarrier); return ports.act(action, body) }
+  const project = input.project
+  const scopeOf = (): Pick<Made, 'scope' | 'project'> => (pressed()['new.scope'] === 'project' ? {scope: 'project', ...(project ? {project} : {})} : {scope: 'root'})
+
+  /** Why Central's review does not stand (Accept and Change wait for it). */
+  const reviewWhyOf = () => (input.review?.status === 'answered' ? null : input.review?.status === 'refused' && input.review.error ? input.review.error
+    : 'Central has not answered the review of the proposal yet (agent-profile.review).')
+  /** What the hand holds when it presses (the holds as they stand then, not as this binding was drawn). */
+  const pressed = () => viewHolds(chainHolds(), MESSAGES_ID)
+
+  /** Make: an agent's words to Central (express, or — while you change a proposal — save at the reviewed revision), or a group's proposal. */
+  const make = async (words: Value | undefined) => {
+    if (!ports.act) throw Error(MESSAGES_REFUSE.noCarrier)
+    if (typeof words !== 'string' || !words) throw Error('Say what it is for first.')
+    const view = pressed(), made = madeOf(view.made)
+    if (ports.page?.() === 'new-group') {
+      const members = membersOf(view['new.members'], known)
+      if (!members.length) throw Error(MESSAGES_REFUSE.noMembers)
+      const scope = scopeOf()
+      const ref = `agent-set:${words.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'group'}-${ports.suffix?.() ?? 'r1'}`
+      const data = await act(PERSON_ACTS.propose, {...scopeInput(scope), ref, revision: 'r1', members: members.map(agent_ref => ({kind: 'agent', agent_ref})), reason: words})
+      const record = isObj(data) ? data.record : undefined
+      hold({kind: 'group', ...scope, ref, revision: isObj(record) && str(record.revision) ? String(record.revision) : 'r1', record})
+      return
+    }
+    const world = typeof view['new.world'] === 'string' ? view['new.world'] : typeof values['new.world'] === 'string' ? values['new.world'] : undefined
+    if (!world) throw Error(MESSAGES_REFUSE.noWorld)
+    const carries = typeof view['new.carries'] === 'string' && view['new.carries'] ? [view['new.carries']] : undefined
+    if (made?.kind === 'agent' && view.editing === true) {
+      // Change: the reviewed profile, with the world and what it carries as you set them, saved at the revision Central reviewed.
+      const reviewed = input.review?.status === 'answered' && isObj(input.review.value) && isObj(input.review.value.profile) ? input.review.value.profile : null
+      if (!reviewed) throw Error(reviewWhyOf() ?? MESSAGES_REFUSE.noProposal)
+      const provenance = isObj(reviewed.intent_provenance) ? reviewed.intent_provenance : {}
+      if (str(provenance.intent_expression) && provenance.intent_expression !== words) throw Error(MESSAGES_REFUSE.sameWords)
+      const profile = {...reviewed, world_ref: world, ratified_world_refs: [world], ...(carries ? {skill_set_refs: carries} : {})}
+      const data = await act(PERSON_ACTS.save, {...scopeInput(made), profile, expected_revision: String(reviewed.revision ?? made.revision)})
+      const receipt = isObj(data) && isObj(data.receipt) ? data.receipt : {}
+      hold({...made, revision: str(receipt.revision) ?? String(reviewed.revision ?? made.revision)})
+      return
+    }
+    const scope = scopeOf()
+    const data = await act(PERSON_ACTS.express, {...scopeInput(scope), world_ref: world, intent_expression: words, ratified_world_refs: [world], ...(carries ? {skill_set_refs: carries} : {})})
+    const allocation = isObj(data) && isObj(data.allocation) ? data.allocation : null
+    if (!allocation || !str(allocation.profile_ref)) throw Error('Central answered Make without the profile it allocated.')
+    hold({kind: 'agent', ...scope, ref: String(allocation.profile_ref), revision: str(allocation.revision) ?? 'r1'})
+  }
+  const accept = async () => {
+    if (!ports.act) throw Error(MESSAGES_REFUSE.noCarrier)
+    const made = madeOf(pressed().made)
+    if (!made) throw Error(MESSAGES_REFUSE.noProposal)
+    if (made.kind === 'group') {
+      await act(PERSON_ACTS.saveSet, {...scopeInput(made), record: made.record, expected_revision: made.revision})
+      hold(null)
+      return
+    }
+    const reviewed = input.review?.status === 'answered' && isObj(input.review.value) ? input.review.value : null
+    if (!reviewed || !isObj(reviewed.profile)) throw Error(reviewWhyOf() ?? MESSAGES_REFUSE.noProposal)
+    await act(PERSON_ACTS.accept, {...scopeInput(made), profile_ref: made.ref, expected_revision: String(reviewed.profile.revision ?? made.revision),
+      expected_content_digest: String(reviewed.content_digest ?? '')})
+    hold(null)
+  }
+  const discard = async () => {
+    if (!ports.act) throw Error(MESSAGES_REFUSE.noCarrier)
+    const made = madeOf(pressed().made)
+    if (!made) throw Error(MESSAGES_REFUSE.noProposal)
+    if (made.kind === 'group') throw Error(MESSAGES_REFUSE.groupDiscard)
+    const reviewed = input.review?.status === 'answered' && isObj(input.review.value) && isObj(input.review.value.profile) ? input.review.value.profile : null
+    await act(PERSON_ACTS.remove, {...scopeInput(made), profile_ref: made.ref, expected_revision: String(reviewed?.revision ?? made.revision)})
+    hold(null)
+  }
   return {
     id: MESSAGES_ID,
     values,
     standing,
-    local: Object.fromEntries(MESSAGES_LOCAL.map(key => [key, (value: Value | undefined) => holdView(MESSAGES_ID, key, value)])),
-    writes: key => key in MESSAGES_REFUSED || key.startsWith('conv.'),
+    local: {
+      ...Object.fromEntries(MESSAGES_LOCAL.map(key => [key, (value: Value | undefined) => holdView(MESSAGES_ID, key, value)])),
+      // Change: back to the card's fields, the proposal still held; Make then saves the change.
+      proposal: value => { if (value === undefined && made) holdView(MESSAGES_ID, 'editing', true) },
+    },
+    writes: key => key in MESSAGES_REFUSED || key.startsWith('conv.') || key === 'make' || key === 'accept' || key === 'discard',
     write: async (changes: readonly ValueChange[]) => {
-      for (const {key} of changes) throw Error(MESSAGES_REFUSED[key] ?? (key.startsWith('conv.') ? MESSAGES_REFUSE.conversation : `${key} is a reading: its owner reports it; nothing here changes it.`))
+      for (const {key, value} of changes) {
+        if (key === 'make') { await make(value); continue }
+        if (key === 'accept') { await accept(); continue }
+        if (key === 'discard') { await discard(); continue }
+        throw Error(MESSAGES_REFUSED[key] ?? (key.startsWith('conv.') ? MESSAGES_REFUSE.conversation : `${key} is a reading: its owner reports it; nothing here changes it.`))
+      }
     },
   }
 }

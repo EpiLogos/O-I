@@ -22,7 +22,7 @@ import {workcellOfTrack} from '../../frame/tracks/returnTracks'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useWorkcellAnswer} from '../../owners/readers'
 import {useOptionalContinuity} from '../../continuity/workspace'
-import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
+import {actionAnswerOf, centralActionOp, useCentralAction, useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShellOptional} from '../AgentShellContext'
 import {fireWritePath} from '../agentNativeDispatch'
@@ -30,7 +30,11 @@ import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
 import {AGENCY_GATEWAY_ID, FRAMES_ID, GATEWAYS_RACK_ID, agencyBinding, framesBinding, mainDevices, rackBinding} from './mainTrackBindings'
-import {MESSAGES_ID, messagesBinding, messagesDevice, positionRefs} from './messagesBinding'
+import {MESSAGES_ID, PERSON_ACTS, madeOf, messagesBinding, messagesDevice, positionRefs, type MessagesPorts} from './messagesBinding'
+import {runStateOfSession} from './runFaces'
+import {hostState} from '../../frame/devices/deviceHost'
+import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {LEDGER_ID, ledgerBinding, receiptDevices} from './receiptBindings'
 import {useAgentChainReading} from './useAgentChainReading'
 import {useConversationAnswer} from './useConversationAnswer'
@@ -46,6 +50,15 @@ export const RAIL_AGENT_DEVICE_IDS: readonly string[] = [MESSAGES_ID, GATEWAYS_R
 
 /** Why the seat instrument is not asked: it is slow, so it is read only where its reading is drawn. */
 export const SEATS_NOT_ASKED = 'The seat instrument is asked while the Workcells tile is open or a workcell\'s return track is selected (`seat status` is slow, so it is not read for a closed tile).'
+
+/** One of the person's own Central acts through the kernel's invoke_action (a write: kernelOp, never a held read): Central's data, or its own
+ * words as the refusal. */
+export async function centralAct(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>>): Promise<unknown> {
+  const call = await kernelOp(transport, centralActionOp(action, input))
+  const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null}, action)
+  if (answer.status === 'answered') return answer.value
+  throw Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
+}
 
 /** The rail's agent devices and their bindings, published on the door. */
 export function AgentRailDevices() {
@@ -85,7 +98,25 @@ export function AgentRailDevices() {
   const positions = useMemo(() => positionRefs(population.status === 'answered' ? population.value : null), [population])
   const opened = viewHolds(holds, MESSAGES_ID).open
   const conversation = useConversationAnswer(transport, RACK_PROJECT, typeof opened === 'string' && positions.includes(opened) ? opened : null, positions)
-  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, holds}), [population, reading, conversation, holds])
+  // Making an agent (§19.24, lane W2): the proposal Make wrote, read back through Central's review; the person's acts through invoke_action,
+  // which carries the person's authority for them (desktop/cradle/kernel/src/action.rs PERSON_ACTS). Every answer is Central's own.
+  const made = madeOf(viewHolds(holds, MESSAGES_ID).made)
+  const reviewInput = useMemo(() => (made?.kind === 'agent' ? {scope: made.scope, ...(made.scope === 'project' && made.project ? {project: made.project} : {}), profile_ref: made.ref} : null),
+    [made?.kind, made?.scope, made?.project, made?.ref]) // eslint-disable-line react-hooks/exhaustive-deps
+  const review = useCentralAction(transport, PERSON_ACTS.review, reviewInput)
+  const ports = useMemo((): MessagesPorts => ({
+    ...(transport.kind !== 'unavailable' ? {act: (action: string, input: Readonly<Record<string, unknown>>) => centralAct(transport, action, input)} : {}),
+    page: () => hostState(MESSAGES_ID).page,
+    suffix: () => globalThis.crypto.randomUUID().slice(0, 8),
+  }), [transport])
+  // The run each agent's session stands in (runFaces.ts), by its agent ref: the posture of an occupied agent's face.
+  const nowUnixMs = sessions?.nowUnixMs ?? 0
+  const runs = useMemo(() => new Map((tracks ?? []).filter(track => !track.group && track.agentRef).flatMap(track => {
+    const run = runStateOfSession(track, null, nowUnixMs)
+    return run ? [[track.agentRef!, run] as const] : []
+  })), [tracks, nowUnixMs])
+  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, project: RACK_PROJECT, holds}, ports),
+    [population, reading, conversation, review, runs, holds, ports])
 
   // The workcell rack: the workcell whose return track is selected, its seats, the chain devices' own values, and the Gateway's rows for the
   // macros — the same rows and the same write path the chain's Gateway writes through.

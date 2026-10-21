@@ -194,18 +194,18 @@ test('(b) every key the Day design reads is a reading, absent with its reason, o
     assert.ok(key in values || why[key] || own.has(key), `${key}: a reading, or absent with a reason`)
     if (key in values) assert.notEqual(values[key], undefined, key)
   }
-  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}})
-  for (const key of ['run_tasks', 'run_patterns', 'run_context', 'run_synthesis', 'rollover', 'agentWrites', 'closeRoutine', 'src_live', 'at_close', 'prompt_tasks', 'verifyCloseout']) {
-    assert.ok(binding.standing[key]?.disabled, `${key} stands disabled`)
-    await assert.rejects(binding.write([{key, value: true}]), new RegExp(key === 'verifyCloseout' ? 'T-COVERAGE §1\\.2' : 'T-COVERAGE §1\\.1'), key)
-  }
-  assert.equal(binding.standing.closeNow, undefined, 'Close now writes through Central\'s close-day')
+  // REPLACED (W2): the settings and the pads write through Central (central-person-writes.test.mjs); with no writers handed in here, a
+  // write is refused naming what is missing. Verify still waits on its kernel route.
+  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}}, OWN)
+  for (const key of ['run_tasks', 'rollover', 'agentWrites', 'closeRoutine', 'src_live', 'at_close', 'prompt_tasks']) assert.equal(binding.standing[key], undefined, `${key} acts`)
+  await assert.rejects(binding.write([{key: 'verifyCloseout', value: true}]), /T-COVERAGE §1\.2/)
+  assert.equal(binding.standing.closeNow, undefined, 'Close now writes through Central\'s close-carry')
 })
 
 test('(e) the Day draws its design on Central\'s readings in every view: the owner\'s prompt, the pads\' reasons, never the design\'s sample', () => {
   const values = day.dayValuesOf(READY_FACTS, null, OWN)
-  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}})
-  const all = drawsOn(dayDesign, binding, /Wed 15 Oct|Read face 0 and propose tasks in three tiers|63 handoff returns/, [day.DAY_STANDING.run_tasks.disabled])
+  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}}, OWN)
+  const all = drawsOn(dayDesign, binding, /Wed 15 Oct|Read face 0 and propose tasks in three tiers|63 handoff returns/, [day.DAY_STANDING.verifyCloseout.disabled])
   assert.ok(all.includes(escaped(REAL.daySettings.data.effective_prompts.tasks)), 'Tasks\' Prompt is Central\'s own')
   assert.match(all, /not yet/, 'a pad\'s record says no run has ended today')
 })
@@ -429,15 +429,17 @@ test('(e) Runs draws its design on the takes in every view, never the design\'s 
 const SCOPE_INPUT = {answer: {bound: true, session: 'agent-session/nara'}, horizon: {state: 'ready', data: {sources: [], changes: [], world_ref: 'control:root'}}, groundError: null,
   document: 'Day', packet: {items: 2, session: 'agent-session/nara'}, effective: {status: 'answered', value: REAL.effectiveSources.data}}
 
-test('REAL — Scope\'s reads are the world\'s effective sources, each a place on the Central ring; a place request waits on the person\'s route', async () => {
+test('REAL — Scope\'s reads are the world\'s effective sources, each a place on the Central ring; a write place has no field in the world\'s relations', async () => {
   const places = world.effectivePlacesOf(REAL.effectiveSources.data)
   assert.deepEqual(places.map(place => [place.name, place.ring]), [['Control/agents', 3], ['Control/relations', 3], ['Control/user/identity', 3]])
   assert.match(places[2].path, /canonical · from control:root/)
   const binding = world.centralScopeBinding(world.CENTRAL_SCOPE_ID, SCOPE_INPUT)
   assert.deepEqual(JSON.parse(binding.values.reads).map(place => place.id), ['packet', ...REAL.effectiveSources.data.sources.map(source => source.ref)])
   const w = `w:${REAL.effectiveSources.data.sources[0].ref}`
-  assert.match(binding.standing[w].disabled, /central\.world-relations\.save, which waits on the kernel route that carries the person's authority \(T-COVERAGE §1\.1\)/)
-  await assert.rejects(binding.write([{key: w, value: false}]), /T-COVERAGE §1\.1/)
+  // REPLACED (W2): a read place's include or exclude saves through central.world-relations.save (central-person-writes.test.mjs); a write
+  // place has no field in the world's relations.
+  assert.match(binding.standing[w].disabled, /missing op: the session's writable places/)
+  await assert.rejects(binding.write([{key: w, value: false}]), /missing op/)
   // Unanswered, or refused: as before, the change horizon's count stands as one place.
   const before = world.centralScopeBinding(world.CENTRAL_SCOPE_ID, {...SCOPE_INPUT, effective: {status: 'refused', error: 'x'}})
   assert.deepEqual(JSON.parse(before.values.reads).map(place => place.id), ['packet', 'world'])

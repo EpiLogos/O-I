@@ -28,7 +28,9 @@ import {documentBinding, flowBinding, highlightBinding, holdsVersion, notesBindi
   type PageMaterial, type ReachedPage} from './pageBindings'
 import {readDayPage, readFlowPage, wordsOfHtml, type FlowPage} from './pageReadings'
 import {dateOfDayPath} from '../daySurface'
-import {useDayDieReading} from './useCentralReadings'
+import {actionAnswerOf, centralActionOp, useCentralAction, useDayDieReading, type ActionAnswer} from './useCentralReadings'
+import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {CONTEMPLATE_FLOW_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_SELF_INSPECT_ACTION, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
 
 /** The Day device's document, as useDayDevice reads it (CentralDevices.tsx). */
 export interface DayDocumentReading {
@@ -141,6 +143,49 @@ const shellModeOf = (mode: string): ShellMode | undefined => SHELL_MODE_OF_BOOK[
 
 const clipboard = (text: string): Promise<void> => (typeof navigator !== 'undefined' && navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject(new Error('No clipboard here.')))
 
+/** The dispatch of one invoke_action as an answer (Central's or AIKit's data, or its words). */
+const answerOfCall = (call: Awaited<ReturnType<typeof kernelOp>>, action: string): ActionAnswer =>
+  call.error ? {status: 'refused', error: call.error} : actionAnswerOf({status: 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: null}, action)
+
+/** The Flow's Thought page (pageGround.ts): the preflight, the one run and what changed since, each asked by a press for the Flow's AIKit
+ * Flow ref (its document id, as the cradle names it: CradleFrame.tsx `flow.flowRef`), held for that Flow in this window only. */
+export function useFlowThought(transport: KernelTransportStatus, flowRef: string | null): {state: FlowThought; hand: ThoughtHand | null} {
+  const [held, setHeld] = useState<{ref: string; state: FlowThought} | null>(null)
+  const state: FlowThought = held && held.ref === flowRef ? held.state : {flowRef}
+  const hand = useMemo((): ThoughtHand | null => !flowRef || transport.kind === 'unavailable' ? null : {
+    preflight: async () => {
+      const call = await kernelOp(transport, {op: 'invoke_action', invocation: {action: CONTEMPLATE_FLOW_ACTION, target_ref: flowRef}})
+      setHeld({ref: flowRef, state: {flowRef, preflight: answerOfCall(call, CONTEMPLATE_FLOW_ACTION)}})
+    },
+    contemplate: async record => {
+      const call = await kernelOp(transport, {op: 'invoke_action', invocation: {action: CONTEMPLATE_FLOW_ACTION, target_ref: flowRef, input: {execute: record}}})
+      setHeld(was => ({ref: flowRef, state: {...(was?.ref === flowRef ? was.state : {flowRef}), thought: answerOfCall(call, CONTEMPLATE_FLOW_ACTION), since: undefined}}))
+    },
+    since: async thought => {
+      const call = await kernelOp(transport, {op: 'flow_changed_since', thought})
+      const since: FlowThought['since'] = call.outcome?.result === 'flow_changed_since' ? {status: 'answered', value: call.outcome.reading} : {status: 'refused', error: call.error ?? 'The kernel did not answer what changed since the thought.'}
+      setHeld(was => ({ref: flowRef, state: {...(was?.ref === flowRef ? was.state : {flowRef}), since}}))
+    },
+  }, [transport, flowRef])
+  return {state, hand}
+}
+
+/** The Workspace's Ground and Self pages (pageGround.ts): Central's inspection and self reading of the workspace's project world, held for
+ * the window; the preview asked by a press. No project (a workspace of your root): nothing is asked. */
+export function useWorkspaceGround(transport: KernelTransportStatus, project: string | null): WorkspaceGround {
+  const input = useMemo(() => (project ? {project} : null), [project])
+  const pc = useCentralAction(transport, PC_INSPECT_ACTION, input)
+  const self = useCentralAction(transport, PC_SELF_INSPECT_ACTION, input)
+  const [plan, setPlan] = useState<{project: string; treatment: 'adopt' | 'migrate'; answer: ActionAnswer} | null>(null)
+  const preview = useCallback(async (treatment: 'adopt' | 'migrate', source: string) => {
+    if (!project) return
+    const call = await kernelRead(transport, centralActionOp(PC_PREVIEW_ACTION[treatment], {project, source}), {fresh: true})
+    setPlan({project, treatment, answer: answerOfCall(call, PC_PREVIEW_ACTION[treatment])})
+  }, [transport, project])
+  return useMemo(() => ({project, ...(project ? {pc, self, preview} : {}), ...(plan && plan.project === project ? {plan: {treatment: plan.treatment, answer: plan.answer}} : {})}),
+    [project, pc, self, preview, plan])
+}
+
 /** The page family's readings and bindings over the reached document, the Day device's document, the roster and the workspace book. */
 export function usePageDevices(transport: KernelTransportStatus, day: DayDocumentReading): PageDevices {
   // The page family's devices speak of a Day or a Flow; a Being or a Thing reached in its pane leaves them as when none is reached.
@@ -173,12 +218,16 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
   const refreshFlow = flow.refresh
   const current = book?.current as unknown as BookWorkspace | undefined
   const switchMode = book?.setMode, rename = book?.rename, setLayout = book?.setLayout
+  // The Flow's Thought, for its AIKit Flow ref; the workspace's world's ground, for its project (W2: pageGround.ts).
+  const flowPage = flow.page
+  const thought = useFlowThought(transport, flowPage?.documentId ?? null)
+  const ground = useWorkspaceGround(transport, current?.project ?? null)
   return useMemo((): PageDevices => {
     const bindings: Record<string, DesignBinding> = {}
     const fulls: Record<string, OwnFull> = {}
     const id = centralDeviceId
     if (current) {
-      bindings[id('workspace')] = workspaceBinding(id('workspace'), current, Date.now(), switchMode && rename ? {switchMode: mode => { const shell = shellModeOf(mode); if (!shell) throw new Error(`${mode} is no mode of the shell.`); switchMode(shell) }, rename} : null)
+      bindings[id('workspace')] = workspaceBinding(id('workspace'), current, Date.now(), switchMode && rename ? {switchMode: mode => { const shell = shellModeOf(mode); if (!shell) throw new Error(`${mode} is no mode of the shell.`); switchMode(shell) }, rename} : null, ground)
     }
     if (!doc || !reached) {
       return {form: null, book: !!book, bindings, fulls, reads: {page: null, workspace: current ? {name: current.name, mode: current.layout.mode ?? 'base'} : null, flow: null},
@@ -199,7 +248,7 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
         // The hosted face holds no draft (the append refuses while it does): it reads the page again, with the entry on it.
         doc.reread?.()
       }, ...(meta ? {meta} : {})} : null
-      bindings[id('flow-document')] = flowBinding(id('flow-document'), reached, material, agents, writers)
+      bindings[id('flow-document')] = flowBinding(id('flow-document'), reached, material, agents, writers, thought)
       bindings[id('text')] = textBinding(id('text'), reached, material)
       bindings[id('highlight')] = highlightBinding(id('highlight'), reached, material)
       bindings[id('notes')] = notesBinding(id('notes'), reached, material)
@@ -221,6 +270,6 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
     }
     // The holds' version re-binds the view's own keys; `heldOf` reads them inside the builders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc, reached, material, agents, current, switchMode, rename, setLayout, location, transport, refreshFlow, book, version])
+  }, [doc, reached, material, agents, current, switchMode, rename, setLayout, location, transport, refreshFlow, book, version, thought, ground])
 }
 

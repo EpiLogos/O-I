@@ -129,3 +129,37 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   assert.match(read('agent/devices/useAgentChainReading.ts'), /kernelRead\(transport, \{op: 'harness_agent_read', binding\}\)/)
   assert.doesNotMatch(publisher, /APPROVALS_ID/, 'Approvals stays Factory\'s Main track effect')
 })
+
+test('the harness binding is read once for the window: the chain and the rail\'s publisher share the held answer (harness_status, harness_agent_read)', async () => {
+  const {useAgentChainReading} = await import('../src/agent/devices/useAgentChainReading.ts')
+  // A counting stand-in for the kernel bridge: each op asked is recorded; the harness answers in its own shapes, every other read refuses.
+  const asked = []
+  const realFetch = globalThis.fetch
+  globalThis.fetch = async (url, init) => {
+    const op = JSON.parse(init.body)
+    asked.push(op.binding ? `${op.op}:${op.binding}` : op.op)
+    const outcome = op.op === 'harness_status' ? {result: 'harness_status_reading', data: {harnesses: [{id: 'pi', binding: 'pi'}]}}
+      : op.op === 'harness_agent_read' ? {result: 'harness_agent_reading', binding: op.binding, document: {state: 'ready'}} : null
+    return {json: async () => (outcome ? {ok: true, outcome} : {ok: false, error: `${op.op} is not answered in this suite`})}
+  }
+  const bridge = {kind: 'bridge', url: 'http://kernel.test/harness-shared'}
+  /** What the chain reads (FactoryDeviceChain.tsx: useAgentChainReading for its session). */
+  function ChainReads() { useAgentChainReading('agent-session/one'); return null }
+  const container = new Element_('div')
+  document_.body.appendChild(container)
+  const root = createRoot(container)
+  try {
+    flushSync(() => root.render(createElement(StubWorkspaceProvider, {transport: bridge}, createElement(ChainReads), createElement(rail.AgentRailDevices))))
+    for (let tick = 0; tick < 20 && !asked.includes('harness_agent_read:pi'); tick++) await new Promise(resolve => setTimeout(resolve, 10))
+    await settle()
+    assert.equal(asked.filter(op => op === 'harness_status').length, 1, 'harness_status: one ask for both readers')
+    // Each binding is one ask for both readers: the shell's default before the owner names one, then the binding the owner named.
+    assert.equal(asked.filter(op => op === 'harness_agent_read:pi').length, 1, 'harness_agent_read on the named binding: one ask for both readers')
+    assert.ok(asked.filter(op => op === 'harness_agent_read:cursor').length <= 1, 'and on the default, at most one')
+  } finally {
+    flushSync(() => root.unmount())
+    document_.body.removeChild(container)
+    globalThis.fetch = realFetch
+  }
+})
+
