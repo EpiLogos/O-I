@@ -18,7 +18,7 @@
  */
 import {useCallback, useMemo, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
-import {kernelOp} from "../../../kernel/bridge";
+import {kernelRead} from "../../../kernel/bridge";
 import type {KernelTransportStatus} from "../../../kernel/types";
 import {useScope, scopeProject} from "../../../workspace/scope";
 import {openIntent, openObject} from "../../../agent/objects";
@@ -31,7 +31,7 @@ import "../desk/fdesk.css";
 export interface RosterProfile {agentRef: string; name?: string; purpose?: string; accepted: boolean; skillRefs: string[]}
 
 export async function readRoster(transport: KernelTransportStatus, project: string | undefined): Promise<RosterProfile[]> {
-  const result = await kernelOp(transport, {op: "agent_definition", project: project ?? null, request: {action: "roster"}});
+  const result = await kernelRead(transport, {op: "agent_definition", project: project ?? null, request: {action: "roster"}});
   if (result.error || result.outcome?.result !== "agent_definition_reading") throw new Error(result.error ?? "The agent roster did not answer");
   const data = result.outcome.data as {profiles?: {accepted?: boolean; profile?: {agent_ref?: string; name?: string; purpose?: string; skill_refs?: string[]}}[]};
   return (data.profiles ?? []).filter(row => row.profile?.agent_ref).map(row => ({

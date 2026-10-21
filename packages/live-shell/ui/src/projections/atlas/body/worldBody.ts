@@ -12,7 +12,7 @@
 // Bound by the atlas's attach (AtlasProjectionPanel.tsx) for as long as the Earth stands, released with it.
 
 import type {KernelTransportStatus, WorldBodyReading} from '../../../../../../../desktop/cradle/src/kernel/types'
-import {kernelOp} from '../../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import {ACTOR, invoke, newRef, object, readRegister} from '../../../../../../../desktop/cradle/src/knowledge/construction'
 import {
   CONTINENTS_RANGE, TILT_RANGE, WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, isWorldBody, nextSeed, parseWorldBody, type WorldBodyRecord,
@@ -204,7 +204,7 @@ export function baseBody(state: Extract<WorldBodyState, {state: 'read'}>): World
 export function kernelWorldBodyOwner(transport: KernelTransportStatus, project?: string): WorldBodyOwner {
   return {
     async read() {
-      const call = await kernelOp(transport, {op: 'world_body_read', project: project ?? null})
+      const call = await kernelRead(transport, {op: 'world_body_read', project: project ?? null})
       if (call.outcome?.result !== 'world_body_reading') throw Error(('error' in call ? call.error : undefined) ?? 'The kernel did not return your world’s body.')
       return call.outcome.document
     },

@@ -13,7 +13,7 @@
 // Read only while `enabled` (a design that draws the owner's members): the plane's resolve is the heaviest read the rack has
 // (14 s on this machine, 16 Oct), so nothing is asked of it for a device that does not draw it.
 import {useEffect, useMemo, useState} from 'react'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {ChangeSetDocumentWire, ConfigRequestWire, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {planeScope, type ComposePlan, type ComposePorts, type ComposeScope} from './designBindings'
 
@@ -37,7 +37,7 @@ export interface RackReading {
 const NONE: RackReading = {sets: {}, setList: null, skills: null, capabilities: null, profiles: null, refused: {}}
 
 async function definition(transport: KernelTransportStatus, request: {action: 'skillsets' | 'skills'} | {action: 'skillset'; name: string}): Promise<{value?: unknown; error?: string}> {
-  const result = await kernelOp(transport, {op: 'agent_definition', project: RACK_PROJECT, request})
+  const result = await kernelRead(transport, {op: 'agent_definition', project: RACK_PROJECT, request})
   if (result.error || result.outcome?.result !== 'agent_definition_reading') return {error: result.error ?? 'AIKit did not answer the reading'}
   return {value: result.outcome.data}
 }
@@ -63,7 +63,7 @@ export function useRackReading(transport: KernelTransportStatus, profile: {reado
       const skills = await definition(transport, {action: 'skills'})
       if (list.error) refused.setList = list.error
       if (skills.error) refused.skills = skills.error
-      const resolved = await kernelOp(transport, {op: 'config_resolutions_read', pairs: [
+      const resolved = await kernelRead(transport, {op: 'config_resolutions_read', pairs: [
         {setting_ref: 'ai-kit:skills:skills.capabilities', scope: pairScope},
         {setting_ref: 'ai-kit:resolution:resolution.profiles', scope: pairScope},
       ]})

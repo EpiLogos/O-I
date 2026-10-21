@@ -34,6 +34,9 @@ export function readingsChangedOf(receipt: KernelReceipt): ReadingsChanged | nul
 export interface ReadingsChangedDriver {
   /** Take receipts as they arrive; any notice among them schedules the re-read. */
   receive(receipts: readonly KernelReceipt[]): void
+  /** Something this window did moved an owner's ground (a write completed): every held answer is retired at once, without waiting
+   * for the kernel's notice, so the read that follows a write is the owner's. */
+  now(): void
   /** Drop a scheduled re-read (the window is closing). */
   dispose(): void
 }
@@ -47,6 +50,10 @@ export function createReadingsChangedDriver(registry: OwnerReadings = ownerReadi
       if (!receipts.some(receipt => readingsChangedOf(receipt))) return
       if (pending !== null) timers.clear(pending)
       pending = timers.set(() => { pending = null; void registry.moved() }, delayMs)
+    },
+    now() {
+      if (pending !== null) { timers.clear(pending); pending = null }
+      void registry.moved()
     },
     dispose() { if (pending !== null) { timers.clear(pending); pending = null } },
   }

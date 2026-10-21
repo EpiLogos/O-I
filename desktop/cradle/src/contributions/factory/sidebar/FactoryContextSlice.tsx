@@ -12,7 +12,7 @@
  */
 import {useEffect, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
-import {kernelOp} from "../../../kernel/bridge";
+import {kernelRead} from "../../../kernel/bridge";
 import type {NativeFileEntry} from "../../../kernel/types";
 import {useScope, scopeProject} from "../../../workspace/scope";
 import {openObject} from "../../../agent/objects";
@@ -33,7 +33,7 @@ export function FactoryContextSlice() {
   useEffect(() => {
     if (!project) { setIntent([]); return; }
     let live = true;
-    void kernelOp(kernel.transport, {op: "files_list", path: `Work/${project}/ProjectCentral/user`}).then(result => {
+    void kernelRead(kernel.transport, {op: "files_list", path: `Work/${project}/ProjectCentral/user`}).then(result => {
       if (!live) return;
       const entries = result.outcome?.result === "directory_read" ? (result.outcome as unknown as {directory: {entries: NativeFileEntry[]}}).directory.entries : [];
       setIntent(entries.filter(file => file.kind === "file" && (INTENT_FILE.test(file.name) || file.name === `${project}.html`)));

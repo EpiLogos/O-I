@@ -75,7 +75,7 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
   return { ...outcome, receipts: outcome.receipts ?? [] };
 }
 
-export async function kernelOp(
+export async function kernelReadSend(
   transport: KernelTransportStatus,
   op: KernelOp,
   signal?: AbortSignal,
@@ -100,6 +100,51 @@ export async function kernelOp(
   } catch (error) {
     return { outcome: null, error: String(error) };
   }
+}
+
+/** Ops that change what an owner holds, whatever else they return: an op in this set, or a mixed op whose request is not a read,
+ * tells the window's held readings that they may no longer be the owner's (`onKernelWrite`). Over-telling costs a re-read, never a
+ * wrong answer. */
+const WRITING_OPS: ReadonlySet<string> = new Set(["invoke_action", "file_operation", "decide", "decision_episode_revoke", "decision_preflight", "theme_import", "theme_apply", "theme_revert", "theme_remove",
+  "nara_decision_record", "live_device_param_write", "live_clip_write", "live_track_mixer_write", "live_take_comp", "live_groove_pool_write", "harness_agent_control", "chat_default_hold",
+  "chat_default_discard", "credential_setup", "credential_rotate", "credential_revoke", "client_install", "product_action_run", "dictation_configure", "working_surface_attachment",
+  "encounter_provision", "flow_participant_provision", "receiving", "factory_owner", "config_apply_reviewed", "encounter", "a2a_exchange", "routine", "shared_field", "ground", "setup"]);
+const READING_REQUESTS: ReadonlySet<string> = new Set(["inspect", "index", "list", "read", "find_checkpoint", "source-location", "agent-set", "open-day", "roster"]);
+export function writesOwner(op: KernelOp): boolean {
+  if (WRITING_OPS.has(op.op)) return true;
+  const request = (op as { request?: { kind?: unknown; operation?: unknown; action?: unknown } }).request;
+  if (op.op === "central" || op.op === "now" || op.op === "page" || op.op === "expression" || op.op === "expression_recovery" || op.op === "encounter_session_settings" || op.op === "knowledge" || op.op === "agent_definition") {
+    const kind = request?.kind ?? request?.operation ?? request?.action;
+    return typeof kind === "string" ? !READING_REQUESTS.has(kind) && !/^(?:read|list|inspect|search|relations|resolve|status)/.test(kind) : false;
+  }
+  return false;
+}
+const writeListeners = new Set<() => void>();
+/** Hear that an op which may change an owner's ground completed. */
+export function onKernelWrite(listener: () => void): () => void { writeListeners.add(listener); return () => { writeListeners.delete(listener); }; }
+
+export async function kernelOp(
+  transport: KernelTransportStatus,
+  op: KernelOp,
+  signal?: AbortSignal,
+): Promise<KernelOpCall> {
+  const call = await kernelReadSend(transport, op, signal);
+  if (!call.error && writesOwner(op)) for (const listener of [...writeListeners]) listener();
+  return call;
+}
+
+/** What holds a read of the kernel for the window: one answer per op and transport, asked once however many readers want it, kept
+ * until the kernel says its sources moved (the shell installs it, packages/live-shell/ui/src/owners/ownerCall.ts). Without one a
+ * read goes to the kernel each time (a host with no shared store, a test). */
+export type KernelReadHolder = (transport: KernelTransportStatus, op: KernelOp, fresh: boolean) => Promise<KernelOpCall>;
+let readHolder: KernelReadHolder | null = null;
+export function installKernelReadHolder(holder: KernelReadHolder | null): void { readHolder = holder; }
+
+/** A kernel op that only reads. It is answered from the window's held answer when one stands for the same op; `fresh` asks the
+ * kernel again and replaces it. A write, or a read whose answer must be the owner's now, goes through `kernelOp`. */
+export function kernelRead(transport: KernelTransportStatus, op: KernelOp, options: { fresh?: boolean; signal?: AbortSignal } = {}): Promise<KernelOpCall> {
+  if (readHolder && !options.signal) return readHolder(transport, op, options.fresh === true);
+  return kernelReadSend(transport, op, options.signal);
 }
 
 const safeSequence = (value: unknown, minimum: number): value is number =>

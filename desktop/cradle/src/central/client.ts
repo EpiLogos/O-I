@@ -1,4 +1,4 @@
-import {kernelOp} from "../kernel/bridge";
+import {kernelOp,kernelRead} from "../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import type {DayReading} from "../day/client";
 import {validateNow,type NowListing} from "../receiving/now";
@@ -66,12 +66,15 @@ export function validateDayOpen(value:unknown,project:string|null):DayOpen {
  if(project===null&&value.location.path!==day.source.path)throw new Error("Day source location was redirected");
  return value as unknown as DayOpen;
 }
-export async function central<T=unknown>(transport:KernelTransportStatus,project:string|null,request:CentralRequest):Promise<T> {
- const result=await kernelOp(transport,{op:"central",project,request});
+/** The requests that only read: answered from the window's held reading until the kernel says the ground moved. The rest act. */
+const READS:ReadonlySet<string>=new Set(["inspect","source-location","agent-set"]);
+export async function central<T=unknown>(transport:KernelTransportStatus,project:string|null,request:CentralRequest,fresh=false):Promise<T> {
+ const op:import("../kernel/types").KernelOp={op:"central",project,request};
+ const result=READS.has(request.kind)?await kernelRead(transport,op,{fresh}):await kernelOp(transport,op);
  if(result.error||result.outcome?.result!=="central_reading")throw new Error(result.error??"Central did not return its native reading");
  return result.outcome.data as T;
 }
-export async function readGround(transport:KernelTransportStatus,project:string|null):Promise<CentralGroundReading>{return validateGround(await central(transport,project,{kind:"inspect"}),project);}
+export async function readGround(transport:KernelTransportStatus,project:string|null,fresh=false):Promise<CentralGroundReading>{return validateGround(await central(transport,project,{kind:"inspect"},fresh),project);}
 export async function openDay(transport:KernelTransportStatus,project:string|null,day_ref?:string):Promise<DayOpen>{return validateDayOpen(await central(transport,project,{kind:"open-day",day_ref}),project);}
 export async function sourceLocation(transport:KernelTransportStatus,project:string|null,source_ref:string):Promise<CentralLocation>{
  const result=await central<{schema:string;project:string|null;source_ref:string;location:CentralLocation}>(transport,project,{kind:"source-location",source_ref});

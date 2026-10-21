@@ -148,8 +148,14 @@ export class OwnerReadingEntry<T> {
     const epoch = this.state.epoch
     if (epoch === null || this.state.status === 'reading') return Promise.resolve()
     if (this.listeners.size === 0) { this.unread = true; return Promise.resolve() }
+    // A driver reads this answer on the notice itself (owners/agency.ts), with a hook after it: not asked twice.
+    if (this.driven) return Promise.resolve()
     return this.askAfter(epoch)
   }
+
+  private driven = false
+  /** A driver takes over reading this answer on the kernel's notice (`moved` then leaves it to the driver). */
+  drive(on: boolean): void { this.driven = on }
 
   /** The age of the standing answer at `at`, or null when none stands. */
   ageAt(at: number): number | null {
@@ -195,8 +201,11 @@ export class OwnerReadingEntry<T> {
 }
 
 export interface OwnerReadings {
-  /** The entry for `key`, made on first use; every caller with the same key gets the same entry. */
-  entry<T>(key: string, read: OwnerRead<T>): OwnerReadingEntry<T>
+  /** The entry for `key`, made on first use; every caller with the same key gets the same entry. A `volatile` entry's answer is
+   * never kept across a relaunch (file contents, which the window's storage should not carry). */
+  entry<T>(key: string, read: OwnerRead<T>, volatile?: boolean): OwnerReadingEntry<T>
+  /** A read made with no subscriber is done: let the entry go like one whose last reader left (bounded as the unread are). */
+  park(entry: OwnerReadingEntry<unknown>): void
   /** Every held entry (a test's census; a notice that refreshes all of one family). */
   entries(): OwnerReadingEntry<unknown>[]
   /** The kernel's notice that owner sources moved: every held answer is marked unread, and those with live readers are asked again. */
@@ -225,11 +234,12 @@ export function createOwnerReadings(now: () => number = Date.now, kept?: KeptRea
     }
   }
   return {
-    entry<T>(key: string, read: OwnerRead<T>): OwnerReadingEntry<T> {
+    park: entry => { if (entry.readers === 0) release(entry) },
+    entry<T>(key: string, read: OwnerRead<T>, volatile = false): OwnerReadingEntry<T> {
       let entry = held.get(key) as OwnerReadingEntry<T> | undefined
       unread.delete(key)
       if (!entry) {
-        entry = new OwnerReadingEntry<T>(key, read, now, release as (entry: OwnerReadingEntry<T>) => void, kept?.get(key) ?? null, answer => kept?.put(key, answer))
+        entry = new OwnerReadingEntry<T>(key, read, now, release as (entry: OwnerReadingEntry<T>) => void, volatile ? null : kept?.get(key) ?? null, answer => { if (!volatile) kept?.put(key, answer) })
         held.set(key, entry as OwnerReadingEntry<unknown>)
       } else entry.rebind(read)
       return entry

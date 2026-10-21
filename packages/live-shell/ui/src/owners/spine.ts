@@ -31,6 +31,9 @@ export function publishSpineEpoch(key: string): void {
   for (const listener of [...listeners]) listener()
 }
 
+/** The key now, for code outside React (a read made from an effect or a model builder). */
+export function currentSpineEpoch(): string { return published }
+
 /** The current spine key: the providers' when they stand above the reader, else the last one a provider-held reader
  * published (a constant in a fixture or a test, where nothing moves the epoch). */
 export function useSpineEpoch(): string {

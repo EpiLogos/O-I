@@ -1,6 +1,6 @@
 import {useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import {kernelOp} from "../kernel/bridge";
+import {kernelOp, kernelRead} from "../kernel/bridge";
 import type {NativeDirectory} from "../kernel/types";
 /** Remembered notes, read (the U3.3 named open, queue cell D): a register's
  * remembered ground is plain owner files, listed through the owner's
@@ -21,7 +21,7 @@ export function RememberedList({path,label}:{path:string;label:string}) {
  const [pending,setPending]=useState(false);
  useEffect(()=>{
   let live=true;setPending(true);setAbsent(false);setError(undefined);
-  void kernelOp(kernel.transport,{op:"files_list",path}).then(result=>{
+  void kernelRead(kernel.transport,{op:"files_list",path}).then(result=>{
    if(result.error||result.outcome?.result!=="directory_read")throw new Error(result.error??"the listing did not serve");
    if(live){setEntries(result.outcome.directory);setError(undefined);}
   }).catch(reason=>{

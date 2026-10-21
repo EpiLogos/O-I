@@ -30,7 +30,7 @@ const {createOwnerReadings, useOwnerReading, KEPT_UNREAD, answersOf, ensureInOrd
 const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {readTaskOf, readRosterOf, readWorkcellOf, taskReadingKey, rosterReadingKey, workcellReadingKey, refreshHeld, composeRoster, TASK_OP} = await import('../src/owners/readers.ts')
-const {createAgencyDriver, agencyReadingKey, readAgencyOf, AGENCY_FLOOR_MS, agencyFingerprint} = await import('../src/owners/agency.ts')
+const {createAgencyDriver, agencyReadingKey, readAgencyOf, agencyFingerprint} = await import('../src/owners/agency.ts')
 const {receiptMovesTemporal, receiptMovesAgency} = await import('../src/owners/notices.ts')
 
 const settle = async () => { for (let i = 0; i < 6; i++) await new Promise(resolve => setImmediate(resolve)) }
@@ -376,22 +376,19 @@ function agencyHarness(t) {
     return Promise.resolve(answer)
   })
   const off = entry.subscribe(() => {})
-  let visible = true
   const attention = new Set()
   const told = new Set()
   const settled = []
   const driver = createAgencyDriver(entry, {
     epoch: EPOCH,
-    visible: () => visible,
     onAttention: listener => { attention.add(listener); return () => attention.delete(listener) },
     onTold: listener => { told.add(listener); return () => told.delete(listener) },
     onRead: (_reading, cause) => settled.push(cause),
   })
   return {
-    entry, driver, settled,
+    entry, driver, settled, registry,
     get reads() { return reads },
     setRows: next => { rows = next },
-    setVisible: next => { visible = next },
     regain: () => { for (const listener of attention) listener() },
     tell: cause => { for (const listener of told) listener(cause) },
     holdNext: () => new Promise(resolve => { hold = resolve }),
@@ -399,40 +396,38 @@ function agencyHarness(t) {
   }
 }
 
-test('agency is read on mount, then at a slow floor (>= 15 s) while the window is seen — not every 3 s', async (t) => {
+test('agency is read on mount and then only when something says it may have moved — no timer at all', async (t) => {
   const h = agencyHarness(t)
   await settle()
   assert.equal(h.reads, 1, 'read on mount')
-  assert.ok(AGENCY_FLOOR_MS >= 15_000, 'the floor is slow and honest')
-  t.mock.timers.tick(3_000)
+  t.mock.timers.tick(60 * 60_000)
   await settle()
-  assert.equal(h.reads, 1, 'no 3 s cadence')
-  t.mock.timers.tick(AGENCY_FLOOR_MS - 3_000)
+  assert.equal(h.reads, 1, 'an hour of a seen window asks the owner nothing')
+  h.driver.observe([{seq: 1, schema: 'oi.kernel-event/v1', version: 1, event: 'readings_changed', scopes: ['seats'], epoch: 1}])
+  h.driver.observe([{seq: 1, schema: 'oi.kernel-event/v1', version: 1, event: 'readings_changed', scopes: ['seats'], epoch: 1}, {seq: 2, schema: 'oi.kernel-event/v1', version: 1, event: 'readings_changed', scopes: ['seats'], epoch: 2}])
   await settle()
-  assert.equal(h.reads, 2, 'the floor reads once while the window is seen')
-  t.mock.timers.tick(AGENCY_FLOOR_MS)
+  assert.equal(h.reads, 1, 'the seats moving cannot move the sessions AIKit keeps')
+  h.driver.observe([{seq: 2, schema: 'oi.kernel-event/v1', version: 1, event: 'readings_changed', scopes: ['seats'], epoch: 2}, {seq: 3, schema: 'oi.kernel-event/v1', version: 1, event: 'readings_changed', scopes: ['aikit'], epoch: 3}])
   await settle()
-  assert.equal(h.reads, 3)
-  assert.deepEqual(h.settled, ['mount', 'floor', 'floor'])
+  assert.equal(h.reads, 2, 'AIKit\'s home moving reads once')
+  assert.deepEqual(h.settled, ['mount', 'kernel receipt readings_changed'])
+  // The registry leaves a driven answer to its driver: a moved() asks nothing a second time.
+  await h.registry.moved()
+  await settle()
+  assert.equal(h.reads, 2, 'the registry\'s notice does not double the driver\'s read')
   h.stop()
 })
 
-test('agency is never read while the window is hidden; coming back to it reads at once', async (t) => {
+test('coming back to the window reads at once, however long it was away', async (t) => {
   const h = agencyHarness(t)
   await settle()
-  h.setVisible(false)
-  t.mock.timers.tick(AGENCY_FLOOR_MS * 10)
+  t.mock.timers.tick(10 * 60_000)
   await settle()
-  assert.equal(h.reads, 1, 'hidden for five minutes: no read')
-  h.setVisible(true)
+  assert.equal(h.reads, 1, 'away for ten minutes: no read')
   h.regain()
   await settle()
   assert.equal(h.reads, 2, 'the window regained is a notice')
   assert.equal(h.settled.at(-1), 'window regained')
-  // The floor counts from that read.
-  t.mock.timers.tick(AGENCY_FLOOR_MS)
-  await settle()
-  assert.equal(h.reads, 3)
   h.stop()
 })
 

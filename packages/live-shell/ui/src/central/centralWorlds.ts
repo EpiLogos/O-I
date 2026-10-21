@@ -5,7 +5,7 @@
 // and placed by its island through the page owner (kernel/src/page.rs `list`): your world's folder is Control/user/flows (Central's
 // one creation door in Control ground), a project's its human ground (ProjectCentral/user, whose door is projectcentral.source.create).
 // A file that is no page is named by the listing, never shown as a clip.
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus, RootWorld} from '../../../../../desktop/cradle/src/kernel/types'
 import {listWorldPages, type PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
 
@@ -51,7 +51,7 @@ export async function readWorlds(transport: KernelTransportStatus | undefined, s
   if (!transport) return {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'}
   if (transport.kind === 'unavailable') return {state: 'unavailable', reason: transport.reason}
   for (let attempt = 1; ; attempt++) {
-    const answer = await kernelOp(transport, {op: 'world_browse'})
+    const answer = await kernelRead(transport, {op: 'world_browse'}, {fresh: attempt > 1})
     if (answer.error || answer.outcome?.result !== 'world_read') return {state: 'unavailable', reason: answer.error ?? 'Central did not disclose its worlds'}
     const navigator = answer.outcome.snapshot.navigator
     if (navigator?.root) return {state: 'read', worlds: worldsOf(navigator.root)}

@@ -6,7 +6,7 @@
 // the seat are the window's shared answers (owners/readers.ts) — the same ones the sessions provider, the agent browser and the
 // Central devices read, one owner read between them; the gateway and the repository are read here, for the bound harness.
 import {useEffect, useMemo, useState} from 'react'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useWorkspace} from '../../shell/workspaceContext'
 import {OWNER_BINDINGS, missingOpRemedy, ownerRefusalLine} from '../agentChainDrag'
@@ -39,7 +39,7 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
     setOwn(null)
     if (transport.kind === 'unavailable') return
     void (async () => {
-      const gatewayOp = await kernelOp(transport, {op: 'harness_agent_read', binding})
+      const gatewayOp = await kernelRead(transport, {op: 'harness_agent_read', binding})
       const gatewayOutcome = gatewayOp.error ? null : gatewayOp.outcome
       const gatewayReading = gatewayOutcome?.result === 'harness_agent_reading' ? gatewayOutcome : null
       const gatewayAnswered = !!gatewayReading && !(isObj(gatewayReading.document) && 'refused' in gatewayReading.document)
@@ -53,7 +53,7 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
             : {kind: 'reading', title: 'Gateway · hermes', line: `binding ${gatewayReading.binding} · ${gatewayLine(gatewayReading.document)}`, receipt: safeJson(gatewayReading.document)},
       }
       if (live) setOwn(previous => ({gateway, gatewayWaiting: gatewayAnswered ? null : OWNER_BINDINGS.gateway.owner, git: previous?.git ?? null}))
-      const gitOp = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
+      const gitOp = await kernelRead(transport, {op: 'git_repository_read', project: 'O-I'})
       const doc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null
       if (live) setOwn(previous => ({gateway, gatewayWaiting: previous?.gatewayWaiting ?? null, git: {doc, error: gitOp.error ?? null}}))
     })()

@@ -1,14 +1,15 @@
-import {kernelOp} from "../kernel/bridge";
+import {kernelOp,kernelRead} from "../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus, NativeDirectory, NativeFileBytes, NativeFileReading} from "../kernel/types";
-/** `fresh` bypasses the kernel's short-horizon read cache for this one
- * listing — the explicit refresh affordance, not an ordinary expansion. */
+/** A listing is answered from the window's held reading until the kernel says the ground moved (kernel/bridge.ts kernelRead).
+ * `fresh` asks the owner again and replaces it — the explicit refresh affordance, not an ordinary expansion. */
 export async function listFiles(transport:KernelTransportStatus,path:string,fresh=false):Promise<NativeDirectory> {
-  const result=await kernelOp(transport,fresh?{op:"files_list",path,fresh}:{op:"files_list",path});
+  const result=await kernelRead(transport,fresh?{op:"files_list",path,fresh}:{op:"files_list",path},{fresh});
   if(result.error || result.outcome?.result!=="directory_read")throw new Error(result.error??"Central did not return a directory reading");
   return result.outcome.directory;
 }
-export async function readFile(transport:KernelTransportStatus,location:CentralLocation):Promise<NativeFileReading> {
-  const result=await kernelOp(transport,{op:"file_read",location});
+/** A file reading, held like a listing; `fresh` for a read that precedes a write or answers an explicit refresh. */
+export async function readFile(transport:KernelTransportStatus,location:CentralLocation,fresh=false):Promise<NativeFileReading> {
+  const result=await kernelRead(transport,{op:"file_read",location},{fresh});
   if(result.error || result.outcome?.result!=="file_read")throw new Error(result.error??"Central did not return a file reading");
   return result.outcome.reading;
 }
@@ -16,7 +17,7 @@ export async function readFile(transport:KernelTransportStatus,location:CentralL
  * owner's mime hint. Used for images and any renderer that needs raw
  * bytes rather than the UTF-8 text contract. */
 export async function readFileBytes(transport:KernelTransportStatus,location:CentralLocation):Promise<NativeFileBytes> {
-  const result=await kernelOp(transport,{op:"file_bytes",location});
+  const result=await kernelRead(transport,{op:"file_bytes",location});
   if(result.error || result.outcome?.result!=="file_bytes")throw new Error(result.error??"Central did not return a material reading");
   const {location:loc,revision,byte_len,mime_hint,content_base64,source}=result.outcome;
   return {location:loc,revision,byte_len,mime_hint,content_base64,source};
@@ -42,7 +43,7 @@ export async function lastFileReading(transport:KernelTransportStatus,location:C
 
 /** Resolve an opaque native path reference in its owner; never parse it here. */
 export async function resolveFileLocation(transport:KernelTransportStatus,reference:string):Promise<CentralLocation>{
- const result=await kernelOp(transport,{op:"file_resolve",reference});
+ const result=await kernelRead(transport,{op:"file_resolve",reference});
  if(result.error||result.outcome?.result!=="file_resolved")throw Error(result.error??"Central did not resolve this file");
  if(result.outcome.location.ref!==reference)throw Error("Central redirected the file reference");
  return result.outcome.location;

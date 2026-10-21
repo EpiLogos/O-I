@@ -11,7 +11,7 @@
  * Nothing here is bound by default; an unregistered kind renders its own
  * named unavailable state in the component that needs it.
  */
-import { kernelOp } from "../kernel/bridge";
+import { kernelRead } from "../kernel/bridge";
 import type { KernelTransportStatus } from "../kernel/types";
 import type { AgencyReading, AgencySessionRow, AgentDraft, GuardianRecord, SetupProposalRecord } from "./agencyTypes";
 
@@ -23,7 +23,7 @@ import type { AgencyReading, AgencySessionRow, AgentDraft, GuardianRecord, Setup
  * once. A reading that does not match the observed shape is skipped, never
  * fabricated into a row. */
 export async function readAgency(transport: KernelTransportStatus, project: string): Promise<{ reading: AgencyReading } | { error: string }> {
-  const result = await kernelOp(transport, { op: "agency_read", project });
+  const result = await kernelRead(transport, { op: "agency_read", project });
   if (result.error || result.outcome?.result !== "agency_reading") {
     return { error: result.error ?? "AIKit SessionSpace reading unavailable" };
   }

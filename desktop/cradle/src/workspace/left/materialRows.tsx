@@ -10,7 +10,7 @@
  */
 import {useCallback, useEffect, useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
-import {kernelOp} from "../../kernel/bridge";
+import {kernelRead} from "../../kernel/bridge";
 import type {NativeFileEntry} from "../../kernel/types";
 import {listFlowInstances, type FlowInstanceRow} from "../../flow/instances";
 import {MaterialRow, Section, type SectionState} from "./rows";
@@ -49,7 +49,7 @@ export function RememberedRows({path, label}: {path: string; label: string}) {
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
-    void kernelOp(kernel.transport, {op: "files_list", path}).then(result => {
+    void kernelRead(kernel.transport, {op: "files_list", path}).then(result => {
       if (result.error || result.outcome?.result !== "directory_read") throw new Error(result.error ?? "the listing did not serve");
       if (live) { setEntries(result.outcome.directory.entries.filter(entry => entry.kind === "file")); setError(undefined); }
     }).catch(reason => {

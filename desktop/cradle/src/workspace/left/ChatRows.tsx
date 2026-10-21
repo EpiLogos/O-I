@@ -10,7 +10,7 @@
  */
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
-import {kernelOp} from "../../kernel/bridge";
+import {kernelRead} from "../../kernel/bridge";
 import type {KernelTransportStatus} from "../../kernel/types";
 import type {EncounterRow} from "../../encounter/EncounterList";
 import {ConversationRow} from "./rows";
@@ -37,7 +37,7 @@ export function conversationsFromReading(spaces:unknown[],project:string):Encoun
 }
 
 export async function readConversations(transport: KernelTransportStatus, project: string): Promise<EncounterRow[]> {
-  const result = await kernelOp(transport, {op: "agency_read", project});
+  const result = await kernelRead(transport, {op: "agency_read", project});
   if (result.error || result.outcome?.result !== "agency_reading") throw new Error(result.error ?? "AIKit SessionSpace reading unavailable");
   return conversationsFromReading(result.outcome.spaces,project);
 }

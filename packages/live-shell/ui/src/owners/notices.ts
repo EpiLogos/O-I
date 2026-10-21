@@ -17,15 +17,16 @@
 // (`now_changed`, `day_changed`, `receiving_changed`, `factory_run_changed`; kernel/src/owner_write.rs). The temporal field and
 // the Day's standing read again on them, with no floor involved.
 //
-// What no receipt reaches — a write another process makes: another session's NOW return or thought, a Day ensured or closed
-// from a terminal, a receiving act from elsewhere, a Factory Run advancing in its own runner, AIKit history and sessions written
-// by other agents. The kernel sees none of them. Those, and only those, are what the floors stand for: the temporal field's
-// (timeline/temporalPoll.ts, five minutes while seen) and the agency reading's (owners/agency.ts, 30 s while seen — AIKit
-// discloses no session-change event at all, so no receipt can ever move it for a session another process started).
+// What the kernel's own receipts do not reach — a write another process makes: another session's NOW return or thought, a Day
+// ensured or closed from a terminal, a receiving act from elsewhere, a Factory Run advancing in its own runner, AIKit history and
+// sessions written by other agents. The kernel's `readings_changed` reports them: it names the scopes (root, a project, AIKit's home, seats, the
+// clock) its filesystem watch saw change, whoever wrote. The temporal field (timeline/temporalPoll.ts) and the agency reading
+// (owners/agency.ts) read on it with no timer; every other held answer is retired by it (owners/readingsChanged.ts).
 //
 // Pure TypeScript: no view, no store.
 
 import type {KernelReceipt} from '../../../../../desktop/cradle/src/kernel/types'
+import {readingsChangedOf} from './readingsChanged'
 
 /** The window event an act raises after its receipt. desktop/cradle raises it by this literal (encounter/session.ts). */
 export const OWNER_CHANGED_EVENT = 'oi:owner-changed'
@@ -99,6 +100,7 @@ export const OWNER_WRITE_RECEIPTS: readonly string[] = ['now_changed', 'day_chan
  * only under a ground the field reads. Every other receipt either carries no instant (a window never answers it) or changes
  * nothing the field reads. */
 export function receiptMovesTemporal(receipt: KernelReceipt): boolean {
+  if (receipt.event === 'readings_changed') return readingsChangedOf(receipt) !== null
   if (receipt.event === 'working_surface_driving' || receipt.event === 'routine_action_returned') return true
   if (OWNER_WRITE_RECEIPTS.includes(receipt.event)) return true
   const path = changedPath(receipt)
@@ -142,5 +144,6 @@ export function createReceiptCursor(): (receipts: readonly KernelReceipt[]) => K
 /** A receipt that can move the agency reading: a working surface attaching to or releasing an agent session, or a routine's
  * returned action (a routine runs agents). The kernel pushes nothing else about sessions. */
 export function receiptMovesAgency(receipt: KernelReceipt): boolean {
+  if (receipt.event === 'readings_changed') return readingsChangedOf(receipt)?.scopes.some(scope => scope !== 'seats' && scope !== 'clock') ?? false
   return receipt.event === 'working_surface_driving' || receipt.event === 'routine_action_returned'
 }

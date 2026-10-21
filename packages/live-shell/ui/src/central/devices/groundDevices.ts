@@ -9,7 +9,7 @@
 //     (which reads through these three since lane BC3: one implementation of each leg), and the NOW leg again when the kernel says
 //     a NOW write landed (owners/notices.ts receiptMovesNow, lane W3).
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {readGraph, type GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
 import type {KernelTransportStatus, NativeDirectory} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {DesignBinding} from '../../frame/devices/designed'
@@ -50,7 +50,7 @@ export async function readFilesLeg(transport: KernelTransportStatus, subject: Im
   if (subject.kind !== 'folder') return undefined
   const at = new Date().toISOString()
   try {
-    const directory = await kernelOp(transport, {op: 'files_list', path: subject.path})
+    const directory = await kernelRead(transport, {op: 'files_list', path: subject.path})
     if (directory.error || directory.outcome?.result !== 'directory_read') return {entries: [], boundaryOp: 'op files_list', at, refusal: REFUSAL(directory.error ?? 'the directory reading did not answer')}
     const doc = (directory.outcome as {directory?: NativeDirectory}).directory
     return {entries: doc?.entries ?? [], boundaryOp: 'op files_list', at, refusal: null}

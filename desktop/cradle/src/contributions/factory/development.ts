@@ -1,4 +1,4 @@
-import {kernelOp} from "../../kernel/bridge";
+import {kernelOp, kernelRead} from "../../kernel/bridge";
 import type {KernelTransportStatus} from "../../kernel/types";
 import type {FactoryBuildView} from "./types";
 /** The owner's refusal, in the owner's words. The kernel carries an owner
@@ -40,7 +40,7 @@ export async function attemptRead<T=unknown>(transport:KernelTransportStatus,sta
 /** Workcell's own placement/status reading (`workcell status --json`). */
 export interface WorkcellStatus {health:string;offers:number;providers:number;state_root:string;workcell_ref:string;ok?:boolean}
 export async function workcellStatus(transport:KernelTransportStatus):Promise<WorkcellStatus> {
-  const result=await kernelOp(transport,{op:"workcell_status_read"});
+  const result=await kernelRead(transport,{op:"workcell_status_read"});
   if(result.error || result.outcome?.result!=="workcell_status_reading")throw new Error(result.error??"Workcell status is unavailable");
   return result.outcome.data as WorkcellStatus;
 }

@@ -1,5 +1,5 @@
 import {useEffect, useSyncExternalStore} from "react";
-import {kernelOp} from "../kernel/bridge";
+import {kernelRead} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
 import type {CompositionReading} from "./settings/types";
 import type {WorkspaceMode} from "./mode";
@@ -57,7 +57,7 @@ const listeners = new Set<() => void>();
 const announce = () => { for (const listener of listeners) listener(); };
 
 async function read(transport: KernelTransportStatus): Promise<void> {
-  const result = await kernelOp(transport, {op: "composition_read"});
+  const result = await kernelRead(transport, {op: "composition_read"});
   const outcome = result.outcome;
   if (outcome?.result === "composition_reading") current = presentProducts(outcome.reading);
   announce();

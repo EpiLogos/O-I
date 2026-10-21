@@ -1,4 +1,5 @@
 import {windowReadingsChanged} from '../owners/readingsChanged'
+import '../owners/ownerCall'
 import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {KernelProvider} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
 import {VisualsProvider} from '../../../../../desktop/cradle/src/visuals/ParticleExpression'
