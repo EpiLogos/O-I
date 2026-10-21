@@ -137,12 +137,14 @@ export interface FaceStageProps extends FacePose {
   readonly interactive?: boolean
   /** The face page (default FACE_PAGE). */
   readonly src?: string
+  /** Draw only the still mask, in the pose; the live face is not loaded (a second face on a screen that already has one). */
+  readonly still?: boolean
   readonly className?: string
   readonly style?: CSSProperties
 }
 
 /** The face, filling the box it is given: live where it stands, the mask in the same pose until then or instead. */
-export const FaceStage = memo(function FaceStage({label, interactive, src = FACE_PAGE, className, style, ...pose}: FaceStageProps) {
+export const FaceStage = memo(function FaceStage({label, interactive, src = FACE_PAGE, still, className, style, ...pose}: FaceStageProps) {
   const frame = useRef<HTMLIFrameElement>(null)
   const face = useRef<FaceSurface | null>(null)
   // off: not mounted (the server, the first draw); loading; live; failed. The frame is drawn once mounted, behind the mask.
@@ -155,7 +157,7 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
   const applied = useRef<string | null>(null)
   const putInPose = (found: FaceSurface) => { if (applied.current !== plan.current.key) { run(found, plan.current.calls); applied.current = plan.current.key } }
 
-  useEffect(() => { setStand('loading') }, [src])
+  useEffect(() => { setStand(still ? 'failed' : 'loading') }, [src, still])
   useEffect(() => {
     if (stand !== 'loading') return
     const late = setTimeout(() => setStand(was => (was === 'loading' ? 'failed' : was)), FACE_PATIENCE_MS)
@@ -187,7 +189,7 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
   return <div className={['face-stage', className].filter(Boolean).join(' ')} style={style} data-face={live ? 'live' : 'mask'} data-dim={pose.dim ? 'true' : undefined}
     role="img" aria-label={label}>
     {!live && <div className="face-stage-mask" aria-hidden="true" dangerouslySetInnerHTML={{__html: mask}} />}
-    {(stand === 'loading' || live) && <iframe ref={frame} className="face-stage-frame" src={src} title={label ?? 'Face'} aria-hidden="true" tabIndex={-1}
+    {!still && (stand === 'loading' || live) && <iframe ref={frame} className="face-stage-frame" src={src} title={label ?? 'Face'} aria-hidden="true" tabIndex={-1}
       sandbox="allow-scripts allow-same-origin" referrerPolicy="no-referrer" onLoad={onLoad} onError={() => setStand('failed')}
       data-interactive={interactive ? 'true' : undefined} />}
   </div>
