@@ -234,7 +234,7 @@ function Consent({p}: {p: ViewProps}) {
   const to = pending(p.v)
   if (to === undefined) return null
   return <>
-    <Action {...st(p, 'reach')} label="Confirm" does={`Raise the Reach to ${LEVELS[to]}. The agent may then read that far.`} onPress={() => { p.set('reach', to); p.set('reachPending', undefined) }} />
+    <Action {...st(p, 'reach')} hold label="Confirm" does={`Raise the Reach to ${LEVELS[to]}. The agent may then read that far.`} onPress={() => { p.set('reach', to); p.set('reachPending', undefined) }} />
     <Action label="Cancel" does="Keep the Reach as it is." onPress={() => p.set('reachPending', undefined)} />
   </>
 }

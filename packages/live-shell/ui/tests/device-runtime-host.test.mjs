@@ -73,6 +73,27 @@ test('while the hand moves the control shows the draft and nothing is sent; on r
   host.resetHost(binding.id)
 })
 
+test('a value the owner has not yet read waits, a value it has read never does, and a key the view holds is never waiting', () => {
+  const binding = {id: 'r:first', values: {gain: 0.2}, waiting: true, local: {open: () => {}}}
+  const standing = host.hostedStanding(host.hostState(binding.id), binding, ['gain', 'pan', 'open'])
+  assert.equal(standing.pan.waiting, true, 'no reading yet, and the owner was asked: it breathes')
+  assert.equal(standing.gain?.waiting, undefined, 'a reading you already had shows at once')
+  assert.equal(standing.open?.waiting, undefined, 'the view\'s own key waits on no owner')
+  const some = host.hostedStanding(host.hostState('r:some'), {id: 'r:some', values: {}, waiting: ['pan']}, ['gain', 'pan'])
+  assert.equal(some.pan.waiting, true)
+  assert.equal(some.gain.waiting, undefined, 'only the keys the owner names wait')
+  assert.equal(host.hostedStanding(host.hostState('r:none'), {id: 'r:none', values: {}}, ['pan']).pan.waiting, undefined, 'asked of nobody: no wait is drawn')
+})
+
+test('who moved a value is the owner\'s word, else the one that holds or modulates it', () => {
+  const binding = {id: 'r:mover', values: {a: 1, b: 2, c: 3, d: 4}, heldBy: {a: 'Kite'}, modulatedBy: {b: 'Mars'}, movedBy: {c: 'Flint', a: 'Cairn'}}
+  const standing = host.hostedStanding(host.hostState(binding.id), binding, [])
+  assert.equal(standing.a.movedBy, 'Cairn', 'the owner says who, over the holder')
+  assert.equal(standing.b.movedBy, 'Mars', 'a modulator moves it')
+  assert.equal(standing.c.movedBy, 'Flint')
+  assert.equal(standing.d.movedBy, undefined, 'a value nobody else moves has no name')
+})
+
 test('a write the owner accepts with no new reading ends its wait after the grace, and the owner\'s value stands again', async () => {
   const binding = {id: 'r:grace', values: {gain: 0.2}, write: async () => {}}
   host.setDraft(binding.id, 'gain', 0.9)

@@ -134,7 +134,7 @@ export const physics: DesignedDevice = {
           <Action {...st(p, 'disperse')} label="Disperse" does="Spreads the particles out." onPress={() => p.set('disperse', true)} />
           {p.v.resetAsk === true
             ? <div className="ref-pair">
-                <Action {...st(p, 'reset')} label="Reset" does="Return every particle to its shape. The field's motion is lost." onPress={() => { p.set('reset', 'confirmed'); p.set('resetAsk', undefined) }} />
+                <Action {...st(p, 'reset')} hold label="Reset" does="Return every particle to its shape. The field's motion is lost." onPress={() => { p.set('reset', 'confirmed'); p.set('resetAsk', undefined) }} />
                 <Action label="Cancel" does="Keep the field as it is." onPress={() => p.set('resetAsk', undefined)} />
               </div>
             : <Action {...st(p, 'reset')} label="Reset…" does="Returns every particle to its shape. Asks you first." onPress={() => p.set('resetAsk', true)} />}

@@ -486,7 +486,6 @@ export const design: DesignedDevice = {
     </Section>
     <Section label="Reading" width={80}>
       {machinesReadout(p.v)}
-      {lagReadout(p.v)}
     </Section>
   </Panel>,
 
@@ -504,7 +503,6 @@ export const design: DesignedDevice = {
         <Section label="Peers" grow>
           {machinesReadout(p.v)}
           {agentsReadout(p.v)}
-          {lagReadout(p.v)}
         </Section>
       </Band>
       <Band>

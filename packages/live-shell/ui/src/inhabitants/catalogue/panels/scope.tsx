@@ -62,7 +62,7 @@ const ask = (v: V, set: ViewProps['set']) => (x: number) => {
 function Consent({p}: {p: ViewProps}) {
   if (p.v.reachPending === undefined) return null
   return <div className="ref-pair">
-    <Action {...st(p, 'reach')} label="Confirm" does={`Raise the reach to ${RINGS[Number(p.v.reachPending)] ?? NONE}.`} onPress={() => { p.set('reach', Number(p.v.reachPending)); p.set('reachPending', undefined) }} />
+    <Action {...st(p, 'reach')} hold label="Confirm" does={`Raise the reach to ${RINGS[Number(p.v.reachPending)] ?? NONE}.`} onPress={() => { p.set('reach', Number(p.v.reachPending)); p.set('reachPending', undefined) }} />
     <Action label="Cancel" does="Keep the reach as it is." onPress={() => p.set('reachPending', undefined)} />
   </div>
 }

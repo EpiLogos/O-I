@@ -75,7 +75,7 @@ function controls(p: ViewProps) {
   return {
     machines: <Radio {...st(p, 'machine')} label="Machines" does="The open moments of every machine, or of one." value={strOf(v, 'machine') ?? 'all'} stack
       options={[{value: 'all', label: 'All'}, ...machines.map(m => ({value: m, label: m}))]} onChange={x => p.set('machine', x)} />,
-    close: <Action {...st(p, 'close')} label="Close" does={chosen ? `Close “${chosen.purpose}”: the moment is done.` : 'Open a moment, then close it when it is done.'}
+    close: <Action {...st(p, 'close')} hold label="Close" does={chosen ? `Close “${chosen.purpose}”: the moment is done.` : 'Open a moment, then close it when it is done.'}
       onPress={chosen ? () => p.set('close', chosen.ref) : undefined} />,
   }
 }
@@ -117,7 +117,6 @@ export const design: DesignedDevice = {
         <Section label="Machines" width={76}>{c.machines}</Section>
         <Section label="Day" grow>
           <Readout label="day" does="The day in force, as the ground reports it." value={dayOf(p.v)} />
-          <Readout label="now" does="The present moment, as the ground reports it." value={clockOf(p.v)} tone="value" />
           {c.close}
         </Section>
       </Band>

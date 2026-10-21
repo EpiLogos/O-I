@@ -96,6 +96,10 @@ export function hostedStanding(state: HostState, binding: DesignBinding, keys: I
   const out: Record<string, Standing> = {}
   for (const key of all) {
     const holder = binding.heldBy?.[key]
+    // Who moved it, when something other than the hand does: the owner's word, else whoever holds or modulates the value. The kit shows
+    // the name only with the ring of a change, never from the first draw.
+    const mover = binding.movedBy?.[key] ?? holder ?? binding.modulatedBy?.[key]
+    const waits = binding.waiting === true || (Array.isArray(binding.waiting) && binding.waiting.includes(key))
     // A key the view holds is the binding's own: it neither waits on an owner nor is a reading.
     const local = !!binding.local?.[key]
     const disabled = local ? undefined : !binding.write ? 'No owner takes a change here.' : binding.writes && !binding.writes(key) ? 'A reading: the owner reports it; nothing here changes it.' : undefined
@@ -105,6 +109,8 @@ export function hostedStanding(state: HostState, binding: DesignBinding, keys: I
       ...(state.refused[key] ? {refused: state.refused[key]!.reason} : {}),
       ...(holder ? {heldBy: holder, ...(binding.handBack ? {onHandBack: () => void binding.handBack!(key)} : {})} : {}),
       ...(binding.modulatedBy?.[key] ? {modulatedBy: binding.modulatedBy[key]} : {}),
+      ...(mover ? {movedBy: mover} : {}),
+      ...(waits && !local && !(key in binding.values) ? {waiting: true} : {}),
       ...(disabled && !binding.standing?.[key]?.disabled ? {disabled} : {}),
     }
     if (Object.keys(standing).length) out[key] = standing

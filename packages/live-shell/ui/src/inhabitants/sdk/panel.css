@@ -141,6 +141,7 @@
 /* A picture the device draws itself (Display raw): it fills the well and is clipped to it. */
 .dp-display[data-raw="true"] { display: grid; place-items: center; }
 .dp-display[data-raw="true"] > * { max-width: 100%; max-height: 100%; }
+.dp-display-corner[data-echo="true"] { display: none; }
 .dp-display-corner { position: absolute; top: 3px; right: 5px; padding: 0 3px; border-radius: 2px; background: color-mix(in srgb, var(--dp-well, #121519) 72%, transparent); font-size: 9.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; pointer-events: none; }
 .dp-display .dp-grid { stroke: var(--dp-grid); stroke-width: 1; fill: none; }
 .dp-display .dp-curve { stroke: var(--dp-value); stroke-width: 1.5; fill: none; }
@@ -378,6 +379,20 @@
 .dp-meter[data-tone="green"] > i { background: var(--green, #8fd0a8); }
 .dp-meter[data-tone="stall"] > i { background: var(--stall, #ff9b4a); }
 .dp-meter[data-tone="rec"] > i { background: var(--rec, #e0523f); }
+
+/* A pad: a well whose two sides are two parameters, with one handle that moves both. Each side's default is a faint line the handle is caught
+   on; the guides run from the handle to its two sides. */
+.dp-cell--pad { align-items: flex-start; }
+.dp-pad > svg { cursor: crosshair; touch-action: none; outline: none; user-select: none; }
+.dp-pad > svg:focus-visible { outline: 1px solid var(--dp-on); outline-offset: -1px; }
+.dp-pad[aria-disabled] > svg, .dp-pad > svg[aria-disabled] { cursor: default; }
+.dp-pad .dp-pad-def { stroke: color-mix(in srgb, var(--text, #d4d7da) 24%, transparent); stroke-width: 1; stroke-dasharray: 2 3; fill: none; }
+.dp-pad .dp-pad-guide { stroke: color-mix(in srgb, var(--dp-on) 50%, transparent); stroke-width: 1; stroke-dasharray: 2 2; fill: none; pointer-events: none; }
+.dp-pad .dp-pad-puck { cursor: grab; }
+.dp-pad > svg:focus-visible .dp-handle-mark, .dp-pad:hover .dp-pad-puck .dp-handle-mark { fill: var(--dp-on); }
+.dp-cell[data-detent="true"] .dp-pad-def { stroke: var(--dp-on); }
+.dp-cell--pad[data-held="true"] .dp-handle-mark { stroke: var(--stall, #ff9b4a); }
+.dp-cell--pad[data-pending="true"] .dp-handle-mark { stroke-dasharray: 2 2; }
 
 /* Reduced motion: the rule above stops every transition and animation under the kit. What carries a state still shows it, standing
    still: a working light keeps a ring, a rung being worked on stays half-lit, a control waiting stays dimmed, the hold's fill is

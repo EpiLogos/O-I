@@ -81,7 +81,7 @@ function Trust({p}: {p: ViewProps}) {
   if (!known(p.v)) return <Readout label="trust" does="No reading of the member yet." value={undefined} />
   if (m.withheld?.fix !== 'review' || reviewed(p.v)) return <Readout label="trust" does="The revision in use has been reviewed." value={reviewed(p.v) ? `${m.rev} reviewed` : 'trusted'} tone="green" />
   if (p.v.reviewAsk === true) return <div className="ref-pair">
-    <Action {...st(p, 'reviewed')} label="Trust" does={`Record that you reviewed ${m.rev}. AIKit delivers it again.`} onPress={() => { p.set('reviewed', true); p.set('reviewAsk', undefined) }} />
+    <Action {...st(p, 'reviewed')} hold label="Trust" does={`Record that you reviewed ${m.rev}. AIKit delivers it again.`} onPress={() => { p.set('reviewed', true); p.set('reviewAsk', undefined) }} />
     <Action label="Cancel" does="Leave the revision unseen." onPress={() => p.set('reviewAsk', undefined)} />
   </div>
   return <Action {...st(p, 'reviewed')} label="Review" does={m.withheld.why} onPress={() => p.set('reviewAsk', true)} pending />
@@ -94,7 +94,7 @@ function FormControls({p, primary}: {p: ViewProps; primary?: boolean}) {
     const run = strOf(p.v, 'run') ?? 'idle'
     const runControl = run === 'asked'
         ? <div className="ref-pair">
-            <Action {...st(p, 'run')} label="Run" does="Preflight passed. Run the Method once, with a receipt." onPress={() => p.set('run', 'ran')} />
+            <Action {...st(p, 'run')} hold label="Run" does="Preflight passed. Run the Method once, with a receipt." onPress={() => p.set('run', 'ran')} />
             <Action label="Cancel" does="Do not run it." onPress={() => p.set('run', 'idle')} />
           </div>
         : <Action label="Run…" does="Preflight first: a missing condition refuses the run before any effect, and names itself." onPress={m.rungs[2] ? () => p.set('run', 'asked') : undefined}
@@ -194,7 +194,7 @@ export const memberDevice: DesignedDevice = {
       <Section label="Standing" width={100}>
         {enabled(p)}
         <Trust p={p} />
-        <Readout label="revision" does="The revision in use." value={member(p.v).rev} />
+        <Readout label="revision" does="The revision in use." value={member(p.v).rev} copy={member(p.v).rev} />
       </Section>
       <Section label={member(p.v).form === 'method' ? 'Run' : member(p.v).form === 'methodology' ? 'Orients' : 'Reach'} grow><FormControls p={p} /></Section>
     </Band>

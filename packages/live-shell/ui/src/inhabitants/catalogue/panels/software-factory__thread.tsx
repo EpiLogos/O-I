@@ -284,7 +284,8 @@ const SAYS = {
 }
 
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
-const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
+const atWork = (p: ViewProps) => read(p).state === 'working'
+const head = (p: ViewProps) => ({light: lampOf(p), busy: atWork(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
 
 /** What the status bar says of a control: what it does, then why it cannot act, then the owner's refusal. */
 const saysOf = (does: string, s: Standing) => [does, s.disabled, s.refused ? `The owner refused: ${s.refused}` : undefined].filter(Boolean).join(' ')
@@ -667,7 +668,7 @@ export const design: DesignedDevice = {
   widget: p => {
     const r = read(p), items = r.items && visible(p.v, r.items), last = items?.filter(it => it.k !== 'task').pop(), draft = strOf(p.v, 'draft') ?? '', sent = st(p, 'sent')
     const says = 'Type a message and press Enter. It steers the turn that runs, or waits as the next task, as Input says.'
-    return <Tile title={`Thread · ${r.me?.agent ?? NONE}`} light={lampOf(p)} span={2} onFull={p.nav.full}>
+    return <Tile title={`Thread · ${r.me?.agent ?? NONE}`} light={lampOf(p)} busy={r.state === 'working'} span={2} onFull={p.nav.full}>
       <ThreadWell p={p} r={r} live={false} w={104} h={100} size="mini" />
       <div className="th-tile-side">
         <p className="th-last" aria-live="polite">{items === undefined ? 'No reading of the thread.' : last

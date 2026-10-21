@@ -329,7 +329,7 @@ export const design: DesignedDevice = {
     return <Panel title="Ledger" view="whole" {...head(p)}>
       <Band>
         <Section width={206}>
-          <Display w={194} h={146} label="Receipts" corner={cornerOf(p.v)}
+          <Display w={194} h={146} label="Receipts"
             does="The receipts of the span, one line for each. The tick is the outcome. Press a line, or drag handle 1, to read another receipt.">
             <List p={p} w={194} h={146} handle />
           </Display>

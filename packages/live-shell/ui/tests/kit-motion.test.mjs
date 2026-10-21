@@ -156,6 +156,43 @@ test('a name that moved a value is shown only with the ring, never from the firs
   assert.doesNotMatch(out, /dp-by|data-flash/, 'nothing has moved it yet')
 })
 
+// ── the pad ───────────────────────────────────────────────────────────────
+
+const padAxis = (label, value, extra = {}) => ({label, value, def: 0.5, scale: {min: 0, max: 1}, format: fmt, onChange: () => {}, ...extra})
+
+test('a pad stands its handle where the two values put it, with a faint line at each default', () => {
+  const out = html(h(kit.Pad, {w: 100, h: 100, label: 'Room', does: 'Across and up.', x: padAxis('Decay', 0.5), y: padAxis('Size', 0.25)}))
+  assert.match(out, /dp-cell--pad/)
+  assert.match(out, /role="slider"[^>]*aria-valuetext="Decay 0\.5, Size 0\.25"/)
+  // plot: left 8, right 92 (x = 8 + .5 × 84 = 50); top 17, bottom 85 (y = 85 − .25 × 68 = 68)
+  assert.match(out, /<circle cx="50" cy="68" r="5\.5" class="dp-handle-mark"/)
+  assert.equal([...out.matchAll(/class="dp-pad-def"/g)].length, 2, 'a default line for each side')
+  assert.match(out, /Room\|Across and up\./, 'the status bar names it and says what it does')
+})
+
+test('a pad with no reading on a side draws no handle and no number: the well says so', () => {
+  const out = html(h(kit.Pad, {w: 100, h: 100, label: 'Room', x: padAxis('Decay', undefined), y: padAxis('Size', 0.25)}))
+  assert.doesNotMatch(out, /dp-handle-mark|NaN|undefined/)
+  assert.match(out, /data-unread="true"/)
+  assert.match(out, /—/)
+  assert.match(out, /aria-valuetext="no reading"/)
+})
+
+test('a pad whose one side the owner refuses stands on the other: the status bar says which', () => {
+  const out = html(h(kit.Pad, {w: 100, h: 100, label: 'Room', does: 'Across and up.', x: padAxis('Decay', 0.5, {disabled: 'A reading.'}), y: padAxis('Size', 0.25)}))
+  assert.doesNotMatch(out, /data-disabled="true"/, 'half a pad is still a pad')
+  assert.match(out, /Decay: A reading\./)
+  const both = html(h(kit.Pad, {w: 100, h: 100, label: 'Room', x: padAxis('Decay', 0.5, {disabled: 'A reading.'}), y: padAxis('Size', 0.25, {disabled: 'A reading.'})}))
+  assert.match(both, /data-disabled="true"/, 'both sides closed: the pad is closed')
+  assert.match(both, /aria-disabled="true"/)
+})
+
+test('a pad held by someone offers the value back, and rings as a dial does', () => {
+  const out = html(h(kit.Pad, {w: 100, h: 100, label: 'Room', x: padAxis('Decay', 0.5, {heldBy: 'Kite', onHandBack: () => {}}), y: padAxis('Size', 0.25)}))
+  assert.match(out, /data-held="true"/)
+  assert.match(out, /class="dp-handback"[^>]*>Kite</)
+})
+
 // ── the stylesheet's promises ─────────────────────────────────────────────
 
 test('one easing and one set of times, and every one shortens to nothing under reduced motion', () => {

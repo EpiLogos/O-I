@@ -11,8 +11,9 @@
 // browser's compressor does. `reduction` would be the owner's gain reduction now, which the hosted reading does not announce;
 // `reason` names an absence in the well. The Live set document's stored tables for Live's Compressor and Glue (packages/live-dynamics
 // params.rs COMPRESSOR, GLUE_COMPRESSOR) edit a set's device in Live's own units, not the torus's sound.
-import {Band, Dial, Display, Folded, Handle, Panel, Readout, Section, Tile, type LightState} from '../../sdk/panel'
+import {Band, Dial, Display, Folded, Handle, Pad, Panel, Readout, Section, Tile, type LightState} from '../../sdk/panel'
 import {NONE, clampTo, has, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {BURST, depthAtAttack, depthAtRelease, depthOf, kneeDrag, ratioForDepth, reductionAt} from './handleLaws'
 
 type V = ViewProps['v']
 
@@ -27,12 +28,12 @@ const ms = (x: number) => (x >= 1000 ? `${(x / 1000).toFixed(2)} s` : x < 1 ? `$
 function curveOf(v: V) {
   const t = numOf(v, 'threshold'), r = numOf(v, 'ratio'), m = numOf(v, 'makeup')
   if (t === undefined || r === undefined || m === undefined) return undefined
-  return {t, r, m, out: (x: number) => (x <= t ? x : t + (x - t) / r) + m, depth: -t * (1 - 1 / r)}
+  return {t, r, m, out: (x: number) => (x <= t ? x : t + (x - t) / r) + m, depth: depthOf(t, r)}
 }
 
-/** The transfer: input across, output up, both −60 to +6 dB. Handle 1 the threshold (on the knee), 2 the ratio (at full input), 3 the
- * makeup (at the quiet end). The compact well carries handle 1 only. */
-function Transfer({p, w, h, handles}: {p: ViewProps; w: number; h: number; handles: 0 | 1 | 3}) {
+/** The transfer: input across, output up, both −60 to +6 dB. Handle 1 is the knee: across it moves the threshold, up it lifts the whole
+ * curve, which is the makeup. Handle 2 is the ratio (up or down, at full input). The compact well carries handle 1 only. */
+function Transfer({p, w, h, handles}: {p: ViewProps; w: number; h: number; handles: 0 | 1 | 2}) {
   const v = p.v, c = curveOf(v), l = 18, r = w - 4, top = 14, bot = h - 12
   const X = (db: number) => l + (clampTo(AXIS.lo, AXIS.hi, db) - AXIS.lo) / (AXIS.hi - AXIS.lo) * (r - l)
   const Y = (db: number) => bot - (clampTo(AXIS.lo, AXIS.hi, db) - AXIS.lo) / (AXIS.hi - AXIS.lo) * (bot - top)
@@ -47,41 +48,45 @@ function Transfer({p, w, h, handles}: {p: ViewProps; w: number; h: number; handl
       <path d={`M${f1(X(c.t))} ${top}V${bot}`} className="dp-curve-on" strokeDasharray="2 2" opacity={.6} />
       {/* the owner's gain reduction now, where it reports one: the output at full input pulled down by it */}
       {reduction !== undefined && <path d={`M${f1(X(0) - 4)} ${f1(Y(c.out(0) - reduction))}h8`} className="dp-curve-on" strokeWidth={2} />}
-      {handles >= 1 && <Handle n={1} x={X(c.t)} y={Y(c.out(c.t))} label="Threshold" does={`Drag across: the level above which the effect acts.${ts.disabled ? ` ${ts.disabled}` : ''}`}
-        onDrag={ts.disabled ? undefined : x => p.set('threshold', Math.round(clampTo(-60, 0, dbX(x)) * 10) / 10)} onReset={ts.disabled ? undefined : () => p.set('threshold', -12)} />}
-      {handles >= 3 && <Handle n={2} shape="square" x={X(0)} y={Y(c.out(0))} label="Ratio" does={`Drag up or down: how much the effect lowers sound above the threshold.${rs.disabled ? ` ${rs.disabled}` : ''}`}
+      {handles >= 1 && <Handle n={1} x={X(c.t)} y={Y(c.out(c.t))} label="Threshold and makeup" does={`Drag across for the threshold, up for the makeup.${ts.disabled ? ` ${ts.disabled}` : ''}${ms_.disabled ? ` ${ms_.disabled}` : ''}`}
+        onDrag={ts.disabled && ms_.disabled ? undefined : (x, y) => { const k = kneeDrag(dbX(x), dbY(y)); if (!ts.disabled) p.set('threshold', k.threshold); if (!ms_.disabled) p.set('makeup', k.makeup) }}
+        onReset={ts.disabled && ms_.disabled ? undefined : () => { if (!ts.disabled) p.set('threshold', -12); if (!ms_.disabled) p.set('makeup', 2) }} />}
+      {handles >= 2 && <Handle n={2} shape="square" x={X(0)} y={Y(c.out(0))} label="Ratio" does={`Drag up or down: how much the effect lowers sound above the threshold.${rs.disabled ? ` ${rs.disabled}` : ''}`}
         onDrag={rs.disabled ? undefined : (_, y) => { const rise = dbY(y) - c.m - c.t; p.set('ratio', Math.round(clampTo(1, 20, rise <= 0 ? 20 : -c.t / rise) * 10) / 10) }}
         onReset={rs.disabled ? undefined : () => p.set('ratio', 4)} />}
-      {handles >= 3 && <Handle n={3} shape="square" x={X(-54)} y={Y(c.out(-54))} label="Makeup" does={`Drag up or down: the gain added after the level is lowered.${ms_.disabled ? ` ${ms_.disabled}` : ''}`}
-        onDrag={ms_.disabled ? undefined : (_, y) => p.set('makeup', Math.round(clampTo(0, 24, dbY(y) + 54) * 10) / 10)} onReset={ms_.disabled ? undefined : () => p.set('makeup', 2)} />}
     </> : <text x={w / 2 + 6} y={h / 2} textAnchor="middle" className="dp-ink-dim">{strOf(v, 'reason') ?? 'No reading of the curve'}</text>}
     {w > 100 && <><text x={r} y={bot + 10} textAnchor="end" className="dp-axis">in</text><text x={l + 2} y={top - 4} className="dp-axis">out</text></>}
   </g>
 }
 
-/** The gain reduction in time for a burst at full level, on a log scale of time: down is reduction. Handle 1 the attack, 2 the release. */
+/** The gain reduction in time for a burst at full level, on a log scale of time: down is reduction. The depth of the dip is the ratio's
+ * (the deepest the threshold allows is the picture's full height), so up or down on either handle moves the ratio. Handle 1 is the
+ * attack (across) and the ratio (down); handle 2 the release (across) and the ratio (down). */
 function Envelope({p, w, h, handles}: {p: ViewProps; w: number; h: number; handles: boolean}) {
-  const v = p.v, c = curveOf(v), a = numOf(v, 'attack'), rel = numOf(v, 'release'), l = 6, r = w - 6, top = 14, bot = h - 14, burst = 500
+  const v = p.v, c = curveOf(v), a = numOf(v, 'attack'), rel = numOf(v, 'release'), l = 6, r = w - 6, top = 14, bot = h - 14
   const T = (t: number) => l + Math.log10(Math.max(.01, t) / .01) / Math.log10(5000 / .01) * (r - l), tOf = (x: number) => .01 * (5000 / .01) ** clampTo(0, 1, (x - l) / (r - l))
   if (!c || a === undefined || rel === undefined) return <text x={w / 2} y={h / 2} textAnchor="middle" className="dp-ink-dim">{strOf(v, 'reason') ?? 'No reading of the times'}</text>
-  const deep = Math.max(.5, c.depth), D = (gr: number) => top + gr / Math.max(12, deep) * (bot - top)
-  const gr = (t: number) => (t <= burst ? deep * (1 - Math.exp(-t / a)) : deep * (1 - Math.exp(-burst / a)) * Math.exp(-(t - burst) / rel))
+  const deep = Math.max(.5, c.depth), scale = Math.max(12, -c.t * .95), D = (gr: number) => top + gr / scale * (bot - top), grOf = (y: number) => (y - top) / (bot - top) * scale
+  const gr = (t: number) => reductionAt(t, deep, a, rel)
   let d = ''
   for (let i = 0; i <= 200; i++) { const t = .01 * (5000 / .01) ** (i / 200); d += `${i ? 'L' : 'M'}${f1(T(t))} ${f1(D(gr(t)))}` }
-  const as = st(p, 'attack'), rs = st(p, 'release')
+  const as = st(p, 'attack'), rs = st(p, 'release'), ratio = st(p, 'ratio')
+  const setRatio = (depth: number) => { if (!ratio.disabled) p.set('ratio', ratioForDepth(c.t, depth)) }
   return <g>
     {[.1, 1, 10, 100, 1000].map(t => <g key={t}><path d={`M${f1(T(t))} ${top}V${bot}`} className="dp-grid" />
       {(t === 1 || t === 100 || (w > 240 && t !== 1000)) && <text x={T(t) + 2} y={h - 4} className="dp-axis">{t >= 1000 ? `${t / 1000} s` : `${t} ms`}</text>}</g>)}
     <path d={`M${l} ${top}H${r}`} className="dp-faint" />
-    <path d={`M${f1(T(burst))} ${top}V${bot}`} className="dp-faint" strokeDasharray="2 3" />
+    <path d={`M${f1(T(BURST))} ${top}V${bot}`} className="dp-faint" strokeDasharray="2 3" />
     <path d={`${d}L${r} ${top}L${l} ${top}Z`} className="dp-fill" />
     <path d={d} className="dp-curve" />
     <text x={w - 6} y={top - 4} textAnchor="end" className="dp-axis">{`−${deep.toFixed(1)} dB`}</text>
     {handles && <>
-      <Handle n={1} shape="square" x={T(a)} y={D(gr(a))} label="Attack" does={`Drag across: how fast the effect starts.${as.disabled ? ` ${as.disabled}` : ''}`}
-        onDrag={as.disabled ? undefined : x => p.set('attack', Math.round(clampTo(.01, 200, tOf(x)) * 100) / 100)} onReset={as.disabled ? undefined : () => p.set('attack', 1)} />
-      <Handle n={2} shape="square" x={T(burst + rel)} y={D(gr(burst + rel))} label="Release" does={`Drag across: how fast the effect stops.${rs.disabled ? ` ${rs.disabled}` : ''}`}
-        onDrag={rs.disabled ? undefined : x => p.set('release', Math.round(clampTo(5, 2000, tOf(x) - burst)))} onReset={rs.disabled ? undefined : () => p.set('release', 100)} />
+      <Handle n={1} shape="square" x={T(a)} y={D(gr(a))} label="Attack and ratio" does={`Drag across for the attack, up or down for the ratio: how deep the effect pulls.${as.disabled ? ` ${as.disabled}` : ''}${ratio.disabled ? ` ${ratio.disabled}` : ''}`}
+        onDrag={as.disabled && ratio.disabled ? undefined : (x, y) => { if (!as.disabled) p.set('attack', Math.round(clampTo(.01, 200, tOf(x)) * 100) / 100); setRatio(depthAtAttack(grOf(y))) }}
+        onReset={as.disabled && ratio.disabled ? undefined : () => { if (!as.disabled) p.set('attack', 1); if (!ratio.disabled) p.set('ratio', 4) }} />
+      <Handle n={2} shape="square" x={T(BURST + rel)} y={D(gr(BURST + rel))} label="Release and ratio" does={`Drag across for the release, up or down for the ratio: how deep the effect pulls.${rs.disabled ? ` ${rs.disabled}` : ''}${ratio.disabled ? ` ${ratio.disabled}` : ''}`}
+        onDrag={rs.disabled && ratio.disabled ? undefined : (x, y) => { if (!rs.disabled) p.set('release', Math.round(clampTo(5, 2000, tOf(x) - BURST))); setRatio(depthAtRelease(grOf(y), a)) }}
+        onReset={rs.disabled && ratio.disabled ? undefined : () => { if (!rs.disabled) p.set('release', 100); if (!ratio.disabled) p.set('ratio', 4) }} />
     </>}
   </g>
 }
@@ -120,31 +125,39 @@ export const design: DesignedDevice = {
   compact: p => { const c = controls(p)
     return <Panel title="Dynamics" view="compact" {...head(p)} onSelect={p.nav.select}>
       <Section width={152}>
-        <Display w={140} h={146} label="Transfer" does={`${TRANSFER_DOES} Drag handle 1 for the threshold.`} corner={has(p.v, 'ratio') ? ratioWord(numOf(p.v, 'ratio')!) : NONE}>
+        <Display w={140} h={146} label="Transfer" does={`${TRANSFER_DOES} Drag handle 1 across for the threshold and up for the makeup.`} corner={has(p.v, 'ratio') ? ratioWord(numOf(p.v, 'ratio')!) : NONE}>
           <Transfer p={p} w={140} h={146} handles={1} />
         </Display>
       </Section>
       <Section label="Macros" cols={2}>{c.threshold}{c.ratio}{c.attack}{c.makeup}</Section>
     </Panel> },
 
-  whole: p => { const c = controls(p), cv = curveOf(p.v), w = wide(p) ? Math.round(clampTo(186, (p.room!.w - 300) / 2, 320)) : 186
+  whole: p => { const c = controls(p), cv = curveOf(p.v), v = p.v, w = wide(p) ? Math.round(clampTo(186, (p.room!.w - 400) / 2, 320)) : 186, pw = 96
     return <Panel title="Dynamics" view="whole" {...head(p)}>
       <Band>
         <Section width={w + 12}>
-          <Display w={w} h={146} label="Transfer" does={`${TRANSFER_DOES} Drag handle 1 for the threshold, 2 for the ratio, 3 for the makeup.`} corner={has(p.v, 'ratio') ? ratioWord(numOf(p.v, 'ratio')!) : NONE}>
-            <Transfer p={p} w={w} h={146} handles={3} />
+          <Display w={w} h={146} label="Transfer" does={`${TRANSFER_DOES} Drag handle 1 across for the threshold and up for the makeup, handle 2 for the ratio.`} corner={has(p.v, 'ratio') ? ratioWord(numOf(p.v, 'ratio')!) : NONE}>
+            <Transfer p={p} w={w} h={146} handles={2} />
           </Display>
         </Section>
-        <Section label="Level" width={60}>{c.threshold}{c.ratio}</Section>
+        <Section label="Level" width={pw + 12}>
+          <Pad w={pw} h={146} label="Level" does="Drag across for the threshold and up for the ratio."
+            x={{...st(p, 'threshold'), label: 'Thresh', value: numOf(v, 'threshold'), def: -12, scale: {min: -60, max: 0}, format: dbWord, onChange: x => p.set('threshold', Math.round(x * 10) / 10)}}
+            y={{...st(p, 'ratio'), label: 'Ratio', value: numOf(v, 'ratio'), def: 4, scale: RATIO, format: ratioWord, onChange: y => p.set('ratio', Math.round(y * 10) / 10)}} />
+        </Section>
         <Section label="Output" grow>{c.makeup}{c.reduction}</Section>
       </Band>
       <Band>
         <Section width={w + 12}>
-          <Display w={w} h={146} label="Gain reduction" does="The gain reduction in time for a burst at full level. Drag handle 1 for the attack and handle 2 for the release.">
+          <Display w={w} h={146} label="Gain reduction" does="The gain reduction in time for a burst at full level. Drag handle 1 across for the attack and handle 2 across for the release; up or down on either moves the ratio.">
             <Envelope p={p} w={w} h={146} handles />
           </Display>
         </Section>
-        <Section label="Time" width={60}>{c.attack}{c.release}</Section>
+        <Section label="Time" width={pw + 12}>
+          <Pad w={pw} h={146} label="Time" does="Drag across for the attack and up for the release."
+            x={{...st(p, 'attack'), label: 'Attack', value: numOf(v, 'attack'), def: 1, scale: ATTACK, format: ms, onChange: x => p.set('attack', Math.round(x * 100) / 100)}}
+            y={{...st(p, 'release'), label: 'Release', value: numOf(v, 'release'), def: 100, scale: RELEASE, format: ms, onChange: y => p.set('release', Math.round(y))}} />
+        </Section>
         <Section label="Depth" grow>
           <Readout label="at 0 dB" does="How far the effect lowers a sound at full level, by its curve." value={cv ? dbWord(-cv.depth) : undefined} tone="value" />
         </Section>

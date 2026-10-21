@@ -131,7 +131,8 @@ function read(p: ViewProps): Reading {
 }
 
 const light = (p: ViewProps): LightState => { const x = strOf(p.owner ?? p.v, 'light'); return x === 'lit' || x === 'dark' ? x : 'unknown' }
-const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
+const atWork = (p: ViewProps) => light(p) === 'lit' && read(p).latest?.state === 'running'
+const head = (p: ViewProps) => ({light: light(p), busy: atWork(p), onFold: p.nav.fold, onFull: p.nav.full})
 const shorts = (a: Attempt | undefined) => (a ? `#${a.n}` : undefined)
 
 // ---------------------------------------------------------------- the choices
@@ -190,7 +191,7 @@ const standsChooser = (p: ViewProps, r: Reading) => {
 const Consent = ({p, r}: {p: ViewProps; r: Reading}) => {
   if (strOf(p.v, 'standsPending') === undefined) return null
   return <>
-    <Action {...st(p, 'stands')} label="Confirm" does={`${SAYS.confirm} Reads #${r.pending?.n ?? NONE}.`} onPress={() => { p.set('stands', strOf(p.v, 'standsPending')); p.set('standsPending', undefined) }} />
+    <Action {...st(p, 'stands')} hold label="Confirm" does={`${SAYS.confirm} Reads #${r.pending?.n ?? NONE}.`} onPress={() => { p.set('stands', strOf(p.v, 'standsPending')); p.set('standsPending', undefined) }} />
     <Action label="Cancel" does={SAYS.cancel} onPress={() => p.set('standsPending', undefined)} />
   </>
 }
@@ -382,7 +383,7 @@ function RunsPane({p}: {p: ViewProps}) {
 // ---------------------------------------------------------------- the widget
 
 function taskRows(a: Attempt | undefined, show: string | undefined): RowItem[] {
-  return a ? treeOf(a.tasks, show).map(row => ({id: row.task.id, name: `${'· '.repeat(Math.min(row.depth, 2))}${cut(row.task.title ?? NONE, 22 - row.depth * 2)}`, light: LIGHT[row.task.state], tone: TONE[row.task.state],
+  return a ? treeOf(a.tasks, show).map(row => ({id: row.task.id, name: `${'· '.repeat(Math.min(row.depth, 2))}${cut(row.task.title ?? NONE, 22 - row.depth * 2)}`, light: LIGHT[row.task.state], tone: TONE[row.task.state], busy: row.task.state === 'running',
     note: row.task.seen !== undefined ? `${Math.round(row.task.seen)}m` : undefined, does: WORD[row.task.state]})) : []
 }
 
@@ -448,7 +449,7 @@ export const design: DesignedDevice = {
     const r = read(p)
     const rows: RowItem[] = ordered(r.attempts ?? [], strOf(p.v, 'group')).map(a => ({
       id: a.id, name: [groupKey(a, strOf(p.v, 'group')), `#${a.n}`, strOf(p.v, 'group') === 'attempt' || strOf(p.v, 'group') === undefined ? a.agent : undefined].filter(Boolean).join(' · '),
-      light: LIGHT[a.state], tone: TONE[a.state], note: a.id === r.standsId ? 'stands' : a.current ? 'current' : a.at, does: `${WORD[a.state]}${a.day ? `, ${a.day}` : ''}`,
+      light: LIGHT[a.state], tone: TONE[a.state], busy: a.state === 'running', note: a.id === r.standsId ? 'stands' : a.current ? 'current' : a.at, does: `${WORD[a.state]}${a.day ? `, ${a.day}` : ''}`,
     }))
     const target = r.pending ?? r.me
     return <Panel title="Runs" view="whole" {...head(p)}>
@@ -488,7 +489,7 @@ export const design: DesignedDevice = {
 
   widget: p => {
     const r = read(p), a = r.latest, items = taskRows(a, undefined), done = a?.tasks.filter(t => t.state === 'done').length
-    return <Tile title={`Runs · ${shorts(a) ?? NONE}`} light={light(p)} span={2} onFull={p.nav.full}>
+    return <Tile title={`Runs · ${shorts(a) ?? NONE}`} light={light(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
       <div className="ar-tile-list">
         {r.attempts === undefined
           ? <p style={{margin: 0, font: '10.5px var(--font-ui, sans-serif)', color: 'var(--text-dim)'}}>No reading of the attempts.</p>

@@ -158,9 +158,9 @@ function rowItems(list: readonly Node[], chip: boolean, note: boolean): RowItem[
     const {light, tone} = lampOf(m.state)
     const why = (m.state === 'stalled' || m.state === 'failed') ? `${STATE_WORD[m.state]}: ${m.why ?? 'The owner gave no reason.'}` : undefined
     return {
-      id: m.id, name: m.name, light, tone, why,
+      id: m.id, name: m.name, light, tone, busy: m.state === 'working', why,
       mark: <span className="as-mark" data-state={m.state ?? 'none'} data-nested={m.depth > 0 ? 'true' : undefined} style={{'--d': m.depth} as CSSProperties}>
-        <Lamp state={light} tone={tone} label={m.state ? `${m.name}: ${STATE_WORD[m.state]}` : `${m.name}: no reading`} /></span>,
+        <Lamp state={light} tone={tone} busy={m.state === 'working'} label={m.state ? `${m.name}: ${STATE_WORD[m.state]}` : `${m.name}: no reading`} /></span>,
       meter: chip && m.model ? <span className="as-chip" data-i={`Model|${m.name} runs on ${m.model}.`}>{m.model}</span> : undefined,
       note: note && m.tools !== undefined ? `${m.tools}` : undefined,
       does: [m.state ? STATE_SAYS[m.state] : 'No reading of this member yet.', m.goal].filter(Boolean).join(' '),
@@ -309,7 +309,8 @@ function CrewPane({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- the device
 
-const head = (p: ViewProps) => ({light: lightOf(p), onFold: p.nav.fold, onFull: p.nav.full})
+const atWork = (p: ViewProps) => lightOf(p) === 'lit' && countOf(membersOf(p.v), 'working') > 0
+const head = (p: ViewProps) => ({light: lightOf(p), busy: atWork(p), onFold: p.nav.fold, onFull: p.nav.full})
 const headMark = <KindMark kind="agent" size={12} title="Agentset" />
 
 const LEAD = 'agent/oi-field-guardian'
@@ -422,7 +423,7 @@ export const design: DesignedDevice = {
 
   widget: p => {
     const known = has(p.v, 'members'), list = membersOf(p.v)
-    return <Tile title={crewOf(p.v) ?? 'Agentset'} light={lightOf(p)} span={2} onFull={p.nav.full}>
+    return <Tile title={crewOf(p.v) ?? 'Agentset'} light={lightOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
       <div className="as-tile-list"><MemberList p={p} size={5} chip={false} label={false} /></div>
       <div className="as-tile-side">
         <Readout big label="working" does="Members at work, of all the members." value={known ? `${countOf(list, 'working')}/${list.length}` : undefined} tone="value" />

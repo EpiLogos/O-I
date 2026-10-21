@@ -300,7 +300,8 @@ function Agents({p}: {p: ViewProps}) {
     }} />
 }
 
-const head = (p: ViewProps) => ({light: lightOf(p), onFold: p.nav.fold, onFull: p.nav.full})
+const atWork = (p: ViewProps) => lightOf(p) === 'lit' && strOf(p.v, 'state') === 'running'
+const head = (p: ViewProps) => ({light: lightOf(p), busy: atWork(p), onFold: p.nav.fold, onFull: p.nav.full})
 
 // ---------------------------------------------------------------- the pane: the result
 
@@ -514,7 +515,7 @@ export const design: DesignedDevice = {
   widget: p => {
     const q = strOf(p.v, 'question'), slots = slotsOf(p.v), plot = readingOf(strOf(p.v, 'plot'))
     const last = slots?.filter(s => s.run?.state === 'done' && plot && valueOf(s.run, plot.key) !== undefined).at(-1)
-    return <Tile title="Experiment" light={lightOf(p)} span={2} onFull={p.nav.full}>
+    return <Tile title="Experiment" light={lightOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
       <RunWell v={p.v} w={104} h={100} size="mini" />
       <div className="ex-tile-side">
         <p className="ex-q" data-none={q ? undefined : 'true'}>{q === undefined ? 'No reading of the question' : q === '' ? 'No question written' : q}</p>
