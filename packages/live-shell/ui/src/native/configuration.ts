@@ -6,6 +6,7 @@ import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelOutcome, KernelTransportStatus, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
 import type {SettingsAdapter, SettingsBasis} from '../settings/adapter'
 import type {MachineConnection, MachineOperationResult, RemoteMachineDeclaration, RemoteMachinesSource} from '../settings/machines'
+import type {RoutineAuthoringResult, RoutineAuthoringSource} from '../settings/routines'
 export type {SettingsAdapter, SettingsBasis} from '../settings/adapter'
 
 export interface NativeSettingsContext {
@@ -47,8 +48,9 @@ const textOr = (value: unknown): string | null => typeof value === 'string' ? va
 
 /** The Machines page over Workcell's own declarations and connections (kernel workcell_read machine-list, connections-list,
  * connections-show; workcell_write machine-add, machine-remove, connect, disconnect: owner_routes.rs). The operations a declaration may
- * expect are Workcell's control operations, which no Workcell read discloses yet, so none is offered (allowedOperations is empty) rather
- * than copied here. Each write answers in Workcell's words. */
+ * expect are Workcell's control operations, which `workcell machine list` discloses since Workcell#118 (`control_operations`, fourteen on
+ * workcell:mac; real shape in desktop/cradle/kernel/tests/fixtures/owner-routes/workcell-machine-list-2026-10-21.json): offered as read,
+ * none before the list answers, never copied here. Each write answers in Workcell's words. */
 export function nativeRemoteMachines(call: Call, workcellRef: string): RemoteMachinesSource {
   const write = async (request: Extract<KernelOp, {op: 'workcell_write'}>['request'], done: string): Promise<MachineOperationResult> => {
     try {
@@ -58,12 +60,14 @@ export function nativeRemoteMachines(call: Call, workcellRef: string): RemoteMac
       return {status: 'refused', message: cause instanceof Error ? cause.message : String(cause)}
     }
   }
+  let controlOperations: readonly string[] = []
   return {
     scope: {scope_kind: 'workcell', scope_ref: workcellRef},
-    allowedOperations: [],
+    get allowedOperations() { return controlOperations },
     async readMachines(): Promise<RemoteMachineDeclaration[]> {
-      const data = await routeData(call, {op: 'workcell_read', request: {kind: 'machine-list'}}, 'Workcell\'s machine list') as {machines?: unknown}
+      const data = await routeData(call, {op: 'workcell_read', request: {kind: 'machine-list'}}, 'Workcell\'s machine list') as {machines?: unknown; control_operations?: unknown}
       if (!Array.isArray(data?.machines)) throw new Error('Workcell\'s machine list carried no machines.')
+      controlOperations = strings(data.control_operations)
       return data.machines.flatMap((row): RemoteMachineDeclaration[] => {
         const m = row as Record<string, unknown>
         return typeof m.label === 'string' && typeof m.endpoint === 'string'
@@ -95,6 +99,36 @@ export function nativeRemoteMachines(call: Call, workcellRef: string): RemoteMac
     connect: label => write({kind: 'connect', connection: label}, `${label} is connected.`),
     disconnect: label => write({kind: 'disconnect', label}, `${label} is disconnected; its record is kept.`),
     remove: label => write({kind: 'machine-remove', label}, `${label} is removed.`),
+  }
+}
+
+/** Why the Automations page's options and schedule preparation stand absent: no AIKit command answers either. */
+export const ROUTINE_ABSENT = {
+  options: 'A Routine\'s options: no owner operation carries them yet — missing op: an AIKit command listing a method\'s verified runs (proofs), the authorities and the admitted triggers for a new Routine (no `aikit routine` verb answers them) (AIKit).',
+  prepareSchedule: 'A schedule for a Routine: no owner operation carries it yet — missing op: an AIKit command that validates a schedule and allocates its ScheduleRecord without enabling anything (no `aikit routine` verb prepares one) (AIKit).',
+} as const
+
+/** Routine authoring through the kernel's routine op (lane W6 round 3: `aikit routine create` stores a Draft — nothing fires; `enable` arms
+ * it with the authority given; `reprove` returns it to Disabled on a new proof), each answering AIKit's {routine, state, note} in its words.
+ * Options and schedule preparation have no AIKit command: each refuses naming it, so the page offers neither. */
+export function nativeRoutineAuthoring(call: Call): RoutineAuthoringSource {
+  const author = async (request: Extract<KernelOp, {op: 'routine'}>['request'], project: string | undefined): Promise<RoutineAuthoringResult> => {
+    const answer = await call({op: 'routine', ...(project ? {project} : {}), request})
+    if (answer.error) return {status: 'refused', message: answer.error}
+    if (answer.outcome?.result !== 'routine') return {status: 'failed', message: 'AIKit did not answer the Routine operation.'}
+    const data = (answer.outcome.data ?? {}) as {routine?: unknown; state?: unknown; note?: unknown}
+    const routine = typeof data.routine === 'string' ? data.routine : undefined
+    const state = typeof data.state === 'string' ? data.state : undefined
+    return {status: 'acknowledged', message: typeof data.note === 'string' && data.note ? data.note : `${routine ?? 'The Routine'} is ${state ?? 'recorded'}.`, ...(routine ? {routine_ref: routine} : {})}
+  }
+  return {
+    options: async () => { throw new Error(ROUTINE_ABSENT.options) },
+    prepareSchedule: async () => { throw new Error(ROUTINE_ABSENT.prepareSchedule) },
+    create: (input, project) => author({action: 'create', name: input.name, method: input.method, proof: {...input.proof}, trigger: {...input.trigger} as Record<string, unknown>,
+      authority: {...input.authority}, ...(input.description ? {description: input.description} : {}), ...(input.agent_profile ? {agent_profile: input.agent_profile} : {}),
+      ...(input.context_scope.length ? {context_scopes: [...input.context_scope]} : {})}, project),
+    enable: (routine_ref, authority, project) => author({action: 'enable', routine_ref, authority: {...authority}}, project),
+    reprove: (routine_ref, proof, project) => author({action: 'reprove', routine_ref, proof: {...proof}}, project),
   }
 }
 
@@ -214,6 +248,7 @@ export async function connectNativeSettings(transport: KernelTransportStatus, co
     },
     harnesses: createLiveHarnessSource(call),
     ...(workcell ? {remoteMachines: nativeRemoteMachines(call, workcell)} : {}),
+    routineAuthoring: nativeRoutineAuthoring(call),
     ...(context.visuals ? {visualPreferences: nativeVisualPreferences(context.visuals)} : {}),
     importTheme: (text, fileName) => nativeImportTheme(call, text, fileName),
   }

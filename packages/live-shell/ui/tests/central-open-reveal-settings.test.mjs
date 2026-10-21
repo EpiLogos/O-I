@@ -168,7 +168,9 @@ test('the native connector offers the pages beyond the configuration plane over 
     const adapter = await connectNativeSettings(transport, context())
     for (const key of ['invoke', 'profiles', 'readProducts', 'harnesses', 'remoteMachines', 'importTheme']) assert.ok(adapter[key], `${key} is offered`)
     assert.equal(adapter.visualPreferences, undefined, 'no store handed in, no visual preferences')
-    assert.equal(adapter.routineAuthoring, undefined, 'routine authoring waits on ops the kernel does not carry (create, enable, options)')
+    // REPLACED (lane W11): routine authoring goes through the kernel's routine op (create, enable, reprove); options and schedule preparation
+    // refuse naming the AIKit commands that do not exist (w11-custody-turn-thought-settings.test.mjs).
+    assert.ok(adapter.routineAuthoring, 'routine authoring is offered on the kernel\'s routine verbs')
     assert.equal(adapter.canEnterCredentialMaterial, undefined, 'no credential capability reading qualifies material entry')
     const invoked = await adapter.invoke({op: 'routine', request: {action: 'list'}})
     assert.deepEqual([invoked.outcome.result, invoked.outcome.data, invoked.error], ['routine_reading', {asked: 'list'}, null], 'the pages\' own ops go through the epoch-checked call')
@@ -176,7 +178,9 @@ test('the native connector offers the pages beyond the configuration plane over 
     assert.deepEqual(await adapter.profiles.listProfiles(), {active_profile_ref: null, profiles: []})
     const machines = adapter.remoteMachines
     assert.deepEqual(machines.scope, {scope_kind: 'workcell', scope_ref: 'workcell:mac'})
-    assert.deepEqual(machines.allowedOperations, [], 'no Workcell read discloses its control operations: none is copied here')
+    // REPLACED (lane W11): the control operations are `workcell machine list`'s own (Workcell#118); none before it answers, and this older
+    // capture carries none.
+    assert.deepEqual(machines.allowedOperations, [], 'none before the list answers: none is copied here')
     assert.deepEqual((await machines.readMachines()).map(m => [m.label, m.endpoint, m.credential_ref, m.operations]), [
       ['omarchy', '100.92.62.101:7777', 'keychain://workcell-connection/omarchy', ['status', 'discover', 'observe', 'inspect']],
       ['omarchy-improvement-lanes', '100.92.62.101:7777', 'keychain://workcell-connection/omarchy-improvement-lanes', []]])

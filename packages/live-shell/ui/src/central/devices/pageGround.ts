@@ -30,12 +30,34 @@ const count = (value: unknown): number | undefined => (Array.isArray(value) ? va
 
 export const CONTEMPLATE_FLOW_ACTION = 'action:contemplate-flow'
 
-/** What this window holds of one Flow's Thought: the preflight, the thought and what changed since, each as its owner answered. */
+/** What this window holds of one Flow's Thought: the preflight, the thought and what changed since, each as its owner answered; and the
+ * Flow's last thought as AIKit keeps it (lane W11: `aikit flow thoughts`, the kernel's aikit_read flow-thoughts) with what changed since
+ * that one (flow_changed_since on its kept record). A run in this window stands over the kept one. */
 export interface FlowThought {
   readonly flowRef: string | null
   readonly preflight?: ActionAnswer
   readonly thought?: ActionAnswer
   readonly since?: {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string} | {readonly status: 'reading'}
+  /** `aikit flow thoughts <flow> --limit 1` (aikit.flow-thoughts/v1 {flow, thoughts [{recorded_at_unix_ms, thought}], unreadable}). */
+  readonly kept?: ActionAnswer
+  /** What changed since the kept thought (flow_changed_since with its `thought`). */
+  readonly keptSince?: FlowThought['since']
+}
+
+/** The Flow's last kept thought ({at (ms), thought: the FlowThoughtRecord a successful contemplation returned}); null when AIKit keeps
+ * none (thoughts are kept only when a host executor runs a contemplation — the kernel's Contemplate does); undefined when the answer is
+ * not the reading. Pure. */
+export function lastKeptThought(reading: unknown): {at?: number; thought: Record<string, unknown>} | null | undefined {
+  if (!rec(reading) || reading.version !== 'aikit.flow-thoughts/v1' || !Array.isArray(reading.thoughts)) return undefined
+  const first = reading.thoughts.find(rec)
+  if (!first || !rec(first.thought)) return null
+  return {...(typeof first.recorded_at_unix_ms === 'number' ? {at: first.recorded_at_unix_ms} : {}), thought: first.thought}
+}
+
+/** A kept thought's instant in the window's clock ('21 Oct 14:30'). */
+function keptAt(ms: number | undefined, timeZone?: string): string | undefined {
+  if (ms === undefined) return undefined
+  try { return new Intl.DateTimeFormat('en-GB', {timeZone, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(ms)).replace(',', '') } catch { return undefined }
 }
 
 /** The presses of the Thought page: ask the preflight; run Contemplate once on the preflight record; ask what changed since the thought. */
@@ -92,13 +114,27 @@ export function sinceValue(answer: FlowThought['since']): string | undefined {
     open: open.flatMap(row => (rec(row) && txt(row.kind) && txt(row.reference) ? [{kind: txt(row.kind), reference: txt(row.reference), ...(txt(row.state) ? {state: txt(row.state)} : {})}] : []))})
 }
 
-/** The Thought page's values (preflight, thought, since), where this window asked for them. */
-export function thoughtValues(thought: FlowThought | null): Record<string, Value> {
+/** The Thought page's values (preflight, thought, since), where this window asked for them, else the Flow's last kept thought and what
+ * changed since it. With no thought kept, `thought` is JSON null: the Flow has not been contemplated where AIKit keeps its thoughts. */
+export function thoughtValues(thought: FlowThought | null, timeZone?: string): Record<string, Value> {
   const values: Record<string, Value> = {}
-  const preflight = preflightValue(thought?.preflight), cognition = thoughtValue(thought?.thought), since = sinceValue(thought?.since)
+  const preflight = preflightValue(thought?.preflight)
   if (preflight) values.preflight = preflight
-  if (cognition) values.thought = cognition
-  if (since) values.since = since
+  if (thought?.thought) {
+    const cognition = thoughtValue(thought.thought), since = sinceValue(thought.since)
+    if (cognition) values.thought = cognition
+    if (since) values.since = since
+    return values
+  }
+  const last = thought?.kept?.status === 'answered' ? lastKeptThought(thought.kept.value) : undefined
+  if (last === null) values.thought = 'null'
+  else if (last) {
+    const cognition = thoughtValue({status: 'answered', value: {state: 'cognition', thought: last.thought}})
+    const at = keptAt(last.at, timeZone)
+    if (cognition) values.thought = at ? JSON.stringify({...JSON.parse(cognition) as Record<string, unknown>, at}) : cognition
+    const since = sinceValue(thought?.since ?? thought?.keptSince)
+    if (since) values.since = since
+  }
   return values
 }
 

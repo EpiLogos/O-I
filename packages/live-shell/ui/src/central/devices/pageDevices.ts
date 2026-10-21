@@ -31,7 +31,8 @@ import {dateOfDayPath} from '../daySurface'
 import {actionAnswerOf, centralActionOp, useCentralAction, useDayDieReading, type ActionAnswer} from './useCentralReadings'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {CONTEMPLATE_FLOW_ACTION, PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_SELF_ENSURE_ACTION, PC_SELF_INSPECT_ACTION, PC_TIER_RELATE_ACTION, acceptInput, relateInput,
-  type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
+  lastKeptThought, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
+import {useOwnerOp} from '../../owners/ownerCall'
 
 /** The Day device's document, as useDayDevice reads it (CentralDevices.tsx). */
 export interface DayDocumentReading {
@@ -152,7 +153,18 @@ const answerOfCall = (call: Awaited<ReturnType<typeof kernelOp>>, action: string
  * Flow ref (its document id, as the cradle names it: CradleFrame.tsx `flow.flowRef`), held for that Flow in this window only. */
 export function useFlowThought(transport: KernelTransportStatus, flowRef: string | null): {state: FlowThought; hand: ThoughtHand | null} {
   const [held, setHeld] = useState<{ref: string; state: FlowThought} | null>(null)
-  const state: FlowThought = held && held.ref === flowRef ? held.state : {flowRef}
+  const ran = held && held.ref === flowRef ? held.state : {flowRef}
+  // The Flow's last thought as AIKit keeps it (W11), and what changed since that one — read for the Flow, never by a press.
+  const keptOp = useMemo(() => (flowRef && transport.kind !== 'unavailable' ? {op: 'aikit_read' as const, request: {kind: 'flow-thoughts' as const, flow_ref: flowRef, limit: 1}} : null), [flowRef, transport])
+  const keptRead = useOwnerOp(transport, keptOp, 'owner_route_reading').reading
+  const kept: ActionAnswer = keptRead.status === 'answered' ? {status: 'answered', value: keptRead.value?.data ?? null}
+    : keptRead.status === 'refused' ? {status: 'refused', error: keptRead.error ?? 'AIKit refused its kept thoughts.'} : {status: 'reading'}
+  const last = kept.status === 'answered' ? lastKeptThought(kept.value) : undefined
+  const sinceOp = useMemo(() => (last && !ran.thought && transport.kind !== 'unavailable' ? {op: 'flow_changed_since' as const, thought: last.thought} : null), [last ? JSON.stringify(last.thought) : null, ran.thought, transport]) // eslint-disable-line react-hooks/exhaustive-deps
+  const sinceRead = useOwnerOp(transport, sinceOp, 'flow_changed_since').reading
+  const keptSince: FlowThought['since'] = !sinceOp ? undefined : sinceRead.status === 'answered' ? {status: 'answered', value: sinceRead.value?.reading ?? null}
+    : sinceRead.status === 'refused' ? {status: 'refused', error: sinceRead.error ?? 'The kernel did not answer what changed since the thought.'} : {status: 'reading'}
+  const state: FlowThought = {...ran, kept, ...(keptSince ? {keptSince} : {})}
   const hand = useMemo((): ThoughtHand | null => !flowRef || transport.kind === 'unavailable' ? null : {
     preflight: async () => {
       const call = await kernelOp(transport, {op: 'invoke_action', invocation: {action: CONTEMPLATE_FLOW_ACTION, target_ref: flowRef}})

@@ -25,7 +25,7 @@ import {gatewayDisclosed, type AgentChainReading} from './agentChainDevices'
 import type {OwnerAcceptedValues} from './ownerAccepted'
 import type {TaskClip, TemporalEventLike} from '../agentRunModel'
 import {runStateOfSession, stageRecordingOf, threadRowsFrom} from './runFaces'
-import {armedOf, bypassesOf, contextPressureOf, historyOf, procedureDiffOf, proceduresOf, rootsOf, sourcesOf, unusedOf, whyOf, type AikitAnswer} from './aikitPages'
+import {armedOf, bypassesOf, contextPressureOf, contextTurnOf, historyOf, procedureDiffOf, proceduresOf, rootsOf, sourcesOf, unusedOf, whyOf, type AikitAnswer} from './aikitPages'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -123,7 +123,7 @@ const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Sta
 export const AGENT_CONTEXT_ABSENT: Readonly<Record<string, string>> = {
   'ctx.pressure': 'The context pressure: AIKit\'s continuity is not read here (`aikit work continuity pressure` through the kernel\'s aikit_read).',
   'ctx.armed': 'The star commands armed: AIKit\'s continuity is not read here (`aikit work continuity commands` through the kernel\'s aikit_read).',
-  'ctx.turn': 'The last turn\'s bounded blocks: no reading reaches them yet — missing op: a read of the last turn\'s bounded blocks (AIKit writes them only into the turn\'s own hook output; T-COVERAGE §1.5, AIKit) (AIKit).',
+  'ctx.turn': 'The last turn\'s bounded blocks: AIKit\'s continuity is not read here (`aikit work continuity turn` through the kernel\'s aikit_read).',
 }
 
 /** Each chain design's refused writes, by key (the refusals its binding's write gives, below). The Agent's light is among them since
@@ -312,7 +312,7 @@ export interface AgentInput {
   /** The kernel's temporal events (the sessions provider's one read): the session's run as the stage plays it. */
   readonly events?: readonly TemporalEventLike[] | null
   /** AIKit's continuity for the Context page (aikitPages.ts): `aikit work continuity pressure` and `commands`; absent: not read here. */
-  readonly context?: {readonly pressure: AikitAnswer; readonly commands: AikitAnswer}
+  readonly context?: {readonly pressure: AikitAnswer; readonly commands: AikitAnswer; readonly turn?: AikitAnswer}
 }
 
 /** The Agent's values: each key from the owner that reports it, or absent. */
@@ -320,7 +320,12 @@ export interface AgentInput {
 function contextStanding(context: AgentInput['context'], values: Values): Record<string, string> {
   const why = (answer: AikitAnswer | undefined, key: string) => (answer?.status === 'refused' ? answer.error ?? AGENT_CONTEXT_ABSENT[key]!
     : answer?.status === 'reading' ? 'AIKit has not answered its continuity yet (`aikit work continuity`).' : answer ? `\`aikit work continuity\` answered no ${key === 'ctx.armed' ? 'armed list' : 'brackets'}.` : AGENT_CONTEXT_ABSENT[key]!)
-  return {'ctx.turn': AGENT_CONTEXT_ABSENT['ctx.turn']!, ...('ctx.pressure' in values ? {} : {'ctx.pressure': why(context?.pressure, 'ctx.pressure')}),
+  const turn = context?.turn?.status === 'answered' ? contextTurnOf(context.turn.value) : null
+  const turnWhy = turn && !turn.kept ? `The last turn's bounded blocks: AIKit kept no turn for ${turn.scope ?? 'this scope'} (\`aikit work continuity turn\` answered turn: null — nothing is kept until a turn's hook output is).`
+    : context?.turn?.status === 'refused' ? context.turn.error ?? AGENT_CONTEXT_ABSENT['ctx.turn']!
+      : context?.turn?.status === 'reading' ? 'AIKit has not answered its continuity turn yet (`aikit work continuity turn`).'
+        : context?.turn ? '`aikit work continuity turn` answered something other than its turn reading.' : AGENT_CONTEXT_ABSENT['ctx.turn']!
+  return {...('ctx.turn' in values ? {} : {'ctx.turn': turnWhy}), ...('ctx.pressure' in values ? {} : {'ctx.pressure': why(context?.pressure, 'ctx.pressure')}),
     ...('ctx.armed' in values ? {} : {'ctx.armed': why(context?.commands, 'ctx.armed')})}
 }
 
@@ -330,6 +335,8 @@ export function agentValues(input: AgentInput): Values {
   if (pressure) values['ctx.pressure'] = JSON.stringify(pressure)
   const armed = input.context?.commands.status === 'answered' ? armedOf(input.context.commands.value) : null
   if (armed) values['ctx.armed'] = JSON.stringify(armed)
+  const turn = input.context?.turn?.status === 'answered' ? contextTurnOf(input.context.turn.value) : null
+  if (turn?.kept) values['ctx.turn'] = JSON.stringify(turn.turn)
   return values
 }
 
