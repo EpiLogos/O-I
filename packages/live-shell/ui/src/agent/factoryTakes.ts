@@ -35,6 +35,8 @@ export interface FactoryTake {
   summary: string | null
   /** Central's receiving receipt for the Return: this take stands. */
   receivingRef: string | null
+  /** The Workcell world the attempt ran in (its execution body's materialWorldRef), where Factory names one. */
+  materialWorldRef?: string | null
 }
 
 const text = (value: unknown): string | null => typeof value === 'string' && value.trim() ? value : null
@@ -88,6 +90,7 @@ export function takeOf(sessionRef: string, served: ServedAttempt, record: unknow
     endUnixMs: returned ? time(row.returnRecordedAt) : failed ? time(row.failureRecordedAt) : null,
     summary: returned ? text(returned.summary) : null,
     receivingRef: returned ? text(returned.receivingRef) : null,
+    materialWorldRef: text(object(object(row.disposition)?.body)?.materialWorldRef),
   }
 }
 

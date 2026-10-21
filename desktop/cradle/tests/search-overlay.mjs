@@ -13,7 +13,9 @@ mkdirSync(out, {recursive:true});
 const cases = JSON.parse(readFileSync(resolve(root,'tests/search-queries.json'),'utf8'));
 const receipt = {grade:'D', scope:'production search component + client + HTTP bridge; controlled responses, not native owner/installed/human evidence', checks:[], browsers:[], passed:false};
 const check = (value, name) => { assert.ok(value,name); receipt.checks.push(name); };
-const server = await createServer({root, configFile:false, plugins:[react()], resolve:{alias:{three:resolve(root,'node_modules/three')}}, define:{__CRADLE_WALK__:'false'}, server:{host:'127.0.0.1',port:1437,strictPort:true,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});
+// The scan starts from this test's own page (as vite.config.ts names the app's entries): with none named it crawls every .html
+// under the root, and on CI an evidence page whose imports name this machine's paths failed it, leaving discovery to run time.
+const server = await createServer({root, configFile:false, optimizeDeps:{entries:['tests/search-fixture.html']}, plugins:[react()], resolve:{alias:{three:resolve(root,'node_modules/three')}}, define:{__CRADLE_WALK__:'false'}, server:{host:'127.0.0.1',port:1437,strictPort:true,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});
 await server.listen();
 try {
   for (const [name, engine] of Object.entries({chromium,webkit})) {
@@ -36,6 +38,8 @@ try {
       const {action,query} = op.request;
       if(query==='progressive' && action==='resolve') await new Promise(resolve=>setTimeout(resolve,1500));
       if(query==='slow') await new Promise(resolve=>setTimeout(resolve,1200));
+      // The owner's resolution answers before the search: its row is the whole list for a moment.
+      if(query==='owner-first' && action==='search') await new Promise(resolve=>setTimeout(resolve,600));
       if(query==='refused') return route.fulfill({json:{ok:false,error:'resolve.unclosed_quote: quoted Resolve subject is not closed'}});
       const length = query==='many' ? 50 : query==='empty' ? 0 : 2;
       const hits = Array.from({length},(_,i)=>({resource:`wiki/fixture-${i}`,label:`Result ${i} · ${query}`,kind:'wiki',snippet:'Controlled source material',address:{kind:'wiki',value:`wiki/fixture-${i}`}}));
@@ -88,6 +92,15 @@ try {
       await overlay.waitFor({state:'detached'});
       check(await writing.evaluate(el=>document.activeElement===el && el.selectionStart===4 && el.selectionEnd===14),`${name}: Escape restores exact writing focus/selection`);
       await open();
+      // The first row is a default, not a choice: when the search's rows land above the owner's row that answered first, the
+      // top row is selected and ArrowDown takes the next (CI, 21 Oct: the default rode down with the owner row, and ArrowDown
+      // wrapped back to knowledge-search-0).
+      await fill('owner-first');
+      await page.waitForFunction(()=>[...document.querySelectorAll('.search-aperture li strong')].some(el=>el.textContent.includes('owner-first')));
+      await settled();
+      check(await input.getAttribute('aria-activedescendant')==='knowledge-search-0',`${name}: rows arriving above the default row take the top`);
+      await input.press('ArrowDown');
+      check(await input.getAttribute('aria-activedescendant')==='knowledge-search-1',`${name}: ArrowDown after a late search answer takes the next row`);
       await fill('keyboard');
       // `settled` can read the previous query's resting list before the new search starts (CI, 15 Oct: ArrowDown landed on the
       // stale rows and the active row never became knowledge-search-1). The keyboard step waits for this query's own rows.

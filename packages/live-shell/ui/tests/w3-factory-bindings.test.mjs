@@ -389,7 +389,8 @@ test('(d) the chain and the rail carry the owner routes where the manual puts th
   assert.match(chain, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null[\s\S]*?actor: deskActor, holds\}, seatPorts\)/, 'Join and Release on the desk\'s actor')
   assert.match(chain, /seat: request => ownerRouteWrite\(transport, seatWriteOp\(request\)/)
   // REPLACED (lane W10): the carrier takes discover's offers and the probe too.
-  assert.match(chain, /carrierBinding\(workcellAnswer, holds, shows, \{discover/, 'the carrier with each connection\'s record')
+  // REPLACED (lane W13): the carrier's material spans a line (discover, the probe, the run's plan).
+  assert.match(chain, /carrierBinding\(workcellAnswer, holds, shows,\s*\{discover/, 'the carrier with each connection\'s record')
   assert.match(chain, /trust: capability => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'trust-record', project: RACK_PROJECT, capability\}\)/)
   assert.match(chain, /slot\.id === 'git' && placed\(SEAT_ID, cells\.seat, seatDesignBinding/, 'the Seat stands inside Git / landing (§19.17)')
   const rail = read('agent/devices/AgentRailDevices.tsx')

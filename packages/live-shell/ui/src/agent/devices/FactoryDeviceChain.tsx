@@ -93,10 +93,11 @@ import {
   AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, RUN_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, runBinding, sessionDevices, type CustodyPorts,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
-import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, connectionLabels, gitBinding, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
+import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp, workcellReadOp} from './ownerRoutes'
+import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
-import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, workcellGitReading} from './workcellRackBinding'
+import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
 import {AGENT_SLOTS, chainSlots, factoryPlace, type FactorySlot} from './factoryPlaces'
 import {KNOWLEDGE_ROUTE_DESIGN, KNOWLEDGE_ROUTE_ID, knowledgeRouteBinding, knowledgeRouteDevice} from './knowledgeRouteBinding'
 import {useOwnerOp} from '../../owners/ownerCall'
@@ -287,9 +288,34 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const shownRun = shownTakes ? runsOfTakes(shownTakes, typeof heldWork === 'string' ? heldWork : undefined).work ?? null : null
   const shownState = shownRun ? shownTakes?.find(take => take.runRef === shownRun)?.statePath ?? null : null
   const runJourney = useRunJourney(transport, shownState, shownRun)
+  // Runs' Outputs (W12): each attempt's world is the receipt `workcell worlds` lists whose world_ref is the attempt's materialWorldRef;
+  // Collect reads `workcell collect` on it (a read: Workcell's collect changes no state), held for this window.
+  const takeWorlds = useMemo(() => [...new Set((shownTakes ?? []).flatMap(take => (take.materialWorldRef ? [take.materialWorldRef] : [])))], [shownTakes])
+  const runWorlds = useWorkcellRead(transport, takeWorlds.length ? {kind: 'worlds'} : null).answer
+  const [collected, setCollected] = useState<Record<string, {value?: unknown; error?: string}>>({})
+  const outputs = useMemo(() => {
+    const listed = runWorlds.status === 'answered' ? worldsOf(runWorlds.value) : null
+    const receipts = Object.fromEntries((shownTakes ?? []).flatMap(take => {
+      const world = take.materialWorldRef ? listed?.worlds.find(row => row.worldRef === take.materialWorldRef) : undefined
+      return world ? [[take.attemptRef, world.receipt]] : []
+    }))
+    const why = !takeWorlds.length ? 'no attempt of this session names the Workcell world it ran in (its execution body\'s materialWorldRef).'
+      : runWorlds.status === 'refused' ? runWorlds.error ?? 'Workcell refused its world receipts.'
+        : runWorlds.status === 'reading' ? 'Workcell has not answered its world receipts yet (`workcell worlds`).'
+          : !listed ? '`workcell worlds` answered something other than its world receipts.'
+            : 'no receipt `workcell worlds` lists is the world an attempt names (a receipt written elsewhere with `--receipt` is not listed).'
+    return {receipts, why}
+  }, [shownTakes, takeWorlds.length, runWorlds])
+  const collectPort = useMemo(() => (transport.kind !== 'unavailable' ? async (attempt: string, receipt: string) => {
+    try {
+      const answer = await ownerRouteWrite(transport, workcellReadOp({kind: 'collect', receipt}), '`workcell collect`')
+      setCollected(was => ({...was, [attempt]: {value: answer.data}}))
+    } catch (cause) { setCollected(was => ({...was, [attempt]: {error: cause instanceof Error ? cause.message : String(cause)}})); throw cause }
+  } : undefined), [transport])
   const runsDesignBinding = useMemo(() => runsBinding(sessionTrack?.sessionRef ?? null, holds,
-    runTakes && sessionTrack ? {takes: shownTakes, choose: runTakes.choose, ...(shownRun ? {journey: runJourney} : {})} : undefined),
-  [sessionTrack, holds, runTakes, shownTakes, shownRun, runJourney])
+    runTakes && sessionTrack ? {takes: shownTakes, choose: runTakes.choose, ...(shownRun ? {journey: runJourney} : {}),
+      receipts: outputs.receipts, collected, ...(collectPort ? {collect: collectPort} : {}), outputsWhy: outputs.why} : undefined),
+  [sessionTrack, holds, runTakes, shownTakes, shownRun, runJourney, outputs, collected, collectPort])
 
   // Factory's Main track devices: the Experiment on its chain. The monitors — Gateways, the Frames monitor the Gateway opens full, the Ledger —
   // Messages, the Agency gateway and the workcell rack stand on the rail in every mode: AgentRailDevices.tsx publishes them, not this chain.
@@ -508,8 +534,22 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const shows = useConnectionShows(transport, carrierLabels)
   const discover = useWorkcellRead(transport, {kind: 'discover'}).answer
   const probe = useWorkcellRead(transport, carrierLabels.length ? {kind: 'connections-probe'} : null).answer
-  const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows, {discover, ...(carrierLabels.length ? {probe} : {})}),
-    [workcellAnswer, holds, shows, discover, probe, carrierLabels.length])
+  // The carrier's Plan (W13): the run the chosen world's receipt names (the rack's world: chosenWorld, W12), its `workcell run show`, and
+  // where its demand is kept, Workcell's plan for that demand (`--demand-json <path>`, first and alone).
+  const carrierWorlds = useWorkcellRead(transport, {kind: 'worlds'}).answer
+  const carrierWorld = chosenWorld(carrierWorlds, typeof machineRef === 'string' ? machineRef : null, viewHolds(holds, WORKCELL_RACK_ID).worldReceipt).chosen
+  // The chosen world's run is the slug `workcell worlds` names for it (Workcell PR 122), never the receipt's subjects (W14).
+  const runLedger = carrierWorlds.status === 'answered' ? worldsOf(carrierWorlds.value)?.runLedger : undefined
+  const planRun = planRunOf(carrierWorld, runLedger, viewHolds(holds, CARRIER_ID).planRun)
+  const carrierRun = planRun.ref
+  const runShow = useWorkcellRead(transport, carrierRun ? {kind: 'run-show', run: carrierRun} : null).answer
+  const keptDemand = runShow.status === 'answered' ? runDemandOf(runShow.value) : null
+  const keptPath = keptDemand?.standing === 'kept' ? keptDemand.path ?? null : null
+  const runPlan = useWorkcellRead(transport, keptPath ? {kind: 'plan', demand: {demand_json: keptPath}} : null)
+  const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows,
+    {discover, ...(carrierLabels.length ? {probe} : {}), run: {ref: carrierRun, ...(planRun.why ? {why: planRun.why} : {}), ...(carrierRun ? {show: runShow} : {}), ...(keptPath ? {plan: runPlan.answer} : {})}},
+    keptPath && transport.kind !== 'unavailable' ? {replan: runPlan.refresh} : {}),
+  [workcellAnswer, holds, shows, discover, probe, carrierLabels.length, carrierRun, planRun.why, runShow, keptPath, runPlan.answer, runPlan.refresh, transport])
   // The rack as the rail's publisher holds it, watched alone (another device's publish does not redraw the chain).
   const rackEntry = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(WORKCELL_RACK_ID), () => publishedDevice(WORKCELL_RACK_ID))
 

@@ -360,13 +360,26 @@ pub enum WorkcellRead {
     Collect {
         receipt: PathBuf,
     },
+    /// One run's record and the demand body it was started with (`workcell
+    /// run show --run SLUG`, Workcell#121): `demand` is `{path, digest,
+    /// standing}`, where standing is `kept` (with `body`, checked against the
+    /// record's demand_digest), `not-kept` (a run recorded before Workcell
+    /// kept bodies), `mismatch` or `unreadable`. Workcell never reconstructs
+    /// a body, and neither does the kernel. Reads only.
+    RunShow {
+        run: String,
+    },
 }
 
 /// A material demand in Workcell's own flag spelling (`workcell plan`): each
 /// field one flag, repeated per value. No other flag travels.
+/// `demand_json` is Workcell's `--demand-json PATH` (a run's kept demand,
+/// `run-show`'s `demand.path`): it travels first, and Workcell refuses it
+/// mixed with any other flag in its own words.
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct WorkcellDemand {
+    pub demand_json: Option<String>,
     pub demand_ref: Option<String>,
     pub require: Vec<String>,
     pub prefer: Vec<String>,
@@ -404,6 +417,7 @@ impl WorkcellDemand {
                 args.push(value.into());
             }
         };
+        one(&mut args, "--demand-json", &self.demand_json);
         one(&mut args, "--demand-ref", &self.demand_ref);
         many(&mut args, "--require", &self.require);
         many(&mut args, "--prefer", &self.prefer);
@@ -1747,6 +1761,12 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             args.push("--json".into());
             ("workcell instances usage", args)
         }
+        WorkcellRead::RunShow { run } => {
+            let mut args = words(&["run", "show", "--run"]);
+            args.push(run.into());
+            args.push("--json".into());
+            ("workcell run show", args)
+        }
         WorkcellRead::Collect { receipt } => {
             let mut args = words(&["--receipt"]);
             args.push(receipt.into());
@@ -1789,6 +1809,11 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             )?
         }
         WorkcellRead::InstancesUsage { .. } => schema(route, data, "workcell.resource-usage/v1")?,
+        WorkcellRead::RunShow { .. } => fields(
+            route,
+            data,
+            &[("run", Kind::Record), ("demand", Kind::Record)],
+        )?,
         WorkcellRead::Collect { .. } => fields(
             route,
             data,

@@ -1,0 +1,162 @@
+{
+  "captured": "2026-10-21 over a scratch state root: 'kept' and 'not_kept' from EpiLogos/Workcell#121 (branch dlw/workcell-run-demand, 40dc731); the not-kept run was started by the installed workcell (before #121, which keeps no body); 'installed_show' is the installed workcell's own answer for that run; 'not_found' is #121's refusal for an unknown slug (exit 5)",
+  "argv": "workcell --json run show --run SLUG",
+  "kept": {
+    "demand": {
+      "body": {
+        "affordances": {
+          "optional": [],
+          "preferred": [],
+          "required": [
+            "shell"
+          ]
+        },
+        "connectivity": {
+          "optional": [],
+          "preferred": [],
+          "required": []
+        },
+        "demand_ref": "demand:dlw-capture",
+        "exposure": {
+          "optional": [],
+          "preferred": [],
+          "required": []
+        },
+        "extensions": {},
+        "isolation_trust": null,
+        "outputs": {
+          "optional": [],
+          "preferred": [],
+          "required": []
+        },
+        "persistence": null,
+        "project_runtime": null,
+        "resources": [],
+        "retention": "release",
+        "storage": {
+          "optional": [],
+          "preferred": [],
+          "required": []
+        },
+        "subjects": {
+          "run": "opaque:factory-run-capture"
+        },
+        "workspace": null
+      },
+      "digest": "sha256:e13d434ecde8c5a34c051de6acc2465ae1c06bc02a4d8e7d8190f379c9f2416d",
+      "path": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/rd-capture/runs/dlw-capture/demand.json",
+      "standing": "kept"
+    },
+    "ok": true,
+    "run": {
+      "agency": null,
+      "boundary_digest": null,
+      "canonical_run_ref": null,
+      "closed_at_unix_ms": null,
+      "collected_at_unix_ms": null,
+      "correlations": [],
+      "created_at_unix_ms": 1792606364283,
+      "deliverable": {
+        "branch": null,
+        "outputs": []
+      },
+      "demand_digest": "sha256:e13d434ecde8c5a34c051de6acc2465ae1c06bc02a4d8e7d8190f379c9f2416d",
+      "demand_ref": "demand:dlw-capture",
+      "execution_status": "running",
+      "material_owner": "workcell.durable-local-run/v1",
+      "material_refs": [
+        "execution:host-process:2bd18179a3103989"
+      ],
+      "opened_at_unix_ms": 1792606364334,
+      "operative": null,
+      "place": null,
+      "provider_ref": "provider:collapsed-local-host-process",
+      "run_slug": "dlw-capture",
+      "rung": "local",
+      "schema": "workcell.run/v1",
+      "status_reason": null,
+      "world_receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/rd-capture/worlds/world_566bd9371b0f4376.json",
+      "world_ref": "world:566bd9371b0f4376"
+    },
+    "run_revision": "sha256:410961f836948fd4cd13aa41f6e60d6398dc6e1d106514dddc5a59398b62d80a"
+  },
+  "not_kept": {
+    "demand": {
+      "detail": "no demand body is kept beside this run's record; a run started before Workcell kept demand bodies records only its demand_ref and demand_digest",
+      "digest": "sha256:dfaed763e835a1fcb776c8f66f9f82d56b82d2bcae3fda0487c1fc64f82853f0",
+      "path": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/rd-capture/runs/legacy-capture/demand.json",
+      "standing": "not-kept"
+    },
+    "ok": true,
+    "run": {
+      "agency": null,
+      "boundary_digest": null,
+      "canonical_run_ref": null,
+      "closed_at_unix_ms": null,
+      "collected_at_unix_ms": null,
+      "correlations": [],
+      "created_at_unix_ms": 1792606364350,
+      "deliverable": {
+        "branch": null,
+        "outputs": []
+      },
+      "demand_digest": "sha256:dfaed763e835a1fcb776c8f66f9f82d56b82d2bcae3fda0487c1fc64f82853f0",
+      "demand_ref": "demand:legacy-capture",
+      "execution_status": "running",
+      "material_owner": "workcell.durable-local-run/v1",
+      "material_refs": [
+        "execution:host-process:afdc9b10402b8523"
+      ],
+      "opened_at_unix_ms": 1792606364402,
+      "operative": null,
+      "place": null,
+      "provider_ref": "provider:collapsed-local-host-process",
+      "run_slug": "legacy-capture",
+      "rung": "local",
+      "schema": "workcell.run/v1",
+      "status_reason": null,
+      "world_receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/rd-capture/worlds/world_89b3cb0218dc0a4b.json",
+      "world_ref": "world:89b3cb0218dc0a4b"
+    },
+    "run_revision": "sha256:1050863e874dddc5ccb4deda9a270b42b22f7997c1123da5ae8a5c892dca9144"
+  },
+  "installed_show": {
+    "ok": true,
+    "run": {
+      "agency": null,
+      "boundary_digest": null,
+      "canonical_run_ref": null,
+      "closed_at_unix_ms": null,
+      "collected_at_unix_ms": null,
+      "correlations": [],
+      "created_at_unix_ms": 1792606364350,
+      "deliverable": {
+        "branch": null,
+        "outputs": []
+      },
+      "demand_digest": "sha256:dfaed763e835a1fcb776c8f66f9f82d56b82d2bcae3fda0487c1fc64f82853f0",
+      "demand_ref": "demand:legacy-capture",
+      "execution_status": "running",
+      "material_owner": "workcell.durable-local-run/v1",
+      "material_refs": [
+        "execution:host-process:afdc9b10402b8523"
+      ],
+      "opened_at_unix_ms": 1792606364402,
+      "operative": null,
+      "place": null,
+      "provider_ref": "provider:collapsed-local-host-process",
+      "run_slug": "legacy-capture",
+      "rung": "local",
+      "schema": "workcell.run/v1",
+      "status_reason": null,
+      "world_receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/rd-capture/worlds/world_89b3cb0218dc0a4b.json",
+      "world_ref": "world:89b3cb0218dc0a4b"
+    },
+    "run_revision": "sha256:1050863e874dddc5ccb4deda9a270b42b22f7997c1123da5ae8a5c892dca9144"
+  },
+  "not_found": {
+    "stdout": "",
+    "stderr": "{\"error\":{\"kind\":\"not-found\",\"message\":\"not found: run `nosuch` is not in this ledger; `workcell run list` shows what is\"},\"ok\":false}\n",
+    "exit": 5
+  }
+}

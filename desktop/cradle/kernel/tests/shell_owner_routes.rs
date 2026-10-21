@@ -2802,6 +2802,11 @@ fn workcell_lists_the_world_receipts_it_keeps_with_their_refs_and_subjects() {
         "opaque:factory-run-capture"
     );
     assert_eq!(data["unreadable"].as_array().unwrap().len(), 1);
+    // Workcell#122's join, carried as it answered: the run-ledger slugs
+    // whose record names the world (the slug `run-show` takes), not its
+    // opaque subject.
+    assert_eq!(data["worlds"][0]["runs"], json!(["dlw-capture"]));
+    assert_eq!(data["run_ledger"], json!({"read": true, "runs": 1}));
     assert_eq!(receipts(&outcome), json!([]), "a read earns no receipt");
     assert_eq!(workcell.asked(), ["worlds --json"]);
 
@@ -2826,6 +2831,71 @@ fn workcell_lists_the_world_receipts_it_keeps_with_their_refs_and_subjects() {
     workcell.answer(&foreign);
     let (outcome, _) = dispatched(no_central(&dir), op(request));
     assert!(outcome.unwrap_err().contains("workcell.world-receipts/v1"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn workcell_shows_a_run_with_the_demand_it_was_started_with() {
+    let _held = hold();
+    let dir = scratch("workcell-run-show");
+    let workcell = Fake::new(&dir, "workcell");
+    let _bin = Bound::set("OI_WORKCELL_BIN", &workcell.bin);
+    // Workcell#121's own answers over a scratch cell (REAL).
+    let real = fixture("workcell-run-show-2026-10-21.json");
+    let show =
+        |run: &str| op(json!({"op": "workcell_read", "request": {"kind": "run-show", "run": run}}));
+
+    // A run started since #121: its demand body, checked against its digest.
+    workcell.answer(&real["kept"]);
+    let (outcome, form) = dispatched(no_central(&dir), show("dlw-capture"));
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "workcell run show");
+    assert_eq!(data, real["kept"], "Workcell's answer, verbatim");
+    assert_eq!(data["demand"]["standing"], "kept");
+    assert_eq!(data["demand"]["digest"], data["run"]["demand_digest"]);
+    assert_eq!(data["demand"]["body"]["demand_ref"], "demand:dlw-capture");
+    assert_eq!(receipts(&outcome), json!([]), "a read earns no receipt");
+    assert_eq!(workcell.asked(), ["run show --run dlw-capture --json"]);
+
+    // A run recorded before Workcell kept bodies: said so, no body made up.
+    workcell.answer(&real["not_kept"]);
+    let (outcome, _) = dispatched(no_central(&dir), show("legacy-capture"));
+    let (_, data, _) = reading(&outcome.unwrap());
+    assert_eq!(data["demand"]["standing"], "not-kept");
+    assert!(data["demand"].get("body").is_none());
+
+    // The kept body plans as Workcell's own `--demand-json PATH`.
+    let path = real["kept"]["demand"]["path"].as_str().unwrap();
+    let material = fixture("workcell-material-2026-10-21.json");
+    workcell.answer(&material["plan"]);
+    workcell.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_read", "request": {"kind": "plan", "demand": {"demand_json": path}}}),
+        ),
+    );
+    outcome.unwrap();
+    assert_eq!(
+        workcell.asked(),
+        [format!("plan --demand-json {path} --json")]
+    );
+
+    // An installed Workcell before #121 answers without the demand: not
+    // this reading, refused by name.
+    workcell.answer(&real["installed_show"]);
+    let (outcome, _) = dispatched(no_central(&dir), show("legacy-capture"));
+    assert!(outcome.unwrap_err().contains("run, demand"));
+
+    // An unknown run is Workcell's refusal in its own words (REAL, exit 5).
+    let refusal = &real["not_found"];
+    workcell.refuse(None, refusal["stderr"].as_str().unwrap(), 5);
+    let (outcome, _) = dispatched(no_central(&dir), show("nosuch"));
+    assert!(outcome
+        .unwrap_err()
+        .contains("run `nosuch` is not in this ledger"));
     let _ = fs::remove_dir_all(&dir);
 }
 

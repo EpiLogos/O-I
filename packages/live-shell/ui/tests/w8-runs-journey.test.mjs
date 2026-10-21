@@ -137,6 +137,7 @@ test('Runs draws the Journey of the Run it shows (the Journey view); unread, ref
 test('the chain hands Runs the Journey of the Run it shows, read from the take\'s state and ref', () => {
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /const runJourney = useRunJourney\(transport, shownState, shownRun\)/)
-  assert.match(view, /\{takes: shownTakes, choose: runTakes\.choose, \.\.\.\(shownRun \? \{journey: runJourney\} : \{\}\)\}/)
+  // REPLACED (lane W12): Runs is handed its Outputs too (each attempt's world receipt, what was collected, Collect).
+  assert.match(view, /\{takes: shownTakes, choose: runTakes\.choose, \.\.\.\(shownRun \? \{journey: runJourney\} : \{\}\),/)
   assert.match(read('agent/devices/runJourney.ts'), /op: 'factory_development_read', state_path: statePath, read, subject/)
 })

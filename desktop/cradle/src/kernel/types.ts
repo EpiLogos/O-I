@@ -226,8 +226,11 @@ export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections
   | {kind:"doctor"|"discover"|"instances-list"}
   /** `workcell worlds` (EpiLogos/Workcell#120): the material-world receipts the cell keeps under its state root,
    * `workcell.world-receipts/v1` `{receipt_root, worlds:[{receipt, world_ref, workcell_ref, demand_ref, subjects, state, retention,
-   * persistence, bindings, planned_exposures}], unreadable:[{receipt, error}], note}`. A receipt written elsewhere with `--receipt`
-   * is not known to the cell (the note says so). */
+   * persistence, bindings, planned_exposures, runs}], unreadable:[{receipt, error}], run_ledger:{read, runs?, error?}, note}`. A
+   * receipt written elsewhere with `--receipt` is not known to the cell (the note says so). `runs` (Workcell#122) holds the
+   * run-ledger slugs whose record names that world's world_ref, the slugs `run-show` takes. It is joined when read, `[]` when no run
+   * names the world, and null when the ledger cannot be read (`run_ledger.error` says why). `subjects.run` is an opaque subject, not
+   * a slug. */
   | {kind:"worlds"}
   /** `workcell plan <demand flags>`: an unsatisfiable plan is a reading too (`status`, `omissions`). */
   | {kind:"plan";demand?:WorkcellDemand}
@@ -239,9 +242,15 @@ export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections
   /** `workcell instances usage <ref> [--pid] [--interval-ms] [--correlation-ref]…` (`workcell.resource-usage/v1`). */
   | {kind:"instances-usage";instance_ref:string;pid?:number;interval_ms?:number;correlation_refs?:string[]}
   /** `workcell --receipt R collect`: the world's collected outputs (world_ref, outputs, degradations, omissions). */
-  | {kind:"collect";receipt:string};
-/** A material demand in `workcell plan`'s own flags, one field per flag. */
-export interface WorkcellDemand { demand_ref?:string; require?:string[]; prefer?:string[]; optional?:string[]; workspace?:"writable"|"read-only"; workspace_ref?:string; revision?:string; project_runtime?:string; connect?:string[]; prefer_connect?:string[]; optional_connect?:string[]; expose?:string[]; prefer_expose?:string[]; optional_expose?:string[]; output?:string[]; prefer_output?:string[]; optional_output?:string[]; resource?:string[]; subject?:string[]; persistence?:string; isolation?:string; retention?:string; extension?:string[] }
+  | {kind:"collect";receipt:string}
+  /** `workcell run show --run SLUG` (EpiLogos/Workcell#121): `{run_revision, run, demand:{path, digest, standing:
+   * kept|not-kept|mismatch|unreadable, body?, body_digest?, detail?}}`. `body` is the demand the run was started with, checked
+   * against `run.demand_digest`, and appears only when `kept`. A run recorded before Workcell kept bodies is `not-kept` (never
+   * reconstructed). `demand.path` plans as `plan {demand:{demand_json: path}}`. */
+  | {kind:"run-show";run:string};
+/** A material demand in `workcell plan`'s own flags, one field per flag. `demand_json` is Workcell's `--demand-json PATH` (a run's
+ * kept demand, `run-show`'s `demand.path`); Workcell refuses it mixed with any other field. */
+export interface WorkcellDemand { demand_json?:string; demand_ref?:string; require?:string[]; prefer?:string[]; optional?:string[]; workspace?:"writable"|"read-only"; workspace_ref?:string; revision?:string; project_runtime?:string; connect?:string[]; prefer_connect?:string[]; optional_connect?:string[]; expose?:string[]; prefer_expose?:string[]; optional_expose?:string[]; output?:string[]; prefer_output?:string[]; optional_output?:string[]; resource?:string[]; subject?:string[]; persistence?:string; isolation?:string; retention?:string; extension?:string[] }
 /** `workcell connect --connection LABEL` (a declared machine: no endpoint or authorization travels), `workcell machine add|remove`. */
 export type WorkcellWriteRequest =
   | {kind:"connect";connection:string}

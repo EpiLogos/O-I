@@ -1,15 +1,19 @@
 {
-  "captured": "2026-10-21 from EpiLogos/Workcell#120 (branch dlw/workcell-worlds, 6b862b1) over a scratch state root; installed_refusal from the installed workcell (main before #120)",
+  "captured": "2026-10-21 over a scratch state root: 'answer' from EpiLogos/Workcell#122 (branch dlw/workcell-worlds-runs, 0e0699a), one world materialised by run dlw-capture and one torn receipt; 'empty' from Workcell#120; installed_refusal from the installed workcell (main before #120)",
   "argv": "workcell --json worlds",
   "answer": {
-    "note": "receipts kept under this cell's state root only; a receipt written elsewhere with --receipt is not listed",
+    "note": "receipts kept under this cell's state root only; a receipt written elsewhere with --receipt is not listed. Each world's runs are the run-ledger slugs whose record names its world_ref (null when the ledger cannot be read)",
     "ok": true,
-    "receipt_root": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wc-capture/worlds",
+    "receipt_root": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wr-capture/worlds",
+    "run_ledger": {
+      "read": true,
+      "runs": 1
+    },
     "schema": "workcell.world-receipts/v1",
     "unreadable": [
       {
         "error": "invalid demand: decode material world: EOF while parsing a value at line 1 column 13",
-        "receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wc-capture/worlds/torn.json"
+        "receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wr-capture/worlds/torn.json"
       }
     ],
     "worlds": [
@@ -18,8 +22,11 @@
         "demand_ref": "demand:dlw-capture",
         "persistence": null,
         "planned_exposures": 0,
-        "receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wc-capture/worlds/world_566bd9371b0f4376.json",
+        "receipt": "/private/tmp/claude-501/-Users-admin-Central/bcf6cb5e-df4d-45ac-9ff2-1a80ca435f52/scratchpad/builder-e/wr-capture/worlds/world_566bd9371b0f4376.json",
         "retention": "release",
+        "runs": [
+          "dlw-capture"
+        ],
         "state": "healthy",
         "subjects": {
           "run": "opaque:factory-run-capture"

@@ -15,7 +15,7 @@
 // Nothing is invented: a field Workcell does not name is left out of its row. Pure.
 
 /** Why a run's world is not read: every world reading and write takes the world's receipt, and no reading names one. */
-export const NO_RUN = 'a run\'s world receipt (`workcell --receipt R material|collect|recover|release|reconcile`): no reading here names one — `workcell status` counts the persisted world receipts (persisted_world_receipts) and lists none, a workcell\'s return track carries no run, and a Factory attempt keeps its world\'s ref, not its receipt'
+export const NO_RUN = 'a world\'s receipt (`workcell --receipt R material|collect|recover|release|reconcile`): Workcell\'s world receipts (`workcell worlds`) are not read here'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -108,4 +108,70 @@ export function collectedOf(attempt: string, collect: unknown): Record<string, u
   const omitted = (Array.isArray(collect.omissions) ? collect.omissions : []).flatMap(row => (isObj(row) && str(row.requirement)
     ? [{requirement: row.requirement, ...keep(row, [['reason', 'reason']])}] : []))
   return {attempt, world: collect.world_ref, outputs, omitted}
+}
+
+/** One world receipt the cell keeps (`workcell worlds`, workcell.world-receipts/v1; EpiLogos/Workcell PR 120). */
+export interface ListedWorld {
+  readonly receipt: string
+  readonly worldRef: string
+  readonly workcellRef?: string
+  readonly demandRef?: string
+  readonly state?: string
+  readonly retention?: string
+  readonly persistence?: string
+  readonly subjects: Readonly<Record<string, string>>
+  /** The run-ledger slugs whose record's world_ref is this world's (EpiLogos/Workcell PR 122): `[]` when none; null when the ledger
+   * cannot be read (the listing's run_ledger says why); absent from an older Workcell's listing. */
+  readonly runs?: readonly string[] | null
+}
+
+/** `workcell worlds`'s receipts ({worlds, unreadable, note}); null when the answer is not that listing. A receipt written elsewhere with
+ * `--receipt` is not listed (the note says so). Pure. */
+export function worldsOf(listing: unknown): {worlds: ListedWorld[]; unreadable: {receipt: string; error?: string}[]; note?: string; runLedger?: {read: boolean; error?: string}} | null {
+  if (!isObj(listing) || listing.schema !== 'workcell.world-receipts/v1' || !Array.isArray(listing.worlds)) return null
+  const worlds = listing.worlds.flatMap((row): ListedWorld[] => (isObj(row) && str(row.receipt) && str(row.world_ref) ? [{receipt: String(row.receipt), worldRef: String(row.world_ref),
+    ...(str(row.workcell_ref) ? {workcellRef: String(row.workcell_ref)} : {}), ...(str(row.demand_ref) ? {demandRef: String(row.demand_ref)} : {}),
+    ...(str(row.state) ? {state: String(row.state)} : {}), ...(str(row.retention) ? {retention: String(row.retention)} : {}), ...(str(row.persistence) ? {persistence: String(row.persistence)} : {}),
+    subjects: isObj(row.subjects) ? Object.fromEntries(Object.entries(row.subjects).flatMap(([key, value]) => (str(value) ? [[key, String(value)]] : []))) : {},
+    ...(row.runs === null ? {runs: null} : Array.isArray(row.runs) ? {runs: row.runs.filter((slug): slug is string => typeof slug === 'string' && !!slug.trim())} : {})}] : []))
+  const unreadable = (Array.isArray(listing.unreadable) ? listing.unreadable : []).flatMap(row => (isObj(row) && str(row.receipt) ? [{receipt: String(row.receipt), ...(str(row.error) ? {error: String(row.error)} : {})}] : []))
+  const ledger = isObj(listing.run_ledger) ? listing.run_ledger : null
+  return {worlds, unreadable, ...(str(listing.note) ? {note: String(listing.note)} : {}),
+    ...(ledger ? {runLedger: {read: ledger.read === true, ...(str(ledger.error) ? {error: String(ledger.error)} : {})}} : {})}
+}
+
+/** The kernel's material_read of a world's receipt (`workcell --receipt R material`, workcell.material-reading/v1, answered as
+ * native_owner_reading: receipt_world, observation and exposure each supplied or an error) as the rack's World and Exposure pages
+ * (workcell__workcell.tsx `world` {ref, demand, persistence, retention, state, bindings [{ref, port, provider, necessity, health, presence,
+ * observed?}]}, `surfaces` [{ref, interaction, endpoint}], `omitted` [{requirement, necessity, reason}], `readAt` ms), and the bindings'
+ * logical refs Apply sets fates on. A field Workcell does not name is left out. Null when the reading is not the material reading. Pure. */
+export function materialWorldOf(reading: unknown): {world: Record<string, unknown>; bindings: string[]; surfaces?: Record<string, unknown>[]; omitted?: Record<string, unknown>[];
+  readAt?: number; exposureError?: string} | null {
+  if (!isObj(reading) || reading.contract !== 'workcell.material-reading/v1' || !isObj(reading.receipt_world) || !str(reading.receipt_world.world_ref)) return null
+  const world = reading.receipt_world
+  const observation = isObj(reading.observation) && reading.observation.status === 'supplied' && isObj(reading.observation.reading) ? reading.observation.reading : null
+  const observed = new Map((observation && Array.isArray(observation.observations) ? observation.observations : []).flatMap(row => (isObj(row) && str(row.logical_ref) && str(row.state)
+    ? [[String(row.logical_ref), String(row.state)]] : [])))
+  const graph = isObj(world.binding_graph) && Array.isArray(world.binding_graph.bindings) ? world.binding_graph.bindings : []
+  const bindings = graph.flatMap(row => (isObj(row) && str(row.logical_ref) && str(row.port) ? [{ref: row.logical_ref, port: row.port,
+    ...keep(row, [['provider', 'provider_ref'], ['necessity', 'necessity'], ['health', 'health'], ['presence', 'presence']]),
+    ...(observed.has(String(row.logical_ref)) ? {observed: observed.get(String(row.logical_ref))} : {})}] : []))
+  const exposure = isObj(reading.exposure) ? reading.exposure : null
+  const supplied = exposure && exposure.status === 'supplied' && isObj(exposure.reading) ? exposure.reading : null
+  const surfaces = supplied && Array.isArray(supplied.surfaces) ? supplied.surfaces.flatMap(row => (isObj(row) && str(row.logical_ref)
+    ? [{ref: row.logical_ref, ...keep(row, [['interaction', 'interaction']]), ...(isObj(row.material) && str(row.material.endpoint) ? {endpoint: row.material.endpoint} : {})}] : [])) : undefined
+  const needs = (list: unknown) => (Array.isArray(list) ? list.flatMap(row => (isObj(row) && str(row.requirement) ? [{requirement: row.requirement, ...keep(row, [['necessity', 'necessity'], ['reason', 'reason']])}] : [])) : [])
+  const omitted = supplied ? [...needs(supplied.omissions), ...needs(supplied.degradations)] : undefined
+  const failed = exposure && exposure.status === 'error' ? (isObj(exposure.error) ? str(exposure.error.message) ?? str(exposure.error.kind) : str(exposure.error)) : undefined
+  const readAt = observation && isObj(reading.observation) ? num(reading.observation.completed_at_unix_ms) : undefined
+  return {world: {ref: world.world_ref, ...keep(world, [['demand', 'demand_ref'], ['persistence', 'persistence'], ['retention', 'retention'], ['state', 'state']]), bindings},
+    bindings: bindings.map(row => String(row.ref)), ...(surfaces ? {surfaces} : {}), ...(omitted ? {omitted} : {}), ...(readAt !== undefined ? {readAt} : {}), ...(failed ? {exposureError: failed} : {})}
+}
+
+/** `workcell --receipt R reconcile --desired …`'s deltas as the rack's last reconcile ([{ref, observed, desired, action}]). Null when the
+ * answer carries no deltas. Pure. */
+export function reconciledOf(answer: unknown): Record<string, unknown>[] | null {
+  if (!isObj(answer) || !Array.isArray(answer.deltas)) return null
+  return answer.deltas.flatMap(row => (isObj(row) && str(row.logical_ref) && str(row.desired) ? [{ref: row.logical_ref, desired: row.desired,
+    observed: str(row.observed) ?? null, action: str(row.action) ?? null}] : []))
 }
