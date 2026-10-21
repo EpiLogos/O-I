@@ -82,13 +82,14 @@ test('the form is read once per encounter; a new degree advances forward on the 
   assert.deepEqual(values, {'clock.degree720': 419, 'clock.tick12': 1, 'clock.backbone': '#3-5-1-3', 'aperture.index': 2, 'form.address': 17, 'form.codon': 'TAT',
     'law.matrix': 'moving-resting', 'law.seed': 'sum-difference-mod', 'law.poseMap': 'raw-bin',
     'generation.lower': 'CT', 'generation.upper': 'CC', 'generation.positive': 'CCC', 'generation.negative': 'CTC', 'generation.nonDual': false})
-  for (const key of Object.keys(design.defaults).filter(key => !['turn', 'open', 'readout', 'reciprocal'].includes(key))) assert.ok(key in values || m3.QL_M3_ABSENT[key], `${key} from the owner, or named absent`)
-  for (const [key, why] of Object.entries(m3.QL_M3_ABSENT)) {
-    assert.equal(key in values, false, `${key}: the reading carries none, so the binding gives none`)
-    assert.ok(key in design.defaults, `${key} is a key of the design`)
-    assert.match(why, /^No rack reading: .* missing op: a rack reading and the rule naming a verified part/, `${key}: absent with its reason`)
-  }
+  // The Rack page's keys are the rack's (qlRack.ts): the rack absent with its reason until it is read, the part in the view's own hand.
   const binding = m3.qlM3Binding(m3.qlM3State())
+  for (const key of Object.keys(design.defaults).filter(key => !['turn', 'open', 'readout', 'reciprocal'].includes(key)))
+    assert.ok(key in values || binding.standing[key]?.disabled || binding.local[key], `${key} from the owner, named absent, or the view's own`)
+  assert.deepEqual(Object.keys(m3.QL_M3_ABSENT), [], 'no key of the M3 clock lacks its owner now')
+  assert.equal('rack' in binding.values, false, 'the rack is not read in this test')
+  assert.ok(binding.standing.rack.disabled.length > 8, 'the rack names why it is not drawn')
+  assert.equal(typeof binding.local['rack.part'], 'function', 'the part you choose is the view\'s own')
   assert.equal(designKey('quaternal-logic', m3.QL_M3_FACE), design.id)
   next = reading({state: form({clock: {...form().clock, steps: 424, degree720: 4}, aperture: {...form().aperture, index: 5}})})
   await binding.write([{key: 'clock.degree720', value: 4}, {key: 'aperture.index', value: 5}])

@@ -11,7 +11,8 @@
 //   generation.lower, upper, positive, negative, nonDual   the cell of the form's hexagram under that matrix (`generation.cell`:
 //                                          lower_pair / upper_pair / positive / negative `.sequence`, `non_dual`);
 //   a new degree is the owner's `advance-clock{steps}` forward by the difference on the double cover, a new cut its `set-aperture`, a new
-//   matrix its `set-matrix{family}` (QL's SetMatrix, carried by m3_reception: the matrix is chosen without turning the form).
+//   matrix its `set-matrix{family}` (QL's SetMatrix, carried by m3_reception: the matrix is chosen without turning the form);
+//   rack, rack.part                        the Rack page: M3′'s rack from the map's ledger and the part you choose (qlRack.ts).
 // Turn, Open, Readout and Reciprocal are the view's own (DesignBinding.local). The seed and the pose map are readings: QL's state names
 // the law in force and offers no operation that sets them. With no identity chosen, no Expression open, or no form
 // opened for them (status 'absent': the Nara instrument's M3 page opens it), every value stands absent and the well says which.
@@ -28,6 +29,7 @@ import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
+import {qlRackState, rackPage, type QlRackState} from './qlRack'
 
 export const QL_M3_FAMILY = 'quaternal-logic'
 export const QL_M3_FACE = 'm3-clock'
@@ -166,12 +168,8 @@ export const QL_M3_READINGS: Readonly<Record<string, string>> = {
   'generation.negative': 'A reading: the cell of the form\'s hexagram under the matrix (ql.m3-state/v1 generation.cell).',
   'generation.nonDual': 'A reading: the cell of the form\'s hexagram under the matrix (ql.m3-state/v1 generation.cell).',
 }
-/** The Rack page (manual §16.16, §22.9): the rack of M3′, its parts and which stand verified. */
-const NO_RACK = 'No rack reading: no owner reports the parts of M3′\'s rack or which of them stand verified — missing op: a rack reading and the rule naming a verified part (Quaternal Logic, T-COVERAGE §1.5).'
-/** Why each key of the generation law has no reading here (manual §16.12: "say which one"). */
-export const QL_M3_ABSENT: Readonly<Record<string, string>> = {
-  rack: NO_RACK, 'rack.part': `${NO_RACK} So no part of it is chosen.`,
-}
+/** Why a key has no reading here (manual §16.12: "say which one"): none now — the Rack page reads M3′'s rack (qlRack.ts). */
+export const QL_M3_ABSENT: Readonly<Record<string, string>> = {}
 /** The matrices in QL's own order: the family index set-matrix takes (crates/ql-mef/src/m3_state/form_cell.rs; ql.m3-state/v1 law.matrix.index). */
 export const QL_M3_MATRICES = ['complementary', 'moving-resting', 'same-quality'] as const
 /** The keys the view holds: how the clock is drawn, not what it is. */
@@ -229,21 +227,24 @@ export function qlM3Operations(m3: QlM3State, changes: readonly ValueChange[]): 
 
 /** The binding the runtime hosts the M3 clock design on: the form's readings, the owner's two operations, the view's own keys in its
  * own hand, and every key the owner does not take disabled with the reason. */
-export function qlM3Binding(m3: QlM3State): DesignBinding {
+export function qlM3Binding(m3: QlM3State, rack: QlRackState = qlRackState(3)): DesignBinding {
   const live = m3.reading?.status === 'available' && !!m3.reading.state
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries({...QL_M3_READINGS, ...QL_M3_ABSENT})) standing[key] = {disabled: why}
   if (!live) for (const key of ['clock.degree720', 'aperture.index', 'law.matrix']) standing[key] = {disabled: m3.reason ?? NO_FORM}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_M3_LOCAL) local[key] = value => setQlM3View({[key]: value})
+  // The Rack page: M3′'s rack from the map's ledger, and the part you choose (qlRack.ts).
+  const page = rackPage(3, rack)
+  Object.assign(standing, page.standing); Object.assign(local, page.local)
   return {
     id: QL_M3_DEVICE_ID,
-    values: qlM3Values(m3),
+    values: {...qlM3Values(m3), ...page.values},
     writes: key => live && (key === 'clock.degree720' || key === 'aperture.index' || key === 'law.matrix'),
     standing,
     local,
     // The first read of the form is in flight: every value waits, and none is drawn as zero.
-    waiting: m3.busy && !live,
+    waiting: m3.busy && !live ? true : page.waiting ? ['rack'] : false,
     ...(live ? {write: async (changes: readonly ValueChange[]) => { const ops = qlM3Operations(m3, changes); if (ops.length) await applyQlM3(ops) }} : {}),
   }
 }

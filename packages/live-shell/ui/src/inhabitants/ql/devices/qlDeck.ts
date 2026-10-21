@@ -9,14 +9,21 @@
 //                                       (QL's reading: `spreads[].placements[]`; a Klein night with the day it completes);
 //   iching                              the latest hexagram's six lines from the bottom and its nuclear hexagram;
 //   act.draw · act.cast · act.assign · act.link · act.comment · act.close    the journey's acts, written through the kernel;
-//   act.move · act.turn                 refused with their reason: QL's journey has no act that moves or turns a placed card yet;
+//   act.move · act.turn                 refused with their reason: QL's deck is shuffled once and drawn in sequence, so a placed card keeps
+//                                       its position and orientation, and its journey has no act that moves or turns one;
 //   m3.card                             the card of the codon now: the person's M3 form's tarot (ql.m3-state/v1 `tarot`, through the
 //                                       kernel's m3_reception, qlM3Clock.ts), named in the kernel's own register "<Rank> of <Suit>"
-//                                       (crates/ql-core/src/pole/tarot.rs MinorArcanaCard Display; m3.c:1006-1007).
-// Deck, Spread, Draw, Pairs, Lemniscate, Moving lines, Agent reads and Consent are the view's own (DesignBinding.local). Consent to
+//                                       (crates/ql-core/src/pole/tarot.rs MinorArcanaCard Display; m3.c:1006-1007);
+//   generation                          the cast hexagram's cell: QL's generation law at the latest cast's primary hexagram (the journey's
+//                                       `primary`, line patterns from the bottom, the id the law reads: oracle_journey.rs:566-578,
+//                                       ql-core pole/generation.rs:142), asked of the person's M3 state as a read with `generation_at`
+//                                       (m3_reception forwards QL's `ql kernel m3` generation_at verbatim, kernel/src/m3_reception.rs
+//                                       Request::Read). One ask answers the three matrices' cells; the matrix shown is chosen among them.
+// Deck, Spread, Draw, Pairs, Lemniscate, Moving lines, Matrix, Agent reads and Consent are the view's own (DesignBinding.local); the
+// Matrix reads as the M3 state's own matrix until you choose one. Consent to
 // chance is spent by the act it allowed: the next draw asks again. With no journey open, every reading stands absent and says why.
 // Pure apart from the one kernel call, which takes the call it is given, and the small store the views share.
-import {useSyncExternalStore} from 'react'
+import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import type {CentralLocation, KernelOp} from '../../../../../../../desktop/cradle/src/kernel/types'
 import type {DeckDefinition, JourneyAct, JourneyRequest, NaraJourneyRequest, NaraJourneyResult, PlacementView, SpreadKind, SpreadView} from '../../../../../../../desktop/cradle/src/nara/journey'
@@ -25,7 +32,7 @@ import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
-import type {QlM3State} from './qlM3Clock'
+import {m3Through, type QlM3State} from './qlM3Clock'
 
 export const QL_DECK_FAMILY = 'quaternal-logic'
 export const QL_DECK_FACE = 'deck'
@@ -34,8 +41,8 @@ export const QL_DECK_DEVICE_ID = techneDeviceId(QL_DECK_FAMILY, QL_DECK_FACE)
 
 export const NO_JOURNEY = 'No journey is open: open a journey page (a Flow on your practice world) and the Deck reads it.'
 export const NO_CONSENT = 'Chance needs your consent: turn Consent on for this act. It is spent by the act it allows.'
-export const NO_MOVE = 'QL\'s journey has no act that moves a placed card yet (crates/ql-mef/src/nara/domain/oracle_journey.rs JourneyRequest).'
-export const NO_TURN = 'QL\'s journey has no act that turns a placed card yet: a card\'s orientation is the shuffle\'s (oracle_journey.rs DeckShuffle).'
+export const NO_MOVE = 'QL\'s journey keeps a placed card where it was drawn: its deck is shuffled once and drawn in sequence (crates/ql-mef/src/nara/domain/oracle_journey.rs:44-45, the protocol), and JourneyRequest (:804) has no act that moves it.'
+export const NO_TURN = 'QL\'s journey keeps a card as it was drawn: its orientation is the shuffle\'s turned portion (oracle_journey.rs:253 DeckShuffle::reversed_at), and JourneyRequest has no act that turns it.'
 export const CONCERN_SET = 'A journey\'s concern is set when the journey opens; it does not change.'
 export const M3_CARD = 'The card of the codon now is the M3 clock\'s (its form\'s tarot): a reading, never set here.'
 /** The card of the codon now, from the M3 form's tarot, in the kernel's print register; undefined while no form is read. */
@@ -118,8 +125,9 @@ export interface DeckView {
   readonly movingLines?: Value
   readonly agentReads?: Value
   readonly consent?: Value
+  readonly matrix?: Value
 }
-export const QL_DECK_LOCAL = ['deck', 'spread', 'draw', 'pairs', 'lemniscate', 'movingLines', 'agentReads', 'consent'] as const
+export const QL_DECK_LOCAL = ['deck', 'spread', 'draw', 'pairs', 'lemniscate', 'movingLines', 'agentReads', 'consent', 'matrix'] as const
 
 export interface QlDeckState {
   readonly journey: DeckJourney | null
@@ -252,6 +260,82 @@ export function useQlDeck(): QlDeckState {
   return useSyncExternalStore(subscribe, qlDeckState, qlDeckState)
 }
 
+// ── the cast hexagram's cell ────────────────────────────────────────────────
+
+export const NO_CAST = 'The generation cell is the I Ching\'s: cast a hexagram, and the cell of its primary hexagram is read.'
+export const GENERATION_LAW = 'ql.pole.m3-generation-law/v1'
+
+/** QL's generation reading at the cast hexagram, or why there is none. */
+export interface DeckCastState {
+  /** The ask's key: the M3 encounter, its generation and the hexagram; null while nothing is asked. */
+  readonly key: string | null
+  readonly hexagram: number | null
+  readonly reading: Record<string, any> | null
+  readonly reason: string | null
+  readonly busy: boolean
+}
+const CAST_INITIAL: DeckCastState = {key: null, hexagram: null, reading: null, reason: NO_CAST, busy: false}
+let cast: DeckCastState = CAST_INITIAL
+let castSequence = 0
+const castListeners = new Set<() => void>()
+const setCast = (next: DeckCastState) => { cast = next; for (const listener of [...castListeners]) listener() }
+
+export function qlDeckCastState(): DeckCastState { return cast }
+
+/** The primary hexagram of the latest cast, as QL's journey reads it from the lines (bit 0 the bottom line). */
+export function castHexagramOf(deck: QlDeckState): number | null {
+  const primary = deck.result?.reading.iching.at(-1)?.primary
+  return Number.isInteger(primary) && (primary as number) >= 0 && (primary as number) < 64 ? primary as number : null
+}
+
+/** QL's reading for the one ask, admitted only when it is the law's cell at the hexagram asked. */
+export function readCastCell(generationAt: unknown, hexagram: number): {ok: true; reading: Record<string, any>} | {ok: false; reason: string} {
+  const first = Array.isArray(generationAt) ? generationAt[0] as Record<string, any> | undefined : undefined
+  if (!first || typeof first !== 'object') return {ok: false, reason: 'The M3 state answered without the generation cell asked for.'}
+  if (first.law_ref !== GENERATION_LAW || first.hexagram_id !== hexagram || !Array.isArray(first.cells))
+    return {ok: false, reason: 'QL answered another law or another hexagram than the one cast.'}
+  return {ok: true, reading: first}
+}
+
+/** Follow the cast and the M3 state: the cell of a new cast (or of the cast under a new state) is asked once; only the newest stands. */
+export async function syncDeckCast(deck: QlDeckState, m3: QlM3State | undefined): Promise<void> {
+  const hexagram = castHexagramOf(deck)
+  const form = m3?.reading?.status === 'available' ? m3.reading.state : null
+  const why = hexagram === null ? NO_CAST : !m3?.basis || !form ? `The cast's cell is read from your M3 state: ${m3?.reason ?? 'no M3 form is open.'}` : null
+  if (why) { if (cast.key !== null || cast.reason !== why) setCast({...CAST_INITIAL, reason: why}); return }
+  const key = `${m3!.key}|${form!.identity.profile_generation}|${hexagram}`
+  if (key === cast.key) return
+  const ticket = ++castSequence
+  setCast({key, hexagram, reading: null, reason: null, busy: true})
+  const answer = await m3Through(call, m3!.basis!, {operation: 'read', generation_at: [{hexagram: hexagram!}]})
+  if (ticket !== castSequence) return
+  const cell = answer.ok ? readCastCell(answer.reading.generation_at, hexagram!) : answer
+  setCast({key, hexagram, reading: cell.ok ? cell.reading : null, reason: cell.ok ? null : cell.reason, busy: false})
+}
+
+/** Tests: start the cast's cell again. */
+export function resetDeckCast(): void { castSequence++; cast = CAST_INITIAL; for (const listener of [...castListeners]) listener() }
+
+const subscribeCast = (listener: () => void) => { castListeners.add(listener); return () => { castListeners.delete(listener) } }
+
+/** The cast hexagram's cell as the views share it, following the open journey's cast and the person's M3 state. */
+export function useQlDeckCast(deck: QlDeckState, m3: QlM3State): DeckCastState {
+  const hexagram = castHexagramOf(deck), generation = m3.reading?.state?.identity.profile_generation
+  useEffect(() => { void syncDeckCast(deck, m3) }, [hexagram, m3.key, generation, m3.reason])
+  return useSyncExternalStore(subscribeCast, qlDeckCastState, qlDeckCastState)
+}
+
+/** The cell the design draws: under the matrix you chose, else the M3 state's own (the reading's `matrix`). */
+export function castGeneration(reading: Record<string, any> | null, chosen: Value | undefined): {matrix: string | undefined; generation: string | undefined} {
+  if (!reading) return {matrix: typeof chosen === 'string' ? chosen : undefined, generation: undefined}
+  const matrix = typeof chosen === 'string' ? chosen : typeof reading.matrix?.family === 'string' ? reading.matrix.family as string : undefined
+  const cell = (reading.cells as Record<string, any>[]).find(item => item?.matrix?.family === matrix)
+  const seq = (x: any) => (typeof x?.sequence === 'string' ? x.sequence as string : undefined)
+  const [lower, upper, positive, negative] = [seq(cell?.lower_pair), seq(cell?.upper_pair), seq(cell?.positive), seq(cell?.negative)]
+  if (!cell || !lower || !upper || !positive || !negative || typeof cell.non_dual !== 'boolean') return {matrix, generation: undefined}
+  return {matrix, generation: JSON.stringify({hexagram: reading.hexagram_id, lower, upper, positive, negative, nonDual: cell.non_dual})}
+}
+
 // ── the design's values and its binding ─────────────────────────────────────
 
 function placementsAll(result: NaraJourneyResult | null): PlacementView[] {
@@ -332,21 +416,25 @@ export function deckActOf(change: ValueChange, deck: QlDeckState = qlDeckState()
   }
 }
 
-const NO_CELL = 'The cast hexagram is not the form\'s, so its generation cell is not the one the M3 state carries: it is QL\'s `ql kernel m3` generation_at, read through m3_reception\'s read — missing op: that read asked by the shell for the cast hexagram (the kernel\'s generation_at, being routed).'
+const CELL_READ = 'A reading: the cell of the cast hexagram under the matrix shown; choose the Matrix to read another.'
 const ACT_KEYS = ['act.draw', 'act.cast', 'act.assign', 'act.link', 'act.comment', 'act.close']
 /** Why each key the binding does not take has no owner write (manual §16.12). */
 const STANDING_WHY: Readonly<Record<string, string>> = {theme: CONCERN_SET, journey: 'The Deck reads the journey whose page is open.', placements: 'A reading: cards come by the journey\'s acts.',
-  iching: 'A reading: lines come by a cast.', 'm3.card': M3_CARD, 'act.move': NO_MOVE, 'act.turn': NO_TURN, matrix: NO_CELL, generation: NO_CELL}
+  iching: 'A reading: lines come by a cast.', 'm3.card': M3_CARD, 'act.move': NO_MOVE, 'act.turn': NO_TURN}
 
 /** The binding the runtime hosts the Deck design on: the journey's readings, its acts through the kernel, the view's own keys in its
  * own hand, and every key no act takes disabled with the reason. */
-export function qlDeckBinding(deck: QlDeckState, m3?: QlM3State): DesignBinding {
+export function qlDeckBinding(deck: QlDeckState, m3?: QlM3State, castCell: DeckCastState = qlDeckCastState()): DesignBinding {
   const live = !!deck.result && deck.result.reading.status !== 'closed'
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(STANDING_WHY)) standing[key] = {disabled: why}
   // The codon now is the M3 form's: while no form is read, why (the clock's own words).
   const card = m3CardOf(m3)
   if (!card) standing['m3.card'] = {disabled: m3?.reason ?? 'The M3 clock is not read here, so no card of the codon now is drawn.'}
+  // The cast hexagram's cell, under the matrix shown (yours, else the M3 state's own).
+  const {matrix, generation} = castGeneration(castCell.reading, deck.view.matrix)
+  standing.generation = {disabled: generation ? CELL_READ : castCell.busy ? 'Reading the cast\'s cell…' : castCell.reason
+    ?? (castCell.reading ? 'QL\'s reading carries no cell for this matrix.' : NO_CAST)}
   if (!live) for (const key of ACT_KEYS) standing[key] = {disabled: deck.reason ?? (deck.result ? 'The journey is closed.' : NO_JOURNEY)}
   else if (deck.view.consent !== true) for (const key of ['act.draw', 'act.cast']) standing[key] = {disabled: NO_CONSENT}
   const local: Record<string, (value: Value | undefined) => void> = {}
@@ -360,7 +448,8 @@ export function qlDeckBinding(deck: QlDeckState, m3?: QlM3State): DesignBinding 
   }
   return {
     id: QL_DECK_DEVICE_ID,
-    values: {...qlDeckValues(deck), ...(card ? {'m3.card': card} : {})},
+    values: {...qlDeckValues(deck), ...(card ? {'m3.card': card} : {}), ...(matrix !== undefined && deck.view.matrix === undefined ? {matrix} : {}),
+      ...(generation ? {generation} : {})},
     waiting: deck.busy && !deck.result,
     writes: key => (live && ACT_KEYS.includes(key)) || (unopened && key === 'theme'),
     standing,

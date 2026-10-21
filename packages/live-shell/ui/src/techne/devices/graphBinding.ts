@@ -20,7 +20,7 @@
 //   reading      the kernel graph op's answer (oi.cradle.graph-reading/v1), whole: the open surface's, else the root register's
 //   budget       the max_nodes the read is asked with: the open surface reads at graphProgress.ts's own 4096 and its handle takes no
 //                bound; with none open, the hand's bound on the root read
-//   aperture.*   no operation reaches them: absent, and their controls stand disabled naming it
+//   aperture.*   QL's living-wiki plan (`ql wiki living-plan`, QL-MEF pull 346); no kernel op routes it yet: absent, the controls disabled naming it
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {KnowledgeGraphSurface} from '../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
@@ -41,7 +41,7 @@ export function surfaceRead(surface: KnowledgeGraphSurface): GraphRead {
 }
 const SURFACE_BOUND = missing('Budget', 'a node bound on the open graph\'s read (KnowledgeSurface.tsx reads at graphProgress.ts\'s own 4096; its handle takes none)', 'the knowledge graph')
 
-const APERTURE = missing('The aperture', 'plan_living_wiki_refraction (QL-MEF crates/ql-wiki/src/living.rs, ql-mef/living-wiki-refraction/v1): a library contract, no CLI and no kernel op reach it', 'Quaternal Logic')
+const APERTURE = missing('The aperture', 'a kernel route to `ql wiki living-plan` (QL-MEF pull 346 puts plan_living_wiki_refraction, crates/ql-wiki/src/living.rs, on the CLI; no kernel op reaches it yet)', 'the kernel, over Quaternal Logic')
 export const GRAPH_REFUSE = {
   'aperture.mode': APERTURE, 'aperture.positions': APERTURE, 'aperture.context': APERTURE, 'aperture.full': APERTURE, 'aperture.budget': APERTURE,
 } as const

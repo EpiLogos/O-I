@@ -13,6 +13,7 @@ import {qlInstrumentEdit, qlPresentation, QL_PRESENTATION_KEYS, QL_WRITE_PATH} f
 import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LIVE_TORUS_TOPOLOGY, type LiveTorusState} from './torusInstrument'
 import type {FrameStageReading} from '@epilogos/expressions-boundary'
 import {hostedChrome} from '../projections/expressionsPaneHost'
+import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
 
 export const TORUS_DEVICE_ID = 'live:m1-torus'
 
@@ -106,8 +107,7 @@ export function torusStageValues(stage: FrameStageReading | null | undefined): R
   return {'stage.slots': JSON.stringify(stage.slots.map(slot => ({slot: slot.slot, ...(slot.owner ? {owner: slot.owner} : {}), ...(slot.revision !== undefined ? {revision: slot.revision} : {})}))),
     'stage.bindings': JSON.stringify(stage.bindings.map(binding => ({procedure: binding.procedure, trigger: binding.trigger, evaluations: binding.evaluations, max: binding.max, standing: binding.standing})))}
 }
-/** The Rack page (manual §16.16, §22.9): the rack of the instrument of the map, its parts and which stand verified. */
-const NO_RACK = 'No rack reading: no owner reports the parts of M1′\'s rack or which of them stand verified — missing op: a rack reading and the rule naming a verified part (Quaternal Logic, T-COVERAGE §1.5)'
+// The Rack page (manual §16.16, §22.9) reads M1′'s rack from the map's ledger, and holds the part you choose (qlRack.ts).
 
 /** Why each design key the binding leaves absent has no reading (manual §16.12: "When a reading is missing, say which one"). */
 export const TORUS_ABSENT: Readonly<Record<string, string>> = {
@@ -133,8 +133,6 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   'tattva.fibre': 'No tattva reaches the shell, so no element fibre does.',
   'tattva.standing': 'No tattva reaches the shell, so no table of body constants stands here.',
   ...STAGE_ABSENT,
-  rack: `${NO_RACK}.`,
-  'rack.part': `${NO_RACK}, so no part of it is chosen.`,
 }
 
 const NOT_WRITABLE = 'The owner takes edits only while the instrument follows or is held.'
@@ -195,18 +193,23 @@ const TORUS_KEYS = ['light', 'standing', 'level', ...QL_PRESENTATION_KEYS.filter
 /** The binding the runtime hosts the Torus design on: the owner's readings, the device's one submit (the stage channel), and every
  * key the owner does not take disabled with the reason. */
 export function torusDesignBinding(state: LiveTorusState | null, device: DeviceInstance = torusDevice(state), skyHeld: Readonly<Record<string, string>> = {},
-  stage: FrameStageReading | null | undefined = hostedChrome()?.state?.instrumentStage ?? null): DesignBinding {
+  stage: FrameStageReading | null | undefined = hostedChrome()?.state?.instrumentStage ?? null, rack: QlRackState = qlRackState(1)): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of TORUS_KEYS) {
     const why = writeStanding(state, key)
     if (why) standing[key] = {disabled: why}
   }
+  // The Rack page: M1′'s rack from the map's ledger, and the part you choose in your own hand (qlRack.ts).
+  const page = rackPage(1, rack)
+  Object.assign(standing, page.standing)
   const submit = device.submit
   return {
     id: device.id,
-    values: {...torusDesignValues(state), ...torusStageValues(stage)},
-    writes: key => writeStanding(state, key) === null,
+    values: {...torusDesignValues(state), ...torusStageValues(stage), ...page.values},
+    writes: key => key !== 'rack' && writeStanding(state, key) === null,
     standing,
+    local: page.local,
+    ...(page.waiting ? {waiting: ['rack']} : {}),
     ...(submit ? {write: async (changes: readonly ValueChange[]) => { await submit(torusRowChanges(changes)) }} : {}),
     // The level or scale a planet moves (designBindings/skyModulation.ts): the status bar names the planet.
     ...(Object.keys(skyHeld).length ? {modulatedBy: skyHeld} : {}),

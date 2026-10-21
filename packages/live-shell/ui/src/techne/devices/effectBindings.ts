@@ -6,7 +6,8 @@
 //     and the Canvas board it lays its bench over is not published by the research frame (frameBindings.ts NO_BOARD).
 //   - The Lens's owner is Quaternal Logic's `techne reading` and `mef lenses` (with `context-frame list` and `service capabilities`):
 //     the kernel routes none of them (T-COVERAGE §1.2, "Quaternal Logic | techne reading, mef lenses, context-frame list, service
-//     capabilities … | The Lens").
+//     capabilities … | The Lens"). Its proposals have no producer even then: QL's WikiFrame refraction engine leaves every reading's
+//     relation and traversal candidates empty (QL-MEF crates/ql-wiki/src/refraction.rs:787-788), and `ql techne reading` carries none.
 import type {DesignBinding, ValueChange} from '../../frame/devices/designed'
 import {LENS_DESIGN, LIGHT_DESIGN, disabled, missing, refusal} from './designDevices'
 
@@ -28,6 +29,7 @@ export const LENS_REFUSE: Readonly<Record<string, string>> = Object.fromEntries(
 const LIGHT_READINGS = ['items', 'lines', 'sensor.power'] as const
 const LENS_READINGS = ['lenses', 'frames', 'service', 'reading.subject', 'reading.members', 'reading.lens', 'reading.frame', 'reading.class', 'reading.evidence', 'reading.provider',
   'reading.summary', 'reading.instruments', 'reading.degraded', 'proposals', 'frame.mapping', 'frame.status', 'frame.frames', 'frame.missing'] as const
+const NO_PROPOSALS = missing('The proposals', 'candidates from QL\'s WikiFrame refraction — its engine leaves relation_candidates and traversal_candidates empty (crates/ql-wiki/src/refraction.rs:787-788), and `ql techne reading` carries none', 'Quaternal Logic')
 export const lightAbsent = (): string => NO_ENGINE
 export const lensAbsent = (): string => NO_READING
 
@@ -43,4 +45,7 @@ function unreached(id: string, refuse: Readonly<Record<string, string>>, reading
 }
 
 export const lightBinding = (): DesignBinding => unreached(LIGHT_ID, LIGHT_REFUSE, LIGHT_READINGS, NO_ENGINE)
-export const lensBinding = (): DesignBinding => unreached(LENS_ID, LENS_REFUSE, LENS_READINGS, NO_READING)
+export const lensBinding = (): DesignBinding => {
+  const binding = unreached(LENS_ID, LENS_REFUSE, LENS_READINGS, NO_READING)
+  return {...binding, standing: {...binding.standing, proposals: {disabled: NO_PROPOSALS}}}
+}

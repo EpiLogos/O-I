@@ -4,7 +4,7 @@ import {register} from 'node:module'
 
 // T-WORLDS W4: the Deck on the open journey (the kernel's nara_journey) and the Chakra on your elements (nara_elemental). A fixture call
 // stands in for the kernel: an answer for another journey, operation, identity or revision is refused; a draw needs consent to chance
-// each time and spends it; Move and Turn are refused in words; today's centres stand absent with their owner named.
+// each time and spends it; Move and Turn are refused in words; today's centres stand absent until the Sky has a sky (qlCentres.ts).
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -36,6 +36,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const h = React.createElement
 const deckMod = await import('../src/inhabitants/ql/devices/qlDeck.ts')
 const chakraMod = await import('../src/inhabitants/ql/devices/qlChakra.ts')
+const centresMod = await import('../src/inhabitants/ql/devices/qlCentres.ts')
 const techne = await import('../src/inhabitants/ql/devices/TechneDevices.tsx')
 const manifests = await import('../src/inhabitants/quaternalLogicFamilyManifest.ts')
 const {HostedDevice} = await import('../src/frame/devices/deviceHost.tsx')
@@ -151,11 +152,12 @@ const elemental = (over = {}) => ({outcome: {result: 'nara_elemental', data: {sc
     source: {...basis, standing_ref: 'ql.nara-natal-composition/v1'}, consent: 'granted', standing: 'typed-observation-mapping'},
   natal_counts: [1, 2, 0, 1, 2, 0, 1], ...over}}})
 
-test('the Chakra reads your elements and natal distribution once per identity; today\'s centres stand absent with their owner named', async () => {
+test('the Chakra reads your elements and natal distribution once per identity; today\'s centres stand absent until the Sky has a sky', async () => {
   const calls = []
+  centresMod.resetQlCentres()
   chakraMod.resetQlChakra({call: async op => { calls.push(op); return elemental() }})
   await chakraMod.syncQlChakra(null, chakraMod.NO_IDENTITY)
-  assert.equal(chakraMod.qlChakraValues(chakraMod.qlChakraState(), {reading: null}).reason, chakraMod.NO_IDENTITY)
+  assert.equal(chakraMod.qlChakraBinding(chakraMod.qlChakraState(), {reading: null}).standing.natal.disabled, chakraMod.NO_IDENTITY)
   await chakraMod.syncQlChakra(basis)
   await chakraMod.syncQlChakra(basis)
   assert.equal(calls.length, 1, 'one read for one identity at one revision')
@@ -164,11 +166,11 @@ test('the Chakra reads your elements and natal distribution once per identity; t
   assert.equal(values['natal.counts'], JSON.stringify([1, 2, 0, 1, 2, 0, 1]))
   assert.equal(JSON.parse(values.elements).contributions.earth.contribution_strength, 3)
   assert.equal(values.epoch, '2026-10-18T12:00:00Z', 'the date follows the Sky')
-  assert.equal(values.centres, undefined, 'no owner carries today\'s centres to the shell')
-  assert.equal(values.reason, chakraMod.NO_CENTRES)
+  assert.equal(values.centres, undefined, 'no sky has been composed into centres')
+  assert.equal(values.reason, centresMod.NO_SKY_FOR_CENTRES)
   const binding = chakraMod.qlChakraBinding(chakraMod.qlChakraState())
   assert.equal(binding.write, undefined, 'a reading of your identity changes nothing')
-  assert.equal(binding.standing.centres.disabled, chakraMod.NO_CENTRES)
+  assert.equal(binding.standing.centres.disabled, centresMod.NO_SKY_FOR_CENTRES)
   assert.equal(chakraMod.readChakraAnswer(elemental({source: {source_ref: basis.source_ref, revision: 's-0'}}), basis).ok, false, 'another revision is refused')
   const face = manifests.quaternalLogicFamilyManifest().faces.find(f => f.id === 'chakra')
   assert.equal(face.admission, undefined, 'cut, not waiting'); assert.ok(face.invariant.generatesAbsent)

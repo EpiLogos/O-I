@@ -8,8 +8,8 @@
 //   the record     a page in the practice world (desktop/cradle/src/nara/practiceWorld.ts makePracticePage): a Flow marked as a sitting
 //                  whose `meta.sitting` is the record — the time actually sat, never the length set — made through Central's own
 //                  creation door when the sitting ends. With After on Write a line, it opens in a pane for the line;
-//   the centres    today's centres are the scene's (`ql.scene/v1`); its answers name no centre (qlChakra.ts NO_CENTRES): absent, the
-//                  spine draws plain and says so;
+//   the centres    today's centres, the scene's (`ql.scene/v1`) for the sky the Sky shows (qlCentres.ts, as the Chakra reads them): each
+//                  by its ordinal and name. A ql that names no centre leaves them absent with that reason, and the spine draws plain;
 //   today          today's sittings from the practice world's records, for the widget.
 // Length, Bell, Intervals, Focus, Centre, Inquiry and After are what you set (DesignBinding.local); the bell starts on the torus's root
 // (the mode in force, native/liveModeCatalogue.ts). Nothing scores a sitting or derives how you are.
@@ -31,7 +31,8 @@ import type {InhabitantFaceDeclaration} from '../../manifest'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRuntime'
 import {techneDeviceId, techneFaceDeclaration} from './faces'
-import {NO_CENTRES} from './qlChakra'
+import {centresValue, qlCentresState, type QlCentresState} from './qlCentres'
+import {CENTRES_READ} from './qlChakra'
 
 export const QL_SITTING_FAMILY = 'quaternal-logic'
 export const QL_SITTING_FACE = 'sitting'
@@ -217,33 +218,35 @@ export function useQlSitting(): QlSittingState {
 // ── the design's values and its binding ─────────────────────────────────────
 
 /** The design's values: what you set, the time while it plays, today's sittings. Only what is read. */
-export function qlSittingValues(sitting: QlSittingState, at: number = root ?? 0): Record<string, Value> {
+export function qlSittingValues(sitting: QlSittingState, at: number = root ?? 0, centres: QlCentresState = qlCentresState()): Record<string, Value> {
   const settings = sitting.sitting?.settings ?? sittingSettingsOf(sitting.view, at)
   const values: Record<string, Value> = {length: settings.length, bell: settings.bell, intervals: String(settings.intervals), focus: settings.focus,
     inquiry: settings.inquiry ?? '', after: settings.after, playing: !!sitting.sitting, elapsed: sitting.elapsed}
   if (settings.centre) values.centre = settings.centre
   if (sitting.today) values.today = JSON.stringify(todaysSittings(sitting.today, localDay(owners.now())))
-  values.reason = sitting.fault ?? sitting.bell ?? NO_CENTRES
+  if (centres.reading.ok) values.centres = centresValue(centres.reading.centres)
+  const why = sitting.fault ?? sitting.bell ?? (centres.reading.ok ? null : centres.reading.reason)
+  if (why) values.reason = why
   return values
 }
 
 const READINGS: Readonly<Record<string, string>> = {
-  centres: NO_CENTRES,
   elapsed: 'The time sat: the transport\'s, read while the sitting plays.',
   today: 'Today\'s sittings, read from your practice world.',
 }
 
 /** The binding the runtime hosts the Sitting design on: what you set in your own hand, the sitting played and stopped through Sit (or
  * the transport), and every reading disabled with its reason. A sitting that plays holds its settings until it ends. */
-export function qlSittingBinding(sitting: QlSittingState): DesignBinding {
+export function qlSittingBinding(sitting: QlSittingState, centres: QlCentresState = qlCentresState()): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(READINGS)) standing[key] = {disabled: why}
+  standing.centres = {disabled: centres.reading.ok ? CENTRES_READ : centres.reading.reason}
   if (sitting.sitting) for (const key of QL_SITTING_LOCAL) standing[key] = {disabled: 'The sitting plays: what you set holds until it ends.'}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_SITTING_LOCAL) local[key] = value => setQlSittingView({[key]: value})
   return {
     id: QL_SITTING_DEVICE_ID,
-    values: qlSittingValues(sitting),
+    values: qlSittingValues(sitting, root ?? 0, centres),
     writes: key => key === 'playing',
     enabledKey: 'playing',
     standing,
