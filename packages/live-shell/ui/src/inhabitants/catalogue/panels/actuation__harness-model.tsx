@@ -12,10 +12,20 @@
 // In Anima or Aletheia the agent stands in a team space (QL `ql context-frame team-space`, `ql.vak-team-space/v1`): Team cell reads
 // its row (a context frame), the question that row asks of it by day or by night, and its depth (one of the six M domains), on
 // team.space ('Anima' | 'Aletheia', or 'none' when the agent is in no team), team.row, team.question and team.depth.
+// The Context page reads AIKit's continuity: what entered the agent's context in the last turn and what was bounded. The owner composes
+// each turn's guidance from the active profile (SessionStart disclosure and orientation, prompt-triggered domains, armed star commands,
+// file-addressed PreToolUse context, PostToolUse receipts) and bounds ordinary guidance by the context-pressure brackets; standing guidance
+// always enters whole, and every bound is disclosed (crates/aikit-core/src/pressure.rs: Pressure, Allowance, Bounded).
+//   ctx.pressure  {budget, prompts, consumed, pressure, brackets: {fresh_max, moderate_max, depleted_max}, blocks, lines}  `aikit work
+//                 continuity pressure --json`: brackets, reading.source, reading.consumed, reading.pressure, reading.allowance ('unbounded' = all)
+//   ctx.armed     string[]   the star prompt-commands the composition arms (`aikit work continuity commands --json`: armed)
+//   ctx.turn      {blocks: [{event, title, standing, kept, withheld, suppressed?}], withheldLines, withheldBlocks, notice}  the last turn's
+//                 Bounded disclosure. No command reports it: AIKit writes it only into the turn's own hook output.
+// The page only reads. No kernel op reaches `aikit work continuity` yet: the host leaves the keys absent until one does.
 import {memo, useLayoutEffect, useMemo, useState} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
-import {NONE, boolOf, clampTo, json, numOf, prefixed, scoped, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, has, json, numOf, prefixed, scoped, shown, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 import {CustodyBands, GrantsBands, design as custody} from './software-factory__agent-custody'
 import {IdentityBands, agentType, withType, design as identity} from './central__agent-identity'
 import {CreatureFace} from '../faces/CreatureFace'
@@ -31,7 +41,7 @@ import './actuation__harness-model.css'
 const CUSTODY_SHARED = ['light', 'autonomy'] as const
 const IDENTITY_SHARED = ['light'] as const
 const THREAD_SHARED = ['light', 'input', 'quantize', 'draft', 'sent', 'age'] as const
-const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'grants', label: 'Grants'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'}] as const
+const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'grants', label: 'Grants'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'}, {id: 'context', label: 'Context'}] as const
 const custodyOf = (p: ViewProps) => scoped(p, 'custody.', CUSTODY_SHARED)
 const identityOf = (p: ViewProps) => scoped(p, 'id.', IDENTITY_SHARED)
 /** The pattern the agent was given: the identity page's `types` read for the agent it shows. */
@@ -349,6 +359,119 @@ function AgentBands({p}: {p: ViewProps}) {
   </>
 }
 
+// ---------------------------------------------------------------- Context: what entered the agent's context, and what was bounded
+
+type Pressure = 'fresh' | 'moderate' | 'depleted' | 'critical'
+const PRESSURES: readonly Pressure[] = ['fresh', 'moderate', 'depleted', 'critical']
+interface PressureReading {readonly budget?: number; readonly prompts?: number; readonly consumed?: number; readonly pressure?: Pressure
+  readonly brackets: readonly [number, number, number]; readonly blocks?: number | 'all'; readonly lines?: number | 'all'}
+interface Block {readonly event: string; readonly title: string; readonly standing: number; readonly kept: number; readonly withheld: number; readonly suppressed: boolean}
+interface Turn {readonly blocks: readonly Block[]; readonly withheldLines?: number; readonly withheldBlocks?: number; readonly notice?: string}
+const recOf = (x: unknown): Record<string, unknown> | undefined => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, unknown> : undefined)
+const numIn = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
+const allOr = (x: unknown): number | 'all' | undefined => (x === 'unbounded' || x === 'all' ? 'all' : numIn(x))
+
+/** `aikit work continuity pressure`: the brackets in effect and this session's reading. Undefined when the owner reports none. */
+function pressureOf(v: V): PressureReading | undefined {
+  const o = recOf(json<unknown>(v, 'ctx.pressure', undefined))
+  if (!o) return undefined
+  const b = recOf(o.brackets)
+  return {budget: numIn(o.budget), prompts: numIn(o.prompts), consumed: numIn(o.consumed), pressure: PRESSURES.includes(o.pressure as Pressure) ? o.pressure as Pressure : undefined,
+    brackets: [numIn(b?.fresh_max) ?? .2, numIn(b?.moderate_max) ?? .45, numIn(b?.depleted_max) ?? .7], blocks: allOr(o.blocks), lines: allOr(o.lines)}
+}
+/** The last turn's bounded blocks, as the continuity engine disclosed them. Undefined when the owner reports none. */
+function turnOf(v: V): Turn | undefined {
+  const o = recOf(json<unknown>(v, 'ctx.turn', undefined))
+  if (!o) return undefined
+  const blocks = (Array.isArray(o.blocks) ? o.blocks : []).flatMap((x): Block[] => { const b = recOf(x); return b && typeof b.title === 'string'
+    ? [{event: typeof b.event === 'string' ? b.event : NONE, title: b.title, standing: numIn(b.standing) ?? 0, kept: numIn(b.kept) ?? 0, withheld: numIn(b.withheld) ?? 0, suppressed: b.suppressed === true}] : [] })
+  return {blocks, withheldLines: numIn(o.withheldLines), withheldBlocks: numIn(o.withheldBlocks), notice: typeof o.notice === 'string' ? o.notice : undefined}
+}
+const armedOf = (v: V): string[] | undefined => (has(v, 'ctx.armed') ? words(v, 'ctx.armed') : undefined)
+const allowanceWords = (r: PressureReading | undefined) => (r === undefined || r.blocks === undefined ? undefined
+  : r.blocks === 'all' ? 'all' : r.blocks === 0 ? 'standing only' : `${r.blocks} × ${r.lines === 'all' ? 'all' : r.lines ?? NONE} lines`)
+
+/** The context: along the top, the session's prompts against its budget, the four brackets as zones and a needle at where it stands. Under
+ * it, the last turn's blocks as columns: standing lines solid, ordinary lines that entered lighter, the lines withheld as an orange outline
+ * above them; a block withheld whole is an empty outline. */
+function ContextWell({v, w, h}: {v: V; w: number; h: number}) {
+  const r = pressureOf(v), turn = turnOf(v)
+  const x0 = 8, x1 = w - 8, at = (u: number) => x0 + clampTo(0, 1, u) * (x1 - x0), ry = 24
+  const edges = r ? [0, ...r.brackets, 1] : [0, .2, .45, .7, 1]
+  const blocks = turn?.blocks.slice(0, 8) ?? [], most = Math.max(1, ...blocks.map(b => b.standing + b.kept + b.withheld))
+  const base = h - 16, room = base - 52, colW = blocks.length ? Math.min(20, (w - 16) / blocks.length - 4) : 0, scale = room / most
+  return <Display w={w} h={h} label="Context" corner={r?.pressure ?? NONE}
+    does="Top: the session's prompts against its budget, the brackets fresh, moderate, depleted and critical, and the needle where it stands. Below: the last turn's blocks. Solid: standing lines, always whole. Lighter: ordinary lines that entered. Orange outline: lines withheld.">
+    {edges.slice(0, 4).map((e, i) => <g key={i}>
+      <rect x={at(e)} y={ry - 5} width={at(edges[i + 1]!) - at(e)} height={10} fill={i === 3 ? 'var(--stall)' : 'var(--dp-value)'} opacity={.12 + i * .1} />
+      <text x={(at(e) + at(edges[i + 1]!)) / 2} y={ry + 16} className="dp-axis" textAnchor="middle">{PRESSURES[i]}</text>
+    </g>)}
+    {r?.consumed !== undefined ? <path d={`M${at(r.consumed)} ${ry - 9}V${ry + 7}`} stroke="var(--dp-on)" strokeWidth={2} />
+      : <text x={w / 2} y={ry + 3} className="dp-axis" textAnchor="middle">no reading of the pressure</text>}
+    <text x={x0} y={11} className="dp-axis">{r?.prompts !== undefined && r.budget !== undefined ? `${r.prompts} of ${r.budget} prompts` : NONE}</text>
+    {!turn ? <text x={w / 2} y={(52 + base) / 2} className="dp-ink-dim" textAnchor="middle">No reading of the last turn</text>
+      : !blocks.length ? <text x={w / 2} y={(52 + base) / 2} className="dp-ink-dim" textAnchor="middle">Nothing entered</text>
+      : blocks.map((b, i) => {
+        const x = 8 + i * ((w - 16) / blocks.length) + ((w - 16) / blocks.length - colW) / 2
+        const hs = b.standing * scale, hk = b.kept * scale, hw = b.withheld * scale
+        return <g key={i} data-i={`${b.title}|${b.event}: ${b.standing} standing, ${b.kept} ordinary entered, ${b.withheld} withheld${b.suppressed ? '; the whole block was withheld' : ''}.`}>
+          {hs > 0 && <rect x={x} y={base - hs} width={colW} height={hs} fill="var(--dp-value)" />}
+          {hk > 0 && <rect x={x} y={base - hs - hk} width={colW} height={hk} fill="var(--dp-value)" opacity={.45} />}
+          {hw > 0 && <rect x={x + .5} y={base - hs - hk - hw} width={colW - 1} height={hw} fill="none" stroke="var(--stall)" strokeDasharray={b.suppressed ? '2 2' : undefined} />}
+          <text x={x + colW / 2} y={h - 5} className="dp-axis" textAnchor="middle">{b.event.slice(0, 1)}</text>
+        </g>
+      })}
+    <path d={`M6 ${base}H${w - 6}`} className="dp-faint" />
+  </Display>
+}
+
+function contextRows(v: V): RowItem[] {
+  const turn = turnOf(v), armed = armedOf(v)
+  const rows: RowItem[] = !turn ? [{id: 'none', name: 'No reading of the last turn', light: 'unknown'}]
+    : turn.blocks.map((b, i) => ({id: `b${i}`, name: b.title, light: (b.suppressed ? 'dark' : 'lit') as LightState, tone: b.withheld ? 'stall' as const : 'value' as const,
+      note: b.suppressed ? 'withheld' : b.withheld ? `${b.standing + b.kept} in · ${b.withheld} out` : `${b.standing + b.kept} in`,
+      why: b.suppressed ? 'The bracket allows no more ordinary blocks: this one carried ordinary lines only, so none of it entered.' : undefined,
+      does: `${b.event}. ${b.standing} standing lines, always whole; ${b.kept} ordinary lines entered; ${b.withheld} withheld.`}))
+  for (const c of armed ?? []) rows.push({id: `c:${c}`, name: c, light: 'lit', tone: 'accent', note: 'armed', does: 'A star command the composition arms: invoked, it arrives as its close-out protocol.'})
+  return rows
+}
+
+/** The Context page: how full the agent's context is, and what the last turn let in and kept out. */
+function ContextBands({p}: {p: ViewProps}) {
+  const r = pressureOf(p.v), turn = turnOf(p.v), [page, setPage] = useState(0)
+  const entered = turn ? turn.blocks.reduce((n, b) => n + b.standing + b.kept, 0) : undefined
+  return <>
+    <Band>
+      <Section width={206}><ContextWell v={p.v} w={194} h={146} /></Section>
+      <Section label="Pressure" width={100}>
+        <Readout label="prompts" does="Prompts in this session, of the budget the brackets are measured against." value={r?.prompts === undefined ? undefined : `${r.prompts} / ${r.budget ?? NONE}`} tone="value" />
+        <Readout label="allowance" does="How much ordinary guidance a turn may carry now: how many blocks, and how many lines each. Standing guidance always enters whole." value={allowanceWords(r)} />
+        <Readout label="armed" does="Star commands the composition arms." value={armedOf(p.v)?.length} />
+      </Section>
+      <Section label="Last turn" grow>
+        <Readout big label="entered" does="Lines that entered the agent's context in the last turn." value={entered} tone="value" />
+        <Readout label="withheld" does="Ordinary lines the bracket kept out. Each bound is disclosed to the agent." value={turn?.withheldLines} tone={turn?.withheldLines ? 'stall' : undefined} />
+        <Readout label="blocks out" does="Blocks withheld whole: they carried ordinary lines only, and the bracket allowed none." value={turn?.withheldBlocks} tone={turn?.withheldBlocks ? 'stall' : undefined} />
+      </Section>
+    </Band>
+    <Band>
+      <Section grow><Rows label={turn?.notice ?? 'The last turn'} does="Each block of the last turn: what entered, what was withheld. Then the star commands the composition arms."
+        items={contextRows(p.v)} size={14} columns={2} page={page} onPage={setPage} /></Section>
+    </Band>
+  </>
+}
+
+// The Context page's sample: a session fourteen prompts in, at moderate pressure, and its last turn.
+const SAMPLE_PRESSURE = JSON.stringify({budget: 60, prompts: 14, consumed: 14 / 60, pressure: 'moderate', brackets: {fresh_max: .2, moderate_max: .45, depleted_max: .7}, blocks: 3, lines: 8})
+const SAMPLE_TURN = JSON.stringify({withheldLines: 20, withheldBlocks: 1, notice: 'Moderate: 20 lines and 1 block withheld',
+  blocks: [
+    {event: 'SessionStart', title: 'Disclosure: who you are, where you stand', standing: 4, kept: 0, withheld: 0},
+    {event: 'SessionStart', title: 'O-I orientation and recent work', standing: 3, kept: 8, withheld: 9},
+    {event: 'Prompt', title: 'Domain: the DLW manual', standing: 2, kept: 8, withheld: 4},
+    {event: 'PreToolUse', title: 'docs/dlw/DLW.md: its standing guidance', standing: 0, kept: 8, withheld: 2},
+    {event: 'PostToolUse', title: 'Receipts of the last edits', standing: 0, kept: 0, withheld: 5, suppressed: true},
+  ]})
+
 // ---------------------------------------------------------------- the device
 
 export const design: DesignedDevice = {
@@ -362,6 +485,8 @@ export const design: DesignedDevice = {
     agent: 'Flint', autonomy: 'review', used: 7, age: 6,
     // The owner's material: the thread, and the lists the choosers offer (JSON).
     thread: sampleThread({bash: 'runs'}), models: JSON.stringify(SAMPLE_MODELS), harnesses: JSON.stringify(SAMPLE_HARNESSES),
+    // The Context page's readings (AIKit continuity): the pressure, the last turn's blocks, the armed star commands.
+    'ctx.pressure': SAMPLE_PRESSURE, 'ctx.turn': SAMPLE_TURN, 'ctx.armed': JSON.stringify(['continuity-closeout']),
     // The carried pages' own values, under their prefixes.
     ...prefixed('custody.', custody.defaults, CUSTODY_SHARED), ...prefixed('id.', identity.defaults, IDENTITY_SHARED),
     ...prefixed('thread.', thread.defaults, THREAD_SHARED),
@@ -383,9 +508,13 @@ export const design: DesignedDevice = {
     'In a team': {agent: 'Eros', ...prefixed('id.', identity.fixtures?.['A team member'] ?? {}, IDENTITY_SHARED), 'team.space': 'Anima', 'team.row': 'CF3', 'team.question': '4.2 What is being done?', 'team.depth': 'M3 Journey', thread: TEAM_THREAD, 'thread.thread': TEAM_THREAD,
       'thread.session': 'journey', 'thread.selected': 'journey', 'thread.sessions': JSON.stringify([{id: 'journey', name: 'Where the October journey stands', short: 'journey', agent: 'Eros', model: 'claude-sonnet-4.6', used: 7, cap: 12, thread: JSON.parse(TEAM_THREAD)}])},
     Benched: {light: 'dark', age: -1, thread: sampleThread({})},
+    'Context critical': {'ctx.pressure': JSON.stringify({budget: 60, prompts: 47, consumed: 47 / 60, pressure: 'critical', brackets: {fresh_max: .2, moderate_max: .45, depleted_max: .7}, blocks: 0, lines: 0}),
+      'ctx.turn': JSON.stringify({withheldLines: 31, withheldBlocks: 3, notice: 'Critical: standing guidance only; 3 blocks withheld',
+        blocks: [{event: 'Prompt', title: 'Standing: authorship and the never-do card', standing: 6, kept: 0, withheld: 0}, {event: 'Prompt', title: 'Domain: the DLW manual', standing: 0, kept: 0, withheld: 12, suppressed: true},
+          {event: 'PreToolUse', title: 'docs/dlw/DLW.md: its standing guidance', standing: 2, kept: 0, withheld: 9}, {event: 'PostToolUse', title: 'Receipts of the last edits', standing: 0, kept: 0, withheld: 10, suppressed: true}]})},
     'Not read': {light: 'unknown', used: -1, age: -1, thread: sampleThread({})},
     'No readings': {...Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',
-      'used', 'age', 'thread', 'models', 'harnesses'].map(k => [k, undefined])),
+      'used', 'age', 'thread', 'models', 'harnesses', 'ctx.pressure', 'ctx.turn', 'ctx.armed'].map(k => [k, undefined])),
       ...prefixed('custody.', NO_READINGS(custody), CUSTODY_SHARED), ...prefixed('id.', NO_READINGS(identity), IDENTITY_SHARED),
       ...prefixed('thread.', NO_READINGS(thread), THREAD_SHARED)},
   },
@@ -409,6 +538,7 @@ export const design: DesignedDevice = {
       : p.page === 'grants' ? <GrantsBands p={custodyOf(p)} />
       : p.page === 'identity' ? <IdentityBands p={identityOf(p)} state={runStateOf(p.v, lightOf(p))} />
       : p.page === 'type' ? <TypeBands p={p} />
+      : p.page === 'context' ? <ContextBands p={p} />
       : <AgentBands p={p} />}
   </Panel>,
 

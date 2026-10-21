@@ -914,10 +914,15 @@ the menu bar.
 
 | Object | Its acts |
 |---|---|
-| Clip | Launch (Enter) and Stop, in Session view. Cut (⌘X), Copy (⌘C), Duplicate (⌘D), Delete (⌫). Rename (⌘R), Switch off or on (0), Edit info text. In Arrangement view, Split (⌘E), Consolidate (⌘J) and Crop (⇧⌘J). A colour from Live's palette. |
+| Clip | Launch (Enter) and Stop, in Session view. Cut (⌘X), Copy (⌘C), Duplicate (⌘D), Delete (⌫). Rename (⌘R), Switch off or on (0), Edit info text. In Arrangement view, Split (⌘E), Consolidate (⌘J) and Crop (⇧⌘J). In Central, Open and Reveal the page's file. A colour from Live's palette. |
 | Empty slot | Insert clip (⇧⌘M), Paste (⌘V), Record here on an armed track, Stop the track, Remove stop button (⌘E). |
-| Track | Rename (⌘R), Duplicate (⌘D), Delete (⌫). Switch off or on (0), Solo, Arm. Group (⌘G), Fold (U), Move left (⌘←) and right (⌘→). Retry, when its lane has stalled. A colour. |
+| Track | Rename (⌘R), Duplicate (⌘D), Delete (⌫). Switch off or on (0), Solo, Arm. Group (⌘G), Fold (U), Move left (⌘←) and right (⌘→). Retry, when its lane has stalled. In Central, Open and Reveal the world's folder. A colour. |
 | Row | Launch (Enter), Stop all clips. Insert row (⌘I), Rename (⌘R), Duplicate (⌘D), Delete (⌫). |
+
+Open hands a world's folder, or a page's file, to the application your
+computer opens it with, such as your editor. Reveal shows it in Finder. Neither
+changes the world: Central finds the folder among your work and asks the
+computer to open or show it.
 
 What you do most often stands on the object itself: a clip's launch triangle,
 a slot's stop square, a track's switches. Everything else is in its menu. The
@@ -3388,13 +3393,14 @@ The agent's entries show their author on the page. An accepted entry shows on it
 
 #### Work on a passage
 
-Select a passage. Four acts are close at hand.
+Select a passage. Five acts are close at hand.
 
 | Act | What it does |
 |---|---|
 | Highlight | Marks the passage and leaves it whole. |
 | Note | Attaches a note to the passage. A note is not a source. |
 | To packet | Adds the passage to the packet. |
+| Remember | Keeps the passage word for word, with where it came from, as a proposal in your ground. It stays unrecognised until you recognise it. |
 | Answer this | Sends the packet and the passage to the agent. The answer arrives as a new entry, with its sources. |
 
 The packet is exactly what the agent receives. You see it whole, and its size, before anything is sent. Follow a source in an answer and you land on the line it came from.
@@ -3413,7 +3419,7 @@ A save has one of five outcomes, and the Document names it: saved, unchanged, st
 | Template | A template at a version | The page's own template | Chooses the template that draws the page. The page keeps its version until you change it. |
 | View | Page · Source | Page | Shows the drawn page, or its source text. |
 | Flow view | Dialogue · Flow · Journal | Dialogue | Chooses how a Flow reads. It applies to a Flow only. |
-| Selection act | Highlight · Note · To packet · Answer this | Highlight | Sets what a plain selection does. |
+| Selection act | Highlight · Note · To packet · Remember · Answer this | Highlight | Sets what a plain selection does. |
 | Agent writes | Off · Propose · Write | Propose | Off: the agent does not write. Propose: each agent entry waits for you to accept it. Write: entries go in directly, each with a receipt. |
 | Overdub | New entry · Replace selection | New entry | Sets how an answer or a dictation joins the page. |
 | Packet scope | Selection · Page · Page and linked | Selection | Sets what Answer this reads. |
@@ -3441,7 +3447,7 @@ The compact Document shows a small preview of the page, the size of its packet a
 | Agent writes | Sets Off, Propose or Write. |
 | Overdub | Sets whether an answer joins as a new entry or replaces the selection. |
 | Packet scope | Sets Selection, Page, or Page and linked. |
-| Selection act | Sets what a plain selection does: Highlight, Note, To packet or Answer this. |
+| Selection act | Sets what a plain selection does: Highlight, Note, To packet, Remember or Answer this. |
 
 ##### Whole
 
@@ -3460,7 +3466,7 @@ The full Document shows the page as its template draws it. Read and write here.
 
 The page may be a Day, a Flow, a Being or a Thing. A Day shows its six faces; the Day on the Main track turns the die. A Flow names its people and agents at the top. Choose Dialogue, Flow or Journal to change how it reads. A Being or a Thing shows the bindings that tie it to its world, its sources and its place.
 
-Select a passage. Highlight, Note, To packet and Answer this are close at hand. The answer arrives as a new entry, with its author and its sources. Follow a source and you land on the line it came from.
+Select a passage. Highlight, Note, To packet, Remember and Answer this are close at hand. The answer arrives as a new entry, with its author and its sources. Follow a source and you land on the line it came from.
 
 Type @ to search everything you can reach. Press Record and talk, and your words go into the page. The save state shows next to the page.
 
@@ -3493,7 +3499,7 @@ The widget shows the page you hold, small, with its save state and the size of i
 #### To use the Document
 1. Open a page from the browser, or drag it into a pane.
 2. Read it. Select a passage.
-3. Choose Highlight or Note to mark it. Choose To packet to collect it.
+3. Choose Highlight or Note to mark it. Choose To packet to collect it. Choose Remember to keep it in your ground.
 4. Check the packet and its size in Device view.
 5. Press Play. The agent answers into the page as a new entry with its sources.
 6. Accept or remove each entry that the agent proposes.
@@ -3507,6 +3513,7 @@ The widget shows the page you hold, small, with its save state and the size of i
 - Every write carries a receipt, and every agent entry shows its author.
 - When you change a passage the agent wrote, the hand-back light comes on. Press it to give the passage back.
 - A note is presentation. A highlight leaves the passage whole.
+- A remembered passage is a proposal. It keeps its words and its source exactly, and it waits in your ground until you recognise it.
 - Keys do not play notes while you type in a page.
 - A closed Day is kept. You can open it and read it again.
 
@@ -3514,6 +3521,7 @@ The widget shows the page you hold, small, with its save state and the size of i
 - To prepare a long question, add the passages to the packet and check the size before you press Play.
 - To brief a colleague, highlight a paragraph and tag them with @.
 - To keep a thought with its place, tag a place and let the passage file itself there.
+- To keep a line you may want in your own ground later, choose Remember. It waits there, unrecognised, until you decide.
 - To draft by voice, press Record, talk, and set Overdub to New entry.
 - To redesign your Things, change the template once. Every Thing then follows it.
 
@@ -3758,7 +3766,7 @@ Earlier Days are earlier sets. Open one from the browser to read it and walk thr
 
 A track is a world: your own, Earth, the world of a project or a book you are writing, or a world someone has let you visit. Its clips are that world's pages, and it sends its work to the Day.
 
-To bring a world into today, drag it from the browser onto an empty track. To start a new world, drag a folder there: the folder's pages become its clips, it takes a place on your planet, and it joins the bodies of your sky (§2).
+To bring a world into today, drag it from the browser onto an empty track. To start a new world, drag a folder there. The track's Ground page shows what Central will make of the folder before anything is made; accept it there, and the folder's pages become its clips, it takes a place on your planet, and it joins the bodies of your sky (§2).
 
 The track head shows the world's name and colour. Its settings stand on the head:
 
@@ -3770,6 +3778,61 @@ The track head shows the world's name and colour. Its settings stand on the head
 | Folder | A folder of your ground, or none | None | The folder where the world's pages are kept. |
 | Place | A place on your planet, or none | Its own place | Where the world lands on your planet's surface. Its body turns in your sky. |
 | Workspace | A workspace from the pool, or none | None | The way of working that comes forward when you open this world's pages. |
+
+The settings stand on the Track page of the track's Workspace device. Its two other pages hold the world's own ground: Ground, which makes it, and Self, which holds its account of itself.
+
+##### Ground
+
+You need to know what a folder will become before it becomes a world, and to keep what is already in it. Central reads the folder and says what it found. Ground draws the folder with its own material at the left and ProjectCentral at the right, its parts dashed where they would be made.
+
+| Central finds | What you can do |
+|---|---|
+| No wiki | Create: ProjectCentral is made around the folder. Nothing in the folder moves. |
+| One wiki | Keep in place: the wiki stays where it is and joins the world's wiki as one of its sources. Copy in: the wiki is copied into ProjectCentral, and the original stays where it was. |
+| More than one wiki | Choose the wiki, then keep it in place or copy it in. Central does not choose for you. |
+| A ProjectCentral it cannot read | Nothing here. Mend its manifest by hand. |
+| The ground in place | Nothing to make. |
+
+| Control | What it does |
+|---|---|
+| Make | Create, Keep in place or Copy in. A choice the folder does not allow stays closed and says why. |
+| Wiki | The folder's wiki to keep or copy. |
+| Preview | Lists every step Central would take, in order. Nothing changes. |
+| Accept | Makes the world's ground as previewed. It is held. |
+
+```ui
+device: central:workspace
+fixture: A folder dropped
+page: ground
+caption: Ground for a folder that holds a wiki: kept in place, the preview lists the five steps Central takes, and the original stays.
+```
+
+##### Self
+
+A world has an account of itself: what it is for, what it means to give, how it is built. People who use it write back what it was like. Self holds both, so that an agent reads the world's own account before it guesses one.
+
+| Part | What it holds |
+|---|---|
+| Tiers 0 to 5 | Six places in the world's account, each bound to one source. A tier takes the name its source gives it. Central does not name the tiers. |
+| Intended experiences | The experiences the world means to give, each a source you wrote or adopted. |
+| Returns | What people wrote about an experience, each against the experience it answers. |
+| Unbound | The world's sources that no tier holds yet. |
+
+| Control | What it does |
+|---|---|
+| Ensure | Gives the world its ProjectCentral/self where it has none. Nothing that is already there moves. |
+| As | What the source becomes: a tier, an intended experience, or a return. |
+| Source | An unbound source of the world. |
+| Relate | Binds the source as chosen. Its bytes and its path stay, and its standing is recorded. It is held. |
+| Next | Points As at the next tier that has no source. |
+
+To gather a world's account when it lies scattered across its documents, start at tier 0 and press Next after each Relate. Each empty tier comes up in turn, with the unbound sources beside it.
+
+```ui
+device: central:workspace
+page: self
+caption: Self for Archetypal Earth: two tiers bound, two intended experiences, and one return written against the walks.
+```
 
 ##### The mixer row
 
@@ -3793,7 +3856,16 @@ A row is not a workspace. A row opens pages together inside today. A workspace b
 
 #### The browser
 
-Central's browser lists your whole field: every world you have, each opening to its pages, Earth and the worlds you visit, and the earlier Days. It does not divide your work by project, because Central is where you work across them. Drag a world onto an empty track to bring it into today. Drag a page into a pane to open it. Open an earlier Day to read it. The pool below the browser holds your workspaces.
+Central's browser lists your whole field. Its top level is yours, in four places:
+
+| Place | What it holds |
+|---|---|
+| You | Your own world, your Days and the identity you share. |
+| Agents | The agents of your roster, accepted and proposed. |
+| Machines | Your machines, and the workcells each one holds. |
+| Work | Your projects, each a world with its pages. |
+
+Under them stand every world you have, each opening to its pages, Earth and the worlds you visit, and the earlier Days. The browser does not keep you inside one project, because Central is where you work across them. Drag a world onto an empty track to bring it into today. Drag a page into a pane to open it. Open an earlier Day to read it. The pool below the browser holds your workspaces.
 
 #### The clip
 
@@ -3864,13 +3936,14 @@ A being or a thing with no place, no stop or no placement in the sky says so bes
 
 The tools shape and mark the page you are writing. Each leaves the words whole.
 
-Select a passage and four acts appear above it. They are the selection tool.
+Select a passage and five acts appear above it. They are the selection tool.
 
 | Act | What it does |
 |---|---|
 | Highlight | Marks the passage in the chosen colour. Choose it again on a highlight to remove it. |
 | Note | Opens a note anchored to the passage. |
 | To packet | Adds the passage to the packet. |
+| Remember | Keeps the passage word for word, with where it came from, as a proposal in your ground: Central's, for a page of your own world, or the project's, for a page of a project's world. It stays unrecognised until you recognise it. |
 | Answer this | Sends the packet and the passage to the agent on the world's chain. The answer arrives as a new entry, with its sources. Overdub in the transport decides whether it joins as a new entry or replaces the passage. |
 
 **Text** sets how the words are set: the paragraph style, the emphasis and the size you read at.
@@ -3936,6 +4009,31 @@ A relation says how a new entry connects:
 | Source | The entry names where a statement comes from. |
 | Artifact | The entry names something that the talk made. |
 
+##### Contemplate
+
+You need an agent to read a whole Flow and say what it finds there: the tensions, the next steps it sees, what your ground or the Flow itself should change. And you need that only when you ask. Contemplate is that reading, on the Flow device's Thought page. It never runs by itself.
+
+Press Preflight first. It shows what Contemplate would read and touch: the agent, the model and harness it would run on, the entries of the Flow, and the sources that moved since and the knowledge they affect. Nothing runs, and nothing is recorded. Hold Contemplate to run it once, under that preflight. If anything changed after the preflight, Contemplate refuses and says so.
+
+The thought that comes back is kept with the moment it was taken. Its tensions, candidates and proposals wait for you. None is applied. Later, press Changed since to read what moved after the thought: the sources, the knowledge they affect, and what the thought left open.
+
+| Control | What it does |
+|---|---|
+| Preflight | Shows what Contemplate would read and touch. Nothing runs. |
+| Contemplate | Runs the reading once, under the preflight. It is held. |
+| Changed since | Shows what moved after the thought, and what it left open. |
+| Thought | When the last thought was taken, or why it could not run (reading). |
+| Open | What the thought returned that waits for you (reading). |
+| Moved, Affected | The sources that moved since the thought, and the knowledge they affect (reading). |
+
+The picture is a line from the thought at the left to now at the right. Between them, on three lanes, stand the sources that moved, the knowledge they affect, and the thought's returns that wait for you. Before a first thought, the lanes hold what the preflight would read.
+
+```ui
+device: central:flow-document
+page: thought
+caption: The Thought page of the Factory flow: a thought taken on 15 October, two sources moved since, three readings affected and four returns waiting.
+```
+
 ##### Envelopes
 
 A page has no envelopes. Nothing in a page moves over the page's own time.
@@ -3985,6 +4083,10 @@ When the day closes, what still plays carries into tomorrow's set, playing, with
 - Text does not change a word. It changes only how the words are set. Style and emphasis are kept in the page; Size changes only your view.
 - A highlight marks a passage and leaves it whole. Highlights stay in the page, not only in an export.
 - A highlight or a note enters the packet only when you add it with To packet.
+- A remembered passage is a proposal. It keeps its words and its source exactly, and waits in your ground until you recognise it.
+- Contemplate never runs by itself. It runs once, when you hold it, under the preflight you read, and what it returns waits for you.
+- A world's ground is made only when you accept its preview. Nothing in the folder moves, and a wiki you keep in place stays where it was.
+- Only a person can bind a return to a world's Self.
 - A colour has only the meaning that you give it.
 - A note is yours. An agent does not read it unless you add it to the packet. A note stays with the place it is anchored to.
 - Keys do not act as controls while you type in a page.
@@ -3993,6 +4095,8 @@ When the day closes, what still plays carries into tomorrow's set, playing, with
 
 - To resume a book after a month, bring its world onto a track and launch the flow where you stopped.
 - To keep a side project out of the Day, turn off its world's activator.
+- To keep a line for your own ground without deciding yet, select it and choose Remember.
+- To see where a long conversation has gone, contemplate its Flow, and a week later press Changed since.
 - To work on one project on two machines, turn Link on.
 - To start a new project in your usual way of working, set its world's Workspace to the workspace you use.
 - To begin the morning the way you always do, launch your morning workspace from the pool.
@@ -4642,7 +4746,7 @@ The widget shows the number of findings on the page in front and the first three
 
 **Product:** Central · **Kind:** effect · **Chain:** a folder or a note on a world's track
 
-Use Impact to see what a change to a folder or a note will touch. It shows the neighbourhood of what you select: its references, its links and the sessions that touch it.
+Use Impact to see what a change to a folder or a note will touch, and whether the code still says what the subject means. It shows the neighbourhood of what you select: its references, its links and the sessions that touch it. Its Meaning page sets what the product means beside the code that holds it.
 
 #### What it shows
 
@@ -4651,6 +4755,7 @@ Use Impact to see what a change to a folder or a note will touch. It shows the n
 | References | The files and pages that mention the subject. |
 | Links | The notes that the subject connects to in your knowledge graph. Each link shows its relation and where it comes from. Direct links come first. |
 | Sessions | The sessions whose records name the subject. Each shows its purpose, its state and its branch. |
+| Meaning | The subject's meaning (its Vision, its Design, the wiki) set beside the code that holds it, by the law its project wrote for them. Each mapping holds, or says how it does not: missing, the wrong relation, held twice, stale, or two faces bound as one. |
 
 #### Parameters
 
@@ -4662,12 +4767,19 @@ Use Impact to see what a change to a folder or a note will touch. It shows the n
 | Show | References · Links · Sessions: each On or Off | All On | Which lists appear. |
 | Sessions | Open only · Open and closed | Open only | Which sessions the Sessions list holds. |
 | Relation | All · one kind of link | All | Limits the Links list to one kind of relation. |
+| Meaning | Each mapping, and whether it holds (reading) | Read from AIKit | The subject's meaning against its code. Read now reads both again. |
 
 #### Views
 
 ```ui
 device: central:impact
 caption: Impact, on a fixture of readings.
+```
+
+```ui
+device: central:impact
+page: meaning
+caption: The Meaning page of a wayfinder note: two mappings hold, one is stale, one has the wrong relation, and one names code that does not exist.
 ```
 
 ##### Folded
@@ -4687,7 +4799,7 @@ The compact Impact shows a small graph with the subject at the centre. Three cou
 
 ##### Whole
 
-The whole Impact shows every parameter, in three groups.
+The whole Impact has two pages. Reach shows every parameter, in three groups.
 
 | Group | Parameters |
 |---|---|
@@ -4695,9 +4807,11 @@ The whole Impact shows every parameter, in three groups.
 | Reach | Depth, Relation |
 | Lists | Show, Sessions |
 
+Meaning draws a bridge: the meaning at the left, the code at the right, a span for each mapping. A teal span holds. An orange span does not, and its mark says how: it stops short where the code is missing, it carries a cross for the wrong relation, it is dashed when stale, its end is doubled when two pieces of code claim it. Beside the bridge stand the law and its verdict, how much of each kind the project map holds, and Read now. Under it, every mapping, those that do not hold first. The Meaning tab is dark while a mapping does not hold.
+
 ##### Full
 
-The full Impact shows the neighbourhood of the subject as a graph. The three lists stand beside it: references, links and sessions. Click an item to open it beside the graph.
+The full Impact shows the neighbourhood of the subject as a graph. The three lists stand beside it: references, links and sessions. Click an item to open it beside the graph. Its Meaning tab shows the bridge at pane size, each mapping named at both ends, with the mappings that do not hold beside it. Click one to read where it fails.
 
 In Clip view, Impact reads the subject of the clip and changes nothing.
 
@@ -4719,10 +4833,12 @@ The widget shows the subject, its three counts and the first session. Click the 
 4. Raise Depth to see further.
 5. Open the Sessions list to see who works near the subject.
 6. Click any item to open it beside the subject.
+7. Open the Meaning page to see whether the code still holds what the subject means. Read the orange spans first.
 
 #### Rules
 
 - Impact reads. It changes nothing.
+- Meaning and code keep their own owners. The project's law relates them, and Impact reads that law; it never writes one or guesses a mapping.
 - Impact keeps no index of its own. It reads your knowledge graph, your wiki and your sessions when you select a subject.
 - A session touches the subject when its work records name the folder or the project that holds the subject.
 - Each list names the source it comes from. If a source cannot be read, the list shows the refusal and stays empty.
@@ -4734,6 +4850,7 @@ The widget shows the subject, its three counts and the first session. Click the 
 - To find who works near a note, read Sessions.
 - To keep one view while you browse, turn Pin on.
 - To see only the notes that cite a subject, set Relation to that kind of link.
+- Before you call a design done, open Meaning on its folder. A stale span means the code moved after its meaning was last checked.
 
 ### 18.7 Machine
 
@@ -5331,6 +5448,7 @@ belongs to Scope (§19.12), the next device on the chain.
 | Hand back | Lit · Dark (reading) | Dark | Lit when you edited something the agent holds. |
 | Grants | The grants the agent holds (reading), with Issue and Revoke | Read from Actuation | What the agent may do to agency, and in which Worlds. See Grants, below. |
 | Team cell | Row, question and depth (reading) | Read from the team space | Where the agent stands in Anima or Aletheia. Empty when the agent is in no team. |
+| Context | Pressure and the last turn (reading) | Read from AIKit | How full the agent's context is, and what the last turn let in and kept out. See Context, below. |
 
 Identity is a reading of your roster: the agent's name and colour, its
 character in one line, the program that runs it, the skills it carries, the
@@ -5444,6 +5562,26 @@ device: software-factory:agent-custody
 page: grants
 height: 560
 caption: The Grants page: Flint may actualise and configure agency in O-I; its grant for Quaternal Logic has ended and the one for your whole world was revoked.
+```
+
+#### Context
+
+You need to know what the agent was told before it acted, and what it was not told because its context was filling. AIKit composes each turn's guidance from the profile in use: who the agent is and where it stands when a session starts, the domains a prompt touches, the guidance of a file before the agent opens it, the receipts after. As the session runs, the context fills, and AIKit bounds the ordinary guidance by four brackets. Standing guidance always enters whole. Every bound is told to the agent.
+
+| Bracket | Ordinary guidance that enters |
+|---|---|
+| Fresh | All of it. |
+| Moderate | Three blocks, eight lines each. |
+| Depleted | One block, three lines. |
+| Critical | None. Standing guidance only. |
+
+The Context page draws the session's prompts against its budget, the four brackets as zones and a needle where the session stands. Under it stand the last turn's blocks as columns: standing lines solid, ordinary lines that entered lighter, the lines withheld as an orange outline above them, and a block withheld whole as an empty outline. Beside them: the prompts, the allowance now, the star commands armed, the lines that entered and the lines and blocks withheld. The list names each block and what it let in.
+
+```ui
+device: actuation:harness-model
+page: context
+height: 560
+caption: The Context page fourteen prompts in, at moderate pressure: the last turn let 33 lines in and withheld 20, and one block of receipts entered not at all.
 ```
 
 #### The stage
@@ -5566,7 +5704,7 @@ caption: Agent, on a fixture of readings.
 |---|---|
 | Folded | The agent's name and its power light. The light is lit only when the harness reports the agent is on. |
 | Compact | The agent's face, the creature of its type in the posture of its run state, with the turns used of the turns allowed and its state. A dot for each thing it holds. Macros: Autonomy, Effort, Budget, Input. A composer under the face: type a task or a question and press Enter. |
-| Whole | Pages Run, Custody, Grants, Identity and Type. Run: Power, Agent, Model, Harness; Effort, Budget; Heartbeat, On stall; Input. Custody: Autonomy and Review gate; Escalate to, Wait, On no answer; the held items and Hand back. Grants: the grants as a grid; the next grant with Issue; the grants by World; Revoke with its reason. Identity: the roster card, and Changed since, the body's changes and the identity's. Type: the family, the pattern and where each of its fields lands. |
+| Whole | Pages Run, Custody, Grants, Identity, Type and Context. Run: Power, Agent, Model, Harness; Effort, Budget; Heartbeat, On stall; Input. Custody: Autonomy and Review gate; Escalate to, Wait, On no answer; the held items and Hand back. Grants: the grants as a grid; the next grant with Issue; the grants by World; Revoke with its reason. Identity: the roster card, and Changed since, the body's changes and the identity's. Type: the family, the pattern and where each of its fields lands. Context: the pressure and the last turn's blocks, what entered and what was withheld. |
 | Full | The thread, and beside it the stage: the run as a tree, the agent a creature on it. |
 | Pop-out | The thread with the agent's controls in one row under it: a window to watch and steer one agent from. |
 | Widget | The agent you are talking to: its face in the posture of its state, its state, the last lines of its thread and a composer. It stays when you change mode. |
@@ -5591,7 +5729,7 @@ value that an agent moved shows that agent's name.
 | Tap | Asks the agent where it has got to. |
 | Loop and punch | Sets the window in which the agent may write. |
 | Key | Counts tokens in and out. |
-| Load | Shows how full the agent's context is. |
+| Load | Shows how full the agent's context is. The Context page shows what entered it and what was withheld. |
 
 #### To use the Agent
 
@@ -5643,6 +5781,7 @@ value that an agent moved shows that agent's name.
 - To take over a file for an hour, edit it. Press Hand back when you finish.
 - To start a new agent in a known pattern, drag its type from the browser onto an empty track.
 - To read a stall at a glance, look at the face: a frozen creature on a grey zone is a stall.
+- When an agent seems to forget its guidance late in a long session, open Context. At depleted or critical pressure, ordinary guidance no longer enters; start a fresh session for the next task.
 
 ### 19.5 Experiment
 
@@ -5802,7 +5941,9 @@ Full's head carries the rate, the frames shown, whether the list follows and the
 An agent works from what it carries: what it can do, how it acts, and how it
 finds its bearings in a field. The Skillset rack holds that repertoire. Use it
 to see what the agent carries, what is really available to it now, and what it
-has used.
+has used. Use its other pages to keep the practice itself: where it comes from,
+the skill trees on your machine that AIKit does not own, and every change
+AIKit has made, each of which you can take back.
 
 #### Four kinds of carried practice
 
@@ -5860,6 +6001,19 @@ not make the agent use it.
 | Evidence | Ten steps for each member (reading) | Read from AIKit | What each member has done in this session. |
 | Revision | A digest (reading) | Read from AIKit | The revision of the whole set. |
 | Unsupported | A count (reading) | Read from the receipt | The relations that the package target cannot carry. The receipt names each one. |
+| Unused | On · Off | Off | Shows only the members AIKit has catalogued and never seen used. |
+| Source | A source AIKit owns | The first | The source that Sources reads and acts on: a Git repository at an exact revision, a folder on this machine, or one exported capsule. |
+| Sync | An action | — | Copies the source into a new candidate snapshot. Nothing becomes active. |
+| Promote | An action, held | — | Makes the candidate snapshot active. The one before stays to roll back to. |
+| Roll back | An action, held | — | Returns to the snapshot promoted before. |
+| Root | A skill tree AIKit does not own | The first | The tree to adopt, such as the skills folder of a harness. |
+| Namespace | Text | The harness's name | Where the adopted skills land in AIKit. |
+| Adopt | Preview, then Apply | — | Shows the plan, then adopts the tree: each skill copied into AIKit and a link left in its place. Apply is held. |
+| Procedure | A recorded procedure | The latest | The change that Procedures reads and acts on. |
+| Run | An action, held | — | Applies a planned procedure exactly as planned. A world changed since the plan refuses it. |
+| Undo | An action, held | — | Takes an applied procedure back from its journal, the last edit first. |
+| Bypass | Lasts: Next event · Session · 1 hour, a reason, Issue | Next event | Lets the agent through the hook chain for as long as it lasts. AIKit records the reason. |
+| Revoke | An action, held | — | Closes an open bypass. |
 
 #### Views
 
@@ -5868,6 +6022,25 @@ device: ai-kit:skillset-rack
 width: 1500
 height: 1000
 caption: The Skillset rack on Central's documentation set. Turn a member off and the Preview lights. Point at a mark or at the ticks to read them. Switch the fixture to see the pen marks.
+```
+
+```ui
+device: ai-kit:skillset-rack
+fixture: A candidate waits
+page: sources
+caption: Sources: five sources AIKit owns, one with a new candidate waiting to be promoted, and four skill trees it reads and does not own, three of them holding copies that differ.
+```
+
+```ui
+device: ai-kit:skillset-rack
+page: adopt
+caption: Adopt, previewed for the Claude skills folder: 29 skills to copy in, the ones AIKit already owns left as they are, and two refused because another tree holds a different copy.
+```
+
+```ui
+device: ai-kit:skillset-rack
+page: procedures
+caption: Procedures: the latest five changes AIKit made, the newest an adoption planned and not run, with one bypass open.
 ```
 
 ##### Folded
@@ -5893,21 +6066,25 @@ rack above the chain.
 
 ##### Whole
 
-The whole rack has two bands.
+The whole rack has four pages.
 
-| Band | Sections |
+| Page | Holds |
 |---|---|
-| One | Set: the set, its members by kind, the revision, the author. Compose: Scope, Preview and Apply, Profile. Package: the target, Export, the unsupported count. |
-| Two | Every member, in two columns, with its square, mark, evidence and revision. |
+| Set | Band one: Set (the set, its members by kind, the revision, the author), Compose (Scope, Preview and Apply, Profile), Package (the target, Export, the unsupported count). Band two: Unused, with how many members were never used, then every member in two columns, with its square, mark, evidence and revision. |
+| Sources | A lane for each source AIKit owns, with the snapshot to roll back to, the active one and the candidate; under a dashed rule, each skill tree on the machine that AIKit does not own, as a bar of its skills, an orange dot where copies differ. Source, kind, skills and the active snapshot; Sync, Promote, Roll back and the candidate. Then every source and every tree. |
+| Adopt | The tree's skills at the left, AIKit's namespace at the right, a line for each skill the plan copies across; a ring for one AIKit already owns, an orange cross for one the plan refuses. Root, Namespace and how the change is staged; Preview, then Apply and Cancel; how many to adopt, how many refused, and the digest. Then the plan, skill by skill. |
+| Procedures | The recorded procedures along a line, the latest at the right: filled when applied, a ring when planned, struck when undone; above the chosen one, its edits by kind. Handle 1 chooses one. The procedure, what it changes, how it is staged and its digest; its state, Run, Undo and when. Band two: the next bypass (Lasts, Reason, Issue), the bypasses, and Revoke. |
 
-Select a member to expand it above the rack (see §19.8).
+Sources is dark while a candidate waits or copies differ. Procedures is dark while a procedure is planned and not run. Select a member to expand it above the rack (see §19.8).
 
 ##### Full
 
-The full rack is the set as a page, grouped by kind:
-methodologies, methods, skills and sets. Each member shows its mark, its
-revision, its evidence, its state and what it is for. The controls stay in
-Device view, below the pane.
+The full rack carries the same pages as tabs. Set is the set as a page,
+grouped by kind: methodologies, methods, skills and sets. Each member shows its
+mark, its revision, its evidence, its state and what it is for. Sources lists
+each source with its snapshots, then the trees AIKit does not own. Adopt lists
+the plan. Procedures lists each change with its edits, then the bypasses. The
+controls stay in Device view, below the pane.
 
 ##### Widget
 
@@ -5933,10 +6110,19 @@ when you change mode.
 5. Read the evidence. A member that is carried but never loaded costs the
    agent nothing. A member that is loaded but never invoked costs it context.
 6. To give the set to another harness, choose the target and click Export.
+7. To bring a harness's own skills under AIKit, open Adopt, choose the tree and
+   click Preview. Read the plan, then hold Apply.
+8. To take a change back, open Procedures, choose it and hold Undo.
 
 #### Rules
 
 - Membership grants no trust, no authority and no loading.
+- A source changes only through its snapshots: Sync makes a candidate, Promote
+  makes it active, Roll back returns to the one before.
+- Adoption keeps the originals in its journal. Undo puts every file back as it
+  was.
+- A bypass is recorded with its reason. It lets the agent through the hooks; it
+  grants no authority.
 - The marks and the evidence are readings. The shell does not light them.
 - A set carries a child set by reference. A change to the child reaches every
   set that carries it.
@@ -5948,14 +6134,17 @@ when you change mode.
   invokes.
 - To share a set with a team on another harness, read the unsupported count
   before you export it.
+- To find what a set carries for nothing, turn on Unused.
+- When Sources shows copies that differ, adopt the tree that holds the copy you
+  keep. The other copies then read the same skill.
 
 ### 19.8 Skill, Method, Methodology
 
 **Product:** AIKit · **Kind:** effect · **Chain:** one chain inside a Skillset rack
 
 You need to see one member of a repertoire closely: what it is for, whether
-the agent can use it now, and what it did. One device shows all three forms,
-and its face changes with the form.
+the agent can use it now, what it did, and why it stands as it does. One device
+shows all three forms, and its face changes with the form.
 
 #### Three faces
 
@@ -5979,8 +6168,26 @@ and its face changes with the form.
 | Prove | An action, Method only | — | Checks the receipt of the last run. A run that did not verify is refused. |
 | Instantiate | Needed · Not needed (reading), Methodology only | Read for each act | Whether the act in hand needs the Methodology, or the invoked skill carries enough. |
 | Reach | Harnesses (reading), Skill only | Read from AIKit | The harnesses that the skill is written into in this context. |
+| Why | What selects it, where it is projected, what needs it, what it needs (reading) | Read from AIKit | How the member came to stand as it does: its state, its trust and its maturity. |
+| Ground | Active · Retired, with who, when and why (reading) | Read from Central | The member's standing in your ground, where your ground holds it. |
+| Retire | An action, with a reason | — | Retires the member in your ground. Its files stay; it is no longer projected. You confirm it first. |
+| Restore | An action | — | Returns a retired member to active standing. You confirm it first. |
+| History | Every recorded change (reading) | Read from AIKit | Each change to the member, with its kind, when it happened and whether it can be taken back. |
 
 #### Views
+
+```ui
+device: ai-kit:skill-device
+fixture: In your ground
+page: why
+caption: The Why page of a skill your ground holds: the global profile selects it, four harnesses carry it, two other skills need it. Give a reason to retire it.
+```
+
+```ui
+device: ai-kit:skill-device
+page: history
+caption: The History page of a Method: its review, its projections, its runs, the profile fork that changed its selection, and a refused preflight in orange.
+```
 
 ```ui
 device: ai-kit:skill-device
@@ -6008,17 +6215,22 @@ large, its form and the question the form answers, and its evidence.
 
 ##### Whole
 
-Band one holds the mark with the ten steps
-named, then Standing (Enabled, Trust, Revision), then the form's own section:
-Run for a Method, Orients for a Methodology, Reach for a Skill. Band two holds
-the form's body: the path that a Method composes, the table of which Method
-applies when for a Methodology, or what a Skill is for.
+The whole member has three pages.
+
+| Page | Holds |
+|---|---|
+| Member | Band one: the mark with the ten steps named, then Standing (Enabled, Trust, Revision), then the form's own section: Run for a Method, Orients for a Methodology, Reach for a Skill. Band two: the form's body: the path that a Method composes, the table of which Method applies when for a Methodology, or what a Skill is for. |
+| Why | What selects the member at the left, the harnesses it is projected into at the right, what needs it above and what it needs below. Its state, trust and maturity. Its standing in your ground, with Retire or Restore. Then each line of the reason. |
+| History | A lane for each kind of change, the oldest at the left, a failure in orange. The chosen change's kind, when, and whether it can be taken back. Then every change, newest first. |
+
+The Why tab is dark while the member is retired.
 
 ##### Full
 
 The full member is its text: its form, what it says, a Method's
-steps, a Methodology's table. Its evidence and state stand under the text. The
-controls stay in Device view, below the pane.
+steps, a Methodology's table. Its evidence and state stand under the text. Its
+Why and History tabs read the same as the pages, at pane size. The controls
+stay in Device view, below the pane.
 
 ##### Widget
 
@@ -6040,11 +6252,17 @@ for a Method.
    then confirm.
 4. For a Method, click Run. Read the preflight. Confirm to run it.
 5. After a run, click Prove to check the receipt.
+6. To learn why a member is on or off, open Why.
+7. To withdraw a member your ground holds, open Why, give a reason and click
+   Retire. Confirm it.
 
 #### Rules
 
 - The form comes from the member's own text. To change the form, change the
   text.
+- Retiring keeps the member's files and records who retired it, when and why.
+  Restore brings it back. A member from a product's or a package's skills is
+  retired where it is written.
 - A Method composes. It does not order its steps, and it skips a step that the
   work does not touch.
 - A Methodology points at its Methods. It does not hold their text.
@@ -6057,12 +6275,14 @@ for a Method.
   table of Methods.
 - To find a Method that nobody runs, read the evidence: carried, never
   selected.
+- To find when a member stopped working, open History and read the last
+  orange mark.
 
 ### 19.9 Knowledge route
 
 **Product:** AIKit · **Kind:** effect · **Chain:** inside the Scope device, in a Factory session's chain
 
-You need to choose which knowledge an agent can look up, and how far it may follow links. The Knowledge route sets the sources and the bounds. The agent then finds what it needs on demand.
+You need to choose which knowledge an agent can look up, and how far it may follow links. The Knowledge route sets the sources and the bounds. The agent then finds what it needs on demand. When a source changes, you need to know which of the agent's readings rest on it, so that you choose what to read again. Affected, its second page, shows them.
 
 #### Parameters
 | Parameter | Values | Default | What it does |
@@ -6073,12 +6293,21 @@ You need to choose which knowledge an agent can look up, and how far it may foll
 | Link depth | 0–4 | 2 | The number of links the agent follows from a hit. |
 | Read budget | 1–200 pages | 40 | The most pages the agent reads in one task. |
 | Route | Ready · Composed · Refused (reading) | Read from AIKit | Shows whether the route answers. |
+| Affected | Each reading a moved source affects, with its freshness (reading) | Read from AIKit | Source moved: its source has a new revision. Waits to integrate: a reading made of parts, one of which moved. Source gone: its source can no longer be read. |
+| Read again | An action | — | Reads the chosen reading at the new revision of its source. AIKit records the use. |
+| Forget | An action, held | — | AIKit forgets having used the reading, so the route no longer ranks it from memory. The source is untouched. |
 
 #### Views
 
 ```ui
 device: ai-kit:knowledge-route
 caption: Knowledge route, on a fixture of readings.
+```
+
+```ui
+device: ai-kit:knowledge-route
+page: affected
+caption: The Affected page: two sources moved, the verification architecture and the root wiki; six readings rest on them, one waits to integrate and one's source is gone.
 ```
 
 ##### Folded
@@ -6100,7 +6329,7 @@ Press ▸ on the Scope's head to expand its reads and writes above the chain.
 
 ##### Whole
 
-The whole route shows every parameter, in two groups.
+The whole route has two pages. Route shows every parameter, in two groups.
 
 | Group | Parameters |
 |---|---|
@@ -6109,9 +6338,11 @@ The whole route shows every parameter, in two groups.
 
 The route cannot reach farther than Scope allows.
 
+Affected draws the moved sources at the left, an orange square each, and at the right the readings that rest on them, one column for each link of the path, each in its source's shape: orange when its source moved, dashed when it waits to integrate, faint when its source is gone. Beside it: the chosen reading, its freshness, what it rests on and how many links away; Read again, Forget, how many sources moved and how many readings wait. Under it, every affected reading. The Affected tab is dark while any reading rests on a moved source.
+
 ##### Full
 
-The full route shows the knowledge in reach, as a list and as a graph. A page that the agent read shows with its source. Open the source from the page.
+The full route shows the knowledge in reach, as a list and as a graph. A page that the agent read shows with its source. Open the source from the page. Its Affected tab shows what moved and every reading that rests on it, each named, with Read and Forget beside it.
 
 ##### Widget
 
@@ -6130,16 +6361,20 @@ The widget shows the pages that the agent read in this task, with their sources.
 3. Choose the Sources.
 4. Set the Reach. Use a small Reach for a narrow task.
 5. Set Link depth. Use 0 when the agent must stay on the page you pointed at.
+6. When a source changes, open Affected. Read again what the agent still needs; forget what it should no longer reach from memory.
 
 #### Rules
 - Sources are not copied into the prompt. The agent finds them and reads them on demand.
 - The route cannot reach farther than Scope allows.
 - A page that the agent read is shown with its source. You can open the source.
 - A route that is Refused names the reason. The agent then works without that source.
+- Affected follows only the dependencies the knowledge declares. It does not guess that a reading depends on a source.
+- Forget drops AIKit's record of use and nothing else.
 
 #### Tips
 - To keep the agent on topic, lower Link depth.
 - To let an agent check the wiki first, keep Search first on.
+- Before a long task, open Affected. A reading whose source moved is the first place an agent goes wrong.
 
 ### 19.10 Agency gateway
 

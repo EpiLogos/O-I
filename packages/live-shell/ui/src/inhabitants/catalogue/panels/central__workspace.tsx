@@ -7,8 +7,24 @@
 // tree of each mode), `sets` (the set each mode opens with), `clips` (the files of the project, with the three states that the
 // draft store keeps: workspace/drafts.ts HeldDraft, content against saved_content) and `folders` (the projects of Work). Its sample
 // content (Archetypal-Earth) sits in `defaults`. A key the owner does not report draws "—", and the well says which reading is missing.
-import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, has, json, numOf, shown, strOf, type DesignedDevice, type ViewProps} from './design'
+//
+// Two more pages hold the world's own ground, which the track's settings stand on. Ground is what Central makes of the folder you
+// dropped on an empty track: Central's inspection (`projectcentral.inspect`: outcome already_conformant | bind_existing_wiki_in_place |
+// create_project_central | unresolved_human_decision_required, its reason, the wiki candidates and the native signals), the treatment you
+// choose, its preview (`projectcentral.init` with preview, `projectcentral.adopt.preview`, `projectcentral.migrate.preview`: the mutation
+// plan's operations) and Accept (`projectcentral.init`, `adopt` or `migrate`). Self is the world's account of itself and the returns people
+// wrote (`projectcentral.self.inspect`, central.development-field-reading/v1: the aperture, the six tier bindings, the UX sources and the EX
+// returns), with Ensure (`projectcentral.self.ensure`) and Relate (`projectcentral.self.tier.relate` or `retain-tier` for a tier,
+// `ux.relate` for an intended experience, `ex.relate` for a return, which only a person can make). Every one is reached by the kernel's
+// invoke_action; Accept and Relate carry the person's authority, which that route does not yet carry (ticket §1.1).
+//   pc       {outcome, reason, candidates: [{source, space}], signals: [{kind, path}], errors}  the inspection
+//   pcPlan   {treatment, operations, source?, target?, preserves}  the preview, for the treatment and source it was asked with
+//   self     {aperture: {exists, status}, tiers: [{tier, label?, source}], ux: [{ref, source}], ex: [{ref, source, ux}], unbound: [{source, hints}]}
+// Settings: treatment ('create' | 'adopt' | 'migrate'), pcSource (the wiki), bindAs ('0'…'5' | 'ux' | 'ex'), selfSource (the source to bind).
+// Acts: pcPreview, pcAccept (JSON {treatment, source?}), selfEnsure, selfRelate (JSON {as, source}).
+import {useState} from 'react'
+import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type Option, type RowItem} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__workspace.css'
 
 type V = ViewProps['v']
@@ -302,6 +318,291 @@ const REMEMBER_PARTS = [
   ['keepSets', 'Sets', 'Keeps the saved set that each mode opens with.'],
 ] as const
 
+// ---------------------------------------------------------------- Ground: the world's ProjectCentral, previewed before it is made
+
+type Outcome = 'already_conformant' | 'bind_existing_wiki_in_place' | 'create_project_central' | 'migrate_selected_material' | 'unresolved_human_decision_required'
+type Treatment = 'create' | 'adopt' | 'migrate'
+interface Inspection {readonly outcome: Outcome; readonly reason?: string; readonly candidates: readonly {source: string; space?: string}[]; readonly signals: readonly {kind: string; path: string}[]; readonly errors: readonly string[]}
+interface Plan {readonly treatment: Treatment; readonly operations: readonly string[]; readonly source?: string; readonly target?: string; readonly preserves?: boolean}
+const OUTCOMES: readonly string[] = ['already_conformant', 'bind_existing_wiki_in_place', 'create_project_central', 'migrate_selected_material', 'unresolved_human_decision_required']
+const OUTCOME_WORD: Readonly<Record<Outcome, string>> = {already_conformant: 'in place', bind_existing_wiki_in_place: 'a wiki to keep', create_project_central: 'to create',
+  migrate_selected_material: 'to copy in', unresolved_human_decision_required: 'your decision'}
+const PC_PARTS = ['user', 'governance', 'wiki'] as const
+const isRec = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x)
+const txt = (x: unknown) => (typeof x === 'string' && x !== '' ? x : undefined)
+
+/** Central's inspection of the world's folder (`projectcentral.inspect`), or undefined when it reports none. */
+function inspectionOf(v: V): Inspection | undefined {
+  const raw = json<unknown>(v, 'pc', undefined)
+  if (!isRec(raw) || !OUTCOMES.includes(raw.outcome as string)) return undefined
+  const candidates = (Array.isArray(raw.candidates) ? raw.candidates : []).flatMap(c => (isRec(c) && txt(c.source) ? [{source: c.source as string, space: txt(c.space)}] : []))
+  const signals = (Array.isArray(raw.signals) ? raw.signals : []).flatMap(s => (isRec(s) && txt(s.kind) && txt(s.path) ? [{kind: s.kind as string, path: s.path as string}] : []))
+  return {outcome: raw.outcome as Outcome, reason: txt(raw.reason), candidates, signals, errors: Array.isArray(raw.errors) ? raw.errors.filter((e): e is string => typeof e === 'string') : []}
+}
+function planOf(v: V): Plan | undefined {
+  const raw = json<unknown>(v, 'pcPlan', undefined)
+  if (!isRec(raw) || (raw.treatment !== 'create' && raw.treatment !== 'adopt' && raw.treatment !== 'migrate')) return undefined
+  return {treatment: raw.treatment, operations: Array.isArray(raw.operations) ? raw.operations.filter((o): o is string => typeof o === 'string') : [], source: txt(raw.source), target: txt(raw.target), preserves: raw.preserves === true}
+}
+/** The treatment the person chose, else the one the inspection points to. */
+function treatmentOf(v: V, pc: Inspection | undefined): Treatment | undefined {
+  const t = strOf(v, 'treatment')
+  if (t === 'create' || t === 'adopt' || t === 'migrate') return t
+  return pc?.outcome === 'create_project_central' ? 'create' : pc?.candidates.length ? 'adopt' : undefined
+}
+/** Why a treatment cannot be chosen for this folder; undefined when it can. */
+function treatmentWhy(pc: Inspection | undefined, t: Treatment): string | undefined {
+  if (!pc) return 'No reading of the folder.'
+  if (pc.outcome === 'already_conformant') return 'The world\'s ground is already in place.'
+  if (pc.errors.length) return 'Its ProjectCentral is present but unreadable: mend it by hand. Central will not guess.'
+  if (t === 'create') return pc.candidates.length ? 'The folder holds a wiki: keep it in place, or copy it in.' : undefined
+  return pc.candidates.length ? undefined : 'The folder holds no wiki to keep or copy.'
+}
+const pcSource = (v: V, pc: Inspection | undefined) => strOf(v, 'pcSource') ?? (pc?.candidates.length === 1 ? pc.candidates[0]!.source : undefined)
+const TREATMENTS = [{value: 'create', label: 'Create', does: 'Make ProjectCentral around the folder. Nothing native moves.'},
+  {value: 'adopt', label: 'Keep in place', does: 'Keep the folder\'s wiki where it is, as a source of the new Project wiki.'},
+  {value: 'migrate', label: 'Copy in', does: 'Copy the folder\'s wiki into ProjectCentral. The original stays where it is.'}] as const
+
+/** The world's folder: its native material at the left (a README, docs, design, a wiki), ProjectCentral at the right, its three parts
+ * dashed where they would be made. A line runs from the folder's wiki to the Project wiki: dotted where it stays in place, an arrow where it is
+ * copied in. */
+function GroundWell({v, w, h}: {v: V; w: number; h: number}) {
+  const pc = inspectionOf(v), t = treatmentOf(v, pc), src = pcSource(v, pc), folder = strOf(v, 'folder')
+  if (!pc) return <Display w={w} h={h} label="Ground" corner={NONE}><text x={w / 2} y={h / 2} className="dp-ink-dim" textAnchor="middle">No reading of the folder</text></Display>
+  const made = pc.outcome === 'already_conformant', bx = w / 2 + 4, rows = (i: number) => 38 + i * 22
+  const native = [...pc.signals.filter(s => s.kind !== 'wiki').slice(0, 3).map(s => ({label: s.path, wiki: false})), ...pc.candidates.slice(0, 2).map(c => ({label: c.source, wiki: true}))]
+  const wikiY = (s: string | undefined) => { const i = native.findIndex(n => n.wiki && n.label === s); return i < 0 ? undefined : rows(i) }
+  const from = wikiY(src), toY = rows(2)
+  return <Display w={w} h={h} label="Ground" corner={OUTCOME_WORD[pc.outcome]}
+    does="The folder's own material at the left, ProjectCentral at the right, its parts dashed where they would be made. Dotted: the wiki stays in place and joins. Arrow: the wiki is copied in.">
+    <rect x={3.5} y={16.5} width={w - 7} height={h - 22} fill="none" className="dp-faint" />
+    <text x={8} y={12} className="dp-axis">{folder ? cut(folder, 22) : NONE}</text>
+    {native.map((n, i) => <g key={n.label} data-i={`${n.label}|${n.wiki ? 'A wiki of the folder.' : 'Native material. It does not move.'}`}>
+      <rect x={10} y={rows(i) - 6} width={10} height={12} fill={n.wiki ? 'var(--dp-value)' : 'none'} stroke={n.wiki ? 'var(--dp-value)' : 'var(--text-dim)'} opacity={n.wiki && n.label !== src && pc.candidates.length > 1 ? .45 : 1} />
+      <text x={25} y={rows(i) + 3} className={n.wiki ? 'dp-ink' : 'dp-ink-dim'}>{cut(n.label, 10)}</text>
+    </g>)}
+    {!native.length && <text x={10} y={rows(0) + 3} className="dp-ink-dim">Nothing native</text>}
+    <rect x={bx} y={24} width={w - bx - 10} height={h - 38} fill="none" stroke={made ? 'var(--dp-value)' : 'var(--text-dim)'} strokeDasharray={made ? undefined : '3 2'} />
+    <text x={bx + 4} y={33} className="dp-axis">ProjectCentral</text>
+    {PC_PARTS.map((part, i) => <g key={part}>
+      <rect x={bx + 6} y={rows(i) + 2} width={8} height={8} fill={made ? 'var(--dp-value)' : 'none'} stroke="var(--dp-value)" strokeDasharray={made ? undefined : '2 1.5'} />
+      <text x={bx + 18} y={rows(i) + 9} className={made ? 'dp-ink' : 'dp-ink-dim'}>{part === 'wiki' && !made && from !== undefined && (t === 'adopt' || t === 'migrate') ? `wiki · ${t === 'adopt' ? 'in place' : 'copy'}` : part}</text>
+    </g>)}
+    {!made && from !== undefined && (t === 'adopt' || t === 'migrate') && <g>
+      <path d={`M82 ${from}C${bx - 8} ${from} ${bx - 14} ${toY + 6} ${bx + 4} ${toY + 6}`} fill="none" stroke="var(--dp-on)" strokeWidth={1.3} strokeDasharray={t === 'adopt' ? '1.5 2.5' : undefined} />
+      {t === 'migrate' && <path d={`M${bx + 4} ${toY + 6}l-6 -3.5v7z`} fill="var(--dp-on)" />}
+    </g>}
+    {pc.outcome === 'unresolved_human_decision_required' && <text x={w / 2} y={h - 8} className="dp-axis" textAnchor="middle" style={{fill: 'var(--stall)'}}>{pc.errors.length ? 'unreadable manifest' : `${pc.candidates.length} wikis: choose one`}</text>}
+  </Display>
+}
+
+function groundRows(v: V): RowItem[] {
+  const pc = inspectionOf(v), plan = planOf(v), t = treatmentOf(v, pc)
+  if (!pc) return [{id: 'none', name: 'No reading of the folder', light: 'unknown'}]
+  if (pc.outcome === 'already_conformant') return [{id: 'ok', name: pc.reason ?? 'The world\'s ground is in place.', light: 'lit', tone: 'green'}]
+  if (plan && plan.treatment === t) return plan.operations.map((o, i) => ({id: `op${i}`, name: o, light: 'lit', tone: 'accent', note: `${i + 1}`}))
+  return [{id: 'reason', name: pc.reason ?? NONE, light: 'dark', note: 'preview first'}, ...pc.errors.map((e, i) => ({id: `e${i}`, name: e, light: 'dark' as LightState, tone: 'stall' as const, note: 'manifest'}))]
+}
+
+function GroundBands({p}: {p: ViewProps}) {
+  const pc = inspectionOf(p.v), plan = planOf(p.v), t = treatmentOf(p.v, pc), src = pcSource(p.v, pc), [page, setPage] = useState(0)
+  const blocked = t ? treatmentWhy(pc, t) : 'No reading of the folder.', needsSource = t === 'adopt' || t === 'migrate'
+  const value = JSON.stringify({treatment: t, ...(needsSource ? {source: src} : {})}), previewed = !!plan && plan.treatment === t && (!needsSource || plan.source === src)
+  return <>
+    <Band>
+      <Section width={206}><GroundWell v={p.v} w={194} h={146} /></Section>
+      <Section label="Treatment" width={104}>
+        <Radio {...st(p, 'treatment')} label="Make" does="How the world gets its ground: made around the folder, or with the folder's wiki kept in place or copied in." value={t ?? ''} stack
+          options={TREATMENTS.map(o => ({...o, why: treatmentWhy(pc, o.value)}))} onChange={x => { p.set('treatment', x); p.set('pcPlan', undefined) }} />
+        <Chooser {...st(p, 'pcSource')} label="Wiki" wide does="The folder's wiki to keep in place or copy in." value={src ?? ''} options={(pc?.candidates ?? []).map(c => ({value: c.source, label: c.source}))}
+          onChange={x => { p.set('pcSource', x); p.set('pcPlan', undefined) }} disabled={st(p, 'pcSource').disabled ?? (needsSource ? (pc?.candidates.length ? undefined : 'The folder holds no wiki.') : 'Create needs no wiki.')} />
+      </Section>
+      <Section label="Accept" grow>
+        <Readout label="found" does="What Central found in the folder." value={pc ? OUTCOME_WORD[pc.outcome] : undefined} tone={pc?.outcome === 'unresolved_human_decision_required' ? 'stall' : 'value'} />
+        {previewed
+          ? <div className="ref-pair">
+              <Action {...st(p, 'pcAccept')} hold label="Accept" does="Make the world's ground as previewed. Native files do not move; a wiki kept in place stays where it is." onPress={() => p.set('pcAccept', value)} />
+              <Action label="Cancel" does="Leave the folder as it is." onPress={() => p.set('pcPlan', undefined)} />
+            </div>
+          : <Action {...st(p, 'pcPreview')} label="Preview" does="Show every step Central would take. Nothing changes." onPress={!blocked && (!needsSource || src) ? () => p.set('pcPreview', value) : undefined}
+              disabled={st(p, 'pcPreview').disabled ?? blocked ?? (needsSource && !src ? 'Choose the wiki first.' : undefined)} />}
+        <Readout label="original" does="Whether the folder's own wiki stays where it is." value={plan && previewed ? (plan.preserves ? 'kept' : 'moved') : undefined} tone={plan?.preserves ? 'green' : undefined} />
+      </Section>
+    </Band>
+    <Band>
+      <Section grow><Rows label={previewed ? `The preview · ${plan!.operations.length} steps` : pc ? `The folder · ${pc.signals.length} native signs, ${pc.candidates.length} wiki${pc.candidates.length === 1 ? '' : 's'}` : 'The folder'}
+        does="Before a preview, what Central found. After one, every step it would take, in order." items={groundRows(p.v)} size={7} page={page} onPage={setPage} /></Section>
+    </Band>
+  </>
+}
+
+// ---------------------------------------------------------------- Self: the world's account of itself, and what people returned
+
+interface TierBinding {readonly tier: number; readonly label?: string; readonly source?: string}
+interface Ux {readonly ref: string; readonly source: string}
+interface Ex {readonly ref: string; readonly source: string; readonly ux: readonly string[]}
+interface SelfReading {readonly exists?: boolean; readonly status?: string; readonly tiers: readonly TierBinding[]; readonly ux: readonly Ux[]; readonly ex: readonly Ex[]; readonly unbound: readonly {source: string; hints: readonly string[]}[]}
+const TIERS = [0, 1, 2, 3, 4, 5] as const
+function selfOf(v: V): SelfReading | undefined {
+  const raw = json<unknown>(v, 'self', undefined)
+  if (!isRec(raw)) return undefined
+  const ap = isRec(raw.aperture) ? raw.aperture : {}
+  const list = (x: unknown) => (Array.isArray(x) ? x.filter(isRec) : [])
+  return {exists: typeof ap.exists === 'boolean' ? ap.exists : undefined, status: txt(ap.status),
+    tiers: list(raw.tiers).flatMap(t => (typeof t.tier === 'number' && t.tier >= 0 && t.tier <= 5 ? [{tier: t.tier, label: txt(t.label), source: txt(t.source)}] : [])),
+    ux: list(raw.ux).flatMap(u => (txt(u.ref) && txt(u.source) ? [{ref: u.ref as string, source: u.source as string}] : [])),
+    ex: list(raw.ex).flatMap(e => (txt(e.ref) && txt(e.source) ? [{ref: e.ref as string, source: e.source as string, ux: Array.isArray(e.ux) ? e.ux.filter((x): x is string => typeof x === 'string') : []}] : [])),
+    unbound: list(raw.unbound).flatMap(u => (txt(u.source) ? [{source: u.source as string, hints: Array.isArray(u.hints) ? u.hints.filter((x): x is string => typeof x === 'string') : []}] : []))}
+}
+const boundTier = (s: SelfReading, tier: number) => s.tiers.find(t => t.tier === tier && t.source)
+const nextEmpty = (s: SelfReading, after = -1) => TIERS.find(t => t > after && !boundTier(s, t)) ?? TIERS.find(t => !boundTier(s, t))
+const tail = (path: string) => path.split('/').filter(Boolean).pop() ?? path
+const BIND_AS = [...TIERS.map(t => ({value: String(t), label: `Tier ${t}`, does: `Bind the source as tier ${t} of the world's account.`})),
+  {value: 'ux', label: 'Intended experience', does: 'Bind a source you wrote or adopted as an experience the world means to give.'},
+  {value: 'ex', label: 'Return', does: 'Bind your own report of what an experience was like, against the experience it answers. Only a person can bind a return.'}]
+
+/** The world's account: six tiers from 0 at the foot to 5 at the head, filled where a source is bound and named by it, dashed where none is;
+ * the tier Bind as points at is ringed. At the right, the experiences the world means to give, and the returns people wrote against them. */
+function SelfWell({v, w, h}: {v: V; w: number; h: number}) {
+  const s = selfOf(v), at = strOf(v, 'bindAs')
+  if (!s) return <Display w={w} h={h} label="Self" corner={NONE}><text x={w / 2} y={h / 2} className="dp-ink-dim" textAnchor="middle">No reading of the world's self</text></Display>
+  const y = (tier: number) => h - 20 - tier * 20, x0 = 18, x1 = 120, ux = 146, ex = 178
+  const bound = TIERS.filter(t => boundTier(s, t)).length
+  return <Display w={w} h={h} label="Self" corner={s.exists === false ? 'no self yet' : `${bound} of 6 tiers`}
+    does="Six tiers of the world's account, 0 at the foot. Filled: a source is bound, and named. Dashed: none yet. At the right, the experiences the world means to give and the returns written against them.">
+    {TIERS.map(t => { const b = boundTier(s, t), chosen = at === String(t); return <g key={t} data-i={`Tier ${t}|${b ? `${b.label ? `${b.label}: ` : ''}${b.source}` : 'No source is bound to this tier yet.'}`}>
+      <text x={6} y={y(t) + 3} className="dp-axis">{t}</text>
+      <rect x={x0} y={y(t) - 6} width={x1 - x0} height={12} fill={b ? 'color-mix(in srgb, var(--dp-value) 30%, transparent)' : 'none'} stroke={b ? 'var(--dp-value)' : 'var(--text-faint)'} strokeDasharray={b ? undefined : '2 2'} />
+      {b && <text x={x0 + 4} y={y(t) + 3} className="dp-ink">{cut(b.label ?? tail(b.source!), 17)}</text>}
+      {chosen && <rect x={x0 - 2.5} y={y(t) - 8.5} width={x1 - x0 + 5} height={17} fill="none" stroke="var(--dp-on)" strokeWidth={1.2} />}
+    </g> })}
+    <text x={ux} y={h - 4} className="dp-axis" textAnchor="middle">UX</text><text x={ex} y={h - 4} className="dp-axis" textAnchor="middle">EX</text>
+    {s.ux.slice(0, 5).map((u, i) => { const yy = 40 + i * 20; return <g key={u.ref} data-i={`${u.ref}|${u.source}: an experience the world means to give.`}>
+      <circle cx={ux} cy={yy} r={4.5} fill={at === 'ux' ? 'var(--dp-on)' : 'var(--dp-value)'} />
+      {s.ex.filter(e => e.ux.includes(u.ref)).slice(0, 3).map((e, k) => <g key={e.ref} data-i={`${e.ref}|${e.source}: a return written against ${u.ref}.`}>
+        <path d={`M${ux + 5} ${yy}L${ex - 4} ${yy + (k - 1) * 6}`} stroke="var(--dp-value)" opacity={.6} />
+        <rect x={ex - 3.5} y={yy + (k - 1) * 6 - 3.5} width={7} height={7} fill="none" stroke="var(--dp-on)" strokeWidth={1.2} />
+      </g>)}
+    </g> })}
+    {!s.ux.length && <text x={(ux + ex) / 2} y={44} className="dp-axis" textAnchor="middle">none</text>}
+  </Display>
+}
+
+function selfRows(v: V): RowItem[] {
+  const s = selfOf(v)
+  if (!s) return [{id: 'none', name: 'No reading of the world\'s self', light: 'unknown'}]
+  return [
+    ...TIERS.map(t => { const b = boundTier(s, t); return {id: `t${t}`, name: b ? (b.label ? `${b.label} · ${b.source}` : b.source!) : 'No source yet', light: (b ? 'lit' : 'dark') as LightState, tone: 'value' as const, note: `tier ${t}`} }),
+    ...s.ux.map(u => ({id: `u:${u.ref}`, name: u.source, light: 'lit' as LightState, tone: 'value' as const, note: u.ref})),
+    ...s.ex.map(e => ({id: `e:${e.ref}`, name: e.source, light: 'lit' as LightState, tone: 'accent' as const, note: `return · ${e.ux.join(', ') || NONE}`})),
+    ...s.unbound.map(u => ({id: `c:${u.source}`, name: u.source, light: 'dark' as LightState, tone: 'stall' as const, note: u.hints.length ? u.hints.join(', ') : 'not bound', does: 'A source of the world no tier holds yet. Choose it, then Relate.'})),
+  ]
+}
+
+function SelfBands({p}: {p: ViewProps}) {
+  const s = selfOf(p.v), at = strOf(p.v, 'bindAs'), src = strOf(p.v, 'selfSource'), [page, setPage] = useState(0)
+  const candidates = s ? [...s.unbound.map(u => u.source)] : []
+  const why = !s ? 'No reading of the world\'s self.' : s.exists === false ? 'The world has no self yet: Ensure it first.' : !at ? 'Choose what to bind it as.' : !src ? 'Choose a source.'
+    : at === 'ex' && !s.ux.length ? 'A return answers an intended experience: bind one first.' : undefined
+  return <>
+    <Band>
+      <Section width={206}><SelfWell v={p.v} w={194} h={146} /></Section>
+      <Section label="Self" width={104}>
+        <Readout label="self" does="Whether the world has its ProjectCentral/self: where its account of itself is written." value={s ? (s.exists ? 'present' : 'none yet') : undefined} tone={s?.exists ? 'green' : 'stall'} />
+        <Action {...st(p, 'selfEnsure')} label="Ensure" does="Add ProjectCentral/self where it is missing. Native documents, the wiki and the NOW field stay where they are."
+          onPress={s && s.exists === false ? () => p.set('selfEnsure', true) : undefined} disabled={st(p, 'selfEnsure').disabled ?? (s?.exists ? 'The world has its self.' : undefined)} />
+        <Readout label="returns" does="Returns people wrote against the world's intended experiences." value={s?.ex.length} tone="accent" />
+      </Section>
+      <Section label="Bind" grow>
+        <Chooser {...st(p, 'bindAs')} label="As" wide does="What the source becomes: one tier of the world's account, an intended experience, or a return against one." value={at ?? ''} options={BIND_AS} onChange={x => p.set('bindAs', x)} />
+        <Chooser {...st(p, 'selfSource')} label="Source" wide does="A source of the world that is not bound yet." value={src ?? ''} options={candidates.map(c => ({value: c, label: tail(c)}))} onChange={x => p.set('selfSource', x)} />
+        <div className="ref-pair">
+          <Action {...st(p, 'selfRelate')} hold label="Relate" does="Bind the source as chosen. Its bytes and its path stay; its standing is recorded." onPress={!why ? () => p.set('selfRelate', JSON.stringify({as: at, source: src})) : undefined}
+            disabled={st(p, 'selfRelate').disabled ?? why} />
+          <Action label="Next" does="Point As at the next tier that has no source yet." onPress={s ? () => { const n = nextEmpty(s, at === undefined || isNaN(Number(at)) ? -1 : Number(at)); if (n !== undefined) p.set('bindAs', String(n)) } : undefined}
+            disabled={s && TIERS.every(t => boundTier(s, t)) ? 'Every tier has a source.' : undefined} />
+        </div>
+      </Section>
+    </Band>
+    <Band>
+      <Section grow><Rows label={s ? `The account · ${TIERS.filter(t => boundTier(s, t)).length} of 6 tiers, ${s.ux.length} experience${s.ux.length === 1 ? '' : 's'}, ${s.ex.length} return${s.ex.length === 1 ? '' : 's'}, ${s.unbound.length} unbound` : 'The account'}
+        does="The six tiers, the intended experiences, the returns, then the sources no tier holds yet. Select an unbound source to bind it." items={selfRows(p.v)} size={14} columns={2} page={page} onPage={setPage}
+        selected={src ? `c:${src}` : undefined} onSelect={id => { if (id.startsWith('c:')) p.set('selfSource', id.slice(2)) }} /></Section>
+    </Band>
+  </>
+}
+
+type PageId = 'workspace' | 'ground' | 'self'
+const PAGE_IDS: readonly {id: PageId; label: string}[] = [{id: 'workspace', label: 'Track'}, {id: 'ground', label: 'Ground'}, {id: 'self', label: 'Self'}]
+const pageOf = (p: ViewProps): PageId => (p.page === 'ground' || p.page === 'self' ? p.page : 'workspace')
+function pageLight(v: V, id: PageId): LightState | undefined {
+  if (id === 'ground') { const pc = inspectionOf(v); return pc ? (pc.outcome === 'already_conformant' ? 'lit' : 'dark') : undefined }
+  if (id === 'self') { const s = selfOf(v); return s ? (s.exists && TIERS.every(t => boundTier(s, t)) ? 'lit' : 'dark') : undefined }
+  return undefined
+}
+
+/** Full's Ground tab: what Central found in the folder, and the preview's steps in order. */
+function GroundDoc({v}: {v: V}) {
+  const pc = inspectionOf(v), plan = planOf(v), t = treatmentOf(v, pc)
+  return <div className="ref-doc cws-doc">
+    <h3>Ground <small>{shown(v, 'folder')} · {pc ? OUTCOME_WORD[pc.outcome] : 'no reading'}</small></h3>
+    {!pc ? <p className="ref-doc-lead">No reading of the folder.</p> : <>
+      <p className="ref-doc-lead">{pc.reason ?? NONE}</p>
+      <ol className="ref-doc-list">
+        {pc.signals.map(s => <li key={s.path}><span className="dp-lamp" data-light="lit" data-tone="value" /><b>{s.path}</b><span className="ref-doc-rev">{s.kind}</span><p>Native material. It stays where it is.</p></li>)}
+        {pc.candidates.map(c => <li key={c.source}><span className="dp-lamp" data-light="lit" data-tone="accent" /><b>{c.source}</b><span className="ref-doc-rev">wiki</span><p>{c.space ?? NONE}</p></li>)}
+        {pc.errors.map((e, i) => <li key={`e${i}`}><span className="dp-lamp" data-light="dark" data-tone="stall" /><b>Manifest</b><span className="ref-doc-rev">unreadable</span><p>{e}</p></li>)}
+      </ol>
+      <section className="ref-doc-kind"><h4>The preview</h4>
+        {plan && plan.treatment === t ? <ol className="ref-doc-steps">{plan.operations.map((o, i) => <li key={i}>{o}</li>)}</ol>
+          : <p className="ref-doc-lead">{pc.outcome === 'already_conformant' ? 'Nothing to make: the world\'s ground is in place.' : 'No preview yet. Choose how to make it in Device view and press Preview.'}</p>}
+      </section>
+    </>}
+  </div>
+}
+
+/** Full's Self tab: the account tier by tier, the intended experiences with the returns written against each, and the sources unbound. */
+function SelfDoc({v}: {v: V}) {
+  const s = selfOf(v)
+  return <div className="ref-doc cws-doc">
+    <h3>Self <small>{shown(v, 'name')} · {s ? (s.exists ? `${TIERS.filter(t => boundTier(s, t)).length} of 6 tiers bound` : 'no self yet') : 'no reading'}</small></h3>
+    {!s ? <p className="ref-doc-lead">No reading of the world's self.</p> : <>
+      <ol className="ref-doc-list">{TIERS.map(t => { const b = boundTier(s, t); return <li key={t} data-dim={b ? undefined : 'true'}>
+        <span className="dp-lamp" data-light={b ? 'lit' : 'dark'} data-tone="value" /><b>Tier {t}</b><span className="ref-doc-rev">{b?.label ?? ''}</span><p>{b?.source ?? 'No source yet.'}</p>
+      </li> })}</ol>
+      <section className="ref-doc-kind"><h4>Intended experiences, and the returns against them</h4>
+        {!s.ux.length ? <p className="ref-doc-lead">No intended experience is bound yet.</p>
+          : <ol className="ref-doc-list">{s.ux.map(u => { const r = s.ex.filter(e => e.ux.includes(u.ref)); return <li key={u.ref}>
+            <span className="dp-lamp" data-light="lit" data-tone="value" /><b>{u.ref}</b><span className="ref-doc-rev">{r.length} return{r.length === 1 ? '' : 's'}</span>
+            <span className="ref-doc-standing">{u.source}</span><p>{r.length ? r.map(e => e.source).join(' · ') : 'Nobody has written a return against it yet.'}</p>
+          </li> })}</ol>}
+      </section>
+      {s.unbound.length > 0 && <section className="ref-doc-kind"><h4>Sources no tier holds yet</h4>
+        <ol className="ref-doc-list">{s.unbound.map(u => <li key={u.source} data-dim="true"><span className="dp-lamp" data-light="dark" data-tone="stall" /><b>{u.source}</b><span className="ref-doc-rev">{u.hints.join(', ') || NONE}</span></li>)}</ol>
+      </section>}
+    </>}
+  </div>
+}
+
+// Samples. Archetypal-Earth's ground is in place (`projectcentral.inspect`); a folder dropped from elsewhere shows each outcome Central gives.
+const PC_IN_PLACE = {outcome: 'already_conformant', reason: 'ProjectCentral human-source and Agent-Wiki fractal is present and readable.',
+  candidates: [{source: 'ProjectCentral/agents/wiki/wiki.json', space: 'central:wiki:project:Archetypal-Earth'}], signals: [{kind: 'readme', path: 'README.md'}, {kind: 'docs', path: 'docs'}], errors: []}
+const PC_ADOPT = {outcome: 'bind_existing_wiki_in_place', reason: 'One compatible OKF Wiki source was found; it can remain in place as a participating source while ProjectCentral receives its canonical Agent Wiki.',
+  candidates: [{source: 'wiki/wiki.json', space: 'central:wiki:project:Palace'}], signals: [{kind: 'readme', path: 'README.md'}, {kind: 'docs', path: 'docs'}, {kind: 'design', path: 'design'}, {kind: 'wiki', path: 'wiki'}], errors: []}
+const PLAN_ADOPT = {treatment: 'adopt', source: 'wiki/wiki.json', target: 'ProjectCentral/agents/wiki/wiki.json', preserves: true, operations: [
+  'create ProjectCentral/user and ProjectCentral/agents/{governance,wiki}', 'create canonical ProjectCentral Agent Wiki', 'retain adopted Wiki source in place: wiki/wiki.json',
+  'record the in-place source as a participating Wiki source', 'federate the canonical Project WikiSpace from the Central root']}
+const PC_CREATE = {outcome: 'create_project_central', reason: 'No compatible OKF Wiki source was found; the canonical human-source/Agent-Wiki fractal can be created around the native Project.',
+  candidates: [], signals: [{kind: 'readme', path: 'README.md'}, {kind: 'docs', path: 'docs'}], errors: []}
+const PC_TWO = {outcome: 'unresolved_human_decision_required', reason: 'Multiple compatible Wiki sources were found; Central will not guess which one should participate as the adopted source.',
+  candidates: [{source: 'wiki/wiki.json', space: 'central:wiki:project:Palace'}, {source: 'notes/.okf/wiki.json', space: 'central:wiki:project:Palace-notes'}], signals: [{kind: 'readme', path: 'README.md'}, {kind: 'wiki', path: 'wiki'}], errors: []}
+// Archetypal-Earth's account as it is being written: two tiers bound, the walks it means to give, and one return against them.
+const SELF = {aperture: {exists: true, status: 'present'},
+  tiers: [{tier: 1, source: 'docs/SPEC.md'}, {tier: 4, source: 'AGENTS.md'}],
+  ux: [{ref: 'ux:walks', source: 'docs/SPEC.md#walks'}, {ref: 'ux:lenses', source: 'docs/SPEC.md#lenses'}],
+  ex: [{ref: 'ex:walk-2026-10-12', source: 'ProjectCentral/user/returns/walk-2026-10-12.md', ux: ['ux:walks']}],
+  unbound: [{source: 'README.md', hints: ['readme']}, {source: 'curation/plates.md', hints: ['design']}, {source: 'ephemeris/README.md', hints: ['architecture']}]}
+
 export const design: DesignedDevice = {
   id: 'central:workspace',
   title: 'Workspace',
@@ -327,13 +628,20 @@ export const design: DesignedDevice = {
       {id: 'project', name: 'project.json', path: 'ProjectCentral', kind: 'File', state: 'saved', open: false},
       {id: 'draft', name: 'Untitled', path: '', kind: 'Flow', state: 'draft', open: true},
     ]),
+    // Ground and Self: Central's inspection of the folder (`projectcentral.inspect`) with any preview, and the world's account of itself.
+    pc: JSON.stringify(PC_IN_PLACE), self: JSON.stringify(SELF), bindAs: '0',
   },
+  firstPage: 'workspace',
   fixtures: {
     'Archetypal Earth': {},
     'A new workspace': {name: 'New workspace', folder: 'central', fresh: true, mem: 'base', widgets: 2, visited: 'now', clips: '[]', trees: '{}', sets: '{}'},
     'Not launched': {light: 'dark', visited: '6 d ago', mode: 'techne'},
+    'A folder dropped': {name: 'Palace', folder: 'Palace', fresh: true, mem: 'base', clips: '[]', trees: '{}', sets: '{}', pc: JSON.stringify(PC_ADOPT), pcPlan: JSON.stringify(PLAN_ADOPT), treatment: 'adopt',
+      self: JSON.stringify({aperture: {exists: false, status: 'legacy-migratable-absence'}, tiers: [], ux: [], ex: [], unbound: [{source: 'README.md', hints: ['readme']}, {source: 'design/rooms.md', hints: ['design']}]})},
+    'A plain folder': {name: 'Palace', folder: 'Palace', fresh: true, mem: 'base', clips: '[]', trees: '{}', sets: '{}', pc: JSON.stringify(PC_CREATE)},
+    'Two wikis': {name: 'Palace', folder: 'Palace', fresh: true, mem: 'base', clips: '[]', trees: '{}', sets: '{}', pc: JSON.stringify(PC_TWO), treatment: 'adopt', pcSource: 'notes/.okf/wiki.json'},
     'No readings': Object.fromEntries(['light', 'name', 'kind', 'folder', 'place', 'keepPanes', 'keepInstruments', 'keepWidgets', 'keepSets', 'rememberIn', 'onLaunch',
-      'openIn', 'keepWhen', 'sendToDay', 'mode', 'mem', 'fresh', 'dirty', 'widgets', 'visited', 'clip', 'folders', 'trees', 'sets', 'clips'].map(k => [k, undefined])),
+      'openIn', 'keepWhen', 'sendToDay', 'mode', 'mem', 'fresh', 'dirty', 'widgets', 'visited', 'clip', 'folders', 'trees', 'sets', 'clips', 'pc', 'pcPlan', 'self', 'bindAs'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title={cut(shown(p.v, 'name'), 18)} light={light(p)} readings={[openText(p.v)]} onUnfold={p.nav.unfold} />,
@@ -353,7 +661,8 @@ export const design: DesignedDevice = {
     </Section>
   </Panel>,
 
-  whole: p => <Panel title="Workspace" view="whole" {...head(p)}>
+  whole: p => <Panel title="Workspace" view="whole" {...head(p)} pages={PAGE_IDS.map(x => ({id: x.id, label: x.label, light: pageLight(p.v, x.id)}))} page={pageOf(p)} onPage={p.setPage}>
+    {pageOf(p) === 'ground' ? <GroundBands p={p} /> : pageOf(p) === 'self' ? <SelfBands p={p} /> : <>
     <Band>
       <Section width={206}>
         <Display w={194} h={146} label="The workspace" does="The panes of the open mode. A filled mark on a mode: its panes return at launch. A ring: kept, but not restored. A teal square: a saved set. Drag handle 1 to set the mode that a launch opens in."
@@ -388,9 +697,15 @@ export const design: DesignedDevice = {
         <Readout label="edited" does="Clips edited since save." value={editedCount(p.v)} tone="value" />
       </Section>
     </Band>
+    </>}
   </Panel>,
 
-  full: p => <WorkspaceBody p={p} />,
+  full: p => <div className="ref-pane-body">
+    <div className="ref-pane-tabs" role="tablist" aria-label="Pages">
+      {PAGE_IDS.map(x => <button key={x.id} type="button" role="tab" aria-selected={x.id === pageOf(p)} onClick={() => p.setPage(x.id)}>{x.id === 'workspace' ? 'Clips and modes' : x.label}</button>)}
+    </div>
+    <div className="cws-host">{pageOf(p) === 'ground' ? <GroundDoc v={p.v} /> : pageOf(p) === 'self' ? <SelfDoc v={p.v} /> : <WorkspaceBody p={p} />}</div>
+  </div>,
 
   widget: p => <Tile title={shown(p.v, 'name')} light={light(p)} span={2} onFull={p.nav.full}>
     <Display w={112} h={104} label="The workspace" does="The five modes and the panes of the open one. Click a mode to open it.">

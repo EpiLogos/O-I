@@ -25,3 +25,11 @@
 .kr-empty { margin: 0; font: italic 13px/1.5 Charter, Georgia, serif; color: var(--text-faint, #71767c); }
 .kr-foot { flex: none; display: flex; flex-wrap: wrap; gap: 4px 16px; padding-top: 8px; border-top: 1px solid var(--line, #24262a); font-size: 11px; color: var(--text-dim, #a2a7ad); font-variant-numeric: tabular-nums; }
 .kr-foot b { font-weight: 500; color: var(--text, #d4d7da); }
+
+/* The Affected tab: each reading with Read again and Forget. */
+.kr-affected li { grid-template-columns: 12px minmax(0, 1fr) 40px 40px 48px; }
+.kr-moved li { grid-template-columns: 12px minmax(0, 1fr) auto; }
+.kr-moved li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kr-affected li[data-fresh="basis-changed"] em { color: var(--stall, #ff9b4a); }
+.kr-affected li[data-fresh="basis-unavailable"] .kr-title { color: var(--text-faint, #71767c); }
+.kr-pages button:disabled { opacity: .45; cursor: default; }
