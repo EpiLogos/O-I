@@ -227,3 +227,48 @@ The lead converges the lanes, runs the whole suite, removes `pending` from the g
 - **Sessions and artefacts.** A session's world comes from its space's `definition.projects` (kernel `agency.rs:759-762`); the provider
   reads only O-I's agency. Artefacts are Central change-horizon rows that name an agent. The 16 Oct reading found none attributed, so the
   outer ring is empty until agents write under their session.
+
+## 10. Where it ended (21 Oct 2026)
+
+Built on the owner's second account in one run, by the lead and two Sonnet builders, tests first. The planet's tests are sixteen files
+(`tests/w3q-gen-*`, `w3q-planet-gate`, `w3q-manual-17-2`, `w3q-sys-*`, `w3-world-body-*`, `w3b-your-system`); every one is a real test, none is `todo`, and the
+gate passes with and without `W3Q_GATE=enforce` (the variable no longer changes any test). Last runs on `dlw/build`: planet and atlas suites 542 of 542
+(420 of 420 in enforce), `tsc --noEmit -p .` clean, `atlas-port-pin.mjs --check` clean, the whole suite `scripts/test-all.mjs` 3507 tests with one
+red, another lane's reworded tooltip that `tests/native-device-pool.test.mjs` still expected (corrected; that file 9 of 9).
+
+**Done-when, one by one**
+
+1. The whole suite is green with no `todo`; `tsc` shows nothing in the atlas or the catalogue.
+2. The four gate bodies pass every clause of the gate at 2048 wide. The sea against the Earth's own figures: shore over deep sea 2.0 to 2.3 (the Earth 2.10,
+   the band 1.26 to 3.16), the shelf's reach 4.5 to 6.4 px (5.7; 2.3 to 9.1), the open sea's broad tone .19 to .23 (.30; .12 to .41). Version 1 draws as before,
+   byte for byte (C1); the record names the generator and its version, and the Body rows say a body built by an older one is rebuilt by its next change.
+3. Beside the Earth at the same three cameras (`evidence/procedural-body-20261020/after/globe/`): at the world view the body reads as a planet with weather
+   (weather bands, a cyclone, ice caps, a limb glow); at a region view the ground is crisp (coasts, relief shading, grain, rivers) and the clouds are a thin broken
+   layer with sharp ragged edges and a shadow on the ground; at a place view the ground is made in the tile worker and, past the finest tile, by detail the shader adds
+   (bare rock on steep faces, cover patches, grain). Measured: a cloud's edge is 3 to 4 px wide at region scale (the 1024 mask it replaced: 31 to 60 px); 1-px
+   structure inside large clouds .024 against the ground's .020; at 65 to 80 degrees the cloud and ice structure is isotropic (east-west over north-south .96 to
+   1.15). A 2048 base costs about 5.3 s of thread time (4096: 17 s), the first tile of a body 0.9 s and the next 140 to 250 ms, the cloud window 0.7 s in chunks of
+   about 45 ms. The Earth's pictures are untouched.
+4. A new empty world is a grey moon (`v2-barren-world.png`, `Fresh` in `v2-system-scale.png`); a world lived in is a planet with weather; the weather follows the occasion.
+5. The System scale shows only the agents at work (inner ring) and what they have just made (outer ring, 24 h, six at most), per world (`v2-system-scale.png`).
+6. Every location sentence of §17.2 has a test (`w3q-sys-places`), and the manual says what the code does (`w3q-manual-17-2`).
+
+**What still looks lesser than the Earth** (seen by eye in the captures; none is a test failing)
+- The open sea at a world or region view is a nearly flat dark navy. The shelf's rim and the few long lines in the deep show on the equirect and in a tile, not
+  on the globe at these distances. The Earth's trenches and fracture lines are crisper, and its wide light shelves (Sunda, Patagonia) are brighter than a generated
+  shelf, which is a soft haze 60 to 100 px wide on the 2048 base.
+- Past the finest tile (zoom 8) the extra sharpness is grain, not new structure. Real structure there needs deeper tiles, which cost four times the tiles for each
+  level; this machine could not make them at the load it carried.
+- The app's palette grade makes forest dark teal, so the ground at a place view reads dark.
+- The cloud's streaks at the limb (the shear read at an angle) and a white-grey colour; at a dial of .35 cloud still hides a fair share of land at a world view.
+- The ice sheets are subtle on purpose (the Earth's are nearly flat and nearly neutral); they were judged on the equirects and at the poles in one capture.
+- A faint straight tone step (a few per cent) shows when the sea is contrast-stretched, where the regional slope grid has its nodes; not visible as drawn.
+- Everything above was seen headless (Chromium on swiftshader). **The native candidate's screen pass is the owner's, and is owed.**
+
+**Rulings made in the last rounds**
+- A lane corrects its own test when the evidence shows the threshold it held did not discriminate, and says so in the commit (Lane A's B1: shore over deep
+  held at 2.5 times, from its own 512-wide reading of the Earth, now the lead's band 1.26 to 3.16, mine measuring 2.0). The lead's boundary is still the lead's.
+- A timing assertion measures a thread's own time (`process.cpuUsage`), with the same ceiling: at the load other sessions put on this Mac a wall clock read
+  13 times the work and failed a generator that was fast.
+- The shell's cloud layer is a window of the analytic field about the camera, made in the tile worker's lane, shown whole, turned by the wind since it was made and
+  remade at 0.4 degrees of drift; the 1024 mask still draws the world view. Its noise is sampled on the sphere, not in longitude and latitude.
