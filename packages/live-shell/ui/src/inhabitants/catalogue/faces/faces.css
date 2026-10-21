@@ -79,3 +79,17 @@
 .fx-well--scene .fx-well-name { position: absolute; left: 4px; bottom: 3px; padding: 1px 5px; background: color-mix(in srgb, var(--dp-well, #121519) 78%, transparent); }
 .fx-take[data-state="archived"] { opacity: .45; }
 .fx-take[data-state="dormant"] figcaption span { color: var(--text-faint, #71767c); }
+
+/* The environs of the process devices (Environs.tsx): a picture of the state now, its signature and its words under it. */
+.fx-environ { margin: 0; display: flex; flex-direction: column; flex: none; background: color-mix(in srgb, var(--bg-0, #26292d) 55%, var(--line, #24262a)); border: 1px solid var(--line, #24262a); }
+.fx-environ-svg { display: block; }
+.fx-environ-none { display: grid; place-items: center; padding: 6px 10px; box-sizing: border-box; font-size: 10px; line-height: 1.35; color: var(--text-faint, #71767c); text-align: center; border-bottom: 1px dashed var(--line-strong, #3d4147); }
+.fx-environ-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 16px; padding: 0 6px; box-sizing: border-box; background: color-mix(in srgb, var(--bg-0, #26292d) 80%, transparent); border-top: 1px solid var(--line, #24262a); }
+.fx-environ-foot b { min-width: 0; font: 600 9px/1 var(--mono, ui-monospace, monospace); color: var(--text, #d4d7da); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-environ-note { font: 9px var(--mono, ui-monospace, monospace); fill: var(--text-faint, #71767c); }
+.fx-environ-label { font: 600 8px var(--mono, ui-monospace, monospace); fill: var(--text-dim, #a2a7ad); letter-spacing: .04em; }
+/* A Full that carries its environ at its foot: the Full as it was, then the band (EnvironBand), as wide as the pane. */
+.fx-environ-stack { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
+.fx-environ-stack > :first-child { flex: 1 1 auto; min-height: 0; }
+.fx-environ-band { flex: none; width: 100%; overflow: hidden; }
+.fx-environ-band .fx-environ { border-left: 0; border-right: 0; border-bottom: 0; }

@@ -3,6 +3,8 @@
 export {CreatureFace, FigureThumb, Glyph, useReducedMotion, type CreatureFaceProps} from './CreatureFace'
 export {CrewFace, type CrewFaceProps, type CrewMember} from './CrewFace'
 export {EnvironStage, type StageProps} from './EnvironStage'
+export {EnvironBand, ErosionEnviron, RiverEnviron, SeasonsEnviron, SuccessionEnviron} from './EnvironFaces'
+export {erosionOf, isAbsent, riverOf, seasonsOf, successionOf, type EnvironAbsent, type ErosionReading, type RiverReading, type SeasonsReading, type SuccessionReading} from './environReadings'
 export {TakesGrove, type Take, type TakeState} from './TakesGrove'
 export {TypeBand, TypeWell, type TypeBandProps} from './TypeBand'
 export {FAMILIES, HAZARDS, PATTERNS, RUN_STATES, countOf, hazardOf, isCrew, presetRows, type Pattern, type RunState} from './agency'

@@ -16,6 +16,8 @@
 import {useState, type CSSProperties} from 'react'
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState, type Option} from '../../sdk/panel'
 import {boolOf, clampTo, has, json, NONE, numOf, shown, strOf, type DesignedDevice, type ViewProps, type Values} from './design'
+import {EnvironBand, RiverEnviron} from '../faces/EnvironFaces'
+import {riverOf} from '../faces/environReadings'
 import './actuation__gateway.css'
 
 type V = ViewProps['v']
@@ -385,7 +387,9 @@ export const design: DesignedDevice = {
     </Band>
   </Panel>,
 
-  full: p => <FramesPane v={p.v} />,
+  // Its environ at the foot (manual §25.6: a gateway is a river, a stream with no done): flowing while it checks in, still past Stall
+  // after, a dry bed while nothing can come in; its currents the sessions, the frames in flight on them.
+  full: p => <div className="fx-environ-stack"><FramesPane v={p.v} /><EnvironBand>{width => <RiverEnviron reading={riverOf(p.v)} width={width} height={120} />}</EnvironBand></div>,
 
   widget: p => <Tile title={has(p.v, 'harness') ? `Gateway · ${strOf(p.v, 'harness')}` : 'Gateway'} light={lightOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
     <LinkWell v={p.v} size="mini" />

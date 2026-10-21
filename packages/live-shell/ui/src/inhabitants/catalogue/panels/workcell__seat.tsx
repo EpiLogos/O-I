@@ -18,6 +18,8 @@
 import {Action, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Band, TextField, Tile, type LightState, type Option, type RowItem, type Standing} from '../../sdk/panel'
 import {KindMark} from '../../sdk/marks'
 import {NONE, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
+import {EnvironBand, SuccessionEnviron} from '../faces/EnvironFaces'
+import {successionOf} from '../faces/environReadings'
 import './workcell__seat.css'
 
 type V = ViewProps['v']
@@ -456,7 +458,9 @@ export const design: DesignedDevice = {
     </Panel>
   },
 
-  full: p => <Pane p={p} />,
+  // Its environ at the foot (manual §25.6: the Seat is succession, one lane after another on the same ground): main as the ground the
+  // landed lanes laid down, each seat's lane growing on it, what main laid since lighter on top, the ground turned and not laid down.
+  full: p => <div className="fx-environ-stack"><Pane p={p} /><EnvironBand>{width => <SuccessionEnviron reading={successionOf(p.v)} width={width} height={120} />}</EnvironBand></div>,
 
   widget: p => {
     const g = ground(p.v)

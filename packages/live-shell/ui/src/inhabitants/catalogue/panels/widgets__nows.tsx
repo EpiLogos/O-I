@@ -20,6 +20,8 @@
 import {Action, Display, Handle, Radio, Tile} from '../../sdk/panel'
 import {NONE, clampTo, json, railAndPane, st, strOf, type ViewProps} from './design'
 import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
+import {SeasonsEnviron} from '../faces/EnvironFaces'
+import {seasonsOf} from '../faces/environReadings'
 
 type V = ViewProps['v']
 
@@ -125,6 +127,9 @@ function Day({p, w, h}: {p: ViewProps; w: number; h: number}) {
   </g>
 }
 
+/** The environ's band at the pane's foot. */
+const ENVIRON_H = 120
+
 export const design = railAndPane({
   id: 'widgets:nows',
   title: 'NOWs',
@@ -143,7 +148,12 @@ export const design = railAndPane({
     'The ground reports nothing': {day: undefined, time: undefined, timezone: undefined, dayState: undefined, nows: undefined, open: undefined, reason: 'The ground did not answer'},
   },
 
-  full: p => <MonitorPane dark label="NOWs" head={<Head p={p} />}>{room => <MonitorPicture room={room} label="The moments of the day"><Day p={p} w={room.w} h={room.h} /></MonitorPicture>}</MonitorPane>,
+  // Its environ at the foot (manual §25.6: the NOWs are the seasons, a field's cycle): the clearings in growth, dormant, harvested and in
+  // the record, from the same listing (`nows`, and `seasons` counted over it, archived too).
+  full: p => <MonitorPane dark label="NOWs" head={<Head p={p} />}>{room => <>
+    <MonitorPicture room={{...room, h: Math.max(60, room.h - ENVIRON_H)}} label="The moments of the day"><Day p={p} w={room.w} h={Math.max(60, room.h - ENVIRON_H)} /></MonitorPicture>
+    <SeasonsEnviron reading={seasonsOf(p.v)} width={room.w} height={ENVIRON_H} />
+  </>}</MonitorPane>,
 
   widget: p => <Tile title="NOWs" light="unknown" lightWhy={LIGHT_WHY} span={2} onFull={p.nav.full}>
     <Display w={266} h={104} label="Now" does={`${DISPLAY_DOES} Drag handle 1 for one machine. Click a moment to open it in Full.`}><Moments p={p} w={266} h={104} handle press={openMoment(p)} size={8.5} /></Display>

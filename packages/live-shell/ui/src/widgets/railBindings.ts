@@ -127,6 +127,13 @@ export function nowsValues(ground: CentralGroundReading): Record<string, Value> 
   const listing = ground.now.state === 'ready' ? ground.now.data : undefined
   if (listing) put(values, 'nows', JSON.stringify(listing.records.filter(row => row.lifecycle !== 'archived').map(row => ({
     now_ref: row.now_ref, purpose: row.purpose, lifecycle: row.lifecycle, participant_refs: row.participant_refs, created_at_unix_seconds: row.created_at_unix_seconds}))))
+  // The field's year (manual §25.6, the NOWs' environ: a clearing active, quiescent, closed, archived): how many clearings stand in each
+  // season over the whole listing, the archived ones too (the rows above leave them out). The environ reads it (faces/environReadings.ts).
+  if (listing) {
+    const seasons: Record<string, number> = {active: 0, quiescent: 0, closed: 0, archived: 0}
+    for (const row of listing.records) if (row.lifecycle in seasons) seasons[row.lifecycle]! += 1
+    put(values, 'seasons', JSON.stringify(seasons))
+  }
   if (!time && !listing) put(values, 'reason', ground.time.error?.message ?? ground.now.error?.message ?? 'The ground did not answer')
   return values
 }

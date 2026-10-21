@@ -45,6 +45,8 @@ import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, R
 import {KindMark} from '../../sdk/marks'
 import {assembleCensus, hygieneFindings, registeredSeatPaths, type BoundaryOpSource, type SeatReading, type WorktreeRow} from '../../centralHygieneModel'
 import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
+import {EnvironBand, ErosionEnviron} from '../faces/EnvironFaces'
+import {erosionOf} from '../faces/environReadings'
 import './central__ground-hygiene.css'
 
 type V = ViewProps['v']
@@ -714,7 +716,9 @@ export const design: DesignedDevice = {
 
   whole: p => <PagedWhole p={p} />,
 
-  full: p => <Pane p={p} />,
+  // Its environ at the foot (manual §25.6: Ground hygiene is erosion, the wear of many runs on the ground): each page's bank in section,
+  // one channel cut for each kind of finding, as deep as it is grave and as wide as it is frequent; a refused read leaves it unsurveyed.
+  full: p => <div className="fx-environ-stack"><Pane p={p} /><EnvironBand>{width => <ErosionEnviron reading={erosionOf(p.v)} width={width} height={120} />}</EnvironBand></div>,
 
   widget: p => {
     const page = pageOf(p), g = ground(p.v, page), first = rowsOf(g).slice(0, 3)
