@@ -11,6 +11,18 @@
 // `works` is JSON: rows of {id, name}. The settings are `work`, `attempt`, `show`, `group`, `view`, `compare`, `stands`; `standsPending`
 // holds the attempt you chose to stand until you confirm; `task` is the task selected in the pane. A key the owner does not report
 // arrives absent, and the views draw "—" and say what is missing.
+//
+// Journey (View): the work you read is one Run of a Journey, and the Journey's Runs stand one after another, each with its attempts and
+// whether you recognised its return. `journey` is JSON {purpose, status, runs: [{ref, name?, lifecycle?, attempts?, recognised?}]}: purpose
+// is the Commission's (commission.purpose), status proposed | active | paused | completed | abandoned, runs in the order Factory continued
+// them (factory.journey-reading/v1 runRefs and recognitions; factory.commission-reading/v1 traversal `continued-from`; read by
+// factory_development_read `journey` and `commission-read`, which exist). A run's ref is a `work` id.
+// Review (a page of Whole, and the Return beside the list in Full): what you read before you confirm Stands. An attempt's `ret` also
+// carries `criteria` [{text, state?}] (the bounded intent's success conditions and their evaluation, satisfied | unsatisfied |
+// indeterminate: factory/src/project_development.rs:61, which no route reads yet), `claims` [{statement, status, evidence}] (the build
+// view's Claims with the count of their evidence: factory/src/build.rs:19, factory_build_snapshot, which exists) and `requests`
+// [{question, why}] (its HumanRequests: build.rs:66 question, whyHuman). Stands is confirmed through factory_owner AttemptReceiving
+// (kernel factory.rs:373), which exists.
 import {Fragment, type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
 import {NONE, clampTo, has, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -33,7 +45,22 @@ const word = (x: unknown): string | undefined => (typeof x === 'string' && x.len
 const count = (x: unknown): number | undefined => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? x : undefined)
 
 interface Task { readonly id: string; readonly title?: string; readonly state: State; readonly parent?: string; readonly agent?: string; readonly t0?: number; readonly seen?: number }
-interface Return { readonly summary?: string; readonly artifacts?: number; readonly evidence?: number; readonly receiving?: boolean }
+type Verdict = 'satisfied' | 'unsatisfied' | 'indeterminate'
+const VERDICTS: readonly Verdict[] = ['satisfied', 'unsatisfied', 'indeterminate']
+const VERDICT_WORD: Readonly<Record<Verdict, string>> = {satisfied: 'met', unsatisfied: 'not met', indeterminate: 'open'}
+interface Criterion { readonly text: string; readonly state?: Verdict }
+interface Claim { readonly statement: string; readonly status?: string; readonly evidence?: number }
+interface Request { readonly question: string; readonly why?: string }
+interface Return {
+  readonly summary?: string; readonly artifacts?: number; readonly evidence?: number; readonly receiving?: boolean
+  /** Undefined where the owner reports none of them (not the same as an empty list). */
+  readonly criteria?: readonly Criterion[]; readonly claims?: readonly Claim[]; readonly requests?: readonly Request[]
+}
+const listOf = <T,>(raw: unknown, each: (o: Record<string, unknown>) => T | undefined): T[] | undefined =>
+  Array.isArray(raw) ? objects(raw).flatMap(o => { const x = each(o); return x === undefined ? [] : [x] }) : undefined
+/** The return across the conditions, by the owner's law (project_development.rs:407-433); undefined until each has a state. */
+const verdictOf = (list: readonly Criterion[] | undefined): Verdict | undefined =>
+  !list?.length || list.some(c => !c.state) ? undefined : list.some(c => c.state === 'unsatisfied') ? 'unsatisfied' : list.some(c => c.state === 'indeterminate') ? 'indeterminate' : 'satisfied'
 interface Attempt {
   readonly id: string
   readonly n: number
@@ -68,7 +95,10 @@ function attemptsOf(v: V): Attempt[] | undefined {
     const r = o.ret && typeof o.ret === 'object' ? o.ret as Record<string, unknown> : undefined
     list.push({id, n: count(o.n) ?? i + 1, state: stateIn(o.state), agent: word(o.agent), session: word(o.session), day: word(o.day), at: word(o.at), seen: count(o.seen),
       current: o.current === true, tasks,
-      ret: r ? {summary: word(r.summary), artifacts: count(r.artifacts), evidence: count(r.evidence), receiving: typeof r.receiving === 'boolean' ? r.receiving : undefined} : undefined})
+      ret: r ? {summary: word(r.summary), artifacts: count(r.artifacts), evidence: count(r.evidence), receiving: typeof r.receiving === 'boolean' ? r.receiving : undefined,
+        criteria: listOf(r.criteria, c => (word(c.text) ? {text: word(c.text)!, state: VERDICTS.find(x => x === c.state)} : undefined)),
+        claims: listOf(r.claims, c => (word(c.statement) ? {statement: word(c.statement)!, status: word(c.status), evidence: count(c.evidence)} : undefined)),
+        requests: listOf(r.requests, q => (word(q.question) ? {question: word(q.question)!, why: word(q.why)} : undefined))} : undefined})
   })
   return list.sort((a, b) => a.n - b.n)
 }
@@ -77,6 +107,44 @@ const workName = (v: V): string | undefined => {
   const id = strOf(v, 'work')
   if (id === undefined) return undefined
   return word(objects(json<unknown>(v, 'works', [])).find(o => o.id === id)?.name) ?? id
+}
+
+// ---------------------------------------------------------------- the Journey the work belongs to
+
+const LIFE_WORD: Readonly<Record<string, string>> = {
+  seeded: 'seeded', active: 'at work', waiting_human: 'waits for you', suspended: 'suspended', finishing: 'finishing', finished: 'finished', aborted: 'aborted', archived: 'archived',
+}
+interface JourneyRun { readonly ref: string; readonly name?: string; readonly lifecycle?: string; readonly attempts?: number; readonly recognised: boolean }
+interface Journey { readonly purpose?: string; readonly status?: string; readonly runs: readonly JourneyRun[] }
+const journeyOf = (v: V): Journey | undefined => {
+  const o = json<unknown>(v, 'journey', undefined)
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return undefined
+  const j = o as Record<string, unknown>
+  return {purpose: word(j.purpose), status: word(j.status), runs: objects(j.runs).flatMap(x => (word(x.ref) ? [{ref: word(x.ref)!, name: word(x.name), lifecycle: word(x.lifecycle), attempts: count(x.attempts), recognised: x.recognised === true}] : []))}
+}
+const LIFE_INK: Readonly<Record<string, string>> = {active: 'var(--dp-value)', finishing: 'var(--dp-on)', finished: 'var(--green)', archived: 'var(--green)', waiting_human: 'var(--stall)'}
+
+/** The Journey in the well: its runs left to right in the order Factory continued them, each a block in the colour of its lifecycle, the
+ * run you read ringed, a gold diamond under each run you recognised. */
+function JourneyMarks({v, w, y}: {v: V; w: number; y: number}): ReactNode {
+  const j = journeyOf(v), me = strOf(v, 'work')
+  if (!j) return <text x={7} y={y + 14} className="dp-axis">No reading of the Journey</text>
+  if (!j.runs.length) return <text x={7} y={y + 14} className="dp-axis">The Journey has no run yet</text>
+  const step = (w - 24) / Math.max(1, j.runs.length - 1 || 1), shown = j.runs.slice(-6), at = (i: number) => (shown.length === 1 ? w / 2 : 12 + i * (w - 24) / (shown.length - 1))
+  return <g>
+    <text x={7} y={y + 8} className="dp-axis">{`journey · ${j.status ?? NONE}`}</text>
+    {shown.map((x, i) => i > 0 && <path key={`l${x.ref}`} d={`M${at(i - 1) + 6} ${y + 30}H${at(i) - 6}`} className="dp-faint" />)}
+    {shown.map((x, i) => {
+      const ink = LIFE_INK[x.lifecycle ?? ''] ?? 'var(--text-faint)', mine = x.ref === me, gone = x.lifecycle === 'aborted'
+      return <g key={x.ref} opacity={gone ? 0.45 : 1} data-i={`${x.name ?? x.ref}|${x.lifecycle ? LIFE_WORD[x.lifecycle] ?? x.lifecycle : 'No reading of its lifecycle'}${x.attempts !== undefined ? `, ${x.attempts} attempts` : ''}${x.recognised ? ', recognised' : ''}.`}>
+        <rect x={at(i) - 5} y={y + 25} width={10} height={10} rx={1.5} fill={x.lifecycle === 'finished' || x.lifecycle === 'archived' ? ink : 'var(--dp-well)'} stroke={ink} strokeWidth={1.2} />
+        {mine && <rect x={at(i) - 8} y={y + 22} width={16} height={16} rx={2} fill="none" stroke="var(--sel, #7ec3e6)" />}
+        {x.recognised && <path d={`M${at(i)} ${y + 41}l3.5 3.5l-3.5 3.5l-3.5 -3.5z`} fill="var(--dp-on)" />}
+        <text x={shown.length > 1 && i === 0 ? at(i) - 5 : shown.length > 1 && i === shown.length - 1 ? at(i) + 5 : at(i)} y={y + 60}
+          textAnchor={shown.length > 1 && i === 0 ? 'start' : shown.length > 1 && i === shown.length - 1 ? 'end' : 'middle'} className="dp-axis">{cut(x.name ?? x.ref, Math.max(4, Math.floor(Math.min(step, 60) / 4.6)))}</text>
+      </g>
+    })}
+  </g>
 }
 
 // ---------------------------------------------------------------- the reading the views share
@@ -159,6 +227,7 @@ const VIEW: readonly Option<string>[] = [
   {value: 'tree', label: 'Tree', does: 'Tasks as nested rows.'},
   {value: 'ruler', label: 'Ruler', does: 'Attempts along one ruler of elapsed time.'},
   {value: 'grove', label: 'Grove', does: 'One tree for each attempt: it grows while it runs, bears fruit when it finishes, and comes down when it fails.'},
+  {value: 'journey', label: 'Journey', does: 'The runs of the Journey this work belongs to, one after another, each with its attempts and whether you recognised it.'},
 ]
 
 const SAYS = {
@@ -166,7 +235,7 @@ const SAYS = {
   attempt: 'The attempt you read. The latest is the default.',
   show: 'Which tasks show: all, or only those running, queued, stalled, failed or done.',
   group: 'How the attempts group: by attempt, by agent or by day.',
-  view: 'Tree: tasks as nested rows. Ruler: attempts along one ruler of elapsed time. Grove: one tree for each attempt.',
+  view: 'Tree: tasks as nested rows. Ruler: attempts along one ruler of elapsed time. Grove: one tree for each attempt. Journey: the runs of the Journey this work belongs to.',
   compare: 'Draws a second attempt beside the one you read. None draws one.',
   stands: 'The attempt you accept. Choose one to read its Return, then confirm.',
   confirm: 'Accept this attempt as the one that stands. The device does not choose for you.',
@@ -192,7 +261,7 @@ const compareChooser = (p: ViewProps, r: Reading, long: boolean, wide = long) =>
 const standsChooser = (p: ViewProps, r: Reading) => {
   const shown = strOf(p.v, 'standsPending') ?? strOf(p.v, 'stands') ?? ''
   return <Chooser {...st(p, 'stands')} label="Stands" does={SAYS.stands} value={shown} options={withNone(attemptOptions(r, shown, false))}
-    onChange={x => { if (x === 'none') { p.set('stands', 'none'); p.set('standsPending', undefined) } else if (x !== strOf(p.v, 'stands')) p.set('standsPending', x); else p.set('standsPending', undefined) }} />
+    onChange={x => { if (x === 'none') { p.set('stands', 'none'); p.set('standsPending', undefined) } else if (x !== strOf(p.v, 'stands')) { p.set('standsPending', x); p.setPage('review') } else p.set('standsPending', undefined) }} />
 }
 const Consent = ({p, r}: {p: ViewProps; r: Reading}) => {
   if (strOf(p.v, 'standsPending') === undefined) return null
@@ -280,7 +349,8 @@ function RunWell({p, r, live, w, h, size}: {p: ViewProps; r: Reading; live: bool
     {!whole && r.attempts && <path d={`M${X0} 133H${X0 + span}`} className="dp-faint" />}
     {!whole && r.attempts && <text x={X0} y={143} className="dp-axis">0</text>}
     {!whole && r.attempts && <text x={X0 + span} y={143} className="dp-axis" textAnchor="end">{`${reach} min`}</text>}
-    {whole && !ruler && <>
+    {whole && strOf(v, 'view') === 'journey' && <><path d={`M0 66H${w}`} className="dp-faint" /><JourneyMarks v={v} w={w} y={70} /></>}
+    {whole && !ruler && strOf(v, 'view') !== 'journey' && <>
       {r.attempts !== undefined && <path d={`M0 66H${w}`} className="dp-faint" />}
       {r.attempts !== undefined && !r.me && <text x={7} y={80} className="dp-axis">{strOf(v, 'attempt') === undefined ? 'No attempt chosen' : 'No reading of this attempt'}</text>}
       {r.me && tree.length === 0 && <text x={7} y={80} className="dp-axis">{show === undefined || show === 'all' ? 'no tasks' : 'nothing in this filter'}</text>}
@@ -333,7 +403,7 @@ function RunsPane({p}: {p: ViewProps}) {
       {r.cmp && <span>against {shorts(r.cmp)}</span>}<span>stands {standsAt ? shorts(standsAt) : r.standsId === 'none' ? 'nothing' : NONE}</span>
     </div>
     <div className="ar-main">
-      {grove ? <div className="ar-list ar-grove" data-view="grove" aria-label="Attempts, one tree for each">
+      {strOf(v, 'view') === 'journey' ? <JourneyList v={v} /> : grove ? <div className="ar-list ar-grove" data-view="grove" aria-label="Attempts, one tree for each">
         {list === undefined && <p className="ar-none">No reading of the attempts.</p>}
         {list !== undefined && list.length === 0 && <p className="ar-none">This work has no attempt yet.</p>}
         {list && list.length > 0 && <TakesGrove takes={takesOf(r.attempts ?? [], r.standsId)} width={list.length > 4 ? 112 : 140} />}
@@ -370,13 +440,13 @@ function RunsPane({p}: {p: ViewProps}) {
           </Fragment>
         })}
       </div>}
-      <aside className="ar-side" aria-label="Return">
-        <h4>Return · {shorts(review) ?? NONE}</h4>
+      <aside className="ar-side" aria-label="Review">
+        <h4>Review · {shorts(review) ?? NONE}</h4>
         {review === undefined ? <p>No attempt to review.</p>
           : review.ret === undefined ? <p>No Return recorded for {shorts(review)}. The provider's answer is not a finished task.</p>
-            : <><p>{review.ret.summary ?? NONE}</p>
-              <dl><dt>Artifacts</dt><dd>{review.ret.artifacts ?? NONE}</dd><dt>Evidence</dt><dd>{review.ret.evidence ?? NONE}</dd>
-                <dt>Receipt</dt><dd>{review.ret.receiving === undefined ? NONE : review.ret.receiving ? 'linked' : 'not linked'}</dd></dl></>}
+            : <><p className="ar-summary">{review.ret.summary ?? NONE}</p>
+              <p className="ar-facts">{`${review.ret.artifacts ?? NONE} artefacts · ${review.ret.evidence ?? NONE} evidence · receipt ${review.ret.receiving === undefined ? NONE : review.ret.receiving ? 'linked' : 'not linked'}`}</p></>}
+        {review?.ret && <ReviewLists ret={review.ret} />}
         {r.pending && <div data-wait="true">{shorts(r.pending)} waits for you to confirm that it stands.</div>}
         {r.differs !== undefined && <dl><dt>Differs from {shorts(r.cmp)}</dt><dd>{r.differs} {r.differs === 1 ? 'task' : 'tasks'}</dd></dl>}
       </aside>
@@ -390,11 +460,94 @@ function RunsPane({p}: {p: ViewProps}) {
   </div>
 }
 
+/** The review beside the list: the success conditions with their return, the claims with their evidence, and what waits on you. */
+function ReviewLists({ret}: {ret: Return}) {
+  const verdict = verdictOf(ret.criteria)
+  return <>
+    <h5>Conditions · {verdict ? VERDICT_WORD[verdict] : ret.criteria === undefined ? NONE : 'not returned'}</h5>
+    {ret.criteria === undefined ? <p className="ar-none">No reading of the success conditions.</p>
+      : <ul className="ar-review">{ret.criteria.map((c, i) => <li key={i} data-state={c.state}><i /><span>{c.text}</span><small>{c.state ? VERDICT_WORD[c.state] : ''}</small></li>)}</ul>}
+    <h5>Claims</h5>
+    {ret.claims === undefined ? <p className="ar-none">No reading of the claims.</p>
+      : <ul className="ar-review">{ret.claims.map((c, i) => <li key={i} data-state={c.evidence ? 'evidenced' : 'bare'}><i /><span>{c.statement}</span><small>{c.evidence ? `${c.evidence} evidence` : 'no evidence'}</small></li>)}</ul>}
+    {!!ret.requests?.length && <><h5>Waits on you</h5>
+      <ul className="ar-review">{ret.requests.map((q, i) => <li key={i} data-state="request"><i /><span>{q.question}</span><small>{q.why ?? ''}</small></li>)}</ul></>}
+  </>
+}
+
+/** The Journey at pane size: its Commission's purpose, then its runs in the order Factory continued them, the one you read marked. */
+function JourneyList({v}: {v: V}) {
+  const j = journeyOf(v), me = strOf(v, 'work')
+  return <div className="ar-list ar-journey" data-view="journey" aria-label="The Journey's runs">
+    {!j ? <p className="ar-none">No reading of the Journey.</p> : <>
+      <p className="ar-purpose"><small>For</small>{j.purpose ?? NONE}<em>{j.status ?? NONE}</em></p>
+      <ol>
+        {j.runs.map(x => <li key={x.ref} data-life={x.lifecycle} data-me={x.ref === me || undefined}>
+          <i /><b>{x.name ?? x.ref}</b><span>{x.lifecycle ? LIFE_WORD[x.lifecycle] ?? x.lifecycle : NONE}</span>
+          <span>{x.attempts === undefined ? NONE : `${x.attempts} ${x.attempts === 1 ? 'attempt' : 'attempts'}`}</span>
+          {x.recognised ? <em>recognised</em> : <small>{x.ref === me ? 'you read this run' : ''}</small>}
+        </li>)}
+      </ol>
+    </>}
+  </div>
+}
+
 // ---------------------------------------------------------------- the widget
 
 function taskRows(a: Attempt | undefined, show: string | undefined): RowItem[] {
   return a ? treeOf(a.tasks, show).map(row => ({id: row.task.id, name: `${'· '.repeat(Math.min(row.depth, 2))}${cut(row.task.title ?? NONE, 22 - row.depth * 2)}`, light: LIGHT[row.task.state], tone: TONE[row.task.state], busy: row.task.state === 'running',
     note: row.task.seen !== undefined ? `${Math.round(row.task.seen)}m` : undefined, does: WORD[row.task.state]})) : []
+}
+
+// ---------------------------------------------------------------- the Review page of Whole
+
+/** The review well: the success conditions with their return, then the claims, each with a tick for each piece of its evidence. */
+function ReviewWell({ret, n, w, h}: {ret: Return | undefined; n: number | undefined; w: number; h: number}) {
+  const verdict = verdictOf(ret?.criteria), conds = ret?.criteria?.slice(0, 5) ?? [], claims = ret?.claims?.slice(0, 5) ?? []
+  const cy = 30, ky = cy + Math.max(1, conds.length) * 11 + 18
+  const ink = (c: Verdict | undefined) => (c === 'satisfied' ? 'var(--green)' : c === 'unsatisfied' ? 'var(--stall)' : 'var(--text-faint)')
+  return <Display w={w} h={h} label="The review" corner={n === undefined ? NONE : `#${n}${verdict ? ` ${VERDICT_WORD[verdict]}` : ''}`}
+    does="What the attempt returned against what it was for: each success condition with its return, each claim with its evidence.">
+    {ret === undefined && <text x={7} y={24} className="dp-axis">{n === undefined ? 'No attempt to review' : 'No Return recorded'}</text>}
+    {ret && <>
+      <text x={7} y={22} className="dp-axis">{ret.criteria === undefined ? 'conditions —' : 'conditions'}</text>
+      {conds.map((c, i) => <g key={i}>
+        <circle cx={11} cy={cy + i * 11 + 3} r={2.6} fill={c.state === 'satisfied' ? ink(c.state) : 'none'} stroke={ink(c.state)} strokeWidth={1.1} />
+        {c.state === 'unsatisfied' && <path d={`M8.5 ${cy + i * 11 + 0.5}l5 5m0 -5l-5 5`} stroke="var(--stall)" strokeWidth={1} />}
+        <text x={19} y={cy + i * 11 + 6} className="dp-axis" style={{fill: 'var(--text-dim)'}}>{cut(c.text, Math.floor((w - 24) / 4.5))}</text>
+      </g>)}
+      <path d={`M0 ${ky - 10}H${w}`} className="dp-faint" />
+      <text x={7} y={ky} className="dp-axis">{ret.claims === undefined ? 'claims —' : 'claims'}</text>
+      {claims.map((c, i) => <g key={i}>
+        {Array.from({length: Math.min(4, c.evidence ?? 0)}, (_, k) => <rect key={k} x={7 + k * 3} y={ky + 4 + i * 11} width={2} height={6} fill="var(--dp-value)" />)}
+        {!c.evidence && <rect x={7} y={ky + 4 + i * 11} width={8} height={6} fill="none" stroke="var(--text-faint)" strokeDasharray="1.5 1.5" />}
+        <text x={21} y={ky + 10 + i * 11} className="dp-axis" style={{fill: 'var(--text-dim)'}}>{cut(c.statement, Math.floor((w - 26) / 4.5))}</text>
+      </g>)}
+    </>}
+  </Display>
+}
+
+function ReviewPage({p, r}: {p: ViewProps; r: Reading}) {
+  const target = r.pending ?? r.me, ret = target?.ret, conds = ret?.criteria, verdict = verdictOf(conds)
+  return <>
+    <Band>
+      <Section width={206}><ReviewWell ret={ret} n={target?.n} w={194} h={146} /></Section>
+      <Section label="Stands" width={112}>
+        {standsChooser(p, r)}
+        <Consent p={p} r={r} />
+        <Readout label="reviewing" does="The attempt you review: the one waiting to stand, or the one you read." value={shorts(target)} />
+      </Section>
+      <Section label="Return" cols={3} grow>
+        <Readout big label="intent" does="Across the success conditions: not met if one is not met, open if one is open, met when all are met." value={verdict ? VERDICT_WORD[verdict] : conds ? 'not returned' : undefined}
+          tone={verdict === 'satisfied' ? 'green' : verdict === 'unsatisfied' ? 'stall' : undefined} />
+        <Readout label="conditions" does="Success conditions met, of all of them." value={conds ? `${conds.filter(c => c.state === 'satisfied').length}/${conds.length}` : undefined} />
+        <Readout label="claims" does="Claims that carry evidence, of all the claims the attempt makes." value={ret?.claims ? `${ret.claims.filter(c => c.evidence).length}/${ret.claims.length}` : undefined} />
+        <Readout label="requests" does="Questions the run waits on you to answer before it goes on." value={ret?.requests?.length} tone={ret?.requests?.length ? 'stall' : undefined} />
+        <Readout label="return" does="Artifacts and evidence in the Return of the attempt you review." value={ret ? `${ret.artifacts ?? NONE}·${ret.evidence ?? NONE}` : undefined} />
+        <Readout label="receipt" does="Whether Central has linked a receipt to the Return. A receipt is not your acceptance." value={ret?.receiving === undefined ? undefined : ret.receiving ? 'linked' : 'not linked'} />
+      </Section>
+    </Band>
+  </>
 }
 
 // ---------------------------------------------------------------- the device
@@ -417,7 +570,11 @@ const SAMPLE_ATTEMPTS = JSON.stringify([
   {id: '1', n: 1, state: 'failed', agent: 'Flint', session: 'tsc', day: '14 Oct', at: '09:40', seen: 11,
     tasks: roots(1, ['done', 'failed', 'queued', 'queued', 'queued'], [3, 11, 11, 3, 3, 3])},
   {id: '2', n: 2, state: 'done', agent: 'Kite', session: 'tsc-kite', day: '14 Oct', at: '14:05', seen: 23,
-    ret: {summary: 'All three roots type-check. One import repaired in AgentShellContext.', artifacts: 2, evidence: 3, receiving: false},
+    ret: {summary: 'All three roots type-check. One import repaired in AgentShellContext.', artifacts: 2, evidence: 3, receiving: false,
+      criteria: [{text: 'Each root type-checks with no error', state: 'satisfied'}, {text: 'No file outside the shell changes', state: 'satisfied'}, {text: 'The widget tests still pass', state: 'indeterminate'}],
+      claims: [{statement: 'tsc reports 0 errors in all three roots', status: 'supported', evidence: 3}, {statement: 'The import fix is the only change', status: 'supported', evidence: 1},
+        {statement: 'The widget tests are untouched', status: 'proposed', evidence: 0}],
+      requests: [{question: 'Run the widget tests before this stands?', why: 'Only you can spend the minutes on the shared seat.'}]},
     tasks: roots(2, ['done', 'done', 'done', 'done', 'done'], [2, 9, 15, 23, 23, 23])},
   {id: '3', n: 3, state: 'running', agent: 'Flint', session: 'tsc', day: '15 Oct', at: '10:12', seen: 34, current: true,
     tasks: roots(3, ['done', 'running', 'queued', 'running', 'stalled'], [3, 34, 34, 34, 34, 21])},
@@ -431,12 +588,18 @@ export const design: DesignedDevice = {
     light: 'lit', work: 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA', attempt: '3', show: 'all', group: 'attempt', view: 'tree', compare: 'none', stands: 'none', task: '3.4.2',
     // The owner's material: the pieces of work to choose from, and the attempts of the one shown (JSON).
     works: WORKS, attempts: SAMPLE_ATTEMPTS,
+    journey: JSON.stringify({purpose: 'Keep the three TypeScript roots type-checking', status: 'active', runs: [
+      {ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5F9Z', name: 'First pass', lifecycle: 'finished', attempts: 1, recognised: true},
+      {ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5FCB', name: 'Model row on the agent device', lifecycle: 'aborted', attempts: 2},
+      {ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA', name: 'Type-check the three roots', lifecycle: 'active', attempts: 3}]}),
   },
+  firstPage: 'runs',
   fixtures: {
     'Review waiting': {compare: '2', standsPending: '2'},
     'Ruler, one stands': {compare: '2', stands: '2', view: 'ruler', group: 'agent', show: 'stalled'},
     'Grove, one stands': {stands: '2', view: 'grove'},
-    'No readings': Object.fromEntries(['light', 'work', 'attempt', 'show', 'group', 'view', 'compare', 'stands', 'standsPending', 'task', 'works', 'attempts'].map(k => [k, undefined])),
+    'Its Journey': {view: 'journey', stands: '2'},
+    'No readings': Object.fromEntries(['light', 'work', 'attempt', 'show', 'group', 'view', 'compare', 'stands', 'standsPending', 'task', 'works', 'attempts', 'journey'].map(k => [k, undefined])),
   },
 
   folded: p => { const r = read(p), name = workName(p.v); return <Folded title="Runs" light={light(p)} readings={[name === undefined ? NONE : cut(name, 10), r.attempts ? `${r.attempts.length} attempts` : NONE]} onUnfold={p.nav.unfold} /> },
@@ -463,7 +626,9 @@ export const design: DesignedDevice = {
       light: LIGHT[a.state], tone: TONE[a.state], busy: a.state === 'running', note: a.id === r.standsId ? 'stands' : a.current ? 'current' : a.at, does: `${WORD[a.state]}${a.day ? `, ${a.day}` : ''}`,
     }))
     const target = r.pending ?? r.me
-    return <Panel title="Runs" view="whole" {...head(p)}>
+    const pages = [{id: 'runs', label: 'Runs'}, {id: 'review', label: 'Review', light: (r.pending ? 'lit' : 'unknown') as LightState}]
+    if (p.page === 'review') return <Panel title="Runs" view="whole" {...head(p)} pages={pages} page="review" onPage={p.setPage}><ReviewPage p={p} r={r} /></Panel>
+    return <Panel title="Runs" view="whole" {...head(p)} pages={pages} page="runs" onPage={p.setPage}>
       <Band>
         <Section width={206}>
           <RunWell p={p} r={r} live w={194} h={146} size="whole" />
@@ -497,6 +662,7 @@ export const design: DesignedDevice = {
   },
 
   full: p => <RunsPane p={p} />,
+
 
   widget: p => {
     const r = read(p), a = r.latest, items = taskRows(a, undefined), done = a?.tasks.filter(t => t.state === 'done').length

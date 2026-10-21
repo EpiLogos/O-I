@@ -1289,7 +1289,7 @@ material passes through, from left to right.
 | Mode | Track | Chain, left to right |
 |---|---|---|
 | Central | A world. The set is the Day; its die is on the Main track. | The packet, the agent of the world, and its scope; on a world whose folder holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
-| Factory | An agent session. | Agent, skills rack, scope. On the Main track: the experiments, Approvals and the prompt pads. |
+| Factory | An agent session. | Agent, skills rack, scope. On the Main track: the Run map, the experiments, Approvals and the prompt pads. |
 | Expressions | An Expression. | The Studio: the field, then its field devices. |
 | Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
 | Live | A part. | The note devices, the torus, then its effects. |
@@ -1489,8 +1489,8 @@ beside a track's Works in shows its workcell's chain in Device view.
 The Main track sits at the end, where Live keeps it. It carries each row's
 launch button, Stop All, and Back to Arrangement, which lights when what plays
 differs from the ruler. Its own chain holds what works on the whole: the Day
-and Approvals in Central; the experiments, Approvals and the prompt pads in
-Factory.
+and Approvals in Central; the Run map, the experiments, Approvals and the
+prompt pads in Factory.
 
 #### Session view
 
@@ -4705,7 +4705,7 @@ Factory is where you work with AI agents. Each agent session is a track. Its cha
 
 ### 19.1 Factory: tracks and clips
 
-**Product:** Software Factory, with Actuation and Workcell · **Track:** an agent session · **Clip:** a task · **Return tracks:** your workcells · **Main track:** the Experiment, Approvals and the Prompt pads
+**Product:** Software Factory, with Actuation and Workcell · **Track:** an agent session · **Clip:** a task · **Return tracks:** your workcells · **Main track:** Experiment, Approvals, Prompt pads and Run map
 
 You need to set agents to work, watch how each task stands, and step in where you are needed. In Factory each agent session is a track, and its tasks are its clips. Select a task and Clip view shows how it launches, what follows it, the effort the agent gives it, and its log. Device view below shows the session's chain: the agent, its skills and its scope. The workcells stand at the right, where Live keeps its return tracks, each with its gateway, its machine and its landing.
 
@@ -4745,7 +4745,7 @@ An empty square on a track names what a click does: it stops the session after t
 
 #### Clip view
 
-A running task is watched, so Clip view puts how it launches and what follows it beside the log.
+A running task is watched, so Clip view puts how it launches and what follows it beside the log. A third tab, Intent, holds what the task is for and how you will know it did that.
 
 ```ui
 clip: clip:factory
@@ -4773,6 +4773,21 @@ height: 1120
 | Quantize | Global · Now · Next tool · Next turn | Global | When a launch or a steer lands. Global follows the transport's Quantize. |
 
 Next task and Stop are Live's follow actions. Hand off has no counterpart in Live: a Live follow action stays on its own track, and Hand off moves the work to another session's track.
+
+##### The Intent panel
+
+You need to say, before a task starts, what difference it must make and what will show that it did. The Intent panel holds both. Factory keeps them with the task's run; the words stay in the source they come from.
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Intent | Text | Empty | The difference the task must make, in one line. |
+| From | A source (reading) | Read from Factory | Where the intent is written: a plan, a page, a vision. |
+| Success | A list of conditions, each Met · Not met · Open (reading) | None | What shows the task made its difference. After the run returns, each condition carries its answer: met or not met with the evidence that shows it, or open when the run cannot tell. |
+| Add | Text | Empty | A new success condition. Press Enter to add it. |
+| Return | Met · Not met · Open (reading) | Read from the conditions | Across the conditions: not met if one is not met, open if one is open, met when all are met. |
+| Context | What the task may read, and its limits (reading) | Read from AIKit | The sources the task's context draws on, and the constraints it keeps. |
+
+A condition answered met or not met always carries its evidence. Open is an honest answer: the run could not tell, and it says so.
 
 A task has no legato and no launch velocity.
 
@@ -4805,6 +4820,8 @@ In Arrangement view each session is a track along the clock of the run, with a n
 
 On the track, a done task is a solid block. A running task fades out at the right and has no end. A stalled task is striped, and the needle stops where the output stopped. A queued task is dashed and has no length.
 
+The track's head carries one more reading: Structure, whether the run still stands on what its sources declare, the things they name, how those relate and the code bound to them. It reads sound, or says what is stale (a source or a binding has moved), missing (one is gone) or open (a gap the sources name themselves).
+
 Under each track lie its lanes:
 
 | Lane | What it holds |
@@ -4822,15 +4839,17 @@ A retry is a new attempt. It lies as a new take lane under the same track, and t
 
 The takes open full in a pane as the tree of each attempt: its tasks as nested rows, or its attempts along one ruler, or as a grove, one tree for each attempt. A tree grows while its attempt runs, bears fruit when the attempt finishes and comes down grey when it fails. A retry is a new tree, and the earlier tree stays. A gold bar under a tree marks the attempt that stands.
 
+You need to see how the work came to the run in front of you: a first pass, a pass that was dropped, the pass you are on. Journey view sets the runs of that journey one under another, in the order each continued the last, with what the journey is for at the head. Each run shows how it stands, its attempts, and whether you recognised what it returned (§19.25).
+
 | Setting | Values | Default | What it does |
 |---|---|---|---|
 | Work | A piece of work | The selected session's work | The request whose attempts are shown. |
 | Attempt | A list of attempts | The latest | The attempt you read. |
 | Show | All · Running · Stalled · Done | All | Filters the tasks in the tree. |
 | Group by | Attempt · Agent · Day | Attempt | How the attempts are grouped. |
-| View | Tree · Ruler · Grove | Tree | Tree: tasks as nested rows. Ruler: attempts along one ruler. Grove: one tree for each attempt. |
+| View | Tree · Ruler · Grove · Journey | Tree | Tree: tasks as nested rows. Ruler: attempts along one ruler. Grove: one tree for each attempt. Journey: the runs of the journey this work belongs to. |
 | Compare | None, or a second attempt | None | Draws two attempts side by side. |
-| Stands | An attempt | None | The attempt you accept. When you choose it, you review it. |
+| Stands | An attempt | None | The attempt you accept. When you choose it, the Review page opens, and the attempt stands only when you hold Confirm. |
 
 ```ui
 device: software-factory:attempt-review
@@ -4838,6 +4857,26 @@ view: full
 fixture: Grove, one stands
 height: 480
 caption: The takes of one piece of work as a grove: the first attempt failed, the second stands, the third still runs.
+```
+
+You need to know what you accept before it stands. Review, the page behind Stands, sets the attempt's return against what it was for: each success condition with its answer, each claim the attempt makes with the evidence for it, and the questions that wait on you. In the pane the same review stands beside the list.
+
+| Reading | What it shows |
+|---|---|
+| Intent | Across the success conditions: met, not met or open. |
+| Conditions | The conditions met, of all of them. |
+| Claims | The claims that carry evidence, of all the claims. A claim with no evidence draws a dashed box. |
+| Requests | The questions the run waits on you to answer. |
+| Return | The artefacts and the evidence in the attempt's Return. |
+| Receipt | Whether Central has linked a receipt to the Return. A receipt is not your acceptance. |
+
+```ui
+device: software-factory:attempt-review
+view: whole
+page: review
+fixture: Review waiting
+height: 560
+caption: The Review page: attempt 2 waits to stand. Two conditions are met and one is open; one claim has no evidence, and one question waits on you.
 ```
 
 Press Record and what the sessions do lays out on the ruler as clips, with their takes under them.
@@ -4850,7 +4889,7 @@ The browser also holds a category of agent types: the six families, Sense, Coord
 
 #### The Main track
 
-Factory's Main track carries what serves every session: the Experiment, Approvals and the Prompt pads (§19.22). When no session is selected, Device view shows the Main track's chain. The gateways, the frames and the ledger are monitors, on the rail and in panes; Link is the transport's.
+Factory's Main track carries what serves every session: Experiment, Approvals, Prompt pads (§19.22) and Run map (§19.25). When no session is selected, Device view shows the Main track's chain. The gateways, the frames and the ledger are monitors, on the rail and in panes; Link is the transport's.
 
 #### The workcells
 
@@ -4920,6 +4959,8 @@ caption: The Agents tile: each agent a creature, standing at the zone its run ha
 - To find the first failure of a long run, open the takes in a pane, set Show to Stalled and read the top row.
 - To keep a good attempt, set Stands before you launch another.
 - To compare two attempts, set Compare.
+- To see how the work came to this run, set View to Journey.
+- Before you confirm an attempt, read its Review page from the top: the conditions, then the claims without evidence.
 - To find the sessions that need you, set Sessions' Filter to Stalled.
 - To find a lost session, set Sessions' Filter to Running and read the names.
 - To see who is stuck, look for the amber stations in Agents.
@@ -5245,6 +5286,12 @@ thread of their own, nested under it.
 | Proposal card | A change the agent proposes, with Approve, Changes and Diff. |
 | Stall card | A card with an orange border. It names the prompt the agent waits for, with Retry, Hard stop, Steer and Tell parent. |
 | Working line | A pulsing dot with what the agent is doing now. |
+| Thought row | A thought the agent kept for the run: what carries it (a note, an artefact), its words there, who kept it, the units of the run it is about, and where it stands: active, resolved, superseded, integrated or retained. |
+
+Set Messages to Thought and the thread shows what the agent retained for this
+run, under one line naming how it worked: the Method at its revision, the model
+on its harness, the sources it read. The Thought page filters it by unit, by
+agent, by what carries it and by where it stands.
 
 The thread's head shows the chain of parent agents, the model and the turns
 used, and holds Stop and Retry. Retry lights only when the agent has stalled.
@@ -6159,7 +6206,7 @@ You need a record of what the agents did and what came of it. The Ledger lists e
 
 #### What a receipt holds
 
-A receipt holds the number of the task, its name, the agent, the outcome, the revision it started from and who accepted it. It also lists the files that changed. A receipt is made when the task writes. The Ledger does not edit a receipt.
+A receipt holds the number of the task, its name, the agent, the outcome, the revision it started from and who accepted it. It also lists the files that changed, and one line for how the agent worked: the Method it worked under, at its revision; the model and seat it ran in; the sources it read. A receipt is made when the task writes. The Ledger does not edit a receipt.
 
 #### Views
 
@@ -6198,6 +6245,7 @@ Full's head carries the receipts shown, those made today, those waiting, the tur
 #### Tips
 - To prepare the Day's face 2, read today's Ledger first.
 - To audit one agent, set Agent to that agent and Period to All.
+- To find why two runs of one task came out differently, open both receipts and compare their Worked under lines.
 
 ### 19.14 Approvals
 
@@ -6919,74 +6967,139 @@ The widget shows the last turn, the body, and the feeling of the last sentence. 
 
 ### 19.22 Prompt pads
 
-**Product:** Software Factory, with Actuation · **Kind:** instrument · **Chain:** Factory's Main track
+**Product:** Software Factory, with AIKit and Actuation · **Kind:** instrument · **Chain:** Factory's Main track
 
 You ask agents for the same things again and again: run the checks, review a
 branch, write up the week. Prompt pads keeps those asks as pads, the way a
-Drum Rack keeps sounds. Press a pad and its task starts on the session it
-names. Give a pad a time and it starts then, so a routine you once hid in cron
-stands here, where you can see when it runs and how it went.
+Drum Rack keeps sounds. Press Run now and the pad's task starts on the session
+it names. Give a pad a time and it starts then, so a routine you once hid in
+cron stands here, where you can see when it runs and how it went.
 
 #### The pads
 
-Each project has its own bank of sixteen pads. Choose the bank with the
-project chooser on the device's head.
+Each project has its own bank of sixteen pads, pad 1 at the bottom left as in a
+Drum Rack. Choose the bank with the project chooser on the device's head. Press
+a pad to read it: its settings stand beside the pads, and Run now starts it.
 
 | Setting | Values | Default | What it does |
 |---|---|---|---|
 | Name | Text | The prompt's first words | The name on the pad. |
-| Prompt | Text | Empty | What the task asks. |
+| Prompt | Text | Empty | What the task asks. Writing a prompt on an empty pad makes the pad. |
 | Session | A session of the project, or New | New | Where the task starts. New opens a session with the agent below. |
 | Agent | An agent from your roster | The project's agent | Who works the task when the pad opens a session. |
 | Scope | A scope | The session's | What the task may read and write (§19.12). |
-| Works in | A workcell, or the session's | The session's | The workcell the task runs in: its machine, its seat and its landing (§19.23). |
-| Runs at | Off, or a schedule: a time, days of the week, or every so many hours | Off | When the pad starts its task by itself. |
+| Works in | A workcell's seat, or the session's | The session's | The workcell the task runs in: its machine, its seat and its landing (§19.23). |
+| Runs at | Off · Daily · Every | Off | When the pad starts its task by itself. Daily runs at a time on the days you choose; Every runs every so many hours. |
+| At | A time, in steps of 15 minutes | 08:00 | The time a daily pad runs. |
+| Days | Every day · Weekdays · Weekends | Every day | The days a daily pad runs. |
+| Every | 1–168 hours | 6 h | The hours between the runs of a pad set to Every. |
 | Choke | Off, or a group from 1 to 8 | Off | Pads in one group never run at once: a pad waits while another in its group runs. Use it for tasks that cannot share a seat. |
 
-Each pad shows when it last ran and how that run ended: done, stalled,
-stopped or refused. Click the result to select that task's clip.
+Central checks a schedule before Factory keeps it. A schedule Central refuses
+stays as it was, and the status bar gives Central's reason.
+
+Each pad shows how its last run ended in its corner: green for done, orange for
+stalled, grey for stopped, a hollow ring for refused. A pad lights while its
+task runs. A pad that runs by itself shows ↻ and its next time; a pad in a
+choke group shows c and its group.
+
+#### Running alone
+
+A pad with a schedule runs while nobody watches. Before it may, its Method is
+proved, and you grant the routine that carries it the right to run unattended.
+Alone, beside the pad's settings, reads both.
+
+| Reading | Values | What it shows |
+|---|---|---|
+| Routine | Draft · Enabled · Disabled · Proof stale | The routine that runs the pad by itself. Proof stale means the Method changed since it was proved, and the pad waits until it is proved again. |
+| Unattended | Granted · Not granted | Whether you let the routine run with nobody there. |
+| Next | A time | When the pad next runs by itself. |
 
 #### Views
 
+```ui
+device: software-factory:prompt-pads
+caption: Prompt pads, on a morning's bank: pad 1 runs the checks on weekdays at 08:00, pad 5 runs now, and pad 9's routine needs its Method proved again.
+```
+
 ##### Folded
 
-The folded pads show the project and how many pads have a schedule.
+The folded pads show the project and how many pads run by themselves.
 
 ##### Compact
 
-The compact pads show the sixteen pads of the chosen project. A pad lights
-while its task runs, and its corner shows how its last run ended.
+The compact pads show the sixteen pads of the chosen project, with the pad you
+read ringed in blue. It has four macros.
+
+| Macro | What it does |
+|---|---|
+| Run now | Starts the pad you read. |
+| Choke | Sets its choke group. |
+| Runs at | Sets Off, Daily or Every. |
+| At | Sets the time a daily pad runs. |
 
 ##### Whole
 
-The whole pads show the sixteen pads beside the selected pad's settings.
+The whole pads show the sixteen pads beside the pad you read, in five groups.
+
+| Group | Settings |
+|---|---|
+| Pad | Name, Prompt, Session |
+| Works | Agent, Scope, Works in |
+| Runs at | Runs at, At, Every, Days |
+| Alone | Routine, Unattended, Next |
+| Play | Run now, Choke, the last run, Clear |
 
 ##### Full
 
-The full pads list every pad of the project with its prompt, its schedule, its
-next run, its last run and how it ended.
+The full pads list every pad of the project with its prompt, the session it
+starts on, its schedule, its next run, and its last run and how it ended. Press
+a line to read that pad.
 
 ##### Widget
 
-The widget lists the pads that have a schedule, in the order they next run.
+The widget lists the pads that run by themselves, in the order they next run,
+beside the count of timed pads and of pads running now.
+
+#### Transport
+
+| Control | Effect on Prompt pads |
+|---|---|
+| Arm | A pad's task writes directly, with receipts, where Scope allows; with Arm off it proposes. |
+| Follow | Keeps the widget on the next pad to run. |
+
+#### To use Prompt pads
+
+1. Select Factory's Main track and open Device view.
+2. Choose the project on the device's head.
+3. Press an empty pad and write its prompt.
+4. Choose the session, the agent and where it works.
+5. Press Run now to try it.
+6. To run it by itself, set Runs at, then the time and the days.
 
 #### Rules
 
 - A pad starts a task as any launch does: through the gateway, under Scope and
   Arm.
+- Factory keeps the bank and the record of every run, and never runs a pad by
+  itself. A pad that runs by itself runs through its routine.
+- Only you write a pad. An agent cannot change one.
 - A pad that runs by itself shows its next time and keeps a record of every
   run. Nothing runs where you cannot see it.
 - Pads in one choke group never run at once.
 - Editing a pad changes its next run. A run already made keeps the prompt it
   ran with.
+- Clearing a pad keeps its record of runs.
 
 #### Tips
 
-- To run the checks every morning, give a pad the prompt and set Runs at to
-  08:00.
+- To run the checks every morning, give a pad the prompt, set Runs at to Daily
+  and At to 08:00.
 - To keep two builds off one seat, put their pads in one choke group.
 - To hand a pad's routine to another agent, change its Agent. The schedule
   stays.
+- When a pad's corner turns orange, press the pad and read its last run: the
+  stall names what it waits for.
 
 ### 19.23 Workcell
 
@@ -7211,6 +7324,141 @@ settings, + Agent, + Group and the Agency gateway's mark across its head
 - To find who needs you, leave Order on Needs you and read the top of the list.
 - To start a piece of work by talking, write to the agent, then drag its face onto an empty track.
 - To bring two agents into one conversation, make a group of them.
+
+### 19.25 Run map
+
+**Product:** Software Factory · **Kind:** instrument · **Chain:** Factory's Main track
+
+You need to see a piece of work whole: which parts are done, which wait on
+others, where it waits on you, and whether it has given you what you asked for.
+A run is that piece of work in Factory, and Run map draws it as a map. Each
+part of the run, a unit, stands as a block; a line runs from each unit to the
+units that wait on it. A barrier is a bar that gathers several units, and the
+work after it starts only when all of them have returned. A diamond is a
+decision that waits for you. At the right end stand what the run returns and
+what it is for.
+
+#### Commission, Journey and Recognition
+
+A run answers to a Commission, belongs to a Journey, and closes on your Recognition.
+
+| Word | What it is | What you do with it |
+|---|---|---|
+| Commission | The request that starts the work: what it is for, and who works on it. | You give it once. Factory keeps it, and every run of the work answers to it. |
+| Journey | The work as it goes on across runs. A run that needs another pass is continued by a new run in the same journey, and the earlier run stays on the record. | You read where the work has been. To try again from where a run left off, press Continue. |
+| Recognition | Your word that what a run returned is what the commission asked for. | You give it after you have read the return. A run closes only after it. |
+
+Recognition is yours. No agent gives it, and no setting gives it for you.
+
+#### The map
+
+| Mark | Means |
+|---|---|
+| Block | A unit. Dashed: planned. Outlined in teal: ready to start. Filled teal and ringed: at work. Striped orange: blocked. Filled green: returned or met. Dim: replaced or dropped. |
+| Bar | A barrier. The number beside it is the units it still waits for. |
+| Diamond | A decision. Amber while it waits for you. |
+| Ring | The candidate: what the run returns. |
+| Flag | Where the run is going: its destination. |
+| Bar at the right edge | The run's own state: grey at work, amber finishing, green finished. A gold diamond above it marks your Recognition. |
+
+A line between two units is green once the earlier one has returned.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Unit | A node of the map | None | The node you read: a unit, a barrier, a decision or the candidate. |
+| Show | All · Open · Done | All | Which nodes stand out: all of them, those still to do, or those done. |
+| Lifecycle | Seeded · At work · Waits for you · Suspended · Finishing · Finished · Aborted (reading) | Read from Factory | Where the run stands. |
+| Returned | Units returned, of all units (reading) | Read from Factory | How far the run has come. |
+| Waiting | A count (reading) | Read from Factory | Nodes blocked or waiting for your decision. |
+| Retries | Spent of allowed (reading) | Read from Factory | The attempts the unit you read has spent of those its retry grant allows. |
+| Recognised | A time, or Not yet (reading) | Read from Factory | When you recognised the run's return. |
+| Journey | Active · Paused · Completed · Abandoned (reading) | Read from Factory | How the journey stands, and which of its runs this one is. |
+
+#### Views
+
+```ui
+device: software-factory:run-map
+caption: Run map, on a run at work: three units returned or at work, the app's type-check blocked behind a decision that waits for you, and the report waiting on the barrier.
+```
+
+##### Folded
+
+The folded map shows where the run stands and how many units have returned.
+
+##### Compact
+
+The compact map shows the run as its map, with the node you read ringed and
+handle 1 on it. It has four macros.
+
+| Macro | What it does |
+|---|---|
+| Unit | Chooses the node you read. |
+| Show | Brings out all nodes, those still to do, or those done. |
+| Recognise | Gives your Recognition of the run's return. |
+| Close | Closes the run after your Recognition. Hold it. |
+
+##### Whole
+
+The whole map shows every parameter in five groups.
+
+| Group | Parameters |
+|---|---|
+| Unit | Unit, its state, Retries, Retry |
+| Run | Lifecycle, Returned, Waiting, Show |
+| Recognition | Recognise, the return, Recognised |
+| Close | Close, and what a close does now: finish the run, or start the next unit |
+| Journey | The run's place in the journey, the journey's state, Continue |
+
+##### Full
+
+The full map fills the pane with the map, each node named. Beside it stands
+the node you read: what it is for, how it stands, what it waits on, what it
+opens, its last attempt, its retries and who holds it. Under that stands the
+run's return and your Recognition. Along the foot runs the journey: its runs in
+the order each continued the last, this one marked, each recognised run with
+its mark. The head names the run, how it stands, what has returned, whether you
+recognised it, what the commission asked for, and the run's place in the
+journey.
+
+##### Widget
+
+The widget shows the small map, where the run stands, the units returned and
+the nodes that wait.
+
+#### Transport
+
+| Control | Effect on Run map |
+|---|---|
+| Stop | Stops the units at work at their next safe point. Press twice to cancel. |
+| Tap | Asks every unit at work for a status line. |
+
+#### To use Run map
+
+1. Select Factory's Main track and open Device view. Run map shows the run of the selected work.
+2. Read the map from left to right. A striped block is blocked; an amber diamond waits for you.
+3. Press a node to read it. In the pane, its waits and its holder stand beside the map.
+4. Answer a waiting decision in Approvals (§19.14). The blocked unit goes on.
+5. When the run has returned, read its return and press Recognise.
+6. Hold Close. Factory finishes the run, or starts the next unit if one remains.
+7. If the return falls short, press Continue for a new run in the same journey.
+
+#### Rules
+
+- The map draws what Factory reports. It never draws a unit, a line or a state of its own.
+- A unit stands right of everything it waits on.
+- A run closes only after your Recognition. Factory moves it to finished in its own order, and refuses in its own words when it cannot: while a unit is missing, failed or waiting on you.
+- Recognition is yours alone.
+- Continue starts a new run in the same journey. The earlier run stays on the record.
+- Retry starts a failed or quiet unit again only within its retry grant.
+
+#### Tips
+
+- To find what holds the run up, set Show to Open and look for stripes and amber diamonds.
+- To see why a run exists, open the pane and read the head: what the commission asked for.
+- To see how the work came this far, read the journey along the foot of the pane.
+- Before you recognise a run, open its attempt's Review page (§19.1).
 
 ## 20. Expressions
 

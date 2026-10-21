@@ -19,6 +19,11 @@
 // - Readings: `needle` (seconds since the last check-in), `now` (minutes since midnight), `window` (minutes the ruler shows),
 //   `color` (the session's colour), `light`. Settings: `watch`, `telemetry`, `solo`, `lanes`, `overview`. `open` is the event you
 //   pressed, to open it in its widget.
+// - `structure`: whether the run still stands on the structure its sources declare, {passed, issues: [{kind, subject}], gaps}
+//   (factory/src/structural_ground.rs:187 StructuralFidelityEvidence passed, issues, unresolvedSourceGaps; issue kind
+//   missing_source_revision | stale_binding, drawn stale, or missing_identity | missing_binding | missing_constitutive_relation, drawn
+//   missing). It stands as one line in the head of Full and one reading in Whole. No CLI route and no kernel op carries it yet, so it
+//   arrives absent and draws "—".
 import {type CSSProperties, type KeyboardEvent, type ReactNode} from 'react'
 import {Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -133,6 +138,18 @@ function read(v: V): Reading {
   return {win: numOf(v, 'window'), now: numOf(v, 'now'), needle, stalled: needle === undefined ? undefined : needle > HORIZON, takes, take, blocks: earlier ?? own, events: eventsOf(v),
     lanes: lanes === 'all' ? LANES : LANES.filter(l => l.id === lanes)}
 }
+
+/** The structure the run stands on, as one short reading: sound, or what is stale, missing or still open in its sources. */
+const STALE_KINDS = ['missing_source_revision', 'stale_binding'], MISSING_KINDS = ['missing_identity', 'missing_binding', 'missing_constitutive_relation']
+function structureOf(v: V): {readonly word: string; readonly sound: boolean} | undefined {
+  const o = json<unknown>(v, 'structure', undefined)
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return undefined
+  const r = o as Record<string, unknown>, issues = objects(r.issues), gaps = amount(r.gaps) ?? 0
+  const stale = issues.filter(i => STALE_KINDS.includes(String(i.kind))).length, missing = issues.filter(i => MISSING_KINDS.includes(String(i.kind))).length
+  const parts = [stale ? `${stale} stale` : '', missing ? `${missing} missing` : '', gaps ? `${gaps} open` : ''].filter(Boolean)
+  return parts.length ? {word: parts.join(' · '), sound: false} : r.passed === true ? {word: 'sound', sound: true} : undefined
+}
+const STRUCTURE_DOES = 'Whether the run still stands on the structure its sources declare: the identities, their relations and the code bound to them. Stale is a source or binding that moved; missing is one that is gone; open is a gap the sources name.'
 
 const needleClock = (r: Reading): string | undefined => (r.now !== undefined && r.needle !== undefined ? hhmm(r.now - r.needle / 60) : undefined)
 const needleWord = (r: Reading): string | undefined => (r.stalled === undefined ? undefined : r.stalled ? 'stalled' : 'live')
@@ -353,6 +370,7 @@ function RunThread({p}: {p: ViewProps}) {
       <span>{doing ? doing.name : NONE}</span>
       <span>{tasks ? `${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}` : NONE}</span>
       {r.take && <span>take #{r.take.n}</span>}
+      <span data-state={structureOf(v) === undefined ? undefined : structureOf(v)!.sound ? 'live' : 'stalled'} data-i={`Structure|${STRUCTURE_DOES}`}>structure {structureOf(v)?.word ?? NONE}</span>
     </header>
     <ol className="rn-thread" aria-label="Thread">
       {rows === undefined && <li data-kind="text"><span>No reading of the thread.</span></li>}
@@ -445,6 +463,7 @@ export const design: DesignedDevice = {
     light: 'lit', session: 'lead', color: '#5cc6b4', sessions: SESSIONS, window: 60, now: 874.5, needle: 20,
     watch: 'in', telemetry: true, solo: false, lanes: 'all', overview: true, take: '3',
     tasks: JSON.stringify(LEAD_TASKS), attempts: ATTEMPTS, events: JSON.stringify(LEAD_EVENTS), thread: JSON.stringify(LEAD_THREAD),
+    structure: JSON.stringify({passed: true, issues: [], gaps: 0}),
   },
   fixtures: {
     'The lead session': {},
@@ -455,8 +474,9 @@ export const design: DesignedDevice = {
         tasks: [{id: '1.1', title: 'generate fixtures', state: 'stalled', t0: 0, seen: 2.8}]}]),
       events: JSON.stringify([{id: 't1', lane: 'terminal', ago: 2.4, text: 'gen-fixtures · waiting'}]),
       thread: JSON.stringify(FIXTURE_THREAD),
+      structure: JSON.stringify({passed: false, issues: [{kind: 'stale_binding', subject: 'fixtures/handoff.json'}, {kind: 'missing_identity', subject: 'widget:bridge-3'}], gaps: 1}),
     },
-    'No readings': Object.fromEntries(['light', 'session', 'color', 'sessions', 'window', 'now', 'needle', 'watch', 'telemetry', 'solo', 'lanes', 'overview', 'take', 'tasks', 'attempts', 'events', 'thread', 'open'].map(k => [k, undefined])),
+    'No readings': Object.fromEntries(['light', 'session', 'color', 'sessions', 'window', 'now', 'needle', 'watch', 'telemetry', 'solo', 'lanes', 'overview', 'take', 'tasks', 'attempts', 'events', 'thread', 'open', 'structure'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="Run" light={light(p)} readings={[sessionLabel(sessionNow(p.v)) ?? NONE, needleClock(read(p.v)) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -494,6 +514,7 @@ export const design: DesignedDevice = {
         <Section label="Lanes" cols={1}>
           {lanesChooser(p)}
           {overviewToggle(p)}
+          <Readout label="structure" does={STRUCTURE_DOES} value={structureOf(p.v)?.word} tone={structureOf(p.v)?.sound === false ? 'stall' : undefined} />
         </Section>
       </Band>
       <Band>

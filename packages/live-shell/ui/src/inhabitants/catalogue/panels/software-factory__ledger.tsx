@@ -21,6 +21,12 @@
 //   tokensIn, tokensOut, spend (USD), and receipts, JSON: rows of {n, name, agent, outcome, run, day, time, by, files}. A file is
 //   {path, kind, from, to}. A reading the owner does not have is left out of the row. A key it has not reported arrives absent, and
 //   the views draw "—" and name the missing reading.
+// - A receipt's `cond` is the condition the agent worked under, as Factory retains it with the run: {method, revision, body, context}.
+//   method and revision are the Method-classified Skill the work ran under; body is the body conditions that carried it, each a short
+//   name; context is the context it resolved in (factory/src/journey_praxis.rs:55 JourneyPraxisReturn method_ref, method_revision,
+//   body_condition_refs, context_resolution_ref; the run's PraxisCondition, project_development.rs:118, adds model_ref and harness_ref).
+//   `factory development field operative` records the operative refs (development_field.rs:99 praxisConditionRef); no CLI route and no
+//   kernel op reads the condition back, so it arrives absent and the receipt's line draws "—".
 import {Action, Chooser, Radio, Readout, Rows, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
 import {NONE, json, numOf, railAndPane, st, strOf, type ViewProps} from './design'
 import {MonitorHead, MonitorPane} from './monitor'
@@ -74,6 +80,8 @@ const finite = (x: unknown): number | undefined => (typeof x === 'number' && Num
 const objects = (raw: unknown): Record<string, unknown>[] => (Array.isArray(raw) ? raw.filter((x): x is Record<string, unknown> => !!x && typeof x === 'object') : [])
 
 interface File {readonly path: string; readonly kind?: Kind; readonly from?: string; readonly to?: string}
+/** The condition the agent worked under: the Method and its revision, the body conditions, the context it resolved in. */
+interface Cond {readonly method?: string; readonly revision?: string; readonly body?: readonly string[]; readonly context?: string}
 interface Receipt {
   readonly n: number
   readonly name?: string
@@ -86,6 +94,8 @@ interface Receipt {
   readonly by?: string
   /** The files the task changed; undefined when the owner does not say. */
   readonly files?: readonly File[]
+  /** How the agent worked: undefined when the owner does not say. */
+  readonly cond?: Cond
 }
 
 /** The receipts the owner reports; undefined when it reports none (not the same as an empty list). */
@@ -97,7 +107,9 @@ function receiptsOf(v: V): Receipt[] | undefined {
     const n = finite(o.n)
     if (n === undefined) continue
     const files = Array.isArray(o.files) ? objects(o.files).flatMap((f): File[] => { const path = word(f.path); return path ? [{path, kind: KINDS.find(k => k === f.kind), from: word(f.from), to: word(f.to)}] : [] }) : undefined
-    list.push({n, name: word(o.name), agent: word(o.agent), outcome: OUTCOMES.find(x => x === o.outcome), run: word(o.run), day: word(o.day), time: word(o.time), by: word(o.by), files})
+    const c = o.cond && typeof o.cond === 'object' && !Array.isArray(o.cond) ? o.cond as Record<string, unknown> : undefined
+    const cond = c ? {method: word(c.method), revision: word(c.revision), body: Array.isArray(c.body) ? c.body.filter((b): b is string => typeof b === 'string' && b.length > 0) : undefined, context: word(c.context)} : undefined
+    list.push({n, name: word(o.name), agent: word(o.agent), outcome: OUTCOMES.find(x => x === o.outcome), run: word(o.run), day: word(o.day), time: word(o.time), by: word(o.by), files, cond})
   }
   return list
 }
@@ -155,6 +167,13 @@ const agentChooser = (p: ViewProps) => <Chooser {...st(p, 'agent')} label="Agent
 // ---------------------------------------------------------------- readings of the receipt you read
 
 const outcomeWord = (r?: Receipt) => (r?.outcome ? WORD[r.outcome] : undefined)
+/** The condition as one line: the Method at its revision, the body, the context. Undefined when the owner reports none of it. */
+const condLine = (c?: Cond): string | undefined => {
+  if (!c) return undefined
+  const parts = [c.method ? `${c.method}${c.revision ? ` r${c.revision}` : ''}` : undefined, c.body?.length ? c.body.join(', ') : undefined, c.context].filter(Boolean)
+  return parts.length ? parts.join(' · ') : undefined
+}
+const COND_DOES = 'The Method the agent worked under, at its revision; the body it worked in; the context it resolved in. Factory keeps it with the run.'
 
 function Receipts({p, size, label}: {p: ViewProps; size: number; label?: string}) {
   const s = shownOf(p.v)
@@ -218,6 +237,7 @@ function Pane({p}: {p: ViewProps}) {
             <dt>Accepted by</dt><dd>{r.by ?? NONE}</dd>
             <dt>When</dt><dd>{r.day && r.time ? `${r.day} ${r.time}` : NONE}</dd>
             <dt>Run</dt><dd>{r.run ?? NONE}</dd>
+            <dt>Worked under</dt><dd className="sfl-cond" data-i={`Worked under|${COND_DOES}`}>{condLine(r.cond) ?? NONE}</dd>
           </dl>
           {r.outcome && <p className="sfl-says">{SAYS_OUTCOME[r.outcome]}</p>}
           <h4>Files changed{r.files ? ` · ${r.files.length}` : ''}</h4>
@@ -237,10 +257,13 @@ function Pane({p}: {p: ViewProps}) {
 
 const SAMPLE_RECEIPTS = [
   {n: 214, name: 'drop old captures', agent: 'Kite', outcome: 'waiting', run: 'run:2', day: '2026-10-16', time: '10:48',
+    cond: {method: 'capture-pass', revision: '3', body: ['Haiku 4.5', 'env-2'], context: '9 sources'},
     files: [{path: 'Work/O-I/docs/dlw/DLW.md', kind: 'modified', from: 'b3:51d0aa', to: 'b3:7c2e19'}]},
   {n: 213, name: 'map field → plan', agent: 'Flint', outcome: 'approved', by: 'You', run: 'run:2', day: '2026-10-16', time: '10:05',
+    cond: {method: 'port-plan', revision: '7', body: ['Sonnet 4.6', 'env-1'], context: '14 sources'},
     files: [{path: 'packages/live-shell/ui/src/inhabitants/agentParamAddresses.ts', kind: 'modified', from: 'b3:2a90e4', to: 'b3:d18b36'}, {path: 'portPlan.ts', kind: 'added', to: 'b3:9f2c41'}]},
   {n: 212, name: 're-plan port', agent: 'Flint', outcome: 'landed', run: 'run:2', day: '2026-10-16', time: '09:12',
+    cond: {method: 'port-plan', revision: '7', body: ['Sonnet 4.6', 'env-1'], context: '11 sources'},
     files: [{path: 'portPlan.ts', kind: 'modified', from: 'b3:9f2c41', to: 'b3:41ae07'}]},
   {n: 211, name: 'survey the widget tree', agent: 'Cairn', outcome: 'refused', run: 'run:2', day: '2026-10-16', time: '08:30',
     files: [{path: 'Control/user/flows/flow-2026-10-03-1432.md', kind: 'modified', from: 'b3:6e07f3', to: 'b3:c4a5d2'}]},
