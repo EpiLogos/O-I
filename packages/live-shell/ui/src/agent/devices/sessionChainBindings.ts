@@ -18,6 +18,7 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AgentSessionTrack, TaskClip} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
+import {rackStateOf, runStateOfSession} from './runFaces'
 import {familyFaceDevice} from './mainTrackBindings'
 import {sessionRowsOf} from './threadBinding'
 
@@ -204,24 +205,24 @@ export interface AgentsetInput {
   readonly tracks: readonly AgentSessionTrack[] | null
   /** The models AIKit's catalogue names (kernel model_catalogue), for the Subagent model chooser. */
   readonly models?: readonly string[] | null
+  /** The instant the tracks were read at (AgentSessionsProvider nowUnixMs): a member's needle is aged against it. */
+  readonly nowUnixMs?: number
   readonly holds: ChainHolds
 }
 
-/** A member's state from its own task clips, as the run model holds them: a running task is Working, a stalled one Stalled, every
- * task done is Done. Anything else is not said (idle and failed have no reading here). */
-function memberState(track: AgentSessionTrack): 'working' | 'stalled' | 'done' | undefined {
-  const tasks = track.tasks.filter(task => !task.softStop)
-  if (tasks.some(task => task.state === 'running')) return 'working'
-  if (tasks.some(task => task.state === 'stalled')) return 'stalled'
-  return tasks.length && tasks.every(task => task.state === 'done') ? 'done' : undefined
+/** A member's state (lane W5): the run state of its session (runFaces.ts runStateOfSession: its task's state, its needle against the 90 s
+ * horizon) as the rack names it — Working, Idle (queued), Stalled, Done or Failed (runFaces.ts rackStateOf). A member's thread is not read
+ * here, so a running member is Working and no failure is read; a state nobody said is left out. */
+function memberState(track: AgentSessionTrack, nowUnixMs: number): ReturnType<typeof rackStateOf> {
+  return rackStateOf(runStateOfSession(track, null, nowUnixMs))
 }
 
 /** The group's members as the rack reads them (software-factory__agentset-rack.tsx:8-13): each session of the SessionSpace, named by
  * its agent (else its purpose), its goal the session's purpose, its state from its tasks. agency_read discloses no spawn parent below
  * the space (agentRunModel.ts GROUP_DISCLOSURE), so every member stands at the top; no model, tool count or files are reported. */
-export function agentsetMembers(group: AgentSessionTrack, tracks: readonly AgentSessionTrack[]): Record<string, Value>[] {
+export function agentsetMembers(group: AgentSessionTrack, tracks: readonly AgentSessionTrack[], nowUnixMs = 0): Record<string, Value>[] {
   return tracks.filter(track => !track.group && track.parentRef === group.sessionRef).map(track => {
-    const state = memberState(track)
+    const state = memberState(track, nowUnixMs)
     return {id: track.sessionRef, name: track.agentName ?? track.purpose ?? track.sessionRef,
       ...(track.purpose ? {goal: track.purpose} : {}), ...(state ? {state} : {})}
   })
@@ -235,7 +236,7 @@ export function agentsetValues(input: AgentsetInput): Values {
   if (!group || !group.group) return values
   put(values, 'crew', group.spaceLabel ?? group.purpose)
   if (input.tracks) {
-    const members = agentsetMembers(group, input.tracks)
+    const members = agentsetMembers(group, input.tracks, input.nowUnixMs ?? 0)
     values.members = JSON.stringify(members)
     values.light = members.some(member => member.state === 'working') ? 'lit' : 'dark'
   }
