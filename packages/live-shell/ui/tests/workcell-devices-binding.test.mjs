@@ -113,7 +113,7 @@ test('the Seat on the instrument\'s own reading: its rows and disk; a free seat\
   assert.equal(cell.seatReading({schema: 'something else'}), null)
 })
 
-test('the Seat without the instrument\'s reading (the shell: no kernel op runs `seat status`): only the hand\'s settings, and why; Join and Release refused', async () => {
+test('the Seat without the instrument\'s reading: only the hand\'s settings, and why; with no carrier Join and Release say so', async () => {
   bind.resetHolds()
   const binding = cell.seatBinding({status: null, project: 'O-I', branch: 'dlw/build', holds: bind.chainHolds()})
   assert.deepEqual(binding.values, {joinAs: 'attach'})
@@ -122,9 +122,10 @@ test('the Seat without the instrument\'s reading (the shell: no kernel op runs `
   // R4 (lane K1's seat_status_read): a refusal is the owner's words on the Seat's choosers.
   assert.equal(cell.seatBinding({status: null, unread: 'seat status: the register is locked', project: 'O-I', branch: null, holds: bind.chainHolds()}).standing.product.disabled,
     'seat status: the register is locked')
+  // REPLACED (lane W3): Join and Release write through the kernel's seat_write (w3-factory-bindings.test.mjs); with no carrier they say so.
   for (const key of ['join', 'release']) {
-    assert.match(binding.standing[key].disabled, /missing op: seat (join|release) through the kernel/)
-    await assert.rejects(() => binding.write([{key, value: true}]), /missing op/)
+    assert.equal(binding.standing[key].disabled, cell.SEAT_REFUSE[key])
+    await assert.rejects(() => binding.write([{key, value: true}]), /kernel carrier is unavailable/)
   }
   binding.local.lane('agent/o-i-try')
   binding.local.joinAs('new-lane')

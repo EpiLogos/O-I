@@ -9,11 +9,15 @@
 //   - `gateway_remotes_read` → aikit.gateway-remotes/v1, AIKit's declared gateway endpoints of the other Workcells. It feeds the Link's
 //     endpoints and whether the link is joined (workcellBindings.ts linkBinding).
 // A refusal is the owner's words, carried as the reading's error.
-import {scopesOf} from '../../owners/ownerCall'
+import {useMemo} from 'react'
+import {scopesOf, useHeldRead} from '../../owners/ownerCall'
 import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import type {GatewayRemotesReading, KernelTransportStatus, SeatStatusReading, SourceReturnsReading} from '../../../../../../desktop/cradle/src/kernel/types'
-import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReadings, type OwnerReadingEntry} from '../../owners/ownerReading'
+import type {GatewayRemotesReading, KernelOp, KernelTransportStatus, SeatStatusReading, SourceReturnsReading} from '../../../../../../desktop/cradle/src/kernel/types'
+import {ownerReadings, scoped, useOwnerReading, type OwnerRead, type OwnerReadings, type OwnerReadingEntry} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
+import {ROUTE_WORDS, aikitReadOp, routeAnswerOf, workcellReadOp} from './ownerRoutes'
+import type {ConnectionShows, WorkcellAnswer} from './workcellBindings'
+import type {JournalAsk} from './mainTrackBindings'
 
 const unavailable = (transport: KernelTransportStatus): string | null => (transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null)
 
@@ -81,4 +85,60 @@ export function useSourceReturnsAnswer(transport: KernelTransportStatus, project
 export function useGatewayRemotesAnswer(transport: KernelTransportStatus) {
   const epoch = useSpineEpoch()
   return useOwnerReading(gatewayRemotesKey(transport), readGatewayRemotesOf(transport), epoch)
+}
+
+// Lane W3's reads the Remote carrier and the Frames monitor take, each through the kernel's route to the owner's own command
+// (desktop/cradle/kernel/src/owner_routes.rs; ownerRoutes.ts), held for the window as one read of several (owners/ownerCall.ts useHeldRead),
+// read again on the spine's epoch and after any write:
+//   - `workcell connections show <label> --json` for each connection `workcell status` lists (workcell_read {connections-show}): the
+//     Remote carrier's grant, credential reference, remote software and since (workcellBindings.ts connectionFields);
+//   - `aikit gateway ecology --json` (aikit_read {gateway-ecology}): the sessions the gateway serves, each with its harness and Streams;
+//   - `aikit gateway replay --stream S [--after N] --json` (aikit_read {gateway-replay}): one Stream's frames from the gateway's journal.
+// A refusal is the owner's words (ownerRoutes.ts refusalWords).
+
+/** One owner route's read through the kernel's held reads: the reading, or the owner's words thrown. */
+async function routeRead(transport: KernelTransportStatus, op: KernelOp, asked: string): Promise<{data: unknown; read_scopes?: readonly string[]}> {
+  const down = unavailable(transport)
+  if (down) throw new Error(down)
+  const call = await kernelRead(transport, op)
+  const answer = routeAnswerOf(call, asked)
+  return {data: answer.data, ...scopesOf(call.outcome)}
+}
+
+/** Each listed connection's record (`workcell connections show`), by label: its answer or Workcell's refusal. None asked for no label. */
+export function useConnectionShows(transport: KernelTransportStatus, labels: readonly string[]): ConnectionShows {
+  // A plain record, not a Map: the window keeps answers across a relaunch as JSON (owners/keptReadings.ts).
+  const reading = useHeldRead<Record<string, {value?: unknown; error?: string}>>(labels.length ? ['connections-show', transport, [...labels].sort()] : null, async () => {
+    const shown = await Promise.all(labels.map(async label => {
+      try { return [label, {value: (await routeRead(transport, workcellReadOp({kind: 'connections-show', label}), ROUTE_WORDS.connectionsShow)).data}] as const }
+      catch (cause) { return [label, {error: cause instanceof Error ? cause.message : String(cause)}] as const }
+    }))
+    return Object.fromEntries(shown)
+  })
+  return useMemo(() => new Map(reading.status === 'answered' && reading.value ? Object.entries(reading.value) : []), [reading])
+}
+
+/** An owner route's held reading as the bindings take it (workcellBindings.ts WorkcellAnswer): AIKit's gateway ecology. */
+export function useGatewayEcology(transport: KernelTransportStatus, enabled: boolean): WorkcellAnswer {
+  const reading = useHeldRead<unknown>(enabled ? ['gateway-ecology', transport] : null, async () => {
+    const read = await routeRead(transport, aikitReadOp({kind: 'gateway-ecology'}), ROUTE_WORDS.ecology)
+    return scoped(read.data, read.read_scopes)
+  })
+  return useMemo((): WorkcellAnswer => ({status: reading.status, value: reading.value, error: reading.error}), [reading])
+}
+
+/** The frames of each Stream asked, from AIKit's gateway journal (`aikit gateway replay --stream S --after N --limit L`), by Stream ref: its
+ * answer or AIKit's refusal in its words (the installed AIKit may not carry `gateway replay` yet: its refusal is the reason drawn). Nothing
+ * is asked for no Stream. A plain record, kept as JSON across a relaunch (owners/keptReadings.ts). */
+export function useGatewayReplays(transport: KernelTransportStatus, asks: readonly JournalAsk[]): ReadonlyMap<string, {value?: unknown; error?: string}> | undefined {
+  const reading = useHeldRead<Record<string, {value?: unknown; error?: string}>>(asks.length ? ['gateway-replay', transport, asks.map(ask => [ask.stream, ask.after, ask.limit])] : null, async () => {
+    const replayed = await Promise.all(asks.map(async ask => {
+      try {
+        const read = await routeRead(transport, aikitReadOp({kind: 'gateway-replay', stream: ask.stream, ...(ask.after > 0 ? {after: ask.after} : {}), limit: ask.limit}), ROUTE_WORDS.replay)
+        return [ask.stream, {value: read.data}] as const
+      } catch (cause) { return [ask.stream, {error: cause instanceof Error ? cause.message : String(cause)}] as const }
+    }))
+    return Object.fromEntries(replayed)
+  })
+  return useMemo(() => (reading.status === 'answered' && reading.value ? new Map(Object.entries(reading.value)) : undefined), [reading])
 }

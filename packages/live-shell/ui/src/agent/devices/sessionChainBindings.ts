@@ -136,11 +136,25 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 
 // ---------------------------------------------------------------------------------------------------------------- Custody
 
+// Factory's custody writes reach the kernel since lane W3 (factory_owner {custody-assign, custody-update}: `factory development custody
+// assign <state> --position P --work W --reason R [--run, --workflow-unit, --journey, --origin-communique, --state in-progress|blocked,
+// --custody]` and `… update <state> --custody C --state in-progress|blocked|released|completed|handed-off --reason R [--reopen,
+// --to-position P, --expected-revision N]`, both answering factory.work-custody-receipt/v1). They carry a Position's custody of a piece of
+// work, its state and a hand-off Position: none of Custody's settings. So each stays disabled, naming exactly what the command lacks.
+/** What Factory's custody commands carry, for a refusal that names what they do not. */
+const CUSTODY_CARRIES = 'Factory\'s custody assign and update (factory_owner) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to'
 export const CUSTODY_REFUSE = {
-  autonomy: missing('Autonomy', 'a write of the session\'s custody (encounter_task_read reads it; agentParamAddresses.ts autonomy has no write path)', 'Software Factory'),
-  gate: missing('Review gate', 'a review gate in the session\'s custody record', 'Software Factory'),
-  escalate: missing('Escalate to', 'an escalation contact in the session\'s custody record', 'Software Factory'),
-  handBack: missing('Hand back', 'Factory\'s custody release through the kernel (the custody hold, software-factory.custody.hold, has no kernel op)', 'Software Factory'),
+  autonomy: missing('Autonomy', `a write of the session's autonomy (${CUSTODY_CARRIES}, and no autonomy; encounter_task_read reads it; agentParamAddresses.ts autonomy has no write path)`, 'Software Factory'),
+  gate: missing('Review gate', `a review gate in Factory's custody record (${CUSTODY_CARRIES}, and no gate)`, 'Software Factory'),
+  escalate: missing('Escalate to', `an escalation contact in Factory's custody record (${CUSTODY_CARRIES}: a hand-off moves the work to that Position, which names no one to ask)`, 'Software Factory'),
+  handBack: missing('Hand back', `a custody state for giving back what you edited (${CUSTODY_CARRIES}; giving control back is none of these states), and the custody refs of what the session holds (\`factory development custody list\` has no kernel route)`, 'Software Factory'),
+} as const
+/** Custody's readings no owner reports here, each with what it waits for. */
+const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
+export const CUSTODY_ABSENT = {
+  held: unread('What the agent holds', '`factory development custody list` through the kernel (factory_owner carries custody assign and update, and lists none)', 'Software Factory'),
+  people: unread('The people the agent may ask', 'a list of escalation contacts (no owner holds one)', 'Software Factory'),
+  handBackLit: unread('The hand-back light', 'a reading of what you edited among the agent\'s held items (Factory\'s custody states name no edit)', 'Software Factory'),
 } as const
 
 export interface CustodyInput {
@@ -166,7 +180,7 @@ export function custodyValues(input: CustodyInput): Values {
 /** Custody's binding: Write mode is Scope's own key and row (one binding feeds both: the same write, the same standing); every other
  * setting has no owner write and stands disabled with the operation it lacks. */
 export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, 'write' | 'standing'> | null): DesignBinding {
-  const standing: Record<string, Standing> = disabled(CUSTODY_REFUSE)
+  const standing: Record<string, Standing> = {...disabled(CUSTODY_ABSENT), ...disabled(CUSTODY_REFUSE)}
   standing.writeMode = scope?.standing?.writeMode ?? {disabled: 'Write mode is Scope\'s: the chain\'s Scope is not drawn on its owner here.'}
   return {
     id: CUSTODY_ID,

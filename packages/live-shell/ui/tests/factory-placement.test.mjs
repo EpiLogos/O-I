@@ -198,7 +198,8 @@ test('(b) the monitors placed on the rail: every key their designs read is an ow
     const design = await designOf(id)
     for (const key of designKeys(design)) assert.ok(classify(binding, key), `${id} ${key}: a reading, absent with why, or the hand's`)
   }
-  assert.match(cases[0][1].standing.frames.disabled, /frame-ring read/)
+  // REPLACED (lane W6): the frames are AIKit's own gateway journal's (w3-factory-bindings.test.mjs); with none read, the standing says so.
+  assert.match(cases[0][1].standing.frames.disabled, /AIKit's gateway journal is not read here/)
   assert.match(cases[1][1].standing.spend.disabled, /usage/)
   assert.match(cases[2][1].standing.peers.disabled, /missing op/)
   assert.equal(classify(cases[2][1], 'show'), 'local', 'Gateways\' Show is the hand\'s')

@@ -142,14 +142,22 @@ export interface LedgerPorts {
   readonly openSession: (sessionRef: string) => string | null
 }
 
+/** Why Actuation's usage reading reaches no Ledger key (lane W3): the kernel's actuation_read {kind usage} runs `actuation usage - --json` on
+ * ONE record it is handed — an `actuation.model-usage/v1` observation (usage_ref, actuation_ref, invocation_ref, correlation, model,
+ * tokens {input, output}, cache, timing, cost, outcome, provenance; real shape in desktop/cradle/kernel/tests/fixtures/owner-routes/
+ * actuation-usage-2026-10-21.json) — and reads no store. No reading the shell holds carries such a record for a receipt's session (the
+ * change horizon, the session's task record, the agency reading and AIKit's encounter view hold none); Actuation makes them from a harness
+ * transcript with `actuation stream usage` into its own store, which no kernel route runs or reads. */
+const NO_USAGE_RECORD = 'a model-usage record for the receipt\'s session to hand Actuation\'s `usage` (the kernel\'s actuation_read takes one actuation.model-usage/v1 record and reads no store; no reading here holds one — Actuation keeps them in its own store through `actuation stream usage`, which no kernel route reads)'
+
 /** What the Ledger draws that no change carries (the task, the run, turns, tokens and spend), each with the read it waits for. */
 export const LEDGER_ABSENT: Readonly<Record<string, string>> = {
   run: 'The run: no reading reaches it yet — missing op: the run a change belongs to (a source change names no run) (Software Factory).',
-  used: 'The turns: no reading reaches them yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
-  cap: 'The turns allowed: no reading reaches them yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
-  tokensIn: 'The tokens read: no reading reaches them yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
-  tokensOut: 'The tokens written: no reading reaches them yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
-  spend: 'The spend: no reading reaches it yet — missing op: Actuation\'s `usage` through the kernel (T-COVERAGE §1.2) (Actuation).',
+  used: 'The turns: no reading reaches them yet — missing op: the turns of the receipt\'s run (a model-usage record counts a model message\'s tokens, never turns; the Ledger reads no session\'s task record) (Actuation).',
+  cap: 'The turns allowed: no reading reaches them yet — missing op: the turn budget of the receipt\'s run (no model-usage record carries one) (Actuation).',
+  tokensIn: `The tokens read: no reading reaches them yet — missing op: ${NO_USAGE_RECORD} (Actuation).`,
+  tokensOut: `The tokens written: no reading reaches them yet — missing op: ${NO_USAGE_RECORD} (Actuation).`,
+  spend: `The spend: no reading reaches it yet — missing op: ${NO_USAGE_RECORD}, whose cost Actuation reports only where the harness did (Actuation).`,
 }
 
 /** The Ledger's binding: it only reads (§19.13 "The Ledger only reads"); its filters and the receipt you read are the view's own;

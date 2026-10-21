@@ -66,7 +66,7 @@ import {chainPicture, type PictureContext} from './AgentDevicePictures'
 import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
-  memberChains, rackBinding, scopeBinding, seatedProfile, useChainHolds, type AgentRows,
+  memberChains, rackBinding, scopeBinding, seatedProfile, useChainHolds, type AgentRows, type MemberPorts,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
@@ -88,7 +88,9 @@ import {
   AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, RUN_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, runBinding, sessionDevices,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
-import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, gitBinding, seatBinding, workcellDevices} from './workcellBindings'
+import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, connectionLabels, gitBinding, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
+import {ROUTE_WORDS, aikitWriteOp, deskActorOf, ownerRouteWrite, seatWriteOp} from './ownerRoutes'
+import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_DESIGN, WORKCELL_RACK_ID, workcellGitReading} from './workcellRackBinding'
 import {AGENT_SLOTS, chainSlots, factoryPlace, type FactorySlot} from './factoryPlaces'
 import {KNOWLEDGE_ROUTE_DESIGN, KNOWLEDGE_ROUTE_ID, knowledgeRouteBinding, knowledgeRouteDevice} from './knowledgeRouteBinding'
@@ -96,7 +98,7 @@ import {useOwnerOp} from '../../owners/ownerCall'
 import type {KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
-import {useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
+import {useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -281,8 +283,11 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const memberOn = rackOn && !waits.member
   const chosen = useSelectedSkillChain(rackDesignBinding ? memberChains(rackDesignBinding.values) : null)
   const memberDevice = useMemo(() => (memberOn ? rackMemberDevice(MEMBER_DEVICE_ID) : null), [memberOn])
-  const memberDesignBinding = useMemo(() => (memberDevice && rackDesignBinding ? memberBinding(MEMBER_DEVICE_ID, rackDesignBinding.values, chosen, holds) : null),
-    [memberDevice, rackDesignBinding, chosen, holds])
+  // Trust (lane W3): the review recorded with AIKit through the kernel's aikit_write trust-record, in the rack's project.
+  const memberPorts = useMemo((): MemberPorts => (transport.kind !== 'unavailable'
+    ? {trust: capability => ownerRouteWrite(transport, aikitWriteOp({kind: 'trust-record', project: RACK_PROJECT, capability}), ROUTE_WORDS.trust)} : {}), [transport])
+  const memberDesignBinding = useMemo(() => (memberDevice && rackDesignBinding ? memberBinding(MEMBER_DEVICE_ID, rackDesignBinding.values, chosen, holds, memberPorts) : null),
+    [memberDevice, rackDesignBinding, chosen, holds, memberPorts])
   // Scope: the world row's write path for the write mode; a raised reach held until Confirm.
   const writeModeRow = chain.find(entry => entry.slot.id === 'world')?.device.rows.find(row => row.key === 'write-mode')
   const scopeDesignBinding = useMemo(() => (waits.world ? null : scopeBinding(chainDeviceId('world'), holds, writeModeRow, write)), [waits.world, holds, writeModeRow, write])
@@ -363,9 +368,19 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const cells = useMemo(() => workcellDevices(), [])
   const designsCells = {seat: useDesign(SEAT_DESIGN, true), carrier: useDesign(CARRIER_DESIGN, true), rack: useDesign(WORKCELL_RACK_DESIGN, true)}
   const seatsUnread = seats.status === 'refused' && seats.error ? seats.error : undefined
+  // Join and Release (lane W3): the seat instrument through the kernel's seat_write, attributed to the desk's actor — the person's ref when
+  // an identity is current, else the desktop's own (ownerRoutes.ts deskActorOf). The claim it writes is read back on the next seat reading.
+  const deskActor = deskActorOf(currentIdentity()?.reading.person_ref ?? null)
+  const machineRef = workcellAnswer.status === 'answered' && workcellAnswer.value && typeof (workcellAnswer.value as {workcell_ref?: unknown}).workcell_ref === 'string'
+    ? (workcellAnswer.value as {workcell_ref: string}).workcell_ref : undefined
+  const seatPorts = useMemo((): SeatPorts => (transport.kind !== 'unavailable'
+    ? {seat: request => ownerRouteWrite(transport, seatWriteOp(request), request.kind === 'join' ? ROUTE_WORDS.join : ROUTE_WORDS.release)} : {}), [transport])
   const seatDesignBinding = useMemo(() => seatBinding({status: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {unread: seatsUnread} : {}),
-    project: RACK_PROJECT, branch: reading.gitRepo.branch ?? null, workcell: cellName, holds}), [seats, seatsUnread, reading.gitRepo.branch, cellName, holds])
-  const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds), [workcellAnswer, holds])
+    project: RACK_PROJECT, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), actor: deskActor, holds}, seatPorts),
+  [seats, seatsUnread, reading.gitRepo.branch, cellName, machineRef, deskActor, holds, seatPorts])
+  // The Remote carrier: Workcell's status, and each listed connection's record (`workcell connections show`, lane W3).
+  const shows = useConnectionShows(transport, connectionLabels(workcellAnswer))
+  const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows), [workcellAnswer, holds, shows])
   // The rack as the rail's publisher holds it, watched alone (another device's publish does not redraw the chain).
   const rackEntry = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(WORKCELL_RACK_ID), () => publishedDevice(WORKCELL_RACK_ID))
 

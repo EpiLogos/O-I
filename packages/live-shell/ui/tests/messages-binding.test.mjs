@@ -149,14 +149,20 @@ test('(b) every key the design reads is an owner reading, absent with its missin
   assert.match(binding.standing.groups.disabled, /aikit gateway team/)
 })
 
-test('(c) send, delegate and the conversation\'s session acts refused with the AIKit command; with no carrier Make, Accept and Discard say so', async () => {
+test('(c) the conversation\'s Input, Voice and session acts refused with what they lack; with no carrier Send, a drop, Make, Accept and Discard say so', async () => {
   bind.resetHolds()
   const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
-  for (const [key, op] of [['conv.sent', /aikit gateway send/], ['delegate', /aikit gateway delegate/], ['conv.input', /aikit gateway send/], ['conv.voice', /aikit gateway send/],
+  // REPLACED (lane W3): Send and a drop onto a track write through AIKit's gateway (w3-factory-bindings.test.mjs); with no carrier they say so.
+  for (const [key, op] of [['conv.input', /steer or queue/], ['conv.voice', /dictation into Messages' composer/],
     ['conv.approve', /a session for the Position's conversation/], ['conv.retry', /a session for the Position's conversation/], ['conv.hardStop', /a session/]]) {
     assert.match(binding.standing[key].disabled, op, key)
     assert.equal(binding.writes(key), true)
     await assert.rejects(() => binding.write([{key, value: true}]), op)
+  }
+  for (const key of ['conv.sent', 'delegate']) {
+    assert.equal(binding.standing[key].disabled, msg.MESSAGES_REFUSE.noCarrier, key)
+    assert.equal(binding.writes(key), true)
+    await assert.rejects(() => binding.write([{key, value: 'hello'}]), /kernel carrier is unavailable/)
   }
   for (const key of ['make', 'accept', 'discard']) {
     assert.equal(binding.standing[key].disabled, msg.MESSAGES_REFUSE.noCarrier, key)

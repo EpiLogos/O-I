@@ -23,14 +23,23 @@
 //     ("connection timed out") and five Positions stood occupied on workcell:mac. `gateway remote list` (aikit.gateway-remotes/v1, the
 //     kernel's `gateway_remotes_read` since lane K1: workcellReads.ts) gives each declared machine its endpoint (websocket_bind) and says
 //     whether the link is joined; the lag, the clock and the threads have no reading.
-// The writes: `seat join` and `seat release` have no kernel op; `workcell-cli git commit|push` and `seat land` do not exist; moving a
-// session to another machine, joining the link and its Share have no owner operation. Each stands disabled with that reason.
+//   `workcell connections show <label> --json` (workcell.connection/v1, the kernel's workcell_read {connections-show} since lane W3: real
+//     shape in desktop/cradle/kernel/tests/fixtures/owner-routes/workcell-connections-2026-10-21.json): each connection's granted
+//     operations, credential reference, remote software and when it connected — the Remote carrier's grant, credRef, software and since.
+// The writes: the Seat's Join and Release go to the seat instrument through the kernel's seat_write (lane W3, desktop/cradle/kernel/src/
+// owner_routes.rs SeatWrite; ownerRoutes.ts): `seat join WORKCELL PRODUCT --actor A [--branch B] [--new-lane] [--region P…]
+// [--recover-dirt-branch NAME] --json` and `seat release WORKCELL PRODUCT --actor A --json`, attributed to the desk's actor; the instrument
+// writes the machine's register and answers central.workcell-seat-result/v1 (an `owner_changed` receipt when it says it wrote it), and the
+// seat reading is asked again. The Floor stands disabled: seat_write carries no `--min-free-gb`. `workcell-cli git commit|push` and `seat
+// land` do not exist; moving a session to another machine, joining the link and its Share have no owner operation; Workcell's connect and
+// machine declarations (workcell_write) have no control on these designs. Each stands disabled with that reason.
 // Pure, apart from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
+import type {SeatWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
 import {parseSeatStatusJson} from '../../inhabitants/centralHygieneModel'
 import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
-import {holdView, viewHolds, type ChainHolds} from './designBindings'
+import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {familyFaceDevice} from './mainTrackBindings'
 
 type Obj = Record<string, unknown>
@@ -106,8 +115,17 @@ export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo
 // ---------------------------------------------------------------------------------------------------------------- the Seat
 
 export const SEAT_REFUSE = {
-  join: missing('Join', 'seat join through the kernel (the seat instrument runs only from a shell on this machine)', 'Workcell'),
-  release: missing('Release', 'seat release through the kernel', 'Workcell'),
+  /** Join or Release where no carrier stands. */
+  join: 'Join: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat join` through the kernel\'s seat_write).',
+  release: 'Release: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat release` through the kernel\'s seat_write).',
+  /** Floor: the register's floor is read; the join through the kernel does not carry another. */
+  floor: missing('Floor', 'a join floor through the kernel (seat_write carries no `--min-free-gb`, so Join keeps the register\'s floor)', 'Workcell'),
+} as const
+/** Join or Release before a product and a seat are chosen. */
+export const SEAT_CHOOSE = 'Choose a product and a seat first: Join and Release name both (`seat join|release WORKCELL PRODUCT`).'
+/** The Seat's readings no owner reports here. */
+export const SEAT_ABSENT = {
+  actor: 'The session\'s own actor ref: no reading reaches it yet — missing op: the actor a session\'s agent claims seats as (the instrument\'s claims name actors; no reading names a session\'s) (Workcell).',
 } as const
 export const SEAT_UNREAD = 'The seat instrument has not answered yet (kernel seat_status_read, `seat status --json`: it takes 20–30 s).'
 const SEAT_LOCAL = ['product', 'seat', 'lane', 'joinAs', 'zone', 'keepDirt', 'floor', 'sel', 'page:zones'] as const
@@ -149,7 +167,34 @@ export interface SeatInput {
   /** The workcell whose chain the Seat stands on (the register's name its return track carries, frame/tracks/returnTracks.ts): its seat
    * of the product is where the Seat starts (§19.23 "a workcell holds one seat for each project"). Absent: the seat on the branch. */
   readonly workcell?: string | null
+  /** This machine's Workcell ref (`workcell status --json` workcell_ref), when Workcell answered. */
+  readonly machineRef?: string
+  /** The desk's actor (ownerRoutes.ts deskActorOf): whom Join and Release attribute the claim to. */
+  readonly actor?: string
   readonly holds: ChainHolds
+}
+
+/** The Seat's writes: the seat instrument through the kernel's seat_write (ownerRoutes.ts). Absent: no carrier stands. */
+export interface SeatPorts {
+  readonly seat?: (request: SeatWriteRequest) => Promise<unknown>
+}
+
+/** The paths of a Zone as the hand wrote them, apart by commas (workcell__seat.tsx Zone: "The paths you will edit, apart by commas"). */
+export const zonePaths = (zone: Value | undefined): string[] => (typeof zone === 'string' ? zone.split(',').map(path => path.trim()).filter(Boolean) : [])
+
+/** The seat instrument's join request from the Seat's values as they stand and the seat row they name: on a free seat, the lane you name
+ * (else the instrument cuts one); on a held seat, Attach joins the standing lane and New lane starts yours (`--new-lane`, with your lane);
+ * Zone is every region on one `--region` flag; Keep dirt the recovery branch. Null when no product, seat or row is named. Pure. */
+export function seatJoinRequest(values: Values, seats: readonly Record<string, unknown>[], actor: string): SeatWriteRequest | null {
+  const workcell = typeof values.seat === 'string' ? values.seat : undefined, product = typeof values.product === 'string' ? values.product : undefined
+  const row = workcell && product ? seats.find(seat => seat.workcell === workcell && seat.product === product) : undefined
+  if (!workcell || !product || !row) return null
+  const newLane = row.state !== 'free' && values.joinAs === 'new-lane'
+  const lane = typeof values.lane === 'string' && values.lane.trim() ? values.lane.trim() : undefined
+  const regions = zonePaths(values.zone)
+  const keep = typeof values.keepDirt === 'string' && values.keepDirt.trim() ? values.keepDirt.trim() : undefined
+  return {kind: 'join', workcell, product, actor, ...((row.state === 'free' || newLane) && lane ? {branch: lane} : {}), ...(newLane ? {new_lane: true} : {}),
+    ...(regions.length ? {regions} : {}), ...(keep ? {recover_dirt_branch: keep} : {})}
 }
 
 /** The Seat's values: the seats and the disk as the instrument reads them; the product, the seat and the join's settings the hand
@@ -160,6 +205,7 @@ export function seatValues(input: SeatInput): Values {
   const view = viewHolds(input.holds, SEAT_ID)
   for (const key of SEAT_LOCAL) put(values, key, view[key])
   values.joinAs = view.joinAs ?? 'attach'
+  put(values, 'machineRef', input.machineRef)
   const read = input.status == null ? null : seatReading(input.status)
   if (!read) return values
   values.seats = JSON.stringify(read.seats)
@@ -176,16 +222,40 @@ export function seatValues(input: SeatInput): Values {
   return values
 }
 
-export function seatBinding(input: SeatInput): DesignBinding {
-  const standing: Record<string, Standing> = disabled(SEAT_REFUSE)
-  if (input.status == null || !seatReading(input.status)) for (const key of ['product', 'seat']) standing[key] = {disabled: input.unread ?? SEAT_UNREAD}
+export function seatBinding(input: SeatInput, ports: SeatPorts = {}): DesignBinding {
+  const values = seatValues(input)
+  const read = input.status == null ? null : seatReading(input.status)
+  const unread = input.unread ?? SEAT_UNREAD
+  const standing: Record<string, Standing> = {...disabled(SEAT_ABSENT), floor: {disabled: SEAT_REFUSE.floor}}
+  if (!('machineRef' in values)) standing.machineRef = {disabled: 'This machine\'s Workcell ref: Workcell\'s status (`workcell status --json`) has not answered.'}
+  if (!read) for (const key of ['product', 'seat', 'seats', 'disk']) standing[key] = {disabled: unread}
+  // Join and Release: the seat instrument through the kernel, on the seat the values name, attributed to the desk's actor.
+  const why = (key: 'join' | 'release'): string | null => (!ports.seat || !input.actor ? SEAT_REFUSE[key] : !read ? unread
+    : typeof values.product !== 'string' || typeof values.seat !== 'string' ? SEAT_CHOOSE : null)
+  for (const key of ['join', 'release'] as const) { const reason = why(key); if (reason) standing[key] = {disabled: reason} }
+  const act = async (key: 'join' | 'release') => {
+    // What the hand holds when it presses (the holds as they stand then).
+    const now = seatValues({...input, holds: chainHolds()})
+    const reason = why(key)
+    if (reason) throw Error(reason)
+    const rows = (input.status == null ? null : seatReading(input.status))?.seats ?? []
+    const request: SeatWriteRequest | null = key === 'join' ? seatJoinRequest(now, rows, input.actor!)
+      : typeof now.seat === 'string' && typeof now.product === 'string' ? {kind: 'release', workcell: now.seat, product: now.product, actor: input.actor!} : null
+    if (!request) throw Error(key === 'join' && typeof now.seat === 'string' ? `${now.seat} has no ${String(now.product)} seat.` : SEAT_CHOOSE)
+    await ports.seat!(request)
+  }
   return {
     id: SEAT_ID,
-    values: seatValues(input),
+    values,
     standing,
-    local: held(SEAT_ID, SEAT_LOCAL),
-    writes: key => key in SEAT_REFUSE,
-    write: async (changes: readonly ValueChange[]) => { for (const {key} of changes) throw Error(SEAT_REFUSE[key as keyof typeof SEAT_REFUSE] ?? reading(key)) },
+    local: held(SEAT_ID, SEAT_LOCAL.filter(key => key !== 'floor')),
+    writes: key => key === 'join' || key === 'release' || key === 'floor',
+    write: async (changes: readonly ValueChange[]) => {
+      for (const {key} of changes) {
+        if (key === 'join' || key === 'release') { await act(key); continue }
+        throw Error(key === 'floor' ? SEAT_REFUSE.floor : reading(key))
+      }
+    },
   }
 }
 
@@ -193,7 +263,29 @@ export function seatBinding(input: SeatInput): DesignBinding {
 
 export const CARRIER_REFUSE = {
   where: missing('Where', 'a session carried to another machine over workcell.control/v1 through the kernel', 'Workcell'),
+  replan: missing('Plan again', '`workcell plan` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
 } as const
+/** The Standing page's readings no kernel route reaches. */
+export const CARRIER_ABSENT = {
+  offers: 'What the place can provide: no reading reaches it yet — missing op: `workcell discover` through the kernel (T-COVERAGE §1.2) (Workcell).',
+  plan: 'The run\'s plan on those offers: no reading reaches it yet — missing op: `workcell plan` through the kernel (T-COVERAGE §1.2) (Workcell).',
+} as const
+
+/** One connection's record as Workcell shows it (`workcell connections show <label> --json`, workcell.connection/v1 under `connection`),
+ * by label: the answer the kernel's workcell_read {connections-show} gave, or its refusal in Workcell's words. */
+export type ConnectionShows = ReadonlyMap<string, {readonly value?: unknown; readonly error?: string}>
+
+/** What a connection's record adds to its machine (workcell__remote-carrier.tsx:13-15): the operations its grant allows (`grant`), its
+ * credential reference (`credRef`), the remote's software (`software`) and when it connected (`since`, ms). Its `detail` is a report on
+ * the software revisions, not why the connection stands as it does, so it is not drawn as `why`. Pure. */
+export function connectionFields(shown: unknown): Record<string, Value | readonly string[]> {
+  const record = isObj(shown) && isObj(shown.connection) ? shown.connection : null
+  if (!record || record.version !== 'workcell.connection/v1') return {}
+  const grant = Array.isArray(record.granted_operations) ? record.granted_operations.filter((op): op is string => typeof op === 'string') : null
+  return {...(grant ? {grant} : {}), ...(str(record.credential_ref) ? {credRef: String(record.credential_ref)} : {}),
+    ...(str(record.remote_software) ? {software: String(record.remote_software)} : {}),
+    ...(num(record.connected_at_unix_ms) !== undefined ? {since: num(record.connected_at_unix_ms)!} : {})}
+}
 
 /** A Workcell connection's state in the carrier's words: connected is Composed (the machines are connected; no kernel op has carried
  * a session through it, and nothing probes its gateway, so it is not Ready); Workcell's other states keep their own words. */
@@ -202,23 +294,30 @@ const CARRIED: Readonly<Record<string, string>> = {connected: 'composed', discon
 /** The connections of `workcell status --json` as the carrier's machines (workcell__remote-carrier.tsx:10-16): {id (the label), name
  * (the remote Workcell ref), endpoint, protocol, state, expiresAt}. The grant's operations, the credential's standing, the round trip
  * and the sessions are other reads (`workcell connections show`, a gateway probe) no kernel op runs. */
-export function carrierMachines(status: unknown): Record<string, Value | null>[] | null {
+export function carrierMachines(status: unknown, shows?: ConnectionShows): Record<string, Value | null | readonly string[]>[] | null {
   if (!isObj(status) || !Array.isArray(status.connections)) return null
   return status.connections.flatMap(row => {
     if (!isObj(row) || !str(row.label)) return []
     const state = CARRIED[String(row.state)]
     return [{id: String(row.label), name: str(row.remote_workcell_ref) ?? String(row.label),
       ...(str(row.endpoint) ? {endpoint: String(row.endpoint)} : {}), ...(str(row.protocol) ? {protocol: String(row.protocol)} : {}),
-      ...(state ? {state} : {}), ...(row.expires_at_unix_ms === null ? {expiresAt: null} : num(row.expires_at_unix_ms) !== undefined ? {expiresAt: num(row.expires_at_unix_ms)!} : {})}]
+      ...(state ? {state} : {}), ...(row.expires_at_unix_ms === null ? {expiresAt: null} : num(row.expires_at_unix_ms) !== undefined ? {expiresAt: num(row.expires_at_unix_ms)!} : {}),
+      ...connectionFields(shows?.get(String(row.label))?.value)}]
   })
 }
 
-export function carrierValues(answer: WorkcellAnswer, holds: ChainHolds): Values {
+/** The connection labels `workcell status` lists: the records the carrier asks Workcell to show. */
+export function connectionLabels(answer: WorkcellAnswer): string[] {
+  return answer.status === 'answered' && isObj(answer.value) && Array.isArray(answer.value.connections)
+    ? answer.value.connections.flatMap(row => (isObj(row) && str(row.label) ? [String(row.label)] : [])) : []
+}
+
+export function carrierValues(answer: WorkcellAnswer, holds: ChainHolds, shows?: ConnectionShows): Values {
   const values: Record<string, Value> = {}
   put(values, 'machine', viewHolds(holds, CARRIER_ID).machine)
   if (answer.status !== 'answered') return values
   put(values, 'here', isObj(answer.value) ? str(answer.value.workcell_ref) : undefined)
-  const machines = carrierMachines(answer.value)
+  const machines = carrierMachines(answer.value, shows)
   if (machines) {
     values.machines = JSON.stringify(machines)
     values.light = machines.some(machine => machine.state === 'ready') ? 'lit' : 'dark'
@@ -237,11 +336,17 @@ export function carrierChainState(answer: WorkcellAnswer): {state?: 'ready' | 'c
   return machines.length ? {state: 'refused', why: 'No connected machine: every connection is down, refused or incompatible.'} : {}
 }
 
-export function carrierBinding(answer: WorkcellAnswer, holds: ChainHolds): DesignBinding {
+export function carrierBinding(answer: WorkcellAnswer, holds: ChainHolds, shows?: ConnectionShows): DesignBinding {
+  const values = carrierValues(answer, holds, shows)
+  const standing: Record<string, Standing> = {...disabled(CARRIER_ABSENT), ...disabled(CARRIER_REFUSE)}
+  const why = answer.status === 'refused' && answer.error ? answer.error : 'Workcell\'s status (`workcell status --json`) has not answered.'
+  for (const key of ['light', 'here', 'machines']) if (!(key in values)) standing[key] = {disabled: why}
+  // A connection Workcell refused to show keeps only what its status gave (the record's grant, credential reference, software and since
+  // stay off that machine): the machines themselves are still Workcell's reading.
   return {
     id: CARRIER_ID,
-    values: carrierValues(answer, holds),
-    standing: disabled(CARRIER_REFUSE),
+    values,
+    standing,
     local: held(CARRIER_ID, ['machine']),
     writes: key => key in CARRIER_REFUSE,
     write: async (changes: readonly ValueChange[]) => { for (const {key} of changes) throw Error(CARRIER_REFUSE[key as keyof typeof CARRIER_REFUSE] ?? reading(key)) },

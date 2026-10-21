@@ -23,11 +23,16 @@ export const decisionHelperDevice = (): DeviceInstance | null =>
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 
+/** Factory's unit decisions reach the kernel since lane W3 (factory_owner {attempt-decision-submit, attempt-decision-read}: `factory attempt
+ * decision submit <state> -` with a unit's retained RequestUnitDecision Action, and `… read <state> <run> <human-request> <receiving>`): they
+ * put a Factory unit's question to the person through Central's receiving field and read the person's answer back. They are not the
+ * helper's small model, and carry none of its settings — so When and Deadline name what they wait for, and why the unit decision is not it. */
+const UNIT_DECISION = 'Factory\'s attempt decision (factory_owner attempt-decision-submit and -read) puts a unit\'s question to you through Central\'s receiving field and reads your answer; it carries no setting of the helper'
 /** Each write the design offers, refused with the operation it lacks. */
 export const DECISION_HELPER_REFUSE = {
   provider: missing('Provider', 'the decision provider election, ai-kit:local-services:decision.provider, through the kernel', 'AIKit'),
-  when: missing('When', 'a team\'s Background or Before-the-act setting for its helper', 'Quaternal Logic'),
-  deadline: missing('Deadline', 'a team\'s answer deadline for its helper', 'Quaternal Logic'),
+  when: missing('When', `a team's Background or Before-the-act setting for its helper (${UNIT_DECISION})`, 'Quaternal Logic'),
+  deadline: missing('Deadline', `a team's answer deadline for its helper (${UNIT_DECISION})`, 'Quaternal Logic'),
   probe: missing('Probe', '`aikit decide status --probe` through the kernel (it asks the model once)', 'AIKit'),
 } as const
 const ALLOW = missing('The instrument\'s request', 'a team\'s per-instrument request to its helper', 'Quaternal Logic')

@@ -10,7 +10,8 @@
 // owners/ownerCall.ts installKernelReadHolder; the roster and Workcell's status are owners/readers.ts answers), AIKit's population
 // (usePopulationAnswer.ts) and the open agent's conversation (useConversationAnswer.ts), Central's ground (central/devices/useCentralReadings.ts
 // useCentralGroundAnswer), the seat instrument (workcellReads.ts useSeatStatusAnswer — slow, so asked only while the Workcells tile is open
-// or a workcell's return track is selected). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
+// or a workcell's return track is selected), AIKit's own gateway journal (workcellReads.ts useGatewayEcology and useGatewayReplays: the
+// Frames monitor's frames, lane W6). Messages' Send and a drop onto a track write through the kernel's gateway_write (lane W3, ownerRoutes.ts). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
 // agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — the rack's macros write through the Gateway's
 // rows, the same rows and write path the chain's Gateway writes through (designBindings.ts gatewayBinding; agentNativeDispatch.ts
 // fireWritePath).
@@ -29,20 +30,21 @@ import {fireWritePath} from '../agentNativeDispatch'
 import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
-import {AGENCY_GATEWAY_ID, FRAMES_ID, GATEWAYS_RACK_ID, agencyBinding, framesBinding, mainDevices, rackBinding} from './mainTrackBindings'
+import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, GATEWAYS_RACK_ID, agencyBinding, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {MESSAGES_ID, PERSON_ACTS, madeOf, messagesBinding, messagesDevice, positionRefs, type MessagesPorts} from './messagesBinding'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {GatewayWriteRequest, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {LEDGER_ID, ledgerBinding, receiptDevices} from './receiptBindings'
 import {useAgentChainReading} from './useAgentChainReading'
 import {useConversationAnswer} from './useConversationAnswer'
+import {ROUTE_WORDS, gatewayWriteOp, ownerRouteWrite} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {RACK_PROJECT} from './useRackReading'
 import {CARRIER_ID, carrierChainState, carrierValues, gitValues} from './workcellBindings'
 import {WORKCELL_RACK_ID, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
-import {useSeatStatusAnswer} from './workcellReads'
+import {useGatewayEcology, useGatewayReplays, useSeatStatusAnswer} from './workcellReads'
 
 /** The rail's agent devices this publisher holds, by id: withdrawn with it. Approvals is not among them — it is Factory's Main track
  * effect (§19.14), published by its chain. */
@@ -78,7 +80,16 @@ export function AgentRailDevices() {
   }, [])
   const gateways = useMemo(() => rackBinding({reading, holds, carrier}, {show: showChain}), [reading, holds, carrier, showChain])
   const agency = useMemo(() => agencyBinding(reading, holds), [reading, holds])
-  const frames = useMemo(() => framesBinding({reading, harness: {binding, resolved}}, holds), [reading, binding, resolved, holds])
+  // The Frames monitor's frames (lane W6): AIKit's own gateway journal — its ecology names the sessions and their Streams, and each Stream of
+  // the session chosen is replayed from where its last Keep frames begin. Refusals are AIKit's words (the installed AIKit may not carry
+  // `gateway replay` yet), drawn as the reason.
+  const ecology = useGatewayEcology(transport, true)
+  const framesView = viewHolds(holds, FRAMES_ID)
+  const asks = useMemo(() => journalAsks((ecology.status === 'answered' ? journalSessions(ecology.value) : null) ?? [], framesView.session ?? FRAMES_VIEW.session,
+    framesView.keep ?? FRAMES_VIEW.keep), [ecology, framesView.session, framesView.keep])
+  const replays = useGatewayReplays(transport, asks)
+  const frames = useMemo(() => framesBinding({reading, harness: {binding, resolved}}, holds, {ecology, ...(replays ? {replays} : {})}),
+    [reading, binding, resolved, holds, ecology, replays])
 
   // The Ledger: Central's change horizon; Open log selects the receipt's session's track.
   const ground = useCentralGroundAnswer(transport)
@@ -104,8 +115,10 @@ export function AgentRailDevices() {
   const reviewInput = useMemo(() => (made?.kind === 'agent' ? {scope: made.scope, ...(made.scope === 'project' && made.project ? {project: made.project} : {}), profile_ref: made.ref} : null),
     [made?.kind, made?.scope, made?.project, made?.ref]) // eslint-disable-line react-hooks/exhaustive-deps
   const review = useCentralAction(transport, PERSON_ACTS.review, reviewInput)
+  // AIKit's gateway writes (lane W3): Send and a drop onto a track through the kernel's route to `aikit gateway send|delegate`.
   const ports = useMemo((): MessagesPorts => ({
-    ...(transport.kind !== 'unavailable' ? {act: (action: string, input: Readonly<Record<string, unknown>>) => centralAct(transport, action, input)} : {}),
+    ...(transport.kind !== 'unavailable' ? {act: (action: string, input: Readonly<Record<string, unknown>>) => centralAct(transport, action, input),
+      gateway: (request: GatewayWriteRequest) => ownerRouteWrite(transport, gatewayWriteOp(request), ROUTE_WORDS[request.kind])} : {}),
     page: () => hostState(MESSAGES_ID).page,
     suffix: () => globalThis.crypto.randomUUID().slice(0, 8),
   }), [transport])

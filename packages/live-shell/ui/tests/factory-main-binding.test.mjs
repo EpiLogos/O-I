@@ -142,7 +142,9 @@ test('the Experiment: no kernel op reaches Actuation\'s comparison, so nothing i
   assert.deepEqual(main.experimentValues(bind.chainHolds()), {})
   const binding = main.experimentBinding(bind.chainHolds())
   for (const key of main.EXPERIMENT_WRITES) assert.equal(binding.standing[key].disabled, main.EXPERIMENT_REFUSE, key)
-  assert.match(main.EXPERIMENT_REFUSE, /missing op: Actuation's matched comparison \(research comparison\.rs run_with\) through the kernel/)
+  // REPLACED (lane W3): the comparison's readings are routed, its run is not (it runs models), and nothing here holds the records they read.
+  assert.match(main.EXPERIMENT_REFUSE, /missing op: Actuation's matched comparison run, `actuation-research comparison\.run` \(research comparison\.rs run_with\), which the kernel does not route because it runs models/)
+  for (const key of Object.keys(main.EXPERIMENT_ABSENT)) assert.match(binding.standing[key].disabled, /missing op:/, key)
   await assert.rejects(() => binding.write([{key: 'repeats', value: 5}]), /run_with/)
   binding.local.plot('time')
   assert.deepEqual(main.experimentValues(bind.chainHolds()), {plot: 'time'}, 'the reading the picture draws is the view\'s own')
