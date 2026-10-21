@@ -131,6 +131,20 @@ About forty more are partly bound; each row in the evidence names what is missin
 | AIKit | the agent-to-agent ingress rule; the Knowledge route's Read budget and Search first; an owner read of Living Knowledge's impact for a set of readings (the Affected page); a read of the last turn's bounded blocks (Context); a read of a Flow's last thought (`flow changed-since` needs `--thought <file>`); a CLI leaf for the reflection law's verdict (Meaning). |
 | Quaternal Logic | a CLI for the External Context Frame reading (`read_external_context_frame` is library-only); a CLI for `plan_living_wiki_refraction` (the graph's Aperture); WikiFrame refraction candidate counts (the Lens's proposals); a rule naming when a rack part is "verified"; a kernel address for a matrix cell; portal traversal; the Deck's Move and Turn; a tuning owner for Exact-ratio; the Decision helper's When and Deadline; the M′ Situation matrix; the M3 clock's Run and Rate. |
 
+### 1.6 What the build waits on the owner for (21 Oct)
+
+Each needs the owner's word before it is built; the build keeps the device's refusal exact meanwhile.
+
+| Question | Where it stands |
+|---|---|
+| Who may change a custody record's autonomy, review gate and escalate-to after assignment? | Factory sets them at `custody assign` (EpiLogos/Factory#288); `update` admits only the holding occupant, and Factory names no person authority for custody. |
+| Where do a task's typed success-condition words live, given "the words stay in the source they come from"? | Review's criteria stand absent. |
+| What do a group's First, Quorum and Weighted joins do? | The manual names them ("stand dark, because no owner combines returns that way yet") without semantics; Central keeps the Join field (EpiLogos/Central#291) and nothing combines returns by it. |
+| Should a notification that asks for a callback be delivered without it? | macOS's notification provider supports no callback, so Central keeps such a request as refused, with its open target (EpiLogos/Central#288). |
+| Git / landing's commit, push and land from the desk; moving a session to another machine. | Not routed: they act on repositories and machines. |
+| A mutation class for Central actions that reconcile derived state only. | See §1.5's Central row: since `a4c97faa9` each such read retires the read model. |
+| Publishing SharedField's presence-consent kinds to maincloud. | Built as code and tests only; the hosted module is the owner's to publish. |
+
 ## 2. For the design lane: what to design before the build reaches it
 
 Each package lands as catalogue designs and manual entries on `main`, the way every device does. Where an existing device can hold a
