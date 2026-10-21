@@ -29,7 +29,9 @@ import {useTimelinePanePresentation} from '../../../projections/timelinePaneHost
 import {readNativeExpressionsContent} from '../../../shell/nativeContent'
 import {useWorkspace} from '../../../shell/workspaceContext'
 import {FORMATION_SHAPE_LABELS, formationObjectChange, formationSettingChange} from '../../nativeEntityFace.formation'
-import {addedSound, resolvedSound, soundChange, soundWithField} from '../../nativeEntityFace.sound'
+import {addedSound, carryFromValue, carryValue, resolvedSound, soundChange, soundWithField, voiceChoices} from '../../nativeEntityFace.sound'
+import {useLiveModeCatalogue} from '../../../native/liveModeCatalogue'
+import type {QlMusicModes} from '../../../live/modes'
 import {ARRANGE_LAYOUTS, arrangePlan, blueprintMemberIds, recordedLayout, type ArrangeLayout, type Plane} from '../../nativeSceneFace.arrange'
 import {blueprintRequest, committedDisplay, fieldValue, transformIntent, withField, type FieldKey} from '../../nativeSceneFace.blueprint'
 import {CARRIER_LABELS, OCCASION_LABELS, OPERATION_LABELS, PLACEMENT_LABELS} from '../../nativeSceneFace.body'
@@ -65,14 +67,14 @@ function objectOf(entity: Entity): Obj {
     formation: {x: entity.position.x, y: entity.position.y, z: entity.position.z, w: entity.size.x, h: entity.size.y, scale: entity.scale ?? 1, rotation: entity.rotation,
       share: entity.share, tint: entity.tintWeight, enabled: entity.enabled !== false, locked: entity.locked, name: entity.name, shape: FORMATION_SHAPE_LABELS[entity.shape] ?? entity.shape},
     force: {kind: entity.force.kind, strength: entity.force.strength, spin: entity.force.spin, radius: entity.force.radius},
-    // The voice as the owner resolves it (nativeEntityFace.sound.ts resolvedSound: the app validator's defaults for a field it omits).
-    sound: sound ? (({enabled, followCymatic, frequencyHz, gain, waveform, attack, release, pan}) => ({voice: enabled, follow: followCymatic, frequency: frequencyHz,
-      gain, wave: waveform, attack, release, pan}))(resolvedSound(sound)) : {voice: false},
+    // The voice as the owner resolves it (nativeEntityFace.sound.ts resolvedSound: the app validator's defaults for a field it omits). A symbol's voice
+    // carries a name or a mode of the torus's sound and has no frequency, follow, waveform or pan: those keys are not reported, so the design draws them absent.
+    sound: sound ? (({enabled, carry, gain, attack, release}) => ({voice: enabled, carry: carryValue(carry), gain, attack, release}))(resolvedSound(sound)) : {voice: false},
   }
 }
 
 /** The presented scene's readings on the design's keys. A key the owner does not report is left out. Pure. */
-export function expressionsClipValues(reading: NativeEditorReading, colour?: string | null): Values {
+export function expressionsClipValues(reading: NativeEditorReading, colour?: string | null, modes: QlMusicModes | null = null): Values {
   const values: Record<string, Value> = {}
   const scene = reading.scene
   const row = reading.scenes?.scenes.find(item => item.scene_ref === reading.basis.scene_ref)
@@ -120,6 +122,9 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
   }))
   values.objects = JSON.stringify(Object.fromEntries(scene.entities.map(entity => [entity.id, objectOf(entity)])))
   if (reading.selection.entity_ids.length === 1) values.symbol = reading.selection.entity_ids[0]!
+  // The "Name or mode" row's choices for the selected symbol (nativeEntityFace.sound.ts voiceChoices): the owner's modes, then the store's names.
+  const held = scene.entities.find(entity => entity.id === values.symbol)?.sound?.carry ?? null
+  values.carryOptions = JSON.stringify(voiceChoices(modes, held).flatMap(group => group.options))
   values.lanes = JSON.stringify(scene.automation.map(lane => ({id: lane.id, device: laneDevice(lane.entityId, lane.target), target: lane.target,
     type: lane.type === 'lfo' ? 'oscillator' : 'ramp', wave: WAVE[lane.wave] ?? lane.wave, rate: lane.rate, phase: lane.phase, min: lane.min, max: lane.max,
     blend: lane.blend, duration: lane.duration, delay: lane.delay, loop: lane.loop, ...(lane.easing ? {easing: lane.easing} : {}), enabled: lane.enabled,
@@ -159,7 +164,7 @@ const apply = (basis: NativeEditorBasis, changes: readonly NativeEditorChange[])
 const target = (id: string, suffix: string) => `entity:${encodeURIComponent(id)}:${suffix}`
 const FORMATION_TARGET: Readonly<Record<string, string>> = {x: 'x', y: 'y', z: 'z', w: 'size.x', h: 'size.y', scale: 'scale', rotation: 'rotation', share: 'share', tint: 'tintWeight'}
 const FORCE_TARGET: Readonly<Record<string, string>> = {strength: 'forces.strength', spin: 'forces.spin', radius: 'forces.radius'}
-const SOUND_FIELD: Readonly<Record<string, Parameters<typeof soundWithField>[1]>> = {follow: 'followCymatic', frequency: 'frequencyHz', gain: 'gain', wave: 'waveform', attack: 'attack', release: 'release', pan: 'pan'}
+const SOUND_FIELD: Readonly<Record<string, 'gain' | 'attack' | 'release'>> = {gain: 'gain', attack: 'attack', release: 'release'}
 
 /** The native changes one edit of the `objects` value asks for: each field the hand moved, as the owner's own change. Throws the
  * refusal for a field the owner takes in a shape Clip view does not compose yet. Pure. */
@@ -176,9 +181,11 @@ export function objectChanges(reading: NativeEditorReading, next: Record<string,
         else if (page === 'force' && field === 'kind') changes.push({kind: 'force-mode', entity_id: entity.id, value: value as Entity['force']['kind']})
         else if (page === 'force' && FORCE_TARGET[field] && typeof value === 'number') changes.push({kind: 'parameter', target: target(entity.id, FORCE_TARGET[field]!), value})
         else if (page === 'sound' && field === 'voice') changes.push(soundChange(entity.id, value === true ? (entity.sound ?? addedSound()) : null))
-        else if (page === 'sound' && SOUND_FIELD[field]) {
+        else if (page === 'sound' && (SOUND_FIELD[field] || field === 'carry')) {
           if (!entity.sound) throw new Error('The symbol has no voice: turn Voice on first.')
-          changes.push(soundChange(entity.id, soundWithField(entity.sound, SOUND_FIELD[field]!, field === 'wave' ? String(value) : value as number | boolean)))
+          changes.push(soundChange(entity.id, field === 'carry'
+            ? soundWithField(entity.sound, 'carry', carryFromValue(String(value)))
+            : soundWithField(entity.sound, SOUND_FIELD[field]!, value as number)))
         } else throw new Error(page === 'meaning' ? NOT_COMPOSED('Meaning', 'one entity-semantic change (nativeEntityFace.meaning.ts meaningChange)')
           : page === 'force' ? NOT_COMPOSED('The force\'s centre', 'its parameter target') : `${field}: the owner reports it; nothing in Clip view changes it.`)
       }
@@ -318,6 +325,8 @@ export interface ExpressionsClipInput {
   readonly present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void
   readonly colour?: string | null
   readonly placed?: boolean
+  /** The owner's mode catalogue, for the voice's "Name or mode" row; null while it is not read. */
+  readonly modes?: QlMusicModes | null
 }
 
 /** Expressions' clip binding: the presented scene of the open Expression, or null while none is read. Pure. */
@@ -329,7 +338,7 @@ export function expressionsClipBinding(input: ExpressionsClipInput): ClipBinding
   const first = clipBinding({mode: 'expressions', ref, values: {}, wiring: expressionsWiring(reading, input.request, input.present), viewDefaults: defaults})
   // The arrange plan reads the view's own choices (its rule, plane and objects), as held now.
   const wiring = expressionsWiring(reading, input.request, input.present, first.values)
-  return clipBinding({mode: 'expressions', ref, values: expressionsClipValues(reading, input.colour), wiring, placed: input.placed, viewDefaults: defaults})
+  return clipBinding({mode: 'expressions', ref, values: expressionsClipValues(reading, input.colour, input.modes ?? null), wiring, placed: input.placed, viewDefaults: defaults})
 }
 
 /** The presented scene's clip binding, from the retained native editor. */
@@ -340,6 +349,8 @@ export function useExpressionsClip(): ClipBinding | null {
   const presentation = useTimelinePanePresentation()
   useViewHoldsVersion()
   const editor = workspace.editor
+  const modes = useLiveModeCatalogue().reading
   return expressionsClipBinding({reading: workspace.editorReading ?? null, request: editor ? operation => editor.request(operation) : null,
-    present: native.presentNativeEditor, colour: selected.track?.color, placed: presentation === 'arrangement'})
+    present: native.presentNativeEditor, colour: selected.track?.color, placed: presentation === 'arrangement',
+    modes: modes.state === 'ready' ? modes.catalogue : null})
 }

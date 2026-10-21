@@ -81,13 +81,14 @@ export const PLATE_CELLS = 14
 /** Station count of the sweep (cymaticResonator.ts:65). Waypoints are these stations, or the there-and-back path through them. */
 export const RESONATOR_STATION_COUNT = 7
 
-export interface ResonanceGateInput {resonanceEnabled: boolean; resonatorMode?: 'resonator' | 'template'; frequencyDriver: 'manual' | 'focus' | 'automation'; autoSweep: boolean}
+export interface ResonanceGateInput {resonanceEnabled: boolean; resonatorMode?: 'resonator' | 'template'; frequencyDriver: 'torus' | 'manual' | 'focus' | 'automation'; keySource?: 'torus' | 'sky' | 'manual'; autoSweep: boolean}
 /** Which source the engine drives the modal body from, given the same flags the shell bridge uses (nativeBridge.ts:87-91).
- * off: the medium is stopped (PointCloudField.ts:1811). focus: travelling focus sets the drive (PointCloudField.ts:1838-1872).
+ * off: the medium is stopped (PointCloudField.ts:1811). torus: the pitches the torus plays (or the sky's, under Key source Sky) drive the plate;
+ * under Key source Manual the Torus driver takes the resonance that was set, so the drive is the tuning band (torusDrive.ts; DLW §20.14, §20.2). focus: travelling focus sets the drive (PointCloudField.ts:1838-1872).
  * sweep: the station sweep owns the frequency (cymaticResonator.ts:492). frequency: the tuning band is the drive. */
-export function resonanceGate(input: ResonanceGateInput): {modal: boolean; drive: 'off' | 'frequency' | 'focus' | 'sweep'} {
+export function resonanceGate(input: ResonanceGateInput): {modal: boolean; drive: 'off' | 'frequency' | 'torus' | 'focus' | 'sweep'} {
   const modal = input.resonanceEnabled && (input.resonatorMode ?? 'resonator') !== 'template'
-  const drive = !modal ? 'off' : input.frequencyDriver === 'focus' ? 'focus' : input.frequencyDriver === 'automation' && input.autoSweep ? 'sweep' : 'frequency'
+  const drive = !modal ? 'off' : input.frequencyDriver === 'torus' ? (input.keySource === 'manual' ? 'frequency' : 'torus') : input.frequencyDriver === 'focus' ? 'focus' : input.frequencyDriver === 'automation' && input.autoSweep ? 'sweep' : 'frequency'
   return {modal, drive}
 }
 /** Sweep schedule as the engine runs it (cymaticResonator.ts:492-528): waypoints are the stations ascending, descending, or

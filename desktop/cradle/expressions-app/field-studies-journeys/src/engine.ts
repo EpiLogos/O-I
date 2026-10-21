@@ -28,6 +28,10 @@ export interface FieldEngineAdapter {
  resize(width:number,height:number,pixelRatio:number):void;
  needsRender?():boolean;
  telemetry?():any;
+ /** The pitches the torus plays now, read from the native owner (DLW §20.14 Frequency driver = Torus). Absent: the engine has no torus drive. */
+ setTorusPlay?(reading:import('../../src/engine/torusDrive').TorusPlayReading|null):void;
+ /** The node the controller offers for the symbols' voices to listen to (DLW §20.2: a symbol's voice carries part of the torus's sound), in the controller's audio context; null while no instrument is open. */
+ setTorusTap?(tap:import('./native-field/symbolVoices').TorusTap|null):void;
  capture?(width:number,height:number):HTMLCanvasElement;
  withCleanFrame?<T>(copy:()=>T):T;
  inspect?(readParticles?:boolean):unknown;

@@ -2,7 +2,7 @@ import { applyBlueprintAnchors } from "./blueprintGeometry.mjs";
 import { stateSource } from "./sourceState.mjs";
 import { resolvedAutomation, automationLeader } from "./automationLinks.mjs";
 import { applyNativeDelta } from "./nativeDelta.mjs";
-import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG, DEFAULT_MEDIUM_CONFIG, DEFAULT_COLLISION_CONFIG, DEFAULT_PAIRWISE_CONFIG, DEFAULT_DEPTH_CONFIG } from "../engine/PointCloudField.mjs";
+import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG, DEFAULT_MEDIUM_CONFIG, DEFAULT_COLLISION_CONFIG, DEFAULT_PAIRWISE_CONFIG, DEFAULT_DEPTH_CONFIG } from "../engine/fieldDefaults.mjs";
 import { DEFAULT_GLYPH_VOLUME } from "../engine/glyphVolume.mjs";
 import { DEFAULT_SEQUENCE, DEFAULT_FORCES, DEFAULT_COMPOSITION, DEFAULT_CYMATIC_MEDIUM } from "../engine/fieldModel.mjs";
 import { makeSemanticChakraEntities } from "../engine/semantics/chakraPresets.mjs";
@@ -101,7 +101,9 @@ function projectNativeConfig(s) {
   cfg.color = { ...DEFAULT_COLOR_CONFIG, ...cfg.color, enabled: s.engine.colorEnabled !== false, mode: s.engine.colorMode, primaryColor: s.field.palette[0], secondaryColor: s.field.palette.at(-1), accentColor: s.field.palette[Math.floor(s.field.palette.length / 2)], customPaletteColors: s.engine.paletteSource === "legacy" ? void 0 : [...s.field.palette], backgroundColor: s.field.background, backgroundMode: s.engine.backgroundMode ?? "solid" };
   cfg.colorMode = s.engine.inkMode ?? cfg.colorMode;
   if (s.engine.paletteId) cfg.color.paletteId = s.engine.paletteId;
-  cfg.style = s.field.material === "print" ? "halftone" : "stipple"; if (s.field.material === "round") cfg.authoredMaterial = "round"; else delete cfg.authoredMaterial;
+  cfg.style = s.field.material === "print" ? "halftone" : "stipple";
+  if (s.field.material === "round") cfg.authoredMaterial = "round";
+  else delete cfg.authoredMaterial;
   cfg.dotShape = s.engine.dotShape ?? "circle";
   if (s.engine.grainProfile === false) cfg.material = void 0;
   const semanticAuthority = !!s.semanticField?.enabled;
@@ -111,7 +113,6 @@ function projectNativeConfig(s) {
   cfg.customImage = first?.source?.kind === "image" ? clone(first.source.image) : void 0;
   cfg.asciiGlyph = first?.source?.kind === "ascii" ? clone(first.source.ascii) : void 0;
   cfg.toroidalMorph = { ...DEFAULT_TOROIDAL_CONFIG, ...cfg.toroidalMorph, enabled: s.engine.morphEnabled, autoOscillate: s.engine.autoOscillate, trajectory: s.engine.trajectory, driveShape: s.engine.driveShape, interference: s.morph.law === "theta" ? "toroidalOnly" : s.morph.law };
-  const semanticFocus = s.composition.frequencyDriver === "focus" && semanticAuthority;
   const legacyFocus = s.composition.frequencyDriver === "focus" && !semanticAuthority;
   cfg.composition = { ...DEFAULT_COMPOSITION, ...cfg.composition, plane: s.engine.mediumPlane, layoutName: s.composition.layout, orchestration: {
     ...DEFAULT_COMPOSITION.orchestration,
@@ -125,6 +126,7 @@ function projectNativeConfig(s) {
   cfg.semanticField = s.semanticField ? clone(s.semanticField) : void 0;
   if (s.composition.frequencyDriver === "focus" && semanticAuthority) cfg.resonanceDrive = { kind: "semanticFocus", profileId: s.semanticField.profile.profileId };
   else if (s.composition.frequencyDriver === "automation" && s.engine.autoSweep) cfg.resonanceDrive = { kind: "sweep", glideS: cfg.cymatics.sweep?.glideS, dwellS: cfg.cymatics.sweep?.dwellS, direction: cfg.cymatics.sweep?.direction };
+  else if (s.composition.frequencyDriver === "torus") cfg.resonanceDrive = { kind: "torus", keySource: s.composition.keySource ?? "torus" };
   else if (s.composition.frequencyDriver !== "focus") cfg.resonanceDrive = { kind: "frequency" };
   else cfg.resonanceDrive = void 0;
   cfg.relational = { ...cfg.relational, enabled: s.engine.relationalEnabled, mode: s.engine.relationalMode };
@@ -168,6 +170,10 @@ function toNativeConfig(s) {
   if (!s.native) return applyBlueprintAnchors(s, projected);
   const baseline = s.native.projection ?? nativeSnapshotToJourney({ schemaVersion: CONFIG_SCHEMA_VERSION, config: s.native.config }).scenes[0].native.projection;
   return applyBlueprintAnchors(s, applyNativeDelta(s.native.config, baseline, projected));
+}
+function toRenderConfig(s) {
+  const config = toNativeConfig(s);
+  return s.entryOffset ? { ...config, sequenceOffsetS: s.entryOffset } : config;
 }
 const shellShape = (s) => s.kind === "glyph" ? "text" : s.kind === "primitive" ? s.primitive ?? "disc" : s.kind;
 function fromNativeEntity(e) {
@@ -219,14 +225,13 @@ function nativeSnapshotToJourney(raw, index = 0) {
   if (Number(value.schemaVersion ?? 0) > CONFIG_SCHEMA_VERSION) throw new Error(`Native schema ${value.schemaVersion} is newer than ${CONFIG_SCHEMA_VERSION}; the original is unchanged.`);
   const source = value.config ?? value;
   if (!source || !["entities", "fluid", "glyph", "spatialChakra", "particleCount"].some((k) => k in source)) throw new Error("Not a recognised native configuration");
-  const rawEntities = source.entities;
   const snapshot = migrateSnapshot(value, index);
   if (!snapshot) throw new Error("Native migration returned no scene");
   const cfg = snapshot.config, s = blankScene(snapshot.name), j = blankJourney();
   const completeNative = Number(value.schemaVersion) >= 4 && Number(value.schemaVersion) <= CONFIG_SCHEMA_VERSION && source.fluid && source.interaction && source.particleSize && typeof source.particleCount === "number" && Array.isArray(source.entities);
   s.native = { config: clone(completeNative ? source : cfg), original: clone(raw) };
   s.text = [];
-  s.engine = { ...DEFAULT_ENGINE_SETTINGS, inkMode: cfg.colorMode, templateGeometry: cfg.cymatics?.plateGeometry, templateDimension: cfg.cymatics?.dimension, resonanceEnabled: cfg.cymatics?.enabled ?? false, morphEnabled: cfg.toroidalMorph?.enabled ?? false, autoOscillate: cfg.toroidalMorph?.autoOscillate ?? true, trajectory: cfg.toroidalMorph?.trajectory ?? "linear", driveShape: cfg.toroidalMorph?.driveShape ?? "sine", relationalEnabled: cfg.relational?.enabled ?? false, relationalMode: cfg.relational?.mode ?? "orbital", mediumEnabled: cfg.medium?.enabled ?? false, mediumDimension: cfg.medium?.dimension ?? "2D", collisionEnabled: cfg.collision?.enabled ?? false, collisionMode: cfg.collision?.mode ?? "obstacle", pairwiseEnabled: cfg.pairwise?.enabled ?? false, pointerMode: cfg.interaction.mode, pointerClick: cfg.interaction.clickMode ?? "pulse", pointerClickStrength: cfg.interaction.clickStrength ?? 2.2, pointerClickRadius: (cfg.interaction.clickRadius ?? 180) / 400, colorMode: cfg.color?.mode ?? "monochrome", colorEnabled: cfg.color?.enabled ?? false, mediumPlane: cfg.composition?.plane ?? "vertical", autoSweep: cfg.cymatics?.sweep?.enabled ?? cfg.cymatics?.autoSweep ?? false, sweepDirection: cfg.cymatics?.sweep?.direction ?? "ascent", volumeEnabled: cfg.glyphVolume?.enabled ?? false, volumeProfile: cfg.glyphVolume?.profile ?? DEFAULT_GLYPH_VOLUME.profile, depthPerspective: (cfg.depth?.projection ?? DEFAULT_DEPTH_CONFIG.projection) === "perspective", depthOcclusion: cfg.depth?.occlusion ?? DEFAULT_DEPTH_CONFIG.occlusion, ...(cfg.fluid?.vortex3d !== undefined ? { vortex3d: cfg.fluid.vortex3d } : {}), ...(cfg.fluid?.dispersion3d !== undefined ? { dispersion3d: cfg.fluid.dispersion3d } : {}), depthTintColor: cfg.depth?.depthTintColor ?? DEFAULT_DEPTH_CONFIG.depthTintColor };
+  s.engine = { ...DEFAULT_ENGINE_SETTINGS, inkMode: cfg.colorMode, templateGeometry: cfg.cymatics?.plateGeometry, templateDimension: cfg.cymatics?.dimension, resonanceEnabled: cfg.cymatics?.enabled ?? false, morphEnabled: cfg.toroidalMorph?.enabled ?? false, autoOscillate: cfg.toroidalMorph?.autoOscillate ?? true, trajectory: cfg.toroidalMorph?.trajectory ?? "linear", driveShape: cfg.toroidalMorph?.driveShape ?? "sine", relationalEnabled: cfg.relational?.enabled ?? false, relationalMode: cfg.relational?.mode ?? "orbital", mediumEnabled: cfg.medium?.enabled ?? false, mediumDimension: cfg.medium?.dimension ?? "2D", collisionEnabled: cfg.collision?.enabled ?? false, collisionMode: cfg.collision?.mode ?? "obstacle", pairwiseEnabled: cfg.pairwise?.enabled ?? false, pointerMode: cfg.interaction.mode, pointerClick: cfg.interaction.clickMode ?? "pulse", pointerClickStrength: cfg.interaction.clickStrength ?? 2.2, pointerClickRadius: (cfg.interaction.clickRadius ?? 180) / 400, colorMode: cfg.color?.mode ?? "monochrome", colorEnabled: cfg.color?.enabled ?? false, mediumPlane: cfg.composition?.plane ?? "vertical", autoSweep: cfg.cymatics?.sweep?.enabled ?? cfg.cymatics?.autoSweep ?? false, sweepDirection: cfg.cymatics?.sweep?.direction ?? "ascent", volumeEnabled: cfg.glyphVolume?.enabled ?? false, volumeProfile: cfg.glyphVolume?.profile ?? DEFAULT_GLYPH_VOLUME.profile, depthPerspective: (cfg.depth?.projection ?? DEFAULT_DEPTH_CONFIG.projection) === "perspective", depthOcclusion: cfg.depth?.occlusion ?? DEFAULT_DEPTH_CONFIG.occlusion, ...cfg.fluid?.vortex3d !== void 0 ? { vortex3d: cfg.fluid.vortex3d } : {}, ...cfg.fluid?.dispersion3d !== void 0 ? { dispersion3d: cfg.fluid.dispersion3d } : {}, depthTintColor: cfg.depth?.depthTintColor ?? DEFAULT_DEPTH_CONFIG.depthTintColor };
   s.field.background = cfg.backgroundColor ?? cfg.color?.backgroundColor ?? "#f4f2eb";
   s.field.material = cfg.style === "halftone" ? "print" : cfg.authoredMaterial === "round" ? "round" : "ink";
   s.field.palette = cfg.color?.customPaletteColors?.length ? cfg.color.customPaletteColors.slice(0, 8) : [cfg.color?.primaryColor ?? "#252720", cfg.color?.accentColor ?? "#252720", cfg.color?.secondaryColor ?? "#252720"];
@@ -259,7 +264,9 @@ function nativeSnapshotToJourney(raw, index = 0) {
   s.composition.focus = cfg.composition?.orchestration.mode === "focus" ? "travelling" : "parallel";
   s.composition.carryTint = (cfg.composition?.orchestration.focusTintWeight ?? 0) > 0;
   s.composition.carryStation = cfg.composition?.orchestration.followStation ?? false;
-  s.composition.frequencyDriver = cfg.resonanceDrive?.kind === "semanticFocus" ? "focus" : cfg.resonanceDrive?.kind === "sweep" || cfg.cymatics?.sweep?.enabled || cfg.cymatics?.autoSweep || cfg.automations?.some((l) => l.enabled && l.path === "cymatics.frequencyHz") ? "automation" : cfg.cymatics?.followFocus ? "focus" : "manual";
+  s.composition.frequencyDriver = cfg.resonanceDrive?.kind === "torus" ? "torus" : cfg.resonanceDrive?.kind === "semanticFocus" ? "focus" : cfg.resonanceDrive?.kind === "sweep" || cfg.cymatics?.sweep?.enabled || cfg.cymatics?.autoSweep || cfg.automations?.some((l) => l.enabled && l.path === "cymatics.frequencyHz") ? "automation" : cfg.cymatics?.followFocus ? "focus" : "manual";
+  if (cfg.resonanceDrive?.kind === "torus") s.composition.keySource = cfg.resonanceDrive.keySource ?? "torus";
+  else delete s.composition.keySource;
   s.morph.law = cfg.toroidalMorph?.interference === "toroidalOnly" ? "theta" : cfg.toroidalMorph?.interference ?? "theta";
   s.automation = (cfg.automations ?? []).map((l) => {
     const b = NATIVE_BINDINGS.find((b2) => b2.path === l.path), eb = entityTargets(s).find((b2) => b2.path === l.path);
@@ -311,5 +318,6 @@ export {
   nativeExport,
   nativeSnapshotToJourney,
   toNativeConfig,
-  toNativeEntity
+  toNativeEntity,
+  toRenderConfig
 };

@@ -3,7 +3,7 @@
 // mode's tracks from its registration (modeTracks.ts) and draws one of the two shared views. It knows no mode.
 import {useTimelinePanePresentation, useTimelineReading, type TimelineHostReading} from '../../projections/timelinePaneHost'
 import {useEffect} from 'react'
-import {MODE_TRACKS} from './modeTracks'
+import {MODE_OWNERS, MODE_TRACKS} from './modeTracks'
 import {publishTrackRows} from '../keys/keyDoors'
 import {publishShownTracks} from './tracksDoor'
 import {SessionGrid} from './SessionGrid'
@@ -22,7 +22,10 @@ export function TracksPane({pinnedRef}: {pinnedRef?: string} = {}) {
 /** A pinned pane shows its pinned clip as selected; a following one shows THE selection. */
 function ModeTracksView({reading, pinnedRef}: {reading: TimelineHostReading; pinnedRef?: string}) {
   const presented = useTimelinePanePresentation()
-  const set = MODE_TRACKS[reading.mode](reading)
+  const projected = MODE_TRACKS[reading.mode](reading)
+  // Each set names whose ops its object acts are, for the acts its owner does not carry yet (frame/menu/objectActions.ts).
+  const set = projected && !('waiting' in projected) && !projected.actions?.owner
+    ? {...projected, actions: {...projected.actions, owner: MODE_OWNERS[reading.mode]}} : projected
   const selection = {ref: pinnedRef ?? reading.selectedRef, select: reading.selectTrackItem}
   // The row keys launch the stops drawn here (F9), so they read the set this pane shows.
   useEffect(() => { publishTrackRows(set && !('waiting' in set) ? {set, presented} : null); return () => publishTrackRows(null) })

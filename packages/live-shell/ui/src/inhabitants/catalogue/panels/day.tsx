@@ -207,7 +207,7 @@ const faceName = (v: ViewProps['v']) => { const f = numOf(v, 'face'); return f =
 const openToday = (p: ViewProps, label = 'Open today') => <Action label={label} does="Asks Central to open today's Day. Used when the Day it points at is stale."
   onPress={() => p.set('openToday', true)} disabled={on(p.v, 'canOpenToday') ? undefined : 'Today is open, or Central cannot open it now.'} />
 /** Close now (manual §18.2): Central closes the Day; what still plays carries into the next Day. The owner reports `canClose`. */
-const closeNow = (p: ViewProps) => <Action label="Close now" does="Closes the Day through Central; what still plays carries into the next Day."
+const closeNow = (p: ViewProps) => <Action hold label="Close now" does="Closes the Day through Central; what still plays carries into the next Day."
   onPress={() => p.set('closeNow', true)} disabled={on(p.v, 'canClose') ? undefined : 'The Day shown is closed already, or is one you selected.'} />
 const toggle = (p: ViewProps, key: string, label: string, does: string, tone?: 'value') => {
   const now = boolOf(p.v, key)

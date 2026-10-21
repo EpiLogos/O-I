@@ -56,7 +56,7 @@ function mediumTrilinearWeights(fx, fy, fz) {
     fx * fy * fz
   ];
 }
-function mediumSplatSliceWeight(fz, n, offset) {
+function mediumSplatSliceWeight(fz, _n, offset) {
   const target = Math.round(fz) + offset;
   return Math.max(0, 1 - Math.abs(fz - target));
 }

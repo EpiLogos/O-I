@@ -349,6 +349,7 @@ export function qlDeckBinding(deck: QlDeckState): DesignBinding {
   return {
     id: QL_DECK_DEVICE_ID,
     values: qlDeckValues(deck),
+    waiting: deck.busy && !deck.result,
     writes: key => (live && ACT_KEYS.includes(key)) || (unopened && key === 'theme'),
     standing,
     local,

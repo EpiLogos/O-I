@@ -294,7 +294,8 @@ const kindToggles = (p: ViewProps) => {
     onChange={x => p.set('kinds', canon(x ? [...(on ?? []), k.id] : (on ?? []).filter(o => o !== k.id)))} {...st(p, 'kinds')} />)
 }
 
-const head = (p: ViewProps) => ({light: lightOf(p), onFold: p.nav.fold, onFull: p.nav.full})
+const atWork = (p: ViewProps) => lightOf(p) === 'lit' && (numOf(p.v, 'running') ?? 0) > 0
+const head = (p: ViewProps) => ({light: lightOf(p), busy: atWork(p), onFold: p.nav.fold, onFull: p.nav.full})
 
 // ---------------------------------------------------------------- the frame list, in the pane
 
@@ -486,7 +487,7 @@ export const design: DesignedDevice = {
 
   widget: p => {
     const sc = scopeOf(p.v), read = has(p.v, 'frames'), lines = sc.passing.slice(-TILE_LINES)
-    return <Tile title="Frames" light={lightOf(p)} span={2} onFull={p.nav.full} onClose={p.nav.close}>
+    return <Tile title="Frames" light={lightOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full} onClose={p.nav.close}>
       <div className="fm-tape" aria-label="The last frames">
         {!read ? <p className="fm-empty">No reading of the frames.</p>
           : sc.scoped.length === 0 ? <p className="fm-empty">{sc.note ?? 'No frames for this session.'}</p>

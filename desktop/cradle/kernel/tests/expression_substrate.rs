@@ -549,8 +549,7 @@ fn rich_material() -> Value {
         "force":{"kind":"vortex","strength":2.5,"radius":0.6,"spin":1.2},
         "tint":"#c0ffee","tintWeight":0.7,"size":{"x":0.65,"y":0.86},"scale":1.2,"share":2,"rotation":90,
         "native":{"id":"expression:cast:entity:nous","params":{"glyphWeight":0.6}},
-        "sound":{"enabled":true,"followCymatic":false,"frequencyHz":432,"gain":0.3,"waveform":"triangle",
-            "attack":0.05,"release":1.5,"pan":-0.25}
+        "sound":{"enabled":true,"carry":{"kind":"mode","ref":"maqam/00"},"gain":0.3,"attack":0.05,"release":1.5}
     })
 }
 
@@ -577,8 +576,8 @@ fn profiles_carry_the_full_authoring_material_and_refuse_unknown_keys() {
     );
     assert_eq!(defined["state"], "profile");
     assert_eq!(
-        defined["resolved_defaults"]["material"]["value"]["sound"]["frequencyHz"],
-        432
+        defined["resolved_defaults"]["material"]["value"]["sound"]["carry"],
+        json!({"kind":"mode","ref":"maqam/00"})
     );
     assert_eq!(
         defined["resolved_defaults"]["material"]["value"]["force"]["kind"],
@@ -618,6 +617,35 @@ fn profiles_carry_the_full_authoring_material_and_refuse_unknown_keys() {
         (
             json!({"sound":{"enabled":true,"script":"x"}}),
             "Unsupported sound field",
+        ),
+        // The oscillator's fields are refused in words, one by one; none is ignored.
+        (
+            json!({"sound":{"enabled":true,"frequencyHz":432}}),
+            "frequencyHz was removed: a symbol's voice carries the torus's sound and has no pitch of its own",
+        ),
+        (
+            json!({"sound":{"enabled":true,"followCymatic":false}}),
+            "followCymatic was removed",
+        ),
+        (
+            json!({"sound":{"enabled":true,"waveform":"triangle"}}),
+            "waveform was removed: a symbol's voice has no oscillator",
+        ),
+        (
+            json!({"sound":{"enabled":true,"pan":-0.25}}),
+            "pan was removed: a symbol's voice stands where its symbol stands",
+        ),
+        (
+            json!({"sound":{"enabled":true,"carry":{"kind":"oscillator","ref":"x"}}}),
+            "Sound carry kind",
+        ),
+        (
+            json!({"sound":{"enabled":true,"carry":{"kind":"mode","ref":""}}}),
+            "Sound carry ref",
+        ),
+        (
+            json!({"sound":{"enabled":true,"carry":{"kind":"mode","ref":"x","hz":3}}}),
+            "Unsupported sound carry field hz",
         ),
         (
             json!({"force":{"kind":"explode","strength":1}}),

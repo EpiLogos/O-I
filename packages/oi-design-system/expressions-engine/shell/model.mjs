@@ -2,7 +2,10 @@ import { validateResearchMaterial } from "./researchMaterial.mjs";
 import { validateBlueprint } from "./blueprintGeometry.mjs";
 import { globalPath, POINTER_PATHS } from "./sharedSettings.mjs";
 import { validateAutomationLinks } from "./automationLinks.mjs";
-import { validateWorkspace, defaultWorkspace } from "./workspacePreferences.mjs";
+import { migrateEntitySound } from "./native-field/entitySound.mjs";
+import { validateMarkers, validateLoopRegion } from "./journeyMarkers.mjs";
+import { validateTransitionSpec } from "./transitions.mjs";
+import { validateWorkspace, validateDeviceWidgets, defaultWorkspace } from "./workspacePreferences.mjs";
 import { validateTracks } from "./propertyTracks.mjs";
 const ROLE_NAME = /^[A-Za-z0-9_.-]{1,64}$/;
 function validateRoleSlot(value) {
@@ -13,6 +16,36 @@ function validateRoleSlot(value) {
   }
 }
 const DEFAULT_ENGINE_SETTINGS = { paletteSource: "custom", grainProfile: true, backgroundMode: "solid", resonatorMode: "resonator", focusOrder: "listed", dotShape: "circle", autoFitSizes: true, mediumEnabled: false, collisionEnabled: false, collisionMode: "obstacle", pairwiseEnabled: false, fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, resonanceEnabled: true, morphEnabled: false, trajectory: "toroidalHopf", driveShape: "sine", autoOscillate: true, relationalEnabled: false, relationalMode: "orbital", pointerMode: "repel", pointerClick: "pulse", pointerClickStrength: 2.2, pointerClickRadius: 0.45, colorMode: "linearGradient", colorEnabled: true, mediumPlane: "vertical", mediumDimension: "2D", autoSweep: false, sweepDirection: "ascent" };
+const SCENE_SIGNATURES = ["5:3", "4:2", "3:3", "2:1"];
+const SCENE_LAUNCH_QUANTIZE = ["global", "now", "beat", "scene"];
+function sceneClipRefusal(value) {
+  if (value === void 0) return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "The scene's clip settings are an object.";
+  const c = value;
+  for (const key of Object.keys(c)) if (!["colour", "enabled", "signature", "locked", "quantize"].includes(key)) return `A scene has no clip setting ${key}.`;
+  if (c.colour !== void 0 && !(typeof c.colour === "string" && /^(var\(--[a-z0-9-]{1,40}\)|#[\da-f]{6})$/i.test(c.colour))) return "A scene's colour is a palette colour.";
+  if (c.enabled !== void 0 && typeof c.enabled !== "boolean") return "A scene plays or does not (true or false).";
+  if (c.locked !== void 0 && typeof c.locked !== "boolean") return "A scene is locked or not (true or false).";
+  if (c.signature !== void 0 && !SCENE_SIGNATURES.includes(c.signature)) return `A scene's ratio of hold to change is one of ${SCENE_SIGNATURES.join(", ")}.`;
+  if (c.quantize !== void 0 && !SCENE_LAUNCH_QUANTIZE.includes(c.quantize)) return `A scene's launch lands at one of ${SCENE_LAUNCH_QUANTIZE.join(", ")}.`;
+  return null;
+}
+const SCENE_DURATION_MIN = 1;
+const SCENE_DURATION_MAX = 3600;
+const SCENE_TRANSITION_MIN = 0;
+const SCENE_TRANSITION_MAX = 30;
+const SCENE_TIMELINE_FACTS = ["duration", "transition", "entryOffset", "transitionSpec", "breakAtEnd"];
+function canonicalJson(v) {
+  if (Array.isArray(v)) return "[" + v.map((x) => canonicalJson(x)).join(",") + "]";
+  if (v && typeof v === "object") {
+    const o = v;
+    return "{" + Object.keys(o).filter((k) => o[k] !== void 0).sort().map((k) => JSON.stringify(k) + ":" + canonicalJson(o[k])).join(",") + "}";
+  }
+  return JSON.stringify(v) ?? "null";
+}
+function sceneContentDigest(scene) {
+  return canonicalJson(Object.fromEntries(Object.entries(scene).filter(([key]) => !SCENE_TIMELINE_FACTS.includes(key))));
+}
 const clone = (v) => typeof structuredClone === "function" ? structuredClone(v) : JSON.parse(JSON.stringify(v));
 const uid = (prefix = "id") => prefix + "-" + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 12));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -101,7 +134,7 @@ function blankScene(name = "Untitled scene") {
     field: { background: "#f4f2eb", palette: ["#252720", "#252720"], material: "ink", params: { ...DEFAULT_PARAMS } },
     entities: [],
     text: [],
-    composition: { layout: "free", plane: "XY", focus: "parallel", focusDuration: 4, carryTint: true, carryStation: false, frequencyDriver: "manual" },
+    composition: { layout: "free", plane: "XY", focus: "parallel", focusDuration: 4, carryTint: true, carryStation: false, frequencyDriver: "torus", keySource: "torus" },
     morph: { thetaRate: 0.08, phiRate: 0.13, thetaOffset: 0, phiOffset: 0, law: "theta", depth: 1, dwell: 0.3 },
     automation: []
   };
@@ -281,6 +314,11 @@ function validateJourney(value) {
   };
   inspect(value);
   const j = clone(value);
+  const receipts = [];
+  if (j.soundMigration !== void 0) {
+    if (!Array.isArray(j.soundMigration) || j.soundMigration.length > 1024 || j.soundMigration.some((r) => !r || typeof r.scene !== "string" || typeof r.entity !== "string" || !Array.isArray(r.dropped) || typeof r.words !== "string")) throw new Error("Invalid sound migration receipts.");
+    receipts.push(...j.soundMigration);
+  }
   if (j.schema !== "oi.journey" || j.version !== 1) throw new Error("This is not a journey-schema 1 document. Use Import for native schema-4 configurations.");
   const finite = (n, a, b) => typeof n === "number" && Number.isFinite(n) && n >= a && n <= b;
   const str = (s, max = 5e3) => typeof s === "string" && s.length <= max;
@@ -300,6 +338,7 @@ function validateJourney(value) {
   };
   if (j.shared) {
     j.shared.toolbelt = validateWorkspace({ version: 1, appearance: "scene", entries: j.shared.toolbelt }).entries;
+    if (j.shared.devices !== void 0) j.shared.devices = validateDeviceWidgets(j.shared.devices);
     for (const bucket of ["values", "pointer"]) {
       const values = j.shared[bucket];
       if (!values || typeof values !== "object" || Array.isArray(values) || Object.keys(values).length > 1024) throw new Error("Invalid expression properties");
@@ -314,9 +353,23 @@ function validateJourney(value) {
     if (s.propertyTakeRange && (!Number.isFinite(s.propertyTakeRange.start) || !Number.isFinite(s.propertyTakeRange.end) || s.propertyTakeRange.start < 0 || s.propertyTakeRange.end <= s.propertyTakeRange.start || s.propertyTakeRange.end > 3600)) throw new Error("Invalid property take interval");
     if (s.toolbelt !== void 0) s.toolbelt = validateWorkspace({ version: 1, appearance: "scene", entries: s.toolbelt }).entries;
     if (s.propertyTracks !== void 0) s.propertyTracks = validateTracks(s.propertyTracks);
+    if (s.transitionSpec !== void 0) {
+      const spec = validateTransitionSpec(s.transitionSpec);
+      if (spec) s.transitionSpec = spec;
+      else delete s.transitionSpec;
+    }
+    if (s.breakAtEnd !== void 0) {
+      if (typeof s.breakAtEnd !== "boolean") throw new Error("A loop exit is on or off.");
+      if (!s.breakAtEnd) delete s.breakAtEnd;
+    }
     s.engine = { ...DEFAULT_ENGINE_SETTINGS, ...s.engine };
-    if (!safeId(s.id) || ids.has(s.id) || !str(s.name, 160) || !str(s.character) || !finite(s.duration, 1, 3600) || !finite(s.transition, 0, 30)) throw new Error("Invalid or duplicate scene.");
+    if (!safeId(s.id) || ids.has(s.id) || !str(s.name, 160) || !str(s.character) || !finite(s.duration, SCENE_DURATION_MIN, SCENE_DURATION_MAX) || !finite(s.transition, SCENE_TRANSITION_MIN, SCENE_TRANSITION_MAX)) throw new Error("Invalid or duplicate scene.");
+    if (s.entryOffset !== void 0 && !finite(s.entryOffset, 0, SCENE_DURATION_MAX)) throw new Error("Invalid scene entry offset.");
     ids.add(s.id);
+    {
+      const refused = sceneClipRefusal(s.clip);
+      if (refused) throw new Error(refused);
+    }
     if (!s.view) s.view = { mode: "2d", yaw: 0, pitch: 0, zoom: 1, panX: 0, panY: 0 };
     if (s.view.nativeScaffold !== void 0 && !["off", "axis", "grid"].includes(s.view.nativeScaffold)) throw new Error("Invalid native scaffold.");
     if (!["2d", "3d"].includes(s.view.mode) || !finite(s.view.yaw, -1e3, 1e3) || !finite(s.view.pitch, -1e3, 1e3) || !finite(s.view.zoom, 0.01, 100) || !finite(s.view.panX, -10, 10) || !finite(s.view.panY, -10, 10)) throw new Error("Invalid scene framing.");
@@ -334,6 +387,11 @@ function validateJourney(value) {
       if (!e.force || !["none", "attract", "repel", "vortex"].includes(e.force.kind) || !finite(e.force.strength, -1e3, 1e3) || !finite(e.force.radius, 1e-3, 125) || !finite(e.force.spin, -1e3, 1e3) || !(e.station === null || Number.isInteger(e.station) && e.station >= 0 && e.station < 7)) throw new Error("Invalid entity influence.");
       validateSource(e.source);
       validateRoleSlot(e);
+      if (e.sound !== void 0) {
+        const m = migrateEntitySound(e.sound);
+        e.sound = m.sound;
+        if (m.migration && !receipts.some((r) => r.scene === s.id && r.entity === e.id && r.saved !== true)) receipts.push({ scene: s.id, entity: e.id, ...m.migration });
+      }
       if (!e.sequence || e.sequence.sourcesVersion !== void 0 && e.sequence.sourcesVersion !== 1 || typeof e.sequence.enabled !== "boolean" || !["seconds", "morph"].includes(e.sequence.clock) || !Array.isArray(e.sequence.steps) || e.sequence.steps.length > 32) throw new Error("Invalid sequence.");
       for (const l of e.layers ?? []) if (typeof l.id !== "string" || !l.id || !finite(l.z, -100, 100) || l.scale !== void 0 && !finite(l.scale, 0.01, 10) || typeof l.text !== "string") throw new Error("Invalid layer.");
       const baseLayerSources = new Map((e.layers ?? []).map((l) => [l.id, JSON.stringify(l.source)]));
@@ -389,11 +447,12 @@ function validateJourney(value) {
     }
     if (s.resonanceDrive) {
       const d = s.resonanceDrive;
-      if (!["frequency", "sweep", "semanticFocus"].includes(d.kind)) throw new Error("Invalid resonance driver.");
+      if (!["frequency", "sweep", "semanticFocus", "torus"].includes(d.kind)) throw new Error("Invalid resonance driver.");
+      if (d.kind === "torus" && d.keySource !== void 0 && !["torus", "sky", "manual"].includes(d.keySource)) throw new Error("Invalid torus resonance driver.");
       if (d.kind === "semanticFocus" && !safeId(d.profileId)) throw new Error("Invalid semantic resonance driver.");
       if (d.kind === "sweep" && ([d.glideS, d.dwellS].some((v) => v !== void 0 && !finite(v, 0, 3600)) || d.direction !== void 0 && !["ascent", "descent", "pingpong"].includes(d.direction))) throw new Error("Invalid resonance sweep.");
     }
-    if (!s.composition || !["XY", "XZ", "YZ"].includes(s.composition.plane) || !["parallel", "travelling"].includes(s.composition.focus) || !finite(s.composition.focusDuration, 0.01, 3600) || !["manual", "focus", "automation"].includes(s.composition.frequencyDriver)) throw new Error("Invalid composition.");
+    if (!s.composition || !["XY", "XZ", "YZ"].includes(s.composition.plane) || !["parallel", "travelling"].includes(s.composition.focus) || !finite(s.composition.focusDuration, 0.01, 3600) || !["torus", "manual", "focus", "automation"].includes(s.composition.frequencyDriver) || s.composition.keySource !== void 0 && !["torus", "sky", "manual"].includes(s.composition.keySource) || s.composition.symbolVoices !== void 0 && typeof s.composition.symbolVoices !== "boolean") throw new Error("Invalid composition.");
     if (s.composition.blueprint) validateBlueprint(s.composition.blueprint);
     if (!s.morph || !["theta", "product", "sum", "beat"].includes(s.morph.law) || !finite(s.morph.thetaRate, -100, 100) || !finite(s.morph.phiRate, -100, 100) || !finite(s.morph.thetaOffset, -1e3, 1e3) || !finite(s.morph.phiOffset, -1e3, 1e3) || !finite(s.morph.depth, -10, 10) || !finite(s.morph.dwell, 0, 0.99)) throw new Error("Invalid morph clock.");
     validateAutomationLinks(s.automation);
@@ -406,10 +465,20 @@ function validateJourney(value) {
     const saved = Object.entries(j.savedScenes);
     if (saved.length > 64 || saved.some(([id, s]) => !ids.has(id) || !s || s.id !== id)) throw new Error("Saved scene does not match its working scene.");
     if (saved.length) {
-      const checked = validateJourney({ ...j, savedScenes: void 0, scenes: saved.map(([, s]) => s) });
+      const checked = validateJourney({ ...j, savedScenes: void 0, soundMigration: void 0, scenes: saved.map(([, s]) => s) });
       j.savedScenes = Object.fromEntries(checked.scenes.map((s) => [s.id, s]));
+      for (const r of checked.soundMigration ?? []) if (!receipts.some((x) => x.scene === r.scene && x.entity === r.entity && x.saved === true)) receipts.push({ ...r, saved: true });
     }
   }
+  const duration = j.scenes.reduce((n, s) => n + s.duration, 0);
+  if (j.markers !== void 0) j.markers = validateMarkers(j.markers, duration);
+  if (j.loopRegion !== void 0) {
+    const region = validateLoopRegion(j.loopRegion, duration);
+    if (region) j.loopRegion = region;
+    else delete j.loopRegion;
+  }
+  if (receipts.length) j.soundMigration = receipts;
+  else delete j.soundMigration;
   return clone(j);
 }
 const COLLECTION_MANIFEST_SCHEMA = "oi.legacy-collections/v1";
@@ -484,6 +553,13 @@ export {
   DEFAULT_ENGINE_SETTINGS,
   DEFAULT_PARAMS,
   ROLE_NAME,
+  SCENE_DURATION_MAX,
+  SCENE_DURATION_MIN,
+  SCENE_LAUNCH_QUANTIZE,
+  SCENE_SIGNATURES,
+  SCENE_TIMELINE_FACTS,
+  SCENE_TRANSITION_MAX,
+  SCENE_TRANSITION_MIN,
   blankJourney,
   blankScene,
   chakraEntities,
@@ -495,6 +571,8 @@ export {
   oiMark,
   pin,
   rethemeMark,
+  sceneClipRefusal,
+  sceneContentDigest,
   sevenCentres,
   smallLanguage,
   uid,

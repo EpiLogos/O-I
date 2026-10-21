@@ -1,4 +1,5 @@
 import test from 'node:test'
+import {readFileSync} from 'node:fs'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 import {createElement} from 'react'
@@ -18,11 +19,12 @@ const [registry, views, catalogue, sound, boundary, appSound] = await Promise.al
   import('../../../expressions-boundary/src/nativeEntitySound.ts'),
   import(new URL('desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound.ts', root)),
 ])
-const {validateEntitySound, SOUND_FIELDS, SOUND_WAVEFORMS, DEFAULT_ENTITY_SOUND} = appSound
+const {validateEntitySound, SOUND_FIELDS, DEFAULT_ENTITY_SOUND} = appSound
 const {validateNativeEntitySoundChange} = boundary
 const {
   SOUND_GROUPS, SOUND_NUMBERS, numberProblem, parseNumberText, snapValue, steppedValue, resolvedSound, soundWithField, addedSound, soundChange,
-  replyRefusal, soundSummaryText, LOCKED_NOTE, timeToX, xToTime, envelopeValueAt, envelopeGeometry, waveformPath, panX, ENVELOPE, soundFaceModel,
+  replyRefusal, soundSummaryText, LOCKED_NOTE, timeToX, xToTime, envelopeValueAt, envelopeGeometry, ENVELOPE, soundFaceModel,
+  voiceChoices, voiceChoiceNote, carryValue, carryFromValue,
 } = sound
 
 const ENGINE = {mediumEnabled: false, resonanceEnabled: false, collisionEnabled: false, pairwiseEnabled: false, morphEnabled: false,
@@ -30,7 +32,8 @@ const ENGINE = {mediumEnabled: false, resonanceEnabled: false, collisionEnabled:
 const cell = (over = {}) => ({id: 'entity-a', name: 'Cell A', kind: 'formation', enabled: true, position: {x: 0, y: 0, z: 0}, size: {x: 1, y: 1},
   rotation: 0, shape: 'circle', text: '', share: 1, tint: '#000', tintWeight: 1, locked: false, station: null,
   force: {kind: 'none', strength: 0, radius: 1, spin: 0}, sequence: {enabled: false, clock: 'seconds', steps: []}, ...over})
-const SOUND = {enabled: true, frequencyHz: 220, followCymatic: false, gain: 0.2, waveform: 'sine', attack: 0.08, release: 0.8, pan: 0}
+const CARRY = {kind: 'mode', ref: "chromatic/L0'/aeolian"}
+const SOUND = {enabled: true, carry: CARRY, gain: 0.2, attack: 0.08, release: 0.8}
 function reading({selection = [], entities = [cell()]} = {}) {
   const scene = {name: 'Fixture', entities, automation: [], engine: {...ENGINE}, field: {background: '#ffffff', palette: ['#111111'], material: 'ink', params: {}}}
   return {
@@ -74,22 +77,22 @@ test('the activator is the object sound\'s own enabled flag, undefined while no 
   assert.equal(soundFaceModel.enabled(r, cell()), undefined)
 })
 
-test('the strip summary is read from the reading: pitch or cymatic, waveform and gain, with off when disabled', () => {
-  assert.equal(soundSummaryText(SOUND), '220 Hz · sine · gain 0.2')
-  assert.equal(soundSummaryText({...SOUND, enabled: false, frequencyHz: 330, waveform: 'triangle', gain: 0.5}), 'off · 330 Hz · triangle · gain 0.5')
-  assert.equal(soundSummaryText({enabled: true, followCymatic: true, gain: 0.2, waveform: 'sine'}), 'cymatic pitch · sine · gain 0.2')
+test('the strip summary is read from the reading: what the voice carries and its gain, with off when disabled', () => {
+  assert.equal(soundSummaryText(SOUND), "mode chromatic/L0'/aeolian · gain 0.2")
+  assert.equal(soundSummaryText({...SOUND, enabled: false, carry: {kind: 'name', ref: 'shem'}, gain: 0.5}), 'off · name shem · gain 0.5')
+  assert.equal(soundSummaryText({enabled: true, gain: 0.2}), 'no name or mode yet · gain 0.2', 'a voice that carries nothing says so')
   assert.equal(soundSummaryText(undefined), 'No sound')
   const r = reading({selection: ['entity-a']})
-  assert.equal(soundFaceModel.strip.summary(r, withSound(SOUND)), '220 Hz · sine · gain 0.2')
+  assert.equal(soundFaceModel.strip.summary(r, withSound(SOUND)), "mode chromatic/L0'/aeolian · gain 0.2")
   // Through the catalogue (the rack and pool path): one selected object.
   const device = catalogue.deviceCatalogue().find(row => row.family === 'sound')
-  assert.equal(device.summary(reading({selection: ['entity-a'], entities: [withSound(SOUND)]})), '220 Hz · sine · gain 0.2')
+  assert.equal(device.summary(reading({selection: ['entity-a'], entities: [withSound(SOUND)]})), "mode chromatic/L0'/aeolian · gain 0.2")
   assert.equal(device.summary(reading()), 'Select one object to act on its Sound')
 })
 
 test('the bounds are the app validator\'s: every edge is admitted and one step outside is refused, for the message and for the validator alike', () => {
   for (const spec of SOUND_NUMBERS) {
-    const step = spec.field === 'frequencyHz' ? 1 : 0.001
+    const step = 0.001
     for (const value of [spec.min, spec.max]) {
       assert.equal(numberProblem(spec, value), null, `${spec.field}=${value} is admitted`)
       assert.doesNotThrow(() => validateEntitySound({enabled: true, [spec.field]: value}))
@@ -101,11 +104,10 @@ test('the bounds are the app validator\'s: every edge is admitted and one step o
       assert.throws(() => validateEntitySound({enabled: true, [spec.field]: value}), /Invalid entity sound/)
     }
   }
-  assert.equal(numberProblem(SPEC.pan, -1), null)
   assert.equal(numberProblem(SPEC.gain, 1.5), 'Gain must be from 0 to 1.')
-  assert.equal(numberProblem(SPEC.frequencyHz, 0), 'Frequency must be from 1 to 20000 Hz.')
   assert.equal(numberProblem(SPEC.attack, 11), 'Attack must be from 0 to 10 s.')
-  assert.equal(numberProblem(SPEC.pan, 2), 'Pan must be from -1 to 1.')
+  assert.equal(numberProblem(SPEC.release, 31), 'Release must be from 0 to 30 s.')
+  assert.equal(SPEC.frequencyHz, undefined, 'no Frequency control'); assert.equal(SPEC.pan, undefined, 'and no Pan')
 })
 
 test('exact-value text is parsed strictly: blank and non-numeric text never become a number', () => {
@@ -117,32 +119,58 @@ test('exact-value text is parsed strictly: blank and non-numeric text never beco
 })
 
 test('arrow steps use the control\'s step, Shift multiplies by ten, a bound that cannot move returns null, and floats never carry noise', () => {
-  assert.equal(steppedValue(SPEC.frequencyHz, 220, 1, false), 221)
-  assert.equal(steppedValue(SPEC.frequencyHz, 220, -1, true), 210)
-  assert.equal(steppedValue(SPEC.frequencyHz, 20000, 1, false), null)
   assert.equal(steppedValue(SPEC.gain, 0.2, -1, false), 0.19)
   assert.equal(steppedValue(SPEC.gain, 0.2, -1, true), 0.1)
   assert.equal(steppedValue(SPEC.gain, 0.1, 1, false), 0.11, 'no 0.11000000000000001')
   assert.equal(steppedValue(SPEC.gain, 0, -1, false), null)
-  assert.equal(steppedValue(SPEC.pan, 1, 1, true), null)
-  assert.equal(steppedValue(SPEC.pan, 0.95, 1, true), 1, 'a Shift step clamps to the bound')
-  assert.equal(snapValue(SPEC.frequencyHz, 0), 1)
-  assert.equal(snapValue(SPEC.frequencyHz, 20001), 20000)
+  assert.equal(steppedValue(SPEC.release, 30, 1, true), null)
+  assert.equal(steppedValue(SPEC.release, 29.95, 1, true), 30, 'a Shift step clamps to the bound')
+  assert.equal(snapValue(SPEC.gain, 1.5), 1)
   assert.equal(snapValue(SPEC.attack, 0.123), 0.12)
 })
 
-test('coupling: a fixed pitch clears Follow cymatic, Follow restores a pitch when none is set, and no input is mutated', () => {
-  const base = {enabled: true, followCymatic: true, gain: 0.2, waveform: 'sine', attack: 0.08, release: 0.8, pan: 0}
+test('the voice choice: a carry is one whole-sound change, the choice is the owner\'s catalogue, and no input is mutated', () => {
+  const base = {enabled: true, gain: 0.2, attack: 0.08, release: 0.8}
   const snapshot = structuredClone(base)
-  const fixed = soundWithField(base, 'frequencyHz', 330)
-  assert.deepEqual(fixed, {...base, frequencyHz: 330, followCymatic: false})
+  const carried = soundWithField(base, 'carry', CARRY)
+  assert.deepEqual(carried, {...base, carry: CARRY})
   assert.deepEqual(base, snapshot)
-  assert.deepEqual(soundWithField(base, 'followCymatic', false), {...base, followCymatic: false, frequencyHz: DEFAULT_ENTITY_SOUND.frequencyHz})
-  assert.deepEqual(soundWithField({...fixed, followCymatic: false}, 'followCymatic', true), {...fixed, followCymatic: true})
-  assert.equal(soundWithField(fixed, 'gain', 0.5).frequencyHz, 330, 'a gain edit keeps the pitch')
-  assert.throws(() => soundWithField(base, 'frequencyHz', 0), /Invalid entity sound/)
-  assert.throws(() => soundWithField(base, 'followCymatic', 'yes'), /followCymatic must be a boolean/)
-  assert.deepEqual(addedSound(), {...DEFAULT_ENTITY_SOUND, enabled: true}, 'Add sound sends the app defaults, sounding')
+  assert.deepEqual(soundWithField(carried, 'carry', null), base, 'None yet removes the carry')
+  assert.equal(soundWithField(carried, 'gain', 0.5).carry.ref, CARRY.ref, 'a gain edit keeps what the voice carries')
+  assert.throws(() => soundWithField(base, 'carry', {kind: 'oscillator', ref: 'x'}), /Invalid entity sound/)
+  assert.throws(() => soundWithField(base, 'gain', 3), /Invalid entity sound/)
+  assert.deepEqual(addedSound(), {...DEFAULT_ENTITY_SOUND, enabled: true}, 'Add sound sends the app defaults, sounding, and carrying nothing yet')
+  assert.equal('carry' in addedSound(), false)
+  assert.equal(carryValue(CARRY), "mode:chromatic/L0'/aeolian"); assert.equal(carryValue(null), '')
+  assert.deepEqual(carryFromValue("mode:chromatic/L0'/aeolian"), CARRY); assert.deepEqual(carryFromValue('name:shem'), {kind: 'name', ref: 'shem'}); assert.equal(carryFromValue(''), null)
+  assert.throws(() => carryFromValue('oscillator:x'), /mode or a name/)
+})
+
+const fixtureJson = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/expressions-app/field-studies-journeys/tests/fixtures/ql-music-modes-trimmed.json', import.meta.url), 'utf8'))
+const catalogueOf = async () => { const {parseQlMusicModes} = await import('../src/live/modes.ts'); const parsed = parseQlMusicModes(structuredClone(fixtureJson)); assert.ok(parsed.ok, parsed.refusal); return parsed.catalogue }
+
+test('the "Name or mode" row lists the catalogue\'s modes as it groups them and the store\'s names with the status it gives each, and says why a voice is silent', async () => {
+  const catalogue = await catalogueOf()
+  const groups = voiceChoices(catalogue)
+  assert.deepEqual(groups.map(group => group.label), ['No carry', "L0' on the chromatic basis", "L0' on the fifths basis", 'maqam', 'names of the store'])
+  assert.deepEqual(groups[0].options, [{value: '', label: 'None yet'}])
+  assert.deepEqual(groups[1].options.map(option => option.value), ["mode:chromatic/L0'/aeolian", "mode:chromatic/L0'/dorian"])
+  assert.deepEqual(groups[3].options.map(option => option.value), ['mode:maqam/00', 'mode:maqam/01'])
+  assert.deepEqual(groups[4].options, [{value: 'name:shem', label: 'shem · absent'}, {value: 'name:ficino-planetary', label: 'ficino-planetary · needs owner authoring'}])
+  // A carry the store does not list stays visible as what it is; with no catalogue there are no modes, and the held one is still shown.
+  assert.equal(voiceChoices(catalogue, {kind: 'mode', ref: 'maqam/99'})[1].options[0].label, 'maqam/99 · not in the store')
+  assert.deepEqual(voiceChoices(null).map(group => group.label), ['No carry'])
+  assert.equal(voiceChoices(null, CARRY)[1].options[0].value, carryValue(CARRY))
+  for (const group of groups) for (const option of group.options) assert.doesNotMatch(option.label, /Hz|waveform|frequency/i, 'no oscillator in a choice')
+  const ready = {state: 'ready', catalogue}
+  assert.equal(voiceChoiceNote(undefined, ready), 'This voice is off.')
+  assert.equal(voiceChoiceNote({enabled: true}, ready), 'This voice has no name or mode yet: choose one on the Sound page')
+  assert.equal(voiceChoiceNote(SOUND, ready), "Carries aeolian on L0', chromatic basis of the torus's sound, over the torus's root.")
+  assert.match(voiceChoiceNote({enabled: true, carry: {kind: 'name', ref: 'shem'}}, ready), /^shem \(absent\): Register72::Shem is a register of 72 names/, 'a name the store gives no sound for says the store\'s reason')
+  assert.match(voiceChoiceNote({enabled: true, carry: {kind: 'name', ref: 'asma'}}, ready), /^The store names no "asma"/)
+  assert.match(voiceChoiceNote({enabled: true, carry: {kind: 'mode', ref: 'maqam/99'}}, ready), /has no mode "maqam\/99"/)
+  assert.equal(voiceChoiceNote(SOUND, {state: 'refused', reason: 'the kernel could not be asked'}), 'the kernel could not be asked')
+  assert.match(voiceChoiceNote(SOUND, {state: 'loading'}), /being read from the kernel/)
 })
 
 test('change shapes: add and remove, and one whole sound for each field, all admitted by the boundary validator through a stub apply', async () => {
@@ -153,13 +181,11 @@ test('change shapes: add and remove, and one whole sound for each field, all adm
     soundChange(id, addedSound()),
     soundChange(id, null),
     soundChange(id, soundWithField(SOUND, 'enabled', false)),
-    soundChange(id, soundWithField(SOUND, 'waveform', 'sawtooth')),
-    soundChange(id, soundWithField(SOUND, 'frequencyHz', 440)),
-    soundChange(id, soundWithField(SOUND, 'followCymatic', true)),
+    soundChange(id, soundWithField(SOUND, 'carry', {kind: 'name', ref: 'shem'})),
+    soundChange(id, soundWithField(SOUND, 'carry', null)),
     soundChange(id, soundWithField(SOUND, 'gain', 0.75)),
     soundChange(id, soundWithField(SOUND, 'attack', 2.5)),
     soundChange(id, soundWithField(SOUND, 'release', 12)),
-    soundChange(id, soundWithField(SOUND, 'pan', -0.5)),
   ]
   assert.equal(await apply(gestures).then(() => sent.length), gestures.length)
   for (const change of sent) {
@@ -169,9 +195,11 @@ test('change shapes: add and remove, and one whole sound for each field, all adm
   }
   assert.deepEqual(sent[0], {kind: 'entity-sound', entity_id: id, sound: {...DEFAULT_ENTITY_SOUND, enabled: true}})
   assert.deepEqual(sent[1], {kind: 'entity-sound', entity_id: id, sound: null})
-  assert.equal(sent[4].sound.followCymatic, false, 'a fixed pitch is sent with Follow off')
-  assert.equal(sent[5].sound.followCymatic, true)
+  assert.deepEqual(sent[3].sound.carry, {kind: 'name', ref: 'shem'})
+  assert.equal('carry' in sent[4].sound, false)
+  for (const change of sent) for (const gone of ['frequencyHz', 'followCymatic', 'waveform', 'pan']) assert.equal(gone in (change.sound ?? {}), false, `${gone} is never sent`)
   assert.throws(() => soundChange(id, {...SOUND, gain: 1.2}), /Invalid entity sound: gain/)
+  assert.throws(() => soundChange(id, {...SOUND, frequencyHz: 220}), /frequencyHz was removed/)
   assert.throws(() => soundChange('', SOUND), /Choose the object/)
 })
 
@@ -208,31 +236,9 @@ test('the envelope drawing is computed from the sound: a change to attack or gai
   assert.ok(Math.abs(a.handles.gain.y - (c.handles.gain.y + (0.8 - 0.2) * (ENVELOPE.baseY - ENVELOPE.topY))) < 1e-9)
 })
 
-test('the waveform sketch is deterministic, shows two periods scaled to gain, and is flat at zero gain', () => {
-  const box = {x0: 30, width: 300, centreY: 178, halfHeight: 20}
-  const ys = path => [...path.matchAll(/[ML]([\d.]+) ([\d.-]+)/g)].map(match => Number(match[2]))
-  for (const waveform of SOUND_WAVEFORMS) {
-    const path = waveformPath(waveform, 0.5, box)
-    assert.equal(waveformPath(waveform, 0.5, box), path, `${waveform} is deterministic`)
-    const values = ys(path)
-    assert.equal(values.length, 65, '64 samples across two periods')
-    assert.ok(Math.max(...values) <= 178 + 10 + 0.01 && Math.min(...values) >= 178 - 10 - 0.01, `${waveform} stays within gain 0.5`)
-  }
-  assert.deepEqual([...new Set(ys(waveformPath('square', 0, box)))], [178])
-  const square = ys(waveformPath('square', 1, box))
-  assert.ok(square.includes(158) && square.includes(198), 'a full square reaches the full amplitude both ways')
-})
-
-test('the pan indicator maps -1 to the left edge, 0 to the centre and 1 to the right edge', () => {
-  assert.equal(panX(-1, 30, 300), 30)
-  assert.equal(panX(0, 30, 300), 180)
-  assert.equal(panX(1, 30, 300), 330)
-})
-
-test('the app\'s sound groups, waveforms and bounds are the same table the view and the boundary use', () => {
-  assert.deepEqual([...SOUND_WAVEFORMS], ['sine', 'triangle', 'square', 'sawtooth'])
+test('the app\'s sound groups and bounds are the same table the view and the boundary use', () => {
   for (const spec of SOUND_NUMBERS) assert.ok(SOUND_FIELDS.includes(spec.field))
-  assert.deepEqual(SOUND_NUMBERS.map(spec => [spec.field, spec.min, spec.max]), [['frequencyHz', 1, 20000], ['gain', 0, 1], ['attack', 0, 10], ['release', 0, 30], ['pan', -1, 1]])
+  assert.deepEqual(SOUND_NUMBERS.map(spec => [spec.field, spec.min, spec.max]), [['gain', 0, 1], ['attack', 0, 10], ['release', 0, 30]])
 })
 
 // Server render through the real registries and the shared body.
@@ -248,20 +254,26 @@ test('with no sound: the panel says so, offers one Add sound action and no remov
   assert.doesNotMatch(html, /Remove sound/)
   assert.doesNotMatch(html, /role="slider"/)
   assert.doesNotMatch(html, /Configuration diagram/)
-  assert.match(html, /WebAudio/, 'the audio caveat is always disclosed')
+  assert.match(html, /carries part of the torus/, 'the caveat that the voice makes no sound of its own is always disclosed')
 })
 
-test('with a sound: the diagram has three named handles, the exact-value fields are labelled with units, and the switches are present', () => {
+test('with a sound: the diagram has three named handles, the exact-value fields are labelled with units, the voice choice is there, and no oscillator control is', () => {
   const html = SSR(withSound(SOUND))
   for (const name of ['Attack handle', 'Release handle', 'Gain handle']) assert.match(html, new RegExp(`role="slider"[^>]*aria-label="${name}"|aria-label="${name}"[^>]*role="slider"`))
   assert.equal([...html.matchAll(/role="slider"/g)].length, 3)
-  for (const label of ['Frequency', 'Gain', 'Attack', 'Release', 'Pan', 'Waveform']) assert.match(html, new RegExp(`<span>${label}`))
-  assert.match(html, /This object sounds while present/)
-  assert.match(html, /Follow its cymatic frequency/)
+  for (const label of ['Name or mode', 'Gain', 'Attack', 'Release']) assert.match(html, new RegExp(`<span>${label}`))
+  for (const gone of ['Frequency', 'Pan', 'Waveform', 'Follow its cymatic']) assert.doesNotMatch(html, new RegExp(gone), `${gone} is gone with the oscillator`)
+  assert.match(html, /This object carries the torus&#x27;s sound while present|This object carries the torus's sound while present/)
   assert.match(html, /<button[^>]*>Remove sound<\/button>/)
   assert.doesNotMatch(html, /Add sound/)
-  assert.match(html, /Presentation mute is local to the page/)
-  assert.match(html, /220 Hz · sine · gain 0.2/)
+  assert.match(html, /mode chromatic\/L0&#x27;\/aeolian · gain 0.2|mode chromatic\/L0'\/aeolian · gain 0.2/)
+  assert.match(html, /<select[^>]*>.*None yet/s, 'the choice starts with None yet')
+})
+
+test('a voice with nothing to carry says so in the panel, in the same words the frame uses', () => {
+  const html = SSR(withSound({enabled: true, gain: 0.2}))
+  assert.match(html, /This voice has no name or mode yet: choose one on the Sound page/)
+  assert.match(html, /no name or mode yet · gain 0.2/)
 })
 
 test('the diagram follows the reading: a different attack or gain draws a different envelope path', () => {
@@ -270,11 +282,6 @@ test('the diagram follows the reading: a different attack or gain draws a differ
   assert.ok(a)
   assert.notEqual(a, pathOf(SSR(withSound({...SOUND, attack: 2}))))
   assert.notEqual(a, pathOf(SSR(withSound({...SOUND, gain: 0.9}))))
-})
-
-test('Follow cymatic disables the Frequency control; a fixed pitch enables it', () => {
-  assert.match(input(SSR(withSound({...SOUND, followCymatic: true})), 'frequencyHz'), /disabled/)
-  assert.doesNotMatch(input(SSR(withSound(SOUND)), 'frequencyHz'), /disabled/)
 })
 
 test('a locked object is shown as locked with its reason, and every edit control is disabled', () => {

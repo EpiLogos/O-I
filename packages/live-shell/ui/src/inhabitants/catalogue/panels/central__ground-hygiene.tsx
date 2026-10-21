@@ -356,7 +356,7 @@ function Tender({p, f}: {p: ViewProps; f: Finding}) {
     {asking
       ? <>
         <small>{t.op}</small>
-        <Action {...stand} label="Confirm" does={`Run: ${t.label}.`} onPress={() => confirm(p, f)} disabled={can.ok ? undefined : can.why ?? 'No tender runs here.'} />
+        <Action {...stand} hold label="Confirm" does={`Run: ${t.label}.`} onPress={() => confirm(p, f)} disabled={can.ok ? undefined : can.why ?? 'No tender runs here.'} />
         <Action label="Cancel" does="Keep the ground as it is." onPress={() => p.set('ask', undefined)} />
       </>
       : <>

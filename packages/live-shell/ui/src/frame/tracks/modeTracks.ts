@@ -124,6 +124,7 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
       return source.content?.playback?.saved_sequence_playing ? actions.scene({action: 'stop-saved'}).then(reply => said(reply, 'Every scene stopped.')) : said(paused, 'Every scene stopped.')
     }}
     controls.playSaved = {op: 'expressions scene · play-saved (the saved sequence: the ruler)', run: () => actions.scene({action: 'play-saved'}).then(reply => said(reply, 'The saved sequence plays again.'))}
+    controls.sceneEdit = {op: 'expressions scene-edit (the presented composition)', run: intent => actions.sceneEdit(intent).then(reply => said(reply, 'The Expression changed.'))}
   }
   const run = link.run
   if (run) controls.reenable = {op: 'expressions stage · automation resume (native/stageCommands.ts STAGE_AUTOMATION_RESUME)', run: () =>
@@ -173,4 +174,14 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   factory: worldCut(useFactoryTracks),
   techne: worldCut(useTechneTracks),
   expressions: expressionsTracks,
+}
+
+/** Whose operations each mode's object acts are, in the words a missing act names (manual §10.9; each mode's action table,
+ * §17.1–§21.1). A registration, never a branch. */
+export const MODE_OWNERS: Readonly<Record<SurfMode, string>> = {
+  live: 'kernel · live-set, the open set\'s owner',
+  base: 'Central · the page owner, kernel/src/page.rs, and today\'s set in the Day, central/daySet.ts',
+  factory: 'AIKit · the encounter\'s session settings, and Factory',
+  techne: 'Technē · the reading\'s owner',
+  expressions: 'Expressions · the native composition',
 }

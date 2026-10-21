@@ -456,7 +456,9 @@ test('the clouds are a layer of their own: a deterministic mask, none at all for
   assert.match(shaders.EARTH_FRAG, /uniform sampler2D uCloud;/)
   assert.match(shaders.EARTH_FRAG, /if \(uCloudMix > 0\.0\)/, 'the Earth, at 0, is drawn exactly as before')
   assert.match(shaders.SHELL_FRAG, /c \* cut \* uAir/)
-  assert.match(shaders.TILE_FRAG, /vDens, 1\.0\)/, 'the Earth\'s close tiles keep the Earth\'s own air')
+  // [T-PROCEDURAL-BODY] a tile has the air of the sphere under it (shaders.ts TILE_FRAG: `shadeEarth(..., vDens, uAir)`); the Earth's air is 1 (earth.ts `air`, the Earth's default, held by
+  // w3q-gen-pipeline B2), so the Earth's close tiles keep the Earth's own air: the old rule, written as the tile's own `1.0`, is now the uniform that is 1 for the Earth
+  assert.match(shaders.TILE_FRAG, /vDens, uAir\)/, 'a close tile has the air of its sphere: the Earth\'s own for the Earth')
   assert.equal(body.airOf(RECORD), 1, 'the device\'s default atmosphere is the Earth\'s air')
   assert.equal(body.airOf({...RECORD, sky: {...RECORD.sky, atmosphere: 0}}), 0)
 })

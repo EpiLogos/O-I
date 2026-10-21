@@ -88,6 +88,7 @@ function projectNativeConfig(s:Scene):PointCloudConfig{
  cfg.semanticField=s.semanticField?clone(s.semanticField):undefined;
  if(s.composition.frequencyDriver==='focus'&&semanticAuthority)cfg.resonanceDrive={kind:'semanticFocus',profileId:s.semanticField!.profile.profileId};
  else if(s.composition.frequencyDriver==='automation'&&s.engine.autoSweep)cfg.resonanceDrive={kind:'sweep',glideS:cfg.cymatics.sweep?.glideS,dwellS:cfg.cymatics.sweep?.dwellS,direction:cfg.cymatics.sweep?.direction};
+ else if(s.composition.frequencyDriver==='torus')cfg.resonanceDrive={kind:'torus',keySource:s.composition.keySource??'torus'};
  else if(s.composition.frequencyDriver!=='focus')cfg.resonanceDrive={kind:'frequency'};
  else cfg.resonanceDrive=undefined;
  cfg.relational={...cfg.relational!,enabled:s.engine.relationalEnabled,mode:s.engine.relationalMode as any};
@@ -169,7 +170,9 @@ export function nativeSnapshotToJourney(raw:unknown,index=0):Journey{
  s.composition.layout=cfg.composition?.layoutName??'free';
  s.composition.focus=cfg.composition?.orchestration.mode==='focus'?'travelling':'parallel';
  s.composition.carryTint=(cfg.composition?.orchestration.focusTintWeight??0)>0;s.composition.carryStation=cfg.composition?.orchestration.followStation??false;
- s.composition.frequencyDriver=cfg.resonanceDrive?.kind==='semanticFocus'?'focus':cfg.resonanceDrive?.kind==='sweep'||cfg.cymatics?.sweep?.enabled||cfg.cymatics?.autoSweep||cfg.automations?.some(l=>l.enabled&&l.path==='cymatics.frequencyHz')?'automation':cfg.cymatics?.followFocus?'focus':'manual';
+ s.composition.frequencyDriver=cfg.resonanceDrive?.kind==='torus'?'torus':cfg.resonanceDrive?.kind==='semanticFocus'?'focus':cfg.resonanceDrive?.kind==='sweep'||cfg.cymatics?.sweep?.enabled||cfg.cymatics?.autoSweep||cfg.automations?.some(l=>l.enabled&&l.path==='cymatics.frequencyHz')?'automation':cfg.cymatics?.followFocus?'focus':'manual';
+ // The key travels with the torus drive only; a configuration that names no torus drive carries no key (blankScene's default is not written into it).
+ if(cfg.resonanceDrive?.kind==='torus')s.composition.keySource=cfg.resonanceDrive.keySource??'torus';else delete s.composition.keySource;
  s.morph.law=cfg.toroidalMorph?.interference==='toroidalOnly'?'theta':cfg.toroidalMorph?.interference??'theta';
  s.automation=(cfg.automations??[]).map(l=>{
   const b=NATIVE_BINDINGS.find(b=>b.path===l.path),eb=entityTargets(s).find(b=>b.path===l.path);

@@ -30,7 +30,7 @@ import {subscribeSuiteStanding, suiteStanding} from '../provider/suiteStanding'
 import {systemActs, systemReading, subscribeSystem} from './systemStore'
 import {occasionMs, occasionStep, shownWindow, subscribeWindow} from './bodyDraw'
 import type {SystemBody} from './systemModel'
-import {anchorsOf, yourLocations, type Anchor, type BodyLocation} from './bodyLocations'
+import {anchorsOf, yourBodyRef, yourLocations, type Anchor, type BodyLocation} from './bodyLocations'
 import {precisionMarker} from '../../../../../../../desktop/cradle/src/techne/m0m5/place/project'
 import './systemOverlay.css'
 
@@ -71,9 +71,12 @@ const ROT = (-14 * Math.PI) / 180
 const YOUR_RING = 34
 /** The ring of worlds stands outside your outer ring, at least this far (px) from your planet. */
 const WORLDS_RING = 112
-/** A world's disc, and its rings' least radius (px). */
-const DISC = 26
-const WORLD_RING = 21
+/** A world's disc, and its rings' least radius (px). A disc this size shows a moon and a planet apart (the look of its body, drawn at twice the size
+ * for a sharp screen), and its rings stand clear of it. */
+export const DISC = 40
+const WORLD_RING = 34
+/** The room a world's name takes under its disc (px): kept inside the pane. */
+const NAME_ROOM = 22
 
 /** `#rrggbb` as the `r g b` the orbits' stylesheet reads (`--core-rgb`). */
 export function rgbOf(hex: string): string {
@@ -186,7 +189,9 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
   let placeMarks: {drawn: DrawnLocation; node: HTMLElement; dir: [number, number, number]}[] = []
   let placesKey = ''
   const syncPlaces = () => {
-    const record = handle.engine.body
+    // the marks are those of YOUR body: a globe drawing another world's body (you entered it) has none of yours on it
+    const drawn = handle.engine.body
+    const record = drawn && drawn.body_ref === yourBodyRef(worldBodyState()) ? drawn : null
     const standing = suiteStanding(), system = systemReading()
     const read = record ? yourLocations(worldBodyState(), standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null, shownWindow()) : null
     const rows = read && 'rows' in read ? read.rows : []
@@ -202,18 +207,18 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
       const {location} = drawn
       const words = markWords(drawn)
       const anchor = anchors.find(entry => entry.location === location.id)
-      const pressIt = () => press?.(location)
-      const node = el('div', {
-        class: `sys-place${drawn.shore ? ' is-shore' : ''}${location.locus === 'myth-episode' ? ' is-mythic' : ''}${location.written === false ? ' is-unwritten' : ''}`,
-        role: 'button', tabindex: 0, 'aria-label': words.label, 'data-marker': location.precision ? precisionMarker(location.precision).kind : undefined,
-        onclick: pressIt,
-        onkeydown: event => { if ((event as KeyboardEvent).key === 'Enter' || (event as KeyboardEvent).key === ' ') { event.preventDefault(); pressIt() } },
-      }, [
-        el('span', {class: 'sys-place-dot'}),
-        el('span', {class: 'sys-place-name', text: words.text}),
-        // the anchor line: a dashed stub to the real place on Earth, named; a press follows it there without selecting the location
+      // the mark is a wrapper placed at the location's point; its press and its anchor line are two buttons beside each other, so neither holds the other
+      const node = el('div', {class: 'sys-mark'}, [
+        el('button', {
+          type: 'button',
+          class: `sys-place${drawn.shore ? ' is-shore' : ''}${location.locus === 'myth-episode' ? ' is-mythic' : ''}${location.written === false ? ' is-unwritten' : ''}`,
+          'aria-label': words.label, 'data-marker': location.precision ? precisionMarker(location.precision).kind : undefined,
+          onclick: () => press?.(location),
+        }, [el('span', {class: 'sys-place-dot'}), el('span', {class: 'sys-place-name', text: words.text})]),
+        // the anchor line: a dashed stub to the real place on Earth, named; a press follows it there
         anchor && el('button', {type: 'button', class: 'sys-anchor', title: `${location.name} is anchored to ${anchor.to.name} on Earth: follow the line there`,
-          onclick: event => { event.stopPropagation(); follow?.(anchor) }}, [el('span', {class: 'sys-anchor-line'}), el('span', {text: `Earth · ${anchor.to.name}`})]),
+          'aria-label': `${location.name}: follow its anchor to ${anchor.to.name} on Earth`, onclick: () => follow?.(anchor)},
+        [el('span', {class: 'sys-anchor-line'}), el('span', {text: `Earth · ${anchor.to.name}`})]),
       ])
       places.append(node)
       return {drawn, node, dir: dirFromLatLon(drawn.lat, drawn.lon) as [number, number, number]}
@@ -316,7 +321,9 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
     }
     const {w, h} = hostSize(root)
     const R = Math.max(terra.held / 2, 2)
-    const radius = Math.max(R * 2.9, WORLDS_RING)
+    // the ring of worlds stands outside your planet, but never wider than the pane has room for: a planet that fills the pane would push every world
+    // to its corners, where their names clip
+    const radius = Math.max(WORLDS_RING, Math.min(R * 2.9, Math.min(terra.x, w - terra.x) - DISC))
     ring.setAttribute('cx', terra.x.toFixed(1)); ring.setAttribute('cy', terra.y.toFixed(1))
     ring.setAttribute('rx', radius.toFixed(1)); ring.setAttribute('ry', (radius * TILT).toFixed(1))
     ring.setAttribute('transform', `rotate(${(ROT * 180) / Math.PI} ${terra.x.toFixed(1)} ${terra.y.toFixed(1)})`)
@@ -328,7 +335,7 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
       const body = bodies.find(entry => entry.key === mark.key)
       if (!body) continue
       const place = worldPlace(body.phase, radius)
-      const x = Math.min(w - DISC, Math.max(DISC, terra.x + place.x)), y = Math.min(h - DISC, Math.max(DISC, terra.y + place.y))
+      const x = Math.min(w - DISC, Math.max(DISC, terra.x + place.x)), y = Math.min(h - DISC / 2 - NAME_ROOM, Math.max(DISC, terra.y + place.y))
       mark.root.style.transform = `translate(${Math.round(x - DISC / 2)}px, ${Math.round(y - DISC / 2)}px)`
       mark.root.style.opacity = place.behind ? '0.8' : '1'
       mark.root.style.zIndex = place.behind ? '1' : '2'

@@ -3,7 +3,8 @@ import {sameEditorBasis, type NativeEditorBasis, type NativeEditorChange, type N
 import {forceStripDevice, selectedEntity} from './nativeDeviceStripModel'
 import {ForceDeviceCard} from './NativeDeviceStrip'
 import {grabOffset, handlePosition, keyboardValue, resetValue, valueFromPoint, valueText, type HandleBinding} from './nativeFieldHandleModel'
-import {numberProblem, parseNumberText, soundNumberSpec, steppedValue, type SoundNumberSpec} from './nativeEntityFace.sound'
+import {voiceChoices, carryFromValue, type VoiceChoiceGroup} from './nativeEntityFace.sound'
+import {useLiveModeCatalogue} from '../native/liveModeCatalogue'
 import {short} from './nativeFieldFaceModel'
 import {DEVICE_MIME, afterIdFor, deviceInsertIndex, parseDeviceDrag} from './nativeDrag'
 import {activatorChanges, addableDevices, deviceAddChange, deviceNote, deviceOrderChange, deviceRemoveChange, entitySoundControlChange, rackWidgets, reorderWidgetIds,
@@ -123,6 +124,7 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
   onOpen: (device: {scope: 'entity' | 'field'; family: string}) => void; fault: (message: string) => void;
   move: (deviceId: string, to: number) => void; dragging: MutableRefObject<string | null>}) {
   const [folded, setFolded] = useState(false)
+  const modes = useLiveModeCatalogue().reading
   if (widget.unavailable) return <div className="native-rack-card is-unavailable" role="group" aria-label={`${widget.family} unavailable`}>
     <header className="native-rack-head">
       <span className="native-rack-family">{widget.family}</span>
@@ -134,7 +136,7 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
   const state = widget.on === undefined ? 'unknown' : widget.on ? 'on' : 'off'
   // An entity widget's controls are off while its object is locked; a sound control also needs the object to have a sound.
   const off = locked || widget.locked
-  const soundSubmit = (field: 'gain' | 'frequencyHz' | 'waveform') => (value: number | string): Promise<NativeEditorReply> => {
+  const soundSubmit = (field: 'gain' | 'carry') => (value: number | string): Promise<NativeEditorReply> => {
     let change: NativeEditorChange
     try {change = entitySoundControlChange(reading, field, value)} catch (cause) {return Promise.resolve({ok: false, error: cause instanceof Error ? cause.message : String(cause)})}
     return apply([change])
@@ -179,8 +181,7 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
         <EntityScrub key={control.path} binding={control} value={control.value} modulation={control.modulation} disabled={off} submit={value => apply([entityParameterChange(control.path, value)])}/>)}</div>}
       {widget.entityCompact.length > 0 && <div className="native-rack-controls">{widget.entityCompact.map(row => {
         const disabledRow = off || row.blocked !== null
-        if (row.field === 'waveform') return <EntitySelect key="waveform" label="Waveform" value={row.value} options={row.options} disabled={disabledRow} submit={soundSubmit('waveform')}/>
-        if (row.field === 'frequencyHz') return <EntityNumber key="frequencyHz" spec={soundNumberSpec('frequencyHz')} value={row.control.value} disabled={disabledRow} submit={soundSubmit('frequencyHz')}/>
+        if (row.field === 'carry') return <EntitySelect key="carry" label="Name or mode" value={row.value} groups={voiceChoices(modes.state === 'ready' ? modes.catalogue : null, carryFromValueOrNull(row.value))} disabled={disabledRow} submit={soundSubmit('carry')}/>
         return <EntityScrub key="gain" binding={row.control} value={row.control.value} disabled={disabledRow} submit={soundSubmit('gain')}/>
       })}</div>}
       {widget.actions && widget.actions.length > 0 && <div className="native-rack-actions" role="group" aria-label={`${widget.name} actions`}>
@@ -277,54 +278,22 @@ function EntityScrub({binding, value, modulation, disabled, submit}: {binding: H
   </div>
 }
 
-/** A numeric sound field as a stepper: − and + each commit one step (Shift x10). Typed text commits on Enter or blur, once the validator's bounds accept it. */
-function EntityNumber({spec, value, disabled, submit}: {spec: SoundNumberSpec; value: number; disabled: boolean; submit: (value: number) => Promise<NativeEditorReply>}) {
-  const held = useHeldCommit<number>(submit), [typed, setTyped] = useState<string | null>(null), [problem, setProblem] = useState<string | null>(null)
-  const shown = held.held ?? value
-  const commitTyped = () => {
-    if (typed === null) return
-    const next = parseNumberText(typed), text = numberProblem(spec, next)
-    setProblem(text)
-    if (text) return
-    setTyped(null)
-    if (next !== value) held.commit(next)
-  }
-  const step = (direction: 1 | -1, shift: boolean) => {
-    setTyped(null); setProblem(null)
-    const next = steppedValue(spec, shown, direction, shift)
-    if (next !== null) held.commit(next)
-  }
-  const unit = spec.unit && !spec.unit.startsWith('(') ? ` ${spec.unit}` : ''
-  return <div className={`native-rack-control${held.refused ? ' is-refused' : ''}`}>
-    <span className="native-rack-label">{spec.label}</span>
-    <div className="native-rack-control-row native-rack-stepper">
-      <button type="button" className="native-rack-step" aria-label={`Decrease ${spec.label}`} disabled={disabled} onClick={() => step(-1, false)}>−</button>
-      <input type="number" className="native-rack-number" aria-label={spec.label} min={spec.min} max={spec.max} step={spec.step} disabled={disabled}
-        aria-invalid={problem !== null} value={typed ?? String(shown)} onChange={event => setTyped(event.target.value)} onBlur={commitTyped}
-        onKeyDown={event => {
-          if (event.key === 'Enter') {event.preventDefault(); commitTyped()}
-          else if (event.key === 'Escape') {setTyped(null); setProblem(null)}
-          else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); step(event.key === 'ArrowUp' ? 1 : -1, event.shiftKey)}
-        }}/>
-      <button type="button" className="native-rack-step" aria-label={`Increase ${spec.label}`} disabled={disabled} onClick={() => step(1, false)}>+</button>
-      <output className="native-rack-value">{unit.trim()}</output>
-    </div>
-    {problem && <p className="native-rack-note native-rack-problem">{problem}</p>}
-    <HeldNotice label={spec.label} refused={held.refused} disabled={disabled} retry={held.retry} discard={held.discard}/>
-  </div>
-}
-
-/** A sound's waveform choice: one whole-sound change per selection. */
-function EntitySelect({label, value, options, disabled, submit}: {label: string; value: string; options: readonly string[]; disabled: boolean;
+/** A sound's carry choice: one whole-sound change per selection. The groups are the owner's catalogue (nativeEntityFace.sound.ts voiceChoices). */
+function EntitySelect({label, value, groups, disabled, submit}: {label: string; value: string; groups: readonly VoiceChoiceGroup[]; disabled: boolean;
   submit: (value: string) => Promise<NativeEditorReply>}) {
   const held = useHeldCommit<string>(submit), shown = held.held ?? value
   return <div className={`native-rack-control${held.refused ? ' is-refused' : ''}`}>
     <span className="native-rack-label">{label}</span>
     <select className="native-rack-select" aria-label={label} value={shown} disabled={disabled} onChange={event => held.commit(event.target.value)}>
-      {options.map(option => <option key={option} value={option}>{option}</option>)}
+      {groups.map(group => <optgroup key={group.label} label={group.label}>{group.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</optgroup>)}
     </select>
     <HeldNotice label={label} refused={held.refused} disabled={disabled} retry={held.retry} discard={held.discard}/>
   </div>
+}
+
+/** The carry a rack row holds, from its option value (null for none yet). */
+function carryFromValueOrNull(value: string) {
+  try {return carryFromValue(value)} catch {return null}
 }
 
 /** '+ Device': a small role=menu of the addable devices. Choosing one sends one device-add (appended to the rack). */

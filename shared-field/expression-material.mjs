@@ -11,6 +11,9 @@ const source = {kind: scalar, ascii: {text: scalar, fontFamily: scalar, fontSize
 const objectState = {size: {x: scalar, y: scalar}, rotation: scalar, scale: scalar, tint: scalar, tintWeight: scalar, force: {kind: scalar, strength: scalar, radius: scalar, spin: scalar}};
 const form = {id: scalar, name: scalar, kind: scalar, enabled: scalar, position: vec, ...objectState, shape: scalar, text: scalar, share: scalar, locked: scalar, station: scalar, role: scalar, source,
   yantraId: scalar, templateFrequency: scalar, templateGeometry: scalar, templateDimension: scalar,
+  // A symbol's voice (DLW 20.2): a name or a mode carrying the torus's sound, never its own oscillator. The oscillator's fields (frequencyHz,
+  // followCymatic, waveform, pan) are not admitted: a publishing author's old voice reports them as omissions, a receiver refuses them.
+  sound: {enabled: scalar, carry: {kind: scalar, ref: scalar}, gain: scalar, attack: scalar, release: scalar},
   layers: [{id: scalar, text: scalar, z: scalar, scale: scalar, source}],
   sequence: {sourcesVersion: scalar, enabled: scalar, clock: scalar, manual: scalar, hold: scalar, transition: scalar, order: scalar, easing: scalar, jitter: scalar, impulse: scalar, rateMul: scalar, phaseOffset: scalar,
     steps: [{id: scalar, name: scalar, text: scalar, shape: scalar, hold: scalar, transition: scalar, position: vec, source, objectState, holdOverride: scalar, transitionOverride: scalar, yantraId: scalar, templateFrequency: scalar, templateGeometry: scalar, templateDimension: scalar}]}};
@@ -22,7 +25,7 @@ const sceneShape = {
   engine: keys('inkMode paletteId templateGeometry templateDimension paletteSource grainProfile backgroundMode resonatorMode focusOrder resonanceEnabled morphEnabled trajectory driveShape autoOscillate relationalEnabled relationalMode pointerMode pointerClick pointerClickStrength pointerClickRadius colorMode colorEnabled dotShape autoFitSizes mediumEnabled collisionEnabled collisionMode pairwiseEnabled fontFamily fontWeight mediumPlane mediumDimension autoSweep sweepDirection volumeEnabled volumeProfile depthPerspective depthOcclusion vortex3d dispersion3d depthTintColor'),
   entities: [form],
   text: [keys('id visible kicker title italic body x y width size align role')],
-  composition: keys('layout plane focus focusDuration focusDwell carryTint carryStation frequencyDriver'),
+  composition: keys('layout plane focus focusDuration focusDwell carryTint carryStation frequencyDriver keySource symbolVoices'),
   morph: keys('thetaRate phiRate thetaOffset phiOffset law depth dwell'),
   automation: [keys('id enabled target type wave min max rate phase blend duration delay loop firedAt easing clockId syncWith entityId')],
 };

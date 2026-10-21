@@ -1,5 +1,6 @@
 // All GLSL for the globe, kept together so the time-visibility formula (also in
 // src/data/time.ts) and shared helpers stay identical across passes.
+import { WEATHER_BANDS } from './bodyWeather';
 
 export const TIME_GLSL = /* glsl */ `
 uniform float uCursor;
@@ -269,6 +270,102 @@ void main() {
 }
 `;
 
+/** The wind as the shader has it: the bands of bodyWeather.ts WEATHER_BANDS (the same latitudes and widths), each at the weight the body's own rate gives it. The
+ * shift is the rate times the days, in turns, and is NOT wrapped to one turn: the cloud texture repeats in longitude, and a `fract` here leaves a seam at every latitude where
+ * the shift passes a whole turn, across which the lookup's screen derivatives jump and the texture unit picks its coarsest level: a hairline ring at each, and the
+ * more of them the more turns the shift has had (the owner's "dense concentric ripples"). The clock is bounded (bodyWeather.ts weatherClock), so the number stays small. */
+const WEATHER_GLSL = /* glsl */ `
+float weatherTurns(float latDeg, float days, vec3 rate) {
+  float a = abs(latDeg);
+  float r = ${WEATHER_BANDS.map((band, k) => `rate[${k}] * exp(-((a - ${band.centre.toFixed(1)}) / ${band.width.toFixed(1)}) * ((a - ${band.centre.toFixed(1)}) / ${band.width.toFixed(1)}))`).join(' + ')};
+  return r * days / 360.0;
+}
+`;
+
+/** Value noise on the unit sphere's own direction (a lattice of the three coordinates, hashed by Ashima Arts' mod-289 permutation, Ian McEwan; MIT), for the ground's grain finer than its picture:
+ * there is no pole in it and no seam, and a cell is a cell at every latitude. (Noise on (longitude, latitude) is the sinusoidal projection: its cells at a high latitude are slivers wound
+ * round the pole.) Nothing here is random: the same point gives the same value. */
+const SPHERE_NOISE_GLSL = /* glsl */ `
+float sphereHash(vec3 i) {
+  i = i - floor(i * (1.0 / 289.0)) * 289.0;
+  float h = i.x;
+  h = mod((h * 34.0 + 1.0) * h, 289.0) + i.y;
+  h = mod((h * 34.0 + 1.0) * h, 289.0) + i.z;
+  h = mod((h * 34.0 + 1.0) * h, 289.0);
+  return h * (1.0 / 289.0);
+}
+float sphereNoise(vec3 p) {
+  vec3 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(sphereHash(i), sphereHash(i + vec3(1.0, 0.0, 0.0)), f.x), mix(sphereHash(i + vec3(0.0, 1.0, 0.0)), sphereHash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+    mix(mix(sphereHash(i + vec3(0.0, 0.0, 1.0)), sphereHash(i + vec3(1.0, 0.0, 1.0)), f.x), mix(sphereHash(i + vec3(0.0, 1.0, 1.0)), sphereHash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+}
+`;
+
+/** The body's own sky stood over the graded ground (a statement block for `main`, given the coordinate `uv` the equirect is read at, and `N`, `col`): its cloud layer, carried east
+ * by the wind of its latitude at the occasion's time, lit as the ground is. The sphere and every tile take this one block, so a tile is the sphere's own picture made finer and
+ * not a clear rectangle in a clouded base. */
+const skyOver = (uv: string) => /* glsl */ `
+  // the clouds stand over the graded land and sea as a layer of their own, never in the base: white there would read as land
+  // (waterOf), and the land the shore and the Place tool read stays the body's own. Lit by the same light as the ground.
+  // [T-PROCEDURAL-BODY] The mask is carried east by the wind of its latitude at the occasion's time (bodyWeather.ts weatherShift: the same bands, the same
+  // rate), so a past occasion shows the weather it had and Now moves slowly; the wind is 0 for a body of generator version 1.
+  if (uCloudMix > 0.0) {
+    float turns = weatherTurns(degrees(asin(clamp(N.y, -1.0, 1.0))), uWeatherT, uWeatherRate);
+    vec2 cuv = vec2(${uv}.x - turns, ${uv}.y);
+    float cover = texture2D(uCloud, cuv).r * uCloudMix;
+    float shade = texture2D(uCloud, cuv + vec2(0.0035, -0.0022)).r * uCloudMix;
+    // where the camera is near, the window of the field itself stands in the mask's place: made for the view, read at about a texel to the pixel (the mask's texel is sixteen pixels at a
+    // region view), crisp-edged and broken up inside. It was made at one occasion; the wind has carried the sky since, by the shift of each latitude's rate over the clock between
+    float wlat = asin(clamp(N.y, -1.0, 1.0));
+    if (uWinOn > 0.0) {
+      float wres = weatherTurns(degrees(wlat), uWeatherT - uWinT, uWeatherRate);
+      float wdl = (${uv}.x - 0.5 - wres) * 6.2831853 - uWinRect.x;
+      wdl -= 6.2831853 * floor((wdl + 3.14159265) / 6.2831853);
+      vec2 wc = vec2(wdl * uWinRect.z + 0.5, 0.5 - (wlat - uWinRect.y) * uWinRect.w);
+      float winside = smoothstep(0.0, 0.05, min(min(wc.x, 1.0 - wc.x), min(wc.y, 1.0 - wc.y))) * uWinOn;
+      if (winside > 0.0) {
+        float wcover = texture2D(uCloudWin, wc).r * uCloudMix;
+        float wshade = texture2D(uCloudWin, wc + vec2(0.022 * uWinRect.z / max(cos(wlat), 0.2), 0.0069 * uWinRect.w)).r * uCloudMix;
+        cover = mix(cover, wcover, winside);
+        shade = mix(shade, wshade, winside);
+      }
+    }
+    float lit = mix(0.46, 1.0, smoothstep(0.1, 1.0, 0.5 + 0.5 * dot(N, normalize(uLightDir))));
+    if (uSunMix > 0.0) lit = mix(lit, mix(0.1, 1.0, smoothstep(-0.07, 0.16, dot(N, normalize(uSunDir)))), uSunMix);
+    // a cloud stands above the ground: the ground beside and under it is in its shadow (the mask looked at again a little toward the key light's far side, softly), and the cloud's own
+    // tone follows its thickness: thin cloud bright and light, thick cloud greyer at the base
+    // the sky is below the camera and gone at a place view: its texel is far larger than a pixel there, and magnified it is a smear over the ground that was come to see
+    float nearSky = smoothstep(0.00003, 0.00014, uPxRad);
+    cover *= nearSky;
+    shade *= nearSky;
+    col *= 1.0 - 0.3 * shade * smoothstep(0.0, 0.5, shade) * lit;
+    vec3 cloudTone = mix(mix(uCore, vec3(1.0), 0.6), vec3(0.74, 0.77, 0.82), smoothstep(0.55, 1.0, cover) * 0.7);
+    col = mix(col, cloudTone * lit, cover * 0.8);
+  }
+`;
+
+/** The ground drawn finer than its picture (a statement block for `main`, given `N`, `src`, `col`): where the camera is closer than the picture can
+ * show, a texel spans several pixels and the ground reads soft. Value noise is laid on it, octave on octave, each as fine as a pixel can show (a cell against the pixel's span,
+ * uPxRad: the finer ones fade out, so nothing shimmers from afar), strongly on land and a little on water; none where a texel is no larger than a pixel, and none for the Earth. */
+const detailOver = () => /* glsl */ `
+  if (uDetail > 0.0) {
+    float dfoot = uPxRad / max(dot(N, normalize(vView)), 0.15);
+    float dmag = uTexRad / max(dfoot, 1e-9);
+    float damt = uDetail * smoothstep(1.3, 4.0, dmag);
+    if (damt > 0.0) {
+      // the sphere's own direction, in texels (the lattice is the texel and then finer): no pole, no seam
+      vec3 dp = N / uTexRad;
+      float dpix = dfoot / uTexRad;
+      float dn = (sphereNoise(dp * 1.0 + 3.1) - 0.5) * 0.55 * (1.0 - smoothstep(0.35, 0.9, dpix * 1.0))
+        + (sphereNoise(dp * 2.1 + 9.7) - 0.5) * 0.4 * (1.0 - smoothstep(0.35, 0.9, dpix * 2.1))
+        + (sphereNoise(dp * 4.4 + 5.3) - 0.5) * 0.3 * (1.0 - smoothstep(0.35, 0.9, dpix * 4.4))
+        + (sphereNoise(dp * 9.3 + 1.9) - 0.5) * 0.22 * (1.0 - smoothstep(0.35, 0.9, dpix * 9.3));
+      col *= 1.0 + damt * dn * mix(0.2, 0.8, 1.0 - waterOf(src));
+    }
+  }
+`;
+
 // ── the earth ────────────────────────────────────────────────────────────
 // One grade for every source of imagery. The sphere's base texture and the
 // streaming close-zoom tiles are both NASA Blue Marble (colour, relief shading
@@ -287,7 +384,31 @@ uniform vec3 uGlow;
 uniform vec3 uDeep;
 uniform vec3 uCore;
 uniform float uSpec;
-
+// [T-WORLDS §5 W3] a generated body's own sky: its cloud layer (a mask in the base's equirect, body.ts cloudImage) and how much of it is drawn (0 for the Earth, whose
+// imagery carries no cloud layer), and the thickness of its air (1.0 for the Earth). [T-PROCEDURAL-BODY] The occasion's weather: its clock in days (bodyWeather.ts
+// weatherClock, bounded) and the wind of the body (degrees of longitude a day at each band's weight). Shared by the sphere and the tiles.
+uniform sampler2D uCloud;
+uniform float uCloudMix;
+uniform float uAir;
+// [T-PROCEDURAL-BODY] how barren the body is (its look, body.ts BodyLook.barren): 0 the lived grade, 1 a grey airless moon. The grade is the site's world, a navy palette; a barren world is graded
+// toward its own picture's neutral rock instead, and dust is not sea.
+uniform float uBarren;
+// [T-PROCEDURAL-BODY] the radians of the body one screen pixel spans (at the point under the camera), so the sky's finest detail is drawn only where a pixel is smaller than it
+uniform float uPxRad;
+// [T-PROCEDURAL-BODY] how fine the picture being drawn is (radians one texel spans: the base's, or a tile's), and whether the ground is given detail finer than it (1 for a generated
+// body, 0 for the Earth, whose imagery is as it was)
+uniform float uTexRad;
+uniform float uDetail;
+// [T-PROCEDURAL-BODY] the window of the sky about the camera (globe/cloudWindow.ts): a texture of the analytic cloud field over a rectangle of the sphere (lon0, lat0, 1 / its longitude span, 1 / its
+// latitude span: radians), how much of it is shown, and the weather's clock (days) at the occasion it was made
+uniform sampler2D uCloudWin;
+uniform vec4 uWinRect;
+uniform float uWinOn;
+uniform float uWinT;
+uniform float uWeatherT;
+uniform vec3 uWeatherRate;
+${WEATHER_GLSL}
+${SPHERE_NOISE_GLSL}
 float lumaOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 
 // 0 land · 1 water, from the Blue Marble colour: seas are strongly blue against red (even the
@@ -299,7 +420,7 @@ float waterOf(vec3 s) {
 // air: how thick the body's own atmosphere shows at the rim, 1.0 for the Earth (a generated body's sky.atmosphere, body.ts airOf)
 vec3 shadeEarth(vec3 src, vec3 N, vec3 V, vec2 densUv, float air) {
   float l = lumaOf(src);
-  float water = waterOf(src);
+  float water = waterOf(src) * (1.0 - uBarren);
   vec3 L = normalize(uLightDir);
   float diffuse = 0.5 + 0.5 * dot(N, L);
   float lit = mix(0.46, 1.0, smoothstep(0.1, 1.0, diffuse));
@@ -326,10 +447,12 @@ vec3 shadeEarth(vec3 src, vec3 N, vec3 V, vec2 densUv, float air) {
   ramp += uCore * 0.1 * smoothstep(0.5, 1.0, l); // keeps relief legible across snow and ice
   vec3 chroma = src - vec3(l);
   vec3 land = ramp + chroma * 0.5 * (1.0 - smoothstep(0.55, 0.8, l));
+  // a barren world is not the palette's: grey rock as its own picture has it, a little lifted (the ramp's navy never reaches it)
+  land = mix(land, src * 1.3, uBarren);
 
   vec3 col = mix(land, ocean, water) * lit;
   // a hairline of twilight along the terminator, only where the true Sun is in charge
-  col += uGlow * 0.07 * exp(-pow(sd / 0.11, 2.0)) * uSunMix * (1.0 - 0.4 * water);
+  col += uGlow * 0.07 * exp(-pow(sd / 0.11, 2.0)) * uSunMix * (1.0 - 0.4 * water) * (1.0 - uBarren);
 
   // a hairline of coast, as thick as the imagery is sharp (no screen derivatives: those band in 2x2 blocks)
   float coast = pow(1.0 - abs(2.0 * water - 1.0), 3.0);
@@ -368,11 +491,6 @@ export const EARTH_FRAG = /* glsl */ `
 uniform sampler2D uBaseLo;
 uniform sampler2D uBaseHi;
 uniform float uHiMix;
-// [T-WORLDS §5 W3] a generated body's own sky: its cloud layer (a mask in the base's equirect, body.ts cloudImage) and how much of it
-// is drawn (0 for the Earth, whose imagery carries no cloud layer), and the thickness of its air (1.0 for the Earth)
-uniform sampler2D uCloud;
-uniform float uCloudMix;
-uniform float uAir;
 ${EARTH_COMMON}
 varying vec2 vUv;
 varying vec3 vN;
@@ -381,14 +499,7 @@ void main() {
   vec3 src = mix(texture2D(uBaseLo, vUv).rgb, texture2D(uBaseHi, vUv).rgb, uHiMix);
   vec3 N = normalize(vN);
   vec3 col = shadeEarth(src, N, normalize(vView), vUv, uAir);
-  // the clouds stand over the graded land and sea as a layer of their own, never in the base: white there would read as land
-  // (waterOf), and the land the shore and the Place tool read stays the body's own. Lit by the same light as the ground.
-  if (uCloudMix > 0.0) {
-    float cover = texture2D(uCloud, vUv).r * uCloudMix;
-    float lit = mix(0.46, 1.0, smoothstep(0.1, 1.0, 0.5 + 0.5 * dot(N, normalize(uLightDir))));
-    if (uSunMix > 0.0) lit = mix(lit, mix(0.1, 1.0, smoothstep(-0.07, 0.16, dot(N, normalize(uSunDir)))), uSunMix);
-    col = mix(col, mix(uCore, vec3(1.0), 0.55) * lit, cover * 0.82);
-  }
+${detailOver()}${skyOver('vUv')}
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -424,7 +535,11 @@ void main() {
   // sample texel centres at the tile border so neighbours meet without a seam
   vec2 uv = (vTile * 255.0 + 0.5) / 256.0;
   vec3 src = texture2D(uMap, uv).rgb;
-  gl_FragColor = vec4(shadeEarth(src, normalize(vN), normalize(vView), vDens, 1.0), uAlpha);
+  vec3 N = normalize(vN);
+  // [T-PROCEDURAL-BODY] the body's own air and sky, as the sphere under it has them: the Earth's tiles (GIBS) are drawn with air 1.0 and no cloud layer, as before
+  vec3 col = shadeEarth(src, N, normalize(vView), vDens, uAir);
+${detailOver()}${skyOver('vDens')}
+  gl_FragColor = vec4(col, uAlpha);
 }
 `;
 

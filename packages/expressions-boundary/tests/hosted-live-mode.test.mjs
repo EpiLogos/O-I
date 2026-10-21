@@ -137,11 +137,12 @@ test('the owner parameters are carried exact: sound, level, scale, cadence and t
   assert.deepEqual(carried.parameters, {muted: false, level: 2.5, scale: {unitsPerMetre: null, mode: 'manual'}, cadence: null, refusal: 'determinant: lens is already acting'});
 });
 
-test('the torus\'s four effects ride the parameters exact, every value inside the owner\'s law, or the reading is refused by name', () => {
+test('the torus\'s effects (the four and the Resonator bank) ride the parameters exact, every value inside the owner\'s law, or the reading is refused by name', () => {
   const effects = {chain: ['reverb', 'filter'], filter: {on: true, type: 'bandpass', cutoff: 900, resonance: 70, drive: 6, mix: 80},
     dynamics: {on: false, threshold: -12, ratio: 4, attack: 1, release: 100, makeup: 2},
     delay: {on: false, sync: true, division: '1/8', time: 250, feedback: 35, tone: 6000, mix: 25, tempo: 120},
-    reverb: {on: true, size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22}};
+    reverb: {on: true, size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22},
+    resonator: {on: false, division: 240, root: 7, decay: 1, tilt: 0, span: 2, mix: 50, gain: 0}};
   const carried = readHostedInstrument({reading: ownerReading(), determinants: null, parameters: {...parameters(), effects}});
   assert.equal(carried.ok, true); assert.deepEqual(carried.parameters.effects, effects);
   assert.equal('effects' in readHostedInstrument({reading: ownerReading(), determinants: null, parameters: parameters()}).parameters, false, 'a frame that announces none carries none');

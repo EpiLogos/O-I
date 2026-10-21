@@ -49,6 +49,20 @@ From MAP's build lane:
 3. Reverse engineering into the product (item 3).
 4. Technē's construction chain, end to end (item 6).
 5. The owner operations drag and drop needs, then those the planning lane's action table finds missing (item 7).
+   The UI/UX lane's phase 2 (manual §10.9) put every object's acts in its menu. Each act an owner cannot take yet stands dimmed
+   and names its operation, so this list can be re-read off the menus at any time (`frame/menu/objectActions.ts`). What waits, 20 Oct:
+   - **Every mode:**
+     - clip: cut, copy and paste (`clip.copy-to`, `clip.move-to`), info text, and Arrangement view's split, consolidate and crop;
+     - track: duplicate, colour, group and move;
+     - slot: its stop button;
+     - row: rename, duplicate and delete.
+   - **Live (kernel · live-set):** clip launch, stop, duplicate, delete and insert; track rename; row insert.
+   - **Central (the page owner, today's set in the Day):** page duplicate, delete and create in a world (Insert clip); a page's
+     switch (`active`); world rename; row insert.
+   - **Factory (AIKit's encounter, Factory):** task duplicate, delete and insert; session rename; taking a session off the set;
+     row insert.
+   - **Expressions:** taking an Expression off the set; a stop's rename.
+   - **Technē:** an event's name, colour and switch; event duplicate, delete and insert; a reading's rename and removal.
 6. The shell refinements (item 8).
 7. The readings the device lane's designs wait on (O-I #684).
 8. T-PROCEDURAL-BODY (20 Oct, built on the owner's second account in one run; `tickets/T-PROCEDURAL-BODY-at-the-earths-standard.md`): a
@@ -66,8 +80,36 @@ From MAP's build lane:
    - **The outer ring may be empty on real ground.** Recent artefacts come from Central's change horizon rows that name an agent
      (`actor_kind` agent or an `agent_session_ref`). The 16 Oct reading found none attributed (`agent/devices/receiptBindings.ts:9-13`):
      the ring fills when agents write under their session.
-   - **Unverified on the native app** (headless captures only): the flight from the sky and the Graph (waits an estimated `LANDING_MS`),
-     the anchor stub's look, the dotted and uncertainty rings drawn in CSS. The native candidate's screen pass is owed.
+   - **Unverified on the native app** (headless captures only): the sky lens end to end on a real sky layer (the harness has none; the
+     flight follows the controller's own `ctl.skyCam.busy`, bounded at 12 s, and from the Graph or the ground flies at once), the anchor
+     stub's look, the dotted and uncertainty rings drawn in CSS. The native candidate's screen pass is owed.
+9. **Expressions in full** (owner, 20 Oct: the app's own UI still draws inside the field pane; the Studio's Full holds every device;
+   the rack's face is the toolbelt). The manual's §20.1 (Pane view, Device view, Where everything is), §20.3 and §16.3's rack rule
+   say where each of the app's functions lives; the catalogue's Studio draws its Full as that suite, through the rack's `member`
+   door (`catalogue/panels/design.ts`). The UI/UX lane builds this as part of its phase 3 (device grammar); the files below are
+   taken until it lands. What the build found:
+   - **The field pane is the whole app.** The pane is an iframe of `field-studies-journeys` (`panels/expressions.tsx:251`,
+     `expressions-boundary/src/host.ts:482`), and its 'devices' presentation hides only part of the app's chrome
+     (`field-studies-journeys/src/workspace.css:613-633`). Still opening inside it: `#inspector` (the app's Studio, 19 sections),
+     `#toolbelt-panel` (open by default over 1000 px, `app.ts:169, 953`), `#live-workspace` (open by default, `app.ts:167, 953`),
+     `#context-panel`, `#belt-picker`, `#shape-picker`, `#modes-panel`, `#entry-gate`, `#capture-panel`, `#automation-assignment`,
+     `#automation-monitor` and the dialogs (`shell.ts:13-29`). A maximised pane sends `frame` and all of it comes back
+     (`components/expressions/studio/framePresentation.ts:19-21`). The pane's presentation hides every one, at every size.
+   - **The shell opens the app's Studio in the pane itself:** the pool's "Open in studio ↗" (`components/NativeDevicePoolView.tsx:57-59`),
+     `components/GlyphSequenceEditor.tsx:286` and `host.openStudio` (`panels/expressions.tsx:318-325` → `app.ts:2338-2342`). Each
+     opens instead the device, or the Clip view tab, that holds the setting.
+   - **Device view is the Studio rack:** its macros (the toolbelt, `Journey.shared.toolbelt`) and its Chains page; a device added by
+     hand stands after it on "Your rack" (the 8 Oct ruling: never an always-on strip of every device). The Stage plate beside it
+     (`components/expressions/studio/ExpressionsStudio.tsx:203-207`) holds what has no home yet: its relays of the app's rail, View
+     (camera, guides, snap), still and film capture, Present and the Edition's export and import. It goes once those homes stand:
+     Present in the View menu, Export in the File menu, the scene's View in its Clip panel (View: Kept), the rail's tools in Clip view.
+   - **Pane view's seed** is the field pane and the Studio's Full side by side (`shell/modeFrames.ts:59-60`).
+   - **The Studio's Full** hosts `member` for a rack: each member's design in its Whole view on that device's own binding, as the
+     band draws it (`frame/devices/designed.ts`), so the pane and the chain read the same values.
+   - **Homes with nothing behind them yet:** the Expression's title and description on its track head; Present in the View menu
+     (`desktop/cradle/src-tauri/src/menus.rs`); compositions as the browser's starters; Export in the File menu.
+   - **The port ledger** (`EXPRESSIONS-PORT-STATUS.json`): the eleven `studio-only-by-design` rows ("retained during port") end.
+     Each takes its home from the manual's table, and no row stays retained.
 
 These wait for the planning lane to write them into the manual; MAP's planning lane items 1–5 say what each is:
 - the three layers per mode (Session, Arrangement, Pane);

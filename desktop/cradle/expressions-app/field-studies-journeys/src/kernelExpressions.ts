@@ -106,6 +106,14 @@ function call<T>(kind:string,body:Record<string,unknown>,timeoutMs=20000):Promis
  });
 }
 
+/** The kernel's mode catalogue (`ql music modes --json`, ql.music-modes/v1), verbatim: the host relays the kernel's `music_modes_read` owner read.
+ * The symbols' voices read their modes from it (native-field/modeStore.ts). Waits for the host's announce (up to ten seconds) before asking. */
+export async function readMusicModes():Promise<unknown>{
+ const deadline=Date.now()+10000;
+ while(!ready&&typeof window!=='undefined'&&window.parent!==window&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,100));
+ return call<unknown>('music-modes',{});
+}
+
 /** Personal readings stay on this session channel, outside Journey data. */
 export function naraInstrumentRequest(request:import('../../../src/nara/instrumentProtocol').NaraInstrumentRequest):Promise<import('../../../src/nara/instrumentProtocol').NaraInstrumentReply>{
  return call('nara-instrument',{request},90000);

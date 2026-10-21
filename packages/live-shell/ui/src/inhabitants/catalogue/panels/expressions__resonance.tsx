@@ -10,7 +10,7 @@
 // Everything is keyed on the engine's paths: the registry's (nativeParameters.ts over paramRegistry.ts, group Cymatics) and the panel settings
 // (parameterAddress.ts FIELD_SETTINGS and PANEL_FAMILY: resonanceEnabled, frequencyDriver, autoSweep, sweepDirection, templateDimension,
 // resonatorMode). The owner reports (defaults: fieldModel.ts DEFAULT_CYMATIC_MEDIUM):
-//   resonanceEnabled  the light      cymatics.frequencyHz 20..4000 Hz log (396)    frequencyDriver  manual | focus | automation
+//   resonanceEnabled  the light      cymatics.frequencyHz 20..4000 Hz log (396)    frequencyDriver  torus | manual | focus | automation
 //   cymatics.dominance 0..1 (1)   .dampingQFactor 0.1..40 log (4.5)   .driveStrength 0..6 (1)   .driveScale 0..4 (1)   .transportGain 0..10 (1)
 //   .agitation 0..5 (0.3)   .plateSize 100..2000 px log (700)   .boundaryStrength 0..30 (6)   .baseFrequency 5..200 Hz log (40)   .modeCount 1..64 (64)
 //   templateDimension 2D | 3D   autoSweep   sweepDirection ascent | descent | pingpong   cymatics.sweep.glideS 0.1..30 s   .sweep.dwellS 0..30 s
@@ -50,7 +50,7 @@ const BODY_SOURCES = [{value: 'declared', label: 'Declared', does: 'The plate ke
   {value: 'tattva', label: 'Tattva', does: 'The tattva of the M2 condition sets Q, Agitation and Edge through its element fibre.'}] as const
 const dial = (p: ViewProps, r: Rule) => <Dial key={r.key} {...st(p, r.key)} disabled={held(p, r)} label={r.label} does={r.does} value={fin(p.v, r) ?? NaN} def={r.def} scale={r.scale} format={r.format} onChange={x => p.set(r.key, Math.round(x * 100) / 100)} />
 const box = (p: ViewProps, r: Rule) => <ValueBox key={r.key} {...st(p, r.key)} disabled={held(p, r)} label={r.label} does={r.does} value={fin(p.v, r) ?? NaN} def={r.def} scale={r.scale} format={r.format} onChange={x => p.set(r.key, Math.round(x * 100) / 100)} />
-const DRIVERS = [{value: 'manual', label: 'Manual', does: 'The drive frequency sets the tone.'}, {value: 'focus', label: 'Focus', does: 'The Focus device sets the tone.'}, {value: 'automation', label: 'Automation', does: 'A lane or the sweep sets the tone.'}] as const
+const DRIVERS = [{value: 'torus', label: 'Torus', does: 'What the torus plays sets the tone (Key source chooses whose pitches).'}, {value: 'manual', label: 'Manual', does: 'The drive frequency sets the tone.'}, {value: 'focus', label: 'Focus', does: 'The Focus device sets the tone.'}, {value: 'automation', label: 'Automation', does: 'A lane or the sweep sets the tone.'}] as const
 const DIMS = [{value: '2D', label: '2D', does: 'A flat plate.'}, {value: '3D', label: '3D', does: 'A volumetric chamber.'}] as const
 const SWEEPS = [{value: 'ascent', label: 'Up', does: 'The sweep climbs the stations.'}, {value: 'descent', label: 'Down', does: 'The sweep descends the stations.'}, {value: 'pingpong', label: 'Both', does: 'There and back.'}] as const
 const MODES_IMPL = [{value: 'resonator', label: 'Continuous'}, {value: 'template', label: 'Legacy templates'}] as const
@@ -104,7 +104,7 @@ export const design: DesignedDevice = {
   kind: 'effect',
   firstPage: 'tuning',
   defaults: {
-    resonanceEnabled: true, 'cymatics.frequencyHz': 396, frequencyDriver: 'manual', 'cymatics.dominance': 1, 'cymatics.dampingQFactor': 4.5, 'cymatics.driveStrength': 1, 'cymatics.driveScale': 1,
+    resonanceEnabled: true, 'cymatics.frequencyHz': 396, frequencyDriver: 'torus', 'cymatics.dominance': 1, 'cymatics.dampingQFactor': 4.5, 'cymatics.driveStrength': 1, 'cymatics.driveScale': 1,
     'cymatics.transportGain': 1, 'cymatics.agitation': .3, 'cymatics.plateSize': 700, 'cymatics.boundaryStrength': 6, 'cymatics.baseFrequency': 40, 'cymatics.modeCount': 64,
     templateDimension: '2D', autoSweep: false, sweepDirection: 'ascent', 'cymatics.sweep.glideS': 8, 'cymatics.sweep.dwellS': 2, resonatorMode: 'resonator', 'resonance.live': 396,
     'body.source': 'declared', 'tattva.name': 'Prithvi', 'tattva.fibre': 'earth', 'tattva.standing': 'proposed',

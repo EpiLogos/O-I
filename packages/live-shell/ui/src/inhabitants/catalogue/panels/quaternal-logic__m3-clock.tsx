@@ -115,7 +115,8 @@ function Wheel({p, w, h, handles, labels}: {p: ViewProps; w: number; h: number; 
 const LIGHT_WHY = 'The M3 clock has no on or off. The light stays hollow.'
 const head = (p: ViewProps) => ({light: 'unknown' as LightState, lightWhy: LIGHT_WHY, onFold: p.nav.fold, onFull: p.nav.full})
 const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
-const corner = (s: Reading) => (s.deg === undefined ? NONE : `${s.deg}° · ${s.layer ? '2nd' : '1st'}`)
+/** The cover the position stands on: the dial says the degree, so the corner says only which of the two covers it is. */
+const corner = (s: Reading) => (s.deg === undefined ? NONE : `${s.layer ? '2nd' : '1st'} cover`)
 const DISPLAY_DOES = 'The wheel: North at the top, the governors outside, the chambers inside them, the cut as spokes, the needle at the degree.'
 
 function controls(p: ViewProps) {
@@ -189,7 +190,7 @@ export const design: DesignedDevice = {
         <Section label="Readout" width={84}>{c.readout}</Section>
         <Section label="Reading" grow>
           <Readout big label={(strOf(p.v, 'readout') ?? 'governor')} does="What the position shows, as the owner reads it." value={readoutWord(p.v, s)} tone="value" />
-          <Readout label="governor ref" does="The governor's coordinate, as the owner names it." value={s.ref} />
+          <Readout label="governor ref" does="The governor's coordinate, as the owner names it." value={s.ref} copy={s.ref} />
           <Readout label="pairs" does="The two pairs of bases of the cell: the lower trigram's under the upper's." value={pairsWord(p.v)} />
           <Readout label={`pose · ${strOf(p.v, 'law.poseMap') === 'lawful-slot' ? 'slot' : 'bin'}`} does="The active pose, read under the seed and the pose map." tone="accent"
             value={strOf(p.v, 'law.poseMap') === 'lawful-slot' ? numOf(p.v, 'pose.slot') : numOf(p.v, 'pose.bin')} />

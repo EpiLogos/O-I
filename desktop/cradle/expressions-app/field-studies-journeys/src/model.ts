@@ -2,6 +2,7 @@ import {validateResearchMaterial,type ResearchMaterial} from './researchMaterial
 import {validateBlueprint,type SceneBlueprint} from './blueprintGeometry.js';
 import {SharedSettings,globalPath,POINTER_PATHS} from './sharedSettings';
 import {validateAutomationLinks} from './automationLinks';
+import {migrateEntitySound,type SoundMigrationReceipt} from './native-field/entitySound';
 import {validateMarkers,validateLoopRegion,type JourneyMarker,type LoopRegion} from './journeyMarkers';
 import {validateTransitionSpec,type TransitionSpec} from './transitions';
 import type {BeltEntry} from './workspacePreferences';
@@ -63,7 +64,9 @@ export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global
  view:{nativeScaffold?:'off'|'axis'|'grid';nativeCamera?:CameraOrbState;mode:'2d'|'3d';yaw:number;pitch:number;zoom:number;panX:number;panY:number};
  field:{background:string;palette:string[];material:Material;params:Record<string,number>};
  entities:Entity[];text:TextLayer[];
- composition:{blueprint?:SceneBlueprint;layout:string;plane:Plane;focus:'parallel'|'travelling';focusDuration:number;focusDwell?:number;carryTint:boolean;carryStation:boolean;frequencyDriver:'manual'|'focus'|'automation'};
+ composition:{blueprint?:SceneBlueprint;layout:string;plane:Plane;focus:'parallel'|'travelling';focusDuration:number;focusDwell?:number;carryTint:boolean;carryStation:boolean;frequencyDriver:'torus'|'manual'|'focus'|'automation';keySource?:'torus'|'sky'|'manual';
+  /** Symbol voices (DLW §20.2 Field): On lets every symbol's voice carry the torus's sound to where the symbol stands. Absent reads as On. */
+  symbolVoices?:boolean};
  morph:{thetaRate:number;phiRate:number;thetaOffset:number;phiOffset:number;law:'theta'|'product'|'sum'|'beat';depth:number;dwell:number};
  automation:AutomationLane[];
 }
@@ -85,7 +88,9 @@ export function sceneClipRefusal(value:unknown):string|null{
 }
 export interface Journey {shared?:SharedSettings;savedScenes?:Record<string,Scene>;schema:'oi.journey';version:1;id:string;name:string;description:string;loop:boolean;scenes:Scene[];updatedAt:string;
  /** E12 journey markers and E13 loop region: journey-level presentation, persisted with the envelope. */
- markers?:JourneyMarker[];loopRegion?:LoopRegion}
+ markers?:JourneyMarker[];loopRegion?:LoopRegion;
+ /** What opening this document did to symbols' voices written for an oscillator: each voice, each field dropped (native-field/entitySound.ts `migrateEntitySound`). Absent when nothing was migrated. */
+ soundMigration?:SoundMigrationReceipt[]}
 /** The scene timing rule, in seconds. validateJourney reads these; the timeline's trim and the scene workflow read them too. */
 export const SCENE_DURATION_MIN=1;
 export const SCENE_DURATION_MAX=3600;
@@ -127,7 +132,7 @@ export function blankScene(name='Untitled scene'):Scene{return{toolbelt:defaultW
  view:{mode:'2d',yaw:0,pitch:0,zoom:1,panX:0,panY:0},
  field:{background:'#f4f2eb',palette:['#252720','#252720'],material:'ink',params:{...DEFAULT_PARAMS}},entities:[],
  text:[],
- composition:{layout:'free',plane:'XY',focus:'parallel',focusDuration:4,carryTint:true,carryStation:false,frequencyDriver:'manual'},
+ composition:{layout:'free',plane:'XY',focus:'parallel',focusDuration:4,carryTint:true,carryStation:false,frequencyDriver:'torus',keySource:'torus'},
  morph:{thetaRate:.08,phiRate:.13,thetaOffset:0,phiOffset:0,law:'theta',depth:1,dwell:.3},automation:[]
 };}
 const descriptions=[
@@ -197,6 +202,8 @@ export function validateJourney(value:unknown):Journey {
  if(!value||typeof value!=='object')throw new Error('Choose a Field Studies journey JSON file.');
  const inspect=(v:unknown,depth=0):void=>{if(depth>40)throw new Error('Document nesting is too deep.');if(typeof v==='number'&&!Number.isFinite(v))throw new Error('Non-finite value.');if(v&&typeof v==='object')for(const [k,x]of Object.entries(v)){if(['__proto__','constructor','prototype'].includes(k))throw new Error('Unsafe document key.');inspect(x,depth+1);}};inspect(value);
  const j=clone(value) as Journey;
+ const receipts:SoundMigrationReceipt[]=[];
+ if(j.soundMigration!==undefined){if(!Array.isArray(j.soundMigration)||j.soundMigration.length>1024||j.soundMigration.some(r=>!r||typeof r.scene!=='string'||typeof r.entity!=='string'||!Array.isArray(r.dropped)||typeof r.words!=='string'))throw new Error('Invalid sound migration receipts.');receipts.push(...j.soundMigration);}
  if(j.schema!=='oi.journey'||j.version!==1)throw new Error('This is not a journey-schema 1 document. Use Import for native schema-4 configurations.');
  const finite=(n:unknown,a:number,b:number)=>typeof n==='number'&&Number.isFinite(n)&&n>=a&&n<=b;
  const str=(s:unknown,max=5000)=>typeof s==='string'&&s.length<=max;
@@ -220,6 +227,7 @@ export function validateJourney(value:unknown):Journey {
    if(!e.position||!Object.values(e.position).every(n=>finite(n,-100,100))||!['x','y','z'].every(k=>finite(e.position[k as keyof Vec3],-100,100))||!e.size||!finite(e.size.x,.001,100)||!finite(e.size.y,.001,100)||!finite(e.rotation,-36000,36000)||!finite(e.share,0,1000)||!color(e.tint)||!finite(e.tintWeight,0,1)||typeof e.locked!=='boolean')throw new Error('Invalid entity transform or appearance.');
    if(!e.force||!['none','attract','repel','vortex'].includes(e.force.kind)||!finite(e.force.strength,-1000,1000)||!finite(e.force.radius,.001,125)||!finite(e.force.spin,-1000,1000)||!(e.station===null||Number.isInteger(e.station)&&e.station>=0&&e.station<7))throw new Error('Invalid entity influence.');
    validateSource(e.source);validateRoleSlot(e);
+   if(e.sound!==undefined){const m=migrateEntitySound(e.sound);e.sound=m.sound;if(m.migration&&!receipts.some(r=>r.scene===s.id&&r.entity===e.id&&r.saved!==true))receipts.push({scene:s.id,entity:e.id,...m.migration});}
    if(!e.sequence||e.sequence.sourcesVersion!==undefined&&e.sequence.sourcesVersion!==1||typeof e.sequence.enabled!=='boolean'||!['seconds','morph'].includes(e.sequence.clock)||!Array.isArray(e.sequence.steps)||e.sequence.steps.length>32)throw new Error('Invalid sequence.');
    for(const l of e.layers??[])if(typeof l.id!=='string'||!l.id||!finite(l.z,-100,100)||(l.scale!==undefined&&!finite(l.scale,.01,10))||typeof l.text!=='string')throw new Error('Invalid layer.');
    const baseLayerSources=new Map((e.layers??[]).map(l=>[l.id,JSON.stringify(l.source)]));for(const l of e.layers??[])validateSource(l.source);
@@ -230,8 +238,8 @@ export function validateJourney(value:unknown):Journey {
   if(s.semanticField){const sf=s.semanticField;if(typeof sf.enabled!=='boolean'||sf.profile?.kind!=='chakra'||!safeId(sf.profile.profileId)||sf.affinity?.method!=='modalProjection'||!finite(sf.affinity.bandwidth,.001,10)||!finite(sf.globalColorGain,0,100)||!Array.isArray(sf.bindings)||sf.bindings.length>32)throw new Error('Invalid semantic field.');
    const semanticIds=new Set<string>();for(const b of sf.bindings){if(!safeId(b.id)||semanticIds.has(b.id)||!safeId(b.semanticNodeId)||typeof b.enabled!=='boolean'||!Array.isArray(b.carriers)||!b.carriers.length||b.carriers.length>16)throw new Error('Invalid semantic binding.');semanticIds.add(b.id);for(const c of b.carriers){if(!['entity','forceEmitter'].includes(c.kind)||!safeId(c.id)||c.kind==='entity'&&!eids.has(c.id))throw new Error('Invalid semantic carrier.');}if(b.resonance&&(!finite(b.resonance.gain,-100,100)||(b.resonance.anchorId!==undefined&&!str(b.resonance.anchorId,160))))throw new Error('Invalid semantic resonance binding.');if(b.color){const c=b.color;if(typeof c.enabled!=='boolean'||!['canonical','entityTint','override'].includes(c.colorSource)||c.overrideColor!==undefined&&!color(c.overrideColor)||!finite(c.gain,0,100)||!['independent','force'].includes(c.radius?.source)||c.radius.value!==undefined&&!finite(c.radius.value,.001,100000)||!['gaussian','compact'].includes(c.falloff)||!['world3d','compositionPlane'].includes(c.metric)||!['weighted','additive'].includes(c.blend)||!['resonanceAffinity','focus','constant'].includes(c.activation))throw new Error('Invalid semantic colour coupling.');}if(b.modulations){if(!Array.isArray(b.modulations)||b.modulations.length>16)throw new Error('Invalid semantic modulation list.');for(const m of b.modulations){if(!['resonanceAffinity','focus','carrierSpeed','forceStrength','forceSpin'].includes(m.source?.kind)||!['color.gain','color.radius','color.hueShift'].includes(m.target)||!finite(m.amount,-10000,10000)||m.offset!==undefined&&!finite(m.offset,-10000,10000)||m.clamp!==undefined&&(!Array.isArray(m.clamp)||m.clamp.length!==2||!m.clamp.every(v=>finite(v,-1e9,1e9))))throw new Error('Invalid semantic modulation.');}}}
   }
-  if(s.resonanceDrive){const d=s.resonanceDrive;if(!['frequency','sweep','semanticFocus'].includes(d.kind))throw new Error('Invalid resonance driver.');if(d.kind==='semanticFocus'&&!safeId(d.profileId))throw new Error('Invalid semantic resonance driver.');if(d.kind==='sweep'&&([d.glideS,d.dwellS].some(v=>v!==undefined&&!finite(v!,0,3600))||(d.direction!==undefined&&!['ascent','descent','pingpong'].includes(d.direction))))throw new Error('Invalid resonance sweep.');}
-  if(!s.composition||!['XY','XZ','YZ'].includes(s.composition.plane)||!['parallel','travelling'].includes(s.composition.focus)||!finite(s.composition.focusDuration,.01,3600)||!['manual','focus','automation'].includes(s.composition.frequencyDriver))throw new Error('Invalid composition.');
+  if(s.resonanceDrive){const d=s.resonanceDrive;if(!['frequency','sweep','semanticFocus','torus'].includes(d.kind))throw new Error('Invalid resonance driver.');if(d.kind==='torus'&&d.keySource!==undefined&&!['torus','sky','manual'].includes(d.keySource))throw new Error('Invalid torus resonance driver.');if(d.kind==='semanticFocus'&&!safeId(d.profileId))throw new Error('Invalid semantic resonance driver.');if(d.kind==='sweep'&&([d.glideS,d.dwellS].some(v=>v!==undefined&&!finite(v!,0,3600))||(d.direction!==undefined&&!['ascent','descent','pingpong'].includes(d.direction))))throw new Error('Invalid resonance sweep.');}
+  if(!s.composition||!['XY','XZ','YZ'].includes(s.composition.plane)||!['parallel','travelling'].includes(s.composition.focus)||!finite(s.composition.focusDuration,.01,3600)||!['torus','manual','focus','automation'].includes(s.composition.frequencyDriver)||s.composition.keySource!==undefined&&!['torus','sky','manual'].includes(s.composition.keySource)||s.composition.symbolVoices!==undefined&&typeof s.composition.symbolVoices!=='boolean')throw new Error('Invalid composition.');
   if(s.composition.blueprint)validateBlueprint(s.composition.blueprint);
   if(!s.morph||!['theta','product','sum','beat'].includes(s.morph.law)||!finite(s.morph.thetaRate,-100,100)||!finite(s.morph.phiRate,-100,100)||!finite(s.morph.thetaOffset,-1000,1000)||!finite(s.morph.phiOffset,-1000,1000)||!finite(s.morph.depth,-10,10)||!finite(s.morph.dwell,0,.99))throw new Error('Invalid morph clock.');
   validateAutomationLinks(s.automation);for(const a of s.automation){if(!safeId(a.id)||!str(a.target,250)||!['lfo','ramp'].includes(a.type)||!['sine','triangle','square','saw','steps','smooth','morph'].includes(a.wave)||!['replace','add','multiply'].includes(a.blend)||!['once','loop','pingpong'].includes(a.loop)||![a.min,a.max,a.rate,a.phase,a.duration,a.delay].every(n=>typeof n==='number'&&Number.isFinite(n))||!(a.firedAt===null||typeof a.firedAt==='number'&&Number.isFinite(a.firedAt)))throw new Error('Invalid automation lane.');}
@@ -240,11 +248,12 @@ export function validateJourney(value:unknown):Journey {
   if(!j.savedScenes||typeof j.savedScenes!=='object'||Array.isArray(j.savedScenes))throw new Error('Invalid saved scenes.');
   const saved=Object.entries(j.savedScenes);
   if(saved.length>64||saved.some(([id,s])=>!ids.has(id)||!s||s.id!==id))throw new Error('Saved scene does not match its working scene.');
-  if(saved.length){const checked=validateJourney({...j,savedScenes:undefined,scenes:saved.map(([,s])=>s)});j.savedScenes=Object.fromEntries(checked.scenes.map(s=>[s.id,s]));}
+  if(saved.length){const checked=validateJourney({...j,savedScenes:undefined,soundMigration:undefined,scenes:saved.map(([,s])=>s)});j.savedScenes=Object.fromEntries(checked.scenes.map(s=>[s.id,s]));for(const r of checked.soundMigration??[])if(!receipts.some(x=>x.scene===r.scene&&x.entity===r.entity&&x.saved===true))receipts.push({...r,saved:true});}
  }
  const duration=j.scenes.reduce((n,s)=>n+s.duration,0);
  if(j.markers!==undefined)j.markers=validateMarkers(j.markers,duration);
  if(j.loopRegion!==undefined){const region=validateLoopRegion(j.loopRegion,duration);if(region)j.loopRegion=region;else delete j.loopRegion;}
+ if(receipts.length)j.soundMigration=receipts;else delete j.soundMigration;
  return clone(j);
 }
 // --- Collections (the library refit at the Central/ProjectCentral levels) --

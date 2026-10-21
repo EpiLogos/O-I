@@ -1,0 +1,28 @@
+{
+  "schema": "oi.vendored-face/v1",
+  "source": "EpiLogos/face-rig",
+  "note": "Vendored by packages/live-shell/ui/scripts/sync-face.mjs. Do not edit these files by hand; re-run the sync when the face moves.",
+  "commit": "75e60357fdf3a1b5766d3d19a4bb85693c6550e9",
+  "date": "2026-10-20T17:31:40+01:00",
+  "dirty": false,
+  "verbatim": [
+    "facerig2.html",
+    "face-core.js",
+    "face-speech.js"
+  ],
+  "built": [
+    "face-rig.css",
+    "face-embed.css",
+    "face-embed.js",
+    "face.html"
+  ],
+  "files": {
+    "face-core.js": "bab187afbf3c73de603b76ba18fdb49d527ac68e58304d672a16695b3e026ca6",
+    "face-embed.css": "7aca5f97a70c0e550cd0dc3934d4fff46af54b00e27c4a679f635a0b52c15e0a",
+    "face-embed.js": "789340d1d5a7ea964475f3ddce3122dfa43f1e145215a8d18603349e2fe16320",
+    "face-rig.css": "a7de8cca9736993a0518ba67033ca9c40324655fa6e07647d405fdace6837457",
+    "face-speech.js": "25dce1fcbaaa215b01def0202477dab82db5d6269e83e957f615d7becb1d11a8",
+    "face.html": "92391683cd6305ec1f0192e9cf2946974a1e5e0bc23657b4586b6ec64f6c0ca0",
+    "facerig2.html": "530df92967872b119662634e3fcebe1d0e659d9b3e6d4ecd481892dc1e507a48"
+  }
+}

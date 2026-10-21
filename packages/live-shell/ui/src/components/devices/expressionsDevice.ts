@@ -86,9 +86,20 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
   medium: [
     {key: 'mediumDimension', kind: 'field-setting', title: 'Medium dimensions', read: scene => text(engine(scene).mediumDimension, '2D'), choices: same('2D', '3D')},
   ],
+  // The Field's Key source (manual §20.2): which pitches tune the plate under the Torus driver. The catalogue has no Field device yet
+  // (nativeDeviceCatalogue.ts lists the eleven field families), so no rack row carries this setting until one does; the choices, the
+  // reading and the write (the editor's `keySource` panel setting) are the owner's already. A scene saved before the key carries none: absent.
+  field: [
+    {key: 'keySource', kind: 'panel-setting', title: 'Key source', read: scene => text(composition(scene).keySource),
+      choices: [choice('torus', 'Torus'), choice('sky', 'Sky'), choice('manual', 'Manual')]},
+    // Symbol voices (manual §20.2: On · Off, default On): whether symbols carry the torus's sound to where they stand. The scene carries it only
+    // once it is set; the manual's own meaning of a scene that carries none is On. Off silences every voice and changes no symbol's block.
+    {key: 'symbolVoices', kind: 'panel-setting', title: 'Symbol voices', read: scene => composition(scene).symbolVoices !== false},
+  ],
   resonance: [
-    {key: 'frequencyDriver', kind: 'panel-setting', title: 'Frequency driver', read: scene => text(composition(scene).frequencyDriver, 'manual'),
-      choices: [choice('manual', 'Manual tuning'), choice('focus', 'Travelling focus'), choice('automation', 'Automation / station sweep')]},
+    // Torus · Manual · Focus · Automation, in the manual's order (§20.14). A scene that carries no driver is unknown, not a default.
+    {key: 'frequencyDriver', kind: 'panel-setting', title: 'Frequency driver', read: scene => text(composition(scene).frequencyDriver),
+      choices: [choice('torus', 'Torus'), choice('manual', 'Manual tuning'), choice('focus', 'Travelling focus'), choice('automation', 'Automation / station sweep')]},
     {key: 'autoSweep', kind: 'panel-setting', title: 'Sweep linked stations', read: scene => engine(scene).autoSweep === true},
     {key: 'sweepDirection', kind: 'panel-setting', title: 'Sweep direction', read: scene => text(engine(scene).sweepDirection, 'ascent'),
       choices: [choice('ascent', 'Ascending'), choice('descent', 'Descending'), choice('pingpong', 'There and back')]},
@@ -134,7 +145,7 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
       choices: [choice('listed', 'Listed order'), choice('reverse', 'Reverse order'), choice('pingpong', 'There and back')]},
     {key: 'carryTint', kind: 'panel-setting', title: 'Carry local tint', read: scene => composition(scene).carryTint === true},
     {key: 'frequencyDriver', kind: 'panel-setting', title: 'Shared tuning driver', read: scene => text(composition(scene).frequencyDriver),
-      choices: [choice('manual', 'Manual'), choice('focus', 'Travelling focus'), choice('automation', 'Automation')]},
+      choices: [choice('torus', 'Torus'), choice('manual', 'Manual'), choice('focus', 'Travelling focus'), choice('automation', 'Automation')]},
   ],
   morph: [
     {key: 'autoOscillate', kind: 'morph-setting', title: 'Oscillating drive', read: scene => morphing(scene, 'autoOscillate') === true},
@@ -157,6 +168,13 @@ export function expressionsSettingKeys(family: string): readonly string[] {
  * setting. A designed device draws the owner's values, so its binding maps the row's label back to the value (physicsBinding.ts). */
 export function expressionsSettingChoices(family: string, key: string): readonly Choice[] | undefined {
   return (SETTINGS[family] ?? []).find(spec => spec.key === key)?.choices
+}
+
+/** A setting's value in a scene as a row shows it (the owner's label for a choice, the boolean for a switch), or undefined when the scene
+ * does not say or the family has no such setting. */
+export function expressionsSettingRead(family: string, key: string, scene: Scene): ParamValue | undefined {
+  const spec = (SETTINGS[family] ?? []).find(candidate => candidate.key === key)
+  return spec ? settingValue(spec, scene) : undefined
 }
 
 /** A setting's value as the row shows it: the owner's label for a choice, the boolean for a switch; unknown when the scene does not say. */

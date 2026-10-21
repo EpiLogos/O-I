@@ -669,6 +669,22 @@
   },
   {
     "family": "quaternal-logic",
+    "face": "resonator-bank",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "live"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the torus's sound after its level: one tuned body rings at each part of the M3 clock's cut"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "quaternal-logic",
     "face": "sitting",
     "kind": "parameter",
     "liveSemantic": "device-instrument",

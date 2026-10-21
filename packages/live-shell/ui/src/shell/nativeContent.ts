@@ -2,6 +2,7 @@ import type {Entity, NativeEditorBasis, NativeEditorChange, NativeEditorControll
 import {toNativeEntity} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeBridge';
 import type {ActMaterialContract} from '../../../../expressions-boundary/src/nativeMaterials';
 import {loopIntent, sceneFocused} from '../components/nativeScenePlayback';
+import type {NativeSceneEditIntent} from '../../../../expressions-boundary/src/sceneEdits';
 
 /** Presentation identities are tuples, never invented native references. The
  * complete material stays with the retained Expressions document owner. */
@@ -181,6 +182,15 @@ export function createNativeContentActions(content: NativeExpressionsContent, co
       if (!sceneFocused(selection, basis.scene_ref) || !selection) return refuse('Focus a Scene before changing its loop.');
       return controller.request({operation: 'scene-edit', basis, intent_epoch: content.playback.intent_epoch,
         native_selection: structuredClone(selection), intent: loopIntent(loop)});
+    },
+    /** One scene edit (rename, duplicate, remove, add, the Expression's title): the same scene-edit intent the Scene editor sends, on
+     * the captured basis and native selection (the object menu's acts on a scene, manual §10.9). */
+    sceneEdit(intent: NativeSceneEditIntent): Promise<NativeEditorReply> {
+      if (!content.scenes || !content.playback) return refuse('The native Scene transport is unavailable');
+      const selection = content.native_selection;
+      if (!selection) return refuse('Select a scene of the Expression first: the owner edits from the selection it holds.');
+      return controller.request({operation: 'scene-edit', basis, intent_epoch: content.playback.intent_epoch,
+        native_selection: structuredClone(selection), intent});
     },
     selectField(): Promise<NativeEditorReply> {
       return controller.request({operation: 'select-field', basis});

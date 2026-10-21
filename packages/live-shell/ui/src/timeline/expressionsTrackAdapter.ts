@@ -68,6 +68,8 @@ export interface ExpressionsControls {
   /** The transport's Studio arm (native/frameSound.ts publishStudioArm): armed, Play records a take. One arm for the open Expression. */
   arm?: {op: string; on: boolean; set(on: boolean): unknown};
   playScene?: {op: string; run(expressionId: string, sceneId: string): unknown};
+  /** The presented composition's scene edits (the object menu's acts): rename, duplicate, remove, add, the Expression's title. */
+  sceneEdit?: {op: string; run(intent: {operation: 'duplicate' | 'remove'; scene_ref: string} | {operation: 'add'} | {operation: 'expression-title'; title: string}): unknown};
   stopAll?: {op: string; run(): unknown};
   playSaved?: {op: string; run(): unknown};
   reenable?: {op: string; run(): unknown};
@@ -234,7 +236,19 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   }
   const arm = controls.arm
   if (arm) actions.mixer = {...actions.mixer, arm: {op: arm.op, run: (_trackId, on) => arm.set(on)}}
-  return Object.keys(actions).length ? actions : undefined;
+  // A scene's acts (manual §20.1's action table): duplicate, delete, insert after the presented scene, the Expression's title.
+  const edit = controls.sceneEdit
+  if (edit) {
+    const scene = (clipId: string) => sceneOf.get(clipId)
+    const refused = (clipId: string) => ({ok: false, error: `"${clipId}" is no scene of this Expression.`})
+    actions.duplicateClip = {op: `${edit.op} · duplicate`, run: clipId => { const found = scene(clipId); return found ? edit.run({operation: 'duplicate', scene_ref: found.sceneId}) : refused(clipId) }}
+    actions.deleteClip = {op: `${edit.op} · remove`, run: clipId => { const found = scene(clipId); return found ? edit.run({operation: 'remove', scene_ref: found.sceneId}) : refused(clipId) }}
+    actions.insertClip = {op: `${edit.op} · add (a blank scene after the presented one)`, run: () => edit.run({operation: 'add'})}
+    actions.insertRow = {op: `${edit.op} · add (a blank scene after the presented one)`, run: () => edit.run({operation: 'add'})}
+    actions.renameTrack = {op: `${edit.op} · expression-title`, run: (_trackId, name) => edit.run({operation: 'expression-title', title: name})}
+  }
+  actions.owner = 'Expressions · the native composition (packages/expressions-boundary sceneEdits)'
+  return actions;
 }
 
 export const expressionsTrackAdapter: WorldTrackAdapter<ExpressionsWorkReading> = {

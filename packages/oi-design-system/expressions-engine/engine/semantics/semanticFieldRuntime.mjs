@@ -1,6 +1,5 @@
 import { CHAKRA_BY_ID } from "./chakraSemantics.mjs";
 import { mapChakrasToAnchors } from "./chakraProfile.mjs";
-const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function hueShift(hex, turns) {
   const clean = hex.replace("#", "");

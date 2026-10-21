@@ -24,6 +24,7 @@ import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
 import {useAgentShellOptional} from '../../agent/AgentShellContext'
 import {useHarnessBinding} from '../../agent/useHarnessBinding'
 import {harnessAgentControl} from '../../agent/harnessAgentControl'
+import {withChatSeat} from '../../agent/factoryChatsReopen'
 import {shellSetter} from '../../inhabitants/sdk/shellSetters'
 import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, type FactoryWriteArm} from '../../timeline/factoryTrackAdapter'
 import {useSettingsAnswers} from '../../owners/readers'
@@ -95,5 +96,6 @@ export const useFactoryTracks: UseModeTracks = reading => {
   }, [transport])
   if (!agency.tracks.length && agency.error) return {waiting: `The agent sessions are unread: ${agency.error}`}
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
-  return factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {})})
+  // A chat dragged from Factory's Projects (DLW §19.1) reopens on the empty track; an agent still starts a new agent there.
+  return withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {})}), {transport})
 }

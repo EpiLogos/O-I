@@ -8,7 +8,7 @@ import {meaningFaceModel} from './nativeEntityFace.meaning.ts'
  * `paths` are entity parameter suffixes as keyed by entityTargets (desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters.ts),
  * e.g. 'x', 'y', 'z', 'forces.strength'. */
 /** A compact control that is not a registry parameter. `entity-sound` writes the whole sound block through nativeEntityFace.sound.ts builders. */
-export type EntityCompactControl = {kind: 'entity-sound'; field: 'gain' | 'frequencyHz' | 'waveform'}
+export type EntityCompactControl = {kind: 'entity-sound'; field: 'gain' | 'carry'}
 
 export interface EntityFaceModel {
   name: string

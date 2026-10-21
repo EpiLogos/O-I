@@ -122,7 +122,8 @@ function WaitingPicture({size, face}: {size: DeviceSize; face: InhabitantFaceDec
 
 /** The devices of the given manifests' faces, over the owners' readings. Pure: the chain, the tests and the door all read this. */
 export function techneEntries(manifests: readonly InhabitantManifest[], readings: TechneReadings): TechneEntry[] {
-  return manifests.flatMap(manifest => manifest.faces.map((face): TechneEntry => {
+  // A Technē chain device is an instrument, never an effect (lock §5.2): a family's effects (the Resonator bank) stand on Live's chain.
+  return manifests.flatMap(manifest => manifest.faces.filter(face => face.liveSemantic !== 'device-audio-fx').map((face): TechneEntry => {
     const waiting = face.admission === 'waiting'
     if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3, readings.deck, readings.chakra, readings.sitting)
     if (!waiting && manifest.id === ATLAS_FAMILY && isAtlasFaceId(face.id)) {

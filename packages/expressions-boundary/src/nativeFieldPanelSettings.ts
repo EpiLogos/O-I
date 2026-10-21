@@ -55,8 +55,15 @@ export const FIELD_PANEL_SETTINGS = {
   relationalEnabled: {target: 'engine', type: 'boolean'},
   // Relational forces (inspector.ts:134). Model: EngineSettings.relationalMode.
   relationalMode: {target: 'engine', type: 'enum', options: ['orbital', 'nbody', 'chaos'] as const},
-  // Continuous resonance (inspector.ts:127). Model: Scene.composition.frequencyDriver.
-  frequencyDriver: {target: 'composition', type: 'enum', options: ['manual', 'focus', 'automation'] as const},
+  // Continuous resonance (inspector.ts:127). Model: Scene.composition.frequencyDriver. The manual lists Torus · Manual · Focus · Automation
+  // (§20.14), in that order, and Torus is the default of a new Scene.
+  frequencyDriver: {target: 'composition', type: 'enum', options: ['torus', 'manual', 'focus', 'automation'] as const},
+  // Continuous resonance, Key source (inspector.ts:127; §20.2 Field): which pitches tune the plate under the Torus driver. Model:
+  // Scene.composition.keySource, optional (a Scene saved before the key carries none; a new Scene carries Torus).
+  keySource: {target: 'composition', type: 'enum', options: ['torus', 'sky', 'manual'] as const},
+  // Symbol voices (inspector.ts:131; §20.2 Field, "Symbol voices | On · Off | On"): whether symbols carry the torus's sound to where they stand. Model:
+  // Scene.composition.symbolVoices, optional; absent reads as On, and Off silences every voice without changing any symbol's block.
+  symbolVoices: {target: 'composition', type: 'boolean'},
   // Continuous resonance (inspector.ts:130). Model: EngineSettings.autoSweep.
   autoSweep: {target: 'engine', type: 'boolean'},
   // Continuous resonance (inspector.ts:131). Model: EngineSettings.sweepDirection.
@@ -107,6 +114,8 @@ export type FieldPanelModelAgreement = [
   Assert<Equal<FieldPanelSettingValue<'relationalEnabled'>, EngineSettings['relationalEnabled']>>,
   Assert<Equal<FieldPanelSettingValue<'relationalMode'>, EngineSettings['relationalMode']>>,
   Assert<Equal<FieldPanelSettingValue<'frequencyDriver'>, Scene['composition']['frequencyDriver']>>,
+  Assert<Equal<FieldPanelSettingValue<'keySource'>, NonNullable<Scene['composition']['keySource']>>>,
+  Assert<Equal<FieldPanelSettingValue<'symbolVoices'>, NonNullable<Scene['composition']['symbolVoices']>>>,
   Assert<Equal<FieldPanelSettingValue<'autoSweep'>, EngineSettings['autoSweep']>>,
   Assert<Equal<FieldPanelSettingValue<'sweepDirection'>, EngineSettings['sweepDirection']>>,
   Assert<Equal<FieldPanelSettingValue<'templateDimension'>, NonNullable<EngineSettings['templateDimension']>>>,

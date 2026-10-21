@@ -217,6 +217,8 @@ export function qlM3Binding(m3: QlM3State): DesignBinding {
     writes: key => live && (key === 'clock.degree720' || key === 'aperture.index'),
     standing,
     local,
+    // The first read of the form is in flight: every value waits, and none is drawn as zero.
+    waiting: m3.busy && !live,
     ...(live ? {write: async (changes: readonly ValueChange[]) => { const ops = qlM3Operations(m3, changes); if (ops.length) await applyQlM3(ops) }} : {}),
   }
 }

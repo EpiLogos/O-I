@@ -177,7 +177,8 @@ test('the grid draws each head across every track in its atmosphere, its name an
   const rails = id => [...(new RegExp(`data-section-rails="\\d"><span class="rails" aria-hidden="true">((?:<i style="[^"]*"></i>)+)</span><button type="button" class="stop-launch"[^>]*>▸</button><span class="cs-label">${id}<`).exec(markup)?.[1] ?? '').matchAll(/background:([^"]+)"/g)].map(m => m[1])
   assert.deepEqual(rails('2'), ['#aa5500', '#3366cc'], 'a row under Era: the Age rail, then the Era rail')
   assert.deepEqual(rails('4'), ['#aa5500', 'var(--line-strong)'], 'a section with no atmosphere draws its rail in the strong line')
-  assert.match(markup, /<div class="cs" role="gridcell"><button type="button" class="stop-launch" disabled="" title="No row launch: the owner discloses none">▸<\/button><span class="cs-label">5<\/span>/, 'a row in no section is as it was')
+  // The row carries its id for the object menu (manual §10.9; frame/menu/TracksMenu.tsx), and is otherwise as it was.
+  assert.match(markup, /<div class="cs" role="gridcell" data-row="[^"]+"><button type="button" class="stop-launch" disabled="" title="No row launch: the owner discloses none">▸<\/button><span class="cs-label">5<\/span>/, 'a row in no section is as it was')
   const folds = []
   find(gridTree(set, {onFold: id => folds.push(id)}), n => n.props['aria-label'] === 'Fold Era')[0].props.onClick()
   assert.deepEqual(folds, ['section:era'], 'a section folds through the grid\'s own fold record, under its own keys')

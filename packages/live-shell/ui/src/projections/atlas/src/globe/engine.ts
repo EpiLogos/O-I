@@ -12,10 +12,13 @@ import { CameraRig } from './controls';
 import { Arcs, Marker } from './arcs';
 import { Aura, AtmosphereShell, Backdrop, Earth, bodyTexture, hiResChoice, loadBaseHi, loadBaseLo } from './earth';
 import { airOf, barrenOf, bodyImage, bodySunDir, BODY_WIDTHS, type BodyLook, type WorldBodyRecord } from './body';
-import { renderBody } from './bodyRender';
+import { WEATHER_BANDS, weatherClock, weatherScale } from './bodyWeather';
+import { bodyTileSource, renderBody } from './bodyRender';
+import { hasTiles, tileLevelFor } from './bodyTiles';
+import { SkyWindow } from './cloudWindow';
 import { Presences } from './presences';
 import { createShared, type Shared } from './shared';
-import { TileLayer } from './tiles';
+import { gibsSource, TileLayer } from './tiles';
 import { depthPlanes, stageDistance, sunWeight, surfaceWeight } from '../sky/stages';
 import type { SkyLayer } from '../sky/layer';
 import type { BodyKey } from '../types/sky';
@@ -70,6 +73,12 @@ export class GlobeEngine {
   readonly arcs: Arcs;
   readonly markers: { sel: Marker; hover: Marker; head: Marker };
   presences!: Presences;
+  /** [T-PROCEDURAL-BODY] the window of the sky about the camera: the analytic cloud field over what the camera sees, in the mask's place where the camera is near (cloudWindow.ts) */
+  private skyWindow!: SkyWindow;
+  /** whether the body drawn has a sky and its cloud layer has arrived */
+  private skyCloudy = false;
+  /** the occasion the weather is drawn at (ms): the occasion set, or Now (held where reduced motion holds it) */
+  private weatherAt = 0;
   earth!: Earth;
   tiles!: TileLayer;
   /** the sky layer, once its data has loaded (absent: the atlas exactly as it was) */
@@ -102,6 +111,8 @@ export class GlobeEngine {
   /** cancels the frame the loop has scheduled next (ui/lifetime.ts: released with the atlas) */
   private cancelFrame: () => void = () => {};
   baseKind: '2k' | '4k' | '8k' = '2k';
+  /** the first tile level the Earth's own sharp base is less dense than (GIBS tiles start there); a generated body sets its own */
+  private earthMinEmit = 6;
   baseUploadMs = 0;
   private running = true;
   private paused = false;
@@ -147,8 +158,9 @@ export class GlobeEngine {
     this.presences = new Presences(this.model, this.shared, this.renderer);
     this.earth = new Earth(this.shared, lo, this.presences.densityTarget.texture);
     this.tiles = new TileLayer(this.renderer, this.earth.u, this.reduced);
+    this.skyWindow = new SkyWindow({ win: this.earth.winTexture, rect: this.earth.winRect, on: this.earth.winOn, time: this.earth.winT }, this.renderer);
     // a body asked for before the Earth stood is drawn now
-    if (this.bodyRecord) this.drawBody(this.bodyRecord, this.bodyLook, this.bodyKey);
+    if (this.bodyRecord) { this.drawBody(this.bodyRecord, this.bodyLook, this.bodyKey); this.applyWeather(); }
     this.scene.add(this.backdrop.mesh, this.earth.mesh, this.tiles.group, this.shell.mesh, this.presences.mesh, this.arcs.group, this.aura.points, this.markers.sel.mesh, this.markers.hover.mesh, this.markers.head.mesh);
     this.palDirty = true;
     this.last = performance.now();
@@ -164,7 +176,8 @@ export class GlobeEngine {
   /** After first paint: fetch the sharp base, upload it quietly, then blend it in. */
   private async upgradeBase() {
     const which = hiResChoice(this.renderer);
-    this.tiles.minEmit = which === '8k' ? 6 : 5;
+    this.earthMinEmit = which === '8k' ? 6 : 5;
+    if (!this.earth.generated) this.tiles.minEmit = this.earthMinEmit;
     if (!which) return;
     try {
       await new Promise<void>((r) => { later(() => r(), 700); });
@@ -437,9 +450,12 @@ export class GlobeEngine {
       if (dLon) this.rig.lon = wrapLon(this.rig.lon + dLon);
     }
     this.stepSun(dt);
+    if (this.bodyRecord && this.bodyTime === null && !this.reduced) { this.weatherAt = Date.now(); this.earth.weatherT.value = weatherClock(this.bodyRecord.seed, this.weatherAt); }
     this.rig.update(dt);
     // the clip planes follow the altitude so depth stays precise from orbit to the ground
     const camDist = this.camera.position.length();
+    // the radians of the body one pixel spans, under the camera (the sky's finest detail is drawn only where a pixel is smaller than it)
+    this.earth.pxRad.value = (2 * Math.tan((FOV * Math.PI) / 360) * Math.max(camDist - 1, 0.02)) / Math.max(this.height, 1);
     // the far plane follows the Earth's distance (the sky is drawn about the Sun); the near plane may follow the focus
     const planes = depthPlanes(camDist, !!this.sky, this.rig.dist, this.sky?.approach ?? 0);
     this.camera.near = planes.near;
@@ -498,10 +514,12 @@ export class GlobeEngine {
     this.presences.setSizeFor(dist, surface);
     this.setSurface(surface);
     this.presences.step(dt);
-    if (render) this.presences.renderDensity();
+    if (render && !this.earth.generated) this.presences.renderDensity(); // the glow of the Earth's presences is the Earth's
     this.earth.step(dt, this.reduced);
-    // the close-zoom tiles are the Earth's imagery (NASA GIBS, tilemath.ts): none is fetched or drawn over a generated body
-    if (!this.earth.generated) this.tiles.update(this.camera, dt, this.width, this.height);
+    // the close-zoom tiles: the Earth's are NASA GIBS's (tilemath.ts); a generated body's are made by its own generator in a worker (bodyTiles.ts), never fetched
+    this.tiles.update(this.camera, dt, this.width, this.height);
+    // the sky's window where the camera is near: asked for, made in chunks, shown when whole (a body with no cloud, the Earth and a far camera have none)
+    this.skyWindow.update(dt, { record: this.bodyRecord, look: this.bodyLook, cloudy: this.skyCloudy, dist: camDist, lat: this.rig.lat, lon: this.rig.lon, time: this.weatherAt });
     this.markers.sel.step(dt, this.camera, this.height);
     this.markers.hover.step(dt, this.camera, this.height);
     this.markers.head.step(dt, this.camera, this.height);
@@ -527,12 +545,15 @@ export class GlobeEngine {
   /** The atlas's surface layers fade as the pull-back passes the Moon; fully off, they are not drawn. */
   private setSurface(w: number) {
     const on = w > 0.002;
-    this.surfaceOn = on;
-    this.presences.mesh.visible = on;
+    // [T-PROCEDURAL-BODY] the presences, their arcs and markers are the Earth's occurrences: a generated body in the Earth's place carries none of them, drawn or picked
+    // (its tiles and its air are its own); they are the Earth's again when the Earth is
+    const earthly = on && !this.earth.generated;
+    this.surfaceOn = earthly;
+    this.presences.mesh.visible = earthly;
     this.aura.points.visible = on;
-    this.arcs.group.visible = on;
-    this.tiles.group.visible = on && !this.earth.generated;
-    for (const m of [this.markers.sel, this.markers.hover, this.markers.head]) m.suppressed = !on;
+    this.arcs.group.visible = earthly;
+    this.tiles.group.visible = on;
+    for (const m of [this.markers.sel, this.markers.hover, this.markers.head]) m.suppressed = !earthly;
   }
 
   // ── the body the globe draws (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────────────────────────
@@ -559,16 +580,38 @@ export class GlobeEngine {
     if (!record) {
       this.earth.setGenerated(null);
       this.earth.setSky(null, 0, 1);
+      this.earth.barren.value = 0;
+      this.earth.detail.value = 0;
+      this.earth.texRad.value = (2 * Math.PI) / 8192;
+      this.skyCloudy = false;
+      this.skyWindow.clear();
       this.shell.air.value = 1;
       this.bodyPictureState = 'earth';
+      // the Earth's own tiles again
+      this.tiles.setSource(gibsSource);
+      this.tiles.enabled = true;
+      this.tiles.minEmit = this.earthMinEmit;
       return;
     }
     this.drawBody(record, this.bodyLook, key);
+    this.applyWeather();
   }
 
-  /** The occasion the body's weather is shown at: a moment (ms), or null for Now. */
+  /** The occasion the body's weather is shown at: a moment (ms), or null for Now. A past occasion shows the weather it had; Now moves slowly (the wind carries the
+   * clouds a few tens of degrees a day), and reduced motion holds Now where the occasion was set. */
   setBodyTime(ms: number | null) {
     this.bodyTime = ms;
+    this.applyWeather();
+  }
+
+  /** Hand the shader the body's wind and the occasion's time in days: from the occasion where there is one, from the clock for Now. */
+  private applyWeather() {
+    if (!this.earth) return;
+    const record = this.bodyRecord;
+    const scale = record && record.generator.version >= 2 ? weatherScale(record.seed) : 0;
+    this.earth.weatherRate.value.set(WEATHER_BANDS[0]!.weight * scale, WEATHER_BANDS[1]!.weight * scale, WEATHER_BANDS[2]!.weight * scale);
+    this.weatherAt = this.bodyTime ?? Date.now();
+    this.earth.weatherT.value = record ? weatherClock(record.seed, this.weatherAt) : 0;
   }
 
   /** The occasion the body is shown at (null: Now). */
@@ -589,12 +632,24 @@ export class GlobeEngine {
     const air = airOf(record, look);
     // at once, on the main thread: the first picture (BODY_WIDTHS.first wide, a few tens of milliseconds) and the body's air; its clouds come with the sharp base
     this.earth.setGenerated(bodyTexture(bodyImage(record, BODY_WIDTHS.first, look), this.renderer));
+    // its ground is drawn finer than its pictures where the camera is close (shaders.ts detailOver); the texel is the first picture's until a sharper one is in
+    this.earth.detail.value = 1;
+    this.earth.texRad.value = (2 * Math.PI) / BODY_WIDTHS.first;
+    // the old body's window is not this body's; this one's sky comes with its sharp base
+    this.skyCloudy = false;
+    this.skyWindow.clear();
     this.earth.setSky(null, 0, air);
+    this.earth.barren.value = barrenOf(look);
     this.shell.air.value = air;
     this.bodyPictureState = 'coarse';
+    // its close-zoom tiles: made by its generator (a body of generator version 1 has none), wanted where they are denser than the base that will stand, as GIBS's are
+    const widths = hiResChoice(this.renderer) ? [BODY_WIDTHS.lo, BODY_WIDTHS.hi] : [BODY_WIDTHS.lo];
+    this.tiles.setSource(bodyTileSource(record, look));
+    this.tiles.enabled = hasTiles(record);
+    this.tiles.minEmit = tileLevelFor(widths[widths.length - 1]!);
     // the larger pictures are made off the main thread (bodyRender.ts: a module worker, else the main thread), in order, and each blended in as the Earth's sharp
     // base is (the Earth's 2k and 4k/8k): BODY_WIDTHS.lo where the GPU takes no more, then BODY_WIDTHS.hi where it does
-    void this.drawBases(record, look, key, hiResChoice(this.renderer) ? [BODY_WIDTHS.lo, BODY_WIDTHS.hi] : [BODY_WIDTHS.lo]);
+    void this.drawBases(record, look, key, widths);
   }
 
   private async drawBases(record: WorldBodyRecord, look: BodyLook | undefined, key: string, widths: readonly number[]) {
@@ -613,7 +668,9 @@ export class GlobeEngine {
       const hi = bodyTexture(pictures.image, this.renderer);
       this.renderer.initTexture(hi);
       this.earth.setGeneratedHi(hi);
+      this.earth.texRad.value = (2 * Math.PI) / width;
       this.earth.setSky(bodyTexture(pictures.clouds, this.renderer), cover, air);
+      this.skyCloudy = cover > 0;
       this.bodyPictureState = 'sharp';
     }
   }

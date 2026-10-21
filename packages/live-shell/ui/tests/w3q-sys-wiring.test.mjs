@@ -100,6 +100,7 @@ globalThis.__CRADLE_WALK__ = false
 const model = await import('../src/projections/atlas/system/systemModel.ts')
 const systemStore = await import('../src/projections/atlas/system/systemStore.ts')
 const overlay = await import('../src/projections/atlas/system/systemOverlay.ts')
+const enteredLib = await import('../src/projections/atlas/system/enteredWorld.ts')
 const worldBody = await import('../src/projections/atlas/body/worldBody.ts')
 const {createDisclosureSessionStore} = await import('../../../../desktop/cradle/src/techne/session.ts')
 const {groundSelection} = await import('../../../../desktop/cradle/src/techne/m0m5/reading.ts')
@@ -168,6 +169,34 @@ test('your own world\'s body is drawn with its own look: engine.setBody(record, 
   assert.deepEqual(lastOf(engine, 'setBody')[2], lookFor(NEW), 'the look follows the readings: a new world is drawn as a moon (barren 1)')
   assert.equal(lastOf(engine, 'setBody')[2].barren, 1)
   assert.deepEqual(lastOf(engine, 'setBody')[1], RECORD, 'and the record has not moved: a look is read, never written into it')
+})
+
+// Screen pass: the entered 'Fresh' world (a moon, barren 1) was seen on the globe as a dark navy sphere while its disc beside your planet was grey-brown.
+// The question this holds: what does the drawer hand the globe for a world you ENTER? Its record AND that world's own look - the look its own readings
+// give it, the look its disc is drawn with - never your world's look and never none.
+test('an entered world is drawn with its own record and its own look, the look its disc has; never your world\'s look, never none; leaving draws yours again', async () => {
+  const {bindBodyDraw} = drawMod
+  later((await chooseOwn()).dispose)
+  setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, NEW]])))
+  const engine = stubEngine()
+  later(bindBodyDraw({engine, store: sharedSession()}).dispose)
+  later(() => enteredLib.leaveWorld())
+  const [oi] = systemStore.systemBodies().filter(body => !body.yours)
+  assert.deepEqual([lastOf(engine, 'setBody')[1], lastOf(engine, 'setBody')[2]], [RECORD, lookFor(LIVED)], 'before entering: your own body, your own look')
+  assert.equal(enteredLib.enterWorld(oi.key), null)
+  const entered = lastOf(engine, 'setBody')
+  assert.deepEqual(entered[1], OI_RECORD, 'the entered world\'s own record')
+  assert.deepEqual(entered[2], lookFor(NEW), 'with the look its own readings give it: a young world, a moon')
+  assert.equal(entered[2].barren, 1)
+  assert.notDeepEqual(entered[2], lookFor(LIVED), 'not the look of your world, which is lived in')
+  assert.deepEqual(entered[2], oi.look, 'the look its disc beside your planet is drawn with (SystemBody.look)')
+  setBodies(systemOf(new Map([[YOURS.ref, NEW], [OI.ref, LIVED]])))
+  const moved = lastOf(engine, 'setBody')
+  assert.deepEqual([moved[1], moved[2]], [OI_RECORD, lookFor(LIVED)], 'the entered world\'s look follows ITS readings, while your own world has become a moon')
+  assert.equal(moved[2].barren, 0)
+  enteredLib.leaveWorld()
+  const back = lastOf(engine, 'setBody')
+  assert.deepEqual([back[1], back[2]], [RECORD, lookFor(NEW)], 'leaving draws your own body again with your own look')
 })
 
 test('choosing Earth draws no body and gives no look: engine.setBody(null); choosing your own again draws it with its look', async () => {
@@ -312,7 +341,7 @@ test('a world\'s disc beside your planet is drawn from its record and its look: 
   const first = discsOf()
   assert.equal(first.length, 1, 'O-I\'s disc is drawn once')
   assert.deepEqual(first[0][0], OI_RECORD)
-  assert.equal(first[0][1], 52, 'at its disc size')
+  assert.equal(first[0][1], 2 * overlay.DISC, 'at its disc size (twice the pixels it is drawn at, for a sharp screen)')
   assert.deepEqual(first[0][2], lookFor(NEW), 'with the look its own readings give it: the overlay hands the generator the look, not the record alone')
   assert.equal(first[0][3], null, 'and no occasion: Now')
   setBodies(systemOf(new Map([[YOURS.ref, LIVED], [OI.ref, NEW]])))

@@ -1,0 +1,10 @@
+/* The face alone, as the shell hosts it (FaceStage, packages/live-shell/ui/src/agent/FaceStage.tsx). Built by
+   packages/live-shell/ui/scripts/sync-face.mjs: do not edit by hand. The rig page's header, its controls, its speech box and
+   its anatomy overlay are not drawn; the live face fills the frame, centred, on a transparent ground, with room left round it
+   for the head's own turns and the jaw's drop (most below). Adapted from face-rig-chat/public/face-embed.css. */
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;background:transparent!important;color-scheme:dark}
+.plate{position:fixed!important;inset:0!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;overflow:hidden!important}
+header.top,#speech-box,.dev.facedev>.dh,.fd-col>.fd-chips,.fd-pads,.fd-mxw,.fd-side,.anat{display:none!important}
+#device-body,.dev.facedev,.fd,.fd-col{display:block!important;position:static!important;width:100%!important;height:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}
+#fd-face{position:absolute!important;inset:2% 5% 8%!important;display:block!important}
+#fd-face svg.pface{display:block!important;width:100%!important;height:100%!important}

@@ -16,9 +16,14 @@
 //   document, entry, state (idle · reading · answering), context (bytes of identity and Expression the turn carries), resume.
 // The actions set their own keys: `sent` (the composer), `accept` and `decline` (the proposal). A key the owner does not report is
 // absent; the views then draw "—" and name the missing reading in words.
-import {memo, useLayoutEffect, useMemo, useState} from 'react'
+// The face: opened — Whole (in the pool, expanded, under the material in its window), Full in a pane — the agent shows its whole
+// face, live: the face rig's own face (agent/FaceStage.tsx, public/face, scripts/sync-face.mjs), at rest when idle, focused on the
+// packet while it reads, speaking while it answers, asleep while nothing is bound. Folded, Compact, the widget and each row of the
+// exchange keep the small mask: they are icons.
+import {memo, useMemo, type CSSProperties} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, type LightState, type Option} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
+import {FaceStage, useFaceColours} from '../../../agent/FaceStage'
 import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__nara-conversation.css'
 
@@ -202,7 +207,10 @@ function landingOf(p: ViewProps, rows: readonly Row[] | undefined): Landing {
 const LANDING_WORD: Readonly<Record<Exclude<Landing, 'none'>, string>> = {chat: 'off', waits: 'waits', kept: 'kept', declined: 'declined'}
 const landingWord = (where: Landing) => (where === 'none' ? undefined : LANDING_WORD[where])
 
-const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), onFold: p.nav.fold, onFull: p.nav.full})
+/** The owner reports the agent at work: reading the packet or answering. The head's light carries its ring while it does. */
+const atWork = (p: ViewProps) => { const ph = phase(p.v); return lampOf(p) === 'lit' && (ph === 'reading' || ph === 'answering') }
+const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), onFold: p.nav.fold, onFull: p.nav.full,
+  busy: atWork(p)})
 const ask = (p: ViewProps, said: string) => {
   const t = said.trim()
   if (!t || lampOf(p) !== 'lit') return
@@ -211,17 +219,17 @@ const ask = (p: ViewProps, said: string) => {
 
 // ---------------------------------------------------------------- the face
 
-function useFaceColours() {
-  const [colours, setColours] = useState({ink: 'var(--fizz)', ground: 'var(--bg-0)'})
-  useLayoutEffect(() => {
-    const style = getComputedStyle(document.documentElement)
-    const hex = (name: string, fallback: string) => { const x = style.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(x) ? x : fallback }
-    setColours({ink: hex('--fizz', 'var(--fizz)'), ground: hex('--bg-0', 'var(--bg-0)')})
-  }, [])
-  return colours
-}
 const EXPR: Readonly<Record<Phase, string>> = {idle: 'neutral', reading: 'focus', answering: 'speak'}
-/** The agent's face as the shell draws it: at rest when idle, focused while it reads, speaking while it answers. */
+/** The agent's face, live and whole, where the device is opened: the face rig's own face, at rest when idle, focused on the packet
+ * while it reads, speaking while it answers, asleep while no conversation is bound (agent/FaceStage.tsx). Until it stands, and
+ * wherever it cannot, the mask in the same pose. */
+function LiveFace({p, className, style}: {p: ViewProps; className?: string; style?: CSSProperties}) {
+  const lit = lampOf(p) === 'lit', ph = phase(p.v)
+  return <FaceStage className={className} style={style} state={lit ? ph ?? 'idle' : 'idle'} dim={!lit}
+    label={`${agentName(p.v) ?? 'The agent'}: ${stateWord(p) ?? 'no reading'}`} />
+}
+/** The agent's small face, the icon (the chain, the rail, each row): the mask at rest when idle, focused while it reads, speaking
+ * while it answers. */
 const Face = memo(function Face({x, y, size, expr, dim}: {x: number; y: number; size: number; expr: string; dim: boolean}) {
   const {ink, ground} = useFaceColours()
   const html = useMemo(() => maskStatic(expr, ink, ink, size, ground), [expr, ink, ground, size])
@@ -235,8 +243,17 @@ const Avatar = memo(function Avatar({expr, size = 18}: {expr: string; size?: num
 
 // ---------------------------------------------------------------- the well
 
+/** Whole, the live face stands at the left of the well, in the well's own pixels, as tall as the well holds it; the well draws the
+ * rest beside it. */
+const FACE_BOX = {x: 2, y: 6, w: 96, h: 134} as const
+const WHOLE_OX = FACE_BOX.x + FACE_BOX.w + 2
+/** The whole well: the face, then the drawing (the compact's measures, widened). */
+export const WHOLE_WELL = {w: WHOLE_OX + 174, h: 146} as const
+
 /** The well: the agent, the turn against its budget (the ruler), the chat and the page side by side — the question, the answer,
- * and where the answer lands — then the effort rungs (handle 1) and, whole, the writes line (handle 2) and the landing (handle 3). */
+ * and where the answer lands — then the effort rungs (handle 1) and, whole, the writes line (handle 2) and the landing (handle 3).
+ * Whole, the agent's live face stands at its left (FACE_BOX), laid over the well as a frame of its own: a frame inside the svg is
+ * not drawn by every engine. The face takes no pointer, so the handles beside it keep their hand. */
 function AnswerWell({p, w, h, size}: {p: ViewProps; w: number; h: number; size: 'mini' | 'compact' | 'whole'}) {
   const v = p.v, set = p.set
   const mini = size === 'mini', whole = size === 'whole'
@@ -245,14 +262,15 @@ function AnswerWell({p, w, h, size}: {p: ViewProps; w: number; h: number; size: 
   const effort = effortAt(v), writes = writesAt(v)
   const asked = !!rows?.some(r => r.kind === 'you'), answered = !!rows?.some(r => r.kind === 'agent')
   const canEffort = lit && !st(p, 'effort').disabled, canWrites = lit && !st(p, 'writes').disabled, canAnswerAs = lit && !st(p, 'answerAs').disabled
-  // geometry: the chat column and the page column, side by side
+  // geometry: whole, everything stands right of the face (ox); the chat column and the page column, side by side
+  const ox = whole ? WHOLE_OX : 0
   const g = mini ? {cx: 6, cw: 40, px: 58, pw: 40, dv: 52, ly: 38, r0: 44}
-    : whole ? {cx: 7, cw: 83, px: 106, pw: 81, dv: 98, ly: 78, r0: 84}
+    : whole ? {cx: ox + 7, cw: 72, px: ox + 92, pw: 72, dv: ox + 86, ly: 78, r0: 84}
     : {cx: 7, cw: 56, px: 78, pw: 55, dv: 70, ly: 73, r0: 79}
   const row = (i: number) => g.r0 + i * 8, bh = mini ? 2.4 : 3
-  const fs = mini ? 20 : whole ? 30 : 26, nameX = (mini ? 6 : 7) + fs + 7
+  const fs = mini ? 20 : 26, nameX = whole ? ox + 7 : (mini ? 6 : 7) + fs + 7
   // the ruler: the turn along the 256 KiB budget
-  const rx = mini ? 6 : 7, rw = w - 2 * rx, ry = mini ? 83 : whole ? 56 : 53, rh = mini ? 5 : 8, per = rw / BUDGET
+  const rx = mini ? 6 : ox + 7, rw = w - rx - (mini ? 6 : 7), ry = mini ? 83 : whole ? 56 : 53, rh = mini ? 5 : 8, per = rw / BUDGET
   let at = rx
   const segs: {x: number; w: number; packet: boolean; key: string}[] = []
   if (ctx !== undefined) { const sw = Math.max(2, ctx * per); segs.push({x: at, w: sw, packet: false, key: 'ctx'}); at += sw + 1 }
@@ -260,20 +278,21 @@ function AnswerWell({p, w, h, size}: {p: ViewProps; w: number; h: number; size: 
   const ruler = ctx === undefined && !packet ? 'turn · not read' : ctx === undefined ? 'turn · context not read' : !packet ? 'turn · packet not read' : 'turn'
   // effort rungs, the writes line
   const rungW = whole ? 16 : 12, rungGap = whole ? 4 : 3, baseY = whole ? 134 : 138, rungH = whole ? [6, 11, 16, 21] : [4, 8, 12, 16]
-  const rungX = (i: number) => 7 + i * (rungW + rungGap)
-  const wx0 = whole ? 114 : 84, wx1 = whole ? 180 : 128, wy = whole ? 130 : 129, wxs = [wx0, (wx0 + wx1) / 2, wx1]
+  const rung0 = ox + 7, rungX = (i: number) => rung0 + i * (rungW + rungGap)
+  const wx0 = whole ? g.px + 8 : 84, wx1 = whole ? g.px + 68 : 128, wy = whole ? 130 : 129, wxs = [wx0, (wx0 + wx1) / 2, wx1]
   const tgt = replace ? 1 : 3, bar = (f: number) => g.pw * f
   const pageStatus = where === 'none' || !lit ? '' : LANDING_WORD[where]
-  return <Display w={w} h={h} label="The answer"
-    does={mini ? 'The agent, the turn against its budget, and where the answer lands.' : 'The agent, the turn against its 256 KB budget, the chat and the page, and the effort. Drag the handles to set them.'}
+  const well = <Display w={w} h={h} label="The answer"
+    does={mini ? 'The agent, the turn against its budget, and where the answer lands.' : whole ? 'The agent\'s face, the turn against its 256 KB budget, the chat and the page, and the effort. Drag the handles to set them.'
+      : 'The agent, the turn against its 256 KB budget, the chat and the page, and the effort. Drag the handles to set them.'}
     corner={mini ? undefined : turn === undefined ? NONE : whole ? `${kb(turn)} / 256 KB` : kb(turn)}>
-    <Face x={mini ? 6 : 7} y={mini ? 4 : 5} size={fs} expr={EXPR[ph ?? 'idle']} dim={!lit} />
+    {!whole && <Face x={mini ? 6 : 7} y={mini ? 4 : 5} size={fs} expr={EXPR[ph ?? 'idle']} dim={!lit} />}
     <text x={nameX} y={mini ? 13 : 17} className="dp-ink" style={{fontSize: mini ? 10.5 : 11.5, fontWeight: 600}}>{agentName(v) ?? NONE}</text>
     <text x={nameX} y={mini ? 24 : 30} className="dp-ink-dim" style={{fill: lit && ph && ph !== 'idle' ? 'var(--dp-value)' : undefined}}>{stateWord(p) ?? NONE}</text>
 
     {/* the turn: the identity and Expression context (dim), then each packet item, along the budget */}
     <text x={rx} y={ry - 3} className="dp-axis">{ruler}</text>
-    {whole && <text x={w - rx} y={ry - 3} className="dp-axis" textAnchor="end">256 KB</text>}
+    {whole && <text x={rx + rw} y={ry - 3} className="dp-axis" textAnchor="end">256 KB</text>}
     <rect x={rx + 0.5} y={ry} width={rw - 1} height={rh} className="dp-faint" />
     {segs.map(s => <rect key={s.key} x={s.x} y={ry + 1.5} width={s.w} height={rh - 3} fill={s.packet ? 'var(--dp-value)' : 'var(--text-faint)'} opacity={s.packet ? 1 : 0.55} />)}
 
@@ -312,14 +331,14 @@ function AnswerWell({p, w, h, size}: {p: ViewProps; w: number; h: number; size: 
 
     {/* effort: four rungs, lit up to the chosen one */}
     {!mini && <>
-      <text x={7} y={whole ? 121 : 119} className="dp-axis">effort</text>
+      <text x={rung0} y={whole ? 121 : 119} className="dp-axis">effort</text>
       {rungH.map((rh, i) => { const on = lit && effort !== undefined && i <= effort
         return <g key={i}>
           <rect x={rungX(i) + 0.5} y={baseY - rh} width={rungW - 1} height={rh} className={on ? undefined : 'dp-faint'} fill={on ? 'var(--dp-value)' : 'none'} opacity={on ? 0.45 + i * 0.18 : 1} />
           {whole && <text x={rungX(i) + rungW / 2} y={baseY + 9} className="dp-axis" textAnchor="middle" style={{fontSize: 7.5}}>{['low', 'med', 'high', 'max'][i]}</text>}
         </g> })}
       {lit && effort !== undefined && <Handle n={1} shape="ring" x={rungX(effort) + rungW / 2} y={baseY - rungH[effort]! - 7} label="Effort" does="Drag across the rungs: how hard the agent thinks on each answer."
-        onDrag={canEffort ? x => set('effort', EFFORTS[Math.round(clampTo(0, 3, (x - 7 - rungW / 2) / (rungW + rungGap)))]!) : undefined} onReset={canEffort ? () => set('effort', 'high') : undefined} />}
+        onDrag={canEffort ? x => set('effort', EFFORTS[Math.round(clampTo(0, 3, (x - rung0 - rungW / 2) / (rungW + rungGap)))]!) : undefined} onReset={canEffort ? () => set('effort', 'high') : undefined} />}
 
       {/* writes: where the answer goes, from the chat alone to the page */}
       <text x={g.px} y={whole ? 121 : 119} className="dp-axis">writes</text>
@@ -333,6 +352,12 @@ function AnswerWell({p, w, h, size}: {p: ViewProps; w: number; h: number; size: 
         onDrag={canWrites ? x => set('writes', WRITES[Math.round(clampTo(0, 2, (x - wx0) / ((wx1 - wx0) / 2)))]!) : undefined} onReset={canWrites ? () => set('writes', 'propose') : undefined} />}
     </>}
   </Display>
+  if (!whole) return well
+  // The face over the well: the well's border (1 px) and then its own pixels, 1:1.
+  return <div className="an-well">
+    {well}
+    <LiveFace p={p} className="an-well-face" style={{left: FACE_BOX.x + 1, top: FACE_BOX.y + 1, width: FACE_BOX.w, height: FACE_BOX.h}} />
+  </div>
 }
 
 // ---------------------------------------------------------------- the controls
@@ -418,6 +443,9 @@ function AnswerPane({p}: {p: ViewProps}) {
       <b>{who}</b><span>{shown(v, 'document')}</span><span>{standingWord(p) ?? NONE}</span><span>effort {shown(v, 'effort')}</span>
       <span>writes {writesLabel(v) ?? NONE}</span><span data-state={ph === undefined || ph === 'idle' ? undefined : 'busy'}>{stateWord(p) ?? NONE}</span>
     </div>
+    <div className="an-pane-main">
+    {/* The agent's whole face beside the exchange. In its own window the face stands once, in the well under the exchange. */}
+    {p.frame !== 'window' && <div className="an-pane-face"><LiveFace p={p} className="an-pane-stage" /></div>}
     <div className="an-stream" role="log" aria-label="Exchange">
       <div className="an-task"><span>Answer to entry {shown(v, 'entry')}</span><i /><small>{turn === undefined ? NONE : kb(turn)} of 256 KB</small></div>
       {lit && <>
@@ -429,6 +457,7 @@ function AnswerPane({p}: {p: ViewProps}) {
         {answering && rows[rows.length - 1]?.kind !== 'agent' && working('speak', `${who} is answering`)}
       </>}
       {!lit && note('unlit', lamp === 'unknown' ? 'The binding has not been read. The owner has not said.' : 'No subject is selected. The conversation binds once you select one.')}
+    </div>
     </div>
     <div className="an-composer">
       <input aria-label="Message" disabled={!lit || !!send.disabled} placeholder={!lit ? 'Bind a conversation to ask' : name ? `Ask ${name}` : 'Ask the agent'} value={draft}
@@ -487,24 +516,23 @@ export const design: DesignedDevice = {
 
   whole: p => {
     const where = landingOf(p, rowsOf(p.v)), ph = phase(p.v), resume = boolOf(p.v, 'resume'), turn = turnBytes(p.v), size = packetBytes(p.v), l = lightOf(p)
+    // The face takes the first band's room beside the agent's own settings; the answer's two choices go together in the second.
     return <Panel title="Answer" view="whole" {...head(p)}>
       <Band>
-        <Section width={206}>
-          <AnswerWell p={p} w={194} h={146} size="whole" />
+        <Section width={WHOLE_WELL.w + 12}>
+          <AnswerWell p={p} w={WHOLE_WELL.w} h={WHOLE_WELL.h} size="whole" />
         </Section>
-        <Section label="Agent" cols={2}>
+        <Section label="Agent" cols={2} grow>
           {agentChooser(p)}
           {effortDial(p)}
           <Readout label="role" does="The role the owner binds for this agent. A roster agent has none yet." value={roleOf(p.v)} />
         </Section>
-        <Section label="Answer" grow>
-          {answerRadio(p)}
-          <Readout label="sources" does="The places the answer cites. Follow one in the pane." value={sourcesOf(p.v)?.length} tone="value" />
-        </Section>
       </Band>
       <Band>
-        <Section label="Writes" cols={2} width={140}>
+        <Section label="Answer" cols={2} width={140}>
+          {answerRadio(p)}
           {writesRadio(p)}
+          <Readout label="sources" does="The places the answer cites. Follow one in the pane." value={sourcesOf(p.v)?.length} tone="value" />
           <Readout label="page" does="Where the answer stands: off, waits for you, or kept with a receipt." value={landingWord(where)}
             tone={where === 'waits' ? 'accent' : where === 'kept' ? 'green' : undefined} />
         </Section>

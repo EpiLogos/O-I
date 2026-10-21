@@ -284,6 +284,7 @@ function useListing<T>(family: string, transport: KernelTransportStatus, place: 
 /** The owner refuses a listing of a folder that does not exist: that is exactly "nothing written yet" (flow/instances.ts). */
 const notYet = (reason: unknown): boolean => /No such file or directory/i.test(String(reason))
 const NO_PAGES: PageListing = {schema: 'oi.page-list/v1', path: USER_FLOWS_DIR, pages: [], not_pages: [], more: false}
+const NO_READINGS: ReadonlyMap<string, FlowReading> = new Map()
 
 /** The Days rows: the day records at the root register's day surface, read
  * through the same owner route the L7 craft uses; each day's standing from
@@ -386,9 +387,11 @@ export function NowSection({rows}: {rows: readonly NowRow[]}) {
   </section>
 }
 
-/** The Flows rows: the owner's Flow listing (`files_list` at Control/user/flows — the route flow/instances.ts listFlowInstances
- * takes, its entries kept whole so the open gesture has the owner's own entry), each Flow's own payload read once per listing
- * for its title, agents and revision (flow/instances.ts readFlowInstance — the Flow's own parser). */
+/** The Flows rows: the page owner's listing of your world's folder (`page` list at Control/user/flows, its entries kept whole so
+ * the open gesture has the owner's own entry) and each Flow's title, agents and revision — the words the owner's listing already
+ * carries for a Flow it placed by its island (`flowReadingsOfListing`), so a Flow is read once, to be listed. A Flow whose words the
+ * listing does not carry (a kernel that lists without them) is read on its own, one after another (flow/instances.ts
+ * readFlowInstance — the Flow's own parser). */
 function FlowsRows({needle, onSelectSubject, selectedSubject}: {
   needle: string
   onSelectSubject: (subject: CentralSubjectSelection | null) => void
@@ -401,10 +404,14 @@ function FlowsRows({needle, onSelectSubject, selectedSubject}: {
   const fault = listed.status === 'refused' ? listed.error : null
   const {openFile, openFault} = useOpening()
   const flows = useMemo(() => [...(listing ?? [])].sort(flowOrder), [listing])
-  const refs = useMemo(() => flows.slice(0, ROWS_READ).map(entry => entry.location.ref), [flows])
   const byRef = useMemo(() => new Map(flows.map(entry => [entry.location.ref, entry])), [flows])
-  const readings = useRowReadings<FlowReading>('flow_read', transport, refs, ref => readFlowInstance(transport, byRef.get(ref)!.location)
+  // What the listing read of each Flow is what its row draws: it comes and goes with the listing's own reading, so a return or a
+  // relaunch draws the rows' words with the rows. Only a Flow the listing gives no words for is read on its own.
+  const carried = useMemo(() => listed.status === 'answered' && listed.value ? flowReadingsOfListing(listed.value) : NO_READINGS, [listed])
+  const refs = useMemo(() => flows.slice(0, ROWS_READ).map(entry => entry.location.ref).filter(ref => !carried.has(ref)), [flows, carried])
+  const own = useRowReadings<FlowReading>('flow_read', transport, refs, ref => readFlowInstance(transport, byRef.get(ref)!.location)
     .then(instance => flowReadingOf(instance.doc), (reason): FlowReading => ({state: 'refused', message: message(reason)})))
+  const readings = carried.size ? new Map([...own, ...carried]) : own
   if (transport.kind === 'unavailable') {
     return <DesignedRead absence="The kernel carrier is unavailable" reason={transport.reason} affordance={`The Flows list at ${USER_FLOWS_DIR} when the carrier answers.`} />
   }
@@ -414,6 +421,19 @@ function FlowsRows({needle, onSelectSubject, selectedSubject}: {
   const shown = flows.filter(entry => !needleText || `${entry.name} ${flowRowWords(entry.name, readings.get(entry.location.ref)).name}`.toLocaleLowerCase().includes(needleText))
   if (!shown.length) return <p className="native-empty">{needleText ? 'No Flows match this search.' : 'No Flow written yet.'}</p>
   return <FlowRowList flows={shown} readings={readings} selectedSubject={selectedSubject} onSelectSubject={onSelectSubject} openFile={openFile} openFault={openFault} />
+}
+
+/** Each Flow's row words, by ref, from the words the page owner's listing carries for it: beside a Flow's place, a `flow` record of
+ * the `meta` keys its row draws — `title`, `revision`, and each participant's `kind`, `name` and `initial` (kernel page.rs
+ * list_pages). They are read by the Flow's own row parser (rowWords.ts flowReadingOf), as the Flow's payload is. A Flow whose
+ * listing gives no such record (a kernel that lists without it) has no entry here. Pure. */
+export function flowReadingsOfListing(listing: PageListing): Map<string, FlowReading> {
+  const readings = new Map<string, FlowReading>()
+  for (const page of listing.pages) {
+    const words = (page as {readonly flow?: unknown}).flow
+    if (page.form === 'flow' && words && typeof words === 'object') readings.set(page.location.ref, flowReadingOf({meta: words}))
+  }
+  return readings
 }
 
 /** The pages of one form in a page listing, as the rows' file entries. Pure. */

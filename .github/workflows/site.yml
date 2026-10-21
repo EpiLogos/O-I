@@ -70,6 +70,7 @@ jobs:
             ../shared-field/central-wiki-projection.test.mjs \
             ../shared-field/aikit-contribution-field.test.mjs \
             ../shared-field/native-action-binding.test.mjs \
+            ../shared-field/expression-material.test.mjs \
             public-content.test.mjs \
             library.test.mjs \
             tests/native-player-lifecycle.test.mjs \

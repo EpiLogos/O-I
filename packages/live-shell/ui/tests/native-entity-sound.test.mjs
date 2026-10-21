@@ -26,10 +26,10 @@ const [devices,sounds,appSound,{kernelDocumentToJourney},{DocumentStore},{create
  readFile(new URL('desktop/cradle/kernel/src/expression_profile.rs',root),'utf8'),
  readFile(receiptPath,'utf8'),
 ])
-const {validateEntitySound,SOUND_FIELDS,SOUND_WAVEFORMS,DEFAULT_ENTITY_SOUND}=appSound
+const {validateEntitySound,SOUND_FIELDS,REMOVED_SOUND_FIELDS,DEFAULT_ENTITY_SOUND}=appSound
 const archived=JSON.parse(archivedText)
 const closed=()=>{throw Error('Native effects are closed in Entity sound verification')}
-const sound0={enabled:true,frequencyHz:440,gain:.5,waveform:'triangle',attack:.1,release:1.5,pan:-.25,followCymatic:false}
+const sound0={enabled:true,carry:{kind:'mode',ref:"chromatic/L0'/aeolian"},gain:.5,attack:.1,release:1.5}
 /** A private working copy of the archived native Expression; the baseline view is untouched. */
 function source(){
  const view=kernelDocumentToJourney(archived.after.document),store=new DocumentStore(structuredClone(view.journey))
@@ -45,7 +45,7 @@ const changeOf=(r,sound,id=r.entity.id)=>({kind:'entity-sound',entity_id:id,soun
 const applyOne=(r,change,doc=r.store.document)=>devices.applyNativeDeviceChanges(doc,r.view.startSceneId,[change])
 
 test('every field bound is inclusive at its edges and refuses one step outside, through the app validator and the boundary change',()=>{
- const bounds=[['frequencyHz',1,20000],['gain',0,1],['attack',0,10],['release',0,30],['pan',-1,1]]
+ const bounds=[['gain',0,1],['attack',0,10],['release',0,30]]
  for(const [field,low,high] of bounds){
   const base={enabled:true,[field]:low}
   assert.deepEqual(validateEntitySound({...base}),{...base})
@@ -56,10 +56,13 @@ test('every field bound is inclusive at its edges and refuses one step outside, 
    assert.throws(()=>sounds.validateNativeEntitySoundChange({kind:'entity-sound',entity_id:'e',sound:{enabled:true,[field]:bad}}),/Invalid entity sound/,`${field}=${String(bad)} via change`)
   }
  }
- for(const waveform of SOUND_WAVEFORMS)assert.doesNotThrow(()=>validateEntitySound({enabled:true,waveform}))
- for(const waveform of ['Sine','noise','',null])assert.throws(()=>validateEntitySound({enabled:true,waveform}),/unsupported waveform/)
- for(const follow of [true,false])assert.doesNotThrow(()=>validateEntitySound({enabled:true,followCymatic:follow}))
- assert.throws(()=>validateEntitySound({enabled:true,followCymatic:'yes'}),/followCymatic must be a boolean/)
+ // A symbol's voice carries a name or a mode and has no oscillator: its four old fields are refused in words, at the app validator and at the boundary.
+ for(const [field,value,words] of [['frequencyHz',330,/frequencyHz was removed: a symbol's voice carries the torus's sound and has no pitch/],['followCymatic',true,/followCymatic was removed/],['waveform','sine',/waveform was removed: a symbol's voice has no oscillator/],['pan',.5,/pan was removed: a symbol's voice stands where its symbol stands/]]){
+  assert.throws(()=>validateEntitySound({enabled:true,[field]:value}),words,field)
+  assert.throws(()=>sounds.validateNativeEntitySoundChange({kind:'entity-sound',entity_id:'e',sound:{enabled:true,[field]:value}}),words,`${field} via change`)
+ }
+ for(const carry of [{kind:'mode',ref:'maqam/00'},{kind:'name',ref:'shem'}])assert.deepEqual(validateEntitySound({enabled:true,carry}),{enabled:true,carry})
+ for(const bad of [{kind:'oscillator',ref:'x'},{kind:'mode'},{kind:'mode',ref:''},{kind:'mode',ref:'x'.repeat(201)},{kind:'mode',ref:'x',hz:3},'maqam/00',7])assert.throws(()=>validateEntitySound({enabled:true,carry:bad}),/Invalid entity sound: (unsupported )?carry/,JSON.stringify(bad))
  assert.throws(()=>validateEntitySound({enabled:'true'}),/enabled must be a boolean/)
  assert.throws(()=>validateEntitySound({gain:.2}),/enabled must be a boolean/)
  assert.throws(()=>validateEntitySound({enabled:true,detune:3}),/unsupported field detune/)
@@ -76,13 +79,18 @@ test('the boundary change admits only the whole block or null, and refuses forei
   assert.throws(()=>sounds.validateNativeEntitySoundChange(bad),/object sound|foreign|sound|Choose/)
 })
 test('the kernel expression_profile::sound table is the same table the app validator enforces',()=>{
- const kernelSound=kernelSource.slice(kernelSource.indexOf('pub fn sound('),kernelSource.indexOf('impl ExpressionProfile'))
+ const kernelSound=kernelSource.slice(kernelSource.indexOf('pub fn sound('),kernelSource.indexOf('/// Bring a voice written for an oscillator'))
  const bounds=Object.fromEntries([...kernelSound.matchAll(/finite\(v, ([-\d._]+), ([-\d._]+), "(\w+)"\)/g)].map(m=>[m[3],[Number(m[1].replace(/_/g,'')),Number(m[2].replace(/_/g,''))]]))
- assert.deepEqual(bounds,{frequencyHz:[1,20000],gain:[0,1],attack:[0,10],release:[0,30],pan:[-1,1]})
+ assert.deepEqual(bounds,{gain:[0,1],attack:[0,10],release:[0,30]})
  const kernelFields=[...kernelSource.match(/pub const SOUND_FIELDS: &\[&str\] = &\[([\s\S]*?)\];/)[1].matchAll(/"(\w+)"/g)].map(m=>m[1])
  assert.deepEqual(kernelFields,[...SOUND_FIELDS])
- const kernelWaveforms=[...kernelSound.match(/&\[([^\]]*)\],\s*"Sound waveform"/)[1].matchAll(/"(\w+)"/g)].map(m=>m[1])
- assert.deepEqual(kernelWaveforms,[...SOUND_WAVEFORMS])
+ // The oscillator's fields, and the words each is refused in, are one table in both owners.
+ const removed=kernelSource.match(/pub const REMOVED_SOUND_FIELDS: &\[\(&str, &str\)\] = &\[([\s\S]*?)\n\];/)[1]
+ const kernelRemoved=[...removed.matchAll(/\(\s*"(\w+)",\s*"((?:[^"\\]|\\.)*)",?\s*\)/g)].map(m=>[m[1],m[2].replace(/\\'/g,"'")])
+ assert.deepEqual(kernelRemoved.map(([field])=>field),[...REMOVED_SOUND_FIELDS])
+ assert.deepEqual(kernelRemoved.map(([,words])=>words),REMOVED_SOUND_FIELDS.map(field=>appSound.REMOVED_SOUND_WORDS[field]),'the same words, kernel and frame')
+ const kernelKinds=[...kernelSource.match(/pub const CARRY_KINDS: &\[&str\] = &\[([^\]]*)\];/)[1].matchAll(/"(\w+)"/g)].map(m=>m[1])
+ assert.deepEqual(kernelKinds,[...appSound.CARRY_KINDS])
 })
 test('the reducer sets the whole object sound, clears it on null, and leaves the caller document untouched on refusal',()=>{
  const r=source(),before=structuredClone(r.store.document),id=r.entity.id
@@ -91,7 +99,7 @@ test('the reducer sets the whole object sound, clears it on null, and leaves the
  assert.deepEqual(entityIn(changed,id).gain,entityIn(before,id).gain,'other entity fields are not rewritten')
  const cleared=applyOne(r,changeOf(r,null),changed)
  assert.equal('sound' in entityIn(cleared,id),false);assert.deepEqual(entityIn(changed,id).sound,sound0)
- for(const bad of [{...sound0,detune:1},{...sound0,frequencyHz:0},{enabled:'yes'},undefined])
+ for(const bad of [{...sound0,detune:1},{...sound0,frequencyHz:330},{...sound0,pan:0},{enabled:'yes'},undefined])
   assert.throws(()=>applyOne(r,{kind:'entity-sound',entity_id:id,sound:bad}),/Invalid entity sound|whole sound|Choose/)
  assert.throws(()=>applyOne(r,{kind:'entity-sound',entity_id:'entity:missing',sound:sound0}),/no longer belongs to this Scene/)
  assert.throws(()=>applyOne(r,{kind:'entity-sound',entity_id:id,sound:sound0,scope:'entity'}),/Choose|foreign|object sound/)
@@ -101,7 +109,7 @@ test('a locked entity refuses the sound edit and a batch with a second bad chang
  const r=source(),before=structuredClone(r.store.document),locked=structuredClone(r.store.document)
  entityIn(locked,r.entity.id).locked=true
  assert.throws(()=>devices.applyNativeDeviceChanges(locked,r.view.startSceneId,[changeOf(r,sound0)]),/Unlock this entity/)
- assert.throws(()=>devices.applyNativeDeviceChanges(before,r.view.startSceneId,[changeOf(r,sound0),{kind:'entity-sound',entity_id:r.entity.id,sound:{enabled:true,frequencyHz:99999}}]),/frequencyHz must sit inside/)
+ assert.throws(()=>devices.applyNativeDeviceChanges(before,r.view.startSceneId,[changeOf(r,sound0),{kind:'entity-sound',entity_id:r.entity.id,sound:{enabled:true,frequencyHz:99999}}]),/frequencyHz was removed/)
  assert.throws(()=>devices.applyNativeDeviceChanges(before,r.view.startSceneId,[changeOf(r,sound0),changeOf(r,null)]),/same object sound twice/)
  assert.deepEqual(r.store.document,before)
 })
@@ -110,21 +118,19 @@ test('mute is not a document change: the page-global presentation has no sound c
  for(const kind of ['entity-sound-mute','sound-mute','object-sound-muted'])
   assert.throws(()=>applyOne(r,{kind,entity_id:r.entity.id,muted:true}),/another editor owner/)
 })
-test('frequency and follow coupling are pure, match the inspector, and change the voice the planner sounds',()=>{
- const base={enabled:true,followCymatic:true,gain:.2,waveform:'sine',attack:.08,release:.8,pan:0}
+test('the carry helper is pure, validated, and changes the voice the planner reads',()=>{
+ const base={enabled:true,gain:.2,attack:.08,release:.8}
  const snapshot=structuredClone(base)
- const fixed=sounds.soundWithFrequency(base,330)
- assert.deepEqual(fixed,{...base,frequencyHz:330,followCymatic:false});assert.deepEqual(base,snapshot,'the input is not mutated')
- assert.deepEqual(sounds.soundWithFrequency(undefined,220),{enabled:false,frequencyHz:220,followCymatic:false})
- for(const hz of [0,20001,Number.NaN])assert.throws(()=>sounds.soundWithFrequency(base,hz),/Invalid entity sound/)
- assert.deepEqual(sounds.soundWithFollow({enabled:true,frequencyHz:440},true),{enabled:true,frequencyHz:440,followCymatic:true},'follow keeps the stored pitch as the inspector does')
- assert.deepEqual(sounds.soundWithFollow({enabled:true,followCymatic:true},false),{enabled:true,followCymatic:false,frequencyHz:DEFAULT_ENTITY_SOUND.frequencyHz})
- assert.deepEqual(sounds.soundWithFollow({enabled:true,frequencyHz:440},false),{enabled:true,frequencyHz:440,followCymatic:false})
- assert.throws(()=>sounds.soundWithFollow(base,'yes'),/followCymatic must be a boolean/)
- const scene={entities:[{id:'a',enabled:true,templateFrequency:500,sound:fixed}],field:{params:{frequency:100}}}
- assert.equal(appSound.entitySoundVoices(scene)[0].frequencyHz,330,'a fixed pitch sounds that pitch')
- scene.entities[0].sound=sounds.soundWithFollow(fixed,true)
- assert.equal(appSound.entitySoundVoices(scene)[0].frequencyHz,500,'follow sounds the cymatic template frequency')
+ const carries=sounds.soundWithCarry(base,{kind:'mode',ref:'maqam/00'})
+ assert.deepEqual(carries,{...base,carry:{kind:'mode',ref:'maqam/00'}});assert.deepEqual(base,snapshot,'the input is not mutated')
+ assert.deepEqual(sounds.soundWithCarry(undefined,{kind:'name',ref:'shem'}),{enabled:false,carry:{kind:'name',ref:'shem'}})
+ assert.deepEqual(sounds.soundWithCarry(carries,null),base,'null removes the carry')
+ for(const bad of [{kind:'oscillator',ref:'x'},{kind:'mode',ref:''}])assert.throws(()=>sounds.soundWithCarry(base,bad),/Invalid entity sound/)
+ assert.equal('soundWithFrequency' in sounds,false,'the frequency control is gone');assert.equal('soundWithFollow' in sounds,false,'and so is follow')
+ const scene={entities:[{id:'a',enabled:true,sound:carries},{id:'b',enabled:true,sound:base}]}
+ assert.deepEqual(appSound.entitySoundVoices(scene).map(v=>v.entityId),['a'],'a voice that carries something is planned')
+ assert.deepEqual(appSound.entitySoundPlan(scene).silent,[{entityId:'b',because:appSound.NO_CARRY}],'one that carries nothing is silent and says why')
+ assert.deepEqual(Object.keys(appSound.entitySoundVoices(scene)[0]).sort(),['attack','carry','entityId','gain','release'],'no frequency, waveform or pan in the plan')
 })
 test('the retained host admits the kind through the device batch and commits one transaction, with readback from the reading',async()=>{
  const r=source(),id=r.entity.id;let commits=0,changes=0
@@ -166,6 +172,6 @@ test('prepareCompositionEdit carries the object sound in the scene_material_set 
  const removal=prepareCompositionEdit(carried,cleared).changes.find(c=>c.change==='scene_material_set'&&c.scene_ref===sceneRef)
  assert.ok(removal,'the removal produces a scene_material_set request')
  assert.equal('sound' in removal.presentation.scene.entities.find(e=>e.id===entityRef),false,'a cleared sound is absent from the request')
- const invalid=structuredClone(r.store.document);entityIn(invalid,id).sound={enabled:true,frequencyHz:0}
- assert.throws(()=>prepareCompositionEdit(r.view,invalid),/frequencyHz must sit inside/)
+ const invalid=structuredClone(r.store.document);entityIn(invalid,id).sound={enabled:true,frequencyHz:330}
+ assert.throws(()=>prepareCompositionEdit(r.view,invalid),/frequencyHz was removed/)
 })
