@@ -17,7 +17,7 @@ export const IDENTITY_DESIGN = 'central:agent-identity'
 
 export const IDENTITY_WIRING: DesignWiring = {
   design: IDENTITY_DESIGN,
-  keys: ['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds'],
+  keys: ['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds', 'types'],
   reads: {
     light: 'the roster answered (lit) or refused (dark): op agent_definition roster, the window\'s shared roster answer',
     read: 'read when the roster answered, refused when it did not',
@@ -35,6 +35,7 @@ export const IDENTITY_WIRING: DesignWiring = {
   refused: {},
   absent: {
     marks: 'The mark set is the person\'s choice for the whole shell (Settings); no reading of it reaches this chain, so the blade stands.',
+    types: 'Central\'s profile names no type yet: an agent\'s type is set on the Agent device\'s Type page and held with the agent, and no reading of it reaches this chain.',
   },
 }
 

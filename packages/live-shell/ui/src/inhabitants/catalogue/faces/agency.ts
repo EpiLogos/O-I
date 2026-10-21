@@ -16,7 +16,8 @@ export interface Pattern {
 export interface Family {readonly id: string; readonly name: string; readonly patterns: readonly Pattern[]}
 export interface Hazard {readonly id: string; readonly name: string; readonly animal: string; readonly breaks: string; readonly of: string | null}
 
-const A = agency()
+// No ontology where no page loaded it (a Node test suite): the types are empty, nothing is invented.
+const A = agency() ?? {RUN_STATES: [], PATTERNS: {}, FAMILIES: [], HAZARDS: []}
 export const RUN_STATES: readonly RunStateInfo[] = A.RUN_STATES
 export const PATTERNS: Readonly<Record<string, Pattern>> = A.PATTERNS
 export const FAMILIES: readonly Family[] = A.FAMILIES.map((f: {id: string; name: string; patterns: string[]}) => ({id: f.id, name: f.name, patterns: f.patterns.map(id => A.PATTERNS[id] as Pattern)}))
