@@ -93,7 +93,7 @@ import {
   AGENTSET_DESIGN, AGENTSET_ID, CUSTODY_ID, RUN_ID, SESSION_DEVICE_IDS, agentsetBinding, custodyBinding, runBinding, sessionDevices, type CustodyPorts,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
-import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, connectionLabels, gitBinding, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
+import {CARRIER_DESIGN, CARRIER_ID, SEAT_DESIGN, SEAT_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
 import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp, workcellReadOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
@@ -538,15 +538,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // where its demand is kept, Workcell's plan for that demand (`--demand-json <path>`, first and alone).
   const carrierWorlds = useWorkcellRead(transport, {kind: 'worlds'}).answer
   const carrierWorld = chosenWorld(carrierWorlds, typeof machineRef === 'string' ? machineRef : null, viewHolds(holds, WORKCELL_RACK_ID).worldReceipt).chosen
-  const carrierRun = carrierWorld ? carrierWorld.subjects.factory_run ?? carrierWorld.subjects.run ?? null : null
+  // The chosen world's run is the slug `workcell worlds` names for it (Workcell PR 122), never the receipt's subjects (W14).
+  const runLedger = carrierWorlds.status === 'answered' ? worldsOf(carrierWorlds.value)?.runLedger : undefined
+  const planRun = planRunOf(carrierWorld, runLedger, viewHolds(holds, CARRIER_ID).planRun)
+  const carrierRun = planRun.ref
   const runShow = useWorkcellRead(transport, carrierRun ? {kind: 'run-show', run: carrierRun} : null).answer
   const keptDemand = runShow.status === 'answered' ? runDemandOf(runShow.value) : null
   const keptPath = keptDemand?.standing === 'kept' ? keptDemand.path ?? null : null
   const runPlan = useWorkcellRead(transport, keptPath ? {kind: 'plan', demand: {demand_json: keptPath}} : null)
   const carrierDesignBinding = useMemo(() => carrierBinding(workcellAnswer, holds, shows,
-    {discover, ...(carrierLabels.length ? {probe} : {}), run: {ref: carrierRun, ...(carrierRun ? {show: runShow} : {}), ...(keptPath ? {plan: runPlan.answer} : {})}},
+    {discover, ...(carrierLabels.length ? {probe} : {}), run: {ref: carrierRun, ...(planRun.why ? {why: planRun.why} : {}), ...(carrierRun ? {show: runShow} : {}), ...(keptPath ? {plan: runPlan.answer} : {})}},
     keptPath && transport.kind !== 'unavailable' ? {replan: runPlan.refresh} : {}),
-  [workcellAnswer, holds, shows, discover, probe, carrierLabels.length, carrierRun, runShow, keptPath, runPlan.answer, runPlan.refresh, transport])
+  [workcellAnswer, holds, shows, discover, probe, carrierLabels.length, carrierRun, planRun.why, runShow, keptPath, runPlan.answer, runPlan.refresh, transport])
   // The rack as the rail's publisher holds it, watched alone (another device's publish does not redraw the chain).
   const rackEntry = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(WORKCELL_RACK_ID), () => publishedDevice(WORKCELL_RACK_ID))
 

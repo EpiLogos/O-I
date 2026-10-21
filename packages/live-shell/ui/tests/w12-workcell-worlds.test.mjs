@@ -87,8 +87,9 @@ function recorder() {
 
 test('1 · Workcell\'s world receipts (REAL): each with its cell, its demand and its subjects; the unreadable receipt and the note kept', () => {
   const listing = material.worldsOf(WORLDS.answer)
+  // REPLACED (lane W14): each world names its runs too (Workcell PR 122; the capture was refreshed with them).
   assert.deepEqual(listing.worlds, [{receipt: LISTED.receipt, worldRef: LISTED.world_ref, workcellRef: CELL, demandRef: 'demand:dlw-capture', state: 'healthy', retention: 'release',
-    subjects: {run: 'opaque:factory-run-capture'}}])
+    subjects: {run: 'opaque:factory-run-capture'}, runs: ['dlw-capture']}])
   assert.equal(listing.unreadable.length, 1)
   assert.match(listing.note, /a receipt written elsewhere with --receipt is not listed/)
   assert.deepEqual(material.worldsOf(WORLDS.empty).worlds, [])
@@ -138,7 +139,8 @@ test('3 · the chosen receipt\'s material reading draws the World and Exposure p
   assert.deepEqual(JSON.parse(binding.values.world), read1.world)
   assert.deepEqual(JSON.parse(binding.values.surfaces), read1.surfaces)
   assert.equal(binding.values.readAt, 1_792_600_000_000)
-  assert.equal(binding.values.run, 'opaque:factory-run-capture', 'the run the receipt names among its subjects')
+  // REPLACED (lane W14): the world's one ledger run (Workcell PR 122) is the run the pages show.
+  assert.equal(binding.values.run, 'dlw-capture', 'the world\'s one ledger run')
   const workcellSays = 'identity-mismatch: Receipt was replaced with a different active WorldRef'
   const replaced = rack.workcellRackBinding(rackInput({material: refused(workcellSays)}), {gateway: null})
   assert.equal(replaced.standing.world.disabled, workcellSays)
@@ -199,7 +201,7 @@ test('6 · the carrier\'s Plan stays refused, naming the demand body it waits fo
   bind.resetHolds()
   const binding = cell.carrierBinding(answered(REAL.workcellStatus), bind.chainHolds())
   // REPLACED (lane W13): `workcell run show` is routed; with no run handed in, the plan says it waits for the chosen world's run.
-  assert.match(binding.standing.plan.disabled, /the run the chosen world's receipt names, read with `workcell run show`/)
+  assert.match(binding.standing.plan.disabled, /the chosen world's run \(`workcell worlds` runs\), read with `workcell run show`/)
   assert.equal(binding.standing.replan.disabled, cell.CARRIER_REFUSE.replan)
 })
 

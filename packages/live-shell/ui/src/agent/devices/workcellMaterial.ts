@@ -120,18 +120,24 @@ export interface ListedWorld {
   readonly retention?: string
   readonly persistence?: string
   readonly subjects: Readonly<Record<string, string>>
+  /** The run-ledger slugs whose record's world_ref is this world's (EpiLogos/Workcell PR 122): `[]` when none; null when the ledger
+   * cannot be read (the listing's run_ledger says why); absent from an older Workcell's listing. */
+  readonly runs?: readonly string[] | null
 }
 
 /** `workcell worlds`'s receipts ({worlds, unreadable, note}); null when the answer is not that listing. A receipt written elsewhere with
  * `--receipt` is not listed (the note says so). Pure. */
-export function worldsOf(listing: unknown): {worlds: ListedWorld[]; unreadable: {receipt: string; error?: string}[]; note?: string} | null {
+export function worldsOf(listing: unknown): {worlds: ListedWorld[]; unreadable: {receipt: string; error?: string}[]; note?: string; runLedger?: {read: boolean; error?: string}} | null {
   if (!isObj(listing) || listing.schema !== 'workcell.world-receipts/v1' || !Array.isArray(listing.worlds)) return null
   const worlds = listing.worlds.flatMap((row): ListedWorld[] => (isObj(row) && str(row.receipt) && str(row.world_ref) ? [{receipt: String(row.receipt), worldRef: String(row.world_ref),
     ...(str(row.workcell_ref) ? {workcellRef: String(row.workcell_ref)} : {}), ...(str(row.demand_ref) ? {demandRef: String(row.demand_ref)} : {}),
     ...(str(row.state) ? {state: String(row.state)} : {}), ...(str(row.retention) ? {retention: String(row.retention)} : {}), ...(str(row.persistence) ? {persistence: String(row.persistence)} : {}),
-    subjects: isObj(row.subjects) ? Object.fromEntries(Object.entries(row.subjects).flatMap(([key, value]) => (str(value) ? [[key, String(value)]] : []))) : {}}] : []))
+    subjects: isObj(row.subjects) ? Object.fromEntries(Object.entries(row.subjects).flatMap(([key, value]) => (str(value) ? [[key, String(value)]] : []))) : {},
+    ...(row.runs === null ? {runs: null} : Array.isArray(row.runs) ? {runs: row.runs.filter((slug): slug is string => typeof slug === 'string' && !!slug.trim())} : {})}] : []))
   const unreadable = (Array.isArray(listing.unreadable) ? listing.unreadable : []).flatMap(row => (isObj(row) && str(row.receipt) ? [{receipt: String(row.receipt), ...(str(row.error) ? {error: String(row.error)} : {})}] : []))
-  return {worlds, unreadable, ...(str(listing.note) ? {note: String(listing.note)} : {})}
+  const ledger = isObj(listing.run_ledger) ? listing.run_ledger : null
+  return {worlds, unreadable, ...(str(listing.note) ? {note: String(listing.note)} : {}),
+    ...(ledger ? {runLedger: {read: ledger.read === true, ...(str(ledger.error) ? {error: String(ledger.error)} : {})}} : {})}
 }
 
 /** The kernel's material_read of a world's receipt (`workcell --receipt R material`, workcell.material-reading/v1, answered as

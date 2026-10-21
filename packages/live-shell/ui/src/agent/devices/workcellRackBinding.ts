@@ -263,8 +263,9 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
   if (picked) {
     for (const key of ['world', 'surfaces', 'omitted', 'readAt', 'run']) delete standing[key]
     if (picked.none) values.world = 'null'
+    // The run the pages show: the world's one ledger run (Workcell PR 122), else the run its receipt names among its subjects.
     const subjects = picked.chosen?.subjects ?? {}
-    const run = subjects.factory_run ?? subjects.run
+    const run = picked.chosen?.runs?.length === 1 ? picked.chosen.runs[0] : subjects.factory_run ?? subjects.run
     if (run) values.run = run
     else standing.run = {disabled: picked.chosen ? 'The run: the world\'s receipt names no run among its subjects.' : picked.why ?? 'No world is prepared for this cell.'}
     if (read) {

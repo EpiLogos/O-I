@@ -268,12 +268,15 @@ export function seatBinding(input: SeatInput, ports: SeatPorts = {}): DesignBind
 // `workcell connections probe` (workcell_read {connections-probe}, a read that never writes the record; workcellMaterial.ts probeFields):
 // reached and authorised is Ready, a refusal keeps Workcell's words, an unreachable machine keeps its recorded standing and says why.
 /** Why the run's plan is not read: `workcell plan` takes the run's demand, and no reading names one. */
-// The Plan (lane W13): the run the chosen world's receipt names (workcellRackBinding.ts chosenWorld, W12) is read with `workcell run show
+// The Plan (lanes W13, W14): the run is the chosen world's (workcellRackBinding.ts chosenWorld, W12) as `workcell worlds` names it — the
+// run-ledger slugs whose record's world_ref is that world's (EpiLogos/Workcell PR 122; planRunOf): one is that run; several wait for the
+// hand's choice (`planRun`), none assumed; none says the world was prepared outside a run or its run is recorded elsewhere; null says
+// Workcell's run-ledger error verbatim. Never the receipt's opaque subjects. The run is read with `workcell run show
 // --run R` (the kernel's workcell_read {run-show}; EpiLogos/Workcell PR 121), which answers its demand {path, digest, standing: kept |
 // not-kept | mismatch | unreadable, body?, detail?}. Where the demand is kept, the plan is Workcell's own for it (`workcell plan
 // --demand-json <path>`, workcell_read {plan, demand: {demand_json}}), drawn as Workcell answered it; otherwise the plan says Workcell's
 // standing in its words and no demand is reconstructed. With no run, no plan is asked.
-const NO_DEMAND = 'the run\'s demand for `workcell plan`: the run the chosen world\'s receipt names, read with `workcell run show` — no world is chosen here, or its receipt names no run'
+const NO_DEMAND = 'the run\'s demand for `workcell plan`: the chosen world\'s run (`workcell worlds` runs), read with `workcell run show` — no world is chosen here'
 export const CARRIER_REFUSE = {
   where: missing('Where', 'a session carried to another machine over workcell.control/v1 through the kernel', 'Workcell'),
   replan: missing('Plan again', NO_DEMAND, 'Workcell'),
@@ -330,8 +333,22 @@ export function connectionLabels(answer: WorkcellAnswer): string[] {
 export interface CarrierMaterial {
   readonly discover?: WorkcellAnswer
   readonly probe?: WorkcellAnswer
-  /** The run the chosen world's receipt names, its `workcell run show`, and the plan of its kept demand; absent: not read here. */
-  readonly run?: {readonly ref: string | null; readonly show?: WorkcellAnswer; readonly plan?: WorkcellAnswer}
+  /** The chosen world's run (planRunOf), its `workcell run show`, and the plan of its kept demand; absent: not read here. `why` says why
+   * there is no run, in words. */
+  readonly run?: {readonly ref: string | null; readonly why?: string; readonly show?: WorkcellAnswer; readonly plan?: WorkcellAnswer}
+}
+
+/** The chosen world's run for the Plan, from `workcell worlds`'s `runs` (EpiLogos/Workcell PR 122): one slug is that run; several wait
+ * for the hand's choice and none is assumed; none, a world prepared outside a run or a run recorded elsewhere; null, Workcell's run-ledger
+ * error verbatim. Never the receipt's subjects. Pure. */
+export function planRunOf(world: {readonly worldRef: string; readonly runs?: readonly string[] | null} | null, runLedger: {read: boolean; error?: string} | undefined, choice: unknown): {ref: string | null; why?: string} {
+  if (!world) return {ref: null}
+  if (world.runs === undefined) return {ref: null, why: `The run's plan: Workcell's world listing names no runs for ${world.worldRef} (an older Workcell answers \`workcell worlds\` without them).`}
+  if (world.runs === null) return {ref: null, why: runLedger?.error ?? `The run's plan: Workcell could not read its run ledger for ${world.worldRef}.`}
+  if (!world.runs.length) return {ref: null, why: `The run's plan: no run in this cell's ledger names ${world.worldRef} — the world was prepared outside a run, or its run is recorded elsewhere.`}
+  if (world.runs.length === 1) return {ref: world.runs[0]!}
+  if (typeof choice === 'string' && world.runs.includes(choice)) return {ref: choice}
+  return {ref: null, why: `The run's plan: ${world.runs.length} runs name ${world.worldRef} (${world.runs.join(', ')}): choose one; none is assumed.`}
 }
 
 /** A run's demand as `workcell run show` answers it ({path, standing, detail?}); null when the answer carries no demand. Pure. */
@@ -373,7 +390,7 @@ export function carrierChainState(answer: WorkcellAnswer): {state?: 'ready' | 'c
 function planWhy(run: CarrierMaterial['run'], values: Values): string | null {
   if ('plan' in values) return null
   if (!run) return CARRIER_ABSENT.plan
-  if (!run.ref) return `The run's plan on those offers: no reading reaches it yet — missing op: ${NO_DEMAND} (Workcell).`
+  if (!run.ref) return run.why ?? `The run's plan on those offers: no reading reaches it yet — missing op: ${NO_DEMAND} (Workcell).`
   const show = run.show
   if (!show || show.status === 'reading') return `The run's plan: Workcell has not answered \`workcell run show --run ${run.ref}\` yet.`
   if (show.status === 'refused') return show.error ?? 'Workcell refused the run\'s record.'
@@ -408,7 +425,7 @@ export function carrierBinding(answer: WorkcellAnswer, holds: ChainHolds, shows?
     id: CARRIER_ID,
     values,
     standing,
-    local: held(CARRIER_ID, ['machine']),
+    local: held(CARRIER_ID, ['machine', 'planRun']),
     writes: key => key in CARRIER_REFUSE,
     write: async (changes: readonly ValueChange[]) => {
       for (const {key} of changes) {
