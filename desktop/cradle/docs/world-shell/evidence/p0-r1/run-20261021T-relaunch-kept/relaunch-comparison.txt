@@ -23,4 +23,4 @@ Earlier rounds of the same comparison, and what each found (traces not kept):
   3  side by side: on 49 -> 9 (36 of 37 taken back, 1 moved by a seat edit), off 49 -> 45. The Day's settings and discovery
      were still asked.
 
-kept-listing.txt names what the stack kept (keys, scopes, sizes; the values are the owners' content and are left out).
+Traces: kept-on/trace.txt, kept-off/trace.txt with each launch's marks. kept-listing.txt names what the stack kept (keys, scopes, sizes; the values are the owners' content and are left out).

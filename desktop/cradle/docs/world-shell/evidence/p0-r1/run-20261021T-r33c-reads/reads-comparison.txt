@@ -2,7 +2,7 @@ Reads that remember — the sealed candidate at 8c906eb21 against r29 (20 Oct), 
 
 Same recipe as run-20261020T-r29-reads: full-suite backing, run-native-at-head.sh all, OI_KERNEL_TRACE_FILE, launched and left
 idle; the window restored into Expressions with no work open. Owners are the installed set (ctrl 11e7e69cb = Central#287,
-aikit cc6405e66 = ai-kit#539). Trace: kernel-trace.log (the start-up, then the Live switch below).
+aikit cc6405e66 = ai-kit#539). Trace: kernel-trace.txt (the start-up, then the Live switch below).
 
 Start-up, owner processes ([owner] … process lines):
   r29  (72216b455)  137 processes in the first 31 s, 20.5 s of process time; still reading at 31 s (the 30 s agency floor),
