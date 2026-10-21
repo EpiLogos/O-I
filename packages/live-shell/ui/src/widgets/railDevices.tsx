@@ -33,7 +33,9 @@ import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import type {IconName} from '../inhabitants/sdk/Icon'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
-import {CALENDAR_ABSENT, diffFilesOf, filesOf, nowsCloseWrites, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
+import {CALENDAR_ABSENT, diffFilesOf, filesOf, notificationsBinding, nowsCloseWrites, nowsValues, pagesOf, put, trailValues, wikiPagesOf} from './railBindings'
+import {openInstrument} from '../frame/instrumentDoor'
+import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {loadWhenDrawn} from '../shell/loadWhenDrawn'
 
 /** The family the rail-born devices stand in: their designs are `widgets:<id>` in the catalogue. */
@@ -48,6 +50,7 @@ export const RAIL_DEVICES = [
   {id: 'diff', title: 'Diff', icon: 'select', note: 'The selected seat\'s working diff (kernel git_diff_read → Central central.git.diff, central.git-diff/v1), the seat as the seat instrument reads it; with no seat selected, the shell\'s project (git_repository_read).'},
   {id: 'nows', title: 'NOWs', icon: 'die', note: 'The ground\'s civil time, its Day and its open NOW clearings (kernel central inspect → central.civil-time-reading/v1, central.day-reading/v1, central.now-listing/v1).'},
   {id: 'calendar', title: 'Calendar', icon: 'metro', note: 'A third party\'s calendar, through the provider it comes from. No calendar provider is installed.'},
+  {id: 'notifications', title: 'Notifications', icon: 'arm', note: 'What asks for your attention (§23.9): the agents that wait for you (Messages), what waits in Approvals, and the requests an owner raised through Central\'s personal.notify, which is not installed yet.'},
 ] as const satisfies readonly {id: string; title: string; icon: IconName; note: string}[]
 export type RailDeviceId = typeof RAIL_DEVICES[number]['id']
 
@@ -333,6 +336,33 @@ function useCalendarBinding(): DesignBinding {
   return useMemo(() => ({id: railDeviceId('calendar'), values: withHolds({reason: CALENDAR_ABSENT}, holds), local}), [holds, local])
 }
 
+// ---------------------------------------------------------------------------------------------------------------- Notifications
+
+/** Messages on the door (agent/devices/messagesBinding.ts MESSAGES_ID), and the Approvals devices — Central's Main track's
+ * (central/devices/CentralDevices.tsx CENTRAL_APPROVALS_ID) and Factory's (agent/devices/receiptBindings.ts APPROVALS_ID): named here, not
+ * imported, so the rail's boot does not load their chains (scripts/load-census.mjs). */
+export const NOTIFY_MESSAGES_ID = 'ai-kit:messages'
+export const NOTIFY_APPROVALS_IDS = ['central:main:approvals', 'factory:main:approvals'] as const
+const doorValue = (id: string, key: string): Value | undefined => publishedDevice(id)?.binding?.values[key]
+/** The Approvals device on the door now: the mode's chain publishes one (Central's or Factory's), each reading the same returned work. */
+const approvalsOnDoor = (): string | undefined => NOTIFY_APPROVALS_IDS.find(id => publishedDevice(id))
+const minutesNow = (): number => { const at = new Date(); return at.getHours() * 60 + at.getMinutes() }
+
+function useNotificationsBinding(): DesignBinding {
+  const {holds, local} = useHolds(['show', 'follow', 'selected', 'opened'])
+  // Each count is its own device's reading (railBindings.ts notificationsValues): read off the door, never derived here.
+  const agents = useSyncExternalStore(subscribeDeviceDoor, () => doorValue(NOTIFY_MESSAGES_ID, 'agents'), () => undefined)
+  const approvals = useSyncExternalStore(subscribeDeviceDoor, approvalsOnDoor, () => undefined)
+  const queue = useSyncExternalStore(subscribeDeviceDoor, () => (approvals ? doorValue(approvals, 'queue') : undefined), () => undefined)
+  // Now on the strip: the view's own clock, turned each minute.
+  const [now, setNow] = useState(minutesNow)
+  useEffect(() => { const timer = window.setInterval(() => setNow(minutesNow()), 60_000); return () => window.clearInterval(timer) }, [])
+  return useMemo(() => notificationsBinding(railDeviceId('notifications'), {messagesAgents: agents, approvalsQueue: queue, nowMinutes: now}, holds, {local,
+    messages: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: NOTIFY_MESSAGES_ID, title: 'Messages'}),
+    approvals: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: approvals ?? NOTIFY_APPROVALS_IDS[0], title: 'Approvals'})}),
+  [agents, queue, approvals, now, holds, local])
+}
+
 // ---------------------------------------------------------------------------------------------------------------- the publisher
 
 /** The rail's agent devices — Messages, Gateways, the Agency gateway, Frames, the Ledger and the workcell rack (agent/devices/
@@ -345,7 +375,7 @@ export function RailDevices() {
   const reading = useWidgetReading()
   const transport = reading?.transport
   const diffReading = useDiffReading(transport), tape = useFollowedTape()
-  const trail = useTrailBinding(), diff = useDiffBinding(diffReading), nows = useNowsBinding(transport), calendar = useCalendarBinding()
+  const trail = useTrailBinding(), diff = useDiffBinding(diffReading), nows = useNowsBinding(transport), calendar = useCalendarBinding(), notifications = useNotificationsBinding()
   const files = useFilesBinding(tape, diffReading), web = useWebBinding(tape), wiki = useWikiBinding(transport)
   const devices = useMemo(() => Object.fromEntries(RAIL_DEVICES.map(spec => [spec.id, railDevice(spec.id)])) as Record<RailDeviceId, DeviceInstance>, [])
   // The Terminal (§17.9): the newest terminal the Workbench's surfaces hold, while one runs (terminalBinding.ts); its rail tile is
@@ -363,6 +393,7 @@ export function RailDevices() {
   useEffect(() => { publishDevice(devices.wiki.id, {device: devices.wiki, binding: wiki}) }, [devices, wiki])
   useEffect(() => { publishDevice(devices.nows.id, {device: devices.nows, binding: nows}) }, [devices, nows])
   useEffect(() => { publishDevice(devices.calendar.id, {device: devices.calendar, binding: calendar}) }, [devices, calendar])
+  useEffect(() => { publishDevice(devices.notifications.id, {device: devices.notifications, binding: notifications}) }, [devices, notifications])
   useEffect(() => () => { for (const spec of RAIL_DEVICES) publishDevice(railDeviceId(spec.id), null); publishDevice(TERMINAL_ID, null) }, [])
   return <AgentRailDevices />
 }

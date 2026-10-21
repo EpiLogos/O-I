@@ -5,11 +5,31 @@
  * control. Camera pan/zoom/orbit stay pointer gestures on the stage itself. */
 import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome', 'sound', 'journey', 'canvas'] as const;
+import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
+import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline'] as const;
 /** The walk's own acts (lane W4-Technē; DLW §17.6 Journey): stand on a stop (at seconds into it), play or stop the saved scenes
  * (app.ts setSavedScenePlay, the scene strip's own Play), enter the presented stop's Scene in its Expression and return from it (the
  * journey instrument's crossing and app.ts returnToJourney). Each runs the frame's own act; nothing here walks. */
-export const STAGE_JOURNEY_ACTIONS = ['stand', 'play', 'stop', 'enter', 'return'] as const;
+export const STAGE_JOURNEY_ACTIONS = ['stand', 'play', 'stop', 'enter', 'return', 'pace', 'seam', 'switch', 'curve', 'loop'] as const;
+/** The walk's pace and seams (DLW §17.6 Pace and Transitions), each the frame's own edit of one stop's Scene: `pace` its duration (the timeline
+ * trim and the Journey's Pace save, retimeScene in one labelled change), `seam` the transition it is entered by — its kind, seconds, a wipe's
+ * direction, a dip's colour point (the seam chooser's own write, writeSeamTransition) — and `switch`, `curve` and `loop` the seam chooser's
+ * edge facts (planEdgeEdit: the switch mode, the curve preset, the last stop's loop exit). Each is the edit the frame's own control makes. */
+export const STAGE_JOURNEY_EDITS = ['pace', 'seam', 'switch', 'curve', 'loop'] as const;
+/** The Timeline's own acts (DLW §17.5): `camera` sets the chronology's centre year and pixels per year as Going to a view does (the lens
+ * remounted on that camera, keeping its filters), `view` goes to a saved timeline view, `save-view` saves one under a name (the "Save view…"
+ * act without its prompt), `links` and `categories` set the chronology's relation links and its hidden card categories through the lens's
+ * own presentation (capture, then restore: the path a view's restore takes). */
+export const STAGE_TIMELINE_ACTIONS = ['camera', 'view', 'save-view', 'links', 'categories'] as const;
+/** The chronology's camera bounds, the view record's own (researchMaterial.ts:82-84 TIMELINE_CENTER_YEAR_LIMIT, TIMELINE_PIXELS_PER_YEAR_RANGE),
+ * repeated here so this contract stays import-light for the boundary and the shell; tests/research-reading.test.mjs pins the parity. */
+export const STAGE_TIMELINE_CAMERA = {centreLimit: 1e10, zoom: {min: 1e-9, max: 1e14}} as const;
+/** The Canvas's own board acts (DLW §17.4 Look and Lines): `camera` through the canvas's own fly, `connector` the selected line's connector
+ * record (ConnectorControls: its kind and its sides). */
+export const STAGE_CANVAS_ACTIONS = ['camera', 'connector'] as const;
+export const STAGE_CANVAS_LINE_KINDS = ['straight', 'curved', 'elbow'] as const;
+export const STAGE_CANVAS_SIDES = ['auto', 'top', 'right', 'bottom', 'left'] as const;
 export type StageJourneyAction = (typeof STAGE_JOURNEY_ACTIONS)[number];
 /** The Canvas camera's bounds as the canvas holds them (navigationGeometry.ts CANVAS_ZOOM_LIMITS: 0.05 to 2, as percent). */
 export const STAGE_CANVAS_ZOOM = {min: 5, max: 200} as const;
@@ -226,8 +246,19 @@ export type StageCommand =
   | {command: 'sound'; muted: boolean}
   | {command: 'journey'; action: 'stand'; index: number; seconds?: number}
   | {command: 'journey'; action: 'play' | 'stop' | 'enter' | 'return'}
+  | {command: 'journey'; action: 'pace'; index: number; seconds: number}
+  /** `transition` is the seam's kind (the message's own `kind` is the envelope's). */
+  | {command: 'journey'; action: 'seam'; index: number; transition?: TransitionKind; seconds?: number; direction?: WipeDirection; at?: number}
+  | {command: 'journey'; action: 'switch'; index: number; mode: SwitchMode}
+  | {command: 'journey'; action: 'curve'; index: number; type: CurveType}
+  | {command: 'journey'; action: 'loop'; on: boolean}
   /** The Canvas camera (DLW §17.4): the board point at the pane's centre and the zoom in percent, set through the canvas's own fly. */
-  | {command: 'canvas'; action: 'camera'; cx: number; cy: number; zoom: number};
+  | {command: 'canvas'; action: 'camera'; cx: number; cy: number; zoom: number}
+  | {command: 'canvas'; action: 'connector'; line: string; lineKind?: (typeof STAGE_CANVAS_LINE_KINDS)[number]; fromSide?: (typeof STAGE_CANVAS_SIDES)[number]; toSide?: (typeof STAGE_CANVAS_SIDES)[number]}
+  | {command: 'timeline'; action: 'camera'; centre: number; zoom: number}
+  | {command: 'timeline'; action: 'view' | 'save-view'; name: string}
+  | {command: 'timeline'; action: 'links'; on: boolean}
+  | {command: 'timeline'; action: 'categories'; hidden: string[]};
 /** A Jankó note: one to twelve distinct pitch classes (0–11) struck together as one act, at an amplitude in (0, 1] (modal metres; the owner's strike bound). */
 export const STAGE_JANKO_AMPLITUDE_MAX = 1;
 export type StageResult = {ok: true} | {ok: false; error: string};
@@ -251,6 +282,64 @@ function readSettings(raw: unknown): StageCaptureSettings | undefined | null {
   if (includeText !== undefined) {if (typeof includeText !== 'boolean') return null; out.includeText = includeText;}
   if (transparent !== undefined) {if (typeof transparent !== 'boolean') return null; out.transparent = transparent;}
   return out;
+}
+
+const stopIndex = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+const seconds = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+/** One of the walk's pace and seam edits, every key closed; the bounds of each value are the document's own and are checked by the edit. */
+function readJourneyEdit(raw: Record<string, unknown>, req: number): {req: number; command: StageCommand} | null {
+  switch (raw.action) {
+    case 'pace':
+      return closed(raw, [...BASE_KEYS, 'action', 'index', 'seconds']) && stopIndex(raw.index) && seconds(raw.seconds)
+        ? {req, command: {command: 'journey', action: 'pace', index: raw.index, seconds: raw.seconds}} : null;
+    case 'seam': {
+      if (!closed(raw, [...BASE_KEYS, 'action', 'index', 'transition', 'seconds', 'direction', 'at']) || !stopIndex(raw.index)) return null;
+      if (raw.transition !== undefined && !stageOneOf(TRANSITION_KINDS, raw.transition)) return null;
+      if (raw.seconds !== undefined && !seconds(raw.seconds)) return null;
+      if (raw.direction !== undefined && !stageOneOf(WIPE_DIRECTIONS, raw.direction)) return null;
+      if (raw.at !== undefined && !(typeof raw.at === 'number' && Number.isFinite(raw.at) && raw.at >= 0 && raw.at <= 1)) return null;
+      if (raw.transition === undefined && raw.seconds === undefined && raw.direction === undefined && raw.at === undefined) return null;
+      return {req, command: {command: 'journey', action: 'seam', index: raw.index, ...(raw.transition !== undefined ? {transition: raw.transition} : {}),
+        ...(raw.seconds !== undefined ? {seconds: raw.seconds as number} : {}), ...(raw.direction !== undefined ? {direction: raw.direction} : {}), ...(raw.at !== undefined ? {at: raw.at as number} : {})}};
+    }
+    case 'switch':
+      return closed(raw, [...BASE_KEYS, 'action', 'index', 'mode']) && stopIndex(raw.index) && stageOneOf(SWITCH_MODES, raw.mode)
+        ? {req, command: {command: 'journey', action: 'switch', index: raw.index, mode: raw.mode}} : null;
+    case 'curve':
+      return closed(raw, [...BASE_KEYS, 'action', 'index', 'type']) && stopIndex(raw.index) && stageOneOf(CURVE_TYPES, raw.type)
+        ? {req, command: {command: 'journey', action: 'curve', index: raw.index, type: raw.type}} : null;
+    case 'loop':
+      return closed(raw, [...BASE_KEYS, 'action', 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'journey', action: 'loop', on: raw.on}} : null;
+    default:
+      return null;
+  }
+}
+
+/** One of the Timeline's acts, every key closed. */
+function readTimelineCommand(raw: Record<string, unknown>, req: number): {req: number; command: StageCommand} | null {
+  if (!stageOneOf(STAGE_TIMELINE_ACTIONS, raw.action)) return null;
+  switch (raw.action) {
+    case 'camera': {
+      if (!closed(raw, [...BASE_KEYS, 'action', 'centre', 'zoom'])) return null;
+      const centre = raw.centre, zoom = raw.zoom
+      if (typeof centre !== 'number' || !Number.isFinite(centre) || Math.abs(centre) > STAGE_TIMELINE_CAMERA.centreLimit) return null;
+      if (typeof zoom !== 'number' || !Number.isFinite(zoom) || zoom < STAGE_TIMELINE_CAMERA.zoom.min || zoom > STAGE_TIMELINE_CAMERA.zoom.max) return null;
+      return {req, command: {command: 'timeline', action: 'camera', centre, zoom}};
+    }
+    case 'view':
+    case 'save-view':
+      return closed(raw, [...BASE_KEYS, 'action', 'name']) && bounded(raw.name) && (raw.name as string).length <= 160 ? {req, command: {command: 'timeline', action: raw.action, name: raw.name as string}} : null;
+    case 'links':
+      return closed(raw, [...BASE_KEYS, 'action', 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'timeline', action: 'links', on: raw.on}} : null;
+    case 'categories': {
+      if (!closed(raw, [...BASE_KEYS, 'action', 'hidden']) || !Array.isArray(raw.hidden)) return null;
+      const hidden = raw.hidden as unknown[]
+      if (!hidden.every(id => stageOneOf(TIMELINE_CATEGORY_IDS, id)) || new Set(hidden).size !== hidden.length) return null;
+      return {req, command: {command: 'timeline', action: 'categories', hidden: hidden as string[]}};
+    }
+  }
+  return null;
 }
 
 /** A host-command from the shell, or null. Every key and value is a closed enum. */
@@ -277,11 +366,23 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       return closed(raw, [...BASE_KEYS, 'muted']) && typeof raw.muted === 'boolean' ? {req, command: {command: 'sound', muted: raw.muted}} : null;
     case 'journey':
       if (!stageOneOf(STAGE_JOURNEY_ACTIONS, raw.action)) return null;
+      if (stageOneOf(STAGE_JOURNEY_EDITS, raw.action)) return readJourneyEdit(raw, req);
       if (raw.action !== 'stand') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'journey', action: raw.action}} : null;
       if (!closed(raw, [...BASE_KEYS, 'action', 'index', 'seconds']) || typeof raw.index !== 'number' || !Number.isSafeInteger(raw.index) || raw.index < 0) return null;
       if (raw.seconds !== undefined && (typeof raw.seconds !== 'number' || !Number.isFinite(raw.seconds) || raw.seconds < 0)) return null;
       return {req, command: {command: 'journey', action: 'stand', index: raw.index, ...(raw.seconds !== undefined ? {seconds: raw.seconds as number} : {})}};
+    case 'timeline':
+      return readTimelineCommand(raw, req);
     case 'canvas':
+      if (raw.action === 'connector') {
+        if (!closed(raw, [...BASE_KEYS, 'action', 'line', 'lineKind', 'fromSide', 'toSide']) || !bounded(raw.line)) return null;
+        if (raw.lineKind !== undefined && !stageOneOf(STAGE_CANVAS_LINE_KINDS, raw.lineKind)) return null;
+        if (raw.fromSide !== undefined && !stageOneOf(STAGE_CANVAS_SIDES, raw.fromSide)) return null;
+        if (raw.toSide !== undefined && !stageOneOf(STAGE_CANVAS_SIDES, raw.toSide)) return null;
+        if (raw.lineKind === undefined && raw.fromSide === undefined && raw.toSide === undefined) return null;
+        return {req, command: {command: 'canvas', action: 'connector', line: raw.line, ...(raw.lineKind !== undefined ? {lineKind: raw.lineKind} : {}),
+          ...(raw.fromSide !== undefined ? {fromSide: raw.fromSide} : {}), ...(raw.toSide !== undefined ? {toSide: raw.toSide} : {})}};
+      }
       if (!closed(raw, [...BASE_KEYS, 'action', 'cx', 'cy', 'zoom']) || raw.action !== 'camera') return null;
       if (![raw.cx, raw.cy, raw.zoom].every(value => typeof value === 'number' && Number.isFinite(value))) return null;
       if ((raw.zoom as number) < STAGE_CANVAS_ZOOM.min || (raw.zoom as number) > STAGE_CANVAS_ZOOM.max) return null;

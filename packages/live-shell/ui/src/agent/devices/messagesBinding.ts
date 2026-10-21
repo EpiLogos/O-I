@@ -18,9 +18,18 @@
 //     (its own `thread`, which the design lays under `conv.`), and its last line;
 //   Central's agent-profile.review of the proposal Make wrote: its profile (role, purpose, world, sources, revision) and its content digest.
 // What nothing reads yet, each absent with the operation it waits for: an agent's model and type, the session's light and its last check-in
-// in the conversation, the groups (`aikit gateway team`), the types and skillsets the card offers.
-// The writes: a send (`aikit gateway send`), a message dragged onto a track (`aikit gateway delegate`) and the conversation's session acts
-// stand disabled with the AIKit command no kernel route reaches (T-COVERAGE §1.2). Making an agent (§19.24 "Making an agent", lane W2) is
+// in the conversation, the groups (Central's agent sets; `aikit gateway team` acts on one admitted member's delivery and lists none), the
+// types and skillsets the card offers.
+// The gateway's writes go through the kernel's routes to AIKit's own commands (lane W3, desktop/cradle/kernel/src/owner_routes.rs
+// GatewayWrite; ownerRoutes.ts), each answered in AIKit's words and earning an `owner_changed` receipt, after which the conversation is read
+// again:
+//   Send     the composer's words to the open agent's Position → gateway_write {kind send, project, to: the Position, body: your words}
+//            (`aikit gateway send --to P --body-file -`, the words on stdin);
+//   a drop   a message dragged onto a track → gateway_write {kind delegate, project, communique, work, reason[, run, journey,
+//            workflow_unit]} (`aikit gateway delegate`): the drop names the Communique, the work it becomes and why — AIKit takes all three.
+// No control of Messages' design writes a team operation: `aikit gateway team` prepares, delegates to, reads, cancels or releases one
+// admitted member for the parent that occupies a Position, and the desk occupies none. The conversation's Input (steer or queue), its
+// Voice and its session acts stand disabled, each with what it lacks. Making an agent (§19.24 "Making an agent", lane W2) is
 // Central's, and the kernel's invoke_action carries the person's authority for it (desktop/cradle/kernel/src/action.rs PERSON_ACTS):
 //   Make     your words → agent-profile.express {scope, project?, world_ref, intent_expression (verbatim), ratified_world_refs, skill_set_refs?}:
 //            Central allocates the profile and writes it generated-proposal/unrecognised; the card turns to it, read back through
@@ -32,11 +41,12 @@
 //   a group  central.agent-set.propose {ref, revision r1, members [{kind agent, agent_ref}], reason: your words}, accepted by
 //            central.agent-set.save of Central's own record at its revision; its Discard (central.agent-set.remove) carries no person's
 //            authority, so it stands disabled with that reason.
-// Every refusal is Central's own words. The list's settings, the agent you open, the composer's draft, the conversation's filters, the card's
-// fields and the proposal the card is on are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView); the acts
-// go through the port the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action).
+// Every refusal is its owner's own words. The list's settings, the agent you open, the composer's draft, the conversation's filters, the
+// card's fields and the proposal the card is on are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView); the
+// acts go through the ports the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action for Central's, gateway_write for AIKit's).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
+import type {GatewayWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {AgentChainReading} from './agentChainDevices'
 import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {familyFaceDevice, gatewayAnswer} from './mainTrackBindings'
@@ -64,9 +74,15 @@ const missing = (what: string, op: string, owner: string) => `${what}: no owner 
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
 
 export const MESSAGES_REFUSE = {
-  send: missing('Send', '`aikit gateway send` through the kernel (T-COVERAGE §1.2)', 'AIKit'),
-  delegate: missing('A message dragged onto a track', '`aikit gateway delegate` through the kernel (T-COVERAGE §1.2)', 'AIKit'),
-  team: unread('Your groups', '`aikit gateway team` through the kernel (T-COVERAGE §1.2)', 'AIKit'),
+  /** Send with no agent of the population open: a message is addressed to a Position. */
+  send: 'Send: open an agent in the list first — a message goes to its Position (`aikit gateway send --to P`).',
+  /** A drop that does not name everything `aikit gateway delegate` takes. */
+  delegate: 'A message dragged onto a track: `aikit gateway delegate` takes the Communique, the work it becomes and why (--communique C --work W --reason R), and the drop did not name all three.',
+  team: unread('Your groups', 'a listing of your groups for Messages (Central\'s agent sets, `central.agent-set.list`, are not read here; `aikit gateway team` acts on one admitted member\'s delivery for the parent that occupies a Position, and lists none)', 'Central'),
+  /** The conversation's Input: where the next words land in a session's turn. */
+  input: missing('Where your words land (steer or queue)', 'a steer or queue for a Position\'s Communique (`aikit gateway send` hands the words to the Position, which holds them for its occupant in order)', 'AIKit'),
+  /** The conversation's Voice: speech turned into the composer's words. */
+  voice: missing('Voice', 'dictation into Messages\' composer (`aikit gateway send` carries words; the Thread holds no capture of its own)', 'AIKit'),
   /** The conversation's session acts: a Position's journal names no session, so nothing here answers its proposals or stalls. */
   conversation: missing('The conversation\'s session acts (Approve, Diff, Retry, Hard stop, Tell parent, a spawn\'s thread)', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session\'s turns)', 'AIKit'),
   session: unread('The session\'s light and its last check-in', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session)', 'AIKit'),
@@ -92,11 +108,11 @@ export const MESSAGES_ABSENT: Readonly<Record<string, string>> = {
   'conv.light': MESSAGES_REFUSE.session, 'conv.age': MESSAGES_REFUSE.session, 'conv.writes': MESSAGES_REFUSE.session,
 }
 
-/** The writes no owner carries, by key: the card's acts, the composer, a drop onto a track, and the conversation's own controls (the
- * Thread's Full under `conv.`, software-factory__thread.tsx: Input, Voice, the proposal's and the stall's buttons, a spawn row's open). */
+/** The writes no owner carries, by key: the conversation's own controls (the Thread's Full under `conv.`, software-factory__thread.tsx:
+ * Input, Voice, the proposal's and the stall's buttons, a spawn row's open). Send (`conv.sent`) and a drop onto a track (`delegate`) write
+ * through AIKit's gateway (MessagesPorts.gateway). */
 export const MESSAGES_REFUSED: Readonly<Record<string, string>> = {
-  delegate: MESSAGES_REFUSE.delegate,
-  'conv.sent': MESSAGES_REFUSE.send, 'conv.input': MESSAGES_REFUSE.send, 'conv.voice': MESSAGES_REFUSE.send,
+  'conv.input': MESSAGES_REFUSE.input, 'conv.voice': MESSAGES_REFUSE.voice,
   'conv.approve': MESSAGES_REFUSE.conversation, 'conv.diff': MESSAGES_REFUSE.conversation, 'conv.retry': MESSAGES_REFUSE.conversation,
   'conv.hardStop': MESSAGES_REFUSE.conversation, 'conv.tellParent': MESSAGES_REFUSE.conversation, 'conv.session': MESSAGES_REFUSE.conversation,
 }
@@ -249,6 +265,21 @@ export interface MessagesPorts {
   readonly page?: () => string | null
   /** A fresh suffix for a group's ref (Central's propose takes the ref from its caller). */
   readonly suffix?: () => string
+  /** AIKit's gateway writes through the kernel's route (ownerRoutes.ts gateway_write): resolves with AIKit's reading or rejects with its
+   * words. Absent: no carrier stands. */
+  readonly gateway?: (request: GatewayWriteRequest) => Promise<unknown>
+}
+
+/** What a drop onto a track names for `aikit gateway delegate` (the drop's value, JSON): the Communique, the work it becomes and why, and
+ * the run, journey or workflow unit it belongs to where the track names one. Null when it does not name the three AIKit requires. Pure. */
+export function delegationOf(value: Value | undefined): {communique: string; work: string; reason: string; run?: string; journey?: string; workflow_unit?: string} | null {
+  let drop: unknown = value
+  if (typeof value === 'string') { try { drop = JSON.parse(value) } catch { return null } }
+  if (!isObj(drop)) return null
+  const communique = str(drop.communique), work = str(drop.work), reason = str(drop.reason)
+  if (!communique || !work || !reason) return null
+  const run = str(drop.run), journey = str(drop.journey), unit = str(drop.workflow_unit)
+  return {communique, work, reason, ...(run ? {run} : {}), ...(journey ? {journey} : {}), ...(unit ? {workflow_unit: unit} : {})}
 }
 
 /** Messages' values: the agents and the inbox from the population, the gateway's state from its own answer, the card's worlds and the
@@ -319,6 +350,10 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     if (made?.kind === 'group') standing.discard = {disabled: MESSAGES_REFUSE.groupDiscard}
   }
   if (!('proposal' in values) && made && !view.editing) standing.proposal = {disabled: reviewWhy ?? MESSAGES_REFUSE.noProposal}
+  // Send: to the open agent's Position, while a carrier stands; a drop onto a track names its own Communique, so only the carrier gates it.
+  const positions = positionRefs(known)
+  if (!ports.gateway) for (const key of ['conv.sent', 'delegate']) standing[key] = {disabled: MESSAGES_REFUSE.noCarrier}
+  else if (typeof values.open !== 'string' || !positions.includes(values.open)) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.send}
 
   const hold = (made: Made | null) => { holdView(MESSAGES_ID, 'made', made ? JSON.stringify(made) : undefined); holdView(MESSAGES_ID, 'editing', undefined) }
   const act = async (action: string, body: Readonly<Record<string, unknown>>) => { if (!ports.act) throw Error(MESSAGES_REFUSE.noCarrier); return ports.act(action, body) }
@@ -391,6 +426,21 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     await act(PERSON_ACTS.remove, {...scopeInput(made), profile_ref: made.ref, expected_revision: String(reviewed?.revision ?? made.revision)})
     hold(null)
   }
+  /** Send: your words to the Position of the agent open when you press (`aikit gateway send`); AIKit's refusal is its own words. */
+  const send = async (words: Value | undefined) => {
+    if (!ports.gateway) throw Error(MESSAGES_REFUSE.noCarrier)
+    if (typeof words !== 'string' || !words.trim()) throw Error('Send: write the message first.')
+    const open = pressed().open
+    if (typeof open !== 'string' || !positions.includes(open)) throw Error(MESSAGES_REFUSE.send)
+    await ports.gateway({kind: 'send', ...(project ? {project} : {}), to: open, body: words})
+  }
+  /** A message dropped onto a track: the Communique crosses into that work (`aikit gateway delegate`; Factory assigns custody). */
+  const delegate = async (drop: Value | undefined) => {
+    if (!ports.gateway) throw Error(MESSAGES_REFUSE.noCarrier)
+    const named = delegationOf(drop)
+    if (!named) throw Error(MESSAGES_REFUSE.delegate)
+    await ports.gateway({kind: 'delegate', ...(project ? {project} : {}), ...named})
+  }
   return {
     id: MESSAGES_ID,
     values,
@@ -400,9 +450,11 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
       // Change: back to the card's fields, the proposal still held; Make then saves the change.
       proposal: value => { if (value === undefined && made) holdView(MESSAGES_ID, 'editing', true) },
     },
-    writes: key => key in MESSAGES_REFUSED || key.startsWith('conv.') || key === 'make' || key === 'accept' || key === 'discard',
+    writes: key => key in MESSAGES_REFUSED || key.startsWith('conv.') || key === 'delegate' || key === 'make' || key === 'accept' || key === 'discard',
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
+        if (key === 'conv.sent') { await send(value); continue }
+        if (key === 'delegate') { await delegate(value); continue }
         if (key === 'make') { await make(value); continue }
         if (key === 'accept') { await accept(); continue }
         if (key === 'discard') { await discard(); continue }

@@ -92,10 +92,14 @@ const REFUSE = {
   budget: 'Budget is a reading here: used and cap come from the session\'s task record (encounter_task_read); Actuation exposes no budget write.',
   reading: (key: string) => `${key} is a reading: its owner reports it; nothing here changes it.`,
   set: `The set on the chain: ${missingOpRemedy('skillset')} — missing op: ${MISSING_OPS.skillset}.`,
-  export: missing('Export', 'aikit set package <set> <target> through the kernel', 'AIKit'),
-  trust: missing('Trust', 'aikit trust record <capability> through the kernel', 'AIKit'),
-  run: missing('Run', 'aikit run <method> with its preflight through the kernel', 'AIKit'),
-  prove: missing('Prove', 'a Method run receipt verify through the kernel', 'AIKit'),
+  // Lane W3 routes AIKit's store writes (desktop/cradle/kernel/src/owner_routes.rs AikitWrite; ownerRoutes.ts aikitWriteOp). Export's
+  // `aikit set package export SET --target T --out DIR` writes into an absolute directory the desk names, and the rack has no field naming
+  // one; Run's `aikit praxis method run REF --input JSON` takes the Method's exact input and Prove's `aikit praxis method prove --method REF
+  // --proof-json J` the run's proof, and the member carries neither. Trust writes (memberBinding, MemberPorts.trust).
+  export: missing('Export', 'the directory the package is written into (`aikit set package export <set> --target <t> --out <dir>` through the kernel\'s aikit_write takes an absolute --out, and the rack has no field naming one; the owner\'s own default, ./<package>-<target>, is relative to a working directory the kernel does not choose)', 'AIKit'),
+  trust: 'Trust: the kernel carrier is unavailable here, so AIKit cannot be asked (`aikit trust record <capability>` through the kernel\'s aikit_write).',
+  run: missing('Run', 'the exact JSON input `aikit praxis method run <ref> --input` takes (the kernel\'s aikit_write method-run carries it; the member has no field for it)', 'AIKit'),
+  prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
   knowledge: 'Knowledge: set on the Knowledge route inside this Scope (§19.9), whose lenses wait on a lens-level request on the AgentProfile (knowledgeRouteBinding.ts).',
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),
@@ -656,15 +660,23 @@ export function memberChains(rack: Values): {ref: string}[] | null {
 
 const MEMBER_WRITES = new Set(['requested', 'reviewed', 'run', 'proved'])
 
+/** The member's writes to AIKit through the kernel's routes (ownerRoutes.ts). Absent: no carrier stands. */
+export interface MemberPorts {
+  /** Record that you reviewed the capability's revision (`aikit trust record <capability>`, aikit_write trust-record). */
+  readonly trust?: (capability: string) => Promise<unknown>
+}
+
 /** The member's binding: Enabled is your request in the rack's composition (Preview and Apply carry it); Review is asked first —
- * the ask is the view's own key, held here until Trust or Cancel drops it; Trust, Run and Prove are AIKit's and refused by name
- * until the kernel carries them. */
-export function memberBinding(id: string, rack: Values, chosen: string | null, held: ChainHolds): DesignBinding {
+ * the ask is the view's own key, held here until Trust or Cancel drops it; Trust records the review with AIKit (`aikit trust record`)
+ * on the chosen capability; Run and Prove stand refused, each naming what the member does not carry. */
+export function memberBinding(id: string, rack: Values, chosen: string | null, held: ChainHolds, ports: MemberPorts = {}): DesignBinding {
+  const refused: Record<string, string> = {...REFUSED_WRITES[MEMBER_DESIGN]!}
+  if (ports.trust) delete refused.reviewed
   return {
     id,
     values: memberValues(rack, chosen, held),
     local: {reviewAsk: value => updateHolds(was => ({...was, member: {...was.member, reviewAsk: value === true ? true : undefined}}))},
-    standing: disabled(REFUSED_WRITES[MEMBER_DESIGN]!),
+    standing: disabled(refused),
     writes: key => MEMBER_WRITES.has(key),
     write: async changes => {
       for (const {key, value} of changes) {
@@ -675,7 +687,10 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
             break
           case 'reviewed':
             updateHolds(was => ({...was, member: {...was.member, reviewAsk: undefined}}))
-            throw Error(REFUSE.trust)
+            if (!ports.trust) throw Error(REFUSE.trust)
+            if (!chosen) throw Error('No member is chosen in the rack.')
+            await ports.trust(chosen)
+            break
           case 'run':
             if (value === 'asked') { updateHolds(was => ({...was, member: {...was.member, run: 'asked'}})); break }
             updateHolds(was => ({...was, member: {...was.member, run: undefined}}))

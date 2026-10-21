@@ -59,6 +59,9 @@ export interface FrameTimelineReading {
   /** The chronology's camera (TimelineViewState centerYear, pixelsPerYear). */
   centre?: number; zoom?: number
   views: {id: string; label: string}[]
+  /** The mounted chronology's relation links and hidden card categories (its lens's presentation, TimelinePresentationSnapshot
+   * relationLinks and hiddenCategories); absent while the chronology is not mounted. */
+  links?: boolean; hiddenCategories?: string[]
 }
 export interface FrameResearchReading {journey?: FrameJourneyReading; canvas?: FrameCanvasReading; timeline?: FrameTimelineReading}
 
@@ -133,7 +136,7 @@ export const yearOf = (value: unknown): number | undefined => {
 /** The ruler as the Timeline draws it: the reading's dated nodes and its relationships between them, the projection and the camera. */
 export function timelineReadingOf(bundle: {nodes: readonly {graphNodeId: string; title?: string; isTemporal?: boolean; validFrom?: unknown; validTo?: unknown; entityType?: unknown; historicity?: unknown}[];
   relationships: readonly {id: string; sourceGraphNodeId: string; targetGraphNodeId: string; relType: string; properties?: Readonly<Record<string, unknown>>}[]},
-view: {projection?: string; camera?: {centerYear: number; pixelsPerYear: number}; views: readonly string[]}): FrameTimelineReading {
+view: {projection?: string; camera?: {centerYear: number; pixelsPerYear: number}; views: readonly string[]; links?: boolean; hidden?: readonly string[]}): FrameTimelineReading {
   const events = bundle.nodes.filter(node => node.isTemporal).slice(0, RESEARCH_LIMITS.events).flatMap((node): FrameTimelineEvent[] => {
     const from = yearOf(node.validFrom)
     if (from === undefined) return []
@@ -149,7 +152,9 @@ view: {projection?: string; camera?: {centerYear: number; pixelsPerYear: number}
   const projection = (TIMELINE_PROJECTIONS as readonly string[]).includes(view.projection ?? '') ? view.projection as FrameTimelineReading['projection'] : 'chronology'
   return {projection, events, edges, ...(years.length ? {domain: {from: Math.min(...years), to: Math.max(...years)}} : {}),
     ...(view.camera && finite(view.camera.centerYear) && finite(view.camera.pixelsPerYear) ? {centre: view.camera.centerYear, zoom: view.camera.pixelsPerYear} : {}),
-    views: view.views.slice(0, RESEARCH_LIMITS.views).map(name => ({id: clip(name, 128), label: clip(name, 128)}))}
+    views: view.views.slice(0, RESEARCH_LIMITS.views).map(name => ({id: clip(name, 128), label: clip(name, 128)})),
+    ...(typeof view.links === 'boolean' ? {links: view.links} : {}),
+    ...(Array.isArray(view.hidden) ? {hiddenCategories: view.hidden.filter(id => typeof id === 'string').slice(0, RESEARCH_LIMITS.views).map(id => clip(id, 64))} : {})}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the reader
@@ -211,7 +216,7 @@ function readCanvas(raw: unknown): FrameCanvasReading | null {
     drawing: raw.drawing as boolean, erasing: raw.erasing as boolean, lasso: raw.lasso as boolean, snap: raw.snap as boolean}
 }
 function readTimeline(raw: unknown): FrameTimelineReading | null {
-  if (!plain(raw) || !closed(raw, ['projection', 'events', 'edges', 'domain', 'centre', 'zoom', 'views'])) return null
+  if (!plain(raw) || !closed(raw, ['projection', 'events', 'edges', 'domain', 'centre', 'zoom', 'views', 'links', 'hiddenCategories'])) return null
   if (!oneOf(TIMELINE_PROJECTIONS, raw.projection) || !list(raw.events, RESEARCH_LIMITS.events) || !list(raw.edges, RESEARCH_LIMITS.edges) || !list(raw.views, RESEARCH_LIMITS.views)) return null
   const events: FrameTimelineEvent[] = []
   for (const event of raw.events) {
@@ -226,8 +231,11 @@ function readTimeline(raw: unknown): FrameTimelineReading | null {
   for (const view of raw.views) if (!plain(view) || !closed(view, ['id', 'label']) || !text(view.id, 128) || !text(view.label, 128)) return null
   if (raw.domain !== undefined && (!plain(raw.domain) || !closed(raw.domain, ['from', 'to']) || !finite(raw.domain.from) || !finite(raw.domain.to))) return null
   if (raw.centre !== undefined && !finite(raw.centre) || raw.zoom !== undefined && (!finite(raw.zoom) || raw.zoom <= 0)) return null
+  if (raw.links !== undefined && typeof raw.links !== 'boolean') return null
+  if (raw.hiddenCategories !== undefined && (!list(raw.hiddenCategories, RESEARCH_LIMITS.views) || !raw.hiddenCategories.every(id => text(id, 64)))) return null
   return {projection: raw.projection, events, edges: raw.edges as FrameTimelineReading['edges'], ...(raw.domain !== undefined ? {domain: raw.domain as {from: number; to: number}} : {}),
-    ...(raw.centre !== undefined ? {centre: raw.centre as number} : {}), ...(raw.zoom !== undefined ? {zoom: raw.zoom as number} : {}), views: raw.views as FrameTimelineReading['views']}
+    ...(raw.centre !== undefined ? {centre: raw.centre as number} : {}), ...(raw.zoom !== undefined ? {zoom: raw.zoom as number} : {}), views: raw.views as FrameTimelineReading['views'],
+    ...(raw.links !== undefined ? {links: raw.links as boolean} : {}), ...(raw.hiddenCategories !== undefined ? {hiddenCategories: raw.hiddenCategories as string[]} : {})}
 }
 
 /** The research state as the frame announced it, exact or refused (null): every key is closed, every string and list bounded. */

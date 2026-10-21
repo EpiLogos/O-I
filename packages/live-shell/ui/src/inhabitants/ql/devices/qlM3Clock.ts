@@ -6,10 +6,14 @@
 // frame's channel has it (expressions-boundary cradle.ts createCradleOwners, attached by panels/expressions.tsx).
 // Owners write, faces read (lock §0.4):
 //   clock.degree720, clock.tick12, clock.backbone, aperture.index, form.address, form.codon   the state's own readings;
-//   a new degree is the owner's `advance-clock{steps}` forward by the difference on the double cover, a new cut its `set-aperture`.
-// Turn, Open, Readout and Reciprocal are the view's own (DesignBinding.local). The generation law (law.matrix, law.seed, law.poseMap)
-// and the generation cell it gives (generation.*) stand absent with their reason: the reading carries the form's hexagram and its
-// matrix axis, not the cell, the seed or the pose map. With no identity chosen, no Expression open, or no form
+//   law.matrix, law.seed, law.poseMap      the generation law (ql.m3-state/v1 `law`, QL-MEF ec79681: law.matrix.family,
+//                                          law.seed.in_force.law, law.pose_map.in_force; QL's names, crates/ql-mef/src/m3_state/form_cell.rs);
+//   generation.lower, upper, positive, negative, nonDual   the cell of the form's hexagram under that matrix (`generation.cell`:
+//                                          lower_pair / upper_pair / positive / negative `.sequence`, `non_dual`);
+//   a new degree is the owner's `advance-clock{steps}` forward by the difference on the double cover, a new cut its `set-aperture`, a new
+//   matrix its `set-matrix{family}` (QL's SetMatrix, carried by m3_reception: the matrix is chosen without turning the form).
+// Turn, Open, Readout and Reciprocal are the view's own (DesignBinding.local). The seed and the pose map are readings: QL's state names
+// the law in force and offers no operation that sets them. With no identity chosen, no Expression open, or no form
 // opened for them (status 'absent': the Nara instrument's M3 page opens it), every value stands absent and the well says which.
 // Pure apart from the one kernel call, which takes the call it is given, and the small store the views share.
 import {useEffect, useSyncExternalStore} from 'react'
@@ -154,17 +158,22 @@ export const QL_M3_READINGS: Readonly<Record<string, string>> = {
   'clock.backbone': 'A reading: the governor follows the clock.',
   'form.address': 'A reading here: the form is chosen in the Nara instrument\'s M3 page (select-form).',
   'form.codon': 'A reading: the codon is the form\'s transcription.',
+  'law.seed': 'A reading: the seed in force is the state\'s; QL offers no operation that sets it (ql.m3-state/v1 law.seed).',
+  'law.poseMap': 'A reading: the pose map in force is the state\'s; QL offers no operation that sets it (ql.m3-state/v1 law.pose_map).',
+  'generation.lower': 'A reading: the cell of the form\'s hexagram under the matrix (ql.m3-state/v1 generation.cell).',
+  'generation.upper': 'A reading: the cell of the form\'s hexagram under the matrix (ql.m3-state/v1 generation.cell).',
+  'generation.positive': 'A reading: the cell of the form\'s hexagram under the matrix (ql.m3-state/v1 generation.cell).',
+  'generation.negative': 'A reading: the cell of the form\'s hexagram under the matrix (ql.m3-state/v1 generation.cell).',
+  'generation.nonDual': 'A reading: the cell of the form\'s hexagram under the matrix (ql.m3-state/v1 generation.cell).',
 }
-const NO_LAW = 'The M3 reading carries no generation law: it names the form\'s hexagram and its matrix axis, not the matrix that makes the hexagram a cell, the seed or the pose map (ql.m3-state/v1).'
 /** The Rack page (manual §16.16, §22.9): the rack of M3′, its parts and which stand verified. */
 const NO_RACK = 'No rack reading: no owner reports the parts of M3′\'s rack or which of them stand verified — missing op: a rack reading and the rule naming a verified part (Quaternal Logic, T-COVERAGE §1.5).'
-const NO_CELL = 'The M3 reading carries no generation cell: the kernel generates one (ql_m3_generate) and the reception does not ask it.'
 /** Why each key of the generation law has no reading here (manual §16.12: "say which one"). */
 export const QL_M3_ABSENT: Readonly<Record<string, string>> = {
-  'law.matrix': NO_LAW, 'law.seed': NO_LAW, 'law.poseMap': NO_LAW,
-  'generation.lower': NO_CELL, 'generation.upper': NO_CELL, 'generation.positive': NO_CELL, 'generation.negative': NO_CELL, 'generation.nonDual': NO_CELL,
   rack: NO_RACK, 'rack.part': `${NO_RACK} So no part of it is chosen.`,
 }
+/** The matrices in QL's own order: the family index set-matrix takes (crates/ql-mef/src/m3_state/form_cell.rs; ql.m3-state/v1 law.matrix.index). */
+export const QL_M3_MATRICES = ['complementary', 'moving-resting', 'same-quality'] as const
 /** The keys the view holds: how the clock is drawn, not what it is. */
 export const QL_M3_LOCAL = ['turn', 'open', 'readout', 'reciprocal'] as const
 
@@ -183,6 +192,15 @@ export function qlM3Values(m3: QlM3State): Record<string, Value> {
   if (int(form.aperture?.index)) values['aperture.index'] = form.aperture.index
   if (int(form.form?.address)) values['form.address'] = form.form.address
   if (typeof form.transcription?.sequence === 'string') values['form.codon'] = form.transcription.sequence
+  const law = (form as Record<string, any>).law, cell = (form as Record<string, any>).generation?.cell
+  if (typeof law?.matrix?.family === 'string') values['law.matrix'] = law.matrix.family
+  if (typeof law?.seed?.in_force?.law === 'string') values['law.seed'] = law.seed.in_force.law
+  if (typeof law?.pose_map?.in_force === 'string') values['law.poseMap'] = law.pose_map.in_force
+  if (typeof cell?.lower_pair?.sequence === 'string') values['generation.lower'] = cell.lower_pair.sequence
+  if (typeof cell?.upper_pair?.sequence === 'string') values['generation.upper'] = cell.upper_pair.sequence
+  if (typeof cell?.positive?.sequence === 'string') values['generation.positive'] = cell.positive.sequence
+  if (typeof cell?.negative?.sequence === 'string') values['generation.negative'] = cell.negative.sequence
+  if (typeof cell?.non_dual === 'boolean') values['generation.nonDual'] = cell.non_dual
   return values
 }
 
@@ -200,6 +218,10 @@ export function qlM3Operations(m3: QlM3State, changes: readonly ValueChange[]): 
       const total = form.aperture.total_lenses
       if (!int(value) || value < 0 || (int(total) && value >= total)) throw new Error(`The cut is one of the owner's ${int(total) ? total : 16} apertures.`)
       if (value !== form.aperture.index) operations.push({operation: 'set-aperture', aperture: value})
+    } else if (key === 'law.matrix') {
+      const family = QL_M3_MATRICES.indexOf(value as typeof QL_M3_MATRICES[number])
+      if (family < 0) throw new Error(`${String(value)}: the matrix is complementary, moving and resting, or same quality.`)
+      operations.push({operation: 'set-matrix', family})
     } else throw new Error(QL_M3_READINGS[key] ?? `${key}: no operation of the M3 form.`)
   }
   return operations
@@ -211,13 +233,13 @@ export function qlM3Binding(m3: QlM3State): DesignBinding {
   const live = m3.reading?.status === 'available' && !!m3.reading.state
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries({...QL_M3_READINGS, ...QL_M3_ABSENT})) standing[key] = {disabled: why}
-  if (!live) for (const key of ['clock.degree720', 'aperture.index']) standing[key] = {disabled: m3.reason ?? NO_FORM}
+  if (!live) for (const key of ['clock.degree720', 'aperture.index', 'law.matrix']) standing[key] = {disabled: m3.reason ?? NO_FORM}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_M3_LOCAL) local[key] = value => setQlM3View({[key]: value})
   return {
     id: QL_M3_DEVICE_ID,
     values: qlM3Values(m3),
-    writes: key => live && (key === 'clock.degree720' || key === 'aperture.index'),
+    writes: key => live && (key === 'clock.degree720' || key === 'aperture.index' || key === 'law.matrix'),
     standing,
     local,
     // The first read of the form is in flight: every value waits, and none is drawn as zero.

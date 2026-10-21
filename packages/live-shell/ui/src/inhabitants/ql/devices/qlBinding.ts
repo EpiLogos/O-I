@@ -2,13 +2,17 @@
 // `quaternal-logic:binding`). Binding is M3′'s view of form as charge, and it runs its own physics over the kernel's symbols: it takes
 // from the kernel only the codons, their charges, their pairing and their counts (§22.8 Rules). Owners write, faces read (lock §0.4):
 //   cell.hexagram     the form's hexagram: the person's M3 form through the kernel's m3_reception (qlM3Clock.ts; ql.m3-state/v1
-//                     form.hexagram is the form's address read as a hexagram, crates/ql-mef/src/m3_state.rs `form`);
+//                     `generation.hexagram_id`, else the form's address read as a hexagram, crates/ql-mef/src/m3_state.rs `form`);
+//   cell.lower, cell.upper, cell.positive, cell.negative, cell.nonDual, charges.positive, charges.negative   the generation cell of that
+//                     hexagram under the pairing's matrix: one of the three cells the state carries (`generation.cells`, QL-MEF ec79681:
+//                     lower_pair / upper_pair / positive / negative `.sequence`, `non_dual`, each codon's `charges_pp_mm_mp_pm`);
 //   binding.on, pairing.matrix, charge.register, nonets.show, string.tension, coupling.scale   the device's own settings, held by the
 //                     view (DesignBinding.local): its own physics and its own choice of the matrix whose cell it draws (§22.8 "It
-//                     belongs to Binding's own physics");
+//                     belongs to Binding's own physics"); until the pairing is held it is the matrix the form's law is read under
+//                     (`law.matrix.family`), and choosing another reads that matrix's cell — Binding writes nothing to the form;
 // and named absent, each with the operation that would carry it:
-//   the generation cell (cell.lower, upper, positive, negative, nonDual) — the kernel's ql_m3_generate has no kernel op: m3_reception
-//   reads the form's hexagram, not the cell a matrix gives at it; the cell's codons' coin values and charges follow the cell (ql_m3_codon);
+//   the sites' coin values of the cell's codons (values.positive, values.negative) — the cell names each codon's charges, not its
+//   sites' coin values;
 //   the nonet (m2.index, nonet) — the 9:8 compression (ql_m3_epogdoon) has no kernel op; the event behind the last motion (event.kind,
 //   event.what) — the kernel publishes no inscription, matrix or line event to the shell; Binding's engine readings (coupling.alpha,
 //   string.stretch, string.energy) — the device's string engine over the cell is not built; Skin — neither the Torus nor the M3 clock
@@ -29,10 +33,8 @@ export const QL_BINDING_DEVICE_ID = techneDeviceId(QL_BINDING_FAMILY, QL_BINDING
 /** The device's own settings: Binding's physics and its choices, held by the view, never sent to an owner. */
 export const QL_BINDING_LOCAL = ['binding.on', 'pairing.matrix', 'charge.register', 'nonets.show', 'string.tension', 'coupling.scale'] as const
 
-const NO_CELL = missing('The generation cell', 'the kernel op ql_m3_generate (the matrix\'s generation cell at the form\'s hexagram) — m3_reception reads the '
-  + 'form\'s hexagram, not the cell a matrix gives at it', 'Quaternal Logic, through the kernel')
-const NO_CODONS = missing('The cell\'s coin values and charges', 'the cell\'s two codons read through ql_m3_codon — they follow the cell, which ql_m3_generate gives',
-  'Quaternal Logic, through the kernel')
+const NO_COINS = missing('The coin values of the cell\'s codons', 'the sites\' coin values of each codon of the generation cell (ql.m3-state/v1 generation '
+  + 'names each codon\'s sequence and charges, not its sites\' coin values)', 'Quaternal Logic, through m3_reception')
 const NO_NONET = missing('The nonet', 'the kernel op ql_m3_epogdoon (nine M2 positions resolving into eight M3 positions)', 'Quaternal Logic, through the kernel')
 const NO_EVENT = missing('The event behind the last motion', 'the kernel\'s events — an inscription, a matrix change, a line change — published to the shell',
   'the kernel')
@@ -43,8 +45,7 @@ const NO_STRETCH_Q = missing('Stretch → Q', 'a route from Binding\'s stretch t
 
 /** Why each key Binding draws and no owner reports here is absent, or why its control is off (manual §16.12: "say which one"). */
 export const QL_BINDING_ABSENT: Readonly<Record<string, string>> = {
-  'cell.lower': NO_CELL, 'cell.upper': NO_CELL, 'cell.positive': NO_CELL, 'cell.negative': NO_CELL, 'cell.nonDual': NO_CELL,
-  'values.positive': NO_CODONS, 'values.negative': NO_CODONS, 'charges.positive': NO_CODONS, 'charges.negative': NO_CODONS,
+  'values.positive': NO_COINS, 'values.negative': NO_COINS,
   'm2.index': NO_NONET, nonet: NO_NONET, 'event.kind': NO_EVENT, 'event.what': NO_EVENT,
   'coupling.alpha': NO_ENGINE, 'string.stretch': NO_ENGINE, 'string.energy': NO_ENGINE,
   skin: NO_SKIN, 'sound.stretchQ': NO_STRETCH_Q,
@@ -58,15 +59,41 @@ export interface QlBindingState {
 }
 
 const int = (x: unknown): x is number => Number.isSafeInteger(x)
+const record = (x: unknown): Record<string, any> | undefined => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, any> : undefined)
+const charges = (x: unknown) => (Array.isArray(x) && x.length === 4 && x.every(n => Number.isSafeInteger(n)) ? JSON.stringify(x) : undefined)
 
-/** The design's values: the form's hexagram from the reception, the device's own settings as held. Only what the owners report. */
+/** The generation cell Binding draws: the state's cell of the form's hexagram under the pairing's matrix, else under the law's. */
+export function bindingCell(state: QlBindingState): {matrix: string | undefined; cell: Record<string, any> | undefined; hexagram: number | undefined} {
+  const form = state.m3.reading?.status === 'available' ? record(state.m3.reading.state) : undefined
+  const generation = record(form?.generation), law = record(form?.law)
+  const inForce = typeof law?.matrix?.family === 'string' ? law.matrix.family as string : undefined
+  const held = state.held['pairing.matrix'], matrix = typeof held === 'string' ? held : inForce
+  const cells = Array.isArray(generation?.cells) ? generation!.cells.map(record).filter(Boolean) as Record<string, any>[] : []
+  const cell = cells.find(item => item.matrix?.family === matrix) ?? (matrix === inForce ? record(generation?.cell) : undefined)
+  const hexagram = int(generation?.hexagram_id) ? generation!.hexagram_id as number : int(form?.form?.address) ? form!.form.address as number : undefined
+  return {matrix, cell, hexagram}
+}
+
+/** The design's values: the form's hexagram and its generation cell from the reception, the device's own settings as held. */
 export function qlBindingValues(state: QlBindingState): Record<string, Value> {
   const values: Record<string, Value> = {}
   for (const key of QL_BINDING_LOCAL) if (state.held[key] !== undefined) values[key] = state.held[key]!
-  const form = state.m3.reading?.status === 'available' ? state.m3.reading.state : null
-  if (form && int(form.form?.address)) values['cell.hexagram'] = form.form.address
+  const {matrix, cell, hexagram} = bindingCell(state)
+  if (hexagram !== undefined) values['cell.hexagram'] = hexagram
+  if (matrix !== undefined && values['pairing.matrix'] === undefined) values['pairing.matrix'] = matrix
+  if (typeof cell?.lower_pair?.sequence === 'string') values['cell.lower'] = cell.lower_pair.sequence
+  if (typeof cell?.upper_pair?.sequence === 'string') values['cell.upper'] = cell.upper_pair.sequence
+  if (typeof cell?.positive?.sequence === 'string') values['cell.positive'] = cell.positive.sequence
+  if (typeof cell?.negative?.sequence === 'string') values['cell.negative'] = cell.negative.sequence
+  if (typeof cell?.non_dual === 'boolean') values['cell.nonDual'] = cell.non_dual
+  const plus = charges(cell?.positive?.charges_pp_mm_mp_pm), minus = charges(cell?.negative?.charges_pp_mm_mp_pm)
+  if (plus) values['charges.positive'] = plus
+  if (minus) values['charges.negative'] = minus
   return values
 }
+/** Why the cell's keys are not drawn when the state carries no cell for the pairing. */
+const NO_GENERATION = 'The form\'s state carries no generation cell for this matrix (ql.m3-state/v1 generation): a reading, when it does.'
+const CELL_KEYS = ['cell.lower', 'cell.upper', 'cell.positive', 'cell.negative', 'cell.nonDual', 'charges.positive', 'charges.negative'] as const
 
 /** The binding the runtime hosts Binding's design on: the reception's reading, the view's own hands for the device's settings, and every
  * key no owner carries named with the operation it waits on. Nothing writes to an owner: Binding takes only the kernel's symbols. */
@@ -74,14 +101,18 @@ export function qlBindingBinding(state: QlBindingState): DesignBinding {
   const standing: Record<string, Standing> = {...disabled(QL_BINDING_ABSENT)}
   const live = state.m3.reading?.status === 'available' && !!state.m3.reading.state
   standing['cell.hexagram'] = {disabled: live ? 'A reading: the form\'s hexagram, chosen in the Nara instrument\'s M3 page (select-form).' : state.m3.reason ?? NO_FORM}
+  const values = qlBindingValues(state)
+  for (const key of CELL_KEYS) {
+    standing[key] = {disabled: key in values ? 'A reading: the generation cell of the form\'s hexagram under the pairing\'s matrix.' : live ? NO_GENERATION : state.m3.reason ?? NO_FORM}
+  }
   return {
     id: QL_BINDING_DEVICE_ID,
-    values: qlBindingValues(state),
+    values,
     standing,
     local: handsFor(QL_BINDING_DEVICE_ID, QL_BINDING_LOCAL),
     enabledKey: 'binding.on',
     // The first read of the form is in flight: the hexagram waits, and is not drawn as none.
-    ...(state.m3.busy && !live ? {waiting: ['cell.hexagram']} : {}),
+    ...(state.m3.busy && !live ? {waiting: ['cell.hexagram', ...CELL_KEYS]} : {}),
   }
 }
 

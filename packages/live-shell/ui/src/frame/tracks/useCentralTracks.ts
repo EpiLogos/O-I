@@ -10,7 +10,7 @@
 // The acts: Launch and Stop are the page owner's (pageOwner.ts launchPage, stopPage); a world dropped on the empty track is written
 // into the Day's set (writeDaySet); every world's Arm is the shell's one write arm. After an act the readings it moved are read
 // again. Registered as `base: worldCut(useCentralTracks)` in modeTracks.ts.
-import {useCallback, useMemo, useRef, useSyncExternalStore} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useSyncExternalStore} from 'react'
 import {useAgentShellOptional} from '../../agent/AgentShellContext'
 import {shellWriteArm} from './useFactoryTracks'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
@@ -32,6 +32,10 @@ import {useOwnerReadingsOf} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
 import {useSeatStatusAnswer} from '../../agent/devices/workcellReads'
 import {withWorksIn} from './returnTracks'
+import {nameTrackHeadDevices, type TrackHeadDevice} from './trackHeads'
+import {openInstrument} from '../instrumentDoor'
+import {DEVICE_PANE_KIND} from '../devices/devicePane'
+import {centralDeviceId} from '../../central/devices/centralDeviceModel'
 import {centralWorldTrackId} from '../../timeline/centralTrackAdapter'
 import {useCentralGroundAnswer, usePageHistories} from '../../central/devices/useCentralReadings'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
@@ -74,6 +78,9 @@ export function setReadingOf(ground: CentralGroundReading | null, error: string 
 import {playingOf} from '../../timeline/centralTrackAdapter'
 export {playingOf}
 
+/** The track's Workspace device on the door (central/devices/CentralDevices.tsx publishes it; pageBindings.ts WORKSPACE_DEVICE_ID). */
+const WORKSPACE_DEVICE = centralDeviceId('workspace')
+
 export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   const shell = useAgentShellOptional()
   const armOn = shell ? shell.writeArm : null
@@ -93,6 +100,17 @@ export function useCentralTracks(reading: TracksReading): WorldTrackSet {
     const held = set.state === 'read' ? set.set.tracks.map(track => track.world) : []
     return worlds.worlds.filter(world => world.kind === 'yours' || held.includes(world.ref))
   }, [worlds, set])
+  // Each world's head opens the track's Workspace device full in a pane (§18.1: "The settings stand on the Track page of the track's
+  // Workspace device"; its Ground and Self pages are the world's own). The press selects the track first, so the device reads that world.
+  useEffect(() => {
+    const devices = new Map<string, TrackHeadDevice>(inSet.map(world => [centralWorldTrackId(world.ref), {
+      title: 'Workspace',
+      does: `Open ${world.name}'s Workspace full in a pane: its Track page (the settings on this head), its Ground and its Self`,
+      open: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: WORKSPACE_DEVICE, title: `${world.name} · Workspace`}),
+    }]))
+    nameTrackHeadDevices('central', devices)
+    return () => nameTrackHeadDevices('central', null)
+  }, [inSet])
   const folders = useMemo(() => usable ? inSet.map(world => world.folder) : [], [usable, inSet])
   const pageAnswers = useOwnerReadingsOf(folders, folder => JSON.stringify(['world-pages', usable, folder]),
     folder => async () => ({value: await readWorldPages(usable ?? undefined, {folder})}), epoch)

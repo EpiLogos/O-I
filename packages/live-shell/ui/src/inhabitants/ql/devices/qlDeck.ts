@@ -332,7 +332,7 @@ export function deckActOf(change: ValueChange, deck: QlDeckState = qlDeckState()
   }
 }
 
-const NO_CELL = 'The journey\'s reading carries the hexagram\'s lines, not its generation cell: the kernel generates one under a matrix (ql_m3_generate), and the journey does not ask it.'
+const NO_CELL = 'The cast hexagram is not the form\'s, so its generation cell is not the one the M3 state carries: it is QL\'s `ql kernel m3` generation_at, read through m3_reception\'s read — missing op: that read asked by the shell for the cast hexagram (the kernel\'s generation_at, being routed).'
 const ACT_KEYS = ['act.draw', 'act.cast', 'act.assign', 'act.link', 'act.comment', 'act.close']
 /** Why each key the binding does not take has no owner write (manual §16.12). */
 const STANDING_WHY: Readonly<Record<string, string>> = {theme: CONCERN_SET, journey: 'The Deck reads the journey whose page is open.', placements: 'A reading: cards come by the journey\'s acts.',

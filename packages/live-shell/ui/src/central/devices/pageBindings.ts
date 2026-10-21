@@ -50,6 +50,8 @@ export const NOTES_DESIGN = 'central:notes'
 export const BEINGS_DESIGN = 'central:beings'
 export const THINGS_DESIGN = 'central:things'
 export const WORKSPACE_DESIGN = 'central:workspace'
+/** The Workspace on the door: the track's Workspace device a world's head opens (§18.1; frame/tracks/useCentralTracks.ts). */
+export const WORKSPACE_DEVICE_ID = WORKSPACE_DESIGN
 
 const ON_THE_PAGE = 'the hosted form is the page\'s one writer while it holds the page (DocumentFlowFace.tsx: the bridge reads its island and never pushes into it)'
 const NO_SELECTION = 'The page\'s selection (ql-flow.html currentSel) does not cross the host bridge: the bridge reads the island only (desktop/cradle/src/document/frame.ts useDocumentHostRead).'
@@ -290,7 +292,10 @@ export const WORKSPACE_WIRING: DesignWiring = {
     'mode', 'mem', 'fresh', 'dirty', 'widgets', 'visited', 'clip', 'folders', 'trees', 'sets', 'clips', 'launch', 'keepNow',
     'pc', 'pcPlan', 'self', 'treatment', 'pcSource', 'bindAs', 'selfSource', 'pcPreview', 'pcAccept', 'selfEnsure', 'selfRelate'],
   reads: {
-    light: 'the book holds this workspace open (it is the current one)', name: 'the workspace\'s name', folder: 'its project, or Central',
+    light: 'the book holds this workspace open (it is the current one)',
+    name: 'the world\'s name as Central discloses it (world browse), when a world\'s head opened the Workspace (§18.1 Name: "The world\'s name"); else the book\'s workspace\'s name',
+    folder: 'the world\'s project, or Central for your world (world browse), when a world\'s head opened it; else the book\'s workspace\'s project, or Central',
+    folders: 'the projects of Work that are worlds, as Central discloses them (world browse: central/centralWorlds.ts readWorlds)',
     mode: 'the open mode (layout.mode)', mem: 'the modes whose pane tree the book keeps (layout, modeLayouts)', fresh: 'the book keeps no tree and no set for it yet',
     widgets: 'the widgets open on the rail', visited: 'when the book last stood in it (lastVisitedAt)',
     trees: 'each mode\'s pane tree (splits with weights, tab groups with their tabs and pins)', sets: 'the newest named set of each mode',
@@ -325,7 +330,6 @@ export const WORKSPACE_WIRING: DesignWiring = {
     kind: BOOK_KEEPS, place: 'No owner places a workspace on the planet yet.', keepPanes: BOOK_KEEPS, keepInstruments: BOOK_KEEPS, keepWidgets: BOOK_KEEPS, keepSets: BOOK_KEEPS,
     rememberIn: BOOK_KEEPS, onLaunch: BOOK_KEEPS, openIn: BOOK_KEEPS, keepWhen: BOOK_KEEPS, sendToDay: 'No route sends a workspace\'s work to the Day yet.',
     dirty: 'No owner reports which of a workspace\'s documents hold edits the owner does not.',
-    folders: 'The projects of Work are the world\'s reading, which this device does not take.',
     clips: 'The book keeps no list of the project\'s files; the files are the owner\'s listing, which this device does not take.',
   },
 }
@@ -828,12 +832,20 @@ export function agoOf(at: number | undefined, now: number): string | undefined {
 }
 
 /** The Workspace's readings (WORKSPACE_WIRING) from the book's current workspace. */
-export function workspaceValues(id: string, workspace: BookWorkspace | null, now: number): Values {
+/** The world a world's head opened the Workspace on (§18.1 "the track's Workspace device"): its name and project as Central discloses them. */
+export interface TrackWorld {
+  readonly name: string
+  /** The project it is, or null for your world. */
+  readonly project: string | null
+}
+
+export function workspaceValues(id: string, workspace: BookWorkspace | null, now: number, world: TrackWorld | null = null, folders: readonly string[] | null = null): Values {
   const values: Record<string, Value> = {}
+  if (folders) values.folders = JSON.stringify(folders)
+  if (world) { values.name = world.name; values.folder = world.project ?? 'central' }
   if (!workspace) return withHeld(id, WORKSPACE_WIRING, values, {})
   values.light = 'lit'
-  values.name = workspace.name
-  values.folder = workspace.project ?? 'central'
+  if (!world) { values.name = workspace.name; values.folder = workspace.project ?? 'central' }
   const mode = workspace.layout.mode ?? 'base'
   values.mode = mode
   const trees: Record<string, unknown> = {}
@@ -864,7 +876,11 @@ export interface BookActs {
 }
 
 /** The Workspace's binding: the open mode turns, and the name changes, through the book's own acts. */
-export function workspaceBinding(id: string, workspace: BookWorkspace | null, now: number, book: BookActs | null, ground: WorkspaceGround | null = null): DesignBinding {
+/** A world's name is its register's: Central names it in its disclosure, and no owner operation renames a world from here. */
+export const WORLD_NAME_REFUSED = 'Name: a world\'s name is its register\'s, as Central discloses it (world browse); no owner operation renames a world from here — missing op: a world rename in Central.'
+
+export function workspaceBinding(id: string, workspace: BookWorkspace | null, now: number, book: BookActs | null, ground: WorkspaceGround | null = null,
+  world: TrackWorld | null = null, folders: readonly string[] | null = null): DesignBinding {
   const NO_BOOK = 'No workspace book is mounted here.'
   const acts: Record<string, (value: Value) => Promise<void>> = {
     mode: async value => {
@@ -873,6 +889,7 @@ export function workspaceBinding(id: string, workspace: BookWorkspace | null, no
       book.switchMode(value)
     },
     name: async value => {
+      if (world) throw new Error(WORLD_NAME_REFUSED)
       if (!book) throw new Error(NO_BOOK)
       if (typeof value !== 'string' || !value.trim()) throw new Error('A workspace keeps a name: write one.')
       book.rename(value.trim())
@@ -917,11 +934,12 @@ export function workspaceBinding(id: string, workspace: BookWorkspace | null, no
     await ground.relate(tier, asked.source)
   }
   const why: Record<string, string> = book ? {} : {mode: NO_BOOK, name: NO_BOOK}
+  if (world) why.name = WORLD_NAME_REFUSED
   if (!ground?.preview || !ground.project) why.pcPreview = WORKSPACE_WIRING.refused.pcPreview!
   if (!ground?.accept) why.pcAccept = noHand('Accept')
   if (!ground?.ensure) why.selfEnsure = noHand('Ensure')
   if (!ground?.relate) why.selfRelate = noHand('Relate')
   else if (held.bindAs === 'ux' || held.bindAs === 'ex') why.selfRelate = RELATE_UX_EX_REFUSED
   const wiring = {...WORKSPACE_WIRING, refused: Object.fromEntries(Object.entries(WORKSPACE_WIRING.refused).filter(([key]) => key !== 'pcPreview'))}
-  return pageBinding(id, wiring, {...workspaceValues(id, workspace, now), ...groundValues(ground)}, acts, why)
+  return pageBinding(id, wiring, {...workspaceValues(id, workspace, now, world, folders), ...groundValues(ground)}, acts, why)
 }

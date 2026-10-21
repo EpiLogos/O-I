@@ -23,7 +23,7 @@
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
-import {familyFaceDevice} from './mainTrackBindings'
+import {FRAME_RING, familyFaceDevice} from './mainTrackBindings'
 import {GIT_REFUSE, SEAT_UNREAD, seatReading} from './workcellBindings'
 
 type Obj = Record<string, unknown>
@@ -55,7 +55,7 @@ const NO_RUN = 'material_read takes the run\'s receipt (`workcell --receipt R ma
 export const WORKCELL_ABSENT = {
   working: unread('Working here', 'a reading of the track and the mode each agent here works on (the seat claims name their actors only — see Seats; `aikit gateway who` places Positions by machine, not by workcell or track)', 'AIKit'),
   instances: unread('The harness processes and their cost', '`workcell instances list|usage` through the kernel (T-COVERAGE §1.2)', 'Workcell'),
-  frames: unread('The gateway\'s latest frames', 'a frame-ring read through the kernel (T-COVERAGE §1.2: Hermes)', 'Actuation'),
+  frames: `The gateway's latest frames: ${FRAME_RING}`,
   run: unread('The run', `the selected track's running task — ${NO_RUN}`, 'Workcell'),
   world: unread('The run\'s world', NO_RUN, 'Workcell'),
   lease: unread('The world\'s lease', 'a lease reading (Workcell observes leases, MaterialLeaseProvider::observe_lease, but no command reports them)', 'Workcell'),

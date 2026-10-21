@@ -3,6 +3,9 @@ import type {InstrumentBasis} from '../../../src/nara/instrumentProtocol';
 import type {M3Gesture,M3Operation,NativeM3Reading} from '../../../src/nara/nativeM3';
 import type {NativeCurrentReading} from '../../../src/nara/nativeCurrent';
 import {naraInstrumentRequest} from './kernelExpressions';
+/** The form operations this page offers (its Form operation list below). Choosing the reading's matrix (set-matrix) is the M3 clock's in the
+ * shell (qlM3Clock.ts law.matrix), not this page's. */
+type PageOperation=Exclude<M3Operation['operation'],'set-matrix'>;
 
 /** Gestures go to the native transactional owner. Hiding this view never
  * advances a clock, resets a form or writes a personal reading. */
@@ -13,7 +16,7 @@ export function NaraM3({basis,selectionKey,current,disabled,onCurrent,onPresent,
 }){
  const [reading,setReading]=useState<NativeM3Reading|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const [opening,setOpening]=useState({address:'',pose:'',aperture:'',matrix_axis:'',clock_steps:'',rna:''});
- const [activity,setActivity]=useState(false),[action,setAction]=useState<M3Operation['operation']>('select-form'),[operand,setOperand]=useState('');
+ const [activity,setActivity]=useState(false),[action,setAction]=useState<PageOperation>('select-form'),[operand,setOperand]=useState('');
  const [angles,setAngles]=useState(['','','']),[velocities,setVelocities]=useState(['','','']);
  const epoch=useRef(0),pending=useRef(false),live=useRef(true);
  const event=current?.context?.event_ref??null,key=JSON.stringify([selectionKey,event]);
@@ -72,7 +75,7 @@ export function NaraM3({basis,selectionKey,current,disabled,onCurrent,onPresent,
    <p>This optional historical Sprite policy turns each successful command into an ordered native activity packet. It uses the current coordinate, resulting transcription and elapsed time; it does not infer an emotion or change the natal reading.</p><button onClick={open}>Open this native form</button></>}
    {state&&<><p>{state.transcription.sequence} · {state.transcription.rna?'RNA':'DNA'} · {state.tarot.rank} of {state.tarot.suit}</p>
     <dl><dt>Form address / pose</dt><dd>{state.form.address} / {state.form.pose} ({state.form.state_count} lawful poses)</dd><dt>Clock</dt><dd>{state.clock.steps} steps · {state.clock.degree360}° · sheet {Math.floor(state.clock.degree720/360)+1}</dd><dt>Aperture</dt><dd>{state.aperture.index} · {state.aperture.division_deg10/10}° · ground phase {state.aperture.fibonacci_phase60}/60</dd></dl>
-    <label className="nara-personal-input"><span>Form operation</span><select value={action} onChange={e=>{setAction(e.target.value as M3Operation['operation']);setOperand('');}}>{[['select-form','Select form'],['change-line','Change line'],['apply-matrix','Apply matrix'],['set-pose','Select lawful pose'],['set-aperture','Select static aperture'],['reciprocal-aperture','Reciprocal aperture'],['advance-clock','Advance clock'],['transcribe','Transcribe DNA / RNA'],['cast-creases','Receive crease telemetry']].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+    <label className="nara-personal-input"><span>Form operation</span><select value={action} onChange={e=>{setAction(e.target.value as PageOperation);setOperand('');}}>{[['select-form','Select form'],['change-line','Change line'],['apply-matrix','Apply matrix'],['set-pose','Select lawful pose'],['set-aperture','Select static aperture'],['reciprocal-aperture','Reciprocal aperture'],['advance-clock','Advance clock'],['transcribe','Transcribe DNA / RNA'],['cast-creases','Receive crease telemetry']].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
     {action==='transcribe'?<label className="nara-personal-input"><span>Transcription</span><select value={operand} onChange={e=>setOperand(e.target.value)}><option value="">Choose…</option><option value="dna">DNA</option><option value="rna">RNA</option></select></label>:action==='cast-creases'?<div>{[0,1,2].map(i=><div className="nara-input-pair" key={i}><label>Site {i+1} angle · 0.1°<input type="number" value={angles[i]} onChange={e=>setAngles(angles.map((v,j)=>i===j?e.target.value:v))}/></label><label>Site {i+1} velocity · 0.1°/tick<input type="number" value={velocities[i]} onChange={e=>setVelocities(velocities.map((v,j)=>i===j?e.target.value:v))}/></label></div>)}</div>:action!=='reciprocal-aperture'&&<label className="nara-personal-input"><span>{action==='select-form'?'Form address · 0–63':action==='change-line'?'Line index · 0–5':action==='apply-matrix'?'Matrix family · 0 i, 1 j, 2 k':action==='set-pose'?`Pose · 0–${state.form.state_count-1}`:action==='set-aperture'?'Static aperture · 0–15':'Clock steps to advance'}</span><input type="number" min="0" step="1" value={operand} onChange={e=>setOperand(e.target.value)}/></label>}
     <button onClick={apply}>Apply native operation</button>
     {!reading?.activity_policy&&<details><summary>Include subsequent operations in activity</summary><p>The historical Sprite policy receives only successful operations after you enable it. Previous form changes remain in their original receipts and are not added retroactively.</p><button onClick={()=>{if(reading?.revision)void run({operation:'select_activity_policy',expected_generation:state.identity.profile_generation,expected_revision:reading.revision,activity_policy:'historical-personal-frame-sprite-v1'});}}>Enable activity for subsequent operations</button></details>}

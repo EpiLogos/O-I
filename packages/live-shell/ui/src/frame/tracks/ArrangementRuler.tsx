@@ -26,7 +26,8 @@
 // Re-enable for a value held by hand; Factory's event lanes, an event clicked opening beside the ruler (trackLanes.ts).
 import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import {answerOf, MixerRow, STATUS_WORD, stalledLanes, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
+import {answerOf, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
+import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
 import {automationPoints, compRange, DEFAULT_LANES, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
 import {clipAccessibleName, clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
@@ -365,14 +366,17 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
         {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
         {track.name}{track.lane ? <small>{SIDE_WORD[track.lane]}</small> : null}{track.main ? <small>Main</small> : null}</>
       const selectTrack = () => selection.select({kind: 'track', ref: track.id, title: track.name})
+      // The track's own device, opened from its head (trackHeads.ts; §18.1: the world's Workspace).
+      const device = trackHeadDevice(track.id)
       const under = lanesUnder(set, track.id, lanesView.shown)
       const comps = (set.lanes?.comp ?? []).filter(stretch => stretch.trackId === track.id)
       const takeName = (takeId: string) => set.lanes?.takes?.find(take => take.id === takeId)?.name ?? takeId
       return [<div key={track.id} className={`tl-lane${track.lane ? ` lane-${track.lane}` : ''}`} style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-track={track.id} data-main={track.main ? 'true' : undefined} data-return={track.returns ? 'true' : undefined}>
-        {cells.length
+        {cells.length || device
           ? <div className={`tl-head tl-track-head${selection.ref === track.id ? ' sel' : ''}`}>
             <button type="button" className="tl-name" title={`${track.name} · ${track.kind}`} onClick={selectTrack}>{headName}</button>
-            <MixerRow cells={cells} shown routes={false} trackId={track.id} receipt={receipt} onPress={onPress} />
+            <TrackDeviceButton device={device} track={track} selection={selection} />
+            {cells.length > 0 && <MixerRow cells={cells} shown routes={false} trackId={track.id} receipt={receipt} onPress={onPress} />}
           </div>
           : <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} onClick={selectTrack}>{headName}</button>}
         <div className="tl-body">
@@ -448,12 +452,29 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       </p>}
       {left > 0 && <p className="tl-note" role="status">{left} {left === 1 ? 'clip has' : 'clips have'} no place on this ruler: its owner gives none. The Session grid holds {left === 1 ? 'it' : 'them'}.</p>}
     </div>}
+    <RulerLegend set={set} stalled={stalled} now={now} />
   </div>
+}
+
+/** The states a clip lies in on the ruler, in the order the legend names them (dlw:arrangement-ruler's foot). */
+const RULER_LEGEND = ['running', 'waiting', 'stopped', 'stalled'] as const
+/** The ruler's legend (catalogue dlw__arrangement-ruler.tsx's foot): how each state lies on the ruler, and the lanes that have stalled, each
+ * with how long since its needle stopped. */
+function RulerLegend({set, stalled, now}: {set: WorldTrackSet; stalled: ReadonlySet<string>; now: number | undefined}) {
+  const duration = set.ruler?.duration ?? plainDuration(set.ruler?.unit ?? '')
+  const says = set.tracks.filter(track => track.needle !== undefined && stalled.has(track.id))
+    .map(track => `${track.name} · stalled${now !== undefined ? ` ${duration(Math.max(0, now - track.needle!))}` : ''}`).join(' · ')
+  return <footer className="sg-legend tl-legend" aria-label="Legend">
+    {RULER_LEGEND.map(state => <span key={state} className="sg-key"><i data-status={state} />{STATUS_WORD[state]}</span>)}
+    <span className="sg-says">{says || 'No lane has stalled'}</span>
+  </footer>
 }
 
 /** The Arrangement: the view, with the state a ruler keeps — the window, the snap and the insert marker (the pane's
  * presentation, never the book's and never an owner's), and the owner's last answer to a rail's stop. */
 export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; selection: TracksSelection; empty?: string}) {
+  // A mode naming its tracks' own devices again draws their head buttons (trackHeads.ts).
+  useTrackHeadDevices()
   const [shown, setShown] = useState<TimeRange | null>(null)
   const [snap, setSnap] = useState<SnapMode>('grid')
   const [marker, setMarker] = useState<number | null>(null)

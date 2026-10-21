@@ -60,6 +60,8 @@ const field = await import(src('components/devices/fieldInstrument.ts'))
 const {claimDevice} = await import(src('components/devices/devicePublication.ts'))
 const qlB = await import(src('inhabitants/ql/devices/qlBinding.ts'))
 const qlMx = await import(src('inhabitants/ql/devices/qlMatrices.ts'))
+const m1 = await import(src('inhabitants/ql/devices/qlM1.ts'))
+const m3c = await import(src('inhabitants/ql/devices/qlM3Clock.ts'))
 const chain = await import(src('inhabitants/ql/devices/TechneDevices.tsx'))
 const holds = await import(src('techne/devices/designDevices.ts'))
 const {parseQlMusicModes} = await import(src('live/modes.ts'))
@@ -74,6 +76,7 @@ const DESIGNS = {
   studio: (await import(src('inhabitants/catalogue/panels/expressions__studio.tsx'))).design,
   binding: (await import(src('inhabitants/catalogue/panels/quaternal-logic__binding.tsx'))).design,
   matrices: (await import(src('inhabitants/catalogue/panels/quaternal-logic__m-prime-matrices.tsx'))).design,
+  m3clock: (await import(src('inhabitants/catalogue/panels/quaternal-logic__m3-clock.tsx'))).design,
 }
 
 door.resetFamilyManifestsForTest()
@@ -278,96 +281,169 @@ test('the field devices close what their owners answer: Focus\'s Carry station, 
 
 // ---------------------------------------------------------------------------------------------------------------- Quaternal Logic
 
+// The person's M3 form as the installed QL answers it (REAL, tests/fixtures/ql-m3-state-2026-10-21.json: form 17 under moving and resting,
+// with its generation law and the cells of all three matrices at hexagram 17), in the reception's envelope as m3_reception passes it.
+const REAL_M3 = JSON.parse(readFileSync(new URL('./fixtures/ql-m3-state-2026-10-21.json', import.meta.url), 'utf8')).answer.state
+/** QL's M1 engine's cells for family 0, each `ql kernel m1`'s own answer (REAL, tests/fixtures/ql-m1-family0-cells-2026-10-21.json). */
+const REAL_M1 = JSON.parse(readFileSync(new URL('./fixtures/ql-m1-family0-cells-2026-10-21.json', import.meta.url), 'utf8'))
 const identity = {selection_ref: 'nara-identity-selection:1', source: {source_ref: 'central:nara/identity/p1', revision: 'r9'},
   reading: {person_ref: 'person:p1', nara_ref: 'nara:p1'}}
-const formState = address => ({schema: 'ql.m3-state/v1', identity: {event_ref: 'event:e', profile_generation: 7},
-  clock: {steps: 419, degree720: 419, degree360: 59, completed_double_covers: 0, backbone: {id: 'b', ref: '#3-5-1-3'}, tick12: 1},
-  aperture: {index: 2, total_lenses: 18, division_deg10: 40, reciprocal_index: 14, fibonacci_phase60: 0},
-  form: {address, codon: {id: 'c', ref: 'r'}, hexagram: {id: 'h', ref: 'r'}, matrix_axis: 1}, transcription: {rna: false, sequence: 'TTC'}})
-const m3Of = (address = 23) => ({key: 'k', basis: {identity, expression: {expression_ref: 'expression:kept', revision: 3}}, busy: false, reason: null, view: {},
-  reading: {schema: 'oi.m3-reception-context/v1', status: 'available', person_ref: 'person:p1', expression_ref: 'expression:kept', expression_revision: 3, state: formState(address)}})
+const m3Of = (state = REAL_M3) => ({key: 'k', basis: {identity, expression: {expression_ref: 'expression:kept', revision: 3}}, busy: false, reason: null, view: {},
+  reading: {schema: 'oi.m3-reception-context/v1', status: 'available', person_ref: 'person:p1', expression_ref: 'expression:kept', expression_revision: 3, state}})
 const NO_M3 = {key: null, basis: null, reading: null, reason: 'No Nara identity is chosen: the M3 form is the person\'s own. Choose one in the Nara instrument.', busy: false, view: {}}
 const MODES = {reading: {state: 'ready', catalogue: REAL_MODES.catalogue}, hold: {key: 'chromatic/L0\'/aeolian', root: 10}}
 /** The chromatic basis's tonics, from the real catalogue (ql music modes --json, lens_cf: each lens's tonic for ionian … locrian). */
 const CHROMATIC = [[0, 2, 4, 5, 7, 9, 11], [1, 3, 5, 6, 8, 10, 0], [2, 4, 6, 7, 9, 11, 1], [3, 5, 7, 8, 10, 0, 2], [4, 6, 8, 9, 11, 1, 3], [5, 7, 9, 10, 0, 2, 4],
   [6, 8, 10, 11, 1, 3, 5], [7, 9, 11, 0, 2, 4, 6], [8, 10, 0, 1, 3, 5, 7], [9, 11, 1, 2, 4, 6, 8], [10, 0, 2, 3, 5, 7, 9], [11, 1, 3, 4, 6, 8, 10]]
+/** The kernel's ql_read answer for one cell, from the real family-0 matrix (owner_routes.rs ql_read: {route, data}). */
+const m1Answer = op => {
+  const {family, row12, col12} = op.request.request.config, [raw, dr, decimal] = REAL_M1.cells[row12][col12]
+  return {outcome: {result: 'owner_route_reading', route: 'ql kernel m1', data: {schema: 'ql.m1.engine/v1', registry_revision: REAL_M1.registry_revision,
+    cell: {family, row12, col12, raw, digit_root: dr, decimal10: decimal}}}}
+}
 
-test('Binding reads the form\'s hexagram from the M3 reception and holds its own physics; the cell, its charges, the nonet and the events wait on their kernel ops', () => {
+test('the M3 clock reads the generation law and the cell of the form\'s hexagram from the real state, and chooses the matrix through set-matrix', () => {
+  const values = m3c.qlM3Values(m3Of())
+  assert.deepEqual([values['law.matrix'], values['law.seed'], values['law.poseMap']], ['moving-resting', 'sum-difference-mod', 'raw-bin'], 'QL\'s own names (form_cell.rs)')
+  assert.deepEqual([values['generation.lower'], values['generation.upper'], values['generation.positive'], values['generation.negative'], values['generation.nonDual']],
+    ['CT', 'CC', 'CCC', 'CTC', false], 'the cell, its codons under .sequence')
+  assert.deepEqual(m3c.qlM3Operations(m3Of(), [{key: 'law.matrix', value: 'complementary'}]), [{operation: 'set-matrix', family: 0}], 'QL\'s order: complementary 0, moving and resting 1, same quality 2')
+  assert.deepEqual(m3c.qlM3Operations(m3Of(), [{key: 'law.matrix', value: 'same-quality'}]), [{operation: 'set-matrix', family: 2}])
+  assert.throws(() => m3c.qlM3Operations(m3Of(), [{key: 'law.matrix', value: 'diagonal'}]), /complementary, moving and resting, or same quality/)
+  assert.throws(() => m3c.qlM3Operations(m3Of(), [{key: 'law.seed', value: 'four-charge'}]), /QL offers no operation that sets it/)
+  const binding = m3c.qlM3Binding(m3Of())
+  assert.equal(binding.writes('law.matrix'), true)
+  assert.equal(binding.writes('generation.positive'), false)
+  assert.deepEqual(Object.keys(m3c.QL_M3_ABSENT), ['rack', 'rack.part'], 'only the rack waits now')
+  const keys = classify(DESIGNS.m3clock, binding)
+  assert.deepEqual(keys.absent.sort(), ['rack', 'rack.part'])
+  assert.match(m3c.qlM3Binding(NO_M3).standing['law.matrix'].disabled, /No Nara identity is chosen/)
+})
+
+test('Binding draws the generation cell of the form\'s hexagram under its pairing, from the real state; the nonet, the events and its engine name their routes', () => {
   holds.resetHolds()
-  const binding = qlB.qlBindingBinding({m3: m3Of(23), held: {}})
+  const binding = qlB.qlBindingBinding({m3: m3Of(), held: {}})
   assert.equal(binding.id, designKey('quaternal-logic', 'binding'))
-  assert.deepEqual(binding.values, {'cell.hexagram': 23}, 'the hexagram is the form\'s address read as a hexagram; nothing else is a reading')
+  assert.deepEqual(binding.values, {'cell.hexagram': 17, 'pairing.matrix': 'moving-resting', 'cell.lower': 'CT', 'cell.upper': 'CC', 'cell.positive': 'CCC', 'cell.negative': 'CTC',
+    'cell.nonDual': false, 'charges.positive': '[24,-8,8,8]', 'charges.negative': '[25,-9,7,9]'}, 'until a pairing is held, the matrix the form\'s law is read under')
+  // Another pairing reads that matrix's cell, one of the three the state carries; Binding writes nothing to the form.
+  binding.local['pairing.matrix']('complementary')
+  const singlet = qlB.qlBindingBinding({m3: m3Of(), held: holds.heldFor(qlB.QL_BINDING_DEVICE_ID)})
+  assert.deepEqual([singlet.values['cell.lower'], singlet.values['cell.positive'], singlet.values['cell.negative'], singlet.values['cell.nonDual']], ['GC', 'GCC', 'GCC', true],
+    'complementary at hexagram 17 is non-dual: a singlet')
   const keys = classify(DESIGNS.binding, binding)
-  assert.deepEqual(keys.local.sort(), [...qlB.QL_BINDING_LOCAL].sort(), 'its own physics and choices are the view\'s')
-  for (const key of ['cell.lower', 'cell.positive', 'cell.nonDual']) assert.match(binding.standing[key].disabled, /missing op: the kernel op ql_m3_generate/, key)
+  assert.deepEqual(keys.local.sort(), [...qlB.QL_BINDING_LOCAL].filter(key => key !== 'pairing.matrix').sort(), 'its own physics and choices are the view\'s (the pairing reads as the law\'s until held)')
+  for (const key of ['values.positive', 'values.negative']) assert.match(binding.standing[key].disabled, /names each codon's sequence and charges, not its sites' coin values/, key)
   assert.match(binding.standing.nonet.disabled, /ql_m3_epogdoon/)
   assert.match(binding.standing['event.kind'].disabled, /an inscription, a matrix change, a line change/)
   assert.match(binding.standing['string.energy'].disabled, /Binding's string engine/)
   const controls = controlStanding(binding, setKeysOf('quaternal-logic__binding.tsx'))
   assert.deepEqual(controls.disabled.sort(), ['skin', 'sound.stretchQ'])
   assert.deepEqual(controls.written, [], 'Binding writes to no owner')
-  // The view's hand holds a setting, never an owner; the next binding reads it back.
-  binding.local['string.tension']?.(0.4)
-  assert.equal(qlB.qlBindingBinding({m3: m3Of(23), held: holds.heldFor(qlB.QL_BINDING_DEVICE_ID)}).values['string.tension'], 0.4)
   const none = qlB.qlBindingBinding({m3: NO_M3, held: {}})
-  assert.equal(none.values['cell.hexagram'], undefined)
-  assert.match(none.standing['cell.hexagram'].disabled, /No Nara identity is chosen/)
+  assert.equal(none.values['cell.positive'], undefined)
+  for (const key of ['cell.hexagram', 'cell.positive', 'charges.negative']) assert.match(none.standing[key].disabled, /No Nara identity is chosen/, key)
   holds.resetHolds()
 })
 
-test('the M′ matrices read the real mode catalogue, the mode in force and the M3 form; the M1 engine, the partners and the kernel\'s operators name their routes', async () => {
+test('the M′ matrices read the real mode catalogue, the mode in force, the M3 form and QL\'s M1 engine\'s cells; the partners and the kernel\'s operators name their routes', async () => {
   holds.resetHolds()
+  m1.resetQlM1()
   const set = [], applied = []
   const writers = {setHold: patch => set.push(patch), applyM3: async ops => { applied.push(ops) }}
-  const state = {m3: m3Of(17), modes: MODES, held: {}}
+  const state = {m3: m3Of(), modes: MODES, held: {}}
   const binding = qlMx.qlMatricesBinding(state, writers)
   assert.equal(binding.id, designKey('quaternal-logic', 'm-prime-matrices'))
   assert.deepEqual(JSON.parse(binding.values['m2.tonics']), CHROMATIC, 'the tonics of the basis in force, lens by lens')
   assert.equal(binding.values['m1.basis'], 'chromatic', 'until held, the basis is the mode in force\'s')
-  assert.equal(binding.values['m1.lens12'], 1, 'L0′, the lens in force')
-  assert.equal(binding.values['m1.context_frame'], 6, 'CF6, aeolian')
-  assert.equal(binding.values['form.address'], 17, 'the form in force')
+  assert.deepEqual([binding.values['m1.lens12'], binding.values['m1.context_frame'], binding.values['form.address']], [1, 6, 17], 'L0′ at CF6, aeolian; the form in force')
+  assert.deepEqual([binding.values['m1.family'], binding.values['m1.row12'], binding.values['m1.col12']], [5, 3, 4], 'the engine opens where QL\'s example request does')
+  assert.match(binding.standing['m1.cells'].disabled, /The engine opens on the Quintessence/)
+  assert.match(binding.standing['m1.tick12'].disabled, /no M1 clock|nothing in the shell keeps an M1 clock/)
   const keys = classify(DESIGNS.matrices, binding)
-  assert.deepEqual(keys.reading.sort(), ['form.address', 'm1.basis', 'm1.context_frame', 'm1.lens12', 'm2.tonics'])
-  for (const key of ['m1.cells', 'm1.row12', 'm1.tick12', 'm1.family']) assert.match(binding.standing[key].disabled, /missing op: the kernel op for `ql kernel m1`/, key)
+  assert.deepEqual(keys.reading.sort(), ['form.address', 'm1.basis', 'm1.col12', 'm1.context_frame', 'm1.family', 'm1.lens12', 'm1.row12', 'm2.tonics'])
   assert.match(binding.standing['m3.codons'].disabled, /`ql kernel m3`/)
   for (const key of ['form.partners', 'form.partner', 'form.scale']) assert.match(binding.standing[key].disabled, /ql_m3_apply_matrix/, key)
   for (const key of ['kernel.conjugate', 'kernel.class', 'kernel.version', 'kernel.depth', 'kernel.form']) assert.match(binding.standing[key].disabled, /`ql kernel apply/, key)
-  assert.match(binding.values.reason, /Situation matrix has no owner/)
   const controls = controlStanding(binding, setKeysOf('quaternal-logic__m-prime-matrices.tsx'))
   assert.deepEqual(controls.written.sort(), ['form.address', 'm1.context_frame', 'm1.lens12'])
-  assert.deepEqual(controls.local.sort(), ['kernel.face', 'kernel.position', 'm1.basis', 'matrix', 'valueForm'])
-  assert.deepEqual(controls.disabled.sort(), ['form.partner', 'form.scale', 'm1.col12', 'm1.family', 'm1.row12'])
-  // A cell of the Reading is that mode set on the transport; a form address is the reception's select-form.
+  assert.deepEqual(controls.local.sort(), ['kernel.face', 'kernel.position', 'm1.basis', 'm1.col12', 'm1.family', 'm1.row12', 'matrix', 'valueForm'])
+  assert.deepEqual(controls.disabled.sort(), ['form.partner', 'form.scale'])
   await binding.write([{key: 'm1.lens12', value: 3}, {key: 'm1.context_frame', value: 2}, {key: 'form.address', value: 40}])
   assert.deepEqual(set, [{root: 5, key: 'chromatic/L1\'/dorian'}])
   assert.deepEqual(applied, [[{operation: 'select-form', address: 40}]])
-  await assert.rejects(binding.write([{key: 'm1.row12', value: 2}]), /`ql kernel m1`/)
+  // Choosing a family reads its 144 cells from QL's M1 engine, one `ql kernel m1` each, through the kernel's ql_read.
+  const asked = []
+  m1.resetQlM1({call: async op => { asked.push(op); return m1Answer(op) }})
+  binding.local['m1.family'](0)
+  await m1.syncQlM1(0)
+  assert.equal(asked.length, 144)
+  assert.deepEqual(asked[0], {op: 'ql_read', request: {kind: 'kernel-m1', request: m1.m1Request(0, 0, 0)}})
+  assert.equal(asked[0].request.request.config.selected_coordinate, '#1-2-0', 'the family\'s own coordinate, as QL names a cell\'s')
+  const read = qlMx.qlMatricesBinding({...state, held: holds.heldFor(qlMx.QL_MATRICES_DEVICE_ID), m1: m1.qlM1State()}, writers)
+  assert.deepEqual(JSON.parse(read.values['m1.cells']), REAL_M1.cells, 'the family\'s matrix, cell by cell, as QL answered')
+  await m1.syncQlM1(0)
+  assert.equal(asked.length, 144, 'a family read once is kept for the session')
+  m1.resetQlM1({call: async () => ({outcome: null, error: 'ql: missing field `schema` at line 1 column 2'})})
+  await m1.syncQlM1(2)
+  const refused = qlMx.qlMatricesBinding({...state, held: {'m1.family': 2}, m1: m1.qlM1State()}, writers)
+  assert.match(refused.standing['m1.cells'].disabled, /QL's M1 engine refused: ql: missing field `schema`/)
   // The basis is the view's: held, the Reading reads the other order the owner serves.
   const fifths = qlMx.qlMatricesBinding({...state, held: {'m1.basis': 'fifths'}}, writers)
   assert.deepEqual(JSON.parse(fifths.values['m2.tonics'])[1], [6, 8, 10, 11, 1, 3, 5], 'L0′ in the fifths basis')
-  // No mode in force and nothing held: the basis waits on your choice, and the cell cannot be set alone.
   const bare = qlMx.qlMatricesBinding({m3: NO_M3, modes: {...MODES, hold: {key: null, root: 0}}, held: {}}, writers)
   assert.equal(bare.values['m2.tonics'], undefined)
   assert.match(bare.standing['m1.lens12'].disabled, /Choose a basis first/)
   assert.match(bare.standing['form.address'].disabled, /No Nara identity is chosen/)
-  const refused = qlMx.qlMatricesBinding({m3: NO_M3, modes: {reading: {state: 'refused', reason: 'ql is not installed'}, hold: MODES.hold}, held: {}}, writers)
-  assert.match(refused.standing['m2.tonics'].disabled, /refused: ql is not installed/)
+  m1.resetQlM1()
   holds.resetHolds()
 })
 
 test('Binding and the M′ matrices draw on their bindings in every view and page — no NaN, no undefined, never their fixtures — and each refusal says why', () => {
   holds.resetHolds()
-  const binding = qlB.qlBindingBinding({m3: m3Of(23), held: {}})
-  const boundAll = drawsClean(DESIGNS.binding, binding, /CCC|CTC|inscribed|Complementary to moving and resting|Line 5 of hexagram|0\.573/)
-  assert.ok(boundAll.includes('hex 23'), 'the form\'s hexagram')
+  const binding = qlB.qlBindingBinding({m3: m3Of(), held: {}})
+  const boundAll = drawsClean(DESIGNS.binding, binding, /inscribed|Complementary to moving and resting|Line 5 of hexagram|0\.573|1\.176/)
+  assert.ok(boundAll.includes('CT under CC'), 'the form\'s cell')
   assert.ok(boundAll.includes(escaped(qlB.QL_BINDING_ABSENT.skin)), 'Skin names its missing route')
-  assert.ok(boundAll.includes('No cell from the kernel'), 'the cell, absent, is said')
-  const matrices = qlMx.qlMatricesBinding({m3: m3Of(17), modes: MODES, held: {}})
+  const matrices = qlMx.qlMatricesBinding({m3: m3Of(), modes: MODES, held: {}})
   const matrixAll = drawsClean(DESIGNS.matrices, matrices, /qladdr:sixfold@1|>explicate<|>implicate<|0\.1\.0-q1/, ['matrix', 'kernel'])
-  assert.ok(matrixAll.includes(escaped(qlMx.QL_MATRICES_ABSENT['m1.family'])), 'the M1 engine\'s family names its route')
+  assert.ok(matrixAll.includes('No reading of the oscillator'), 'the Quintessence\'s matrix is not read until a family is chosen')
   assert.ok(matrixAll.includes('No address'), 'the kernel page with no address held says so')
   holds.resetHolds()
+})
+
+test('today\'s centres stay absent with exact words: the real `ql scene compose` answer names each centre\'s reference, anatomy and planets, not what the Chakra and the Sitting draw', async () => {
+  const chakra = await import(src('inhabitants/ql/devices/qlChakra.ts'))
+  const deck = await import(src('inhabitants/ql/devices/qlDeck.ts'))
+  const scene = JSON.parse(readFileSync(new URL('./fixtures/ql-scene-compose-2026-10-21.json', import.meta.url), 'utf8')).answer
+  assert.equal(scene.schema, 'ql.scene/v1')
+  assert.equal(scene.centres.length, 7)
+  for (const centre of scene.centres) assert.deepEqual(Object.keys(centre).sort(), ['anatomy', 'centre_ref', 'receiving'], 'the scene\'s centre, as QL answers it')
+  const chakraDesign = (await import(src('inhabitants/catalogue/panels/quaternal-logic__chakra.tsx'))).design
+  const drawn = JSON.parse(chakraDesign.defaults.centres)[0]
+  for (const key of ['name', 'element', 'mantra', 'petals', 'decan']) assert.ok(key in drawn && !(key in scene.centres[0]), `${key}: the design draws it; the scene does not answer it`)
+  assert.match(chakra.NO_CENTRES, /answer each centre's reference, anatomy and the planets it receives, not its name, element, mantra, petals or decan route/)
+  assert.equal(chakra.qlChakraBinding(chakra.qlChakraState()).standing.centres.disabled, chakra.NO_CENTRES)
+  // The Deck's cast hexagram is not the form's: its cell is QL's generation_at, which the shell does not ask yet; the card of the codon now is the form's.
+  const binding = deck.qlDeckBinding(deck.qlDeckState(), m3Of())
+  assert.equal(binding.values['m3.card'], 'Ten of Wands', 'the real form\'s tarot, in the kernel\'s register')
+  for (const key of ['matrix', 'generation']) assert.match(binding.standing[key].disabled, /generation_at, read through m3_reception's read/, key)
+})
+
+test('the Timeline reads the chronology\'s relation links and card categories as the frame announces them, and sets them through its commands', async () => {
+  const frameB = await import(src('techne/devices/frameBindings.ts'))
+  const runs = []
+  const ruler = {projection: 'chronology', events: [], edges: [], views: [{id: 'War', label: 'War'}], centre: 1600, zoom: 2, links: true, hiddenCategories: ['myth']}
+  const frame = {state: {lens: 'timeline', research: {timeline: ruler}}, run: async command => { runs.push(command); return {ok: true} }, window: undefined}
+  const law = {yearOf: () => null, instantOf: year => String(year), write: () => null}
+  const binding = frameB.timelineBinding(frame, law)
+  assert.deepEqual([binding.values.links, binding.values.cat_source, binding.values.cat_myth, binding.values.cat_claim], [true, true, false, true])
+  await binding.write([{key: 'cat_myth', value: true}, {key: 'cat_claim', value: false}])
+  await binding.write([{key: 'links', value: false}, {key: 'links', value: true}])
+  assert.deepEqual(runs, [{command: 'timeline', action: 'categories', hidden: ['claim']}, {command: 'timeline', action: 'links', on: false}],
+    'one categories command for the set; links already standing is not sent again')
+  const drawnElsewhere = frameB.timelineBinding({...frame, state: {lens: 'timeline', research: {timeline: {...ruler, links: undefined, hiddenCategories: undefined}}}}, law)
+  assert.match(drawnElsewhere.standing.links.disabled, /The chronology is not drawn now/)
 })
 
 test('(d) Binding and the M′ matrices are admitted where §22 and §16.16 put them: on M3′\'s rack and the Studio\'s body, on the M′ instruments\' racks', () => {
@@ -383,7 +459,7 @@ test('(d) Binding and the M′ matrices are admitted where §22 and §16.16 put 
     for (const view of views) assert.equal(host.viewIn(design, view), view, `${design.id} ${view}`)
   }
   const entries = chain.techneEntries([inhabitantManifest('quaternal-logic')], {atlas: null, surface: null, torus: null, instrumentReading: null,
-    m3: m3Of(17), modes: MODES, held: {}})
+    m3: m3Of(), modes: MODES, held: {}})
   for (const id of ['quaternal-logic:binding', 'quaternal-logic:m-prime-matrices']) {
     const entry = entries.find(item => item.device.id === id)
     assert.ok(entry?.binding, `${id}: on the chain with its binding, not a waiting device`)

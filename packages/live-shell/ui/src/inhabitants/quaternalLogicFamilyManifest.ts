@@ -137,9 +137,10 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         liveSemantic: 'device-instrument',
         // M3′'s rack holds it beside the Deck and the Resonator bank (manual §16.16), and it sits in the Studio's body chain (§22.8).
         heldBy: ['techne:m3', 'studio:body'],
-        invariant: {generatesAbsent: 'Binding writes to no owner: it takes the kernel\'s symbols — the form\'s hexagram through m3_reception — and runs its own physics over them; the matrix\'s generation cell waits on ql_m3_generate (lock §7).'},
-        note: 'M3′\'s view of form as charge (manual §22.8; ql/devices/qlBinding.ts): the codons a matrix holds together, drawn as colour charges bound by strings. Its tension, coupling, '
-          + 'pairing and charge are its own; the cell, its codons\' charges, the nonet and the kernel events that move it wait on their kernel ops, and the device says which.',
+        invariant: {generatesAbsent: 'Binding writes to no owner: it takes the kernel\'s symbols — the form\'s hexagram and its generation cells through m3_reception — and runs its own physics over them (lock §7).'},
+        note: 'M3′\'s view of form as charge (manual §22.8; ql/devices/qlBinding.ts): the codons a matrix holds together, drawn as colour charges bound by strings. The cell and its codons\' '
+          + 'charges are the form\'s state (ql.m3-state/v1 generation, under the pairing\'s matrix); its tension, coupling, pairing and charge are its own; the nonet and the kernel events '
+          + 'that move it wait on their kernel ops, and the device says which.',
       },
     ],
     params: {grammar: 'quaternal-logic/parameter-address/v1'},

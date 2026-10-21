@@ -40,6 +40,11 @@ One route that carries it unblocks these, all of whose Central operations alread
 - Messages › Accept: `agent-profile.accept`, with `agent-profile.express`, `save` and `remove`, and `central.agent-set.propose` and
   `save`.
 
+**Build, 21 Oct:** landed (`6c6492604`): action.rs PERSON_ACTS carries the host's token for the person's own presses through
+`invoke_action`. NOWs' Close, the Day's writes, Approve and Messages' Make, Accept and Discard write through it (`16db9826c`,
+`b912483a5`, `ed21cfc09`, `bfe605406`). Approve's `projectcentral.source.return_accept` joined the owner's human grant at the
+owner's word (Control `3c45ba016`).
+
 ### 1.2 Kernel routes to commands that already exist
 
 | Owner | Commands | What they fill |
@@ -66,6 +71,15 @@ One route that carries it unblocks these, all of whose Central operations alread
 | Software Factory | `factory development pads`, `pads-write`, `pads-run`, `pads-record`, `pads-due` | Prompt pads (§19.22): every pad write and Run now. |
 | Software Factory | a read of the project-development ledger (bounded intent, success criteria, PraxisCondition); the cognitive view (Run Thought); StructuralFidelityEvidence; `development mutate` for ContinueCommission; the attempt `retry` | The Intent panel, Review's criteria, the Thought page, the Ledger's Worked under line, the Run device's Structure reading, and the Run map's Continue and Retry. |
 
+**Build, 21 Oct:** routed (`1dc4b6821`, `a28843087`): Actuation's agency, realised, stream, activity and usage, and the research
+comparisons held, assess, mask and review (the dead `correlate` call removed); Workcell's connections, machine and connect, and the
+seat's join and release; AIKit's gateway send, delegate and team, capture, inbox, promote, trust record, praxis method run and prove,
+set package export and wiki-shape; Factory's attempt decision and custody; QL's kernel m1 and scene compose and world. The M3 clock's
+law and generation are QL's own `ql.m3-state/v1` (QL-MEF `ec79681`), passed verbatim by m3_reception, which now takes `set-matrix`.
+The Frames monitor reads AIKit's own gateway journal (`aikit gateway replay`, EpiLogos/ai-kit#540): Hermes's ring belongs to Hermes's
+own TUI process, and AIKit's coexistence law forbids reading a foreign gateway's state. Not routed: `actuation-research
+comparison.run` (it runs models). The rest of the table is builder E's, in order (Factory's pads, Workcell, QL, AIKit, Actuation).
+
 ### 1.3 Refusals that are now stale (the owner answers; only the binding is behind)
 
 | Binding | It refuses | What answers now |
@@ -79,6 +93,9 @@ One route that carries it unblocks these, all of whose Central operations alread
 | Search | "Your world" | `control.search` |
 | page takes | page history | `central.temporal.source-history` |
 | Diff widget | anything but O-I (it reads one fixed repository, `widgets/railDevices.tsx:100`) | — fix to follow the selected seat |
+
+**Build, 21 Oct:** bound by builder A (`ca84f65ce`); the Workspace's Accept, Ensure and Relate, and the Self page's shapes,
+followed in `bfe605406`.
 
 ### 1.3b Shell models the new designs need
 
@@ -98,13 +115,18 @@ reproject-scaffold, recognise-source, reconcile-binding, release-orphans. The de
 
 About forty more are partly bound; each row in the evidence names what is missing.
 
+**Build, 21 Oct:** bound: `workcell:workcell` and `ai-kit:messages` (`0321415ea`); `actuation:voice`, `widgets:terminal` and
+`ai-kit:knowledge-route` (`ed21cfc09`); Technē's five and `knowledge-graph:graph` (`a84bea1b2`, `18f57d4e0`); `expressions:field`,
+`quaternal-logic:binding` and `quaternal-logic:m-prime-matrices` (`4a96463bf`). Open: `ai-kit:capture-skill` (builder B2);
+`dlw:session-grid` and `dlw:arrangement-ruler` (builder A).
+
 ### 1.5 Owner operations that do not exist (build them in the owning product, as part of the same development)
 
 | Owner | What is missing |
 |---|---|
 | Workcell | placement; reachability and Lag; commit, push and land for Git / landing; moving a session to another machine; leases and checkpoints (`MaterialLeaseProvider`, `MaterialCheckpoint` are internal only). |
 | Central | `personal.notify` installed, keeping its requests and deliveries as a read the kernel can route (Notifications); listing and withdrawing presence consents (`nara_presence` publishes; nothing lists or withdraws); `personal.show` installed (only the library registers it); an open and reveal that resolve a page's file (`work.open` and `work.reveal` resolve a Work directory only); applying Control proposals (library-only today; apply refuses without a human-authority route); an Agentset Join field; listings of worlds, subjects and places for Beings and Things; commenting on a source return; `personal.notify` and `personal.show`, which are not installed. |
-| Actuation | a list of grants (`AuthorityStore::read` reads one ref); continuity (`continuityDelta` is library-only); the heartbeat cadence; per-task Launch, Retry and Stop; session Telemetry and Solo; a writer for spend. |
+| Actuation | a store read that hands a session's records to the routed reads (`agency`, `realised`, `stream`, `activity` and `usage` each project one record they are handed, and nothing the shell holds is one: the Ledger's tokens and spend and the Agent's run pages wait on it); a list of grants (`AuthorityStore::read` reads one ref); continuity (`continuityDelta` is library-only); the heartbeat cadence; per-task Launch, Retry and Stop; session Telemetry and Solo; a writer for spend. |
 | Software Factory | Scope's reach and write enforcement (WO-SF2); the custody record's autonomy, gate and escalate fields; the First, Quorum and Weighted joins; an owner for a task's success criterion; a pad's link to the AIKit Routine that carries its schedule; unit decisions in Approvals (`factory attempt decision`); composing a new Commission (`factory.commission-request/v1`). |
 | AIKit | the agent-to-agent ingress rule; the Knowledge route's Read budget and Search first; an owner read of Living Knowledge's impact for a set of readings (the Affected page); a read of the last turn's bounded blocks (Context); a read of a Flow's last thought (`flow changed-since` needs `--thought <file>`); a CLI leaf for the reflection law's verdict (Meaning). |
 | Quaternal Logic | a CLI for the External Context Frame reading (`read_external_context_frame` is library-only); a CLI for `plan_living_wiki_refraction` (the graph's Aperture); WikiFrame refraction candidate counts (the Lens's proposals); a rule naming when a rack part is "verified"; a kernel address for a matrix cell; portal traversal; the Deck's Move and Turn; a tuning owner for Exact-ratio; the Decision helper's When and Deadline; the M′ Situation matrix; the M3 clock's Run and Rate. |
@@ -136,6 +158,42 @@ capability, it lands as a page, an act or a view of that device.
 |  | **Landed 21 Oct:** `settings:window` (§10.10), one device with the window's pages (Harnesses and models, the owner settings, Profiles, Credentials as references only, Machines and services, Automations, Appearance, Products and updates, System's four axes) and Review. It carries what the shell's Settings draws today; per-row scope overrides are folded into the page's Applies to. | |
 | D10 Attention and hosting | Notifications; Workcell model hosting | Needs-you in Messages and Approvals, plus a Notifications monitor; a hosted model's health beside the Decision helper's Provider. |
 |  | **Landed 21 Oct:** `widgets:notifications` (§23.9), a monitor of what owners raise for attention, beside Messages and Approvals; hosting and kept-by on the Decision helper's Provider page (§19.20). Before building an owner for notifications, read the models that exist: `shared-field/activity.mjs` (`notificationFromActivity`) and `packages/oi-pi/contrib/lib/attention.ts`. | |
+
+### 2.1 What the build found the designs still need (21 Oct)
+
+The builders bind the designs as they stand; where a design or the manual is wrong or short, they leave it and say so here. Each line
+names the file and the change.
+
+| Design or section | What it needs |
+|---|---|
+| `central__ground-hygiene.tsx` (:61-62, :111) | `git\.census` in PAGES.checkouts.ops, and `central\.git\.` kept off the Ground page's ops. Its hand-written Ground and Material findings can come from the model (`groundFindings`, `materialFindings`), as its checkout findings already do. |
+| `widgets__wiki.tsx` | The `external` link state drawn as its own kind, not "does not resolve". |
+| `workcell__workcell.tsx` | Worker.mode and Worker.track optional, drawn as none: today they render "undefined", so Working here stays absent although the claims name actors. `laneOf` should prefer the chosen project. |
+| `techne__palace.tsx` | Pages for Palaces/Enter, Compose, Integral whole and Portals; a `scene` room kind; the guide text read from an owner `guide` key (it hard-codes "free mnemonic composition"); locus stepping; bookmark Rename and Delete. |
+| `techne__light.tsx` | Folded says "0 sensors" with no reading (it should draw "—"); the widget's text overflows. |
+| `knowledge-graph__graph.tsx` | A `fit` act for the surface's own Fit. |
+| `actuation__harness-model.tsx` | FullWithStage builds its stage with `recordingFromThread` (a recording made up from thread rows at fixed steps). It should read the binding's `stage` key, which the binding already fills, and say "No run event names this session yet." without one; declare `stage` and give it a fixture recording. |
+| Central's Day (`central__day*.tsx`) | A control for `openTomorrow`. |
+| `scope.tsx` | The Reads rows want the include/exclude toggles (`r:<id>`) that Context & world had. |
+| `widgets__terminal.tsx` | The screen, the shells and the grid draw from the design's own SHELLS constant, not from its keys. |
+| `ai-kit__knowledge-route.tsx` | The Sources request is lens-level, but Central's AgentProfile carries source refs (of 39 real profiles, 21 carry none; the rest `central:source:…` or `file://`). |
+| `clip__central` and §18.1 | No place for the Flow device's Thought page, which §18.1 puts under Clip view ▸ Contemplate. |
+| `central__beings.tsx`, `central__things.tsx` | The manual names no such device: a Being or Thing page is the Document's Full (§17.8), its ties the Clip panel (§18.1). The designs duplicate both and nothing places them. |
+| `central__workspace.tsx` | Its Track page draws the window's workspace book (Remember, Keep, Launch); the manual's Track page holds Name, World, Kind, Folder, Place and Workspace. |
+| `expressions__field.tsx` | The DIAL helper, Toggles and Radios spread no `st(p, key)`, so a disabled dial cannot draw its reason; the widget meter multiplies an absent level into `--level:NaN` (it should draw unread). |
+| `quaternal-logic__m-prime-matrices.tsx` | Its comment calls m1.lens12, m1.context_frame and m1.basis M1 engine config; §22.6 Transport says the Reading follows the key, root and scale. A key for Apply over m3_reception's existing `apply-matrix {family}` would let Apply act now. |
+| §20.3 and §22.8 | §20.3's Body chain (Physics, Resonance, Torus) and §22.8 (Binding "sits in the Studio's body chain") disagree; the shell's STUDIO_SECTIONS does not hold Binding. The build put the M′ matrices on techne:m1–m4 by the semantics table's M′ provenance (§22.6 "the rack of its instrument"). |
+| `actuation__frames-monitor.tsx` (:86, :311, :416) | Draw `st(p,'frames').disabled` instead of the fixed "No reading of the frames.", so AIKit's refusal shows; stop defaulting a missing `dir` to 'in' (an undirected frame draws as Received); draw `ring` when `ringCap` is absent (the journal declares no cap). |
+| `ai-kit__messages.tsx` | The conversation rows want a drag carrying their Communique ref onto a track; the drop names the work and asks for a reason, setting `delegate` to {communique, work, reason} (the binding writes it). Its header says groups come from `aikit gateway team`: they come from Central's `central.agent-set.list`. |
+| `skills.tsx` | A package directory field for Export (`aikit set package export` needs an absolute --out). |
+| `workcell__seat.tsx` | Whether `actor` (Yours vs Held) is the desk's actor, now that Join claims as it. |
+| `software-factory__agent-custody.tsx` | Autonomy, gate and escalate are not fields of Factory's custody record (custody assign|update carry Position, work, reason, state and hand-off Position); see §1.5. |
+| `settings__window.tsx` | Places for what the Settings window does today and the design does not draw: per-setting Undo; the Details panel (axes, reconciliation, reading basis, default); the help aside; unavailable owners with their reason; the owner-plan and acknowledgement JSON; Open Expressions; Machines' expected operations when adding a machine; preparing a new schedule; harness install and reveal notes; the dependent column choices; ↑/↓/Enter through search results; a back control naming the return. The port waits on `dlw/settings-window-port` until these exist. |
+| `central__workspace.tsx` (:674) | The Name TextField should spread its standing, so a refused rename shows before it is pressed. |
+| `widgets__notifications.tsx` | A line saying why requests are absent. |
+| `dlw__session-grid.tsx` | Whether the design or the shell's established behaviour wins for the group roll-up (the shell always rolls up; the design only when folded) and the rails (the shell draws them full height). Still to bring the shell to: the clip cell's second line (mode, follow, takes) at 52px, the running clip's progress (no reading), the ruler's loop region, overview strip and scale label. |
+| Timeline's Save view (`techne__timeline.tsx`) | A name for the saved view: the frame's save-view takes one. |
+| `quaternal-logic:map-rack` | A face: a `rack` liveSemantic requires routesTo, and M4′'s rack routes nothing. |
 
 ## 3. Manual corrections made with this ticket
 

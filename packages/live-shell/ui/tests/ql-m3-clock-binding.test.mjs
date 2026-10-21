@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {readFileSync} from 'node:fs'
 
 // R5: the M3 clock on its owner — the person's M3 form (ql.m3-state/v1) through the kernel's m3_reception, on the encounter the frame's
 // Nara instrument uses (naraChannel.ts operation 'm3'). A fixture call stands in for the kernel: the encounter is the chosen identity
@@ -46,7 +47,9 @@ const kernelOps = await import('../src/inhabitants/sdk/kernelOps.ts')
 const identity = {selection_ref: 'nara-identity-selection:1', source: {source_ref: 'central:nara/identity/p1', revision: 'r9'},
   reading: {person_ref: 'person:p1', nara_ref: 'nara:p1', profile: {person_ref: 'person:p1', nara_ref: 'nara:p1'}}}
 const basis = {identity, expression: {expression_ref: 'expression:kept', revision: 3}}
-const form = (over = {}) => ({schema: 'ql.m3-state/v1', identity: {event_ref: 'event:e', profile_generation: 7},
+// The generation law and its cell as the installed QL answers them for form 17 under moving and resting (REAL, tests/fixtures/ql-m3-state-2026-10-21.json).
+const REAL = JSON.parse(readFileSync(new URL('./fixtures/ql-m3-state-2026-10-21.json', import.meta.url), 'utf8')).answer.state
+const form = (over = {}) => ({schema: 'ql.m3-state/v1', identity: {event_ref: 'event:e', profile_generation: 7}, law: REAL.law, generation: REAL.generation,
   clock: {steps: 419, degree720: 419, degree360: 59, completed_double_covers: 0, backbone: {id: 'b', ref: '#3-5-1-3'}, tick12: 1},
   aperture: {index: 2, total_lenses: 16, division_deg10: 40, reciprocal_index: 14, fibonacci_phase60: 0},
   form: {address: 17}, transcription: {rna: false, sequence: 'TAT'}, ...over})
@@ -76,12 +79,14 @@ test('the form is read once per encounter; a new degree advances forward on the 
   assert.equal(calls.length, 1, 'one read for one encounter')
   assert.deepEqual(calls[0], {op: 'm3_reception', project: 'O-I', request: {operation: 'read', binding: m3.m3Binding(basis)}})
   const values = m3.qlM3Values(m3.qlM3State())
-  assert.deepEqual(values, {'clock.degree720': 419, 'clock.tick12': 1, 'clock.backbone': '#3-5-1-3', 'aperture.index': 2, 'form.address': 17, 'form.codon': 'TAT'})
+  assert.deepEqual(values, {'clock.degree720': 419, 'clock.tick12': 1, 'clock.backbone': '#3-5-1-3', 'aperture.index': 2, 'form.address': 17, 'form.codon': 'TAT',
+    'law.matrix': 'moving-resting', 'law.seed': 'sum-difference-mod', 'law.poseMap': 'raw-bin',
+    'generation.lower': 'CT', 'generation.upper': 'CC', 'generation.positive': 'CCC', 'generation.negative': 'CTC', 'generation.nonDual': false})
   for (const key of Object.keys(design.defaults).filter(key => !['turn', 'open', 'readout', 'reciprocal'].includes(key))) assert.ok(key in values || m3.QL_M3_ABSENT[key], `${key} from the owner, or named absent`)
   for (const [key, why] of Object.entries(m3.QL_M3_ABSENT)) {
     assert.equal(key in values, false, `${key}: the reading carries none, so the binding gives none`)
     assert.ok(key in design.defaults, `${key} is a key of the design`)
-    assert.match(why, key.startsWith('rack') ? /^No rack reading: .* missing op: a rack reading and the rule naming a verified part/ : /^The M3 reading carries no generation (law|cell)/, `${key}: absent with its reason`)
+    assert.match(why, /^No rack reading: .* missing op: a rack reading and the rule naming a verified part/, `${key}: absent with its reason`)
   }
   const binding = m3.qlM3Binding(m3.qlM3State())
   assert.equal(designKey('quaternal-logic', m3.QL_M3_FACE), design.id)

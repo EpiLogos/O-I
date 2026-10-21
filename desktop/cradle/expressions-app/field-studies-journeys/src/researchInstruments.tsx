@@ -11,7 +11,7 @@ import {createStageFocus,releaseStageFullscreen,requestStageFullscreenOn} from '
 import type {FullscreenHold} from './focusMode';
 import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
 import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
-import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
+import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ConnectorSide,type ResearchConnector} from './canvasConnectors.js';
 import {frameHeadings,FRAME_TITLE_HIT_HEIGHT,FRAME_TITLE_MAX,type FrameHeading} from './canvasFrames.js';
 import {viewDrift,viewNotice,type ViewBasis} from './viewDrift.js';
 import {EMBED_CARD_SIZE,EMBED_GLYPH,canvasEmbedNodes,cardOverlayBox,embedCardLabel,embedHost,embedUrlRecord,isEmbedCardType,mediaFileName,mediaSourceUrl,type CentralPathRef} from './canvasEmbeds.js';
@@ -349,7 +349,7 @@ interface ViewState {
  m2Projection?:'chronology'|'field'|'relative';
  /** lane-2 T15–T18: the mounted chronology's presentation hold (null while it is unmounted), the presentation last captured
   * when the person leaves chronology (what a relation-mode save names), and a view waiting to be applied on mount. */
- timelineHandle?:TimelinePresentationHandle|null;timelinePresentation?:TimelinePresentation;timelinePending?:{name:string;presentation:TimelinePresentation};
+ timelineHandle?:TimelinePresentationHandle|null;timelinePresentation?:TimelinePresentation;timelinePending?:{name:string;presentation:TimelinePresentation;quiet?:boolean};
  /** Remounts the chronology surface when a named view moves its camera (its camera is read once, at mount). */
  timelineKey?:number;
  timeDraft?:SharedTimeDraft;
@@ -410,6 +410,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  const lastTitles=new Map<string,string>();
  let materialInFlight=0,deferredRefresh=false;
  let dismissedCard:string|null=null;let flyToNode:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
+ // W4: the presented Canvas's and Timeline's own acts, kept as they last rendered, so the host's stage commands run the very acts their
+ // controls run (the connector controls; Go to, Save view and the lens's own presentation).
+ let canvasActs:{connector:(line:string,patch:{kind?:ConnectorKind;fromSide?:ConnectorSide|'auto';toSide?:ConnectorSide|'auto'})=>Promise<string|null>}|null=null;
+ let timelineActs:{camera:(centre:number,zoom:number)=>void;goTo:(name:string)=>void;save:(name:string)=>void;present:(patch:{relationLinks?:boolean;hiddenCategories?:string[]})=>Promise<void>}|null=null;
  let flyToEdge:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
  // A8 — presentation is session-local: its step lives only in this closure, and
  // leaving restores the editor from the snapshot taken on entry.
@@ -605,16 +609,19 @@ host.tools.append(saveGlyph);
   const selection=state.multiSelect?.size?state.multiSelect:new Set(state.selectedNode?[state.selectedNode]:[]);
   navigation={canvas,selection};
   for(const node of canvas.nodes){const ref=canvas.occurrences.get(node.id);if(ref&&node.title)lastTitles.set(ref,node.title);}
-  const apply=(action:()=>Promise<void>,refresh=true,notice?:string|(()=>string))=>{
+  const apply=(action:()=>Promise<void>,refresh=true,notice?:string|(()=>string)):Promise<string|null>=>{
    const key=canvas.key;message('Saving…');
-   mutations=mutations.catch(()=>{}).then(async()=>{
+   // The outcome, for a host's command that waits on it: null once written, else the refusal the message line shows.
+   const done:Promise<string|null>=mutations.catch(()=>{}).then(async()=>{
     if(destroyed||!host.nativeView()||nativeCanvas(host.nativeView()!,host.sceneId()).key!==key)throw new Error('The selected native composition changed; the queued edit was not applied');
     materialInFlight++;saveState('saving');
     try{await action();saveState('saved');}finally{materialInFlight--;}
     if(currentKey===key&&!destroyed){message(typeof notice==='function'?notice():notice??'Saved');if(lens==='m1'){const view=host.nativeView();if(view&&host.sceneId()===canvas.sceneId){const updated=nativeCanvas(view,host.sceneId());render(canvasNode(updated,state,epoch));}else if(refresh||deferredRefresh)await load('m1');}}
     if(!materialInFlight){const pending=deferredRefresh;deferredRefresh=false;if(pending&&lens&&currentKey!==key)await load(lens);}
-
-   }).catch(error=>{saveState('held');if(currentKey===key&&!destroyed)message(error instanceof Error?error.message:String(error));});
+    return null;
+   }).catch(error=>{const said=error instanceof Error?error.message:String(error);saveState('held');if(currentKey===key&&!destroyed)message(said);return said;});
+   mutations=done.then(()=>{});
+   return done;
   };
   const occurrence=(id:string)=>{const value=canvas.occurrences.get(id);if(!value)throw new Error('This card has no native occurrence');return value;};
   const ownConnection=(id:string)=>{const relation=host.nativeView()?.document.relations?.[id];if(relation?.native_owner!=='oi')throw new Error('This source relation is read-only; use its native owner to change it');return id;};
@@ -744,6 +751,17 @@ host.tools.append(saveGlyph);
    const {departed}=viewDrift(view,present);
    // D2: one sentence — the basis difference (a different subject) and the members that left; a view without a basis is exactly B4.
    message(viewNotice(name,view,departed,ref=>lastTitles.get(ref),currentViewBasis())??`View "${name}" applied`);};
+  // W4: the host's Lines act is this very act (the connector controls' onChange).
+  canvasActs={
+   connector:async(line,patch)=>{
+    if(!editable||!host.connector||!canvas.sceneId)throw new Error('This Canvas reads its lines but cannot change them: no connector write is offered here.');
+    if(!canvas.edges.some(edge=>edge.id===line))throw new Error('That line is no longer on the board.');
+    const record=material?.connectors?.[line];
+    const side=(asked:ConnectorSide|'auto'|undefined,kept:ConnectorSide|undefined)=>(asked===undefined?kept:asked==='auto'?undefined:asked);
+    const next=connectorRecord({kind:patch.kind??record?.kind??'curved',label:record?.label,fromSide:side(patch.fromSide,record?.fromSide),toSide:side(patch.toSide,record?.toSide)});
+    return apply(()=>host.connector!(canvas.sceneId!,line,next));
+   },
+  };
   // B2 — the composed Canvas as one Obsidian .canvas file. Cards keep their
   // position and size; frames become group nodes; every connection keeps its
   // native identity; what a .canvas cannot carry is named in its header.
@@ -1150,7 +1168,8 @@ host.tools.append(saveGlyph);
      const pending=state.timelinePending;
      if(handle&&pending){
       state.timelinePending=undefined;
-      void handle.restore(pending.presentation).then(({unresolved})=>message(timelineRestoreNote(pending.name,unresolved)),error=>message(error instanceof Error?error.message:String(error)));
+      // A camera set from the host is quiet: no view was named, so none is said restored.
+      void handle.restore(pending.presentation).then(({unresolved})=>{if(!pending.quiet)message(timelineRestoreNote(pending.name,unresolved));},error=>message(error instanceof Error?error.message:String(error)));
      }
     };
    }
@@ -1188,16 +1207,22 @@ host.tools.append(saveGlyph);
      if(!view||!state.timeline)return;
      const entered=window.prompt('Name this timeline view');
      if(entered===null)return;
+     saveTimelineViewNamed(entered);
+    };
+    // The save itself, under the name the prompt gave (or the host's command names). A name refused is said and returned.
+    const saveTimelineViewNamed=(entered:string):string|null=>{
+     if(!view||!state.timeline)return 'Open a native work to save its timeline view.';
      const problem=timelineViewNameProblem(entered,savedTimelineViews());
-     if(problem){message(problem);return;}
+     if(problem){message(problem);return problem;}
      const name=entered.trim();
      // The mounted lens reads its own filters, chain, frame and stack; in the relation field the last chronology capture stands.
      const camera={centerYear:state.timeline.centerYear,pixelsPerYear:state.timeline.pixelsPerYear};
      const presentation:TimelinePresentation=state.timelineHandle?.capture()??{...openTimelinePresentation(camera),...state.timelinePresentation,camera};
      let record:TimelineViewRecord;
      try{record=timelineViewOf({projection:state.m2Projection==='field'?'relations':'chronology',presentation});}
-     catch(error){message(error instanceof Error?error.message:String(error));return;}
+     catch(error){const said=error instanceof Error?error.message:String(error);message(said);return said;}
      void host.material(sceneId,{type:'timeline-view-save',name,view:record}).then(()=>{message(`Timeline view "${name}" saved`);render(canvasNode2());},error=>message(error instanceof Error?error.message:String(error)));
+     return null;
     };
     // Going to a view sets its camera and projection now; its filters, chain, frame and stack are applied when the chronology
     // mounts (its refs re-read through the native owner), so a restore never reads a stale copy.
@@ -1215,6 +1240,27 @@ host.tools.append(saveGlyph);
      if(plan.projection==='relations')message(`View "${name}" restored; its chronology filters, frame and stack apply when the chronology opens.`);
     };
     const removeTimelineView=(name:string)=>{void host.material(sceneId,{type:'timeline-view-remove',name}).then(()=>{message(`Timeline view "${name}" removed`);render(canvasNode2());},error=>message(error instanceof Error?error.message:String(error)));};
+    // W4: the host's Timeline acts are these: Go to and Save view as the Views chooser and "Save view…" run them; a camera as Going to a view
+    // sets one (the surface remounted on it, its filters, frame and stack restored on mount); links and card categories through the lens's
+    // own presentation (capture, then restore, the path a view's restore takes).
+    timelineActs={
+     camera:(centre,zoom)=>{
+      if(!state.timeline)throw new Error('The chronology has not drawn yet.');
+      const held=state.timelineHandle&&state.m2Projection==='chronology'?state.timelineHandle.capture():undefined;
+      state.timeline={centerYear:centre,pixelsPerYear:zoom,selectedNodeId:state.timeline.selectedNodeId};
+      if(held)state.timelinePending={name:'',presentation:{...held,camera:{centerYear:centre,pixelsPerYear:zoom}},quiet:true};
+      state.timelineKey=(state.timelineKey??0)+1;
+      render(canvasNode2());
+     },
+     goTo:name=>{if(!savedTimelineViews()[name])throw new Error(`No timeline view named "${name}"`);applyTimelineView(name);},
+     save:name=>{const refused=saveTimelineViewNamed(name);if(refused)throw new Error(refused);},
+     present:async patch=>{
+      const handle=state.timelineHandle;
+      if(!handle||state.m2Projection!=='chronology')throw new Error('Open the chronology to set its relation links and card categories.');
+      const {unresolved}=await handle.restore({...handle.capture(),...patch});
+      if(unresolved.length)message(`${unresolved.length} ${unresolved.length===1?'node is':'nodes are'} no longer in this reading and ${unresolved.length===1?'was':'were'} left out.`);
+     },
+    };
     // lane-2 T21/T22: "Show on the globe" offers the selected event's one located place. The crossing is planned on the session
     // read here; a session that has drifted refuses by name (handoffRefusal) and is never re-targeted. The place is the shared
     // spatial focus and the event's own validity the window, each through the owner's compare-and-set write, then Places opens.
@@ -1444,7 +1490,9 @@ host.tools.append(saveGlyph);
     if(lens==='m2'&&presentedTimeline&&presentedTimeline.sceneId===host.sceneId()){
      const {bundle,state,sceneId}=presentedTimeline;
      let views:string[]=[];try{views=Object.keys(host.sceneMaterial(sceneId).research?.timelineViews??{});}catch{views=[];}
-     return {timeline:timelineReadingOf(bundle,{projection:state.m2Projection,camera:state.timeline,views})};
+     // W4: the chronology's relation links and hidden card categories, as its lens holds them (capture), only while it is mounted.
+     let held:{relationLinks:boolean;hiddenCategories:string[]}|undefined;try{held=state.m2Projection==='chronology'?state.timelineHandle?.capture():undefined;}catch{held=undefined;}
+     return {timeline:timelineReadingOf(bundle,{projection:state.m2Projection,camera:state.timeline,views,...(held?{links:held.relationLinks,hidden:held.hiddenCategories}:{})})};
     }
    }catch{/* nothing is announced rather than a wrong board */}
    return {};
@@ -1456,6 +1504,23 @@ host.tools.append(saveGlyph);
    const pane={width:body.clientWidth,height:body.clientHeight};
    if(!(pane.width>0&&pane.height>0))throw new Error('The Canvas stands in no pane of any size, so it has no centre to move.');
    flyToNode('',viewportOf(camera,pane));
+  },
+  /** W4: the selected line's connector record (its kind, its sides), written as the connector controls write it; the owner's refusal thrown. */
+  async setCanvasConnector(line:string,patch:{kind?:ConnectorKind;fromSide?:ConnectorSide|'auto';toSide?:ConnectorSide|'auto'}){
+   if(lens!=='m1'||!currentKey||!canvasActs)throw new Error('Open the Canvas to change its lines.');
+   const refused=await canvasActs.connector(line,patch);
+   if(refused)throw new Error(refused);
+  },
+  /** W4: one of the Timeline's own acts (stageCommands.ts STAGE_TIMELINE_ACTIONS). */
+  async timelineAct(command:{action:'camera';centre:number;zoom:number}|{action:'view'|'save-view';name:string}|{action:'links';on:boolean}|{action:'categories';hidden:string[]}){
+   if(lens!=='m2'||!timelineActs)throw new Error('Open the Timeline to act on its ruler.');
+   switch(command.action){
+    case 'camera':timelineActs.camera(command.centre,command.zoom);return;
+    case 'view':timelineActs.goTo(command.name);return;
+    case 'save-view':timelineActs.save(command.name);return;
+    case 'links':await timelineActs.present({relationLinks:command.on});return;
+    case 'categories':await timelineActs.present({hiddenCategories:[...command.hidden]});return;
+   }
   },
  };
 }

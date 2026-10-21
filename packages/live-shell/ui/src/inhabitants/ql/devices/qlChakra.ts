@@ -7,8 +7,10 @@
 //   elements        your four elements as QL maps them — each a contribution strength with no confidence claimed, and the quaternion
 //                   (w Earth, x Fire, y Water, z Air) — with their source (a key the design does not draw yet);
 //   epoch           the date of the sky the routes follow: the Sky's (qlSky.ts), read, never set here.
-// `centres` — today's centres with their routes — is the scene's (`ql.scene/v1` `centres[7]`, `ql scene compose|world`), which no owner
-// carries to the shell yet: it stands absent with that reason, and the display says so. View, Routes, Colour source, Natal distribution
+// `centres` — today's centres with their routes — is the scene's (`ql.scene/v1` `centres[7]`). The kernel's ql_read carries `ql scene
+// compose` and `ql scene world`, but their centres name only each centre's reference, its anatomy and the planets it receives
+// ({centre_ref, anatomy, receiving}, crates/ql-mef/src/scene.rs compose; world answers compose's centres): not the name, element,
+// mantra, petals or decan route the design draws. It stands absent with that reason, and the display says so. View, Routes, Colour source, Natal distribution
 // and Detail are the view's own (DesignBinding.local). Nothing here writes: the identity is never changed by a reading of it.
 // Pure apart from the one kernel call, which takes the call it is given, and the small store the views share.
 import {useEffect, useSyncExternalStore} from 'react'
@@ -29,7 +31,7 @@ export const QL_CHAKRA_FACE = 'chakra'
 export const QL_CHAKRA_DEVICE_ID = techneDeviceId(QL_CHAKRA_FAMILY, QL_CHAKRA_FACE)
 
 export const NO_IDENTITY = 'No Nara identity is chosen: your centres\' elements are your own. Choose one in the Nara instrument.'
-export const NO_CENTRES = 'Today\'s centres and their routes are the scene\'s (ql.scene/v1 centres, ql scene compose): no owner carries them to the shell yet.'
+export const NO_CENTRES = 'Today\'s centres are the scene\'s (ql.scene/v1 centres): `ql scene compose` and `ql scene world` answer each centre\'s reference, anatomy and the planets it receives, not its name, element, mantra, petals or decan route — missing op: those in the scene\'s centres (Quaternal Logic).'
 
 /** The identity the map is read for: the chosen saved identity, at its revision. */
 export interface ChakraBasis {readonly source_ref: string; readonly revision: string}

@@ -134,3 +134,60 @@ export function nowsValues(ground: CentralGroundReading): Record<string, Value> 
 /** No calendar provider is installed (widgets__calendar.tsx: "no calendar provider, feed or panel exists in the shell"): every reading
  * is absent, and the reason says so. The tile's own keys (range, calendar, this work) are view holds. */
 export const CALENDAR_ABSENT = 'No calendar provider is installed: a calendar comes from a provider outside O:I, and none has been added.'
+
+// ---------------------------------------------------------------------------------------------------------------- Notifications
+
+/** Notifications (design package D10, §23.9; widgets:notifications): a monitor. Its requests and the host's notification capabilities are
+ * Central's `personal.notify` (ctrl/src/personal.rs; connector-sdk notification.rs), which is not in Central's installed action list, and
+ * no owner keeps the requests (T-COVERAGE §1.5): both arrive absent naming it. What already reaches the shell as an owner's reading of what
+ * needs you is read from its own device, never derived again here: the agents that wait for you or have stalled are Messages' (its
+ * `agents`, each in the state its occupant's run reports: agent/devices/messagesBinding.ts), and what waits in Approvals is the Approvals
+ * device's own queue (its source returns and the shown session's consent requests: agent/devices/receiptBindings.ts approvalsValues). */
+export const NOTIFICATIONS_ABSENT = {
+  requests: 'The requests are Central\'s personal.notify, which is not installed (ctrl --json action list: no personal.notify), and no owner keeps the requests it posts — missing op: personal.notify, and a reading of the requests it keeps (T-COVERAGE §1.5).',
+  provider: 'Whether this computer shows notifications is personal.notify\'s UserNotification connector\'s (authorization, callback, urgency, category) — missing op: personal.notify (T-COVERAGE §1.5).',
+  waiting: 'Messages has not read its agents and their runs yet (aikit gateway who --json): no count of the agents that wait for you.',
+  proposals: 'No Approvals device is on the door, or it has read nothing yet: no count of what waits for you.',
+} as const
+/** Open: a request names what to open; with no requests read there is none. */
+export const NOTIFY_OPEN_REFUSED = `Open: ${NOTIFICATIONS_ABSENT.requests}`
+
+/** The agents that wait for you or have stalled, by Messages' own `agents` (each agent's state as its occupant's run reports it). Absent
+ * where Messages listed no agents. Pure. */
+export function waitingAgentsOf(agents: Value | undefined): number | undefined {
+  if (typeof agents !== 'string') return undefined
+  try {
+    const list = JSON.parse(agents) as unknown
+    return Array.isArray(list) ? list.filter(agent => !!agent && typeof agent === 'object' && ((agent as {state?: unknown}).state === 'waiting' || (agent as {state?: unknown}).state === 'stalled')).length : undefined
+  } catch { return undefined }
+}
+
+/** What waits for you in Approvals, by the Approvals device's own `queue` (its pending proposals and consent requests). Absent where it read
+ * none. Pure. */
+export function waitingInApprovalsOf(queue: Value | undefined): number | undefined {
+  if (typeof queue !== 'string') return undefined
+  try { const rows = JSON.parse(queue) as unknown; return Array.isArray(rows) ? rows.length : undefined } catch { return undefined }
+}
+
+/** Notifications' values: Messages' and Approvals' counts where their devices read them, and now on the strip (minutes after midnight, the
+ * view's own clock). The requests and the provider stay absent (NOTIFICATIONS_ABSENT). Pure. */
+export function notificationsValues(input: {readonly messagesAgents: Value | undefined; readonly approvalsQueue: Value | undefined; readonly nowMinutes: number}): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  put(values, 'waiting', waitingAgentsOf(input.messagesAgents))
+  put(values, 'proposals', waitingInApprovalsOf(input.approvalsQueue))
+  put(values, 'now', input.nowMinutes)
+  return values
+}
+
+/** Notifications' binding: its values (notificationsValues) with the view's own holds laid over the manual's defaults (Show All, Follow On:
+ * §23.9 Parameters), Messages ▸ and Approvals ▸ as the shell's own moves (opening writes nothing to any owner), and a request's Open refused
+ * naming personal.notify until a request stands. Pure. */
+export function notificationsBinding(id: string, input: Parameters<typeof notificationsValues>[0], holds: Readonly<Record<string, Value | undefined>>,
+  hands: {readonly local: Readonly<Record<string, (value: Value | undefined) => void>>; readonly messages: () => void; readonly approvals: () => void}): DesignBinding {
+  const values: Record<string, Value> = {...notificationsValues(input), show: 'all', follow: true, opened: '[]'}
+  for (const [key, value] of Object.entries(holds)) put(values, key, value)
+  return {id, values, standing: {open: {disabled: NOTIFY_OPEN_REFUSED}},
+    local: {...hands.local, messages: () => hands.messages(), approvals: () => hands.approvals()},
+    writes: key => key === 'open',
+    write: async () => { throw new Error(NOTIFY_OPEN_REFUSED) }}
+}

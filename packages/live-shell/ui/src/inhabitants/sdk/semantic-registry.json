@@ -630,7 +630,7 @@
     ],
     "formats": {},
     "invariant": {
-      "generatesAbsent": "Binding writes to no owner: it takes the kernel's symbols — the form's hexagram through m3_reception — and runs its own physics over them; the matrix's generation cell waits on ql_m3_generate (lock §7)."
+      "generatesAbsent": "Binding writes to no owner: it takes the kernel's symbols — the form's hexagram and its generation cells through m3_reception — and runs its own physics over them (lock §7)."
     },
     "writePaths": [],
     "heldBy": [

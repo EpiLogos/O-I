@@ -7,15 +7,18 @@
 /* Session */
 .sg-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-2) }
 .sg { flex: 1; min-height: 0; display: flex; overflow: auto; background: var(--bg-2); padding-left: var(--pane-edge-band, 0) }
-.trk { flex: none; width: 122px; display: flex; flex-direction: column; border-right: 2px solid var(--line); position: relative }
-.trk .thd { height: 26px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 6px; padding-left: calc(6px + var(--rails, 0) * 4px); background: var(--tc); color: var(--bg-0); font-size: 10px; font-weight: 500; border: 0; border-bottom: 2px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left }
+/* A track's column wears its colour as the rule over its head, the head itself dark (catalogue dlw__session-grid.css .sgd-trk / .sgd-head). */
+.trk { flex: none; width: 122px; display: flex; flex-direction: column; border-right: 2px solid var(--line); border-top: 3px solid var(--tc); position: relative }
+.trk .thd { height: 26px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 6px; padding-left: calc(6px + var(--rails, 0) * 4px); background: var(--bg-3); color: var(--text); font-size: 10px; font-weight: 500; border: 0; border-bottom: 2px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left }
+/* An armed track's head carries the record mark (dlw__session-grid.css .sgd-arm). */
+.trk .thd .trk-arm { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; background: var(--rec) }
 .trk .thd.sel { box-shadow: inset 0 0 0 1px var(--accent) }
 .trk.sub { width: 104px }
 .trk.sub .thd { font-weight: 400; font-size: 9.5px }
 /* A track others sit under: a coloured band over the group's dark head, its colour carried down the rule beneath it. */
-.trk[data-group] .thd { padding-left: calc(6px + var(--rails, 0) * 4px + 12px); padding-bottom: 5px; background: linear-gradient(var(--tc), var(--tc)) top / 100% 21px no-repeat, var(--bg-1); border-bottom-color: var(--tc) }
+.trk[data-group] .thd { padding-left: calc(6px + var(--rails, 0) * 4px + 12px); background: var(--bg-3); border-bottom-color: var(--tc) }
 .trk[data-stalled] .thd { border-bottom-color: var(--stalled) }
-.trk .gf { position: absolute; top: 0; left: calc(var(--rails, 0) * 4px + 2px); width: 12px; height: 21px; z-index: 3; display: grid; place-items: center; padding: 0; background: none; border: 0; color: var(--bg-0); font-size: 8px }
+.trk .gf { position: absolute; top: 0; left: calc(var(--rails, 0) * 4px + 2px); width: 12px; height: 21px; z-index: 3; display: grid; place-items: center; padding: 0; background: none; border: 0; color: var(--text-dim); font-size: 8px }
 /* One rail per ancestor, each in that ancestor's colour. */
 .rails { position: absolute; left: 0; top: 0; bottom: 0; display: flex; pointer-events: none; z-index: 2 }
 .rails i { width: 3px; height: 100%; margin-right: 1px; opacity: .9 }
@@ -192,9 +195,9 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .mx-route small { margin-right: 2px; color: var(--text-faint); font-size: 7.5px; text-transform: uppercase; letter-spacing: .04em }
 .mx-route[data-state="unread"] { color: var(--text-faint) }
 /* A track that launches itself (Central's workspace): a small launcher at the head's right. */
-.trk .trk-launch { position: absolute; top: 0; right: 0; width: 16px; height: 24px; z-index: 3; padding: 0; background: none; border: 0; color: var(--bg-0); font-size: 9px }
+.trk .trk-launch { position: absolute; top: 0; right: 0; width: 16px; height: 24px; z-index: 3; padding: 0; background: none; border: 0; color: var(--text-dim); font-size: 9px }
 /* A selected track's way out of the set, on its head beside the launcher (Live's Delete on a selected track). */
-.trk .trk-remove { position: absolute; top: 0; right: 16px; width: 16px; height: 24px; z-index: 3; padding: 0; background: none; border: 0; color: var(--bg-0); font-size: 12px; line-height: 1 }
+.trk .trk-remove { position: absolute; top: 0; right: 16px; width: 16px; height: 24px; z-index: 3; padding: 0; background: none; border: 0; color: var(--text-dim); font-size: 12px; line-height: 1 }
 .trk .trk-remove:hover, .trk .trk-remove:focus-visible { color: var(--text) }
 .trk .trk-launch[data-receipt="refused"] { color: var(--rec) }
 /* An armed track's empty slot records (Live's round record button). */
@@ -261,3 +264,21 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 
 /* Return tracks (Live's; manual §16.2): after the tracks, before Main; ⌥⌘R hides them with the frame's returns-hidden. */
 .returns-hidden .trk-return, .returns-hidden .tl-lane[data-return="true"] { display: none }
+/* A track's own device (Central: the world's Workspace, §18.1): a small pane button on the head, left of the selected track's way out. */
+.trk .trk-device { position: absolute; top: 0; right: 32px; width: 16px; height: 24px; z-index: 3; display: grid; place-items: center; padding: 0; background: none; border: 0; color: var(--text-dim) }
+.trk .trk-device:hover, .trk .trk-device:focus-visible { color: var(--text) }
+.tl-head .trk-device { position: static; width: 14px; height: 14px; display: inline-grid; place-items: center; padding: 0; margin-left: 2px; background: none; border: 0; color: var(--text-dim) }
+/* The grid's foot (dlw__session-grid.css .sgd-bar): the legend of a clip's states, and what the selected clip launches and does after. */
+.sg-legend { flex: none; display: flex; align-items: center; gap: 14px; height: 24px; padding: 0 12px; background: var(--bg-0); border-top: 1px solid var(--line); color: var(--text-dim); font-size: 10px; white-space: nowrap; overflow: hidden }
+.sg-legend .sg-key { display: inline-flex; align-items: center; gap: 5px }
+.sg-legend .sg-key i { display: inline-block; width: 14px; height: 9px; background: var(--text-dim) }
+.sg-legend .sg-key i[data-status="done"] { opacity: .45 }
+.sg-legend .sg-key i[data-status="waiting"] { background: none; outline: 1px dashed var(--text-dim); outline-offset: -1px }
+.sg-legend .sg-key i[data-status="running"] { background: linear-gradient(90deg, var(--text-dim) 55%, color-mix(in srgb, var(--text-dim) 35%, transparent)) }
+.sg-legend .sg-key i[data-status="recording"] { background: var(--rec) }
+.sg-legend .sg-key i[data-status="stalled"] { background: repeating-linear-gradient(135deg, var(--text-dim) 0 3px, var(--stalled) 3px 5px) }
+.sg-legend .sg-says { margin-left: auto; overflow: hidden; text-overflow: ellipsis; color: var(--text) }
+/* The ruler's legend stands at the pane's foot; the foot with the owner's answer and the note stands just above it. */
+.tl-legend { position: sticky; bottom: 0; z-index: 3; margin-top: auto }
+.tl:has(.tl-legend) .tl-foot { bottom: 24px }
+.tl-foot + .tl-legend { margin-top: 0 }
