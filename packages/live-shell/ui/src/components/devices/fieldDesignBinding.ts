@@ -18,6 +18,8 @@ import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devi
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import {ENABLED_KEY, SETTING_PREFIX, expressionsFieldEntry, expressionsSettingChoices, type FieldDeviceSend} from './expressionsDevice'
 import {handsFor, heldFor} from '../../techne/devices/designDevices'
+import type {FrameInstrumentCondition} from '@epilogos/expressions-boundary'
+import {NO_CONDITION, tattvaKeys, type CoordinateName} from '../../inhabitants/ql/devices/qlCoordinateName'
 
 /** The field families whose catalogue design this binding hosts (Physics has its own, physicsBinding.ts). */
 export const FIELD_DESIGN_FAMILIES = ['pointer', 'relational', 'medium', 'contacts', 'morph', 'focus', 'colour', 'ink', 'depth', 'resonance'] as const
@@ -39,8 +41,8 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   },
   contacts: {},
   morph: {
-    'phase.theta': 'The engine keeps the toroidal phase in its own accumulator (its telemetry drive.theta, which the Studio\'s phase instrument draws) — missing: its announcement to the shell (the editor reading carries no phase).',
-    'phase.phi': 'The engine keeps the poloidal phase in its own accumulator (its telemetry drive.phi, which the Studio\'s phase instrument draws) — missing: its announcement to the shell (the editor reading carries no phase).',
+    'phase.theta': 'The engine has not reported its morph drive yet (the editor reading\'s observation.phases, its telemetry drive.theta): a reading, when it does.',
+    'phase.phi': 'The engine has not reported its morph drive yet (the editor reading\'s observation.phases, its telemetry drive.phi): a reading, when it does.',
   },
   focus: {
     'focus.at': 'The engine does not report which formation holds the focus now.',
@@ -50,10 +52,10 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   ink: {},
   depth: {},
   resonance: {
-    stations: 'The plate\'s stations are computed in the Expression from its modes (the Studio\'s station ticks) — missing: their announcement to the shell (the editor reading carries none).',
+    stations: 'The engine reports no stations for the plate (the editor reading\'s observation.stations; it computes none while the native field follows the domain).',
     'body.source': 'No body source: the plate takes its Q factor, agitation and edge as rows of its own, and no owner holds body constants by tattva (QL\'s scene material is a declared policy too).',
-    'tattva.name': 'The plate rings under no M2 condition of its own (the field engine is not QL\'s scene); the live scene\'s tattva, QL\'s condition source_path, is not announced to the shell either.',
-    'tattva.fibre': 'No tattva sets the plate, so no element fibre does: the live scene\'s fibre (QL\'s condition material_fibre) is not announced to the shell.',
+    'tattva.name': NO_CONDITION,
+    'tattva.fibre': NO_CONDITION,
     'tattva.standing': 'No table of body constants by tattva stands: the plate\'s constants are its own rows.',
   },
 }
@@ -102,6 +104,14 @@ function sceneValues(family: FieldDesignFamily, reading: Pick<NativeEditorReadin
   if (family === 'resonance') {
     const live = reading.observation?.effectiveValues?.['cymatics.frequencyHz'] ?? reading.observation?.effectiveValues?.['field.cymatics.frequencyHz']
     if (finite(live)) values['resonance.live'] = live
+    // The plate's stations as the engine computes them (the Studio's station ticks), verbatim from the observation.
+    const stations = reading.observation?.stations
+    if (stations?.length) values.stations = JSON.stringify(stations)
+  }
+  if (family === 'morph') {
+    // The engine's own morph accumulators, radians (its telemetry drive.theta and drive.phi), verbatim from the observation.
+    const phases = reading.observation?.phases
+    if (phases) { values['phase.theta'] = phases.theta; values['phase.phi'] = phases.phi }
   }
   return values
 }
@@ -178,14 +188,21 @@ export function fieldDesignWrites(family: FieldDesignFamily, device: DeviceInsta
 /** The binding the runtime hosts a field family's design on: the engine's readings, the device's one submit for its rows, the family's
  * send for what the scene's editor admits. While the work is busy or waits on the owner the device has no submit, and every value is a
  * reading. Keys with no owner stand disabled with their reason. */
-export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null): DesignBinding {
+export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null,
+  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null} = {}): DesignBinding {
   const modulatedBy: Record<string, string> = {}
   for (const row of device.rows) if (row.modulatedBy && !row.key.startsWith(SETTING_PREFIX)) modulatedBy[row.key] = row.modulatedBy
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(FIELD_ABSENT[family])) standing[key] = {disabled: why}
+  // Resonance's tattva: the live scene's M2 condition the frame announces, by the map's name for its coordinate (qlCoordinateName.ts).
+  const condition = family === 'resonance' ? tattvaKeys(tattva.condition, tattva.name ?? null) : null
+  if (condition) Object.assign(standing, condition.standing)
   const submit = device.submit, toggle = toggleKeyOf(family)
   const local = FIELD_LOCAL[family]
-  const values = {...fieldDesignValues(family, device, reading), ...(local ? Object.fromEntries(Object.entries(heldFor(device.id)).filter(([key]) => local.includes(key))) : {})}
+  const values = {...fieldDesignValues(family, device, reading), ...(condition?.values ?? {}), ...(local ? Object.fromEntries(Object.entries(heldFor(device.id)).filter(([key]) => local.includes(key))) : {})}
+  // A reading the observation carries is drawn as one, never written.
+  for (const key of ['stations', 'phase.theta', 'phase.phi']) if (key in values && key in FIELD_ABSENT[family]) standing[key] = {disabled: key === 'stations'
+    ? 'A reading: the plate\'s stations as the engine computes them; tune to one on the plate.' : 'A reading: the engine\'s own morph accumulator, in radians.'}
   for (const [key, why] of Object.entries(FIELD_UNREPORTED[family] ?? {})) if (!(key in values)) standing[key] = {disabled: why}
   return {
     id: device.id,

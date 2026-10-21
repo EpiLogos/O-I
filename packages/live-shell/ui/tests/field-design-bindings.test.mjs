@@ -124,6 +124,44 @@ test('Focus reads its route from the scene\'s formations; what no owner reports 
   assert.match(binding.standing['focus.at'].disabled, /does not report/)
   assert.match(binding.standing.route.disabled, /no reorder/)
   const morph = fieldBinding.fieldDesignBinding('morph', model.expressionsFieldDevice(r, 'morph', null), r, null)
-  assert.match(morph.standing['phase.theta'].disabled, /accumulator/)
+  assert.match(morph.standing['phase.theta'].disabled, /observation\.phases/)
   assert.equal(fieldBinding.fieldDesignValues('ink', model.expressionsFieldDevice(r, 'ink', null), null).reason, 'No native Expression is open: its field has no reading here.')
+})
+
+// W6: what the frame announces of the field and the live scene. REAL condition and the engine's stations:
+// tests/fixtures/field-announcements-2026-10-21.json. The phases are two numbers the engine reports (FAKE values here: no engine runs).
+test('Morph reads the engine\'s own phases and Resonance its stations from the observation, verbatim; Resonance\'s tattva is the live scene\'s M2 condition, by the map\'s name', async () => {
+  const {readFileSync} = await import('node:fs')
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/field-announcements-2026-10-21.json', import.meta.url), 'utf8'))
+  const names = await import(src('inhabitants/ql/devices/qlCoordinateName.ts'))
+  const {conditionReadingOf} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/instrumentCondition.ts')
+  const r = {...reading(), observation: {fieldPaused: false, phases: {theta: 7.4, phi: 2.1}, stations: fixture.stations}}
+  const morph = fieldBinding.fieldDesignBinding('morph', model.expressionsFieldDevice(r, 'morph', null), r, null)
+  assert.deepEqual([morph.values['phase.theta'], morph.values['phase.phi']], [7.4, 2.1], 'the engine\'s accumulators, radians, as reported')
+  assert.match(morph.standing['phase.theta'].disabled, /A reading/)
+  const condition = conditionReadingOf({current: {m2: {condition: {source_path: fixture.source_path}}}})
+  const name = names.readCoordinateName({outcome: {result: 'owner_route_reading', data: fixture.tattva_view}}, condition.tattva_ref)
+  assert.deepEqual(name, {ok: true, name: 'Prithvi Tattva'}, 'the map\'s own name for #2-2-2-5-5')
+  const device = model.expressionsFieldDevice(r, 'resonance', null)
+  const resonance = fieldBinding.fieldDesignBinding('resonance', device, r, null, {condition, name})
+  assert.deepEqual(JSON.parse(resonance.values.stations), fixture.stations, 'the engine\'s stations, verbatim')
+  assert.deepEqual([resonance.values['tattva.name'], resonance.values['tattva.fibre']], ['Prithvi Tattva', 'earth'])
+  assert.equal(resonance.standing['tattva.name'].disabled, names.TATTVA_READ)
+  assert.match(resonance.standing['body.source'].disabled, /no owner holds body constants by tattva/, 'the body source keeps its reason')
+  assert.match(resonance.standing['tattva.standing'].disabled, /No table of body constants/)
+  const design = await designOf('resonance')
+  for (const view of ['compact', 'whole', 'full']) {
+    const markup = renderToStaticMarkup(h(HostedDevice, {designed: design, binding: resonance, view, nav: {}}))
+    assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/, view)
+  }
+  const whole = renderToStaticMarkup(h(HostedDevice, {designed: design, binding: resonance, view: 'whole', nav: {}}))
+  assert.ok(whole.includes('Mode 1:1') || whole.includes('80'), 'the stations are drawn')
+  // No announcement: each key keeps its reason.
+  const bare = fieldBinding.fieldDesignBinding('resonance', model.expressionsFieldDevice(reading(), 'resonance', null), reading(), null)
+  for (const key of ['stations', 'tattva.name', 'tattva.fibre']) assert.equal(bare.values[key], undefined, key)
+  assert.equal(bare.standing['tattva.name'].disabled, names.NO_CONDITION)
+  assert.match(bare.standing.stations.disabled, /reports no stations/)
+  const pending = fieldBinding.fieldDesignBinding('resonance', device, r, null, {condition, name: {ok: false, reason: 'Reading the map\'s name for #2-2-2-5-5…', busy: true}})
+  assert.equal(pending.values['tattva.name'], undefined, 'the name waits for the map')
+  assert.equal(pending.values['tattva.fibre'], 'earth')
 })

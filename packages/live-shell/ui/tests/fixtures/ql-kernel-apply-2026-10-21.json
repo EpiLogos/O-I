@@ -1,0 +1,83 @@
+{
+ "captured": "REAL: Quaternal Logic 0.1.0 (9af17b080bc8, installed), 21 Oct 2026, read only: `ql kernel apply <operator> <address> --json` for two addresses; the refusal of an address in another form (exit 2).",
+ "cases": [
+  {
+   "operator": "conjugate-address",
+   "address": "qladdr:sixfold@1/direct/P2/d0",
+   "answer": {
+    "contract": "ql.cli/v1",
+    "operation": "conjugate-address",
+    "input": "qladdr:sixfold@1/direct/P2/d0",
+    "output": "qladdr:sixfold@1/conjugate/P2/d0",
+    "schemaVersion": "1.0.0",
+    "kernelVersion": "0.1.0-q1"
+   }
+  },
+  {
+   "operator": "complement-address",
+   "address": "qladdr:sixfold@1/direct/P2/d0",
+   "answer": {
+    "contract": "ql.cli/v1",
+    "operation": "complement-address",
+    "input": "qladdr:sixfold@1/direct/P2/d0",
+    "output": "qladdr:sixfold@1/direct/P3/d0",
+    "schemaVersion": "1.0.0",
+    "kernelVersion": "0.1.0-q1"
+   }
+  },
+  {
+   "operator": "classify-four-plus-two",
+   "address": "qladdr:sixfold@1/direct/P2/d0",
+   "answer": {
+    "contract": "ql.cli/v1",
+    "operation": "classify-four-plus-two",
+    "input": "qladdr:sixfold@1/direct/P2/d0",
+    "output": "explicate",
+    "schemaVersion": "1.0.0",
+    "kernelVersion": "0.1.0-q1"
+   }
+  },
+  {
+   "operator": "conjugate-address",
+   "address": "qladdr:sixfold@1/conjugate/P0/d0",
+   "answer": {
+    "contract": "ql.cli/v1",
+    "operation": "conjugate-address",
+    "input": "qladdr:sixfold@1/conjugate/P0/d0",
+    "output": "qladdr:sixfold@1/direct/P0/d0",
+    "schemaVersion": "1.0.0",
+    "kernelVersion": "0.1.0-q1"
+   }
+  },
+  {
+   "operator": "complement-address",
+   "address": "qladdr:sixfold@1/conjugate/P0/d0",
+   "answer": {
+    "contract": "ql.cli/v1",
+    "operation": "complement-address",
+    "input": "qladdr:sixfold@1/conjugate/P0/d0",
+    "output": "qladdr:sixfold@1/conjugate/P5/d0",
+    "schemaVersion": "1.0.0",
+    "kernelVersion": "0.1.0-q1"
+   }
+  },
+  {
+   "operator": "classify-four-plus-two",
+   "address": "qladdr:sixfold@1/conjugate/P0/d0",
+   "answer": {
+    "contract": "ql.cli/v1",
+    "operation": "classify-four-plus-two",
+    "input": "qladdr:sixfold@1/conjugate/P0/d0",
+    "output": "implicate",
+    "schemaVersion": "1.0.0",
+    "kernelVersion": "0.1.0-q1"
+   }
+  }
+ ],
+ "refusal": {
+  "operator": "conjugate-address",
+  "address": "qladdr:four-plus-two@1/direct/P2/d0",
+  "exit": 2,
+  "stderr": "ql: unsupported QL address frame: four-plus-two@1"
+ }
+}

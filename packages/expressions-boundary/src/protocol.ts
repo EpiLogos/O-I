@@ -6,8 +6,10 @@
 import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
 import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
 import type {HostedAppState as CradleHostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp'; import type {FramePresentation, FrameChromeReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts'; import {readFrameResearch, type FrameResearchReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts'; import {readFrameStage, type FrameStageReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
-export type {HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress}; /** The cradle's reading and (T-FRAME-CHROME-ONTO-PLATES) the presentation the shell declared and the frame's chrome as data. */ export type HostedAppState = CradleHostedAppState & {presentation?: FramePresentation; chrome?: FrameChromeReading; /** lane W4-Technē: the research instruments' state as the frame holds it (researchReading.ts). */ research?: FrameResearchReading; /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts). */ instrumentStage?: FrameStageReading};
+export type {HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress}; /** The cradle's reading and (T-FRAME-CHROME-ONTO-PLATES) the presentation the shell declared and the frame's chrome as data. */ export type HostedAppState = CradleHostedAppState & {presentation?: FramePresentation; chrome?: FrameChromeReading; /** lane W4-Technē: the research instruments' state as the frame holds it (researchReading.ts). */ research?: FrameResearchReading; /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts). */ instrumentStage?: FrameStageReading; /** W6: the live scene's M2 condition, its tattva and material fibre, as the native field last inspected it (instrumentCondition.ts). */ instrumentCondition?: FrameInstrumentCondition};
 export type {FrameStageReading, FrameStageSlot, FrameStageBinding} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
+import {readFrameCondition, type FrameInstrumentCondition} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/instrumentCondition.ts';
+export type {FrameInstrumentCondition} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/instrumentCondition.ts';
 export type {FrameResearchReading, FrameJourneyReading, FrameJourneyStop, FrameCanvasReading, FrameCanvasItem, FrameCanvasLine, FrameTimelineReading, FrameTimelineEvent} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts';
 /** lane-3 E22: the frame's own deep-link grammar (`?expression=&scene=&t=&marker=`), one parse and one format for frame, boundary
  * and shell: the announced address is read with it, the shell opens the frame with it and copies the address in it. */
@@ -223,6 +225,12 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     const stage = readFrameStage(raw.instrumentStage);
     if (!stage) return null;
     state.instrumentStage = stage;
+  }
+  // W6: the live scene's M2 condition (instrumentCondition.ts). A malformed one refuses the reading; absent is valid (no inspect yet).
+  if (raw.instrumentCondition !== undefined) {
+    const condition = readFrameCondition(raw.instrumentCondition);
+    if (!condition) return null;
+    state.instrumentCondition = condition;
   }
   // The property take's append/replace mode, as the frame's own take-mode reading.
   if (raw.takeMode !== undefined) {

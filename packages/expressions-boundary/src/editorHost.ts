@@ -58,6 +58,20 @@ function deviceWidgets(value: unknown): boolean {
     return true;
   });
 }
+/** W6: the engine's morph phases and the plate's stations, admitted exactly when the observation carries them. */
+const STATION_KEYS = ['id', 'index', 'name', 'frequencyHz', 'm', 'n', 'color', 'energy', 'semanticNodeId', 'affinity'];
+function observationExtras(observation: unknown): boolean {
+  if (observation === undefined) return true;
+  if (!object(observation)) return false;
+  const {phases, stations} = observation;
+  if (phases !== undefined && (!object(phases) || Object.keys(phases).length !== 2 || !finite(phases.theta) || !finite(phases.phi))) return false;
+  if (stations === undefined) return true;
+  return Array.isArray(stations) && stations.length <= 64 && stations.every(s => object(s) && Object.keys(s).every(key => STATION_KEYS.includes(key))
+    && Number.isSafeInteger(s.index) && typeof s.name === 'string' && finite(s.frequencyHz) && s.frequencyHz > 0
+    && Number.isSafeInteger(s.m) && Number.isSafeInteger(s.n) && typeof s.color === 'string'
+    && (s.id === undefined || typeof s.id === 'string') && (s.energy === undefined || finite(s.energy))
+    && (s.semanticNodeId === undefined || typeof s.semanticNodeId === 'string') && (s.affinity === undefined || finite(s.affinity)));
+}
 export function reading(value: unknown): value is NativeEditorReading {
   if (!object(value) || !object(value.basis) || !object(value.scene) || !object(value.history)
     || !object(value.selection) || !object(value.standing) || !object(value.entityOccurrences)) return false;
@@ -72,6 +86,7 @@ export function reading(value: unknown): value is NativeEditorReading {
     || !(standing.notice === null || typeof standing.notice === 'string')
     || !Object.values(value.entityOccurrences).every(text)
     || !chosenControls(value.chosenControls,scene,selection,value.entityOccurrences)
+    || !observationExtras(value.observation)
     || value.foldTargets !== undefined && !isNativeFoldTargets(value.foldTargets)
     || value.devices !== undefined && !deviceWidgets(value.devices)
     || value.scenes !== undefined && (!object(value.scenes) || value.scenes.loop !== undefined && typeof value.scenes.loop !== 'boolean'

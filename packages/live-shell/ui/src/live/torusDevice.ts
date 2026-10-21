@@ -11,11 +11,12 @@ import type {DeviceInstance, ParamValue} from '../frame/devices/deviceRuntime'
 import type {DesignBinding, Standing, Value, ValueChange} from '../frame/devices/designed'
 import {qlInstrumentEdit, qlPresentation, QL_PRESENTATION_KEYS, QL_WRITE_PATH} from '../inhabitants/ql/devices/qlDevices'
 import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LIVE_TORUS_TOPOLOGY, type LiveTorusState} from './torusInstrument'
-import type {FrameStageReading} from '@epilogos/expressions-boundary'
+import type {FrameInstrumentCondition, FrameStageReading} from '@epilogos/expressions-boundary'
 import {hostedChrome} from '../projections/expressionsPaneHost'
 import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
 import {handsFor, heldFor} from '../techne/devices/designDevices'
 import type {StageRun} from '../components/expressions/studio/StudioStage'
+import {coordinateNames, NO_CONDITION, tattvaKeys, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
 
 export const TORUS_DEVICE_ID = 'live:m1-torus'
 
@@ -152,8 +153,10 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   sounding: 'The owner reports no sounding keys: a struck key is one act through the stage channel, answered yes or no, never reported back as sounding.',
   driveMod: 'Nothing moves the drive: the owner announces no drive, so no planet can take it and no range is drawn round it.',
   'body.source': 'No body source: QL\'s scene material is a declared policy (scene_field.rs MATERIAL_STANDING), never taken from the tattva; no owner holds body constants by tattva.',
-  'tattva.name': 'The tattva of the M2 condition is QL\'s (the live event\'s condition source_path: tattva_coordinate), but neither the field\'s influence reading nor the instrument the frame announces carries it — missing: its announcement to the shell.',
-  'tattva.fibre': 'The element fibre is QL\'s (the condition source_path: material_fibre), but nothing announces it to the shell — missing: its announcement.',
+  // tattva.name and tattva.fibre: the live scene's M2 condition the frame announces (qlCoordinateName.ts tattvaKeys), absent with its reason
+  // until it does.
+  'tattva.name': NO_CONDITION,
+  'tattva.fibre': NO_CONDITION,
   'tattva.standing': 'No table of body constants by tattva stands: QL\'s scene material is a declared policy (scene_field.rs MATERIAL_STANDING).',
   ...STAGE_ABSENT,
 }
@@ -217,7 +220,9 @@ const TORUS_KEYS = ['light', 'standing', 'level', ...QL_PRESENTATION_KEYS.filter
  * key the owner does not take disabled with the reason. */
 export function torusDesignBinding(state: LiveTorusState | null, device: DeviceInstance = torusDevice(state), skyHeld: Readonly<Record<string, string>> = {},
   stage: FrameStageReading | null | undefined = hostedChrome()?.state?.instrumentStage ?? null, rack: QlRackState = qlRackState(1),
-  run: StageRun | null = hostedChrome()?.run ?? null, held: Readonly<Record<string, Value>> = heldFor(TORUS_DESIGN_ID)): DesignBinding {
+  run: StageRun | null = hostedChrome()?.run ?? null, held: Readonly<Record<string, Value>> = heldFor(TORUS_DESIGN_ID),
+  condition: FrameInstrumentCondition | null | undefined = hostedChrome()?.state?.instrumentCondition ?? null,
+  tattvaName: CoordinateName | null = condition?.tattva_ref ? coordinateNames().get(condition.tattva_ref) ?? null : null): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of TORUS_KEYS) {
     const why = writeStanding(state, key)
@@ -234,6 +239,9 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
     standing['stage.why'] = {disabled: stage.last?.why ? 'The owner\'s refusal of the last stage act, in its words.' : stage.last ? 'The last stage act was not refused.' : NO_LAST}
     for (const key of Object.keys(TORUS_STAGE_ACTS)) if (acting) delete standing[key]; else standing[key] = {disabled: NO_STAGE_FRAME}
   }
+  // The Body group's tattva: the live scene's M2 condition, as the frame announces it, by the map's name for its coordinate.
+  const tattva = tattvaKeys(condition, tattvaName)
+  Object.assign(standing, tattva.standing)
   const local: Record<string, (value: Value | undefined) => void> = {...page.local, ...handsFor(TORUS_DESIGN_ID, TORUS_STAGE_LOCAL)}
   const submit = device.submit
   const stageAct = async (change: ValueChange) => {
@@ -243,7 +251,7 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   }
   return {
     id: device.id,
-    values: {...torusDesignValues(state), ...torusStageValues(stage, held), ...page.values},
+    values: {...torusDesignValues(state), ...torusStageValues(stage, held), ...page.values, ...tattva.values},
     writes: key => (key in TORUS_STAGE_ACTS ? acting : key !== 'rack' && writeStanding(state, key) === null),
     standing,
     local,

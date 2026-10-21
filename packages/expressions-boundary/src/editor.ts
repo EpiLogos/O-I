@@ -99,9 +99,16 @@ export interface NativeEditorReading {
     simTime?: number;
     effectiveValues?: Record<string, number>;
     sequences?: {entityId: string; linkIndex: number; nextIndex?: number; progress: number}[];
+    /** W6: the engine's morph phases, its own accumulators in radians (its telemetry `drive.theta` and `drive.phi`, which the Studio's
+     * phase instrument draws). Absent while the engine reports no drive. */
+    phases?: {theta: number; phi: number};
+    /** W6: the resonance plate's stations as the engine computes them (its `stations()`, the Studio's station ticks), verbatim. */
+    stations?: NativeResonanceStation[];
   };
   standing: {dirty: boolean; pending: boolean; notice: string | null};
 }
+/** One station of the resonance plate, as the field engine computes it (field-studies-journeys engine.ts `stations()`). */
+export interface NativeResonanceStation {id?: string; index: number; name: string; frequencyHz: number; m: number; n: number; color: string; energy?: number; semanticNodeId?: string; affinity?: number}
 /** Existing shared Scene Morph fields; no occurrence or alternate solver. */
 export type NativeMorphSettingChange =
   | {kind: 'morph-setting'; key: 'morphEnabled' | 'autoOscillate'; value: boolean}

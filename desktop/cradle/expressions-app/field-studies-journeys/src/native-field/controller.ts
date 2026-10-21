@@ -8,6 +8,7 @@ import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type 
 import {editEffectChain,editEffects,initialEffects,type EffectValue,type EffectsState,type PresentationEffect} from './effectsLaw';
 import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
+import {conditionReadingOf} from '../instrumentCondition';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -145,6 +146,8 @@ export class NativeFieldController {
   instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
    opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,played:this.played,struck:this.struck,
    stage:this.stageReading,stage_stale:this.stageStale,stage_last:this.stageLast,
+   // The live scene's M2 condition, verbatim from the sources last inspected (instrumentCondition.ts): announced, never derived here.
+   condition:conditionReadingOf(this.sources)??null,
    presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
   exact_seek:false,restart:'explicit new native process; no implicit rewind',

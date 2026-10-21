@@ -1,0 +1,149 @@
+{
+ "captured": {
+  "condition": "REAL: Quaternal Logic 0.1.0 (9af17b080bc8, installed), 21 Oct 2026, `ql scene world` over the installed transit sky of 2026-10-21T12:00Z (the default start recipe): basis.m2.condition.source_path verbatim — the coupled basis a field host also discloses on inspect (sources.current).",
+  "tattva_view": "REAL: the same ql, `ql kernel ledger '#2-2-2-5-5' --json`, trimmed to schema and coordinate {source_ref, names}.",
+  "stations": "SCRIPTED: the frame's own engine code — expressions-app src/engine/cymaticResonator.ts (transpiled, unchanged) configured as production.ts stations() does with no current stations (base 40 Hz, plate 700), mapped exactly as it maps them."
+ },
+ "source_path": {
+  "chakra_coordinate": "#2-5-0/1-1",
+  "chakra_index": 1,
+  "chakra_node_id": "5ae70b600c50f1fe",
+  "claims": [
+   {
+    "coordinate": "#2-4.3-0-4",
+    "literal": "Kirdan",
+    "node_id": "ec7c57f12cefdfd8",
+    "path": "bimba-map:http://100.92.62.101:7474",
+    "pointer": "/708/c_1_name",
+    "property": "c_1_name",
+    "sha256": "0ceaa5552398b9eb16238461a7d5f9e9c7126cda40cc9346983dfce54015cc8a"
+   },
+   {
+    "coordinate": "#2-5-0/1-1",
+    "literal": "Four-petaled lotus with yellow square (earth symbol)",
+    "node_id": "5ae70b600c50f1fe",
+    "path": "bimba-map:http://100.92.62.101:7474",
+    "pointer": "/870/c_1_yantra_form",
+    "property": "c_1_yantra_form",
+    "sha256": "0ceaa5552398b9eb16238461a7d5f9e9c7126cda40cc9346983dfce54015cc8a"
+   }
+  ],
+  "colour_name": "yellow",
+  "element_literal": "",
+  "interval_literal": "",
+  "maqam_coordinate": "#2-4.3-0-4",
+  "maqam_index": 3,
+  "maqam_name": "Kirdan",
+  "maqam_node_id": "ec7c57f12cefdfd8",
+  "material_fibre": "earth",
+  "musical_relations": [
+   {
+    "from_coordinate": "#2-4.3-0-4",
+    "id": "393c61f330a58829",
+    "kind": "TONIC_PLANETARY_RESONANCE",
+    "path": "bimba-map:http://100.92.62.101:7474",
+    "payload_sha256": "4b647bfe6df6ee8b83fdc23ff66797fcc309d5776d402580f03589324045757d",
+    "record_index": 7021,
+    "relation_ref": "bimba:relation:df9272ffcd20657728050b73",
+    "sha256": "0ceaa5552398b9eb16238461a7d5f9e9c7126cda40cc9346983dfce54015cc8a",
+    "to_coordinate": "#2-5-5"
+   }
+  ],
+  "planet_coordinate": "#2-5-5",
+  "planet_index": 6,
+  "planet_node_id": "6e19f8d6726f28e1",
+  "planetary_mode_literal": "",
+  "planetary_relations": [
+   {
+    "from_coordinate": "#2-5-5",
+    "id": "8f12c607bcd1940b",
+    "kind": "PLANETARY_RESONANCE",
+    "path": "bimba-map:http://100.92.62.101:7474",
+    "payload_sha256": "03e55a2bde54fa06f9b906576a8ea663c3bf825dd2f0916e5e5a089cab5f054f",
+    "record_index": 8294,
+    "relation_ref": "bimba:relation:3dc468971635ad58313af42e",
+    "sha256": "0ceaa5552398b9eb16238461a7d5f9e9c7126cda40cc9346983dfce54015cc8a",
+    "to_coordinate": "#2-5-0/1-1"
+   }
+  ],
+  "role": "tonic",
+  "spelled_steps24": null,
+  "tattva_coordinate": "#2-2-2-5-5",
+  "tattva_node_id": "9741de25da067f85",
+  "yantra_literal": "Four-petaled lotus with yellow square (earth symbol)"
+ },
+ "tattva_view": {
+  "schema": "ql.m-ledger-view/v1",
+  "coordinate": {
+   "source_ref": "#2-2-2-5-5",
+   "names": [
+    "Prithvi Tattva"
+   ]
+  }
+ },
+ "stations": [
+  {
+   "id": "mode:1:1",
+   "index": 0,
+   "name": "Mode 1:1",
+   "frequencyHz": 80,
+   "m": 1,
+   "n": 1,
+   "color": "#888888"
+  },
+  {
+   "id": "mode:2:2",
+   "index": 1,
+   "name": "Mode 2:2",
+   "frequencyHz": 320,
+   "m": 2,
+   "n": 2,
+   "color": "#888888"
+  },
+  {
+   "id": "mode:1:3",
+   "index": 2,
+   "name": "Mode 1:3",
+   "frequencyHz": 400,
+   "m": 1,
+   "n": 3,
+   "color": "#888888"
+  },
+  {
+   "id": "mode:1:4",
+   "index": 3,
+   "name": "Mode 1:4",
+   "frequencyHz": 680,
+   "m": 1,
+   "n": 4,
+   "color": "#888888"
+  },
+  {
+   "id": "mode:3:3",
+   "index": 4,
+   "name": "Mode 3:3",
+   "frequencyHz": 720,
+   "m": 3,
+   "n": 3,
+   "color": "#888888"
+  },
+  {
+   "id": "mode:2:4",
+   "index": 5,
+   "name": "Mode 2:4",
+   "frequencyHz": 800,
+   "m": 2,
+   "n": 4,
+   "color": "#888888"
+  },
+  {
+   "id": "mode:1:5",
+   "index": 6,
+   "name": "Mode 1:5",
+   "frequencyHz": 1040,
+   "m": 1,
+   "n": 5,
+   "color": "#888888"
+  }
+ ]
+}

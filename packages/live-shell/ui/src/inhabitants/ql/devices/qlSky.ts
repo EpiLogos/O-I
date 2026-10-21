@@ -253,11 +253,13 @@ export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   place: 'No observer place reaches the shell.',
   // The Share page (manual §22.1): consent is Nara's presence. The kernel's nara_presence prepares and publishes one presence publication
   // (desktop/cradle/src/nara/nativePresence.ts: field, world, projection and participant refs the Sky does not hold); nothing reads the
-  // world's participants or the consents you hold to the shell.
+  // world's participants or the consents you hold to the shell. The consents wait on nara_presence `list`; the design draws its Withdraw
+  // disabled in its own words, with no key, so the person's withdrawal (nara_presence `withdraw`, a fresh withdrawal_ref) has no control
+  // to bind until the design gives it one.
   'presence.participants': 'The world\'s participants: no owner operation carries them here — missing op: a read of the world\'s participants for the Sky (Nara\'s presence, through the kernel).',
   'presence.target': 'No participants are read here, so there is no one to choose — missing op: a read of the world\'s participants (Nara\'s presence, through the kernel).',
-  'presence.consents': 'The consents you hold: no owner operation carries them here — missing op: `ql nara presence-consent` read through the kernel (nara_presence only prepares and publishes).',
-  'presence.shared': 'Who has shared their sky with you: no owner operation carries it here — missing op: `ql nara presence-consent` read through the kernel.',
+  'presence.consents': 'The consents you hold: no owner operation carries them here — missing op: the kernel\'s nara_presence `list` (each SharedField\'s `nara-presences`, oi.nara-presences/v1; nara_presence today only prepares and publishes).',
+  'presence.shared': 'Who has shared their sky with you: no owner operation carries it here — missing op: the kernel\'s nara_presence `list` (each SharedField\'s `nara-presences`, oi.nara-presences/v1).',
   'presence.share': 'Share: no owner operation carries it here — missing op: nara_presence publish from the Sky, which holds none of the world, projection and participant refs a publication needs.',
   'natal.of': 'Whose birth sky rings: the ring opens on the identity Launch gave the Sky; opening another\'s needs their consent read — missing op: `ql nara presence-consent` through the kernel.',
   // The Rack page (manual §16.16) reads M2′'s rack from the map's ledger (qlRack.ts): no key of it is absent here.
