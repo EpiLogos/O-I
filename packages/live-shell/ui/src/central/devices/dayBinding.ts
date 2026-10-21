@@ -69,7 +69,9 @@ const SOURCE_KEYS = ['src_central', 'src_factory', 'src_expressions', 'src_techn
 /** The keys the Day's settings reading fills, and those its moves reading fills. */
 export const DAY_SETTINGS_KEYS: readonly string[] = ['rollover', 'agentWrites', 'closeRoutine', ...SOURCE_KEYS, ...DAY_MOVES.flatMap(move => [`at_${move}`, `prompt_${move}`])]
 export const DAY_RUN_KEYS: readonly string[] = DAY_MOVES.flatMap(move => [`last_${move}`, `running_${move}`, ...(move === 'close' ? [] : [`gave_${move}`])])
-const NO_CLOSEOUT = 'Close-out is AIKit\'s reading of what the close left behind (`aikit work continuity closeout verify`): no kernel route reaches it yet (T-COVERAGE §1.2).'
+/** The close-out (design package D5, §18.2 Close): AIKit's own reading. Central keeps no close-out verify (its action list has none), and the
+ * kernel's AIKit reads (kernel/src/owner_routes.rs AikitRead: inbox, wiki shape, gateway ecology and replay) do not include it. */
+export const NO_CLOSEOUT = 'Close-out is AIKit\'s reading of what the close left behind (`aikit work continuity closeout verify --json`); Central keeps no close-out verify of its own, and no kernel route reaches AIKit\'s — missing op: an aikit_read route for `work continuity closeout verify` (kernel/src/owner_routes.rs AikitRead; T-COVERAGE §1.2).'
 
 /** Why each design key no owner reports has no reading (manual §16.12: "When a reading is missing, say which one"). The settings' and
  * the runs' keys have their reasons from their readings (dayOwnAbsent). The views draw "—" where the kit draws them. */

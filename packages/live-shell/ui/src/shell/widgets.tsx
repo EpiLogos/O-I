@@ -62,6 +62,8 @@ const HINTS: Record<string, string> = {
 /** The devices born on the rail that no old tile held (DLW §23): registered so the rail lists them; each draws its device
  * (widgets/railDevices.tsx claims it), so the body here never draws. */
 const RAIL_BORN: readonly WidgetDeclaration[] = [
+  // Notifications beside Messages and Approvals (§23.9): a monitor, its tile here and its Full in a pane (widgets/railDevices.tsx claims it).
+  {id: 'notifications', name: 'Notifications', mark: 'arm', hint: 'what asks for your attention: agents that wait, proposals, owners\' requests', Body: () => null},
   {id: 'wiki', name: 'Wiki', mark: 'orbit', hint: 'the wiki pages an agent may use, read here', Body: () => null},
   {id: 'calendar', name: 'Calendar', mark: 'metro', hint: 'what is due around your work, from a calendar provider', Body: () => null},
 ]

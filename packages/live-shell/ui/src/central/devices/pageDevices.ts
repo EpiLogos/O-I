@@ -24,7 +24,7 @@ import {useReachedDocument, type DocumentInPane} from '../documents/documentDoor
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
 import {appendFlowEntry, centralWrite, setFlowMeta} from './centralDeviceWrites'
 import {civilDayName, type DayAperture} from './dayBinding'
-import {documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
+import {documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace, type TrackWorld,
   type PageMaterial, type ReachedPage} from './pageBindings'
 import {readDayPage, readFlowPage, wordsOfHtml, type FlowPage} from './pageReadings'
 import {dateOfDayPath} from '../daySurface'
@@ -198,7 +198,13 @@ export function useWorkspaceGround(transport: KernelTransportStatus, project: st
 }
 
 /** The page family's readings and bindings over the reached document, the Day device's document, the roster and the workspace book. */
-export function usePageDevices(transport: KernelTransportStatus, day: DayDocumentReading): PageDevices {
+/** The world a world's head opened the Workspace on, and the projects of Work that are worlds (the Workspace's Folder choices). */
+export interface PageWorld {
+  readonly world: TrackWorld | null
+  readonly folders: readonly string[] | null
+}
+
+export function usePageDevices(transport: KernelTransportStatus, day: DayDocumentReading, worldOf: PageWorld = {world: null, folders: null}): PageDevices {
   // The page family's devices speak of a Day or a Flow; a Being or a Thing reached in its pane leaves them as when none is reached.
   const reachedNow = useReachedDocument()
   const doc = reachedNow && (reachedNow.form === 'Day' || reachedNow.form === 'Flow') ? reachedNow as DocumentInPane & {form: 'Day' | 'Flow'} : null
@@ -232,13 +238,16 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
   // The Flow's Thought, for its AIKit Flow ref; the workspace's world's ground, for its project (W2: pageGround.ts).
   const flowPage = flow.page
   const thought = useFlowThought(transport, flowPage?.documentId ?? null)
-  const ground = useWorkspaceGround(transport, current?.project ?? null)
+  // The Workspace's Ground and Self read the world its head opened it on (§18.1: the track's Workspace device), else the book's project.
+  const world = worldOf.world, folders = worldOf.folders
+  const ground = useWorkspaceGround(transport, world ? world.project : current?.project ?? null)
   return useMemo((): PageDevices => {
     const bindings: Record<string, DesignBinding> = {}
     const fulls: Record<string, OwnFull> = {}
     const id = centralDeviceId
-    if (current) {
-      bindings[id('workspace')] = workspaceBinding(id('workspace'), current, Date.now(), switchMode && rename ? {switchMode: mode => { const shell = shellModeOf(mode); if (!shell) throw new Error(`${mode} is no mode of the shell.`); switchMode(shell) }, rename} : null, ground)
+    if (current || world) {
+      bindings[id('workspace')] = workspaceBinding(id('workspace'), current ?? null, Date.now(), switchMode && rename ? {switchMode: mode => { const shell = shellModeOf(mode); if (!shell) throw new Error(`${mode} is no mode of the shell.`); switchMode(shell) }, rename} : null, ground,
+        world, folders)
     }
     if (!doc || !reached) {
       return {form: null, book: !!book, bindings, fulls, reads: {page: null, workspace: current ? {name: current.name, mode: current.layout.mode ?? 'base'} : null, flow: null},
@@ -281,6 +290,6 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
     }
     // The holds' version re-binds the view's own keys; `heldOf` reads them inside the builders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc, reached, material, agents, current, switchMode, rename, setLayout, location, transport, refreshFlow, book, version, thought, ground])
+  }, [doc, reached, material, agents, current, switchMode, rename, setLayout, location, transport, refreshFlow, book, version, thought, ground, world, folders])
 }
 

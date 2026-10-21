@@ -64,6 +64,7 @@ import {turnDay, useDayInPane} from '../documents/documentDoor'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
 import {usePageDevices} from './pageDevices'
+import {WORKSPACE_DEVICE_ID} from './pageBindings'
 import {HYGIENE_DEVICE_ID, IMPACT_DEVICE_ID, useHygieneDevice, useImpactDevice} from './groundDevices'
 import {CENTRAL_AGENT_ID, answerBinding, centralAgentBinding, centralAgentRef} from './answerBinding'
 import {useAnswerVoice} from './useAnswerVoice'
@@ -402,16 +403,6 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const dayDevice = useDayDevice(transport, dayStanding ? {standing: dayStanding, aperture: day} : null)
   const dayBinding = dayDevice.binding
   const dayAperture = dayDevice.facts.aperture
-  // The document the hand reached, for the Agent's and Scope's page (the page family itself stands on no chain: R4).
-  const pages = usePageDevices(transport, {aperture: dayAperture, face: dayDevice.document.face, payload: dayDevice.document.payload, civilDate: dayDevice.facts.civilDate})
-  // Ground hygiene and Impact on their designs (groundDevices.ts): the census read when the chain opens, the neighbourhood of the
-  // browser's selection when it changes.
-  const hygiene = useHygieneDevice(transport, true)
-  const impactDesign = useImpactDevice(transport, impact)
-  const nara = useNaraReading(transport, conversation?.project ?? null, conversation?.expressionRef ?? null, conversation?.conversation ?? null)
-  // The Agent (answerBinding.ts centralAgentBinding): the bound session's exchange through the ONE shared encounter observer (lane BF2's),
-  // the roster's agent of the binding's role. The Packet goes with the conversation the Agent widget holds (THE selection's session, else
-  // the companion's own: the read the Packet widget and the transport's Key slot make, useCentralTransport.tsx usePacketReading).
   const selection = useOptionalContinuity()?.current.context?.selection ?? null
   const selectionRef = selection?.ref ?? null
   // The world the selected track holds (§16.2 "Track: a world"), from the worlds Central discloses — the one held reading the tracks read
@@ -421,6 +412,24 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const selectedWorld = centralWorldOf(selection, worlds)
   const codeProject = selectedWorld?.kind === 'project' ? selectedWorld.project : null
   const git = useOwnerOp(transport, codeProject ? {op: 'git_repository_read', project: codeProject} : null, 'git_repository_reading').reading
+  // The Workspace a world's head opens (§18.1 "the track's Workspace device": frame/tracks/useCentralTracks.ts names it) reads the selected
+  // world — its name, its folder, its Ground and Self — and offers the projects of Work that are worlds as its Folder's choices.
+  const selectedWorldRef = selectedWorld?.ref ?? null
+  const pageWorld = useMemo(() => ({
+    world: selectedWorld ? {name: selectedWorld.name, project: selectedWorld.kind === 'project' ? selectedWorld.project : null} : null,
+    folders: worlds?.state === 'read' ? worlds.worlds.flatMap(world => (world.kind === 'project' && world.project ? [world.project] : [])) : null,
+  }), // eslint-disable-next-line react-hooks/exhaustive-deps -- the world is its ref
+  [selectedWorldRef, worlds])
+  // The document the hand reached, for the Agent's and Scope's page (the page family itself stands on no chain: R4), and the Workspace.
+  const pages = usePageDevices(transport, {aperture: dayAperture, face: dayDevice.document.face, payload: dayDevice.document.payload, civilDate: dayDevice.facts.civilDate}, pageWorld)
+  // Ground hygiene and Impact on their designs (groundDevices.ts): the census read when the chain opens, the neighbourhood of the
+  // browser's selection when it changes.
+  const hygiene = useHygieneDevice(transport, true)
+  const impactDesign = useImpactDevice(transport, impact)
+  const nara = useNaraReading(transport, conversation?.project ?? null, conversation?.expressionRef ?? null, conversation?.conversation ?? null)
+  // The Agent (answerBinding.ts centralAgentBinding): the bound session's exchange through the ONE shared encounter observer (lane BF2's),
+  // the roster's agent of the binding's role. The Packet goes with the conversation the Agent widget holds (THE selection's session, else
+  // the companion's own: the read the Packet widget and the transport's Key slot make, useCentralTransport.tsx usePacketReading).
   const chainWorld = useMemo(() => chainWorldOf(selectedWorld, codeProject ? {status: git.status, error: git.error} : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the world is its ref
     [selectedWorld?.ref, codeProject, git.status, git.error])
@@ -572,11 +581,15 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     if (others.approvals) publishDevice(CENTRAL_APPROVALS_ID, {device: others.approvals, binding: approvals})
   }, [others, agent, scope, approvals])
   useEffect(() => { if (voiceDev) publishDevice(VOICE_ID, {device: voiceDev, binding: voiceDesign}) }, [voiceDev, voiceDesign])
+  // The track's Workspace device (§18.1), on no chain: a world's head opens it full in a pane, on the world it selected.
+  const workspaceDev = useMemo(() => familyFaceDevice(WORKSPACE_DEVICE_ID, CENTRAL_FAMILY, 'workspace', 'Workspace', 'session'), [])
+  const workspaceBinding = pages.bindings[WORKSPACE_DEVICE_ID] ?? null
+  useEffect(() => { if (workspaceDev) publishDevice(WORKSPACE_DEVICE_ID, workspaceBinding ? {device: workspaceDev, binding: workspaceBinding} : {device: workspaceDev}) }, [workspaceDev, workspaceBinding])
   useEffect(() => {
     for (const id of [IDENTITY_DEVICE_ID, CONTEXT_WORLD_DEVICE_ID, SEARCH_DEVICE_ID]) publishDevice(id, null)
     return () => {
       for (const face of manifest?.faces ?? []) publishDevice(centralDeviceId(face.id), null)
-      for (const id of [CENTRAL_AGENT_ID, VOICE_ID, CENTRAL_SCOPE_ID, CENTRAL_APPROVALS_ID]) publishDevice(id, null)
+      for (const id of [CENTRAL_AGENT_ID, VOICE_ID, CENTRAL_SCOPE_ID, CENTRAL_APPROVALS_ID, WORKSPACE_DEVICE_ID]) publishDevice(id, null)
     }
   }, [manifest])
   const place = centralChainOf(selection)

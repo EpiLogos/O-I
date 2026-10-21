@@ -21,6 +21,7 @@ import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
 import {mixerCells, type MixerCell} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
 import {useTracksMenu} from '../menu/TracksMenu'
+import {trackHeadDevice, useTrackHeadDevices, type TrackHeadDevice} from './trackHeads'
 import './tracks.css'
 
 export interface TracksSelection {
@@ -41,6 +42,14 @@ export function MainHead({selection, title, children}: {selection: TracksSelecti
   return <button type="button" className={`thd${selected ? ' sel' : ''}`} aria-pressed={selected} data-track-head="main"
     title={title ? `Main · ${title}` : 'Main · select the Main track: the Device side shows its chain'}
     onClick={() => selection.select({kind: 'track', ref: MAIN_TRACK_REF, title: 'Main'})}>{children}</button>
+}
+
+/** The head's button for the track's own device (trackHeads.ts; manual §18.1 "the track's Workspace device"): the press selects the track,
+ * so the device reads the track it was opened from, then opens it full in a pane. */
+export function TrackDeviceButton({device, track, selection}: {device: TrackHeadDevice | undefined; track: {id: string; name: string}; selection: TracksSelection}) {
+  if (!device) return null
+  return <button type="button" className="trk-device" aria-label={`Open ${track.name}'s ${device.title} in a pane`} title={device.does} data-track-device={track.id}
+    onClick={event => { event.stopPropagation(); selection.select({kind: 'track', ref: track.id, title: track.name}); device.open() }}><CutIcon name="pane" size={10} /></button>
 }
 
 /** A track's colour as the views draw it: the one the set gives, else the shell's default. */
@@ -272,9 +281,11 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             // the head takes focus as it is selected, so its keys reach it: WebKit (the native candidate) focuses no button on a click,
             // and its Backspace then stepped the shell back a page instead of taking the track out (r20)
             onClick={event => { event.currentTarget.focus(); selection.select({kind: 'track', ref: track.id, title: track.name}) }}
-            onKeyDown={removeTrack && owned ? event => { if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id)) } } : undefined}>{track.name}</button>
+            onKeyDown={removeTrack && owned ? event => { if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id)) } } : undefined}>{track.name}
+            {track.mix?.arm === true && <span className="trk-arm" role="img" aria-label="Armed" title="Armed: its empty slots record" />}</button>
           {/* Live's Delete on a selected track, also under the pointer: the selected track's own way out of the set (the inverse of a
               drop on the empty track). What it holds stays where its owner keeps it. */}
+          <TrackDeviceButton device={trackHeadDevice(track.id)} track={track} selection={selection} />
           {removeTrack && owned && selectedTrack && <button type="button" className="trk-remove" aria-label={`Take ${track.name} out of the set`} data-receipt={receiptMark(receipt, `remove:${track.id}`)}
             title={`Take ${track.name} out of the set (${removeTrack.op})`} onClick={() => onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id))}>×</button>}
           {launchTrack && owned && <button type="button" className="trk-launch" aria-label={`Launch ${track.name}`} data-receipt={receiptMark(receipt, `track:${track.id}`)}
@@ -394,11 +405,27 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
       <span>{receipt.text}</span>
       <button type="button" aria-label="Dismiss" onClick={onDismiss}>×</button>
     </p>}
+    <GridLegend set={set} selection={selection} />
   </div>
+}
+
+/** The states a clip can stand in, in the order the legend names them (dlw:session-grid's foot). */
+const LEGEND_STATES = ['waiting', 'running', 'stopped', 'recording', 'stalled', 'done'] as const
+/** The grid's foot (catalogue dlw__session-grid.tsx FullGrid's bar): the legend of a clip's states, and what the selected clip launches
+ * and does after, in its owner's words where the set gives them (its launch's quantize and follow). */
+export function GridLegend({set, selection}: {set: WorldTrackSet; selection: TracksSelection}) {
+  const chosen = selection.ref ? set.clips.find(clip => clip.id === selection.ref) : undefined
+  const says = chosen ? [chosen.label, chosen.launch?.quantize ? `launches ${chosen.launch.quantize}` : null, chosen.launch?.follow ? `then ${chosen.launch.follow}` : null].filter(Boolean).join(' · ') : 'No clip selected'
+  return <footer className="sg-legend" aria-label="Legend">
+    {LEGEND_STATES.map(state => <span key={state} className="sg-key"><i data-status={state} />{STATUS_WORD[state]}</span>)}
+    <span className="sg-says">{says}</span>
+  </footer>
 }
 
 /** The Session grid: the view, with the state a grid keeps — which groups are folded shut, and the owner's last answer. */
 export function SessionGrid({set, selection, empty}: {set: WorldTrackSet; selection: TracksSelection; empty?: string}) {
+  // A mode naming its tracks' own devices again draws their head buttons (trackHeads.ts).
+  useTrackHeadDevices()
   const [folded, setFolded] = useState<Record<string, boolean>>({})
   const [receipt, setReceipt] = useState<PressedReceipt | null>(null)
   const latest = useRef(0)
