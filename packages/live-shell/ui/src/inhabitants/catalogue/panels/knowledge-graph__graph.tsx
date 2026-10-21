@@ -7,8 +7,19 @@
 // The material is values. `reading` is the graph reading (the shape filterGraph takes: nodes, edges, formations) as one JSON
 // string, and `groups` is the coloured emphasis groups as one JSON string. A view reads them with json(); a reading the owner
 // has not reported is named in the well, never drawn from a sample. The sample content lives in `defaults` alone.
+//
+// The Aperture page is Quaternal Logic's own way into the field round the note you hold, beside the cradle's Scope and Depth, which
+// filter what the graph draws. Its owner is QL's living-wiki plan (crates/ql-wiki/src/living.rs `plan_living_wiki_refraction`,
+// `ql-mef/living-wiki-refraction/v1`): it always admits the entry aperture 5 → 0 → 1 first, then the positions you name in QL's own order,
+// up to the budget, and returns from 5 to 0 through the note. Its writes are the plan's request: aperture.mode ('ordinary' | 'explain' |
+// 'formal'), aperture.positions (the relevant positions you name, a JSON list of 0..5), aperture.context (position 4 is needed),
+// aperture.full (the whole frame, 0 to 5) and aperture.budget (3..6, the most positions one pass admits; 6 by default). Its readings are
+// the plan: aperture.admitted (the positions admitted, in order), aperture.omitted (those the budget left out), aperture.depth ('none' |
+// 'entry-aperture' | 'partial' | 'full-sixfold'), and aperture.refraction (whether a refraction request stands for the note: Formal
+// carries it and refuses without one). The plan is a library contract: no CLI and no kernel op reach it yet, so the binding owes the
+// route and the host stands these writes disabled with that reason until it lands.
 import {useState} from 'react'
-import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, toUnit, fromUnit, type LightState, type RowItem} from '../../sdk/panel'
+import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, fromUnit, type LightState, type RowItem} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
 import {defaultGraphFilters, filterGraph, type FilteredGraph, type GraphFilters} from '../../../../../../../desktop/cradle/src/knowledge/filters'
 import {graphNodeCaption, isUnresolvedGraphNode, projectUnresolvedGraph, unresolvedGraphAssociations} from '../../../../../../../desktop/cradle/src/knowledge/graphNavigation'
@@ -423,6 +434,9 @@ export const design: DesignedDevice = {
   defaults: {
     light: 'lit', selected: 'wiki:node:identity', scope: 'local', depth: 2, direction: 'both', shared: false, budget: 4096, text: '', kinds: '', relations: '',
     ghosts: true, orphans: true, mode: 'structure', labels: 'automatic', arrows: false, minimap: true, zoom: 1,
+    // QL's living-wiki plan for the note (plan_living_wiki_refraction): Explain, position 2 asked for, budget 6 — the entry, then 2.
+    'aperture.mode': 'explain', 'aperture.positions': JSON.stringify([2]), 'aperture.context': false, 'aperture.full': false, 'aperture.budget': 6,
+    'aperture.admitted': JSON.stringify([5, 0, 1, 2]), 'aperture.omitted': JSON.stringify([]), 'aperture.depth': 'partial', 'aperture.refraction': false,
     // The material: the reading of the root wiki, as Control/agents/wiki/wiki.json holds it, and the groups that the person coloured.
     reading: sampleReading(),
     groups: JSON.stringify([
@@ -435,8 +449,15 @@ export const design: DesignedDevice = {
     'Two hops from User identity': {},
     'Find, structure kept': {scope: 'field', text: 'actuation'},
     'Find, matches only': {scope: 'field', text: 'actuation', mode: 'matches'},
+    // The plan's law on four requests.
+    'Aperture, the entry alone': {'aperture.positions': JSON.stringify([]), 'aperture.admitted': JSON.stringify([5, 0, 1]), 'aperture.depth': 'entry-aperture'},
+    'Aperture, context and a budget of 4': {'aperture.positions': JSON.stringify([2, 3]), 'aperture.context': true, 'aperture.budget': 4, 'aperture.admitted': JSON.stringify([5, 0, 1, 2]),
+      'aperture.omitted': JSON.stringify([3, 4]), 'aperture.depth': 'partial'},
+    'Aperture, the whole frame, formal': {'aperture.mode': 'formal', 'aperture.full': true, 'aperture.refraction': true, 'aperture.admitted': JSON.stringify([5, 0, 1, 2, 3, 4]), 'aperture.depth': 'full-sixfold'},
+    'Aperture, ordinary': {'aperture.mode': 'ordinary', 'aperture.admitted': JSON.stringify([]), 'aperture.depth': 'none'},
     'No readings': Object.fromEntries(['light', 'selected', 'scope', 'depth', 'direction', 'shared', 'budget', 'text', 'kinds', 'relations', 'ghosts', 'orphans', 'mode', 'labels',
-      'arrows', 'minimap', 'zoom', 'reading', 'groups'].map(k => [k, undefined])),
+      'arrows', 'minimap', 'zoom', 'reading', 'groups', 'aperture.mode', 'aperture.positions', 'aperture.context', 'aperture.full', 'aperture.budget', 'aperture.admitted',
+      'aperture.omitted', 'aperture.depth', 'aperture.refraction'].map(k => [k, undefined])),
   },
   firstPage: 'reach',
 
@@ -515,15 +536,69 @@ function sampleReading(): string {
 
 // ---------------------------------------------------------------- the whole view: three pages, one for each face of the graph
 
+// ---------------------------------------------------------------- the aperture (QL's living-wiki plan)
+
+const APERTURE_MODES = [{value: 'ordinary', label: 'Ordinary', does: 'The wiki stands on its own. QL reads nothing; the aperture is only offered.'},
+  {value: 'explain', label: 'Explain', does: 'Read the positions the aperture admits and explain them, without the formal reading.'},
+  {value: 'formal', label: 'Formal', does: 'Carry the note\'s refraction through the admitted positions.'}] as const
+const ENTRY = [5, 0, 1] as const
+const DEPTH_WORD: Record<string, string> = {'none': 'none', 'entry-aperture': 'entry', 'partial': 'partial', 'full-sixfold': 'full frame'}
+const numbers = (v: V, key: string): number[] | undefined => { const raw = json<unknown>(v, key, undefined); return Array.isArray(raw) ? raw.filter((x): x is number => Number.isInteger(x) && x >= 0 && x <= 5) : undefined }
+const apertureWord = (v: V) => { const d = strOf(v, 'aperture.depth'); return d === undefined ? undefined : DEPTH_WORD[d] ?? d }
+
+/** The aperture: the note at the centre, its six positions round it from 0 at the top. The entry 5 → 0 → 1 is the bright arc; each admitted
+ * position is lit with its place in the order; one the budget left out is dashed; the return runs from 5 through the note to 0. */
+function ApertureWell({v, w, h, labels}: {v: V; w: number; h: number; labels: boolean}) {
+  const admitted = numbers(v, 'aperture.admitted'), omitted = new Set(numbers(v, 'aperture.omitted') ?? []), asked = new Set(numbers(v, 'aperture.positions') ?? [])
+  const cx = w / 2, cy = h / 2 + 2, R = Math.min(w, h) / 2 - 16, P = (i: number) => { const a = (i * 60 - 90) * Math.PI / 180; return [cx + R * Math.cos(a), cy + R * Math.sin(a)] as const }
+  if (!admitted) return <Say w={w} h={h} size={labels ? 'whole' : 'small'} text="No reading of the aperture." />
+  const order = new Map(admitted.map((x, i) => [x, i + 1])), [x5, y5] = P(5), [x0, y0] = P(0), [x1, y1] = P(1)
+  return <g>
+    <path d={`M${x5} ${y5}L${cx} ${cy}L${x0} ${y0}`} fill="none" stroke="var(--dp-value)" strokeDasharray="3 2" opacity={.6} />
+    <path d={`M${x5} ${y5}A${R} ${R} 0 0 1 ${x0} ${y0}A${R} ${R} 0 0 1 ${x1} ${y1}`} fill="none" stroke="var(--dp-on)" strokeWidth={2} opacity={admitted.length ? .9 : .35} />
+    <circle cx={cx} cy={cy} r={4} fill="var(--text)" />
+    {[0, 1, 2, 3, 4, 5].map(i => { const [x, y] = P(i), n = order.get(i), out = omitted.has(i)
+      return <g key={i}>
+        <circle cx={x} cy={y} r={labels ? 9 : 7} fill={n ? 'var(--dp-value)' : 'var(--dp-well)'} stroke={out ? 'var(--stall)' : n ? 'var(--dp-value)' : 'var(--dp-value-dim)'}
+          strokeDasharray={out ? '2 2' : undefined} opacity={n || out || asked.has(i) ? 1 : .55} />
+        <text x={x} y={y + 3} textAnchor="middle" style={{fontSize: labels ? 9 : 7.5, fill: n ? '#121a20' : 'var(--text-dim)'}} className="dp-ink">{i}</text>
+        {n && labels && <text x={x + (x >= cx ? 12 : -12)} y={y - 7} textAnchor={x >= cx ? 'start' : 'end'} className="dp-axis" style={{fontSize: 7.5}}>{`#${n}`}</text>}
+      </g> })}
+  </g>
+}
+
+function apertureRows(p: ViewProps): RowItem[] {
+  const v = p.v, admitted = numbers(v, 'aperture.admitted'), omitted = new Set(numbers(v, 'aperture.omitted') ?? []), asked = new Set(numbers(v, 'aperture.positions') ?? [])
+  return [0, 1, 2, 3, 4, 5].map(i => { const entry = (ENTRY as readonly number[]).includes(i), n = admitted ? admitted.indexOf(i) : -1
+    return {id: String(i), name: `${i}${entry ? ' · entry' : i === 4 ? ' · context' : ''}`, light: admitted === undefined ? 'unknown' : n >= 0 ? 'lit' : 'dark', tone: 'value',
+      request: entry || !has(v, 'aperture.positions') ? undefined : asked.has(i), note: n >= 0 ? `#${n + 1}` : omitted.has(i) ? 'out' : undefined,
+      why: omitted.has(i) ? 'The budget admits fewer positions than you asked for.' : undefined} })
+}
+const askPosition = (p: ViewProps) => (id: string, on: boolean) => {
+  const now = new Set(numbers(p.v, 'aperture.positions') ?? []), i = Number(id)
+  if (on) now.add(i); else now.delete(i)
+  p.set('aperture.positions', JSON.stringify([...now].sort((a, b) => a - b)))
+}
+
 function KnowledgeWhole({p}: {p: ViewProps}) {
   const [group, setGroup] = useState(0)
   const read = readingOf(p.v), c = read?.result.counts, budget = finite(numOf(p.v, 'budget')), bounded = c !== undefined && budget !== undefined && c.admitted > budget
   const fit = read ? fitZoom(p, read) : undefined
   return <Panel title="Knowledge graph" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'reach', label: 'Reach'}, {id: 'filters', label: 'Filters'}, {id: 'display', label: 'Display'}]} page={p.page} onPage={p.setPage}>
+    pages={[{id: 'reach', label: 'Reach'}, {id: 'filters', label: 'Filters'}, {id: 'display', label: 'Display'}, {id: 'aperture', label: 'Aperture'}]} page={p.page} onPage={p.setPage}>
     <Band>
       <Section width={206}><GraphDisplay p={p} w={194} h={146} size="whole" /></Section>
-      {p.page === 'filters' ? <>
+      {p.page === 'aperture' ? <>
+        <Section label="Aperture" cols={2} grow>
+          <Radio {...st(p, 'aperture.mode')} label="Mode" does="How far Quaternal Logic reads the field round the note." value={strOf(p.v, 'aperture.mode') ?? ''} stack
+            options={APERTURE_MODES.map(m => ({...m, why: m.value === 'formal' && boolOf(p.v, 'aperture.refraction') === false ? 'Formal carries the note\'s refraction: put a Lens on the reading first.' : undefined}))}
+            onChange={x => p.set('aperture.mode', x)} />
+          <ValueBox {...st(p, 'aperture.budget')} label="Budget" does="The most positions one pass admits. The entry takes three." value={numOf(p.v, 'aperture.budget') ?? NaN} def={6}
+            scale={{min: 3, max: 6, step: 1}} format={x => `${x}`} onChange={x => p.set('aperture.budget', x)} />
+          <Flag p={p} k="aperture.context" label="Context" does="The reading depends on its context: admit position 4." />
+          <Flag p={p} k="aperture.full" label="Whole frame" does="Admit all six positions, 0 to 5, as the budget allows." />
+        </Section>
+      </> : p.page === 'filters' ? <>
         <Section label="Find" cols={2} grow>
           <FindBox p={p} />
           <GhostToggle p={p} />
@@ -547,7 +622,19 @@ function KnowledgeWhole({p}: {p: ViewProps}) {
       </>}
     </Band>
     <Band>
-      {p.page === 'filters' ? <>
+      {p.page === 'aperture' ? <>
+        <Section width={150}><Display w={138} h={146} label="The aperture" corner={apertureWord(p.v) ?? NONE}
+          does="The note at the centre and its six positions, 0 at the top. The bright arc is the entry, 5 to 0 to 1; a lit position is admitted, with its place in the order; a dashed one the budget left out. The dashed line is the return, 5 through the note to 0.">
+          <ApertureWell v={p.v} w={138} h={146} labels /></Display></Section>
+        <Section width={150}><Rows label="Positions" does={why(p, 'aperture.positions', 'The square asks for a position. The entry, 5, 0 and 1, is always admitted. A light means the plan admits it.')} items={apertureRows(p)}
+          onRequest={has(p.v, 'aperture.positions') && !st(p, 'aperture.positions').disabled ? askPosition(p) : undefined} size={6} /></Section>
+        <Section label="Plan" cols={2} grow>
+          <Readout big label="depth" does="How much of the frame the pass admits: none, the entry, part, or the full frame." value={apertureWord(p.v)} tone="value" />
+          <Readout label="admitted" does="The positions the pass admits, in order." value={numbers(p.v, 'aperture.admitted')?.join(' ')} />
+          <Readout label="left out" does="Positions you asked for that the budget left out." value={numbers(p.v, 'aperture.omitted') === undefined ? undefined : numbers(p.v, 'aperture.omitted')!.join(' ') || 'none'} tone="accent" />
+          <Readout label="return" does="The return always runs from 5 through the note to 0. The entry is orientation; it is not the return." value={numbers(p.v, 'aperture.admitted') === undefined ? undefined : '5 → 0'} />
+        </Section>
+      </> : p.page === 'filters' ? <>
         <Section width={132}><Rows label="Kinds" does={why(p, 'kinds', 'The kinds of note. The square is your request; a light means the graph holds one.')} items={kindRows(p)}
           onRequest={read && !st(p, 'kinds').disabled ? toggleIn(p, 'kinds') : undefined} size={6} /></Section>
         <Section width={132}><Rows label="Relations" does={why(p, 'relations', 'The kinds of relation. The square is your request; a light means the graph holds one.')} items={relationRows(p)}

@@ -2171,6 +2171,22 @@ M4′'s divinatory frameworks.
 A part that nothing carries yet keeps its place in the rack, named and dark,
 so you can see what the instrument still lacks.
 
+The Torus, the Sky and the M3 clock each show their rack on a Rack page, and
+M4′'s rack opens as a device of its own (§22.9). The rack is drawn whole:
+position 0 is the bar above and position 5 the bar below, and positions 1 to 4
+stand between them as four chains, each showing its own six positions as
+cells. A part that a device carries is lit and names the device. A part that
+nothing carries is dashed: on M1′, Pratibimba keeps its place at position 1,
+named and dark. Choose a part and the rack reads it: its coordinate in the
+map, the device and the control that work it, and three steps from the map's
+ledger — in the map, bound, verified.
+
+```ui
+device: quaternal-logic:torus
+page: rack
+caption: The Torus's Rack page: M1′, with Pratibimba dark at position 1.
+```
+
 #### One body
 
 Live's three instruments are one body seen three ways. M1′ gives it its shape:
@@ -2220,7 +2236,7 @@ Arrangement view are not among them: they are two views of the mode's set
 
 **Product:** Technē · **Track:** a reading, a journey or the occurrences of a subject · **Clip:** an event, or a stop of a walk · **Main track:** the stops
 
-You need to set what you know at its time and place, keep how sure anyone is of it, and walk someone through it in an order that makes sense. In Technē a reading is a track, and its events are its clips. Select an event and Clip view shows its span, its place, its standing and what it gathered. Device view below shows the instrument the track plays through, then its lens and filter effects.
+You need to set what you know at its time and place, keep how sure anyone is of it, and walk someone through it in an order that makes sense. In Technē a reading is a track, and its events are its clips. Select an event and Clip view shows its span, its place, its standing and what it gathered. Device view below shows the instrument the track plays through, then its effects: the Lens, which reads the material through one of Quaternal Logic's lenses and cuts it by a context frame (§17.11), and Light, which follows a reading's force across the Canvas (§17.10).
 
 #### The track
 
@@ -2620,6 +2636,25 @@ The Knowledge graph separates three things: matches, context and display. A norm
 
 Every filter you apply stays on screen as a chip. Remove a chip to remove the filter. A hidden private note does not show in a label, a count or a line.
 
+#### Quaternal Logic's aperture
+
+Scope and Depth decide which notes the graph draws. The aperture decides how Quaternal Logic enters the field round the note you hold. It always comes in the same way: from the whole, position 5, through the ground, 0, to the first step, 1. Then it admits the positions you name, in their own order, and position 4 when the note's reading depends on its context. The budget caps how many positions one pass admits, and those it leaves out are named. The way back runs from 5 through the note to 0; the way in is orientation, not the return.
+
+Hold a note, ask for positions 2 and 3, say the reading needs its context, and set the budget to 4. The pass admits 5, 0, 1 and 2, and names 3 and 4 as left out. Raise the budget to 6 and all six come in: the full frame.
+
+| Mode | What the aperture does |
+|---|---|
+| Ordinary | Nothing. The wiki stands on its own, and the aperture is only offered. |
+| Explain | Reads the positions it admits and explains them. |
+| Formal | Carries the note's refraction, from a Lens on its reading (§17.11), through the positions it admits. |
+
+```ui
+device: knowledge-graph:graph
+fixture: Aperture, context and a budget of 4
+page: aperture
+caption: The Knowledge graph's Aperture page: positions 2 and 3 asked for, the context needed, a budget of 4.
+```
+
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -2635,6 +2670,11 @@ Every filter you apply stays on screen as a chip. Remove a chip to remove the fi
 | Labels | Automatic · All · Focus | Automatic | Shows labels as you zoom, all labels, or only the labels near the selection. |
 | Arrows | On · Off | Off | Shows the direction of each line. |
 | Minimap | On · Off | On | Shows the overview in the corner. |
+| Aperture | Ordinary · Explain · Formal | Explain | How Quaternal Logic enters the field round the note. Formal needs a refraction of the note. |
+| Positions | Any of 0 to 5 | None | The positions you ask the aperture for. 5, 0 and 1 always come first. |
+| Context | On · Off | Off | Admits position 4, for a reading that depends on its context. |
+| Whole frame | On · Off | Off | Asks for all six positions. |
+| Aperture budget | 3 to 6 positions | 6 | The most positions one pass admits. |
 
 #### Views
 
@@ -2668,6 +2708,9 @@ The whole Knowledge graph shows every parameter, in four groups.
 | Filters | Kinds, Relation types, Standing floor, Filter mode |
 | Display | View, Ghosts, Labels, Arrows, Minimap |
 | Groups | The highlighted groups that you coloured |
+| Aperture | Aperture, Positions, Context, Whole frame, Aperture budget |
+
+On the Aperture page the display draws the note at the centre and its six positions round it: the way in, 5 to 0 to 1, as a bright arc, each admitted position lit with its place in the order, and a position the budget left out dashed.
 
 ##### Full
 
@@ -2709,12 +2752,14 @@ The widget shows the neighbourhood of the selection. The centre is marked. A col
 - A hidden private note leaks nothing: not a label, not a count, not a line.
 - An empty result, an incomplete read and a failed provider show different messages.
 - The graph does not load a note into an agent's context. Add a node to the packet to do that.
+- The aperture is orientation. The wiki's own correctness never waits on it.
 
 #### Tips
 - To find broken links in a folder, set Scope to Whole wiki, filter by the folder and show Ghosts.
 - To prepare an answer for an agent, select the nodes and add them to the packet.
 - To see how two notes connect, select one and raise Depth until the other appears.
 - To follow a line of thought, turn Arrows on and read along the lines.
+- To read a note through its whole frame, turn Whole frame on and leave the budget at 6.
 
 ### 17.4 Canvas
 
@@ -3735,6 +3780,152 @@ The widget shows a small bench and the reading at each sensor. Click the bench t
 - To see what one weak link costs, lower its standing and watch the sensor after it.
 - To follow every way the source reads, put a prism on the source.
 
+### 17.11 Lens
+
+**Product:** Technē, with Quaternal Logic · **Kind:** effect · **Chain:** A reading's chain, after its instrument
+
+You need to read your material through one way of seeing at a time, and to know where that way of seeing reaches and where it stops. The Lens reads the subject of a reading through one of Quaternal Logic's twelve lenses, and cuts it by one of the seven context frames. The material stays as it was. What the Lens adds is a reading, with its lens and its frame named and the evidence behind it.
+
+#### The twelve lenses
+
+Each lens has a day face and a night face, and each belongs to one of three squares. The night face is the lens's prime: L0′ to L5′. Every lens holds six conditions, its sublenses. Read through the whole lens, or through one sublens.
+
+| Lens | Day face | Night face | Square |
+|---|---|---|---|
+| L0 | Quaternal | Archetypal-Numerical | Articulation |
+| L1 | Causal | Phenomenal | Encounter |
+| L2 | Logical | Alchemical-Elemental | Becoming |
+| L3 | Processual | Chronological | Becoming |
+| L4 | Phenomenological | Scientific | Encounter |
+| L5 | Para Vāk | Divine Logos | Articulation |
+
+#### What the Lens shows and refuses
+
+A reading through the Lens says where it can stand. Each of Technē's seven instruments takes the reading or refuses it, and a refusal comes with its owner's reason.
+
+Put the Lens on the Quaternal Logic wiki's constellation of Technē instruments and set it to L5, Para Vāk. Its six sublenses run from Anuttara to Mātṛkā round the ring, and the reading stands in all seven instruments, from Project to Expressions. Now put it on a Day, with the Lens off. The Day still stands in Project, the Canvas and the Timeline, and the Timeline takes it thin, because the Factory runs in it carry no clock time. Journey, Place, Palace and Expressions refuse it: no scene, no place and no Expression is bound to the Day.
+
+The Lens proposes and never decides. A relation or a walk that it finds stays a proposal until the wiki's own governance takes it up.
+
+| Read | What it asks |
+|---|---|
+| Locate | Where the subject stands. |
+| Refract | The subject through the lens. |
+| Relate | How two subjects relate through the lens. |
+| Synthesise | Several subjects read as one. |
+
+The provider of the readings says which it offers. One it does not offer stands closed, with its word.
+
+#### The frame
+
+Your material has six positions: the ground it comes from at 0, four working steps from 1 to 4, and the whole it returns to at 5. Each context frame stands at one position, on one face and in one grain. On the Name face the material names; on the Power face it acts. The inner four are the working positions; the outer two frame them.
+
+| Frame | Expression | Position | Face | Grain |
+|---|---|---|---|---|
+| CF1 | (00/00) | 0 | Name | Outer two |
+| CF2 | (0/1) | 1 | Name | Inner four |
+| CF3 | (0/1/2) | 2 | Name | Inner four |
+| CF4 | (0/1/2/3) | 2 | Power | Inner four |
+| CF5 | (4.0/1-4.4/5) | 3 | Power | Inner four |
+| CF6 | (4.5/0) | 4 | Power | Inner four |
+| CF7 | (5/0) | 5 | Power | Outer two |
+
+Set a position and narrow it by face and grain, and the owner answers: exact, partial, ambiguous or no frame. The constellation of Technē instruments maps its six members to the six positions. At position 2, the Place, with the Power face and the inner four, the answer is CF4, exact, the frame its reading names. Leave the grain open and the answer is CF4, partial. Leave the face open as well and it is ambiguous: CF3 and CF4 both stand at position 2. Ask for the Power face at the ground, position 0, and no frame stands there.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Mode | Off · Optional · Required | Optional | Off lets the material pass unread. Optional reads through the lens when the provider can, and its absence stops nothing. Required stops when the provider is absent. |
+| Lens | L0 to L5′ | The reading's own lens | The lens to read through. |
+| Sublens | The whole lens, or one of its six | The whole lens | One condition of the lens. |
+| Read | Locate · Refract · Relate · Synthesise | Refract | What the reading asks of the lens. |
+| Position | 0 to 5 | — | The position of the material to read the frame at. |
+| Face | Any · Name · Power | Any | Whether the material at the position names or acts. |
+| Grain | Any · Inner four · Outer two | Any | Whether the position works or frames. |
+
+#### Views
+
+```ui
+device: techne:lens
+caption: Lens, on a fixture of readings: L5 on the Quaternal Logic wiki's constellation of Technē instruments.
+```
+
+##### Folded
+
+The folded Lens shows the lens and how many instruments take the reading.
+
+##### Compact
+
+The compact Lens shows the lens with its rays, and four macros.
+
+| Macro | What it does |
+|---|---|
+| Lens | Sets the lens to read through. |
+| Sublens | Sets one condition of the lens, or the whole lens. |
+| Position | Sets the position of the material to read the frame at. |
+| Mode | Sets Off, Optional or Required. |
+
+##### Whole
+
+The whole Lens has two pages.
+
+| Page | Group | Parameters |
+|---|---|---|
+| Lens | Lens | Lens, Sublens |
+| Lens | Read | Read, Mode |
+| Lens | Instruments | Each instrument, carried, thin or refused, with the owner's reason |
+| Frame | Probe | Position, and the frame the owner reads there |
+| Frame | Narrow | Face, Grain |
+| Frame | Positions | The material's six positions, and the answer |
+
+On the Lens page the display draws the subject and its members on the left, the lens as a ring of its six sublenses, and a ray to each instrument that takes the reading; a refused one is stopped with ✕. Drag the handle round the ring to choose a sublens. On the Frame page the display draws the six positions, the Name face above and the Power face below, and the seven frames at their places; drag the handle along the line to move the position.
+
+```ui
+device: techne:lens
+fixture: Frame, no face · ambiguous
+page: frame
+caption: The Lens's Frame page: position 2 with the face left open, ambiguous between CF3 and CF4.
+```
+
+##### Full
+
+The full Lens draws the reading through the lens at pane size, with the lens's six sublenses named round it, and the frame beneath.
+
+##### Widget
+
+The widget shows the lens with its rays, the lens's name, how many instruments take the reading and the frame.
+
+#### Transport
+
+| Control | Effect on the Lens |
+|---|---|
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives back a parameter that you hold. |
+
+#### To use the Lens
+
+1. Drag the Lens onto the chain of a reading, after its instrument.
+2. Set Lens. The rays show where the reading can stand.
+3. Point at a refused instrument to read why it refuses.
+4. Drag the handle round the ring to read through one sublens.
+5. Open the Frame page. Set Position to the step of the material you want to place.
+6. Set Face and Grain until the answer is exact.
+
+#### Rules
+
+- The Lens reads the material. It never changes it.
+- A lens's reading is a proposal. It becomes knowledge only when the wiki's governance takes it up.
+- A refused instrument keeps its owner's reason.
+- A frame answer describes the material. It gives the material no standing and no authority.
+- Under Off the material passes unread. The owner still checks that it is well formed.
+
+#### Tips
+
+- To compare two ways of seeing, put two Lenses on the chain, each with its own lens, and solo the reading.
+- To find which frame a step of your material stands in, leave Face and Grain on Any and narrow them one at a time.
+- To read the material plain, set Mode to Off. The instruments it stands in still show.
+
 ## 18. Central
 
 Central keeps the day's work, your documents and your ground in one place. It is where you work across all your projects at once: each project is a world, and the Day gathers them. It works like a code editor: your files down the left, documents side by side, and the day as the set they all belong to. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
@@ -4422,7 +4613,29 @@ make the search exact.
 | `( )` | `( + @0 knowledge + @4 world:current )` | Frames several parts as one expression. |
 
 A kind narrows a term: `source:`, `wiki:`, `reading:`, `world:`, `form:`,
-`agent:`, `person:`, `place:`, `doc:`.
+`agent:`, `person:`, `place:`, `doc:`, `vak:`.
+
+#### The language of the map
+
+The `vak:` kind reaches the language the map is written in: Quaternal Logic's
+Vāk registry, where every entry is a line of its source with a coordinate. A
+Vāk entry is found by its coordinate, as in `vak:M0-3`, never by a word in its
+name. The result opens where the entry stands among its neighbours: its parent
+above, the entries one relation away round it, and those two away beyond them.
+
+`vak:M0-3` is the archetypal number language, with the symbol 12+4+2. One
+relation round it stand Anuttara, its parent, and its eleven archetypes, from
+the Mirror to Archetype 8. Two relations round, the archetypes' own entries
+and Anuttara's other positions come in: fifty-one entries in all. Each entry
+keeps its line in the source, and every relation is read from the way the
+coordinates nest.
+
+```ui
+device: central:search
+fixture: Vāk M0-3, one relation round
+page: find
+caption: Search on a `vak:` term: the archetypal number language, one relation round.
+```
 
 #### What a tag sends
 
@@ -4435,6 +4648,7 @@ Select a passage, type @, choose a result and press Enter. The passage goes to t
 | Place | Files the passage on that spot of your world, with a link back to the page. |
 | Document | Adds the passage to the document with a link back. A Flow takes it as a new entry. Another document takes it as a quote at the end. |
 | Passage | Opens the passage. A tag does not send to a passage. |
+| Vāk entry | Opens the entry among its neighbours. A tag does not send to it. |
 
 With no selection, Enter opens the result. Press Shift and Enter to open a result without sending. Press Esc to close the line.
 
@@ -4495,7 +4709,8 @@ ranks by use.
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Reach | Your world · Projects and agents · Shared field · Joined fields | Projects and agents | How far a search looks. |
-| Kinds | People · Agents · Places · Documents · Passages: each On or Off | All On | Which kinds of result appear. |
+| Kinds | People · Agents · Places · Documents · Passages · Vāk: each On or Off | All On | Which kinds of result appear. |
+| Vāk depth | 0 to 2 relations | 1 | How far round a Vāk entry its result opens. |
 | Order | Best match · Newest · Name | Best match | The order of the results. |
 | Jump | On · Off | On | Whether plain words jump to what you open most. Off: plain words search for the best match. |
 | History | Remember · Off | Remember | Whether opening and sending are counted. |
@@ -4537,6 +4752,8 @@ The whole Search shows every parameter, in five groups.
 | History | History |
 | Aliases | Aliases |
 
+With a `vak:` term, Find shows the entry and its neighbours in place of the horizons, with Vāk depth beside the search line. Drag the handle out to the second ring or in to the entry.
+
 ##### Full
 
 The full Search is the search pane. The search line is at the top. The results are below it, in groups by kind. The selected passage is at the side, with the place where each tag would send it. Press ⌘F in a pane to open it.
@@ -4571,6 +4788,7 @@ The widget shows the search line, the last results and your aliases. Type @ in t
 - A tag to an agent writes as Scope and Arm allow.
 - A message from another world arrives under the name of its sender. It stays theirs until you make it your own.
 - An alias is yours. Another person's alias does not run in your Search.
+- A Vāk entry is found by its coordinate, and its result reaches two relations round it at most.
 
 #### Tips
 
@@ -4578,6 +4796,7 @@ The widget shows the search line, the last results and your aliases. Type @ in t
 - To start an agent on a passage, select it and tag the agent.
 - To file a quote on the place it is about, tag the place.
 - To ask what could serve a task, type `@# @5` and the task. Then include the tools you want with `+`.
+- To read what a coordinate of the map says, type `vak:` and the coordinate, then raise Vāk depth.
 
 ### 18.5 Ground hygiene
 
@@ -9857,6 +10076,40 @@ The surface carries the other two instruments as well. The planets of M2′ bend
 it where they stand, and the form of M3′ sits on it. What you see on the
 torus is the whole body (§16.16).
 
+#### The stage
+
+You need to change the live scene by a procedure, not by hand: to fold the
+form a set way, or to strike the torus at a planet's mode at every step of the
+ring. The stage holds four slots of the live scene: the form, the body's
+damping, the clock's inscription and its lensing. Each slot is driven by its
+authored state until a procedure owns it.
+
+| Act | What it does |
+|---|---|
+| Evaluate | Runs the procedure once. Its receipt comes back with the field as it stands. |
+| Bind | Binds the procedure to the live flow. It fires at each step of the ring, or at each new event, until its budget is spent. |
+| Unbind | Removes the binding, and names the standing it ends in. |
+| Retire | Releases the slots the procedure holds. They return to their authored state, and what the procedure left stays as authored material. |
+
+A fold that casts the form's creases and sets its pose owns the form slot once
+you evaluate it, and its passage runs three scenes: the one it stands and two
+that follow. A strike bound to the
+ring fires at each step, sixteen times by default, then stops and says that its
+budget is spent. A strike claims no slot: it is a moment, and it survives no
+new evaluation.
+
+One procedure owns a slot at a time. A second procedure that writes the same
+slot is refused until the first retires, because the order in which two writes
+arrive decides nothing. A procedure that runs when you evaluate it binds to
+nothing.
+
+```ui
+device: quaternal-logic:torus
+fixture: Stage, a strike bound to the ring
+page: stage
+caption: The Torus's Stage page: a strike bound to the ring, five firings of its budget of sixteen spent.
+```
+
 #### The keyboard
 
 The keyboard is part of the Torus, and it is the torus laid flat. Its six rows
@@ -9893,6 +10146,8 @@ reach it from where your hand is.
 | Voices | 1 to 32 | 16 | How many notes sound at once. The oldest note makes way for a new one. |
 | Level and pan | Level −60 to 6 dB · Pan −1 to 1 | −6 dB · 0 | The loudness and the place of the sound. |
 | View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws. Receiver On makes your camera the place where the torus is heard. |
+| Procedure | One of the procedures you keep | — | The procedure the stage acts on. |
+| Budget | 1 to 1024 firings | 16 | How often a bound procedure may fire before it stops. |
 
 #### The body source
 
@@ -9941,6 +10196,8 @@ The whole Torus shows every parameter, in four groups.
 | Body | Strike, Damping, Modes, Agitation, Body source |
 | Envelope | Attack, Release |
 | Voices and output | Voices, Level and pan, View |
+| Stage | Procedure, Budget, Evaluate, Bind, Unbind, Retire |
+| Rack | M1′'s parts, 0 to 5 (§16.16, §22.9) |
 
 ##### Full
 
@@ -9985,6 +10242,8 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - A saved state keeps every parameter. A preset in the browser opens with the same sound.
 - A held note keeps its own tail. A key release does not cut the ringing of the body.
 - Under Tattva, the body's constants are the tattva's. To set them by hand, set Body source to Declared.
+- A procedure owns a slot until it retires. Another procedure's write to that slot is refused.
+- A bound procedure stops when its budget is spent, and says so.
 
 #### Tips
 
@@ -9993,6 +10252,7 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - To play the surface by hand, touch it while a chord sounds.
 - To make the pulses beat, move Pulse mix away from the middle.
 - To share a sound, save the state as a preset and give the preset to a friend.
+- To let the form fold itself as the ring turns, bind a fold procedure and give it a budget.
 
 ### 21.3 Scale mapping
 
@@ -10350,6 +10610,7 @@ Each device here is a part of one of the instruments of the map (§16.16), and i
 | M′ matrices (§22.6) | M1′ to M4′ | The insides of the racks: Oscillator is M1′'s Ananda; Reading is M1′'s modes with M2′'s lenses; Form is M3′; Situation is M4′'s centres. |
 | Resonator bank (§22.7) | M3′ | Position 5: it sounds the cut the wheel draws. |
 | Binding (§22.8) | M3′ | Positions 0 and 2: the codons bound into a form, and the reception from M2′'s planets. |
+| Rack (§22.9) | M1′ to M4′ | Each instrument's parts, 1 to 4, framed by 0 and 5. |
 
 ### 22.1 Sky
 
@@ -10397,6 +10658,19 @@ Each day has a ruling planet, and so does each hour. The day's planet rules its 
 
 The hours are counted at a place: the world's place when Observer is Shared, yours when it is Private. With no place, the Sky reads no rulers. The ring marks the planet of the hour. Scale mapping can take its mode from it (§21.3).
 
+#### Sharing your sky
+
+The ring of your birth draws for you alone until you share it. On the Share page, choose a person of this world and press Share. They can then open your ring over the sky of the date, and meet your presence in the world. Nothing of your identity is copied or changed: sharing is a consent, kept with your identity, and Withdraw takes it back.
+
+The page lists everyone you share your sky with and the day you did, and everyone who shares theirs with you. Satya shares a sky with you: set Whose to Satya and that birth sky rings the sky of the date, as yours does. Orpheus shared in September and the consent no longer permits it, so the row is dark and the ring stays closed.
+
+```ui
+device: quaternal-logic:sky
+fixture: Shared with you by Satya
+page: share
+caption: The Sky's Share page: your sky shared with Ariadne, and Satya's ring open over the sky of the date.
+```
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -10407,7 +10681,9 @@ The hours are counted at a place: the world's place when Observer is Shared, you
 | Observer | Shared · Private | Shared | Shared is the sky as seen from Earth. Private is the sky for your place. |
 | Bodies | The ten bodies: each On · Off | All On | Which bodies show. |
 | Aspects | On · Off | Off | Draws the angles between bodies. |
-| Natal ring | Off · On | Off | Draws the sky of your birth round the sky of the date. Only you see it. |
+| Natal ring | Off · On | Off | Draws the sky of your birth round the sky of the date. Only you see it, until you share it. |
+| Whose | Yours · a person who shares their sky with you | Yours | Whose birth sky the natal ring draws. |
+| Share with | A person of this world | — | The person Share gives your consent to. Share and Withdraw give it and take it back. |
 | Moves | A list | Filled by use | The parameters that each body moves now. |
 
 #### Views
@@ -10441,6 +10717,8 @@ The whole Sky shows every parameter, in three groups.
 | Time | Date, Day clock, Run speed |
 | Bodies | Bodies, Observer |
 | Overlay | Aspects, Natal ring |
+| Share | Whose, Natal ring, Share with, and the consents both ways |
+| Rack | M2′'s parts, 0 to 5 (§16.16, §22.9) |
 
 The list of what each body moves shows below the groups. Beside the groups, the Sky reads the day's planet, the hour and its planet, and the place where the hours are counted.
 
@@ -10478,6 +10756,8 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - A shared view does not show a private observer's place.
 - The Sky gives sources. It does not decide what a reading means.
 - The rulers of the day and the hour are counted at a place. Without a place, the Sky shows none.
+- Sharing your sky gives consent to see it. It never copies or changes your identity.
+- Another person's ring opens only while their consent permits it.
 
 #### Tips
 
@@ -10486,6 +10766,7 @@ The widget shows each body with its degree. The Sky widget is on the rail in eve
 - To use the Sky as a clock for a walk, set Day clock to Run.
 - To tune the field to the sky, set Key source to Sky on the Field.
 - To know whose hour it is, read the marked planet on the ring.
+- To read your sky beside a friend's, ask them to share theirs, then set Whose to them.
 
 ### 22.2 Sky modulation
 
@@ -10706,6 +10987,9 @@ The whole M3 clock shows every parameter, in three groups.
 | Cut | Aperture, Reciprocal, Turn, Open |
 | Position | Position, Readout |
 | Law | Matrix, Seed, Pose map |
+| Rack | M3′'s parts, 0 to 5 (§16.16, §22.9) |
+
+The Wheel page holds the first three groups, and the Rack page the fourth.
 
 ##### Full
 
@@ -11003,6 +11287,25 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Form | The 64 codons, the shape of the body, its material, its edge, and the points where it is struck and heard. | Gives the sound a body to ring in. |
 | Situation | The world that receives the sound, and the seven centres of the body. | Sets who and where the sound reaches. The Situation matrix has no source yet. |
 
+#### The kernel's operators
+
+Apply moves a codon to its partner. The kernel's own operators move any address
+of its sixfold form: six positions, each with a direct face and a conjugate
+face. Conjugate turns an address to its other face at the same position.
+Complement takes it across to the position that completes it: 0 with 5, 1 with
+4, 2 with 3. Classify says whether the position frames the whole, as 0 and 5
+do, or works inside it, as 1 to 4 do: the four and two of §16.16.
+
+Position 2 on its direct face has its conjugate at 2 on the conjugate face and
+its complement at 3, and it works. Position 0 on its conjugate face has its
+conjugate at 0, direct, and its complement at 5, and it frames.
+
+```ui
+device: quaternal-logic:m-prime-matrices
+page: kernel
+caption: The M′ matrices' Kernel page: position 2, direct, with its conjugate and its complement.
+```
+
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -11018,6 +11321,8 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Partner | Complementary · Moving and resting · Same quality | Complementary | In the Form matrix, the matrix whose partner shows beside each codon. |
 | Scale | Codon · Hexagram | Codon | Codon takes the partner base by base. Hexagram takes it trigram by trigram, each trigram going to the trigram whose pair is the partner of its pair. |
 | Apply | An action | — | Moves the cell to its partner. |
+| Address | Position 0 to 5 · Face Direct or Conjugate | 0, Direct | The address of the kernel's sixfold form that the operators read. |
+| Conjugate and Complement | Actions | — | Move the address to the kernel's conjugate or complement of it. |
 
 #### Views
 
@@ -11049,8 +11354,9 @@ The whole M′ matrices show every parameter, in two groups.
 |---|---|
 | Matrix | Matrix, Basis, Lens, Context frame, Value form, Context |
 | Cell | Family, Cell, Partner, Scale, Apply |
+| Kernel | Address, Conjugate, Complement, and the kernel's class of the address |
 
-The grid shows with every value.
+The grid shows with every value. The Matrices page holds the first two groups, and the Kernel page the third: the sixfold form drawn round, the frame 0 and 5 at the top, each position across from its complement, the direct face outside and the conjugate inside. Drag the handle to another position or across to the other face.
 
 ##### Full
 
@@ -11088,6 +11394,8 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - A change in the Situation matrix keeps the shared source unchanged. A private context does not enter a shared preset.
 - Each matrix gives every codon a partner, at both scales. No matrix leaves a gap.
 - A matrix applied twice returns the cell. Complementary then Moving and resting is Same quality.
+- The kernel's operators serve its sixfold form. An address of another form is refused.
+- Conjugate twice returns the address, and so does Complement twice.
 
 #### Tips
 
@@ -11095,6 +11403,7 @@ The widget shows the small grid with the cell marked. Click the grid to open the
 - To compare two lenses, pin a cell and change the lens.
 - To see what the sky changes, set Follow to Sky.
 - To check a source value, set Value form to Raw, then to Digital root.
+- To see which positions frame and which work, step the address round with Complement and read its class.
 
 ### 22.7 Resonator bank
 
@@ -11300,6 +11609,89 @@ The widget shows the small junctions, the two codons and the event that last mov
 - To compare the three matrices, read one hexagram and change Pairing.
 - To see what a line change does, change a line on the Deck and watch the codons.
 - To hear the binding, turn Stretch → Q on and put the Resonance after the torus.
+
+### 22.9 Rack
+
+**Product:** Quaternal Logic · **Kind:** rack · **Chain:** Under an instrument of the map, as its Rack page; M4′'s opens in any pane
+
+You need to see what an instrument is made of and what it still lacks. The Rack holds an instrument's four working parts, positions 1 to 4, as chains side by side, framed by its position 0 above and its position 5 below (§16.16). Each part keeps its name in the map, and each chain shows the part's own six positions, as deep as the map goes.
+
+#### Carried and dark
+
+A part that a device carries is lit and names the device. A part nothing carries is dashed and dark: it keeps its place so you can see the gap.
+
+On M1′, Ananda at position 2 is carried by the Oscillator of the M′ matrices, and Spanda at position 3 by the Torus's pulses and its context frame. Pratibimba, at position 1, has no device: it stands in the rack, named, and dark. On M3′, the Minor Arcana at position 4 is carried by the Deck, and its own six run from Wands to the superposition of DNA and RNA.
+
+#### The ledger
+
+Choose a part and the Rack reads it from the map's ledger in three steps.
+
+| Step | What it says |
+|---|---|
+| In the map | The part has a coordinate in the map. |
+| Bound | Code is bound to the coordinate. |
+| Verified | A capability on the coordinate stands verified. |
+
+The steps are the ledger's. A step nobody has read stays hollow, and no step is inferred from the one below it.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Part | 0 to 5 | 1 | The part to read. |
+
+The parts, their names and their own positions come from the map. The device that carries each part, and the control that works it, come from the instrument's entry.
+
+#### Views
+
+```ui
+device: quaternal-logic:map-rack
+caption: The Rack of M4′, of Nara, on a fixture of readings.
+```
+
+##### Folded
+
+The folded Rack shows the instrument and how many of its four parts a device carries.
+
+##### Compact
+
+The compact Rack shows the rack whole, and the part you chose with the device that carries it.
+
+##### Whole
+
+The whole Rack shows the rack whole, the list of its six parts, the part you chose with its coordinate, the device that carries it and its three steps, and that part's own positions. The Torus, the Sky and the M3 clock show the same on their Rack pages.
+
+##### Full
+
+The full Rack lays the parts out in order, from 0 to 5. Each part that a device carries shows that device whole, with every setting live. A part with no device shows its own positions and their steps.
+
+##### Widget
+
+The widget shows the rack small, with how many parts are carried and how many are dark.
+
+#### Transport
+
+The Rack has no transport of its own. Its devices keep their own.
+
+#### To use the Rack
+
+1. Open the Rack page of the Torus, the Sky or the M3 clock.
+2. Read the rack: a dashed chain is a part nothing carries.
+3. Drag the handle along the rack, or press a part in the list, to read it.
+4. Read its steps in the ledger, and its own positions below.
+5. Open the Rack in a pane to see each part's device.
+
+#### Rules
+
+- A part keeps its place in the rack whether or not a device carries it.
+- The Rack writes nothing to the map. The map's own refresh changes it.
+- Every name in the Rack is the map's name for the part.
+- The steps come from the ledger. The Rack does not raise them.
+
+#### Tips
+
+- To see what an instrument still lacks, read its dashed chains.
+- To find the device that works a part, choose the part and read "carried by", then open that device.
 
 ## 23. Widgets
 
@@ -11819,13 +12211,14 @@ In a container, an entry also says what kind of entry it is:
 
 You are a Being in your own world. Your Being page holds your identity by reference, never as a copy: your birth, your natal chart, your Jungian functions, your Gene Keys, your Human Design and what they make together. Each layer shows with its source, or as absent with the reason. Nothing fills a missing layer.
 
-Launch your page as Sky and your natal sky opens beside today's: the planets where they stood when you were born, and where they stand now. A Being page of another person opens their sky only when their identity is shared with you.
+Launch your page as Sky and your natal sky opens beside today's: the planets where they stood when you were born, and where they stand now. A Being page of another person opens their sky only while they share it with you. You share yours, and open theirs, on the Sky's Share page (§22.1).
 
 #### Rules
 
 - A corrected birth time is a new revision of the same identity, never a new person.
 - Your identity is kept in your ground. Practice, journeys and answers never write it.
 - Your natal sky comes from your identity. The shell does not compute a second chart.
+- Sharing your sky gives consent to see it. It never writes your identity.
 
 ### 24.7 Nara over the field
 

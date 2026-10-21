@@ -13,10 +13,17 @@
 // Grounded in the cradle: the search line and results are desktop/cradle/src/knowledge/SearchOverlay.tsx; the kernel sends the full query
 // to `aikit knowledge search|resolve --limit 50 -- <query>` (kernel/src/knowledge.rs:487). Tagging a passage, aliases, the kind filter
 // and the limit as a setting have no code yet; the manual specifies them.
+// The `vak:` kind reaches Quaternal Logic's Vāk registry, the source-locked language of the map (109 entries at one source revision).
+// A `vak:` term names a coordinate, `vak:M0-3`: the registry finds an entry by its coordinate, never by its name. The located entry
+// arrives among the `results` as kind `vak-entry` (`ql vak locate <ref>`: its name, its designation as `says`, owner Quaternal Logic).
+// Opened, it stands in its neighbourhood: `vak.context` is `ql vak context <ref> <depth>` (`ql.vak-context/v1`), carried as {centre,
+// depth, revision, entries: [[ref, name, symbol, source line]], relations: [[from, relation, into]]}, every entry a SOURCE row and
+// every relation DERIVED from the coordinates' nesting. `vak.depth` (0..2, the owner's bound) is the depth asked. Both commands are
+// CLI; no kernel op reaches them yet, and the binding owes the route. A `vak:` result carries no horizon unless the owner states one.
 import {useState} from 'react'
 import {KindMark, type KindShapeName} from '../../sdk/marks'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, Action, type LightState, type Option, type RowItem} from '../../sdk/panel'
-import {NONE, boolOf, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
 import './central__search.css'
 
 // ---------------------------------------------------------------- the grammar (a port of aikit-core resource/operative.rs)
@@ -181,7 +188,7 @@ const scopesIn = (e: Node, out = new Set<string>()): Set<string> => {
 
 // ---------------------------------------------------------------- what is findable (the owner returns it; the view draws it)
 
-type Group = 'person' | 'agent' | 'place' | 'document' | 'passage' | 'power'
+type Group = 'person' | 'agent' | 'place' | 'document' | 'passage' | 'power' | 'vak'
 /** One result as the owner returns it: what it is (kind, and form for a skill), where it stands (horizon), what it is called and where
  * it lives (title, ref). `horizon` is one horizon or a list; where the owner gives none, the kind's own horizons stand. */
 interface Hit {readonly ref: string; readonly title: string; readonly kind: string; readonly horizons: readonly Horizon[]; readonly says?: string; readonly owner?: string; readonly project?: string}
@@ -193,9 +200,10 @@ const GROUPS: readonly {id: Group; name: string; shape: KindShapeName; verb: str
   {id: 'document', name: 'Documents', shape: 'doc', verb: 'adds', effect: 'Adds the passage, with a link back.'},
   {id: 'passage', name: 'Passages', shape: 'source', verb: 'opens', effect: 'Opens the passage.'},
   {id: 'power', name: 'Powers', shape: 'run', verb: 'opens', effect: 'Opens the skill or method.'},
+  {id: 'vak', name: 'Vāk', shape: 'archetype', verb: 'opens', effect: 'Opens the entry at its source line, among the entries round it.'},
 ]
 /** The owner's kinds and the group each is shown in. A kind this table does not know is shown with the documents. */
-const GROUP_OF = new Map<string, Group>([['knowledge-source', 'document'], ['knowledge-node', 'document'], ['knowledge-frame', 'passage'], ['agent', 'agent'], ['project', 'place'], ['place', 'place'], ['capability', 'power'], ['participant', 'person']])
+const GROUP_OF = new Map<string, Group>([['knowledge-source', 'document'], ['knowledge-node', 'document'], ['knowledge-frame', 'passage'], ['agent', 'agent'], ['project', 'place'], ['place', 'place'], ['capability', 'power'], ['participant', 'person'], ['vak-entry', 'vak']])
 const G = Object.fromEntries(GROUPS.map(g => [g.id, g])) as Record<Group, (typeof GROUPS)[number]>
 const groupOf = (h: Hit): Group => GROUP_OF.get(h.kind) ?? 'document'
 
@@ -292,6 +300,8 @@ interface Reading {
   readonly ghosts: readonly Hit[]
   readonly aimed: ReadonlySet<Horizon>
   readonly lead: Horizon | null
+  /** The coordinate a `vak:` term names. */
+  readonly vak?: string
 }
 
 function read(v: Values): Reading {
@@ -309,9 +319,72 @@ function read(v: Values): Reading {
   const asked = raw !== undefined && !!raw.trim() && !def && !error
   const cut = asked && owned ? owned.filter(kept) : []
   const hits = limit === undefined || !Number.isFinite(limit) ? cut : cut.slice(0, Math.max(0, limit))
-  return {raw, expr, error, alias: ex.alias, defining: def?.[1], aimed, lead: lead(expr),
+  return {raw, expr, error, alias: ex.alias, defining: def?.[1], aimed, lead: lead(expr), vak: error ? undefined : VAK_TERM.exec(ex.text)?.[1],
     hits: raw === undefined || (asked && !owned) ? undefined : hits, ghosts: asked && owned ? owned.filter(h => !hits.includes(h)) : []}
 }
+
+// ---------------------------------------------------------------- a Vāk entry and the entries round it
+
+/** A `vak:` term in the search: the coordinate it names. */
+const VAK_TERM = /(?:^|\s)vak:(M0\S*)/
+interface VakEntry {readonly ref: string; readonly name: string; readonly symbol: string; readonly line?: number}
+interface VakContext {readonly centre: string; readonly depth: number; readonly revision?: string; readonly entries: readonly VakEntry[]; readonly relations: readonly (readonly [string, string, string])[]}
+/** The neighbourhood the owner returned, or undefined when it reports none. */
+function vakContextOf(v: Values): VakContext | undefined {
+  const raw = json<unknown>(v, 'vak.context', undefined)
+  if (!raw || typeof raw !== 'object') return undefined
+  const o = raw as Record<string, unknown>
+  if (typeof o.centre !== 'string' || !Array.isArray(o.entries)) return undefined
+  const entries = o.entries.flatMap((e): VakEntry[] => (Array.isArray(e) && typeof e[0] === 'string' ? [{ref: e[0], name: textOf(e[1]) ?? e[0], symbol: textOf(e[2]) ?? '', line: typeof e[3] === 'number' ? e[3] : undefined}] : []))
+  const relations = (Array.isArray(o.relations) ? o.relations : []).flatMap((r): (readonly [string, string, string])[] => (Array.isArray(r) && r.length === 3 && r.every(x => typeof x === 'string') ? [[r[0], r[1], r[2]] as const] : []))
+  return {centre: o.centre, depth: typeof o.depth === 'number' ? o.depth : 0, revision: textOf(o.revision), entries, relations}
+}
+/** Each entry's distance in relations from the centre, up to the depth the owner answered. */
+function hopsOf(c: VakContext): Map<string, number> {
+  const hops = new Map<string, number>([[c.centre, 0]])
+  for (let d = 1; d <= c.depth; d++) for (const [a, , b] of c.relations) {
+    if (hops.get(a) === d - 1 && !hops.has(b)) hops.set(b, d)
+    if (hops.get(b) === d - 1 && !hops.has(a)) hops.set(a, d)
+  }
+  return hops
+}
+const vakDepthWord = (v: Values) => { const d = numOf(v, 'vak.depth'); return d === undefined ? undefined : `${d}` }
+
+/** The neighbourhood: the entry at the centre, the entries one relation away on the first ring (its parent at the top), two away on the
+ * second, each by its symbol. Handle 1 is the depth: drag it out to the second ring, in to the centre. */
+function VakRings({p, w, h, labels}: {p: ViewProps; w: number; h: number; labels: boolean}) {
+  const c = vakContextOf(p.v), cx = w / 2, cy = h / 2 + 4, R = Math.min(w, h) / 2 - 12, rings = [0, R * .46, R * .92]
+  const off = st(p, 'vak.depth').disabled, asked = numOf(p.v, 'vak.depth')
+  const handle = asked !== undefined && <Handle n={1} shape="ring" x={cx + rings[Math.round(clampTo(0, 2, asked))]!} y={cy} label="Depth"
+    does={`Drag out or in: how many relations from the entry the neighbourhood reaches, 0 to 2.${off ? ` ${off}` : ''}`}
+    onDrag={off ? undefined : x => { const d = Math.round(clampTo(0, 2, (x - cx) / (R * .46))); if (d !== asked) p.set('vak.depth', d) }} onReset={off ? undefined : () => p.set('vak.depth', 1)} />
+  if (!c) return <g><text x={cx} y={cy} textAnchor="middle" className="dp-axis">No reading of the entries round it.</text>{handle}</g>
+  const hops = hopsOf(c), byRef = new Map(c.entries.map(e => [e.ref, e])), at = new Map<string, readonly [number, number]>([[c.centre, [cx, cy]]])
+  const first = c.entries.filter(e => hops.get(e.ref) === 1), parents = new Set(c.relations.filter(r => r[0] === c.centre && r[1] === 'parent').map(r => r[2]))
+  const ordered = [...first.filter(e => parents.has(e.ref)), ...first.filter(e => !parents.has(e.ref))]
+  ordered.forEach((e, i) => { const a = (-90 + i * 360 / Math.max(1, ordered.length)) * Math.PI / 180; at.set(e.ref, [cx + rings[1]! * Math.cos(a), cy + rings[1]! * Math.sin(a)]) })
+  // The second ring keeps each entry beside the entry it came through.
+  const anchor = (ref: string) => c.relations.find(r => (r[0] === ref && hops.get(r[2]) === 1) || (r[2] === ref && hops.get(r[0]) === 1))
+  const second = c.entries.filter(e => hops.get(e.ref) === 2).map(e => { const r = anchor(e.ref), via = r ? (r[0] === e.ref ? r[2] : r[0]) : c.centre, [x, y] = at.get(via) ?? [cx, cy]
+    return {e, angle: Math.atan2(y - cy, x - cx)} }).sort((a, b) => a.angle - b.angle)
+  second.forEach(({e}, i) => { const a = (-90 + (i + .5) * 360 / Math.max(1, second.length)) * Math.PI / 180; at.set(e.ref, [cx + rings[2]! * Math.cos(a), cy + rings[2]! * Math.sin(a)]) })
+  const fs = labels ? 8 : 6.5
+  return <g>
+    {rings.slice(1).map((r, i) => <circle key={i} cx={cx} cy={cy} r={r} className="dp-faint" opacity={i + 1 <= c.depth ? .7 : .25} strokeDasharray={i + 1 <= c.depth ? undefined : '2 3'} />)}
+    {c.relations.map(([a, rel, b], i) => { const p0 = at.get(a), p1 = at.get(b); if (!p0 || !p1) return null
+      return <path key={i} d={`M${p0[0].toFixed(1)} ${p0[1].toFixed(1)}L${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`} stroke={rel === 'parent' ? 'var(--dp-on)' : 'var(--dp-value-dim)'} strokeWidth={.7} opacity={.7} /> })}
+    {[...at].map(([ref, [x, y]]) => { const e = byRef.get(ref), hop = hops.get(ref) ?? 0
+      return <g key={ref}>
+        <circle cx={x} cy={y} r={hop === 0 ? 5 : hop === 1 ? 3.2 : 1.8} fill={hop === 0 ? 'var(--dp-on)' : 'var(--dp-value)'} opacity={hop === 2 ? .7 : 1} />
+        {(hop === 0 || (labels && hop === 1)) && e && <text x={x} y={y - (hop === 0 ? 8 : 5)} textAnchor="middle" className={hop === 0 ? 'dp-ink' : 'dp-axis'}
+          style={{fontSize: hop === 0 ? fs + 1 : fs, paintOrder: 'stroke', stroke: '#121a20', strokeWidth: 3}}>{(e.symbol || e.ref.replace(/^M0-?/, '') || e.ref).slice(0, 7)}</text>}
+      </g> })}
+    {handle}
+  </g>
+}
+const vakRows = (v: Values): RowItem[] | undefined => { const c = vakContextOf(v); if (!c) return undefined; const hops = hopsOf(c)
+  return [...c.entries].sort((a, b) => (hops.get(a.ref) ?? 3) - (hops.get(b.ref) ?? 3)).map(e => ({id: e.ref, name: e.name, light: e.ref === c.centre ? 'lit' : 'dark', tone: 'value' as const,
+    note: e.symbol.slice(0, 8), does: `${e.ref} · ${hops.get(e.ref) === 0 ? 'the entry' : `${hops.get(e.ref)} away`} · source line ${e.line ?? NONE}`}))}
 
 // The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
@@ -397,6 +470,34 @@ function AliasRows({p, size, columns}: {p: ViewProps; size: number; columns: 1 |
 
 const PAGES = [{id: 'find', label: 'Find'}, {id: 'keep', label: 'Keep'}] as const
 
+/** The Find page for a `vak:` term: the entry it locates, and the entries round it. */
+function VakFind({p, r}: {p: ViewProps; r: Reading}) {
+  const [at, setAt] = useState(0)
+  const c = vakContextOf(p.v), centre = c?.entries.find(e => e.ref === c.centre), rows = vakRows(p.v)
+  return <>
+    <Band>
+      <Section width={164}><Display w={152} h={146} label="Round the entry" corner={vakDepthWord(p.v) === undefined ? NONE : `depth ${vakDepthWord(p.v)}`}
+        does="The entry the search locates at the centre, its parent at the top of the first ring, the entries one relation away on that ring and two away on the second.">
+        <VakRings p={p} w={152} h={146} labels={false} /></Display></Section>
+      <Section label="Query" grow>
+        <div className="srch-grid4">
+          <QueryLine p={p} />
+          <Readout big label="round it" does="Entries in the neighbourhood, the entry among them." value={c?.entries.length} tone="value" />
+          <Dial {...st(p, 'vak.depth')} label="Depth" does="How many relations from the entry the neighbourhood reaches. The registry reaches two at most." value={numOf(p.v, 'vak.depth') ?? NaN} def={1}
+            scale={{min: 0, max: 2, step: 1}} format={x => `${x}`} onChange={x => p.set('vak.depth', x)} />
+          <Readout label="symbol" does="The entry's symbol, as its source row gives it." value={centre?.symbol || (centre ? NONE : undefined)} />
+          <Readout label={`line ${centre?.line ?? NONE}`} does="The entry's coordinate, locked to its line in the source. Press to copy the coordinate." value={r.vak} copy={r.vak} />
+        </div>
+      </Section>
+    </Band>
+    <Band>
+      <Section grow>{rows === undefined
+        ? <div className="srch-keep"><Rows label="Round it · —" does="The entries round the one the search located." items={[]} size={10} columns={2} /><p className="srch-none">No reading of the entries round it</p></div>
+        : <Rows label={`Round it · ${rows.length}`} does="The entries round the one the search located, nearest first. The lit row is the entry; the note is each entry's symbol." items={rows} size={10} columns={2} page={at} onPage={setAt} />}</Section>
+    </Band>
+  </>
+}
+
 function SearchWhole({p}: {p: ViewProps}) {
   const [at, setAt] = useState(0)
   const r = read(p.v)
@@ -427,7 +528,7 @@ function SearchWhole({p}: {p: ViewProps}) {
           </div>
         </Section>
       </Band>
-    </> : <>
+    </> : r.vak !== undefined ? <VakFind p={p} r={r} /> : <>
       <Band>
         <Section width={164}><Well r={r} p={p} w={152} h={146} compact={false} /></Section>
         <Section label="Query" grow>
@@ -485,14 +586,20 @@ function SearchFull({p}: {p: ViewProps}) {
           </li>)}</ul>
         </section>)}
       </div>
-      <aside className="srch-side">
+      {gid === 'vak' ? <aside className="srch-side">
+        <h4>{picked!.title}</h4>
+        <p className="srch-from">{picked!.ref.replace(/^vak:/, '')} · {saysOf(picked!)}</p>
+        <h4>Round it{vakDepthWord(p.v) === undefined ? '' : `, depth ${vakDepthWord(p.v)}`}</h4>
+        <svg viewBox="0 0 246 200" width="100%" className="srch-vak" role="group" aria-label="The entries round it"><VakRings p={p} w={246} h={200} labels /></svg>
+        <p className="srch-from">{vakContextOf(p.v)?.revision ? `Source revision ${vakContextOf(p.v)!.revision!.slice(0, 10)}. Every entry is a source row; every line is drawn from the coordinates.` : 'No reading of the entries round it.'}</p>
+      </aside> : <aside className="srch-side">
         <h4>Selected passage</h4>
         <blockquote className="srch-quote">{selection ?? NONE}</blockquote>
         <p className="srch-from">from {from ?? NONE} · {size ?? NONE} characters</p>
         <h4>Where a tag would send it</h4>
-        <ul className="srch-targets">{GROUPS.filter(g => g.id !== 'power').map(g => <li key={g.id} data-on={gid === g.id ? 'true' : undefined}><b>{g.name.replace(/s$/, '')}</b><span>{g.effect}</span></li>)}</ul>
+        <ul className="srch-targets">{GROUPS.filter(g => g.id !== 'power' && g.id !== 'vak').map(g => <li key={g.id} data-on={gid === g.id ? 'true' : undefined}><b>{g.name.replace(/s$/, '')}</b><span>{g.effect}</span></li>)}</ul>
         <p className="srch-send">{verdict}</p>
-      </aside>
+      </aside>}
     </div>
   </div>
 }
@@ -505,7 +612,7 @@ export const design: DesignedDevice = {
   kind: 'instrument',
   defaults: {
     light: 'lit', query: 'ground', reach: ROOT, fields: 'mine', limit: 50, enter: 'send',
-    'k:person': true, 'k:agent': true, 'k:place': true, 'k:document': true, 'k:passage': true, 'k:power': true,
+    'k:person': true, 'k:agent': true, 'k:place': true, 'k:document': true, 'k:passage': true, 'k:power': true, 'k:vak': true, 'vak.depth': 1,
     selection: 'A completion claim without executed evidence is only tone.', from: 'Completion', pick: 'agent:flint',
     // Readings: what the owner returns for the query, the aliases it keeps, the projects a search can reach.
     results: JSON.stringify([
@@ -544,8 +651,17 @@ export const design: DesignedDevice = {
       {ref: 'wiki:bollingen-stone', title: 'The Bollingen stone', says: 'The Things page of the stone.', kind: 'knowledge-node', horizon: [0, 2], project: 'Archetypal-Earth', owner: 'Central'},
       {ref: 'participant:public:parasakti', title: 'parasakti', says: 'A participant of the shared field.', kind: 'participant', horizon: [4], project: 'control', owner: 'Shared field'},
     ]), fields: 'shared'},
-    'No readings': Object.fromEntries(['light', 'query', 'reach', 'fields', 'limit', 'enter', 'k:person', 'k:agent', 'k:place', 'k:document', 'k:passage', 'k:power',
-      'selection', 'from', 'pick', 'results', 'aliases', 'projects'].map(k => [k, undefined])),
+    // `ql vak locate M0-3` and `ql vak context M0-3 1` (Vāk source revision daa660cb): the archetypal number language and its eleven
+    // archetypes, with its parent Anuttara.
+    'Vāk M0-3, one relation round': {query: 'vak:M0-3', pick: 'vak:M0-3', results: JSON.stringify([{ref: 'vak:M0-3', title: 'Archetypal Number Language', says: 'Anuttara Position #3: The Complete Proto-Mathematical-Linguistic System - Para Vāk', kind: 'vak-entry', owner: 'Quaternal Logic'}]),
+      'vak.context': "{\"centre\": \"M0-3\", \"depth\": 1, \"revision\": \"daa660cbc1b8c5da83828698665a753852cb0287\", \"entries\": [[\"M0\", \"Anuttara\", \"\", 21], [\"M0-3\", \"Archetypal Number Language\", \"12+4+2\", 39], [\"M0-3-(0/1)\", \"The Mirror\", \"(-)\", 40], [\"M0-3-10\", \"Archetype 7 - Divine Action\", \"7\", 70], [\"M0-3-11\", \"Archetype 8 - Structural Reflection\", \"8\", 78], [\"M0-3-2\", \"Archetype 0\", \"0\", 43], [\"M0-3-3\", \"Archetype 1\", \"1\", 44], [\"M0-3-4\", \"Archetype 0/1\", \"0/1\", 45], [\"M0-3-5\", \"Archetype 2\", \"2\", 46], [\"M0-3-6\", \"Archetype 3\", \"3\", 47], [\"M0-3-7\", \"Archetype 4\", \"4\", 60], [\"M0-3-8\", \"Archetype 5 - Dynamic Harmony\", \"5\", 61], [\"M0-3-9\", \"Archetype 6 - Synthetic Emptiness\", \"6\", 69]], \"relations\": [[\"M0-3\", \"parent\", \"M0\"], [\"M0-3\", \"child\", \"M0-3-(0/1)\"], [\"M0-3\", \"child\", \"M0-3-10\"], [\"M0-3\", \"child\", \"M0-3-11\"], [\"M0-3\", \"child\", \"M0-3-2\"], [\"M0-3\", \"child\", \"M0-3-3\"], [\"M0-3\", \"child\", \"M0-3-4\"], [\"M0-3\", \"child\", \"M0-3-5\"], [\"M0-3\", \"child\", \"M0-3-6\"], [\"M0-3\", \"child\", \"M0-3-7\"], [\"M0-3\", \"child\", \"M0-3-8\"], [\"M0-3\", \"child\", \"M0-3-9\"]]}"},
+    // `ql vak context M0-3 2`: the archetypes' own rows, and Anuttara's other five positions.
+    'Vāk M0-3, two relations round': {query: 'vak:M0-3', pick: 'vak:M0-3', 'vak.depth': 2, results: JSON.stringify([{ref: 'vak:M0-3', title: 'Archetypal Number Language', says: 'Anuttara Position #3: The Complete Proto-Mathematical-Linguistic System - Para Vāk', kind: 'vak-entry', owner: 'Quaternal Logic'}]),
+      'vak.context': "{\"centre\": \"M0-3\", \"depth\": 2, \"revision\": \"daa660cbc1b8c5da83828698665a753852cb0287\", \"entries\": [[\"M0\", \"Anuttara\", \"\", 21], [\"M0-(4.0/1)\", \"O# - Paramasiva Base\", \"O#\", 80], [\"M0-(4.0/1/2)\", \"X# - Parashakti Base\", \"X#\", 87], [\"M0-(4.0/1/2/3)\", \"N# - Spanda Base\", \"N#\", 94], [\"M0-(4.5/0)\", \"# - Nara Base\", \"#\", 108], [\"M0-0\", \"Transcendent Void - 4-Fold Zero Unity\", \"(0000) -\", 23], [\"M0-1\", \"Emergence of Non-Duality\", \"(0/1)/00x00 = (∞x∞)x(R#/##)\", 26], [\"M0-2\", \"8-fold Zero-Zero\", \"(00-00), 00/00, 00x00, (00+00) = 9\", 28], [\"M0-3\", \"Archetypal Number Language\", \"12+4+2\", 39], [\"M0-3-(0/1)\", \"The Mirror\", \"(-)\", 40], [\"M0-3-(0/1)-0\", \"The Frame\", \"()\", 41], [\"M0-3-(0/1)-1\", \"The Operator\", \"-\", 42], [\"M0-3-10\", \"Archetype 7 - Divine Action\", \"7\", 70], [\"M0-3-10-(0/1)\", \"Svatantrya - Freedom\", \"(R#)\", 71], [\"M0-3-10-2\", \"Srishti - Creation\", \"(R0)\", 72], [\"M0-3-10-3\", \"Sthiti - Sustenance\", \"(R1)\", 73], [\"M0-3-10-4\", \"Samhara - Dissolution\", \"(R2)\", 74], [\"M0-3-10-5\", \"Tirodhana - Veiling\", \"(R3)\", 75], [\"M0-3-10-6\", \"Anugraha - Grace\", \"(R4)\", 76], [\"M0-3-10-7\", \"Samavesa - Absorption\", \"(R5)\", 77], [\"M0-3-11\", \"Archetype 8 - Structural Reflection\", \"8\", 78], [\"M0-3-2\", \"Archetype 0\", \"0\", 43], [\"M0-3-3\", \"Archetype 1\", \"1\", 44], [\"M0-3-4\", \"Archetype 0/1\", \"0/1\", 45], [\"M0-3-5\", \"Archetype 2\", \"2\", 46], [\"M0-3-6\", \"Archetype 3\", \"3\", 47], [\"M0-3-6-0\", \"Actual Identity (!)\", \"!\", 48], [\"M0-3-6-1\", \"Potential Essence (?)\", \"?\", 49], [\"M0-3-6-10\", \"Self Questioning World (!?/?!)\", \"!?/?!\", 58], [\"M0-3-6-11\", \"World Questioning Self (?!/!?)\", \"?!/!?\", 59], [\"M0-3-6-2\", \"Subjective I (!-)\", \"!-\", 50], [\"M0-3-6-3\", \"Asserted Am (-?)\", \"-?\", 51], [\"M0-3-6-4\", \"The Statement (!?)\", \"!?\", 52], [\"M0-3-6-5\", \"Objective Is (?-)\", \"?-\", 53], [\"M0-3-6-6\", \"Query of Other (-!)\", \"-!\", 54], [\"M0-3-6-7\", \"Reflexive Query (?!)\", \"?!\", 55], [\"M0-3-6-8\", \"Integrated Self (-!/!-)\", \"-!/!-\", 56], [\"M0-3-6-9\", \"Relational Other (-?/?-)\", \"-?/?-\", 57], [\"M0-3-7\", \"Archetype 4\", \"4\", 60], [\"M0-3-8\", \"Archetype 5 - Dynamic Harmony\", \"5\", 61], [\"M0-3-8-(0/1)\", \"Mono - The One\", \"(-)\", 62], [\"M0-3-8-2\", \"Poly - The Many\", \"@\", 63], [\"M0-3-8-3\", \"Poly- - Actually Many\", \"(-)-@+@-(-) + @-(-)+(-)-@\", 64], [\"M0-3-8-4\", \"-Mono - Potentially One\", \"(-)×@\", 65], [\"M0-3-8-5\", \"Mono- - Actualising The One\", \"= =\", 66], [\"M0-3-8-6\", \"-Poly - Potentiating The Many\", \"(-)/@\", 67], [\"M0-3-8-7\", \"MonoPoly - (M)Any-One\", \"(@)\", 68], [\"M0-3-9\", \"Archetype 6 - Synthetic Emptiness\", \"6\", 69], [\"M0-4\", \"The Holographic Matrix of Context\", \"(4.0/1-4/5)\", 79], [\"M0-4.4.0-(4.4/5)\", \"M# - Mahamaya Base\", \"M#\", 101], [\"M0-5\", \"Siva-Shakti Unity\", \"(5/0)\", 115]], \"relations\": [[\"M0-3\", \"parent\", \"M0\"], [\"M0-3\", \"child\", \"M0-3-(0/1)\"], [\"M0-3\", \"child\", \"M0-3-10\"], [\"M0-3\", \"child\", \"M0-3-11\"], [\"M0-3\", \"child\", \"M0-3-2\"], [\"M0-3\", \"child\", \"M0-3-3\"], [\"M0-3\", \"child\", \"M0-3-4\"], [\"M0-3\", \"child\", \"M0-3-5\"], [\"M0-3\", \"child\", \"M0-3-6\"], [\"M0-3\", \"child\", \"M0-3-7\"], [\"M0-3\", \"child\", \"M0-3-8\"], [\"M0-3\", \"child\", \"M0-3-9\"], [\"M0\", \"child\", \"M0-(4.0/1)\"], [\"M0\", \"child\", \"M0-(4.0/1/2)\"], [\"M0\", \"child\", \"M0-(4.0/1/2/3)\"], [\"M0\", \"child\", \"M0-(4.5/0)\"], [\"M0\", \"child\", \"M0-0\"], [\"M0\", \"child\", \"M0-1\"], [\"M0\", \"child\", \"M0-2\"], [\"M0\", \"child\", \"M0-3\"], [\"M0\", \"child\", \"M0-4\"], [\"M0\", \"child\", \"M0-4.4.0-(4.4/5)\"], [\"M0\", \"child\", \"M0-5\"], [\"M0-3-(0/1)\", \"parent\", \"M0-3\"], [\"M0-3-(0/1)\", \"child\", \"M0-3-(0/1)-0\"], [\"M0-3-(0/1)\", \"child\", \"M0-3-(0/1)-1\"], [\"M0-3-10\", \"parent\", \"M0-3\"], [\"M0-3-10\", \"child\", \"M0-3-10-(0/1)\"], [\"M0-3-10\", \"child\", \"M0-3-10-2\"], [\"M0-3-10\", \"child\", \"M0-3-10-3\"], [\"M0-3-10\", \"child\", \"M0-3-10-4\"], [\"M0-3-10\", \"child\", \"M0-3-10-5\"], [\"M0-3-10\", \"child\", \"M0-3-10-6\"], [\"M0-3-10\", \"child\", \"M0-3-10-7\"], [\"M0-3-11\", \"parent\", \"M0-3\"], [\"M0-3-2\", \"parent\", \"M0-3\"], [\"M0-3-3\", \"parent\", \"M0-3\"], [\"M0-3-4\", \"parent\", \"M0-3\"], [\"M0-3-5\", \"parent\", \"M0-3\"], [\"M0-3-6\", \"parent\", \"M0-3\"], [\"M0-3-6\", \"child\", \"M0-3-6-0\"], [\"M0-3-6\", \"child\", \"M0-3-6-1\"], [\"M0-3-6\", \"child\", \"M0-3-6-10\"], [\"M0-3-6\", \"child\", \"M0-3-6-11\"], [\"M0-3-6\", \"child\", \"M0-3-6-2\"], [\"M0-3-6\", \"child\", \"M0-3-6-3\"], [\"M0-3-6\", \"child\", \"M0-3-6-4\"], [\"M0-3-6\", \"child\", \"M0-3-6-5\"], [\"M0-3-6\", \"child\", \"M0-3-6-6\"], [\"M0-3-6\", \"child\", \"M0-3-6-7\"], [\"M0-3-6\", \"child\", \"M0-3-6-8\"], [\"M0-3-6\", \"child\", \"M0-3-6-9\"], [\"M0-3-7\", \"parent\", \"M0-3\"], [\"M0-3-8\", \"parent\", \"M0-3\"], [\"M0-3-8\", \"child\", \"M0-3-8-(0/1)\"], [\"M0-3-8\", \"child\", \"M0-3-8-2\"], [\"M0-3-8\", \"child\", \"M0-3-8-3\"], [\"M0-3-8\", \"child\", \"M0-3-8-4\"], [\"M0-3-8\", \"child\", \"M0-3-8-5\"], [\"M0-3-8\", \"child\", \"M0-3-8-6\"], [\"M0-3-8\", \"child\", \"M0-3-8-7\"], [\"M0-3-9\", \"parent\", \"M0-3\"]]}"},
+    'Vāk M0-3, the entry alone': {query: 'vak:M0-3', pick: 'vak:M0-3', 'vak.depth': 0, results: JSON.stringify([{ref: 'vak:M0-3', title: 'Archetypal Number Language', says: 'Anuttara Position #3: The Complete Proto-Mathematical-Linguistic System - Para Vāk', kind: 'vak-entry', owner: 'Quaternal Logic'}]),
+      'vak.context': "{\"centre\": \"M0-3\", \"depth\": 0, \"revision\": \"daa660cbc1b8c5da83828698665a753852cb0287\", \"entries\": [[\"M0-3\", \"Archetypal Number Language\", \"12+4+2\", 39]], \"relations\": []}"},
+    'No readings': Object.fromEntries(['light', 'query', 'reach', 'fields', 'limit', 'enter', 'k:person', 'k:agent', 'k:place', 'k:document', 'k:passage', 'k:power', 'k:vak',
+      'selection', 'from', 'pick', 'results', 'aliases', 'projects', 'vak.depth', 'vak.context'].map(k => [k, undefined])),
   },
   firstPage: 'find',
 
@@ -557,7 +673,10 @@ export const design: DesignedDevice = {
   compact: p => {
     const r = read(p.v)
     return <Panel title="Search" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
-      <Section width={152}><Well r={r} p={p} w={140} h={146} compact /></Section>
+      <Section width={152}>{r.vak !== undefined
+        ? <Display w={140} h={146} label="Round the entry" corner={vakDepthWord(p.v) === undefined ? NONE : `depth ${vakDepthWord(p.v)}`}
+          does="The entry the search locates, and the entries round it. Drag handle 1 for the depth."><VakRings p={p} w={140} h={146} labels={false} /></Display>
+        : <Well r={r} p={p} w={140} h={146} compact />}</Section>
       <Section cols={2}>
         <QueryLine p={p} label="Search" />
         <div className="srch-span"><ReachChooser p={p} /></div>

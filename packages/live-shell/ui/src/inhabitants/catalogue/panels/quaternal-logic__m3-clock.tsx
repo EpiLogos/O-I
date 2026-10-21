@@ -22,8 +22,10 @@
 // Writes are the owner's apply operations: a new degree is `advance-clock{steps}` by the difference. Turn, Open, Readout and showing
 // the reciprocal are the view's own choices; no owner keeps them. The entry's Run and Rate have no owner operation (m3_reception
 // carries no spanda-advance, and nothing runs the wheel), so they are not offered.
+// The Rack page carries the rack of M3′ (quaternal-logic__map-rack.tsx), on the keys rack and rack.part.
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {RACK_M3, RackBands} from './quaternal-logic__map-rack'
 
 type V = ViewProps['v']
 
@@ -147,7 +149,10 @@ export const design: DesignedDevice = {
     // ql_m3_generate(complementary, 17): GC under CC, one codon, GCC.
     'law.matrix': 'complementary', 'law.seed': 'sum-difference-mod', 'law.poseMap': 'raw-bin',
     'generation.lower': 'GC', 'generation.upper': 'CC', 'generation.positive': 'GCC', 'generation.negative': 'GCC', 'generation.nonDual': true,
+    // M3′'s rack, read from the M registry at revision c211a781 with the ledger's rungs; the parts carried as §22.3 names them.
+    rack: RACK_M3, 'rack.part': '4',
   },
+  firstPage: 'wheel',
   fixtures: {
     'Second turn, 4° cut': {},
     // ql_m3_generate(moving-resting, 17): CT under CC, two codons, CCC and CTC.
@@ -157,7 +162,7 @@ export const design: DesignedDevice = {
     'Exploded, 15° × 24': {'clock.degree720': 359, 'clock.tick12': 11, 'clock.backbone': '#3-5-4-5', 'aperture.index': 7, open: 'exploded', turn: 'first', 'form.codon': 'ATG', readout: 'hexagram'},
     'No reading': {'clock.degree720': undefined, 'clock.tick12': undefined, 'clock.backbone': undefined, 'aperture.index': undefined, 'form.address': undefined, 'form.codon': undefined,
       'law.matrix': undefined, 'law.seed': undefined, 'law.poseMap': undefined, 'generation.lower': undefined, 'generation.upper': undefined, 'generation.positive': undefined,
-      'generation.negative': undefined, 'generation.nonDual': undefined},
+      'generation.negative': undefined, 'generation.nonDual': undefined, rack: undefined, 'rack.part': undefined},
   },
 
   folded: p => { const s = readingOf(p.v)
@@ -172,7 +177,8 @@ export const design: DesignedDevice = {
     </Panel> },
 
   whole: p => { const c = controls(p), s = readingOf(p.v), w = wide(p) ? Math.round(clampTo(186, p.room!.h - 22, 186)) : 186
-    return <Panel title="M3 clock" view="whole" {...head(p)}>
+    return <Panel title="M3 clock" view="whole" {...head(p)} pages={[{id: 'wheel', label: 'Wheel'}, {id: 'rack', label: 'Rack'}]} page={p.page === 'rack' ? 'rack' : 'wheel'} onPage={p.setPage}>
+      {p.page === 'rack' ? <RackBands p={p} /> : <>
       <Band>
         <Section width={w + 12}>
           <Display w={w} h={146} label="The wheel" does={`${DISPLAY_DOES} Drag handle 1 for the position.`} corner={corner(s)}>
@@ -196,6 +202,7 @@ export const design: DesignedDevice = {
             value={strOf(p.v, 'law.poseMap') === 'lawful-slot' ? numOf(p.v, 'pose.slot') : numOf(p.v, 'pose.bin')} />
         </Section>
       </Band>
+      </>}
     </Panel> },
 
   full: p => { const s = readingOf(p.v)
