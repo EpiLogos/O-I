@@ -28,6 +28,7 @@ import {sessionRowsOf} from './threadBinding'
 import {familyFaceDevice} from './mainTrackBindings'
 import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {FactoryTake, TakeState} from '../factoryTakes'
+import {journeyOf, type RunJourneyRead} from './runJourney'
 import {SETTINGS_WHY, TASKS_DEVICE_SETTINGS, settingsRefusal, taskSettingChange, tasksDeviceChange, tasksDeviceValues, writeSessionSettings,
   type TasksDeviceSetting} from '../sessionSettings'
 
@@ -212,11 +213,12 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
 
 // ---------------------------------------------------------------------------------------------------------------- Runs
 
-/** The Journey the work belongs to (lane W7; D3's Journey view, software-factory__attempt-review.tsx `journey`): factory_development_read
- * `journey` and `commission-read` read a Journey by its ref, and the run reading (`run`) names the Run's Journey — reads that exist. The
- * take lanes read each Run's attempts (factory.attempt-reading/v1, which names its Run and no Journey) and ask neither, so the Journey stands
- * absent with that reason until a reader chains the run reading to the Journey's. */
-export const RUNS_JOURNEY_UNREAD = 'The Journey the work belongs to: not read here yet — the take lanes read each Run\'s attempts (factory.attempt-reading/v1 names its Run, not its Journey), and nothing here asks the run reading (factory_development_read `run`) for its Journey or the Journey\'s own reads (`journey`, `commission-read`), which exist.'
+/** The Journey the work belongs to (lane W8; D3's Journey view, software-factory__attempt-review.tsx `journey`): read by runJourney.ts
+ * through factory_development_read — the shown Run's reading names its Journey, the Journey's reading its purpose, status and Runs — for
+ * the Run the take lanes name (its state path and ref). Why it is not drawn, when it is not. */
+export const RUNS_JOURNEY_UNREAD = 'The Journey the work belongs to: no Run is shown — the take lanes name a Run (its state and ref) only for a selected session\'s attempts, and factory_development_read `run` and `journey` read it from there.'
+export const RUNS_JOURNEY_READING = 'The Journey the work belongs to: Factory has not answered yet (factory_development_read `run`, then `journey`).'
+export const RUNS_JOURNEY_NONE = 'The Journey the work belongs to: Factory names none for this Run (its reading\'s owningJourneyRefs is empty).'
 
 export const RUNS_REFUSE = {
   /** No takes handed in: the chain has not given Runs the take lanes' reading of the session. */
@@ -240,6 +242,8 @@ export interface RunsTakes {
   readonly takes: readonly FactoryTake[] | null
   readonly choose: (take: FactoryTake) => Promise<unknown>
   readonly timezone?: string
+  /** The Journey of the Run shown (runJourney.ts useRunJourney), as the window holds it; absent: not read. */
+  readonly journey?: {readonly status: 'reading' | 'answered' | 'refused'; readonly value: RunJourneyRead | null; readonly error: string | null}
 }
 
 /** An attempt's standing in the design's words (software-factory__attempt-review.tsx STATES), from Factory's (factoryTakes.ts TakeState). */
@@ -287,13 +291,18 @@ export function runsValues(session: string | null, holds: ChainHolds, takes?: Ru
     put(values, 'work', read.work)
     const stands = read.attempts.find(attempt => attempt.current === true)
     put(values, 'stands', stands ? String(stands.id) : undefined)
+    const journey = takes.journey?.status === 'answered' && takes.journey.value ? journeyOf(takes.journey.value) : null
+    if (journey) values.journey = JSON.stringify(journey)
   }
   return values
 }
 
 /** Why Runs' attempts and Stands cannot stand now, by key; empty when the takes are read. */
 function runsStanding(session: string | null, takes?: RunsTakes): Record<string, Standing> {
-  const journey = {journey: {disabled: RUNS_JOURNEY_UNREAD}}
+  const held = takes?.journey
+  const drawn = !!session && !!takes?.takes && held?.status === 'answered' && !!held.value && journeyOf(held.value) !== null
+  const journey: Record<string, Standing> = drawn ? {} : {journey: {disabled: !session || !takes?.takes || !held ? RUNS_JOURNEY_UNREAD
+    : held.status === 'refused' ? held.error ?? RUNS_JOURNEY_READING : held.status === 'reading' ? RUNS_JOURNEY_READING : RUNS_JOURNEY_NONE}}
   if (!takes) return {...journey, stands: {disabled: RUNS_REFUSE.stands}}
   if (!session) return {...journey, stands: {disabled: 'Stands: no session is selected; an attempt stands on its session\'s Run.'}}
   if (!takes.takes) return {...journey, stands: {disabled: `Stands: ${RUNS_UNREAD.noneServed}`}}

@@ -1,0 +1,110 @@
+{
+ "_read": "aikit explain|history skill/aikit/wiki-inhabitation --json, workcell:mac, 21 Oct 2026, read-only: each envelope's data (history trimmed to its first three entries, each entry's canonical_refs to four)",
+ "explain": {
+  "active": false,
+  "declared_enabled": true,
+  "dependencies": [],
+  "exports": [],
+  "id": "skill/aikit/wiki-inhabitation",
+  "render": "skill/aikit/wiki-inhabitation@0431f3\nState: unavailable — this revision has not been reviewed\nTrust: unseen\nMaturity: stable\nSelected by:\n  enabled by global /Users/admin/.aikit/scopes/global/profile.toml\nRequired by:\n  none\nDependencies:\n  none\nActivation means: projected into the relevant agent skill surface\n",
+  "required_by": [],
+  "revision": "0431f3c93b48624a91dbcec740472b499035724d8718b830ad6e5a04d0352702",
+  "selected_by": [
+   "enabled by global /Users/admin/.aikit/scopes/global/profile.toml"
+  ],
+  "skill_usage_overlays": [],
+  "unavailable": "this revision has not been reviewed"
+ },
+ "history": {
+  "entries": [
+   {
+    "authorities": [
+     "generated"
+    ],
+    "canonical_refs": [
+     "generation/gen_081ce086e5e947f3",
+     "hook/aikit/knowledge-route",
+     "hook/aikit/pi-extension-carrier",
+     "hook/continuity/wiki-projection"
+    ],
+    "details": {
+     "baseGeneration": "gen_f607f550cbc8fdd7",
+     "catalogRevision": "3e4935992d7452034108314bdaf05c6a83e5eacf22530c0c8d4c34a65433f60d",
+     "context": "ctx_01M29JMDD7MKQZ096VPJYV5ABS",
+     "isolation": "Shared",
+     "materialization": "Link",
+     "notes": "codex: this task uses the session's shared working tree: no session-only capability skills are withheld; the context-specific actor bootstrap is also withheld | deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+     "resolutionHash": "8d7f8f0a787bb6f6e694394b3567fc18b09d4ca2b1b9671594eef80a5c6ed70c",
+     "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:brokered — this task uses the session's shared working tree: no session-only capability skills are withheld; the context-specific actor bootstrap is also withheld, deepseek-harness:brokered — DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+    },
+    "id": "gen_081ce086e5e947f3",
+    "kind": "generation",
+    "occurred_at_unix_ms": 1790112476654,
+    "provenance": [],
+    "recoverability": "inspect-only",
+    "schema": "aikit.explain-history/v1",
+    "subject": "generation/gen_081ce086e5e947f3",
+    "summary": "generation gen_081ce086e5e947f3 · resolution 8d7f8f0a787bb6f6e694394b3567fc18b09d4ca2b1b9671594eef80a5c6ed70c · catalog 3e4935992d7452034108314bdaf05c6a83e5eacf22530c0c8d4c34a65433f60d"
+   },
+   {
+    "authorities": [
+     "generated"
+    ],
+    "canonical_refs": [
+     "generation/gen_c061018614659084",
+     "hook/aikit/knowledge-route",
+     "hook/aikit/pi-extension-carrier",
+     "hook/continuity/wiki-projection"
+    ],
+    "details": {
+     "baseGeneration": "gen_98bca1673a334498",
+     "catalogRevision": "3e4935992d7452034108314bdaf05c6a83e5eacf22530c0c8d4c34a65433f60d",
+     "context": "ctx_01M2S7BYT5WMKDS7GKG3ZZWM11",
+     "isolation": "Shared",
+     "materialization": "Link",
+     "notes": "codex: this task uses the session's shared working tree: no session-only capability skills are withheld; the context-specific actor bootstrap is also withheld | deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+     "resolutionHash": "8d7f8f0a787bb6f6e694394b3567fc18b09d4ca2b1b9671594eef80a5c6ed70c",
+     "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:brokered — this task uses the session's shared working tree: no session-only capability skills are withheld; the context-specific actor bootstrap is also withheld, deepseek-harness:brokered — DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+    },
+    "id": "gen_c061018614659084",
+    "kind": "generation",
+    "occurred_at_unix_ms": 1790112427403,
+    "provenance": [],
+    "recoverability": "inspect-only",
+    "schema": "aikit.explain-history/v1",
+    "subject": "generation/gen_c061018614659084",
+    "summary": "generation gen_c061018614659084 · resolution 8d7f8f0a787bb6f6e694394b3567fc18b09d4ca2b1b9671594eef80a5c6ed70c · catalog 3e4935992d7452034108314bdaf05c6a83e5eacf22530c0c8d4c34a65433f60d"
+   },
+   {
+    "authorities": [
+     "generated"
+    ],
+    "canonical_refs": [
+     "generation/gen_f700f6ec4648c53e",
+     "guidance/aikit/living-project-collaboration",
+     "guidance/aikit/world-situated-agency",
+     "hook/aikit/knowledge-route"
+    ],
+    "details": {
+     "baseGeneration": "gen_e3fca2691b1bc015",
+     "catalogRevision": "3e4935992d7452034108314bdaf05c6a83e5eacf22530c0c8d4c34a65433f60d",
+     "context": "ctx_01M1SZDY0EHE4SABR3YQ1AZ9YJ",
+     "isolation": "Shared",
+     "materialization": "Link",
+     "notes": "codex: this task uses the session's shared working tree: no session-only capability skills are withheld; the context-specific actor bootstrap is also withheld | deepseek-harness: DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+     "resolutionHash": "185e717ff08d894cbebd2affb712078cbf3ca4fb1af35e1cf3673c6c1f4cb140",
+     "targetEffects": "shell:shell bin/, claude-code:restart Claude, codex:brokered — this task uses the session's shared working tree: no session-only capability skills are withheld; the context-specific actor bootstrap is also withheld, deepseek-harness:brokered — DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree"
+    },
+    "id": "gen_f700f6ec4648c53e",
+    "kind": "generation",
+    "occurred_at_unix_ms": 1790112372800,
+    "provenance": [],
+    "recoverability": "inspect-only",
+    "schema": "aikit.explain-history/v1",
+    "subject": "generation/gen_f700f6ec4648c53e",
+    "summary": "generation gen_f700f6ec4648c53e · resolution 185e717ff08d894cbebd2affb712078cbf3ca4fb1af35e1cf3673c6c1f4cb140 · catalog 3e4935992d7452034108314bdaf05c6a83e5eacf22530c0c8d4c34a65433f60d"
+   }
+  ],
+  "schema": "aikit.explain-history/v1"
+ }
+}

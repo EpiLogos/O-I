@@ -162,21 +162,71 @@ export const CUSTODY_ABSENT = {
   handBackLit: unread('The hand-back light', 'a reading of what you edited among the agent\'s held items (Factory\'s custody states name no edit)', 'Software Factory'),
 } as const
 
-// The Grants page (lane W7; D7, software-factory__agent-custody.tsx `grants`, `holder`, `worlds`, `readAt`): Actuation's governing authority
-// records. Actuation has no command that lists them (AuthorityStore::read reads one source ref: T-COVERAGE §1.5, Actuation "a list of
-// grants"), and `actuation authority issue|revoke` has no kernel route yet (T-COVERAGE §1.2, Actuation "authority issue|revoke"): the grants
-// stand absent and Issue and Revoke disabled, each naming its operation. The next grant's settings are the hand's own holds.
+// The Grants page (lanes W7, W8; D7, software-factory__agent-custody.tsx `grants`, `holder`, `worlds`, `readAt`): Actuation's governing
+// authority records, read through the kernel's actuation_read {kind authority-list} (`actuation authority list --json`,
+// actuation.local-authority-listing/v1: authorities [{authority_source_ref, record {holder, issued_by, metagency_grant {operations},
+// allowed_world_refs, …}, issued_at_unix_seconds, revoked? {at_unix_seconds, reason}}]; real shape in desktop/cradle/kernel/tests/fixtures/
+// owner-routes/actuation-authority-2026-10-21.json). Every grant in Actuation's store stands, each with its own holder: no reading names
+// the Actuation holder ref of the session's agent, so `holder` and `worlds` stay absent.
+// The writes: Actuation authenticates no issuer — its record is local material protected by file access, and it accepts whatever issuer a
+// record names — so this binding is the only guard, and it writes only as the person's own press, with the person as who acts
+// (`currentIdentity()`, handed in as `person`), never a value the desk composes:
+//   Revoke  actuation_write {authority-revoke, authority_source_ref: the grant chosen, reason: the hand's reason} — only while a person is
+//           current, and only for a grant the list holds and has not revoked.
+//   Issue   stands disabled: `actuation authority issue` takes a whole actuation.local-authority/v1 record — the holder's governing binding
+//           (actuation.agency/v1: binding, agent, agency, world, scope, bounds and authority refs) and the grant's agency, binding and
+//           authority refs — and no reading here holds the holder's binding; the desk does not compose one.
 const unreadGrant = (what: string, op: string) => `${what}: no reading reaches it yet — missing op: ${op} (Actuation).`
 export const CUSTODY_GRANTS_ABSENT = {
-  grants: unreadGrant('The agent\'s grants', 'a list of Actuation\'s grants for a holder (AuthorityStore::read reads one source ref; T-COVERAGE §1.5, Actuation: "a list of grants")'),
-  holder: unreadGrant('Whom the grants are for', 'the Actuation holder ref of the session\'s agent (no reading here names it; it comes with the grant list)'),
-  worlds: unreadGrant('The worlds a grant may name', 'the World refs Actuation admits for the holder (it comes with the grant list)'),
-  readAt: unreadGrant('When the grants were read', 'a list of Actuation\'s grants (T-COVERAGE §1.5, Actuation: "a list of grants")'),
+  grants: 'The agent\'s grants: Actuation has not answered its authority list yet (`actuation authority list`).',
+  holder: unreadGrant('Whom the grants are for', 'the Actuation holder ref of the session\'s agent (no reading here names it; each grant in the list names its own holder)'),
+  worlds: unreadGrant('The worlds a grant may name', 'the World refs Actuation admits for the session\'s agent (no reading here names them)'),
+  readAt: 'When the grants were read: Actuation has not answered its authority list yet.',
 } as const
 export const CUSTODY_GRANTS_REFUSE = {
-  issue: missing('Issue', '`actuation authority issue` through the kernel (T-COVERAGE §1.2, Actuation: "authority issue|revoke"; not routed yet)', 'Actuation'),
-  revoke: missing('Revoke', '`actuation authority revoke <authority_source_ref> --reason <text>` through the kernel (T-COVERAGE §1.2, Actuation: "authority issue|revoke"; not routed yet)', 'Actuation'),
+  issue: missing('Issue', 'the holder\'s governing binding for a new actuation.local-authority/v1 record (`actuation authority issue` takes the whole record — the holder\'s actuation.agency/v1 binding and the grant\'s agency, binding and authority refs — and no reading here holds the holder\'s binding; the desk composes none)', 'Actuation'),
+  /** Revoke with no person current: Actuation authenticates no one, so the desk writes only as the person. */
+  revoke: 'Revoke: no person is current here (the Nara identity names none). Actuation authenticates no one, so a grant is revoked only as the current person\'s own press.',
+  revokeChoose: 'Revoke: choose a grant in force in the list first.',
+  /** The person changed between the drawing and the press. */
+  revokePerson: 'Revoke: the current person is no longer the one this page was drawn for; nothing was sent to Actuation.',
 } as const
+
+/** One grant of Actuation's listing as the design's row (software-factory__agent-custody.tsx:17-21): {ref, holder, issuedBy, operations,
+ * worlds, issuedAt (s), revoked: {at, reason} | null}. `expiresAt` is left out: an Actuation authority record carries no expiry. Pure. */
+export function grantRows(listing: unknown): Record<string, unknown>[] | null {
+  const doc = listing && typeof listing === 'object' && !Array.isArray(listing) ? listing as Record<string, unknown> : null
+  if (!doc || doc.schema !== 'actuation.local-authority-listing/v1' || !Array.isArray(doc.authorities)) return null
+  const obj = (value: unknown) => (value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null)
+  const text = (value: unknown) => (typeof value === 'string' && value ? value : undefined)
+  const words = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [])
+  return doc.authorities.flatMap(row => {
+    const entry = obj(row), record = obj(entry?.record), grant = obj(record?.metagency_grant), revoked = obj(entry?.revoked)
+    const ref = text(entry?.authority_source_ref)
+    if (!entry || !record || !ref) return []
+    const issuedAt = typeof entry.issued_at_unix_seconds === 'number' ? entry.issued_at_unix_seconds : undefined
+    return [{ref, ...(text(record.holder) ? {holder: record.holder} : {}), ...(text(record.issued_by) ? {issuedBy: record.issued_by} : {}),
+      operations: words(grant?.operations), worlds: words(record.allowed_world_refs), ...(issuedAt !== undefined ? {issuedAt} : {}),
+      revoked: revoked ? {at: typeof revoked.at_unix_seconds === 'number' ? revoked.at_unix_seconds : null, reason: text(revoked.reason) ?? null} : null}]
+  })
+}
+
+/** Actuation's authority list as the window holds it, with when it was read. */
+export interface GrantsReading {
+  readonly status: 'reading' | 'answered' | 'refused'
+  readonly value: unknown
+  readonly error: string | null
+  readonly readAtUnixMs?: number | null
+}
+
+/** Custody's writes to Actuation (ownerRoutes.ts actuation_write). Absent: no carrier stands. */
+export interface CustodyPorts {
+  readonly revoke?: (authoritySourceRef: string, reason: string | undefined) => Promise<unknown>
+  /** Who is current at the moment of the press (`currentIdentity()` read again): Revoke goes only when it is still the person the page
+   * was drawn for. Absent: the person drawn stands. */
+  readonly personNow?: () => string | null
+}
+
 /** The next grant's settings and the revocation's reason: the hand's own holds (software-factory__agent-custody.tsx:21-22). */
 export const CUSTODY_GRANT_SETTINGS: readonly string[] = ['grant:determine-agency', 'grant:configure-agency', 'grant:actualise-agency', 'grant:reintegrate-return',
   'grant:world', 'grant:expires', 'revoke:reason']
@@ -190,6 +240,10 @@ export interface CustodyInput {
   readonly agent: Values
   /** The hand's holds (the next grant's settings); absent, the store as it stands. */
   readonly holds?: ChainHolds
+  /** Actuation's authority list (actuation_read {authority-list}); absent: not read here. */
+  readonly grants?: GrantsReading
+  /** The current person (`currentIdentity()`'s person ref): the only one Custody writes to Actuation as. */
+  readonly person?: string | null
 }
 
 /** Custody's values: the Agent's light and the custody the session's task record names. Write mode is Scope's reading, and none is
@@ -199,6 +253,11 @@ export function custodyValues(input: CustodyInput): Values {
   const values: Record<string, Value> = {}
   const view = viewHolds(input.holds ?? chainHolds(), CUSTODY_ID)
   for (const key of CUSTODY_GRANT_SETTINGS) put(values, key, view[key])
+  const rows = input.grants?.status === 'answered' ? grantRows(input.grants.value) : null
+  if (rows) {
+    values.grants = JSON.stringify(rows)
+    if (typeof input.grants?.readAtUnixMs === 'number') values.readAt = Math.floor(input.grants.readAtUnixMs / 1000)
+  }
   if (input.sessionRef == null) return values
   put(values, 'light', input.agent.light)
   put(values, 'autonomy', input.autonomy)
@@ -207,15 +266,35 @@ export function custodyValues(input: CustodyInput): Values {
 
 /** Custody's binding: Write mode is Scope's own key and row (one binding feeds both: the same write, the same standing); every other
  * setting has no owner write and stands disabled with the operation it lacks. */
-export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, 'write' | 'standing'> | null): DesignBinding {
-  const standing: Record<string, Standing> = {...disabled(CUSTODY_ABSENT), ...disabled(CUSTODY_GRANTS_ABSENT), ...disabled(CUSTODY_GRANTS_REFUSE), ...disabled(CUSTODY_REFUSE)}
+export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, 'write' | 'standing'> | null, ports: CustodyPorts = {}): DesignBinding {
+  const values = custodyValues(input)
+  const standing: Record<string, Standing> = {...disabled(CUSTODY_ABSENT), ...disabled(CUSTODY_REFUSE), issue: {disabled: CUSTODY_GRANTS_REFUSE.issue}}
+  for (const key of ['holder', 'worlds'] as const) standing[key] = {disabled: CUSTODY_GRANTS_ABSENT[key]}
+  const listWhy = input.grants?.status === 'refused' ? input.grants.error ?? CUSTODY_GRANTS_ABSENT.grants
+    : input.grants?.status === 'answered' && !('grants' in values) ? '`actuation authority list` answered something other than its listing.' : null
+  if (!('grants' in values)) standing.grants = {disabled: listWhy ?? CUSTODY_GRANTS_ABSENT.grants}
+  if (!('readAt' in values)) standing.readAt = {disabled: listWhy ?? CUSTODY_GRANTS_ABSENT.readAt}
+  const person = typeof input.person === 'string' && input.person.trim() ? input.person : null
+  const revokeWhy = !ports.revoke ? 'Revoke: the kernel carrier is unavailable here, so Actuation cannot be asked (`actuation authority revoke` through the kernel\'s actuation_write).'
+    : !person ? CUSTODY_GRANTS_REFUSE.revoke : !('grants' in values) ? standing.grants!.disabled! : null
+  if (revokeWhy) standing.revoke = {disabled: revokeWhy}
   standing.writeMode = scope?.standing?.writeMode ?? {disabled: 'Write mode is Scope\'s: the chain\'s Scope is not drawn on its owner here.'}
+  /** Revoke: the grant the list holds and has not revoked, as the current person's own press; Actuation's refusal is its own words. */
+  const revoke = async (value: Value | undefined) => {
+    if (revokeWhy) throw Error(revokeWhy)
+    if (ports.personNow && ports.personNow() !== person) throw Error(CUSTODY_GRANTS_REFUSE.revokePerson)
+    const rows = (input.grants?.status === 'answered' ? grantRows(input.grants.value) : null) ?? []
+    const row = rows.find(grant => grant.ref === value)
+    if (typeof value !== 'string' || !row || row.revoked) throw Error(CUSTODY_GRANTS_REFUSE.revokeChoose)
+    const reason = viewHolds(input.holds ?? chainHolds(), CUSTODY_ID)['revoke:reason']
+    await ports.revoke!(value, typeof reason === 'string' && reason.trim() ? reason.trim() : undefined)
+  }
   return {
     id: CUSTODY_ID,
-    values: custodyValues(input),
+    values,
     standing,
     local: Object.fromEntries(CUSTODY_GRANT_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(CUSTODY_ID, key, value)])),
-    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key in CUSTODY_GRANTS_REFUSE,
+    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key === 'issue' || key === 'revoke',
     write: async changes => {
       for (const {key, value} of changes) {
         if (key === 'writeMode') {
@@ -223,7 +302,10 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
           await scope.write([{key, value}])
           continue
         }
-        throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? CUSTODY_GRANTS_REFUSE[key as keyof typeof CUSTODY_GRANTS_REFUSE] ?? reading(key))
+        if (key === 'revoke') { await revoke(value); continue }
+        // Issue: the desk composes no authority record, whoever the value names as its issuer.
+        if (key === 'issue') throw Error(CUSTODY_GRANTS_REFUSE.issue)
+        throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? reading(key))
       }
     },
   }

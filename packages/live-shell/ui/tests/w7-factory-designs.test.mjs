@@ -168,20 +168,14 @@ test('2 · Capture skill stands on the armed track\'s chain — a session\'s, af
   assert.match(view, /promote: \(candidate, id\) => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'promote', project: RACK_PROJECT, candidate/)
 })
 
-test('3 · the Prompt pads: no route reads Factory\'s bank yet, so every reading is absent and every write disabled, each naming its pads command', async () => {
-  bind.resetHolds()
-  const binding = pads.promptPadsBinding(bind.chainHolds())
-  for (const key of ['pads', 'revision', 'light']) assert.match(binding.standing[key].disabled, /`factory development pads <state> <project-ref>` through the kernel \(T-COVERAGE §1\.2; not routed yet\)/, key)
-  for (const key of pads.PAD_SETTINGS) assert.match(binding.standing[key].disabled, /`factory development pads-write`/, key)
-  assert.match(binding.standing.press.disabled, /`factory development pads-run`.*`pads-record`/)
-  await assert.rejects(() => binding.write([{key: 'press', value: true}]), /pads-run/)
-  binding.local.pad(5)
-  assert.equal(pads.promptPadsValues(bind.chainHolds()).pad, 5, 'the pad you read is the hand\'s')
+// REPLACED (lane W8): the Prompt pads read Factory's bank through factory_owner locate and pads-read and write through pads-write
+// (w8-factory-routes.test.mjs); the Main track's order is still §16.2's.
+test('3 · the Prompt pads stand on the Main track in §16.2\'s order: the Run map, the experiments, Approvals and the prompt pads', () => {
+  assert.deepEqual(places.chainSlots({kind: 'main'}, {helper: true, pads: true, runMap: true}), ['run-map', 'experiment', 'approvals', 'prompt-pads'])
   const padsDevice = pads.promptPadsDevice()
   assert.ok(padsDevice, 'Software Factory admits the prompt-pads face: its plate stands on the Main track')
   assert.equal(padsDevice.id, pads.PROMPT_PADS_ID)
-  assert.deepEqual(places.chainSlots({kind: 'main'}, {helper: true, pads: true, runMap: true}), ['run-map', 'experiment', 'approvals', 'prompt-pads'], '§16.2: the Run map, the experiments, Approvals and the prompt pads')
-  bind.resetHolds()
+  assert.match(pads.PADS_REFUSE.press, /Factory never runs a pad/)
 })
 
 test('4 · the Run map: no Run is named on the Main track, so its readings stand absent saying so; Retry and Continue name T-COVERAGE §1.2\'s Software Factory row', async () => {
@@ -209,55 +203,18 @@ test('4 · the Run map: no Run is named on the Main track, so its readings stand
   bind.resetHolds()
 })
 
-test('5 · the Skillset rack\'s and member\'s upkeep pages and the Agent\'s Context page: each reading absent and each act disabled, naming its command', async () => {
-  bind.resetHolds()
-  const rack = bind.rackBinding('factory:skillset', {profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()}, null, {project: 'O-I', sessionRef: null})
-  for (const [key, op] of [['unused', /`aikit unused --json`/], ['sources', /`aikit source show/], ['roots', /`aikit collate --json`/], ['adoption', /`aikit adopt <path>/], ['procedures', /`aikit procedure list/], ['bypasses', /`aikit bypass list/]]) {
-    assert.match(rack.standing[key].disabled, op, key)
-  }
-  for (const key of ['sync', 'promote', 'rollback', 'adoptPreview', 'adoptApply', 'procRun', 'procUndo', 'issue', 'revoke']) {
-    assert.match(rack.standing[key].disabled, /through the kernel \(T-COVERAGE §1\.2, AIKit; not routed yet\)/, key)
-    await assert.rejects(() => rack.write([{key, value: 'x'}]), /missing op/)
-  }
-  rack.local.unusedOnly(true)
-  assert.equal(bind.rackBinding('factory:skillset', {profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()}, null, {project: 'O-I', sessionRef: null}).values.unusedOnly, true, 'the Unused filter is the hand\'s')
+// REPLACED (lane W8): the rack's upkeep pages, the member's Why and History, the Agent's Context page and Custody's Grants read and write
+// through AIKit's and Actuation's routes (w8-factory-routes.test.mjs). What stays refused here is what no route carries.
+test('5 · what no route carries stays refused: Retire and Restore (PERSON_ACTS names neither), a procedure run, a bypass issue, an adoption with no digest, the last turn', async () => {
   const member = bind.memberBinding(bind.MEMBER_DEVICE_ID, {}, null, bind.chainHolds())
-  assert.match(member.standing.why.disabled, /`aikit explain <capability> --json`/)
-  assert.match(member.standing.history.disabled, /`aikit history <capability> --json`/)
-  assert.match(member.standing.ground.disabled, /control\.skills\.inspect lists skills by ground name and path/)
-  for (const key of ['retire', 'restore']) {
-    assert.match(member.standing[key].disabled, /PERSON_ACTS names it not/, key)
-    await assert.rejects(() => member.write([{key, value: '{}'}]), /PERSON_ACTS/)
-  }
-  // PERSON_ACTS (committed action.rs) names neither control.skills.retire nor restore.
+  for (const key of ['retire', 'restore']) assert.match(member.standing[key].disabled, /PERSON_ACTS names it not/, key)
   const action = readFileSync(new URL('../../../../desktop/cradle/kernel/src/action.rs', import.meta.url), 'utf8')
   const acts = action.slice(action.indexOf('pub const PERSON_ACTS'), action.indexOf('];', action.indexOf('pub const PERSON_ACTS')))
   assert.doesNotMatch(acts, /control\.skills/)
-  assert.match(bind.AGENT_CONTEXT_ABSENT['ctx.pressure'], /`aikit work continuity pressure --json`/)
-  assert.match(bind.AGENT_CONTEXT_ABSENT['ctx.armed'], /`aikit work continuity commands --json`/)
+  assert.match(bind.RACK_UPKEEP_REFUSE.adoptApply, /carries no digest/)
+  assert.match(bind.RACK_UPKEEP_REFUSE.procRun, /not routed/)
+  assert.match(bind.RACK_UPKEEP_REFUSE.issue, /mints a secret/)
   assert.match(bind.AGENT_CONTEXT_ABSENT['ctx.turn'], /T-COVERAGE §1\.5, AIKit/)
-  const agent = bind.agentBinding('factory:agent', {sessionRef: 's', track: null, nowUnixMs: 1, reading: model.INITIAL_READING, accepted: {}, harness: {binding: 'cursor', resolved: false},
-    holds: bind.chainHolds()}, {}, async () => ({kind: 'refused', reason: 'x'}), () => true)
-  for (const key of Object.keys(bind.AGENT_CONTEXT_ABSENT)) assert.equal(agent.standing[key].disabled, bind.AGENT_CONTEXT_ABSENT[key], key)
-  bind.resetHolds()
-})
-
-test('6 · the Grants page on Custody: the grant list is a missing Actuation operation; Issue and Revoke name `actuation authority issue|revoke`; the next grant is the hand\'s', async () => {
-  bind.resetHolds()
-  const custody = session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}, holds: bind.chainHolds()}, null)
-  for (const key of ['grants', 'holder', 'worlds', 'readAt']) assert.match(custody.standing[key].disabled, /no reading reaches it yet — missing op:/, key)
-  assert.match(custody.standing.grants.disabled, /T-COVERAGE §1\.5, Actuation: "a list of grants"/)
-  assert.match(custody.standing.issue.disabled, /`actuation authority issue` through the kernel/)
-  assert.match(custody.standing.revoke.disabled, /`actuation authority revoke <authority_source_ref> --reason <text>`/)
-  await assert.rejects(() => custody.write([{key: 'issue', value: '{}'}]), /authority issue/)
-  custody.local['grant:actualise-agency'](true)
-  custody.local['grant:world']('project:O-I')
-  const held = session.custodyValues({sessionRef: 's', autonomy: 'review', agent: {}, holds: bind.chainHolds()})
-  assert.deepEqual([held['grant:actualise-agency'], held['grant:world']], [true, 'project:O-I'])
-  assert.equal(held.grants, undefined, 'no grant invented')
-  // Changed since on Identity is Central's binding (central/devices/identityBinding.ts `continuity`), already absent with its op.
-  assert.match(readFileSync(new URL('../src/central/devices/identityBinding.ts', import.meta.url), 'utf8'), /continuity: 'Changed since: missing op/)
-  bind.resetHolds()
 })
 
 test('the bound designs draw on their bindings in all their views — no NaN, no undefined, never their fixture text — each refusal drawn as why', () => {

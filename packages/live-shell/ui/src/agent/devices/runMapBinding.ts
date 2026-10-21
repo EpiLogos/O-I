@@ -41,7 +41,7 @@ export const RUN_MAP_ABSENT: Readonly<Record<string, string>> = {
 export const RUN_MAP_REFUSE: Readonly<Record<string, string>> = {
   recognise: `Recognise: factory_owner Recognise takes the Journey and the Return you recognise, and ${NO_RUN}.`,
   close: `Close: factory_owner RunClose takes the Run and your Recognition of its Return, and ${NO_RUN}.`,
-  retry: missing('Retry', 'the attempt `retry` under the unit\'s RetryGrant through the kernel (T-COVERAGE §1.2, Software Factory: "the attempt `retry`"; not routed yet)'),
+  retry: missing('Retry', 'the attempt `retry` under the unit\'s RetryGrant through the kernel (T-COVERAGE §1.2, Software Factory: "the attempt `retry`"; not routed: it needs a named grant action, and the desk never asserts one)'),
   continue: missing('Continue', '`factory development mutate` for ContinueCommission through the kernel (T-COVERAGE §1.2, Software Factory: "`development mutate` for ContinueCommission"; the kernel issues the mutation only for a Recognition)'),
 }
 

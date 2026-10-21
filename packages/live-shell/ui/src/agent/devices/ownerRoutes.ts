@@ -38,6 +38,16 @@ export async function ownerRouteWrite(transport: KernelTransportStatus, op: Kern
   return routeAnswerOf(await kernelOp(transport, op), asked)
 }
 
+/** One Factory owner write through the kernel's factory_owner (its answer is `factory_development_reading`): Factory's document, or its
+ * refusal thrown in its words. */
+export async function factoryOwnerWrite(transport: KernelTransportStatus, request: {kind: string; [field: string]: unknown}, asked: string): Promise<unknown> {
+  if (transport.kind === 'unavailable') throw new Error(`The kernel carrier is unavailable, so ${asked} cannot be asked: ${transport.reason ?? 'no transport'}.`)
+  const call = await kernelOp(transport, {op: 'factory_owner', request})
+  if (call.error) throw new Error(refusalWords(call.error))
+  if (call.outcome?.result !== 'factory_development_reading') throw new Error(`${asked} did not answer with Factory's document.`)
+  return call.outcome.data
+}
+
 /** The writes the kernel routes, each in its owner's own request (desktop/cradle/src/kernel/types.ts). */
 export const gatewayWriteOp = (request: GatewayWriteRequest): KernelOp => ({op: 'gateway_write', request})
 export const seatWriteOp = (request: SeatWriteRequest): KernelOp => ({op: 'seat_write', request})

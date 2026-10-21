@@ -61,7 +61,7 @@ export function lensRequestRefused(sources: readonly string[] | null): string {
 /** The keys no owner reports here, each with the reading it waits for. */
 export const KNOWLEDGE_ABSENT = {
   pages: unread('The pages read in this task', 'a knowledge history by session or task — `aikit knowledge history` (aikit.knowledge-application-history/v1) records each route with an empty context', 'AIKit'),
-  graph: unread('The links round the last hit', 'the agent\'s last hit, to ask `aikit knowledge relations` round it (the history names no session)', 'AIKit'),
+  graph: unread('The links round the last hit', 'the agent\'s last hit, to ask `aikit knowledge relations` or `aikit knowledge frame <address>` round it (the history names no session; the kernel\'s aikit_read knowledge-frame takes at least one address, and no reading names one as this agent\'s)', 'AIKit'),
   reach: unread('Reach', 'the scope reach on the world device (WO-SF2): Scope reports none', 'Software Factory'),
   level: unread('The level that holds each source', 'central.world.effective-sources, asked against a Reach Scope does not report yet', 'Central'),
   light: unread('Whether the route is on', 'a reading of the route\'s standing for the agent', 'AIKit'),
@@ -74,7 +74,7 @@ export const KNOWLEDGE_REFUSE = {
   budget: missing('Read budget', 'a per-agent ceiling on the pages a task opens', 'AIKit'),
   searchFirst: missing('Search first', 'a per-agent order of search and links on the route', 'AIKit'),
   refresh: 'Read again: Affected is not reported, so no reading stands to read again (the kernel\'s knowledge use would read it at its new basis).',
-  forget: missing('Forget', '`aikit knowledge forget destination <resource>` through the kernel', 'AIKit'),
+  forget: 'Forget: Affected is not reported, so no reading stands to forget (`aikit knowledge forget destination <resource>` reaches AIKit through the kernel\'s aikit_write since lane W3 round 3).',
 } as const
 
 /** Each lens's answer from AIKit's `knowledge status`, or null when the reading cannot be read as one. */
