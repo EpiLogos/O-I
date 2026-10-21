@@ -179,3 +179,62 @@ test('the generic plate that stands in for a view reads the owner\'s places; its
   assert.equal(calls.at(-1).request.request.mode, 'current')
   sky.resetQlSky()
 })
+
+// ---------------------------------------------------------------------------------------------------------------- the Share page
+// The consents both ways: SharedField's list through the kernel's nara_presence `list` (oi.nara-presences/v1), split by the person's
+// Participants (SharedField's snapshot, my_authority). REAL: the hosted field's list, read-only on 21 Oct (no presences). SCRIPTED: the
+// list, the withdrawal's re-read and the refusals from SharedField's own pure functions (the kernel fixture's `list`, `listed_after`),
+// and a snapshot whose authority and chosen name are written here to match that list's Participants.
+const presenceFixture = JSON.parse(await readFile(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/shared-field-presences-2026-10-21.json', import.meta.url), 'utf8'))
+const presences = await import(src('inhabitants/ql/devices/skyPresences.ts'))
+const OWNER = 'participant:oi-field-expression-sf5-nara:human-owner'
+const listAnswer = data => ({outcome: {result: 'nara_presence_consent', data, receipts: []}})
+const snapshotAnswer = (mine, participants = []) => ({outcome: {result: 'shared_field_reading', data: {schema: 'oi.shared-field.snapshot/v1', my_authority: mine.map(participant_ref => ({field_ref: 'oi:field:expression-sf5-nara', participant_ref, role: 'participant', revoked: false})), participants}, receipts: []}})
+const presenceCall = (list, snapshot, asked = []) => async op => { asked.push(op); return op.op === 'nara_presence' ? list : snapshot }
+
+test('the Share page lists the consents both ways from SharedField, split by your Participants; Withdraw keeps the design\'s own words (REAL empty list; SCRIPTED rows)', async () => {
+  const state = sky.qlSkyState()
+  // REAL: the hosted field lists no presences. Both lists are empty whoever you are, so no snapshot is asked.
+  const asked = []
+  presences.resetSkyPresences({call: presenceCall(listAnswer(presenceFixture.hosted_list), null, asked)})
+  assert.equal(sky.qlSkyBinding(state).standing['presence.consents'].disabled, 'Reading the presence consents SharedField lists…')
+  await presences.readSkyPresences()
+  assert.deepEqual(asked.map(op => [op.op, op.request.operation ?? op.request.kind]), [['nara_presence', 'list']], 'the list alone')
+  let binding = sky.qlSkyBinding(state)
+  assert.deepEqual([JSON.parse(binding.values['presence.consents']), JSON.parse(binding.values['presence.shared'])], [[], []])
+  assert.equal(binding.standing['presence.consents'].disabled, presences.CONSENTS_READ)
+  const empty = renderToStaticMarkup(h(HostedDevice, {designed: {...design, firstPage: 'share'}, binding, view: 'whole', nav: {}}))
+  assert.match(empty, /Only you see your sky/)
+  assert.match(empty, /No one has shared a sky with you/)
+  assert.match(empty, /Central keeps each consent and has no operation to withdraw one yet\./, 'Withdraw has no key: the design\'s own words stand')
+  // SCRIPTED: your Participant published the presence: a consent you gave, to World B, permitting now.
+  presences.resetSkyPresences({call: presenceCall(listAnswer(presenceFixture.list), snapshotAnswer([OWNER], [{participant_ref: 'participant:world-b', presentation: {chosen_name: 'World B'}}]))})
+  await presences.readSkyPresences()
+  binding = sky.qlSkyBinding(state)
+  assert.deepEqual(JSON.parse(binding.values['presence.consents']), [{target: 'participant:world-b', name: 'World B', consent: 'consent:sf5:1', granted: '2026-09-15T12:00:01Z', permitted: true}])
+  assert.deepEqual(JSON.parse(binding.values['presence.shared']), [])
+  const share = renderToStaticMarkup(h(HostedDevice, {designed: {...design, firstPage: 'share'}, binding, view: 'whole', nav: {}}))
+  assert.match(share, /World B/)
+  assert.match(share, /2026-09-15/)
+  assert.doesNotMatch(share, /NaN|undefined|data-device-fault/)
+  // After its withdrawal, the re-read lists it withdrawn: it no longer permits.
+  presences.resetSkyPresences({call: presenceCall(listAnswer(presenceFixture.listed_after), snapshotAnswer([OWNER]))})
+  await presences.readSkyPresences()
+  assert.equal(JSON.parse(sky.qlSkyBinding(state).values['presence.consents'])[0].permitted, false)
+  // The other way: the presence's target is yours, so it was given to you; its publisher is the subject.
+  presences.resetSkyPresences({call: presenceCall(listAnswer(presenceFixture.list), snapshotAnswer(['participant:world-b']))})
+  await presences.readSkyPresences()
+  binding = sky.qlSkyBinding(state)
+  assert.deepEqual(JSON.parse(binding.values['presence.consents']), [])
+  assert.deepEqual(JSON.parse(binding.values['presence.shared']), [{subject: OWNER, consent: 'consent:sf5:1', granted: '2026-09-15T12:00:01Z', permitted: true}])
+  // Refusals in words: SharedField unbound; presences listed but your Participants not readable.
+  presences.resetSkyPresences({call: presenceCall(listAnswer({state: 'unavailable', owner_operation: 'shared-field', detail: 'no SharedField target is bound'}), null)})
+  await presences.readSkyPresences()
+  assert.equal(sky.qlSkyBinding(state).standing['presence.shared'].disabled, 'SharedField is unavailable: no SharedField target is bound')
+  presences.resetSkyPresences({call: presenceCall(listAnswer(presenceFixture.list), {outcome: null, error: 'the carrier is down'})})
+  await presences.readSkyPresences()
+  binding = sky.qlSkyBinding(state)
+  assert.equal(binding.values['presence.consents'], undefined)
+  assert.match(binding.standing['presence.consents'].disabled, /SharedField lists 1 presence\(s\), but which are yours it cannot say here: the carrier is down/)
+  presences.resetSkyPresences()
+})

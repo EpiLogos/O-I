@@ -499,7 +499,7 @@ const registryCall = (answers = {'mef-lenses': QL_REGISTRY.mef_lenses, 'context-
   return answer?.answer ? {outcome: {result: 'owner_route_reading', route: answer.command.slice(0, 3).join(' '), data: answer.answer}} : {outcome: null, error: answer ?? 'no answer'}
 }
 
-test('the Lens reads QL\'s lens registry, frames and provider operations through ql_read, verbatim (REAL answers); its reading and frame reading name what they wait for; its controls name the request no QL command takes', async () => {
+test('the Lens reads QL\'s lens registry, frames and provider operations through ql_read, verbatim (REAL answers); its reading and frame reading name what they wait for; its mode, operation and probe say what is lacking', async () => {
   const lenses = await import('../src/techne/devices/lensRegistry.ts')
   const asked = []
   lenses.resetLensRegistry({call: registryCall(undefined, asked)})
@@ -517,11 +517,12 @@ test('the Lens reads QL\'s lens registry, frames and provider operations through
   assert.match(binding.standing.service.disabled, /`ql service capabilities`, available\)/)
   const keys = classify(DESIGNS.lens, binding, effects.lensAbsent)
   assert.deepEqual(keys.reading.sort(), ['frames', 'lenses', 'service'], 'what QL answers here, and nothing of the design\'s sample')
-  assert.deepEqual(keys.local, [])
+  assert.deepEqual(keys.local.sort(), ['lens.lens', 'lens.sublens'], 'the aperture is the view\'s own hold')
   for (const key of ['reading.subject', 'reading.members', 'reading.lens', 'reading.instruments', 'reading.degraded']) assert.match(binding.standing[key].disabled, /QL reads the target its caller supplies .*WikiSubjectSource/, key)
   for (const key of ['frame.mapping', 'frame.status', 'frame.frames', 'frame.missing']) assert.match(binding.standing[key].disabled, /sixfold mapping its caller names .*QL-MEF pull 344/, key)
   assert.match(binding.standing.proposals.disabled, /refraction\.rs:787-788/, 'the proposals keep QL\'s own gap')
-  for (const key of ['lens.mode', 'lens.lens', 'lens.sublens']) assert.match(binding.standing[key].disabled, /pins \(`mef:lens:L1@1`.*techne_wiki\.rs:30, :72\)/, key)
+  assert.match(binding.standing['lens.mode'].disabled, /`ql wiki refract -`, QL-MEF pull 350.*no refraction runs here/)
+  for (const key of ['lens.lens', 'lens.sublens']) assert.equal(binding.standing[key], undefined, `${key}: a hold, not refused`)
   assert.match(binding.standing['lens.operation'].disabled, /`ql service negotiate` only reports/)
   for (const key of ['frame.position', 'frame.face', 'frame.grain']) assert.match(binding.standing[key].disabled, /sixfold mapping/, key)
   for (const key of Object.keys(effects.LENS_REFUSE)) await assert.rejects(() => binding.write([{key, value: 1}]), new RegExp(effects.LENS_REFUSE[key].slice(0, 20).replace(/[.*+?^${}()|[\]\\`]/g, '\\$&')), key)
@@ -533,7 +534,7 @@ test('the Lens reads QL\'s lens registry, frames and provider operations through
   }
   const all = drawn.map(([, markup]) => markup).join('\n')
   assert.ok(all.includes('Archetypal-Numerical') && all.includes(escaped("L5' Divine Logos")), 'the lens chooser lists QL\'s own lenses, by QL\'s codes')
-  assert.ok(all.includes(escaped(effects.LENS_REFUSE['lens.lens'])), 'a refused control says why')
+  assert.ok(all.includes(escaped(effects.LENS_REFUSE['lens.mode'])), 'a refused control says why')
   // A refusal is drawn in QL's words, and asked again when a view next opens.
   lenses.resetLensRegistry({call: registryCall({'mef-lenses': 'ql: the registry is unavailable', 'context-frame-list': QL_REGISTRY.context_frame_list, 'service-capabilities': QL_REGISTRY.service_capabilities}, asked)})
   await lenses.ensureLensRegistry()
@@ -544,6 +545,35 @@ test('the Lens reads QL\'s lens registry, frames and provider operations through
   asked.length = 0
   await lenses.ensureLensRegistry()
   assert.deepEqual(asked.map(op => op.request.kind), ['mef-lenses'], 'only the refused list is asked again')
+  lenses.resetLensRegistry()
+})
+
+// REAL (tests/fixtures/ql-mef-lenses-sublenses-2026-10-21.json): `ql mef lenses` with each lens's six sublenses (QL-MEF pull 349).
+const QL_SUBLENSES = JSON.parse(readFileSync(new URL('./fixtures/ql-mef-lenses-sublenses-2026-10-21.json', import.meta.url), 'utf8'))
+
+test('the Lens draws each lens\'s six sublenses where QL carries them, and holds the lens and sublens you choose (REAL answer)', async () => {
+  const lenses = await import('../src/techne/devices/lensRegistry.ts')
+  lenses.resetLensRegistry({call: registryCall({'mef-lenses': QL_SUBLENSES, 'context-frame-list': QL_REGISTRY.context_frame_list, 'service-capabilities': QL_REGISTRY.service_capabilities})})
+  await lenses.ensureLensRegistry()
+  devices.resetHolds()
+  const empty = effects.lensBinding(lenses.lensRegistry(), devices.heldFor(effects.LENS_ID))
+  const drawn = JSON.parse(empty.values.lenses)
+  assert.deepEqual(drawn.map(l => l.code), QL_SUBLENSES.answer.lenses.map(l => l.code), 'QL\'s lenses, by QL\'s codes')
+  assert.deepEqual(drawn[10].sublenses, ['Anuttara/Asambhava', 'Para Vāk', 'Paśyantī', 'Madhyamā', 'Vaikharī', 'Mātṛkā'], 'L5\'s labels in position order, from QL')
+  assert.equal(drawn[10].lensRef, 'mef:lens:L5@1', 'the rest of the entry as QL gives it')
+  assert.match(empty.standing.lenses.disabled, /each with its six sublenses/)
+  assert.equal(empty.values['lens.lens'], undefined, 'no lens is held until you choose one: never the design\'s L5')
+  // The lens and sublens are the view's own: set through the binding's hands, never written to an owner.
+  empty.local['lens.lens']('L5'); empty.local['lens.sublens']('2')
+  const held = effects.lensBinding(lenses.lensRegistry(), devices.heldFor(effects.LENS_ID))
+  assert.deepEqual([held.values['lens.lens'], held.values['lens.sublens']], ['L5', '2'])
+  const all = hostedAll(DESIGNS.lens, held).map(([, markup]) => markup).join('\n')
+  assert.ok(all.includes('Paśyantī') && all.includes('Mātṛkā'), 'the ring and the chooser draw QL\'s sublenses of the lens you hold')
+  assert.doesNotMatch(all, /\bNaN\b|undefined|data-device-fault/)
+  // A lens entry whose sublenses are not QL's six is drawn without them.
+  assert.equal(lenses.sublensLabels({sublenses: [{position: 0, label: 'x'}]}), undefined)
+  assert.equal(lenses.sublensLabels({sublenses: Array.from({length: 6}, (_, i) => ({position: 5 - i, label: 'x'}))}), undefined)
+  devices.resetHolds()
   lenses.resetLensRegistry()
 })
 
@@ -600,7 +630,7 @@ test('the designs draw on their bindings in every view and page — no NaN, no u
     [DESIGNS.timeline, frameB.timelineBinding(timelineFrame, LAW([])), /Naassene|Kabbala|Late antiquity/, ['An event of the frame', '1700'], [frameB.TIMELINE_REFUSE.mode]],
     [DESIGNS.canvas, frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME})), /Which centre speaks first|Sacral|Lower three/, ['A frame of the board', '84'], [frameB.CANVAS_REFUSE.promote]],
     [DESIGNS.light, effects.lightBinding(), /The river dream|Grief, unsaid|Change jobs/, [], [effects.LIGHT_REFUSE['light.bounces']]],
-    [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.lens']]],
+    [DESIGNS.lens, effects.lensBinding(), /l5-techne-instrument-constellation|registry-disclosure|Fourfold-Zero/, [], [effects.LENS_REFUSE['lens.mode']]],
   ]
   for (const [design, binding, fixture, shows, reasons] of cases) {
     const drawn = hostedAll(design, binding)

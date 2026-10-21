@@ -1,0 +1,483 @@
+{
+ "_source": "REAL, headless: `ql mef lenses --json` from QL-MEF pull 349 (dlw/ql-mef-sublenses, built at b661840; rebased to 8c11e76 with no code change), 21 Oct 2026. The installed ql (2c041e9e) does not carry sublenses yet.",
+ "command": [
+  "ql",
+  "mef",
+  "lenses",
+  "--json"
+ ],
+ "answer": {
+  "registryVersion": "1.0.0-q2",
+  "registryRevision": 1,
+  "lenses": [
+   {
+    "lensRef": "mef:lens:L0@1",
+    "code": "L0",
+    "name": "Quaternal",
+    "face": "day",
+    "square": "articulation",
+    "sublenses": [
+     {
+      "label": "Why",
+      "position": 0,
+      "sublensRef": "mef:sublens:L0.0@1"
+     },
+     {
+      "label": "What",
+      "position": 1,
+      "sublensRef": "mef:sublens:L0.1@1"
+     },
+     {
+      "label": "How",
+      "position": 2,
+      "sublensRef": "mef:sublens:L0.2@1"
+     },
+     {
+      "label": "Whom/Which/When",
+      "position": 3,
+      "sublensRef": "mef:sublens:L0.3@1"
+     },
+     {
+      "label": "Where/Why-for",
+      "position": 4,
+      "sublensRef": "mef:sublens:L0.4@1"
+     },
+     {
+      "label": "Why-so/Why-not",
+      "position": 5,
+      "sublensRef": "mef:sublens:L0.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L0'@1",
+    "code": "L0'",
+    "name": "Archetypal-Numerical",
+    "face": "night",
+    "square": "articulation",
+    "sublenses": [
+     {
+      "label": "One/Unity",
+      "position": 0,
+      "sublensRef": "mef:sublens:L0'.0@1"
+     },
+     {
+      "label": "Two/Duality",
+      "position": 1,
+      "sublensRef": "mef:sublens:L0'.1@1"
+     },
+     {
+      "label": "Three/Triad",
+      "position": 2,
+      "sublensRef": "mef:sublens:L0'.2@1"
+     },
+     {
+      "label": "Four/Quaternity",
+      "position": 3,
+      "sublensRef": "mef:sublens:L0'.3@1"
+     },
+     {
+      "label": "Five/Pentad",
+      "position": 4,
+      "sublensRef": "mef:sublens:L0'.4@1"
+     },
+     {
+      "label": "Six/Hexad",
+      "position": 5,
+      "sublensRef": "mef:sublens:L0'.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L1@1",
+    "code": "L1",
+    "name": "Causal",
+    "face": "day",
+    "square": "encounter",
+    "sublenses": [
+     {
+      "label": "Svātantrya",
+      "position": 0,
+      "sublensRef": "mef:sublens:L1.0@1"
+     },
+     {
+      "label": "Material cause",
+      "position": 1,
+      "sublensRef": "mef:sublens:L1.1@1"
+     },
+     {
+      "label": "Efficient cause",
+      "position": 2,
+      "sublensRef": "mef:sublens:L1.2@1"
+     },
+     {
+      "label": "Formal cause",
+      "position": 3,
+      "sublensRef": "mef:sublens:L1.3@1"
+     },
+     {
+      "label": "Final cause",
+      "position": 4,
+      "sublensRef": "mef:sublens:L1.4@1"
+     },
+     {
+      "label": "Icchā Śakti / Will",
+      "position": 5,
+      "sublensRef": "mef:sublens:L1.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L1'@1",
+    "code": "L1'",
+    "name": "Phenomenal",
+    "face": "night",
+    "square": "encounter",
+    "sublenses": [
+     {
+      "label": "Introversion",
+      "position": 0,
+      "sublensRef": "mef:sublens:L1'.0@1"
+     },
+     {
+      "label": "Sensation",
+      "position": 1,
+      "sublensRef": "mef:sublens:L1'.1@1"
+     },
+     {
+      "label": "Feeling",
+      "position": 2,
+      "sublensRef": "mef:sublens:L1'.2@1"
+     },
+     {
+      "label": "Thinking",
+      "position": 3,
+      "sublensRef": "mef:sublens:L1'.3@1"
+     },
+     {
+      "label": "Intuition",
+      "position": 4,
+      "sublensRef": "mef:sublens:L1'.4@1"
+     },
+     {
+      "label": "Extroversion",
+      "position": 5,
+      "sublensRef": "mef:sublens:L1'.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L2@1",
+    "code": "L2",
+    "name": "Logical",
+    "face": "day",
+    "square": "becoming",
+    "sublenses": [
+     {
+      "label": "Tetralemmaic ground",
+      "position": 0,
+      "sublensRef": "mef:sublens:L2.0@1"
+     },
+     {
+      "label": "IS",
+      "position": 1,
+      "sublensRef": "mef:sublens:L2.1@1"
+     },
+     {
+      "label": "IS-NOT",
+      "position": 2,
+      "sublensRef": "mef:sublens:L2.2@1"
+     },
+     {
+      "label": "BOTH",
+      "position": 3,
+      "sublensRef": "mef:sublens:L2.3@1"
+     },
+     {
+      "label": "NEITHER",
+      "position": 4,
+      "sublensRef": "mef:sublens:L2.4@1"
+     },
+     {
+      "label": "SILENCE",
+      "position": 5,
+      "sublensRef": "mef:sublens:L2.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L2'@1",
+    "code": "L2'",
+    "name": "Alchemical-Elemental",
+    "face": "night",
+    "square": "becoming",
+    "sublenses": [
+     {
+      "label": "Aether",
+      "position": 0,
+      "sublensRef": "mef:sublens:L2'.0@1"
+     },
+     {
+      "label": "Earth",
+      "position": 1,
+      "sublensRef": "mef:sublens:L2'.1@1"
+     },
+     {
+      "label": "Water",
+      "position": 2,
+      "sublensRef": "mef:sublens:L2'.2@1"
+     },
+     {
+      "label": "Air",
+      "position": 3,
+      "sublensRef": "mef:sublens:L2'.3@1"
+     },
+     {
+      "label": "Fire",
+      "position": 4,
+      "sublensRef": "mef:sublens:L2'.4@1"
+     },
+     {
+      "label": "Salt",
+      "position": 5,
+      "sublensRef": "mef:sublens:L2'.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L3@1",
+    "code": "L3",
+    "name": "Processual",
+    "face": "day",
+    "square": "becoming",
+    "sublenses": [
+     {
+      "label": "Concrescent desire",
+      "position": 0,
+      "sublensRef": "mef:sublens:L3.0@1"
+     },
+     {
+      "label": "Actual occasion",
+      "position": 1,
+      "sublensRef": "mef:sublens:L3.1@1"
+     },
+     {
+      "label": "Ingression",
+      "position": 2,
+      "sublensRef": "mef:sublens:L3.2@1"
+     },
+     {
+      "label": "Eternal objects",
+      "position": 3,
+      "sublensRef": "mef:sublens:L3.3@1"
+     },
+     {
+      "label": "Community integration",
+      "position": 4,
+      "sublensRef": "mef:sublens:L3.4@1"
+     },
+     {
+      "label": "Satisfaction/Perishing",
+      "position": 5,
+      "sublensRef": "mef:sublens:L3.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L3'@1",
+    "code": "L3'",
+    "name": "Chronological",
+    "face": "night",
+    "square": "becoming",
+    "sublenses": [
+     {
+      "label": "Spirit (Geist)",
+      "position": 0,
+      "sublensRef": "mef:sublens:L3'.0@1"
+     },
+     {
+      "label": "Spring",
+      "position": 1,
+      "sublensRef": "mef:sublens:L3'.1@1"
+     },
+     {
+      "label": "Summer",
+      "position": 2,
+      "sublensRef": "mef:sublens:L3'.2@1"
+     },
+     {
+      "label": "Autumn",
+      "position": 3,
+      "sublensRef": "mef:sublens:L3'.3@1"
+     },
+     {
+      "label": "Winter",
+      "position": 4,
+      "sublensRef": "mef:sublens:L3'.4@1"
+     },
+     {
+      "label": "Life (Aufhebung)",
+      "position": 5,
+      "sublensRef": "mef:sublens:L3'.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L4@1",
+    "code": "L4",
+    "name": "Phenomenological",
+    "face": "day",
+    "square": "encounter",
+    "sublenses": [
+     {
+      "label": "Sein (Being)",
+      "position": 0,
+      "sublensRef": "mef:sublens:L4.0@1"
+     },
+     {
+      "label": "Geworfenheit (Thrownness)",
+      "position": 1,
+      "sublensRef": "mef:sublens:L4.1@1"
+     },
+     {
+      "label": "Dasein (Being-there)",
+      "position": 2,
+      "sublensRef": "mef:sublens:L4.2@1"
+     },
+     {
+      "label": "Zeit (Temporality)",
+      "position": 3,
+      "sublensRef": "mef:sublens:L4.3@1"
+     },
+     {
+      "label": "Besorge (Care)",
+      "position": 4,
+      "sublensRef": "mef:sublens:L4.4@1"
+     },
+     {
+      "label": "Gelassenheit (Releasement)",
+      "position": 5,
+      "sublensRef": "mef:sublens:L4.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L4'@1",
+    "code": "L4'",
+    "name": "Scientific",
+    "face": "night",
+    "square": "encounter",
+    "sublenses": [
+     {
+      "label": "Prompts",
+      "position": 0,
+      "sublensRef": "mef:sublens:L4'.0@1"
+     },
+     {
+      "label": "Traces",
+      "position": 1,
+      "sublensRef": "mef:sublens:L4'.1@1"
+     },
+     {
+      "label": "Challenges",
+      "position": 2,
+      "sublensRef": "mef:sublens:L4'.2@1"
+     },
+     {
+      "label": "Patterns",
+      "position": 3,
+      "sublensRef": "mef:sublens:L4'.3@1"
+     },
+     {
+      "label": "Discovery",
+      "position": 4,
+      "sublensRef": "mef:sublens:L4'.4@1"
+     },
+     {
+      "label": "Insight",
+      "position": 5,
+      "sublensRef": "mef:sublens:L4'.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L5@1",
+    "code": "L5",
+    "name": "Para Vāk",
+    "face": "day",
+    "square": "articulation",
+    "sublenses": [
+     {
+      "label": "Anuttara/Asambhava",
+      "position": 0,
+      "sublensRef": "mef:sublens:L5.0@1"
+     },
+     {
+      "label": "Para Vāk",
+      "position": 1,
+      "sublensRef": "mef:sublens:L5.1@1"
+     },
+     {
+      "label": "Paśyantī",
+      "position": 2,
+      "sublensRef": "mef:sublens:L5.2@1"
+     },
+     {
+      "label": "Madhyamā",
+      "position": 3,
+      "sublensRef": "mef:sublens:L5.3@1"
+     },
+     {
+      "label": "Vaikharī",
+      "position": 4,
+      "sublensRef": "mef:sublens:L5.4@1"
+     },
+     {
+      "label": "Mātṛkā",
+      "position": 5,
+      "sublensRef": "mef:sublens:L5.5@1"
+     }
+    ]
+   },
+   {
+    "lensRef": "mef:lens:L5'@1",
+    "code": "L5'",
+    "name": "Divine Logos",
+    "face": "night",
+    "square": "articulation",
+    "sublenses": [
+     {
+      "label": "Arche",
+      "position": 0,
+      "sublensRef": "mef:sublens:L5'.0@1"
+     },
+     {
+      "label": "Apokalypsis",
+      "position": 1,
+      "sublensRef": "mef:sublens:L5'.1@1"
+     },
+     {
+      "label": "Dynamis",
+      "position": 2,
+      "sublensRef": "mef:sublens:L5'.2@1"
+     },
+     {
+      "label": "Sophia",
+      "position": 3,
+      "sublensRef": "mef:sublens:L5'.3@1"
+     },
+     {
+      "label": "Parousia",
+      "position": 4,
+      "sublensRef": "mef:sublens:L5'.4@1"
+     },
+     {
+      "label": "Epi-Logos",
+      "position": 5,
+      "sublensRef": "mef:sublens:L5'.5@1"
+     }
+    ]
+   }
+  ]
+ }
+}

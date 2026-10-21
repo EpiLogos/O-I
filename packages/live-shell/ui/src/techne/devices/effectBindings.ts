@@ -8,11 +8,12 @@
 //     (`ql mef lenses`), the frames (`ql context-frame list`) and the provider's operations (`ql service capabilities`). The rest names
 //     what it waits for. The reading (`ql techne reading`) is routed, but it reads a target its caller supplies, and nothing in the shell
 //     supplies one for the reading on a chain. The frame reading (`ql context-frame read`) is routed, but it reads a sixfold mapping its
-//     caller names, and nothing names the material's six positions. The controls are fields of requests no QL command takes. The
-//     proposals have no producer even then: QL's WikiFrame refraction engine leaves every reading's relation and traversal candidates
+//     caller names, and nothing names the material's six positions. The lens and sublens are the view's own holds: the aperture of a
+//     refraction request (`ql wiki refract`, QL-MEF pull 350), drawn on QL's registry entry for the lens; the request itself waits for
+//     that target and a kernel route. The mode and operation stand refused with what QL lacks. The proposals have no producer even then: QL's WikiFrame refraction engine leaves every reading's relation and traversal candidates
 //     empty (QL-MEF crates/ql-wiki/src/refraction.rs:787-788), and `ql techne reading` carries none.
-import type {DesignBinding, ValueChange} from '../../frame/devices/designed'
-import {LENS_DESIGN, LIGHT_DESIGN, disabled, missing, refusal} from './designDevices'
+import type {DesignBinding, Value, ValueChange} from '../../frame/devices/designed'
+import {LENS_DESIGN, LIGHT_DESIGN, disabled, handsFor, missing, refusal} from './designDevices'
 import {registryKeys, type LensRegistry} from './lensRegistry'
 
 export const LIGHT_ID = LIGHT_DESIGN
@@ -27,18 +28,20 @@ export const LIGHT_REFUSE: Readonly<Record<string, string>> = Object.fromEntries
 /** The reading on the chain: QL reads a target its caller supplies, and no owner here supplies one. */
 const NO_TARGET = 'No reading through the lens: QL reads the target its caller supplies (`ql techne reading <target.json>`, routed as ql_read techne-reading), '
   + 'and nothing in the shell supplies one for the reading on this chain. The cradle composes its wiki readings without QL (desktop/cradle/src/techne/wikiReadingProvider.ts), '
-  + 'and no owner implements QL\'s WikiSubjectSource (QL-MEF crates/ql-adapters/src/techne_wiki.rs:35).'
+  + 'and no owner implements QL\'s WikiSubjectSource (QL-MEF crates/ql-adapters/src/techne_wiki.rs).'
 /** The frame reading: QL reads a sixfold mapping its caller names, and no owner here names one. */
 const NO_MAPPING = 'No frame reading: QL reads the frame of a sixfold mapping its caller names (`ql context-frame read -`, QL-MEF pull 344, routed as ql_read context-frame-read: '
   + 'six external position refs, their source, and the probe), and nothing in the shell names the material\'s six positions.'
-/** The lens, sublens and mode: QL's reading pins its own. */
-const NO_APERTURE = 'QL\'s Technē reading refracts through the lens it pins (`mef:lens:L1@1`, no sublens, mode required: QL-MEF crates/ql-adapters/src/techne_wiki.rs:30, :72). '
-  + 'No QL command takes a refraction request with another lens, sublens or mode (ql-wiki WikiRefractionRequest), and the `reading_for_request` its comment names does not exist.'
+/** The mode: what a missing provider does to a refraction that runs; none runs here. */
+const NO_MODE = 'QL refracts a request in the provider mode it names (`ql wiki refract -`, QL-MEF pull 350; `ql techne reading` pins required), but no refraction runs here: '
+  + 'the request needs a target nothing in the shell supplies, and the kernel routes no `ql wiki refract`.'
 /** The operation: QL performs one. */
-const NO_OPERATION = 'QL\'s one reading is the refraction `ql techne reading` makes. No QL command performs a locate, relate or synthesise: `ql service negotiate` only reports whether the provider supports one.'
-/** The Lens's controls (techne__lens.tsx: lens.mode, lens.lens, lens.sublens, lens.operation, frame.position, frame.face, frame.grain). */
-export const LENS_REFUSE: Readonly<Record<string, string>> = {'lens.mode': NO_APERTURE, 'lens.lens': NO_APERTURE, 'lens.sublens': NO_APERTURE, 'lens.operation': NO_OPERATION,
+const NO_OPERATION = 'QL performs one operation, a refraction (`ql techne reading`, `ql wiki refract`). No QL command performs a locate, relate or synthesise: `ql service negotiate` only reports whether the provider supports one.'
+/** The Lens's refused controls (techne__lens.tsx: lens.mode, lens.operation, frame.position, frame.face, frame.grain). */
+export const LENS_REFUSE: Readonly<Record<string, string>> = {'lens.mode': NO_MODE, 'lens.operation': NO_OPERATION,
   'frame.position': NO_MAPPING, 'frame.face': NO_MAPPING, 'frame.grain': NO_MAPPING}
+/** The view's own holds: the lens and sublens of the refraction request (a lens code of QL's registry; '' or '0'..'5'). */
+export const LENS_LOCAL = ['lens.lens', 'lens.sublens'] as const
 
 /** Light's readings (the Canvas's board and the engine's sensors) and the Lens's (QL's registry, the reading, the frame's answer). */
 const LIGHT_READINGS = ['items', 'lines', 'sensor.power'] as const
@@ -66,10 +69,12 @@ function unreached(id: string, refuse: Readonly<Record<string, string>>, reading
 }
 
 export const lightBinding = (): DesignBinding => unreached(LIGHT_ID, LIGHT_REFUSE, LIGHT_READINGS, NO_ENGINE)
-/** The Lens on Quaternal Logic: the registry's lists where QL has answered them, every other key absent with what it waits for, every
- * control refused naming the request no QL command takes. */
-export const lensBinding = (registry?: LensRegistry): DesignBinding => {
+/** The Lens on Quaternal Logic: the registry's lists where QL has answered them, the lens and sublens the view holds, every other key
+ * absent with what it waits for, the mode, operation and probe refused naming what QL or the shell lacks. */
+export const lensBinding = (registry?: LensRegistry, held: Readonly<Record<string, Value>> = {}): DesignBinding => {
   const binding = unreached(LENS_ID, LENS_REFUSE, [], NO_TARGET)
   const lists = registry ? registryKeys(registry) : {values: {}, standing: {}}
-  return {...binding, values: lists.values, standing: {...binding.standing, ...disabled(LENS_ABSENT), ...lists.standing}}
+  const hands = Object.fromEntries(LENS_LOCAL.flatMap(key => (held[key] === undefined ? [] : [[key, held[key]!]])))
+  return {...binding, values: {...lists.values, ...hands}, standing: {...binding.standing, ...disabled(LENS_ABSENT), ...lists.standing},
+    local: handsFor(LENS_ID, LENS_LOCAL)}
 }

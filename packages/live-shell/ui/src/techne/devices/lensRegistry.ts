@@ -2,9 +2,9 @@
 // Context-Frame grammar's frames (`ql context-frame list`) and its service provider's operations (`ql service capabilities`), reached
 // through the kernel's ql_read {kind: 'mef-lenses' | 'context-frame-list' | 'service-capabilities'} (desktop/cradle/kernel/src/
 // owner_routes.rs QlRead::MefLenses, ContextFrameList, ServiceCapabilities, each admitted on the fields its answer declares). Each list
-// is drawn as QL gives it: the lenses by QL's own codes (`L0'` for a night face) with their name, face and square, and no sublens labels,
-// because QL's answer carries none; the frames with their expressions and names; the operations with whether the provider supports
-// them. The registry does not move under a running shell, so each list is read once per session (a refused read is asked again when a
+// is drawn as QL gives it: the lenses by QL's own codes (`L0'` for a night face) with their name, face and square, and each lens's six
+// sublens labels where QL's answer carries them (`sublenses: [{sublensRef, position, label}]`, QL-MEF pull 349; the design reads the
+// labels in position order); the frames with their expressions and names; the operations with whether the provider supports them. The registry does not move under a running shell, so each list is read once per session (a refused read is asked again when a
 // view next opens). Pure apart from the kernel calls, which take the call they are given, and the small store the views share.
 import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -81,8 +81,24 @@ export function useLensRegistry(): LensRegistry {
   return useSyncExternalStore(subscribe, lensRegistry, lensRegistry)
 }
 
+/** A lens's six sublens labels in position order, where QL's entry carries exactly its six sublenses; else undefined. */
+export function sublensLabels(entry: unknown): string[] | undefined {
+  const sublenses = rec(entry) ? entry.sublenses : undefined
+  if (!Array.isArray(sublenses) || sublenses.length !== 6) return undefined
+  const labels = sublenses.map((x, position) => (rec(x) && x.position === position && typeof x.label === 'string' && x.label ? x.label : null))
+  return labels.every((label): label is string => label !== null) ? labels : undefined
+}
+/** QL's lenses as the design reads them: each entry as QL gives it, its sublenses as their labels where QL carries all six, else none. */
+const lensValue = (list: readonly unknown[]): unknown[] => list.map(entry => {
+  if (!rec(entry)) return entry
+  const {sublenses: _given, ...rest} = entry
+  const labels = sublensLabels(entry)
+  return labels ? {...rest, sublenses: labels} : rest
+})
 const READ: Readonly<Record<LensRegistryKey, (reading: {list: readonly unknown[]; version: string}) => string>> = {
-  lenses: r => `A reading: QL's MEF lens registry (\`ql mef lenses\`, registry ${r.version}), its ${r.list.length} lenses by code, name, face and square. QL names no sublenses in it, so the ring is drawn whole.`,
+  lenses: r => r.list.every(entry => sublensLabels(entry))
+    ? `A reading: QL's MEF lens registry (\`ql mef lenses\`, registry ${r.version}), its ${r.list.length} lenses by code, name, face and square, each with its six sublenses.`
+    : `A reading: QL's MEF lens registry (\`ql mef lenses\`, registry ${r.version}), its ${r.list.length} lenses by code, name, face and square. QL names no sublenses in it, so the ring is drawn whole.`,
   frames: r => `A reading: QL's Context-Frame grammar (\`ql context-frame list\`, grammar ${r.version}), its ${r.list.length} frames with their expressions and names.`,
   service: r => `A reading: QL's service provider (\`ql service capabilities\`, ${r.version}), each operation with whether it supports it.`,
 }
@@ -93,7 +109,7 @@ export function registryKeys(registry: LensRegistry): {values: Record<string, Va
   const standing: Record<string, Standing> = {}
   for (const key of LENS_REGISTRY_KEYS) {
     const reading = registry[key]
-    if (reading.ok) { values[key] = JSON.stringify(reading.list); standing[key] = {disabled: READ[key](reading)} }
+    if (reading.ok) { values[key] = JSON.stringify(key === 'lenses' ? lensValue(reading.list) : reading.list); standing[key] = {disabled: READ[key](reading)} }
     else standing[key] = {disabled: reading.reason}
   }
   return {values, standing}
