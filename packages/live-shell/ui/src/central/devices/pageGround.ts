@@ -12,8 +12,10 @@
 // (what it would make of the folder), `projectcentral.self.inspect {project}` (central.development-field-reading/v1: the self aperture,
 // tier bindings, UX and EX relations) — readings through invoke_action — and the preview of a treatment: `projectcentral.adopt.preview`
 // or `projectcentral.migrate.preview {project, source}` (projectcentral-mutation-plan); Central has no preview of `projectcentral.init`.
-// Accept (init, adopt, migrate) and the self writes (self.ensure, self.tier.relate, self.retain-tier) write the world's ground: they are
-// not among the person's own presses the kernel carries (action.rs PERSON_ACTS), so they stand disabled naming that.
+// Accept (`projectcentral.init {project, project_id}`, `adopt` or `migrate {project, project_id, source}`), Ensure (`projectcentral.self.ensure
+// {project}`) and a tier's Relate (`projectcentral.self.tier.relate {project, source_ref, tier, acceptance}`) write the world's ground as the
+// person's own presses, which the kernel carries with the person's authority (action.rs PERSON_ACTS). Binding a source as an intended
+// experience or a return (`projectcentral.self.ux.relate`, `ex.relate`) is not among those presses, so it stands disabled naming that.
 //
 // Pure: no React, no transport. The readers are pageDevices.ts.
 import type {Value} from '../../frame/devices/designed'
@@ -114,7 +116,24 @@ export interface WorkspaceGround {
   readonly plan?: {readonly treatment: 'create' | 'adopt' | 'migrate'; readonly answer: ActionAnswer}
   /** Ask Central's preview of a treatment (adopt or migrate) for a source. */
   readonly preview?: (treatment: 'adopt' | 'migrate', source: string) => Promise<void>
+  /** The person's Accept: make the world's ground by the treatment previewed (a source for adopt and migrate). */
+  readonly accept?: (treatment: 'create' | 'adopt' | 'migrate', source: string | null) => Promise<void>
+  /** The person's Ensure: give the world its ProjectCentral/self. */
+  readonly ensure?: () => Promise<void>
+  /** The person's Relate: bind a source of the world to a tier of its account. */
+  readonly relate?: (tier: number, sourceRef: string) => Promise<void>
 }
+
+/** The person's presses that write the world's ground (action.rs PERSON_ACTS). A ProjectCentral's id is its project's name, as every
+ * project.json keeps it (Work/<Name>/ProjectCentral/project.json `project_id`). */
+export const PC_ACCEPT_ACTION: Readonly<Record<'create' | 'adopt' | 'migrate', string>> = {create: 'projectcentral.init', adopt: 'projectcentral.adopt', migrate: 'projectcentral.migrate'}
+export const PC_SELF_ENSURE_ACTION = 'projectcentral.self.ensure'
+export const PC_TIER_RELATE_ACTION = 'projectcentral.self.tier.relate'
+export const acceptInput = (project: string, treatment: 'create' | 'adopt' | 'migrate', source: string | null): Record<string, unknown> =>
+  ({project, project_id: project, ...(treatment === 'create' ? {} : {source})})
+/** The held Relate is the person's acceptance of the relation (Central asks it explicitly: `acceptance: human-accepted`). */
+export const relateInput = (project: string, tier: number, sourceRef: string): Record<string, unknown> =>
+  ({project, source_ref: sourceRef, tier, acceptance: 'human-accepted'})
 
 /** projectcentral.inspect's data as the design's `pc` ({outcome, reason, candidates [{source, space}], signals [{kind, path}], errors}). Pure. */
 export function pcValue(data: unknown): string | undefined {
@@ -126,17 +145,24 @@ export function pcValue(data: unknown): string | undefined {
 }
 
 /** projectcentral.self.inspect's data (central.development-field-reading/v1) as the design's `self` ({aperture {exists, status}, tiers
- * [{tier, label?, source}], ux [{ref, source}], ex [{ref, source, ux}], unbound [{source, hints}]}). Pure. */
+ * [{tier, label?, source}], ux [{ref, source}], ex [{ref, source, ux}], unbound [{source, hints}]}), in Central's own shapes
+ * (ctrl/src/development_field.rs): a tier's sources are resolved sources ({ref, path, …}, or null where a bound ref no longer resolves), a
+ * UX's and an EX's source is one, and an unbound source of the self folder is {ref, path, standing, provenance}. A source is named by its ref,
+ * which is what Relate binds. Pure. */
 export function selfValue(data: unknown): string | undefined {
   if (!rec(data) || data.schema !== 'central.development-field-reading/v1') return undefined
   const aperture = rec(data.self_aperture) ? data.self_aperture : {}
+  const refOf = (source: unknown): string | undefined => (rec(source) ? txt(source.ref) ?? txt(source.path) : undefined)
   return JSON.stringify({
     aperture: {exists: aperture.exists === true, status: txt(aperture.status) ?? ''},
     tiers: list(data.tier_bindings).flatMap(row => rec(row) && typeof row.tier === 'number'
-      ? list(row.source_refs).filter((ref): ref is string => typeof ref === 'string').map(source => ({tier: row.tier, ...(txt(row.canonical_label) ? {label: txt(row.canonical_label)} : {}), source})) : []),
-    ux: list(data.ux).flatMap(row => (rec(row) && txt(row.ux_ref) ? [{ref: txt(row.ux_ref), source: txt(row.source_ref) ?? txt(row.source) ?? ''}] : [])),
-    ex: list(data.ex).flatMap(row => (rec(row) && txt(row.ex_ref) ? [{ref: txt(row.ex_ref), source: txt(row.source_ref) ?? txt(row.source) ?? '', ux: list(row.ux_refs).map(String)}] : [])),
-    unbound: list(aperture.unbound_sources).flatMap(row => (rec(row) && txt(row.source) ? [{source: txt(row.source), hints: list(row.hints).map(String)}] : (typeof row === 'string' ? [{source: row, hints: []}] : []))),
+      ? list(row.sources).flatMap(source => { const ref = refOf(source); return ref ? [{tier: row.tier, ...(txt(row.canonical_label) ? {label: txt(row.canonical_label)} : {}), source: ref}] : [] }) : []),
+    ux: list(data.ux).flatMap(row => (rec(row) && txt(row.ux_ref) ? [{ref: txt(row.ux_ref), source: refOf(row.source) ?? ''}] : [])),
+    ex: list(data.ex).flatMap(row => (rec(row) && txt(row.ex_ref) ? [{ref: txt(row.ex_ref), source: refOf(row.source) ?? '', ux: list(row.ux_refs).map(String)}] : [])),
+    unbound: list(aperture.unbound_sources).flatMap(row => {
+      const ref = rec(row) ? txt(row.ref) : undefined
+      return ref && rec(row) ? [{source: ref, hints: [txt(row.path), txt(row.standing) && `standing ${row.standing}`, txt(row.provenance) && `provenance ${row.provenance}`].filter((hint): hint is string => !!hint)}] : []
+    }),
   })
 }
 

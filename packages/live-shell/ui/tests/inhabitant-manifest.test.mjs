@@ -83,7 +83,7 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   // …and the page family after them (lane BC2: DLW §17.8 Document, §18.2 Workspace, §18.4–§18.8), then the agent chain's Packet and
   // Search (lane BC3: DLW §18.3, §18.4).
   assert.deepEqual(central.faces.map(face => face.id),
-    ['context-world', 'agent-identity', 'ground-hygiene', 'impact', 'day-die', 'flow-document', 'nara-conversation',
+    ['context-world', 'agent-identity', 'machine', 'ground-hygiene', 'impact', 'day-die', 'flow-document', 'nara-conversation',
       'document', 'workspace', 'beings', 'things', 'text', 'highlight', 'notes', 'packet', 'search'])
   // Software-factory's composed manifest carries attempt-review after its base's own (the base admits the thread, tasks and the
   // agentset rack since lane BF3).

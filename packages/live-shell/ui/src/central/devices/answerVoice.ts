@@ -37,6 +37,12 @@ export interface AnswerVoiceState {
   readonly refused: Readonly<Partial<Record<VoiceKey, string>>>
   /** What waits on the owner now, in words ('' when nothing does). */
   readonly busy: string
+  /** The open voice's constitution, as the owner answered nara_voice open (actuation.speech-constitution/v1: its interaction, its
+   * interruption, the stages' declared voices); absent while no voice is open. */
+  readonly constitution?: unknown
+  /** The last speak's receipt, as the owner answered it (the speech actor's actuation.nara-session-response/v1, named by its request_ref);
+   * absent before the first answer is spoken on this conversation. */
+  readonly receipt?: unknown
 }
 
 export const VOICE_OFF: AnswerVoiceState = Object.freeze({hears: 'off', speaks: 'off', voice: 'quiet', heard: '', refused: Object.freeze({}), busy: ''})
@@ -209,6 +215,7 @@ export class AnswerVoice {
   private async teardown(ports: AnswerVoicePorts | null): Promise<void> {
     const recording = this.recording, playing = this.playing, lease = this.lease
     this.recording = null; this.playing = null; this.lease = null
+    if (this.state.constitution !== undefined) this.set({constitution: undefined})
     playing?.playback.stop()
     await recording?.recorder.discard().catch(() => undefined)
     // Closing the lease releases a recording or a response the owner still holds.
@@ -277,6 +284,7 @@ export class AnswerVoice {
     const lease = this.lease, ports = this.ports
     if (!lease || !ports || this.state.hears === 'on' || this.state.speaks === 'on') return
     this.lease = null
+    this.set({constitution: undefined})
     await this.serial(() => ports.voice({operation: 'close', voice_ref: lease})).catch(() => undefined)
   }
 
@@ -292,7 +300,7 @@ export class AnswerVoice {
       throw new Stale()
     }
     this.lease = result.voice_ref
-    this.set({busy: ''})
+    this.set({busy: '', constitution: result.constitution})
     return result.voice_ref
   }
 
@@ -314,6 +322,7 @@ export class AnswerVoice {
       } catch (failure) {
         // The owner holds the recording lease until a transcript or a close: release it.
         this.lease = null
+        this.set({constitution: undefined})
         await ports.voice({operation: 'close', voice_ref: lease}).catch(() => undefined)
         throw new Error(microphoneWords(failure))
       }
@@ -465,7 +474,7 @@ export class AnswerVoice {
         if (generation !== this.generation) { playback.stop(); throw new Stale() }
         const playing = {playback, response}
         this.playing = playing
-        this.set({voice: 'speaking', busy: ''})
+        this.set({voice: 'speaking', busy: '', ...(result.receipt !== undefined ? {receipt: result.receipt} : {})})
         return playing
       })
     } catch (failure) {
@@ -492,4 +501,31 @@ export class AnswerVoice {
       if (generation === this.generation && !(failure instanceof Stale)) { this.set({hears: 'off', busy: ''}); this.refuse('hears', wordsOf(failure)) }
     })
   }
+}
+
+const record = (x: unknown): Record<string, unknown> | undefined => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, unknown> : undefined)
+const SUPPORT_STATES: readonly string[] = ['supported', 'degraded', 'unsupported']
+
+/** What the open voice's own answers tell the Voice device (agent/devices/voiceBinding.ts VOICE_ABSENT names each key's source): the TTS
+ * stage's declared voice (the constitution's provenance.stage_relations, in the kernel's order stt, text, tts:
+ * kernel/src/nara_voice_constitution.rs), the body's duplex and barge-in (its `interaction`), its stop (its `interruption`), and the last
+ * speak's receipt by its request_ref. A key the answers do not carry stays absent. Pure. */
+export function voiceBodyReadings(state: Pick<AnswerVoiceState, 'constitution' | 'receipt'>): Record<string, string> {
+  const readings: Record<string, string> = {}
+  const constitution = record(state.constitution)
+  if (constitution) {
+    const stages = record(constitution.provenance)?.stage_relations
+    const tts = Array.isArray(stages) ? record(record(stages[2])?.configuration) : undefined
+    if (typeof tts?.declared_voice === 'string' && tts.declared_voice) readings['voice.voice'] = tts.declared_voice
+    const interaction = record(constitution.interaction)
+    const support = (name: string): string | undefined => { const state = record(interaction?.[name])?.state; return typeof state === 'string' && SUPPORT_STATES.includes(state) ? state : undefined }
+    const duplex = support('full-duplex-realtime'), bargeIn = support('barge-in')
+    if (duplex) readings['body.duplex'] = duplex
+    if (bargeIn) readings['body.bargeIn'] = bargeIn
+    const interruption = record(constitution.interruption)?.state
+    if (typeof interruption === 'string' && SUPPORT_STATES.includes(interruption)) readings['body.interrupt'] = interruption
+  }
+  const receipt = record(state.receipt)?.request_ref
+  if (typeof receipt === 'string' && receipt) readings['body.receipt'] = receipt
+  return readings
 }

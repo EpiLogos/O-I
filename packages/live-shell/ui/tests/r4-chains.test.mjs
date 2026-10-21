@@ -67,10 +67,10 @@ const MOVED = ['agent-identity', 'nara-conversation', 'context-world', 'search',
 /** The device ids a chain's markup stands, in order (each slot's data-device on DeviceView). */
 const devicesOf = markup => [...markup.matchAll(/data-device="([^"]+)" data-device-size="compact"/g)].map(match => match[1])
 
-test('Central: the family\'s faces on a chain are the Day (the Main track) and the Packet, Ground hygiene and Impact (a workspace) — no moved face', () => {
+test('Central: the family\'s faces on a chain are the Day (the Main track) and the Packet, Ground hygiene, Machine and Impact (a world) — no moved face', () => {
   assert.deepEqual([...model.CENTRAL_MAIN_FACES], ['day-die'])
-  assert.deepEqual([...model.CENTRAL_WORKSPACE_FACES], ['packet', 'ground-hygiene', 'impact'])
-  assert.deepEqual(chain.placedFaces(central.faces).map(face => face.id), ['day-die', 'packet', 'ground-hygiene', 'impact'])
+  assert.deepEqual([...model.CENTRAL_WORKSPACE_FACES], ['packet', 'ground-hygiene', 'machine', 'impact'])
+  assert.deepEqual(chain.placedFaces(central.faces).map(face => face.id), ['day-die', 'packet', 'ground-hygiene', 'machine', 'impact'])
   assert.deepEqual([...model.CENTRAL_OFF_CHAIN_FACES].sort(), [...MOVED].sort())
   for (const id of MOVED) assert.ok(central.faces.some(face => face.id === id), `${id}: still declared — its design and binding stand for Clip view and the views`)
 })
@@ -85,13 +85,13 @@ test('Central: the selected track chooses the chain — the Main track (its head
   assert.equal(chain.centralChainOf(null), 'both')
 })
 
-test('Central on screen (SSR): the Main track\'s chain is the Day, then Approvals; a workspace\'s is the Packet, the Agent, Scope, Ground hygiene and Impact', () => {
+test('Central on screen (SSR): the Main track\'s chain is the Day, then Approvals; with no world\'s track selected, a world\'s is the Packet, the Agent, its Voice and Scope (Ground hygiene, Machine and Impact stand on a world whose folder holds code: w4-central-machine-chain.test.mjs)', () => {
   const markup = quiet(() => renderToStaticMarkup(createElement(BaseDevicesDetail, {transport})))
   const main = markup.slice(markup.indexOf('data-track="main"'), markup.indexOf('data-track="workspace"'))
   const workspace = markup.slice(markup.indexOf('data-track="workspace"'))
   assert.ok(main.length > 0 && workspace.length > 0, 'with no Central track selected, both chains stand')
   assert.deepEqual(devicesOf(main), ['central:day-die', 'central:main:approvals'])
-  assert.deepEqual(devicesOf(workspace), ['central:packet', 'central:agent', 'central:scope', 'central:ground-hygiene', 'central:impact'])
+  assert.deepEqual(devicesOf(workspace), ['central:packet', 'central:agent', 'central:voice', 'central:scope'])
   for (const id of MOVED) assert.ok(!markup.includes(`data-device="central:${id}"`), `${id} stands on no chain`)
   // The two devices of other families are their faces' own, drawn by their designs once loaded (actuation:harness-model, software-factory:context-write-mode).
   const others = chain.centralAgentDevices()

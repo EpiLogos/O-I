@@ -278,13 +278,17 @@ export const THINGS_READ_WIRING: DesignWiring = pageWiring(THINGS_DESIGN, false,
 /** Why a write of a world's ground stands: Central takes it, but it writes the person's ground and is not among the person's own presses the
  * kernel carries through invoke_action (action.rs PERSON_ACTS), so nothing writes it from here. */
 const NOT_PERSON_ACT = 'it is not among the person\'s own presses the kernel carries (desktop/cradle/kernel/src/action.rs PERSON_ACTS), so it waits for the kernel to carry it.'
+/** Binding a source as an intended experience or a return: Central's projectcentral.self.ux.relate {ux_ref} and ex.relate {ex_ref, actor_kind,
+ * ux_refs} take a reference the design does not name, and neither is among the person's own presses the kernel carries. */
+export const RELATE_UX_EX_REFUSED = `Relate as an intended experience or a return: projectcentral.self.ux.relate {ux_ref, source_ref} and ex.relate {ex_ref, source_ref, actor_kind, ux_refs} write the world's self — ${NOT_PERSON_ACT}`
+const NO_WORLD_GROUND = 'no world\'s ground is read here (a workspace of your root has no ProjectCentral; Ground hygiene reads the root\'s).'
 const NO_THOUGHT_HAND = 'Contemplate: no Flow is reached with its AIKit Flow ref here, so neither the preflight nor a run can be asked (`action:contemplate-flow`).'
 const BOOK_KEEPS = 'The workspace book keeps every part of the context, for every mode, at every change (desktop/cradle/src/workspace/store.ts): it has no such setting.'
 export const WORKSPACE_WIRING: DesignWiring = {
   design: WORKSPACE_DESIGN,
   keys: ['light', 'name', 'kind', 'folder', 'place', 'keepPanes', 'keepInstruments', 'keepWidgets', 'keepSets', 'rememberIn', 'onLaunch', 'openIn', 'keepWhen', 'sendToDay',
     'mode', 'mem', 'fresh', 'dirty', 'widgets', 'visited', 'clip', 'folders', 'trees', 'sets', 'clips', 'launch', 'keepNow',
-    'pc', 'pcPlan', 'self', 'treatment', 'pcSource', 'bindAs', 'pcPreview', 'pcAccept', 'selfEnsure', 'selfRelate'],
+    'pc', 'pcPlan', 'self', 'treatment', 'pcSource', 'bindAs', 'selfSource', 'pcPreview', 'pcAccept', 'selfEnsure', 'selfRelate'],
   reads: {
     light: 'the book holds this workspace open (it is the current one)', name: 'the workspace\'s name', folder: 'its project, or Central',
     mode: 'the open mode (layout.mode)', mem: 'the modes whose pane tree the book keeps (layout, modeLayouts)', fresh: 'the book keeps no tree and no set for it yet',
@@ -297,17 +301,18 @@ export const WORKSPACE_WIRING: DesignWiring = {
     pcPreview: 'Central\'s preview of the treatment chosen (projectcentral.adopt.preview | migrate.preview {project, source}, through invoke_action): a reading, nothing changes',
     mode: 'the book\'s own mode switch (continuity/workspace.tsx setMode → store.ts switchMode): the open mode turns',
     name: 'the book\'s own rename of the current workspace (store.ts rename)',
+    pcAccept: 'the person\'s Accept: projectcentral.init {project, project_id}, adopt or migrate {project, project_id, source} as previewed (invoke_action, action.rs PERSON_ACTS)',
+    selfEnsure: 'the person\'s Ensure: projectcentral.self.ensure {project} (invoke_action, action.rs PERSON_ACTS)',
+    selfRelate: 'the person\'s Relate of a tier: projectcentral.self.tier.relate {project, source_ref, tier, acceptance human-accepted} (invoke_action, action.rs PERSON_ACTS)',
   },
   local: {clip: 'the clip this device holds selected',
     // The Ground and Self pages' settings (D-package; manual §18.1 Ground): the person's choices, held until a preview or an accept asks.
     treatment: 'how Central would make the folder\'s ground (create, adopt or migrate): the person\'s choice, held until a preview asks for it',
     pcSource: 'the wiki a treatment keeps or copies: the person\'s choice, held until a preview asks for it',
-    bindAs: 'the tier, UX or EX a source is bound as: the person\'s choice, held until Relate asks for it'},
+    bindAs: 'the tier, UX or EX a source is bound as: the person\'s choice, held until Relate asks for it',
+    selfSource: 'the unbound source chosen to bind: the person\'s choice, held until Relate asks for it'},
   refused: {
-    pcPreview: 'Preview: no world\'s ground is read here (a workspace of your root has no ProjectCentral; Ground hygiene reads the root\'s).',
-    pcAccept: `Accept: projectcentral.init, adopt or migrate writes the world's ground — ${NOT_PERSON_ACT}`,
-    selfEnsure: `Ensure: projectcentral.self.ensure writes the world's self — ${NOT_PERSON_ACT}`,
-    selfRelate: `Relate: projectcentral.self.tier.relate (or retain-tier) writes a tier's binding — ${NOT_PERSON_ACT}`,
+    pcPreview: `Preview: ${NO_WORLD_GROUND}`,
     kind: BOOK_KEEPS, folder: 'A workspace\'s project is its world context; no owner operation moves it from here.',
     place: 'No owner places a workspace on the planet yet.', keepPanes: BOOK_KEEPS, keepInstruments: BOOK_KEEPS, keepWidgets: BOOK_KEEPS, keepSets: BOOK_KEEPS,
     rememberIn: BOOK_KEEPS, onLaunch: BOOK_KEEPS, openIn: BOOK_KEEPS, keepWhen: BOOK_KEEPS, sendToDay: 'No route sends a workspace\'s work to the Day yet.',
@@ -887,8 +892,36 @@ export function workspaceBinding(id: string, workspace: BookWorkspace | null, no
     if (!source) throw new Error('Preview: choose the wiki to keep or copy first.')
     await ground.preview(treatment, source)
   }
+  // The person's Accept, Ensure and Relate (action.rs PERSON_ACTS): what the design sends, to the world's own ground.
+  const noHand = (act: string): string => (ground?.project ? `${act}: no transport reaches Central here.` : `${act}: ${NO_WORLD_GROUND}`)
+  acts.pcAccept = async value => {
+    const asked = typeof value === 'string' && value.startsWith('{') ? (() => { try { return JSON.parse(value) as {treatment?: unknown; source?: unknown} } catch { return {} } })() : {}
+    if (!ground?.accept) throw new Error(noHand('Accept'))
+    const treatment = asked.treatment
+    if (treatment !== 'create' && treatment !== 'adopt' && treatment !== 'migrate') throw new Error('Accept: choose how Central makes the ground (create, adopt or migrate) first.')
+    const source = typeof asked.source === 'string' && asked.source ? asked.source : null
+    if (treatment !== 'create' && !source) throw new Error('Accept: choose the wiki to keep or copy first.')
+    await ground.accept(treatment, source)
+  }
+  acts.selfEnsure = async () => {
+    if (!ground?.ensure) throw new Error(noHand('Ensure'))
+    await ground.ensure()
+  }
+  acts.selfRelate = async value => {
+    const asked = typeof value === 'string' && value.startsWith('{') ? (() => { try { return JSON.parse(value) as {as?: unknown; source?: unknown} } catch { return {} } })() : {}
+    if (!ground?.relate) throw new Error(noHand('Relate'))
+    if (asked.as === 'ux' || asked.as === 'ex') throw new Error(RELATE_UX_EX_REFUSED)
+    const tier = typeof asked.as === 'string' && /^[0-5]$/.test(asked.as) ? Number(asked.as) : null
+    if (tier === null) throw new Error('Relate: choose the tier (0 to 5) the source is bound as first.')
+    if (typeof asked.source !== 'string' || !asked.source) throw new Error('Relate: choose a source first.')
+    await ground.relate(tier, asked.source)
+  }
   const why: Record<string, string> = book ? {} : {mode: NO_BOOK, name: NO_BOOK}
   if (!ground?.preview || !ground.project) why.pcPreview = WORKSPACE_WIRING.refused.pcPreview!
+  if (!ground?.accept) why.pcAccept = noHand('Accept')
+  if (!ground?.ensure) why.selfEnsure = noHand('Ensure')
+  if (!ground?.relate) why.selfRelate = noHand('Relate')
+  else if (held.bindAs === 'ux' || held.bindAs === 'ex') why.selfRelate = RELATE_UX_EX_REFUSED
   const wiring = {...WORKSPACE_WIRING, refused: Object.fromEntries(Object.entries(WORKSPACE_WIRING.refused).filter(([key]) => key !== 'pcPreview'))}
   return pageBinding(id, wiring, {...workspaceValues(id, workspace, now), ...groundValues(ground)}, acts, why)
 }

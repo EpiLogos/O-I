@@ -93,8 +93,9 @@ const deviceMarkup = (markup, faceId) => {
 }
 
 test('no selected occasion: the chain is unchanged by a world with nothing retained', () => {
-  // R4 (DLW §16.2): the family's chain faces are the Day, the Packet, Ground hygiene and Impact (REPLACED: lane BC3's seven).
-  assert.match(todayMarkup, /data-central-devices="4"/, 'the four chain faces of the Central family stand, reached document or not')
+  // R4 (DLW §16.2): the family's chain faces are the Day, the Packet, Ground hygiene, Machine (W4, §18.7) and Impact (REPLACED: lane BC3's
+  // seven), each on the door; Ground hygiene, Machine and Impact stand on a world whose folder holds code (w4-central-machine-chain.test.mjs).
+  assert.match(todayMarkup, /data-central-devices="5"/, 'the five chain faces of the Central family stand on the door, reached document or not')
   const empty = worldWith([nowEvent], null)
   assert.equal(html(createElement(BaseDevicesDetail, {transport, world: empty, standing: null})), todayMarkup, 'a world with no retained occasion: unchanged')
   assert.equal(html(createElement(BaseDevicesDetail, {transport, standing: readyStanding})), todayMarkup, 'a Day standing with no occasion draws no Day: the die has no aperture')
@@ -107,7 +108,11 @@ test('a browser subject stands in the Document row: it shadows the occasion, the
   const die = deviceMarkup(markup, 'day-die')
   assert.match(die, /data-device-light="unknown"/, 'no Day aperture: the die\'s light stays dark')
   assert.doesNotMatch(die, /2026-10-06/, 'the occasion\'s Day is not read while a browser subject stands')
-  assert.match(deviceMarkup(markup, 'impact'), /data-central-picture="impact"[\s\S]*<small>Control\/agents\/now\/day\/2026-09-12\.md<\/small>/, 'the Impact reads the selected subject')
+  // W4 (§16.2): with no world holding code selected, the Impact stands on no chain; its device, on the door, reads the selected subject.
+  assert.ok(!markup.includes('data-device="central:impact"'), 'the Impact: on a world whose folder holds code only')
+  const impact = devices.centralDeviceEntries(chainInput({reads: {impact: subject}, impact: subject})).find(entry => entry.id === 'central:impact')
+  assert.match(html(createElement(DeviceView, {device: impact.device, size: 'compact', picture: impact.picture('compact')})),
+    /data-central-picture="impact"[\s\S]*<small>Control\/agents\/now\/day\/2026-09-12\.md<\/small>/, 'the Impact reads the selected subject')
 })
 
 test('a selected Day occasion with a ready Day: the Day die stands lit on its Day, its body a pane away (its picture is its design\'s)', () => {

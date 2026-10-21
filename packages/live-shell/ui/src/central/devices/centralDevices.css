@@ -17,3 +17,6 @@
 .central-track-chain[data-track="main"] { padding-right: 8px; border-right: 1px solid var(--line-strong) }
 .central-devices-chain[data-central-track="main"] .central-track-chain[data-track="main"] { border-right: 0; padding-right: 0 }
 .central-track-chain:empty { display: none }
+/* Why a world's chain stands without its code devices when Central's git reading refused (DLW §16.2: Ground hygiene, Machine and Impact
+   stand on a world whose folder holds code). */
+.central-chain-note { flex: 1 1 100%; margin: 0; font-size: 10px; color: var(--text-faint) }

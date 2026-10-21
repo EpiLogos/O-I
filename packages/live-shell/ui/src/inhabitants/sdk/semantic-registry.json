@@ -450,6 +450,22 @@
   },
   {
     "family": "central",
+    "face": "machine",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the machine against its declaration: compared, passed unchanged"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "central",
     "face": "nara-conversation",
     "kind": "conversation",
     "liveSemantic": "device-instrument",
