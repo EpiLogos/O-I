@@ -336,6 +336,8 @@ fn wait_observed(
     let begun = Instant::now();
     let answered = wait_observed_untraced(&mut child, bound, on_line, begun);
     if bound.effect == Effect::Write {
+        // Named in the trace: a read misfiled as a write moves every reading.
+        trace_written(bound.owner, bound.operation);
         if let Some(hook) = WRITE_HOOK.get() {
             hook();
         }
@@ -355,6 +357,16 @@ fn wait_observed(
 /// This module stands alone (the composition test includes it by path), so it opens the trace for itself; both writers append whole
 /// lines, which the file keeps apart.
 fn trace_process(owner: &str, operation: &str, total: Duration, answered: bool) {
+    trace_owner_line(|unix_ms| process_trace_line(owner, operation, unix_ms, total, answered));
+}
+
+/// `[owner] <unix ms> written <owner> <operation>`: an owner call that may
+/// have written ended, so every reading kept from before it moved.
+fn trace_written(owner: &str, operation: &str) {
+    trace_owner_line(|unix_ms| format!("[owner] {unix_ms} written {owner} {operation}\n"));
+}
+
+fn trace_owner_line(line: impl FnOnce(u128) -> String) {
     static TRACE: std::sync::OnceLock<Option<std::sync::Mutex<std::fs::File>>> =
         std::sync::OnceLock::new();
     let file = TRACE.get_or_init(|| {
@@ -371,7 +383,7 @@ fn trace_process(owner: &str, operation: &str, total: Duration, answered: bool) 
         .duration_since(std::time::UNIX_EPOCH)
         .map(|since| since.as_millis())
         .unwrap_or(0);
-    let line = process_trace_line(owner, operation, unix_ms, total, answered);
+    let line = line(unix_ms);
     if let Ok(mut file) = file.lock() {
         let _ = file.write_all(line.as_bytes());
     }

@@ -1106,7 +1106,10 @@ impl Drop for Leader<'_> {
 /// A native write happened here (an owner write the kernel ran): what was
 /// retained from before it, and every read in flight across it, is withdrawn
 /// without waiting for the watcher to see the files change.
+#[track_caller]
 pub fn written() {
+    let at = std::panic::Location::caller();
+    crate::dispatch::trace_read(&format!("* {}:{}", at.file(), at.line()), "written");
     let watch = Watch::global();
     watch.changed_here();
     ReadModel::global().clear();
