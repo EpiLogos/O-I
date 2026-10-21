@@ -278,6 +278,11 @@ impl Keeping {
         if let Some(owner) = header.owners.iter().find(|owner| !owner.stands()) {
             return refused(format!("{} changed since they were kept", owner.path));
         }
+        // A reading taken back is still these owners' answer, whether or not
+        // this run starts them: the next write names them too.
+        for owner in &header.owners {
+            crate::owner_process::answered_by(Path::new(&owner.path));
+        }
         let paths = [
             self.roots.central.clone(),
             self.roots.aikit.clone(),
@@ -848,6 +853,42 @@ mod tests {
             .refused
             .unwrap()
             .contains("changed since"));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn the_owners_a_relaunch_vouched_for_are_written_again() {
+        let dir = temp("owners-carried");
+        let journal = Fake::default();
+        let first = run(&dir, &journal);
+        first.read("root", vec![Scope::Root], Clock::None);
+        first.write();
+        // The kept reading came from an owner the next run never starts:
+        // taken back, it is still that owner's answer.
+        let owner = dir.join("owner-bin");
+        std::fs::write(&owner, "1").unwrap();
+        let file = dir.join("state").join(FILE_NAME);
+        let header_of = || -> Header {
+            let text = std::fs::read_to_string(&file).unwrap();
+            serde_json::from_str(text.split_once('\n').unwrap().0).unwrap()
+        };
+        let text = std::fs::read_to_string(&file).unwrap();
+        let (_, rest) = text.split_once('\n').unwrap();
+        let mut header = header_of();
+        header.owners = vec![Identity::of(&owner).unwrap()];
+        std::fs::write(
+            &file,
+            format!("{}\n{rest}", serde_json::to_string(&header).unwrap()),
+        )
+        .unwrap();
+        let second = run(&dir, &journal);
+        assert_eq!(second.restore().taken, 1);
+        second.write();
+        let named = owner.to_string_lossy().into_owned();
+        assert!(
+            header_of().owners.iter().any(|kept| kept.path == named),
+            "a rebuilt owner is still seen at the launch after next"
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 

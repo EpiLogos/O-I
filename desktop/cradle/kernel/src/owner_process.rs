@@ -126,6 +126,12 @@ fn started_programs() -> &'static Mutex<std::collections::BTreeSet<std::path::Pa
     STARTED.get_or_init(Mutex::default)
 }
 
+/// Count `program` among this process's owners without starting it: the
+/// owner of a reading kept from the last run and taken back (`kept.rs`).
+pub(crate) fn answered_by(program: &std::path::Path) {
+    started(program.as_os_str());
+}
+
 fn started(program: &std::ffi::OsStr) {
     started_programs()
         .lock()
