@@ -10,6 +10,11 @@
 // change is a write that landed (the proposals that wait, are accepted or rejected are Central's source returns,
 // projectcentral.source.returns, which no kernel op runs: the kernel's client has it, flow.rs:780 source_returns, and nothing calls it).
 // The task, the run, turns, tokens and spend are no part of a change.
+// The proposals stand in the Ledger too (lane W9), from Central's source returns (the kernel's source_returns_read, central.source-returns/v1,
+// the read Approvals makes): a pending or applying return is Waiting, or Commented once a reviewer commented on it (its entry's `comments`,
+// Central PR 290: the count of the comments the return keeps); an accepted one is Approved and a rejected one Refused (source_return.rs
+// statuses). A return carries no receipt number: its row's `n` is the instant Central minted it (its ref names it, in ms), and who accepted
+// it is not in the list, so `by` is left out.
 //
 // Approvals' Default answer is the Gateway's `approvals` key — the same read (agentChainDevices.ts gatewayDisclosed) and the same write
 // (the Gateway row, kernel harness_agent_control configure {approvals}); its queue is the shown session's pending consent requests
@@ -18,8 +23,13 @@
 // owner write (Hermes' approvals.timeout is not a harness_agent_control configure field, harnessAgentControl.ts:14-25); the proposals are
 // Central's source returns, which the kernel reads since lane K1 (`source_returns_read`, central.source-returns/v1: workcellReads.ts) —
 // the pending and applying ones stand in the queue. Approve accepts one through Central's projectcentral.source.return_accept, the person's
-// press the kernel carries (central/devices/sourceReturnAccept.ts, handed in as a port); Changes has no owner operation yet. Pure, apart
-// from the view holds (designBindings.ts holdView).
+// press the kernel carries (central/devices/sourceReturnAccept.ts, handed in as a port). Changes comments on the waiting return through
+// Central's projectcentral.source.return_comment in the words written in the thread: a chain carries it by wrapping this binding with
+// central/devices/sourceReturnComment.ts withReturnComments; unwrapped, it stands disabled saying so.
+// Factory's unit decisions (lane W9, unitDecisions.ts) stand in the queue as requests: the questions the shown session's Runs wait on, each
+// answered as the person — Allow once answers Resume bounded work, Deny answers Cancel bounded work — through Central's receiving Review of
+// the question Factory put to Central; Allow always is refused (a unit decision takes one answer). Pure, apart from the view holds
+// (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
@@ -29,6 +39,7 @@ import type {SourceReturnEntry} from '../../../../../../desktop/cradle/src/kerne
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {familyFaceDevice} from './mainTrackBindings'
 import {pendingPermissions, verbStanding} from './threadBinding'
+import {unitAnswer, unitRows, waitingDecisions, type UnitDecisionsRead} from './unitDecisions'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -69,6 +80,10 @@ export interface LedgerGround {
 export interface LedgerInput {
   /** The root register's ground (useCentralGroundAnswer), null while unread. */
   readonly ground: LedgerGround | null
+  /** Central's source returns of the project (kernel source_returns_read), null while unread; absent: not read here. */
+  readonly returns?: {readonly entries: readonly SourceReturnEntry[]} | null
+  /** The agency tracks, which name a return's agent. */
+  readonly tracks?: readonly AgentSessionTrack[] | null
   /** The ground's refusal in the owner's words, or the carrier's, when there is one. */
   readonly groundError: string | null
   readonly holds: ChainHolds
@@ -110,6 +125,29 @@ export function receiptRows(horizon: unknown, timeZone: string | undefined): Rec
   return rows.sort((a, b) => Number(b.n) - Number(a.n))
 }
 
+/** A return's outcome in the Ledger's words: Waiting, or Commented once it keeps a comment; Approved; Refused. Undefined for a status Central
+ * may add later. */
+function returnOutcome(entry: SourceReturnEntry): string | undefined {
+  const comments = (entry as {comments?: unknown}).comments
+  if (entry.status === 'pending' || entry.status === 'applying') return typeof comments === 'number' && comments > 0 ? 'commented' : 'waiting'
+  return entry.status === 'accepted' ? 'approved' : entry.status === 'rejected' ? 'refused' : undefined
+}
+
+/** Central's source returns as Ledger receipts (software-factory__ledger.tsx `receipts`): {n (the instant Central minted it, ms), name (the
+ * source it proposes to change), agent (the session's agent, else its session), outcome, day, time (minted, in the civil time zone), session}.
+ * A return whose ref names no instant has no `n` and is left out. Pure. */
+export function returnReceiptRows(entries: readonly SourceReturnEntry[], tracks: readonly AgentSessionTrack[] | null | undefined, timeZone: string | undefined): Record<string, Value>[] {
+  return entries.flatMap(entry => {
+    const minted = returnMintedMs(entry.return_ref)
+    if (minted === null) return []
+    const outcome = returnOutcome(entry)
+    const track = tracks?.find(item => item.sessionRef === entry.agent_session_ref)
+    const at = civil(Math.floor(minted / 1000), timeZone)
+    return [{n: minted, name: pathOfSource(entry.source_ref), agent: track?.agentName ?? track?.agentRef ?? entry.agent_session_ref, ...(outcome ? {outcome} : {}),
+      day: at.day, time: at.time, session: entry.agent_session_ref}]
+  })
+}
+
 const timeData = (ground: LedgerGround | null) => (ground?.time?.state === 'ready' && isObj(ground.time.data) ? ground.time.data : null)
 
 /** The Ledger's values: the light (the horizon answered, or refused), today, the receipts, the view's settings. */
@@ -122,7 +160,9 @@ export function ledgerValues(input: LedgerInput): Values {
   if (sources?.state === 'ready' && sources.data !== undefined) {
     const time = timeData(input.ground)
     const policy = time && isObj(time.policy) ? time.policy : null
-    values.receipts = JSON.stringify(receiptRows(sources.data, policy ? str(policy.timezone) : undefined))
+    const zone = policy ? str(policy.timezone) : undefined
+    const proposed = input.returns ? returnReceiptRows(input.returns.entries, input.tracks, zone) : []
+    values.receipts = JSON.stringify([...receiptRows(sources.data, zone), ...proposed].sort((a, b) => Number(b.n) - Number(a.n)))
     values.light = 'lit'
   } else if (sources || input.groundError) values.light = 'dark'
   const time = timeData(input.ground)
@@ -194,7 +234,7 @@ export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBin
 export const APPROVALS_REFUSE = {
   wait: missing('Wait', 'Hermes\' approvals.timeout through harness_agent_control configure (it carries approvals, transport, connect and stall-after only)', 'Actuation'),
   noAnswer: missing('On no answer', 'a timed-out request\'s outcome through harness_agent_control configure', 'Actuation'),
-  changes: missing('Changes', 'a comment on a source return', 'Central'),
+  changes: 'Changes: this chain passes no comment hand (Central\'s projectcentral.source.return_comment comments on the waiting return in the words written in the thread: central/devices/sourceReturnComment.ts).',
 } as const
 
 /** Approve where the chain hands no acceptance port (ApprovalsPorts.approve): Central's action exists and the kernel carries it as the
@@ -218,6 +258,10 @@ export interface ApprovalsInput {
   /** That session's encounter view, while it is observed. */
   readonly encounter: Pick<EncounterReading, 'permissions' | 'actions'> | null
   readonly holds: ChainHolds
+  /** Factory's unit decisions of the shown session's Runs (unitDecisions.ts useUnitDecisions); absent: not read here. */
+  readonly units?: UnitDecisionsRead | null
+  /** The person Central's personal anchor names: only the unit's resolver answers a unit decision. */
+  readonly person?: string | null
 }
 
 /** The tool a consent request names (its tool call's kind or title). */
@@ -269,8 +313,9 @@ export function approvalsValues(input: ApprovalsInput): Values {
   put(values, 'approvals', input.gateway.approvals)
   const requests = input.session && input.encounter ? queueRows(pendingPermissions(input.encounter), input.session) : null
   const proposals = input.returns ? proposalRows(input.returns.entries, input.tracks, input.nowUnixMs) : null
-  if (requests || proposals) {
-    const rows = [...(proposals ?? []), ...(requests ?? [])]
+  const units = input.units ? unitRows(input.units, input.session, input.nowUnixMs) : null
+  if (requests || proposals || units) {
+    const rows = [...(proposals ?? []), ...(units ?? []), ...(requests ?? [])]
     values.queue = JSON.stringify(rows)
     values.light = rows.length ? 'lit' : 'dark'
   }
@@ -283,6 +328,9 @@ export interface ApprovalsPorts {
   /** Accept one returned proposal through Central (projectcentral.source.return_accept, the person's press: sourceReturnAccept.ts
    * acceptSourceReturn), with the row as Central lists it. Rejects with the refusal, or Central's words. Absent: Approve stands disabled. */
   readonly approve?: (row: SourceReturnEntry) => Promise<unknown>
+  /** Answer one unit decision's question through Central's receiving Review (the kernel's `receiving` op, the person's press), in the
+   * register its return belongs to. Absent: no carrier stands. */
+  readonly answerUnit?: (project: string | null, review: {kind: 'review'; return_ref: string; expected_return_revision: string; disposition: 'answered'; answer: string}) => Promise<unknown>
 }
 
 /** The harness's own choice for an answer: allow once, allow always, or reject (PermissionCard.tsx reads the same kinds). */
@@ -305,7 +353,9 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
   const standing: Record<string, Standing> = disabled(APPROVALS_REFUSE)
   const verb = !input.session ? 'No session is shown: select one, or pin the Thread to one.' : !input.encounter ? 'The session\'s conversation is not read yet.'
     : verbStanding(input.encounter, 'permission')
-  if (verb) for (const key of ['allowOnce', 'allowAlways', 'deny']) standing[key] = {disabled: verb}
+  // A unit decision needs no conversation: while one waits, each answer is judged at the press, on the item chosen.
+  const unitsWait = waitingDecisions(input.units).length > 0
+  if (verb && !unitsWait) for (const key of ['allowOnce', 'allowAlways', 'deny']) standing[key] = {disabled: verb}
   if (gateway?.standing?.approvals) standing.approvals = gateway.standing.approvals
   if (!ports.approve) standing.approve = {disabled: APPROVE_UNWIRED}
   return {
@@ -323,6 +373,13 @@ export function approvalsBinding(input: ApprovalsInput, gateway: Pick<DesignBind
           continue
         }
         if (key === 'allowOnce' || key === 'allowAlways' || key === 'deny') {
+          if (waitingDecisions(input.units).some(item => item.humanRequestRef === value)) {
+            const asked = unitAnswer(input.units, value, key, input.person ?? null)
+            if ('refused' in asked) throw Error(asked.refused)
+            if (!ports.answerUnit) throw Error('The kernel carrier is unavailable here, so Central\'s receiving field cannot be asked.')
+            await ports.answerUnit(asked.project, asked.review)
+            continue
+          }
           if (verb || !ports.permission) throw Error(verb ?? 'The session\'s conversation is not observed here.')
           const request = requests.find(item => item.native_request_id === value)
           if (!request) throw Error('That request no longer waits: AIKit reports it answered or gone.')

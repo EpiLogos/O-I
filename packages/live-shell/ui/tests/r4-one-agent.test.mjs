@@ -113,8 +113,10 @@ test('the Agent\'s composed binding carries custody.*, id.* and thread.* from th
   // have no owner reading, so nothing stands under custody.* — and each control stands disabled with the op it lacks.
   assert.equal(v.autonomy, 'review')
   assert.deepEqual(Object.keys(v).filter(key => key.startsWith('custody.')), [], 'no custody reading is invented')
-  for (const key of ['custody.gate', 'custody.escalate', 'custody.handBack']) assert.match(agent.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
-  assert.match(agent.standing.autonomy.disabled, /^Autonomy: no owner operation/, 'the shared autonomy carries Custody\'s standing')
+  // REPLACED (lane W9): Review gate and Escalate to name what an assignment from here lacks (Factory's record and the kernel carry them).
+  for (const key of ['custody.gate', 'custody.escalate', 'custody.handBack']) assert.match(agent.standing[key].disabled, /missing op:/, key)
+  // REPLACED (lane W9): Custody's Autonomy names what an assignment from here lacks (sessionChainBindings.ts custodySetting).
+  assert.match(agent.standing.autonomy.disabled, /^Autonomy: set when Factory assigns custody/, 'the shared autonomy carries Custody\'s standing')
   // Identity: the roster and whose card, under id.*; the light is the Agent's.
   assert.equal(v['id.agent'], 'agent/flint')
   assert.match(String(v['id.roster']), /"name":"Flint"/)
@@ -140,8 +142,8 @@ test('a change goes to the owner of its key: the Agent\'s own row, a carried pag
   await agent.write([{key: 'effort', value: 'max'}])
   assert.deepEqual(written, [['effort', 'max']], 'Effort through the Agent\'s own row')
   assert.equal(agent.writes('custody.gate'), true)
-  await assert.rejects(() => agent.write([{key: 'custody.gate', value: 'diffs'}]), /^Error: Review gate: no owner operation carries it yet/)
-  await assert.rejects(() => agent.write([{key: 'autonomy', value: 'auto'}]), /^Error: Autonomy: no owner operation/, 'the shared autonomy is Custody\'s to refuse')
+  await assert.rejects(() => agent.write([{key: 'custody.gate', value: 'diffs'}]), /^Error: Review gate: set when Factory assigns custody/)
+  await assert.rejects(() => agent.write([{key: 'autonomy', value: 'auto'}]), /^Error: Autonomy: set when Factory assigns custody/, 'the shared autonomy is Custody\'s to refuse')
   assert.equal(typeof agent.local['thread.pin'], 'function', 'the Thread page\'s pin is a view hold')
   assert.equal(typeof agent.local['id.agent'], 'function', 'the Identity page\'s choice is a view hold')
   agent.local['id.agent']('agent/nara')

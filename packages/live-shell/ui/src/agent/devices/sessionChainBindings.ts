@@ -144,14 +144,21 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 // Factory's custody writes reach the kernel since lane W3 (factory_owner {custody-assign, custody-update}: `factory development custody
 // assign <state> --position P --work W --reason R [--run, --workflow-unit, --journey, --origin-communique, --state in-progress|blocked,
 // --custody]` and `… update <state> --custody C --state in-progress|blocked|released|completed|handed-off --reason R [--reopen,
-// --to-position P, --expected-revision N]`, both answering factory.work-custody-receipt/v1). They carry a Position's custody of a piece of
-// work, its state and a hand-off Position: none of Custody's settings. So each stays disabled, naming exactly what the command lacks.
+// --to-position P, --expected-revision N]`, both answering factory.work-custody-receipt/v1). Factory's custody record carries Autonomy,
+// Review gate and Escalate to since EpiLogos/Factory PR 288 (set at assignment: `custody assign --autonomy suggest|review|auto --review-gate
+// diffs|approvals|both --escalate-to <ref>`; `update` does not change them), and the kernel's CustodyAssign carries all three since lane W6
+// round 2 (cdbde6fe7). This device still sets none: an assignment names a Position, a piece of work and a reason it does not hold, assigning
+// without a custody ref mints a new record, and no route reads the session's custody (`custody list`) to know whether it is assigned. Who
+// may change them after assignment is the owner's ruling to make. Each stands disabled naming both (lane W9).
 /** What Factory's custody commands carry, for a refusal that names what they do not. */
 const CUSTODY_CARRIES = 'Factory\'s custody assign and update (factory_owner) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to'
+/** Who may change a custody record's settings after assignment: the owner's ruling to make (lane W8, 3a). */
+export const CUSTODY_SETTINGS_RULING = 'Changing it after assignment waits for the owner\'s ruling on who may: `custody update` admits only the holding occupant, and Factory names no person authority for custody.'
+const custodySetting = (what: string, flag: string) => `${what}: set when Factory assigns custody (\`factory development custody assign ${flag}\`, which the kernel's factory_owner CustodyAssign carries since lane W6 round 2); this device holds no assignment to set it on — missing op: a reading of the session's custody (\`factory development custody list <state> --position <P>\` through the kernel), and the Position, work and reason an assignment names, none of which is read here for this session (Software Factory). ${CUSTODY_SETTINGS_RULING}`
 export const CUSTODY_REFUSE = {
-  autonomy: missing('Autonomy', `a write of the session's autonomy (${CUSTODY_CARRIES}, and no autonomy; encounter_task_read reads it; agentParamAddresses.ts autonomy has no write path)`, 'Software Factory'),
-  gate: missing('Review gate', `a review gate in Factory's custody record (${CUSTODY_CARRIES}, and no gate)`, 'Software Factory'),
-  escalate: missing('Escalate to', `an escalation contact in Factory's custody record (${CUSTODY_CARRIES}: a hand-off moves the work to that Position, which names no one to ask)`, 'Software Factory'),
+  autonomy: custodySetting('Autonomy', '--autonomy suggest|review|auto'),
+  gate: custodySetting('Review gate', '--review-gate diffs|approvals|both'),
+  escalate: custodySetting('Escalate to', '--escalate-to'),
   handBack: missing('Hand back', `a custody state for giving back what you edited (${CUSTODY_CARRIES}; giving control back is none of these states), and the custody refs of what the session holds (\`factory development custody list\` has no kernel route)`, 'Software Factory'),
 } as const
 /** Custody's readings no owner reports here, each with what it waits for. */
@@ -320,7 +327,7 @@ export const AGENTSET_REFUSE = {
   handBack: DELEGATION('Hand-back', 'the helper\'s return form'),
   returnCap: DELEGATION('Summary cap', 'delegation.max_summary_chars'),
   model: DELEGATION('Subagent model', 'delegation.model'),
-  join: missing('Join', 'the agent set\'s join, how its members\' returns combine, through the kernel: no agent-set record carries it', 'Central'),
+  join: missing('Join', 'a tie from this group to one of Central\'s agent sets: the group is an AIKit session space, and AIKit\'s team carries no join; Central keeps join on its agent sets (central.agent-set/v1 `join`, written by central.agent-set.save, read by list, read and resolve), and agency_read names only the space\'s ref and label, so no reading says which set this group runs', 'Central'),
   retry: missing('Retry', 'Factory\'s RetryGrant (factory/src/orchestration.rs) through the kernel', 'Software Factory'),
 } as const
 

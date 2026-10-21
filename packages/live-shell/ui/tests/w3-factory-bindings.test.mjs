@@ -178,10 +178,12 @@ test('4 · the Experiment: its comparison readings read the records a run made, 
 
 test('5 · Custody and the Decision helper: Factory\'s custody and unit-decision commands carry none of their settings, and each refusal says what they do carry', () => {
   const custody = session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}}, null)
-  for (const key of ['autonomy', 'gate', 'escalate', 'handBack']) {
-    assert.match(custody.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
-    assert.match(custody.standing[key].disabled, /Factory's custody assign and update \(factory_owner\) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to/, key)
-  }
+  assert.match(custody.standing.handBack.disabled, /no owner operation carries it yet — missing op:/)
+  for (const key of ['autonomy', 'gate', 'escalate']) assert.match(custody.standing[key].disabled, /missing op:/, key)
+  // REPLACED (lane W9): Factory's custody record carries Autonomy, Review gate and Escalate to since Factory PR 288; each names the kernel's
+  // CustodyAssign that carries none yet, and the owner's ruling on changing them after assignment (w9-approvals-ledger-sets.test.mjs).
+  assert.match(custody.standing.handBack.disabled, /Factory's custody assign and update \(factory_owner\) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to/)
+  for (const key of ['autonomy', 'gate', 'escalate']) assert.match(custody.standing[key].disabled, /`factory development custody assign --/, key)
   assert.match(custody.standing.handBack.disabled, /`factory development custody list` has no kernel route/)
   for (const key of ['held', 'people', 'handBackLit']) assert.match(custody.standing[key].disabled, /no reading reaches it yet — missing op:/, key)
   const decision = helper.decisionHelperBinding({status: null, teamSpace: null, holds: bind.chainHolds()})
