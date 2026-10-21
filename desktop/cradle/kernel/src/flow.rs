@@ -928,10 +928,16 @@ impl CentralClient {
         limit: Option<u64>,
         before: Option<&str>,
     ) -> Result<SourceReturns, OwnerCallError> {
-        let data = self.run(
-            "projectcentral.source.returns",
-            json!({ "project": project, "limit": limit, "before": before }),
-        )?;
+        // Central takes `limit` and `before` only when given: a null is
+        // refused ("limit must be an integer").
+        let mut input = json!({ "project": project });
+        if let Some(limit) = limit {
+            input["limit"] = json!(limit);
+        }
+        if let Some(before) = before {
+            input["before"] = json!(before);
+        }
+        let data = self.run("projectcentral.source.returns", input)?;
         let result: SourceReturns = decode_owner("projectcentral.source.returns", data)?;
         ensure_schema(
             "projectcentral.source.returns",
@@ -1296,6 +1302,39 @@ mod tests {
                 .find(|(held, _)| held == name)
                 .map(|(_, value)| value.clone())
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn source_returns_name_a_limit_and_a_cursor_only_when_given() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("central-returns-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let ctrl = dir.join("ctrl");
+        // Refuses a null limit or cursor, as Central does.
+        std::fs::write(
+            &ctrl,
+            r#"#!/bin/sh
+for last; do :; done
+case "$last" in
+  *'"limit":null'*|*'"before":null'*)
+    echo '{"ok":false,"status":"invalid_input","error":{"code":"invalid_input","message":"limit must be an integer"}}' ;;
+  *)
+    echo '{"ok":true,"data":{"schema":"central.source-returns/v1","entries":[],"more":false,"authored_source_mutated":false}}' ;;
+esac
+"#,
+        )
+        .unwrap();
+        std::fs::set_permissions(&ctrl, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&ctrl);
+        let client = CentralClient::with(ctrl, None, "test".into());
+        assert!(client
+            .source_returns("O-I", None, None)
+            .unwrap()
+            .entries
+            .is_empty());
+        assert!(client.source_returns("O-I", Some(10), Some("r-1")).is_ok());
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
