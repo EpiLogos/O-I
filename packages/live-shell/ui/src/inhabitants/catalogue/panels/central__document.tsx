@@ -10,9 +10,17 @@
 // `island` (a JSON map of what the other keys of the island hold). A key the owner does not report is absent; the picture then says
 // which reading is missing in words, and every control and reading draws "—".
 // The actions set their own keys: `save`, `reread`, `copy`, `clear`. The save router's outcome is the reading `outcome`.
+// Selection (manual §17.8, the Selection group): `selection` is the passage selected in the page, {entry, text} (the shell's
+// selection in the drawn page; absent while nothing is selected). `selectionAct` is what a plain selection does (highlight | note |
+// packet | remember | answer) and `packetScope` what Answer this reads (selection | page | linked); the shell holds both. The five
+// passage acts, each on its own key as Central's Clip view writes them: act.highlight and act.note (the page's own island, through
+// the save router), act.topacket (the packet, ql-doc `packet`), act.remember (`central.remember` for a page of your own world,
+// `projectcentral.remember` for a project's: the passage word for word with its source ref, a proposal that stays unrecognised
+// until you recognise it; the kernel's invoke_action reaches both) and act.answerthis (the packet and the passage to the agent on
+// the world's chain; the answer arrives as a new entry with its sources). All five owners exist.
 import {useEffect, useState, type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem, type Tone} from '../../sdk/panel'
-import {NONE, boolOf, cradleDocuments, has, json, numOf, shown, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, cradleDocuments, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__document.css'
 
 type V = ViewProps['v']
@@ -44,6 +52,23 @@ const AT: Record<number, [number, number]> = {2: [1, 0], 4: [0, 1], 0: [1, 1], 1
  * too. The tone is the drawing's `data-paper` (styles.css `[data-paper="ink"]`), so each tone names the same tokens. */
 const TOKENS = {bg: 'var(--paper)', ink: 'var(--ink)', mid: 'var(--pmid)', faint: 'var(--pfaint)', rule: 'var(--prule)'} as const
 const PAPER = {paper: TOKENS, ink: TOKENS} as const
+
+const SELECTION_ACTS = [
+  {value: 'highlight', label: 'Highlight', does: 'A plain selection marks the passage and leaves it whole.'},
+  {value: 'note', label: 'Note', does: 'A plain selection opens a note on the passage.'},
+  {value: 'packet', label: 'To packet', does: 'A plain selection adds the passage to the packet.'},
+  {value: 'remember', label: 'Remember', does: 'A plain selection keeps the passage in your ground, as a proposal.'},
+  {value: 'answer', label: 'Answer this', does: 'A plain selection sends the packet and the passage to the agent.'},
+] as const
+const PACKET_SCOPES = [{value: 'selection', label: 'Selection', does: 'Answer this reads the passage.'}, {value: 'page', label: 'Page', does: 'Answer this reads the page.'},
+  {value: 'linked', label: 'Page and linked', does: 'Answer this reads the page and the pages it links.'}] as const
+const PASSAGE_ACTS = [
+  {key: 'act.highlight', label: 'Highlight', does: 'Marks the passage and leaves it whole.'},
+  {key: 'act.note', label: 'Note', does: 'Attaches a note to the passage. A note is not a source.'},
+  {key: 'act.topacket', label: 'To packet', does: 'Adds the passage to the packet.'},
+  {key: 'act.remember', label: 'Remember', does: 'Keeps the passage word for word, with where it came from, as a proposal in your ground. It stays unrecognised until you recognise it.'},
+  {key: 'act.answerthis', label: 'Answer this', does: 'Sends the packet and the passage to the agent. The answer arrives as a new entry, with its sources.'},
+] as const
 
 const WRITES = [
   {value: 'off', label: 'Off', does: 'The agent does not write.'},
@@ -373,6 +398,12 @@ const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.
 const span = (n: number, child: ReactNode) => <div style={{gridColumn: `span ${n}`, width: '100%'}}>{child}</div>
 
 const NO_TEMPLATE = 'No reading of the template.'
+/** The passage selected in the page, or undefined while nothing is (or the shell reports no selection). */
+const passage = (v: V): {entry?: number; text: string} | undefined => {
+  const s = json<unknown>(v, 'selection', null)
+  return s && typeof s === 'object' && typeof (s as {text?: unknown}).text === 'string' && (s as {text: string}).text
+    ? {entry: typeof (s as {entry?: unknown}).entry === 'number' ? (s as {entry: number}).entry : undefined, text: (s as {text: string}).text} : undefined
+}
 const flowOnly = (v: V) => { const k = kindOf(v); return k === 'flow' ? undefined : k ? `A ${KINDS[k].label} has no Flow view.` : NO_TEMPLATE }
 const pageOnly = (v: V) => { const k = kindOf(v); return k === 'being' || k === 'thing' ? undefined : k ? `A ${KINDS[k].label} keeps its template's paper.` : NO_TEMPLATE }
 const SOURCE_MOVED = 'The source moved after your draft. Re-read to review it.'
@@ -403,7 +434,8 @@ function packetRows(v: V): RowItem[] {
 
 const defaults = {
   light: 'lit', template: 'flow', title: 'Factory original development Run — execution and continuation', view: 'page', flowView: 'dialogue', ground: 'paper', layout: 'portrait', pinned: false,
-  agentWrites: 'propose', autosave: false,
+  agentWrites: 'propose', autosave: false, selectionAct: 'highlight', packetScope: 'selection',
+  selection: JSON.stringify({entry: 8, text: 'The first worker can retain its coordinator'}),
   // Readings and the state of the page: what the owner reports, and the draft.
   copied: false, dirty: false, outcome: 'saved', face: 1, date: 'Wed 15 Oct', tabTitle: 'Flow · flow-2026-10-03-1432', highlights: 2, notes: 1,
   // The Factory flow's entries (flow-2026-10-03-1432.html): `C` the Factory coordinator, `F` the person. Highlights and a note sit on
@@ -446,6 +478,7 @@ export const design: DesignedDevice = {
       island: JSON.stringify({profile: '"oi.page/v1"', meta: '{…}', bindings: '{…}', page: '{…}', extensions: '{}'}),
     },
     'Stale save': {dirty: true, outcome: 'stale'},
+    'Nothing selected': {selection: 'null', selectionAct: 'remember', packetScope: 'page'},
     'No readings': Object.fromEntries(Object.keys(defaults).map(key => [key, undefined])),
   },
 
@@ -507,6 +540,20 @@ export const design: DesignedDevice = {
         <Readout label="state" does="Saved, edited since save, or the save router's refusal: stale, conflict, refused." value={saveWords(p.v)} tone={saveTone(saveWords(p.v))} />
         <Action label="Save" does="Send the page to its owner." onPress={() => p.set('save', true)} disabled={blocked(p.v) ? SOURCE_MOVED : undefined} />
         <Action label="Re-read" does="Read the page again from its owner. Your draft goes." onPress={() => p.set('reread', true)} />
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Selection" width={150}>
+        <Chooser {...st(p, 'selectionAct')} label="Selection act" wide does="What a plain selection does: Highlight, Note, To packet, Remember or Answer this."
+          value={strOf(p.v, 'selectionAct') ?? ''} options={SELECTION_ACTS} onChange={x => p.set('selectionAct', x)} />
+        <Radio {...st(p, 'packetScope')} label="Packet scope" does="What Answer this reads: the passage, the page, or the page and the pages it links." value={strOf(p.v, 'packetScope') ?? ''}
+          options={PACKET_SCOPES} stack onChange={x => p.set('packetScope', x)} />
+      </Section>
+      <Section label="Passage" cols={3} width={250}>
+        {span(3, <p className="cdoc-passage" data-i="Passage|The passage selected in the page. The acts beside it work on it.">{passage(p.v) ? <><b>{passage(p.v)!.entry === undefined ? '' : `${passage(p.v)!.entry} · `}</b>{passage(p.v)!.text}</>
+          : <i>{has(p.v, 'selection') ? 'Select a passage in the page.' : NONE}</i>}</p>)}
+        {PASSAGE_ACTS.map(a => <Action key={a.key} {...st(p, a.key)} label={a.label} does={a.does} onPress={() => p.set(a.key, Date.now())}
+          disabled={st(p, a.key).disabled ?? (!passage(p.v) ? 'Select a passage first.' : a.key === 'act.answerthis' && strOf(p.v, 'agentWrites') === 'off' ? 'Agent writes is Off.' : undefined)} />)}
       </Section>
     </Band>
   </Panel>,

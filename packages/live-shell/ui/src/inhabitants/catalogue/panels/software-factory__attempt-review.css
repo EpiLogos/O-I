@@ -105,3 +105,5 @@ button.ar-name:focus-visible { outline: 1px solid var(--accent, #ffbe00); outlin
 .ar-review li[data-state="request"] small { grid-column: 2; white-space: normal; }
 .ar-side { gap: 7px; }
 .ar-side > * { flex: none; }
+.ar-review li[data-state="output"] i { border-radius: 1px; background: var(--dp-value, #5cc6b4); border-color: var(--dp-value, #5cc6b4); }
+.ar-review li[data-state="output"] small { max-width: 130px; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono, ui-monospace, monospace); }

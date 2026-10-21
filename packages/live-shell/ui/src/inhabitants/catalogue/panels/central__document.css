@@ -1,2 +1,5 @@
 /* The Document's pane, inside the gallery's frame: the text that a page keeps. Shell and panel tokens only. */
 .cdoc-source { flex: 1 1 auto; margin: 0; padding: 14px 18px; overflow: auto; background: var(--bg-0, #26292d); color: var(--text-dim, #a2a7ad); font: 11px/1.5 var(--mono, ui-monospace, Menlo, monospace); white-space: pre; tab-size: 2; }
+.cdoc-passage { margin: 0; width: 100%; height: 30px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font: 10.5px/1.4 var(--font-ui, sans-serif); color: var(--text, #d4d7da); }
+.cdoc-passage b { font-weight: 400; color: var(--text-faint, #71767c); }
+.cdoc-passage i { font-style: normal; color: var(--text-faint, #71767c); }

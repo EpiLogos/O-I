@@ -23,6 +23,12 @@
 // view's Claims with the count of their evidence: factory/src/build.rs:19, factory_build_snapshot, which exists) and `requests`
 // [{question, why}] (its HumanRequests: build.rs:66 question, whyHuman). Stands is confirmed through factory_owner AttemptReceiving
 // (kernel factory.rs:373), which exists.
+// Outputs (the Results tile, §19.1 On the rail; the Return beside the list in Full; Review on Whole): what Workcell collected from the
+// world each attempt ran in. `collected` is JSON: rows of {attempt, world, outputs: [{ref, locator, provenance}], omitted:
+// [{requirement, reason}]}, one for each attempt whose world was collected: `workcell --receipt R collect --json` (world_ref,
+// outputs[].logical_ref, material_locator, provenance; omissions), R being the receipt of the world the attempt's run stood in
+// (material_read). An attempt with no row has not been collected. The act `collect` (the attempt's id) runs that collection;
+// the kernel has no route to it yet, so the host stands it disabled with that reason.
 import {Fragment, type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Lamp, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type Option, type RowItem, type Tone} from '../../sdk/panel'
 import {NONE, clampTo, has, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -447,6 +453,7 @@ function RunsPane({p}: {p: ViewProps}) {
             : <><p className="ar-summary">{review.ret.summary ?? NONE}</p>
               <p className="ar-facts">{`${review.ret.artifacts ?? NONE} artefacts · ${review.ret.evidence ?? NONE} evidence · receipt ${review.ret.receiving === undefined ? NONE : review.ret.receiving ? 'linked' : 'not linked'}`}</p></>}
         {review?.ret && <ReviewLists ret={review.ret} />}
+        {review && <Outputs v={p.v} a={review} />}
         {r.pending && <div data-wait="true">{shorts(r.pending)} waits for you to confirm that it stands.</div>}
         {r.differs !== undefined && <dl><dt>Differs from {shorts(r.cmp)}</dt><dd>{r.differs} {r.differs === 1 ? 'task' : 'tasks'}</dd></dl>}
       </aside>
@@ -458,6 +465,32 @@ function RunsPane({p}: {p: ViewProps}) {
         : <span>{picked === undefined ? 'Select a task and its log opens in Clip view.' : 'No reading of the selected task.'}</span>}
     </div>
   </div>
+}
+
+interface Output {readonly ref: string; readonly locator?: string; readonly provenance?: string}
+interface Collected {readonly world?: string; readonly outputs: readonly Output[]; readonly omitted: readonly {requirement: string; reason?: string}[]}
+/** What Workcell collected from an attempt's world; undefined where the owner reports no collection for it. */
+function collectedOf(v: V, attempt: string | undefined): Collected | undefined {
+  if (attempt === undefined || !has(v, 'collected')) return undefined
+  const row = objects(json<unknown[]>(v, 'collected', [])).find(o => o.attempt === attempt)
+  if (!row) return undefined
+  const outputs = objects(Array.isArray(row.outputs) ? row.outputs : []).flatMap(o => (word(o.ref) ? [{ref: o.ref as string, locator: word(o.locator),
+    provenance: o.provenance && typeof o.provenance === 'object' ? Object.entries(o.provenance as Record<string, unknown>).map(([k, x]) => `${k} ${String(x)}`).join(', ') : undefined}] : []))
+  const omitted = objects(Array.isArray(row.omitted) ? row.omitted : []).flatMap(o => (word(o.requirement) ? [{requirement: o.requirement as string, reason: word(o.reason)}] : []))
+  return {world: word(row.world), outputs, omitted}
+}
+const outputsWord = (c: Collected | undefined, v: V) => (c ? `${c.outputs.length}${c.omitted.length ? ` · ${c.omitted.length} left out` : ''}` : has(v, 'collected') ? 'not collected' : undefined)
+
+/** The outputs of an attempt beside its Return: each with where it lies; what Workcell could not collect, with its reason. */
+function Outputs({v, a}: {v: V; a: Attempt | undefined}) {
+  const c = collectedOf(v, a?.id)
+  return <>
+    <h5>Outputs · {c ? `${c.outputs.length} collected` : has(v, 'collected') ? 'not collected' : NONE}</h5>
+    {c === undefined ? <p className="ar-none">{has(v, 'collected') ? 'Workcell has not collected this attempt\'s world.' : 'No reading of the outputs.'}</p>
+      : <ul className="ar-review">{c.outputs.slice(0, 2).map(o => <li key={o.ref} data-state="output" data-i={`${o.ref}|${o.locator ?? NONE}${o.provenance ? ` · ${o.provenance}` : ''}`}><i /><span>{o.ref}</span><small>{o.locator ?? NONE}</small></li>)}
+        {c.outputs.length > 2 && <li data-state="output"><i /><span>+{c.outputs.length - 2} more</span></li>}
+        {c.omitted.map((o, i) => <li key={`o${i}`} data-state="unsatisfied" data-i={`Left out|${o.reason ?? 'Workcell gave no reason.'}`}><i /><span>{o.requirement}</span><small>left out</small></li>)}</ul>}
+  </>
 }
 
 /** The review beside the list: the success conditions with their return, the claims with their evidence, and what waits on you. */
@@ -588,6 +621,14 @@ export const design: DesignedDevice = {
     light: 'lit', work: 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA', attempt: '3', show: 'all', group: 'attempt', view: 'tree', compare: 'none', stands: 'none', task: '3.4.2',
     // The owner's material: the pieces of work to choose from, and the attempts of the one shown (JSON).
     works: WORKS, attempts: SAMPLE_ATTEMPTS,
+    // What Workcell collected from each attempt's world (`workcell --receipt R collect --json`).
+    collected: JSON.stringify([
+      {attempt: '2', world: 'world:01M5DQ7TSC-kite', outputs: [{ref: 'artifacts:run', locator: 'file:///Users/admin/.workcell/worlds/01M5DQ7TSC/artifacts', provenance: {provider: 'collapsed-local-artifacts'}},
+        {ref: 'logs:run', locator: 'file:///Users/admin/.workcell/worlds/01M5DQ7TSC/logs', provenance: {provider: 'collapsed-local-logs'}},
+        {ref: 'checkout:o-i', locator: 'git:env-2/o-i@4c1e9a7', provenance: {provider: 'collapsed-local-git-worktree'}}], omitted: []},
+      {attempt: '3', world: 'world:01M5ENFNAV-flint', outputs: [{ref: 'logs:run', locator: 'file:///Users/admin/.workcell/worlds/01M5ENFNAV/logs', provenance: {provider: 'collapsed-local-logs'}}],
+        omitted: [{requirement: 'artifacts:run', reason: 'The run is still writing; the artifact channel is not sealed.'}]},
+    ]),
     journey: JSON.stringify({purpose: 'Keep the three TypeScript roots type-checking', status: 'active', runs: [
       {ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5F9Z', name: 'First pass', lifecycle: 'finished', attempts: 1, recognised: true},
       {ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5FCB', name: 'Model row on the agent device', lifecycle: 'aborted', attempts: 2},
@@ -599,7 +640,7 @@ export const design: DesignedDevice = {
     'Ruler, one stands': {compare: '2', stands: '2', view: 'ruler', group: 'agent', show: 'stalled'},
     'Grove, one stands': {stands: '2', view: 'grove'},
     'Its Journey': {view: 'journey', stands: '2'},
-    'No readings': Object.fromEntries(['light', 'work', 'attempt', 'show', 'group', 'view', 'compare', 'stands', 'standsPending', 'task', 'works', 'attempts', 'journey'].map(k => [k, undefined])),
+    'No readings': Object.fromEntries(['light', 'work', 'attempt', 'show', 'group', 'view', 'compare', 'stands', 'standsPending', 'task', 'works', 'attempts', 'journey', 'collected'].map(k => [k, undefined])),
   },
 
   folded: p => { const r = read(p), name = workName(p.v); return <Folded title="Runs" light={light(p)} readings={[name === undefined ? NONE : cut(name, 10), r.attempts ? `${r.attempts.length} attempts` : NONE]} onUnfold={p.nav.unfold} /> },
@@ -656,6 +697,9 @@ export const design: DesignedDevice = {
           <Consent p={p} r={r} />
           <Readout label="return" does="Artifacts and evidence in the Return of the attempt you review." value={target?.ret ? `${target.ret.artifacts ?? NONE}·${target.ret.evidence ?? NONE}` : undefined} />
           <Readout label="receipt" does="Whether Central has linked a receipt to the Return. A receipt is not your acceptance." value={target?.ret?.receiving === undefined ? undefined : target.ret.receiving ? 'linked' : 'not linked'} />
+          <Readout label="outputs" does="What Workcell collected from the world the attempt ran in, and what it left out." value={outputsWord(collectedOf(p.v, target?.id), p.v)} tone="value" />
+          <Action {...st(p, 'collect')} label="Collect" does="Workcell collects the outputs of the world the attempt ran in, with where each lies." onPress={() => p.set('collect', target?.id ?? true)}
+            disabled={st(p, 'collect').disabled ?? (target ? undefined : 'No attempt to collect.')} />
         </Section>
       </Band>
     </Panel>
@@ -676,6 +720,7 @@ export const design: DesignedDevice = {
         <Readout label="state" does="How the latest attempt stands." value={a ? WORD[a.state] : undefined} tone={a ? TONE[a.state] : undefined} />
         <Readout label="done" does="Tasks done of the tasks of the latest attempt." value={a ? `${done}/${a.tasks.length}` : undefined} />
         <Readout label="attempts" does="Attempts made on this work." value={r.attempts?.length} />
+        <Readout label="outputs" does="What Workcell collected from the latest attempt's world. Open Full to read them." value={outputsWord(collectedOf(p.v, a?.id), p.v)} tone="value" onPress={p.nav.full} />
       </div>
     </Tile>
   },

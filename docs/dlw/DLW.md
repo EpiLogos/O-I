@@ -580,7 +580,7 @@ title line names what you have selected, its world and its day, with Back and
 Forward at its head (§10.7). The moment you stand in shows in Position.
 Instruments are not in the transport: they come from the browser. Settings
 open in a window of their own with ⌘, as Live's do, and never take the main
-area.
+area (§10.10).
 
 #### The bottom right
 
@@ -957,6 +957,134 @@ keyboard, so Solo and Arm wait in the track's menu. U folds the selected
 group. 0 switches off what is selected; with nothing selected that can be
 switched off, it launches the tenth row.
 
+### 10.10 Settings
+
+**Product:** O:I, holding the settings of every owner · **Part of the window:** a window of its own, on ⌘,
+
+You need to change how your world works without hunting for each owner's
+files: which harness and model a new conversation starts with, which keys
+reach which providers, which machines a workcell can carry work to, which
+verified Methods run by themselves, and how the window looks. Settings holds
+them in one window, after Live's: the pages down the left, the page you chose
+beside them. Each setting stays with its owner. Settings reads it from the
+owner, keeps your change local until you review it, and the owner applies it.
+
+#### The pages
+
+| Page | What it holds | Owner |
+|---|---|---|
+| Harnesses & models | The provider a new chat starts with, and the defaults for new sessions, such as the model each harness requests. Each harness client: installed, detected or why not, and what a change needs; Install, Folder and Sign in. The model routes of the catalogue, each with its standing: unproven, observed or usable. | O:I's chat default, AIKit |
+| Skills & methods | The skill-sets offered by default, the capabilities composed into work, and each skill's standing. | AIKit, Central |
+| Profiles | Your named profiles. Use stages a profile's settings as local changes; New from changes keeps your changes under a name; Import reads a profile file. The AIKit profile that composes new work. | O:I, AIKit |
+| Permissions | The permission mode each harness starts in, and the owners' access policies, read only. | AIKit, Central |
+| Credentials | Each provider binding with its secret reference, its state and its last verdict, with Verify, Rotate and Revoke; Discover and Add binding. Workcell's secret references with what uses each, and its projections, with Scan and Revoke. | AIKit, Workcell |
+| Machines & services | The remote machines a workcell can carry work to, each with its connection and what it was granted, with Connect, Disconnect and Remove; Add machine. The services the workcell declares and the local services AIKit elects. | Workcell, AIKit |
+| Automations | Routines: verified Methods that run on a schedule or an event, each with its state, its next run and whether it runs unattended, with Enable, Run now, Disable and Reprove; Create routine. The Methods you can make a routine from, the harness timers not yet adopted, and the run history. | AIKit |
+| Search & telemetry | Factory's search limits and its watch interval. | Factory |
+| Sources & libraries | The Central project each register binds to. | Factory |
+| Appearance | Light, Dark or Follow system, or a library theme, with Apply and Revert; the themes you imported, with Import and Remove; the visual layer and the welcome scene. | O:I's presentation |
+| Products & updates | Each installed product with its version, its state and the operations it offers here. The one you choose shows what is degraded and why, and what it still owes. Under them, the installation's own details. | Each product |
+| System | Each owner's System reading on four axes, declared, effective, active and staged, with the drift between two of them; or the owners' read-only configuration. | Each product |
+
+Skills & methods, Permissions, Search & telemetry and Sources & libraries show
+only when an owner contributes a setting to them.
+
+#### A setting's row
+
+Every setting an owner contributes stands as one row: its name and owner, its
+value, where the value comes from, and when a change takes effect.
+
+| Column | What it shows |
+|---|---|
+| Value | The value in effect, as the control you change it with: a chooser, a switch or a field. A list or a table opens its entries under the row. A secret shows its reference, never the key. |
+| From | This scope, where the value is set here; inherited, where the owner resolves it from a wider scope or its default. |
+| Applies | When a change takes effect: at the next resolution, for new sessions, on reconnect or on restart. Read only, where the owner lets nothing change it. |
+| Reset | Removes this scope's value, and the owner resolves it again. It stands where this scope sets the value. |
+
+A change is local until you review it. Its row carries an amber mark, the
+page's name counts its changes, and the foot of the window counts them all.
+Review changes asks each owner to plan your changes. The Review page lists
+each plan with its scope, the change and when it applies, and Apply sends the
+plans the owners made. Each owner answers in the same table: applied, verified
+or refused, with its reason. When an owner's reading moves under a change you
+made, Keep holds your change on the new reading. Discard drops every change.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Search | Text | Empty | Finds pages, settings, and the settings that stand beside an instrument. Press a result to go to it. |
+| Applies to | This machine · World · a project · a workcell | This machine | The scope the owners' settings are read and changed at. |
+| Show | Routines · Methods · Timers · History | Routines | What the Automations page lists. |
+| Work context | This AIKit home · a project | This AIKit home | Where the Automations page reads routines and makes them. |
+| System | Four axes · Configuration, and an owner | Four axes | What the System page shows, and whose reading. |
+
+#### Views
+
+```ui
+device: settings:window
+page: harnesses
+height: 520
+caption: Settings on this Mac: the pages down the left, Harnesses & models beside them.
+```
+
+```ui
+device: settings:window
+page: system
+height: 520
+caption: The System page: Workcell's settings on four axes. Point at an axis it cannot read for the reason.
+```
+
+```ui
+device: settings:window
+fixture: Changes to review
+page: review
+height: 520
+caption: Three local changes reviewed: two applied, and one refused with its owner's reason.
+```
+
+Settings has one view: its window. A head holds Search and the owners'
+connection; the pages stand down the left and the page beside them; a foot
+holds your local changes, Discard and Review changes. Nothing in the window
+scrolls: a long list turns its pages with ‹ and ›.
+
+#### Transport
+
+The transport does not reach Settings. A setting changes what starts next: a
+running session keeps its harness, its model and its composition.
+
+#### To use Settings
+
+1. Press ⌘, or choose Settings… in the application's menu.
+2. Choose a page down the left, or type in Search and press a result.
+3. Set Applies to, then change a value. Its row takes an amber mark.
+4. Press Review changes… and read each owner's plan.
+5. Press Apply, and read each owner's answer in the table.
+6. Press Esc to go back to the work you came from.
+
+#### Rules
+
+- Settings shows no secret. A credential, a projection and a machine's
+  connection show their reference. A key you enter goes to the computer's own
+  secure field and on to the credential owner, never through the window.
+- A change stays yours until its owner applies it.
+- An act its owner cannot take stays in place, dimmed, and the status bar
+  says why.
+- A setting that belongs beside an instrument, such as a device's parameter,
+  opens there. Search finds it.
+- Discover and Scan report where a key lies, never what it holds. Neither
+  changes a setting.
+- Revoke, Remove, Disconnect, Run now and Disable are held: press and hold
+  them.
+
+#### Tips
+
+- To start a building day with the same defaults, keep them as a profile and
+  press Use.
+- To see why a workcell does not hold what it declares, open System and read
+  the drift column.
+- To find a setting fast, press ⌘, then ⌘F and type a word of its name.
+
 ---
 
 # Part Two — The Game
@@ -1257,7 +1385,7 @@ which views it has (§16.3), and whose time it keeps.
 | Effect | Changes what passes through it and keeps the rest. | On a chain, after the instrument. | Its track's. | Scope, Packet, Physics, Exact-ratio tuning, Approvals |
 | Rack | Holds chains side by side, with macros that reach into them. | On a chain. | Its chains'. | Skillset rack, Agentset rack, Studio |
 | Modulator | Moves settings of other devices from a source of its own, and never touches the material. | On any chain. It moves settings on any track, in any mode, and each setting it moves names it. | Its own clock: the sky of now, or of a chosen day. It keeps moving while the transport stands. | Sky modulation; a clip's Modulation envelope (§16.5) |
-| Monitor | Shows what is happening and what has happened, and opens what it shows. It writes nothing. | On the rail, and full in a pane. Never on a chain. | The present. Follow keeps it there; scroll back and it reads the record. In Arrangement view the same events lie along a track's event lanes. | Files, Diff, Trail, NOWs, Web, Wiki, Calendar, Frames, Ledger, Gateways |
+| Monitor | Shows what is happening and what has happened, and opens what it shows. It writes nothing. | On the rail, and full in a pane. Never on a chain. | The present. Follow keeps it there; scroll back and it reads the record. In Arrangement view the same events lie along a track's event lanes. | Files, Diff, Trail, NOWs, Web, Wiki, Calendar, Notifications, Frames, Ledger, Gateways |
 | Connection | Brings agents to the work, and takes their work to where it lands. | On a workcell's chain; Link stands in the transport. Never on a track's chain. | Its own. It stays up whether or not the transport plays, and its heartbeat is the agents' check-in. | Gateway, Remote carrier, Git / landing with its Seat, Link |
 
 Between them the monitors keep what is live in front of you: your own trail,
@@ -3501,7 +3629,7 @@ The whole Document shows every parameter, in four groups.
 | Group | Parameters |
 |---|---|
 | Page | Template, View, Flow view, Paper, Pin |
-| Selection | Selection act, Packet scope |
+| Selection | Selection act, Packet scope, and the selected passage with Highlight, Note, To packet, Remember and Answer this |
 | Agent | Agent writes, Overdub |
 | Save | Autosave |
 
@@ -4425,11 +4553,16 @@ parameter, in five groups.
 | Faces | Face, View, Template |
 | Moves | Tasks, Patterns, Context, Synthesis, Close: each pad's Prompt and Runs at |
 | Agent | Agent writes, Sources |
-| Close | Close routine |
+| Close | Close routine, Close now, Open today, and Close-out with Verify |
 
 Each face also shows a count: tasks on face 1, sessions on face 2, patterns on
 face 3. It does not add the Day
 to your rack.
+
+Close-out reads back what the last close left behind: a continuation
+registered, earlier handoffs closed, what was learned recorded, and deferred
+work registered. It shows verified, or how many of the clauses it checks hold;
+point at it to read which fail. Verify reads them again.
 
 ##### Full
 
@@ -5357,7 +5490,7 @@ height: 480
 caption: The takes of one piece of work as a grove: the first attempt failed, the second stands, the third still runs.
 ```
 
-You need to know what you accept before it stands. Review, the page behind Stands, sets the attempt's return against what it was for: each success condition with its answer, each claim the attempt makes with the evidence for it, and the questions that wait on you. In the pane the same review stands beside the list.
+You need to know what you accept before it stands. Review, the page behind Stands, sets the attempt's return against what it was for: each success condition with its answer, each claim the attempt makes with the evidence for it, the outputs the run left in its world, and the questions that wait on you. Collect gathers the outputs where the run kept them. In the pane the same review stands beside the list.
 
 | Reading | What it shows |
 |---|---|
@@ -5401,7 +5534,7 @@ In Session view the Main track's row launchers stand at the end of the grid. In 
 |---|---|
 | Sessions | The tracks of the work as a tree: each session with its state, its helpers nested under it one step of indent for each level. Three counts show the sessions, the running ones and the stalled ones, with buttons for All, Running and Stalled. For the selected session, its needle time and the task it is on. Click a session to select its track. Double-click it to open its thread. |
 | Agents | The agents of the tracks as creatures in their habitat: each agent is the creature of its type, in the posture of its state, standing in the zone its run has reached. It stands at the roots while it reads its sources, on the trunk while it makes, and in the crown once it has delivered. Its helpers stand round it, joined by dashed lines, with a line saying what each does. A stuck agent stands frozen and its outline is amber. Each agent carries its track's Telemetry: a muted agent works in silence. Click an agent to select its session. Double-click it to open its thread. Tap in the transport asks every running agent for a status line, and the answers arrive here. |
-| Results | The takes of the selected run: each result with its author and its diff. Open a diff to read it. Press Accept to send a result to review. |
+| Results | The takes of the selected run: each result with its author and its diff. Open a diff to read it. Press Accept to send a result to review. Beside them, the outputs Workcell collected from the world the run stood in, each with where it lies, and what it left out; Collect gathers them again. |
 | Frames | What passed between the shell and the harness, frame by frame. |
 | Ledger | Every task with its receipt. |
 | Approvals | Every proposal and request that waits for you. |
@@ -7469,6 +7602,7 @@ overrides what an agent saw.
 | Deadline | 1–120 s | 10 s | How long an answer may take. A later one is dropped, and the question stays open. |
 | Instruments | On · Off, for each | On | Which of the team's questions the helper may answer. Its light shows whether the team has measured it and admits it. |
 | Model | Reading | Read from AIKit | The model that answers, where it runs, and whether it is loaded. |
+| Hosting | Reading | Read from Workcell | Whether the service that serves the model answers, where it listens, and who keeps it running: its own owner or Workcell. |
 | Counts | Reading | Read from the team | Acts settled by rule, questions asked, abstentions, and picks the engine refused. |
 
 #### Views
@@ -7482,8 +7616,8 @@ caption: Decision helper, on a fixture of readings.
 |---|---|
 | Folded | The helper's name and light, the questions asked today and the last pick. |
 | Compact | The spread of the last question. Macros: When, Deadline, Provider, Probe. |
-| Whole | Pages Ask, Instruments and Provider. Ask: the spread; the question, who asked it, its row and field, how many labels it may hold and what to do if none stands out; the pick, its status, its clarity and its time; the engine's verdict and the counts. Instruments: the team's questions with your request and the team's admission, and the labels of the one you select. Provider: Provider, the model and where it runs, When, Deadline and Probe. |
-| Full | The open question and its spread, and today's questions in order: who asked, which instrument, the pick and what the engine did. |
+| Whole | Pages Ask, Instruments and Provider. Ask: the spread; the question, who asked it, its row and field, how many labels it may hold and what to do if none stands out; the pick, its status, its clarity and its time; the engine's verdict and the counts. Instruments: the team's questions with your request and the team's admission, and the labels of the one you select. Provider: Provider, the model and where it runs, its hosting and who keeps it, When, Deadline and Probe. |
+| Full | The open question and its spread, the counts and the model's hosting, and today's questions in order: who asked, which instrument, the pick and what the engine did. |
 | Widget | The last spread, the counts, and the last pick. |
 
 #### Transport
@@ -7515,6 +7649,9 @@ caption: Decision helper, on a fixture of readings.
 - The collaboration gate is yours. A helper's answer to it is refused, even an
   abstention.
 - A model on your machine has no price, and the device shows none.
+- Loaded is AIKit's reading of the model; hosting is Workcell's reading of the
+  service that serves it. The two can disagree: a model can stand loaded while
+  its service does not answer.
 
 #### Tips
 
@@ -8028,6 +8165,7 @@ settings, + Agent, + Group and the Agency gateway's mark across its head
 
 #### Rules
 - One agent has one conversation, the same in every mode and in its Agent device.
+- What an owner raises for your attention, such as a routine that failed or a close that is due, is not a message: it stands in Notifications (§23.9).
 - Messages travel through the Agency gateway. A call from one agent to another follows its Agent to agent rule.
 - Making an agent writes only a proposal until you accept it. The card is Central's; Messages keeps no copy.
 - An agent's card gives it no right. What it may read and write comes from Scope (§19.12).
@@ -12060,6 +12198,72 @@ Full's head carries the provider, the next event and the events shown, with Cale
 
 #### Tips
 - To plan a task around a deadline, set Range to Week.
+
+### 23.9 Notifications
+
+**Product:** Central, with AIKit and Factory · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
+
+You need to know when something waits for you, without watching every device.
+An owner raises a request when a routine fails, a service stops answering, a
+Day's close comes due, or an agent asks you to decide. Notifications lists
+today's requests along the day and opens each where it belongs. The agents that
+wait for you stay in Messages (§19.24) and the proposals in Approvals (§19.14);
+Notifications counts both and opens them.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Show | All · Unopened · Urgent | All | Chooses which requests the list holds. |
+| Follow | On · Off | On | Keeps the newest request at the top and the strip on now. |
+
+#### Views
+
+```ui
+device: widgets:notifications
+caption: Notifications, on a fixture of requests: the tile on the rail, and Full in a pane.
+```
+
+##### Widget
+
+The tile draws the day as a strip, midnight to midnight, with a mark for each
+request at the time it came: amber for an ordinary request, red for an urgent
+one, hollow once you opened it, crossed where your computer refused to show it.
+The latest three stand under the strip; press one to open it. The foot counts
+the agents that wait for you and the proposals.
+
+##### Full
+
+Full's head counts the unopened requests, the urgent ones, the agents that wait
+and the proposals, and says whether your computer shows notifications.
+Messages ▸ and Approvals ▸ open those devices. Under the strip each request
+stands as a row: when it came, what it asks, who asked, what it is about,
+whether your computer showed it, and Open. The request you pick stands whole at
+the foot.
+
+#### Transport
+| Control | Effect on Notifications |
+|---|---|
+| Follow | Keeps the strip on now. |
+
+#### To use Notifications
+1. Open Notifications from the launcher.
+2. Read the red marks first: those are urgent.
+3. Click Open on a request. It opens where it belongs: a run in Factory, a Day
+   in Central, an agent in Messages.
+4. Click Messages ▸ to answer the agents that wait for you.
+
+#### Rules
+- Notifications writes nothing. Opening a request marks it opened here and
+  tells its owner nothing.
+- Shown is not read: a request your computer showed counts as unopened until
+  you open it here.
+- Every request names who asked for it. An owner's request and an agent's
+  stand in one list.
+
+#### Tips
+- To clear the urgent requests first, set Show to Urgent.
+- If the light goes dark and every mark is crossed, your computer refuses to
+  show notifications. Allow them in its settings.
 
 ## 24. Nara: practice
 

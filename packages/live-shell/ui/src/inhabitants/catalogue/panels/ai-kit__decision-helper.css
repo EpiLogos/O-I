@@ -18,3 +18,7 @@
 .dh-log td[data-tone="green"] { color: var(--green, #7fc97f); }
 .dh-log td[data-tone="stall"] { color: var(--stall, #ff9b4a); }
 .dh-none { margin: 0; color: var(--text-faint, #71767c); font-style: italic; }
+.dh-hosted { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; font-size: 11px; color: var(--text-dim, #a2a7ad); }
+.dh-hosted b { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.dh-hosted span[data-tone="green"] { color: var(--green, #7fc97f); }
+.dh-hosted span[data-tone="stall"] { color: var(--stall, #ff9b4a); }
