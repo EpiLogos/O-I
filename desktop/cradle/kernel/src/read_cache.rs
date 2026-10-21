@@ -613,6 +613,15 @@ impl ReadModel {
             };
             let read = f.take().expect("a read asks the owner once");
             let result = read();
+            // Encode and share the reading once, before taking the model's
+            // lock: a large reading (a listing, a document) must not hold
+            // every other reader while it is serialised or cloned.
+            let shared = result.as_ref().ok().map(|value| {
+                (
+                    Arc::new(value.clone()) as Shared,
+                    serde_json::to_vec(value).ok(),
+                )
+            });
             let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
             if state
                 .flights
@@ -621,21 +630,25 @@ impl ReadModel {
             {
                 state.flights.remove(key);
             }
-            if let Ok(value) = &result {
-                self.note_digest(&mut state, key, value);
+            if let (Ok(value), Some((shared, encoded))) = (&result, &shared) {
+                if let Some(encoded) = encoded {
+                    self.note_digest(&mut state, key, encoded);
+                }
                 let retainable = state.generation == generation
                     && self.watch.by_epochs(&stamp)
                     && self.watch.still(&stamp, dep.ttl)
                     && keep(value);
                 if retainable {
-                    self.retain(&mut state, key, value, stamp, dep.ttl);
+                    let bytes = key.len() + encoded.as_ref().map_or(0, Vec::len);
+                    self.retain(&mut state, key, Arc::clone(shared), bytes, stamp, dep.ttl);
                 }
             }
             drop(state);
             leader.finished = true;
-            slot.finish(match &result {
-                Ok(value) => Ok(Arc::new(value.clone()) as Shared),
-                Err(error) => Err(error.to_string()),
+            slot.finish(match (&result, shared) {
+                (Ok(_), Some((shared, _))) => Ok(shared),
+                (Err(error), _) => Err(error.to_string()),
+                (Ok(_), None) => unreachable!("an answered read is shared"),
             });
             return result;
         }
@@ -643,11 +656,8 @@ impl ReadModel {
 
     /// Tell the watch whether this reading is the one the key gave last time
     /// (the loop breaker's evidence that a notice was an owner's own write).
-    fn note_digest<T: serde::Serialize>(&self, state: &mut ModelState, key: &str, value: &T) {
+    fn note_digest(&self, state: &mut ModelState, key: &str, bytes: &[u8]) {
         use std::hash::{Hash, Hasher};
-        let Ok(bytes) = serde_json::to_vec(value) else {
-            return;
-        };
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         bytes.hash(&mut hasher);
         let digest = hasher.finish();
@@ -665,11 +675,15 @@ impl ReadModel {
         }
     }
 
-    fn retain<T>(&self, state: &mut ModelState, key: &str, value: &T, stamp: Stamp, ttl: Duration)
-    where
-        T: Clone + serde::Serialize + Send + Sync + 'static,
-    {
-        let bytes = key.len() + serde_json::to_vec(value).map(|b| b.len()).unwrap_or(0);
+    fn retain(
+        &self,
+        state: &mut ModelState,
+        key: &str,
+        value: Shared,
+        bytes: usize,
+        stamp: Stamp,
+        ttl: Duration,
+    ) {
         self.drop_entry(state, key);
         if bytes > MODEL_MAX_BYTES / 4 {
             return;
@@ -689,7 +703,7 @@ impl ReadModel {
         state.entries.insert(
             key.to_owned(),
             Held {
-                value: Arc::new(value.clone()),
+                value,
                 stamp,
                 ttl,
                 bytes,

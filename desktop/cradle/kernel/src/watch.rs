@@ -960,6 +960,12 @@ fn classify_path(roots: &Roots, path: &Path) -> Vec<Scope> {
             }
         }
         Some("Work") => match parts.next() {
+            // A seat checkout's branch, index and the refs it is counted
+            // against live in its product's repository (`Work/<Name>/.git`,
+            // `.git/worktrees/<seat>`), not under `worktrees/`.
+            Some(name) if parts.next() == Some(".git") => {
+                vec![Scope::Project(name.to_owned()), Scope::Seats]
+            }
             Some(name) => vec![Scope::Project(name.to_owned())],
             // The Work directory itself: a project was added or removed.
             None => vec![Scope::Root],
@@ -1090,6 +1096,14 @@ mod tests {
         );
         assert_eq!(at("worktrees/env-1/o-i/x"), vec![Scope::Seats]);
         assert_eq!(
+            at("Work/O-I/.git/worktrees/o-i/HEAD"),
+            vec![Scope::Project("O-I".into()), Scope::Seats]
+        );
+        assert_eq!(
+            at("Work/O-I/.git/refs/heads/main"),
+            vec![Scope::Project("O-I".into()), Scope::Seats]
+        );
+        assert_eq!(
             at("Control/machines/workcells.register.json"),
             vec![Scope::Root, Scope::Seats]
         );
@@ -1101,7 +1115,10 @@ mod tests {
         assert!(at("Work/O-I/ui/node_modules/a/b.js").is_empty());
         assert!(at("Work/O-I/.git/objects/ab/cdef").is_empty());
         assert!(at("Work/O-I/.git/lfs/tmp/x").is_empty());
-        assert_eq!(at("Work/O-I/.git/HEAD"), vec![Scope::Project("O-I".into())]);
+        assert_eq!(
+            at("Work/O-I/.git/HEAD"),
+            vec![Scope::Project("O-I".into()), Scope::Seats]
+        );
         assert!(at("Work/O-I/dist/app.js").is_empty());
         assert!(at("Control/.DS_Store").is_empty());
         assert!(at("Control/agents/now/x.lock").is_empty());
