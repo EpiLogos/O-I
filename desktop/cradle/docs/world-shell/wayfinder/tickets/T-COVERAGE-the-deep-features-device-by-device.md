@@ -188,6 +188,12 @@ names the file and the change.
 | `skills.tsx` | A package directory field for Export (`aikit set package export` needs an absolute --out). |
 | `workcell__seat.tsx` | Whether `actor` (Yours vs Held) is the desk's actor, now that Join claims as it. |
 | `software-factory__agent-custody.tsx` | Autonomy, gate and escalate are not fields of Factory's custody record (custody assign|update carry Position, work, reason, state and hand-off Position); see §1.5. |
+| `settings__window.tsx` | Places for what the Settings window does today and the design does not draw: per-setting Undo; the Details panel (axes, reconciliation, reading basis, default); the help aside; unavailable owners with their reason; the owner-plan and acknowledgement JSON; Open Expressions; Machines' expected operations when adding a machine; preparing a new schedule; harness install and reveal notes; the dependent column choices; ↑/↓/Enter through search results; a back control naming the return. The port waits on `dlw/settings-window-port` until these exist. |
+| `central__workspace.tsx` (:674) | The Name TextField should spread its standing, so a refused rename shows before it is pressed. |
+| `widgets__notifications.tsx` | A line saying why requests are absent. |
+| `dlw__session-grid.tsx` | Whether the design or the shell's established behaviour wins for the group roll-up (the shell always rolls up; the design only when folded) and the rails (the shell draws them full height). Still to bring the shell to: the clip cell's second line (mode, follow, takes) at 52px, the running clip's progress (no reading), the ruler's loop region, overview strip and scale label. |
+| Timeline's Save view (`techne__timeline.tsx`) | A name for the saved view: the frame's save-view takes one. |
+| `quaternal-logic:map-rack` | A face: a `rack` liveSemantic requires routesTo, and M4′'s rack routes nothing. |
 
 ## 3. Manual corrections made with this ticket
 
