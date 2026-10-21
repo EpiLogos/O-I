@@ -288,12 +288,31 @@ pub fn execute(
     let mut input = scoped(project);
     match request {
         Request::Roster => owner(client, "agent-profile.roster", input),
-        Request::Scope => aikit.direct_agent(cwd, "agent-session-scope", None),
-        Request::Skills => aikit.direct_agent(cwd, "agent-session-skills", None),
-        Request::SkillSets => aikit.set_list(cwd),
+        // AIKit's registry readings: kept while its home, the root and the
+        // project did not change.
+        Request::Scope => {
+            crate::read_cache::aikit_read(&aikit.identity(), "agent-session-scope", cwd, || {
+                aikit.direct_agent(cwd, "agent-session-scope", None)
+            })
+        }
+        Request::Skills => {
+            crate::read_cache::aikit_read(&aikit.identity(), "agent-session-skills", cwd, || {
+                aikit.direct_agent(cwd, "agent-session-skills", None)
+            })
+        }
+        Request::SkillSets => {
+            crate::read_cache::aikit_read(&aikit.identity(), "set-list", cwd, || {
+                aikit.set_list(cwd)
+            })
+        }
         Request::SkillSet { name } => {
             exact(name, 256, "SkillSet name")?;
-            aikit.set_show(cwd, name)
+            crate::read_cache::aikit_read(
+                &aikit.identity(),
+                &format!("set-show:{name}"),
+                cwd,
+                || aikit.set_show(cwd, name),
+            )
         }
         Request::Session { agent_session } => {
             exact(agent_session, 1024, "AgentSession reference")?;

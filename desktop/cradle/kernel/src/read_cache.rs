@@ -53,6 +53,10 @@ struct Entry {
     /// What validates the reading: the epochs of its scopes taken before it
     /// was read, or - where the watch does not cover it - its age.
     stamp: Stamp,
+    /// Nothing tracked when this reading began (`put` without a finished
+    /// `begin`): its stamp was taken as it was retained, so a change while
+    /// it was read is not seen, and its age bounds it as well.
+    untracked: bool,
     value: serde_json::Value,
     bytes: usize,
     /// The owner's own revision of the retained reading, when it gave one.
@@ -201,6 +205,11 @@ impl OwnerReadCache {
     /// A pending owner read is a distinct observation, not a cache entry.
     /// Latest request wins, and source invalidation also withdraws pending reads.
     pub(crate) fn begin(&mut self, key: String) -> u64 {
+        let scopes = scopes_for_key(&self.watch, &key);
+        self.begin_in(key, scopes)
+    }
+    /// `begin` for a read whose sources the caller knows.
+    pub(crate) fn begin_in(&mut self, key: String, scopes: Vec<Scope>) -> u64 {
         self.request_clock = self
             .request_clock
             .checked_add(1)
@@ -216,7 +225,6 @@ impl OwnerReadCache {
                 self.stamps.remove(&oldest);
             }
         }
-        let scopes = scopes_for_key(&self.watch, &key);
         self.stamps
             .insert(key.clone(), self.watch.stamp(&scopes, Clock::None));
         self.requests.insert(key, self.request_clock);
@@ -239,10 +247,22 @@ impl OwnerReadCache {
         true
     }
 
+    /// A finished read's stamp, kept for the reading retained under another
+    /// key than the one it was tracked by.
+    pub(crate) fn adopt_stamp(&mut self, from: &str, to: &str) {
+        if let Some(stamp) = self.settled.remove(from) {
+            self.settled.insert(to.to_owned(), stamp);
+        }
+    }
+    /// The scopes a keyed reading of `path` depends on, with the AIKit home
+    /// and the root register (owner readings that go through AIKit).
+    pub(crate) fn aikit_scopes(&self, path: &Path) -> Vec<Scope> {
+        aikit_scopes(&self.watch, path)
+    }
+
     pub fn get(&self, key: &str, ttl: Duration) -> Option<serde_json::Value> {
         let entry = self.entries.get(key)?;
-        self.watch
-            .still(&entry.stamp, ttl)
+        (self.watch.still(&entry.stamp, ttl) && (!entry.untracked || entry.at.elapsed() < ttl))
             .then(|| entry.value.clone())
     }
     pub fn put(&mut self, key: String, value: serde_json::Value) {
@@ -263,12 +283,16 @@ impl OwnerReadCache {
     }
     fn retain(&mut self, key: String, revision: Option<String>, value: serde_json::Value) {
         let bytes = key.len() + value.to_string().len();
-        // The stamp the read began under, when `begin`/`finish` tracked it;
-        // otherwise nothing says when the read began, so only its age counts.
-        let stamp = self
-            .settled
-            .remove(&key)
-            .unwrap_or_else(|| self.watch.stamp_timed());
+        // The stamp the read began under, when `begin`/`finish` tracked it.
+        let (stamp, untracked) = match self.settled.remove(&key) {
+            // The temporal field also reads the kernel's own event log, which
+            // no file change announces: its age bounds it as well.
+            Some(stamp) => (stamp, key.starts_with("temporal-events:")),
+            None => {
+                let scopes = scopes_for_key(&self.watch, &key);
+                (self.watch.stamp(&scopes, Clock::None), true)
+            }
+        };
         self.invalidate(&key);
         if bytes > MAX_BYTES {
             return;
@@ -291,6 +315,7 @@ impl OwnerReadCache {
             Entry {
                 at: Instant::now(),
                 stamp,
+                untracked,
                 value,
                 bytes,
                 revision,
@@ -400,6 +425,9 @@ struct ModelState {
     entries: HashMap<String, Held>,
     flights: HashMap<String, Arc<Slot>>,
     bytes: usize,
+    /// A digest of the last reading each key was asked for, to tell a re-read
+    /// that came back unchanged from one that did not.
+    digests: HashMap<String, u64>,
     /// Incremented by anything that withdraws every reading (`clear`): a
     /// read that began before cannot be retained after.
     generation: u64,
@@ -465,6 +493,17 @@ impl ReadModel {
         &self.watch
     }
 
+    /// Whether a retained reading depends on the clock at `grain`.
+    pub fn holds(&self, grain: Clock) -> bool {
+        self.state
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .entries
+            .values()
+            .any(|held| held.stamp.clock() == grain)
+    }
+
+    #[cfg_attr(not(test), allow(dead_code))]
     pub fn counts(&self) -> Counts {
         *self.counts.lock().unwrap_or_else(|e| e.into_inner())
     }
@@ -543,15 +582,12 @@ impl ReadModel {
                 if let Some(slot) = state.flights.get(key).cloned() {
                     if self.watch.still(&slot.stamp, slot.ttl) {
                         drop(state);
-                        match slot.wait() {
-                            Ok(shared) => {
-                                if let Some(value) = shared.downcast_ref::<T>() {
-                                    self.note(key, "joined");
-                                    return Ok(value.clone());
-                                }
+                        // A failed read is not shared: ask again.
+                        if let Ok(shared) = slot.wait() {
+                            if let Some(value) = shared.downcast_ref::<T>() {
+                                self.note(key, "joined");
+                                return Ok(value.clone());
                             }
-                            // A failed read is not shared: ask again.
-                            Err(_) => {}
                         }
                         continue;
                     }
@@ -586,6 +622,7 @@ impl ReadModel {
                 state.flights.remove(key);
             }
             if let Ok(value) = &result {
+                self.note_digest(&mut state, key, value);
                 let retainable = state.generation == generation
                     && self.watch.by_epochs(&stamp)
                     && self.watch.still(&stamp, dep.ttl)
@@ -601,6 +638,24 @@ impl ReadModel {
                 Err(error) => Err(error.to_string()),
             });
             return result;
+        }
+    }
+
+    /// Tell the watch whether this reading is the one the key gave last time
+    /// (the loop breaker's evidence that a notice was an owner's own write).
+    fn note_digest<T: serde::Serialize>(&self, state: &mut ModelState, key: &str, value: &T) {
+        use std::hash::{Hash, Hasher};
+        let Ok(bytes) = serde_json::to_vec(value) else {
+            return;
+        };
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        bytes.hash(&mut hasher);
+        let digest = hasher.finish();
+        if state.digests.len() > 4096 {
+            state.digests.clear();
+        }
+        if let Some(before) = state.digests.insert(key.to_owned(), digest) {
+            self.watch.note_reread(before == digest);
         }
     }
 
@@ -667,7 +722,8 @@ impl Drop for Leader<'_> {
             state.flights.remove(self.key);
         }
         drop(state);
-        self.slot.finish(Err("the owner read did not complete".into()));
+        self.slot
+            .finish(Err("the owner read did not complete".into()));
     }
 }
 
@@ -678,6 +734,33 @@ pub fn written() {
     let watch = Watch::global();
     watch.changed_here();
     ReadModel::global().clear();
+}
+
+/// What a reading AIKit makes over `cwd` depends on: its own home, the root
+/// register, and wherever `cwd` lies.
+pub(crate) fn aikit_scopes(watch: &Watch, cwd: &Path) -> Vec<Scope> {
+    let mut scopes = vec![Scope::Aikit, Scope::Root];
+    scopes.extend(watch.scopes_of_path(cwd));
+    scopes.sort();
+    scopes.dedup();
+    scopes
+}
+
+/// An AIKit reading over `cwd` through the read model. `identity` names the
+/// AIKit asked (`agency::Client::identity`), `what` the reading. No clock
+/// dependence: AIKit's answers are its journal's and registry's content.
+pub(crate) fn aikit_read<T>(
+    identity: &str,
+    what: &str,
+    cwd: &Path,
+    read: impl FnOnce() -> Result<T, String>,
+) -> Result<T, String>
+where
+    T: Clone + serde::Serialize + Send + Sync + 'static,
+{
+    let model = ReadModel::global();
+    let dep = Dep::new(aikit_scopes(model.watch(), cwd), CENTRAL_TTL);
+    model.read(&format!("aikit:{what}:{cwd:?}:{identity}"), &dep, read)
 }
 
 const CENTRAL_TTL: Duration = Duration::from_secs(4);
@@ -717,9 +800,13 @@ pub fn central_dep(
             .or_else(|| input.get("path"))
             .or_else(|| input.get("repo_root"))
             .and_then(serde_json::Value::as_str);
-        match path {
-            Some(path) => watch.scopes_of_path(Path::new(path)),
-            None => vec![Scope::All],
+        let root = input
+            .pointer("/location/root")
+            .and_then(serde_json::Value::as_str);
+        match (root, path) {
+            (Some(root), Some(path)) => watch.scopes_of_path(&Path::new(root).join(path)),
+            (None, Some(path)) => watch.scopes_of_path(Path::new(path)),
+            _ => vec![Scope::All],
         }
     };
     let (scopes, clock) = match action {
@@ -752,19 +839,25 @@ pub fn central_dep(
         | "central.document.read"
         | "central.agent-set.read"
         | "central.receiving.list"
-        | "central.receiving.read" => (project_scopes(), Clock::None),
-        "central.files.read" | "central.files.read-batch" | "central.files.list"
-        | "central.files.history" | "central.files.resolve" => (path_scopes(), Clock::None),
+        | "central.receiving.read"
+        | "agent-profile.roster"
+        | "agent-profile.read" => (project_scopes(), Clock::None),
+        "central.files.read"
+        | "central.files.read-batch"
+        | "central.files.list"
+        | "central.files.history"
+        | "central.files.resolve" => (path_scopes(), Clock::None),
         _ => return None,
     };
-    let key = format!("central:{owner}:{action}:{input}");
+    let key = format!("central:{action}:{input}:{owner}");
     Some((key, Dep::new(scopes, CENTRAL_TTL).clock(clock)))
 }
 
 /// Whether a Central action only reads (so running it moves nothing). Any
 /// other action may write, and a write moves every retained reading.
 pub fn central_reads(action: &str) -> bool {
-    const READING: [&str; 15] = [
+    const READING: [&str; 16] = [
+        ".roster",
         ".read",
         ".list",
         ".inspect",
@@ -1028,8 +1121,14 @@ mod tests {
             Ok("before the change")
         });
         assert_eq!(first, Ok("before the change"));
-        let again = model.read("a", &dep, || -> Result<_, String> { Ok("after the change") });
-        assert_eq!(again, Ok("after the change"), "the first reading was not kept");
+        let again = model.read("a", &dep, || -> Result<_, String> {
+            Ok("after the change")
+        });
+        assert_eq!(
+            again,
+            Ok("after the change"),
+            "the first reading was not kept"
+        );
         let kept = model.read("a", &dep, || -> Result<_, String> { Ok("never asked") });
         assert_eq!(kept, Ok("after the change"));
         // A read that began before a change is not joined by one after it.
@@ -1152,25 +1251,43 @@ mod tests {
     fn central_readings_name_their_scopes_and_writers_are_not_readings() {
         let watch = Watch::fed(fed_roots());
         watch.ingest(&[PathBuf::from("/central/Work/O-I/x")]);
-        let dep = |action: &str, input: serde_json::Value| central_dep(&watch, "owner", action, &input);
+        let dep =
+            |action: &str, input: serde_json::Value| central_dep(&watch, "owner", action, &input);
         let (key, now) = dep("central.now.list", json!({"project":"o-i"})).unwrap();
         assert!(key.contains("central.now.list") && key.contains("o-i"));
         assert_eq!(now.scopes, vec![Scope::Root, Scope::Project("O-I".into())]);
-        assert_eq!(dep("central.now.list", json!({})).unwrap().1.scopes, vec![Scope::Root]);
-        assert_eq!(dep("central.time.policy", json!({})).unwrap().1.clock, Clock::Minute);
-        assert_eq!(dep("central.day.read", json!({})).unwrap().1.clock, Clock::Day);
         assert_eq!(
-            dep("central.files.read", json!({"location":{"path":"/central/Work/O-I/a.md"}}))
-                .unwrap()
-                .1
-                .scopes,
+            dep("central.now.list", json!({})).unwrap().1.scopes,
+            vec![Scope::Root]
+        );
+        assert_eq!(
+            dep("central.time.policy", json!({})).unwrap().1.clock,
+            Clock::Minute
+        );
+        assert_eq!(
+            dep("central.day.read", json!({})).unwrap().1.clock,
+            Clock::Day
+        );
+        assert_eq!(
+            dep(
+                "central.files.read",
+                json!({"location":{"path":"/central/Work/O-I/a.md"}})
+            )
+            .unwrap()
+            .1
+            .scopes,
             vec![Scope::Project("O-I".into())]
         );
-        assert_eq!(dep("central.world", json!({})).unwrap().1.scopes, vec![Scope::All]);
+        assert_eq!(
+            dep("central.world", json!({})).unwrap().1.scopes,
+            vec![Scope::All]
+        );
         assert!(dep("central.files.write", json!({})).is_none());
         assert!(dep("projectcentral.now.return", json!({})).is_none());
         assert!(central_reads("central.agent-set.read") && central_reads("central.world"));
-        assert!(!central_reads("central.files.write") && !central_reads("projectcentral.now.return"));
+        assert!(
+            !central_reads("central.files.write") && !central_reads("projectcentral.now.return")
+        );
     }
 
     #[test]

@@ -2,6 +2,7 @@
 //! This foreground desktop route holds neither a second profile store nor a
 //! JavaScript copy of the natal/composition algorithm.
 use crate::flow::{CentralClient, SourceReading};
+use crate::watch::Scope;
 use crate::world::{ChangeHorizon, HORIZON_SCHEMA};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -97,11 +98,50 @@ impl Prepared {
         Self { client, request }
     }
     pub fn execute(self) -> Result<crate::KernelOpOutcome, String> {
+        // The listing and opening of identities are Central's source
+        // readings, and an inspection or a calculation is a function of the
+        // profile it is given: kept while the root did not change. A save
+        // moves every reading; a transit or a personal current reads the
+        // sky of its moment and is asked each time.
+        let scopes = match &self.request {
+            Request::List => Some(vec![Scope::Root]),
+            Request::Open { source_ref } => {
+                Some(if source_ref.starts_with("central:source:control:root:") {
+                    vec![Scope::Root]
+                } else {
+                    vec![Scope::All]
+                })
+            }
+            Request::Inspect { .. } | Request::Calculate { .. } => Some(vec![Scope::Aikit]),
+            Request::Save { .. } | Request::Transit { .. } | Request::PersonalCurrent { .. } => {
+                None
+            }
+        };
+        let saves = matches!(self.request, Request::Save { .. });
+        let data = match scopes {
+            Some(scopes) => {
+                let key = format!(
+                    "nara-identity:{}:{}",
+                    self.client.owner_identity(),
+                    serde_json::to_string(&self.request).map_err(|e| e.to_string())?
+                );
+                crate::read_cache::ReadModel::global().read(
+                    &key,
+                    &crate::read_cache::Dep::new(scopes, std::time::Duration::from_secs(4)),
+                    || apply(&self.client, self.request.clone()),
+                )?
+            }
+            None => {
+                let data = apply(&self.client, self.request);
+                if saves {
+                    crate::read_cache::written();
+                }
+                data?
+            }
+        };
         Ok(crate::KernelOpOutcome {
             receipts: vec![],
-            result: crate::KernelOpResult::NaraIdentity {
-                data: apply(&self.client, self.request)?,
-            },
+            result: crate::KernelOpResult::NaraIdentity { data },
         })
     }
 }

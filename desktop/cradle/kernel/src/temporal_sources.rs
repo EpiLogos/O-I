@@ -547,12 +547,24 @@ impl<'a> KernelEventLogSource<'a> {
     }
 
     pub fn read(&self) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
-        self.log
-            .since(1)
+        without_notices(self.log.since(1))
             .iter()
             .map(kernel_receipt_to_event)
             .collect()
     }
+}
+
+/// The receipts that are events of the kernel's own state. A notice that
+/// files changed (`ReadingsChanged`) says "ask again", not that something
+/// happened in the ground, and reading it would change the field it asks
+/// about.
+pub(crate) fn without_notices(
+    receipts: Vec<crate::events::KernelEventReceipt>,
+) -> Vec<crate::events::KernelEventReceipt> {
+    receipts
+        .into_iter()
+        .filter(|receipt| receipt.envelope.event.tag() != "readings_changed")
+        .collect()
 }
 
 /// Map one kernel receipt into a temporal event. Shared by the borrowed
@@ -1351,10 +1363,12 @@ const THOUGHT_WORKERS: usize = 8;
 /// `CentralThoughtsSource` carries it.
 const THOUGHT_LIMIT: u64 = 256;
 
-/// The cached-answer horizon. The same law as every other agency read
-/// (`read_cache::HORIZON_TTL`): a retained answer echoes the instant it
-/// was observed — never a fresher one — and expiry is never a claim that
-/// a source stayed unchanged.
+/// The cached-answer key. A retained answer echoes the instant it was
+/// observed - never a fresher one - and, because the field also reads the
+/// kernel's own event log (which no file change announces), it is held for
+/// `read_cache::HORIZON_TTL` at most even while the watch validates the rest;
+/// that bound is stricter than the minute its relative windows move at. The
+/// owner readings it is made of go through the read model.
 const TEMPORAL_CACHE_PREFIX: &str = "temporal-events:";
 
 /// A stream adapter over events already read. The parallel assembly hands

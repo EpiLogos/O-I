@@ -853,7 +853,8 @@ impl PreparedGraph {
                     return Ok(graph_outcome(reading));
                 }
             }
-            reads.begin(key.clone())
+            let scopes = reads.aikit_scopes(&cwd);
+            reads.begin_in(key.clone(), scopes)
         };
         let reading = assemble_selected(
             &self.client,

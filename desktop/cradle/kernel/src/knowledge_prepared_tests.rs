@@ -289,14 +289,20 @@ fn concurrent_owner_calls_hold_to_the_readers_bound() {
     let together = std::sync::Barrier::new(N + 1);
     std::thread::scope(|scope| {
         let requests: Vec<_> = (0..=N)
-            .map(|_| {
-                scope.spawn(|| {
+            .map(|n| {
+                let (together, readers, in_flight, most, client) =
+                    (&together, &readers, &in_flight, &most, &client);
+                scope.spawn(move || {
                     together.wait();
                     readers.run(|| {
                         let now = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
                         most.fetch_max(now, Ordering::SeqCst);
                         std::thread::sleep(Duration::from_millis(100));
-                        let answer = crate::world::read_world(&client);
+                        // Each ask differs, so each is its own owner call (asks
+                        // that are identical share one: read_cache.rs).
+                        let answer = client
+                            .run("central.world", serde_json::json!({ "ask": n }))
+                            .map_err(|e| e.to_string());
                         in_flight.fetch_sub(1, Ordering::SeqCst);
                         answer
                     })

@@ -366,7 +366,7 @@ impl CentralClient {
     }
 
     /// Which owner this client asks: the route, the executables and the root.
-    fn owner_identity(&self) -> String {
+    pub(crate) fn owner_identity(&self) -> String {
         format!(
             "{:?}|{:?}|{:?}|{}",
             self.executable, self.central_executable, self.central_root, self.suite_route
@@ -399,15 +399,15 @@ impl CentralClient {
     pub fn run_envelope(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
         let input = self.with_project(input);
         if self.person.is_some() {
-            return self.run_envelope_owner(action, input);
+            let answer = self.run_envelope_owner(action, input);
+            if !crate::read_cache::central_reads(action) {
+                crate::read_cache::written();
+            }
+            return answer;
         }
         let model = crate::read_cache::ReadModel::global();
-        match crate::read_cache::central_dep(
-            model.watch(),
-            &self.owner_identity(),
-            action,
-            &input,
-        ) {
+        match crate::read_cache::central_dep(model.watch(), &self.owner_identity(), action, &input)
+        {
             Some((key, dep)) => model.read_if(
                 &key,
                 &dep,

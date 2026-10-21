@@ -119,7 +119,6 @@ pub mod ql_music;
 /// (see the module's own law). Private to the kernel's apply path.
 mod read_cache;
 pub mod refs;
-pub mod watch;
 pub mod retained_files;
 pub mod routine;
 pub mod setup;
@@ -129,6 +128,7 @@ pub mod system_composition;
 pub mod team_space;
 pub mod temporal_events;
 pub mod temporal_sources;
+pub mod watch;
 pub mod working_surface;
 pub mod world;
 pub mod world_prepared;
@@ -1800,6 +1800,12 @@ impl Kernel {
     /// A ground bind re-based every path a retained reading was read under:
     /// every cache, and every read in flight, is withdrawn.
     pub(crate) fn ground_changed(&mut self) {
+        // The read model's readings were made under the old ground too, and
+        // the change watch watches the root it started with: after a bind
+        // nothing says the new ground's files did not change, so readings are
+        // held for their time-to-live from here on.
+        watch::Watch::global().stop();
+        read_cache::written();
         self.reads.clear();
         self.graph_reads.invalidate();
         self.agent_reads
@@ -2617,7 +2623,7 @@ impl Kernel {
         // queue like every other independent owner read.
         let temporal = match op {
             KernelOp::TemporalEventsRead { .. } => Some(owner_read::TemporalReadInputs {
-                receipts: self.log.since(1),
+                receipts: temporal_sources::without_notices(self.log.since(1)),
                 cwd: std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")),
                 cache: std::sync::Arc::clone(&self.temporal_reads),
             }),
@@ -2712,6 +2718,18 @@ impl Kernel {
 
     pub fn event_log(&self) -> &KernelEventLog {
         &self.log
+    }
+
+    /// Record that files readings are made from changed (the change watch's
+    /// debounced announcement); the host forwards the receipt on the event
+    /// topic like any other.
+    pub fn record_readings_changed(
+        &mut self,
+        scopes: Vec<String>,
+        epoch: u64,
+    ) -> events::KernelEventReceipt {
+        self.log
+            .record(events::KernelEvent::ReadingsChanged { scopes, epoch })
     }
 
     pub fn snapshot(&self) -> KernelSnapshot {

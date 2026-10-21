@@ -122,6 +122,9 @@ impl PreparedWrite {
     pub fn execute(self) -> WriteAnswered {
         let mut records = Vec::new();
         let result = self.write(&mut records);
+        // Whatever the owner changed, or may have changed before it failed,
+        // moves every reading kept from before: the watcher confirms it later.
+        crate::read_cache::written();
         WriteAnswered { result, records }
     }
 

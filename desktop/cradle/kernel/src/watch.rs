@@ -105,6 +105,9 @@ pub struct Stamp {
 }
 
 impl Stamp {
+    pub(crate) fn clock(&self) -> Clock {
+        self.clock
+    }
     /// This stamp as it would be one tick of its clock earlier.
     #[cfg(test)]
     pub(crate) fn with_tick_before(&self) -> Self {
@@ -164,7 +167,14 @@ struct Pending {
     scopes: BTreeSet<Scope>,
     epoch: u64,
     stop: bool,
+    /// The first few (scope, path) pairs of the batch, for the trace.
+    sample: Vec<(Scope, PathBuf)>,
 }
+
+/// Paths named in the trace per announced batch.
+const SAMPLE_PATHS: usize = 5;
+/// A degraded watch (it could not start) still says "ask again" this often.
+pub const DEGRADED_NOTICE_EVERY: Duration = Duration::from_secs(30);
 
 struct Inner {
     live: AtomicBool,
@@ -185,7 +195,18 @@ struct Inner {
     /// names its project the way its owner does (`o-i`), a path names it by
     /// its directory (`O-I`).
     known: Mutex<HashMap<String, String>>,
+    /// Re-reads (by the read model) whose answer was byte-identical to the
+    /// one before / differed, since the last announcement: the loop breaker's
+    /// evidence that a notice is only the owner's own write coming back.
+    identical: AtomicU64,
+    different: AtomicU64,
+    /// The periodic notice of a watch that is not running.
+    ticking: AtomicBool,
+    period: Mutex<Duration>,
+    announce: Mutex<Option<Shared>>,
 }
+
+type Shared = Arc<dyn Fn(Vec<Scope>, u64) + Send + Sync>;
 
 /// The change watch. Cloning shares it.
 #[derive(Clone)]
@@ -228,6 +249,11 @@ impl Watch {
                 wake: Condvar::new(),
                 roots: Mutex::new(None),
                 known: Mutex::new(HashMap::new()),
+                identical: AtomicU64::new(0),
+                different: AtomicU64::new(0),
+                ticking: AtomicBool::new(false),
+                period: Mutex::new(DEGRADED_NOTICE_EVERY),
+                announce: Mutex::new(None),
             }),
             watcher: Arc::new(Mutex::new(None)),
         }
@@ -247,7 +273,12 @@ impl Watch {
     /// The process's watch, shared by the kernel's read model and the host.
     pub fn global() -> &'static Watch {
         static GLOBAL: OnceLock<Watch> = OnceLock::new();
-        GLOBAL.get_or_init(Watch::new)
+        let watch = GLOBAL.get_or_init(Watch::new);
+        // An owner call that may have written moves every reading, without
+        // waiting for the watcher to see the files change.
+        static HOOKED: std::sync::Once = std::sync::Once::new();
+        HOOKED.call_once(|| crate::owner_process::on_write(|| Watch::global().changed_here()));
+        watch
     }
 
     /// Whether epochs can validate readings at all.
@@ -265,6 +296,12 @@ impl Watch {
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
                 .contains(scope)
+    }
+
+    /// The count of changes seen while the watch is running; none when it
+    /// cannot say (the signal for a host with no other).
+    pub fn change_epoch(&self) -> Option<u64> {
+        self.live().then(|| self.epoch())
     }
 
     /// The count of changes seen.
@@ -418,7 +455,26 @@ impl Watch {
         } else {
             roots.central.join(path)
         };
-        let scopes = classify_path(&roots, &absolute);
+        // The root, `Work/` and `worktrees/` list what lies beneath them:
+        // anything that comes or goes under them changes the listing.
+        let shallow = absolute
+            .strip_prefix(&roots.central)
+            .map(|inside| {
+                let mut parts = inside.components();
+                match (parts.next(), parts.next()) {
+                    (None, _) => true,
+                    (Some(first), None) => {
+                        matches!(first.as_os_str().to_str(), Some("Work" | "worktrees"))
+                    }
+                    _ => false,
+                }
+            })
+            .unwrap_or(false);
+        let scopes = if shallow {
+            Vec::new()
+        } else {
+            classify_path(&roots, &absolute)
+        };
         if scopes.is_empty() {
             vec![Scope::All]
         } else {
@@ -448,8 +504,14 @@ impl Watch {
             .clone();
         let Some(roots) = roots else { return };
         let mut moved: BTreeSet<Scope> = BTreeSet::new();
+        let mut sample: Vec<(Scope, PathBuf)> = Vec::new();
         for path in paths {
-            moved.extend(classify(&roots, path));
+            for scope in classify(&roots, path) {
+                if sample.len() < SAMPLE_PATHS {
+                    sample.push((scope.clone(), path.clone()));
+                }
+                moved.insert(scope);
+            }
         }
         if moved.is_empty() {
             return;
@@ -479,14 +541,66 @@ impl Watch {
             }
         }
         let epoch = self.inner.global.fetch_add(1, Ordering::SeqCst) + 1;
-        self.announce(moved, epoch);
+        self.announce_with(moved, epoch, sample);
     }
 
     fn announce(&self, scopes: BTreeSet<Scope>, epoch: u64) {
+        self.announce_with(scopes, epoch, Vec::new());
+    }
+
+    fn announce_with(&self, scopes: BTreeSet<Scope>, epoch: u64, sample: Vec<(Scope, PathBuf)>) {
         let mut pending = self.inner.pending.lock().unwrap_or_else(|e| e.into_inner());
         pending.scopes.extend(scopes);
         pending.epoch = epoch;
+        for entry in sample {
+            if pending.sample.len() < SAMPLE_PATHS {
+                pending.sample.push(entry);
+            }
+        }
         self.inner.wake.notify_all();
+    }
+
+    /// The read model re-read something a change had ended: whether the
+    /// answer was byte-identical to the one before it.
+    pub fn note_reread(&self, identical: bool) {
+        let counter = if identical {
+            &self.inner.identical
+        } else {
+            &self.inner.different
+        };
+        counter.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Say "ask again" for everything, every `period`, from a watch that is
+    /// not running: readings are held for their time-to-live only, so the
+    /// views that refresh on a notice still refresh. Started once.
+    fn degrade(&self, reason: &str) {
+        crate::dispatch::trace_watch(&format!("degraded {reason}"));
+        if self.inner.ticking.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        let watch = self.clone();
+        let _ = std::thread::Builder::new()
+            .name("oi-change-watch-degraded".into())
+            .spawn(move || loop {
+                let period = *watch.inner.period.lock().unwrap_or_else(|e| e.into_inner());
+                std::thread::sleep(period);
+                if watch.live() {
+                    // A later start succeeded: the watcher says what moved.
+                    watch.inner.ticking.store(false, Ordering::SeqCst);
+                    return;
+                }
+                let notice = watch
+                    .inner
+                    .announce
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .clone();
+                let epoch = watch.inner.global.fetch_add(1, Ordering::SeqCst) + 1;
+                if let Some(notice) = notice {
+                    notice(vec![Scope::All], epoch);
+                }
+            });
     }
 
     /// Start watching. `announce` is called from the watch's own thread,
@@ -496,6 +610,20 @@ impl Watch {
         if self.live() {
             return Ok(());
         }
+        let announce: Shared = Arc::from(announce);
+        *self
+            .inner
+            .announce
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) = Some(Arc::clone(&announce));
+        let started = self.start_watching(roots, &announce);
+        if let Err(reason) = &started {
+            self.degrade(reason);
+        }
+        started
+    }
+
+    fn start_watching(&self, roots: Roots, announce: &Shared) -> Result<(), String> {
         let roots = Roots {
             central: canonical(&roots.central),
             aikit: canonical(&roots.aikit),
@@ -549,9 +677,15 @@ impl Watch {
         *self.watcher.lock().unwrap_or_else(|e| e.into_inner()) = Some(watcher);
         self.inner.live.store(true, Ordering::SeqCst);
         let inner = Arc::clone(&self.inner);
+        let announce = Arc::clone(announce);
+        crate::dispatch::trace_watch(&format!(
+            "live {} {}",
+            roots.central.display(),
+            roots.aikit.display()
+        ));
         std::thread::Builder::new()
             .name("oi-change-watch".into())
-            .spawn(move || announce_loop(&inner, &announce))
+            .spawn(move || announce_loop(&inner, announce.as_ref()))
             .map_err(|error| format!("change watch unavailable: {error}"))?;
         Ok(())
     }
@@ -563,11 +697,71 @@ impl Watch {
         let mut pending = self.inner.pending.lock().unwrap_or_else(|e| e.into_inner());
         pending.stop = true;
         self.inner.wake.notify_all();
+        drop(pending);
+        let was_announcing = self
+            .inner
+            .announce
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .is_some();
+        if was_announcing {
+            self.degrade("the watch was stopped");
+        }
     }
 }
 
-fn announce_loop(inner: &Inner, announce: &Callback) {
+/// Backs off notices that are only the owners' own writes coming back: when
+/// the watch has announced in `THRESHOLD` windows within `WITHIN` and the
+/// readings re-read in between came back byte-identical, each next
+/// announcement waits twice as long as the last (to `CAP`) until a re-read
+/// differs or a window passes with no identical re-read. Readings still
+/// honour the epochs; only the notices are held back.
+#[derive(Debug, Default)]
+struct Damper {
+    windows: std::collections::VecDeque<Instant>,
+    backoff: Duration,
+}
+
+const DAMP_THRESHOLD: usize = 8;
+const DAMP_WITHIN: Duration = Duration::from_secs(10);
+const DAMP_FIRST: Duration = Duration::from_millis(500);
+const DAMP_CAP: Duration = Duration::from_secs(30);
+
+impl Damper {
+    /// One announcement window closed: how long to hold its notice.
+    fn window(&mut self, now: Instant, identical: u64, different: u64) -> Duration {
+        while self
+            .windows
+            .front()
+            .is_some_and(|at| now.duration_since(*at) > DAMP_WITHIN)
+        {
+            self.windows.pop_front();
+        }
+        self.windows.push_back(now);
+        if different > 0 || identical == 0 {
+            if self.backoff.is_zero() {
+                if different > 0 {
+                    self.windows.clear();
+                }
+                return Duration::ZERO;
+            }
+            // Damped, and the loop is over: back to announcing at once.
+            self.backoff = Duration::ZERO;
+            self.windows.clear();
+            return Duration::ZERO;
+        }
+        if !self.backoff.is_zero() {
+            self.backoff = (self.backoff * 2).min(DAMP_CAP);
+        } else if self.windows.len() >= DAMP_THRESHOLD {
+            self.backoff = DAMP_FIRST;
+        }
+        self.backoff
+    }
+}
+
+fn announce_loop(inner: &Inner, announce: &(dyn Fn(Vec<Scope>, u64) + Send + Sync)) {
     let mut last: Option<Instant> = None;
+    let mut damper = Damper::default();
     loop {
         let mut pending = inner.pending.lock().unwrap_or_else(|e| e.into_inner());
         while pending.scopes.is_empty() && !pending.stop {
@@ -583,14 +777,44 @@ fn announce_loop(inner: &Inner, announce: &Callback) {
             wait = wait.max(ANNOUNCE_EVERY.saturating_sub(last.elapsed()));
         }
         std::thread::sleep(wait);
+        let pending = inner.pending.lock().unwrap_or_else(|e| e.into_inner());
+        if pending.stop {
+            return;
+        }
+        drop(pending);
+        let hold = damper.window(
+            Instant::now(),
+            inner.identical.swap(0, Ordering::Relaxed),
+            inner.different.swap(0, Ordering::Relaxed),
+        );
+        if !hold.is_zero() {
+            let named: Vec<String> = inner
+                .pending
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .scopes
+                .iter()
+                .map(Scope::wire)
+                .collect();
+            crate::dispatch::trace_watch(&format!(
+                "damped {} for {} ms",
+                named.join(","),
+                hold.as_millis()
+            ));
+            std::thread::sleep(hold);
+        }
         let mut pending = inner.pending.lock().unwrap_or_else(|e| e.into_inner());
         if pending.stop {
             return;
         }
         let scopes: Vec<Scope> = std::mem::take(&mut pending.scopes).into_iter().collect();
         let epoch = pending.epoch;
+        let sample = std::mem::take(&mut pending.sample);
         drop(pending);
         last = Some(Instant::now());
+        for (scope, path) in sample {
+            crate::dispatch::trace_watch(&format!("{} {}", scope.wire(), path.display()));
+        }
         if !scopes.is_empty() {
             announce(scopes, epoch);
         }
@@ -599,6 +823,66 @@ fn announce_loop(inner: &Inner, announce: &Callback) {
 
 fn canonical(path: &Path) -> PathBuf {
     std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+}
+
+/// Start the process's change watch over the roots its owners read, calling
+/// `announce` with the wire names of what moved (`Scope::wire`) and the
+/// watch's change count, debounced. On failure the watch stays degraded -
+/// readings validate by their time-to-live - and the error says why.
+pub fn start_global(
+    configured_root: Option<&Path>,
+    announce: impl Fn(Vec<String>, u64) + Send + Sync + 'static,
+) -> Result<(), String> {
+    let announce = Arc::new(announce);
+    let clock = Arc::clone(&announce);
+    start_clock_notices(move |epoch| clock(vec!["clock".to_owned()], epoch));
+    let Some(roots) = Roots::resolve(configured_root) else {
+        let reason = "change watch unavailable: no home directory".to_owned();
+        // No announce callback exists to tick with yet: bind it, then degrade.
+        let watch = Watch::global();
+        *watch
+            .inner
+            .announce
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) =
+            Some(Arc::new(move |scopes: Vec<Scope>, epoch| {
+                announce(scopes.iter().map(Scope::wire).collect(), epoch)
+            }));
+        watch.degrade(&reason);
+        return Err(reason);
+    };
+    Watch::global().start(
+        roots,
+        Box::new(move |scopes, epoch| {
+            announce(scopes.iter().map(Scope::wire).collect(), epoch);
+        }),
+    )
+}
+
+/// Notices for readings that depend on the clock: at each minute boundary
+/// when a retained reading carries a minute dependency, otherwise at the
+/// civil-day boundary (machine zone). Nothing is said while nothing depends
+/// on the time.
+fn start_clock_notices(notice: impl Fn(u64) + Send + 'static) {
+    let _ = std::thread::Builder::new()
+        .name("oi-clock-notices".into())
+        .spawn(move || {
+            let today = || jiff::Zoned::now().date();
+            let mut day = today();
+            loop {
+                let into_minute = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|elapsed| elapsed.as_secs() % 60)
+                    .unwrap_or(0);
+                std::thread::sleep(Duration::from_secs(60 - into_minute));
+                let now = today();
+                let new_day = now != day;
+                day = now;
+                if crate::read_cache::ReadModel::global().holds(Clock::Minute) || new_day {
+                    notice(Watch::global().epoch());
+                }
+            }
+        });
 }
 
 /// What to watch, and the scopes that stay uncovered.
@@ -651,7 +935,7 @@ fn classify_path(roots: &Roots, path: &Path) -> Vec<Scope> {
     }
     let relative_to = |base: &Path| path.strip_prefix(base).ok().map(Path::to_path_buf);
     if let Some(inside) = relative_to(&roots.aikit) {
-        return if noise(&inside) {
+        return if aikit_noise(&inside) {
             Vec::new()
         } else {
             vec![Scope::Aikit]
@@ -687,18 +971,14 @@ fn classify_path(roots: &Roots, path: &Path) -> Vec<Scope> {
 
 /// Paths whose changes are never a change of what an owner reads: build
 /// output, dependency trees, git's object store, Finder droppings, and the
-/// lock files owners create and remove around their own writes.
+/// caches and lock files owners write around their own reads (Central's
+/// `.central/bkmr` index and `source-change-horizon.json`, GitNexus's index).
+/// Without this a read would announce its own cache write and be asked again.
 fn noise(relative: &Path) -> bool {
-    let parts: Vec<&str> = relative
-        .components()
-        .filter_map(|part| match part {
-            Component::Normal(part) => part.to_str(),
-            _ => None,
-        })
-        .collect();
+    let parts = names(relative);
     for (index, part) in parts.iter().enumerate() {
         match *part {
-            "target" | "node_modules" | "dist" | ".DS_Store" => return true,
+            "target" | "node_modules" | "dist" | ".DS_Store" | ".gitnexus" => return true,
             ".git" => {
                 if matches!(
                     parts.get(index + 1),
@@ -707,12 +987,60 @@ fn noise(relative: &Path) -> bool {
                     return true;
                 }
             }
+            ".central" => {
+                if matches!(
+                    parts.get(index + 1),
+                    Some(&"bkmr") | Some(&"source-change-horizon.json")
+                ) {
+                    return true;
+                }
+            }
             _ => {}
         }
     }
-    parts
-        .last()
-        .is_some_and(|name| name.ends_with(".lock") && *name != "Cargo.lock")
+    locked(&parts)
+}
+
+/// The same for the AIKit home: its caches, the services it keeps running
+/// (the Redis append-only file), its logs, and the state files its own
+/// readings refresh (`temporal-floor`, `wiki-projection`, `development-entry`,
+/// `knowledge`, the observation database).
+fn aikit_noise(relative: &Path) -> bool {
+    let parts = names(relative);
+    match parts.first() {
+        Some(&"cache") | Some(&"services") | Some(&"logs") | Some(&".DS_Store") => return true,
+        Some(&"state") => {
+            if let Some(name) = parts.get(1) {
+                if matches!(
+                    *name,
+                    "temporal-floor" | "wiki-projection" | "development-entry" | "knowledge"
+                ) || name.starts_with("observations.sqlite3")
+                {
+                    return true;
+                }
+            }
+        }
+        _ => {}
+    }
+    locked(&parts)
+}
+
+fn names(relative: &Path) -> Vec<&str> {
+    relative
+        .components()
+        .filter_map(|part| match part {
+            Component::Normal(part) => part.to_str(),
+            _ => None,
+        })
+        .collect()
+}
+
+/// A lock file an owner creates and removes around a write: `x.lock`,
+/// `x.lock.1`, `.wiki.json.publication.lock`, `aikit.sqlite-open.lock`.
+fn locked(parts: &[&str]) -> bool {
+    parts.last().is_some_and(|name| {
+        *name != "Cargo.lock" && (name.ends_with(".lock") || name.contains(".lock."))
+    })
 }
 
 #[cfg(test)]
@@ -756,13 +1084,19 @@ mod tests {
         let roots = roots(&central, &aikit);
         let at = |p: &str| classify(&roots, &roots.central.join(p));
         assert_eq!(at("Control/agents/now/a.json"), vec![Scope::Root]);
-        assert_eq!(at("Work/O-I/src/main.rs"), vec![Scope::Project("O-I".into())]);
+        assert_eq!(
+            at("Work/O-I/src/main.rs"),
+            vec![Scope::Project("O-I".into())]
+        );
         assert_eq!(at("worktrees/env-1/o-i/x"), vec![Scope::Seats]);
         assert_eq!(
             at("Control/machines/workcells.register.json"),
             vec![Scope::Root, Scope::Seats]
         );
-        assert_eq!(classify(&roots, &roots.aikit.join("db")), vec![Scope::Aikit]);
+        assert_eq!(
+            classify(&roots, &roots.aikit.join("db")),
+            vec![Scope::Aikit]
+        );
         assert!(at("Work/O-I/target/debug/x").is_empty());
         assert!(at("Work/O-I/ui/node_modules/a/b.js").is_empty());
         assert!(at("Work/O-I/.git/objects/ab/cdef").is_empty());
@@ -789,7 +1123,10 @@ mod tests {
         watch.ingest(&[roots.central.join("Work/O-I/a.rs")]);
         assert!(watch.still(&root_stamp, long), "an unrelated scope holds");
         assert!(!watch.still(&project_stamp, long), "its own scope moved");
-        assert!(!watch.still(&all_stamp, long), "all depends on every change");
+        assert!(
+            !watch.still(&all_stamp, long),
+            "all depends on every change"
+        );
         // Noise moves nothing.
         let after = watch.stamp(&[Scope::Project("O-I".into())], Clock::None);
         let epoch = watch.epoch();
@@ -826,7 +1163,10 @@ mod tests {
         assert_eq!(watch.project_scope("o-i"), Scope::All);
         watch.ingest(&[roots.central.join("Work/O-I/x")]);
         assert_eq!(watch.project_scope("o-i"), Scope::Project("O-I".into()));
-        assert_eq!(watch.project_scope("project:O-I"), Scope::Project("O-I".into()));
+        assert_eq!(
+            watch.project_scope("project:O-I"),
+            Scope::Project("O-I".into())
+        );
     }
 
     #[test]
@@ -855,7 +1195,10 @@ mod tests {
         let big = roots.central.join("Work/Big/a");
         watch.ingest(&[big]);
         assert!(!watch.by_epochs(&stamp));
-        assert!(watch.still(&stamp, Duration::from_secs(60)), "time, not epochs");
+        assert!(
+            watch.still(&stamp, Duration::from_secs(60)),
+            "time, not epochs"
+        );
         let mut aged = watch.stamp(&[Scope::Root], Clock::Minute);
         assert!(watch.still(&aged, Duration::from_secs(60)));
         aged.tick = aged.tick.wrapping_sub(1);
@@ -929,7 +1272,10 @@ mod tests {
         std::fs::write(central.join("Control/agents/a.txt"), "1").unwrap();
         wait_for(Scope::Root);
         assert!(!watch.still(&before_root, long));
-        assert!(watch.still(&before_project, long), "the project did not change");
+        assert!(
+            watch.still(&before_project, long),
+            "the project did not change"
+        );
         std::fs::write(central.join("Work/X/src/m.rs"), "1").unwrap();
         wait_for(Scope::Project("X".into()));
         assert!(!watch.still(&before_project, long));
@@ -938,5 +1284,152 @@ mod tests {
         std::thread::sleep(Duration::from_secs(2));
         assert!(watch.still(&ignored, long), "target/ is noise");
         watch.stop();
+    }
+
+    #[test]
+    fn owner_caches_services_logs_and_locks_are_not_changes() {
+        let central = temp("owner-noise");
+        let aikit = temp("owner-noise-aikit");
+        let roots = roots(&central, &aikit);
+        let in_aikit = |p: &str| classify(&roots, &roots.aikit.join(p));
+        for ignored in [
+            "cache/knowledge/discovery",
+            "services/redis-now/data/appendonly.aof",
+            "logs/today.log",
+            "state/temporal-floor",
+            "state/wiki-projection",
+            "state/development-entry",
+            "state/knowledge",
+            "state/observations.sqlite3-wal",
+            "state/aikit.sqlite-open.lock",
+        ] {
+            assert!(in_aikit(ignored).is_empty(), "{ignored}");
+        }
+        assert_eq!(in_aikit("state/aikit.sqlite"), vec![Scope::Aikit]);
+        assert_eq!(in_aikit("profiles/p.toml"), vec![Scope::Aikit]);
+        let at = |p: &str| classify(&roots, &roots.central.join(p));
+        for ignored in [
+            "Work/O-I/.central/bkmr/index.db",
+            "Work/O-I/.central/source-change-horizon.json",
+            "Work/O-I/ProjectCentral/agents/wiki/.wiki.json.publication.lock",
+            "Work/O-I/x.lock.1",
+            "Work/O-I/.gitnexus/graph.db",
+        ] {
+            assert!(at(ignored).is_empty(), "{ignored}");
+        }
+        assert_eq!(
+            at("Work/O-I/.central/source-returns/r.json"),
+            vec![Scope::Project("O-I".into())]
+        );
+    }
+
+    /// An owner that writes under a path the watch ignores (its cache) moves
+    /// no epoch and announces nothing; one that writes a real path does.
+    #[test]
+    fn an_owners_cache_write_moves_nothing_and_a_real_write_moves_its_scope() {
+        let central = temp("owner-write");
+        let aikit = temp("owner-write-aikit");
+        for dir in ["Control/agents", "Work/X/.central/bkmr"] {
+            std::fs::create_dir_all(central.join(dir)).unwrap();
+        }
+        std::fs::create_dir_all(aikit.join("cache")).unwrap();
+        let watch = Watch::new();
+        let (sender, receiver) = mpsc::channel();
+        let sender = Mutex::new(sender);
+        watch
+            .start(
+                roots(&central, &aikit),
+                Box::new(move |scopes, epoch| {
+                    let _ = sender.lock().unwrap().send((scopes, epoch));
+                }),
+            )
+            .expect("the watcher starts");
+        std::thread::sleep(Duration::from_millis(800));
+        while receiver.try_recv().is_ok() {}
+        let owner = |target: &Path| {
+            let status = std::process::Command::new("/bin/sh")
+                .arg("-c")
+                .arg(format!("echo read > '{}'", target.display()))
+                .status()
+                .unwrap();
+            assert!(status.success());
+        };
+        let before = watch.epoch();
+        owner(&aikit.join("cache/discovery"));
+        owner(&central.join("Work/X/.central/bkmr/index.db"));
+        owner(&central.join("Work/X/.central/source-change-horizon.json"));
+        std::thread::sleep(Duration::from_secs(2));
+        assert_eq!(
+            watch.epoch(),
+            before,
+            "an owner's own cache write is no change"
+        );
+        assert!(receiver.try_recv().is_err());
+        owner(&central.join("Control/agents/n.json"));
+        let (scopes, _) = receiver.recv_timeout(Duration::from_secs(10)).unwrap();
+        assert!(scopes.contains(&Scope::Root));
+        assert!(watch.epoch() > before);
+        watch.stop();
+    }
+
+    #[test]
+    fn notices_that_are_only_an_owners_own_writes_coming_back_are_damped() {
+        let mut damper = Damper::default();
+        let start = Instant::now();
+        let at = |n: u64| start + Duration::from_millis(500 * n);
+        // Seven windows with identical re-reads: not yet.
+        for n in 0..7 {
+            assert_eq!(damper.window(at(n), 1, 0), Duration::ZERO, "{n}");
+        }
+        // The eighth within ten seconds starts the backoff, then it doubles to the cap.
+        assert_eq!(damper.window(at(7), 1, 0), DAMP_FIRST);
+        assert_eq!(damper.window(at(8), 1, 0), DAMP_FIRST * 2);
+        let mut last = Duration::ZERO;
+        for n in 9..20 {
+            last = damper.window(at(n), 1, 0);
+        }
+        assert_eq!(last, DAMP_CAP);
+        // A re-read that differs ends it at once.
+        assert_eq!(damper.window(at(21), 1, 1), Duration::ZERO);
+        assert_eq!(damper.window(at(22), 1, 0), Duration::ZERO);
+        // So does a window with no identical re-read, and a change with no
+        // re-read at all is never damped.
+        let mut quiet = Damper::default();
+        for n in 0..20 {
+            assert_eq!(quiet.window(at(n), 0, 0), Duration::ZERO);
+        }
+    }
+
+    /// A watch that cannot start still says "ask again" on a fixed period, so
+    /// the views that refresh on a notice keep refreshing.
+    #[test]
+    fn a_watch_that_cannot_start_announces_all_on_a_fixed_period() {
+        let watch = Watch::new();
+        *watch.inner.period.lock().unwrap() = Duration::from_millis(100);
+        let (sender, receiver) = mpsc::channel();
+        let sender = Mutex::new(sender);
+        let missing = std::env::temp_dir().join("oi-watch-missing-root-nothing-here");
+        let error = watch
+            .start(
+                Roots {
+                    central: missing.clone(),
+                    aikit: missing,
+                    ignore: Vec::new(),
+                },
+                Box::new(move |scopes, epoch| {
+                    let _ = sender.lock().unwrap().send((scopes, epoch));
+                }),
+            )
+            .unwrap_err();
+        assert!(error.contains("unavailable"), "{error}");
+        assert!(!watch.live());
+        let first = receiver.recv_timeout(Duration::from_secs(5)).unwrap();
+        let second = receiver.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert_eq!(first.0, vec![Scope::All]);
+        assert_eq!(second.0, vec![Scope::All]);
+        assert!(second.1 > first.1, "the epoch advances with each notice");
+        // Readings in that mode are bounded by their time-to-live.
+        let stamp = watch.stamp(&[Scope::Root], Clock::None);
+        assert!(!watch.by_epochs(&stamp));
     }
 }

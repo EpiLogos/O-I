@@ -92,6 +92,11 @@ pub struct Client {
 }
 
 impl Client {
+    /// Which AIKit this client asks: the route, the executable and the home.
+    pub(crate) fn identity(&self) -> String {
+        format!("{:?}|{:?}|{}", self.executable, self.home, self.suite_route)
+    }
+
     pub(crate) fn local_speech_read(
         &self,
         cwd: &Path,

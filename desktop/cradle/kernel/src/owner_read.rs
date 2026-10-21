@@ -77,6 +77,8 @@ impl PreparedSources {
 /// ticket its answer is retained under.
 pub(crate) struct PreparedListing {
     path: String,
+    /// An explicit refresh: the owner is asked, whatever is retained.
+    fresh: bool,
     key: String,
     held: Option<files::Directory>,
     ticket: Option<u64>,
@@ -113,6 +115,7 @@ impl PreparedListing {
     pub(crate) fn execute(self, client: &CentralClient) -> ListingAnswer {
         let directory = match self.held {
             Some(directory) => Ok(directory),
+            None if self.fresh => read_cache::with_fresh(|| files::list(client, &self.path)),
             None => files::list(client, &self.path),
         };
         ListingAnswer {
@@ -273,6 +276,7 @@ impl Kernel {
         let ticket = held.is_none().then(|| self.reads.begin(key.clone()));
         PreparedListing {
             path: path.to_owned(),
+            fresh,
             key,
             held,
             ticket,
@@ -960,11 +964,37 @@ impl PreparedRead {
                 } else {
                     None
                 };
-                KernelOpResult::FactoryDevelopmentReading {
-                    data: factory::owner(request.clone(), world.as_ref()).map_err(|e| {
+                let ask = || {
+                    factory::owner(request.clone(), world.as_ref()).map_err(|e| {
                         serde_json::to_string(&e)
                             .unwrap_or_else(|_| "factory owner request failed".into())
-                    })?,
+                    })
+                };
+                KernelOpResult::FactoryDevelopmentReading {
+                    // Where the Factory's state lives is found by listing each
+                    // root's directories: kept while they did not change, and
+                    // shared by the panels that ask at once.
+                    data: match request {
+                        factory::OwnerRequest::Locate { project, all } => {
+                            let model = read_cache::ReadModel::global();
+                            let scopes = match project {
+                                Some(project) if !*all => {
+                                    vec![model.watch().project_scope(project)]
+                                }
+                                _ => vec![crate::watch::Scope::All],
+                            };
+                            let key = format!(
+                                "factory:locate:{}:{project:?}:{all}",
+                                self.client.owner_identity()
+                            );
+                            model.read(
+                                &key,
+                                &read_cache::Dep::new(scopes, std::time::Duration::from_secs(4)),
+                                ask,
+                            )?
+                        }
+                        _ => ask()?,
+                    },
                 }
             }
             KernelOp::InhabitationRead { request } => {
@@ -1097,9 +1127,21 @@ impl PreparedRead {
                     .map_err(|e| e.to_string())?,
                 }
             }
-            KernelOp::SeatStatusRead => KernelOpResult::SeatStatusReading {
-                data: seat_status().map_err(failed("seat status read failed"))?,
-            },
+            // The seat instrument reads every seat's git standing (22-30 s
+            // for 24 seats): kept while no seat, the Workcell register or
+            // Control changed.
+            KernelOp::SeatStatusRead => {
+                let model = read_cache::ReadModel::global();
+                let dep = read_cache::Dep::new(
+                    vec![crate::watch::Scope::Seats, crate::watch::Scope::Root],
+                    std::time::Duration::from_secs(30),
+                );
+                KernelOpResult::SeatStatusReading {
+                    data: model.read("seat:status", &dep, || {
+                        seat_status().map_err(failed("seat status read failed"))
+                    })?,
+                }
+            }
             KernelOp::SourceReturnsRead {
                 project,
                 limit,

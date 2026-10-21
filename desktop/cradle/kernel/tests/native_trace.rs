@@ -39,7 +39,12 @@ fn every_op_the_host_dispatches_writes_one_timing_line_to_the_named_file() {
     dispatch::trace_replay("native", Duration::from_micros(1500));
 
     let text = std::fs::read_to_string(&trace).unwrap();
-    let lines: Vec<&str> = text.lines().collect();
+    // The read model's `[read]` lines (hit / miss / joined) and the watch's
+    // `[watch]` lines share the file; this test is about the op lines.
+    let lines: Vec<&str> = text
+        .lines()
+        .filter(|line| !line.starts_with("[read] ") && !line.starts_with("[watch] "))
+        .collect();
     assert_eq!(
         lines.len(),
         4,

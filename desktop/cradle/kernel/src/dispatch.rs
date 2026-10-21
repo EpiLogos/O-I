@@ -115,6 +115,12 @@ pub fn trace_read(key: &str, how: &str) {
     });
 }
 
+/// A line about the change watch: its mode, the paths that moved a scope
+/// (`<scope> <path>`, a few per announced batch), a notice held back.
+pub fn trace_watch(what: &str) {
+    trace_line(|| format!("[watch] {} {what}\n", unix_ms()));
+}
+
 /// Where one host's trace goes: the file `OI_KERNEL_TRACE_FILE` named when
 /// the first line was written, opened once for appending.
 fn trace_line(line: impl FnOnce() -> String) {
