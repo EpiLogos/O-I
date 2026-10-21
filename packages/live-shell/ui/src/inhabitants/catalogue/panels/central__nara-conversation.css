@@ -1,22 +1,30 @@
-/* The Answer's own layout: the exchange in the pane, and the widget's last line and composer. Shell and panel tokens only. */
-.an-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
-.an-pane-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
-.an-pane-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
-.an-pane-head span::before, .an-pane-head b + span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
-.an-pane-head [data-state="busy"] { color: var(--dp-value, #5cc6b4); }
+/* Full: mostly the face. The stage fills the pane; the conversation, small and optional, stands at its right. No header. */
+.an-pane { position: absolute; inset: 0; display: flex; background: var(--bg-0, #26292d); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
+.an-stage { position: relative; flex: 1 1 auto; min-width: 0; background: radial-gradient(120% 80% at 50% 38%, color-mix(in srgb, var(--bg-0, #26292d) 70%, #000) 0%, color-mix(in srgb, var(--bg-0, #26292d) 25%, #000) 72%); }
+.an-stage-face { position: absolute; inset: 0 0 56px; }
+/* The words of the moment, under the face: yours, as they are heard, and the agent's, as they are said. */
+.an-subtitle { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); width: min(62%, 600px); max-height: 46px; overflow: hidden; margin: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; text-align: center; font-size: 13px; line-height: 1.3; pointer-events: none; }
+.an-subtitle span { color: var(--text, #d4d7da); text-shadow: 0 1px 6px #000; }
+.an-subtitle span[data-who="you"] { color: var(--text-dim, #a2a7ad); font-style: italic; }
+/* The three marks at the corners: hears, speaks, chat. */
+.an-mark { position: absolute; width: 26px; height: 26px; display: grid; place-items: center; padding: 0; background: color-mix(in srgb, var(--bg-0, #26292d) 60%, transparent); border: 1px solid var(--line-strong, #3d4147); color: var(--text-dim, #a2a7ad); cursor: pointer; }
+.an-mark svg { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.an-mark[data-kind="hears"] { left: 12px; bottom: 12px; }
+.an-mark[data-kind="speaks"] { right: 12px; bottom: 12px; }
+.an-mark[data-kind="chat"] { right: 12px; top: 12px; }
+.an-mark:hover, .an-mark:focus-visible { color: var(--text, #d4d7da); outline: none; border-color: var(--text-faint, #71767c); }
+.an-mark[aria-pressed="true"] { color: var(--dp-on-text, #1d1f22); background: var(--dp-on, #ffbe00); border-color: var(--dp-on, #ffbe00); }
+.an-mark:disabled { cursor: not-allowed; opacity: .45; }
+/* The conversation: small, at the right of the face. */
+.an-chat { flex: none; width: clamp(240px, 28%, 340px); display: flex; flex-direction: column; min-height: 0; background: var(--bg-1, #33363b); border-left: 1px solid var(--line, #24262a); }
+.an-stream { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 7px; padding: 10px 14px 8px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 28px); mask-image: linear-gradient(to bottom, transparent 0, #000 28px); }
 /* The whole well and the face laid over its left (AnswerWell FACE_BOX: placed in the well's own pixels). */
 .an-well { position: relative; flex: none; }
 /* The face takes no pointer: pointing at it reads the well on the status bar, and a press there is the well's. */
 .an-well > .an-well-face { position: absolute; pointer-events: none; }
-/* The pane: the agent's whole face beside the exchange, at the top, as wide as the pane allows. */
-.an-pane-main { flex: 1 1 auto; min-height: 0; display: flex; }
-.an-pane-face { flex: none; width: clamp(96px, 20%, 150px); padding: 14px 0 0 18px; }
-.an-pane-stage { width: 100%; aspect-ratio: 96 / 134; }
-.an-stream { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 7px; padding: 10px 20px 8px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); }
-
-.an-task { display: flex; align-items: center; gap: 10px; color: var(--text-faint, #71767c); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
-.an-task i { flex: 1 1 auto; height: 1px; background: var(--line, #24262a); }
-.an-task small { font-size: 9px; color: var(--text-dim, #a2a7ad); letter-spacing: 0; text-transform: none; }
+/* The Face page: the face to watch the dynamics on. */
+.an-preview { position: relative; overflow: hidden; background: var(--dp-well, #121519); border: 1px solid var(--line, #24262a); box-sizing: border-box; }
+.an-preview-face { position: absolute; inset: 0; pointer-events: none; }
 
 .an-row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; }
 .an-row--note { align-items: center; }
@@ -70,7 +78,7 @@
 @keyframes an-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .an-work i { animation: none; } }
 
-.an-composer { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 20px 14px; padding: 0 8px; height: 26px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); }
+.an-composer { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 14px 12px; padding: 0 8px; height: 26px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); }
 .an-composer input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0; background: none; border: 0; color: var(--text, #d4d7da); font: inherit; outline: none; }
 .an-composer input::placeholder { color: var(--text-faint, #71767c); }
 .an-composer input:disabled { cursor: not-allowed; }

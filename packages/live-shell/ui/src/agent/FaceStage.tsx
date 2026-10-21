@@ -3,7 +3,8 @@
  * in a same-origin iframe, driven only through the face's own bounded surface (face-speech.js `window.FACE_RIG_CHAT`: `apply`
  * with its named agent states, expressions, emotions and affect, and `setSpeechMode`). Nothing is drawn or redrawn here: the
  * polygon mesh, its muscles, its springs and its life are the rig's. A change of state glides by the face's own springs; nothing
- * here eases it.
+ * here eases it. While the agent answers aloud, the voice's loudness (faceVoice.ts) opens the jaw and parts the lips through two of
+ * the face's own pads (mouthCalls): a voice that measures no timing gives the mouth nothing else to follow.
  *
  * Until the live face stands — on the server, in the manual's static figures, while it loads, and wherever it cannot load — the
  * stage draws the static mask (maskFace.ts) in the same pose. A request for reduced motion keeps the face and stops its own life
@@ -14,14 +15,18 @@
  */
 import {memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties} from 'react'
 import {maskStatic, type FaceExpr} from './maskFace'
+import {subscribeVoiceLevel, voiceLevel, type VoiceLevel} from './faceVoice'
 import './FaceStage.css'
 
-/** What the agent does now, as the owner reports it. */
-export type FaceState = 'idle' | 'reading' | 'answering'
+/** What the agent does now, as the owner reports it. `listening`: you are speaking and it attends. */
+export type FaceState = 'idle' | 'reading' | 'answering' | 'listening'
 
-/** The face's own agent states and emotions this stage uses (face-core.js AGENTS, EMOTIONS). */
-export type FaceAgent = 'idle' | 'working' | 'speaking'
-export type FaceEmotion = 'sleepy'
+/** The face's own agent states, emotions and gestures this stage uses (face-core.js AGENTS, EMOTIONS, GESTURES). */
+export type FaceAgent = 'idle' | 'working' | 'speaking' | 'listening'
+export const FACE_EMOTIONS = ['neutral', 'joy', 'excited', 'curious', 'content', 'calm', 'sleepy', 'bored', 'sad', 'angry', 'afraid', 'surprised'] as const
+export type FaceEmotion = (typeof FACE_EMOTIONS)[number]
+export const FACE_GESTURES = ['nod', 'shake', 'tilt', 'recoil', 'sigh', 'giggle', 'laugh', 'shrug', 'tremble', 'droop', 'bob', 'spin'] as const
+export type FaceGesture = (typeof FACE_GESTURES)[number]
 
 /** One action on the face's bounded surface (face-speech.js FACE_RIG_CHAT.apply). */
 export type FaceAction =
@@ -29,6 +34,11 @@ export type FaceAction =
   | {readonly type: 'expression'; readonly name: FaceExpr; readonly weight: number}
   | {readonly type: 'emotion'; readonly name: FaceEmotion}
   | {readonly type: 'affect'; readonly valence: number; readonly arousal: number}
+  | {readonly type: 'gesture'; readonly name: FaceGesture}
+  | {readonly type: 'gaze'; readonly x: number; readonly y: number}
+  /** One of the face's own pads (face-core.js PADS): `jaw` (x press…sneer, y chin…open), `lowerFace` (x purse…drop lip, y raise
+   * chin…depress). The voice's loudness moves the mouth through these two (mouthCalls). */
+  | {readonly type: 'pad'; readonly name: 'jaw' | 'lowerFace'; readonly x: number; readonly y: number}
 
 /** One call on that surface: an action to apply, or the speech mode (true: the mouth waits for a voice's timeline; false: the
  * speaking state moves the mouth itself). */
@@ -40,6 +50,12 @@ export interface FacePose {
   readonly expression?: FaceExpr
   /** The feeling, as valence and arousal, each −1..1 (the face's affect plane). */
   readonly affect?: readonly [number, number]
+  /** A named emotion held over the state's own (one of the face's twelve). */
+  readonly emotion?: FaceEmotion
+  /** Where the eyes look, each −1..1 (across, up). */
+  readonly gaze?: readonly [number, number]
+  /** A gesture to make: it is made once for each `n` (a counter the host raises), never again for the same one. */
+  readonly gesture?: {readonly name: FaceGesture; readonly n: number}
   /** Whether the mouth moves while the agent answers. Default: yes. Off, the mouth waits for a voice to move it (§19.21). */
   readonly speaking?: boolean
   /** No conversation is bound: the face sleeps. */
@@ -48,9 +64,9 @@ export interface FacePose {
 
 /** The agent state each phase puts the face in: at rest; reading the packet, focused, eyes down on it (the face's own
  * `working`: focus, gaze down); answering, speaking. */
-export const FACE_AGENT_OF: Readonly<Record<FaceState, FaceAgent>> = {idle: 'idle', reading: 'working', answering: 'speaking'}
+export const FACE_AGENT_OF: Readonly<Record<FaceState, FaceAgent>> = {idle: 'idle', reading: 'working', answering: 'speaking', listening: 'listening'}
 /** The mask's pose for each phase, where the live face is not standing (the shell's earlier mapping). */
-export const MASK_OF: Readonly<Record<FaceState, FaceExpr>> = {idle: 'neutral', reading: 'focus', answering: 'speak'}
+export const MASK_OF: Readonly<Record<FaceState, FaceExpr>> = {idle: 'neutral', reading: 'focus', answering: 'speak', listening: 'focus'}
 
 const unit = (x: number) => (Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0)
 
@@ -64,12 +80,53 @@ export function faceCalls(pose: FacePose): FaceCall[] {
   const calls: FaceCall[] = [{apply: {type: 'agent', name: FACE_AGENT_OF[state]}}]
   if (state === 'answering') calls.push({speechMode: pose.speaking === false})
   if (pose.expression) calls.push({apply: {type: 'expression', name: pose.expression, weight: 1}})
+  if (pose.emotion) calls.push({apply: {type: 'emotion', name: pose.emotion}})
   if (pose.affect) calls.push({apply: {type: 'affect', valence: unit(pose.affect[0]), arousal: unit(pose.affect[1])}})
+  if (pose.gaze) calls.push({apply: {type: 'gaze', x: unit(pose.gaze[0]), y: unit(pose.gaze[1])}})
   return calls
 }
 
 /** The mask's pose: the held expression, else sleep when dim, else the phase's. */
 export const maskOf = (pose: FacePose): FaceExpr => pose.expression ?? (pose.dim ? 'sleep' : MASK_OF[pose.state ?? 'idle'])
+
+/** How far a voice's loudness opens the mouth (§19.21 Mouth: Loudness), at full loudness: the jaw pad's opening — the jaw .85 × .45
+ * ≈ .38, short of the widest the face's own speech opens it (/a/, face-speech.js AFF_CEIL.jaw .42) — and the lower lip's drop (the
+ * depressor at .3 × .45 ≈ .14, under the .55 where it peels the lip off the teeth, face-core.js MOUTH_PEEL). Measured on the face
+ * in the gallery against a syllabic signal: the opening between the lips 3 px shut, 22 px at a quarter, 42 px at a half, 75 px full. */
+export const MOUTH_JAW = 0.45
+export const MOUTH_LIP = 0.3
+
+/** The calls that open the mouth by a voice's loudness (0..1; null: no voice, the pads let go). Only the jaw and the lips' opening:
+ * a loudness carries no phone, so nothing here shapes a consonant or rounds a vowel. Pure; values kept to two places, so a level
+ * that does not move the mouth sends nothing new. */
+export function mouthCalls(level: number | null): FaceCall[] {
+  const l = level === null || !Number.isFinite(level) ? 0 : Math.max(0, Math.min(1, level))
+  const two = (x: number) => Math.round(x * 100) / 100
+  return [{apply: {type: 'pad', name: 'jaw', x: 0, y: two(l * MOUTH_JAW)}}, {apply: {type: 'pad', name: 'lowerFace', x: two(l * MOUTH_LIP), y: 0}}]
+}
+
+/** Whether the mouth follows the voice: while the agent answers aloud — answering, its mouth waiting for a voice (`speaking: false`). */
+export const mouthFollowsVoice = (pose: FacePose): boolean => !pose.dim && pose.state === 'answering' && pose.speaking === false
+
+/** While the mouth follows the voice, the voice's loudness (faceVoice.ts, the bus the player fills each frame) moves it; when the
+ * voice stops, or the face leaves that pose, the pads let go and the face's own springs close the mouth. */
+function useFaceMouth(face: {readonly current: FaceSurface | null}, follows: boolean): void {
+  useEffect(() => {
+    if (!follows) return
+    let sent = ''
+    const put = (level: VoiceLevel) => {
+      const surface = face.current
+      if (!surface) return
+      const calls = mouthCalls(level), key = JSON.stringify(calls)
+      if (key === sent) return
+      sent = key
+      run(surface, calls)
+    }
+    put(voiceLevel())
+    const off = subscribeVoiceLevel(put)
+    return () => { off(); if (face.current) run(face.current, mouthCalls(null)) }
+  }, [follows])
+}
 
 /** The face's bounded surface as the page gives it (face-speech.js). */
 interface FaceSurface {
@@ -124,17 +181,19 @@ export interface FaceStageProps extends FacePose {
   readonly interactive?: boolean
   /** The face page (default FACE_PAGE). */
   readonly src?: string
+  /** Draw only the still mask, in the pose; the live face is not loaded (a second face on a screen that already has one). */
+  readonly still?: boolean
   readonly className?: string
   readonly style?: CSSProperties
 }
 
 /** The face, filling the box it is given: live where it stands, the mask in the same pose until then or instead. */
-export const FaceStage = memo(function FaceStage({label, interactive, src = FACE_PAGE, className, style, ...pose}: FaceStageProps) {
+export const FaceStage = memo(function FaceStage({label, interactive, src = FACE_PAGE, still, className, style, ...pose}: FaceStageProps) {
   const frame = useRef<HTMLIFrameElement>(null)
   const face = useRef<FaceSurface | null>(null)
   // off: not mounted (the server, the first draw); loading; live; failed. The frame is drawn once mounted, behind the mask.
   const [stand, setStand] = useState<'off' | 'loading' | 'shown' | 'failed'>('off')
-  const calls = useMemo(() => faceCalls(pose), [pose.state, pose.expression, pose.affect?.[0], pose.affect?.[1], pose.speaking, pose.dim])
+  const calls = useMemo(() => faceCalls(pose), [pose.state, pose.expression, pose.emotion, pose.affect?.[0], pose.affect?.[1], pose.gaze?.[0], pose.gaze?.[1], pose.speaking, pose.dim])
   const key = JSON.stringify(calls)
   const plan = useRef({calls, key})
   plan.current = {calls, key}
@@ -142,7 +201,7 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
   const applied = useRef<string | null>(null)
   const putInPose = (found: FaceSurface) => { if (applied.current !== plan.current.key) { run(found, plan.current.calls); applied.current = plan.current.key } }
 
-  useEffect(() => { setStand('loading') }, [src])
+  useEffect(() => { setStand(still ? 'failed' : 'loading') }, [src, still])
   useEffect(() => {
     if (stand !== 'loading') return
     const late = setTimeout(() => setStand(was => (was === 'loading' ? 'failed' : was)), FACE_PATIENCE_MS)
@@ -150,6 +209,16 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
   }, [stand])
   // Each new pose goes to the standing face at once; the face's springs carry it there.
   useEffect(() => { if (stand === 'shown' && face.current) putInPose(face.current) }, [key, stand])
+  // A gesture is made once for each count the host raises, and not at all for the count the face has already seen.
+  const gestured = useRef<number | null>(null)
+  useEffect(() => {
+    const g = pose.gesture
+    if (stand !== 'shown' || !face.current || !g || pose.dim) return
+    if (gestured.current === null) { gestured.current = g.n; return }
+    if (gestured.current !== g.n) { gestured.current = g.n; run(face.current, [{apply: {type: 'gesture', name: g.name}}]) }
+  }, [pose.gesture?.n, pose.gesture?.name, stand, pose.dim])
+  // Answering aloud, the voice's loudness moves the mouth.
+  useFaceMouth(face, stand === 'shown' && mouthFollowsVoice(pose))
 
   // The face takes its pose before it is shown, so it is never seen arriving from the rig's own rest.
   const onLoad = () => {
@@ -166,7 +235,7 @@ export const FaceStage = memo(function FaceStage({label, interactive, src = FACE
   return <div className={['face-stage', className].filter(Boolean).join(' ')} style={style} data-face={live ? 'live' : 'mask'} data-dim={pose.dim ? 'true' : undefined}
     role="img" aria-label={label}>
     {!live && <div className="face-stage-mask" aria-hidden="true" dangerouslySetInnerHTML={{__html: mask}} />}
-    {(stand === 'loading' || live) && <iframe ref={frame} className="face-stage-frame" src={src} title={label ?? 'Face'} aria-hidden="true" tabIndex={-1}
+    {!still && (stand === 'loading' || live) && <iframe ref={frame} className="face-stage-frame" src={src} title={label ?? 'Face'} aria-hidden="true" tabIndex={-1}
       sandbox="allow-scripts allow-same-origin" referrerPolicy="no-referrer" onLoad={onLoad} onError={() => setStand('failed')}
       data-interactive={interactive ? 'true' : undefined} />}
   </div>

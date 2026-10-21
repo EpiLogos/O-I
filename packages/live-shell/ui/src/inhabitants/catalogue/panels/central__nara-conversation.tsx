@@ -14,17 +14,26 @@
 //            is its size when `text` shows only the start of it (else the size of `text`).
 //   sources  JSON [{n, name, tag, at, lines: [{n, t, hit?}]}]   what the answer cites, each with the lines around its line.
 //   document, entry, state (idle · reading · answering), context (bytes of identity and Expression the turn carries), resume.
+//   hears, speaks (on · off), voice (quiet · listening · speaking), heard (your words, once the owner has transcribed them, until they
+//   are sent): the voice the owner holds.
+//   The views ask for `hears` and `speaks`; the owner answers with them, and with `voice` and `heard`.
+// The view's own keys, held by the host for the session and never sent to an owner: `chat` (on · off: the conversation beside the
+// face), the face's dynamics `emotion`, `feeling.v` and `feeling.a` (valence and arousal, −1..1), `gaze.x` and `gaze.y` (−1..1),
+// `gesture` (a name) and `do` (a count the view raises to make the gesture once).
 // The actions set their own keys: `sent` (the composer), `accept` and `decline` (the proposal). A key the owner does not report is
 // absent; the views then draw "—" and name the missing reading in words.
 // The face: opened — Whole (in the pool, expanded, under the material in its window), Full in a pane — the agent shows its whole
-// face, live: the face rig's own face (agent/FaceStage.tsx, public/face, scripts/sync-face.mjs), at rest when idle, focused on the
-// packet while it reads, speaking while it answers, asleep while nothing is bound. Folded, Compact, the widget and each row of the
-// exchange keep the small mask: they are icons.
+// face, live: the face rig's own face (agent/FaceStage.tsx, public/face, scripts/sync-face.mjs), at rest when idle, attending while
+// you speak, focused on the packet while it reads, speaking while it answers, asleep while nothing is bound. Folded, Compact, the
+// widget and each row of the exchange keep the small mask: they are icons. Full is mostly the face: no header, three marks (hears,
+// speaks, chat), your words and its words under the face as they are heard and said, and, at the right and optional, the
+// conversation. What the pane would say in a header is in the rack (Whole, expanded or under the pane in its window), whose second
+// page holds the face's dynamics.
 import {memo, useMemo, type CSSProperties} from 'react'
-import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, type LightState, type Option} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Pad, Panel, Radio, Readout, Section, Tile, Toggle, type LightState, type Option} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
-import {FaceStage, useFaceColours} from '../../../agent/FaceStage'
-import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {FACE_EMOTIONS, FACE_GESTURES, FaceStage, useFaceColours, type FaceEmotion, type FaceGesture, type FacePose, type FaceState} from '../../../agent/FaceStage'
+import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__nara-conversation.css'
 
 type V = ViewProps['v']
@@ -207,8 +216,11 @@ function landingOf(p: ViewProps, rows: readonly Row[] | undefined): Landing {
 const LANDING_WORD: Readonly<Record<Exclude<Landing, 'none'>, string>> = {chat: 'off', waits: 'waits', kept: 'kept', declined: 'declined'}
 const landingWord = (where: Landing) => (where === 'none' ? undefined : LANDING_WORD[where])
 
-/** The owner reports the agent at work: reading the packet or answering. The head's light carries its ring while it does. */
-const atWork = (p: ViewProps) => { const ph = phase(p.v); return lampOf(p) === 'lit' && (ph === 'reading' || ph === 'answering') }
+/** What the voice does now, as the owner reports it; undefined when it reports none. */
+const voiceOf = (v: V): 'quiet' | 'listening' | 'speaking' | undefined => { const x = strOf(v, 'voice'); return x === 'quiet' || x === 'listening' || x === 'speaking' ? x : undefined }
+const onOf = (v: V, key: string): boolean | undefined => { const x = strOf(v, key); return x === 'on' ? true : x === 'off' ? false : undefined }
+/** The owner reports the agent at work: reading the packet, answering, hearing you or speaking. The head's light carries its ring while it does. */
+const atWork = (p: ViewProps) => { const ph = phase(p.v), vo = voiceOf(p.v); return lampOf(p) === 'lit' && (ph === 'reading' || ph === 'answering' || vo === 'listening' || vo === 'speaking') }
 const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), onFold: p.nav.fold, onFull: p.nav.full,
   busy: atWork(p)})
 const ask = (p: ViewProps, said: string) => {
@@ -220,13 +232,29 @@ const ask = (p: ViewProps, said: string) => {
 // ---------------------------------------------------------------- the face
 
 const EXPR: Readonly<Record<Phase, string>> = {idle: 'neutral', reading: 'focus', answering: 'speak'}
-/** The agent's face, live and whole, where the device is opened: the face rig's own face, at rest when idle, focused on the packet
- * while it reads, speaking while it answers, asleep while no conversation is bound (agent/FaceStage.tsx). Until it stands, and
+const unitOf = (v: V, key: string) => Math.max(-1, Math.min(1, numOf(v, key) ?? 0))
+/** The face's pose from the values: the state it is in (hearing you, speaking, reading, at rest, or asleep while nothing is bound),
+ * then the dynamics you set — the emotion, the feeling, where it looks, a gesture — which stand while the agent is at rest and which
+ * its own states move the face over. */
+export function poseOf(p: ViewProps): FacePose {
+  const v = p.v, lit = lampOf(p) === 'lit', ph = phase(v), vo = voiceOf(v)
+  const state: FaceState = !lit ? 'idle' : vo === 'listening' ? 'listening' : vo === 'speaking' ? 'answering' : ph ?? 'idle'
+  const emotion = strOf(v, 'emotion') as FaceEmotion | undefined, gesture = strOf(v, 'gesture') as FaceGesture | undefined
+  const feeling: [number, number] = [unitOf(v, 'feeling.v'), unitOf(v, 'feeling.a')], gaze: [number, number] = [unitOf(v, 'gaze.x'), unitOf(v, 'gaze.y')]
+  return {
+    state, dim: !lit,
+    // With Speaks on, the mouth waits for the voice; otherwise the face moves its mouth to the words itself.
+    speaking: onOf(v, 'speaks') ? false : undefined,
+    ...(emotion && emotion !== 'neutral' && FACE_EMOTIONS.includes(emotion) ? {emotion} : {}),
+    ...(feeling[0] || feeling[1] ? {affect: feeling} : {}),
+    ...(gaze[0] || gaze[1] ? {gaze} : {}),
+    ...(gesture && FACE_GESTURES.includes(gesture) ? {gesture: {name: gesture, n: numOf(v, 'do') ?? 0}} : {}),
+  }
+}
+/** The agent's face, live and whole, where the device is opened: the face rig's own face (agent/FaceStage.tsx). Until it stands, and
  * wherever it cannot, the mask in the same pose. */
-function LiveFace({p, className, style}: {p: ViewProps; className?: string; style?: CSSProperties}) {
-  const lit = lampOf(p) === 'lit', ph = phase(p.v)
-  return <FaceStage className={className} style={style} state={lit ? ph ?? 'idle' : 'idle'} dim={!lit}
-    label={`${agentName(p.v) ?? 'The agent'}: ${stateWord(p) ?? 'no reading'}`} />
+function LiveFace({p, className, style, still}: {p: ViewProps; className?: string; style?: CSSProperties; still?: boolean}) {
+  return <FaceStage className={className} style={style} still={still} {...poseOf(p)} label={`${agentName(p.v) ?? 'The agent'}: ${stateWord(p) ?? 'no reading'}`} />
 }
 /** The agent's small face, the icon (the chain, the rail, each row): the mask at rest when idle, focused while it reads, speaking
  * while it answers. */
@@ -356,7 +384,7 @@ function AnswerWell({p, w, h, size}: {p: ViewProps; w: number; h: number; size: 
   // The face over the well: the well's border (1 px) and then its own pixels, 1:1.
   return <div className="an-well">
     {well}
-    <LiveFace p={p} className="an-well-face" style={{left: FACE_BOX.x + 1, top: FACE_BOX.y + 1, width: FACE_BOX.w, height: FACE_BOX.h}} />
+    <LiveFace p={p} still={p.frame === 'window'} className="an-well-face" style={{left: FACE_BOX.x + 1, top: FACE_BOX.y + 1, width: FACE_BOX.w, height: FACE_BOX.h}} />
   </div>
 }
 
@@ -375,6 +403,52 @@ const effortDial = (p: ViewProps) => {
     onChange={i => p.set('effort', EFFORTS[Math.round(i)]!)} />
 }
 
+const voiceToggle = (p: ViewProps, key: 'hears' | 'speaks', label: string, does: string) => {
+  const now = onOf(p.v, key), s = st(p, key)
+  return <Toggle {...s} label={label} does={does} on={now === true} unknown={now === undefined} disabled={s.disabled ?? (lampOf(p) === 'lit' ? undefined : 'The conversation is not bound.')}
+    onChange={x => p.set(key, x ? 'on' : 'off')} />
+}
+const chatToggle = (p: ViewProps) => <Toggle {...st(p, 'chat')} label="Chat" does="The conversation beside the face in the pane. Off, the face has the whole pane." on={strOf(p.v, 'chat') !== 'off'} onChange={x => p.set('chat', x ? 'on' : 'off')} />
+
+const signed2 = (x: number) => `${x > 0 ? '+' : ''}${x.toFixed(2)}`
+const UNIT = {min: -1, max: 1} as const
+const EMOTION_OPTIONS: readonly Option<string>[] = FACE_EMOTIONS.map(e => ({value: e, label: e[0]!.toUpperCase() + e.slice(1)}))
+const GESTURE_OPTIONS: readonly Option<string>[] = FACE_GESTURES.map(g => ({value: g, label: g[0]!.toUpperCase() + g.slice(1)}))
+/** The Face page: the feeling and where it looks on a pad each, the emotion and the gesture on a menu each, and the face itself to
+ * watch them on. They stand on the face while the agent is at rest; its own states move the face over them. */
+function FacePage({p}: {p: ViewProps}) {
+  const v = p.v, lit = lampOf(p) === 'lit', put = (key: string) => (x: number) => p.set(key, Math.round(x * 100) / 100)
+  const num = (key: string) => numOf(v, key) ?? 0
+  return <>
+    <Band>
+      <Section width={FACE_PREVIEW.w + 12}>
+        <div className="an-preview" style={{width: FACE_PREVIEW.w, height: FACE_PREVIEW.h}} data-i="The face|The agent's face, as the dynamics set here and its own state move it.">
+          <LiveFace p={p} still={p.frame === 'window'} className="an-preview-face" />
+        </div>
+      </Section>
+      <Section label="Feeling" width={FACE_PAD + 12}>
+        <Pad w={FACE_PAD} h={146} label="Feeling" does="Drag across for the mood, from unpleasant to pleasant, and up for the energy, from calm to stirred up."
+          x={{...st(p, 'feeling.v'), label: 'Mood', value: num('feeling.v'), def: 0, scale: UNIT, format: signed2, onChange: put('feeling.v')}}
+          y={{...st(p, 'feeling.a'), label: 'Energy', value: num('feeling.a'), def: 0, scale: UNIT, format: signed2, onChange: put('feeling.a')}} />
+      </Section>
+      <Section label="Eyes" width={FACE_PAD + 12}>
+        <Pad w={FACE_PAD} h={146} label="Eyes" does="Drag to where the face looks: across, and up."
+          x={{...st(p, 'gaze.x'), label: 'Across', value: num('gaze.x'), def: 0, scale: UNIT, format: signed2, onChange: put('gaze.x')}}
+          y={{...st(p, 'gaze.y'), label: 'Up', value: num('gaze.y'), def: 0, scale: UNIT, format: signed2, onChange: put('gaze.y')}} />
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Manner" grow>
+        <Chooser {...st(p, 'emotion')} label="Emotion" does="The feeling the face holds while the agent is at rest." value={strOf(v, 'emotion') ?? 'neutral'} options={EMOTION_OPTIONS} onChange={x => p.set('emotion', x)} />
+        <Chooser {...st(p, 'gesture')} label="Gesture" does="A movement the face makes once when you press Do." value={strOf(v, 'gesture') ?? 'nod'} options={GESTURE_OPTIONS} onChange={x => p.set('gesture', x)} />
+        <Action label="Do" does="The face makes the gesture once." disabled={lit ? undefined : 'The face sleeps while no conversation is bound.'} onPress={() => p.set('do', (numOf(v, 'do') ?? 0) + 1)} />
+      </Section>
+    </Band>
+  </>
+}
+const FACE_PREVIEW = {w: 100, h: 146} as const, FACE_PAD = 118
+const PAGES = [{id: 'answer', label: 'Answer'}, {id: 'face', label: 'Face'}] as const
+
 // ---------------------------------------------------------------- the exchange, in the pane
 
 /** The packet's items as chips, with the size of each in the turn. */
@@ -389,10 +463,25 @@ function Packet({v}: {v: V}) {
 
 const note = (key: string | number, words: string) => <div key={key} className="an-row an-row--note"><span className="an-av an-av--tool" aria-hidden="true" /><p className="an-note">{words}</p></div>
 
-function AnswerPane({p}: {p: ViewProps}) {
+/** The three marks at the stage's corners: they open the voice in, the voice out and the conversation. Drawn here, a line each. */
+const MARK = {
+  hears: <><rect x="6" y="2.5" width="4" height="7" rx="2" /><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2" /></>,
+  speaks: <><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5z" /><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.6a6 6 0 0 1 0 8.8" /></>,
+  chat: <path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" />,
+} as const
+function StageMark({kind, on, label, does, standing, onPress}: {kind: keyof typeof MARK; on: boolean | undefined; label: string; does: string; standing: {disabled?: string}; onPress?: () => void}) {
+  return <button type="button" className="an-mark" data-kind={kind} aria-pressed={on === undefined ? undefined : on} aria-label={label} disabled={!onPress || !!standing.disabled}
+    data-i={`${label}|${[does, standing.disabled].filter(Boolean).join(' ')}`} onClick={onPress}>
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">{MARK[kind]}</svg>
+  </button>
+}
+
+/** The conversation, small, at the right of the face: the exchange, a proposal's two answers, the line to type in. No header: what
+ * the pane would say about itself is in the rack. */
+function Conversation({p}: {p: ViewProps}) {
   const {v, set} = p
   const lamp = lampOf(p), lit = lamp === 'lit', ph = phase(v), answering = ph === 'answering'
-  const all = rowsOf(v), rows = all ?? [], packet = packetOf(v), turn = turnBytes(v), name = agentName(v), who = name ?? NONE
+  const all = rowsOf(v), rows = all ?? [], packet = packetOf(v), name = agentName(v), who = name ?? NONE
   const sources = sourcesOf(v), open = Number(strOf(v, 'source')) || 0, source = sources?.find(s => s.n === open)
   const where = landingOf(p, all)
   const lastAgent = rows.map(r => r.kind).lastIndexOf('agent'), firstYou = rows.findIndex(r => r.kind === 'you')
@@ -438,16 +527,8 @@ function AnswerPane({p}: {p: ViewProps}) {
   const working = (expr: string, words: string) => <div className="an-row"><span className="an-av" data-agent="true"><Avatar expr={expr} /></span>
     <div className="an-body"><span className="an-who" data-agent="true">{who}</span><p className="an-work"><i />{words}</p></div></div>
   const reads = `${who} reads the packet${packet ? ` · ${packet.length} item${packet.length === 1 ? '' : 's'} · ${kb(packetBytes(v) ?? 0)}` : ''}`
-  return <div className="an-pane">
-    <div className="an-pane-head" aria-label="The answering agent">
-      <b>{who}</b><span>{shown(v, 'document')}</span><span>{standingWord(p) ?? NONE}</span><span>effort {shown(v, 'effort')}</span>
-      <span>writes {writesLabel(v) ?? NONE}</span><span data-state={ph === undefined || ph === 'idle' ? undefined : 'busy'}>{stateWord(p) ?? NONE}</span>
-    </div>
-    <div className="an-pane-main">
-    {/* The agent's whole face beside the exchange. In its own window the face stands once, in the well under the exchange. */}
-    {p.frame !== 'window' && <div className="an-pane-face"><LiveFace p={p} className="an-pane-stage" /></div>}
+  return <aside className="an-chat" aria-label="Conversation">
     <div className="an-stream" role="log" aria-label="Exchange">
-      <div className="an-task"><span>Answer to entry {shown(v, 'entry')}</span><i /><small>{turn === undefined ? NONE : kb(turn)} of 256 KB</small></div>
       {lit && <>
         {firstYou < 0 && <div className="an-row"><span className="an-av an-av--tool" aria-hidden="true" /><div className="an-body"><span className="an-who">packet</span><Packet v={v} /></div></div>}
         {all === undefined && note('thread', 'No reading of the thread.')}
@@ -458,13 +539,34 @@ function AnswerPane({p}: {p: ViewProps}) {
       </>}
       {!lit && note('unlit', lamp === 'unknown' ? 'The binding has not been read. The owner has not said.' : 'No subject is selected. The conversation binds once you select one.')}
     </div>
-    </div>
     <div className="an-composer">
       <input aria-label="Message" disabled={!lit || !!send.disabled} placeholder={!lit ? 'Bind a conversation to ask' : name ? `Ask ${name}` : 'Ask the agent'} value={draft}
-        data-i={`Composer|${[said('Type a question and press Enter. The agent reads the packet and answers in this pane.', send.disabled), send.refused ? `The owner refused: ${send.refused}` : undefined].filter(Boolean).join(' ')}`}
+        data-i={`Composer|${[said('Type a question and press Enter. The agent reads the packet and answers here.', send.disabled), send.refused ? `The owner refused: ${send.refused}` : undefined].filter(Boolean).join(' ')}`}
         onChange={e => set('draft', e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ask(p, draft) } }} />
-      <small>ask</small>
     </div>
+  </aside>
+}
+
+/** Full: mostly the face. Its three marks stand at its corners; your words, as they are heard, and the agent's, as they are said,
+ * stand under it while the conversation is closed (open, the conversation holds them). The conversation is small, at the right. */
+function AnswerPane({p}: {p: ViewProps}) {
+  const {v, set} = p
+  const lit = lampOf(p) === 'lit', ph = phase(v), vo = voiceOf(v), chat = strOf(v, 'chat') !== 'off'
+  const hears = onOf(v, 'hears'), speaks = onOf(v, 'speaks'), hs = st(p, 'hears'), ss = st(p, 'speaks'), cs = st(p, 'chat')
+  const heard = strOf(v, 'heard')?.trim(), rows = rowsOf(v) ?? [], lastAgent = [...rows].reverse().find(r => r.kind === 'agent')
+  const saying = !chat && lastAgent && (ph === 'answering' || vo === 'speaking') ? lastAgent.text : undefined
+  return <div className="an-pane" data-chat={chat ? 'on' : 'off'}>
+    <div className="an-stage">
+      <LiveFace p={p} className="an-stage-face" />
+      {(heard || saying) && <p className="an-subtitle" aria-live="polite">{heard && <span data-who="you">{heard}</span>}{saying && <span data-who="agent">{saying}</span>}</p>}
+      <StageMark kind="hears" on={hears} label="Hears" does={hears ? 'The microphone is open: what you say is written and sent when you stop. Press to close it.' : 'Open the microphone: what you say is written and sent when you stop.'}
+        standing={hs} onPress={hs.disabled || !lit ? undefined : () => set('hears', hears ? 'off' : 'on')} />
+      <StageMark kind="speaks" on={speaks} label="Speaks" does={speaks ? 'The answer is spoken, and the face moves its mouth with the sound. Press to stop speaking.' : 'Speak the answer aloud, with the face moving its mouth with the sound.'}
+        standing={ss} onPress={ss.disabled || !lit ? undefined : () => set('speaks', speaks ? 'off' : 'on')} />
+      <StageMark kind="chat" on={chat} label="Chat" does={chat ? 'Close the conversation: the face has the whole pane.' : 'Open the conversation beside the face.'}
+        standing={cs} onPress={() => set('chat', chat ? 'off' : 'on')} />
+    </div>
+    {chat && <Conversation p={p} />}
   </div>
 }
 
@@ -484,20 +586,28 @@ export const design: DesignedDevice = {
   id: 'central:nara-conversation',
   title: 'Answer',
   kind: 'instrument',
+  firstPage: 'answer',
   defaults: {
     light: 'lit', agent: 'nara', answerAs: 'new', writes: 'propose', effort: 'high', draft: '', source: '1',
+    hears: 'off', speaks: 'off',
+    // The view's own: the conversation beside the face, and the face's dynamics (they stand while the agent is at rest).
+    chat: 'on', emotion: 'neutral', 'feeling.v': 0, 'feeling.a': 0, 'gaze.x': 0, 'gaze.y': 0, gesture: 'nod', do: 0,
     // Readings: what the owners report, never set from here. `context` is the bytes of identity and Expression the turn carries.
-    state: 'idle', context: 38912, document: DOC, entry: 7, resume: false,
+    state: 'idle', voice: 'quiet', heard: '', context: 38912, document: DOC, entry: 7, resume: false,
     // The owner's material: the roster, the packet, the exchange and what it cites (JSON).
     agents: JSON.stringify(SAMPLE_AGENTS), packet: JSON.stringify(SAMPLE_PACKET), thread: sampleThread('proposal'), sources: JSON.stringify(SAMPLE_SOURCES),
   },
   fixtures: {
     'Answered, waiting': {},
     Answering: {state: 'answering', thread: partialThread(), sources: undefined},
+    'Hearing you, face alone': {chat: 'off', hears: 'on', voice: 'listening', heard: ''},
+    'Words written, sending': {chat: 'off', hears: 'on', voice: 'listening', heard: 'What does this entry ask of me'},
+    'Speaking, face alone': {chat: 'off', hears: 'on', speaks: 'on', state: 'answering', voice: 'speaking', thread: partialThread(), sources: undefined},
+    'Wry, looking aside': {emotion: 'curious', 'feeling.v': 0.4, 'feeling.a': 0.3, 'gaze.x': -0.5, 'gaze.y': 0.2},
     'Replace and write': {answerAs: 'replace', writes: 'write', thread: sampleThread('written', true)},
     'Not bound': {light: 'dark', context: undefined},
-    'No readings': Object.fromEntries(['light', 'agent', 'answerAs', 'writes', 'effort', 'draft', 'sent', 'source', 'state', 'context', 'document', 'entry', 'resume',
-      'agents', 'packet', 'thread', 'sources'].map(k => [k, undefined])),
+    'No readings': Object.fromEntries(['light', 'agent', 'answerAs', 'writes', 'effort', 'draft', 'sent', 'source', 'state', 'hears', 'speaks', 'voice', 'heard', 'context', 'document',
+      'entry', 'resume', 'agents', 'packet', 'thread', 'sources'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="Answer" light={lampOf(p)} readings={[agentName(p.v) ?? NONE, writesLabel(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -516,8 +626,11 @@ export const design: DesignedDevice = {
 
   whole: p => {
     const where = landingOf(p, rowsOf(p.v)), ph = phase(p.v), resume = boolOf(p.v, 'resume'), turn = turnBytes(p.v), size = packetBytes(p.v), l = lightOf(p)
-    // The face takes the first band's room beside the agent's own settings; the answer's two choices go together in the second.
-    return <Panel title="Answer" view="whole" {...head(p)}>
+    const page = p.page === 'face' ? 'face' : 'answer'
+    // The face takes the first band's room beside the agent's own settings; the answer's two choices go together in the second; the voice
+    // and the conversation's toggles stand with the binding. The second page is the face's dynamics.
+    return <Panel title="Answer" view="whole" {...head(p)} pages={PAGES} page={page} onPage={p.setPage}>
+      {page === 'face' ? <FacePage p={p} /> : <>
       <Band>
         <Section width={WHOLE_WELL.w + 12}>
           <AnswerWell p={p} w={WHOLE_WELL.w} h={WHOLE_WELL.h} size="whole" />
@@ -526,6 +639,8 @@ export const design: DesignedDevice = {
           {agentChooser(p)}
           {effortDial(p)}
           <Readout label="role" does="The role the owner binds for this agent. A roster agent has none yet." value={roleOf(p.v)} />
+          <Readout label="standing" does="Whether the conversation is bound to a person and an Expression." value={standingWord(p)} tone={l === 'lit' ? 'green' : undefined} />
+          <Readout label="resume" does="Whether the owner needs the session resumed before it answers." value={resume === undefined ? undefined : resume ? 'yes' : 'no'} />
         </Section>
       </Band>
       <Band>
@@ -541,11 +656,13 @@ export const design: DesignedDevice = {
           <Readout label="packet" does="The size of the packet the agent receives." value={size === undefined ? undefined : kb(size)} tone="value" />
           <Readout label="turn" does="The whole turn against the native budget of 256 KB: the packet and the identity context." value={turn === undefined ? undefined : kb(turn)} />
         </Section>
-        <Section label="Binding" grow>
-          <Readout label="standing" does="Whether the conversation is bound to a person and an Expression." value={standingWord(p)} tone={l === 'lit' ? 'green' : undefined} />
-          <Readout label="resume" does="Whether the owner needs the session resumed before it answers." value={resume === undefined ? undefined : resume ? 'yes' : 'no'} />
+        <Section label="Voice" grow>
+          {voiceToggle(p, 'hears', 'Hears', 'Open the microphone: what you say is written and sent when you stop.')}
+          {voiceToggle(p, 'speaks', 'Speaks', 'Speak the answer aloud, with the face moving its mouth with the sound.')}
+          {chatToggle(p)}
         </Section>
       </Band>
+      </>}
     </Panel>
   },
 
@@ -553,7 +670,7 @@ export const design: DesignedDevice = {
 
   widget: p => {
     const send = st(p, 'sent'), ph = phase(p.v), name = agentName(p.v), draft = strOf(p.v, 'draft') ?? '', says = 'Type a question and press Enter. The agent reads the packet and answers.'
-    return <Tile title={`Answer · ${name ?? NONE}`} light={lampOf(p)} span={2} onFull={p.nav.full}>
+    return <Tile title={`Answer · ${name ?? NONE}`} light={lampOf(p)} busy={atWork(p)} span={2} onFull={p.nav.full}>
       <AnswerWell p={p} w={104} h={100} size="mini" />
       <div className="an-tile-side">
         <p className="an-last" aria-live="polite"><Last p={p} /></p>
