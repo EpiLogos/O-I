@@ -83,6 +83,10 @@ From MAP's build lane:
    - **Unverified on the native app** (headless captures only): the sky lens end to end on a real sky layer (the harness has none; the
      flight follows the controller's own `ctl.skyCam.busy`, bounded at 12 s, and from the Graph or the ground flies at once), the anchor
      stub's look, the dotted and uncertainty rings drawn in CSS. The native candidate's screen pass is owed.
+   - **Where it ended and what looks lesser than the Earth** (21 Oct; ticket §10 and `evidence/procedural-body-20261020/after/`): the generated body
+     stands inside the Earth's own numbers on every clause, and crisp at a region view. By eye the open sea is a flat dark navy at a world or region
+     view (the rim and the lines show on the equirect and in a tile), past zoom 8 the sharpness is grain, and forest grades dark in the app's palette.
+     Look at a world, a region and a place of a generated body beside the Earth on the native app and say which is still the lesser.
 9. **Expressions in full** (owner, 20 Oct: the app's own UI still draws inside the field pane; the Studio's Full holds every device;
    the rack's face is the toolbelt). The manual's §20.1 (Pane view, Device view, Where everything is), §20.3 and §16.3's rack rule
    say where each of the app's functions lives; the catalogue's Studio draws its Full as that suite, through the rack's `member`
