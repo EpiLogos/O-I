@@ -141,6 +141,16 @@ export class OwnerReadingEntry<T> {
     this.keep({value, readAtUnixMs, epoch})
   }
 
+  /** The kernel said the owner's sources moved: the answer may no longer be the owner's. With readers it is asked again behind the
+   * standing answer (one read in flight, one following, however many notices arrive); with none it is marked unread, so the next
+   * reader draws it carried and has the owner asked. A key never read has nothing to retire. */
+  moved(): Promise<void> {
+    const epoch = this.state.epoch
+    if (epoch === null || this.state.status === 'reading') return Promise.resolve()
+    if (this.listeners.size === 0) { this.unread = true; return Promise.resolve() }
+    return this.askAfter(epoch)
+  }
+
   /** The age of the standing answer at `at`, or null when none stands. */
   ageAt(at: number): number | null {
     return this.state.readAtUnixMs == null ? null : at - this.state.readAtUnixMs
@@ -189,6 +199,8 @@ export interface OwnerReadings {
   entry<T>(key: string, read: OwnerRead<T>): OwnerReadingEntry<T>
   /** Every held entry (a test's census; a notice that refreshes all of one family). */
   entries(): OwnerReadingEntry<unknown>[]
+  /** The kernel's notice that owner sources moved: every held answer is marked unread, and those with live readers are asked again. */
+  moved(): Promise<void>
 }
 
 /** A registry of entries. The window has one (`ownerReadings`); a test makes its own. `kept` holds the last answers across a
@@ -223,6 +235,7 @@ export function createOwnerReadings(now: () => number = Date.now, kept?: KeptRea
       return entry
     },
     entries: () => [...held.values()],
+    moved: async () => { await Promise.all([...held.values()].map(entry => entry.moved())) },
   }
 }
 

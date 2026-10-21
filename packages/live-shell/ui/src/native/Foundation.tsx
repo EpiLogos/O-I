@@ -1,3 +1,4 @@
+import {windowReadingsChanged} from '../owners/readingsChanged'
 import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {KernelProvider} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
 import {VisualsProvider} from '../../../../../desktop/cradle/src/visuals/ParticleExpression'
@@ -116,6 +117,7 @@ export function NativeFoundation({children}: {children: ReactNode}) {
   const receive = useCallback((receipts: KernelReceipt[]) => {
     if (!live.current) return
     currentWorkspace.current.publishReceipts(receipts)
+    windowReadingsChanged.receive(receipts)
     const changed = new Set(receipts.filter(row => row.event === 'file_changed' && typeof row.path === 'string').map(row => row.path as string))
     for (const path of changed) invalidateSet(path)
   }, [])
