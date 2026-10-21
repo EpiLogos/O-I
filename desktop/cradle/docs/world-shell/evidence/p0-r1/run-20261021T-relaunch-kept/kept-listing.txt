@@ -1,0 +1,44 @@
+Header (kept-readings.jsonl after launch 2; values left out):
+  format oi.kept-readings/v1 | since 291017466 | beacon kept-readings-38749.beacon
+  kernel walk-bridge 91346576 | volume F18352DB-9039-4068-9822-63DF1072DE0B
+  owners /Users/admin/.local/bin/aikit, /Users/admin/.local/bin/ctrl, /Users/admin/.local/bin/oi
+
+bytes  clock  scopes                         key
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/development-entry-root-pi-20261008:"/Users/admin/Central/Work/O-I":"/Users/admin/.loc
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/direct-5c117063862f85c2c40d120071fb6c2142f79c4b97d21ecdf5772d84685dfecd:"/Users/admin
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/direct-7209029b48547ec6d1cf29cd1f70bf60438b774c79a0cbf6edc075aaf19cd20e:"/Users/admin
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/direct-ac1a89022f8b9f9938b868dbc47e3bec4ddd86365996bd3f59e7889592ef360f:"/Users/admin
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/direct-e0aa37dcc939d98bfe3ca871bd4154ed8587a9b1c944138caac44de12e3d93cb:"/Users/admin
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/fx-aletheia-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/fx-anima-20260926-201904:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aik
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/o-i-chat-1790087010-4a70:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aik
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/o-i-chat-1790095416-e090:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aik
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/o-i-chat-1791392656-7658:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aik
+     4 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/o-i-chat-1791392815-b898:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aik
+   190 none   root,project:O-I               central:agent-profile.roster:{"project":"O-I","scope":"project"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+   194 none   root,project:O-I               central:projectcentral.source.returns:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+   383 none   root                           factory:locate-row:/Users/admin/.local/bin/factory:None:/Users/admin/Central
+   449 none   project:personal               factory:locate-row:/Users/admin/.local/bin/factory:Some("personal"):/Users/admin/Central/Work/personal
+   449 none   project:projects               factory:locate-row:/Users/admin/.local/bin/factory:Some("projects"):/Users/admin/Central/Work/projects
+   497 none   project:Point-Cloud-Demo       factory:locate-row:/Users/admin/.local/bin/factory:Some("Point-Cloud-Demo"):/Users/admin/Central/Work/Point-Cloud-Demo
+   634 none   root,project:O-I               central:projectcentral.inspect:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+  1089 none   root                           central:central.files.list:{"path":"Control/agents/wiki/returns"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+  1340 none   root,project:O-I               central:central.world.effective-sources:{"project":"o-i","scope":"root","world_ref":"control:root"}:"/Users/admin/.local
+  1433 none   root                           central:central.files.list:{"path":"Control/agents/wiki","project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+  1650 none   root,work                      central:central.world.project:{"project":"O-I"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+  3600 none   root,project:O-I               central:central.day.settings.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+  4358 none   root                           central:central.files.list:{"path":"Control/user/flows","project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+  7144 none   root,project:O-I               central:central.wiki.read:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+  8934 none   root,aikit,project:O-I         aikit:encounter:O-I:{"action":"context","agent_session":null,"request":{"operation":"read"}}:"/Users/admin/Central/Work/
+ 10628 none   root                           central:central.files.read:{"location":{"path":"Control/agents/wiki/wiki.json","ref":"central:path:/Users/admin/Central:
+ 20736 none   root,aikit,project:O-I         aikit:encounter-task:agent-session/development-entry-factory-guardian-20261008:"/Users/admin/Central/Work/O-I":"/Users/a
+ 25881 none   root,work                      central:central.world:{"project":"o-i"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+ 46946 none   root,aikit,project:O-I         aikit:session-space-discover:O-I:"/Users/admin/Central/Work/O-I":"/Users/admin/.local/bin/aikit"|None|false
+ 80318 none   root                           central:central.files.read:{"location":{"path":"Control/user/flows/flow-2026-10-07-1350.html","ref":"central:path:/Users
+ 87291 none   root                           central:central.now.thoughts.read-batch:{"include_content":true,"limit":256,"now_refs":["central:now:control:root:015179
+133155 none   project:O-I                    central:central.git.diff:{"from":"HEAD","ignore_whitespace":false,"max_bytes":65536,"max_files":200,"repo_root":"/Users/
+173279 none   root                           central:central.now.list:{}:"/Users/admin/.local/bin/ctrl"|None|None|false
+176817 none   root                           central:agent-profile.roster:{"scope":"root"}:"/Users/admin/.local/bin/ctrl"|None|None|false
+802670 day    root                           central:central.day.read:{"day_ref":null}:"/Users/admin/.local/bin/ctrl"|None|None|false
+802670 day    root                           central:central.day.read:{}:"/Users/admin/.local/bin/ctrl"|None|None|false
+906895 none   root                           central:projectcentral.change.horizon:{}:"/Users/admin/.local/bin/ctrl"|None|None|false

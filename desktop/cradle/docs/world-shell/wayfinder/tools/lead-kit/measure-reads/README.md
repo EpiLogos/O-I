@@ -18,6 +18,13 @@ Run the two revisions back to back with the same installed owners, and keep git 
 the run: they move the change watch. Compare process counts, not wall time, on a loaded machine. `load.mjs` takes Playwright
 and chrome-headless-shell from this machine's paths; change them for another.
 
+A relaunch is measured with `relaunch.sh <tree> <target-dir> <stack-dir> <base-port> [first-s] [second-s]`: it starts the stack,
+loads, stops it and starts it again over the same home, marking each launch in `<stack-dir>/launch-<n>.txt`; split each with
+`split.py`, or count each launch's start-up burst (owner processes within 10 s of its first ask) with `burst.py <stack-dir>...`.
+The second launch's first load is answered from the readings the first one kept (`[kept]` lines in the trace say how many were
+taken back and which change moved the rest). `OI_KEPT_READINGS=off` runs the same stack without keeping, for the before arm; run
+both arms at once, since which devices the shell opens follows shared workspace state that other sessions change.
+
 A read that should be retained can be probed alone: start one bridge, POST `/op`
 `{"op":"now","project":null,"request":{"kind":"list"}}` twice, and the trace shows `miss` then `hit`. Every write that withdrew
 the readings is named in the trace (`[owner] <ms> written <owner> <operation>`, `[read] <ms> *_<file:line> written`).
