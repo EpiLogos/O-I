@@ -400,13 +400,14 @@ impl Watch {
                 if self.inner.rescans.load(Ordering::SeqCst) != *rescans {
                     return false;
                 }
-                let covered = scopes.iter().all(|(scope, _)| self.covers(scope));
-                if !covered {
-                    return stamp.taken.elapsed() < ttl;
-                }
-                scopes
+                let unmoved = scopes
                     .iter()
-                    .all(|(scope, epoch)| self.scope_epoch(scope) == *epoch)
+                    .all(|(scope, epoch)| self.scope_epoch(scope) == *epoch);
+                // A scope the watcher covers only in part (Linux: a project's
+                // ProjectCentral and git refs, not its working tree) still
+                // moves on what is watched; the rest is bounded by time.
+                let covered = scopes.iter().all(|(scope, _)| self.covers(scope));
+                unmoved && (covered || stamp.taken.elapsed() < ttl)
             }
             _ => stamp.taken.elapsed() < ttl,
         }
@@ -1309,12 +1310,18 @@ mod tests {
             .unwrap()
             .insert(Scope::Project("Big".into()));
         let stamp = watch.stamp(&[Scope::Project("Big".into())], Clock::None);
-        let big = roots.central.join("Work/Big/a");
-        watch.ingest(&[big]);
         assert!(!watch.by_epochs(&stamp));
         assert!(
             watch.still(&stamp, Duration::from_secs(60)),
-            "time, not epochs"
+            "unmoved and within its time"
+        );
+        assert!(!watch.still(&stamp, Duration::ZERO), "bounded by time");
+        // What the watcher does see under it (its ProjectCentral, its refs)
+        // still moves it.
+        watch.ingest(&[roots.central.join("Work/Big/ProjectCentral/a.json")]);
+        assert!(
+            !watch.still(&stamp, Duration::from_secs(60)),
+            "a seen change moves an uncovered scope"
         );
         let mut aged = watch.stamp(&[Scope::Root], Clock::Minute);
         assert!(watch.still(&aged, Duration::from_secs(60)));
@@ -1354,7 +1361,7 @@ mod tests {
     fn the_real_watcher_sees_files_under_control_and_work_and_ignores_target() {
         let central = temp("real");
         let aikit = temp("real-aikit");
-        for dir in ["Control/agents", "Work/X/src", "Work/X/target"] {
+        for dir in ["Control/agents", "Work/X/ProjectCentral", "Work/X/target"] {
             std::fs::create_dir_all(central.join(dir)).unwrap();
         }
         let watch = Watch::new();
@@ -1393,7 +1400,9 @@ mod tests {
             watch.still(&before_project, long),
             "the project did not change"
         );
-        std::fs::write(central.join("Work/X/src/m.rs"), "1").unwrap();
+        // Every platform watches a project's ProjectCentral (Linux watches
+        // no working tree).
+        std::fs::write(central.join("Work/X/ProjectCentral/m.json"), "1").unwrap();
         wait_for(Scope::Project("X".into()));
         assert!(!watch.still(&before_project, long));
         let ignored = watch.stamp(&[Scope::Project("X".into())], Clock::None);

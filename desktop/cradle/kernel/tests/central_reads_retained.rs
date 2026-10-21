@@ -74,7 +74,13 @@ fn central_readings_are_retained_until_their_sources_change() {
     let dir = scratch();
     let root = dir.join("central");
     let aikit = dir.join("aikit");
-    for sub in ["Control/agents", "Work/X/src", "Work/Y/src"] {
+    // Project changes are written under ProjectCentral, which every platform
+    // watches (Linux watches no working tree).
+    for sub in [
+        "Control/agents",
+        "Work/X/ProjectCentral",
+        "Work/Y/ProjectCentral",
+    ] {
         fs::create_dir_all(root.join(sub)).unwrap();
     }
     fs::create_dir_all(&aikit).unwrap();
@@ -101,7 +107,7 @@ fn central_readings_are_retained_until_their_sources_change() {
     assert_eq!(starts(&dir, "central.now.list"), 1);
 
     // A change under another project leaves a root reading standing.
-    fs::write(root.join("Work/Y/src/a.rs"), "1").unwrap();
+    fs::write(root.join("Work/Y/ProjectCentral/a.json"), "1").unwrap();
     wait_for("the project change to be announced", || {
         announced
             .lock()
@@ -141,7 +147,7 @@ fn central_readings_are_retained_until_their_sources_change() {
     assert!(now_x().is_ok());
     assert!(now_x().is_ok());
     assert_eq!(starts(&dir, "central.now.list"), 3);
-    fs::write(root.join("Work/X/src/m.rs"), "1").unwrap();
+    fs::write(root.join("Work/X/ProjectCentral/m.json"), "1").unwrap();
     wait_for("the X change to be announced", || {
         announced
             .lock()
