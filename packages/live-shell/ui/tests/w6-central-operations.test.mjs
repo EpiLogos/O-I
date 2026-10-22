@@ -271,7 +271,7 @@ test('Central\'s Approvals carries Changes over the Approvals binding: disabled 
 
 const noopFn = () => {}
 
-test('a clip\'s second line says what follows it and its takes, as the owner words them, in the grid\'s 28px cell; with nothing to say there is none', async () => {
+test('a clip\'s second line says what follows it and its takes, as the owner words them, in the grid\'s 52px cell; with nothing to say there is none', async () => {
   const grid = await import('../src/frame/tracks/SessionGrid.tsx')
   const set = {columns: [{id: 'r1', name: '1'}, {id: 'r2', name: '2'}], tracks: [{id: 't', name: 'Lead', kind: 'session'}],
     clips: [{id: 'a', trackId: 't', columnId: 'r1', label: 'map field', status: 'running', launch: {quantize: 'next turn', follow: 'next'}, takes: [{id: 'k1', name: '1'}, {id: 'k2', name: '2', standing: true}]},
@@ -283,7 +283,8 @@ test('a clip\'s second line says what follows it and its takes, as the owner wor
   assert.equal(grid.clipSecondLine({launch: {quantize: 'now'}}), null, 'a quantize alone stands in the foot, not the second line')
   const {readFile} = await import('node:fs/promises')
   const css = await readFile(new URL('../src/frame/tracks/tracks.css', import.meta.url), 'utf8')
-  assert.match(css, /\.cs \{ height: 28px;/, 'the mockup\'s 28px rhythm stands (agent-shell-craft pins it)')
+  // W4: the design's 52px cell replaces the mockup's 28px (catalogue dlw__session-grid.css .sgd-cell; agent-shell-craft pins it).
+  assert.match(css, /\.cs \{ height: 52px;/, 'the design\'s 52px cell stands (agent-shell-craft pins it)')
 })
 
 test('the ruler\'s overview strip draws the whole ruler with each placed clip and the window, its head the ruler\'s scale; a press centres the window there', async () => {

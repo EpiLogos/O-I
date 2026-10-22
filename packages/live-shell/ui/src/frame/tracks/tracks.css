@@ -23,7 +23,8 @@
 .rails { position: absolute; left: 0; top: 0; bottom: 0; display: flex; pointer-events: none; z-index: 2 }
 .rails i { width: 3px; height: 100%; margin-right: 1px; opacity: .9 }
 
-.cs { height: 28px; flex: none; position: relative; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10px; white-space: nowrap; overflow: hidden; color: var(--text-dim) }
+/* A cell stands the design's 52px (catalogue dlw__session-grid.css .sgd-cell), room for a clip's name and its second line. */
+.cs { height: 52px; flex: none; position: relative; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10px; white-space: nowrap; overflow: hidden; color: var(--text-dim) }
 .cs.clip { background: var(--tc); color: var(--bg-0); cursor: pointer }
 /* Stopped is ready, in full colour; Done is dimmed and settled (manual §16.6 Session view). */
 .cs.clip.done { opacity: .5; filter: saturate(.6) }
@@ -38,11 +39,16 @@
 /* Running: a slow blink and a fill that grows, with no end drawn — the fill never meets the slot's right edge. */
 .cs.clip.running::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0; pointer-events: none; background: linear-gradient(90deg, color-mix(in srgb, var(--bg-0) 18%, transparent), transparent); animation: tracks-fill 4s linear infinite }
 @keyframes tracks-fill { from { width: 0 } to { width: 92% } }
+/* Where its owner reads how far it has got (SessionGrid.tsx clipProgress), the fill stands there instead, fading out past it: still no end
+   drawn (dlw__session-grid.css .sgd-cell[data-status="running"]). */
+.cs.clip.running[data-progress] { background: linear-gradient(90deg, var(--tc) 0, var(--tc) calc(var(--p, 0) * 1%), color-mix(in srgb, var(--tc) 40%, var(--bg-2)) calc(var(--p, 0) * 1% + 24px)) }
+.cs.clip.running[data-progress]::before { display: none; animation: none }
+/* An empty slot's square stands in the middle of its cell (dlw__session-grid.css .sgd-cell[data-empty]). */
+.cs[data-slot-track] { justify-content: center }
 .cs .cs-label { overflow: hidden; text-overflow: ellipsis }
-/* A clip's two lines (catalogue dlw__session-grid.tsx .sgd-cell): its name, and under it what follows it and its takes. They stand in the
-   mockup's 28px cell (world-shell-mockup.html .cs, pinned by agent-shell-craft); the design's 52px cell waits for the design lane. */
-.cs .cs-text { min-width: 0; display: flex; flex-direction: column; justify-content: center; overflow: hidden; line-height: 12px }
-.cs .cs-sub { font-size: 8.5px; line-height: 10px; opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+/* A clip's two lines (catalogue dlw__session-grid.tsx .sgd-cell): its name, and under it how it plays, what follows it and its takes. */
+.cs .cs-text { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; overflow: hidden; line-height: 12px }
+.cs .cs-sub { font-size: 9px; line-height: 11px; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .cs .cs-note { flex: none; font-size: 9px; opacity: .8 }
 .cs .tri { width: 0; height: 0; padding: 0; background: none; border: 0; border-left: 7px solid var(--bg-0); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; flex: none; opacity: .75 }
 .cs .tri:disabled { opacity: .3 }
@@ -142,6 +148,12 @@
 .tl-window { cursor: grab; touch-action: none }
 .tl-window:active { cursor: grabbing }
 .tl-window:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px }
+/* The loop brace (catalogue dlw__arrangement-ruler.css .arp-brace): the loop its owner carries, over the marks and down each track, quieter
+   in the lanes; an end outside the window draws no edge. Read, never set from here: no owner op takes a loop from the ruler. */
+.tl-brace { position: absolute; top: 0; bottom: 0; box-sizing: border-box; background: color-mix(in srgb, var(--accent) 16%, transparent); border-left: 2px solid var(--accent); border-right: 2px solid var(--accent); pointer-events: none }
+.tl-brace[data-cut-start] { border-left-width: 0 }
+.tl-brace[data-cut-end] { border-right-width: 0 }
+.tl-body > .tl-brace { opacity: .6 }
 /* The insert marker: the pane's own, a thin line through the lanes and its point read out on the ruler. */
 .tl-marks .tl-marker-mark { top: 3px; transform: translateX(-50%); height: 14px; padding: 0 3px; border-left: 0; background: var(--text-dim); color: var(--bg-0); font: 9px/14px var(--mono); pointer-events: none; z-index: 2 }
 .tl-marker { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 2; pointer-events: none; background: var(--text-dim) }
