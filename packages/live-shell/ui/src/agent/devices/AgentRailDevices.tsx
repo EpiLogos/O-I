@@ -37,7 +37,7 @@ import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {GatewayWriteRequest, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
-import {LEDGER_ID, ledgerBinding, receiptDevices} from './receiptBindings'
+import {LEDGER_ID, ledgerBinding, ledgerReceiptSession, receiptDevices} from './receiptBindings'
 import {useAgentChainReading} from './useAgentChainReading'
 import {useConversationAnswer} from './useConversationAnswer'
 import {ROUTE_WORDS, gatewayWriteOp, ownerRouteWrite, refusalWords, workcellWriteOp} from './ownerRoutes'
@@ -45,7 +45,7 @@ import {usePopulationAnswer} from './usePopulationAnswer'
 import {RACK_PROJECT} from './useRackReading'
 import {CARRIER_ID, carrierChainState, carrierValues, gitValues} from './workcellBindings'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
-import {useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 
 /** The rail's agent devices this publisher holds, by id: withdrawn with it. Approvals is not among them — it is Factory's Main track
  * effect (§19.14), published by its chain. */
@@ -110,8 +110,12 @@ export function AgentRailDevices() {
     shell.setSelectedTrackId(trackKey(chosen))
     return null
   }, [tracks, shell])
-  const ledger = useMemo(() => ledgerBinding({ground: ground.reading, groundError: ground.error, holds, returns: returned, tracks}, {openSession}),
-    [ground.reading, ground.error, holds, openSession, returned, tracks])
+  // The chosen receipt's session's tokens and spend (lane K0): Actuation's usage records of that session (`actuation usage list --session`).
+  const usageSession = useMemo(() => ledgerReceiptSession({ground: ground.reading, holds, returns: returned, tracks}), [ground.reading, holds, returned, tracks])
+  const usageAnswer = useActuationRead(transport, usageSession ? {kind: 'usage-list', session: usageSession} : null)
+  const usage = useMemo(() => (usageSession ? {session: usageSession, ...usageAnswer} : null), [usageSession, usageAnswer])
+  const ledger = useMemo(() => ledgerBinding({ground: ground.reading, groundError: ground.error, holds, returns: returned, tracks, usage}, {openSession}),
+    [ground.reading, ground.error, holds, openSession, returned, tracks, usage])
 
   // Messages: AIKit's population, the Agency gateway's answer, and the open agent's conversation (read while an agent of the population is
   // open).
@@ -180,6 +184,9 @@ export function AgentRailDevices() {
     return reading.value?.data ? {status: 'answered' as const, value: reading.value.data, error: null}
       : {status: 'refused' as const, value: null, error: typeof failure?.message === 'string' ? failure.message : 'Workcell answered the material read with neither a reading nor its failure.'}
   }, [materialRead.reading])
+  // The chosen world's leases and checkpoints (lane K0): Workcell's own readings of its receipt.
+  const leaseRead = useWorkcellRead(transport, asked && picked.chosen ? {kind: 'lease', receipt: picked.chosen.receipt} : null)
+  const checkpointsRead = useWorkcellRead(transport, asked && picked.chosen ? {kind: 'checkpoints', receipt: picked.chosen.receipt} : null)
   const [lastReconcile, setLastReconcile] = useState<{receipt: string; answer: unknown} | null>(null)
   const workcellWrite = useMemo(() => (transport.kind !== 'unavailable'
     ? async (request: Parameters<typeof workcellWriteOp>[0]) => {
@@ -193,10 +200,12 @@ export function AgentRailDevices() {
     return workcellRackBinding({name: cellName, project: RACK_PROJECT, seats: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {seatsUnread} : {}),
       chain: {gateway: gatewayPort.values, carrier: carrierValues(workcellAnswer, holds), git}, holds,
       ...(asked ? {doctor: doctor.answer, instances: {list: instanceList.answer, usages}, worlds: worlds.answer, ...(materialOp ? {material} : {}),
+        ...(picked.chosen ? {lease: leaseRead.answer, checkpoints: checkpointsRead.answer} : {}),
         ...(lastReconcile && lastReconcile.receipt === picked.chosen?.receipt ? {reconciled: lastReconcile.answer} : {})} : {})},
     {gateway: gatewayPort, ...(asked && transport.kind !== 'unavailable' ? {rereadServices: doctor.refresh, ...(materialOp ? {rereadWorld: materialRead.refresh} : {})} : {}),
       ...(workcellWrite ? {workcell: workcellWrite} : {})})
-  }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite, worlds.answer, materialOp, material, materialRead.refresh, lastReconcile, picked.chosen?.receipt])
+  }, [cellName, seats, asked, reading, holds, gatewayPort, workcellAnswer, doctor, instanceList, usages, transport, workcellWrite, worlds.answer, materialOp, material, materialRead.refresh, lastReconcile, picked.chosen?.receipt,
+    leaseRead.answer, checkpointsRead.answer])
 
   // Publish each one again only when its own binding moves; withdraw them all with this publisher.
   const devices = useMemo((): Readonly<Record<string, DeviceInstance | null>> => ({

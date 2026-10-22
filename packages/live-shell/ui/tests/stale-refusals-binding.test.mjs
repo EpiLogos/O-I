@@ -294,9 +294,14 @@ test('FIXTURE — a root part not valid, a root mixed with a product, a binding 
 test('the pages read through invoke_action and the shared workcell answer; the sandboxes, with no sandbox server named, refused saying so', async () => {
   const actions = {'central.doctor': PAGES.doctor.data, 'central.world.reproject.plan': PAGES.reprojectOI.data, 'projectcentral.ground.inspect': PAGES.groundOI.data}
   const owner = kernel(actions)
+  // REPLACED (lane K0): the worlds are `workcell worlds` (workcell_read worlds) for the cell the status names, each receipt read with
+  // material_read; this machine's real listing (`workcell worlds --json`, 22 Oct 2026, REAL) holds none.
+  const WORLDS = {note: 'receipts kept under this cell\'s state root only; a receipt written elsewhere with --receipt is not listed. Each world\'s runs are the run-ledger slugs whose record names its world_ref (null when the ledger cannot be read)',
+    ok: true, receipt_root: '/Users/admin/.workcell/worlds', run_ledger: {read: true, runs: 2}, schema: 'workcell.world-receipts/v1', unreadable: [], worlds: []}
   const fetchWithStatus = async (url, init) => {
     const body = JSON.parse(init.body)
-    if (body.op === 'workcell_status_read') return {json: async () => ({ok: true, outcome: {result: 'workcell_status_reading', data: {workcell_ref: 'workcell:mac', persisted_world_receipts: PAGES.workcellStatus.persisted_world_receipts}}})}
+    if (body.op === 'workcell_status_read') return {json: async () => ({ok: true, outcome: {result: 'workcell_status_reading', data: {workcell_ref: 'workcell:mac', state_root: '/Users/admin/.workcell', persisted_world_receipts: PAGES.workcellStatus.persisted_world_receipts}}})}
+    if (body.op === 'workcell_read' && body.request.kind === 'worlds') return {json: async () => ({ok: true, outcome: {result: 'owner_route_reading', route: 'workcell worlds', data: WORLDS, warnings: []}})}
     return owner.fetch(url, init)
   }
   const pages = await withKernel({fetch: fetchWithStatus}, () => ground.readHygienePages({kind: 'bridge', url: 'http://pages.fixture'}, 'e', true))
@@ -311,7 +316,7 @@ test('the pages read through invoke_action and the shared workcell answer; the s
   assert.equal(pages.findings.length, 1650, 'O-I: no scaffold missing, every listed candidate waiting')
 })
 
-test('(b)(c)(e) Ground hygiene draws the census and the pages in every view: every key classified, every tender disabled naming its route', async () => {
+test('(b)(c)(e) Ground hygiene draws the census and the pages in every view: every key classified, each tender writing through its owner or disabled naming why', async () => {
   const owner = kernel({'central.git.census': REAL.gitCensus.data, 'central.doctor': PAGES.doctor.data, 'central.world.reproject.plan': PAGES.reprojectPointCloud.data,
     'projectcentral.ground.inspect': PAGES.groundOI.data})
   const transport = {kind: 'bridge', url: 'http://pages-hygiene.fixture'}
@@ -322,12 +327,32 @@ test('(b)(c)(e) Ground hygiene draws the census and the pages in every view: eve
   for (const key of ['root', 'scaffold', 'authored']) assert.notEqual(binding.values[key], undefined, `${key}: Central's reading`)
   assert.equal(binding.values.sandboxes, undefined)
   assert.deepEqual([binding.values['as:provenance'], binding.values['as:standing'], binding.values['look:authored']], ['human-authored', 'design-commitment', true], 'the manual\'s defaults for the holds')
-  for (const key of ['init', 'reproject', 'recognise']) {
-    // W4: invoke_action carries the person for the presses action.rs PERSON_ACTS names; these are not among them.
-    assert.match(binding.standing[key].disabled, /person's authority: .*PERSON_ACTS names, which do not include it/, key)
-    await assert.rejects(binding.write([{key, value: 'x'}]), /PERSON_ACTS/)
-  }
-  assert.match(binding.standing.reconcile.disabled, /kernel route to Workcell/)
+  // REPLACED (lane K0): PERSON_ACTS names central.init, central.world.reproject.apply and projectcentral.ground.apply, so the three write
+  // through invoke_action on the person's press; with no carrier handed in they stand disabled naming it, as Reconcile does for Workcell.
+  for (const key of ['init', 'reproject', 'recognise']) assert.equal(binding.standing[key].disabled, 'The kernel carrier is unavailable here, so Central cannot be asked.', key)
+  assert.equal(binding.standing.reconcile.disabled, 'The kernel carrier is unavailable here, so Workcell cannot be asked.')
+  const action = readFileSync(new URL('../../../../desktop/cradle/kernel/src/action.rs', import.meta.url), 'utf8')
+  const acts = action.slice(action.indexOf('pub const PERSON_ACTS'), action.indexOf('];', action.indexOf('pub const PERSON_ACTS')))
+  for (const id of ['central.init', 'central.world.reproject.apply', 'projectcentral.ground.apply']) assert.ok(acts.includes(`"${id}"`), `PERSON_ACTS names ${id}`)
+  // Handed Central's act, each tender writes on a finding of the pages' last reading, in Central's own action and input; the pages are read
+  // again after it; a subject not among the findings is not asked.
+  const sent = []
+  let reread = 0
+  const writing = groundBind.hygieneBinding(ground.HYGIENE_DEVICE_ID, {census: read.census, findings: read.findings, pages, at: Date.UTC(2026, 9, 21, 9)}, Date.UTC(2026, 9, 21, 9),
+    async () => { reread++ }, {central: async (id, input) => { sent.push([id, input]); return {} }, project: 'O-I'})
+  const scaffold = JSON.parse(writing.values.findings).find(f => f.kind === 'scaffold-missing')
+  const waiting = JSON.parse(writing.values.findings).find(f => f.kind === 'source-unrecognised')
+  for (const key of ['init', 'reproject', 'recognise']) assert.equal(writing.standing[key], undefined, `${key}: written through Central`)
+  await writing.write([{key: 'reproject', value: scaffold.subject}])
+  await writing.write([{key: 'recognise', value: JSON.stringify({source: waiting.subject, provenance: 'human-authored', standing: 'design-commitment'})}])
+  await assert.rejects(writing.write([{key: 'init', value: 'Control/user'}]), /not among the findings/)
+  assert.deepEqual(sent, [['central.world.reproject.apply', {project: pages.scaffold.project}], ['projectcentral.ground.apply', {project: 'O-I', source: waiting.subject,
+    provenance: 'human-authored', standing: 'design-commitment', treatment: 'retain-native-in-place', acceptance: 'human-accepted'}]])
+  assert.equal(reread, 2, 'the pages are read again after each tender')
+  // Central's refusal is the press's error, in Central's words.
+  const refusing = groundBind.hygieneBinding(ground.HYGIENE_DEVICE_ID, {census: read.census, findings: read.findings, pages, at: Date.UTC(2026, 9, 21, 9)}, Date.UTC(2026, 9, 21, 9),
+    async () => {}, {central: async () => { throw new Error('central.world.reproject.apply: project Point-Cloud-Demo is not a Central world') }, project: 'O-I'})
+  await assert.rejects(refusing.write([{key: 'reproject', value: scaffold.subject}]), {message: 'central.world.reproject.apply: project Point-Cloud-Demo is not a Central world'})
   // REPLACED (lane K0): Release orphans has its route (workcell_write release-orphans) and waits for a sandbox server named here.
   assert.match(binding.standing.orphans.disabled, /a sandbox server named to the shell/)
   const findings = JSON.parse(binding.values.findings)

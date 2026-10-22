@@ -169,7 +169,7 @@ test('(c) the macros write through the Gateway\'s rows to kernel:harness_agent_c
   assert.equal(binding.standing.landAs.disabled, cell.GIT_REFUSE.landAs, 'Git / landing\'s own refusal')
   await assert.rejects(() => binding.write([{key: 'landAs', value: 'mr'}]), new RegExp(cell.GIT_REFUSE.landAs.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
   // REPLACED (lane W10): Recover, Apply and Release world name the receipt they lack (NO_RUN); Read services the carrier it lacks.
-  for (const [key, op] of [['reread', /material_read/], ['recover', /workcell --receipt R recover/], ['checkpoint', /checkpoint command/], ['readServices', /workcell doctor/], ['open', /endpoint/],
+  for (const [key, op] of [['reread', /material_read/], ['recover', /workcell --receipt R recover/], ['checkpoint', /workcell --receipt R checkpoint/], ['readServices', /workcell doctor/], ['open', /endpoint/],
     ['apply', /reconcile --desired/], ['releaseWorld', /workcell --receipt R release/]]) {
     assert.match(binding.standing[key].disabled, op, key)
     await assert.rejects(() => binding.write([{key, value: true}]), op)

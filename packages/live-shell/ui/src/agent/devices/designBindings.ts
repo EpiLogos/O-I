@@ -313,6 +313,20 @@ export interface AgentInput {
   readonly events?: readonly TemporalEventLike[] | null
   /** AIKit's continuity for the Context page (aikitPages.ts): `aikit work continuity pressure` and `commands`; absent: not read here. */
   readonly context?: {readonly pressure: AikitAnswer; readonly commands: AikitAnswer; readonly turn?: AikitAnswer}
+  /** Actuation's usage records of the selected session (`actuation usage list --session S`, the kernel's actuation_read {usage-list}; lane
+   * K0): the model the session last reported using, where the gateway names none. Absent: not read here. */
+  readonly usage?: AikitAnswer
+}
+
+/** The model the session last reported using: the newest usage record's `usage.model.name` that Actuation lists for it
+ * (actuation.usage-listing/v1, records in stream order), where a record names one. Pure. */
+export function lastUsageModelOf(listing: unknown): string | undefined {
+  if (!isObj(listing) || listing.schema !== 'actuation.usage-listing/v1' || !Array.isArray(listing.records)) return undefined
+  for (const record of [...listing.records].reverse()) {
+    const model = isObj(record) && isObj(record.usage) && isObj(record.usage.model) ? record.usage.model : null
+    if (model && typeof model.name === 'string' && model.name) return model.name
+  }
+  return undefined
 }
 
 /** The Agent's values: each key from the owner that reports it, or absent. */
@@ -359,6 +373,8 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
   if (harness.resolved) put(values, 'harness', harness.binding)
   const doc = reading.gatewayAdmitted === true && isObj(reading.gatewayDoc) ? reading.gatewayDoc : null
   if (doc && typeof doc.model === 'string') put(values, 'model', doc.model)
+  // Where the gateway names no model, the one the session last reported using (Actuation's usage records, lane K0).
+  else if (sessionRef != null && input.usage?.status === 'answered') put(values, 'model', lastUsageModelOf(input.usage.value))
   put(values, 'effort', accepted.effort)
   put(values, 'input', accepted.input)
   put(values, 'quantize', accepted.quantize)

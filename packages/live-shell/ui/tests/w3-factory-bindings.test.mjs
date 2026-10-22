@@ -148,15 +148,17 @@ test('1 · Messages: Send writes `aikit gateway send` to the open agent\'s Posit
   bind.resetHolds()
 })
 
-test('2 · the Ledger: Actuation\'s usage reads one model-usage record it is handed, and nothing here holds one, so the tokens and spend name exactly that; turns are never in it', () => {
+test('2 · the Ledger: a model-usage record counts tokens, never turns; with no receipt chosen the tokens and spend say whose session they wait for', () => {
   // The REAL answer: a model-usage record carries tokens per model message and a cost standing — no turns, no turn budget.
   assert.equal(USAGE.answer.schema, 'actuation.model-usage/v1')
   assert.deepEqual([USAGE.answer.tokens.input, USAGE.answer.tokens.output, USAGE.answer.cost.standing], [11, 8, 'not-reported'])
   assert.doesNotMatch(JSON.stringify(USAGE.answer), /"turns?"|"cap"|turn_budget/, 'a usage record counts no turns')
+  // REPLACED (lane K0): the tokens and spend are the chosen receipt's session's, from Actuation's `usage list` (k0-owner-ops-bindings.test.mjs);
+  // with no receipt chosen they say so.
   const binding = rec.ledgerBinding({ground: null, groundError: null, holds: bind.chainHolds()}, {openSession: () => null})
   for (const key of ['tokensIn', 'tokensOut', 'spend']) {
     assert.equal(binding.values[key], undefined, `${key}: absent`)
-    assert.match(binding.standing[key].disabled, /a model-usage record for the receipt's session to hand Actuation's `usage` \(the kernel's actuation_read takes one actuation\.model-usage\/v1 record and reads no store/, key)
+    assert.equal(binding.standing[key].disabled, rec.LEDGER_USAGE_WHY.noReceipt, key)
   }
   assert.match(binding.standing.used.disabled, /counts a model message's tokens, never turns/)
   assert.match(binding.standing.cap.disabled, /no model-usage record carries one/)

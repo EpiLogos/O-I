@@ -15,6 +15,10 @@ import {heldOf, pageBinding, type DesignWiring} from './pageBindings'
 
 export const IDENTITY_DESIGN = 'central:agent-identity'
 
+/** Why Changed since stands absent: Actuation compares two realised receipts of one acting condition (`actuation realised continuity`, the
+ * kernel's actuation_read {realised-continuity}), and the shell holds no realised receipt of the agent, so there is no second to compare. */
+export const NO_SECOND_RECEIPT = 'Changed since: Actuation compares two realised receipts of the agent (`actuation realised continuity`, the kernel\'s actuation_read {realised-continuity}); no reading here holds a realised receipt of this agent, so no second receipt exists to compare with.'
+
 export const IDENTITY_WIRING: DesignWiring = {
   design: IDENTITY_DESIGN,
   keys: ['light', 'agent', 'proposed', 'world', 'read', 'fault', 'marks', 'roster', 'card', 'worlds', 'types', 'continuity'],
@@ -36,8 +40,9 @@ export const IDENTITY_WIRING: DesignWiring = {
   absent: {
     marks: 'The mark set is the person\'s choice for the whole shell (Settings); no reading of it reaches this chain, so the blade stands.',
     types: 'Central\'s profile names no type yet: an agent\'s type is set on the Agent device\'s Type page and held with the agent, and no reading of it reaches this chain.',
-    // D7, Changed since (§19.4): what moved in the agent's body and identity since a receipt is Actuation's continuityDelta.
-    continuity: 'Changed since: missing op — Actuation\'s continuityDelta is library-only; no Actuation command and no kernel route carry it (T-COVERAGE §1.5, Actuation: continuity).',
+    // D7, Changed since (§19.4): what moved in the agent's body and identity between two realised receipts is Actuation's
+    // `realised continuity` (the kernel's actuation_read {realised-continuity}, lane K0; EpiLogos/Actuation#143).
+    continuity: NO_SECOND_RECEIPT,
   },
 }
 
@@ -114,6 +119,35 @@ export interface IdentityInput {
   readonly talkingTo: string | null
   /** The card read for (agent, world): the card, or the owner's refusal; null while it reads. */
   readonly card: {readonly agent: string; readonly world: string | null; readonly card?: HumanAgentCard; readonly error?: string} | null
+  /** Two realised receipts of the agent the shell holds (actuation.realised/v1, earlier and later), and Actuation's continuity of them
+   * (`actuation realised continuity`): the answer, or its refusal in Actuation's words. Absent: the shell holds no two receipts. */
+  readonly realised?: {readonly previous: unknown; readonly next: unknown; readonly status: 'reading' | 'answered' | 'refused'; readonly value: unknown; readonly error: string | null} | null
+}
+
+/** Actuation's delta (actuation.realised-continuity/v1 `delta`) as the design reads Changed since (central__agent-identity.tsx `continuity`
+ * {since, body: [{field, from, to}], identity: [{field, from, to}]}): each part Actuation says changed, with its value in each receipt —
+ * the body's harness, session, process, model condition and material binding and the loop's recurrence; who the agent is (agent, agency,
+ * world binding, actuation). `since` is the earlier receipt's ref. Null when the answer is not that reading. Pure. */
+export function continuityOf(previous: unknown, next: unknown, answer: unknown): {since: string; body: {field: string; from?: string; to?: string}[]; identity: {field: string; from?: string; to?: string}[]} | null {
+  if (!obj(answer) || answer.schema !== 'actuation.realised-continuity/v1' || !obj(answer.delta)) return null
+  const delta = answer.delta
+  const before = obj(previous) ? previous : {}, after = obj(next) ? next : {}
+  const at = (receipt: Obj, path: readonly string[]): string | undefined => {
+    let here: unknown = receipt
+    for (const step of path) here = obj(here) ? here[step] : undefined
+    return str(here)
+  }
+  const change = (field: string, path: readonly string[]) => ({field, ...(at(before, path) ? {from: at(before, path)} : {}), ...(at(after, path) ? {to: at(after, path)} : {})})
+  const BODY: readonly [string, string, readonly string[]][] = [['harness_changed', 'harness', ['body', 'harness_ref']], ['session_changed', 'session', ['body', 'session_ref']],
+    ['process_changed', 'process', ['body', 'process_ref']], ['model_condition_changed', 'model condition', ['body', 'model_condition_ref']],
+    ['material_binding_changed', 'material binding', ['body', 'material_binding_ref']], ['recurrence_changed', 'recurrence', ['loop', 'recurrence']]]
+  const IDENTITY: readonly [string, string, readonly string[]][] = [['same_agent', 'agent', ['agent_ref']], ['same_agency', 'agency', ['agency_ref']],
+    ['same_world_binding', 'world binding', ['world_binding_ref']], ['same_actuation', 'actuation', ['actuation_ref']]]
+  return {
+    since: str(answer.previous_realised_ref) ?? at(before, ['realised_ref']) ?? 'the earlier receipt',
+    body: BODY.filter(([key]) => delta[key] === true).map(([, field, path]) => change(field, path)),
+    identity: IDENTITY.filter(([key]) => delta[key] === false).map(([, field, path]) => change(field, path)),
+  }
 }
 
 /** The agent whose card is read: the one you chose, else the one you talk to, else the roster's first accepted agent. */
@@ -138,6 +172,9 @@ export function identityValues(id: string, input: IdentityInput): Values {
   values.world = held.world ?? 'home'
   const agent = identityAgentOf(id, input)
   if (agent) values.agent = agent
+  // Changed since: Actuation's continuity of the two realised receipts held (whatever the roster answered).
+  const realised = input.realised?.status === 'answered' ? continuityOf(input.realised.previous, input.realised.next, input.realised.value) : null
+  if (realised) values.continuity = JSON.stringify(realised)
   const roster = input.roster
   if (roster && 'error' in roster) {
     values.light = 'dark'; values.read = 'refused'; values.fault = roster.error
@@ -164,7 +201,13 @@ export function identityValues(id: string, input: IdentityInput): Values {
 /** Agent identity's binding: readings only — the roster is yours and the device writes nothing; the agent, World and Proposed are
  * the view's own choices of what is read. A card the owner refused is said in its words on the Agent chooser. */
 export function identityBinding(id: string, input: IdentityInput): DesignBinding {
-  const binding = pageBinding(id, IDENTITY_WIRING, identityValues(id, input), {})
+  const values = identityValues(id, input)
+  // Changed since: Actuation's continuity of the two receipts held, else why it stands absent (no second receipt; Actuation's refusal).
+  const continuityWhy = 'continuity' in values ? null : input.realised?.status === 'refused' ? input.realised.error ?? 'Actuation refused the continuity.'
+    : input.realised?.status === 'reading' ? 'Actuation has not answered the continuity of the two receipts yet (`actuation realised continuity`).'
+      : input.realised?.status === 'answered' ? 'Actuation answered the continuity in a form the device does not read (actuation.realised-continuity/v1 expected).' : NO_SECOND_RECEIPT
+  const base = pageBinding(id, IDENTITY_WIRING, values, {})
+  const binding = continuityWhy ? {...base, standing: {...base.standing, continuity: {disabled: continuityWhy}}} : base
   const agent = identityAgentOf(id, input)
   const refused = input.card?.error && input.card.agent === agent ? input.card.error : undefined
   return refused ? {...binding, standing: {...binding.standing, agent: {...binding.standing?.agent, refused: `The card did not answer: ${refused}`}}} : binding

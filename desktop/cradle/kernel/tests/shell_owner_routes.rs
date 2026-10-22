@@ -3339,3 +3339,155 @@ fn a_units_retry_is_a_factory_write_refused_while_factory_admits_no_desktop_retr
     assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
     let _ = fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn actuation_lists_a_sessions_usage_and_compares_two_realised_receipts() {
+    let _held = hold();
+    let dir = scratch("actuation-usage-list");
+    let actuation = Fake::new(&dir, "actuation");
+    let _bin = Bound::set("OI_ACTUATION_BIN", &actuation.bin);
+    // Actuation#143's own answers over a scratch store (REAL, the PR's binary).
+    let real = fixture("actuation-usage-list-continuity-2026-10-22.json");
+    let list = |session: &str| {
+        op(json!({"op": "actuation_read", "request": {"kind": "usage-list", "session": session}}))
+    };
+
+    actuation.answer(&real["usage_list_session"]);
+    let (outcome, form) = dispatched(no_central(&dir), list("session:a"));
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "actuation usage list");
+    assert_eq!(
+        data, real["usage_list_session"],
+        "Actuation's listing, verbatim"
+    );
+    assert_eq!(data["totals"]["tokens_input"]["sum"], 30);
+    assert_eq!(data["totals"]["cost"][0]["currency"], "USD");
+    assert_eq!(actuation.asked(), ["usage list --session session:a --json"]);
+    assert_eq!(receipts(&outcome), json!([]), "a read earns no receipt");
+
+    // A session with no records is Actuation's empty listing, not an absence.
+    actuation.answer(&real["usage_list_empty"]);
+    let (outcome, _) = dispatched(no_central(&dir), list("session:none"));
+    let (_, data, _) = reading(&outcome.unwrap());
+    assert_eq!(data["totals"]["records"], 0);
+
+    // The installed Actuation (0.2.1) reads `list` as a file: its own words.
+    let installed = &real["installed_usage_list"];
+    actuation.refuse(None, installed["stderr"].as_str().unwrap(), 2);
+    let (outcome, _) = dispatched(no_central(&dir), list("session:a"));
+    let error = outcome.unwrap_err();
+    assert_eq!(kind(&error), "owner-refused-or-failed");
+    assert!(error.contains("no JSON input supplied for list"), "{error}");
+
+    // Two realised receipts: their continuity, the pair on stdin.
+    let continuity = &real["realised_continuity"];
+    actuation.answer(&continuity["answer"]);
+    actuation.forget();
+    let compare = op(
+        json!({"op": "actuation_read", "request": {"kind": "realised-continuity", "document": continuity["input"]}}),
+    );
+    let (outcome, form) = dispatched(no_central(&dir), compare.clone());
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "actuation realised continuity");
+    assert_eq!(data["delta"]["harness_changed"], true);
+    assert_eq!(actuation.asked(), ["realised continuity - --json"]);
+    assert_eq!(
+        serde_json::from_str::<Value>(&actuation.stdin()).unwrap(),
+        continuity["input"]
+    );
+    // A pair without its next receipt: Actuation's refusal, its words (REAL).
+    let refused = &real["realised_continuity_refusal"];
+    actuation.refuse(None, refused["stderr"].as_str().unwrap(), 2);
+    let (outcome, _) = dispatched(no_central(&dir), compare);
+    assert!(outcome
+        .unwrap_err()
+        .contains("invalid realised continuity input: missing field `next`"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn workcell_reads_a_worlds_leases_and_checkpoints_and_takes_one() {
+    let _held = hold();
+    let dir = scratch("workcell-lease");
+    let workcell = Fake::new(&dir, "workcell");
+    let _bin = Bound::set("OI_WORKCELL_BIN", &workcell.bin);
+    // Workcell#123's own answers over a scratch world (REAL, the PR's binary).
+    let real = fixture("workcell-lease-checkpoints-2026-10-22.json");
+    let receipt = "/tmp/world.json";
+    let read = |kind: &str| {
+        op(json!({"op": "workcell_read", "request": {"kind": kind, "receipt": receipt}}))
+    };
+
+    workcell.answer(&real["sandbox"]["lease"]);
+    let (outcome, form) = dispatched(no_central(&dir), read("lease"));
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "workcell lease");
+    assert_eq!(data["leases"][0]["standing"], "leased");
+    assert_eq!(data["leases"][0]["renewable"], true);
+    assert_eq!(
+        workcell.asked(),
+        [format!("--receipt {receipt} lease --json")]
+    );
+
+    workcell.answer(&real["sandbox"]["checkpoints"]);
+    workcell.forget();
+    let (outcome, _) = dispatched(no_central(&dir), read("checkpoints"));
+    let (route, data, _) = reading(&outcome.unwrap());
+    assert_eq!(route, "workcell checkpoints");
+    assert_eq!(data["checkpoints"][0]["checkpoint_ref"], "snap-1");
+    assert_eq!(
+        workcell.asked(),
+        [format!("--receipt {receipt} checkpoints --json")]
+    );
+
+    // The installed Workcell has neither verb: its refusal, its words (REAL).
+    let installed = &real["installed"]["lease"];
+    workcell.refuse(None, &installed["stderr"].to_string(), 2);
+    let (outcome, _) = dispatched(no_central(&dir), read("lease"));
+    let error = outcome.unwrap_err();
+    assert!(
+        error.contains("invalid demand: unknown command `lease`; run `workcell help`")
+            && !error.contains(r#"\"ok\":false"#),
+        "{error}"
+    );
+
+    // Checkpoint: a write; its receipt names the checkpoint Workcell keeps.
+    workcell.answer(&real["sandbox"]["checkpoint"]);
+    workcell.forget();
+    let take = op(
+        json!({"op": "workcell_write", "request": {"kind": "checkpoint", "receipt": receipt, "name": "before"}}),
+    );
+    let (outcome, form) = dispatched(no_central(&dir), take.clone());
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "workcell checkpoint");
+    assert_eq!(data["state"], "ready");
+    assert_eq!(
+        workcell.asked(),
+        [format!(
+            "--receipt {receipt} checkpoint --name before --json"
+        )]
+    );
+    let receipt_wire = receipts(&outcome);
+    assert_eq!(receipt_wire[0]["owner"], "workcell");
+    assert_eq!(receipt_wire[0]["ref"], "snap-1");
+
+    // A host world's binding takes no checkpoint: Workcell's refusal (REAL,
+    // exit 6, its document the whole of stderr).
+    let refused = &real["host"]["checkpoint_refused"];
+    workcell.refuse(None, &refused["stderr"].to_string(), 6);
+    let (outcome, _) = dispatched(no_central(&dir), take);
+    let error = outcome.unwrap_err();
+    assert!(
+        error.contains("is held by a provider that takes checkpoints"),
+        "{error}"
+    );
+    let _ = fs::remove_dir_all(&dir);
+}

@@ -22,13 +22,20 @@
 //     one is that world; several wait for the hand's choice (`worldReceipt`), and none is assumed. A receipt written elsewhere with
 //     `--receipt` is not listed (Workcell's note). The chosen receipt is read with the kernel's material_read (`workcell --receipt R
 //     material`, workcellMaterial.ts materialWorldOf): the World and Exposure pages, and the bindings Apply sets fates on.
+//   the chosen world's leases and checkpoints (lane K0; EpiLogos/Workcell PR 123): `workcell --receipt R lease` (workcell_read {lease},
+//     workcell.material-leases/v1: each binding's lease as its provider reports it) and `workcell --receipt R checkpoints` (workcell_read
+//     {checkpoints}, workcell.material-checkpoints/v1). The world's lease is its earliest-ending leased binding's (expiresAt, renewable);
+//     a world whose bindings hold no lease, or never expire, lives until released (expiresAt null); a binding whose provider did not answer
+//     leaves the lease absent with its error.
 // What nothing reads, each absent with the operation it waits for: who works here with their track and mode (the claims name actors, not
-// tracks or modes), the gateway's frames (a frame-ring read), the world's lease and checkpoints (no Workcell command reports them).
+// tracks or modes), the gateway's frames (a frame-ring read).
 // The writes: the macros Transport, Approvals and Stall after go the Gateway's own way (its rows to kernel:harness_agent_control, the same
 // rows gatewayBinding writes through); Land as is Git / landing's and stands refused in its words (GIT_REFUSE.landAs). Recover, Apply
 // (reconcile) and Release world are Workcell's writes on the machine's worlds (workcell_write {recover, release, reconcile}): each goes only
 // on the person's press, on the receipt the world's reading handed in, and is refused in Workcell's words; with no world read they stand
-// disabled naming the receipt they lack. Checkpoint has no Workcell command. Needed only and Open in are the shell's own holds. Pure, apart
+// disabled naming the receipt they lack. Checkpoint takes a checkpoint of the world through its binding's provider (workcell_write
+// {checkpoint}, `workcell --receipt R checkpoint`); a binding whose provider takes none is Workcell's refusal (kind unsupported), shown at the
+// act. Needed only and Open in are the shell's own holds. Pure, apart
 // from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -70,8 +77,8 @@ export const WORKCELL_ABSENT = {
   frames: `The gateway's latest frames: ${FRAME_RING}`,
   run: unread('The run', `the selected track's running task — ${NO_RUN}`, 'Workcell'),
   world: unread('The run\'s world', NO_RUN, 'Workcell'),
-  lease: unread('The world\'s lease', 'a lease reading (Workcell observes leases, MaterialLeaseProvider::observe_lease, but no command reports them)', 'Workcell'),
-  checkpoints: unread('The world\'s checkpoints', 'a checkpoint list (no Workcell command takes or lists them)', 'Workcell'),
+  lease: unread('The world\'s lease', `\`workcell --receipt R lease\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
+  checkpoints: unread('The world\'s checkpoints', `\`workcell --receipt R checkpoints\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
   readAt: unread('When the world was read', NO_RUN, 'Workcell'),
   services: 'The services: Workcell\'s `workcell doctor` is not read here (the rail reads it while the rack stands; Workcell has no `services` command, doctor declares them).',
   surfaces: unread('What the run exposes', NO_RUN, 'Workcell'),
@@ -84,7 +91,7 @@ export const WORKCELL_REFUSE = {
   landAs: GIT_REFUSE.landAs,
   reread: missing('Read now', `the kernel's material_read of a world — ${NO_RUN}`, 'Workcell'),
   recover: missing('Recover', `\`workcell --receipt R recover\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
-  checkpoint: missing('Checkpoint', 'a checkpoint command (Workcell has none)', 'Workcell'),
+  checkpoint: missing('Checkpoint', `\`workcell --receipt R checkpoint\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
   readServices: 'Read services: the kernel carrier is unavailable here, so Workcell\'s `workcell doctor` cannot be asked.',
   open: 'Open: opening a surface\'s endpoint in the Web monitor or a pane is the frame\'s act, and this rack is not handed an opener (the endpoint stands on the Exposure page to read).',
   apply: missing('Apply', `\`workcell --receipt R reconcile --desired <ref>=<state>\` on the world's receipt — ${NO_RUN}`, 'Workcell'),
@@ -160,6 +167,36 @@ export interface WorkcellRackInput {
   readonly material?: WorkcellAnswer
   /** The last reconcile's answer in this window (`workcell --receipt R reconcile`), absent while none ran here. */
   readonly reconciled?: unknown
+  /** `workcell --receipt R lease` of the chosen world (workcell_read {lease}); absent: not read here. */
+  readonly lease?: WorkcellAnswer
+  /** `workcell --receipt R checkpoints` of the chosen world (workcell_read {checkpoints}); absent: not read here. */
+  readonly checkpoints?: WorkcellAnswer
+}
+
+/** The world's lease as the design reads it (workcell__workcell.tsx `lease` {expiresAt, renewable}), from Workcell's leases
+ * (workcell.material-leases/v1): the earliest-ending leased binding's expiry (ms) and whether it renews; null expiry when every binding holds
+ * no lease or never expires (it lives until released); or why it is not known — a binding whose provider did not answer, in its error. Pure. */
+export function worldLeaseOf(reading: unknown): {lease: {expiresAt: number | null; renewable?: boolean}} | {why: string} | null {
+  if (!isObj(reading) || reading.schema !== 'workcell.material-leases/v1' || !Array.isArray(reading.leases)) return null
+  const rows = reading.leases.filter(isObj)
+  const unobserved = rows.find(row => row.standing === 'unobserved')
+  if (unobserved) return {why: `The lease of ${str(unobserved.logical_ref) ?? 'a binding'} is not observed: ${str(unobserved.error) ?? 'its provider did not say why'}.`}
+  const leased = rows.filter(row => row.standing === 'leased').flatMap(row => {
+    const at = typeof row.expires_at === 'string' ? Date.parse(row.expires_at) : NaN
+    return Number.isFinite(at) ? [{at, renewable: typeof row.renewable === 'boolean' ? row.renewable : undefined}] : []
+  }).sort((a, b) => a.at - b.at)
+  if (leased[0]) return {lease: {expiresAt: leased[0].at, ...(leased[0].renewable !== undefined ? {renewable: leased[0].renewable} : {})}}
+  if (rows.some(row => row.standing === 'leased')) return {why: 'Workcell names a leased binding whose expiry it does not give.'}
+  return {lease: {expiresAt: null}}
+}
+
+/** The world's checkpoints as the design reads them (`checkpoints` [{ref, state, reusable, at}]), from Workcell's checkpoint ledger
+ * (workcell.material-checkpoints/v1). Null when the answer is not that ledger. Pure. */
+export function worldCheckpointsOf(reading: unknown): {ref: string; state?: string; reusable?: boolean; at?: number}[] | null {
+  if (!isObj(reading) || reading.schema !== 'workcell.material-checkpoints/v1' || !Array.isArray(reading.checkpoints)) return null
+  return reading.checkpoints.filter(isObj).flatMap(row => (str(row.checkpoint_ref) ? [{ref: String(row.checkpoint_ref),
+    ...(str(row.state) ? {state: String(row.state)} : {}), ...(typeof row.reusable === 'boolean' ? {reusable: row.reusable} : {}),
+    ...(num(row.taken_at_unix_ms) !== undefined ? {at: num(row.taken_at_unix_ms)} : {})}] : []))
 }
 
 /** The chain list (workcell__workcell.tsx:14): the three devices in the road's order, each with the light its own binding reads and one
@@ -281,6 +318,16 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
     for (const key of ['surfaces', 'omitted', 'readAt']) if (!(key in values)) standing[key] = {disabled: read?.exposureError && key !== 'readAt' ? `What the run exposes: ${read.exposureError}` : materialWhy}
     if (!('world' in values)) standing.world = {disabled: materialWhy}
   }
+  // The world's lease and checkpoints (lane K0): Workcell's own readings of the chosen world's receipt, or why each stands absent.
+  if (picked) {
+    const noWorld = picked.why ?? 'No world is prepared for this cell (`workcell worlds` lists none for it).'
+    const leaseRead = picked.chosen && input.lease?.status === 'answered' ? worldLeaseOf(input.lease.value) : null
+    if (leaseRead && 'lease' in leaseRead) { values.lease = JSON.stringify(leaseRead.lease); delete standing.lease }
+    else standing.lease = {disabled: !picked.chosen ? noWorld : leaseRead ? leaseRead.why : answerWhy(input.lease, WORKCELL_ABSENT.lease, 'workcell --receipt R lease')}
+    const kept = picked.chosen && input.checkpoints?.status === 'answered' ? worldCheckpointsOf(input.checkpoints.value) : null
+    if (kept) { values.checkpoints = JSON.stringify(kept); delete standing.checkpoints }
+    else standing.checkpoints = {disabled: !picked.chosen ? noWorld : answerWhy(input.checkpoints, WORKCELL_ABSENT.checkpoints, 'workcell --receipt R checkpoints')}
+  }
   const reconciled = input.reconciled !== undefined ? reconciledOf(input.reconciled) : null
   if (reconciled) { values.reconciled = JSON.stringify(reconciled); delete standing.reconciled }
   else if (picked?.chosen) standing.reconciled = {disabled: 'The last reconcile: none ran in this window (it is the answer to Apply; Workcell keeps no reading of the last one).'}
@@ -288,16 +335,19 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
   const world = input.world ?? (picked?.chosen ? {receipt: picked.chosen.receipt, ref: picked.chosen.worldRef, bindings: read?.bindings ?? []} : null)
   if (picked?.chosen && ports.rereadWorld) delete standing.reread
   else if (picked) standing.reread = {disabled: picked.chosen ? 'Read now: the kernel carrier is unavailable here, so Workcell cannot be asked.' : `Read now: ${picked.why ?? 'no world is prepared for this cell.'}`}
-  if (world && ports.workcell) for (const key of ['recover', 'apply', 'releaseWorld']) delete standing[key]
-  else if (world) for (const key of ['recover', 'apply', 'releaseWorld']) standing[key] = {disabled: 'The kernel carrier is unavailable here, so Workcell cannot be asked.'}
+  if (world && ports.workcell) for (const key of ['recover', 'apply', 'releaseWorld', 'checkpoint']) delete standing[key]
+  else if (world) for (const key of ['recover', 'apply', 'releaseWorld', 'checkpoint']) standing[key] = {disabled: 'The kernel carrier is unavailable here, so Workcell cannot be asked.'}
+  else if (picked) standing.checkpoint = {disabled: `Checkpoint: ${picked.why ?? 'no world is prepared for this cell.'}`}
   /** Apply: each binding of the world whose fate you set, as `<logical ref>=<state>`; none set, nothing to ask. */
   const desired = (): string[] => {
     const view = viewHolds(chainHolds(), WORKCELL_RACK_ID)
     return (world?.bindings ?? []).flatMap(ref => (typeof view[`want:${ref}`] === 'string' && BINDING_FATES.includes(String(view[`want:${ref}`])) ? [`${ref}=${String(view[`want:${ref}`])}`] : []))
   }
-  const worldWrite = async (key: 'recover' | 'apply' | 'releaseWorld', value: Value | undefined) => {
+  const worldWrite = async (key: 'recover' | 'apply' | 'releaseWorld' | 'checkpoint', value: Value | undefined) => {
     if (standing[key]?.disabled || !world || !ports.workcell) throw Error(standing[key]?.disabled ?? WORKCELL_REFUSE[key])
-    if (key !== 'apply' && value !== world.ref) throw Error(`${key === 'recover' ? 'Recover' : 'Release world'}: that is not the world read here (${world.ref}).`)
+    if (key !== 'apply' && value !== world.ref) throw Error(`${key === 'recover' ? 'Recover' : key === 'checkpoint' ? 'Checkpoint' : 'Release world'}: that is not the world read here (${world.ref}).`)
+    // Checkpoint: Workcell takes it through the binding's provider, or refuses in its words (a provider that takes none: unsupported).
+    if (key === 'checkpoint') { await ports.workcell({kind: 'checkpoint', receipt: world.receipt}); return }
     if (key === 'apply') {
       const asked = desired()
       if (!asked.length) throw Error('Apply: no binding\'s fate is set.')
@@ -331,7 +381,7 @@ export function workcellRackBinding(input: WorkcellRackInput, ports: WorkcellRac
           ports.rereadServices()
           continue
         }
-        if (key === 'recover' || key === 'apply' || key === 'releaseWorld') { await worldWrite(key, value); continue }
+        if (key === 'recover' || key === 'apply' || key === 'releaseWorld' || key === 'checkpoint') { await worldWrite(key, value); continue }
         if (key === 'reread') {
           if (standing.reread?.disabled || !ports.rereadWorld) throw Error(standing.reread?.disabled ?? WORKCELL_REFUSE.reread)
           ports.rereadWorld()

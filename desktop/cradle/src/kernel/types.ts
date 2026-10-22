@@ -176,6 +176,16 @@ export type ActuationReadRequest =
   /** `actuation stream replay REF [--after N] [--limit N] --json`: one stream's page (`actuation.stream/v1`: identity, lifecycle,
    * cursor, events); each `model-usage` event's `model_usage` is one record the `usage` reading projects. */
   | {kind:"stream-replay";stream_ref:string;after?:number;limit?:number}
+  /** `actuation usage list [--session S] --json` (EpiLogos/Actuation#143): `actuation.usage-listing/v1` `{store, agent_session_ref?,
+   * records:[{stream_ref, agent_session_ref, event_ref, sequence, usage (actuation.model-usage/v1)}], totals:{records,
+   * tokens_input:{sum, records}, tokens_output:{sum, records}, tokens_not_reported, cost:[{currency, amount, records, standings}],
+   * cost_not_reported}, invalid}`. A sum covers only the records that report it (its `records`); cost is per currency, never converted. */
+  | {kind:"usage-list";session?:string|null}
+  /** `actuation realised continuity - --json` (EpiLogos/Actuation#143), `{previous, next}` (each actuation.realised/v1) on stdin:
+   * `actuation.realised-continuity/v1` `{previous_realised_ref, next_realised_ref, delta:{same_agent, same_agency, same_world_binding,
+   * same_actuation, harness_changed, session_changed, process_changed, model_condition_changed, material_binding_changed,
+   * recurrence_changed}}`. */
+  | {kind:"realised-continuity";document:{previous:unknown;next:unknown}}
   | {kind:"comparison";operation:"held"|"assess"|"mask"|"review";input:Record<string,unknown>};
 /** Actuation's governing authority on its own store: `actuation authority issue - --json` (the `actuation.local-authority/v1`
  * record on stdin; answers `{issued, authority_source_ref, holder, issued_at_unix_seconds}`) and `actuation authority revoke REF
@@ -251,7 +261,15 @@ export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections
   /** `workcell sandboxes reconcile --server URL` without `--release-orphans` (a report): `{server, sandboxes:[{id, state, expires_at,
    * lease: live|expired-orphan|unknown}], released_sandboxes:[], failures:[{operation, target, reason}], snapshots,
    * unrecognised_sandboxes, …}`. The server is the desk's, so the kernel withholds the key variable Workcell would send it. */
-  | {kind:"sandboxes";server:string};
+  | {kind:"sandboxes";server:string}
+  /** `workcell --receipt R lease` (EpiLogos/Workcell#123): `workcell.material-leases/v1` `{world_ref, observed_at_unix_ms,
+   * leases:[{logical_ref, port, provider_ref, material_ref, presence, standing: leased|unexpiring|no-lease|unobserved, expires_at?,
+   * renewable?, error?}]}`. Reads only; renews nothing. */
+  | {kind:"lease";receipt:string}
+  /** `workcell --receipt R checkpoints` (EpiLogos/Workcell#123): `workcell.material-checkpoints/v1` `{world_ref, ledger,
+   * checkpoints:[workcell.material-checkpoint/v1: checkpoint_ref, logical_ref, source_material_ref, provider_ref, state, reusable, name?,
+   * taken_at_unix_ms], unreadable:[{line, error}]}`. */
+  | {kind:"checkpoints";receipt:string};
 /** A material demand in `workcell plan`'s own flags, one field per flag. `demand_json` is Workcell's `--demand-json PATH` (a run's
  * kept demand, `run-show`'s `demand.path`); Workcell refuses it mixed with any other field. */
 export interface WorkcellDemand { demand_json?:string; demand_ref?:string; require?:string[]; prefer?:string[]; optional?:string[]; workspace?:"writable"|"read-only"; workspace_ref?:string; revision?:string; project_runtime?:string; connect?:string[]; prefer_connect?:string[]; optional_connect?:string[]; expose?:string[]; prefer_expose?:string[]; optional_expose?:string[]; output?:string[]; prefer_output?:string[]; optional_output?:string[]; resource?:string[]; subject?:string[]; persistence?:string; isolation?:string; retention?:string; extension?:string[] }
@@ -267,7 +285,10 @@ export type WorkcellWriteRequest =
   | {kind:"reconcile";receipt:string;desired:string[]}
   /** `workcell sandboxes reconcile --server URL --release-orphans`: the sandboxes whose lease ended released (a sandbox without lease
    * evidence never is); the same report, `released_sandboxes` naming them. No key travels to the desk's server. */
-  | {kind:"release-orphans";server:string};
+  | {kind:"release-orphans";server:string}
+  /** `workcell --receipt R checkpoint [--binding L] [--name N]` (EpiLogos/Workcell#123): `workcell.material-checkpoint/v1` (checkpoint_ref,
+   * state, reusable, taken_at_unix_ms, …). A binding whose provider takes no checkpoint is Workcell's refusal (kind unsupported). */
+  | {kind:"checkpoint";receipt:string;binding?:string|null;name?:string|null};
 /** `seat join|release WORKCELL PRODUCT --actor REF --json`: the actor is the desk's, claims are attributed; every region goes to one
  * `--region` flag. Answers central.workcell-seat-result/v1. */
 export type SeatWriteRequest =

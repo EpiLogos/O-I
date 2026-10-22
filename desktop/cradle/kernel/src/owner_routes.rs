@@ -141,6 +141,23 @@ pub enum ActuationRead {
         #[serde(default)]
         session: Option<String>,
     },
+    /// `actuation usage list [--session S] --json` (EpiLogos/Actuation#143;
+    /// `actuation.usage-listing/v1`): the model-usage records Actuation's
+    /// durable streams keep, or one Agent session's, each with its stream and
+    /// event, and their totals — tokens summed only over the records that
+    /// report them, cost summed per currency, never converted. Reads the
+    /// store; writes none.
+    UsageList {
+        #[serde(default)]
+        session: Option<String>,
+    },
+    /// `actuation realised continuity - --json` (EpiLogos/Actuation#143;
+    /// `actuation.realised-continuity/v1`): two realised receipts handed as
+    /// `{previous, next}`, and which identity stayed and which parts of the
+    /// body changed between them. Reads the document; no store.
+    RealisedContinuity {
+        document: Value,
+    },
     /// `actuation stream replay REF [--after N] [--limit N] --json`: one
     /// durable stream's page from Actuation's store (`actuation.stream/v1`);
     /// each `model-usage` event carries one usage record.
@@ -381,6 +398,20 @@ pub enum WorkcellRead {
     Sandboxes {
         server: String,
     },
+    /// Each binding's lease of a prepared world as its own provider reports
+    /// it (`workcell --receipt R lease`, EpiLogos/Workcell#123;
+    /// `workcell.material-leases/v1`): `leased` with its expiry and whether
+    /// it renews, `unexpiring`, `no-lease`, or `unobserved` with the
+    /// provider's error. Reads only; renews nothing.
+    Lease {
+        receipt: PathBuf,
+    },
+    /// The checkpoints a prepared world keeps (`workcell --receipt R
+    /// checkpoints`, EpiLogos/Workcell#123; `workcell.material-checkpoints/v1`),
+    /// any unreadable ledger line named. Reads only.
+    Checkpoints {
+        receipt: PathBuf,
+    },
 }
 
 /// A material demand in Workcell's own flag spelling (`workcell plan`): each
@@ -510,6 +541,18 @@ pub enum WorkcellWrite {
     /// snapshot) travels, and the child runs without the key variable.
     ReleaseOrphans {
         server: String,
+    },
+    /// A checkpoint of a prepared world's binding taken through the
+    /// binding's provider, its record kept in Workcell's checkpoint ledger
+    /// (`workcell --receipt R checkpoint [--binding L] [--name N]`,
+    /// EpiLogos/Workcell#123; `workcell.material-checkpoint/v1`). A binding
+    /// whose provider takes none is refused by Workcell (kind `unsupported`).
+    Checkpoint {
+        receipt: PathBuf,
+        #[serde(default)]
+        binding: Option<String>,
+        #[serde(default)]
+        name: Option<String>,
     },
 }
 
@@ -1304,6 +1347,10 @@ fn actuation_schema(request: &ActuationRead) -> (&'static str, &'static str) {
         ActuationRead::AuthorityList => ("authority list", "actuation.local-authority-listing/v1"),
         ActuationRead::StreamList { .. } => ("stream list", "actuation.stream-listing/v1"),
         ActuationRead::StreamReplay { .. } => ("stream replay", "actuation.stream/v1"),
+        ActuationRead::UsageList { .. } => ("usage list", "actuation.usage-listing/v1"),
+        ActuationRead::RealisedContinuity { .. } => {
+            ("realised continuity", "actuation.realised-continuity/v1")
+        }
     }
 }
 
@@ -1396,6 +1443,36 @@ fn actuation_answer(request: &ActuationRead) -> Result<Reading, Error> {
         )?;
         return Ok(reading(route.into(), data, Vec::new()));
     }
+    if let ActuationRead::UsageList { session } = request {
+        let route = "actuation usage list";
+        let mut args = words(&["usage", "list"]);
+        push_flag(&mut args, "--session", session.as_deref());
+        args.push("--json".into());
+        let data = schema(
+            route,
+            run(Call::new(actuation(), route, args, READ_LIMIT))?,
+            wanted,
+        )?;
+        let data = fields(
+            route,
+            data,
+            &[("records", Kind::List), ("totals", Kind::Record)],
+        )?;
+        return Ok(reading(route.into(), data, Vec::new()));
+    }
+    if let ActuationRead::RealisedContinuity { document } = request {
+        let route = "actuation realised continuity";
+        let mut call = Call::new(
+            actuation(),
+            route,
+            words(&["realised", "continuity", "-", "--json"]),
+            READ_LIMIT,
+        );
+        call.input = Some(object_bytes(document)?);
+        let data = schema(route, run(call)?, wanted)?;
+        let data = fields(route, data, &[("delta", Kind::Record)])?;
+        return Ok(reading(route.into(), data, Vec::new()));
+    }
     if let ActuationRead::StreamReplay {
         stream_ref,
         after,
@@ -1439,7 +1516,9 @@ fn actuation_answer(request: &ActuationRead) -> Result<Reading, Error> {
         ActuationRead::Comparison { .. }
         | ActuationRead::AuthorityList
         | ActuationRead::StreamList { .. }
-        | ActuationRead::StreamReplay { .. } => unreachable!("answered above"),
+        | ActuationRead::StreamReplay { .. }
+        | ActuationRead::UsageList { .. }
+        | ActuationRead::RealisedContinuity { .. } => unreachable!("answered above"),
     };
     let route = format!("actuation {verb}");
     let mut call = Call::new(
@@ -1824,6 +1903,18 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
         WorkcellRead::Sandboxes { server } => {
             ("workcell sandboxes reconcile", sandbox_args(server, false)?)
         }
+        WorkcellRead::Lease { receipt } => {
+            let mut args = words(&["--receipt"]);
+            args.push(receipt.into());
+            args.extend(words(&["lease", "--json"]));
+            ("workcell lease", args)
+        }
+        WorkcellRead::Checkpoints { receipt } => {
+            let mut args = words(&["--receipt"]);
+            args.push(receipt.into());
+            args.extend(words(&["checkpoints", "--json"]));
+            ("workcell checkpoints", args)
+        }
     };
     let mut call = Call::new(workcell(), route, args, READ_LIMIT);
     if matches!(request, WorkcellRead::Sandboxes { .. }) {
@@ -1875,6 +1966,18 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             &[("world_ref", Kind::Text), ("outputs", Kind::List)],
         )?,
         WorkcellRead::Sandboxes { .. } => sandbox_report(route, data)?,
+        WorkcellRead::Lease { .. } => {
+            let data = schema(route, data, "workcell.material-leases/v1")?;
+            fields(route, data, &[("leases", Kind::List)])?
+        }
+        WorkcellRead::Checkpoints { .. } => {
+            let data = schema(route, data, "workcell.material-checkpoints/v1")?;
+            fields(
+                route,
+                data,
+                &[("checkpoints", Kind::List), ("unreadable", Kind::List)],
+            )?
+        }
         WorkcellRead::Plan { .. } | WorkcellRead::Doctor => {
             unreachable!("answered by workcell_findings")
         }
@@ -2546,6 +2649,16 @@ fn workcell_world_written(request: &WorkcellWrite) -> Result<Written, Error> {
             args.pop();
             ("workcell sandboxes reconcile --release-orphans", args)
         }
+        WorkcellWrite::Checkpoint {
+            receipt,
+            binding,
+            name,
+        } => {
+            let mut args = with_receipt(receipt, &["checkpoint"]);
+            push_flag(&mut args, "--binding", binding.as_deref());
+            push_flag(&mut args, "--name", name.as_deref());
+            ("workcell checkpoint", args)
+        }
         _ => unreachable!("answered by workcell_written"),
     };
     args.push("--json".into());
@@ -2599,6 +2712,13 @@ fn workcell_world_written(request: &WorkcellWrite) -> Result<Written, Error> {
                 .as_array()
                 .is_some_and(|released| !released.is_empty());
             (data, released.then(|| server.clone()))
+        }
+        // The checkpoint Workcell took and keeps in its ledger.
+        WorkcellWrite::Checkpoint { .. } => {
+            let data = schema(route, data, "workcell.material-checkpoint/v1")?;
+            let data = fields(route, data, &[("checkpoint_ref", Kind::Text)])?;
+            let reference = named(&data, &["/checkpoint_ref"]);
+            (data, reference)
         }
         _ => unreachable!(),
     };

@@ -107,7 +107,7 @@ import {CAPTURE_SKILL_DESIGN, CAPTURE_SKILL_ID, captureSkillBinding, captureSkil
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
-import {useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -232,11 +232,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const continuityTurn = useAikitRead(transport, contextOn ? {kind: 'continuity-turn', project: RACK_PROJECT, session: sessionRef} : null)
   const context = useMemo(() => (contextOn ? {pressure: continuityPressure, commands: continuityCommands, turn: continuityTurn} : undefined),
     [contextOn, continuityPressure, continuityCommands, continuityTurn])
+  // The model the session last reported using (lane K0): Actuation's usage records of the session.
+  const sessionUsage = useActuationRead(transport, contextOn ? {kind: 'usage-list', session: sessionRef} : null)
   const agentDesignBinding = useMemo(() => (waits.agent ? null : agentBinding(chainDeviceId('agent'), {
     sessionRef, track, nowUnixMs: sessions?.nowUnixMs ?? 0, reading, accepted, harness: {binding, resolved}, holds, thread: agentThread, models, harnesses, events: sessions?.events ?? null,
-    ...(context ? {context} : {}),
+    ...(context ? {context} : {}), ...(contextOn ? {usage: sessionUsage} : {}),
   }, agentRows, write, () => steering.current)), [waits.agent, sessionRef, track, sessions?.nowUnixMs, reading, accepted, binding, resolved, holds, agentRows, write, agentThread, models, harnesses,
-    sessions?.events, context])
+    sessions?.events, context, contextOn, sessionUsage])
 
   // The Agent's Thread page (its Full): the shown session's conversation; its composer, Input and timing the Agent's; Approve and Hard
   // stop that session's own encounter verbs; choosing a session moves THE selection.

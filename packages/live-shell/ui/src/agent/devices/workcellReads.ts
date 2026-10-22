@@ -153,6 +153,14 @@ export function useAikitRead(transport: KernelTransportStatus, request: Extract<
   return useMemo(() => ({status: reading.status, value: reading.value?.data ?? null, error: reading.error ? refusalWords(reading.error) : null}), [reading])
 }
 
+/** One Actuation reading through the kernel's actuation_read (lane K0: a session's usage listing, two realised receipts' continuity), as
+ * the bindings take it: Actuation's answer, or its refusal in its words. Nothing is asked for no request. */
+export function useActuationRead(transport: KernelTransportStatus, request: Extract<KernelOp, {op: 'actuation_read'}>['request'] | null): WorkcellAnswer {
+  const op = useMemo(() => (request ? ({op: 'actuation_read', request} as KernelOp) : null), [JSON.stringify(request)]) // eslint-disable-line react-hooks/exhaustive-deps
+  const {reading} = useOwnerOp(transport, op, 'owner_route_reading')
+  return useMemo(() => ({status: reading.status, value: reading.value?.data ?? null, error: reading.error ? refusalWords(reading.error) : null}), [reading])
+}
+
 /** One Workcell reading through the kernel's workcell_read (lane W10: doctor, discover, plan, instances list, connections probe), as the
  * bindings take it (workcellBindings.ts WorkcellAnswer, Workcell's refusal in its words), and the way to ask it again. Nothing is asked for
  * no request. */

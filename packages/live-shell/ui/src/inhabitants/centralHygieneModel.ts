@@ -13,9 +13,11 @@
  *
  * Aperture law: the tenders (release a seat, prune a worktree, sweep a
  * stray branch; initialise the root, reproject a scaffold, recognise a source;
- * reconcile a binding, release orphan sandboxes) are DECLARED controls naming
- * the owner operation that would execute them. No tender fires from a device: each renders as declared and
- * waiting for its writer, exactly as the L2 manifest note promised.
+ * reconcile a binding, release orphan sandboxes) are DECLARED here, each naming
+ * the owner operation that executes it; this model fires none. A device's
+ * binding writes a tender only through its owner's route, on the person's press
+ * (central/devices/groundBindings.ts HYGIENE_WRITERS, lane K0); a tender with no
+ * route renders as declared and waiting for its writer.
  *
  * Pure TypeScript. No React, no transport, no store. */
 
@@ -306,7 +308,7 @@ function sourceOps(census: HygieneCensus): readonly string[] {
 }
 
 // ---------------------------------------------------------------------------
-// tenders — declared, waiting, never fired from a device
+// tenders — declared here; a binding fires one only through its owner's route
 
 export interface HygieneTender {
   readonly id: string
@@ -320,9 +322,10 @@ export interface HygieneTender {
   readonly receiptShape: string
 }
 
-/** The route a tender that writes the person's own ground waits on: the kernel's invoke_action reaches Central's actions, and carries the
- * person's authority only for the person's own presses (desktop/cradle/kernel/src/action.rs PERSON_ACTS), which name none of these. */
-const PERSON_ROUTE = 'the kernel route that carries the person\'s authority: the owner\'s write needs the person, and invoke_action carries the person only for the presses desktop/cradle/kernel/src/action.rs PERSON_ACTS names, which do not include it'
+/** What a tender that writes the person's own ground waits on: the person's press. The kernel's invoke_action reaches Central's actions and
+ * carries the person's authority for the presses desktop/cradle/kernel/src/action.rs PERSON_ACTS names, which include central.init,
+ * central.world.reproject.apply and projectcentral.ground.apply (since a4c97faa9; bound on Ground hygiene in lane K0). */
+const PERSON_ROUTE = 'the person\'s press: the owner, Central, takes it through the kernel\'s invoke_action, which carries the person\'s authority for it (desktop/cradle/kernel/src/action.rs PERSON_ACTS names it)'
 
 export const HYGIENE_TENDERS: readonly HygieneTender[] = [
   {
@@ -371,7 +374,7 @@ export const HYGIENE_TENDERS: readonly HygieneTender[] = [
     id: 'reconcile-binding',
     label: 'Reconcile',
     ownerOperation: 'workcell --receipt <R> reconcile --desired <binding>=present (Workcell)',
-    waitsFor: 'a kernel route to Workcell\'s reconcile, which the owner has and the kernel does not reach yet (T-COVERAGE §1.2)',
+    waitsFor: 'the person\'s press: the owner, Workcell, reconciles the world from its receipt through the kernel\'s workcell_write reconcile (routed since a4c97faa9)',
     receiptShape: 'the binding brought back from the world\'s receipt, or Workcell\'s refusal',
   },
   {
@@ -407,6 +410,8 @@ export interface AuthoredReading {
  * released, suspended, snapshotted, stale) and health; `persistence` where the receipt says the binding lasts only for its task. */
 export interface MaterialWorld {
   readonly ref: string
+  /** The receipt Workcell keeps the world under (`workcell worlds`): what Reconcile runs on. */
+  readonly receipt?: string
   readonly state?: string
   readonly bindings: readonly {readonly ref: string; readonly presence: string; readonly health?: string; readonly persistence?: string}[]
 }

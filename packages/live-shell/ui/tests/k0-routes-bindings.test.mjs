@@ -205,12 +205,14 @@ test('Ground hygiene · Release orphans writes workcell_write release-orphans on
   const released = {...SANDBOXES.read, release_orphans: true, released_sandboxes: ['sbx-orphan']}
   const owner = sandboxKernel(null, {result: 'owner_route_reading', route: 'workcell sandboxes reconcile --release-orphans', data: released, warnings: []})
   let reread = 0
-  const binding = groundBind.hygieneBinding('central:ground-hygiene', read, Date.UTC(2026, 9, 22, 9), async () => { reread++ }, ground.sandboxesPort(transport, SERVER))
-  // The tender has a writer: Tend and Allow are the hand's, at the manual's defaults (Propose, On); the other tenders stay refused.
+  const binding = groundBind.hygieneBinding('central:ground-hygiene', read, Date.UTC(2026, 9, 22, 9), async () => { reread++ }, {sandboxes: ground.sandboxesPort(transport, SERVER)})
+  // The tender has a writer: Tend and Allow are the hand's, at the manual's defaults (Propose, On); the seat's tenders stay refused, and
+  // Reconcile, with no Workcell port handed in here, says so.
   assert.deepEqual([binding.values.tend, binding.values['allow:orphans']], ['propose', true])
   assert.equal(binding.standing.orphans, undefined)
   assert.equal(binding.standing.tend, undefined)
-  assert.match(binding.standing.reconcile.disabled, /no writer reaches it/)
+  assert.match(binding.standing.release.disabled, /no writer reaches it/)
+  assert.equal(binding.standing.reconcile.disabled, 'The kernel carrier is unavailable here, so Workcell cannot be asked.')
   for (const key of groundBind.HYGIENE_ORPHANS_WIRING.keys) {
     assert.ok([groundBind.HYGIENE_ORPHANS_WIRING.reads, groundBind.HYGIENE_ORPHANS_WIRING.writes, groundBind.HYGIENE_ORPHANS_WIRING.local,
       groundBind.HYGIENE_ORPHANS_WIRING.refused, groundBind.HYGIENE_ORPHANS_WIRING.absent].some(table => key in table), `${key} placed`)
@@ -231,12 +233,14 @@ test('Ground hygiene · Release orphans writes workcell_write release-orphans on
   const down = sandboxKernel({error: refusal(words)}, null)
   const pages = await withKernel(down, () => ground.readHygienePages(transport, 'e', true, 'http://127.0.0.1:9'))
   assert.equal(pages.sandboxes, undefined)
-  const refused = groundBind.hygieneBinding('central:ground-hygiene', censusOf(pages), Date.UTC(2026, 9, 22, 9), async () => {}, ground.sandboxesPort(transport, 'http://127.0.0.1:9'))
+  const refused = groundBind.hygieneBinding('central:ground-hygiene', censusOf(pages), Date.UTC(2026, 9, 22, 9), async () => {}, {sandboxes: ground.sandboxesPort(transport, 'http://127.0.0.1:9')})
   assert.equal(refused.standing.orphans.disabled, words)
   // With no server named, Release orphans stands as before: refused, naming what it waits for.
   const unnamed = groundBind.hygieneBinding('central:ground-hygiene', censusOf({sources: [], findings: []}), Date.UTC(2026, 9, 22, 9), async () => {})
   assert.match(unnamed.standing.orphans.disabled, /a sandbox server named to the shell/)
-  assert.equal(unnamed.values.tend, 'off')
+  // Tend is the hand's setting either way (lane K0): Central's and Workcell's tenders write through their owners.
+  assert.equal(unnamed.values.tend, 'propose')
+  assert.equal(unnamed.values['allow:orphans'], undefined, 'no server named: Release orphans offers nothing to allow')
   // (a) the catalogue design draws the Material page on the named server's report.
   host.setHostPage(binding.id, 'material')
   const markup = draws(hygieneDesign, binding)

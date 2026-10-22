@@ -87,6 +87,44 @@ export interface LedgerInput {
   /** The ground's refusal in the owner's words, or the carrier's, when there is one. */
   readonly groundError: string | null
   readonly holds: ChainHolds
+  /** Actuation's usage listing of the chosen receipt's session (ledgerReceiptSession; the kernel's actuation_read {usage-list}), read
+   * while a receipt that names a session is chosen. */
+  readonly usage?: SessionUsage | null
+}
+
+/** Actuation's usage listing of one Agent session (`actuation usage list --session S --json`, actuation.usage-listing/v1;
+ * EpiLogos/Actuation#143), as the window holds it: its answer, or its refusal in Actuation's words. */
+export interface SessionUsage {
+  readonly session: string
+  readonly status: 'reading' | 'answered' | 'refused'
+  readonly value: unknown
+  readonly error: string | null
+}
+
+/** A session's usage as Actuation sums it (`totals`): the records it lists; the tokens read and written, each only where some record
+ * reports them (`records` counts those that do — a sum over fewer records than listed is partial); the cost per currency, never
+ * converted. Null when the answer is not the listing. Pure. */
+export function usageTotalsOf(listing: unknown): {records: number; tokensIn?: {sum: number; records: number}; tokensOut?: {sum: number; records: number}
+  cost: {currency: string; amount: number; records: number}[]} | null {
+  if (!isObj(listing) || listing.schema !== 'actuation.usage-listing/v1' || !isObj(listing.totals)) return null
+  const totals = listing.totals
+  const sum = (field: unknown) => (isObj(field) && typeof field.sum === 'number' && typeof field.records === 'number' && field.records > 0
+    ? {sum: field.sum, records: field.records} : undefined)
+  const tokensIn = sum(totals.tokens_input), tokensOut = sum(totals.tokens_output)
+  return {
+    records: typeof totals.records === 'number' ? totals.records : 0,
+    ...(tokensIn ? {tokensIn} : {}), ...(tokensOut ? {tokensOut} : {}),
+    cost: Array.isArray(totals.cost) ? totals.cost.flatMap(row => (isObj(row) && typeof row.currency === 'string' && typeof row.amount === 'number'
+      ? [{currency: row.currency, amount: row.amount, records: typeof row.records === 'number' ? row.records : 0}] : [])) : [],
+  }
+}
+
+/** The agent session of the receipt you read (the view's `task`), when it names one: whose usage the Ledger's head reads. Pure. */
+export function ledgerReceiptSession(input: Pick<LedgerInput, 'ground' | 'returns' | 'tracks' | 'holds'>): string | null {
+  const values = ledgerValues({...input, groundError: null})
+  const receipts = typeof values.receipts === 'string' ? JSON.parse(values.receipts) as {n: number; session?: string}[] : []
+  const chosen = typeof values.task === 'number' ? receipts.find(row => row.n === values.task) : undefined
+  return chosen?.session ?? null
 }
 
 /** One civil instant as the Day writes it, in the policy's time zone (else this machine's). */
@@ -183,32 +221,65 @@ export interface LedgerPorts {
   readonly openSession: (sessionRef: string) => string | null
 }
 
-/** Why Actuation's usage reading reaches no Ledger key (lane W3): the kernel's actuation_read {kind usage} runs `actuation usage - --json` on
- * ONE record it is handed — an `actuation.model-usage/v1` observation (usage_ref, actuation_ref, invocation_ref, correlation, model,
- * tokens {input, output}, cache, timing, cost, outcome, provenance; real shape in desktop/cradle/kernel/tests/fixtures/owner-routes/
- * actuation-usage-2026-10-21.json) — and reads no store. No reading the shell holds carries such a record for a receipt's session (the
- * change horizon, the session's task record, the agency reading and AIKit's encounter view hold none); Actuation makes them from a harness
- * transcript with `actuation stream usage` into its own store, which no kernel route runs or reads. */
-const NO_USAGE_RECORD = 'a model-usage record for the receipt\'s session to hand Actuation\'s `usage` (the kernel\'s actuation_read takes one actuation.model-usage/v1 record and reads no store; no reading here holds one — Actuation keeps them in its own store through `actuation stream usage`, which no kernel route reads)'
+/** The tokens and the spend are the chosen receipt's session's, as Actuation's usage records add them up (lane K0: `actuation usage list
+ * --session S --json`, the kernel's actuation_read {usage-list}; EpiLogos/Actuation#143). Each key stands absent with why until then. */
+export const LEDGER_USAGE_WHY = {
+  noReceipt: 'Choose a receipt: the tokens and the spend are its agent session\'s, as Actuation\'s usage records add them up (`actuation usage list --session`).',
+  noSession: 'This receipt names no agent session, so no usage is read for it (Actuation keeps usage by agent session).',
+  reading: 'Actuation has not answered the session\'s usage yet (`actuation usage list --session`).',
+  none: 'No usage recorded for this session: Actuation\'s streams keep no model-usage record for it.',
+  form: 'Actuation answered the session\'s usage in a form the Ledger does not read (actuation.usage-listing/v1 expected).',
+} as const
 
 /** What the Ledger draws that no change carries (the task, the run, turns, tokens and spend), each with the read it waits for. */
 export const LEDGER_ABSENT: Readonly<Record<string, string>> = {
   run: 'The run: no reading reaches it yet — missing op: the run a change belongs to (a source change names no run) (Software Factory).',
   used: 'The turns: no reading reaches them yet — missing op: the turns of the receipt\'s run (a model-usage record counts a model message\'s tokens, never turns; the Ledger reads no session\'s task record) (Actuation).',
   cap: 'The turns allowed: no reading reaches them yet — missing op: the turn budget of the receipt\'s run (no model-usage record carries one) (Actuation).',
-  tokensIn: `The tokens read: no reading reaches them yet — missing op: ${NO_USAGE_RECORD} (Actuation).`,
-  tokensOut: `The tokens written: no reading reaches them yet — missing op: ${NO_USAGE_RECORD} (Actuation).`,
-  spend: `The spend: no reading reaches it yet — missing op: ${NO_USAGE_RECORD}, whose cost Actuation reports only where the harness did (Actuation).`,
+  tokensIn: LEDGER_USAGE_WHY.noReceipt,
+  tokensOut: LEDGER_USAGE_WHY.noReceipt,
+  spend: LEDGER_USAGE_WHY.noReceipt,
+}
+
+/** The Ledger's tokens and spend from the chosen receipt's session's usage, and why each one that stands absent does. Zero records is "no
+ * usage recorded", never 0 tokens as if measured; a sum no record reports is absent; spend is the dollars Actuation summed, and a cost
+ * reported only in another currency is named, never converted. Pure. */
+export function ledgerUsage(session: string | null, usage: SessionUsage | null | undefined, receiptChosen: boolean): {values: Record<string, Value>; why: Record<string, string>} {
+  const all = (why: string) => ({values: {}, why: {tokensIn: why, tokensOut: why, spend: why}})
+  if (!receiptChosen) return all(LEDGER_USAGE_WHY.noReceipt)
+  if (!session) return all(LEDGER_USAGE_WHY.noSession)
+  if (!usage || usage.session !== session || usage.status === 'reading') return all(LEDGER_USAGE_WHY.reading)
+  if (usage.status === 'refused') return all(usage.error ?? 'Actuation refused the session\'s usage.')
+  const totals = usageTotalsOf(usage.value)
+  if (!totals) return all(LEDGER_USAGE_WHY.form)
+  if (totals.records === 0) return all(LEDGER_USAGE_WHY.none)
+  const values: Record<string, Value> = {}, why: Record<string, string> = {}
+  const unreported = (what: string) => `None of the session's ${totals.records} usage record${totals.records === 1 ? '' : 's'} reports the ${what}.`
+  if (totals.tokensIn) values.tokensIn = totals.tokensIn.sum; else why.tokensIn = unreported('tokens read')
+  if (totals.tokensOut) values.tokensOut = totals.tokensOut.sum; else why.tokensOut = unreported('tokens written')
+  const usd = totals.cost.find(row => row.currency === 'USD')
+  if (usd) values.spend = usd.amount
+  else why.spend = totals.cost.length ? `The session's cost is reported in ${totals.cost.map(row => row.currency).join(', ')} only; the Ledger draws dollars, and Actuation converts none.`
+    : unreported('cost')
+  return {values, why}
 }
 
 /** The Ledger's binding: it only reads (§19.13 "The Ledger only reads"); its filters and the receipt you read are the view's own;
  * Open log selects the receipt's agent session, whose log Clip view shows. A key no owner reports stands absent with what it waits for. */
 export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBinding {
-  const values = ledgerValues(input)
+  const values: Record<string, Value> = {...ledgerValues(input)}
   const receipts = typeof values.receipts === 'string' ? JSON.parse(values.receipts) as {n: number; session?: string}[] : []
   const why = ledgerWaits(input)
   const unread = why ?? 'Central\'s ground has not answered yet (the kernel\'s central inspect carries the change horizon and the civil date).'
   const standing: Record<string, Standing> = Object.fromEntries(Object.entries(LEDGER_ABSENT).map(([key, reason]) => [key, {disabled: reason}]))
+  // The chosen receipt's session's tokens and spend, from Actuation's usage records (lane K0).
+  const chosen = typeof values.task === 'number' ? receipts.find(row => row.n === values.task) : undefined
+  const usage = ledgerUsage(chosen?.session ?? null, input.usage, !!chosen)
+  Object.assign(values, usage.values)
+  for (const key of ['tokensIn', 'tokensOut', 'spend']) {
+    if (key in usage.values) delete standing[key]
+    else standing[key] = {disabled: usage.why[key] ?? LEDGER_USAGE_WHY.noReceipt}
+  }
   for (const key of ['light', 'receipts', 'today']) if (!(key in values)) standing[key] = {disabled: unread}
   if (why) standing.openLog = {disabled: why}
   return {
